@@ -282,6 +282,21 @@ def convert(input_path: str, theme: str, output: str, template: str):
 
 ---
 
+## 适用场景
+
+- 文档转换工具开发
+- CI/CD 流程中的文档处理
+- 知识库建设
+- 技术文档发布
+
+**典型项目特征:**
+- 需要将 Markdown 文档转换为其他格式
+- 要求自定义样式和模板
+- 支持批量处理和自动化
+- 需要中文等多语言支持
+
+---
+
 **📂 导航**
 - [[MOC|⬅️ 返回知识地图]]
 - **相关案例**: [[case-studies/ai-task-prioritizer|任务优先级工具]] | [[case-studies/cli-tool-development|CLI 工具开发]]

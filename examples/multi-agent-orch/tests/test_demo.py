@@ -174,5 +174,89 @@ class TestWorkflowOrchestrator(unittest.TestCase):
         self.assertTrue(any("Workflow Completed" in arg for arg in printed_args))
 
 
+class TestIntegrationWorkflow(unittest.TestCase):
+    """集成测试：使用真实 MockLLM 测试完整工作流（无 mock patch）"""
+
+    @patch("demo.time.sleep")
+    @patch("builtins.print")
+    def test_full_workflow_with_real_mock(self, mock_print, mock_sleep):
+        """测试完整工作流：PM → Architect → Coder → Reviewer(PASS)"""
+        orch = WorkflowOrchestrator()
+        # 使用真实的 MockLLM，不 mock agent.run
+        orch.execute("Build a currency converter")
+
+        # 验证所有阶段都被调用
+        printed_args = [call.args[0] for call in mock_print.call_args_list]
+        self.assertTrue(any("PM Output" in arg for arg in printed_args))
+        self.assertTrue(any("Architect Output" in arg for arg in printed_args))
+        self.assertTrue(any("Code:" in arg for arg in printed_args))
+        self.assertTrue(any("Reviewer Feedback" in arg for arg in printed_args))
+        self.assertTrue(any("Workflow Completed" in arg for arg in printed_args))
+
+    @patch("demo.time.sleep")
+    @patch("builtins.print")
+    def test_reviewer_drives_fix_loop(self, mock_print, mock_sleep):
+        """测试 Reviewer FAIL → Coder FIX → Reviewer PASS 的迭代循环"""
+        orch = WorkflowOrchestrator()
+        
+        # Mock reviewer 先返回 FAIL，再返回 PASS
+        call_count = [0]
+        def reviewer_side_effect(code):
+            call_count[0] += 1
+            if "error handling" in code:
+                return "PASS: Code looks good now."
+            return "FAIL: Missing error handling for invalid inputs."
+        
+        orch.reviewer.run = reviewer_side_effect
+        orch.execute("Build a converter")
+
+        # 验证迭代发生：第一次 FAIL，第二次 PASS
+        printed_args = [call.args[0] for call in mock_print.call_args_list]
+        self.assertTrue(any("Review failed" in arg for arg in printed_args))
+        self.assertTrue(any("Review passed" in arg for arg in printed_args))
+
+    @patch("demo.time.sleep")
+    @patch("builtins.print")
+    def test_agent_role_consistency(self, mock_print, mock_sleep):
+        """测试各 Agent 角色在整个工作流中保持一致"""
+        orch = WorkflowOrchestrator()
+        
+        # 记录每个 agent 被调用时的角色
+        roles_called = []
+        original_pm_run = orch.pm.run
+        original_arch_run = orch.architect.run
+        original_coder_run = orch.coder.run
+        original_review_run = orch.reviewer.run
+        
+        def track_pm(input_text):
+            roles_called.append(orch.pm.role)
+            return original_pm_run(input_text)
+        
+        def track_arch(input_text):
+            roles_called.append(orch.architect.role)
+            return original_arch_run(input_text)
+        
+        def track_coder(input_text):
+            roles_called.append(orch.coder.role)
+            return original_coder_run(input_text)
+        
+        def track_reviewer(input_text):
+            roles_called.append(orch.reviewer.role)
+            return original_review_run(input_text)
+        
+        orch.pm.run = track_pm
+        orch.architect.run = track_arch
+        orch.coder.run = track_coder
+        orch.reviewer.run = track_reviewer
+        
+        orch.execute("Build a tool")
+
+        # 验证角色顺序：PM → Architect → Coder → Reviewer
+        self.assertEqual(roles_called[0], "PM")
+        self.assertEqual(roles_called[1], "Architect")
+        self.assertEqual(roles_called[2], "Coder")
+        self.assertEqual(roles_called[3], "Reviewer")
+
+
 if __name__ == "__main__":
     unittest.main()

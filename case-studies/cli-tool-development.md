@@ -150,6 +150,42 @@ def convert_md_to_html(content: str, theme: str = "default") -> str:
 - 使用 `concurrent.futures.ThreadPoolExecutor` 并行转换
 - 添加进度条反馈，改善用户体验
 
+**代码示例（并行批量处理）:**
+```python
+from concurrent.futures import ThreadPoolExecutor, as_completed
+from pathlib import Path
+from rich.progress import Progress
+
+def batch_convert(input_dir: Path, output_dir: Path, theme: str, workers: int = 4):
+    md_files = list(input_dir.glob("**/*.md"))
+    output_dir.mkdir(parents=True, exist_ok=True)
+    template = load_template(theme)
+
+    def convert_one(md_path: Path) -> tuple[Path, bool]:
+        try:
+            content = md_path.read_text(encoding="utf-8")
+            html = convert_md_to_html(content, theme)
+            out_path = output_dir / md_path.with_suffix(".html").name
+            out_path.write_text(template.render(body=html), encoding="utf-8")
+            return (md_path, True)
+        except Exception as e:
+            print(f"ERROR: {md_path}: {e}")
+            return (md_path, False)
+
+    results = []
+    with ThreadPoolExecutor(max_workers=workers) as pool:
+        futures = {pool.submit(convert_one, f): f for f in md_files}
+        with Progress() as progress:
+            task = progress.add_task("Converting...", total=len(md_files))
+            for future in as_completed(futures):
+                path, ok = future.result()
+                results.append((path, ok))
+                progress.advance(task)
+
+    success = sum(1 for _, ok in results if ok)
+    print(f"Converted {success}/{len(md_files)} files")
+```
+
 ## 5. 最终结果
 
 ### 效率提升分析
@@ -167,14 +203,43 @@ def convert_md_to_html(content: str, theme: str = "default") -> str:
 md2html/
 ├── md2html/
 │   ├── __init__.py
-│   ├── cli.py          # CLI 入口
-│   ├── parser.py       # Markdown 解析
-│   ├── renderer.py     # HTML 渲染
-│   └── templates/      # HTML 模板
+│   ├── cli.py          # CLI 入口 (Click)
+│   ├── parser.py       # Markdown 解析 (Mistune)
+│   ├── renderer.py     # HTML 渲染 (Pygments)
+│   ├── batch.py        # 批量处理 (ThreadPoolExecutor)
+│   └── templates/      # HTML 模板 (Jinja2)
+│       ├── default.html
+│       ├── dark.html
+│       └── minimal.html
 ├── tests/
-│   ├── test_parser.py
-│   └── test_renderer.py
+│   ├── test_parser.py      # 解析器单元测试
+│   ├── test_renderer.py    # 渲染器单元测试
+│   ├── test_batch.py       # 批量处理集成测试
+│   └── test_cli.py         # CLI 端到端测试
 └── setup.py
+```
+
+**测试覆盖详情:**
+```python
+# test_cli.py - 端到端测试示例
+from click.testing import CliRunner
+from md2html.cli import convert
+
+def test_convert_single_file(tmp_path):
+    md_file = tmp_path / "test.md"
+    md_file.write_text("# Hello\n\nThis is a test.")
+    runner = CliRunner()
+    result = runner.invoke(convert, [str(md_file), "--output", str(tmp_path / "out")])
+    assert result.exit_code == 0
+    assert (tmp_path / "out" / "test.html").exists()
+    html = (tmp_path / "out" / "test.html").read_text()
+    assert "<h1>Hello</h1>" in html
+
+def test_convert_nonexistent_file():
+    runner = CliRunner()
+    result = runner.invoke(convert, ["nonexistent.md"])
+    assert result.exit_code != 0
+    assert "Error" in result.output or "Invalid value" in result.output
 ```
 
 ## 关键洞察
@@ -182,11 +247,38 @@ md2html/
 ### 1. AI 极大地加速了样板代码生成
 CLI 工具涉及大量"管道胶水代码"：参数解析、文件 I/O、错误处理。AI 能在几秒内生成这些模式化代码，开发者只需关注核心逻辑。一个 Click CLI 的完整骨架（含参数验证、帮助信息、错误处理）通常需要 30 分钟手动编写，AI 只需一条指令。
 
+**代码示例（AI 生成的 Click CLI 骨架）:**
+```python
+import click
+from pathlib import Path
+
+@click.command()
+@click.argument("input_path", type=click.Path(exists=True))
+@click.option("--theme", "-t", default="default", help="HTML theme name")
+@click.option("--output", "-o", type=click.Path(), help="Output directory")
+@click.option("--template", type=click.Path(exists=True), help="Custom Jinja2 template")
+@click.version_option(version="1.0.0")
+def convert(input_path: str, theme: str, output: str, template: str):
+    """Convert Markdown files to HTML pages."""
+    input_file = Path(input_path)
+    output_dir = Path(output) if output else input_file.parent
+    output_dir.mkdir(parents=True, exist_ok=True)
+
+    content = input_file.read_text(encoding="utf-8")
+    html = convert_md_to_html(content, theme)
+    out_file = output_dir / input_file.with_suffix(".html").name
+    out_file.write_text(html, encoding="utf-8")
+    click.echo(f"✅ Converted: {input_file.name} → {out_file}")
+```
+
 ### 2. TDD 在 CLI 工具中特别有效
 命令行工具的输入输出边界清晰，非常适合 TDD。先写测试定义期望行为，再让 AI 实现，每次验证都很快（毫秒级），循环节奏紧凑。整个 TDD 过程中，AI 生成的代码首次通过率超过 80%。
 
 ### 3. 中文支持是被低估的工程量
 看似简单的字体问题，实际上涉及 CSS 字体栈设计、行高调优、HTML lang 属性等多个层面。AI 帮助快速定位了所有需要调整的地方，避免了逐一排查的时间消耗。
+
+### 4. 错误处理决定工具的专业度
+用户对 CLI 工具的信任度很大程度上取决于错误信息的质量。AI 能一次性生成全面的错误处理链：文件不存在、编码错误、权限不足、磁盘空间不足。这些边界情况在开发时容易被忽略，但在生产环境中是用户最常遇到的问题。
 
 ---
 

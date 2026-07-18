@@ -29,3 +29,6 @@ Thumbs.db
 
 # OMO (project management)
 .omo/
+
+# OpenCode (internal state)
+.opencode/

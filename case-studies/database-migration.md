@@ -2,6 +2,20 @@
 
 在本案例中，我们将展示如何利用 AI 快速构建一个自动化数据库迁移工具：**DB Migrator**。这个工具能够自动分析数据库结构，生成迁移脚本，并安全地执行迁移操作。
 
+## 项目背景
+
+### 问题定义
+
+数据库迁移是后端开发中最容易出错的环节之一。在一次紧急的产品迭代中，团队需要同时修改 3 张核心表的结构：添加新字段、修改索引、调整外键关系。手动编写 SQL 迁移脚本不仅耗时，还容易遗漏边界情况（比如新字段是否允许 NULL、已有数据如何填充默认值）。
+
+更糟糕的是，不同数据库的数据类型映射差异很大。开发环境用 SQLite，测试环境用 PostgreSQL，生产环境也是 PostgreSQL 但版本不同。一个在本地测试通过的迁移脚本，部署到生产环境后可能因为数据类型不兼容而失败。这种"环境差异"问题每天都在消耗团队的时间。
+
+### 核心需求
+
+构建一个数据库迁移工具，能够自动对比源数据库和目标数据库的结构差异，生成可执行的迁移 SQL 脚本，支持回滚操作，并提供预检查机制确保迁移安全。
+
+---
+
 ## 1. 需求阶段：从想法到 PRD
 
 **初始想法**：我想简化数据库迁移流程，但不想手动写 SQL 迁移脚本。
@@ -13,6 +27,27 @@
    - 脚本生成：根据变化生成迁移 SQL
    - 版本控制：管理迁移版本历史
    - 回滚支持：提供安全的回滚机制
+
+**AI 协作 Prompt:**
+```markdown
+设计一个自动化数据库迁移工具。
+
+**核心痛点：**
+- 手动 SQL 脚本容易遗漏边界情况
+- 不同数据库的数据类型不兼容
+- 缺乏回滚机制，迁移失败后果严重
+
+**技术约束：**
+- Python 3.11+
+- 支持 PostgreSQL 和 SQLite
+- SQLAlchemy 元数据反射
+- 所有操作必须可回滚
+
+**请输出：**
+1. 模块划分和核心接口
+2. 迁移脚本的格式规范
+3. 回滚机制设计
+```
 
 **PRD 关键点**：
 - 输入：源数据库和目标数据库连接
@@ -49,23 +84,88 @@ Source DB → Schema Analyzer → Diff Generator → Script Generator → Execut
 - **Implement**：实现 SQL 模板引擎
 - **Verify**：生成可执行的迁移脚本
 
+**AI 协作 Prompt (差异检测):**
+```markdown
+实现数据库结构差异检测器。
+
+**输入：**
+- source_schema: 源数据库的表结构字典
+- target_schema: 目标数据库的表结构字典
+
+**输出：**
+- 新增的表
+- 删除的表
+- 修改的表（含具体差异：新增列、删除列、修改列类型）
+
+**约束：**
+- 忽略索引顺序差异
+- 比较列类型时考虑兼容映射（如 VARCHAR(255) == TEXT）
+- 输出结构化的差异报告
+```
+
+**代码示例：**
+```python
+from dataclasses import dataclass
+from sqlalchemy import inspect
+
+@dataclass
+class ColumnDiff:
+    name: str
+    change_type: str  # "added", "removed", "type_changed"
+    old_type: str | None = None
+    new_type: str | None = None
+
+def analyze_schema(engine) -> dict:
+    inspector = inspect(engine)
+    schema = {}
+    for table_name in inspector.get_table_names():
+        columns = inspector.get_columns(table_name)
+        schema[table_name] = {
+            col["name"]: str(col["type"]) for col in columns
+        }
+    return schema
+
+def generate_diff(source: dict, target: dict) -> list:
+    diffs = []
+    for table, target_cols in target.items():
+        if table not in source:
+            diffs.append({"table": table, "change": "added_table"})
+            continue
+        source_cols = source[table]
+        for col, col_type in target_cols.items():
+            if col not in source_cols:
+                diffs.append({"table": table, "column": col, "change": "added_column"})
+    return diffs
+```
+
 ## 4. 遇到的挑战与解决方案
 
 ### 挑战 1：数据类型兼容性
-**问题**：不同数据库的数据类型不兼容。
+
+**问题**：不同数据库的数据类型不兼容。SQLite 使用动态类型系统，而 PostgreSQL 有严格类型检查。一个在 SQLite 中成功的迁移脚本到 PostgreSQL 可能因为类型不匹配而失败。例如，SQLite 的 `INTEGER` 可能对应 PostgreSQL 的 `BIGINT` 或 `SMALLINT`，取决于值范围。
 
 **解决方案**：
-- 实现数据类型映射表
-- 添加自定义类型转换规则
-- 提供类型兼容性检查
+- 实现数据类型映射表，定义 SQLite → PostgreSQL 的类型转换规则。例如 `INTEGER → BIGINT`，`TEXT → VARCHAR`。
+- 添加自定义类型转换规则，允许用户在配置文件中覆盖默认映射。
+- 提供类型兼容性检查，在生成迁移脚本前验证所有类型转换是否安全。
 
 ### 挑战 2：迁移安全性
-**问题**：迁移可能导致数据丢失。
+
+**问题**：迁移可能导致数据丢失。特别是删除列或修改列类型的操作，如果目标表已有数据，可能造成不可逆的损失。团队曾经因为一个 `ALTER TABLE DROP COLUMN` 操作丢失了两周的用户数据。
 
 **解决方案**：
-- 实现预检查机制，验证迁移安全性
-- 添加数据备份功能
-- 实现分步执行，支持部分回滚
+- 实现预检查机制，验证迁移安全性。在执行前检查是否有数据可能受影响，并生成警告。
+- 添加数据备份功能，在执行危险操作前自动创建临时备份表。
+- 实现分步执行，支持部分回滚。将一个大迁移拆分为多个小步骤，每个步骤独立可回滚。
+
+### 挑战 3：并发迁移处理
+
+**问题**：多个开发者同时修改数据库结构时，迁移脚本可能冲突。两个人分别添加了同名但类型不同的列，或者同时修改了同一张表的索引。
+
+**解决方案**：
+- 引入迁移版本号机制，每次迁移生成唯一版本号。
+- 合并冲突检测，在执行前检查是否有未解决的版本冲突。
+- 支持迁移锁定，通过数据库锁机制防止并发迁移。
 
 ## 5. 最终结果
 
@@ -95,6 +195,19 @@ db-migrator/
 ```
 
 ## 关键洞察
-- AI 极大地加速了数据库工具开发
-- 自动化分析减少了人工错误
-- 版本控制确保了迁移可追溯
+
+### 1. 数据库工具的代码量主要在边界处理
+核心的"分析差异"逻辑并不复杂，但类型兼容性检查、回滚机制、并发控制等边界处理占据了 70% 的代码量。AI 特别擅长生成这些防御性代码，因为它能一次性考虑多种边界情况。
+
+### 2. 安全机制的设计需要人类判断
+AI 可以生成"在执行前备份"的代码，但"什么操作算危险"的判断需要人类根据业务场景决定。比如，添加一个允许 NULL 的新列通常是安全的，但如果新列有 NOT NULL 约束且没有默认值，就需要特别处理。
+
+### 3. 版本控制是迁移工具的生命线
+没有版本控制的迁移工具就是在裸奔。通过 AI 辅助设计的版本号机制，让每次变更都可追溯、可回滚，这是整个工具最有价值的安全保障。
+
+---
+
+**📂 导航**
+- [[MOC|⬅️ 返回知识地图]]
+- **相关案例**: [[case-studies/data-pipeline|数据管道]] | [[case-studies/production-debugging|生产调试]]
+- **相关方法**: [[efficiency/full-cycle-workflow|全周期工作flow]] | [[docs/database/sql|SQL 规范]]

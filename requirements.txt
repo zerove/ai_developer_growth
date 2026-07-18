@@ -1,0 +1,8 @@
+# Root-level tool dependencies
+# For tools in tools/scripts/
+
+# LLM integration (used by ai-context-manager.py)
+openai>=1.0.0
+
+# Testing
+pytest>=7.0.0

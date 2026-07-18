@@ -17,10 +17,15 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+
       - name: Check no unwrap/expect in production code
         run: |
           echo "=== Gate 2.1: No unwrap() in production code ==="
-          MATCHES=$(grep -rn "unwrap()" src/ --include="*.py" --include="*.rs" --include="*.ts" --include="*.js" 2>/dev/null | grep -v test | grep -v "# " || true)
+          MATCHES=$(grep -rn "unwrap()" examples/ai-context-sync/src/ --include="*.py" 2>/dev/null | grep -v test | grep -v "# " || true)
           if [ -n "$MATCHES" ]; then
             echo "FAIL: Found unwrap() in production code:"
             echo "$MATCHES"
@@ -31,7 +36,7 @@ jobs:
       - name: Check no expect in production code
         run: |
           echo "=== Gate 2.2: No expect() in production code ==="
-          MATCHES=$(grep -rn "\.expect(" src/ --include="*.py" --include="*.rs" --include="*.ts" --include="*.js" 2>/dev/null | grep -v test | grep -v "# " || true)
+          MATCHES=$(grep -rn "\.expect(" examples/ai-context-sync/src/ --include="*.py" 2>/dev/null | grep -v test | grep -v "# " || true)
           if [ -n "$MATCHES" ]; then
             echo "FAIL: Found expect() in production code:"
             echo "$MATCHES"
@@ -39,10 +44,21 @@ jobs:
           fi
           echo "PASS: No expect() found"
 
+      - name: Check no as any / ts-ignore
+        run: |
+          echo "=== Gate 2.3: No type suppression ==="
+          TS_MATCHES=$(grep -rn "as any\|@ts-ignore\|@ts-expect-error" examples/ --include="*.ts" --include="*.tsx" --include="*.js" 2>/dev/null | grep -v test | grep -v node_modules || true)
+          if [ -n "$TS_MATCHES" ]; then
+            echo "FAIL: Found type suppression in production code:"
+            echo "$TS_MATCHES"
+            exit 1
+          fi
+          echo "PASS: No type suppression found"
+
       - name: Check file size limits
         run: |
           echo "=== Gate 2.6: File size < 300 lines ==="
-          OVERSIZED=$(find src/ -type f \( -name "*.py" -o -name "*.rs" -o -name "*.ts" -o -name "*.js" \) -exec wc -l {} + 2>/dev/null | awk '$1 > 300 && !/total$/ {print}' || true)
+          OVERSIZED=$(find examples/ai-context-sync/src/ -type f -name "*.py" -exec wc -l {} + 2>/dev/null | awk '$1 > 300 && !/total$/ {print}' || true)
           if [ -n "$OVERSIZED" ]; then
             echo "WARN: Files exceeding 300 lines:"
             echo "$OVERSIZED"
@@ -56,21 +72,32 @@ jobs:
   gate3-automated-audit:
     name: "Gate 3: Automated Audit"
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ['3.11', '3.12', '3.13']
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
-      - name: Set up Python
+      - name: Set up Python ${{ matrix.python-version }}
         uses: actions/setup-python@v4
         with:
-          python-version: '3.11'
+          python-version: ${{ matrix.python-version }}
+          cache: 'pip'
+          cache-dependency-path: |
+            requirements.txt
+            examples/ai-context-sync/requirements.txt
 
-      - name: Install dependencies
+      - name: Install root dependencies
         run: |
-          pip install typer unidiff watchdog pytest ruff
-          pip install -e .
+          pip install -r requirements.txt
+
+      - name: Install ai-context-sync dependencies
+        run: |
+          cd examples/ai-context-sync
+          pip install -r requirements.txt
 
       - name: Run AI Audit (strict mode)
         env:
@@ -80,17 +107,24 @@ jobs:
           cd examples/ai-context-sync
           python3 -m src.cli audit --strict --config .ai-sync.json
 
-      - name: Run unit tests
+      - name: Run ai-context-sync unit tests
         run: |
-          echo "=== Gate 3.4: Unit Tests ==="
+          echo "=== Gate 3.4: ai-context-sync Tests ==="
           cd examples/ai-context-sync
           python -m pytest tests/ -v --tb=short
-          echo "Tests complete"
+          echo "ai-context-sync tests complete"
+
+      - name: Run root-level tests
+        run: |
+          echo "=== Gate 3.5: Root Tests ==="
+          python -m pytest tests/ -v --tb=short
+          echo "Root tests complete"
 
       - name: Run linting (ruff)
         run: |
-          echo "=== Gate 3.5: Linting ==="
-          ruff check src/ || true
+          echo "=== Gate 3.6: Linting ==="
+          cd examples/ai-context-sync
+          ruff check src/ --exit-non-zero-on-fix
           echo "Lint check complete"
 
       - name: Verify CONTEXT.md exists and is current
@@ -108,11 +142,12 @@ jobs:
           fi
           echo "PASS: CONTEXT.md exists (last modified $AGE_DAYS days ago)"
 
-      - name: Verify agent definitions exist
+      - name: Verify AGENTS.md exists
         run: |
           echo "=== Gate 4.3: AGENTS.md check ==="
           if [ -f AGENTS.md ]; then
             echo "PASS: AGENTS.md exists"
           else
-            echo "INFO: AGENTS.md not found (optional but recommended)"
+            echo "FAIL: AGENTS.md not found (required by CLAUDE.md)"
+            exit 1
           fi

@@ -78,6 +78,101 @@
 
 ---
 
+## 🤖 Agent 开发规范 (Agent Dev)
+
+*确保 agent 开发的质量和效率。*
+
+### 通用治理标准 (适用于任何项目)
+
+| 主题 | 核心问题 | 文档 |
+|------|----------|------|
+| 通用治理标准 | 项目开发的完整规范 | [[GOVERNANCE]] |
+| 安装指南 | 如何在任何项目中使用 | [[governance/INSTALL]] |
+
+### 编程语言规范
+
+| 语言 | 核心问题 | 文档 |
+|------|----------|------|
+| Python | Python 项目特定规范 | [[governance/languages/python]] |
+| Rust | Rust 项目特定规范 | [[governance/languages/rust]] |
+| TypeScript | TS 项目特定规范 | [[governance/languages/typescript]] |
+| Go | Go 项目特定规范 | [[governance/languages/go]] |
+| Java | Java 项目特定规范 | [[governance/languages/java]] |
+| C# | C# 项目特定规范 | [[governance/languages/csharp]] |
+| Kotlin | Kotlin 项目特定规范 | [[governance/languages/kotlin]] |
+| PHP | PHP 项目特定规范 | [[governance/languages/php]] |
+| Ruby | Ruby 项目特定规范 | [[governance/languages/ruby]] |
+| C/C++ | C/C++ 项目特定规范 | [[governance/languages/cpp]] |
+| Swift | Swift 项目特定规范 | [[governance/languages/swift]] |
+| Scala | Scala 项目特定规范 | [[governance/languages/scala]] |
+| Elixir | Elixir 项目特定规范 | [[governance/languages/elixir]] |
+
+### 框架规范
+
+| 框架 | 核心问题 | 文档 |
+|------|----------|------|
+| React | React 项目特定规范 | [[frameworks/react]] |
+| Vue | Vue 项目特定规范 | [[frameworks/vue]] |
+| Angular | Angular 项目特定规范 | [[frameworks/angular]] |
+| Svelte | Svelte/SvelteKit 项目特定规范 | [[frameworks/svelte]] |
+| Next.js | Next.js 项目特定规范 | [[frameworks/nextjs]] |
+| NestJS | NestJS 项目特定规范 | [[frameworks/nestjs]] |
+| Express/Fastify | Express/Fastify 项目特定规范 | [[frameworks/express]] |
+| Flask | Flask 项目特定规范 | [[frameworks/flask]] |
+| Django | Django 项目特定规范 | [[frameworks/django]] |
+| FastAPI | FastAPI 项目特定规范 | [[frameworks/fastapi]] |
+| Spring Boot | Spring Boot 项目特定规范 | [[frameworks/springboot]] |
+
+### DevOps 规范
+
+| 主题 | 核心问题 | 文档 |
+|------|----------|------|
+| Docker | 容器化最佳实践 | [[devops/docker]] |
+| Kubernetes | K8s 部署与管理 | [[devops/kubernetes]] |
+| CI/CD | 持续集成/持续部署 | [[devops/cicd]] |
+
+### 数据库规范
+
+| 主题 | 核心问题 | 文档 |
+|------|----------|------|
+| SQL | 关系型数据库最佳实践 | [[database/sql]] |
+| NoSQL | 非关系型数据库最佳实践 | [[database/nosql]] |
+
+### API 设计规范
+
+| 主题 | 核心问题 | 文档 |
+|------|----------|------|
+| RESTful | REST API 设计 | [[api/rest]] |
+| GraphQL | GraphQL API 设计 | [[api/graphql]] |
+| gRPC | gRPC API 设计 | [[api/grpc]] |
+
+### 安全规范
+
+| 主题 | 核心问题 | 文档 |
+|------|----------|------|
+| 认证授权 | 认证模式与最佳实践 | [[security/authentication]] |
+| OWASP Top 10 | 安全风险防护 | [[security/owasp]] |
+
+### 测试与工作流
+
+| 主题 | 核心问题 | 文档 |
+|------|----------|------|
+| 测试策略 | 测试金字塔与最佳实践 | [[testing/strategy]] |
+| Git 工作流 | Git 分支与提交规范 | [[testing/git-workflow]] |
+
+### 本项目特定规范
+
+| 主题 | 核心问题 | 文档 |
+|------|----------|------|
+| Prompt 编写规范 | 如何编写高质量 agent 定义 | [[agent-dev/prompt-standards]] |
+| 开发流程规范 | agent 开发的全流程标准 | [[agent-dev/workflow-standards]] |
+| 质量门禁 | 各阶段的质量检查标准 | [[agent-dev/quality-gates]] |
+| 上下文管理 | 项目上下文的维护规范 | [[agent-dev/context-management]] |
+| Prompt 模板 | agent 定义的标准模板 | [[agent-dev/agent-prompt-template]] |
+| 质量检查清单 | 开发各阶段的检查项 | [[agent-dev/quality-checklist]] |
+
+---
+
 ## 🔬 实践验证
 
 *理论需要实践检验。*
@@ -206,6 +301,24 @@ ai-learning-method → automated-bug-fixing → full-cycle-workflow → ide-best
 | 案例库 | 10 | ✅ 达标 |
 | 代码示例 | 2 | ✅ 基础 |
 | 学习路径 | 7 | ✅ 完整 |
+
+---
+
+## 治理框架工具
+
+| 文件 | 用途 | 链接 |
+|------|------|------|
+| 可视化地图 | 整体架构图 | [[governance/MAP]] |
+| 快速参考卡 | 速查手册 | [[governance/CHEATSHEET]] |
+| 安装指南 | 快速入门 | [[governance/INSTALL]] |
+
+---
+
+## 贡献
+
+欢迎贡献案例、工具推荐、方法论改进。
+
+详见 [[CONTRIBUTING|贡献指南]]。
 
 ---
 

@@ -1,11 +1,13 @@
 """Tests for ai-context-manager.py"""
 import os
 import sys
+import shutil
+import tempfile
+import unittest
 import importlib.util
-import pytest
 from unittest.mock import patch, MagicMock
 
-# Mock openai before importing the module
+# Mock openai before importing the module (source imports openai at module level)
 mock_openai = MagicMock()
 sys.modules["openai"] = mock_openai
 
@@ -20,67 +22,83 @@ load_context = ai_context_manager.load_context
 save_context = ai_context_manager.save_context
 
 
-class TestLoadContext:
+class TestLoadContext(unittest.TestCase):
     """Test context loading functionality."""
 
-    def test_load_context_returns_string(self, tmp_path):
+    def setUp(self):
+        self.original_dir = os.getcwd()
+        self.tmp_dir = tempfile.mkdtemp()
+        os.chdir(self.tmp_dir)
+
+    def tearDown(self):
+        os.chdir(self.original_dir)
+        shutil.rmtree(self.tmp_dir)
+
+    def test_load_context_returns_string(self):
         """Test that load_context returns a string."""
-        context_file = tmp_path / "CONTEXT.md"
-        context_file.write_text("# Project Context\n\n## Current Progress\n- Test.")
-        
-        original_dir = os.getcwd()
-        os.chdir(tmp_path)
-        try:
-            result = load_context()
-            assert isinstance(result, str)
-            assert "Project Context" in result
-        finally:
-            os.chdir(original_dir)
+        context_file = os.path.join(self.tmp_dir, "CONTEXT.md")
+        with open(context_file, "w", encoding="utf-8") as f:
+            f.write("# Project Context\n\n## Current Progress\n- Test.")
 
-    def test_load_context_returns_default_when_missing(self, tmp_path):
+        result = load_context()
+        self.assertIsInstance(result, str)
+        self.assertIn("Project Context", result)
+
+    def test_load_context_returns_default_when_missing(self):
         """Test that load_context returns default when CONTEXT.md doesn't exist."""
-        original_dir = os.getcwd()
-        os.chdir(tmp_path)
-        try:
-            result = load_context()
-            assert "Project Context" in result
-            assert "Initial project setup" in result
-        finally:
-            os.chdir(original_dir)
+        result = load_context()
+        self.assertIn("Project Context", result)
+        self.assertIn("Initial project setup", result)
+
+    def test_load_context_preserves_content(self):
+        """Test that load_context preserves full file content."""
+        context_file = os.path.join(self.tmp_dir, "CONTEXT.md")
+        content = "# Title\n\n## Section\n- Item 1\n- Item 2\n\n## Another\n- Detail"
+        with open(context_file, "w", encoding="utf-8") as f:
+            f.write(content)
+
+        result = load_context()
+        self.assertEqual(result, content)
 
 
-class TestSaveContext:
+class TestSaveContext(unittest.TestCase):
     """Test context saving functionality."""
 
-    def test_save_context_creates_file(self, tmp_path):
-        """Test that save_context creates CONTEXT.md."""
-        original_dir = os.getcwd()
-        os.chdir(tmp_path)
-        
-        try:
-            save_context("# Updated Context\n\n## Progress\n- Done.")
-            assert os.path.exists("CONTEXT.md")
-            
-            with open("CONTEXT.md", "r", encoding="utf-8") as f:
-                content = f.read()
-            assert "Updated Context" in content
-        finally:
-            os.chdir(original_dir)
+    def setUp(self):
+        self.original_dir = os.getcwd()
+        self.tmp_dir = tempfile.mkdtemp()
+        os.chdir(self.tmp_dir)
 
-    def test_save_context_overwrites_existing(self, tmp_path):
+    def tearDown(self):
+        os.chdir(self.original_dir)
+        shutil.rmtree(self.tmp_dir)
+
+    def test_save_context_creates_file(self):
+        """Test that save_context creates CONTEXT.md."""
+        save_context("# Updated Context\n\n## Progress\n- Done.")
+        self.assertTrue(os.path.exists("CONTEXT.md"))
+
+        with open("CONTEXT.md", "r", encoding="utf-8") as f:
+            content = f.read()
+        self.assertIn("Updated Context", content)
+
+    def test_save_context_overwrites_existing(self):
         """Test that save_context overwrites existing file."""
-        original_dir = os.getcwd()
-        os.chdir(tmp_path)
-        
-        try:
-            # Create initial file
-            save_context("# Old Content")
-            # Overwrite
-            save_context("# New Content")
-            
-            with open("CONTEXT.md", "r", encoding="utf-8") as f:
-                content = f.read()
-            assert "New Content" in content
-            assert "Old Content" not in content
-        finally:
-            os.chdir(original_dir)
+        save_context("# Old Content")
+        save_context("# New Content")
+
+        with open("CONTEXT.md", "r", encoding="utf-8") as f:
+            content = f.read()
+        self.assertIn("New Content", content)
+        self.assertNotIn("Old Content", content)
+
+    def test_save_context_writes_utf8(self):
+        """Test that save_context handles UTF-8 content correctly."""
+        save_context("# 中文上下文\n\n## 进度\n- 完成")
+        with open("CONTEXT.md", "r", encoding="utf-8") as f:
+            content = f.read()
+        self.assertIn("中文上下文", content)
+
+
+if __name__ == "__main__":
+    unittest.main()

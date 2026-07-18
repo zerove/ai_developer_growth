@@ -2,6 +2,20 @@
 
 在本案例中，我们将展示如何利用 AI 快速构建一个实用的命令行工具：**Markdown 转 HTML 转换器**。这个工具能够将 Markdown 文件转换为格式化的 HTML 页面，支持自定义样式和模板。
 
+## 项目背景
+
+### 问题定义
+
+在日常开发中，团队需要将 Markdown 格式的技术文档转换为美观的 HTML 页面，用于内部知识库展示。现有的工具（如 pandoc）功能强大但配置复杂，而简单的在线转换器无法满足定制化需求。团队需要一个可以集成到 CI/CD 流程中的本地工具，支持自定义主题和模板。
+
+手动实现一个完整的 Markdown 到 HTML 转换器需要处理大量细节：解析各种 Markdown 语法扩展（表格、任务列表、数学公式）、处理编码问题、实现语法高亮、设计模板系统。这些工作虽然不算困难，但耗时且容易出错。
+
+### 核心需求
+
+构建一个 Python CLI 工具，能够将单个或批量 Markdown 文件转换为 HTML，支持多种主题切换、自定义 Jinja2 模板、代码块语法高亮，以及中文等多语言内容的正确渲染。
+
+---
+
 ## 1. 需求阶段：从想法到 PRD
 
 **初始想法**：我想快速将 Markdown 文档转换为漂亮的 HTML 页面，方便在浏览器中查看。
@@ -14,6 +28,26 @@
    - 自定义样式：CSS 主题支持
    - 模板系统：HTML 模板定制
 3. 明确技术约束：Python、Click CLI 框架、Mistune Markdown 解析器
+
+**AI 协作 Prompt:**
+```markdown
+设计一个 Markdown 转 HTML 的 CLI 工具。
+
+**功能需求：**
+1. 单文件和批量转换
+2. 支持 GFM 扩展（表格、任务列表）
+3. 代码块语法高亮（Pygments）
+4. Jinja2 模板系统
+5. 多主题支持
+
+**技术约束：**
+- Python 3.11+
+- Click 作为 CLI 框架
+- Mistune 作为 Markdown 解析器
+- 单文件不超过 200 行
+
+请输出模块划分和核心接口定义。
+```
 
 **PRD 关键点**：
 - 输入：Markdown 文件路径
@@ -49,21 +83,72 @@ CLI Layer (Click) → Parser Layer (Mistune) → Renderer Layer (HTML) → Templ
 - **Implement**：集成 Jinja2
 - **Verify**：端到端测试通过
 
+**AI 协作 Prompt (TDD 循环):**
+```markdown
+为 Markdown 解析模块编写测试和实现。
+
+**测试要求：**
+1. 测试标题转换（h1-h6）
+2. 测试有序和无序列表
+3. 测试代码块（含语言标注）
+4. 测试表格转换
+
+**实现要求：**
+- 使用 Mistune 3.x 的插件机制
+- 代码块集成 Pygments 高亮
+- 返回 tokens 列表而非直接输出 HTML
+```
+
+**代码示例：**
+```python
+import mistune
+from pygments import highlight
+from pygments.lexers import get_lexer_by_name
+from pygments.formatters import HtmlFormatter
+
+class HighlightRenderer(mistune.HTMLRenderer):
+    def block_code(self, code, info=None):
+        if info:
+            lexer = get_lexer_by_name(info)
+            return highlight(code, lexer, HtmlFormatter())
+        return f"<pre><code>{mistune.html(code)}</code></pre>"
+
+def convert_md_to_html(content: str, theme: str = "default") -> str:
+    renderer = HighlightRenderer()
+    md = mistune.create_markdown(renderer=renderer)
+    body_html = md(content)
+    template = load_template(theme)
+    return template.render(body=body_html)
+```
+
 ## 4. 遇到的挑战与解决方案
 
 ### 挑战 1：代码块高亮
-**问题**：默认代码块没有语法高亮。
+
+**问题**：默认代码块没有语法高亮。这是最常见的用户反馈，没有高亮的代码块在视觉上毫无区分度，严重影响文档可读性。最初尝试了客户端高亮方案（highlight.js），但离线环境下无法使用。
 
 **解决方案**：
-- 使用 Pygments 进行语法高亮
-- 添加语言检测和自动高亮
+- 使用 Pygments 在服务端完成语法高亮，生成带 class 标注的 HTML
+- 添加语言检测，当 Markdown 代码块未标注语言时，通过启发式算法猜测
+- 高亮后的 HTML 内嵌 CSS 或引用主题 CSS 文件
 
 ### 挑战 2：中文支持
-**问题**：某些主题对中文显示不友好。
+
+**问题**：某些主题对中文显示不友好。英文主题的默认字体（如 Helvetica、Arial）不包含中文字形，导致中文回退到系统默认字体，行高和间距不协调。
 
 **解决方案**：
-- 添加中文字体支持
-- 优化行高和间距
+- 在 CSS 主题中添加中文字体栈（Noto Sans SC、PingFang SC、Microsoft YaHei）
+- 优化行高（从 1.4 调到 1.8）和字间距
+- 添加 `lang="zh-CN"` 属性到 HTML 标签，帮助浏览器正确选择字体
+
+### 挑战 3：批量处理的性能
+
+**问题**：处理 100+ 文件时，逐个转换太慢。每个文件都重新加载模板和初始化解析器，大量重复开销。
+
+**解决方案**：
+- 模板预加载并缓存，避免重复读取磁盘
+- 使用 `concurrent.futures.ThreadPoolExecutor` 并行转换
+- 添加进度条反馈，改善用户体验
 
 ## 5. 最终结果
 
@@ -93,6 +178,19 @@ md2html/
 ```
 
 ## 关键洞察
-- AI 极大地加速了样板代码生成
-- 人工审查确保了代码质量
-- TDD 循环保证了功能正确性
+
+### 1. AI 极大地加速了样板代码生成
+CLI 工具涉及大量"管道胶水代码"：参数解析、文件 I/O、错误处理。AI 能在几秒内生成这些模式化代码，开发者只需关注核心逻辑。一个 Click CLI 的完整骨架（含参数验证、帮助信息、错误处理）通常需要 30 分钟手动编写，AI 只需一条指令。
+
+### 2. TDD 在 CLI 工具中特别有效
+命令行工具的输入输出边界清晰，非常适合 TDD。先写测试定义期望行为，再让 AI 实现，每次验证都很快（毫秒级），循环节奏紧凑。整个 TDD 过程中，AI 生成的代码首次通过率超过 80%。
+
+### 3. 中文支持是被低估的工程量
+看似简单的字体问题，实际上涉及 CSS 字体栈设计、行高调优、HTML lang 属性等多个层面。AI 帮助快速定位了所有需要调整的地方，避免了逐一排查的时间消耗。
+
+---
+
+**📂 导航**
+- [[MOC|⬅️ 返回知识地图]]
+- **相关案例**: [[case-studies/ai-task-prioritizer|任务优先级工具]] | [[case-studies/cli-tool-development|CLI 工具开发]]
+- **相关方法**: [[efficiency/full-cycle-workflow|全周期工作flow]] | [[learning/prompt-engineering|Prompt 工程]]

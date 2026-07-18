@@ -9,7 +9,7 @@ import os
 import sys
 from datetime import datetime
 
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "..", "products", "ai_context_sync"))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "..", "examples", "ai-context-sync"))
 from src.llm_client import LLMClient
 
 

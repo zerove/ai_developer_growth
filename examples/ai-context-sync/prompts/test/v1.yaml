@@ -1,0 +1,3 @@
+version: "1.0.0"
+system_prompt: "Test system prompt"
+user_template: "Context: {{adrs}}"

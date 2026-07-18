@@ -1,0 +1,29 @@
+[build-system]
+requires = ["setuptools", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "ai-context-sync"
+version = "1.0.0"
+description = "Automatically maintain project CONTEXT.md and ADR.md using LLMs"
+authors = [
+    {name = "AI Developer Growth", email = "dev@example.com"}
+]
+license = {text = "MIT"}
+readme = "README.md"
+requires-python = ">=3.9"
+dependencies = [
+    "requests>=2.31.0",
+    "unidiff",
+    "typer[all]>=0.9.0",
+    "httpx>=0.25.0",
+    "mcp>=1.0.0",
+    "fastmcp>=1.0.0",
+]
+
+[project.scripts]
+ai-context-sync = "src.cli:app"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["src*"]

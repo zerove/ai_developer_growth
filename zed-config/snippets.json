@@ -1,0 +1,22 @@
+{
+  "AI Refactor": {
+    "prefix": "ai-refactor",
+    "body": "Please refactor the selected code to improve readability, maintainability, and performance. Follow the project's existing coding style. Keep the logic identical. \n\nSelected Code:\n${TM_SELECTED_TEXT}"
+  },
+  "AI TDD Step": {
+    "prefix": "ai-tdd",
+    "body": "I am following TDD. Please help me with the next step:\n1. Write a failing test for the following requirement: ${1:Requirement}\n2. Once the test is written, I will implement the minimum code to make it pass.\n\nContext:\n${TM_SELECTED_TEXT}"
+  },
+  "AI ADR Draft": {
+    "prefix": "ai-adr",
+    "body": "Create an Architecture Decision Record (ADR) for the following decision: ${1:Decision Name}.\n\nPlease include:\n- Context: The problem we are solving.\n- Decision: What we decided to do.\n- Status: Proposed/Accepted/Deprecated.\n- Consequences: The trade-offs and impact of this decision.\n\nContext:\n${TM_SELECTED_TEXT}"
+  },
+  "AI Bug Hunt": {
+    "prefix": "ai-bug",
+    "body": "Analyze the following code for potential bugs, edge cases, or security vulnerabilities. Suggest fixes for each issue found.\n\nCode:\n${TM_SELECTED_TEXT}"
+  },
+  "AI Documentation": {
+    "prefix": "ai-doc",
+    "body": "Generate comprehensive documentation/comments for the following code. Use a clear, professional tone and explain the 'why' behind the implementation, not just the 'what'.\n\nCode:\n${TM_SELECTED_TEXT}"
+  }
+}

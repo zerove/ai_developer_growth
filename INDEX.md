@@ -174,7 +174,7 @@
 
 理论需要实践检验。以下是真实案例：
 
-### 案例库 (10 个真实案例)
+### 案例库 (11 个真实案例)
 
 | 案例 | 场景 | 效率提升 | 核心洞察 |
 |------|------|----------|----------|
@@ -188,6 +188,7 @@
 | [[case-studies/legacy-refactoring\|遗留系统重构]] | 代码现代化 | 5x | 渐进式重构降低风险 |
 | [[case-studies/production-debugging\|生产环境调试]] | 问题排查 | 6x | AI 辅助快速定位根因 |
 | [[case-studies/api-design-implementation\|API 设计实现]] | 后端开发 | 5x | 契约先行保证接口质量 |
+| [[case-studies/multi-agent-collaboration\|多 Agent 协作]] | 团队协作 | 5x | 角色专业化 + 工作流编排 |
 
 ### 代码示例
 | 示例 | 核心机制 | 学习价值 |

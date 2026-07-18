@@ -112,49 +112,44 @@ EOF
 ai_developer_growth/
 ├── GOVERNANCE.md               # 通用治理标准 (可复制到任何项目)
 ├── CLAUDE.md                   # Agent 系统指令 (强制遵守)
+├── AGENTS.md                   # Agent 定义索引
+├── UBIQUITOUS_LANGUAGE.md       # 领域术语表
+├── CONTEXT.md                  # 项目上下文 (AI 需要读取)
+├── INDEX.md                    # 知识地图入口
 ├── docs/
+│   ├── MOC.md                  # 知识地图 (Map of Content)
+│   ├── adr/                    # 架构决策记录
+│   │   └── ADR.md              # ADR 聚合索引
 │   ├── governance/             # 通用治理框架
 │   │   ├── MAP.md              # 可视化地图
 │   │   ├── CHEATSHEET.md       # 快速参考卡
 │   │   ├── INSTALL.md          # 安装指南
-│   │   └── languages/          # 语言特定规则
-│   │       ├── python.md
-│   │       ├── rust.md
-│   │       ├── typescript.md
-│   │       └── go.md
-│   ├── frameworks/             # 框架特定规则
-│   │   ├── react.md
-│   │   ├── vue.md
-│   │   ├── nextjs.md
-│   │   └── ...
+│   │   └── languages/          # 语言特定规则 (13 种)
+│   ├── frameworks/             # 框架特定规则 (11 种)
 │   ├── devops/                 # DevOps 规范
-│   │   ├── docker.md
-│   │   ├── kubernetes.md
-│   │   └── cicd.md
 │   ├── database/               # 数据库规范
-│   │   ├── sql.md
-│   │   └── nosql.md
 │   ├── api/                    # API 设计规范
-│   │   ├── rest.md
-│   │   ├── graphql.md
-│   │   └── grpc.md
 │   ├── security/               # 安全规范
-│   │   ├── authentication.md
-│   │   └── owasp.md
 │   ├── testing/                # 测试与工作流
-│   │   ├── strategy.md
-│   │   └── git-workflow.md
-│   ├── agent-dev/              # 本项目特定规范
+│   ├── agent-dev/              # Agent 开发规范
 │   ├── mindset/                # 认知升级
 │   ├── learning/               # 学习方法
 │   ├── efficiency/             # 工程效率
 │   └── tools/                  # 工具选型
-├── case-studies/               # 实践案例
+├── case-studies/               # 实践案例 (10 个)
 ├── examples/                   # 代码示例
 │   ├── ai-context-sync/       # 知识验证工具
+│   │   ├── src/
+│   │   │   ├── cli/commands/   # CLI 命令模块
+│   │   │   ├── providers/      # LLM 提供者 (7 文件)
+│   │   │   └── handlers/       # MCP 处理器 (5 文件)
+│   │   └── tests/              # 单元 + 集成测试
 │   ├── self-correction-loop/
-│   └── multi-agent-orch/
-└── templates/                  # 模板资源
+│   ├── multi-agent-orch/
+│   │   └── tests/              # 集成测试
+│   └── ai-task-prioritizer/
+├── tests/                      # 根目录测试 (4 文件)
+└── tools/scripts/              # 工具脚本
 ```
 
 ---

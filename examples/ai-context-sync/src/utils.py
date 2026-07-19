@@ -1,10 +1,58 @@
+import json
+import re
 import time
 import functools
-from typing import Callable, Optional, TypeVar, Any
+from typing import Callable, Optional, TypeVar, Any, List
 
 from .logger import logger
 
 T = TypeVar("T")
+
+
+def parse_llm_json(text: str, label: str = "LLM response") -> Optional[List]:
+    """Extract and parse a JSON array from LLM-generated text.
+
+    Handles common LLM output patterns:
+    - Plain JSON arrays: ``[{"key": "value"}]``
+    - Markdown fenced code blocks: `````json [...]`````
+    - Trailing commas before ``]``
+
+    Args:
+        text: Raw text returned by the LLM.
+        label: Human-readable label for log messages.
+
+    Returns:
+        Parsed list, or ``None`` when parsing fails.
+    """
+    if not text:
+        return None
+
+    # Strip markdown code fences (```json ... ``` or ``` ... ```)
+    fenced = re.search(r"```(?:json)?\s*\n?(.*?)\n?\s*```", text, re.DOTALL)
+    if fenced:
+        text = fenced.group(1).strip()
+
+    # Find the outermost JSON array
+    start = text.find("[")
+    end = text.rfind("]")
+    if start == -1 or end == -1 or end <= start:
+        logger.warning(f"⚠️ {label}: no JSON array found in response")
+        return None
+
+    candidate = text[start : end + 1]
+
+    # Remove trailing commas before ] or } (common LLM mistake)
+    candidate = re.sub(r",\s*([}\]])", r"\1", candidate)
+
+    try:
+        result = json.loads(candidate)
+        if not isinstance(result, list):
+            logger.warning(f"⚠️ {label}: parsed JSON is not a list (got {type(result).__name__})")
+            return None
+        return result
+    except json.JSONDecodeError as e:
+        logger.error(f"❌ {label}: JSON parse failed — {e}")
+        return None
 
 
 def retry_on_failure(

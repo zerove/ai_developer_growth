@@ -1,7 +1,6 @@
 from .llm_client import LLMClient
 from .profiles import LanguageProfile
 from .prompt_optimizer import PromptOptimizer
-from .logger import logger
 from .utils import retry_on_failure
 
 

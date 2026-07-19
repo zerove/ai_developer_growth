@@ -104,7 +104,7 @@ HOOK_TEMPLATE = """#!/bin/bash
 
 echo "🔍 Running AI-Context-Sync audit..."
 
-python -m ai_developer_growth.products.ai_context_sync.src.cli audit --strict --config .ai-sync.json
+python -m src.cli audit --strict --config .ai-sync.json
 
 EXIT_CODE=$?
 

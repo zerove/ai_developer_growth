@@ -1,11 +1,11 @@
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from typing import Any, List, Optional
-import time
 import os
 import json
 from .llm_client import LLMClient
 from .logger import logger
-from .exceptions import AuditError, LLMError
+from .exceptions import LLMError
+from .utils import parse_llm_json
 
 @dataclass
 class Violation:
@@ -68,7 +68,7 @@ class SpecAuditor:
         self.llm_client = llm_client
         self.specs_dir = specs_dir
 
-    def _get_relevant_specs(self, diff: str) -> str:
+    def get_relevant_specs(self, diff: str) -> str:
         all_specs = ""
         if os.path.exists(self.specs_dir):
             for file in os.listdir(self.specs_dir):
@@ -131,7 +131,7 @@ class SpecAuditor:
         Performs an adversarial audit: Attack -> Verify.
         Returns only confirmed violations.
         """
-        specs = self._get_relevant_specs(diff)
+        specs = self.get_relevant_specs(diff)
         if not specs:
             return []
 
@@ -150,15 +150,10 @@ class SpecAuditor:
         
         try:
             attack_response = self.llm_client.generate(attack_prompt, system_prompt=attack_system_prompt)
-            if not attack_response: return []
-            
-            import json
-            start = attack_response.find("[")
-            end = attack_response.rfind("]") + 1
-            if start == -1 or end == 0:
+            candidates_data = parse_llm_json(attack_response, label="adversarial audit")
+            if not candidates_data:
                 return []
-                
-            candidates_data = json.loads(attack_response[start:end])
+
             candidates = [
                 Violation(
                     rule_id=v.get("rule_id", "UNKNOWN"),
@@ -167,14 +162,13 @@ class SpecAuditor:
                     file_path="unknown"
                 ) for v in candidates_data
             ]
-            
-            # --- Phase 2: Verify (Filtering false positives) ---
-            confirmed_violations = []
-            for v in candidates:
-                if self._verify_violation(v, diff, specs):
-                    confirmed_violations.append(v)
-            
+
+            confirmed_violations = [
+                v for v in candidates
+                if self._verify_violation(v, diff, specs)
+            ]
+
             return confirmed_violations
-        except (LLMError, json.JSONDecodeError) as e:
+        except LLMError as e:
             logger.error(f"Error during adversarial audit: {e}")
             return []

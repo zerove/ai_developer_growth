@@ -1,5 +1,7 @@
 # Root-level tool dependencies
 # For tools in tools/scripts/
+# NOTE: examples/ai-context-sync/ has its own requirements.txt and pyproject.toml
+# because it is a self-contained sub-project with its own virtualenv and MCP server.
 
 # LLM integration (used by ai-context-manager.py)
 openai>=1.0.0

@@ -34,7 +34,7 @@
 **最适合**: Bug 报告、功能建议、内容错误
 
 **步骤**:
-1. 访问 [GitHub Issues](https://github.com/your-username/ai_developer_growth/issues) <!-- 请替换为实际仓库地址 -->
+1. 访问 [GitHub Issues](https://github.com/zeron-ai/ai_developer_growth/issues)
 2. 点击 "New Issue"
 3. 选择合适的模板
 4. 填写详细信息
@@ -74,7 +74,7 @@
 ### 3. 邮件反馈
 **最适合**: 私人反馈、敏感信息
 
-**邮箱**: [请替换为实际邮箱，如 admin@example.com]
+**邮箱**: 通过 [GitHub Issues](https://github.com/zeron-ai/ai_developer_growth/issues) 提交反馈
 
 **主题格式**: `[反馈] 反馈类型 - 简短描述`
 

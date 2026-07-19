@@ -1,36 +1,11 @@
 """Tests for src/reasoning.py - DecisionReasoner"""
 import os
 import sys
-import tempfile
-import shutil
-from unittest.mock import MagicMock, patch
-import pytest
+from unittest.mock import MagicMock
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from src.reasoning import DecisionReasoner
-
-
-@pytest.fixture
-def adr_dir():
-    """Create a temporary ADR directory."""
-    tmpdir = tempfile.mkdtemp()
-    with open(os.path.join(tmpdir, "ADR-001.md"), "w") as f:
-        f.write("# ADR-001: Use REST API\n\n"
-               "Decision to use REST for external communication.\n")
-    with open(os.path.join(tmpdir, "ADR-002.md"), "w") as f:
-        f.write("# ADR-002: Add Authentication\n\n"
-               "- **Depends On:** [ADR-001]\n\n"
-               "Add JWT auth layer.\n")
-    yield tmpdir
-    shutil.rmtree(tmpdir)
-
-
-@pytest.fixture
-def empty_adr_dir():
-    tmpdir = tempfile.mkdtemp()
-    yield tmpdir
-    shutil.rmtree(tmpdir)
 
 
 class TestDecisionReasoner:
@@ -39,7 +14,7 @@ class TestDecisionReasoner:
         reasoner = DecisionReasoner(mock_llm, adr_dir)
         assert reasoner.adr_dir == adr_dir
         assert reasoner.graph is not None
-        assert len(reasoner.graph.nodes) == 2
+        assert len(reasoner.graph.nodes) == 3
 
     def test_find_relevant_adrs(self, adr_dir):
         mock_llm = MagicMock()

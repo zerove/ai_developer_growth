@@ -11,14 +11,18 @@ authors = [
 ]
 license = {text = "MIT"}
 readme = "README.md"
-requires-python = ">=3.9"
+requires-python = ">=3.10"
 dependencies = [
     "requests>=2.31.0",
-    "unidiff",
+    "unidiff>=0.7.0",
     "typer[all]>=0.9.0",
     "httpx>=0.25.0",
     "mcp>=1.0.0",
     "fastmcp>=1.0.0",
+    "watchdog>=4.0.0",
+    "jinja2>=3.1.0",
+    "PyYAML>=6.0",
+    "openai>=1.0.0",
 ]
 
 [project.scripts]
@@ -27,3 +31,11 @@ ai-context-sync = "src.cli:app"
 [tool.setuptools.packages.find]
 where = ["."]
 include = ["src*"]
+
+[tool.coverage.run]
+source = ["src"]
+omit = ["*/tests/*", "*/__main__.py"]
+
+[tool.coverage.report]
+fail_under = 70
+show_missing = true

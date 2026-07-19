@@ -4,7 +4,6 @@ import os
 import tempfile
 import subprocess
 from unittest.mock import patch
-import pytest
 from typer.testing import CliRunner
 
 from src.cli import app

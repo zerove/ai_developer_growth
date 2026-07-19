@@ -4,7 +4,6 @@ import os
 import tempfile
 import shutil
 from unittest.mock import MagicMock, patch
-import pytest
 
 from src.onboarding import OnboardingSession
 

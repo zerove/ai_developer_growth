@@ -117,6 +117,12 @@ ai_developer_growth/
 ├── UBIQUITOUS_LANGUAGE.md       # 领域术语表
 ├── CONTEXT.md                  # 项目上下文 (AI 需要读取)
 ├── INDEX.md                    # 知识地图入口
+├── CONTRIBUTING.md             # 贡献指南
+├── FEEDBACK.md                 # 反馈指南
+├── ROADMAP.md                  # 项目路线图
+├── pyproject.toml              # Python 项目配置
+├── requirements.txt            # Python 依赖
+├── opencode.json               # opencode MCP 配置
 ├── docs/
 │   ├── MOC.md                  # 知识地图 (Map of Content)
 │   ├── adr/                    # 架构决策记录
@@ -150,7 +156,9 @@ ai_developer_growth/
 │   │   └── tests/              # 集成测试
 │   └── ai-task-prioritizer/
 ├── tests/                      # 根目录测试 (4 文件)
-└── tools/scripts/              # 工具脚本
+├── tools/scripts/              # 工具脚本
+├── templates/                  # 模板文件
+└── zed-config/                 # Zed IDE 配置
 ```
 
 ---
@@ -267,4 +275,4 @@ CI/CD 自动执行 Gate 2-3 检查，Gate 1 和 Gate 4 需人工审查。
 
 *AI 时代的竞争不是人与 AI 的竞争，而是掌握 AI 的人与不掌握 AI 的人的竞争。*
 
-*Last Updated: 2026-07-17*
+*Last Updated: 2026-07-19*

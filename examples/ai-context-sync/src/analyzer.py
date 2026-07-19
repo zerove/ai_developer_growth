@@ -1,9 +1,7 @@
 import subprocess
-import os
 from typing import List, Optional
 from unidiff import PatchSet
 from .logger import logger
-from .exceptions import GitError
 
 class GitAnalyzer:
     """

@@ -1,10 +1,9 @@
 import os
 import re
-from typing import List, Optional
+from typing import List
 from .llm_client import LLMClient
 from .graph import DecisionGraph
 from .semantic_search import SemanticSearcher
-from .logger import logger
 
 
 class DecisionReasoner:

@@ -5,7 +5,6 @@ import shutil
 import sys
 from typing import Callable, NamedTuple, Optional
 from .logger import logger
-from .exceptions import TestExecutionError
 
 class TestResult(NamedTuple):
     success: bool

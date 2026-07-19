@@ -1,8 +1,7 @@
 import os
-from typing import List, Optional
+from typing import List
 from .llm_client import LLMClient
-from .analyzer import GitAnalyzer
-from .logger import logger
+from .utils import parse_llm_json
 
 class ArchitectureGuard:
     """
@@ -58,7 +57,6 @@ class ArchitectureGuard:
         """
         Compares current changes against ADRs and returns structured violations.
         """
-        import json
         adrs = self._load_adrs()
         if adrs == "No ADRs defined yet.":
             return []
@@ -79,11 +77,8 @@ class ArchitectureGuard:
         )
         
         response = self.client.generate(prompt, system_prompt=system_prompt)
-        try:
-            return json.loads(response) if response else []
-        except json.JSONDecodeError:
-            logger.error(f"Failed to parse JSON response: {response}")
-            return []
+        result = parse_llm_json(response, label="architecture guard")
+        return result if result is not None else []
 
 # Test guard
 if __name__ == "__main__":

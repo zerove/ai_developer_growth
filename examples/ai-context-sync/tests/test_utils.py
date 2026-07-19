@@ -1,6 +1,5 @@
 """Tests for utils module."""
 
-import pytest
 from src.utils import retry_on_failure
 
 

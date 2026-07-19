@@ -1,5 +1,5 @@
 import os
-from typing import List, Optional
+from typing import List
 from .llm_client import LLMClient
 from .slicer import ContextSlicer
 from .logger import logger

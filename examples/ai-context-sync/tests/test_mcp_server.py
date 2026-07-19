@@ -6,10 +6,11 @@ server and register the handlers to test them directly.
 """
 
 import json
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock
 import pytest
 
-from src.handlers import register_tools, register_resources
+from src.handlers import register_tools
+from src.exceptions import AISyncError
 
 
 class MockMCP:
@@ -71,7 +72,7 @@ class TestAiSync:
 
     def test_error_handling(self):
         def failing_get_sync_tool(config=".ai-sync.json", dry_run=False):
-            raise Exception("test error")
+            raise AISyncError("test error")
         
         mcp = MockMCP()
         register_tools(mcp, failing_get_sync_tool)
@@ -91,7 +92,7 @@ class TestAiGuard:
 
     def test_error_handling(self):
         def failing_get_sync_tool(config=".ai-sync.json"):
-            raise Exception("guard error")
+            raise AISyncError("guard error")
         
         mcp = MockMCP()
         register_tools(mcp, failing_get_sync_tool)

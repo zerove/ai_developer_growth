@@ -40,8 +40,8 @@
 | `ai-context-manager.py` | ✅ 有测试 | 依赖 OpenAI API，6 个测试 |
 
 ### 其他示例（3 个）
-- `self-correction-loop`: 74 行演示，mock 模式 ✅
-- `multi-agent-orch`: 76 行演示，mock LLM ✅ **有测试**（test_demo.py, 9 tests）
+- `self-correction-loop`: 模块化架构（runner + strategies/* + CLI），mock 模式 ✅ **58 个测试**
+- `multi-agent-orch`: 模块化架构（agents/* + orchestration/*），mock LLM ✅ **63 个测试**
 - `ai-task-prioritizer`: 45 行 CLI，mock 数据 ✅
 
 ---

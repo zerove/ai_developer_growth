@@ -28,7 +28,7 @@ export AI_SYNC_KEY="您的-LLM-API-KEY"
 ### 2. 初始化配置
 在项目根目录下运行，生成默认的 `.ai-sync.json` 配置文件：
 ```bash
-python3 -m ai_developer_growth.products.ai_context_sync.src.cli init
+python3 -m src.cli init
 ```
 
 ### 3. 集成到 opencode (可选)
@@ -53,7 +53,7 @@ python3 -m ai_developer_growth.products.ai_context_sync.src.cli init
 ### 3. 运行首次同步
 将最新的 Git 提交同步到项目上下文中：
 ```bash
-python3 -m ai_developer_growth.products.ai_context_sync.src.cli sync
+python3 -m src.cli sync
 ```
 
 ---
@@ -129,10 +129,10 @@ python3 -m ai_developer_growth.products.ai_context_sync.src.cli sync
 | `WorkflowError` | 并行任务执行失败 | 查看具体任务的错误日志 |
 
 ```python
-from ai_context_sync.src.exceptions import AISyncError, ConfigError
+from src.exceptions import AISyncError, ConfigError
 
 try:
-    from ai_context_sync.src.core import AIContextSync
+    from src.core import AIContextSync
     sync = AIContextSync()
     sync.sync_context()
 except ConfigError as e:

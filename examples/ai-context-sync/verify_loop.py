@@ -3,14 +3,14 @@ import os
 import json
 
 # Use absolute imports via the package structure
-from products.ai_context_sync.src.orchestrator import WorkflowManager
-from products.ai_context_sync.src.llm_client import LLMClient
-from products.ai_context_sync.src.analyzer import GitAnalyzer
-from products.ai_context_sync.src.synthesizer import ContextSynthesizer
-from products.ai_context_sync.src.guard import ArchitectureGuard
-from products.ai_context_sync.src.auditor import SpecAuditor
-from products.ai_context_sync.src.config import AppConfig
-from products.ai_context_sync.src.profiles import LANGUAGE_PROFILES
+from src.orchestrator import WorkflowManager
+from src.llm_client import LLMClient
+from src.analyzer import GitAnalyzer
+from src.synthesizer import ContextSynthesizer
+from src.guard import ArchitectureGuard
+from src.auditor import SpecAuditor
+from src.config import AppConfig
+from src.profiles import LANGUAGE_PROFILES
 
 class MockLLMClient:
     """
@@ -72,7 +72,7 @@ def main():
     guard = ArchitectureGuard(llm, "docs/adr/")
     auditor = SpecAuditor(llm, "docs/specs/")
     
-    config_path = "products/ai_context_sync/.ai-sync.json"
+    config_path = ".ai-sync.json"
     if not os.path.exists(config_path):
         with open(config_path, "w") as f:
             f.write('{"settings": {"context_file": "CONTEXT.md"}}')

@@ -1,4 +1,4 @@
-"""Tests for adr-generator.py"""
+"""Tests for adr_generator.py"""
 import os
 import shutil
 import tempfile
@@ -6,10 +6,9 @@ import unittest
 import importlib.util
 from unittest.mock import patch, MagicMock
 
-# Import using importlib to handle hyphenated filename
 spec = importlib.util.spec_from_file_location(
     "adr_generator",
-    os.path.join(os.path.dirname(__file__), "..", "tools", "scripts", "adr-generator.py")
+    os.path.join(os.path.dirname(__file__), "..", "tools", "scripts", "adr_generator.py")
 )
 adr_generator = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(adr_generator)

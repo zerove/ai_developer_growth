@@ -1,0 +1,64 @@
+{
+  "answers": [
+    {
+      "dimension": "product",
+      "question_id": "product_0",
+      "level": 2,
+      "confidence": 4
+    },
+    {
+      "dimension": "product",
+      "question_id": "product_1",
+      "level": 2,
+      "confidence": 3
+    },
+    {
+      "dimension": "architecture",
+      "question_id": "arch_0",
+      "level": 3,
+      "confidence": 4
+    },
+    {
+      "dimension": "architecture",
+      "question_id": "arch_1",
+      "level": 2,
+      "confidence": 3
+    },
+    {
+      "dimension": "ai_collab",
+      "question_id": "ai_0",
+      "level": 2,
+      "confidence": 4
+    },
+    {
+      "dimension": "ai_collab",
+      "question_id": "ai_1",
+      "level": 2,
+      "confidence": 3
+    },
+    {
+      "dimension": "engineering",
+      "question_id": "eng_0",
+      "level": 2,
+      "confidence": 4
+    },
+    {
+      "dimension": "engineering",
+      "question_id": "eng_1",
+      "level": 3,
+      "confidence": 3
+    },
+    {
+      "dimension": "learning",
+      "question_id": "learn_0",
+      "level": 2,
+      "confidence": 4
+    },
+    {
+      "dimension": "learning",
+      "question_id": "learn_1",
+      "level": 2,
+      "confidence": 3
+    }
+  ]
+}

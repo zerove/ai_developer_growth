@@ -2,41 +2,89 @@ import re
 import os
 import sys
 
-def find_broken_links(directory):
-    broken_links = []
-    link_pattern = re.compile(r"\[\[(.*?)\|(.*?)\]\]")
-    
+def _build_index(directory: str) -> dict[str, str]:
+    """Build a lookup map of all .md files in the vault.
+
+    Keys:
+      - basename without .ext (e.g. "MOC" → path/to/MOC.md)
+      - relative path without leading ./
+      - relative dir path (for directory wikilinks)
+    """
+    index: dict[str, str] = {}
+    for root, _, files in os.walk(directory):
+        for f in files:
+            if not f.endswith(".md"):
+                continue
+            full = os.path.join(root, f)
+            rel = os.path.relpath(full, directory)
+
+            name = os.path.splitext(f)[0]
+            # First-encountered wins
+            if name not in index:
+                index[name] = rel
+
+            if rel not in index:
+                index[rel] = rel
+    return index
+
+
+def _check_target(target: str, index: dict[str, str], directory: str, file_dir: str) -> bool:
+    """Check if a wikilink target resolves to an existing file."""
+    target = target.rstrip("\\")
+
+    # Exact path (relative to vault root)
+    if target in index:
+        return True
+    if target + ".md" in index:
+        return True
+
+    # Path relative to file's directory
+    rel = os.path.relpath(os.path.join(file_dir, target), directory)
+    if rel in index:
+        return True
+    if rel + ".md" in index:
+        return True
+
+    # Basename match (Obsidian searches all subdirs)
+    name = os.path.splitext(os.path.basename(target))[0]
+    if name in index:
+        return True
+
+    # Directory wikilink: [[dirname]] → dirname.md or dirname/README.md
+    dir_readme = os.path.join(target, "README.md")
+    if dir_readme in index:
+        return True
+
+    return False
+
+
+def find_broken_links(directory: str) -> list[tuple[str, str]]:
+    """Scan directory for .md files, extract [[wikilinks]], report broken ones."""
+    broken: list[tuple[str, str]] = []
+    link_pattern = re.compile(r"\[\[([^\[\]]+?)(?:\|[^\[\]]*)?\]\]")
+    index = _build_index(directory)
+
     for root, _, files in os.walk(directory):
         for file in files:
-            if file.endswith(".md"):
-                file_path = os.path.join(root, file)
-                with open(file_path, "r") as f:
-                    content = f.read()
-                    for match in link_pattern.finditer(content):
-                        target_path = match.group(1)
-                        # We need to check if the path is relative to the directory being scanned
-                        # or relative to the repository root. The plan says relative to repo root,
-                        # but the test setup creates files in `test_docs`.
-                        # Let's assume the target_path is relative to the directory root.
-                        # Wait, the plan says: "Validate path existence relative to the repository root."
-                        # If I am scanning `test_docs`, the test creates `valid.md` and `broken.md` inside it.
-                        # The link is `nonexistent.md`. If it's relative to `test_docs`, it should be `test_docs/nonexistent.md`.
-                        
-                        # Let's adjust the implementation to be robust.
-                        # The test expects:
-                        # self.assertEqual(broken[0][0], os.path.join(self.test_dir, "broken.md"))
-                        # self.assertEqual(broken[0][1], "nonexistent.md")
-                        
-                        # In test: `os.path.join(self.test_dir, target_path)`
-                        if not os.path.exists(os.path.join(root, target_path)):
-                            broken_links.append((file_path, target_path))
-    return broken_links
+            if not file.endswith(".md"):
+                continue
+            file_path = os.path.join(root, file)
+            with open(file_path, "r") as f:
+                content = f.read()
+            for match in link_pattern.finditer(content):
+                target_path = match.group(1).strip()
+                if target_path.startswith(("http://", "https://", "#")):
+                    continue
+                if not _check_target(target_path, index, directory, root):
+                    broken.append((file_path, match.group(1)))
+    return broken
+
 
 if __name__ == "__main__":
     if len(sys.argv) < 2:
         print("Usage: python link_auditor.py <directory>")
         sys.exit(1)
-        
+
     broken = find_broken_links(sys.argv[1])
     if broken:
         print("Broken links found:")

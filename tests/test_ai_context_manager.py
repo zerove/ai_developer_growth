@@ -1,4 +1,4 @@
-"""Tests for ai-context-manager.py"""
+"""Tests for ai_context_manager.py"""
 import os
 import sys
 import shutil
@@ -13,7 +13,7 @@ sys.modules["openai"] = mock_openai
 
 spec = importlib.util.spec_from_file_location(
     "ai_context_manager",
-    os.path.join(os.path.dirname(__file__), "..", "tools", "scripts", "ai-context-manager.py")
+    os.path.join(os.path.dirname(__file__), "..", "tools", "scripts", "ai_context_manager.py")
 )
 ai_context_manager = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(ai_context_manager)

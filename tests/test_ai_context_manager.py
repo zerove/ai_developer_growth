@@ -5,7 +5,8 @@ import shutil
 import tempfile
 import unittest
 import importlib.util
-from unittest.mock import MagicMock
+from unittest.mock import MagicMock, patch, call
+from io import StringIO
 
 # Mock openai before importing the module (source imports openai at module level)
 mock_openai = MagicMock()
@@ -20,6 +21,8 @@ spec.loader.exec_module(ai_context_manager)
 
 load_context = ai_context_manager.load_context
 save_context = ai_context_manager.save_context
+update_context_with_llm = ai_context_manager.update_context_with_llm
+main = ai_context_manager.main
 
 
 class TestLoadContext(unittest.TestCase):
@@ -98,6 +101,104 @@ class TestSaveContext(unittest.TestCase):
         with open("CONTEXT.md", "r", encoding="utf-8") as f:
             content = f.read()
         self.assertIn("中文上下文", content)
+
+
+class TestUpdateContextWithLLM(unittest.TestCase):
+    """Test LLM-based context update functionality."""
+
+    @patch.dict(os.environ, {"OPENAI_API_KEY": "test-key"})
+    @patch.object(ai_context_manager, "OpenAI")
+    def test_update_context_with_llm_success(self, mock_openai_class):
+        """Test successful LLM context update."""
+        mock_client = MagicMock()
+        mock_openai_class.return_value = mock_client
+        mock_response = MagicMock()
+        mock_response.choices = [MagicMock(message=MagicMock(content="# Updated Context\n\n## Progress\n- New item"))]
+        mock_client.chat.completions.create.return_value = mock_response
+
+        result = update_context_with_llm("# Current Context", "Added new feature")
+
+        self.assertIn("Updated Context", result)
+        self.assertIn("New item", result)
+        mock_client.chat.completions.create.assert_called_once()
+
+    @patch.dict(os.environ, {"OPENAI_API_KEY": "test-key"})
+    @patch.object(ai_context_manager, "OpenAI")
+    def test_update_context_with_llm_handles_error(self, mock_openai_class):
+        """Test LLM error handling."""
+        mock_client = MagicMock()
+        mock_openai_class.return_value = mock_client
+        mock_client.chat.completions.create.side_effect = Exception("API Error")
+
+        with self.assertRaises(SystemExit) as cm:
+            update_context_with_llm("# Current", "Changes")
+        self.assertEqual(cm.exception.code, 1)
+
+    def test_update_context_with_llm_exits_when_no_api_key(self):
+        """Test that update_context_with_llm exits when no API key."""
+        with patch.dict(os.environ, {}, clear=True):
+            with self.assertRaises(SystemExit) as cm:
+                update_context_with_llm("# Current", "Changes")
+            self.assertEqual(cm.exception.code, 1)
+
+
+class TestMain(unittest.TestCase):
+    """Test main function."""
+
+    def setUp(self):
+        self.original_dir = os.getcwd()
+        self.tmp_dir = tempfile.mkdtemp()
+        os.chdir(self.tmp_dir)
+
+    def tearDown(self):
+        os.chdir(self.original_dir)
+        shutil.rmtree(self.tmp_dir)
+
+    @patch.dict(os.environ, {"OPENAI_API_KEY": "test-key"})
+    @patch("builtins.input", return_value="Test changes")
+    @patch.object(ai_context_manager, "update_context_with_llm", return_value="# Updated\n\n## Progress\n- Test")
+    @patch("sys.stdout", new_callable=StringIO)
+    def test_main_with_changes_argument(self, mock_stdout, mock_update, mock_input):
+        """Test main with changes as argument."""
+        # Call with command line argument
+        sys.argv = ["ai_context_manager.py", "Test changes"]
+        main()
+        output = mock_stdout.getvalue()
+        self.assertIn("成功更新 CONTEXT.md", output)
+        mock_update.assert_called_once()
+
+    @patch.dict(os.environ, {"OPENAI_API_KEY": "test-key"})
+    @patch("builtins.input", return_value="Test changes")
+    @patch.object(ai_context_manager, "update_context_with_llm", return_value="# Updated\n\n## Progress\n- Test")
+    @patch("sys.stdout", new_callable=StringIO)
+    def test_main_interactive_input(self, mock_stdout, mock_update, mock_input):
+        """Test main with interactive input."""
+        sys.argv = ["ai_context_manager.py"]
+        main()
+        output = mock_stdout.getvalue()
+        self.assertIn("成功更新 CONTEXT.md", output)
+
+    @patch.dict(os.environ, {"OPENAI_API_KEY": "test-key"})
+    @patch("builtins.input", return_value="")
+    @patch("sys.stdout", new_callable=StringIO)
+    def test_main_empty_input_exits(self, mock_stdout, mock_input):
+        """Test main exits when empty input provided."""
+        sys.argv = ["ai_context_manager.py"]
+        main()
+        output = mock_stdout.getvalue()
+        self.assertIn("没有提供变更信息", output)
+
+    @patch.dict(os.environ, {}, clear=True)
+    @patch("builtins.input", return_value="Test changes")
+    @patch("sys.stdout", new_callable=StringIO)
+    def test_main_no_api_key_exits(self, mock_stdout, mock_input):
+        """Test main exits when no API key."""
+        sys.argv = ["ai_context_manager.py", "Test changes"]
+        with self.assertRaises(SystemExit) as cm:
+            main()
+        self.assertEqual(cm.exception.code, 1)
+        output = mock_stdout.getvalue()
+        self.assertIn("OPENAI_API_KEY", output)
 
 
 if __name__ == "__main__":

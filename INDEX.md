@@ -26,6 +26,7 @@
 | 团队采用 | 团队如何采用 AI？ | 企业案例 + 采用框架 | [[docs/mindset/team-adoption]] |
 | 人机协作 | 如何与 AI 协作？ | 能力互补 + 信任校准 | [[docs/mindset/human-ai-collaboration]] |
 | 团队度量 | 如何度量团队效能？ | 四维平衡计分卡 | [[docs/mindset/team-metrics]] |
+| **能力模型** | **AI 时代开发者如何分级？** | **五维雷达图 + 成长路径** | **[[docs/mindset/capability-model]]** |
 
 **推荐阅读顺序**: product-thinking → solo-founder-loop → ai-to-market-checklist → team-adoption → human-ai-collaboration → team-metrics
 
@@ -292,7 +293,7 @@ ai-learning-method → automated-bug-fixing → full-cycle-workflow → ide-best
 
 | 维度 | 文档数 | 状态 |
 |------|--------|------|
-| 认知层 | 6 | ✅ 完整 |
+| 认知层 | 7 | ✅ 完整 |
 | 学习层 | 3 | ✅ 完整 |
 | 效率层 | 18 | ✅ 完整 |
 | 工具层 | 2 | ✅ 完整 |

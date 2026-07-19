@@ -55,6 +55,27 @@ class TestDecisionReasoner:
         mock_llm.generate.assert_called_once()
         assert "This decision" in result
 
+    def test_find_relevant_adrs_by_adr_id(self, adr_dir):
+        mock_llm = MagicMock()
+        reasoner = DecisionReasoner(mock_llm, adr_dir)
+        adrs = reasoner._find_relevant_adrs("Tell me about ADR-001")
+        assert len(adrs) >= 1
+        assert "ADR-001" in adrs[0]
+
+    def test_find_relevant_adrs_by_adr_id_no_match(self, adr_dir):
+        mock_llm = MagicMock()
+        reasoner = DecisionReasoner(mock_llm, adr_dir)
+        adrs = reasoner._find_relevant_adrs("Explain ADR-9999 decision")
+        assert isinstance(adrs, list)
+
+    def test_explain_decision_by_adr_id(self, adr_dir):
+        mock_llm = MagicMock()
+        mock_llm.generate.return_value = "ADR-001 chose REST."
+        reasoner = DecisionReasoner(mock_llm, adr_dir)
+        result = reasoner.explain_decision("Summarize ADR-001")
+        mock_llm.generate.assert_called_once()
+        assert "ADR-001" in result
+
     def test_explain_decision_llm_failure(self, adr_dir):
         mock_llm = MagicMock()
         mock_llm.generate.return_value = ""

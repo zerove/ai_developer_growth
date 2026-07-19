@@ -1,4 +1,6 @@
 import os
+import subprocess
+import sys
 from typing import List
 
 from .llm_client import LLMClient
@@ -39,6 +41,9 @@ class OnboardingSession:
         response = self.llm_client.generate(initial_prompt)
         logger.info(f"\n{response}")
 
+        # Offer capability radar assessment
+        self._offer_capability_assessment()
+
         while True:
             user_input = input("\nWhat would you like to explore? (Enter an area name, or 'exit' to finish): ")
             if user_input.lower() in ["exit", "quit", "q"]:
@@ -59,6 +64,43 @@ class OnboardingSession:
 
             response = self.llm_client.generate(explore_prompt)
             logger.info(f"\n{response}")
+
+    def _offer_capability_assessment(self) -> None:
+        """Offer to run the capability radar self-assessment."""
+        logger.info("\n" + "=" * 60)
+        logger.info("🎯 Before we continue: Would you like to run the AI Era Developer Capability Radar?")
+        logger.info("   This 3-minute self-assessment maps your skills across 5 dimensions:")
+        logger.info("   1. 问题定义与产品思维  2. 架构决策与系统设计  3. AI 协作与提示工程")
+        logger.info("   4. 工程严谨性与质量文化  5. 学习与知识内化")
+        logger.info("   Result: Your current level (L0-L4), radar chart, and personalized growth plan.")
+        logger.info("=" * 60)
+
+        choice = input("\nRun capability radar now? (y/n, default n): ").strip().lower()
+        if choice == 'y':
+            self._run_capability_radar()
+
+    def _run_capability_radar(self) -> None:
+        """Run the capability radar CLI tool."""
+        radar_path = os.path.join(self.root_dir, "examples", "capability-radar")
+        if not os.path.exists(radar_path):
+            logger.warning("⚠️ Capability radar not found at examples/capability-radar")
+            return
+
+        try:
+            logger.info("\n🚀 Starting capability radar assessment...")
+            # Run the radar in interactive mode
+            result = subprocess.run(
+                [sys.executable, "-m", "src.cli"],
+                cwd=radar_path,
+                capture_output=False,  # Show output directly
+            )
+            if result.returncode == 0:
+                logger.info("\n✅ Capability assessment completed!")
+                logger.info("💡 Tip: Run it again next quarter to track your growth.")
+            else:
+                logger.warning("⚠️ Capability radar exited with errors")
+        except Exception as e:
+            logger.error(f"❌ Failed to run capability radar: {e}")
 
     def _find_files_for_area(self, area: str) -> List[str]:
         """

@@ -1,0 +1,84 @@
+name: Case Study Validation
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+    paths:
+      - 'case-studies/**'
+      - '.github/workflows/case-study-validation.yml'
+      - 'tools/scripts/validate_case_study.py'
+
+jobs:
+  validate:
+    name: Validate Case Study
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+          cache-dependency-path: |
+            requirements.txt
+            tools/scripts/validate_case_study.py
+
+      - name: Install dependencies
+        run: |
+          pip install pyyaml
+
+      - name: Find changed case studies
+        id: changes
+        run: |
+          echo "CHANGED=$(git diff --name-only ${{ github.event.pull_request.base.sha }}...HEAD -- case-studies/ | tr '\n' ' ')" >> $GITHUB_OUTPUT
+
+      - name: Validate each changed case study
+        if: steps.changes.outputs.CHANGED != ''
+        run: |
+          for path in ${{ steps.changes.outputs.CHANGED }}; do
+            # Get the case study root (directory or .md file)
+            case_root=$(dirname "$path")
+            if [[ "$path" == *.md ]]; then
+              case_root=$(dirname "$path")
+            fi
+            case_name=$(basename "$case_root")
+            
+            echo "🔍 Validating: $case_name ($path)"
+            python tools/scripts/validate_case_study.py --path "$path" --strict
+            
+            if [ $? -ne 0 ]; then
+              echo "❌ Validation failed for $case_name"
+              exit 1
+            else
+              echo "✅ $case_name passed validation"
+            fi
+          done
+
+      - name: Validate all case studies (on main branch)
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        run: |
+          python tools/scripts/validate_case_study.py --all --strict
+
+  link-check:
+    name: Check Links
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: pip install pyyaml
+
+      - name: Check links in case studies
+        run: |
+          python tools/scripts/link_auditor.py case-studies/ || true

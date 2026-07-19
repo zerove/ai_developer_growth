@@ -1,10 +1,7 @@
 """Tests for src/cli/commands/monitoring.py — _validate_file_path, watch, apply_fix."""
-import os
-import tempfile
-import shutil
-from unittest.mock import MagicMock, patch, mock_open
+from unittest.mock import MagicMock, mock_open, patch
 
-from src.cli.commands.monitoring import _validate_file_path, watch, apply_fix
+from src.cli.commands.monitoring import _validate_file_path, apply_fix, watch
 
 
 class TestValidateFilePath:

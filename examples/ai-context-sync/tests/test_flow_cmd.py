@@ -1,8 +1,5 @@
 """Tests for src/cli/commands/flow.py — flow command (with/without diff, context fallback)."""
-import os
-import tempfile
-import shutil
-from unittest.mock import MagicMock, patch, mock_open
+from unittest.mock import MagicMock, mock_open, patch
 
 from src.cli.commands.flow import flow
 

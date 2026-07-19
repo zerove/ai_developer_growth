@@ -1,7 +1,7 @@
 """Tests for src/cli/commands/sync_guard.py — sync (normal, dry-run, detach) and guard."""
-from unittest.mock import MagicMock, patch, call
+from unittest.mock import MagicMock, patch
 
-from src.cli.commands.sync_guard import sync, guard
+from src.cli.commands.sync_guard import guard, sync
 
 
 class TestSyncCommand:

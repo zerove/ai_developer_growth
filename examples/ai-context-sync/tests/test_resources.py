@@ -1,8 +1,8 @@
 """Tests for src/handlers/resources.py — get_context, get_adr, get_specs MCP resources."""
 import os
-import tempfile
 import shutil
-from unittest.mock import MagicMock, patch
+import tempfile
+from unittest.mock import MagicMock
 
 from src.handlers.resources import register
 
@@ -21,8 +21,8 @@ class TestResourcesRegister:
         # Extract registered handlers by name
         self._handlers = {}
         for call in self.mock_mcp.resource.call_args_list:
-            uri = call[0][0]
-            func = call[1] if call[1] else {}
+            call[0][0]
+            call[1] if call[1] else {}
             # The decorator replaces the function; retrieve from mock_mcp calls
             # Actually, the resource decorator registers via mcp.resource(uri)(fn)
             # We need to capture the decorated function
@@ -39,7 +39,6 @@ class TestResourcesRegister:
         """Re-register and extract handler functions."""
         self.mock_mcp.reset_mock()
         handlers = {}
-        original_decorator = self.mock_mcp.resource
 
         def capturing_decorator(uri):
             def decorator(fn):

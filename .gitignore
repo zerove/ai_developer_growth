@@ -12,6 +12,7 @@ venv/
 # Testing
 .pytest_cache/
 .mypy_cache/
+.ruff_cache/
 .coverage
 htmlcov/
 MagicMock/

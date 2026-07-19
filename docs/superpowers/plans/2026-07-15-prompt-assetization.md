@@ -5,8 +5,8 @@
 **Goal:** Extract hardcoded LLM prompts from source code into structured, versioned YAML files and implement a loader to manage them.
 
 **Architecture:**
-- Create `products/ai_context_sync/prompts/` directory.
-- Create `products/ai_context_sync/src/prompt_loader.py` to handle loading/Jinja2 templating.
+- Create `examples/ai-context-sync/prompts/` directory.
+- Create `examples/ai-context-sync/src/prompt_loader.py` to handle loading/Jinja2 templating.
 - Refactor `guard.py` (and potentially others) to use the new loader.
 
 **Tech Stack:**
@@ -23,8 +23,8 @@
 ### Task 1: Create Prompt Loader
 
 **Files:**
-- Create: `products/ai_context_sync/src/prompt_loader.py`
-- Test: `products/ai_context_sync/tests/test_prompt_loader.py`
+- Create: `examples/ai-context-sync/src/prompt_loader.py`
+- Test: `examples/ai-context-sync/tests/test_prompt_loader.py`
 
 **Interfaces:**
 - Consumes: Prompt file path, context variables.
@@ -48,7 +48,7 @@ if __name__ == "__main__":
 
 - [ ] **Step 2: Run test to verify it fails**
 
-Run: `python3 -m unittest products/ai_context_sync/tests/test_prompt_loader.py`
+Run: `python3 -m unittest examples/ai-context-sync/tests/test_prompt_loader.py`
 Expected: FAIL (ModuleNotFoundError)
 
 - [ ] **Step 3: Implement prompt loader**
@@ -72,14 +72,14 @@ def load_prompt(prompt_id: str, context: dict = None, version: str = "v1"):
 
 - [ ] **Step 4: Run test to verify it passes**
 
-Run: `python3 -m unittest products/ai_context_sync/tests/test_prompt_loader.py`
+Run: `python3 -m unittest examples/ai-context-sync/tests/test_prompt_loader.py`
 Expected: PASS
 
 ### Task 2: Refactor ArchitectureGuard to use Prompt Loader
 
 **Files:**
-- Modify: `products/ai_context_sync/src/guard.py`
-- Create: `products/ai_context_sync/prompts/architecture_audit/v1.yaml`
+- Modify: `examples/ai-context-sync/src/guard.py`
+- Create: `examples/ai-context-sync/prompts/architecture_audit/v1.yaml`
 
 **Interfaces:**
 - Consumes: `prompt_loader.load_prompt`
@@ -107,6 +107,6 @@ system_prompt, prompt = load_prompt("architecture_audit", context={"adrs": adrs,
 - [ ] **Step 3: Commit**
 
 ```bash
-git add products/ai_context_sync/src/guard.py products/ai_context_sync/prompts/
+git add examples/ai-context-sync/src/guard.py examples/ai-context-sync/prompts/
 git commit -m "refactor: migrate guard prompts to assetized yaml"
 ```

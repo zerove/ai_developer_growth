@@ -1,4 +1,3 @@
-from typing import Dict, Any
 from .profiles import LanguageProfile
 
 class PromptOptimizer:

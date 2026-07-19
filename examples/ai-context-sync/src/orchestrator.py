@@ -1,7 +1,5 @@
 import os
-import subprocess
-import json
-import concurrent.futures
+import re
 from typing import Dict, Any, List
 from .logger import logger
 from .llm_client import LLMClient
@@ -13,7 +11,8 @@ from .tester import TestRunner
 from .slicer import ContextSlicer
 from .config import AppConfig
 from .executor import ParallelExecutor
-from .exceptions import WorkflowError, LLMError
+from .exceptions import LLMError
+from .utils import parse_llm_json
 
 class WorkflowManager:
     """
@@ -35,12 +34,88 @@ class WorkflowManager:
         self.slicer = ContextSlicer()
         self.executor = ParallelExecutor(max_workers=self.config.settings.executor_max_workers)
 
-    def _write_to_file(self, path: str, content: str) -> None:
-        """Helper to write content to a file."""
-        os.makedirs(os.path.dirname(path) if os.path.dirname(path) else ".", exist_ok=True)
-        with open(path, "w", encoding="utf-8") as f:
-            f.write(content)
-        logger.info(f"💾 Wrote content to {path}")
+    def _validate_path(self, path: str) -> bool:
+        """
+        Validate that a file path is safe to write to.
+        
+        Rejects:
+        - Absolute paths
+        - Paths with '..' (parent directory traversal)
+        - Paths outside the current working directory
+        - Empty or whitespace-only paths
+        
+        Returns True if path is safe, False otherwise.
+        """
+        if not path or not path.strip():
+            logger.warning(f"Rejected empty or whitespace-only path: {path!r}")
+            return False
+        
+        # Reject absolute paths
+        if os.path.isabs(path):
+            logger.warning(f"Rejected absolute path: {path}")
+            return False
+        
+        # Reject paths with '..' (parent directory traversal)
+        if ".." in path:
+            logger.warning(f"Rejected path with '..' traversal: {path}")
+            return False
+        
+        # Reject paths that start with '~' (home directory)
+        if path.startswith("~"):
+            logger.warning(f"Rejected path starting with '~': {path}")
+            return False
+        
+        # Normalize the path and check if it's within the current directory
+        try:
+            normalized = os.path.normpath(path)
+            # Get the current working directory
+            cwd = os.getcwd()
+            # Resolve the full path
+            full_path = os.path.abspath(os.path.join(cwd, normalized))
+            # Check if the resolved path is within the current directory
+            if not full_path.startswith(cwd):
+                logger.warning(f"Rejected path outside project directory: {path} -> {full_path}")
+                return False
+        except (OSError, ValueError) as e:
+            logger.warning(f"Failed to validate path '{path}': {e}")
+            return False
+        
+        return True
+    
+    def _write_to_file(self, path: str, content: str) -> bool:
+        """
+        Write content to a file after validating the path.
+        
+        Returns True if successfully written, False if path validation failed.
+        """
+        if not self._validate_path(path):
+            return False
+        
+        try:
+            os.makedirs(os.path.dirname(path) if os.path.dirname(path) else ".", exist_ok=True)
+            with open(path, "w", encoding="utf-8") as f:
+                f.write(content)
+            logger.info(f"💾 Wrote content to {path}")
+            return True
+        except OSError as e:
+            logger.error(f"Failed to write to {path}: {e}")
+            return False
+    
+    def _apply_file_blocks(self, output: str) -> List[str]:
+        """
+        Parse and apply file blocks from LLM output.
+        
+        Extracts [FILE: path]\n...\n[END] blocks and writes them to disk.
+        Returns list of successfully written file paths.
+        """
+        file_blocks = re.findall(r"\[FILE: (.*?)\]\n(.*?)\n\[END\]", output, re.DOTALL)
+        written_files = []
+        
+        for path, content in file_blocks:
+            if self._write_to_file(path, content):
+                written_files.append(path)
+        
+        return written_files
 
     def _execute_subtask(self, task: Dict[str, Any]) -> str:
         """
@@ -97,10 +172,9 @@ class WorkflowManager:
                     return f"Error: No output for {tid}"
                 
                 # 2. Apply implementation to disk
-                import re
-                file_blocks = re.findall(r"\[FILE: (.*?)\]\n(.*?)\n\[END\]", code_output, re.DOTALL)
-                for path, content in file_blocks:
-                    self._write_to_file(path, content)
+                written_files = self._apply_file_blocks(code_output)
+                if not written_files:
+                    logger.warning(f"No valid file blocks found in output for {tid}")
                 
                 # 3. Verify
                 result = self.tester.run_test(test_code, files)
@@ -154,14 +228,8 @@ class WorkflowManager:
             logger.info("❌ Design rejected. Workflow terminated.")
             return "Design rejected by user.", None
 
-        try:
-            start = design_doc.find("[")
-            end = design_doc.rfind("]") + 1
-            if start == -1 or end == 0:
-                raise ValueError("No structured task list found in design.")
-            sub_tasks = json.loads(design_doc[start:end])
-        except (json.JSONDecodeError, ValueError) as e:
-            logger.error(f"Failed to parse sub-tasks from design: {e}")
+        sub_tasks = parse_llm_json(design_doc, label="design decomposition")
+        if sub_tasks is None:
             return "Design failed decomposition. Please refine the design.", None
         
         return current_context, sub_tasks
@@ -188,7 +256,6 @@ class WorkflowManager:
                 with open(f, "r", encoding="utf-8") as file:
                     combined_diff += f"+++ b/{f}\n{file.read()}\n"
 
-        import re
         max_audit_retries = 3
         for audit_attempt in range(1, max_audit_retries + 1):
             violations = self.auditor.audit(combined_diff, task)
@@ -206,9 +273,9 @@ class WorkflowManager:
             fix_code = self.llm_client.generate(fix_prompt, system_prompt="You are a global integrator and quality gate.")
             if not fix_code:
                 continue
-            file_blocks = re.findall(r"\[FILE: (.*?)\]\n(.*?)\n\[END\]", fix_code, re.DOTALL)
-            for path, content in file_blocks:
-                self._write_to_file(path, content)
+            written_files = self._apply_file_blocks(fix_code)
+            if not written_files:
+                logger.warning(f"No valid file blocks found in fix output for audit attempt {audit_attempt}")
         
         logger.error("❌ Failed to reach global compliance after maximum retries.")
         return "Global Audit failed. Manual intervention required."
@@ -247,10 +314,9 @@ class WorkflowManager:
             code_output = self.llm_client.generate(prompt, system_prompt="You are a focused implementation expert.")
             if not code_output:
                 return f"Error: No output for {tid}"
-            import re
-            file_blocks = re.findall(r"\[FILE: (.*?)\]\n(.*?)\n\[END\]", code_output, re.DOTALL)
-            for path, content in file_blocks:
-                self._write_to_file(path, content)
+            written_files = self._apply_file_blocks(code_output)
+            if not written_files:
+                logger.warning(f"No valid file blocks found in output for {tid}")
             return f"Successfully implemented {tid} (single-shot)"
         except Exception as e:
             logger.error(f"Error in single-shot sub-task {tid}: {e}")
@@ -291,8 +357,4 @@ class WorkflowManager:
             "```"
         )
 
-    def _build_test_prompt(self, task: str, design: str) -> str:
-        return f"Task: {task}\nDesign:\n{design}\n\nPlease write a comprehensive set of unit tests (using pytest for Python) to verify this feature. Output only the code. Ensure you import the necessary modules from implementation.py."
 
-    def _build_code_prompt(self, task: str, design: str, tests: str) -> str:
-        return f"Task: {task}\nDesign:\n{design}\nTests:\n{tests}\n\nPlease implement the code that satisfies the design and passes the tests. Output only the code. Save it as implementation.py."

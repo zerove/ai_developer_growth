@@ -1,5 +1,5 @@
-from dataclasses import dataclass, field
-from typing import List, Dict, Any, Optional
+from dataclasses import dataclass, field, asdict
+from typing import List, Optional
 import json
 import os
 from .exceptions import ConfigError
@@ -35,21 +35,8 @@ class AppConfig:
         try:
             with open(self.config_path, "w") as f:
                 data = {
-                    "llm": self.llm.__dict__,
-                    "settings": {
-                        "ignore": self.settings.ignore,
-                        "auto_commit": self.settings.auto_commit,
-                        "context_file": self.settings.context_file,
-                        "adr_dir": self.settings.adr_dir,
-                        "test_command": self.settings.test_command,
-                        "overridden_violations": self.settings.overridden_violations,
-                        "executor_max_workers": self.settings.executor_max_workers,
-                        "test_timeout": self.settings.test_timeout,
-                        "max_retries": self.settings.max_retries,
-                        "watcher_debounce": self.settings.watcher_debounce,
-                        "live_report_path": self.settings.live_report_path,
-                        "specs_dir": self.settings.specs_dir,
-                    }
+                    "llm": asdict(self.llm),
+                    "settings": asdict(self.settings)
                 }
                 json.dump(data, f, indent=2)
         except OSError as e:
@@ -90,9 +77,9 @@ class AppConfig:
             "AI_SYNC_ADR_DIR": ("settings", "adr_dir"),
             "AI_SYNC_TEST_COMMAND": ("settings", "test_command"),
         }
-        for env_key, (section, field) in env_map.items():
+        for env_key, (section, attr_name) in env_map.items():
             env_val = os.getenv(env_key)
             if env_val is not None:
-                setattr(getattr(config, section), field, env_val)
+                setattr(getattr(config, section), attr_name, env_val)
 
         return config

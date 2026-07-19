@@ -1,11 +1,6 @@
 """Tests for watcher.py - AuditHandler and WatchManager."""
 
-import os
-import time
-import tempfile
-import shutil
 from unittest.mock import MagicMock, patch, mock_open
-import pytest
 
 
 class TestAuditHandler:

@@ -7,6 +7,7 @@ from __future__ import annotations
 
 import json
 from typing import Callable
+from ..exceptions import AISyncError
 
 
 def register(mcp: object, get_sync_tool: Callable) -> None:
@@ -28,8 +29,11 @@ def register(mcp: object, get_sync_tool: Callable) -> None:
             sync_tool = get_sync_tool(config=config, dry_run=dry_run)
             sync_tool.sync()
             return json.dumps({"status": "success", "config": config, "dry_run": dry_run})
-        except Exception as e:
+        except AISyncError as e:
             return json.dumps({"status": "error", "error": str(e)})
+        except Exception as e:
+            # Re-raise programming errors (TypeError, AttributeError, etc.)
+            raise
 
     @mcp.tool()
     def ai_guard(config: str = ".ai-sync.json") -> str:
@@ -45,8 +49,11 @@ def register(mcp: object, get_sync_tool: Callable) -> None:
             sync_tool = get_sync_tool(config=config)
             report = sync_tool.guard_check()
             return json.dumps({"status": "success", "report": report})
-        except Exception as e:
+        except AISyncError as e:
             return json.dumps({"status": "error", "error": str(e)})
+        except Exception as e:
+            # Re-raise programming errors (TypeError, AttributeError, etc.)
+            raise
 
     @mcp.tool()
     def ai_audit(config: str = ".ai-sync.json", strict: bool = False) -> str:
@@ -63,7 +70,6 @@ def register(mcp: object, get_sync_tool: Callable) -> None:
             sync_tool = get_sync_tool(config=config)
             report = sync_tool.spec_audit()
             if strict:
-                from src.auditor import Violation
                 violations = sync_tool.auditor.audit(
                     sync_tool.analyzer.get_last_commit_diff(),
                     sync_tool.analyzer.get_last_commit_message()
@@ -75,8 +81,11 @@ def register(mcp: object, get_sync_tool: Callable) -> None:
                     "critical_violations": critical
                 })
             return json.dumps({"status": "success", "report": report})
-        except Exception as e:
+        except AISyncError as e:
             return json.dumps({"status": "error", "error": str(e)})
+        except Exception as e:
+            # Re-raise programming errors (TypeError, AttributeError, etc.)
+            raise
 
     @mcp.tool()
     def ai_map(config: str = ".ai-sync.json") -> str:
@@ -98,5 +107,8 @@ def register(mcp: object, get_sync_tool: Callable) -> None:
                 "mermaid": mermaid,
                 "adr_dir": sync_tool.config.settings.adr_dir
             })
-        except Exception as e:
+        except AISyncError as e:
             return json.dumps({"status": "error", "error": str(e)})
+        except Exception as e:
+            # Re-raise programming errors (TypeError, AttributeError, etc.)
+            raise

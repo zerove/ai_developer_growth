@@ -1,5 +1,4 @@
 import logging
-import os
 
 def setup_logger(name: str = "ai-context-sync") -> logging.Logger:
     logger = logging.getLogger(name)

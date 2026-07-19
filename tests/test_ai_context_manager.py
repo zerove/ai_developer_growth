@@ -5,7 +5,7 @@ import shutil
 import tempfile
 import unittest
 import importlib.util
-from unittest.mock import patch, MagicMock
+from unittest.mock import MagicMock
 
 # Mock openai before importing the module (source imports openai at module level)
 mock_openai = MagicMock()

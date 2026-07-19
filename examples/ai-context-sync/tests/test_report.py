@@ -2,7 +2,6 @@
 
 import os
 import tempfile
-import pytest
 from src.report import generate_html_report, save_report
 
 

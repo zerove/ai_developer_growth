@@ -1,6 +1,5 @@
 import json
 import sys
-from typing import List, Dict
 
 def format_audit_results(json_input: str) -> str:
     """

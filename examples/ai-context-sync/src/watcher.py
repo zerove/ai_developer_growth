@@ -45,7 +45,7 @@ class AuditHandler(FileSystemEventHandler):
                 report_lines.append(line)
                 
                 if v.severity == 'Critical':
-                    specs = self.sync_tool.auditor._get_relevant_specs("N/A")
+                    specs = self.sync_tool.auditor.get_relevant_specs("N/A")
                     fix = self.sync_tool.auditor.generate_fix(v, "N/A", specs)
                     report_lines.append(f"   💡 Suggested Fix:\n   ```python\n   {fix}\n   ```\n   👉 Run `dx apply-fix {v.rule_id}` to apply.")
             report = "\n".join(report_lines)
@@ -54,8 +54,10 @@ class AuditHandler(FileSystemEventHandler):
         self._write_live_report(filename, report)
 
     def _write_live_report(self, filename: str, report: str) -> None:
-        report_path = self.sync_tool.config.settings.live_report_path
-        os.makedirs(os.path.dirname(report_path) if os.path.dirname(report_path) else ".", exist_ok=True)
+        report_rel = self.sync_tool.config.settings.live_report_path
+        config_dir = os.path.dirname(os.path.abspath(self.sync_tool.config.config_path))
+        report_path = os.path.join(config_dir, report_rel)
+        os.makedirs(os.path.dirname(report_path), exist_ok=True)
         
         with open(report_path, "w", encoding="utf-8") as f:
             f.write(f"# 🔴 AI-Native Real-time Audit Dashboard\n\n")

@@ -1,11 +1,8 @@
 """Sync and guard commands for AI-Context-Sync CLI."""
-import os
 import sys
 import subprocess
 import typer
 from ...core import AIContextSync
-from ...config import AppConfig
-from ...logger import logger
 from .. import cli_error_handler
 
 
@@ -18,7 +15,7 @@ def sync(
     """Synchronize project context with the last git commit."""
     if detach:
         python_exe = sys.executable
-        cmd = [python_exe, "-m", "ai_developer_growth.products.ai_context_sync.src.cli", "sync", "--config", config]
+        cmd = [python_exe, "-m", "src.cli", "sync", "--config", config]
         if dry_run:
             cmd.append("--dry-run")
 

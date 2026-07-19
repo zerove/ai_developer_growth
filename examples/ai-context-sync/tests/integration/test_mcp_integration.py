@@ -13,7 +13,7 @@ import pytest
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..'))
 
 from src.core import AIContextSync
-from src.handlers import register_tools, register_resources
+from src.handlers import register_tools
 
 
 class MockMCP:

@@ -1,6 +1,5 @@
 """Tests for adr-generator.py"""
 import os
-import sys
 import shutil
 import tempfile
 import unittest

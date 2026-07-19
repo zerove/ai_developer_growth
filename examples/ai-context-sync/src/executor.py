@@ -1,7 +1,6 @@
 import concurrent.futures
 from typing import List, Dict, Any, Callable
 from .logger import logger
-from .exceptions import WorkflowError
 
 class ParallelExecutor:
     """

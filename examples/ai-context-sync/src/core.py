@@ -1,5 +1,5 @@
 import os
-from typing import List, Optional, Any
+from typing import List, Optional
 from .config import AppConfig
 from .logger import logger
 from .llm_client import LLMClient

@@ -114,6 +114,13 @@ jobs:
           python -m pytest tests/ -v --tb=short
           echo "ai-context-sync tests complete"
 
+      - name: Check test coverage (≥70%)
+        run: |
+          echo "=== Gate 3.4b: Coverage Enforcement ==="
+          cd examples/ai-context-sync
+          python -m pytest tests/ --cov=src --cov-report=term-missing --tb=short
+          echo "Coverage check complete"
+
       - name: Run root-level tests
         run: |
           echo "=== Gate 3.5: Root Tests ==="

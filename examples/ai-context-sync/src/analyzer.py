@@ -1,7 +1,10 @@
 import subprocess
 from typing import List, Optional
+
 from unidiff import PatchSet
+
 from .logger import logger
+
 
 class GitAnalyzer:
     """
@@ -44,23 +47,23 @@ class GitAnalyzer:
         """
         if not diff_text:
             return ""
-            
+
         try:
             patch = PatchSet(diff_text)
             filtered_diffs = []
-            
+
             for patched_file in patch:
                 # Extract the file path from the patched file object
                 file_path = patched_file.path
-                
+
                 # Check if file should be ignored
                 if any(pattern in file_path for pattern in self.ignore_patterns):
                     continue
-                
+
                 # Reconstruct the diff for the non-ignored file
                 # We convert the patched_file object back to a string
                 filtered_diffs.append(str(patched_file))
-                
+
             return "".join(filtered_diffs)
         except (ValueError, IndexError) as e:
             logger.warning(f"Error parsing diff with unidiff: {e}. Falling back to basic filter.")

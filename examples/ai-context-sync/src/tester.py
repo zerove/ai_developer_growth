@@ -1,10 +1,12 @@
-import subprocess
-import tempfile
 import os
 import shutil
+import subprocess
 import sys
+import tempfile
 from typing import Callable, NamedTuple, Optional
+
 from .logger import logger
+
 
 class TestResult(NamedTuple):
     success: bool

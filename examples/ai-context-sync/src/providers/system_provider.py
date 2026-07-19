@@ -5,13 +5,13 @@ from typing import Optional
 
 import requests
 
-from .base import LLMProvider
 from ..exceptions import LLMError
 from ..logger import logger
-from .openai_provider import OpenAIProvider
+from .base import LLMProvider
 from .claude_provider import ClaudeProvider
 from .gemini_provider import GeminiProvider
 from .ollama_provider import OllamaProvider
+from .openai_provider import OpenAIProvider
 
 
 class SystemProvider(LLMProvider):

@@ -1,11 +1,13 @@
+import json
+import os
 from dataclasses import dataclass
 from typing import Any, List, Optional
-import os
-import json
+
+from .exceptions import LLMError
 from .llm_client import LLMClient
 from .logger import logger
-from .exceptions import LLMError
 from .utils import parse_llm_json
+
 
 @dataclass
 class Violation:
@@ -40,11 +42,11 @@ class FeedbackManager:
     def save_violation(self, violation: Violation) -> None:
         """Records a new violation in the history."""
         for item in self.history:
-            if (item['rule_id'] == violation.rule_id and 
-                item['file_path'] == violation.file_path and 
+            if (item['rule_id'] == violation.rule_id and
+                item['file_path'] == violation.file_path and
                 item['message'] == violation.message):
                 return
-        
+
         self.history.append(violation.to_dict())
         self._persist()
 
@@ -87,14 +89,14 @@ class SpecAuditor:
             "Be rigorous and objective. If the code actually follows the spirit of the spec, "
             "or if the reported violation is a hallucination, mark it as a false positive."
         )
-        
+
         prompt = (
             f"Spec Rule: {spec_text}\n\n"
             f"Code Diff: {diff}\n\n"
             f"Reported Violation: {violation.message} (Rule: {violation.rule_id})\n\n"
             "Is this a real violation? Reply only with 'YES' or 'NO' followed by a brief explanation."
         )
-        
+
         try:
             response = self.llm_client.generate(prompt, system_prompt=system_prompt)
             return bool(response and response.strip().upper().startswith("YES"))
@@ -110,7 +112,7 @@ class SpecAuditor:
             "You are a pragmatic senior developer. Your task to fix a specific specification violation "
             "in the provided code. Ensure the fix is minimal, correct, and strictly follows the project spec."
         )
-        
+
         prompt = (
             f"Spec Rule: {spec_text}\n\n"
             f"Code Diff: {diff}\n\n"
@@ -118,7 +120,7 @@ class SpecAuditor:
             "Please provide the corrected version of the affected code. "
             "Return ONLY the corrected code block, no explanations."
         )
-        
+
         try:
             response = self.llm_client.generate(prompt, system_prompt=system_prompt)
             return response if response else "Could not generate a fix."
@@ -145,9 +147,9 @@ class SpecAuditor:
             "If no violations are found, return [].\n\n"
             f"SPECIFICATIONS:\n{specs}"
         )
-        
+
         attack_prompt = f"Task: {task}\n\nCode Diff:\n{diff}"
-        
+
         try:
             attack_response = self.llm_client.generate(attack_prompt, system_prompt=attack_system_prompt)
             candidates_data = parse_llm_json(attack_response, label="adversarial audit")

@@ -6,6 +6,7 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from src.analyzer import GitAnalyzer
 
+
 class TestGitAnalyzerRobust(unittest.TestCase):
     def setUp(self):
         # 初始化带忽略模式的分析器
@@ -43,7 +44,7 @@ class TestGitAnalyzerRobust(unittest.TestCase):
     def test_filter_diff_with_corrupted_diff_fallback(self):
         # 损坏的 diff，没有有效的 git header，这将强制触发异常并进入 _basic_filter
         corrupted_diff = "not a valid diff file content"
-        
+
         # 即使损坏，也应该返回一些内容或者不崩溃（基于 basic_filter 的逻辑）
         result = self.analyzer.filter_diff(corrupted_diff)
         # 基础过滤在没有找到 diff --git 时返回空或者原内容。此处应该返回空或原内容

@@ -1,9 +1,9 @@
 """End-to-end integration test for the full AI-Native workflow."""
 
 import os
+import shutil
 import sys
 import tempfile
-import shutil
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..'))
 

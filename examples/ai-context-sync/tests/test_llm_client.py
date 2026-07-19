@@ -3,14 +3,15 @@
 import os
 import sys
 import tempfile
+from unittest.mock import MagicMock, patch
+
 import pytest
-from unittest.mock import patch, MagicMock
 import requests
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from src.llm_client import LLMClient, LLMCache
 from src.exceptions import LLMError
+from src.llm_client import LLMCache, LLMClient
 
 
 class TestLLMCache:
@@ -48,7 +49,7 @@ class TestLLMClientCache:
         mock_response = MagicMock()
         mock_response.json.return_value = {"choices": [{"message": {"content": "cached"}}]}
         mock_response.raise_for_status = MagicMock()
-        with tempfile.TemporaryDirectory() as tmpdir:
+        with tempfile.TemporaryDirectory():
             with patch.dict(os.environ, {"AI_SYNC_KEY": "test-key"}):
                 with patch("src.llm_client.LLMCache") as MockCache:
                     mock_cache = MagicMock()

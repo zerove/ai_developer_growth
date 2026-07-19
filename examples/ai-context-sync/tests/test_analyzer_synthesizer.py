@@ -6,8 +6,9 @@ from unittest.mock import MagicMock
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from src.analyzer import GitAnalyzer
-from src.synthesizer import ContextSynthesizer
 from src.llm_client import LLMClient
+from src.synthesizer import ContextSynthesizer
+
 
 class TestGitAnalyzer(unittest.TestCase):
     def setUp(self):

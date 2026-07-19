@@ -1,8 +1,10 @@
-import os
 import json
+import os
 from typing import Any, Dict, List, Optional
-from .llm_client import LLMClient
+
 from .auditor import FeedbackManager
+from .llm_client import LLMClient
+
 
 class EvolutionEngine:
     """
@@ -29,7 +31,7 @@ class EvolutionEngine:
             rid = item['rule_id']
             if rid not in stats:
                 stats[rid] = {"total": 0, "overridden": 0, "examples": []}
-            
+
             stats[rid]["total"] += 1
             if item['status'] == 'overridden':
                 stats[rid]["overridden"] += 1
@@ -52,7 +54,7 @@ class EvolutionEngine:
                     "overridden": data["overridden"],
                     "examples": data["examples"]
                 })
-        
+
         return candidates
 
     def propose_evolution(self, candidate: Dict) -> Optional[str]:
@@ -61,17 +63,17 @@ class EvolutionEngine:
         """
         rid = candidate["rule_id"]
         examples = candidate["examples"]
-        
+
         # Find the current spec content
         current_spec = self._find_spec_content(rid)
-        
+
         system_prompt = (
             "You are a senior software architect and standards engineer. "
             "Your task is to evolve a project's coding specification based on observed developer preferences. "
             "The developer has consistently overridden a specific rule, suggesting the current rule is "
             "too strict, outdated, or doesn't fit the project's unique context."
         )
-        
+
         prompt = (
             f"Rule ID: {rid}\n"
             f"Current Specification: {current_spec}\n\n"
@@ -83,7 +85,7 @@ class EvolutionEngine:
             "3. IMPACT: How this change affects the overall codebase quality.\n\n"
             "Return the response in a clear, professional format."
         )
-        
+
         return self.llm_client.generate(prompt, system_prompt=system_prompt)
 
     def propose_batch_evolution(self, candidates: List[Dict]) -> Optional[str]:
@@ -105,7 +107,7 @@ class EvolutionEngine:
             "holistic update to these rules to align them with actual project practice while "
             "maintaining high quality standards."
         )
-        
+
         newline = '\n'
         prompt = (
             f"The following rules are under review for evolution:\n\n"
@@ -116,14 +118,14 @@ class EvolutionEngine:
             "Ensure that the updated rules are consistent with each other. "
             "Structure your response as a formal specification update document."
         )
-        
+
         return self.llm_client.generate(prompt, system_prompt=system_prompt)
 
     def _find_spec_content(self, rule_id: str) -> str:
         """Searches through spec files to find the current text for a rule_id."""
         if not os.path.exists(self.specs_dir):
             return "No specification found."
-            
+
         for file in os.listdir(self.specs_dir):
             if file.endswith(".md"):
                 with open(os.path.join(self.specs_dir, file), "r", encoding="utf-8") as f:

@@ -1,8 +1,8 @@
 """Tests for src/executor.py - ParallelExecutor"""
 import os
 import sys
-import time
 import threading
+import time
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
@@ -41,13 +41,13 @@ class TestParallelExecutor:
         executor = ParallelExecutor(max_workers=2)
         order = []
         lock = threading.Lock()
-        
+
         def task_fn(t):
             with lock:
                 order.append(t["id"])
             time.sleep(0.05)
             return t["id"]
-        
+
         tasks = [
             {"id": "t1", "depends_on": []},
             {"id": "t2", "depends_on": ["t1"]},
@@ -62,10 +62,10 @@ class TestParallelExecutor:
     def test_execute_failing_task(self):
         executor = ParallelExecutor(max_workers=2)
         tasks = [{"id": "t1", "depends_on": []}]
-        
+
         def failing_fn(t):
             raise ValueError("Intentional failure")
-        
+
         results = executor.execute(tasks, failing_fn)
         assert results["t1"] is None
 
@@ -75,12 +75,12 @@ class TestParallelExecutor:
             {"id": "t1", "depends_on": []},
             {"id": "t2", "depends_on": ["t1"]},
         ]
-        
+
         def selective_fn(t):
             if t["id"] == "t1":
                 raise RuntimeError("t1 failed")
             return "ok"
-        
+
         results = executor.execute(tasks, selective_fn)
         assert results["t1"] is None
         # t2 should still execute even if t1 failed

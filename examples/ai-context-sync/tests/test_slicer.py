@@ -1,8 +1,9 @@
 """Tests for src/slicer.py - ContextSlicer"""
 import os
+import shutil
 import sys
 import tempfile
-import shutil
+
 import pytest
 
 # Setup import path

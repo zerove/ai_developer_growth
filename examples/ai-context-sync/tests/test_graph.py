@@ -4,7 +4,7 @@ import sys
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from src.graph import DecisionGraph, ADRNode
+from src.graph import ADRNode, DecisionGraph
 
 
 class TestDecisionGraph:

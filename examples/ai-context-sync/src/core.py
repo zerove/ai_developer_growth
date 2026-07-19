@@ -1,15 +1,16 @@
 import os
 from typing import List, Optional
-from .config import AppConfig
-from .logger import logger
-from .llm_client import LLMClient
+
 from .analyzer import GitAnalyzer
-from .synthesizer import ContextSynthesizer
-from .guard import ArchitectureGuard
-from .auditor import SpecAuditor, FeedbackManager
-from .orchestrator import WorkflowManager
-from .profiles import LanguageDetector, LANGUAGE_PROFILES
+from .auditor import FeedbackManager, SpecAuditor
+from .config import AppConfig
 from .evolution import EvolutionEngine
+from .guard import ArchitectureGuard
+from .llm_client import LLMClient
+from .logger import logger
+from .orchestrator import WorkflowManager
+from .profiles import LANGUAGE_PROFILES, LanguageDetector
+from .synthesizer import ContextSynthesizer
 
 
 class AIContextSync:

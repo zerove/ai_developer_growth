@@ -7,26 +7,27 @@ server and register the handlers to test them directly.
 
 import json
 from unittest.mock import MagicMock
+
 import pytest
 
-from src.handlers import register_tools
 from src.exceptions import AISyncError
+from src.handlers import register_tools
 
 
 class MockMCP:
     """Minimal mock of FastMCP that captures registered tools."""
-    
+
     def __init__(self):
         self.tools = {}
         self.resources = {}
-    
+
     def tool(self):
         """Decorator that registers a tool function."""
         def decorator(func):
             self.tools[func.__name__] = func
             return func
         return decorator
-    
+
     def resource(self, uri):
         """Decorator that registers a resource function."""
         def decorator(func):
@@ -39,7 +40,7 @@ class MockMCP:
 def mcp_server():
     """Create a mock MCP server with all tools registered."""
     mcp = MockMCP()
-    
+
     mock_sync = MagicMock()
     mock_sync.config.settings.adr_dir = "docs/adr/"
     mock_sync.config.settings.context_file = "CONTEXT.md"
@@ -53,12 +54,12 @@ def mcp_server():
     mock_sync.evolution.analyze_conflicts.return_value = []
     mock_sync.evolution.propose_evolution.return_value = "proposal text"
     mock_sync.evolution.propose_batch_evolution.return_value = "batch proposal"
-    
+
     def get_sync_tool(config=".ai-sync.json", dry_run=False):
         return mock_sync
-    
+
     register_tools(mcp, get_sync_tool)
-    
+
     return mcp, mock_sync
 
 
@@ -73,7 +74,7 @@ class TestAiSync:
     def test_error_handling(self):
         def failing_get_sync_tool(config=".ai-sync.json", dry_run=False):
             raise AISyncError("test error")
-        
+
         mcp = MockMCP()
         register_tools(mcp, failing_get_sync_tool)
         result = mcp.tools["ai_sync"]()
@@ -93,7 +94,7 @@ class TestAiGuard:
     def test_error_handling(self):
         def failing_get_sync_tool(config=".ai-sync.json"):
             raise AISyncError("guard error")
-        
+
         mcp = MockMCP()
         register_tools(mcp, failing_get_sync_tool)
         result = mcp.tools["ai_guard"]()
@@ -137,7 +138,7 @@ class TestAiTrace:
     def test_error_handling(self):
         def failing_get_sync_tool(config=".ai-sync.json"):
             raise Exception("trace error")
-        
+
         mcp = MockMCP()
         register_tools(mcp, failing_get_sync_tool)
         result = mcp.tools["ai_trace"](adr_id="ADR-999")

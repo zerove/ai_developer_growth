@@ -1,5 +1,6 @@
 """Evolution commands for AI-Context-Sync CLI."""
 import typer
+
 from ...core import AIContextSync
 from .. import cli_error_handler
 

@@ -1,13 +1,16 @@
 import os
 import sys
 import unittest
+
 from typer.testing import CliRunner
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from src.cli import app
 import json
 import os
+
+from src.cli import app
+
 
 class TestCLIOverride(unittest.TestCase):
     def setUp(self):
@@ -30,7 +33,7 @@ class TestCLIOverride(unittest.TestCase):
         # 执行 override
         result = self.runner.invoke(app, ["override", "ADR-001", "--config", self.config_path])
         self.assertEqual(result.exit_code, 0)
-        
+
         # 验证已添加
         with open(self.config_path, "r") as f:
             data = json.load(f)

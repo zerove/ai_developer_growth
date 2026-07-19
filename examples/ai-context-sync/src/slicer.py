@@ -1,6 +1,8 @@
 import os
 from typing import List, Set
+
 from .logger import logger
+
 
 class ContextSlicer:
     """
@@ -16,21 +18,20 @@ class ContextSlicer:
         """
         contexts = []
         # Start from the root and go down to the file's directory
-        current_dir = self.root_dir
-        
+
         # Normalize path
         abs_file_path = os.path.abspath(os.path.join(self.root_dir, file_path))
         abs_root_dir = os.path.abspath(self.root_dir)
-        
+
         # Get the list of directories from root to the file
         relative_path = os.path.relpath(abs_file_path, abs_root_dir)
         path_parts = relative_path.split(os.sep)
-        
+
         # Check root first
         root_context = os.path.join(self.root_dir, "CONTEXT.md")
         if os.path.exists(root_context):
             contexts.append(root_context)
-            
+
         # Check each directory level
         current_path = abs_root_dir
         for part in path_parts[:-1]: # exclude the filename itself
@@ -38,7 +39,7 @@ class ContextSlicer:
             context_file = os.path.join(current_path, "CONTEXT.md")
             if os.path.exists(context_file):
                 contexts.append(context_file)
-                
+
         return contexts
 
     def slice(self, target_files: List[str]) -> str:
@@ -56,10 +57,10 @@ class ContextSlicer:
         all_context_files: Set[str] = set()
         for target in target_files:
             all_context_files.update(self._find_context_files(target))
-            
+
         # Sort files to maintain a consistent order (Root -> Module -> Component)
         sorted_contexts = sorted(list(all_context_files), key=len)
-        
+
         slices = []
         for ctx_file in sorted_contexts:
             try:
@@ -70,5 +71,5 @@ class ContextSlicer:
                     slices.append(f"--- Context from {rel_path} ---\n{content}")
             except (OSError, UnicodeDecodeError) as e:
                 logger.error(f"Error reading context file {ctx_file}: {e}")
-                
+
         return "\n\n".join(slices)

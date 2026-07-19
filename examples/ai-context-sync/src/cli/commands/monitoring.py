@@ -1,6 +1,8 @@
 """Monitoring commands for AI-Context-Sync CLI."""
 import os
+
 import typer
+
 from ...core import AIContextSync
 from ...watcher import WatchManager
 from .. import cli_error_handler
@@ -9,30 +11,30 @@ from .. import cli_error_handler
 def _validate_file_path(path: str) -> bool:
     """
     Validate that a file path is safe to write to.
-    
+
     Rejects:
     - Absolute paths
     - Paths with '..' (parent directory traversal)
     - Paths outside the current working directory
     - Empty or whitespace-only paths
-    
+
     Returns True if path is safe, False otherwise.
     """
     if not path or not path.strip():
         return False
-    
+
     # Reject absolute paths
     if os.path.isabs(path):
         return False
-    
+
     # Reject paths with '..' (parent directory traversal)
     if ".." in path:
         return False
-    
+
     # Reject paths that start with '~' (home directory)
     if path.startswith("~"):
         return False
-    
+
     # Normalize the path and check if it's within the current directory
     try:
         normalized = os.path.normpath(path)
@@ -45,7 +47,7 @@ def _validate_file_path(path: str) -> bool:
             return False
     except (OSError, ValueError):
         return False
-    
+
     return True
 
 

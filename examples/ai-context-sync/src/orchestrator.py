@@ -1,27 +1,29 @@
 import os
 import re
-from typing import Dict, Any, List
-from .logger import logger
-from .llm_client import LLMClient
+from typing import Any, Dict, List
+
 from .analyzer import GitAnalyzer
-from .synthesizer import ContextSynthesizer
-from .guard import ArchitectureGuard
 from .auditor import SpecAuditor
-from .tester import TestRunner
-from .slicer import ContextSlicer
 from .config import AppConfig
-from .executor import ParallelExecutor
 from .exceptions import LLMError
+from .executor import ParallelExecutor
+from .guard import ArchitectureGuard
+from .llm_client import LLMClient
+from .logger import logger
+from .slicer import ContextSlicer
+from .synthesizer import ContextSynthesizer
+from .tester import TestRunner
 from .utils import parse_llm_json
+
 
 class WorkflowManager:
     """
     Orchestrates the end-to-end AI-Native development flow:
     Sense -> Design -> Parallel Implement -> Global Audit -> Sync
     """
-    
-    def __init__(self, llm_client: LLMClient, analyzer: GitAnalyzer, 
-                 synthesizer: ContextSynthesizer, guard: ArchitectureGuard, 
+
+    def __init__(self, llm_client: LLMClient, analyzer: GitAnalyzer,
+                 synthesizer: ContextSynthesizer, guard: ArchitectureGuard,
                  auditor: SpecAuditor, evolution: Any, config_path: str):
         self.llm_client = llm_client
         self.analyzer = analyzer
@@ -37,34 +39,34 @@ class WorkflowManager:
     def _validate_path(self, path: str) -> bool:
         """
         Validate that a file path is safe to write to.
-        
+
         Rejects:
         - Absolute paths
         - Paths with '..' (parent directory traversal)
         - Paths outside the current working directory
         - Empty or whitespace-only paths
-        
+
         Returns True if path is safe, False otherwise.
         """
         if not path or not path.strip():
             logger.warning(f"Rejected empty or whitespace-only path: {path!r}")
             return False
-        
+
         # Reject absolute paths
         if os.path.isabs(path):
             logger.warning(f"Rejected absolute path: {path}")
             return False
-        
+
         # Reject paths with '..' (parent directory traversal)
         if ".." in path:
             logger.warning(f"Rejected path with '..' traversal: {path}")
             return False
-        
+
         # Reject paths that start with '~' (home directory)
         if path.startswith("~"):
             logger.warning(f"Rejected path starting with '~': {path}")
             return False
-        
+
         # Normalize the path and check if it's within the current directory
         try:
             normalized = os.path.normpath(path)
@@ -79,18 +81,18 @@ class WorkflowManager:
         except (OSError, ValueError) as e:
             logger.warning(f"Failed to validate path '{path}': {e}")
             return False
-        
+
         return True
-    
+
     def _write_to_file(self, path: str, content: str) -> bool:
         """
         Write content to a file after validating the path.
-        
+
         Returns True if successfully written, False if path validation failed.
         """
         if not self._validate_path(path):
             return False
-        
+
         try:
             os.makedirs(os.path.dirname(path) if os.path.dirname(path) else ".", exist_ok=True)
             with open(path, "w", encoding="utf-8") as f:
@@ -100,26 +102,26 @@ class WorkflowManager:
         except OSError as e:
             logger.error(f"Failed to write to {path}: {e}")
             return False
-    
+
     def _apply_file_blocks(self, output: str) -> List[str]:
         """
         Parse and apply file blocks from LLM output.
-        
+
         Extracts [FILE: path]\n...\n[END] blocks and writes them to disk.
         Returns list of successfully written file paths.
         """
         file_blocks = re.findall(r"\[FILE: (.*?)\]\n(.*?)\n\[END\]", output, re.DOTALL)
         written_files = []
-        
+
         for path, content in file_blocks:
             if self._write_to_file(path, content):
                 written_files.append(path)
-        
+
         return written_files
 
     def _execute_subtask(self, task: Dict[str, Any]) -> str:
         """
-        The worker function that implements a single sub-task with an 
+        The worker function that implements a single sub-task with an
         autonomous implement-test-fix loop.
         """
         tid = task['id']
@@ -140,7 +142,7 @@ class WorkflowManager:
         while attempt < max_retries:
             attempt += 1
             logger.info(f"🛠️ Worker executing {tid} (Attempt {attempt}/{max_retries}): {desc}")
-            
+
             # 1. Generate/Fix Prompt with Sliced Context
             sliced_context = self.slicer.slice(files)
             if attempt == 1:
@@ -170,18 +172,18 @@ class WorkflowManager:
                 code_output = self.llm_client.generate(prompt, system_prompt="You are a focused implementation expert who writes test-passing code.")
                 if not code_output:
                     return f"Error: No output for {tid}"
-                
+
                 # 2. Apply implementation to disk
                 written_files = self._apply_file_blocks(code_output)
                 if not written_files:
                     logger.warning(f"No valid file blocks found in output for {tid}")
-                
+
                 # 3. Verify
                 result = self.tester.run_test(test_code, files)
                 if result.success:
                     logger.info(f"✅ Task {tid} passed verification on attempt {attempt}!")
                     return f"Successfully implemented and verified {tid}"
-                
+
                 last_error = result.output
                 logger.warning(f"⚠️ Task {tid} failed verification (Attempt {attempt}):\n{last_error}")
 
@@ -193,37 +195,37 @@ class WorkflowManager:
 
     def run_flow(self, task: str, approval_callback: Any, initial_context: str = "") -> str:
         logger.info(f"🚀 Starting AI-Native Parallel Workflow for task: {task}")
-        
+
         current_context, sub_tasks = self._phase_design(task, initial_context, approval_callback)
         if sub_tasks is None:
             return current_context  # Error or rejection message
-        
+
         impl_result = self._phase_implement(sub_tasks, task)
         if impl_result:
             return impl_result
-        
+
         audit_result = self._phase_audit(sub_tasks, task)
         if audit_result:
             return audit_result
-        
+
         self._phase_sync(sub_tasks, task, current_context)
         self._phase_evolution()
-        
+
         logger.info("✅ Parallel Workflow completed successfully.")
         return f"Task '{task}' completed. {len(sub_tasks)} sub-tasks implemented in parallel and verified."
 
     def _phase_design(self, task: str, initial_context: str, approval_callback: Any) -> tuple[str, Any]:
         current_context = initial_context or self.slicer.slice([])
-        
+
         logger.info("📐 Phase 2: Generating technical design and task decomposition...")
         design_prompt = self._build_design_prompt(task, current_context)
         design_doc = self.llm_client.generate(design_prompt) or ""
         logger.info(f"\n--- Proposed Technical Design & Plan ---\n{design_doc}\n------------------------------\n")
-        
+
         logger.info("🛡️ Running Architecture Design Drift Check...")
         drift_report = self.guard.check_design_drift(design_doc, task)
         logger.info(f"\n--- Architecture Drift Report ---\n{drift_report}\n----------------------------------\n")
-        
+
         if not approval_callback():
             logger.info("❌ Design rejected. Workflow terminated.")
             return "Design rejected by user.", None
@@ -231,13 +233,13 @@ class WorkflowManager:
         sub_tasks = parse_llm_json(design_doc, label="design decomposition")
         if sub_tasks is None:
             return "Design failed decomposition. Please refine the design.", None
-        
+
         return current_context, sub_tasks
 
     def _phase_implement(self, sub_tasks: list, task: str) -> str:
         logger.info(f"💻 Phase 3: Implementing {len(sub_tasks)} sub-tasks in parallel...")
         results = self.executor.execute(sub_tasks, self._execute_subtask)
-        
+
         failures = [tid for tid, res in results.items() if res is None or "Failed" in res]
         if failures:
             logger.error(f"❌ Some sub-tasks failed: {failures}")
@@ -249,7 +251,7 @@ class WorkflowManager:
         all_target_files = []
         for t in sub_tasks:
             all_target_files.extend(t.get('target_files', []))
-            
+
         combined_diff = ""
         for f in set(all_target_files):
             if os.path.exists(f):
@@ -262,7 +264,7 @@ class WorkflowManager:
             if not violations:
                 logger.info("✨ Global Audit passed! All parallel modules comply.")
                 return ""
-            
+
             logger.warning(f"⚠️ Global Audit found {len(violations)} violations. Attempt {audit_attempt}/{max_audit_retries} to fix...")
             fix_prompt = (
                 f"The parallel implementation of task '{task}' has the following spec violations:\n"
@@ -276,7 +278,7 @@ class WorkflowManager:
             written_files = self._apply_file_blocks(fix_code)
             if not written_files:
                 logger.warning(f"No valid file blocks found in fix output for audit attempt {audit_attempt}")
-        
+
         logger.error("❌ Failed to reach global compliance after maximum retries.")
         return "Global Audit failed. Manual intervention required."
 

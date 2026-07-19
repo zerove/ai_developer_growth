@@ -4,16 +4,16 @@
 
 ## 工具列表
 
-### 1. AI 上下文管理器 (`ai-context-manager.py`)
+### 1. AI 上下文管理器 (`ai_context_manager.py`)
 该脚本使用 LLM 自动更新项目的 `CONTEXT.md` 文件，确保项目进度实时同步。
 
 **使用方法：**
 ```bash
 # 方式 1：直接传递变更信息
-python ai-context-manager.py "完成了 ADR 生成器的实现并添加了文档"
+python ai_context_manager.py "完成了 ADR 生成器的实现并添加了文档"
 
 # 方式 2：交互式输入
-python ai-context-manager.py
+python ai_context_manager.py
 ```
 
 **环境变量：**
@@ -22,12 +22,12 @@ python ai-context-manager.py
 
 ---
 
-### 2. ADR 生成器 (`adr-generator.py`)
+### 2. ADR 生成器 (`adr_generator.py`)
 该脚本引导用户通过一系列提示生成标准化的架构决策记录 (Architecture Decision Record) 文件。
 
 **使用方法：**
 ```bash
-python adr-generator.py
+python adr_generator.py
 ```
 脚本将提示您输入决策标题、背景、替代方案和最终结论，并在 `docs/adr/` 目录下生成 `.md` 文件。
 

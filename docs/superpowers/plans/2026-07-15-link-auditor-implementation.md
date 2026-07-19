@@ -32,7 +32,7 @@
 - Consumes: Directory path to scan.
 - Produces: List of `(file_path, broken_link_path)`.
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 ```python
 import unittest
@@ -64,12 +64,12 @@ if __name__ == "__main__":
     unittest.main()
 ```
 
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2: Run test to verify it fails**
 
 Run: `python3 -m unittest tests/test_link_auditor.py`
 Expected: FAIL (ImportError or module not found)
 
-- [ ] **Step 3: Write minimal implementation**
+- [x] **Step 3: Write minimal implementation**
 
 ```python
 import re
@@ -92,12 +92,12 @@ def find_broken_links(directory):
     return broken_links
 ```
 
-- [ ] **Step 4: Run test to verify it passes**
+- [x] **Step 4: Run test to verify it passes**
 
 Run: `python3 -m unittest tests/test_link_auditor.py`
 Expected: PASS
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add tools/scripts/link_auditor.py tests/test_link_auditor.py
@@ -113,7 +113,7 @@ git commit -m "feat: add knowledge link auditor"
 - Consumes: Command line arguments.
 - Produces: Printed report.
 
-- [ ] **Step 1: Add CLI interface**
+- [x] **Step 1: Add CLI interface**
 
 ```python
 import sys
@@ -135,12 +135,12 @@ if __name__ == "__main__":
         sys.exit(0)
 ```
 
-- [ ] **Step 2: Run verification**
+- [x] **Step 2: Run verification**
 
 Run: `python3 tools/scripts/link_auditor.py test_docs`
 Expected: Prints broken link info.
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add tools/scripts/link_auditor.py

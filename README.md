@@ -142,8 +142,11 @@ ai_developer_growth/
 │   ├── mindset/                # 认知升级
 │   ├── learning/               # 学习方法
 │   ├── efficiency/             # 工程效率
-│   └── tools/                  # 工具选型
-├── case-studies/               # 实践案例 (10 个)
+│   ├── tools/                  # 工具选型
+│   ├── specs/                  # 语言规范库 (12 种)
+│   ├── specialization/         # 专项规范
+│   └── superpowers/            # 超能力计划
+├── case-studies/               # 实践案例 (11 个)
 ├── examples/                   # 代码示例
 │   ├── ai-context-sync/       # 知识验证工具
 │   │   ├── src/
@@ -158,6 +161,9 @@ ai_developer_growth/
 ├── tests/                      # 根目录测试 (4 文件)
 ├── tools/scripts/              # 工具脚本
 ├── templates/                  # 模板文件
+├── .github/                    # GitHub 配置
+│   └── workflows/              # CI/CD 工作流
+├── .omo/                       # OpenCode 配置
 └── zed-config/                 # Zed IDE 配置
 ```
 
@@ -226,15 +232,6 @@ ai_developer_growth/
 | OWASP | `docs/security/owasp.md` | 安全风险防护 |
 | 测试策略 | `docs/testing/strategy.md` | 测试最佳实践 |
 | Git 工作流 | `docs/testing/git-workflow.md` | Git 分支规范 |
-
-### 项目特定规范
-
-| 规范 | 文件 | 用途 |
-|------|------|------|
-| Prompt 编写标准 | `docs/agent-dev/prompt-standards.md` | 如何编写高质量 agent 定义 |
-| 开发流程 | `docs/agent-dev/workflow-standards.md` | 5 步闭环生命周期 |
-| 质量门禁 | `docs/agent-dev/quality-gates.md` | 4 道门禁检查 |
-| 上下文管理 | `docs/agent-dev/context-management.md` | CONTEXT/ADR/AGENTS 维护 |
 
 ### 项目特定规范
 

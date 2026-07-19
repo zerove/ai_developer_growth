@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 """
 ADR Generator with LLM support.
 

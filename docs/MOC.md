@@ -86,7 +86,7 @@
 
 | 主题 | 核心问题 | 文档 |
 |------|----------|------|
-| 通用治理标准 | 项目开发的完整规范 | [[GOVERNANCE]] |
+| 通用治理标准 | 项目开发的完整规范 | [[GOVERNANCE.md]] |
 | 安装指南 | 如何在任何项目中使用 | [[governance/INSTALL]] |
 
 ### 编程语言规范
@@ -177,7 +177,7 @@
 
 *理论需要实践检验。*
 
-### 案例库 (10 个真实案例)
+### 案例库 (11 个真实案例)
 
 | 案例 | 场景 | 效率提升 | 核心洞察 |
 |------|------|----------|----------|
@@ -191,6 +191,7 @@
 | [[case-studies/legacy-refactoring\|遗留系统重构]] | 代码现代化 | 5x | 渐进式重构降低风险 |
 | [[case-studies/production-debugging\|生产环境调试]] | 问题排查 | 6x | AI 辅助快速定位根因 |
 | [[case-studies/api-design-implementation\|API 设计实现]] | 后端开发 | 5x | 契约先行保证接口质量 |
+| [[case-studies/multi-agent-collaboration\|多 Agent 协作]] | 模拟团队开发 | 5x | 角色分工 + 迭代 |
 
 ### 代码示例
 | 示例 | 核心机制 | 学习价值 |
@@ -298,7 +299,7 @@ ai-learning-method → automated-bug-fixing → full-cycle-workflow → ide-best
 | 学习层 | 3 | ✅ 完整 |
 | 效率层 | 18 | ✅ 完整 |
 | 工具层 | 2 | ✅ 完整 |
-| 案例库 | 10 | ✅ 达标 |
+| 案例库 | 11 | ✅ 达标 |
 | 代码示例 | 2 | ✅ 基础 |
 | 学习路径 | 7 | ✅ 完整 |
 

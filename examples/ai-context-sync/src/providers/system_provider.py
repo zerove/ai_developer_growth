@@ -52,8 +52,8 @@ class SystemProvider(LLMProvider):
             if response.status_code == 200:
                 self._detected_provider = "ollama"
                 logger.info("Detected Ollama server running locally")
-        except requests.RequestException:
-            pass
+        except requests.RequestException as e:
+            logger.debug(f"Ollama detection failed: {e}")
 
     def _load_jcode_config(self) -> bool:
         config_path = os.path.expanduser("~/.jcode/config.toml")

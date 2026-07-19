@@ -4,7 +4,7 @@
 实现 `dx scaffold <template>` 指令，用于快速基于预定义模板初始化项目骨架，并自动配置 `ai-context-sync` 环境。
 
 ## 架构设计
-- **位置**: `products/ai_context_sync/src/cli.py`
+- **位置**: `examples/ai-context-sync/src/cli.py`
 - **依赖**: `typer`, `shutil`, `os`
 - **执行流程**:
   1. `typer` 命令解析 `<template>` 参数。

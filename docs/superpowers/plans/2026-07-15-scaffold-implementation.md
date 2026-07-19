@@ -5,7 +5,7 @@
 **Goal:** Implement `dx scaffold <template>` to initialize project skeletons based on predefined templates in `templates/` and automatically configure `ai-context-sync`.
 
 **Architecture:**
-- Extend `products/ai_context_sync/src/cli.py` with `typer` command `scaffold`.
+- Extend `examples/ai-context-sync/src/cli.py` with `typer` command `scaffold`.
 - Logic resides in `cli.py` (or a helper in `src/utils.py` if complex).
 - Relies on `shutil` for file operations and existing `init` logic for configuration.
 
@@ -24,8 +24,8 @@
 ### Task 1: Create Helper and Scaffold CLI Command
 
 **Files:**
-- Modify: `products/ai_context_sync/src/cli.py`
-- Test: `products/ai_context_sync/tests/test_cli_scaffold.py`
+- Modify: `examples/ai-context-sync/src/cli.py`
+- Test: `examples/ai-context-sync/tests/test_cli_scaffold.py`
 
 **Interfaces:**
 - Consumes: Existing `init()` function in `cli.py`.
@@ -67,7 +67,7 @@ if __name__ == "__main__":
 
 - [ ] **Step 2: Run test to verify it fails**
 
-Run: `python3 -m unittest products/ai_context_sync/tests/test_cli_scaffold.py`
+Run: `python3 -m unittest examples/ai-context-sync/tests/test_cli_scaffold.py`
 Expected: FAIL (command not implemented)
 
 - [ ] **Step 3: Implement scaffold command and logic in cli.py**
@@ -113,12 +113,12 @@ def scaffold(
 
 - [ ] **Step 4: Run test to verify it passes**
 
-Run: `python3 -m unittest products/ai_context_sync/tests/test_cli_scaffold.py`
+Run: `python3 -m unittest examples/ai-context-sync/tests/test_cli_scaffold.py`
 Expected: PASS
 
 - [ ] **Step 5: Commit**
 
 ```bash
-git add products/ai_context_sync/src/cli.py products/ai_context_sync/tests/test_cli_scaffold.py
+git add examples/ai-context-sync/src/cli.py examples/ai-context-sync/tests/test_cli_scaffold.py
 git commit -m "feat: add dx scaffold command"
 ```

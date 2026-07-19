@@ -1,11 +1,13 @@
 import os
 import sys
 import unittest
+
 from typer.testing import CliRunner
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from src.cli import app
+
 
 class TestCLI(unittest.TestCase):
     def setUp(self):

@@ -2,8 +2,10 @@
 
 import os
 import tempfile
+
 import pytest
-from src.semantic_search import tokenize, compute_tf, compute_idf, cosine_similarity, SemanticSearcher
+
+from src.semantic_search import SemanticSearcher, compute_idf, compute_tf, cosine_similarity, tokenize
 
 
 class TestTokenize:

@@ -1,6 +1,8 @@
 """Analysis commands for AI-Context-Sync CLI."""
 import os
+
 import typer
+
 from ...core import AIContextSync
 from ...graph import DecisionGraph
 from .. import cli_error_handler
@@ -40,10 +42,10 @@ def map(
     os.makedirs(os.path.dirname(report_path) if os.path.dirname(report_path) else ".", exist_ok=True)
 
     with open(report_path, "w", encoding="utf-8") as f:
-        f.write(f"# 🗺️ Architecture Decision Map\n\n")
+        f.write("# 🗺️ Architecture Decision Map\n\n")
         f.write(f"This map is automatically generated from the ADRs in {sync_tool.config.settings.adr_dir}.\n\n")
         f.write(f"```mermaid\n{mermaid_code}\n```\n\n")
-        f.write(f"---\n*Tip: Use a Mermaid-compatible viewer (like Zed or GitHub) to render this map.*")
+        f.write("---\n*Tip: Use a Mermaid-compatible viewer (like Zed or GitHub) to render this map.*")
 
     typer.echo(f"✅ Architecture map generated successfully at {report_path}")
 

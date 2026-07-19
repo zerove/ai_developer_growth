@@ -1,7 +1,9 @@
 """Sync and guard commands for AI-Context-Sync CLI."""
-import sys
 import subprocess
+import sys
+
 import typer
+
 from ...core import AIContextSync
 from .. import cli_error_handler
 

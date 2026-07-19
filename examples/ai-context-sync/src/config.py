@@ -1,8 +1,10 @@
-from dataclasses import dataclass, field, asdict
-from typing import List, Optional
 import json
 import os
+from dataclasses import asdict, dataclass, field
+from typing import List, Optional
+
 from .exceptions import ConfigError
+
 
 @dataclass
 class LLMConfig:
@@ -46,18 +48,18 @@ class AppConfig:
     def load(cls, path: str) -> "AppConfig":
         if not os.path.exists(path):
             return cls(config_path=path)
-        
+
         try:
             with open(path, "r") as f:
                 data = json.load(f)
-            
+
             llm_data = data.get("llm", {})
             settings_data = data.get("settings", {})
-            
+
             # Ensure overridden_violations exists if not in file
             if "overridden_violations" not in settings_data:
                 settings_data["overridden_violations"] = []
-            
+
             config = cls(
                 llm=LLMConfig(**llm_data),
                 settings=SyncSettings(**settings_data),

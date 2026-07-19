@@ -6,6 +6,7 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from src.prompt_loader import load_prompt
 
+
 class TestPromptLoader(unittest.TestCase):
     def test_load_prompt_renders_template(self):
         # 假设存在 prompts/test/v1.yaml

@@ -5,8 +5,8 @@ from unittest.mock import MagicMock
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from src.evolution import EvolutionEngine
 from src.auditor import FeedbackManager
+from src.evolution import EvolutionEngine
 from src.llm_client import LLMClient
 
 

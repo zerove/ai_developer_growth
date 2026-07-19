@@ -10,8 +10,10 @@ Commands are organized into separate modules under cli/commands/:
 - flow.py: flow command
 """
 import functools
-import typer
 from typing import Any
+
+import typer
+
 from ..exceptions import AISyncError
 from ..logger import logger
 
@@ -35,13 +37,14 @@ def cli_error_handler(func: Any) -> Any:
 
 
 # Import command functions from modules (each module exports raw functions)
-from .commands.sync_guard import sync, guard
+from .commands.analysis import map as map_cmd
+from .commands.analysis import trace, why
 from .commands.audit import audit
-from .commands.analysis import trace, map as map_cmd, why
 from .commands.evolution import evolve
-from .commands.monitoring import watch, apply_fix
-from .commands.tools import scaffold, init, override, onboard, install_hook, report
 from .commands.flow import flow
+from .commands.monitoring import apply_fix, watch
+from .commands.sync_guard import guard, sync
+from .commands.tools import init, install_hook, onboard, override, report, scaffold
 
 # Register all commands as flat (no nested groups)
 app.command("sync")(sync)

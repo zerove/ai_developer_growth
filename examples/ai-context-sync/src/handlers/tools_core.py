@@ -7,6 +7,7 @@ from __future__ import annotations
 
 import json
 from typing import Callable
+
 from ..exceptions import AISyncError
 
 
@@ -31,7 +32,7 @@ def register(mcp: object, get_sync_tool: Callable) -> None:
             return json.dumps({"status": "success", "config": config, "dry_run": dry_run})
         except AISyncError as e:
             return json.dumps({"status": "error", "error": str(e)})
-        except Exception as e:
+        except Exception:
             # Re-raise programming errors (TypeError, AttributeError, etc.)
             raise
 
@@ -51,7 +52,7 @@ def register(mcp: object, get_sync_tool: Callable) -> None:
             return json.dumps({"status": "success", "report": report})
         except AISyncError as e:
             return json.dumps({"status": "error", "error": str(e)})
-        except Exception as e:
+        except Exception:
             # Re-raise programming errors (TypeError, AttributeError, etc.)
             raise
 
@@ -83,7 +84,7 @@ def register(mcp: object, get_sync_tool: Callable) -> None:
             return json.dumps({"status": "success", "report": report})
         except AISyncError as e:
             return json.dumps({"status": "error", "error": str(e)})
-        except Exception as e:
+        except Exception:
             # Re-raise programming errors (TypeError, AttributeError, etc.)
             raise
 
@@ -109,6 +110,6 @@ def register(mcp: object, get_sync_tool: Callable) -> None:
             })
         except AISyncError as e:
             return json.dumps({"status": "error", "error": str(e)})
-        except Exception as e:
+        except Exception:
             # Re-raise programming errors (TypeError, AttributeError, etc.)
             raise

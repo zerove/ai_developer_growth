@@ -29,7 +29,7 @@ def register(mcp: object, get_sync_tool: Callable) -> None:
             sync_tool = get_sync_tool(config=config)
 
             from src.slicer import ContextSlicer
-            slicer = ContextSlicer()
+            ContextSlicer()
             diff = sync_tool.analyzer.get_last_commit_diff()
             filtered_diff = sync_tool.analyzer.filter_diff(diff)
 

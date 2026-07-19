@@ -1,8 +1,9 @@
 from .profiles import LanguageProfile
 
+
 class PromptOptimizer:
     """
-    Dynamically adjusts the LLM's system prompt based on project scale, 
+    Dynamically adjusts the LLM's system prompt based on project scale,
     change complexity, and task type.
     """
     def __init__(self) -> None:
@@ -26,7 +27,7 @@ class PromptOptimizer:
         """Calculates complexity based on diff size and number of files."""
         lines = diff.splitlines()
         num_files = diff.count("diff --git")
-        
+
         if len(lines) < 50 or num_files <= 2:
             return "granular"
         elif len(lines) < 300 or num_files <= 10:
@@ -41,7 +42,7 @@ class PromptOptimizer:
         complexity = self._calculate_complexity(diff)
         task_type = self._detect_task_type(commit_msg)
         strategy_text = self.strategies.get(complexity, self.strategies["balanced"])
-        
+
         # Construct the dynamic extension
         extension = (
             f"**Project Context:** This is a {profile.name} project. {profile.recommended_prompt_extension}\n\n"

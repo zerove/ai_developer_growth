@@ -1,8 +1,8 @@
+import functools
 import json
 import re
 import time
-import functools
-from typing import Callable, Optional, TypeVar, Any, List
+from typing import Any, Callable, List, Optional, TypeVar
 
 from .logger import logger
 

@@ -2,7 +2,9 @@
 import os
 import shutil
 import subprocess
+
 import typer
+
 from ...core import AIContextSync
 from ...logger import logger
 from .. import cli_error_handler
@@ -20,13 +22,13 @@ def scaffold(
     if len([f for f in os.listdir('.') if f not in ['.git', '.DS_Store']]) > 0:
         typer.echo("❌ Directory is not empty. Aborting.")
         raise typer.Exit(code=1)
-    
+
     # 2. Check if template exists
     template_path = os.path.join("..", "..", "..", "templates", template)
     if not os.path.exists(template_path):
         typer.echo(f"❌ Template '{template}' not found in templates/.")
         raise typer.Exit(code=1)
-    
+
     # 3. Copy files
     # Simplified copy logic for demonstration
     for item in os.listdir(template_path):
@@ -35,10 +37,10 @@ def scaffold(
             shutil.copytree(src, item)
         else:
             shutil.copy2(src, item)
-            
+
     # 4. Init
     init(config=config)
-    
+
     # 5. Update CONTEXT.md
     with open("CONTEXT.md", "a") as f:
         f.write(f"\n--- Initialized from template: {template} ---\n")
@@ -53,7 +55,7 @@ def init(
     if os.path.exists(config):
         logger.warning(f"Config file {config} already exists. Skipping.")
         return
-    
+
     from ...config import AppConfig
     default_config = AppConfig()
     with open(config, "w") as f:
@@ -77,7 +79,7 @@ def override(
     """Mark a specification violation as overridden."""
     from ...config import AppConfig
     app_config = AppConfig.load(config)
-    
+
     if rule_id not in app_config.settings.overridden_violations:
         app_config.settings.overridden_violations.append(rule_id)
         app_config.save()

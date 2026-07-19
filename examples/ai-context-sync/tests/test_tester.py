@@ -1,12 +1,12 @@
 """Tests for src/tester.py - TestRunner and TestResult"""
 import os
+import shutil
 import sys
 import tempfile
-import shutil
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from src.tester import TestRunner, TestResult
+from src.tester import TestResult, TestRunner
 
 
 class TestTestResult:

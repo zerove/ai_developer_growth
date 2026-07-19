@@ -1,8 +1,10 @@
 import os
 from typing import List
+
 from .llm_client import LLMClient
-from .slicer import ContextSlicer
 from .logger import logger
+from .slicer import ContextSlicer
+
 
 class OnboardingSession:
     """
@@ -57,7 +59,7 @@ class OnboardingSession:
 
             response = self.llm_client.generate(explore_prompt)
             logger.info(f"\n{response}")
-            
+
     def _find_files_for_area(self, area: str) -> List[str]:
         """
         Tries to map a user-provided area name to a set of files/directories.
@@ -71,5 +73,5 @@ class OnboardingSession:
             for f in files:
                 if area.lower() in f.lower():
                     matches.append(os.path.join(root, f))
-        
+
         return matches if matches else ["CONTEXT.md"]

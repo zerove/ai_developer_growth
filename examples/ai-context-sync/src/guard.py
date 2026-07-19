@@ -1,7 +1,9 @@
 import os
 from typing import List
+
 from .llm_client import LLMClient
 from .utils import parse_llm_json
+
 
 class ArchitectureGuard:
     """
@@ -17,13 +19,13 @@ class ArchitectureGuard:
         """
         if not os.path.exists(self.adr_dir):
             return "No ADRs defined yet."
-            
+
         adr_contents = []
         for filename in sorted(os.listdir(self.adr_dir)):
             if filename.endswith(".md"):
                 with open(os.path.join(self.adr_dir, filename), "r", encoding="utf-8") as f:
                     adr_contents.append(f"--- File: {filename} ---\n{f.read()}")
-        
+
         return "\n\n".join(adr_contents) if adr_contents else "No ADRs defined yet."
 
     def check_design_drift(self, design_doc: str, task: str) -> str:
@@ -68,14 +70,14 @@ class ArchitectureGuard:
             "'rule_id', 'adr_file', 'severity', 'description'. "
             "If no violations, return an empty array []."
         )
-        
+
         prompt = (
             f"### Established ADRs\n{adrs}\n\n"
             f"### Current Commit Message\n{commit_msg}\n\n"
             f"### Git Diff\n{diff}\n\n"
             "Violations (JSON array):"
         )
-        
+
         response = self.client.generate(prompt, system_prompt=system_prompt)
         result = parse_llm_json(response, label="architecture guard")
         return result if result is not None else []

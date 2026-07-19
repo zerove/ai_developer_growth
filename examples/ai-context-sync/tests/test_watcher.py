@@ -1,6 +1,6 @@
 """Tests for watcher.py - AuditHandler and WatchManager."""
 
-from unittest.mock import MagicMock, patch, mock_open
+from unittest.mock import MagicMock, mock_open, patch
 
 
 class TestAuditHandler:

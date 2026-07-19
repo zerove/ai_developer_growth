@@ -1,8 +1,8 @@
 """Tests for onboarding.py - OnboardingSession."""
 
 import os
-import tempfile
 import shutil
+import tempfile
 from unittest.mock import MagicMock, patch
 
 from src.onboarding import OnboardingSession

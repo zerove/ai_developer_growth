@@ -1,9 +1,10 @@
 """Tests for CLI install-hook command."""
 
 import os
-import tempfile
 import subprocess
+import tempfile
 from unittest.mock import patch
+
 from typer.testing import CliRunner
 
 from src.cli import app

@@ -94,12 +94,13 @@ class SystemProvider(LLMProvider):
             try:
                 with open(config_path, "r", encoding="utf-8") as f:
                     config = json.load(f)
-                provider = config.get("provider", config.get("model", {}).get("provider"))
-                model = (
-                    config.get("model", {}).get("name")
-                    if isinstance(config.get("model"), dict)
-                    else config.get("model")
-                )
+                model_config = config.get("model")
+                if isinstance(model_config, dict):
+                    provider = config.get("provider", model_config.get("provider"))
+                    model = model_config.get("name")
+                else:
+                    provider = config.get("provider")
+                    model = model_config
                 if provider:
                     self._detected_provider = provider
                     self._detected_model = model

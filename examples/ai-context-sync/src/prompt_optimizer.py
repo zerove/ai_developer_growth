@@ -29,13 +29,19 @@ class PromptOptimizer:
         return "General"
 
     def _calculate_complexity(self, diff: str) -> str:
-        """Calculates complexity based on diff size and number of files."""
+        """Calculates complexity based on diff size and number of files.
+
+        Priority:
+        1. < 50 lines -> granular (line check first)
+        2. 50-300 lines and <=10 files -> balanced
+        3. >300 lines or >10 files -> abstract
+        """
         lines = diff.splitlines()
         num_files = diff.count("diff --git")
 
-        if len(lines) < 50 or num_files <= 2:
+        if len(lines) < 50:
             return "granular"
-        elif len(lines) < 300 or num_files <= 10:
+        elif len(lines) <= 300 and num_files <= 10:
             return "balanced"
         else:
             return "abstract"

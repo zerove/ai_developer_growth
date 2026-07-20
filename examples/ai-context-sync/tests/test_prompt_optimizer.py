@@ -81,7 +81,7 @@ class TestCalculateComplexity:
         assert self.optimizer._calculate_complexity(diff) == "balanced"
 
     def test_large_diff_returns_abstract(self):
-        lines = ["diff --git a/f{} b/f{}".format(i, i)] * 15
+        lines = ["diff --git a/f{} b/f{}".format(i, i) for i in range(15)]
         lines += ["+" + str(i) for i in range(400)]
         diff = "\n".join(lines)
         assert self.optimizer._calculate_complexity(diff) == "abstract"

@@ -46,6 +46,10 @@ def register(mcp: object, get_sync_tool: Callable) -> None:
             return json.dumps({"status": "success", "candidates": candidates, "proposals": proposals})
         except (LLMError, OSError, json.JSONDecodeError, KeyError) as e:
             return json.dumps({"status": "error", "error": str(e)})
+        except Exception as e:
+            return json.dumps({"status": "error", "error": str(e)})
+        except Exception as e:
+            return json.dumps({"status": "error", "error": str(e)})
 
     @mcp.tool()
     def ai_scaffold(template: str, target_dir: str = ".", config: str = ".ai-sync.json") -> str:
@@ -66,4 +70,8 @@ def register(mcp: object, get_sync_tool: Callable) -> None:
             session.start()
             return json.dumps({"status": "success", "template": template, "target": target_dir})
         except (LLMError, OSError, json.JSONDecodeError) as e:
+            return json.dumps({"status": "error", "error": str(e)})
+        except Exception as e:
+            return json.dumps({"status": "error", "error": str(e)})
+        except Exception as e:
             return json.dumps({"status": "error", "error": str(e)})

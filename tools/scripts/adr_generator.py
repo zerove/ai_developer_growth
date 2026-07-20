@@ -6,6 +6,7 @@ Modes:
   - Interactive (default): 逐字段手动输入
   - Auto: 从标题+简述自动生成完整 ADR
 """
+
 import os
 import sys
 from datetime import datetime
@@ -27,8 +28,7 @@ SYSTEM_PROMPT = (
 
 
 def generate_from_llm(title: str, brief: str) -> str:
-    llm = LLMClient(provider=os.getenv("LLM_PROVIDER", "openai"),
-                     model=os.getenv("LLM_MODEL", "gpt-4o"))
+    llm = LLMClient(provider=os.getenv("LLM_PROVIDER", "openai"), model=os.getenv("LLM_MODEL", "gpt-4o"))
     prompt = (
         f"Generate an Architecture Decision Record for:\n"
         f"Title: {title}\n"

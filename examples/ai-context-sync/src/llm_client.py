@@ -7,6 +7,7 @@ Supported providers:
 - ollama: Local Ollama server (llama3, mistral, etc.)
 - system: Auto-detect from jcode/opencode environment
 """
+
 import hashlib
 import json
 import os

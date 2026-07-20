@@ -41,9 +41,7 @@ class CorrectionResult:
     fixed_code: str | None = None
     test_output: str = ""
     duration_s: float = 0.0
-    timestamp: str = field(
-        default_factory=lambda: datetime.now(timezone.utc).isoformat()
-    )
+    timestamp: str = field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
 
     @property
     def is_success(self) -> bool:
@@ -59,10 +57,7 @@ class CorrectionResult:
         """One-line human-readable summary."""
         status_label = self.status.name
         strategy_label = self.strategy or "none"
-        return (
-            f"[Attempt {self.attempt}] {status_label} "
-            f"(strategy={strategy_label}) {self.message}"
-        )
+        return f"[Attempt {self.attempt}] {status_label} (strategy={strategy_label}) {self.message}"
 
 
 def success_result(

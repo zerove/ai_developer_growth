@@ -1,4 +1,5 @@
 """Monitoring commands for AI-Context-Sync CLI."""
+
 import os
 
 import typer
@@ -54,7 +55,7 @@ def _validate_file_path(path: str) -> bool:
 @cli_error_handler
 def watch(
     config: str = typer.Option(".ai-sync.json", help="Path to config file"),
-    path: str = typer.Option(".", help="Path to watch")
+    path: str = typer.Option(".", help="Path to watch"),
 ) -> None:
     """Start the real-time audit guard. Monitors file changes and updates the live report."""
     sync_tool = AIContextSync(config_path=config)
@@ -66,7 +67,7 @@ def watch(
 def apply_fix(
     rule_id: str,
     config: str = typer.Option(".ai-sync.json", help="Path to config file"),
-    dry_run: bool = typer.Option(False, "--dry-run", help="Preview changes without applying")
+    dry_run: bool = typer.Option(False, "--dry-run", help="Preview changes without applying"),
 ) -> None:
     """Automatically apply the suggested fix for a specific rule violation."""
     sync_tool = AIContextSync(config_path=config)

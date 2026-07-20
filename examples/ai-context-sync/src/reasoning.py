@@ -66,4 +66,6 @@ class DecisionReasoner:
             "Provide a comprehensive explanation of why this decision was made."
         )
 
-        return self.llm_client.generate(prompt, system_prompt=system_prompt) or "LLM failed to synthesize an explanation."
+        return (
+            self.llm_client.generate(prompt, system_prompt=system_prompt) or "LLM failed to synthesize an explanation."
+        )

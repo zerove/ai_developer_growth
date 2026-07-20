@@ -1,4 +1,5 @@
 """Auto-detect and use LLM from jcode/opencode environment."""
+
 import json
 import os
 import re
@@ -94,7 +95,11 @@ class SystemProvider(LLMProvider):
                 with open(config_path, "r", encoding="utf-8") as f:
                     config = json.load(f)
                 provider = config.get("provider", config.get("model", {}).get("provider"))
-                model = config.get("model", {}).get("name") if isinstance(config.get("model"), dict) else config.get("model")
+                model = (
+                    config.get("model", {}).get("name")
+                    if isinstance(config.get("model"), dict)
+                    else config.get("model")
+                )
                 if provider:
                     self._detected_provider = provider
                     self._detected_model = model

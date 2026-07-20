@@ -173,7 +173,7 @@ class TestMain(unittest.TestCase):
             [sys.executable, "tools/scripts/link_auditor.py"],
             capture_output=True,
             text=True,
-            cwd=os.path.join(os.path.dirname(__file__), "..")
+            cwd=os.path.join(os.path.dirname(__file__), ".."),
         )
         self.assertEqual(result.returncode, 1)
         self.assertIn("Usage:", result.stdout)
@@ -187,7 +187,7 @@ class TestMain(unittest.TestCase):
             [sys.executable, "tools/scripts/link_auditor.py", self.test_dir],
             capture_output=True,
             text=True,
-            cwd=os.path.join(os.path.dirname(__file__), "..")
+            cwd=os.path.join(os.path.dirname(__file__), ".."),
         )
         self.assertEqual(result.returncode, 0)
         self.assertIn("All links are valid", result.stdout)
@@ -201,7 +201,7 @@ class TestMain(unittest.TestCase):
             [sys.executable, "tools/scripts/link_auditor.py", self.test_dir],
             capture_output=True,
             text=True,
-            cwd=os.path.join(os.path.dirname(__file__), "..")
+            cwd=os.path.join(os.path.dirname(__file__), ".."),
         )
         self.assertEqual(result.returncode, 1)
         self.assertIn("Broken links found", result.stdout)

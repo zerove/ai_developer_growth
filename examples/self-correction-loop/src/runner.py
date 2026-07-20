@@ -98,11 +98,15 @@ class CorrectionLoop:
             if result.is_success:
                 return result
 
-        return self._history[-1] if self._history else failure_result(
-            attempt=self._max_attempts,
-            strategy="none",
-            message=f"Exhausted {self._max_attempts} attempts without a fix.",
-            file_path=str(self._target_file),
+        return (
+            self._history[-1]
+            if self._history
+            else failure_result(
+                attempt=self._max_attempts,
+                strategy="none",
+                message=f"Exhausted {self._max_attempts} attempts without a fix.",
+                file_path=str(self._target_file),
+            )
         )
 
     def _run_verification(self) -> tuple[bool, str]:
@@ -115,8 +119,11 @@ class CorrectionLoop:
     ) -> tuple[str | None, Strategy | None]:  # noqa: F821
         """Delegate to the strategy registry to find a fix."""
         return self._registry.fix(
-            original_code, error_output, str(self._target_file),
-            test_dir=self._test_dir, runner=self._runner,
+            original_code,
+            error_output,
+            str(self._target_file),
+            test_dir=self._test_dir,
+            runner=self._runner,
         )
 
     def _apply_fix(self, target_file: Path, fixed_code: str) -> tuple[bool, str]:
@@ -134,41 +141,57 @@ class CorrectionLoop:
         passed, test_output = self._run_verification()
         if passed:
             return success_result(
-                attempt=attempt, strategy="none",
-                file_path=str(self._target_file), original_code="",
-                test_output=test_output, duration_s=time.monotonic() - t0,
+                attempt=attempt,
+                strategy="none",
+                file_path=str(self._target_file),
+                original_code="",
+                test_output=test_output,
+                duration_s=time.monotonic() - t0,
             )
         original_code = _read_code(self._target_file)
         fixed_code, strategy = self._try_strategies(original_code, test_output)
         if fixed_code is None or strategy is None:
             return failure_result(
-                attempt=attempt, strategy="none",
+                attempt=attempt,
+                strategy="none",
                 message="No strategy could produce a fix.",
-                file_path=str(self._target_file), original_code=original_code,
-                test_output=test_output, duration_s=time.monotonic() - t0,
+                file_path=str(self._target_file),
+                original_code=original_code,
+                test_output=test_output,
+                duration_s=time.monotonic() - t0,
             )
         try:
             passed, verify_output = self._apply_fix(self._target_file, fixed_code)
         except FixError as exc:
             return failure_result(
-                attempt=attempt, strategy=strategy.name, message=str(exc),
-                file_path=str(self._target_file), original_code=original_code,
-                fixed_code=fixed_code, test_output=test_output,
+                attempt=attempt,
+                strategy=strategy.name,
+                message=str(exc),
+                file_path=str(self._target_file),
+                original_code=original_code,
+                fixed_code=fixed_code,
+                test_output=test_output,
                 duration_s=time.monotonic() - t0,
             )
         duration = time.monotonic() - t0
         if passed:
             return success_result(
-                attempt=attempt, strategy=strategy.name,
-                file_path=str(self._target_file), original_code=original_code,
-                fixed_code=fixed_code, test_output=verify_output,
+                attempt=attempt,
+                strategy=strategy.name,
+                file_path=str(self._target_file),
+                original_code=original_code,
+                fixed_code=fixed_code,
+                test_output=verify_output,
                 duration_s=duration,
             )
         return failure_result(
-            attempt=attempt, strategy=strategy.name,
+            attempt=attempt,
+            strategy=strategy.name,
             message=f"Fix via '{strategy.name}' did not resolve test failures.",
-            file_path=str(self._target_file), original_code=original_code,
-            fixed_code=fixed_code, test_output=verify_output,
+            file_path=str(self._target_file),
+            original_code=original_code,
+            fixed_code=fixed_code,
+            test_output=verify_output,
             duration_s=duration,
         )
 

@@ -9,7 +9,7 @@ import json
 import os
 from typing import Callable
 
-from src.core import LLMError
+from ..exceptions import LLMError
 
 
 def register(mcp: object, get_sync_tool: Callable) -> None:
@@ -31,6 +31,7 @@ def register(mcp: object, get_sync_tool: Callable) -> None:
             sync_tool = get_sync_tool(config=config)
 
             from src.slicer import ContextSlicer
+
             ContextSlicer()
             diff = sync_tool.analyzer.get_last_commit_diff()
             filtered_diff = sync_tool.analyzer.filter_diff(diff)
@@ -51,9 +52,7 @@ def register(mcp: object, get_sync_tool: Callable) -> None:
             def approval_callback() -> bool:
                 return True
 
-            result = sync_tool.orchestrator.run_flow(
-                task, approval_callback, initial_context=aggregated_context
-            )
+            result = sync_tool.orchestrator.run_flow(task, approval_callback, initial_context=aggregated_context)
             return json.dumps({"status": "success", "result": result})
         except (LLMError, OSError, json.JSONDecodeError, KeyError) as e:
             return json.dumps({"status": "error", "error": str(e)})
@@ -72,26 +71,21 @@ def register(mcp: object, get_sync_tool: Callable) -> None:
         try:
             sync_tool = get_sync_tool(config=config)
             from src.graph import DecisionGraph
+
             graph = DecisionGraph(sync_tool.config.settings.adr_dir)
             chain = graph.trace_causality(adr_id)
 
             if not chain:
-                return json.dumps({
-                    "status": "not_found",
-                    "adr_id": adr_id,
-                    "message": f"No causal chain found for {adr_id}"
-                })
+                return json.dumps(
+                    {"status": "not_found", "adr_id": adr_id, "message": f"No causal chain found for {adr_id}"}
+                )
 
             nodes = []
             for node_id in chain:
                 title = graph.nodes[node_id].title if node_id in graph.nodes else "Unknown"
                 nodes.append({"id": node_id, "title": title})
 
-            return json.dumps({
-                "status": "success",
-                "adr_id": adr_id,
-                "chain": nodes
-            })
+            return json.dumps({"status": "success", "adr_id": adr_id, "chain": nodes})
         except (LLMError, OSError, json.JSONDecodeError, KeyError) as e:
             return json.dumps({"status": "error", "error": str(e)})
 
@@ -109,6 +103,7 @@ def register(mcp: object, get_sync_tool: Callable) -> None:
         try:
             sync_tool = get_sync_tool(config=config)
             from src.reasoning import DecisionReasoner
+
             reasoner = DecisionReasoner(sync_tool.llm_client, sync_tool.config.settings.adr_dir)
             result = reasoner.explain_decision(query)
             return json.dumps({"status": "success", "explanation": result})

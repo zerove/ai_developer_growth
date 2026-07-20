@@ -12,10 +12,12 @@ import sys
 
 from mcp.server.fastmcp import FastMCP
 
+# Add project root to path for imports
 _project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 if _project_root not in sys.path:
     sys.path.insert(0, _project_root)
 
+# ruff: noqa: E402
 from src.core import AIContextSync
 from src.handlers import register_resources, register_tools
 

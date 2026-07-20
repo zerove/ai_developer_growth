@@ -12,6 +12,7 @@ from .utils import parse_llm_json
 @dataclass
 class Violation:
     """Represents a single specification violation."""
+
     rule_id: str
     message: str
     severity: str  # 'Critical', 'Warning', 'Info'
@@ -22,10 +23,12 @@ class Violation:
     def to_dict(self) -> dict[str, Any]:
         return self.__dict__
 
+
 class FeedbackManager:
     """
     Tracks the history of specification violations and developer feedback.
     """
+
     def __init__(self, history_file: str = ".ai-audit-history.json"):
         self.history_file = history_file
         self.history = self._load_history()
@@ -42,9 +45,11 @@ class FeedbackManager:
     def save_violation(self, violation: Violation) -> None:
         """Records a new violation in the history."""
         for item in self.history:
-            if (item['rule_id'] == violation.rule_id and
-                item['file_path'] == violation.file_path and
-                item['message'] == violation.message):
+            if (
+                item["rule_id"] == violation.rule_id
+                and item["file_path"] == violation.file_path
+                and item["message"] == violation.message
+            ):
                 return
 
         self.history.append(violation.to_dict())
@@ -54,11 +59,13 @@ class FeedbackManager:
         with open(self.history_file, "w", encoding="utf-8") as f:
             json.dump(self.history, f, indent=2)
 
+
 class SpecAuditor:
     """
     Audits code against language-specific development specifications.
     Implements an Adversarial Audit (Attack -> Verify) loop to minimize false positives.
     """
+
     def __init__(self, llm_client: LLMClient, specs_dir: str):
         self.llm_client = llm_client
         self.specs_dir = specs_dir
@@ -154,14 +161,12 @@ class SpecAuditor:
                     rule_id=v.get("rule_id", "UNKNOWN"),
                     message=v.get("message", "No message provided"),
                     severity=v.get("severity", "Info"),
-                    file_path="unknown"
-                ) for v in candidates_data
+                    file_path="unknown",
+                )
+                for v in candidates_data
             ]
 
-            confirmed_violations = [
-                v for v in candidates
-                if self._verify_violation(v, diff, specs)
-            ]
+            confirmed_violations = [v for v in candidates if self._verify_violation(v, diff, specs)]
 
             return confirmed_violations
         except LLMError as e:

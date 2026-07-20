@@ -1,4 +1,5 @@
 """Tool commands for AI-Context-Sync CLI."""
+
 import json
 import os
 import shutil
@@ -16,11 +17,11 @@ app = typer.Typer()
 @app.command()
 def scaffold(
     template: str = typer.Argument(..., help="Template name (in templates/ directory)"),
-    config: str = typer.Option(".ai-sync.json", help="Path to config file")
+    config: str = typer.Option(".ai-sync.json", help="Path to config file"),
 ) -> None:
     """Initialize a project from a predefined template."""
     # 1. Check if directory is empty
-    if len([f for f in os.listdir('.') if f not in ['.git', '.DS_Store']]) > 0:
+    if len([f for f in os.listdir(".") if f not in [".git", ".DS_Store"]]) > 0:
         typer.echo("❌ Directory is not empty. Aborting.")
         raise typer.Exit(code=1)
 
@@ -49,35 +50,34 @@ def scaffold(
 
 
 @app.command()
-def init(
-    config: str = typer.Option(".ai-sync.json", help="Path to config file")
-) -> None:
+def init(config: str = typer.Option(".ai-sync.json", help="Path to config file")) -> None:
     """Initialize a default .ai-sync.json configuration file."""
     if os.path.exists(config):
         logger.warning(f"Config file {config} already exists. Skipping.")
         return
 
     from ...config import AppConfig
+
     default_config = AppConfig()
     with open(config, "w") as f:
+
         def d_to_dict(obj):
             if hasattr(obj, "__dict__"):
                 return {k: d_to_dict(v) for k, v in obj.__dict__.items()}
             elif isinstance(obj, list):
                 return [d_to_dict(i) for i in obj]
             return obj
+
         json.dump(d_to_dict(default_config), f, indent=2)
     logger.info(f"✅ Initialized default config at {config}")
 
 
 @app.command()
 @cli_error_handler
-def override(
-    rule_id: str,
-    config: str = typer.Option(".ai-sync.json", help="Path to config file")
-) -> None:
+def override(rule_id: str, config: str = typer.Option(".ai-sync.json", help="Path to config file")) -> None:
     """Mark a specification violation as overridden."""
     from ...config import AppConfig
+
     app_config = AppConfig.load(config)
 
     if rule_id not in app_config.settings.overridden_violations:
@@ -90,12 +90,11 @@ def override(
 
 @app.command()
 @cli_error_handler
-def onboard(
-    config: str = typer.Option(".ai-sync.json", help="Path to config file")
-) -> None:
+def onboard(config: str = typer.Option(".ai-sync.json", help="Path to config file")) -> None:
     """Start an interactive architecture onboarding tour."""
     sync_tool = AIContextSync(config_path=config)
     from ...onboarding import OnboardingSession
+
     session = OnboardingSession(sync_tool.llm_client)
     session.start()
 
@@ -126,8 +125,7 @@ exit 0
 def install_hook() -> None:
     """Install a Git pre-commit hook for automatic audit."""
     git_dir = subprocess.run(
-        ["git", "rev-parse", "--git-dir"],
-        capture_output=True, text=True, check=True
+        ["git", "rev-parse", "--git-dir"], capture_output=True, text=True, check=True
     ).stdout.strip()
 
     hooks_dir = os.path.join(git_dir, "hooks")
@@ -162,12 +160,12 @@ def report(
     """Generate an HTML audit report for visualization."""
     sync_tool = AIContextSync(config_path=config)
     violations = sync_tool.auditor.audit(
-        sync_tool.analyzer.get_last_commit_diff(),
-        sync_tool.analyzer.get_last_commit_message()
+        sync_tool.analyzer.get_last_commit_diff(), sync_tool.analyzer.get_last_commit_message()
     )
     violation_dicts = [v.to_dict() for v in violations]
 
     from ...report import generate_html_report, save_report
+
     html_content = generate_html_report(violation_dicts)
     saved_path = save_report(html_content, output)
     typer.echo(f"✅ Audit report generated: {saved_path}")

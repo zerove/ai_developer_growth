@@ -41,9 +41,7 @@ def update_context_with_llm(current_context: str, changes: str) -> str:
 
     try:
         response = client.chat.completions.create(
-            model="gpt-4o",
-            messages=[{"role": "user", "content": prompt}],
-            temperature=0.3
+            model="gpt-4o", messages=[{"role": "user", "content": prompt}], temperature=0.3
         )
         return response.choices[0].message.content.strip()
     except Exception as e:

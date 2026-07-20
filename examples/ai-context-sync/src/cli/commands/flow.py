@@ -1,4 +1,5 @@
 """Flow command for AI-Context-Sync CLI."""
+
 import os
 
 import typer
@@ -9,10 +10,7 @@ from .. import cli_error_handler
 
 
 @cli_error_handler
-def flow(
-    task: str,
-    config: str = typer.Option(".ai-sync.json", help="Path to config file")
-) -> None:
+def flow(task: str, config: str = typer.Option(".ai-sync.json", help="Path to config file")) -> None:
     """Execute the full AI-Native development flow for a specific task."""
     sync_tool = AIContextSync(config_path=config)
 

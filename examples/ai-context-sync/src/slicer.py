@@ -9,6 +9,7 @@ class ContextSlicer:
     ContextSlicer extracts a minimal, relevant slice of project documentation
     (CONTEXT.md files) based on the files being modified.
     """
+
     def __init__(self, root_dir: str = "."):
         self.root_dir = root_dir
 
@@ -34,7 +35,7 @@ class ContextSlicer:
 
         # Check each directory level
         current_path = abs_root_dir
-        for part in path_parts[:-1]: # exclude the filename itself
+        for part in path_parts[:-1]:  # exclude the filename itself
             current_path = os.path.join(current_path, part)
             context_file = os.path.join(current_path, "CONTEXT.md")
             if os.path.exists(context_file):

@@ -22,9 +22,16 @@ class WorkflowManager:
     Sense -> Design -> Parallel Implement -> Global Audit -> Sync
     """
 
-    def __init__(self, llm_client: LLMClient, analyzer: GitAnalyzer,
-                 synthesizer: ContextSynthesizer, guard: ArchitectureGuard,
-                 auditor: SpecAuditor, evolution: Any, config_path: str):
+    def __init__(
+        self,
+        llm_client: LLMClient,
+        analyzer: GitAnalyzer,
+        synthesizer: ContextSynthesizer,
+        guard: ArchitectureGuard,
+        auditor: SpecAuditor,
+        evolution: Any,
+        config_path: str,
+    ):
         self.llm_client = llm_client
         self.analyzer = analyzer
         self.synthesizer = synthesizer
@@ -124,14 +131,16 @@ class WorkflowManager:
         The worker function that implements a single sub-task with an
         autonomous implement-test-fix loop.
         """
-        tid = task['id']
-        desc = task['description']
-        files = task['target_files']
-        verification = task.get('verification', {})
-        test_code = verification.get('test_code')
+        tid = task["id"]
+        desc = task["description"]
+        files = task["target_files"]
+        verification = task.get("verification", {})
+        test_code = verification.get("test_code")
 
         if not test_code:
-            logger.warning(f"No verification test provided for {tid}. Skipping loop and doing single-shot implementation.")
+            logger.warning(
+                f"No verification test provided for {tid}. Skipping loop and doing single-shot implementation."
+            )
             # Fallback to single-shot (similar to old logic but using the new flow)
             return self._single_shot_implement(tid, desc, files)
 
@@ -169,7 +178,9 @@ class WorkflowManager:
                 )
 
             try:
-                code_output = self.llm_client.generate(prompt, system_prompt="You are a focused implementation expert who writes test-passing code.")
+                code_output = self.llm_client.generate(
+                    prompt, system_prompt="You are a focused implementation expert who writes test-passing code."
+                )
                 if not code_output:
                     return f"Error: No output for {tid}"
 
@@ -250,7 +261,7 @@ class WorkflowManager:
         logger.info("⚖️ Phase 4: Running Global Spec Audit...")
         all_target_files = []
         for t in sub_tasks:
-            all_target_files.extend(t.get('target_files', []))
+            all_target_files.extend(t.get("target_files", []))
 
         combined_diff = ""
         for f in set(all_target_files):
@@ -265,14 +276,18 @@ class WorkflowManager:
                 logger.info("✨ Global Audit passed! All parallel modules comply.")
                 return ""
 
-            logger.warning(f"⚠️ Global Audit found {len(violations)} violations. Attempt {audit_attempt}/{max_audit_retries} to fix...")
+            logger.warning(
+                f"⚠️ Global Audit found {len(violations)} violations. Attempt {audit_attempt}/{max_audit_retries} to fix..."
+            )
             fix_prompt = (
                 f"The parallel implementation of task '{task}' has the following spec violations:\n"
                 f"{violations}\n\n"
                 f"Please provide the corrected code for the affected files. "
                 f"Return the result as file blocks: [FILE: path]\nCode...\n[END]"
             )
-            fix_code = self.llm_client.generate(fix_prompt, system_prompt="You are a global integrator and quality gate.")
+            fix_code = self.llm_client.generate(
+                fix_prompt, system_prompt="You are a global integrator and quality gate."
+            )
             if not fix_code:
                 continue
             written_files = self._apply_file_blocks(fix_code)
@@ -286,7 +301,7 @@ class WorkflowManager:
         logger.info("🔄 Phase 5: Synchronizing project assets...")
         all_target_files = []
         for t in sub_tasks:
-            all_target_files.extend(t.get('target_files', []))
+            all_target_files.extend(t.get("target_files", []))
         combined_diff = ""
         for f in set(all_target_files):
             if os.path.exists(f):
@@ -300,7 +315,9 @@ class WorkflowManager:
         logger.info("💡 Phase 6: Checking for specification evolution opportunities...")
         candidates = self.evolution.analyze_conflicts()
         if candidates:
-            logger.info(f"✨ Found {len(candidates)} evolution opportunities. Run 'dx evolve --batch' to propose updates.")
+            logger.info(
+                f"✨ Found {len(candidates)} evolution opportunities. Run 'dx evolve --batch' to propose updates."
+            )
 
     def _single_shot_implement(self, tid: str, desc: str, files: list[str]) -> str:
         """Fallback implementation when no verification test is available."""
@@ -347,17 +364,15 @@ class WorkflowManager:
             "```json\n"
             "[\n"
             "  {\n"
-            "    \"id\": \"TASK-1\",\n"
-            "    \"description\": \"Implement the user greeting function\",\n"
-            "    \"target_files\": [\"utils/greet.py\"],\n"
-            "    \"verification\": {\n"
+            '    "id": "TASK-1",\n'
+            '    "description": "Implement the user greeting function",\n'
+            '    "target_files": ["utils/greet.py"],\n'
+            '    "verification": {\n'
             "      \"test_code\": \"import pytest\\nfrom utils.greet import greet\\n\\ndef test_greet():\\n    assert greet('Alice') == 'Hello, Alice!'\",\n"
             "      \"expected\": \" greet('Alice') should return 'Hello, Alice!'\"\n"
             "    },\n"
-            "    \"depends_on\": []\n"
+            '    "depends_on": []\n'
             "  }\n"
             "]\n"
             "```"
         )
-
-

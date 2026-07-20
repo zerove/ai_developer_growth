@@ -39,9 +39,7 @@ def _mock_fix(code: str, error_output: str) -> str | None:
     import re  # noqa: PLC0415
 
     if "range(len(" in code and re.search(r"-\s*1", code):
-        fixed, count = re.subn(
-            r"range\(len\((\w+)\)\s*-\s*1\)", r"range(len(\1))", code
-        )
+        fixed, count = re.subn(r"range\(len\((\w+)\)\s*-\s*1\)", r"range(len(\1))", code)
         if count > 0:
             return fixed
     return None

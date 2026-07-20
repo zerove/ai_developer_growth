@@ -8,7 +8,7 @@ from __future__ import annotations
 import json
 from typing import Callable
 
-from src.core import LLMError
+from ..exceptions import LLMError
 
 
 def register(mcp: object, get_sync_tool: Callable) -> None:
@@ -30,34 +30,20 @@ def register(mcp: object, get_sync_tool: Callable) -> None:
             candidates = sync_tool.evolution.analyze_conflicts()
 
             if not candidates:
-                return json.dumps({
-                    "status": "success",
-                    "candidates": [],
-                    "message": "No evolution opportunities detected."
-                })
+                return json.dumps(
+                    {"status": "success", "candidates": [], "message": "No evolution opportunities detected."}
+                )
 
             if batch:
                 proposal = sync_tool.evolution.propose_batch_evolution(candidates)
-                return json.dumps({
-                    "status": "success",
-                    "candidates": candidates,
-                    "batch_proposal": proposal
-                })
+                return json.dumps({"status": "success", "candidates": candidates, "batch_proposal": proposal})
 
             proposals = []
             for c in candidates:
                 proposal = sync_tool.evolution.propose_evolution(c)
-                proposals.append({
-                    "rule_id": c["rule_id"],
-                    "ratio": c["ratio"],
-                    "proposal": proposal
-                })
+                proposals.append({"rule_id": c["rule_id"], "ratio": c["ratio"], "proposal": proposal})
 
-            return json.dumps({
-                "status": "success",
-                "candidates": candidates,
-                "proposals": proposals
-            })
+            return json.dumps({"status": "success", "candidates": candidates, "proposals": proposals})
         except (LLMError, OSError, json.JSONDecodeError, KeyError) as e:
             return json.dumps({"status": "error", "error": str(e)})
 
@@ -75,6 +61,7 @@ def register(mcp: object, get_sync_tool: Callable) -> None:
         try:
             sync_tool = get_sync_tool(config=config, dry_run=False)
             from src.onboarding import OnboardingSession
+
             session = OnboardingSession(sync_tool.llm_client, root_dir=target_dir)
             session.start()
             return json.dumps({"status": "success", "template": template, "target": target_dir})

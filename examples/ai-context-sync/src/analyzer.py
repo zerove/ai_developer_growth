@@ -10,6 +10,7 @@ class GitAnalyzer:
     """
     Handles Git interactions to extract and filter changes using professional parsing.
     """
+
     def __init__(self, ignore_patterns: Optional[List[str]] = None):
         self.ignore_patterns = ignore_patterns or []
 
@@ -18,10 +19,7 @@ class GitAnalyzer:
         Gets the raw diff of the last commit.
         """
         try:
-            result = subprocess.run(
-                ["git", "diff", "HEAD~1", "HEAD"],
-                capture_output=True, text=True, check=True
-            )
+            result = subprocess.run(["git", "diff", "HEAD~1", "HEAD"], capture_output=True, text=True, check=True)
             return result.stdout
         except subprocess.CalledProcessError as e:
             logger.warning(f"Error getting git diff: {e}")
@@ -32,10 +30,7 @@ class GitAnalyzer:
         Gets the last commit message.
         """
         try:
-            result = subprocess.run(
-                ["git", "log", "-1", "--pretty=%B"],
-                capture_output=True, text=True, check=True
-            )
+            result = subprocess.run(["git", "log", "-1", "--pretty=%B"], capture_output=True, text=True, check=True)
             return result.stdout.strip()
         except subprocess.CalledProcessError as e:
             logger.warning(f"Error getting commit message: {e}")
@@ -88,6 +83,7 @@ class GitAnalyzer:
                     continue
             filtered_chunks.append("diff --git" + chunk)
         return "".join(filtered_chunks)
+
 
 # Test analyzer
 if __name__ == "__main__":

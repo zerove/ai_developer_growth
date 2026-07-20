@@ -8,6 +8,7 @@ class ParallelExecutor:
     """
     Executes a set of dependent sub-tasks in parallel using a thread pool.
     """
+
     def __init__(self, max_workers: int = 4):
         self.max_workers = max_workers
 
@@ -18,13 +19,12 @@ class ParallelExecutor:
         task_fn: The function to execute for each task (e.g., a call to LLM).
         """
         results = {}
-        pending_tasks = {t['id']: t for t in tasks}
+        pending_tasks = {t["id"]: t for t in tasks}
 
         while pending_tasks:
             # Find tasks that have all dependencies met
             ready_tasks = [
-                t for tid, t in pending_tasks.items()
-                if all(dep in results for dep in t.get('depends_on', []))
+                t for tid, t in pending_tasks.items() if all(dep in results for dep in t.get("depends_on", []))
             ]
 
             if not ready_tasks:
@@ -36,7 +36,7 @@ class ParallelExecutor:
 
             with concurrent.futures.ThreadPoolExecutor(max_workers=self.max_workers) as executor:
                 # Map task_fn to the ready tasks
-                future_to_task = {executor.submit(task_fn, t): t['id'] for t in ready_tasks}
+                future_to_task = {executor.submit(task_fn, t): t["id"] for t in ready_tasks}
 
                 for future in concurrent.futures.as_completed(future_to_task):
                     tid = future_to_task[future]
@@ -49,6 +49,6 @@ class ParallelExecutor:
 
             # Remove completed tasks from pending
             for t in ready_tasks:
-                pending_tasks.pop(t['id'], None)
+                pending_tasks.pop(t["id"], None)
 
         return results

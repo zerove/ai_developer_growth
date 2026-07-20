@@ -1,4 +1,5 @@
 """Google Gemini API provider."""
+
 import requests
 
 from .base import LLMProvider
@@ -16,16 +17,10 @@ class GeminiProvider(LLMProvider):
             "x-goog-api-key": self.api_key,
         }
         payload = {
-            "contents": [
-                {"role": "user", "parts": [{"text": prompt}]}
-            ],
-            "systemInstruction": {
-                "parts": [{"text": system_prompt}]
-            },
-            "generationConfig": {
-                "temperature": 0.3
-            }
+            "contents": [{"role": "user", "parts": [{"text": prompt}]}],
+            "systemInstruction": {"parts": [{"text": system_prompt}]},
+            "generationConfig": {"temperature": 0.3},
         }
         response = requests.post(url, json=payload, headers=headers, timeout=60)  # type: ignore[arg-type]
         response.raise_for_status()
-        return str(response.json()['candidates'][0]['content']['parts'][0]['text'])
+        return str(response.json()["candidates"][0]["content"]["parts"][0]["text"])

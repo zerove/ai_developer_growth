@@ -108,8 +108,11 @@ class StrategyRegistry:
         for strategy in self._strategies:
             try:
                 result = strategy.fix(
-                    code, error_output, file_path,
-                    test_dir=test_dir, runner=runner,
+                    code,
+                    error_output,
+                    file_path,
+                    test_dir=test_dir,
+                    runner=runner,
                 )
             except TypeError:
                 # Backward compatibility: strategy subclass doesn't accept

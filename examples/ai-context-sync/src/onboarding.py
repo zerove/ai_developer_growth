@@ -12,6 +12,7 @@ class OnboardingSession:
     """
     Interactive session to guide a new developer through the project architecture.
     """
+
     def __init__(self, llm_client: LLMClient, root_dir: str = "."):
         self.llm_client = llm_client
         self.slicer = ContextSlicer(root_dir)
@@ -76,7 +77,7 @@ class OnboardingSession:
         logger.info("=" * 60)
 
         choice = input("\nRun capability radar now? (y/n, default n): ").strip().lower()
-        if choice == 'y':
+        if choice == "y":
             self._run_capability_radar()
 
     def _run_capability_radar(self) -> None:

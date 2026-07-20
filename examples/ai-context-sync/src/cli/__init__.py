@@ -9,6 +9,7 @@ Commands are organized into separate modules under cli/commands/:
 - tools.py: scaffold, init, override, onboard, install_hook, report commands
 - flow.py: flow command
 """
+
 import functools
 from typing import Any
 
@@ -33,6 +34,7 @@ def cli_error_handler(func: Any) -> Any:
         except Exception as e:
             logger.exception(f"Unexpected error in {func.__name__}: {e}")
             raise typer.Exit(code=1)
+
     return wrapper
 
 

@@ -1,4 +1,5 @@
 """Evolution commands for AI-Context-Sync CLI."""
+
 import typer
 
 from ...core import AIContextSync
@@ -8,14 +9,16 @@ from .. import cli_error_handler
 @cli_error_handler
 def evolve(
     config: str = typer.Option(".ai-sync.json", help="Path to config file"),
-    batch: bool = typer.Option(False, "--batch", help="Batch process all proposals instead of interactive mode")
+    batch: bool = typer.Option(False, "--batch", help="Batch process all proposals instead of interactive mode"),
 ) -> None:
     """Analyze audit history and propose updates to the project specifications."""
     sync_tool = AIContextSync(config_path=config)
     candidates = sync_tool.evolution.analyze_conflicts()
 
     if not candidates:
-        typer.echo("✨ No strong patterns of specification conflict detected. Your specs are currently well-aligned with your practice.")
+        typer.echo(
+            "✨ No strong patterns of specification conflict detected. Your specs are currently well-aligned with your practice."
+        )
         return
 
     if batch:

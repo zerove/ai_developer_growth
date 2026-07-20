@@ -1,4 +1,5 @@
 """Sync and guard commands for AI-Context-Sync CLI."""
+
 import subprocess
 import sys
 
@@ -12,7 +13,7 @@ from .. import cli_error_handler
 def sync(
     config: str = typer.Option(".ai-sync.json", help="Path to config file"),
     dry_run: bool = typer.Option(False, "--dry-run", help="Simulate sync without writing files"),
-    detach: bool = typer.Option(False, "--detach", help="Run synchronization in background (detached process)")
+    detach: bool = typer.Option(False, "--detach", help="Run synchronization in background (detached process)"),
 ) -> None:
     """Synchronize project context with the last git commit."""
     if detach:
@@ -22,11 +23,7 @@ def sync(
             cmd.append("--dry-run")
 
         subprocess.Popen(
-            cmd,
-            stdout=subprocess.DEVNULL,
-            stderr=subprocess.DEVNULL,
-            stdin=subprocess.DEVNULL,
-            start_new_session=True
+            cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, stdin=subprocess.DEVNULL, start_new_session=True
         )
         typer.echo("🕒 Sync triggered in background. You can continue working!")
         return
@@ -36,11 +33,10 @@ def sync(
 
 
 @cli_error_handler
-def guard(
-    config: str = typer.Option(".ai-sync.json", help="Path to config file")
-) -> None:
+def guard(config: str = typer.Option(".ai-sync.json", help="Path to config file")) -> None:
     """Audit current changes against established ADRs to detect architectural drift."""
     from ...config import AppConfig
+
     app_config = AppConfig.load(config)
 
     sync_tool = AIContextSync(config_path=config)

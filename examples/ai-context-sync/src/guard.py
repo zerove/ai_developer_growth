@@ -9,6 +9,7 @@ class ArchitectureGuard:
     """
     Ensures that code changes align with established Architecture Decision Records (ADRs).
     """
+
     def __init__(self, client: LLMClient, adr_dir: str):
         self.client = client
         self.adr_dir = adr_dir
@@ -53,7 +54,10 @@ class ArchitectureGuard:
             "Please provide a 'Design Drift Report'. If the design is compliant, simply say 'All design aspects are compliant'."
         )
 
-        return self.client.generate(prompt, system_prompt=system_prompt) or "Error: LLM failed to generate design drift report."
+        return (
+            self.client.generate(prompt, system_prompt=system_prompt)
+            or "Error: LLM failed to generate design drift report."
+        )
 
     def check_drift_json(self, diff: str, commit_msg: str) -> List[dict]:
         """
@@ -82,9 +86,11 @@ class ArchitectureGuard:
         result = parse_llm_json(response, label="architecture guard")
         return result if result is not None else []
 
+
 # Test guard
 if __name__ == "__main__":
     from .llm_client import LLMClient
+
     client = LLMClient()
     guard = ArchitectureGuard(client, "docs/adr/")
     print(guard.check_design_drift("diff... ", "feat: use sqlite"))

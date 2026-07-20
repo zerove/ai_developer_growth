@@ -6,12 +6,13 @@ class PromptOptimizer:
     Dynamically adjusts the LLM's system prompt based on project scale,
     change complexity, and task type.
     """
+
     def __init__(self) -> None:
         # Define different strategy levels for synthesis
         self.strategies = {
             "granular": "Focus on the specific line-by-line changes. Provide high detail for every modified function and variable.",
             "balanced": "Balance between high-level intent and technical detail. Summarize the 'what' and 'why' for each module.",
-            "abstract": "Focus on the architectural impact and high-level goals. Group related changes into conceptual themes and ignore minor implementation details."
+            "abstract": "Focus on the architectural impact and high-level goals. Group related changes into conceptual themes and ignore minor implementation details.",
         }
 
     def _detect_task_type(self, commit_msg: str) -> str:
@@ -61,13 +62,15 @@ class PromptOptimizer:
             "Bugfix": "Focus on the root cause of the bug and how the fix resolves it without introducing regressions.",
             "Refactor": "Highlight the improvement in code quality, performance, or maintainability, and ensure no behavioral changes.",
             "Documentation": "Focus on the clarity and completeness of the added information.",
-            "General": "Provide a balanced summary of the changes."
+            "General": "Provide a balanced summary of the changes.",
         }
         return guidelines.get(task_type, guidelines["General"])
+
 
 # Test optimizer
 if __name__ == "__main__":
     from .profiles import LanguageProfile
+
     prof = LanguageProfile("Python", [], "Be Pythonic.")
     opt = PromptOptimizer()
     print(opt.optimize("diff... a lot of lines...", "feat: add auth", prof))

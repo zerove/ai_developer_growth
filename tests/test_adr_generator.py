@@ -1,4 +1,5 @@
 """Tests for adr_generator.py"""
+
 import importlib.util
 import os
 import shutil
@@ -7,8 +8,7 @@ import unittest
 from unittest.mock import MagicMock, patch
 
 spec = importlib.util.spec_from_file_location(
-    "adr_generator",
-    os.path.join(os.path.dirname(__file__), "..", "tools", "scripts", "adr_generator.py")
+    "adr_generator", os.path.join(os.path.dirname(__file__), "..", "tools", "scripts", "adr_generator.py")
 )
 adr_generator = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(adr_generator)
@@ -120,7 +120,19 @@ class TestGenerateFromLLMMode(unittest.TestCase):
         self.assertEqual(title, "Test Title")
         self.assertIn("Generated content", body)
 
-    @patch("builtins.input", side_effect=["Test Title", "Test brief description", "n", "Fallback Title", "Context", "Alternatives", "Decision", "Consequences"])
+    @patch(
+        "builtins.input",
+        side_effect=[
+            "Test Title",
+            "Test brief description",
+            "n",
+            "Fallback Title",
+            "Context",
+            "Alternatives",
+            "Decision",
+            "Consequences",
+        ],
+    )
     @patch.object(adr_generator, "generate_from_llm", return_value="## Context\nGenerated content")
     def test_generate_from_llm_mode_fallback_on_reject(self, mock_llm, mock_input):
         """Test fallback to interactive when user rejects LLM output."""

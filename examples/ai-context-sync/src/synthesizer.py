@@ -48,7 +48,9 @@ class ContextSynthesizer:
             "Title, Status, Context, Decision, Consequences."
         )
 
-        system_prompt += f"\n\n**Technical Context:** This is a {self.profile.name} project. Please use appropriate terminology."
+        system_prompt += (
+            f"\n\n**Technical Context:** This is a {self.profile.name} project. Please use appropriate terminology."
+        )
 
         prompt = (
             f"Commit Message: {commit_msg}\n"

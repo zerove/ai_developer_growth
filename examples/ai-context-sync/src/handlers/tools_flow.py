@@ -56,6 +56,8 @@ def register(mcp: object, get_sync_tool: Callable) -> None:
             return json.dumps({"status": "success", "result": result})
         except (LLMError, OSError, json.JSONDecodeError, KeyError) as e:
             return json.dumps({"status": "error", "error": str(e)})
+        except Exception as e:
+            return json.dumps({"status": "error", "error": str(e)})
 
     @mcp.tool()
     def ai_trace(adr_id: str, config: str = ".ai-sync.json") -> str:
@@ -88,6 +90,8 @@ def register(mcp: object, get_sync_tool: Callable) -> None:
             return json.dumps({"status": "success", "adr_id": adr_id, "chain": nodes})
         except (LLMError, OSError, json.JSONDecodeError, KeyError) as e:
             return json.dumps({"status": "error", "error": str(e)})
+        except Exception as e:
+            return json.dumps({"status": "error", "error": str(e)})
 
     @mcp.tool()
     def ai_explain(query: str, config: str = ".ai-sync.json") -> str:
@@ -108,4 +112,6 @@ def register(mcp: object, get_sync_tool: Callable) -> None:
             result = reasoner.explain_decision(query)
             return json.dumps({"status": "success", "explanation": result})
         except (LLMError, OSError, json.JSONDecodeError) as e:
+            return json.dumps({"status": "error", "error": str(e)})
+        except Exception as e:
             return json.dumps({"status": "error", "error": str(e)})

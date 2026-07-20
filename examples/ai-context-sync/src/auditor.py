@@ -59,6 +59,16 @@ class FeedbackManager:
         with open(self.history_file, "w", encoding="utf-8") as f:
             json.dump(self.history, f, indent=2)
 
+    def update_status(self, rule_id: str, status: str) -> None:
+        """Update the status of a violation in the history."""
+        updated = False
+        for item in self.history:
+            if item.get("rule_id") == rule_id:
+                item["status"] = status
+                updated = True
+        if updated:
+            self._persist()
+
 
 class SpecAuditor:
     """

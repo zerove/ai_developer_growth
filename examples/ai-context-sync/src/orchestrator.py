@@ -337,7 +337,7 @@ class WorkflowManager:
             if not written_files:
                 logger.warning(f"No valid file blocks found in output for {tid}")
             return f"Successfully implemented {tid} (single-shot)"
-        except (LLMError, OSError) as e:
+        except (LLMError, OSError, Exception) as e:
             logger.error(f"Error in single-shot sub-task {tid}: {e}")
             return f"Failed {tid}: {str(e)}"
 

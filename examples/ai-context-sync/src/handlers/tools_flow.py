@@ -9,6 +9,8 @@ import json
 import os
 from typing import Callable
 
+from src.core import LLMError
+
 
 def register(mcp: object, get_sync_tool: Callable) -> None:
     """Register flow/trace/explain tool handlers."""
@@ -53,7 +55,7 @@ def register(mcp: object, get_sync_tool: Callable) -> None:
                 task, approval_callback, initial_context=aggregated_context
             )
             return json.dumps({"status": "success", "result": result})
-        except Exception as e:
+        except (LLMError, OSError, json.JSONDecodeError, KeyError) as e:
             return json.dumps({"status": "error", "error": str(e)})
 
     @mcp.tool()
@@ -90,7 +92,7 @@ def register(mcp: object, get_sync_tool: Callable) -> None:
                 "adr_id": adr_id,
                 "chain": nodes
             })
-        except Exception as e:
+        except (LLMError, OSError, json.JSONDecodeError, KeyError) as e:
             return json.dumps({"status": "error", "error": str(e)})
 
     @mcp.tool()
@@ -110,5 +112,5 @@ def register(mcp: object, get_sync_tool: Callable) -> None:
             reasoner = DecisionReasoner(sync_tool.llm_client, sync_tool.config.settings.adr_dir)
             result = reasoner.explain_decision(query)
             return json.dumps({"status": "success", "explanation": result})
-        except Exception as e:
+        except (LLMError, OSError, json.JSONDecodeError) as e:
             return json.dumps({"status": "error", "error": str(e)})

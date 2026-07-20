@@ -297,7 +297,7 @@ ai-learning-method → automated-bug-fixing → full-cycle-workflow → ide-best
 | 学习层 | 3 | ✅ 完整 |
 | 效率层 | 18 | ✅ 完整 |
 | 工具层 | 2 | ✅ 完整 |
-| 案例库 | 10 | ✅ 达标 |
+| 案例库 | 11 | ✅ 达标 |
 | 代码示例 | 2 | ✅ 基础 |
 | 学习路径 | 7 | ✅ 完整 |
 

@@ -1,0 +1,69 @@
+version: 2
+updates:
+  - package-ecosystem: "pip"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "09:00"
+    open-pull-requests-limit: 10
+    labels:
+      - "dependencies"
+      - "pip"
+    commit-message:
+      prefix: "deps(pip)"
+
+  - package-ecosystem: "pip"
+    directory: "/examples/ai-context-sync"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "09:00"
+    open-pull-requests-limit: 5
+    labels:
+      - "dependencies"
+      - "pip"
+      - "ai-context-sync"
+    commit-message:
+      prefix: "deps(ai-context-sync)"
+
+  - package-ecosystem: "pip"
+    directory: "/examples/self-correction-loop"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "09:00"
+    open-pull-requests-limit: 5
+    labels:
+      - "dependencies"
+      - "pip"
+      - "self-correction-loop"
+    commit-message:
+      prefix: "deps(self-correction-loop)"
+
+  - package-ecosystem: "pip"
+    directory: "/examples/multi-agent-orch"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "09:00"
+    open-pull-requests-limit: 5
+    labels:
+      - "dependencies"
+      - "pip"
+      - "multi-agent-orch"
+    commit-message:
+      prefix: "deps(multi-agent-orch)"
+
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "monthly"
+      day: "first monday"
+      time: "09:00"
+    open-pull-requests-limit: 5
+    labels:
+      - "dependencies"
+      - "github-actions"
+    commit-message:
+      prefix: "deps(actions)"

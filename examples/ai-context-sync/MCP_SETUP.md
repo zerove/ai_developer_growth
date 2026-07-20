@@ -20,7 +20,7 @@ pip install -r requirements.txt
     "ai-context-sync": {
       "command": "python",
       "args": ["-m", "src.mcp_server"],
-      "cwd": "/home/zeron/dev/ai_developer_growth/examples/ai-context-sync",
+      "cwd": "$PWD",
       "enabled": true
     }
   }
@@ -35,7 +35,7 @@ pip install -r requirements.txt
   "mcp": {
     "ai-context-sync": {
       "command": "python3",
-      "args": ["/home/zeron/dev/ai_developer_growth/examples/ai-context-sync/src/mcp_server.py"],
+      "args": ["$PWD/src/mcp_server.py"],
       "enabled": true
     }
   }
@@ -86,7 +86,7 @@ pip install -r requirements.txt
 ### 手动测试 MCP 服务器
 
 ```bash
-cd /home/zeron/dev/ai_developer_growth/examples/ai-context-sync
+cd examples/ai-context-sync
 python -m src.mcp_server
 ```
 
@@ -113,7 +113,7 @@ export AI_SYNC_KEY="your-api-key"
 
 2. 检查 Python 路径：
    ```bash
-   cd /home/zeron/dev/ai_developer_growth/examples/ai-context-sync
+   cd examples/ai-context-sync
    python -c "import src.mcp_server; print('OK')"
    ```
 

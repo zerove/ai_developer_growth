@@ -99,7 +99,7 @@ class OnboardingSession:
                 logger.info("💡 Tip: Run it again next quarter to track your growth.")
             else:
                 logger.warning("⚠️ Capability radar exited with errors")
-        except Exception as e:
+        except (OSError, subprocess.CalledProcessError) as e:
             logger.error(f"❌ Failed to run capability radar: {e}")
 
     def _find_files_for_area(self, area: str) -> List[str]:

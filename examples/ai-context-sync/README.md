@@ -49,7 +49,7 @@ python3 -m src.cli init
     "ai-context-sync": {
       "command": "python",
       "args": ["-m", "src.mcp_server"],
-      "cwd": "/home/zeron/dev/ai_developer_growth/examples/ai-context-sync",
+      "cwd": "$PWD",
       "enabled": true
     }
   }

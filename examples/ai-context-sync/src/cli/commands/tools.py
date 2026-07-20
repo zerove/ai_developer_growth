@@ -1,4 +1,5 @@
 """Tool commands for AI-Context-Sync CLI."""
+import json
 import os
 import shutil
 import subprocess
@@ -59,7 +60,6 @@ def init(
     from ...config import AppConfig
     default_config = AppConfig()
     with open(config, "w") as f:
-        import json
         def d_to_dict(obj):
             if hasattr(obj, "__dict__"):
                 return {k: d_to_dict(v) for k, v in obj.__dict__.items()}

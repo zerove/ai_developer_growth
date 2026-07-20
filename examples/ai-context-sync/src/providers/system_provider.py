@@ -1,6 +1,7 @@
 """Auto-detect and use LLM from jcode/opencode environment."""
 import json
 import os
+import re
 from typing import Optional
 
 import requests
@@ -76,7 +77,7 @@ class SystemProvider(LLMProvider):
                                 break
                 logger.info(f"Loaded jcode config: provider={provider}, model={model}")
                 return True
-        except Exception as e:
+        except (OSError, json.JSONDecodeError) as e:
             logger.debug(f"Failed to load jcode config: {e}")
         return False
 
@@ -99,12 +100,11 @@ class SystemProvider(LLMProvider):
                     self._detected_model = model
                     logger.info(f"Loaded opencode config: provider={provider}, model={model}")
                     return True
-            except Exception as e:
+            except (OSError, json.JSONDecodeError) as e:
                 logger.debug(f"Failed to load opencode config from {config_path}: {e}")
         return False
 
     def _parse_toml_value(self, content: str, key: str) -> Optional[str]:
-        import re
         pattern = rf'^{key}\s*=\s*["\']?([^"\'\n]+)["\']?\s*$'
         match = re.search(pattern, content, re.MULTILINE)
         return match.group(1).strip() if match else None
@@ -145,12 +145,12 @@ class SystemProvider(LLMProvider):
         logger.info(f"Using detected provider: {provider}/{use_model}")
         try:
             return provider_instance.generate(prompt, system_prompt, use_model)
-        except Exception as e:
+        except (LLMError, requests.RequestException) as e:
             if provider == "ollama":
                 raise
             logger.warning(f"Provider {provider} failed: {e}, trying Ollama fallback")
             try:
                 ollama = OllamaProvider()
                 return ollama.generate(prompt, system_prompt, use_model)
-            except Exception:
+            except (LLMError, requests.RequestException):
                 raise LLMError(f"All providers failed. Last error: {e}") from e

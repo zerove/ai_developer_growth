@@ -8,6 +8,8 @@ from __future__ import annotations
 import json
 from typing import Callable
 
+from src.core import LLMError
+
 
 def register(mcp: object, get_sync_tool: Callable) -> None:
     """Register evolve/scaffold tool handlers."""
@@ -56,7 +58,7 @@ def register(mcp: object, get_sync_tool: Callable) -> None:
                 "candidates": candidates,
                 "proposals": proposals
             })
-        except Exception as e:
+        except (LLMError, OSError, json.JSONDecodeError, KeyError) as e:
             return json.dumps({"status": "error", "error": str(e)})
 
     @mcp.tool()
@@ -76,5 +78,5 @@ def register(mcp: object, get_sync_tool: Callable) -> None:
             session = OnboardingSession(sync_tool.llm_client, root_dir=target_dir)
             session.start()
             return json.dumps({"status": "success", "template": template, "target": target_dir})
-        except Exception as e:
+        except (LLMError, OSError, json.JSONDecodeError) as e:
             return json.dumps({"status": "error", "error": str(e)})

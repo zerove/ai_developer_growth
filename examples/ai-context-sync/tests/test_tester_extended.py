@@ -1,7 +1,6 @@
 """Extended tests for src/tester.py — cover _sanitize_env, pytest fallback, timeout bytes, OSError."""
 import os
 import subprocess
-import sys
 from unittest.mock import MagicMock, patch
 
 from src.tester import TestRunner

@@ -1,13 +1,13 @@
 """Tests for examples/multi-agent-orch/demo.py"""
 
-import unittest
-from unittest.mock import patch, MagicMock
-import sys
 import os
+import sys
+import unittest
+from unittest.mock import patch
 
 # Add parent directory to path so we can import demo
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
-from demo import MockLLM, Agent, WorkflowOrchestrator
+from demo import Agent, MockLLM, WorkflowOrchestrator
 
 
 class TestMockLLM(unittest.TestCase):
@@ -111,10 +111,18 @@ class TestWorkflowOrchestrator(unittest.TestCase):
     def test_execute_full_workflow(self, mock_print, mock_sleep):
         """Test the happy path: PM -> Architect -> Coder -> Reviewer(PASS)."""
         orch = WorkflowOrchestrator()
-        mock_pm = patch.object(orch.pm, "run", return_value="[PRD] Test PRD")
-        mock_arch = patch.object(orch.architect, "run", return_value="[Design] Test Design")
-        mock_coder = patch.object(orch.coder, "run", return_value="def convert(): pass")
-        mock_review = patch.object(orch.reviewer, "run", return_value="PASS: Looks good.")
+        mock_pm = patch.object(
+            orch.pm, "run", return_value="[PRD] Test PRD"
+        )
+        mock_arch = patch.object(
+            orch.architect, "run", return_value="[Design] Test Design"
+        )
+        mock_coder = patch.object(
+            orch.coder, "run", return_value="def convert(): pass"
+        )
+        mock_review = patch.object(
+            orch.reviewer, "run", return_value="PASS: Looks good."
+        )
 
         m_pm = mock_pm.start()
         m_arch = mock_arch.start()
@@ -141,12 +149,14 @@ class TestWorkflowOrchestrator(unittest.TestCase):
         mock_pm = patch.object(orch.pm, "run", return_value="[PRD] Test")
         mock_arch = patch.object(orch.architect, "run", return_value="[Design] Test")
         mock_coder = patch.object(orch.coder, "run", return_value="def code(): pass")
-        mock_review = patch.object(orch.reviewer, "run", return_value="FAIL: Still broken.")
+        mock_review = patch.object(
+            orch.reviewer, "run", return_value="FAIL: Still broken."
+        )
 
-        m_pm = mock_pm.start()
-        m_arch = mock_arch.start()
+        _m_pm = mock_pm.start()
+        _m_arch = mock_arch.start()
         m_coder = mock_coder.start()
-        m_review = mock_review.start()
+        _m_review = mock_review.start()
         try:
             orch.execute("Build something")
             # Iterations 1, 2, 3 (each fails, iter > 3 breaks at 4)
@@ -198,7 +208,7 @@ class TestIntegrationWorkflow(unittest.TestCase):
     def test_reviewer_drives_fix_loop(self, mock_print, mock_sleep):
         """测试 Reviewer FAIL → Coder FIX → Reviewer PASS 的迭代循环"""
         orch = WorkflowOrchestrator()
-        
+
         # Mock reviewer 先返回 FAIL，再返回 PASS
         call_count = [0]
         def reviewer_side_effect(code):
@@ -206,7 +216,7 @@ class TestIntegrationWorkflow(unittest.TestCase):
             if "error handling" in code:
                 return "PASS: Code looks good now."
             return "FAIL: Missing error handling for invalid inputs."
-        
+
         orch.reviewer.run = reviewer_side_effect
         orch.execute("Build a converter")
 
@@ -220,35 +230,35 @@ class TestIntegrationWorkflow(unittest.TestCase):
     def test_agent_role_consistency(self, mock_print, mock_sleep):
         """测试各 Agent 角色在整个工作流中保持一致"""
         orch = WorkflowOrchestrator()
-        
+
         # 记录每个 agent 被调用时的角色
         roles_called = []
         original_pm_run = orch.pm.run
         original_arch_run = orch.architect.run
         original_coder_run = orch.coder.run
         original_review_run = orch.reviewer.run
-        
+
         def track_pm(input_text):
             roles_called.append(orch.pm.role)
             return original_pm_run(input_text)
-        
+
         def track_arch(input_text):
             roles_called.append(orch.architect.role)
             return original_arch_run(input_text)
-        
+
         def track_coder(input_text):
             roles_called.append(orch.coder.role)
             return original_coder_run(input_text)
-        
+
         def track_reviewer(input_text):
             roles_called.append(orch.reviewer.role)
             return original_review_run(input_text)
-        
+
         orch.pm.run = track_pm
         orch.architect.run = track_arch
         orch.coder.run = track_coder
         orch.reviewer.run = track_reviewer
-        
+
         orch.execute("Build a tool")
 
         # 验证角色顺序：PM → Architect → Coder → Reviewer

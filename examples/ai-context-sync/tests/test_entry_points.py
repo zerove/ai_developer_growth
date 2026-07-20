@@ -1,8 +1,7 @@
 """Smoke tests for entry point modules."""
-import os
-import sys
-import subprocess
 import importlib.util
+import subprocess
+import sys
 from pathlib import Path
 
 import pytest
@@ -48,7 +47,7 @@ def test_main_cli_help():
 
 def test_mcp_server_cli_help():
     """Test mcp_server can be run with --help."""
-    result = subprocess.run(
+    _result = subprocess.run(
         [sys.executable, "-m", "src.mcp_server", "--help"],
         cwd=Path(__file__).parent.parent,
         capture_output=True,

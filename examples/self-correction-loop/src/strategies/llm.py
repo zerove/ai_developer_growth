@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import os
 
-from src.strategies.base import Strategy, StrategyKind
+from strategies.base import Strategy, StrategyKind
 
 # Lazy import: openai may not be installed in demo mode.
 _openai: object | None = None

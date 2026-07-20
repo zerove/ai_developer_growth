@@ -2,13 +2,13 @@
 
 import unittest
 
-from src.agents import ArchitectAgent, CoderAgent, MockLLM, PMAgent, ReviewerAgent
-from src.config import WorkflowConfig
-from src.errors import AgentFailureError, MaxIterationsError
-from src.orchestration import FanOutOrchestrator, WaterfallOrchestrator
-from src.orchestration.fan_out import FanOutResult
-from src.orchestration.waterfall import WorkflowResult
-from src.protocol import Agent, AgentResponse, Message, MessageRole
+from agents import ArchitectAgent, CoderAgent, MockLLM, PMAgent, ReviewerAgent
+from config import WorkflowConfig
+from errors import AgentFailureError, MaxIterationsError
+from orchestration import FanOutOrchestrator, WaterfallOrchestrator
+from orchestration.fan_out import FanOutResult
+from orchestration.waterfall import WorkflowResult
+from protocol import Agent, AgentResponse, Message, MessageRole
 
 
 def _make_agents() -> dict[MessageRole, Agent]:

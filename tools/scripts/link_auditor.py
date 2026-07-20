@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
-import re
 import os
+import re
 import sys
+
 
 def _build_index(directory: str) -> dict[str, str]:
     """Build a lookup map of all .md files in the vault.
@@ -46,6 +47,13 @@ def _check_target(target: str, index: dict[str, str], directory: str, file_dir: 
     if rel + ".md" in index:
         return True
 
+    # Check absolute path on filesystem (for links outside scanned directory)
+    abs_path = os.path.join(file_dir, target)
+    if os.path.exists(abs_path):
+        return True
+    if os.path.exists(abs_path + ".md"):
+        return True
+
     # Basename match (Obsidian searches all subdirs)
     name = os.path.splitext(os.path.basename(target))[0]
     if name in index:
@@ -62,7 +70,8 @@ def _check_target(target: str, index: dict[str, str], directory: str, file_dir: 
 def find_broken_links(directory: str) -> list[tuple[str, str]]:
     """Scan directory for .md files, extract [[wikilinks]], report broken ones."""
     broken: list[tuple[str, str]] = []
-    link_pattern = re.compile(r"\[\[([^\[\]]+?)(?:\|[^\[\]]*)?\]\]")
+    # Support both | and \| as display text separators
+    link_pattern = re.compile(r"\[\[([^\[\]]+?)(?:\\?\|[^\[\]]*)?\]\]")
     index = _build_index(directory)
 
     for root, _, files in os.walk(directory):
@@ -70,7 +79,7 @@ def find_broken_links(directory: str) -> list[tuple[str, str]]:
             if not file.endswith(".md"):
                 continue
             file_path = os.path.join(root, file)
-            with open(file_path, "r") as f:
+            with open(file_path) as f:
                 content = f.read()
             for match in link_pattern.finditer(content):
                 target_path = match.group(1).strip()

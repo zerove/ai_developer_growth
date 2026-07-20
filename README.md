@@ -117,6 +117,7 @@ ai_developer_growth/
 ├── UBIQUITOUS_LANGUAGE.md       # 领域术语表
 ├── CONTEXT.md                  # 项目上下文 (AI 需要读取)
 ├── INDEX.md                    # 知识地图入口
+├── AUDIT_REPORT.md             # 最近审计报告
 ├── CONTRIBUTING.md             # 贡献指南
 ├── FEEDBACK.md                 # 反馈指南
 ├── ROADMAP.md                  # 项目路线图
@@ -154,15 +155,21 @@ ai_developer_growth/
 │   │   │   ├── providers/      # LLM 提供者 (7 文件)
 │   │   │   └── handlers/       # MCP 处理器 (5 文件)
 │   │   └── tests/              # 单元 + 集成测试
-│   ├── self-correction-loop/
+│   ├── ai-task-prioritizer/
+│   ├── capability-radar/       # 能力雷达图
+│   │   ├── src/
+│   │   └── tests/
 │   ├── multi-agent-orch/
 │   │   └── tests/              # 集成测试
-│   └── ai-task-prioritizer/
+│   └── self-correction-loop/
+├── scripts/                    # 项目脚本
 ├── tests/                      # 根目录测试 (4 文件)
 ├── tools/scripts/              # 工具脚本
-├── templates/                  # 模板文件
+├── templates/                  # 模板文件 (9 个)
 ├── .github/                    # GitHub 配置
-│   └── workflows/              # CI/CD 工作流
+│   ├── workflows/              # CI/CD 工作流
+│   ├── ISSUE_TEMPLATE/         # Issue 模板
+│   └── PULL_REQUEST_TEMPLATE/  # PR 模板
 ├── .omo/                       # OpenCode 配置
 └── zed-config/                 # Zed IDE 配置
 ```

@@ -2,11 +2,11 @@
 
 import unittest
 
-from src.agents import ArchitectAgent, CoderAgent, MockLLM, PMAgent, ReviewerAgent
-from src.agents.base import BaseAgent
-from src.config import AgentConfig
-from src.errors import AgentFailureError
-from src.protocol import AgentResponse, Message, MessageRole
+from agents import ArchitectAgent, CoderAgent, MockLLM, PMAgent, ReviewerAgent
+from agents.base import BaseAgent
+from config import AgentConfig
+from errors import AgentFailureError
+from protocol import AgentResponse, Message, MessageRole
 
 
 class TestMockLLM(unittest.TestCase):
@@ -156,7 +156,7 @@ class TestAgentProtocolCompliance(unittest.TestCase):
     """Verify all agents satisfy the Agent protocol."""
 
     def test_all_agents_satisfy_protocol(self) -> None:
-        from src.protocol import Agent
+        from protocol import Agent
 
         agents = [PMAgent(), ArchitectAgent(), CoderAgent(), ReviewerAgent()]
         for agent in agents:

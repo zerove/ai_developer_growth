@@ -2,7 +2,7 @@
 import os
 import shutil
 import tempfile
-from unittest.mock import MagicMock, call, patch
+from unittest.mock import MagicMock, patch
 
 from src.onboarding import OnboardingSession
 
@@ -82,7 +82,7 @@ class TestStartExploreMultipleAreas:
 
         session = OnboardingSession(mock_llm, self.tmpdir)
 
-        with patch("builtins.input", side_effect=["auth", "api", "exit"]), \
+        with patch("builtins.input", side_effect=["n", "auth", "api", "exit"]), \
              patch("src.onboarding.logger"):
             session.start()
 
@@ -97,7 +97,7 @@ class TestStartExploreMultipleAreas:
 
         session = OnboardingSession(mock_llm, self.tmpdir)
 
-        with patch("builtins.input", side_effect=["database", "exit"]), \
+        with patch("builtins.input", side_effect=["n", "database", "exit"]), \
              patch("src.onboarding.logger"):
             session.start()
 

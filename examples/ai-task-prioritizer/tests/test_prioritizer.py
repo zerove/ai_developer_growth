@@ -1,15 +1,16 @@
-import pytest
-import tempfile
 import os
-from unittest.mock import MagicMock, patch
-from io import StringIO
 import sys
+import tempfile
+from io import StringIO
+from unittest.mock import MagicMock, patch
+
+import pytest
 
 # Import modules
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
-from prioritizer import Prioritizer
 from llm_client import LLMClient
 from main import main
+from prioritizer import Prioritizer
 
 
 def test_prioritize_sorting():
@@ -20,15 +21,15 @@ def test_prioritize_sorting():
         {"task": "Task B", "value": 10, "effort": 2}, # Score 5.0
         {"task": "Task C", "value": 2, "effort": 8}, # Score 0.25
     ]
-    
+
     prioritizer = Prioritizer(mock_client)
     results = prioritizer.prioritize(["Task A", "Task B", "Task C"])
-    
+
     # Check sorting order (B, A, C)
     assert results[0]["task"] == "Task B"
     assert results[1]["task"] == "Task A"
     assert results[2]["task"] == "Task C"
-    
+
     # Check score calculation
     assert results[0]["score"] == 5.0
     assert results[2]["score"] == 0.25
@@ -43,10 +44,10 @@ def test_prioritizer_categories():
         {"task": "Fill-in", "value": 3, "effort": 2},        # Fill-ins
         {"task": "Thankless", "value": 2, "effort": 5},      # Thankless Task
     ]
-    
+
     prioritizer = Prioritizer(mock_client)
     results = prioritizer.prioritize(["Quick Win", "Major Project", "Fill-in", "Thankless"])
-    
+
     categories = {r["task"]: r["category"] for r in results}
     assert categories["Quick Win"] == "Quick Win (立即执行)"
     assert categories["Major Project"] == "Major Project (计划执行)"
@@ -60,9 +61,9 @@ def test_prioritizer_division_by_zero():
     mock_client.get_scores.return_value = [
         {"task": "Zero Effort", "value": 5, "effort": 0},
     ]
-    
+
     prioritizer = Prioritizer(mock_client)
-    
+
     # Current code crashes on division by zero
     with pytest.raises(ZeroDivisionError):
         prioritizer.prioritize(["Zero Effort"])
@@ -72,7 +73,7 @@ def test_llm_client_init():
     """Test LLMClient initialization (covers lines 5-8)."""
     client = LLMClient(api_key="test-key")
     assert client.api_key == "test-key"
-    
+
     # Test with env var
     with patch.dict(os.environ, {"LLM_API_KEY": "env-key"}):
         client = LLMClient()
@@ -92,7 +93,7 @@ def test_llm_client_get_scores():
     with patch.dict(os.environ, {"LLM_API_KEY": "test-key"}):
         client = LLMClient()
         results = client.get_scores(["Task 1", "Task 2"])
-        
+
         assert len(results) == 2
         assert results[0]["task"] == "Task 1"
         assert "value" in results[0]
@@ -106,7 +107,7 @@ def test_llm_client_build_prompt():
     """Test _build_prompt method (covers lines 18-23)."""
     client = LLMClient(api_key="test")
     prompt = client._build_prompt(["Task A", "Task B"])
-    
+
     assert "Value (1-10)" in prompt
     assert "Effort (1-10)" in prompt
     assert "Return a JSON object" in prompt
@@ -122,7 +123,7 @@ def test_main_with_stdin(capsys):
         {"task": "Task 2", "value": 10, "effort": 2},
         {"task": "Task 3", "value": 3, "effort": 3},
     ]
-    
+
     with patch("sys.stdin", StringIO(input_data)):
         with patch("main.LLMClient", return_value=mock_client):
             with patch("main.Prioritizer") as mock_prioritizer:
@@ -133,11 +134,11 @@ def test_main_with_stdin(capsys):
                     {"task": "Task 1", "value": 5, "effort": 5, "score": 1.0, "category": "Fill-ins"},
                 ]
                 mock_prioritizer.return_value = mock_prioritizer_instance
-                
+
                 # Simulate command line args
                 with patch.object(sys, "argv", ["main.py", "-"]):
                     main()
-    
+
     captured = capsys.readouterr()
     assert "Analyzing 3 tasks" in captured.out
     assert "Task 2" in captured.out
@@ -148,14 +149,14 @@ def test_main_with_file(capsys):
     with tempfile.NamedTemporaryFile(mode="w", suffix=".txt", delete=False) as f:
         f.write("Task 1\nTask 2\n")
         temp_file = f.name
-    
+
     try:
         mock_client = MagicMock()
         mock_client.get_scores.return_value = [
             {"task": "Task 1", "value": 5, "effort": 5},
             {"task": "Task 2", "value": 10, "effort": 2},
         ]
-        
+
         with patch("main.LLMClient", return_value=mock_client):
             with patch("main.Prioritizer") as mock_prioritizer:
                 mock_prioritizer_instance = MagicMock()
@@ -164,10 +165,10 @@ def test_main_with_file(capsys):
                     {"task": "Task 1", "value": 5, "effort": 5, "score": 1.0, "category": "Fill-ins"},
                 ]
                 mock_prioritizer.return_value = mock_prioritizer_instance
-                
+
                 with patch.object(sys, "argv", ["main.py", temp_file]):
                     main()
-        
+
         captured = capsys.readouterr()
         assert "Analyzing 2 tasks" in captured.out
     finally:
@@ -180,7 +181,7 @@ def test_main_file_not_found(capsys):
         with pytest.raises(SystemExit) as exc_info:
             main()
         assert exc_info.value.code == 1
-    
+
     captured = capsys.readouterr()
     assert "File nonexistent.txt not found" in captured.out
 
@@ -190,7 +191,7 @@ def test_main_empty_input(capsys):
     with patch("sys.stdin", StringIO("")):
         with patch.object(sys, "argv", ["main.py", "-"]):
             main()
-    
+
     captured = capsys.readouterr()
     assert "No tasks found" in captured.out
 
@@ -201,16 +202,16 @@ def test_main_exception_handling(capsys):
         with patch("main.LLMClient") as mock_llm:
             mock_client = MagicMock()
             mock_llm.return_value = mock_client
-            
+
             with patch("main.Prioritizer") as mock_prioritizer:
                 mock_prioritizer_instance = MagicMock()
                 mock_prioritizer_instance.prioritize.side_effect = Exception("Test error")
                 mock_prioritizer.return_value = mock_prioritizer_instance
-                
+
                 with patch.object(sys, "argv", ["main.py", "-"]):
                     with pytest.raises(SystemExit) as exc_info:
                         main()
                     assert exc_info.value.code == 1
-    
+
     captured = capsys.readouterr()
     assert "Error: Test error" in captured.out

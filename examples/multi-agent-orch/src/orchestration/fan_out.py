@@ -5,9 +5,9 @@ from __future__ import annotations
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from dataclasses import dataclass, field
 
-from src.config import WorkflowConfig
-from src.errors import AgentFailureError
-from src.protocol import Agent, AgentResponse, Message, MessageRole
+from config import WorkflowConfig
+from errors import AgentFailureError
+from protocol import Agent, AgentResponse, Message, MessageRole
 
 
 @dataclass

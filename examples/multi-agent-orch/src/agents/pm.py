@@ -2,9 +2,9 @@
 
 from __future__ import annotations
 
-from src.agents.base import BaseAgent, MockLLM
-from src.config import AgentConfig
-from src.protocol import AgentResponse, Message, MessageRole
+from agents.base import BaseAgent, MockLLM
+from config import AgentConfig
+from protocol import AgentResponse, Message, MessageRole
 
 
 class PMAgent(BaseAgent):

@@ -1,16 +1,12 @@
 """Assessment Engine - Runs the capability radar self-assessment."""
 
 import json
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from datetime import datetime
-from pathlib import Path
-from typing import Dict, List, Optional, Tuple
 
 from capability_model import (
     Dimension,
     Level,
-    LevelDescriptor,
-    DIMENSION_DESCRIPTORS,
     get_descriptor,
 )
 
@@ -30,11 +26,11 @@ class AssessmentResult:
     timestamp: str
     overall_score: float  # 0-4 float
     overall_level: Level
-    dimension_scores: Dict[Dimension, float]  # 0-4 float
-    dimension_levels: Dict[Dimension, Level]  # rounded
-    answers: List[Answer]
-    radar_data: Dict  # for visualization
-    recommendations: List[str]
+    dimension_scores: dict[Dimension, float]  # 0-4 float
+    dimension_levels: dict[Dimension, Level]  # rounded
+    answers: list[Answer]
+    radar_data: dict  # for visualization
+    recommendations: list[str]
     weakest_dimension: Dimension
     strongest_dimension: Dimension
 
@@ -117,7 +113,7 @@ class AssessmentEngine:
     }
 
     def __init__(self):
-        self.answers: List[Answer] = []
+        self.answers: list[Answer] = []
 
     def run_interactive(self) -> AssessmentResult:
         """Run interactive CLI assessment."""
@@ -161,7 +157,7 @@ class AssessmentEngine:
 
     def run_from_json(self, json_path: str) -> AssessmentResult:
         """Run assessment from JSON file (for automation/CI)."""
-        with open(json_path, "r", encoding="utf-8") as f:
+        with open(json_path, encoding="utf-8") as f:
             data = json.load(f)
 
         for item in data.get("answers", []):
@@ -177,7 +173,7 @@ class AssessmentEngine:
     def calculate_result(self) -> AssessmentResult:
         """Calculate final scores from answers."""
         # Aggregate by dimension (weighted by confidence)
-        dim_scores: Dict[Dimension, List[Tuple[Level, int]]] = {d: [] for d in Dimension}
+        dim_scores: dict[Dimension, list[tuple[Level, int]]] = {d: [] for d in Dimension}
         for ans in self.answers:
             dim_scores[ans.dimension].append((ans.selected_level, ans.confidence))
 
@@ -232,9 +228,9 @@ class AssessmentEngine:
 
     def _generate_recommendations(
         self,
-        levels: Dict[Dimension, Level],
+        levels: dict[Dimension, Level],
         weakest: Dimension
-    ) -> List[str]:
+    ) -> list[str]:
         """Generate personalized recommendations."""
         recs = []
 
@@ -259,7 +255,7 @@ class AssessmentEngine:
                 )
 
         # Growth path
-        if all(l.value >= 2 for l in levels.values()):
+        if all(lvl.value >= 2 for lvl in levels.values()):
             recs.append(
                 "🚀 你已是 L2+ AI 原生工程师，建议下一阶段目标：\n"
                 "   - 产出 3 个 ADR + 1 个可复用 Prompt Chain + 80%+ 覆盖率模块 (冲 L3)\n"
@@ -274,7 +270,7 @@ class AssessmentEngine:
             "timestamp": result.timestamp,
             "overall_level": result.overall_level.name,
             "dimension_scores": {d.value: s for d, s in result.dimension_scores.items()},
-            "dimension_levels": {d.value: l.name for d, l in result.dimension_levels.items()},
+            "dimension_levels": {d.value: lvl.name for d, lvl in result.dimension_levels.items()},
             "weakest_dimension": result.weakest_dimension.value,
             "strongest_dimension": result.strongest_dimension.value,
             "recommendations": result.recommendations,
@@ -298,7 +294,7 @@ class AssessmentEngine:
             "# 能力雷达图评估报告",
             f"\n**评估时间**: {result.timestamp}",
             f"**综合等级**: {result.overall_level.label}",
-            f"\n## 维度得分",
+            "\n## 维度得分",
             "\n| 维度 | 得分 (0-4) | 等级 |",
             "|------|------------|------|",
         ]
@@ -358,15 +354,14 @@ def print_result(result: AssessmentResult) -> None:
 
 def print_radar_chart(result: AssessmentResult) -> None:
     """Print simple ASCII radar chart."""
-    import math
-    
+
     # 5 dimensions, create a simple radial chart
     labels = [d.label for d in Dimension]
     scores = [result.dimension_scores[d] for d in Dimension]
-    
+
     # Scale for display (max 4.0 -> 20 chars)
     scale = 20 / 4.0
-    
+
     # Print each dimension as a spoke
     for i, (label, score) in enumerate(zip(labels, scores)):
         bar_len = int(score * scale)

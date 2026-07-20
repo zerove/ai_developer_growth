@@ -4,9 +4,9 @@ from __future__ import annotations
 
 import os
 import tempfile
-from unittest.mock import patch, MagicMock
+from unittest.mock import MagicMock, patch
 
-from self_correct import main, run_tests, get_ai_fix, apply_fix
+from self_correct import apply_fix, get_ai_fix, main, run_tests
 
 
 class TestRunTests:
@@ -34,7 +34,7 @@ class TestApplyFix:
             path = f.name
         try:
             apply_fix(path, "x = 2")
-            with open(path, "r") as f:
+            with open(path) as f:
                 content = f.read()
             assert content == "x = 2"
         finally:

@@ -2,7 +2,6 @@
 
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Dict, List, Optional
 
 
 class Level(Enum):
@@ -61,12 +60,12 @@ class LevelDescriptor:
     """Descriptor for a specific level in a dimension."""
     level: Level
     description: str
-    typical_behaviors: List[str] = field(default_factory=list)
+    typical_behaviors: list[str] = field(default_factory=list)
     key_transition: str = ""
 
 
 # Dimension level descriptors - core of the model
-DIMENSION_DESCRIPTORS: Dict[Dimension, Dict[Level, LevelDescriptor]] = {
+DIMENSION_DESCRIPTORS: dict[Dimension, dict[Level, LevelDescriptor]] = {
     Dimension.PRODUCT: {
         Level.L0: LevelDescriptor(
             level=Level.L0,
@@ -215,6 +214,6 @@ def get_descriptor(dimension: Dimension, level: Level) -> LevelDescriptor:
     return DIMENSION_DESCRIPTORS[dimension][level]
 
 
-def get_all_descriptors(dimension: Dimension) -> Dict[Level, LevelDescriptor]:
+def get_all_descriptors(dimension: Dimension) -> dict[Level, LevelDescriptor]:
     """Get all level descriptors for a dimension."""
     return DIMENSION_DESCRIPTORS[dimension]

@@ -1,5 +1,7 @@
 import unittest
-from src.math_utils import calculate_sum
+
+from math_utils import calculate_sum
+
 
 class TestMathUtils(unittest.TestCase):
     def test_calculate_sum(self):

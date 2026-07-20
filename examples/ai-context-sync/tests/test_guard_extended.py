@@ -2,7 +2,7 @@
 import os
 import shutil
 import tempfile
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock
 
 from src.guard import ArchitectureGuard
 

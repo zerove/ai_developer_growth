@@ -1,7 +1,7 @@
 """Smoke tests for entry point modules."""
-import sys
-import subprocess
 import importlib.util
+import subprocess
+import sys
 from pathlib import Path
 
 import pytest

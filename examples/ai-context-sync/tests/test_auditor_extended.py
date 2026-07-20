@@ -1,9 +1,6 @@
 """Extended tests for src/auditor.py — cover Violation, FeedbackManager, SpecAuditor."""
 import json
-import os
 from unittest.mock import MagicMock, patch
-
-import pytest
 
 from src.auditor import FeedbackManager, SpecAuditor, Violation
 from src.exceptions import LLMError

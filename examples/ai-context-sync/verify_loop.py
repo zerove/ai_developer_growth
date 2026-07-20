@@ -1,16 +1,14 @@
-import sys
 import os
-import json
+
+from src.analyzer import GitAnalyzer
+from src.auditor import SpecAuditor
+from src.guard import ArchitectureGuard
 
 # Use absolute imports via the package structure
 from src.orchestrator import WorkflowManager
-from src.llm_client import LLMClient
-from src.analyzer import GitAnalyzer
-from src.synthesizer import ContextSynthesizer
-from src.guard import ArchitectureGuard
-from src.auditor import SpecAuditor
-from src.config import AppConfig
 from src.profiles import LANGUAGE_PROFILES
+from src.synthesizer import ContextSynthesizer
+
 
 class MockLLMClient:
     """
@@ -22,7 +20,7 @@ class MockLLMClient:
 
     def generate(self, prompt, system_prompt=""):
         self.call_count += 1
-        
+
         # 1. Handle Design Phase (Phase 2)
         if "provide a detailed technical design" in prompt:
             return (
@@ -42,7 +40,7 @@ class MockLLMClient:
                 "]\n"
                 "```"
             )
-        
+
         # 2. Handle Implementation Phase (Phase 3)
         if "Task ID: TASK-1" in prompt:
             # Simulate a bug on the first attempt
@@ -51,11 +49,11 @@ class MockLLMClient:
             # Fix it on the second attempt
             else:
                 return "[FILE: calc.py]\ndef calculate_sum(a, b):\n    return a + b\n[END]"
-        
+
         # 3. Handle Audit Phase (Phase 4) - Return empty violations
         if "The parallel implementation of task" in prompt or "find ALL possible violations" in prompt:
             return "[]"
-        
+
         return "Mock response"
 
 def mock_approval():
@@ -66,30 +64,31 @@ def main():
     # Setup with MockLLM
     llm = MockLLMClient()
     analyzer = GitAnalyzer()
-    
+
     profile = LANGUAGE_PROFILES["python"]
     synthesizer = ContextSynthesizer(llm, profile)
     guard = ArchitectureGuard(llm, "docs/adr/")
     auditor = SpecAuditor(llm, "docs/specs/")
-    
+
     config_path = ".ai-sync.json"
     if not os.path.exists(config_path):
         with open(config_path, "w") as f:
             f.write('{"settings": {"context_file": "CONTEXT.md"}}')
 
     wm = WorkflowManager(llm, analyzer, synthesizer, guard, auditor, config_path)
-    
+
     task = "Implement a function 'calculate_sum' in 'calc.py' that takes two numbers and returns their sum."
-    
+
     print(f"🚀 Testing Autonomous Loop with MockLLM: {task}")
     result = wm.run_flow(task, mock_approval)
     print(f"\nFinal Result: {result}")
 
     # Final Verification
     try:
-        import calc
         # Need to reload because the file was written to disk
         import importlib
+
+        import calc
         importlib.reload(calc)
         assert calc.calculate_sum(2, 3) == 5
         print("✨ Final Verification Passed: calculate_sum(2, 3) == 5")

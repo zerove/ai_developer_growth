@@ -5,16 +5,16 @@ class Prioritizer:
     def prioritize(self, tasks):
         # 1. Get scores from LLM
         scores = self.llm_client.get_scores(tasks)
-        
+
         # 2. Calculate priority score and assign category
         prioritized = []
         for item in scores:
             value = int(item.get("value", 0))
             effort = int(item.get("effort", 1)) # Avoid division by zero
             score = value / effort
-            
+
             category = self._get_category(value, effort)
-            
+
             prioritized.append({
                 "task": item["task"],
                 "value": value,
@@ -22,7 +22,7 @@ class Prioritizer:
                 "score": score,
                 "category": category
             })
-        
+
         # 3. Sort by score descending
         prioritized.sort(key=lambda x: x["score"], reverse=True)
         return prioritized

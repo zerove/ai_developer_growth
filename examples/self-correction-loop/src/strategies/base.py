@@ -107,7 +107,10 @@ class StrategyRegistry:
         """
         for strategy in self._strategies:
             try:
-                result = strategy.fix(code, error_output, file_path, test_dir=test_dir, runner=runner)
+                result = strategy.fix(
+                    code, error_output, file_path,
+                    test_dir=test_dir, runner=runner,
+                )
             except TypeError:
                 # Backward compatibility: strategy subclass doesn't accept
                 # the new kwargs – fall back to the legacy signature.
@@ -134,9 +137,9 @@ def get_registry(
         llm_model: Model identifier for the LLM strategy.
         **llm_kwargs: Extra keyword args forwarded to :class:`LLMStrategy`.
     """
-    from src.strategies.llm import LLMStrategy  # noqa: PLC0415
-    from src.strategies.pattern import PatternStrategy  # noqa: PLC0415
-    from src.strategies.retry import RetryStrategy  # noqa: PLC0415
+    from strategies.llm import LLMStrategy  # noqa: PLC0415
+    from strategies.pattern import PatternStrategy  # noqa: PLC0415
+    from strategies.retry import RetryStrategy  # noqa: PLC0415
 
     chain: list[Strategy] = []
     if enable_retry:

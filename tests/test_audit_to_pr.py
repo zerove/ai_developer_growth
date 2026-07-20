@@ -1,10 +1,10 @@
-import unittest
 import json
-import sys
 import os
 import subprocess
-from unittest.mock import patch, MagicMock
+import sys
+import unittest
 from io import StringIO
+from unittest.mock import patch
 
 sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'tools', 'scripts'))
 from audit_to_pr import format_audit_results

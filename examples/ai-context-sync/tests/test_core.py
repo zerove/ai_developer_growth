@@ -4,22 +4,15 @@ Covers all previously uncovered lines: 52, 79, 87, 107-108, 120-122, 127-139,
 148-149, 161-162, 169-176.
 """
 import os
-import shutil
-import tempfile
-from unittest.mock import MagicMock, patch, mock_open
-
-import pytest
+from unittest.mock import MagicMock
 
 from src.auditor import FeedbackManager, SpecAuditor, Violation
-from src.config import AppConfig
 from src.core import AIContextSync
 from src.evolution import EvolutionEngine
 from src.guard import ArchitectureGuard
 from src.llm_client import LLMClient
 from src.orchestrator import WorkflowManager
-from src.profiles import LANGUAGE_PROFILES
 from src.synthesizer import ContextSynthesizer
-
 
 # ---------------------------------------------------------------------------
 # Helpers

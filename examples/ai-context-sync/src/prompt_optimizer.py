@@ -17,10 +17,14 @@ class PromptOptimizer:
     def _detect_task_type(self, commit_msg: str) -> str:
         """Detects the type of task based on conventional commit prefixes."""
         msg = commit_msg.lower()
-        if "feat" in msg: return "Feature"
-        if "fix" in msg: return "Bugfix"
-        if "refactor" in msg: return "Refactor"
-        if "docs" in msg: return "Documentation"
+        if "feat" in msg:
+            return "Feature"
+        if "fix" in msg:
+            return "Bugfix"
+        if "refactor" in msg:
+            return "Refactor"
+        if "docs" in msg:
+            return "Documentation"
         return "General"
 
     def _calculate_complexity(self, diff: str) -> str:

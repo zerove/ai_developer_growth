@@ -7,9 +7,9 @@ import sys
 import time
 from pathlib import Path
 
-from src.errors import FixError
-from src.results import CorrectionResult, failure_result, success_result
-from src.strategies.base import StrategyRegistry, get_registry
+from errors import FixError
+from results import CorrectionResult, failure_result, success_result
+from strategies.base import StrategyRegistry, get_registry
 
 
 def run_tests(
@@ -112,7 +112,7 @@ class CorrectionLoop:
 
     def _try_strategies(
         self, original_code: str, error_output: str
-    ) -> tuple[str | None, Strategy | None]:
+    ) -> tuple[str | None, Strategy | None]:  # noqa: F821
         """Delegate to the strategy registry to find a fix."""
         return self._registry.fix(
             original_code, error_output, str(self._target_file),

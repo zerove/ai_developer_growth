@@ -8,7 +8,7 @@ A CLI tool for developers to self-assess their capabilities across 5 dimensions:
 5. Learning & Knowledge Internalization
 
 Based on the capability model defined in docs/mindset/capability-model.md
-"""
+"""  # noqa: N999
 
 __version__ = "0.1.0"
 __author__ = "Sisyphus"

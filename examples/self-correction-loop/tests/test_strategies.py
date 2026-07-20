@@ -7,10 +7,11 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from src.strategies.base import Strategy, StrategyKind, StrategyRegistry, get_registry
-from src.strategies.llm import LLMStrategy, _mock_fix
-from src.strategies.pattern import Pattern, PatternStrategy
-from src.strategies.retry import RetryStrategy
+import runner as _runner_mod
+from strategies.base import Strategy, StrategyKind, StrategyRegistry, get_registry
+from strategies.llm import LLMStrategy, _mock_fix
+from strategies.pattern import Pattern, PatternStrategy
+from strategies.retry import RetryStrategy
 
 # ── Strategy base / registry ────────────────────────────────────────────────
 
@@ -97,13 +98,13 @@ class TestRetryStrategy:
     def test_name(self) -> None:
         assert RetryStrategy().name == "retry"
 
-    @patch("src.runner.run_tests", return_value=(0, "OK", ""))
+    @patch.object(_runner_mod, "run_tests", return_value=(0, "OK", ""))
     def test_pass_through_on_green(self, _mock: MagicMock) -> None:
         s = RetryStrategy()
         result = s.fix("original code", "some error", file_path="src/x.py")
         assert result == "original code"
 
-    @patch("src.runner.run_tests", return_value=(1, "FAIL", "err"))
+    @patch.object(_runner_mod, "run_tests", return_value=(1, "FAIL", "err"))
     def test_decline_on_still_failing(self, _mock: MagicMock) -> None:
         s = RetryStrategy()
         result = s.fix("code", "error", file_path="src/x.py")

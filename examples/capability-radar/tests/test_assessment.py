@@ -89,7 +89,7 @@ class TestAssessmentEngine:
         try:
             engine.export_json(result, temp_path)
 
-            with open(temp_path, 'r') as f:
+            with open(temp_path) as f:
                 data = json.load(f)
 
             assert 'timestamp' in data
@@ -111,7 +111,7 @@ class TestAssessmentEngine:
         try:
             engine.export_markdown(result, temp_path)
 
-            with open(temp_path, 'r') as f:
+            with open(temp_path) as f:
                 content = f.read()
 
             assert '# 能力雷达图评估报告' in content

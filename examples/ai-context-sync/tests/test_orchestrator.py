@@ -1,15 +1,13 @@
 """Tests for src.orchestrator.WorkflowManager — targeting 70%+ coverage."""
-import os
 import json
-from unittest.mock import MagicMock, patch, mock_open, PropertyMock
+from unittest.mock import MagicMock, mock_open, patch
 
 import pytest
 
-from src.orchestrator import WorkflowManager
+from src.config import AppConfig
 from src.exceptions import LLMError
+from src.orchestrator import WorkflowManager
 from src.tester import TestResult
-from src.config import AppConfig, SyncSettings
-
 
 # ---------------------------------------------------------------------------
 # Helpers
@@ -532,7 +530,7 @@ class TestPhaseSync:
         self.mgr._phase_sync(tasks, "task", "old ctx")
         self.mgr.synthesizer.synthesize_context_update.assert_called_once()
         # Verify context file was written
-        handle = self.mgr.config.settings.context_file
+        _handle = self.mgr.config.settings.context_file
 
 
 # ===========================================================================

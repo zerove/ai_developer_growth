@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from src.results import (
+from results import (
     CorrectionResult,
     CorrectionStatus,
     failure_result,

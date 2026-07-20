@@ -1,0 +1,32 @@
+# jcode 配置文件
+
+governance:
+  enabled: true
+  framework_path: ".ai-framework"
+  
+  hooks:
+    pre_prompt:
+      - name: detect-language
+        command: "bash .ai-framework/scripts/detect-language.sh"
+        description: "检测项目语言"
+      - name: check-governance
+        command: "bash .ai-framework/quality-gates/scripts/check.sh"
+        description: "检查代码质量"
+    
+    post_prompt:
+      - name: update-context
+        command: "bash .ai-framework/scripts/update-context.sh"
+        description: "更新项目上下文"
+    
+    pre_commit:
+      - name: lint-check
+        command: "bash .ai-framework/languages/{language}/check.sh"
+        description: "代码质量检查"
+  
+  quality_gates:
+    enabled: true
+    fail_on_error: true
+  
+  context_management:
+    enabled: true
+    auto_update: true

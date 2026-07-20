@@ -26,9 +26,7 @@ class Pattern:
     _compiled_error: re.Pattern[str] = field(init=False, repr=False)  # type: ignore[type-arg]
 
     def __post_init__(self) -> None:
-        object.__setattr__(
-            self, "_compiled_error", re.compile(self.error_regex, re.IGNORECASE)
-        )
+        object.__setattr__(self, "_compiled_error", re.compile(self.error_regex, re.IGNORECASE))
 
     def matches_error(self, error_output: str) -> bool:
         """Return True if *error_output* matches the error-side regex."""

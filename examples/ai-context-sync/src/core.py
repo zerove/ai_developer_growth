@@ -54,12 +54,15 @@ class AIContextSync:
         self.guard = guard or ArchitectureGuard(self.llm_client, self.config.settings.adr_dir)
         self.auditor = auditor or SpecAuditor(self.llm_client, specs_dir=self.config.settings.specs_dir)
         self.feedback = feedback or FeedbackManager()
-        self.evolution = evolution or EvolutionEngine(
-            self.llm_client, self.feedback, self.config.settings.specs_dir
-        )
+        self.evolution = evolution or EvolutionEngine(self.llm_client, self.feedback, self.config.settings.specs_dir)
         self.orchestrator = orchestrator or WorkflowManager(
-            self.llm_client, self.analyzer, self.synthesizer, self.guard, self.auditor,
-            self.evolution, config_path=self.config.config_path
+            self.llm_client,
+            self.analyzer,
+            self.synthesizer,
+            self.guard,
+            self.auditor,
+            self.evolution,
+            config_path=self.config.config_path,
         )
 
     def _get_context_for_path(self, file_path: str) -> List[str]:
@@ -131,6 +134,7 @@ class AIContextSync:
             if not self.dry_run:
                 os.makedirs(adr_dir, exist_ok=True)
                 import datetime
+
                 filename = f"ADR-{datetime.datetime.now().strftime('%Y%m%d-%H%M%S')}.md"
                 with open(os.path.join(adr_dir, filename), "w", encoding="utf-8") as f:
                     f.write(adr_content)

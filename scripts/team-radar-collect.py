@@ -16,11 +16,11 @@ from pathlib import Path
 
 # 五个能力维度
 DIMENSIONS = [
-    "product",           # 问题定义与产品思维
-    "architecture",      # 架构决策与系统设计
-    "ai_collab",         # AI 协作与提示工程
-    "engineering",       # 工程严谨性与质量文化
-    "learning",          # 学习与知识内化
+    "product",  # 问题定义与产品思维
+    "architecture",  # 架构决策与系统设计
+    "ai_collab",  # AI 协作与提示工程
+    "engineering",  # 工程严谨性与质量文化
+    "learning",  # 学习与知识内化
 ]
 
 DIMENSION_LABELS = {
@@ -43,7 +43,7 @@ LEVEL_LABELS = {
 def load_radar_file(file_path: Path) -> dict:
     """加载单个雷达数据文件"""
     try:
-        with open(file_path, encoding='utf-8') as f:
+        with open(file_path, encoding="utf-8") as f:
             return json.load(f)
     except Exception as e:
         print(f"⚠️  无法读取 {file_path}: {e}")
@@ -157,19 +157,21 @@ def generate_team_report(team_radar: dict, team_name: str, output_dir: Path) -> 
         lines.append(f"| {dim_name} | {avg:.2f} | {min_s:.2f} | {max_s:.2f} | {dist_str} |")
 
     # 个性化建议
-    lines.extend([
-        "\n## ⚠️ 团队短板识别",
-        f"最弱维度: {weakest} ({team_radar[weakest]['average']:.2f})" if weakest else "无数据",
-        f"最强维度: {strongest} ({team_radar[strongest]['average']:.2f})" if strongest else "无数据",
-        "\n## 📋 建议行动",
-        "1. **针对最弱维度安排专项培训/工作坊**",
-        "2. **结对编程/Code Review 重点关注弱项**",
-        "3. **邀请内部专家分享强项经验**",
-        "4. **招聘/内部流动补充短板维度人才**",
-        "5. **建立导师制，强项成员带弱项成员**",
-        "\n---\n",
-        f"*报告生成时间: {datetime.now().strftime('%Y-%m-%d %H:%M')}*",
-    ])
+    lines.extend(
+        [
+            "\n## ⚠️ 团队短板识别",
+            f"最弱维度: {weakest} ({team_radar[weakest]['average']:.2f})" if weakest else "无数据",
+            f"最强维度: {strongest} ({team_radar[strongest]['average']:.2f})" if strongest else "无数据",
+            "\n## 📋 建议行动",
+            "1. **针对最弱维度安排专项培训/工作坊**",
+            "2. **结对编程/Code Review 重点关注弱项**",
+            "3. **邀请内部专家分享强项经验**",
+            "4. **招聘/内部流动补充短板维度人才**",
+            "5. **建立导师制，强项成员带弱项成员**",
+            "\n---\n",
+            f"*报告生成时间: {datetime.now().strftime('%Y-%m-%d %H:%M')}*",
+        ]
+    )
 
     report_file = Path(output_dir) / f"team-radar-report-{datetime.now().strftime('%Y%m%d')}.md"
     report_file.parent.mkdir(parents=True, exist_ok=True)

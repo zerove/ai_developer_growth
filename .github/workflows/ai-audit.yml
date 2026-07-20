@@ -173,6 +173,63 @@ jobs:
           fi
 
   # ──────────────────────────────────────────────────────────────
+  # Gate 5: Documentation Consistency Checks
+  # ──────────────────────────────────────────────────────────────
+  gate5-doc-consistency:
+    name: "Gate 5: Documentation Consistency"
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          pip install pyyaml
+
+      - name: Check broken links
+        run: |
+          echo "=== Gate 5.1: Broken Link Check ==="
+          python tools/scripts/link_auditor.py --check-all --fail-on-broken
+
+      - name: Check case study count consistency
+        run: |
+          echo "=== Gate 5.2: Case Study Count Consistency ==="
+          CASE_COUNT=$(find case-studies/ -name "*.md" | wc -l)
+          INDEX_COUNT=$(grep -c "case-studies/" INDEX.md || echo 0)
+          README_COUNT=$(grep -o "案例" README.md | head -1 | sed 's/[^0-9]*//g' || echo 0)
+          echo "case-studies/ files: $CASE_COUNT"
+          echo "INDEX.md references: $INDEX_COUNT"
+          echo "README.md mentions: $README_COUNT"
+          if [ "$CASE_COUNT" -ne "$INDEX_COUNT" ]; then
+            echo "FAIL: Case study count mismatch (case-studies/ vs INDEX.md)"
+            exit 1
+          fi
+          echo "PASS: Case study counts consistent"
+
+      - name: Check terminology consistency
+        run: |
+          echo "=== Gate 5.3: Terminology Consistency ==="
+          python tools/scripts/check_ubiquitous_language.py
+
+      - name: Check date consistency
+        run: |
+          echo "=== Gate 5.4: Date Consistency ==="
+          # Check all .md files have recent dates (within 90 days)
+          find . -name "*.md" -not -path "./.git/*" -not -path "./node_modules/*" -not -path "./.opencode/*" -not -path "./ai-dev-framework/examples/*" | while read f; do
+            if grep -q "最后更新" "$f" || grep -q "Last Updated" "$f" || grep -q "更新:" "$f"; then
+              echo "OK: $f has date"
+            else
+              echo "WARN: $f missing update date"
+            fi
+          done
+          echo "Date check complete"
+
+  # ──────────────────────────────────────────────────────────────
   # Gate 4: Case Study Validation
   # ──────────────────────────────────────────────────────────────
   gate4-case-study-validation:

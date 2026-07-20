@@ -1,4 +1,5 @@
 """Analysis commands for AI-Context-Sync CLI."""
+
 import os
 
 import typer
@@ -9,10 +10,7 @@ from .. import cli_error_handler
 
 
 @cli_error_handler
-def trace(
-    adr_id: str,
-    config: str = typer.Option(".ai-sync.json", help="Path to config file")
-) -> None:
+def trace(adr_id: str, config: str = typer.Option(".ai-sync.json", help="Path to config file")) -> None:
     """Trace the causal chain leading up to a specific architectural decision."""
     sync_tool = AIContextSync(config_path=config)
     graph = DecisionGraph(sync_tool.config.settings.adr_dir)
@@ -25,14 +23,12 @@ def trace(
     typer.echo(f"\n--- Causal Trace for {adr_id} ---\n")
     for i, node_id in enumerate(chain):
         title = graph.nodes[node_id].title if node_id in graph.nodes else "Unknown"
-        typer.echo(f"{i+1}. {node_id}: {title}")
+        typer.echo(f"{i + 1}. {node_id}: {title}")
     typer.echo(f"\nConclusion: {adr_id} was decided based on the preceding sequence.")
 
 
 @cli_error_handler
-def map(
-    config: str = typer.Option(".ai-sync.json", help="Path to config file")
-) -> None:
+def map(config: str = typer.Option(".ai-sync.json", help="Path to config file")) -> None:
     """Generate a visual architecture decision map as a Mermaid diagram."""
     sync_tool = AIContextSync(config_path=config)
     graph = DecisionGraph(sync_tool.config.settings.adr_dir)
@@ -51,13 +47,11 @@ def map(
 
 
 @cli_error_handler
-def why(
-    query: str,
-    config: str = typer.Option(".ai-sync.json", help="Path to config file")
-) -> None:
+def why(query: str, config: str = typer.Option(".ai-sync.json", help="Path to config file")) -> None:
     """Ask 'why' a certain architectural decision was made."""
     sync_tool = AIContextSync(config_path=config)
     from ...reasoning import DecisionReasoner
+
     reasoner = DecisionReasoner(sync_tool.llm_client, sync_tool.config.settings.adr_dir)
     explanation = reasoner.explain_decision(query)
     typer.echo(f"\n--- Decision Explanation ---\n{explanation}\n--------------------------\n")

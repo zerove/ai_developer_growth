@@ -13,11 +13,13 @@ class TestResult(NamedTuple):
     output: str
     exit_code: int
 
+
 class TestRunner:
     """
     TestRunner is responsible for executing verification tests in an isolated
     sandbox environment and capturing the output.
     """
+
     def __init__(self, timeout: int = 30) -> None:
         self.timeout = timeout
 
@@ -25,8 +27,12 @@ class TestRunner:
         env = os.environ.copy()
         env["PYTHONPATH"] = ""
         sensitive_keys = [
-            "AI_SYNC_KEY", "OPENAI_API_KEY", "ANTHROPIC_API_KEY",
-            "AWS_SECRET_ACCESS_KEY", "GITHUB_TOKEN", "GH_TOKEN",
+            "AI_SYNC_KEY",
+            "OPENAI_API_KEY",
+            "ANTHROPIC_API_KEY",
+            "AWS_SECRET_ACCESS_KEY",
+            "GITHUB_TOKEN",
+            "GH_TOKEN",
         ]
         for key in sensitive_keys:
             env.pop(key, None)
@@ -38,10 +44,12 @@ class TestRunner:
             return None
         try:
             import resource
+
             def _limit() -> None:
                 resource.setrlimit(resource.RLIMIT_AS, (512 * 1024 * 1024, 512 * 1024 * 1024))
                 resource.setrlimit(resource.RLIMIT_FSIZE, (64 * 1024 * 1024, 64 * 1024 * 1024))
                 resource.setrlimit(resource.RLIMIT_NPROC, (32, 32))
+
             return _limit
         except (ImportError, ValueError, OSError):
             return None
@@ -112,4 +120,3 @@ class TestRunner:
                 return TestResult(False, f"Test timed out after {self.timeout}s\n{stdout}", 124)
             except (OSError, subprocess.SubprocessError) as e:
                 return TestResult(False, f"Unexpected error: {str(e)}", -1)
-

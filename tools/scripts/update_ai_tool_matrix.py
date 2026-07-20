@@ -21,7 +21,7 @@ from datetime import datetime, timedelta
 from enum import Enum
 from pathlib import Path
 
-logging.basicConfig(level=logging.INFO, format='%(levelname)s: %(message)s')
+logging.basicConfig(level=logging.INFO, format="%(levelname)s: %(message)s")
 logger = logging.getLogger(__name__)
 
 MATRIX_PATH = Path(__file__).parent.parent.parent / "docs" / "tools" / "ai-tool-matrix.md"
@@ -104,9 +104,9 @@ class ToolMatrixUpdater:
     def _parse_matrix(self):
         """Extract tool and model info from markdown."""
         # Parse models table
-        model_pattern = r'\|\s*(\*\*.+?\*\*)\s*\|\s*(.+?)\s*\|\s*(.+?)\s*\|\s*(.+?)\s*\|\s*(\⭐+)'
+        model_pattern = r"\|\s*(\*\*.+?\*\*)\s*\|\s*(.+?)\s*\|\s*(.+?)\s*\|\s*(.+?)\s*\|\s*(\⭐+)"
         for match in re.finditer(model_pattern, self.matrix_content):
-            name = match.group(1).strip('*')
+            name = match.group(1).strip("*")
             core_advantage = match.group(2).strip()
             use_cases = match.group(3).strip()
             limitations = match.group(4).strip()
@@ -122,23 +122,37 @@ class ToolMatrixUpdater:
                 strengths=[core_advantage],
                 use_cases=[use_cases],
                 limitations=limitations,
-                pricing_tier=f"{stars}/5"
+                pricing_tier=f"{stars}/5",
             )
 
         # Parse tools table
-        tool_pattern = r'\|\s*(.+?)\s*\|\s*(.+?)\s*\|\s*(.+?)\s*\|\s*(.+?)\s*\|\s*(.+?)\s*\|'
+        tool_pattern = r"\|\s*(.+?)\s*\|\s*(.+?)\s*\|\s*(.+?)\s*\|\s*(.+?)\s*\|\s*(.+?)\s*\|"
         in_tools_section = False
-        for line in self.matrix_content.split('\n'):
-            if 'AI Coding Agent Harness' in line or '编码代理框架' in line:
+        for line in self.matrix_content.split("\n"):
+            if "AI Coding Agent Harness" in line or "编码代理框架" in line:
                 in_tools_section = True
                 continue
-            if in_tools_section and line.startswith('|'):
+            if in_tools_section and line.startswith("|"):
                 match = re.match(tool_pattern, line)
-                if match and not match.group(1).startswith(' '):
+                if match and not match.group(1).startswith(" "):
                     name = match.group(1).strip()
-                    if name in ['工具', '---', 'jcode', 'opencode', 'Claude Code', 'Cursor Agent', 'GitHub Copilot CLI',
-                               'VS Code', 'Cursor', 'Windsurf', 'Zed',
-                               'Cline', 'v0.dev', 'Perplexity AI', 'AI-Context-Sync']:
+                    if name in [
+                        "工具",
+                        "---",
+                        "jcode",
+                        "opencode",
+                        "Claude Code",
+                        "Cursor Agent",
+                        "GitHub Copilot CLI",
+                        "VS Code",
+                        "Cursor",
+                        "Windsurf",
+                        "Zed",
+                        "Cline",
+                        "v0.dev",
+                        "Perplexity AI",
+                        "AI-Context-Sync",
+                    ]:
                         core_feature = match.group(2).strip()
                         advantage = match.group(3).strip()
                         _disadvantage = match.group(4).strip()
@@ -146,13 +160,15 @@ class ToolMatrixUpdater:
 
                         self.tools[name] = ToolInfo(
                             name=name,
-                            category="coding_agent" if "Agent" in line or "Agent" in name else
-                                     "ide" if name in ['VS Code', 'Cursor', 'Windsurf', 'Zed'] else
-                                     "utility",
+                            category="coding_agent"
+                            if "Agent" in line or "Agent" in name
+                            else "ide"
+                            if name in ["VS Code", "Cursor", "Windsurf", "Zed"]
+                            else "utility",
                             current_version="latest",
                             description=f"{core_feature}. {advantage}",
                             pricing=audience,
-                            last_checked=datetime.now().isoformat()
+                            last_checked=datetime.now().isoformat(),
                         )
 
     async def check_model_updates(self) -> list[str]:
@@ -161,7 +177,7 @@ class ToolMatrixUpdater:
 
         # Check GitHub releases for open source models
         for model_name, model in self.models.items():
-            if model.provider.lower() in ['deepseek', 'qwen']:
+            if model.provider.lower() in ["deepseek", "qwen"]:
                 update = await self._check_github_releases(model_name, model.provider)
                 if update:
                     updates.append(update)
@@ -182,8 +198,8 @@ class ToolMatrixUpdater:
     async def _check_github_releases(self, model_name: str, provider: str) -> str | None:
         """Check GitHub for latest releases."""
         repo_map = {
-            'deepseek': 'deepseek-ai/DeepSeek-V3',
-            'qwen': 'QwenLM/Qwen2.5-Coder',
+            "deepseek": "deepseek-ai/DeepSeek-V3",
+            "qwen": "QwenLM/Qwen2.5-Coder",
         }
 
         repo = repo_map.get(provider.lower())
@@ -193,24 +209,23 @@ class ToolMatrixUpdater:
         try:
             cache_key = f"github_{repo}"
             cached = self.cache.get(cache_key)
-            if cached and cached.get('checked_at'):
-                checked = datetime.fromisoformat(cached['checked_at'])
+            if cached and cached.get("checked_at"):
+                checked = datetime.fromisoformat(cached["checked_at"])
                 if datetime.now() - checked < timedelta(hours=24):
-                    return cached.get('latest_version')
+                    return cached.get("latest_version")
 
             # Use gh CLI if available
             result = subprocess.run(
-                ['gh', 'release', 'list', '--repo', repo, '--limit', '1', '--json', 'tagName'],
-                capture_output=True, text=True, timeout=30
+                ["gh", "release", "list", "--repo", repo, "--limit", "1", "--json", "tagName"],
+                capture_output=True,
+                text=True,
+                timeout=30,
             )
             if result.returncode == 0:
                 releases = json.loads(result.stdout)
                 if releases:
-                    version = releases[0]['tagName']
-                    self.cache[cache_key] = {
-                        'latest_version': version,
-                        'checked_at': datetime.now().isoformat()
-                    }
+                    version = releases[0]["tagName"]
+                    self.cache[cache_key] = {"latest_version": version, "checked_at": datetime.now().isoformat()}
                     self._save_cache()
                     return version
         except Exception as e:
@@ -223,26 +238,22 @@ class ToolMatrixUpdater:
         try:
             cache_key = f"pypi_{package_name}"
             cached = self.cache.get(cache_key)
-            if cached and cached.get('checked_at'):
-                checked = datetime.fromisoformat(cached['checked_at'])
+            if cached and cached.get("checked_at"):
+                checked = datetime.fromisoformat(cached["checked_at"])
                 if datetime.now() - checked < timedelta(hours=24):
-                    return cached.get('latest_version')
+                    return cached.get("latest_version")
 
             result = subprocess.run(
-                ['pip', 'index', 'versions', package_name],
-                capture_output=True, text=True, timeout=30
+                ["pip", "index", "versions", package_name], capture_output=True, text=True, timeout=30
             )
             if result.returncode == 0:
                 # Parse output like "Available versions: 1.0.0, 1.0.1, 1.1.0"
-                match = re.search(r'Available versions: (.+)', result.stdout)
+                match = re.search(r"Available versions: (.+)", result.stdout)
                 if match:
-                    versions = [v.strip() for v in match.group(1).split(',')]
+                    versions = [v.strip() for v in match.group(1).split(",")]
                     if versions:
                         latest = versions[-1]
-                        self.cache[cache_key] = {
-                            'latest_version': latest,
-                            'checked_at': datetime.now().isoformat()
-                        }
+                        self.cache[cache_key] = {"latest_version": latest, "checked_at": datetime.now().isoformat()}
                         self._save_cache()
                         return latest
         except Exception as e:
@@ -254,11 +265,11 @@ class ToolMatrixUpdater:
         """Check installed CLI tool versions."""
         updates = []
         cli_tools = {
-            'jcode': ['jcode', '--version'],
-            'opencode': ['opencode', '--version'],
-            'cursor': ['cursor', '--version'],
-            'zed': ['zed', '--version'],
-            'code': ['code', '--version'],
+            "jcode": ["jcode", "--version"],
+            "opencode": ["opencode", "--version"],
+            "cursor": ["cursor", "--version"],
+            "zed": ["zed", "--version"],
+            "code": ["code", "--version"],
         }
 
         for name, cmd in cli_tools.items():
@@ -281,7 +292,7 @@ class ToolMatrixUpdater:
             "# AI Tool Matrix Update Report",
             f"\n**Generated**: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}",
             f"**Matrix File**: {MATRIX_PATH}",
-            "\n---\n"
+            "\n---\n",
         ]
 
         # Model updates
@@ -333,10 +344,10 @@ class ToolMatrixUpdater:
         for model_name, model in self.models.items():
             if model.update_available and model.latest_version:
                 # Update version in table
-                _pattern = rf'(\|\s*\*\*{re.escape(model_name)}\*\*\s*\|.+?\|.+?\|.+?\|)\s*\⭐+'
+                _pattern = rf"(\|\s*\*\*{re.escape(model_name)}\*\*\s*\|.+?\|.+?\|.+?\|)\s*\⭐+"
                 # This is a simplified update - real implementation would need more careful parsing
-                _old_stars = '⭐' * 5  # placeholder
-                _new_stars = '⭐' * 5  # keep same rating
+                _old_stars = "⭐" * 5  # placeholder
+                _new_stars = "⭐" * 5  # keep same rating
                 # In practice, would update version info in the table cells
                 pass
 
@@ -348,11 +359,11 @@ class ToolMatrixUpdater:
 
         if changed:
             # Create backup
-            backup_path = MATRIX_PATH.with_suffix('.md.backup')
-            backup_path.write_text(self.matrix_content, encoding='utf-8')
+            backup_path = MATRIX_PATH.with_suffix(".md.backup")
+            backup_path.write_text(self.matrix_content, encoding="utf-8")
             logger.info(f"Backup created: {backup_path}")
 
-            MATRIX_PATH.write_text(updated_content, encoding='utf-8')
+            MATRIX_PATH.write_text(updated_content, encoding="utf-8")
             logger.info(f"Matrix updated: {MATRIX_PATH}")
 
         return changed
@@ -360,11 +371,12 @@ class ToolMatrixUpdater:
 
 async def main():
     import argparse
+
     parser = argparse.ArgumentParser(description="AI Tool Matrix Updater")
-    parser.add_argument('--check', action='store_true', help='Check for updates only')
-    parser.add_argument('--update', action='store_true', help='Apply updates to matrix')
-    parser.add_argument('--report', action='store_true', help='Generate update report')
-    parser.add_argument('--output', type=str, help='Output file for report')
+    parser.add_argument("--check", action="store_true", help="Check for updates only")
+    parser.add_argument("--update", action="store_true", help="Apply updates to matrix")
+    parser.add_argument("--report", action="store_true", help="Generate update report")
+    parser.add_argument("--output", type=str, help="Output file for report")
 
     args = parser.parse_args()
 
@@ -382,7 +394,7 @@ async def main():
     if args.report or args.check:
         report = updater.generate_report()
         if args.output:
-            Path(args.output).write_text(report, encoding='utf-8')
+            Path(args.output).write_text(report, encoding="utf-8")
             logger.info(f"Report saved to {args.output}")
         else:
             print(report)

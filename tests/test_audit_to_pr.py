@@ -6,7 +6,7 @@ import unittest
 from io import StringIO
 from unittest.mock import patch
 
-sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'tools', 'scripts'))
+sys.path.append(os.path.join(os.path.dirname(__file__), "..", "tools", "scripts"))
 from audit_to_pr import format_audit_results
 
 
@@ -27,13 +27,7 @@ class TestAuditToPr(unittest.TestCase):
     def test_single_violation(self):
         """Test formatting with a single violation."""
         violations = [
-            {
-                "rule_id": "TEST-001",
-                "severity": "Critical",
-                "message": "Test violation",
-                "file": "test.py",
-                "line": 10
-            }
+            {"rule_id": "TEST-001", "severity": "Critical", "message": "Test violation", "file": "test.py", "line": 10}
         ]
         json_input = json.dumps(violations)
         result = format_audit_results(json_input)
@@ -50,22 +44,16 @@ class TestAuditToPr(unittest.TestCase):
                 "severity": "Critical",
                 "message": "Critical violation",
                 "file": "test.py",
-                "line": 10
+                "line": 10,
             },
             {
                 "rule_id": "TEST-002",
                 "severity": "Warning",
                 "message": "Warning violation",
                 "file": "test2.py",
-                "line": 20
+                "line": 20,
             },
-            {
-                "rule_id": "TEST-003",
-                "severity": "Info",
-                "message": "Info violation",
-                "file": "test3.py",
-                "line": 30
-            }
+            {"rule_id": "TEST-003", "severity": "Info", "message": "Info violation", "file": "test3.py", "line": 30},
         ]
         json_input = json.dumps(violations)
         result = format_audit_results(json_input)
@@ -135,7 +123,7 @@ class TestAuditToPr(unittest.TestCase):
             input='[{"rule_id": "TEST-001", "severity": "Critical", "message": "Test", "file": "test.py", "line": 10}]',
             capture_output=True,
             text=True,
-            cwd=os.path.join(os.path.dirname(__file__), "..")
+            cwd=os.path.join(os.path.dirname(__file__), ".."),
         )
         self.assertEqual(result.returncode, 0)
         self.assertIn("AI-Context-Sync Audit Report", result.stdout)
@@ -147,7 +135,7 @@ class TestAuditToPr(unittest.TestCase):
             input="",
             capture_output=True,
             text=True,
-            cwd=os.path.join(os.path.dirname(__file__), "..")
+            cwd=os.path.join(os.path.dirname(__file__), ".."),
         )
         self.assertEqual(result.returncode, 1)
         self.assertIn("No input provided", result.stdout)

@@ -13,6 +13,7 @@ class LLMConfig:
     model: str = "auto"  # Use detected model or fallback to gpt-4o
     api_base: Optional[str] = None
 
+
 @dataclass
 class SyncSettings:
     ignore: List[str] = field(default_factory=lambda: ["package-lock.json", ".gitignore", "dist/*"])
@@ -28,6 +29,7 @@ class SyncSettings:
     live_report_path: str = "docs/ai-audit-live.md"
     specs_dir: str = "docs/specs"
 
+
 @dataclass
 class AppConfig:
     llm: LLMConfig = field(default_factory=LLMConfig)
@@ -37,10 +39,7 @@ class AppConfig:
     def save(self) -> None:
         try:
             with open(self.config_path, "w") as f:
-                data = {
-                    "llm": asdict(self.llm),
-                    "settings": asdict(self.settings)
-                }
+                data = {"llm": asdict(self.llm), "settings": asdict(self.settings)}
                 json.dump(data, f, indent=2)
         except OSError as e:
             raise ConfigError(f"Failed to save config to {self.config_path}: {e}") from e
@@ -61,11 +60,7 @@ class AppConfig:
             if "overridden_violations" not in settings_data:
                 settings_data["overridden_violations"] = []
 
-            config = cls(
-                llm=LLMConfig(**llm_data),
-                settings=SyncSettings(**settings_data),
-                config_path=path
-            )
+            config = cls(llm=LLMConfig(**llm_data), settings=SyncSettings(**settings_data), config_path=path)
         except (json.JSONDecodeError, KeyError, TypeError) as e:
             logging.warning(f"Error loading config, using defaults: {e}")
             config = cls(config_path=path)

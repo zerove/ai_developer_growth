@@ -64,9 +64,7 @@ class WaterfallOrchestrator:
             AgentFailureError: If an agent fails and fail_fast is True.
             MaxIterationsError: If max_review_iterations exceeded (when fail_fast).
         """
-        history: list[Message] = [
-            Message(role=MessageRole.USER, content=user_request)
-        ]
+        history: list[Message] = [Message(role=MessageRole.USER, content=user_request)]
         self._run_phase_pm(history)
         self._run_phase_architect(history)
         return self._run_coder_reviewer_loop(history)

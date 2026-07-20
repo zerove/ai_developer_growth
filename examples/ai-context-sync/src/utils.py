@@ -88,15 +88,11 @@ def retry_on_failure(
             for attempt in range(1, max_retries + 1):
                 last_result = func(*args, **kwargs)
 
-                is_valid = (
-                    validate(last_result) if validate else bool(last_result)
-                )
+                is_valid = validate(last_result) if validate else bool(last_result)
                 if is_valid:
                     return last_result
 
-                logger.warning(
-                    f"⚠️ {label} attempt {attempt}/{max_retries} returned invalid result. Retrying..."
-                )
+                logger.warning(f"⚠️ {label} attempt {attempt}/{max_retries} returned invalid result. Retrying...")
                 if attempt < max_retries:
                     time.sleep(delay)
 

@@ -12,11 +12,13 @@ class ADRNode:
     supersedes: Set[str]
     content: str
 
+
 class DecisionGraph:
     """
     Parses ADR files and builds a directed graph of architectural decisions.
     Allows for causal tracing and visualization of decision evolution.
     """
+
     def __init__(self, adr_dir: str):
         self.adr_dir = adr_dir
         self.nodes: Dict[str, ADRNode] = {}
@@ -58,11 +60,7 @@ class DecisionGraph:
                 supersedes = {s.strip() for s in sups if s.strip()}
 
             self.nodes[adr_id] = ADRNode(
-                id=adr_id,
-                title=title,
-                dependencies=depends_on,
-                supersedes=supersedes,
-                content=content
+                id=adr_id, title=title, dependencies=depends_on, supersedes=supersedes, content=content
             )
 
     def trace_causality(self, start_id: str, visited: Optional[List[str]] = None) -> List[str]:

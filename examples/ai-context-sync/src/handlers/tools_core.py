@@ -66,15 +66,10 @@ def register(mcp: object, get_sync_tool: Callable) -> None:
             report = sync_tool.spec_audit()
             if strict:
                 violations = sync_tool.auditor.audit(
-                    sync_tool.analyzer.get_last_commit_diff(),
-                    sync_tool.analyzer.get_last_commit_message()
+                    sync_tool.analyzer.get_last_commit_diff(), sync_tool.analyzer.get_last_commit_message()
                 )
                 critical = [v.to_dict() for v in violations if v.severity == "Critical"]
-                return json.dumps({
-                    "status": "success",
-                    "report": report,
-                    "critical_violations": critical
-                })
+                return json.dumps({"status": "success", "report": report, "critical_violations": critical})
             return json.dumps({"status": "success", "report": report})
         except AISyncError as e:
             return json.dumps({"status": "error", "error": str(e)})
@@ -92,12 +87,9 @@ def register(mcp: object, get_sync_tool: Callable) -> None:
         try:
             sync_tool = get_sync_tool(config=config)
             from src.graph import DecisionGraph
+
             graph = DecisionGraph(sync_tool.config.settings.adr_dir)
             mermaid = graph.generate_mermaid()
-            return json.dumps({
-                "status": "success",
-                "mermaid": mermaid,
-                "adr_dir": sync_tool.config.settings.adr_dir
-            })
+            return json.dumps({"status": "success", "mermaid": mermaid, "adr_dir": sync_tool.config.settings.adr_dir})
         except AISyncError as e:
             return json.dumps({"status": "error", "error": str(e)})

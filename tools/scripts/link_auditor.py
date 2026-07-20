@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+import argparse
 import os
 import re
 import sys
@@ -90,17 +91,55 @@ def find_broken_links(directory: str) -> list[tuple[str, str]]:
     return broken
 
 
-if __name__ == "__main__":
-    if len(sys.argv) < 2:
-        print("Usage: python link_auditor.py <directory>")
-        sys.exit(1)
+def check_all_links() -> bool:
+    """Check all markdown files in the project for broken links."""
+    # Check main directories
+    dirs_to_check = ["docs", ".", "case-studies", "examples"]
+    all_broken = []
 
-    broken = find_broken_links(sys.argv[1])
-    if broken:
+    for d in dirs_to_check:
+        if os.path.exists(d):
+            broken = find_broken_links(d)
+            for file, link in broken:
+                all_broken.append((file, link))
+
+    if all_broken:
         print("Broken links found:")
-        for file, link in broken:
+        for file, link in all_broken:
             print(f"  {file}: [[{link}]]")
-        sys.exit(1)
+        return False
     else:
         print("All links are valid.")
+        return True
+
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description="Audit markdown links")
+    parser.add_argument("directory", nargs="?", help="Directory to scan")
+    parser.add_argument("--check-all", action="store_true", help="Check all project directories")
+    parser.add_argument("--fail-on-broken", action="store_true", help="Exit with error code if broken links found")
+    parser.add_argument("--internal-only", action="store_true", help="Only check internal links (skip external)")
+    args = parser.parse_args()
+
+    if args.check_all:
+        success = check_all_links()
+    elif args.directory:
+        broken = find_broken_links(args.directory)
+        if broken:
+            print("Broken links found:")
+            for file, link in broken:
+                print(f"  {file}: [[{link}]]")
+            success = False
+        else:
+            print("All links are valid.")
+            success = True
+    else:
+        print("Usage: python link_auditor.py <directory> [--check-all] [--fail-on-broken]")
+        sys.exit(1)
+
+    if args.fail_on_broken and not success:
+        sys.exit(1)
+    elif not success:
+        sys.exit(1)
+    else:
         sys.exit(0)

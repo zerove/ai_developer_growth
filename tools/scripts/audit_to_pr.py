@@ -16,9 +16,9 @@ def format_audit_results(json_input: str) -> str:
         return "✨ **AI-Context-Sync Audit**: No specification violations detected. Great job!"
 
     # Statistics
-    critical_count = sum(1 for v in violations if v['severity'] == 'Critical')
-    warning_count = sum(1 for v in violations if v['severity'] == 'Warning')
-    info_count = sum(1 for v in violations if v['severity'] == 'Info')
+    critical_count = sum(1 for v in violations if v["severity"] == "Critical")
+    warning_count = sum(1 for v in violations if v["severity"] == "Warning")
+    info_count = sum(1 for v in violations if v["severity"] == "Info")
 
     # Header
     report = [
@@ -30,21 +30,24 @@ def format_audit_results(json_input: str) -> str:
         "",
         "### 📋 Violation Details",
         "| Severity | Rule ID | Message |",
-        "| :--- | :--- | :--- |"
+        "| :--- | :--- | :--- |",
     ]
 
     # Table rows
     for v in violations:
-        severity_icon = "🔴" if v['severity'] == 'Critical' else "🟡" if v['severity'] == 'Warning' else "🔵"
+        severity_icon = "🔴" if v["severity"] == "Critical" else "🟡" if v["severity"] == "Warning" else "🔵"
         report.append(f"| {severity_icon} {v['severity']} | `{v['rule_id']}` | {v['message']} |")
 
     # Footer
     report.append("\n---\n")
     report.append("**How to resolve this?**")
     report.append("1. **Fix the code**: Align your changes with the project specifications.")
-    report.append("2. **Override the rule**: If this is an intentional deviation, use `dx override <rule_id>` in your local environment and commit the change to `.ai-audit-history.json`.")
+    report.append(
+        "2. **Override the rule**: If this is an intentional deviation, use `dx override <rule_id>` in your local environment and commit the change to `.ai-audit-history.json`."
+    )
 
     return "\n".join(report)
+
 
 if __name__ == "__main__":
     # Read JSON from stdin

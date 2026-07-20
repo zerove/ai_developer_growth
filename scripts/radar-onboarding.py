@@ -45,15 +45,16 @@ def run_interactive():
 
     # 打印结果
     from assessment import print_result
+
     print_result(result)
 
     # 询问是否导出
     export = input("\n是否导出报告? (y/n, 默认 y): ").strip().lower()
-    if export != 'n':
+    if export != "n":
         format_choice = input("导出格式 (md/json/both, 默认 both): ").strip().lower()
-        if format_choice == 'md':
+        if format_choice == "md":
             engine.export_markdown(result)
-        elif format_choice == 'json':
+        elif format_choice == "json":
             engine.export_json(result)
         else:
             engine.export_markdown(result)
@@ -71,17 +72,21 @@ def run_demo():
 
     # 使用预设的 L2 答案
     from capability_model import Dimension, Level
+
     for dim in Dimension:
         for q_id, _, _ in engine.QUESTIONS[dim]:
-            engine.answers.append({
-                'dimension': dim,
-                'question_id': q_id,
-                'selected_level': Level.L2,
-                'confidence': 3,
-            })
+            engine.answers.append(
+                {
+                    "dimension": dim,
+                    "question_id": q_id,
+                    "selected_level": Level.L2,
+                    "confidence": 3,
+                }
+            )
 
     result = engine.calculate_result()
     from assessment import print_result
+
     print_result(result)
 
     print("\n✅ 演示完成！现在你可以运行交互式评估：")
@@ -92,17 +97,19 @@ def run_batch(input_file: str, output_md: str = None, output_json: str = None):
     """批量导入评估"""
     print(f"📥 从 {input_file} 导入答案...")
 
-    with open(input_file, encoding='utf-8') as f:
+    with open(input_file, encoding="utf-8") as f:
         data = json.load(f)
 
     engine = AssessmentEngine()
-    for item in data.get('answers', []):
-        engine.answers.append({
-            'dimension': Dimension(item['dimension']),
-            'question_id': item['question_id'],
-            'selected_level': Level(item['level']),
-            'confidence': item.get('confidence', 3),
-        })
+    for item in data.get("answers", []):
+        engine.answers.append(
+            {
+                "dimension": Dimension(item["dimension"]),
+                "question_id": item["question_id"],
+                "selected_level": Level(item["level"]),
+                "confidence": item.get("confidence", 3),
+            }
+        )
 
     result = engine.calculate_result()
 
@@ -116,6 +123,7 @@ def run_batch(input_file: str, output_md: str = None, output_json: str = None):
 
     if not output_md and not output_json:
         from assessment import print_result
+
         print_result(result)
 
 
@@ -123,10 +131,10 @@ def main():
     import argparse
 
     parser = argparse.ArgumentParser(description="能力雷达 Onboarding 引导脚本")
-    parser.add_argument('--demo', action='store_true', help='运行演示模式')
-    parser.add_argument('--input', '-i', help='输入答案 JSON 文件')
-    parser.add_argument('--output', '-o', help='输出 Markdown 报告文件')
-    parser.add_argument('--json', help='输出 JSON 报告文件')
+    parser.add_argument("--demo", action="store_true", help="运行演示模式")
+    parser.add_argument("--input", "-i", help="输入答案 JSON 文件")
+    parser.add_argument("--output", "-o", help="输出 Markdown 报告文件")
+    parser.add_argument("--json", help="输出 JSON 报告文件")
 
     args = parser.parse_args()
 

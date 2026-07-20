@@ -11,6 +11,7 @@ class EvolutionEngine:
     Analyzes audit history to detect patterns of specification overrides
     and proposes updates to the project's specifications.
     """
+
     def __init__(self, llm_client: LLMClient, feedback_manager: FeedbackManager, specs_dir: str):
         self.llm_client = llm_client
         self.feedback_manager = feedback_manager
@@ -28,32 +29,31 @@ class EvolutionEngine:
         # Count total vs overridden occurrences per rule_id
         stats: Dict[str, Dict[str, Any]] = {}
         for item in history:
-            rid = item['rule_id']
+            rid = item["rule_id"]
             if rid not in stats:
                 stats[rid] = {"total": 0, "overridden": 0, "examples": []}
 
             stats[rid]["total"] += 1
-            if item['status'] == 'overridden':
+            if item["status"] == "overridden":
                 stats[rid]["overridden"] += 1
                 # Store a few examples of the violation for the LLM to analyze
                 if len(stats[rid]["examples"]) < 3:
-                    stats[rid]["examples"].append({
-                        "message": item['message'],
-                        "file": item['file_path']
-                    })
+                    stats[rid]["examples"].append({"message": item["message"], "file": item["file_path"]})
 
         # Identify candidates for evolution
         candidates = []
         for rid, data in stats.items():
             ratio = data["overridden"] / data["total"]
             if ratio >= self.conflict_threshold and data["total"] >= 2:
-                candidates.append({
-                    "rule_id": rid,
-                    "ratio": ratio,
-                    "total": data["total"],
-                    "overridden": data["overridden"],
-                    "examples": data["examples"]
-                })
+                candidates.append(
+                    {
+                        "rule_id": rid,
+                        "ratio": ratio,
+                        "total": data["total"],
+                        "overridden": data["overridden"],
+                        "examples": data["examples"],
+                    }
+                )
 
         return candidates
 
@@ -108,7 +108,7 @@ class EvolutionEngine:
             "maintaining high quality standards."
         )
 
-        newline = '\n'
+        newline = "\n"
         prompt = (
             f"The following rules are under review for evolution:\n\n"
             f"{'---' * 10}\n"

@@ -1,4 +1,5 @@
 """Base class for LLM providers."""
+
 from typing import Optional
 
 

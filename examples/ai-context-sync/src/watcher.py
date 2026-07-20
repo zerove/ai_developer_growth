@@ -23,7 +23,9 @@ class AuditHandler(FileSystemEventHandler):
 
         # Filter out irrelevant files
         filename = str(os.path.basename(event.src_path))
-        if filename.startswith('.') or any(str(ignore) in event.src_path for ignore in self.sync_tool.config.settings.ignore):
+        if filename.startswith(".") or any(
+            str(ignore) in event.src_path for ignore in self.sync_tool.config.settings.ignore
+        ):
             return
 
         # Debounce to avoid multiple triggers for a single save
@@ -46,10 +48,12 @@ class AuditHandler(FileSystemEventHandler):
                 line = f"{i}. [{v.severity}] {v.rule_id}: {v.message}"
                 report_lines.append(line)
 
-                if v.severity == 'Critical':
+                if v.severity == "Critical":
                     specs = self.sync_tool.auditor.get_relevant_specs("N/A")
                     fix = self.sync_tool.auditor.generate_fix(v, "N/A", specs)
-                    report_lines.append(f"   💡 Suggested Fix:\n   ```python\n   {fix}\n   ```\n   👉 Run `dx apply-fix {v.rule_id}` to apply.")
+                    report_lines.append(
+                        f"   💡 Suggested Fix:\n   ```python\n   {fix}\n   ```\n   👉 Run `dx apply-fix {v.rule_id}` to apply."
+                    )
             report = "\n".join(report_lines)
 
         # Write to live report file
@@ -68,6 +72,7 @@ class AuditHandler(FileSystemEventHandler):
             f.write("## Audit Results\n\n")
             f.write(f"{report}\n\n")
             f.write("---\n*Tip: Keep this file open in a split pane to see instant feedback.*")
+
 
 class WatchManager:
     def __init__(self, sync_tool: "AIContextSync") -> None:

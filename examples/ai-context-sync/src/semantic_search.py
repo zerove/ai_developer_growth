@@ -3,6 +3,7 @@ Semantic search for ADR documents using TF-IDF-like scoring.
 
 Provides vector similarity search without external dependencies.
 """
+
 import math
 import os
 import re
@@ -12,19 +13,106 @@ from typing import Dict, List, Tuple
 
 def tokenize(text: str) -> List[str]:
     text_lower = text.lower()
-    tokens = re.findall(r'\b\w+\b', text_lower)
+    tokens = re.findall(r"\b\w+\b", text_lower)
     stopwords = {
-        'the', 'a', 'an', 'is', 'are', 'was', 'were', 'be', 'been', 'being',
-        'have', 'has', 'had', 'do', 'does', 'did', 'will', 'would', 'could',
-        'should', 'may', 'might', 'shall', 'can', 'need', 'dare', 'ought',
-        'used', 'to', 'of', 'in', 'for', 'on', 'with', 'at', 'by', 'from',
-        'as', 'into', 'through', 'during', 'before', 'after', 'above', 'below',
-        'between', 'out', 'off', 'over', 'under', 'again', 'further', 'then',
-        'once', 'here', 'there', 'when', 'where', 'why', 'how', 'all', 'each',
-        'every', 'both', 'few', 'more', 'most', 'other', 'some', 'such', 'no',
-        'nor', 'not', 'only', 'own', 'same', 'so', 'than', 'too', 'very',
-        'just', 'because', 'but', 'and', 'or', 'if', 'while', 'that', 'this',
-        'these', 'those', 'it', 'its', 'we', 'they', 'them', 'he', 'she',
+        "the",
+        "a",
+        "an",
+        "is",
+        "are",
+        "was",
+        "were",
+        "be",
+        "been",
+        "being",
+        "have",
+        "has",
+        "had",
+        "do",
+        "does",
+        "did",
+        "will",
+        "would",
+        "could",
+        "should",
+        "may",
+        "might",
+        "shall",
+        "can",
+        "need",
+        "dare",
+        "ought",
+        "used",
+        "to",
+        "of",
+        "in",
+        "for",
+        "on",
+        "with",
+        "at",
+        "by",
+        "from",
+        "as",
+        "into",
+        "through",
+        "during",
+        "before",
+        "after",
+        "above",
+        "below",
+        "between",
+        "out",
+        "off",
+        "over",
+        "under",
+        "again",
+        "further",
+        "then",
+        "once",
+        "here",
+        "there",
+        "when",
+        "where",
+        "why",
+        "how",
+        "all",
+        "each",
+        "every",
+        "both",
+        "few",
+        "more",
+        "most",
+        "other",
+        "some",
+        "such",
+        "no",
+        "nor",
+        "not",
+        "only",
+        "own",
+        "same",
+        "so",
+        "than",
+        "too",
+        "very",
+        "just",
+        "because",
+        "but",
+        "and",
+        "or",
+        "if",
+        "while",
+        "that",
+        "this",
+        "these",
+        "those",
+        "it",
+        "its",
+        "we",
+        "they",
+        "them",
+        "he",
+        "she",
     }
     return [t for t in tokens if t not in stopwords and len(t) > 2]
 
@@ -54,8 +142,8 @@ def cosine_similarity(vec_a: Dict[str, float], vec_b: Dict[str, float]) -> float
     if not common_keys:
         return 0.0
     dot_product = sum(vec_a[k] * vec_b[k] for k in common_keys)
-    norm_a = math.sqrt(sum(v ** 2 for v in vec_a.values()))
-    norm_b = math.sqrt(sum(v ** 2 for v in vec_b.values()))
+    norm_a = math.sqrt(sum(v**2 for v in vec_a.values()))
+    norm_b = math.sqrt(sum(v**2 for v in vec_b.values()))
     if norm_a == 0 or norm_b == 0:
         return 0.0
     return dot_product / (norm_a * norm_b)

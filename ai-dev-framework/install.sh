@@ -13,10 +13,13 @@ echo "语言: $LANGUAGE"
 
 # 创建框架目录
 mkdir -p "$PROJECT_DIR/.ai-framework"
+mkdir -p "$PROJECT_DIR/.ai-framework/languages"
+mkdir -p "$PROJECT_DIR/.ai-framework/hooks"
+mkdir -p "$PROJECT_DIR/.ai-framework/quality-gates/scripts"
+mkdir -p "$PROJECT_DIR/.ai-framework/scripts"
 
 # 复制核心文件
 cp -r "$FRAMEWORK_DIR/core/"* "$PROJECT_DIR/.ai-framework/"
-cp -r "$FRAMEWORK_DIR/languages/"* "$PROJECT_DIR/.ai-framework/languages/"
 cp -r "$FRAMEWORK_DIR/hooks/"* "$PROJECT_DIR/.ai-framework/hooks/"
 
 # 检测语言
@@ -27,6 +30,16 @@ if [ "$LANGUAGE" = "auto" ]; then
         LANGUAGE="go"
     elif [ -f "pom.xml" ] || [ -f "build.gradle" ]; then
         LANGUAGE="java"
+    elif [ -f "Package.swift" ] || [ -f "*.xcodeproj" ]; then
+        LANGUAGE="swift"
+    elif [ -f "*.kt" ] || [ -f "build.gradle.kts" ]; then
+        LANGUAGE="kotlin"
+    elif [ -f "Gemfile" ] || [ -f "*.gemspec" ]; then
+        LANGUAGE="ruby"
+    elif [ -f "composer.json" ]; then
+        LANGUAGE="php"
+    elif [ -f "*.csproj" ] || [ -f "*.sln" ]; then
+        LANGUAGE="csharp"
     elif [ -f "requirements.txt" ] || [ -f "pyproject.toml" ]; then
         LANGUAGE="python"
     elif [ -f "package.json" ]; then
@@ -36,6 +49,10 @@ if [ "$LANGUAGE" = "auto" ]; then
     fi
     echo "检测到语言: $LANGUAGE"
 fi
+
+# 复制语言特定文件
+mkdir -p "$PROJECT_DIR/.ai-framework/languages/$LANGUAGE"
+cp -r "$FRAMEWORK_DIR/languages/$LANGUAGE/"* "$PROJECT_DIR/.ai-framework/languages/$LANGUAGE/"
 
 # 创建质量门禁脚本
 cat > "$PROJECT_DIR/.ai-framework/quality-gates/scripts/check.sh" << 'EOF'

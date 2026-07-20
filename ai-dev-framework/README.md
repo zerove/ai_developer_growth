@@ -68,6 +68,11 @@ ai-dev-framework/
 | Go | golangci-lint | go test | govulncheck |
 | Java | checkstyle | junit | spotbugs |
 | TypeScript | eslint | jest/vitest | npm audit |
+| Swift | swiftlint | xcodebuild/swift test | swift-format |
+| Kotlin | ktlint | gradle/mvn test | detekt |
+| Ruby | rubocop | rspec | bundle-audit |
+| PHP | phpstan | phpunit | php-cs-fixer |
+| C# | dotnet format | dotnet test | dotnet list package |
 
 ---
 

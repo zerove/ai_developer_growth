@@ -11,12 +11,12 @@
 
 | 文档 | 核心问题 | 关键洞察 |
 |------|----------|----------|
-| [[mindset/product-thinking\|产品思维]] | 为什么要做这个？ | 摆脱实现陷阱，关注用户价值 |
-| [[mindset/solo-founder-loop\|独立开发闭环]] | 一人公司如何运作？ | 精益运作 + 认知资源管理 |
-| [[mindset/ai-to-market-checklist\|市场发布]] | 如何从代码到产品？ | 0→1 路径 + 增长策略 |
-| [[mindset/team-adoption\|团队采用策略]] | 团队如何采用 AI？ | 企业案例 + 采用框架 |
-| [[mindset/human-ai-collaboration\|人机协作]] | 如何与 AI 协作？ | 能力互补 + 信任校准 |
-| [[mindset/capability-model\|能力模型]] | AI 时代开发者如何分级？ | 五维雷达图 + 成长路径 |
+| [[docs/mindset/product-thinking\|产品思维]] | 为什么要做这个？ | 摆脱实现陷阱，关注用户价值 |
+| [[docs/mindset/solo-founder-loop\|独立开发闭环]] | 一人公司如何运作？ | 精益运作 + 认知资源管理 |
+| [[docs/mindset/ai-to-market-checklist\|市场发布]] | 如何从代码到产品？ | 0→1 路径 + 增长策略 |
+| [[docs/mindset/team-adoption\|团队采用策略]] | 团队如何采用 AI？ | 企业案例 + 采用框架 |
+| [[docs/mindset/human-ai-collaboration\|人机协作]] | 如何与 AI 协作？ | 能力互补 + 信任校准 |
+| [[docs/mindset/capability-model\|能力模型]] | AI 时代开发者如何分级？ | 五维雷达图 + 成长路径 |
 
 **推荐阅读顺序**: product-thinking → solo-founder-loop → ai-to-market-checklist → team-adoption → human-ai-collaboration → team-metrics
 
@@ -28,9 +28,9 @@
 
 | 文档 | 核心问题 | 关键洞察 |
 |------|----------|----------|
-| [[learning/ai-learning-method\|AI 学习法]] | 如何快速掌握新领域？ | 好奇心→提示→实现→审视→内化 |
-| [[learning/knowledge-internalization\|知识内化]] | 如何避免 AI 依赖？ | 对抗能力错觉，构建底层能力 |
-| [[learning/prompt-engineering\|Prompt 工程]] | 如何写出好 Prompt？ | CoT、Few-Shot、结构化输出 |
+| [[docs/learning/ai-learning-method\|AI 学习法]] | 如何快速掌握新领域？ | 好奇心→提示→实现→审视→内化 |
+| [[docs/learning/knowledge-internalization\|知识内化]] | 如何避免 AI 依赖？ | 对抗能力错觉，构建底层能力 |
+| [[docs/learning/prompt-engineering\|Prompt 工程]] | 如何写出好 Prompt？ | CoT、Few-Shot、结构化输出 |
 
 **推荐阅读顺序**: ai-learning-method → knowledge-internalization → prompt-engineering
 
@@ -42,24 +42,24 @@
 
 | 文档 | 核心问题 | 关键洞察 |
 |------|----------|----------|
-| [[efficiency/full-cycle-workflow\|全周期工作流]] | 如何用 AI 开发？ | 意图→生成→验证→修正闭环 |
-| [[efficiency/automated-bug-fixing\|自动化修复]] | 如何自动修 Bug？ | 感知→推理→行动→验证 |
-| [[efficiency/anti-patterns\|反模式与失败案例]] | 如何避免常见陷阱？ | 8 大反模式 + 真实案例 |
-| [[efficiency/context-engineering\|上下文工程]] | 如何精准传递上下文？ | 分层策略 + 验证方法论 |
-| [[efficiency/token-optimization\|Token 成本控制]] | 如何控制 AI 成本？ | 分层模型 + ROI 计算 |
-| [[efficiency/multi-agent-patterns\|多 Agent 编排]] | 如何协作多个 Agent？ | 5 种编排模式 + 选择指南 |
-| [[efficiency/metrics-framework\|度量体系]] | 如何量化 AI 效果？ | 三维平衡计分卡 + 自动化采集 |
-| [[efficiency/legacy-ai-migration\|迁移策略]] | 如何引入 AI？ | 五阶段渐进式迁移 |
-| [[efficiency/ai-security-review\|安全审查]] | 如何保证 AI 代码安全？ | OWASP Top 10 + 安全门禁 |
-| [[efficiency/auto-documentation\|文档自动化]] | 如何自动生成文档？ | API/注释/README 自动生成 |
-| [[efficiency/ai-code-performance\|性能优化]] | 如何优化 AI 代码？ | 数据库/内存/算法/缓存优化 |
-| [[efficiency/oss-with-ai\|开源协作]] | 如何用 AI 参与开源？ | Issue/PR/文档 AI 协作 |
-| [[efficiency/knowledge-base-usage\|知识库使用]] | 如何应用知识库？ | 文档引用规则 + 自动化配置 |
-| [[efficiency/ci-cd-workflow\|CI/CD 工作流]] | 如何自动化部署？ | GitHub Actions + 蓝绿部署 |
-| [[efficiency/code-review-guide\|代码审查指南]] | 如何审查 AI 代码？ | 审查清单 + 质量门禁 |
-| [[efficiency/debugging-workflow\|调试工作流]] | 如何 AI 辅助调试？ | 系统化调试 + 日志分析 |
-| [[efficiency/error-handling-patterns\|错误处理模式]] | 如何统一错误处理？ | 错误分类 + 恢复策略 |
-| [[efficiency/api-design-guide\|API 设计指南]] | 如何设计 API？ | RESTful 规范 + 响应格式 |
+| [[docs/efficiency/full-cycle-workflow\|全周期工作流]] | 如何用 AI 开发？ | 意图→生成→验证→修正闭环 |
+| [[docs/efficiency/automated-bug-fixing\|自动化修复]] | 如何自动修 Bug？ | 感知→推理→行动→验证 |
+| [[docs/efficiency/anti-patterns\|反模式与失败案例]] | 如何避免常见陷阱？ | 8 大反模式 + 真实案例 |
+| [[docs/efficiency/context-engineering\|上下文工程]] | 如何精准传递上下文？ | 分层策略 + 验证方法论 |
+| [[docs/efficiency/token-optimization\|Token 成本控制]] | 如何控制 AI 成本？ | 分层模型 + ROI 计算 |
+| [[docs/efficiency/multi-agent-patterns\|多 Agent 编排]] | 如何协作多个 Agent？ | 5 种编排模式 + 选择指南 |
+| [[docs/efficiency/metrics-framework\|度量体系]] | 如何量化 AI 效果？ | 三维平衡计分卡 + 自动化采集 |
+| [[docs/efficiency/legacy-ai-migration\|迁移策略]] | 如何引入 AI？ | 五阶段渐进式迁移 |
+| [[docs/efficiency/ai-security-review\|安全审查]] | 如何保证 AI 代码安全？ | OWASP Top 10 + 安全门禁 |
+| [[docs/efficiency/auto-documentation\|文档自动化]] | 如何自动生成文档？ | API/注释/README 自动生成 |
+| [[docs/efficiency/ai-code-performance\|性能优化]] | 如何优化 AI 代码？ | 数据库/内存/算法/缓存优化 |
+| [[docs/efficiency/oss-with-ai\|开源协作]] | 如何用 AI 参与开源？ | Issue/PR/文档 AI 协作 |
+| [[docs/efficiency/knowledge-base-usage\|知识库使用]] | 如何应用知识库？ | 文档引用规则 + 自动化配置 |
+| [[docs/efficiency/ci-cd-workflow\|CI/CD 工作流]] | 如何自动化部署？ | GitHub Actions + 蓝绿部署 |
+| [[docs/efficiency/code-review-guide\|代码审查指南]] | 如何审查 AI 代码？ | 审查清单 + 质量门禁 |
+| [[docs/efficiency/debugging-workflow\|调试工作流]] | 如何 AI 辅助调试？ | 系统化调试 + 日志分析 |
+| [[docs/efficiency/error-handling-patterns\|错误处理模式]] | 如何统一错误处理？ | 错误分类 + 恢复策略 |
+| [[docs/efficiency/api-design-guide\|API 设计指南]] | 如何设计 API？ | RESTful 规范 + 响应格式 |
 
 **实战避坑**: full-cycle-workflow 包含了从 AI-Context-Sync 开发中提炼的 4 个避坑指南。anti-patterns.md 收集了真实失败案例。
 
@@ -71,8 +71,8 @@
 
 | 文档 | 核心问题 | 关键洞察 |
 |------|----------|----------|
-| [[tools/ai-tool-matrix\|工具矩阵]] | 选什么模型/IDE？ | jcode vs opencode 深度对比 |
-| [[tools/ide-best-practices\|IDE 实践]] | 如何配置开发环境？ | 极速编辑 + AI 协同 |
+| [[docs/tools/ai-tool-matrix\|工具矩阵]] | 选什么模型/IDE？ | jcode vs opencode 深度对比 |
+| [[docs/tools/ide-best-practices\|IDE 实践]] | 如何配置开发环境？ | 极速编辑 + AI 协同 |
 
 **最新更新**: 已更新至 Claude 4、GPT-5、jcode、opencode 等最新工具。
 
@@ -87,89 +87,89 @@
 | 主题 | 核心问题 | 文档 |
 |------|----------|------|
 | 通用治理标准 | 项目开发的完整规范 | [[../GOVERNANCE.md]] |
-| 安装指南 | 如何在任何项目中使用 | [[governance/INSTALL.md]] |
+| 安装指南 | 如何在任何项目中使用 | [[docs/governance/INSTALL.md]] |
 
 ### 编程语言规范
 
 | 语言 | 核心问题 | 文档 |
 |------|----------|------|
-| Python | Python 项目特定规范 | [[governance/languages/python]] |
-| Rust | Rust 项目特定规范 | [[governance/languages/rust]] |
-| TypeScript | TS 项目特定规范 | [[governance/languages/typescript]] |
-| Go | Go 项目特定规范 | [[governance/languages/go]] |
-| Java | Java 项目特定规范 | [[governance/languages/java]] |
-| C# | C# 项目特定规范 | [[governance/languages/csharp]] |
-| Kotlin | Kotlin 项目特定规范 | [[governance/languages/kotlin]] |
-| PHP | PHP 项目特定规范 | [[governance/languages/php]] |
-| Ruby | Ruby 项目特定规范 | [[governance/languages/ruby]] |
-| C/C++ | C/C++ 项目特定规范 | [[governance/languages/cpp]] |
-| Swift | Swift 项目特定规范 | [[governance/languages/swift]] |
-| Scala | Scala 项目特定规范 | [[governance/languages/scala]] |
-| Elixir | Elixir 项目特定规范 | [[governance/languages/elixir]] |
+| Python | Python 项目特定规范 | [[docs/governance/languages/python]] |
+| Rust | Rust 项目特定规范 | [[docs/governance/languages/rust]] |
+| TypeScript | TS 项目特定规范 | [[docs/governance/languages/typescript]] |
+| Go | Go 项目特定规范 | [[docs/governance/languages/go]] |
+| Java | Java 项目特定规范 | [[docs/governance/languages/java]] |
+| C# | C# 项目特定规范 | [[docs/governance/languages/csharp]] |
+| Kotlin | Kotlin 项目特定规范 | [[docs/governance/languages/kotlin]] |
+| PHP | PHP 项目特定规范 | [[docs/governance/languages/php]] |
+| Ruby | Ruby 项目特定规范 | [[docs/governance/languages/ruby]] |
+| C/C++ | C/C++ 项目特定规范 | [[docs/governance/languages/cpp]] |
+| Swift | Swift 项目特定规范 | [[docs/governance/languages/swift]] |
+| Scala | Scala 项目特定规范 | [[docs/governance/languages/scala]] |
+| Elixir | Elixir 项目特定规范 | [[docs/governance/languages/elixir]] |
 
 ### 框架规范
 
 | 框架 | 核心问题 | 文档 |
 |------|----------|------|
-| React | React 项目特定规范 | [[frameworks/react]] |
-| Vue | Vue 项目特定规范 | [[frameworks/vue]] |
-| Angular | Angular 项目特定规范 | [[frameworks/angular]] |
-| Svelte | Svelte/SvelteKit 项目特定规范 | [[frameworks/svelte]] |
-| Next.js | Next.js 项目特定规范 | [[frameworks/nextjs]] |
-| NestJS | NestJS 项目特定规范 | [[frameworks/nestjs]] |
-| Express/Fastify | Express/Fastify 项目特定规范 | [[frameworks/express]] |
-| Flask | Flask 项目特定规范 | [[frameworks/flask]] |
-| Django | Django 项目特定规范 | [[frameworks/django]] |
-| FastAPI | FastAPI 项目特定规范 | [[frameworks/fastapi]] |
-| Spring Boot | Spring Boot 项目特定规范 | [[frameworks/springboot]] |
+| React | React 项目特定规范 | [[docs/frameworks/react]] |
+| Vue | Vue 项目特定规范 | [[docs/frameworks/vue]] |
+| Angular | Angular 项目特定规范 | [[docs/frameworks/angular]] |
+| Svelte | Svelte/SvelteKit 项目特定规范 | [[docs/frameworks/svelte]] |
+| Next.js | Next.js 项目特定规范 | [[docs/frameworks/nextjs]] |
+| NestJS | NestJS 项目特定规范 | [[docs/frameworks/nestjs]] |
+| Express/Fastify | Express/Fastify 项目特定规范 | [[docs/frameworks/express]] |
+| Flask | Flask 项目特定规范 | [[docs/frameworks/flask]] |
+| Django | Django 项目特定规范 | [[docs/frameworks/django]] |
+| FastAPI | FastAPI 项目特定规范 | [[docs/frameworks/fastapi]] |
+| Spring Boot | Spring Boot 项目特定规范 | [[docs/frameworks/springboot]] |
 
 ### DevOps 规范
 
 | 主题 | 核心问题 | 文档 |
 |------|----------|------|
-| Docker | 容器化最佳实践 | [[devops/docker]] |
-| Kubernetes | K8s 部署与管理 | [[devops/kubernetes]] |
-| CI/CD | 持续集成/持续部署 | [[devops/cicd]] |
+| Docker | 容器化最佳实践 | [[docs/devops/docker]] |
+| Kubernetes | K8s 部署与管理 | [[docs/devops/kubernetes]] |
+| CI/CD | 持续集成/持续部署 | [[docs/devops/cicd]] |
 
 ### 数据库规范
 
 | 主题 | 核心问题 | 文档 |
 |------|----------|------|
-| SQL | 关系型数据库最佳实践 | [[database/sql]] |
-| NoSQL | 非关系型数据库最佳实践 | [[database/nosql]] |
+| SQL | 关系型数据库最佳实践 | [[docs/database/sql]] |
+| NoSQL | 非关系型数据库最佳实践 | [[docs/database/nosql]] |
 
 ### API 设计规范
 
 | 主题 | 核心问题 | 文档 |
 |------|----------|------|
-| RESTful | REST API 设计 | [[api/rest]] |
-| GraphQL | GraphQL API 设计 | [[api/graphql]] |
-| gRPC | gRPC API 设计 | [[api/grpc]] |
+| RESTful | REST API 设计 | [[docs/api/rest]] |
+| GraphQL | GraphQL API 设计 | [[docs/api/graphql]] |
+| gRPC | gRPC API 设计 | [[docs/api/grpc]] |
 
 ### 安全规范
 
 | 主题 | 核心问题 | 文档 |
 |------|----------|------|
-| 认证授权 | 认证模式与最佳实践 | [[security/authentication]] |
-| OWASP Top 10 | 安全风险防护 | [[security/owasp]] |
+| 认证授权 | 认证模式与最佳实践 | [[docs/security/authentication]] |
+| OWASP Top 10 | 安全风险防护 | [[docs/security/owasp]] |
 
 ### 测试与工作流
 
 | 主题 | 核心问题 | 文档 |
 |------|----------|------|
-| 测试策略 | 测试金字塔与最佳实践 | [[testing/strategy]] |
-| Git 工作流 | Git 分支与提交规范 | [[testing/git-workflow]] |
+| 测试策略 | 测试金字塔与最佳实践 | [[docs/testing/strategy]] |
+| Git 工作流 | Git 分支与提交规范 | [[docs/testing/git-workflow]] |
 
 ### 本项目特定规范
 
 | 主题 | 核心问题 | 文档 |
 |------|----------|------|
-| Prompt 编写规范 | 如何编写高质量 agent 定义 | [[agent-dev/prompt-standards]] |
-| 开发流程规范 | agent 开发的全流程标准 | [[agent-dev/workflow-standards]] |
-| 质量门禁 | 各阶段的质量检查标准 | [[agent-dev/quality-gates]] |
-| 上下文管理 | 项目上下文的维护规范 | [[agent-dev/context-management]] |
-| Prompt 模板 | agent 定义的标准模板 | [[agent-dev/agent-prompt-template]] |
-| 质量检查清单 | 开发各阶段的检查项 | [[agent-dev/quality-checklist]] |
+| Prompt 编写规范 | 如何编写高质量 agent 定义 | [[docs/agent-dev/prompt-standards]] |
+| 开发流程规范 | agent 开发的全流程标准 | [[docs/agent-dev/workflow-standards]] |
+| 质量门禁 | 各阶段的质量检查标准 | [[docs/agent-dev/quality-gates]] |
+| 上下文管理 | 项目上下文的维护规范 | [[docs/agent-dev/context-management]] |
+| Prompt 模板 | agent 定义的标准模板 | [[docs/agent-dev/agent-prompt-template]] |
+| 质量检查清单 | 开发各阶段的检查项 | [[docs/agent-dev/quality-checklist]] |
 
 ---
 
@@ -309,9 +309,9 @@ ai-learning-method → automated-bug-fixing → full-cycle-workflow → ide-best
 
 | 文件 | 用途 | 链接 |
 |------|------|------|
-| 可视化地图 | 整体架构图 | [[governance/MAP]] |
-| 快速参考卡 | 速查手册 | [[governance/CHEATSHEET]] |
-| 安装指南 | 快速入门 | [[governance/INSTALL.md]] |
+| 可视化地图 | 整体架构图 | [[docs/governance/MAP]] |
+| 快速参考卡 | 速查手册 | [[docs/governance/CHEATSHEET]] |
+| 安装指南 | 快速入门 | [[docs/governance/INSTALL.md]] |
 
 ---
 

@@ -32,14 +32,22 @@ def parse_llm_json(text: str, label: str = "LLM response") -> Optional[List]:
     if fenced:
         text = fenced.group(1).strip()
 
-    # Find the outermost JSON array
-    start = text.find("[")
-    end = text.rfind("]")
-    if start == -1 or end == -1 or end <= start:
+    # Find the outermost JSON array using bracket counting (handles nested brackets)
+    depth = 0
+    start = -1
+    for i, ch in enumerate(text):
+        if ch == "[":
+            if depth == 0:
+                start = i
+            depth += 1
+        elif ch == "]":
+            depth -= 1
+            if depth == 0 and start != -1:
+                candidate = text[start : i + 1]
+                break
+    else:
         logger.warning(f"⚠️ {label}: no JSON array found in response")
         return None
-
-    candidate = text[start : end + 1]
 
     # Remove trailing commas before ] or } (common LLM mistake)
     candidate = re.sub(r",\s*([}\]])", r"\1", candidate)

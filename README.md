@@ -81,7 +81,7 @@ cat > opencode.json << 'EOF'
     "ai-context-sync": {
       "command": "python",
       "args": ["-m", "src.mcp_server"],
-      "cwd": "/home/zeron/dev/ai_developer_growth/examples/ai-context-sync",
+      "cwd": "./examples/ai-context-sync",
       "enabled": true
     }
   }
@@ -142,9 +142,9 @@ ai_developer_growth/
 │   ├── agent-dev/              # Agent 开发规范
 │   ├── mindset/                # 认知升级
 │   ├── learning/               # 学习方法
-│   ├── efficiency/             # 工程效率
+│   ├── efficiency/             # 工程效率 (18 文档)
 │   ├── tools/                  # 工具选型
-│   ├── specs/                  # 语言规范库 (12 种)
+│   ├── specs/                  # 语言规范库 (11 种)
 │   ├── specialization/         # 专项规范
 │   └── superpowers/            # 超能力计划
 ├── case-studies/               # 实践案例 (11 个)

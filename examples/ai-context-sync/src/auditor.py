@@ -50,13 +50,6 @@ class FeedbackManager:
         self.history.append(violation.to_dict())
         self._persist()
 
-    def update_status(self, rule_id: str, status: str) -> None:
-        """Updates the status of all violations for a specific rule."""
-        for item in self.history:
-            if item['rule_id'] == rule_id:
-                item['status'] = status
-        self._persist()
-
     def _persist(self) -> None:
         with open(self.history_file, "w", encoding="utf-8") as f:
             json.dump(self.history, f, indent=2)

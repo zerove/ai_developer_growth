@@ -320,9 +320,10 @@ class WorkflowManager:
             if not written_files:
                 logger.warning(f"No valid file blocks found in output for {tid}")
             return f"Successfully implemented {tid} (single-shot)"
-        except Exception as e:
+        except (LLMError, OSError) as e:
             logger.error(f"Error in single-shot sub-task {tid}: {e}")
             return f"Failed {tid}: {str(e)}"
+
     def _build_design_prompt(self, task: str, context: str) -> str:
         return (
             f"Task: {task}\n"

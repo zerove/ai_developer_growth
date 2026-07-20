@@ -1,4 +1,5 @@
 import json
+import logging
 import os
 from dataclasses import asdict, dataclass, field
 from typing import List, Optional
@@ -66,7 +67,6 @@ class AppConfig:
                 config_path=path
             )
         except (json.JSONDecodeError, KeyError, TypeError) as e:
-            import logging
             logging.warning(f"Error loading config, using defaults: {e}")
             config = cls(config_path=path)
 

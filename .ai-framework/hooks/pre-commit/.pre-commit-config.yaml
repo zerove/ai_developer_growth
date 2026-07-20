@@ -1,0 +1,9 @@
+repos:
+  - repo: local
+    hooks:
+      - id: governance-check
+        name: Governance Check
+        entry: bash .ai-framework/quality-gates/scripts/check.sh
+        language: system
+        types: [python, rust, go, java, typescript]
+        pass_filenames: false

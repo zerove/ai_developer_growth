@@ -16,6 +16,7 @@
 | [[docs/mindset/ai-to-market-checklist\|市场发布]] | 如何从代码到产品？ | 0→1 路径 + 增长策略 |
 | [[docs/mindset/team-adoption\|团队采用策略]] | 团队如何采用 AI？ | 企业案例 + 采用框架 |
 | [[docs/mindset/human-ai-collaboration\|人机协作]] | 如何与 AI 协作？ | 能力互补 + 信任校准 |
+| [[docs/mindset/team-metrics\|指标度量]] | 如何衡量团队效能？ | 效能指标 + 数据驱动改进 |
 | [[docs/mindset/capability-model\|能力模型]] | AI 时代开发者如何分级？ | 五维雷达图 + 成长路径 |
 
 **推荐阅读顺序**: product-thinking → solo-founder-loop → ai-to-market-checklist → team-adoption → human-ai-collaboration → team-metrics

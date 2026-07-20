@@ -11,15 +11,13 @@ Usage:
     python validate_case_study.py --all  # Validate all cases
 """
 
-import os
+import argparse
+import json
 import re
 import sys
-import json
-import argparse
-from pathlib import Path
-from typing import List, Tuple, Dict, Any
 from dataclasses import dataclass
 from enum import Enum
+from pathlib import Path
 
 
 class Severity(Enum):
@@ -62,9 +60,9 @@ class CaseStudyValidator:
 
     def __init__(self, strict: bool = False):
         self.strict = strict
-        self.results: List[ValidationResult] = []
+        self.results: list[ValidationResult] = []
 
-    def validate(self, case_path: Path) -> List[ValidationResult]:
+    def validate(self, case_path: Path) -> list[ValidationResult]:
         """Run all validation checks on a case study."""
         self.results = []
 
@@ -72,9 +70,9 @@ class CaseStudyValidator:
         readme_path = case_path
         if case_path.is_dir():
             readme_path = case_path / "README.md"
-        
+
         if not readme_path.exists():
-            self._add_error(f"Missing README.md or case study file", str(case_path))
+            self._add_error("Missing README.md or case study file", str(case_path))
             return self.results
 
         content = readme_path.read_text(encoding="utf-8")
@@ -247,7 +245,7 @@ class CaseStudyValidator:
         if missing:
             self._add_warning(f"Submission checklist incomplete: {', '.join(missing)}", "README.md")
 
-    def _check_format(self, lines: List[str]):
+    def _check_format(self, lines: list[str]):
         """Check markdown formatting."""
         for i, line in enumerate(lines, 1):
             # Check for table alignment
@@ -292,7 +290,7 @@ class CaseStudyValidator:
             self.results.append(ValidationResult(Severity.WARNING, msg, file, line))
 
 
-def print_results(results: List[ValidationResult], case_name: str = ""):
+def print_results(results: list[ValidationResult], case_name: str = ""):
     """Pretty print validation results."""
     if case_name:
         print(f"\n{'='*60}")
@@ -333,7 +331,7 @@ def main():
 
     if args.all:
         case_items = sorted([
-            d for d in base.iterdir() 
+            d for d in base.iterdir()
             if not d.name.startswith('.') and (d.is_dir() or d.suffix == '.md')
         ])
         if not case_items:
@@ -345,7 +343,7 @@ def main():
             validator = CaseStudyValidator(strict=args.strict)
             results = validator.validate(case_item)
             print_results(results, case_item.name)
-            
+
             if any(r.severity == Severity.ERROR for r in results):
                 all_passed = False
 

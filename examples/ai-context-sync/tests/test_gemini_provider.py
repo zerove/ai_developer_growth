@@ -1,6 +1,5 @@
 """Tests for gemini_provider.py - GeminiProvider generate via HTTP."""
 
-import json
 import os
 import sys
 from unittest.mock import MagicMock, patch

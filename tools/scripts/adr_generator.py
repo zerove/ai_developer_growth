@@ -16,8 +16,7 @@ _ai_ctx_sync = _script_dir.parent.parent / "examples" / "ai-context-sync"
 if str(_ai_ctx_sync) not in sys.path:
     sys.path.insert(0, str(_ai_ctx_sync))
 
-from src.llm_client import LLMClient
-
+from src.llm_client import LLMClient  # noqa: E402
 
 SYSTEM_PROMPT = (
     "You are a senior software architect. Generate a structured ADR document. "

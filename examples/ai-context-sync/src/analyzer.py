@@ -76,9 +76,11 @@ class GitAnalyzer:
         chunks = diff.split("diff --git")
         filtered_chunks = []
         for chunk in chunks:
-            if not chunk: continue
+            if not chunk:
+                continue
             lines = chunk.splitlines()
-            if not lines: continue
+            if not lines:
+                continue
             parts = lines[0].split()
             if len(parts) >= 2:
                 file_path = parts[0].replace("a/", "")

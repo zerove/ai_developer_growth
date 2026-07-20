@@ -1,12 +1,10 @@
 """Tests for adr_generator.py"""
+import importlib.util
 import os
 import shutil
-import sys
 import tempfile
 import unittest
-import importlib.util
-from unittest.mock import patch, MagicMock, call
-from io import StringIO
+from unittest.mock import MagicMock, patch
 
 spec = importlib.util.spec_from_file_location(
     "adr_generator",
@@ -79,7 +77,7 @@ class TestSaveAdr(unittest.TestCase):
         self.assertTrue(os.path.exists(filepath))
         self.assertTrue(filepath.startswith("docs/adr/"))
 
-        with open(filepath, "r", encoding="utf-8") as f:
+        with open(filepath, encoding="utf-8") as f:
             content = f.read()
         self.assertIn("Test Decision", content)
         self.assertIn("## Context", content)
@@ -101,7 +99,7 @@ class TestSaveAdr(unittest.TestCase):
     def test_save_adr_includes_metadata(self):
         """Test that saved ADR includes status and date."""
         filepath = save_adr("Meta Test", "## Context\nTest")
-        with open(filepath, "r", encoding="utf-8") as f:
+        with open(filepath, encoding="utf-8") as f:
             content = f.read()
         self.assertIn("Accepted", content)
         self.assertIn("## Context", content)

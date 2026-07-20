@@ -3,7 +3,6 @@
 
 import argparse
 import sys
-from pathlib import Path
 
 from assessment import AssessmentEngine, print_result
 

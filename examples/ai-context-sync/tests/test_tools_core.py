@@ -162,8 +162,7 @@ class TestAiMapErrorBranches:
         mock_sync.config.settings.adr_dir = str(tmp_path)
 
         # Patch DecisionGraph so it raises AISyncError
-        import src.handlers.tools_core as tc
-        original_import_decision_graph = None
+        _original_import_decision_graph = None
 
         class FakeDecisionGraph:
             def __init__(self, *args, **kwargs):

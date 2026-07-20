@@ -1,9 +1,10 @@
-import unittest
 import os
 import shutil
-import sys
 import subprocess
-from tools.scripts.link_auditor import find_broken_links, _check_target, _build_index
+import sys
+import unittest
+
+from tools.scripts.link_auditor import _build_index, _check_target, find_broken_links
 
 
 class TestLinkAuditor(unittest.TestCase):

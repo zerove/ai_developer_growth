@@ -2,6 +2,7 @@
 import json
 import sys
 
+
 def format_audit_results(json_input: str) -> str:
     """
     Converts a JSON audit result into a formatted GitHub PR comment.
@@ -51,5 +52,5 @@ if __name__ == "__main__":
     if not input_data:
         print("❌ Error: No input provided to audit-to-pr.")
         sys.exit(1)
-        
+
     print(format_audit_results(input_data))

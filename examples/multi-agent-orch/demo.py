@@ -1,18 +1,42 @@
 import time
-from typing import List, Dict, Any, Optional
+
 
 class MockLLM:
     """Simulates an LLM response based on the role and input."""
+
     def generate(self, role: str, prompt: str) -> str:
         # Simple mock logic to simulate different agent outputs
         if role == "PM":
-            return f"[PRD] Project: {prompt}\n- Goal: Create a functional tool.\n- Requirements: Input amount, select currency, output converted value.\n- Success Criteria: Accuracy and simplicity."
+            return (
+                f"[PRD] Project: {prompt}\n"
+                "- Goal: Create a functional tool.\n"
+                "- Requirements: Input amount, select currency, output converted value.\n"  # noqa: E501
+                "- Success Criteria: Accuracy and simplicity."
+            )
         elif role == "Architect":
-            return f"[Design] Based on PRD: {prompt}\n- Component: CurrencyConverter Class\n- Method: convert(amount, from_curr, to_curr)\n- API: JSON interface {{ 'amount': float, 'from': str, 'to': str }} -> {{ 'result': float }}"
+            return (
+                f"[Design] Based on PRD: {prompt}\n"
+                "- Component: CurrencyConverter Class\n"
+                "- Method: convert(amount, from_curr, to_curr)\n"
+                "- API: JSON interface {{ 'amount': float, 'from': str, 'to': str }}"  # noqa: E501
+                " -> {{ 'result': float }}"
+            )
         elif role == "Coder":
             if "FIX" in prompt:
-                return "def convert(amount, from_curr, to_curr):\n    # Fixed: Added error handling\n    try:\n        rate = 1.1 # Mock rate\n        return amount * rate\n    except Exception as e:\n        return str(e)"
-            return "def convert(amount, from_curr, to_curr):\n    rate = 1.1 # Mock rate\n    return amount * rate"
+                return (
+                    "def convert(amount, from_curr, to_curr):\n"
+                    "    # Fixed: Added error handling\n"
+                    "    try:\n"
+                    "        rate = 1.1 # Mock rate\n"
+                    "        return amount * rate\n"
+                    "    except Exception as e:\n"
+                    "        return str(e)"
+                )
+            return (
+                "def convert(amount, from_curr, to_curr):\n"
+                "    rate = 1.1 # Mock rate\n"
+                "    return amount * rate"
+            )
         elif role == "Reviewer":
             if "error handling" in prompt:
                 return "PASS: Code looks good now."
@@ -39,7 +63,7 @@ class WorkflowOrchestrator:
 
     def execute(self, request: str):
         print(f"🚀 Starting Workflow for: {request}\n" + "="*50)
-        
+
         # 1. PM Phase
         prd = self.pm.run(request)
         print(f"📄 PM Output:\n{prd}\n" + "-"*30)
@@ -50,19 +74,22 @@ class WorkflowOrchestrator:
 
         # 3. Coder & Reviewer Loop
         iteration = 1
+        review_feedback = ""
         while True:
             print(f"💻 Coder Iteration {iteration}...")
-            code = self.coder.run(design if iteration == 1 else f"FIX: {review_feedback}")
+            code = self.coder.run(
+                design if iteration == 1 else f"FIX: {review_feedback}"
+            )
             print(f"📝 Code:\n{code}\n" + "-"*20)
 
-            print(f"🔍 Reviewer is checking...")
+            print("🔍 Reviewer is checking...")
             review_feedback = self.reviewer.run(code)
             print(f"📢 Reviewer Feedback: {review_feedback}\n" + "-"*30)
 
             if "PASS" in review_feedback:
                 print("✅ Review passed!")
                 break
-            
+
             print("❌ Review failed. Sending back to Coder...")
             iteration += 1
             if iteration > 3:

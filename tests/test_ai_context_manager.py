@@ -1,12 +1,12 @@
 """Tests for ai_context_manager.py"""
+import importlib.util
 import os
-import sys
 import shutil
+import sys
 import tempfile
 import unittest
-import importlib.util
-from unittest.mock import MagicMock, patch, call
 from io import StringIO
+from unittest.mock import MagicMock, patch
 
 # Mock openai before importing the module (source imports openai at module level)
 mock_openai = MagicMock()
@@ -81,7 +81,7 @@ class TestSaveContext(unittest.TestCase):
         save_context("# Updated Context\n\n## Progress\n- Done.")
         self.assertTrue(os.path.exists("CONTEXT.md"))
 
-        with open("CONTEXT.md", "r", encoding="utf-8") as f:
+        with open("CONTEXT.md", encoding="utf-8") as f:
             content = f.read()
         self.assertIn("Updated Context", content)
 
@@ -90,7 +90,7 @@ class TestSaveContext(unittest.TestCase):
         save_context("# Old Content")
         save_context("# New Content")
 
-        with open("CONTEXT.md", "r", encoding="utf-8") as f:
+        with open("CONTEXT.md", encoding="utf-8") as f:
             content = f.read()
         self.assertIn("New Content", content)
         self.assertNotIn("Old Content", content)
@@ -98,7 +98,7 @@ class TestSaveContext(unittest.TestCase):
     def test_save_context_writes_utf8(self):
         """Test that save_context handles UTF-8 content correctly."""
         save_context("# 中文上下文\n\n## 进度\n- 完成")
-        with open("CONTEXT.md", "r", encoding="utf-8") as f:
+        with open("CONTEXT.md", encoding="utf-8") as f:
             content = f.read()
         self.assertIn("中文上下文", content)
 

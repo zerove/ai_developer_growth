@@ -2,7 +2,7 @@
 
 import unittest
 
-from src.errors import (
+from errors import (
     AgentError,
     AgentFailureError,
     AgentTimeoutError,

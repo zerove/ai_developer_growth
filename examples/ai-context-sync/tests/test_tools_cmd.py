@@ -3,7 +3,6 @@ import os
 import sys
 from unittest.mock import MagicMock, mock_open, patch
 
-import pytest
 from typer.testing import CliRunner
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -101,7 +100,7 @@ class TestScaffold:
         mock_os.path.join.side_effect = os.path.join
 
         with patch("builtins.open", mock_open()) as m_open:
-            result = runner.invoke(app, ["scaffold", "minimal"])
+            _result = runner.invoke(app, ["scaffold", "minimal"])
             m_open.assert_any_call("CONTEXT.md", "a")
 
 
@@ -297,9 +296,12 @@ class TestReport:
     def test_report_shows_violation_count(self, mock_sync_cls, mock_gen, mock_save):
         """Report shows number of violations found."""
         mock_sync = MagicMock()
-        v1 = MagicMock(); v1.to_dict.return_value = {"severity": "Critical"}
-        v2 = MagicMock(); v2.to_dict.return_value = {"severity": "Info"}
-        v3 = MagicMock(); v3.to_dict.return_value = {"severity": "Warning"}
+        v1 = MagicMock()
+        v1.to_dict.return_value = {"severity": "Critical"}
+        v2 = MagicMock()
+        v2.to_dict.return_value = {"severity": "Info"}
+        v3 = MagicMock()
+        v3.to_dict.return_value = {"severity": "Warning"}
         mock_sync.auditor.audit.return_value = [v1, v2, v3]
         mock_sync.analyzer.get_last_commit_diff.return_value = "diff"
         mock_sync.analyzer.get_last_commit_message.return_value = "msg"

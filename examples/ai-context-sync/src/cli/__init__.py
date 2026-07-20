@@ -37,14 +37,14 @@ def cli_error_handler(func: Any) -> Any:
 
 
 # Import command functions from modules (each module exports raw functions)
-from .commands.analysis import map as map_cmd
-from .commands.analysis import trace, why
-from .commands.audit import audit
-from .commands.evolution import evolve
-from .commands.flow import flow
-from .commands.monitoring import apply_fix, watch
-from .commands.sync_guard import guard, sync
-from .commands.tools import init, install_hook, onboard, override, report, scaffold
+from .commands.analysis import map as map_cmd  # noqa: E402
+from .commands.analysis import trace, why  # noqa: E402
+from .commands.audit import audit  # noqa: E402
+from .commands.evolution import evolve  # noqa: E402
+from .commands.flow import flow  # noqa: E402
+from .commands.monitoring import apply_fix, watch  # noqa: E402
+from .commands.sync_guard import guard, sync  # noqa: E402
+from .commands.tools import init, install_hook, onboard, override, report, scaffold  # noqa: E402
 
 # Register all commands as flat (no nested groups)
 app.command("sync")(sync)

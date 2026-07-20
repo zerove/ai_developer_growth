@@ -121,6 +121,20 @@ jobs:
           python -m pytest tests/ --cov=src --cov-report=term-missing --tb=short
           echo "Coverage check complete"
 
+      - name: Run self-correction-loop tests
+        run: |
+          echo "=== Gate 3.4c: self-correction-loop Tests ==="
+          cd examples/self-correction-loop
+          PYTHONPATH=src python -m pytest tests/ -v --tb=short
+          echo "self-correction-loop tests complete"
+
+      - name: Run multi-agent-orch tests
+        run: |
+          echo "=== Gate 3.4d: multi-agent-orch Tests ==="
+          cd examples/multi-agent-orch
+          PYTHONPATH=src python -m pytest tests/ -v --tb=short
+          echo "multi-agent-orch tests complete"
+
       - name: Run root-level tests
         run: |
           echo "=== Gate 3.5: Root Tests ==="
@@ -158,3 +172,33 @@ jobs:
             echo "FAIL: AGENTS.md not found (required by CLAUDE.md)"
             exit 1
           fi
+
+  # ──────────────────────────────────────────────────────────────
+  # Gate 4: Case Study Validation
+  # ──────────────────────────────────────────────────────────────
+  gate4-case-study-validation:
+    name: "Gate 4: Case Study Validation"
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+          cache-dependency-path: |
+            requirements.txt
+            tools/scripts/validate_case_study.py
+
+      - name: Install dependencies
+        run: |
+          pip install pyyaml
+
+      - name: Validate all case studies
+        run: |
+          echo "=== Gate 4: Case Study Validation ==="
+          python tools/scripts/validate_case_study.py --all --strict

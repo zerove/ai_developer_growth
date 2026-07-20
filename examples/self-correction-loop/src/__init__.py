@@ -1,8 +1,8 @@
-"""Self-correction loop: AI-powered code repair via test feedback."""
+"""Self-correction loop: AI-powered code repair via test feedback."""  # noqa: N999
 
-from src.errors import CorrectionError, FixError, StrategyError, TestFailure
-from src.results import CorrectionResult
-from src.runner import CorrectionLoop
+from .errors import CorrectionError, FixError, StrategyError, TestFailure
+from .results import CorrectionResult
+from .runner import CorrectionLoop
 
 __all__ = [
     "CorrectionError",

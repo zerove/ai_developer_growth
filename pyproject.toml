@@ -26,6 +26,9 @@ python_files = ["test_*.py"]
 python_classes = ["Test*"]
 python_functions = ["test_*"]
 
+# Example projects have their own test configurations in their respective pyproject.toml
+# Run tests from each example's directory: cd examples/<project> && python -m pytest tests/
+
 [tool.ruff]
 line-length = 120
 target-version = "py310"

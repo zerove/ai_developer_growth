@@ -2,7 +2,7 @@
 
 import unittest
 
-from src.protocol import Agent, AgentResponse, Message, MessageRole
+from protocol import Agent, AgentResponse, Message, MessageRole
 
 
 class TestMessage(unittest.TestCase):

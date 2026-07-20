@@ -10,16 +10,16 @@ from __future__ import annotations
 
 import argparse
 
-from src.agents import (
+from agents import (
     ArchitectAgent,
     CoderAgent,
     MockLLM,
     PMAgent,
     ReviewerAgent,
 )
-from src.config import WorkflowConfig
-from src.orchestration import FanOutOrchestrator, WaterfallOrchestrator
-from src.protocol import Message, MessageRole
+from config import WorkflowConfig
+from orchestration import FanOutOrchestrator, WaterfallOrchestrator
+from protocol import Message, MessageRole
 
 
 def _print_header(title: str) -> None:

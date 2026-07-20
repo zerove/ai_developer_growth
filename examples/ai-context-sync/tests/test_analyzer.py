@@ -1,10 +1,10 @@
 """Tests for src/analyzer.py - targeting 100% coverage (excluding __main__)."""
 
+import os
 import subprocess
 import sys
-import os
 import unittest
-from unittest.mock import patch, MagicMock
+from unittest.mock import MagicMock, patch
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 

@@ -17,7 +17,6 @@
 | [[mindset/team-adoption\|团队采用策略]] | 团队如何采用 AI？ | 企业案例 + 采用框架 |
 | [[mindset/human-ai-collaboration\|人机协作]] | 如何与 AI 协作？ | 能力互补 + 信任校准 |
 | [[mindset/capability-model\|能力模型]] | AI 时代开发者如何分级？ | 五维雷达图 + 成长路径 |
-| [[mindset/capability-model\|能力模型]] | AI 时代开发者如何分级？ | 五维雷达图 + 成长路径 |
 
 **推荐阅读顺序**: product-thinking → solo-founder-loop → ai-to-market-checklist → team-adoption → human-ai-collaboration → team-metrics
 
@@ -87,8 +86,8 @@
 
 | 主题 | 核心问题 | 文档 |
 |------|----------|------|
-| 通用治理标准 | 项目开发的完整规范 | [[GOVERNANCE.md]] |
-| 安装指南 | 如何在任何项目中使用 | [[governance/INSTALL]] |
+| 通用治理标准 | 项目开发的完整规范 | [[../GOVERNANCE.md]] |
+| 安装指南 | 如何在任何项目中使用 | [[governance/INSTALL.md]] |
 
 ### 编程语言规范
 
@@ -182,28 +181,28 @@
 
 | 案例 | 场景 | 效率提升 | 核心洞察 |
 |------|------|----------|----------|
-| [[case-studies/ai-task-prioritizer\|任务优先级工具]] | CLI 工具开发 | 8x | TDD + AI = 极致效率 |
-| [[case-studies/ai-context-sync-development\|AI-Context-Sync]] | 完整产品开发 | 12x | 结构化 Prompt 是关键 |
-| [[case-studies/cli-tool-development\|CLI 工具开发]] | 命令行工具 | 4x | AI 加速样板代码生成 |
-| [[case-studies/web-scraping-tool\|网页抓取工具]] | 数据采集 | 4x | 智能识别减少手动配置 |
-| [[case-studies/data-pipeline\|数据处理管道]] | ETL 流程 | 4x | 插件化架构提高可扩展性 |
-| [[case-studies/api-monitoring\|API 监控系统]] | 运维监控 | 4.5x | 配置驱动减少代码修改 |
-| [[case-studies/database-migration\|数据库迁移]] | 数据库管理 | 4.4x | 自动化分析减少人工错误 |
-| [[case-studies/legacy-refactoring\|遗留系统重构]] | 代码现代化 | 5x | 渐进式重构降低风险 |
-| [[case-studies/production-debugging\|生产环境调试]] | 问题排查 | 6x | AI 辅助快速定位根因 |
-| [[case-studies/api-design-implementation\|API 设计实现]] | 后端开发 | 5x | 契约先行保证接口质量 |
-| [[case-studies/multi-agent-collaboration\|多 Agent 协作]] | 模拟团队开发 | 5x | 角色分工 + 迭代 |
+| [../case-studies/ai-task-prioritizer.md\|任务优先级工具]] | CLI 工具开发 | 8x | TDD + AI = 极致效率 |
+| [../case-studies/ai-context-sync-development.md\|AI-Context-Sync]] | 完整产品开发 | 12x | 结构化 Prompt 是关键 |
+| [../case-studies/cli-tool-development.md\|CLI 工具开发]] | 命令行工具 | 4x | AI 加速样板代码生成 |
+| [../case-studies/web-scraping-tool.md\|网页抓取工具]] | 数据采集 | 4x | 智能识别减少手动配置 |
+| [../case-studies/data-pipeline.md\|数据处理管道]] | ETL 流程 | 4x | 插件化架构提高可扩展性 |
+| [../case-studies/api-monitoring.md\|API 监控系统]] | 运维监控 | 4.5x | 配置驱动减少代码修改 |
+| [../case-studies/database-migration.md\|数据库迁移]] | 数据库管理 | 4.4x | 自动化分析减少人工错误 |
+| [../case-studies/legacy-refactoring.md\|遗留系统重构]] | 代码现代化 | 5x | 渐进式重构降低风险 |
+| [../case-studies/production-debugging.md\|生产环境调试]] | 问题排查 | 6x | AI 辅助快速定位根因 |
+| [../case-studies/api-design-implementation.md\|API 设计实现]] | 后端开发 | 5x | 契约先行保证接口质量 |
+| [../case-studies/multi-agent-collaboration.md\|多 Agent 协作]] | 模拟团队开发 | 5x | 角色分工 + 迭代 |
 
 ### 代码示例
 | 示例 | 核心机制 | 学习价值 |
 |------|----------|----------|
-| [[examples/self-correction-loop\|自我修正循环]] | AI 代码质量保证 | 验证→重试模式 |
-| [[examples/multi-agent-orch\|多 Agent 协作]] | 模拟团队开发 | 角色分工 + 迭代 |
+| [../examples/self-correction-loop/README.md\|自我修正循环]] | AI 代码质量保证 | 验证→重试模式 |
+| [../examples/multi-agent-orch/README.md\|多 Agent 协作]] | 模拟团队开发 | 角色分工 + 迭代 |
 
 ### 参考实现
 | 项目 | 定位 | 价值 |
 |------|------|------|
-| [[examples/ai-context-sync/README\|AI-Context-Sync]] | 知识验证工具 | 方法论的实践检验 |
+| [../examples/ai-context-sync/README.md\|AI-Context-Sync]] | 知识验证工具 | 方法论的实践检验 |
 
 ---
 
@@ -312,7 +311,7 @@ ai-learning-method → automated-bug-fixing → full-cycle-workflow → ide-best
 |------|------|------|
 | 可视化地图 | 整体架构图 | [[governance/MAP]] |
 | 快速参考卡 | 速查手册 | [[governance/CHEATSHEET]] |
-| 安装指南 | 快速入门 | [[governance/INSTALL]] |
+| 安装指南 | 快速入门 | [[governance/INSTALL.md]] |
 
 ---
 
@@ -320,7 +319,7 @@ ai-learning-method → automated-bug-fixing → full-cycle-workflow → ide-best
 
 欢迎贡献案例、工具推荐、方法论改进。
 
-详见 [[CONTRIBUTING|贡献指南]]。
+详见 [../CONTRIBUTING.md|贡献指南]]。
 
 ---
 

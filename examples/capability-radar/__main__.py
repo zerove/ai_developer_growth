@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# noqa: N999
 """Capability Radar CLI - AI Era Developer Self-Assessment Tool."""
 
 import argparse

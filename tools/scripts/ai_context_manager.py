@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
+import argparse
 import os
 import sys
-import argparse
+
 from openai import OpenAI
 
 
@@ -9,7 +10,7 @@ def load_context() -> str:
     context_file = "CONTEXT.md"
     if not os.path.exists(context_file):
         return "# Project Context\n\n## Current Progress\n- Initial project setup."
-    with open(context_file, "r", encoding="utf-8") as f:
+    with open(context_file, encoding="utf-8") as f:
         return f.read()
 
 

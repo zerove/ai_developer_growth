@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from src.errors import CorrectionError, FixError, StrategyError, TestFailure
+from errors import CorrectionError, FixError, StrategyError, TestFailure
 
 
 class TestCorrectionError:

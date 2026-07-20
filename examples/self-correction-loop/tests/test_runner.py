@@ -2,19 +2,21 @@
 
 from __future__ import annotations
 
+import subprocess as _subprocess
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 
-from src.errors import FixError
-from src.results import CorrectionResult
-from src.runner import CorrectionLoop, run_tests
-from src.strategies.base import Strategy, StrategyRegistry
+import runner as _runner_mod
+from errors import FixError
+from results import CorrectionResult
+from runner import CorrectionLoop, run_tests
+from strategies.base import Strategy, StrategyRegistry
 
 # ── run_tests helper ───────────────────────────────────────────────────────
 
 
 class TestRunTests:
-    @patch("src.runner.subprocess.run")
+    @patch.object(_subprocess, "run")
     def test_unittest_command(self, mock_run: MagicMock) -> None:
         mock_run.return_value = MagicMock(returncode=0, stdout="OK", stderr="")
         rc, out, err = run_tests("tests", "unittest")
@@ -22,7 +24,7 @@ class TestRunTests:
         cmd = mock_run.call_args[0][0]
         assert "unittest" in " ".join(cmd)
 
-    @patch("src.runner.subprocess.run")
+    @patch.object(_subprocess, "run")
     def test_pytest_command(self, mock_run: MagicMock) -> None:
         mock_run.return_value = MagicMock(returncode=0, stdout="1 passed", stderr="")
         rc, out, err = run_tests("tests", "pytest")
@@ -76,14 +78,14 @@ class TestCorrectionLoop:
             registry=registry,
         )
 
-    @patch("src.runner.run_tests", return_value=(0, "OK", ""))
+    @patch.object(_runner_mod, "run_tests", return_value=(0, "OK", ""))
     def test_immediate_pass(self, _mock: MagicMock, tmp_path: Path) -> None:
         loop = self._make_loop(tmp_path, [_AlwaysPass()])
         result = loop.run()
         assert result.is_success
         assert result.attempt == 1
 
-    @patch("src.runner.run_tests", return_value=(1, "FAIL", "err"))
+    @patch.object(_runner_mod, "run_tests", return_value=(1, "FAIL", "err"))
     def test_all_strategies_fail(self, _mock: MagicMock, tmp_path: Path) -> None:
         loop = self._make_loop(tmp_path, [_NeverFixes()], max_attempts=2)
         result = loop.run()
@@ -96,12 +98,12 @@ class TestCorrectionLoop:
             test_dir=str(tmp_path),
         )
         # Should not raise – loop reads file only after test failure
-        with patch("src.runner.run_tests", return_value=(0, "OK", "")):
+        with patch.object(_runner_mod, "run_tests", return_value=(0, "OK", "")):
             result = loop.run()
             assert result.is_success
 
-    @patch("src.runner.run_tests", return_value=(1, "FAIL", "err"))
-    @patch("src.runner._write_code", side_effect=FixError("perm denied"))
+    @patch.object(_runner_mod, "run_tests", return_value=(1, "FAIL", "err"))
+    @patch.object(_runner_mod, "_write_code", side_effect=FixError("perm denied"))
     def test_write_failure(
         self, _write: MagicMock, _run: MagicMock, tmp_path: Path
     ) -> None:
@@ -112,7 +114,7 @@ class TestCorrectionLoop:
 
     def test_history_populated(self, tmp_path: Path) -> None:
         loop = self._make_loop(tmp_path, [_NeverFixes()], max_attempts=2)
-        with patch("src.runner.run_tests", return_value=(1, "FAIL", "err")):
+        with patch.object(_runner_mod, "run_tests", return_value=(1, "FAIL", "err")):
             loop.run()
             assert len(loop.history) == 2
             assert all(isinstance(r, CorrectionResult) for r in loop.history)
@@ -121,12 +123,12 @@ class TestCorrectionLoop:
         callback = MagicMock()
         loop = self._make_loop(tmp_path, [_NeverFixes()], max_attempts=1)
         loop._on_attempt = callback
-        with patch("src.runner.run_tests", return_value=(1, "FAIL", "err")):
+        with patch.object(_runner_mod, "run_tests", return_value=(1, "FAIL", "err")):
             loop.run()
             assert callback.call_count == 1
 
-    @patch("src.runner._write_code")
-    @patch("src.runner.run_tests")
+    @patch.object(_runner_mod, "_write_code")
+    @patch.object(_runner_mod, "run_tests")
     def test_strategy_chain_priority(
         self, mock_run: MagicMock, _write: MagicMock, tmp_path: Path
     ) -> None:

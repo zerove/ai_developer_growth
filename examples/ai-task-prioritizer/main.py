@@ -1,7 +1,9 @@
 import argparse
 import sys
+
 from llm_client import LLMClient
 from prioritizer import Prioritizer
+
 
 def main():
     parser = argparse.ArgumentParser(description="AI-Powered Task Prioritizer")
@@ -13,7 +15,7 @@ def main():
         if args.input == "-":
             tasks = [line.strip() for line in sys.stdin if line.strip()]
         else:
-            with open(args.input, "r") as f:
+            with open(args.input) as f:
                 tasks = [line.strip() for line in f if line.strip()]
     except FileNotFoundError:
         print(f"Error: File {args.input} not found.")

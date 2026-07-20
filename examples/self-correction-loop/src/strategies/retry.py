@@ -7,7 +7,7 @@ If the re-run passes, the fix is a no-op "pass-through"; otherwise it declines.
 
 from __future__ import annotations
 
-from src.strategies.base import Strategy, StrategyKind
+from strategies.base import Strategy, StrategyKind
 
 
 @Strategy.register(StrategyKind.RETRY)
@@ -43,7 +43,7 @@ class RetryStrategy(Strategy):
         if file_path is None:
             return None
 
-        from src.runner import run_tests  # noqa: PLC0415
+        from runner import run_tests  # noqa: PLC0415
 
         return_code, _stdout, _stderr = run_tests(test_dir=test_dir, runner=runner)
         if return_code == 0:

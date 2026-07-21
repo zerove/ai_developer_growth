@@ -66,8 +66,8 @@
 | 双重治理框架冗余 | 维护成本双倍，易不一致 | 合并为单一源头，保留 ai-dev-framework/ 作为分发包 | ✅ 已完成 |
 | 核心 Agent 定义缺失 | 无法自动化治理流程 | 基于模板创建 4 个 agent 定义文件 | ✅ 已完成 (4 个定义在 agents/ 目录) |
 | 文档链接不一致 | 用户导航困惑，CI 可检测 | 统一链接格式，添加 link_auditor CI 检查 | ✅ 已完成 (18 个断链修复) |
-| 缺少 conftest.py | 测试 fixture 重复，pytest 警告 | 在根目录和 ai-context-sync 添加 conftest.py | 🟡 待处理 |
-| 无远程仓库 | 无法协作、CI 无法运行 | 配置 GitHub/GitLab remote | 🟡 待处理 |
+| 缺少 conftest.py | 测试 fixture 重复，pytest 警告 | 在根目录和 ai-context-sync 添加 conftest.py | ✅ 已完成 |
+| 无远程仓库 | 无法协作、CI 无法运行 | 配置 GitHub/GitLab remote | ✅ 已完成 (https://github.com/zerove/ai_developer_growth) |
 
 ## 关键指标
 

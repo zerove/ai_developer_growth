@@ -1,0 +1,25 @@
+version: '3.8'
+
+services:
+  ai-context-sync:
+    build: .
+    container_name: ai-context-sync
+    volumes:
+      - ./workspace:/workspace
+      - ./config:/config
+    environment:
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - LLM_PROVIDER=${LLM_PROVIDER:-openai}
+      - LOG_LEVEL=${LOG_LEVEL:-INFO}
+    ports:
+      - "8080:8080"
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "python", "-c", "import sys; sys.exit(0)"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+volumes:
+  workspace:
+  config:

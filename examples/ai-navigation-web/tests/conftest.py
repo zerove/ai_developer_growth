@@ -1,13 +1,19 @@
 import pytest
 from httpx import AsyncClient, ASGITransport
 from src.app import app
-from src.database import init_db
+from src.database import init_db, DB_PATH
+import os
 
 
 @pytest.fixture(autouse=True)
 async def setup_db():
+    # Remove old DB and reinitialize for each test
+    if DB_PATH.exists():
+        os.remove(DB_PATH)
     await init_db()
     yield
+    if DB_PATH.exists():
+        os.remove(DB_PATH)
 
 
 @pytest.fixture

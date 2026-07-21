@@ -38,12 +38,14 @@
   - BM25 评分算法
   - 同义词扩展 (中英文技术术语)
   - 协同过滤推荐
-- ✅ Phase 4 向量搜索引擎
+- ✅ Phase 4 向量搜索引擎 + RAG 优化 + 对话界面 + 个性化导师
   - sentence-transformers + cosine similarity 语义搜索
   - BM25 + 向量混合搜索 (Reciprocal Rank Fusion)
-  - 18 个向量/混合搜索测试
+  - chat_interface.py: CLI 对话式问答系统
+  - personalized_mentor.py: 五维能力评估 + 个性化学习计划
+  - 18 个向量/混合搜索测试 + 11 个对话测试 + 10 个导师测试
 - ✅ 7 个示例项目全部 README.md
-- ✅ 测试覆盖率 84% (175 根目录 + 35 ai-navigation + 其他示例，目标 ≥70%)
+- ✅ 测试覆盖率 84% (175 根目录 + 56 ai-navigation + 其他示例，目标 ≥70%)
 - ✅ LICENSE 文件 (MIT)
 - ✅ 通用治理框架 (ai-dev-framework)
   - project_config.py: 参数化配置系统

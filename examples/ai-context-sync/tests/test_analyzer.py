@@ -24,15 +24,15 @@ class TestGetLastCommitDiff(unittest.TestCase):
         self.assertEqual(result, "diff output")
         mock_run.assert_called_once_with(
             ["git", "diff", "HEAD~1", "HEAD"],
-            capture_output=True, text=True, check=True,
+            capture_output=True,
+            text=True,
+            check=True,
         )
 
     @patch("subprocess.run")
     def test_returns_empty_on_called_process_error(self, mock_run):
         """Lines 26-28: CalledProcessError branch."""
-        mock_run.side_effect = subprocess.CalledProcessError(
-            returncode=128, cmd=["git", "diff"]
-        )
+        mock_run.side_effect = subprocess.CalledProcessError(returncode=128, cmd=["git", "diff"])
         result = self.analyzer.get_last_commit_diff()
         self.assertEqual(result, "")
 
@@ -52,9 +52,7 @@ class TestGetLastCommitMessage(unittest.TestCase):
     @patch("subprocess.run")
     def test_returns_empty_on_called_process_error(self, mock_run):
         """Lines 40-42: CalledProcessError branch."""
-        mock_run.side_effect = subprocess.CalledProcessError(
-            returncode=128, cmd=["git", "log"]
-        )
+        mock_run.side_effect = subprocess.CalledProcessError(returncode=128, cmd=["git", "log"])
         result = self.analyzer.get_last_commit_message()
         self.assertEqual(result, "")
 
@@ -103,11 +101,7 @@ class TestFilterDiff(unittest.TestCase):
         """Lines 68-70: IndexError triggers _basic_filter fallback."""
         mock_ps.side_effect = IndexError("bad index")
 
-        diff = (
-            "diff --git a/file.txt b/file.txt\n"
-            "old content\n"
-            "+new content\n"
-        )
+        diff = "diff --git a/file.txt b/file.txt\nold content\n+new content\n"
         result = self.analyzer.filter_diff(diff)
         self.assertIn("diff --git", result)
 
@@ -132,11 +126,7 @@ class TestBasicFilter(unittest.TestCase):
 
     def test_keeps_non_ignored_files(self):
         """Line 87: non-ignored chunk is appended."""
-        diff = (
-            "diff --git a/src/app.py b/src/app.py\n"
-            "-old\n"
-            "+new\n"
-        )
+        diff = "diff --git a/src/app.py b/src/app.py\n-old\n+new\n"
         result = self.analyzer._basic_filter(diff)
         self.assertIn("diff --git", result)
         self.assertIn("src/app.py", result)
@@ -171,10 +161,7 @@ class TestBasicFilter(unittest.TestCase):
 
     def test_strips_a_prefix_from_file_path(self):
         """Line 84: 'a/' prefix is removed for ignore matching."""
-        diff = (
-            "diff --git a/package-lock.json b/package-lock.json\n"
-            "old\n+new\n"
-        )
+        diff = "diff --git a/package-lock.json b/package-lock.json\nold\n+new\n"
         result = self.analyzer._basic_filter(diff)
         self.assertEqual(result, "")
 

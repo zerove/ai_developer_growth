@@ -133,9 +133,13 @@ class CaseStudyValidator:
 
                 if legacy_found:
                     if self.strict:
-                        self._add_error(f"Using legacy section format: {section_name} (consider updating to new format)")
+                        self._add_error(
+                            f"Using legacy section format: {section_name} (consider updating to new format)"
+                        )
                     else:
-                        self._add_warning(f"Using legacy section format: {section_name} (consider updating to new format)")
+                        self._add_warning(
+                            f"Using legacy section format: {section_name} (consider updating to new format)"
+                        )
                 else:
                     self._add_error(f"Missing required section: {section_name} (tried: {', '.join(alt_headers)})")
 

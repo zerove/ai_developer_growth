@@ -35,6 +35,7 @@ class TestGitAnalyzer(unittest.TestCase):
     def test_filter_diff_empty(self):
         self.assertEqual(self.analyzer.filter_diff(""), "")
 
+
 class TestContextSynthesizer(unittest.TestCase):
     def setUp(self):
         self.mock_client = MagicMock(spec=LLMClient)
@@ -53,6 +54,7 @@ class TestContextSynthesizer(unittest.TestCase):
         result = self.synth.synthesize_adr("diff", "msg")
         self.assertIn("ADR Content", result)
         self.mock_client.generate.assert_called_once()
+
 
 if __name__ == "__main__":
     unittest.main()

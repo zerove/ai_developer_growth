@@ -1,4 +1,5 @@
 """Smoke tests for entry point modules."""
+
 import importlib.util
 import subprocess
 import sys
@@ -22,9 +23,7 @@ def test_main_entry_point():
 
 def test_mcp_server_import():
     """Test that src/mcp_server.py can be imported (tests lines 1-32)."""
-    spec = importlib.util.spec_from_file_location(
-        "mcp_server", Path(__file__).parent.parent / "src" / "mcp_server.py"
-    )
+    spec = importlib.util.spec_from_file_location("mcp_server", Path(__file__).parent.parent / "src" / "mcp_server.py")
     module = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(module)
     # Check mcp instance exists

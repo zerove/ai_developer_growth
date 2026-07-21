@@ -1,4 +1,5 @@
 """Tests for src/cli/commands/flow.py — flow command (with/without diff, context fallback)."""
+
 from unittest.mock import MagicMock, mock_open, patch
 
 from src.cli.commands.flow import flow

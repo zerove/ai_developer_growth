@@ -1,4 +1,5 @@
 """Tests for CLI analysis commands: trace, map, why."""
+
 import os
 import sys
 from unittest.mock import MagicMock, mock_open, patch
@@ -15,6 +16,7 @@ runner = CliRunner()
 # ---------------------------------------------------------------------------
 # trace
 # ---------------------------------------------------------------------------
+
 
 class TestTrace:
     """Tests for the trace command."""
@@ -87,6 +89,7 @@ class TestTrace:
 # map
 # ---------------------------------------------------------------------------
 
+
 class TestMap:
     """Tests for the map command."""
 
@@ -115,6 +118,7 @@ class TestMap:
 # ---------------------------------------------------------------------------
 # why
 # ---------------------------------------------------------------------------
+
 
 class TestWhy:
     """Tests for the why command."""

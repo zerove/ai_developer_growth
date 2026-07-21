@@ -22,9 +22,13 @@ class TestWorkflowManager(unittest.TestCase):
             mock_cfg.settings.context_file = "CONTEXT.md"
             MockConfig.load.return_value = mock_cfg
             self.wm = WorkflowManager(
-                self.mock_llm, self.mock_analyzer, self.mock_synth,
-                self.mock_guard, self.mock_auditor, self.mock_evolution,
-                config_path=".ai-sync.json"
+                self.mock_llm,
+                self.mock_analyzer,
+                self.mock_synth,
+                self.mock_guard,
+                self.mock_auditor,
+                self.mock_evolution,
+                config_path=".ai-sync.json",
             )
 
     def test_run_flow_design_rejection(self):

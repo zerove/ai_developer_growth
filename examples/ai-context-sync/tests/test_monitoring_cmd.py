@@ -1,4 +1,5 @@
 """Tests for src/cli/commands/monitoring.py — _validate_file_path, watch, apply_fix."""
+
 from unittest.mock import MagicMock, mock_open, patch
 
 from src.cli.commands.monitoring import _validate_file_path, apply_fix, watch
@@ -133,6 +134,7 @@ class TestApplyFixCommand:
     @patch("src.cli.commands.monitoring.AIContextSync")
     def test_apply_fix_os_error(self, mock_sync_cls, mock_typer):
         import typer as _typer
+
         mock_typer.Exit = _typer.Exit  # real Exit class so `raise` works
 
         mock_sync = MagicMock()

@@ -1,4 +1,5 @@
 """Pytest configuration for multi-agent-orch tests."""
+
 import sys
 from pathlib import Path
 

@@ -14,6 +14,7 @@ from capability_model import (
 @dataclass
 class Answer:
     """Single question answer."""
+
     dimension: Dimension
     question_id: str
     selected_level: Level
@@ -23,6 +24,7 @@ class Answer:
 @dataclass
 class AssessmentResult:
     """Complete assessment result."""
+
     timestamp: str
     overall_score: float  # 0-4 float
     overall_level: Level
@@ -41,74 +43,124 @@ class AssessmentEngine:
     # Questions per dimension - each maps to a level
     QUESTIONS = {
         Dimension.PRODUCT: [
-            ("product_0", "收到模糊需求（如'做个登录页'）时，你的第一反应是？",
-             [("直接开写代码", Level.L0),
-              ("先问清楚用户类型、边界情况", Level.L1),
-              ("挖掘真实目标：'是要降低注册流失还是合规要求？'", Level.L2),
-              ("输出含 MVP 范围、优先级、成功指标的 PRD", Level.L3),
-              ("结合市场/商业判断决定'构建什么'，能说服利益相关者", Level.L4)]),
-            ("product_1", "定义成功指标时，你倾向于？",
-             [("凭感觉/不定指标", Level.L0),
-              ("定义基础验收标准（如'能登录'）", Level.L1),
-              ("定义可量化指标（如'注册转化率 > 60%'）", Level.L2),
-              ("建立北极星指标 + 领先/滞后指标体系", Level.L3),
-              ("指标体系驱动产品迭代决策，定期复盘调整", Level.L4)]),
+            (
+                "product_0",
+                "收到模糊需求（如'做个登录页'）时，你的第一反应是？",
+                [
+                    ("直接开写代码", Level.L0),
+                    ("先问清楚用户类型、边界情况", Level.L1),
+                    ("挖掘真实目标：'是要降低注册流失还是合规要求？'", Level.L2),
+                    ("输出含 MVP 范围、优先级、成功指标的 PRD", Level.L3),
+                    ("结合市场/商业判断决定'构建什么'，能说服利益相关者", Level.L4),
+                ],
+            ),
+            (
+                "product_1",
+                "定义成功指标时，你倾向于？",
+                [
+                    ("凭感觉/不定指标", Level.L0),
+                    ("定义基础验收标准（如'能登录'）", Level.L1),
+                    ("定义可量化指标（如'注册转化率 > 60%'）", Level.L2),
+                    ("建立北极星指标 + 领先/滞后指标体系", Level.L3),
+                    ("指标体系驱动产品迭代决策，定期复盘调整", Level.L4),
+                ],
+            ),
         ],
         Dimension.ARCHITECTURE: [
-            ("arch_0", "开始新模块/服务开发前，你的设计流程是？",
-             [("直接开写，后期重构", Level.L0),
-              ("画模块图、定接口，理解 SOLID", Level.L1),
-              ("处理并发/一致性/可观测性/演进性，输出 ADR", Level.L2),
-              ("在约束下做 Trade-off，建立团队架构评审机制", Level.L3),
-              ("设计可复用平台/框架，建立架构治理体系", Level.L4)]),
-            ("arch_1", "技术选型（如 Redis vs Memcached）时，你的决策依据？",
-             [("习惯/随意选", Level.L0),
-              ("对比基础优劣", Level.L1),
-              ("结合场景做权衡矩阵：维护成本/扩展性/开发速度", Level.L2),
-              ("输出 ADR，团队评审通过，决策可追溯", Level.L3),
-              ("建立选型标准库，新人也能按图索骥", Level.L4)]),
+            (
+                "arch_0",
+                "开始新模块/服务开发前，你的设计流程是？",
+                [
+                    ("直接开写，后期重构", Level.L0),
+                    ("画模块图、定接口，理解 SOLID", Level.L1),
+                    ("处理并发/一致性/可观测性/演进性，输出 ADR", Level.L2),
+                    ("在约束下做 Trade-off，建立团队架构评审机制", Level.L3),
+                    ("设计可复用平台/框架，建立架构治理体系", Level.L4),
+                ],
+            ),
+            (
+                "arch_1",
+                "技术选型（如 Redis vs Memcached）时，你的决策依据？",
+                [
+                    ("习惯/随意选", Level.L0),
+                    ("对比基础优劣", Level.L1),
+                    ("结合场景做权衡矩阵：维护成本/扩展性/开发速度", Level.L2),
+                    ("输出 ADR，团队评审通过，决策可追溯", Level.L3),
+                    ("建立选型标准库，新人也能按图索骥", Level.L4),
+                ],
+            ),
         ],
         Dimension.AI_COLLABORATION: [
-            ("ai_0", "日常编码中 AI 的使用方式？",
-             [("不用 AI", Level.L0),
-              ("问答式：'帮我写个函数'，逐行审查", Level.L1),
-              ("结构化：Prompt 模板 + CONTEXT.md + 迭代优化，AI 做 60%+", Level.L2),
-              ("编排：Prompt Chain / Multi-Agent Workflow，AI 做 80%+ 含测试/部署", Level.L3),
-              ("造工具：开发团队级 AI 框架/标准，赋能全组", Level.L4)]),
-            ("ai_1", "AI 生成代码的验证流程？",
-             [("无验证/仅肉眼看", Level.L0),
-              ("跑一遍/人工测试", Level.L1),
-              ("自动化测试 + 静态分析 + AI 审计", Level.L2),
-              ("Self-Correction Loop：验证→重试→修复全自动", Level.L3),
-              ("建立组织级验证标准/门禁", Level.L4)]),
+            (
+                "ai_0",
+                "日常编码中 AI 的使用方式？",
+                [
+                    ("不用 AI", Level.L0),
+                    ("问答式：'帮我写个函数'，逐行审查", Level.L1),
+                    ("结构化：Prompt 模板 + CONTEXT.md + 迭代优化，AI 做 60%+", Level.L2),
+                    ("编排：Prompt Chain / Multi-Agent Workflow，AI 做 80%+ 含测试/部署", Level.L3),
+                    ("造工具：开发团队级 AI 框架/标准，赋能全组", Level.L4),
+                ],
+            ),
+            (
+                "ai_1",
+                "AI 生成代码的验证流程？",
+                [
+                    ("无验证/仅肉眼看", Level.L0),
+                    ("跑一遍/人工测试", Level.L1),
+                    ("自动化测试 + 静态分析 + AI 审计", Level.L2),
+                    ("Self-Correction Loop：验证→重试→修复全自动", Level.L3),
+                    ("建立组织级验证标准/门禁", Level.L4),
+                ],
+            ),
         ],
         Dimension.ENGINEERING: [
-            ("eng_0", "代码质量保障机制？",
-             [("能跑就行，无测试/无 CI", Level.L0),
-              ("有单测、CI 跑通、PR 走形式", Level.L1),
-              ("TDD + 契约测试 + 性能基线 + 安全扫描入 CI", Level.L2),
-              ("追踪 DORA/缺陷逃逸率/技术债偿还率，数据驱动改进", Level.L3),
-              ("建立工程文化、输出最佳实践规范、影响组织级效能", Level.L4)]),
-            ("eng_1", "生产环境出 Bug 时的处理？",
-             [("救火/甩锅", Level.L0),
-              ("修复 + 补测试", Level.L1),
-              ("复盘根因 + 改进流程/工具防复发", Level.L2),
-              ("建立混沌工程/自动化回归/故障演练机制", Level.L3),
-              ("零故障文化：事前预防 > 事后修复", Level.L4)]),
+            (
+                "eng_0",
+                "代码质量保障机制？",
+                [
+                    ("能跑就行，无测试/无 CI", Level.L0),
+                    ("有单测、CI 跑通、PR 走形式", Level.L1),
+                    ("TDD + 契约测试 + 性能基线 + 安全扫描入 CI", Level.L2),
+                    ("追踪 DORA/缺陷逃逸率/技术债偿还率，数据驱动改进", Level.L3),
+                    ("建立工程文化、输出最佳实践规范、影响组织级效能", Level.L4),
+                ],
+            ),
+            (
+                "eng_1",
+                "生产环境出 Bug 时的处理？",
+                [
+                    ("救火/甩锅", Level.L0),
+                    ("修复 + 补测试", Level.L1),
+                    ("复盘根因 + 改进流程/工具防复发", Level.L2),
+                    ("建立混沌工程/自动化回归/故障演练机制", Level.L3),
+                    ("零故障文化：事前预防 > 事后修复", Level.L4),
+                ],
+            ),
         ],
         Dimension.LEARNING: [
-            ("learn_0", "遇到新技术/陌生报错时，学习方式？",
-             [("直接问 AI，复制粘贴，不记不练", Level.L0),
-              ("搜文档/教程，过目即忘，需要时再搜", Level.L1),
-              ("费曼学习法 + 个人知识库 + 每周产出沉淀", Level.L2),
-              ("跨领域类比、抽象通用模式、形成心智模型、输出原创洞察", Level.L3),
-              ("开源工具/社区贡献/大会分享，建立个人品牌", Level.L4)]),
-            ("learn_1", "避免 AI 依赖症的具体做法？",
-             [("无意识/无对策", Level.L0),
-              ("偶尔尝试不问 AI", Level.L1),
-              ("刻意练习：先自己写再对比、Prompt 反向工程、知识库归档", Level.L2),
-              ("能脱离 AI 独立解决核心问题、指导他人内化", Level.L3),
-              ("建立团队/组织级'去 AI 依赖'培养体系", Level.L4)]),
+            (
+                "learn_0",
+                "遇到新技术/陌生报错时，学习方式？",
+                [
+                    ("直接问 AI，复制粘贴，不记不练", Level.L0),
+                    ("搜文档/教程，过目即忘，需要时再搜", Level.L1),
+                    ("费曼学习法 + 个人知识库 + 每周产出沉淀", Level.L2),
+                    ("跨领域类比、抽象通用模式、形成心智模型、输出原创洞察", Level.L3),
+                    ("开源工具/社区贡献/大会分享，建立个人品牌", Level.L4),
+                ],
+            ),
+            (
+                "learn_1",
+                "避免 AI 依赖症的具体做法？",
+                [
+                    ("无意识/无对策", Level.L0),
+                    ("偶尔尝试不问 AI", Level.L1),
+                    ("刻意练习：先自己写再对比、Prompt 反向工程、知识库归档", Level.L2),
+                    ("能脱离 AI 独立解决核心问题、指导他人内化", Level.L3),
+                    ("建立团队/组织级'去 AI 依赖'培养体系", Level.L4),
+                ],
+            ),
         ],
     }
 
@@ -146,12 +198,14 @@ class AssessmentEngine:
                 confidence = int(input("  确信度 (1-5, 默认 3): ").strip() or "3")
                 confidence = max(1, min(5, confidence))
 
-                self.answers.append(Answer(
-                    dimension=dim,
-                    question_id=q_id,
-                    selected_level=options[choice - 1][1],
-                    confidence=confidence,
-                ))
+                self.answers.append(
+                    Answer(
+                        dimension=dim,
+                        question_id=q_id,
+                        selected_level=options[choice - 1][1],
+                        confidence=confidence,
+                    )
+                )
 
         return self.calculate_result()
 
@@ -161,12 +215,14 @@ class AssessmentEngine:
             data = json.load(f)
 
         for item in data.get("answers", []):
-            self.answers.append(Answer(
-                dimension=Dimension(item["dimension"]),
-                question_id=item["question_id"],
-                selected_level=Level(item["level"]),
-                confidence=item.get("confidence", 3),
-            ))
+            self.answers.append(
+                Answer(
+                    dimension=Dimension(item["dimension"]),
+                    question_id=item["question_id"],
+                    selected_level=Level(item["level"]),
+                    confidence=item.get("confidence", 3),
+                )
+            )
 
         return self.calculate_result()
 
@@ -226,11 +282,7 @@ class AssessmentEngine:
             strongest_dimension=strongest,
         )
 
-    def _generate_recommendations(
-        self,
-        levels: dict[Dimension, Level],
-        weakest: Dimension
-    ) -> list[str]:
+    def _generate_recommendations(self, levels: dict[Dimension, Level], weakest: Dimension) -> list[str]:
         """Generate personalized recommendations."""
         recs = []
 
@@ -305,20 +357,24 @@ class AssessmentEngine:
             marker = " 🎯" if dim == result.weakest_dimension else (" ⭐" if dim == result.strongest_dimension else "")
             lines.append(f"| {dim.label} | {score:.2f} | {level.label} |{marker}")
 
-        lines.extend([
-            "\n## 详细雷达数据",
-            f"\n```json\n{json.dumps(result.radar_data, ensure_ascii=False, indent=2)}\n```",
-            "\n## 个性化建议",
-        ])
+        lines.extend(
+            [
+                "\n## 详细雷达数据",
+                f"\n```json\n{json.dumps(result.radar_data, ensure_ascii=False, indent=2)}\n```",
+                "\n## 个性化建议",
+            ]
+        )
 
         for i, rec in enumerate(result.recommendations, 1):
             lines.append(f"\n### {i}. {rec}")
 
-        lines.extend([
-            "\n---\n",
-            "> 💡 建议每季度重测一次，追踪成长轨迹。\n",
-            "> 📚 详细能力模型见: `docs/mindset/capability-model.md`",
-        ])
+        lines.extend(
+            [
+                "\n---\n",
+                "> 💡 建议每季度重测一次，追踪成长轨迹。\n",
+                "> 📚 详细能力模型见: `docs/mindset/capability-model.md`",
+            ]
+        )
 
         with open(path, "w", encoding="utf-8") as f:
             f.write("\n".join(lines))
@@ -331,14 +387,18 @@ def print_result(result: AssessmentResult) -> None:
     print("=" * 60)
     print(f"\n🎯 综合等级: {result.overall_level.label}")
     print(f"📉 最弱维度: {result.weakest_dimension.label} ({result.dimension_scores[result.weakest_dimension]:.2f})")
-    print(f"📈 最强维度: {result.strongest_dimension.label} ({result.dimension_scores[result.strongest_dimension]:.2f})")
+    print(
+        f"📈 最强维度: {result.strongest_dimension.label} ({result.dimension_scores[result.strongest_dimension]:.2f})"
+    )
 
     print("\n📐 维度详情:")
     for dim in Dimension:
         score = result.dimension_scores[dim]
         level = result.dimension_levels[dim]
         bar = "█" * int(score) + "░" * (4 - int(score))
-        marker = " ← 重点提升" if dim == result.weakest_dimension else (" ★" if dim == result.strongest_dimension else "")
+        marker = (
+            " ← 重点提升" if dim == result.weakest_dimension else (" ★" if dim == result.strongest_dimension else "")
+        )
         print(f"  {dim.label:12} {bar} {score:.2f}  {level.label}{marker}")
 
     # ASCII Radar Chart

@@ -125,9 +125,13 @@ class TestUpdateContextWithLLM(unittest.TestCase):
     @patch.dict(os.environ, {"OPENAI_API_KEY": "test-key"})
     @patch.object(ai_context_manager, "OpenAI")
     @patch.object(ai_context_manager, "APIError", new_callable=lambda: type("APIError", (Exception,), {}))
-    @patch.object(ai_context_manager, "APIConnectionError", new_callable=lambda: type("APIConnectionError", (Exception,), {}))
+    @patch.object(
+        ai_context_manager, "APIConnectionError", new_callable=lambda: type("APIConnectionError", (Exception,), {})
+    )
     @patch.object(ai_context_manager, "RateLimitError", new_callable=lambda: type("RateLimitError", (Exception,), {}))
-    def test_update_context_with_llm_handles_error(self, mock_rate_error, mock_conn_error, mock_api_error, mock_openai_class):
+    def test_update_context_with_llm_handles_error(
+        self, mock_rate_error, mock_conn_error, mock_api_error, mock_openai_class
+    ):
         """Test LLM error handling."""
         mock_client = MagicMock()
         mock_openai_class.return_value = mock_client

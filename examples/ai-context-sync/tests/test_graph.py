@@ -1,4 +1,5 @@
 """Tests for src/graph.py - DecisionGraph and ADRNode"""
+
 import os
 import sys
 
@@ -91,9 +92,6 @@ class TestDecisionGraph:
         assert "ADR-001 -.-> ADR-003" in mermaid
 
     def test_adr_node_dataclass(self):
-        node = ADRNode(
-            id="ADR-001", title="Test",
-            dependencies=set(), supersedes=set(), content="test"
-        )
+        node = ADRNode(id="ADR-001", title="Test", dependencies=set(), supersedes=set(), content="test")
         assert node.id == "ADR-001"
         assert node.title == "Test"

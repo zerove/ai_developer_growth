@@ -13,11 +13,13 @@ class TestAuditHandler:
 
     def test_init_sets_debounce(self):
         from src.watcher import AuditHandler
+
         handler = AuditHandler(self.mock_sync)
         assert handler.debounce_interval == 1.0
 
     def test_on_modified_skips_directories(self):
         from src.watcher import AuditHandler
+
         handler = AuditHandler(self.mock_sync)
         event = MagicMock()
         event.is_directory = True
@@ -26,6 +28,7 @@ class TestAuditHandler:
 
     def test_on_modified_skips_hidden_files(self):
         from src.watcher import AuditHandler
+
         handler = AuditHandler(self.mock_sync)
         event = MagicMock()
         event.is_directory = False
@@ -35,6 +38,7 @@ class TestAuditHandler:
 
     def test_on_modified_skips_ignored_patterns(self):
         from src.watcher import AuditHandler
+
         handler = AuditHandler(self.mock_sync)
         event = MagicMock()
         event.is_directory = False
@@ -44,6 +48,7 @@ class TestAuditHandler:
 
     def test_on_modified_calls_auditor(self):
         from src.watcher import AuditHandler
+
         handler = AuditHandler(self.mock_sync)
         event = MagicMock()
         event.is_directory = False
@@ -53,6 +58,7 @@ class TestAuditHandler:
 
     def test_on_modified_debounce(self):
         from src.watcher import AuditHandler
+
         handler = AuditHandler(self.mock_sync)
         event = MagicMock()
         event.is_directory = False
@@ -62,6 +68,7 @@ class TestAuditHandler:
 
     def test_write_live_report(self):
         from src.watcher import AuditHandler
+
         handler = AuditHandler(self.mock_sync)
         with patch("builtins.open", mock_open()) as mock_file:
             handler._write_live_report("test.py", "All good")

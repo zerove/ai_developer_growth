@@ -8,6 +8,7 @@ try:
 except ImportError:
     openai = None
 
+
 def run_tests():
     """运行测试套件并返回结果"""
     print("Running tests...")
@@ -18,6 +19,7 @@ def run_tests():
         check=False,
     )
     return result.returncode, result.stdout, result.stderr
+
 
 def get_ai_fix(error_message, code):
     """请求 AI 修复代码"""
@@ -36,15 +38,16 @@ def get_ai_fix(error_message, code):
     )
 
     response = client.chat.completions.create(
-        model="gpt-4-turbo-preview",
-        messages=[{"role": "user", "content": prompt}]
+        model="gpt-4-turbo-preview", messages=[{"role": "user", "content": prompt}]
     )
     return response.choices[0].message.content
+
 
 def apply_fix(file_path, new_code):
     """应用修复到文件"""
     with open(file_path, "w") as f:
         f.write(new_code)
+
 
 def main():
     target_file = "src/math_utils.py"
@@ -73,6 +76,7 @@ def main():
             if attempt == max_retries:
                 print("Reached max retries. Failed to fix the code.")
                 sys.exit(1)
+
 
 if __name__ == "__main__":
     main()

@@ -1,4 +1,5 @@
 """Extended tests for src/onboarding.py — cover start() interactive flow, multiple areas."""
+
 import os
 import shutil
 import tempfile
@@ -26,8 +27,7 @@ class TestStartInteractiveFlow:
 
         session = OnboardingSession(mock_llm, self.tmpdir)
 
-        with patch("builtins.input", return_value="exit"), \
-             patch("src.onboarding.logger"):
+        with patch("builtins.input", return_value="exit"), patch("src.onboarding.logger"):
             session.start()
 
         # LLM was called once for initial prompt
@@ -40,8 +40,7 @@ class TestStartInteractiveFlow:
 
         session = OnboardingSession(mock_llm, self.tmpdir)
 
-        with patch("builtins.input", return_value="quit"), \
-             patch("src.onboarding.logger"):
+        with patch("builtins.input", return_value="quit"), patch("src.onboarding.logger"):
             session.start()
 
         assert mock_llm.generate.call_count == 1
@@ -53,8 +52,7 @@ class TestStartInteractiveFlow:
 
         session = OnboardingSession(mock_llm, self.tmpdir)
 
-        with patch("builtins.input", return_value="q"), \
-             patch("src.onboarding.logger"):
+        with patch("builtins.input", return_value="q"), patch("src.onboarding.logger"):
             session.start()
 
         assert mock_llm.generate.call_count == 1
@@ -82,8 +80,7 @@ class TestStartExploreMultipleAreas:
 
         session = OnboardingSession(mock_llm, self.tmpdir)
 
-        with patch("builtins.input", side_effect=["n", "auth", "api", "exit"]), \
-             patch("src.onboarding.logger"):
+        with patch("builtins.input", side_effect=["n", "auth", "api", "exit"]), patch("src.onboarding.logger"):
             session.start()
 
         # Initial prompt + 2 area explorations = 3 calls
@@ -97,8 +94,7 @@ class TestStartExploreMultipleAreas:
 
         session = OnboardingSession(mock_llm, self.tmpdir)
 
-        with patch("builtins.input", side_effect=["n", "database", "exit"]), \
-             patch("src.onboarding.logger"):
+        with patch("builtins.input", side_effect=["n", "database", "exit"]), patch("src.onboarding.logger"):
             session.start()
 
         assert session.current_focus == "database"
@@ -130,8 +126,7 @@ class TestStartNoContext:
         mock_llm = MagicMock()
         session = OnboardingSession(mock_llm, self.tmpdir)
 
-        with patch("src.onboarding.logger"), \
-             patch("builtins.input") as mock_input:
+        with patch("src.onboarding.logger"), patch("builtins.input") as mock_input:
             session.start()
 
         mock_input.assert_not_called()

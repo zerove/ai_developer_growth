@@ -1,4 +1,5 @@
 """Tests for src/handlers/resources.py — get_context, get_adr, get_specs MCP resources."""
+
 import os
 import shutil
 import tempfile
@@ -44,6 +45,7 @@ class TestResourcesRegister:
             def decorator(fn):
                 handlers[uri] = fn
                 return fn
+
             return decorator
 
         self.mock_mcp.resource.side_effect = capturing_decorator
@@ -74,6 +76,7 @@ class TestResourcesRegister:
     def test_get_context_error(self):
         handlers = self._extract_handlers()
         from src.exceptions import AISyncError
+
         self.get_sync_tool.side_effect = AISyncError("config error")
 
         result = handlers["context://{config_path}"]()

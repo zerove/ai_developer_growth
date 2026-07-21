@@ -27,8 +27,9 @@
 | 人机协作 | 如何与 AI 协作？ | 能力互补 + 信任校准 | [[docs/mindset/human-ai-collaboration]] |
 | 团队度量 | 如何度量团队效能？ | 四维平衡计分卡 | [[docs/mindset/team-metrics]] |
 | **能力模型** | **AI 时代开发者如何分级？** | **五维雷达图 + 成长路径** | **[[docs/mindset/capability-model]]** |
+| **转型路径** | **如何完成 AI 时代转型？** | **四阶段模型 + 检查清单** | **[[docs/mindset/career-transformation]]** |
 
-**推荐阅读顺序**: product-thinking → solo-founder-loop → ai-to-market-checklist → team-adoption → human-ai-collaboration → team-metrics
+**推荐阅读顺序**: product-thinking → career-transformation → capability-model → solo-founder-loop → ai-to-market-checklist → team-adoption
 
 ### 📚 学习层 (Learning)
 掌握 AI 时代的学习范式。
@@ -64,8 +65,12 @@
 | 调试工作流 | 如何 AI 辅助调试？ | 系统化调试 + 日志分析 | [[docs/efficiency/debugging-workflow]] |
 | 错误处理模式 | 如何统一错误处理？ | 错误分类 + 恢复策略 | [[docs/efficiency/error-handling-patterns]] |
 | API 设计指南 | 如何设计 API？ | RESTful 规范 + 响应格式 | [[docs/efficiency/api-design-guide]] |
+| **AI 测试策略** | **如何用 AI 写测试？** | **分层策略 + 生成技巧** | **[[docs/efficiency/ai-testing-strategies]]** |
+| **Prompt 版本管理** | **如何管理 Prompt？** | **版本控制 + 评估体系** | **[[docs/efficiency/prompt-versioning]]** |
 
 **实战避坑**: full-cycle-workflow 包含了从 AI-Context-Sync 开发中提炼的 4 个避坑指南。anti-patterns.md 收集了真实失败案例。
+
+**推荐阅读顺序**: full-cycle-workflow → ai-testing-strategies → prompt-versioning → context-engineering → token-optimization → multi-agent-patterns
 
 ### 🛠️ 工具层 (Tooling)
 选择正确的工具组合。
@@ -74,6 +79,8 @@
 |------|----------|----------|------|
 | 工具矩阵 | 模型/IDE/Agent 选型 | jcode vs opencode 深度对比 | [[docs/tools/ai-tool-matrix]] |
 | IDE 实践 | Zed/Cursor 配置 | 极速编辑 + AI 协同 | [[docs/tools/ide-best-practices]] |
+| **模型对比** | **2026 年模型怎么选？** | **场景选型 + 成本优化** | **[[docs/tools/model-comparison-2026]]** |
+| **RAG 指南** | **如何构建 RAG 系统？** | **架构设计 + 优化技巧** | **[[docs/tools/rag-for-developers]]** |
 
 **最新更新**: 已更新至 Claude 4、GPT-5、jcode、opencode 等最新工具。
 
@@ -175,7 +182,7 @@
 
 理论需要实践检验。以下是真实案例：
 
-### 案例库 (11 个真实案例)
+### 案例库 (15 个真实案例)
 
 | 案例 | 场景 | 效率提升 | 核心洞察 |
 |------|------|----------|----------|
@@ -190,12 +197,17 @@
 | [[case-studies/production-debugging\|生产环境调试]] | 问题排查 | 6x | AI 辅助快速定位根因 |
 | [[case-studies/api-design-implementation\|API 设计实现]] | 后端开发 | 5x | 契约先行保证接口质量 |
 | [[case-studies/multi-agent-collaboration\|多 Agent 协作]] | 团队协作 | 5x | 角色专业化 + 工作流编排 |
+| **[[case-studies/cursor-refactoring\|Cursor 大规模重构]]** | **架构迁移** | **3x** | **分而治之 + 上下文管理** |
+| **[[case-studies/copilot-test-generation\|Copilot 测试生成]]** | **测试补充** | **3.4x** | **注释驱动 + 模板化** |
+| **[[case-studies/claude-architecture-design\|Claude 架构设计]]** | **系统设计** | **3.3x** | **对比分析 + 迭代设计** |
+| **[[case-studies/multi-agent-automation\|多 Agent 自动化]]** | **工作流自动化** | **9.3x** | **Agent 编排 + 人在回路** |
 
 ### 代码示例
 | 示例 | 核心机制 | 学习价值 |
 |------|----------|----------|
 | [[examples/self-correction-loop\|自我修正循环]] | AI 代码质量保证 | 验证→重试模式 |
 | [[examples/multi-agent-orch\|多 Agent 协作]] | 模拟团队开发 | 角色分工 + 迭代 |
+| **[[examples/prompt-optimizer\|Prompt 优化器]]** | **Prompt 版本管理** | **版本控制 + 评估** |
 
 ### 参考实现
 | 项目 | 定位 | 价值 |

@@ -1,4 +1,5 @@
 """Extended tests for src/guard.py — cover _load_adrs, check_design_drift, check_drift_json."""
+
 import os
 import shutil
 import tempfile

@@ -1,4 +1,5 @@
 """Tests for CLI tool commands: scaffold, init, override, onboard, install_hook, report."""
+
 import os
 import sys
 from unittest.mock import MagicMock, mock_open, patch
@@ -14,6 +15,7 @@ runner = CliRunner()
 # ---------------------------------------------------------------------------
 # scaffold
 # ---------------------------------------------------------------------------
+
 
 class TestScaffold:
     """Tests for the scaffold command."""
@@ -108,12 +110,14 @@ class TestScaffold:
 # init
 # ---------------------------------------------------------------------------
 
+
 class TestInit:
     """Tests for the init command."""
 
     @patch("src.cli.commands.tools.os.path.exists", return_value=False)
     def test_init_creates_new_config(self, mock_exists):
         """Init creates .ai-sync.json when it doesn't exist."""
+
         # Provide a simple object whose __dict__ can be recursed by d_to_dict
         # without infinite recursion (plain dataclass-like, not MagicMock)
         class SimpleConfig:
@@ -138,6 +142,7 @@ class TestInit:
 # ---------------------------------------------------------------------------
 # override
 # ---------------------------------------------------------------------------
+
 
 class TestOverride:
     """Tests for the override command."""
@@ -174,6 +179,7 @@ class TestOverride:
 # onboard
 # ---------------------------------------------------------------------------
 
+
 class TestOnboard:
     """Tests for the onboard command."""
 
@@ -197,6 +203,7 @@ class TestOnboard:
 # ---------------------------------------------------------------------------
 # install_hook
 # ---------------------------------------------------------------------------
+
 
 class TestInstallHook:
     """Tests for the install_hook command using a real temp directory."""
@@ -266,6 +273,7 @@ class TestInstallHook:
 # ---------------------------------------------------------------------------
 # report
 # ---------------------------------------------------------------------------
+
 
 class TestReport:
     """Tests for the report command."""

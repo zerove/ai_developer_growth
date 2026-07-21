@@ -37,11 +37,14 @@ def main():
         print(f"{'Task':<30} | {'Value':<5} | {'Effort':<6} | {'Score':<5} | {'Category'}")
         print("-" * 70)
         for res in results:
-            print(f"{res['task'][:30]:<30} | {res['value']:<5} | {res['effort']:<6} | {res['score']:<5.2f} | {res['category']}")
+            print(
+                f"{res['task'][:30]:<30} | {res['value']:<5} | {res['effort']:<6} | {res['score']:<5.2f} | {res['category']}"
+            )
 
     except Exception as e:
         print(f"Error: {e}")
         sys.exit(1)
+
 
 if __name__ == "__main__":
     main()

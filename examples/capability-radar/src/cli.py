@@ -32,29 +32,13 @@ def main() -> int:
   L4: AI 时代技术领袖
 
 详细能力模型: docs/mindset/capability-model.md
-        """
+        """,
     )
 
-    parser.add_argument(
-        "-i", "--input",
-        help="从 JSON 文件导入答案 (非交互模式)",
-        metavar="FILE"
-    )
-    parser.add_argument(
-        "-o", "--output",
-        help="导出 Markdown 报告到文件",
-        metavar="FILE"
-    )
-    parser.add_argument(
-        "--json",
-        help="导出 JSON 结果到文件",
-        metavar="FILE"
-    )
-    parser.add_argument(
-        "--demo",
-        action="store_true",
-        help="使用演示数据快速跑通流程"
-    )
+    parser.add_argument("-i", "--input", help="从 JSON 文件导入答案 (非交互模式)", metavar="FILE")
+    parser.add_argument("-o", "--output", help="导出 Markdown 报告到文件", metavar="FILE")
+    parser.add_argument("--json", help="导出 JSON 结果到文件", metavar="FILE")
+    parser.add_argument("--demo", action="store_true", help="使用演示数据快速跑通流程")
 
     args = parser.parse_args()
 
@@ -64,14 +48,21 @@ def main() -> int:
         # Run with demo data (all L2)
         print("🎮 演示模式: 使用预设答案 (全 L2)...")
         from capability_model import Dimension, Level
+
         for dim in Dimension:
             for q_id, _, _ in engine.QUESTIONS[dim]:
-                engine.answers.append(type('Answer', (), {
-                    'dimension': dim,
-                    'question_id': q_id,
-                    'selected_level': Level.L2,
-                    'confidence': 3,
-                })())
+                engine.answers.append(
+                    type(
+                        "Answer",
+                        (),
+                        {
+                            "dimension": dim,
+                            "question_id": q_id,
+                            "selected_level": Level.L2,
+                            "confidence": 3,
+                        },
+                    )()
+                )
         result = engine.calculate_result()
     elif args.input:
         # Load from JSON

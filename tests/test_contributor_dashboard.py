@@ -130,6 +130,7 @@ AI 工具栈: Cursor
     def test_analyze_contributors_error(self, mock_run):
         """Test contributors analysis on error."""
         import subprocess
+
         mock_run.side_effect = subprocess.SubprocessError("git not found")
 
         result = self.dashboard.analyze_contributors()
@@ -153,11 +154,11 @@ AI 工具栈: Cursor
         self._write_tool_matrix("✅ **推荐** Tool A")
         self._write_docs("efficiency", ["workflow.md"])
 
-        with patch.object(self.dashboard, "analyze_contributors", return_value={
-            "total_contributors": 1,
-            "top_contributors": [{"name": "Test", "commits": 5}],
-            "all": []
-        }):
+        with patch.object(
+            self.dashboard,
+            "analyze_contributors",
+            return_value={"total_contributors": 1, "top_contributors": [{"name": "Test", "commits": 5}], "all": []},
+        ):
             result = self.dashboard.generate_dashboard("markdown")
 
         assert "# 📊 贡献者仪表板" in result
@@ -172,12 +173,15 @@ AI 工具栈: Cursor
         """Test dashboard generation in JSON format."""
         self._write_case_study("case1", "# Case\n项目类型: Web\n效率提升: 2x")
 
-        with patch.object(self.dashboard, "analyze_contributors", return_value={
-            "total_contributors": 0, "top_contributors": [], "all": []
-        }):
+        with patch.object(
+            self.dashboard,
+            "analyze_contributors",
+            return_value={"total_contributors": 0, "top_contributors": [], "all": []},
+        ):
             result = self.dashboard.generate_dashboard("json")
 
         import json
+
         data = json.loads(result)
         assert "generated_at" in data
         assert "case_studies" in data

@@ -1,4 +1,5 @@
 """Extended tests for src/auditor.py — cover Violation, FeedbackManager, SpecAuditor."""
+
 import json
 from unittest.mock import MagicMock, patch
 
@@ -29,8 +30,12 @@ class TestViolation:
 
     def test_custom_fields(self):
         v = Violation(
-            rule_id="R3", message="m", severity="Info",
-            file_path="c.py", line_number=42, status="fixed",
+            rule_id="R3",
+            message="m",
+            severity="Info",
+            file_path="c.py",
+            line_number=42,
+            status="fixed",
         )
         assert v.line_number == 42
         assert v.status == "fixed"
@@ -40,7 +45,6 @@ class TestViolation:
 # FeedbackManager
 # ---------------------------------------------------------------------------
 class TestFeedbackManager:
-
     def test_load_history_nonexistent_file(self, tmp_path):
         path = str(tmp_path / "missing.json")
         fm = FeedbackManager(history_file=path)
@@ -125,7 +129,6 @@ class TestFeedbackManager:
 # SpecAuditor
 # ---------------------------------------------------------------------------
 class TestSpecAuditor:
-
     def _make_auditor(self, tmp_path):
         mock_client = MagicMock()
         specs_dir = tmp_path / "specs"
@@ -244,9 +247,7 @@ class TestSpecAuditor:
         auditor, mock_client, specs_dir = self._make_auditor(tmp_path)
         (specs_dir / "spec.md").write_text("rule content", encoding="utf-8")
         mock_client.generate.return_value = "[]"
-        mock_parse.return_value = [
-            {"rule_id": "R1", "message": "bad code", "severity": "Warning"}
-        ]
+        mock_parse.return_value = [{"rule_id": "R1", "message": "bad code", "severity": "Warning"}]
         # Verification: first call is attack, subsequent are verify
         mock_client.generate.side_effect = [
             "[]",  # attack response
@@ -260,9 +261,7 @@ class TestSpecAuditor:
     def test_audit_rejects_false_positive(self, mock_parse, tmp_path):
         auditor, mock_client, specs_dir = self._make_auditor(tmp_path)
         (specs_dir / "spec.md").write_text("rule content", encoding="utf-8")
-        mock_parse.return_value = [
-            {"rule_id": "R1", "message": "not real", "severity": "Info"}
-        ]
+        mock_parse.return_value = [{"rule_id": "R1", "message": "not real", "severity": "Info"}]
         mock_client.generate.side_effect = [
             "[]",  # attack
             "NO - false positive",  # verify

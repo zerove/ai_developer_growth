@@ -1,4 +1,5 @@
 """Tests for src/tester.py - TestRunner and TestResult"""
+
 import os
 import shutil
 import sys
@@ -60,7 +61,7 @@ class TestTestRunner:
         target_dir = os.path.join(tmpdir, "pkg")
         os.makedirs(target_dir)
         target_file = os.path.join(target_dir, "target_module.py")
-        with open(target_file, 'w') as f:
+        with open(target_file, "w") as f:
             f.write("VALUE = 42\n")
         try:
             test_code = "from pkg.target_module import VALUE; def test_val(): assert VALUE == 42"

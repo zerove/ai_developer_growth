@@ -1,4 +1,5 @@
 """Tests for src/slicer.py - ContextSlicer"""
+
 import os
 import shutil
 import sys

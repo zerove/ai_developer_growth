@@ -111,15 +111,11 @@ class TestWorkflowOrchestrator(unittest.TestCase):
     def test_execute_full_workflow(self, mock_print, mock_sleep):
         """Test the happy path: PM -> Architect -> Coder -> Reviewer(PASS)."""
         orch = WorkflowOrchestrator()
-        mock_pm = patch.object(
-            orch.pm, "run", return_value="[PRD] Test PRD"
-        )
+        mock_pm = patch.object(orch.pm, "run", return_value="[PRD] Test PRD")
         mock_arch = patch.object(
             orch.architect, "run", return_value="[Design] Test Design"
         )
-        mock_coder = patch.object(
-            orch.coder, "run", return_value="def convert(): pass"
-        )
+        mock_coder = patch.object(orch.coder, "run", return_value="def convert(): pass")
         mock_review = patch.object(
             orch.reviewer, "run", return_value="PASS: Looks good."
         )
@@ -211,6 +207,7 @@ class TestIntegrationWorkflow(unittest.TestCase):
 
         # Mock reviewer 先返回 FAIL，再返回 PASS
         call_count = [0]
+
         def reviewer_side_effect(code):
             call_count[0] += 1
             if "error handling" in code:

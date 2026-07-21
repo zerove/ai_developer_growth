@@ -1,4 +1,5 @@
 """Tests for MCP tool handlers: ai_evolve, ai_scaffold (tools_evol.py)."""
+
 import json
 import os
 import sys
@@ -12,6 +13,7 @@ from src.handlers.tools_evol import register
 # Helpers
 # ---------------------------------------------------------------------------
 
+
 def _make_mcp_stub():
     """Return a stub mcp object and a list of registered tool callables."""
     registered = []
@@ -21,6 +23,7 @@ def _make_mcp_stub():
             def decorator(fn):
                 registered.append(fn)
                 return fn
+
             return decorator
 
     return FakeMCP(), registered
@@ -29,6 +32,7 @@ def _make_mcp_stub():
 # ---------------------------------------------------------------------------
 # ai_evolve
 # ---------------------------------------------------------------------------
+
 
 class TestAiEvolve:
     """Tests for the ai_evolve MCP tool handler."""
@@ -103,6 +107,7 @@ class TestAiEvolve:
 
     def test_exception_returns_error(self):
         """ai_evolve catches exceptions and returns error status."""
+
         def boom(**kw):
             raise RuntimeError("sync failed")
 
@@ -115,6 +120,7 @@ class TestAiEvolve:
     def test_custom_config_path(self):
         """ai_evolve passes config kwarg to get_sync_tool."""
         captured = {}
+
         def capture(**kw):
             captured.update(kw)
             sync = MagicMock()
@@ -130,6 +136,7 @@ class TestAiEvolve:
 # ---------------------------------------------------------------------------
 # ai_scaffold
 # ---------------------------------------------------------------------------
+
 
 class TestAiScaffold:
     """Tests for the ai_scaffold MCP tool handler."""
@@ -173,6 +180,7 @@ class TestAiScaffold:
     def test_scaffold_passes_dry_run_false(self, MockSession):
         """ai_scaffold passes dry_run=False to get_sync_tool."""
         captured = {}
+
         def capture(**kw):
             captured.update(kw)
             return MagicMock()
@@ -187,6 +195,7 @@ class TestAiScaffold:
     def test_scaffold_custom_config(self, MockSession):
         """ai_scaffold passes custom config path to get_sync_tool."""
         captured = {}
+
         def capture(**kw):
             captured.update(kw)
             return MagicMock()

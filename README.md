@@ -56,8 +56,12 @@
 | AI-Context-Sync 开发 | 完整产品开发流程 | 12x | [[case-studies/ai-context-sync-development]] |
 | 自我修正循环 | AI 代码质量保证 | 3x | [[examples/self-correction-loop]] |
 | 多 Agent 协作 | 模拟团队开发 | 5x | [[examples/multi-agent-orch]] |
+| **Cursor 大规模重构** | **架构迁移** | **3x** | **[[case-studies/cursor-refactoring]]** |
+| **Copilot 测试生成** | **测试补充** | **3.4x** | **[[case-studies/copilot-test-generation]]** |
+| **Claude 架构设计** | **系统设计** | **3.3x** | **[[case-studies/claude-architecture-design]]** |
+| **多 Agent 自动化** | **工作流自动化** | **9.3x** | **[[case-studies/multi-agent-automation]]** |
 
-**目标**: 收集 10+ 真实案例，覆盖不同规模和场景。
+**目标**: 收集 15+ 真实案例，覆盖不同规模和场景。
 
 ---
 

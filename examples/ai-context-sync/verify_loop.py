@@ -15,6 +15,7 @@ class MockLLMClient:
     A mock LLM client that simulates a failing-then-passing sequence
     to test the autonomous verification loop.
     """
+
     def __init__(self):
         self.call_count = 0
 
@@ -28,14 +29,14 @@ class MockLLMClient:
                 "```json\n"
                 "[\n"
                 "  {\n"
-                "    \"id\": \"TASK-1\",\n"
-                "    \"description\": \"Implement the calculate_sum function\",\n"
-                "    \"target_files\": [\"calc.py\"],\n"
-                "    \"verification\": {\n"
-                "      \"test_code\": \"import calc\\n\\ndef test_sum():\\n    assert calc.calculate_sum(2, 3) == 5\",\n"
-                "      \"expected\": \"calculate_sum(2, 3) should be 5\"\n"
+                '    "id": "TASK-1",\n'
+                '    "description": "Implement the calculate_sum function",\n'
+                '    "target_files": ["calc.py"],\n'
+                '    "verification": {\n'
+                '      "test_code": "import calc\\n\\ndef test_sum():\\n    assert calc.calculate_sum(2, 3) == 5",\n'
+                '      "expected": "calculate_sum(2, 3) should be 5"\n'
                 "    },\n"
-                "    \"depends_on\": []\n"
+                '    "depends_on": []\n'
                 "  }\n"
                 "]\n"
                 "```"
@@ -56,9 +57,11 @@ class MockLLMClient:
 
         return "Mock response"
 
+
 def mock_approval():
     print("✅ Mock Approval: Design accepted.")
     return True
+
 
 def main():
     # Setup with MockLLM
@@ -89,11 +92,13 @@ def main():
         import importlib
 
         import calc
+
         importlib.reload(calc)
         assert calc.calculate_sum(2, 3) == 5
         print("✨ Final Verification Passed: calculate_sum(2, 3) == 5")
     except Exception as e:
         print(f"❌ Final Verification Failed: {e}")
+
 
 if __name__ == "__main__":
     main()

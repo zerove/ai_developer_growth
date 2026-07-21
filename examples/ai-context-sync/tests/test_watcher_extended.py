@@ -1,4 +1,5 @@
 """Extended tests for src/watcher.py — cover violation reporting, Critical fixes, WatchManager lifecycle."""
+
 from unittest.mock import MagicMock, mock_open, patch
 
 from src.watcher import AuditHandler

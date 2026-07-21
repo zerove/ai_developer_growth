@@ -6,6 +6,7 @@ from enum import Enum
 
 class Level(Enum):
     """Capability levels L0-L4."""
+
     L0 = 0
     L1 = 1
     L2 = 2
@@ -26,11 +27,12 @@ class Level(Enum):
 
 class Dimension(Enum):
     """Five capability dimensions."""
-    PRODUCT = "product"           # 问题定义与产品思维
-    ARCHITECTURE = "architecture" # 架构决策与系统设计
-    AI_COLLABORATION = "ai_collab" # AI 协作与提示工程
-    ENGINEERING = "engineering"   # 工程严谨性与质量文化
-    LEARNING = "learning"         # 学习与知识内化
+
+    PRODUCT = "product"  # 问题定义与产品思维
+    ARCHITECTURE = "architecture"  # 架构决策与系统设计
+    AI_COLLABORATION = "ai_collab"  # AI 协作与提示工程
+    ENGINEERING = "engineering"  # 工程严谨性与质量文化
+    LEARNING = "learning"  # 学习与知识内化
 
     @property
     def label(self) -> str:
@@ -58,6 +60,7 @@ class Dimension(Enum):
 @dataclass
 class LevelDescriptor:
     """Descriptor for a specific level in a dimension."""
+
     level: Level
     description: str
     typical_behaviors: list[str] = field(default_factory=list)

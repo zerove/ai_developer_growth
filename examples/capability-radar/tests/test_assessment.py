@@ -55,8 +55,8 @@ class TestAssessmentEngine:
         result = engine.run_from_json(str(sample_path))
 
         assert result is not None
-        assert hasattr(result, 'overall_score')
-        assert hasattr(result, 'dimension_scores')
+        assert hasattr(result, "overall_score")
+        assert hasattr(result, "dimension_scores")
         assert len(result.dimension_scores) == 5
 
     def test_calculation_correctness(self):
@@ -64,14 +64,16 @@ class TestAssessmentEngine:
         engine = AssessmentEngine()
 
         # Manually add answers: all L2 (value=2) with confidence 3
-        for dim in ['product', 'architecture', 'ai_collab', 'engineering', 'learning']:
+        for dim in ["product", "architecture", "ai_collab", "engineering", "learning"]:
             for i in range(2):
-                engine.answers.append({
-                    'dimension': type('Dim', (), {'name': dim.upper()})(),
-                    'question_id': f'{dim}_{i}',
-                    'selected_level': type('Lvl', (), {'value': 2, 'name': 'L2'})(),
-                    'confidence': 3,
-                })
+                engine.answers.append(
+                    {
+                        "dimension": type("Dim", (), {"name": dim.upper()})(),
+                        "question_id": f"{dim}_{i}",
+                        "selected_level": type("Lvl", (), {"value": 2, "name": "L2"})(),
+                        "confidence": 3,
+                    }
+                )
 
         # This tests the internal logic without calling calculate_result
         # which expects proper Dimension/Level enums
@@ -83,7 +85,7 @@ class TestAssessmentEngine:
         sample_path = Path(__file__).parent / "sample_answers_l2.json"
         result = engine.run_from_json(str(sample_path))
 
-        with tempfile.NamedTemporaryFile(mode='w', suffix='.json', delete=False) as f:
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".json", delete=False) as f:
             temp_path = f.name
 
         try:
@@ -92,10 +94,10 @@ class TestAssessmentEngine:
             with open(temp_path) as f:
                 data = json.load(f)
 
-            assert 'timestamp' in data
-            assert 'overall_level' in data
-            assert 'dimension_scores' in data
-            assert len(data['dimension_scores']) == 5
+            assert "timestamp" in data
+            assert "overall_level" in data
+            assert "dimension_scores" in data
+            assert len(data["dimension_scores"]) == 5
         finally:
             Path(temp_path).unlink(missing_ok=True)
 
@@ -105,7 +107,7 @@ class TestAssessmentEngine:
         sample_path = Path(__file__).parent / "sample_answers_l2.json"
         result = engine.run_from_json(str(sample_path))
 
-        with tempfile.NamedTemporaryFile(mode='w', suffix='.md', delete=False) as f:
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".md", delete=False) as f:
             temp_path = f.name
 
         try:
@@ -114,10 +116,10 @@ class TestAssessmentEngine:
             with open(temp_path) as f:
                 content = f.read()
 
-            assert '# 能力雷达图评估报告' in content
-            assert '## 维度得分' in content
-            assert '| 维度 | 得分 (0-4) | 等级 |' in content
-            assert '## 个性化建议' in content
+            assert "# 能力雷达图评估报告" in content
+            assert "## 维度得分" in content
+            assert "| 维度 | 得分 (0-4) | 等级 |" in content
+            assert "## 个性化建议" in content
         finally:
             Path(temp_path).unlink(missing_ok=True)
 
@@ -135,7 +137,7 @@ class TestAssessmentEngine:
         sample_path = Path(__file__).parent / "sample_answers_l2.json"
         result = engine.run_from_json(str(sample_path))
 
-        for dim in ['product', 'architecture', 'ai_collab', 'engineering', 'learning']:
+        for dim in ["product", "architecture", "ai_collab", "engineering", "learning"]:
             # dimension_scores uses Dimension enums as keys
             assert any(d.value == dim for d in result.dimension_scores.keys())
 
@@ -151,7 +153,7 @@ class TestSampleData:
 
         # Should be around L2 (2.0)
         assert 1.5 <= result.overall_score <= 2.5
-        assert result.overall_level.name in ('L1', 'L2', 'L3')
+        assert result.overall_level.name in ("L1", "L2", "L3")
 
 
 if __name__ == "__main__":

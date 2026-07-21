@@ -175,7 +175,9 @@ class TestDetectEnvironment:
         p = _make_provider()
         with patch("src.providers.system_provider.os.path.exists", return_value=False):
             with patch("src.providers.system_provider.os.getenv", return_value=None):
-                with patch("src.providers.system_provider.requests.get", side_effect=requests.ConnectionError("refused")):
+                with patch(
+                    "src.providers.system_provider.requests.get", side_effect=requests.ConnectionError("refused")
+                ):
                     p._detect_environment()
                     assert p._detected_provider is None
 

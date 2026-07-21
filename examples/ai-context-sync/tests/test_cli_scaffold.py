@@ -33,5 +33,6 @@ class TestCLIScaffold(unittest.TestCase):
         self.assertEqual(result.exit_code, 1)
         self.assertIn("Directory is not empty", result.stdout)
 
+
 if __name__ == "__main__":
     unittest.main()

@@ -26,6 +26,7 @@ class MockMCP:
         def decorator(func):
             self.tools[func.__name__] = func
             return func
+
         return decorator
 
 
@@ -35,6 +36,7 @@ class MockMCP:
 class TestAiSyncGenericException:
     def test_generic_exception_is_reraised(self):
         """A non-AISyncError exception must propagate (not be swallowed)."""
+
         def boom(config=".ai-sync.json", dry_run=False):
             raise ValueError("unexpected")
 
@@ -46,6 +48,7 @@ class TestAiSyncGenericException:
 
     def test_runtime_error_is_reraised(self):
         """Another programming error class also propagates."""
+
         def boom(config=".ai-sync.json", dry_run=False):
             raise RuntimeError("boom")
 
@@ -87,6 +90,7 @@ class TestAiGuardGenericException:
 class TestAiAuditErrorBranches:
     def test_aisync_error_is_caught(self):
         """AISyncError should be caught and returned as error JSON."""
+
         def bad_factory(config=".ai-sync.json", **kwargs):
             raise AISyncError("audit config problem")
 
@@ -145,6 +149,7 @@ class TestAiAuditErrorBranches:
 class TestAiMapErrorBranches:
     def test_aisync_error_is_caught(self):
         """AISyncError should be caught and returned as error JSON."""
+
         def bad_factory(config=".ai-sync.json", **kwargs):
             raise AISyncError("graph init failed")
 

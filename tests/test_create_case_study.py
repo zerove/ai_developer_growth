@@ -21,6 +21,7 @@ class TestCreateCaseStudy:
     def teardown_method(self):
         """Clean up test fixtures."""
         import shutil
+
         shutil.rmtree(self.temp_dir, ignore_errors=True)
 
     def test_create_case_study_creates_dirs(self):
@@ -91,9 +92,7 @@ class TestCreateCaseStudy:
         # Create a template file
         template_dir = self.base_dir.parent / "templates"
         template_dir.mkdir(exist_ok=True)
-        (template_dir / "case-study-template.md").write_text(
-            "# Custom Template: [简短标题]\n", encoding="utf-8"
-        )
+        (template_dir / "case-study-template.md").write_text("# Custom Template: [简短标题]\n", encoding="utf-8")
 
         case_dir = create_case_study_structure("Custom", self.base_dir)
         readme = case_dir / "README.md"

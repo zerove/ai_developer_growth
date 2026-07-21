@@ -43,6 +43,7 @@ class MockLLM:
             return "FAIL: Missing error handling for invalid inputs."
         return "I don't know how to handle this."
 
+
 class Agent:
     def __init__(self, role: str, llm: MockLLM):
         self.role = role
@@ -50,8 +51,9 @@ class Agent:
 
     def run(self, input_text: str) -> str:
         print(f"[{self.role}] is processing...")
-        time.sleep(0.5) # Simulate thinking
+        time.sleep(0.5)  # Simulate thinking
         return self.llm.generate(self.role, input_text)
+
 
 class WorkflowOrchestrator:
     def __init__(self):
@@ -62,15 +64,15 @@ class WorkflowOrchestrator:
         self.reviewer = Agent("Reviewer", self.llm)
 
     def execute(self, request: str):
-        print(f"🚀 Starting Workflow for: {request}\n" + "="*50)
+        print(f"🚀 Starting Workflow for: {request}\n" + "=" * 50)
 
         # 1. PM Phase
         prd = self.pm.run(request)
-        print(f"📄 PM Output:\n{prd}\n" + "-"*30)
+        print(f"📄 PM Output:\n{prd}\n" + "-" * 30)
 
         # 2. Architect Phase
         design = self.architect.run(prd)
-        print(f"📐 Architect Output:\n{design}\n" + "-"*30)
+        print(f"📐 Architect Output:\n{design}\n" + "-" * 30)
 
         # 3. Coder & Reviewer Loop
         iteration = 1
@@ -80,11 +82,11 @@ class WorkflowOrchestrator:
             code = self.coder.run(
                 design if iteration == 1 else f"FIX: {review_feedback}"
             )
-            print(f"📝 Code:\n{code}\n" + "-"*20)
+            print(f"📝 Code:\n{code}\n" + "-" * 20)
 
             print("🔍 Reviewer is checking...")
             review_feedback = self.reviewer.run(code)
-            print(f"📢 Reviewer Feedback: {review_feedback}\n" + "-"*30)
+            print(f"📢 Reviewer Feedback: {review_feedback}\n" + "-" * 30)
 
             if "PASS" in review_feedback:
                 print("✅ Review passed!")
@@ -96,7 +98,8 @@ class WorkflowOrchestrator:
                 print("⚠️ Max iterations reached. Terminating.")
                 break
 
-        print("="*50 + "\n🎉 Workflow Completed Successfully!")
+        print("=" * 50 + "\n🎉 Workflow Completed Successfully!")
+
 
 if __name__ == "__main__":
     orchestrator = WorkflowOrchestrator()

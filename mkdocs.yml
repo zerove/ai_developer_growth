@@ -129,3 +129,9 @@ nav:
     - 速查表: governance/CHEATSHEET.md
   - 集成:
     - 能力雷达集成: integration/capability-radar-integration.md
+    - 贡献者看板集成: integration/contributor-dashboard-integration.md
+    - 上下文同步集成: integration/context-sync-integration.md
+    - 多 Agent 编排集成: integration/multi-agent-orch-integration.md
+    - 个性化搜索集成: integration/personalized-search-integration.md
+    - 修正循环集成: integration/self-correction-loop-integration.md
+    - 工作流优化集成: integration/workflow-optimizer-integration.md

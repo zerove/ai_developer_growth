@@ -1,0 +1,70 @@
+name: Welcome New Contributors
+
+on:
+  issues:
+    types: [opened]
+  pull_request_target:
+    types: [opened]
+
+permissions:
+  issues: write
+  pull-requests: write
+
+jobs:
+  welcome:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Welcome Issue Author
+        if: github.event_name == 'issues'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const author = context.payload.issue.user.login;
+            const issue = context.payload.issue;
+            
+            let welcomeMessage = `👋 欢迎 @${author}！\n\n`;
+            welcomeMessage += `感谢你提交 Issue。我们的社区催化剂会尽快审核。\n\n`;
+            
+            if (issue.labels.some(l => l.name === '案例')) {
+              welcomeMessage += `📋 **案例提交**：请确保案例包含以下内容：\n`;
+              welcomeMessage += `- 背景描述\n- AI 协作过程\n- 效率对比数据\n- 关键洞察\n- 适用场景\n\n`;
+              welcomeMessage += `详细模板请参考 Issue 描述。`;
+            } else if (issue.labels.some(l => l.name === '工具')) {
+              welcomeMessage += `🔧 **工具推荐**：请提供工具的核心功能、使用场景和优劣势分析。`;
+            } else {
+              welcomeMessage += `我们会尽快处理你的 Issue。如有疑问，请随时提问。`;
+            }
+            
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: issue.number,
+              body: welcomeMessage
+            });
+
+      - name: Welcome PR Author
+        if: github.event_name == 'pull_request_target'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const author = context.payload.pull_request.user.login;
+            const pr = context.payload.pull_request;
+            
+            let welcomeMessage = `🎉 欢迎 @${author}！\n\n`;
+            welcomeMessage += `感谢你提交 PR。我们的 Reviewer 会尽快审核。\n\n`;
+            welcomeMessage += `**审核流程**：\n`;
+            welcomeMessage += `1. 自动化检查（lint、测试）\n`;
+            welcomeMessage += `2. 社区催化剂验证案例/工具格式\n`;
+            welcomeMessage += `3. 工作流优化师评估效率数据\n`;
+            welcomeMessage += `4. 知识策展人整合到知识库\n\n`;
+            welcomeMessage += `请确保：\n`;
+            welcomeMessage += `- 所有测试通过\n`;
+            welcomeMessage += `- 代码符合项目规范\n`;
+            welcomeMessage += `- 已关联相关 Issue`;
+            
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: pr.number,
+              body: welcomeMessage
+            });

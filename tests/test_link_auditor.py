@@ -227,6 +227,31 @@ class TestMain(unittest.TestCase):
         self.assertEqual(result.returncode, 1)
         self.assertIn("Broken links found", result.stdout)
 
+    def test_main_check_all(self):
+        """Test main with --check-all flag."""
+        result = subprocess.run(
+            [sys.executable, "tools/scripts/link_auditor.py", "--check-all"],
+            capture_output=True,
+            text=True,
+            cwd=os.path.join(os.path.dirname(__file__), ".."),
+        )
+        # Should not crash, returns 0 or 1 depending on project state
+        self.assertIn(result.returncode, [0, 1])
+
+    def test_main_fail_on_broken(self):
+        """Test main with --fail-on-broken when broken links exist."""
+        with open(os.path.join(self.test_dir, "broken.md"), "w") as f:
+            f.write("[[missing.md]]")
+
+        result = subprocess.run(
+            [sys.executable, "tools/scripts/link_auditor.py", self.test_dir, "--fail-on-broken"],
+            capture_output=True,
+            text=True,
+            cwd=os.path.join(os.path.dirname(__file__), ".."),
+        )
+        self.assertEqual(result.returncode, 1)
+        self.assertIn("Broken links found", result.stdout)
+
 
 if __name__ == "__main__":
     unittest.main()

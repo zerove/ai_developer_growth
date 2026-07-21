@@ -228,7 +228,7 @@ class ToolMatrixUpdater:
                     self.cache[cache_key] = {"latest_version": version, "checked_at": datetime.now().isoformat()}
                     self._save_cache()
                     return version
-        except Exception as e:
+        except (subprocess.SubprocessError, json.JSONDecodeError, KeyError, IndexError, subprocess.TimeoutExpired) as e:
             logger.debug(f"Failed to check GitHub releases for {repo}: {e}")
 
         return None
@@ -256,7 +256,7 @@ class ToolMatrixUpdater:
                         self.cache[cache_key] = {"latest_version": latest, "checked_at": datetime.now().isoformat()}
                         self._save_cache()
                         return latest
-        except Exception as e:
+        except (subprocess.SubprocessError, re.error, IndexError) as e:
             logger.debug(f"Failed to check PyPI for {package_name}: {e}")
 
         return None
@@ -281,7 +281,7 @@ class ToolMatrixUpdater:
                         self.tools[name].current_version = version
             except FileNotFoundError:
                 pass
-            except Exception as e:
+            except (subprocess.SubprocessError, OSError) as e:
                 logger.debug(f"Failed to check {name}: {e}")
 
         return updates

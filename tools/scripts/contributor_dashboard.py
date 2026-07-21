@@ -87,7 +87,7 @@ class ContributorDashboard:
                     contributors.append({"name": name, "commits": int(count)})
 
             return {"total_contributors": len(contributors), "top_contributors": contributors[:10], "all": contributors}
-        except Exception:
+        except (subprocess.SubprocessError, ValueError, FileNotFoundError):
             return {"total_contributors": 0, "top_contributors": [], "all": []}
 
     def analyze_docs_coverage(self) -> dict:

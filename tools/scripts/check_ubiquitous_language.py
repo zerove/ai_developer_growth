@@ -31,7 +31,7 @@ def check_term_usage(term: str, docs_dir: Path) -> int:
             content = md_file.read_text(encoding="utf-8")
             # 简单的词边界匹配
             count += len(re.findall(rf"\b{re.escape(term)}\b", content))
-        except Exception:
+        except (UnicodeDecodeError, OSError):
             pass
     return count
 

@@ -3,7 +3,7 @@ import argparse
 import os
 import sys
 
-from openai import OpenAI
+from openai import APIConnectionError, APIError, OpenAI, RateLimitError
 
 
 def load_context() -> str:
@@ -44,7 +44,7 @@ def update_context_with_llm(current_context: str, changes: str) -> str:
             model="gpt-4o", messages=[{"role": "user", "content": prompt}], temperature=0.3
         )
         return response.choices[0].message.content.strip()
-    except Exception as e:
+    except (APIError, APIConnectionError, RateLimitError, AttributeError) as e:
         print(f"LLM 调用失败: {e}")
         sys.exit(1)
 

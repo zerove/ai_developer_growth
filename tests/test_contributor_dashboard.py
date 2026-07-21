@@ -129,7 +129,8 @@ AI 工具栈: Cursor
     @patch("subprocess.run")
     def test_analyze_contributors_error(self, mock_run):
         """Test contributors analysis on error."""
-        mock_run.side_effect = Exception("git not found")
+        import subprocess
+        mock_run.side_effect = subprocess.SubprocessError("git not found")
 
         result = self.dashboard.analyze_contributors()
         assert result["total_contributors"] == 0

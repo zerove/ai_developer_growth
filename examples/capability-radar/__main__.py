@@ -3,6 +3,7 @@
 """Capability Radar CLI - AI Era Developer Self-Assessment Tool."""
 
 import argparse
+import json
 import sys
 from pathlib import Path
 
@@ -73,7 +74,7 @@ def main() -> int:
         except FileNotFoundError:
             print(f"错误: 文件不存在: {args.input}", file=sys.stderr)
             return 1
-        except Exception as e:
+        except (json.JSONDecodeError, KeyError, ValueError) as e:
             print(f"错误: 解析 JSON 失败: {e}", file=sys.stderr)
             return 1
     else:

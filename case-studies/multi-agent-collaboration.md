@@ -270,6 +270,6 @@ MockLLM 允许在没有真实 LLM API 的情况下进行开发和测试。这对
 ---
 
 **📂 导航**
-- [[MOC|⬅️ 返回知识地图]]
+- [[../docs/MOC|⬅️ 返回知识地图]]
 - **相关案例**: [[case-studies/ai-context-sync-development|AI-Context-Sync 开发]] | [[case-studies/ai-task-prioritizer|任务优先级工具]]
-- **相关方法**: [[efficiency/multi-agent-patterns|多 Agent 编排模式]] | [[efficiency/full-cycle-workflow|全周期工作流]]
+- **相关方法**: [[../docs/efficiency/multi-agent-patterns|多 Agent 编排模式]] | [[../docs/efficiency/full-cycle-workflow|全周期工作流]]

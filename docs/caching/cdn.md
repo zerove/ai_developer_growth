@@ -123,6 +123,7 @@ Origin Shield 是 CDN 和源站之间的额外缓存层。当多个边缘节点�
 ## 相关文档
 
 - [[docs/caching/redis|Redis]] — 应用层缓存
+- [[docs/caching/README|缓存规范首页]] — 缓存模式与策略
 - [[docs/devops/docker|Docker]] — 容器化部署
 - [[docs/security/owasp|OWASP]] — CDN 安全配置
 - [[docs/api/rest|REST]] — API 响应缓存头设计

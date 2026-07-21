@@ -58,8 +58,8 @@ class ModelInfo:
     current_version: str
     latest_version: str | None = None
     context_window: int = 0
-    strengths: list[str] = None
-    use_cases: list[str] = None
+    strengths: list[str] | None = None
+    use_cases: list[str] | None = None
     limitations: str = ""
     pricing_tier: str = ""
     last_checked: str | None = None
@@ -263,7 +263,7 @@ class ToolMatrixUpdater:
 
     def _check_cli_versions(self) -> list[str]:
         """Check installed CLI tool versions."""
-        updates = []
+        updates: list[str] = []
         cli_tools = {
             "jcode": ["jcode", "--version"],
             "opencode": ["opencode", "--version"],

@@ -4,11 +4,6 @@
 
 **Goal:** Implement `tools/scripts/link_auditor.py` to audit Markdown files for broken `[[path|title]]` links and generate a report.
 
-**Architecture:**
-- Use `re` to find all `[[...|...]]` patterns in `.md` files under `docs/`.
-- Validate path existence relative to the repository root.
-- CLI output report of broken links.
-
 **Tech Stack:**
 - Python 3.9+
 - `re` (regex)
@@ -26,7 +21,7 @@
 
 **Files:**
 - Create: `tools/scripts/link_auditor.py`
-- Test: `tests/test_link_auditor.py`
+- Test: `tools/scripts/test_link_auditor.py`
 
 **Interfaces:**
 - Consumes: Directory path to scan.

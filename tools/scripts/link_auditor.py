@@ -75,7 +75,16 @@ def find_broken_links(directory: str) -> list[tuple[str, str]]:
     link_pattern = re.compile(r"\[\[([^\[\]]+?)(?:\\?\|[^\[\]]*)?\]\]")
     index = _build_index(directory)
 
+    # Skip template directories and files with template-like patterns
+    skip_dirs = {'.github/PULL_REQUEST_TEMPLATE', 'docs/superpowers/plans'}
+    placeholder_pattern = re.compile(r'^[\{\.\\/]+|[\{\.]{2,}')
+
     for root, _, files in os.walk(directory):
+        # Skip template directories
+        rel_root = os.path.relpath(root, directory)
+        if any(rel_root.startswith(skip) for skip in skip_dirs):
+            continue
+
         for file in files:
             if not file.endswith(".md"):
                 continue
@@ -84,7 +93,10 @@ def find_broken_links(directory: str) -> list[tuple[str, str]]:
                 content = f.read()
             for match in link_pattern.finditer(content):
                 target_path = match.group(1).strip()
+                # Skip external links, anchors, and template placeholders
                 if target_path.startswith(("http://", "https://", "#")):
+                    continue
+                if placeholder_pattern.match(target_path):
                     continue
                 if not _check_target(target_path, index, directory, root):
                     broken.append((file_path, match.group(1)))

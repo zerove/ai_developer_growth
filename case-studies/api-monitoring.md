@@ -208,7 +208,7 @@ AI 负责生成代码骨架和处理模式化逻辑，人类负责定义告警�
 ---
 
 **📂 导航**
-- [[MOC|⬅️ 返回知识地图]]
+- [[../docs/MOC|⬅️ 返回知识地图]]
 - **相关案例**: [[case-studies/api-design-implementation|API 设计]] | [[case-studies/production-debugging|生产调试]]
-- **相关方法**: [[efficiency/full-cycle-workflow|全周期工作flow]] | [[learning/prompt-engineering|Prompt 工程]]
-- **相关工具**: [[docs/api/rest|REST API 规范]] | [[docs/devops/cicd|CI/CD 集成]]
+- **相关方法**: [[../docs/efficiency/full-cycle-workflow|全周期工作流]] | [[../docs/learning/prompt-engineering|Prompt 工程]]
+- **相关工具**: [[../docs/api/rest|REST API 规范]] | [[../docs/devops/cicd|CI/CD 集成]]

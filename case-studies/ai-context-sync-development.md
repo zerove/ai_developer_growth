@@ -214,6 +214,6 @@ def test_synthesizer生成结构化上下文():
 ---
 
 **📂 导航**
-- [[MOC|⬅️ 返回知识地图]]
+- [[../docs/MOC|⬅️ 返回知识地图]]
 - **相关案例**: [[case-studies/ai-task-prioritizer|AI 任务优先级工具]]
-- **相关文章**: [[efficiency/full-cycle-workflow|全周期工作流]] | [[learning/prompt-engineering|Prompt 工程]]
+- **相关文章**: [[../docs/efficiency/full-cycle-workflow|全周期工作流]] | [[../docs/learning/prompt-engineering|Prompt 工程]]

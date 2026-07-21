@@ -29,6 +29,7 @@
 - ✅ MCP 集成 (ai-context-sync 作为 MCP Server)
 - ✅ 测试覆盖率 84% (152 个测试，目标 ≥70%)
 - ✅ LICENSE 文件 (MIT)
+- ✅ jcode 集成 (4 个 Agent Skills + Swarm 配置)
 
 ## 进行中
 

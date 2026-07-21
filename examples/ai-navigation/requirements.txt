@@ -1,0 +1,9 @@
+# AI Navigation Dependencies
+# Core (required)
+# No external dependencies - uses only Python standard library
+
+# Optional (for enhanced features)
+# chromadb>=0.4.0        # Vector database
+# openai>=1.0.0          # OpenAI API
+# anthropic>=0.20.0      # Claude API
+# tiktoken>=0.5.0        # Token counting

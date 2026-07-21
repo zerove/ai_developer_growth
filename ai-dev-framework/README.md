@@ -1,234 +1,193 @@
-# AI Dev Framework
+# AI Dev Framework - 通用治理框架
 
-> 通用的 AI Agent 开发治理标准，适用于任何项目、任何编程语言。
-
----
+> 适用于任何项目的 AI Agent 开发治理标准。
 
 ## 特性
 
-- ✅ **语言无关**: 支持 10 种编程语言 (Python, Rust, Go, Java, TypeScript, Swift, Kotlin, Ruby, PHP, C#)
-- ✅ **框架配置**: 7 种流行框架开箱可用 (React, Vue, Spring Boot, Next.js, FastAPI, Express, Actix)
-- ✅ **工具集成**: 支持 opencode, jcode, pre-commit
+- ✅ **语言无关**: 支持 Python, TypeScript, Rust, Go, Java 等
+- ✅ **框架无关**: 适用于任何框架
+- ✅ **Agent 模板**: 预定义通用 Agent 角色
 - ✅ **质量门禁**: 4 道门禁确保代码质量
-- ✅ **模板系统**: 项目上下文、架构决策、Agent 定义、质量报告模板
-- ✅ **自检诊断**: 内置诊断脚本验证框架完整性
-- ✅ **一键安装**: 自动语言检测 + 配置注入
-
----
+- ✅ **自动化钩子**: 提交/PR/合并时自动触发
 
 ## 快速开始
 
+### 1. 初始化项目
+
 ```bash
-# 安装到你的项目 (auto 自动检测语言)
-./install.sh /path/to/your/project auto
+# 通用初始化
+python ai-dev-framework/core/jcode_init.py my-project
 
-# 或指定语言
-./install.sh /path/to/your/project python
-./install.sh /path/to/your/project typescript
+# 指定语言和类型
+python ai-dev-framework/core/jcode_init.py my-app --type webapp --language typescript
+
+# 指定框架
+python ai-dev-framework/core/jcode_init.py my-api --language python --framework fastapi
 ```
 
-安装后:
-1. 阅读 `.ai-framework/GOVERNANCE.md`
-2. 使用模板创建 agent
-3. 通过 4 道质量门禁
-4. 定期更新上下文文件
-
----
-
-## 目录结构
+### 2. 生成的文件
 
 ```
-ai-dev-framework/
-├── core/                          # 核心框架 (语言无关)
-│   ├── GOVERNANCE.md              # 通用治理标准
-│   ├── quality-gates/             # 4 道质量门禁
-│   │   ├── gate1-prompt.md        # Gate 1: Prompt 设计
-│   │   ├── gate2-implementation.md # Gate 2: 实现编码
-│   │   ├── gate3-audit.md         # Gate 3: 自动化审计
-│   │   └── gate4-documentation.md # Gate 4: 资产更新
-│   └── templates/                 # 项目模板
-│       ├── agent-prompt.md        # Agent 定义模板
-│       ├── CONTEXT.md             # 项目上下文模板
-│       ├── ADR.md                 # 架构决策记录模板
-│       ├── AGENTS.md              # Agent 索引模板
-│       └── quality-report.md      # 质量报告模板
-├── languages/                     # 语言特定配置 (10 种)
-│   ├── python/      (check.sh + rules.md)
-│   ├── rust/        (check.sh + rules.md)
-│   ├── go/          (check.sh + rules.md)
-│   ├── java/        (check.sh + rules.md)
-│   ├── typescript/  (check.sh + rules.md)
-│   ├── swift/       (check.sh + rules.md)
-│   ├── kotlin/      (check.sh + rules.md)
-│   ├── ruby/        (check.sh + rules.md)
-│   ├── php/         (check.sh + rules.md)
-│   └── csharp/      (check.sh + rules.md)
-├── frameworks/                    # 框架特定配置 (7 种)
-│   ├── react/        (rules.md)
-│   ├── vue/          (rules.md)
-│   ├── spring-boot/  (rules.md)
-│   ├── nextjs/       (rules.md)
-│   ├── fastapi/      (rules.md)
-│   ├── express/      (rules.md)
-│   └── actix/        (rules.md)
-├── hooks/                         # 工具集成
-│   ├── opencode/      (hooks.json)
-│   ├── jcode/         (config.yml)
-│   └── pre-commit/    (.pre-commit-config.yaml)
-├── examples/                      # 示例项目
-│   ├── python/
-│   ├── rust/
-│   ├── go/
-│   ├── java/
-│   └── typescript/
-├── install.sh                     # 一键安装 (自动语言检测)
-├── diagnose.sh                    # 框架自检脚本
-└── README.md                      # 本文件
+your-project/
+├── jcode.yaml              # 项目配置
+├── AGENTS.md               # Agent 索引
+├── GOVERNANCE.md           # 治理标准
+├── .jcode/
+│   ├── PROJECT.md          # 项目信息
+│   └── hooks.json          # 钩子配置
+└── agents/
+    ├── code-guardian.md    # 代码守护者
+    └── doc-curator.md      # 文档策展人
 ```
 
----
+### 3. 自定义 Agent
 
-## 支持的语言
+```bash
+# 编辑 Agent 定义
+vim agents/code-guardian.md
 
-| 语言 | Lint 工具 | 类型检查 | 测试工具 | 安全检查 |
-|------|-----------|----------|----------|----------|
-| Python | ruff | mypy | pytest | bandit |
-| Rust | clippy | rustc | cargo test | cargo audit |
-| Go | golangci-lint | go vet | go test | govulncheck |
-| Java | checkstyle | javac | junit | spotbugs |
-| TypeScript | eslint | tsc | jest/vitest | npm audit |
-| Swift | swiftlint | swiftc | xctest | swift-format |
-| Kotlin | ktlint | kotlinc | kotest | detekt |
-| Ruby | rubocop | ruby -c | rspec | bundle-audit |
-| PHP | phpstan | php -l | phpunit | php-cs-fixer |
-| C# | dotnet format | dotnet build | dotnet test | dotnet list package |
+# 添加新 Agent
+vim agents/my-custom-agent.md
+```
 
----
+## 组件说明
 
-## 框架特定配置
+### 1. 项目配置 (jcode.yaml)
 
-| 框架 | 语言 | 适用场景 |
-|------|------|----------|
-| React | TypeScript | SPA 前端应用 |
-| Vue | TypeScript | SPA 前端应用 |
-| Next.js | TypeScript | 全栈 SSR 应用 |
-| Spring Boot | Java | 企业后端服务 |
-| FastAPI | Python | 高性能 API 服务 |
-| Express | TypeScript | Node.js API 服务 |
-| Actix Web | Rust | 高性能 Web 服务 |
+```yaml
+project:
+  name: "my-project"
+  type: "library"          # library, webapp, api, cli, knowledge-base
+  language: "python"       # python, typescript, rust, go, java
+  framework: "fastapi"     # 可选
 
----
+  directories:
+    source: "src"
+    tests: "tests"
+    docs: "docs"
 
-## 质量门禁
+  quality:
+    min_test_coverage: 70
+    lint_tool: "ruff"
+    type_checker: "mypy"
+    security_scanner: "bandit"
+```
 
-| Gate | 阶段 | 检查内容 | 通过标准 |
-|------|------|----------|----------|
-| Gate 1 | 设计 | Prompt 编写标准 | 名称格式、描述完整、指令具体 |
-| Gate 2 | 实现 | 编码审查 | 代码通过 linter、类型检查、测试 |
-| Gate 3 | CI/CD | 自动化审计 | Linter、测试、安全扫描自动执行 |
-| Gate 4 | 完成 | 资产更新 | CONTEXT.md、ADR.md、AGENTS.md 已更新 |
+### 2. Agent 定义模板
 
----
+#### code-guardian (代码守护者)
 
-## 工具集成
+```yaml
+agent-name: code-guardian
+description: "维护代码质量、安全、风格一致性"
 
-### opencode
+responsibilities:
+  - "执行 lint 检查"
+  - "运行测试套件"
+  - "安全扫描"
+
+instructions:
+  - name: "lint-check"
+    command: "{lint_tool} {source_dir}"
+    validation:
+      success: "exit_code == 0"
+```
+
+#### doc-curator (文档策展人)
+
+```yaml
+agent-name: doc-curator
+description: "维护文档完整性、链接有效性"
+
+responsibilities:
+  - "检查文档链接"
+  - "验证文档格式"
+  - "更新索引"
+```
+
+### 3. 钩子系统
 
 ```json
 {
-  "pre_prompt": [
-    {
-      "name": "check-governance",
-      "command": "bash .ai-framework/quality-gates/scripts/check.sh"
-    }
-  ]
+  "hooks": {
+    "on_commit": [
+      {
+        "name": "lint-check",
+        "agent": "code-guardian",
+        "action": "lint",
+        "description": "提交时检查代码风格"
+      }
+    ],
+    "on_pr": [
+      {
+        "name": "full-audit",
+        "agent": "code-guardian",
+        "action": "full",
+        "description": "PR 时运行完整审计"
+      }
+    ],
+    "scheduled": [
+      {
+        "name": "weekly-audit",
+        "agent": "code-guardian",
+        "action": "full",
+        "schedule": "0 9 * * 1"
+      }
+    ]
+  }
 }
 ```
 
-### jcode
+## 语言支持
+
+| 语言 | Lint 工具 | 类型检查 | 测试工具 | 安全扫描 |
+|------|-----------|----------|----------|----------|
+| Python | ruff | mypy | pytest | bandit |
+| TypeScript | eslint | tsc | vitest | semgrep |
+| Rust | clippy | cargo | cargo test | cargo-audit |
+| Go | golangci-lint | go vet | go test | gosec |
+
+## 工作流程
+
+### 标准开发流程
+
+```
+1. 编写代码
+2. 提交 → 触发 lint-check
+3. 创建 PR → 触发 full-audit
+4. 合并 → 触发 update-index
+```
+
+### 质量门禁
+
+| 门禁 | 检查内容 | 通过标准 |
+|------|----------|----------|
+| Gate 1 | Prompt 设计 | 人工审查通过 |
+| Gate 2 | 代码质量 | Lint + 类型检查通过 |
+| Gate 3 | 自动化审计 | CI/CD 流水线通过 |
+| Gate 4 | 资产更新 | 文档同步完成 |
+
+## 扩展
+
+### 添加自定义 Agent
+
+1. 创建 Agent 定义文件: `agents/my-agent.md`
+2. 更新 AGENTS.md 索引
+3. 在 hooks.json 中添加触发器
+
+### 集成 CI/CD
 
 ```yaml
-governance:
-  enabled: true
-  hooks:
-    pre_commit:
-      - command: "bash .ai-framework/quality-gates/scripts/check.sh"
+# .github/workflows/ci.yml
+- name: Jcode Audit
+  run: |
+    python ai-dev-framework/core/jcode_init.py --validate
+    ruff check .
+    pytest tests/
 ```
 
-### pre-commit
+## 相关文档
 
-```yaml
-repos:
-  - repo: local
-    hooks:
-      - id: governance-check
-        name: Governance Check
-        entry: bash .ai-framework/quality-gates/scripts/check.sh
-        language: system
-```
-
----
-
-## 自检
-
-```bash
-# 验证框架完整性
-bash diagnose.sh
-```
-
-输出示例:
-```
-✅ PASS 14 项核心文件
-✅ PASS 10 种语言配置
-✅ PASS 7 种框架配置
-✅ PASS 3 种钩子集成
-✅ PASS 所有脚本可执行
-✅ 所有检查通过 — 框架完整可用
-```
-
----
-
-## 模板系统
-
-| 模板 | 用途 |
-|------|------|
-| agent-prompt.md | 创建新的 Agent 定义 |
-| CONTEXT.md | 记录项目当前上下文 |
-| ADR.md | 记录架构决策 |
-| AGENTS.md | 索引所有 Agent |
-| quality-report.md | 生成质量报告 |
-
----
-
-## 添加新语言
-
-```bash
-1. 创建 languages/{language}/ 目录
-2. 创建 rules.md — 语言规则
-3. 创建 check.sh — 质量门禁脚本
-4. 更新 README.md
-5. 运行 bash diagnose.sh 验证
-```
-
----
-
-## 添加新框架
-
-```bash
-1. 创建 frameworks/{framework}/ 目录
-2. 创建 rules.md — 框架特定规则
-3. 更新 README.md
-4. 运行 bash diagnose.sh 验证
-```
-
----
-
-## 贡献
-
-欢迎贡献新语言、新框架、新工具集成。
-
-详见 `CONTRIBUTING.md`。
-
----
-
-*本框架适用于任何项目、任何编程语言。*
+- [GOVERNANCE.md](../GOVERNANCE.md) - 治理标准
+- [AGENTS.md](../AGENTS.md) - Agent 索引
+- [agent-templates.md](agent-templates.md) - Agent 模板

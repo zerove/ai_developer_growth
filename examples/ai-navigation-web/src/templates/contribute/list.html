@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+{% block title %}Contributions - AI Developer Growth{% endblock %}
+{% block content %}
+<div class="flex flex-between mb-8">
+    <h2>📝 My Contributions</h2>
+    <a href="/contribute/new" class="btn btn-primary btn-sm">+ New Contribution</a>
+</div>
+
+{% if contributions %}
+<table>
+    <tr><th>Title</th><th>Status</th><th>Submitted</th><th>Actions</th></tr>
+    {% for c in contributions %}
+    <tr>
+        <td>{{ c.doc_title }}</td>
+        <td>
+            {% if c.status == 'submitted' %}<span class="badge badge-submitted">Submitted</span>
+            {% elif c.status == 'reviewed' %}<span class="badge badge-reviewed">Reviewed</span>
+            {% else %}<span class="badge badge-pending">{{ c.status }}</span>{% endif %}
+        </td>
+        <td>{{ c.submitted_at }}</td>
+        <td><a href="/contribute/{{ c.id }}" class="btn btn-outline btn-sm">View</a></td>
+    </tr>
+    {% endfor %}
+</table>
+{% else %}
+<div class="card" style="text-align:center;padding:40px;">
+    <p style="color:var(--text-muted);">No contributions yet. Share your knowledge!</p>
+    <a href="/contribute/new" class="btn btn-primary" style="margin-top:12px;">Create Contribution</a>
+</div>
+{% endif %}
+{% endblock %}

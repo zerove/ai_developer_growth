@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+{% block title %}Assessment - AI Developer Growth{% endblock %}
+{% block content %}
+<div class="card">
+    <h2>📊 Skill Assessment</h2>
+    <p style="color:var(--text-muted);margin-bottom:24px;">Rate yourself on each dimension (0-100%). Be honest - this helps personalize your learning path.</p>
+    <form method="post" action="/assess">
+        {% set dims = [
+            ('ai_comprehension', 'AI 理解力', 'How well do you understand AI concepts and apply them?'),
+            ('engineering_integration', '工程整合', 'How effectively do you integrate AI into your engineering workflow?'),
+            ('learning_method', '学习方法', 'How systematic is your learning approach in the AI era?'),
+            ('innovation_thinking', '创新思维', 'How well do you think beyond conventional approaches?'),
+            ('output_quality', '输出质量', 'How high is the quality of your AI-assisted output?'),
+        ] %}
+        {% for dim, label, desc in dims %}
+        <div class="form-group">
+            <label>{{ label }}</label>
+            <p style="font-size:13px;color:var(--text-muted);margin-bottom:6px;">{{ desc }}</p>
+            <div class="slider-group">
+                <span>0%</span>
+                <input type="range" name="{{ dim }}" min="0" max="100" value="{{ prev[dim] * 100|int if prev else 50 }}" oninput="this.nextElementSibling.textContent=this.value+'%'">
+                <span class="value">{{ (prev[dim] * 100|int if prev else 50) }}%</span>
+            </div>
+            {% if skill_docs.get(dim) %}
+            <div style="margin-top:6px;font-size:12px;color:var(--text-muted);">
+                📖 Suggested: {% for doc in skill_docs[dim] %}<code>{{ doc }}</code>{% if not loop.last %}, {% endif %}{% endfor %}
+            </div>
+            {% endif %}
+        </div>
+        {% endfor %}
+        <button type="submit" class="btn btn-primary">Submit Assessment</button>
+    </form>
+</div>
+{% endblock %}

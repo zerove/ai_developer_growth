@@ -1,128 +1,114 @@
-# 项目规范
+# CLAUDE.md - AI Developer Growth Project
 
-本项目遵循 ai-dev-framework 治理标准。
+## 项目概览
+这是一个开源知识库，专注于 AI 时代开发者成长方法论。包含 37 个方法论文档、11 个真实案例研究、5 个代码示例、4 个 ADR 决策记录，以及 4 个核心治理 Agent。
 
-## 快速开始
+## 核心结构
+```
+ai_developer_growth/
+├── AGENTS.md              # Agent 定义索引
+├── GOVERNANCE.md          # 治理标准
+├── CONTRIBUTING.md        # 贡献指南
+├── ROADMAP.md             # 路线图
+├── INDEX.md               # 文档索引
+├── MOC.md                 # 知识地图
+├── UBIQUITOUS_LANGUAGE.md # 领域术语表
+├── agents/                # 4 个核心 Agent 定义
+├── case-studies/          # 11 个真实案例研究
+├── docs/                  # 37 个方法论文档
+│   ├── efficiency/        # 效率相关
+│   ├── learning/          # 学习相关
+│   ├── tools/             # 工具相关
+│   └── ...
+├── examples/              # 5 个代码示例
+│   ├── ai-context-sync/   # 上下文同步工具
+│   ├── multi-agent-orch/  # 多 Agent 编排
+│   ├── self-correction-loop/ # 自我修正循环
+│   ├── ai-task-prioritizer/  # 任务优先级工具
+│   └── ...
+├── tools/scripts/         # 自动化工具脚本
+├── tests/                 # 测试套件
+└── .github/workflows/     # CI/CD
+```
 
-1. 阅读 `ai-dev-framework/core/GOVERNANCE.md`
-2. 使用 `ai-dev-framework/core/templates/agent-prompt.md` 创建 agent
-3. 通过 4 道质量门禁
+## 核心 Agent (已定义在 agents/)
+1. **knowledge-curator** - 知识策展人：维护知识库结构、案例收集、文档质量
+2. **governance-auditor** - 治理审计员：代码质量、安全、治理合规自动化审计
+3. **workflow-optimizer** - 工作流优化师：效率数据分析、工作流优化、工具推荐
+4. **community-catalyst** - 社区催化剂：贡献流程管理、案例验证、激励机制
 
-## 工具集成
+## 已实现参考 Agent (examples/)
+- **context-sync** - 自动维护 CONTEXT.md、ADR.md、项目状态同步
+- **multi-agent-orch** - PM/Architect/Coder/Reviewer 协作模拟
+- **self-correction-loop** - AI 代码质量保证：验证→重试→修正闭环
+- **ai-task-prioritizer** - CLI 任务优先级排序，TDD + AI 驱动
 
-- opencode: hooks 已配置 (`ai-dev-framework/hooks/opencode/`)
-- jcode: hooks 已配置 (`ai-dev-framework/hooks/jcode/`)
-- pre-commit: 已安装 (`ai-dev-framework/hooks/pre-commit/`)
-
-## 语言特定规则
-
-见 `ai-dev-framework/languages/` 目录（13 种语言）
-
-## 框架特定规则
-
-见 `ai-dev-framework/frameworks/` 目录（11 种框架）
-
-## 领域特定规则
-
-- DevOps: `docs/devops/`
-- 数据库: `docs/database/`
-- API 设计: `docs/api/`
-- 安全: `docs/security/`
-- 测试与工作流: `docs/testing/`
-
-## 项目特定规范
-
-| 规范 | 文件 | 用途 |
-|------|------|------|
-| Prompt 编写标准 | `docs/agent-dev/prompt-standards.md` | 如何编写高质量 agent 定义 |
-| 开发流程规范 | `docs/agent-dev/workflow-standards.md` | 5 步闭环生命周期 |
-| 质量门禁 | `docs/agent-dev/quality-gates.md` | 各阶段质量检查标准 |
-| 上下文管理 | `docs/agent-dev/context-management.md` | CONTEXT/ADR/AGENTS 维护规范 |
-| Prompt 模板 | `docs/agent-dev/agent-prompt-template.md` | agent 定义的标准模板 |
-| 质量检查清单 | `docs/agent-dev/quality-checklist.md` | 开发各阶段的检查项 |
-
-## 验证命令
-
-### 代码质量检查
+## 开发命令
 ```bash
-# Lint + Format
-make lint
+# 代码质量检查
+ruff check .
+ruff format --check .
+mypy tools/scripts/ --ignore-missing-imports
 
 # 测试
-make test
+pytest tests/ -v
 
-# 全部检查
-make check
-```
-
-### 文档一致性检查
-```bash
-# 断链检查
-python tools/scripts/link_auditor.py
+# 链接审计
+python tools/scripts/link_auditor.py .
 
 # 案例验证
-python tools/scripts/validate_case_study.py case-studies/your-case.md
+python tools/scripts/validate_case_study.py --all
 
-# 术语一致性
-python tools/scripts/check_ubiquitous_language.py
+# 治理审计
+python tools/scripts/audit_to_pr.py --check-all
+
+# 工具矩阵更新
+python tools/scripts/update_ai_tool_matrix.py --check
+
+# 贡献者仪表板
+python tools/scripts/contributor_dashboard.py --format markdown
 ```
 
-### 治理框架检查
-```bash
-# 语言特定检查（自动检测语言）
-bash ai-dev-framework/scripts/detect-language.sh
-bash ai-dev-framework/core/quality-gates/scripts/check.sh
+## 质量门禁 (GOVERNANCE.md)
+- ✅ Ruff lint + format 通过
+- ✅ MyPy 类型检查通过
+- ✅ Pytest 覆盖率 ≥ 70%
+- ✅ 无 `unwrap()`/`expect()`/`as any`
+- ✅ 链接审计通过
+- ✅ 案例研究格式验证通过
 
-# 或指定语言
-bash ai-dev-framework/core/quality-gates/scripts/check.sh python
-```
+## Agent 定义格式 (GOVERNANCE.md 第 1 节)
+Agent 定义必须包含：
+- `## agent: <name> (<中文名>)` 标题
+- 职责描述 (一句话)
+- 作用域
+- 核心指令 (具体、可验证、含工具名/文件路径/函数名)
+- 工具列表 (最小权限，≤10 个)
+- 约束 (明确禁止行为)
 
-## Agent 开发工作流
+## 创建新 Agent 检查清单
+- [ ] 命名: kebab-case (如 `feature-builder`)
+- [ ] 描述: 一句话明确职责和作用域
+- [ ] 指令: 具体、可验证，含工具/路径/函数名
+- [ ] 工具: 最小权限，不超过 10 个
+- [ ] 约束: 明确禁止行为
+- [ ] Gate 1: Prompt 设计审查 (人工)
+- [ ] Gate 2: 实现代码审查 (Linter + 类型检查 + 人工)
+- [ ] Gate 3: 自动化审计 (CI/CD)
+- [ ] Gate 4: 资产更新 (AGENTS.md、CONTEXT.md、ADR.md)
+- [ ] 索引更新: 在 AGENTS.md 添加记录
 
-### 1. 需求分析
-- 明确职责边界，与现有 agent 无重叠（查阅 `AGENTS.md`）
-- 产出需求文档
+## 常用文档链接
+- [[GOVERNANCE|通用治理标准]] - Agent 定义格式、5步闭环、4道门禁
+- [[docs/agent-dev/prompt-standards|Prompt 编写规范]] - 高质量 Prompt 设计原则
+- [[docs/agent-dev/workflow-standards|开发流程规范]] - Agent 开发全流程标准
+- [[docs/agent-dev/quality-gates|质量门禁]] - 各阶段质量检查标准
+- [[docs/agent-dev/context-management|上下文管理]] - CONTEXT/ADR/AGENTS 维护规范
+- [[CONTRIBUTING|贡献指南]] - 案例提交、工具推荐、方法论改进流程
 
-### 2. Prompt 设计 (Gate 1)
-- 基于 `docs/agent-dev/agent-prompt-template.md` 创建定义
-- 命名: kebab-case
-- 描述: 一句话核心职责
-- 指令: 具体、可验证、含工具名/文件路径/函数名
-- 工具: 最小权限（≤10个）
-- 约束: 明确禁止行为
-- 人工审查通过
-
-### 3. 实现编码 (Gate 2)
-- 遵循语言特定规范 (`ai-dev-framework/languages/{lang}/rules.md`)
-- 代码风格: ruff/mypy/pytest (Python)
-- 无 `unwrap()`/`expect()`/`as any` 等抑制
-- 测试覆盖核心逻辑
-
-### 4. 自动化审计 (Gate 3)
-- CI/CD 自动执行: lint + type check + test + security scan
-- 必须全部通过
-
-### 5. 资产更新 (Gate 4)
-- 更新 `AGENTS.md` 索引
-- 更新 `CONTEXT.md` 项目状态
-- 记录 `ADR.md` 关键决策
-- 更新相关文档
-
-## 禁止行为
-
-- ❌ 硬编码密钥、密码、token
-- ❌ 提交敏感信息到版本控制
-- ❌ 无授权访问外部服务
-- ❌ 执行高风险操作 (删除数据、重置系统)
-- ❌ 使用 `unwrap()`/`expect()`/`as any`/`@ts-ignore` 在生产代码
-- ❌ 跳过质量门禁
-- ❌ 修改 trait/interface 签名而不审计所有实现者
-
-## 必须行为
-
-- ✅ 使用环境变量或密钥管理服务
-- ✅ 最小权限原则
-- ✅ 输入验证和输出编码
-- ✅ 日志脱敏
-- ✅ 更新 CONTEXT.md 后每次重大迭代
-- ✅ 记录 ADR 于关键架构决策时
+## 注意事项
+- 所有文档使用 Wikilink 格式：`[[../docs/...|显示文本]]`
+- 案例研究必须包含：背景/过程/对比/洞察/场景五要素 + 效率对比表
+- 新术语先在 `UBIQUITOUS_LANGUAGE.md` 定义
+- 禁止硬编码路径，使用相对路径或环境变量
+- 所有验证脚本必须在 CI/CD 中自动运行

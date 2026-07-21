@@ -49,7 +49,7 @@ assignees: ""
 ### 📄 格式规范
 
 - [ ] 文件命名: `case-studies/<kebab-case-title>/README.md`
-- [ ] 使用 Wikilink 格式引用内部文档: `[[docs/...|显示文本]]`
+- [ ] 使用 Wikilink 格式引用内部文档: `[[../docs/...|显示文本]]`
 - [ ] 表格对齐正确
 - [ ] 代码块标注语言
 - [ ] 无明显错别字/语法错误

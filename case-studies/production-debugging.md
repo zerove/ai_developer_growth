@@ -303,6 +303,6 @@ AI 的分析需要人工验证，特别是涉及生产环境的变更。AI 提�
 ---
 
 **📂 导航**
-- [[MOC|⬅️ 返回知识地图]]
+- [[../docs/MOC|⬅️ 返回知识地图]]
 - **相关案例**: [[case-studies/legacy-refactoring|遗留代码重构]] | [[case-studies/api-design-implementation|API 设计]]
-- **相关方法**: [[efficiency/automated-bug-fixing|自动化修复]] | [[learning/prompt-engineering|Prompt 工程]]
+- **相关方法**: [[../docs/efficiency/automated-bug-fixing|自动化修复]] | [[../docs/learning/prompt-engineering|Prompt 工程]]

@@ -120,8 +120,9 @@ class CaseStudyValidator:
                     found = True
                     break
             if not found:
-                # Check legacy sections as fallback
+                # Check legacy sections as fallback - but only for corresponding legacy section
                 legacy_found = False
+                # Find the corresponding legacy section name
                 for legacy_name, legacy_headers in self.LEGACY_SECTIONS.items():
                     for legacy_alt in legacy_headers:
                         if legacy_alt in content:
@@ -130,9 +131,12 @@ class CaseStudyValidator:
                     if legacy_found:
                         break
 
-                if legacy_found and not self.strict:
-                    self._add_warning(f"Using legacy section format: {section_name} (consider updating to new format)")
-                elif not legacy_found:
+                if legacy_found:
+                    if self.strict:
+                        self._add_error(f"Using legacy section format: {section_name} (consider updating to new format)")
+                    else:
+                        self._add_warning(f"Using legacy section format: {section_name} (consider updating to new format)")
+                else:
                     self._add_error(f"Missing required section: {section_name} (tried: {', '.join(alt_headers)})")
 
     def _check_tables(self, content: str):
@@ -203,18 +207,26 @@ class CaseStudyValidator:
         try:
             # Extract numbers
             t_match = re.search(r"([\d.]+)\s*小时", traditional)
-            a_match = re.search(r"([\d.]+)\s*分钟", ai)
+
+            # AI time could be in hours or minutes
+            a_match_hours = re.search(r"([\d.]+)\s*小时", ai)
+            a_match_minutes = re.search(r"([\d.]+)\s*分钟", ai)
             b_match = re.search(r"([\d.]+)x", boost)
 
-            if t_match and a_match and b_match:
+            if t_match and b_match and (a_match_hours or a_match_minutes):
                 t_hours = float(t_match.group(1))
-                a_minutes = float(a_match.group(1))
+
+                if a_match_hours:
+                    a_hours = float(a_match_hours.group(1))
+                else:
+                    a_hours = float(a_match_minutes.group(1)) / 60
+
                 boost_val = float(b_match.group(1))
 
-                expected = t_hours / (a_minutes / 60)
+                expected = t_hours / a_hours
                 if abs(expected - boost_val) > 0.5:  # Allow 0.5x tolerance
                     self._add_warning(
-                        f"Boost calculation may be off: {traditional} / ({ai} min) = {expected:.1f}x, claimed {boost_val}x",
+                        f"Boost calculation may be off: {traditional} / {ai} = {expected:.1f}x, claimed {boost_val}x",
                         "README.md",
                     )
         except (ValueError, AttributeError):

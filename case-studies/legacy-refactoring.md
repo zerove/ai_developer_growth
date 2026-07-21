@@ -301,6 +301,6 @@ git commit -m "refactor(auth): remove legacy session-based auth"
 ---
 
 **📂 导航**
-- [[MOC|⬅️ 返回知识地图]]
+- [[../docs/MOC|⬅️ 返回知识地图]]
 - **相关案例**: [[case-studies/ai-task-prioritizer|任务优先级工具]] | [[case-studies/ai-context-sync-development|AI-Context-Sync]]
-- **相关方法**: [[learning/ai-learning-method|AI 学习法]] | [[efficiency/full-cycle-workflow|全周期工作flow]]
+- **相关方法**: [[../docs/learning/ai-learning-method|AI 学习法]] | [[../docs/efficiency/full-cycle-workflow|全周期工作流]]

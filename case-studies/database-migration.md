@@ -223,6 +223,6 @@ AI 可以生成"在执行前备份"的代码，但"什么操作算危险"的判�
 ---
 
 **📂 导航**
-- [[MOC|⬅️ 返回知识地图]]
+- [[../docs/MOC|⬅️ 返回知识地图]]
 - **相关案例**: [[case-studies/data-pipeline|数据管道]] | [[case-studies/production-debugging|生产调试]]
-- **相关方法**: [[efficiency/full-cycle-workflow|全周期工作flow]] | [[docs/database/sql|SQL 规范]]
+- **相关方法**: [[../docs/efficiency/full-cycle-workflow|全周期工作流]] | [[../docs/database/sql|SQL 规范]]

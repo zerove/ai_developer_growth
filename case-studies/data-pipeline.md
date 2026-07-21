@@ -225,6 +225,6 @@ data-pipeline/
 ---
 
 **📂 导航**
-- [[MOC|⬅️ 返回知识地图]]
+- [[../docs/MOC|⬅️ 返回知识地图]]
 - **相关案例**: [[case-studies/database-migration|数据库迁移]] | [[case-studies/web-scraping-tool|网页抓取]]
-- **相关方法**: [[efficiency/full-cycle-workflow|全周期工作flow]] | [[docs/database/sql|SQL 规范]]
+- **相关方法**: [[../docs/efficiency/full-cycle-workflow|全周期工作流]] | [[../docs/database/sql|SQL 规范]]

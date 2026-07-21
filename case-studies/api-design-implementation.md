@@ -199,6 +199,6 @@ AI 生成的代码需要人工审核，特别是安全相关部分（认证、�
 ---
 
 **📂 导航**
-- [[MOC|⬅️ 返回知识地图]]
+- [[../docs/MOC|⬅️ 返回知识地图]]
 - **相关案例**: [[case-studies/ai-task-prioritizer|任务优先级工具]] | [[case-studies/legacy-refactoring|遗留代码重构]]
-- **相关方法**: [[efficiency/full-cycle-workflow|全周期工作flow]] | [[learning/prompt-engineering|Prompt 工程]]
+- **相关方法**: [[../docs/efficiency/full-cycle-workflow|全周期工作流]] | [[../docs/learning/prompt-engineering|Prompt 工程]]

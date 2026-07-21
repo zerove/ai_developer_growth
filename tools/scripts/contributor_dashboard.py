@@ -14,7 +14,7 @@ from pathlib import Path
 class ContributorDashboard:
     def __init__(self, repo_root: Path = Path(".")):
         self.repo_root = repo_root
-        self.stats = {}
+        self.stats: dict = {}
 
     def analyze_case_studies(self) -> dict:
         """分析案例研究统计"""
@@ -23,9 +23,9 @@ class ContributorDashboard:
             return {"total": 0, "by_type": {}, "by_tool": {}, "avg_boost": 0}
 
         total = 0
-        by_type = Counter()
-        by_tool = Counter()
-        boosts = []
+        by_type: Counter[str] = Counter()
+        by_tool: Counter[str] = Counter()
+        boosts: list[float] = []
 
         for case_file in cases_dir.glob("*.md"):
             if case_file.name in ["README.md", "INDEX.md"]:
@@ -56,13 +56,13 @@ class ContributorDashboard:
             "max_boost": max(boosts) if boosts else 0,
         }
 
-    def analyze_tool_matrix(self) -> dict:
+    def analyze_tool_matrix(self) -> dict[str, int]:
         """分析工具矩阵"""
-        tool_file = self.repo_root / "docs" / "tools" / "ai-tool-matrix.md"
-        if not tool_file.exists():
-            return {"categories": 0, "tools": 0, "recommended": 0}
+        matrix_file = self.repo_root / "docs" / "tools" / "ai-tool-matrix.md"
+        if not matrix_file.exists():
+            return {"recommended": 0, "stable": 0, "legacy": 0, "total": 0}
 
-        content = tool_file.read_text(encoding="utf-8")
+        content = matrix_file.read_text(encoding="utf-8")
 
         # 统计推荐/稳定/遗留工具
         recommended = len(re.findall(r"✅\s*\*\*推荐\*\*", content))

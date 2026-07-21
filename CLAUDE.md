@@ -37,6 +37,21 @@ ai_developer_growth/
 3. **workflow-optimizer** - 工作流优化师：效率数据分析、工作流优化、工具推荐
 4. **community-catalyst** - 社区催化剂：贡献流程管理、案例验证、激励机制
 
+## jcode Skills (已注册)
+本项目已注册 4 个 jcode skills，可通过斜杠命令调用：
+
+| Skill | 命令 | 用途 |
+|-------|------|------|
+| knowledge-curator | `/knowledge-curator` | 案例扫描、断链检查、工具矩阵同步 |
+| governance-auditor | `/governance-auditor` | lint、typecheck、test、security 审计 |
+| workflow-optimizer | `/workflow-optimizer` | 效率分析、工具推荐、工作流优化 |
+| community-catalyst | `/community-catalyst` | Issue 分流、案例验证、ADR 生成 |
+
+配置文件位于 `.jcode/` 目录：
+- `.jcode/PROJECT.md` - 项目配置
+- `.jcode/SWARM.md` - 多 Agent 协作配置
+- `.jcode/skills/` - 4 个 skill 定义
+
 ## 已实现参考 Agent (examples/)
 - **context-sync** - 自动维护 CONTEXT.md、ADR.md、项目状态同步
 - **multi-agent-orch** - PM/Architect/Coder/Reviewer 协作模拟

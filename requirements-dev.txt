@@ -13,7 +13,7 @@ pytest-timeout>=2.0.0
 
 # Security
 bandit>=1.7.0
-pip-audit>=2.0.0
+pip-audit>=2.10.1
 
 # Pre-commit
 pre-commit>=3.0.0

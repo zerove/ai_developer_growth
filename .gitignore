@@ -41,6 +41,9 @@ Thumbs.db
 !.jcode/skills/
 !.jcode/PROJECT.md
 !.jcode/SWARM.md
+!.jcode/hooks.json
+!.jcode/registry.json
+!.jcode/scripts/
 
 # OpenCode (internal state)
 .opencode/

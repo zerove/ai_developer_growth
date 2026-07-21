@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+{% block title %}Assessment History - AI Developer Growth{% endblock %}
+{% block content %}
+<div class="card">
+    <h2>📊 Assessment History</h2>
+    {% if assessments %}
+    <table>
+        <tr><th>Date</th><th>Overall</th><th>AI Comp.</th><th>Eng.</th><th>Learning</th><th>Innov.</th><th>Output</th></tr>
+        {% for a in assessments %}
+        <tr>
+            <td>{{ a.created_at }}</td>
+            <td><strong>{{ '%.0f' | format(a.overall * 100) }}%</strong></td>
+            <td>{{ '%.0f' | format(a.ai_comprehension * 100) }}%</td>
+            <td>{{ '%.0f' | format(a.engineering_integration * 100) }}%</td>
+            <td>{{ '%.0f' | format(a.learning_method * 100) }}%</td>
+            <td>{{ '%.0f' | format(a.innovation_thinking * 100) }}%</td>
+            <td>{{ '%.0f' | format(a.output_quality * 100) }}%</td>
+        </tr>
+        {% endfor %}
+    </table>
+    {% else %}
+    <p style="color:var(--text-muted)">No assessments yet.</p>
+    {% endif %}
+</div>
+<div><a href="/assess" class="btn btn-primary">New Assessment</a></div>
+{% endblock %}

@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+{% block title %}Learning Progress - AI Developer Growth{% endblock %}
+{% block content %}
+<div class="flex flex-between mb-8">
+    <h2>📚 Learning Progress</h2>
+    <a href="/contribute" class="btn btn-primary btn-sm">+ New Document</a>
+</div>
+
+{% if items %}
+<table>
+    <tr><th>Document</th><th>Status</th><th>Started</th><th>Completed</th><th>Actions</th></tr>
+    {% for item in items %}
+    <tr>
+        <td>{{ item.doc_title }}</td>
+        <td>
+            {% if item.status == 'completed' %}<span class="badge badge-done">Completed</span>
+            {% elif item.status == 'in_progress' %}<span class="badge badge-progress">In Progress</span>
+            {% else %}<span class="badge badge-pending">Pending</span>{% endif %}
+        </td>
+        <td>{{ item.started_at or '-' }}</td>
+        <td>{{ item.completed_at or '-' }}</td>
+        <td>
+            {% if item.status == 'in_progress' %}
+            <form method="post" action="/progress/{{ item.id }}/complete" style="display:inline">
+                <input type="hidden" name="notes" value="">
+                <button type="submit" class="btn btn-success btn-sm">Complete</button>
+            </form>
+            {% endif %}
+            <form method="post" action="/progress/{{ item.id }}/delete" style="display:inline">
+                <button type="submit" class="btn btn-danger btn-sm" onclick="return confirm('Delete?')">Delete</button>
+            </form>
+        </td>
+    </tr>
+    {% endfor %}
+</table>
+{% else %}
+<div class="card" style="text-align:center;padding:40px;">
+    <p style="color:var(--text-muted);">No learning progress yet. Start by taking an assessment!</p>
+    <a href="/assess" class="btn btn-primary" style="margin-top:12px;">Take Assessment</a>
+</div>
+{% endif %}
+{% endblock %}

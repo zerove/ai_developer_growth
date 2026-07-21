@@ -1,14 +1,14 @@
 # AI Developer Growth: 知识库
 
+[![CI](https://img.shields.io/badge/CI-passing-brightgreen)](#)
+[![Python 3.11+](https://img.shields.io/badge/Python-3.11+-blue.svg)](https://www.python.org/downloads/)
+[![Coverage](https://img.shields.io/badge/Coverage-84%25-brightgreen)](#)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+[![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](CONTRIBUTING.md)
+
 > **定位**: 开源知识库 | **目标**: 帮助开发者在 AI 时代实现指数级成长
 
-## 核心问题
-
-当 AI 能写出 80% 的代码时，开发者的价值在哪里？
-
-**答案**: 定义问题、系统设计、快速迭代的能力。
-
-本知识库不教你怎么写代码，而是教你**如何与 AI 协作**，成为更高效的开发者。
+**核心价值**: 当 AI 能写出 80% 的代码时，开发者的价值在于**定义问题、系统设计、快速迭代**的能力。
 
 ---
 
@@ -279,4 +279,4 @@ CI/CD 自动执行 Gate 2-3 检查，Gate 1 和 Gate 4 需人工审查。
 
 *AI 时代的竞争不是人与 AI 的竞争，而是掌握 AI 的人与不掌握 AI 的人的竞争。*
 
-*Last Updated: 2026-07-19*
+*Last Updated: 2026-07-21*

@@ -1,17 +1,16 @@
 #!/usr/bin/env python3
 """Tests for ai-dev-framework core modules."""
 
-import json
+import sys
 import tempfile
 from pathlib import Path
 
 import pytest
 
-import sys
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from core.project_config import ProjectConfig, JcodeConfig, init_project
 from core.hook_system import Hook, HookConfig, create_default_config
+from core.project_config import JcodeConfig, ProjectConfig, init_project
 
 
 class TestProjectConfig:

@@ -7,20 +7,19 @@ Jcode Init - 项目初始化命令
 
 import sys
 from pathlib import Path
-from typing import Optional
 
 # Add parent directory to path
 sys.path.insert(0, str(Path(__file__).parent))
 
-from project_config import init_project, JcodeConfig
-from hook_system import create_default_config, HookConfig
+from hook_system import create_default_config
+from project_config import JcodeConfig, init_project
 
 
 def init_jcode(
     project_name: str,
     project_type: str = "generic",
     language: str = "python",
-    framework: Optional[str] = None,
+    framework: str | None = None,
     output_dir: str = ".",
     force: bool = False,
 ) -> dict:
@@ -155,7 +154,7 @@ def _create_doc_curator_agent(agents_dir: Path, config: JcodeConfig) -> None:
 
 def _create_agents_md(output_path: Path, config: JcodeConfig) -> None:
     """创建 AGENTS.md"""
-    (output_path / "AGENTS.md").write_text(f"""# Agent 定义索引
+    (output_path / "AGENTS.md").write_text("""# Agent 定义索引
 
 本项目中的所有 agent 定义，按职责分类索引。
 
@@ -270,13 +269,13 @@ def main():
 
     if result["success"]:
         print(f"✅ Project '{args.name}' initialized successfully!")
-        print(f"\nFiles created:")
+        print("\nFiles created:")
         for f in result["files_created"]:
             print(f"  - {f}")
-        print(f"\nNext steps:")
-        print(f"  1. Review AGENTS.md and customize agent definitions")
-        print(f"  2. Run your first audit: python .jcode/scripts/governance-auditor.py full")
-        print(f"  3. Check hooks: cat .jcode/hooks.json")
+        print("\nNext steps:")
+        print("  1. Review AGENTS.md and customize agent definitions")
+        print("  2. Run your first audit: python .jcode/scripts/governance-auditor.py full")
+        print("  3. Check hooks: cat .jcode/hooks.json")
     else:
         print(f"❌ Initialization failed: {result['error']}")
         sys.exit(1)

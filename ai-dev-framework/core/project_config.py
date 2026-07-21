@@ -5,10 +5,8 @@ Jcode Config - 参数化配置系统
 """
 
 import json
-import os
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Optional
 
 
 @dataclass
@@ -17,7 +15,7 @@ class ProjectConfig:
     name: str
     type: str  # library, webapp, api, cli, knowledge-base
     language: str
-    framework: Optional[str] = None
+    framework: str | None = None
 
     # 目录结构
     source_dir: str = "src"
@@ -28,7 +26,7 @@ class ProjectConfig:
     # 质量门禁
     min_test_coverage: int = 70
     lint_tool: str = "ruff"
-    type_checker: Optional[str] = None
+    type_checker: str | None = None
     security_scanner: str = "bandit"
 
 
@@ -146,17 +144,17 @@ class JcodeConfig:
             # 简单 YAML 输出
             with open(path, "w") as f:
                 f.write("# Jcode Project Configuration\n")
-                f.write(f"project:\n")
+                f.write("project:\n")
                 f.write(f"  name: \"{self.project.name}\"\n")
                 f.write(f"  type: \"{self.project.type}\"\n")
                 f.write(f"  language: \"{self.project.language}\"\n")
                 if self.project.framework:
                     f.write(f"  framework: \"{self.project.framework}\"\n")
-                f.write(f"  directories:\n")
+                f.write("  directories:\n")
                 f.write(f"    source: \"{self.project.source_dir}\"\n")
                 f.write(f"    tests: \"{self.project.tests_dir}\"\n")
                 f.write(f"    docs: \"{self.project.docs_dir}\"\n")
-                f.write(f"  quality:\n")
+                f.write("  quality:\n")
                 f.write(f"    min_test_coverage: {self.project.min_test_coverage}\n")
                 f.write(f"    lint_tool: \"{self.project.lint_tool}\"\n")
         else:
@@ -200,7 +198,7 @@ def init_project(
     project_name: str,
     project_type: str = "library",
     language: str = "python",
-    framework: Optional[str] = None,
+    framework: str | None = None,
     output_dir: str = ".",
 ) -> JcodeConfig:
     """
@@ -321,7 +319,7 @@ if __name__ == "__main__":
 
         config = init_project(name, project_type, language, framework)
         print(f"✅ Project '{name}' initialized")
-        print(f"   Config: jcode.yaml")
+        print("   Config: jcode.yaml")
         print(f"   Language: {language}")
         print(f"   Type: {project_type}")
 
@@ -336,7 +334,7 @@ if __name__ == "__main__":
         config_path = sys.argv[2] if len(sys.argv) > 2 else "jcode.yaml"
         try:
             config = JcodeConfig.load(config_path)
-            print(f"✅ Config is valid")
+            print("✅ Config is valid")
             print(f"   Project: {config.project.name}")
             print(f"   Language: {config.project.language}")
         except Exception as e:

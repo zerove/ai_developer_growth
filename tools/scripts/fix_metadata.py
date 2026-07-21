@@ -33,12 +33,11 @@ DIR_CATEGORY_MAP = {
 def get_category_from_path(filepath):
     """根据文件路径推断分类"""
     path = Path(filepath)
-    parts = path.parts
-    
+
     for dir_path, category in DIR_CATEGORY_MAP.items():
         if dir_path in str(path):
             return category
-    
+
     return ('效率层', ['AI开发', '技术文档'])
 
 def infer_title_from_content(content, filepath):
@@ -47,7 +46,7 @@ def infer_title_from_content(content, filepath):
     match = re.search(r'^#\s+(.+)$', content, re.MULTILINE)
     if match:
         return match.group(1).strip()
-    
+
     # 从文件名推断
     filename = Path(filepath).stem
     return filename.replace('-', ' ').replace('_', ' ').title()
@@ -64,12 +63,12 @@ def infer_difficulty(content):
 def infer_tags(content, filepath):
     """推断标签"""
     tags = set()
-    
+
     # 从文件路径提取
     filename = Path(filepath).stem
     if '-' in filename:
         tags.update(filename.split('-')[:3])
-    
+
     # 从内容提取关键词
     keywords = {
         'python': 'Python', 'javascript': 'JavaScript', 'typescript': 'TypeScript',
@@ -82,31 +81,31 @@ def infer_tags(content, filepath):
         'deploy': '部署', 'ci/cd': 'CI/CD',
         'security': '安全', 'performance': '性能',
     }
-    
+
     content_lower = content.lower()
     for key, tag in keywords.items():
         if key in content_lower or key in filename.lower():
             tags.add(tag)
-    
+
     return list(tags)[:5] or ['技术文档']
 
 def generate_metadata(filepath):
     """生成元数据"""
-    with open(filepath, 'r', encoding='utf-8') as f:
+    with open(filepath, encoding='utf-8') as f:
         content = f.read()
-    
+
     category, default_tags = get_category_from_path(filepath)
     title = infer_title_from_content(content, filepath)
     difficulty = infer_difficulty(content)
     tags = infer_tags(content, filepath)
-    
+
     # 生成描述
     desc_match = re.search(r'^#\s+.+\n\n(.+?)(?:\n\n|\n#)', content, re.MULTILINE)
     if desc_match:
         description = desc_match.group(1).strip()[:100]
     else:
         description = f"{title} - 技术文档"
-    
+
     metadata = f"""---
 title: {title}
 description: {description}
@@ -122,9 +121,9 @@ updated: 2026-07-21
 
 def process_file(filepath):
     """处理单个文件"""
-    with open(filepath, 'r', encoding='utf-8') as f:
+    with open(filepath, encoding='utf-8') as f:
         content = f.read()
-    
+
     # 如果已经有完整的元数据，跳过
     if content.startswith('---'):
         parts = content.split('---', 2)
@@ -133,7 +132,7 @@ def process_file(filepath):
             required_fields = ['title', 'description', 'category', 'tags', 'difficulty']
             if all(field + ':' in frontmatter for field in required_fields):
                 return False
-    
+
     # 如果没有元数据，添加
     if not content.startswith('---'):
         metadata = generate_metadata(filepath)
@@ -143,16 +142,16 @@ def process_file(filepath):
         parts = content.split('---', 2)
         metadata = generate_metadata(filepath)
         new_content = metadata + parts[2] if len(parts) >= 3 else metadata + content
-    
+
     with open(filepath, 'w', encoding='utf-8') as f:
         f.write(new_content)
-    
+
     return True
 
 def main():
     docs_dir = 'docs'
     fixed_count = 0
-    
+
     for root, dirs, files in os.walk(docs_dir):
         for f in files:
             if f.endswith('.md'):
@@ -160,7 +159,7 @@ def main():
                 if process_file(filepath):
                     fixed_count += 1
                     print(f'✓ {filepath}')
-    
+
     print(f'\n完成! 修复了 {fixed_count} 个文件')
 
 if __name__ == '__main__':

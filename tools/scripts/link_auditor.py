@@ -116,15 +116,53 @@ def find_broken_links(directory: str) -> list[tuple[str, str]]:
     return broken
 
 
+def find_broken_links_with_index(directory: str, index: dict[str, str]) -> list[tuple[str, str]]:
+    """Like find_broken_links, but accepts an externally-built index.
+
+    Used by check_all_links() to scan subdirectories with a project-wide
+    index so cross-directory wikilinks resolve correctly.
+    """
+    broken: list[tuple[str, str]] = []
+    link_pattern = re.compile(r"\[\[([^\[\]]+?)(?:\\?\|[^\[\]]*)?\]\]")
+    skip_dirs = {".github/PULL_REQUEST_TEMPLATE", "docs/superpowers/plans"}
+    placeholder_pattern = re.compile(r"^[\{\.\\/]+|[\{\.]{2,}")
+
+    for root, _, files in os.walk(directory):
+        rel_root = os.path.relpath(root, directory)
+        if any(rel_root.startswith(skip) for skip in skip_dirs):
+            continue
+
+        for file in files:
+            if not file.endswith(".md"):
+                continue
+            file_path = os.path.join(root, file)
+            with open(file_path) as f:
+                content = f.read()
+            cleaned = _strip_code_blocks(content)
+            for match in link_pattern.finditer(cleaned):
+                target_path = match.group(1).strip()
+                if target_path.startswith(("http://", "https://", "#")):
+                    continue
+                if placeholder_pattern.match(target_path):
+                    continue
+                if not _check_target(target_path, index, directory, root):
+                    broken.append((file_path, match.group(1)))
+    return broken
+
+
 def check_all_links() -> bool:
     """Check all markdown files in the project for broken links."""
-    # Check main directories
+    # Build a single global index from the project root so cross-directory
+    # wikilinks (e.g. examples/ referencing docs/) resolve correctly.
+    project_root = "."
+    global_index = _build_index(project_root)
+
     dirs_to_check = ["docs", ".", "case-studies", "examples"]
     all_broken = []
 
     for d in dirs_to_check:
         if os.path.exists(d):
-            broken = find_broken_links(d)
+            broken = find_broken_links_with_index(d, global_index)
             for file, link in broken:
                 all_broken.append((file, link))
 

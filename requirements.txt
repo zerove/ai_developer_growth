@@ -12,17 +12,5 @@ httpx>=0.25.0
 # YAML parsing (used by ai-context-sync config)
 PyYAML>=6.0
 
-# File watching (used by ai-context-sync for Git hooks)
-watchdog>=4.0.0
-
-# Template engine (used by ai-context-sync for document generation)
-jinja2>=3.1.0
-
-# CLI framework (used by ai-context-sync)
-typer[all]>=0.9.0
-
-# Diff parsing (used by ai-context-sync for Git diff analysis)
-unidiff>=0.7.0
-
 # Testing
 pytest>=7.0.0

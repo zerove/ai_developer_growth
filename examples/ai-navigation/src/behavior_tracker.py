@@ -99,26 +99,53 @@ class BehaviorTracker:
             data = {}
             for user_id, profile in self.profiles.items():
                 data[user_id] = {"interests": profile.interests}
-            self.storage_path.write_text(json.dumps(data, ensure_ascii=False, indent=2), encoding="utf-8")
+            self.storage_path.write_text(
+                json.dumps(data, ensure_ascii=False, indent=2), encoding="utf-8"
+            )
 
-    def track_search(self, user_id: str, query: str, results_count: int, clicked_doc_id: str | None = None):
+    def track_search(
+        self,
+        user_id: str,
+        query: str,
+        results_count: int,
+        clicked_doc_id: str | None = None,
+    ):
         """Track a search event."""
         profile = self._get_or_create_profile(user_id)
-        event = SearchEvent(query=query, results_count=results_count, clicked_doc_id=clicked_doc_id)
+        event = SearchEvent(
+            query=query, results_count=results_count, clicked_doc_id=clicked_doc_id
+        )
         profile.searches.append(event)
         self._save_profiles()
 
-    def track_view(self, user_id: str, doc_id: str, duration_seconds: float, scroll_depth: float = 0.0):
+    def track_view(
+        self,
+        user_id: str,
+        doc_id: str,
+        duration_seconds: float,
+        scroll_depth: float = 0.0,
+    ):
         """Track a document view event."""
         profile = self._get_or_create_profile(user_id)
-        event = ViewEvent(doc_id=doc_id, duration_seconds=duration_seconds, scroll_depth=scroll_depth)
+        event = ViewEvent(
+            doc_id=doc_id, duration_seconds=duration_seconds, scroll_depth=scroll_depth
+        )
         profile.views.append(event)
         self._save_profiles()
 
-    def track_feedback(self, user_id: str, doc_id: str, rating: int, helpful: bool, comment: str | None = None):
+    def track_feedback(
+        self,
+        user_id: str,
+        doc_id: str,
+        rating: int,
+        helpful: bool,
+        comment: str | None = None,
+    ):
         """Track user feedback."""
         profile = self._get_or_create_profile(user_id)
-        event = FeedbackEvent(doc_id=doc_id, rating=rating, helpful=helpful, comment=comment)
+        event = FeedbackEvent(
+            doc_id=doc_id, rating=rating, helpful=helpful, comment=comment
+        )
         profile.feedback.append(event)
         self._save_profiles()
 
@@ -171,9 +198,18 @@ class BehaviorTracker:
         # Calculate popularity score
         popular = []
         for doc_id, stats in doc_stats.items():
-            avg_rating = stats["total_rating"] / stats["count"] if stats["count"] > 0 else 0
+            avg_rating = (
+                stats["total_rating"] / stats["count"] if stats["count"] > 0 else 0
+            )
             score = stats["views"] * 0.6 + avg_rating * 0.4
-            popular.append({"doc_id": doc_id, "views": stats["views"], "avg_rating": avg_rating, "score": score})
+            popular.append(
+                {
+                    "doc_id": doc_id,
+                    "views": stats["views"],
+                    "avg_rating": avg_rating,
+                    "score": score,
+                }
+            )
 
         # Sort by score
         popular.sort(key=lambda x: x["score"], reverse=True)
@@ -196,7 +232,9 @@ class BehaviorTracker:
                     pass
 
         # Sort by count
-        trending = [{"query": query, "count": count} for query, count in query_counts.items()]
+        trending = [
+            {"query": query, "count": count} for query, count in query_counts.items()
+        ]
         trending.sort(key=lambda x: x["count"], reverse=True)
 
         return trending[:top_k]
@@ -273,11 +311,13 @@ class CollaborativeFilter:
         recommendations = []
         for doc_id, score in doc_scores.items():
             avg_score = score / doc_counts[doc_id] if doc_counts[doc_id] > 0 else 0
-            recommendations.append({
-                "doc_id": doc_id,
-                "score": avg_score,
-                "based_on_users": doc_counts[doc_id],
-            })
+            recommendations.append(
+                {
+                    "doc_id": doc_id,
+                    "score": avg_score,
+                    "based_on_users": doc_counts[doc_id],
+                }
+            )
 
         # Sort by score
         recommendations.sort(key=lambda x: x["score"], reverse=True)
@@ -351,11 +391,13 @@ class CollaborativeFilter:
         for other_doc_id, count in co_views.items():
             # Normalize by number of viewers
             score = count / len(viewers)
-            similar_docs.append({
-                "doc_id": other_doc_id,
-                "co_view_count": count,
-                "score": score,
-            })
+            similar_docs.append(
+                {
+                    "doc_id": other_doc_id,
+                    "co_view_count": count,
+                    "score": score,
+                }
+            )
 
         # Sort by score
         similar_docs.sort(key=lambda x: x["score"], reverse=True)

@@ -13,6 +13,7 @@ from .knowledge_index import KnowledgeIndex
 @dataclass
 class QueryContext:
     """Context for a RAG query."""
+
     question: str
     user_role: str | None = None
     experience_level: str | None = None
@@ -23,6 +24,7 @@ class QueryContext:
 @dataclass
 class Citation:
     """A citation to a source document."""
+
     doc_id: str
     title: str
     relevance: float
@@ -33,6 +35,7 @@ class Citation:
 @dataclass
 class QueryResult:
     """Result from a RAG query."""
+
     answer: str
     citations: list[Citation]
     follow_up_questions: list[str]
@@ -81,7 +84,7 @@ class RAGEngine:
                 answer="抱歉，知识库中没有找到相关信息。请尝试换个问法。",
                 citations=[],
                 follow_up_questions=["如何开始学习 AI 辅助开发?"],
-                confidence=0.0
+                confidence=0.0,
             )
 
         # Step 2: Build context and generate answer
@@ -90,33 +93,34 @@ class RAGEngine:
 
         for r in results:
             doc = r["doc"]
-            citations.append(Citation(
-                doc_id=doc.id,
-                title=doc.title,
-                relevance=min(r["score"] / 10.0, 1.0),
-                snippet=r["snippet"],
-                doc_type=doc.type
-            ))
+            citations.append(
+                Citation(
+                    doc_id=doc.id,
+                    title=doc.title,
+                    relevance=min(r["score"] / 10.0, 1.0),
+                    snippet=r["snippet"],
+                    doc_type=doc.type,
+                )
+            )
             context_parts.append(f"【{doc.title}】\n{r['snippet']}")
 
         # Step 3: Generate answer (simplified - in production use LLM)
         answer = self._generate_answer(context, context_parts, citations)
         follow_up = self._generate_follow_up(context, results)
 
-        avg_relevance = sum(c.relevance for c in citations) / len(citations) if citations else 0
+        avg_relevance = (
+            sum(c.relevance for c in citations) / len(citations) if citations else 0
+        )
 
         return QueryResult(
             answer=answer,
             citations=citations,
             follow_up_questions=follow_up,
-            confidence=avg_relevance
+            confidence=avg_relevance,
         )
 
     def _generate_answer(
-        self,
-        context: QueryContext,
-        context_parts: list[str],
-        citations: list[Citation]
+        self, context: QueryContext, context_parts: list[str], citations: list[Citation]
     ) -> str:
         """Generate an answer based on context."""
         # In production, this would call an LLM
@@ -139,9 +143,7 @@ class RAGEngine:
         return answer
 
     def _generate_follow_up(
-        self,
-        context: QueryContext,
-        results: list[dict]
+        self, context: QueryContext, results: list[dict]
     ) -> list[str]:
         """Generate follow-up questions."""
         follow_up = []
@@ -157,10 +159,7 @@ class RAGEngine:
             follow_up.append("这个决策的技术背景是什么?")
 
         # Add generic follow-ups
-        follow_up.extend([
-            "有哪些常见的坑需要避免?",
-            "推荐的学习路径是什么?"
-        ])
+        follow_up.extend(["有哪些常见的坑需要避免?", "推荐的学习路径是什么?"])
 
         return follow_up[:3]
 
@@ -179,17 +178,19 @@ class ConversationManager:
             user_role=user_context.get("role") if user_context else None,
             experience_level=user_context.get("experience") if user_context else None,
             tools_used=user_context.get("tools", []) if user_context else [],
-            goals=user_context.get("goals", []) if user_context else []
+            goals=user_context.get("goals", []) if user_context else [],
         )
 
         result = self.engine.query(context)
 
         # Save to history
-        self.history.append({
-            "question": question,
-            "answer": result.answer,
-            "citations": [c.doc_id for c in result.citations]
-        })
+        self.history.append(
+            {
+                "question": question,
+                "answer": result.answer,
+                "citations": [c.doc_id for c in result.citations],
+            }
+        )
 
         return result
 

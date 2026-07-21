@@ -1,53 +1,61 @@
-# Prompt 优化器
+# Prompt Optimizer
 
-一个帮助开发者迭代和优化 Prompt 的工具。
+> Prompt 版本管理和自动优化工具。
 
-## 功能
+---
 
-- Prompt 版本管理
-- 自动评估 Prompt 效果
-- 对比不同版本的性能
-- 生成优化建议
+## 定位
 
-## 使用方法
+验证 `docs/learning/prompt-engineering|Prompt 工程` 中的 Prompt 设计方法论和迭代优化流程。
+
+## 核心能力
+
+| 组件 | 描述 |
+|------|------|
+| `PromptOptimizer` | Prompt 优化器：模板生成、版本管理、A/B 测试 |
+| `PromptVersion` | 版本管理：支持 diff 对比和历史追踪 |
+
+### 优化流程
+
+```
+1. 定义 Prompt 模板
+   ↓
+2. 收集测试用例
+   ↓
+3. 运行评估 (score_function)
+   ↓
+4. 分析结果，生成优化建议
+   ↓
+5. 创建新版本
+   ↓
+6. A/B 测试对比
+```
+
+## 快速开始
 
 ```python
-from src.optimizer import PromptOptimizer, PromptVersion
+from optimizer import PromptOptimizer, PromptVersion
 
 # 创建优化器
-optimizer = PromptOptimizer(prompts_dir="prompts")
+opt = PromptOptimizer("templates/")
 
-# 保存 Prompt 版本
-prompt = PromptVersion(
-    version="1.0.0",
-    template="你是一位代码审查专家。请审查以下代码：\n{code}",
-    model="gpt-4",
-    score=7.5,
-    metadata={
-        "examples": ["审查一个简单函数"],
-        "constraints": ["输出 JSON 格式"]
-    }
+# 创建初始版本
+v1 = opt.create_version(
+    template="你是一个{role}，请帮我{task}",
+    context={"role": "Python 专家", "task": "review code"}
 )
-optimizer.save_prompt("code-review", prompt)
 
-# 列出所有版本
-versions = optimizer.list_versions("code-review")
-
-# 对比版本
-result = optimizer.compare_versions("code-review", "1.0.0", "2.0.0")
-
-# 生成优化建议
-suggestions = optimizer.generate_optimization_suggestions("code-review", "1.0.0")
+# 优化
+v2 = opt.optimize(v1, feedback="更具体地指出问题")
 ```
 
 ## 测试
 
 ```bash
-pip install pytest
-PYTHONPATH=src pytest tests/ -v
+python -m pytest tests/ -v
+# 6 tests passed
 ```
 
-## 依赖
+## 相关文档
 
-- Python 3.10+
-- pytest (测试)
+- [[docs/learning/prompt-engineering|Prompt 工程]]

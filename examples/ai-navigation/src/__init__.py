@@ -5,6 +5,7 @@ Provides RAG-based query engine and personalized learning path recommendations
 for the AI Developer Growth knowledge base.
 """
 
+from .hybrid_search import HybridSearchEngine, HybridSearchResult
 from .knowledge_index import Document, IndexBuilder, KnowledgeIndex, build_index
 from .path_recommender import LearningPath, LearningStep, PathRecommender, UserProfile
 from .rag_engine import (
@@ -14,6 +15,7 @@ from .rag_engine import (
     QueryResult,
     RAGEngine,
 )
+from .vector_search import VectorSearchEngine, VectorSearchResult
 
 __all__ = [
     "Document",
@@ -29,4 +31,8 @@ __all__ = [
     "UserProfile",
     "LearningPath",
     "LearningStep",
+    "VectorSearchEngine",
+    "VectorSearchResult",
+    "HybridSearchEngine",
+    "HybridSearchResult",
 ]

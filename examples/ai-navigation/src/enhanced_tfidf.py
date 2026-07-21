@@ -264,6 +264,39 @@ class EnhancedTFIDF:
             "total_terms": len(self.doc_freqs),
             "average_doc_length": self.avg_doc_length,
         }
+    
+    def suggest(self, prefix: str, top_k: int = 10) -> list[str]:
+        """Get search suggestions based on prefix."""
+        prefix = prefix.lower().strip()
+        if not prefix:
+            return []
+        
+        # 从文档标题、标签、内容中提取建议
+        suggestions = set()
+        
+        for doc in self.documents:
+            # 标题建议
+            title_words = self._tokenize(doc.title)
+            for word in title_words:
+                if word.startswith(prefix) and len(word) > 1:
+                    suggestions.add(word)
+            
+            # 标签建议
+            for tag in doc.tags:
+                tag_lower = tag.lower()
+                if tag_lower.startswith(prefix):
+                    suggestions.add(tag)
+            
+            # 分类建议
+            if doc.category and doc.category.lower().startswith(prefix):
+                suggestions.add(doc.category)
+        
+        # 从词汇表中获取建议
+        for term in self.doc_freqs.keys():
+            if term.startswith(prefix) and len(term) > 1:
+                suggestions.add(term)
+        
+        return sorted(list(suggestions))[:top_k]
 
 
 def create_enhanced_index(documents: list[Document]) -> EnhancedTFIDF:

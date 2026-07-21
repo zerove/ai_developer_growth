@@ -25,7 +25,7 @@ class TestDocument:
             type="methodology",
             category="efficiency",
             title="Test Doc",
-            content="Test content"
+            content="Test content",
         )
         assert doc.id == "test-1"
         assert doc.type == "methodology"
@@ -43,7 +43,7 @@ class TestDocument:
             category="web",
             title="Case Study",
             content="Case content",
-            metadata={"tools": ["Cursor"], "efficiency": "3x"}
+            metadata={"tools": ["Cursor"], "efficiency": "3x"},
         )
         assert doc.metadata["tools"] == ["Cursor"]
         assert doc.metadata["efficiency"] == "3x"
@@ -60,7 +60,7 @@ class TestKnowledgeIndex:
             type="methodology",
             category="test",
             title="Test",
-            content="Content"
+            content="Content",
         )
         index.add_document(doc)
         assert len(index.documents) == 1
@@ -74,7 +74,7 @@ class TestKnowledgeIndex:
             type="methodology",
             category="test",
             title="Test",
-            content="Content"
+            content="Content",
         )
         index.add_document(doc)
 
@@ -93,14 +93,14 @@ class TestKnowledgeIndex:
             type="methodology",
             category="test",
             title="Python Tutorial",
-            content="Learn Python programming"
+            content="Learn Python programming",
         )
         doc2 = Document(
             id="doc-2",
             type="methodology",
             category="test",
             title="JavaScript Guide",
-            content="Learn JavaScript development"
+            content="Learn JavaScript development",
         )
         index.add_document(doc1)
         index.add_document(doc2)
@@ -118,7 +118,7 @@ class TestKnowledgeIndex:
                 type="methodology",
                 category="test",
                 title="Test",
-                content="Content"
+                content="Content",
             )
             index.add_document(doc)
 
@@ -187,7 +187,7 @@ class TestRAGEngine:
             category="efficiency",
             title="全周期工作流",
             content="AI 辅助开发的全周期工作流，包括需求分析、设计、编码、测试",
-            metadata={"reading_time": "15min"}
+            metadata={"reading_time": "15min"},
         )
         self.doc2 = Document(
             id="case-cursor",
@@ -195,7 +195,7 @@ class TestRAGEngine:
             category="web",
             title="Cursor 重构案例",
             content="使用 Cursor 重构遗留代码的案例研究，效率提升 3x",
-            metadata={"efficiency_gain": "3x"}
+            metadata={"efficiency_gain": "3x"},
         )
         self.index.add_document(self.doc1)
         self.index.add_document(self.doc2)
@@ -212,10 +212,9 @@ class TestRAGEngine:
     def test_query_with_role(self):
         """Test query with user role."""
         engine = RAGEngine(self.index)
-        result = engine.query(QueryContext(
-            question="工作流是什么?",
-            user_role="前端工程师"
-        ))
+        result = engine.query(
+            QueryContext(question="工作流是什么?", user_role="前端工程师")
+        )
 
         assert result.answer is not None
         assert "工作流" in result.answer or "全周期" in result.answer
@@ -227,7 +226,9 @@ class TestRAGEngine:
         result = engine.query(QueryContext(question="xyz123"))
 
         # Should have very low or no confidence
-        assert result.confidence <= 0.1  # Very low confidence for completely unrelated query
+        assert (
+            result.confidence <= 0.1
+        )  # Very low confidence for completely unrelated query
 
 
 class TestPathRecommender:
@@ -242,7 +243,7 @@ class TestPathRecommender:
             category="efficiency",
             title="全周期工作流",
             content="AI 辅助开发的全周期工作流",
-            metadata={"reading_time": "15min"}
+            metadata={"reading_time": "15min"},
         )
         self.doc2 = Document(
             id="case-cursor",
@@ -250,7 +251,7 @@ class TestPathRecommender:
             category="web",
             title="Cursor 重构案例",
             content="使用 Cursor 重构遗留代码",
-            metadata={"tools_used": ["Cursor"], "reading_time": "15min"}
+            metadata={"tools_used": ["Cursor"], "reading_time": "15min"},
         )
         self.index.add_document(self.doc1)
         self.index.add_document(self.doc2)
@@ -262,7 +263,7 @@ class TestPathRecommender:
             role="前端工程师",
             experience="2年",
             current_tools=["Cursor"],
-            goals=["提升效率"]
+            goals=["提升效率"],
         )
 
         paths = recommender.recommend(user)
@@ -277,7 +278,7 @@ class TestPathRecommender:
             role="后端工程师",
             experience="5年",
             current_tools=["Claude"],
-            goals=["架构设计"]
+            goals=["架构设计"],
         )
 
         paths = recommender.recommend(user)
@@ -288,9 +289,7 @@ class TestPathRecommender:
         """Test recommendation with goals."""
         recommender = PathRecommender(self.index)
         user = UserProfile(
-            role="全栈工程师",
-            experience="3年",
-            goals=["提升效率", "学习 RAG"]
+            role="全栈工程师", experience="3年", goals=["提升效率", "学习 RAG"]
         )
 
         paths = recommender.recommend(user)

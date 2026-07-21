@@ -47,6 +47,7 @@ def cmd_query(args):
     # Load or build index
     if Path(index_path).exists():
         from src.knowledge_index import KnowledgeIndex
+
         index = KnowledgeIndex.load(index_path)
         print(f"📚 Loaded index: {len(index.documents)} documents")
     else:
@@ -114,20 +115,26 @@ def cmd_query(args):
 
         if args.json:
             print("\n📄 JSON Output:")
-            print(json.dumps({
-                "answer": result.answer,
-                "confidence": result.confidence,
-                "citations": [
+            print(
+                json.dumps(
                     {
-                        "doc_id": c.doc_id,
-                        "title": c.title,
-                        "type": c.doc_type,
-                        "relevance": c.relevance,
-                    }
-                    for c in result.citations
-                ],
-                "follow_up": result.follow_up_questions,
-            }, indent=2, ensure_ascii=False))
+                        "answer": result.answer,
+                        "confidence": result.confidence,
+                        "citations": [
+                            {
+                                "doc_id": c.doc_id,
+                                "title": c.title,
+                                "type": c.doc_type,
+                                "relevance": c.relevance,
+                            }
+                            for c in result.citations
+                        ],
+                        "follow_up": result.follow_up_questions,
+                    },
+                    indent=2,
+                    ensure_ascii=False,
+                )
+            )
 
 
 def cmd_recommend(args):
@@ -138,6 +145,7 @@ def cmd_recommend(args):
     # Load or build index
     if Path(index_path).exists():
         from src.knowledge_index import KnowledgeIndex
+
         index = KnowledgeIndex.load(index_path)
     else:
         index = build_index(repo_root, index_path)
@@ -186,6 +194,7 @@ def cmd_stats(args):
     # Load or build index
     if Path(index_path).exists():
         from src.knowledge_index import KnowledgeIndex
+
         index = KnowledgeIndex.load(index_path)
     else:
         index = build_index(repo_root, index_path)
@@ -234,11 +243,13 @@ Examples:
 
   # Show stats
   python cli.py stats
-        """
+        """,
     )
 
     parser.add_argument("--repo-root", default=".", help="Repository root directory")
-    parser.add_argument("--index", default="knowledge_index.json", help="Index file path")
+    parser.add_argument(
+        "--index", default="knowledge_index.json", help="Index file path"
+    )
 
     subparsers = parser.add_subparsers(dest="command", help="Command to execute")
 
@@ -248,7 +259,9 @@ Examples:
     # Query command
     query_parser = subparsers.add_parser("query", help="Query knowledge base")
     query_parser.add_argument("question", nargs="?", help="Question to ask")
-    query_parser.add_argument("--interactive", "-i", action="store_true", help="Interactive mode")
+    query_parser.add_argument(
+        "--interactive", "-i", action="store_true", help="Interactive mode"
+    )
     query_parser.add_argument("--role", help="User role (e.g., 前端工程师)")
     query_parser.add_argument("--experience", help="Experience level (e.g., 3年)")
     query_parser.add_argument("--json", action="store_true", help="Output as JSON")
@@ -259,7 +272,9 @@ Examples:
     rec_parser.add_argument("--experience", default="3年", help="Experience level")
     rec_parser.add_argument("--tools", help="Comma-separated tools used")
     rec_parser.add_argument("--goals", help="Comma-separated learning goals")
-    rec_parser.add_argument("--verbose", "-v", action="store_true", help="Show detailed steps")
+    rec_parser.add_argument(
+        "--verbose", "-v", action="store_true", help="Show detailed steps"
+    )
 
     # Stats command
     subparsers.add_parser("stats", help="Show knowledge base statistics")

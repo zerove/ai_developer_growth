@@ -1,45 +1,52 @@
-# 多智能体工作流原型 (Multi-Agent Workflow Prototype)
+# Multi-Agent Orchestration
 
-这是一个模拟专业软件开发团队的简单多智能体编排原型。它展示了如何将一个复杂的开发任务分解为多个具有特定角色的智能体，并通过定义好的工作流进行协作。
+> 模拟团队开发：PM / Architect / Coder /Reviewer 四角色协作编排。
 
-## 角色定义
+---
 
-本原型实现了以下四个角色：
+## 定位
 
-1. **PM Agent (产品经理)**: 
-   - **输入**: 模糊的用户需求。
-   - **输出**: 结构化的 PRD (产品需求文档)。
-   - **职责**: 将用户意图转化为可执行的功能需求。
+验证 `docs/agent-dev/workflow-standards` 中的多 Agent 协作开发流程和 `AGENTS.md` 中的 Agent 定义标准。
 
-2. **Architect Agent (架构师)**: 
-   - **输入**: PRD。
-   - **输出**: 技术设计方案和 API 合约。
-   - **职责**: 决定如何实现功能，定义模块接口。
+## 核心能力
 
-3. **Coder Agent (程序员)**: 
-   - **输入**: 技术设计 (或 Reviewer 的修改建议)。
-   - **输出**: 可执行的代码实现。
-   - **职责**: 根据设计编写代码，并根据反馈进行修复。
+| 模式 | 描述 |
+|------|------|
+| **Waterfall** | 瀑布式：PM → Architect → Coder ↔ Reviewer (循环) |
+| **Fan-Out** | 扇出式：并行分配任务给多个 Agent，汇总结果 |
 
-4. **Reviewer Agent (代码审核员)**: 
-   - **输入**: Coder 编写的代码。
-   - **输出**: 审核结果 (PASS 或 FAIL) 及修改意见。
-   - **职责**: 确保代码质量，发现 Bug 并驱动代码迭代。
+### 四角色 Agent
 
-## 编排逻辑
+| 角色 | 职责 | 输入/输出 |
+|------|------|----------|
+| PM | 需求分析，生成设计文档 | 需求 → PRD |
+| Architect | 架构设计，技术选型 | PRD → 架构方案 |
+| Coder | 代码实现 | 架构方案 → 代码 |
+| Reviewer | 代码审查，质量把关 | 代码 → PASS/FAIL + 反馈 |
 
-工作流采用 **“线性推进 $\rightarrow$ 循环迭代”** 的模式：
-
-1. **线性阶段**: `用户请求` $\rightarrow$ `PM` $\rightarrow$ `Architect`。
-2. **循环阶段**: `Coder` $\rightarrow$ `Reviewer` $\rightarrow$ (如果 FAIL) $\rightarrow$ `Coder` $\rightarrow$ ...
-3. **终止条件**: 当 Reviewer 返回 `PASS` 或达到最大迭代次数时，流程结束。
-
-## 运行示例
-
-在当前目录下运行 `demo.py` 即可查看模拟过程：
+## 快速开始
 
 ```bash
-python3 demo.py
+pip install -e .
+
+# 运行 demo
+python demo.py --mode waterfall
+python demo.py --mode fan-out
 ```
 
-该示例将模拟“构建一个简单的货币转换器”的完整开发生命周期。
+## 技术栈
+
+- 结构化消息传递协议
+- 共享上下文管理
+- 迭代优化循环 (Coder ↔ Reviewer)
+
+## 测试
+
+```bash
+python -m pytest tests/ -v
+```
+
+## 相关文档
+
+- [[docs/agent-dev/workflow-standards|开发流程规范]]
+- [[AGENTS|Agent 定义索引]]

@@ -151,7 +151,8 @@ class EnhancedTFIDF:
 
         # BM25 TF component
         tf = (term_count * (self.k1 + 1)) / (
-            term_count + self.k1 * (1 - self.b + self.b * doc_length / self.avg_doc_length)
+            term_count
+            + self.k1 * (1 - self.b + self.b * doc_length / self.avg_doc_length)
         )
         return tf
 
@@ -231,11 +232,20 @@ class EnhancedTFIDF:
             # Generate snippet
             snippet = self._generate_snippet(doc, query_terms)
 
-            results.append(SearchResult(doc=doc, score=score, snippet=snippet, match_terms=list(match_terms[doc_id])))
+            results.append(
+                SearchResult(
+                    doc=doc,
+                    score=score,
+                    snippet=snippet,
+                    match_terms=list(match_terms[doc_id]),
+                )
+            )
 
         return results
 
-    def _generate_snippet(self, doc: Document, query_terms: list[str], max_length: int = 200) -> str:
+    def _generate_snippet(
+        self, doc: Document, query_terms: list[str], max_length: int = 200
+    ) -> str:
         """Generate a relevant snippet from the document."""
         content = doc.content
 

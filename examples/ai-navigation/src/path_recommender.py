@@ -12,6 +12,7 @@ from .knowledge_index import KnowledgeIndex
 @dataclass
 class UserProfile:
     """User profile for personalization."""
+
     role: str  # e.g., "前端工程师", "后端工程师", "全栈工程师"
     experience: str  # e.g., "1年", "3年", "5年+"
     current_tools: list[str] = field(default_factory=list)
@@ -22,6 +23,7 @@ class UserProfile:
 @dataclass
 class LearningStep:
     """A step in a learning path."""
+
     step_number: int
     doc_id: str
     title: str
@@ -34,6 +36,7 @@ class LearningStep:
 @dataclass
 class LearningPath:
     """A personalized learning path."""
+
     name: str
     description: str
     steps: list[LearningStep]
@@ -50,23 +53,23 @@ class PathRecommender:
         "前端工程师": {
             "methodology": ["cursor-best-practices", "copilot-optimization"],
             "case_study": ["react-dashboard"],
-            "first_steps": ["学习 AI 代码补全", "掌握 Prompt 工程基础"]
+            "first_steps": ["学习 AI 代码补全", "掌握 Prompt 工程基础"],
         },
         "后端工程师": {
             "methodology": ["full-cycle-workflow", "ai-testing-strategies"],
             "case_study": ["fastapi-migration"],
-            "first_steps": ["了解 AI 辅助调试", "学习架构设计 Prompt"]
+            "first_steps": ["了解 AI 辅助调试", "学习架构设计 Prompt"],
         },
         "全栈工程师": {
             "methodology": ["full-cycle-workflow", "prompt-versioning"],
             "case_study": ["saas-refactoring"],
-            "first_steps": ["建立 AI 工作流", "学习全栈 AI 协作"]
+            "first_steps": ["建立 AI 工作流", "学习全栈 AI 协作"],
         },
         "默认": {
             "methodology": ["ai-learning-methodology", "knowledge-internalization"],
             "case_study": [],
-            "first_steps": ["了解 AI 开发工具", "学习基础 Prompt 技巧"]
-        }
+            "first_steps": ["了解 AI 开发工具", "学习基础 Prompt 技巧"],
+        },
     }
 
     # Goal-based recommendations
@@ -74,23 +77,23 @@ class PathRecommender:
         "提升效率": {
             "keywords": ["效率", "工作流", "自动化"],
             "priority_docs": ["full-cycle-workflow", "ai-automation"],
-            "case_filter": lambda doc: "效率" in doc.content
+            "case_filter": lambda doc: "效率" in doc.content,
         },
         "学习 RAG": {
             "keywords": ["RAG", "检索", "向量"],
             "priority_docs": ["rag-for-developers"],
-            "case_filter": lambda doc: "RAG" in doc.content or "检索" in doc.content
+            "case_filter": lambda doc: "RAG" in doc.content or "检索" in doc.content,
         },
         "代码质量": {
             "keywords": ["测试", "质量", "重构"],
             "priority_docs": ["ai-testing-strategies", "tdd-ai"],
-            "case_filter": lambda doc: "测试" in doc.content or "重构" in doc.content
+            "case_filter": lambda doc: "测试" in doc.content or "重构" in doc.content,
         },
         "架构设计": {
             "keywords": ["架构", "设计", "系统"],
             "priority_docs": ["ai-architecture"],
-            "case_filter": lambda doc: "架构" in doc.content or "设计" in doc.content
-        }
+            "case_filter": lambda doc: "架构" in doc.content or "设计" in doc.content,
+        },
     }
 
     def __init__(self, index: KnowledgeIndex):
@@ -130,30 +133,34 @@ class PathRecommender:
         for doc_id in role_config["methodology"]:
             doc = self.index.get_document(f"methodology-{doc_id}")
             if doc:
-                steps.append(LearningStep(
-                    step_number=step_num,
-                    doc_id=doc.id,
-                    title=doc.title,
-                    reason=f"适合{user.role}的基础方法论",
-                    estimated_time=doc.metadata.get("reading_time", "10min"),
-                    doc_type="methodology",
-                    priority=5
-                ))
+                steps.append(
+                    LearningStep(
+                        step_number=step_num,
+                        doc_id=doc.id,
+                        title=doc.title,
+                        reason=f"适合{user.role}的基础方法论",
+                        estimated_time=doc.metadata.get("reading_time", "10min"),
+                        doc_type="methodology",
+                        priority=5,
+                    )
+                )
                 step_num += 1
 
         # Add case studies
         for case_id in role_config["case_study"]:
             doc = self.index.get_document(f"case-{case_id}")
             if doc:
-                steps.append(LearningStep(
-                    step_number=step_num,
-                    doc_id=doc.id,
-                    title=doc.title,
-                    reason=f"与{user.role}工作相关的实战案例",
-                    estimated_time="15min",
-                    doc_type="case_study",
-                    priority=4
-                ))
+                steps.append(
+                    LearningStep(
+                        step_number=step_num,
+                        doc_id=doc.id,
+                        title=doc.title,
+                        reason=f"与{user.role}工作相关的实战案例",
+                        estimated_time="15min",
+                        doc_type="case_study",
+                        priority=4,
+                    )
+                )
                 step_num += 1
 
         if not steps:
@@ -165,7 +172,7 @@ class PathRecommender:
             steps=steps,
             total_time=f"{len(steps) * 15}min",
             difficulty=self._get_difficulty(user.experience),
-            prerequisites=role_config["first_steps"]
+            prerequisites=role_config["first_steps"],
         )
 
     def _create_goal_path(self, user: UserProfile, goal: str) -> LearningPath | None:
@@ -181,15 +188,17 @@ class PathRecommender:
         for doc_id in goal_config["priority_docs"]:
             doc = self.index.get_document(f"methodology-{doc_id}")
             if doc:
-                steps.append(LearningStep(
-                    step_number=step_num,
-                    doc_id=doc.id,
-                    title=doc.title,
-                    reason=f"直接相关: {goal}",
-                    estimated_time=doc.metadata.get("reading_time", "10min"),
-                    doc_type="methodology",
-                    priority=5
-                ))
+                steps.append(
+                    LearningStep(
+                        step_number=step_num,
+                        doc_id=doc.id,
+                        title=doc.title,
+                        reason=f"直接相关: {goal}",
+                        estimated_time=doc.metadata.get("reading_time", "10min"),
+                        doc_type="methodology",
+                        priority=5,
+                    )
+                )
                 step_num += 1
 
         # Add relevant case studies
@@ -197,15 +206,17 @@ class PathRecommender:
         if case_filter:
             for doc in self.index.documents:
                 if doc.type == "case_study" and case_filter(doc):
-                    steps.append(LearningStep(
-                        step_number=step_num,
-                        doc_id=doc.id,
-                        title=doc.title,
-                        reason=f"案例实践: {goal}",
-                        estimated_time="15min",
-                        doc_type="case_study",
-                        priority=3
-                    ))
+                    steps.append(
+                        LearningStep(
+                            step_number=step_num,
+                            doc_id=doc.id,
+                            title=doc.title,
+                            reason=f"案例实践: {goal}",
+                            estimated_time="15min",
+                            doc_type="case_study",
+                            priority=3,
+                        )
+                    )
                     step_num += 1
                     if len(steps) >= 5:  # Limit case studies
                         break
@@ -219,7 +230,7 @@ class PathRecommender:
             steps=steps,
             total_time=f"{len(steps) * 15}min",
             difficulty="intermediate",
-            prerequisites=["了解基础 AI 开发工具"]
+            prerequisites=["了解基础 AI 开发工具"],
         )
 
     def _create_tool_path(self, user: UserProfile) -> LearningPath | None:
@@ -235,15 +246,17 @@ class PathRecommender:
 
             # Check if any user tool is mentioned
             if any(tool in tools_in_doc for tool in user.current_tools):
-                steps.append(LearningStep(
-                    step_number=step_num,
-                    doc_id=doc.id,
-                    title=doc.title,
-                    reason=f"与你使用的 {', '.join(user.current_tools)} 相关",
-                    estimated_time=doc.metadata.get("reading_time", "10min"),
-                    doc_type=doc.type,
-                    priority=3
-                ))
+                steps.append(
+                    LearningStep(
+                        step_number=step_num,
+                        doc_id=doc.id,
+                        title=doc.title,
+                        reason=f"与你使用的 {', '.join(user.current_tools)} 相关",
+                        estimated_time=doc.metadata.get("reading_time", "10min"),
+                        doc_type=doc.type,
+                        priority=3,
+                    )
+                )
                 step_num += 1
                 if len(steps) >= 4:
                     break
@@ -257,7 +270,7 @@ class PathRecommender:
             steps=steps,
             total_time=f"{len(steps) * 15}min",
             difficulty="intermediate",
-            prerequisites=[f"已使用 {', '.join(user.current_tools)}"]
+            prerequisites=[f"已使用 {', '.join(user.current_tools)}"],
         )
 
     def _get_difficulty(self, experience: str) -> str:
@@ -267,6 +280,7 @@ class PathRecommender:
 
         # Extract years
         import re
+
         match = re.search(r"(\d+)", experience)
         if match:
             years = int(match.group(1))
@@ -304,7 +318,7 @@ if __name__ == "__main__":
         experience="2年",
         current_tools=["Cursor", "Copilot"],
         goals=["提升效率", "学习 RAG"],
-        interests=["Web 开发", "AI 应用"]
+        interests=["Web 开发", "AI 应用"],
     )
 
     print("\n用户画像:")

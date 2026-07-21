@@ -13,6 +13,7 @@ from pathlib import Path
 @dataclass
 class Document:
     """Represents a knowledge document."""
+
     id: str
     type: str  # methodology, case_study, tool, adr
     category: str
@@ -25,6 +26,7 @@ class Document:
 @dataclass
 class KnowledgeIndex:
     """Knowledge index for RAG queries."""
+
     documents: list[Document] = field(default_factory=list)
     metadata: dict = field(default_factory=dict)
 
@@ -49,7 +51,7 @@ class KnowledgeIndex:
 
         # For Chinese text, also extract individual characters as search terms
         # This helps with partial matching
-        query_chars = set(query_lower) - set("？！。，、；：""''（）【】")
+        query_chars = set(query_lower) - set("？！。，、；：''（）【】")
 
         for doc in self.documents:
             # Simple scoring based on keyword matches
@@ -83,17 +85,21 @@ class KnowledgeIndex:
                         score += 1
 
             if score > 0:
-                results.append({
-                    "doc": doc,
-                    "score": score,
-                    "snippet": self._get_snippet(doc.content, list(query_chars))
-                })
+                results.append(
+                    {
+                        "doc": doc,
+                        "score": score,
+                        "snippet": self._get_snippet(doc.content, list(query_chars)),
+                    }
+                )
 
         # Sort by score
         results.sort(key=lambda x: x["score"], reverse=True)
         return results[:top_k]
 
-    def _get_snippet(self, content: str, query_words: list[str], context_len: int = 100) -> str:
+    def _get_snippet(
+        self, content: str, query_words: list[str], context_len: int = 100
+    ) -> str:
         """Get a relevant snippet from content."""
         content_lower = content.lower()
 
@@ -117,7 +123,7 @@ class KnowledgeIndex:
         """Save index to JSON file."""
         data = {
             "metadata": self.metadata,
-            "documents": [asdict(doc) for doc in self.documents]
+            "documents": [asdict(doc) for doc in self.documents],
         }
         Path(path).write_text(json.dumps(data, ensure_ascii=False, indent=2))
 
@@ -144,7 +150,7 @@ class IndexBuilder:
             metadata={
                 "version": "1.0",
                 "repo_root": str(self.repo_root),
-                "description": "AI Developer Growth Knowledge Index"
+                "description": "AI Developer Growth Knowledge Index",
             }
         )
 
@@ -172,7 +178,9 @@ class IndexBuilder:
             try:
                 content = md_file.read_text(encoding="utf-8")
                 rel_path = md_file.relative_to(docs_dir)
-                category = rel_path.parent.name if rel_path.parent != Path(".") else "root"
+                category = (
+                    rel_path.parent.name if rel_path.parent != Path(".") else "root"
+                )
 
                 # Extract title from first heading
                 title = self._extract_title(content, md_file.stem)
@@ -186,8 +194,8 @@ class IndexBuilder:
                     metadata={
                         "path": str(rel_path),
                         "reading_time": self._estimate_reading_time(content),
-                        "difficulty": self._estimate_difficulty(content)
-                    }
+                        "difficulty": self._estimate_difficulty(content),
+                    },
                 )
                 index.add_document(doc)
             except Exception as e:
@@ -219,10 +227,12 @@ class IndexBuilder:
                     content=content,
                     metadata={
                         "project_type": project_type,
-                        "tools_used": [t.strip() for t in tools_used.split(",") if t.strip()],
+                        "tools_used": [
+                            t.strip() for t in tools_used.split(",") if t.strip()
+                        ],
                         "efficiency_gain": efficiency,
-                        "path": md_file.name
-                    }
+                        "path": md_file.name,
+                    },
                 )
                 index.add_document(doc)
             except Exception as e:
@@ -255,10 +265,7 @@ class IndexBuilder:
                     category="architecture",
                     title=self._extract_title(content, md_file.stem),
                     content=content,
-                    metadata={
-                        "status": status,
-                        "path": md_file.name
-                    }
+                    metadata={"status": status, "path": md_file.name},
                 )
                 index.add_document(doc)
             except Exception as e:
@@ -302,8 +309,12 @@ def build_index(repo_root: str, output_path: str) -> KnowledgeIndex:
     index = builder.build()
     index.save(output_path)
     print(f"✅ Index built: {len(index.documents)} documents")
-    print(f"   - Methodology: {sum(1 for d in index.documents if d.type == 'methodology')}")
-    print(f"   - Case Studies: {sum(1 for d in index.documents if d.type == 'case_study')}")
+    print(
+        f"   - Methodology: {sum(1 for d in index.documents if d.type == 'methodology')}"
+    )
+    print(
+        f"   - Case Studies: {sum(1 for d in index.documents if d.type == 'case_study')}"
+    )
     print(f"   - ADRs: {sum(1 for d in index.documents if d.type == 'adr')}")
     return index
 

@@ -1,43 +1,56 @@
-# 自我修正循环 (Self-Correction Loop) 原型
+# Self-Correction Loop
 
-这是一个演示 AI 如何自动检测、分析并修复代码错误的简单原型。
+> AI 代码质量保证：验证 → 重试 → 修正闭环。
 
-## 工作流程
+---
 
-该原型实现了以下自动化闭环：
-1. **运行测试 (Run Tests)**: 使用 Python `unittest` 模块执行测试套件。
-2. **捕获错误 (Capture Error)**: 如果测试失败，捕获标准输出和错误流中的堆栈追踪。
-3. **AI 修复 (AI Fix)**: 将故障代码和错误信息发送给 LLM（本原型支持 OpenAI API 或 演示模式下的 Mock AI）。
-4. **应用修复 (Apply Fix)**: 将 AI 生成的修复代码自动写回源代码文件。
-5. **验证 (Verify)**: 重新运行测试。如果仍然失败，则重复上述步骤，直到通过或达到最大重试次数。
+## 定位
+
+验证 `docs/efficiency/full-cycle-workflow` 中的"引导 → 生成 → 验证 → 修正"闭环方法论。
+
+## 核心能力
+
+| 组件 | 描述 |
+|------|------|
+| `CorrectionLoop` | 主循环：运行测试 → 失败时 AI 修复 → 重试 |
+| `Strategies` | 修复策略：语法修复、类型修复、逻辑修复、测试驱动修复 |
+| `Runner` | 测试运行器：支持 unittest / pytest |
+| `Results` | 结果追踪：记录修正历史、成功率、尝试次数 |
+
+### 修正流程
+
+```
+1. 运行测试
+   ↓ (失败)
+2. 获取错误信息
+   ↓
+3. AI 分析错误原因
+   ↓
+4. 生成修复方案
+   ↓
+5. 应用修复
+   ↓
+6. 回到步骤 1
+   ↓ (成功或达到最大重试次数)
+7. 返回最终结果
+```
 
 ## 快速开始
 
-### 目录结构
-- `src/`: 包含需要被修复的源代码。
-- `tests/`: 包含验证代码正确性的测试用例。
-- `self_correct.py`: 核心编排脚本。
+```bash
+pip install -e .
 
-### 运行步骤
+# 运行修正循环
+python runner.py <target_file> --max-retries 5
+```
 
-1. **进入目录**:
-   ```bash
-   cd ai-developer-growth/examples/self-correction-loop/
-   ```
+## 测试
 
-2. **运行原型 (演示模式)**:
-   默认情况下，如果没有配置 API Key，脚本将使用 Mock AI 来演示修复过程。
-   ```bash
-   python3 self_correct.py
-   ```
+```bash
+python -m pytest tests/ -v
+```
 
-3. **运行原型 (真实 AI 模式)**:
-   如果你想使用真实的 GPT-4 进行修复，请安装 `openai` 库并配置环境变量：
-   ```bash
-   pip install openai
-   export OPENAI_API_KEY='your-api-key-here'
-   python3 self_correct.py
-   ```
+## 相关文档
 
-## 查看结果
-运行结束后，你可以查看 `LOG.md` 以了解具体的自我修正过程。
+- [[docs/efficiency/full-cycle-workflow|全周期工作流]]
+- [[docs/efficiency/automated-bugfix|自动化 Bug 修复]]

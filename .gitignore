@@ -44,6 +44,7 @@ Thumbs.db
 !.jcode/hooks.json
 !.jcode/registry.json
 !.jcode/scripts/
+!.jcode/USAGE.md
 
 # OpenCode (internal state)
 .opencode/

@@ -36,5 +36,11 @@ Thumbs.db
 # OMO (project management)
 .omo/
 
+# jcode (keep skills tracked)
+.jcode/*
+!.jcode/skills/
+!.jcode/PROJECT.md
+!.jcode/SWARM.md
+
 # OpenCode (internal state)
 .opencode/

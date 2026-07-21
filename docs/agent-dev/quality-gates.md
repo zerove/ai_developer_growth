@@ -1,3 +1,13 @@
+---
+title: Agent 质量门禁标准
+description: 本文档定义了 agent 开发各阶段的质量检查标准，确保每个交付物都满足质量要求。
+category: 治理层
+tags: ['测试', 'AI', 'gates', 'quality']
+difficulty: 初级
+reading_time: 10 分钟
+updated: 2026-07-21
+---
+
 # Agent 质量门禁标准
 
 本文档定义了 agent 开发各阶段的质量检查标准，确保每个交付物都满足质量要求。

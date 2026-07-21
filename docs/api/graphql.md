@@ -1,3 +1,13 @@
+---
+title: GraphQL Governance Rules
+description: > 适用于 GraphQL 项目的 AI Agent 开发规范。
+category: 工具层
+tags: ['AI', 'GraphQL', '测试', 'Python', 'JavaScript']
+difficulty: 高级
+reading_time: 10 分钟
+updated: 2026-07-21
+---
+
 # GraphQL Governance Rules
 
 > 适用于 GraphQL 项目的 AI Agent 开发规范。

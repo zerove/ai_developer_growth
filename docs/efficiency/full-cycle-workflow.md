@@ -1,3 +1,13 @@
+---
+title: AI 驱动的全生命周期开发工作流 (Full-Cycle Workflow)
+description: ## 核心理念：从"手动编写"转向"意图引导"
+category: 效率层
+tags: ['cycle', 'AI', 'API', 'Kubernetes', 'Python']
+difficulty: 高级
+reading_time: 10 分钟
+updated: 2026-07-21
+---
+
 # AI 驱动的全生命周期开发工作流 (Full-Cycle Workflow)
 
 ## 核心理念：从"手动编写"转向"意图引导"

@@ -1,3 +1,13 @@
+---
+title: AI 代码审查指南 (Code Review Guide)
+description: > AI 生成代码的审查清单与最佳实践。
+category: 效率层
+tags: ['AI', 'API', '测试', '安全', '性能']
+difficulty: 高级
+reading_time: 10 分钟
+updated: 2026-07-21
+---
+
 # AI 代码审查指南 (Code Review Guide)
 
 > AI 生成代码的审查清单与最佳实践。

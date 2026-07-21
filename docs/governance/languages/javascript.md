@@ -1,3 +1,13 @@
+---
+title: JavaScript Governance Rules
+description: > 适用于: JavaScript 项目 (Node.js, 浏览器, React, Vue, Angular 等)
+category: 治理层
+tags: ['AI', 'API', 'REST', 'SQL', 'TypeScript']
+difficulty: 初级
+reading_time: 10 分钟
+updated: 2026-07-21
+---
+
 # JavaScript Governance Rules
 
 > 适用于: JavaScript 项目 (Node.js, 浏览器, React, Vue, Angular 等)

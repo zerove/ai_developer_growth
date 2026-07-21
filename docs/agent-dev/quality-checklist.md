@@ -1,3 +1,13 @@
+---
+title: Agent 开发质量检查清单
+description: 本文档提供 agent 开发各阶段的质量检查清单，确保交付物满足质量要求。
+category: 治理层
+tags: ['测试', 'checklist', 'AI', 'quality']
+difficulty: 初级
+reading_time: 10 分钟
+updated: 2026-07-21
+---
+
 # Agent 开发质量检查清单
 
 本文档提供 agent 开发各阶段的质量检查清单，确保交付物满足质量要求。

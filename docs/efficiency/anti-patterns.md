@@ -1,3 +1,13 @@
+---
+title: AI 编程反模式与失败案例 (Anti-patterns & Failure Cases)
+description: > 从真实失败中学习，避免重蹈覆辙。
+category: 效率层
+tags: ['AI', 'API', '测试', 'TypeScript', '安全']
+difficulty: 高级
+reading_time: 10 分钟
+updated: 2026-07-21
+---
+
 # AI 编程反模式与失败案例 (Anti-patterns & Failure Cases)
 
 > 从真实失败中学习，避免重蹈覆辙。

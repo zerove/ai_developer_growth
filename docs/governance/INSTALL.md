@@ -1,3 +1,13 @@
+---
+title: Governance Installation Guide
+description: > How to add AI agent development governance to any project.
+category: 治理层
+tags: ['AI', 'Python', '测试', 'TypeScript', 'CI/CD']
+difficulty: 初级
+reading_time: 10 分钟
+updated: 2026-07-21
+---
+
 # Governance Installation Guide
 
 > How to add AI agent development governance to any project.

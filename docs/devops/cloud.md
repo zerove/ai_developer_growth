@@ -1,3 +1,13 @@
+---
+title: 云平台选型与部署模式
+description: > AWS / GCP / Azure 核心服务对比、落地架构、成本优化、多云策略。
+category: 工具层
+tags: ['AI', 'REST', 'API', 'Kubernetes', 'SQL']
+difficulty: 高级
+reading_time: 10 分钟
+updated: 2026-07-21
+---
+
 # 云平台选型与部署模式
 
 > AWS / GCP / Azure 核心服务对比、落地架构、成本优化、多云策略。

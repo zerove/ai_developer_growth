@@ -1,3 +1,13 @@
+---
+title: SQL Governance Rules
+description: > 适用于: SQL 项目 (PostgreSQL, MySQL, SQLite, SQL Server)
+category: 治理层
+tags: ['测试', 'AI', 'SQL']
+difficulty: 初级
+reading_time: 10 分钟
+updated: 2026-07-21
+---
+
 # SQL Governance Rules
 
 > 适用于: SQL 项目 (PostgreSQL, MySQL, SQLite, SQL Server)

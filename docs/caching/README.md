@@ -1,3 +1,13 @@
+---
+title: 缓存
+description: > 用空间换时间，降低延迟，保护后端服务。
+category: 工具层
+tags: ['数据库', 'Docker', 'SQL', 'API']
+difficulty: 初级
+reading_time: 10 分钟
+updated: 2026-07-21
+---
+
 # 缓存
 
 > 用空间换时间，降低延迟，保护后端服务。

@@ -1,3 +1,13 @@
+---
+title: 集中化日志
+description: > 把散落在各台机器上的日志收集到一起，方便搜索、分析、排查问题。
+category: 工具层
+tags: ['API', 'AI', 'Kubernetes', 'Python', 'SQL']
+difficulty: 高级
+reading_time: 10 分钟
+updated: 2026-07-21
+---
+
 # 集中化日志
 
 > 把散落在各台机器上的日志收集到一起，方便搜索、分析、排查问题。

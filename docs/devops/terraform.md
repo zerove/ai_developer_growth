@@ -1,3 +1,13 @@
+---
+title: Terraform 最佳实践
+description: > 基础设施即代码的核心工具，覆盖模块化、状态管理、CI/CD、多环境、安全与治理。
+category: 工具层
+tags: ['AI', 'REST', 'Kubernetes', '测试', '安全']
+difficulty: 初级
+reading_time: 10 分钟
+updated: 2026-07-21
+---
+
 # Terraform 最佳实践
 
 > 基础设施即代码的核心工具，覆盖模块化、状态管理、CI/CD、多环境、安全与治理。

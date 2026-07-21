@@ -1,3 +1,13 @@
+---
+title: 多 Agent 编排模式 (Multi-Agent Orchestration Patterns)
+description: > 从单兵作战到团队协作。
+category: 效率层
+tags: ['AI', 'API', 'REST', '测试', 'SQL']
+difficulty: 高级
+reading_time: 10 分钟
+updated: 2026-07-21
+---
+
 # 多 Agent 编排模式 (Multi-Agent Orchestration Patterns)
 
 > 从单兵作战到团队协作。

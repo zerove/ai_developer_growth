@@ -1,3 +1,13 @@
+---
+title: 设计规格：dx scaffold 指令 (2026-07-15)
+description: 设计规格：dx scaffold 指令 (2026-07-15) - 技术文档
+category: 效率层
+tags: ['AI', '07', 'Python', '15', '2026']
+difficulty: 初级
+reading_time: 10 分钟
+updated: 2026-07-21
+---
+
 # 设计规格：dx scaffold 指令 (2026-07-15)
 
 ## 概述

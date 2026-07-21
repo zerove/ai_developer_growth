@@ -1,3 +1,13 @@
+---
+title: 学习路径模板
+description: ## 概述
+category: 治理层
+tags: ['API', 'learning', 'AI', '测试', '安全']
+difficulty: 高级
+reading_time: 10 分钟
+updated: 2026-07-21
+---
+
 # 学习路径模板
 
 ## 概述

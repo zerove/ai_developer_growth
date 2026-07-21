@@ -1,3 +1,13 @@
+---
+title: AI 时代开发者转型路径
+description: ## 核心观点
+category: 心态层
+tags: ['career', 'transformation', 'AI']
+difficulty: 高级
+reading_time: 10 分钟
+updated: 2026-07-21
+---
+
 # AI 时代开发者转型路径
 
 ## 核心观点

@@ -1,3 +1,13 @@
+---
+title: 现有项目 AI 迁移策略 (Legacy-to-AI Migration Strategy)
+description: > 渐进式引入，而非推倒重来。
+category: 效率层
+tags: ['AI', 'API', '测试', '安全', 'legacy']
+difficulty: 高级
+reading_time: 10 分钟
+updated: 2026-07-21
+---
+
 # 现有项目 AI 迁移策略 (Legacy-to-AI Migration Strategy)
 
 > 渐进式引入，而非推倒重来。

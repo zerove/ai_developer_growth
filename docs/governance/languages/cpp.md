@@ -1,3 +1,13 @@
+---
+title: C/C++ Governance Rules
+description: > 适用于 C/C++ 项目的 AI Agent 开发规范。
+category: 治理层
+tags: ['测试', 'AI', 'API']
+difficulty: 初级
+reading_time: 10 分钟
+updated: 2026-07-21
+---
+
 # C/C++ Governance Rules
 
 > 适用于 C/C++ 项目的 AI Agent 开发规范。

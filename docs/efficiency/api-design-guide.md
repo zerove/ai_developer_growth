@@ -1,3 +1,13 @@
+---
+title: API 设计指南 (API Design Guide)
+description: > RESTful API 设计规范与最佳实践。
+category: 效率层
+tags: ['AI', 'API', 'REST', 'TypeScript', 'design']
+difficulty: 初级
+reading_time: 10 分钟
+updated: 2026-07-21
+---
+
 # API 设计指南 (API Design Guide)
 
 > RESTful API 设计规范与最佳实践。

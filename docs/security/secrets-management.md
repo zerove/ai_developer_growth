@@ -1,3 +1,13 @@
+---
+title: 密钥管理最佳实践
+description: > 覆盖密钥生成、存储、分发、轮换、撤销、审计的全生命周期管理。
+category: 治理层
+tags: ['AI', 'API', 'Kubernetes', 'Python', 'SQL']
+difficulty: 高级
+reading_time: 10 分钟
+updated: 2026-07-21
+---
+
 # 密钥管理最佳实践
 
 > 覆盖密钥生成、存储、分发、轮换、撤销、审计的全生命周期管理。

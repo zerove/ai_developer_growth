@@ -1,3 +1,13 @@
+---
+title: Mocking 策略与最佳实践
+description: > 统一 Mock 原则，避免过度/不足 Mock 导致测试失效或虚假通过。
+category: 工具层
+tags: ['AI', 'API', 'Python', '测试', 'SQL']
+difficulty: 高级
+reading_time: 10 分钟
+updated: 2026-07-21
+---
+
 # Mocking 策略与最佳实践
 
 > 统一 Mock 原则，避免过度/不足 Mock 导致测试失效或虚假通过。

@@ -1,3 +1,13 @@
+---
+title: Prompt 版本管理与迭代
+description: ## 核心观点
+category: 效率层
+tags: ['AI', 'Python', '测试', 'GPT', 'versioning']
+difficulty: 高级
+reading_time: 10 分钟
+updated: 2026-07-21
+---
+
 # Prompt 版本管理与迭代
 
 ## 核心观点

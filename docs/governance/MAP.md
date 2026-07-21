@@ -1,3 +1,13 @@
+---
+title: 治理框架可视化地图
+description: ## 整体架构
+category: 治理层
+tags: ['AI', 'API', 'REST', 'Kubernetes', 'Python']
+difficulty: 初级
+reading_time: 10 分钟
+updated: 2026-07-21
+---
+
 # 治理框架可视化地图
 
 ## 整体架构

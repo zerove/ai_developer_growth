@@ -1,0 +1,104 @@
+site_name: AI Developer Growth
+site_description: AI 时代开发者成长知识库
+site_url: https://zerove.github.io/ai_developer_growth/
+
+theme:
+  name: material
+  language: zh
+  palette:
+    - scheme: default
+      primary: indigo
+      accent: indigo
+      toggle:
+        icon: material/brightness-7
+        name: 切换到深色模式
+    - scheme: slate
+      primary: indigo
+      accent: indigo
+      toggle:
+        icon: material/brightness-4
+        name: 切换到浅色模式
+  features:
+    - navigation.tabs
+    - navigation.sections
+    - navigation.expand
+    - navigation.top
+    - search.highlight
+    - search.suggest
+    - content.code.copy
+  icon:
+    repo: fontawesome/brands/github
+
+repo_name: zerove/ai_developer_growth
+repo_url: https://github.com/zerove/ai_developer_growth
+
+plugins:
+  - search
+
+markdown_extensions:
+  - pymdownx.highlight:
+      anchor_linenums: true
+  - pymdownx.superfences
+  - pymdownx.tabbed:
+      alternate_style: true
+  - admonition
+  - pymdownx.details
+  - attr_list
+  - md_in_html
+  - toc:
+      permalink: true
+
+nav:
+  - 首页: index.md
+  - 心态层:
+    - 概览: mindset/README.md
+    - AI 心态: mindset/ai-mindset.md
+    - 工程师文化: mindset/engineering-culture.md
+    - 成长心态: mindset/growth-mindset.md
+    - 持续学习: mindset/continuous-learning.md
+    - 创新思维: mindset/innovation-thinking.md
+    - 产品思维: mindset/product-thinking.md
+    - 技术选型: mindset/tech-selection-methodology.md
+    - 代码评审: mindset/code-review-best-practices.md
+    - 团队协作: mindset/team-collaboration.md
+  - 学习层:
+    - 概览: learning/README.md
+    - 学习方法: learning/learning-methodology.md
+    - 代码阅读: learning/code-reading-skills.md
+    - 调试方法: learning/debugging-methodology.md
+    - 重构策略: learning/refactoring-strategy.md
+    - TDD: learning/test-driven-development.md
+    - CI/CD: learning/continuous-integration.md
+    - Docker: learning/container-deployment.md
+    - 云原生: learning/cloud-native-development.md
+    - 微服务: learning/microservices-architecture.md
+    - Serverless: learning/serverless-architecture.md
+  - 效率层:
+    - 概览: efficiency/README.md
+    - AI 编码: efficiency/ai-coding-efficiency.md
+    - AI 调试: efficiency/ai-debugging-efficiency.md
+    - AI 审查: efficiency/ai-code-review.md
+    - Prompt 工程: efficiency/prompt-engineering.md
+    - AI 文档: efficiency/ai-documentation.md
+    - AI 测试: efficiency/ai-test-generation.md
+    - AI 重构: efficiency/ai-refactoring.md
+    - AI 架构: efficiency/ai-architecture-design.md
+    - AI 数据库: efficiency/ai-database-design.md
+    - AI 性能: efficiency/ai-performance-optimization.md
+  - 工具层:
+    - 概览: tools/README.md
+    - 编辑器对比: tools/ai-editor-comparison.md
+    - 代码质量: tools/ai-code-quality-tools.md
+    - 测试工具: tools/ai-testing-tools.md
+    - 文档工具: tools/ai-documentation-tools.md
+    - 版本控制: tools/ai-version-control.md
+    - 包管理: tools/ai-package-management.md
+    - 容器工具: tools/ai-container-tools.md
+    - CI/CD: tools/ai-cicd-tools.md
+    - 监控工具: tools/ai-monitoring-tools.md
+    - 数据库工具: tools/ai-database-tools.md
+  - 治理层:
+    - 概览: governance/README.md
+    - 代码规范: governance/coding-standards.md
+    - 安全标准: governance/security-standards.md
+    - 文档标准: governance/documentation-standards.md

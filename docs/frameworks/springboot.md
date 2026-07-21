@@ -1,3 +1,13 @@
+---
+title: Spring Boot Governance Rules
+description: > 适用于 Spring Boot 项目的 AI Agent 开发规范。
+category: 工具层
+tags: ['AI', 'REST', 'API', '测试', '安全']
+difficulty: 初级
+reading_time: 10 分钟
+updated: 2026-07-21
+---
+
 # Spring Boot Governance Rules
 
 > 适用于 Spring Boot 项目的 AI Agent 开发规范。

@@ -1,3 +1,13 @@
+---
+title: 消息队列
+description: > 微服务架构中解耦、削峰、异步处理的核心基础设施。
+category: 工具层
+tags: ['数据库', 'SQL', 'Kubernetes', 'NoSQL']
+difficulty: 高级
+reading_time: 10 分钟
+updated: 2026-07-21
+---
+
 # 消息队列
 
 > 微服务架构中解耦、削峰、异步处理的核心基础设施。

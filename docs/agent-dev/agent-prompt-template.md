@@ -1,3 +1,13 @@
+---
+title: Agent Prompt 模板
+description: 本文档提供 agent 定义的标准模板，新 agent 必须基于此模板创建。
+category: 治理层
+tags: ['AI', 'API', '测试', '安全', 'prompt']
+difficulty: 高级
+reading_time: 10 分钟
+updated: 2026-07-21
+---
+
 # Agent Prompt 模板
 
 本文档提供 agent 定义的标准模板，新 agent 必须基于此模板创建。

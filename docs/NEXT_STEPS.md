@@ -1,3 +1,13 @@
+---
+title: 后续开发计划
+description: > 基于"知识优先"原则，保持项目核心价值，渐进式增强
+category: 效率层
+tags: ['AI', 'API', 'Kubernetes', 'Python', 'LLM']
+difficulty: 高级
+reading_time: 10 分钟
+updated: 2026-07-21
+---
+
 # 后续开发计划
 
 > 基于"知识优先"原则，保持项目核心价值，渐进式增强

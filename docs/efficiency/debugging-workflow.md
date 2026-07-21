@@ -1,3 +1,13 @@
+---
+title: AI 辅助调试工作流 (Debugging Workflow)
+description: > AI 驱动的系统化调试方法论。
+category: 效率层
+tags: ['AI', '测试', 'TypeScript', 'workflow', 'debugging']
+difficulty: 初级
+reading_time: 10 分钟
+updated: 2026-07-21
+---
+
 # AI 辅助调试工作流 (Debugging Workflow)
 
 > AI 驱动的系统化调试方法论。

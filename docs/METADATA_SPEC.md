@@ -1,3 +1,13 @@
+---
+title: 文档元数据规范
+description: > 为所有文档添加标准化元数据，便于检索和分类
+category: 效率层
+tags: ['AI', 'API', 'Kubernetes', 'Python', '测试']
+difficulty: 高级
+reading_time: 10 分钟
+updated: 2026-07-21
+---
+
 # 文档元数据规范
 
 > 为所有文档添加标准化元数据，便于检索和分类

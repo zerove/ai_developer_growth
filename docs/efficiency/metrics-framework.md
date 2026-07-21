@@ -1,3 +1,13 @@
+---
+title: AI 编程度量体系 (AI Programming Metrics Framework)
+description: > 无法度量，就无法改进。
+category: 效率层
+tags: ['AI', 'API', 'Python', 'framework', 'metrics']
+difficulty: 高级
+reading_time: 10 分钟
+updated: 2026-07-21
+---
+
 # AI 编程度量体系 (AI Programming Metrics Framework)
 
 > 无法度量，就无法改进。

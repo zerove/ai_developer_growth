@@ -1,3 +1,13 @@
+---
+title: PHP Governance Rules
+description: > 适用于 PHP 项目的 AI Agent 开发规范。
+category: 治理层
+tags: ['测试', 'AI', 'SQL', 'API']
+difficulty: 高级
+reading_time: 10 分钟
+updated: 2026-07-21
+---
+
 # PHP Governance Rules
 
 > 适用于 PHP 项目的 AI Agent 开发规范。

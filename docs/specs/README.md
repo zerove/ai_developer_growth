@@ -1,3 +1,13 @@
+---
+title: 语言开发规范库 (Language Spec Library)
+description: 本目录包含了针对不同编程语言的 AI 协同开发标准。这些规范旨在将“通用 AI 技巧”转化为“语言特定”的工程实践，确保 AI 生成的代码不仅能运行，而且符合该语言的最佳实践（Best Practic
+category: 治理层
+tags: ['AI', 'TypeScript', 'SQL', 'Python']
+difficulty: 初级
+reading_time: 10 分钟
+updated: 2026-07-21
+---
+
 # 语言开发规范库 (Language Spec Library)
 
 本目录包含了针对不同编程语言的 AI 协同开发标准。这些规范旨在将“通用 AI 技巧”转化为“语言特定”的工程实践，确保 AI 生成的代码不仅能运行，而且符合该语言的最佳实践（Best Practices）。

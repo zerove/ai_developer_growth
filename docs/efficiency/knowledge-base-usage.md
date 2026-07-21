@@ -1,3 +1,13 @@
+---
+title: OpenCode 知识库使用方案 (Knowledge Base Usage Plan)
+description: > 将35篇知识文档转化为开发实践。
+category: 效率层
+tags: ['base', 'AI', 'Python', '测试', '安全']
+difficulty: 初级
+reading_time: 10 分钟
+updated: 2026-07-21
+---
+
 # OpenCode 知识库使用方案 (Knowledge Base Usage Plan)
 
 > 将35篇知识文档转化为开发实践。

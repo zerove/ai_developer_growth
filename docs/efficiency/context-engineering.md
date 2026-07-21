@@ -1,3 +1,13 @@
+---
+title: 上下文工程与 AI 输出验证 (Context Engineering & AI Output Verification)
+description: > 精准传递意图，系统化验证结果。
+category: 效率层
+tags: ['AI', 'API', '测试', 'TypeScript', 'engineering']
+difficulty: 高级
+reading_time: 10 分钟
+updated: 2026-07-21
+---
+
 # 上下文工程与 AI 输出验证 (Context Engineering & AI Output Verification)
 
 > 精准传递意图，系统化验证结果。

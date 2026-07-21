@@ -395,11 +395,11 @@ ai_developer_growth/
 
 ## 📚 相关文档
 
-- [能力模型详细定义](mindset/capability-model.md)
-- [能力雷达工具文档](examples/capability-radar/README.md)
-- [全周期工作流](efficiency/full-cycle-workflow.md)
-- [团队度量体系](efficiency/metrics-framework.md)
-- [代码审查指南](efficiency/code-review-guide.md)
+- [能力模型详细定义](../mindset/capability-model.md)
+- [能力雷达工具文档](https://github.com/zerove/ai_developer_growth/tree/master/examples/capability-radar)
+- [全周期工作流](../efficiency/full-cycle-workflow.md)
+- [团队度量体系](../efficiency/metrics-framework.md)
+- [代码审查指南](../efficiency/code-review-guide.md)
 
 ---
 

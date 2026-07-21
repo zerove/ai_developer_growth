@@ -55,14 +55,14 @@ updated: 2026-07-21
 
 ### 阅读知识
 
-1. 阅读 [README.md](README.md) 了解项目概览
-2. 浏览 [INDEX.md](INDEX.md) 查看完整知识地图
-3. 从 [docs/mindset/product-thinking.md](docs/mindset/product-thinking.md) 开始学习
+1. 阅读 [项目首页](index.md) 了解项目概览
+2. 浏览 [能力等级](capability-levels.md) 查看完整知识地图
+3. 从 [产品思维](mindset/product-thinking.md) 开始学习
 
 ### 贡献案例
 
-1. 查看 [CONTRIBUTING.md](CONTRIBUTING.md) 了解贡献流程
-2. 使用 [案例模板](.github/ISSUE_TEMPLATE/case-study.md) 提交案例
+1. 查看 [贡献指南](https://github.com/zerove/ai_developer_growth/blob/master/CONTRIBUTING.md) 了解贡献流程
+2. 使用 [案例模板](https://github.com/zerove/ai_developer_growth/blob/master/.github/ISSUE_TEMPLATE/case-study.md) 提交案例
 3. 等待社区催化剂审核
 
 ### 参与讨论
@@ -75,7 +75,7 @@ updated: 2026-07-21
 
 ## 社区准则
 
-我们承诺营造一个开放、友好的环境。请阅读 [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md) 了解我们的行为准则。
+我们承诺营造一个开放、友好的环境。请阅读 [行为准则](https://github.com/zerove/ai_developer_growth/blob/master/CODE_OF_CONDUCT.md) 了解我们的行为准则。
 
 ---
 

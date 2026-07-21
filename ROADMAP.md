@@ -124,4 +124,49 @@
 
 ---
 
+## Phase 5: 交互式学习平台
+
+- [x] Web UI (FastAPI + Jinja2 + SQLite)
+  - 用户认证 (register/login/JWT cookie)
+  - Dashboard (学习进度/评估/贡献统计)
+  - 五维能力评估 (滑块交互 + 推荐)
+  - 学习进度追踪 (启动/完成/删除)
+  - 文档贡献工作流 (提交/查看/审核)
+  - 8 个集成测试
+
+## Phase 6: 自动化治理
+
+- [x] GitHub Actions CI/CD 扩展
+  - Example Tests job (8 个示例项目)
+  - 测试摘要报告 (GitHub Step Summary)
+
+## Phase 7: 团队协作
+
+- [x] 团队配置隔离 (TeamManager)
+  - 创建/删除团队
+  - 成员管理 (添加/移除)
+  - 团队设置隔离
+  - JSON 持久化存储
+- [x] 学习路径模板 (LearningPathManager)
+  - 3 个预置路径 (入门/实践/领导)
+  - 按角色过滤 (frontend/backend/fullstack)
+  - 智能推荐 (基于当前/目标等级)
+  -
+  - 17 个测试
+
+## Phase 8: 生态集成
+
+- [x] VS Code 扩展 (ai-growth-vscode)
+  - 技能评估命令
+  - 学习进度追踪
+  - 推荐系统
+  - Webview Dashboard
+- [x] Slack Bot (ai-growth-slack)
+  - 命令系统 (!growth assess/progress/recommend/help)
+  - 用户进度追踪
+  - 个性化推荐
+  - 7 个测试
+
+---
+
 *路线图是活的文档，随项目演进持续更新。*

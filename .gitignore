@@ -17,6 +17,10 @@ venv/
 htmlcov/
 MagicMock/
 
+# Tool cache
+.tool_matrix_cache.json
+*.backup
+
 # AI Sync
 .ai-sync-cache/
 .ai-audit-history.json

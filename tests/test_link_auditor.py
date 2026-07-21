@@ -4,7 +4,7 @@ import subprocess
 import sys
 import unittest
 
-from tools.scripts.link_auditor import _build_index, _check_target, find_broken_links
+from tools.scripts.link_auditor import _build_index, _check_target, _strip_code_blocks, find_broken_links
 
 
 class TestLinkAuditor(unittest.TestCase):
@@ -15,6 +15,27 @@ class TestLinkAuditor(unittest.TestCase):
     def tearDown(self):
         if os.path.exists(self.test_dir):
             shutil.rmtree(self.test_dir)
+
+    def test_strip_code_blocks_removes_fenced(self):
+        """Test that fenced code blocks are stripped."""
+        content = "# Title\n\n```toml\n[[rules]]\n```\n\n[[real-link]]"
+        cleaned = _strip_code_blocks(content)
+        self.assertNotIn("[[rules]]", cleaned)
+        self.assertIn("[[real-link]]", cleaned)
+
+    def test_strip_code_blocks_removes_inline(self):
+        """Test that inline code is stripped."""
+        content = "Use `[[inline]]` here and [[real-link]] there."
+        cleaned = _strip_code_blocks(content)
+        self.assertNotIn("[[inline]]", cleaned)
+        self.assertIn("[[real-link]]", cleaned)
+
+    def test_strip_code_blocks_removes_tilde(self):
+        """Test that tilde code blocks are stripped."""
+        content = "~~~\n[[tilde-link]]\n~~~\n\n[[real-link]]"
+        cleaned = _strip_code_blocks(content)
+        self.assertNotIn("[[tilde-link]]", cleaned)
+        self.assertIn("[[real-link]]", cleaned)
 
     def test_find_broken_links(self):
         """One broken wikilink should be reported."""

@@ -68,6 +68,17 @@ def _check_target(target: str, index: dict[str, str], directory: str, file_dir: 
     return False
 
 
+def _strip_code_blocks(content: str) -> str:
+    """Remove content inside fenced code blocks to avoid false positives."""
+    # Remove ``` blocks (```...```)
+    content = re.sub(r"```[\s\S]*?```", "", content)
+    # Remove ~~~ blocks (~~~...~~~)
+    content = re.sub(r"~~~[\s\S]*?~~~", "", content)
+    # Remove inline code (`...`)
+    content = re.sub(r"`[^`]+`", "", content)
+    return content
+
+
 def find_broken_links(directory: str) -> list[tuple[str, str]]:
     """Scan directory for .md files, extract [[wikilinks]], report broken ones."""
     broken: list[tuple[str, str]] = []
@@ -91,7 +102,9 @@ def find_broken_links(directory: str) -> list[tuple[str, str]]:
             file_path = os.path.join(root, file)
             with open(file_path) as f:
                 content = f.read()
-            for match in link_pattern.finditer(content):
+            # Strip code blocks to avoid false positives (e.g. TOML [[rules]])
+            cleaned = _strip_code_blocks(content)
+            for match in link_pattern.finditer(cleaned):
                 target_path = match.group(1).strip()
                 # Skip external links, anchors, and template placeholders
                 if target_path.startswith(("http://", "https://", "#")):

@@ -5,6 +5,10 @@
 [![Coverage](https://img.shields.io/badge/Coverage-84%25-brightgreen)](#)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](CONTRIBUTING.md)
+[![Issues](https://img.shields.io/github/issues/zerove/ai_developer_growth)](https://github.com/zerove/ai_developer_growth/issues)
+[![Stars](https://img.shields.io/github/stars/zerove/ai_developer_growth)](https://github.com/zerove/ai_developer_growth/stargazers)
+[![Code of Conduct](https://img.shields.io/badge/Code%20of-Conduct-blue.svg)](CODE_OF_CONDUCT.md)
+[![Security](https://img.shields.io/badge/Security-Policy-red.svg)](SECURITY.md)
 
 > **定位**: 开源知识库 | **目标**: 帮助开发者在 AI 时代实现指数级成长
 

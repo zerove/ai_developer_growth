@@ -37,13 +37,14 @@
 **Phase 2: 检索优化 (2026 Q4)**
 - [x] 优化 TF-IDF 算法 (BM25)
 - [x] 增加同义词库 (中英文技术术语)
-- [ ] 用户行为追踪
+- [x] 用户行为追踪 (tracking.js + analyze_tracking.py)
 - [x] 协同过滤推荐
 
 **Phase 3: Web 界面 (2027 Q1)**
-- [ ] MkDocs 网站搭建
-- [ ] 搜索界面
-- [ ] 案例展示页
+- [x] MkDocs 网站搭建 (Material 主题, nav 修复)
+- [x] 搜索界面 (BM25 + 同义词 + 协同过滤)
+- [x] GitHub Pages 自动部署 (deploy-docs.yml)
+- [x] 用户行为追踪集成
 
 **Phase 4: AI 增强 (2027 Q2, 视需求)**
 - [ ] 向量数据库集成

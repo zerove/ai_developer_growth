@@ -11,6 +11,7 @@ class LLMClient:
 
         # Simulation: return strings instead of ints to trigger a bug
         import random
+
         random.seed(42)
         return [{"task": t, "value": str(random.randint(1, 10)), "effort": str(random.randint(1, 10))} for t in tasks]
 

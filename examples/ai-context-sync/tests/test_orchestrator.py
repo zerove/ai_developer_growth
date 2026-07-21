@@ -1,4 +1,5 @@
 """Tests for src.orchestrator.WorkflowManager — targeting 70%+ coverage."""
+
 import json
 from unittest.mock import MagicMock, mock_open, patch
 
@@ -13,8 +14,8 @@ from src.tester import TestResult
 # Helpers
 # ---------------------------------------------------------------------------
 
-def _make_config(max_retries=3, test_timeout=30, executor_max_workers=4,
-                 context_file="CONTEXT.md"):
+
+def _make_config(max_retries=3, test_timeout=30, executor_max_workers=4, context_file="CONTEXT.md"):
     """Build a real AppConfig with sensible defaults for tests."""
     cfg = AppConfig()
     cfg.settings.max_retries = max_retries
@@ -24,8 +25,9 @@ def _make_config(max_retries=3, test_timeout=30, executor_max_workers=4,
     return cfg
 
 
-def _make_manager(cfg=None, *, llm_client=None, analyzer=None,
-                  synthesizer=None, guard=None, auditor=None, evolution=None):
+def _make_manager(
+    cfg=None, *, llm_client=None, analyzer=None, synthesizer=None, guard=None, auditor=None, evolution=None
+):
     """Construct a WorkflowManager with all dependencies pre-mocked."""
     cfg = cfg or _make_config()
     manager = WorkflowManager.__new__(WorkflowManager)
@@ -42,8 +44,7 @@ def _make_manager(cfg=None, *, llm_client=None, analyzer=None,
     return manager
 
 
-def _task(id_="TASK-1", desc="Implement foo", files=None,
-          test_code="assert True", depends_on=None):
+def _task(id_="TASK-1", desc="Implement foo", files=None, test_code="assert True", depends_on=None):
     """Build a task dict matching the orchestrator's expected shape."""
     return {
         "id": id_,
@@ -60,6 +61,7 @@ def _task(id_="TASK-1", desc="Implement foo", files=None,
 # ===========================================================================
 # _validate_path
 # ===========================================================================
+
 
 class TestValidatePath:
     """All edge-cases for _validate_path()."""
@@ -110,8 +112,8 @@ class TestValidatePath:
 # _write_to_file
 # ===========================================================================
 
-class TestWriteToFile:
 
+class TestWriteToFile:
     @pytest.fixture(autouse=True)
     def _mgr(self):
         self.mgr = _make_manager()
@@ -147,8 +149,8 @@ class TestWriteToFile:
 # _apply_file_blocks
 # ===========================================================================
 
-class TestApplyFileBlocks:
 
+class TestApplyFileBlocks:
     @pytest.fixture(autouse=True)
     def _mgr(self):
         self.mgr = _make_manager()
@@ -162,10 +164,7 @@ class TestApplyFileBlocks:
 
     @patch.object(WorkflowManager, "_write_to_file", return_value=True)
     def test_multiple_blocks(self, mock_write):
-        output = (
-            "[FILE: a.py]\ncode_a\n[END]\n"
-            "[FILE: b.py]\ncode_b\n[END]"
-        )
+        output = "[FILE: a.py]\ncode_a\n[END]\n[FILE: b.py]\ncode_b\n[END]"
         result = self.mgr._apply_file_blocks(output)
         assert result == ["a.py", "b.py"]
         assert mock_write.call_count == 2
@@ -178,11 +177,7 @@ class TestApplyFileBlocks:
     def test_mixed_valid_invalid(self, mock_write):
         """Only blocks that pass _write_to_file appear in result."""
         mock_write.side_effect = lambda p, c: p != "bad.txt"
-        output = (
-            "[FILE: good.py]\ncode\n[END]\n"
-            "[FILE: bad.txt]\ncode\n[END]\n"
-            "[FILE: ok.py]\ncode\n[END]"
-        )
+        output = "[FILE: good.py]\ncode\n[END]\n[FILE: bad.txt]\ncode\n[END]\n[FILE: ok.py]\ncode\n[END]"
         result = self.mgr._apply_file_blocks(output)
         assert "bad.txt" not in result
         assert "good.py" in result
@@ -201,8 +196,8 @@ class TestApplyFileBlocks:
 # _execute_subtask
 # ===========================================================================
 
-class TestExecuteSubtask:
 
+class TestExecuteSubtask:
     @pytest.fixture(autouse=True)
     def _mgr(self):
         self.mgr = _make_manager(cfg=_make_config(max_retries=3))
@@ -245,8 +240,7 @@ class TestExecuteSubtask:
         t = _task()
         t["verification"] = {}
         self.mgr.llm_client.generate.return_value = "[FILE: out.py]\ncode\n[END]"
-        with patch.object(WorkflowManager, "_apply_file_blocks",
-                          return_value=["out.py"]):
+        with patch.object(WorkflowManager, "_apply_file_blocks", return_value=["out.py"]):
             result = self.mgr._execute_subtask(t)
         assert "single-shot" in result
 
@@ -307,8 +301,8 @@ class TestExecuteSubtask:
 # _phase_design
 # ===========================================================================
 
-class TestPhaseDesign:
 
+class TestPhaseDesign:
     @pytest.fixture(autouse=True)
     def _mgr(self):
         self.mgr = _make_manager()
@@ -368,8 +362,8 @@ class TestPhaseDesign:
 # _phase_implement
 # ===========================================================================
 
-class TestPhaseImplement:
 
+class TestPhaseImplement:
     @pytest.fixture(autouse=True)
     def _mgr(self):
         self.mgr = _make_manager()
@@ -403,8 +397,8 @@ class TestPhaseImplement:
 # _phase_audit
 # ===========================================================================
 
-class TestPhaseAudit:
 
+class TestPhaseAudit:
     @pytest.fixture(autouse=True)
     def _mgr(self):
         self.mgr = _make_manager()
@@ -424,20 +418,16 @@ class TestPhaseAudit:
             [],
         ]
         self.mgr.llm_client.generate.return_value = "[FILE: foo.py]\nfixed\n[END]"
-        with patch.object(WorkflowManager, "_apply_file_blocks",
-                          return_value=["foo.py"]):
+        with patch.object(WorkflowManager, "_apply_file_blocks", return_value=["foo.py"]):
             result = self.mgr._phase_audit([_task()], "task")
         assert result == ""
 
     @patch("src.orchestrator.os.path.exists", return_value=False)
     def test_max_audit_retries_exceeded(self, _mock_exists):
         """After 3 failed fix attempts, returns error."""
-        self.mgr.auditor.audit.return_value = [
-            {"file": "foo.py", "rule": "R1"}
-        ]
+        self.mgr.auditor.audit.return_value = [{"file": "foo.py", "rule": "R1"}]
         self.mgr.llm_client.generate.return_value = "[FILE: foo.py]\nbad\n[END]"
-        with patch.object(WorkflowManager, "_apply_file_blocks",
-                          return_value=["foo.py"]):
+        with patch.object(WorkflowManager, "_apply_file_blocks", return_value=["foo.py"]):
             result = self.mgr._phase_audit([_task()], "task")
         assert "failed" in result.lower()
         assert self.mgr.auditor.audit.call_count == 3
@@ -445,9 +435,7 @@ class TestPhaseAudit:
     @patch("src.orchestrator.os.path.exists", return_value=False)
     def test_fix_returns_empty_output(self, _mock_exists):
         """When LLM returns empty fix, audit loop retries."""
-        self.mgr.auditor.audit.return_value = [
-            {"file": "f.py", "rule": "R1"}
-        ]
+        self.mgr.auditor.audit.return_value = [{"file": "f.py", "rule": "R1"}]
         self.mgr.llm_client.generate.return_value = ""
         result = self.mgr._phase_audit([_task()], "task")
         assert "failed" in result.lower()
@@ -468,8 +456,8 @@ class TestPhaseAudit:
 # _single_shot_implement
 # ===========================================================================
 
-class TestSingleShotImplement:
 
+class TestSingleShotImplement:
     @pytest.fixture(autouse=True)
     def _mgr(self):
         self.mgr = _make_manager()
@@ -477,28 +465,23 @@ class TestSingleShotImplement:
     @patch.object(WorkflowManager, "_apply_file_blocks", return_value=["out.py"])
     def test_success(self, _mock_blocks):
         self.mgr.llm_client.generate.return_value = "[FILE: out.py]\ncode\n[END]"
-        result = self.mgr._single_shot_implement(
-            "TASK-1", "desc", ["out.py"])
+        result = self.mgr._single_shot_implement("TASK-1", "desc", ["out.py"])
         assert "Successfully implemented" in result
         assert "single-shot" in result
 
     def test_no_output(self):
         self.mgr.llm_client.generate.return_value = ""
-        result = self.mgr._single_shot_implement(
-            "TASK-1", "desc", ["out.py"])
+        result = self.mgr._single_shot_implement("TASK-1", "desc", ["out.py"])
         assert "Error: No output" in result
 
     def test_none_output(self):
         self.mgr.llm_client.generate.return_value = None
-        result = self.mgr._single_shot_implement(
-            "TASK-1", "desc", ["out.py"])
+        result = self.mgr._single_shot_implement("TASK-1", "desc", ["out.py"])
         assert "Error: No output" in result
 
-    @patch.object(WorkflowManager, "_apply_file_blocks",
-                  side_effect=Exception("boom"))
+    @patch.object(WorkflowManager, "_apply_file_blocks", side_effect=Exception("boom"))
     def test_exception_caught(self, _mock_blocks):
-        result = self.mgr._single_shot_implement(
-            "TASK-1", "desc", ["out.py"])
+        result = self.mgr._single_shot_implement("TASK-1", "desc", ["out.py"])
         assert "Failed" in result
         assert "TASK-1" in result
 
@@ -506,8 +489,7 @@ class TestSingleShotImplement:
     def test_no_valid_blocks(self, _mock_blocks):
         """Even with no written files, returns success (single-shot)."""
         self.mgr.llm_client.generate.return_value = "[FILE: x.py]\nc\n[END]"
-        result = self.mgr._single_shot_implement(
-            "TASK-1", "desc", ["x.py"])
+        result = self.mgr._single_shot_implement("TASK-1", "desc", ["x.py"])
         assert "Successfully implemented" in result
 
 
@@ -515,8 +497,8 @@ class TestSingleShotImplement:
 # _phase_sync
 # ===========================================================================
 
-class TestPhaseSync:
 
+class TestPhaseSync:
     @pytest.fixture(autouse=True)
     def _mgr(self):
         self.mgr = _make_manager()
@@ -537,8 +519,8 @@ class TestPhaseSync:
 # _phase_evolution
 # ===========================================================================
 
-class TestPhaseEvolution:
 
+class TestPhaseEvolution:
     @pytest.fixture(autouse=True)
     def _mgr(self):
         self.mgr = _make_manager()
@@ -559,8 +541,8 @@ class TestPhaseEvolution:
 # run_flow (integration of phases)
 # ===========================================================================
 
-class TestRunFlow:
 
+class TestRunFlow:
     @pytest.fixture(autouse=True)
     def _mgr(self):
         self.mgr = _make_manager()
@@ -579,9 +561,7 @@ class TestRunFlow:
         self.mgr.llm_client.generate.return_value = json.dumps(sub_tasks)
         self.mgr.slicer.slice.return_value = "ctx"
         approval = MagicMock(return_value=True)
-        self.mgr.executor.execute.return_value = {
-            "TASK-1": "Successfully implemented TASK-1"
-        }
+        self.mgr.executor.execute.return_value = {"TASK-1": "Successfully implemented TASK-1"}
         self.mgr.auditor.audit.return_value = []
         self.mgr.evolution.analyze_conflicts.return_value = []
         self.mgr.synthesizer.synthesize_context_update.return_value = "updated"
@@ -595,9 +575,7 @@ class TestRunFlow:
         self.mgr.llm_client.generate.return_value = json.dumps(sub_tasks)
         self.mgr.slicer.slice.return_value = "ctx"
         approval = MagicMock(return_value=True)
-        self.mgr.executor.execute.return_value = {
-            "TASK-1": "Failed TASK-1 after 3 attempts"
-        }
+        self.mgr.executor.execute.return_value = {"TASK-1": "Failed TASK-1 after 3 attempts"}
 
         result = self.mgr.run_flow("task", approval)
         assert "failed" in result.lower()
@@ -606,23 +584,18 @@ class TestRunFlow:
         sub_tasks = [_task()]
         # First call = design doc, subsequent calls = fix prompt
         self.mgr.llm_client.generate.side_effect = [
-            json.dumps(sub_tasks),       # _phase_design
-            "[FILE: f.py]\nb\n[END]",    # _phase_audit fix attempt 1
-            "[FILE: f.py]\nb\n[END]",    # _phase_audit fix attempt 2
-            "[FILE: f.py]\nb\n[END]",    # _phase_audit fix attempt 3
+            json.dumps(sub_tasks),  # _phase_design
+            "[FILE: f.py]\nb\n[END]",  # _phase_audit fix attempt 1
+            "[FILE: f.py]\nb\n[END]",  # _phase_audit fix attempt 2
+            "[FILE: f.py]\nb\n[END]",  # _phase_audit fix attempt 3
         ]
         self.mgr.slicer.slice.return_value = "ctx"
         approval = MagicMock(return_value=True)
-        self.mgr.executor.execute.return_value = {
-            "TASK-1": "Successfully implemented TASK-1"
-        }
+        self.mgr.executor.execute.return_value = {"TASK-1": "Successfully implemented TASK-1"}
         # Audit always returns violations, never fixes
-        self.mgr.auditor.audit.return_value = [
-            {"file": "f.py", "rule": "R1"}
-        ]
+        self.mgr.auditor.audit.return_value = [{"file": "f.py", "rule": "R1"}]
 
-        with patch.object(WorkflowManager, "_apply_file_blocks",
-                          return_value=["f.py"]):
+        with patch.object(WorkflowManager, "_apply_file_blocks", return_value=["f.py"]):
             with patch("src.orchestrator.os.path.exists", return_value=False):
                 result = self.mgr.run_flow("task", approval)
         assert "audit failed" in result.lower() or "manual" in result.lower()
@@ -632,8 +605,8 @@ class TestRunFlow:
 # _build_design_prompt
 # ===========================================================================
 
-class TestBuildDesignPrompt:
 
+class TestBuildDesignPrompt:
     @pytest.fixture(autouse=True)
     def _mgr(self):
         self.mgr = _make_manager()

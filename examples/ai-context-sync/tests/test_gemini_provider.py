@@ -17,9 +17,7 @@ class TestGeminiGenerate:
 
     def test_generate_success(self):
         mock_response = MagicMock()
-        mock_response.json.return_value = {
-            "candidates": [{"content": {"parts": [{"text": "Hello from Gemini"}]}}]
-        }
+        mock_response.json.return_value = {"candidates": [{"content": {"parts": [{"text": "Hello from Gemini"}]}}]}
         mock_response.raise_for_status = MagicMock()
 
         provider = GeminiProvider(api_key="test-gemini-key")
@@ -31,9 +29,7 @@ class TestGeminiGenerate:
 
     def test_generate_url_construction(self):
         mock_response = MagicMock()
-        mock_response.json.return_value = {
-            "candidates": [{"content": {"parts": [{"text": "ok"}]}}]
-        }
+        mock_response.json.return_value = {"candidates": [{"content": {"parts": [{"text": "ok"}]}}]}
         mock_response.raise_for_status = MagicMock()
 
         provider = GeminiProvider(api_key="key", api_base="https://custom.api.com/v1")
@@ -45,9 +41,7 @@ class TestGeminiGenerate:
 
     def test_generate_default_url(self):
         mock_response = MagicMock()
-        mock_response.json.return_value = {
-            "candidates": [{"content": {"parts": [{"text": "ok"}]}}]
-        }
+        mock_response.json.return_value = {"candidates": [{"content": {"parts": [{"text": "ok"}]}}]}
         mock_response.raise_for_status = MagicMock()
 
         provider = GeminiProvider(api_key="key")
@@ -59,9 +53,7 @@ class TestGeminiGenerate:
 
     def test_generate_payload_structure(self):
         mock_response = MagicMock()
-        mock_response.json.return_value = {
-            "candidates": [{"content": {"parts": [{"text": "response"}]}}]
-        }
+        mock_response.json.return_value = {"candidates": [{"content": {"parts": [{"text": "response"}]}}]}
         mock_response.raise_for_status = MagicMock()
 
         provider = GeminiProvider(api_key="key")

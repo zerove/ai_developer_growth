@@ -1,4 +1,5 @@
 """Extended tests for src/tester.py — cover _sanitize_env, pytest fallback, timeout bytes, OSError."""
+
 import os
 import subprocess
 from unittest.mock import MagicMock, patch
@@ -12,15 +13,18 @@ class TestSanitizeEnvExtended:
     def test_sanitize_env_removes_all_sensitive_keys(self):
         """All 6 sensitive keys are removed from environment."""
         runner = TestRunner()
-        with patch.dict(os.environ, {
-            "AI_SYNC_KEY": "sk-123",
-            "OPENAI_API_KEY": "openai-key",
-            "ANTHROPIC_API_KEY": "anthropic-key",
-            "AWS_SECRET_ACCESS_KEY": "aws-secret",
-            "GITHUB_TOKEN": "gh-token",
-            "GH_TOKEN": "gh-token-2",
-            "SAFE_KEY": "should-remain",
-        }):
+        with patch.dict(
+            os.environ,
+            {
+                "AI_SYNC_KEY": "sk-123",
+                "OPENAI_API_KEY": "openai-key",
+                "ANTHROPIC_API_KEY": "anthropic-key",
+                "AWS_SECRET_ACCESS_KEY": "aws-secret",
+                "GITHUB_TOKEN": "gh-token",
+                "GH_TOKEN": "gh-token-2",
+                "SAFE_KEY": "should-remain",
+            },
+        ):
             env = runner._sanitize_env()
             assert "AI_SYNC_KEY" not in env
             assert "OPENAI_API_KEY" not in env
@@ -66,11 +70,13 @@ class TestRunTestPytestFallback:
             result.stderr = ""
             return result
 
-        with patch("src.tester.subprocess.run", side_effect=mock_run), \
-             patch("src.tester.os.path.exists", return_value=False), \
-             patch("src.tester.shutil.copy2"), \
-             patch("src.tester.os.makedirs"), \
-             patch("builtins.open", MagicMock()):
+        with (
+            patch("src.tester.subprocess.run", side_effect=mock_run),
+            patch("src.tester.os.path.exists", return_value=False),
+            patch("src.tester.shutil.copy2"),
+            patch("src.tester.os.makedirs"),
+            patch("builtins.open", MagicMock()),
+        ):
             result = runner.run_test("def test_pass(): pass", ["fake.py"])
 
         assert call_count == 2  # pytest first, then unittest
@@ -85,11 +91,13 @@ class TestRunTestPytestFallback:
                 raise FileNotFoundError("pytest not found")
             raise OSError("cannot run process")
 
-        with patch("src.tester.subprocess.run", side_effect=mock_run), \
-             patch("src.tester.os.path.exists", return_value=False), \
-             patch("src.tester.shutil.copy2"), \
-             patch("src.tester.os.makedirs"), \
-             patch("builtins.open", MagicMock()):
+        with (
+            patch("src.tester.subprocess.run", side_effect=mock_run),
+            patch("src.tester.os.path.exists", return_value=False),
+            patch("src.tester.shutil.copy2"),
+            patch("src.tester.os.makedirs"),
+            patch("builtins.open", MagicMock()),
+        ):
             result = runner.run_test("test", [])
 
         assert result.success is False
@@ -104,11 +112,13 @@ class TestRunTestPytestFallback:
                 raise FileNotFoundError("pytest not found")
             raise subprocess.SubprocessError("subprocess broke")
 
-        with patch("src.tester.subprocess.run", side_effect=mock_run), \
-             patch("src.tester.os.path.exists", return_value=False), \
-             patch("src.tester.shutil.copy2"), \
-             patch("src.tester.os.makedirs"), \
-             patch("builtins.open", MagicMock()):
+        with (
+            patch("src.tester.subprocess.run", side_effect=mock_run),
+            patch("src.tester.os.path.exists", return_value=False),
+            patch("src.tester.shutil.copy2"),
+            patch("src.tester.os.makedirs"),
+            patch("builtins.open", MagicMock()),
+        ):
             result = runner.run_test("test", [])
 
         assert result.success is False
@@ -129,11 +139,13 @@ class TestRunTestTimeoutExtended:
         def mock_run(cmd, **kwargs):
             raise error
 
-        with patch("src.tester.subprocess.run", side_effect=mock_run), \
-             patch("src.tester.os.path.exists", return_value=False), \
-             patch("src.tester.shutil.copy2"), \
-             patch("src.tester.os.makedirs"), \
-             patch("builtins.open", MagicMock()):
+        with (
+            patch("src.tester.subprocess.run", side_effect=mock_run),
+            patch("src.tester.os.path.exists", return_value=False),
+            patch("src.tester.shutil.copy2"),
+            patch("src.tester.os.makedirs"),
+            patch("builtins.open", MagicMock()),
+        ):
             result = runner.run_test("import time; time.sleep(10)", [])
 
         assert result.success is False
@@ -151,11 +163,13 @@ class TestRunTestTimeoutExtended:
         def mock_run(cmd, **kwargs):
             raise error
 
-        with patch("src.tester.subprocess.run", side_effect=mock_run), \
-             patch("src.tester.os.path.exists", return_value=False), \
-             patch("src.tester.shutil.copy2"), \
-             patch("src.tester.os.makedirs"), \
-             patch("builtins.open", MagicMock()):
+        with (
+            patch("src.tester.subprocess.run", side_effect=mock_run),
+            patch("src.tester.os.path.exists", return_value=False),
+            patch("src.tester.shutil.copy2"),
+            patch("src.tester.os.makedirs"),
+            patch("builtins.open", MagicMock()),
+        ):
             result = runner.run_test("test", [])
 
         assert result.success is False
@@ -171,11 +185,13 @@ class TestRunTestTimeoutExtended:
         def mock_run(cmd, **kwargs):
             raise error
 
-        with patch("src.tester.subprocess.run", side_effect=mock_run), \
-             patch("src.tester.os.path.exists", return_value=False), \
-             patch("src.tester.shutil.copy2"), \
-             patch("src.tester.os.makedirs"), \
-             patch("builtins.open", MagicMock()):
+        with (
+            patch("src.tester.subprocess.run", side_effect=mock_run),
+            patch("src.tester.os.path.exists", return_value=False),
+            patch("src.tester.shutil.copy2"),
+            patch("src.tester.os.makedirs"),
+            patch("builtins.open", MagicMock()),
+        ):
             result = runner.run_test("test", [])
 
         assert "already a string" in result.output
@@ -191,11 +207,13 @@ class TestRunTestOSError:
         def mock_run(cmd, **kwargs):
             raise OSError("Permission denied")
 
-        with patch("src.tester.subprocess.run", side_effect=mock_run), \
-             patch("src.tester.os.path.exists", return_value=False), \
-             patch("src.tester.shutil.copy2"), \
-             patch("src.tester.os.makedirs"), \
-             patch("builtins.open", MagicMock()):
+        with (
+            patch("src.tester.subprocess.run", side_effect=mock_run),
+            patch("src.tester.os.path.exists", return_value=False),
+            patch("src.tester.shutil.copy2"),
+            patch("src.tester.os.makedirs"),
+            patch("builtins.open", MagicMock()),
+        ):
             result = runner.run_test("test", [])
 
         assert result.success is False
@@ -209,11 +227,13 @@ class TestRunTestOSError:
         def mock_run(cmd, **kwargs):
             raise subprocess.SubprocessError("process failed")
 
-        with patch("src.tester.subprocess.run", side_effect=mock_run), \
-             patch("src.tester.os.path.exists", return_value=False), \
-             patch("src.tester.shutil.copy2"), \
-             patch("src.tester.os.makedirs"), \
-             patch("builtins.open", MagicMock()):
+        with (
+            patch("src.tester.subprocess.run", side_effect=mock_run),
+            patch("src.tester.os.path.exists", return_value=False),
+            patch("src.tester.shutil.copy2"),
+            patch("src.tester.os.makedirs"),
+            patch("builtins.open", MagicMock()),
+        ):
             result = runner.run_test("test", [])
 
         assert result.success is False
@@ -228,9 +248,11 @@ class TestRunTestTargetFiles:
         """Non-existent target file triggers warning but doesn't crash."""
         runner = TestRunner(timeout=10)
 
-        with patch("src.tester.os.path.exists", return_value=False), \
-             patch("src.tester.os.makedirs"), \
-             patch("builtins.open", MagicMock()):
+        with (
+            patch("src.tester.os.path.exists", return_value=False),
+            patch("src.tester.os.makedirs"),
+            patch("builtins.open", MagicMock()),
+        ):
             # Should not raise
             result = runner.run_test("def test_ok(): assert True", ["nonexistent/file.py"])
 

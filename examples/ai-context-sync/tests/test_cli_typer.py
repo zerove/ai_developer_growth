@@ -19,5 +19,6 @@ class TestCLI(unittest.TestCase):
         self.assertEqual(result.exit_code, 0)
         self.assertIn("Usage:", result.stdout)
 
+
 if __name__ == "__main__":
     unittest.main()

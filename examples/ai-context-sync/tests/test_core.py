@@ -3,6 +3,7 @@
 Covers all previously uncovered lines: 52, 79, 87, 107-108, 120-122, 127-139,
 148-149, 161-162, 169-176.
 """
+
 import os
 from unittest.mock import MagicMock
 
@@ -18,20 +19,25 @@ from src.synthesizer import ContextSynthesizer
 # Helpers
 # ---------------------------------------------------------------------------
 
+
 def _make_config_file(tmpdir: str) -> str:
     """Write a minimal config file and return its path."""
     cfg_path = os.path.join(tmpdir, ".ai-sync.json")
     import json
+
     with open(cfg_path, "w") as f:
-        json.dump({
-            "llm": {"provider": "system", "model": "auto", "api_base": None},
-            "settings": {
-                "ignore": [],
-                "context_file": "CONTEXT.md",
-                "adr_dir": os.path.join(tmpdir, "docs/adr"),
-                "specs_dir": os.path.join(tmpdir, "docs/specs"),
+        json.dump(
+            {
+                "llm": {"provider": "system", "model": "auto", "api_base": None},
+                "settings": {
+                    "ignore": [],
+                    "context_file": "CONTEXT.md",
+                    "adr_dir": os.path.join(tmpdir, "docs/adr"),
+                    "specs_dir": os.path.join(tmpdir, "docs/specs"),
+                },
             },
-        }, f)
+            f,
+        )
     return cfg_path
 
 
@@ -59,6 +65,7 @@ def _build_sync(tmpdir: str, *, dry_run=False, synthesizer=None):
 # __init__ — line 52: else branch (injected synthesizer)
 # ===================================================================
 
+
 class TestInitSynthesizerInjection:
     """Cover line 52: synthesizer provided via kwarg."""
 
@@ -72,6 +79,7 @@ class TestInitSynthesizerInjection:
 # ===================================================================
 # _get_context_for_path — line 79: root boundary break
 # ===================================================================
+
 
 class TestGetContextForPath:
     """Cover line 79: parent_dir == current_dir triggers break."""
@@ -110,6 +118,7 @@ class TestGetContextForPath:
 # get_aggregated_context — line 87: empty affected_files
 # ===================================================================
 
+
 class TestGetAggregatedContext:
     """Cover line 87: returns '' for empty input."""
 
@@ -122,6 +131,7 @@ class TestGetAggregatedContext:
 # ===================================================================
 # sync — lines 107-108, 120-122, 127-139
 # ===================================================================
+
 
 class TestSync:
     """Cover sync() branches: empty diff, file write, dry_run, ADR trigger."""
@@ -178,6 +188,7 @@ class TestSync:
         cfg_path = _make_config_file(tmpdir)
         # Override adr_dir in config
         import json
+
         with open(cfg_path, "r") as f:
             cfg_data = json.load(f)
         cfg_data["settings"]["adr_dir"] = adr_dir
@@ -221,6 +232,7 @@ class TestSync:
         adr_dir = os.path.join(tmpdir, "docs", "adr")
         cfg_path = _make_config_file(tmpdir)
         import json
+
         with open(cfg_path, "r") as f:
             cfg_data = json.load(f)
         cfg_data["settings"]["adr_dir"] = adr_dir
@@ -263,6 +275,7 @@ class TestSync:
 # guard_check — lines 148-149
 # ===================================================================
 
+
 class TestGuardCheck:
     """Cover lines 148-149: empty filtered_diff in guard_check."""
 
@@ -279,6 +292,7 @@ class TestGuardCheck:
 # ===================================================================
 # spec_audit — lines 161-162, 169-176
 # ===================================================================
+
 
 class TestSpecAudit:
     """Cover spec_audit branches: empty diff, compliance, violations."""

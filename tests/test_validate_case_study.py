@@ -15,6 +15,7 @@ class TestCaseStudyValidator(unittest.TestCase):
 
     def tearDown(self):
         import shutil
+
         shutil.rmtree(self.test_dir, ignore_errors=True)
 
     def _write_case(self, content: str):
@@ -556,6 +557,7 @@ class TestValidateCaseStudyMain(unittest.TestCase):
 
     def tearDown(self):
         import shutil
+
         shutil.rmtree(self.test_dir, ignore_errors=True)
 
     def _write_case(self, content: str):
@@ -645,9 +647,7 @@ Specific.
         self.assertEqual(result.returncode, 1)
         # Output may be on stderr or stdout
         combined = result.stdout + result.stderr
-        self.assertTrue(
-            "No case studies found" in combined or "error" in combined.lower() or result.returncode == 1
-        )
+        self.assertTrue("No case studies found" in combined or "error" in combined.lower() or result.returncode == 1)
 
     def test_main_with_strict_flag(self):
         """Test main with --strict flag."""
@@ -664,6 +664,7 @@ Legacy format.
     def test_print_results_no_issues(self):
         """Test print_results with no issues."""
         from tools.scripts.validate_case_study import print_results
+
         results = []
         # Should print "All checks passed"
         print_results(results, "test")

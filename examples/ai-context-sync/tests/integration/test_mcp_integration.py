@@ -11,7 +11,7 @@ import tempfile
 
 import pytest
 
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..'))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", ".."))
 
 from src.core import AIContextSync
 from src.handlers import register_tools
@@ -26,16 +26,20 @@ class MockMCP:
 
     def tool(self):
         """Decorator that registers a tool function."""
+
         def decorator(func):
             self.tools[func.__name__] = func
             return func
+
         return decorator
 
     def resource(self, uri):
         """Decorator that registers a resource function."""
+
         def decorator(func):
             self.resources[uri] = func
             return func
+
         return decorator
 
 
@@ -47,10 +51,7 @@ def temp_project():
 
     config = {
         "llm": {"provider": "openai", "model": "gpt-4o"},
-        "settings": {
-            "context_file": os.path.join(tmpdir, "CONTEXT.md"),
-            "adr_dir": os.path.join(tmpdir, "docs/adr")
-        }
+        "settings": {"context_file": os.path.join(tmpdir, "CONTEXT.md"), "adr_dir": os.path.join(tmpdir, "docs/adr")},
     }
 
     with open(config_path, "w") as f:
@@ -78,8 +79,17 @@ class TestMCPIntegration:
 
         register_tools(mcp, get_sync_tool)
 
-        expected_tools = ["ai_sync", "ai_guard", "ai_audit", "ai_map",
-                         "ai_flow", "ai_trace", "ai_explain", "ai_evolve", "ai_scaffold"]
+        expected_tools = [
+            "ai_sync",
+            "ai_guard",
+            "ai_audit",
+            "ai_map",
+            "ai_flow",
+            "ai_trace",
+            "ai_explain",
+            "ai_evolve",
+            "ai_scaffold",
+        ]
 
         for tool_name in expected_tools:
             assert tool_name in mcp.tools, f"Tool {tool_name} not registered"

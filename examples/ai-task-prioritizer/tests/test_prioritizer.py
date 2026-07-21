@@ -7,7 +7,7 @@ from unittest.mock import MagicMock, patch
 import pytest
 
 # Import modules
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 from llm_client import LLMClient
 from main import main
 from prioritizer import Prioritizer
@@ -17,9 +17,9 @@ def test_prioritize_sorting():
     # Mock LLMClient
     mock_client = MagicMock()
     mock_client.get_scores.return_value = [
-        {"task": "Task A", "value": 5, "effort": 5}, # Score 1.0
-        {"task": "Task B", "value": 10, "effort": 2}, # Score 5.0
-        {"task": "Task C", "value": 2, "effort": 8}, # Score 0.25
+        {"task": "Task A", "value": 5, "effort": 5},  # Score 1.0
+        {"task": "Task B", "value": 10, "effort": 2},  # Score 5.0
+        {"task": "Task C", "value": 2, "effort": 8},  # Score 0.25
     ]
 
     prioritizer = Prioritizer(mock_client)
@@ -39,10 +39,10 @@ def test_prioritizer_categories():
     """Test category assignment logic (covers lines 30-38)."""
     mock_client = MagicMock()
     mock_client.get_scores.return_value = [
-        {"task": "Quick Win", "value": 8, "effort": 2},      # Quick Win
+        {"task": "Quick Win", "value": 8, "effort": 2},  # Quick Win
         {"task": "Major Project", "value": 8, "effort": 5},  # Major Project
-        {"task": "Fill-in", "value": 3, "effort": 2},        # Fill-ins
-        {"task": "Thankless", "value": 2, "effort": 5},      # Thankless Task
+        {"task": "Fill-in", "value": 3, "effort": 2},  # Fill-ins
+        {"task": "Thankless", "value": 2, "effort": 5},  # Thankless Task
     ]
 
     prioritizer = Prioritizer(mock_client)

@@ -1,4 +1,5 @@
 """Tests for src/cli/commands/audit.py — text/json output, strict mode, overridden violations."""
+
 from unittest.mock import MagicMock, patch
 
 from src.cli.commands.audit import audit
@@ -76,6 +77,7 @@ class TestAuditCommand:
     @patch("src.cli.commands.audit.AIContextSync")
     def test_audit_strict_critical(self, mock_sync_cls, mock_typer):
         import typer as _typer
+
         mock_typer.Exit = _typer.Exit  # real Exit class so `raise` works
 
         mock_sync = MagicMock()

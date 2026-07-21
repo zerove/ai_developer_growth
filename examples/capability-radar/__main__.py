@@ -38,12 +38,14 @@ def main() -> int:
     )
 
     parser.add_argument(
-        "-i", "--input",
+        "-i",
+        "--input",
         metavar="FILE",
         help="从 JSON 文件导入答案 (用于自动化/CI)",
     )
     parser.add_argument(
-        "-o", "--output",
+        "-o",
+        "--output",
         metavar="FILE",
         help="导出 Markdown 报告文件",
     )
@@ -53,7 +55,8 @@ def main() -> int:
         help="导出 JSON 结果文件",
     )
     parser.add_argument(
-        "--quiet", "-q",
+        "--quiet",
+        "-q",
         action="store_true",
         help="静默模式，仅输出结果摘要",
     )
@@ -95,7 +98,9 @@ def main() -> int:
         # Quiet mode: just summary
         print(f"综合等级: {result.overall_level.label}")
         print(f"最弱维度: {result.weakest_dimension.label} ({result.dimension_scores[result.weakest_dimension]:.2f})")
-        print(f"最强维度: {result.strongest_dimension.label} ({result.dimension_scores[result.strongest_dimension]:.2f})")
+        print(
+            f"最强维度: {result.strongest_dimension.label} ({result.dimension_scores[result.strongest_dimension]:.2f})"
+        )
 
     # Export files
     if args.json:

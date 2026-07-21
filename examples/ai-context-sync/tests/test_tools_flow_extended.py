@@ -1,4 +1,5 @@
 """Extended tests for src/handlers/tools_flow.py — cover ai_flow, ai_trace, ai_explain."""
+
 import json
 import os
 import sys
@@ -17,6 +18,7 @@ def _register_and_capture(mock_get_sync):
         def decorator(func):
             funcs[func.__name__] = func
             return func
+
         return decorator
 
     mock_mcp = MagicMock()
@@ -44,11 +46,13 @@ class TestToolsFlowRegister:
             def decorator(func):
                 captured.append(func.__name__)
                 return func
+
             return decorator
 
         mock_mcp = MagicMock()
         mock_mcp.tool = capture_tool
         from src.handlers.tools_flow import register
+
         register(mock_mcp, get_sync_tool=MagicMock())
         assert sorted(captured) == ["ai_explain", "ai_flow", "ai_trace"]
 
@@ -94,8 +98,10 @@ class TestAiFlowExtended:
         mock_sync.orchestrator.run_flow.return_value = "flow_result"
 
         m = mock_open(read_data="# Root Context\nContent here.")
-        with patch("src.handlers.tools_flow.os.path.exists", return_value=True), \
-             patch("src.handlers.tools_flow.open", m):
+        with (
+            patch("src.handlers.tools_flow.os.path.exists", return_value=True),
+            patch("src.handlers.tools_flow.open", m),
+        ):
             result_str = ai_flow(task="task", config=".ai-sync.json")
 
         result = json.loads(result_str)

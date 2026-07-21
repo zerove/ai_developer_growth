@@ -138,9 +138,7 @@ class TestReviewerAgent(unittest.TestCase):
 
     def test_pass_sets_passed_true(self) -> None:
         agent = ReviewerAgent()
-        history = [
-            Message(role=MessageRole.CODER, content="code with error handling")
-        ]
+        history = [Message(role=MessageRole.CODER, content="code with error handling")]
         response = agent.run(history)
         self.assertTrue(response.passed)
         self.assertTrue(response.text.startswith("PASS"))

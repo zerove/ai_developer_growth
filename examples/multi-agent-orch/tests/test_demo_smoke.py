@@ -1,4 +1,5 @@
 """Smoke tests for entry point modules."""
+
 import importlib.util
 import subprocess
 import sys

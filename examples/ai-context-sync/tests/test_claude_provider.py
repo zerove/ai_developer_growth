@@ -18,15 +18,11 @@ class TestClaudeGenerate:
     def test_generate_success(self):
         """generate() returns the assistant message content on 200."""
         mock_response = MagicMock()
-        mock_response.json.return_value = {
-            "content": [{"text": "Hello from Claude"}]
-        }
+        mock_response.json.return_value = {"content": [{"text": "Hello from Claude"}]}
         mock_response.raise_for_status = MagicMock()
 
         provider = ClaudeProvider(api_key="test-claude-key")
-        with patch(
-            "src.providers.claude_provider.requests.post", return_value=mock_response
-        ) as mock_post:
+        with patch("src.providers.claude_provider.requests.post", return_value=mock_response) as mock_post:
             result = provider.generate("What is AI?", "You are helpful.", "claude-sonnet-4-20250514")
             assert result == "Hello from Claude"
             mock_post.assert_called_once()
@@ -39,9 +35,7 @@ class TestClaudeGenerate:
         mock_response.raise_for_status = MagicMock()
 
         provider = ClaudeProvider(api_key="key")
-        with patch(
-            "src.providers.claude_provider.requests.post", return_value=mock_response
-        ) as mock_post:
+        with patch("src.providers.claude_provider.requests.post", return_value=mock_response) as mock_post:
             provider.generate("prompt", "sys", "claude-sonnet-4-20250514")
             url = mock_post.call_args[0][0]
             assert url == f"{ClaudeProvider.DEFAULT_BASE_URL}/messages"
@@ -53,9 +47,7 @@ class TestClaudeGenerate:
         mock_response.raise_for_status = MagicMock()
 
         provider = ClaudeProvider(api_key="key", api_base="https://proxy.example.com/v1")
-        with patch(
-            "src.providers.claude_provider.requests.post", return_value=mock_response
-        ) as mock_post:
+        with patch("src.providers.claude_provider.requests.post", return_value=mock_response) as mock_post:
             provider.generate("prompt", "sys", "claude-sonnet-4-20250514")
             url = mock_post.call_args[0][0]
             assert url == "https://proxy.example.com/v1/messages"
@@ -67,9 +59,7 @@ class TestClaudeGenerate:
         mock_response.raise_for_status = MagicMock()
 
         provider = ClaudeProvider(api_key="sk-ant-test")
-        with patch(
-            "src.providers.claude_provider.requests.post", return_value=mock_response
-        ) as mock_post:
+        with patch("src.providers.claude_provider.requests.post", return_value=mock_response) as mock_post:
             provider.generate("prompt", "sys", "claude-sonnet-4-20250514")
             _, kwargs = mock_post.call_args
             headers = kwargs["headers"]
@@ -84,9 +74,7 @@ class TestClaudeGenerate:
         mock_response.raise_for_status = MagicMock()
 
         provider = ClaudeProvider(api_key="key")
-        with patch(
-            "src.providers.claude_provider.requests.post", return_value=mock_response
-        ) as mock_post:
+        with patch("src.providers.claude_provider.requests.post", return_value=mock_response) as mock_post:
             provider.generate("test prompt", "test system", "claude-sonnet-4-20250514")
             _, kwargs = mock_post.call_args
             payload = kwargs["json"]
@@ -136,9 +124,7 @@ class TestClaudeGenerate:
         mock_response.raise_for_status = MagicMock()
 
         provider = ClaudeProvider(api_key="key")
-        with patch(
-            "src.providers.claude_provider.requests.post", return_value=mock_response
-        ) as mock_post:
+        with patch("src.providers.claude_provider.requests.post", return_value=mock_response) as mock_post:
             provider.generate("prompt", "sys", "claude-sonnet-4-20250514")
             _, kwargs = mock_post.call_args
             assert kwargs["timeout"] == 60
@@ -150,9 +136,7 @@ class TestClaudeGenerate:
         mock_response.raise_for_status = MagicMock()
 
         provider = ClaudeProvider(api_key=None)
-        with patch(
-            "src.providers.claude_provider.requests.post", return_value=mock_response
-        ) as mock_post:
+        with patch("src.providers.claude_provider.requests.post", return_value=mock_response) as mock_post:
             provider.generate("prompt", "sys", "claude-sonnet-4-20250514")
             _, kwargs = mock_post.call_args
             assert kwargs["headers"]["x-api-key"] == ""

@@ -14,5 +14,6 @@ class TestPromptLoader(unittest.TestCase):
         self.assertEqual(system_prompt, "Test system prompt")
         self.assertEqual(rendered, "Context: adr-data")
 
+
 if __name__ == "__main__":
     unittest.main()

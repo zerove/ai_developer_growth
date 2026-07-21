@@ -37,9 +37,7 @@ class TestWaterfallIntegration(unittest.TestCase):
         coder_msg = next(m for m in result.history if m.role == MessageRole.CODER)
         self.assertIn("def convert(", coder_msg.content)
 
-        reviewer_msgs = [
-            m for m in result.history if m.role == MessageRole.REVIEWER
-        ]
+        reviewer_msgs = [m for m in result.history if m.role == MessageRole.REVIEWER]
         self.assertTrue(reviewer_msgs[-1].content.startswith("PASS"))
 
     def test_iterative_fix_loop(self) -> None:
@@ -61,8 +59,7 @@ class TestWaterfallIntegration(unittest.TestCase):
 
         # Verify FIX message was inserted
         fix_msgs = [
-            m for m in result.history
-            if m.metadata.get("purpose") == "fix_request"
+            m for m in result.history if m.metadata.get("purpose") == "fix_request"
         ]
         self.assertEqual(len(fix_msgs), 1)
         self.assertIn("FIX:", fix_msgs[0].content)
@@ -81,8 +78,10 @@ class TestWaterfallIntegration(unittest.TestCase):
 
         found_roles = {m.role for m in result.history}
         expected = {
-            MessageRole.PM, MessageRole.ARCHITECT,
-            MessageRole.CODER, MessageRole.REVIEWER,
+            MessageRole.PM,
+            MessageRole.ARCHITECT,
+            MessageRole.CODER,
+            MessageRole.REVIEWER,
         }
         self.assertTrue(expected.issubset(found_roles))
 

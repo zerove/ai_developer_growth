@@ -1,4 +1,5 @@
 """Tests for src/cli/commands/evolution.py — evolve command (batch, interactive, no candidates)."""
+
 from unittest.mock import MagicMock, patch
 
 from src.cli.commands.evolution import evolve

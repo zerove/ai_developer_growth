@@ -51,5 +51,6 @@ class TestGitAnalyzerRobust(unittest.TestCase):
         # 关键是不会抛出异常
         self.assertIsNotNone(result)
 
+
 if __name__ == "__main__":
     unittest.main()

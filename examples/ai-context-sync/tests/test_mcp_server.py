@@ -23,16 +23,20 @@ class MockMCP:
 
     def tool(self):
         """Decorator that registers a tool function."""
+
         def decorator(func):
             self.tools[func.__name__] = func
             return func
+
         return decorator
 
     def resource(self, uri):
         """Decorator that registers a resource function."""
+
         def decorator(func):
             self.resources[uri] = func
             return func
+
         return decorator
 
 

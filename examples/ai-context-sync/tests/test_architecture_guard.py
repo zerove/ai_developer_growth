@@ -25,5 +25,6 @@ class TestArchitectureGuard(unittest.TestCase):
         self.assertEqual(len(report), 1)
         self.assertEqual(report[0]["rule_id"], "ADR-001")
 
+
 if __name__ == "__main__":
     unittest.main()

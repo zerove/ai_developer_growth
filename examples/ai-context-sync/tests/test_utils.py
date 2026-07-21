@@ -51,11 +51,7 @@ class TestRetryOnFailure:
     def test_custom_validate(self):
         call_count = 0
 
-        @retry_on_failure(
-            max_retries=3, delay=0,
-            validate=lambda x: x is not None and x > 0,
-            label="test"
-        )
+        @retry_on_failure(max_retries=3, delay=0, validate=lambda x: x is not None and x > 0, label="test")
         def negative_then_positive():
             nonlocal call_count
             call_count += 1

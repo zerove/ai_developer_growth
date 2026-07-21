@@ -39,5 +39,6 @@ class TestCLIOverride(unittest.TestCase):
             data = json.load(f)
         self.assertIn("ADR-001", data["settings"]["overridden_violations"])
 
+
 if __name__ == "__main__":
     unittest.main()

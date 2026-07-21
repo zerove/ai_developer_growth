@@ -26,6 +26,7 @@ def test_mcp_server():
             ai_sync,
             ai_trace,
         )
+
         print("   ✓ MCP server module imported successfully")
     except Exception as e:
         print(f"   ✗ Failed to import MCP server module: {e}")
@@ -42,7 +43,7 @@ def test_mcp_server():
         "ai_map": ai_map,
         "ai_evolve": ai_evolve,
         "ai_scaffold": ai_scaffold,
-        "ai_explain": ai_explain
+        "ai_explain": ai_explain,
     }
 
     for name, tool in tools.items():
@@ -61,7 +62,7 @@ def test_mcp_server():
             cwd=os.path.dirname(os.path.abspath(__file__)),
             timeout=3,
             capture_output=True,
-            text=True
+            text=True,
         )
         # If we get here, server started (timeout is expected)
         print("   ✓ MCP server can be started")
@@ -77,7 +78,7 @@ def test_mcp_server():
     opencode_config_path = os.path.expanduser("~/.opencode/opencode.json")
     if os.path.exists(opencode_config_path):
         try:
-            with open(opencode_config_path, 'r') as f:
+            with open(opencode_config_path, "r") as f:
                 config = json.load(f)
 
             if "mcp" in config and "ai-context-sync" in config["mcp"]:
@@ -100,9 +101,9 @@ def test_mcp_server():
         print("   ✗ opencode.json not found")
         return False
 
-    print("\n" + "="*50)
+    print("\n" + "=" * 50)
     print("✓ All MCP integration tests passed!")
-    print("="*50)
+    print("=" * 50)
     print("\nTo use MCP tools in opencode:")
     print("1. Start opencode in your project directory")
     print("2. The MCP tools will be automatically available")
@@ -110,6 +111,7 @@ def test_mcp_server():
     print("   'Please use ai_sync to update the project context'")
 
     return True
+
 
 if __name__ == "__main__":
     success = test_mcp_server()

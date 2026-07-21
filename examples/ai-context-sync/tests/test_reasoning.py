@@ -1,4 +1,5 @@
 """Tests for src/reasoning.py - DecisionReasoner"""
+
 import os
 import sys
 from unittest.mock import MagicMock
@@ -45,7 +46,9 @@ class TestDecisionReasoner:
         mock_llm = MagicMock()
         reasoner = DecisionReasoner(mock_llm, adr_dir)
         result = reasoner.explain_decision("quantum computing")
-        assert "no relevant adr" in result.lower() or "couldn't find" in result.lower() or "no specific" in result.lower()
+        assert (
+            "no relevant adr" in result.lower() or "couldn't find" in result.lower() or "no specific" in result.lower()
+        )
 
     def test_explain_decision_with_llm(self, adr_dir):
         mock_llm = MagicMock()

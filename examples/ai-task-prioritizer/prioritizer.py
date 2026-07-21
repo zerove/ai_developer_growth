@@ -10,18 +10,14 @@ class Prioritizer:
         prioritized = []
         for item in scores:
             value = int(item.get("value", 0))
-            effort = int(item.get("effort", 1)) # Avoid division by zero
+            effort = int(item.get("effort", 1))  # Avoid division by zero
             score = value / effort
 
             category = self._get_category(value, effort)
 
-            prioritized.append({
-                "task": item["task"],
-                "value": value,
-                "effort": effort,
-                "score": score,
-                "category": category
-            })
+            prioritized.append(
+                {"task": item["task"], "value": value, "effort": effort, "score": score, "category": category}
+            )
 
         # 3. Sort by score descending
         prioritized.sort(key=lambda x: x["score"], reverse=True)

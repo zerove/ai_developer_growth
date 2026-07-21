@@ -73,15 +73,21 @@ class TestCorrectionResult:
 
     def test_timestamp_populated(self) -> None:
         r = success_result(
-            attempt=1, strategy="retry", file_path="x.py",
-            original_code="", fixed_code="",
+            attempt=1,
+            strategy="retry",
+            file_path="x.py",
+            original_code="",
+            fixed_code="",
         )
         assert r.timestamp  # non-empty ISO string
 
     def test_frozen(self) -> None:
         r = success_result(
-            attempt=1, strategy="x", file_path="x.py",
-            original_code="", fixed_code="",
+            attempt=1,
+            strategy="x",
+            file_path="x.py",
+            original_code="",
+            fixed_code="",
         )
         try:
             r.attempt = 99  # type: ignore[misc]

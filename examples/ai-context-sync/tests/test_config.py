@@ -30,5 +30,6 @@ class TestConfigPersistence(unittest.TestCase):
         new_config = AppConfig.load(self.config_path)
         self.assertIn("ADR-001", new_config.settings.overridden_violations)
 
+
 if __name__ == "__main__":
     unittest.main()

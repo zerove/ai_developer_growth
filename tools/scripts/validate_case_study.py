@@ -219,6 +219,7 @@ class CaseStudyValidator:
                 if a_match_hours:
                     a_hours = float(a_match_hours.group(1))
                 else:
+                    assert a_match_minutes is not None
                     a_hours = float(a_match_minutes.group(1)) / 60
 
                 boost_val = float(b_match.group(1))

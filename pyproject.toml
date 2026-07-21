@@ -34,7 +34,7 @@ line-length = 120
 target-version = "py310"
 
 [tool.coverage.run]
-source = ["examples/ai-context-sync/src"]
+source = ["tools/scripts"]
 omit = ["*/tests/*", "*/__pycache__/*"]
 branch = true
 

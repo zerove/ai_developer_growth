@@ -55,6 +55,7 @@ nav:
   - 首页: index.md
   - 心态层:
     - 产品思维: mindset/product-thinking.md
+    - 能力模型: mindset/capability-model.md
     - 技术选型: mindset/tech-selection-methodology.md
     - 代码评审: mindset/code-review-best-practices.md
     - 团队协作: mindset/team-collaboration.md
@@ -64,6 +65,13 @@ nav:
     - 独立开发者: mindset/solo-founder-loop.md
     - 开源运营: mindset/open-source-operations.md
     - 安全开发: mindset/secure-development.md
+    - 团队指标: mindset/team-metrics.md
+    - 项目管理: mindset/project-management.md
+    - 绩效优化: mindset/performance-optimization.md
+    - 上市清单: mindset/ai-to-market-checklist.md
+    - 团队采纳: mindset/team-adoption.md
+    - 文档规范: mindset/documentation-standards.md
+    - 人机协作: mindset/human-ai-collaboration.md
   - 学习层:
     - AI 学习法: learning/ai-learning-method.md
     - 学习路径: learning/ai-learning-path.md
@@ -96,6 +104,7 @@ nav:
     - 上下文工程: efficiency/context-engineering.md
     - 多 Agent 模式: efficiency/multi-agent-patterns.md
     - 反模式: efficiency/anti-patterns.md
+    - 能力等级: capability-levels.md
   - 工具层:
     - 编辑器对比: tools/ai-editor-comparison.md
     - 工具矩阵: tools/ai-tool-matrix.md
@@ -105,7 +114,18 @@ nav:
     - 版本控制: tools/ai-version-control.md
     - 模型对比: tools/model-comparison-2026.md
     - RAG 开发: tools/rag-for-developers.md
+    - API 测试: tools/ai-api-testing-tools.md
+    - CI/CD 工具: tools/ai-cicd-tools.md
+    - 容器工具: tools/ai-container-tools.md
+    - 数据库工具: tools/ai-database-tools.md
+    - 监控工具: tools/ai-monitoring-tools.md
+    - 包管理: tools/ai-package-management.md
+    - IDE 实践: tools/ide-best-practices.md
   - 治理层:
     - 代码规范: governance/coding-standards.md
     - 安全标准: governance/security-standards.md
     - 文档标准: governance/documentation-standards.md
+    - 治理地图: governance/MAP.md
+    - 速查表: governance/CHEATSHEET.md
+  - 集成:
+    - 能力雷达集成: integration/capability-radar-integration.md

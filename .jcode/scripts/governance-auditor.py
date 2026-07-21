@@ -83,12 +83,12 @@ def security() -> None:
     ])
     print("Bandit 结果:")
     print(output1)
-    
+
     # pip-audit
     code2, output2 = run_command(["pip-audit", "--desc"])
     print("Pip-audit 结果:")
     print(output2)
-    
+
     if code1 == 0 and code2 == 0:
         print("✅ 安全扫描通过")
     else:
@@ -100,14 +100,14 @@ def full() -> None:
     """运行完整审计"""
     print("🚀 运行完整审计...")
     print("=" * 50)
-    
+
     checks = [
         ("Lint", lint),
         ("Format", format_check),
         ("Type Check", typecheck),
         ("Test", test),
     ]
-    
+
     failed = []
     for name, func in checks:
         print(f"\n{'=' * 50}")
@@ -116,7 +116,7 @@ def full() -> None:
             func()
         except SystemExit:
             failed.append(name)
-    
+
     print("\n" + "=" * 50)
     if failed:
         print(f"❌ 以下检查失败: {', '.join(failed)}")

@@ -24,7 +24,7 @@
 - ✅ 治理框架 (13 语言 + 11 框架 + 12 领域 = 36 规范)
 - ✅ 15 个真实案例研究 (效率提升 3x-12x)
 - ✅ 6 个代码示例 (2 个参考实现 + 4 个教学示例)
-- ✅ 5 条 ADR (Git 解析、知识优先重构、质量门禁、Agent 协作、AI 导航)
+- ✅ 6 条 ADR (Git 解析、知识优先重构、质量门禁、Agent 协作、AI 导航、知识产品化)
 - ✅ CI/CD 工作流 (统一 ci.yml: pre-commit, lint, type-check, test, link-audit, case-study-validation, governance-audit, security-scan, docs-check)
 - ✅ MCP 集成 (ai-context-sync 作为 MCP Server)
 - ✅ 测试覆盖率 84% (152 个测试，目标 ≥70%)
@@ -70,7 +70,7 @@
 | 核心文档数 | 37 | 40+ | 📈 |
 | 真实案例数 | 15 | 15+ | ✅ 达标 |
 | 代码示例 | 6 | 8+ | 📈 |
-| ADR | 5 | 6+ | 📈 |
+| ADR | 6 | 6+ | ✅ 达标 |
 | 测试覆盖率 | 84% (152 tests) | ≥70% | ✅ 达标 |
 | 代码质量 | ruff 0 errors | 0 errors | ✅ |
 | 安全评分 | 90/100 | 90/100 | ✅ 达标 |

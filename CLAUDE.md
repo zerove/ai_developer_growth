@@ -1,7 +1,7 @@
 # CLAUDE.md - AI Developer Growth Project
 
 ## 项目概览
-这是一个开源知识库，专注于 AI 时代开发者成长方法论。包含 37 个方法论文档、11 个真实案例研究、5 个代码示例、4 个 ADR 决策记录，以及 4 个核心治理 Agent。
+这是一个开源知识库，专注于 AI 时代开发者成长方法论。包含 37 个方法论文档、15 个真实案例研究、6 个代码示例、6 个 ADR 决策记录，以及 4 个核心治理 Agent。
 
 ## 核心结构
 ```
@@ -14,13 +14,13 @@ ai_developer_growth/
 ├── MOC.md                 # 知识地图
 ├── UBIQUITOUS_LANGUAGE.md # 领域术语表
 ├── agents/                # 4 个核心 Agent 定义
-├── case-studies/          # 11 个真实案例研究
+├── case-studies/          # 15 个真实案例研究
 ├── docs/                  # 37 个方法论文档
 │   ├── efficiency/        # 效率相关
 │   ├── learning/          # 学习相关
 │   ├── tools/             # 工具相关
 │   └── ...
-├── examples/              # 5 个代码示例
+├── examples/              # 6 个代码示例（可运行）
 │   ├── ai-context-sync/   # 上下文同步工具
 │   ├── multi-agent-orch/  # 多 Agent 编排
 │   ├── self-correction-loop/ # 自我修正循环
@@ -50,7 +50,7 @@ ai_developer_growth/
 配置文件位于 `.jcode/` 目录：
 - `.jcode/PROJECT.md` - 项目配置
 - `.jcode/SWARM.md` - 多 Agent 协作配置
-- `.jcode/skills/` - 4 个 skill 定义
+- `.jcode/scripts/` - 4 个可执行脚本
 
 ## 已实现参考 Agent (examples/)
 - **context-sync** - 自动维护 CONTEXT.md、ADR.md、项目状态同步

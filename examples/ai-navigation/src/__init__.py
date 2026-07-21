@@ -9,6 +9,7 @@ from .chat_interface import ChatInterface, ChatMessage, ChatSession
 from .hybrid_search import HybridSearchEngine, HybridSearchResult
 from .knowledge_index import Document, IndexBuilder, KnowledgeIndex, build_index
 from .path_recommender import LearningPath, LearningStep, PathRecommender, UserProfile
+from .personalized_mentor import Level, MentorPlan, PersonalizedMentor
 from .rag_engine import (
     Citation,
     ConversationManager,
@@ -35,6 +36,9 @@ __all__ = [
     "UserProfile",
     "LearningPath",
     "LearningStep",
+    "PersonalizedMentor",
+    "MentorPlan",
+    "Level",
     "VectorSearchEngine",
     "VectorSearchResult",
     "HybridSearchEngine",

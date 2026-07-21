@@ -47,7 +47,7 @@ python cli.py recommend --role "前端工程师" --experience "3年"
 
 ```bash
 python -m pytest tests/ -v
-# 17 tests passed
+# 56 tests passed
 ```
 
 ## 相关文档

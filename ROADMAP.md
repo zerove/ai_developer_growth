@@ -49,8 +49,8 @@
 **Phase 4: AI 增强 (2027 Q2, 视需求)**
 - [x] 向量数据库集成 (sentence-transformers + cosine similarity)
 - [x] RAG 引擎优化 (BM25 + 向量混合搜索 RRF 融合)
-- [ ] 对话界面
-- [ ] 个性化导师
+- [x] 对话界面 (chat_interface.py - CLI 问答系统)
+- [x] 个性化导师 (personalized_mentor.py - 五维能力评估 + 学习计划)
 
 ---
 

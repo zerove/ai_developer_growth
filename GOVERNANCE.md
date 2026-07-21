@@ -234,11 +234,12 @@ refactor(tools): extract common utilities
 
 详见 `docs/governance/languages/`、`docs/frameworks/` 和 `docs/` 目录：
 
-### 编程语言 (13 种)
+### 编程语言 (18 种)
 
 - [Python](docs/governance/languages/python.md)
-- [Rust](docs/governance/languages/rust.md)
+- [JavaScript](docs/governance/languages/javascript.md)
 - [TypeScript](docs/governance/languages/typescript.md)
+- [Rust](docs/governance/languages/rust.md)
 - [Go](docs/governance/languages/go.md)
 - [Java](docs/governance/languages/java.md)
 - [C#](docs/governance/languages/csharp.md)
@@ -249,6 +250,10 @@ refactor(tools): extract common utilities
 - [Swift](docs/governance/languages/swift.md)
 - [Scala](docs/governance/languages/scala.md)
 - [Elixir](docs/governance/languages/elixir.md)
+- [Dart](docs/governance/languages/dart.md)
+- [R](docs/governance/languages/r.md)
+- [SQL](docs/governance/languages/sql.md)
+- [Shell/Bash](docs/governance/languages/shell.md)
 
 ### 框架 (11 种)
 

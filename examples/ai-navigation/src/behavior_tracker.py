@@ -213,3 +213,150 @@ class BehaviorTracker:
             "total_views": total_views,
             "total_feedback": total_feedback,
         }
+
+
+class CollaborativeFilter:
+    """
+    Collaborative filtering for document recommendations.
+
+    Uses user behavior patterns to recommend documents
+    that similar users found helpful.
+    """
+
+    def __init__(self, tracker: BehaviorTracker):
+        self.tracker = tracker
+
+    def get_recommendations(self, user_id: str, top_k: int = 10) -> list[dict]:
+        """
+        Get document recommendations based on similar users.
+
+        Args:
+            user_id: Target user ID
+            top_k: Number of recommendations
+
+        Returns:
+            List of recommended documents with scores
+        """
+        user_profile = self.tracker.profiles.get(user_id)
+        if not user_profile:
+            return []
+
+        # Get user's viewed documents
+        user_views = {v.doc_id for v in user_profile.views}
+
+        # Find similar users
+        similar_users = self._find_similar_users(user_id, user_views)
+
+        # Collect recommendations from similar users
+        doc_scores: dict[str, float] = defaultdict(float)
+        doc_counts: dict[str, int] = defaultdict(int)
+
+        for similar_user_id, similarity in similar_users:
+            similar_profile = self.tracker.profiles[similar_user_id]
+
+            # Documents viewed by similar user but not by target user
+            for view in similar_profile.views:
+                if view.doc_id not in user_views:
+                    # Score based on similarity and view duration
+                    score = similarity * min(view.duration_seconds / 60.0, 1.0)
+                    doc_scores[view.doc_id] += score
+                    doc_counts[view.doc_id] += 1
+
+            # Documents rated highly by similar user
+            for fb in similar_profile.feedback:
+                if fb.doc_id not in user_views and fb.rating >= 4:
+                    score = similarity * (fb.rating / 5.0)
+                    doc_scores[fb.doc_id] += score
+                    doc_counts[fb.doc_id] += 1
+
+        # Normalize scores
+        recommendations = []
+        for doc_id, score in doc_scores.items():
+            avg_score = score / doc_counts[doc_id] if doc_counts[doc_id] > 0 else 0
+            recommendations.append({
+                "doc_id": doc_id,
+                "score": avg_score,
+                "based_on_users": doc_counts[doc_id],
+            })
+
+        # Sort by score
+        recommendations.sort(key=lambda x: x["score"], reverse=True)
+        return recommendations[:top_k]
+
+    def _find_similar_users(
+        self, user_id: str, user_views: set[str]
+    ) -> list[tuple[str, float]]:
+        """
+        Find users with similar viewing patterns.
+
+        Uses Jaccard similarity on viewed documents.
+        """
+        similarities = []
+
+        for other_id, other_profile in self.tracker.profiles.items():
+            if other_id == user_id:
+                continue
+
+            # Get other user's viewed documents
+            other_views = {v.doc_id for v in other_profile.views}
+
+            # Calculate Jaccard similarity
+            if not user_views and not other_views:
+                continue
+
+            intersection = len(user_views & other_views)
+            union = len(user_views | other_views)
+
+            if union > 0:
+                similarity = intersection / union
+                if similarity > 0.1:  # Minimum similarity threshold
+                    similarities.append((other_id, similarity))
+
+        # Sort by similarity
+        similarities.sort(key=lambda x: x[1], reverse=True)
+        return similarities[:20]  # Top 20 similar users
+
+    def get_similar_documents(self, doc_id: str, top_k: int = 5) -> list[dict]:
+        """
+        Find documents that are frequently viewed together.
+
+        Args:
+            doc_id: Target document ID
+            top_k: Number of similar documents
+
+        Returns:
+            List of similar documents with co-occurrence scores
+        """
+        # Find users who viewed this document
+        viewers = set()
+        for profile in self.tracker.profiles.values():
+            for view in profile.views:
+                if view.doc_id == doc_id:
+                    viewers.add(profile.user_id)
+                    break
+
+        if not viewers:
+            return []
+
+        # Count co-views
+        co_views: dict[str, int] = defaultdict(int)
+        for profile in self.tracker.profiles.values():
+            if profile.user_id in viewers:
+                for view in profile.views:
+                    if view.doc_id != doc_id:
+                        co_views[view.doc_id] += 1
+
+        # Calculate similarity scores
+        similar_docs = []
+        for other_doc_id, count in co_views.items():
+            # Normalize by number of viewers
+            score = count / len(viewers)
+            similar_docs.append({
+                "doc_id": other_doc_id,
+                "co_view_count": count,
+                "score": score,
+            })
+
+        # Sort by score
+        similar_docs.sort(key=lambda x: x["score"], reverse=True)
+        return similar_docs[:top_k]

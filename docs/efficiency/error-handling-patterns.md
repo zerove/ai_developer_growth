@@ -1,3 +1,13 @@
+---
+title: 错误处理模式 (Error Handling Patterns)
+description: > 统一的错误处理策略与最佳实践。
+category: 效率层
+tags: ['AI', 'error', 'TypeScript', 'handling', '数据库']
+difficulty: 初级
+reading_time: 10 分钟
+updated: 2026-07-21
+---
+
 # 错误处理模式 (Error Handling Patterns)
 
 > 统一的错误处理策略与最佳实践。

@@ -1,3 +1,13 @@
+---
+title: Token 成本控制与 ROI 分析 (Token Cost Control & ROI Analysis)
+description: > 精打细算，让每一分钱都产生价值。
+category: 效率层
+tags: ['token', 'AI', 'GPT', 'optimization']
+difficulty: 高级
+reading_time: 10 分钟
+updated: 2026-07-21
+---
+
 # Token 成本控制与 ROI 分析 (Token Cost Control & ROI Analysis)
 
 > 精打细算，让每一分钱都产生价值。

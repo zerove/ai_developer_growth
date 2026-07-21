@@ -1,0 +1,3287 @@
+
+<!doctype html>
+<html lang="zh" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="AI 开发者成长知识图谱 (MOC) - 技术文档">
+      
+      
+      
+        <link rel="canonical" href="https://zerove.github.io/ai_developer_growth/MOC/">
+      
+      
+      
+      
+        
+      
+      
+      <link rel="icon" href="../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.7">
+    
+    
+      
+        <title>AI 开发者成长知识图谱 (MOC) - AI Developer Growth</title>
+      
+    
+    
+      <link rel="stylesheet" href="../assets/stylesheets/main.ec1eaa64.min.css">
+      
+        
+        <link rel="stylesheet" href="../assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+    <script>__md_scope=new URL("..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#ai-moc" class="md-skip">
+          跳转至
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+<header class="md-header" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="页眉">
+    <a href=".." title="AI Developer Growth" class="md-header__button md-logo" aria-label="AI Developer Growth" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            AI Developer Growth
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              AI 开发者成长知识图谱 (MOC)
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="切换到深色模式"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="切换到深色模式" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a4 4 0 0 0-4 4 4 4 0 0 0 4 4 4 4 0 0 0 4-4 4 4 0 0 0-4-4m0 10a6 6 0 0 1-6-6 6 6 0 0 1 6-6 6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="slate" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="切换到浅色模式"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="切换到浅色模式" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 18c-.89 0-1.74-.2-2.5-.55C11.56 16.5 13 14.42 13 12s-1.44-4.5-3.5-5.45C10.26 6.2 11.11 6 12 6a6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="搜索" placeholder="搜索" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="查找">
+        
+        <button type="reset" class="md-search__icon md-icon" title="清空当前内容" aria-label="清空当前内容" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            正在初始化搜索引擎
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/zerove/ai_developer_growth" title="前往仓库" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+  </div>
+  <div class="md-source__repository">
+    zerove/ai_developer_growth
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+            
+<nav class="md-tabs" aria-label="标签" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href=".." class="md-tabs__link">
+        
+  
+  
+    
+  
+  首页
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../mindset/README.md" class="md-tabs__link">
+          
+  
+  
+  心态层
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../learning/README.md" class="md-tabs__link">
+          
+  
+  
+  学习层
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../efficiency/README.md" class="md-tabs__link">
+          
+  
+  
+  效率层
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../tools/README.md" class="md-tabs__link">
+          
+  
+  
+  工具层
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../governance/README.md" class="md-tabs__link">
+          
+  
+  
+  治理层
+
+        </a>
+      </li>
+    
+  
+
+      
+    </ul>
+  </div>
+</nav>
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="导航栏" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href=".." title="AI Developer Growth" class="md-nav__button md-logo" aria-label="AI Developer Growth" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    AI Developer Growth
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/zerove/ai_developer_growth" title="前往仓库" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+  </div>
+  <div class="md-source__repository">
+    zerove/ai_developer_growth
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href=".." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    首页
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    心态层
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    心态层
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../mindset/README.md" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    概览
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../mindset/ai-mindset.md" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    AI 心态
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../mindset/engineering-culture.md" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    工程师文化
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../mindset/growth-mindset.md" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    成长心态
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../mindset/continuous-learning.md" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    持续学习
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../mindset/innovation-thinking.md" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    创新思维
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../mindset/product-thinking/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    产品思维
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../mindset/tech-selection-methodology/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    技术选型
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../mindset/code-review-best-practices/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    代码评审
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../mindset/team-collaboration/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    团队协作
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    学习层
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    学习层
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../learning/README.md" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    概览
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../learning/learning-methodology.md" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    学习方法
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../learning/code-reading-skills/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    代码阅读
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../learning/debugging-methodology/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    调试方法
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../learning/refactoring-strategy/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    重构策略
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../learning/test-driven-development/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    TDD
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../learning/continuous-integration/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    CI/CD
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../learning/container-deployment/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Docker
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../learning/cloud-native-development/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    云原生
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../learning/microservices-architecture/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    微服务
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../learning/serverless-architecture/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Serverless
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    效率层
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    效率层
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../efficiency/README.md" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    概览
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../efficiency/ai-coding-efficiency/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    AI 编码
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../efficiency/ai-debugging-efficiency/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    AI 调试
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../efficiency/ai-code-review/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    AI 审查
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../efficiency/prompt-engineering/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Prompt 工程
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../efficiency/ai-documentation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    AI 文档
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../efficiency/ai-test-generation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    AI 测试
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../efficiency/ai-refactoring/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    AI 重构
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../efficiency/ai-architecture-design/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    AI 架构
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../efficiency/ai-database-design/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    AI 数据库
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../efficiency/ai-performance-optimization/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    AI 性能
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_5" >
+        
+          
+          <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    工具层
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    工具层
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../tools/README.md" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    概览
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../tools/ai-editor-comparison/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    编辑器对比
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../tools/ai-code-quality-tools/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    代码质量
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../tools/ai-testing-tools/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    测试工具
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../tools/ai-documentation-tools/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    文档工具
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../tools/ai-version-control/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    版本控制
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../tools/ai-package-management/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    包管理
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../tools/ai-container-tools/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    容器工具
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../tools/ai-cicd-tools/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    CI/CD
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../tools/ai-monitoring-tools/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    监控工具
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../tools/ai-database-tools/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    数据库工具
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_6" >
+        
+          
+          <label class="md-nav__link" for="__nav_6" id="__nav_6_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    治理层
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_6_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_6">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    治理层
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../governance/README.md" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    概览
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../governance/coding-standards/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    代码规范
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../governance/security-standards/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    安全标准
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../governance/documentation-standards/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    文档标准
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="目录">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      目录
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#mindset" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        🧠 认知层 (Mindset)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#learning" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        📚 学习层 (Learning)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#engineering" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ⚡ 效率层 (Engineering)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#tooling" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        🛠️ 工具层 (Tooling)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#agent-agent-dev" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        🤖 Agent 开发规范 (Agent Dev)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="🤖 Agent 开发规范 (Agent Dev)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        通用治理标准 (适用于任何项目)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#_2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        编程语言规范
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#_3" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        框架规范
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#devops" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        DevOps 规范
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#_4" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        数据库规范
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#api" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        API 设计规范
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#_5" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        安全规范
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#_6" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        测试与工作流
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#_7" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        本项目特定规范
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_8" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        🔬 实践验证
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="🔬 实践验证">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#11" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        案例库 (11 个真实案例)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#_9" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        代码示例
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#_10" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        参考实现
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_11" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        🗺️ 学习路径
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="🗺️ 学习路径">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#a" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        路径 A: 认知升级
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#b" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        路径 B: 技能提升
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#c" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        路径 C: 工具赋能
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#d" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        路径 D: 全面进化
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#e-frontend-focused" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        路径 E: 前端专用 (Frontend-Focused)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#f-backend-focused" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        路径 F: 后端专用 (Backend-Focused)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#g-devops-devops-focused" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        路径 G: DevOps 专用 (DevOps-Focused)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_12" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        📊 知识覆盖率
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_13" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        治理框架工具
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_14" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        贡献
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+  
+
+
+<h1 id="ai-moc">AI 开发者成长知识图谱 (MOC)<a class="headerlink" href="#ai-moc" title="Permanent link">&para;</a></h1>
+<blockquote>
+<p>以成长维度组织的知识网络，帮助开发者在 AI 时代实现指数级成长。
+<strong>优化状态</strong>: 已精简冗余内容，补充实际代码示例，以代码质量和工作效率为导向。</p>
+</blockquote>
+<hr />
+<h2 id="mindset">🧠 认知层 (Mindset)<a class="headerlink" href="#mindset" title="Permanent link">&para;</a></h2>
+<p><em>从"代码实现者"到"产品定义者"的转变。</em></p>
+<table>
+<thead>
+<tr>
+<th>文档</th>
+<th>核心问题</th>
+<th>关键洞察</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>[[docs/mindset/product-thinking|产品思维]]</td>
+<td>为什么要做这个？</td>
+<td>摆脱实现陷阱，关注用户价值</td>
+</tr>
+<tr>
+<td>[[docs/mindset/solo-founder-loop|独立开发闭环]]</td>
+<td>一人公司如何运作？</td>
+<td>精益运作 + 认知资源管理</td>
+</tr>
+<tr>
+<td>[[docs/mindset/ai-to-market-checklist|市场发布]]</td>
+<td>如何从代码到产品？</td>
+<td>0→1 路径 + 增长策略</td>
+</tr>
+<tr>
+<td>[[docs/mindset/team-adoption|团队采用策略]]</td>
+<td>团队如何采用 AI？</td>
+<td>企业案例 + 采用框架</td>
+</tr>
+<tr>
+<td>[[docs/mindset/human-ai-collaboration|人机协作]]</td>
+<td>如何与 AI 协作？</td>
+<td>能力互补 + 信任校准</td>
+</tr>
+<tr>
+<td>[[docs/mindset/team-metrics|指标度量]]</td>
+<td>如何衡量团队效能？</td>
+<td>效能指标 + 数据驱动改进</td>
+</tr>
+<tr>
+<td>[[docs/mindset/capability-model|能力模型]]</td>
+<td>AI 时代开发者如何分级？</td>
+<td>五维雷达图 + 成长路径</td>
+</tr>
+</tbody>
+</table>
+<p><strong>推荐阅读顺序</strong>: product-thinking → solo-founder-loop → ai-to-market-checklist → team-adoption → human-ai-collaboration → team-metrics</p>
+<hr />
+<h2 id="learning">📚 学习层 (Learning)<a class="headerlink" href="#learning" title="Permanent link">&para;</a></h2>
+<p><em>用 AI 极速习得新能力并真正内化。</em></p>
+<table>
+<thead>
+<tr>
+<th>文档</th>
+<th>核心问题</th>
+<th>关键洞察</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>[[docs/learning/ai-learning-method|AI 学习法]]</td>
+<td>如何快速掌握新领域？</td>
+<td>好奇心→提示→实现→审视→内化</td>
+</tr>
+<tr>
+<td>[[docs/learning/knowledge-internalization|知识内化]]</td>
+<td>如何避免 AI 依赖？</td>
+<td>对抗能力错觉，构建底层能力</td>
+</tr>
+<tr>
+<td>[[docs/learning/prompt-engineering|Prompt 工程]]</td>
+<td>如何写出好 Prompt？</td>
+<td>CoT、Few-Shot、结构化输出</td>
+</tr>
+</tbody>
+</table>
+<p><strong>推荐阅读顺序</strong>: ai-learning-method → knowledge-internalization → prompt-engineering</p>
+<hr />
+<h2 id="engineering">⚡ 效率层 (Engineering)<a class="headerlink" href="#engineering" title="Permanent link">&para;</a></h2>
+<p><em>将开发流程自动化，实现意图到交付的极短路径。</em></p>
+<table>
+<thead>
+<tr>
+<th>文档</th>
+<th>核心问题</th>
+<th>关键洞察</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>[[docs/efficiency/full-cycle-workflow|全周期工作流]]</td>
+<td>如何用 AI 开发？</td>
+<td>意图→生成→验证→修正闭环</td>
+</tr>
+<tr>
+<td>[[docs/efficiency/automated-bug-fixing|自动化修复]]</td>
+<td>如何自动修 Bug？</td>
+<td>感知→推理→行动→验证</td>
+</tr>
+<tr>
+<td>[[docs/efficiency/anti-patterns|反模式与失败案例]]</td>
+<td>如何避免常见陷阱？</td>
+<td>8 大反模式 + 真实案例</td>
+</tr>
+<tr>
+<td>[[docs/efficiency/context-engineering|上下文工程]]</td>
+<td>如何精准传递上下文？</td>
+<td>分层策略 + 验证方法论</td>
+</tr>
+<tr>
+<td>[[docs/efficiency/token-optimization|Token 成本控制]]</td>
+<td>如何控制 AI 成本？</td>
+<td>分层模型 + ROI 计算</td>
+</tr>
+<tr>
+<td>[[docs/efficiency/multi-agent-patterns|多 Agent 编排]]</td>
+<td>如何协作多个 Agent？</td>
+<td>5 种编排模式 + 选择指南</td>
+</tr>
+<tr>
+<td>[[docs/efficiency/metrics-framework|度量体系]]</td>
+<td>如何量化 AI 效果？</td>
+<td>三维平衡计分卡 + 自动化采集</td>
+</tr>
+<tr>
+<td>[[docs/efficiency/legacy-ai-migration|迁移策略]]</td>
+<td>如何引入 AI？</td>
+<td>五阶段渐进式迁移</td>
+</tr>
+<tr>
+<td>[[docs/efficiency/ai-security-review|安全审查]]</td>
+<td>如何保证 AI 代码安全？</td>
+<td>OWASP Top 10 + 安全门禁</td>
+</tr>
+<tr>
+<td>[[docs/efficiency/auto-documentation|文档自动化]]</td>
+<td>如何自动生成文档？</td>
+<td>API/注释/README 自动生成</td>
+</tr>
+<tr>
+<td>[[docs/efficiency/ai-code-performance|性能优化]]</td>
+<td>如何优化 AI 代码？</td>
+<td>数据库/内存/算法/缓存优化</td>
+</tr>
+<tr>
+<td>[[docs/efficiency/oss-with-ai|开源协作]]</td>
+<td>如何用 AI 参与开源？</td>
+<td>Issue/PR/文档 AI 协作</td>
+</tr>
+<tr>
+<td>[[docs/efficiency/knowledge-base-usage|知识库使用]]</td>
+<td>如何应用知识库？</td>
+<td>文档引用规则 + 自动化配置</td>
+</tr>
+<tr>
+<td>[[docs/efficiency/ci-cd-workflow|CI/CD 工作流]]</td>
+<td>如何自动化部署？</td>
+<td>GitHub Actions + 蓝绿部署</td>
+</tr>
+<tr>
+<td>[[docs/efficiency/code-review-guide|代码审查指南]]</td>
+<td>如何审查 AI 代码？</td>
+<td>审查清单 + 质量门禁</td>
+</tr>
+<tr>
+<td>[[docs/efficiency/debugging-workflow|调试工作流]]</td>
+<td>如何 AI 辅助调试？</td>
+<td>系统化调试 + 日志分析</td>
+</tr>
+<tr>
+<td>[[docs/efficiency/error-handling-patterns|错误处理模式]]</td>
+<td>如何统一错误处理？</td>
+<td>错误分类 + 恢复策略</td>
+</tr>
+<tr>
+<td>[[docs/efficiency/api-design-guide|API 设计指南]]</td>
+<td>如何设计 API？</td>
+<td>RESTful 规范 + 响应格式</td>
+</tr>
+</tbody>
+</table>
+<p><strong>实战避坑</strong>: full-cycle-workflow 包含了从 AI-Context-Sync 开发中提炼的 4 个避坑指南。anti-patterns.md 收集了真实失败案例。</p>
+<hr />
+<h2 id="tooling">🛠️ 工具层 (Tooling)<a class="headerlink" href="#tooling" title="Permanent link">&para;</a></h2>
+<p><em>构建自己的 AI 生产力环境。</em></p>
+<table>
+<thead>
+<tr>
+<th>文档</th>
+<th>核心问题</th>
+<th>关键洞察</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>[[docs/tools/ai-tool-matrix|工具矩阵]]</td>
+<td>选什么模型/IDE？</td>
+<td>jcode vs opencode 深度对比</td>
+</tr>
+<tr>
+<td>[[docs/tools/ide-best-practices|IDE 实践]]</td>
+<td>如何配置开发环境？</td>
+<td>极速编辑 + AI 协同</td>
+</tr>
+</tbody>
+</table>
+<p><strong>最新更新</strong>: 已更新至 Claude 4、GPT-5、jcode、opencode 等最新工具。</p>
+<hr />
+<h2 id="agent-agent-dev">🤖 Agent 开发规范 (Agent Dev)<a class="headerlink" href="#agent-agent-dev" title="Permanent link">&para;</a></h2>
+<p><em>确保 agent 开发的质量和效率。</em></p>
+<h3 id="_1">通用治理标准 (适用于任何项目)<a class="headerlink" href="#_1" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>主题</th>
+<th>核心问题</th>
+<th>文档</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>通用治理标准</td>
+<td>项目开发的完整规范</td>
+<td>[[../GOVERNANCE.md]]</td>
+</tr>
+<tr>
+<td>安装指南</td>
+<td>如何在任何项目中使用</td>
+<td>[[docs/governance/INSTALL.md]]</td>
+</tr>
+</tbody>
+</table>
+<h3 id="_2">编程语言规范<a class="headerlink" href="#_2" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>语言</th>
+<th>核心问题</th>
+<th>文档</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Python</td>
+<td>Python 项目特定规范</td>
+<td>[[docs/governance/languages/python]]</td>
+</tr>
+<tr>
+<td>Rust</td>
+<td>Rust 项目特定规范</td>
+<td>[[docs/governance/languages/rust]]</td>
+</tr>
+<tr>
+<td>TypeScript</td>
+<td>TS 项目特定规范</td>
+<td>[[docs/governance/languages/typescript]]</td>
+</tr>
+<tr>
+<td>Go</td>
+<td>Go 项目特定规范</td>
+<td>[[docs/governance/languages/go]]</td>
+</tr>
+<tr>
+<td>Java</td>
+<td>Java 项目特定规范</td>
+<td>[[docs/governance/languages/java]]</td>
+</tr>
+<tr>
+<td>C#</td>
+<td>C# 项目特定规范</td>
+<td>[[docs/governance/languages/csharp]]</td>
+</tr>
+<tr>
+<td>Kotlin</td>
+<td>Kotlin 项目特定规范</td>
+<td>[[docs/governance/languages/kotlin]]</td>
+</tr>
+<tr>
+<td>PHP</td>
+<td>PHP 项目特定规范</td>
+<td>[[docs/governance/languages/php]]</td>
+</tr>
+<tr>
+<td>Ruby</td>
+<td>Ruby 项目特定规范</td>
+<td>[[docs/governance/languages/ruby]]</td>
+</tr>
+<tr>
+<td>C/C++</td>
+<td>C/C++ 项目特定规范</td>
+<td>[[docs/governance/languages/cpp]]</td>
+</tr>
+<tr>
+<td>Swift</td>
+<td>Swift 项目特定规范</td>
+<td>[[docs/governance/languages/swift]]</td>
+</tr>
+<tr>
+<td>Scala</td>
+<td>Scala 项目特定规范</td>
+<td>[[docs/governance/languages/scala]]</td>
+</tr>
+<tr>
+<td>Elixir</td>
+<td>Elixir 项目特定规范</td>
+<td>[[docs/governance/languages/elixir]]</td>
+</tr>
+</tbody>
+</table>
+<h3 id="_3">框架规范<a class="headerlink" href="#_3" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>框架</th>
+<th>核心问题</th>
+<th>文档</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>React</td>
+<td>React 项目特定规范</td>
+<td>[[docs/frameworks/react]]</td>
+</tr>
+<tr>
+<td>Vue</td>
+<td>Vue 项目特定规范</td>
+<td>[[docs/frameworks/vue]]</td>
+</tr>
+<tr>
+<td>Angular</td>
+<td>Angular 项目特定规范</td>
+<td>[[docs/frameworks/angular]]</td>
+</tr>
+<tr>
+<td>Svelte</td>
+<td>Svelte/SvelteKit 项目特定规范</td>
+<td>[[docs/frameworks/svelte]]</td>
+</tr>
+<tr>
+<td>Next.js</td>
+<td>Next.js 项目特定规范</td>
+<td>[[docs/frameworks/nextjs]]</td>
+</tr>
+<tr>
+<td>NestJS</td>
+<td>NestJS 项目特定规范</td>
+<td>[[docs/frameworks/nestjs]]</td>
+</tr>
+<tr>
+<td>Express/Fastify</td>
+<td>Express/Fastify 项目特定规范</td>
+<td>[[docs/frameworks/express]]</td>
+</tr>
+<tr>
+<td>Flask</td>
+<td>Flask 项目特定规范</td>
+<td>[[docs/frameworks/flask]]</td>
+</tr>
+<tr>
+<td>Django</td>
+<td>Django 项目特定规范</td>
+<td>[[docs/frameworks/django]]</td>
+</tr>
+<tr>
+<td>FastAPI</td>
+<td>FastAPI 项目特定规范</td>
+<td>[[docs/frameworks/fastapi]]</td>
+</tr>
+<tr>
+<td>Spring Boot</td>
+<td>Spring Boot 项目特定规范</td>
+<td>[[docs/frameworks/springboot]]</td>
+</tr>
+</tbody>
+</table>
+<h3 id="devops">DevOps 规范<a class="headerlink" href="#devops" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>主题</th>
+<th>核心问题</th>
+<th>文档</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Docker</td>
+<td>容器化最佳实践</td>
+<td>[[docs/devops/docker]]</td>
+</tr>
+<tr>
+<td>Kubernetes</td>
+<td>K8s 部署与管理</td>
+<td>[[docs/devops/kubernetes]]</td>
+</tr>
+<tr>
+<td>CI/CD</td>
+<td>持续集成/持续部署</td>
+<td>[[docs/devops/cicd]]</td>
+</tr>
+</tbody>
+</table>
+<h3 id="_4">数据库规范<a class="headerlink" href="#_4" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>主题</th>
+<th>核心问题</th>
+<th>文档</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>SQL</td>
+<td>关系型数据库最佳实践</td>
+<td>[[docs/database/sql]]</td>
+</tr>
+<tr>
+<td>NoSQL</td>
+<td>非关系型数据库最佳实践</td>
+<td>[[docs/database/nosql]]</td>
+</tr>
+</tbody>
+</table>
+<h3 id="api">API 设计规范<a class="headerlink" href="#api" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>主题</th>
+<th>核心问题</th>
+<th>文档</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>RESTful</td>
+<td>REST API 设计</td>
+<td>[[docs/api/rest]]</td>
+</tr>
+<tr>
+<td>GraphQL</td>
+<td>GraphQL API 设计</td>
+<td>[[docs/api/graphql]]</td>
+</tr>
+<tr>
+<td>gRPC</td>
+<td>gRPC API 设计</td>
+<td>[[docs/api/grpc]]</td>
+</tr>
+</tbody>
+</table>
+<h3 id="_5">安全规范<a class="headerlink" href="#_5" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>主题</th>
+<th>核心问题</th>
+<th>文档</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>认证授权</td>
+<td>认证模式与最佳实践</td>
+<td>[[docs/security/authentication]]</td>
+</tr>
+<tr>
+<td>OWASP Top 10</td>
+<td>安全风险防护</td>
+<td>[[docs/security/owasp]]</td>
+</tr>
+</tbody>
+</table>
+<h3 id="_6">测试与工作流<a class="headerlink" href="#_6" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>主题</th>
+<th>核心问题</th>
+<th>文档</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>测试策略</td>
+<td>测试金字塔与最佳实践</td>
+<td>[[docs/testing/strategy]]</td>
+</tr>
+<tr>
+<td>Git 工作流</td>
+<td>Git 分支与提交规范</td>
+<td>[[docs/testing/git-workflow]]</td>
+</tr>
+</tbody>
+</table>
+<h3 id="_7">本项目特定规范<a class="headerlink" href="#_7" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>主题</th>
+<th>核心问题</th>
+<th>文档</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Prompt 编写规范</td>
+<td>如何编写高质量 agent 定义</td>
+<td>[[docs/agent-dev/prompt-standards]]</td>
+</tr>
+<tr>
+<td>开发流程规范</td>
+<td>agent 开发的全流程标准</td>
+<td>[[docs/agent-dev/workflow-standards]]</td>
+</tr>
+<tr>
+<td>质量门禁</td>
+<td>各阶段的质量检查标准</td>
+<td>[[docs/agent-dev/quality-gates]]</td>
+</tr>
+<tr>
+<td>上下文管理</td>
+<td>项目上下文的维护规范</td>
+<td>[[docs/agent-dev/context-management]]</td>
+</tr>
+<tr>
+<td>Prompt 模板</td>
+<td>agent 定义的标准模板</td>
+<td>[[docs/agent-dev/agent-prompt-template]]</td>
+</tr>
+<tr>
+<td>质量检查清单</td>
+<td>开发各阶段的检查项</td>
+<td>[[docs/agent-dev/quality-checklist]]</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="_8">🔬 实践验证<a class="headerlink" href="#_8" title="Permanent link">&para;</a></h2>
+<p><em>理论需要实践检验。</em></p>
+<h3 id="11">案例库 (11 个真实案例)<a class="headerlink" href="#11" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>案例</th>
+<th>场景</th>
+<th>效率提升</th>
+<th>核心洞察</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>[../case-studies/ai-task-prioritizer.md|任务优先级工具]]</td>
+<td>CLI 工具开发</td>
+<td>8x</td>
+<td>TDD + AI = 极致效率</td>
+</tr>
+<tr>
+<td>[../case-studies/ai-context-sync-development.md|AI-Context-Sync]]</td>
+<td>完整产品开发</td>
+<td>12x</td>
+<td>结构化 Prompt 是关键</td>
+</tr>
+<tr>
+<td>[../case-studies/cli-tool-development.md|CLI 工具开发]]</td>
+<td>命令行工具</td>
+<td>4x</td>
+<td>AI 加速样板代码生成</td>
+</tr>
+<tr>
+<td>[../case-studies/web-scraping-tool.md|网页抓取工具]]</td>
+<td>数据采集</td>
+<td>4x</td>
+<td>智能识别减少手动配置</td>
+</tr>
+<tr>
+<td>[../case-studies/data-pipeline.md|数据处理管道]]</td>
+<td>ETL 流程</td>
+<td>4x</td>
+<td>插件化架构提高可扩展性</td>
+</tr>
+<tr>
+<td>[../case-studies/api-monitoring.md|API 监控系统]]</td>
+<td>运维监控</td>
+<td>4.5x</td>
+<td>配置驱动减少代码修改</td>
+</tr>
+<tr>
+<td>[../case-studies/database-migration.md|数据库迁移]]</td>
+<td>数据库管理</td>
+<td>4.4x</td>
+<td>自动化分析减少人工错误</td>
+</tr>
+<tr>
+<td>[../case-studies/legacy-refactoring.md|遗留系统重构]]</td>
+<td>代码现代化</td>
+<td>5x</td>
+<td>渐进式重构降低风险</td>
+</tr>
+<tr>
+<td>[../case-studies/production-debugging.md|生产环境调试]]</td>
+<td>问题排查</td>
+<td>6x</td>
+<td>AI 辅助快速定位根因</td>
+</tr>
+<tr>
+<td>[../case-studies/api-design-implementation.md|API 设计实现]]</td>
+<td>后端开发</td>
+<td>5x</td>
+<td>契约先行保证接口质量</td>
+</tr>
+<tr>
+<td>[../case-studies/multi-agent-collaboration.md|多 Agent 协作]]</td>
+<td>模拟团队开发</td>
+<td>5x</td>
+<td>角色分工 + 迭代</td>
+</tr>
+</tbody>
+</table>
+<h3 id="_9">代码示例<a class="headerlink" href="#_9" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>示例</th>
+<th>核心机制</th>
+<th>学习价值</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>[../examples/self-correction-loop/README.md|自我修正循环]]</td>
+<td>AI 代码质量保证</td>
+<td>验证→重试模式</td>
+</tr>
+<tr>
+<td>[../examples/multi-agent-orch/README.md|多 Agent 协作]]</td>
+<td>模拟团队开发</td>
+<td>角色分工 + 迭代</td>
+</tr>
+</tbody>
+</table>
+<h3 id="_10">参考实现<a class="headerlink" href="#_10" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>项目</th>
+<th>定位</th>
+<th>价值</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>[../examples/ai-context-sync/README.md|AI-Context-Sync]]</td>
+<td>知识验证工具</td>
+<td>方法论的实践检验</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="_11">🗺️ 学习路径<a class="headerlink" href="#_11" title="Permanent link">&para;</a></h2>
+<h3 id="a">路径 A: 认知升级<a class="headerlink" href="#a" title="Permanent link">&para;</a></h3>
+<p>适合想理解"为什么"的开发者。
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>product-thinking → solo-founder-loop → ai-to-market-checklist
+</code></pre></div></p>
+<h3 id="b">路径 B: 技能提升<a class="headerlink" href="#b" title="Permanent link">&para;</a></h3>
+<p>适合想掌握"怎么做"的开发者。
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>ai-learning-method → prompt-engineering → full-cycle-workflow
+</code></pre></div></p>
+<h3 id="c">路径 C: 工具赋能<a class="headerlink" href="#c" title="Permanent link">&para;</a></h3>
+<p>适合想优化"用什么"的开发者。
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>ai-tool-matrix → ide-best-practices → 实践案例
+</code></pre></div></p>
+<h3 id="d">路径 D: 全面进化<a class="headerlink" href="#d" title="Permanent link">&para;</a></h3>
+<p>适合想系统性提升的开发者。
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>认知层 → 学习层 → 效率层 → 工具层 → 实践验证
+</code></pre></div></p>
+<h3 id="e-frontend-focused">路径 E: 前端专用 (Frontend-Focused)<a class="headerlink" href="#e-frontend-focused" title="Permanent link">&para;</a></h3>
+<p>适合 React/Vue/Next.js 开发者，聚焦 UI/UX 与组件化开发。</p>
+<p><strong>核心组合</strong>:
+<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>product-thinking → ai-learning-method → ide-best-practices → 实践案例
+</code></pre></div></p>
+<p><strong>推荐技术栈</strong>:
+- AI IDE: Cursor (React 优化) + Zed (极速补全)
+- 模型: Claude 4 (复杂组件逻辑) + GPT-4o-mini (快速补全)
+- 工具: v0.dev (UI 生成), CodeRabbit (PR 审查)</p>
+<p><strong>实战重点</strong>:
+- 组件化 Prompt 设计
+- 响应式布局 AI 辅助
+- 状态管理模式选择
+- 性能优化 (懒加载、代码分割)</p>
+<h3 id="f-backend-focused">路径 F: 后端专用 (Backend-Focused)<a class="headerlink" href="#f-backend-focused" title="Permanent link">&para;</a></h3>
+<p>适合 API 开发、微服务、数据库优化方向的开发者。</p>
+<p><strong>核心组合</strong>:
+<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a>ai-learning-method → knowledge-internalization → full-cycle-workflow → automated-bug-fixing
+</code></pre></div></p>
+<p><strong>推荐技术栈</strong>:
+- AI IDE: Zed (Rust 性能) + Claude Code (复杂推理)
+- 模型: Claude 4 (架构设计) + Gemini 2.5 Pro (长上下文)
+- 工具: Postbird (API 测试), AI-Context-Sync (上下文管理)</p>
+<p><strong>实战重点</strong>:
+- API 契约设计
+- 数据库 Schema 优化
+- 微服务拆分策略
+- 性能监控与调优</p>
+<h3 id="g-devops-devops-focused">路径 G: DevOps 专用 (DevOps-Focused)<a class="headerlink" href="#g-devops-devops-focused" title="Permanent link">&para;</a></h3>
+<p>适合 CI/CD、监控、基础设施自动化方向的工程师。</p>
+<p><strong>核心组合</strong>:
+<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a>ai-learning-method → automated-bug-fixing → full-cycle-workflow → ide-best-practices
+</code></pre></div></p>
+<p><strong>推荐技术栈</strong>:
+- AI IDE: Zed (Shell 集成) + Claude Code (脚本生成)
+- 模型: Claude 4 (复杂脚本) + GPT-4o (快速补全)
+- 工具: GitHub Actions (CI/CD), Terraform (IaC), Datadog (监控)</p>
+<p><strong>实战重点</strong>:
+- CI/CD Pipeline 自动化
+- 基础设施即代码 (IaC)
+- 监控告警智能化
+- 故障自动恢复</p>
+<hr />
+<h2 id="_12">📊 知识覆盖率<a class="headerlink" href="#_12" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>维度</th>
+<th>文档数</th>
+<th>状态</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>认知层</td>
+<td>7</td>
+<td>✅ 完整</td>
+</tr>
+<tr>
+<td>学习层</td>
+<td>3</td>
+<td>✅ 完整</td>
+</tr>
+<tr>
+<td>效率层</td>
+<td>18</td>
+<td>✅ 完整</td>
+</tr>
+<tr>
+<td>工具层</td>
+<td>2</td>
+<td>✅ 完整</td>
+</tr>
+<tr>
+<td>案例库</td>
+<td>11</td>
+<td>✅ 达标</td>
+</tr>
+<tr>
+<td>代码示例</td>
+<td>2</td>
+<td>✅ 基础</td>
+</tr>
+<tr>
+<td>学习路径</td>
+<td>7</td>
+<td>✅ 完整</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="_13">治理框架工具<a class="headerlink" href="#_13" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>文件</th>
+<th>用途</th>
+<th>链接</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>可视化地图</td>
+<td>整体架构图</td>
+<td>[[docs/governance/MAP]]</td>
+</tr>
+<tr>
+<td>快速参考卡</td>
+<td>速查手册</td>
+<td>[[docs/governance/CHEATSHEET]]</td>
+</tr>
+<tr>
+<td>安装指南</td>
+<td>快速入门</td>
+<td>[[docs/governance/INSTALL.md]]</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="_14">贡献<a class="headerlink" href="#_14" title="Permanent link">&para;</a></h2>
+<p>欢迎贡献案例、工具推荐、方法论改进。</p>
+<p>详见 [../CONTRIBUTING.md|贡献指南]]。</p>
+<hr />
+<p><em>本图谱随项目演进持续更新。</em></p>
+
+
+
+
+
+
+
+  
+  
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  回到页面顶部
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "..", "features": ["navigation.tabs", "navigation.sections", "navigation.expand", "navigation.top", "search.highlight", "search.suggest", "content.code.copy"], "search": "../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "\u5df2\u590d\u5236", "clipboard.copy": "\u590d\u5236", "search.result.more.one": "\u5728\u8be5\u9875\u4e0a\u8fd8\u6709 1 \u4e2a\u7b26\u5408\u6761\u4ef6\u7684\u7ed3\u679c", "search.result.more.other": "\u5728\u8be5\u9875\u4e0a\u8fd8\u6709 # \u4e2a\u7b26\u5408\u6761\u4ef6\u7684\u7ed3\u679c", "search.result.none": "\u6ca1\u6709\u627e\u5230\u7b26\u5408\u6761\u4ef6\u7684\u7ed3\u679c", "search.result.one": "\u627e\u5230 1 \u4e2a\u7b26\u5408\u6761\u4ef6\u7684\u7ed3\u679c", "search.result.other": "# \u4e2a\u7b26\u5408\u6761\u4ef6\u7684\u7ed3\u679c", "search.result.placeholder": "\u952e\u5165\u4ee5\u5f00\u59cb\u641c\u7d22", "search.result.term.missing": "\u7f3a\u5c11", "select.version": "\u9009\u62e9\u5f53\u524d\u7248\u672c"}, "version": null}</script>
+    
+    
+      <script src="../assets/javascripts/bundle.d7400e89.min.js"></script>
+      
+    
+  </body>
+</html>

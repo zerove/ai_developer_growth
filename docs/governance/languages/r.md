@@ -1,3 +1,13 @@
+---
+title: R Governance Rules
+description: > 适用于: R 项目 (数据分析, 统计建模, 机器学习)
+category: 治理层
+tags: ['测试']
+difficulty: 高级
+reading_time: 10 分钟
+updated: 2026-07-21
+---
+
 # R Governance Rules
 
 > 适用于: R 项目 (数据分析, 统计建模, 机器学习)

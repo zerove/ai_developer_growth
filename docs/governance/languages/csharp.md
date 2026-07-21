@@ -1,3 +1,13 @@
+---
+title: C# Governance Rules
+description: > 适用于 C# 项目的 AI Agent 开发规范。
+category: 治理层
+tags: ['AI', 'API', '测试', 'SQL', 'LLM']
+difficulty: 高级
+reading_time: 10 分钟
+updated: 2026-07-21
+---
+
 # C# Governance Rules
 
 > 适用于 C# 项目的 AI Agent 开发规范。

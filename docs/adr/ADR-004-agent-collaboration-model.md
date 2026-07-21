@@ -1,3 +1,13 @@
+---
+title: ADR-004: 多 Agent 协作模型与编排模式
+description: ADR-004: 多 Agent 协作模型与编排模式 - 技术文档
+category: 治理层
+tags: ['ADR', 'agent', '004']
+difficulty: 高级
+reading_time: 10 分钟
+updated: 2026-07-21
+---
+
 # ADR-004: 多 Agent 协作模型与编排模式
 
 **状态**: 已通过

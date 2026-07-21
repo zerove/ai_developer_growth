@@ -1,3 +1,13 @@
+---
+title: ADR-005: AI 导航系统架构
+description: ## 状态
+category: 治理层
+tags: ['AI', 'REST', '005', 'ADR', 'ai']
+difficulty: 高级
+reading_time: 10 分钟
+updated: 2026-07-21
+---
+
 # ADR-005: AI 导航系统架构
 
 ## 状态

@@ -1,3 +1,13 @@
+---
+title: CDN 缓存
+description: > 把内容推到离用户最近的节点，降低延迟，减轻源站压力。
+category: 工具层
+tags: ['Docker', 'REST', '安全', 'API']
+difficulty: 初级
+reading_time: 10 分钟
+updated: 2026-07-21
+---
+
 # CDN 缓存
 
 > 把内容推到离用户最近的节点，降低延迟，减轻源站压力。

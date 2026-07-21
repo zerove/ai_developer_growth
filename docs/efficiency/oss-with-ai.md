@@ -1,3 +1,13 @@
+---
+title: 开源项目 AI 协作 (Open Source with AI)
+description: > AI 赋能开源，让贡献更高效。
+category: 效率层
+tags: ['with', 'AI', 'API', 'Python', '测试']
+difficulty: 高级
+reading_time: 10 分钟
+updated: 2026-07-21
+---
+
 # 开源项目 AI 协作 (Open Source with AI)
 
 > AI 赋能开源，让贡献更高效。

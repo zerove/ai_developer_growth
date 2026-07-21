@@ -1,3 +1,13 @@
+---
+title: 2026 年 AI 模型对比
+description: ## 核心观点
+category: 工具层
+tags: ['AI', 'model', 'API', 'GPT', 'comparison']
+difficulty: 高级
+reading_time: 10 分钟
+updated: 2026-07-21
+---
+
 # 2026 年 AI 模型对比
 
 ## 核心观点

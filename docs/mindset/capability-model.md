@@ -1,3 +1,13 @@
+---
+title: AI 时代开发者能力模型
+description: AI 时代开发者能力模型 - 技术文档
+category: 心态层
+tags: ['AI', 'model', 'capability']
+difficulty: 高级
+reading_time: 10 分钟
+updated: 2026-07-21
+---
+
 # AI 时代开发者能力模型
 
 > **定位**: 定义 AI 时代开发者的核心能力维度与等级标准

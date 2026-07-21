@@ -1,3 +1,13 @@
+---
+title: Rust AI 开发规范 (Rust AI Spec)
+description: Rust AI 开发规范 (Rust AI Spec) - 技术文档
+category: 治理层
+tags: ['AI']
+difficulty: 高级
+reading_time: 10 分钟
+updated: 2026-07-21
+---
+
 # Rust AI 开发规范 (Rust AI Spec)
 
 ## 1. AI 协同编码标准 (Coding Standards)

@@ -1,3 +1,13 @@
+---
+title: Authentication Governance Rules
+description: > 适用于认证模式的 AI Agent 开发规范。
+category: 治理层
+tags: ['测试', 'AI', 'API', 'Python']
+difficulty: 高级
+reading_time: 10 分钟
+updated: 2026-07-21
+---
+
 # Authentication Governance Rules
 
 > 适用于认证模式的 AI Agent 开发规范。

@@ -1,3 +1,13 @@
+---
+title: Vue Governance Rules
+description: > 适用于 Vue 项目的 AI Agent 开发规范。
+category: 工具层
+tags: ['AI', 'API', '测试', 'TypeScript', 'Vue']
+difficulty: 高级
+reading_time: 10 分钟
+updated: 2026-07-21
+---
+
 # Vue Governance Rules
 
 > 适用于 Vue 项目的 AI Agent 开发规范。

@@ -1,3 +1,13 @@
+---
+title: RAG 技术开发者实践指南
+description: ## 核心观点
+category: 工具层
+tags: ['AI', 'Python', 'GPT', 'LLM', 'developers']
+difficulty: 高级
+reading_time: 10 分钟
+updated: 2026-07-21
+---
+
 # RAG 技术开发者实践指南
 
 ## 核心观点

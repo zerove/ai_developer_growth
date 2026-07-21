@@ -1,3 +1,13 @@
+---
+title: 架构决策记录 (ADR) 索引
+description: > 本文件汇总所有架构决策记录，按时间倒序排列。
+category: 治理层
+tags: ['REST']
+difficulty: 初级
+reading_time: 10 分钟
+updated: 2026-07-21
+---
+
 # 架构决策记录 (ADR) 索引
 
 > 本文件汇总所有架构决策记录，按时间倒序排列。

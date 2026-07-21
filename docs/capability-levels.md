@@ -1,3 +1,13 @@
+---
+title: AI 时代开发者能力等级模型
+description: > 定义 AI 时代开发者的能力标准，帮助开发者明确成长路径。
+category: 效率层
+tags: ['AI', 'Python', 'capability', 'CI/CD', 'levels']
+difficulty: 高级
+reading_time: 10 分钟
+updated: 2026-07-21
+---
+
 # AI 时代开发者能力等级模型
 
 > 定义 AI 时代开发者的能力标准，帮助开发者明确成长路径。

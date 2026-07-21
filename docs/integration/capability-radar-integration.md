@@ -1,3 +1,13 @@
+---
+title: 能力雷达集成指南
+description: > 将 AI 时代开发者能力雷达集成到团队的核心人才流程中
+category: 工具层
+tags: ['AI', 'REST', 'Python', 'radar', '测试']
+difficulty: 初级
+reading_time: 10 分钟
+updated: 2026-07-21
+---
+
 # 能力雷达集成指南
 
 > 将 AI 时代开发者能力雷达集成到团队的核心人才流程中

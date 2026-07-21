@@ -1,3 +1,13 @@
+---
+title: Agent Prompt 编写规范
+description: 本文档定义了 AI Agent 的 Prompt 编写标准，确保 agent 定义的一致性、可维护性和高质量。
+category: 治理层
+tags: ['AI', '测试', 'standards', '安全', 'prompt']
+difficulty: 初级
+reading_time: 10 分钟
+updated: 2026-07-21
+---
+
 # Agent Prompt 编写规范
 
 本文档定义了 AI Agent 的 Prompt 编写标准，确保 agent 定义的一致性、可维护性和高质量。

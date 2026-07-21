@@ -1,3 +1,13 @@
+---
+title: 社区运营计划
+description: ## 目标
+category: 效率层
+tags: ['plan', 'AI', 'community', 'operations']
+difficulty: 初级
+reading_time: 10 分钟
+updated: 2026-07-21
+---
+
 # 社区运营计划
 
 ## 目标

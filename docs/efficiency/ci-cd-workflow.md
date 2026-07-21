@@ -1,3 +1,13 @@
+---
+title: CI/CD 工作流 (CI/CD Workflow)
+description: > AI 驱动的持续集成与持续部署最佳实践。
+category: 效率层
+tags: ['AI', 'Kubernetes', '测试', '安全', 'ci']
+difficulty: 初级
+reading_time: 10 分钟
+updated: 2026-07-21
+---
+
 # CI/CD 工作流 (CI/CD Workflow)
 
 > AI 驱动的持续集成与持续部署最佳实践。

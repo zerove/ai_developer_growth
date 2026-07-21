@@ -1,3 +1,13 @@
+---
+title: 自动化 Bug 修复流水线 (Automated Bug-Fixing Pipeline)
+description: ## 概述
+category: 效率层
+tags: ['automated', 'AI', '测试', 'LLM', 'fixing']
+difficulty: 高级
+reading_time: 10 分钟
+updated: 2026-07-21
+---
+
 # 自动化 Bug 修复流水线 (Automated Bug-Fixing Pipeline)
 
 ## 概述

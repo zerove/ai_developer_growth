@@ -1,3 +1,13 @@
+---
+title: AI 代码性能优化 (AI Code Performance Optimization)
+description: > AI 生成的代码能运行，但不一定跑得快。
+category: 效率层
+tags: ['AI', 'API', 'performance', 'Python', '测试']
+difficulty: 高级
+reading_time: 10 分钟
+updated: 2026-07-21
+---
+
 # AI 代码性能优化 (AI Code Performance Optimization)
 
 > AI 生成的代码能运行，但不一定跑得快。

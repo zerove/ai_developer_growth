@@ -1,3 +1,13 @@
+---
+title: RabbitMQ
+description: > 轻量级消息代理，适合灵活路由和复杂消息模式。
+category: 工具层
+tags: ['Docker', 'Python']
+difficulty: 高级
+reading_time: 10 分钟
+updated: 2026-07-21
+---
+
 # RabbitMQ
 
 > 轻量级消息代理，适合灵活路由和复杂消息模式。

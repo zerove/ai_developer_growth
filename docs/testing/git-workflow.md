@@ -1,3 +1,13 @@
+---
+title: Git Workflow Governance Rules
+description: > 适用于 Git 工作流的 AI Agent 开发规范。
+category: 工具层
+tags: ['API', 'git', 'AI', 'Python', '测试']
+difficulty: 初级
+reading_time: 10 分钟
+updated: 2026-07-21
+---
+
 # Git Workflow Governance Rules
 
 > 适用于 Git 工作流的 AI Agent 开发规范。

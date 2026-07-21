@@ -1,3 +1,13 @@
+---
+title: AI Developer Growth - 项目公告
+description: ## 欢迎参与 AI Developer Growth
+category: 效率层
+tags: ['AI']
+difficulty: 初级
+reading_time: 10 分钟
+updated: 2026-07-21
+---
+
 # AI Developer Growth - 项目公告
 
 ## 欢迎参与 AI Developer Growth

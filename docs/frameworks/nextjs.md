@@ -1,3 +1,13 @@
+---
+title: Next.js Governance Rules
+description: > 适用于 Next.js 项目的 AI Agent 开发规范。
+category: 工具层
+tags: ['AI', 'API', '测试', 'TypeScript', 'React']
+difficulty: 初级
+reading_time: 10 分钟
+updated: 2026-07-21
+---
+
 # Next.js Governance Rules
 
 > 适用于 Next.js 项目的 AI Agent 开发规范。

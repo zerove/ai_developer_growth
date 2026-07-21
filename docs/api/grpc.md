@@ -1,3 +1,13 @@
+---
+title: gRPC Governance Rules
+description: > 适用于 gRPC 项目的 AI Agent 开发规范。
+category: 工具层
+tags: ['测试', 'AI', 'Python']
+difficulty: 初级
+reading_time: 10 分钟
+updated: 2026-07-21
+---
+
 # gRPC Governance Rules
 
 > 适用于 gRPC 项目的 AI Agent 开发规范。

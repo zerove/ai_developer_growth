@@ -1,3 +1,13 @@
+---
+title: ADR-001: 增强 Git 变更解析的鲁棒性
+description: ADR-001: 增强 Git 变更解析的鲁棒性 - 技术文档
+category: 治理层
+tags: ['ADR', '001', 'enhanced', 'Python']
+difficulty: 高级
+reading_time: 10 分钟
+updated: 2026-07-21
+---
+
 # ADR-001: 增强 Git 变更解析的鲁棒性
 
 ## 状态

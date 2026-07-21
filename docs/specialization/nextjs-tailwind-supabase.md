@@ -1,3 +1,13 @@
+---
+title: Next.js + Tailwind + Supabase: AI 时代独立开发者的“黄金三角”
+description: 本文档旨在为追求极致开发效率的 AI 驱动开发者提供一份深度指南。在 LLM (Large Language Models) 辅助编程的背景下，技术选型不再仅仅是关于性能，更是关于 **“AI 生成质
+category: 学习层
+tags: ['supabase', 'AI', 'API', 'REST', 'GraphQL']
+difficulty: 高级
+reading_time: 10 分钟
+updated: 2026-07-21
+---
+
 # Next.js + Tailwind + Supabase: AI 时代独立开发者的“黄金三角”
 
 本文档旨在为追求极致开发效率的 AI 驱动开发者提供一份深度指南。在 LLM (Large Language Models) 辅助编程的背景下，技术选型不再仅仅是关于性能，更是关于 **“AI 生成质量”** 与 **“迭代速度”** 的乘积。

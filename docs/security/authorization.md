@@ -1,3 +1,13 @@
+---
+title: Authorization Governance Rules
+description: > 适用于授权模式的 AI Agent 开发规范。
+category: 治理层
+tags: ['AI', 'REST', 'API', 'Python', '安全']
+difficulty: 高级
+reading_time: 10 分钟
+updated: 2026-07-21
+---
+
 # Authorization Governance Rules
 
 > 适用于授权模式的 AI Agent 开发规范。

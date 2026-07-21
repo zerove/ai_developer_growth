@@ -1,3 +1,13 @@
+---
+title: Python AI 开发规范 (Python AI Spec)
+description: Python AI 开发规范 (Python AI Spec) - 技术文档
+category: 治理层
+tags: ['AI', 'Python']
+difficulty: 高级
+reading_time: 10 分钟
+updated: 2026-07-21
+---
+
 # Python AI 开发规范 (Python AI Spec)
 
 ## 1. AI 协同编码标准 (Coding Standards)

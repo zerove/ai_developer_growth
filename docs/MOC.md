@@ -1,3 +1,13 @@
+---
+title: AI 开发者成长知识图谱 (MOC)
+description: AI 开发者成长知识图谱 (MOC) - 技术文档
+category: 效率层
+tags: ['AI', 'API', 'REST', 'TypeScript', 'Docker']
+difficulty: 高级
+reading_time: 10 分钟
+updated: 2026-07-21
+---
+
 # AI 开发者成长知识图谱 (MOC)
 
 > 以成长维度组织的知识网络，帮助开发者在 AI 时代实现指数级成长。

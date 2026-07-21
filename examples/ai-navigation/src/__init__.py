@@ -7,7 +7,13 @@ for the AI Developer Growth knowledge base.
 
 from .knowledge_index import Document, IndexBuilder, KnowledgeIndex, build_index
 from .path_recommender import LearningPath, LearningStep, PathRecommender, UserProfile
-from .rag_engine import Citation, ConversationManager, QueryContext, QueryResult, RAGEngine
+from .rag_engine import (
+    Citation,
+    ConversationManager,
+    QueryContext,
+    QueryResult,
+    RAGEngine,
+)
 
 __all__ = [
     "Document",

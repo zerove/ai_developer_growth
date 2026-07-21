@@ -1,0 +1,195 @@
+{
+  "version": "1.0",
+  "skills": {
+    "knowledge-curator": {
+      "name": "knowledge-curator",
+      "display_name": "知识策展人",
+      "description": "维护知识库结构完整性、收集真实案例、审核文档质量、更新 INDEX/MOC",
+      "version": "1.0.0",
+      "author": "ai-developer-growth",
+      "entry_point": "skills/knowledge-curator.py",
+      "actions": {
+        "scan": {
+          "description": "扫描所有案例格式完整性",
+          "command": "python tools/scripts/validate_case_study.py --all --strict",
+          "output": "markdown"
+        },
+        "audit": {
+          "description": "检查文档断链",
+          "command": "python tools/scripts/link_auditor.py . --check-all",
+          "output": "markdown"
+        },
+        "validate": {
+          "description": "验证新提交案例",
+          "command": "python tools/scripts/validate_case_study.py --path {file}",
+          "args": ["file"],
+          "output": "markdown"
+        },
+        "sync": {
+          "description": "同步工具矩阵",
+          "command": "python tools/scripts/update_ai_tool_matrix.py",
+          "output": "markdown"
+        },
+        "update-moc": {
+          "description": "更新知识图谱",
+          "command": "python tools/scripts/link_auditor.py . --update-moc",
+          "output": "markdown"
+        }
+      },
+      "triggers": {
+        "on_file_change": ["case-studies/**", "docs/**", "INDEX.md", "MOC.md"],
+        "on_pr": true,
+        "scheduled": "0 10 * * 1"
+      }
+    },
+    "governance-auditor": {
+      "name": "governance-auditor",
+      "display_name": "治理审计员",
+      "description": "自动化审计代码质量、安全漏洞、治理标准合规性",
+      "version": "1.0.0",
+      "author": "ai-developer-growth",
+      "entry_point": "skills/governance-auditor.py",
+      "actions": {
+        "lint": {
+          "description": "运行 ruff lint 检查",
+          "command": "ruff check .",
+          "output": "text"
+        },
+        "format": {
+          "description": "运行 ruff format 检查",
+          "command": "ruff format --check .",
+          "output": "text"
+        },
+        "typecheck": {
+          "description": "运行 mypy 类型检查",
+          "command": "mypy tools/scripts/ --ignore-missing-imports",
+          "output": "text"
+        },
+        "test": {
+          "description": "运行 pytest 测试套件",
+          "command": "python -m pytest tests/ -v --cov=tools/scripts --cov-report=term-missing",
+          "output": "text"
+        },
+        "security": {
+          "description": "运行安全扫描",
+          "command": "bandit -r tools/scripts/ -f json -o bandit-report.json; pip-audit --desc",
+          "output": "json"
+        },
+        "full": {
+          "description": "运行完整审计",
+          "command": "ruff check . && ruff format --check . && mypy tools/scripts/ --ignore-missing-imports && python -m pytest tests/ -v --cov=tools/scripts",
+          "output": "text"
+        }
+      },
+      "triggers": {
+        "on_commit": true,
+        "on_pr": true,
+        "scheduled": "0 9 * * 1"
+      }
+    },
+    "workflow-optimizer": {
+      "name": "workflow-optimizer",
+      "display_name": "工作流优化师",
+      "description": "分析 AI 协作效率数据、优化全周期工作流、推荐工具组合",
+      "version": "1.0.0",
+      "author": "ai-developer-growth",
+      "entry_point": "skills/workflow-optimizer.py",
+      "actions": {
+        "analyze": {
+          "description": "分析效率数据",
+          "command": "python -c \"from tools.scripts.contributor_dashboard import analyze; analyze()\"",
+          "output": "markdown"
+        },
+        "recommend": {
+          "description": "推荐工具组合",
+          "command": "python tools/scripts/update_ai_tool_matrix.py --recommend",
+          "output": "markdown"
+        },
+        "optimize": {
+          "description": "优化工作流",
+          "command": "python -c \"from tools.scripts.workflow_optimizer import optimize; optimize()\"",
+          "output": "markdown"
+        },
+        "report": {
+          "description": "生成效率报告",
+          "command": "python tools/scripts/contributor_dashboard.py --report",
+          "output": "markdown"
+        }
+      },
+      "triggers": {
+        "scheduled": "0 9 1 * *"
+      }
+    },
+    "community-catalyst": {
+      "name": "community-catalyst",
+      "display_name": "社区催化剂",
+      "description": "管理贡献流程、验证社区案例、设计贡献者激励机制",
+      "version": "1.0.0",
+      "author": "ai-developer-growth",
+      "entry_point": "skills/community-catalyst.py",
+      "actions": {
+        "triage": {
+          "description": "分流 Issues/PRs",
+          "command": "gh issue list --label '待审核' --json number,title,labels",
+          "output": "json"
+        },
+        "validate": {
+          "description": "验证社区案例",
+          "command": "python tools/scripts/validate_case_study.py --path {file}",
+          "args": ["file"],
+          "output": "markdown"
+        },
+        "generate-adr": {
+          "description": "从 PR 生成 ADR",
+          "command": "python tools/scripts/adr_generator.py --pr {pr_number}",
+          "args": ["pr_number"],
+          "output": "markdown"
+        },
+        "update-roadmap": {
+          "description": "更新路线图进度",
+          "command": "python -c \"from tools.scripts.roadmap_updater import update; update()\"",
+          "output": "markdown"
+        },
+        "leaderboard": {
+          "description": "贡献者排行榜",
+          "command": "python tools/scripts/contributor_dashboard.py --leaderboard",
+          "output": "markdown"
+        }
+      },
+      "triggers": {
+        "on_issue": true,
+        "on_pr": true
+      }
+    }
+  },
+  "workflows": {
+    "pr-review": {
+      "description": "PR 审查工作流",
+      "steps": [
+        {"skill": "governance-auditor", "action": "full"},
+        {"skill": "knowledge-curator", "action": "validate", "condition": "files_contain('case-studies/')"},
+        {"skill": "knowledge-catalyst", "action": "triage"}
+      ]
+    },
+    "weekly-maintenance": {
+      "description": "每周维护工作流",
+      "steps": [
+        {"skill": "governance-auditor", "action": "full"},
+        {"skill": "knowledge-curator", "action": "scan"},
+        {"skill": "knowledge-curator", "action": "audit"},
+        {"skill": "knowledge-curator", "action": "update-moc"},
+        {"skill": "workflow-optimizer", "action": "report"}
+      ]
+    },
+    "release-prep": {
+      "description": "发布准备工作流",
+      "steps": [
+        {"skill": "governance-auditor", "action": "full"},
+        {"skill": "knowledge-curator", "action": "scan"},
+        {"skill": "knowledge-curator", "action": "audit"},
+        {"skill": "workflow-optimizer", "action": "report"},
+        {"skill": "community-catalyst", "action": "leaderboard"}
+      ]
+    }
+  }
+}

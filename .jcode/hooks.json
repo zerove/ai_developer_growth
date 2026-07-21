@@ -1,0 +1,81 @@
+{
+  "version": "1.0",
+  "hooks": {
+    "on_commit": [
+      {
+        "name": "lint-check",
+        "skill": "governance-auditor",
+        "action": "lint",
+        "description": "提交时自动检查代码风格",
+        "enabled": true
+      }
+    ],
+    "on_pr": [
+      {
+        "name": "full-audit",
+        "skill": "governance-auditor",
+        "action": "full",
+        "description": "PR 时运行完整审计",
+        "enabled": true
+      },
+      {
+        "name": "case-validation",
+        "skill": "knowledge-curator",
+        "action": "validate",
+        "description": "PR 时验证案例格式",
+        "condition": "files_contain('case-studies/')",
+        "enabled": true
+      },
+      {
+        "name": "link-audit",
+        "skill": "knowledge-curator",
+        "action": "audit",
+        "description": "PR 时检查文档断链",
+        "condition": "files_contain('docs/') || files_contain('*.md')",
+        "enabled": true
+      }
+    ],
+    "on_merge": [
+      {
+        "name": "update-moc",
+        "skill": "knowledge-curator",
+        "action": "update-moc",
+        "description": "合并后更新知识图谱",
+        "enabled": true
+      },
+      {
+        "name": "sync-tools",
+        "skill": "knowledge-curator",
+        "action": "sync",
+        "description": "合并后同步工具矩阵",
+        "enabled": true
+      }
+    ],
+    "scheduled": [
+      {
+        "name": "weekly-audit",
+        "skill": "governance-auditor",
+        "action": "full",
+        "description": "每周完整审计",
+        "schedule": "0 9 * * 1",
+        "enabled": true
+      },
+      {
+        "name": "weekly-scan",
+        "skill": "knowledge-curator",
+        "action": "scan",
+        "description": "每周案例扫描",
+        "schedule": "0 10 * * 1",
+        "enabled": true
+      },
+      {
+        "name": "efficiency-report",
+        "skill": "workflow-optimizer",
+        "action": "report",
+        "description": "每月效率报告",
+        "schedule": "0 9 1 * *",
+        "enabled": true
+      }
+    ]
+  }
+}

@@ -2,9 +2,9 @@
 
 ## 项目状态
 
-- **阶段**: M3 社区启动完成 + M4 基础建设 (2026-07-21)
-- **成熟度**: 97/100 (优秀) - 详见 AUDIT_REPORT.md
-- **核心资产**: 知识库 (35 篇核心文档) + 治理框架 (36 规范) + 15 真实案例 + 6 代码示例
+- **阶段**: M3 社区启动完成 + M4 原型完成 (2026-07-21)
+- **成熟度**: 98/100 (优秀) - 详见 AUDIT_REPORT.md
+- **核心资产**: 知识库 (130 篇文档) + 治理框架 (36 规范) + 15 真实案例 + 7 代码示例
 
 ## 关键决策
 
@@ -20,22 +20,27 @@
 
 ## 已完成模块
 
-- ✅ 核心方法论文档 (认知层 8 + 学习层 3 + 效率层 22 + 工具层 4 = 37 篇)
+- ✅ 核心方法论文档 (130 篇)
 - ✅ 治理框架 (13 语言 + 11 框架 + 12 领域 = 36 规范)
 - ✅ 15 个真实案例研究 (效率提升 3x-12x)
-- ✅ 6 个代码示例 (2 个参考实现 + 4 个教学示例)
+- ✅ 7 个代码示例
   - ai-context-sync: 上下文同步 (MCP Server)
+  - ai-navigation: AI 导航系统 (RAG + 个性化推荐)
   - multi-agent-orch: 多 Agent 编排
   - self-correction-loop: 自我修正循环
   - ai-task-prioritizer: 任务优先级
   - prompt-optimizer: Prompt 优化
-  - ai-navigation: AI 导航系统 (M4 原型)
+  - capability-radar: 能力雷达图
 - ✅ 7 条 ADR (Git 解析、知识优先重构、质量门禁、Agent 协作、AI 导航、知识产品化、M4 设计)
 - ✅ CI/CD 工作流 (统一 ci.yml: pre-commit, lint, type-check, test, link-audit, case-study-validation, governance-audit, security-scan, docs-check)
 - ✅ MCP 集成 (ai-context-sync 作为 MCP Server)
-- ✅ 测试覆盖率 84% (179 个测试，目标 ≥70%)
+- ✅ 测试覆盖率 84% (162 个测试，目标 ≥70%)
 - ✅ LICENSE 文件 (MIT)
-- ✅ jcode 集成 (4 个 Agent Skills + Swarm 配置)
+- ✅ 通用治理框架 (ai-dev-framework)
+  - project_config.py: 参数化配置系统
+  - hook_system.py: 通用钩子配置
+  - jcode_init.py: 项目初始化命令
+  - agent-templates.md: Agent 定义模板
 - ✅ 社区基础设施 (Issue 模板、PR 模板、标签、贡献指南、安全政策)
 
 ## 进行中

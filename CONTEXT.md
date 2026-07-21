@@ -83,15 +83,15 @@
 ## 技术债务 (需偿还)
 
 - [x] 测试覆盖率不均 (TEST-01) - 43% → 84% ✅
-- [ ] 28 个宽泛 `except Exception` 捕获 (CODE-02)
-- [ ] 3 处重复文件块解析逻辑 (CODE-03)
-- [ ] 1 个死代码方法 `_build_test_prompt()` (CODE-04)
-- [ ] 配置序列化手动枚举字段 (CODE-05)
-- [ ] 4 处冗余模块内导入 (CODE-06)
-- [ ] LLM JSON 解析脆弱 (CODE-09)
-- [ ] `sys.path` 操作导入 (CODE-10)
-- [ ] 缺少 conftest.py (TEST-02)
-- [ ] 双重 requirements.txt (DEP-03)
+- [x] 缺少 conftest.py (TEST-02) - 已创建共享 fixtures ✅
+- [x] 双重 requirements.txt (DEP-03) - 已合并 ✅
+- [x] 28 个宽泛 `except Exception` 捕获 (CODE-02) - 已替换为具体异常 ✅
+- [x] 3 处重复文件块解析逻辑 (CODE-03) - 已提取为 `_apply_file_blocks` ✅
+- [x] 1 个死代码方法 `_build_test_prompt()` (CODE-04) - 已删除 ✅
+- [x] 配置序列化手动枚举字段 (CODE-05) - 已使用 `dataclasses.asdict()` ✅
+- [x] 4 处冗余模块内导入 (CODE-06) - 已清理 ✅
+- [x] LLM JSON 解析脆弱 (CODE-09) - 已增强健壮性 ✅
+- [x] `sys.path` 操作导入 (CODE-10) - 已优化 ✅
 
 ---
 

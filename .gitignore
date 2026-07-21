@@ -48,3 +48,4 @@ Thumbs.db
 
 # OpenCode (internal state)
 .opencode/
+knowledge_index.json

@@ -7,7 +7,7 @@
 openai>=1.0.0
 
 # HTTP client (used by adr-generator.py, audit-to-pr.py)
-httpx>=0.25.0
+httpx>=0.28.1
 
 # YAML parsing (used by ai-context-sync config)
 PyYAML>=6.0

@@ -4,24 +4,24 @@ Web Search API Server for AI Developer Growth
 基于 Enhanced TF-IDF 的 Web 搜索 API
 """
 
-from fastapi import FastAPI, Query, HTTPException
+import os
+import sys
+
+from fastapi import FastAPI, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
-from typing import List, Optional
-import sys
-import os
 
 # 添加搜索模块路径
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'examples/ai-navigation/src'))
 
-from enhanced_tfidf import EnhancedTFIDF, Document, create_enhanced_index, SynonymDictionary
+from enhanced_tfidf import Document, EnhancedTFIDF, create_enhanced_index
 
 
 class SearchResponse(BaseModel):
     """搜索响应模型"""
     query: str
     total: int
-    results: List[dict]
+    results: list[dict]
     time_ms: float
 
 
@@ -47,28 +47,28 @@ app.add_middleware(
 )
 
 # 全局索引
-search_index: Optional[EnhancedTFIDF] = None
+search_index: EnhancedTFIDF | None = None
 
 
 def load_documents():
     """从 docs 目录加载文档"""
     documents = []
     docs_dir = os.path.join(os.path.dirname(__file__), 'docs')
-    
+
     for root, dirs, files in os.walk(docs_dir):
         for file in files:
             if file.endswith('.md'):
                 filepath = os.path.join(root, file)
                 try:
-                    with open(filepath, 'r', encoding='utf-8') as f:
+                    with open(filepath, encoding='utf-8') as f:
                         content = f.read()
-                    
+
                     # 解析 frontmatter
                     title = file.replace('.md', '').replace('-', ' ').title()
                     category = ""
                     tags = []
                     difficulty = "初级"
-                    
+
                     if content.startswith('---'):
                         parts = content.split('---', 2)
                         if len(parts) >= 3:
@@ -87,14 +87,14 @@ def load_documents():
                                         tags = [t.strip() for t in tags_str.split(',')]
                                 elif line.startswith('difficulty:'):
                                     difficulty = line.split(':', 1)[1].strip().strip('"\'')
-                    
+
                     # 移除 frontmatter 获取正文
                     if content.startswith('---'):
                         content = content.split('---', 2)[2] if len(content.split('---', 2)) >= 3 else content
-                    
+
                     rel_path = os.path.relpath(filepath, docs_dir)
                     doc_id = rel_path.replace('.md', '').replace('/', '_')
-                    
+
                     doc = Document(
                         id=doc_id,
                         title=title,
@@ -107,7 +107,7 @@ def load_documents():
                     documents.append(doc)
                 except Exception as e:
                     print(f"Error loading {filepath}: {e}")
-    
+
     return documents
 
 
@@ -126,21 +126,21 @@ async def startup_event():
 async def search(
     q: str = Query(..., description="搜索查询", min_length=1, max_length=200),
     limit: int = Query(10, description="返回结果数", ge=1, le=50),
-    category: Optional[str] = Query(None, description="分类过滤")
+    category: str | None = Query(None, description="分类过滤")
 ):
     """执行搜索"""
     import time
     start = time.time()
-    
+
     if not search_index:
         raise HTTPException(status_code=503, detail="Search index not ready")
-    
+
     results = search_index.search(q, top_k=limit)
-    
+
     # 分类过滤
     if category:
         results = [r for r in results if r.doc.category == category]
-    
+
     formatted_results = []
     for r in results:
         formatted_results.append({
@@ -153,7 +153,7 @@ async def search(
             "difficulty": r.doc.difficulty,
             "url": f"/{r.doc.id.replace('_', '/')}.html"
         })
-    
+
     return SearchResponse(
         query=q,
         total=len(formatted_results),
@@ -162,7 +162,7 @@ async def search(
     )
 
 
-@app.get("/api/suggestions", response_model=List[SearchSuggestion])
+@app.get("/api/suggestions", response_model=list[SearchSuggestion])
 async def suggestions(
     q: str = Query(..., description="部分查询", min_length=1, max_length=50),
     limit: int = Query(5, description="建议数量", ge=1, le=20)
@@ -170,7 +170,7 @@ async def suggestions(
     """获取搜索建议"""
     if not search_index:
         raise HTTPException(status_code=503, detail="Search index not ready")
-    
+
     suggestions = search_index.suggest(q, top_k=limit)
     return [{"term": s, "count": 1} for s in suggestions]
 
@@ -188,7 +188,7 @@ async def categories():
     """获取所有分类"""
     if not search_index:
         raise HTTPException(status_code=503, detail="Search index not ready")
-    
+
     cats = set()
     for doc in search_index.documents.values():
         if doc.category:

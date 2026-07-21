@@ -5,9 +5,8 @@ Jcode Hooks - 通用钩子系统
 """
 
 import json
+from collections.abc import Callable
 from dataclasses import dataclass, field
-from pathlib import Path
-from typing import Optional, Callable
 
 
 @dataclass
@@ -18,7 +17,7 @@ class Hook:
     action: str
     description: str
     enabled: bool = True
-    condition: Optional[str] = None
+    condition: str | None = None
 
 
 @dataclass
@@ -221,7 +220,7 @@ class HookExecutor:
         key = f"{agent}:{action}"
         self.executors[key] = executor
 
-    def execute(self, event: str, context: Optional[dict] = None) -> list[dict]:
+    def execute(self, event: str, context: dict | None = None) -> list[dict]:
         """
         执行指定事件的钩子
 
@@ -267,7 +266,7 @@ class HookExecutor:
 
         return results
 
-    def _check_condition(self, condition: str, context: Optional[dict]) -> bool:
+    def _check_condition(self, condition: str, context: dict | None) -> bool:
         """检查条件"""
         # 简单条件解析
         if "files_contain(" in condition:
@@ -320,7 +319,7 @@ if __name__ == "__main__":
         config_path = sys.argv[2] if len(sys.argv) > 2 else ".jcode/hooks.json"
         try:
             config = HookConfig.load(config_path)
-            print(f"✅ Config is valid")
+            print("✅ Config is valid")
             print(f"   Total hooks: {len(config.on_commit) + len(config.on_pr) + len(config.on_merge) + len(config.scheduled)}")
         except Exception as e:
             print(f"❌ Config validation failed: {e}")

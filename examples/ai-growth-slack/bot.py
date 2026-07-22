@@ -1,9 +1,7 @@
 """Slack bot for AI Developer Growth - knowledge navigation and assessment."""
 from __future__ import annotations
 
-import json
 from dataclasses import dataclass
-from typing import Optional
 
 
 @dataclass
@@ -27,7 +25,7 @@ class GrowthBot:
         self.user_scores: dict[str, dict] = {}
         self.user_progress: dict[str, list[str]] = {}
 
-    def handle_message(self, msg: SlackMessage) -> Optional[str]:
+    def handle_message(self, msg: SlackMessage) -> str | None:
         """Handle an incoming Slack message."""
         text = msg.text.strip()
         if not text.startswith("!growth"):
@@ -38,8 +36,6 @@ class GrowthBot:
             return self.cmd_help(msg)
 
         cmd = parts[1].lower()
-        args = parts[2] if len(parts) > 2 else ""
-
         handler = self.commands.get(cmd, self.cmd_help)
         return handler(msg)
 

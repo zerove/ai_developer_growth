@@ -2,15 +2,14 @@ import os
 import shutil
 import tempfile
 import unittest
-from pathlib import Path
 
 from tools.scripts.fix_metadata import (
     DIR_CATEGORY_MAP,
+    generate_metadata,
     get_category_from_path,
-    infer_title_from_content,
     infer_difficulty,
     infer_tags,
-    generate_metadata,
+    infer_title_from_content,
     process_file,
 )
 

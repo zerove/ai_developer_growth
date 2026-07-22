@@ -13,7 +13,6 @@ import re
 import sys
 from pathlib import Path
 
-
 GOVERNANCE_DOCS = [
     "docs/efficiency/ai-code-generation-quality.md",
     "docs/efficiency/ai-model-selection.md",

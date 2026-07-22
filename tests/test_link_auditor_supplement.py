@@ -1,17 +1,14 @@
 """Supplementary tests for link_auditor.py to improve coverage from 55% to 80%+."""
 import os
 import shutil
-import subprocess
-import sys
 import unittest
 
 from tools.scripts.link_auditor import (
     _build_index,
     _check_target,
     _strip_code_blocks,
-    find_broken_links,
-    find_broken_links_with_index,
     check_all_links,
+    find_broken_links_with_index,
 )
 
 

@@ -3,7 +3,7 @@ import shutil
 import unittest
 from pathlib import Path
 
-from tools.scripts.check_metadata import extract_frontmatter, check_metadata, scan_directory
+from tools.scripts.check_metadata import check_metadata, extract_frontmatter, scan_directory
 
 
 class TestExtractFrontmatter(unittest.TestCase):

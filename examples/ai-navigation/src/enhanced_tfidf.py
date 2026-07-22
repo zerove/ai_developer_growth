@@ -40,11 +40,12 @@ class SearchResult:
 class SynonymDictionary:
     """Synonym dictionary for query expansion."""
 
-    def __init__(self):
+    def __init__(self) -> None:
+        """Initialize the synonym dictionary."""
         self.synonyms: dict[str, set[str]] = {}
         self._load_default_synonyms()
 
-    def _load_default_synonyms(self):
+    def _load_default_synonyms(self) -> None:
         """Load default Chinese synonyms for tech terms."""
         default_synonyms = {
             # AI 相关

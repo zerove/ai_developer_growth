@@ -81,8 +81,8 @@ jobs:
           root = tree.getroot()
           coverage = float(root.attrib.get('line-rate', 0)) * 100
           print(f'Coverage: {coverage:.1f}%')
-          if coverage < 70:
-              print(f'::error::Coverage {coverage:.1f}% is below 70% threshold')
+          if coverage < 80:
+              print(f'::error::Coverage {coverage:.1f}% is below 80% threshold')
               exit(1)
           "
 

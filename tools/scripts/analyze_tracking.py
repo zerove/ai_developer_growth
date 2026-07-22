@@ -71,7 +71,7 @@ def analyze_reading_time(data: dict, top_n: int = 10) -> dict:
     """分析阅读时长"""
     reading_time = data.get("reading_time", {})
     if not reading_time:
-        return {"total_seconds": 0, "top": []}
+        return {"total_seconds": 0, "total_minutes": 0, "top": []}
 
     sorted_pages = sorted(reading_time.items(), key=lambda x: x[1], reverse=True)
     total = sum(reading_time.values())

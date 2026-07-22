@@ -3,7 +3,7 @@
 help:  ## 显示帮助信息
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-20s\033[0m %s\n", $$1, $$2}'
 
-lint:  ## 运行 ruff lint 检查
+lint:  ## 运行
 	ruff check .
 
 format:  ## 运行 ruff format 检查
@@ -18,9 +18,10 @@ typecheck:  ## 运行 mypy 类型检查
 test:  ## 运行 pytest 测试
 	python -m pytest tests/ -v
 
-test-cov:  ## 运行测试并生成覆盖率报告
+test-cov:  ## 运行测试
 	python -m pytest tests/ -v --cov=tools/scripts --cov-report=term-missing --cov-report=html
-行安全扫描
+
+security:  ## 运行安全扫描
 	bandit -r tools/scripts/ -f json -o bandit-report.json || true
 	pip-audit --desc
 
@@ -60,7 +61,7 @@ scan:  ## 扫描案例格式完整性
 full-audit:  ## 运行完整审计 (所有检查)
 	python .jcode/scripts/governance-auditor.py full
 
-full-validate:  ## 运行完整治理文档验证
+full-validate:  ## 运行
 	python .jcode/scripts/governance-docs-validator.py full
 
 check: lint format typecheck test validate-docs check-index  ## 运行所有检查

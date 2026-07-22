@@ -1,5 +1,5 @@
 ---
-title: "AI 标准 (AI Code Attribution & Licensing)"
+title: "AI 代码归属与许可证标准 (AI Code Attribution & Licensing)"
 description: AI 生成代码的版权归属、许可证合规和法律风险管理
 category: 治理层
 tags: ['AI', 'licensing', 'attribution', 'legal', 'governance']

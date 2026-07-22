@@ -1,5 +1,5 @@
 ---
-title: "AI 开 Dev Environment Configuration)"
+title: "AI 开发环境配置标准 (AI Dev Environment Configuration)"
 description: 面向 AI 辅助开发的 IDE、工具和工作区配置标准
 category: 治理层
 tags: ['AI', 'IDE', 'configuration', 'environment', 'governance']

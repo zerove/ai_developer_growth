@@ -57,7 +57,10 @@
 | [[docs/efficiency/ai-nondeterministic-testing]] | AI 非确定性输出测试标准 | 属性测试、模糊测试、契约测试 |
 | [[docs/efficiency/ai-hallucination-mitigation]] | AI 幻觉检测与缓解标准 | 幻觉分类、检测方法、缓解策略 |
 | [[docs/efficiency/ai-context-window-management]] | AI 上下文窗口管理标准 | 分层上下文、成本优化、会话管理 |
+| [[docs/efficiency/ai-developer-training]] | AI 开发者培训标准 | 能力模型、培训路径、认证体系 |
 | [[docs/efficiency/ai-performance-benchmarks]] | AI 开发性能基准标准 | 效率指标、基准测试、度量体系 |
+| [[docs/efficiency/ai-code-licensing]] | AI 代码归属与许可证标准 | 版权归属、许可证合规、法律风险 |
+| [[docs/efficiency/ai-dev-environment]] | AI 开发环境配置标准 | IDE 配置、工具链、Git Hooks |
 ---
 
 ### ⚡ 效率层 (Engineering)

@@ -1,7 +1,7 @@
 # CLAUDE.md - AI Developer Growth Project
 
 ## 项目概览
-这是一个开源知识库，专注于 AI 时代开发者成长方法论。包含 208 个方法论文档、35 个真实案例研究、7 个代码示例、7 个 ADR 决策记录，以及 4 个核心治理 Agent。新增 5 个 AI 开发流程规范标准文档。
+这是一个开源知识库，专注于 AI 时代开发者成长方法论。包含 218 个方法论文档、35 个真实案例研究、7 个代码示例、7 个 ADR 决策记录，以及 4 个核心治理 Agent。新增 15
 
 ## 核心结构
 ```
@@ -112,6 +112,29 @@ Agent 定义必须包含：
 - [ ] Gate 3: 自动化审计 (CI/CD)
 - [ ] Gate 4: 资产更新 (AGENTS.md、CONTEXT.md、ADR.md)
 - [ ] 索引更新: 在 AGENTS.md 添加记录
+
+## AI 开发流程规范 (新增 15 个标准文档)
+
+### 治理层 (P0 - 核心流程)
+1. **ai-code-generation-quality.md** - 代码生成质量标准 (幻觉检测、输出验证、代码标注)
+2. **ai-model-selection.md** - 模型选型与评估标准 (选型矩阵、成本优化、多模型协作)
+3. **ai-sdlc.md** - 开发全生命周期标准 (7阶段 SDLC、质量门禁、度量指标)
+4. **ai-code-review-checklist.md** - 代码审查专项清单 (幻觉检测、模式复制、过度简化检查)
+5. **ai-nondeterministic-testing.md** - 非确定性输出测试标准 (属性测试、模糊测试、契约测试)
+
+### 治理层 (P1 - 工程实践)
+6. **ai-hallucination-mitigation.md** - 幻觉检测与缓解标准
+7. **ai-code-licensing.md** - 代码归属与许可证标准
+8. **ai-dev-environment.md** - 开发环境配置标准
+9. **ai-context-window-management.md** - 上下文窗口管理标准
+10. **ai-performance-benchmarks.md** - 开发性能基准标准
+
+### 效率层 (P2 - 补充完善)
+11. **ai-debugging-standards.md** - 调试专项标准
+12. **ai-version-control.md** - 代码版本控制标准
+13. **ai-deployment-operations.md** - 部署与运维标准
+14. **ai-developer-training.md** - 开发者培训标准
+15. **ai-dev-toolchain.md** - 开发工具链标准
 
 ## 常用文档链接
 - [[GOVERNANCE|通用治理标准]] - Agent 定义格式、5步闭环、4道门禁

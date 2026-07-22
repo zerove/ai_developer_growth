@@ -42,6 +42,19 @@
 
 **推荐阅读顺序**: ai-learning-method → knowledge-internalization → prompt-engineering
 
+### 🔒 治理层 (Governance)
+将认知转化为生产力。
+
+| 标准 | 描述 | 关键内容 |
+|------|------|----------|
+| [[docs/efficiency/ai-code-generation-quality]] | AI 代码生成质量标准 | 幻觉检测、输出验证、行为测试、代码标注 |
+| [[docs/efficiency/ai-model-selection]] | AI 模型选型与评估标准 | 选型矩阵、成本优化、多模型协作 |
+| [[docs/efficiency/ai-sdlc]] | AI标准 | 7 阶段 SDLC、质量门禁、度量指标 |
+| [[docs/efficiency/ai-code-review-checklist]] | AI 代码审查专项清单 | 幻觉检测、模式复制、过度简化检查 |
+| [[docs/efficiency/ai-nondeterministic-testing]] | AI 非确定 | 属性测试、模糊测试、契约测试 |
+
+---
+
 ### ⚡ 效率层 (Engineering)
 将认知转化为生产力。
 

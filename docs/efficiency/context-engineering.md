@@ -305,3 +305,16 @@ AI 编程成功率 = 上下文精准度 × 验证严格度
 **📂 导航**
 - [[MOC|⬅️ 返回知识地图]]
 - **相关**: [[learning/prompt-engineering|Prompt 工程]] | [[efficiency/full-cycle-workflow|全周期工作流]]
+---
+
+## 导航
+
+**分类**: 效率层
+
+**相关文档**:
+
+- [[docs/efficiency/full-cycle-workflow|全周期工作流]]
+- [[docs/efficiency/automated-bug-fixing|自动化修复]]
+- [[docs/efficiency/anti-patterns|反模式]]
+- [[docs/efficiency/token-optimization|Token 优化]]
+- [[docs/efficiency/multi-agent-patterns|多 Agent 编排]]

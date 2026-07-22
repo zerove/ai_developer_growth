@@ -228,3 +228,16 @@ def log_token_usage(model, input_tokens, output_tokens, task_type):
 **📂 导航**
 - [[MOC|⬅️ 返回知识地图]]
 - **相关文章**: [[efficiency/token-optimization|Token 成本控制]] | [[efficiency/full-cycle-workflow|全周期工作流]]
+---
+
+## 导航
+
+**分类**: 效率层
+
+**相关文档**:
+
+- [[docs/efficiency/full-cycle-workflow|全周期工作流]]
+- [[docs/efficiency/automated-bug-fixing|自动化修复]]
+- [[docs/efficiency/anti-patterns|反模式]]
+- [[docs/efficiency/context-engineering|上下文工程]]
+- [[docs/efficiency/token-optimization|Token 优化]]

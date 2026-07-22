@@ -452,3 +452,16 @@ def test_memory():
 **📂 导航**
 - [[MOC|⬅️ 返回知识地图]]
 - **相关文章**: [[efficiency/full-cycle-workflow|全周期工作流]] | [[mindset/team-adoption|团队采用策略]]
+---
+
+## 导航
+
+**分类**: 效率层
+
+**相关文档**:
+
+- [[docs/efficiency/full-cycle-workflow|全周期工作流]]
+- [[docs/efficiency/automated-bug-fixing|自动化修复]]
+- [[docs/efficiency/anti-patterns|反模式]]
+- [[docs/efficiency/context-engineering|上下文工程]]
+- [[docs/efficiency/token-optimization|Token 优化]]

@@ -164,3 +164,17 @@ from pathlib import Path\n\n\nclass PromptManager:\n    \"\"\"Prompt 版本管�
 
 - [[docs/learning/prompt-engineering|Prompt 工程]] - Prompt 设计技巧
 - [[docs/efficiency/full-cycle-workflow|全周期工作流]] - Prompt 在开发流程中的位置
+
+---
+
+## 导航
+
+**分类**: 效率层
+
+**相关文档**:
+
+- [[docs/efficiency/full-cycle-workflow|全周期工作流]]
+- [[docs/efficiency/automated-bug-fixing|自动化修复]]
+- [[docs/efficiency/anti-patterns|反模式]]
+- [[docs/efficiency/context-engineering|上下文工程]]
+- [[docs/efficiency/token-optimization|Token 优化]]

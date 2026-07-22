@@ -1,5 +1,5 @@
 {
-  "version": "1.0",
+  "version": "1.1",
   "hooks": {
     "on_commit": [
       {
@@ -16,6 +16,14 @@
         "description": "提交时验证治理文档格式",
         "condition": "files_contain('docs/efficiency/ai-')",
         "enabled": true
+      },
+      {
+        "name": "ai-quality-gate",
+        "skill": "governance-auditor",
+        "action": "ai-quality-gate",
+        "description": "提交时运行 AI 代码质量门禁",
+        "command": "python tools/scripts/ai_quality_gate.py --check-annotation --check-security --check-patterns",
+        "enabled": true
       }
     ],
     "on_pr": [
@@ -30,7 +38,7 @@
         "name": "case-validation",
         "skill": "knowledge-curator",
         "action": "validate",
-        "description": "PR 时验证案例格式",
+        "description": "PR ",
         "condition": "files_contain('case-studies/')",
         "enabled": true
       },
@@ -48,6 +56,23 @@
         "action": "check-index",
         "description": "PR 时验证治理层索引完整性",
         "condition": "files_contain('GOVERNANCE.md') || files_contain('INDEX.md') || files_contain('CLAUDE.md')",
+        "enabled": true
+      },
+      {
+        "name": "agent-definition-validation",
+        "skill": "governance-auditor",
+        "action": "validate-agent-definition",
+        "description": "PR 时验证 Agent 定义格式",
+        "command": "python tools/scripts/validate_agent_definition.py --path agents",
+        "condition": "files_contain('agents/')",
+        "enabled": true
+      },
+      {
+        "name": "ai-annotation-check",
+        "skill": "governance-auditor",
+        "action": "check-ai-annotation",
+        "description": "PR 时检查 AI 代码标注",
+        "command": "python tools/scripts/check_ai_annotation.py --strict",
         "enabled": true
       }
     ],
@@ -98,6 +123,15 @@
         "action": "audit-hallucination-risks",
         "description": "每月幻觉风险审计",
         "schedule": "0 9 15 * *",
+        "enabled": true
+      },
+      {
+        "name": "monthly-quality-report",
+        "skill": "governance-auditor",
+        "action": "ai-quality-gate",
+        "description": "每月 AI 代码质量报告",
+        "command": "python tools/scripts/ai_quality_gate.py --full",
+        "schedule": "0 9 1 * *",
         "enabled": true
       }
     ]

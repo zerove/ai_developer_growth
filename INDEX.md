@@ -88,6 +88,7 @@
 | API 设计指南 | 如何设计 API？ | RESTful 规范 + 响应格式 | [[docs/efficiency/api-design-guide]] |
 | **AI 测试策略** | **如何用 AI 写测试？** | **分层策略 + 生成技巧** | **[[docs/efficiency/ai-testing-strategies]]** |
 | **Prompt 版本管理** | **如何管理 Prompt？** | **版本控制 + 评估体系** | **[[docs/efficiency/prompt-versioning]]** |
+| **AI 文档验证** | **如何验证治理文档？** | **格式检查 + 交叉引用** | **[[docs/efficiency/ai-governance-docs-validator]]** |
 
 **实战避坑**: full-cycle-workflow 包含了从 AI-Context-Sync 开发中提炼的 4 个避坑指南。anti-patterns.md 收集了真实失败案例。
 
@@ -326,12 +327,13 @@ ai-learning-method → automated-bug-fixing → full-cycle-workflow → ide-best
 
 | 维度 | 文档数 | 状态 |
 |------|--------|------|
-| 认知层 | 7 | ✅ 完整 |
+| 认知层 | 8 | ✅ 完整 |
 | 学习层 | 3 | ✅ 完整 |
-| 效率层 | 18 | ✅ 完整 |
-| 工具层 | 2 | ✅ 完整 |
-| 案例库 | 11 | ✅ 达标 |
-| 代码示例 | 2 | ✅ 基础 |
+| 治理层 | 11 | ✅ 完整 |
+| 效率层 | 20 | ✅ 完整 |
+| 工具层 | 4 | ✅ 完整 |
+| 案例库 | 15 | ✅ 达标 |
+| 代码示例 | 4 | ✅ 完整 |
 | 学习路径 | 7 | ✅ 完整 |
 
 ---

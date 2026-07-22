@@ -174,3 +174,17 @@ prompt = f"修改这个函数:\n{function_code}\n\n调用者:\n{callers}\n\n测�
 ---
 
 *本标准随模型能力变化持续更新。最后更新: 2026-07-22*
+
+---
+
+## 导航
+
+**分类**: 治理层
+
+**相关文档**:
+
+- [[docs/efficiency/ai-code-generation-quality|代码质量]]
+- [[docs/efficiency/ai-model-selection|模型选型]]
+- [[docs/efficiency/ai-sdlc|SDLC]]
+- [[docs/efficiency/ai-code-review-checklist|代码审查]]
+- [[docs/efficiency/ai-nondeterministic-testing|非确定性测试]]

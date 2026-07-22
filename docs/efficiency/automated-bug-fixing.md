@@ -273,3 +273,17 @@ Error Log → Context Gathering → Root Cause Analysis → Proposed Fix → Tes
 **📂 导航**
 - [[MOC|⬅️ 返回知识地图]]
 - **相关文章**：[[efficiency/full-cycle-workflow|全生命周期工作流]] | [[tools/ide-best-practices|IDE 最佳实践]]
+
+---
+
+## 导航
+
+**分类**: 效率层
+
+**相关文档**:
+
+- [[docs/efficiency/full-cycle-workflow|全周期工作流]]
+- [[docs/efficiency/anti-patterns|反模式]]
+- [[docs/efficiency/context-engineering|上下文工程]]
+- [[docs/efficiency/token-optimization|Token 优化]]
+- [[docs/efficiency/multi-agent-patterns|多 Agent 编排]]

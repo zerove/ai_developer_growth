@@ -165,3 +165,17 @@ python tests/fuzz/target.py
 
 ---
 
+
+---
+
+## 导航
+
+**分类**: 治理层
+
+**相关文档**:
+
+- [[docs/efficiency/ai-code-generation-quality|代码质量]]
+- [[docs/efficiency/ai-model-selection|模型选型]]
+- [[docs/efficiency/ai-sdlc|SDLC]]
+- [[docs/efficiency/ai-code-review-checklist|代码审查]]
+- [[docs/efficiency/ai-nondeterministic-testing|非确定性测试]]

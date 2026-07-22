@@ -391,3 +391,17 @@ jobs:
 - [AI 辅助测试策略](ai-testing-strategies.md) - 通用测试方法论
 ---
 
+
+---
+
+## 导航
+
+**分类**: 治理层
+
+**相关文档**:
+
+- [[docs/efficiency/ai-code-generation-quality|代码质量]]
+- [[docs/efficiency/ai-model-selection|模型选型]]
+- [[docs/efficiency/ai-sdlc|SDLC]]
+- [[docs/efficiency/ai-code-review-checklist|代码审查]]
+- [[docs/efficiency/ai-hallucination-mitigation|幻觉缓解]]

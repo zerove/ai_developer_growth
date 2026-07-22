@@ -241,3 +241,17 @@ Step 3: 通用审查 (10 分钟)
 - [AI 代码生成质量标准](ai-code-generation-quality.md) - 质量验证框架
 - [代码审查指南](code-review-guide.md) - 通用审查指南
 ---
+
+---
+
+## 导航
+
+**分类**: 治理层
+
+**相关文档**:
+
+- [[docs/efficiency/ai-code-generation-quality|代码质量]]
+- [[docs/efficiency/ai-model-selection|模型选型]]
+- [[docs/efficiency/ai-sdlc|SDLC]]
+- [[docs/efficiency/ai-nondeterministic-testing|非确定性测试]]
+- [[docs/efficiency/ai-hallucination-mitigation|幻觉缓解]]

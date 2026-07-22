@@ -286,6 +286,44 @@ refactor(tools): extract common utilities
 
 ---
 
+## 11. AI 开发流程规范 (15 个标准文档)
+
+AI 辅助开发需要额外的流程规范。以下15个标准文档覆盖了从代码生成到部署运维的完整链路。
+
+### 治理层 (P0 - 核心流程)
+
+| 标准 | 描述 | 关键内容 |
+|------|------|----------|
+| [AI 代码生成质量标准](docs/efficiency/ai-code-generation-quality.md) | 幻觉检测、输出验证、代码标注 | 三级验证体系、幻觉分类、持续改进 |
+| [AI 模型选型与评估标准](docs/efficiency/ai-model-selection.md) | 选型、多模型协作 | 决策树、评估框架、月度审查 |
+| [AI 开发全生命周期标准](docs/efficiency/ai-sdlc.md) | 7 阶段 SDLC、质量门禁、度量指标 | 需求→设计→实现→测试→部署→监控→维护 |
+| [AI 代码审查专项清单](docs/efficiency/ai-code-review-checklist.md) | 幻觉检测、模式复制、过度简化 | H/P/S/C 四类检查项 |
+| [AI 非确定性输出测试标准](docs/efficiency/ai-nondeterministic-testing.md) | 属性测试、模糊测试、契约测试 | 四层测试金字塔 |
+
+### 治理层 (P1 - 工程实践)
+
+| 标准 | 描述 | 关键内容 |
+|------|------|----------|
+| [AI 幻觉检测与缓解标准](docs/efficiency/ai-hallucination-mitigation.md) | 幻觉分类、检测方法、缓解策略 | L1-L4 严重等级、三级检测 |
+| [AI 代码归属与许可证标准](docs/efficiency/ai-code-licensing.md) | 版权归属、许可证合规、法律风险 | 归属标注、许可证兼容矩阵 |
+| [AI 开发环境配置标准](docs/efficiency/ai-dev-environment.md) | IDE 配置、工具链、Git Hooks | 推荐配置、团队共享 |
+| [AI 上下文窗口管理标准](docs/efficiency/ai-context-window-management.md) | 分层上下文、成本优化、会话管理 | 三层模型、预算分配 |
+| [AI 开发性能基准标准](docs/efficiency/ai-performance-benchmarks.md) | 效率指标、基准测试、度量体系 | 效率/质量/成本三维指标 |
+
+### 效率层 (P2 - 补充完善)
+
+| 标准 | 描述 | 关键内容 |
+|------|------|----------|
+| [AI 调试专项标准](docs/efficiency/ai-debugging-standards.md) | 调试工作流和方法论 | 5步调试流程、Prompt模板 |
+| [AI 代码版本控制标准](docs/efficiency/ai-version-control.md) | 版本管理、分支策略、回滚机制 | 提交规范、分支模型 |
+| [AI 部署与运维标准](docs/efficiency/ai-deployment-operations.md) | 部署检查清单、监控告警 | 蓝绿部署、金丝雀发布 |
+| [AI 开发者培训标准](docs/efficiency/ai-developer-training.md) | 能力模型、培训路径、认证体系 | L1-L5 能力等级 |
+| [AI 开发工具链标准](docs/efficiency/ai-dev-toolchain.md) | 工具选型、配置标准、评估方法 | 工具矩阵、选型决策 |
+
+---
+
+---
+
 ## 附录: 质量检查清单
 
 ### Agent 定义检查

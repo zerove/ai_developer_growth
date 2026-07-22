@@ -8,6 +8,7 @@ from assessment import AssessmentEngine, print_result
 
 
 def main() -> int:
+    """Run the capability radar CLI assessment tool."""
     parser = argparse.ArgumentParser(
         prog="capability-radar",
         description="AI 时代开发者能力雷达图自我评估工具",

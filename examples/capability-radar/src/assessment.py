@@ -164,7 +164,8 @@ class AssessmentEngine:
         ],
     }
 
-    def __init__(self):
+    def __init__(self) -> None:
+        """Initialize the capability assessor with empty answers."""
         self.answers: list[Answer] = []
 
     def run_interactive(self) -> AssessmentResult:

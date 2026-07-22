@@ -46,7 +46,7 @@
       "name": "governance-auditor",
       "display_name": "治理审计员",
       "description": "自动化审计代码质量、安全漏洞、治理标准合规性",
-      "version": "1.0.0",
+      "version": "1.1.0",
       "author": "ai-developer-growth",
       "entry_point": "scripts/governance-auditor.py",
       "actions": {
@@ -75,9 +75,24 @@
           "command": "bandit -r tools/scripts/ -f json -o bandit-report.json; pip-audit --desc",
           "output": "json"
         },
+        "validate-governance-docs": {
+          "description": "验证15个治理层文档格式完整性",
+          "command": "python .jcode/scripts/governance-auditor.py validate-governance-docs",
+          "output": "text"
+        },
+        "check-ai-sdlc-compliance": {
+          "description": "检查 AI-SDLC 合规性",
+          "command": "python .jcode/scripts/governance-auditor.py check-ai-sdlc-compliance",
+          "output": "text"
+        },
+        "audit-hallucination-risks": {
+          "description": "审计幻觉风险",
+          "command": "python .jcode/scripts/governance-auditor.py audit-hallucination-risks",
+          "output": "text"
+        },
         "full": {
           "description": "运行完整审计",
-          "command": "ruff check . && ruff format --check . && mypy tools/scripts/ --ignore-missing-imports && python -m pytest tests/ -v --cov=tools/scripts",
+          "command": "python .jcode/scripts/governance-auditor.py full",
           "output": "text"
         }
       },
@@ -159,6 +174,41 @@
       "triggers": {
         "on_issue": true,
         "on_pr": true
+      }
+    },
+    "governance-docs-validator": {
+      "name": "governance-docs-validator",
+      "display_name": "治理文档验证器",
+      "description": "验证治理层、索引引用、交叉引用同步",
+      "version": "1.0.0",
+      "author": "ai-developer-growth",
+      "entry_point": "scripts/governance-docs-validator.py",
+      "actions": {
+        "validate": {
+          "description": "验证15个治理层",
+          "command": "python .jcode/scripts/governance-docs-validator.py validate",
+          "output": "text"
+        },
+        "check-index": {
+          "description": "验证治理层索引完整性",
+          "command": "python .jcode/scripts/governance-docs-validator.py check-index",
+          "output": "text"
+        },
+        "sync-refs": {
+          "description": "同步治理文档交叉引用",
+          "command": "python .jcode/scripts/governance-docs-validator.py sync-refs",
+          "output": "text"
+        },
+        "full": {
+          "description": "运行完整验证",
+          "command": "python .jcode/scripts/governance-docs-validator.py full",
+          "output": "text"
+        }
+      },
+      "triggers": {
+        "on_file_change": ["docs/efficiency/ai-*.md", "GOVERNANCE.md", "INDEX.md", "CLAUDE.md"],
+        "on_pr": true,
+        "scheduled": "0 8 * * 1"
       }
     }
   },

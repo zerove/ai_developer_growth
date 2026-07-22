@@ -8,6 +8,14 @@
         "action": "lint",
         "description": "提交时自动检查代码风格",
         "enabled": true
+      },
+      {
+        "name": "governance-docs-check",
+        "skill": "governance-docs-validator",
+        "action": "validate",
+        "description": "提交时验证治理文档格式",
+        "condition": "files_contain('docs/efficiency/ai-')",
+        "enabled": true
       }
     ],
     "on_pr": [
@@ -32,6 +40,14 @@
         "action": "audit",
         "description": "PR 时检查文档断链",
         "condition": "files_contain('docs/') || files_contain('*.md')",
+        "enabled": true
+      },
+      {
+        "name": "governance-index-check",
+        "skill": "governance-docs-validator",
+        "action": "check-index",
+        "description": "PR 时验证治理层索引完整性",
+        "condition": "files_contain('GOVERNANCE.md') || files_contain('INDEX.md') || files_contain('CLAUDE.md')",
         "enabled": true
       }
     ],
@@ -74,6 +90,14 @@
         "action": "report",
         "description": "每月效率报告",
         "schedule": "0 9 1 * *",
+        "enabled": true
+      },
+      {
+        "name": "monthly-hallucination-audit",
+        "skill": "governance-auditor",
+        "action": "audit-hallucination-risks",
+        "description": "每月幻觉风险审计",
+        "schedule": "0 9 15 * *",
         "enabled": true
       }
     ]

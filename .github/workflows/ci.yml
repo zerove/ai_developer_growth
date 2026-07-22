@@ -192,3 +192,16 @@ jobs:
             test -d "$d" || { echo "Missing dir: $d"; exit 1; }
           done
           echo "All required files and directories exist"
+
+  governance-docs-check:
+    name: Governance Docs Validation
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+      - name: Validate governance docs
+        run: python .jcode/scripts/governance-docs-validator.py check-index
+      - name: Validate AI-SDLC compliance
+        run: python .jcode/scripts/governance-auditor.py check-ai-sdlc-compliance

@@ -21,7 +21,6 @@ import re
 import sys
 from pathlib import Path
 
-
 # 安全反模式
 SECURITY_PATTERNS = [
     (r"(?:password|secret|api_key|token)\s*=\s*['\"][^'\"]+['\"]", "疑似硬编码密钥"),
@@ -30,10 +29,10 @@ SECURITY_PATTERNS = [
     (r"verify\s*=\s*False", "禁用 SSL 验证"),
     (r"hashlib\.md5\(", "使用 MD5 - 不安全的哈希"),
     (r"hashlib\.sha1\(", "使用 SHA1 - 不安全的哈希"),
-    (r"f['\"].*SELECT.*{", "SQL 拼接 (f-string)"),
-    (r"f['\"].*INSERT.*{", "SQL 拼接 (f-string)"),
-    (r"f['\"].*UPDATE.*{", "SQL 拼接 (f-string)"),
-    (r"f['\"].*DELETE.*{", "SQL 拼接 (f-string)"),
+    (r"f['\"].*\bSELECT\b.*{", "SQL 拼接 (f-string)"),
+    (r"f['\"].*\bINSERT\b.*{", "SQL 拼接 (f-string)"),
+    (r"f['\"].*\bUPDATE\b\s+\w+.*{", "SQL 拼接 (f-string)"),
+    (r"f['\"].*\bDELETE\b.*{", "SQL 拼接 (f-string)"),
 ]
 
 # 类型安全反模式
@@ -56,6 +55,28 @@ STRUCTURE_PATTERNS = [
 ]
 
 
+def _is_in_string(line: str, pos: int) -> bool:
+    """检查 pos 位置是否在字符串字面量内部"""
+    in_str = False
+    str_char = None
+    i = 0
+    while i < pos and i < len(line):
+        ch = line[i]
+        if in_str:
+            if ch == "\\":
+                i += 2  # 跳过转义字符
+                continue
+            if ch == str_char:
+                in_str = False
+                str_char = None
+        else:
+            if ch in ('"', "'"):
+                in_str = True
+                str_char = ch
+        i += 1
+    return in_str
+
+
 def check_security_patterns(filepath: Path) -> list[dict]:
     """检查安全反模式"""
     issues = []
@@ -68,7 +89,8 @@ def check_security_patterns(filepath: Path) -> list[dict]:
             continue
 
         for pattern, description in SECURITY_PATTERNS:
-            if re.search(pattern, line, re.IGNORECASE):
+            match = re.search(pattern, line, re.IGNORECASE)
+            if match and not _is_in_string(line, match.start()):
                 issues.append({
                     "line": line_num,
                     "type": "security",

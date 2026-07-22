@@ -82,7 +82,7 @@ category: 效率层
 ---
 # Test
 """, encoding="utf-8")
-        
+
         result = add_navigation_to_doc(doc)
         self.assertTrue(result)
         content = doc.read_text(encoding="utf-8")
@@ -96,7 +96,7 @@ title: Test
 ## 导航
 - [[docs/efficiency/other|Other]]
 """, encoding="utf-8")
-        
+
         result = add_navigation_to_doc(doc)
         self.assertFalse(result)
 
@@ -108,7 +108,7 @@ title: Test
 ---
 # Test
 """, encoding="utf-8")
-        
+
         result = add_navigation_to_doc(doc)
         self.assertFalse(result)
 
@@ -134,7 +134,7 @@ category: 效率层
 ---
 # Doc {i}
 """, encoding="utf-8")
-        
+
         # Run main with patched docs_dir
         from unittest.mock import patch
         with patch("tools.scripts.add_navigation.Path") as mock_path:

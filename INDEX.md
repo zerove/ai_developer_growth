@@ -1,4 +1,8 @@
-# AI Developer Growth: 知识地图
+
+| **AI 调试专项** | **如何 AI 辅助调试？** | **系统化调试 + 日志分析** | **[[docs/efficiency/ai-debugging-standards]]** |
+| **AI 版本控制** | **如何管理 AI 代码版本？** | **提交规范 + 分支策略** | **[[docs/efficiency/ai-version-control]]** |
+| **AI 部署运维** | **如何部署 AI 代码？** | **蓝绿部署 + 监控告警** | **[[docs/efficiency/ai-deployment-operations]]** |
+| **AI 工具链** | **如何选型工具？** | **工具矩阵 + 配置标准** | **[[docs/efficiency/ai-dev-toolchain]]** |# AI Developer Growth: 知识地图
 
 > 按认知维度组织的知识网络，帮助开发者在 AI 时代进化。
 
@@ -43,16 +47,17 @@
 **推荐阅读顺序**: ai-learning-method → knowledge-internalization → prompt-engineering
 
 ### 🔒 治理层 (Governance)
-将认知转化为生产力。
 
 | 标准 | 描述 | 关键内容 |
 |------|------|----------|
 | [[docs/efficiency/ai-code-generation-quality]] | AI 代码生成质量标准 | 幻觉检测、输出验证、行为测试、代码标注 |
 | [[docs/efficiency/ai-model-selection]] | AI 模型选型与评估标准 | 选型矩阵、成本优化、多模型协作 |
-| [[docs/efficiency/ai-sdlc]] | AI标准 | 7 阶段 SDLC、质量门禁、度量指标 |
+| [[docs/efficiency/ai-sdlc]] | AI 标准 | 7 阶段 SDLC、质量门禁、度量指标 |
 | [[docs/efficiency/ai-code-review-checklist]] | AI 代码审查专项清单 | 幻觉检测、模式复制、过度简化检查 |
-| [[docs/efficiency/ai-nondeterministic-testing]] | AI 非确定 | 属性测试、模糊测试、契约测试 |
-
+| [[docs/efficiency/ai-nondeterministic-testing]] | AI 非确定性输出测试标准 | 属性测试、模糊测试、契约测试 |
+| [[docs/efficiency/ai-hallucination-mitigation]] | AI 幻觉检测与缓解标准 | 幻觉分类、检测方法、缓解策略 |
+| [[docs/efficiency/ai-context-window-management]] | AI 上下文窗口管理标准 | 分层上下文、成本优化、会话管理 |
+| [[docs/efficiency/ai-performance-benchmarks]] | AI 开发性能基准标准 | 效率指标、基准测试、度量体系 |
 ---
 
 ### ⚡ 效率层 (Engineering)

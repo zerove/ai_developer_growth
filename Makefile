@@ -1,87 +1,74 @@
-.PHONY: help install lint format type-check test test-cov check security clean all
+.PHONY: help lint format typecheck test test-cov security audit validate-docs check-index sync-refs full check clean
 
-# Default target
-help: ## Show this help
+help:  ## 显示帮助信息
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-20s\033[0m %s\n", $$1, $$2}'
 
-# ──────────────────────────────────────────────────────
-# Setup
-# ──────────────────────────────────────────────────────
-
-install: ## Install all dependencies
-	pip install -r requirements.txt
-	pip install -r requirements-dev.txt 2>/dev/null || true
-	pip install ruff mypy pytest pytest-cov bandit pip-audit pre-commit
-
-install-pre-commit: ## Install pre-commit hooks
-	pre-commit install
-
-# ──────────────────────────────────────────────────────
-# Code Quality
-# ──────────────────────────────────────────────────────
-
-lint: ## Run ruff linter
+lint:  ## 运行 ruff lint 检查
 	ruff check .
+
+format:  ## 运行 ruff format 检查
 	ruff format --check .
 
-format: ## Auto-format code with ruff
+format-fix:  ## 自动修复格式
 	ruff format .
-	ruff check --fix .
 
-type-check: ## Run mypy type checker
+typecheck:  ## 运行 mypy 类型检查
 	mypy tools/scripts/ --ignore-missing-imports
 
-# ──────────────────────────────────────────────────────
-# Testing
-# ──────────────────────────────────────────────────────
+test:  ## 运行 pytest 测试
+	python -m pytest tests/ -v
 
-test: ## Run all tests
-	python -m pytest tests/ -v --tb=short
-
-test-cov: ## Run tests with coverage report
-	python -m pytest tests/ -v --cov=tools/scripts --cov-report=term-missing --cov-report=xml --tb=short
-
-test-fast: ## Run tests without coverage (faster)
-	python -m pytest tests/ -v --tb=short -x
-
-# ──────────────────────────────────────────────────────
-# Quality Gates
-# ──────────────────────────────────────────────────────
-
-security: ## Run security scans (bandit + pip-audit)
+test-cov:  ## 运行测试并生成覆盖率报告
+	python -m pytest tests/ -v --cov=tools/scripts --cov-report=term-missing --cov-report=html
+行安全扫描
 	bandit -r tools/scripts/ -f json -o bandit-report.json || true
 	pip-audit --desc
 
-links: ## Check documentation links
+audit:  ## 运行治理审计 (lint + format + typecheck + test)
+	python .jcode/scripts/governance-auditor.py lint
+	python .jcode/scripts/governance-auditor.py format
+	python .jcode/scripts/governance-auditor.py typecheck
+	python .jcode/scripts/governance-auditor.py test
+
+validate-docs:  ## 验证治理文档格式
+	python .jcode/scripts/governance-docs-validator.py validate
+
+check-index:  ## 检查治理文档索引引用
+	python .jcode/scripts/governance-docs-validator.py check-index
+
+sync-refs:  ## 同步治理文档交叉引用
+	python .jcode/scripts/governance-docs-validator.py sync-refs
+
+validate-governance-docs:  ## 验证治理层文档完整性
+	python .jcode/scripts/governance-auditor.py validate-governance-docs
+
+check-ai-sdlc:  ## 检查 AI-SDLC 合规性
+	python .jcode/scripts/governance-auditor.py check-ai-sdlc-compliance
+
+audit-hallucination:  ## 审计幻觉风险
+	python .jcode/scripts/governance-auditor.py audit-hallucination-risks
+
+link-audit:  ## 检查文档断链
 	python tools/scripts/link_auditor.py . --check-all
 
-validate-cases: ## Validate all case studies
+validate-cases:  ## 验证案例格式
 	python tools/scripts/validate_case_study.py --all --strict
 
-audit: ## Run governance audit
-	python tools/scripts/audit_to_pr.py --check-all
+scan:  ## 扫描案例格式完整性
+	python .jcode/scripts/knowledge-curator.py scan
 
-# ──────────────────────────────────────────────────────
-# Combined
-# ──────────────────────────────────────────────────────
+full-audit:  ## 运行完整审计 (所有检查)
+	python .jcode/scripts/governance-auditor.py full
 
-check: lint type-check test ## Run all checks (lint + type-check + test)
+full-validate:  ## 运行完整治理文档验证
+	python .jcode/scripts/governance-docs-validator.py full
 
-pre-commit: ## Run pre-commit on all files
-	pre-commit run --all-files
+check: lint format typecheck test validate-docs check-index  ## 运行所有检查
 
-# ──────────────────────────────────────────────────────
-# Cleanup
-# ──────────────────────────────────────────────────────
-
-clean: ## Remove build artifacts and caches
+clean:  ## 清理临时文件
 	find . -type d -name __pycache__ -exec rm -rf {} + 2>/dev/null || true
-	find . -type d -name .pytest_cache -exec rm -rf {} + 2>/dev/null || true
-	find . -type d -name "*.egg-info" -exec rm -rf {} + 2>/dev/null || true
-	rm -rf .mypy_cache .ruff_cache htmlcov coverage.xml .coverage bandit-report.json
-
-# ──────────────────────────────────────────────────────
-# All
-# ──────────────────────────────────────────────────────
-
-all: clean install check security ## Full pipeline: clean + install + check + security
+	find . -type f -name "*.pyc" -delete 2>/dev/null || true
+	find . -type d -name ".pytest_cache" -exec rm -rf {} + 2>/dev/null || true
+	find . -type d -name ".ruff_cache" -exec rm -rf {} + 2>/dev/null || true
+	find . -type d -name "htmlcov" -exec rm -rf {} + 2>/dev/null || true
+	rm -rf .coverage coverage.xml bandit-report.json 2>/dev/null || true

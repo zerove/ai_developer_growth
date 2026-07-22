@@ -199,9 +199,10 @@ class TestPrintReport(unittest.TestCase):
 
     def test_print_report_basic(self):
         """Should print report without errors."""
-        from tools.scripts.analyze_tracking import print_report
-        from io import StringIO
         import sys
+        from io import StringIO
+
+        from tools.scripts.analyze_tracking import print_report
 
         data = {
             "searches": [{"q": "test", "results": 5}],
@@ -217,9 +218,10 @@ class TestPrintReport(unittest.TestCase):
 
     def test_print_report_empty_data(self):
         """Should handle empty data."""
-        from tools.scripts.analyze_tracking import print_report
-        from io import StringIO
         import sys
+        from io import StringIO
+
+        from tools.scripts.analyze_tracking import print_report
 
         data = {"searches": [], "pageviews": [], "reading_time": {}}
         old_stdout = sys.stdout
@@ -231,9 +233,10 @@ class TestPrintReport(unittest.TestCase):
 
     def test_print_report_with_synonyms(self):
         """Should print synonym suggestions."""
-        from tools.scripts.analyze_tracking import print_report
-        from io import StringIO
         import sys
+        from io import StringIO
+
+        from tools.scripts.analyze_tracking import print_report
 
         data = {
             "searches": [
@@ -256,9 +259,10 @@ class TestMainFunction(unittest.TestCase):
 
     def test_main_with_valid_file(self):
         """Should run main with valid file."""
-        from tools.scripts.analyze_tracking import main
         import sys
         from io import StringIO
+
+        from tools.scripts.analyze_tracking import main
 
         data = {
             "searches": [{"q": "test", "results": 5}],
@@ -283,9 +287,10 @@ class TestMainFunction(unittest.TestCase):
 
     def test_main_with_export_synonyms(self):
         """Should export synonyms as JSON."""
-        from tools.scripts.analyze_tracking import main
         import sys
         from io import StringIO
+
+        from tools.scripts.analyze_tracking import main
 
         data = {
             "searches": [
@@ -317,9 +322,10 @@ class TestMainFunction(unittest.TestCase):
 
     def test_main_nonexistent_file(self):
         """Should exit with error for nonexistent file."""
-        from tools.scripts.analyze_tracking import main
         import sys
         from io import StringIO
+
+        from tools.scripts.analyze_tracking import main
 
         old_argv = sys.argv
         sys.argv = ["analyze_tracking.py", "nonexistent.json"]

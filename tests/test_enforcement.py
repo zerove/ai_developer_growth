@@ -4,18 +4,17 @@ import tempfile
 import unittest
 from pathlib import Path
 
+from tools.scripts.ai_quality_gate import (
+    check_error_patterns,
+    check_security_patterns,
+    check_type_patterns,
+)
+from tools.scripts.check_ai_annotation import (
+    has_ai_annotation,
+)
 from tools.scripts.validate_agent_definition import (
     validate_agent_definition,
     validate_agent_name,
-)
-from tools.scripts.check_ai_annotation import (
-    check_file,
-    has_ai_annotation,
-)
-from tools.scripts.ai_quality_gate import (
-    check_security_patterns,
-    check_type_patterns,
-    check_error_patterns,
 )
 
 

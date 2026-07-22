@@ -48,20 +48,20 @@ def get_navigation(doc_path: Path, content: str) -> str:
     cat_match = re.search(r"^category:\s*(.+)$", content, re.MULTILINE)
     if not cat_match:
         return ""
-    
+
     category = cat_match.group(1).strip()
     doc_name = doc_path.stem
-    
+
     # Get related docs from same category
     related = CATEGORY_DOCS.get(category, [])
     related_links = []
     for slug, title in related:
         if slug != doc_name:
             related_links.append(f"- [[docs/efficiency/{slug}|{title}]]")
-    
+
     if not related_links:
         return ""
-    
+
     # Build navigation section
     nav_lines = [
         "\n---\n",
@@ -71,22 +71,22 @@ def get_navigation(doc_path: Path, content: str) -> str:
     ]
     nav_lines.extend(related_links[:5])  # Limit to 5 related docs
     nav_lines.append("")
-    
+
     return "\n".join(nav_lines)
 
 
 def add_navigation_to_doc(doc_path: Path) -> bool:
     """Add navigation section to a doc if missing."""
     content = doc_path.read_text(encoding="utf-8")
-    
+
     # Skip if navigation already exists
     if "## 导航" in content:
         return False
-    
+
     nav = get_navigation(doc_path, content)
     if not nav:
         return False
-    
+
     # Append navigation section
     doc_path.write_text(content + nav, encoding="utf-8")
     return True
@@ -96,12 +96,12 @@ def main():
     """Add navigation to all efficiency docs."""
     docs_dir = Path("docs/efficiency")
     updated = 0
-    
+
     for doc in sorted(docs_dir.glob("*.md")):
         if add_navigation_to_doc(doc):
             print(f"✅ {doc.name}")
             updated += 1
-    
+
     print(f"📊 已更新 {updated} 个文档")
 
 

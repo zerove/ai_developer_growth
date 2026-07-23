@@ -77,7 +77,7 @@ class CaseStudyValidator:
         "4. 优化",
     ]
 
-    def __init__(self, strict: bool = False, legacy_mode: bool = False):
+    def __init__(self, strict: bool = False, legacy_mode: bool = False) -> None:
         self.strict = strict
         self.legacy_mode = legacy_mode
         self.results: list[ValidationResult] = []
@@ -111,7 +111,7 @@ class CaseStudyValidator:
 
         return self.results
 
-    def _check_sections(self, content: str):
+    def _check_sections(self, content: str) -> None:
         """Verify all required sections exist (supports alt headers)."""
         for section_name, alt_headers in self.REQUIRED_SECTIONS_ALT.items():
             found = False
@@ -143,13 +143,13 @@ class CaseStudyValidator:
                 else:
                     self._add_error(f"Missing required section: {section_name} (tried: {', '.join(alt_headers)})")
 
-    def _check_tables(self, content: str):
+    def _check_tables(self, content: str) -> None:
         """Verify required tables exist."""
         for table in self.REQUIRED_TABLES:
             if table not in content:
                 self._add_warning(f"Missing recommended table: {table} (required for new submissions)", "README.md")
 
-    def _check_phases(self, content: str):
+    def _check_phases(self, content: str) -> None:
         """Verify AI collaboration phases are documented."""
         found_phases = 0
         for kw in self.PHASE_KEYWORDS:
@@ -169,7 +169,7 @@ class CaseStudyValidator:
                 "README.md",
             )
 
-    def _check_efficiency_table(self, content: str):
+    def _check_efficiency_table(self, content: str) -> None:
         """Validate efficiency comparison table."""
         # Find the efficiency table
         table_pattern = r"\|.*阶段.*\|.*传统.*\|.*AI.*\|.*提升.*\|"
@@ -206,7 +206,7 @@ class CaseStudyValidator:
                 if stage in ["总计", "总计 "] or "总计" in stage:
                     self._validate_boost_calculation(traditional, ai, boost)
 
-    def _validate_boost_calculation(self, traditional: str, ai: str, boost: str):
+    def _validate_boost_calculation(self, traditional: str, ai: str, boost: str) -> None:
         """Validate that boost = traditional / ai (in hours)."""
         try:
             # Extract numbers
@@ -237,7 +237,7 @@ class CaseStudyValidator:
         except (ValueError, AttributeError):
             self._add_warning(f"Could not parse efficiency values: {traditional} / {ai} → {boost}", "README.md")
 
-    def _check_insights(self, content: str):
+    def _check_insights(self, content: str) -> None:
         """Validate key insights quality."""
         insight_section = content.split("## 关键洞察")
         if len(insight_section) < 2:
@@ -258,7 +258,7 @@ class CaseStudyValidator:
                 )
                 break
 
-    def _check_applicability(self, content: str):
+    def _check_applicability(self, content: str) -> None:
         """Check applicability scenarios are marked."""
         if "适用场景" not in content:
             self._add_warning("Missing 适用场景 section (required for new submissions)", "README.md")
@@ -268,7 +268,7 @@ class CaseStudyValidator:
         if "- [ ]" not in content and "- [x]" not in content:
             self._add_warning("Applicability scenarios should use checkbox format (- [ ] / - [x])", "README.md")
 
-    def _check_deliverables(self, content: str):
+    def _check_deliverables(self, content: str) -> None:
         """Check deliverables checklist."""
         if "交付物清单" not in content:
             self._add_warning("Missing 交付物清单 section (required for new submissions)", "README.md")
@@ -283,7 +283,7 @@ class CaseStudyValidator:
         if missing:
             self._add_warning(f"Missing deliverable checkboxes: {', '.join(missing)}", "README.md")
 
-    def _check_submission_checklist(self, content: str):
+    def _check_submission_checklist(self, content: str) -> None:
         """Check submission checklist."""
         if "提交前检查" not in content:
             self._add_warning("Missing 提交前检查 section", "README.md")
@@ -297,7 +297,7 @@ class CaseStudyValidator:
         if missing:
             self._add_warning(f"Submission checklist incomplete: {', '.join(missing)}", "README.md")
 
-    def _check_format(self, lines: list[str]):
+    def _check_format(self, lines: list[str]) -> None:
         """Check markdown formatting."""
         for i, line in enumerate(lines, 1):
             # Check for table alignment
@@ -314,7 +314,7 @@ class CaseStudyValidator:
             if line.endswith("  ") or line.endswith("\t"):
                 self._add_warning(f"Trailing whitespace at line {i}", "README.md", i)
 
-    def _check_links(self, case_path: Path, content: str):
+    def _check_links(self, case_path: Path, content: str) -> None:
         """Check wikilinks and external links."""
         # Check wikilinks
         wikilinks = re.findall(r"\[\[([^\]]+)\]\]", content)
@@ -332,17 +332,17 @@ class CaseStudyValidator:
                     if not (target_path.with_suffix(".md")).exists():
                         self._add_warning(f"Broken wikilink: [[{link}]] -> {target_path}", "README.md")
 
-    def _add_error(self, msg: str, file: str = "", line: int = 0):
+    def _add_error(self, msg: str, file: str = "", line: int = 0) -> None:
         self.results.append(ValidationResult(Severity.ERROR, msg, file, line))
 
-    def _add_warning(self, msg: str, file: str = "", line: int = 0):
+    def _add_warning(self, msg: str, file: str = "", line: int = 0) -> None:
         if self.strict:
             self._add_error(msg, file, line)
         else:
             self.results.append(ValidationResult(Severity.WARNING, msg, file, line))
 
 
-def print_results(results: list[ValidationResult], case_name: str = ""):
+def print_results(results: list[ValidationResult], case_name: str = "") -> None:
     """Pretty print validation results."""
     if case_name:
         print(f"\n{'=' * 60}")
@@ -371,7 +371,7 @@ def print_results(results: list[ValidationResult], case_name: str = ""):
     print()
 
 
-def main():
+def main() -> int:
     parser = argparse.ArgumentParser(description="Validate case study submissions")
     parser.add_argument("--path", type=str, help="Path to single case study directory")
     parser.add_argument("--all", action="store_true", help="Validate all cases in case-studies/")

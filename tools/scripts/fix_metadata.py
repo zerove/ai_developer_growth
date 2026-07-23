@@ -30,7 +30,7 @@ DIR_CATEGORY_MAP = {
     'docs/moc': ('治理层', ['知识图谱', 'MOC']),
 }
 
-def get_category_from_path(filepath):
+def get_category_from_path(filepath: str) -> tuple:
     """根据文件路径推断分类"""
     path = Path(filepath)
 
@@ -40,7 +40,7 @@ def get_category_from_path(filepath):
 
     return ('效率层', ['AI开发', '技术文档'])
 
-def infer_title_from_content(content, filepath):
+def infer_title_from_content(content: str, filepath: str) -> str:
     """从内容推断标题"""
     # 尝试从第一个标题提取
     match = re.search(r'^#\s+(.+)$', content, re.MULTILINE)
@@ -51,7 +51,7 @@ def infer_title_from_content(content, filepath):
     filename = Path(filepath).stem
     return filename.replace('-', ' ').replace('_', ' ').title()
 
-def infer_difficulty(content):
+def infer_difficulty(content: str) -> str:
     """推断难度"""
     content_lower = content.lower()
     if any(word in content_lower for word in ['高级', '深入', '复杂', 'advanced', 'expert']):
@@ -60,7 +60,7 @@ def infer_difficulty(content):
         return '中级'
     return '初级'
 
-def infer_tags(content, filepath):
+def infer_tags(content: str, filepath: str) -> list[str]:
     """推断标签"""
     tags = set()
 
@@ -89,7 +89,7 @@ def infer_tags(content, filepath):
 
     return list(tags)[:5] or ['技术文档']
 
-def generate_metadata(filepath):
+def generate_metadata(filepath: str) -> str:
     """生成元数据"""
     with open(filepath, encoding='utf-8') as f:
         content = f.read()
@@ -119,7 +119,7 @@ updated: 2026-07-21
 """
     return metadata
 
-def process_file(filepath):
+def process_file(filepath: str) -> bool:
     """处理单个文件"""
     with open(filepath, encoding='utf-8') as f:
         content = f.read()
@@ -148,7 +148,7 @@ def process_file(filepath):
 
     return True
 
-def main():
+def main() -> None:
     docs_dir = 'docs'
     fixed_count = 0
 

@@ -12,7 +12,7 @@ from pathlib import Path
 
 
 class ContributorDashboard:
-    def __init__(self, repo_root: Path = Path(".")):
+    def __init__(self, repo_root: Path = Path(".")) -> None:
         self.repo_root = repo_root
         self.stats: dict = {}
 
@@ -180,7 +180,7 @@ class ContributorDashboard:
         return ""
 
 
-def main():
+def main() -> None:
     import argparse
 
     parser = argparse.ArgumentParser(description="生成贡献者仪表板")

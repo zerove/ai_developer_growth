@@ -79,7 +79,7 @@ def scan_directory(directory: Path) -> dict[str, list[str]]:
     return results
 
 
-def main():
+def main() -> None:
     """主函数"""
     # 扫描 docs 目录
     docs_dir = Path("docs")

@@ -185,7 +185,7 @@ jobs:
         with:
           python-version: ${{ env.PYTHON_VERSION }}
           cache: pip
-      - run: pip install -e examples/ai-context-sync -e examples/multi-agent-orch -e examples/self-correction-loop -e examples/ai-task-prioritizer -e examples/ai-navigation -e examples/capability-radar -e examples/prompt-optimizer -e examples/ai-navigation-web pytest pytest-cov
+      - run: pip install -e examples/ai-context-sync -e examples/multi-agent-orch -e examples/self-correction-loop -e examples/ai-task-prioritizer -e examples/ai-navigation -e examples/capability-radar -e examples/prompt-optimizer -e examples/ai-navigation-web -e examples/ai-growth-slack -e examples/ai-growth-vscode pytest pytest-cov
       - name: Validate example structure
         run: python tools/scripts/validate_example_projects.py
       - name: Run example tests
@@ -204,7 +204,7 @@ jobs:
           echo "## Test Summary" >> $GITHUB_STEP_SUMMARY
           echo "| Example | Tests |" >> $GITHUB_STEP_SUMMARY
           echo "|---------|-------|" >> $GITHUB_STEP_SUMMARY
-          for d in ai-context-sync multi-agent-orch self-correction-loop ai-task-prioritizer capability-radar prompt-optimizer ai-navigation ai-navigation-web; do
+          for d in ai-context-sync multi-agent-orch self-correction-loop ai-task-prioritizer capability-radar prompt-optimizer ai-navigation ai-navigation-web ai-growth-slack ai-growth-vscode; do
             count=$(cd examples/$d && python -m pytest tests/ --co -q 2>/dev/null | grep "test" | wc -l || echo "0")
             echo "| $d | $count |" >> $GITHUB_STEP_SUMMARY
           done

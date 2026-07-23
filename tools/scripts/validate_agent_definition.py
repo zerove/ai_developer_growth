@@ -43,7 +43,7 @@ def validate_agent_name(name: str) -> list[str]:
 
 def validate_agent_definition(filepath: Path) -> dict:
     """验证单个 Agent 定义文件"""
-    result = {
+    result: dict[str, object] = {
         "file": str(filepath),
         "errors": [],
         "warnings": [],
@@ -129,7 +129,7 @@ def validate_agent_definition(filepath: Path) -> dict:
 
 def validate_all_agents(agents_dir: Path = Path("agents")) -> list[dict]:
     """验证所有 Agent 定义文件"""
-    results = []
+    results: list[dict] = []
 
     if not agents_dir.exists():
         print(f"❌ Agent 目录不存在: {agents_dir}")
@@ -150,7 +150,7 @@ def validate_all_agents(agents_dir: Path = Path("agents")) -> list[dict]:
     return results
 
 
-def main():
+def main() -> None:
     """主函数"""
     import argparse
 

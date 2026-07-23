@@ -110,7 +110,7 @@ def fix_file(filepath: Path, model: str = "unknown") -> bool:
     return True
 
 
-def main():
+def main() -> None:
     """主函数"""
     parser = argparse.ArgumentParser(description="检查 AI 代码标注")
     parser.add_argument("--path", type=Path, help="检查指定目录")

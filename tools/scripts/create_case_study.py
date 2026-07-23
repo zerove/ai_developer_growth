@@ -176,7 +176,7 @@ def get_default_template() -> str:
 """
 
 
-def main():
+def main() -> None:
     parser = argparse.ArgumentParser(description="创建标准化案例研究目录结构")
     parser.add_argument("name", help="案例研究名称 (如: 'AI 驱动的 API 网关开发')")
     parser.add_argument("--dir", default="case-studies", help="基础目录 (默认: case-studies)")

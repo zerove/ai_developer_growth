@@ -49,7 +49,7 @@ def validate_example(example_dir: Path) -> list[str]:
     return issues
 
 
-def main():
+def main() -> None:
     """主函数"""
     examples_dir = Path("examples")
     if not examples_dir.exists():

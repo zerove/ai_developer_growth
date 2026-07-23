@@ -65,7 +65,7 @@ class ModelInfo:
     last_checked: str | None = None
     update_available: bool = False
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         if self.strengths is None:
             self.strengths = []
         if self.use_cases is None:
@@ -73,7 +73,7 @@ class ModelInfo:
 
 
 class ToolMatrixUpdater:
-    def __init__(self):
+    def __init__(self) -> None:
         self.tools: dict[str, ToolInfo] = {}
         self.models: dict[str, ModelInfo] = {}
         self.matrix_content = ""
@@ -90,10 +90,10 @@ class ToolMatrixUpdater:
             return json.loads(CACHE_PATH.read_text())
         return {}
 
-    def _save_cache(self):
+    def _save_cache(self) -> None:
         CACHE_PATH.write_text(json.dumps(self.cache, indent=2))
 
-    def load_matrix(self):
+    def load_matrix(self) -> None:
         """Parse current matrix from markdown file."""
         if not MATRIX_PATH.exists():
             raise FileNotFoundError(f"Matrix file not found: {MATRIX_PATH}")
@@ -101,7 +101,7 @@ class ToolMatrixUpdater:
         self.matrix_content = MATRIX_PATH.read_text(encoding="utf-8")
         self._parse_matrix()
 
-    def _parse_matrix(self):
+    def _parse_matrix(self) -> None:
         """Extract tool and model info from markdown."""
         # Parse models table
         model_pattern = r"\|\s*(\*\*.+?\*\*)\s*\|\s*(.+?)\s*\|\s*(.+?)\s*\|\s*(.+?)\s*\|\s*(\⭐+)"
@@ -369,7 +369,7 @@ class ToolMatrixUpdater:
         return changed
 
 
-async def main():
+async def main() -> int:
     import argparse
 
     parser = argparse.ArgumentParser(description="AI Tool Matrix Updater")

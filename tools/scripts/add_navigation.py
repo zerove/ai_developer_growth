@@ -92,7 +92,7 @@ def add_navigation_to_doc(doc_path: Path) -> bool:
     return True
 
 
-def main():
+def main() -> None:
     """Add navigation to all efficiency docs."""
     docs_dir = Path("docs/efficiency")
     updated = 0

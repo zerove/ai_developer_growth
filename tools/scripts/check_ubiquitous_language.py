@@ -36,7 +36,7 @@ def check_term_usage(term: str, docs_dir: Path) -> int:
     return count
 
 
-def main():
+def main() -> None:
     ubiquitous_file = Path("UBIQUITOUS_LANGUAGE.md")
     docs_dir = Path("docs")
 

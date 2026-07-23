@@ -216,7 +216,7 @@ def check_annotation(filepath: Path) -> list[dict]:
 
 def check_file(filepath: Path, checks: list[str]) -> dict:
     """检查单个文件"""
-    result = {
+    result: dict[str, object] = {
         "file": str(filepath),
         "issues": [],
         "passed": True,
@@ -252,7 +252,7 @@ def check_file(filepath: Path, checks: list[str]) -> dict:
     return result
 
 
-def main():
+def main() -> None:
     """主函数"""
     parser = argparse.ArgumentParser(description="AI 代码质量门禁")
     parser.add_argument("--path", type=Path, help="检查指定目录")

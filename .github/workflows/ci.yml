@@ -85,6 +85,19 @@ jobs:
               print(f'::error::Coverage {coverage:.1f}% is below 80% threshold')
               exit(1)
           "
+      - name: Coverage Report
+        if: matrix.python-version == '3.11' && always()
+        run: |
+          echo "## Coverage Report" >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          python -c "
+          import xml.etree.ElementTree as ET
+          tree = ET.parse('coverage.xml')
+          root = tree.getroot()
+          coverage = float(root.attrib.get('line-rate', 0)) * 100
+          print(f'Line coverage: {coverage:.1f}%')
+          " >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
 
   # ──────────────────────────────────────────────────────
   # Quality Gates
@@ -137,7 +150,22 @@ jobs:
       - name: pip-audit
         run: pip-audit --desc
       - name: bandit
-        run: bandit -r tools/scripts/ -f json -o bandit-report.json || true
+        run: bandit -r tools/scripts/ -f json -o bandit-report.json -ll
+      - name: bandit fail on high severity
+        run: |
+          if [ -f bandit-report.json ]; then
+            python -c "
+          import json, sys
+          with open('bandit-report.json') as f:
+              data = json.load(f)
+          high = [r for r in data.get('results', []) if r.get('issue_severity') == 'HIGH']
+          if high:
+              print(f'::error::{len(high)} HIGH severity issues found')
+              for r in high:
+                  print(f\"  {r['filename']}:{r['line_number']} - {r['issue_text']}\")
+              sys.exit(1)
+          print('No HIGH severity issues')
+          "
       - name: Upload bandit report
         if: always()
         uses: actions/upload-artifact@v4
@@ -158,6 +186,8 @@ jobs:
           python-version: ${{ env.PYTHON_VERSION }}
           cache: pip
       - run: pip install -e examples/ai-context-sync -e examples/multi-agent-orch -e examples/self-correction-loop -e examples/ai-task-prioritizer -e examples/ai-navigation -e examples/capability-radar -e examples/prompt-optimizer -e examples/ai-navigation-web pytest pytest-cov
+      - name: Validate example structure
+        run: python tools/scripts/validate_example_projects.py
       - name: Run example tests
         run: |
           cd examples/ai-context-sync && python -m pytest tests/ -v --tb=short
@@ -205,3 +235,30 @@ jobs:
         run: python .jcode/scripts/governance-docs-validator.py check-index
       - name: Validate AI-SDLC compliance
         run: python .jcode/scripts/governance-auditor.py check-ai-sdlc-compliance
+
+  # ──────────────────────────────────────────────────────
+  # Agent & Enforcement Validation
+  # ──────────────────────────────────────────────────────
+  agent-validation:
+    name: Agent Definition Validation
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+      - name: Validate agent definitions
+        run: python tools/scripts/validate_agent_definition.py --path agents/
+
+  enforcement-check:
+    name: Enforcement Scripts Check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+      - name: AI annotation check
+        run: python tools/scripts/check_ai_annotation.py --path tools/scripts/
+      - name: Quality gate check
+        run: python tools/scripts/ai_quality_gate.py --check-patterns --path tools/scripts/ || true

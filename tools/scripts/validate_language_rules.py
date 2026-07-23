@@ -1197,292 +1197,63 @@ def _calc_cyclomatic_complexity(node: ast.AST) -> int:
 def apply_fixes(filepath: Path, issues: list[Issue], dry_run: bool = False) -> list[FixResult]:
     """Apply auto-fixes to a file based on issues with fix_replacement.
 
-    Args:
-        filepath: File to fix
-        issues: Issues to fix (only those with fix_replacement set)
-        dry_run: If True, report what would change without writing
-
-    Returns:
-        List of FixResult describing each change
+    Delegated to fix_applier.apply_fixes for modularity.
     """
-    fixes: list[FixResult] = []
+    from .fix_applier import apply_fixes as _apply_fixes
 
-    try:
-        content = filepath.read_text(encoding="utf-8")
-    except (OSError, UnicodeDecodeError):
-        return fixes
-
-    lines = content.splitlines(keepends=True)
-    modified = False
-
-    for issue in issues:
-        if not issue.fix_replacement or issue.line < 1 or issue.line > len(lines):
-            continue
-
-        line_idx = issue.line - 1
-        original_line = lines[line_idx]
-
-        # Try regex replacement on the line
-        try:
-            # fix_replacement format: "s/pattern/replacement/flags" or literal string
-            replacement = issue.fix_replacement
-            if replacement.startswith("s/") and replacement.count("/") >= 3:
-                # sed-style: s/pattern/replacement/flags
-                parts = replacement.split("/")
-                pattern = parts[1]
-                new_text = parts[2]
-                flags = parts[3] if len(parts) > 3 else ""
-                re_flags = re.IGNORECASE if "i" in flags else 0
-                new_line = re.sub(pattern, new_text, original_line, flags=re_flags)
-            else:
-                # Literal replacement of matched text
-                new_line = original_line.replace(
-                    issue.message.split(":")[-1].strip() if ":" in issue.message else "",
-                    replacement,
-                    1,
-                )
-
-            if new_line != original_line:
-                fixes.append(
-                    FixResult(
-                        file=str(filepath),
-                        rule_id=issue.rule_id,
-                        line=issue.line,
-                        original=original_line.rstrip(),
-                        fixed=new_line.rstrip(),
-                        description=issue.fix_hint or f"Auto-fixed: {issue.rule_id}",
-                    )
-                )
-                if not dry_run:
-                    lines[line_idx] = new_line
-                    modified = True
-        except re.error:
-            continue
-
-    if modified and not dry_run:
-        filepath.write_text("".join(lines), encoding="utf-8")
-
-    return fixes
+    return _apply_fixes(filepath, issues, dry_run)
 
 
 # ──────────────────────────────────────────────────────────
-# Report generators (#6)
+# Report generators (#6) - Delegated to report_generator.py
 # ──────────────────────────────────────────────────────────
 
 
 def generate_junit_xml(results: list[ValidationResult]) -> str:
-    """Generate JUnit XML report."""
-    total_errors = sum(r.error_count for r in results)
-    total_warnings = sum(r.warning_count for r in results)
-    total_tests = len(results)
-    failures = sum(1 for r in results if not r.passed)
+    """Generate JUnit XML report. Delegated to report_generator."""
+    from .report_generator import generate_junit_xml as _gen
 
-    lines = [
-        '<?xml version="1.0" encoding="UTF-8"?>',
-        f'<testsuite name="language-rules" tests="{total_tests}" '
-        f'failures="{failures}" errors="{total_errors}" warnings="{total_warnings}">',
-    ]
-
-    for result in results:
-        testcase = f'  <testcase name="{_xml_escape(result.file)}" classname="{result.language}">'
-        if not result.passed:
-            for issue in result.issues:
-                if issue.severity == "error":
-                    lines.append(f"{testcase}")
-                    lines.append(f'    <failure message="{_xml_escape(issue.message)}">')
-                    lines.append(f"      {issue.rule_id}: {issue.message} (line {issue.line})")
-                    lines.append("    </failure>")
-                    lines.append("  </testcase>")
-                    break
-            else:
-                lines.append(f"{testcase}</testcase>")
-        else:
-            # Report warnings as system-out
-            warns = [i for i in result.issues if i.severity == "warning"]
-            if warns:
-                lines.append(f"{testcase}")
-                lines.append("    <system-out>")
-                for w in warns[:5]:
-                    lines.append(f"      [{w.rule_id}] {w.message} (line {w.line})")
-                lines.append("    </system-out>")
-                lines.append("  </testcase>")
-            else:
-                lines.append(f"{testcase}</testcase>")
-
-    lines.append("</testsuite>")
-    return "\n".join(lines)
+    return _gen(results)
 
 
 def _xml_escape(s: str) -> str:
     """Escape XML special characters."""
-    return s.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;").replace('"', "&quot;")
+    from .report_generator import _xml_escape as _esc
+
+    return _esc(s)
 
 
 def generate_html_report(results: list[ValidationResult]) -> str:
-    """Generate HTML report."""
-    total_errors = sum(r.error_count for r in results)
-    total_warnings = sum(r.warning_count for r in results)
-    total_info = sum(r.info_count for r in results)
-    passed_count = sum(1 for r in results if r.passed)
+    """Generate HTML report. Delegated to report_generator."""
+    from .report_generator import generate_html_report as _gen
 
-    rows = []
-    for result in sorted(results, key=lambda r: (not r.passed, r.file)):
-        status_class = "pass" if result.passed else "fail"
-        rows.append(f"""      <tr class="{status_class}">
-        <td>{_html_escape(result.file)}</td>
-        <td>{result.language}</td>
-        <td class="num">{result.error_count}</td>
-        <td class="num">{result.warning_count}</td>
-        <td class="num">{result.info_count}</td>
-        <td>{"PASS" if result.passed else "FAIL"}</td>
-      </tr>""")
-        if not result.passed:
-            for issue in result.issues[:3]:
-                rows.append(f"""      <tr class="detail">
-        <td colspan="6">[{issue.severity}] {issue.rule_id}: {_html_escape(issue.message)} (line {issue.line})</td>
-      </tr>""")
-
-    return f"""<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <title>Language Rules Report</title>
-  <style>
-    body {{ font-family: -apple-system, sans-serif; margin: 2rem; }}
-    .summary {{ display: flex; gap: 2rem; margin-bottom: 2rem; }}
-    .card {{ padding: 1rem 1.5rem; border-radius: 8px; }}
-    .card.error {{ background: #fee; border: 1px solid #fcc; }}
-    .card.warn {{ background: #ffd; border: 1px solid #ff8; }}
-    .card.pass {{ background: #efe; border: 1px solid #8c8; }}
-    .card.info {{ background: #eef; border: 1px solid #88c; }}
-    table {{ border-collapse: collapse; width: 100%; }}
-    th, td {{ padding: 0.5rem 1rem; border: 1px solid #ddd; text-align: left; }}
-    th {{ background: #f5f5f5; }}
-    tr.pass td {{ background: #efe; }}
-    tr.fail td {{ background: #fee; }}
-    tr.detail td {{ background: #f9f9f9; font-size: 0.9em; color: #666; }}
-    .num {{ text-align: right; }}
-  </style>
-</head>
-<body>
-  <h1>Language Rules Report</h1>
-  <div class="summary">
-    <div class="card pass"><strong>{passed_count}</strong> files passed</div>
-    <div class="card error"><strong>{total_errors}</strong> errors</div>
-    <div class="card warn"><strong>{total_warnings}</strong> warnings</div>
-    <div class="card info"><strong>{total_info}</strong> info</div>
-  </div>
-  <table>
-    <tr><th>File</th><th>Language</th><th>Errors</th><th>Warnings</th><th>Info</th><th>Status</th></tr>
-{chr(10).join(rows)}
-  </table>
-</body>
-</html>"""
+    return _gen(results)
 
 
 def _html_escape(s: str) -> str:
     """Escape HTML special characters."""
-    return s.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
+    from .report_generator import _html_escape as _esc
 
-
-# ──────────────────────────────────────────────────────────
-# SARIF output (#10) - GitHub Code Scanning format
-# ──────────────────────────────────────────────────────────
+    return _esc(s)
 
 
 def generate_sarif(results: list[ValidationResult]) -> str:
-    """Generate SARIF 2.1.0 report for GitHub Code Scanning."""
-    rules: dict[str, dict[str, Any]] = {}
-    runs_results: list[dict[str, Any]] = []
+    """Generate SARIF 2.1.0 report. Delegated to report_generator."""
+    from .report_generator import generate_sarif as _gen
 
-    for result in results:
-        file_results = []
-        for issue in result.issues:
-            # Collect rule definitions
-            if issue.rule_id not in rules:
-                rules[issue.rule_id] = {
-                    "id": issue.rule_id,
-                    "shortDescription": {"text": issue.message},
-                    "helpUri": f"https://github.com/example/rules/{issue.rule_id}",
-                    "properties": {"category": issue.category},
-                }
-
-            level = "error" if issue.severity == "error" else "warning" if issue.severity == "warning" else "note"
-
-            file_results.append(
-                {
-                    "ruleId": issue.rule_id,
-                    "level": level,
-                    "message": {"text": issue.message},
-                    "locations": [
-                        {
-                            "physicalLocation": {
-                                "artifactLocation": {"uri": issue.file},
-                                "region": {"startLine": issue.line, "startColumn": issue.column + 1},
-                            }
-                        }
-                    ],
-                }
-            )
-
-        if file_results:
-            runs_results.extend(file_results)
-
-    sarif = {
-        "$schema": "https://raw.githubusercontent.com/oasis-tcs/sarif-spec/master/Schemata/sarif-schema-2.1.0.json",
-        "version": "2.1.0",
-        "runs": [
-            {
-                "tool": {
-                    "driver": {
-                        "name": "ai-language-rules",
-                        "version": "2.0.0",
-                        "informationUri": "https://github.com/1jehuang/jcode",
-                        "rules": list(rules.values()),
-                    }
-                },
-                "results": runs_results,
-            }
-        ],
-    }
-
-    return json.dumps(sarif, indent=2, ensure_ascii=False)
+    return _gen(results)
 
 
 def write_report(results: list[ValidationResult], format: str, output: Path | None = None) -> str | None:
-    """Write report in specified format. Returns content or writes to file."""
-    if format == "json":
-        data = {
-            "results": [r.to_dict() for r in results],
-            "summary": {
-                "total_files": len(results),
-                "total_errors": sum(r.error_count for r in results),
-                "total_warnings": sum(r.warning_count for r in results),
-                "total_info": sum(r.info_count for r in results),
-                "passed": all(r.passed for r in results),
-            },
-        }
-        content = json.dumps(data, indent=2, ensure_ascii=False)
-    elif format == "junit":
-        content = generate_junit_xml(results)
-    elif format == "html":
-        content = generate_html_report(results)
-    elif format == "sarif":
-        content = generate_sarif(results)
-    else:
-        return None
+    """Write report in specified format. Delegated to report_generator."""
+    from .report_generator import write_report as _write
 
-    if output:
-        output.write_text(content, encoding="utf-8")
-        print(f"Report written to {output}", file=sys.stderr)
-    return content
+    return _write(results, format, output)
 
 
 # ──────────────────────────────────────────────────────────
 # Health score (#10)
 # ──────────────────────────────────────────────────────────
-
-
 def calculate_health_score(results: list[ValidationResult]) -> HealthScore:
     """Calculate project health score (0-100) from validation results.
 

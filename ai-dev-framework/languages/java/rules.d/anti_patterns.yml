@@ -1,0 +1,105 @@
+# Java Language Rules - Machine-Readable Configuration
+
+language: java
+version: '>=17'
+config_version: '1.0'
+anti_patterns:
+- id: java-catch-all
+  name: Catching generic Exception
+  severity: error
+  category: error_handling
+  pattern: catch\s*\(\s*Exception\s+\w+\s*\)
+  message: Catching generic Exception hides specific errors
+  fix_hint: Catch specific exception types
+- id: java-return-null
+  name: Returning null
+  severity: warning
+  category: error_handling
+  pattern: return\s+null\s*;
+  message: Returning null causes NullPointerExceptions
+  fix_hint: Use Optional<T>, empty collections, or throw
+- id: java-system-exit
+  name: System.exit() in library
+  severity: error
+  category: error_handling
+  pattern: System\.exit\s*\(
+  message: System.exit() kills the JVM - return error instead
+  fix_hint: Return error code or throw exception
+- id: java-eval-runtime
+  name: Runtime.exec()
+  severity: error
+  category: security
+  pattern: Runtime\.getRuntime\(\)\.exec\(|ProcessBuilder
+  message: Process execution can be exploited
+  fix_hint: Validate inputs and use whitelists
+- id: java-sql-string
+  name: SQL injection via string concat
+  severity: error
+  category: security
+  pattern: '".*SELECT.*"\s*\+|".*INSERT.*"\s*\+|".*UPDATE.*"\s*\+|".*DELETE.*"\s*\+'
+  message: String concatenation in SQL enables injection
+  fix_hint: Use PreparedStatement with parameterized queries
+- id: java-print-stacktrace
+  name: printStackTrace() usage
+  severity: warning
+  category: code_quality
+  pattern: \.printStackTrace\s*\(
+  message: printStackTrace() goes to stderr - use logging
+  fix_hint: Use logger.error("msg", exception)
+- id: java-system-out
+  name: System.out.println()
+  severity: info
+  category: code_quality
+  pattern: System\.(out|err)\.print
+  message: Use logging framework instead of System.out
+  fix_hint: Use SLF4J or java.util.logging
+- id: java-finalizer
+  name: finalize() method
+  severity: error
+  category: code_quality
+  pattern: protected\s+void\s+finalize\s*\(
+  message: finalize() is deprecated and unreliable
+  fix_hint: Use try-with-resources or Cleaner API
+- id: java-thread-sleep
+  name: Thread.sleep in production
+  severity: warning
+  category: code_quality
+  pattern: Thread\.sleep\s*\(
+  message: Thread.sleep blocks the thread
+  fix_hint: Use scheduled executors or reactive operators
+- id: java-new-hashmap
+  name: Raw HashMap instantiation
+  severity: info
+  category: type_safety
+  pattern: new\s+HashMap\s*\(\s*\)
+  message: Consider using Map.of() or Map.copyOf() for immutable maps
+  fix_hint: Use Map.of() for small fixed maps
+naming:
+  file:
+    pattern: ^[A-Z][a-zA-Z0-9]*\.java$
+    message: Java files should use PascalCase
+  function:
+    pattern: ^[a-z][a-zA-Z0-9]*$
+    message: Java methods should use camelCase
+  class:
+    pattern: ^[A-Z][a-zA-Z0-9]*$
+    message: Java classes should use PascalCase
+  constant:
+    pattern: ^[A-Z][A-Z0-9_]*$
+    message: Java constants should use UPPER_SNAKE_CASE
+  package:
+    pattern: ^[a-z][a-z0-9]*\.([a-z][a-z0-9]*\.)*[a-z][a-z0-9]*$
+    message: Java packages should use lowercase dot-separated
+thresholds:
+  max_function_length: 50
+  max_file_length: 500
+  max_line_length: 120
+  max_nesting_depth: 4
+  max_function_params: 5
+tooling:
+  linter: checkstyle
+  formatter: google-java-format
+  test_runner: junit5
+  config_files:
+  - pom.xml
+  - build.gradle

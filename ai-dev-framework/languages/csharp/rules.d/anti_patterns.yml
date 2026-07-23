@@ -1,0 +1,91 @@
+# Csharp Language Rules - Machine-Readable Configuration
+
+language: csharp
+version: '>=8.0'
+config_version: '1.0'
+anti_patterns:
+- id: cs-catch-all
+  name: Catching generic Exception
+  severity: error
+  category: error_handling
+  pattern: catch\s*\(\s*Exception\s*\)
+  message: Catching generic Exception hides specific errors
+  fix_hint: Catch specific exception types
+- id: cs-empty-catch
+  name: Empty catch block
+  severity: error
+  category: error_handling
+  pattern: catch\s*(?:\([^)]*\))?\s*\{\s*\}
+  message: Empty catch blocks hide errors
+  fix_hint: Log the exception or rethrow
+- id: cs-return-null
+  name: Returning null
+  severity: warning
+  category: error_handling
+  pattern: return\s+null\s*;
+  message: Returning null causes NullReferenceException
+  fix_hint: Use nullable reference types or throw
+- id: cs-string-concat-sql
+  name: SQL injection via string concat
+  severity: error
+  category: security
+  pattern: '".*SELECT.*"\s*\+|".*INSERT.*"\s*\+'
+  message: String concatenation in SQL enables injection
+  fix_hint: Use parameterized queries
+- id: cs-eval
+  name: eval() or ExecuteScript usage
+  severity: error
+  category: security
+  pattern: \bExecuteScript\s*\(|\beval\s*\(
+  message: Dynamic code execution is a security risk
+  fix_hint: Find a safer alternative
+- id: cs-console-write
+  name: Console.WriteLine in production
+  severity: info
+  category: code_quality
+  pattern: Console\.Write
+  message: Use logging framework instead of Console.Write
+  fix_hint: Use ILogger or Serilog
+- id: cs-thread-sleep
+  name: Thread.Sleep()
+  severity: warning
+  category: code_quality
+  pattern: Thread\.Sleep\s*\(
+  message: Thread.Sleep blocks the thread
+  fix_hint: Use Task.Delay or async patterns
+- id: cs-disposable-leak
+  name: IDisposable not disposed
+  severity: warning
+  category: code_quality
+  pattern: new\s+(SqlConnection|StreamReader|FileStream|HttpClient)\s*\(
+  message: IDisposable objects should be disposed
+  fix_hint: Use 'using' statement or 'await using'
+naming:
+  file:
+    pattern: ^[A-Z][a-zA-Z0-9]*\.cs$
+    message: C# files should use PascalCase
+  function:
+    pattern: ^[A-Z][a-zA-Z0-9]*$
+    message: C# methods should use PascalCase
+  class:
+    pattern: ^[A-Z][a-zA-Z0-9]*$
+    message: C# classes should use PascalCase
+  interface:
+    pattern: ^I[A-Z][a-zA-Z0-9]*$
+    message: C# interfaces should use I-prefix PascalCase
+  constant:
+    pattern: ^[A-Z][a-zA-Z0-9]*$
+    message: C# constants should use PascalCase
+thresholds:
+  max_function_length: 50
+  max_file_length: 500
+  max_line_length: 120
+  max_nesting_depth: 4
+  max_function_params: 5
+tooling:
+  linter: dotnet-format
+  formatter: dotnet-format
+  test_runner: dotnet-test
+  config_files:
+  - .editorconfig
+  - '*.csproj'

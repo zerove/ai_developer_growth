@@ -1,0 +1,88 @@
+# Kotlin Language Rules - Machine-Readable Configuration
+
+language: kotlin
+version: '>=1.9'
+config_version: '1.0'
+anti_patterns:
+- id: kt-bang-call
+  name: Non-null assertion operator
+  severity: warning
+  category: type_safety
+  pattern: \w+!!
+  message: '!! throws NullPointerException - use safe calls'
+  fix_hint: Use ?. operator or let {} block
+- id: kt-catch-all
+  name: Catching generic Exception
+  severity: error
+  category: error_handling
+  pattern: catch\s*\(\s*e:\s*Exception\s*\)
+  message: Catching generic Exception hides specific errors
+  fix_hint: Catch specific exception types
+- id: kt-return-null
+  name: Returning null
+  severity: warning
+  category: error_handling
+  pattern: return\s+null\s*$
+  message: Returning null defeats Kotlin null safety
+  fix_hint: Use nullable return type or Result<T>
+- id: kt-run-blocking
+  name: runBlocking usage
+  severity: warning
+  category: code_quality
+  pattern: runBlocking\s*\{
+  message: runBlocking blocks the thread - use coroutines
+  fix_hint: Use coroutineScope or suspend functions
+- id: kt-eval
+  name: eval() usage
+  severity: error
+  category: security
+  pattern: \beval\s*\(
+  message: eval() is a security risk
+  fix_hint: Find a safer alternative
+- id: kt-print
+  name: println() in production
+  severity: info
+  category: code_quality
+  pattern: \bprintln\s*\(|\bprint\s*\(
+  message: Use logging framework instead of println
+  fix_hint: Use Kotlin logging (kotlin-logging, SLF4J)
+- id: kt-data-class-mutable
+  name: Mutable data class
+  severity: info
+  category: code_quality
+  pattern: data\s+class\s+\w+.*var\s+
+  message: Mutable data classes break equals/hashCode contracts
+  fix_hint: Use val properties in data classes
+- id: kt-lateinit
+  name: lateinit var usage
+  severity: info
+  category: type_safety
+  pattern: lateinit\s+var\s+
+  message: lateinit can throw UninitializedPropertyAccessException
+  fix_hint: Use nullable type or lazy initialization
+naming:
+  file:
+    pattern: ^[A-Z][a-zA-Z0-9]*\.kt$
+    message: Kotlin files should use PascalCase
+  function:
+    pattern: ^[a-z][a-zA-Z0-9]*$
+    message: Kotlin functions should use camelCase
+  class:
+    pattern: ^[A-Z][a-zA-Z0-9]*$
+    message: Kotlin classes should use PascalCase
+  constant:
+    pattern: ^[A-Z][A-Z0-9_]*$|^[a-z][a-zA-Z0-9]*$
+    message: Kotlin constants should use UPPER_SNAKE_CASE or camelCase
+thresholds:
+  max_function_length: 50
+  max_file_length: 500
+  max_line_length: 120
+  max_nesting_depth: 4
+  max_function_params: 5
+tooling:
+  linter: ktlint
+  formatter: ktlint
+  test_runner: junit5
+  config_files:
+  - .editorconfig
+  - build.gradle.kts

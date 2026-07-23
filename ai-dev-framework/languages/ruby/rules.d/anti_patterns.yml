@@ -1,0 +1,91 @@
+# Ruby Language Rules - Machine-Readable Configuration
+
+language: ruby
+version: '>=3.0'
+config_version: '1.0'
+anti_patterns:
+- id: rb-rescue-nil
+  name: Inline rescue returning nil
+  severity: error
+  category: error_handling
+  pattern: rescue\s+nil\s*$
+  message: Inline rescue hides errors silently
+  fix_hint: Use proper begin-rescue blocks
+- id: rb-bare-rescue
+  name: Bare rescue
+  severity: error
+  category: error_handling
+  pattern: ^\s*rescue\s*$
+  message: Bare rescue catches StandardError - be specific
+  fix_hint: 'Rescue specific exceptions: rescue ArgumentError'
+- id: rb-return-nil
+  name: Returning nil
+  severity: warning
+  category: error_handling
+  pattern: return\s+nil\s*$
+  message: Returning nil causes NoMethodError downstream
+  fix_hint: Return empty collection or raise
+- id: rb-eval
+  name: eval() usage
+  severity: error
+  category: security
+  pattern: \beval\s*\(|\binstance_eval\s*\(|\bclass_eval\s*\(
+  message: eval is a security risk
+  fix_hint: Find a safer alternative
+- id: rb-send
+  name: send() for dynamic dispatch
+  severity: warning
+  category: security
+  pattern: \.send\s*\(
+  message: send() can execute arbitrary methods
+  fix_hint: Use explicit method calls or public_send
+- id: rb-system-exec
+  name: system() or exec()
+  severity: error
+  category: security
+  pattern: \bsystem\s*\(|\bexec\s*\(|\b`
+  message: Shell commands can be exploited
+  fix_hint: Validate inputs and use Open3 for safer execution
+- id: rb-puts
+  name: puts/print for logging
+  severity: info
+  category: code_quality
+  pattern: ^\s*(puts|print|p\s+)\s+
+  message: Use logging gem instead of puts
+  fix_hint: Use Rails.logger or a logging gem
+- id: rb-attr-accessor
+  name: attr_accessor for read-only
+  severity: info
+  category: code_quality
+  pattern: attr_accessor\s+
+  message: Use attr_reader if the setter is not needed
+  fix_hint: Prefer attr_reader or attr_writer over attr_accessor
+naming:
+  file:
+    pattern: ^[a-z][a-z0-9_]*\.rb$
+    message: Ruby files should use snake_case
+  function:
+    pattern: ^[a-z][a-z0-9_]*[!?]?$
+    message: Ruby methods should use snake_case
+  class:
+    pattern: ^[A-Z][a-zA-Z0-9]*$
+    message: Ruby classes should use PascalCase
+  constant:
+    pattern: ^[A-Z][A-Z0-9_]*$
+    message: Ruby constants should use UPPER_SNAKE_CASE
+  module:
+    pattern: ^[A-Z][a-zA-Z0-9]*$
+    message: Ruby modules should use PascalCase
+thresholds:
+  max_function_length: 50
+  max_file_length: 500
+  max_line_length: 120
+  max_nesting_depth: 4
+  max_function_params: 5
+tooling:
+  linter: rubocop
+  formatter: rubocop
+  test_runner: rspec
+  config_files:
+  - .rubocop.yml
+  - Gemfile

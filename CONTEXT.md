@@ -2,7 +2,7 @@
 
 ## 项目状态
 
-- **阶段**: Phase 11 完成 - 模块化重构 + 插件系统 (2026-07-23)
+- **阶段**: Phase 12 完成 - 测试补全 + 死代码清理 (2026-07-23)
 - **成熟度**: 99/100 (优秀) - 详见 AUDIT_REPORT.md
 - **核心资产**: 知识库 (218 篇文档) + 治理框架 (21 语言规则 + 11 框架 + 12 领域 = 44 规范) + 35 真实案例 + 7 代码示例 (含向量搜索)
 
@@ -10,7 +10,7 @@
 
 | 日期 | 决策 | 背景 | 影响 |
 |------|------|------|------|
-| 2026-07-23 | Phase 11: 模块化重构 + 插件系统 | rule_marketplace 拆分, fix_heuristics 提取, rules_engine 插件系统, CONTRIBUTING 测试要求 | 913 测试, 8 个新模块, plugin 架构, rule_catalog 可复用 |
+| 2026-07-23 | Phase 12: 测试补全 + 死代码清理 | 913→989 测试, rule_tracker/plugins/rule_loader 测试, 278 行死代码清理 | 989 测试, 插件系统, 规则加载器测试覆盖 80%+ |
 | 2026-07-23 | 语言规则优化 + rules/ 包重构 | 21 种语言规则 + 统一 CLI + Web 基类 + 懒加载 | 748 测试全部通过，代码质量提升 |通过，代码质量提升 |
 | 2026-07-22 | AI 开发流程规范补全 | 缺失 15 个标准文档 | 新增: 5个P0 + 5个P1 + 5个P2 = 15个标准文档 |
 | 2026-07-19 | 知识优先重构 | 从工具优先转为文档优先 | 核心价值在方法论文档，代码为验证手段 |
@@ -22,6 +22,13 @@
 
 ## 已完成模块
 
+- ✅ Phase 12 测试补全 + 死代码清理
+  - test_rule_tracker.py (27 tests): CLI + helpers
+  - test_plugins.py (21 tests): CheckerPlugin ABC, registry, decorator, discovery
+  - test_rule_loader.py (29 tests): file hash, disk cache, merge, load rules
+  - plugins.py: fix discover_plugins to count module-level register_checker() calls
+  - validate_language_rules.py: remove 278 lines dead code (duplicate functions)
+  - 989 测试全部通过 (从 913 增至 989, +76)
 - ✅ Phase 11 模块化重构 + 插件系统
   - rule_marketplace.py 拆分: rule_catalog.py (263行) + CLI (222行)
   - generate_fixes.py 拆分: fix_heuristics.py (151行) + orchestration (167行)

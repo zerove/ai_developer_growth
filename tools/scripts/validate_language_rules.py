@@ -317,6 +317,84 @@ def _extract_identifiers(line: str, kind: str, language: str) -> list[str]:
             if m:
                 identifiers.append(m.group(1))
 
+    elif language == "java":
+        if kind == "function":
+            m = re.match(r"(?:public|private|protected)?\s*(?:static\s+)?(?:final\s+)?(?:synchronized\s+)?(?:<[^>]+>\s+)?(\w+)\s+\w+\s*\(", line)
+            if m and m.group(1) not in ("if", "for", "while", "switch", "catch", "try", "return", "new", "throw"):
+                identifiers.append(m.group(1))
+        elif kind == "class":
+            m = re.match(r"(?:public|private|protected)?\s*(?:abstract\s+)?(?:final\s+)?class\s+(\w+)", line)
+            if m:
+                identifiers.append(m.group(1))
+        elif kind == "constant":
+            m = re.match(r"(?:public|private|protected)?\s*static\s+final\s+\w+\s+([A-Z][A-Z0-9_]*)", line)
+            if m:
+                identifiers.append(m.group(1))
+        elif kind == "package":
+            m = re.match(r"package\s+([\w.]+)", line)
+            if m:
+                identifiers.append(m.group(1))
+
+    elif language == "kotlin":
+        if kind == "function":
+            m = re.match(r"(?:fun|suspend\s+fun)\s+(\w+)", line)
+            if m:
+                identifiers.append(m.group(1))
+        elif kind == "class":
+            m = re.match(r"(?:data\s+)?(?:abstract\s+)?(?:open\s+)?class\s+(\w+)", line)
+            if m:
+                identifiers.append(m.group(1))
+        elif kind == "constant":
+            m = re.match(r"const\s+val\s+(\w+)", line)
+            if m:
+                identifiers.append(m.group(1))
+
+    elif language == "csharp":
+        if kind == "function":
+            m = re.match(r"(?:public|private|protected|internal)?\s*(?:static\s+)?(?:async\s+)?(?:\w+\s+)?(\w+)\s*\(", line)
+            if m and m.group(1) not in ("if", "for", "while", "switch", "catch", "try", "return", "new", "throw", "using"):
+                identifiers.append(m.group(1))
+        elif kind == "class":
+            m = re.match(r"(?:public|private|protected|internal)?\s*(?:abstract\s+)?(?:sealed\s+)?(?:partial\s+)?class\s+(\w+)", line)
+            if m:
+                identifiers.append(m.group(1))
+        elif kind == "interface":
+            m = re.match(r"(?:public|private|protected|internal)?\s*(?:partial\s+)?interface\s+(\w+)", line)
+            if m:
+                identifiers.append(m.group(1))
+        elif kind == "constant":
+            m = re.match(r"(?:public|private|protected|internal)?\s*const\s+\w+\s+(\w+)", line)
+            if m:
+                identifiers.append(m.group(1))
+
+    elif language == "php":
+        if kind == "function":
+            m = re.match(r"(?:public|private|protected)?\s*(?:static\s+)?function\s+(\w+)", line)
+            if m:
+                identifiers.append(m.group(1))
+        elif kind == "class":
+            m = re.match(r"(?:abstract\s+)?class\s+(\w+)", line)
+            if m:
+                identifiers.append(m.group(1))
+        elif kind == "constant":
+            m = re.match(r"(?:public|private|protected)?\s*const\s+([A-Z][A-Z0-9_]*)", line)
+            if m:
+                identifiers.append(m.group(1))
+
+    elif language == "ruby":
+        if kind == "function":
+            m = re.match(r"(?:def|defself)\s+(\w+[!?]?)", line)
+            if m:
+                identifiers.append(m.group(1))
+        elif kind in ("class", "module"):
+            m = re.match(r"(?:class|module)\s+(\w+)", line)
+            if m:
+                identifiers.append(m.group(1))
+        elif kind == "constant":
+            m = re.match(r"([A-Z][A-Z0-9_]*)\s*=", line)
+            if m:
+                identifiers.append(m.group(1))
+
     return identifiers
 
 
@@ -632,6 +710,12 @@ EXTENSION_MAP: dict[str, str] = {
     ".jsx": "typescript",
     ".rs": "rust",
     ".go": "go",
+    ".java": "java",
+    ".kt": "kotlin",
+    ".kts": "kotlin",
+    ".cs": "csharp",
+    ".php": "php",
+    ".rb": "ruby",
 }
 
 

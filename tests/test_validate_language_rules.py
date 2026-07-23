@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import json
 import tempfile
+import unittest
 from pathlib import Path
 
 import pytest
@@ -17,6 +18,10 @@ import pytest
 from tools.scripts.validate_language_rules import (
     Issue,
     ValidationResult,
+    _calc_cyclomatic_complexity,
+    _extract_function_lines,
+    _max_nesting_depth,
+    _max_python_indent_depth,
     check_anti_patterns,
     check_naming_conventions,
     check_python_ast,
@@ -25,12 +30,7 @@ from tools.scripts.validate_language_rules import (
     load_rules,
     validate_directory,
     validate_file,
-    _calc_cyclomatic_complexity,
-    _extract_function_lines,
-    _max_nesting_depth,
-    _max_python_indent_depth,
 )
-
 
 # ──────────────────────────────────────────────────────────
 # Fixtures
@@ -118,12 +118,14 @@ class TestValidationResult:
 
     def test_counts(self):
         r = ValidationResult(file="f.py", language="python")
-        r.issues.extend([
-            Issue("a", "error", "c", "f.py", 1, "m"),
-            Issue("b", "warning", "c", "f.py", 2, "m"),
-            Issue("c", "info", "c", "f.py", 3, "m"),
-            Issue("d", "error", "c", "f.py", 4, "m"),
-        ])
+        r.issues.extend(
+            [
+                Issue("a", "error", "c", "f.py", 1, "m"),
+                Issue("b", "warning", "c", "f.py", 2, "m"),
+                Issue("c", "info", "c", "f.py", 3, "m"),
+                Issue("d", "error", "c", "f.py", 4, "m"),
+            ]
+        )
         assert r.error_count == 2
         assert r.warning_count == 1
         assert r.info_count == 1
@@ -345,7 +347,7 @@ class TestAntiPatternDetection:
         assert "rs-print" in ids
 
     def test_go_panic_detected(self, go_rules):
-        lines = ["panic(\"not implemented\")"]
+        lines = ['panic("not implemented")']
         issues = check_anti_patterns(lines, go_rules, "test.go")
         ids = [i.rule_id for i in issues]
         assert "go-panic-in-library" in ids
@@ -642,7 +644,9 @@ class TestCyclomaticComplexity:
 
     def test_if_branches(self, tmp_dir):
         filepath = tmp_dir / "branch.py"
-        filepath.write_text("def f(x):\n    if x > 0:\n        return 1\n    elif x < 0:\n        return -1\n    return 0\n")
+        filepath.write_text(
+            "def f(x):\n    if x > 0:\n        return 1\n    elif x < 0:\n        return -1\n    return 0\n"
+        )
         tree = __import__("ast").parse(filepath.read_text())
         func = tree.body[0]
         c = _calc_cyclomatic_complexity(func)
@@ -775,8 +779,8 @@ class TestFileValidation:
             "fn process(data: &[u8]) -> Vec<u8> {\n"
             "    let x = data[0].unwrap();\n"
             "    let y = vec![1, 2, 3];\n"
-            "    println!(\"{:?}\", y);\n"
-            "    panic!(\"oops\");\n"
+            '    println!("{:?}", y);\n'
+            '    panic!("oops");\n'
             "}\n"
         )
         result = validate_file(filepath, "rust")
@@ -787,10 +791,10 @@ class TestFileValidation:
         filepath.write_text(
             "package main\n"
             "\n"
-            "import \"fmt\"\n"
+            'import "fmt"\n'
             "\n"
             "func process(data []byte) ([]byte, error) {\n"
-            '    if len(data) == 0 {\n'
+            "    if len(data) == 0 {\n"
             '        return nil, fmt.Errorf("empty data")\n'
             "    }\n"
             "    result := make([]byte, len(data))\n"
@@ -920,3 +924,498 @@ class TestJsonOutput:
         d = result.to_dict()
         json_str = json.dumps(d, ensure_ascii=False)
         assert "py-bare-except" in json_str
+
+
+# =====================================================================
+# Java
+# =====================================================================
+class TestJavaRules(unittest.TestCase):
+    """Java anti-pattern tests."""
+
+    def test_java_catch_all(self):
+        with tempfile.NamedTemporaryFile(suffix=".java", mode="w", delete=False) as f:
+            f.write("try {\n    doSomething();\n} catch (Exception e) {\n    return null;\n}\n")
+            f.flush()
+            filepath = Path(f.name)
+        try:
+            result = validate_file(filepath, "java")
+            ids = [i.rule_id for i in result.issues]
+            self.assertIn("java-catch-all", ids)
+            self.assertIn("java-return-null", ids)
+        finally:
+            filepath.unlink()
+
+    def test_java_system_exit(self):
+        with tempfile.NamedTemporaryFile(suffix=".java", mode="w", delete=False) as f:
+            f.write("System.exit(1);\n")
+            f.flush()
+            filepath = Path(f.name)
+        try:
+            result = validate_file(filepath, "java")
+            ids = [i.rule_id for i in result.issues]
+            self.assertIn("java-system-exit", ids)
+        finally:
+            filepath.unlink()
+
+    def test_java_sql_injection(self):
+        with tempfile.NamedTemporaryFile(suffix=".java", mode="w", delete=False) as f:
+            f.write('String sql = "SELECT * FROM users WHERE id=" + userId;\n')
+            f.flush()
+            filepath = Path(f.name)
+        try:
+            result = validate_file(filepath, "java")
+            ids = [i.rule_id for i in result.issues]
+            self.assertIn("java-sql-string", ids)
+        finally:
+            filepath.unlink()
+
+    def test_java_print_stacktrace(self):
+        with tempfile.NamedTemporaryFile(suffix=".java", mode="w", delete=False) as f:
+            f.write("e.printStackTrace();\n")
+            f.flush()
+            filepath = Path(f.name)
+        try:
+            result = validate_file(filepath, "java")
+            ids = [i.rule_id for i in result.issues]
+            self.assertIn("java-print-stacktrace", ids)
+        finally:
+            filepath.unlink()
+
+    def test_java_system_out(self):
+        with tempfile.NamedTemporaryFile(suffix=".java", mode="w", delete=False) as f:
+            f.write('System.out.println("hello");\n')
+            f.flush()
+            filepath = Path(f.name)
+        try:
+            result = validate_file(filepath, "java")
+            ids = [i.rule_id for i in result.issues]
+            self.assertIn("java-system-out", ids)
+        finally:
+            filepath.unlink()
+
+    def test_java_finalizer(self):
+        with tempfile.NamedTemporaryFile(suffix=".java", mode="w", delete=False) as f:
+            f.write("protected void finalize() throws Throwable { super.finalize(); }\n")
+            f.flush()
+            filepath = Path(f.name)
+        try:
+            result = validate_file(filepath, "java")
+            ids = [i.rule_id for i in result.issues]
+            self.assertIn("java-finalizer", ids)
+        finally:
+            filepath.unlink()
+
+    def test_java_clean_code(self):
+        with tempfile.NamedTemporaryFile(suffix=".java", mode="w", delete=False) as f:
+            f.write('public void doWork() {\n    logger.info("start");\n}\n')
+            f.flush()
+            filepath = Path(f.name)
+        try:
+            result = validate_file(filepath, "java")
+            err_ids = [i.rule_id for i in result.issues if i.severity == "error"]
+            self.assertEqual(len(err_ids), 0)
+        finally:
+            filepath.unlink()
+
+    def test_java_naming(self):
+        with tempfile.NamedTemporaryFile(suffix=".java", mode="w", delete=False) as f:
+            f.write("public class my_class {\n    public void my_method() {}\n}\n")
+            f.flush()
+            filepath = Path(f.name)
+        try:
+            result = validate_file(filepath, "java")
+            issues = [i for i in result.issues if i.category == "naming"]
+            self.assertTrue(len(issues) >= 2)
+        finally:
+            filepath.unlink()
+
+    def test_java_package_naming(self):
+        with tempfile.NamedTemporaryFile(suffix=".java", mode="w", delete=False) as f:
+            f.write("package com.example.mypackage;\n")
+            f.flush()
+            filepath = Path(f.name)
+        try:
+            result = validate_file(filepath, "java")
+            pkg_issues = [i for i in result.issues if "package" in i.rule_id]
+            self.assertEqual(len(pkg_issues), 0)
+        finally:
+            filepath.unlink()
+
+
+# =====================================================================
+# Kotlin
+# =====================================================================
+class TestKotlinRules(unittest.TestCase):
+    """Kotlin anti-pattern tests."""
+
+    def test_kt_bang_call(self):
+        with tempfile.NamedTemporaryFile(suffix=".kt", mode="w", delete=False) as f:
+            f.write("val x = obj!!.property\n")
+            f.flush()
+            filepath = Path(f.name)
+        try:
+            result = validate_file(filepath, "kotlin")
+            ids = [i.rule_id for i in result.issues]
+            self.assertIn("kt-bang-call", ids)
+        finally:
+            filepath.unlink()
+
+    def test_kt_catch_all(self):
+        with tempfile.NamedTemporaryFile(suffix=".kt", mode="w", delete=False) as f:
+            f.write("try { doSomething() } catch (e: Exception) { null }\n")
+            f.flush()
+            filepath = Path(f.name)
+        try:
+            result = validate_file(filepath, "kotlin")
+            ids = [i.rule_id for i in result.issues]
+            self.assertIn("kt-catch-all", ids)
+        finally:
+            filepath.unlink()
+
+    def test_kt_run_blocking(self):
+        with tempfile.NamedTemporaryFile(suffix=".kt", mode="w", delete=False) as f:
+            f.write("runBlocking { delay(1000) }\n")
+            f.flush()
+            filepath = Path(f.name)
+        try:
+            result = validate_file(filepath, "kotlin")
+            ids = [i.rule_id for i in result.issues]
+            self.assertIn("kt-run-blocking", ids)
+        finally:
+            filepath.unlink()
+
+    def test_kt_println(self):
+        with tempfile.NamedTemporaryFile(suffix=".kt", mode="w", delete=False) as f:
+            f.write('println("hello")\n')
+            f.flush()
+            filepath = Path(f.name)
+        try:
+            result = validate_file(filepath, "kotlin")
+            ids = [i.rule_id for i in result.issues]
+            self.assertIn("kt-print", ids)
+        finally:
+            filepath.unlink()
+
+    def test_kt_lateinit(self):
+        with tempfile.NamedTemporaryFile(suffix=".kt", mode="w", delete=False) as f:
+            f.write("lateinit var name: String\n")
+            f.flush()
+            filepath = Path(f.name)
+        try:
+            result = validate_file(filepath, "kotlin")
+            ids = [i.rule_id for i in result.issues]
+            self.assertIn("kt-lateinit", ids)
+        finally:
+            filepath.unlink()
+
+    def test_kt_naming(self):
+        with tempfile.NamedTemporaryFile(suffix=".kt", mode="w", delete=False) as f:
+            f.write("class my_class {\n    fun my_method() {}\n}\n")
+            f.flush()
+            filepath = Path(f.name)
+        try:
+            result = validate_file(filepath, "kotlin")
+            issues = [i for i in result.issues if i.category == "naming"]
+            self.assertTrue(len(issues) >= 2)
+        finally:
+            filepath.unlink()
+
+    def test_kt_clean_code(self):
+        with tempfile.NamedTemporaryFile(suffix=".kt", mode="w", delete=False) as f:
+            f.write('fun doWork(): Result<String> {\n    return Result.success("done")\n}\n')
+            f.flush()
+            filepath = Path(f.name)
+        try:
+            result = validate_file(filepath, "kotlin")
+            err_ids = [i.rule_id for i in result.issues if i.severity == "error"]
+            self.assertEqual(len(err_ids), 0)
+        finally:
+            filepath.unlink()
+
+
+# =====================================================================
+# C#
+# =====================================================================
+class TestCSharpRules(unittest.TestCase):
+    """C# anti-pattern tests."""
+
+    def test_cs_catch_all(self):
+        with tempfile.NamedTemporaryFile(suffix=".cs", mode="w", delete=False) as f:
+            f.write("try { DoSomething(); } catch (Exception) { return null; }\n")
+            f.flush()
+            filepath = Path(f.name)
+        try:
+            result = validate_file(filepath, "csharp")
+            ids = [i.rule_id for i in result.issues]
+            self.assertIn("cs-catch-all", ids)
+            self.assertIn("cs-return-null", ids)
+        finally:
+            filepath.unlink()
+
+    def test_cs_empty_catch(self):
+        with tempfile.NamedTemporaryFile(suffix=".cs", mode="w", delete=False) as f:
+            f.write("try { DoSomething(); } catch { }\n")
+            f.flush()
+            filepath = Path(f.name)
+        try:
+            result = validate_file(filepath, "csharp")
+            ids = [i.rule_id for i in result.issues]
+            self.assertIn("cs-empty-catch", ids)
+        finally:
+            filepath.unlink()
+
+    def test_cs_sql_injection(self):
+        with tempfile.NamedTemporaryFile(suffix=".cs", mode="w", delete=False) as f:
+            f.write('var sql = "SELECT * FROM users WHERE id=" + userId;\n')
+            f.flush()
+            filepath = Path(f.name)
+        try:
+            result = validate_file(filepath, "csharp")
+            ids = [i.rule_id for i in result.issues]
+            self.assertIn("cs-string-concat-sql", ids)
+        finally:
+            filepath.unlink()
+
+    def test_cs_console_write(self):
+        with tempfile.NamedTemporaryFile(suffix=".cs", mode="w", delete=False) as f:
+            f.write('Console.WriteLine("hello");\n')
+            f.flush()
+            filepath = Path(f.name)
+        try:
+            result = validate_file(filepath, "csharp")
+            ids = [i.rule_id for i in result.issues]
+            self.assertIn("cs-console-write", ids)
+        finally:
+            filepath.unlink()
+
+    def test_cs_thread_sleep(self):
+        with tempfile.NamedTemporaryFile(suffix=".cs", mode="w", delete=False) as f:
+            f.write("Thread.Sleep(1000);\n")
+            f.flush()
+            filepath = Path(f.name)
+        try:
+            result = validate_file(filepath, "csharp")
+            ids = [i.rule_id for i in result.issues]
+            self.assertIn("cs-thread-sleep", ids)
+        finally:
+            filepath.unlink()
+
+    def test_cs_naming(self):
+        with tempfile.NamedTemporaryFile(suffix=".cs", mode="w", delete=False) as f:
+            f.write("class my_class {\n    void my_method() {}\n}\n")
+            f.flush()
+            filepath = Path(f.name)
+        try:
+            result = validate_file(filepath, "csharp")
+            issues = [i for i in result.issues if i.category == "naming"]
+            self.assertTrue(len(issues) >= 2)
+        finally:
+            filepath.unlink()
+
+    def test_cs_interface_naming(self):
+        with tempfile.NamedTemporaryFile(suffix=".cs", mode="w", delete=False) as f:
+            f.write("interface IMyInterface {\n    void DoWork();\n}\n")
+            f.flush()
+            filepath = Path(f.name)
+        try:
+            result = validate_file(filepath, "csharp")
+            iface_issues = [i for i in result.issues if "interface" in i.rule_id]
+            self.assertEqual(len(iface_issues), 0)
+        finally:
+            filepath.unlink()
+
+
+# =====================================================================
+# PHP
+# =====================================================================
+class TestPHPRules(unittest.TestCase):
+    """PHP anti-pattern tests."""
+
+    def test_php_catch_all(self):
+        with tempfile.NamedTemporaryFile(suffix=".php", mode="w", delete=False) as f:
+            f.write("<?php\ntry {\n    doSomething();\n} catch (Exception $e) {\n    return null;\n}\n")
+            f.flush()
+            filepath = Path(f.name)
+        try:
+            result = validate_file(filepath, "php")
+            ids = [i.rule_id for i in result.issues]
+            self.assertIn("php-catch-all", ids)
+        finally:
+            filepath.unlink()
+
+    def test_php_eval(self):
+        with tempfile.NamedTemporaryFile(suffix=".php", mode="w", delete=False) as f:
+            f.write("<?php\neval($input);\n")
+            f.flush()
+            filepath = Path(f.name)
+        try:
+            result = validate_file(filepath, "php")
+            ids = [i.rule_id for i in result.issues]
+            self.assertIn("php-eval", ids)
+        finally:
+            filepath.unlink()
+
+    def test_php_exit_die(self):
+        with tempfile.NamedTemporaryFile(suffix=".php", mode="w", delete=False) as f:
+            f.write("<?php\nexit(1);\n")
+            f.flush()
+            filepath = Path(f.name)
+        try:
+            result = validate_file(filepath, "php")
+            ids = [i.rule_id for i in result.issues]
+            self.assertIn("php-exit-die", ids)
+        finally:
+            filepath.unlink()
+
+    def test_php_suppress_error(self):
+        with tempfile.NamedTemporaryFile(suffix=".php", mode="w", delete=False) as f:
+            f.write("<?php\n$result = @$variable;\n")
+            f.flush()
+            filepath = Path(f.name)
+        try:
+            result = validate_file(filepath, "php")
+            ids = [i.rule_id for i in result.issues]
+            self.assertIn("php-suppress-error", ids)
+        finally:
+            filepath.unlink()
+
+    def test_php_naming(self):
+        with tempfile.NamedTemporaryFile(suffix=".php", mode="w", delete=False) as f:
+            f.write("<?php\nclass my_class {\n    function my_method() {}\n}\n")
+            f.flush()
+            filepath = Path(f.name)
+        try:
+            result = validate_file(filepath, "php")
+            issues = [i for i in result.issues if i.category == "naming"]
+            self.assertTrue(len(issues) >= 2)
+        finally:
+            filepath.unlink()
+
+    def test_php_clean_code(self):
+        with tempfile.NamedTemporaryFile(suffix=".php", mode="w", delete=False) as f:
+            f.write(
+                '<?php\nclass MyService {\n    public function doWork(): string {\n        return "done";\n    }\n}\n'
+            )
+            f.flush()
+            filepath = Path(f.name)
+        try:
+            result = validate_file(filepath, "php")
+            err_ids = [i.rule_id for i in result.issues if i.severity == "error"]
+            self.assertEqual(len(err_ids), 0)
+        finally:
+            filepath.unlink()
+
+
+# =====================================================================
+# Ruby
+# =====================================================================
+class TestRubyRules(unittest.TestCase):
+    """Ruby anti-pattern tests."""
+
+    def test_rb_rescue_nil(self):
+        with tempfile.NamedTemporaryFile(suffix=".rb", mode="w", delete=False) as f:
+            f.write("result = do_something rescue nil\n")
+            f.flush()
+            filepath = Path(f.name)
+        try:
+            result = validate_file(filepath, "ruby")
+            ids = [i.rule_id for i in result.issues]
+            self.assertIn("rb-rescue-nil", ids)
+        finally:
+            filepath.unlink()
+
+    def test_rb_bare_rescue(self):
+        with tempfile.NamedTemporaryFile(suffix=".rb", mode="w", delete=False) as f:
+            f.write("begin\ndo_something\nrescue\nend\n")
+            f.flush()
+            filepath = Path(f.name)
+        try:
+            result = validate_file(filepath, "ruby")
+            ids = [i.rule_id for i in result.issues]
+            self.assertIn("rb-bare-rescue", ids)
+        finally:
+            filepath.unlink()
+
+    def test_rb_eval(self):
+        with tempfile.NamedTemporaryFile(suffix=".rb", mode="w", delete=False) as f:
+            f.write("eval(code)\n")
+            f.flush()
+            filepath = Path(f.name)
+        try:
+            result = validate_file(filepath, "ruby")
+            ids = [i.rule_id for i in result.issues]
+            self.assertIn("rb-eval", ids)
+        finally:
+            filepath.unlink()
+
+    def test_rb_send(self):
+        with tempfile.NamedTemporaryFile(suffix=".rb", mode="w", delete=False) as f:
+            f.write("obj.send(:method_name)\n")
+            f.flush()
+            filepath = Path(f.name)
+        try:
+            result = validate_file(filepath, "ruby")
+            ids = [i.rule_id for i in result.issues]
+            self.assertIn("rb-send", ids)
+        finally:
+            filepath.unlink()
+
+    def test_rb_system_exec(self):
+        with tempfile.NamedTemporaryFile(suffix=".rb", mode="w", delete=False) as f:
+            f.write('system("ls")\n')
+            f.flush()
+            filepath = Path(f.name)
+        try:
+            result = validate_file(filepath, "ruby")
+            ids = [i.rule_id for i in result.issues]
+            self.assertIn("rb-system-exec", ids)
+        finally:
+            filepath.unlink()
+
+    def test_rb_naming(self):
+        with tempfile.NamedTemporaryFile(suffix=".rb", mode="w", delete=False) as f:
+            f.write("class my_class\n  def myMethod\n  end\nend\n")
+            f.flush()
+            filepath = Path(f.name)
+        try:
+            result = validate_file(filepath, "ruby")
+            issues = [i for i in result.issues if i.category == "naming"]
+            self.assertTrue(len(issues) >= 2)
+        finally:
+            filepath.unlink()
+
+    def test_rb_clean_code(self):
+        with tempfile.NamedTemporaryFile(suffix=".rb", mode="w", delete=False) as f:
+            f.write('class MyService\n  def do_work\n    logger.info("start")\n  end\nend\n')
+            f.flush()
+            filepath = Path(f.name)
+        try:
+            result = validate_file(filepath, "ruby")
+            err_ids = [i.rule_id for i in result.issues if i.severity == "error"]
+            self.assertEqual(len(err_ids), 0)
+        finally:
+            filepath.unlink()
+
+    def test_rb_attr_accessor(self):
+        with tempfile.NamedTemporaryFile(suffix=".rb", mode="w", delete=False) as f:
+            f.write("class User\n  attr_accessor :name\nend\n")
+            f.flush()
+            filepath = Path(f.name)
+        try:
+            result = validate_file(filepath, "ruby")
+            ids = [i.rule_id for i in result.issues]
+            self.assertIn("rb-attr-accessor", ids)
+        finally:
+            filepath.unlink()
+
+    def test_rb_module_naming(self):
+        with tempfile.NamedTemporaryFile(suffix=".rb", mode="w", delete=False) as f:
+            f.write("module MyModule\n  class MyClass\n  end\nend\n")
+            f.flush()
+            filepath = Path(f.name)
+        try:
+            result = validate_file(filepath, "ruby")
+            mod_issues = [i for i in result.issues if "module" in i.rule_id and i.category == "naming"]
+            self.assertEqual(len(mod_issues), 0)
+        finally:
+            filepath.unlink()

@@ -1,0 +1,88 @@
+# Php Language Rules - Machine-Readable Configuration
+
+language: php
+version: '>=8.1'
+config_version: '1.0'
+anti_patterns:
+- id: php-catch-all
+  name: Catching generic Exception
+  severity: error
+  category: error_handling
+  pattern: catch\s*\(\s*\\?Exception\s+\$\w+\s*\)
+  message: Catching generic Exception hides specific errors
+  fix_hint: Catch specific exception types
+- id: php-return-null
+  name: Returning null
+  severity: warning
+  category: error_handling
+  pattern: return\s+null\s*;
+  message: Returning null causes TypeErrors in typed code
+  fix_hint: Use nullable return type or throw
+- id: php-eval
+  name: eval() usage
+  severity: error
+  category: security
+  pattern: \beval\s*\(|\bassert\s*\(
+  message: eval() and assert() are security risks
+  fix_hint: Find a safer alternative
+- id: php-sql-string
+  name: SQL injection via string concat
+  severity: error
+  category: security
+  pattern: '".*SELECT.*"\s*\.|''.*SELECT.*''\s*\.'
+  message: String concatenation in SQL enables injection
+  fix_hint: Use prepared statements with PDO
+- id: php-suppress-error
+  name: Error suppression operator @
+  severity: warning
+  category: error_handling
+  pattern: '@\$'
+  message: '@ operator suppresses errors silently'
+  fix_hint: Handle errors explicitly with try-catch
+- id: php-exit-die
+  name: exit/die in production
+  severity: error
+  category: error_handling
+  pattern: \bexit\s*\(|\bdie\s*\(
+  message: exit/die terminates the process
+  fix_hint: Throw exception or return error response
+- id: php-print
+  name: print/echo for logging
+  severity: info
+  category: code_quality
+  pattern: ^\s*(print|echo)\s+
+  message: Use logging instead of print/echo
+  fix_hint: Use Monolog or PSR-3 logger
+- id: php-short-tag
+  name: Short open tag <?
+  severity: warning
+  category: code_quality
+  pattern: <\?[^=p]
+  message: Short open tag <? is not portable - use <?php
+  fix_hint: Always use <?php opening tag
+naming:
+  file:
+    pattern: ^[A-Z][a-zA-Z0-9]*\.php$
+    message: PHP class files should use PascalCase
+  function:
+    pattern: ^[a-z][a-zA-Z0-9]*$
+    message: PHP functions should use camelCase
+  class:
+    pattern: ^[A-Z][a-zA-Z0-9]*$
+    message: PHP classes should use PascalCase
+  constant:
+    pattern: ^[A-Z][A-Z0-9_]*$
+    message: PHP constants should use UPPER_SNAKE_CASE
+thresholds:
+  max_function_length: 50
+  max_file_length: 500
+  max_line_length: 120
+  max_nesting_depth: 4
+  max_function_params: 5
+tooling:
+  linter: phpcs
+  formatter: php-cs-fixer
+  test_runner: phpunit
+  config_files:
+  - composer.json
+  - phpcs.xml

@@ -5,14 +5,11 @@ from __future__ import annotations
 import sys
 from pathlib import Path
 
-import pytest
-
 sys.path.insert(0, str(Path(__file__).parent.parent / "tools" / "scripts"))
 
+from generate_fixes import apply_fixes_to_yaml, generate_fixes, heuristic_fix
+from rule_catalog import BUILTIN_PACKS, matches as _matches
 from validate_rule_tests import validate_rule_tests
-from generate_fixes import generate_fixes, heuristic_fix, apply_fixes_to_yaml
-from rule_marketplace import BUILTIN_PACKS, _matches
-
 
 # ──────────────────────────────────────────────────────────
 # Rule test framework tests
@@ -22,12 +19,12 @@ from rule_marketplace import BUILTIN_PACKS, _matches
 class TestRuleTestFramework:
     def test_python_rules_have_tests(self) -> None:
         passed, failed, errors = validate_rule_tests("python")
-        assert passed > 0, f"No Python test cases found"
+        assert passed > 0, "No Python test cases found"
         assert failed == 0, f"Failed tests: {errors}"
 
     def test_typescript_rules_have_tests(self) -> None:
         passed, failed, errors = validate_rule_tests("typescript")
-        assert passed > 0, f"No TypeScript test cases found"
+        assert passed > 0, "No TypeScript test cases found"
         assert failed == 0, f"Failed tests: {errors}"
 
     def test_nonexistent_lang(self) -> None:

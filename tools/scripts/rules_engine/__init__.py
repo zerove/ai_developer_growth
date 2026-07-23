@@ -37,15 +37,33 @@ Architecture:
 
 from .checker import check_directory, check_file
 from .models import CheckResult, Issue, Severity
+from .plugins import (
+    CheckerPlugin,
+    clear_plugins,
+    discover_plugins,
+    get_plugins_for_language,
+    list_plugins,
+    register_checker,
+    register_checker_decorator,
+    unregister_checker,
+)
 from .rule_loader import load_rules_for_language
 
 __all__ = [
     "CheckResult",
+    "CheckerPlugin",
     "Issue",
     "Severity",
     "check_directory",
     "check_file",
+    "clear_plugins",
+    "discover_plugins",
+    "get_plugins_for_language",
+    "list_plugins",
     "load_rules_for_language",
+    "register_checker",
+    "register_checker_decorator",
+    "unregister_checker",
 ]
 
-__version__ = "1.0.0"
+__version__ = "1.1.0"

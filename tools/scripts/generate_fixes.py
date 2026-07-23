@@ -22,179 +22,12 @@ import yaml
 sys.path.insert(0, str(Path(__file__).parent))
 from _common import handle_error
 from _common import rules_dir as _rules_dir
-
-# ──────────────────────────────────────────────────────────
-# Heuristic fix generation (no API needed)
-# ──────────────────────────────────────────────────────────
-
-# Maps pattern substrings to fix templates
-HEURISTIC_FIXES: dict[str, dict[str, str]] = {
-    # Python
-    "eval(": {
-        "fix": "ast.literal_eval({arg})",
-        "message": "Use ast.literal_eval() for safe evaluation",
-    },
-    "exec(": {
-        "fix": "# Replace exec() with direct function calls",
-        "message": "Avoid exec(); use direct function calls",
-    },
-    "except:": {
-        "fix": "except Exception:",
-        "message": "Catch specific exceptions instead of bare except",
-    },
-    "print(": {
-        "fix": "logging.info({args})",
-        "message": "Use logging instead of print statements",
-    },
-    # TypeScript
-    "as any": {
-        "fix": "as {specific_type}",
-        "message": "Use specific types instead of 'any'",
-    },
-    "var ": {
-        "fix": "const ",
-        "message": "Use const/let instead of var",
-    },
-    "== null": {
-        "fix": "=== null",
-        "message": "Use strict equality (===) instead of loose equality (==)",
-    },
-    "require(": {
-        "fix": "// Use import instead of require",
-        "message": "Use ES module imports instead of CommonJS require",
-    },
-    # Security
-    "os.system(": {
-        "fix": "subprocess.run({args}, check=True)",
-        "message": "Use subprocess.run() instead of os.system()",
-    },
-    "subprocess.call(": {
-        "fix": "subprocess.run({args}, check=True)",
-        "message": "Use subprocess.run() with check=True",
-    },
-    "pickle.loads(": {
-        "fix": "# Avoid pickle; use JSON or msgpack",
-        "message": "Avoid pickle for untrusted data",
-    },
-    "md5(": {
-        "fix": "hashlib.sha256(",
-        "message": "Use SHA-256 instead of MD5",
-    },
-    "sha1(": {
-        "fix": "hashlib.sha256(",
-        "message": "Use SHA-256 instead of SHA-1",
-    },
-    "SELECT.*FROM": {
-        "fix": "cursor.execute(query, (param1, param2))",
-        "message": "Use parameterized queries to prevent SQL injection",
-    },
-    # General
-    "TODO": {
-        "fix": "",
-        "message": "Address TODO items before merging",
-    },
-    "FIXME": {
-        "fix": "",
-        "message": "Fix FIXME items",
-    },
-    "console.log(": {
-        "fix": "",
-        "message": "Remove console.log in production code",
-    },
-    "debugger": {
-        "fix": "",
-        "message": "Remove debugger statement",
-    },
-}
+from fix_heuristics import heuristic_fix  # noqa: F401 - re-export for tests
+from fix_heuristics import HEURISTIC_FIXES  # noqa: F401 - re-export for tests
 
 
-def heuristic_fix(rule: dict) -> dict[str, str]:
-    """Generate a fix using pattern matching heuristics."""
-    pattern = rule.get("pattern", "")
-    message = rule.get("message", "")
-    fix_hint = rule.get("fix_hint", "")
-
-    # Try exact pattern match first
-    for key, fix_info in HEURISTIC_FIXES.items():
-        if key in pattern:
-            return {
-                "fix_replacement": fix_info["fix"],
-                "fix_message": fix_info["message"],
-                "source": "heuristic",
-            }
-
-    # Try message-based heuristics
-    msg_lower = message.lower()
-    if "bare except" in msg_lower or "catch all" in msg_lower:
-        return {
-            "fix_replacement": "except Exception:",
-            "fix_message": "Catch specific exceptions",
-            "source": "heuristic",
-        }
-    if "eval" in msg_lower and "literal" not in msg_lower:
-        return {
-            "fix_replacement": "ast.literal_eval()",
-            "fix_message": "Use ast.literal_eval() instead",
-            "source": "heuristic",
-        }
-    if "hardcoded" in msg_lower and "secret" in msg_lower:
-        return {
-            "fix_replacement": "os.environ[\"{SECRET_NAME}\"]",
-            "fix_message": "Move secrets to environment variables",
-            "source": "heuristic",
-        }
-    if "sql" in msg_lower and ("inject" in msg_lower or "string" in msg_lower or "format" in msg_lower):
-        return {
-            "fix_replacement": "cursor.execute(query, params)",
-            "fix_message": "Use parameterized queries",
-            "source": "heuristic",
-        }
-    if "print" in msg_lower and ("logging" in msg_lower or "use" in msg_lower):
-        return {
-            "fix_replacement": "logging.info()",
-            "fix_message": "Replace print with logging",
-            "source": "heuristic",
-        }
-    if "type" in msg_lower and ("any" in msg_lower or "specific" in msg_lower):
-        return {
-            "fix_replacement": "// Add specific type annotation",
-            "fix_message": "Replace 'any' with specific types",
-            "source": "heuristic",
-        }
-    if "console.log" in msg_lower:
-        return {
-            "fix_replacement": "",
-            "fix_message": "Remove console.log",
-            "source": "heuristic",
-        }
-    if "debugger" in msg_lower:
-        return {
-            "fix_replacement": "",
-            "fix_message": "Remove debugger statement",
-            "source": "heuristic",
-        }
-    if "shadowing" in msg_lower or "shadow" in msg_lower:
-        return {
-            "fix_replacement": "",
-            "fix_message": "Rename variable to avoid shadowing",
-            "source": "heuristic",
-        }
-    if "todo" in msg_lower or "fixme" in msg_lower:
-        return {
-            "fix_replacement": "",
-            "fix_message": "Address before merging",
-            "source": "heuristic",
-        }
-
-    # Use fix_hint if available
-    if fix_hint:
-        return {
-            "fix_replacement": fix_hint,
-            "fix_message": f"Fix hint: {fix_hint}",
-            "source": "fix_hint",
-        }
-
-    return {"fix_replacement": "", "fix_message": "Manual fix required", "source": "none"}
+# Re-export for backward compatibility
+__all__ = ["heuristic_fix", "HEURISTIC_FIXES"]
 
 
 def _load_rules_without_fix(lang: str) -> list[dict]:
@@ -223,9 +56,7 @@ def _load_rules_without_fix(lang: str) -> list[dict]:
     return rules
 
 
-def generate_fixes(
-    languages: list[str], dry_run: bool = False
-) -> list[dict]:
+def generate_fixes(languages: list[str], dry_run: bool = False) -> list[dict]:
     """Generate fixes for rules without fix_replacement across languages."""
     results = []
     for lang in languages:
@@ -296,9 +127,7 @@ def main() -> int:
         # Discover languages
         if args.all:
             langs_dir = _rules_dir() / "languages"
-            languages = sorted(
-                d.name for d in langs_dir.iterdir() if d.is_dir() and (d / "rules.d").exists()
-            )
+            languages = sorted(d.name for d in langs_dir.iterdir() if d.is_dir() and (d / "rules.d").exists())
         else:
             languages = [args.lang]
 

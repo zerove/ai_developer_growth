@@ -61,11 +61,38 @@
 - 有测试覆盖
 - 符合项目规范
 
+**测试要求**:
+- 新增测试文件 `tests/test_<module>.py`
+- 测试覆盖率 ≥ 80%（新增代码）
+- 使用 `pytest` 框架，遵循 AAA 模式（Arrange-Act-Assert）
+- 每个测试函数名以 `test_` 开头，清晰描述测试场景
+- 使用 `tmp_path` fixture 处理临时文件
+- Mock 外部依赖（网络、文件系统、API）
+- 测试文件按功能组织，一个模块对应一个测试文件
+
+**快速验证**:
+```bash
+# 运行所有测试
+pytest
+
+# 运行特定测试文件
+pytest tests/test_your_module.py -v
+
+# 检查覆盖率
+pytest --cov=tools/scripts/your_module --cov-report=term-missing
+
+# 代码检查
+ruff check tools/scripts/your_module.py
+ruff format tools/scripts/your_module.py
+mypy tools/scripts/your_module.py
+```
+
 **提交流程**:
 1. Fork 本仓库
 2. 创建功能分支
 3. 编写代码和测试
-4. 提交 PR
+4. 确保测试通过且覆盖率 ≥ 80%
+5. 提交 PR
 
 ### 5. 语言规则贡献 (Language Rules)
 

@@ -100,7 +100,7 @@ jobs:
           echo '```' >> $GITHUB_STEP_SUMMARY
 
   # ──────────────────────────────────────────────────────
-  # Quality Gates (复用 jcode scripts)
+  # Quality Gates (复用 hooks_runner.py)
   # ──────────────────────────────────────────────────────
   link-audit:
     name: Link Audit
@@ -111,7 +111,7 @@ jobs:
         with:
           python-version: ${{ env.PYTHON_VERSION }}
       - name: Check links
-        run: python .jcode/scripts/knowledge-curator.py audit
+        run: python tools/scripts/hooks_runner.py quality-gate --path . --check-annotation --check-security --check-type --check-error --check-structure --format json
 
   case-study-validation:
     name: Case Study Validation
@@ -122,7 +122,7 @@ jobs:
         with:
           python-version: ${{ env.PYTHON_VERSION }}
       - name: Validate all cases
-        run: python .jcode/scripts/knowledge-curator.py scan
+        run: python tools/scripts/validate_case_study.py --path case-studies/
 
   governance-audit:
     name: Governance Audit
@@ -133,13 +133,13 @@ jobs:
         with:
           python-version: ${{ env.PYTHON_VERSION }}
       - name: Governance docs validation
-        run: python .jcode/scripts/governance-docs-validator.py full
+        run: python tools/scripts/hooks_runner.py governance-audit --validate-docs
       - name: AI-SDLC compliance
-        run: python .jcode/scripts/governance-auditor.py check-ai-sdlc-compliance
+        run: python tools/scripts/hooks_runner.py governance-audit --check-ai-sdlc
       - name: Hallucination risk audit
-        run: python .jcode/scripts/governance-auditor.py audit-hallucination-risks || true
-      - name: Legacy audit check
-        run: python tools/scripts/audit_to_pr.py --check-all
+        run: python tools/scripts/hooks_runner.py governance-audit --audit-hallucination || true
+      - name: Language rules check
+        run: python tools/scripts/hooks_runner.py language-rules --path tools/scripts
 
   # ──────────────────────────────────────────────────────
   # Security
@@ -152,26 +152,8 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: ${{ env.PYTHON_VERSION }}
-      - run: pip install pip-audit bandit
-      - name: pip-audit
-        run: pip-audit --desc
-      - name: bandit
-        run: bandit -r tools/scripts/ -f json -o bandit-report.json -ll
-      - name: bandit fail on high severity
-        run: |
-          if [ -f bandit-report.json ]; then
-            python -c "
-          import json, sys
-          with open('bandit-report.json') as f:
-              data = json.load(f)
-          high = [r for r in data.get('results', []) if r.get('issue_severity') == 'HIGH']
-          if high:
-              print(f'::error::{len(high)} HIGH severity issues found')
-              for r in high:
-                  print(f\"  {r['filename']}:{r['line_number']} - {r['issue_text']}\")
-              sys.exit(1)
-          print('No HIGH severity issues')
-          "
+      - name: Security scan (bandit + pip-audit)
+        run: python tools/scripts/hooks_runner.py security
       - name: Upload bandit report
         if: always()
         uses: actions/upload-artifact@v4
@@ -239,9 +221,9 @@ jobs:
         with:
           python-version: ${{ env.PYTHON_VERSION }}
       - name: Validate governance docs format
-        run: python .jcode/scripts/governance-docs-validator.py validate
+        run: python tools/scripts/hooks_runner.py governance-audit --validate-docs
       - name: Check index references
-        run: python .jcode/scripts/governance-docs-validator.py check-index
+        run: python tools/scripts/hooks_runner.py governance-audit --check-index
 
   # ──────────────────────────────────────────────────────
   # Agent & Enforcement Validation (复用 jcode scripts)
@@ -266,6 +248,6 @@ jobs:
         with:
           python-version: ${{ env.PYTHON_VERSION }}
       - name: AI annotation check
-        run: python tools/scripts/check_ai_annotation.py --path tools/scripts/
+        run: python tools/scripts/hooks_runner.py quality-gate --path tools/scripts --check-annotation
       - name: Quality gate
-        run: python .jcode/scripts/governance-auditor.py full || true
+        run: python tools/scripts/hooks_runner.py governance-audit --full || true

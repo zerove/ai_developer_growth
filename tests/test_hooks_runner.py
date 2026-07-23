@@ -13,10 +13,14 @@ from unittest.mock import MagicMock, patch
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from tools.scripts.hooks_runner import (
+    get_changed_files,
+    get_staged_files,
+    run_diff_checks,
     run_format_check,
     run_governance_audit,
     run_language_rules,
     run_lint,
+    run_pre_commit_checks,
     run_quality_gate,
     run_security,
     run_tests,
@@ -184,6 +188,7 @@ class TestRunQualityGate(unittest.TestCase):
             py_file.write_text("# simple test\nx = 1\n")
             passed, output = run_quality_gate(Path(tmpdir), format="json")
             import json
+
             data = json.loads(output)
             self.assertIn("summary", data)
 
@@ -218,6 +223,7 @@ class TestMainCLI(unittest.TestCase):
     def test_main_lint_command(self) -> None:
         """Test lint command dispatch."""
         from tools.scripts.hooks_runner import main
+
         with patch("sys.argv", ["hooks_runner.py", "lint"]):
             with patch("tools.scripts.hooks_runner.run_lint", return_value=(True, "ok")) as mock:
                 result = main()
@@ -227,62 +233,70 @@ class TestMainCLI(unittest.TestCase):
     def test_main_format_command(self) -> None:
         """Test format command dispatch."""
         from tools.scripts.hooks_runner import main
+
         with patch("sys.argv", ["hooks_runner.py", "format"]):
-            with patch("tools.scripts.hooks_runner.run_format_check", return_value=(True, "ok")) as mock:
+            with patch("tools.scripts.hooks_runner.run_format_check", return_value=(True, "ok")):
                 result = main()
                 self.assertEqual(result, 0)
 
     def test_main_typecheck_command(self) -> None:
         """Test typecheck command dispatch."""
         from tools.scripts.hooks_runner import main
+
         with patch("sys.argv", ["hooks_runner.py", "typecheck"]):
-            with patch("tools.scripts.hooks_runner.run_typecheck", return_value=(True, "ok")) as mock:
+            with patch("tools.scripts.hooks_runner.run_typecheck", return_value=(True, "ok")):
                 result = main()
                 self.assertEqual(result, 0)
 
     def test_main_test_command(self) -> None:
         """Test test command dispatch."""
         from tools.scripts.hooks_runner import main
+
         with patch("sys.argv", ["hooks_runner.py", "test"]):
-            with patch("tools.scripts.hooks_runner.run_tests", return_value=(True, "ok")) as mock:
+            with patch("tools.scripts.hooks_runner.run_tests", return_value=(True, "ok")):
                 result = main()
                 self.assertEqual(result, 0)
 
     def test_main_security_command(self) -> None:
         """Test security command dispatch."""
         from tools.scripts.hooks_runner import main
+
         with patch("sys.argv", ["hooks_runner.py", "security"]):
-            with patch("tools.scripts.hooks_runner.run_security", return_value=(True, "ok")) as mock:
+            with patch("tools.scripts.hooks_runner.run_security", return_value=(True, "ok")):
                 result = main()
                 self.assertEqual(result, 0)
 
     def test_main_language_rules_command(self) -> None:
         """Test language-rules command dispatch."""
         from tools.scripts.hooks_runner import main
+
         with patch("sys.argv", ["hooks_runner.py", "language-rules", "--path", "."]):
-            with patch("tools.scripts.hooks_runner.run_language_rules", return_value=(True, "ok")) as mock:
+            with patch("tools.scripts.hooks_runner.run_language_rules", return_value=(True, "ok")):
                 result = main()
                 self.assertEqual(result, 0)
 
     def test_main_quality_gate_command(self) -> None:
         """Test quality-gate command dispatch."""
         from tools.scripts.hooks_runner import main
+
         with patch("sys.argv", ["hooks_runner.py", "quality-gate", "--path", ".", "--full"]):
-            with patch("tools.scripts.hooks_runner.run_quality_gate", return_value=(True, "ok")) as mock:
+            with patch("tools.scripts.hooks_runner.run_quality_gate", return_value=(True, "ok")):
                 result = main()
                 self.assertEqual(result, 0)
 
     def test_main_governance_audit_command(self) -> None:
         """Test governance-audit command dispatch."""
         from tools.scripts.hooks_runner import main
+
         with patch("sys.argv", ["hooks_runner.py", "governance-audit", "--full"]):
-            with patch("tools.scripts.hooks_runner.run_governance_audit", return_value=(True, "ok")) as mock:
+            with patch("tools.scripts.hooks_runner.run_governance_audit", return_value=(True, "ok")):
                 result = main()
                 self.assertEqual(result, 0)
 
     def test_main_full_command(self) -> None:
         """Test full command runs all checks."""
         from tools.scripts.hooks_runner import main
+
         with patch("sys.argv", ["hooks_runner.py", "full"]):
             with patch("tools.scripts.hooks_runner.run_lint", return_value=(True, "ok")):
                 with patch("tools.scripts.hooks_runner.run_format_check", return_value=(True, "ok")):
@@ -290,17 +304,115 @@ class TestMainCLI(unittest.TestCase):
                         with patch("tools.scripts.hooks_runner.run_tests", return_value=(True, "ok")):
                             with patch("tools.scripts.hooks_runner.run_security", return_value=(True, "ok")):
                                 with patch("tools.scripts.hooks_runner.run_quality_gate", return_value=(True, "ok")):
-                                    with patch("tools.scripts.hooks_runner.run_governance_audit", return_value=(True, "ok")):
+                                    with patch(
+                                        "tools.scripts.hooks_runner.run_governance_audit", return_value=(True, "ok")
+                                    ):
                                         result = main()
                                         self.assertEqual(result, 0)
 
     def test_main_lint_fails(self) -> None:
         """Test lint failure returns exit code 1."""
         from tools.scripts.hooks_runner import main
+
         with patch("sys.argv", ["hooks_runner.py", "lint"]):
             with patch("tools.scripts.hooks_runner.run_lint", return_value=(False, "errors")):
                 result = main()
                 self.assertEqual(result, 1)
+
+    def test_main_diff(self) -> None:
+        """Test diff command invokes run_diff_checks."""
+        from tools.scripts.hooks_runner import main
+
+        with patch("sys.argv", ["hooks_runner.py", "diff"]):
+            with patch("tools.scripts.hooks_runner.run_diff_checks", return_value=(True, "ok")):
+                result = main()
+                self.assertEqual(result, 0)
+
+    def test_main_diff_fails(self) -> None:
+        """Test diff failure returns exit code 1."""
+        from tools.scripts.hooks_runner import main
+
+        with patch("sys.argv", ["hooks_runner.py", "diff"]):
+            with patch("tools.scripts.hooks_runner.run_diff_checks", return_value=(False, "errors")):
+                result = main()
+                self.assertEqual(result, 1)
+
+    def test_main_pre_commit(self) -> None:
+        """Test pre-commit command invokes run_pre_commit_checks."""
+        from tools.scripts.hooks_runner import main
+
+        with patch("sys.argv", ["hooks_runner.py", "pre-commit"]):
+            with patch("tools.scripts.hooks_runner.run_pre_commit_checks", return_value=(True, "ok")):
+                result = main()
+                self.assertEqual(result, 0)
+
+
+class TestDiffAndPreCommit(unittest.TestCase):
+    """Tests for incremental check functions."""
+
+    @patch("tools.scripts.hooks_runner.subprocess.run")
+    def test_get_changed_files_returns_paths(self, mock_run: MagicMock) -> None:
+        """Test get_changed_files returns Path objects."""
+        mock_run.return_value = _mock_process(0, "file1.py\nfile2.ts\n")
+        files = get_changed_files("HEAD")
+        self.assertEqual(len(files), 2)
+        self.assertIsInstance(files[0], Path)
+
+    @patch("tools.scripts.hooks_runner.subprocess.run")
+    def test_get_changed_files_empty(self, mock_run: MagicMock) -> None:
+        """Test get_changed_files with no changes."""
+        mock_run.return_value = _mock_process(0, "")
+        files = get_changed_files("HEAD")
+        self.assertEqual(files, [])
+
+    @patch("tools.scripts.hooks_runner.subprocess.run")
+    def test_get_staged_files(self, mock_run: MagicMock) -> None:
+        """Test get_staged_files returns Path objects."""
+        mock_run.return_value = _mock_process(0, "staged.py\n")
+        files = get_staged_files()
+        self.assertEqual(len(files), 1)
+
+    @patch("tools.scripts.hooks_runner.get_changed_files")
+    def test_run_diff_checks_no_files(self, mock_get: MagicMock) -> None:
+        """Test diff with no changed files passes."""
+        mock_get.return_value = []
+        passed, output = run_diff_checks()
+        self.assertTrue(passed)
+        self.assertIn("No changed files", output)
+
+    @patch("tools.scripts.hooks_runner.get_staged_files")
+    def test_run_pre_commit_no_files(self, mock_get: MagicMock) -> None:
+        """Test pre-commit with no staged files passes."""
+        mock_get.return_value = []
+        passed, output = run_pre_commit_checks()
+        self.assertTrue(passed)
+        self.assertIn("No staged files", output)
+
+    @patch("tools.scripts.hooks_runner.subprocess.run")
+    @patch("tools.scripts.hooks_runner.get_changed_files")
+    def test_run_diff_checks_with_py_files(self, mock_get: MagicMock, mock_run: MagicMock) -> None:
+        """Test diff checks with Python files."""
+        # Create a real temp file so exists() returns True
+        with tempfile.NamedTemporaryFile(suffix=".py", mode="w", delete=False) as f:
+            f.write("x = 1\n")
+            f.flush()
+            tmp = Path(f.name)
+        try:
+            mock_get.return_value = [tmp]
+            mock_run.return_value = _mock_process(0, "")
+            passed, output = run_diff_checks()
+            self.assertTrue(passed)
+            self.assertIn("changed files pass checks", output)
+        finally:
+            tmp.unlink(missing_ok=True)
+
+    @patch("tools.scripts.hooks_runner.get_changed_files")
+    def test_run_diff_checks_non_code_files(self, mock_get: MagicMock) -> None:
+        """Test diff skips non-code files."""
+        mock_get.return_value = [Path("README.md"), Path("config.yml")]
+        passed, output = run_diff_checks()
+        self.assertTrue(passed)
+        self.assertIn("No code files", output)
 
 
 if __name__ == "__main__":

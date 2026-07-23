@@ -14,6 +14,8 @@
     python hooks_runner.py language-rules [--path PATH] [--lang LANG]
     python hooks_runner.py quality-gate [--path PATH] [--full] [--check-security] ...
     python hooks_runner.py governance-audit [--full] [--validate-docs] [--check-ai-sdlc] [--audit-hallucination]
+    python hooks_runner.py diff [--base REF]  # Incremental: only check changed files
+    python hooks_runner.py pre-commit        # Pre-commit hook: check staged files
     python hooks_runner.py full
 """
 
@@ -342,6 +344,200 @@ def run_governance_audit(
 
 
 # =============================================================================
+# Incremental check helpers
+# =============================================================================
+
+
+def get_changed_files(base: str = "HEAD") -> list[Path]:
+    """Get list of changed files compared to a base ref (git diff)."""
+    try:
+        result = subprocess.run(
+            ["git", "diff", "--name-only", "--diff-filter=ACMR", base],
+            capture_output=True,
+            text=True,
+            timeout=30,
+        )
+        if result.returncode != 0:
+            # Fallback: try diff with main/master
+            for ref in ["origin/main", "origin/master", "main", "master"]:
+                result = subprocess.run(
+                    ["git", "diff", "--name-only", "--diff-filter=ACMR", ref],
+                    capture_output=True,
+                    text=True,
+                    timeout=30,
+                )
+                if result.returncode == 0 and result.stdout.strip():
+                    break
+
+        return [Path(line.strip()) for line in result.stdout.splitlines() if line.strip()]
+    except (subprocess.TimeoutExpired, FileNotFoundError):
+        return []
+
+
+def get_staged_files() -> list[Path]:
+    """Get list of files staged for commit (git diff --cached)."""
+    try:
+        result = subprocess.run(
+            ["git", "diff", "--cached", "--name-only", "--diff-filter=ACMR"],
+            capture_output=True,
+            text=True,
+            timeout=30,
+        )
+        return [Path(line.strip()) for line in result.stdout.splitlines() if line.strip()]
+    except (subprocess.TimeoutExpired, FileNotFoundError):
+        return []
+
+
+def run_diff_checks(base: str = "HEAD") -> tuple[bool, str]:
+    """Run lint, format, and quality checks only on changed files."""
+    changed = get_changed_files(base)
+    if not changed:
+        return True, "No changed files detected"
+
+    # Filter to code files only
+    code_exts = {
+        ".py",
+        ".ts",
+        ".tsx",
+        ".js",
+        ".jsx",
+        ".rs",
+        ".go",
+        ".java",
+        ".kt",
+        ".cs",
+        ".php",
+        ".rb",
+        ".cpp",
+        ".swift",
+        ".scala",
+        ".dart",
+    }
+    code_files = [f for f in changed if f.suffix in code_exts and f.exists()]
+
+    if not code_files:
+        return True, f"No code files in {len(changed)} changed files"
+
+    output_lines = [f"Checking {len(code_files)} changed file(s)...\n"]
+    all_passed = True
+
+    # 1. Ruff lint on changed files
+    py_files = [str(f) for f in code_files if f.suffix == ".py"]
+    if py_files:
+        result = subprocess.run(
+            ["ruff", "check", *py_files],
+            capture_output=True,
+            text=True,
+            timeout=60,
+        )
+        passed = result.returncode == 0
+        output_lines.append(f"{'✅' if passed else '❌'} Lint ({len(py_files)} Python files)")
+        if not passed:
+            output_lines.append(result.stdout)
+            all_passed = False
+
+    # 2. Ruff format check on changed files
+    if py_files:
+        result = subprocess.run(
+            ["ruff", "format", "--check", *py_files],
+            capture_output=True,
+            text=True,
+            timeout=60,
+        )
+        passed = result.returncode == 0
+        output_lines.append(f"{'✅' if passed else '❌'} Format ({len(py_files)} Python files)")
+        if not passed:
+            output_lines.append(result.stdout)
+            all_passed = False
+
+    # 3. Language rules on changed files
+    for filepath in code_files:
+        lang = detect_language_from_file(filepath)
+        if lang:
+            result = validate_file(filepath, lang)
+            if not result.passed:
+                output_lines.append(f"❌ {filepath}: {len(result.issues)} rule violations")
+                all_passed = False
+
+    if all_passed:
+        output_lines.append(f"\n✅ All {len(code_files)} changed files pass checks")
+
+    return all_passed, "\n".join(output_lines)
+
+
+def run_pre_commit_checks() -> tuple[bool, str]:
+    """Run checks on staged files (pre-commit hook)."""
+    staged = get_staged_files()
+    if not staged:
+        return True, "No staged files"
+
+    # Same logic as diff but against staged
+    code_exts = {
+        ".py",
+        ".ts",
+        ".tsx",
+        ".js",
+        ".jsx",
+        ".rs",
+        ".go",
+        ".java",
+        ".kt",
+        ".cs",
+        ".php",
+        ".rb",
+        ".cpp",
+        ".swift",
+        ".scala",
+        ".dart",
+    }
+    code_files = [f for f in staged if f.suffix in code_exts and f.exists()]
+
+    if not code_files:
+        return True, f"No code files in {len(staged)} staged files"
+
+    output_lines = [f"Pre-commit: checking {len(code_files)} staged file(s)...\n"]
+    all_passed = True
+
+    py_files = [str(f) for f in code_files if f.suffix == ".py"]
+    if py_files:
+        # Lint
+        result = subprocess.run(
+            ["ruff", "check", *py_files],
+            capture_output=True,
+            text=True,
+            timeout=60,
+        )
+        if result.returncode != 0:
+            output_lines.append(f"❌ Lint errors:\n{result.stdout}")
+            all_passed = False
+
+        # Format
+        result = subprocess.run(
+            ["ruff", "format", "--check", *py_files],
+            capture_output=True,
+            text=True,
+            timeout=60,
+        )
+        if result.returncode != 0:
+            output_lines.append(f"❌ Format errors (run: ruff format {' '.join(py_files[:3])}...):\n{result.stdout}")
+            all_passed = False
+
+    # Language rules
+    for filepath in code_files:
+        lang = detect_language_from_file(filepath)
+        if lang:
+            vr = validate_file(filepath, lang)
+            if not vr.passed:
+                output_lines.append(f"❌ {filepath}: {len(vr.issues)} violations")
+                all_passed = False
+
+    if all_passed:
+        output_lines.insert(0, f"✅ All {len(code_files)} staged files pass pre-commit checks")
+
+    return all_passed, "\n".join(output_lines)
+
+
+# =============================================================================
 # CLI
 # =============================================================================
 
@@ -406,6 +602,13 @@ Examples:
     ga_parser.add_argument("--audit-hallucination", action="store_true", help="Audit hallucination risks")
     ga_parser.add_argument("--check-index", action="store_true", help="Check index references")
 
+    # diff (incremental)
+    diff_parser = subparsers.add_parser("diff", help="Incremental check: only changed files vs base ref")
+    diff_parser.add_argument("--base", default="HEAD", help="Git ref to diff against (default: HEAD)")
+
+    # pre-commit
+    subparsers.add_parser("pre-commit", help="Pre-commit hook: check staged files only")
+
     # full
     subparsers.add_parser(
         "full", help="Run all checks (lint, format, typecheck, test, security, quality-gate, governance-audit)"
@@ -467,6 +670,16 @@ Examples:
             audit_hallucination=args.audit_hallucination,
             check_index=args.check_index,
         )
+        print(output)
+        return 0 if passed else 1
+
+    elif args.command == "diff":
+        passed, output = run_diff_checks(args.base)
+        print(output)
+        return 0 if passed else 1
+
+    elif args.command == "pre-commit":
+        passed, output = run_pre_commit_checks()
         print(output)
         return 0 if passed else 1
 

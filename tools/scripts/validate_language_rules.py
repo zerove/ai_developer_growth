@@ -1091,7 +1091,15 @@ Examples:
         """,
     )
     parser.add_argument("path", type=Path, help="File or directory to validate")
-    parser.add_argument("--lang", choices=["python", "typescript", "rust", "go"], help="Language to validate against")
+    parser.add_argument(
+        "--lang",
+        choices=[
+            "python", "typescript", "rust", "go", "java", "kotlin", "csharp",
+            "php", "ruby", "cpp", "swift", "scala", "elixir", "lua",
+            "javascript", "zig", "r", "clojure", "haskell", "dart", "powershell",
+        ],
+        help="Language to validate against",
+    )
     parser.add_argument("--auto-detect", action="store_true", help="Auto-detect language from file extensions")
     parser.add_argument("--json", action="store_true", dest="json_output", help="Output results as JSON")
     parser.add_argument("--fail-on-warnings", action="store_true", help="Exit with error on warnings")

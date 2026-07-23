@@ -23,11 +23,19 @@ import sys
 from pathlib import Path
 from typing import TypedDict
 
+from tools.scripts.validate_language_rules import (
+    detect_language_from_file as detect_lang,
+)
+from tools.scripts.validate_language_rules import (
+    validate_file as validate_lang_file,
+)
+
 
 class FileCheckResult(TypedDict):
     file: str
     issues: list[dict[str, object]]
     passed: bool
+
 
 # 安全反模式
 SECURITY_PATTERNS = [
@@ -179,12 +187,14 @@ def check_structure_patterns(filepath: Path) -> list[dict]:
                     break
             func_lines = j - func_start
             if func_lines > 50:
-                issues.append({
-                    "line": func_start + 1,
-                    "type": "structure",
-                    "message": f"函数超过 50 行 (实际 {func_lines} 行)",
-                    "code": line.strip()[:60],
-                })
+                issues.append(
+                    {
+                        "line": func_start + 1,
+                        "type": "structure",
+                        "message": f"函数超过 50 行 (实际 {func_lines} 行)",
+                        "code": line.strip()[:60],
+                    }
+                )
             i = j
         else:
             i += 1
@@ -271,12 +281,14 @@ def main() -> None:
     parser.add_argument("--check-error", action="store_true", help="检查错误处理")
     parser.add_argument("--check-structure", action="store_true", help="检查代码结构")
     parser.add_argument("--check-patterns", action="store_true", help="检查所有反模式")
+    parser.add_argument("--check-language-rules", action="store_true", help="检查语言特定规则 (21种语言)")
+    parser.add_argument("--lang", help="指定语言 (配合 --check-language-rules)")
     args = parser.parse_args()
 
     # 确定检查项
     checks = []
     if args.full or args.check_patterns:
-        checks = ["annotation", "security", "type", "error", "structure"]
+        checks = ["annotation", "security", "type", "error", "structure", "language_rules"]
     else:
         if args.check_annotation:
             checks.append("annotation")
@@ -288,6 +300,8 @@ def main() -> None:
             checks.append("error")
         if args.check_structure:
             checks.append("structure")
+        if args.check_language_rules:
+            checks.append("language_rules")
 
     if not checks:
         checks = ["annotation", "security", "type", "error"]
@@ -303,13 +317,99 @@ def main() -> None:
     if args.file:
         files_to_check = [args.file]
     elif args.path:
-        files_to_check = list(args.path.rglob("*.py"))
+        exts = [
+            "*.py",
+            "*.ts",
+            "*.tsx",
+            "*.js",
+            "*.jsx",
+            "*.rs",
+            "*.go",
+            "*.java",
+            "*.kt",
+            "*.cs",
+            "*.php",
+            "*.rb",
+            "*.cpp",
+            "*.swift",
+            "*.scala",
+            "*.ex",
+            "*.exs",
+            "*.lua",
+            "*.zig",
+            "*.r",
+            "*.R",
+            "*.clj",
+            "*.hs",
+            "*.dart",
+            "*.ps1",
+        ]
+        files_to_check = []
+        for ext in exts:
+            files_to_check.extend(args.path.rglob(ext))
     else:
         files_to_check = list(Path("tools/scripts").rglob("*.py"))
 
     passed = 0
     failed = 0
     total_issues = 0
+
+    # 语言规则检查单独处理
+    if "language_rules" in checks:
+        lang_files = [
+            f
+            for f in files_to_check
+            if f.suffix
+            in (
+                ".py",
+                ".ts",
+                ".tsx",
+                ".js",
+                ".jsx",
+                ".rs",
+                ".go",
+                ".java",
+                ".kt",
+                ".cs",
+                ".php",
+                ".rb",
+                ".cpp",
+                ".swift",
+                ".scala",
+                ".ex",
+                ".exs",
+                ".lua",
+                ".zig",
+                ".r",
+                ".R",
+                ".clj",
+                ".hs",
+                ".dart",
+                ".ps1",
+            )
+        ]
+        lang_results = []
+        for fp in lang_files:
+            lang = args.lang or detect_lang(fp)
+            if lang:
+                try:
+                    lang_results.append(validate_lang_file(fp, lang))
+                except Exception:
+                    pass
+        lang_issues = sum(r.error_count for r in lang_results)
+        lang_warnings = sum(r.warning_count for r in lang_results)
+        if lang_issues or lang_warnings:
+            print("\n📋 语言规则检查:")
+            for r in lang_results:
+                if r.error_count or r.warning_count:
+                    print(f"  ❌ {r.file}: {r.error_count} errors, {r.warning_count} warnings")
+                    for issue in r.issues[:3]:
+                        print(f"     [{issue.severity}] {issue.rule_id}: {issue.message}")
+            total_issues += lang_issues + lang_warnings
+            failed += 1
+        else:
+            print(f"\n📋 语言规则检查: ✅ {len(lang_results)} 文件通过")
+            passed += 1
 
     for filepath in sorted(files_to_check):
         if "__pycache__" in str(filepath):
@@ -322,8 +422,8 @@ def main() -> None:
             passed += 1
         else:
             print(f"❌ {filepath.name} ({len(result['issues'])} issues)")
-            for issue in result["issues"][:5]:  # 最多显示 5 个
-                print(f"   Line {issue['line']}: [{issue['type']}] {issue['message']}")
+            for issue in result["issues"][:5]:  # type: ignore[assignment] # 最多显示 5 个
+                print(f"   Line {issue['line']}: [{issue['type']}] {issue['message']}")  # type: ignore[index]
             if len(result["issues"]) > 5:
                 print(f"   ... and {len(result['issues']) - 5} more")
             failed += 1

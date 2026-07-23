@@ -32,7 +32,7 @@ def analyze_searches(data: dict, top_n: int = 10) -> dict:
     if not searches:
         return {"total": 0, "unique": 0, "top": [], "zero_result": []}
 
-    query_counter = Counter()
+    query_counter: Counter[str] = Counter()
     zero_result_queries = []
 
     for s in searches:
@@ -56,7 +56,7 @@ def analyze_pageviews(data: dict, top_n: int = 10) -> dict:
     if not pageviews:
         return {"total": 0, "unique": 0, "top": []}
 
-    page_counter = Counter()
+    page_counter: Counter[str] = Counter()
     for pv in pageviews:
         page_counter[pv.get("page", "/")] += 1
 

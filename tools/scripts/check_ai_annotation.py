@@ -15,6 +15,14 @@ import argparse
 import re
 import sys
 from pathlib import Path
+from typing import TypedDict
+
+
+class CheckResult(TypedDict):
+    file: str
+    has_annotation: bool
+    issues: list[str]
+    passed: bool
 
 # AI 标注模式
 AI_ANNOTATION_PATTERN = r"# \[AI-GEN\]"
@@ -66,9 +74,9 @@ def detect_ai_generated_functions(content: str) -> list[dict]:
     return results
 
 
-def check_file(filepath: Path) -> dict:
+def check_file(filepath: Path) -> CheckResult:
     """检查单个文件"""
-    result = {
+    result: CheckResult = {
         "file": str(filepath),
         "has_annotation": False,
         "issues": [],

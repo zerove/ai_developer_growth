@@ -16,6 +16,14 @@ Agent 定义验证脚本
 import re
 import sys
 from pathlib import Path
+from typing import TypedDict
+
+
+class AgentValidationResult(TypedDict):
+    file: str
+    errors: list[str]
+    warnings: list[str]
+    passed: bool
 
 
 def validate_agent_name(name: str) -> list[str]:
@@ -41,9 +49,9 @@ def validate_agent_name(name: str) -> list[str]:
     return errors
 
 
-def validate_agent_definition(filepath: Path) -> dict:
+def validate_agent_definition(filepath: Path) -> AgentValidationResult:
     """验证单个 Agent 定义文件"""
-    result: dict[str, object] = {
+    result: AgentValidationResult = {
         "file": str(filepath),
         "errors": [],
         "warnings": [],
@@ -127,9 +135,9 @@ def validate_agent_definition(filepath: Path) -> dict:
     return result
 
 
-def validate_all_agents(agents_dir: Path = Path("agents")) -> list[dict]:
+def validate_all_agents(agents_dir: Path = Path("agents")) -> list[AgentValidationResult]:
     """验证所有 Agent 定义文件"""
-    results: list[dict] = []
+    results: list[AgentValidationResult] = []
 
     if not agents_dir.exists():
         print(f"❌ Agent 目录不存在: {agents_dir}")

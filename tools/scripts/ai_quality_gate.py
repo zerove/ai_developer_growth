@@ -21,6 +21,13 @@ import argparse
 import re
 import sys
 from pathlib import Path
+from typing import TypedDict
+
+
+class FileCheckResult(TypedDict):
+    file: str
+    issues: list[dict[str, object]]
+    passed: bool
 
 # 安全反模式
 SECURITY_PATTERNS = [
@@ -214,9 +221,9 @@ def check_annotation(filepath: Path) -> list[dict]:
     return issues
 
 
-def check_file(filepath: Path, checks: list[str]) -> dict:
+def check_file(filepath: Path, checks: list[str]) -> FileCheckResult:
     """检查单个文件"""
-    result: dict[str, object] = {
+    result: FileCheckResult = {
         "file": str(filepath),
         "issues": [],
         "passed": True,

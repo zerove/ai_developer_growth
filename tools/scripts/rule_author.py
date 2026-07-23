@@ -20,6 +20,9 @@ from pathlib import Path
 
 import yaml
 
+sys.path.insert(0, str(Path(__file__).parent))
+from _common import rules_dir as _rules_dir
+
 # Rule templates for each category
 TEMPLATES = {
     "anti_patterns": {
@@ -64,9 +67,6 @@ TEMPLATES = {
 SEVERITY_LEVELS = ["error", "warning", "info"]
 CATEGORY_TYPES = ["security", "error_handling", "type_safety", "code_quality", "naming", "performance", "style"]
 
-
-def _rules_dir() -> Path:
-    return Path(__file__).parent.parent.parent / "ai-dev-framework"
 
 
 def cmd_init(args: argparse.Namespace) -> None:

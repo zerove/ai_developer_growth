@@ -19,11 +19,8 @@ from pathlib import Path
 from urllib.parse import urlparse
 
 sys.path.insert(0, str(Path(__file__).parent))
+from _common import rules_dir as _rules_dir
 from validate_language_rules import load_rules
-
-
-def _rules_dir() -> Path:
-    return Path(__file__).parent.parent.parent / "ai-dev-framework"
 
 
 def get_all_rules() -> dict:

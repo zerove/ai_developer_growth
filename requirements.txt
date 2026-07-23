@@ -1,16 +1,6 @@
-# Root-level tool dependencies
-# For tools in tools/scripts/
-# NOTE: examples/ai-context-sync/ has its own requirements.txt and pyproject.toml
-# because it is a self-contained sub-project with its own virtualenv and MCP server.
+# Runtime dependencies
+pyyaml>=6.0
 
-# LLM integration (used by ai-context-manager.py)
-openai>=1.0.0
-
-# HTTP client (used by adr-generator.py, audit-to-pr.py)
-httpx>=0.25.0
-
-# YAML parsing (used by ai-context-sync config)
-PyYAML>=6.0
-
-# Testing
-pytest>=7.0.0
+# No other runtime dependencies!
+# The rules engine is designed to work with zero external packages.
+# All tooling uses Python stdlib + pyyaml only.

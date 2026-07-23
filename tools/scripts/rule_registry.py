@@ -65,9 +65,12 @@ def _save_registry(data: dict) -> None:
 
 
 def _file_hash(filepath: Path) -> str:
-    h = hashlib.sha256()
-    h.update(filepath.read_bytes())
-    return h.hexdigest()[:16]
+    try:
+        h = hashlib.sha256()
+        h.update(filepath.read_bytes())
+        return h.hexdigest()[:16]
+    except (OSError, ValueError):
+        return ""
 
 
 def cmd_init(args: argparse.Namespace) -> None:

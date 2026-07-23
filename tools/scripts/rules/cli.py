@@ -9,8 +9,10 @@ Usage:
 
 from __future__ import annotations
 
+import argparse
 import json
 import sys
+from collections.abc import Callable
 from pathlib import Path
 from typing import Any
 
@@ -18,7 +20,7 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 from _common import handle_error
 
 
-def add_common_args(parser: Any) -> None:
+def add_common_args(parser: argparse.ArgumentParser) -> None:
     """Add standard CLI arguments to an argparse parser.
 
     Adds: --json, --format, --verbose, --output/-o
@@ -49,13 +51,13 @@ def add_common_args(parser: Any) -> None:
 
 
 def output_results(
-    results: Any,
+    results: list[Any] | dict[str, Any] | str | Any,
     *,
     fmt: str = "text",
     json_output: bool = False,
     output_file: Path | None = None,
     verbose: bool = False,
-    formatter: Any = None,
+    formatter: Callable[..., str] | None = None,
 ) -> int:
     """Output results in the specified format.
 
@@ -74,6 +76,7 @@ def output_results(
         fmt = "json"
 
     if fmt == "json":
+        data: Any
         if isinstance(results, list):
             data = [r.to_dict() if hasattr(r, "to_dict") else r for r in results]
         elif hasattr(results, "to_dict"):
@@ -98,7 +101,7 @@ def output_results(
     return 0
 
 
-def cli_main(main_fn: Any, script_name: str = "") -> None:
+def cli_main(main_fn: Callable[[], int], script_name: str = "") -> None:
     """Wrapper for CLI main() with unified error handling (#9).
 
     Catches exceptions and delegates to handle_error from _common.

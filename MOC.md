@@ -131,6 +131,8 @@
 
 | 脚本 | 用途 |
 |------|------|
+| [[tools/scripts/hooks_runner.py]] | 统一 Hook 运行器 |
+| [[tools/scripts/rules_engine]] | 模块化规则引擎 |
 | [[tools/scripts/link_auditor.py]] | 链接检查 |
 | [[tools/scripts/validate_case_study.py]] | 案例验证 |
 | [[tools/scripts/check_metadata.py]] | 元数据检查 |
@@ -153,4 +155,4 @@
 
 ---
 
-*最后更新: 2026-07-22*
+*最后更新: 2026-07-23*

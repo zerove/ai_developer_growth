@@ -15,11 +15,13 @@
 | `governance-auditor` | 治理审计员 | 自动化审计代码质量、安全、治理合规 | ✅ 已定义 (v1.1) | `agents/governance-auditor.md` |
 | `governance-docs-validator` | 治理文档验证器 | 验证治理层文档、索引引用、交叉引用 | ✅ 已定义 (v1.0) | `.jcode/skills/governance-docs-validator.md` |
 | `workflow-optimizer` | 工作流优化师 | 分析效率数据、优化 AI 协作工作流、推荐工具组合 | ✅ 已定义 | `agents/workflow-optimizer.md` |
-| `community-catalyst管理贡献流程、案例验证、贡献者激励 | ✅ 已定义 | `agents/community-catalyst.md` |
+| `community-catalyst` | 社区催化剂 | 管理贡献流程、案例验证、贡献者激励 | ✅ 已定义 | `agents/community-catalyst.md` |
 | `context-sync` | 上下文同步 | 自动维护 CONTEXT.md、ADR.md、同步项目状态 | ✅ 已实现 | `examples/ai-context-sync/src/orchestrator.py` |
 | `multi-agent-orch` | 多 Agent 编排器 | 模拟团队开发：PM/Architect/Coder/Reviewer 协作 | ✅ 已实现 | `examples/multi-agent-orch/src/orchestration/` |
 | `self-correction-loop` | 自我修正循环 | AI 代码质量保证：验证→重试→修正闭环 | ✅ 已实现 | `examples/self-correction-loop/src/strategies/` |
 | `ai-task-prioritizer` | 任务优先级工具 | CLI 任务优先级排序，TDD + AI 驱动 | ✅ 已实现 | `examples/ai-task-prioritizer/prioritizer.py` |
+| `hooks-runner` | 统一 Hook 运行器 | 统一 lint/typecheck/test/security/quality-gate/governance 入口 | ✅ 已实现 | `tools/scripts/hooks_runner.py` |
+| `rules-engine` | 规则引擎 | 语言无关的代码质量检查引擎（反模式/命名/阈值/AST） | ✅ 已实现 | `tools/scripts/rules_engine/` |
 
 ---
 
@@ -128,6 +130,17 @@ ai_developer_growth/
 ├── .jcode/skills/              # jcode Skill 定义
 │   ├── governance-docs-validator.md
 │   └── ...
+├── tools/scripts/              # 核心工具脚本
+│   ├── hooks_runner.py         # 统一 Hook 运行器
+│   └── rules_engine/           # 模块化规则引擎
+│       ├── __init__.py
+│       ├── models.py
+│       ├── rule_loader.py
+│       ├── anti_pattern_checker.py
+│       ├── naming_checker.py
+│       ├── complexity_checker.py
+│       ├── security_patterns.py
+│       └── checker.py
 ├── examples/                    # 参考实现
 │   ├── ai-context-sync/         # context-sync
 │   ├── multi-agent-orch/        # multi-agent-orch
@@ -171,4 +184,4 @@ ai_developer_growth/
 
 ---
 
-*本索引随 Agent 新增/修改时更新。最后更新: 2026-07-22*
+*本索引随 Agent 新增/修改时更新。最后更新: 2026-07-23*

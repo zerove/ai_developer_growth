@@ -1,14 +1,9 @@
 #!/usr/bin/env python3
 """
-AI 代码质量门禁脚本
+AI 代码质量门禁脚本 - 重构版
 
+使用 rules_engine 模块化检查引擎，替代原有的重复代码。
 集成所有 AI 代码质量检查的统一入口。
-检查项:
-1. AI 代码标注 ([AI-GEN])
-2. 安全模式检查 (SQL 拼接、硬编码密钥等)
-3. 类型安全检查 (unwrap/as any)
-4. 错误处理检查
-5. 代码结构检查
 
 用法:
     python ai_quality_gate.py --full              # 运行所有检查
@@ -18,61 +13,19 @@ AI 代码质量门禁脚本
 """
 
 import argparse
-import re
 import sys
 from pathlib import Path
-from typing import TypedDict
+from typing import Any
 
 # 兼容 python -m 和 python <path> 两种运行方式
 if __package__ is None or __package__ == "":
     sys.path.insert(0, str(Path(__file__).resolve().parent.parent.parent))
 
-from tools.scripts.validate_language_rules import (
-    detect_language_from_file as detect_lang,
-)
-from tools.scripts.validate_language_rules import (
-    validate_file as validate_lang_file,
-)
+from tools.scripts.rules_engine import check_directory
 
-
-class FileCheckResult(TypedDict):
-    file: str
-    issues: list[dict[str, object]]
-    passed: bool
-
-
-# 安全反模式
-SECURITY_PATTERNS = [
-    (r"(?:password|secret|api_key|token)\s*=\s*['\"][^'\"]+['\"]", "疑似硬编码密钥"),
-    (r"eval\s*\(", "使用 eval() - 安全风险"),
-    (r"exec\s*\(", "使用 exec() - 安全风险"),
-    (r"verify\s*=\s*False", "禁用 SSL 验证"),
-    (r"hashlib\.md5\(", "使用 MD5 - 不安全的哈希"),
-    (r"hashlib\.sha1\(", "使用 SHA1 - 不安全的哈希"),
-    (r"f['\"].*\bSELECT\b.*{", "SQL 拼接 (f-string)"),
-    (r"f['\"].*\bINSERT\b.*{", "SQL 拼接 (f-string)"),
-    (r"f['\"].*\bUPDATE\b\s+\w+.*{", "SQL 拼接 (f-string)"),
-    (r"f['\"].*\bDELETE\b.*{", "SQL 拼接 (f-string)"),
-]
-
-# 类型安全反模式
-TYPE_PATTERNS = [
-    (r"# type:\s*ignore", "类型抑制"),
-    (r"@\w+(?:\.\w+)*\.ignore", "使用 @ignore 装饰器"),
-    (r":\s*Any\b", "使用 Any 类型"),
-]
-
-# 错误处理反模式
-ERROR_PATTERNS = [
-    (r"except\s+(?:Exception|BaseException)\s*:\s*pass", "空异常处理 (except: pass)"),
-    (r"except\s*:\s*pass", "空异常处理 (bare except: pass)"),
-    (r"try\s*:\s*\n\s*.*\n\s*except\s*:\s*\n\s*pass", "空 try-except 块"),
-]
-
-# 代码结构检查
-STRUCTURE_PATTERNS = [
-    (r"def\s+\w+\([^)]*\)[^:]*:\s*\n(?:\s+.*\n){50,}", "函数超过 50 行"),
-]
+# ──────────────────────────────────────────────────────────
+# 向后兼容函数（供 tests/test_enforcement.py 和 test_enforcement_supplement.py 使用）
+# ──────────────────────────────────────────────────────────
 
 
 def _is_in_string(line: str, pos: int) -> bool:
@@ -97,75 +50,41 @@ def _is_in_string(line: str, pos: int) -> bool:
     return in_str
 
 
-def check_security_patterns(filepath: Path) -> list[dict]:
-    """检查安全反模式"""
+def check_annotation(filepath: Path) -> list[dict]:
+    """向后兼容: 检查 AI 标注"""
+    import re
+
     issues = []
     content = filepath.read_text(encoding="utf-8")
-    lines = content.split("\n")
 
-    for line_num, line in enumerate(lines, 1):
-        # 跳过注释
-        if line.strip().startswith("#"):
-            continue
+    # 检查是否有 AI 生成的指标
+    ai_indicators = [
+        r"# AI[- ]generated",
+        r"# Generated with",
+        r"# This function.*generated",
+    ]
 
-        for pattern, description in SECURITY_PATTERNS:
-            match = re.search(pattern, line, re.IGNORECASE)
-            if match and not _is_in_string(line, match.start()):
+    for indicator in ai_indicators:
+        if re.search(indicator, content, re.IGNORECASE):
+            # 检查是否有 [AI-GEN] 标注
+            if not re.search(r"# \[AI-GEN\]", content):
                 issues.append(
                     {
-                        "line": line_num,
-                        "type": "security",
-                        "message": description,
-                        "code": line.strip()[:60],
+                        "line": 1,
+                        "type": "annotation",
+                        "message": "检测到 AI 生成代码但缺少 [AI-GEN] 标注",
+                        "code": "...",
                     }
                 )
-
-    return issues
-
-
-def check_type_patterns(filepath: Path) -> list[dict]:
-    """检查类型安全反模式"""
-    issues = []
-    content = filepath.read_text(encoding="utf-8")
-    lines = content.split("\n")
-
-    for line_num, line in enumerate(lines, 1):
-        for pattern, description in TYPE_PATTERNS:
-            if re.search(pattern, line, re.IGNORECASE):
-                issues.append(
-                    {
-                        "line": line_num,
-                        "type": "type",
-                        "message": description,
-                        "code": line.strip()[:60],
-                    }
-                )
-
-    return issues
-
-
-def check_error_patterns(filepath: Path) -> list[dict]:
-    """检查错误处理反模式"""
-    issues = []
-    content = filepath.read_text(encoding="utf-8")
-
-    for pattern, description in ERROR_PATTERNS:
-        for match in re.finditer(pattern, content, re.MULTILINE):
-            line_num = content[: match.start()].count("\n") + 1
-            issues.append(
-                {
-                    "line": line_num,
-                    "type": "error",
-                    "message": description,
-                    "code": match.group()[:60],
-                }
-            )
+            break
 
     return issues
 
 
 def check_structure_patterns(filepath: Path) -> list[dict]:
-    """检查代码结构问题 (行计数方式，避免正则回溯)"""
+    """向后兼容: 检查代码结构问题 (行计数方式，避免正则回溯)"""
+    import re
+
     issues = []
     content = filepath.read_text(encoding="utf-8")
     lines = content.split("\n")
@@ -206,41 +125,113 @@ def check_structure_patterns(filepath: Path) -> list[dict]:
     return issues
 
 
-def check_annotation(filepath: Path) -> list[dict]:
-    """检查 AI 标注"""
+def check_security_patterns(filepath: Path) -> list[dict]:
+    """向后兼容: 检查安全模式 (保持原始中文消息)"""
+    import re
+
     issues = []
     content = filepath.read_text(encoding="utf-8")
+    lines = content.split("\n")
 
-    # 检查是否有 AI 生成的指标
-    ai_indicators = [
-        r"# AI[- ]generated",
-        r"# Generated with",
-        r"# This function.*generated",
-    ]
+    for line_num, line in enumerate(lines, 1):
+        # 跳过注释
+        if line.strip().startswith("#"):
+            continue
 
-    for indicator in ai_indicators:
-        if re.search(indicator, content, re.IGNORECASE):
-            # 检查是否有 [AI-GEN] 标注
-            if not re.search(r"# \[AI-GEN\]", content):
+        # 检查各种安全模式
+        for pattern, description in [
+            (r'(?:password|secret|api_key|token)\s*=\s*[\'"][^\'"]+[\'"]', "疑似硬编码密钥"),
+            (r"eval\s*\(", "使用 eval() - 安全风险"),
+            (r"exec\s*\(", "使用 exec() - 安全风险"),
+            (r"verify\s*=\s*False", "禁用 SSL 验证"),
+            (r"hashlib\.md5\(", "使用 MD5 - 不安全的哈希"),
+            (r"hashlib\.sha1\(", "使用 SHA1 - 不安全的哈希"),
+            (r'f[\'"].*\bSELECT\b.*\{', "SQL 拼接 (f-string)"),
+            (r'f[\'"].*\bINSERT\b.*\{', "SQL 拼接 (f-string)"),
+            (r'f[\'"].*\bUPDATE\b\s+\w+.*\{', "SQL 拼接 (f-string)"),
+            (r'f[\'"].*\bDELETE\b.*\{', "SQL 拼接 (f-string)"),
+        ]:
+            match = re.search(pattern, line, re.IGNORECASE)
+            if match and not _is_in_string(line, match.start()):
                 issues.append(
                     {
-                        "line": 1,
-                        "type": "annotation",
-                        "message": "检测到 AI 生成代码但缺少 [AI-GEN] 标注",
-                        "code": "...",
+                        "line": line_num,
+                        "type": "security",
+                        "message": description,
+                        "code": line.strip()[:60],
                     }
                 )
-                break
 
     return issues
 
 
-def check_file(filepath: Path, checks: list[str]) -> FileCheckResult:
-    """检查单个文件"""
-    result: FileCheckResult = {
+def check_type_patterns(filepath: Path) -> list[dict]:
+    """向后兼容: 检查类型安全模式 (保持原始中文消息)"""
+    import re
+
+    issues = []
+    content = filepath.read_text(encoding="utf-8")
+    lines = content.split("\n")
+
+    for line_num, line in enumerate(lines, 1):
+        for pattern, description in [
+            (r"#\s*type:\s*ignore", "类型抑制"),
+            (r"@\w+(?:\.\w+)*\.ignore", "使用 @ignore 装饰器"),
+            (r":\s*Any\b", "使用 Any 类型"),
+        ]:
+            if re.search(pattern, line, re.IGNORECASE):
+                # Skip import lines (from typing import Any)
+                if "import" in line and "Any" in line:
+                    continue
+                # Skip lines where Any is only inside brackets (compound type like dict[str, Any])
+                stripped = line.strip()
+                if re.match(r"^(?:from|import)\b", stripped):
+                    continue
+                issues.append(
+                    {
+                        "line": line_num,
+                        "type": "type",
+                        "message": description,
+                        "code": line.strip()[:60],
+                    }
+                )
+
+    return issues
+
+
+def check_error_patterns(filepath: Path) -> list[dict]:
+    """向后兼容: 检查错误处理模式 (保持原始中文消息)"""
+    import re
+
+    issues = []
+    content = filepath.read_text(encoding="utf-8")
+
+    for pattern, description in [
+        (r"except\s+(?:Exception|BaseException)\s*:\s*pass", "空异常处理 (except: pass)"),
+        (r"except\s*:\s*pass", "空异常处理 (bare except: pass)"),
+        (r"try\s*:\s*\n\s*.*\n\s*except\s*:\s*\n\s*pass", "空 try-except 块"),
+    ]:
+        for match in re.finditer(pattern, content, re.MULTILINE):
+            line_num = content[: match.start()].count("\n") + 1
+            issues.append(
+                {
+                    "line": line_num,
+                    "type": "error",
+                    "message": description,
+                    "code": match.group()[:60],
+                }
+            )
+
+    return issues
+
+
+def check_file(filepath: Path, checks: list[str]) -> dict[str, Any]:
+    """向后兼容: 检查单个文件"""
+    result: dict[str, Any] = {
         "file": str(filepath),
         "issues": [],
         "passed": True,
+        "has_annotation": False,
     }
 
     if not filepath.exists():
@@ -268,6 +259,13 @@ def check_file(filepath: Path, checks: list[str]) -> FileCheckResult:
     if "structure" in checks:
         all_issues.extend(check_structure_patterns(filepath))
 
+    # Check for AI annotation
+    content = filepath.read_text(encoding="utf-8")
+    import re
+
+    if re.search(r"# \[AI-GEN\]", content):
+        result["has_annotation"] = True
+
     result["issues"] = all_issues
     result["passed"] = len(all_issues) == 0
     return result
@@ -287,6 +285,7 @@ def main() -> None:
     parser.add_argument("--check-patterns", action="store_true", help="检查所有反模式")
     parser.add_argument("--check-language-rules", action="store_true", help="检查语言特定规则 (21种语言)")
     parser.add_argument("--lang", help="指定语言 (配合 --check-language-rules)")
+    parser.add_argument("--format", choices=["text", "json"], default="text", help="输出格式")
     args = parser.parse_args()
 
     # 确定检查项
@@ -311,7 +310,7 @@ def main() -> None:
         checks = ["annotation", "security", "type", "error"]
 
     print("=" * 60)
-    print("  AI 代码质量门禁")
+    print("  AI 代码质量门禁 (rules_engine v1.0.0)")
     print("=" * 60)
     print(f"  检查项: {', '.join(checks)}")
     print("=" * 60)
@@ -354,88 +353,70 @@ def main() -> None:
     else:
         files_to_check = list(Path("tools/scripts").rglob("*.py"))
 
-    passed = 0
-    failed = 0
-    total_issues = 0
+    # 过滤文件
+    filtered_files = [f for f in files_to_check if "__pycache__" not in str(f) and ".git" not in str(f)]
 
-    # 语言规则检查单独处理
-    if "language_rules" in checks:
-        lang_files = [
-            f
-            for f in files_to_check
-            if f.suffix
-            in (
-                ".py",
-                ".ts",
-                ".tsx",
-                ".js",
-                ".jsx",
-                ".rs",
-                ".go",
-                ".java",
-                ".kt",
-                ".cs",
-                ".php",
-                ".rb",
-                ".cpp",
-                ".swift",
-                ".scala",
-                ".ex",
-                ".exs",
-                ".lua",
-                ".zig",
-                ".r",
-                ".R",
-                ".clj",
-                ".hs",
-                ".dart",
-                ".ps1",
-            )
-        ]
-        lang_results = []
-        for fp in lang_files:
-            lang = args.lang or detect_lang(fp)
-            if lang:
-                try:
-                    lang_results.append(validate_lang_file(fp, lang))
-                except Exception:
-                    pass
-        lang_issues = sum(r.error_count for r in lang_results)
-        lang_warnings = sum(r.warning_count for r in lang_results)
-        if lang_issues or lang_warnings:
-            print("\n📋 语言规则检查:")
-            for r in lang_results:
-                if r.error_count or r.warning_count:
-                    print(f"  ❌ {r.file}: {r.error_count} errors, {r.warning_count} warnings")
-                    for issue in r.issues[:3]:
-                        print(f"     [{issue.severity}] {issue.rule_id}: {issue.message}")
-            total_issues += lang_issues + lang_warnings
-            failed += 1
-        else:
-            print(f"\n📋 语言规则检查: ✅ {len(lang_results)} 文件通过")
-            passed += 1
+    if not filtered_files:
+        print("  未找到可检查的文件")
+        sys.exit(0)
 
-    for filepath in sorted(files_to_check):
-        if "__pycache__" in str(filepath):
-            continue
+    # 运行检查
+    if args.path:
+        results = check_directory(args.path)
+    else:
+        from tools.scripts.rules_engine import check_file
 
-        result = check_file(filepath, checks)
+        results = []
+        for filepath in filtered_files:
+            lang = args.lang
+            if not lang:
+                from tools.scripts.validate_language_rules import detect_language_from_file
 
-        if result["passed"]:
-            print(f"✅ {filepath.name}")
-            passed += 1
-        else:
-            print(f"❌ {filepath.name} ({len(result['issues'])} issues)")
-            for issue in result["issues"][:5]:  # type: ignore[assignment] # 最多显示 5 个
-                print(f"   Line {issue['line']}: [{issue['type']}] {issue['message']}")  # type: ignore[index]
-            if len(result["issues"]) > 5:
-                print(f"   ... and {len(result['issues']) - 5} more")
-            failed += 1
-            total_issues += len(result["issues"])
+                lang = detect_language_from_file(filepath)
+            result = check_file(filepath, language=lang)
+            if not result.skipped:
+                results.append(result)
 
-    print("\n" + "=" * 60)
-    print(f"  结果: {passed} 通过, {failed} 失败, {total_issues} 个问题")
-    print("=" * 60)
+    # 统计结果
+    passed = sum(1 for r in results if r.passed)
+    failed = sum(1 for r in results if not r.passed)
+    total_issues = sum(len(r.issues) for r in results)
+    total_errors = sum(r.error_count for r in results)
+    total_warnings = sum(r.warning_count for r in results)
+
+    # 输出结果
+    if args.format == "json":
+        import json
+
+        output = {
+            "summary": {
+                "passed": passed,
+                "failed": failed,
+                "total_files": len(results),
+                "total_issues": total_issues,
+                "errors": total_errors,
+                "warnings": total_warnings,
+            },
+            "results": [r.to_dict() for r in results],
+        }
+        print(json.dumps(output, indent=2, ensure_ascii=False))
+    else:
+        # 文本格式输出
+        for result in results:
+            if result.passed:
+                print(f"✅ {result.file}")
+            else:
+                print(f"❌ {result.file} ({len(result.issues)} issues)")
+                for issue in result.issues[:5]:
+                    print(f"   Line {issue.line}: [{issue.severity}] {issue.rule_id}: {issue.message}")
+                if len(result.issues) > 5:
+                    print(f"   ... and {len(result.issues) - 5} more")
+
+        print("\n" + "=" * 60)
+        print(
+            f"  结果: {passed} 通过, {failed} 失败, {total_issues} 个问题 ({total_errors} errors, {total_warnings} warnings)"
+        )
+        print("=" * 60)
 
     sys.exit(1 if failed > 0 else 0)
 

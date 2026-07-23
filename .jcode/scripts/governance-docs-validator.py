@@ -13,6 +13,8 @@ import re
 import sys
 from pathlib import Path
 
+from _common import get_project_root, print_check, print_section
+
 GOVERNANCE_DOCS = [
     "docs/efficiency/ai-code-generation-quality.md",
     "docs/efficiency/ai-model-selection.md",
@@ -57,11 +59,12 @@ def extract_frontmatter(content: str) -> tuple[dict, str]:
 
 def validate() -> int:
     """验证治理层文档格式完整性"""
-    print("📋 验证治理层文档格式完整性...")
-    issues = []
+    print_section("治理文档格式验证")
+    issues: list[str] = []
+    root = get_project_root()
 
     for doc_path in GOVERNANCE_DOCS:
-        path = Path(doc_path)
+        path = root / doc_path
         if not path.exists():
             issues.append(f"Missing: {doc_path}")
             continue
@@ -69,23 +72,19 @@ def validate() -> int:
         content = path.read_text(encoding="utf-8")
         fm, body = extract_frontmatter(content)
 
-        # 检查 frontmatter
         if not fm:
             issues.append(f"{doc_path}: Missing or empty frontmatter")
             continue
 
-        # 检查必需字段
         for field in REQUIRED_FIELDS:
             if field not in fm:
                 issues.append(f"{doc_path}: Missing field '{field}'")
 
-        # 检查标题格式
         if "title" in fm:
             title = fm["title"]
             if not title.endswith(")"):
                 issues.append(f"{doc_path}: Title missing English suffix in parentheses")
 
-        # 检查分类
         valid_categories = ["认知层", "学习层", "效率层", "工具层", "治理层"]
         if "category" in fm and fm["category"] not in valid_categories:
             issues.append(f"{doc_path}: Invalid category '{fm['category']}'")
@@ -93,32 +92,29 @@ def validate() -> int:
         if "## 导航" not in body and "## Navigation" not in body:
             issues.append(f"{doc_path}: Missing navigation section")
 
-        # 检查相关文档
         if "相关文档" not in body and "See Also" not in body:
             issues.append(f"{doc_path}: Missing related docs section")
 
-        # 检查内容长度（至少有3个二级标题）
         h2_count = len(re.findall(r"^## ", body, re.MULTILINE))
         if h2_count < 3:
             issues.append(f"{doc_path}: Only {h2_count} sections (minimum 3 required)")
 
+    passed = len(issues) == 0
+    print_check(f"治理文档 ({len(GOVERNANCE_DOCS)} 个)", passed)
     if issues:
-        print(f"\n❌ 发现 {len(issues)} 个问题:")
         for issue in issues:
             print(f"  - {issue}")
-        return 1
-    else:
-        print(f"✅ {len(GOVERNANCE_DOCS)} 个治理文档验证通过")
-        return 0
+    return 0 if passed else 1
 
 
 def check_index() -> int:
     """验证治理层索引完整性"""
-    print("📑 验证治理层索引完整性...")
-    issues = []
+    print_section("索引完整性验证")
+    issues: list[str] = []
+    root = get_project_root()
 
     # 检查 GOVERNANCE.md
-    governance_path = Path("GOVERNANCE.md")
+    governance_path = root / "GOVERNANCE.md"
     if governance_path.exists():
         content = governance_path.read_text(encoding="utf-8")
         for doc_path in GOVERNANCE_DOCS:
@@ -129,7 +125,7 @@ def check_index() -> int:
         issues.append("GOVERNANCE.md not found")
 
     # 检查 INDEX.md
-    index_path = Path("INDEX.md")
+    index_path = root / "INDEX.md"
     if index_path.exists():
         content = index_path.read_text(encoding="utf-8")
         for doc_path in GOVERNANCE_DOCS:
@@ -140,7 +136,7 @@ def check_index() -> int:
         issues.append("INDEX.md not found")
 
     # 检查 CLAUDE.md
-    claude_path = Path("CLAUDE.md")
+    claude_path = root / "CLAUDE.md"
     if claude_path.exists():
         content = claude_path.read_text(encoding="utf-8")
         for doc_path in GOVERNANCE_DOCS:
@@ -150,33 +146,29 @@ def check_index() -> int:
     else:
         issues.append("CLAUDE.md not found")
 
+    passed = len(issues) == 0
+    print_check("索引完整性", passed)
     if issues:
-        print(f"\n❌ 索引验证失败 ({len(issues)} 个问题):")
         for issue in issues:
             print(f"  - {issue}")
-        return 1
-    else:
-        print("✅ 所有索引引用完整")
-        return 0
+    return 0 if passed else 1
 
 
 def sync_refs() -> int:
     """同步治理文档引用"""
-    print("🔗 同步治理文档引用...")
+    print_section("同步交叉引用")
     fixed = 0
+    root = get_project_root()
 
-    # 检查每个治理文档的交叉引用
     for doc_path in GOVERNANCE_DOCS:
-        path = Path(doc_path)
+        path = root / doc_path
         if not path.exists():
             continue
 
         content = path.read_text(encoding="utf-8")
         modified = False
 
-        # 确保有指向 GOVERNANCE.md 的引用
         if "GOVERNANCE.md" not in content:
-            # 在相关文档部分添加
             if "相关文档" in content:
                 content = content.replace(
                     "相关文档",
@@ -195,26 +187,24 @@ def sync_refs() -> int:
             fixed += 1
             print(f"  Fixed: {doc_path}")
 
-    print(f"✅ 同步完成，修复了 {fixed} 个文件")
+    print_check(f"同步完成 (修复 {fixed} 个文件)", True)
     return 0
 
 
 def full() -> int:
     """运行完整验证"""
-    print("🚀 运行治理文档完整验证...")
-    print("=" * 50)
+    print_section("🚀 治理文档完整验证")
 
     results = []
-    results.append(("文档格式验证", validate()))
-    results.append(("索引完整性检查", check_index()))
+    results.append(("文档格式", validate()))
+    results.append(("索引完整性", check_index()))
 
-    print("\n" + "=" * 50)
     failed = [name for name, code in results if code != 0]
     if failed:
-        print(f"❌ 以下检查失败: {', '.join(failed)}")
+        print(f"\n❌ 失败: {', '.join(failed)}")
         return 1
     else:
-        print("✅ 所有检查通过")
+        print("\n✅ 所有检查通过")
         return 0
 
 
@@ -235,8 +225,8 @@ def main() -> None:
     if action in actions:
         sys.exit(actions[action]())
     else:
-        print(f"未知 action: {action}")
-        print("可用 actions: " + ", ".join(actions.keys()))
+        print(f"❌ 未知 action: {action}")
+        print(f"可用 actions: {', '.join(actions.keys())}")
         sys.exit(1)
 
 

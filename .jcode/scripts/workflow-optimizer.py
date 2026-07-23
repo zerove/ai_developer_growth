@@ -8,32 +8,22 @@ jcode Skill Runner - 工作流优化师
     python .jcode/scripts/workflow-optimizer.py report
 """
 
-import subprocess
 import sys
-from pathlib import Path
+
+from _common import get_project_root, print_section
 
 
-def run_command(cmd: list[str]) -> tuple[int, str]:
-    """运行命令并返回结果"""
-    result = subprocess.run(
-        cmd, capture_output=True, text=True,
-        cwd=Path(__file__).parent.parent.parent
-    )
-    return result.returncode, result.stdout + result.stderr
-
-
-def analyze() -> None:
+def analyze() -> int:
     """分析效率数据"""
-    print("📊 分析效率数据...")
-    case_dir = Path("case-studies")
+    print_section("效率数据分析")
+    case_dir = get_project_root() / "case-studies"
     if not case_dir.exists():
         print("❌ 未找到案例目录")
-        sys.exit(1)
+        return 1
 
     cases = list(case_dir.glob("*.md"))
     print(f"案例总数: {len(cases)}")
 
-    # 提取效率数据
     efficiencies = []
     for case in cases:
         content = case.read_text(encoding="utf-8")
@@ -47,36 +37,34 @@ def analyze() -> None:
         print(f"  - {e['file']}: {e['line'][:60]}...")
     if len(efficiencies) > 5:
         print(f"  ... 还有 {len(efficiencies) - 5} 个")
+    return 0
 
 
-def recommend() -> None:
-    """推荐工具组合"""
-    print("🔧 推荐工具组合...")
-    tool_matrix = Path("docs/tools/ai-tool-matrix.md")
+def recommend() -> int:
+    "组合"""
+    print_section("工具组合推荐")
+    tool_matrix = get_project_root() / "docs" / "tools" / "ai-tool-matrix.md"
     if not tool_matrix.exists():
         print("❌ 未找到工具矩阵文档")
-        sys.exit(1)
+        return 1
 
     content = tool_matrix.read_text(encoding="utf-8")
     print("当前工具矩阵:")
     for line in content.split("\n"):
         if line.startswith("|") and "模型" not in line and "---" not in line:
             print(f"  {line[:70]}...")
+    return 0
 
 
-def report() -> None:
+def report() -> int:
     """生成效率报告"""
-    print("📈 生成效率报告...")
-
-    # 统计数据
-    case_dir = Path("case-studies")
-    docs_dir = Path("docs")
-    examples_dir = Path("examples")
+    print_section("效率报告")
+    root = get_project_root()
 
     stats = {
-        "cases": len(list(case_dir.glob("*.md"))) if case_dir.exists() else 0,
-        "docs": len(list(docs_dir.rglob("*.md"))) if docs_dir.exists() else 0,
-        "examples": len([d for d in examples_dir.iterdir() if d.is_dir()]) if examples_dir.exists() else 0,
+        "cases": len(list((root / "case-studies").glob("*.md"))) if (root / "case-studies").exists() else 0,
+        "docs": len(list((root / "docs").rglob("*.md"))) if (root / "docs").exists() else 0,
+        "examples": len([d for d in (root / "examples").iterdir() if d.is_dir()]) if (root / "examples").exists() else 0,
     }
 
     print("=" * 50)
@@ -86,6 +74,7 @@ def report() -> None:
     print(f"文档数量: {stats['docs']}")
     print(f"代码示例: {stats['examples']}")
     print("=" * 50)
+    return 0
 
 
 def main() -> None:
@@ -95,17 +84,18 @@ def main() -> None:
         sys.exit(1)
 
     action = sys.argv[1]
-    actions = {
+
+    action_map = {
         "analyze": analyze,
         "recommend": recommend,
         "report": report,
     }
 
-    if action in actions:
-        actions[action]()
+    if action in action_map:
+        sys.exit(action_map[action]())
     else:
-        print(f"未知 action: {action}")
-        print("可用 actions: " + ", ".join(actions.keys()))
+        print(f"❌ 未知 action: {action}")
+        print(f"可用 actions: {', '.join(action_map.keys())}")
         sys.exit(1)
 
 

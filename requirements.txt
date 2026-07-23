@@ -1,5 +1,5 @@
 # Runtime dependencies
-pyyaml>=6.0
+pyyaml>=6.0.3
 
 # No other runtime dependencies!
 # The rules engine is designed to work with zero external packages.

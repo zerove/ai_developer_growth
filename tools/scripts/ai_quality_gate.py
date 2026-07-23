@@ -16,6 +16,7 @@ AI 代码质量门禁脚本
     python ai_quality_gate.py --check-security    # 只检查安全
     python ai_quality_gate.py --check-patterns    # 只检查反模式
 """
+
 import argparse
 import re
 import sys
@@ -38,7 +39,7 @@ SECURITY_PATTERNS = [
 # 类型安全反模式
 TYPE_PATTERNS = [
     (r"# type:\s*ignore", "类型抑制"),
-    (r"@\w+\.ignore", "使用 @ignore 装饰器"),
+    (r"@\w+(?:\.\w+)*\.ignore", "使用 @ignore 装饰器"),
     (r":\s*Any\b", "使用 Any 类型"),
 ]
 
@@ -91,12 +92,14 @@ def check_security_patterns(filepath: Path) -> list[dict]:
         for pattern, description in SECURITY_PATTERNS:
             match = re.search(pattern, line, re.IGNORECASE)
             if match and not _is_in_string(line, match.start()):
-                issues.append({
-                    "line": line_num,
-                    "type": "security",
-                    "message": description,
-                    "code": line.strip()[:60],
-                })
+                issues.append(
+                    {
+                        "line": line_num,
+                        "type": "security",
+                        "message": description,
+                        "code": line.strip()[:60],
+                    }
+                )
 
     return issues
 
@@ -110,12 +113,14 @@ def check_type_patterns(filepath: Path) -> list[dict]:
     for line_num, line in enumerate(lines, 1):
         for pattern, description in TYPE_PATTERNS:
             if re.search(pattern, line, re.IGNORECASE):
-                issues.append({
-                    "line": line_num,
-                    "type": "type",
-                    "message": description,
-                    "code": line.strip()[:60],
-                })
+                issues.append(
+                    {
+                        "line": line_num,
+                        "type": "type",
+                        "message": description,
+                        "code": line.strip()[:60],
+                    }
+                )
 
     return issues
 
@@ -127,13 +132,15 @@ def check_error_patterns(filepath: Path) -> list[dict]:
 
     for pattern, description in ERROR_PATTERNS:
         for match in re.finditer(pattern, content, re.MULTILINE):
-            line_num = content[:match.start()].count("\n") + 1
-            issues.append({
-                "line": line_num,
-                "type": "error",
-                "message": description,
-                "code": match.group()[:60],
-            })
+            line_num = content[: match.start()].count("\n") + 1
+            issues.append(
+                {
+                    "line": line_num,
+                    "type": "error",
+                    "message": description,
+                    "code": match.group()[:60],
+                }
+            )
 
     return issues
 
@@ -144,14 +151,16 @@ def check_structure_patterns(filepath: Path) -> list[dict]:
     content = filepath.read_text(encoding="utf-8")
 
     for pattern, description in STRUCTURE_PATTERNS:
-        for match in re.finditer(pattern, content, re.MULTILINE | re.DOTALL):
-            line_num = content[:match.start()].count("\n") + 1
-            issues.append({
-                "line": line_num,
-                "type": "structure",
-                "message": description,
-                "code": "...",
-            })
+        for match in re.finditer(pattern, content, re.MULTILINE):
+            line_num = content[: match.start()].count("\n") + 1
+            issues.append(
+                {
+                    "line": line_num,
+                    "type": "structure",
+                    "message": description,
+                    "code": "...",
+                }
+            )
 
     return issues
 
@@ -172,12 +181,14 @@ def check_annotation(filepath: Path) -> list[dict]:
         if re.search(indicator, content, re.IGNORECASE):
             # 检查是否有 [AI-GEN] 标注
             if not re.search(r"# \[AI-GEN\]", content):
-                issues.append({
-                    "line": 1,
-                    "type": "annotation",
-                    "message": "检测到 AI 生成代码但缺少 [AI-GEN] 标注",
-                    "code": "...",
-                })
+                issues.append(
+                    {
+                        "line": 1,
+                        "type": "annotation",
+                        "message": "检测到 AI 生成代码但缺少 [AI-GEN] 标注",
+                        "code": "...",
+                    }
+                )
                 break
 
     return issues
@@ -192,12 +203,14 @@ def check_file(filepath: Path, checks: list[str]) -> dict:
     }
 
     if not filepath.exists():
-        result["issues"].append({
-            "line": 0,
-            "type": "error",
-            "message": f"文件不存在: {filepath}",
-            "code": "",
-        })
+        result["issues"].append(
+            {
+                "line": 0,
+                "type": "error",
+                "message": f"文件不存在: {filepath}",
+                "code": "",
+            }
+        )
         result["passed"] = False
         return result
 

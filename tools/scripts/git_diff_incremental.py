@@ -12,12 +12,13 @@ Usage:
 
 from __future__ import annotations
 
+import json
 import subprocess
 import sys
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent))
-from _common import filter_supported_files
+from _common import filter_supported_files, handle_error
 
 
 def get_git_changed_files(ref: str = "HEAD", repo_dir: str | None = None) -> list[Path]:
@@ -137,18 +138,28 @@ def main() -> int:
     parser.add_argument("--ref", type=str, default=None, help="Git ref to compare against")
     parser.add_argument("--repo-dir", type=str, default=None, help="Repository root")
     parser.add_argument("--supported-only", action="store_true", help="Filter to supported languages only")
+    parser.add_argument("--json", action="store_true", dest="json_output", help="Output as JSON")
+    parser.add_argument("--verbose", action="store_true", help="Detailed output")
     args = parser.parse_args()
 
-    files = get_incremental_files(args.repo_dir, args.ref)
+    try:
+        files = get_incremental_files(args.repo_dir, args.ref)
 
-    if args.supported_only:
-        files = filter_supported_files(files)
+        if args.supported_only:
+            files = filter_supported_files(files)
 
-    for f in files:
-        print(f)
+        if args.json_output:
+            print(json.dumps([str(f) for f in files], indent=2))
+        else:
+            for f in files:
+                print(f)
 
-    print(f"\n{len(files)} files changed", file=sys.stderr)
-    return 0
+        if args.verbose:
+            print(f"\n{len(files)} files changed", file=sys.stderr)
+        return 0
+    except Exception as e:
+        handle_error(e, script="git_diff_incremental")
+        return 1
 
 
 if __name__ == "__main__":

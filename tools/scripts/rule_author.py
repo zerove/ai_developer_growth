@@ -21,6 +21,7 @@ from pathlib import Path
 import yaml
 
 sys.path.insert(0, str(Path(__file__).parent))
+from _common import handle_error
 from _common import rules_dir as _rules_dir
 
 # Rule templates for each category
@@ -326,16 +327,20 @@ def main() -> int:
         parser.print_help()
         return 0
 
-    commands = {
-        "init": cmd_init,
-        "add-rule": cmd_add_rule,
-        "validate": cmd_validate,
-        "scaffold": cmd_scaffold,
-        "template": cmd_template,
-    }
+    try:
+        commands = {
+            "init": cmd_init,
+            "add-rule": cmd_add_rule,
+            "validate": cmd_validate,
+            "scaffold": cmd_scaffold,
+            "template": cmd_template,
+        }
 
-    commands[args.command](args)
-    return 0
+        commands[args.command](args)
+        return 0
+    except Exception as e:
+        handle_error(e, script="rule_author")
+        return 1
 
 
 if __name__ == "__main__":

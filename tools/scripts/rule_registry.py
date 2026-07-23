@@ -25,6 +25,9 @@ from pathlib import Path
 
 import yaml
 
+sys.path.insert(0, str(Path(__file__).parent))
+from _common import handle_error
+
 
 def _registry_dir() -> Path:
     """Get the registry directory (~/.ai-rules-registry/)."""
@@ -260,18 +263,22 @@ def main() -> int:
         parser.print_help()
         return 0
 
-    commands = {
-        "init": cmd_init,
-        "list": cmd_list,
-        "publish": cmd_publish,
-        "install": cmd_install,
-        "search": cmd_search,
-        "info": cmd_info,
-        "remove": cmd_remove,
-    }
+    try:
+        commands = {
+            "init": cmd_init,
+            "list": cmd_list,
+            "publish": cmd_publish,
+            "install": cmd_install,
+            "search": cmd_search,
+            "info": cmd_info,
+            "remove": cmd_remove,
+        }
 
-    commands[args.command](args)
-    return 0
+        commands[args.command](args)
+        return 0
+    except Exception as e:
+        handle_error(e, script="rule_registry")
+        return 1
 
 
 if __name__ == "__main__":

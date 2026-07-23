@@ -20,6 +20,7 @@ from pathlib import Path
 import yaml
 
 sys.path.insert(0, str(Path(__file__).parent))
+from _common import handle_error
 from _common import rules_dir as _rules_dir
 
 # ──────────────────────────────────────────────────────────
@@ -284,41 +285,53 @@ def main() -> int:
     parser.add_argument("--dry-run", action="store_true", help="Preview without writing")
     parser.add_argument("--apply", action="store_true", help="Apply fixes to YAML files")
     parser.add_argument("-o", "--output", type=str, help="Output JSON file")
+    parser.add_argument("--json", action="store_true", dest="json_output", help="Output as JSON")
+    parser.add_argument("--verbose", action="store_true", help="Detailed output")
     args = parser.parse_args()
 
-    if not args.all and not args.lang:
-        parser.error("Must specify --lang or --all")
+    try:
+        if not args.all and not args.lang:
+            parser.error("Must specify --lang or --all")
 
-    # Discover languages
-    if args.all:
-        langs_dir = _rules_dir() / "languages"
-        languages = sorted(
-            d.name for d in langs_dir.iterdir() if d.is_dir() and (d / "rules.d").exists()
-        )
-    else:
-        languages = [args.lang]
+        # Discover languages
+        if args.all:
+            langs_dir = _rules_dir() / "languages"
+            languages = sorted(
+                d.name for d in langs_dir.iterdir() if d.is_dir() and (d / "rules.d").exists()
+            )
+        else:
+            languages = [args.lang]
 
-    fixes = generate_fixes(languages, dry_run=args.dry_run)
-    total = len(fixes)
-    with_fix = sum(1 for f in fixes if f["fix_replacement"])
+        fixes = generate_fixes(languages, dry_run=args.dry_run)
+        total = len(fixes)
+        with_fix = sum(1 for f in fixes if f["fix_replacement"])
 
-    print(f"Generated fixes for {with_fix}/{total} rules")
+        if args.json_output:
+            print(json.dumps(fixes, indent=2))
+        else:
+            print(f"Generated fixes for {with_fix}/{total} rules")
+            if args.verbose:
+                for fix in fixes:
+                    print(f"  [{fix['lang']}] {fix['id']}: {fix.get('fix_replacement', '') or '(no fix)'}")
 
-    if args.output:
-        with open(args.output, "w") as f:
-            json.dump(fixes, f, indent=2)
-        print(f"Output written to {args.output}")
+        if args.output:
+            with open(args.output, "w") as f:
+                json.dump(fixes, f, indent=2)
+            print(f"Output written to {args.output}")
 
-    if args.apply:
-        applied = apply_fixes_to_yaml(fixes, dry_run=False)
-        print(f"Applied {applied} fixes to YAML files")
-    elif args.dry_run:
-        for fix in fixes[:10]:
-            print(f"  [{fix['lang']}] {fix['id']}: {fix['fix_replacement'] or '(no fix)'}")
-        if len(fixes) > 10:
-            print(f"  ... and {len(fixes) - 10} more")
+        if args.apply:
+            applied = apply_fixes_to_yaml(fixes, dry_run=False)
+            print(f"Applied {applied} fixes to YAML files")
+        elif args.dry_run:
+            for fix in fixes[:10]:
+                print(f"  [{fix['lang']}] {fix['id']}: {fix['fix_replacement'] or '(no fix)'}")
+            if len(fixes) > 10:
+                print(f"  ... and {len(fixes) - 10} more")
 
-    return 0
+        return 0
+    except Exception as e:
+        handle_error(e, script="generate_fixes")
+        return 1  # unreachable
 
 
 if __name__ == "__main__":

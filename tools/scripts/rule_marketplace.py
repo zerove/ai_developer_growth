@@ -30,6 +30,7 @@ import yaml
 
 sys.path.insert(0, str(Path(__file__).parent))
 from _common import framework_dir as _framework_dir
+from _common import handle_error
 
 # ──────────────────────────────────────────────────────────
 # Built-in pack definitions
@@ -384,17 +385,21 @@ def main() -> int:
         parser.print_help()
         return 0
 
-    commands = {
-        "list": cmd_list,
-        "search": cmd_search,
-        "info": cmd_info,
-        "install": cmd_install,
-        "validate": cmd_validate,
-        "export": cmd_export,
-    }
+    try:
+        commands = {
+            "list": cmd_list,
+            "search": cmd_search,
+            "info": cmd_info,
+            "install": cmd_install,
+            "validate": cmd_validate,
+            "export": cmd_export,
+        }
 
-    commands[args.command](args)
-    return 0
+        commands[args.command](args)
+        return 0
+    except Exception as e:
+        handle_error(e, script="rule_marketplace")
+        return 1
 
 
 if __name__ == "__main__":

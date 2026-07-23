@@ -1,0 +1,133 @@
+"""Rule loading, merging, and common rules injection.
+
+Provides cached, lazy rule loading with common rules auto-injection.
+"""
+
+from __future__ import annotations
+
+import functools
+import sys
+from pathlib import Path
+from typing import Any
+
+import yaml
+
+sys.path.insert(0, str(Path(__file__).parent.parent))
+from _common import rules_dir as _rules_dir  # noqa: E402, I001
+
+
+# ──────────────────────────────────────────────────────────
+# Cached rule loading (#7 lazy loading)
+# ──────────────────────────────────────────────────────────
+
+
+@functools.lru_cache(maxsize=64)
+def _load_raw_rules(rule_path_str: str) -> dict[str, Any]:
+    """Load raw YAML rules with LRU cache (keyed by path string for hashability)."""
+    rule_path = Path(rule_path_str)
+    if not rule_path.exists():
+        return {}
+    with open(rule_path) as f:
+        data = yaml.safe_load(f)
+    return data if isinstance(data, dict) else {}
+
+
+def load_rules(language: str, framework_dir: Path | None = None) -> dict[str, Any]:
+    """Load rules for a language, merging with common rules.
+
+    Results are cached via functools.lru_cache on the raw YAML load.
+    Common security rules are automatically merged.
+    """
+    base_dir = framework_dir or _rules_dir()
+    rules_path = base_dir / "languages" / language / "rules.d" / "anti_patterns.yml"
+
+    rules = _load_raw_rules(str(rules_path))
+    if not rules:
+        return _get_embedded_rules(language)
+
+    # Merge common security rules
+    common = _load_common_rules(base_dir)
+    if common:
+        rules = _merge_rules(rules, common)
+
+    return rules
+
+
+def load_custom_rules(project_dir: Path) -> dict[str, Any]:
+    """Load custom rules from .ai-rules/ directory."""
+    custom_dir = project_dir / ".ai-rules"
+    if not custom_dir.exists():
+        return {}
+
+    merged: dict[str, Any] = {}
+    for yml_file in sorted(custom_dir.glob("*.yml")):
+        try:
+            data = _load_raw_rules(str(yml_file))
+            if data:
+                merged = _merge_rules(merged, data)
+        except Exception as e:
+            print(f"Warning: Failed to load {yml_file}: {e}", file=sys.stderr)
+
+    return merged
+
+
+def _merge_rules(base: dict[str, Any], custom: dict[str, Any]) -> dict[str, Any]:
+    """Merge custom rules into base rules.
+
+    Rules with matching IDs are overridden (only severity can be overridden
+    via severity_override field). New rules are appended.
+    """
+    result = dict(base)
+
+    for category in ["anti_patterns", "naming_conventions", "complexity", "naming", "thresholds"]:
+        base_items = base.get(category, [])
+        custom_items = custom.get(category, [])
+
+        if not custom_items:
+            continue
+
+        if isinstance(base_items, list) and isinstance(custom_items, list):
+            # List-based: merge by ID
+            base_map: dict[str, dict] = {}
+            for item in base_items:
+                if isinstance(item, dict) and "id" in item:
+                    base_map[item["id"]] = item
+
+            for rule in custom_items:
+                if not isinstance(rule, dict):
+                    continue
+                rule_id = rule.get("id", "")
+                if rule_id in base_map:
+                    if "severity_override" in rule:
+                        base_map[rule_id] = {**base_map[rule_id], "severity": rule["severity_override"]}
+                    else:
+                        base_map[rule_id].update(rule)
+                else:
+                    base_map[rule_id] = rule
+
+            result[category] = list(base_map.values())
+        elif isinstance(base_items, dict) and isinstance(custom_items, dict):
+            # Dict-based: merge keys
+            merged = dict(base_items)
+            merged.update(custom_items)
+            result[category] = merged
+
+    return result
+
+
+def _load_common_rules(framework_dir: Path) -> dict[str, Any]:
+    """Load common cross-language rules."""
+    common_path = framework_dir / "common" / "security.yml"
+    if common_path.exists():
+        return _load_raw_rules(str(common_path))
+    return {}
+
+
+def _get_embedded_rules(language: str) -> dict[str, Any]:
+    """Fallback embedded rules for when YAML files are missing."""
+    return {
+        "language": language,
+        "anti_patterns": [],
+        "naming_conventions": [],
+        "complexity": [],
+    }

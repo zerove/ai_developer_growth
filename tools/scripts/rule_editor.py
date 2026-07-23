@@ -12,7 +12,10 @@ from __future__ import annotations
 
 import argparse
 import sys
-from http.server import BaseHTTPRequestHandler, HTTPServer
+from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).parent))
+from rules.web_base import RuleWebServer, run_server
 
 HTML = """<!DOCTYPE html>
 <html lang="en">
@@ -290,17 +293,11 @@ anti_patterns:
 </html>"""
 
 
-class EditorHandler(BaseHTTPRequestHandler):
-    def do_GET(self) -> None:
-        content = HTML.encode()
-        self.send_response(200)
-        self.send_header("Content-Type", "text/html")
-        self.send_header("Content-Length", str(len(content)))
-        self.end_headers()
-        self.wfile.write(content)
+class EditorHandler(RuleWebServer):
+    page_title = "Rule Editor"
 
-    def log_message(self, format: str, *args: object) -> None:
-        pass
+    def get_html_content(self):
+        return HTML
 
 
 def main() -> int:
@@ -308,16 +305,7 @@ def main() -> int:
     parser.add_argument("--port", type=int, default=8081, help="Port")
     args = parser.parse_args()
 
-    server = HTTPServer(("localhost", args.port), EditorHandler)
-    print(f"Rule Editor: http://localhost:{args.port}")
-    print("Press Ctrl+C to stop")
-
-    try:
-        server.serve_forever()
-    except KeyboardInterrupt:
-        print("\nStopped.")
-        server.server_close()
-
+    run_server(EditorHandler, port=args.port)
     return 0
 
 

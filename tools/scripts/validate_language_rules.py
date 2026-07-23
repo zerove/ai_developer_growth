@@ -395,6 +395,76 @@ def _extract_identifiers(line: str, kind: str, language: str) -> list[str]:
             if m:
                 identifiers.append(m.group(1))
 
+    elif language == "cpp":
+        if kind == "function":
+            m = re.match(r"(?:[\w:*&<>\s]+?)\s+(\w+)\s*\(", line)
+            if m and m.group(1) not in ("if", "for", "while", "switch", "catch", "try", "return", "new", "delete", "sizeof", "typeof"):
+                identifiers.append(m.group(1))
+        elif kind == "class":
+            m = re.match(r"(?:class|struct)\s+(\w+)", line)
+            if m:
+                identifiers.append(m.group(1))
+        elif kind == "constant":
+            m = re.match(r"(?:const|constexpr|static\s+const)\s+\w+\s+([A-Z][A-Z0-9_]*)", line)
+            if m:
+                identifiers.append(m.group(1))
+
+    elif language == "swift":
+        if kind == "function":
+            m = re.match(r"(?:func|static\s+func)\s+(\w+)", line)
+            if m:
+                identifiers.append(m.group(1))
+        elif kind == "class":
+            m = re.match(r"(?:class|struct|enum|protocol)\s+(\w+)", line)
+            if m:
+                identifiers.append(m.group(1))
+        elif kind == "constant":
+            m = re.match(r"(?:let|static\s+let)\s+(\w+)", line)
+            if m:
+                identifiers.append(m.group(1))
+
+    elif language == "scala":
+        if kind == "function":
+            m = re.match(r"(?:def|override\s+def)\s+(\w+)", line)
+            if m:
+                identifiers.append(m.group(1))
+        elif kind == "class":
+            m = re.match(r"(?:class|trait|object)\s+(\w+)", line)
+            if m:
+                identifiers.append(m.group(1))
+        elif kind == "constant":
+            m = re.match(r"val\s+([A-Z][A-Z0-9_]*)", line)
+            if m:
+                identifiers.append(m.group(1))
+
+    elif language == "elixir":
+        if kind == "function":
+            m = re.match(r"(?:defp?|defmacrop?)\s+(\w+)", line)
+            if m:
+                identifiers.append(m.group(1))
+        elif kind == "class":
+            m = re.match(r"defmodule\s+([\w.]+)", line)
+            if m:
+                identifiers.append(m.group(1).split(".")[-1])
+        elif kind == "constant":
+            m = re.match(r"(@?[A-Z][A-Z0-9_]*)\s*=", line)
+            if m:
+                identifiers.append(m.group(1))
+
+    elif language == "lua":
+        if kind == "function":
+            m = re.match(r"(?:local\s+)?function\s+([\w.]+)", line)
+            if m:
+                identifiers.append(m.group(1).split(".")[-1])
+        elif kind == "class":
+            m = re.match(r"(?:local\s+)?(\w+)\s*=\s*\{\s*\}", line)
+            if m:
+                identifiers.append(m.group(1))
+        elif kind == "constant":
+            m = re.match(r"([A-Z][A-Z0-9_]*)\s*=", line)
+            if m:
+                identifiers.append(m.group(1))
+
     return identifiers
 
 
@@ -716,6 +786,15 @@ EXTENSION_MAP: dict[str, str] = {
     ".cs": "csharp",
     ".php": "php",
     ".rb": "ruby",
+    ".cpp": "cpp",
+    ".cc": "cpp",
+    ".hpp": "cpp",
+    ".h": "cpp",
+    ".swift": "swift",
+    ".scala": "scala",
+    ".ex": "elixir",
+    ".exs": "elixir",
+    ".lua": "lua",
 }
 
 

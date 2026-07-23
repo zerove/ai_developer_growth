@@ -1419,3 +1419,482 @@ class TestRubyRules(unittest.TestCase):
             self.assertEqual(len(mod_issues), 0)
         finally:
             filepath.unlink()
+
+
+# =====================================================================
+# C++
+# =====================================================================
+class TestCppRules(unittest.TestCase):
+    """C++ anti-pattern tests."""
+
+    def test_cpp_raw_new(self):
+        with tempfile.NamedTemporaryFile(suffix=".cpp", mode="w", delete=False) as f:
+            f.write('int* p = new int(5);\n')
+            f.flush()
+            filepath = Path(f.name)
+        try:
+            result = validate_file(filepath, "cpp")
+            ids = [i.rule_id for i in result.issues]
+            self.assertIn("cpp-raw-new", ids)
+        finally:
+            filepath.unlink()
+
+    def test_cpp_null(self):
+        with tempfile.NamedTemporaryFile(suffix=".cpp", mode="w", delete=False) as f:
+            f.write('int* p = NULL;\n')
+            f.flush()
+            filepath = Path(f.name)
+        try:
+            result = validate_file(filepath, "cpp")
+            ids = [i.rule_id for i in result.issues]
+            self.assertIn("cpp-null-ptr", ids)
+        finally:
+            filepath.unlink()
+
+    def test_cpp_c_cast(self):
+        with tempfile.NamedTemporaryFile(suffix=".cpp", mode="w", delete=False) as f:
+            f.write('int x = (int)ptr;\n')
+            f.flush()
+            filepath = Path(f.name)
+        try:
+            result = validate_file(filepath, "cpp")
+            ids = [i.rule_id for i in result.issues]
+            self.assertIn("cpp-c-cast", ids)
+        finally:
+            filepath.unlink()
+
+    def test_cpp_printf(self):
+        with tempfile.NamedTemporaryFile(suffix=".cpp", mode="w", delete=False) as f:
+            f.write('printf("hello %d", x);\n')
+            f.flush()
+            filepath = Path(f.name)
+        try:
+            result = validate_file(filepath, "cpp")
+            ids = [i.rule_id for i in result.issues]
+            self.assertIn("cpp-printf", ids)
+        finally:
+            filepath.unlink()
+
+    def test_cpp_using_namespace(self):
+        with tempfile.NamedTemporaryFile(suffix=".cpp", mode="w", delete=False) as f:
+            f.write('using namespace std;\n')
+            f.flush()
+            filepath = Path(f.name)
+        try:
+            result = validate_file(filepath, "cpp")
+            ids = [i.rule_id for i in result.issues]
+            self.assertIn("cpp-using-namespace", ids)
+        finally:
+            filepath.unlink()
+
+    def test_cpp_catch_by_value(self):
+        with tempfile.NamedTemporaryFile(suffix=".cpp", mode="w", delete=False) as f:
+            f.write('try { doWork(); } catch (const std::exception e) {}\n')
+            f.flush()
+            filepath = Path(f.name)
+        try:
+            result = validate_file(filepath, "cpp")
+            ids = [i.rule_id for i in result.issues]
+            self.assertIn("cpp-catch-value", ids)
+        finally:
+            filepath.unlink()
+
+    def test_cpp_naming(self):
+        with tempfile.NamedTemporaryFile(suffix=".cpp", mode="w", delete=False) as f:
+            f.write('class my_class {\n    void my_method() {}\n};\n')
+            f.flush()
+            filepath = Path(f.name)
+        try:
+            result = validate_file(filepath, "cpp")
+            issues = [i for i in result.issues if i.category == "naming"]
+            self.assertTrue(len(issues) >= 2)
+        finally:
+            filepath.unlink()
+
+    def test_cpp_clean_code(self):
+        with tempfile.NamedTemporaryFile(suffix=".cpp", mode="w", delete=False) as f:
+            f.write('void doWork() {\n    auto p = std::make_unique<int>(5);\n}\n')
+            f.flush()
+            filepath = Path(f.name)
+        try:
+            result = validate_file(filepath, "cpp")
+            err_ids = [i.rule_id for i in result.issues if i.severity == "error"]
+            self.assertEqual(len(err_ids), 0)
+        finally:
+            filepath.unlink()
+
+
+# =====================================================================
+# Swift
+# =====================================================================
+class TestSwiftRules(unittest.TestCase):
+    """Swift anti-pattern tests."""
+
+    def test_sw_force_unwrap(self):
+        with tempfile.NamedTemporaryFile(suffix=".swift", mode="w", delete=False) as f:
+            f.write('let x = optional!\n')
+            f.flush()
+            filepath = Path(f.name)
+        try:
+            result = validate_file(filepath, "swift")
+            ids = [i.rule_id for i in result.issues]
+            self.assertIn("sw-force-unwrap", ids)
+        finally:
+            filepath.unlink()
+
+    def test_sw_force_cast(self):
+        with tempfile.NamedTemporaryFile(suffix=".swift", mode="w", delete=False) as f:
+            f.write('let x = value as! Int\n')
+            f.flush()
+            filepath = Path(f.name)
+        try:
+            result = validate_file(filepath, "swift")
+            ids = [i.rule_id for i in result.issues]
+            self.assertIn("sw-force-cast", ids)
+        finally:
+            filepath.unlink()
+
+    def test_sw_try_force(self):
+        with tempfile.NamedTemporaryFile(suffix=".swift", mode="w", delete=False) as f:
+            f.write('let x = try! riskyOperation()\n')
+            f.flush()
+            filepath = Path(f.name)
+        try:
+            result = validate_file(filepath, "swift")
+            ids = [i.rule_id for i in result.issues]
+            self.assertIn("sw-try-force", ids)
+        finally:
+            filepath.unlink()
+
+    def test_sw_print(self):
+        with tempfile.NamedTemporaryFile(suffix=".swift", mode="w", delete=False) as f:
+            f.write('print("hello")\n')
+            f.flush()
+            filepath = Path(f.name)
+        try:
+            result = validate_file(filepath, "swift")
+            ids = [i.rule_id for i in result.issues]
+            self.assertIn("sw-print", ids)
+        finally:
+            filepath.unlink()
+
+    def test_sw_nsobject(self):
+        with tempfile.NamedTemporaryFile(suffix=".swift", mode="w", delete=False) as f:
+            f.write('class MyClass: NSObject {\n}\n')
+            f.flush()
+            filepath = Path(f.name)
+        try:
+            result = validate_file(filepath, "swift")
+            ids = [i.rule_id for i in result.issues]
+            self.assertIn("sw-nsobject", ids)
+        finally:
+            filepath.unlink()
+
+    def test_sw_naming(self):
+        with tempfile.NamedTemporaryFile(suffix=".swift", mode="w", delete=False) as f:
+            f.write('class my_class {\n    func my_method() {}\n}\n')
+            f.flush()
+            filepath = Path(f.name)
+        try:
+            result = validate_file(filepath, "swift")
+            issues = [i for i in result.issues if i.category == "naming"]
+            self.assertTrue(len(issues) >= 2)
+        finally:
+            filepath.unlink()
+
+    def test_sw_clean_code(self):
+        with tempfile.NamedTemporaryFile(suffix=".swift", mode="w", delete=False) as f:
+            f.write('struct MyView: View {\n    var body: some View {\n        Text("hello")\n    }\n}\n')
+            f.flush()
+            filepath = Path(f.name)
+        try:
+            result = validate_file(filepath, "swift")
+            err_ids = [i.rule_id for i in result.issues if i.severity == "error"]
+            self.assertEqual(len(err_ids), 0)
+        finally:
+            filepath.unlink()
+
+
+# =====================================================================
+# Scala
+# =====================================================================
+class TestScalaRules(unittest.TestCase):
+    """Scala anti-pattern tests."""
+
+    def test_sc_null(self):
+        with tempfile.NamedTemporaryFile(suffix=".scala", mode="w", delete=False) as f:
+            f.write('val x: String = null\n')
+            f.flush()
+            filepath = Path(f.name)
+        try:
+            result = validate_file(filepath, "scala")
+            ids = [i.rule_id for i in result.issues]
+            self.assertIn("sc-null", ids)
+        finally:
+            filepath.unlink()
+
+    def test_sc_throw(self):
+        with tempfile.NamedTemporaryFile(suffix=".scala", mode="w", delete=False) as f:
+            f.write('throw new RuntimeException("error")\n')
+            f.flush()
+            filepath = Path(f.name)
+        try:
+            result = validate_file(filepath, "scala")
+            ids = [i.rule_id for i in result.issues]
+            self.assertIn("sc-throw", ids)
+        finally:
+            filepath.unlink()
+
+    def test_sc_isinstance(self):
+        with tempfile.NamedTemporaryFile(suffix=".scala", mode="w", delete=False) as f:
+            f.write('if (x.isInstanceOf[String]) x.asInstanceOf[String]\n')
+            f.flush()
+            filepath = Path(f.name)
+        try:
+            result = validate_file(filepath, "scala")
+            ids = [i.rule_id for i in result.issues]
+            self.assertIn("sc-isinstance", ids)
+        finally:
+            filepath.unlink()
+
+    def test_sc_println(self):
+        with tempfile.NamedTemporaryFile(suffix=".scala", mode="w", delete=False) as f:
+            f.write('println("hello")\n')
+            f.flush()
+            filepath = Path(f.name)
+        try:
+            result = validate_file(filepath, "scala")
+            ids = [i.rule_id for i in result.issues]
+            self.assertIn("sc-print", ids)
+        finally:
+            filepath.unlink()
+
+    def test_sc_mutable_collection(self):
+        with tempfile.NamedTemporaryFile(suffix=".scala", mode="w", delete=False) as f:
+            f.write('val m = scala.collection.mutable.Map[String, Int]()\n')
+            f.flush()
+            filepath = Path(f.name)
+        try:
+            result = validate_file(filepath, "scala")
+            ids = [i.rule_id for i in result.issues]
+            self.assertIn("sc-mutable-collection", ids)
+        finally:
+            filepath.unlink()
+
+    def test_sc_naming(self):
+        with tempfile.NamedTemporaryFile(suffix=".scala", mode="w", delete=False) as f:
+            f.write('class my_class {\n  def my_method(): Unit = {}\n}\n')
+            f.flush()
+            filepath = Path(f.name)
+        try:
+            result = validate_file(filepath, "scala")
+            issues = [i for i in result.issues if i.category == "naming"]
+            self.assertTrue(len(issues) >= 2)
+        finally:
+            filepath.unlink()
+
+    def test_sc_clean_code(self):
+        with tempfile.NamedTemporaryFile(suffix=".scala", mode="w", delete=False) as f:
+            f.write('object MyApp {\n  def main(args: Array[String]): Unit = {\n    println("hello")\n  }\n}\n')
+            f.flush()
+            filepath = Path(f.name)
+        try:
+            result = validate_file(filepath, "scala")
+            err_ids = [i.rule_id for i in result.issues if i.severity == "error"]
+            self.assertEqual(len(err_ids), 0)
+        finally:
+            filepath.unlink()
+
+
+# =====================================================================
+# Elixir
+# =====================================================================
+class TestElixirRules(unittest.TestCase):
+    """Elixir anti-pattern tests."""
+
+    def test_ex_catch_all(self):
+        with tempfile.NamedTemporaryFile(suffix=".ex", mode="w", delete=False) as f:
+            f.write('def safe do\n  risky()\nrescue _ -> :error\nend\n')
+            f.flush()
+            filepath = Path(f.name)
+        try:
+            result = validate_file(filepath, "elixir")
+            ids = [i.rule_id for i in result.issues]
+            self.assertIn("ex-catch-all", ids)
+        finally:
+            filepath.unlink()
+
+    def test_ex_io_inspect(self):
+        with tempfile.NamedTemporaryFile(suffix=".ex", mode="w", delete=False) as f:
+            f.write('IO.inspect(data)\n')
+            f.flush()
+            filepath = Path(f.name)
+        try:
+            result = validate_file(filepath, "elixir")
+            ids = [i.rule_id for i in result.issues]
+            self.assertIn("ex-io-inspect", ids)
+        finally:
+            filepath.unlink()
+
+    def test_ex_process_sleep(self):
+        with tempfile.NamedTemporaryFile(suffix=".ex", mode="w", delete=False) as f:
+            f.write('Process.sleep(1000)\n')
+            f.flush()
+            filepath = Path(f.name)
+        try:
+            result = validate_file(filepath, "elixir")
+            ids = [i.rule_id for i in result.issues]
+            self.assertIn("ex-process-sleep", ids)
+        finally:
+            filepath.unlink()
+
+    def test_ex_bare_rescue(self):
+        with tempfile.NamedTemporaryFile(suffix=".ex", mode="w", delete=False) as f:
+            f.write('def safe do\n  risky()\nrescue\nend\n')
+            f.flush()
+            filepath = Path(f.name)
+        try:
+            result = validate_file(filepath, "elixir")
+            ids = [i.rule_id for i in result.issues]
+            self.assertIn("ex-bare-rescue", ids)
+        finally:
+            filepath.unlink()
+
+    def test_ex_naming(self):
+        with tempfile.NamedTemporaryFile(suffix=".ex", mode="w", delete=False) as f:
+            f.write('defmodule my_module do\n  def my_function, do: :ok\nend\n')
+            f.flush()
+            filepath = Path(f.name)
+        try:
+            result = validate_file(filepath, "elixir")
+            issues = [i for i in result.issues if i.category == "naming"]
+            self.assertTrue(len(issues) >= 1)
+        finally:
+            filepath.unlink()
+
+    def test_ex_clean_code(self):
+        with tempfile.NamedTemporaryFile(suffix=".ex", mode="w", delete=False) as f:
+            f.write('defmodule MyApp.Worker do\n  def process(data) do\n    Logger.info("processing")\n    :ok\n  end\nend\n')
+            f.flush()
+            filepath = Path(f.name)
+        try:
+            result = validate_file(filepath, "elixir")
+            err_ids = [i.rule_id for i in result.issues if i.severity == "error"]
+            self.assertEqual(len(err_ids), 0)
+        finally:
+            filepath.unlink()
+
+    def test_ex_io_puts(self):
+        with tempfile.NamedTemporaryFile(suffix=".ex", mode="w", delete=False) as f:
+            f.write('IO.puts("hello")\n')
+            f.flush()
+            filepath = Path(f.name)
+        try:
+            result = validate_file(filepath, "elixir")
+            ids = [i.rule_id for i in result.issues]
+            self.assertIn("ex-io-puts", ids)
+        finally:
+            filepath.unlink()
+
+
+# =====================================================================
+# Lua
+# =====================================================================
+class TestLuaRules(unittest.TestCase):
+    """Lua anti-pattern tests."""
+
+    def test_lua_global(self):
+        with tempfile.NamedTemporaryFile(suffix=".lua", mode="w", delete=False) as f:
+            f.write('myVar = 42\n')
+            f.flush()
+            filepath = Path(f.name)
+        try:
+            result = validate_file(filepath, "lua")
+            ids = [i.rule_id for i in result.issues]
+            self.assertIn("lua-global", ids)
+        finally:
+            filepath.unlink()
+
+    def test_lua_goto(self):
+        with tempfile.NamedTemporaryFile(suffix=".lua", mode="w", delete=False) as f:
+            f.write('goto done\n')
+            f.flush()
+            filepath = Path(f.name)
+        try:
+            result = validate_file(filepath, "lua")
+            ids = [i.rule_id for i in result.issues]
+            self.assertIn("lua-goto", ids)
+        finally:
+            filepath.unlink()
+
+    def test_lua_loadstring(self):
+        with tempfile.NamedTemporaryFile(suffix=".lua", mode="w", delete=False) as f:
+            f.write('loadstring(code)()\n')
+            f.flush()
+            filepath = Path(f.name)
+        try:
+            result = validate_file(filepath, "lua")
+            ids = [i.rule_id for i in result.issues]
+            self.assertIn("lua-loadstring", ids)
+        finally:
+            filepath.unlink()
+
+    def test_lua_print(self):
+        with tempfile.NamedTemporaryFile(suffix=".lua", mode="w", delete=False) as f:
+            f.write('print("hello")\n')
+            f.flush()
+            filepath = Path(f.name)
+        try:
+            result = validate_file(filepath, "lua")
+            ids = [i.rule_id for i in result.issues]
+            self.assertIn("lua-print", ids)
+        finally:
+            filepath.unlink()
+
+    def test_lua_string_concat(self):
+        with tempfile.NamedTemporaryFile(suffix=".lua", mode="w", delete=False) as f:
+            f.write('local s = s .. v\n')
+            f.flush()
+            filepath = Path(f.name)
+        try:
+            result = validate_file(filepath, "lua")
+            ids = [i.rule_id for i in result.issues]
+            self.assertIn("lua-string-concat", ids)
+        finally:
+            filepath.unlink()
+
+    def test_lua_naming(self):
+        with tempfile.NamedTemporaryFile(suffix=".lua", mode="w", delete=False) as f:
+            f.write('function MyModule.MyFunction()\nend\n')
+            f.flush()
+            filepath = Path(f.name)
+        try:
+            result = validate_file(filepath, "lua")
+            issues = [i for i in result.issues if i.category == "naming"]
+            self.assertTrue(len(issues) >= 1)
+        finally:
+            filepath.unlink()
+
+    def test_lua_clean_code(self):
+        with tempfile.NamedTemporaryFile(suffix=".lua", mode="w", delete=False) as f:
+            f.write('local M = {}\n\nfunction M.do_work()\n  return true\nend\n\nreturn M\n')
+            f.flush()
+            filepath = Path(f.name)
+        try:
+            result = validate_file(filepath, "lua")
+            err_ids = [i.rule_id for i in result.issues if i.severity == "error"]
+            self.assertEqual(len(err_ids), 0)
+        finally:
+            filepath.unlink()
+
+    def test_lua_rawset(self):
+        with tempfile.NamedTemporaryFile(suffix=".lua", mode="w", delete=False) as f:
+            f.write('rawset(t, key, value)\n')
+            f.flush()
+            filepath = Path(f.name)
+        try:
+            result = validate_file(filepath, "lua")
+            ids = [i.rule_id for i in result.issues]
+            self.assertIn("lua-rawset", ids)
+        finally:
+            filepath.unlink()

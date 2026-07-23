@@ -1,0 +1,88 @@
+# Swift Language Rules - Machine-Readable Configuration
+
+language: swift
+version: '>=5.9'
+config_version: '1.0'
+anti_patterns:
+- id: sw-force-unwrap
+  name: Force unwrap (!)
+  severity: error
+  category: type_safety
+  pattern: \w+!
+  message: Force unwrap causes runtime crash on nil
+  fix_hint: Use optional binding (if let) or nil coalescing (??)
+- id: sw-force-cast
+  name: Force cast (as!)
+  severity: error
+  category: type_safety
+  pattern: \bas!\s+
+  message: Force cast can crash at runtime
+  fix_hint: Use conditional cast (as?) with if let
+- id: sw-try-force
+  name: try! usage
+  severity: error
+  category: error_handling
+  pattern: \btry!
+  message: try! crashes on error - use try? or do-catch
+  fix_hint: Use try? for optional or do-catch for error handling
+- id: sw-print
+  name: print() in production
+  severity: info
+  category: code_quality
+  pattern: \bprint\s*\(|\bdebugPrint\s*\(
+  message: Use os_log or Logger instead of print
+  fix_hint: Use os.Logger or OSLog
+- id: sw-implicit-return
+  name: Complex implicit return
+  severity: info
+  category: code_quality
+  pattern: var\s+\w+\s*=\s*\{
+  message: Complex closures with implicit return reduce readability
+  fix_hint: Use explicit return for multi-line closures
+- id: sw-nsobject
+  name: Inheriting from NSObject
+  severity: info
+  category: code_quality
+  pattern: :\s*NSObject
+  message: NSObject inheritance disables value semantics
+  fix_hint: Prefer structs over classes unless reference semantics needed
+- id: sw-unowned
+  name: unowned reference
+  severity: warning
+  category: memory_safety
+  pattern: \bunowned\s+
+  message: unowned can crash if referenced object is deallocated
+  fix_hint: Use weak reference or restructure ownership
+- id: sw-class-in-viewmodel
+  name: class for ViewModel
+  severity: info
+  category: code_quality
+  pattern: class\s+\w*ViewModel
+  message: Consider using @Observable macro or ObservableObject protocol
+  fix_hint: Use @Observable macro in Swift 5.9+
+naming:
+  file:
+    pattern: ^[A-Z][a-zA-Z0-9]*\.swift$
+    message: Swift files should use PascalCase
+  function:
+    pattern: ^[a-z][a-zA-Z0-9]*$
+    message: Swift functions should use camelCase
+  class:
+    pattern: ^[A-Z][a-zA-Z0-9]*$
+    message: Swift classes should use PascalCase
+  constant:
+    pattern: ^[a-z][a-zA-Z0-9]*$
+    message: Swift constants should use camelCase
+thresholds:
+  max_function_length: 50
+  max_file_length: 500
+  max_line_length: 120
+  max_nesting_depth: 4
+  max_function_params: 5
+tooling:
+  linter: swiftlint
+  formatter: swift-format
+  test_runner: xctest
+  config_files:
+  - .swiftlint.yml
+  - Package.swift

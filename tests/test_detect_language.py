@@ -5,17 +5,15 @@ Tests for detect_language.py
 
 from __future__ import annotations
 
-import json
 import tempfile
 from pathlib import Path
 
 import pytest
 
 from tools.scripts.detect_language import (
+    count_extensions,
     detect_language,
     detect_language_from_file,
-    count_extensions,
-    EXTENSION_MAP,
 )
 
 
@@ -110,9 +108,7 @@ class TestDetectLanguage:
         assert result["confidence"] == 0.0
 
     def test_framework_detection_react(self, tmp_dir):
-        (tmp_dir / "package.json").write_text(
-            '{"dependencies": {"react": "^18.0.0", "next": "^14.0.0"}}'
-        )
+        (tmp_dir / "package.json").write_text('{"dependencies": {"react": "^18.0.0", "next": "^14.0.0"}}')
         (tmp_dir / "tsconfig.json").write_text("{}")
         result = detect_language(tmp_dir)
         assert result["framework"] in ("react", "nextjs")

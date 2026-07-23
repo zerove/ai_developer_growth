@@ -1,0 +1,63 @@
+# Vue Framework Anti-Pattern Rules - Machine-Readable Configuration
+# Used by validate_language_rules.py for automated code validation
+
+framework: vue
+language: typescript
+config_version: '1.0'
+anti_patterns:
+- id: vue-mutate-props
+  name: Mutating props directly
+  severity: error
+  category: reactivity
+  pattern: 'this\.\$props\.\w+\s*=|props\.\w+\s*=\s*(?!.*emit)'
+  message: 'Never mutate props directly - use emit or computed with local state'
+  fix_hint: 'Use emit("update:propName", newValue) or create a local computed ref'
+- id: vue-watch-broad
+  name: Watching too many reactive properties at once
+  severity: warning
+  category: performance
+  pattern: "watch\\s*\\(\\s*\\(\\s*\\)\\s*=>\\s*\\{"
+  message: 'Watching entire objects or too many props causes unnecessary re-renders'
+  fix_hint: 'Watch specific properties: watch(() => props.specificProp, handler)'
+- id: vue-vfor-key
+  name: Missing key in v-for
+  severity: error
+  category: rendering
+  pattern: 'v-for\s*=\s*"[^"]*\s+in\s+[^"]*"'
+  message: 'v-for must have a :key binding for efficient DOM patching'
+  fix_hint: 'Add :key="item.id" to each v-for element'
+- id: vue-heavy-inline-styles
+  name: Excessive inline styles
+  severity: warning
+  category: performance
+  pattern: ':style\s*=\s*\{\s*\{'
+  message: 'Heavy inline styles bypass Vue CSS optimization and increase render cost'
+  fix_hint: 'Use CSS classes or scoped <style> blocks instead of inline styles'
+- id: vue-async-component-error
+  name: Async component without error handling
+  severity: warning
+  category: error_handling
+  pattern: 'defineAsyncComponent\s*\(|new\s+Promise\s*\(\s*\(\s*resolve\s*,\s*reject\)'
+  message: 'Async components should handle loading and error states'
+  fix_hint: 'Use defineAsyncComponent({ loader, loadingComponent, errorComponent })'
+- id: vue-vif-vshow-misuse
+  name: v-if instead of v-show for frequently toggled content
+  severity: info
+  category: performance
+  pattern: 'v-if\s*=\s*"[^"]*(?:open|visible|show|toggle|display)[^"]*"'
+  message: 'Frequently toggled content should use v-show (CSS toggle) over v-if (DOM re-render)'
+  fix_hint: 'Use v-show for toggle scenarios, v-if for initial conditional render'
+- id: vue-missing-computed
+  name: Missing computed property for derived state
+  severity: warning
+  category: performance
+  pattern: "return\\s+.*\\bthis\\.\\w+\\.\\w+.*\\+.*this\\.\\w+\\.\\w+"
+  message: 'Derived calculations in templates/methods should use computed properties'
+  fix_hint: 'Move to computed: computed: { fullName() { return this.first + " " + this.last } }'
+- id: vue-deep-watcher
+  name: Deep watcher on large objects
+  severity: warning
+  category: performance
+  pattern: "watch\\s*:\\s*\\{[\\s\\S]*deep\\s*:\\s*true"
+  message: 'Deep watchers traverse entire object trees and are expensive'
+  fix_hint: 'Watch specific nested properties or use shallowRef for large data'

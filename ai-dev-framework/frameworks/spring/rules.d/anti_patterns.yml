@@ -1,0 +1,63 @@
+# Spring Framework Anti-Pattern Rules - Machine-Readable Configuration
+# Used by validate_language_rules.py for automated code validation
+
+framework: spring
+language: java
+config_version: '1.0'
+anti_patterns:
+- id: spring-n-plus-one
+  name: N+1 query problem
+  severity: error
+  category: performance
+  pattern: '\.findAll\(\)|\.findById\('
+  message: 'N+1 queries cause severe performance degradation in JPA'
+  fix_hint: 'Use @EntityGraph, JOIN FETCH, or JPQL with JOIN for batch loading'
+- id: spring-missing-transactional
+  name: Missing @Transactional on write operations
+  severity: error
+  category: data_integrity
+  pattern: '@(Save|Update|Delete|Persist)\b|\.save\(|\.delete\('
+  message: 'Database writes without @Transactional may leave inconsistent state'
+  fix_hint: 'Add @Transactional to service methods that modify multiple entities'
+- id: spring-catch-generic
+  name: Catching generic Exception
+  severity: error
+  category: error_handling
+  pattern: 'catch\s*\(\s*Exception\s+\w+\s*\)'
+  message: 'Catching generic Exception masks specific errors and complicates debugging'
+  fix_hint: 'Catch specific exceptions or use @ExceptionHandler in a @ControllerAdvice'
+- id: spring-field-injection
+  name: Field injection with @Autowired
+  severity: warning
+  category: design
+  pattern: '@Autowired\s+\s*private\s+'
+  message: 'Field injection makes testing harder and hides dependencies'
+  fix_hint: 'Use constructor injection: @Autowired public MyClass(Service svc) { ... }'
+- id: spring-missing-valid
+  name: Missing @Valid on request body
+  severity: error
+  category: api_design
+  pattern: '@RequestBody\s+\w+\s+\w+'
+  message: 'Request bodies without @Valid skip Bean Validation'
+  fix_hint: 'Add @Valid before @RequestBody: @Valid @RequestBody MyDto dto'
+- id: spring-hardcoded-url
+  name: Hardcoded URLs or endpoints
+  severity: warning
+  category: maintainability
+  pattern: '"https?://[^"]*\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}'
+  message: 'Hardcoded URLs prevent environment-specific configuration'
+  fix_hint: 'Use @Value("${service.url}") or @ConfigurationProperties'
+- id: spring-missing-async
+  name: Missing @Async for long-running operations
+  severity: warning
+  category: performance
+  pattern: 'public\s+\w+\s+\w+\s*\([^)]*\)\s*\{'
+  message: 'Long-running operations block the request thread without @Async'
+  fix_hint: 'Add @Async and return CompletableFuture<T> for non-blocking execution'
+- id: spring-lazy-outside-session
+  name: Lazy loading outside Hibernate session
+  severity: error
+  category: data_integrity
+  pattern: 'FetchType\.LAZY|@ManyToOne|@OneToMany'
+  message: 'Lazy-loaded collections throw LazyInitializationException outside session'
+  fix_hint: 'Use JOIN FETCH, @EntityGraph, or open-in-view within transaction boundaries'

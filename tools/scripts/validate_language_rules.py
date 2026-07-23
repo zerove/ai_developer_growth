@@ -47,9 +47,10 @@ class Issue:
     message: str
     fix_hint: str = ""
     column: int = 0
+    fix_replacement: str = ""  # Auto-fix: regex replacement pattern
 
     def to_dict(self) -> dict[str, Any]:
-        return {
+        d = {
             "rule_id": self.rule_id,
             "severity": self.severity,
             "category": self.category,
@@ -59,6 +60,9 @@ class Issue:
             "message": self.message,
             "fix_hint": self.fix_hint,
         }
+        if self.fix_replacement:
+            d["fix_replacement"] = self.fix_replacement
+        return d
 
 
 @dataclass
@@ -100,6 +104,46 @@ class ValidationResult:
 
 
 # ──────────────────────────────────────────────────────────
+@dataclass
+class FixResult:
+    """Result of an auto-fix operation."""
+
+    file: str
+    rule_id: str
+    line: int
+    original: str
+    fixed: str
+    description: str
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "file": self.file,
+            "rule_id": self.rule_id,
+            "line": self.line,
+            "original": self.original,
+            "fixed": self.fixed,
+            "description": self.description,
+        }
+
+
+@dataclass
+class HealthScore:
+    """Project health score (0-100)."""
+
+    score: int
+    grade: str
+    breakdown: dict[str, float]
+    details: list[str]
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "score": self.score,
+            "grade": self.grade,
+            "breakdown": self.breakdown,
+            "details": self.details,
+        }
+
+
 # Rule loader
 # ──────────────────────────────────────────────────────────
 
@@ -123,6 +167,81 @@ def load_rules(language: str, framework_dir: Path | None = None) -> dict[str, An
         data = yaml.safe_load(f)
 
     return data if isinstance(data, dict) else {}
+
+
+def load_custom_rules(project_dir: Path) -> dict[str, Any]:
+    """Load custom rules from .ai-rules/*.yml in the project directory.
+
+    Custom rules extend (not replace) built-in rules.
+    Rules with the same ID override built-in rules.
+    """
+    custom: dict[str, Any] = {"anti_patterns": [], "naming": {}, "thresholds": {}}
+    rules_dir = project_dir / ".ai-rules"
+
+    if not rules_dir.is_dir():
+        return custom
+
+    if yaml is None:
+        print("Warning: PyYAML not installed. Custom rules skipped.", file=sys.stderr)
+        return custom
+
+    for rule_file in sorted(rules_dir.glob("*.yml")):
+        try:
+            with open(rule_file) as f:
+                data = yaml.safe_load(f)
+            if not isinstance(data, dict):
+                continue
+
+            # Merge anti_patterns (override by ID)
+            new_patterns = data.get("anti_patterns", [])
+            custom["anti_patterns"].extend(new_patterns)
+
+            # Merge naming rules
+            if "naming" in data:
+                custom["naming"].update(data["naming"])
+
+            # Merge thresholds (override)
+            if "thresholds" in data:
+                custom["thresholds"].update(data["thresholds"])
+
+        except Exception as e:
+            print(f"Warning: Failed to load {rule_file}: {e}", file=sys.stderr)
+
+    return custom
+
+
+def _merge_rules(base: dict[str, Any], custom: dict[str, Any]) -> dict[str, Any]:
+    """Merge custom rules into base rules. Custom overrides by ID."""
+    merged = dict(base)
+
+    # Merge anti_patterns: custom overrides by ID, then appends new ones
+    base_patterns = merged.get("anti_patterns", [])
+    custom_patterns = custom.get("anti_patterns", [])
+
+    if custom_patterns:
+        base_ids = {p["id"] for p in base_patterns}
+        overridden = []
+        new_only = []
+        for cp in custom_patterns:
+            if cp.get("id") in base_ids:
+                overridden.append(cp)
+            else:
+                new_only.append(cp)
+
+        # Replace overridden patterns
+        merged_patterns = [next((cp for cp in overridden if cp["id"] == p["id"]), p) for p in base_patterns]
+        merged_patterns.extend(new_only)
+        merged["anti_patterns"] = merged_patterns
+
+    # Merge naming
+    if custom.get("naming"):
+        merged.setdefault("naming", {}).update(custom["naming"])
+
+    # Merge thresholds
+    if custom.get("thresholds"):
+        merged.setdefault("thresholds", {}).update(custom["thresholds"])
+
+    return merged
 
 
 def _get_embedded_rules(language: str) -> dict[str, Any]:
@@ -625,6 +744,48 @@ def _extract_identifiers(line: str, kind: str, language: str) -> list[str]:
             if m:
                 identifiers.append(m.group(1))
 
+    elif language == "perl":
+        if kind == "function":
+            m = re.match(r"(?:sub|method)\s+(\w+)", line)
+            if m:
+                identifiers.append(m.group(1))
+        elif kind == "constant":
+            m = re.match(r"our\s+([A-Z][A-Z0-9_]*)", line)
+            if m:
+                identifiers.append(m.group(1))
+
+    elif language == "assembly":
+        if kind == "function":
+            m = re.match(r"^(\w+):", line)
+            if m and not m.group(1).startswith("."):
+                identifiers.append(m.group(1))
+
+    elif language == "fortran":
+        if kind == "function":
+            m = re.match(r"(?:subroutine|function)\s+(\w+)", line, re.IGNORECASE)
+            if m:
+                identifiers.append(m.group(1))
+        elif kind == "constant":
+            m = re.match(r"(?:parameter|PARAMETER)\s*\((\w+)\s*=", line, re.IGNORECASE)
+            if m:
+                identifiers.append(m.group(1))
+
+    elif language == "graphql":
+        if kind == "function":
+            m = re.match(r"(?:type|input|interface)\s+(\w+)", line)
+            if m:
+                identifiers.append(m.group(1))
+
+    elif language == "matlab":
+        if kind == "function":
+            m = re.match(r"function\s+.*?(\w+)\s*\(", line)
+            if m:
+                identifiers.append(m.group(1))
+        elif kind == "class":
+            m = re.match(r"classdef\s+(\w+)", line)
+            if m:
+                identifiers.append(m.group(1))
+
     return identifiers
 
 
@@ -906,11 +1067,473 @@ def _calc_cyclomatic_complexity(node: ast.AST) -> int:
 
 
 # ──────────────────────────────────────────────────────────
+# Auto-fix engine (#1)
+# ──────────────────────────────────────────────────────────
+
+
+def apply_fixes(filepath: Path, issues: list[Issue], dry_run: bool = False) -> list[FixResult]:
+    """Apply auto-fixes to a file based on issues with fix_replacement.
+
+    Args:
+        filepath: File to fix
+        issues: Issues to fix (only those with fix_replacement set)
+        dry_run: If True, report what would change without writing
+
+    Returns:
+        List of FixResult describing each change
+    """
+    fixes: list[FixResult] = []
+
+    try:
+        content = filepath.read_text(encoding="utf-8")
+    except (OSError, UnicodeDecodeError):
+        return fixes
+
+    lines = content.splitlines(keepends=True)
+    modified = False
+
+    for issue in issues:
+        if not issue.fix_replacement or issue.line < 1 or issue.line > len(lines):
+            continue
+
+        line_idx = issue.line - 1
+        original_line = lines[line_idx]
+
+        # Try regex replacement on the line
+        try:
+            # fix_replacement format: "s/pattern/replacement/flags" or literal string
+            replacement = issue.fix_replacement
+            if replacement.startswith("s/") and replacement.count("/") >= 3:
+                # sed-style: s/pattern/replacement/flags
+                parts = replacement.split("/")
+                pattern = parts[1]
+                new_text = parts[2]
+                flags = parts[3] if len(parts) > 3 else ""
+                re_flags = re.IGNORECASE if "i" in flags else 0
+                new_line = re.sub(pattern, new_text, original_line, flags=re_flags)
+            else:
+                # Literal replacement of matched text
+                new_line = original_line.replace(
+                    issue.message.split(":")[-1].strip() if ":" in issue.message else "",
+                    replacement,
+                    1,
+                )
+
+            if new_line != original_line:
+                fixes.append(
+                    FixResult(
+                        file=str(filepath),
+                        rule_id=issue.rule_id,
+                        line=issue.line,
+                        original=original_line.rstrip(),
+                        fixed=new_line.rstrip(),
+                        description=issue.fix_hint or f"Auto-fixed: {issue.rule_id}",
+                    )
+                )
+                if not dry_run:
+                    lines[line_idx] = new_line
+                    modified = True
+        except re.error:
+            continue
+
+    if modified and not dry_run:
+        filepath.write_text("".join(lines), encoding="utf-8")
+
+    return fixes
+
+
+# ──────────────────────────────────────────────────────────
+# Report generators (#6)
+# ──────────────────────────────────────────────────────────
+
+
+def generate_junit_xml(results: list[ValidationResult]) -> str:
+    """Generate JUnit XML report."""
+    total_errors = sum(r.error_count for r in results)
+    total_warnings = sum(r.warning_count for r in results)
+    total_tests = len(results)
+    failures = sum(1 for r in results if not r.passed)
+
+    lines = [
+        '<?xml version="1.0" encoding="UTF-8"?>',
+        f'<testsuite name="language-rules" tests="{total_tests}" '
+        f'failures="{failures}" errors="{total_errors}" warnings="{total_warnings}">',
+    ]
+
+    for result in results:
+        testcase = f'  <testcase name="{_xml_escape(result.file)}" classname="{result.language}">'
+        if not result.passed:
+            for issue in result.issues:
+                if issue.severity == "error":
+                    lines.append(f"{testcase}")
+                    lines.append(f'    <failure message="{_xml_escape(issue.message)}">')
+                    lines.append(f"      {issue.rule_id}: {issue.message} (line {issue.line})")
+                    lines.append("    </failure>")
+                    lines.append("  </testcase>")
+                    break
+            else:
+                lines.append(f"{testcase}</testcase>")
+        else:
+            # Report warnings as system-out
+            warns = [i for i in result.issues if i.severity == "warning"]
+            if warns:
+                lines.append(f"{testcase}")
+                lines.append("    <system-out>")
+                for w in warns[:5]:
+                    lines.append(f"      [{w.rule_id}] {w.message} (line {w.line})")
+                lines.append("    </system-out>")
+                lines.append("  </testcase>")
+            else:
+                lines.append(f"{testcase}</testcase>")
+
+    lines.append("</testsuite>")
+    return "\n".join(lines)
+
+
+def _xml_escape(s: str) -> str:
+    """Escape XML special characters."""
+    return s.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;").replace('"', "&quot;")
+
+
+def generate_html_report(results: list[ValidationResult]) -> str:
+    """Generate HTML report."""
+    total_errors = sum(r.error_count for r in results)
+    total_warnings = sum(r.warning_count for r in results)
+    total_info = sum(r.info_count for r in results)
+    passed_count = sum(1 for r in results if r.passed)
+
+    rows = []
+    for result in sorted(results, key=lambda r: (not r.passed, r.file)):
+        status_class = "pass" if result.passed else "fail"
+        rows.append(f"""      <tr class="{status_class}">
+        <td>{_html_escape(result.file)}</td>
+        <td>{result.language}</td>
+        <td class="num">{result.error_count}</td>
+        <td class="num">{result.warning_count}</td>
+        <td class="num">{result.info_count}</td>
+        <td>{"PASS" if result.passed else "FAIL"}</td>
+      </tr>""")
+        if not result.passed:
+            for issue in result.issues[:3]:
+                rows.append(f"""      <tr class="detail">
+        <td colspan="6">[{issue.severity}] {issue.rule_id}: {_html_escape(issue.message)} (line {issue.line})</td>
+      </tr>""")
+
+    return f"""<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Language Rules Report</title>
+  <style>
+    body {{ font-family: -apple-system, sans-serif; margin: 2rem; }}
+    .summary {{ display: flex; gap: 2rem; margin-bottom: 2rem; }}
+    .card {{ padding: 1rem 1.5rem; border-radius: 8px; }}
+    .card.error {{ background: #fee; border: 1px solid #fcc; }}
+    .card.warn {{ background: #ffd; border: 1px solid #ff8; }}
+    .card.pass {{ background: #efe; border: 1px solid #8c8; }}
+    .card.info {{ background: #eef; border: 1px solid #88c; }}
+    table {{ border-collapse: collapse; width: 100%; }}
+    th, td {{ padding: 0.5rem 1rem; border: 1px solid #ddd; text-align: left; }}
+    th {{ background: #f5f5f5; }}
+    tr.pass td {{ background: #efe; }}
+    tr.fail td {{ background: #fee; }}
+    tr.detail td {{ background: #f9f9f9; font-size: 0.9em; color: #666; }}
+    .num {{ text-align: right; }}
+  </style>
+</head>
+<body>
+  <h1>Language Rules Report</h1>
+  <div class="summary">
+    <div class="card pass"><strong>{passed_count}</strong> files passed</div>
+    <div class="card error"><strong>{total_errors}</strong> errors</div>
+    <div class="card warn"><strong>{total_warnings}</strong> warnings</div>
+    <div class="card info"><strong>{total_info}</strong> info</div>
+  </div>
+  <table>
+    <tr><th>File</th><th>Language</th><th>Errors</th><th>Warnings</th><th>Info</th><th>Status</th></tr>
+{chr(10).join(rows)}
+  </table>
+</body>
+</html>"""
+
+
+def _html_escape(s: str) -> str:
+    """Escape HTML special characters."""
+    return s.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
+
+
+def write_report(results: list[ValidationResult], format: str, output: Path | None = None) -> str | None:
+    """Write report in specified format. Returns content or writes to file."""
+    if format == "json":
+        data = {
+            "results": [r.to_dict() for r in results],
+            "summary": {
+                "total_files": len(results),
+                "total_errors": sum(r.error_count for r in results),
+                "total_warnings": sum(r.warning_count for r in results),
+                "total_info": sum(r.info_count for r in results),
+                "passed": all(r.passed for r in results),
+            },
+        }
+        content = json.dumps(data, indent=2, ensure_ascii=False)
+    elif format == "junit":
+        content = generate_junit_xml(results)
+    elif format == "html":
+        content = generate_html_report(results)
+    else:
+        return None
+
+    if output:
+        output.write_text(content, encoding="utf-8")
+        print(f"Report written to {output}", file=sys.stderr)
+    return content
+
+
+# ──────────────────────────────────────────────────────────
+# Health score (#10)
+# ──────────────────────────────────────────────────────────
+
+
+def calculate_health_score(results: list[ValidationResult]) -> HealthScore:
+    """Calculate project health score (0-100) from validation results.
+
+    Scoring:
+    - Base: 100
+    - Each error: -5 points
+    - Each warning: -2 points
+    - Each info: -0.5 points
+    - Bonus: +2 per clean file (max +10)
+    - Penalty for file-level failures: -3 per failed file
+    """
+    total_errors = sum(r.error_count for r in results)
+    total_warnings = sum(r.warning_count for r in results)
+    total_info = sum(r.info_count for r in results)
+    total_files = len(results)
+    failed_files = sum(1 for r in results if not r.passed)
+    clean_files = total_files - failed_files
+
+    # Base score
+    score = 100.0
+
+    # Penalties
+    score -= total_errors * 5.0
+    score -= total_warnings * 2.0
+    score -= total_info * 0.5
+    score -= failed_files * 3.0
+
+    # Bonus for clean files
+    bonus = min(clean_files * 2, 10)
+    score += bonus
+
+    # Clamp
+    score = max(0, min(100, round(score)))
+
+    # Grade
+    if score >= 90:
+        grade = "A"
+    elif score >= 80:
+        grade = "B"
+    elif score >= 70:
+        grade = "C"
+    elif score >= 60:
+        grade = "D"
+    else:
+        grade = "F"
+
+    # Breakdown
+    breakdown = {
+        "error_penalty": total_errors * -5.0,
+        "warning_penalty": total_warnings * -2.0,
+        "info_penalty": total_info * -0.5,
+        "failure_penalty": failed_files * -3.0,
+        "clean_bonus": bonus,
+    }
+
+    # Details
+    details = []
+    if total_errors > 0:
+        details.append(f"{total_errors} errors found (-{total_errors * 5} points)")
+    if total_warnings > 0:
+        details.append(f"{total_warnings} warnings found (-{total_warnings * 2} points)")
+    if failed_files > 0:
+        details.append(f"{failed_files} files failed (-{failed_files * 3} points)")
+    if clean_files > 0:
+        details.append(f"{clean_files} files clean (+{bonus} points)")
+    if not details:
+        details.append("All files clean")
+
+    return HealthScore(score=score, grade=grade, breakdown=breakdown, details=details)
+
+
+# ──────────────────────────────────────────────────────────
+# Linter aggregation (#9)
+# ──────────────────────────────────────────────────────────
+
+
+def run_linter_aggregation(
+    dirpath: Path,
+    linters: list[str] | None = None,
+) -> list[dict[str, Any]]:
+    """Run external linters and aggregate results into unified format.
+
+    Supported linters: ruff, mypy, eslint, golangci-lint
+    Returns list of unified issue dicts.
+    """
+
+    if linters is None:
+        linters = []
+
+    unified: list[dict[str, Any]] = []
+
+    for linter in linters:
+        if linter == "ruff":
+            unified.extend(_run_ruff(dirpath))
+        elif linter == "mypy":
+            unified.extend(_run_mypy(dirpath))
+        elif linter == "eslint":
+            unified.extend(_run_eslint(dirpath))
+        elif linter == "golangci-lint":
+            unified.extend(_run_golangci(dirpath))
+
+    return unified
+
+
+def _run_ruff(dirpath: Path) -> list[dict[str, Any]]:
+    """Run ruff and parse results."""
+    import subprocess
+
+    issues: list[dict[str, Any]] = []
+    try:
+        result = subprocess.run(
+            ["ruff", "check", "--output-format=json", str(dirpath)],
+            capture_output=True,
+            text=True,
+            timeout=60,
+        )
+        if result.stdout.strip():
+            data = json.loads(result.stdout)
+            for item in data:
+                issues.append(
+                    {
+                        "linter": "ruff",
+                        "rule_id": item.get("code", ""),
+                        "severity": "error" if item.get("fix") is None else "warning",
+                        "file": item.get("filename", ""),
+                        "line": item.get("location", {}).get("row", 0),
+                        "message": item.get("message", ""),
+                    }
+                )
+    except (subprocess.TimeoutExpired, FileNotFoundError, json.JSONDecodeError):
+        pass
+    return issues
+
+
+def _run_mypy(dirpath: Path) -> list[dict[str, Any]]:
+    """Run mypy and parse results."""
+    import subprocess
+
+    issues: list[dict[str, Any]] = []
+    try:
+        result = subprocess.run(
+            ["mypy", "--ignore-missing-imports", "--no-error-summary", "--show-error-codes", str(dirpath)],
+            capture_output=True,
+            text=True,
+            timeout=60,
+        )
+        for line in result.stdout.splitlines():
+            if ": error:" in line:
+                parts = line.split(": ", 2)
+                if len(parts) >= 3:
+                    file_line = parts[0]
+                    msg = parts[1]
+                    code = parts[2] if len(parts) > 2 else ""
+                    fl = file_line.rsplit(":", 1)
+                    issues.append(
+                        {
+                            "linter": "mypy",
+                            "rule_id": code.strip("()"),
+                            "severity": "error",
+                            "file": fl[0] if len(fl) > 1 else str(dirpath),
+                            "line": int(fl[1]) if fl[1].isdigit() else 0,
+                            "message": msg,
+                        }
+                    )
+    except (subprocess.TimeoutExpired, FileNotFoundError):
+        pass
+    return issues
+
+
+def _run_eslint(dirpath: Path) -> list[dict[str, Any]]:
+    """Run eslint and parse results."""
+    import subprocess
+
+    issues: list[dict[str, Any]] = []
+    try:
+        result = subprocess.run(
+            ["eslint", "--format=json", str(dirpath)],
+            capture_output=True,
+            text=True,
+            timeout=60,
+        )
+        if result.stdout.strip():
+            data = json.loads(result.stdout)
+            for file_entry in data:
+                for msg in file_entry.get("messages", []):
+                    issues.append(
+                        {
+                            "linter": "eslint",
+                            "rule_id": msg.get("ruleId", ""),
+                            "severity": "error" if msg.get("severity") == 2 else "warning",
+                            "file": file_entry.get("filePath", ""),
+                            "line": msg.get("line", 0),
+                            "message": msg.get("message", ""),
+                        }
+                    )
+    except (subprocess.TimeoutExpired, FileNotFoundError, json.JSONDecodeError):
+        pass
+    return issues
+
+
+def _run_golangci(dirpath: Path) -> list[dict[str, Any]]:
+    """Run golangci-lint and parse results."""
+    import subprocess
+
+    issues: list[dict[str, Any]] = []
+    try:
+        result = subprocess.run(
+            ["golangci-lint", "run", "--out-format=json", str(dirpath)],
+            capture_output=True,
+            text=True,
+            timeout=120,
+        )
+        if result.stdout.strip():
+            data = json.loads(result.stdout)
+            for issue in data.get("Issues", []):
+                issues.append(
+                    {
+                        "linter": "golangci-lint",
+                        "rule_id": issue.get("FromLinter", ""),
+                        "severity": "error",
+                        "file": issue.get("Pos", {}).get("Filename", ""),
+                        "line": issue.get("Pos", {}).get("Line", 0),
+                        "message": issue.get("Text", ""),
+                    }
+                )
+    except (subprocess.TimeoutExpired, FileNotFoundError, json.JSONDecodeError):
+        pass
+    return issues
+
+
+# ──────────────────────────────────────────────────────────
 # Main validation
 # ──────────────────────────────────────────────────────────
 
 
-def validate_file(filepath: Path, language: str) -> ValidationResult:
+def validate_file(
+    filepath: Path,
+    language: str,
+    custom_rules: dict[str, Any] | None = None,
+) -> ValidationResult:
     """Validate a single file against language rules."""
     result = ValidationResult(file=str(filepath), language=language)
 
@@ -932,8 +1555,19 @@ def validate_file(filepath: Path, language: str) -> ValidationResult:
     result.lines_checked = len(lines)
     rules = load_rules(language)
 
-    # 1. Regex anti-pattern checks
-    result.issues.extend(check_anti_patterns(lines, rules, str(filepath)))
+    # Merge custom rules if provided
+    if custom_rules and (custom_rules.get("anti_patterns") or custom_rules.get("thresholds")):
+        rules = _merge_rules(rules, custom_rules)
+
+    # 1. Regex anti-pattern checks (with fix_replacement support)
+    anti_issues = check_anti_patterns(lines, rules, str(filepath))
+    # Propagate fix_replacement from rule definitions
+    pattern_map = {p["id"]: p for p in rules.get("anti_patterns", [])}
+    for issue in anti_issues:
+        rule_def = pattern_map.get(issue.rule_id, {})
+        if "fix_replacement" in rule_def:
+            issue.fix_replacement = rule_def["fix_replacement"]
+    result.issues.extend(anti_issues)
 
     # 2. Naming convention checks
     result.issues.extend(check_naming_conventions(lines, rules, str(filepath)))
@@ -981,6 +1615,17 @@ EXTENSION_MAP: dict[str, str] = {
     ".hs": "haskell",
     ".dart": "dart",
     ".ps1": "powershell",
+    ".pl": "perl",
+    ".pm": "perl",
+    ".asm": "assembly",
+    ".s": "assembly",
+    ".S": "assembly",
+    ".f90": "fortran",
+    ".f": "fortran",
+    ".for": "fortran",
+    ".m": "matlab",
+    ".graphql": "graphql",
+    ".gql": "graphql",
 }
 
 
@@ -990,7 +1635,10 @@ def detect_language_from_file(filepath: Path) -> str | None:
 
 
 def validate_directory(
-    dirpath: Path, language: str | None = None, exclude: list[str] | None = None
+    dirpath: Path,
+    language: str | None = None,
+    exclude: list[str] | None = None,
+    custom_rules: dict[str, Any] | None = None,
 ) -> list[ValidationResult]:
     """Validate all supported files in a directory."""
     results: list[ValidationResult] = []
@@ -1008,7 +1656,7 @@ def validate_directory(
         if file_lang is None:
             continue
 
-        results.append(validate_file(filepath, file_lang))
+        results.append(validate_file(filepath, file_lang, custom_rules=custom_rules))
 
     return results
 
@@ -1085,29 +1733,87 @@ def main() -> int:
         epilog="""
 Examples:
   %(prog)s src/ --lang python
-  %(prog)s lib/ --lang typescript --json
-  %(prog)s . --auto-detect
-  %(prog)s main.rs --lang rust
+  %(prog)s lib/ --lang typescript --format json -o report.json
+  %(prog)s . --auto-detect --format html -o report.html
+  %(prog)s main.rs --lang rust --fix --dry-run
+  %(prog)s . --auto-detect --max-errors 0 --max-warnings 10
+  %(prog)s . --auto-detect --linters ruff mypy
+  %(prog)s . --auto-detect --health-score
+  %(prog)s . --auto-detect --custom-rules .ai-rules/
         """,
     )
     parser.add_argument("path", type=Path, help="File or directory to validate")
     parser.add_argument(
         "--lang",
         choices=[
-            "python", "typescript", "rust", "go", "java", "kotlin", "csharp",
-            "php", "ruby", "cpp", "swift", "scala", "elixir", "lua",
-            "javascript", "zig", "r", "clojure", "haskell", "dart", "powershell",
+            "python",
+            "typescript",
+            "rust",
+            "go",
+            "java",
+            "kotlin",
+            "csharp",
+            "php",
+            "ruby",
+            "cpp",
+            "swift",
+            "scala",
+            "elixir",
+            "lua",
+            "javascript",
+            "zig",
+            "r",
+            "clojure",
+            "haskell",
+            "dart",
+            "powershell",
+            "perl",
+            "assembly",
+            "fortran",
+            "matlab",
+            "graphql",
         ],
         help="Language to validate against",
     )
     parser.add_argument("--auto-detect", action="store_true", help="Auto-detect language from file extensions")
-    parser.add_argument("--json", action="store_true", dest="json_output", help="Output results as JSON")
+    parser.add_argument("--json", action="store_true", dest="json_output", help="Output results as JSON (legacy)")
     parser.add_argument("--fail-on-warnings", action="store_true", help="Exit with error on warnings")
     parser.add_argument(
         "--exclude",
         nargs="*",
         default=["node_modules", "target", "vendor", ".git", "__pycache__", ".venv"],
         help="Directories to exclude",
+    )
+
+    # New: Report format (#6)
+    parser.add_argument(
+        "--format",
+        choices=["text", "json", "html", "junit"],
+        default="text",
+        help="Output format (default: text)",
+    )
+    parser.add_argument("-o", "--output", type=Path, help="Write report to file")
+
+    # New: Severity thresholds (#7)
+    parser.add_argument("--max-errors", type=int, default=None, help="Max allowed errors (exit 1 if exceeded)")
+    parser.add_argument("--max-warnings", type=int, default=None, help="Max allowed warnings (exit 1 if exceeded)")
+
+    # New: Auto-fix (#1)
+    parser.add_argument("--fix", action="store_true", help="Apply auto-fixes")
+    parser.add_argument("--dry-run", action="store_true", help="Show what --fix would change without writing")
+
+    # New: Custom rules (#3)
+    parser.add_argument("--custom-rules", type=Path, help="Directory with custom .yml rules (default: .ai-rules/)")
+
+    # New: Health score (#10)
+    parser.add_argument("--health-score", action="store_true", help="Show project health score")
+
+    # New: Linter aggregation (#9)
+    parser.add_argument(
+        "--linters",
+        nargs="*",
+        choices=["ruff", "mypy", "eslint", "golangci-lint"],
+        help="Run external linters and aggregate results",
     )
 
     args = parser.parse_args()
@@ -1118,25 +1824,102 @@ Examples:
 
     language = args.lang
 
+    # Load custom rules
+    custom_rules = None
+    if args.custom_rules:
+        custom_rules = load_custom_rules(args.custom_rules)
+    elif args.auto_detect or args.path.is_dir():
+        # Auto-detect .ai-rules in project root
+        project_dir = args.path if args.path.is_dir() else args.path.parent
+        custom_rules = load_custom_rules(project_dir)
+
     if args.path.is_file():
         if language is None:
             language = detect_language_from_file(args.path)
         if language is None:
             print(f"Error: Cannot detect language for {args.path}. Use --lang.", file=sys.stderr)
             return 1
-        results = [validate_file(args.path, language)]
+        results = [validate_file(args.path, language, custom_rules=custom_rules)]
     else:
         if language is None and not args.auto_detect:
             print("Error: Use --lang or --auto-detect for directories.", file=sys.stderr)
             return 1
-        results = validate_directory(args.path, language, args.exclude)
+        results = validate_directory(args.path, language, args.exclude, custom_rules=custom_rules)
 
-    exit_code = print_results(results, use_json=args.json_output)
+    # Auto-fix (#1)
+    if args.fix or args.dry_run:
+        all_fixes: list[FixResult] = []
+        for result in results:
+            fp = Path(result.file)
+            fixes = apply_fixes(fp, result.issues, dry_run=args.dry_run)
+            all_fixes.extend(fixes)
 
-    if args.fail_on_warnings and any(r.warning_count > 0 for r in results):
-        return 1
+        if all_fixes:
+            action = "Would fix" if args.dry_run else "Fixed"
+            print(f"\n{action} {len(all_fixes)} issue(s):")
+            for fix in all_fixes:
+                print(f"  {fix.file}:{fix.line} [{fix.rule_id}]")
+                print(f"    - {fix.original}")
+                print(f"    + {fix.fixed}")
 
-    return exit_code
+        if args.dry_run and not results:
+            return 0
+
+    # Health score (#10)
+    if args.health_score:
+        health = calculate_health_score(results)
+        print(f"\n  Health Score: {health.score}/100 (Grade: {health.grade})")
+        for detail in health.details:
+            print(f"    - {detail}")
+
+    # Linter aggregation (#9)
+    if args.linters:
+        linter_issues = run_linter_aggregation(args.path, args.linters)
+        if linter_issues:
+            print(f"\n  Linter Results ({len(linter_issues)} issues from {', '.join(args.linters)}):")
+            for issue in linter_issues[:20]:
+                print(f"    [{issue['linter']}] {issue['file']}:{issue['line']} {issue['message']}")
+            if len(linter_issues) > 20:
+                print(f"    ... and {len(linter_issues) - 20} more")
+
+    # Output (#6)
+    if args.format != "text" or args.json_output:
+        fmt = "json" if args.json_output else args.format
+        content = write_report(results, fmt, args.output)
+        if content and not args.output:
+            print(content)
+    else:
+        exit_code = print_results(results, use_json=False)
+
+        # Check thresholds
+        if args.max_errors is not None:
+            total_errors = sum(r.error_count for r in results)
+            if total_errors > args.max_errors:
+                print(f"\nFAILED: {total_errors} errors exceeds max-errors={args.max_errors}")
+                return 1
+
+        if args.max_warnings is not None:
+            total_warnings = sum(r.warning_count for r in results)
+            if total_warnings > args.max_warnings:
+                print(f"\nFAILED: {total_warnings} warnings exceeds max-warnings={args.max_warnings}")
+                return 1
+
+        if args.fail_on_warnings and any(r.warning_count > 0 for r in results):
+            return 1
+
+        return exit_code
+
+    # For non-text formats, still check thresholds
+    if args.max_errors is not None:
+        total_errors = sum(r.error_count for r in results)
+        if total_errors > args.max_errors:
+            return 1
+    if args.max_warnings is not None:
+        total_warnings = sum(r.warning_count for r in results)
+        if total_warnings > args.max_warnings:
+            return 1
+
+    return 0
 
 
 if __name__ == "__main__":

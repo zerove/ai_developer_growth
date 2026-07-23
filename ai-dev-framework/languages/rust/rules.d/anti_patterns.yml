@@ -60,6 +60,55 @@ anti_patterns:
   pattern: HashMap::new\(\)
   message: Consider using typed structs instead of raw HashMaps
   fix_hint: Define a struct with named fields
+- id: rs-clone-abuse
+  name: Excessive clone() usage in hot path
+  severity: warning
+  category: performance
+  pattern: '\.clone\(\)(?:\.|\s*;|\s*\))'
+  message: Excessive .clone() causes unnecessary allocations and hurts performance
+  fix_hint: Use references (&T, &mut T), Cow<T>, or Arc<T> for shared ownership
+- id: rs-unwrap-production
+  name: unwrap() in non-test code
+  severity: error
+  category: error_handling
+  pattern: '\.unwrap\(\)'
+  message: unwrap() in production code will panic on None/Err and crash the application
+  fix_hint: Use .unwrap_or(), .unwrap_or_else(), match, or the ? operator
+- id: rs-missing-error-context
+  name: Error propagation without context
+  severity: warning
+  category: error_handling
+  pattern: '(\?|Err\()'
+  message: Bare ? operator loses error context, making debugging harder
+  fix_hint: Use .context("description") from the anyhow crate, or map_err() for context
+- id: rs-string-concat-loop
+  name: String concatenation in a loop
+  severity: warning
+  category: performance
+  pattern: "for\\s+.*\\{[\\s\\S]*?\\+\\s*[\"']"
+  message: String concatenation with + in loops allocates a new String each iteration
+  fix_hint: Use format!(), String::push_str(), or write! macro with fmt::Write
+- id: rs-unbounded-channel
+  name: Unbounded channel creation
+  severity: warning
+  category: safety
+  pattern: 'unbounded::<|unbounded\('
+  message: Unbounded channels can grow without limit, causing memory exhaustion
+  fix_hint: 'Use bounded channels: bounded(capacity) with a reasonable capacity'
+- id: rs-missing-doc-comments
+  name: Missing doc comments on public items
+  severity: info
+  category: code_quality
+  pattern: 'pub\s+(?:fn|struct|enum|trait|mod)\s+\w+'
+  message: Public API items should have doc comments for documentation
+  fix_hint: 'Add /// doc comments before public items: /// Description of the item'
+- id: rs-transmute-usage
+  name: transmute() usage
+  severity: error
+  category: safety
+  pattern: "transmute\\s*[\\(<]"
+  message: transmute is extremely unsafe and can cause undefined behavior
+  fix_hint: Use From/Into traits, try_from(), or bitwise conversion with safety checks
 naming:
   file:
     pattern: ^[a-z][a-z0-9_]*\.rs$

@@ -49,6 +49,19 @@ EXTENSION_MAP: dict[str, str] = {
     ".ex": "elixir",
     ".exs": "elixir",
     ".hs": "haskell",
+    ".dart": "dart",
+    ".ps1": "powershell",
+    ".pl": "perl",
+    ".pm": "perl",
+    ".asm": "assembly",
+    ".s": "assembly",
+    ".S": "assembly",
+    ".f90": "fortran",
+    ".f": "fortran",
+    ".for": "fortran",
+    ".m": "matlab",
+    ".graphql": "graphql",
+    ".gql": "graphql",
 }
 
 

@@ -1,0 +1,221 @@
+name: Language Rules Check
+
+on:
+  push:
+    branches: [main, master, develop]
+    paths:
+      - 'ai-dev-framework/languages/**/*.yml'
+      - 'ai-dev-framework/frameworks/**/*.yml'
+      - 'tools/scripts/validate_language_rules.py'
+      - 'tools/scripts/ai_quality_gate.py'
+      - '.ai-rules/**'
+  pull_request:
+    branches: [main, master, develop]
+    paths:
+      - 'ai-dev-framework/languages/**/*.yml'
+      - 'ai-dev-framework/frameworks/**/*.yml'
+      - 'tools/scripts/validate_language_rules.py'
+      - 'tools/scripts/ai_quality_gate.py'
+      - '.ai-rules/**'
+
+env:
+  PYTHON_VERSION: "3.11"
+
+jobs:
+  # ──────────────────────────────────────────────────────
+  # Language Rules Validation
+  # ──────────────────────────────────────────────────────
+  language-rules:
+    name: Language Rules (${{ matrix.language }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        language:
+          - python
+          - typescript
+          - rust
+          - go
+          - java
+          - kotlin
+          - csharp
+          - javascript
+          - cpp
+          - swift
+          - scala
+          - elixir
+          - lua
+          - ruby
+          - php
+          - zig
+          - r
+          - clojure
+          - haskell
+          - dart
+          - powershell
+          - perl
+          - assembly
+          - fortran
+          - matlab
+          - graphql
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Install dependencies
+        run: pip install pyyaml
+
+      - name: Validate language rules YAML
+        run: |
+          python -c "
+          import yaml, sys
+          from pathlib import Path
+          rule_path = Path('ai-dev-framework/languages/${{ matrix.language }}/rules.d/anti_patterns.yml')
+          if not rule_path.exists():
+              print(f'Rules not found: {rule_path}', file=sys.stderr)
+              sys.exit(1)
+          with open(rule_path) as f:
+              data = yaml.safe_load(f)
+          patterns = data.get('anti_patterns', [])
+          print(f'${{ matrix.language }}: {len(patterns)} rules loaded')
+          for p in patterns:
+              assert 'id' in p, f'Missing id in rule'
+              assert 'pattern' in p, f'Missing pattern in rule {p.get(\"id\")}'
+              assert 'severity' in p, f'Missing severity in rule {p.get(\"id\")}'
+          print('All rules valid')
+          "
+
+  # ──────────────────────────────────────────────────────
+  # Auto-fix Dry Run
+  # ──────────────────────────────────────────────────────
+  auto-fix:
+    name: Auto-fix Dry Run
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Install dependencies
+        run: pip install pyyaml
+
+      - name: Test auto-fix dry run
+        run: |
+          python tools/scripts/validate_language_rules.py tools/scripts/validate_language_rules.py --lang python --fix --dry-run || true
+
+  # ──────────────────────────────────────────────────────
+  # Report Generation
+  # ──────────────────────────────────────────────────────
+  reports:
+    name: Report Generation
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Install dependencies
+        run: pip install pyyaml
+
+      - name: Generate HTML report
+        run: |
+          python tools/scripts/validate_language_rules.py tools/scripts/ --auto-detect --format html -o report.html || true
+          test -f report.html && echo "HTML report generated" || echo "No report (no matching files)"
+
+      - name: Generate JUnit report
+        run: |
+          python tools/scripts/validate_language_rules.py tools/scripts/ --auto-detect --format junit -o report.xml || true
+          test -f report.xml && echo "JUnit report generated" || echo "No report"
+
+      - name: Generate JSON report
+        run: |
+          python tools/scripts/validate_language_rules.py tools/scripts/ --auto-detect --format json -o report.json || true
+          test -f report.json && echo "JSON report generated" || echo "No report"
+
+      - name: Health score
+        run: |
+          python tools/scripts/validate_language_rules.py tools/scripts/ --auto-detect --health-score || true
+
+  # ──────────────────────────────────────────────────────
+  # Custom Rules Test
+  # ──────────────────────────────────────────────────────
+  custom-rules:
+    name: Custom Rules
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Install dependencies
+        run: pip install pyyaml
+
+      - name: Test custom rules loading
+        run: |
+          mkdir -p .ai-rules
+          cat > .ai-rules/custom-test.yml << 'EOF'
+          anti_patterns:
+          - id: custom-no-todo
+            name: TODO comments
+            severity: warning
+            category: code_quality
+            pattern: 'TODO|FIXME|HACK|XXX'
+            message: 'Avoid TODO/FIXME comments in production code'
+            fix_hint: 'Resolve the issue or create a ticket'
+          EOF
+          python tools/scripts/validate_language_rules.py tools/scripts/validate_language_rules.py --lang python --auto-detect || true
+          rm -rf .ai-rules
+
+  # ──────────────────────────────────────────────────────
+  # Threshold Enforcement
+  # ──────────────────────────────────────────────────────
+  thresholds:
+    name: Threshold Enforcement
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Install dependencies
+        run: pip install pyyaml
+
+      - name: Test max-errors threshold
+        run: |
+          python tools/scripts/validate_language_rules.py tools/scripts/validate_language_rules.py --lang python --max-errors 0 || true
+
+      - name: Test max-warnings threshold
+        run: |
+          python tools/scripts/validate_language_rules.py tools/scripts/validate_language_rules.py --lang python --max-warnings 100 || true
+
+  # ──────────────────────────────────────────────────────
+  # Linter Aggregation
+  # ──────────────────────────────────────────────────────
+  linters:
+    name: Linter Aggregation
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Install dependencies
+        run: pip install pyyaml ruff mypy
+
+      - name: Test linter aggregation
+        run: |
+          python tools/scripts/validate_language_rules.py tools/scripts/ --auto-detect --linters ruff mypy || true

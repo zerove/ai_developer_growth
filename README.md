@@ -20,7 +20,7 @@
 | AI 工具太多，不知如何选择 | 📊 工具矩阵对比 |
 | 不知道如何与 AI 协作 | 🔄 全周期工作流 |
 | 担心被 AI 取代 | 🧠 认知升级方法论 |
-| 缺少真实案例参考 | 📚 15+ 实践案例 |
+| 缺少真实案例参考 | 📚 35+ 实践案例 |
 
 ---
 
@@ -68,7 +68,7 @@
 | 🛠️ AI 任务优先级 | 从 0 到 1 CLI 工具 | **8x** | [[case-studies/ai-task-prioritizer]] |
 | 🔄 AI-Context-Sync | 完整产品开发 | **12x** | [[case-studies/ai-context-sync-development]] |
 
-**目标**: 15+ 真实案例，覆盖不同规模和场景。
+**目标**: 35+ 真实案例，覆盖不同规模和场景。
 
 ---
 
@@ -156,8 +156,8 @@ python ai-dev-framework/core/jcode_init.py your-project --language python
 
 | 指标 | 数量 |
 |------|------|
-| 📄 核心文档 | 129 篇 |
-| 📚 实践案例 | 15 个 |
+| 📄 核心文档 | 200+ 篇 |
+| 📚 实践案例 | 35 个 |
 | 🛠️ 代码示例 | 7 个 |
 | 📋 架构决策 | 7 条 |
 | 🧪 测试用例 | 175 个 |
@@ -169,13 +169,13 @@ python ai-dev-framework/core/jcode_init.py your-project --language python
 
 ```
 ai_developer_growth/
-├── docs/                    # 129 篇方法论文档
+├── docs/                    # 200+ 篇方法论文档
 │   ├── mindset/            # 认知升级
 │   ├── learning/           # 学习方法
 │   ├── efficiency/         # 工程效率
 │   ├── tools/              # 工具选型
 │   └── adr/                # 架构决策
-├── case-studies/            # 15 个实践案例
+├── case-studies/            # 35 个实践案例
 ├── examples/                # 7 个代码示例
 ├── ai-dev-framework/        # 通用治理框架
 │   └── core/               # 可移植组件
@@ -207,4 +207,4 @@ MIT License - 详见 [[LICENSE]]
 
 *AI 时代的竞争不是人与 AI 的竞争，而是掌握 AI 的人与不掌握 AI 的人的竞争。*
 
-*Last Updated: 2026-07-21*
+*Last Updated: 2026-07-23*

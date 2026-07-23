@@ -38,6 +38,7 @@ except ImportError:
 @dataclass
 class Issue:
     """A single validation issue."""
+
     rule_id: str
     severity: str  # error, warning, info
     category: str
@@ -63,6 +64,7 @@ class Issue:
 @dataclass
 class ValidationResult:
     """Aggregated validation results for a file."""
+
     file: str
     language: str
     issues: list[Issue] = field(default_factory=list)
@@ -153,9 +155,7 @@ def _get_embedded_rules(language: str) -> dict[str, Any]:
 # ──────────────────────────────────────────────────────────
 
 
-def check_anti_patterns(
-    lines: list[str], rules: dict[str, Any], filepath: str
-) -> list[Issue]:
+def check_anti_patterns(lines: list[str], rules: dict[str, Any], filepath: str) -> list[Issue]:
     """Check code lines against regex anti-patterns."""
     issues: list[Issue] = []
     anti_patterns = rules.get("anti_patterns", [])
@@ -171,16 +171,18 @@ def check_anti_patterns(
 
             match = regex.search(line)
             if match:
-                issues.append(Issue(
-                    rule_id=pattern_def["id"],
-                    severity=pattern_def.get("severity", "warning"),
-                    category=pattern_def.get("category", "general"),
-                    file=filepath,
-                    line=line_num,
-                    column=match.start(),
-                    message=pattern_def.get("message", "Anti-pattern detected"),
-                    fix_hint=pattern_def.get("fix_hint", ""),
-                ))
+                issues.append(
+                    Issue(
+                        rule_id=pattern_def["id"],
+                        severity=pattern_def.get("severity", "warning"),
+                        category=pattern_def.get("category", "general"),
+                        file=filepath,
+                        line=line_num,
+                        column=match.start(),
+                        message=pattern_def.get("message", "Anti-pattern detected"),
+                        fix_hint=pattern_def.get("fix_hint", ""),
+                    )
+                )
 
     return issues
 
@@ -190,9 +192,7 @@ def check_anti_patterns(
 # ──────────────────────────────────────────────────────────
 
 
-def check_naming_conventions(
-    lines: list[str], rules: dict[str, Any], filepath: str
-) -> list[Issue]:
+def check_naming_conventions(lines: list[str], rules: dict[str, Any], filepath: str) -> list[Issue]:
     """Check naming conventions based on language rules."""
     issues: list[Issue] = []
     naming = rules.get("naming", {})
@@ -203,14 +203,16 @@ def check_naming_conventions(
     if file_rule and "pattern" in file_rule:
         filename = Path(filepath).name
         if not re.match(file_rule["pattern"], filename):
-            issues.append(Issue(
-                rule_id=f"{language[:2]}-naming-file",
-                severity="warning",
-                category="naming",
-                file=filepath,
-                line=0,
-                message=file_rule.get("message", f"File name '{filename}' violates naming convention"),
-            ))
+            issues.append(
+                Issue(
+                    rule_id=f"{language[:2]}-naming-file",
+                    severity="warning",
+                    category="naming",
+                    file=filepath,
+                    line=0,
+                    message=file_rule.get("message", f"File name '{filename}' violates naming convention"),
+                )
+            )
 
     # Check function/class/variable names in code
     for kind in ["function", "class", "struct", "enum", "constant", "interface", "module", "trait", "package"]:
@@ -233,14 +235,16 @@ def check_naming_conventions(
                 if ident in exceptions:
                     continue
                 if not regex.match(ident):
-                    issues.append(Issue(
-                        rule_id=f"{language[:2]}-naming-{kind}",
-                        severity="info",
-                        category="naming",
-                        file=filepath,
-                        line=line_num,
-                        message=kind_rule.get("message", f"'{ident}' violates {kind} naming convention"),
-                    ))
+                    issues.append(
+                        Issue(
+                            rule_id=f"{language[:2]}-naming-{kind}",
+                            severity="info",
+                            category="naming",
+                            file=filepath,
+                            line=line_num,
+                            message=kind_rule.get("message", f"'{ident}' violates {kind} naming convention"),
+                        )
+                    )
 
     return issues
 
@@ -319,7 +323,10 @@ def _extract_identifiers(line: str, kind: str, language: str) -> list[str]:
 
     elif language == "java":
         if kind == "function":
-            m = re.match(r"(?:public|private|protected)?\s*(?:static\s+)?(?:final\s+)?(?:synchronized\s+)?(?:<[^>]+>\s+)?(\w+)\s+\w+\s*\(", line)
+            m = re.match(
+                r"(?:public|private|protected)?\s*(?:static\s+)?(?:final\s+)?(?:synchronized\s+)?(?:<[^>]+>\s+)?(\w+)\s+\w+\s*\(",
+                line,
+            )
             if m and m.group(1) not in ("if", "for", "while", "switch", "catch", "try", "return", "new", "throw"):
                 identifiers.append(m.group(1))
         elif kind == "class":
@@ -351,11 +358,27 @@ def _extract_identifiers(line: str, kind: str, language: str) -> list[str]:
 
     elif language == "csharp":
         if kind == "function":
-            m = re.match(r"(?:public|private|protected|internal)?\s*(?:static\s+)?(?:async\s+)?(?:\w+\s+)?(\w+)\s*\(", line)
-            if m and m.group(1) not in ("if", "for", "while", "switch", "catch", "try", "return", "new", "throw", "using"):
+            m = re.match(
+                r"(?:public|private|protected|internal)?\s*(?:static\s+)?(?:async\s+)?(?:\w+\s+)?(\w+)\s*\(", line
+            )
+            if m and m.group(1) not in (
+                "if",
+                "for",
+                "while",
+                "switch",
+                "catch",
+                "try",
+                "return",
+                "new",
+                "throw",
+                "using",
+            ):
                 identifiers.append(m.group(1))
         elif kind == "class":
-            m = re.match(r"(?:public|private|protected|internal)?\s*(?:abstract\s+)?(?:sealed\s+)?(?:partial\s+)?class\s+(\w+)", line)
+            m = re.match(
+                r"(?:public|private|protected|internal)?\s*(?:abstract\s+)?(?:sealed\s+)?(?:partial\s+)?class\s+(\w+)",
+                line,
+            )
             if m:
                 identifiers.append(m.group(1))
         elif kind == "interface":
@@ -398,7 +421,19 @@ def _extract_identifiers(line: str, kind: str, language: str) -> list[str]:
     elif language == "cpp":
         if kind == "function":
             m = re.match(r"(?:[\w:*&<>\s]+?)\s+(\w+)\s*\(", line)
-            if m and m.group(1) not in ("if", "for", "while", "switch", "catch", "try", "return", "new", "delete", "sizeof", "typeof"):
+            if m and m.group(1) not in (
+                "if",
+                "for",
+                "while",
+                "switch",
+                "catch",
+                "try",
+                "return",
+                "new",
+                "delete",
+                "sizeof",
+                "typeof",
+            ):
                 identifiers.append(m.group(1))
         elif kind == "class":
             m = re.match(r"(?:class|struct)\s+(\w+)", line)
@@ -465,6 +500,131 @@ def _extract_identifiers(line: str, kind: str, language: str) -> list[str]:
             if m:
                 identifiers.append(m.group(1))
 
+    elif language == "javascript":
+        if kind == "function":
+            m = re.match(r"(?:export\s+)?(?:async\s+)?(?:function|const|let|var)\s+(\w+)", line)
+            if m and m.group(1) not in (
+                "if",
+                "for",
+                "while",
+                "switch",
+                "catch",
+                "try",
+                "return",
+                "new",
+                "delete",
+                "typeof",
+                "instanceof",
+            ):
+                identifiers.append(m.group(1))
+        elif kind == "class":
+            m = re.match(r"(?:export\s+)?class\s+(\w+)", line)
+            if m:
+                identifiers.append(m.group(1))
+        elif kind == "constant":
+            m = re.match(r"(?:export\s+)?const\s+([A-Z][A-Z0-9_]*)", line)
+            if m:
+                identifiers.append(m.group(1))
+
+    elif language == "zig":
+        if kind == "function":
+            m = re.match(r"(?:pub\s+)?(?:inline\s+)?fn\s+(\w+)", line)
+            if m:
+                identifiers.append(m.group(1))
+        elif kind in ("class", "struct", "enum"):
+            m = re.match(r"(?:pub\s+)?(?:const|var)\s+(\w+)\s*=\s*(?:struct|enum|union)", line)
+            if m:
+                identifiers.append(m.group(1))
+        elif kind == "constant":
+            m = re.match(r"(?:pub\s+)?const\s+([A-Z][A-Z0-9_]*)\s*=", line)
+            if m:
+                identifiers.append(m.group(1))
+
+    elif language == "r":
+        if kind == "function":
+            m = re.match(r"(\w+)\s*(?:<-|=)\s*function\s*\(", line)
+            if m:
+                identifiers.append(m.group(1))
+        elif kind == "class":
+            m = re.match(r"(\w+)\s*(?:<-|=)\s*setClass\(", line)
+            if m:
+                identifiers.append(m.group(1))
+        elif kind == "constant":
+            m = re.match(r"([A-Z][A-Z0-9_]*)\s*(?:<-|=)", line)
+            if m:
+                identifiers.append(m.group(1))
+
+    elif language == "clojure":
+        if kind == "function":
+            m = re.match(r"\(defn-?\s+(\S+)", line)
+            if m:
+                identifiers.append(m.group(1))
+        elif kind == "class":
+            m = re.match(r"\(defrecord\s+(\S+)", line)
+            if m:
+                identifiers.append(m.group(1))
+        elif kind == "constant":
+            m = re.match(r"\(def\s+([A-Z][A-Z0-9_-]*)", line)
+            if m:
+                identifiers.append(m.group(1))
+
+    elif language == "haskell":
+        if kind == "function":
+            m = re.match(r"(\w+)\s*(?:::|[=])", line)
+            if m and m.group(1) not in ("where", "let", "in", "if", "then", "else", "case", "of", "do"):
+                identifiers.append(m.group(1))
+        elif kind == "class":
+            m = re.match(r"(?:data|newtype|type)\s+(\w+)", line)
+            if m:
+                identifiers.append(m.group(1))
+        elif kind == "constant":
+            m = re.match(r"(\w+)\s*::\s*\w+", line)
+            if m:
+                identifiers.append(m.group(1))
+
+    elif language == "dart":
+        if kind == "function":
+            m = re.match(r"(?:static\s+)?(?:\w+\s+)?(\w+)\s*\(", line)
+            if m and m.group(1) not in (
+                "if",
+                "for",
+                "while",
+                "switch",
+                "catch",
+                "try",
+                "return",
+                "new",
+                "delete",
+                "class",
+                "extends",
+                "implements",
+                "import",
+                "export",
+            ):
+                identifiers.append(m.group(1))
+        elif kind == "class":
+            m = re.match(r"(?:abstract\s+)?class\s+(\w+)", line)
+            if m:
+                identifiers.append(m.group(1))
+        elif kind == "constant":
+            m = re.match(r"(?:static\s+)?const\s+(\w+)", line)
+            if m:
+                identifiers.append(m.group(1))
+
+    elif language == "powershell":
+        if kind == "function":
+            m = re.match(r"function\s+([\w-]+)", line)
+            if m:
+                identifiers.append(m.group(1))
+        elif kind == "class":
+            m = re.match(r"class\s+([\w.]+)", line)
+            if m:
+                identifiers.append(m.group(1))
+        elif kind == "constant":
+            m = re.match(r"\$([A-Z][A-Z0-9_]*)\s*=", line)
+            if m:
+                identifiers.append(m.group(1))
+
     return identifiers
 
 
@@ -473,9 +633,7 @@ def _extract_identifiers(line: str, kind: str, language: str) -> list[str]:
 # ──────────────────────────────────────────────────────────
 
 
-def check_thresholds(
-    lines: list[str], rules: dict[str, Any], filepath: str
-) -> list[Issue]:
+def check_thresholds(lines: list[str], rules: dict[str, Any], filepath: str) -> list[Issue]:
     """Check quantitative thresholds."""
     issues: list[Issue] = []
     thresholds = rules.get("thresholds", {})
@@ -485,26 +643,30 @@ def check_thresholds(
     max_line = thresholds.get("max_line_length", 120)
     for line_num, line in enumerate(lines, 1):
         if len(line.rstrip()) > max_line:
-            issues.append(Issue(
-                rule_id=f"{language[:2]}-threshold-line-length",
-                severity="info",
-                category="readability",
-                file=filepath,
-                line=line_num,
-                message=f"Line length {len(line.rstrip())} exceeds {max_line}",
-            ))
+            issues.append(
+                Issue(
+                    rule_id=f"{language[:2]}-threshold-line-length",
+                    severity="info",
+                    category="readability",
+                    file=filepath,
+                    line=line_num,
+                    message=f"Line length {len(line.rstrip())} exceeds {max_line}",
+                )
+            )
 
     # File length
     max_file = thresholds.get("max_file_length", 500)
     if len(lines) > max_file:
-        issues.append(Issue(
-            rule_id=f"{language[:2]}-threshold-file-length",
-            severity="warning",
-            category="readability",
-            file=filepath,
-            line=0,
-            message=f"File has {len(lines)} lines (max {max_file})",
-        ))
+        issues.append(
+            Issue(
+                rule_id=f"{language[:2]}-threshold-file-length",
+                severity="warning",
+                category="readability",
+                file=filepath,
+                line=0,
+                message=f"File has {len(lines)} lines (max {max_file})",
+            )
+        )
 
     # Function length and nesting depth
     max_func = thresholds.get("max_function_length", 50)
@@ -514,33 +676,35 @@ def check_thresholds(
     for func_name, start, end in func_lines:
         length = end - start + 1
         if length > max_func:
-            issues.append(Issue(
-                rule_id=f"{language[:2]}-threshold-func-length",
-                severity="warning",
-                category="readability",
-                file=filepath,
-                line=start,
-                message=f"Function '{func_name}' is {length} lines (max {max_func})",
-            ))
+            issues.append(
+                Issue(
+                    rule_id=f"{language[:2]}-threshold-func-length",
+                    severity="warning",
+                    category="readability",
+                    file=filepath,
+                    line=start,
+                    message=f"Function '{func_name}' is {length} lines (max {max_func})",
+                )
+            )
 
         # Check nesting depth within function
-        depth = _max_nesting_depth(lines[start - 1:end], language)
+        depth = _max_nesting_depth(lines[start - 1 : end], language)
         if depth > max_nest:
-            issues.append(Issue(
-                rule_id=f"{language[:2]}-threshold-nesting",
-                severity="warning",
-                category="readability",
-                file=filepath,
-                line=start,
-                message=f"Function '{func_name}' has nesting depth {depth} (max {max_nest})",
-            ))
+            issues.append(
+                Issue(
+                    rule_id=f"{language[:2]}-threshold-nesting",
+                    severity="warning",
+                    category="readability",
+                    file=filepath,
+                    line=start,
+                    message=f"Function '{func_name}' has nesting depth {depth} (max {max_nest})",
+                )
+            )
 
     return issues
 
 
-def _extract_function_lines(
-    lines: list[str], language: str
-) -> list[tuple[str, int, int]]:
+def _extract_function_lines(lines: list[str], language: str) -> list[tuple[str, int, int]]:
     """Extract function name, start line, end line."""
     functions: list[tuple[str, int, int]] = []
 
@@ -568,7 +732,7 @@ def _extract_function_lines(
         for pattern in patterns.get(language, []):
             for match in re.finditer(pattern, "\n".join(lines)):
                 name = match.group(1)
-                start = "\n".join(lines[:match.start()]).count("\n") + 1
+                start = "\n".join(lines[: match.start()]).count("\n") + 1
                 # Estimate end by finding next top-level definition
                 end = min(start + 50, len(lines))
                 functions.append((name, start, end))
@@ -620,14 +784,16 @@ def check_python_ast(filepath: str, lines: list[str]) -> list[Issue]:
         source = "\n".join(lines)
         tree = ast.parse(source)
     except SyntaxError as e:
-        issues.append(Issue(
-            rule_id="py-ast-syntax-error",
-            severity="error",
-            category="syntax",
-            file=filepath,
-            line=e.lineno or 1,
-            message=f"Syntax error: {e.msg}",
-        ))
+        issues.append(
+            Issue(
+                rule_id="py-ast-syntax-error",
+                severity="error",
+                category="syntax",
+                file=filepath,
+                line=e.lineno or 1,
+                message=f"Syntax error: {e.msg}",
+            )
+        )
         return issues
 
     for node in ast.walk(tree):
@@ -647,39 +813,45 @@ def _check_python_function(
 
     # Check return type annotation
     if node.returns is None and not name.startswith("_"):
-        issues.append(Issue(
-            rule_id="py-ast-no-return-type",
-            severity="info",
-            category="type_safety",
-            file=filepath,
-            line=node.lineno,
-            message=f"Public function '{name}' lacks return type annotation",
-        ))
-
-    # Check parameter type annotations
-    for arg in node.args.args:
-        if arg.annotation is None and arg.arg != "self" and arg.arg != "cls":
-            issues.append(Issue(
-                rule_id="py-ast-no-param-type",
+        issues.append(
+            Issue(
+                rule_id="py-ast-no-return-type",
                 severity="info",
                 category="type_safety",
                 file=filepath,
                 line=node.lineno,
-                message=f"Parameter '{arg.arg}' of '{name}' lacks type annotation",
-            ))
+                message=f"Public function '{name}' lacks return type annotation",
+            )
+        )
+
+    # Check parameter type annotations
+    for arg in node.args.args:
+        if arg.annotation is None and arg.arg != "self" and arg.arg != "cls":
+            issues.append(
+                Issue(
+                    rule_id="py-ast-no-param-type",
+                    severity="info",
+                    category="type_safety",
+                    file=filepath,
+                    line=node.lineno,
+                    message=f"Parameter '{arg.arg}' of '{name}' lacks type annotation",
+                )
+            )
 
     # Check function length
     if hasattr(node, "end_lineno") and node.end_lineno:
         length = node.end_lineno - node.lineno + 1
         if length > 50:
-            issues.append(Issue(
-                rule_id="py-ast-function-length",
-                severity="warning",
-                category="readability",
-                file=filepath,
-                line=node.lineno,
-                message=f"Function '{name}' is {length} lines (max 50)",
-            ))
+            issues.append(
+                Issue(
+                    rule_id="py-ast-function-length",
+                    severity="warning",
+                    category="readability",
+                    file=filepath,
+                    line=node.lineno,
+                    message=f"Function '{name}' is {length} lines (max 50)",
+                )
+            )
 
     # Check argument count
     args = node.args
@@ -688,26 +860,30 @@ def _check_python_function(
     if args.args and args.args[0].arg in ("self", "cls"):
         total_args -= 1
     if total_args > 7:
-        issues.append(Issue(
-            rule_id="py-ast-function-args",
-            severity="warning",
-            category="readability",
-            file=filepath,
-            line=node.lineno,
-            message=f"Function '{name}' has {total_args} arguments (max 7)",
-        ))
+        issues.append(
+            Issue(
+                rule_id="py-ast-function-args",
+                severity="warning",
+                category="readability",
+                file=filepath,
+                line=node.lineno,
+                message=f"Function '{name}' has {total_args} arguments (max 7)",
+            )
+        )
 
     # Check cyclomatic complexity
     complexity = _calc_cyclomatic_complexity(node)
     if complexity >= 10:
-        issues.append(Issue(
-            rule_id="py-ast-complexity",
-            severity="warning",
-            category="readability",
-            file=filepath,
-            line=node.lineno,
-            message=f"Function '{name}' has cyclomatic complexity {complexity} (max 10)",
-        ))
+        issues.append(
+            Issue(
+                rule_id="py-ast-complexity",
+                severity="warning",
+                category="readability",
+                file=filepath,
+                line=node.lineno,
+                message=f"Function '{name}' has cyclomatic complexity {complexity} (max 10)",
+            )
+        )
 
 
 def _calc_cyclomatic_complexity(node: ast.AST) -> int:
@@ -741,14 +917,16 @@ def validate_file(filepath: Path, language: str) -> ValidationResult:
     try:
         lines = filepath.read_text(encoding="utf-8", errors="replace").splitlines()
     except (OSError, UnicodeDecodeError) as e:
-        result.issues.append(Issue(
-            rule_id="read-error",
-            severity="error",
-            category="io",
-            file=str(filepath),
-            line=0,
-            message=f"Cannot read file: {e}",
-        ))
+        result.issues.append(
+            Issue(
+                rule_id="read-error",
+                severity="error",
+                category="io",
+                file=str(filepath),
+                line=0,
+                message=f"Cannot read file: {e}",
+            )
+        )
         return result
 
     result.lines_checked = len(lines)
@@ -776,8 +954,9 @@ EXTENSION_MAP: dict[str, str] = {
     ".pyi": "python",
     ".ts": "typescript",
     ".tsx": "typescript",
-    ".js": "typescript",
-    ".jsx": "typescript",
+    ".js": "javascript",
+    ".jsx": "javascript",
+    ".mjs": "javascript",
     ".rs": "rust",
     ".go": "go",
     ".java": "java",
@@ -795,6 +974,13 @@ EXTENSION_MAP: dict[str, str] = {
     ".ex": "elixir",
     ".exs": "elixir",
     ".lua": "lua",
+    ".zig": "zig",
+    ".r": "r",
+    ".R": "r",
+    ".clj": "clojure",
+    ".hs": "haskell",
+    ".dart": "dart",
+    ".ps1": "powershell",
 }
 
 
@@ -905,16 +1091,16 @@ Examples:
         """,
     )
     parser.add_argument("path", type=Path, help="File or directory to validate")
-    parser.add_argument("--lang", choices=["python", "typescript", "rust", "go"],
-                        help="Language to validate against")
-    parser.add_argument("--auto-detect", action="store_true",
-                        help="Auto-detect language from file extensions")
-    parser.add_argument("--json", action="store_true", dest="json_output",
-                        help="Output results as JSON")
-    parser.add_argument("--fail-on-warnings", action="store_true",
-                        help="Exit with error on warnings")
-    parser.add_argument("--exclude", nargs="*", default=["node_modules", "target", "vendor", ".git", "__pycache__", ".venv"],
-                        help="Directories to exclude")
+    parser.add_argument("--lang", choices=["python", "typescript", "rust", "go"], help="Language to validate against")
+    parser.add_argument("--auto-detect", action="store_true", help="Auto-detect language from file extensions")
+    parser.add_argument("--json", action="store_true", dest="json_output", help="Output results as JSON")
+    parser.add_argument("--fail-on-warnings", action="store_true", help="Exit with error on warnings")
+    parser.add_argument(
+        "--exclude",
+        nargs="*",
+        default=["node_modules", "target", "vendor", ".git", "__pycache__", ".venv"],
+        help="Directories to exclude",
+    )
 
     args = parser.parse_args()
 

@@ -1,0 +1,88 @@
+# Clojure Language Rules - Machine-Readable Configuration
+
+language: clojure
+version: '>=1.11'
+config_version: '1.0'
+anti_patterns:
+- id: clj-atom
+  name: Overuse of atoms
+  severity: info
+  category: code_quality
+  pattern: \(atom\s+
+  message: Atoms introduce mutable state - prefer pure functions
+  fix_hint: Use pure functions or agents for async updates
+- id: clj-eval
+  name: eval usage
+  severity: error
+  category: security
+  pattern: \(eval\s+
+  message: eval is a security risk
+  fix_hint: Use macros or pre-compiled code
+- id: clj-var
+  name: Dynamic var rebinding
+  severity: warning
+  category: code_quality
+  pattern: \bbinding\s+\[
+  message: Dynamic var binding is implicit state
+  fix_hint: Pass values explicitly through function args
+- id: clj-print
+  name: println in production
+  severity: info
+  category: code_quality
+  pattern: \(println\s+|\(prn\s+|\(print\s+
+  message: Use logging framework instead of println
+  fix_hint: Use tools.logging or timbre
+- id: clj-nil
+  name: nil punning risks
+  severity: info
+  category: type_safety
+  pattern: \(when\s+\w+\s
+  message: nil punning can mask falsy values
+  fix_hint: Use explicit nil checks when needed
+- id: clj-mutable
+  name: Java interop mutation
+  severity: warning
+  category: code_quality
+  pattern: \(\.\s*set[A-Z]
+  message: Java setter interop breaks referential transparency
+  fix_hint: Use atoms or immutable data structures
+- id: clj-thread-first
+  name: Complex thread-first
+  severity: info
+  category: code_quality
+  pattern: \(->>\s+\w+\s+\(
+  message: Complex threading macros reduce readability
+  fix_hint: Break into named functions or use cond-> for conditional threading
+- id: clj-defonce
+  name: defonce for state
+  severity: info
+  category: code_quality
+  pattern: \(defonce\s+
+  message: defonce hides initialization - prefer explicit state
+  fix_hint: Use def with proper initialization or atoms
+naming:
+  file:
+    pattern: ^[a-z][a-z0-9_-]*\.clj$
+    message: Clojure files should use kebab-case
+  function:
+    pattern: ^[a-z][a-z0-9_-]*[!?]?$
+    message: Clojure functions should use kebab-case
+  class:
+    pattern: ^[A-Z][a-zA-Z0-9]*$
+    message: Clojure types should use PascalCase
+  constant:
+    pattern: ^[A-Z][A-Z0-9_-]*$
+    message: Clojure constants should use UPPER-KEBAB-CASE
+thresholds:
+  max_function_length: 30
+  max_file_length: 400
+  max_line_length: 120
+  max_nesting_depth: 4
+  max_function_params: 5
+tooling:
+  linter: clj-kondo
+  formatter: cljfmt
+  test_runner: clojure-test
+  config_files:
+  - .clj-kondo/config.edn
+  - deps.edn

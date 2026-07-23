@@ -1,0 +1,88 @@
+# Dart Language Rules - Machine-Readable Configuration
+
+language: dart
+version: '>=3.0'
+config_version: '1.0'
+anti_patterns:
+- id: dt-print
+  name: print() in production
+  severity: info
+  category: code_quality
+  pattern: \bprint\s*\(
+  message: Use proper logging instead of print
+  fix_hint: Use dart:developer log() or logging package
+- id: dt-force-unwrap
+  name: Bang operator (!)
+  severity: error
+  category: type_safety
+  pattern: \w+!
+  message: Bang operator crashes on null
+  fix_hint: Use null-aware operators (?. ??)
+- id: dt-empty-catch
+  name: Empty catch block
+  severity: error
+  category: error_handling
+  pattern: catch\s*\(\s*\w+\s*(?:,\s*\w+)?\s*\)\s*\{\s*\}
+  message: Empty catch blocks hide errors
+  fix_hint: Log the error or rethrow
+- id: dt-dynamic
+  name: dynamic type
+  severity: warning
+  category: type_safety
+  pattern: \bdynamic\s+\w+
+  message: dynamic bypasses type safety
+  fix_hint: Use explicit types or generics
+- id: dt-as-cast
+  name: Force cast (as)
+  severity: warning
+  category: type_safety
+  pattern: \bas\s+[A-Z]\w+
+  message: Force cast can throw at runtime
+  fix_hint: Use as? with null check
+- id: dt-ignore
+  name: lint ignore comment
+  severity: info
+  category: code_quality
+  pattern: //\s*ignore:\s+
+  message: Lint ignores should be temporary
+  fix_hint: Fix the underlying issue instead of ignoring
+- id: dt-set-state
+  name: setState without mounted check
+  severity: warning
+  category: error_handling
+  pattern: \bsetState\s*\(
+  message: setState may be called after dispose
+  fix_hint: Check mounted before calling setState in async code
+- id: dt-print-debug
+  name: debugPrint overuse
+  severity: info
+  category: code_quality
+  pattern: \bdebugPrint\s*\(
+  message: debugPrint is for development only
+  fix_hint: Remove debugPrint or use logging package
+naming:
+  file:
+    pattern: ^[a-z][a-z0-9_]*\.dart$
+    message: Dart files should use snake_case
+  function:
+    pattern: ^[a-z][a-zA-Z0-9]*$
+    message: Dart functions should use camelCase
+  class:
+    pattern: ^[A-Z][a-zA-Z0-9]*$
+    message: Dart classes should use PascalCase
+  constant:
+    pattern: ^[a-z][a-zA-Z0-9]*$
+    message: Dart constants should use camelCase
+thresholds:
+  max_function_length: 50
+  max_file_length: 500
+  max_line_length: 120
+  max_nesting_depth: 4
+  max_function_params: 5
+tooling:
+  linter: dart analyze
+  formatter: dart format
+  test_runner: flutter test
+  config_files:
+  - analysis_options.yaml
+  - pubspec.yaml

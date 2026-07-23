@@ -1,0 +1,88 @@
+# Haskell Language Rules - Machine-Readable Configuration
+
+language: haskell
+version: '>=9.4'
+config_version: '1.0'
+anti_patterns:
+- id: hs-unsafe-perform-io
+  name: unsafePerformIO
+  severity: error
+  category: code_quality
+  pattern: unsafePerformIO
+  message: unsafePerformIO breaks referential transparency
+  fix_hint: Use IO monad properly
+- id: hs-unsafe-impure
+  name: unsafeInterleaveIO
+  severity: error
+  category: code_quality
+  pattern: unsafeInterleaveIO
+  message: unsafeInterleaveIO causes unpredictable evaluation
+  fix_hint: Use strict IO or streaming libraries
+- id: hs-from-just
+  name: fromJust usage
+  severity: error
+  category: type_safety
+  pattern: \bfromJust\b
+  message: fromJust crashes on Nothing - use pattern matching
+  fix_hint: Use fromMaybe, pattern matching, or maybe
+- id: hs-from-list
+  name: fromList without safety
+  severity: warning
+  category: type_safety
+  pattern: \bfromList\s+
+  message: fromList can fail on invalid input
+  fix_hint: Use fromList with verification or safe alternatives
+- id: hs-print
+  name: print in production
+  severity: info
+  category: code_quality
+  pattern: \bprint\s+|\bputStrLn\s+|\bhPutStrLn\s+
+  message: Use proper logging instead of print
+  fix_hint: Use monad-logger or fast-logger
+- id: hs-head
+  name: head/tail partial functions
+  severity: warning
+  category: error_handling
+  pattern: \bhead\s+|\btail\s+|\blast\s+|\binit\s+
+  message: Partial functions crash on empty lists
+  fix_hint: Use pattern matching or safe alternatives like Data.List.uncons
+- id: hs-read
+  name: read partial function
+  severity: error
+  category: error_handling
+  pattern: \bread\s+
+  message: read crashes on invalid input
+  fix_hint: Use readMaybe or reads for safe parsing
+- id: hs-string
+  name: String type usage
+  severity: info
+  category: code_quality
+  pattern: \bString\b
+  message: String is [Char] and is slow - use Text
+  fix_hint: Use Data.Text for better performance
+naming:
+  file:
+    pattern: ^[A-Z][a-zA-Z0-9]*\.hs$
+    message: Haskell module files should use PascalCase
+  function:
+    pattern: ^[a-z][a-zA-Z0-9']*$
+    message: Haskell functions should use camelCase
+  class:
+    pattern: ^[A-Z][a-zA-Z0-9']*$
+    message: Haskell types should use PascalCase
+  constant:
+    pattern: ^[A-Z][a-zA-Z0-9']*$
+    message: Haskell constants should use PascalCase
+thresholds:
+  max_function_length: 30
+  max_file_length: 400
+  max_line_length: 120
+  max_nesting_depth: 4
+  max_function_params: 5
+tooling:
+  linter: hlint
+  formatter: ormolu
+  test_runner: hspec
+  config_files:
+  - .hlint.yaml
+  - cabal.project

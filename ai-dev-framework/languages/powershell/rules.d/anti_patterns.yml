@@ -1,0 +1,88 @@
+# Powershell Language Rules - Machine-Readable Configuration
+
+language: powershell
+version: '>=7.0'
+config_version: '1.0'
+anti_patterns:
+- id: ps-write-host
+  name: Write-Host usage
+  severity: warning
+  category: code_quality
+  pattern: Write-Host\s+
+  message: Write-Host bypasses output pipeline - use Write-Output
+  fix_hint: Use Write-Output or Write-Information
+- id: ps-invoke-expression
+  name: Invoke-Expression
+  severity: error
+  category: security
+  pattern: Invoke-Expression\s+
+  message: Invoke-Expression is a code injection risk
+  fix_hint: Use direct command invocation or dot-sourcing
+- id: ps-empty-catch
+  name: Empty catch block
+  severity: error
+  category: error_handling
+  pattern: catch\s*\{\s*\}
+  message: Empty catch blocks hide errors
+  fix_hint: Log the error or rethrow
+- id: ps-return-null
+  name: Returning null
+  severity: warning
+  category: error_handling
+  pattern: return\s+\$null\s*;?
+  message: Returning null can cause unexpected behavior
+  fix_hint: Return empty array or throw
+- id: ps-write-output
+  name: Write-Output in scripts
+  severity: info
+  category: code_quality
+  pattern: Write-Output\s+
+  message: Prefer returning values directly over Write-Output
+  fix_hint: Output objects directly in the pipeline
+- id: ps-select-first
+  name: Select-Object -First
+  severity: info
+  category: code_quality
+  pattern: Select-Object\s+-First\s+
+  message: Consider Where-Object filtering before selection
+  fix_hint: Filter early with Where-Object for better performance
+- id: ps-sleep
+  name: Start-Sleep in scripts
+  severity: warning
+  category: code_quality
+  pattern: Start-Sleep\s+
+  message: Sleep blocks the thread - consider async patterns
+  fix_hint: Use timers or async waits
+- id: ps-alias
+  name: Using aliases
+  severity: info
+  category: code_quality
+  pattern: \b(gcm|iex|iwr|gci|gli|gci|gal|gcm)\b
+  message: Use full cmdlet names in scripts for clarity
+  fix_hint: Use Get-Command, Invoke-Expression, Invoke-WebRequest, etc.
+naming:
+  file:
+    pattern: ^[A-Z][a-zA-Z0-9-]*\.ps1$
+    message: PowerShell scripts should use PascalCase
+  function:
+    pattern: ^[A-Z][a-zA-Z0-9-]*$
+    message: PowerShell functions should use PascalCase
+  class:
+    pattern: ^[A-Z][a-zA-Z0-9]*$
+    message: PowerShell classes should use PascalCase
+  constant:
+    pattern: ^[A-Z][A-Z0-9_]*$
+    message: PowerShell constants should use UPPER_SNAKE_CASE
+thresholds:
+  max_function_length: 50
+  max_file_length: 500
+  max_line_length: 120
+  max_nesting_depth: 4
+  max_function_params: 5
+tooling:
+  linter: PSScriptAnalyzer
+  formatter: PSScriptAnalyzer
+  test_runner: Pester
+  config_files:
+  - .pssa.psd1
+  - PSScriptAnalyzerSettings.psd1

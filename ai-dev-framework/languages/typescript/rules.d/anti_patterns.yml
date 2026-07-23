@@ -74,6 +74,55 @@ anti_patterns:
   pattern: (?:it|test)\s*\((?:[^()]|\([^()]*\))*\)\s*\{\s*\}
   message: Test with empty body always passes
   fix_hint: Add expect() assertions or delete the test
+- id: ts-missing-strict-null
+  name: Missing strict null checks configuration
+  severity: warning
+  category: type_safety
+  pattern: 'strictNullChecks\s*:\s*false'
+  message: strictNullChecks should be enabled to catch null/undefined errors at compile time
+  fix_hint: 'Set "strictNullChecks": true in tsconfig.json'
+- id: ts-enum-prefer-union
+  name: Numeric/string enum instead of union type
+  severity: info
+  category: type_safety
+  pattern: 'enum\s+\w+\s*\{'
+  message: Enums add runtime overhead - prefer union types for value-only enumerations
+  fix_hint: 'Use type Status = "active" | "inactive" instead of enum Status { Active, Inactive }'
+- id: ts-missing-return-type
+  name: Missing explicit return type on exported function
+  severity: info
+  category: type_safety
+  pattern: '(?:export|export\s+default)\s+(?:async\s+)?function\s+\w+\s*\([^)]*\)\s*\{'
+  message: Exported functions should have explicit return types
+  fix_hint: 'Add return type: export function greet(name: string): string'
+- id: ts-void-operator
+  name: void operator usage
+  severity: info
+  category: code_quality
+  pattern: '\bvoid\s+\w+'
+  message: void operator discards return value and can hide errors
+  fix_hint: Handle the return value explicitly or use _ prefix for intentionally unused values
+- id: ts-any-escape
+  name: Type escape via @ts-ignore or @ts-expect-error
+  severity: error
+  category: type_safety
+  pattern: '@ts-ignore|@ts-expect-error'
+  message: '@ts-ignore and @ts-expect-error suppress TypeScript errors without fixing them'
+  fix_hint: Fix the underlying type error instead of suppressing it
+- id: ts-non-null-abuse
+  name: Chained non-null assertions
+  severity: warning
+  category: type_safety
+  pattern: '\w+![.\[]\w+!'
+  message: Chained non-null assertions (!) bypass multiple null checks unsafely
+  fix_hint: Use optional chaining (?.) or validate the entire chain
+- id: ts-enum-any-cast
+  name: Casting to any via bracket notation
+  severity: warning
+  category: type_safety
+  pattern: '<any>|\bas\s+any\b|\bany\[\]'
+  message: Casting to any defeats TypeScript's type system
+  fix_hint: Use unknown with type guards, or define a proper type
 naming:
   file:
     pattern: ^[a-z][a-z0-9-]*\.(ts|tsx)$

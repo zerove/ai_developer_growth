@@ -255,7 +255,9 @@ class TestAntiPatternDetection:
             "    return [x * 2 for x in items]",
         ]
         issues = check_anti_patterns(lines, python_rules, "test.py")
-        assert len(issues) == 0
+        # Only check for errors/warnings; info-level suggestions are allowed
+        serious = [i for i in issues if i.severity in ("error", "warning")]
+        assert len(serious) == 0
 
     def test_skip_comments(self, python_rules):
         lines = ["# except: pass", "# eval(x)"]

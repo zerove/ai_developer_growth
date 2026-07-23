@@ -1,0 +1,63 @@
+# React Framework Anti-Pattern Rules - Machine-Readable Configuration
+# Used by validate_language_rules.py for automated code validation
+
+framework: react
+language: typescript
+config_version: '1.0'
+anti_patterns:
+- id: react-state-mutation
+  name: Direct state mutation
+  severity: error
+  category: state_management
+  pattern: 'setState\s*\(|this\.state\.\w+\s*=|state\.\w+\s*=\s*(?!.*set)'
+  message: 'Never mutate state directly - use setState or useState setter'
+  fix_hint: 'Use setState({ ...state, key: value }) or setState(prev => ({ ...prev, key: value }))'
+- id: react-missing-key
+  name: Missing key in list rendering
+  severity: error
+  category: rendering
+  pattern: '\.map\s*\(\s*\([^)]*\)\s*=>\s*<'
+  message: 'List items need a unique "key" prop for efficient reconciliation'
+  fix_hint: 'Add key={item.id} or key={index} (prefer stable IDs over array index)'
+- id: react-useeffect-deps
+  name: useEffect without dependency array
+  severity: warning
+  category: performance
+  pattern: 'useEffect\s*\(\s*\(\s*\)\s*=>\s*\{'
+  message: 'useEffect without a dependency array runs after every render'
+  fix_hint: 'Add a dependency array: useEffect(() => { ... }, [dep1, dep2])'
+- id: react-inline-object
+  name: Inline object or function in JSX
+  severity: warning
+  category: performance
+  pattern: 'style=\{\s*\{|onClick=\{\s*\(\)\s*=>|onSubmit=\{\s*\(\)\s*=>|=\{\s*\(\)\s*=>\s*\w+\.\w+'
+  message: 'Inline objects/functions create new references each render, breaking memoization'
+  fix_hint: 'Extract to useMemo/useCallback or define outside the render function'
+- id: react-string-ref
+  name: String ref usage
+  severity: error
+  category: deprecated
+  pattern: "ref\\s*=\\s*[\"']\\w+[\"']"
+  message: 'String refs are deprecated and will be removed in future React versions'
+  fix_hint: 'Use useRef() hook or React.createRef() instead'
+- id: react-prop-drilling
+  name: Prop drilling beyond 3 levels
+  severity: warning
+  category: architecture
+  pattern: "^\\s*(?:const|let|var)\\s+\\{[^}]*\\}\\s*=\\s*props"
+  message: 'Excessive prop drilling indicates poor component architecture'
+  fix_hint: 'Use React Context, Zustand, or other state management for deep data'
+- id: react-usestate-loop
+  name: useState inside loops or conditionals
+  severity: error
+  category: correctness
+  pattern: "for\\s*\\(|while\\s*\\(|.forEach\\s*\\([\\s\\S]*useState|if\\s*\\(.*\\)\\s*\\{[\\s\\S]*useState"
+  message: 'Hooks must not be called inside loops, conditions, or nested functions'
+  fix_hint: 'Move hook calls to the top level of your component'
+- id: react-missing-error-boundary
+  name: Missing error boundary
+  severity: warning
+  category: error_handling
+  pattern: 'componentDidCatch|static getDerivedStateFromError|ErrorBoundary'
+  message: 'No error boundary detected - errors will crash the entire app'
+  fix_hint: 'Wrap risky components in an ErrorBoundary component'

@@ -67,6 +67,55 @@ anti_patterns:
   pattern: time\.Sleep\(
   message: Sleep in tests makes them slow and flaky
   fix_hint: Use channels, context with timeout, or polling
+- id: go-goroutine-leak
+  name: Goroutine leak potential
+  severity: warning
+  category: concurrency
+  pattern: 'go\s+func\s*\(|go\s+\w+\.'
+  message: Goroutines that block forever cause memory leaks
+  fix_hint: Use context cancellation or done channels to stop goroutines
+- id: go-missing-context
+  name: Function missing context.Context parameter
+  severity: warning
+  category: concurrency
+  pattern: 'func\s+\w+\s*\([^)]*(?:http|net|io|db|sql)'
+  message: Functions performing I/O should accept context.Context for cancellation
+  fix_hint: Add ctx context.Context as the first parameter
+- id: go-error-swallowing
+  name: Error returned but not checked
+  severity: error
+  category: error_handling
+  pattern: '_,\s*_\s*=\s*\w+\('
+  message: Discarding both return values hides potential errors
+  fix_hint: Check and handle all error return values
+- id: go-init-abuse
+  name: Multiple init() functions or complex init logic
+  severity: warning
+  category: code_quality
+  pattern: '^func\s+init\(\)\s*\{'
+  message: Complex init() functions have hidden execution order and test difficulties
+  fix_hint: Use explicit initialization functions or sync.Once for lazy setup
+- id: go-package-var
+  name: Package-level mutable variable
+  severity: warning
+  category: code_quality
+  pattern: '^var\s+\w+\s*=\s*(?!const)'
+  message: Package-level mutable variables create hidden state and race conditions
+  fix_hint: Use function parameters, struct fields, or sync primitives
+- id: go-string-builder-missing
+  name: String concatenation in loop with +
+  severity: warning
+  category: performance
+  pattern: "for\\s+.*\\{[\\s\\S]*?\\+\\s*[\"']|for\\s+.*\\{[\\s\\S]*?\\+=[\"']"
+  message: String concatenation with + in loops creates many temporary allocations
+  fix_hint: Use strings.Builder or bytes.Buffer for efficient string building
+- id: go-missing-vet
+  name: Potential formatting verb misuse
+  severity: info
+  category: code_quality
+  pattern: 'fmt\.\w+f?\s*\([^)]*%[sdvf]'
+  message: printf-style functions should be validated by go vet
+  fix_hint: Run go vet ./... regularly to catch formatting verb mismatches
 naming:
   file:
     pattern: ^[a-z][a-z0-9_]*\.go$

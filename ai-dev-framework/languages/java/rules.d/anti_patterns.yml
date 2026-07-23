@@ -74,6 +74,55 @@ anti_patterns:
   pattern: new\s+HashMap\s*\(\s*\)
   message: Consider using Map.of() or Map.copyOf() for immutable maps
   fix_hint: Use Map.of() for small fixed maps
+- id: java-raw-types
+  name: Raw generic type usage
+  severity: warning
+  category: type_safety
+  pattern: '(?:List|Map|Set|ArrayList|HashMap|HashSet|Iterator)\s+\w+\s*[=;,)]'
+  message: Raw types bypass generic type checking and cause runtime ClassCastExceptions
+  fix_hint: 'Use parameterized types: List<String> instead of List'
+- id: java-missing-final
+  name: Missing final on constants and parameters
+  severity: info
+  category: code_quality
+  pattern: 'private\s+static\s+(?!final)\w+\s+[A-Z_]+\s*='
+  message: Constants and immutable parameters should be declared final
+  fix_hint: Add 'final' to constants, parameters, and fields that should not be reassigned
+- id: java-synchronized-method
+  name: Synchronized on entire method
+  severity: warning
+  category: concurrency
+  pattern: 'public\s+synchronized\s+'
+  message: Synchronizing entire methods reduces concurrency and can cause contention
+  fix_hint: Use synchronized blocks on specific fields or ReentrantLock for finer control
+- id: java-string-concat-loop
+  name: String concatenation in loop
+  severity: warning
+  category: performance
+  pattern: 'for\s*\([^)]*\)\s*\{[\s\S]*?\+\s*"[^"]*"|for\s*\([^)]*\)\s*\{[\s\S]*?\+=\s*"'
+  message: String concatenation with + in loops creates many temporary String objects
+  fix_hint: Use StringBuilder or StringJoiner for efficient string building
+- id: java-missing-override
+  name: Missing @Override annotation
+  severity: info
+  category: code_quality
+  pattern: 'public\s+(?:String|boolean|int|void|long|double|float)\s+(?:toString|equals|hashCode|compareTo)\s*\('
+  message: Methods overriding superclass/interface methods should use @Override
+  fix_hint: Add @Override annotation to make override intent explicit
+- id: java-catch-throwable
+  name: Catching Throwable instead of Exception
+  severity: error
+  category: error_handling
+  pattern: 'catch\s*\(\s*Throwable\s+\w+\s*\)'
+  message: Catching Throwable includes Errors (OutOfMemoryError, StackOverflowError) which should not be caught
+  fix_hint: Catch Exception for recoverable errors, or catch specific exception types
+- id: java-system-out-usage
+  name: System.out/err usage in production code
+  severity: warning
+  category: code_quality
+  pattern: 'System\.(out|err)\.(print|println)\s*\('
+  message: System.out is not configurable, has no log levels, and is not async
+  fix_hint: 'Use SLF4J: logger.info("message") or java.util.logging'
 naming:
   file:
     pattern: ^[A-Z][a-zA-Z0-9]*\.java$

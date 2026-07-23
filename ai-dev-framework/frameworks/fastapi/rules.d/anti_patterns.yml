@@ -1,0 +1,63 @@
+# FastAPI Framework Anti-Pattern Rules - Machine-Readable Configuration
+# Used by validate_language_rules.py for automated code validation
+
+framework: fastapi
+language: python
+config_version: '1.0'
+anti_patterns:
+- id: fastapi-missing-response-model
+  name: Missing response_model on endpoint
+  severity: warning
+  category: api_design
+  pattern: '@app\.\w+\(|@router\.\w+\((?!.*response_model)'
+  message: 'Missing response_model means no response validation or OpenAPI schema'
+  fix_hint: 'Add response_model=YourResponseSchema to your route decorator'
+- id: fastapi-sync-dependency
+  name: Synchronous dependency function
+  severity: warning
+  category: async
+  pattern: 'def\s+\w+\s*\(.*\)\s*(?:->\s*\w+\s*:)?\s*\n\s+return'
+  message: 'Sync dependencies block the event loop and reduce throughput'
+  fix_hint: 'Use async def for dependencies that perform I/O (DB, HTTP, file access)'
+- id: fastapi-large-request-body
+  name: Large request body without size limit
+  severity: warning
+  category: security
+  pattern: 'body:\s*(?:str|bytes|UploadFile)'
+  message: 'Unbounded request bodies can cause memory exhaustion'
+  fix_hint: 'Use streaming uploads or set content-length limits in middleware'
+- id: fastapi-missing-status-code
+  name: Missing explicit status_code
+  severity: info
+  category: api_design
+  pattern: '@(app|router)\.\w+\('
+  message: 'Explicit status codes improve API clarity and documentation'
+  fix_hint: 'Add status_code=HTTP_200_OK (or appropriate code) to your route'
+- id: fastapi-bare-exception
+  name: Bare Exception handler
+  severity: error
+  category: error_handling
+  pattern: 'except\s+Exception\b(?!.*as)'
+  message: 'Catching bare Exception hides bugs and makes debugging harder'
+  fix_hint: 'Catch specific HTTPException or use custom exception handlers'
+- id: fastapi-missing-depends
+  name: Missing Depends for shared logic
+  severity: warning
+  category: api_design
+  pattern: '@(app|router)\.\w+\([^)]*\)\s*\n\s*async\s+def\s+\w+.*:\s*\n\s+\w+\s*='
+  message: 'Shared initialization logic should use FastAPI dependency injection'
+  fix_hint: 'Extract common logic into Depends() functions for reusability and testability'
+- id: fastapi-pydantic-mutation
+  name: Pydantic model mutation
+  severity: warning
+  category: correctness
+  pattern: '\w+\.model_fields\['
+  message: 'Directly mutating Pydantic model fields breaks validation guarantees'
+  fix_hint: 'Use model_copy(update={...}) or create a new instance instead of mutation'
+- id: fastapi-missing-middleware
+  name: Missing CORS or security middleware
+  severity: warning
+  category: security
+  pattern: 'app\s*=\s*FastAPI\(\)'
+  message: 'FastAPI apps should configure CORS, trusted hosts, and security middleware'
+  fix_hint: 'Add CORSMiddleware, TrustedHostMiddleware, and HTTPSRedirectMiddleware'

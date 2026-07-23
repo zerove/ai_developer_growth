@@ -103,6 +103,55 @@ anti_patterns:
   pattern: time\.sleep\(
   message: Sleep in tests makes them slow and flaky
   fix_hint: Use mock.patch or polling with timeout
+- id: py-missing-type-hints
+  name: Missing type hints in public functions
+  severity: warning
+  category: type_safety
+  pattern: 'def\s+[a-z]\w+\s*\([^)]*\)\s*:'
+  message: Public functions should have type annotations for parameters and return value
+  fix_hint: 'Add type hints: def func(arg: str) -> int:'
+- id: py-bare-raise
+  name: Bare raise outside except block
+  severity: error
+  category: error_handling
+  pattern: '^\s*raise\s*$'
+  message: Bare raise without arguments only works inside an except handler'
+  fix_hint: Use 'raise' only inside except blocks, or use 'raise ExceptionType()'
+- id: py-mutable-class-attr
+  name: Mutable class attribute
+  severity: warning
+  category: code_quality
+  pattern: 'class\s+\w+.*:\s*\n\s+\w+\s*=\s*(\[\]|\{|set\()'
+  message: Mutable class attributes are shared across all instances'
+  fix_hint: Initialize mutable attributes in __init__ or use dataclasses
+- id: py-nested-import
+  name: Nested import statement
+  severity: info
+  category: code_quality
+  pattern: '^\s+(?:from\s+\S+\s+)?import\s+\S+'
+  message: Import statements should be at the top of the file'
+  fix_hint: Move imports to the top of the module (PEP 8)
+- id: py-star-unpacking
+  name: Star unpacking in assignment
+  severity: info
+  category: code_quality
+  pattern: '^\s*\w+,\s*\*\w+\s*=\s*\w+'
+  message: Star unpacking can obscure the structure of data'
+  fix_hint: Use explicit unpacking or dataclasses for clarity
+- id: py-complex-comprehension
+  name: Complex list comprehension with too many conditions
+  severity: warning
+  category: code_quality
+  pattern: '\[.*for\s+.*in\s+.*\s+if\s+.*\s+if\s+.*\s+if\s+.*\]'
+  message: Comprehensions with >3 conditions are hard to read'
+  fix_hint: Extract complex logic into a helper function or use a regular loop
+- id: py-missing-all
+  name: Missing __all__ in public modules
+  severity: info
+  category: code_quality
+  pattern: '^(?!.*__all__)\s*(?:class|def|from)\s+\w+'
+  message: Public modules should define __all__ to control the public API'
+  fix_hint: Add __all__ = ["PublicClass", "public_function"] at module top
 naming:
   file:
     pattern: ^[a-z][a-z0-9_]*\.py$

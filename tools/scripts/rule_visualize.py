@@ -12,15 +12,13 @@ Usage:
 from __future__ import annotations
 
 import argparse
-import json
 import sys
-from http.server import BaseHTTPRequestHandler, HTTPServer
 from pathlib import Path
-from urllib.parse import urlparse
 
 sys.path.insert(0, str(Path(__file__).parent))
 from _common import rules_dir as _rules_dir
-from validate_language_rules import load_rules
+from rules.loader import load_rules
+from rules.web_base import RuleWebServer, run_server
 
 
 def get_all_rules() -> dict:
@@ -212,50 +210,29 @@ HTML_TEMPLATE = """<!DOCTYPE html>
 </html>"""
 
 
-class RuleHandler(BaseHTTPRequestHandler):
+class VisualizeHandler(RuleWebServer):
     """HTTP handler for rule visualization."""
 
-    def do_GET(self) -> None:
-        parsed = urlparse(self.path)
+    page_title = "AI Language Rules - Visual Browser"
 
-        if parsed.path == "/api/rules":
+    def handle_api(self, path, query, data=None):  # noqa: ANN001
+        if path == "/api/rules":
+            return get_all_rules()
+        elif path == "/api/languages":
             rules = get_all_rules()
-            self._json_response(rules)
-        elif parsed.path == "/api/languages":
-            rules = get_all_rules()
-            langs = {k: v["total"] for k, v in rules.items()}
-            self._json_response(langs)
-        elif parsed.path == "/api/stats":
+            return {k: v["total"] for k, v in rules.items()}
+        elif path == "/api/stats":
             rules = get_all_rules()
             total = sum(v["total"] for v in rules.values())
-            stats = {
+            return {
                 "languages": len(rules),
                 "total_rules": total,
                 "by_lang": {k: v["total"] for k, v in rules.items()},
             }
-            self._json_response(stats)
-        else:
-            self._html_response(HTML_TEMPLATE)
+        return {"error": "Unknown endpoint"}
 
-    def _json_response(self, data: dict) -> None:
-        content = json.dumps(data).encode()
-        self.send_response(200)
-        self.send_header("Content-Type", "application/json")
-        self.send_header("Content-Length", str(len(content)))
-        self.send_header("Access-Control-Allow-Origin", "*")
-        self.end_headers()
-        self.wfile.write(content)
-
-    def _html_response(self, html: str) -> None:
-        content = html.encode()
-        self.send_response(200)
-        self.send_header("Content-Type", "text/html")
-        self.send_header("Content-Length", str(len(content)))
-        self.end_headers()
-        self.wfile.write(content)
-
-    def log_message(self, format: str, *args: object) -> None:
-        pass  # Suppress default logging
+    def get_html_content(self):
+        return HTML_TEMPLATE
 
 
 def main() -> int:
@@ -264,20 +241,7 @@ def main() -> int:
     parser.add_argument("--lang", type=str, help="Pre-select a language")
     args = parser.parse_args()
 
-    server = HTTPServer(("localhost", args.port), RuleHandler)
-    print(f"Rule Visualization UI: http://localhost:{args.port}")
-    print("API endpoints:")
-    print("  GET /api/rules    - All rules JSON")
-    print("  GET /api/languages - Language list")
-    print("  GET /api/stats    - Statistics")
-    print("Press Ctrl+C to stop")
-
-    try:
-        server.serve_forever()
-    except KeyboardInterrupt:
-        print("\nStopped.")
-        server.server_close()
-
+    run_server(VisualizeHandler, port=args.port)
     return 0
 
 

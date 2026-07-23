@@ -25,6 +25,7 @@ from pathlib import Path
 import yaml
 
 sys.path.insert(0, str(Path(__file__).parent))
+from _common import handle_error
 from _common import rules_dir as _rules_dir
 
 
@@ -109,44 +110,67 @@ def main() -> int:
     parser = argparse.ArgumentParser(description="Validate YAML rule regex test cases")
     parser.add_argument("--lang", type=str, help="Language to test")
     parser.add_argument("--all", action="store_true", help="Test all languages")
+    parser.add_argument("--json", action="store_true", dest="json_output", help="Output as JSON")
+    parser.add_argument("--verbose", action="store_true", help="Detailed output")
     args = parser.parse_args()
 
-    if not args.all and not args.lang:
-        parser.error("Must specify --lang or --all")
+    try:
+        if not args.all and not args.lang:
+            parser.error("Must specify --lang or --all")
 
-    # Discover languages
-    if args.all:
-        langs_dir = _rules_dir() / "languages"
-        languages = sorted(
-            d.name for d in langs_dir.iterdir() if d.is_dir() and (d / "rules.d").exists()
-        )
-    else:
-        languages = [args.lang]
-
-    total_passed = 0
-    total_failed = 0
-    all_errors: list[str] = []
-
-    for lang in languages:
-        passed, failed, errors = validate_rule_tests(lang)
-        total_passed += passed
-        total_failed += failed
-        all_errors.extend(errors)
-
-        if failed:
-            print(f"  ✗ {lang}: {passed} passed, {failed} FAILED")
+        # Discover languages
+        if args.all:
+            langs_dir = _rules_dir() / "languages"
+            languages = sorted(
+                d.name for d in langs_dir.iterdir() if d.is_dir() and (d / "rules.d").exists()
+            )
         else:
-            print(f"  ✓ {lang}: {passed} passed")
+            languages = [args.lang]
 
-    print(f"\n{'=' * 40}")
-    print(f"Total: {total_passed} passed, {total_failed} failed")
+        total_passed = 0
+        total_failed = 0
+        all_errors: list[str] = []
+        lang_results: list[dict] = []
 
-    if all_errors:
-        print("\nFailures:")
-        for err in all_errors:
-            print(f"  ✗ {err}")
+        for lang in languages:
+            passed, failed, errors = validate_rule_tests(lang)
+            total_passed += passed
+            total_failed += failed
+            all_errors.extend(errors)
 
-    return 1 if total_failed > 0 else 0
+            lang_results.append({
+                "language": lang,
+                "passed": passed,
+                "failed": failed,
+                "errors": errors,
+            })
+
+            if not args.json_output:
+                if failed:
+                    print(f"  ✗ {lang}: {passed} passed, {failed} FAILED")
+                else:
+                    print(f"  ✓ {lang}: {passed} passed")
+
+        if args.json_output:
+            import json
+            print(json.dumps({
+                "total_passed": total_passed,
+                "total_failed": total_failed,
+                "languages": lang_results,
+            }, indent=2))
+        else:
+            print(f"\n{'=' * 40}")
+            print(f"Total: {total_passed} passed, {total_failed} failed")
+
+            if all_errors and args.verbose:
+                print("\nFailures:")
+                for err in all_errors:
+                    print(f"  ✗ {err}")
+
+        return 1 if total_failed > 0 else 0
+    except Exception as e:
+        handle_error(e, script="validate_rule_tests")
+        return 1
 
 
 if __name__ == "__main__":

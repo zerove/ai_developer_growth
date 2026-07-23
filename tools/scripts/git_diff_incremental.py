@@ -16,6 +16,9 @@ import subprocess
 import sys
 from pathlib import Path
 
+sys.path.insert(0, str(Path(__file__).parent))
+from _common import filter_supported_files
+
 
 def get_git_changed_files(ref: str = "HEAD", repo_dir: str | None = None) -> list[Path]:
     """Get files changed since a git ref.
@@ -125,21 +128,6 @@ def get_incremental_files(
         files.update(get_git_untracked_files(repo_dir))
 
     return sorted(files)
-
-
-# Supported extensions from EXTENSION_MAP
-SUPPORTED_EXTENSIONS = {
-    ".py", ".js", ".ts", ".jsx", ".tsx", ".rs", ".go", ".java", ".kt",
-    ".cs", ".php", ".rb", ".swift", ".scala", ".dart", ".lua", ".hs",
-    ".clj", ".r", ".R", ".pl", ".pm", ".ps1", ".zig", ".c", ".cpp",
-    ".h", ".hpp", ".cs", ".fs", ".vb", ".m", ".matlab", ".f90", ".f",
-    ".graphql", ".gql", ".asm", ".s", ".S",
-}
-
-
-def filter_supported_files(files: list[Path]) -> list[Path]:
-    """Filter to only files supported by the rules engine."""
-    return [f for f in files if f.suffix.lower() in SUPPORTED_EXTENSIONS]
 
 
 def main() -> int:

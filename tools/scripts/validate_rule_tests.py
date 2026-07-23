@@ -24,9 +24,8 @@ from pathlib import Path
 
 import yaml
 
-
-def _rules_dir() -> Path:
-    return Path(__file__).parent.parent.parent / "ai-dev-framework"
+sys.path.insert(0, str(Path(__file__).parent))
+from _common import rules_dir as _rules_dir
 
 
 def _load_rules_with_tests(lang: str) -> list[dict]:

@@ -28,10 +28,8 @@ from pathlib import Path
 
 import yaml
 
-
-def _framework_dir() -> Path:
-    return Path(__file__).parent.parent.parent / "ai-dev-framework"
-
+sys.path.insert(0, str(Path(__file__).parent))
+from _common import framework_dir as _framework_dir
 
 # ──────────────────────────────────────────────────────────
 # Built-in pack definitions

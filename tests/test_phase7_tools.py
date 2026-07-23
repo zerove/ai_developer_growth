@@ -95,6 +95,38 @@ class TestRuleTracker:
         assert _count_by_severity([]) == {}
         assert _count_by_rule([]) == {}
 
+    def test_nested_empty_issues(self) -> None:
+        results = [{"issues": []}, {}]
+        assert _count_by_severity(results) == {}
+        assert _count_by_rule(results) == {}
+
+
+# ──────────────────────────────────────────────────────────
+# Rule Registry extended tests
+# ──────────────────────────────────────────────────────────
+
+
+class TestRuleRegistryExtended:
+    def test_empty_registry_load(self, tmp_path: Path) -> None:
+        import rule_registry
+        old = rule_registry._registry_file
+        rule_registry._registry_file = lambda: tmp_path / "nonexistent.json"
+        try:
+            reg = _load_registry()
+            assert reg == {"packs": {}, "version": "1.0"}
+        finally:
+            rule_registry._registry_file = old
+
+    def test_file_hash_different_content(self, tmp_path: Path) -> None:
+        f1 = tmp_path / "a.yml"
+        f2 = tmp_path / "b.yml"
+        f1.write_text("content-a")
+        f2.write_text("content-b")
+        assert _file_hash(f1) != _file_hash(f2)
+
+    def test_file_hash_missing_file(self, tmp_path: Path) -> None:
+        assert _file_hash(tmp_path / "missing.yml") == ""
+
 
 # ──────────────────────────────────────────────────────────
 # Git Diff Incremental tests

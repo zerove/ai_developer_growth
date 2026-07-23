@@ -11,6 +11,13 @@ anti_patterns:
   pattern: :\s*any\b|as\s+any\b
   message: any disables TypeScript type checking
   fix_hint: Use unknown and narrow with type guards, or define a proper type
+  test_cases:
+    - code: 'const x: any = {}'
+      should_match: true
+    - code: 'data as any'
+      should_match: true
+    - code: 'const x: string = ""'
+      should_match: false
 - id: ts-unsafe-non-null
   name: Non-null assertion
   severity: warning
@@ -53,6 +60,13 @@ anti_patterns:
   pattern: ^\s*var\s+
   message: var has function scope - use const or let
   fix_hint: Use const by default, let when reassignment is needed
+  test_cases:
+    - code: 'var x = 1'
+      should_match: true
+    - code: '    var y = 2'
+      should_match: true
+    - code: 'const x = 1'
+      should_match: false
 - id: ts-require-import
   name: require() instead of import
   severity: warning

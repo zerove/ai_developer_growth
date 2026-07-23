@@ -122,3 +122,95 @@ class TestDetectLanguage:
         (tmp_dir / "requirements.txt").write_text("fastapi==0.100.0\n")
         result = detect_language(tmp_dir)
         assert result["framework"] == "fastapi"
+
+
+class TestCLI:
+    def test_main_no_args(self, tmp_dir):
+        """Test main() with default args."""
+        import sys
+
+        from tools.scripts.detect_language import main
+
+        old_argv = sys.argv
+        sys.argv = ["detect_language", str(tmp_dir)]
+        try:
+            assert main() == 0
+        finally:
+            sys.argv = old_argv
+
+    def test_main_json_output(self, tmp_dir):
+        """Test main() with --json flag."""
+        import sys
+
+        from tools.scripts.detect_language import main
+
+        old_argv = sys.argv
+        sys.argv = ["detect_language", str(tmp_dir), "--json"]
+        try:
+            assert main() == 0
+        finally:
+            sys.argv = old_argv
+
+    def test_main_not_a_dir(self, tmp_path):
+        """Test main() with a non-directory path."""
+        import sys
+
+        from tools.scripts.detect_language import main
+
+        old_argv = sys.argv
+        sys.argv = ["detect_language", str(tmp_path / "nonexistent")]
+        try:
+            assert main() == 1
+        finally:
+            sys.argv = old_argv
+
+
+class TestGoMod:
+    def test_go_mod_with_framework(self, tmp_dir):
+        """Test go.mod framework detection."""
+        from tools.scripts.detect_language import detect_framework_from_go_mod
+
+        (tmp_dir / "go.mod").write_text('require "github.com/gin-gonic/gin" v1.9.0')
+        assert detect_framework_from_go_mod(tmp_dir) == "gin"
+
+    def test_go_mod_no_framework(self, tmp_dir):
+        """Test go.mod without known framework."""
+        from tools.scripts.detect_language import detect_framework_from_go_mod
+
+        (tmp_dir / "go.mod").write_text("module myproject\n")
+        assert detect_framework_from_go_mod(tmp_dir) is None
+
+    def test_go_mod_no_file(self, tmp_dir):
+        """Test go.mod detection when file doesn't exist."""
+        from tools.scripts.detect_language import detect_framework_from_go_mod
+
+        assert detect_framework_from_go_mod(tmp_dir) is None
+
+
+class TestFrameworkDetection:
+    def test_framework_for_python(self, tmp_dir):
+        """Test framework detection for Python."""
+        from tools.scripts.detect_language import detect_framework
+
+        (tmp_dir / "requirements.txt").write_text("django==4.2\n")
+        assert detect_framework(tmp_dir, "python") == "django"
+
+    def test_framework_for_go(self, tmp_dir):
+        """Test framework detection for Go."""
+        from tools.scripts.detect_language import detect_framework
+
+        (tmp_dir / "go.mod").write_text('require "github.com/gin-gonic/gin" v1.9.0')
+        assert detect_framework(tmp_dir, "go") == "gin"
+
+    def test_framework_for_unknown_lang(self, tmp_dir):
+        """Test framework detection for unsupported language."""
+        from tools.scripts.detect_language import detect_framework
+
+        assert detect_framework(tmp_dir, "fortran") is None
+
+    def test_framework_from_requirements_no_match(self, tmp_dir):
+        """Test requirements.txt with no known framework."""
+        from tools.scripts.detect_language import detect_framework_from_requirements
+
+        (tmp_dir / "requirements.txt").write_text("numpy==1.24\n")
+        assert detect_framework_from_requirements(tmp_dir) is None

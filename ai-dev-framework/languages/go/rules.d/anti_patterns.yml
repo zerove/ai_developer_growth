@@ -1,0 +1,99 @@
+# Go Language Rules - Machine-Readable Configuration
+
+language: go
+version: '>=1.21'
+config_version: '1.0'
+anti_patterns:
+- id: go-underscore-error
+  name: Ignored error with _
+  severity: error
+  category: error_handling
+  pattern: ',\s*_\s*(:=|=)'
+  message: Ignoring errors with _ hides potential failures
+  fix_hint: 'Handle the error: if err != nil { return err }'
+- id: go-panic-in-library
+  name: panic() in library code
+  severity: error
+  category: error_handling
+  pattern: panic\s*\(
+  message: panic() crashes the program - return error instead
+  fix_hint: Return error values and let callers decide
+- id: go-log-fatal
+  name: log.Fatal usage
+  severity: warning
+  category: error_handling
+  pattern: log\.Fatal
+  message: log.Fatal calls os.Exit(1) - prevents cleanup
+  fix_hint: Return error to caller instead
+- id: go-string-error
+  name: String error comparison
+  severity: warning
+  category: error_handling
+  pattern: err\.Error\(\)\s*==
+  message: String comparison on errors is fragile
+  fix_hint: Use errors.Is() or errors.As()
+- id: go-http-tls-skip
+  name: TLS verification disabled
+  severity: error
+  category: security
+  pattern: InsecureSkipVerify\s*:\s*true
+  message: Disabling TLS verification allows MITM attacks
+  fix_hint: Use proper TLS configuration
+- id: go-init-func
+  name: init() function
+  severity: warning
+  category: code_quality
+  pattern: ^func\s+init\(\)
+  message: init() functions have hidden execution order
+  fix_hint: Use NewXxx constructors or explicit Init() methods
+- id: go-fmt-print
+  name: fmt.Print in production
+  severity: info
+  category: code_quality
+  pattern: fmt\.(Print|Println|Printf)\(
+  message: Use structured logging instead of fmt.Print
+  fix_hint: Use log/slog or a third-party logger
+- id: go-test-println
+  name: fmt.Println in tests
+  severity: info
+  category: testing
+  pattern: fmt\.Print|log\.Print
+  message: Use t.Log() instead of fmt.Println in tests
+  fix_hint: Replace with t.Log() or t.Logf()
+- id: go-test-sleep
+  name: time.Sleep in tests
+  severity: warning
+  category: testing
+  pattern: time\.Sleep\(
+  message: Sleep in tests makes them slow and flaky
+  fix_hint: Use channels, context with timeout, or polling
+naming:
+  file:
+    pattern: ^[a-z][a-z0-9_]*\.go$
+    message: Go files should use snake_case
+  function:
+    pattern: ^[A-Z][a-zA-Z0-9]*$
+    message: Exported Go functions should use CamelCase
+  struct:
+    pattern: ^[A-Z][a-zA-Z0-9]*$
+    message: Go structs should use PascalCase
+  constant:
+    pattern: ^[A-Z][a-zA-Z0-9]*$
+    message: Go exported constants should use CamelCase
+  package:
+    pattern: ^[a-z][a-z0-9]*$
+    message: Go packages should use lowercase names
+thresholds:
+  max_function_length: 50
+  max_file_length: 500
+  max_line_length: 120
+  max_nesting_depth: 4
+  max_function_params: 5
+  max_cyclomatic_complexity: 10
+tooling:
+  linter: golangci-lint
+  formatter: gofmt
+  test_runner: go
+  config_files:
+  - .golangci.yml
+  - go.mod

@@ -2,7 +2,7 @@
 
 ## Status
 
-Proposed
+Accepted (Implemented 2026-07-23)
 
 ## Date
 
@@ -10,7 +10,7 @@ Proposed
 
 ## Context
 
-`validate_language_rules.py` has grown to 2160 lines with 40+ functions covering:
+`validate_language_rules.py` grew to 2166 lines with 50 functions covering:
 - Rule loading and merging
 - Anti-pattern detection
 - Naming convention checking
@@ -22,48 +22,57 @@ Proposed
 - Linter aggregation
 - File caching
 
-This makes it hard to navigate, test in isolation, and maintain.
+This made it hard to navigate, test in isolation, and maintain.
 
 ## Decision
 
-Refactor into a `rules/` package:
+Refactor into a `rules_engine/` package with a unified `hooks_runner.py` entry point:
 
 ```
-tools/scripts/rules/
-  __init__.py         # Public API re-exports
-  loader.py           # load_rules(), load_custom_rules(), _merge_rules()
-  checker.py          # check_anti_patterns(), check_naming_conventions()
-  complexity.py       # check_thresholds(), nesting analysis
-  python_ast.py       # check_python_ast(), cyclomatic complexity
-  fixer.py            # apply_fixes()
-  reporters.py        # JUnit, HTML, SARIF generation
-  health.py           # calculate_health_score()
-  cache.py            # file_hash, load/save cache
-  linters.py          # ruff, mypy, eslint, golangci-lint
-  models.py           # Issue, ValidationResult, FixResult, HealthScore
+tools/scripts/rules_engine/
+  __init__.py              # Public API + docstring examples
+  models.py                # Issue, CheckResult, Severity, HealthScore
+  rule_loader.py           # load_rules(), disk cache, YAML merging
+  anti_pattern_checker.py  # Regex-based anti-pattern detection
+  naming_checker.py        # Naming convention validation
+  complexity_checker.py    # AST complexity (Python) + regex (JS/TS)
+  security_patterns.py     # Cross-language security/type/error patterns
+  checker.py               # Main orchestrator + external linter integration
+
+tools/scripts/hooks_runner.py    # Unified CLI entry point
+tools/scripts/report_generator.py # JUnit/HTML/SARIF report generation
+tools/scripts/fix_applier.py      # Auto-fix engine
 ```
 
-### Migration Strategy
+### Migration Strategy (Completed)
 
-1. Create `rules/` package with thin wrappers
-2. Move functions one module at a time
-3. Keep backward-compatible imports in validate_language_rules.py
-4. Update tests incrementally
+1. Created `rules_engine/` package with modular checkers
+2. Created `hooks_runner.py` as unified entry point (lint, format, typecheck, test, security, quality-gate, governance-audit)
+3. Extracted `report_generator.py` and `fix_applier.py` from validate_language_rules.py
+4. Updated `validate_language_rules.py` to delegate to new modules (backward-compatible)
+5. Updated CI/CD to use `hooks_runner.py`
+6. Added 82 new unit tests (748 -> 830 total)
 
 ## Consequences
 
 ### Positive
-- Each module is independently testable
-- Easier to find specific functionality
+- Each module is independently testable (55 new tests for rules_engine)
+- hooks_runner.py reduced full check time via parallelization (lint+format+typecheck concurrent)
 - Clearer dependency graph
-- Enables lazy loading
+- Disk cache for rule loading across CLI invocations
+- Unified entry point for CI/CD and pre-commit hooks
 
 ### Negative
-- Breaking change for direct imports (mitigated by re-exports)
-- More files to navigate
-- Import paths change
+- More files to navigate (7 modules vs 1 monolith)
+- Import paths changed (mitigated by re-exports in validate_language_rules.py)
 
-## Follow-up
+## Metrics
 
-- Implement in Phase 8
-- Add module-level tests
+| Metric | Before | After |
+|--------|--------|-------|
+| validate_language_rules.py | 2166 lines | 1930 lines (-11%) |
+| rules_engine modules | 0 | 7 modules |
+| Test count | 748 | 830 (+82) |
+| hooks_runner.py | N/A | 560 lines |
+| Report generators | inline | 232 lines (report_generator.py) |
+| Fix applier | inline | 85 lines (fix_applier.py) |

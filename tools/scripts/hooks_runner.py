@@ -20,6 +20,7 @@
 import argparse
 import subprocess
 import sys
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
 
 # 兼容 python -m 和 python <path> 两种运行方式
@@ -113,7 +114,7 @@ def run_security() -> tuple[bool, str]:
 
     # pip-audit
     result2 = subprocess.run(
-        ["pip-audit", "--desc"],
+        ["pip-audit", "--desc", "--timeout", "30"],
         capture_output=True,
         text=True,
         timeout=120,
@@ -474,56 +475,46 @@ Examples:
         print("  FULL HOOKS RUNNER - 完整检查套件")
         print("=" * 60)
 
+        # 并行执行独立检查 (lint + format + typecheck 可并行)
+        check_funcs = [
+            ("Lint", run_lint),
+            ("Format", run_format_check),
+            ("Type Check", run_typecheck),
+        ]
+        results: dict[str, tuple[bool, str]] = {}
+        with ThreadPoolExecutor(max_workers=3) as executor:
+            futures = {executor.submit(func): name for name, func in check_funcs}
+            for future in as_completed(futures):
+                name = futures[future]
+                try:
+                    passed, output = future.result()
+                except Exception as e:
+                    passed, output = False, str(e)
+                results[name] = (passed, output)
+
+        # 串行执行有依赖的检查 (test -> security -> quality-gate -> governance-audit)
+        sequential_checks = [
+            ("Test Suite", run_tests),
+            ("Security Scan", run_security),
+            ("AI Quality Gate", lambda: run_quality_gate(Path("tools/scripts"), full=True)),
+            ("Governance Audit", lambda: run_governance_audit(full=True)),
+        ]
+        for name, func in sequential_checks:
+            try:
+                passed, output = func()
+            except Exception as e:
+                passed, output = False, str(e)
+            results[name] = (passed, output)
+
+        # 输出结果 (按固定顺序)
+        order = ["Lint", "Format", "Type Check", "Test Suite", "Security Scan", "AI Quality Gate", "Governance Audit"]
         all_passed = True
-
-        # 1. Lint
-        print("\n📋 1/7: Lint Check")
-        passed, output = run_lint()
-        print(output)
-        if not passed:
-            all_passed = False
-
-        # 2. Format
-        print("\n📋 2/7: Format Check")
-        passed, output = run_format_check()
-        print(output)
-        if not passed:
-            all_passed = False
-
-        # 3. Type Check
-        print("\n📋 3/7: Type Check")
-        passed, output = run_typecheck()
-        print(output)
-        if not passed:
-            all_passed = False
-
-        # 4. Tests
-        print("\n📋 4/7: Test Suite")
-        passed, output = run_tests()
-        print(output)
-        if not passed:
-            all_passed = False
-
-        # 5. Security
-        print("\n📋 5/7: Security Scan")
-        passed, output = run_security()
-        print(output)
-        if not passed:
-            all_passed = False
-
-        # 6. Quality Gate
-        print("\n📋 6/7: AI Quality Gate")
-        passed, output = run_quality_gate(Path("tools/scripts"), full=True)
-        print(output)
-        if not passed:
-            all_passed = False
-
-        # 7. Governance Audit
-        print("\n📋 7/7: Governance Audit")
-        passed, output = run_governance_audit(full=True)
-        print(output)
-        if not passed:
-            all_passed = False
+        for i, name in enumerate(order, 1):
+            print(f"\n📋 {i}/7: {name}")
+            passed, output = results[name]
+            print(output)
+            if not passed:
+                all_passed = False
 
         print("\n" + "=" * 60)
         if all_passed:

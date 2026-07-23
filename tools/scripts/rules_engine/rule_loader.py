@@ -21,6 +21,10 @@ from _common import rules_dir
 _RULE_CACHE: dict[str, dict[str, Any]] = {}
 _FILE_HASH_CACHE: dict[str, str] = {}
 
+# Disk cache path
+_DISK_CACHE_DIR = Path(__file__).parent.parent.parent / ".cache" / "rules_engine"
+_DISK_CACHE_FILE = _DISK_CACHE_DIR / "rules_cache.json"
+
 
 def _file_hash(filepath: Path) -> str:
     """Quick content hash for incremental checks."""
@@ -29,6 +33,25 @@ def _file_hash(filepath: Path) -> str:
         return hashlib.sha256(content).hexdigest()
     except OSError:
         return ""
+
+
+def _load_disk_cache() -> dict[str, Any]:
+    """Load rules from disk cache."""
+    if _DISK_CACHE_FILE.exists():
+        try:
+            return json.loads(_DISK_CACHE_FILE.read_text())
+        except (json.JSONDecodeError, OSError):
+            pass
+    return {}
+
+
+def _save_disk_cache(cache: dict[str, Any]) -> None:
+    """Save rules to disk cache."""
+    try:
+        _DISK_CACHE_DIR.mkdir(parents=True, exist_ok=True)
+        _DISK_CACHE_FILE.write_text(json.dumps(cache))
+    except OSError:
+        pass
 
 
 def _rules_hash(language: str) -> str:
@@ -69,11 +92,17 @@ def _save_cache(cache_file: Path, cache: dict[str, str]) -> None:
 
 def load_rules(language: str, framework_dir: Path | None = None) -> dict[str, Any]:
     """Load YAML rules for a given language with caching."""
-    # Check cache
+    # Check in-memory cache
     rh = _rules_hash(language)
     cache_key = f"{language}:{rh}"
     if cache_key in _RULE_CACHE:
         return _RULE_CACHE[cache_key]
+
+    # Check disk cache
+    disk_cache = _load_disk_cache()
+    if cache_key in disk_cache:
+        _RULE_CACHE[cache_key] = disk_cache[cache_key]
+        return disk_cache[cache_key]
 
     try:
         import yaml
@@ -103,6 +132,11 @@ def load_rules(language: str, framework_dir: Path | None = None) -> dict[str, An
 
     # Cache the result
     _RULE_CACHE[cache_key] = result
+
+    # Save to disk cache
+    disk_cache[cache_key] = result
+    _save_disk_cache(disk_cache)
+
     return result
 
 

@@ -187,6 +187,7 @@ def discover_plugins(directory: Path) -> int:
             continue
 
         try:
+            before = len(_registry)
             spec = importlib.util.spec_from_file_location(
                 f"rules_engine_plugins.{py_file.stem}",
                 py_file,
@@ -201,13 +202,15 @@ def discover_plugins(directory: Path) -> int:
             plugin = getattr(module, "plugin", None)
             if isinstance(plugin, CheckerPlugin):
                 register_checker(plugin)
-                count += 1
 
             # Check for register() function
             register_fn = getattr(module, "register", None)
             if callable(register_fn):
                 register_fn()
-                count += 1
+
+            # Count any plugins registered during module load
+            after = len(_registry)
+            count += after - before
         except Exception:
             # Skip plugins that fail to load
             continue

@@ -23,6 +23,10 @@ import sys
 from pathlib import Path
 from typing import TypedDict
 
+# 兼容 python -m 和 python <path> 两种运行方式
+if __package__ is None or __package__ == "":
+    sys.path.insert(0, str(Path(__file__).resolve().parent.parent.parent))
+
 from tools.scripts.validate_language_rules import (
     detect_language_from_file as detect_lang,
 )

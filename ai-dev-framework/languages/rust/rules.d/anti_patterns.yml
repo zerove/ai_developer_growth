@@ -1,0 +1,96 @@
+# Rust Language Rules - Machine-Readable Configuration
+
+language: rust
+version: '>=1.70'
+config_version: '1.0'
+anti_patterns:
+- id: rs-unwrap
+  name: unwrap() usage
+  severity: error
+  category: error_handling
+  pattern: \.unwrap\(\)
+  message: unwrap() panics on error - use proper error handling
+  fix_hint: Use match, if let, or the ? operator
+- id: rs-expect
+  name: expect() usage
+  severity: warning
+  category: error_handling
+  pattern: \.expect\(
+  message: expect() panics with a message - consider using ? or Result
+  fix_hint: Use ? operator in functions returning Result
+- id: rs-panic
+  name: panic! macro usage
+  severity: error
+  category: error_handling
+  pattern: panic!\s*\(
+  message: panic! crashes the program - use Result for recoverable errors
+  fix_hint: Return Result<T, E> instead of panicking
+- id: rs-unsafe
+  name: unsafe block
+  severity: warning
+  category: safety
+  pattern: unsafe\s*\{
+  message: unsafe blocks bypass Rust safety guarantees
+  fix_hint: Minimize unsafe code and add safety comments
+- id: rs-transmute
+  name: transmute usage
+  severity: error
+  category: safety
+  pattern: transmute\s*\(
+  message: transmute is extremely unsafe
+  fix_hint: Use From/Into traits or try_from()
+- id: rs-print
+  name: println! in library code
+  severity: info
+  category: code_quality
+  pattern: println!\s*\(|dbg!\s*\(
+  message: Remove println!/dbg! from library code
+  fix_hint: Use the log or tracing crate
+- id: rs-clone-overuse
+  name: Excessive .clone()
+  severity: info
+  category: performance
+  pattern: \.clone\(\)
+  message: Excessive cloning may indicate ownership issues
+  fix_hint: Consider references (&T) or Cow<T>
+- id: rs-hashmap-untyped
+  name: Untyped HashMap
+  severity: info
+  category: type_safety
+  pattern: HashMap::new\(\)
+  message: Consider using typed structs instead of raw HashMaps
+  fix_hint: Define a struct with named fields
+naming:
+  file:
+    pattern: ^[a-z][a-z0-9_]*\.rs$
+    message: Rust files should use snake_case
+  function:
+    pattern: ^[a-z][a-z0-9_]*$
+    message: Rust functions should use snake_case
+  struct:
+    pattern: ^[A-Z][a-zA-Z0-9]*$
+    message: Rust structs should use PascalCase
+  enum:
+    pattern: ^[A-Z][a-zA-Z0-9]*$
+    message: Rust enums should use PascalCase
+  constant:
+    pattern: ^[A-Z][A-Z0-9_]*$
+    message: Rust constants should use UPPER_SNAKE_CASE
+  trait:
+    pattern: ^[A-Z][a-zA-Z0-9]*$
+    message: Rust traits should use PascalCase
+thresholds:
+  max_function_length: 50
+  max_file_length: 500
+  max_line_length: 100
+  max_nesting_depth: 4
+  max_function_args: 5
+  max_cyclomatic_complexity: 10
+tooling:
+  linter: clippy
+  formatter: rustfmt
+  test_runner: cargo
+  config_files:
+  - rustfmt.toml
+  - .clippy.toml
+  - Cargo.toml

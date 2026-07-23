@@ -1,0 +1,111 @@
+# TypeScript Language Rules - Machine-Readable Configuration
+
+language: typescript
+version: '>=5.0'
+config_version: '1.0'
+anti_patterns:
+- id: ts-any-type
+  name: Use of any type
+  severity: error
+  category: type_safety
+  pattern: :\s*any\b|as\s+any\b
+  message: any disables TypeScript type checking
+  fix_hint: Use unknown and narrow with type guards, or define a proper type
+- id: ts-unsafe-non-null
+  name: Non-null assertion
+  severity: warning
+  category: type_safety
+  pattern: \w+!
+  message: Non-null assertions (!) bypass null checks
+  fix_hint: Use optional chaining (?.) or proper null checks
+- id: ts-empty-catch
+  name: Empty catch block
+  severity: error
+  category: error_handling
+  pattern: catch\s*(?:\([^)]*\))?\s*\{\s*\}
+  message: Never silently ignore caught errors
+  fix_hint: 'At minimum: console.error(error) or re-throw'
+- id: ts-inner-html
+  name: innerHTML usage
+  severity: error
+  category: security
+  pattern: \.innerHTML\s*=
+  message: innerHTML enables XSS attacks
+  fix_hint: Use textContent, or sanitize with DOMPurify
+- id: ts-eval
+  name: eval() usage
+  severity: error
+  category: security
+  pattern: \beval\s*\(
+  message: eval() is a security risk
+  fix_hint: Use JSON.parse() for data
+- id: ts-console-log
+  name: console.log in production
+  severity: info
+  category: code_quality
+  pattern: console\.(log|debug|info)\s*\(
+  message: Remove console.log from production code
+  fix_hint: Use a proper logging library
+- id: ts-var-declaration
+  name: var declaration
+  severity: warning
+  category: code_quality
+  pattern: ^\s*var\s+
+  message: var has function scope - use const or let
+  fix_hint: Use const by default, let when reassignment is needed
+- id: ts-require-import
+  name: require() instead of import
+  severity: warning
+  category: code_quality
+  pattern: require\s*\(
+  message: Use ES module imports instead of CommonJS require()
+  fix_hint: 'Convert to: import { x } from ''./module'''
+- id: ts-skip-test
+  name: Skipped test
+  severity: info
+  category: testing
+  pattern: (?:it|test|describe)\.skip\s*\(
+  message: Skipped tests reduce coverage
+  fix_hint: Fix the test or document why it is skipped
+- id: ts-no-op-test
+  name: Empty test body
+  severity: error
+  category: testing
+  pattern: (?:it|test)\s*\((?:[^()]|\([^()]*\))*\)\s*\{\s*\}
+  message: Test with empty body always passes
+  fix_hint: Add expect() assertions or delete the test
+naming:
+  file:
+    pattern: ^[a-z][a-z0-9-]*\.(ts|tsx)$
+    message: TypeScript files should use kebab-case
+  function:
+    pattern: ^[a-z][a-zA-Z0-9]*$
+    exceptions:
+    - useCallback
+    - useState
+    message: Functions should use camelCase
+  class:
+    pattern: ^[A-Z][a-zA-Z0-9]*$
+    message: Classes should use PascalCase
+  interface:
+    pattern: ^I[A-Z][a-zA-Z0-9]*$
+    message: Interfaces should use PascalCase
+  constant:
+    pattern: ^[A-Z][A-Z0-9_]*$
+    message: Constants should use UPPER_SNAKE_CASE
+thresholds:
+  max_function_length: 40
+  max_file_length: 400
+  max_line_length: 100
+  max_nesting_depth: 4
+  max_function_params: 5
+  max_cyclomatic_complexity: 10
+tooling:
+  linter: eslint
+  formatter: prettier
+  type_checker: tsc
+  test_runner: vitest
+  config_files:
+  - .eslintrc.json
+  - tsconfig.json
+  - .prettierrc

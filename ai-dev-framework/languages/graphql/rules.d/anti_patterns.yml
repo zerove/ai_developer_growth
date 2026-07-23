@@ -1,0 +1,72 @@
+language: graphql
+version: '>=1.0'
+config_version: '1.0'
+anti_patterns:
+- id: gql-introspection-prod
+  name: Introspection queries in production
+  severity: error
+  category: security
+  pattern: __schema|__type\s*\{
+  message: Disable introspection in production to prevent schema discovery
+  fix_hint: Disable introspection in your server config; use persisted queries
+- id: gql-missing-description
+  name: Type or field without description
+  severity: info
+  category: readability
+  pattern: type\s+\w+\s*\{(?!\\s*""""?)|\w+\s*\(.*\):\s*(?!\\s*""""?)
+  message: Add descriptions to all types and fields for API discoverability
+  fix_hint: Add triple-quoted descriptions above each type and field definition
+- id: gql-n-plus-one
+  name: Potential N+1 query pattern
+  severity: warning
+  category: code_quality
+  pattern: resolve\s*\(|\bfieldResolve\s*\(.*\)\s*=>
+  message: Resolver on list fields may cause N+1 queries - use DataLoader
+  fix_hint: Batch related queries using DataLoader or batch resolver pattern
+- id: gql-deprecated-field-no-reason
+  name: '@deprecated without a reason'
+  severity: warning
+  category: code_quality
+  pattern: '@deprecated(?!\s*\(\s*")'
+  message: '@deprecated directive should include a migration reason'
+  fix_hint: 'Use @deprecated(reason: "Use newField instead") to guide consumers'
+- id: gql-unbounded-complexity
+  name: Unbounded query depth or complexity
+  severity: error
+  category: security
+  pattern: \{[^}]*\{[^}]*\{[^}]*\{[^}]*\{
+  message: Deeply nested queries can cause denial of service
+  fix_hint: Set query depth limit and complexity scoring in server config
+- id: gql-nullable-on-error
+  name: Nullable type masking errors
+  severity: warning
+  category: error_handling
+  pattern: \w+\s*:\s*\w+\s*
+  message: Overuse of nullable types can mask real errors - use non-null where appropriate
+  fix_hint: Use the ! (non-null) modifier for fields that should always return data
+- id: gql-any-scalar
+  name: Use of JSON scalar type
+  severity: warning
+  category: type_safety
+  pattern: \bJSON\b|\bJSONObject\b|\bAny\b\s*}
+  message: JSON scalar bypasses type safety - prefer typed fields
+  fix_hint: Replace JSON scalars with properly typed object fields in your schema
+- id: gql-mutation-input-no-validation
+  name: Mutation input without explicit validation
+  severity: warning
+  category: security
+  pattern: mutation\s+\w+\s*\([^)]*:\s*\w+!\s*\)
+  message: Ensure mutation inputs are validated server-side
+  fix_hint: Add input validation in resolver; use custom scalars with validation
+naming:
+  file:
+    pattern: ^[a-z][a-z0-9_-]*\.graphql$
+    message: GraphQL schema files should use kebab-case
+  function:
+    pattern: ^[a-zA-Z][a-zA-Z0-9]*$
+    message: GraphQL fields should use camelCase
+thresholds:
+  max_function_length: 50
+  max_file_length: 500
+  max_line_length: 120
+  max_nesting_depth: 4

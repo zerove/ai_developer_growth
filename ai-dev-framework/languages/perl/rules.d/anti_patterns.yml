@@ -1,0 +1,72 @@
+language: perl
+version: '>=1.0'
+config_version: '1.0'
+anti_patterns:
+- id: pl-bare-global
+  name: Bare global variable
+  severity: error
+  category: code_quality
+  pattern: ^\s*(?:my\s+)?\$(?!\w*::)\w+
+  message: Always declare variables with my/our and use strictures
+  fix_hint: Add 'use strict; use warnings;' and declare with my() or our()
+- id: pl-indirect-object
+  name: Indirect object syntax
+  severity: warning
+  category: code_quality
+  pattern: \bnew\s+[A-Z]\w+\b|\bnew\s+\{\s*\}
+  message: Indirect object syntax is ambiguous and fragile
+  fix_hint: 'Use direct method call: ClassName->new() instead of new ClassName'
+- id: pl-two-arg-open
+  name: Two-argument open
+  severity: error
+  category: security
+  pattern: \bopen\s*\(\s*\w+\s*,\s*[^)]*[^,;]\s*\)
+  message: Two-argument open can be exploited via shell metacharacters
+  fix_hint: 'Use three-argument open: open(my $fh, ''<'', $filename)'
+- id: pl-eval-string
+  name: String eval
+  severity: error
+  category: security
+  pattern: \beval\s+['"]|\beval\s+\{\}
+  message: String eval is a severe security risk
+  fix_hint: Replace eval with named subroutines or use perlcritic modules
+- id: pl-no-strictures
+  name: Missing strictures
+  severity: error
+  category: code_quality
+  pattern: ^(?!.*use\s+strict).*\$\w+
+  message: All Perl scripts must begin with use strict and use warnings
+  fix_hint: Add 'use strict; use warnings;' at the top of every file
+- id: pl-auto-deref
+  name: Implicit dereferencing
+  severity: warning
+  category: type_safety
+  pattern: \bkeys\s+\$\w+\b|\beach\s+\$\w+\b|\bprint\s+\$\w+\b(?!\{)
+  message: Implicit dereferencing is deprecated since Perl 5.24
+  fix_hint: 'Use explicit dereference: @{$arrayref} or %{$hashref}'
+- id: pl-reversed-args
+  name: Reversed system/exec arguments
+  severity: error
+  category: security
+  pattern: \bsystem\s*\(\s*['"]|\bexec\s*\(\s*['"]
+  message: system() with string arg invokes a shell - use list form
+  fix_hint: Use system(@cmd_list) or exec(@cmd_list) with list context
+- id: pl-regex-no-anchor
+  name: Unanchored regex in pattern match
+  severity: warning
+  category: code_quality
+  pattern: if\s*\(/\^?[^/]*\$/\)
+  message: Regex without anchors may match unintended substrings
+  fix_hint: Use \A and \z anchors instead of ^ and $ for string matching
+naming:
+  file:
+    pattern: ^[a-z][a-z0-9_]*\.pl$
+    message: Perl scripts should use snake_case
+  function:
+    pattern: ^[a-z][a-z0-9_:]*$
+    message: Perl subroutines should use snake_case
+thresholds:
+  max_function_length: 50
+  max_file_length: 500
+  max_line_length: 120
+  max_nesting_depth: 4

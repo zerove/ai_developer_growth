@@ -1,0 +1,87 @@
+# Zig Language Rules - Machine-Readable Configuration
+
+language: zig
+version: '>=0.11'
+config_version: '1.0'
+anti_patterns:
+- id: zig-catch-all
+  name: Catching all errors
+  severity: error
+  category: error_handling
+  pattern: catch\s+_
+  message: Catching all errors hides specific failures
+  fix_hint: Catch specific error unions
+- id: zig-unreachable
+  name: unreachable in runtime code
+  severity: warning
+  category: error_handling
+  pattern: unreachable;
+  message: unreachable causes safety check failure
+  fix_hint: Use proper error handling or return error
+- id: zig-print
+  name: print in production
+  severity: info
+  category: code_quality
+  pattern: \bstd\.debug\.print\s*\(
+  message: Use std.log instead of debug.print
+  fix_hint: Use std.log.info/warn/err
+- id: zig-panic
+  name: '@panic usage'
+  severity: warning
+  category: error_handling
+  pattern: '@panic\s*\('
+  message: '@panic terminates the program'
+  fix_hint: Return an error instead
+- id: zig-alloc-failed
+  name: Unchecked allocation
+  severity: warning
+  category: memory_safety
+  pattern: allocator\.alloc\s*\(|allocator\.create\s*\(
+  message: Allocations can fail - handle OutOfMemory
+  fix_hint: Use try or catch for allocation results
+- id: zig-slice-to-ptr
+  name: Slice to pointer coercion
+  severity: info
+  category: type_safety
+  pattern: '@ptrCast\s*\('
+  message: Pointer casts bypass type safety
+  fix_hint: Use typed slice operations
+- id: zig-c-import
+  name: cImport usage
+  severity: info
+  category: code_quality
+  pattern: '@cImport\s*\('
+  message: cImport is fragile and platform-dependent
+  fix_hint: Define C bindings manually in @cImport blocks
+- id: zig-async
+  name: Async/await usage
+  severity: info
+  category: code_quality
+  pattern: \basync\s+|\bawait\s+
+  message: Async frames have limited support in Zig
+  fix_hint: Consider using threads or event loops
+naming:
+  file:
+    pattern: ^[a-z][a-z0-9_]*\.zig$
+    message: Zig files should use snake_case
+  function:
+    pattern: ^[a-z][a-z0-9_]*$
+    message: Zig functions should use snake_case
+  class:
+    pattern: ^[A-Z][a-zA-Z0-9]*$
+    message: Zig types should use PascalCase
+  constant:
+    pattern: ^[a-z][a-z0-9_]*$
+    message: Zig constants should use snake_case
+thresholds:
+  max_function_length: 50
+  max_file_length: 500
+  max_line_length: 120
+  max_nesting_depth: 4
+  max_function_params: 5
+tooling:
+  linter: zig fmt
+  formatter: zig fmt
+  test_runner: zig test
+  config_files:
+  - build.zig

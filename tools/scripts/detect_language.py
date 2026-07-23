@@ -118,10 +118,26 @@ DIR_MARKERS: dict[str, str | None] = {
 
 # Skip patterns
 SKIP_DIRS = {
-    ".git", ".svn", ".hg", "node_modules", "target", "vendor",
-    "__pycache__", ".venv", "venv", "dist", "build", ".tox",
-    ".mypy_cache", ".ruff_cache", ".pytest_cache", "coverage",
-    ".next", ".nuxt", ".output", "__snapshots__",
+    ".git",
+    ".svn",
+    ".hg",
+    "node_modules",
+    "target",
+    "vendor",
+    "__pycache__",
+    ".venv",
+    "venv",
+    "dist",
+    "build",
+    ".tox",
+    ".mypy_cache",
+    ".ruff_cache",
+    ".pytest_cache",
+    "coverage",
+    ".next",
+    ".nuxt",
+    ".output",
+    "__snapshots__",
 }
 
 
@@ -154,6 +170,7 @@ def detect_framework_from_package_json(dirpath: Path) -> str | None:
 
     try:
         import json as _json
+
         pkg = _json.loads(pkg_path.read_text(encoding="utf-8"))
     except (OSError, _json.JSONDecodeError):
         return None
@@ -265,10 +282,8 @@ def detect_language(dirpath: Path) -> dict[str, object]:
 def main() -> int:
     """Main entry point."""
     parser = argparse.ArgumentParser(description="Detect project language and framework")
-    parser.add_argument("path", type=Path, nargs="?", default=Path("."),
-                        help="Project directory (default: current)")
-    parser.add_argument("--json", action="store_true", dest="json_output",
-                        help="Output as JSON")
+    parser.add_argument("path", type=Path, nargs="?", default=Path("."), help="Project directory (default: current)")
+    parser.add_argument("--json", action="store_true", dest="json_output", help="Output as JSON")
 
     args = parser.parse_args()
 

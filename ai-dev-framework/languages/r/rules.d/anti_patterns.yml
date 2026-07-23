@@ -1,0 +1,88 @@
+# R Language Rules - Machine-Readable Configuration
+
+language: r
+version: '>=4.3'
+config_version: '1.0'
+anti_patterns:
+- id: r-library
+  name: library() in production
+  severity: warning
+  category: code_quality
+  pattern: \blibrary\s*\(|\brequire\s*\(
+  message: 'Use namespace:: or :: for explicit imports'
+  fix_hint: Use pkg::func() or pkg:::func()
+- id: r-attach
+  name: attach() usage
+  severity: error
+  category: code_quality
+  pattern: \battach\s*\(
+  message: attach() modifies search path - use with() or explicit namespace
+  fix_hint: Use with(data, expr) or data$column
+- id: r-sapply
+  name: sapply() usage
+  severity: info
+  category: type_safety
+  pattern: \bsapply\s*\(
+  message: sapply() can return inconsistent types
+  fix_hint: Use vapply() for type-safe results
+- id: r-paste-paste0
+  name: paste0 for string concat
+  severity: info
+  category: code_quality
+  pattern: \bpaste0\s*\(|\bpaste\s*\(
+  message: Consider glue package for string interpolation
+  fix_hint: Use glue::glue() for readable string construction
+- id: r-print
+  name: print() in production
+  severity: info
+  category: code_quality
+  pattern: \bprint\s*\(|\bcat\s*\(
+  message: Use message() or logger for output
+  fix_hint: Use message() for user-facing output
+- id: r-1-index
+  name: Magic number indexing
+  severity: info
+  category: code_quality
+  pattern: \[\d+\]
+  message: Hardcoded numeric indices are fragile
+  fix_hint: Use named elements or column names
+- id: r-tapply
+  name: tapply() usage
+  severity: info
+  category: code_quality
+  pattern: \btapply\s*\(
+  message: Consider dplyr/tidyr for grouped operations
+  fix_hint: Use dplyr::group_by() + summarize()
+- id: r-sapply-class
+  name: class(x) == checks
+  severity: warning
+  category: type_safety
+  pattern: class\(\w+\)\s*==
+  message: class() can return multiple values - use inherits()
+  fix_hint: Use inherits(x, 'ClassName') or is(x, 'ClassName')
+naming:
+  file:
+    pattern: ^[a-z][a-z0-9_]*\.r$
+    message: R files should use snake_case
+  function:
+    pattern: ^[a-z][a-z0-9_.]*$
+    message: R functions should use snake_case
+  class:
+    pattern: ^[A-Z][a-zA-Z0-9]*$
+    message: R classes should use PascalCase
+  constant:
+    pattern: ^[A-Z][A-Z0-9_]*$
+    message: R constants should use UPPER_SNAKE_CASE
+thresholds:
+  max_function_length: 30
+  max_file_length: 400
+  max_line_length: 120
+  max_nesting_depth: 4
+  max_function_params: 5
+tooling:
+  linter: lintr
+  formatter: styler
+  test_runner: testthat
+  config_files:
+  - .lintr
+  - DESCRIPTION

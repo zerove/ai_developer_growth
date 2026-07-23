@@ -1,0 +1,89 @@
+# Javascript Language Rules - Machine-Readable Configuration
+
+language: javascript
+version: '>=ES2022'
+config_version: '1.0'
+anti_patterns:
+- id: js-var
+  name: var declaration
+  severity: warning
+  category: type_safety
+  pattern: \bvar\s+\w+
+  message: var has function scope - use let/const
+  fix_hint: Use const by default, let when reassignment needed
+- id: js-eval
+  name: eval() usage
+  severity: error
+  category: security
+  pattern: \beval\s*\(
+  message: eval() is a security risk
+  fix_hint: Find a safer alternative
+- id: js-inner-html
+  name: innerHTML assignment
+  severity: error
+  category: security
+  pattern: \.innerHTML\s*=
+  message: innerHTML enables XSS attacks
+  fix_hint: Use textContent or DOM APIs
+- id: js-empty-catch
+  name: Empty catch block
+  severity: error
+  category: error_handling
+  pattern: catch\s*\(\s*\w+\s*\)\s*\{\s*\}
+  message: Empty catch blocks hide errors
+  fix_hint: Log the error or rethrow
+- id: js-return-null
+  name: Returning null
+  severity: warning
+  category: error_handling
+  pattern: return\s+null\s*;
+  message: Returning null causes TypeError downstream
+  fix_hint: Use undefined, empty array, or throw
+- id: js-console
+  name: console.log in production
+  severity: info
+  category: code_quality
+  pattern: console\.(log|warn|error|debug)\s*\(
+  message: Use proper logging instead of console
+  fix_hint: Use a logging library or console in dev only
+- id: js-alert
+  name: alert() usage
+  severity: warning
+  category: code_quality
+  pattern: \balert\s*\(
+  message: alert() is blocking and not suitable for production
+  fix_hint: Use UI notification or modal component
+- id: js-document-write
+  name: document.write()
+  severity: error
+  category: code_quality
+  pattern: document\.write\s*\(
+  message: document.write() overwrites the page
+  fix_hint: Use DOM manipulation APIs
+naming:
+  file:
+    pattern: ^[a-z][a-zA-Z0-9]*\.(js|jsx|mjs)$
+    message: JavaScript files should use camelCase
+  function:
+    pattern: ^[a-z][a-zA-Z0-9]*$|^[A-Z][a-zA-Z0-9]*$
+    message: JS functions use camelCase or PascalCase
+  class:
+    pattern: ^[A-Z][a-zA-Z0-9]*$
+    message: JS classes should use PascalCase
+  constant:
+    pattern: ^[A-Z][A-Z0-9_]*$
+    message: JS constants should use UPPER_SNAKE_CASE
+thresholds:
+  max_function_length: 50
+  max_file_length: 500
+  max_line_length: 120
+  max_nesting_depth: 4
+  max_function_params: 5
+tooling:
+  linter: eslint
+  formatter: prettier
+  test_runner: jest
+  config_files:
+  - .eslintrc
+  - .prettierrc
+  - package.json

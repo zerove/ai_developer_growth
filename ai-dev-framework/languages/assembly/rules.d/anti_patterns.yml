@@ -1,0 +1,72 @@
+language: assembly
+version: '>=1.0'
+config_version: '1.0'
+anti_patterns:
+- id: asm-hardcoded-address
+  name: Hardcoded memory address
+  severity: error
+  category: code_quality
+  pattern: 0x[0-9a-fA-F]{4,8}|\b\d{4,}\b\s*\(\s*%\s*(eax|ebx|ecx|edx|rsi|rdi|rax|rbx)\s*\)
+  message: Avoid hardcoded memory addresses - use named constants or labels
+  fix_hint: Define symbolic constants with EQU or use label references
+- id: asm-missing-comments
+  name: Missing comments on non-trivial instructions
+  severity: warning
+  category: readability
+  pattern: ^\s*(mov|push|pop|call|jmp|je|jne|jg|jl|jge|jle|cmp|add|sub|mul|div|xor|and|or|ret)\s+[^;]*$
+  message: Add comments explaining the purpose of non-trivial instructions
+  fix_hint: Use ; comments to document register setup, memory layout, and algorithm steps
+- id: asm-magic-number
+  name: Magic number in instructions
+  severity: warning
+  category: code_quality
+  pattern: (?:mov|add|sub|cmp|and|or|xor|test)\s+\$0x[0-9a-fA-F]{2,},
+  message: Use named constants instead of magic numbers
+  fix_hint: Define constants with .equ or EQU directives for clarity
+- id: asm-unbounded-loop
+  name: Unbounded loop without exit condition
+  severity: error
+  category: error_handling
+  pattern: ^\.\w+:\s*$|^(?:loop|jmp)\s+\.\w+\s*$
+  message: Loops must have a clearly defined exit condition
+  fix_hint: Add comparison and conditional jump before each loop iteration
+- id: asm-global-label-main
+  name: Conflicting global label names
+  severity: error
+  category: code_quality
+  pattern: ^\s*\.glob\s+(?:main|start|exit|read|write|open|close|malloc|free)\b
+  message: Avoid overriding common system labels - use prefixed names
+  fix_hint: Prefix your labels (e.g., myapp_main) to prevent symbol collisions
+- id: asm-stack-imbalance
+  name: Potential stack imbalance in procedure
+  severity: error
+  category: error_handling
+  pattern: ^\s*ret\s*$
+  message: Ensure every RET is preceded by balanced PUSH/POP pairs or stack frame restoration
+  fix_hint: Use ENTER/LEAVE or manual push/pop symmetry with proper stack frame cleanup
+- id: asm-div-zero-risk
+  name: Division without zero check
+  severity: warning
+  category: error_handling
+  pattern: (?:div|idiv)\s+\S+
+  message: Division by zero will crash - verify divisor is non-zero before dividing
+  fix_hint: Add a test/cmp and conditional branch to handle zero divisor case
+- id: asm-shadow-register
+  name: Implicit register clobbering in call
+  severity: warning
+  category: code_quality
+  pattern: ^\s*call\s+\w+
+  message: Document which registers the called function may clobber
+  fix_hint: Save volatile registers (caller-saved) before CALL and note in comments
+naming:
+  file:
+    pattern: ^[a-z][a-z0-9_]*\.\w+$
+    message: Assembly files should use lowercase with underscores
+  function:
+    pattern: ^[a-z][a-z0-9_]*$
+    message: Labels should use lowercase with underscores
+thresholds:
+  max_function_length: 50
+  max_file_length: 500
+  max_line_length: 120
+  max_nesting_depth: 4

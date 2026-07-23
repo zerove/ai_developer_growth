@@ -1,0 +1,72 @@
+language: matlab
+version: '>=1.0'
+config_version: '1.0'
+anti_patterns:
+- id: mcl-eval
+  name: Use of eval()
+  severity: error
+  category: security
+  pattern: \beval\s*\(
+  message: eval() is slow and a security risk - use direct function calls
+  fix_hint: Replace eval with direct variable access, struct fields, or function handles
+- id: mcl-shadow-function
+  name: Variable shadowing built-in function
+  severity: warning
+  category: code_quality
+  pattern: ^[a-zA-Z]\w*\s*=\s*(?!\s*$)
+  message: Variable names must not shadow MATLAB built-in functions
+  fix_hint: Rename variables to avoid conflicts (e.g., avoid sum, mean, length as variable names)
+- id: mcl-clear-globals
+  name: Clearing all workspace variables
+  severity: warning
+  category: code_quality
+  pattern: \bclear\s+(all|\s*$)|\bclearvars\b
+  message: Avoid clearing entire workspace in scripts - clear only what is needed
+  fix_hint: Use clear <specific_var> or structure code as functions instead of scripts
+- id: mcl-string-comparison
+  name: String comparison with ==
+  severity: error
+  category: error_handling
+  pattern: (?:==|~=)\s*['"]
+  message: == on strings does element-wise comparison, not logical equality
+  fix_hint: Use strcmp() or strcmpi() for string comparison
+- id: mcl-global-variable
+  name: Global variable declaration
+  severity: warning
+  category: code_quality
+  pattern: \bglobal\s+\w+
+  message: Global variables create hidden dependencies - pass data as arguments
+  fix_hint: Use function parameters, nested functions, or persistent variables instead
+- id: mcl-semicolon-suppress
+  name: Missing semicolon suppressing output
+  severity: info
+  category: code_quality
+  pattern: ^[^%]*[^;\s]\s*$
+  message: Missing semicolons cause unwanted console output in functions
+  fix_hint: Add semicolons at end of statements to suppress output
+- id: mcl-try-catch-no-error-id
+  name: try/catch without error identifier
+  severity: warning
+  category: error_handling
+  pattern: \bcatch\s*(?!\s*\w+\b)
+  message: Catch blocks should capture the error for proper handling
+  fix_hint: Use 'catch ME' and check ME.message or ME.identifier
+- id: mcl-prealloc-missing
+  name: Array growth without preallocation
+  severity: warning
+  category: code_quality
+  pattern: for\s+\w+\s*=\s*\d+\s*:\s*\d+
+  message: Growing arrays inside loops is slow - preallocate before the loop
+  fix_hint: Preallocate with zeros(), ones(), or NaN() before the loop
+naming:
+  file:
+    pattern: ^[A-Z][a-zA-Z0-9]*\.m$
+    message: MATLAB function files should use PascalCase and match the function name
+  function:
+    pattern: ^[a-z][a-zA-Z0-9]*$
+    message: MATLAB functions should use camelCase
+thresholds:
+  max_function_length: 50
+  max_file_length: 500
+  max_line_length: 120
+  max_nesting_depth: 4

@@ -133,9 +133,9 @@ class ToolMatrixUpdater:
                 in_tools_section = True
                 continue
             if in_tools_section and line.startswith("|"):
-                match = re.match(tool_pattern, line)
-                if match and not match.group(1).startswith(" "):
-                    name = match.group(1).strip()
+                m = re.match(tool_pattern, line)
+                if m and not m.group(1).startswith(" "):
+                    name = m.group(1).strip()
                     if name in [
                         "工具",
                         "---",
@@ -153,10 +153,10 @@ class ToolMatrixUpdater:
                         "Perplexity AI",
                         "AI-Context-Sync",
                     ]:
-                        core_feature = match.group(2).strip()
-                        advantage = match.group(3).strip()
-                        _disadvantage = match.group(4).strip()
-                        audience = match.group(5).strip()
+                        core_feature = m.group(2).strip()
+                        advantage = m.group(3).strip()
+                        _disadvantage = m.group(4).strip()
+                        audience = m.group(5).strip()
 
                         self.tools[name] = ToolInfo(
                             name=name,

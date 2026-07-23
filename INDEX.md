@@ -88,7 +88,6 @@
 | API 设计指南 | 如何设计 API？ | RESTful 规范 + 响应格式 | [[docs/efficiency/api-design-guide]] |
 | **AI 测试策略** | **如何用 AI 写测试？** | **分层策略 + 生成技巧** | **[[docs/efficiency/ai-testing-strategies]]** |
 | **Prompt 版本管理** | **如何管理 Prompt？** | **版本控制 + 评估体系** | **[[docs/efficiency/prompt-versioning]]** |
-| **AI 文档验证** | **如何验证治理文档？** | **格式检查 + 交叉引用** | **[[docs/efficiency/ai-governance-docs-validator]]** |
 
 **实战避坑**: full-cycle-workflow 包含了从 AI-Context-Sync 开发中提炼的 4 个避坑指南。anti-patterns.md 收集了真实失败案例。
 
@@ -204,7 +203,7 @@
 
 理论需要实践检验。以下是真实案例：
 
-### 案例库 (15 个真实案例)
+### 案例库 (35 个真实案例)
 
 | 案例 | 场景 | 效率提升 | 核心洞察 |
 |------|------|----------|----------|

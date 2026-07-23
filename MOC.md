@@ -131,14 +131,14 @@
 
 | 脚本 | 用途 |
 |------|------|
-| [[tools/scripts/link_auditor]] | 链接检查 |
-| [[tools/scripts/validate_case_study]] | 案例验证 |
-| [[tools/scripts/check_metadata]] | 元数据检查 |
-| [[tools/scripts/fix_metadata]] | 元数据修复 |
-| [[tools/scripts/create_case_study]] | 案例创建 |
-| [[tools/scripts/adr_generator]] | ADR 生成 |
-| [[tools/scripts/add_navigation]] | 导航添加 |
-| [[tools/scripts/audit_to_pr]] | 审计转 PR |
+| [[tools/scripts/link_auditor.py]] | 链接检查 |
+| [[tools/scripts/validate_case_study.py]] | 案例验证 |
+| [[tools/scripts/check_metadata.py]] | 元数据检查 |
+| [[tools/scripts/fix_metadata.py]] | 元数据修复 |
+| [[tools/scripts/create_case_study.py]] | 案例创建 |
+| [[tools/scripts/adr_generator.py]] | ADR 生成 |
+| [[tools/scripts/add_navigation.py]] | 导航添加 |
+| [[tools/scripts/audit_to_pr.py]] | 审计转 PR |
 
 ---
 

@@ -1,0 +1,88 @@
+# Lua Language Rules - Machine-Readable Configuration
+
+language: lua
+version: '>=5.4'
+config_version: '1.0'
+anti_patterns:
+- id: lua-global
+  name: Global variable assignment
+  severity: warning
+  category: code_quality
+  pattern: ^[a-zA-Z_][a-zA-Z0-9_]*\s*=\s*
+  message: Implicit global variable - declare with local
+  fix_hint: Add 'local' keyword before variable assignment
+- id: lua-goto
+  name: goto statement
+  severity: info
+  category: code_quality
+  pattern: \bgoto\s+\w+
+  message: goto reduces code readability
+  fix_hint: Use structured control flow (if/while/for)
+- id: lua-loadstring
+  name: loadstring usage
+  severity: error
+  category: security
+  pattern: \bloadstring\s*\(|\bload\s*\(
+  message: Dynamic code loading is a security risk
+  fix_hint: Pre-define functions instead of loading code dynamically
+- id: lua-setfenv
+  name: setfenv usage
+  severity: warning
+  category: code_quality
+  pattern: \bsetfenv\s*\(
+  message: setfenv is deprecated in Lua 5.2+
+  fix_hint: Use environment tables or modules
+- id: lua-print
+  name: print for logging
+  severity: info
+  category: code_quality
+  pattern: ^\s*print\s*\(
+  message: Use a logging library instead of print
+  fix_hint: Use lua-logging or a custom logger
+- id: lua-table-length
+  name: 'Using # on sparse table'
+  severity: warning
+  category: code_quality
+  pattern: '#\s*\w+\s*[%)\],;]'
+  message: '# operator is unreliable on sparse tables'
+  fix_hint: Track length manually or use sequential tables
+- id: lua-string-concat
+  name: String concatenation in loop
+  severity: warning
+  category: code_quality
+  pattern: \w+\s*=\s*\w+\s*\.\.\s*
+  message: String concatenation in loop is O(n^2) - use table.concat
+  fix_hint: Collect strings in a table, then use table.concat
+- id: lua-rawset
+  name: rawset/rawget usage
+  severity: info
+  category: code_quality
+  pattern: \brawset\s*\(|\brawget\s*\(
+  message: rawset/rawget bypass metamethods
+  fix_hint: Use normal table access unless performance critical
+naming:
+  file:
+    pattern: ^[a-z][a-z0-9_]*\.lua$
+    message: Lua files should use snake_case
+  function:
+    pattern: ^[a-z][a-z0-9_.]*$
+    message: Lua functions should use snake_case
+  class:
+    pattern: ^[A-Z][a-zA-Z0-9]*$
+    message: Lua class-like modules should use PascalCase
+  constant:
+    pattern: ^[A-Z][A-Z0-9_]*$
+    message: Lua constants should use UPPER_SNAKE_CASE
+thresholds:
+  max_function_length: 50
+  max_file_length: 500
+  max_line_length: 120
+  max_nesting_depth: 4
+  max_function_params: 5
+tooling:
+  linter: luacheck
+  formatter: stylua
+  test_runner: busted
+  config_files:
+  - .luacheckrc
+  - .stylua.toml

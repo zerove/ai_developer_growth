@@ -1,0 +1,88 @@
+# Scala Language Rules - Machine-Readable Configuration
+
+language: scala
+version: '>=3.0'
+config_version: '1.0'
+anti_patterns:
+- id: sc-null
+  name: null usage
+  severity: error
+  category: type_safety
+  pattern: \bnull\b
+  message: null causes NullPointerException - use Option
+  fix_hint: Use Option(value) instead of null
+- id: sc-throw
+  name: throw new Exception
+  severity: warning
+  category: error_handling
+  pattern: \bthrow\s+new\s+
+  message: Throwing exceptions breaks referential transparency
+  fix_hint: Use Either[Error, A] or Try[A]
+- id: sc-var
+  name: var usage
+  severity: info
+  category: code_quality
+  pattern: \bvar\s+\w+
+  message: var introduces mutable state - prefer val
+  fix_hint: Use val with immutable data
+- id: sc-isinstance
+  name: isInstanceOf/asInstanceOf
+  severity: warning
+  category: type_safety
+  pattern: \b(?:isInstanceOf|asInstanceOf)\b
+  message: Type casts bypass the type system
+  fix_hint: Use pattern matching with match/case
+- id: sc-return
+  name: Explicit return
+  severity: info
+  category: code_quality
+  pattern: ^\s+return\s+
+  message: Explicit return reduces functional style
+  fix_hint: Use expression-based method bodies
+- id: sc-print
+  name: println in production
+  severity: info
+  category: code_quality
+  pattern: \bprintln\s*\(|\bprint\s*\(
+  message: Use logging framework instead of println
+  fix_hint: Use scala-logging or Log4s
+- id: sc-mutable-collection
+  name: Mutable collection
+  severity: info
+  category: code_quality
+  pattern: scala\.collection\.mutable\.
+  message: Prefer immutable collections
+  fix_hint: Use scala.collection.immutable or default List/Map/Set
+- id: sc-default-mutable
+  name: Default mutable Map/List
+  severity: info
+  category: code_quality
+  pattern: scala\.collection\.mutable\.(?:Map|List|Set)\(
+  message: Explicit mutable collection creation
+  fix_hint: Use immutable collection with var if mutation needed
+naming:
+  file:
+    pattern: ^[A-Z][a-zA-Z0-9]*\.scala$
+    message: Scala files should use PascalCase
+  function:
+    pattern: ^[a-z][a-zA-Z0-9]*$
+    message: Scala methods should use camelCase
+  class:
+    pattern: ^[A-Z][a-zA-Z0-9]*$
+    message: Scala classes should use PascalCase
+  constant:
+    pattern: ^[A-Z][A-Z0-9_]*$
+    message: Scala constants should use UPPER_SNAKE_CASE
+thresholds:
+  max_function_length: 50
+  max_file_length: 500
+  max_line_length: 120
+  max_nesting_depth: 4
+  max_function_params: 5
+tooling:
+  linter: scalafix
+  formatter: scalafmt
+  test_runner: scalatest
+  config_files:
+  - .scalafmt.conf
+  - build.sbt

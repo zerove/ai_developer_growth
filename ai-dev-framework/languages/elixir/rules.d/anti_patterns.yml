@@ -1,0 +1,88 @@
+# Elixir Language Rules - Machine-Readable Configuration
+
+language: elixir
+version: '>=1.15'
+config_version: '1.0'
+anti_patterns:
+- id: ex-catch-all
+  name: Catching all exceptions
+  severity: error
+  category: error_handling
+  pattern: 'rescue\s+_\s*->|rescue\s+_\s*:'
+  message: Catching all exceptions hides specific errors
+  fix_hint: Rescue specific exception types
+- id: ex-io-inspect
+  name: IO.inspect in production
+  severity: info
+  category: code_quality
+  pattern: \bIO\.inspect\s*\(
+  message: IO.inspect is a debugging tool - use Logger
+  fix_hint: Use Logger.info/debug/warning/error
+- id: ex-io-puts
+  name: IO.puts in production
+  severity: info
+  category: code_quality
+  pattern: \bIO\.puts\s*\(|\bIO\.write\s*\(
+  message: Use Logger instead of IO.puts
+  fix_hint: Use Logger module
+- id: ex-process-sleep
+  name: Process.sleep
+  severity: warning
+  category: code_quality
+  pattern: \bProcess\.sleep\s*\(
+  message: Process.sleep blocks the scheduler
+  fix_hint: Use Process.send_after or Task.async with delay
+- id: ex-string-to-charlist
+  name: to_charlist in favor of to_string
+  severity: info
+  category: code_quality
+  pattern: \bto_charlist\s*\(
+  message: Consider if string is preferred over charlist
+  fix_hint: Use to_string unless interfacing with C/Erlang
+- id: ex-empty-else
+  name: Empty else clause
+  severity: info
+  category: code_quality
+  pattern: else\s+\n\s*end
+  message: Empty else clause is redundant
+  fix_hint: Remove the empty else clause
+- id: ex-bare-rescue
+  name: Bare rescue
+  severity: warning
+  category: error_handling
+  pattern: \brescue\s*$
+  message: Bare rescue catches all errors - be specific
+  fix_hint: 'Rescue specific exceptions: rescue ArgumentError'
+- id: ex-io-warn
+  name: IO.warn usage
+  severity: info
+  category: code_quality
+  pattern: \bIO\.warn\s*\(
+  message: Use Logger.warning instead of IO.warn
+  fix_hint: Use Logger.warning
+naming:
+  file:
+    pattern: ^[a-z][a-z0-9_]*\.ex$
+    message: Elixir files should use snake_case
+  function:
+    pattern: ^[a-z][a-z0-9_]*[!?]?$
+    message: Elixir functions should use snake_case
+  class:
+    pattern: ^[A-Z][a-zA-Z0-9]*$
+    message: Elixir modules should use PascalCase
+  constant:
+    pattern: ^[A-Z][A-Z0-9_]*$
+    message: Elixir constants should use UPPER_SNAKE_CASE
+thresholds:
+  max_function_length: 30
+  max_file_length: 400
+  max_line_length: 120
+  max_nesting_depth: 4
+  max_function_params: 5
+tooling:
+  linter: credo
+  formatter: mix format
+  test_runner: exunit
+  config_files:
+  - .credo.exs
+  - mix.exs

@@ -1,0 +1,88 @@
+# C++ Language Rules - Machine-Readable Configuration
+
+language: cpp
+version: '>=17'
+config_version: '1.0'
+anti_patterns:
+- id: cpp-raw-new
+  name: Raw new/delete
+  severity: error
+  category: memory_safety
+  pattern: \bnew\s+\w|\bdelete\s+\w|\bdelete\[\]
+  message: Raw new/delete causes memory leaks - use smart pointers
+  fix_hint: Use std::unique_ptr or std::shared_ptr
+- id: cpp-null-ptr
+  name: NULL usage
+  severity: warning
+  category: type_safety
+  pattern: \bNULL\b
+  message: Use nullptr instead of NULL
+  fix_hint: Replace NULL with nullptr
+- id: cpp-c-cast
+  name: C-style casts
+  severity: warning
+  category: type_safety
+  pattern: \((?:int|char|float|double|void|long|short|unsigned)\s*\*?\)\s*\w
+  message: C-style casts are unsafe - use C++ casts
+  fix_hint: Use static_cast, dynamic_cast, const_cast, or reinterpret_cast
+- id: cpp-printf
+  name: printf/scanf usage
+  severity: info
+  category: code_quality
+  pattern: \bprintf\s*\(|\bscanf\s*\(|\bfprintf\s*\(
+  message: Use iostream or fmt library instead of printf/scanf
+  fix_hint: Use std::cout, std::format, or fmt::print
+- id: cpp-using-namespace
+  name: using namespace in header
+  severity: warning
+  category: code_quality
+  pattern: ^\s*using\s+namespace\s+std
+  message: using namespace in headers pollutes global namespace
+  fix_hint: 'Use explicit std:: prefix or put using in .cpp files only'
+- id: cpp-vla
+  name: Variable-length array
+  severity: error
+  category: memory_safety
+  pattern: (?:int|char|float|double)\s+\w+\s*\[\s*\w+\s*\]
+  message: VLAs are not standard C++ and cause stack overflow
+  fix_hint: Use std::vector or std::array
+- id: cpp-memcpy
+  name: memcpy/memmove usage
+  severity: warning
+  category: memory_safety
+  pattern: \bmemcpy\s*\(|\bmemmove\s*\(|\bmemset\s*\(
+  message: C memory functions bypass type system
+  fix_hint: Use std::copy, std::fill, or std::move
+- id: cpp-catch-value
+  name: Catching exceptions by value
+  severity: warning
+  category: error_handling
+  pattern: catch\s*\(\s*(?:const\s+)?[\w:]+(?:\s*&)?\s+\w+\s*\)
+  message: Catch exceptions by const reference, not by value
+  fix_hint: Use catch (const std::exception& e)
+naming:
+  file:
+    pattern: ^[A-Z][a-zA-Z0-9]*\.(cpp|h|hpp|cc)$
+    message: C++ files should use PascalCase
+  function:
+    pattern: ^[a-z][a-zA-Z0-9]*$
+    message: C++ functions should use camelCase
+  class:
+    pattern: ^[A-Z][a-zA-Z0-9]*$
+    message: C++ classes should use PascalCase
+  constant:
+    pattern: ^[A-Z][A-Z0-9_]*$
+    message: C++ constants should use UPPER_SNAKE_CASE
+thresholds:
+  max_function_length: 50
+  max_file_length: 500
+  max_line_length: 120
+  max_nesting_depth: 4
+  max_function_params: 5
+tooling:
+  linter: clang-tidy
+  formatter: clang-format
+  test_runner: gtest
+  config_files:
+  - .clang-tidy
+  - CMakeLists.txt

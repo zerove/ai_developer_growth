@@ -100,7 +100,7 @@ jobs:
           echo '```' >> $GITHUB_STEP_SUMMARY
 
   # ──────────────────────────────────────────────────────
-  # Quality Gates
+  # Quality Gates (复用 jcode scripts)
   # ──────────────────────────────────────────────────────
   link-audit:
     name: Link Audit
@@ -111,7 +111,7 @@ jobs:
         with:
           python-version: ${{ env.PYTHON_VERSION }}
       - name: Check links
-        run: python tools/scripts/link_auditor.py . --check-all --fail-on-broken
+        run: python .jcode/scripts/knowledge-curator.py audit
 
   case-study-validation:
     name: Case Study Validation
@@ -122,7 +122,7 @@ jobs:
         with:
           python-version: ${{ env.PYTHON_VERSION }}
       - name: Validate all cases
-        run: python tools/scripts/validate_case_study.py --all --strict
+        run: python .jcode/scripts/knowledge-curator.py scan
 
   governance-audit:
     name: Governance Audit
@@ -132,7 +132,13 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: ${{ env.PYTHON_VERSION }}
-      - name: Audit
+      - name: Governance docs validation
+        run: python .jcode/scripts/governance-docs-validator.py full
+      - name: AI-SDLC compliance
+        run: python .jcode/scripts/governance-auditor.py check-ai-sdlc-compliance
+      - name: Hallucination risk audit
+        run: python .jcode/scripts/governance-auditor.py audit-hallucination-risks || true
+      - name: Legacy audit check
         run: python tools/scripts/audit_to_pr.py --check-all
 
   # ──────────────────────────────────────────────────────
@@ -226,18 +232,19 @@ jobs:
   governance-docs-check:
     name: Governance Docs Validation
     runs-on: ubuntu-latest
+    needs: [governance-audit]
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
           python-version: ${{ env.PYTHON_VERSION }}
-      - name: Validate governance docs
+      - name: Validate governance docs format
+        run: python .jcode/scripts/governance-docs-validator.py validate
+      - name: Check index references
         run: python .jcode/scripts/governance-docs-validator.py check-index
-      - name: Validate AI-SDLC compliance
-        run: python .jcode/scripts/governance-auditor.py check-ai-sdlc-compliance
 
   # ──────────────────────────────────────────────────────
-  # Agent & Enforcement Validation
+  # Agent & Enforcement Validation (复用 jcode scripts)
   # ──────────────────────────────────────────────────────
   agent-validation:
     name: Agent Definition Validation
@@ -260,5 +267,5 @@ jobs:
           python-version: ${{ env.PYTHON_VERSION }}
       - name: AI annotation check
         run: python tools/scripts/check_ai_annotation.py --path tools/scripts/
-      - name: Quality gate check
-        run: python tools/scripts/ai_quality_gate.py --check-patterns --path tools/scripts/ || true
+      - name: Quality gate
+        run: python .jcode/scripts/governance-auditor.py full || true

@@ -10,65 +10,69 @@ jcode Skill Runner - 知识策展人
     python .jcode/scripts/knowledge-curator.py update-moc
 """
 
-import subprocess
 import sys
-from pathlib import Path
+
+from _common import print_check, print_section, run_command
 
 
-def run_command(cmd: list[str]) -> tuple[int, str]:
-    """运行命令并返回结果"""
-    result = subprocess.run(cmd, capture_output=True, text=True, cwd=Path(__file__).parent.parent.parent)
-    return result.returncode, result.stdout + result.stderr
-
-
-def scan() -> None:
+def scan() -> int:
     """扫描所有案例格式完整性"""
-    print("🔍 扫描案例格式完整性...")
+    print_section("案例格式扫描")
     code, output = run_command([
         sys.executable, "tools/scripts/validate_case_study.py", "--all", "--strict"
     ])
-    print(output)
-    sys.exit(code)
+    print_check("案例扫描", code == 0, output)
+    if code != 0:
+        print(output)
+    return code
 
 
-def audit() -> None:
+def audit() -> int:
     """检查文档断链"""
-    print("🔗 检查文档断链...")
+    print_section("文档断链检查")
     code, output = run_command([
         sys.executable, "tools/scripts/link_auditor.py", ".", "--check-all"
     ])
-    print(output)
-    sys.exit(code)
+    print_check("链接检查", code == 0, output)
+    if code != 0:
+        print(output)
+    return code
 
 
-def validate(file_path: str) -> None:
-    """验证新提交案例"""
-    print(f"✅ 验证案例: {file_path}")
+def validate(file_path: str) -> int:
+    """"""
+    print_section(f"案例验证: {file_path}")
     code, output = run_command([
         sys.executable, "tools/scripts/validate_case_study.py", "--path", file_path
     ])
-    print(output)
-    sys.exit(code)
+    print_check("案例验证", code == 0, output)
+    if code != 0:
+        print(output)
+    return code
 
 
-def sync() -> None:
+def sync() -> int:
     """同步工具矩阵"""
-    print("🔄 同步工具矩阵...")
+    print_section("工具矩阵同步")
     code, output = run_command([
         sys.executable, "tools/scripts/update_ai_tool_matrix.py"
     ])
-    print(output)
-    sys.exit(code)
+    print_check("工具矩阵", code == 0, output)
+    if code != 0:
+        print(output)
+    return code
 
 
-def update_moc() -> None:
+def update_moc() -> int:
     """更新知识图谱"""
-    print("📊 更新知识图谱...")
+    print_section("知识图谱更新")
     code, output = run_command([
         sys.executable, "tools/scripts/link_auditor.py", ".", "--update-moc"
     ])
-    print(output)
-    sys.exit(code)
+    print_check("MOC 更新", code == 0, output)
+    if code != 0:
+        print(output)
+    return code
 
 
 def main() -> None:
@@ -79,19 +83,21 @@ def main() -> None:
 
     action = sys.argv[1]
 
-    actions = {
-        "scan": lambda: scan(),
-        "audit": lambda: audit(),
-        "validate": lambda: validate(sys.argv[2]) if len(sys.argv) > 2 else print("错误: 需要指定文件路径"),
-        "sync": lambda: sync(),
-        "update-moc": lambda: update_moc(),
+    action_map = {
+        "scan": scan,
+        "audit": audit,
+        "validate": lambda: validate(sys.argv[2]) if len(sys.argv) > 2 else (
+            print("错误: 需要指定文件路径") or 1
+        ),
+        "sync": sync,
+        "update-moc": update_moc,
     }
 
-    if action in actions:
-        actions[action]()
+    if action in action_map:
+        sys.exit(action_map[action]())
     else:
-        print(f"未知 action: {action}")
-        print("可用 actions: " + ", ".join(actions.keys()))
+        print(f"❌ 未知 action: {action}")
+        print(f"可用 actions: {', '.join(action_map.keys())}")
         sys.exit(1)
 
 

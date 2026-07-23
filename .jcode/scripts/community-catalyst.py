@@ -8,23 +8,14 @@ jcode Skill Runner - 社区催化剂
     python .jcode/scripts/community-catalyst.py stats
 """
 
-import subprocess
 import sys
-from pathlib import Path
+
+from _common import get_project_root, print_check, print_section, run_command
 
 
-def run_command(cmd: list[str]) -> tuple[int, str]:
-    """运行命令并返回结果"""
-    result = subprocess.run(
-        cmd, capture_output=True, text=True,
-        cwd=Path(__file__).parent.parent.parent
-    )
-    return result.returncode, result.stdout + result.stderr
-
-
-def triage() -> None:
+def triage() -> int:
     """分流 Issues"""
-    print("🔍 分流 Issues...")
+    print_section("Issue 分流")
     labels = [
         "案例", "工具推荐", "方法论", "问题", "文档",
         "question", "bug", "enhancement", "good first issue"
@@ -32,35 +23,34 @@ def triage() -> None:
     print("可用标签:")
     for label in labels:
         print(f"  - {label}")
-    print("提示: 通过 GitHub CLI 标记 issue:")
+    print("\n提示: 通过 GitHub CLI 标记 issue:")
     print("  gh issue edit <number> --add-label <label>")
+    return 0
 
 
-def validate() -> None:
+def validate() -> int:
     """验证社区提交的案例"""
-    print("✅ 验证社区案例...")
+    print_section("社区案例验证")
     code, output = run_command([
         sys.executable, "tools/scripts/validate_case_study.py", "--all"
     ])
-    print(output)
-    if code == 0:
-        print("✅ 所有案例验证通过")
-    else:
-        print("❌ 部分案例验证失败")
+    print_check("案例验证", code == 0, output)
+    if code != 0:
+        print(output)
+    return code
 
 
-def stats() -> None:
+def stats() -> int:
     """查看社区统计"""
-    print("📊 社区统计...")
-    case_dir = Path("case-studies")
+    print_section("社区统计")
+    case_dir = get_project_root() / "case-studies"
     if not case_dir.exists():
         print("❌ 未找到案例目录")
-        sys.exit(1)
+        return 1
 
     cases = list(case_dir.glob("*.md"))
     print(f"案例总数: {len(cases)}")
 
-    # 统计来源
     sources = {"internal": 0, "community": 0}
     for case in cases:
         content = case.read_text(encoding="utf-8")
@@ -71,6 +61,7 @@ def stats() -> None:
 
     print(f"内部案例: {sources['internal']}")
     print(f"社区案例: {sources['community']}")
+    return 0
 
 
 def main() -> None:
@@ -80,17 +71,18 @@ def main() -> None:
         sys.exit(1)
 
     action = sys.argv[1]
-    actions = {
+
+    action_map = {
         "triage": triage,
         "validate": validate,
         "stats": stats,
     }
 
-    if action in actions:
-        actions[action]()
+    if action in action_map:
+        sys.exit(action_map[action]())
     else:
-        print(f"未知 action: {action}")
-        print("可用 actions: " + ", ".join(actions.keys()))
+        print(f"❌ 未知 action: {action}")
+        print(f"可用 actions: {', '.join(action_map.keys())}")
         sys.exit(1)
 
 

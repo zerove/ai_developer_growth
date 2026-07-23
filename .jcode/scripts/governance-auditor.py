@@ -1,6 +1,9 @@
 #!/usr/bin/env python3
 """
-jcode Skill Runner - 治理审计员
+jcode Skill Runner - 治理审计员 (v2.0)
+
+重构版: 使用 _common.py 共享模块，修复 sys.exit 早期退出问题。
+所有子检查返回 bool 而非直接 sys.exit，由 main() 统一处理退出码。
 
 用法:
     python .jcode/scripts/governance-auditor.py lint
@@ -14,122 +17,120 @@ jcode Skill Runner - 治理审计员
     python .jcode/scripts/governance-auditor.py full
 """
 
-import subprocess
+import re
 import sys
-from pathlib import Path
+
+from _common import get_project_root, print_check, print_section, run_command
+
+# ── 15 个 ────────────────────────────────────────────────
+GOVERNANCE_DOCS = [
+    "docs/efficiency/ai-code-generation-quality.md",
+    "docs/efficiency/ai-model-selection.md",
+    "docs/efficiency/ai-sdlc.md",
+    "docs/efficiency/ai-code-review-checklist.md",
+    "docs/efficiency/ai-nondeterministic-testing.md",
+    "docs/efficiency/ai-hallucination-mitigation.md",
+    "docs/efficiency/ai-code-licensing.md",
+    "docs/efficiency/ai-dev-environment.md",
+    "docs/efficiency/ai-context-window-management.md",
+    "docs/efficiency/ai-performance-benchmarks.md",
+    "docs/efficiency/ai-debugging-standards.md",
+    "docs/efficiency/ai-version-control.md",
+    "docs/efficiency/ai-deployment-operations.md",
+    "docs/efficiency/ai-developer-training.md",
+    "docs/efficiency/ai-dev-toolchain.md",
+]
+
+# ── 代码不安全模式 ────────────────────────────────────────────────
+UNSAFE_PATTERNS = [
+    (r"eval\(", "eval() - 代码注入风险"),
+    (r"exec\(", "exec() - 代码注入风险"),
+    (r"os\.system\(", "os.system() - 应使用 subprocess"),
+    (r"pickle\.loads?\(", "pickle - 反序列化风险"),
+    (r"yaml\.load\((?!.*Loader)", "yaml.load 不安全 - 应使用 safe_load"),
+]
 
 
-def run_command(cmd: list[str]) -> tuple[int, str]:
-    """运行命令并返回结果"""
-    result = subprocess.run(cmd, capture_output=True, text=True, cwd=Path(__file__).parent.parent.parent)
-    return result.returncode, result.stdout + result.stderr
-
-
-def lint() -> None:
+def lint() -> bool:
     """运行 ruff lint 检查"""
-    print("🔍 运行 ruff lint 检查...")
+    print_section("Lint 检查")
     code, output = run_command(["ruff", "check", "."])
-    print(output)
-    if code == 0:
-        print("✅ lint 检查通过")
-    else:
-        print("❌ lint 检查失败")
-    sys.exit(code)
+    print_check("ruff check", code == 0, output)
+    if code != 0:
+        print(output)
+    return code == 0
 
 
-def format_check() -> None:
+def format_check() -> bool:
     """运行 ruff format 检查"""
-    print("🎨 运行 ruff format 检查...")
+    print_section("Format 检查")
     code, output = run_command(["ruff", "format", "--check", "."])
-    print(output)
-    if code == 0:
-        print("✅ format 检查通过")
-    else:
-        print("❌ format 检查失败")
-    sys.exit(code)
+    print_check("ruff format", code == 0, output)
+    if code != 0:
+        print(output)
+    return code == 0
 
 
-def typecheck() -> None:
+def typecheck() -> bool:
     """运行 mypy 类型检查"""
-    print("🔬 运行 mypy 类型检查...")
+    print_section("类型检查")
     code, output = run_command([
         sys.executable, "-m", "mypy", "tools/scripts/", "--ignore-missing-imports"
     ])
-    print(output)
-    if code == 0:
-        print("✅ 类型检查通过")
-    else:
-        print("❌ 类型检查失败")
-    sys.exit(code)
+    print_check("mypy", code == 0, output)
+    if code != 0:
+        print(output)
+    return code == 0
 
 
-def test() -> None:
+def test() -> bool:
     """运行 pytest 测试套件"""
-    print("🧪 运行 pytest 测试套件...")
+    print_section("测试套件")
     code, output = run_command([
-        sys.executable, "-m", "pytest", "tests/", "-v", "--cov=tools/scripts", "--cov-report=term-missing"
+        sys.executable, "-m", "pytest", "tests/", "-v",
+        "--cov=tools/scripts", "--cov-report=term-missing", "--tb=short"
     ])
-    print(output)
-    if code == 0:
-        print("✅ 测试通过")
-    else:
-        print("❌ 测试失败")
-    sys.exit(code)
+    print_check("pytest", code == 0, output)
+    if code != 0:
+        print(output)
+    return code == 0
 
 
-def security() -> None:
+def security() -> bool:
     """运行安全扫描"""
-    print("🔒 运行安全扫描...")
+    print_section("安全扫描")
+
     # bandit
     code1, output1 = run_command([
-        "bandit", "-r", "tools/scripts/", "-f", "json", "-o", "bandit-report.json"
+        "bandit", "-r", "tools/scripts/", "-f", "json", "-o", "bandit-report.json", "-ll"
     ])
-    print("Bandit 结果:")
-    print(output1)
+    print_check("bandit", code1 == 0, output1)
 
     # pip-audit
     code2, output2 = run_command(["pip-audit", "--desc"])
-    print("Pip-audit 结果:")
-    print(output2)
+    print_check("pip-audit", code2 == 0, output2)
 
-    if code1 == 0 and code2 == 0:
-        print("✅ 安全扫描通过")
-    else:
-        print("⚠️ 安全扫描发现问题")
-    sys.exit(max(code1, code2))
+    if code1 != 0:
+        print(output1)
+    if code2 != 0:
+        print(output2)
+    return code1 == 0 and code2 == 0
 
 
-def validate_governance_docs() -> None:
-    """验证治理层文档格式完整性"""
-    print("📋 验证治理层文档格式完整性...")
-    governance_docs = [
-        "docs/efficiency/ai-code-generation-quality.md",
-        "docs/efficiency/ai-model-selection.md",
-        "docs/efficiency/ai-sdlc.md",
-        "docs/efficiency/ai-code-review-checklist.md",
-        "docs/efficiency/ai-nondeterministic-testing.md",
-        "docs/efficiency/ai-hallucination-mitigation.md",
-        "docs/efficiency/ai-code-licensing.md",
-        "docs/efficiency/ai-dev-environment.md",
-        "docs/efficiency/ai-context-window-management.md",
-        "docs/efficiency/ai-performance-benchmarks.md",
-        "docs/efficiency/ai-debugging-standards.md",
-        "docs/efficiency/ai-version-control.md",
-        "docs/efficiency/ai-deployment-operations.md",
-        "docs/efficiency/ai-developer-training.md",
-        "docs/efficiency/ai-dev-toolchain.md",
-    ]
+def validate_governance_docs() -> bool:
+    """验证15个治理层文档格式完整性"""
+    print_section("治理文档验证")
+    issues: list[str] = []
 
-    issues = []
-    for doc_path in governance_docs:
-        path = Path(doc_path)
+    for doc_path in GOVERNANCE_DOCS:
+        path = get_project_root() / doc_path
         if not path.exists():
             issues.append(f"Missing: {doc_path}")
             continue
 
         content = path.read_text(encoding="utf-8")
 
-        # 检查 frontmatter
+        # frontmatter 检查
         if not content.startswith("---"):
             issues.append(f"{doc_path}: Missing frontmatter")
             continue
@@ -140,116 +141,99 @@ def validate_governance_docs() -> None:
             continue
 
         fm = content[3:fm_end]
-        required = ["title", "description", "category", "tags", "difficulty"]
-        for field in required:
-            if field + ":" not in fm:
+        for field in ["title", "description", "category", "tags", "difficulty"]:
+            if f"{field}:" not in fm:
                 issues.append(f"{doc_path}: Missing field '{field}'")
 
-        # 检查导航部分
+        # 导航检查
         if "## 导航" not in content and "## Navigation" not in content:
             issues.append(f"{doc_path}: Missing navigation section")
 
-        # 检查相关文档
+        # 相关文档检查
         if "相关文档" not in content and "## See Also" not in content:
             issues.append(f"{doc_path}: Missing related docs section")
 
+    passed = len(issues) == 0
+    print_check(f"治理文档 ({len(GOVERNANCE_DOCS)} 个)", passed)
     if issues:
-        print(f"\n❌ 发现 {len(issues)} 个问题:")
         for issue in issues:
             print(f"  - {issue}")
-        sys.exit(1)
-    else:
-        print(f"✅ {len(governance_docs)} 个治理文档验证通过")
-        sys.exit(0)
+    return passed
 
 
-def check_ai_sdlc_compliance() -> None:
+def check_ai_sdlc_compliance() -> bool:
     """检查 AI-SDLC 合规性"""
-    print("🔄 检查 AI-SDLC 合规性...")
-    issues = []
+    print_section("AI-SDLC 合规检查")
+    issues: list[str] = []
+    root = get_project_root()
 
-    # 检查 CI/CD 配置
-    ci_path = Path(".github/workflows/ci.yml")
+    # CI/CD 配置
+    ci_path = root / ".github" / "workflows" / "ci.yml"
     if ci_path.exists():
         ci_content = ci_path.read_text(encoding="utf-8")
-        required_jobs = ["pre-commit", "lint", "type-check", "test"]
-        for job in required_jobs:
+        for job in ["pre-commit", "lint", "type-check", "test"]:
             if job not in ci_content:
                 issues.append(f"CI/CD missing job: {job}")
     else:
         issues.append("CI/CD configuration not found")
 
-    # 检查测试配置
-    pyproject = Path("pyproject.toml")
+    # pytest 配置
+    pyproject = root / "pyproject.toml"
     if pyproject.exists():
-        content = pyproject.read_text(encoding="utf-8")
-        if "pytest" not in content:
+        if "pytest" not in pyproject.read_text(encoding="utf-8"):
             issues.append("pytest not configured in pyproject.toml")
     else:
         issues.append("pyproject.toml not found")
 
-    # 检查 pre-commit 配置
-    precommit = Path(".pre-commit-config.yaml")
-    if not precommit.exists():
+    # pre-commit 配置
+    if not (root / ".pre-commit-config.yaml").exists():
         issues.append("pre-commit configuration not found")
 
+    passed = len(issues) == 0
+    print_check("AI-SDLC 合规", passed)
     if issues:
-        print(f"\n❌ AI-SDLC 合规检查失败 ({len(issues)} 个问题):")
         for issue in issues:
             print(f"  - {issue}")
-        sys.exit(1)
-    else:
-        print("✅ AI-SDLC 合规检查通过")
-        sys.exit(0)
+    return passed
 
 
-def audit_hallucination_risks() -> None:
+def audit_hallucination_risks() -> bool:
     """审计幻觉风险"""
-    print("🔍 审计幻觉风险...")
-    risks = []
+    print_section("幻觉风险审计")
+    risks: list[str] = []
+    root = get_project_root()
 
-    # 检查代码中是否有不安全的模式
-    unsafe_patterns = [
-        (r'eval\(', "eval() usage - potential code injection"),
-        (r'exec\(', "exec() usage - potential code injection"),
-        (r'os\.system\(', "os.system() usage - use subprocess instead"),
-        (r'pickle\.loads?\(', "pickle usage - potential deserialization risk"),
-        (r'yaml\.load\((?!.*Loader)', "yaml.load without Loader - use safe_load"),
-    ]
-
-    import re
-    for py_file in Path("tools/scripts").rglob("*.py"):
+    # 代码不安全模式
+    for py_file in (root / "tools" / "scripts").rglob("*.py"):
         content = py_file.read_text(encoding="utf-8")
-        for pattern, desc in unsafe_patterns:
+        for pattern, desc in UNSAFE_PATTERNS:
             if re.search(pattern, content):
-                risks.append(f"{py_file}: {desc}")
+                rel = py_file.relative_to(root)
+                risks.append(f"{rel}: {desc}")
 
-    # 检查文档中的断言声明
-    for md_file in Path("docs/efficiency").rglob("*.md"):
+    # 文档绝对化声明
+    abs_patterns = ["100%", "永远", "绝对", "从不"]
+    for md_file in (root / "docs" / "efficiency").rglob("*.md"):
         content = md_file.read_text(encoding="utf-8")
-        # 检查是否有绝对化声明
-        absolute_patterns = ["100%", "永远", "绝对", "从不"]
         for line_num, line in enumerate(content.split("\n"), 1):
-            for pattern in absolute_patterns:
-                if pattern in line and "例外" not in line:
-                    risks.append(f"{md_file}:{line_num}: Absolute claim '{pattern}' found")
+            for pat in abs_patterns:
+                if pat in line and "例外" not in line:
+                    rel = md_file.relative_to(root)
+                    risks.append(f"{rel}:{line_num}: 绝对化声明 '{pat}'")
 
+    passed = len(risks) == 0
+    print_check(f"幻觉风险 ({len(risks)} 个)", passed)
     if risks:
-        print(f"\n⚠️ 发现 {len(risks)} 个风险:")
         for risk in risks[:20]:
             print(f"  - {risk}")
         if len(risks) > 20:
             print(f"  ... 还有 {len(risks) - 20} 个风险")
-        sys.exit(1)
-    else:
-        print("✅ 幻觉风险审计通过")
-        sys.exit(0)
+    return passed
 
 
-def full() -> None:
-    """运行完整审计"""
-    print("🚀 运行完整审计...")
-    print("=" * 50)
+def full() -> int:
+    """运行失败数量"""
+    print_section("🚀 完整治理审计 (v2.0)")
 
     checks = [
         ("Lint", lint),
@@ -260,49 +244,47 @@ def full() -> None:
         ("AI-SDLC Compliance", check_ai_sdlc_compliance),
     ]
 
-    failed = []
+    failed: list[str] = []
     for name, func in checks:
-        print(f"\n{'=' * 50}")
-        print(f"执行 {name}...")
-        try:
-            func()
-        except SystemExit:
+        if not func():
             failed.append(name)
 
-    print("\n" + "=" * 50)
+    print_section("审计结果")
     if failed:
-        print(f"❌ 以下检查失败: {', '.join(failed)}")
-        sys.exit(1)
+        print(f"❌ 失败: {', '.join(failed)}")
+        return len(failed)
     else:
         print("✅ 所有检查通过")
-        sys.exit(0)
+        return 0
 
 
 def main() -> None:
     if len(sys.argv) < 2:
         print("用法: governance-auditor.py <action>")
-        print("Actions: lint, format, typecheck, test, security, validate-governance-docs, check-ai-sdlc-compliance, audit-hallucination-risks, full")
+        print("Actions: lint, format, typecheck, test, security, "
+              "validate-governance-docs, check-ai-sdlc-compliance, "
+              "audit-hallucination-risks, full")
         sys.exit(1)
 
     action = sys.argv[1]
 
-    actions = {
-        "lint": lint,
-        "format": format_check,
-        "typecheck": typecheck,
-        "test": test,
-        "security": security,
-        "validate-governance-docs": validate_governance_docs,
-        "check-ai-sdlc-compliance": check_ai_sdlc_compliance,
-        "audit-hallucination-risks": audit_hallucination_risks,
+    action_map = {
+        "lint": lambda: 0 if lint() else 1,
+        "format": lambda: 0 if format_check() else 1,
+        "typecheck": lambda: 0 if typecheck() else 1,
+        "test": lambda: 0 if test() else 1,
+        "security": lambda: 0 if security() else 1,
+        "validate-governance-docs": lambda: 0 if validate_governance_docs() else 1,
+        "check-ai-sdlc-compliance": lambda: 0 if check_ai_sdlc_compliance() else 1,
+        "audit-hallucination-risks": lambda: 0 if audit_hallucination_risks() else 1,
         "full": full,
     }
 
-    if action in actions:
-        actions[action]()
+    if action in action_map:
+        sys.exit(action_map[action]())
     else:
-        print(f"未知 action: {action}")
-        print("可用 actions: " + ", ".join(actions.keys()))
+        print(f"❌ 未知 action: {action}")
+        print(f"可用 actions: {', '.join(action_map.keys())}")
         sys.exit(1)
 
 

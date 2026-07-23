@@ -12,3 +12,13 @@ repos:
       - id: ruff
         args: [--fix]
       - id: ruff-format
+  # jcode 治理检查
+  - repo: local
+    hooks:
+      - id: jcode-governance
+        name: jcode Governance Check
+        entry: bash .jcode/hooks/pre-commit
+        language: system
+        files: '\.(py|md)$'
+        pass_filenames: false
+        stages: [pre-commit]

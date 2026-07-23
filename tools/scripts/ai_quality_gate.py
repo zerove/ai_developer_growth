@@ -146,21 +146,41 @@ def check_error_patterns(filepath: Path) -> list[dict]:
 
 
 def check_structure_patterns(filepath: Path) -> list[dict]:
-    """检查代码结构问题"""
+    """检查代码结构问题 (行计数方式，避免正则回溯)"""
     issues = []
     content = filepath.read_text(encoding="utf-8")
+    lines = content.split("\n")
 
-    for pattern, description in STRUCTURE_PATTERNS:
-        for match in re.finditer(pattern, content, re.MULTILINE):
-            line_num = content[: match.start()].count("\n") + 1
-            issues.append(
-                {
-                    "line": line_num,
+    i = 0
+    while i < len(lines):
+        line = lines[i]
+        # 检测函数定义
+        if re.match(r"^\s*def\s+\w+", line):
+            func_start = i
+            indent = len(line) - len(line.lstrip())
+            # 计算函数体行数
+            j = i + 1
+            while j < len(lines):
+                stripped = lines[j].strip()
+                if stripped == "" or stripped.startswith("#"):
+                    j += 1
+                    continue
+                current_indent = len(lines[j]) - len(lines[j].lstrip())
+                if current_indent > indent:
+                    j += 1
+                else:
+                    break
+            func_lines = j - func_start
+            if func_lines > 50:
+                issues.append({
+                    "line": func_start + 1,
                     "type": "structure",
-                    "message": description,
-                    "code": "...",
-                }
-            )
+                    "message": f"函数超过 50 行 (实际 {func_lines} 行)",
+                    "code": line.strip()[:60],
+                })
+            i = j
+        else:
+            i += 1
 
     return issues
 

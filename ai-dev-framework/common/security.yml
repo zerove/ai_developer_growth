@@ -1,0 +1,70 @@
+# Cross-language Security Rules
+# Applied to ALL languages automatically via common/security.yml
+# These are universal patterns that transcend specific languages
+
+config_version: '1.0'
+anti_patterns:
+- id: common-hardcoded-secret
+  name: Hardcoded secret or credential
+  severity: error
+  category: security
+  pattern: '(?:password|secret|api_key|token|api_secret|access_key|private_key)\s*[=:]\s*["''][^"'']{4,}["'']'
+  message: Hardcoded secrets are a critical security vulnerability
+  fix_hint: Use environment variables or a secrets manager
+
+- id: common-eval-exec
+  name: Dynamic code execution
+  severity: error
+  category: security
+  pattern: '\beval\s*\(|\bexec\s*\(|\bFunction\s*\('
+  message: Dynamic code execution is a security risk (code injection)
+  fix_hint: Avoid eval/exec; use safer alternatives
+
+- id: common-http-url
+  name: Hardcoded HTTP URL (not HTTPS)
+  severity: warning
+  category: security
+  pattern: 'http://[\w.-]+(?:/|\s)'
+  message: Use HTTPS instead of HTTP for security
+  fix_hint: Replace http:// with https://
+  fix_replacement: 's|http://|https://|'
+
+- id: common-crypto-md5
+  name: Weak hash algorithm (MD5/SHA1)
+  severity: warning
+  category: security
+  pattern: '\bmd5\s*\(|\bsha1\s*\(|MD5\.|SHA1\.'
+  message: MD5 and SHA1 are cryptographically weak
+  fix_hint: Use SHA-256 or stronger
+
+- id: common-debugger
+  name: Debugger statement in production code
+  severity: warning
+  category: security
+  pattern: '\bdebugger\b|\bbreakpoint\s*\(|\bpdb\.set_trace\s*\(|\bimport\s+pdb\b'
+  message: Debugger statements should not be in production code
+  fix_hint: Remove debugger statements before committing
+
+- id: common-todo
+  name: TODO/FIXME/HACK comment
+  severity: info
+  category: code_quality
+  pattern: '#.*(?:TODO|FIXME|HACK|XXX|TEMP)'
+  message: Unresolved TODO/FIXME comment found
+  fix_hint: Resolve the issue or create a tracking ticket
+
+- id: common-console-log
+  name: Debug output in code
+  severity: info
+  category: code_quality
+  pattern: 'console\.log\s*\(|print\s*\(.*debug|System\.out\.print|puts\s+debug'
+  message: Debug output should be removed before production
+  fix_hint: Use a logging framework instead
+
+- id: common-empty-catch
+  name: Empty catch/except block
+  severity: warning
+  category: error_handling
+  pattern: '(?:catch|except|rescue)\s*(?:\([^)]+\))?\s*[:{]\s*(?:end|[}\)])\s*$'
+  message: Empty catch block silently swallows errors
+  fix_hint: Log the error or re-raise it

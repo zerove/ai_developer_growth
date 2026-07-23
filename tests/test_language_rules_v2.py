@@ -23,11 +23,16 @@ from tools.scripts.validate_language_rules import (
     calculate_health_score,
     generate_html_report,
     generate_junit_xml,
+    generate_sarif,
     load_custom_rules,
     load_rules,
     validate_file,
     write_report,
     _merge_rules,
+    _file_hash,
+    _load_cache,
+    _save_cache,
+    _get_supported_files,
 )
 
 
@@ -424,3 +429,149 @@ class TestIssueFixReplacement:
         )
         d = issue.to_dict()
         assert "fix_replacement" not in d
+
+
+# ──────────────────────────────────────────────────────────
+# SARIF output tests (#10)
+# ──────────────────────────────────────────────────────────
+
+
+class TestSARIF:
+    def test_generate_sarif(self) -> None:
+        r = ValidationResult(file="test.py", language="python", lines_checked=10)
+        r.issues.append(
+            Issue(rule_id="py-test", severity="error", category="security", file="test.py", line=5, message="Security issue")
+        )
+        sarif_json = generate_sarif([r])
+        sarif = json.loads(sarif_json)
+        assert sarif["version"] == "2.1.0"
+        assert len(sarif["runs"]) == 1
+        assert len(sarif["runs"][0]["results"]) == 1
+        assert sarif["runs"][0]["results"][0]["ruleId"] == "py-test"
+        assert sarif["runs"][0]["results"][0]["level"] == "error"
+
+    def test_sarif_empty(self) -> None:
+        sarif_json = generate_sarif([])
+        sarif = json.loads(sarif_json)
+        assert sarif["runs"][0]["results"] == []
+
+    def test_sarif_severity_levels(self) -> None:
+        r = ValidationResult(file="test.py", language="python", lines_checked=10)
+        r.issues.append(Issue(rule_id="e", severity="error", category="c", file="test.py", line=1, message="e"))
+        r.issues.append(Issue(rule_id="w", severity="warning", category="c", file="test.py", line=2, message="w"))
+        r.issues.append(Issue(rule_id="i", severity="info", category="c", file="test.py", line=3, message="i"))
+        sarif = json.loads(generate_sarif([r]))
+        levels = [res["level"] for res in sarif["runs"][0]["results"]]
+        assert levels == ["error", "warning", "note"]
+
+    def test_write_report_sarif(self, tmp_path: Path) -> None:
+        r = ValidationResult(file="test.py", language="python", lines_checked=10)
+        r.issues.append(
+            Issue(rule_id="py-test", severity="error", category="security", file="test.py", line=1, message="err")
+        )
+        out = tmp_path / "report.sarif"
+        content = write_report([r], "sarif", out)
+        assert content is not None
+        assert out.exists()
+        sarif = json.loads(content)
+        assert sarif["version"] == "2.1.0"
+
+
+# ──────────────────────────────────────────────────────────
+# Common rules tests (#6)
+# ──────────────────────────────────────────────────────────
+
+
+class TestCommonRules:
+    def test_common_rules_loaded(self) -> None:
+        """Verify common rules are merged into language rules."""
+        rules = load_rules("python")
+        anti_ids = [p["id"] for p in rules.get("anti_patterns", [])]
+        # Common rules should be present
+        assert any("common-" in rid for rid in anti_ids), f"Common rules not found in: {anti_ids[:10]}"
+
+    def test_common_secret_rule(self) -> None:
+        """Verify common-hardcoded-secret rule exists."""
+        rules = load_rules("python")
+        anti_ids = [p["id"] for p in rules.get("anti_patterns", [])]
+        assert "common-hardcoded-secret" in anti_ids
+
+
+# ──────────────────────────────────────────────────────────
+# Severity override tests (#4)
+# ──────────────────────────────────────────────────────────
+
+
+class TestSeverityOverride:
+    def test_severity_override(self) -> None:
+        base = {
+            "anti_patterns": [
+                {"id": "py-test", "severity": "warning", "pattern": "test"},
+            ],
+        }
+        custom = {
+            "anti_patterns": [
+                {"id": "py-test", "severity_override": "error"},
+            ],
+        }
+        merged = _merge_rules(base, custom)
+        assert merged["anti_patterns"][0]["severity"] == "error"
+        assert merged["anti_patterns"][0]["pattern"] == "test"  # pattern preserved
+
+    def test_severity_override_not_found(self) -> None:
+        base = {
+            "anti_patterns": [
+                {"id": "py-test", "severity": "warning", "pattern": "test"},
+            ],
+        }
+        custom = {
+            "anti_patterns": [
+                {"id": "nonexistent", "severity_override": "error"},
+            ],
+        }
+        merged = _merge_rules(base, custom)
+        assert merged["anti_patterns"][0]["severity"] == "warning"  # unchanged
+
+
+# ──────────────────────────────────────────────────────────
+# Cache and incremental tests (#7)
+# ──────────────────────────────────────────────────────────
+
+
+class TestCacheAndIncremental:
+    def test_file_hash(self, tmp_path: Path) -> None:
+        f = tmp_path / "test.py"
+        f.write_text("x = 1\n")
+        h1 = _file_hash(f)
+        assert len(h1) == 32  # MD5 hex
+        # Same content = same hash
+        assert _file_hash(f) == h1
+        # Changed content = different hash
+        f.write_text("x = 2\n")
+        assert _file_hash(f) != h1
+
+    def test_file_hash_missing(self, tmp_path: Path) -> None:
+        assert _file_hash(tmp_path / "nonexistent.py") == ""
+
+    def test_load_save_cache(self, tmp_path: Path) -> None:
+        cache_file = tmp_path / ".rule-cache"
+        _save_cache(cache_file, {"a.py": "hash1", "b.py": "hash2"})
+        loaded = _load_cache(cache_file)
+        assert loaded["a.py"] == "hash1"
+        assert loaded["b.py"] == "hash2"
+
+    def test_load_cache_missing(self, tmp_path: Path) -> None:
+        assert _load_cache(tmp_path / "nonexistent") == {}
+
+    def test_get_supported_files(self, tmp_path: Path) -> None:
+        (tmp_path / "a.py").write_text("x=1")
+        (tmp_path / "b.rs").write_text("fn main() {}")
+        (tmp_path / "c.txt").write_text("hello")
+        (tmp_path / ".git").mkdir()
+        (tmp_path / ".git" / "d.py").write_text("ignored")
+        files = _get_supported_files(tmp_path, [".git"])
+        names = [f.name for f in files]
+        assert "a.py" in names
+        assert "b.rs" in names
+        assert "c.txt" not in names
+        assert "d.py" not in names

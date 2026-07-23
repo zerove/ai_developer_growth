@@ -12,6 +12,13 @@ anti_patterns:
   pattern: 'except\s*:'
   message: 'Avoid bare except: use specific exception types'
   fix_hint: Replace 'except:' with 'except SpecificException:'
+  test_cases:
+    - code: 'except:'
+      should_match: true
+    - code: 'except Exception:'
+      should_match: false
+    - code: 'except (ValueError, TypeError):'
+      should_match: false
 - id: py-bare-except-pass
   name: Silent exception swallowing
   severity: error
@@ -54,6 +61,13 @@ anti_patterns:
   pattern: \beval\s*\(|\bexec\s*\(
   message: eval/exec are security risks
   fix_hint: Use ast.literal_eval() for data
+  test_cases:
+    - code: 'eval(user_input)'
+      should_match: true
+    - code: 'exec(code_string)'
+      should_match: true
+    - code: 'result = eval expression'
+      should_match: false
 - id: py-hardcoded-secret
   name: Hardcoded secret
   severity: error
@@ -61,6 +75,13 @@ anti_patterns:
   pattern: (?:password|secret|api_key|token)\s*=\s*["'][^"']+["']
   message: Hardcoded secrets are a security vulnerability
   fix_hint: Use environment variables or a secrets manager
+  test_cases:
+    - code: 'password = "hunter2"'
+      should_match: true
+    - code: 'api_key = "sk-12345"'
+      should_match: true
+    - code: 'os.environ["password"]'
+      should_match: false
 - id: py-shell-true
   name: subprocess with shell=True
   severity: warning

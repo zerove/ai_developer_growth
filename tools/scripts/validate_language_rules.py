@@ -18,6 +18,7 @@ from __future__ import annotations
 
 import argparse
 import ast
+import hashlib
 import json
 import re
 import sys
@@ -29,6 +30,73 @@ try:
     import yaml
 except ImportError:
     yaml = None  # type: ignore[assignment]
+
+# ──────────────────────────────────────────────────────────
+# Rule cache (#7)
+# ──────────────────────────────────────────────────────────
+
+_RULE_CACHE: dict[str, dict[str, Any]] = {}
+_FILE_HASH_CACHE: dict[str, str] = {}
+
+
+def _file_hash(filepath: Path) -> str:
+    """Quick content hash for incremental checks."""
+    try:
+        content = filepath.read_bytes()
+        return hashlib.md5(content).hexdigest()
+    except OSError:
+        return ""
+
+
+def _rules_hash(language: str) -> str:
+    """Hash of rule file for cache invalidation."""
+    rule_path = (
+        Path(__file__).parent.parent.parent
+        / "ai-dev-framework"
+        / "languages"
+        / language
+        / "rules.d"
+        / "anti_patterns.yml"
+    )
+    if not rule_path.exists():
+        return ""
+    try:
+        return hashlib.md5(rule_path.read_bytes()).hexdigest()
+    except OSError:
+        return ""
+
+
+def _load_cache(cache_file: Path) -> dict[str, str]:
+    """Load file hash cache from disk."""
+    if cache_file.exists():
+        try:
+            return json.loads(cache_file.read_text())
+        except (json.JSONDecodeError, OSError):
+            pass
+    return {}
+
+
+def _save_cache(cache_file: Path, cache: dict[str, str]) -> None:
+    """Save file hash cache to disk."""
+    try:
+        cache_file.write_text(json.dumps(cache))
+    except OSError:
+        pass
+
+
+def _get_supported_files(dirpath: Path, exclude: list[str]) -> list[Path]:
+    """Get all supported files in a directory."""
+    exclude = exclude or ["node_modules", "target", "vendor", ".git", "__pycache__", ".venv"]
+    files = []
+    for fp in sorted(dirpath.rglob("*")):
+        if not fp.is_file():
+            continue
+        if any(ex in fp.parts for ex in exclude):
+            continue
+        if detect_language_from_file(fp):
+            files.append(fp)
+    return files
+
 
 # ──────────────────────────────────────────────────────────
 # Data structures
@@ -149,7 +217,13 @@ class HealthScore:
 
 
 def load_rules(language: str, framework_dir: Path | None = None) -> dict[str, Any]:
-    """Load YAML rules for a given language."""
+    """Load YAML rules for a given language with caching (#7)."""
+    # Check cache
+    rh = _rules_hash(language)
+    cache_key = f"{language}:{rh}"
+    if cache_key in _RULE_CACHE:
+        return _RULE_CACHE[cache_key]
+
     if yaml is None:
         print("Warning: PyYAML not installed. Using embedded rules.", file=sys.stderr)
         return _get_embedded_rules(language)
@@ -166,7 +240,16 @@ def load_rules(language: str, framework_dir: Path | None = None) -> dict[str, An
     with open(rule_path) as f:
         data = yaml.safe_load(f)
 
-    return data if isinstance(data, dict) else {}
+    result = data if isinstance(data, dict) else {}
+
+    # Load common cross-language rules (#6)
+    common = _load_common_rules(framework_dir)
+    if common:
+        result = _merge_rules(result, common)
+
+    # Cache the result
+    _RULE_CACHE[cache_key] = result
+    return result
 
 
 def load_custom_rules(project_dir: Path) -> dict[str, Any]:
@@ -211,7 +294,12 @@ def load_custom_rules(project_dir: Path) -> dict[str, Any]:
 
 
 def _merge_rules(base: dict[str, Any], custom: dict[str, Any]) -> dict[str, Any]:
-    """Merge custom rules into base rules. Custom overrides by ID."""
+    """Merge custom rules into base rules. Custom overrides by ID.
+
+    Supports two modes:
+    - Full replacement: custom rule with same ID replaces the entire base rule
+    - Severity override: custom rule with severity_override only changes severity
+    """
     merged = dict(base)
 
     # Merge anti_patterns: custom overrides by ID, then appends new ones
@@ -228,8 +316,21 @@ def _merge_rules(base: dict[str, Any], custom: dict[str, Any]) -> dict[str, Any]
             else:
                 new_only.append(cp)
 
-        # Replace overridden patterns
-        merged_patterns = [next((cp for cp in overridden if cp["id"] == p["id"]), p) for p in base_patterns]
+        # Process base patterns: replace or apply severity_override
+        merged_patterns = []
+        for p in base_patterns:
+            match = next((cp for cp in overridden if cp["id"] == p["id"]), None)
+            if match:
+                if "severity_override" in match:
+                    # Only override severity, keep rest of base rule
+                    p = dict(p)
+                    p["severity"] = match["severity_override"]
+                    merged_patterns.append(p)
+                else:
+                    # Full replacement with custom rule
+                    merged_patterns.append(match)
+            else:
+                merged_patterns.append(p)
         merged_patterns.extend(new_only)
         merged["anti_patterns"] = merged_patterns
 
@@ -242,6 +343,25 @@ def _merge_rules(base: dict[str, Any], custom: dict[str, Any]) -> dict[str, Any]
         merged.setdefault("thresholds", {}).update(custom["thresholds"])
 
     return merged
+
+
+# ──────────────────────────────────────────────────────────
+# Cross-language common rules (#6)
+# ──────────────────────────────────────────────────────────
+
+
+def _load_common_rules(framework_dir: Path) -> dict[str, Any]:
+    """Load common cross-language rules from common/security.yml."""
+    common_path = framework_dir / "common" / "security.yml"
+    if not common_path.exists() or yaml is None:
+        return {}
+
+    try:
+        with open(common_path) as f:
+            data = yaml.safe_load(f)
+        return data if isinstance(data, dict) else {}
+    except Exception:
+        return {}
 
 
 def _get_embedded_rules(language: str) -> dict[str, Any]:
@@ -1262,6 +1382,70 @@ def _html_escape(s: str) -> str:
     return s.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
 
 
+# ──────────────────────────────────────────────────────────
+# SARIF output (#10) - GitHub Code Scanning format
+# ──────────────────────────────────────────────────────────
+
+
+def generate_sarif(results: list[ValidationResult]) -> str:
+    """Generate SARIF 2.1.0 report for GitHub Code Scanning."""
+    rules: dict[str, dict[str, Any]] = {}
+    runs_results: list[dict[str, Any]] = []
+
+    for result in results:
+        file_results = []
+        for issue in result.issues:
+            # Collect rule definitions
+            if issue.rule_id not in rules:
+                rules[issue.rule_id] = {
+                    "id": issue.rule_id,
+                    "shortDescription": {"text": issue.message},
+                    "helpUri": f"https://github.com/example/rules/{issue.rule_id}",
+                    "properties": {"category": issue.category},
+                }
+
+            level = "error" if issue.severity == "error" else "warning" if issue.severity == "warning" else "note"
+
+            file_results.append(
+                {
+                    "ruleId": issue.rule_id,
+                    "level": level,
+                    "message": {"text": issue.message},
+                    "locations": [
+                        {
+                            "physicalLocation": {
+                                "artifactLocation": {"uri": issue.file},
+                                "region": {"startLine": issue.line, "startColumn": issue.column + 1},
+                            }
+                        }
+                    ],
+                }
+            )
+
+        if file_results:
+            runs_results.extend(file_results)
+
+    sarif = {
+        "$schema": "https://raw.githubusercontent.com/oasis-tcs/sarif-spec/master/Schemata/sarif-schema-2.1.0.json",
+        "version": "2.1.0",
+        "runs": [
+            {
+                "tool": {
+                    "driver": {
+                        "name": "ai-language-rules",
+                        "version": "2.0.0",
+                        "informationUri": "https://github.com/1jehuang/jcode",
+                        "rules": list(rules.values()),
+                    }
+                },
+                "results": runs_results,
+            }
+        ],
+    }
+
+    return json.dumps(sarif, indent=2, ensure_ascii=False)
+
+
 def write_report(results: list[ValidationResult], format: str, output: Path | None = None) -> str | None:
     """Write report in specified format. Returns content or writes to file."""
     if format == "json":
@@ -1280,6 +1464,8 @@ def write_report(results: list[ValidationResult], format: str, output: Path | No
         content = generate_junit_xml(results)
     elif format == "html":
         content = generate_html_report(results)
+    elif format == "sarif":
+        content = generate_sarif(results)
     else:
         return None
 
@@ -1788,9 +1974,9 @@ Examples:
     # New: Report format (#6)
     parser.add_argument(
         "--format",
-        choices=["text", "json", "html", "junit"],
+        choices=["text", "json", "html", "junit", "sarif"],
         default="text",
-        help="Output format (default: text)",
+        help="Output format (default: text). sarif = GitHub Code Scanning",
     )
     parser.add_argument("-o", "--output", type=Path, help="Write report to file")
 
@@ -1807,6 +1993,14 @@ Examples:
 
     # New: Health score (#10)
     parser.add_argument("--health-score", action="store_true", help="Show project health score")
+
+    # New: Performance (#7)
+    parser.add_argument(
+        "--incremental", action="store_true", help="Skip files unchanged since last check (uses .rule-cache)"
+    )
+    parser.add_argument(
+        "--changed-files", nargs="*", type=Path, help="Only check these specific files (for incremental)"
+    )
 
     # New: Linter aggregation (#9)
     parser.add_argument(
@@ -1833,18 +2027,58 @@ Examples:
         project_dir = args.path if args.path.is_dir() else args.path.parent
         custom_rules = load_custom_rules(project_dir)
 
-    if args.path.is_file():
+    if args.changed_files:
+        # Incremental: only check specified files (#7)
+        results = []
+        for fp in args.changed_files:
+            if not fp.exists():
+                continue
+            lang = language or detect_language_from_file(fp)
+            if lang:
+                results.append(validate_file(fp, lang, custom_rules=custom_rules))
+    elif args.path.is_file():
         if language is None:
             language = detect_language_from_file(args.path)
         if language is None:
             print(f"Error: Cannot detect language for {args.path}. Use --lang.", file=sys.stderr)
             return 1
+
+        # Incremental: skip unchanged files (#7)
+        if args.incremental:
+            fh = _file_hash(args.path)
+            cache_file = args.path.parent / ".rule-cache"
+            cache = _load_cache(cache_file)
+            if cache.get(str(args.path)) == fh:
+                return 0  # File unchanged
+            cache[str(args.path)] = fh
+            _save_cache(cache_file, cache)
+
         results = [validate_file(args.path, language, custom_rules=custom_rules)]
     else:
         if language is None and not args.auto_detect:
             print("Error: Use --lang or --auto-detect for directories.", file=sys.stderr)
             return 1
-        results = validate_directory(args.path, language, args.exclude, custom_rules=custom_rules)
+
+        # Incremental: skip unchanged files in directory (#7)
+        if args.incremental:
+            cache_file = args.path / ".rule-cache"
+            cache = _load_cache(cache_file)
+            all_files = _get_supported_files(args.path, args.exclude)
+            changed = [f for f in all_files if _file_hash(f) != cache.get(str(f))]
+            # Update cache
+            for f in all_files:
+                cache[str(f)] = _file_hash(f)
+            _save_cache(cache_file, cache)
+            results = []
+            for fp in changed:
+                lang = language or detect_language_from_file(fp)
+                if lang:
+                    results.append(validate_file(fp, lang, custom_rules=custom_rules))
+            if not results:
+                print("No changed files detected (incremental mode).")
+                return 0
+        else:
+            results = validate_directory(args.path, language, args.exclude, custom_rules=custom_rules)
 
     # Auto-fix (#1)
     if args.fix or args.dry_run:

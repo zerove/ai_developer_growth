@@ -430,486 +430,22 @@ def check_anti_patterns(lines: list[str], rules: dict[str, Any], filepath: str) 
 
 
 # ──────────────────────────────────────────────────────────
-# Naming convention checker
+# Naming convention checker - Delegated to naming_analyzer.py
 # ──────────────────────────────────────────────────────────
 
 
 def check_naming_conventions(lines: list[str], rules: dict[str, Any], filepath: str) -> list[Issue]:
     """Check naming conventions based on language rules."""
-    issues: list[Issue] = []
-    naming = rules.get("naming", {})
-    language = rules.get("language", "")
+    from .naming_analyzer import check_naming_conventions as _check
 
-    # Check filename
-    file_rule = naming.get("file", {})
-    if file_rule and "pattern" in file_rule:
-        filename = Path(filepath).name
-        if not re.match(file_rule["pattern"], filename):
-            issues.append(
-                Issue(
-                    rule_id=f"{language[:2]}-naming-file",
-                    severity="warning",
-                    category="naming",
-                    file=filepath,
-                    line=0,
-                    message=file_rule.get("message", f"File name '{filename}' violates naming convention"),
-                )
-            )
-
-    # Check function/class/variable names in code
-    for kind in ["function", "class", "struct", "enum", "constant", "interface", "module", "trait", "package"]:
-        kind_rule = naming.get(kind, {})
-        if not kind_rule or "pattern" not in kind_rule:
-            continue
-
-        regex = re.compile(kind_rule["pattern"])
-        exceptions = kind_rule.get("exceptions", [])
-
-        for line_num, line in enumerate(lines, 1):
-            stripped = line.strip()
-            if stripped.startswith("#") or stripped.startswith("//"):
-                continue
-
-            # Extract identifier based on language patterns
-            identifiers = _extract_identifiers(stripped, kind, language)
-
-            for ident in identifiers:
-                if ident in exceptions:
-                    continue
-                if not regex.match(ident):
-                    issues.append(
-                        Issue(
-                            rule_id=f"{language[:2]}-naming-{kind}",
-                            severity="info",
-                            category="naming",
-                            file=filepath,
-                            line=line_num,
-                            message=kind_rule.get("message", f"'{ident}' violates {kind} naming convention"),
-                        )
-                    )
-
-    return issues
+    return _check(lines, rules, filepath)
 
 
 def _extract_identifiers(line: str, kind: str, language: str) -> list[str]:
     """Extract identifiers from a line based on the kind and language."""
-    identifiers: list[str] = []
+    from .naming_analyzer import extract_identifiers
 
-    if language == "python":
-        if kind == "function":
-            m = re.match(r"(?:async\s+)?def\s+([a-zA-Z_]\w*)", line)
-            if m:
-                identifiers.append(m.group(1))
-        elif kind == "class":
-            m = re.match(r"class\s+([a-zA-Z_]\w*)", line)
-            if m:
-                identifiers.append(m.group(1))
-        elif kind == "constant":
-            m = re.match(r"^([A-Z][A-Z0-9_]*)\s*=", line)
-            if m:
-                identifiers.append(m.group(1))
-
-    elif language in ("typescript", "ts"):
-        if kind == "function":
-            m = re.match(r"(?:export\s+)?(?:async\s+)?function\s+([a-zA-Z_]\w*)", line)
-            if m:
-                identifiers.append(m.group(1))
-        elif kind == "class":
-            m = re.match(r"(?:export\s+)?class\s+([a-zA-Z_]\w*)", line)
-            if m:
-                identifiers.append(m.group(1))
-        elif kind == "interface":
-            m = re.match(r"(?:export\s+)?interface\s+([a-zA-Z_]\w*)", line)
-            if m:
-                identifiers.append(m.group(1))
-        elif kind == "constant":
-            m = re.match(r"(?:export\s+)?const\s+([a-zA-Z_]\w*)", line)
-            if m:
-                identifiers.append(m.group(1))
-
-    elif language == "rust":
-        if kind == "function":
-            m = re.match(r"(?:pub\s+)?(?:async\s+)?fn\s+([a-zA-Z_]\w*)", line)
-            if m:
-                identifiers.append(m.group(1))
-        elif kind in ("struct", "enum", "trait"):
-            m = re.match(r"(?:pub\s+)?(?:struct|enum|trait)\s+([a-zA-Z_]\w*)", line)
-            if m:
-                identifiers.append(m.group(1))
-        elif kind == "constant":
-            m = re.match(r"(?:pub\s+)?const\s+([a-zA-Z_]\w*)", line)
-            if m:
-                identifiers.append(m.group(1))
-        elif kind == "module":
-            m = re.match(r"mod\s+([a-zA-Z_]\w*)", line)
-            if m:
-                identifiers.append(m.group(1))
-
-    elif language == "go":
-        if kind == "function":
-            m = re.match(r"func\s+(?:\([^)]+\)\s+)?([a-zA-Z_]\w*)", line)
-            if m:
-                identifiers.append(m.group(1))
-        elif kind in ("struct", "interface"):
-            m = re.match(r"type\s+([a-zA-Z_]\w*)\s+(?:struct|interface)", line)
-            if m:
-                identifiers.append(m.group(1))
-        elif kind == "constant":
-            m = re.match(r"(?:const|var)\s+([a-zA-Z_]\w*)", line)
-            if m:
-                identifiers.append(m.group(1))
-        elif kind == "package":
-            m = re.match(r"package\s+(\w+)", line)
-            if m:
-                identifiers.append(m.group(1))
-
-    elif language == "java":
-        if kind == "function":
-            m = re.match(
-                r"(?:public|private|protected)?\s*(?:static\s+)?(?:final\s+)?(?:synchronized\s+)?(?:<[^>]+>\s+)?(\w+)\s+\w+\s*\(",
-                line,
-            )
-            if m and m.group(1) not in ("if", "for", "while", "switch", "catch", "try", "return", "new", "throw"):
-                identifiers.append(m.group(1))
-        elif kind == "class":
-            m = re.match(r"(?:public|private|protected)?\s*(?:abstract\s+)?(?:final\s+)?class\s+(\w+)", line)
-            if m:
-                identifiers.append(m.group(1))
-        elif kind == "constant":
-            m = re.match(r"(?:public|private|protected)?\s*static\s+final\s+\w+\s+([A-Z][A-Z0-9_]*)", line)
-            if m:
-                identifiers.append(m.group(1))
-        elif kind == "package":
-            m = re.match(r"package\s+([\w.]+)", line)
-            if m:
-                identifiers.append(m.group(1))
-
-    elif language == "kotlin":
-        if kind == "function":
-            m = re.match(r"(?:fun|suspend\s+fun)\s+(\w+)", line)
-            if m:
-                identifiers.append(m.group(1))
-        elif kind == "class":
-            m = re.match(r"(?:data\s+)?(?:abstract\s+)?(?:open\s+)?class\s+(\w+)", line)
-            if m:
-                identifiers.append(m.group(1))
-        elif kind == "constant":
-            m = re.match(r"const\s+val\s+(\w+)", line)
-            if m:
-                identifiers.append(m.group(1))
-
-    elif language == "csharp":
-        if kind == "function":
-            m = re.match(
-                r"(?:public|private|protected|internal)?\s*(?:static\s+)?(?:async\s+)?(?:\w+\s+)?(\w+)\s*\(", line
-            )
-            if m and m.group(1) not in (
-                "if",
-                "for",
-                "while",
-                "switch",
-                "catch",
-                "try",
-                "return",
-                "new",
-                "throw",
-                "using",
-            ):
-                identifiers.append(m.group(1))
-        elif kind == "class":
-            m = re.match(
-                r"(?:public|private|protected|internal)?\s*(?:abstract\s+)?(?:sealed\s+)?(?:partial\s+)?class\s+(\w+)",
-                line,
-            )
-            if m:
-                identifiers.append(m.group(1))
-        elif kind == "interface":
-            m = re.match(r"(?:public|private|protected|internal)?\s*(?:partial\s+)?interface\s+(\w+)", line)
-            if m:
-                identifiers.append(m.group(1))
-        elif kind == "constant":
-            m = re.match(r"(?:public|private|protected|internal)?\s*const\s+\w+\s+(\w+)", line)
-            if m:
-                identifiers.append(m.group(1))
-
-    elif language == "php":
-        if kind == "function":
-            m = re.match(r"(?:public|private|protected)?\s*(?:static\s+)?function\s+(\w+)", line)
-            if m:
-                identifiers.append(m.group(1))
-        elif kind == "class":
-            m = re.match(r"(?:abstract\s+)?class\s+(\w+)", line)
-            if m:
-                identifiers.append(m.group(1))
-        elif kind == "constant":
-            m = re.match(r"(?:public|private|protected)?\s*const\s+([A-Z][A-Z0-9_]*)", line)
-            if m:
-                identifiers.append(m.group(1))
-
-    elif language == "ruby":
-        if kind == "function":
-            m = re.match(r"(?:def|defself)\s+(\w+[!?]?)", line)
-            if m:
-                identifiers.append(m.group(1))
-        elif kind in ("class", "module"):
-            m = re.match(r"(?:class|module)\s+(\w+)", line)
-            if m:
-                identifiers.append(m.group(1))
-        elif kind == "constant":
-            m = re.match(r"([A-Z][A-Z0-9_]*)\s*=", line)
-            if m:
-                identifiers.append(m.group(1))
-
-    elif language == "cpp":
-        if kind == "function":
-            m = re.match(r"(?:[\w:*&<>\s]+?)\s+(\w+)\s*\(", line)
-            if m and m.group(1) not in (
-                "if",
-                "for",
-                "while",
-                "switch",
-                "catch",
-                "try",
-                "return",
-                "new",
-                "delete",
-                "sizeof",
-                "typeof",
-            ):
-                identifiers.append(m.group(1))
-        elif kind == "class":
-            m = re.match(r"(?:class|struct)\s+(\w+)", line)
-            if m:
-                identifiers.append(m.group(1))
-        elif kind == "constant":
-            m = re.match(r"(?:const|constexpr|static\s+const)\s+\w+\s+([A-Z][A-Z0-9_]*)", line)
-            if m:
-                identifiers.append(m.group(1))
-
-    elif language == "swift":
-        if kind == "function":
-            m = re.match(r"(?:func|static\s+func)\s+(\w+)", line)
-            if m:
-                identifiers.append(m.group(1))
-        elif kind == "class":
-            m = re.match(r"(?:class|struct|enum|protocol)\s+(\w+)", line)
-            if m:
-                identifiers.append(m.group(1))
-        elif kind == "constant":
-            m = re.match(r"(?:let|static\s+let)\s+(\w+)", line)
-            if m:
-                identifiers.append(m.group(1))
-
-    elif language == "scala":
-        if kind == "function":
-            m = re.match(r"(?:def|override\s+def)\s+(\w+)", line)
-            if m:
-                identifiers.append(m.group(1))
-        elif kind == "class":
-            m = re.match(r"(?:class|trait|object)\s+(\w+)", line)
-            if m:
-                identifiers.append(m.group(1))
-        elif kind == "constant":
-            m = re.match(r"val\s+([A-Z][A-Z0-9_]*)", line)
-            if m:
-                identifiers.append(m.group(1))
-
-    elif language == "elixir":
-        if kind == "function":
-            m = re.match(r"(?:defp?|defmacrop?)\s+(\w+)", line)
-            if m:
-                identifiers.append(m.group(1))
-        elif kind == "class":
-            m = re.match(r"defmodule\s+([\w.]+)", line)
-            if m:
-                identifiers.append(m.group(1).split(".")[-1])
-        elif kind == "constant":
-            m = re.match(r"(@?[A-Z][A-Z0-9_]*)\s*=", line)
-            if m:
-                identifiers.append(m.group(1))
-
-    elif language == "lua":
-        if kind == "function":
-            m = re.match(r"(?:local\s+)?function\s+([\w.]+)", line)
-            if m:
-                identifiers.append(m.group(1).split(".")[-1])
-        elif kind == "class":
-            m = re.match(r"(?:local\s+)?(\w+)\s*=\s*\{\s*\}", line)
-            if m:
-                identifiers.append(m.group(1))
-        elif kind == "constant":
-            m = re.match(r"([A-Z][A-Z0-9_]*)\s*=", line)
-            if m:
-                identifiers.append(m.group(1))
-
-    elif language == "javascript":
-        if kind == "function":
-            m = re.match(r"(?:export\s+)?(?:async\s+)?(?:function|const|let|var)\s+(\w+)", line)
-            if m and m.group(1) not in (
-                "if",
-                "for",
-                "while",
-                "switch",
-                "catch",
-                "try",
-                "return",
-                "new",
-                "delete",
-                "typeof",
-                "instanceof",
-            ):
-                identifiers.append(m.group(1))
-        elif kind == "class":
-            m = re.match(r"(?:export\s+)?class\s+(\w+)", line)
-            if m:
-                identifiers.append(m.group(1))
-        elif kind == "constant":
-            m = re.match(r"(?:export\s+)?const\s+([A-Z][A-Z0-9_]*)", line)
-            if m:
-                identifiers.append(m.group(1))
-
-    elif language == "zig":
-        if kind == "function":
-            m = re.match(r"(?:pub\s+)?(?:inline\s+)?fn\s+(\w+)", line)
-            if m:
-                identifiers.append(m.group(1))
-        elif kind in ("class", "struct", "enum"):
-            m = re.match(r"(?:pub\s+)?(?:const|var)\s+(\w+)\s*=\s*(?:struct|enum|union)", line)
-            if m:
-                identifiers.append(m.group(1))
-        elif kind == "constant":
-            m = re.match(r"(?:pub\s+)?const\s+([A-Z][A-Z0-9_]*)\s*=", line)
-            if m:
-                identifiers.append(m.group(1))
-
-    elif language == "r":
-        if kind == "function":
-            m = re.match(r"(\w+)\s*(?:<-|=)\s*function\s*\(", line)
-            if m:
-                identifiers.append(m.group(1))
-        elif kind == "class":
-            m = re.match(r"(\w+)\s*(?:<-|=)\s*setClass\(", line)
-            if m:
-                identifiers.append(m.group(1))
-        elif kind == "constant":
-            m = re.match(r"([A-Z][A-Z0-9_]*)\s*(?:<-|=)", line)
-            if m:
-                identifiers.append(m.group(1))
-
-    elif language == "clojure":
-        if kind == "function":
-            m = re.match(r"\(defn-?\s+(\S+)", line)
-            if m:
-                identifiers.append(m.group(1))
-        elif kind == "class":
-            m = re.match(r"\(defrecord\s+(\S+)", line)
-            if m:
-                identifiers.append(m.group(1))
-        elif kind == "constant":
-            m = re.match(r"\(def\s+([A-Z][A-Z0-9_-]*)", line)
-            if m:
-                identifiers.append(m.group(1))
-
-    elif language == "haskell":
-        if kind == "function":
-            m = re.match(r"(\w+)\s*(?:::|[=])", line)
-            if m and m.group(1) not in ("where", "let", "in", "if", "then", "else", "case", "of", "do"):
-                identifiers.append(m.group(1))
-        elif kind == "class":
-            m = re.match(r"(?:data|newtype|type)\s+(\w+)", line)
-            if m:
-                identifiers.append(m.group(1))
-        elif kind == "constant":
-            m = re.match(r"(\w+)\s*::\s*\w+", line)
-            if m:
-                identifiers.append(m.group(1))
-
-    elif language == "dart":
-        if kind == "function":
-            m = re.match(r"(?:static\s+)?(?:\w+\s+)?(\w+)\s*\(", line)
-            if m and m.group(1) not in (
-                "if",
-                "for",
-                "while",
-                "switch",
-                "catch",
-                "try",
-                "return",
-                "new",
-                "delete",
-                "class",
-                "extends",
-                "implements",
-                "import",
-                "export",
-            ):
-                identifiers.append(m.group(1))
-        elif kind == "class":
-            m = re.match(r"(?:abstract\s+)?class\s+(\w+)", line)
-            if m:
-                identifiers.append(m.group(1))
-        elif kind == "constant":
-            m = re.match(r"(?:static\s+)?const\s+(\w+)", line)
-            if m:
-                identifiers.append(m.group(1))
-
-    elif language == "powershell":
-        if kind == "function":
-            m = re.match(r"function\s+([\w-]+)", line)
-            if m:
-                identifiers.append(m.group(1))
-        elif kind == "class":
-            m = re.match(r"class\s+([\w.]+)", line)
-            if m:
-                identifiers.append(m.group(1))
-        elif kind == "constant":
-            m = re.match(r"\$([A-Z][A-Z0-9_]*)\s*=", line)
-            if m:
-                identifiers.append(m.group(1))
-
-    elif language == "perl":
-        if kind == "function":
-            m = re.match(r"(?:sub|method)\s+(\w+)", line)
-            if m:
-                identifiers.append(m.group(1))
-        elif kind == "constant":
-            m = re.match(r"our\s+([A-Z][A-Z0-9_]*)", line)
-            if m:
-                identifiers.append(m.group(1))
-
-    elif language == "assembly":
-        if kind == "function":
-            m = re.match(r"^(\w+):", line)
-            if m and not m.group(1).startswith("."):
-                identifiers.append(m.group(1))
-
-    elif language == "fortran":
-        if kind == "function":
-            m = re.match(r"(?:subroutine|function)\s+(\w+)", line, re.IGNORECASE)
-            if m:
-                identifiers.append(m.group(1))
-        elif kind == "constant":
-            m = re.match(r"(?:parameter|PARAMETER)\s*\((\w+)\s*=", line, re.IGNORECASE)
-            if m:
-                identifiers.append(m.group(1))
-
-    elif language == "graphql":
-        if kind == "function":
-            m = re.match(r"(?:type|input|interface)\s+(\w+)", line)
-            if m:
-                identifiers.append(m.group(1))
-
-    elif language == "matlab":
-        if kind == "function":
-            m = re.match(r"function\s+.*?(\w+)\s*\(", line)
-            if m:
-                identifiers.append(m.group(1))
-        elif kind == "class":
-            m = re.match(r"classdef\s+(\w+)", line)
-            if m:
-                identifiers.append(m.group(1))
-
-    return identifiers
+    return extract_identifiers(line, kind, language)
 
 
 # ──────────────────────────────────────────────────────────
@@ -1190,6 +726,69 @@ def _calc_cyclomatic_complexity(node: ast.AST) -> int:
 
 
 # ──────────────────────────────────────────────────────────
+# Threshold checker - Delegated to complexity_analyzer.py
+# ──────────────────────────────────────────────────────────
+
+
+def check_thresholds(lines: list[str], rules: dict[str, Any], filepath: str) -> list[Issue]:
+    """Check quantitative thresholds."""
+    from .complexity_analyzer import check_thresholds as _check
+
+    return _check(lines, rules, filepath)
+
+
+def _extract_function_lines(lines: list[str], language: str) -> list[tuple[str, int, int]]:
+    """Extract function name, start line, end line."""
+    from .complexity_analyzer import extract_function_lines
+
+    return extract_function_lines(lines, language)
+
+
+def _max_nesting_depth(lines: list[str], language: str = "") -> int:
+    """Calculate maximum nesting depth from lines."""
+    from .complexity_analyzer import max_nesting_depth
+
+    return max_nesting_depth(lines, language)
+
+
+def _max_python_indent_depth(lines: list[str]) -> int:
+    """Calculate max nesting depth for Python using indentation."""
+    from .complexity_analyzer import _max_python_indent_depth
+
+    return _max_python_indent_depth(lines)
+
+
+# ──────────────────────────────────────────────────────────
+# Python AST checks - Delegated to complexity_analyzer.py
+# ──────────────────────────────────────────────────────────
+
+
+def check_python_ast(filepath: str, lines: list[str]) -> list[Issue]:
+    """Python-specific AST-based checks."""
+    from .complexity_analyzer import check_python_ast as _check
+
+    return _check(filepath, lines)
+
+
+def _check_python_function(
+    node: "ast.FunctionDef | ast.AsyncFunctionDef",
+    filepath: str,
+    issues: list[Issue],
+) -> None:
+    """Check a Python function node for quality issues."""
+    from .complexity_analyzer import _check_python_function as _check
+
+    _check(node, filepath, issues)
+
+
+def _calc_cyclomatic_complexity(node: "ast.AST") -> int:
+    """Calculate cyclomatic complexity for an AST node."""
+    from .complexity_analyzer import calc_cyclomatic_complexity
+
+    return calc_cyclomatic_complexity(node)
+
+
+# ──────────────────────────────────────────────────────────
 # Auto-fix engine (#1)
 # ──────────────────────────────────────────────────────────
 
@@ -1326,7 +925,7 @@ def calculate_health_score(results: list[ValidationResult]) -> HealthScore:
 
 
 # ──────────────────────────────────────────────────────────
-# Linter aggregation (#9)
+# Linter aggregation (#9) - Delegated to linter_runner.py
 # ──────────────────────────────────────────────────────────
 
 
@@ -1334,154 +933,10 @@ def run_linter_aggregation(
     dirpath: Path,
     linters: list[str] | None = None,
 ) -> list[dict[str, Any]]:
-    """Run external linters and aggregate results into unified format.
+    """Run external linters and aggregate results."""
+    from .linter_runner import run_linter_aggregation as _run
 
-    Supported linters: ruff, mypy, eslint, golangci-lint
-    Returns list of unified issue dicts.
-    """
-
-    if linters is None:
-        linters = []
-
-    unified: list[dict[str, Any]] = []
-
-    for linter in linters:
-        if linter == "ruff":
-            unified.extend(_run_ruff(dirpath))
-        elif linter == "mypy":
-            unified.extend(_run_mypy(dirpath))
-        elif linter == "eslint":
-            unified.extend(_run_eslint(dirpath))
-        elif linter == "golangci-lint":
-            unified.extend(_run_golangci(dirpath))
-
-    return unified
-
-
-def _run_ruff(dirpath: Path) -> list[dict[str, Any]]:
-    """Run ruff and parse results."""
-    import subprocess
-
-    issues: list[dict[str, Any]] = []
-    try:
-        result = subprocess.run(
-            ["ruff", "check", "--output-format=json", str(dirpath)],
-            capture_output=True,
-            text=True,
-            timeout=60,
-        )
-        if result.stdout.strip():
-            data = json.loads(result.stdout)
-            for item in data:
-                issues.append(
-                    {
-                        "linter": "ruff",
-                        "rule_id": item.get("code", ""),
-                        "severity": "error" if item.get("fix") is None else "warning",
-                        "file": item.get("filename", ""),
-                        "line": item.get("location", {}).get("row", 0),
-                        "message": item.get("message", ""),
-                    }
-                )
-    except (subprocess.TimeoutExpired, FileNotFoundError, json.JSONDecodeError):
-        pass
-    return issues
-
-
-def _run_mypy(dirpath: Path) -> list[dict[str, Any]]:
-    """Run mypy and parse results."""
-    import subprocess
-
-    issues: list[dict[str, Any]] = []
-    try:
-        result = subprocess.run(
-            ["mypy", "--ignore-missing-imports", "--no-error-summary", "--show-error-codes", str(dirpath)],
-            capture_output=True,
-            text=True,
-            timeout=60,
-        )
-        for line in result.stdout.splitlines():
-            if ": error:" in line:
-                parts = line.split(": ", 2)
-                if len(parts) >= 3:
-                    file_line = parts[0]
-                    msg = parts[1]
-                    code = parts[2] if len(parts) > 2 else ""
-                    fl = file_line.rsplit(":", 1)
-                    issues.append(
-                        {
-                            "linter": "mypy",
-                            "rule_id": code.strip("()"),
-                            "severity": "error",
-                            "file": fl[0] if len(fl) > 1 else str(dirpath),
-                            "line": int(fl[1]) if fl[1].isdigit() else 0,
-                            "message": msg,
-                        }
-                    )
-    except (subprocess.TimeoutExpired, FileNotFoundError):
-        pass
-    return issues
-
-
-def _run_eslint(dirpath: Path) -> list[dict[str, Any]]:
-    """Run eslint and parse results."""
-    import subprocess
-
-    issues: list[dict[str, Any]] = []
-    try:
-        result = subprocess.run(
-            ["eslint", "--format=json", str(dirpath)],
-            capture_output=True,
-            text=True,
-            timeout=60,
-        )
-        if result.stdout.strip():
-            data = json.loads(result.stdout)
-            for file_entry in data:
-                for msg in file_entry.get("messages", []):
-                    issues.append(
-                        {
-                            "linter": "eslint",
-                            "rule_id": msg.get("ruleId", ""),
-                            "severity": "error" if msg.get("severity") == 2 else "warning",
-                            "file": file_entry.get("filePath", ""),
-                            "line": msg.get("line", 0),
-                            "message": msg.get("message", ""),
-                        }
-                    )
-    except (subprocess.TimeoutExpired, FileNotFoundError, json.JSONDecodeError):
-        pass
-    return issues
-
-
-def _run_golangci(dirpath: Path) -> list[dict[str, Any]]:
-    """Run golangci-lint and parse results."""
-    import subprocess
-
-    issues: list[dict[str, Any]] = []
-    try:
-        result = subprocess.run(
-            ["golangci-lint", "run", "--out-format=json", str(dirpath)],
-            capture_output=True,
-            text=True,
-            timeout=120,
-        )
-        if result.stdout.strip():
-            data = json.loads(result.stdout)
-            for issue in data.get("Issues", []):
-                issues.append(
-                    {
-                        "linter": "golangci-lint",
-                        "rule_id": issue.get("FromLinter", ""),
-                        "severity": "error",
-                        "file": issue.get("Pos", {}).get("Filename", ""),
-                        "line": issue.get("Pos", {}).get("Line", 0),
-                        "message": issue.get("Text", ""),
-                    }
-                )
-    except (subprocess.TimeoutExpired, FileNotFoundError, json.JSONDecodeError):
-        pass
-    return issues
+    return _run(dirpath, linters)
 
 
 # ──────────────────────────────────────────────────────────

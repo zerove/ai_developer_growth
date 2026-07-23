@@ -2,7 +2,7 @@
 
 ## 项目状态
 
-- **阶段**: Phase 10 完成 - 代码质量优化 + 模块化重构 (2026-07-23)
+- **阶段**: Phase 11 完成 - 模块化重构 + 插件系统 (2026-07-23)
 - **成熟度**: 99/100 (优秀) - 详见 AUDIT_REPORT.md
 - **核心资产**: 知识库 (218 篇文档) + 治理框架 (21 语言规则 + 11 框架 + 12 领域 = 44 规范) + 35 真实案例 + 7 代码示例 (含向量搜索)
 
@@ -10,7 +10,7 @@
 
 | 日期 | 决策 | 背景 | 影响 |
 |------|------|------|------|
-| 2026-07-23 | Phase 10: 代码质量优化 + 模块化重构 | 测试覆盖 65%→80%+, 903 测试, validate_language_rules 拆分 | 903 测试全部通过, 6 个新模块, 代码质量显著提升 |
+| 2026-07-23 | Phase 11: 模块化重构 + 插件系统 | rule_marketplace 拆分, fix_heuristics 提取, rules_engine 插件系统, CONTRIBUTING 测试要求 | 913 测试, 8 个新模块, plugin 架构, rule_catalog 可复用 |
 | 2026-07-23 | 语言规则优化 + rules/ 包重构 | 21 种语言规则 + 统一 CLI + Web 基类 + 懒加载 | 748 测试全部通过，代码质量提升 |通过，代码质量提升 |
 | 2026-07-22 | AI 开发流程规范补全 | 缺失 15 个标准文档 | 新增: 5个P0 + 5个P1 + 5个P2 = 15个标准文档 |
 | 2026-07-19 | 知识优先重构 | 从工具优先转为文档优先 | 核心价值在方法论文档，代码为验证手段 |
@@ -22,6 +22,12 @@
 
 ## 已完成模块
 
+- ✅ Phase 11 模块化重构 + 插件系统
+  - rule_marketplace.py 拆分: rule_catalog.py (263行) + CLI (222行)
+  - generate_fixes.py 拆分: fix_heuristics.py (151行) + orchestration (167行)
+  - rules_engine 插件系统: plugins.py (215行), CheckerPlugin ABC, registry, decorator, discovery
+  - CONTRIBUTING.md 测试要求补全
+  - 913 测试全部通过
 - ✅ Phase 10 代码质量优化 + 模块化重构
   - hooks_runner.py 测试补全 (27 tests)
   - 903 测试全部通过 (从 830 增至 903, +73)

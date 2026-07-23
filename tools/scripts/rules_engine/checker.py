@@ -15,6 +15,7 @@ from .anti_pattern_checker import check_anti_patterns
 from .complexity_checker import check_js_complexity, check_python_complexity
 from .models import CheckResult, Issue
 from .naming_checker import check_naming_conventions
+from .plugins import get_plugins_for_language
 from .rule_loader import load_rules_for_language
 
 
@@ -88,6 +89,14 @@ def _run_all_checkers(filepath: Path, content: str, lines: list[str], lang: str,
         issues.extend(check_python_complexity(lines, rules, str(filepath)))
     elif lang in ("javascript", "typescript"):
         issues.extend(check_js_complexity(lines, rules, str(filepath)))
+
+    # Run registered plugins
+    for plugin in get_plugins_for_language(lang):
+        try:
+            issues.extend(plugin.check(filepath, content, lines, lang, rules))
+        except Exception:
+            # Plugin failed - continue with other checkers
+            pass
 
     # Run external linters
     issues.extend(_run_external_linters(filepath, lang))

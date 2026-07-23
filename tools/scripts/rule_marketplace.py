@@ -1,14 +1,7 @@
 #!/usr/bin/env python3
 """Rule marketplace CLI (#9): discover, install, search, and manage rule packs.
 
-Built-in packs:
-  - security    : Common security rules (cross-language)
-  - python-pack : Python anti-patterns and best practices
-  - typescript-pack : TypeScript rules
-  - react-pack  : React anti-patterns
-  - django-pack : Django best practices
-  - fastapi-pack: FastAPI best practices
-  - full        : All rules for all languages
+Delegates core logic to rule_catalog.py. This file is the CLI entry point.
 
 Usage:
     python tools/scripts/rule_marketplace.py list
@@ -22,7 +15,6 @@ Usage:
 from __future__ import annotations
 
 import argparse
-import shutil
 import sys
 from pathlib import Path
 
@@ -31,77 +23,14 @@ import yaml
 sys.path.insert(0, str(Path(__file__).parent))
 from _common import framework_dir as _framework_dir
 from _common import handle_error
-
-# ──────────────────────────────────────────────────────────
-# Built-in pack definitions
-# ──────────────────────────────────────────────────────────
-
-BUILTIN_PACKS: dict[str, dict] = {
-    "security": {
-        "name": "Security Rules",
-        "description": "Cross-language security anti-patterns",
-        "source": "common/security.yml",
-        "categories": ["security"],
-        "rule_count": 8,
-    },
-    "python-pack": {
-        "name": "Python Best Practices",
-        "description": "Python anti-patterns, naming conventions, and complexity rules",
-        "source": "languages/python/rules.d/",
-        "categories": ["anti_patterns", "naming_conventions", "complexity"],
-        "rule_count": 21,
-    },
-    "typescript-pack": {
-        "name": "TypeScript Best Practices",
-        "description": "TypeScript anti-patterns, naming conventions, and complexity rules",
-        "source": "languages/typescript/rules.d/",
-        "categories": ["anti_patterns", "naming_conventions", "complexity"],
-        "rule_count": 17,
-    },
-    "react-pack": {
-        "name": "React Anti-patterns",
-        "description": "Common React anti-patterns and best practices",
-        "source": "frameworks/react/rules.d/",
-        "categories": ["anti_patterns"],
-        "rule_count": 8,
-    },
-    "vue-pack": {
-        "name": "Vue Anti-patterns",
-        "description": "Common Vue anti-patterns and best practices",
-        "source": "frameworks/vue/rules.d/",
-        "categories": ["anti_patterns"],
-        "rule_count": 8,
-    },
-    "django-pack": {
-        "name": "Django Best Practices",
-        "description": "Django security, naming, and anti-patterns",
-        "source": "frameworks/django/rules.d/",
-        "categories": ["anti_patterns", "naming_conventions", "complexity"],
-        "rule_count": 22,
-    },
-    "fastapi-pack": {
-        "name": "FastAPI Best Practices",
-        "description": "FastAPI anti-patterns, naming, and complexity",
-        "source": "frameworks/fastapi/rules.d/",
-        "categories": ["anti_patterns", "naming_conventions", "complexity"],
-        "rule_count": 18,
-    },
-    "spring-pack": {
-        "name": "Spring Boot Best Practices",
-        "description": "Spring Boot anti-patterns and naming conventions",
-        "source": "frameworks/spring/rules.d/",
-        "categories": ["anti_patterns", "naming_conventions"],
-        "rule_count": 16,
-    },
-    "full": {
-        "name": "All Rules",
-        "description": "All rules for all languages and frameworks",
-        "source": "./",
-        "categories": ["anti_patterns", "naming_conventions", "complexity", "security"],
-        "rule_count": 350,
-    },
-}
-
+from rule_catalog import (
+    BUILTIN_PACKS,
+    export_rules,
+    get_pack_info,
+    install_pack,
+    search_rules,
+    validate_rules,
+)
 
 # ──────────────────────────────────────────────────────────
 # Commands
@@ -110,13 +39,9 @@ BUILTIN_PACKS: dict[str, dict] = {
 
 def cmd_list(args: argparse.Namespace) -> None:
     """List all available rule packs."""
-    output_json = args.json
-    packs = []
-    for pack_id, info in BUILTIN_PACKS.items():
-        entry = {"id": pack_id, **info}
-        packs.append(entry)
+    packs = [{"id": pid, **info} for pid, info in BUILTIN_PACKS.items()]
 
-    if output_json:
+    if args.json:
         print(yaml.dump(packs, default_flow_style=False))
     else:
         print(f"{'Pack ID':<20} {'Rules':<8} {'Description'}")
@@ -127,56 +52,7 @@ def cmd_list(args: argparse.Namespace) -> None:
 
 def cmd_search(args: argparse.Namespace) -> None:
     """Search rules by keyword."""
-    query = args.query.lower()
-    fw = _framework_dir()
-    results = []
-
-    # Search in common rules
-    common_file = fw / "common" / "security.yml"
-    if common_file.exists():
-        with open(common_file) as f:
-            data = yaml.safe_load(f) or {}
-        for rule in data.get("anti_patterns", []):
-            if _matches(rule, query):
-                results.append({"pack": "security", **rule})
-
-    # Search in language rules
-    langs_dir = fw / "languages"
-    if langs_dir.exists():
-        for lang_dir in sorted(langs_dir.iterdir()):
-            if not lang_dir.is_dir():
-                continue
-            rules_dir = lang_dir / "rules.d"
-            if not rules_dir.exists():
-                continue
-            for yml in rules_dir.glob("*.yml"):
-                with open(yml) as f:
-                    data = yaml.safe_load(f) or {}
-                for category in ["anti_patterns", "naming_conventions", "complexity"]:
-                    for rule in data.get(category, []):
-                        if _matches(rule, query):
-                            results.append(
-                                {"pack": lang_dir.name, "category": category, **rule}
-                            )
-
-    # Search in framework rules
-    frameworks_dir = fw / "frameworks"
-    if frameworks_dir.exists():
-        for fw_dir in sorted(frameworks_dir.iterdir()):
-            if not fw_dir.is_dir():
-                continue
-            rules_dir = fw_dir / "rules.d"
-            if not rules_dir.exists():
-                continue
-            for yml in rules_dir.glob("*.yml"):
-                with open(yml) as f:
-                    data = yaml.safe_load(f) or {}
-                for category in ["anti_patterns", "naming_conventions", "complexity"]:
-                    for rule in data.get(category, []):
-                        if _matches(rule, query):
-                            results.append(
-                                {"pack": fw_dir.name, "category": category, **rule}
-                            )
+    results = search_rules(args.query.lower())
 
     if args.json:
         print(yaml.dump(results, default_flow_style=False))
@@ -191,34 +67,19 @@ def cmd_search(args: argparse.Namespace) -> None:
             print("  No matching rules found.")
 
 
-def _matches(rule: dict, query: str) -> bool:
-    """Check if a rule matches a search query."""
-    fields = [
-        rule.get("id", ""),
-        rule.get("message", ""),
-        rule.get("pattern", ""),
-        rule.get("fix_hint", ""),
-        rule.get("category", ""),
-        " ".join(rule.get("tags", [])),
-    ]
-    text = " ".join(fields).lower()
-    return query in text
-
-
 def cmd_info(args: argparse.Namespace) -> None:
     """Show details about a rule pack."""
-    pack_id = args.pack
-    if pack_id not in BUILTIN_PACKS:
-        print(f"Unknown pack: {pack_id}")
+    info = get_pack_info(args.pack)
+    if not info:
+        print(f"Unknown pack: {args.pack}")
         print(f"Available: {', '.join(BUILTIN_PACKS.keys())}")
         return
 
-    info = BUILTIN_PACKS[pack_id]
     if args.json:
-        print(yaml.dump({pack_id: info}, default_flow_style=False))
+        print(yaml.dump({args.pack: info}, default_flow_style=False))
     else:
         print(f"Pack: {info['name']}")
-        print(f"  ID:          {pack_id}")
+        print(f"  ID:          {args.pack}")
         print(f"  Description: {info['description']}")
         print(f"  Rules:       ~{info['rule_count']}")
         print(f"  Categories:  {', '.join(info['categories'])}")
@@ -245,33 +106,22 @@ def cmd_info(args: argparse.Namespace) -> None:
 
 def cmd_install(args: argparse.Namespace) -> None:
     """Install a rule pack to .ai-rules/ in the project directory."""
-    pack_id = args.pack
-    if pack_id not in BUILTIN_PACKS:
-        print(f"Unknown pack: {pack_id}")
-        return
-
     project_dir = Path(args.project_dir) if args.project_dir else Path.cwd()
-    target_dir = project_dir / ".ai-rules"
-    info = BUILTIN_PACKS[pack_id]
 
     if args.dry_run:
-        print(f"[dry-run] Would install '{pack_id}' to {target_dir}/")
+        print(f"[dry-run] Would install '{args.pack}' to {project_dir / '.ai-rules'}/")
         return
 
-    target_dir.mkdir(parents=True, exist_ok=True)
-    src = _framework_dir() / info["source"]
-
-    if src.is_file():
-        dest = target_dir / src.name
-        shutil.copy2(src, dest)
-        print(f"Installed: {dest}")
-    elif src.is_dir():
-        for yml in src.glob("*.yml"):
-            dest = target_dir / f"{pack_id}-{yml.name}"
-            shutil.copy2(yml, dest)
-            print(f"Installed: {dest}")
-
-    print(f"Pack '{pack_id}' installed to {target_dir}/")
+    try:
+        installed = install_pack(args.pack, project_dir)
+        for p in installed:
+            print(f"Installed: {p}")
+        if installed:
+            print(f"Pack '{args.pack}' installed to {project_dir / '.ai-rules'}/")
+        else:
+            print(f"Pack '{args.pack}' has no files to install")
+    except ValueError as e:
+        print(str(e))
 
 
 def cmd_validate(args: argparse.Namespace) -> None:
@@ -279,41 +129,17 @@ def cmd_validate(args: argparse.Namespace) -> None:
     project_dir = Path(args.project_dir) if args.project_dir else Path.cwd()
     rules_dir = project_dir / ".ai-rules"
 
+    total, errors, messages = validate_rules(rules_dir)
+
     if not rules_dir.exists():
         print(f"No .ai-rules/ directory found in {project_dir}")
         return
 
-    errors = 0
-    for yml in sorted(rules_dir.glob("*.yml")):
-        try:
-            with open(yml) as f:
-                data = yaml.safe_load(f)
-            if not data:
-                print(f"  ✗ {yml.name}: empty or invalid YAML")
-                errors += 1
-                continue
-
-            rule_count = 0
-            for category in ["anti_patterns", "naming_conventions", "complexity"]:
-                for rule in data.get(category, []):
-                    if not rule.get("id"):
-                        print(f"  ✗ {yml.name}: rule missing 'id'")
-                        errors += 1
-                    if not rule.get("pattern") and category in ["anti_patterns", "complexity"]:
-                        print(f"  ✗ {yml.name}/{rule.get('id', '?')}: missing 'pattern'")
-                        errors += 1
-                    if not rule.get("message"):
-                        print(f"  ✗ {yml.name}/{rule.get('id', '?')}: missing 'message'")
-                        errors += 1
-                    rule_count += 1
-
-            if errors == 0:
-                print(f"  ✓ {yml.name}: {rule_count} rules valid")
-        except yaml.YAMLError as e:
-            print(f"  ✗ {yml.name}: YAML parse error: {e}")
-            errors += 1
-
-    if errors:
+    for msg in messages:
+        print(f"  ✗ {msg}")
+    if errors == 0 and total > 0:
+        print(f"  ✓ {total} rules valid")
+    elif errors:
         print(f"\n{errors} validation errors found")
     else:
         print("\nAll rules valid ✓")
@@ -328,31 +154,21 @@ def cmd_export(args: argparse.Namespace) -> None:
         print(f"No .ai-rules/ directory found in {project_dir}")
         return
 
-    combined: dict = {"anti_patterns": [], "naming_conventions": [], "complexity": []}
-
-    for yml in sorted(rules_dir.glob("*.yml")):
-        with open(yml) as f:
-            data = yaml.safe_load(f) or {}
-        for category in combined:
-            combined[category].extend(data.get(category, []))
-
     output = Path(args.output) if args.output else Path("exported-rules.yml")
+
     if args.dry_run:
-        total = sum(len(v) for v in combined.values())
+        total, _ = export_rules(rules_dir, output)
         print(f"[dry-run] Would export {total} rules to {output}")
         return
 
+    total, combined = export_rules(rules_dir, output)
     with open(output, "w") as f:
         yaml.dump(combined, f, default_flow_style=False, allow_unicode=True, sort_keys=False)
-
-    total = sum(len(v) for v in combined.values())
     print(f"Exported {total} rules to {output}")
 
 
 def main() -> int:
-    parser = argparse.ArgumentParser(
-        description="Rule marketplace: discover, install, search, and manage rule packs"
-    )
+    parser = argparse.ArgumentParser(description="Rule marketplace: discover, install, search, and manage rule packs")
     parser.add_argument("--project-dir", type=str, help="Project directory")
     parser.add_argument("--json", action="store_true", help="JSON output")
 
@@ -394,7 +210,6 @@ def main() -> int:
             "validate": cmd_validate,
             "export": cmd_export,
         }
-
         commands[args.command](args)
         return 0
     except Exception as e:

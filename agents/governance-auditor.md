@@ -9,7 +9,12 @@
 3. **执行测试套件**: 运行 `pytest tests/ -v --timeout=30` + `cd examples/ai-context-sync && pytest tests/ -v --timeout=30` 要求覆盖率 ≥ 70%，输出覆盖率报告
 4. **安全扫描**: 运行 `pip-audit` 或 `safety check` 依赖安全扫描，运行 `bandit -r src/ examples/ai-context-sync/src/` 静态安全分析
 5. **治理合规检查**: 运行 `tools/scripts/audit_to_pr.py` 生成审计报告并创建 PR，检查 `GOVERNANCE.md` 质量门禁：无 `unwrap()`/`expect()`、无 `as any`/`@ts-ignore`、错误处理完整
-6. **检查文档同步**: 验证 `README.md` 案例数量与 `INDEX.md`/`case-studies/` 一致，验证 `MOC.md` 覆盖率表格与实际文档数量一致
+6. **语言特定规则检查**: 运行 `python tools/scripts/validate_language_rules.py <path> --auto-detect --json` 验证 21 种语言的反模式、命名规范和阈值，检查项包括：
+   - 反模式检测（错误处理、安全、类型安全、代码质量）
+   - 命名规范（文件名、函数名、类名、常量）
+   - 量化阈值（函数长度、嵌套深度、行长度）
+   - Python AST 分析（圈复杂度、类型注解）
+7. **检查文档同步**: 验证 `README.md` 案例数量与 `INDEX.md`/`case-studies/` 一致，验证 `MOC.md` 覆盖率表格与实际文档数量一致
 
 ### 工具
 

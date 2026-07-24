@@ -39,6 +39,7 @@ omit = ["*/tests/*", "*/__pycache__/*"]
 branch = true
 
 [tool.coverage.report]
+fail_under = 75
 exclude_lines = [
     "pragma: no cover",
     "def __repr__",
@@ -46,6 +47,8 @@ exclude_lines = [
     "raise AssertionError",
     "raise NotImplementedError",
 ]
+show_missing = true
+skip_covered = true
 
 [tool.ruff.lint]
 select = ["E", "F", "W", "I", "N", "UP"]

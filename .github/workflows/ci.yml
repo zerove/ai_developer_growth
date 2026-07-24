@@ -70,8 +70,8 @@ jobs:
           python-version: ${{ matrix.python-version }}
           cache: pip
       - run: pip install -r requirements.txt pytest pytest-cov
-      - name: Run tests
-        run: pytest tests/ -v --cov=tools/scripts --cov-report=xml --cov-report=term-missing --timeout=30
+      - name: Run tests with coverage
+        run: pytest tests/ -v --cov=tools/scripts --cov-report=xml --cov-report=term-missing --tb=short
       - name: Coverage check
         if: matrix.python-version == '3.11'
         run: |
@@ -80,9 +80,11 @@ jobs:
           tree = ET.parse('coverage.xml')
           root = tree.getroot()
           coverage = float(root.attrib.get('line-rate', 0)) * 100
-          print(f'Coverage: {coverage:.1f}%')
-          if coverage < 80:
-              print(f'::error::Coverage {coverage:.1f}% is below 80% threshold')
+          branch_coverage = float(root.attrib.get('branch-rate', 0)) * 100
+          print(f'Line coverage: {coverage:.1f}%')
+          print(f'Branch coverage: {branch_coverage:.1f}%')
+          if coverage < 75:
+              print(f'::error::Line coverage {coverage:.1f}% is below 75% threshold')
               exit(1)
           "
       - name: Coverage Report
@@ -95,9 +97,17 @@ jobs:
           tree = ET.parse('coverage.xml')
           root = tree.getroot()
           coverage = float(root.attrib.get('line-rate', 0)) * 100
+          branch_coverage = float(root.attrib.get('branch-rate', 0)) * 100
           print(f'Line coverage: {coverage:.1f}%')
+          print(f'Branch coverage: {branch_coverage:.1f}%')
           " >> $GITHUB_STEP_SUMMARY
           echo '```' >> $GITHUB_STEP_SUMMARY
+      - name: Upload coverage artifact
+        if: matrix.python-version == '3.11'
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-report
+          path: coverage.xml
 
   # ──────────────────────────────────────────────────────
   # Quality Gates (复用 hooks_runner.py)

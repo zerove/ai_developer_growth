@@ -2,7 +2,7 @@
 
 ## 项目状态
 
-- **阶段**: Phase 12 完成 - 测试补全 + 死代码清理 (2026-07-23)
+- **阶段**: Phase 13 完成 - 测试覆盖率提升 (2026-07-24)
 - **成熟度**: 99/100 (优秀) - 详见 AUDIT_REPORT.md
 - **核心资产**: 知识库 (218 篇文档) + 治理框架 (21 语言规则 + 11 框架 + 12 领域 = 44 规范) + 35 真实案例 + 7 代码示例 (含向量搜索)
 
@@ -10,7 +10,7 @@
 
 | 日期 | 决策 | 背景 | 影响 |
 |------|------|------|------|
-| 2026-07-23 | Phase 12: 测试补全 + 死代码清理 | 913→989 测试, rule_tracker/plugins/rule_loader 测试, 278 行死代码清理 | 989 测试, 插件系统, 规则加载器测试覆盖 80%+ |
+| 2026-07-24 | Phase 13:  989→1059 测试, rule_catalog/marketplace/detect_language/validate 测试 | 1059 测试, rule_catalog 86%, rule_marketplace 80% |
 | 2026-07-23 | 语言规则优化 + rules/ 包重构 | 21 种语言规则 + 统一 CLI + Web 基类 + 懒加载 | 748 测试全部通过，代码质量提升 |通过，代码质量提升 |
 | 2026-07-22 | AI 开发流程规范补全 | 缺失 15 个标准文档 | 新增: 5个P0 + 5个P1 + 5个P2 = 15个标准文档 |
 | 2026-07-19 | 知识优先重构 | 从工具优先转为文档优先 | 核心价值在方法论文档，代码为验证手段 |
@@ -22,6 +22,12 @@
 
 ## 已完成模块
 
+- ✅ Phase 13 测试覆盖率提升
+  - test_rule_catalog_marketplace.py (41 tests): rule_catalog + rule_marketplace CLI
+  - test_detect_language.py (+10 tests): CLI, go.mod, framework detection
+  - test_validate_language_rules_extra.py (19 tests): CLI, print_results, edge cases
+  - rule_catalog.py 覆盖率 9%→86%, rule_marketplace.py 0%→80%
+  - 1059 测试全部通过 (从 989 增至 1059, +70)
 - ✅ Phase 12 测试补全 + 死代码清理
   - test_rule_tracker.py (27 tests): CLI + helpers
   - test_plugins.py (21 tests): CheckerPlugin ABC, registry, decorator, discovery

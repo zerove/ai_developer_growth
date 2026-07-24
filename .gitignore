@@ -53,3 +53,7 @@ knowledge_index.json
 
 # MkDocs build output
 site/
+
+# Generated reports
+OPTIMIZATION_SUMMARY.md
+bandit-report.json

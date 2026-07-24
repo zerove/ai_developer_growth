@@ -36,6 +36,7 @@ _RULES_PATH = _ADG_HOME / "rules"
 # Fallback: check if ai_developer_growth source is available
 _ADG_SOURCE = Path.home() / "dev" / "ai_developer_growth" / "ai-dev-framework"
 
+
 def _get_rules_path() -> Path:
     """Get the rules directory, preferring config, falling back to source."""
     if _RULES_PATH.exists() and (_RULES_PATH / "languages").exists():
@@ -48,11 +49,11 @@ def _get_rules_path() -> Path:
 
 def load_project_config(dirpath: Path | None = None) -> dict[str, Any]:
     """Load project-level ADG configuration.
-    
+
     Looks for:
     1. .adg/rules.yml in project root
     2. ~/.config/adg/rules.yml as global config
-    
+
     Returns merged configuration with project overriding global.
     """
     config = {
@@ -61,7 +62,7 @@ def load_project_config(dirpath: Path | None = None) -> dict[str, Any]:
         "severity_overrides": {},
         "framework_hints": {},
     }
-    
+
     # Load global config first
     global_config_path = Path.home() / ".config" / "adg" / "rules.yml"
     if global_config_path.exists():
@@ -70,7 +71,7 @@ def load_project_config(dirpath: Path | None = None) -> dict[str, Any]:
             config = _merge_config(config, global_config)
         except Exception:
             pass
-    
+
     # Load project config (overrides global)
     if dirpath:
         project_config_path = dirpath / ".adg" / "rules.yml"
@@ -83,14 +84,14 @@ def load_project_config(dirpath: Path | None = None) -> dict[str, Any]:
                 config = _merge_config(config, project_config)
             except Exception:
                 pass
-    
+
     return config
 
 
 def _merge_config(base: dict[str, Any], override: dict[str, Any]) -> dict[str, Any]:
     """Merge two configuration dictionaries."""
     result = base.copy()
-    
+
     for key, value in override.items():
         if key in result:
             if isinstance(result[key], list) and isinstance(value, list):
@@ -101,49 +102,72 @@ def _merge_config(base: dict[str, Any], override: dict[str, Any]) -> dict[str, A
                 result[key] = value
         else:
             result[key] = value
-    
+
     return result
+
 
 # ──────────────────────────────────────────────────────────
 # Language Detection
 # ──────────────────────────────────────────────────────────
 
 EXTENSION_MAP: dict[str, str] = {
-    ".py": "python", ".pyi": "python",
-    ".ts": "typescript", ".tsx": "typescript",
-    ".js": "javascript", ".jsx": "javascript", ".mjs": "javascript",
+    ".py": "python",
+    ".pyi": "python",
+    ".ts": "typescript",
+    ".tsx": "typescript",
+    ".js": "javascript",
+    ".jsx": "javascript",
+    ".mjs": "javascript",
     ".rs": "rust",
     ".go": "go",
     ".java": "java",
-    ".kt": "kotlin", ".kts": "kotlin",
+    ".kt": "kotlin",
+    ".kts": "kotlin",
     ".cs": "csharp",
     ".php": "php",
     ".rb": "ruby",
-    ".cpp": "cpp", ".cc": "cpp", ".hpp": "cpp", ".h": "cpp",
+    ".cpp": "cpp",
+    ".cc": "cpp",
+    ".hpp": "cpp",
+    ".h": "cpp",
     ".swift": "swift",
     ".dart": "dart",
     ".scala": "scala",
     ".clj": "clojure",
-    ".ex": "elixir", ".exs": "elixir",
+    ".ex": "elixir",
+    ".exs": "elixir",
     ".hs": "haskell",
     ".zig": "zig",
     ".lua": "lua",
-    ".r": "r", ".R": "r",
+    ".r": "r",
+    ".R": "r",
     ".ps1": "powershell",
-    ".pl": "perl", ".pm": "perl",
-    ".asm": "assembly", ".s": "assembly", ".S": "assembly",
-    ".f90": "fortran", ".f": "fortran",
-    ".graphql": "graphql", ".gql": "graphql",
+    ".pl": "perl",
+    ".pm": "perl",
+    ".asm": "assembly",
+    ".s": "assembly",
+    ".S": "assembly",
+    ".f90": "fortran",
+    ".f": "fortran",
+    ".graphql": "graphql",
+    ".gql": "graphql",
 }
 
 CONFIG_MARKERS: dict[tuple[str, str | None]] = {
-    "pyproject.toml": "python", "setup.py": "python", "requirements.txt": "python",
-    "Cargo.toml": "rust", "go.mod": "go",
+    "pyproject.toml": "python",
+    "setup.py": "python",
+    "requirements.txt": "python",
+    "Cargo.toml": "rust",
+    "go.mod": "go",
     "package.json": None,  # could be JS or TS
     "tsconfig.json": "typescript",
-    "pom.xml": "java", "build.gradle": "java", "build.gradle.kts": "kotlin",
-    "Gemfile": "ruby", "composer.json": "php",
-    "CMakeLists.txt": "cpp", "build.sbt": "scala",
+    "pom.xml": "java",
+    "build.gradle": "java",
+    "build.gradle.kts": "kotlin",
+    "Gemfile": "ruby",
+    "composer.json": "php",
+    "CMakeLists.txt": "cpp",
+    "build.sbt": "scala",
 }
 
 FRAMEWORK_SIGNATURES: dict[str, list[str]] = {
@@ -169,32 +193,66 @@ FRAMEWORK_SIGNATURES: dict[str, list[str]] = {
 }
 
 SKIP_DIRS = {
-    ".git", ".svn", "node_modules", "target", "vendor", "__pycache__",
-    ".venv", "venv", "dist", "build", ".tox", ".mypy_cache", ".ruff_cache",
-    ".pytest_cache", "coverage", ".next", ".nuxt",
+    ".git",
+    ".svn",
+    "node_modules",
+    "target",
+    "vendor",
+    "__pycache__",
+    ".venv",
+    "venv",
+    "dist",
+    "build",
+    ".tox",
+    ".mypy_cache",
+    ".ruff_cache",
+    ".pytest_cache",
+    "coverage",
+    ".next",
+    ".nuxt",
     # Generated documentation / build output
-    "book", "site", "_build", "out", "public", "static",
+    "book",
+    "site",
+    "_build",
+    "out",
+    "public",
+    "static",
     # IDE / editor
-    ".idea", ".vscode", ".vs", "*.swp",
+    ".idea",
+    ".vscode",
+    ".vs",
+    "*.swp",
     # Cache directories
-    ".cache", "tmp", ".tmp",
+    ".cache",
+    "tmp",
+    ".tmp",
 }
 
 MAX_FILES = 5000
 
 # Skip generated/minified files
 SKIP_EXTENSIONS = {
-    ".min.js", ".min.css", ".map", ".lock", ".sum",
-    ".pyc", ".pyo", ".class", ".o", ".so", ".dll",
-    ".exe", ".bin", ".dat", ".db",
+    ".min.js",
+    ".min.css",
+    ".map",
+    ".lock",
+    ".sum",
+    ".pyc",
+    ".pyo",
+    ".class",
+    ".o",
+    ".so",
+    ".dll",
+    ".exe",
+    ".bin",
+    ".dat",
+    ".db",
 }
 
 
 def detect_language(dirpath: Path) -> dict[str, Any]:
     """Detect primary language and framework of a project."""
-    result: dict[str, Any] = {
-        "language": "unknown", "framework": None, "confidence": 0.0
-    }
+    result: dict[str, Any] = {"language": "unknown", "framework": None, "confidence": 0.0}
 
     # 1. Check config files
     for config_file, lang in CONFIG_MARKERS.items():
@@ -320,10 +378,12 @@ def _detect_language_from_file(filepath: Path) -> str | None:
 # Rule Loading
 # ──────────────────────────────────────────────────────────
 
+
 def _load_yaml(path: Path) -> dict[str, Any]:
     """Load YAML file. Tries PyYAML first, falls back to simple parser."""
     try:
         import yaml
+
         return yaml.safe_load(path.read_text(encoding="utf-8")) or {}
     except ImportError:
         return _simple_yaml_parse(path)
@@ -337,7 +397,7 @@ def _simple_yaml_parse(path: Path) -> dict[str, Any]:
     result: dict[str, Any] = {"anti_patterns": []}
     current_rule: dict[str, Any] | None = None
     current_section: str | None = None  # For skip_patterns, severity_overrides, etc.
-    
+
     for line in content.splitlines():
         stripped = line.strip()
         if not stripped or stripped.startswith("#"):
@@ -356,7 +416,7 @@ def _simple_yaml_parse(path: Path) -> dict[str, Any]:
             key, _, val = stripped.partition(":")
             key = key.strip()
             val = val.strip().strip("'\"")
-            
+
             if key == "language":
                 result["language"] = val
             elif key == "version":
@@ -450,6 +510,7 @@ def load_framework_rules(framework: str) -> dict[str, Any]:
 # ──────────────────────────────────────────────────────────
 # Code Checking
 # ──────────────────────────────────────────────────────────
+
 
 @dataclass
 class Issue:
@@ -614,18 +675,19 @@ FIX_RULES: dict[str, dict[str, Any]] = {
 # Incremental Check (git diff integration)
 # ──────────────────────────────────────────────────────────
 
+
 def _get_git_changed_files(since: str, cwd: Path | None = None) -> list[Path]:
     """Get list of files changed since a git reference.
-    
+
     Args:
         since: Git reference (HEAD~1, commit hash, branch, etc.)
         cwd: Working directory (defaults to current)
-    
+
     Returns:
         List of changed file paths
     """
     import subprocess
-    
+
     try:
         result = subprocess.run(
             ["git", "diff", "--name-only", "--diff-filter=ACM", since],
@@ -637,7 +699,7 @@ def _get_git_changed_files(since: str, cwd: Path | None = None) -> list[Path]:
         if result.returncode != 0:
             print(f"Warning: git diff failed: {result.stderr}", file=sys.stderr)
             return []
-        
+
         files = []
         for line in result.stdout.strip().split("\n"):
             if line.strip():
@@ -653,7 +715,7 @@ def _get_git_changed_files(since: str, cwd: Path | None = None) -> list[Path]:
 def _get_unstaged_files(cwd: Path | None = None) -> list[Path]:
     """Get list of unstaged changed files."""
     import subprocess
-    
+
     try:
         result = subprocess.run(
             ["git", "diff", "--name-only", "--diff-filter=ACM"],
@@ -664,7 +726,7 @@ def _get_unstaged_files(cwd: Path | None = None) -> list[Path]:
         )
         if result.returncode != 0:
             return []
-        
+
         files = []
         for line in result.stdout.strip().split("\n"):
             if line.strip():
@@ -679,7 +741,7 @@ def _get_unstaged_files(cwd: Path | None = None) -> list[Path]:
 def _get_staged_files(cwd: Path | None = None) -> list[Path]:
     """Get list of staged files."""
     import subprocess
-    
+
     try:
         result = subprocess.run(
             ["git", "diff", "--cached", "--name-only", "--diff-filter=ACM"],
@@ -690,7 +752,7 @@ def _get_staged_files(cwd: Path | None = None) -> list[Path]:
         )
         if result.returncode != 0:
             return []
-        
+
         files = []
         for line in result.stdout.strip().split("\n"):
             if line.strip():
@@ -706,11 +768,12 @@ def _get_staged_files(cwd: Path | None = None) -> list[Path]:
 # SARIF Output Format (GitHub Code Scanning)
 # ──────────────────────────────────────────────────────────
 
+
 def _format_sarif(issues: list[Issue], language: str, framework: str | None) -> str:
     """Format issues as SARIF 2.1.0 for GitHub Code Scanning."""
     rules = {}
     results = []
-    
+
     for issue in issues:
         # Collect unique rules
         if issue.rule_id not in rules:
@@ -724,55 +787,69 @@ def _format_sarif(issues: list[Issue], language: str, framework: str | None) -> 
                     "language": language,
                 },
             }
-        
+
         # Map severity to SARIF level
         level_map = {"error": "error", "warning": "warning", "info": "note"}
         level = level_map.get(issue.severity, "warning")
-        
-        results.append({
-            "ruleId": issue.rule_id,
-            "level": level,
-            "message": {"text": issue.message},
-            "locations": [{
-                "physicalLocation": {
-                    "artifactLocation": {"uri": issue.file},
-                    "region": {
-                        "startLine": issue.line,
-                        "startColumn": issue.column,
-                    },
-                },
-            }],
-            "fixes": [{
-                "description": {"text": issue.fix_hint},
-                "artifactChanges": [{
-                    "artifactLocation": {"uri": issue.file},
-                    "replacements": [{
-                        "deletedRegion": {
-                            "startLine": issue.line,
-                            "startColumn": issue.column,
+
+        results.append(
+            {
+                "ruleId": issue.rule_id,
+                "level": level,
+                "message": {"text": issue.message},
+                "locations": [
+                    {
+                        "physicalLocation": {
+                            "artifactLocation": {"uri": issue.file},
+                            "region": {
+                                "startLine": issue.line,
+                                "startColumn": issue.column,
+                            },
                         },
-                        "insertedContent": {"text": issue.fix_hint},
-                    }],
-                }],
-            }] if issue.fix_hint else [],
-        })
-    
+                    }
+                ],
+                "fixes": [
+                    {
+                        "description": {"text": issue.fix_hint},
+                        "artifactChanges": [
+                            {
+                                "artifactLocation": {"uri": issue.file},
+                                "replacements": [
+                                    {
+                                        "deletedRegion": {
+                                            "startLine": issue.line,
+                                            "startColumn": issue.column,
+                                        },
+                                        "insertedContent": {"text": issue.fix_hint},
+                                    }
+                                ],
+                            }
+                        ],
+                    }
+                ]
+                if issue.fix_hint
+                else [],
+            }
+        )
+
     sarif = {
         "$schema": "https://json.schemastore.org/sarif-2.1.0.json",
         "version": "2.1.0",
-        "runs": [{
-            "tool": {
-                "driver": {
-                    "name": "adg",
-                    "version": "1.0.0",
-                    "informationUri": "https://github.com/ai-developer-growth/adg",
-                    "rules": list(rules.values()),
+        "runs": [
+            {
+                "tool": {
+                    "driver": {
+                        "name": "adg",
+                        "version": "1.0.0",
+                        "informationUri": "https://github.com/ai-developer-growth/adg",
+                        "rules": list(rules.values()),
+                    },
                 },
-            },
-            "results": results,
-        }],
+                "results": results,
+            }
+        ],
     }
-    
+
     return json.dumps(sarif, indent=2)
 
 
@@ -797,30 +874,30 @@ _RULE_TEMPLATE = """# {id}
 def _create_rule_interactive() -> dict[str, Any]:
     """Interactively create a new rule."""
     print("=== ADG Rule Creator ===\n")
-    
+
     rule_id = input("Rule ID (e.g., py-custom-rule): ").strip()
     if not rule_id:
         return {}
-    
+
     language = input("Language (python/javascript/rust/go/typescript): ").strip()
     if not language:
         return {}
-    
+
     category = input("Category (security/code_quality/performance/maintainability): ").strip()
     if not category:
         category = "code_quality"
-    
+
     severity = input("Severity (error/warning/info): ").strip()
     if not severity:
         severity = "warning"
-    
+
     pattern = input("Regex pattern to match: ").strip()
     if not pattern:
         return {}
-    
+
     message = input("Issue message: ").strip()
     fix_hint = input("Fix hint (optional): ").strip()
-    
+
     return {
         "id": rule_id,
         "language": language,
@@ -835,25 +912,25 @@ def _create_rule_interactive() -> dict[str, Any]:
 def _validate_rule(rule: dict[str, Any]) -> list[str]:
     """Validate a rule definition. Returns list of errors."""
     errors = []
-    
+
     required_fields = ["id", "severity", "category", "pattern", "message"]
     for field in required_fields:
         if not rule.get(field):
             errors.append(f"Missing required field: {field}")
-    
+
     if rule.get("severity") not in ("error", "warning", "info"):
         errors.append(f"Invalid severity: {rule.get('severity')}")
-    
+
     if rule.get("category") not in ("security", "code_quality", "performance", "maintainability"):
         errors.append(f"Invalid category: {rule.get('category')}")
-    
+
     # Test regex pattern
     if rule.get("pattern"):
         try:
             re.compile(rule["pattern"])
         except re.error as e:
             errors.append(f"Invalid regex pattern: {e}")
-    
+
     return errors
 
 
@@ -865,29 +942,31 @@ def _test_rule(rule: dict[str, Any], test_files: list[Path]) -> dict[str, Any]:
         "matches": [],
         "errors": [],
     }
-    
+
     try:
         pattern = re.compile(rule["pattern"])
     except re.error as e:
         results["errors"].append(f"Invalid pattern: {e}")
         return results
-    
+
     for filepath in test_files:
         try:
             content = filepath.read_text(encoding="utf-8")
             lines = content.split("\n")
-            
+
             for line_num, line in enumerate(lines, 1):
                 if pattern.search(line):
-                    results["matches"].append({
-                        "file": str(filepath),
-                        "line": line_num,
-                        "column": 1,
-                        "match": line.strip()[:100],
-                    })
+                    results["matches"].append(
+                        {
+                            "file": str(filepath),
+                            "line": line_num,
+                            "column": 1,
+                            "match": line.strip()[:100],
+                        }
+                    )
         except (OSError, UnicodeDecodeError) as e:
             results["errors"].append(f"Error reading {filepath}: {e}")
-    
+
     return results
 
 
@@ -895,33 +974,34 @@ def _test_rule(rule: dict[str, Any], test_files: list[Path]) -> dict[str, Any]:
 # Webhook Notification (Slack/DingTalk)
 # ──────────────────────────────────────────────────────────
 
-def _send_slack_notification(webhook_url: str, issues: list[Issue], 
-                             language: str, project: str) -> bool:
+
+def _send_slack_notification(webhook_url: str, issues: list[Issue], language: str, project: str) -> bool:
     """Send issues notification to Slack."""
-    import urllib.request
     import time
-    
+    import urllib.request
+
     error_count = sum(1 for i in issues if i.severity == "error")
     warning_count = sum(1 for i in issues if i.severity == "warning")
     info_count = sum(1 for i in issues if i.severity == "info")
-    
+
     color = "#36a64f" if error_count == 0 else "#ff0000"
-    
+
     payload = {
-        "attachments": [{
-            "color": color,
-            "title": f"ADG Governance Report - {project}",
-            "text": f"Language: {language}\n"
-                    f"Errors: {error_count} | Warnings: {warning_count} | Info: {info_count}",
-            "fields": [
-                {"title": "Status", "value": "✅ Passed" if error_count == 0 else "❌ Failed", "short": True},
-                {"title": "Total Issues", "value": str(len(issues)), "short": True},
-            ],
-            "footer": "ADG CLI",
-            "ts": int(time.time()),
-        }],
+        "attachments": [
+            {
+                "color": color,
+                "title": f"ADG Governance Report - {project}",
+                "text": f"Language: {language}\nErrors: {error_count} | Warnings: {warning_count} | Info: {info_count}",
+                "fields": [
+                    {"title": "Status", "value": "✅ Passed" if error_count == 0 else "❌ Failed", "short": True},
+                    {"title": "Total Issues", "value": str(len(issues)), "short": True},
+                ],
+                "footer": "ADG CLI",
+                "ts": int(time.time()),
+            }
+        ],
     }
-    
+
     try:
         data = json.dumps(payload).encode("utf-8")
         req = urllib.request.Request(
@@ -936,33 +1016,32 @@ def _send_slack_notification(webhook_url: str, issues: list[Issue],
         return False
 
 
-def _send_dingtalk_notification(webhook_url: str, issues: list[Issue],
-                                 language: str, project: str) -> bool:
+def _send_dingtalk_notification(webhook_url: str, issues: list[Issue], language: str, project: str) -> bool:
     """Send issues notification to DingTalk."""
     import urllib.request
-    
+
     error_count = sum(1 for i in issues if i.severity == "error")
     warning_count = sum(1 for i in issues if i.severity == "warning")
     info_count = sum(1 for i in issues if i.severity == "info")
-    
+
     status = "✅ 通过" if error_count == 0 else "❌ 失败"
-    
+
     payload = {
         "msgtype": "markdown",
         "markdown": {
             "title": f"ADG 治理报告 - {project}",
             "text": f"## ADG 治理报告\n\n"
-                    f"**项目**: {project}\n"
-                    f"**语言**: {language}\n"
-                    f"**状态**: {status}\n\n"
-                    f"---\n\n"
-                    f"**错误**: {error_count}\n"
-                    f"**警告**: {warning_count}\n"
-                    f"**信息**: {info_count}\n"
-                    f"**总计**: {len(issues)}\n",
+            f"**项目**: {project}\n"
+            f"**语言**: {language}\n"
+            f"**状态**: {status}\n\n"
+            f"---\n\n"
+            f"**错误**: {error_count}\n"
+            f"**警告**: {warning_count}\n"
+            f"**信息**: {info_count}\n"
+            f"**总计**: {len(issues)}\n",
         },
     }
-    
+
     try:
         data = json.dumps(payload).encode("utf-8")
         req = urllib.request.Request(
@@ -1005,11 +1084,11 @@ def _save_trend_data(project_dir: Path, data: list[dict[str, Any]]) -> None:
 def _record_trend(project_dir: Path, issues: list[Issue], language: str) -> dict[str, Any]:
     """Record current check results as a trend data point."""
     from datetime import datetime
-    
+
     error_count = sum(1 for i in issues if i.severity == "error")
     warning_count = sum(1 for i in issues if i.severity == "warning")
     info_count = sum(1 for i in issues if i.severity == "info")
-    
+
     data_point = {
         "timestamp": datetime.now().isoformat(),
         "language": language,
@@ -1019,14 +1098,14 @@ def _record_trend(project_dir: Path, issues: list[Issue], language: str) -> dict
         "total": len(issues),
         "files_checked": len(set(i.file for i in issues)),
     }
-    
+
     trend_data = _load_trend_data(project_dir)
     trend_data.append(data_point)
-    
+
     # Keep last 100 data points
     if len(trend_data) > 100:
         trend_data = trend_data[-100:]
-    
+
     _save_trend_data(project_dir, trend_data)
     return data_point
 
@@ -1035,75 +1114,78 @@ def _format_trend_report(trend_data: list[dict[str, Any]], output_json: bool = F
     """Format trend data as a report."""
     if not trend_data:
         return "No trend data available. Run 'adg check' first."
-    
+
     if output_json:
         return json.dumps(trend_data, indent=2)
-    
+
     lines = ["ADG Quality Trend Report", "=" * 40, ""]
-    
+
     # Summary
     latest = trend_data[-1]
     earliest = trend_data[0]
-    
+
     lines.append(f"Period: {earliest['timestamp'][:10]} to {latest['timestamp'][:10]}")
     lines.append(f"Data points: {len(trend_data)}")
     lines.append("")
-    
+
     # Trend
     if len(trend_data) >= 2:
         error_trend = latest["errors"] - earliest["errors"]
         warning_trend = latest["warnings"] - earliest["warnings"]
-        
+
         lines.append("Trend:")
-        lines.append(f"  Errors:   {latest['errors']} ({'↑' if error_trend > 0 else '↓' if error_trend < 0 else '→'} {abs(error_trend)})")
-        lines.append(f"  Warnings: {latest['warnings']} ({'↑' if warning_trend > 0 else '↓' if warning_trend < 0 else '→'} {abs(warning_trend)})")
+        lines.append(
+            f"  Errors:   {latest['errors']} ({'↑' if error_trend > 0 else '↓' if error_trend < 0 else '→'} {abs(error_trend)})"
+        )
+        lines.append(
+            f"  Warnings: {latest['warnings']} ({'↑' if warning_trend > 0 else '↓' if warning_trend < 0 else '→'} {abs(warning_trend)})"
+        )
         lines.append("")
-    
+
     # Recent history
     lines.append("Recent History:")
     lines.append("-" * 40)
     for point in trend_data[-10:]:
         ts = point["timestamp"][:16].replace("T", " ")
         lines.append(f"  {ts}: E={point['errors']} W={point['warnings']} I={point['info']}")
-    
+
     return "\n".join(lines)
 
 
 def _apply_fix(content: str, rule_id: str, fix_info: dict[str, Any]) -> tuple[str, bool]:
     """Apply a single fix to content. Returns (new_content, was_modified)."""
     import re
-    
+
     pattern = fix_info.get("pattern")
     replacement = fix_info.get("replacement")
-    
+
     if not pattern or replacement is None:
         return content, False
-    
+
     new_content, count = re.subn(pattern, replacement, content)
     return new_content, count > 0
 
 
 def fix_file(filepath: Path, rule_ids: list[str] | None = None) -> dict[str, Any]:
     """Apply fixes to a file. Returns stats about fixes applied."""
-    import re
-    
+
     if not filepath.exists():
         return {"fixed": 0, "skipped": 0, "errors": 1}
-    
+
     try:
         content = filepath.read_text(encoding="utf-8")
     except (OSError, UnicodeDecodeError):
         return {"fixed": 0, "skipped": 0, "errors": 1}
-    
+
     original_content = content
     fixed_count = 0
     skipped_count = 0
-    
+
     # Filter rules if specific rule_ids provided
     applicable_rules = FIX_RULES
     if rule_ids:
         applicable_rules = {k: v for k, v in FIX_RULES.items() if k in rule_ids}
-    
+
     for rule_id, fix_info in applicable_rules.items():
         new_content, was_modified = _apply_fix(content, rule_id, fix_info)
         if was_modified:
@@ -1111,21 +1193,21 @@ def fix_file(filepath: Path, rule_ids: list[str] | None = None) -> dict[str, Any
             fixed_count += 1
         else:
             skipped_count += 1
-    
+
     # Write back if modified
     if content != original_content:
         try:
             filepath.write_text(content, encoding="utf-8")
         except OSError:
             return {"fixed": 0, "skipped": 0, "errors": 1}
-    
+
     return {"fixed": fixed_count, "skipped": skipped_count, "errors": 0}
 
 
 def fix_directory(dirpath: Path, language: str | None = None) -> dict[str, Any]:
     """Apply fixes to all code files in a directory."""
     total_stats = {"fixed": 0, "skipped": 0, "errors": 0, "files": 0}
-    
+
     for filepath in dirpath.rglob("*"):
         if not filepath.is_file():
             continue
@@ -1133,19 +1215,19 @@ def fix_directory(dirpath: Path, language: str | None = None) -> dict[str, Any]:
             continue
         if filepath.suffix in SKIP_EXTENSIONS:
             continue
-        
+
         # Filter by language if specified
         if language:
             file_lang = _detect_language_from_file(filepath)
             if file_lang and file_lang != language:
                 continue
-        
+
         # Filter applicable rules by language
         applicable_rules = {}
         for rule_id, fix_info in FIX_RULES.items():
             if language is None or fix_info.get("language") in (language, "common"):
                 applicable_rules[rule_id] = fix_info
-        
+
         if applicable_rules:
             stats = fix_file(filepath, list(applicable_rules.keys()))
             total_stats["fixed"] += stats["fixed"]
@@ -1153,7 +1235,7 @@ def fix_directory(dirpath: Path, language: str | None = None) -> dict[str, Any]:
             total_stats["errors"] += stats["errors"]
             if stats["fixed"] > 0:
                 total_stats["files"] += 1
-    
+
     return total_stats
 
 
@@ -1212,10 +1294,11 @@ def _make_issue(filepath: Path, line: int, column: int, pattern_def: dict[str, A
     )
 
 
-def check_directory(dirpath: Path, rules: dict[str, Any], severity_filter: str | None = None, 
-                    jobs: int = 1) -> list[Issue]:
+def check_directory(
+    dirpath: Path, rules: dict[str, Any], severity_filter: str | None = None, jobs: int = 1
+) -> list[Issue]:
     """Check all code files in a directory.
-    
+
     Args:
         dirpath: Directory to check
         rules: Rules to apply
@@ -1234,7 +1317,7 @@ def check_directory(dirpath: Path, rules: dict[str, Any], severity_filter: str |
         lang = _detect_language_from_file(filepath)
         if lang:
             files_to_check.append(filepath)
-    
+
     # Check files (parallel or sequential)
     if jobs > 1 and len(files_to_check) > 1:
         return _check_files_parallel(files_to_check, rules, severity_filter, jobs)
@@ -1245,27 +1328,25 @@ def check_directory(dirpath: Path, rules: dict[str, Any], severity_filter: str |
         return all_issues
 
 
-def _check_files_parallel(files: list[Path], rules: dict[str, Any], 
-                          severity_filter: str | None, jobs: int) -> list[Issue]:
+def _check_files_parallel(
+    files: list[Path], rules: dict[str, Any], severity_filter: str | None, jobs: int
+) -> list[Issue]:
     """Check files in parallel using ProcessPoolExecutor."""
-    from concurrent.futures import ProcessPoolExecutor, as_completed
     import os
-    
+    from concurrent.futures import ProcessPoolExecutor, as_completed
+
     if not files:
         return []
-    
+
     all_issues: list[Issue] = []
-    
+
     # Limit jobs to CPU count or file count
     max_workers = min(jobs, len(files), os.cpu_count() or 4)
-    
+
     with ProcessPoolExecutor(max_workers=max_workers) as executor:
         # Submit all files for checking
-        future_to_file = {
-            executor.submit(check_file, filepath, rules, severity_filter): filepath
-            for filepath in files
-        }
-        
+        future_to_file = {executor.submit(check_file, filepath, rules, severity_filter): filepath for filepath in files}
+
         # Collect results as they complete
         for future in as_completed(future_to_file):
             try:
@@ -1275,7 +1356,7 @@ def _check_files_parallel(files: list[Path], rules: dict[str, Any],
                 # Log error but continue processing
                 filepath = future_to_file[future]
                 print(f"Warning: Error checking {filepath}: {e}", file=sys.stderr)
-    
+
     return all_issues
 
 
@@ -1337,18 +1418,23 @@ def _format_json(issues: list[Issue], language: str, framework: str | None, file
     warning_count = sum(1 for i in issues if i.severity == "warning")
     info_count = sum(1 for i in issues if i.severity == "info")
 
-    return json.dumps({
-        "language": language,
-        "framework": framework,
-        "files_checked": files_checked,
-        "issues": [i.to_dict() for i in issues],
-        "summary": {"error": error_count, "warning": warning_count, "info": info_count},
-    }, indent=2, ensure_ascii=False)
+    return json.dumps(
+        {
+            "language": language,
+            "framework": framework,
+            "files_checked": files_checked,
+            "issues": [i.to_dict() for i in issues],
+            "summary": {"error": error_count, "warning": warning_count, "info": info_count},
+        },
+        indent=2,
+        ensure_ascii=False,
+    )
 
 
 # ──────────────────────────────────────────────────────────
 # Commands
 # ──────────────────────────────────────────────────────────
+
 
 def cmd_check(args: argparse.Namespace) -> int:
     """Check code against rules."""
@@ -1359,10 +1445,10 @@ def cmd_check(args: argparse.Namespace) -> int:
 
     # Handle incremental check modes
     files: list[Path] = []
-    since = getattr(args, 'since', None)
-    staged = getattr(args, 'staged', False)
-    unstaged = getattr(args, 'unstaged', False)
-    
+    since = getattr(args, "since", None)
+    staged = getattr(args, "staged", False)
+    unstaged = getattr(args, "unstaged", False)
+
     if since:
         # Check only files changed since git ref
         files = _get_git_changed_files(since, cwd=target.parent)
@@ -1400,8 +1486,8 @@ def cmd_check(args: argparse.Namespace) -> int:
         detected = detect_language(target)
 
     language = args.lang or detected.get("language", "unknown")
-    framework = getattr(args, 'framework', None) or detected.get("framework")
-    
+    framework = getattr(args, "framework", None) or detected.get("framework")
+
     # Use framework hint from config if not detected
     if not framework:
         framework = project_config.get("framework_hints", {}).get(language)
@@ -1415,12 +1501,12 @@ def cmd_check(args: argparse.Namespace) -> int:
     if framework:
         fw_rules = load_framework_rules(framework)
         rules["anti_patterns"].extend(fw_rules.get("anti_patterns", []))
-    
+
     # Add custom rules from project config
     custom_rules = project_config.get("custom_rules", [])
     if custom_rules:
         rules["anti_patterns"].extend(custom_rules)
-    
+
     # Apply severity overrides
     severity_overrides = project_config.get("severity_overrides", {})
     for rule in rules["anti_patterns"]:
@@ -1429,8 +1515,8 @@ def cmd_check(args: argparse.Namespace) -> int:
 
     # Check files
     all_issues: list[Issue] = []
-    jobs = getattr(args, 'jobs', 1)
-    
+    jobs = getattr(args, "jobs", 1)
+
     if jobs > 1 and len(files) > 1:
         # Parallel checking
         all_issues = _check_files_parallel(files, rules, args.severity, jobs)
@@ -1440,7 +1526,7 @@ def cmd_check(args: argparse.Namespace) -> int:
             all_issues.extend(check_file(fp, rules, args.severity))
 
     # Output
-    sarif = getattr(args, 'sarif', False)
+    sarif = getattr(args, "sarif", False)
     if sarif:
         print(_format_sarif(all_issues, language, framework))
     elif args.json:
@@ -1449,13 +1535,13 @@ def cmd_check(args: argparse.Namespace) -> int:
         print(_format_human(all_issues, language, framework, len(files)))
 
     # Record trend if requested
-    if getattr(args, 'trend', False):
+    if getattr(args, "trend", False):
         _record_trend(target if target.is_dir() else target.parent, all_issues, language)
 
     # Send notification if requested
-    notify_url = getattr(args, 'notify', None)
+    notify_url = getattr(args, "notify", None)
     if notify_url:
-        project_name = getattr(args, 'project', '.')
+        project_name = getattr(args, "project", ".")
         if notify_url.startswith("slack://"):
             webhook_url = notify_url.replace("slack://", "https://hooks.slack.com/services/")
             _send_slack_notification(webhook_url, all_issues, language, project_name)
@@ -1471,21 +1557,22 @@ def cmd_check(args: argparse.Namespace) -> int:
 def _match_pattern(filepath: Path, pattern: str) -> bool:
     """Check if filepath matches a glob pattern."""
     import fnmatch
+
     return fnmatch.fnmatch(str(filepath), pattern) or fnmatch.fnmatch(filepath.name, pattern)
 
 
 def cmd_fix(args: argparse.Namespace) -> int:
     """Apply automatic fixes to code files."""
     target = Path(args.path).resolve()
-    
+
     if not target.exists():
         print(f"Error: Path not found: {target}", file=sys.stderr)
         return 1
-    
+
     # Detect language
     detected = detect_language(target)
     language = args.lang or detected.get("language")
-    
+
     if args.json:
         stats = fix_file(target) if target.is_file() else fix_directory(target, language)
         # Add files key for single file
@@ -1493,47 +1580,48 @@ def cmd_fix(args: argparse.Namespace) -> int:
             stats["files"] = 1 if stats["fixed"] > 0 else 0
         print(json.dumps(stats, indent=2))
     else:
-        print(f"\n\033[1m\033[36m{'='*60}\033[0m")
-        print(f"\033[1m\033[36m  ADG Auto-fix\033[0m")
-        print(f"\033[1m\033[36m{'='*60}\033[0m\n")
-        
+        print(f"\n\033[1m\033[36m{'=' * 60}\033[0m")
+        print("\033[1m\033[36m  ADG Auto-fix\033[0m")
+        print(f"\033[1m\033[36m{'=' * 60}\033[0m\n")
+
         print(f"\033[1mTarget:\033[0m {target}")
         if language:
             print(f"\033[1mLanguage:\033[0m {language}")
         print()
-        
+
         if target.is_file():
             stats = fix_file(target)
             stats["files"] = 1 if stats["fixed"] > 0 else 0
         else:
             stats = fix_directory(target, language)
-        
-        print(f"\033[1mResults:\033[0m")
+
+        print("\033[1mResults:\033[0m")
         print(f"  Files modified: {stats['files']}")
         print(f"  Rules applied:  {stats['fixed']}")
         print(f"  Rules skipped:  {stats['skipped']}")
         print(f"  Errors:         {stats['errors']}")
         print()
-        
-        if stats['fixed'] > 0:
-            print(f"\033[32m\033[1m✅ Fixes applied successfully\033[0m")
-        elif stats['errors'] > 0:
-            print(f"\033[31m\033[1m❌ Some errors occurred\033[0m")
+
+        if stats["fixed"] > 0:
+            print("\033[32m\033[1m✅ Fixes applied successfully\033[0m")
+        elif stats["errors"] > 0:
+            print("\033[31m\033[1m❌ Some errors occurred\033[0m")
         else:
-            print(f"\033[33m\033[1m⚠️  No automatic fixes available\033[0m")
+            print("\033[33m\033[1m⚠️  No automatic fixes available\033[0m")
             print("   Some issues require manual fixes.")
-    
-    return 0 if stats['errors'] == 0 else 1
+
+    return 0 if stats["errors"] == 0 else 1
 
 
 # ──────────────────────────────────────────────────────────
 # Rule Authoring Commands
 # ──────────────────────────────────────────────────────────
 
+
 def cmd_rule(args: argparse.Namespace) -> int:
     """Handle rule authoring commands."""
-    rule_cmd = getattr(args, 'rule_command', None)
-    
+    rule_cmd = getattr(args, "rule_command", None)
+
     if rule_cmd == "create":
         return _cmd_rule_create(args)
     elif rule_cmd == "test":
@@ -1548,11 +1636,11 @@ def cmd_rule(args: argparse.Namespace) -> int:
 def _cmd_rule_create(args: argparse.Namespace) -> int:
     """Create a new rule interactively."""
     rule = _create_rule_interactive()
-    
+
     if not rule:
         print("Rule creation cancelled.", file=sys.stderr)
         return 1
-    
+
     # Validate
     errors = _validate_rule(rule)
     if errors:
@@ -1560,9 +1648,9 @@ def _cmd_rule_create(args: argparse.Namespace) -> int:
         for e in errors:
             print(f"  - {e}", file=sys.stderr)
         return 1
-    
+
     # Output
-    output_path = getattr(args, 'output', None)
+    output_path = getattr(args, "output", None)
     if output_path:
         yaml_content = _RULE_TEMPLATE.format(**rule)
         Path(output_path).write_text(yaml_content)
@@ -1570,7 +1658,7 @@ def _cmd_rule_create(args: argparse.Namespace) -> int:
     else:
         print("\nGenerated rule:")
         print(_RULE_TEMPLATE.format(**rule))
-    
+
     return 0
 
 
@@ -1580,10 +1668,11 @@ def _cmd_rule_test(args: argparse.Namespace) -> int:
     if not rule_file.exists():
         print(f"Error: Rule file not found: {rule_file}", file=sys.stderr)
         return 1
-    
+
     # Load rule from YAML
     try:
         import yaml
+
         with open(rule_file) as f:
             rule_data = yaml.safe_load(f)
     except ImportError:
@@ -1595,11 +1684,11 @@ def _cmd_rule_test(args: argparse.Namespace) -> int:
                 rule_data["pattern"] = line.split("pattern:")[1].strip().strip('"')
             elif "message:" in line:
                 rule_data["message"] = line.split("message:")[1].strip().strip('"')
-    
+
     if not rule_data.get("pattern"):
         print("Error: No pattern found in rule file", file=sys.stderr)
         return 1
-    
+
     # Get test files
     target = Path(args.path)
     test_files = []
@@ -1609,30 +1698,30 @@ def _cmd_rule_test(args: argparse.Namespace) -> int:
         for fp in target.rglob("*"):
             if fp.is_file() and fp.suffix in (".py", ".js", ".ts", ".go", ".rs", ".java"):
                 test_files.append(fp)
-    
+
     if not test_files:
         print("No test files found.", file=sys.stderr)
         return 1
-    
+
     # Test the rule
     results = _test_rule(rule_data, test_files)
-    
+
     # Output
     print(f"\nRule: {results['rule_id']}")
     print(f"Files tested: {results['files_tested']}")
     print(f"Matches found: {len(results['matches'])}")
-    
-    if results['matches']:
+
+    if results["matches"]:
         print("\nMatches:")
-        for match in results['matches'][:20]:  # Limit to 20
+        for match in results["matches"][:20]:  # Limit to 20
             print(f"  {match['file']}:{match['line']}: {match['match']}")
-    
-    if results['errors']:
+
+    if results["errors"]:
         print("\nErrors:")
-        for e in results['errors']:
+        for e in results["errors"]:
             print(f"  - {e}")
-    
-    return 0 if not results['errors'] else 1
+
+    return 0 if not results["errors"] else 1
 
 
 def _cmd_rule_validate(args: argparse.Namespace) -> int:
@@ -1641,10 +1730,11 @@ def _cmd_rule_validate(args: argparse.Namespace) -> int:
     if not rule_file.exists():
         print(f"Error: Rule file not found: {rule_file}", file=sys.stderr)
         return 1
-    
+
     # Load rule
     try:
         import yaml
+
         with open(rule_file) as f:
             rule = yaml.safe_load(f)
     except ImportError:
@@ -1661,10 +1751,10 @@ def _cmd_rule_validate(args: argparse.Namespace) -> int:
                 rule["category"] = line.split("category:")[1].strip()
             elif "id:" in line and not line.strip().startswith("#"):
                 rule["id"] = line.split("id:")[1].strip()
-    
+
     # Validate
     errors = _validate_rule(rule)
-    
+
     if errors:
         print(f"\n❌ Validation failed for: {rule_file}")
         for e in errors:
@@ -1679,11 +1769,12 @@ def _cmd_rule_validate(args: argparse.Namespace) -> int:
 # Trend Dashboard Command
 # ──────────────────────────────────────────────────────────
 
+
 def cmd_trend(args: argparse.Namespace) -> int:
     """Show quality trend dashboard."""
     project_dir = Path(args.path).resolve()
-    
-    if getattr(args, 'clear', False):
+
+    if getattr(args, "clear", False):
         trend_file = project_dir / _TREND_DATA_FILE
         if trend_file.exists():
             trend_file.unlink()
@@ -1691,14 +1782,14 @@ def cmd_trend(args: argparse.Namespace) -> int:
         else:
             print("No trend history to clear.")
         return 0
-    
+
     trend_data = _load_trend_data(project_dir)
-    
-    if getattr(args, 'json', False):
+
+    if getattr(args, "json", False):
         print(_format_trend_report(trend_data, output_json=True))
     else:
         print(_format_trend_report(trend_data))
-    
+
     return 0
 
 
@@ -1706,22 +1797,23 @@ def cmd_trend(args: argparse.Namespace) -> int:
 # Notify Command
 # ──────────────────────────────────────────────────────────
 
+
 def cmd_notify(args: argparse.Namespace) -> int:
     """Send governance report via webhook."""
     target = Path(args.path).resolve()
-    
+
     # Detect language
     detected = detect_language(target)
     language = args.lang or detected.get("language", "unknown")
-    
+
     if language == "unknown":
         print("Error: Could not detect language. Use --lang to specify.", file=sys.stderr)
         return 1
-    
+
     # Load rules and check
     rules = load_rules_for_language(language)
     all_issues: list[Issue] = []
-    
+
     if target.is_file():
         all_issues = check_file(target, rules)
     else:
@@ -1729,11 +1821,11 @@ def cmd_notify(args: argparse.Namespace) -> int:
             if fp.is_file() and fp.suffix not in SKIP_EXTENSIONS:
                 if _detect_language_from_file(fp):
                     all_issues.extend(check_file(fp, rules))
-    
+
     # Send notification
     webhook_url = args.webhook
-    project_name = getattr(args, 'project', '.')
-    
+    project_name = getattr(args, "project", ".")
+
     if webhook_url.startswith("slack://"):
         url = webhook_url.replace("slack://", "https://hooks.slack.com/services/")
         success = _send_slack_notification(url, all_issues, language, project_name)
@@ -1741,15 +1833,15 @@ def cmd_notify(args: argparse.Namespace) -> int:
         url = webhook_url.replace("dingtalk://", "https://oapi.dingtalk.com/robot/send?access_token=")
         success = _send_dingtalk_notification(url, all_issues, language, project_name)
     else:
-        print(f"Error: Unknown webhook scheme. Use slack:// or dingtalk://", file=sys.stderr)
+        print("Error: Unknown webhook scheme. Use slack:// or dingtalk://", file=sys.stderr)
         return 1
-    
+
     if success:
         print("✅ Notification sent successfully")
     else:
         print("", file=sys.stderr)
         return 1
-    
+
     return 0
 
 
@@ -1806,7 +1898,7 @@ def cmd_report(args: argparse.Namespace) -> int:
 
     detected = detect_language(target)
     language = args.lang or detected.get("language", "unknown")
-    framework = getattr(args, 'framework', None) or detected.get("framework")
+    framework = getattr(args, "framework", None) or detected.get("framework")
 
     if language == "unknown":
         print("Error: Could not detect language. Use --lang to specify.", file=sys.stderr)
@@ -1854,14 +1946,14 @@ def cmd_report(args: argparse.Namespace) -> int:
     top_files = sorted(file_counts.items(), key=lambda x: x[1], reverse=True)[:10]
 
     # Determine pass/fail
-    error_threshold = getattr(args, 'error_threshold', 0)
-    warning_threshold = getattr(args, 'warning_threshold', -1)  # -1 = no limit
+    error_threshold = getattr(args, "error_threshold", 0)
+    warning_threshold = getattr(args, "warning_threshold", -1)  # -1 = no limit
     passed = severity_counts["error"] <= error_threshold
     if warning_threshold >= 0:
         passed = passed and severity_counts["warning"] <= warning_threshold
 
     # Output
-    if getattr(args, 'json', False):
+    if getattr(args, "json", False):
         report = {
             "language": language,
             "framework": framework,
@@ -1875,44 +1967,44 @@ def cmd_report(args: argparse.Namespace) -> int:
         print(json.dumps(report, indent=2))
     else:
         # Color
-        GREEN = "\033[0;32m"
-        RED = "\033[0;31m"
-        YELLOW = "\033[0;33m"
-        CYAN = "\033[0;36m"
-        BOLD = "\033[1m"
-        NC = "\033[0m"
+        green = "\033[0;32m"
+        red = "\033[0;31m"
+        yellow = "\033[0;33m"
+        cyan = "\033[0;36m"
+        bold = "\033[1m"
+        nc = "\033[0m"
 
-        print(f"\n{BOLD}{CYAN}{'='*60}{NC}")
-        print(f"{BOLD}{CYAN}  ADG Quality Gate Report{NC}")
-        print(f"{BOLD}{CYAN}{'='*60}{NC}\n")
+        print(f"\n{bold}{cyan}{'=' * 60}{nc}")
+        print(f"{bold}{cyan}  ADG Quality Gate Report{nc}")
+        print(f"{bold}{cyan}{'=' * 60}{nc}\n")
 
-        print(f"{BOLD}Project:{NC} {target}")
-        print(f"{BOLD}Language:{NC} {language}" + (f" + {framework}" if framework else ""))
-        print(f"{BOLD}Files Checked:{NC} {files_checked}")
+        print(f"{bold}Project:{nc} {target}")
+        print(f"{bold}Language:{nc} {language}" + (f" + {framework}" if framework else ""))
+        print(f"{bold}Files Checked:{nc} {files_checked}")
         print()
 
-        print(f"{BOLD}Issues by Severity:{NC}")
-        print(f"  {RED}Errors:   {severity_counts['error']}{NC}")
-        print(f"  {YELLOW}Warnings: {severity_counts['warning']}{NC}")
+        print(f"{bold}Issues by Severity:{nc}")
+        print(f"  {red}Errors:   {severity_counts['error']}{nc}")
+        print(f"  {yellow}Warnings: {severity_counts['warning']}{nc}")
         print(f"  Info:     {severity_counts['info']}")
         print()
 
         if category_counts:
-            print(f"{BOLD}Issues by Category:{NC}")
+            print(f"{bold}Issues by Category:{nc}")
             for cat, count in sorted(category_counts.items(), key=lambda x: x[1], reverse=True):
                 print(f"  {cat}: {count}")
             print()
 
         if top_files:
-            print(f"{BOLD}Top Files by Issues:{NC}")
+            print(f"{bold}Top Files by Issues:{nc}")
             for filepath, count in top_files:
                 print(f"  {filepath}: {count}")
             print()
 
         if passed:
-            print(f"{GREEN}{BOLD}✅ PASSED{NC} - Quality gate met")
+            print(f"{green}{bold}✅ PASSED{nc} - Quality gate met")
         else:
-            print(f"{RED}{BOLD}❌ FAILED{NC} - Quality gate not met")
+            print(f"{red}{bold}❌ FAILED{nc} - Quality gate not met")
             if severity_counts["error"] > error_threshold:
                 print(f"  Errors ({severity_counts['error']}) exceed threshold ({error_threshold})")
             if warning_threshold >= 0 and severity_counts["warning"] > warning_threshold:
@@ -1934,18 +2026,18 @@ def cmd_install_hooks(args: argparse.Namespace) -> int:
     hooks_dir.mkdir(exist_ok=True)
 
     # Install pre-push hook if requested
-    if getattr(args, 'pre_push', False):
+    if getattr(args, "pre_push", False):
         hook_path = hooks_dir / "pre-push"
         adg_hook_source = Path.home() / ".config" / "adg" / "hooks" / "pre-push"
-        
+
         if adg_hook_source.exists():
             hook_path.write_text(adg_hook_source.read_text())
         else:
             hook_path.write_text(_DEFAULT_PRE_PUSH_HOOK)
-        
+
         hook_path.chmod(0o755)
         print(f"✅ ADG pre-push hook installed: {hook_path}")
-        print(f"   Run 'adg check .' to test manually")
+        print("   Run 'adg check .' to test manually")
         return 0
 
     # Default: install pre-commit hook
@@ -1961,7 +2053,7 @@ def cmd_install_hooks(args: argparse.Namespace) -> int:
 
     hook_path.chmod(0o755)
     print(f"✅ ADG pre-commit hook installed: {hook_path}")
-    print(f"   Run 'adg check .' to test manually")
+    print("   Run 'adg check .' to test manually")
     return 0
 
 
@@ -1969,7 +2061,7 @@ def cmd_install_hooks(args: argparse.Namespace) -> int:
 # Default pre-push hook
 # ──────────────────────────────────────────────────────────
 
-_DEFAULT_PRE_PUSH_HOOK = '''#!/bin/bash
+_DEFAULT_PRE_PUSH_HOOK = """#!/bin/bash
 # ADG Governance Pre-push Hook
 # Installed by: adg install-hooks --pre-push
 
@@ -2002,14 +2094,14 @@ if [ $EXIT_CODE -ne 0 ]; then
 fi
 
 echo "✅ Pre-push check passed."
-'''
+"""
 
 
 # ──────────────────────────────────────────────────────────
 # Default pre-commit hook
 # ──────────────────────────────────────────────────────────
 
-_DEFAULT_PRE_COMMIT_HOOK = '''#!/bin/bash
+_DEFAULT_PRE_COMMIT_HOOK = """#!/bin/bash
 # ADG Governance Pre-commit Hook
 # Installed by: adg install-hooks
 
@@ -2044,12 +2136,13 @@ if [ $EXIT_CODE -ne 0 ]; then
 fi
 
 echo "✅ Governance check passed."
-'''
+"""
 
 
 # ──────────────────────────────────────────────────────────
 # CLI Entry Point
 # ──────────────────────────────────────────────────────────
+
 
 def main() -> int:
     parser = argparse.ArgumentParser(
@@ -2064,24 +2157,22 @@ def main() -> int:
     check_p.add_argument("path", help="File or directory to check")
     check_p.add_argument("--lang", help="Force language (skip auto-detection)")
     check_p.add_argument("--framework", help="Force framework (skip auto-detection)")
-    check_p.add_argument("--severity", choices=["error", "warning", "info"],
-                         help="Only show issues at this severity or higher")
+    check_p.add_argument(
+        "--severity", choices=["error", "warning", "info"], help="Only show issues at this severity or higher"
+    )
     check_p.add_argument("--json", action="store_true", help="Output as JSON")
     check_p.add_argument("--sarif", action="store_true", help="Output as SARIF (GitHub Code Scanning)")
-    check_p.add_argument("-j", "--jobs", type=int, default=1,
-                         help="Number of parallel jobs (default: 1)")
-    check_p.add_argument("--since", type=str, default=None,
-                         help="Only check files changed since git ref (e.g., HEAD~1, main)")
-    check_p.add_argument("--staged", action="store_true",
-                         help="Only check staged files (for pre-commit)")
-    check_p.add_argument("--unstaged", action="store_true",
-                         help="Only check unstaged changed files")
-    check_p.add_argument("--trend", action="store_true",
-                         help="Record results for trend tracking")
-    check_p.add_argument("--notify", type=str, default=None,
-                         help="Send results to webhook (slack://... or dingtalk://...)")
-    check_p.add_argument("--project", type=str, default=".",
-                         help="Project name for notifications")
+    check_p.add_argument("-j", "--jobs", type=int, default=1, help="Number of parallel jobs (default: 1)")
+    check_p.add_argument(
+        "--since", type=str, default=None, help="Only check files changed since git ref (e.g., HEAD~1, main)"
+    )
+    check_p.add_argument("--staged", action="store_true", help="Only check staged files (for pre-commit)")
+    check_p.add_argument("--unstaged", action="store_true", help="Only check unstaged changed files")
+    check_p.add_argument("--trend", action="store_true", help="Record results for trend tracking")
+    check_p.add_argument(
+        "--notify", type=str, default=None, help="Send results to webhook (slack://... or dingtalk://...)"
+    )
+    check_p.add_argument("--project", type=str, default=".", help="Project name for notifications")
 
     # detect
     detect_p = sub.add_parser("detect", help="Detect project language/framework")
@@ -2096,18 +2187,15 @@ def main() -> int:
     # install-hooks
     install_p = sub.add_parser("install-hooks", help="Install pre-commit/pre-push hook")
     install_p.add_argument("path", nargs="?", default=".", help="Project directory")
-    install_p.add_argument("--pre-push", action="store_true", 
-                          help="Install pre-push hook instead of pre-commit")
+    install_p.add_argument("--pre-push", action="store_true", help="Install pre-push hook instead of pre-commit")
 
     # report
     report_p = sub.add_parser("report", help="Generate quality gate report")
     report_p.add_argument("path", help="File or directory to report on")
     report_p.add_argument("--lang", help="Force language (skip auto-detection)")
     report_p.add_argument("--framework", help="Force framework (skip auto-detection)")
-    report_p.add_argument("--error-threshold", type=int, default=0,
-                         help="Max errors allowed (default: 0)")
-    report_p.add_argument("--warning-threshold", type=int, default=-1,
-                         help="Max warnings allowed (-1 = no limit)")
+    report_p.add_argument("--error-threshold", type=int, default=0, help="Max errors allowed (default: 0)")
+    report_p.add_argument("--warning-threshold", type=int, default=-1, help="Max warnings allowed (-1 = no limit)")
     report_p.add_argument("--json", action="store_true", help="Output as JSON")
 
     # fix
@@ -2136,11 +2224,9 @@ def main() -> int:
     # notify
     notify_p = sub.add_parser("notify", help="Send governance report via webhook")
     notify_p.add_argument("path", help="File or directory to check")
-    notify_p.add_argument("--webhook", required=True,
-                         help="Webhook URL (slack://... or dingtalk://...)")
+    notify_p.add_argument("--webhook", required=True, help="Webhook URL (slack://... or dingtalk://...)")
     notify_p.add_argument("--lang", help="Force language")
-    notify_p.add_argument("--project", type=str, default=".",
-                         help="Project name")
+    notify_p.add_argument("--project", type=str, default=".", help="Project name")
 
     args = parser.parse_args()
 

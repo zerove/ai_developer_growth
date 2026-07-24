@@ -2,34 +2,25 @@
 
 from __future__ import annotations
 
+import argparse
 import json
-import tempfile
-from pathlib import Path
-from unittest.mock import patch, MagicMock, call
-
-import pytest
+from unittest.mock import MagicMock, patch
 
 from tools.scripts.adg_cli import (
+    Issue,
     _create_rule_interactive,
+    _format_sarif,
+    _format_trend_report,
+    _get_git_changed_files,
+    _save_trend_data,
+    _send_dingtalk_notification,
+    _send_slack_notification,
     _test_rule,
     _validate_rule,
+    cmd_notify,
     cmd_rule,
     cmd_trend,
-    cmd_notify,
-    _format_trend_report,
-    _load_trend_data,
-    _save_trend_data,
-    _record_trend,
-    _get_git_changed_files,
-    _get_staged_files,
-    _get_unstaged_files,
-    _send_slack_notification,
-    _send_dingtalk_notification,
-    _format_sarif,
-    Issue,
-    load_rules_for_language,
 )
-import argparse
 
 
 class TestCreateRuleInteractive:
@@ -38,18 +29,18 @@ class TestCreateRuleInteractive:
     def test_create_rule_success(self):
         """Interactive rule creation succeeds."""
         inputs = [
-            "test-rule",        # rule_id
-            "python",           # language
-            "code_quality",     # category
-            "warning",          # severity
-            r"test\(\)",       # pattern
-            "Test message",     # message
-            "Fix this",         # fix_hint
+            "test-rule",  # rule_id
+            "python",  # language
+            "code_quality",  # category
+            "warning",  # severity
+            r"test\(\)",  # pattern
+            "Test message",  # message
+            "Fix this",  # fix_hint
         ]
-        
+
         with patch("builtins.input", side_effect=inputs):
             rule = _create_rule_interactive()
-        
+
         assert rule["id"] == "test-rule"
         assert rule["language"] == "python"
         assert rule["category"] == "code_quality"
@@ -62,24 +53,24 @@ class TestCreateRuleInteractive:
         """Interactive rule creation cancelled."""
         with patch("builtins.input", return_value=""):
             rule = _create_rule_interactive()
-        
+
         assert rule == {}
 
     def test_create_rule_defaults(self):
         """Interactive rule creation uses defaults."""
         inputs = [
-            "test-rule",        # rule_id
-            "python",           # language
-            "",                 # category (empty = default)
-            "",                 # severity (empty = default)
-            r"test\(\)",       # pattern
-            "Test message",     # message
-            "",                 # fix_hint
+            "test-rule",  # rule_id
+            "python",  # language
+            "",  # category (empty = default)
+            "",  # severity (empty = default)
+            r"test\(\)",  # pattern
+            "Test message",  # message
+            "",  # fix_hint
         ]
-        
+
         with patch("builtins.input", side_effect=inputs):
             rule = _create_rule_interactive()
-        
+
         assert rule["category"] == "code_quality"
         assert rule["severity"] == "warning"
 
@@ -97,19 +88,19 @@ class TestCmdRule:
         """Rule create with output file."""
         output_file = tmp_path / "test_rule.yaml"
         inputs = [
-            "test-rule",        # rule_id
-            "python",           # language
-            "code_quality",     # category
-            "warning",          # severity
-            r"test_pattern",    # pattern (simple pattern)
-            "Test message",     # message
-            "Fix this",         # fix_hint
+            "test-rule",  # rule_id
+            "python",  # language
+            "code_quality",  # category
+            "warning",  # severity
+            r"test_pattern",  # pattern (simple pattern)
+            "Test message",  # message
+            "Fix this",  # fix_hint
         ]
-        
+
         with patch("builtins.input", side_effect=inputs):
             args = argparse.Namespace(rule_command="create", output=str(output_file))
             result = cmd_rule(args)
-        
+
         assert result == 0
         assert output_file.exists()
 
@@ -123,7 +114,7 @@ category: code_quality
 pattern: "test_pattern"
 message: "Test message"
 """)
-        
+
         args = argparse.Namespace(rule_command="validate", rule_file=str(rule_file))
         result = cmd_rule(args)
         assert result == 0
@@ -135,7 +126,7 @@ message: "Test message"
 id: test-rule
 severity: invalid
 """)
-        
+
         args = argparse.Namespace(rule_command="validate", rule_file=str(rule_file))
         result = cmd_rule(args)
         assert result == 1
@@ -153,10 +144,10 @@ severity: invalid
 pattern: "print_pattern"
 message: "Use logging"
 """)
-        
+
         test_file = tmp_path / "test.py"
         test_file.write_text("print_pattern('hello')\n")
-        
+
         args = argparse.Namespace(rule_command="test", rule_file=str(rule_file), path=str(tmp_path))
         result = cmd_rule(args)
         assert result == 0
@@ -168,10 +159,10 @@ message: "Use logging"
 pattern: "nonexistent_pattern"
 message: "Test"
 """)
-        
+
         test_file = tmp_path / "test.py"
         test_file.write_text("x = 1\n")
-        
+
         args = argparse.Namespace(rule_command="test", rule_file=str(rule_file), path=str(tmp_path))
         result = cmd_rule(args)
         assert result == 0
@@ -189,10 +180,18 @@ class TestCmdTrend:
     def test_trend_with_data(self, tmp_path):
         """Trend with existing data."""
         data = [
-            {"timestamp": "2024-01-01T00:00:00", "errors": 5, "warnings": 10, "info": 3, "total": 18, "files_checked": 5, "language": "python"},
+            {
+                "timestamp": "2024-01-01T00:00:00",
+                "errors": 5,
+                "warnings": 10,
+                "info": 3,
+                "total": 18,
+                "files_checked": 5,
+                "language": "python",
+            },
         ]
         _save_trend_data(tmp_path, data)
-        
+
         args = argparse.Namespace(path=str(tmp_path), json=False, clear=False)
         result = cmd_trend(args)
         assert result == 0
@@ -201,7 +200,7 @@ class TestCmdTrend:
         """Trend JSON output."""
         data = [{"timestamp": "2024-01-01", "errors": 5}]
         _save_trend_data(tmp_path, data)
-        
+
         args = argparse.Namespace(path=str(tmp_path), json=True, clear=False)
         result = cmd_trend(args)
         assert result == 0
@@ -211,7 +210,7 @@ class TestCmdTrend:
         trend_file = tmp_path / ".adg" / "trend.json"
         trend_file.parent.mkdir(parents=True)
         trend_file.write_text("[]")
-        
+
         args = argparse.Namespace(path=str(tmp_path), json=False, clear=True)
         result = cmd_trend(args)
         assert result == 0
@@ -231,47 +230,36 @@ class TestCmdNotify:
         """Notify with Slack webhook."""
         test_file = tmp_path / "test.py"
         test_file.write_text("print('hello')\n")
-        
+
         with patch("urllib.request.urlopen") as mock_open:
             mock_open.return_value = MagicMock()
             args = argparse.Namespace(
-                path=str(test_file),
-                webhook="slack://test-token",
-                lang="python",
-                project="test-project"
+                path=str(test_file), webhook="slack://test-token", lang="python", project="test-project"
             )
             result = cmd_notify(args)
-        
+
         assert result == 0
 
     def test_notify_dingtalk(self, tmp_path):
         """Notify with DingTalk webhook."""
         test_file = tmp_path / "test.py"
         test_file.write_text("print('hello')\n")
-        
+
         with patch("urllib.request.urlopen") as mock_open:
             mock_open.return_value = MagicMock()
             args = argparse.Namespace(
-                path=str(test_file),
-                webhook="dingtalk://test-token",
-                lang="python",
-                project="test-project"
+                path=str(test_file), webhook="dingtalk://test-token", lang="python", project="test-project"
             )
             result = cmd_notify(args)
-        
+
         assert result == 0
 
     def test_notify_unknown_scheme(self, tmp_path):
         """Notify with unknown webhook scheme."""
         test_file = tmp_path / "test.py"
         test_file.write_text("print('hello')\n")
-        
-        args = argparse.Namespace(
-            path=str(test_file),
-            webhook="unknown://test",
-            lang="python",
-            project="test"
-        )
+
+        args = argparse.Namespace(path=str(test_file), webhook="unknown://test", lang="python", project="test")
         result = cmd_notify(args)
         assert result == 1
 
@@ -283,8 +271,9 @@ class TestGitFunctions:
     def test_git_changed_files_timeout(self, mock_run):
         """Handle git timeout."""
         import subprocess
+
         mock_run.side_effect = subprocess.TimeoutExpired(cmd="git", timeout=10)
-        
+
         files = _get_git_changed_files("HEAD~1")
         assert files == []
 
@@ -292,7 +281,7 @@ class TestGitFunctions:
     def test_git_changed_files_not_found(self, mock_run):
         """Handle git not found."""
         mock_run.side_effect = FileNotFoundError()
-        
+
         files = _get_git_changed_files("HEAD~1")
         assert files == []
 
@@ -300,7 +289,7 @@ class TestGitFunctions:
     def test_git_changed_files_empty_output(self, mock_run):
         """Handle empty git output."""
         mock_run.return_value = MagicMock(returncode=0, stdout="", stderr="")
-        
+
         files = _get_git_changed_files("HEAD~1")
         assert files == []
 
@@ -326,23 +315,19 @@ class TestSarifExtended:
 
     def test_sarif_with_fixes(self):
         """SARIF includes fix hints."""
-        issues = [
-            Issue("r1", "error", "security", "/a.py", 10, 5, "Error msg", "Fix hint")
-        ]
+        issues = [Issue("r1", "error", "security", "/a.py", 10, 5, "Error msg", "Fix hint")]
         result = _format_sarif(issues, "python", None)
         data = json.loads(result)
-        
+
         assert "fixes" in data["runs"][0]["results"][0]
         assert len(data["runs"][0]["results"][0]["fixes"]) == 1
 
     def test_sarif_without_fixes(self):
         """SARIF without fix hints."""
-        issues = [
-            Issue("r1", "error", "security", "/a.py", 10, 5, "Error msg", "")
-        ]
+        issues = [Issue("r1", "error", "security", "/a.py", 10, 5, "Error msg", "")]
         result = _format_sarif(issues, "python", None)
         data = json.loads(result)
-        
+
         assert data["runs"][0]["results"][0]["fixes"] == []
 
 
@@ -383,13 +368,13 @@ class TestTestRuleExtended:
         """Test rule against multiple files."""
         file1 = tmp_path / "a.py"
         file1.write_text("print('a')\nprint('b')\n")
-        
+
         file2 = tmp_path / "b.py"
         file2.write_text("x = 1\n")
-        
+
         rule = {"pattern": r"\bprint\(", "message": "msg"}
         results = _test_rule(rule, [file1, file2])
-        
+
         assert results["files_tested"] == 2
         assert len(results["matches"]) == 2
 
@@ -397,7 +382,7 @@ class TestTestRuleExtended:
         """Test rule with invalid regex."""
         rule = {"pattern": "[invalid", "message": "msg"}
         results = _test_rule(rule, [])
-        
+
         assert len(results["errors"]) == 1
         assert "Invalid pattern" in results["errors"][0]
 
@@ -408,9 +393,25 @@ class TestTrendExtended:
     def test_trend_report_with_trend(self):
         """Trend report shows trend direction."""
         data = [
-            {"timestamp": "2024-01-01T00:00:00", "errors": 10, "warnings": 20, "info": 5, "total": 35, "files_checked": 10, "language": "python"},
-            {"timestamp": "2024-01-02T00:00:00", "errors": 5, "warnings": 15, "info": 3, "total": 23, "files_checked": 10, "language": "python"},
+            {
+                "timestamp": "2024-01-01T00:00:00",
+                "errors": 10,
+                "warnings": 20,
+                "info": 5,
+                "total": 35,
+                "files_checked": 10,
+                "language": "python",
+            },
+            {
+                "timestamp": "2024-01-02T00:00:00",
+                "errors": 5,
+                "warnings": 15,
+                "info": 3,
+                "total": 23,
+                "files_checked": 10,
+                "language": "python",
+            },
         ]
-        
+
         report = _format_trend_report(data)
         assert "↓" in report or "Errors" in report

@@ -74,9 +74,9 @@ def _file_not_found_result(filepath: Path) -> CheckResult:
     )
 
 
-def _run_all_checkers(filepath: Path, content: str, lines: list[str], lang: str, rules: dict[str, Any]) -> list:
+def _run_all_checkers(filepath: Path, content: str, lines: list[str], lang: str, rules: dict[str, Any]) -> list[Issue]:
     """Run all checkers on file content."""
-    issues: list = []
+    issues: list[Issue] = []
 
     # Anti-patterns
     issues.extend(check_anti_patterns(filepath, lang, rules))
@@ -173,9 +173,9 @@ def _detect_language(filepath: Path) -> str:
     return mapping.get(ext, "unknown")
 
 
-def _run_external_linters(filepath: Path, lang: str) -> list:
+def _run_external_linters(filepath: Path, lang: str) -> list[Issue]:
     """Run external linters and convert output to Issues."""
-    issues: list = []
+    issues: list[Issue] = []
 
     linters = {
         "python": ["ruff", "check", "--output-format=json", str(filepath)],
@@ -198,9 +198,9 @@ def _run_external_linters(filepath: Path, lang: str) -> list:
     return issues
 
 
-def _parse_linter_output(output: str, lang: str, filepath: str) -> list:
+def _parse_linter_output(output: str, lang: str, filepath: str) -> list[Issue]:
     """Parse linter JSON output to Issues."""
-    issues: list = []
+    issues: list[Issue] = []
     try:
         import json
 

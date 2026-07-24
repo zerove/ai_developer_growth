@@ -183,7 +183,9 @@ def load_custom_rules(project_dir: Path) -> dict[str, Any]:
     return custom
 
 
-def _merge_anti_patterns(base_patterns: list[dict], custom_patterns: list[dict]) -> list[dict]:
+def _merge_anti_patterns(
+    base_patterns: list[dict[str, Any]], custom_patterns: list[dict[str, Any]]
+) -> list[dict[str, Any]]:
     """Merge anti-patterns: custom overrides by ID, then appends new ones."""
     if not custom_patterns:
         return base_patterns

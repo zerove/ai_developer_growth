@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import shutil
 from pathlib import Path
+from typing import Any
 
 import yaml
 from _common import framework_dir
@@ -16,7 +17,7 @@ from _common import framework_dir
 # Built-in pack definitions
 # ──────────────────────────────────────────────────────────
 
-BUILTIN_PACKS: dict[str, dict] = {
+BUILTIN_PACKS: dict[str, dict[str, Any]] = {
     "security": {
         "name": "Security Rules",
         "description": "Cross-language security anti-patterns",
@@ -90,7 +91,7 @@ BUILTIN_PACKS: dict[str, dict] = {
 _CATEGORIES = ["anti_patterns", "naming_conventions", "complexity"]
 
 
-def matches(rule: dict, query: str) -> bool:
+def matches(rule: dict[str, Any], query: str) -> bool:
     """Check if a rule matches a search query."""
     fields = [
         rule.get("id", ""),
@@ -104,13 +105,13 @@ def matches(rule: dict, query: str) -> bool:
     return query in text
 
 
-def search_rules(query: str) -> list[dict]:
+def search_rules(query: str) -> list[dict[str, Any]]:
     """Search all rule sources for rules matching a query.
 
     Returns list of dicts with pack, category, and rule data.
     """
     fw = framework_dir()
-    results: list[dict] = []
+    results: list[dict[str, Any]] = []
 
     # Search common rules
     common_file = fw / "common" / "security.yml"
@@ -163,7 +164,7 @@ def search_rules(query: str) -> list[dict]:
 # ──────────────────────────────────────────────────────────
 
 
-def get_pack_info(pack_id: str) -> dict | None:
+def get_pack_info(pack_id: str) -> dict[str, Any] | None:
     """Get info about a pack. Returns None if not found."""
     return BUILTIN_PACKS.get(pack_id)
 
@@ -244,12 +245,12 @@ def validate_rules(rules_dir: Path) -> tuple[int, int, list[str]]:
     return total_rules, errors, messages
 
 
-def export_rules(rules_dir: Path, output: Path) -> tuple[int, dict]:
+def export_rules(rules_dir: Path, output: Path) -> tuple[int, dict[str, Any]]:
     """Export rules from .ai-rules/ to a single YAML file.
 
     Returns (rule_count, combined_dict).
     """
-    combined: dict = {"anti_patterns": [], "naming_conventions": [], "complexity": []}
+    combined: dict[str, Any] = {"anti_patterns": [], "naming_conventions": [], "complexity": []}
 
     for yml in sorted(rules_dir.glob("*.yml")):
         with open(yml) as f:

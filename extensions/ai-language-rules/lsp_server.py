@@ -14,9 +14,7 @@ from __future__ import annotations
 
 import argparse
 import json
-import os
 import sys
-import threading
 from pathlib import Path
 from typing import Any
 
@@ -27,7 +25,6 @@ from validate_language_rules import (
     EXTENSION_MAP,
     ValidationResult,
     load_custom_rules,
-    load_rules,
     validate_file,
 )
 
@@ -151,9 +148,7 @@ class LanguageRulesLSP:
                 "source": "ai-language-rules",
                 "message": issue.message,
                 "code": issue.rule_id,
-                "codeDescription": {
-                    "href": f"https://github.com/1jehuang/jcode/rules/{issue.rule_id}"
-                },
+                "codeDescription": {"href": f"https://github.com/1jehuang/jcode/rules/{issue.rule_id}"},
             }
 
             # Add related information for fixable issues
@@ -223,9 +218,7 @@ def main() -> None:
                 server._send_message = lambda msg: self.wfile.write(
                     (f"Content-Length: {len(json.dumps(msg))}\r\n\r\n" + json.dumps(msg)).encode()
                 )
-                server.read_message = lambda: json.loads(
-                    self.rfile.readline().decode().strip()
-                )
+                server.read_message = lambda: json.loads(self.rfile.readline().decode().strip())
                 server.run()
 
         with socketserver.TCPServer(("localhost", args.port), LSPHandler) as httpd:

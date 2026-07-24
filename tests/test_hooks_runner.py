@@ -1,4 +1,10 @@
-"""Tests for hooks_runner.py - unified hook runner entry point."""
+"""Tests for hooks_runner.py - unified hook runner entry point.
+
+Updated for modular architecture:
+    - basic_checks: lint, format, typecheck, test, security
+    - domain_checks: language-rules, quality-gate, governance-audit
+    - incremental_checks: diff, pre-commit, git helpers
+"""
 
 from __future__ import annotations
 
@@ -40,7 +46,7 @@ def _mock_process(returncode: int = 0, stdout: str = "", stderr: str = "") -> Ma
 class TestRunLint(unittest.TestCase):
     """Test run_lint function."""
 
-    @patch("tools.scripts.hooks_runner.subprocess.run")
+    @patch("tools.scripts.hooks.basic_checks.subprocess.run")
     def test_lint_pass(self, mock_run: MagicMock) -> None:
         mock_run.return_value = _mock_process(0, "All checks passed!")
         passed, output = run_lint()
@@ -51,7 +57,7 @@ class TestRunLint(unittest.TestCase):
         self.assertEqual(args[0], "ruff")
         self.assertIn("check", args)
 
-    @patch("tools.scripts.hooks_runner.subprocess.run")
+    @patch("tools.scripts.hooks.basic_checks.subprocess.run")
     def test_lint_fail(self, mock_run: MagicMock) -> None:
         mock_run.return_value = _mock_process(1, "", "E501 line too long")
         passed, output = run_lint()
@@ -62,7 +68,7 @@ class TestRunLint(unittest.TestCase):
 class TestRunFormatCheck(unittest.TestCase):
     """Test run_format_check function."""
 
-    @patch("tools.scripts.hooks_runner.subprocess.run")
+    @patch("tools.scripts.hooks.basic_checks.subprocess.run")
     def test_format_pass(self, mock_run: MagicMock) -> None:
         mock_run.return_value = _mock_process(0, "293 files already formatted")
         passed, output = run_format_check()
@@ -71,7 +77,7 @@ class TestRunFormatCheck(unittest.TestCase):
         args = mock_run.call_args[0][0]
         self.assertIn("--check", args)
 
-    @patch("tools.scripts.hooks_runner.subprocess.run")
+    @patch("tools.scripts.hooks.basic_checks.subprocess.run")
     def test_format_fail(self, mock_run: MagicMock) -> None:
         mock_run.return_value = _mock_process(1, "", "Would reformat: foo.py")
         passed, output = run_format_check()
@@ -81,7 +87,7 @@ class TestRunFormatCheck(unittest.TestCase):
 class TestRunTypecheck(unittest.TestCase):
     """Test run_typecheck function."""
 
-    @patch("tools.scripts.hooks_runner.subprocess.run")
+    @patch("tools.scripts.hooks.basic_checks.subprocess.run")
     def test_typecheck_pass(self, mock_run: MagicMock) -> None:
         mock_run.return_value = _mock_process(0, "Success: no issues found")
         passed, output = run_typecheck()
@@ -89,7 +95,7 @@ class TestRunTypecheck(unittest.TestCase):
         args = mock_run.call_args[0][0]
         self.assertIn("mypy", " ".join(str(a) for a in args))
 
-    @patch("tools.scripts.hooks_runner.subprocess.run")
+    @patch("tools.scripts.hooks.basic_checks.subprocess.run")
     def test_typecheck_fail(self, mock_run: MagicMock) -> None:
         mock_run.return_value = _mock_process(1, "", "Found 1 error")
         passed, output = run_typecheck()
@@ -99,7 +105,7 @@ class TestRunTypecheck(unittest.TestCase):
 class TestRunTests(unittest.TestCase):
     """Test run_tests function."""
 
-    @patch("tools.scripts.hooks_runner.subprocess.run")
+    @patch("tools.scripts.hooks.basic_checks.subprocess.run")
     def test_tests_pass(self, mock_run: MagicMock) -> None:
         mock_run.return_value = _mock_process(0, "748 passed")
         passed, output = run_tests()
@@ -107,7 +113,7 @@ class TestRunTests(unittest.TestCase):
         args = mock_run.call_args[0][0]
         self.assertIn("pytest", " ".join(str(a) for a in args))
 
-    @patch("tools.scripts.hooks_runner.subprocess.run")
+    @patch("tools.scripts.hooks.basic_checks.subprocess.run")
     def test_tests_fail(self, mock_run: MagicMock) -> None:
         mock_run.return_value = _mock_process(1, "", "FAILED tests/test_foo.py")
         passed, output = run_tests()
@@ -117,7 +123,7 @@ class TestRunTests(unittest.TestCase):
 class TestRunSecurity(unittest.TestCase):
     """Test run_security function."""
 
-    @patch("tools.scripts.hooks_runner.subprocess.run")
+    @patch("tools.scripts.hooks.basic_checks.subprocess.run")
     def test_security_pass(self, mock_run: MagicMock) -> None:
         mock_run.return_value = _mock_process(0, '{"results": []}')
         passed, output = run_security()
@@ -125,7 +131,7 @@ class TestRunSecurity(unittest.TestCase):
         # Called twice: bandit + pip-audit
         self.assertEqual(mock_run.call_count, 2)
 
-    @patch("tools.scripts.hooks_runner.subprocess.run")
+    @patch("tools.scripts.hooks.basic_checks.subprocess.run")
     def test_security_bandit_fails(self, mock_run: MagicMock) -> None:
         mock_run.side_effect = [
             _mock_process(1, "", "Issue found"),
@@ -148,7 +154,7 @@ class TestRunLanguageRules(unittest.TestCase):
         # Empty directory = pass (no files to check)
         self.assertTrue(passed)
 
-    @patch("tools.scripts.hooks_runner.detect_language_from_file")
+    @patch("tools.scripts.hooks.domain_checks.detect_language_from_file")
     def test_language_rules_no_detect(self, mock_detect: MagicMock) -> None:
         """Test when language cannot be detected."""
         mock_detect.return_value = None
@@ -204,7 +210,7 @@ class TestRunQualityGate(unittest.TestCase):
 class TestRunGovernanceAudit(unittest.TestCase):
     """Test run_governance_audit function."""
 
-    @patch("tools.scripts.hooks_runner.Path")
+    @patch("tools.scripts.hooks.domain_checks.Path")
     def test_governance_audit_import_fails(self, mock_path: MagicMock) -> None:
         """Test governance audit when module import fails."""
         # This tests the ImportError path
@@ -350,7 +356,7 @@ class TestMainCLI(unittest.TestCase):
 class TestDiffAndPreCommit(unittest.TestCase):
     """Tests for incremental check functions."""
 
-    @patch("tools.scripts.hooks_runner.subprocess.run")
+    @patch("tools.scripts.hooks.incremental_checks.subprocess.run")
     def test_get_changed_files_returns_paths(self, mock_run: MagicMock) -> None:
         """Test get_changed_files returns Path objects."""
         mock_run.return_value = _mock_process(0, "file1.py\nfile2.ts\n")
@@ -358,21 +364,21 @@ class TestDiffAndPreCommit(unittest.TestCase):
         self.assertEqual(len(files), 2)
         self.assertIsInstance(files[0], Path)
 
-    @patch("tools.scripts.hooks_runner.subprocess.run")
+    @patch("tools.scripts.hooks.incremental_checks.subprocess.run")
     def test_get_changed_files_empty(self, mock_run: MagicMock) -> None:
         """Test get_changed_files with no changes."""
         mock_run.return_value = _mock_process(0, "")
         files = get_changed_files("HEAD")
         self.assertEqual(files, [])
 
-    @patch("tools.scripts.hooks_runner.subprocess.run")
+    @patch("tools.scripts.hooks.incremental_checks.subprocess.run")
     def test_get_staged_files(self, mock_run: MagicMock) -> None:
         """Test get_staged_files returns Path objects."""
         mock_run.return_value = _mock_process(0, "staged.py\n")
         files = get_staged_files()
         self.assertEqual(len(files), 1)
 
-    @patch("tools.scripts.hooks_runner.get_changed_files")
+    @patch("tools.scripts.hooks.incremental_checks.get_changed_files")
     def test_run_diff_checks_no_files(self, mock_get: MagicMock) -> None:
         """Test diff with no changed files passes."""
         mock_get.return_value = []
@@ -380,7 +386,7 @@ class TestDiffAndPreCommit(unittest.TestCase):
         self.assertTrue(passed)
         self.assertIn("No changed files", output)
 
-    @patch("tools.scripts.hooks_runner.get_staged_files")
+    @patch("tools.scripts.hooks.incremental_checks.get_staged_files")
     def test_run_pre_commit_no_files(self, mock_get: MagicMock) -> None:
         """Test pre-commit with no staged files passes."""
         mock_get.return_value = []
@@ -388,9 +394,15 @@ class TestDiffAndPreCommit(unittest.TestCase):
         self.assertTrue(passed)
         self.assertIn("No staged files", output)
 
-    @patch("tools.scripts.hooks_runner.subprocess.run")
-    @patch("tools.scripts.hooks_runner.get_changed_files")
-    def test_run_diff_checks_with_py_files(self, mock_get: MagicMock, mock_run: MagicMock) -> None:
+    @patch("tools.scripts.hooks.incremental_checks.get_changed_files")
+    @patch("tools.scripts.hooks.incremental_checks.run_lint_files")
+    @patch("tools.scripts.hooks.incremental_checks.run_format_files")
+    def test_run_diff_checks_with_py_files(
+        self,
+        mock_format: MagicMock,
+        mock_lint: MagicMock,
+        mock_get: MagicMock,
+    ) -> None:
         """Test diff checks with Python files."""
         # Create a real temp file so exists() returns True
         with tempfile.NamedTemporaryFile(suffix=".py", mode="w", delete=False) as f:
@@ -399,14 +411,15 @@ class TestDiffAndPreCommit(unittest.TestCase):
             tmp = Path(f.name)
         try:
             mock_get.return_value = [tmp]
-            mock_run.return_value = _mock_process(0, "")
+            mock_lint.return_value = (True, "")
+            mock_format.return_value = (True, "")
             passed, output = run_diff_checks()
             self.assertTrue(passed)
-            self.assertIn("changed files pass checks", output)
+            self.assertIn("pass checks", output)
         finally:
             tmp.unlink(missing_ok=True)
 
-    @patch("tools.scripts.hooks_runner.get_changed_files")
+    @patch("tools.scripts.hooks.incremental_checks.get_changed_files")
     def test_run_diff_checks_non_code_files(self, mock_get: MagicMock) -> None:
         """Test diff skips non-code files."""
         mock_get.return_value = [Path("README.md"), Path("config.yml")]

@@ -709,10 +709,18 @@ def _make_issue(filepath: Path, line: int, column: int, pattern_def: dict[str, A
     )
 
 
-def check_directory(dirpath: Path, rules: dict[str, Any], severity_filter: str | None = None) -> list[Issue]:
-    """Check all code files in a directory."""
-    all_issues: list[Issue] = []
-
+def check_directory(dirpath: Path, rules: dict[str, Any], severity_filter: str | None = None, 
+                    jobs: int = 1) -> list[Issue]:
+    """Check all code files in a directory.
+    
+    Args:
+        dirpath: Directory to check
+        rules: Rules to apply
+        severity_filter: Filter by severity level
+        jobs: Number of parallel jobs (1 = sequential)
+    """
+    # Collect files first
+    files_to_check: list[Path] = []
     for filepath in dirpath.rglob("*"):
         if not filepath.is_file():
             continue
@@ -722,8 +730,49 @@ def check_directory(dirpath: Path, rules: dict[str, Any], severity_filter: str |
             continue
         lang = _detect_language_from_file(filepath)
         if lang:
+            files_to_check.append(filepath)
+    
+    # Check files (parallel or sequential)
+    if jobs > 1 and len(files_to_check) > 1:
+        return _check_files_parallel(files_to_check, rules, severity_filter, jobs)
+    else:
+        all_issues: list[Issue] = []
+        for filepath in files_to_check:
             all_issues.extend(check_file(filepath, rules, severity_filter))
+        return all_issues
 
+
+def _check_files_parallel(files: list[Path], rules: dict[str, Any], 
+                          severity_filter: str | None, jobs: int) -> list[Issue]:
+    """Check files in parallel using ProcessPoolExecutor."""
+    from concurrent.futures import ProcessPoolExecutor, as_completed
+    import os
+    
+    if not files:
+        return []
+    
+    all_issues: list[Issue] = []
+    
+    # Limit jobs to CPU count or file count
+    max_workers = min(jobs, len(files), os.cpu_count() or 4)
+    
+    with ProcessPoolExecutor(max_workers=max_workers) as executor:
+        # Submit all files for checking
+        future_to_file = {
+            executor.submit(check_file, filepath, rules, severity_filter): filepath
+            for filepath in files
+        }
+        
+        # Collect results as they complete
+        for future in as_completed(future_to_file):
+            try:
+                issues = future.result()
+                all_issues.extend(issues)
+            except Exception as e:
+                # Log error but continue processing
+                filepath = future_to_file[future]
+                print(f"Warning: Error checking {filepath}: {e}", file=sys.stderr)
+    
     return all_issues
 
 
@@ -852,8 +901,15 @@ def cmd_check(args: argparse.Namespace) -> int:
 
     # Check files
     all_issues: list[Issue] = []
-    for fp in files:
-        all_issues.extend(check_file(fp, rules, args.severity))
+    jobs = getattr(args, 'jobs', 1)
+    
+    if jobs > 1 and len(files) > 1:
+        # Parallel checking
+        all_issues = _check_files_parallel(files, rules, args.severity, jobs)
+    else:
+        # Sequential checking
+        for fp in files:
+            all_issues.extend(check_file(fp, rules, args.severity))
 
     # Output
     if args.json:
@@ -1238,6 +1294,8 @@ def main() -> int:
     check_p.add_argument("--severity", choices=["error", "warning", "info"],
                          help="Only show issues at this severity or higher")
     check_p.add_argument("--json", action="store_true", help="Output as JSON")
+    check_p.add_argument("-j", "--jobs", type=int, default=1,
+                         help="Number of parallel jobs (default: 1)")
 
     # detect
     detect_p = sub.add_parser("detect", help="Detect project language/framework")

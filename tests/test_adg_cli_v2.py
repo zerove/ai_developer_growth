@@ -739,3 +739,59 @@ class TestMainCLI:
         assert result == 0
         assert "except Exception:" in f1.read_text()
         assert "except Exception:" in f2.read_text()
+
+    def test_install_hooks_pre_push(self, tmp_path: Path) -> None:
+        """Test pre-push hook installation."""
+        (tmp_path / ".git").mkdir()
+        (tmp_path / ".git" / "hooks").mkdir()
+        with patch("sys.argv", ["adg", "install-hooks", str(tmp_path), "--pre-push"]):
+            result = main()
+        assert result == 0
+        assert (tmp_path / ".git" / "hooks" / "pre-push").exists()
+
+    def test_project_config_custom_rules(self, tmp_path: Path) -> None:
+        """Test project config with custom rules."""
+        # Create project config
+        config_dir = tmp_path / ".adg"
+        config_dir.mkdir()
+        config_file = config_dir / "rules.yml"
+        config_file.write_text(
+            "anti_patterns:\n"
+            "- id: no-print\n"
+            "  name: No print\n"
+            "  severity: warning\n"
+            "  pattern: '\\bprint\\('\n"
+            "  message: Use logging\n"
+        )
+        
+        # Create test file
+        test_file = tmp_path / "app.py"
+        test_file.write_text("print('hello')\n")
+        
+        with patch("sys.argv", ["adg", "check", str(tmp_path), "--lang", "python"]):
+            result = main()
+        assert result == 0  # warning only, no errors
+
+    def test_project_config_skip_patterns(self, tmp_path: Path) -> None:
+        """Test project config skip patterns."""
+        # Create project config
+        config_dir = tmp_path / ".adg"
+        config_dir.mkdir()
+        config_file = config_dir / "rules.yml"
+        config_file.write_text(
+            "skip_patterns:\n"
+            "- '*.test.py'\n"
+        )
+        
+        # Create test files
+        test_file = tmp_path / "app.py"
+        test_file.write_text("try:\n    pass\nexcept:\n    pass\n")
+        skipped_file = tmp_path / "app.test.py"
+        skipped_file.write_text("try:\n    pass\nexcept:\n    pass\n")
+        
+        with patch("sys.argv", ["adg", "check", str(tmp_path), "--lang", "python"]):
+            with patch("tools.scripts.adg_cli.load_rules_for_language") as mock:
+                mock.return_value = load_rules_for_language("python")
+                result = main()
+        # Only app.py should be checked, app.test.py should be skipped
+        assert result == 1  # error in app.py only

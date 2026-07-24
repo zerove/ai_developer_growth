@@ -46,7 +46,7 @@ def extract_frontmatter(content: str) -> tuple[dict, str]:
         return {}, content
 
     fm_str = content[3:end_idx].strip()
-    body = content[end_idx + 3:].strip()
+    body = content[end_idx + 3 :].strip()
 
     frontmatter = {}
     for line in fm_str.split("\n"):
@@ -170,16 +170,10 @@ def sync_refs() -> int:
 
         if "GOVERNANCE.md" not in content:
             if "相关文档" in content:
-                content = content.replace(
-                    "相关文档",
-                    "相关文档\n- [[GOVERNANCE|通用治理标准]]"
-                )
+                content = content.replace("相关文档", "相关文档\n- [[GOVERNANCE|通用治理标准]]")
                 modified = True
             elif "See Also" in content:
-                content = content.replace(
-                    "See Also",
-                    "See Also\n- [[GOVERNANCE|通用治理标准]]"
-                )
+                content = content.replace("See Also", "See Also\n- [[GOVERNANCE|通用治理标准]]")
                 modified = True
 
         if modified:

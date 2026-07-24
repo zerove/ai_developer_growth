@@ -28,12 +28,9 @@ import sys
 from pathlib import Path
 from typing import Any
 
-sys.path.insert(0, str(Path(__file__).parent))
-
 # ──────────────────────────────────────────────────────────
 # Backward-compatible re-exports from validators package
 # ──────────────────────────────────────────────────────────
-
 from tools.scripts.validators.health import HealthScore, calculate_health_score  # noqa: F401
 from tools.scripts.validators.models import FixResult, Issue, ValidationResult  # noqa: F401
 from tools.scripts.validators.pipeline import (  # noqa: F401

@@ -6,13 +6,9 @@ import hashlib
 import json
 import sys
 from pathlib import Path
-from pathlib import Path as PathLib
-
-sys.path.insert(0, str(PathLib(__file__).parent.parent))
-
 from typing import Any
 
-from _common import rules_dir
+from tools.scripts._common import rules_dir
 
 # ──────────────────────────────────────────────────────────
 # Rule cache

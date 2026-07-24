@@ -15,13 +15,9 @@ Usage:
 from __future__ import annotations
 
 import json
-import sys
 from http.server import BaseHTTPRequestHandler, HTTPServer
-from pathlib import Path
 from typing import Any
 from urllib.parse import parse_qs, urlparse
-
-sys.path.insert(0, str(Path(__file__).parent.parent))
 
 
 class RuleWebServer(BaseHTTPRequestHandler):

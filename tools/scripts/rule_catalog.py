@@ -11,7 +11,8 @@ from pathlib import Path
 from typing import Any
 
 import yaml
-from _common import framework_dir
+
+from tools.scripts._common import framework_dir
 
 # ──────────────────────────────────────────────────────────
 # Built-in pack definitions

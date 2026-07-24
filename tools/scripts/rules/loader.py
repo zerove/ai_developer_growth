@@ -12,9 +12,7 @@ from typing import Any
 
 import yaml
 
-sys.path.insert(0, str(Path(__file__).parent.parent))
-from _common import rules_dir as _rules_dir  # noqa: E402, I001
-
+from tools.scripts._common import rules_dir as _rules_dir  # noqa: I001
 
 # ──────────────────────────────────────────────────────────
 # Cached rule loading (#7 lazy loading)

@@ -2,14 +2,10 @@
 
 from __future__ import annotations
 
-import sys
 from pathlib import Path
-from pathlib import Path as PathLib
 from typing import Any
 
-sys.path.insert(0, str(PathLib(__file__).parent.parent))
-
-from _common import run_command
+from tools.scripts._common import run_command
 
 from .anti_pattern_checker import check_anti_patterns
 from .complexity_checker import check_js_complexity, check_python_complexity

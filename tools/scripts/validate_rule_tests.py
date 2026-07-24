@@ -20,13 +20,11 @@ from __future__ import annotations
 
 import re
 import sys
-from pathlib import Path
 
 import yaml
 
-sys.path.insert(0, str(Path(__file__).parent))
-from _common import handle_error
-from _common import rules_dir as _rules_dir
+from tools.scripts._common import handle_error
+from tools.scripts._common import rules_dir as _rules_dir
 
 
 def _load_rules_with_tests(lang: str) -> list[dict]:

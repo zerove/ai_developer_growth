@@ -12,10 +12,8 @@ from __future__ import annotations
 
 import argparse
 import sys
-from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).parent))
-from rules.web_base import RuleWebServer, run_server
+from tools.scripts.rules.web_base import RuleWebServer, run_server
 
 HTML = """<!DOCTYPE html>
 <html lang="en">

@@ -11,7 +11,6 @@ ai_developer_growth/
 ├── CONTRIBUTING.md        # 贡献指南
 ├── ROADMAP.md             # 路线图
 ├── INDEX.md               # 文档索引
-├── MOC.md                 # 知识地图
 ├── UBIQUITOUS_LANGUAGE.md # 领域术语表
 ├── agents/                # 4 个核心 Agent 定义
 ├── case-studies/          # 15 个真实案例研究

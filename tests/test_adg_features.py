@@ -2,36 +2,33 @@
 
 from __future__ import annotations
 
+import argparse
 import json
 import tempfile
 from pathlib import Path
-from unittest.mock import patch, MagicMock
-
-import pytest
+from unittest.mock import MagicMock, patch
 
 from tools.scripts.adg_cli import (
+    Issue,
     _format_sarif,
+    _format_trend_report,
     _get_git_changed_files,
     _get_staged_files,
     _get_unstaged_files,
     _load_trend_data,
-    _save_trend_data,
     _record_trend,
-    _format_trend_report,
-    _validate_rule,
-    _test_rule,
-    _send_slack_notification,
+    _save_trend_data,
     _send_dingtalk_notification,
-    Issue,
-    load_rules_for_language,
+    _send_slack_notification,
+    _test_rule,
+    _validate_rule,
     cmd_trend,
 )
-import argparse
-
 
 # ──────────────────────────────────────────────────────────
 # SARIF Output Tests
 # ──────────────────────────────────────────────────────────
+
 
 class TestSarifOutput:
     """Test SARIF format output."""
@@ -60,7 +57,7 @@ class TestSarifOutput:
         ]
         result = _format_sarif(issues, "python", None)
         data = json.loads(result)
-        
+
         assert len(data["runs"][0]["results"]) == 1
         assert data["runs"][0]["results"][0]["ruleId"] == "py-bare-except"
         assert data["runs"][0]["results"][0]["level"] == "error"
@@ -74,7 +71,7 @@ class TestSarifOutput:
         ]
         result = _format_sarif(issues, "python", None)
         data = json.loads(result)
-        
+
         levels = [r["level"] for r in data["runs"][0]["results"]]
         assert levels == ["error", "warning", "note"]
 
@@ -87,7 +84,7 @@ class TestSarifOutput:
         ]
         result = _format_sarif(issues, "python", None)
         data = json.loads(result)
-        
+
         rules = data["runs"][0]["tool"]["driver"]["rules"]
         assert len(rules) == 2
 
@@ -96,68 +93,54 @@ class TestSarifOutput:
 # Incremental Check Tests
 # ──────────────────────────────────────────────────────────
 
+
 class TestIncrementalCheck:
     """Test git-based incremental checking."""
 
     @patch("subprocess.run")
     def test_get_git_changed_files(self, mock_run):
         """Get files changed since a git ref."""
-        mock_run.return_value = MagicMock(
-            returncode=0,
-            stdout="file1.py\nfile2.py\n",
-            stderr=""
-        )
-        
+        mock_run.return_value = MagicMock(returncode=0, stdout="file1.py\nfile2.py\n", stderr="")
+
         with patch("pathlib.Path.is_file", return_value=True):
             files = _get_git_changed_files("HEAD~1")
-        
+
         assert len(files) == 2
         mock_run.assert_called_once()
 
     @patch("subprocess.run")
     def test_get_git_changed_files_error(self, mock_run):
         """Handle git command error."""
-        mock_run.return_value = MagicMock(
-            returncode=128,
-            stdout="",
-            stderr="not a git repo"
-        )
-        
+        mock_run.return_value = MagicMock(returncode=128, stdout="", stderr="not a git repo")
+
         files = _get_git_changed_files("HEAD~1")
         assert files == []
 
     @patch("subprocess.run")
     def test_get_staged_files(self, mock_run):
         """Get staged files."""
-        mock_run.return_value = MagicMock(
-            returncode=0,
-            stdout="staged.py\n",
-            stderr=""
-        )
-        
+        mock_run.return_value = MagicMock(returncode=0, stdout="staged.py\n", stderr="")
+
         with patch("pathlib.Path.is_file", return_value=True):
             files = _get_staged_files()
-        
+
         assert len(files) == 1
 
     @patch("subprocess.run")
     def test_get_unstaged_files(self, mock_run):
         """Get unstaged files."""
-        mock_run.return_value = MagicMock(
-            returncode=0,
-            stdout="unstaged.py\n",
-            stderr=""
-        )
-        
+        mock_run.return_value = MagicMock(returncode=0, stdout="unstaged.py\n", stderr="")
+
         with patch("pathlib.Path.is_file", return_value=True):
             files = _get_unstaged_files()
-        
+
         assert len(files) == 1
 
 
 # ──────────────────────────────────────────────────────────
 # Rule Authoring Tests
 # ──────────────────────────────────────────────────────────
+
 
 class TestRuleAuthoring:
     """Test rule authoring tools."""
@@ -210,17 +193,17 @@ class TestRuleAuthoring:
             f.write("print('hello')\n")
             f.write("x = None\n")
             test_file = Path(f.name)
-        
+
         rule = {
             "id": "test-print",
             "pattern": r"\bprint\(",
             "message": "Use logging",
         }
-        
+
         results = _test_rule(rule, [test_file])
         assert results["files_tested"] == 1
         assert len(results["matches"]) == 1
-        
+
         test_file.unlink()
 
     def test_test_rule_no_matches(self):
@@ -228,22 +211,23 @@ class TestRuleAuthoring:
         with tempfile.NamedTemporaryFile(mode="w", suffix=".py", delete=False) as f:
             f.write("x = 1\n")
             test_file = Path(f.name)
-        
+
         rule = {
             "id": "test",
             "pattern": r"\bprint\(",
             "message": "msg",
         }
-        
+
         results = _test_rule(rule, [test_file])
         assert len(results["matches"]) == 0
-        
+
         test_file.unlink()
 
 
 # ──────────────────────────────────────────────────────────
 # Trend Dashboard Tests
 # ──────────────────────────────────────────────────────────
+
 
 class TestTrendDashboard:
     """Test trend tracking and dashboard."""
@@ -254,10 +238,10 @@ class TestTrendDashboard:
             {"timestamp": "2024-01-01T00:00:00", "errors": 5, "warnings": 10, "info": 3},
             {"timestamp": "2024-01-02T00:00:00", "errors": 3, "warnings": 8, "info": 2},
         ]
-        
+
         _save_trend_data(tmp_path, data)
         loaded = _load_trend_data(tmp_path)
-        
+
         assert loaded == data
 
     def test_load_nonexistent_trend_data(self, tmp_path):
@@ -271,13 +255,13 @@ class TestTrendDashboard:
             Issue("r1", "error", "security", "/a.py", 1, 1, "err", ""),
             Issue("r2", "warning", "code_quality", "/a.py", 2, 1, "warn", ""),
         ]
-        
+
         data_point = _record_trend(tmp_path, issues, "python")
-        
+
         assert data_point["errors"] == 1
         assert data_point["warnings"] == 1
         assert data_point["info"] == 0
-        
+
         # Check saved
         loaded = _load_trend_data(tmp_path)
         assert len(loaded) == 1
@@ -293,7 +277,7 @@ class TestTrendDashboard:
             {"timestamp": "2024-01-01T00:00:00", "errors": 5, "warnings": 10, "info": 3},
             {"timestamp": "2024-01-02T00:00:00", "errors": 3, "warnings": 8, "info": 2},
         ]
-        
+
         result = _format_trend_report(data)
         assert "Errors" in result
         assert "Warnings" in result
@@ -308,13 +292,13 @@ class TestTrendDashboard:
     def test_trend_data_limit(self, tmp_path):
         """Trend data is limited to 100 entries."""
         data = [{"timestamp": f"2024-01-{i:02d}", "errors": i} for i in range(150)]
-        
+
         # Save more than 100 entries
         _save_trend_data(tmp_path, data)
-        
+
         # Record one more to trigger limit
         _record_trend(tmp_path, [], "python")
-        
+
         loaded = _load_trend_data(tmp_path)
         assert len(loaded) <= 100
 
@@ -322,6 +306,7 @@ class TestTrendDashboard:
 # ──────────────────────────────────────────────────────────
 # Webhook Notification Tests
 # ──────────────────────────────────────────────────────────
+
 
 class TestWebhookNotification:
     """Test webhook notifications."""
@@ -331,16 +316,11 @@ class TestWebhookNotification:
         issues = [
             Issue("r1", "error", "security", "/a.py", 1, 1, "err", ""),
         ]
-        
+
         with patch("urllib.request.urlopen") as mock_open:
             mock_open.return_value = MagicMock()
-            result = _send_slack_notification(
-                "https://hooks.slack.com/test",
-                issues,
-                "python",
-                "test-project"
-            )
-        
+            result = _send_slack_notification("https://hooks.slack.com/test", issues, "python", "test-project")
+
         assert result is True
         mock_open.assert_called_once()
 
@@ -349,34 +329,25 @@ class TestWebhookNotification:
         issues = [
             Issue("r1", "warning", "code_quality", "/a.py", 1, 1, "warn", ""),
         ]
-        
+
         with patch("urllib.request.urlopen") as mock_open:
             mock_open.return_value = MagicMock()
-            result = _send_dingtalk_notification(
-                "https://oapi.dingtalk.com/test",
-                issues,
-                "python",
-                "test-project"
-            )
-        
+            result = _send_dingtalk_notification("https://oapi.dingtalk.com/test", issues, "python", "test-project")
+
         assert result is True
 
     def test_slack_notification_error(self):
         """Slack notification handles errors."""
         with patch("urllib.request.urlopen", side_effect=Exception("Network error")):
-            result = _send_slack_notification(
-                "https://hooks.slack.com/test",
-                [],
-                "python",
-                "test"
-            )
-        
+            result = _send_slack_notification("https://hooks.slack.com/test", [], "python", "test")
+
         assert result is False
 
 
 # ──────────────────────────────────────────────────────────
 # CLI Command Tests
 # ──────────────────────────────────────────────────────────
+
 
 class TestTrendCommand:
     """Test trend command."""
@@ -393,7 +364,7 @@ class TestTrendCommand:
         trend_file = tmp_path / ".adg" / "trend.json"
         trend_file.parent.mkdir(parents=True)
         trend_file.write_text("[]")
-        
+
         args = argparse.Namespace(path=str(tmp_path), json=False, clear=True)
         result = cmd_trend(args)
         assert result == 0
@@ -404,23 +375,27 @@ class TestTrendCommand:
 # Extended Auto-fix Tests
 # ──────────────────────────────────────────────────────────
 
+
 class TestExtendedAutoFix:
     """Test extended auto-fix rules."""
 
     def test_go_println_fix(self, tmp_path):
         """Go println fix."""
         from tools.scripts.adg_cli import FIX_RULES
+
         assert "go-println" in FIX_RULES
         assert FIX_RULES["go-println"]["replacement"] == "log.Println("
 
     def test_rust_unwrap_fix(self, tmp_path):
         """Rust unwrap fix."""
         from tools.scripts.adg_cli import FIX_RULES
+
         assert "rust-unwrap-question" in FIX_RULES
         assert FIX_RULES["rust-unwrap-question"]["replacement"] == ".unwrap_or_default()"
 
     def test_rust_panic_fix(self, tmp_path):
         """Rust panic fix."""
         from tools.scripts.adg_cli import FIX_RULES
+
         assert "rust-panic-macro" in FIX_RULES
         assert FIX_RULES["rust-panic-macro"]["replacement"] == "return Err("

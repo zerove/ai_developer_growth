@@ -12,6 +12,7 @@ from pathlib import Path
 @dataclass
 class ProjectConfig:
     """项目配置"""
+
     name: str
     type: str  # library, webapp, api, cli, knowledge-base
     language: str
@@ -33,6 +34,7 @@ class ProjectConfig:
 @dataclass
 class AgentConfig:
     """Agent 配置"""
+
     name: str
     description: str
     responsibilities: list[str] = field(default_factory=list)
@@ -43,6 +45,7 @@ class AgentConfig:
 @dataclass
 class JcodeConfig:
     """Jcode 完整配置"""
+
     project: ProjectConfig
     agents: list[AgentConfig] = field(default_factory=list)
     hooks: dict = field(default_factory=dict)
@@ -64,6 +67,7 @@ class JcodeConfig:
         """加载 YAML 配置"""
         try:
             import yaml
+
             with open(path) as f:
                 data = yaml.safe_load(f)
         except ImportError:
@@ -101,13 +105,15 @@ class JcodeConfig:
         agents = []
         for agent_name, agent_data in data.get("agents", {}).items():
             if isinstance(agent_data, dict):
-                agents.append(AgentConfig(
-                    name=agent_name,
-                    description=agent_data.get("description", ""),
-                    responsibilities=agent_data.get("responsibilities", []),
-                    tools=agent_data.get("tools", []),
-                    triggers=agent_data.get("triggers", []),
-                ))
+                agents.append(
+                    AgentConfig(
+                        name=agent_name,
+                        description=agent_data.get("description", ""),
+                        responsibilities=agent_data.get("responsibilities", []),
+                        tools=agent_data.get("tools", []),
+                        triggers=agent_data.get("triggers", []),
+                    )
+                )
 
         return cls(
             project=project,
@@ -145,18 +151,18 @@ class JcodeConfig:
             with open(path, "w") as f:
                 f.write("# Jcode Project Configuration\n")
                 f.write("project:\n")
-                f.write(f"  name: \"{self.project.name}\"\n")
-                f.write(f"  type: \"{self.project.type}\"\n")
-                f.write(f"  language: \"{self.project.language}\"\n")
+                f.write(f'  name: "{self.project.name}"\n')
+                f.write(f'  type: "{self.project.type}"\n')
+                f.write(f'  language: "{self.project.language}"\n')
                 if self.project.framework:
-                    f.write(f"  framework: \"{self.project.framework}\"\n")
+                    f.write(f'  framework: "{self.project.framework}"\n')
                 f.write("  directories:\n")
-                f.write(f"    source: \"{self.project.source_dir}\"\n")
-                f.write(f"    tests: \"{self.project.tests_dir}\"\n")
-                f.write(f"    docs: \"{self.project.docs_dir}\"\n")
+                f.write(f'    source: "{self.project.source_dir}"\n')
+                f.write(f'    tests: "{self.project.tests_dir}"\n')
+                f.write(f'    docs: "{self.project.docs_dir}"\n')
                 f.write("  quality:\n")
                 f.write(f"    min_test_coverage: {self.project.min_test_coverage}\n")
-                f.write(f"    lint_tool: \"{self.project.lint_tool}\"\n")
+                f.write(f'    lint_tool: "{self.project.lint_tool}"\n')
         else:
             raise ValueError(f"Unsupported config format: {path.suffix}")
 
@@ -264,13 +270,14 @@ def init_project(
     jcode_dir.mkdir(exist_ok=True)
 
     # 生成 PROJECT.md
-    (jcode_dir / "PROJECT.md").write_text(f"""# {project_name} - jcode Configuration
+    (jcode_dir / "PROJECT.md").write_text(
+        f"""# {project_name} - jcode Configuration
 
 ## Project Info
 - **Name**: {project_name}
 - **Type**: {project_type}
 - **Language**: {language}
-- **Framework**: {framework or 'N/A'}
+- **Framework**: {framework or "N/A"}
 
 ## Agent Skills
 
@@ -285,15 +292,17 @@ def init_project(
 
 ```bash
 # Lint check
-{defaults['lint']} {config.project.source_dir}
+{defaults["lint"]} {config.project.source_dir}
 
 # Run tests
-{defaults['test']} {config.project.tests_dir}
+{defaults["test"]} {config.project.tests_dir}
 
 # Security scan
-{defaults['security']} {config.project.source_dir}
+{defaults["security"]} {config.project.source_dir}
 ```
-""", encoding="utf-8")
+""",
+        encoding="utf-8",
+    )
 
     return config
 

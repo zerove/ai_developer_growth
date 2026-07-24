@@ -12,6 +12,7 @@ from dataclasses import dataclass, field
 @dataclass
 class Hook:
     """钩子定义"""
+
     name: str
     agent: str
     action: str
@@ -23,6 +24,7 @@ class Hook:
 @dataclass
 class HookConfig:
     """钩子配置"""
+
     version: str = "1.0"
     on_commit: list[Hook] = field(default_factory=list)
     on_pr: list[Hook] = field(default_factory=list)
@@ -246,23 +248,29 @@ class HookExecutor:
             if executor:
                 try:
                     result = executor(context)
-                    results.append({
-                        "hook": hook.name,
-                        "success": True,
-                        "result": result,
-                    })
+                    results.append(
+                        {
+                            "hook": hook.name,
+                            "success": True,
+                            "result": result,
+                        }
+                    )
                 except Exception as e:
-                    results.append({
+                    results.append(
+                        {
+                            "hook": hook.name,
+                            "success": False,
+                            "error": str(e),
+                        }
+                    )
+            else:
+                results.append(
+                    {
                         "hook": hook.name,
                         "success": False,
-                        "error": str(e),
-                    })
-            else:
-                results.append({
-                    "hook": hook.name,
-                    "success": False,
-                    "error": f"No executor for {key}",
-                })
+                        "error": f"No executor for {key}",
+                    }
+                )
 
         return results
 
@@ -320,7 +328,9 @@ if __name__ == "__main__":
         try:
             config = HookConfig.load(config_path)
             print("✅ Config is valid")
-            print(f"   Total hooks: {len(config.on_commit) + len(config.on_pr) + len(config.on_merge) + len(config.scheduled)}")
+            print(
+                f"   Total hooks: {len(config.on_commit) + len(config.on_pr) + len(config.on_merge) + len(config.scheduled)}"
+            )
         except Exception as e:
             print(f"❌ Config validation failed: {e}")
             sys.exit(1)

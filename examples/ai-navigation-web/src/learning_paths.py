@@ -1,4 +1,5 @@
 """Learning path templates for different roles and skill levels."""
+
 from __future__ import annotations
 
 from dataclasses import dataclass, field, asdict
@@ -120,9 +121,7 @@ class LearningPathManager:
 
     def create_custom_path(self, path_id: str, name: str, description: str, steps: list[dict]) -> LearningPathTemplate:
         """Create a custom learning path."""
-        learning_steps = [
-            LearningStep(**step) for step in steps
-        ]
+        learning_steps = [LearningStep(**step) for step in steps]
         template = LearningPathTemplate(
             path_id=path_id,
             name=name,

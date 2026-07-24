@@ -99,9 +99,7 @@ class TestPersonalizedMentor:
             },
         )
         # At least some assessments should have resources
-        total_resources = sum(
-            len(a.recommended_resources) for a in plan.assessments
-        )
+        total_resources = sum(len(a.recommended_resources) for a in plan.assessments)
         assert total_resources > 0
 
     def test_to_dict(self):

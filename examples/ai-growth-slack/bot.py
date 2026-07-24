@@ -1,4 +1,5 @@
 """Slack bot for AI Developer Growth - knowledge navigation and assessment."""
+
 from __future__ import annotations
 
 from dataclasses import dataclass

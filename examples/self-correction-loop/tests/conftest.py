@@ -1,4 +1,5 @@
 """Conftest for self-correction-loop tests."""
+
 import sys
 from pathlib import Path
 

@@ -23,6 +23,7 @@ def path_manager():
 
 # ── Team Config Tests ──
 
+
 def test_create_team(team_manager: TeamManager):
     team = team_manager.create_team("team-1", "Alpha Team", "First team")
     assert team.team_id == "team-1"
@@ -102,6 +103,7 @@ def test_persistence(team_manager: TeamManager):
 
 
 # ── Learning Path Tests ──
+
 
 def test_list_all_templates(path_manager: LearningPathManager):
     templates = path_manager.list_templates()

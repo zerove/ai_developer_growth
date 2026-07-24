@@ -25,7 +25,9 @@ class TestPromptOptimizer:
 
     def test_save_and_load_prompt(self, optimizer):
         """Test saving and loading a prompt"""
-        prompt = PromptVersion(version="1.0.0", template="Test template", model="gpt-4", score=8.0)
+        prompt = PromptVersion(
+            version="1.0.0", template="Test template", model="gpt-4", score=8.0
+        )
 
         optimizer.save_prompt("test-prompt", prompt)
         loaded = optimizer.load_prompt("test-prompt", "1.0.0")
@@ -76,7 +78,9 @@ class TestPromptOptimizer:
         )
 
         optimizer.save_prompt("test-prompt", prompt)
-        suggestions = optimizer.generate_optimization_suggestions("test-prompt", "1.0.0")
+        suggestions = optimizer.generate_optimization_suggestions(
+            "test-prompt", "1.0.0"
+        )
 
         assert len(suggestions) > 0
         assert any("分数较低" in s for s in suggestions)

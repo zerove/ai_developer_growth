@@ -92,29 +92,89 @@ SKILL_GAPS = {
 # Recommended learning resources for each dimension
 LEARNING_RESOURCES = {
     Dimension.PRODUCT: [
-        {"level": Level.L1, "title": "产品思维基础", "doc_id": "mindset/product-thinking"},
-        {"level": Level.L2, "title": "技术选型方法论", "doc_id": "mindset/tech-selection-methodology"},
-        {"level": Level.L3, "title": "架构决策方法", "doc_id": "mindset/architecture-decision"},
+        {
+            "level": Level.L1,
+            "title": "产品思维基础",
+            "doc_id": "mindset/product-thinking",
+        },
+        {
+            "level": Level.L2,
+            "title": "技术选型方法论",
+            "doc_id": "mindset/tech-selection-methodology",
+        },
+        {
+            "level": Level.L3,
+            "title": "架构决策方法",
+            "doc_id": "mindset/architecture-decision",
+        },
     ],
     Dimension.ARCHITECTURE: [
-        {"level": Level.L1, "title": "全周期工作流", "doc_id": "efficiency/full-cycle-workflow"},
-        {"level": Level.L2, "title": "多 Agent 模式", "doc_id": "efficiency/multi-agent-patterns"},
-        {"level": Level.L3, "title": "上下文工程", "doc_id": "efficiency/context-engineering"},
+        {
+            "level": Level.L1,
+            "title": "全周期工作流",
+            "doc_id": "efficiency/full-cycle-workflow",
+        },
+        {
+            "level": Level.L2,
+            "title": "多 Agent 模式",
+            "doc_id": "efficiency/multi-agent-patterns",
+        },
+        {
+            "level": Level.L3,
+            "title": "上下文工程",
+            "doc_id": "efficiency/context-engineering",
+        },
     ],
     Dimension.AI_COLLABORATION: [
-        {"level": Level.L1, "title": "Prompt 工程", "doc_id": "learning/prompt-engineering"},
-        {"level": Level.L2, "title": "AI 编码效率", "doc_id": "efficiency/ai-coding-efficiency"},
-        {"level": Level.L3, "title": "AI 架构设计", "doc_id": "efficiency/ai-architecture-design"},
+        {
+            "level": Level.L1,
+            "title": "Prompt 工程",
+            "doc_id": "learning/prompt-engineering",
+        },
+        {
+            "level": Level.L2,
+            "title": "AI 编码效率",
+            "doc_id": "efficiency/ai-coding-efficiency",
+        },
+        {
+            "level": Level.L3,
+            "title": "AI 架构设计",
+            "doc_id": "efficiency/ai-architecture-design",
+        },
     ],
     Dimension.ENGINEERING: [
-        {"level": Level.L1, "title": "TDD 方法论", "doc_id": "learning/test-driven-development"},
-        {"level": Level.L2, "title": "CI/CD 实践", "doc_id": "learning/continuous-integration"},
-        {"level": Level.L3, "title": "代码质量工具", "doc_id": "tools/ai-code-quality-tools"},
+        {
+            "level": Level.L1,
+            "title": "TDD 方法论",
+            "doc_id": "learning/test-driven-development",
+        },
+        {
+            "level": Level.L2,
+            "title": "CI/CD 实践",
+            "doc_id": "learning/continuous-integration",
+        },
+        {
+            "level": Level.L3,
+            "title": "代码质量工具",
+            "doc_id": "tools/ai-code-quality-tools",
+        },
     ],
     Dimension.LEARNING: [
-        {"level": Level.L1, "title": "AI 学习法", "doc_id": "learning/ai-learning-method"},
-        {"level": Level.L2, "title": "知识内化", "doc_id": "learning/knowledge-internalization"},
-        {"level": Level.L3, "title": "开发者社区", "doc_id": "efficiency/developer-community"},
+        {
+            "level": Level.L1,
+            "title": "AI 学习法",
+            "doc_id": "learning/ai-learning-method",
+        },
+        {
+            "level": Level.L2,
+            "title": "知识内化",
+            "doc_id": "learning/knowledge-internalization",
+        },
+        {
+            "level": Level.L3,
+            "title": "开发者社区",
+            "doc_id": "efficiency/developer-community",
+        },
     ],
 }
 
@@ -257,9 +317,7 @@ class PersonalizedMentor:
         priority_actions = self._generate_actions(weakest, dim_levels[weakest])
 
         # Estimate time (2-4 weeks per level up, depending on gaps)
-        gaps_to_fill = sum(
-            1 for a in assessments if a.current_level < a.target_level
-        )
+        gaps_to_fill = sum(1 for a in assessments if a.current_level < a.target_level)
         estimated_weeks = gaps_to_fill * 3
 
         return MentorPlan(
@@ -279,13 +337,19 @@ class PersonalizedMentor:
 
         if current_level < Level.L1:
             actions.append(f"【紧急】提升{label}: 从 L0 → L1")
-            actions.append(f"  起步: {SKILL_GAPS.get(weakest_dim, {}).get(Level.L0, '开始学习')}")
+            actions.append(
+                f"  起步: {SKILL_GAPS.get(weakest_dim, {}).get(Level.L0, '开始学习')}"
+            )
         elif current_level < Level.L2:
             actions.append(f"【重要】提升{label}: 从 L1 → L2")
-            actions.append(f"  目标: {SKILL_GAPS.get(weakest_dim, {}).get(Level.L1, '继续深入')}")
+            actions.append(
+                f"  目标: {SKILL_GAPS.get(weakest_dim, {}).get(Level.L1, '继续深入')}"
+            )
         elif current_level < Level.L3:
             actions.append(f"【进阶】提升{label}: 从 L2 → L3")
-            actions.append(f"  目标: {SKILL_GAPS.get(weakest_dim, {}).get(Level.L2, '追求卓越')}")
+            actions.append(
+                f"  目标: {SKILL_GAPS.get(weakest_dim, {}).get(Level.L2, '追求卓越')}"
+            )
         else:
             actions.append("已达到 L3+ 水平，保持并分享经验")
 
@@ -301,7 +365,9 @@ class PersonalizedMentor:
         print(f"{'=' * 60}")
 
         print("\n📊 综合评估:")
-        print(f"  当前等级: {plan.overall_level.name} ({LEVEL_LABELS[plan.overall_level]})")
+        print(
+            f"  当前等级: {plan.overall_level.name} ({LEVEL_LABELS[plan.overall_level]})"
+        )
         print(
             f"  最弱维度: {DIMENSION_LABELS.get(plan.weakest_dimension, plan.weakest_dimension)}"
         )

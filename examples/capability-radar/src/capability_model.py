@@ -73,31 +73,46 @@ DIMENSION_DESCRIPTORS: dict[Dimension, dict[Level, LevelDescriptor]] = {
         Level.L0: LevelDescriptor(
             level=Level.L0,
             description="接收需求，直接开写代码",
-            typical_behaviors=["收到'做个登录页'直接开写", "不问用户类型、边界条件、成功指标"],
+            typical_behaviors=[
+                "收到'做个登录页'直接开写",
+                "不问用户类型、边界条件、成功指标",
+            ],
             key_transition="开始提问：用户是谁？成功标准是什么？",
         ),
         Level.L1: LevelDescriptor(
             level=Level.L1,
             description="澄清需求，理解边界",
-            typical_behaviors=["问清楚用户类型、边界情况、验收标准", "能拆解出用户故事和验收标准"],
+            typical_behaviors=[
+                "问清楚用户类型、边界情况、验收标准",
+                "能拆解出用户故事和验收标准",
+            ],
             key_transition="从'问清楚'到'发现真问题'",
         ),
         Level.L2: LevelDescriptor(
             level=Level.L2,
             description="发现问题，定义产品",
-            typical_behaviors=["从'要登录页'挖掘到'要降低注册流失 30%'", "能独立完成 MVP 范围、优先级、验收标准定义"],
+            typical_behaviors=[
+                "从'要登录页'挖掘到'要降低注册流失 30%'",
+                "能独立完成 MVP 范围、优先级、验收标准定义",
+            ],
             key_transition="建立 ADR 文化，决策可追溯",
         ),
         Level.L3: LevelDescriptor(
             level=Level.L3,
             description="独立完成 0→1 产品定义",
-            typical_behaviors=["含 MVP 范围、优先级、成功指标、上线计划", "能说服利益相关者，推动跨团队协作"],
+            typical_behaviors=[
+                "含 MVP 范围、优先级、成功指标、上线计划",
+                "能说服利益相关者，推动跨团队协作",
+            ],
             key_transition="结合市场/商业判断决定'构建什么'",
         ),
         Level.L4: LevelDescriptor(
             level=Level.L4,
             description="战略洞察，决定构建什么",
-            typical_behaviors=["基于市场趋势、竞品、商业模型做产品决策", "能定义新品类、创造新需求"],
+            typical_behaviors=[
+                "基于市场趋势、竞品、商业模型做产品决策",
+                "能定义新品类、创造新需求",
+            ],
             key_transition="影响组织级产品战略",
         ),
     },
@@ -115,12 +130,18 @@ DIMENSION_DESCRIPTORS: dict[Dimension, dict[Level, LevelDescriptor]] = {
         Level.L2: LevelDescriptor(
             level=Level.L2,
             description="系统设计，处理非功能性需求",
-            typical_behaviors=["并发、一致性、可观测性、演进性", "能做技术选型权衡，文档化 ADR"],
+            typical_behaviors=[
+                "并发、一致性、可观测性、演进性",
+                "能做技术选型权衡，文档化 ADR",
+            ],
         ),
         Level.L3: LevelDescriptor(
             level=Level.L3,
             description="技术选型权衡，指导团队",
-            typical_behaviors=["在约束下做 Trade-off，输出 ADR", "建立团队架构评审机制"],
+            typical_behaviors=[
+                "在约束下做 Trade-off，输出 ADR",
+                "建立团队架构评审机制",
+            ],
         ),
         Level.L4: LevelDescriptor(
             level=Level.L4,
@@ -142,12 +163,18 @@ DIMENSION_DESCRIPTORS: dict[Dimension, dict[Level, LevelDescriptor]] = {
         Level.L2: LevelDescriptor(
             level=Level.L2,
             description="结构化协作，Prompt 模板、上下文管理、迭代优化",
-            typical_behaviors=["有固定 Prompt 库、CONTEXT.md 管理", "AI 做 60%+ 代码，验证闭环跑通"],
+            typical_behaviors=[
+                "有固定 Prompt 库、CONTEXT.md 管理",
+                "AI 做 60%+ 代码，验证闭环跑通",
+            ],
         ),
         Level.L3: LevelDescriptor(
             level=Level.L3,
             description="工作流编排，Agent Workflow、自动化 Pipeline",
-            typical_behaviors=["设计 Prompt Chain、Multi-Agent Workflow", "AI 做 80%+，自动化测试/修复/部署"],
+            typical_behaviors=[
+                "设计 Prompt Chain、Multi-Agent Workflow",
+                "AI 做 80%+，自动化测试/修复/部署",
+            ],
         ),
         Level.L4: LevelDescriptor(
             level=Level.L4,
@@ -201,7 +228,10 @@ DIMENSION_DESCRIPTORS: dict[Dimension, dict[Level, LevelDescriptor]] = {
         Level.L3: LevelDescriptor(
             level=Level.L3,
             description="模式识别：从杂乱信息提炼通用模式，形成心智模型",
-            typical_behaviors=["能跨领域类比、抽象出通用框架", "产出原创洞察、开源工具、技术博客"],
+            typical_behaviors=[
+                "能跨领域类比、抽象出通用框架",
+                "产出原创洞察、开源工具、技术博客",
+            ],
         ),
         Level.L4: LevelDescriptor(
             level=Level.L4,

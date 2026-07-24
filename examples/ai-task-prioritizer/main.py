@@ -7,7 +7,9 @@ from prioritizer import Prioritizer
 
 def main():
     parser = argparse.ArgumentParser(description="AI-Powered Task Prioritizer")
-    parser.add_argument("input", help="Path to a file containing tasks (one per line) or '-' for stdin")
+    parser.add_argument(
+        "input", help="Path to a file containing tasks (one per line) or '-' for stdin"
+    )
     args = parser.parse_args()
 
     # Read tasks
@@ -34,7 +36,9 @@ def main():
         results = prioritizer.prioritize(tasks)
 
         # Print results in a table
-        print(f"{'Task':<30} | {'Value':<5} | {'Effort':<6} | {'Score':<5} | {'Category'}")
+        print(
+            f"{'Task':<30} | {'Value':<5} | {'Effort':<6} | {'Score':<5} | {'Category'}"
+        )
         print("-" * 70)
         for res in results:
             print(

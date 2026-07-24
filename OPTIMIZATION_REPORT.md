@@ -199,7 +199,7 @@
 - [ ] CI 复用 `hooks_runner.py on_pr`
 
 ### Phase 3: 文档清理（几天）
-- [ ] 合并 `INDEX.md` + `MOC.md`
+- [x] 合并 `INDEX.md` + `MOC.md` (MOC.md 内容已整合至 INDEX.md)
 - [ ] 清理 `CLAUDE.md` 冗余
 - [ ] 验证 `AGENTS.md` 完整性
 

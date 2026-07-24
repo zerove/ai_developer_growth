@@ -5,10 +5,10 @@
 ### 指令
 
 1. **每周执行案例扫描**: 运行 `tools/scripts/validate_case_study.py --scan case-studies/` 验证所有案例格式完整性（背景/过程/对比/洞察/场景五要素），输出报告到 `AUDIT_REPORT.md`
-2. **每周执行断链检查**: 运行 `tools/scripts/link_auditor.py --check docs/ INDEX.md MOC.md` 检查文档断链，生成修复报告，更新 `UBIQUITOUS_LANGUAGE.md` 中的术语链接
-3. **验证新提交案例**: 运行 `tools/scripts/validate_case_study.py --file case-studies/<new-case>.md` 检查格式、真实性、效率数据、适用场景，通过后更新 `INDEX.md` 案例表格和 `MOC.md` 知识覆盖率统计
+2. **每周执行断链检查**: 运行 `tools/scripts/link_auditor.py --check docs/ INDEX.md INDEX.md` 检查文档断链，生成修复报告，更新 `UBIQUITOUS_LANGUAGE.md` 中的术语链接
+3. **验证新提交案例**: 运行 `tools/scripts/validate_case_study.py --file case-studies/<new-case>.md` 检查格式、真实性、效率数据、适用场景，通过后更新 `INDEX.md` 案例表格和 `INDEX.md` 知识覆盖率统计
 4. **同步工具矩阵**: 运行 `tools/scripts/update_ai_tool_matrix.py` 更新 `docs/tools/ai-tool-matrix.md` 最新版本，对比 `case-studies/` 实际使用工具差异
-5. **更新知识图谱**: 运行 `tools/scripts/link_auditor.py --update-moc` 更新 `MOC.md` 覆盖率表格，同步 `INDEX.md` 文档数量统计
+5. **更新知识图谱**: 运行 `tools/scripts/link_auditor.py --update-moc` 更新 `INDEX.md` 覆盖率表格，同步 `INDEX.md` 文档数量统计
 
 ### 工具
 

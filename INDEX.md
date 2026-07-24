@@ -355,4 +355,67 @@ ai-learning-method → automated-bug-fixing → full-cycle-workflow → ide-best
 
 ---
 
+---
+
+## 🎯 快速入口
+
+| 文档 | 用途 |
+|------|------|
+| [[CONTRIBUTING]] | 贡献指南 |
+| [[GOVERNANCE]] | 治理标准 |
+| [[CONTEXT]] | 项目上下文 |
+| [[AGENTS]] | Agent 定义索引 |
+
+---
+
+## 💡 实践案例
+
+| 案例 | 效率提升 | 核心洞察 |
+|------|----------|----------|
+| [[case-studies/ai-task-prioritizer]] | 8x | TDD + AI |
+| [[case-studies/ai-context-sync-development]] | 12x | 结构化 Prompt |
+| [[case-studies/cli-tool-development]] | 4x | 样板代码生成 |
+| [[case-studies/web-scraping-tool]] | 4x | 智能识别 |
+| [[case-studies/data-pipeline]] | 4x | 插件化架构 |
+| [[case-studies/api-monitoring]] | 4.5x | 配置驱动 |
+| [[case-studies/database-migration]] | 4.4x | 自动化分析 |
+| [[case-studies/legacy-refactoring]] | 5x | 渐进式重构 |
+| [[case-studies/production-debugging]] | 6x | AI 定位根因 |
+| [[case-studies/api-design-implementation]] | 5x | 契约先行 |
+| [[case-studies/multi-agent-collaboration]] | 5x | 角色专业化 |
+| [[case-studies/cursor-refactoring]] | 3x | 分而治之 |
+| [[case-studies/copilot-test-generation]] | 3.4x | 注释驱动 |
+| [[case-studies/claude-architecture-design]] | 3.3x | 对比分析 |
+| [[case-studies/multi-agent-automation]] | 9.3x | Agent 编排 |
+
+---
+
+## 🔧 工具脚本
+
+| 脚本 | 用途 |
+|------|------|
+| [[tools/scripts/hooks_runner.py]] | 统一 Hook 运行器 |
+| [[tools/scripts/rules_engine]] | 模块化规则引擎 |
+| [[tools/scripts/link_auditor.py]] | 链接检查 |
+| [[tools/scripts/validate_case_study.py]] | 案例验证 |
+| [[tools/scripts/check_metadata.py]] | 元数据检查 |
+| [[tools/scripts/fix_metadata.py]] | 元数据修复 |
+| [[tools/scripts/create_case_study.py]] | 案例创建 |
+| [[tools/scripts/adr_generator.py]] | ADR 生成 |
+| [[tools/scripts/add_navigation.py]] | 导航添加 |
+| [[tools/scripts/audit_to_pr.py]] | 审计转 PR |
+
+---
+
+## 📊 学习路径
+
+| 路径 | 适合人群 | 核心文档 |
+|------|----------|----------|
+| 认知升级 | 理解"为什么" | product-thinking → career-transformation → capability-model |
+| 技能提升 | 掌握"怎么做" | ai-learning-method → prompt-engineering → full-cycle-workflow |
+| 工具赋能 | 优化"用什么" | ai-tool-matrix → ide-best-practices → 实践案例 |
+| 全面进化 | 系统性提升 | 认知层 → 学习层 → 效率层 → 工具层 |
+
+---
+
 *AI 时代的竞争是掌握 AI 的人与不掌握 AI 的人的竞争。*

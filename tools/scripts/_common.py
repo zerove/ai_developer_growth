@@ -1,15 +1,35 @@
-"""Shared utilities for AI Language Rules tools.
+"""Shared utilities for AI Language Rules tools and jcode Skills.
 
-Eliminates code duplication across rule_marketplace.py, generate_fixes.py,
-rule_author.py, rule_visualize.py, validate_rule_tests.py, and others.
+Eliminates code duplication across:
+- rule_marketplace.py, generate_fixes.py, rule_author.py, rule_visualize.py,
+  validate_rule_tests.py, validate_language_rules.py
+- .jcode/scripts/*.py (skill runners)
 
 Usage:
-    from _common import rules_dir, framework_dir, EXTENSION_MAP, detect_language
+    from _common import (
+        # Path helpers
+        rules_dir, framework_dir, get_project_root,
+        # Extension map
+        EXTENSION_MAP, detect_language,
+        # Command execution
+        run_command,
+        # Hashing
+        file_hash,
+        # Error handling
+        handle_error, safe_import,
+        # YAML
+        load_yaml, save_yaml,
+        # Output formatting
+        print_check, print_section,
+        # File filtering
+        filter_supported_files,
+    )
 """
 
 from __future__ import annotations
 
 import hashlib
+import subprocess
 import sys
 from pathlib import Path
 from typing import Any
@@ -19,9 +39,14 @@ from typing import Any
 # ──────────────────────────────────────────────────────────
 
 
+def get_project_root() -> Path:
+    """Get project root directory (works from tools/scripts/ or .jcode/scripts/)."""
+    return Path(__file__).parent.parent.parent
+
+
 def rules_dir() -> Path:
     """Return the ai-dev-framework directory."""
-    return Path(__file__).parent.parent.parent / "ai-dev-framework"
+    return get_project_root() / "ai-dev-framework"
 
 
 def framework_dir() -> Path:
@@ -90,6 +115,19 @@ def detect_language(filepath: Path) -> str | None:
 
 
 # ──────────────────────────────────────────────────────────
+# Command execution
+# ──────────────────────────────────────────────────────────
+
+
+def run_command(cmd: list[str], cwd: Path | None = None) -> tuple[int, str]:
+    """Run command and return (exit_code, combined_output)."""
+    if cwd is None:
+        cwd = get_project_root()
+    result = subprocess.run(cmd, capture_output=True, text=True, cwd=cwd)
+    return result.returncode, result.stdout + result.stderr
+
+
+# ──────────────────────────────────────────────────────────
 # Hashing
 # ──────────────────────────────────────────────────────────
 
@@ -121,6 +159,7 @@ def safe_import(module_name: str, package: str = "") -> Any | None:
     try:
         if package:
             from importlib import import_module
+
             return import_module(f"{package}.{module_name}")
         return __import__(module_name)
     except ImportError:
@@ -136,6 +175,7 @@ def load_yaml(filepath: Path) -> dict[str, Any] | None:
     """Load YAML file safely."""
     try:
         import yaml
+
         with open(filepath) as f:
             return yaml.safe_load(f)
     except Exception:
@@ -145,8 +185,30 @@ def load_yaml(filepath: Path) -> dict[str, Any] | None:
 def save_yaml(filepath: Path, data: dict[str, Any]) -> None:
     """Save data to YAML file."""
     import yaml
+
     with open(filepath, "w") as f:
         yaml.dump(data, f, default_flow_style=False, allow_unicode=True, sort_keys=False)
+
+
+# ──────────────────────────────────────────────────────────
+# Output formatting
+# ──────────────────────────────────────────────────────────
+
+
+def print_check(name: str, passed: bool, output: str = "") -> None:
+    """Format and print check result."""
+    icon = "✅" if passed else "❌"
+    print(f"{icon} {name}")
+    if output and not passed:
+        for line in output.strip().split("\n")[:20]:
+            print(f"  {line}")
+
+
+def print_section(title: str) -> None:
+    """Print section separator with title."""
+    print(f"\n{'=' * 50}")
+    print(f"  {title}")
+    print(f"{'=' * 50}")
 
 
 # ──────────────────────────────────────────────────────────

@@ -9,6 +9,7 @@ from typing import Any
 @dataclass
 class Issue:
     """A single code quality issue found during validation."""
+
     rule_id: str
     severity: str
     category: str
@@ -39,6 +40,7 @@ class Issue:
 @dataclass
 class ValidationResult:
     """Validation result for a single file."""
+
     file: str
     language: str
     lines_checked: int = 0
@@ -73,6 +75,7 @@ class ValidationResult:
 @dataclass
 class FixResult:
     """Result of applying a fix."""
+
     file: str
     line: int
     rule_id: str
@@ -94,6 +97,7 @@ class FixResult:
 @dataclass
 class HealthScore:
     """Project health score."""
+
     score: int  # 0-100
     grade: str  # A-F
     errors: int = 0

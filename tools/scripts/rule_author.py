@@ -69,7 +69,6 @@ SEVERITY_LEVELS = ["error", "warning", "info"]
 CATEGORY_TYPES = ["security", "error_handling", "type_safety", "code_quality", "naming", "performance", "style"]
 
 
-
 def cmd_init(args: argparse.Namespace) -> None:
     """Initialize a new language rule directory."""
     lang = args.lang

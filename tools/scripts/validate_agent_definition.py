@@ -13,6 +13,7 @@ Agent 定义验证脚本
 3. 工具权限最小化
 4. 约束完整性
 """
+
 import re
 import sys
 from pathlib import Path
@@ -75,8 +76,7 @@ def validate_agent_definition(filepath: Path) -> AgentValidationResult:
         return result
 
     # 2. 提取并验证名称
-    name_match = re.search(r"agent-name:\s*(.+)", content) or \
-                 re.search(r"## agent:\s*(\S+)", content)
+    name_match = re.search(r"agent-name:\s*(.+)", content) or re.search(r"## agent:\s*(\S+)", content)
     if name_match:
         name = name_match.group(1).strip()
         # 去掉括号内的中文名 (如 "knowledge-curator (知识策展人)")
@@ -87,8 +87,7 @@ def validate_agent_definition(filepath: Path) -> AgentValidationResult:
         result["errors"].append("无法提取 Agent 名称")
 
     # 3. 检查描述质量
-    desc_match = re.search(r"描述:\s*(.+)", content) or \
-                 re.search(r"## agent:\s*\S+\s*\((.+?)\)", content)
+    desc_match = re.search(r"描述:\s*(.+)", content) or re.search(r"## agent:\s*\S+\s*\((.+?)\)", content)
     if desc_match:
         desc = desc_match.group(1).strip()
         if len(desc) < 10:
@@ -99,22 +98,22 @@ def validate_agent_definition(filepath: Path) -> AgentValidationResult:
         result["warnings"].append("未找到描述字段")
 
     # 4. 检查工具权限
-    tools_section = re.search(r"工具:(.+?)(?=\n约束:|$)", content, re.DOTALL) or \
-                    re.search(r"### 工具\n(.+?)(?=\n###|$)", content, re.DOTALL)
+    tools_section = re.search(r"工具:(.+?)(?=\n约束:|$)", content, re.DOTALL) or re.search(
+        r"### 工具\n(.+?)(?=\n###|$)", content, re.DOTALL
+    )
     if tools_section:
         tools_text = tools_section.group(1)
         dangerous_tools = ["shell", "exec", "eval", "system"]
         for tool in dangerous_tools:
             if tool in tools_text.lower():
-                result["warnings"].append(
-                    f"工具 '{tool}' 可能存在安全风险，确认是否需要"
-                )
+                result["warnings"].append(f"工具 '{tool}' 可能存在安全风险，确认是否需要")
     else:
         result["warnings"].append("未找到工具定义")
 
     # 5. 检查约束完整性
-    constraints_section = re.search(r"约束:(.+?)(?=\n指令:|$)", content, re.DOTALL) or \
-                          re.search(r"### 约束\n(.+?)(?=\n###|$)", content, re.DOTALL)
+    constraints_section = re.search(r"约束:(.+?)(?=\n指令:|$)", content, re.DOTALL) or re.search(
+        r"### 约束\n(.+?)(?=\n###|$)", content, re.DOTALL
+    )
     if constraints_section:
         constraints_text = constraints_section.group(1)
         if len(constraints_text.strip()) < 20:
@@ -122,8 +121,9 @@ def validate_agent_definition(filepath: Path) -> AgentValidationResult:
     else:
         result["warnings"].append("未找到约束定义")
 
-    instructions_section = re.search(r"指令:(.+)", content, re.DOTALL) or \
-                           re.search(r"### 指令\n(.+)", content, re.DOTALL)
+    instructions_section = re.search(r"指令:(.+)", content, re.DOTALL) or re.search(
+        r"### 指令\n(.+)", content, re.DOTALL
+    )
     if instructions_section:
         instructions_text = instructions_section.group(1)
         if not re.search(r"(tools/|scripts/|\.py|\.sh|\.js)", instructions_text):
@@ -163,9 +163,7 @@ def main() -> None:
     import argparse
 
     parser = argparse.ArgumentParser(description="验证 Agent 定义文件")
-    parser.add_argument(
-        "--path", type=Path, default=Path("agents"), help="Agent 目录路径"
-    )
+    parser.add_argument("--path", type=Path, default=Path("agents"), help="Agent 目录路径")
     parser.add_argument("--file", type=Path, help="验证单个文件")
     args = parser.parse_args()
 

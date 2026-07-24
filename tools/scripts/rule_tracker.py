@@ -138,13 +138,18 @@ def cmd_report(args: argparse.Namespace) -> None:
         trend.append((date_str, summary.get("total_issues", 0)))
 
     if args.json:
-        print(json.dumps({
-            "records": len(records),
-            "total_issues": total_issues,
-            "by_rule": dict(sorted(rule_counts.items(), key=lambda x: -x[1])),
-            "by_severity": dict(severity_counts),
-            "by_language": dict(sorted(lang_counts.items(), key=lambda x: -x[1])),
-        }, indent=2))
+        print(
+            json.dumps(
+                {
+                    "records": len(records),
+                    "total_issues": total_issues,
+                    "by_rule": dict(sorted(rule_counts.items(), key=lambda x: -x[1])),
+                    "by_severity": dict(severity_counts),
+                    "by_language": dict(sorted(lang_counts.items(), key=lambda x: -x[1])),
+                },
+                indent=2,
+            )
+        )
         return
 
     print("Rule Effectiveness Report")
@@ -203,7 +208,7 @@ def cmd_prune(args: argparse.Namespace) -> None:
         return
 
     # Keep most recent
-    records = records[-args.keep:]
+    records = records[-args.keep :]
 
     with open(_records_file(), "w") as f:
         for rec in records:

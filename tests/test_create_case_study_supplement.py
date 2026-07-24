@@ -1,4 +1,5 @@
 """Tests for create_case_study.py - improve coverage from 77% to 85%+."""
+
 import shutil
 import tempfile
 import unittest

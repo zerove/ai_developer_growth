@@ -3,22 +3,24 @@
 from __future__ import annotations
 
 import json
-import tempfile
-from pathlib import Path
-
-import pytest
-import yaml
 
 # Ensure tests/ is on path for imports
 import sys
+from pathlib import Path
+
+import yaml
 
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from tools.scripts.validate_language_rules import (
     FixResult,
-    HealthScore,
     Issue,
     ValidationResult,
+    _file_hash,
+    _get_supported_files,
+    _load_cache,
+    _merge_rules,
+    _save_cache,
     apply_fixes,
     calculate_health_score,
     generate_html_report,
@@ -28,13 +30,7 @@ from tools.scripts.validate_language_rules import (
     load_rules,
     validate_file,
     write_report,
-    _merge_rules,
-    _file_hash,
-    _load_cache,
-    _save_cache,
-    _get_supported_files,
 )
-
 
 # ──────────────────────────────────────────────────────────
 # FixResult tests
@@ -352,7 +348,9 @@ class TestHealthScore:
         r = ValidationResult(file="bad.py", language="python", lines_checked=10)
         for i in range(20):
             r.issues.append(
-                Issue(rule_id=f"test-{i}", severity="error", category="security", file="bad.py", line=i + 1, message="err")
+                Issue(
+                    rule_id=f"test-{i}", severity="error", category="security", file="bad.py", line=i + 1, message="err"
+                )
             )
         health = calculate_health_score([r])
         assert health.score <= 60
@@ -376,12 +374,8 @@ class TestThresholds:
     def test_max_errors_cli(self, tmp_path: Path) -> None:
         """Test that max-errors threshold works via validate_file."""
         r = ValidationResult(file="test.py", language="python")
-        r.issues.append(
-            Issue(rule_id="e1", severity="error", category="sec", file="test.py", line=1, message="err1")
-        )
-        r.issues.append(
-            Issue(rule_id="e2", severity="error", category="sec", file="test.py", line=2, message="err2")
-        )
+        r.issues.append(Issue(rule_id="e1", severity="error", category="sec", file="test.py", line=1, message="err1"))
+        r.issues.append(Issue(rule_id="e2", severity="error", category="sec", file="test.py", line=2, message="err2"))
 
         # 2 errors, threshold 1 -> should fail
         total_errors = sum(1 for i in r.issues if i.severity == "error")
@@ -440,7 +434,14 @@ class TestSARIF:
     def test_generate_sarif(self) -> None:
         r = ValidationResult(file="test.py", language="python", lines_checked=10)
         r.issues.append(
-            Issue(rule_id="py-test", severity="error", category="security", file="test.py", line=5, message="Security issue")
+            Issue(
+                rule_id="py-test",
+                severity="error",
+                category="security",
+                file="test.py",
+                line=5,
+                message="Security issue",
+            )
         )
         sarif_json = generate_sarif([r])
         sarif = json.loads(sarif_json)

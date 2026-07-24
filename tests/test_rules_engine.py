@@ -6,6 +6,19 @@ import tempfile
 import unittest
 from pathlib import Path
 
+from tools.scripts.rules_engine.anti_pattern_checker import check_anti_patterns
+from tools.scripts.rules_engine.checker import (
+    _detect_language,
+    _map_severity,
+    _parse_linter_output,
+    check_directory,
+    check_file,
+)
+from tools.scripts.rules_engine.complexity_checker import (
+    _max_nesting_depth,
+    check_js_complexity,
+    check_python_complexity,
+)
 from tools.scripts.rules_engine.models import (
     CheckResult,
     FixResult,
@@ -13,12 +26,6 @@ from tools.scripts.rules_engine.models import (
     Issue,
     Severity,
     ValidationResult,
-)
-from tools.scripts.rules_engine.anti_pattern_checker import check_anti_patterns
-from tools.scripts.rules_engine.complexity_checker import (
-    _max_nesting_depth,
-    check_js_complexity,
-    check_python_complexity,
 )
 from tools.scripts.rules_engine.naming_checker import check_naming_conventions
 from tools.scripts.rules_engine.rule_loader import (
@@ -28,14 +35,6 @@ from tools.scripts.rules_engine.rule_loader import (
     _merge_rules,
     load_rules_for_language,
 )
-from tools.scripts.rules_engine.checker import (
-    _detect_language,
-    _map_severity,
-    _parse_linter_output,
-    check_directory,
-    check_file,
-)
-
 
 # ── models.py tests ────────────────────────────────────────────────
 
@@ -209,7 +208,7 @@ class TestAntiPatternChecker(unittest.TestCase):
 
     def test_detects_eval(self) -> None:
         with tempfile.NamedTemporaryFile(mode="w", suffix=".py", delete=False) as f:
-            f.write('result = eval(user_input)\n')
+            f.write("result = eval(user_input)\n")
             f.flush()
             rules = {
                 "anti_patterns": [
@@ -230,7 +229,7 @@ class TestAntiPatternChecker(unittest.TestCase):
 
     def test_no_issues_clean_code(self) -> None:
         with tempfile.NamedTemporaryFile(mode="w", suffix=".py", delete=False) as f:
-            f.write('x = 1\nprint(x)\n')
+            f.write("x = 1\nprint(x)\n")
             f.flush()
             rules = {"anti_patterns": []}
             issues = check_anti_patterns(Path(f.name), "python", rules)
@@ -239,7 +238,7 @@ class TestAntiPatternChecker(unittest.TestCase):
 
     def test_multiline_pattern(self) -> None:
         with tempfile.NamedTemporaryFile(mode="w", suffix=".py", delete=False) as f:
-            f.write('except:\n    pass\n')
+            f.write("except:\n    pass\n")
             f.flush()
             rules = {
                 "anti_patterns": [
@@ -311,12 +310,14 @@ class TestMaxNestingDepth(unittest.TestCase):
 
     def test_no_nesting(self) -> None:
         import ast
+
         tree = ast.parse("x = 1\n")
         node = tree.body[0]
         self.assertEqual(_max_nesting_depth(node), 0)
 
     def test_with_if(self) -> None:
         import ast
+
         tree = ast.parse("if True:\n    if False:\n        pass\n")
         node = tree.body[0]
         # Depth starts at 0, outer if = 0, inner if = 1
@@ -481,6 +482,7 @@ class TestParseLinterOutput(unittest.TestCase):
 
     def test_parse_ruff_json(self) -> None:
         import json
+
         data = [
             {
                 "code": "E501",
@@ -496,6 +498,7 @@ class TestParseLinterOutput(unittest.TestCase):
 
     def test_parse_eslint_json(self) -> None:
         import json
+
         data = [
             {
                 "messages": [

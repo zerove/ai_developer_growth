@@ -19,7 +19,7 @@ class TestWorkflowOptimizer:
             [sys.executable, str(SCRIPTS_DIR / "workflow-optimizer.py"), *args],
             capture_output=True,
             text=True,
-            cwd=Path.cwd()
+            cwd=Path.cwd(),
         )
         return result
 

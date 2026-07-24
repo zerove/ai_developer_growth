@@ -81,7 +81,8 @@ class TestCheckMetadata(unittest.TestCase):
 
     def test_valid_file_no_issues(self):
         """File with all required fields should have no issues."""
-        self.test_file.write_text("""---
+        self.test_file.write_text(
+            """---
 title: Test
 description: Desc
 category: 效率层
@@ -89,78 +90,96 @@ tags: ['AI']
 difficulty: 进阶
 ---
 
-# Content""", encoding="utf-8")
+# Content""",
+            encoding="utf-8",
+        )
         issues = check_metadata(self.test_file)
         self.assertEqual(issues, [])
 
     def test_missing_title(self):
         """Should report missing title field."""
-        self.test_file.write_text("""---
+        self.test_file.write_text(
+            """---
 description: Desc
 category: 效率层
 tags: ['AI']
 difficulty: 进阶
 ---
 
-# Content""", encoding="utf-8")
+# Content""",
+            encoding="utf-8",
+        )
         issues = check_metadata(self.test_file)
         self.assertTrue(any("title" in i for i in issues))
 
     def test_missing_description(self):
         """Should report missing description field."""
-        self.test_file.write_text("""---
+        self.test_file.write_text(
+            """---
 title: Test
 category: 效率层
 tags: ['AI']
 difficulty: 进阶
 ---
 
-# Content""", encoding="utf-8")
+# Content""",
+            encoding="utf-8",
+        )
         issues = check_metadata(self.test_file)
         self.assertTrue(any("description" in i for i in issues))
 
     def test_missing_category(self):
         """Should report missing category field."""
-        self.test_file.write_text("""---
+        self.test_file.write_text(
+            """---
 title: Test
 description: Desc
 tags: ['AI']
 difficulty: 中级
 ---
 
-# Content""", encoding="utf-8")
+# Content""",
+            encoding="utf-8",
+        )
         issues = check_metadata(self.test_file)
         self.assertTrue(any("category" in i for i in issues))
 
     def test_missing_tags(self):
         """Should report missing tags field."""
-        self.test_file.write_text("""---
+        self.test_file.write_text(
+            """---
 title: Test
 description: Desc
 category: 效率层
 difficulty: 中级
 ---
 
-# Content""", encoding="utf-8")
+# Content""",
+            encoding="utf-8",
+        )
         issues = check_metadata(self.test_file)
         self.assertTrue(any("tags" in i for i in issues))
 
     def test_missing_difficulty(self):
         """Should report missing difficulty field."""
-        self.test_file.write_text("""---
+        self.test_file.write_text(
+            """---
 title: Test
 description: Desc
 category: 效率层
 tags: ['AI']
 ---
 
-# Content""", encoding="utf-8")
+# Content""",
+            encoding="utf-8",
+        )
         issues = check_metadata(self.test_file)
         self.assertTrue(any("difficulty" in i for i in issues))
 
     def test_invalid_category(self):
         """Should report invalid category."""
-        self.test_file.write_text("""---
+        self.test_file.write_text(
+            """---
 title: Test
 description: Desc
 category: 无效分类
@@ -168,13 +187,16 @@ tags: ['AI']
 difficulty: 中级
 ---
 
-# Content""", encoding="utf-8")
+# Content""",
+            encoding="utf-8",
+        )
         issues = check_metadata(self.test_file)
         self.assertTrue(any("Invalid category" in i for i in issues))
 
     def test_invalid_difficulty(self):
         """Should report invalid difficulty."""
-        self.test_file.write_text("""---
+        self.test_file.write_text(
+            """---
 title: Test
 description: Desc
 category: 效率层
@@ -182,14 +204,17 @@ tags: ['AI']
 difficulty: 超级难
 ---
 
-# Content""", encoding="utf-8")
+# Content""",
+            encoding="utf-8",
+        )
         issues = check_metadata(self.test_file)
         self.assertTrue(any("Invalid difficulty" in i for i in issues))
 
     def test_description_too_long(self):
         """Should report description exceeding 50 chars."""
         long_desc = "A" * 51
-        self.test_file.write_text(f"""---
+        self.test_file.write_text(
+            f"""---
 title: Test
 description: {long_desc}
 category: 效率层
@@ -197,14 +222,17 @@ tags: ['AI']
 difficulty: 进阶
 ---
 
-# Content""", encoding="utf-8")
+# Content""",
+            encoding="utf-8",
+        )
         issues = check_metadata(self.test_file)
         self.assertTrue(any("Description too long" in i for i in issues))
 
     def test_description_at_limit(self):
         """Description at exactly 50 chars should be OK."""
         desc = "A" * 50
-        self.test_file.write_text(f"""---
+        self.test_file.write_text(
+            f"""---
 title: Test
 description: {desc}
 category: 效率层
@@ -212,14 +240,17 @@ tags: ['AI']
 difficulty: 进阶
 ---
 
-# Content""", encoding="utf-8")
+# Content""",
+            encoding="utf-8",
+        )
         issues = check_metadata(self.test_file)
         self.assertFalse(any("Description too long" in i for i in issues))
 
     def test_all_valid_categories(self):
         """All valid categories should pass."""
         for cat in ["认知层", "学习层", "效率层", "工具层", "治理层"]:
-            self.test_file.write_text(f"""---
+            self.test_file.write_text(
+                f"""---
 title: Test
 description: Desc
 category: {cat}
@@ -227,14 +258,17 @@ tags: ['AI']
 difficulty: 中级
 ---
 
-# Content""", encoding="utf-8")
+# Content""",
+                encoding="utf-8",
+            )
             issues = check_metadata(self.test_file)
             self.assertFalse(any("Invalid category" in i for i in issues), f"Failed for {cat}")
 
     def test_all_valid_difficulties(self):
         """All valid difficulties should pass."""
         for diff in ["入门", "基础", "进阶", "高级", "专家"]:
-            self.test_file.write_text(f"""---
+            self.test_file.write_text(
+                f"""---
 title: Test
 description: Desc
 category: 效率层
@@ -242,7 +276,9 @@ tags: ['AI']
 difficulty: {diff}
 ---
 
-# Content""", encoding="utf-8")
+# Content""",
+                encoding="utf-8",
+            )
             issues = check_metadata(self.test_file)
             self.assertFalse(any("Invalid difficulty" in i for i in issues), f"Failed for {diff}")
 
@@ -254,11 +290,14 @@ difficulty: {diff}
 
     def test_multiple_missing_fields(self):
         """Should report all missing fields at once."""
-        self.test_file.write_text("""---
+        self.test_file.write_text(
+            """---
 title: Test
 ---
 
-# Content""", encoding="utf-8")
+# Content""",
+            encoding="utf-8",
+        )
         issues = check_metadata(self.test_file)
         self.assertGreaterEqual(len(issues), 3)  # missing description, category, tags, difficulty
 
@@ -282,7 +321,8 @@ class TestScanDirectory(unittest.TestCase):
 
     def test_scan_ignores_valid_files(self):
         """Valid files should not appear in results."""
-        (Path(self.test_dir) / "good.md").write_text("""---
+        (Path(self.test_dir) / "good.md").write_text(
+            """---
 title: Test
 description: Desc
 category: 效率层
@@ -290,7 +330,9 @@ tags: ['AI']
 difficulty: 进阶
 ---
 
-# Content""", encoding="utf-8")
+# Content""",
+            encoding="utf-8",
+        )
         results = scan_directory(Path(self.test_dir))
         self.assertEqual(len(results), 0)
 

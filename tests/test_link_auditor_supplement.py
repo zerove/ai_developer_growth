@@ -1,4 +1,5 @@
 """Supplementary tests for link_auditor.py to improve coverage from 55% to 80%+."""
+
 import os
 import shutil
 import unittest

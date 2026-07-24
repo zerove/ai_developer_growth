@@ -55,7 +55,7 @@ anti_patterns:
   name: Server Action without auth check
   severity: warning
   category: security
-  pattern: "'use server'[\s\S]*?export async function"
+  pattern: "use server[\\s\\S]*?export async function"
   message: 'Server Actions should validate authentication'
   fix_hint: 'Add auth check at start of Server Action'
 
@@ -63,6 +63,6 @@ anti_patterns:
   name: Unoptimized external image
   severity: warning
   category: performance
-  pattern: '<img\s+[^>]*?src=["\']https?://'
+  pattern: "<img\\s+[^>]*?src=[\"']https?://"
   message: 'Use next/image for external images'
   fix_hint: 'Import Image from "next/image" and use <Image />'

@@ -45,6 +45,65 @@ def _get_rules_path() -> Path:
     print(f"Error: Rules not found at {_RULES_PATH} or {_ADG_SOURCE}", file=sys.stderr)
     sys.exit(1)
 
+
+def load_project_config(dirpath: Path | None = None) -> dict[str, Any]:
+    """Load project-level ADG configuration.
+    
+    Looks for:
+    1. .adg/rules.yml in project root
+    2. ~/.config/adg/rules.yml as global config
+    
+    Returns merged configuration with project overriding global.
+    """
+    config = {
+        "custom_rules": [],
+        "skip_patterns": [],
+        "severity_overrides": {},
+        "framework_hints": {},
+    }
+    
+    # Load global config first
+    global_config_path = Path.home() / ".config" / "adg" / "rules.yml"
+    if global_config_path.exists():
+        try:
+            global_config = _simple_yaml_parse(global_config_path)
+            config = _merge_config(config, global_config)
+        except Exception:
+            pass
+    
+    # Load project config (overrides global)
+    if dirpath:
+        project_config_path = dirpath / ".adg" / "rules.yml"
+        if project_config_path.exists():
+            try:
+                project_config = _simple_yaml_parse(project_config_path)
+                # Map anti_patterns to custom_rules if present
+                if "anti_patterns" in project_config:
+                    project_config["custom_rules"] = project_config.pop("anti_patterns")
+                config = _merge_config(config, project_config)
+            except Exception:
+                pass
+    
+    return config
+
+
+def _merge_config(base: dict[str, Any], override: dict[str, Any]) -> dict[str, Any]:
+    """Merge two configuration dictionaries."""
+    result = base.copy()
+    
+    for key, value in override.items():
+        if key in result:
+            if isinstance(result[key], list) and isinstance(value, list):
+                result[key] = result[key] + value
+            elif isinstance(result[key], dict) and isinstance(value, dict):
+                result[key].update(value)
+            else:
+                result[key] = value
+        else:
+            result[key] = value
+    
+    return result
+
 # ──────────────────────────────────────────────────────────
 # Language Detection
 # ──────────────────────────────────────────────────────────
@@ -273,11 +332,12 @@ def _load_yaml(path: Path) -> dict[str, Any]:
 
 
 def _simple_yaml_parse(path: Path) -> dict[str, Any]:
-    """Minimal YAML parser for anti_patterns.yml files (no PyYAML needed)."""
+    """Minimal YAML parser for anti_patterns.yml and config files (no PyYAML needed)."""
     content = path.read_text(encoding="utf-8")
     result: dict[str, Any] = {"anti_patterns": []}
     current_rule: dict[str, Any] | None = None
-
+    current_section: str | None = None  # For skip_patterns, severity_overrides, etc.
+    
     for line in content.splitlines():
         stripped = line.strip()
         if not stripped or stripped.startswith("#"):
@@ -288,16 +348,55 @@ def _simple_yaml_parse(path: Path) -> dict[str, Any]:
             if current_rule:
                 result["anti_patterns"].append(current_rule)
             current_rule = {"id": stripped.split(":", 1)[1].strip()}
+            current_section = None
             continue
 
         # Top-level keys (only lines NOT starting with space and NOT starting with -)
         if not line.startswith(" ") and not line.startswith("-") and ":" in stripped:
             key, _, val = stripped.partition(":")
+            key = key.strip()
             val = val.strip().strip("'\"")
+            
             if key == "language":
                 result["language"] = val
             elif key == "version":
                 result["version"] = val
+            elif key == "skip_patterns":
+                current_section = "skip_patterns"
+                result["skip_patterns"] = []
+            elif key == "severity_overrides":
+                current_section = "severity_overrides"
+                result["severity_overrides"] = {}
+            elif key == "framework_hints":
+                current_section = "framework_hints"
+                result["framework_hints"] = {}
+            elif key == "anti_patterns":
+                current_section = "anti_patterns"
+            continue
+
+        # Handle skip_patterns list items
+        if current_section == "skip_patterns" and stripped.startswith("- "):
+            pattern = stripped[2:].strip().strip("'\"")
+            if pattern:
+                result["skip_patterns"].append(pattern)
+            continue
+
+        # Handle severity_overrides key: value pairs
+        if current_section == "severity_overrides" and ":" in stripped and not stripped.startswith("-"):
+            key, _, val = stripped.partition(":")
+            key = key.strip()
+            val = val.strip().strip("'\"")
+            if key and val:
+                result["severity_overrides"][key] = val
+            continue
+
+        # Handle framework_hints key: value pairs
+        if current_section == "framework_hints" and ":" in stripped and not stripped.startswith("-"):
+            key, _, val = stripped.partition(":")
+            key = key.strip()
+            val = val.strip().strip("'\"")
+            if key and val:
+                result["framework_hints"][key] = val
             continue
 
         # Rule fields
@@ -703,21 +802,32 @@ def cmd_check(args: argparse.Namespace) -> int:
     """Check code against rules."""
     target = Path(args.path).resolve()
 
+    # Load project configuration
+    project_config = load_project_config(target if target.is_dir() else target.parent)
+
     # Collect files to check
     if target.is_file():
         files = [target]
         detected = detect_language(target.parent)
     else:
         files = []
+        skip_patterns = project_config.get("skip_patterns", [])
         for fp in target.rglob("*"):
             if fp.is_file() and any(part not in SKIP_DIRS for part in fp.parts):
                 if fp.suffix not in SKIP_EXTENSIONS:
+                    # Check skip patterns
+                    if any(_match_pattern(fp, pat) for pat in skip_patterns):
+                        continue
                     if _detect_language_from_file(fp):
                         files.append(fp)
         detected = detect_language(target)
 
     language = args.lang or detected.get("language", "unknown")
     framework = getattr(args, 'framework', None) or detected.get("framework")
+    
+    # Use framework hint from config if not detected
+    if not framework:
+        framework = project_config.get("framework_hints", {}).get(language)
 
     if language == "unknown":
         print("Error: Could not detect language. Use --lang to specify.", file=sys.stderr)
@@ -728,6 +838,17 @@ def cmd_check(args: argparse.Namespace) -> int:
     if framework:
         fw_rules = load_framework_rules(framework)
         rules["anti_patterns"].extend(fw_rules.get("anti_patterns", []))
+    
+    # Add custom rules from project config
+    custom_rules = project_config.get("custom_rules", [])
+    if custom_rules:
+        rules["anti_patterns"].extend(custom_rules)
+    
+    # Apply severity overrides
+    severity_overrides = project_config.get("severity_overrides", {})
+    for rule in rules["anti_patterns"]:
+        if rule["id"] in severity_overrides:
+            rule["severity"] = severity_overrides[rule["id"]]
 
     # Check files
     all_issues: list[Issue] = []
@@ -743,6 +864,12 @@ def cmd_check(args: argparse.Namespace) -> int:
     # Exit code: non-zero if errors found
     has_errors = any(i.severity == "error" for i in all_issues)
     return 1 if has_errors else 0
+
+
+def _match_pattern(filepath: Path, pattern: str) -> bool:
+    """Check if filepath matches a glob pattern."""
+    import fnmatch
+    return fnmatch.fnmatch(str(filepath), pattern) or fnmatch.fnmatch(filepath.name, pattern)
 
 
 def cmd_fix(args: argparse.Namespace) -> int:
@@ -977,8 +1104,24 @@ def cmd_install_hooks(args: argparse.Namespace) -> int:
     hooks_dir = git_dir / "hooks"
     hooks_dir.mkdir(exist_ok=True)
 
+    # Install pre-push hook if requested
+    if getattr(args, 'pre_push', False):
+        hook_path = hooks_dir / "pre-push"
+        adg_hook_source = Path.home() / ".config" / "adg" / "hooks" / "pre-push"
+        
+        if adg_hook_source.exists():
+            hook_path.write_text(adg_hook_source.read_text())
+        else:
+            hook_path.write_text(_DEFAULT_PRE_PUSH_HOOK)
+        
+        hook_path.chmod(0o755)
+        print(f"✅ ADG pre-push hook installed: {hook_path}")
+        print(f"   Run 'adg check .' to test manually")
+        return 0
+
+    # Default: install pre-commit hook
     hook_path = hooks_dir / "pre-commit"
-    adg_hook_source = Path(__file__).parent.parent / "config" / "adg" / "hooks" / "pre-commit"
+    adg_hook_source = Path.home() / ".config" / "adg" / "hooks" / "pre-commit"
 
     # Try to copy from installed hooks first
     if adg_hook_source.exists():
@@ -991,6 +1134,46 @@ def cmd_install_hooks(args: argparse.Namespace) -> int:
     print(f"✅ ADG pre-commit hook installed: {hook_path}")
     print(f"   Run 'adg check .' to test manually")
     return 0
+
+
+# ──────────────────────────────────────────────────────────
+# Default pre-push hook
+# ──────────────────────────────────────────────────────────
+
+_DEFAULT_PRE_PUSH_HOOK = '''#!/bin/bash
+# ADG Governance Pre-push Hook
+# Installed by: adg install-hooks --pre-push
+
+set -euo pipefail
+
+REMOTE="$1"
+URL="$2"
+
+echo "🔍 ADG Pre-push Governance Check..."
+
+# Try system adg first
+if command -v adg &> /dev/null; then
+    adg check . --severity error
+elif [ -x "$HOME/.local/bin/adg" ]; then
+    $HOME/.local/bin/adg check . --severity error
+else
+    echo "⚠️  adg not found. Skipping."
+    exit 0
+fi
+
+EXIT_CODE=$?
+
+if [ $EXIT_CODE -ne 0 ]; then
+    echo ""
+    echo "❌ Pre-push check failed. Fix errors before pushing."
+    echo "   Run: adg check ."
+    echo "   Report: adg report ."
+    echo "   Skip: git push --no-verify"
+    exit 1
+fi
+
+echo "✅ Pre-push check passed."
+'''
 
 
 # ──────────────────────────────────────────────────────────
@@ -1067,8 +1250,10 @@ def main() -> int:
     list_p.add_argument("--json", action="store_true", help="Output as JSON")
 
     # install-hooks
-    install_p = sub.add_parser("install-hooks", help="Install pre-commit hook")
+    install_p = sub.add_parser("install-hooks", help="Install pre-commit/pre-push hook")
     install_p.add_argument("path", nargs="?", default=".", help="Project directory")
+    install_p.add_argument("--pre-push", action="store_true", 
+                          help="Install pre-push hook instead of pre-commit")
 
     # report
     report_p = sub.add_parser("report", help="Generate quality gate report")

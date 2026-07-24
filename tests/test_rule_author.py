@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import argparse
 from pathlib import Path
-from unittest.mock import patch
+from unittest.mock import MagicMock, patch
 
 import pytest
 import yaml
@@ -306,8 +306,7 @@ class TestMain:
     def test_init_command(self) -> None:
         with patch("sys.argv", ["rule_author", "init", "--lang", "test"]):
             with patch("tools.scripts.rule_author._rules_dir") as mock:
-                from pathlib import Path as P
-                mock.return_value = P("/tmp/test_rules")
+                mock.return_value = Path("/tmp/test_rules")
                 result = main()
         assert result == 0
 

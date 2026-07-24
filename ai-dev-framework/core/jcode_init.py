@@ -96,7 +96,8 @@ def _create_code_guardian_agent(agents_dir: Path, config: JcodeConfig) -> None:
     test_dir = config.project.tests_dir
     source_dir = config.project.source_dir
 
-    (agents_dir / "code-guardian.md").write_text(f"""# Agent: code-guardian
+    (agents_dir / "code-guardian.md").write_text(
+        f"""# Agent: code-guardian
 
 维护代码质量、安全、风格一致性
 
@@ -119,14 +120,17 @@ def _create_code_guardian_agent(agents_dir: Path, config: JcodeConfig) -> None:
 - 不能修改生产代码
 - 不能跳过测试
 - 不能忽略安全警告
-""", encoding="utf-8")
+""",
+        encoding="utf-8",
+    )
 
 
 def _create_doc_curator_agent(agents_dir: Path, config: JcodeConfig) -> None:
     """创建 doc-curator Agent 定义"""
     docs_dir = config.project.docs_dir
 
-    (agents_dir / "doc-curator.md").write_text(f"""# Agent: doc-curator
+    (agents_dir / "doc-curator.md").write_text(
+        f"""# Agent: doc-curator
 
 维护文档完整性、链接有效性、结构一致性
 
@@ -149,12 +153,15 @@ def _create_doc_curator_agent(agents_dir: Path, config: JcodeConfig) -> None:
 - 不能删除文档
 - 不能修改文档结构
 - 必须保持向后兼容
-""", encoding="utf-8")
+""",
+        encoding="utf-8",
+    )
 
 
 def _create_agents_md(output_path: Path, config: JcodeConfig) -> None:
     """创建 AGENTS.md"""
-    (output_path / "AGENTS.md").write_text("""# Agent 定义索引
+    (output_path / "AGENTS.md").write_text(
+        """# Agent 定义索引
 
 本项目中的所有 agent 定义，按职责分类索引。
 
@@ -193,12 +200,15 @@ def _create_agents_md(output_path: Path, config: JcodeConfig) -> None:
 ---
 
 *本索引随 Agent 新增/修改时更新。*
-""", encoding="utf-8")
+""",
+        encoding="utf-8",
+    )
 
 
 def _create_governance_md(output_path: Path, config: JcodeConfig) -> None:
     """创建 GOVERNANCE.md"""
-    (output_path / "GOVERNANCE.md").write_text(f"""# 项目治理标准
+    (output_path / "GOVERNANCE.md").write_text(
+        f"""# 项目治理标准
 
 > 适用于 {config.project.name} 的通用治理标准。
 
@@ -235,13 +245,15 @@ agent-name: kebab-case 命名
 
 - **语言**: {config.project.language}
 - **Lint 工具**: {config.project.lint_tool}
-- **类型检查**: {config.project.type_checker or 'N/A'}
+- **类型检查**: {config.project.type_checker or "N/A"}
 - **测试覆盖率**: ≥ {config.project.min_test_coverage}%
 
 ---
 
 *本标准随项目演进更新。*
-""", encoding="utf-8")
+""",
+        encoding="utf-8",
+    )
 
 
 def main():

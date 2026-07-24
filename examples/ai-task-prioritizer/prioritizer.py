@@ -16,7 +16,13 @@ class Prioritizer:
             category = self._get_category(value, effort)
 
             prioritized.append(
-                {"task": item["task"], "value": value, "effort": effort, "score": score, "category": category}
+                {
+                    "task": item["task"],
+                    "value": value,
+                    "effort": effort,
+                    "score": score,
+                    "category": category,
+                }
             )
 
         # 3. Sort by score descending

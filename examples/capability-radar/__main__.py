@@ -97,7 +97,9 @@ def main() -> int:
     else:
         # Quiet mode: just summary
         print(f"综合等级: {result.overall_level.label}")
-        print(f"最弱维度: {result.weakest_dimension.label} ({result.dimension_scores[result.weakest_dimension]:.2f})")
+        print(
+            f"最弱维度: {result.weakest_dimension.label} ({result.dimension_scores[result.weakest_dimension]:.2f})"
+        )
         print(
             f"最强维度: {result.strongest_dimension.label} ({result.dimension_scores[result.strongest_dimension]:.2f})"
         )

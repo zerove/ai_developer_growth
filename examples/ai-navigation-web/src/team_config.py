@@ -1,4 +1,5 @@
 """Team configuration management with isolation between teams."""
+
 from __future__ import annotations
 
 import json
@@ -100,6 +101,4 @@ class TeamManager:
 
     def _save(self, config: TeamConfig) -> None:
         """Save team config to file."""
-        self._team_file(config.team_id).write_text(
-            json.dumps(asdict(config), indent=2, ensure_ascii=False)
-        )
+        self._team_file(config.team_id).write_text(json.dumps(asdict(config), indent=2, ensure_ascii=False))

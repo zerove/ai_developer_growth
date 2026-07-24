@@ -24,7 +24,10 @@ async def progress_list(request: Request):
             (user_id,),
         )
         items = await rows.fetchall()
-        return templates.TemplateResponse(request, "progress/list.html", context={"request": request, "items": [dict(r) for r in items]},
+        return templates.TemplateResponse(
+            request,
+            "progress/list.html",
+            context={"request": request, "items": [dict(r) for r in items]},
         )
     finally:
         await db.close()

@@ -69,7 +69,10 @@ async def assessment_form(request: Request):
             (user_id,),
         )
         prev_row = await prev.fetchone()
-        return templates.TemplateResponse(request, "assess/assessment.html", context={
+        return templates.TemplateResponse(
+            request,
+            "assess/assessment.html",
+            context={
                 "request": request,
                 "prev": dict(prev_row) if prev_row else None,
                 "skill_docs": SKILL_DOCS,
@@ -123,7 +126,10 @@ async def submit_assessment(
             }.get(dim, dim)
             recommendations.append({"dimension": dim_name, "score": score, "docs": docs})
 
-        return templates.TemplateResponse(request, "assess/result.html", context={
+        return templates.TemplateResponse(
+            request,
+            "assess/result.html",
+            context={
                 "request": request,
                 "scores": scores,
                 "overall": overall,
@@ -148,7 +154,10 @@ async def assessment_history(request: Request):
             (user_id,),
         )
         items = await rows.fetchall()
-        return templates.TemplateResponse(request, "assess/history.html", context={"request": request, "assessments": [dict(r) for r in items]},
+        return templates.TemplateResponse(
+            request,
+            "assess/history.html",
+            context={"request": request, "assessments": [dict(r) for r in items]},
         )
     finally:
         await db.close()

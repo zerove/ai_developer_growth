@@ -46,7 +46,9 @@ def test_prioritizer_categories():
     ]
 
     prioritizer = Prioritizer(mock_client)
-    results = prioritizer.prioritize(["Quick Win", "Major Project", "Fill-in", "Thankless"])
+    results = prioritizer.prioritize(
+        ["Quick Win", "Major Project", "Fill-in", "Thankless"]
+    )
 
     categories = {r["task"]: r["category"] for r in results}
     assert categories["Quick Win"] == "Quick Win (立即执行)"
@@ -84,7 +86,9 @@ def test_llm_client_get_scores_without_key():
     """Test LLMClient.get_scores raises error without API key (covers lines 10-11)."""
     with patch.dict(os.environ, {}, clear=True):
         client = LLMClient(api_key=None)
-        with pytest.raises(ValueError, match="LLM_API_KEY environment variable is not set"):
+        with pytest.raises(
+            ValueError, match="LLM_API_KEY environment variable is not set"
+        ):
             client.get_scores(["task1"])
 
 
@@ -129,9 +133,27 @@ def test_main_with_stdin(capsys):
             with patch("main.Prioritizer") as mock_prioritizer:
                 mock_prioritizer_instance = MagicMock()
                 mock_prioritizer_instance.prioritize.return_value = [
-                    {"task": "Task 2", "value": 10, "effort": 2, "score": 5.0, "category": "Quick Win"},
-                    {"task": "Task 3", "value": 3, "effort": 3, "score": 1.0, "category": "Fill-ins"},
-                    {"task": "Task 1", "value": 5, "effort": 5, "score": 1.0, "category": "Fill-ins"},
+                    {
+                        "task": "Task 2",
+                        "value": 10,
+                        "effort": 2,
+                        "score": 5.0,
+                        "category": "Quick Win",
+                    },
+                    {
+                        "task": "Task 3",
+                        "value": 3,
+                        "effort": 3,
+                        "score": 1.0,
+                        "category": "Fill-ins",
+                    },
+                    {
+                        "task": "Task 1",
+                        "value": 5,
+                        "effort": 5,
+                        "score": 1.0,
+                        "category": "Fill-ins",
+                    },
                 ]
                 mock_prioritizer.return_value = mock_prioritizer_instance
 
@@ -161,8 +183,20 @@ def test_main_with_file(capsys):
             with patch("main.Prioritizer") as mock_prioritizer:
                 mock_prioritizer_instance = MagicMock()
                 mock_prioritizer_instance.prioritize.return_value = [
-                    {"task": "Task 2", "value": 10, "effort": 2, "score": 5.0, "category": "Quick Win"},
-                    {"task": "Task 1", "value": 5, "effort": 5, "score": 1.0, "category": "Fill-ins"},
+                    {
+                        "task": "Task 2",
+                        "value": 10,
+                        "effort": 2,
+                        "score": 5.0,
+                        "category": "Quick Win",
+                    },
+                    {
+                        "task": "Task 1",
+                        "value": 5,
+                        "effort": 5,
+                        "score": 1.0,
+                        "category": "Fill-ins",
+                    },
                 ]
                 mock_prioritizer.return_value = mock_prioritizer_instance
 
@@ -205,7 +239,9 @@ def test_main_exception_handling(capsys):
 
             with patch("main.Prioritizer") as mock_prioritizer:
                 mock_prioritizer_instance = MagicMock()
-                mock_prioritizer_instance.prioritize.side_effect = Exception("Test error")
+                mock_prioritizer_instance.prioritize.side_effect = Exception(
+                    "Test error"
+                )
                 mock_prioritizer.return_value = mock_prioritizer_instance
 
                 with patch.object(sys, "argv", ["main.py", "-"]):

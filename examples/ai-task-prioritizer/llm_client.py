@@ -13,7 +13,14 @@ class LLMClient:
         import random
 
         random.seed(42)
-        return [{"task": t, "value": str(random.randint(1, 10)), "effort": str(random.randint(1, 10))} for t in tasks]
+        return [
+            {
+                "task": t,
+                "value": str(random.randint(1, 10)),
+                "effort": str(random.randint(1, 10)),
+            }
+            for t in tasks
+        ]
 
     def _build_prompt(self, tasks: list[str]) -> str:
         _task_list_str = "\n".join([f"- {t}" for t in tasks])

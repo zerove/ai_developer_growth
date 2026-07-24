@@ -45,12 +45,13 @@ async def dashboard(request: Request):
         recent_items = await recent.fetchall()
 
         # Get contributions count
-        contrib = await db.execute(
-            "SELECT COUNT(*) as cnt FROM contributions WHERE user_id = ?", (user_id,)
-        )
+        contrib = await db.execute("SELECT COUNT(*) as cnt FROM contributions WHERE user_id = ?", (user_id,))
         contrib_row = await contrib.fetchone()
 
-        return templates.TemplateResponse(request, "dashboard.html", context={
+        return templates.TemplateResponse(
+            request,
+            "dashboard.html",
+            context={
                 "request": request,
                 "username": user_row["username"],
                 "assessment": dict(assessment_row) if assessment_row else None,

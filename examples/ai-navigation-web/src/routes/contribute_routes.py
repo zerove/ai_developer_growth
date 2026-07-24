@@ -23,7 +23,10 @@ async def contribute_list(request: Request):
             (user_id,),
         )
         items = await rows.fetchall()
-        return templates.TemplateResponse(request, "contribute/list.html", context={"request": request, "contributions": [dict(r) for r in items]},
+        return templates.TemplateResponse(
+            request,
+            "contribute/list.html",
+            context={"request": request, "contributions": [dict(r) for r in items]},
         )
     finally:
         await db.close()
@@ -75,7 +78,10 @@ async def view_contribution(request: Request, contrib_id: int):
         item = await row.fetchone()
         if not item:
             return RedirectResponse(url="/contribute", status_code=303)
-        return templates.TemplateResponse(request, "contribute/detail.html", context={"request": request, "contribution": dict(item)},
+        return templates.TemplateResponse(
+            request,
+            "contribute/detail.html",
+            context={"request": request, "contribution": dict(item)},
         )
     finally:
         await db.close()

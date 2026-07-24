@@ -97,8 +97,14 @@ class AssessmentEngine:
                 [
                     ("不用 AI", Level.L0),
                     ("问答式：'帮我写个函数'，逐行审查", Level.L1),
-                    ("结构化：Prompt 模板 + CONTEXT.md + 迭代优化，AI 做 60%+", Level.L2),
-                    ("编排：Prompt Chain / Multi-Agent Workflow，AI 做 80%+ 含测试/部署", Level.L3),
+                    (
+                        "结构化：Prompt 模板 + CONTEXT.md + 迭代优化，AI 做 60%+",
+                        Level.L2,
+                    ),
+                    (
+                        "编排：Prompt Chain / Multi-Agent Workflow，AI 做 80%+ 含测试/部署",
+                        Level.L3,
+                    ),
                     ("造工具：开发团队级 AI 框架/标准，赋能全组", Level.L4),
                 ],
             ),
@@ -230,7 +236,9 @@ class AssessmentEngine:
     def calculate_result(self) -> AssessmentResult:
         """Calculate final scores from answers."""
         # Aggregate by dimension (weighted by confidence)
-        dim_scores: dict[Dimension, list[tuple[Level, int]]] = {d: [] for d in Dimension}
+        dim_scores: dict[Dimension, list[tuple[Level, int]]] = {
+            d: [] for d in Dimension
+        }
         for ans in self.answers:
             dim_scores[ans.dimension].append((ans.selected_level, ans.confidence))
 
@@ -283,7 +291,9 @@ class AssessmentEngine:
             strongest_dimension=strongest,
         )
 
-    def _generate_recommendations(self, levels: dict[Dimension, Level], weakest: Dimension) -> list[str]:
+    def _generate_recommendations(
+        self, levels: dict[Dimension, Level], weakest: Dimension
+    ) -> list[str]:
         """Generate personalized recommendations."""
         recs = []
 
@@ -322,8 +332,12 @@ class AssessmentEngine:
         data = {
             "timestamp": result.timestamp,
             "overall_level": result.overall_level.name,
-            "dimension_scores": {d.value: s for d, s in result.dimension_scores.items()},
-            "dimension_levels": {d.value: lvl.name for d, lvl in result.dimension_levels.items()},
+            "dimension_scores": {
+                d.value: s for d, s in result.dimension_scores.items()
+            },
+            "dimension_levels": {
+                d.value: lvl.name for d, lvl in result.dimension_levels.items()
+            },
             "weakest_dimension": result.weakest_dimension.value,
             "strongest_dimension": result.strongest_dimension.value,
             "recommendations": result.recommendations,
@@ -355,7 +369,11 @@ class AssessmentEngine:
         for dim in Dimension:
             score = result.dimension_scores[dim]
             level = result.dimension_levels[dim]
-            marker = " 🎯" if dim == result.weakest_dimension else (" ⭐" if dim == result.strongest_dimension else "")
+            marker = (
+                " 🎯"
+                if dim == result.weakest_dimension
+                else (" ⭐" if dim == result.strongest_dimension else "")
+            )
             lines.append(f"| {dim.label} | {score:.2f} | {level.label} |{marker}")
 
         lines.extend(
@@ -387,7 +405,9 @@ def print_result(result: AssessmentResult) -> None:
     print("  📊 评估结果")
     print("=" * 60)
     print(f"\n🎯 综合等级: {result.overall_level.label}")
-    print(f"📉 最弱维度: {result.weakest_dimension.label} ({result.dimension_scores[result.weakest_dimension]:.2f})")
+    print(
+        f"📉 最弱维度: {result.weakest_dimension.label} ({result.dimension_scores[result.weakest_dimension]:.2f})"
+    )
     print(
         f"📈 最强维度: {result.strongest_dimension.label} ({result.dimension_scores[result.strongest_dimension]:.2f})"
     )
@@ -398,7 +418,9 @@ def print_result(result: AssessmentResult) -> None:
         level = result.dimension_levels[dim]
         bar = "█" * int(score) + "░" * (4 - int(score))
         marker = (
-            " ← 重点提升" if dim == result.weakest_dimension else (" ★" if dim == result.strongest_dimension else "")
+            " ← 重点提升"
+            if dim == result.weakest_dimension
+            else (" ★" if dim == result.strongest_dimension else "")
         )
         print(f"  {dim.label:12} {bar} {score:.2f}  {level.label}{marker}")
 
@@ -427,5 +449,9 @@ def print_radar_chart(result: AssessmentResult) -> None:
     for i, (label, score) in enumerate(zip(labels, scores)):
         bar_len = int(score * scale)
         bar = "█" * bar_len + "░" * (20 - bar_len)
-        marker = " ← 最弱" if i == 0 and score == min(scores) else (" ★最强" if i == 1 and score == max(scores) else "")
+        marker = (
+            " ← 最弱"
+            if i == 0 and score == min(scores)
+            else (" ★最强" if i == 1 and score == max(scores) else "")
+        )
         print(f"  {label:<12} {bar} {score:.1f}{marker}")

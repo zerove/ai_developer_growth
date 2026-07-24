@@ -36,8 +36,12 @@ def main() -> int:
         """,
     )
 
-    parser.add_argument("-i", "--input", help="从 JSON 文件导入答案 (非交互模式)", metavar="FILE")
-    parser.add_argument("-o", "--output", help="导出 Markdown 报告到文件", metavar="FILE")
+    parser.add_argument(
+        "-i", "--input", help="从 JSON 文件导入答案 (非交互模式)", metavar="FILE"
+    )
+    parser.add_argument(
+        "-o", "--output", help="导出 Markdown 报告到文件", metavar="FILE"
+    )
     parser.add_argument("--json", help="导出 JSON 结果到文件", metavar="FILE")
     parser.add_argument("--demo", action="store_true", help="使用演示数据快速跑通流程")
 

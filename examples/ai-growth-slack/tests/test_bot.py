@@ -1,4 +1,5 @@
 """Tests for the Slack bot."""
+
 from bot import GrowthBot, SlackMessage, create_bot
 
 

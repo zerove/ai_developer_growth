@@ -404,6 +404,157 @@ def check_file(filepath: Path, rules: dict[str, Any], severity_filter: str | Non
     return issues
 
 
+# ──────────────────────────────────────────────────────────
+# Auto-fix Support
+# ──────────────────────────────────────────────────────────
+
+# Fix rules: pattern_id -> (regex_pattern, replacement)
+FIX_RULES: dict[str, dict[str, Any]] = {
+    # Python fixes
+    "py-bare-except": {
+        "pattern": r"except\s*:",
+        "replacement": "except Exception:",
+        "language": "python",
+    },
+    "py-print-statement": {
+        "pattern": r"\bprint\(",
+        "replacement": None,  # Requires context-aware replacement
+        "language": "python",
+    },
+    # JavaScript/TypeScript fixes
+    "js-==null": {
+        "pattern": r"==\s*null",
+        "replacement": "=== null",
+        "language": "javascript",
+    },
+    "js-==undefined": {
+        "pattern": r"==\s*undefined",
+        "replacement": "=== undefined",
+        "language": "javascript",
+    },
+    "js-!=null": {
+        "pattern": r"!=\s*null",
+        "replacement": "!== null",
+        "language": "javascript",
+    },
+    "js-!=undefined": {
+        "pattern": r"!=\s*undefined",
+        "replacement": "!== undefined",
+        "language": "javascript",
+    },
+    "js-eval": {
+        "pattern": r"\beval\(",
+        "replacement": None,  # Requires manual fix
+        "language": "javascript",
+    },
+    # Rust fixes
+    "rust-unwrap": {
+        "pattern": r"\.unwrap\(\)",
+        "replacement": None,  # Requires context
+        "language": "rust",
+    },
+    # Common fixes
+    "common-eval-exec": {
+        "pattern": r"\b(eval|exec)\(",
+        "replacement": None,  # Requires manual fix
+        "language": "common",
+    },
+    "common-hardcoded-secret": {
+        "pattern": r'(SECRET|PASSWORD|API_KEY|TOKEN)\s*=\s*["\'][^"\']+["\']',
+        "replacement": None,  # Requires env var
+        "language": "common",
+    },
+}
+
+
+def _apply_fix(content: str, rule_id: str, fix_info: dict[str, Any]) -> tuple[str, bool]:
+    """Apply a single fix to content. Returns (new_content, was_modified)."""
+    import re
+    
+    pattern = fix_info.get("pattern")
+    replacement = fix_info.get("replacement")
+    
+    if not pattern or replacement is None:
+        return content, False
+    
+    new_content, count = re.subn(pattern, replacement, content)
+    return new_content, count > 0
+
+
+def fix_file(filepath: Path, rule_ids: list[str] | None = None) -> dict[str, Any]:
+    """Apply fixes to a file. Returns stats about fixes applied."""
+    import re
+    
+    if not filepath.exists():
+        return {"fixed": 0, "skipped": 0, "errors": 1}
+    
+    try:
+        content = filepath.read_text(encoding="utf-8")
+    except (OSError, UnicodeDecodeError):
+        return {"fixed": 0, "skipped": 0, "errors": 1}
+    
+    original_content = content
+    fixed_count = 0
+    skipped_count = 0
+    
+    # Filter rules if specific rule_ids provided
+    applicable_rules = FIX_RULES
+    if rule_ids:
+        applicable_rules = {k: v for k, v in FIX_RULES.items() if k in rule_ids}
+    
+    for rule_id, fix_info in applicable_rules.items():
+        new_content, was_modified = _apply_fix(content, rule_id, fix_info)
+        if was_modified:
+            content = new_content
+            fixed_count += 1
+        else:
+            skipped_count += 1
+    
+    # Write back if modified
+    if content != original_content:
+        try:
+            filepath.write_text(content, encoding="utf-8")
+        except OSError:
+            return {"fixed": 0, "skipped": 0, "errors": 1}
+    
+    return {"fixed": fixed_count, "skipped": skipped_count, "errors": 0}
+
+
+def fix_directory(dirpath: Path, language: str | None = None) -> dict[str, Any]:
+    """Apply fixes to all code files in a directory."""
+    total_stats = {"fixed": 0, "skipped": 0, "errors": 0, "files": 0}
+    
+    for filepath in dirpath.rglob("*"):
+        if not filepath.is_file():
+            continue
+        if any(part in SKIP_DIRS for part in filepath.parts):
+            continue
+        if filepath.suffix in SKIP_EXTENSIONS:
+            continue
+        
+        # Filter by language if specified
+        if language:
+            file_lang = _detect_language_from_file(filepath)
+            if file_lang and file_lang != language:
+                continue
+        
+        # Filter applicable rules by language
+        applicable_rules = {}
+        for rule_id, fix_info in FIX_RULES.items():
+            if language is None or fix_info.get("language") in (language, "common"):
+                applicable_rules[rule_id] = fix_info
+        
+        if applicable_rules:
+            stats = fix_file(filepath, list(applicable_rules.keys()))
+            total_stats["fixed"] += stats["fixed"]
+            total_stats["skipped"] += stats["skipped"]
+            total_stats["errors"] += stats["errors"]
+            if stats["fixed"] > 0:
+                total_stats["files"] += 1
+    
+    return total_stats
+
+
 def _severity_rank(severity: str) -> int:
     """Return numeric rank for severity comparison."""
     return {"error": 0, "warning": 1, "info": 2}.get(severity, 3)
@@ -592,6 +743,58 @@ def cmd_check(args: argparse.Namespace) -> int:
     # Exit code: non-zero if errors found
     has_errors = any(i.severity == "error" for i in all_issues)
     return 1 if has_errors else 0
+
+
+def cmd_fix(args: argparse.Namespace) -> int:
+    """Apply automatic fixes to code files."""
+    target = Path(args.path).resolve()
+    
+    if not target.exists():
+        print(f"Error: Path not found: {target}", file=sys.stderr)
+        return 1
+    
+    # Detect language
+    detected = detect_language(target)
+    language = args.lang or detected.get("language")
+    
+    if args.json:
+        stats = fix_file(target) if target.is_file() else fix_directory(target, language)
+        # Add files key for single file
+        if target.is_file():
+            stats["files"] = 1 if stats["fixed"] > 0 else 0
+        print(json.dumps(stats, indent=2))
+    else:
+        print(f"\n\033[1m\033[36m{'='*60}\033[0m")
+        print(f"\033[1m\033[36m  ADG Auto-fix\033[0m")
+        print(f"\033[1m\033[36m{'='*60}\033[0m\n")
+        
+        print(f"\033[1mTarget:\033[0m {target}")
+        if language:
+            print(f"\033[1mLanguage:\033[0m {language}")
+        print()
+        
+        if target.is_file():
+            stats = fix_file(target)
+            stats["files"] = 1 if stats["fixed"] > 0 else 0
+        else:
+            stats = fix_directory(target, language)
+        
+        print(f"\033[1mResults:\033[0m")
+        print(f"  Files modified: {stats['files']}")
+        print(f"  Rules applied:  {stats['fixed']}")
+        print(f"  Rules skipped:  {stats['skipped']}")
+        print(f"  Errors:         {stats['errors']}")
+        print()
+        
+        if stats['fixed'] > 0:
+            print(f"\033[32m\033[1m✅ Fixes applied successfully\033[0m")
+        elif stats['errors'] > 0:
+            print(f"\033[31m\033[1m❌ Some errors occurred\033[0m")
+        else:
+            print(f"\033[33m\033[1m⚠️  No automatic fixes available\033[0m")
+            print("   Some issues require manual fixes.")
+    
+    return 0 if stats['errors'] == 0 else 1
 
 
 def cmd_detect(args: argparse.Namespace) -> int:
@@ -878,6 +1081,12 @@ def main() -> int:
                          help="Max warnings allowed (-1 = no limit)")
     report_p.add_argument("--json", action="store_true", help="Output as JSON")
 
+    # fix
+    fix_p = sub.add_parser("fix", help="Apply automatic fixes to code")
+    fix_p.add_argument("path", help="File or directory to fix")
+    fix_p.add_argument("--lang", help="Force language (skip auto-detection)")
+    fix_p.add_argument("--json", action="store_true", help="Output as JSON")
+
     args = parser.parse_args()
 
     if not args.command:
@@ -890,6 +1099,7 @@ def main() -> int:
         "list-rules": cmd_list_rules,
         "install-hooks": cmd_install_hooks,
         "report": cmd_report,
+        "fix": cmd_fix,
     }
 
     return commands[args.command](args)

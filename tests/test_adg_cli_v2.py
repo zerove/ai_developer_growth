@@ -691,3 +691,51 @@ class TestMainCLI:
         with patch("sys.argv", ["adg", "report", str(tmp_path / "nonexistent"), "--lang", "python"]):
             result = main()
         assert result == 1
+
+    def test_fix_python_bare_except(self, tmp_path: Path) -> None:
+        """Test fix Python bare except."""
+        f = tmp_path / "test.py"
+        f.write_text("try:\n    pass\nexcept:\n    pass\n")
+        with patch("sys.argv", ["adg", "fix", str(f), "--lang", "python"]):
+            result = main()
+        assert result == 0
+        content = f.read_text()
+        assert "except Exception:" in content
+        assert "except:" not in content
+
+    def test_fix_javascript_equality(self, tmp_path: Path) -> None:
+        """Test fix JavaScript equality operators."""
+        f = tmp_path / "app.js"
+        f.write_text("if (x == null) {}\nif (y != undefined) {}\n")
+        with patch("sys.argv", ["adg", "fix", str(f), "--lang", "javascript"]):
+            result = main()
+        assert result == 0
+        content = f.read_text()
+        assert "=== null" in content
+        assert "!== undefined" in content
+
+    def test_fix_json_output(self, tmp_path: Path) -> None:
+        """Test fix JSON output."""
+        f = tmp_path / "test.py"
+        f.write_text("try:\n    pass\nexcept:\n    pass\n")
+        with patch("sys.argv", ["adg", "fix", str(f), "--lang", "python", "--json"]):
+            result = main()
+        assert result == 0
+
+    def test_fix_nonexistent_path(self, tmp_path: Path) -> None:
+        """Test fix on nonexistent path."""
+        with patch("sys.argv", ["adg", "fix", str(tmp_path / "nonexistent"), "--lang", "python"]):
+            result = main()
+        assert result == 1
+
+    def test_fix_directory(self, tmp_path: Path) -> None:
+        """Test fix on directory."""
+        f1 = tmp_path / "test1.py"
+        f1.write_text("try:\n    pass\nexcept:\n    pass\n")
+        f2 = tmp_path / "test2.py"
+        f2.write_text("try:\n    pass\nexcept:\n    pass\n")
+        with patch("sys.argv", ["adg", "fix", str(tmp_path), "--lang", "python"]):
+            result = main()
+        assert result == 0
+        assert "except Exception:" in f1.read_text()
+        assert "except Exception:" in f2.read_text()

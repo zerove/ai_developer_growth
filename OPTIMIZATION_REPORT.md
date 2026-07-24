@@ -283,3 +283,18 @@
 - **CI 覆盖率门槛**: fail_under=75%
 - **所有新增测试通过**: 1466/1466 ✅
 - **低覆盖率模块**: 全部提升至 80% 以上
+
+### Phase 22: 消除 sys.path hack + 统一模块导入
+- 移除 11 个源文件中的 `sys.path.insert` hack
+- `from _common import` → `from tools.scripts._common import`（9 个文件）
+- `from rules.X import` → `from tools.scripts.rules.X import`（3 个文件）
+- `rules/__init__.py` 改为相对导入（`.loader`, `.models`）
+- `rules/cli.py`, `rules/loader.py`, `rules/web_base.py` 统一导入路径
+- **覆盖率**: 71.62% → **76.40%**（首次达到 75% 门槛 ✅）
+
+### 最终成果
+- **总测试数**: 748 → **1466** (+718, +96%)
+- **覆盖率**: ~75% → **76.40%** (fail_under=75% ✅)
+- **Lint**: 全部通过 ✅
+- **sys.path hack**: 全部消除 ✅
+- **模块双加载**: 已修复 ✅

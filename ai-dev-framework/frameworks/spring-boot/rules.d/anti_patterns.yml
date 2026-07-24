@@ -15,7 +15,7 @@ anti_patterns:
   name: Raw SQL injection risk
   severity: error
   category: security
-  pattern: "createQuery\(\".*\\+|createNativeQuery\(\".*\\+"
+  pattern: 'createQuery\(".*\+|createNativeQuery\(".*\+'
   message: 'String concatenation in SQL enables injection'
   fix_hint: 'Use parameterized queries: query.setParameter("id", id)'
 

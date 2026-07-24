@@ -15,7 +15,7 @@ anti_patterns:
   name: Missing use client directive
   severity: info
   category: architecture
-  pattern: "import\s+.*(?:useState|useEffect|useRouter)\s+from\s+['\"]react['\"]"
+  pattern: 'import\s+.*(?:useState|useEffect|useRouter)\s+from\s+[''"]react[''"]'
   message: 'React hooks require client component'
   fix_hint: "Add 'use client' at top of file"
 

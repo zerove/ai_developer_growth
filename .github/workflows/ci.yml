@@ -115,8 +115,8 @@ jobs:
           branch_coverage = float(root.attrib.get('branch-rate', 0)) * 100
           print(f'Line coverage: {coverage:.1f}%')
           print(f'Branch coverage: {branch_coverage:.1f}%')
-          if coverage < 75:
-              print(f'::error::Line coverage {coverage:.1f}% is below 75% threshold')
+          if coverage < 85:
+              print(f'::error::Line coverage {coverage:.1f}% is below 85% threshold')
               exit(1)
           "
       - name: Coverage Report
@@ -252,6 +252,19 @@ jobs:
             test -d "$d" || { echo "Missing dir: $d"; exit 1; }
           done
           echo "All required files and directories exist"
+
+  docs-build:
+    name: MkDocs Build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: pip
+      - run: pip install mkdocs-material
+      - name: Build docs (strict)
+        run: mkdocs build --strict
 
   governance-docs-check:
     name: Governance Docs Validation

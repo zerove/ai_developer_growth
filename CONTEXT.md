@@ -2,7 +2,7 @@
 
 ## 项目状态
 
-- **阶段**: Phase 14 完成 - hooks 拆分 + 集成测试 + 类型安全 + 文档 (2026-07-24)
+- **阶段**: Phase 15 完成 - validate_language_rules 拆分 + CI 增强 + 测试覆盖 (2026-07-24)
 - **成熟度**: 99/100 (优秀) - 详见 AUDIT_REPORT.md
 - **核心资产**: 知识库 (218 篇文档) + 治理框架 (21 语言规则 + 11 框架 + 12 领域 = 44 规范) + 35 真实案例 + 7 代码示例 (含向量搜索)
 
@@ -10,6 +10,7 @@
 
 | 日期 | 决策 | 背景 | 影响 |
 |------|------|------|------|
+| 2026-07-24 | Phase 15: validate_language_rules 拆分 + CI/CD + 覆盖率 | 1115→142+731 行, CI 覆盖率阈值 75%, linter_runner 0→99% | 1139 测试, 模块化验证器, 自动化质量门禁 |
 | 2026-07-24 | Phase 14: hooks 拆分 + 集成测试 + 类型安全 | 747→260 行, 34 集成测试, mypy strict 19→6 | 1093 测试, 模块化架构, 类型安全 |
 | 2026-07-23 | 语言规则优化 + rules/ 包重构 | 21 种语言规则 + 统一 CLI + Web 基类 + 懒加载 | 748 测试全部通过，代码质量提升 |通过，代码质量提升 |
 | 2026-07-22 | AI 开发流程规范补全 | 缺失 15 个标准文档 | 新增: 5个P0 + 5个P1 + 5个P2 = 15个标准文档 |
@@ -22,6 +23,13 @@
 
 ## 已完成模块
 
+- ✅ Phase 15 validate_language_rules 拆分 + CI 增强 + 测试覆盖
+  - validate_language_rules.py 拆分为 validators/ 包 (1115→142+731 行)
+  - validators/: models.py, pipeline.py, cli.py, health.py, __init__.py
+  - CI/CD 增强: coverage fail_under=75, branch coverage, quality gate
+  - test_linter_runner.py (26 tests): linter_runner 0%→99%
+  - test_basic_checks.py (20 tests): basic_checks 65%→94%
+  - 1139 测试全部通过 (从 1093 增至 1139, +46)
 - ✅ Phase 14 hooks 拆分 + 集成测试 + 类型安全
   - hooks_runner.py 拆分为 4 模块 (747→260+178+236+131+54 行)
   - 34 集成测试 (端到端管道: detect→validate→report, CLI, quality gate)

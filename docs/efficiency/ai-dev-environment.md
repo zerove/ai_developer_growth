@@ -218,7 +218,7 @@ AI_MAX_TOKENS=4096
 
 ## 📂 导航
 
-- [IDE 最佳实践](ide-best-practices.md) - IDE 配置详解
+- [IDE 最佳实践](../tools/ide-best-practices.md) - IDE 配置详解
 - [CI/CD 工作流](ci-cd-workflow.md) - 自动化配置
 - [AI 模型选型与评估标准](ai-model-selection.md) - 模型选择
 

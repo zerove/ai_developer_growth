@@ -192,8 +192,8 @@ cursor .  # 或 zed .
 
 ## 📂 导航
 
-- [IDE 最佳实践](ide-best-practices.md) - IDE 配置详解
-- [工具矩阵](ai-tool-matrix.md) - 完整工具对比
+- [IDE 最佳实践](../tools/ide-best-practices.md) - IDE 配置详解
+- [工具矩阵](../tools/ai-tool-matrix.md) - 完整工具对比
 - [AI 模型选型与评估标准](ai-model-selection.md) - 模型选择
 
 ---

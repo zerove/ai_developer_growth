@@ -18,9 +18,7 @@ from _common import print_check, print_section, run_command
 def scan() -> int:
     """扫描所有案例格式完整性"""
     print_section("案例格式扫描")
-    code, output = run_command([
-        sys.executable, "tools/scripts/validate_case_study.py", "--all", "--strict"
-    ])
+    code, output = run_command([sys.executable, "tools/scripts/validate_case_study.py", "--all", "--strict"])
     print_check("案例扫描", code == 0, output)
     if code != 0:
         print(output)
@@ -30,9 +28,7 @@ def scan() -> int:
 def audit() -> int:
     """检查文档断链"""
     print_section("文档断链检查")
-    code, output = run_command([
-        sys.executable, "tools/scripts/link_auditor.py", ".", "--check-all"
-    ])
+    code, output = run_command([sys.executable, "tools/scripts/link_auditor.py", ".", "--check-all"])
     print_check("链接检查", code == 0, output)
     if code != 0:
         print(output)
@@ -42,9 +38,7 @@ def audit() -> int:
 def validate(file_path: str) -> int:
     """"""
     print_section(f"案例验证: {file_path}")
-    code, output = run_command([
-        sys.executable, "tools/scripts/validate_case_study.py", "--path", file_path
-    ])
+    code, output = run_command([sys.executable, "tools/scripts/validate_case_study.py", "--path", file_path])
     print_check("案例验证", code == 0, output)
     if code != 0:
         print(output)
@@ -54,9 +48,7 @@ def validate(file_path: str) -> int:
 def sync() -> int:
     """同步工具矩阵"""
     print_section("工具矩阵同步")
-    code, output = run_command([
-        sys.executable, "tools/scripts/update_ai_tool_matrix.py"
-    ])
+    code, output = run_command([sys.executable, "tools/scripts/update_ai_tool_matrix.py"])
     print_check("工具矩阵", code == 0, output)
     if code != 0:
         print(output)
@@ -66,9 +58,7 @@ def sync() -> int:
 def update_moc() -> int:
     """更新知识图谱"""
     print_section("知识图谱更新")
-    code, output = run_command([
-        sys.executable, "tools/scripts/link_auditor.py", ".", "--update-moc"
-    ])
+    code, output = run_command([sys.executable, "tools/scripts/link_auditor.py", ".", "--update-moc"])
     print_check("MOC 更新", code == 0, output)
     if code != 0:
         print(output)
@@ -86,9 +76,7 @@ def main() -> None:
     action_map = {
         "scan": scan,
         "audit": audit,
-        "validate": lambda: validate(sys.argv[2]) if len(sys.argv) > 2 else (
-            print("错误: 需要指定文件路径") or 1
-        ),
+        "validate": lambda: validate(sys.argv[2]) if len(sys.argv) > 2 else (print("错误: 需要指定文件路径") or 1),
         "sync": sync,
         "update-moc": update_moc,
     }

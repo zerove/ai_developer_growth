@@ -31,16 +31,20 @@ def load_hooks_config() -> dict:
         return json.load(f)
 
 
-def files_match_condition(changed_files: list[str], condition: str) -> bool:
+def files_match_condition(changed_files: list[str] | None, condition: str) -> bool:
     """检查变更文件是否满足触发条件"""
     if not condition:
         return True
 
     # 解析简单条件: files_contain('pattern')
     import re
+
     matches = re.findall(r"files_contain\('([^']+)'\)", condition)
     if not matches:
         return True
+
+    if not changed_files:
+        return False
 
     for pattern in matches:
         # 支持 glob 模式
@@ -71,10 +75,7 @@ def run_hook(hook: dict, changed_files: list[str] | None = None) -> bool:
 
     if command:
         # 直接执行命令
-        result = subprocess.run(
-            command, shell=True, capture_output=True, text=True,
-            cwd=get_project_root()
-        )
+        result = subprocess.run(command, shell=True, capture_output=True, text=True, cwd=get_project_root())
         output = result.stdout + result.stderr
         passed = result.returncode == 0
         print_check(name, passed, output)
@@ -89,10 +90,7 @@ def run_hook(hook: dict, changed_files: list[str] | None = None) -> bool:
             return False
 
         cmd = [sys.executable, str(script), action]
-        result = subprocess.run(
-            cmd, capture_output=True, text=True,
-            cwd=get_project_root()
-        )
+        result = subprocess.run(cmd, capture_output=True, text=True, cwd=get_project_root())
         output = result.stdout + result.stderr
         passed = result.returncode == 0
         print_check(name, passed, output)
@@ -102,7 +100,7 @@ def run_hook(hook: dict, changed_files: list[str] | None = None) -> bool:
 
 
 def run_event_hooks(event: str, changed_files: list[str] | None = None) -> int:
-    """运行数量"""
+    """运行事件的 hooks 并返回失败数量"""
     config = load_hooks_config()
     hooks = config.get("hooks", {}).get(event, [])
 
@@ -154,7 +152,7 @@ def main() -> None:
     changed_files = None
     if "--files" in sys.argv:
         idx = sys.argv.index("--files")
-        changed_files = sys.argv[idx + 1:]
+        changed_files = sys.argv[idx + 1 :]
 
     valid_events = ["on_commit", "on_pr", "on_merge", "scheduled"]
     if event not in valid_events:

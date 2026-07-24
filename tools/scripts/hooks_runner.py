@@ -1,9 +1,11 @@
 #!/usr/bin/env python3
 """
-统一 Hook 运行器
+统一 Hook 运行器 (CLI 入口)
 
-统一了 jcode hook 系统和 AI Quality Gate / Governance Auditor 的检查逻辑。
-可被 CI/CD workflow 复用，也可被 pre-commit hook 调用。
+模块化拆分:
+    - hooks/basic_checks.py    : lint, format, typecheck, test, security
+    - hooks/domain_checks.py   : language-rules, quality-gate, governance-audit
+    - hooks/incremental_checks.py : diff, pre-commit, git helpers
 
 用法:
     python hooks_runner.py lint
@@ -19,8 +21,9 @@
     python hooks_runner.py full
 """
 
+from __future__ import annotations
+
 import argparse
-import subprocess
 import sys
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
@@ -29,513 +32,24 @@ from pathlib import Path
 if __package__ is None or __package__ == "":
     sys.path.insert(0, str(Path(__file__).resolve().parent.parent.parent))
 
-from tools.scripts.ai_quality_gate import (
-    check_file,
+from tools.scripts.hooks.basic_checks import (
+    run_format_check,
+    run_lint,
+    run_security,
+    run_tests,
+    run_typecheck,
 )
-from tools.scripts.validate_language_rules import (
-    detect_language_from_file,
-    validate_directory,
-    validate_file,
+from tools.scripts.hooks.domain_checks import (
+    run_governance_audit,
+    run_language_rules,
+    run_quality_gate,
 )
-
-# =============================================================================
-# 基础检查函数
-# =============================================================================
-
-
-def run_lint() -> tuple[bool, str]:
-    """运行 ruff lint 检查"""
-
-    result = subprocess.run(
-        ["ruff", "check", "."],
-        capture_output=True,
-        text=True,
-        timeout=120,
-    )
-    return result.returncode == 0, result.stdout + result.stderr
-
-
-def run_format_check() -> tuple[bool, str]:
-    """运行 ruff format 检查"""
-
-    result = subprocess.run(
-        ["ruff", "format", "--check", "."],
-        capture_output=True,
-        text=True,
-        timeout=120,
-    )
-    return result.returncode == 0, result.stdout + result.stderr
-
-
-def run_typecheck() -> tuple[bool, str]:
-    """运行 mypy 类型检查"""
-
-    result = subprocess.run(
-        [sys.executable, "-m", "mypy", "tools/scripts/", "--ignore-missing-imports"],
-        capture_output=True,
-        text=True,
-        timeout=120,
-    )
-    return result.returncode == 0, result.stdout + result.stderr
-
-
-def run_tests() -> tuple[bool, str]:
-    """运行 pytest 测试套件"""
-
-    result = subprocess.run(
-        [
-            sys.executable,
-            "-m",
-            "pytest",
-            "tests/",
-            "-v",
-            "--cov=tools/scripts",
-            "--cov-report=term-missing",
-            "--tb=short",
-        ],
-        capture_output=True,
-        text=True,
-        timeout=300,
-    )
-    return result.returncode == 0, result.stdout + result.stderr
-
-
-def run_security() -> tuple[bool, str]:
-    """运行安全扫描"""
-
-    results = []
-
-    # bandit
-    result1 = subprocess.run(
-        ["bandit", "-r", "tools/scripts/", "-f", "json", "-o", "bandit-report.json", "-ll"],
-        capture_output=True,
-        text=True,
-        timeout=120,
-    )
-    results.append(("bandit", result1.returncode == 0, result1.stdout + result1.stderr))
-
-    # pip-audit
-    result2 = subprocess.run(
-        ["pip-audit", "--desc", "--timeout", "30"],
-        capture_output=True,
-        text=True,
-        timeout=120,
-    )
-    results.append(("pip-audit", result2.returncode == 0, result2.stdout + result2.stderr))
-
-    all_passed = all(r[1] for r in results)
-    output = "\n".join(f"=== {r[0]} ===\n{r[2]}" for r in results)
-    return all_passed, output
-
-
-def run_language_rules(path: Path, lang: str | None = None) -> tuple[bool, str]:
-    """运行语言特定规则检查"""
-    if path.is_file():
-        language = lang or detect_language_from_file(path)
-        if not language:
-            return False, f"Cannot detect language for {path}"
-        result = validate_file(path, language)
-        return result.passed, str(result.to_dict())
-    else:
-        results = validate_directory(path)
-        passed = all(r.passed for r in results)
-        output = "\n".join(f"{r.file}: {'PASS' if r.passed else 'FAIL'} ({len(r.issues)} issues)" for r in results)
-        return passed, output
-
-
-def run_quality_gate(
-    path: Path,
-    full: bool = False,
-    check_annotation: bool = False,
-    check_security: bool = False,
-    check_type: bool = False,
-    check_error: bool = False,
-    check_structure: bool = False,
-    check_patterns: bool = False,
-    format: str = "text",
-) -> tuple[bool, str]:
-    """运行 AI Quality Gate 检查"""
-    checks = []
-    if full or check_patterns:
-        checks = ["annotation", "security", "type", "error", "structure", "language_rules"]
-    else:
-        if check_annotation:
-            checks.append("annotation")
-        if check_security:
-            checks.append("security")
-        if check_type:
-            checks.append("type")
-        if check_error:
-            checks.append("error")
-        if check_structure:
-            checks.append("structure")
-
-    if not checks:
-        checks = ["annotation", "security", "type", "error"]
-
-    files_to_check = []
-    if path.is_file():
-        files_to_check = [path]
-    else:
-        exts = [
-            "*.py",
-            "*.ts",
-            "*.tsx",
-            "*.js",
-            "*.jsx",
-            "*.rs",
-            "*.go",
-            "*.java",
-            "*.kt",
-            "*.cs",
-            "*.php",
-            "*.rb",
-            "*.cpp",
-            "*.swift",
-            "*.scala",
-            "*.ex",
-            "*.exs",
-            "*.lua",
-            "*.zig",
-            "*.r",
-            "*.R",
-            "*.clj",
-            "*.hs",
-            "*.dart",
-            "*.ps1",
-        ]
-        for ext in exts:
-            files_to_check.extend(path.rglob(ext))
-
-    filtered_files = [f for f in files_to_check if "__pycache__" not in str(f) and ".git" not in str(f)]
-
-    if not filtered_files:
-        return True, "No files to check"
-
-    all_results = []
-    for filepath in filtered_files:
-        lang = detect_language_from_file(filepath)
-        if not lang:
-            continue
-        result = check_file(filepath, checks)
-        all_results.append((filepath, result))
-
-    passed_count = sum(1 for _, r in all_results if r["passed"])
-    failed_count = len(all_results) - passed_count
-    total_issues = sum(len(r["issues"]) for _, r in all_results)
-
-    if format == "json":
-        import json
-
-        output = json.dumps(
-            {
-                "summary": {
-                    "passed": passed_count,
-                    "failed": failed_count,
-                    "total_files": len(all_results),
-                    "total_issues": total_issues,
-                },
-                "results": [{"file": str(f), **r} for f, r in all_results],
-            },
-            indent=2,
-            ensure_ascii=False,
-        )
-    else:
-        lines = []
-        for filepath, result in all_results:
-            if result["passed"]:
-                lines.append(f"✅ {filepath}")
-            else:
-                lines.append(f"❌ {filepath} ({len(result['issues'])} issues)")
-                for issue in result["issues"][:5]:
-                    lines.append(f"   Line {issue['line']}: [{issue['type']}] {issue['message']}")
-                if len(result["issues"]) > 5:
-                    lines.append(f"   ... and {len(result['issues']) - 5} more")
-        lines.append(f"\nSummary: {passed_count} passed, {failed_count} failed, {total_issues} issues")
-        output = "\n".join(lines)
-
-    return failed_count == 0, output
-
-
-def run_governance_audit(
-    full: bool = False,
-    validate_docs: bool = False,
-    check_ai_sdlc: bool = False,
-    audit_hallucination: bool = False,
-    check_index: bool = False,
-) -> tuple[bool, str]:
-    """运行治理审计"""
-    # 直接调用 governance-auditor 的函数
-    sys.path.insert(0, str(Path(__file__).resolve().parent.parent / ".jcode" / "scripts"))
-    import importlib.util
-
-    spec = importlib.util.spec_from_file_location(
-        "governance_auditor",
-        Path(__file__).resolve().parent.parent.parent / ".jcode" / "scripts" / "governance-auditor.py",
-    )
-    if spec is None or spec.loader is None:
-        raise ImportError("Failed to load governance_auditor module")
-    governance_auditor = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(governance_auditor)
-
-    lint = governance_auditor.lint
-    format_check = governance_auditor.format_check
-    typecheck = governance_auditor.typecheck
-    test = governance_auditor.test
-    validate_governance_docs = governance_auditor.validate_governance_docs
-    check_ai_sdlc_compliance = governance_auditor.check_ai_sdlc_compliance
-    audit_hallucination_risks = governance_auditor.audit_hallucination_risks
-
-    checks = []
-    if full or validate_docs:
-        checks.append(("Governance Docs", validate_governance_docs))
-    if full or check_ai_sdlc:
-        checks.append(("AI-SDLC Compliance", check_ai_sdlc_compliance))
-    if full or audit_hallucination:
-        checks.append(("Hallucination Risk", audit_hallucination_risks))
-    if check_index:
-        # 调用 governance-docs-validator.py check-index
-        def _check_index() -> bool:
-            import subprocess
-
-            result = subprocess.run(
-                [sys.executable, ".jcode/scripts/governance-docs-validator.py", "check-index"],
-                capture_output=True,
-                text=True,
-                timeout=60,
-            )
-            return result.returncode == 0
-
-        checks.append(("Index References", _check_index))
-    if full:
-        checks = [
-            ("Lint", lint),
-            ("Format", format_check),
-            ("Type Check", typecheck),
-            ("Test", test),
-            *checks,
-        ]
-
-    if not checks:
-        checks = [
-            ("Lint", lint),
-            ("Format", format_check),
-            ("Type Check", typecheck),
-            ("Test", test),
-            ("Governance Docs", validate_governance_docs),
-            ("AI-SDLC Compliance", check_ai_sdlc_compliance),
-        ]
-
-    failed = []
-    output_lines = []
-
-    for name, func in checks:
-        passed = func()
-        status = "✅ PASS" if passed else "❌ FAIL"
-        output_lines.append(f"  {status}: {name}")
-        if not passed:
-            failed.append(name)
-
-    output = "\n".join(output_lines)
-    if failed:
-        output += f"\n\nFailed checks: {', '.join(failed)}"
-
-    return len(failed) == 0, output
-
-
-# =============================================================================
-# Incremental check helpers
-# =============================================================================
-
-
-def get_changed_files(base: str = "HEAD") -> list[Path]:
-    """Get list of changed files compared to a base ref (git diff)."""
-    try:
-        result = subprocess.run(
-            ["git", "diff", "--name-only", "--diff-filter=ACMR", base],
-            capture_output=True,
-            text=True,
-            timeout=30,
-        )
-        if result.returncode != 0:
-            # Fallback: try diff with main/master
-            for ref in ["origin/main", "origin/master", "main", "master"]:
-                result = subprocess.run(
-                    ["git", "diff", "--name-only", "--diff-filter=ACMR", ref],
-                    capture_output=True,
-                    text=True,
-                    timeout=30,
-                )
-                if result.returncode == 0 and result.stdout.strip():
-                    break
-
-        return [Path(line.strip()) for line in result.stdout.splitlines() if line.strip()]
-    except (subprocess.TimeoutExpired, FileNotFoundError):
-        return []
-
-
-def get_staged_files() -> list[Path]:
-    """Get list of files staged for commit (git diff --cached)."""
-    try:
-        result = subprocess.run(
-            ["git", "diff", "--cached", "--name-only", "--diff-filter=ACMR"],
-            capture_output=True,
-            text=True,
-            timeout=30,
-        )
-        return [Path(line.strip()) for line in result.stdout.splitlines() if line.strip()]
-    except (subprocess.TimeoutExpired, FileNotFoundError):
-        return []
-
-
-def run_diff_checks(base: str = "HEAD") -> tuple[bool, str]:
-    """Run lint, format, and quality checks only on changed files."""
-    changed = get_changed_files(base)
-    if not changed:
-        return True, "No changed files detected"
-
-    # Filter to code files only
-    code_exts = {
-        ".py",
-        ".ts",
-        ".tsx",
-        ".js",
-        ".jsx",
-        ".rs",
-        ".go",
-        ".java",
-        ".kt",
-        ".cs",
-        ".php",
-        ".rb",
-        ".cpp",
-        ".swift",
-        ".scala",
-        ".dart",
-    }
-    code_files = [f for f in changed if f.suffix in code_exts and f.exists()]
-
-    if not code_files:
-        return True, f"No code files in {len(changed)} changed files"
-
-    output_lines = [f"Checking {len(code_files)} changed file(s)...\n"]
-    all_passed = True
-
-    # 1. Ruff lint on changed files
-    py_files = [str(f) for f in code_files if f.suffix == ".py"]
-    if py_files:
-        result = subprocess.run(
-            ["ruff", "check", *py_files],
-            capture_output=True,
-            text=True,
-            timeout=60,
-        )
-        passed = result.returncode == 0
-        output_lines.append(f"{'✅' if passed else '❌'} Lint ({len(py_files)} Python files)")
-        if not passed:
-            output_lines.append(result.stdout)
-            all_passed = False
-
-    # 2. Ruff format check on changed files
-    if py_files:
-        result = subprocess.run(
-            ["ruff", "format", "--check", *py_files],
-            capture_output=True,
-            text=True,
-            timeout=60,
-        )
-        passed = result.returncode == 0
-        output_lines.append(f"{'✅' if passed else '❌'} Format ({len(py_files)} Python files)")
-        if not passed:
-            output_lines.append(result.stdout)
-            all_passed = False
-
-    # 3. Language rules on changed files
-    for filepath in code_files:
-        lang = detect_language_from_file(filepath)
-        if lang:
-            result = validate_file(filepath, lang)
-            if not result.passed:
-                output_lines.append(f"❌ {filepath}: {len(result.issues)} rule violations")
-                all_passed = False
-
-    if all_passed:
-        output_lines.append(f"\n✅ All {len(code_files)} changed files pass checks")
-
-    return all_passed, "\n".join(output_lines)
-
-
-def run_pre_commit_checks() -> tuple[bool, str]:
-    """Run checks on staged files (pre-commit hook)."""
-    staged = get_staged_files()
-    if not staged:
-        return True, "No staged files"
-
-    # Same logic as diff but against staged
-    code_exts = {
-        ".py",
-        ".ts",
-        ".tsx",
-        ".js",
-        ".jsx",
-        ".rs",
-        ".go",
-        ".java",
-        ".kt",
-        ".cs",
-        ".php",
-        ".rb",
-        ".cpp",
-        ".swift",
-        ".scala",
-        ".dart",
-    }
-    code_files = [f for f in staged if f.suffix in code_exts and f.exists()]
-
-    if not code_files:
-        return True, f"No code files in {len(staged)} staged files"
-
-    output_lines = [f"Pre-commit: checking {len(code_files)} staged file(s)...\n"]
-    all_passed = True
-
-    py_files = [str(f) for f in code_files if f.suffix == ".py"]
-    if py_files:
-        # Lint
-        result = subprocess.run(
-            ["ruff", "check", *py_files],
-            capture_output=True,
-            text=True,
-            timeout=60,
-        )
-        if result.returncode != 0:
-            output_lines.append(f"❌ Lint errors:\n{result.stdout}")
-            all_passed = False
-
-        # Format
-        result = subprocess.run(
-            ["ruff", "format", "--check", *py_files],
-            capture_output=True,
-            text=True,
-            timeout=60,
-        )
-        if result.returncode != 0:
-            output_lines.append(f"❌ Format errors (run: ruff format {' '.join(py_files[:3])}...):\n{result.stdout}")
-            all_passed = False
-
-    # Language rules
-    for filepath in code_files:
-        lang = detect_language_from_file(filepath)
-        if lang:
-            vr = validate_file(filepath, lang)
-            if not vr.passed:
-                output_lines.append(f"❌ {filepath}: {len(vr.issues)} violations")
-                all_passed = False
-
-    if all_passed:
-        output_lines.insert(0, f"✅ All {len(code_files)} staged files pass pre-commit checks")
-
-    return all_passed, "\n".join(output_lines)
-
+from tools.scripts.hooks.incremental_checks import (  # noqa: F401
+    get_changed_files,
+    get_staged_files,
+    run_diff_checks,
+    run_pre_commit_checks,
+)
 
 # =============================================================================
 # CLI
@@ -616,7 +130,7 @@ Examples:
 
     args = parser.parse_args()
 
-    # 执行对应命令
+    # Dispatch commands
     if args.command == "lint":
         passed, output = run_lint()
         print(output)
@@ -705,7 +219,7 @@ Examples:
                     passed, output = False, str(e)
                 results[name] = (passed, output)
 
-        # 串行执行有依赖的检查 (test -> security -> quality-gate -> governance-audit)
+        # 串行执行有依赖的检查
         sequential_checks = [
             ("Test Suite", run_tests),
             ("Security Scan", run_security),
@@ -738,7 +252,7 @@ Examples:
 
         return 0 if all_passed else 1
 
-    # Unknown command - should not reach here due to required=True, but mypy needs it
+    # Unknown command
     print(f"Unknown command: {args.command}")
     return 1
 

@@ -1,0 +1,84 @@
+# Spring Boot Framework Anti-Pattern Rules
+framework: spring-boot
+language: java
+config_version: '1.0'
+anti_patterns:
+- id: spring-n-plus-one
+  name: N+1 query problem
+  severity: error
+  category: performance
+  pattern: 'findAll\(\)|\.findAllById\('
+  message: 'N+1 queries cause performance degradation'
+  fix_hint: 'Use @EntityGraph or JOIN FETCH for related entities'
+
+- id: spring-raw-sql
+  name: Raw SQL injection risk
+  severity: error
+  category: security
+  pattern: "createQuery\(\".*\\+|createNativeQuery\(\".*\\+"
+  message: 'String concatenation in SQL enables injection'
+  fix_hint: 'Use parameterized queries: query.setParameter("id", id)'
+
+- id: spring-no-transaction
+  name: Missing @Transactional
+  severity: warning
+  category: data_integrity
+  pattern: '@(Save|Update|Delete)\s'
+  message: 'Database modifications should be transactional'
+  fix_hint: 'Add @Transactional annotation to service method'
+
+- id: spring-hardcoded-secret
+  name: Hardcoded secret
+  severity: error
+  category: security
+  pattern: "(?:SECRET|PASSWORD|API_KEY|TOKEN)\\s*=\\s*[\"']"
+  message: 'Secrets must not be hardcoded in source'
+  fix_hint: 'Use application.yml with ${ENV_VAR} or Vault'
+
+- id: spring-catch-all-exception
+  name: Generic exception catching
+  severity: warning
+  category: error_handling
+  pattern: 'catch\s*\(\s*Exception\s+\w+\s*\)'
+  message: 'Catching generic Exception hides specific errors'
+  fix_hint: 'Catch specific exceptions or use @ExceptionHandler'
+
+- id: spring-sys-out
+  name: System.out.println usage
+  severity: warning
+  category: code_quality
+  pattern: 'System\.out\.print|System\.err\.print|e\.printStackTrace\(\)'
+  message: 'Use SLF4J logger instead of System.out'
+  fix_hint: 'private static final Logger log = LoggerFactory.getLogger(...);'
+
+- id: spring-no-validation
+  name: Missing input validation
+  severity: warning
+  category: security
+  pattern: '@RequestBody\s+(?!.*@Valid)'
+  message: 'Request body should be validated'
+  fix_hint: 'Add @Valid annotation: @Valid @RequestBody'
+
+- id: spring-rest-return-type
+  name: Returning entity directly from controller
+  severity: warning
+  category: architecture
+  pattern: 'ResponseEntity<\w+Entity>'
+  message: 'Consider using DTO instead of entity'
+  fix_hint: 'Create DTO class and map entity to DTO'
+
+- id: spring-magic-number
+  name: Magic number in code
+  severity: info
+  category: code_quality
+  pattern: '(?:if|while|for)\s*\(\s*\w+\s*[><=]+\s*\d{2,}'
+  message: 'Magic numbers should be constants'
+  fix_hint: 'Extract to named constant: private static final int MAX = 100;'
+
+- id: spring-empty-catch
+  name: Empty catch block
+  severity: error
+  category: error_handling
+  pattern: 'catch\s*\([^)]*\)\s*\{\s*\}'
+  message: 'Empty catch blocks hide errors'
+  fix_hint: 'Log the exception or rethrow'

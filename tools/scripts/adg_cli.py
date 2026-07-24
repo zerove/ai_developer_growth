@@ -88,19 +88,25 @@ CONFIG_MARKERS: dict[tuple[str, str | None]] = {
 }
 
 FRAMEWORK_SIGNATURES: dict[str, list[str]] = {
-    "react": ["react", "react-dom"],
+    # JavaScript/TypeScript frameworks (order matters for detection)
     "nextjs": ["next", "nextjs"],
+    "react": ["react", "react-dom"],
     "vue": ["vue", "nuxt"],
     "angular": ["@angular/core"],
+    "express": ["express"],
+    "nestjs": ["@nestjs/core"],
+    # Python frameworks
     "fastapi": ["fastapi"],
     "django": ["django"],
     "flask": ["flask"],
-    "express": ["express"],
-    "nestjs": ["@nestjs/core"],
+    # Go frameworks
     "gin": ["github.com/gin-gonic/gin"],
+    # Rust frameworks
     "actix": ["actix-web"],
     "axum": ["axum"],
+    # Java frameworks
     "spring-boot": ["spring-boot"],
+    "spring": ["spring"],
 }
 
 SKIP_DIRS = {
@@ -231,6 +237,17 @@ def _detect_framework(dirpath: Path, language: str | None) -> str | None:
                     return "spring"
             except OSError:
                 pass
+
+    # Check Rust Cargo.toml
+    cargo_toml = dirpath / "Cargo.toml"
+    if cargo_toml.exists():
+        try:
+            content = cargo_toml.read_text(encoding="utf-8").lower()
+            for framework, signatures in FRAMEWORK_SIGNATURES.items():
+                if any(sig.lower() in content for sig in signatures):
+                    return framework
+        except OSError:
+            pass
 
     return None
 

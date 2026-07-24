@@ -1,0 +1,74 @@
+name: Scheduled Governance Audit
+
+on:
+  schedule:
+    # 每周一 09:00 UTC 运
+    - cron: "0 9 * * 1"
+    # 每月 1 号 10:00 UTC 运行效率报告
+    - cron: "0 10 1 * *"
+  workflow_dispatch:
+    inputs:
+      audit_type:
+        description: "审计类型"
+        required: true
+        default: "full"
+        type: choice
+        options:
+          - full
+          - weekly
+          - monthly
+
+env:
+  PYTHON_VERSION: "3.11"
+
+jobs:
+  governance-audit:
+    name: Governance Audit
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+      - name: Install dependencies
+        run: pip install ruff mypy pytest pytest-cov pyyaml bandit
+
+      - name: Run full governance audit
+        run: python .jcode/scripts/governance-auditor.py full
+
+      - name: Run AI Quality Gate
+        run: python .jcode/scripts/governance-auditor.py ai-quality-gate
+
+      - name: Run link audit
+        run: python tools/scripts/link_auditor.py --check . || true
+
+      - name: Run case validation
+        run: python tools/scripts/validate_case_study.py --all || true
+
+  weekly-scan:
+    name: Weekly Knowledge Scan
+    runs-on: ubuntu-latest
+    if: github.event.schedule == '0 9 * * 1' || github.event.inputs.audit_type == 'weekly'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+      - name: Scan case studies
+        run: python tools/scripts/validate_case_study.py --all || true
+      - name: Update tool matrix
+        run: python tools/scripts/update_ai_tool_matrix.py --check || true
+
+  monthly-report:
+    name: Monthly Efficiency Report
+    runs-on: ubuntu-latest
+    if: github.event.schedule == '0 10 1 * *' || github.event.inputs.audit_type == 'monthly'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+      - name: Generate efficiency report
+        run: python .jcode/scripts/workflow-optimizer.py report || true
+      - name: Audit hallucination risks
+        run: python .jcode/scripts/governance-auditor.py audit-hallucination-risks || true

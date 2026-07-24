@@ -1,4 +1,5 @@
 """Tests for enforcement scripts."""
+
 import shutil
 import tempfile
 import unittest
@@ -59,7 +60,8 @@ class TestValidateAgentDefinition(unittest.TestCase):
     def test_valid_md_format(self):
         """Should accept valid Markdown format."""
         agent_file = Path(self.test_dir) / "test-agent.md"
-        agent_file.write_text("""## agent: test-agent (Test Agent)
+        agent_file.write_text(
+            """## agent: test-agent (Test Agent)
 
 ### 指令
 
@@ -72,7 +74,9 @@ class TestValidateAgentDefinition(unittest.TestCase):
 
 - 禁止删除生产数据
 - 所有操作必须有日志记录
-""", encoding="utf-8")
+""",
+            encoding="utf-8",
+        )
 
         result = validate_agent_definition(agent_file)
         self.assertTrue(result["passed"])
@@ -80,7 +84,8 @@ class TestValidateAgentDefinition(unittest.TestCase):
     def test_invalid_name(self):
         """Should reject invalid agent names."""
         agent_file = Path(self.test_dir) / "bad-name.md"
-        agent_file.write_text("""## agent: BAD_NAME
+        agent_file.write_text(
+            """## agent: BAD_NAME
 
 ### 指令
 
@@ -93,7 +98,9 @@ class TestValidateAgentDefinition(unittest.TestCase):
 ### 约束
 
 - 禁止删除生产数据
-""", encoding="utf-8")
+""",
+            encoding="utf-8",
+        )
 
         result = validate_agent_definition(agent_file)
         self.assertFalse(result["passed"])
@@ -127,7 +134,7 @@ class TestCheckSecurityPatterns(unittest.TestCase):
     def test_detects_eval(self):
         """Should detect eval usage."""
         with tempfile.NamedTemporaryFile(mode="w", suffix=".py", delete=False) as f:
-            f.write('result = eval(user_input)')
+            f.write("result = eval(user_input)")
             f.flush()
             issues = check_security_patterns(Path(f.name))
         self.assertGreater(len(issues), 0)
@@ -147,7 +154,7 @@ class TestCheckTypePatterns(unittest.TestCase):
     def test_detects_type_ignore(self):
         """Should detect type: ignore."""
         with tempfile.NamedTemporaryFile(mode="w", suffix=".py", delete=False) as f:
-            f.write('x = get_value()  # type: ignore')
+            f.write("x = get_value()  # type: ignore")
             f.flush()
             issues = check_type_patterns(Path(f.name))
         self.assertGreater(len(issues), 0)
@@ -159,7 +166,7 @@ class TestCheckErrorPatterns(unittest.TestCase):
     def test_detects_empty_except(self):
         """Should detect empty except blocks."""
         with tempfile.NamedTemporaryFile(mode="w", suffix=".py", delete=False) as f:
-            f.write('try:\n    pass\nexcept Exception:\n    pass')
+            f.write("try:\n    pass\nexcept Exception:\n    pass")
             f.flush()
             issues = check_error_patterns(Path(f.name))
         self.assertGreater(len(issues), 0)

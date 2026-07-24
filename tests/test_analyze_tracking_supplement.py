@@ -1,4 +1,5 @@
 """Tests for analyze_tracking.py - improve coverage from 52% to 70%+."""
+
 import json
 import tempfile
 import unittest
@@ -96,11 +97,7 @@ class TestAnalyzeSearches(unittest.TestCase):
 
     def test_custom_top_n(self):
         """Should respect top_n parameter."""
-        data = {
-            "searches": [
-                {"q": f"query{i}", "results": 1} for i in range(20)
-            ]
-        }
+        data = {"searches": [{"q": f"query{i}", "results": 1} for i in range(20)]}
         result = analyze_searches(data, top_n=5)
         self.assertEqual(len(result["top"]), 5)
 

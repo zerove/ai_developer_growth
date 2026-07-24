@@ -19,7 +19,7 @@ class TestCommunityCatalyst:
             [sys.executable, str(SCRIPTS_DIR / "community-catalyst.py"), *args],
             capture_output=True,
             text=True,
-            cwd=Path.cwd()
+            cwd=Path.cwd(),
         )
         return result
 

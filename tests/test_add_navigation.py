@@ -1,4 +1,5 @@
 """Tests for add_navigation.py."""
+
 import shutil
 import tempfile
 import unittest
@@ -76,12 +77,15 @@ class TestAddNavigationToDoc(unittest.TestCase):
     def test_adds_navigation(self):
         """Should add navigation section."""
         doc = self.docs_dir / "test.md"
-        doc.write_text("""---
+        doc.write_text(
+            """---
 title: Test
 category: 效率层
 ---
 # Test
-""", encoding="utf-8")
+""",
+            encoding="utf-8",
+        )
 
         result = add_navigation_to_doc(doc)
         self.assertTrue(result)
@@ -91,11 +95,14 @@ category: 效率层
     def test_skips_if_exists(self):
         """Should skip if navigation already exists."""
         doc = self.docs_dir / "test.md"
-        doc.write_text("""---
+        doc.write_text(
+            """---
 title: Test
 ## 导航
 - [[docs/efficiency/other|Other]]
-""", encoding="utf-8")
+""",
+            encoding="utf-8",
+        )
 
         result = add_navigation_to_doc(doc)
         self.assertFalse(result)
@@ -103,11 +110,14 @@ title: Test
     def test_skips_no_category(self):
         """Should skip if no category."""
         doc = self.docs_dir / "test.md"
-        doc.write_text("""---
+        doc.write_text(
+            """---
 title: Test
 ---
 # Test
-""", encoding="utf-8")
+""",
+            encoding="utf-8",
+        )
 
         result = add_navigation_to_doc(doc)
         self.assertFalse(result)
@@ -128,15 +138,19 @@ class TestMain(unittest.TestCase):
         """Should update multiple docs."""
         for i in range(3):
             doc = self.docs_dir / f"doc{i}.md"
-            doc.write_text(f"""---
+            doc.write_text(
+                f"""---
 title: Doc {i}
 category: 效率层
 ---
 # Doc {i}
-""", encoding="utf-8")
+""",
+                encoding="utf-8",
+            )
 
         # Run main with patched docs_dir
         from unittest.mock import patch
+
         with patch("tools.scripts.add_navigation.Path") as mock_path:
             mock_path.return_value = self.docs_dir
             # Just verify it runs without error

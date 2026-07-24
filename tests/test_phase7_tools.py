@@ -2,27 +2,19 @@
 
 from __future__ import annotations
 
-import json
 import sys
-import tempfile
 from pathlib import Path
-
-import pytest
 
 sys.path.insert(0, str(Path(__file__).parent.parent / "tools" / "scripts"))
 
+from git_diff_incremental import filter_supported_files, get_incremental_files
+from rule_author import CATEGORY_TYPES, SEVERITY_LEVELS, TEMPLATES
 from rule_registry import (
+    _file_hash,
     _load_registry,
     _save_registry,
-    _file_hash,
-    init_registry,
-    _registry_dir,
-    _packs_dir,
 )
-from rule_author import TEMPLATES, SEVERITY_LEVELS, CATEGORY_TYPES
-from rule_tracker import _count_by_severity, _count_by_rule
-from git_diff_incremental import get_incremental_files, filter_supported_files
-
+from rule_tracker import _count_by_rule, _count_by_severity
 
 # ──────────────────────────────────────────────────────────
 # Rule Registry tests
@@ -42,6 +34,7 @@ class TestRuleRegistry:
         reg_file = tmp_path / "registry.json"
         # Patch temporarily
         import rule_registry
+
         old = rule_registry._registry_file
         rule_registry._registry_file = lambda: reg_file
         try:
@@ -109,6 +102,7 @@ class TestRuleTracker:
 class TestRuleRegistryExtended:
     def test_empty_registry_load(self, tmp_path: Path) -> None:
         import rule_registry
+
         old = rule_registry._registry_file
         rule_registry._registry_file = lambda: tmp_path / "nonexistent.json"
         try:
@@ -179,6 +173,7 @@ class TestGitDiffIncremental:
 class TestWebTools:
     def test_visualize_imports(self) -> None:
         from rule_visualize import get_all_rules
+
         rules = get_all_rules()
         assert len(rules) > 0
         assert "python" in rules
@@ -186,5 +181,6 @@ class TestWebTools:
 
     def test_editor_html_exists(self) -> None:
         from rule_editor import HTML
+
         assert "Rule Editor" in HTML
         assert "yaml-editor" in HTML

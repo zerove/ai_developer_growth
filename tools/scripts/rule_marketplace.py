@@ -19,7 +19,7 @@ import sys
 from pathlib import Path
 
 import yaml
-from rule_catalog import (
+from tools.scripts.rule_catalog import (
     BUILTIN_PACKS,
     export_rules,
     get_pack_info,

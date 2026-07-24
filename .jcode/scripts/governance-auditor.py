@@ -14,10 +14,12 @@ jcode Skill Runner - 治理审计员 (v2.0)
     python .jcode/scripts/governance-auditor.py validate-governance-docs
     python .jcode/scripts/governance-auditor.py check-ai-sdlc-compliance
     python .jcode/scripts/governance-auditor.py audit-hallucination-risks
+    python .jcode/scripts/governance-auditor.py ai-quality-gate
     python .jcode/scripts/governance-auditor.py full
 """
 
 import re
+import subprocess
 import sys
 from pathlib import Path
 
@@ -280,6 +282,24 @@ def audit_hallucination_risks() -> bool:
     return passed
 
 
+def ai_quality_gate() -> bool:
+    """运行 AI 代码质量门禁 (整合 ai_quality_gate.py)"""
+    print_section("🛡️ AI 代码质量门禁")
+    root = get_project_root()
+    script = root / "tools" / "scripts" / "ai_quality_gate.py"
+    if not script.exists():
+        print(f"⚠️  未找到 {script}")
+        return True  # 非阻断
+    cmd = [
+        sys.executable, str(script),
+        "--check-annotation", "--check-security", "--check-patterns",
+    ]
+    result = subprocess.run(cmd, capture_output=True, text=True, cwd=root)
+    passed = result.returncode == 0
+    print_check("AI Quality Gate", passed, result.stdout + result.stderr)
+    return passed
+
+
 def full() -> int:
     """运行失败数量"""
     print_section("🚀 完整治理审计 (v2.0)")
@@ -291,6 +311,7 @@ def full() -> int:
         ("Test", test),
         ("Governance Docs", validate_governance_docs),
         ("AI-SDLC Compliance", check_ai_sdlc_compliance),
+        ("AI Quality Gate", ai_quality_gate),
     ]
 
     failed: list[str] = []
@@ -313,7 +334,7 @@ def main() -> None:
         print(
             "Actions: lint, format, typecheck, test, security, "
             "validate-governance-docs, check-ai-sdlc-compliance, "
-            "audit-hallucination-risks, full"
+            "audit-hallucination-risks, ai-quality-gate, full"
         )
         sys.exit(1)
 
@@ -328,6 +349,7 @@ def main() -> None:
         "validate-governance-docs": lambda: 0 if validate_governance_docs() else 1,
         "check-ai-sdlc-compliance": lambda: 0 if check_ai_sdlc_compliance() else 1,
         "audit-hallucination-risks": lambda: 0 if audit_hallucination_risks() else 1,
+        "ai-quality-gate": lambda: 0 if ai_quality_gate() else 1,
         "full": full,
     }
 

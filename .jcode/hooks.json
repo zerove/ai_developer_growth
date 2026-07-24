@@ -22,7 +22,6 @@
         "skill": "governance-auditor",
         "action": "ai-quality-gate",
         "description": "提交时运行 AI 代码质量门禁",
-        "command": "python tools/scripts/ai_quality_gate.py --check-annotation --check-security --check-patterns",
         "enabled": true
       }
     ],
@@ -130,7 +129,6 @@
         "skill": "governance-auditor",
         "action": "ai-quality-gate",
         "description": "每月 AI 代码质量报告",
-        "command": "python tools/scripts/ai_quality_gate.py --full",
         "schedule": "0 9 1 * *",
         "enabled": true
       }

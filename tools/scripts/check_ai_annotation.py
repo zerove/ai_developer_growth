@@ -11,6 +11,7 @@ AI 代码标注检查脚本
     python check_ai_annotation.py --file test.py     # 检查单个文件
     python check_ai_annotation.py --fix              # 自动添加标注
 """
+
 import argparse
 import re
 import sys
@@ -23,6 +24,7 @@ class CheckResult(TypedDict):
     has_annotation: bool
     issues: list[str]
     passed: bool
+
 
 # AI 标注模式
 AI_ANNOTATION_PATTERN = r"# \[AI-GEN\]"
@@ -58,14 +60,16 @@ def detect_ai_generated_functions(content: str) -> list[dict]:
             context = "\n".join(lines[start:i])
             if not has_ai_annotation(context):
                 # 逐行检查是否有 AI 生成指标 (仅匹配独立注释行)
-                for context_line in lines[max(0, i - 6):i]:
+                for context_line in lines[max(0, i - 6) : i]:
                     for indicator in AI_GENERATION_INDICATORS:
                         if re.search(indicator, context_line, re.IGNORECASE):
-                            results.append({
-                                "line": i,
-                                "function": line.strip()[:50],
-                                "reason": "检测到 AI 生成指标但缺少标注",
-                            })
+                            results.append(
+                                {
+                                    "line": i,
+                                    "function": line.strip()[:50],
+                                    "reason": "检测到 AI 生成指标但缺少标注",
+                                }
+                            )
                             break
                     else:
                         continue
@@ -94,9 +98,7 @@ def check_file(filepath: Path) -> CheckResult:
     # 检测可能的 AI 生成函数
     ai_functions = detect_ai_generated_functions(content)
     for func in ai_functions:
-        result["issues"].append(
-            f"Line {func['line']}: {func['function'][:30]}... - {func['reason']}"
-        )
+        result["issues"].append(f"Line {func['line']}: {func['function'][:30]}... - {func['reason']}")
 
     result["passed"] = len(result["issues"]) == 0
     return result

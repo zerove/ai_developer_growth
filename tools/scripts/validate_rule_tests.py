@@ -96,10 +96,7 @@ def validate_rule_tests(lang: str) -> tuple[int, int, list[str]]:
                 failed += 1
                 expected = "match" if should_match else "no match"
                 actual = "matched" if did_match else "no match"
-                errors.append(
-                    f"[{category}] {rule_id} case {i + 1}: "
-                    f"expected {expected}, got {actual} on: {code!r}"
-                )
+                errors.append(f"[{category}] {rule_id} case {i + 1}: expected {expected}, got {actual} on: {code!r}")
 
     return passed, failed, errors
 
@@ -121,9 +118,7 @@ def main() -> int:
         # Discover languages
         if args.all:
             langs_dir = _rules_dir() / "languages"
-            languages = sorted(
-                d.name for d in langs_dir.iterdir() if d.is_dir() and (d / "rules.d").exists()
-            )
+            languages = sorted(d.name for d in langs_dir.iterdir() if d.is_dir() and (d / "rules.d").exists())
         else:
             languages = [args.lang]
 
@@ -138,12 +133,14 @@ def main() -> int:
             total_failed += failed
             all_errors.extend(errors)
 
-            lang_results.append({
-                "language": lang,
-                "passed": passed,
-                "failed": failed,
-                "errors": errors,
-            })
+            lang_results.append(
+                {
+                    "language": lang,
+                    "passed": passed,
+                    "failed": failed,
+                    "errors": errors,
+                }
+            )
 
             if not args.json_output:
                 if failed:
@@ -153,11 +150,17 @@ def main() -> int:
 
         if args.json_output:
             import json
-            print(json.dumps({
-                "total_passed": total_passed,
-                "total_failed": total_failed,
-                "languages": lang_results,
-            }, indent=2))
+
+            print(
+                json.dumps(
+                    {
+                        "total_passed": total_passed,
+                        "total_failed": total_failed,
+                        "languages": lang_results,
+                    },
+                    indent=2,
+                )
+            )
         else:
             print(f"\n{'=' * 40}")
             print(f"Total: {total_passed} passed, {total_failed} failed")

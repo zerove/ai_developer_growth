@@ -95,7 +95,9 @@ def cmd_list(args: argparse.Namespace) -> None:
     print(f"{'Name':<25} {'Version':<10} {'Rules':<8} {'Updated'}")
     print("-" * 65)
     for name, info in packs.items():
-        print(f"{name:<25} {info.get('version', '?'):<10} {info.get('rule_count', '?'):<8} {info.get('updated', '?')[:10]}")
+        print(
+            f"{name:<25} {info.get('version', '?'):<10} {info.get('rule_count', '?'):<8} {info.get('updated', '?')[:10]}"
+        )
 
 
 def cmd_publish(args: argparse.Namespace) -> None:

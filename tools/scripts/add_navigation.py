@@ -5,6 +5,7 @@ Add navigation sections to efficiency docs.
 Adds a standard navigation section at the end of each doc
 with links to related docs in the same category.
 """
+
 import re
 from pathlib import Path
 

@@ -1,0 +1,32 @@
+#!/usr/bin/env bash
+# jcode pre-commit hook
+# 统一入口: 调用 hooks_runner.py on_commit，通过 hooks.json 配置驱动
+# 配置位置: .jcode/hooks.json → on_commit hooks
+
+set -euo pipefail
+
+echo "jcode pre-commit: 运行治理检查..."
+
+# 获取 staged 文件列表
+STAGED_FILES=$(git diff --cached --name-only --diff-filter=ACM || true)
+
+if [ -z "$STAGED_FILES" ]; then
+    echo "  无变更文件，跳过检查"
+    exit 0
+fi
+
+# 转换为数组
+readarray -t FILES <<< "$STAGED_FILES"
+
+# 调用 hooks_runner.py on_commit，传递 staged 文件
+FAILED=0
+if ! python .jcode/scripts/hooks_runner.py on_commit --files "${FILES[@]}"; then
+    FAILED=$((FAILED + 1))
+fi
+
+if [ $FAILED -gt 0 ]; then
+    echo "jcode pre-commit: 检查失败 (详见上方输出)"
+    exit 1
+fi
+
+echo "jcode pre-commit: 检查通过"

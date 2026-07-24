@@ -13,12 +13,10 @@ from __future__ import annotations
 
 import argparse
 import sys
-from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).parent))
-from _common import rules_dir as _rules_dir
-from rules.loader import load_rules
-from rules.web_base import RuleWebServer, run_server
+from tools.scripts._common import rules_dir as _rules_dir
+from tools.scripts.rules.loader import load_rules
+from tools.scripts.rules.web_base import RuleWebServer, run_server
 
 
 def get_all_rules() -> dict:

@@ -8,8 +8,8 @@ Usage:
     from rules.cli import add_common_args, output_results
 """
 
-from rules.loader import load_custom_rules, load_rules
-from rules.models import FixResult, HealthScore, Issue, ValidationResult
+from .loader import load_custom_rules, load_rules
+from .models import FixResult, HealthScore, Issue, ValidationResult
 
 __all__ = [
     "load_rules",

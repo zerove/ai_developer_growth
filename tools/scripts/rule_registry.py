@@ -25,8 +25,7 @@ from pathlib import Path
 
 import yaml
 
-sys.path.insert(0, str(Path(__file__).parent))
-from _common import handle_error
+from tools.scripts._common import handle_error
 
 
 def _registry_dir() -> Path:

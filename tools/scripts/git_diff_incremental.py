@@ -17,8 +17,7 @@ import subprocess
 import sys
 from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).parent))
-from _common import filter_supported_files, handle_error
+from tools.scripts._common import filter_supported_files, handle_error
 
 
 def get_git_changed_files(ref: str = "HEAD", repo_dir: str | None = None) -> list[Path]:

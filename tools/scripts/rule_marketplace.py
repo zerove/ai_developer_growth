@@ -19,10 +19,6 @@ import sys
 from pathlib import Path
 
 import yaml
-
-sys.path.insert(0, str(Path(__file__).parent))
-from _common import framework_dir as _framework_dir
-from _common import handle_error
 from rule_catalog import (
     BUILTIN_PACKS,
     export_rules,
@@ -31,6 +27,9 @@ from rule_catalog import (
     search_rules,
     validate_rules,
 )
+
+from tools.scripts._common import framework_dir as _framework_dir
+from tools.scripts._common import handle_error
 
 # ──────────────────────────────────────────────────────────
 # Commands

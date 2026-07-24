@@ -16,8 +16,7 @@ from collections.abc import Callable
 from pathlib import Path
 from typing import Any
 
-sys.path.insert(0, str(Path(__file__).parent.parent))
-from _common import handle_error
+from tools.scripts._common import handle_error
 
 
 def add_common_args(parser: argparse.ArgumentParser) -> None:

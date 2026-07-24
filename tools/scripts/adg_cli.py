@@ -563,7 +563,510 @@ FIX_RULES: dict[str, dict[str, Any]] = {
         "replacement": None,  # Requires env var
         "language": "common",
     },
+    # Go fixes
+    "go-println": {
+        "pattern": r"\bfmt\.Println\(",
+        "replacement": "log.Println(",
+        "language": "go",
+    },
+    "go-err-nil": {
+        "pattern": r"if err != nil \{\s*return err\s*\}",
+        "replacement": None,  # Requires context
+        "language": "go",
+    },
+    # TypeScript fixes
+    "ts-any": {
+        "pattern": r":\s*any\b",
+        "replacement": None,  # Requires context
+        "language": "typescript",
+    },
+    "ts-ignore": {
+        "pattern": r"//\s*@ts-ignore",
+        "replacement": None,  # Requires context
+        "language": "typescript",
+    },
+    # Rust extended
+    "rust-unwrap-question": {
+        "pattern": r"\.unwrap\(\)",
+        "replacement": ".unwrap_or_default()",
+        "language": "rust",
+    },
+    "rust-panic-macro": {
+        "pattern": r"\bpanic!\(",
+        "replacement": "return Err(",
+        "language": "rust",
+    },
+    # Python extended
+    "py-global": {
+        "pattern": r"\bglobal\s+\w+",
+        "replacement": None,  # Requires refactoring
+        "language": "python",
+    },
+    "py-mutable-default": {
+        "pattern": r"def\s+\w+\(.*?=\s*(\[\]|\{\})\)",
+        "replacement": None,  # Requires None default
+        "language": "python",
+    },
 }
+
+
+# ──────────────────────────────────────────────────────────
+# Incremental Check (git diff integration)
+# ──────────────────────────────────────────────────────────
+
+def _get_git_changed_files(since: str, cwd: Path | None = None) -> list[Path]:
+    """Get list of files changed since a git reference.
+    
+    Args:
+        since: Git reference (HEAD~1, commit hash, branch, etc.)
+        cwd: Working directory (defaults to current)
+    
+    Returns:
+        List of changed file paths
+    """
+    import subprocess
+    
+    try:
+        result = subprocess.run(
+            ["git", "diff", "--name-only", "--diff-filter=ACM", since],
+            capture_output=True,
+            text=True,
+            cwd=cwd or Path.cwd(),
+            timeout=10,
+        )
+        if result.returncode != 0:
+            print(f"Warning: git diff failed: {result.stderr}", file=sys.stderr)
+            return []
+        
+        files = []
+        for line in result.stdout.strip().split("\n"):
+            if line.strip():
+                fp = Path(line.strip())
+                if fp.is_file():
+                    files.append(fp)
+        return files
+    except (subprocess.TimeoutExpired, FileNotFoundError) as e:
+        print(f"Warning: git command failed: {e}", file=sys.stderr)
+        return []
+
+
+def _get_unstaged_files(cwd: Path | None = None) -> list[Path]:
+    """Get list of unstaged changed files."""
+    import subprocess
+    
+    try:
+        result = subprocess.run(
+            ["git", "diff", "--name-only", "--diff-filter=ACM"],
+            capture_output=True,
+            text=True,
+            cwd=cwd or Path.cwd(),
+            timeout=10,
+        )
+        if result.returncode != 0:
+            return []
+        
+        files = []
+        for line in result.stdout.strip().split("\n"):
+            if line.strip():
+                fp = Path(line.strip())
+                if fp.is_file():
+                    files.append(fp)
+        return files
+    except (subprocess.TimeoutExpired, FileNotFoundError):
+        return []
+
+
+def _get_staged_files(cwd: Path | None = None) -> list[Path]:
+    """Get list of staged files."""
+    import subprocess
+    
+    try:
+        result = subprocess.run(
+            ["git", "diff", "--cached", "--name-only", "--diff-filter=ACM"],
+            capture_output=True,
+            text=True,
+            cwd=cwd or Path.cwd(),
+            timeout=10,
+        )
+        if result.returncode != 0:
+            return []
+        
+        files = []
+        for line in result.stdout.strip().split("\n"):
+            if line.strip():
+                fp = Path(line.strip())
+                if fp.is_file():
+                    files.append(fp)
+        return files
+    except (subprocess.TimeoutExpired, FileNotFoundError):
+        return []
+
+
+# ──────────────────────────────────────────────────────────
+# SARIF Output Format (GitHub Code Scanning)
+# ──────────────────────────────────────────────────────────
+
+def _format_sarif(issues: list[Issue], language: str, framework: str | None) -> str:
+    """Format issues as SARIF 2.1.0 for GitHub Code Scanning."""
+    rules = {}
+    results = []
+    
+    for issue in issues:
+        # Collect unique rules
+        if issue.rule_id not in rules:
+            rules[issue.rule_id] = {
+                "id": issue.rule_id,
+                "shortDescription": {"text": issue.message},
+                "fullDescription": {"text": issue.message},
+                "helpUri": f"https://github.com/ai-developer-growth/rules/{issue.rule_id}",
+                "properties": {
+                    "category": issue.category,
+                    "language": language,
+                },
+            }
+        
+        # Map severity to SARIF level
+        level_map = {"error": "error", "warning": "warning", "info": "note"}
+        level = level_map.get(issue.severity, "warning")
+        
+        results.append({
+            "ruleId": issue.rule_id,
+            "level": level,
+            "message": {"text": issue.message},
+            "locations": [{
+                "physicalLocation": {
+                    "artifactLocation": {"uri": issue.file},
+                    "region": {
+                        "startLine": issue.line,
+                        "startColumn": issue.column,
+                    },
+                },
+            }],
+            "fixes": [{
+                "description": {"text": issue.fix_hint},
+                "artifactChanges": [{
+                    "artifactLocation": {"uri": issue.file},
+                    "replacements": [{
+                        "deletedRegion": {
+                            "startLine": issue.line,
+                            "startColumn": issue.column,
+                        },
+                        "insertedContent": {"text": issue.fix_hint},
+                    }],
+                }],
+            }] if issue.fix_hint else [],
+        })
+    
+    sarif = {
+        "$schema": "https://json.schemastore.org/sarif-2.1.0.json",
+        "version": "2.1.0",
+        "runs": [{
+            "tool": {
+                "driver": {
+                    "name": "adg",
+                    "version": "1.0.0",
+                    "informationUri": "https://github.com/ai-developer-growth/adg",
+                    "rules": list(rules.values()),
+                },
+            },
+            "results": results,
+        }],
+    }
+    
+    return json.dumps(sarif, indent=2)
+
+
+# ──────────────────────────────────────────────────────────
+# Rule Authoring Tool
+# ──────────────────────────────────────────────────────────
+
+_RULE_TEMPLATE = """# {id}
+# Language: {language}
+# Category: {category}
+# Severity: {severity}
+
+- id: {id}
+  severity: {severity}
+  category: {category}
+  pattern: "{pattern}"
+  message: "{message}"
+  fix_hint: "{fix_hint}"
+"""
+
+
+def _create_rule_interactive() -> dict[str, Any]:
+    """Interactively create a new rule."""
+    print("=== ADG Rule Creator ===\n")
+    
+    rule_id = input("Rule ID (e.g., py-custom-rule): ").strip()
+    if not rule_id:
+        return {}
+    
+    language = input("Language (python/javascript/rust/go/typescript): ").strip()
+    if not language:
+        return {}
+    
+    category = input("Category (security/code_quality/performance/maintainability): ").strip()
+    if not category:
+        category = "code_quality"
+    
+    severity = input("Severity (error/warning/info): ").strip()
+    if not severity:
+        severity = "warning"
+    
+    pattern = input("Regex pattern to match: ").strip()
+    if not pattern:
+        return {}
+    
+    message = input("Issue message: ").strip()
+    fix_hint = input("Fix hint (optional): ").strip()
+    
+    return {
+        "id": rule_id,
+        "language": language,
+        "category": category,
+        "severity": severity,
+        "pattern": pattern,
+        "message": message,
+        "fix_hint": fix_hint,
+    }
+
+
+def _validate_rule(rule: dict[str, Any]) -> list[str]:
+    """Validate a rule definition. Returns list of errors."""
+    errors = []
+    
+    required_fields = ["id", "severity", "category", "pattern", "message"]
+    for field in required_fields:
+        if not rule.get(field):
+            errors.append(f"Missing required field: {field}")
+    
+    if rule.get("severity") not in ("error", "warning", "info"):
+        errors.append(f"Invalid severity: {rule.get('severity')}")
+    
+    if rule.get("category") not in ("security", "code_quality", "performance", "maintainability"):
+        errors.append(f"Invalid category: {rule.get('category')}")
+    
+    # Test regex pattern
+    if rule.get("pattern"):
+        try:
+            re.compile(rule["pattern"])
+        except re.error as e:
+            errors.append(f"Invalid regex pattern: {e}")
+    
+    return errors
+
+
+def _test_rule(rule: dict[str, Any], test_files: list[Path]) -> dict[str, Any]:
+    """Test a rule against test files."""
+    results = {
+        "rule_id": rule.get("id", "unknown"),
+        "files_tested": len(test_files),
+        "matches": [],
+        "errors": [],
+    }
+    
+    try:
+        pattern = re.compile(rule["pattern"])
+    except re.error as e:
+        results["errors"].append(f"Invalid pattern: {e}")
+        return results
+    
+    for filepath in test_files:
+        try:
+            content = filepath.read_text(encoding="utf-8")
+            lines = content.split("\n")
+            
+            for line_num, line in enumerate(lines, 1):
+                if pattern.search(line):
+                    results["matches"].append({
+                        "file": str(filepath),
+                        "line": line_num,
+                        "column": 1,
+                        "match": line.strip()[:100],
+                    })
+        except (OSError, UnicodeDecodeError) as e:
+            results["errors"].append(f"Error reading {filepath}: {e}")
+    
+    return results
+
+
+# ──────────────────────────────────────────────────────────
+# Webhook Notification (Slack/DingTalk)
+# ──────────────────────────────────────────────────────────
+
+def _send_slack_notification(webhook_url: str, issues: list[Issue], 
+                             language: str, project: str) -> bool:
+    """Send issues notification to Slack."""
+    import urllib.request
+    import time
+    
+    error_count = sum(1 for i in issues if i.severity == "error")
+    warning_count = sum(1 for i in issues if i.severity == "warning")
+    info_count = sum(1 for i in issues if i.severity == "info")
+    
+    color = "#36a64f" if error_count == 0 else "#ff0000"
+    
+    payload = {
+        "attachments": [{
+            "color": color,
+            "title": f"ADG Governance Report - {project}",
+            "text": f"Language: {language}\n"
+                    f"Errors: {error_count} | Warnings: {warning_count} | Info: {info_count}",
+            "fields": [
+                {"title": "Status", "value": "✅ Passed" if error_count == 0 else "❌ Failed", "short": True},
+                {"title": "Total Issues", "value": str(len(issues)), "short": True},
+            ],
+            "footer": "ADG CLI",
+            "ts": int(time.time()),
+        }],
+    }
+    
+    try:
+        data = json.dumps(payload).encode("utf-8")
+        req = urllib.request.Request(
+            webhook_url,
+            data=data,
+            headers={"Content-Type": "application/json"},
+        )
+        urllib.request.urlopen(req, timeout=10)
+        return True
+    except Exception as e:
+        print(f"Warning: Slack notification failed: {e}", file=sys.stderr)
+        return False
+
+
+def _send_dingtalk_notification(webhook_url: str, issues: list[Issue],
+                                 language: str, project: str) -> bool:
+    """Send issues notification to DingTalk."""
+    import urllib.request
+    
+    error_count = sum(1 for i in issues if i.severity == "error")
+    warning_count = sum(1 for i in issues if i.severity == "warning")
+    info_count = sum(1 for i in issues if i.severity == "info")
+    
+    status = "✅ 通过" if error_count == 0 else "❌ 失败"
+    
+    payload = {
+        "msgtype": "markdown",
+        "markdown": {
+            "title": f"ADG 治理报告 - {project}",
+            "text": f"## ADG 治理报告\n\n"
+                    f"**项目**: {project}\n"
+                    f"**语言**: {language}\n"
+                    f"**状态**: {status}\n\n"
+                    f"---\n\n"
+                    f"**错误**: {error_count}\n"
+                    f"**警告**: {warning_count}\n"
+                    f"**信息**: {info_count}\n"
+                    f"**总计**: {len(issues)}\n",
+        },
+    }
+    
+    try:
+        data = json.dumps(payload).encode("utf-8")
+        req = urllib.request.Request(
+            webhook_url,
+            data=data,
+            headers={"Content-Type": "application/json"},
+        )
+        urllib.request.urlopen(req, timeout=10)
+        return True
+    except Exception as e:
+        print(f"Warning: DingTalk notification failed: {e}", file=sys.stderr)
+        return False
+
+
+# ──────────────────────────────────────────────────────────
+# Quality Trend Dashboard
+# ──────────────────────────────────────────────────────────
+
+_TREND_DATA_FILE = ".adg/trend.json"
+
+
+def _load_trend_data(project_dir: Path) -> list[dict[str, Any]]:
+    """Load historical trend data."""
+    trend_file = project_dir / _TREND_DATA_FILE
+    if trend_file.exists():
+        try:
+            return json.loads(trend_file.read_text(encoding="utf-8"))
+        except (json.JSONDecodeError, OSError):
+            return []
+    return []
+
+
+def _save_trend_data(project_dir: Path, data: list[dict[str, Any]]) -> None:
+    """Save trend data."""
+    trend_file = project_dir / _TREND_DATA_FILE
+    trend_file.parent.mkdir(parents=True, exist_ok=True)
+    trend_file.write_text(json.dumps(data, indent=2), encoding="utf-8")
+
+
+def _record_trend(project_dir: Path, issues: list[Issue], language: str) -> dict[str, Any]:
+    """Record current check results as a trend data point."""
+    from datetime import datetime
+    
+    error_count = sum(1 for i in issues if i.severity == "error")
+    warning_count = sum(1 for i in issues if i.severity == "warning")
+    info_count = sum(1 for i in issues if i.severity == "info")
+    
+    data_point = {
+        "timestamp": datetime.now().isoformat(),
+        "language": language,
+        "errors": error_count,
+        "warnings": warning_count,
+        "info": info_count,
+        "total": len(issues),
+        "files_checked": len(set(i.file for i in issues)),
+    }
+    
+    trend_data = _load_trend_data(project_dir)
+    trend_data.append(data_point)
+    
+    # Keep last 100 data points
+    if len(trend_data) > 100:
+        trend_data = trend_data[-100:]
+    
+    _save_trend_data(project_dir, trend_data)
+    return data_point
+
+
+def _format_trend_report(trend_data: list[dict[str, Any]], output_json: bool = False) -> str:
+    """Format trend data as a report."""
+    if not trend_data:
+        return "No trend data available. Run 'adg check' first."
+    
+    if output_json:
+        return json.dumps(trend_data, indent=2)
+    
+    lines = ["ADG Quality Trend Report", "=" * 40, ""]
+    
+    # Summary
+    latest = trend_data[-1]
+    earliest = trend_data[0]
+    
+    lines.append(f"Period: {earliest['timestamp'][:10]} to {latest['timestamp'][:10]}")
+    lines.append(f"Data points: {len(trend_data)}")
+    lines.append("")
+    
+    # Trend
+    if len(trend_data) >= 2:
+        error_trend = latest["errors"] - earliest["errors"]
+        warning_trend = latest["warnings"] - earliest["warnings"]
+        
+        lines.append("Trend:")
+        lines.append(f"  Errors:   {latest['errors']} ({'↑' if error_trend > 0 else '↓' if error_trend < 0 else '→'} {abs(error_trend)})")
+        lines.append(f"  Warnings: {latest['warnings']} ({'↑' if warning_trend > 0 else '↓' if warning_trend < 0 else '→'} {abs(warning_trend)})")
+        lines.append("")
+    
+    # Recent history
+    lines.append("Recent History:")
+    lines.append("-" * 40)
+    for point in trend_data[-10:]:
+        ts = point["timestamp"][:16].replace("T", " ")
+        lines.append(f"  {ts}: E={point['errors']} W={point['warnings']} I={point['info']}")
+    
+    return "\n".join(lines)
 
 
 def _apply_fix(content: str, rule_id: str, fix_info: dict[str, Any]) -> tuple[str, bool]:
@@ -854,12 +1357,37 @@ def cmd_check(args: argparse.Namespace) -> int:
     # Load project configuration
     project_config = load_project_config(target if target.is_dir() else target.parent)
 
-    # Collect files to check
-    if target.is_file():
+    # Handle incremental check modes
+    files: list[Path] = []
+    since = getattr(args, 'since', None)
+    staged = getattr(args, 'staged', False)
+    unstaged = getattr(args, 'unstaged', False)
+    
+    if since:
+        # Check only files changed since git ref
+        files = _get_git_changed_files(since, cwd=target.parent)
+        if not files:
+            print("No changed files found.", file=sys.stderr)
+            return 0
+        detected = detect_language(target)
+    elif staged:
+        # Check only staged files
+        files = _get_staged_files(cwd=target.parent)
+        if not files:
+            print("No staged files found.", file=sys.stderr)
+            return 0
+        detected = detect_language(target)
+    elif unstaged:
+        # Check only unstaged files
+        files = _get_unstaged_files(cwd=target.parent)
+        if not files:
+            print("No unstaged changes found.", file=sys.stderr)
+            return 0
+        detected = detect_language(target)
+    elif target.is_file():
         files = [target]
         detected = detect_language(target.parent)
     else:
-        files = []
         skip_patterns = project_config.get("skip_patterns", [])
         for fp in target.rglob("*"):
             if fp.is_file() and any(part not in SKIP_DIRS for part in fp.parts):
@@ -912,10 +1440,28 @@ def cmd_check(args: argparse.Namespace) -> int:
             all_issues.extend(check_file(fp, rules, args.severity))
 
     # Output
-    if args.json:
+    sarif = getattr(args, 'sarif', False)
+    if sarif:
+        print(_format_sarif(all_issues, language, framework))
+    elif args.json:
         print(_format_json(all_issues, language, framework, len(files)))
     else:
         print(_format_human(all_issues, language, framework, len(files)))
+
+    # Record trend if requested
+    if getattr(args, 'trend', False):
+        _record_trend(target if target.is_dir() else target.parent, all_issues, language)
+
+    # Send notification if requested
+    notify_url = getattr(args, 'notify', None)
+    if notify_url:
+        project_name = getattr(args, 'project', '.')
+        if notify_url.startswith("slack://"):
+            webhook_url = notify_url.replace("slack://", "https://hooks.slack.com/services/")
+            _send_slack_notification(webhook_url, all_issues, language, project_name)
+        elif notify_url.startswith("dingtalk://"):
+            webhook_url = notify_url.replace("dingtalk://", "https://oapi.dingtalk.com/robot/send?access_token=")
+            _send_dingtalk_notification(webhook_url, all_issues, language, project_name)
 
     # Exit code: non-zero if errors found
     has_errors = any(i.severity == "error" for i in all_issues)
@@ -978,6 +1524,233 @@ def cmd_fix(args: argparse.Namespace) -> int:
             print("   Some issues require manual fixes.")
     
     return 0 if stats['errors'] == 0 else 1
+
+
+# ──────────────────────────────────────────────────────────
+# Rule Authoring Commands
+# ──────────────────────────────────────────────────────────
+
+def cmd_rule(args: argparse.Namespace) -> int:
+    """Handle rule authoring commands."""
+    rule_cmd = getattr(args, 'rule_command', None)
+    
+    if rule_cmd == "create":
+        return _cmd_rule_create(args)
+    elif rule_cmd == "test":
+        return _cmd_rule_test(args)
+    elif rule_cmd == "validate":
+        return _cmd_rule_validate(args)
+    else:
+        print("Usage: adg rule {create|test|validate}", file=sys.stderr)
+        return 1
+
+
+def _cmd_rule_create(args: argparse.Namespace) -> int:
+    """Create a new rule interactively."""
+    rule = _create_rule_interactive()
+    
+    if not rule:
+        print("Rule creation cancelled.", file=sys.stderr)
+        return 1
+    
+    # Validate
+    errors = _validate_rule(rule)
+    if errors:
+        print("Rule validation failed:", file=sys.stderr)
+        for e in errors:
+            print(f"  - {e}", file=sys.stderr)
+        return 1
+    
+    # Output
+    output_path = getattr(args, 'output', None)
+    if output_path:
+        yaml_content = _RULE_TEMPLATE.format(**rule)
+        Path(output_path).write_text(yaml_content)
+        print(f"Rule saved to: {output_path}")
+    else:
+        print("\nGenerated rule:")
+        print(_RULE_TEMPLATE.format(**rule))
+    
+    return 0
+
+
+def _cmd_rule_test(args: argparse.Namespace) -> int:
+    """Test a rule against files."""
+    rule_file = Path(args.rule_file)
+    if not rule_file.exists():
+        print(f"Error: Rule file not found: {rule_file}", file=sys.stderr)
+        return 1
+    
+    # Load rule from YAML
+    try:
+        import yaml
+        with open(rule_file) as f:
+            rule_data = yaml.safe_load(f)
+    except ImportError:
+        # Fallback: try simple parsing
+        content = rule_file.read_text()
+        rule_data = {"pattern": "", "message": ""}
+        for line in content.split("\n"):
+            if "pattern:" in line:
+                rule_data["pattern"] = line.split("pattern:")[1].strip().strip('"')
+            elif "message:" in line:
+                rule_data["message"] = line.split("message:")[1].strip().strip('"')
+    
+    if not rule_data.get("pattern"):
+        print("Error: No pattern found in rule file", file=sys.stderr)
+        return 1
+    
+    # Get test files
+    target = Path(args.path)
+    test_files = []
+    if target.is_file():
+        test_files = [target]
+    else:
+        for fp in target.rglob("*"):
+            if fp.is_file() and fp.suffix in (".py", ".js", ".ts", ".go", ".rs", ".java"):
+                test_files.append(fp)
+    
+    if not test_files:
+        print("No test files found.", file=sys.stderr)
+        return 1
+    
+    # Test the rule
+    results = _test_rule(rule_data, test_files)
+    
+    # Output
+    print(f"\nRule: {results['rule_id']}")
+    print(f"Files tested: {results['files_tested']}")
+    print(f"Matches found: {len(results['matches'])}")
+    
+    if results['matches']:
+        print("\nMatches:")
+        for match in results['matches'][:20]:  # Limit to 20
+            print(f"  {match['file']}:{match['line']}: {match['match']}")
+    
+    if results['errors']:
+        print("\nErrors:")
+        for e in results['errors']:
+            print(f"  - {e}")
+    
+    return 0 if not results['errors'] else 1
+
+
+def _cmd_rule_validate(args: argparse.Namespace) -> int:
+    """Validate a rule file."""
+    rule_file = Path(args.rule_file)
+    if not rule_file.exists():
+        print(f"Error: Rule file not found: {rule_file}", file=sys.stderr)
+        return 1
+    
+    # Load rule
+    try:
+        import yaml
+        with open(rule_file) as f:
+            rule = yaml.safe_load(f)
+    except ImportError:
+        content = rule_file.read_text()
+        rule = {}
+        for line in content.split("\n"):
+            if "pattern:" in line:
+                rule["pattern"] = line.split("pattern:")[1].strip().strip('"')
+            elif "message:" in line:
+                rule["message"] = line.split("message:")[1].strip().strip('"')
+            elif "severity:" in line:
+                rule["severity"] = line.split("severity:")[1].strip()
+            elif "category:" in line:
+                rule["category"] = line.split("category:")[1].strip()
+            elif "id:" in line and not line.strip().startswith("#"):
+                rule["id"] = line.split("id:")[1].strip()
+    
+    # Validate
+    errors = _validate_rule(rule)
+    
+    if errors:
+        print(f"\n❌ Validation failed for: {rule_file}")
+        for e in errors:
+            print(f"  - {e}")
+        return 1
+    else:
+        print(f"\n✅ Validation passed for: {rule_file}")
+        return 0
+
+
+# ──────────────────────────────────────────────────────────
+# Trend Dashboard Command
+# ──────────────────────────────────────────────────────────
+
+def cmd_trend(args: argparse.Namespace) -> int:
+    """Show quality trend dashboard."""
+    project_dir = Path(args.path).resolve()
+    
+    if getattr(args, 'clear', False):
+        trend_file = project_dir / _TREND_DATA_FILE
+        if trend_file.exists():
+            trend_file.unlink()
+            print("Trend history cleared.")
+        else:
+            print("No trend history to clear.")
+        return 0
+    
+    trend_data = _load_trend_data(project_dir)
+    
+    if getattr(args, 'json', False):
+        print(_format_trend_report(trend_data, output_json=True))
+    else:
+        print(_format_trend_report(trend_data))
+    
+    return 0
+
+
+# ──────────────────────────────────────────────────────────
+# Notify Command
+# ──────────────────────────────────────────────────────────
+
+def cmd_notify(args: argparse.Namespace) -> int:
+    """Send governance report via webhook."""
+    target = Path(args.path).resolve()
+    
+    # Detect language
+    detected = detect_language(target)
+    language = args.lang or detected.get("language", "unknown")
+    
+    if language == "unknown":
+        print("Error: Could not detect language. Use --lang to specify.", file=sys.stderr)
+        return 1
+    
+    # Load rules and check
+    rules = load_rules_for_language(language)
+    all_issues: list[Issue] = []
+    
+    if target.is_file():
+        all_issues = check_file(target, rules)
+    else:
+        for fp in target.rglob("*"):
+            if fp.is_file() and fp.suffix not in SKIP_EXTENSIONS:
+                if _detect_language_from_file(fp):
+                    all_issues.extend(check_file(fp, rules))
+    
+    # Send notification
+    webhook_url = args.webhook
+    project_name = getattr(args, 'project', '.')
+    
+    if webhook_url.startswith("slack://"):
+        url = webhook_url.replace("slack://", "https://hooks.slack.com/services/")
+        success = _send_slack_notification(url, all_issues, language, project_name)
+    elif webhook_url.startswith("dingtalk://"):
+        url = webhook_url.replace("dingtalk://", "https://oapi.dingtalk.com/robot/send?access_token=")
+        success = _send_dingtalk_notification(url, all_issues, language, project_name)
+    else:
+        print(f"Error: Unknown webhook scheme. Use slack:// or dingtalk://", file=sys.stderr)
+        return 1
+    
+    if success:
+        print("✅ Notification sent successfully")
+    else:
+        print("", file=sys.stderr)
+        return 1
+    
+    return 0
 
 
 def cmd_detect(args: argparse.Namespace) -> int:
@@ -1294,8 +2067,21 @@ def main() -> int:
     check_p.add_argument("--severity", choices=["error", "warning", "info"],
                          help="Only show issues at this severity or higher")
     check_p.add_argument("--json", action="store_true", help="Output as JSON")
+    check_p.add_argument("--sarif", action="store_true", help="Output as SARIF (GitHub Code Scanning)")
     check_p.add_argument("-j", "--jobs", type=int, default=1,
                          help="Number of parallel jobs (default: 1)")
+    check_p.add_argument("--since", type=str, default=None,
+                         help="Only check files changed since git ref (e.g., HEAD~1, main)")
+    check_p.add_argument("--staged", action="store_true",
+                         help="Only check staged files (for pre-commit)")
+    check_p.add_argument("--unstaged", action="store_true",
+                         help="Only check unstaged changed files")
+    check_p.add_argument("--trend", action="store_true",
+                         help="Record results for trend tracking")
+    check_p.add_argument("--notify", type=str, default=None,
+                         help="Send results to webhook (slack://... or dingtalk://...)")
+    check_p.add_argument("--project", type=str, default=".",
+                         help="Project name for notifications")
 
     # detect
     detect_p = sub.add_parser("detect", help="Detect project language/framework")
@@ -1330,6 +2116,32 @@ def main() -> int:
     fix_p.add_argument("--lang", help="Force language (skip auto-detection)")
     fix_p.add_argument("--json", action="store_true", help="Output as JSON")
 
+    # rule (authoring tool)
+    rule_p = sub.add_parser("rule", help="Create/test governance rules")
+    rule_sub = rule_p.add_subparsers(dest="rule_command")
+    rule_create = rule_sub.add_parser("create", help="Create a new rule interactively")
+    rule_create.add_argument("--output", type=str, help="Output YAML file path")
+    rule_test = rule_sub.add_parser("test", help="Test a rule against files")
+    rule_test.add_argument("rule-file", type=str, help="Rule YAML file to test")
+    rule_test.add_argument("path", type=str, help="Files/directory to test against")
+    rule_validate = rule_sub.add_parser("validate", help="Validate a rule file")
+    rule_validate.add_argument("rule-file", type=str, help="Rule YAML file to validate")
+
+    # trend
+    trend_p = sub.add_parser("trend", help="Show quality trend dashboard")
+    trend_p.add_argument("path", nargs="?", default=".", help="Project directory")
+    trend_p.add_argument("--json", action="store_true", help="Output as JSON")
+    trend_p.add_argument("--clear", action="store_true", help="Clear trend history")
+
+    # notify
+    notify_p = sub.add_parser("notify", help="Send governance report via webhook")
+    notify_p.add_argument("path", help="File or directory to check")
+    notify_p.add_argument("--webhook", required=True,
+                         help="Webhook URL (slack://... or dingtalk://...)")
+    notify_p.add_argument("--lang", help="Force language")
+    notify_p.add_argument("--project", type=str, default=".",
+                         help="Project name")
+
     args = parser.parse_args()
 
     if not args.command:
@@ -1343,6 +2155,9 @@ def main() -> int:
         "install-hooks": cmd_install_hooks,
         "report": cmd_report,
         "fix": cmd_fix,
+        "rule": cmd_rule,
+        "trend": cmd_trend,
+        "notify": cmd_notify,
     }
 
     return commands[args.command](args)

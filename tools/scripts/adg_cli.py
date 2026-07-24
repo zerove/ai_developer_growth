@@ -189,12 +189,26 @@ def _detect_framework(dirpath: Path, language: str | None) -> str | None:
         req_path = dirpath / req_file
         if req_path.exists():
             try:
-                content = req_path.read_text(encoding="utf-8")
+                content = req_path.read_text(encoding="utf-8").lower()
                 for framework, signatures in FRAMEWORK_SIGNATURES.items():
-                    if any(sig in content for sig in signatures):
+                    if any(sig.lower() in content for sig in signatures):
                         return framework
             except OSError:
                 pass
+
+    # Check for manage.py (Django indicator)
+    if (dirpath / "manage.py").exists():
+        try:
+            content = (dirpath / "manage.py").read_text(encoding="utf-8")
+            if "django" in content.lower():
+                return "django"
+        except OSError:
+            pass
+
+    # Check for settings.py in common Django locations
+    for settings_path in ["settings.py", "config/settings.py", "myproject/settings.py"]:
+        if (dirpath / settings_path).exists():
+            return "django"
 
     # Check go.mod
     go_mod = dirpath / "go.mod"
@@ -206,6 +220,17 @@ def _detect_framework(dirpath: Path, language: str | None) -> str | None:
                     return framework
         except OSError:
             pass
+
+    # Check Java build files (pom.xml, build.gradle)
+    for build_file in ("pom.xml", "build.gradle", "build.gradle.kts"):
+        build_path = dirpath / build_file
+        if build_path.exists():
+            try:
+                content = build_path.read_text(encoding="utf-8")
+                if "spring" in content.lower():
+                    return "spring"
+            except OSError:
+                pass
 
     return None
 
@@ -524,7 +549,7 @@ def cmd_check(args: argparse.Namespace) -> int:
         detected = detect_language(target)
 
     language = args.lang or detected.get("language", "unknown")
-    framework = detected.get("framework")
+    framework = getattr(args, 'framework', None) or detected.get("framework")
 
     if language == "unknown":
         print("Error: Could not detect language. Use --lang to specify.", file=sys.stderr)
@@ -682,6 +707,7 @@ def main() -> int:
     check_p = sub.add_parser("check", help="Check code against rules")
     check_p.add_argument("path", help="File or directory to check")
     check_p.add_argument("--lang", help="Force language (skip auto-detection)")
+    check_p.add_argument("--framework", help="Force framework (skip auto-detection)")
     check_p.add_argument("--severity", choices=["error", "warning", "info"],
                          help="Only show issues at this severity or higher")
     check_p.add_argument("--json", action="store_true", help="Output as JSON")

@@ -22,9 +22,10 @@ import yaml
 sys.path.insert(0, str(Path(__file__).parent))
 from _common import handle_error
 from _common import rules_dir as _rules_dir
-from fix_heuristics import heuristic_fix  # noqa: F401 - re-export for tests
-from fix_heuristics import HEURISTIC_FIXES  # noqa: F401 - re-export for tests
-
+from fix_heuristics import (
+    HEURISTIC_FIXES,  # noqa: F401 - re-export for tests
+    heuristic_fix,  # noqa: F401 - re-export for tests
+)
 
 # Re-export for backward compatibility
 __all__ = ["heuristic_fix", "HEURISTIC_FIXES"]

@@ -13,6 +13,7 @@ from __future__ import annotations
 
 import argparse
 import sys
+from typing import Any
 
 from tools.scripts._common import rules_dir as _rules_dir
 from tools.scripts.rules.loader import load_rules
@@ -213,7 +214,7 @@ class VisualizeHandler(RuleWebServer):
 
     page_title = "AI Language Rules - Visual Browser"
 
-    def handle_api(self, path, query, data=None):  # noqa: ANN001
+    def handle_api(self, path: str, query: dict[str, list[str]], data: dict[str, Any] | None = None) -> Any:
         if path == "/api/rules":
             return get_all_rules()
         elif path == "/api/languages":
@@ -229,7 +230,7 @@ class VisualizeHandler(RuleWebServer):
             }
         return {"error": "Unknown endpoint"}
 
-    def get_html_content(self):
+    def get_html_content(self) -> str:
         return HTML_TEMPLATE
 
 

@@ -184,9 +184,9 @@ def _run_external_linters(filepath: Path, lang: str) -> list[Issue]:
         return issues
 
     try:
-        result = run_command(cmd, capture=True, check=False)
-        if result.stdout:
-            issues.extend(_parse_linter_output(result.stdout, lang, str(filepath)))
+        exit_code, output = run_command(cmd)
+        if output:
+            issues.extend(_parse_linter_output(output, lang, str(filepath)))
     except Exception:
         # Linter not available or failed - silently ignore
         pass

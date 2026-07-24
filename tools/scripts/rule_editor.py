@@ -294,7 +294,7 @@ anti_patterns:
 class EditorHandler(RuleWebServer):
     page_title = "Rule Editor"
 
-    def get_html_content(self):
+    def get_html_content(self) -> str:
         return HTML
 
 

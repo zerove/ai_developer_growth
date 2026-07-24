@@ -103,7 +103,7 @@ jobs:
           cache: pip
       - run: pip install -r requirements.txt pytest pytest-cov
       - name: Run tests with coverage
-        run: pytest tests/ -v --cov=tools/scripts --cov-report=xml --cov-report=term-missing --tb=short
+        run: pytest tests/ -v --cov=tools.scripts.adg_cli --cov-report=xml --cov-report=term-missing --tb=short
       - name: Coverage check
         if: matrix.python-version == '3.11'
         run: |

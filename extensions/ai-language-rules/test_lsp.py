@@ -8,7 +8,6 @@ Usage:
 
 from __future__ import annotations
 
-import json
 import sys
 from pathlib import Path
 
@@ -117,26 +116,18 @@ def test_result_to_diagnostics() -> bool:
 
 def test_validate_mode() -> bool:
     """Validate mode: test LSP against actual Python file."""
-    from validate_language_rules import Issue, ValidationResult
-
-    server = LanguageRulesLSP()
     # Create a temp file with known issues
     import tempfile
+    from pathlib import Path
 
+    from validate_language_rules import validate_file
+
+    _ = LanguageRulesLSP()  # Create server instance for context
     with tempfile.NamedTemporaryFile(mode="w", suffix=".py", delete=False) as f:
         f.write("except:\n    pass\n")
         tmp_path = f.name
 
     try:
-        msg = {
-            "jsonrpc": "2.0",
-            "method": "textDocument/didOpen",
-            "params": {"textDocument": {"uri": f"file://{tmp_path}"}},
-        }
-        # This will publish diagnostics via _send_message
-        # We capture by checking the validation result directly
-        from validate_language_rules import validate_file
-
         result = validate_file(Path(tmp_path), "python")
         assert len(result.issues) > 0, "Expected issues in bare except code"
         print(f"  ✓ validate_mode: {len(result.issues)} issues found")

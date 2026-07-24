@@ -8,7 +8,8 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent.parent / "tools" / "scripts"))
 
 from generate_fixes import apply_fixes_to_yaml, generate_fixes, heuristic_fix
-from rule_catalog import BUILTIN_PACKS, matches as _matches
+from rule_catalog import BUILTIN_PACKS
+from rule_catalog import matches as _matches
 from validate_rule_tests import validate_rule_tests
 
 # ──────────────────────────────────────────────────────────

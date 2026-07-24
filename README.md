@@ -160,7 +160,7 @@ python ai-dev-framework/core/jcode_init.py your-project --language python
 | 📚 实践案例 | 35 个 |
 | 🛠️ 代码示例 | 7 个 |
 | 📋 架构决策 | 7 条 |
-| 🧪 测试用例 | 175 个 |
+| 🧪 测试用例 | 1093 个 |
 | ✅ 测试覆盖率 | 84% |
 
 ---
@@ -180,8 +180,14 @@ ai_developer_growth/
 ├── ai-dev-framework/        # 通用治理框架
 │   └── core/               # 可移植组件
 ├── tools/scripts/           # 自动化工具
+│   ├── hooks/              # 模块化 Hook 系统
+│   │   ├── basic_checks.py # lint/format/typecheck/test/security
+│   │   ├── domain_checks.py# language-rules/quality-gate/governance
+│   │   └── incremental.py  # diff/pre-commit 增量检查
+│   ├── rules_engine/       # 规则引擎 (21 语言)
+│   └── rule_catalog.py     # 规则包管理
 ├── agents/                  # Agent 定义
-└── tests/                   # 测试套件
+├── tests/                   # 1093 个测试
 ```
 
 ---

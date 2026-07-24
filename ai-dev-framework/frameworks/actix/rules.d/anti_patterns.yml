@@ -1,0 +1,68 @@
+# Actix Web Framework Anti-Pattern Rules
+framework: actix
+language: rust
+config_version: '1.0'
+anti_patterns:
+- id: actix-sync-handler
+  name: Synchronous handler in async context
+  severity: error
+  category: async
+  pattern: 'fn\s+\w+\s*\(.*\)\s*->\s*(HttpResponse|impl\s+Responder)'
+  message: 'Actix handlers should be async functions'
+  fix_hint: 'Add async keyword: pub async fn handler(...)'
+
+- id: actix-unwrap-in-handler
+  name: unwrap() in handler
+  severity: error
+  category: error_handling
+  pattern: '\.unwrap\(\)'
+  message: 'Avoid unwrap() in handlers - use proper error handling'
+  fix_hint: 'Use .map_err()? or match for error handling'
+
+- id: actix-panic-in-handler
+  name: panic! in handler
+  severity: error
+  category: error_handling
+  pattern: 'panic!\('
+  message: 'Never panic in handlers - return proper error responses'
+  fix_hint: 'Return HttpResponse::InternalServerError() instead'
+
+- id: actix-blocking-db
+  name: Blocking database call in async handler
+  severity: error
+  category: performance
+  pattern: 'block_on\(|\.lock\(\)\.unwrap\(\)'
+  message: 'Blocking calls in async handlers block the event loop'
+  fix_hint: 'Use tokio::spawn_blocking or async DB driver'
+
+- id: actix-no-error-handler
+  name: Missing error handler for Result
+  severity: warning
+  category: error_handling
+  pattern: 'let\s+\w+\s*=\s*\w+\.\w+\(\)\s*;'
+  message: 'Unwrap Result without error handling'
+  fix_hint: 'Add .map_err() or use ? operator with ResponseError'
+
+- id: actix-unbounded-collection
+  name: Unbounded collection loading
+  severity: warning
+  category: performance
+  pattern: 'find_many\(|find_all\(|SELECT\s+\*\s+FROM'
+  message: 'Loading unbounded collections can cause memory issues'
+  fix_hint: 'Add pagination or limit results'
+
+- id: actix-hardcoded-secret
+  name: Hardcoded secret in code
+  severity: error
+  category: security
+  pattern: "(?:SECRET|PASSWORD|API_KEY|TOKEN)\\s*=\\s*[\"']"
+  message: 'Secrets must not be hardcoded'
+  fix_hint: 'Use environment variables or config files'
+
+- id: actix-sql-injection
+  name: Raw SQL with string formatting
+  severity: error
+  category: security
+  pattern: 'format!\(.*SELECT|format!\(.*INSERT|format!\(.*UPDATE|format!\(.*DELETE'
+  message: 'Raw SQL with format! enables SQL injection'
+  fix_hint: 'Use parameterized queries or ORM'

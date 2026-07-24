@@ -21,14 +21,13 @@ from tools.scripts.adg_cli import (
     _simple_yaml_parse,
     check_directory,
     check_file,
-    load_rules_for_language,
-    main,
     cmd_check,
     cmd_detect,
-    cmd_list_rules,
     cmd_install_hooks,
+    cmd_list_rules,
+    load_rules_for_language,
+    main,
 )
-
 
 # ── _get_rules_path ────────────────────────────────────────
 

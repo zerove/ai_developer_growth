@@ -1,0 +1,68 @@
+# Next.js Framework Anti-Pattern Rules
+framework: nextjs
+language: typescript
+config_version: '1.0'
+anti_patterns:
+- id: nextjs-client-fetch
+  name: Client-side data fetching in server component
+  severity: warning
+  category: performance
+  pattern: 'use client[\s\S]*?fetch\(|use client[\s\S]*?axios\.'
+  message: 'Prefer server components for data fetching'
+  fix_hint: 'Move data fetching to server component or use Server Actions'
+
+- id: nextjs-no-use-client
+  name: Missing use client directive
+  severity: info
+  category: architecture
+  pattern: "import\s+.*(?:useState|useEffect|useRouter)\s+from\s+['\"]react['\"]"
+  message: 'React hooks require client component'
+  fix_hint: "Add 'use client' at top of file"
+
+- id: nextjs-eval
+  name: eval() or dangerouslySetInnerHTML
+  severity: error
+  category: security
+  pattern: 'dangerouslySetInnerHTML|eval\(|Function\('
+  message: 'XSS vulnerability risk'
+  fix_hint: 'Avoid dangerouslySetInnerHTML; sanitize input instead'
+
+- id: nextjs-no-loading
+  name: Missing loading state
+  severity: info
+  category: ux
+  pattern: 'export default async function.*Page'
+  message: 'Consider adding loading.tsx for better UX'
+  fix_hint: 'Create loading.tsx in same directory'
+
+- id: nextjs-no-error-boundary
+  name: Missing error boundary
+  severity: info
+  category: error_handling
+  pattern: 'export default function.*Page'
+  message: 'Consider adding error.tsx for error handling'
+  fix_hint: 'Create error.tsx in same directory'
+
+- id: nextjs-hardcoded-secret
+  name: Hardcoded secret
+  severity: error
+  category: security
+  pattern: "(?:SECRET|PASSWORD|API_KEY|TOKEN)\\s*=\\s*[\"']"
+  message: 'Secrets must not be hardcoded'
+  fix_hint: 'Use environment variables: process.env.NEXT_PUBLIC_*'
+
+- id: nextjs-server-action-auth
+  name: Server Action without auth check
+  severity: warning
+  category: security
+  pattern: "'use server'[\s\S]*?export async function"
+  message: 'Server Actions should validate authentication'
+  fix_hint: 'Add auth check at start of Server Action'
+
+- id: nextjs-image-unoptimized
+  name: Unoptimized external image
+  severity: warning
+  category: performance
+  pattern: '<img\s+[^>]*?src=["\']https?://'
+  message: 'Use next/image for external images'
+  fix_hint: 'Import Image from "next/image" and use <Image />'

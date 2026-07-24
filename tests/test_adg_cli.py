@@ -248,6 +248,75 @@ class TestFrameworkDetection:
         
         result = detect_language(tmp_path)
         assert result["framework"] == "spring"
+    
+    def test_actix_detection(self, tmp_path: Path):
+        """Test Actix detection from Cargo.toml."""
+        # Create Cargo.toml with actix
+        cargo_toml = tmp_path / "Cargo.toml"
+        cargo_toml.write_text(
+            '[package]\n'
+            'name = "my-app"\n'
+            '\n'
+            '[dependencies]\n'
+            'actix-web = "4"\n'
+        )
+        
+        # Create a Rust file
+        rs_file = tmp_path / "main.rs"
+        rs_file.write_text('use actix_web::{web, App, HttpServer};\n')
+        
+        result = detect_language(tmp_path)
+        assert result["framework"] == "actix"
+    
+    def test_express_detection(self, tmp_path: Path):
+        """Test Express detection from package.json."""
+        # Create package.json with express
+        pkg_json = tmp_path / "package.json"
+        pkg_json.write_text(json.dumps({
+            'name': 'express-app',
+            'dependencies': {
+                'express': '^4.18.2'
+            }
+        }))
+        
+        # Create a JS file
+        js_file = tmp_path / "app.js"
+        js_file.write_text("const express = require('express');\n")
+        
+        result = detect_language(tmp_path)
+        assert result["framework"] == "express"
+    
+    def test_nextjs_detection(self, tmp_path: Path):
+        """Test Next.js detection from package.json."""
+        # Create package.json with next
+        pkg_json = tmp_path / "package.json"
+        pkg_json.write_text(json.dumps({
+            'name': 'nextjs-app',
+            'dependencies': {
+                'next': '14.0.0',
+                'react': '^18.2.0'
+            }
+        }))
+        
+        result = detect_language(tmp_path)
+        assert result["framework"] == "nextjs"
+    
+    def test_springboot_detection(self, tmp_path: Path):
+        """Test Spring Boot detection from pom.xml."""
+        # Create pom.xml with Spring Boot
+        pom_xml = tmp_path / "pom.xml"
+        pom_xml.write_text(
+            '<?xml version="1.0" encoding="UTF-8"?>\n'
+            '<project>\n'
+            '  <parent>\n'
+            '    <groupId>org.springframework.boot</groupId>\n'
+            '    <artifactId>spring-boot-starter-parent</artifactId>\n'
+            '  </parent>\n'
+            '</project>\n'
+        )
+        
+        result = detect_language(tmp_path)
+        assert result["framework"] == "spring"
 
 
 class TestSimpleYamlParse:

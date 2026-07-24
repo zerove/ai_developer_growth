@@ -621,6 +621,130 @@ def cmd_list_rules(args: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_report(args: argparse.Namespace) -> int:
+    """Generate a quality gate report."""
+    target = Path(args.path).resolve()
+    if not target.exists():
+        print(f"Error: Path not found: {target}", file=sys.stderr)
+        return 1
+
+    detected = detect_language(target)
+    language = args.lang or detected.get("language", "unknown")
+    framework = getattr(args, 'framework', None) or detected.get("framework")
+
+    if language == "unknown":
+        print("Error: Could not detect language. Use --lang to specify.", file=sys.stderr)
+        return 1
+
+    # Load rules
+    rules = load_rules_for_language(language)
+    if framework:
+        fw_rules = load_framework_rules(framework)
+        rules["anti_patterns"].extend(fw_rules.get("anti_patterns", []))
+
+    # Collect all issues
+    all_issues: list[Issue] = []
+    files_checked = 0
+
+    if target.is_file():
+        all_issues = check_file(target, rules)
+        files_checked = 1
+    else:
+        for fp in target.rglob("*"):
+            if fp.is_file() and any(part not in SKIP_DIRS for part in fp.parts):
+                if fp.suffix not in SKIP_EXTENSIONS:
+                    if _detect_language_from_file(fp):
+                        all_issues.extend(check_file(fp, rules))
+                        files_checked += 1
+
+    # Count by severity
+    severity_counts = {"error": 0, "warning": 0, "info": 0}
+    for issue in all_issues:
+        if issue.severity in severity_counts:
+            severity_counts[issue.severity] += 1
+
+    # Count by category
+    category_counts: dict[str, int] = {}
+    for issue in all_issues:
+        cat = issue.category or "unknown"
+        category_counts[cat] = category_counts.get(cat, 0) + 1
+
+    # Count by file
+    file_counts: dict[str, int] = {}
+    for issue in all_issues:
+        file_counts[issue.file] = file_counts.get(issue.file, 0) + 1
+
+    # Top files by issue count
+    top_files = sorted(file_counts.items(), key=lambda x: x[1], reverse=True)[:10]
+
+    # Determine pass/fail
+    error_threshold = getattr(args, 'error_threshold', 0)
+    warning_threshold = getattr(args, 'warning_threshold', -1)  # -1 = no limit
+    passed = severity_counts["error"] <= error_threshold
+    if warning_threshold >= 0:
+        passed = passed and severity_counts["warning"] <= warning_threshold
+
+    # Output
+    if getattr(args, 'json', False):
+        report = {
+            "language": language,
+            "framework": framework,
+            "files_checked": files_checked,
+            "total_issues": len(all_issues),
+            "severity": severity_counts,
+            "categories": category_counts,
+            "top_files": [{"file": f, "issues": c} for f, c in top_files],
+            "passed": passed,
+        }
+        print(json.dumps(report, indent=2))
+    else:
+        # Color
+        GREEN = "\033[0;32m"
+        RED = "\033[0;31m"
+        YELLOW = "\033[0;33m"
+        CYAN = "\033[0;36m"
+        BOLD = "\033[1m"
+        NC = "\033[0m"
+
+        print(f"\n{BOLD}{CYAN}{'='*60}{NC}")
+        print(f"{BOLD}{CYAN}  ADG Quality Gate Report{NC}")
+        print(f"{BOLD}{CYAN}{'='*60}{NC}\n")
+
+        print(f"{BOLD}Project:{NC} {target}")
+        print(f"{BOLD}Language:{NC} {language}" + (f" + {framework}" if framework else ""))
+        print(f"{BOLD}Files Checked:{NC} {files_checked}")
+        print()
+
+        print(f"{BOLD}Issues by Severity:{NC}")
+        print(f"  {RED}Errors:   {severity_counts['error']}{NC}")
+        print(f"  {YELLOW}Warnings: {severity_counts['warning']}{NC}")
+        print(f"  Info:     {severity_counts['info']}")
+        print()
+
+        if category_counts:
+            print(f"{BOLD}Issues by Category:{NC}")
+            for cat, count in sorted(category_counts.items(), key=lambda x: x[1], reverse=True):
+                print(f"  {cat}: {count}")
+            print()
+
+        if top_files:
+            print(f"{BOLD}Top Files by Issues:{NC}")
+            for filepath, count in top_files:
+                print(f"  {filepath}: {count}")
+            print()
+
+        if passed:
+            print(f"{GREEN}{BOLD}✅ PASSED{NC} - Quality gate met")
+        else:
+            print(f"{RED}{BOLD}❌ FAILED{NC} - Quality gate not met")
+            if severity_counts["error"] > error_threshold:
+                print(f"  Errors ({severity_counts['error']}) exceed threshold ({error_threshold})")
+            if warning_threshold >= 0 and severity_counts["warning"] > warning_threshold:
+                print(f"  Warnings ({severity_counts['warning']}) exceed threshold ({warning_threshold})")
+
+    return 0 if passed else 1
+
+
 def cmd_install_hooks(args: argparse.Namespace) -> int:
     """Install pre-commit hook into a project."""
     target = Path(args.path).resolve()
@@ -726,6 +850,17 @@ def main() -> int:
     install_p = sub.add_parser("install-hooks", help="Install pre-commit hook")
     install_p.add_argument("path", nargs="?", default=".", help="Project directory")
 
+    # report
+    report_p = sub.add_parser("report", help="Generate quality gate report")
+    report_p.add_argument("path", help="File or directory to report on")
+    report_p.add_argument("--lang", help="Force language (skip auto-detection)")
+    report_p.add_argument("--framework", help="Force framework (skip auto-detection)")
+    report_p.add_argument("--error-threshold", type=int, default=0,
+                         help="Max errors allowed (default: 0)")
+    report_p.add_argument("--warning-threshold", type=int, default=-1,
+                         help="Max warnings allowed (-1 = no limit)")
+    report_p.add_argument("--json", action="store_true", help="Output as JSON")
+
     args = parser.parse_args()
 
     if not args.command:
@@ -737,6 +872,7 @@ def main() -> int:
         "detect": cmd_detect,
         "list-rules": cmd_list_rules,
         "install-hooks": cmd_install_hooks,
+        "report": cmd_report,
     }
 
     return commands[args.command](args)

@@ -50,7 +50,7 @@ def _is_in_string(line: str, pos: int) -> bool:
     return in_str
 
 
-def check_annotation(filepath: Path) -> list[dict]:
+def check_annotation(filepath: Path) -> list[dict[str, Any]]:
     """向后兼容: 检查 AI 标注"""
     import re
 
@@ -81,7 +81,7 @@ def check_annotation(filepath: Path) -> list[dict]:
     return issues
 
 
-def check_structure_patterns(filepath: Path) -> list[dict]:
+def check_structure_patterns(filepath: Path) -> list[dict[str, Any]]:
     """向后兼容: 检查代码结构问题 (行计数方式，避免正则回溯)"""
     import re
 
@@ -125,7 +125,7 @@ def check_structure_patterns(filepath: Path) -> list[dict]:
     return issues
 
 
-def check_security_patterns(filepath: Path) -> list[dict]:
+def check_security_patterns(filepath: Path) -> list[dict[str, Any]]:
     """向后兼容: 检查安全模式 (保持原始中文消息)"""
     import re
 
@@ -165,7 +165,7 @@ def check_security_patterns(filepath: Path) -> list[dict]:
     return issues
 
 
-def check_type_patterns(filepath: Path) -> list[dict]:
+def check_type_patterns(filepath: Path) -> list[dict[str, Any]]:
     """向后兼容: 检查类型安全模式 (保持原始中文消息)"""
     import re
 
@@ -199,7 +199,7 @@ def check_type_patterns(filepath: Path) -> list[dict]:
     return issues
 
 
-def check_error_patterns(filepath: Path) -> list[dict]:
+def check_error_patterns(filepath: Path) -> list[dict[str, Any]]:
     """向后兼容: 检查错误处理模式 (保持原始中文消息)"""
     import re
 

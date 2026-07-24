@@ -98,7 +98,7 @@ def run_quality_gate(
         return True, "No files to check"
 
     # Run checks on each file
-    all_results: list[tuple[Path, dict]] = []
+    all_results: list[tuple[Path, dict[str, Any]]] = []
     for filepath in filtered_files:
         lang = detect_language_from_file(filepath)
         if not lang:

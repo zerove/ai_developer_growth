@@ -107,9 +107,22 @@ SKIP_DIRS = {
     ".git", ".svn", "node_modules", "target", "vendor", "__pycache__",
     ".venv", "venv", "dist", "build", ".tox", ".mypy_cache", ".ruff_cache",
     ".pytest_cache", "coverage", ".next", ".nuxt",
+    # Generated documentation / build output
+    "book", "site", "_build", "out", "public", "static",
+    # IDE / editor
+    ".idea", ".vscode", ".vs", "*.swp",
+    # Cache directories
+    ".cache", "tmp", ".tmp",
 }
 
 MAX_FILES = 5000
+
+# Skip generated/minified files
+SKIP_EXTENSIONS = {
+    ".min.js", ".min.css", ".map", ".lock", ".sum",
+    ".pyc", ".pyo", ".class", ".o", ".so", ".dll",
+    ".exe", ".bin", ".dat", ".db",
+}
 
 
 def detect_language(dirpath: Path) -> dict[str, Any]:
@@ -328,6 +341,10 @@ def check_file(filepath: Path, rules: dict[str, Any], severity_filter: str | Non
     if not filepath.exists() or filepath.stat().st_size == 0:
         return issues
 
+    # Skip generated/minified files
+    if filepath.suffix in SKIP_EXTENSIONS or filepath.name.endswith(".min.js"):
+        return issues
+
     try:
         content = filepath.read_text(encoding="utf-8")
     except (OSError, UnicodeDecodeError):
@@ -408,6 +425,8 @@ def check_directory(dirpath: Path, rules: dict[str, Any], severity_filter: str |
         if not filepath.is_file():
             continue
         if any(part in SKIP_DIRS for part in filepath.parts):
+            continue
+        if filepath.suffix in SKIP_EXTENSIONS:
             continue
         lang = _detect_language_from_file(filepath)
         if lang:
@@ -499,8 +518,9 @@ def cmd_check(args: argparse.Namespace) -> int:
         files = []
         for fp in target.rglob("*"):
             if fp.is_file() and any(part not in SKIP_DIRS for part in fp.parts):
-                if _detect_language_from_file(fp):
-                    files.append(fp)
+                if fp.suffix not in SKIP_EXTENSIONS:
+                    if _detect_language_from_file(fp):
+                        files.append(fp)
         detected = detect_language(target)
 
     language = args.lang or detected.get("language", "unknown")

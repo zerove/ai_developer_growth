@@ -9,7 +9,6 @@ from unittest.mock import patch
 import pytest
 
 from tools.scripts.adg_cli import (
-    EXTENSION_MAP,
     Issue,
     _check_pattern,
     _detect_framework,
@@ -20,11 +19,8 @@ from tools.scripts.adg_cli import (
     _load_yaml,
     _make_issue,
     _simple_yaml_parse,
-    _severity_rank,
     check_directory,
     check_file,
-    detect_language,
-    load_framework_rules,
     load_rules_for_language,
     main,
     cmd_check,
@@ -70,7 +66,7 @@ class TestDetectFramework:
         (tmp_path / "package.json").write_text("{invalid json")
         assert _detect_framework(tmp_path, "javascript") is None
 
-    def test_package_json_devDependencies(self, tmp_path: Path) -> None:
+    def test_package_json_dev_deps(self, tmp_path: Path) -> None:
         (tmp_path / "package.json").write_text(json.dumps({
             "devDependencies": {"next": "^14.0.0"}
         }))
@@ -84,7 +80,7 @@ class TestDetectFramework:
         (tmp_path / "requirements.txt").write_text("fastapi>=0.100\n")
         assert _detect_framework(tmp_path, "python") == "fastapi"
 
-    def test_requirements_txt_oSError(self, tmp_path: Path) -> None:
+    def test_requirements_txt_os_error(self, tmp_path: Path) -> None:
         req = tmp_path / "requirements.txt"
         req.write_text("django==4.2\n")
         with patch.object(Path, "read_text", side_effect=OSError("locked")):
@@ -581,23 +577,16 @@ class TestCmdInstallHooks:
         result = cmd_install_hooks(args)
         assert result == 1
 
-    def test_install_with_hook_source(self, tmp_path: Path) -> None:
+    def test_install_hook_content(self, tmp_path: Path) -> None:
         (tmp_path / ".git" / "hooks").mkdir(parents=True)
-        hook_src = tmp_path / "config" / "adg" / "hooks" / "pre-commit"
-        hook_src.parent.mkdir(parents=True)
-        hook_src.write_text("#!/bin/bash\necho custom\n")
         args = argparse.Namespace(path=str(tmp_path))
-        # Patch Path(__file__).parent.parent / "config" to point to tmp_path
-        with patch("tools.scripts.adg_cli.Path") as MockPath:
-            real = Path
-            def side_effect(*a, **kw):
-                return real(*a, **kw)
-            MockPath.side_effect = side_effect
-            # Replace just the __file__ resolution
-            hook_path = tmp_path / ".git" / "hooks" / "pre-commit"
-            result = cmd_install_hooks(args)
+        result = cmd_install_hooks(args)
         assert result == 0
-        assert "custom" in hook_path.read_text()
+        hook = tmp_path / ".git" / "hooks" / "pre-commit"
+        content = hook.read_text()
+        assert "#!/bin/bash" in content
+        assert "ADG" in content
+        assert hook.stat().st_mode & 0o755
 
 
 # ── main CLI ───────────────────────────────────────────────
@@ -656,4 +645,50 @@ class TestMainCLI:
             with patch("tools.scripts.adg_cli.load_rules_for_language") as mock:
                 mock.return_value = load_rules_for_language("python")
                 result = main()
+        assert result == 1
+
+    def test_report_clean_code(self, tmp_path: Path) -> None:
+        """Test report on clean code passes."""
+        f = tmp_path / "test.py"
+        f.write_text("x = 1\n")
+        with patch("sys.argv", ["adg", "report", str(f), "--lang", "python"]):
+            with patch("tools.scripts.adg_cli.load_rules_for_language") as mock:
+                mock.return_value = {"anti_patterns": []}
+                result = main()
+        assert result == 0
+
+    def test_report_with_errors(self, tmp_path: Path) -> None:
+        """Test report on code with errors fails."""
+        f = tmp_path / "test.py"
+        f.write_text("try:\n    pass\nexcept:\n    pass\n")
+        with patch("sys.argv", ["adg", "report", str(f), "--lang", "python"]):
+            with patch("tools.scripts.adg_cli.load_rules_for_language") as mock:
+                mock.return_value = load_rules_for_language("python")
+                result = main()
+        assert result == 1
+
+    def test_report_json_output(self, tmp_path: Path) -> None:
+        """Test report JSON output."""
+        f = tmp_path / "test.py"
+        f.write_text("x = 1\n")
+        with patch("sys.argv", ["adg", "report", str(f), "--lang", "python", "--json"]):
+            with patch("tools.scripts.adg_cli.load_rules_for_language") as mock:
+                mock.return_value = {"anti_patterns": []}
+                result = main()
+        assert result == 0
+
+    def test_report_with_threshold(self, tmp_path: Path) -> None:
+        """Test report with error threshold."""
+        f = tmp_path / "test.py"
+        f.write_text("try:\n    pass\nexcept:\n    pass\n")
+        with patch("sys.argv", ["adg", "report", str(f), "--lang", "python", "--error-threshold", "10"]):
+            with patch("tools.scripts.adg_cli.load_rules_for_language") as mock:
+                mock.return_value = load_rules_for_language("python")
+                result = main()
+        assert result == 0  # Should pass with high threshold
+
+    def test_report_nonexistent_path(self, tmp_path: Path) -> None:
+        """Test report on nonexistent path."""
+        with patch("sys.argv", ["adg", "report", str(tmp_path / "nonexistent"), "--lang", "python"]):
+            result = main()
         assert result == 1

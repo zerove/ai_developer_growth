@@ -18,8 +18,15 @@ typecheck:  ## 运行 mypy 类型检查
 test:  ## 运行 pytest 测试
 	python -m pytest tests/ -v
 
-test-cov:  ## 运行测试
-	python -m pytest tests/ -v --cov=tools/scripts --cov-report=term-missing --cov-report=html
+test-cov:  ## 运行测试并生成覆盖率报告
+	python -m pytest tests/ -v --cov=tools/scripts --cov-report=term-missing --cov-report=xml --cov-report=html
+
+check-quality:  ## 运行完整质量检查 (lint + format + typecheck + test + coverage)
+	echo '=== Ruff Check ===' && ruff check . && \
+	echo '=== Ruff Format ===' && ruff format --check . && \
+	echo '=== Mypy ===' && mypy tools/scripts/ --ignore-missing-imports && \
+	echo '=== Tests ===' && python -m pytest tests/ -v --cov=tools/scripts --cov-report=term-missing && \
+	echo '=== All checks passed ==='
 
 security:  ## 运行安全扫描
 	bandit -r tools/scripts/ -f json -o bandit-report.json || true

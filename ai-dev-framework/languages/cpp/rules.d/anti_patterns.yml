@@ -5,84 +5,128 @@ version: '>=17'
 config_version: '1.0'
 anti_patterns:
 - id: cpp-raw-new
-  name: Raw new/delete
+  name: Raw new/delete usage
   severity: error
   category: memory_safety
-  pattern: \bnew\s+\w|\bdelete\s+\w|\bdelete\[\]
-  message: Raw new/delete causes memory leaks - use smart pointers
-  fix_hint: Use std::unique_ptr or std::shared_ptr
-- id: cpp-null-ptr
-  name: NULL usage
+  pattern: '\bnew\s+\w+|\bdelete\s+'
+  message: 'Raw new/delete causes memory leaks and undefined behavior'
+  fix_hint: 'Use smart pointers: std::unique_ptr or std::shared_ptr'
+- id: cpp-null-pointer
+  name: NULL pointer usage
   severity: warning
   category: type_safety
-  pattern: \bNULL\b
-  message: Use nullptr instead of NULL
-  fix_hint: Replace NULL with nullptr
-- id: cpp-c-cast
-  name: C-style casts
+  pattern: '\bNULL\b'
+  message: 'NULL is not type-safe in C++'
+  fix_hint: 'Use nullptr instead of NULL'
+- id: cpp-c-style-cast
+  name: C-style cast
   severity: warning
   category: type_safety
-  pattern: \((?:int|char|float|double|void|long|short|unsigned)\s*\*?\)\s*\w
-  message: C-style casts are unsafe - use C++ casts
-  fix_hint: Use static_cast, dynamic_cast, const_cast, or reinterpret_cast
-- id: cpp-printf
-  name: printf/scanf usage
+  pattern: '\(\s*(?:int|float|double|char|void|const|unsigned)\s*\)\s*\w'
+  message: 'C-style casts are unsafe and bypass type checking'
+  fix_hint: 'Use static_cast<>, dynamic_cast<>, const_cast<> instead'
+- id: cpp-raw-array
+  name: Raw array allocation
+  severity: warning
+  category: memory_safety
+  pattern: '\w+\s*\*\s*\w+\s*=\s*new\s+\w+\['
+  message: 'Raw array allocation is error-prone'
+  fix_hint: 'Use std::vector, std::array, or std::span'
+- id: cpp-using-namespace
+  name: Using namespace in header
+  severity: error
+  category: code_quality
+  pattern: 'using\s+namespace\s+\w+;'
+  message: 'using namespace pollutes the global namespace'
+  fix_hint: 'Use specific using declarations or fully qualified names'
+- id: cpp-cout-printf
+  name: printf/cout for logging
   severity: info
   category: code_quality
-  pattern: \bprintf\s*\(|\bscanf\s*\(|\bfprintf\s*\(
-  message: Use iostream or fmt library instead of printf/scanf
-  fix_hint: Use std::cout, std::format, or fmt::print
-- id: cpp-using-namespace
-  name: using namespace in header
-  severity: warning
+  pattern: '\bprintf\s*\(|std::cout\s*<<|std::cerr\s*<<'
+  message: 'Use a proper logging library instead of printf/cout'
+  fix_hint: 'Use spdlog, fmt, or similar logging library'
+- id: cpp-magic-number
+  name: Magic number
+  severity: info
   category: code_quality
-  pattern: ^\s*using\s+namespace\s+std
-  message: using namespace in headers pollutes global namespace
-  fix_hint: 'Use explicit std:: prefix or put using in .cpp files only'
-- id: cpp-vla
-  name: Variable-length array
+  pattern: '(?:if|while|for)\s*\(.*(?:==?|>=?|<=?)\s*\d{3,}'
+  message: 'Magic numbers should be named constants'
+  fix_hint: 'Define constexpr int MAX_SIZE = 1024;'
+- id: cpp-global-ctor
+  name: Global constructor with side effects
+  severity: warning
+  category: design
+  pattern: '^\s*\w+\s+\w+\s*\([^)]*\)\s*;'
+  message: 'Global constructors with side effects cause static initialization order fiasco'
+  fix_hint: 'Use function-local statics or lazy initialization'
+- id: cpp-exception-spec
+  name: Dynamic exception specification
   severity: error
-  category: memory_safety
-  pattern: (?:int|char|float|double)\s+\w+\s*\[\s*\w+\s*\]
-  message: VLAs are not standard C++ and cause stack overflow
-  fix_hint: Use std::vector or std::array
-- id: cpp-memcpy
-  name: memcpy/memmove usage
+  category: modern_cpp
+  pattern: 'throw\s*\([^)]*\)'
+  message: 'Dynamic exception specifications are removed in C++17'
+  fix_hint: 'Use noexcept for functions that do not throw'
+- id: cpp-uncaught-exception
+  name: Throwing in destructor
+  severity: error
+  category: exception_safety
+  pattern: '~\w+\s*\(\s*\)\s*(?:noexcept\s*\(\s*false\s*\))?\s*\{[^}]*\bthrow\b'
+  message: 'Throwing in destructors causes undefined behavior during stack unwinding'
+  fix_hint: 'Use try-catch in destructors or move dangerous operations to separate methods'
+- id: cpp-copy-loop
+  name: Copying container in loop
   severity: warning
-  category: memory_safety
-  pattern: \bmemcpy\s*\(|\bmemmove\s*\(|\bmemset\s*\(
-  message: C memory functions bypass type system
-  fix_hint: Use std::copy, std::fill, or std::move
-- id: cpp-catch-value
-  name: Catching exceptions by value
+  category: performance
+  pattern: 'for\s*\([^)]*\bauto\b\s+\w+\s*:\s*\w+'
+  message: 'Range-based for loops should use const reference to avoid copies'
+  fix_hint: 'Use: for (const auto& item : container)'
+- id: cpp-uninitialized-var
+  name: Uninitialized member variable
   severity: warning
-  category: error_handling
-  pattern: catch\s*\(\s*(?:const\s+)?[\w:]+(?:\s*&)?\s+\w+\s*\)
-  message: Catch exceptions by const reference, not by value
-  fix_hint: Use catch (const std::exception& e)
+  category: correctness
+  pattern: '^\s*\w+\s+\w+;'
+  message: 'Member variables should be initialized'
+  fix_hint: 'Initialize in constructor or use default member initializers'
+- id: cpp-deprecated-cast
+  name: const_cast to remove const
+  severity: error
+  category: correctness
+  pattern: 'const_cast\s*<[^>]*>\s*\('
+  message: 'const_cast is almost always a bug or design smell'
+  fix_hint: 'Redesign to avoid removing const qualification'
+
 naming:
   file:
-    pattern: ^[A-Z][a-zA-Z0-9]*\.(cpp|h|hpp|cc)$
-    message: C++ files should use PascalCase
+    pattern: '^[a-z][a-z0-9_]*\.(cpp|cc|cxx)$|^[A-Z][a-zA-Z0-9]*\.h$'
+    message: 'C++ source files use snake_case, headers use PascalCase'
   function:
-    pattern: ^[a-z][a-zA-Z0-9]*$
-    message: C++ functions should use camelCase
+    pattern: '^[a-z][a-z0-9_]*$'
+    message: 'Functions should use snake_case'
   class:
-    pattern: ^[A-Z][a-zA-Z0-9]*$
-    message: C++ classes should use PascalCase
+    pattern: '^[A-Z][a-zA-Z0-9]*$'
+    message: 'Classes should use PascalCase'
   constant:
-    pattern: ^[A-Z][A-Z0-9_]*$
-    message: C++ constants should use UPPER_SNAKE_CASE
+    pattern: '^[A-Z][A-Z0-9_]*$'
+    message: 'Constants should use UPPER_SNAKE_CASE'
+  namespace:
+    pattern: '^[a-z][a-z0-9_]*$'
+    message: 'Namespaces should use snake_case'
+
 thresholds:
   max_function_length: 50
   max_file_length: 500
   max_line_length: 120
   max_nesting_depth: 4
-  max_function_params: 5
+  max_function_params: 7
+  max_cyclomatic_complexity: 10
+
 tooling:
   linter: clang-tidy
   formatter: clang-format
+  type_checker: null
   test_runner: gtest
   config_files:
-  - .clang-tidy
-  - CMakeLists.txt
+    - CMakeLists.txt
+    - .clang-tidy
+    - .clang-format

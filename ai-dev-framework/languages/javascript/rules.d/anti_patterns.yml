@@ -1,4 +1,4 @@
-# Javascript Language Rules - Machine-Readable Configuration
+# JavaScript Language Rules - Machine-Readable Configuration
 
 language: javascript
 version: '>=ES2022'
@@ -60,30 +60,98 @@ anti_patterns:
   pattern: document\.write\s*\(
   message: document.write() overwrites the page
   fix_hint: Use DOM manipulation APIs
+- id: js-eq-null
+  name: Loose equality with null
+  severity: warning
+  category: type_safety
+  pattern: '==\s*null|!=\s*null'
+  message: Loose equality with null is error-prone
+  fix_hint: Use === null or == null with explicit type coercion
+- id: js-typeof-undefined
+  name: Comparing typeof to string
+  severity: info
+  category: code_quality
+  pattern: "typeof\\s+\\w+\\s*===\\s*['\"]undefined['\"]"
+  message: Prefer void 0 check or optional chaining
+  fix_hint: Use x === undefined or x?.prop
+- id: js-nested-ternary
+  name: Nested ternary operators
+  severity: warning
+  category: code_quality
+  pattern: '\?[^?:]*\?[^?:]*:'
+  message: Nested ternaries are hard to read
+  fix_hint: Use if/else or switch for complex logic
+- id: js-n-plus-one-select
+  name: N+1 query in loops
+  severity: error
+  category: performance
+  pattern: 'for\s*\(.*\{[\s\S]*?(?:fetch|axios|\.find\(|\.findOne\()'
+  message: Making API calls inside loops causes N+1 query problem
+  fix_hint: Use Promise.all() or batch API calls
+- id: js-synchronous-loop
+  name: Synchronous async in loop
+  severity: error
+  category: async
+  pattern: 'for\s*\(.*\{[\s\S]*?await\s+'
+  message: Sequential await in loops is slow - use Promise.all()
+  fix_hint: 'const results = await Promise.all(items.map(item => asyncOp(item)))'
+- id: js-missing-await
+  name: Missing await on async function
+  severity: warning
+  category: correctness
+  pattern: '(?:const|let|var)\s+\w+\s*=\s*(?:async\s+)?(?:fetch|axios|\.then)'
+  message: Async function call without await may cause race conditions
+  fix_hint: Add await before async operations or use .then() chain
+- id: js-timeout-string
+  name: setTimeout with string
+  severity: error
+  category: security
+  pattern: "setTimeout\\s*\\(\\s*['\"]"
+  message: setTimeout with string evaluates code - same as eval()
+  fix_hint: Pass a function reference instead of a string
+- id: js-prototype-pollution
+  name: Prototype pollution risk
+  severity: error
+  category: security
+  pattern: '__proto__|constructor\s*\['
+  message: Direct prototype manipulation enables pollution attacks
+  fix_hint: Use Object.create(null) or Map for safe dictionaries
+- id: js-reassign-const
+  name: Attempting to reassign const
+  severity: error
+  category: type_safety
+  pattern: 'const\s+\w+\s*=\s*.*;\s*\w+\s*='
+  message: Cannot reassign a const variable
+  fix_hint: Use let for variables that need reassignment
+
 naming:
   file:
-    pattern: ^[a-z][a-zA-Z0-9]*\.(js|jsx|mjs)$
-    message: JavaScript files should use camelCase
+    pattern: '^[a-z][a-zA-Z0-9]*\.(js|jsx|mjs)$'
+    message: 'JavaScript files should use camelCase'
   function:
-    pattern: ^[a-z][a-zA-Z0-9]*$|^[A-Z][a-zA-Z0-9]*$
-    message: JS functions use camelCase or PascalCase
+    pattern: '^[a-z][a-zA-Z0-9]*$|^[A-Z][a-zA-Z0-9]*$'
+    message: 'JS functions use camelCase or PascalCase'
   class:
-    pattern: ^[A-Z][a-zA-Z0-9]*$
-    message: JS classes should use PascalCase
+    pattern: '^[A-Z][a-zA-Z0-9]*$'
+    message: 'JS classes should use PascalCase'
   constant:
-    pattern: ^[A-Z][A-Z0-9_]*$
-    message: JS constants should use UPPER_SNAKE_CASE
+    pattern: '^[A-Z][A-Z0-9_]*$'
+    message: 'JS constants should use UPPER_SNAKE_CASE'
+
 thresholds:
   max_function_length: 50
   max_file_length: 500
   max_line_length: 120
   max_nesting_depth: 4
   max_function_params: 5
+  max_cyclomatic_complexity: 10
+
 tooling:
   linter: eslint
   formatter: prettier
-  test_runner: jest
+  type_checker: tsc
+  test_runner: vitest
   config_files:
-  - .eslintrc
-  - .prettierrc
-  - package.json
+    - .eslintrc.json
+    - .prettierrc
+    - package.json

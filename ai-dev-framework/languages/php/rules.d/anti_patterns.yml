@@ -1,88 +1,136 @@
-# Php Language Rules - Machine-Readable Configuration
+# PHP Language Rules - Machine-Readable Configuration
 
 language: php
 version: '>=8.1'
 config_version: '1.0'
 anti_patterns:
-- id: php-catch-all
-  name: Catching generic Exception
+- id: php-sql-injection
+  name: SQL injection via string concatenation
   severity: error
-  category: error_handling
-  pattern: catch\s*\(\s*\\?Exception\s+\$\w+\s*\)
-  message: Catching generic Exception hides specific errors
-  fix_hint: Catch specific exception types
-- id: php-return-null
-  name: Returning null
-  severity: warning
-  category: error_handling
-  pattern: return\s+null\s*;
-  message: Returning null causes TypeErrors in typed code
-  fix_hint: Use nullable return type or throw
+  category: security
+  pattern: "(?:execute|query)\s*\(.*(?:\\$|\\.\\s*['\"]|\\.\\s*\\$)"
+  message: 'String concatenation in SQL enables injection'
+  fix_hint: 'Use prepared statements: $pdo->prepare("... WHERE id = ?")->execute([$id])'
 - id: php-eval
   name: eval() usage
   severity: error
   category: security
-  pattern: \beval\s*\(|\bassert\s*\(
-  message: eval() and assert() are security risks
-  fix_hint: Find a safer alternative
-- id: php-sql-string
-  name: SQL injection via string concat
+  pattern: '\beval\s*\('
+  message: 'eval() is a critical security risk'
+  fix_hint: 'Use proper parsing functions instead'
+- id: php-extract
+  name: extract() usage
   severity: error
   category: security
-  pattern: '".*SELECT.*"\s*\.|''.*SELECT.*''\s*\.'
-  message: String concatenation in SQL enables injection
-  fix_hint: Use prepared statements with PDO
-- id: php-suppress-error
-  name: Error suppression operator @
+  pattern: '\bextract\s*\('
+  message: 'extract() can overwrite variables unexpectedly'
+  fix_hint: 'Use explicit variable assignment instead'
+- id: php-var-dump
+  name: var_dump/print_r in production
   severity: warning
-  category: error_handling
-  pattern: '@\$'
-  message: '@ operator suppresses errors silently'
-  fix_hint: Handle errors explicitly with try-catch
-- id: php-exit-die
-  name: exit/die in production
+  category: code_quality
+  pattern: '\b(var_dump|print_r|echo\s+\$|die\s*\(|exit\s*\()'
+  message: 'Debug output should not be in production code'
+  fix_hint: 'Use error_log() or a logging library'
+- id: php-bare-except
+  name: Bare catch clause
   severity: error
   category: error_handling
-  pattern: \bexit\s*\(|\bdie\s*\(
-  message: exit/die terminates the process
-  fix_hint: Throw exception or return error response
-- id: php-print
-  name: print/echo for logging
-  severity: info
-  category: code_quality
-  pattern: ^\s*(print|echo)\s+
-  message: Use logging instead of print/echo
-  fix_hint: Use Monolog or PSR-3 logger
-- id: php-short-tag
-  name: Short open tag <?
+  pattern: 'catch\s*\(\s*\w*\s*\$\w+\s*\)'
+  message: 'Catch specific exceptions instead of generic Throwable'
+  fix_hint: 'Catch specific exceptions: catch (InvalidArgumentException $e)'
+- id: php-empty-catch
+  name: Empty catch block
+  severity: error
+  category: error_handling
+  pattern: 'catch\s*\([^)]*\)\s*\{\s*\}'
+  message: 'Empty catch blocks silently swallow errors'
+  fix_hint: 'Log the exception or rethrow it'
+- id: php-global-var
+  name: Global variable usage
   severity: warning
   category: code_quality
-  pattern: <\?[^=p]
-  message: Short open tag <? is not portable - use <?php
-  fix_hint: Always use <?php opening tag
+  pattern: '\bglobal\s+\$'
+  message: 'Global variables make code hard to test'
+  fix_hint: 'Use dependency injection or function parameters'
+- id: php-magic-number
+  name: Magic number
+  severity: info
+  category: code_quality
+  pattern: '(?:if|while|for)\s*\(.*(?:===?|!==?|>=?|<=?)\s*\d{2,}'
+  message: 'Magic numbers should be named constants'
+  fix_hint: 'Define const MAX_VALUE = 100;'
+- id: php-short-tags
+  name: Short open tags
+  severity: warning
+  category: code_quality
+  pattern: '<\?php(?!\s)|<\?='
+  message: 'Short tags may not work in all configurations'
+  fix_hint: 'Use full PHP tags: <?php ... ?>'
+- id: php-no-type-hints
+  name: Missing type hints
+  severity: warning
+  category: type_safety
+  pattern: 'function\s+\w+\s*\(\s*\$'
+  message: 'PHP functions should have type hints'
+  fix_hint: 'Add parameter and return type hints: function foo(string $bar): int'
+- id: php-comparison-type-juggling
+  name: Loose comparison type juggling
+  severity: warning
+  category: type_safety
+  pattern: '==\s*0(?!\.)|!=\s*0(?!\.)|==\s*""|==\s*false'
+  message: 'Loose comparison with 0, "", false is error-prone in PHP'
+  fix_hint: 'Use strict comparison (===) to avoid type juggling'
+- id: php-deprecated-functions
+  name: Deprecated function usage
+  severity: warning
+  category: maintainability
+  pattern: '\b(create_function|each\s*\(|mysql_|ereg\s*\(|split\s*\()'
+  message: 'These functions are deprecated or removed'
+  fix_hint: 'Use modern equivalents: array functions, PDO, preg_match'
+- id: php-nested-ternary
+  name: Deeply nested ternary
+  severity: warning
+  category: code_quality
+  pattern: '\?[^?:]*\?[^?:]*:'
+  message: 'Nested ternaries reduce readability'
+  fix_hint: 'Use match expression or if/else blocks'
+- id: php-no-return-type
+  name: Missing return type declaration
+  severity: info
+  category: type_safety
+  pattern: 'function\s+\w+\s*\([^)]*\)\s*(?!:\s*\w)'
+  message: 'Functions should declare return types'
+  fix_hint: 'Add return type: function process(): string'
+
 naming:
   file:
-    pattern: ^[A-Z][a-zA-Z0-9]*\.php$
-    message: PHP class files should use PascalCase
+    pattern: '^[A-Z][a-zA-Z0-9]*\.php$'
+    message: 'PHP class files should use PascalCase'
   function:
-    pattern: ^[a-z][a-zA-Z0-9]*$
-    message: PHP functions should use camelCase
+    pattern: '^[a-z][a-zA-Z0-9]*$'
+    message: 'Functions should use camelCase'
   class:
-    pattern: ^[A-Z][a-zA-Z0-9]*$
-    message: PHP classes should use PascalCase
+    pattern: '^[A-Z][a-zA-Z0-9]*$'
+    message: 'Classes should use PascalCase'
   constant:
-    pattern: ^[A-Z][A-Z0-9_]*$
-    message: PHP constants should use UPPER_SNAKE_CASE
+    pattern: '^[A-Z][A-Z0-9_]*$'
+    message: 'Constants should use UPPER_SNAKE_CASE'
+
 thresholds:
   max_function_length: 50
   max_file_length: 500
   max_line_length: 120
   max_nesting_depth: 4
   max_function_params: 5
+  max_cyclomatic_complexity: 10
+
 tooling:
-  linter: phpcs
+  linter: phpstan
   formatter: php-cs-fixer
+  type_checker: phpstan
   test_runner: phpunit
   config_files:
-  - composer.json
-  - phpcs.xml
+    - composer.json
+    - phpstan.neon
+    - .php-cs-fixer.php

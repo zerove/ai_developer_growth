@@ -1,5 +1,4 @@
 # Vue Framework Anti-Pattern Rules - Machine-Readable Configuration
-# Used by validate_language_rules.py for automated code validation
 
 framework: vue
 language: typescript
@@ -61,3 +60,64 @@ anti_patterns:
   pattern: "watch\\s*:\\s*\\{[\\s\\S]*deep\\s*:\\s*true"
   message: 'Deep watchers traverse entire object trees and are expensive'
   fix_hint: 'Watch specific nested properties or use shallowRef for large data'
+- id: vue-missing-vmodel
+  name: Manual input binding instead of v-model
+  severity: info
+  category: code_quality
+  pattern: ':value\s*=\s*"\w+"\s+@input\s*=\s*"\w+\s*=\s*\$event'
+  message: 'Manual value/input binding should use v-model directive'
+  fix_hint: 'Use v-model="propertyName" for two-way binding'
+- id: vue-mixins-deprecated
+  name: Mixins usage (deprecated in Vue 3)
+  severity: warning
+  category: deprecated
+  pattern: 'mixins\s*:\s*\['
+  message: 'Mixins are deprecated in Vue 3 - use Composition API or provide/inject'
+  fix_hint: 'Refactor to <script setup> with composables or use provide/inject'
+- id: vue-no-template-root
+  name: Multiple root elements without explicit wrapper
+  severity: info
+  category: architecture
+  pattern: '<template>\s*\n\s*<\w+'
+  message: 'Vue 3 supports fragments but explicit wrappers improve readability'
+  fix_hint: 'Consider wrapping in a single root element or <template fragment>'
+- id: vue-vuex-mutation
+  name: Direct Vuex state mutation
+  severity: error
+  category: state_management
+  pattern: 'this\.\$store\.state\.\w+\s*='
+  message: 'Never mutate Vuex state directly - use mutations or actions'
+  fix_hint: 'Use this.$store.commit("MUTATION_NAME", payload) or dispatch actions'
+
+naming:
+  file:
+    pattern: '^[A-Z][a-zA-Z0-9]*\.(vue|ts)$'
+    message: 'Vue component files should use PascalCase'
+  function:
+    pattern: '^[a-z][a-zA-Z0-9]*$'
+    message: 'Functions should use camelCase'
+  component:
+    pattern: '^[A-Z][a-zA-Z0-9]*$'
+    message: 'Components should use PascalCase'
+  constant:
+    pattern: '^[A-Z][A-Z0-9_]*$'
+    message: 'Constants should use UPPER_SNAKE_CASE'
+
+thresholds:
+  max_function_length: 50
+  max_file_length: 400
+  max_line_length: 100
+  max_nesting_depth: 4
+  max_function_params: 5
+  max_cyclomatic_complexity: 10
+
+tooling:
+  linter: eslint
+  formatter: prettier
+  type_checker: vue-tsc
+  test_runner: vitest
+  config_files:
+    - .eslintrc.json
+    - tsconfig.json
+    - vite.config.ts
+    - .prettierrc

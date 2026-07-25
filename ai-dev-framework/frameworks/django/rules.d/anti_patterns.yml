@@ -1,5 +1,4 @@
 # Django Framework Anti-Pattern Rules - Machine-Readable Configuration
-# Used by validate_language_rules.py for automated code validation
 
 framework: django
 language: python
@@ -61,3 +60,67 @@ anti_patterns:
   pattern: '@csrf_exempt|csrf_exempt\s*\('
   message: 'Disabling CSRF protection exposes the endpoint to cross-site request forgery'
   fix_hint: 'Remove @csrf_exempt and ensure {% csrf_token %} is in your forms'
+- id: django-admin-expose
+  name: Admin site exposed in production
+  severity: warning
+  category: security
+  pattern: 'path\\([\"']admin/[\"']|url\\([\"']admin/[\"']'
+  message: 'Admin site should be disabled or restricted in production'
+  fix_hint: 'Use environment checks or IP whitelisting for admin access'
+- id: django-debug-toolbar
+  name: Debug toolbar in production
+  severity: error
+  category: security
+  pattern: 'debug_toolbar|DebugToolbarMiddleware'
+  message: 'Debug toolbar must not be enabled in production'
+  fix_hint: 'Wrap debug toolbar config in if DEBUG: checks'
+- id: django-sql-logging
+  name: SQL logging in production
+  severity: warning
+  category: performance
+  pattern: "'loggers'.*'django.db.backends'|LOGGING.*sql"
+  message: 'SQL logging increases memory usage and reduces performance'
+  fix_hint: 'Disable SQL logging in production settings'
+- id: django-missing-static-compression
+  name: Missing static file compression
+  severity: info
+  category: performance
+  pattern: 'STATICFILES_STORAGE.*ManifestStaticFilesStorage|whitenoise'
+  message: 'Static files should be compressed and cached in production'
+  fix_hint: 'Use ManifestStaticFilesStorage or WhiteNoise for static serving'
+
+naming:
+  file:
+    pattern: '^[a-z][a-z0-9_]*\.py$'
+    message: 'Python files should use snake_case'
+  function:
+    pattern: '^[a-z][a-z0-9_]*$'
+    exceptions:
+      - __init__
+      - __str__
+      - __repr__
+    message: 'Django views and functions should use snake_case'
+  class:
+    pattern: '^[A-Z][a-zA-Z0-9]*$'
+    message: 'Django classes should use PascalCase'
+  constant:
+    pattern: '^[A-Z][A-Z0-9_]*$'
+    message: 'Constants should use UPPER_SNAKE_CASE'
+
+thresholds:
+  max_function_length: 50
+  max_file_length: 500
+  max_line_length: 120
+  max_nesting_depth: 4
+  max_function_params: 7
+  max_cyclomatic_complexity: 10
+
+tooling:
+  linter: ruff
+  formatter: ruff
+  type_checker: mypy
+  test_runner: pytest-django
+  config_files:
+    - pyproject.toml
+    - setup.cfg
+    - manage.py

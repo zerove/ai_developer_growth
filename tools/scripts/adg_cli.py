@@ -56,7 +56,7 @@ def load_project_config(dirpath: Path | None = None) -> dict[str, Any]:
 
     Returns merged configuration with project overriding global.
     """
-    config = {
+    config: dict[str, Any] = {
         "custom_rules": [],
         "skip_patterns": [],
         "severity_overrides": {},
@@ -153,7 +153,7 @@ EXTENSION_MAP: dict[str, str] = {
     ".gql": "graphql",
 }
 
-CONFIG_MARKERS: dict[tuple[str, str | None]] = {
+CONFIG_MARKERS: dict[str, str | None] = {
     "pyproject.toml": "python",
     "setup.py": "python",
     "requirements.txt": "python",

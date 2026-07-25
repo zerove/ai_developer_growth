@@ -31,7 +31,7 @@ DIR_CATEGORY_MAP = {
 }
 
 
-def get_category_from_path(filepath: str) -> tuple:
+def get_category_from_path(filepath: str) -> tuple[str, list[str]]:
     """根据文件路径推断分类"""
     path = Path(filepath)
 

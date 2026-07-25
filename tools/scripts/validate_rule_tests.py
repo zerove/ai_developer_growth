@@ -25,11 +25,12 @@ import yaml
 
 from tools.scripts._common import handle_error
 from tools.scripts._common import rules_dir as _rules_dir
+from typing import Any
 
 
-def _load_rules_with_tests(lang: str) -> list[dict]:
+def _load_rules_with_tests(lang: str) -> list[dict[str, Any]]:
     """Load rules that have test_cases for a language."""
-    rules: list[dict] = []
+    rules: list[dict[str, Any]] = []
     rules_dir = _rules_dir() / "languages" / lang / "rules.d"
     if not rules_dir.exists():
         return rules
@@ -123,7 +124,7 @@ def main() -> int:
         total_passed = 0
         total_failed = 0
         all_errors: list[str] = []
-        lang_results: list[dict] = []
+        lang_results: list[dict[str, Any]] = []
 
         for lang in languages:
             passed, failed, errors = validate_rule_tests(lang)

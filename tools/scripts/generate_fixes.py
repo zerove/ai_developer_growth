@@ -24,14 +24,15 @@ from fix_heuristics import (
 
 from tools.scripts._common import handle_error
 from tools.scripts._common import rules_dir as _rules_dir
+from typing import Any
 
 # Re-export for backward compatibility
 __all__ = ["heuristic_fix", "HEURISTIC_FIXES"]
 
 
-def _load_rules_without_fix(lang: str) -> list[dict]:
+def _load_rules_without_fix(lang: str) -> list[dict[str, Any]]:
     """Load rules that don't have fix_replacement."""
-    rules: list[dict] = []
+    rules: list[dict[str, Any]] = []
     lang_dir = _rules_dir() / "languages" / lang / "rules.d"
     if not lang_dir.exists():
         return rules
@@ -55,7 +56,7 @@ def _load_rules_without_fix(lang: str) -> list[dict]:
     return rules
 
 
-def generate_fixes(languages: list[str], dry_run: bool = False) -> list[dict]:
+def generate_fixes(languages: list[str], dry_run: bool = False) -> list[dict[str, Any]]:
     """Generate fixes for rules without fix_replacement across languages."""
     results = []
     for lang in languages:
@@ -77,14 +78,14 @@ def generate_fixes(languages: list[str], dry_run: bool = False) -> list[dict]:
     return results
 
 
-def apply_fixes_to_yaml(fixes: list[dict], dry_run: bool = True) -> int:
+def apply_fixes_to_yaml(fixes: list[dict[str, Any]], dry_run: bool = True) -> int:
     """Apply generated fixes back to YAML files. Returns number of fixes applied."""
     if dry_run:
         return len(fixes)
 
     applied = 0
     # Group by file
-    by_file: dict[str, list[dict]] = {}
+    by_file: dict[str, list[dict[str, Any]]] = {}
     for fix in fixes:
         if fix["fix_replacement"]:
             by_file.setdefault(fix["file"], []).append(fix)

@@ -20,6 +20,7 @@ import sys
 from collections import defaultdict
 from datetime import datetime, timezone
 from pathlib import Path
+from typing import Any
 
 
 def _data_dir() -> Path:
@@ -59,7 +60,7 @@ def cmd_record(args: argparse.Namespace) -> None:
     print(f"Recorded: {record['summary']['total_issues']} issues in {record['summary']['total_files']} files")
 
 
-def _count_by_severity(results: list) -> dict:
+def _count_by_severity(results: list[Any]) -> dict[str, int]:
     counts: dict[str, int] = defaultdict(int)
     for r in results:
         for issue in r.get("issues", []):
@@ -67,7 +68,7 @@ def _count_by_severity(results: list) -> dict:
     return dict(counts)
 
 
-def _count_by_rule(results: list) -> dict:
+def _count_by_rule(results: list[Any]) -> dict[str, int]:
     counts: dict[str, int] = defaultdict(int)
     for r in results:
         for issue in r.get("issues", []):
@@ -75,7 +76,7 @@ def _count_by_rule(results: list) -> dict:
     return dict(counts)
 
 
-def _load_records(days: int | None = None) -> list[dict]:
+def _load_records(days: int | None = None) -> list[dict[str, Any]]:
     """Load records, optionally filtered by days."""
     if not _records_file().exists():
         return []

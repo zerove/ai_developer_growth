@@ -17,6 +17,7 @@ import re
 import sys
 from pathlib import Path
 from typing import TypedDict
+from typing import Any
 
 
 class CheckResult(TypedDict):
@@ -45,7 +46,7 @@ def has_ai_annotation(content: str) -> bool:
     return bool(re.search(AI_ANNOTATION_PATTERN, content))
 
 
-def detect_ai_generated_functions(content: str) -> list[dict]:
+def detect_ai_generated_functions(content: str) -> list[dict[str, Any]]:
     """检测可能的 AI 生成函数 (启发式)"""
     results = []
 

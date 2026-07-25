@@ -4,6 +4,7 @@ Extracted from generate_fixes.py for reuse by hooks_runner and other tools.
 """
 
 from __future__ import annotations
+from typing import Any
 
 # Maps pattern substrings to fix templates
 HEURISTIC_FIXES: dict[str, dict[str, str]] = {
@@ -109,7 +110,7 @@ _MESSAGE_HEURISTICS: list[tuple[list[str], str | None, str | None]] = [
 ]
 
 
-def heuristic_fix(rule: dict) -> dict[str, str]:
+def heuristic_fix(rule: dict[str, Any]) -> dict[str, str]:
     """Generate a fix using pattern matching heuristics.
 
     Args:

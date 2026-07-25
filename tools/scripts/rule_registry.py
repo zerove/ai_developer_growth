@@ -26,6 +26,7 @@ from pathlib import Path
 import yaml
 
 from tools.scripts._common import handle_error
+from typing import Any
 
 
 def _registry_dir() -> Path:
@@ -54,14 +55,14 @@ def init_registry() -> None:
         print(f"Registry already exists at {reg_dir}")
 
 
-def _load_registry() -> dict:
+def _load_registry() -> dict[str, Any]:
     if _registry_file().exists():
         with open(_registry_file()) as f:
             return json.load(f)
     return {"packs": {}, "version": "1.0"}
 
 
-def _save_registry(data: dict) -> None:
+def _save_registry(data: dict[str, Any]) -> None:
     with open(_registry_file(), "w") as f:
         json.dump(data, f, indent=2)
 

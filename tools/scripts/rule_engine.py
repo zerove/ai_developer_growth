@@ -188,7 +188,7 @@ class RuleEngine:
 
     # ── Visualization ───────────────────────────────────────
 
-    def get_all_rules(self) -> dict[str, dict]:
+    def get_all_rules(self) -> dict[str, dict[str, Any]]:
         """Load all rules organized by language."""
         from tools.scripts.rule_visualize import get_all_rules
 

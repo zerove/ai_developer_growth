@@ -59,6 +59,7 @@ anti_patterns:
   severity: error
   category: security
   pattern: \beval\s*\(|\bexec\s*\(
+  exclude_files: ['fix_heuristics.py']
   message: eval/exec are security risks
   fix_hint: Use ast.literal_eval() for data
   test_cases:

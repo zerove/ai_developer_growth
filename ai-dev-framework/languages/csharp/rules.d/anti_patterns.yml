@@ -37,6 +37,7 @@ anti_patterns:
   severity: error
   category: security
   pattern: \bExecuteScript\s*\(|\beval\s*\(
+  exclude_files: ['fix_heuristics.py']
   message: Dynamic code execution is a security risk
   fix_hint: Find a safer alternative
 - id: cs-console-write

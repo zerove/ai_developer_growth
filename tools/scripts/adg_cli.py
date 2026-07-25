@@ -1437,39 +1437,29 @@ def _format_json(issues: list[Issue], language: str, framework: str | None, file
 # ──────────────────────────────────────────────────────────
 
 
-def cmd_check(args: argparse.Namespace) -> int:
-    """Check code against rules."""
-    target = Path(args.path).resolve()
-
-    # Load project configuration
-    project_config = load_project_config(target if target.is_dir() else target.parent)
-
-    # Handle incremental check modes
+def _collect_check_files(
+    target: Path, args: argparse.Namespace, project_config: dict[str, Any]
+) -> tuple[list[Path], dict[str, Any]]:
+    """Collect files to check and language detection info. Returns (files, detected)."""
     files: list[Path] = []
     since = getattr(args, "since", None)
     staged = getattr(args, "staged", False)
     unstaged = getattr(args, "unstaged", False)
 
     if since:
-        # Check only files changed since git ref
         files = _get_git_changed_files(since, cwd=target.parent)
         if not files:
             print("No changed files found.", file=sys.stderr)
-            return 0
         detected = detect_language(target)
     elif staged:
-        # Check only staged files
         files = _get_staged_files(cwd=target.parent)
         if not files:
             print("No staged files found.", file=sys.stderr)
-            return 0
         detected = detect_language(target)
     elif unstaged:
-        # Check only unstaged files
         files = _get_unstaged_files(cwd=target.parent)
         if not files:
             print("No unstaged changes found.", file=sys.stderr)
-            return 0
         detected = detect_language(target)
     elif target.is_file():
         files = [target]
@@ -1479,12 +1469,23 @@ def cmd_check(args: argparse.Namespace) -> int:
         for fp in target.rglob("*"):
             if fp.is_file() and any(part not in SKIP_DIRS for part in fp.parts):
                 if fp.suffix not in SKIP_EXTENSIONS:
-                    # Check skip patterns
                     if any(_match_pattern(fp, pat) for pat in skip_patterns):
                         continue
                     if _detect_language_from_file(fp):
                         files.append(fp)
         detected = detect_language(target)
+
+    return files, detected
+
+
+def cmd_check(args: argparse.Namespace) -> int:
+    """Check code against rules."""
+    target = Path(args.path).resolve()
+
+    # Load project configuration
+    project_config = load_project_config(target if target.is_dir() else target.parent)
+
+    files, detected = _collect_check_files(target, args, project_config)
 
     language = args.lang or detected.get("language", "unknown")
     framework = getattr(args, "framework", None) or detected.get("framework")
@@ -1496,6 +1497,9 @@ def cmd_check(args: argparse.Namespace) -> int:
     if language == "unknown":
         print("Error: Could not detect language. Use --lang to specify.", file=sys.stderr)
         return 1
+
+    if not files:
+        return 0
 
     # Load rules
     rules = load_rules_for_language(language)
@@ -1519,10 +1523,8 @@ def cmd_check(args: argparse.Namespace) -> int:
     jobs = getattr(args, "jobs", 1)
 
     if jobs > 1 and len(files) > 1:
-        # Parallel checking
         all_issues = _check_files_parallel(files, rules, args.severity, jobs)
     else:
-        # Sequential checking
         for fp in files:
             all_issues.extend(check_file(fp, rules, args.severity))
 
@@ -1550,7 +1552,6 @@ def cmd_check(args: argparse.Namespace) -> int:
             webhook_url = notify_url.replace("dingtalk://", "https://oapi.dingtalk.com/robot/send?access_token=")
             _send_dingtalk_notification(webhook_url, all_issues, language, project_name)
 
-    # Exit code: non-zero if errors found
     has_errors = any(i.severity == "error" for i in all_issues)
     return 1 if has_errors else 0
 

@@ -10,6 +10,7 @@ import argparse
 import json
 import sys
 from pathlib import Path
+from typing import Any
 
 from .health import calculate_health_score
 from .models import FixResult, ValidationResult
@@ -211,8 +212,11 @@ def _collect_results(
     args: argparse.Namespace,
     language: str | None,
     custom_rules: dict[str, Any] | None,
-) -> list[ValidationResult]:
-    """Collect validation results based on CLI arguments."""
+) -> list[ValidationResult] | None:
+    """Collect validation results based on CLI arguments.
+
+    Returns None on error (e.g. undetectable language), empty list if no files matched.
+    """
     results: list[ValidationResult] = []
 
     if args.changed_files:
@@ -227,7 +231,7 @@ def _collect_results(
             language = detect_language_from_file(args.path)
         if language is None:
             print(f"Error: Cannot detect language for {args.path}. Use --lang.", file=sys.stderr)
-            return []
+            return None
 
         # Incremental: skip unchanged files
         if args.incremental:
@@ -243,7 +247,7 @@ def _collect_results(
     else:
         if language is None and not args.auto_detect:
             print("Error: Use --lang or --auto-detect for directories.", file=sys.stderr)
-            return []
+            return None
 
         # Incremental: skip unchanged files in directory
         if args.incremental:
@@ -340,6 +344,8 @@ def main() -> int:
         custom_rules = load_custom_rules(project_dir)
 
     results = _collect_results(args, language, custom_rules)
+    if results is None:
+        return 1
 
     # Auto-fix
     if args.fix or args.dry_run:

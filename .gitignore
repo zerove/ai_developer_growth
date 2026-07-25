@@ -19,6 +19,7 @@ MagicMock/
 
 # Tool cache
 .tool_matrix_cache.json
+tools/.cache/
 *.backup
 
 # AI Sync

@@ -55,6 +55,12 @@ def _check_pattern(filepath: Path, content: str, lines: list[str], pattern_def: 
     if not pattern:
         return issues
 
+    # Check exclude_files - skip rule if filename matches any excluded file
+    exclude_files = pattern_def.get("exclude_files", [])
+    filename = filepath.name
+    if any(filename == ef or filepath.match(ef) for ef in exclude_files):
+        return issues
+
     # Check exclude patterns first - if any exclude pattern matches, skip this pattern
     exclude_patterns = pattern_def.get("exclude_patterns", [])
     for exclude_pattern in exclude_patterns:

@@ -18,10 +18,13 @@ def _get_llm_client() -> Any:
     _script_dir = Path(__file__).resolve().parent
     _ai_ctx_sync = _script_dir.parent.parent / "examples" / "ai-context-sync"
     import sys
+
     if str(_ai_ctx_sync) not in sys.path:
         sys.path.insert(0, str(_ai_ctx_sync))
     from src.llm_client import LLMClient  # noqa: E402
+
     return LLMClient
+
 
 SYSTEM_PROMPT = (
     "You are a senior software architect. Generate a structured ADR document. "

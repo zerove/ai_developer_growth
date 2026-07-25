@@ -1,0 +1,44 @@
+# ADG Governance - Azure Pipelines Template
+# Add this to your azure-pipelines.yml
+
+trigger:
+  branches:
+    include:
+      - main
+      - master
+  pull_requests:
+    include:
+      - main
+      - master
+
+pool:
+  vmImage: 'ubuntu-latest'
+
+stages:
+  - stage: Governance
+    displayName: 'ADG Code Governance'
+    jobs:
+      - job: AdgCheck
+        displayName: 'ADG Governance Check'
+        steps:
+          - task: UsePythonVersion@0
+            inputs:
+              versionSpec: '3.12'
+            displayName: 'Use Python 3.12'
+          - script: |
+              pip install ruff
+              pip install -e .
+            displayName: 'Install dependencies'
+          - script: |
+              adg check . --severity error --json > $(Build.ArtifactStagingDirectory)/adg-report.json || true
+            displayName: 'ADG Check (JSON report)'
+          - script: |
+              adg check . --severity error
+            displayName: 'ADG Check (gate)'
+          - task: PublishCodeAnalysisResults@2
+            inputs:
+              CredScan: false
+              BinSkim: false
+              PoliCheck: false
+            condition: always()
+            displayName: 'Publish Code Analysis'

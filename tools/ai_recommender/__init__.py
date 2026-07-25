@@ -4,6 +4,7 @@ ADG AI Rule Recommender - Suggest governance rules based on code patterns.
 Uses static analysis heuristics to recommend rules for a codebase.
 No LLM required - works offline with pattern matching.
 """
+
 from __future__ import annotations
 
 import re
@@ -51,9 +52,14 @@ def analyze_code_patterns(
     if language is None:
         ext = file_path.suffix.lower()
         lang_map = {
-            ".py": "python", ".js": "javascript", ".ts": "typescript",
-            ".tsx": "typescript", ".jsx": "javascript", ".rs": "rust",
-            ".go": "go", ".java": "java",
+            ".py": "python",
+            ".js": "javascript",
+            ".ts": "typescript",
+            ".tsx": "typescript",
+            ".jsx": "javascript",
+            ".rs": "rust",
+            ".go": "go",
+            ".java": "java",
         }
         language = lang_map.get(ext)
 
@@ -66,13 +72,15 @@ def analyze_code_patterns(
     for line_num, line in enumerate(content.splitlines(), 1):
         for pattern_def in patterns:
             if re.search(pattern_def["pattern"], line):
-                recommendations.append({
-                    "rule": pattern_def["recommendation"],
-                    "reason": pattern_def["reason"],
-                    "line": line_num,
-                    "code": line.strip(),
-                    "file": str(file_path),
-                })
+                recommendations.append(
+                    {
+                        "rule": pattern_def["recommendation"],
+                        "reason": pattern_def["reason"],
+                        "line": line_num,
+                        "code": line.strip(),
+                        "file": str(file_path),
+                    }
+                )
 
     return recommendations
 
@@ -130,15 +138,17 @@ def recommend_rules(
     recommendations_list = []
     for rec in unique_recs[:max_recommendations]:
         rule_info = rule_lookup.get(rec["rule"], {})
-        recommendations_list.append({
-            "rule_id": rec["rule"],
-            "name": rule_info.get("name", rec["rule"]),
-            "severity": rule_info.get("severity", "warning"),
-            "category": rule_info.get("category", "code_quality"),
-            "reason": rec["reason"],
-            "affected_files": len([r for r in unique_recs if r["rule"] == rec["rule"]]),
-            "example": {"file": rec["file"], "line": rec["line"], "code": rec["code"]},
-        })
+        recommendations_list.append(
+            {
+                "rule_id": rec["rule"],
+                "name": rule_info.get("name", rec["rule"]),
+                "severity": rule_info.get("severity", "warning"),
+                "category": rule_info.get("category", "code_quality"),
+                "reason": rec["reason"],
+                "affected_files": len([r for r in unique_recs if r["rule"] == rec["rule"]]),
+                "example": {"file": rec["file"], "line": rec["line"], "code": rec["code"]},
+            }
+        )
 
     # Deduplicate by rule_id, keep highest count
     seen_rules_final: set[str] = set()

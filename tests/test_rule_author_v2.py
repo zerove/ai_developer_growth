@@ -1,4 +1,5 @@
 """Tests for rule_author.py (0% → target 85%)."""
+
 from __future__ import annotations
 
 import argparse
@@ -141,10 +142,14 @@ class TestCmdValidate:
         import yaml as _yaml
 
         f = tmp_path / "valid.yml"
-        f.write_text(_yaml.dump({
-            "language": "python",
-            "anti_patterns": [{"id": "py-test", "severity": "error"}],
-        }))
+        f.write_text(
+            _yaml.dump(
+                {
+                    "language": "python",
+                    "anti_patterns": [{"id": "py-test", "severity": "error"}],
+                }
+            )
+        )
         args = argparse.Namespace(file=str(f))
         cmd_validate(args)
 
@@ -164,10 +169,14 @@ class TestCmdValidate:
         import yaml as _yaml
 
         f = tmp_path / "badsev.yml"
-        f.write_text(_yaml.dump({
-            "language": "python",
-            "anti_patterns": [{"id": "x", "severity": "critical"}],
-        }))
+        f.write_text(
+            _yaml.dump(
+                {
+                    "language": "python",
+                    "anti_patterns": [{"id": "x", "severity": "critical"}],
+                }
+            )
+        )
         args = argparse.Namespace(file=str(f))
         cmd_validate(args)
 
@@ -175,10 +184,14 @@ class TestCmdValidate:
         import yaml as _yaml
 
         f = tmp_path / "badregex.yml"
-        f.write_text(_yaml.dump({
-            "language": "python",
-            "anti_patterns": [{"id": "x", "severity": "error", "pattern": "[invalid"}],
-        }))
+        f.write_text(
+            _yaml.dump(
+                {
+                    "language": "python",
+                    "anti_patterns": [{"id": "x", "severity": "error", "pattern": "[invalid"}],
+                }
+            )
+        )
         args = argparse.Namespace(file=str(f))
         cmd_validate(args)
 
@@ -186,10 +199,14 @@ class TestCmdValidate:
         import yaml as _yaml
 
         f = tmp_path / "badtc.yml"
-        f.write_text(_yaml.dump({
-            "language": "python",
-            "anti_patterns": [{"id": "x", "severity": "error", "test_cases": [{"should_match": True}]}],
-        }))
+        f.write_text(
+            _yaml.dump(
+                {
+                    "language": "python",
+                    "anti_patterns": [{"id": "x", "severity": "error", "test_cases": [{"should_match": True}]}],
+                }
+            )
+        )
         args = argparse.Namespace(file=str(f))
         cmd_validate(args)
 
@@ -197,10 +214,14 @@ class TestCmdValidate:
         import yaml as _yaml
 
         f = tmp_path / "badsm.yml"
-        f.write_text(_yaml.dump({
-            "language": "python",
-            "anti_patterns": [{"id": "x", "severity": "error", "test_cases": [{"code": "x"}]}],
-        }))
+        f.write_text(
+            _yaml.dump(
+                {
+                    "language": "python",
+                    "anti_patterns": [{"id": "x", "severity": "error", "test_cases": [{"code": "x"}]}],
+                }
+            )
+        )
         args = argparse.Namespace(file=str(f))
         cmd_validate(args)
 
@@ -208,10 +229,14 @@ class TestCmdValidate:
         import yaml as _yaml
 
         f = tmp_path / "notdict.yml"
-        f.write_text(_yaml.dump({
-            "language": "python",
-            "anti_patterns": ["just-a-string"],
-        }))
+        f.write_text(
+            _yaml.dump(
+                {
+                    "language": "python",
+                    "anti_patterns": ["just-a-string"],
+                }
+            )
+        )
         args = argparse.Namespace(file=str(f))
         cmd_validate(args)
 
@@ -219,10 +244,14 @@ class TestCmdValidate:
         import yaml as _yaml
 
         f = tmp_path / "noid.yml"
-        f.write_text(_yaml.dump({
-            "language": "python",
-            "anti_patterns": [{"severity": "error", "name": "x"}],
-        }))
+        f.write_text(
+            _yaml.dump(
+                {
+                    "language": "python",
+                    "anti_patterns": [{"severity": "error", "name": "x"}],
+                }
+            )
+        )
         args = argparse.Namespace(file=str(f))
         cmd_validate(args)
 
@@ -248,10 +277,14 @@ class TestCmdScaffold:
 
         rules_dir = tmp_path / "languages" / "mylang" / "rules.d"
         rules_dir.mkdir(parents=True, exist_ok=True)
-        (rules_dir / "anti_patterns.yml").write_text(_yaml.dump({
-            "language": "mylang",
-            "anti_patterns": [{"id": "existing"}],
-        }))
+        (rules_dir / "anti_patterns.yml").write_text(
+            _yaml.dump(
+                {
+                    "language": "mylang",
+                    "anti_patterns": [{"id": "existing"}],
+                }
+            )
+        )
         args = argparse.Namespace(lang="mylang")
         with patch("tools.scripts.rule_author._rules_dir") as mock_dir:
             mock_dir.return_value = tmp_path

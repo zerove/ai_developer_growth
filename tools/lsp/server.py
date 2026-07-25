@@ -15,6 +15,7 @@ Features:
     - Hover information for governance rules
     - SARIF import support
 """
+
 from __future__ import annotations
 
 import argparse
@@ -29,6 +30,7 @@ from typing import Any
 try:
     from lsprotocol import types
     from pygls.server import LanguageServer
+
     HAS_PYGLS = True
 except ImportError:
     HAS_PYGLS = False
@@ -57,19 +59,33 @@ logger = logging.getLogger("adg-lsp")
 
 # Supported file extensions
 SUPPORTED_EXTENSIONS = {
-    ".py": "python", ".js": "javascript", ".ts": "typescript",
-    ".tsx": "typescript", ".jsx": "javascript", ".go": "go",
-    ".rs": "rust", ".java": "java", ".kt": "kotlin",
-    ".rb": "ruby", ".php": "php", ".swift": "swift",
-    ".c": "c", ".cpp": "cpp", ".cs": "csharp",
-    ".h": "c", ".hh": "cpp", ".hpp": "cpp",
-    ".dart": "dart", ".scala": "scala",
+    ".py": "python",
+    ".js": "javascript",
+    ".ts": "typescript",
+    ".tsx": "typescript",
+    ".jsx": "javascript",
+    ".go": "go",
+    ".rs": "rust",
+    ".java": "java",
+    ".kt": "kotlin",
+    ".rb": "ruby",
+    ".php": "php",
+    ".swift": "swift",
+    ".c": "c",
+    ".cpp": "cpp",
+    ".cs": "csharp",
+    ".h": "c",
+    ".hh": "cpp",
+    ".hpp": "cpp",
+    ".dart": "dart",
+    ".scala": "scala",
 }
 
 
 # ─────────────────────────────────────────────────────────────
 # Standalone LSP Server (without pygls)
 # ─────────────────────────────────────────────────────────────
+
 
 class AdgLanguageServer:
     """Lightweight LSP server that speaks JSON-RPC over stdio."""
@@ -198,20 +214,22 @@ class AdgLanguageServer:
                 "warning": 2,  # Warning
                 "info": 3,  # Information
             }
-            diagnostics.append({
-                "range": {
-                    "start": {"line": max(0, issue.line - 1), "character": max(0, issue.column - 1)},
-                    "end": {"line": max(0, issue.line - 1), "character": issue.column + 80},
-                },
-                "severity": severity_map.get(issue.severity, 2),
-                "code": issue.rule_id,
-                "source": "adg",
-                "message": f"[{issue.rule_id}] {issue.message}\nFix: {issue.fix_hint}",
-                "data": {
-                    "category": issue.category,
-                    "fix_hint": issue.fix_hint,
-                },
-            })
+            diagnostics.append(
+                {
+                    "range": {
+                        "start": {"line": max(0, issue.line - 1), "character": max(0, issue.column - 1)},
+                        "end": {"line": max(0, issue.line - 1), "character": issue.column + 80},
+                    },
+                    "severity": severity_map.get(issue.severity, 2),
+                    "code": issue.rule_id,
+                    "source": "adg",
+                    "message": f"[{issue.rule_id}] {issue.message}\nFix: {issue.fix_hint}",
+                    "data": {
+                        "category": issue.category,
+                        "fix_hint": issue.fix_hint,
+                    },
+                }
+            )
 
         return diagnostics
 
@@ -231,28 +249,32 @@ class AdgLanguageServer:
             data = diag.get("data", {})
 
             # Fix action
-            actions.append({
-                "title": f"ADG: Auto-fix \"{rule_id}\"",
-                "kind": "quickfix",
-                "diagnostics": [diag],
-                "command": {
-                    "command": "adg.fix",
-                    "title": "Apply Fix",
-                    "arguments": [params.get("textDocument", {}).get("uri", ""), rule_id],
-                },
-            })
+            actions.append(
+                {
+                    "title": f'ADG: Auto-fix "{rule_id}"',
+                    "kind": "quickfix",
+                    "diagnostics": [diag],
+                    "command": {
+                        "command": "adg.fix",
+                        "title": "Apply Fix",
+                        "arguments": [params.get("textDocument", {}).get("uri", ""), rule_id],
+                    },
+                }
+            )
 
             # Suppress action
-            actions.append({
-                "title": f"ADG: Suppress \"{rule_id}\"",
-                "kind": "quickfix",
-                "diagnostics": [diag],
-                "command": {
-                    "command": "adg.suppress",
-                    "title": "Suppress Rule",
-                    "arguments": [rule_id],
-                },
-            })
+            actions.append(
+                {
+                    "title": f'ADG: Suppress "{rule_id}"',
+                    "kind": "quickfix",
+                    "diagnostics": [diag],
+                    "command": {
+                        "command": "adg.suppress",
+                        "title": "Suppress Rule",
+                        "arguments": [rule_id],
+                    },
+                }
+            )
 
         return actions
 
@@ -277,13 +299,15 @@ class AdgLanguageServer:
         if warn_count:
             summary += f" ({warn_count} warnings)"
 
-        return [{
-            "range": {"start": {"line": 0, "character": 0}, "end": {"line": 0, "character": 0}},
-            "command": {
-                "title": summary,
-                "command": "adg.showOutput",
-            },
-        }]
+        return [
+            {
+                "range": {"start": {"line": 0, "character": 0}, "end": {"line": 0, "character": 0}},
+                "command": {
+                    "title": summary,
+                    "command": "adg.showOutput",
+                },
+            }
+        ]
 
     def _handle_hover(self, params: dict) -> dict | None:
         """Handle textDocument/hover - show rule info on hover."""
@@ -293,10 +317,7 @@ class AdgLanguageServer:
 
         # Get diagnostics for this line
         diagnostics = self._handle_diagnostic({"textDocument": {"uri": uri}})
-        line_issues = [
-            d for d in diagnostics
-            if d["range"]["start"]["line"] == line
-        ]
+        line_issues = [d for d in diagnostics if d["range"]["start"]["line"] == line]
 
         if not line_issues:
             return None
@@ -332,17 +353,19 @@ class AdgLanguageServer:
                 rule_id = pattern.get("id", "")
                 if query and query.lower() not in rule_id.lower():
                     continue
-                symbols.append({
-                    "name": rule_id,
-                    "kind": 12,  # Event
-                    "location": {
-                        "uri": f"file://{self.workspace_root}/rules/{lang}",
-                        "range": {
-                            "start": {"line": 0, "character": 0},
-                            "end": {"line": 0, "character": 0},
+                symbols.append(
+                    {
+                        "name": rule_id,
+                        "kind": 12,  # Event
+                        "location": {
+                            "uri": f"file://{self.workspace_root}/rules/{lang}",
+                            "range": {
+                                "start": {"line": 0, "character": 0},
+                                "end": {"line": 0, "character": 0},
+                            },
                         },
-                    },
-                })
+                    }
+                )
 
         return symbols
 
@@ -356,6 +379,7 @@ class AdgLanguageServer:
 # ─────────────────────────────────────────────────────────────
 # JSON-RPC Transport
 # ─────────────────────────────────────────────────────────────
+
 
 def read_message() -> tuple[str, Any]:
     """Read a JSON-RPC message from stdin."""
@@ -401,6 +425,7 @@ def send_notification(method: str, params: dict) -> None:
 # Main Loop
 # ─────────────────────────────────────────────────────────────
 
+
 def run_stdio_server():
     """Run the LSP server over stdio."""
     server = AdgLanguageServer()
@@ -425,21 +450,26 @@ def run_stdio_server():
                 uri = params.get("textDocument", {}).get("uri", "")
                 if uri:
                     diagnostics = server._handle_diagnostic({"textDocument": {"uri": uri}})
-                    send_notification("textDocument/publishDiagnostics", {
-                        "uri": uri,
-                        "diagnostics": diagnostics,
-                    })
+                    send_notification(
+                        "textDocument/publishDiagnostics",
+                        {
+                            "uri": uri,
+                            "diagnostics": diagnostics,
+                        },
+                    )
 
         except EOFError:
             break
         except Exception as e:
             logger.error(f"Error handling {method}: {e}")
             if msg_id is not None:
-                write_message({
-                    "jsonrpc": "2.0",
-                    "id": msg_id,
-                    "error": {"code": -32603, "message": str(e)},
-                })
+                write_message(
+                    {
+                        "jsonrpc": "2.0",
+                        "id": msg_id,
+                        "error": {"code": -32603, "message": str(e)},
+                    }
+                )
 
 
 def run_tcp_server(port: int):
@@ -469,6 +499,7 @@ def run_tcp_server(port: int):
 # ─────────────────────────────────────────────────────────────
 # Entry Point
 # ─────────────────────────────────────────────────────────────
+
 
 def main():
     parser = argparse.ArgumentParser(description="ADG LSP Server")

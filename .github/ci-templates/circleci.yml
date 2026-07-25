@@ -1,0 +1,34 @@
+# ADG Governance - CircleCI Template
+# Add to your .circleci/config.yml
+
+version: 2.1
+
+orbs:
+  python: circleci/python@2.1
+
+jobs:
+  adg-governance:
+    docker:
+      - image: cimg/python:3.12
+    steps:
+      - checkout
+      - python/install-packages:
+          pkg-manager: pip
+          args: ruff
+      - run:
+          name: Install ADG
+          command: pip install -e .
+      - run:
+          name: ADG Governance Check
+          command: adg check . --json > /tmp/adg-report.json || true
+      - run:
+          name: ADG Gate
+          command: adg check . --severity error
+      - store_artifacts:
+          path: /tmp/adg-report.json
+          destination: adg-report.json
+
+workflows:
+  build-and-check:
+    jobs:
+      - adg-governance

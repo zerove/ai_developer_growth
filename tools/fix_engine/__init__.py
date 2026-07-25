@@ -6,6 +6,7 @@ Usage:
     engine = FixEngine()
     result = engine.fix_file(Path("main.py"))
 """
+
 from __future__ import annotations
 
 import re
@@ -110,13 +111,15 @@ class FixEngine:
 
                     fixed = new_content
 
-            applied.append({
-                "rule_id": rule_id,
-                "description": fix_info.get("description", ""),
-                "matches": len(matches),
-                "pattern": pattern,
-                "replacement": replacement,
-            })
+            applied.append(
+                {
+                    "rule_id": rule_id,
+                    "description": fix_info.get("description", ""),
+                    "matches": len(matches),
+                    "pattern": pattern,
+                    "replacement": replacement,
+                }
+            )
 
         return fixed, applied
 
@@ -139,8 +142,12 @@ class FixEngine:
         # Detect language from extension
         if language is None:
             ext_map = {
-                ".py": "python", ".js": "javascript", ".ts": "typescript",
-                ".tsx": "typescript", ".jsx": "javascript", ".rs": "rust",
+                ".py": "python",
+                ".js": "javascript",
+                ".ts": "typescript",
+                ".tsx": "typescript",
+                ".jsx": "javascript",
+                ".rs": "rust",
             }
             language = ext_map.get(path.suffix.lower())
 
@@ -178,8 +185,12 @@ class FixEngine:
             return {"success": False, "error": f"Directory not found: {target}"}
 
         ext_map = {
-            ".py": "python", ".js": "javascript", ".ts": "typescript",
-            ".tsx": "typescript", ".jsx": "javascript", ".rs": "rust",
+            ".py": "python",
+            ".js": "javascript",
+            ".ts": "typescript",
+            ".tsx": "typescript",
+            ".jsx": "javascript",
+            ".rs": "rust",
         }
 
         total_fixed = 0
@@ -216,6 +227,7 @@ class FixEngine:
 # ─────────────────────────────────────────────────────────────
 # User Custom Fix Registration
 # ─────────────────────────────────────────────────────────────
+
 
 def load_custom_fixes(project_dir: str | Path) -> dict[str, dict[str, Any]]:
     """Load custom fixes from .adg/fixes.yml."""

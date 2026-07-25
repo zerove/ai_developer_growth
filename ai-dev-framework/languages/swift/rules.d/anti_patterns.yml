@@ -1,88 +1,116 @@
 # Swift Language Rules - Machine-Readable Configuration
 
 language: swift
-version: '>=5.9'
+version: '>=5.7'
 config_version: '1.0'
 anti_patterns:
 - id: sw-force-unwrap
   name: Force unwrap (!)
   severity: error
-  category: type_safety
-  pattern: \w+!
-  message: Force unwrap causes runtime crash on nil
-  fix_hint: Use optional binding (if let) or nil coalescing (??)
+  category: error_handling
+  pattern: '\w+!(?!\.)' 
+  message: 'Force unwrap can crash at runtime'
+  fix_hint: 'Use optional binding (if let) or guard let instead'
+
+- id: sw-hardcoded-secret
+  name: Hardcoded secret
+  severity: error
+  category: security
+  pattern: '(?:password|secret|api_key|token)\s*=\s*"[^"]+"'
+  message: 'Hardcoded secrets are a security vulnerability'
+  fix_hint: 'Use Keychain or environment variables'
+
+- id: sw-print-debug
+  name: print() in production code
+  severity: info
+  category: code_quality
+  pattern: '\bprint\(|debugPrint\(|dump\('
+  message: 'Use os_log or Logger for production logging'
+  fix_hint: 'import os; let logger = Logger()'
+
+- id: sw-try-force
+  name: try! (force try)
+  severity: error
+  category: error_handling
+  pattern: '\btry!'
+  message: 'try! crashes if the throwing function throws'
+  fix_hint: 'Use try with do-catch or try? for optional handling'
+
+- id: sw-catch-all
+  name: Generic catch clause
+  severity: warning
+  category: error_handling
+  pattern: 'catch\s*\{\s*\n\s*\}'
+  message: 'Empty catch block silently swallows errors'
+  fix_hint: 'Log the error or rethrow with proper handling'
+
+- id: sw-retain-cycle
+  name: Potential retain cycle in closure
+  severity: warning
+  category: performance
+  pattern: '\{\s*\[?(?!\s*weak|\s*unowned).*\]\s*in'
+  message: 'Closures capturing self strongly can cause retain cycles'
+  fix_hint: 'Use [weak self] or [unowned self] in escaping closures'
+
+- id: sw-nested-deep
+  name: Deeply nested code
+  severity: warning
+  category: code_quality
+  pattern: '(?:if|guard|for|while|switch).*(?:if|guard|for|while|switch).*(?:if|guard|for|while|switch)'
+  message: 'Deep nesting reduces readability'
+  fix_hint: 'Extract into helper functions or use early returns'
+
+- id: sw-global-var
+  name: Global mutable variable
+  severity: warning
+  category: code_quality
+  pattern: '^var\s+\w+\s*.*=\s*(?!\s*$)'
+  message: 'Global mutable state is hard to test and reason about'
+  fix_hint: 'Use dependency injection or singleton pattern'
+
 - id: sw-force-cast
   name: Force cast (as!)
   severity: error
   category: type_safety
-  pattern: \bas!\s+
-  message: Force cast can crash at runtime
-  fix_hint: Use conditional cast (as?) with if let
-- id: sw-try-force
-  name: try! usage
-  severity: error
-  category: error_handling
-  pattern: \btry!
-  message: try! crashes on error - use try? or do-catch
-  fix_hint: Use try? for optional or do-catch for error handling
-- id: sw-print
-  name: print() in production
+  pattern: '\bas!'
+  message: 'Force cast can crash at runtime'
+  fix_hint: 'Use conditional cast (as?) with if-let binding'
+
+- id: sw-nspointer
+  name: Using NSObject/NSCoding patterns
   severity: info
-  category: code_quality
-  pattern: \bprint\s*\(|\bdebugPrint\s*\(
-  message: Use os_log or Logger instead of print
-  fix_hint: Use os.Logger or OSLog
-- id: sw-implicit-return
-  name: Complex implicit return
-  severity: info
-  category: code_quality
-  pattern: var\s+\w+\s*=\s*\{
-  message: Complex closures with implicit return reduce readability
-  fix_hint: Use explicit return for multi-line closures
-- id: sw-nsobject
-  name: Inheriting from NSObject
-  severity: info
-  category: code_quality
-  pattern: :\s*NSObject
-  message: NSObject inheritance disables value semantics
-  fix_hint: Prefer structs over classes unless reference semantics needed
-- id: sw-unowned
-  name: unowned reference
-  severity: warning
-  category: memory_safety
-  pattern: \bunowned\s+
-  message: unowned can crash if referenced object is deallocated
-  fix_hint: Use weak reference or restructure ownership
-- id: sw-class-in-viewmodel
-  name: class for ViewModel
-  severity: info
-  category: code_quality
-  pattern: class\s+\w*ViewModel
-  message: Consider using @Observable macro or ObservableObject protocol
-  fix_hint: Use @Observable macro in Swift 5.9+
+  category: modern_swift
+  pattern: '\bNSObject\b|\bNSCoding\b'
+  message: 'Prefer Swift-native protocols (Codable) over NSObject patterns'
+  fix_hint: 'Use Codable for serialization instead of NSCoding'
+
 naming:
   file:
-    pattern: ^[A-Z][a-zA-Z0-9]*\.swift$
-    message: Swift files should use PascalCase
+    pattern: '^[A-Z][a-zA-Z0-9]*\.swift$'
+    message: 'Swift files should use PascalCase'
   function:
-    pattern: ^[a-z][a-zA-Z0-9]*$
-    message: Swift functions should use camelCase
+    pattern: '^[a-z][a-zA-Z0-9]*$'
+    message: 'Functions should use camelCase'
   class:
-    pattern: ^[A-Z][a-zA-Z0-9]*$
-    message: Swift classes should use PascalCase
+    pattern: '^[A-Z][a-zA-Z0-9]*$'
+    message: 'Classes should use PascalCase'
   constant:
-    pattern: ^[a-z][a-zA-Z0-9]*$
-    message: Swift constants should use camelCase
+    pattern: '^[a-z][a-zA-Z0-9]*$'
+    message: 'Swift constants use camelCase (lowercase let)'
+
 thresholds:
-  max_function_length: 50
+  max_function_length: 40
   max_file_length: 500
   max_line_length: 120
-  max_nesting_depth: 4
+  max_nesting_depth: 3
   max_function_params: 5
+  max_cyclomatic_complexity: 10
+
 tooling:
   linter: swiftlint
   formatter: swift-format
+  type_checker: swiftc
   test_runner: xctest
   config_files:
-  - .swiftlint.yml
-  - Package.swift
+    - Package.swift
+    - .swiftlint.yml

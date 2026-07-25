@@ -1,4 +1,5 @@
 """Tests for rule_visualize.py (54% → target 85%)."""
+
 from __future__ import annotations
 
 from pathlib import Path
@@ -28,14 +29,12 @@ class TestGetAllRules:
         rules_dir = py_dir / "rules.d"
         rules_dir.mkdir()
         (rules_dir / "anti.yml").write_text(
-            "anti_patterns:\n"
-            "  - id: py-test\n"
-            "    pattern: 'bad'\n"
-            "    message: 'test rule'\n"
-            "    severity: error\n"
+            "anti_patterns:\n  - id: py-test\n    pattern: 'bad'\n    message: 'test rule'\n    severity: error\n"
         )
-        with patch("tools.scripts.rule_visualize._rules_dir") as mock_dir, \
-             patch("tools.scripts.rule_visualize.load_rules") as mock_load:
+        with (
+            patch("tools.scripts.rule_visualize._rules_dir") as mock_dir,
+            patch("tools.scripts.rule_visualize.load_rules") as mock_load,
+        ):
             mock_dir.return_value = tmp_path
             mock_load.return_value = {
                 "anti_patterns": [{"id": "py-test"}],
@@ -59,8 +58,10 @@ class TestGetAllRules:
     def test_empty_lang_dir(self, tmp_path: Path) -> None:
         lang_dir = tmp_path / "languages" / "python"
         lang_dir.mkdir(parents=True)
-        with patch("tools.scripts.rule_visualize._rules_dir") as mock_dir, \
-             patch("tools.scripts.rule_visualize.load_rules") as mock_load:
+        with (
+            patch("tools.scripts.rule_visualize._rules_dir") as mock_dir,
+            patch("tools.scripts.rule_visualize.load_rules") as mock_load,
+        ):
             mock_dir.return_value = tmp_path
             mock_load.return_value = {"anti_patterns": [], "naming_conventions": [], "complexity": []}
             result = get_all_rules()
@@ -74,7 +75,9 @@ class TestVisualizeHandler:
     def test_api_rules(self) -> None:
         handler = VisualizeHandler.__new__(VisualizeHandler)
         with patch("tools.scripts.rule_visualize.get_all_rules") as mock_rules:
-            mock_rules.return_value = {"python": {"anti_patterns": [], "naming_conventions": [], "complexity": [], "total": 0}}
+            mock_rules.return_value = {
+                "python": {"anti_patterns": [], "naming_conventions": [], "complexity": [], "total": 0}
+            }
             result = handler.handle_api("/api/rules", {})
             assert "python" in result
 

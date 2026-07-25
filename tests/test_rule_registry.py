@@ -30,12 +30,8 @@ from tools.scripts.rule_registry import (
 @pytest.fixture()
 def fake_registry(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
     """Redirect registry to tmp_path."""
-    monkeypatch.setattr(
-        "tools.scripts.rule_registry._registry_dir", lambda: tmp_path
-    )
-    monkeypatch.setattr(
-        "tools.scripts.rule_registry._packs_dir", lambda: tmp_path / "packs"
-    )
+    monkeypatch.setattr("tools.scripts.rule_registry._registry_dir", lambda: tmp_path)
+    monkeypatch.setattr("tools.scripts.rule_registry._packs_dir", lambda: tmp_path / "packs")
     return tmp_path
 
 
@@ -114,7 +110,9 @@ class TestCmdList:
         assert "No packs" in capsys.readouterr().out
 
     def test_list_with_packs(self, fake_registry: Path, capsys: Any) -> None:
-        _save_registry({"packs": {"my-pack": {"version": "1.0", "rule_count": 5, "updated": "2024-01-01"}}, "version": "1.0"})
+        _save_registry(
+            {"packs": {"my-pack": {"version": "1.0", "rule_count": 5, "updated": "2024-01-01"}}, "version": "1.0"}
+        )
         cmd_list(_make_args())
         assert "my-pack" in capsys.readouterr().out
 
@@ -181,7 +179,12 @@ class TestCmdSearch:
     """Tests for cmd_search()."""
 
     def test_search_found(self, fake_registry: Path, capsys: Any) -> None:
-        _save_registry({"packs": {"sec-rules": {"version": "1.0", "description": "security rules", "tags": ["security"]}}, "version": "1.0"})
+        _save_registry(
+            {
+                "packs": {"sec-rules": {"version": "1.0", "description": "security rules", "tags": ["security"]}},
+                "version": "1.0",
+            }
+        )
         cmd_search(_make_args(query="security"))
         assert "Found" in capsys.readouterr().out
 

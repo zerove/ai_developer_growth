@@ -101,9 +101,19 @@ def _run_all_checkers(filepath: Path, content: str, lines: list[str], lang: str,
 
 
 def check_directory(
-    dirpath: Path, rules: dict[str, Any] | None = None, languages: list[str] | None = None
+    dirpath: Path,
+    rules: dict[str, Any] | None = None,
+    languages: list[str] | None = None,
+    jobs: int = 1,
 ) -> list[CheckResult]:
-    """Check all files in a directory."""
+    """Check all files in a directory.
+
+    Args:
+        dirpath: Directory to check.
+        rules: Rules dict. Auto-loaded if None.
+        languages: Filter to these languages only.
+        jobs: Number of parallel workers (1 = serial).
+    """
     results: list[CheckResult] = []
 
     if not dirpath.exists() or not dirpath.is_dir():
@@ -131,17 +141,32 @@ def check_directory(
     for ext in exts:
         files.extend(dirpath.rglob(f"*{ext}"))
 
-    for filepath in files:
-        if "__pycache__" in str(filepath) or ".git" in str(filepath):
-            continue
+    # Filter out ignored paths
+    files = [f for f in files if "__pycache__" not in str(f) and ".git" not in str(f) and "node_modules" not in str(f)]
 
-        lang = _detect_language(filepath)
-        if languages and lang not in languages:
-            continue
+    # Filter by language
+    if languages:
+        files = [f for f in files if _detect_language(f) in languages]
 
-        result = check_file(filepath, rules, lang)
-        if not result.skipped:
-            results.append(result)
+    if jobs <= 1 or len(files) <= 4:
+        # Serial execution for small sets
+        for filepath in files:
+            result = check_file(filepath, rules, _detect_language(filepath))
+            if not result.skipped:
+                results.append(result)
+    else:
+        # Parallel execution
+        from concurrent.futures import ProcessPoolExecutor, as_completed
+
+        with ProcessPoolExecutor(max_workers=jobs) as executor:
+            future_to_file = {executor.submit(check_file, fp, rules, _detect_language(fp)): fp for fp in files}
+            for future in as_completed(future_to_file):
+                try:
+                    result = future.result()
+                    if not result.skipped:
+                        results.append(result)
+                except Exception:
+                    pass
 
     return results
 

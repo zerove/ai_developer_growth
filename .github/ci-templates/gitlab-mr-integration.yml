@@ -1,0 +1,48 @@
+# ADG Governance - GitLab Merge Request Integration
+# Posts quality report as MR comment
+# Add to your .gitlab-ci.yml or use as include
+
+adg-mr-report:
+  stage: test
+  image: python:3.12-slim
+  before_script:
+    - pip install ruff
+    - pip install -e .
+  script:
+    - adg check . --json > adg-report.json || true
+    - |
+      # Post MR comment via GitLab API
+      if [ -n "$CI_MERGE_REQUEST_IID" ]; then
+        ERRORS=$(python3 -c "import json; d=json.load(open('adg-report.json')); print(d.get('summary',{}).get('errors',0))" 2>/dev/null || echo "0")
+        WARNINGS=$(python3 -c "import json; d=json.load(open('adg-report.json')); print(d.get('summary',{}).get('warnings',0))" 2>/dev/null || echo "0")
+        TOTAL=$((ERRORS + WARNINGS))
+        
+        if [ "$ERRORS" -gt 0 ]; then
+          STATUS="❌ FAIL"
+        elif [ "$WARNINGS" -gt 0 ]; then
+          STATUS="⚠️ WARN"
+        else
+          STATUS="✅ PASS"
+        fi
+        
+        BODY="## ${STATUS} ADG Code Governance Report\n\n"
+        BODY+="| Metric | Count |\n|--------|-------|\n"
+        BODY+="| Errors | ${ERRORS} |\n"
+        BODY+="| Warnings | ${WARNINGS} |\n"
+        BODY+="| Total Issues | ${TOTAL} |\n"
+        
+        curl --request POST \
+          --header "PRIVATE-TOKEN: ${GITLAB_TOKEN}" \
+          "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/merge_requests/${CI_MERGE_REQUEST_IID}/notes" \
+          --data-urlencode "body=${BODY}" \
+          || true
+      fi
+  artifacts:
+    reports:
+      codequality: adg-report.json
+    paths:
+      - adg-report.json
+    expire_in: 30 days
+  rules:
+    - if: $CI_MERGE_REQUEST_IID
+  allow_failure: false

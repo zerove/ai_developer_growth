@@ -8,6 +8,7 @@ from tools.scripts.adg_cli.core import Issue
 
 _TREND_DATA_FILE = ".adg/trend.json"
 
+
 def _load_trend_data(project_dir: Path) -> list[dict[str, Any]]:
     """Load historical trend data."""
     trend_file = project_dir / _TREND_DATA_FILE

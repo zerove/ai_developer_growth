@@ -1,88 +1,117 @@
 # Kotlin Language Rules - Machine-Readable Configuration
 
 language: kotlin
-version: '>=1.9'
+version: '>=1.8'
 config_version: '1.0'
 anti_patterns:
-- id: kt-bang-call
-  name: Non-null assertion operator
-  severity: warning
-  category: type_safety
-  pattern: \w+!!
-  message: '!! throws NullPointerException - use safe calls'
-  fix_hint: Use ?. operator or let {} block
-- id: kt-catch-all
-  name: Catching generic Exception
+- id: kt-bare-except
+  name: Bare catch clause
   severity: error
   category: error_handling
-  pattern: catch\s*\(\s*e:\s*Exception\s*\)
-  message: Catching generic Exception hides specific errors
-  fix_hint: Catch specific exception types
-- id: kt-return-null
-  name: Returning null
-  severity: warning
-  category: error_handling
-  pattern: return\s+null\s*$
-  message: Returning null defeats Kotlin null safety
-  fix_hint: Use nullable return type or Result<T>
-- id: kt-run-blocking
-  name: runBlocking usage
-  severity: warning
-  category: code_quality
-  pattern: runBlocking\s*\{
-  message: runBlocking blocks the thread - use coroutines
-  fix_hint: Use coroutineScope or suspend functions
+  pattern: 'catch\s*\(\s*\w*\s*\)'
+  message: 'Avoid catching generic Throwable/Exception - catch specific types'
+  fix_hint: 'Catch specific exceptions like IOException, IllegalArgumentException'
+
+- id: kt-coroutine-blocking
+  name: Blocking call in coroutine
+  severity: error
+  category: async
+  pattern: 'Thread\.sleep\(|\.join\(\)|\.get\(\)|runBlocking'
+  message: 'Blocking calls in coroutines block the dispatcher thread'
+  fix_hint: 'Use delay() instead of Thread.sleep(), and suspending functions'
+
+- id: kt-hardcoded-secret
+  name: Hardcoded secret
+  severity: error
+  category: security
+  pattern: '(?:password|secret|api_key|token)\s*=\s*"[^"]+"'
+  message: 'Hardcoded secrets are a security vulnerability'
+  fix_hint: 'Use environment variables or encrypted config'
+
 - id: kt-eval
   name: eval() usage
   severity: error
   category: security
-  pattern: \beval\s*\(
-  message: eval() is a security risk
-  fix_hint: Find a safer alternative
-- id: kt-print
-  name: println() in production
+  pattern: '\beval\s*\('
+  message: 'eval() is a security risk'
+  fix_hint: 'Use safe parsing functions instead'
+
+- id: kt-println
+  name: println in production code
   severity: info
   category: code_quality
-  pattern: \bprintln\s*\(|\bprint\s*\(
-  message: Use logging framework instead of println
-  fix_hint: Use Kotlin logging (kotlin-logging, SLF4J)
+  pattern: 'println\(|print\('
+  message: 'Use structured logging (SLF4J/Log4j) instead of println'
+  fix_hint: 'private val log = LoggerFactory.getLogger(MyClass::class.java)'
+
+- id: kt-mutable-var
+  name: Unnecessary var usage
+  severity: warning
+  category: code_quality
+  pattern: '^\s*var\s+\w+\s*=\s*(?!.*\b(set|add|remove|clear)\b)'
+  message: 'Prefer val over var for immutable references'
+  fix_hint: 'Use val when the variable is not reassigned'
+
+- id: kt-null-assertion
+  name: Non-null assertion (!!)
+  severity: warning
+  category: error_handling
+  pattern: '\w+!!'
+  message: 'Non-null assertion can throw NullPointerException'
+  fix_hint: 'Use safe call (?.) or let {} block instead'
+
 - id: kt-data-class-mutable
   name: Mutable data class
+  severity: warning
+  category: correctness
+  pattern: 'data\s+class\s+\w+.*var\s+'
+  message: 'Data classes with mutable fields break equals/hashCode consistency'
+  fix_hint: 'Use val properties in data classes'
+
+- id: kt-system-exit
+  name: System.exit() in code
+  severity: error
+  category: code_quality
+  pattern: 'exitProcess\(|System\.exit\('
+  message: 'Direct process exit prevents proper cleanup'
+  fix_hint: 'Return error codes or throw exceptions instead'
+
+- id: kt-magic-number
+  name: Magic number
   severity: info
   category: code_quality
-  pattern: data\s+class\s+\w+.*var\s+
-  message: Mutable data classes break equals/hashCode contracts
-  fix_hint: Use val properties in data classes
-- id: kt-lateinit
-  name: lateinit var usage
-  severity: info
-  category: type_safety
-  pattern: lateinit\s+var\s+
-  message: lateinit can throw UninitializedPropertyAccessException
-  fix_hint: Use nullable type or lazy initialization
+  pattern: '(?:if|while|for|when)\s*\(.*(?:>|<|>=|<=|==)\s*\d{2,}'
+  message: 'Extract magic numbers to named constants'
+  fix_hint: 'Define companion object const val MAX_VALUE = 100'
+
 naming:
   file:
-    pattern: ^[A-Z][a-zA-Z0-9]*\.kt$
-    message: Kotlin files should use PascalCase
+    pattern: '^[A-Z][a-zA-Z0-9]*\.kt$'
+    message: 'Kotlin files should use PascalCase'
   function:
-    pattern: ^[a-z][a-zA-Z0-9]*$
-    message: Kotlin functions should use camelCase
+    pattern: '^[a-z][a-zA-Z0-9]*$'
+    message: 'Functions should use camelCase'
   class:
-    pattern: ^[A-Z][a-zA-Z0-9]*$
-    message: Kotlin classes should use PascalCase
+    pattern: '^[A-Z][a-zA-Z0-9]*$'
+    message: 'Classes should use PascalCase'
   constant:
-    pattern: ^[A-Z][A-Z0-9_]*$|^[a-z][a-zA-Z0-9]*$
-    message: Kotlin constants should use UPPER_SNAKE_CASE or camelCase
+    pattern: '^[A-Z][A-Z0-9_]*$'
+    message: 'Constants should use UPPER_SNAKE_CASE'
+
 thresholds:
-  max_function_length: 50
+  max_function_length: 40
   max_file_length: 500
   max_line_length: 120
   max_nesting_depth: 4
   max_function_params: 5
+  max_cyclomatic_complexity: 10
+
 tooling:
   linter: ktlint
   formatter: ktlint
-  test_runner: junit5
+  type_checker: null
+  test_runner: junit
   config_files:
-  - .editorconfig
-  - build.gradle.kts
+    - build.gradle.kts
+    - .editorconfig
+    - ktlint.gradle

@@ -110,8 +110,14 @@ class TestCmdAddRule:
     def test_add_rule_unknown_category(self, mock_rules_dir: MagicMock) -> None:
         mock_rules_dir.return_value = Path("/tmp")
         args = argparse.Namespace(
-            lang="testlang", category="unknown", id="x", name="x",
-            severity="error", pattern="x", message="x", fix_hint="x",
+            lang="testlang",
+            category="unknown",
+            id="x",
+            name="x",
+            severity="error",
+            pattern="x",
+            message="x",
+            fix_hint="x",
         )
         cmd_add_rule(args)  # Should not raise
 
@@ -119,8 +125,14 @@ class TestCmdAddRule:
     def test_add_rule_no_file(self, mock_rules_dir: MagicMock, tmp_path: Path) -> None:
         mock_rules_dir.return_value = tmp_path
         args = argparse.Namespace(
-            lang="testlang", category="anti_patterns", id="x", name="x",
-            severity="error", pattern="x", message="x", fix_hint="x",
+            lang="testlang",
+            category="anti_patterns",
+            id="x",
+            name="x",
+            severity="error",
+            pattern="x",
+            message="x",
+            fix_hint="x",
         )
         cmd_add_rule(args)  # Should not raise, prints message
 
@@ -133,8 +145,14 @@ class TestCmdAddRule:
         )
         mock_rules_dir.return_value = tmp_path
         args = argparse.Namespace(
-            lang="testlang", category="anti_patterns", id="dup", name="x",
-            severity="error", pattern="x", message="x", fix_hint="fix",
+            lang="testlang",
+            category="anti_patterns",
+            id="dup",
+            name="x",
+            severity="error",
+            pattern="x",
+            message="x",
+            fix_hint="fix",
         )
         cmd_add_rule(args)  # Should print duplicate message
 
@@ -145,8 +163,14 @@ class TestCmdAddRule:
         (rules_dir / "anti_patterns.yml").write_text("language: testlang\nanti_patterns: []\n")
         mock_rules_dir.return_value = tmp_path
         args = argparse.Namespace(
-            lang="testlang", category="anti_patterns", id="x", name="x",
-            severity="error", pattern="[invalid", message="x", fix_hint="fix",
+            lang="testlang",
+            category="anti_patterns",
+            id="x",
+            name="x",
+            severity="error",
+            pattern="[invalid",
+            message="x",
+            fix_hint="fix",
         )
         cmd_add_rule(args)  # Should print invalid regex message
 
@@ -158,21 +182,35 @@ class TestCmdAddRule:
         (rules_dir / "anti_patterns.yml").write_text("language: testlang\nanti_patterns: []\n")
         mock_rules_dir.return_value = tmp_path
         args = argparse.Namespace(
-            lang="testlang", category="anti_patterns", id="", name="x",
-            severity="error", pattern="x", message="x", fix_hint="x",
+            lang="testlang",
+            category="anti_patterns",
+            id="",
+            name="x",
+            severity="error",
+            pattern="x",
+            message="x",
+            fix_hint="x",
         )
         cmd_add_rule(args)  # Should print "Rule ID is required"
 
     @patch("tools.scripts.rule_author._rules_dir")
     @patch("builtins.input", side_effect=["", ""])
-    def test_add_rule_empty_name_or_message(self, mock_input: MagicMock, mock_rules_dir: MagicMock, tmp_path: Path) -> None:
+    def test_add_rule_empty_name_or_message(
+        self, mock_input: MagicMock, mock_rules_dir: MagicMock, tmp_path: Path
+    ) -> None:
         rules_dir = tmp_path / "languages" / "testlang" / "rules.d"
         rules_dir.mkdir(parents=True)
         (rules_dir / "anti_patterns.yml").write_text("language: testlang\nanti_patterns: []\n")
         mock_rules_dir.return_value = tmp_path
         args = argparse.Namespace(
-            lang="testlang", category="anti_patterns", id="x", name="",
-            severity="error", pattern="fix", message="x", fix_hint="fix",
+            lang="testlang",
+            category="anti_patterns",
+            id="x",
+            name="",
+            severity="error",
+            pattern="fix",
+            message="x",
+            fix_hint="fix",
         )
         cmd_add_rule(args)  # Should print "Name and message are required"
 
@@ -227,28 +265,20 @@ class TestCmdValidate:
     def test_validate_test_cases_missing_fields(self, tmp_path: Path) -> None:
         f = tmp_path / "bad_tc.yml"
         f.write_text(
-            "language: python\nanti_patterns:\n"
-            "- id: x\n  name: X\n  severity: error\n"
-            "  test_cases:\n  - code: 'test'\n"
+            "language: python\nanti_patterns:\n- id: x\n  name: X\n  severity: error\n  test_cases:\n  - code: 'test'\n"
         )
         args = argparse.Namespace(file=str(f))
         cmd_validate(args)
 
     def test_validate_naming_conventions(self, tmp_path: Path) -> None:
         f = tmp_path / "naming.yml"
-        f.write_text(
-            "language: python\nnaming_conventions:\n"
-            "- id: py-fn\n  name: Function name\n  severity: warning\n"
-        )
+        f.write_text("language: python\nnaming_conventions:\n- id: py-fn\n  name: Function name\n  severity: warning\n")
         args = argparse.Namespace(file=str(f))
         cmd_validate(args)
 
     def test_validate_complexity(self, tmp_path: Path) -> None:
         f = tmp_path / "complexity.yml"
-        f.write_text(
-            "language: python\ncomplexity:\n"
-            "- id: py-len\n  name: Too long\n  severity: warning\n"
-        )
+        f.write_text("language: python\ncomplexity:\n- id: py-len\n  name: Too long\n  severity: warning\n")
         args = argparse.Namespace(file=str(f))
         cmd_validate(args)
 
@@ -270,9 +300,7 @@ class TestCmdScaffold:
     def test_scaffold_appends_to_existing(self, mock_rules_dir: MagicMock, tmp_path: Path) -> None:
         rules_dir = tmp_path / "languages" / "testlang" / "rules.d"
         rules_dir.mkdir(parents=True)
-        (rules_dir / "anti_patterns.yml").write_text(
-            "language: testlang\nanti_patterns:\n- id: existing\n"
-        )
+        (rules_dir / "anti_patterns.yml").write_text("language: testlang\nanti_patterns:\n- id: existing\n")
         mock_rules_dir.return_value = tmp_path
         args = argparse.Namespace(lang="testlang")
         cmd_scaffold(args)

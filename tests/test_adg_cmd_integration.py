@@ -1,4 +1,5 @@
 """Targeted tests for remaining uncovered lines (83% -> 85%+)."""
+
 from __future__ import annotations
 
 import argparse
@@ -304,10 +305,13 @@ class TestCmdRuleExtended:
         args = ns(rule_command="create", output=str(workspace / "rule.yml"))
         with patch("tools.scripts.adg_cli.rule_author._create_rule_interactive") as mock:
             mock.return_value = {
-                "id": "test/rule", "pattern": r"eval\(",
-                "severity": "error", "message": "test",
-                "category": "security", "fix_hint": "fix",
-                "language": "python"
+                "id": "test/rule",
+                "pattern": r"eval\(",
+                "severity": "error",
+                "message": "test",
+                "category": "security",
+                "fix_hint": "fix",
+                "language": "python",
             }
             result = cmd_rule(args)
         assert result == 0
@@ -376,11 +380,14 @@ class TestCmdRuleExtended:
         rule_file.write_text("id: test\npattern: eval\\(\nseverity: error\nmessage: test\n")
         # Simulate yaml import failure
         import builtins
+
         real_import = builtins.__import__
+
         def mock_import(name, *args, **kwargs):
             if name == "yaml":
                 raise ImportError("No yaml")
             return real_import(name, *args, **kwargs)
+
         monkeypatch.setattr(builtins, "__import__", mock_import)
         args = ns(rule_command="validate", rule_file=str(rule_file))
         result = cmd_rule(args)
@@ -415,12 +422,7 @@ class TestCmdTrendExtended:
 
 class TestCmdNotifyExtended:
     def test_notify_slack(self, py_workspace):
-        args = ns(
-            path=str(py_workspace),
-            webhook="slack://test/token",
-            lang="python",
-            project="test"
-        )
+        args = ns(path=str(py_workspace), webhook="slack://test/token", lang="python", project="test")
         with patch("urllib.request.urlopen") as mock:
             mock.return_value.__enter__ = lambda s: s
             mock.return_value.__exit__ = MagicMock(return_value=False)
@@ -428,12 +430,7 @@ class TestCmdNotifyExtended:
         assert result == 0
 
     def test_notify_dingtalk(self, py_workspace):
-        args = ns(
-            path=str(py_workspace),
-            webhook="dingtalk://test",
-            lang="python",
-            project="test"
-        )
+        args = ns(path=str(py_workspace), webhook="dingtalk://test", lang="python", project="test")
         with patch("urllib.request.urlopen") as mock:
             mock.return_value.__enter__ = lambda s: s
             mock.return_value.__exit__ = MagicMock(return_value=False)
@@ -441,41 +438,23 @@ class TestCmdNotifyExtended:
         assert result == 0
 
     def test_notify_unknown_scheme(self, py_workspace):
-        args = ns(
-            path=str(py_workspace),
-            webhook="ftp://invalid",
-            lang="python"
-        )
+        args = ns(path=str(py_workspace), webhook="ftp://invalid", lang="python")
         result = cmd_notify(args)
         assert result == 1
 
     def test_notify_slack_failure(self, py_workspace):
-        args = ns(
-            path=str(py_workspace),
-            webhook="slack://test/token",
-            lang="python",
-            project="test"
-        )
+        args = ns(path=str(py_workspace), webhook="slack://test/token", lang="python", project="test")
         with patch("urllib.request.urlopen", side_effect=Exception("network error")):
             result = cmd_notify(args)
         assert result == 1
 
     def test_notify_unknown_lang(self, workspace):
-        args = ns(
-            path=str(workspace),
-            webhook="slack://test/token",
-            lang="unknown"
-        )
+        args = ns(path=str(workspace), webhook="slack://test/token", lang="unknown")
         result = cmd_notify(args)
         assert result == 1
 
     def test_notify_directory(self, py_workspace):
-        args = ns(
-            path=str(py_workspace),
-            webhook="slack://test/token",
-            lang="python",
-            project="test"
-        )
+        args = ns(path=str(py_workspace), webhook="slack://test/token", lang="python", project="test")
         with patch("urllib.request.urlopen") as mock:
             mock.return_value.__enter__ = lambda s: s
             mock.return_value.__exit__ = MagicMock(return_value=False)

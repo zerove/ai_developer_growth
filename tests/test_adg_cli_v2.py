@@ -1,4 +1,5 @@
 """Phase 27: Comprehensive tests for adg_cli.py (43% -> 80%)."""
+
 from __future__ import annotations
 
 import argparse
@@ -31,10 +32,13 @@ from tools.scripts.adg_cli import (
 
 # ── _get_rules_path ────────────────────────────────────────
 
+
 class TestGetRulesPath:
     def test_error_when_no_rules_found(self, tmp_path: Path) -> None:
-        with patch("tools.scripts.adg_cli.core._RULES_PATH", tmp_path / "nope"), \
-             patch("tools.scripts.adg_cli.core._ADG_SOURCE", tmp_path / "nope2"):
+        with (
+            patch("tools.scripts.adg_cli.core._RULES_PATH", tmp_path / "nope"),
+            patch("tools.scripts.adg_cli.core._ADG_SOURCE", tmp_path / "nope2"),
+        ):
             with pytest.raises(SystemExit):
                 _get_rules_path()
 
@@ -47,18 +51,21 @@ class TestGetRulesPath:
     def test_returns_source_path(self, tmp_path: Path) -> None:
         source = tmp_path / "source"
         source.mkdir()
-        with patch("tools.scripts.adg_cli.core._RULES_PATH", tmp_path / "nope"), \
-             patch("tools.scripts.adg_cli.core._ADG_SOURCE", source):
+        with (
+            patch("tools.scripts.adg_cli.core._RULES_PATH", tmp_path / "nope"),
+            patch("tools.scripts.adg_cli.core._ADG_SOURCE", source),
+        ):
             assert _get_rules_path() == source
 
 
 # ── _detect_framework ──────────────────────────────────────
 
+
 class TestDetectFramework:
     def test_package_json_react(self, tmp_path: Path) -> None:
-        (tmp_path / "package.json").write_text(json.dumps({
-            "dependencies": {"react": "^18.0.0", "react-dom": "^18.0.0"}
-        }))
+        (tmp_path / "package.json").write_text(
+            json.dumps({"dependencies": {"react": "^18.0.0", "react-dom": "^18.0.0"}})
+        )
         assert _detect_framework(tmp_path, "javascript") == "react"
 
     def test_package_json_invalid_json(self, tmp_path: Path) -> None:
@@ -66,9 +73,7 @@ class TestDetectFramework:
         assert _detect_framework(tmp_path, "javascript") is None
 
     def test_package_json_dev_deps(self, tmp_path: Path) -> None:
-        (tmp_path / "package.json").write_text(json.dumps({
-            "devDependencies": {"next": "^14.0.0"}
-        }))
+        (tmp_path / "package.json").write_text(json.dumps({"devDependencies": {"next": "^14.0.0"}}))
         assert _detect_framework(tmp_path, "typescript") == "nextjs"
 
     def test_requirements_txt_django(self, tmp_path: Path) -> None:
@@ -105,6 +110,7 @@ class TestDetectFramework:
 
 # ── _detect_language_from_file ──────────────────────────────
 
+
 class TestDetectLanguageFromFile:
     def test_known_extension(self) -> None:
         assert _detect_language_from_file(Path("main.py")) == "python"
@@ -123,6 +129,7 @@ class TestDetectLanguageFromFile:
 
 
 # ── _load_yaml ─────────────────────────────────────────────
+
 
 class TestLoadYaml:
     def test_valid_yaml(self, tmp_path: Path) -> None:
@@ -147,6 +154,7 @@ class TestLoadYaml:
 
 
 # ── _simple_yaml_parse ─────────────────────────────────────
+
 
 class TestSimpleYamlParseExtended:
     def test_version_field(self, tmp_path: Path) -> None:
@@ -212,6 +220,7 @@ class TestSimpleYamlParseExtended:
 
 # ── check_file extended ────────────────────────────────────
 
+
 class TestCheckFileExtended:
     def test_skip_min_js(self, tmp_path: Path) -> None:
         f = tmp_path / "app.min.js"
@@ -254,11 +263,13 @@ class TestCheckFileExtended:
     def test_severity_filter_excludes_lower(self, tmp_path: Path) -> None:
         f = tmp_path / "test.py"
         f.write_text("x = 1\n")
-        rules = {"anti_patterns": [
-            {"id": "e", "severity": "error", "pattern": "x = 1"},
-            {"id": "w", "severity": "warning", "pattern": "x = 1"},
-            {"id": "i", "severity": "info", "pattern": "x = 1"},
-        ]}
+        rules = {
+            "anti_patterns": [
+                {"id": "e", "severity": "error", "pattern": "x = 1"},
+                {"id": "w", "severity": "warning", "pattern": "x = 1"},
+                {"id": "i", "severity": "info", "pattern": "x = 1"},
+            ]
+        }
         issues = check_file(f, rules, severity_filter="warning")
         sevs = {i.severity for i in issues}
         assert "info" not in sevs
@@ -274,10 +285,11 @@ class TestCheckFileExtended:
     def test_exclude_patterns_match(self, tmp_path: Path) -> None:
         f = tmp_path / "test.py"
         f.write_text("bare except: pass\nimport re\n")
-        rules = {"anti_patterns": [{
-            "id": "test", "severity": "error", "pattern": "bare except",
-            "exclude_patterns": [r"import re"]
-        }]}
+        rules = {
+            "anti_patterns": [
+                {"id": "test", "severity": "error", "pattern": "bare except", "exclude_patterns": [r"import re"]}
+            ]
+        }
         issues = check_file(f, rules)
         assert issues == []
 
@@ -292,44 +304,36 @@ class TestCheckFileExtended:
     def test_multiline_pattern(self, tmp_path: Path) -> None:
         f = tmp_path / "test.py"
         f.write_text("try:\n    pass\nexcept:\n    pass\n")
-        rules = {"anti_patterns": [{
-            "id": "ml", "severity": "error", "multiline": True,
-            "pattern": r"try:\n.*\nexcept:\n"
-        }]}
+        rules = {
+            "anti_patterns": [{"id": "ml", "severity": "error", "multiline": True, "pattern": r"try:\n.*\nexcept:\n"}]
+        }
         issues = check_file(f, rules)
         assert len(issues) >= 1
 
     def test_multiline_pattern_invalid_regex(self, tmp_path: Path) -> None:
         f = tmp_path / "test.py"
         f.write_text("try:\n    pass\n")
-        rules = {"anti_patterns": [{
-            "id": "ml", "severity": "error", "multiline": True,
-            "pattern": "[invalid"
-        }]}
+        rules = {"anti_patterns": [{"id": "ml", "severity": "error", "multiline": True, "pattern": "[invalid"}]}
         issues = check_file(f, rules)
         assert isinstance(issues, list)
 
     def test_ignore_case_pattern(self, tmp_path: Path) -> None:
         f = tmp_path / "test.py"
         f.write_text("BARE EXCEPT: pass\n")
-        rules = {"anti_patterns": [{
-            "id": "ic", "severity": "error", "ignore_case": True, "pattern": "bare except"
-        }]}
+        rules = {"anti_patterns": [{"id": "ic", "severity": "error", "ignore_case": True, "pattern": "bare except"}]}
         issues = check_file(f, rules)
         assert len(issues) >= 1
 
     def test_pattern_in_multiline_string(self, tmp_path: Path) -> None:
         f = tmp_path / "test.py"
         f.write_text("try:\n    pass\nexcept:\n    pass\n")
-        rules = {"anti_patterns": [{
-            "id": "nl", "severity": "error", "multiline": True,
-            "pattern": "try:\\n"
-        }]}
+        rules = {"anti_patterns": [{"id": "nl", "severity": "error", "multiline": True, "pattern": "try:\\n"}]}
         issues = check_file(f, rules)
         assert len(issues) >= 1
 
 
-#────────────────────────────────────────
+# ────────────────────────────────────────
+
 
 class TestCheckPattern:
     def test_exclude_patterns_no_match(self, tmp_path: Path) -> None:
@@ -341,6 +345,7 @@ class TestCheckPattern:
 
 
 # ── _make_issue ────────────────────────────────────────────
+
 
 class TestMakeIssue:
     def test_default_values(self) -> None:
@@ -357,6 +362,7 @@ class TestMakeIssue:
 
 
 # ── check_directory ────────────────────────────────────────
+
 
 class TestCheckDirectory:
     def test_checks_python_files(self, tmp_path: Path) -> None:
@@ -388,6 +394,7 @@ class TestCheckDirectory:
 
 
 # ── _format_human ──────────────────────────────────────────
+
 
 class TestFormatHuman:
     def test_with_issues(self) -> None:
@@ -437,6 +444,7 @@ class TestFormatHuman:
 
 # ── _format_json ───────────────────────────────────────────
 
+
 class TestFormatJson:
     def test_with_issues(self) -> None:
         issues = [
@@ -458,6 +466,7 @@ class TestFormatJson:
 
 
 # ── cmd_check ──────────────────────────────────────────────
+
 
 class TestCmdCheck:
     def test_check_file_with_errors(self, tmp_path: Path) -> None:
@@ -507,9 +516,11 @@ class TestCmdCheck:
         f.write_text("x = 1\n")
         (tmp_path / "requirements.txt").write_text("Django==4.2\n")
         args = argparse.Namespace(path=str(f), lang="python", severity=None, json=False)
-        with patch("tools.scripts.adg_cli.rules.load_rules_for_language") as mock_lang, \
-             patch("tools.scripts.adg_cli.rules.load_framework_rules") as mock_fw, \
-             patch("tools.scripts.adg_cli.detect.detect_language") as mock_det:
+        with (
+            patch("tools.scripts.adg_cli.rules.load_rules_for_language") as mock_lang,
+            patch("tools.scripts.adg_cli.rules.load_framework_rules") as mock_fw,
+            patch("tools.scripts.adg_cli.detect.detect_language") as mock_det,
+        ):
             mock_lang.return_value = {"anti_patterns": []}
             mock_fw.return_value = {"anti_patterns": []}
             mock_det.return_value = {"language": "python", "framework": "django", "confidence": 0.9}
@@ -518,6 +529,7 @@ class TestCmdCheck:
 
 
 # ── cmd_detect ─────────────────────────────────────────────
+
 
 class TestCmdDetect:
     def test_detect_python(self, tmp_path: Path) -> None:
@@ -542,6 +554,7 @@ class TestCmdDetect:
 
 # ── cmd_list_rules ─────────────────────────────────────────
 
+
 class TestCmdListRules:
     def test_list_python_rules(self) -> None:
         args = argparse.Namespace(lang="python", json=False)
@@ -560,6 +573,7 @@ class TestCmdListRules:
 
 
 # ── cmd_install_hooks ──────────────────────────────────────
+
 
 class TestCmdInstallHooks:
     def test_install_to_git_repo(self, tmp_path: Path) -> None:
@@ -589,6 +603,7 @@ class TestCmdInstallHooks:
 
 
 # ── main CLI ───────────────────────────────────────────────
+
 
 class TestMainCLI:
     def test_no_command(self) -> None:
@@ -763,11 +778,11 @@ class TestMainCLI:
             "  pattern: '\\bprint\\('\n"
             "  message: Use logging\n"
         )
-        
+
         # Create test file
         test_file = tmp_path / "app.py"
         test_file.write_text("print('hello')\n")
-        
+
         with patch("sys.argv", ["adg", "check", str(tmp_path), "--lang", "python"]):
             result = main()
         assert result == 0  # warning only, no errors
@@ -778,17 +793,14 @@ class TestMainCLI:
         config_dir = tmp_path / ".adg"
         config_dir.mkdir()
         config_file = config_dir / "rules.yml"
-        config_file.write_text(
-            "skip_patterns:\n"
-            "- '*.test.py'\n"
-        )
-        
+        config_file.write_text("skip_patterns:\n- '*.test.py'\n")
+
         # Create test files
         test_file = tmp_path / "app.py"
         test_file.write_text("try:\n    pass\nexcept:\n    pass\n")
         skipped_file = tmp_path / "app.test.py"
         skipped_file.write_text("try:\n    pass\nexcept:\n    pass\n")
-        
+
         with patch("sys.argv", ["adg", "check", str(tmp_path), "--lang", "python"]):
             with patch("tools.scripts.adg_cli.rules.load_rules_for_language") as mock:
                 mock.return_value = load_rules_for_language("python")

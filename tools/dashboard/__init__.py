@@ -8,6 +8,7 @@ Usage:
     # Or via CLI:
     python -m tools.dashboard.server --port 8080
 """
+
 from __future__ import annotations
 
 import json
@@ -31,7 +32,7 @@ from tools.scripts.adg_cli import (
 # HTML Dashboard
 # ─────────────────────────────────────────────────────────────
 
-DASHBOARD_HTML = '''<!DOCTYPE html>
+DASHBOARD_HTML = """<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -128,7 +129,7 @@ DASHBOARD_HTML = '''<!DOCTYPE html>
         }}
     </script>
 </body>
-</html>'''
+</html>"""
 
 
 def generate_dashboard_html(
@@ -179,7 +180,7 @@ def generate_dashboard_html(
         width = int(count / max_file * 100)
         bar_class = "bar-err" if count > 5 else "bar-warn"
         file_rows.append(
-            f'<tr><td>{Path(fp).name}</td><td>{count}</td>'
+            f"<tr><td>{Path(fp).name}</td><td>{count}</td>"
             f'<td><div class="bar {bar_class}" style="width:{width}%"></div></td></tr>'
         )
 
@@ -189,7 +190,7 @@ def generate_dashboard_html(
     for point in trend_data[-7:]:
         ts = point.get("timestamp", "")[:10]
         trend_rows.append(
-            f'<tr><td>{ts}</td><td>{point.get("total", 0)}</td>'
+            f"<tr><td>{ts}</td><td>{point.get('total', 0)}</td>"
             f'<td style="color:var(--red)">{point.get("errors", 0)}</td>'
             f'<td style="color:var(--yellow)">{point.get("warnings", 0)}</td></tr>'
         )
@@ -224,6 +225,7 @@ def generate_dashboard_html(
 # ─────────────────────────────────────────────────────────────
 # HTTP API Server (lightweight, no dependencies)
 # ─────────────────────────────────────────────────────────────
+
 
 def start_dashboard(
     project_dir: str = ".",
@@ -277,6 +279,7 @@ def start_dashboard(
 
 def main():
     import argparse
+
     parser = argparse.ArgumentParser(description="ADG Dashboard")
     parser.add_argument("--port", type=int, default=8080)
     parser.add_argument("--host", default="127.0.0.1")

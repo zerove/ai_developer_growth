@@ -83,7 +83,11 @@ class TestRunCommand:
     def test_custom_cwd(self, mock_run: MagicMock, tmp_path: Path) -> None:
         mock_run.return_value = MagicMock(returncode=0, stdout="", stderr="")
         run_command(["ls"], cwd=tmp_path)
-        cwd_used = mock_run.call_args[1].get("cwd") or mock_run.call_args[0][1] if len(mock_run.call_args[0]) > 1 else mock_run.call_args[1]["cwd"]
+        cwd_used = (
+            mock_run.call_args[1].get("cwd") or mock_run.call_args[0][1]
+            if len(mock_run.call_args[0]) > 1
+            else mock_run.call_args[1]["cwd"]
+        )
         assert cwd_used == tmp_path
 
 

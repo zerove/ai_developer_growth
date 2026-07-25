@@ -66,3 +66,52 @@ anti_patterns:
   pattern: "<img\\s+[^>]*?src=[\"']https?://"
   message: 'Use next/image for external images'
   fix_hint: 'Import Image from "next/image" and use <Image />'
+
+- id: nextjs-dynamic-import-missing
+  name: Missing dynamic import for heavy components
+  severity: info
+  category: performance
+  pattern: "import\\s+.*from\\s+['\"]@?\\w.*['\"]"
+  message: 'Consider using next/dynamic for heavy components below the fold'
+  fix_hint: 'Use const Component = dynamic(() => import("./Heavy"))'
+
+- id: nextjs-no-metadata
+  name: Missing page metadata
+  severity: info
+  category: seo
+  pattern: 'export default function.*Page'
+  message: 'Pages should export metadata for SEO'
+  fix_hint: 'Export const metadata: Metadata = { title: "..." }'
+
+naming:
+  file:
+    pattern: '^[a-z][a-z0-9-]*\.(ts|tsx|js|jsx)$'
+    message: 'Next.js files should use kebab-case'
+  function:
+    pattern: '^[a-z][a-zA-Z0-9]*$'
+    message: 'Functions should use camelCase'
+  component:
+    pattern: '^[A-Z][a-zA-Z0-9]*$'
+    message: 'Components should use PascalCase'
+  constant:
+    pattern: '^[A-Z][A-Z0-9_]*$'
+    message: 'Constants should use UPPER_SNAKE_CASE'
+
+thresholds:
+  max_function_length: 40
+  max_file_length: 400
+  max_line_length: 100
+  max_nesting_depth: 4
+  max_function_params: 5
+  max_cyclomatic_complexity: 10
+
+tooling:
+  linter: eslint
+  formatter: prettier
+  type_checker: tsc
+  test_runner: jest
+  config_files:
+    - .eslintrc.json
+    - tsconfig.json
+    - next.config.js
+    - .prettierrc

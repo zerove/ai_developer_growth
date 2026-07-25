@@ -7,6 +7,7 @@ from pathlib import Path
 from typing import Any
 
 from .models import Issue
+from .regex_cache import get_compiled
 from .rule_loader import load_rules_for_language
 from .security_patterns import get_security_rules
 
@@ -86,7 +87,8 @@ def _check_multiline_pattern(
     """Check multi-line pattern against full content."""
     issues: list[Issue] = []
     try:
-        for match in re.finditer(pattern, content, flags | re.MULTILINE):
+        compiled = get_compiled(pattern, flags | re.MULTILINE)
+        for match in compiled.finditer(content):
             line_num = content[: match.start()].count("\n") + 1
             issues.append(
                 Issue(
@@ -112,28 +114,28 @@ def _check_line_patterns(
 ) -> list[Issue]:
     """Check pattern against each line."""
     issues: list[Issue] = []
+    try:
+        compiled = get_compiled(pattern, flags)
+    except re.error:
+        return issues
     for line_num, line in enumerate(lines, 1):
         # Skip comments for most patterns
         stripped = line.strip()
         if stripped.startswith("#") or stripped.startswith("//"):
             continue
 
-        try:
-            for match in re.finditer(pattern, line, flags):
-                issues.append(
-                    Issue(
-                        rule_id=pattern_def.get("id", "unknown"),
-                        severity=pattern_def.get("severity", "warning"),
-                        category=pattern_def.get("category", "anti-pattern"),
-                        file=filepath,
-                        line=line_num,
-                        column=match.start() + 1,
-                        message=pattern_def.get("message", "Anti-pattern detected"),
-                        fix_hint=pattern_def.get("fix_hint", ""),
-                        fix_replacement=pattern_def.get("fix_replacement", ""),
-                    )
+        for match in compiled.finditer(line):
+            issues.append(
+                Issue(
+                    rule_id=pattern_def.get("id", "unknown"),
+                    severity=pattern_def.get("severity", "warning"),
+                    category=pattern_def.get("category", "anti-pattern"),
+                    file=filepath,
+                    line=line_num,
+                    column=match.start() + 1,
+                    message=pattern_def.get("message", "Anti-pattern detected"),
+                    fix_hint=pattern_def.get("fix_hint", ""),
+                    fix_replacement=pattern_def.get("fix_replacement", ""),
                 )
-        except re.error:
-            # Skip invalid regex
-            continue
+            )
     return issues

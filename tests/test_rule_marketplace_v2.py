@@ -1,4 +1,5 @@
 """Tests for rule_marketplace.py (0% → target 85%)."""
+
 from __future__ import annotations
 
 import argparse
@@ -35,7 +36,9 @@ class TestCmdSearch:
 
     def test_search_with_results(self) -> None:
         with patch("tools.scripts.rule_marketplace.search_rules") as mock_search:
-            mock_search.return_value = [{"id": "py-bare-except", "severity": "error", "message": "test", "pattern": "except"}]
+            mock_search.return_value = [
+                {"id": "py-bare-except", "severity": "error", "message": "test", "pattern": "except"}
+            ]
             args = argparse.Namespace(query="except", json=False)
             cmd_search(args)
 
@@ -65,8 +68,11 @@ class TestCmdInfo:
         args = argparse.Namespace(pack="security", json=False)
         with patch("tools.scripts.rule_marketplace.get_pack_info") as mock_info:
             mock_info.return_value = {
-                "name": "Security", "description": "desc", "rule_count": 5,
-                "categories": ["security"], "source": "common/security.yml",
+                "name": "Security",
+                "description": "desc",
+                "rule_count": 5,
+                "categories": ["security"],
+                "source": "common/security.yml",
             }
             with patch("tools.scripts.rule_marketplace._framework_dir") as mock_fd:
                 mock_fd.return_value = Path("/tmp")
@@ -90,7 +96,13 @@ class TestCmdInfo:
         src = tmp_path / "security.yml"
         src.write_text("anti_patterns:\n  - id: x\n")
         with patch("tools.scripts.rule_marketplace.get_pack_info") as mock_info:
-            mock_info.return_value = {"name": "x", "description": "d", "rule_count": 1, "categories": ["anti_patterns"], "source": str(src)}
+            mock_info.return_value = {
+                "name": "x",
+                "description": "d",
+                "rule_count": 1,
+                "categories": ["anti_patterns"],
+                "source": str(src),
+            }
             args = argparse.Namespace(pack="x", json=False)
             with patch("tools.scripts.rule_marketplace._framework_dir") as mock_fd:
                 mock_fd.return_value = tmp_path
@@ -101,7 +113,13 @@ class TestCmdInfo:
         src.mkdir()
         (src / "anti.yml").write_text("anti_patterns:\n  - id: x\n")
         with patch("tools.scripts.rule_marketplace.get_pack_info") as mock_info:
-            mock_info.return_value = {"name": "x", "description": "d", "rule_count": 1, "categories": ["anti_patterns"], "source": "rules.d"}
+            mock_info.return_value = {
+                "name": "x",
+                "description": "d",
+                "rule_count": 1,
+                "categories": ["anti_patterns"],
+                "source": "rules.d",
+            }
             args = argparse.Namespace(pack="x", json=False)
             with patch("tools.scripts.rule_marketplace._framework_dir") as mock_fd:
                 mock_fd.return_value = tmp_path

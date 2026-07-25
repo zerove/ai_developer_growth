@@ -11,6 +11,7 @@ from tools.scripts.adg_cli.detect import detect_language, _detect_language_from_
 from tools.scripts.adg_cli.rules import load_rules_for_language, load_framework_rules
 from tools.scripts.adg_cli.git import _get_git_changed_files, _get_staged_files, _get_unstaged_files
 
+
 def check_file(filepath: Path, rules: dict[str, Any], severity_filter: str | None = None) -> list[Issue]:
     """Check a single file against rules."""
     issues: list[Issue] = []
@@ -37,6 +38,7 @@ def check_file(filepath: Path, rules: dict[str, Any], severity_filter: str | Non
         issues.extend(_check_pattern(filepath, content, lines, pattern_def))
 
     return issues
+
 
 def _check_pattern(filepath: Path, content: str, lines: list[str], pattern_def: dict[str, Any]) -> list[Issue]:
     """Check a single pattern against file content."""
@@ -72,6 +74,7 @@ def _check_pattern(filepath: Path, content: str, lines: list[str], pattern_def: 
                 continue
 
     return issues
+
 
 def check_directory(
     dirpath: Path, rules: dict[str, Any], severity_filter: str | None = None, jobs: int = 1
@@ -138,6 +141,7 @@ def _check_files_parallel(
 
     return all_issues
 
+
 def _collect_check_files(
     target: Path, args: argparse.Namespace, project_config: dict[str, Any]
 ) -> tuple[list[Path], dict[str, Any]]:
@@ -177,6 +181,7 @@ def _collect_check_files(
         detected = detect_language(target)
 
     return files, detected
+
 
 def _match_pattern(filepath: Path, pattern: str) -> bool:
     """Check if filepath matches a glob pattern."""

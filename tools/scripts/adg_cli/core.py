@@ -27,28 +27,66 @@ def _get_rules_path() -> Path:
 
 
 SKIP_DIRS = {
-    ".git", ".svn", "node_modules", "target", "vendor", "__pycache__",
-    ".venv", "venv", "dist", "build", ".tox", ".mypy_cache", ".ruff_cache",
-    ".pytest_cache", "coverage", ".next", ".nuxt",
+    ".git",
+    ".svn",
+    "node_modules",
+    "target",
+    "vendor",
+    "__pycache__",
+    ".venv",
+    "venv",
+    "dist",
+    "build",
+    ".tox",
+    ".mypy_cache",
+    ".ruff_cache",
+    ".pytest_cache",
+    "coverage",
+    ".next",
+    ".nuxt",
     # Generated documentation / build output
-    "book", "site", "_build", "out", "public", "static",
+    "book",
+    "site",
+    "_build",
+    "out",
+    "public",
+    "static",
     # IDE / editor
-    ".idea", ".vscode", ".vs", "*.swp",
+    ".idea",
+    ".vscode",
+    ".vs",
+    "*.swp",
     # Cache directories
-    ".cache", "tmp", ".tmp",
+    ".cache",
+    "tmp",
+    ".tmp",
 }
 
 MAX_FILES = 5000
 
 SKIP_EXTENSIONS = {
-    ".min.js", ".min.css", ".map", ".lock", ".sum", ".pyc", ".pyo",
-    ".class", ".o", ".so", ".dll", ".exe", ".bin", ".dat", ".db",
+    ".min.js",
+    ".min.css",
+    ".map",
+    ".lock",
+    ".sum",
+    ".pyc",
+    ".pyo",
+    ".class",
+    ".o",
+    ".so",
+    ".dll",
+    ".exe",
+    ".bin",
+    ".dat",
+    ".db",
 }
 
 
 @dataclass
 class Issue:
     """Represents a single code quality issue."""
+
     rule_id: str
     severity: str
     category: str

@@ -1,4 +1,5 @@
 """CI/CD template generator for ADG governance integration."""
+
 from __future__ import annotations
 
 from pathlib import Path
@@ -9,7 +10,7 @@ from typing import Any
 # GitHub Actions Templates
 # ─────────────────────────────────────────────────────────────
 
-GITHUB_ACTIONS_ADG = '''name: ADG Governance Check
+GITHUB_ACTIONS_ADG = """name: ADG Governance Check
 
 on:
   push:
@@ -70,9 +71,9 @@ jobs:
         with:
           name: adg-governance-report
           path: adg-report.json
-'''
+"""
 
-GITHUB_ACTIONS_ADG_ADVANCED = '''name: ADG Advanced Governance
+GITHUB_ACTIONS_ADG_ADVANCED = """name: ADG Advanced Governance
 
 on:
   push:
@@ -111,14 +112,14 @@ jobs:
       - name: Record Trend
         run: adg check . --lang ${{ matrix.language }} --json > /dev/null
         continue-on-error: true
-'''
+"""
 
 
 # ─────────────────────────────────────────────────────────────
 # GitLab CI Template
 # ─────────────────────────────────────────────────────────────
 
-GITLAB_CI_ADG = '''
+GITLAB_CI_ADG = """
 adg-governance:
   stage: test
   image: python:3.11
@@ -139,21 +140,21 @@ adg-governance:
   rules:
     - if: $CI_MERGE_REQUEST_ID
     - if: $CI_COMMIT_BRANCH == "main"
-'''
+"""
 
 
 # ─────────────────────────────────────────────────────────────
 # Jenkins Pipeline
 # ─────────────────────────────────────────────────────────────
 
-JENKINS_PIPELINE = 'pipeline {\n    agent any\n\n    stages {\n        stage(\'ADG Governance\') {\n            steps {\n                sh \'\'\'\n                    pip install adg-governance\n                    adg detect . --json > detect.json\n                    LANG=$(python -c "import json; print(json.load(open(\'detect.json\'))[\'language\'])")\n                    adg check . --lang $LANG --severity warning --json > adg-report.json\n                    adg check . --lang $LANG --sarif > results.sarif\n                \'\'\'\n            }\n            post {\n                always {\n                    archiveArtifacts artifacts: \'adg-report.json, results.sarif\'\n                }\n            }\n        }\n    }\n}'
+JENKINS_PIPELINE = "pipeline {\n    agent any\n\n    stages {\n        stage('ADG Governance') {\n            steps {\n                sh '''\n                    pip install adg-governance\n                    adg detect . --json > detect.json\n                    LANG=$(python -c \"import json; print(json.load(open('detect.json'))['language'])\")\n                    adg check . --lang $LANG --severity warning --json > adg-report.json\n                    adg check . --lang $LANG --sarif > results.sarif\n                '''\n            }\n            post {\n                always {\n                    archiveArtifacts artifacts: 'adg-report.json, results.sarif'\n                }\n            }\n        }\n    }\n}"
 
 
 # ─────────────────────────────────────────────────────────────
 # Docker Compose
 # ─────────────────────────────────────────────────────────────
 
-DOCKER_COMPOSE_ADG = '''
+DOCKER_COMPOSE_ADG = """
 version: "3.8"
 services:
   adg:
@@ -168,7 +169,7 @@ services:
         adg check . --severity warning --json > /workspace/adg-report.json &&
         adg report . --json > /workspace/adg-gate.json
       "
-'''
+"""
 
 
 # ─────────────────────────────────────────────────────────────
@@ -241,12 +242,14 @@ def format_template_info() -> str:
 
     for name, content in TEMPLATES.items():
         lines.append(f"  {name:20s} - {content.count(chr(10))} lines")
-    lines.extend([
-        "",
-        "Usage:",
-        "  adg-cicd generate github --output ./project",
-        "  adg-cicd generate gitlab --output ./project",
-        "",
-    ])
+    lines.extend(
+        [
+            "",
+            "Usage:",
+            "  adg-cicd generate github --output ./project",
+            "  adg-cicd generate gitlab --output ./project",
+            "",
+        ]
+    )
 
     return "\n".join(lines)

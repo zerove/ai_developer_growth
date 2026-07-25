@@ -9,8 +9,14 @@ from pathlib import Path
 from typing import Any
 
 from tools.scripts.adg_cli.core import (
-    Issue, _get_rules_path, _ADG_HOME, SKIP_DIRS, SKIP_EXTENSIONS,
-    _DEFAULT_PRE_PUSH_HOOK, _DEFAULT_PRE_COMMIT_HOOK, FIX_RULES,
+    Issue,
+    _get_rules_path,
+    _ADG_HOME,
+    SKIP_DIRS,
+    SKIP_EXTENSIONS,
+    _DEFAULT_PRE_PUSH_HOOK,
+    _DEFAULT_PRE_COMMIT_HOOK,
+    FIX_RULES,
     load_project_config,
 )
 from tools.scripts.adg_cli.detect import detect_language, _detect_language_from_file
@@ -18,16 +24,25 @@ from tools.scripts.adg_cli.rules import load_rules_for_language, load_framework_
 from tools.scripts.adg_cli.check import check_file, check_directory, _check_files_parallel, _collect_check_files
 from tools.scripts.adg_cli.fix import fix_file, fix_directory
 from tools.scripts.adg_cli.format import (
-    _format_human, _format_json, _format_sarif, _count_issues, _print_report_text,
-    _SEVERITY_COLORS, _RESET,
+    _format_human,
+    _format_json,
+    _format_sarif,
+    _count_issues,
+    _print_report_text,
+    _SEVERITY_COLORS,
+    _RESET,
 )
 from tools.scripts.adg_cli.git import _get_git_changed_files, _get_staged_files, _get_unstaged_files
 from tools.scripts.adg_cli.trend import (
-    _load_trend_data, _save_trend_data, _record_trend, _format_trend_report,
+    _load_trend_data,
+    _save_trend_data,
+    _record_trend,
+    _format_trend_report,
     _TREND_DATA_FILE,
 )
 from tools.scripts.adg_cli.notify import _send_slack_notification, _send_dingtalk_notification
 from tools.scripts.adg_cli.rule_author import _create_rule_interactive, _validate_rule, _test_rule, _RULE_TEMPLATE
+
 
 def cmd_check(args: argparse.Namespace) -> int:
     """Check code against rules."""
@@ -106,6 +121,7 @@ def cmd_check(args: argparse.Namespace) -> int:
     has_errors = any(i.severity == "error" for i in all_issues)
     return 1 if has_errors else 0
 
+
 def cmd_fix(args: argparse.Namespace) -> int:
     """Apply automatic fixes to code files."""
     target = Path(args.path).resolve()
@@ -156,6 +172,7 @@ def cmd_fix(args: argparse.Namespace) -> int:
             print("   Some issues require manual fixes.")
 
     return 0 if stats["errors"] == 0 else 1
+
 
 def cmd_rule(args: argparse.Namespace) -> int:
     """Handle rule authoring commands."""
@@ -303,6 +320,7 @@ def _cmd_rule_validate(args: argparse.Namespace) -> int:
         print(f"\n✅ Validation passed for: {rule_file}")
         return 0
 
+
 def cmd_trend(args: argparse.Namespace) -> int:
     """Show quality trend dashboard."""
     project_dir = Path(args.path).resolve()
@@ -324,6 +342,7 @@ def cmd_trend(args: argparse.Namespace) -> int:
         print(_format_trend_report(trend_data))
 
     return 0
+
 
 def cmd_notify(args: argparse.Namespace) -> int:
     """Send governance report via webhook."""
@@ -371,6 +390,7 @@ def cmd_notify(args: argparse.Namespace) -> int:
 
     return 0
 
+
 def cmd_detect(args: argparse.Namespace) -> int:
     """Detect project language and framework."""
     target = Path(args.path).resolve()
@@ -384,6 +404,7 @@ def cmd_detect(args: argparse.Namespace) -> int:
         print(f"Confidence: {result['confidence']}")
 
     return 0
+
 
 def cmd_list_rules(args: argparse.Namespace) -> int:
     """List rules for a specific language."""
@@ -412,6 +433,7 @@ def cmd_list_rules(args: argparse.Namespace) -> int:
             print()
 
     return 0
+
 
 def cmd_report(args: argparse.Namespace) -> int:
     """Generate a quality gate report."""
@@ -472,9 +494,21 @@ def cmd_report(args: argparse.Namespace) -> int:
         }
         print(json.dumps(report, indent=2))
     else:
-        _print_report_text(target, language, framework, files_checked, severity_counts, category_counts, top_files, passed, error_threshold, warning_threshold)
+        _print_report_text(
+            target,
+            language,
+            framework,
+            files_checked,
+            severity_counts,
+            category_counts,
+            top_files,
+            passed,
+            error_threshold,
+            warning_threshold,
+        )
 
     return 0 if passed else 1
+
 
 def cmd_install_hooks(args: argparse.Namespace) -> int:
     """Install pre-commit hook into a project."""
@@ -519,6 +553,7 @@ def cmd_install_hooks(args: argparse.Namespace) -> int:
     print("   Run 'adg check .' to test manually")
     return 0
 
+
 def cmd_html_report(args: argparse.Namespace) -> int:
     """Generate HTML quality gate report."""
     from tools.report import generate_html_report, save_html_report
@@ -545,6 +580,7 @@ def cmd_html_report(args: argparse.Namespace) -> int:
     print(f"  Language: {language}")
     print(f"  Issues: {len(issues)}")
     return 0
+
 
 def cmd_recommend(args: argparse.Namespace) -> int:
     """AI-powered rule recommendations."""

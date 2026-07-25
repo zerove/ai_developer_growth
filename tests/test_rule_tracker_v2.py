@@ -1,4 +1,5 @@
 """Tests for rule_tracker.py (0% → target 85%)."""
+
 from __future__ import annotations
 
 import argparse
@@ -79,8 +80,10 @@ class TestLoadRecords:
         old = datetime.now(timezone.utc) - timedelta(days=60)
         new = datetime.now(timezone.utc)
         records_file.write_text(
-            json.dumps({"timestamp": old.isoformat(), "summary": {"total_issues": 1}}) + "\n"
-            + json.dumps({"timestamp": new.isoformat(), "summary": {"total_issues": 2}}) + "\n"
+            json.dumps({"timestamp": old.isoformat(), "summary": {"total_issues": 1}})
+            + "\n"
+            + json.dumps({"timestamp": new.isoformat(), "summary": {"total_issues": 2}})
+            + "\n"
         )
         with patch("tools.scripts.rule_tracker._records_file") as mock_f:
             mock_f.return_value = records_file
@@ -108,7 +111,9 @@ class TestCmdRecord:
 
     def test_record_from_file(self, tmp_path: Path) -> None:
         data_file = tmp_path / "results.json"
-        data_file.write_text(json.dumps({"results": [{"issues": [{"severity": "error", "rule_id": "x"}]}], "health_score": 80}))
+        data_file.write_text(
+            json.dumps({"results": [{"issues": [{"severity": "error", "rule_id": "x"}]}], "health_score": 80})
+        )
         args = argparse.Namespace(file=str(data_file), project="test-project")
         with patch("tools.scripts.rule_tracker._records_file") as mock_f:
             mock_f.return_value = tmp_path / "records.jsonl"

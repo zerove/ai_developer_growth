@@ -1,4 +1,5 @@
 """Tests for validate_rule_tests.py (48% → target 85%)."""
+
 from __future__ import annotations
 
 import json
@@ -51,11 +52,7 @@ class TestLoadRulesWithTests:
     def test_rules_without_test_cases(self, tmp_path: Path) -> None:
         rules_dir = tmp_path / "languages" / "python" / "rules.d"
         rules_dir.mkdir(parents=True)
-        (rules_dir / "anti.yml").write_text(
-            "anti_patterns:\n"
-            "  - id: py-no-test\n"
-            "    pattern: 'bad'\n"
-        )
+        (rules_dir / "anti.yml").write_text("anti_patterns:\n  - id: py-no-test\n    pattern: 'bad'\n")
         with patch("tools.scripts.validate_rule_tests._rules_dir") as mock_dir:
             mock_dir.return_value = tmp_path
             result = _load_rules_with_tests("python")

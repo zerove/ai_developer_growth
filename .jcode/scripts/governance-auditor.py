@@ -291,8 +291,11 @@ def ai_quality_gate() -> bool:
         print(f"⚠️  未找到 {script}")
         return True  # 非阻断
     cmd = [
-        sys.executable, str(script),
-        "--check-annotation", "--check-security", "--check-patterns",
+        sys.executable,
+        str(script),
+        "--check-annotation",
+        "--check-security",
+        "--check-patterns",
     ]
     result = subprocess.run(cmd, capture_output=True, text=True, cwd=root)
     passed = result.returncode == 0

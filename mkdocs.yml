@@ -29,6 +29,14 @@ theme:
 
 plugins:
   - search
+  - mkdocstrings:
+      handlers:
+        python:
+          options:
+            show_source: true
+            show_root_heading: true
+            members_order: source
+            docstring_style: google
 
 markdown_extensions:
   - pymdownx.highlight:
@@ -65,6 +73,9 @@ nav:
   - Tools:
     - IDE Best Practices: tools/ide-best-practices.md
     - Tool Matrix: tools/ai-tool-matrix.md
+  - API Reference:
+    - Rules Engine: api/rules-engine.md
+    - CLI: api/cli.md
   - Meta:
     - MOC: MOC.md
     - Capability Levels: capability-levels.md

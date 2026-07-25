@@ -21,7 +21,7 @@ class ContributorDashboard:
         """分析案例研究统计"""
         cases_dir = self.repo_root / "case-studies"
         if not cases_dir.exists():
-            return {"total": 0, "by_type": {}, "by_tool": {}, "avg_boost": 0}
+            return {"total": 0, "by_type": {}, "by_tool": {}, "avg_boost": 0, "max_boost": 0}
 
         total = 0
         by_type: Counter[str] = Counter()

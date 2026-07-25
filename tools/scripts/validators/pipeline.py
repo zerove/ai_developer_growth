@@ -70,8 +70,14 @@ def check_anti_patterns(lines: list[str], rules: dict[str, Any], filepath: str) 
     """Check code lines against regex anti-patterns."""
     issues: list[Issue] = []
     anti_patterns = rules.get("anti_patterns", [])
+    filename = Path(filepath).name
 
     for pattern_def in anti_patterns:
+        # Skip rule if file is in exclude_files list
+        exclude_files = pattern_def.get("exclude_files", [])
+        if exclude_files and any(filename == ef or Path(filepath).match(ef) for ef in exclude_files):
+            continue
+
         regex = re.compile(pattern_def["pattern"])
 
         for line_num, line in enumerate(lines, 1):

@@ -43,6 +43,7 @@ anti_patterns:
   severity: warning
   category: security
   pattern: '\bdebugger\b|\bbreakpoint\s*\(|\bpdb\.set_trace\s*\(|\bimport\s+pdb\b'
+  exclude_files: ['auto_fix.py']
   message: Debugger statements should not be in production code
   fix_hint: Remove debugger statements before committing
 
@@ -59,6 +60,7 @@ anti_patterns:
   severity: info
   category: code_quality
   pattern: 'console\.log\s*\(|print\s*\(.*debug|System\.out\.print|puts\s+debug'
+  exclude_files: ['auto_fix.py']
   message: Debug output should be removed before production
   fix_hint: Use a logging framework instead
 

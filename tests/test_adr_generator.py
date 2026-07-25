@@ -23,23 +23,27 @@ main = adr_generator.main
 class TestGenerateFromLLM(unittest.TestCase):
     """Test LLM-based ADR generation."""
 
-    @patch.object(adr_generator, "LLMClient")
-    def test_generate_from_llm_returns_string(self, mock_llm_class):
+    @patch.object(adr_generator, "_get_llm_client")
+    def test_generate_from_llm_returns_string(self, mock_get_llm):
         """Test that generate_from_llm returns a string."""
+        mock_llm_class = MagicMock()
         mock_llm = MagicMock()
         mock_llm.generate.return_value = "## Context\nTest context"
         mock_llm_class.return_value = mock_llm
+        mock_get_llm.return_value = mock_llm_class
 
         result = generate_from_llm("Test Title", "Test brief")
         self.assertIsInstance(result, str)
         self.assertIn("Context", result)
 
-    @patch.object(adr_generator, "LLMClient")
-    def test_generate_from_llm_handles_empty_response(self, mock_llm_class):
+    @patch.object(adr_generator, "_get_llm_client")
+    def test_generate_from_llm_handles_empty_response(self, mock_get_llm):
         """Test that generate_from_llm handles empty LLM response."""
+        mock_llm_class = MagicMock()
         mock_llm = MagicMock()
         mock_llm.generate.return_value = ""
         mock_llm_class.return_value = mock_llm
+        mock_get_llm.return_value = mock_llm_class
 
         result = generate_from_llm("Test Title", "Test brief")
         self.assertEqual(result, "")

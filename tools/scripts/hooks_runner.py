@@ -28,10 +28,6 @@ import sys
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
 
-# 兼容 python -m 和 python <path> 两种运行方式
-if __package__ is None or __package__ == "":
-    sys.path.insert(0, str(Path(__file__).resolve().parent.parent.parent))
-
 from tools.scripts.hooks.basic_checks import (
     run_format_check,
     run_lint,

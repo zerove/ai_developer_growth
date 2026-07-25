@@ -8,16 +8,20 @@ Modes:
 """
 
 import os
-import sys
 from datetime import datetime
 from pathlib import Path
+from typing import Any
 
-_script_dir = Path(__file__).resolve().parent
-_ai_ctx_sync = _script_dir.parent.parent / "examples" / "ai-context-sync"
-if str(_ai_ctx_sync) not in sys.path:
-    sys.path.insert(0, str(_ai_ctx_sync))
 
-from src.llm_client import LLMClient  # noqa: E402
+def _get_llm_client() -> Any:
+    """Lazy import of LLMClient from examples/ai-context-sync."""
+    _script_dir = Path(__file__).resolve().parent
+    _ai_ctx_sync = _script_dir.parent.parent / "examples" / "ai-context-sync"
+    import sys
+    if str(_ai_ctx_sync) not in sys.path:
+        sys.path.insert(0, str(_ai_ctx_sync))
+    from src.llm_client import LLMClient  # noqa: E402
+    return LLMClient
 
 SYSTEM_PROMPT = (
     "You are a senior software architect. Generate a structured ADR document. "
@@ -28,7 +32,8 @@ SYSTEM_PROMPT = (
 
 
 def generate_from_llm(title: str, brief: str) -> str:
-    llm = LLMClient(provider=os.getenv("LLM_PROVIDER", "openai"), model=os.getenv("LLM_MODEL", "gpt-4o"))
+    llm_cls = _get_llm_client()
+    llm = llm_cls(provider=os.getenv("LLM_PROVIDER", "openai"), model=os.getenv("LLM_MODEL", "gpt-4o"))
     prompt = (
         f"Generate an Architecture Decision Record for:\n"
         f"Title: {title}\n"

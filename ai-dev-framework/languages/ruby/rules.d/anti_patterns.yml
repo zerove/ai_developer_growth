@@ -1,91 +1,122 @@
 # Ruby Language Rules - Machine-Readable Configuration
 
 language: ruby
-version: '>=3.0'
+version: '>=3.1'
 config_version: '1.0'
 anti_patterns:
-- id: rb-rescue-nil
-  name: Inline rescue returning nil
-  severity: error
-  category: error_handling
-  pattern: rescue\s+nil\s*$
-  message: Inline rescue hides errors silently
-  fix_hint: Use proper begin-rescue blocks
-- id: rb-bare-rescue
-  name: Bare rescue
-  severity: error
-  category: error_handling
-  pattern: ^\s*rescue\s*$
-  message: Bare rescue catches StandardError - be specific
-  fix_hint: 'Rescue specific exceptions: rescue ArgumentError'
-- id: rb-return-nil
-  name: Returning nil
-  severity: warning
-  category: error_handling
-  pattern: return\s+nil\s*$
-  message: Returning nil causes NoMethodError downstream
-  fix_hint: Return empty collection or raise
-- id: rb-eval
+- id: ruby-eval
   name: eval() usage
   severity: error
   category: security
-  pattern: \beval\s*\(|\binstance_eval\s*\(|\bclass_eval\s*\(
-  message: eval is a security risk
-  fix_hint: Find a safer alternative
-- id: rb-send
-  name: send() for dynamic dispatch
-  severity: warning
-  category: security
-  pattern: \.send\s*\(
-  message: send() can execute arbitrary methods
-  fix_hint: Use explicit method calls or public_send
-- id: rb-system-exec
-  name: system() or exec()
+  pattern: '\beval\s*\(|\binstance_eval\s*\(|\bclass_eval\s*\('
+  message: 'eval() is a security risk'
+  fix_hint: 'Use send() or public_send() for dynamic dispatch'
+- id: ruby-send
+  name: send() with user input
   severity: error
   category: security
-  pattern: \bsystem\s*\(|\bexec\s*\(|\b`
-  message: Shell commands can be exploited
-  fix_hint: Validate inputs and use Open3 for safer execution
-- id: rb-puts
-  name: puts/print for logging
+  pattern: '\.send\s*\('
+  message: 'send() can call any method - use public_send() for safer dispatch'
+  fix_hint: 'Use public_send() which only calls public methods'
+- id: ruby-sql-injection
+  name: SQL injection via string interpolation
+  severity: error
+  category: security
+  pattern: "(?:execute|find_by_sql|where)\\s*\\(.*(?:#{|\\.format|%\\()"
+  message: 'String interpolation in SQL enables injection'
+  fix_hint: 'Use parameterized queries: where("name = ?", name)'
+- id: ruby-puts
+  name: puts/print in production
   severity: info
   category: code_quality
-  pattern: ^\s*(puts|print|p\s+)\s+
-  message: Use logging gem instead of puts
-  fix_hint: Use Rails.logger or a logging gem
-- id: rb-attr-accessor
-  name: attr_accessor for read-only
+  pattern: '\b(puts|print|p\s+\w+|pp\s+\w+)\s*\('
+  message: 'Use proper logging instead of puts/print'
+  fix_hint: 'Use Rails.logger or a logging gem'
+- id: ruby-rescue-all
+  name: Rescue all exceptions
+  severity: error
+  category: error_handling
+  pattern: 'rescue\s*=>|rescue\s+Exception\b'
+  message: 'Rescuing all exceptions hides specific errors'
+  fix_hint: 'Rescue specific exceptions: rescue ActiveRecord::RecordNotFound'
+- id: ruby-empty-rescue
+  name: Empty rescue block
+  severity: error
+  category: error_handling
+  pattern: 'rescue[^:]*:\s*$'
+  message: 'Empty rescue blocks silently swallow errors'
+  fix_hint: 'Log the error or re-raise it'
+- id: ruby-freeze-string
+  name: Mutable string literal
+  severity: warning
+  category: performance
+  pattern: '("[^"]*"|\'[^\']*\')(?!\.freeze)'
+  message: 'String literals are mutable in Ruby < 3.0'
+  fix_hint: 'Add .freeze or use # frozen_string_literal: true'
+- id: ruby-global-var
+  name: Global variable usage
+  severity: warning
+  category: code_quality
+  pattern: '\$\w+\s*='
+  message: 'Global variables make code hard to test'
+  fix_hint: 'Use constants, class variables, or dependency injection'
+- id: ruby-magic-number
+  name: Magic number
   severity: info
   category: code_quality
-  pattern: attr_accessor\s+
-  message: Use attr_reader if the setter is not needed
-  fix_hint: Prefer attr_reader or attr_writer over attr_accessor
+  pattern: '(?:if|while|unless)\s+.*(?:==?|>=?|<=?)\s*\d{2,}'
+  message: 'Magic numbers should be named constants'
+  fix_hint: 'Define MAX_RETRIES = 3'
+- id: ruby-nested-tenary
+  name: Nested ternary (inline if)
+  severity: warning
+  category: code_quality
+  pattern: '\?\s*\S+\s*:\s*\S+\s*\?'
+  message: 'Nested ternaries are hard to read'
+  fix_hint: 'Use if/else or case/when for complex logic'
+- id: ruby-no-frozen-literal
+  name: Missing frozen string literal comment
+  severity: info
+  category: performance
+  pattern: '^(?!# frozen_string_literal)'
+  message: 'Add # frozen_string_literal: true for performance'
+  fix_hint: '# frozen_string_literal: true at top of file'
+- id: ruby-rails-sql-injection
+  name: Rails SQL injection via where
+  severity: error
+  category: security
+  pattern: "\\.where\\s*\\(\\s*\"[^\"]*#\\{"
+  message: 'String interpolation in where() enables SQL injection'
+  fix_hint: 'Use where("column = ?", value) or Arel queries'
+
 naming:
   file:
-    pattern: ^[a-z][a-z0-9_]*\.rb$
-    message: Ruby files should use snake_case
+    pattern: '^[a-z][a-z0-9_]*\.rb$'
+    message: 'Ruby files should use snake_case'
   function:
-    pattern: ^[a-z][a-z0-9_]*[!?]?$
-    message: Ruby methods should use snake_case
+    pattern: '^[a-z][a-z0-9_]*$'
+    message: 'Methods should use snake_case'
   class:
-    pattern: ^[A-Z][a-zA-Z0-9]*$
-    message: Ruby classes should use PascalCase
+    pattern: '^[A-Z][a-zA-Z0-9]*$'
+    message: 'Classes should use PascalCase'
   constant:
-    pattern: ^[A-Z][A-Z0-9_]*$
-    message: Ruby constants should use UPPER_SNAKE_CASE
-  module:
-    pattern: ^[A-Z][a-zA-Z0-9]*$
-    message: Ruby modules should use PascalCase
+    pattern: '^[A-Z][A-Z0-9_]*$'
+    message: 'Constants should use UPPER_SNAKE_CASE'
+
 thresholds:
   max_function_length: 50
   max_file_length: 500
   max_line_length: 120
   max_nesting_depth: 4
   max_function_params: 5
+  max_cyclomatic_complexity: 10
+
 tooling:
   linter: rubocop
   formatter: rubocop
+  type_checker: steep
   test_runner: rspec
   config_files:
-  - .rubocop.yml
-  - Gemfile
+    - Gemfile
+    - .rubocop.yml
+    - .rspec

@@ -1,5 +1,4 @@
 # React Framework Anti-Pattern Rules - Machine-Readable Configuration
-# Used by validate_language_rules.py for automated code validation
 
 framework: react
 language: typescript
@@ -61,3 +60,74 @@ anti_patterns:
   pattern: 'componentDidCatch|static getDerivedStateFromError|ErrorBoundary'
   message: 'No error boundary detected - errors will crash the entire app'
   fix_hint: 'Wrap risky components in an ErrorBoundary component'
+- id: react-dangerously-set-html
+  name: dangerouslySetInnerHTML usage
+  severity: error
+  category: security
+  pattern: 'dangerouslySetInnerHTML'
+  message: 'dangerouslySetInnerHTML enables XSS if content is not sanitized'
+  fix_hint: 'Sanitize HTML with DOMPurify before rendering'
+- id: react-memory-leak
+  name: Missing cleanup in useEffect
+  severity: warning
+  category: correctness
+  pattern: 'useEffect\s*\(\s*async|useEffect\s*\(\s*\(\s*\)\s*=>\s*\{\s*\n\s*(?:fetch|axios|setInterval|addEventListener)'
+  message: 'Side effects without cleanup cause memory leaks'
+  fix_hint: 'Return a cleanup function from useEffect: return () => { cleanup() }'
+- id: react-unnecessary-render
+  name: Component re-renders on every parent render
+  severity: warning
+  category: performance
+  pattern: 'export\s+default\s+function\s+\w+.*\{'
+  message: 'Components without memo re-render on every parent render'
+  fix_hint: 'Wrap expensive components with React.memo() or useMemo'
+- id: react-usestate-object
+  name: Multiple useState for related state
+  severity: info
+  category: code_quality
+  pattern: 'const\s*\[\w+,\s*set\w+\]\s*=\s*useState.*\n.*const\s*\[\w+,\s*set\w+\]\s*=\s*useState'
+  message: 'Multiple related useState calls should be combined with useReducer'
+  fix_hint: 'Use useReducer for complex state logic or combine related state'
+- id: react-missing-key-index
+  name: Using array index as key
+  severity: warning
+  category: performance
+  pattern: '\.map\s*\([^)]*=>\s*<[^>]*\s+key=\{(?:index|i|idx)\}'
+  message: 'Array index as key causes issues with reordering, insertion, deletion'
+  fix_hint: 'Use stable, unique IDs: key={item.id} or key={item.uuid}'
+
+naming:
+  file:
+    pattern: '^[A-Z][a-zA-Z0-9]*\.(tsx|jsx)$'
+    message: 'React component files should use PascalCase'
+  function:
+    pattern: '^[a-z][a-zA-Z0-9]*$'
+    message: 'Functions should use camelCase'
+  component:
+    pattern: '^[A-Z][a-zA-Z0-9]*$'
+    message: 'Components should use PascalCase'
+  constant:
+    pattern: '^[A-Z][A-Z0-9_]*$'
+    message: 'Constants should use UPPER_SNAKE_CASE'
+  hook:
+    pattern: '^use[A-Z][a-zA-Z0-9]*$'
+    message: 'Custom hooks must start with "use"'
+
+thresholds:
+  max_function_length: 50
+  max_file_length: 300
+  max_line_length: 100
+  max_nesting_depth: 4
+  max_function_params: 5
+  max_cyclomatic_complexity: 10
+
+tooling:
+  linter: eslint
+  formatter: prettier
+  type_checker: tsc
+  test_runner: vitest
+  config_files:
+    - .eslintrc.json
+    - tsconfig.json
+    - vite.config.ts
+    - .prettierrc

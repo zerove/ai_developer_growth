@@ -1,5 +1,4 @@
 # Spring Framework Anti-Pattern Rules - Machine-Readable Configuration
-# Used by validate_language_rules.py for automated code validation
 
 framework: spring
 language: java
@@ -61,3 +60,56 @@ anti_patterns:
   pattern: 'FetchType\.LAZY|@ManyToOne|@OneToMany'
   message: 'Lazy-loaded collections throw LazyInitializationException outside session'
   fix_hint: 'Use JOIN FETCH, @EntityGraph, or open-in-view within transaction boundaries'
+- id: spring-missing-validation
+  name: Missing Bean Validation annotations
+  severity: warning
+  category: security
+  pattern: 'private\s+\w+\s+\w+;'
+  message: 'DTO fields should have validation annotations (@NotNull, @Size, etc.)'
+  fix_hint: '@NotNull @Size(min=1, max=100) private String name;'
+- id: spring-sys-out
+  name: System.out.println in production code
+  severity: warning
+  category: code_quality
+  pattern: 'System\.out\.print|System\.err\.print|e\.printStackTrace\(\)'
+  message: 'Use SLF4J/Log4j logger instead of System.out'
+  fix_hint: 'private static final Logger log = LoggerFactory.getLogger(MyClass.class);'
+- id: spring-magic-number
+  name: Magic number in code
+  severity: info
+  category: code_quality
+  pattern: '(?:if|while|for)\s*\(\s*\w+\s*[><=]+\s*\d{2,}'
+  message: 'Magic numbers should be named constants'
+  fix_hint: 'Extract to named constant: private static final int MAX = 100;'
+
+naming:
+  file:
+    pattern: '^[A-Z][a-zA-Z0-9]*\.java$'
+    message: 'Java files should use PascalCase'
+  function:
+    pattern: '^[a-z][a-zA-Z0-9]*$'
+    message: 'Methods should use camelCase'
+  class:
+    pattern: '^[A-Z][a-zA-Z0-9]*$'
+    message: 'Classes should use PascalCase'
+  constant:
+    pattern: '^[A-Z][A-Z0-9_]*$'
+    message: 'Constants should use UPPER_SNAKE_CASE'
+
+thresholds:
+  max_function_length: 40
+  max_file_length: 500
+  max_line_length: 120
+  max_nesting_depth: 4
+  max_function_params: 5
+  max_cyclomatic_complexity: 10
+
+tooling:
+  linter: checkstyle
+  formatter: google-java-format
+  type_checker: null
+  test_runner: junit
+  config_files:
+    - pom.xml
+    - build.gradle
+    - checkstyle.xml

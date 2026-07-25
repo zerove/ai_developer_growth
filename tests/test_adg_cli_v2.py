@@ -33,22 +33,22 @@ from tools.scripts.adg_cli import (
 
 class TestGetRulesPath:
     def test_error_when_no_rules_found(self, tmp_path: Path) -> None:
-        with patch("tools.scripts.adg_cli._RULES_PATH", tmp_path / "nope"), \
-             patch("tools.scripts.adg_cli._ADG_SOURCE", tmp_path / "nope2"):
+        with patch("tools.scripts.adg_cli.core._RULES_PATH", tmp_path / "nope"), \
+             patch("tools.scripts.adg_cli.core._ADG_SOURCE", tmp_path / "nope2"):
             with pytest.raises(SystemExit):
                 _get_rules_path()
 
     def test_returns_config_path(self, tmp_path: Path) -> None:
         rules = tmp_path / "rules"
         (rules / "languages").mkdir(parents=True)
-        with patch("tools.scripts.adg_cli._RULES_PATH", rules):
+        with patch("tools.scripts.adg_cli.core._RULES_PATH", rules):
             assert _get_rules_path() == rules
 
     def test_returns_source_path(self, tmp_path: Path) -> None:
         source = tmp_path / "source"
         source.mkdir()
-        with patch("tools.scripts.adg_cli._RULES_PATH", tmp_path / "nope"), \
-             patch("tools.scripts.adg_cli._ADG_SOURCE", source):
+        with patch("tools.scripts.adg_cli.core._RULES_PATH", tmp_path / "nope"), \
+             patch("tools.scripts.adg_cli.core._ADG_SOURCE", source):
             assert _get_rules_path() == source
 
 
@@ -464,7 +464,7 @@ class TestCmdCheck:
         f = tmp_path / "bad.py"
         f.write_text("try:\n    pass\nexcept:\n    pass\n")
         args = argparse.Namespace(path=str(f), lang="python", severity=None, json=False)
-        with patch("tools.scripts.adg_cli.load_rules_for_language") as mock:
+        with patch("tools.scripts.adg_cli.rules.load_rules_for_language") as mock:
             mock.return_value = load_rules_for_language("python")
             result = cmd_check(args)
         assert result == 1  # errors found
@@ -473,7 +473,7 @@ class TestCmdCheck:
         f = tmp_path / "good.py"
         f.write_text("x = 1\n")
         args = argparse.Namespace(path=str(f), lang="python", severity=None, json=False)
-        with patch("tools.scripts.adg_cli.load_rules_for_language") as mock:
+        with patch("tools.scripts.adg_cli.rules.load_rules_for_language") as mock:
             mock.return_value = {"anti_patterns": []}
             result = cmd_check(args)
         assert result == 0
@@ -481,7 +481,7 @@ class TestCmdCheck:
     def test_check_directory(self, tmp_path: Path) -> None:
         (tmp_path / "a.py").write_text("x = 1\n")
         args = argparse.Namespace(path=str(tmp_path), lang="python", severity=None, json=False)
-        with patch("tools.scripts.adg_cli.load_rules_for_language") as mock:
+        with patch("tools.scripts.adg_cli.rules.load_rules_for_language") as mock:
             mock.return_value = {"anti_patterns": []}
             result = cmd_check(args)
         assert result == 0
@@ -490,7 +490,7 @@ class TestCmdCheck:
         f = tmp_path / "test.py"
         f.write_text("x = 1\n")
         args = argparse.Namespace(path=str(f), lang="python", severity=None, json=True)
-        with patch("tools.scripts.adg_cli.load_rules_for_language") as mock:
+        with patch("tools.scripts.adg_cli.rules.load_rules_for_language") as mock:
             mock.return_value = {"anti_patterns": []}
             result = cmd_check(args)
         assert result == 0
@@ -507,9 +507,9 @@ class TestCmdCheck:
         f.write_text("x = 1\n")
         (tmp_path / "requirements.txt").write_text("Django==4.2\n")
         args = argparse.Namespace(path=str(f), lang="python", severity=None, json=False)
-        with patch("tools.scripts.adg_cli.load_rules_for_language") as mock_lang, \
-             patch("tools.scripts.adg_cli.load_framework_rules") as mock_fw, \
-             patch("tools.scripts.adg_cli.detect_language") as mock_det:
+        with patch("tools.scripts.adg_cli.rules.load_rules_for_language") as mock_lang, \
+             patch("tools.scripts.adg_cli.rules.load_framework_rules") as mock_fw, \
+             patch("tools.scripts.adg_cli.detect.detect_language") as mock_det:
             mock_lang.return_value = {"anti_patterns": []}
             mock_fw.return_value = {"anti_patterns": []}
             mock_det.return_value = {"language": "python", "framework": "django", "confidence": 0.9}
@@ -534,7 +534,7 @@ class TestCmdDetect:
 
     def test_detect_default_path(self, tmp_path: Path) -> None:
         args = argparse.Namespace(path=".", json=False)
-        with patch("tools.scripts.adg_cli.detect_language") as mock:
+        with patch("tools.scripts.adg_cli.detect.detect_language") as mock:
             mock.return_value = {"language": "python", "framework": None, "confidence": 0.9}
             result = cmd_detect(args)
         assert result == 0
@@ -600,7 +600,7 @@ class TestMainCLI:
         f = tmp_path / "test.py"
         f.write_text("x = 1\n")
         with patch("sys.argv", ["adg", "check", str(f), "--lang", "python"]):
-            with patch("tools.scripts.adg_cli.load_rules_for_language") as mock:
+            with patch("tools.scripts.adg_cli.rules.load_rules_for_language") as mock:
                 mock.return_value = {"anti_patterns": []}
                 result = main()
         assert result == 0
@@ -626,7 +626,7 @@ class TestMainCLI:
         f = tmp_path / "test.py"
         f.write_text("x = 1\n")
         with patch("sys.argv", ["adg", "check", str(f), "--lang", "python", "--json"]):
-            with patch("tools.scripts.adg_cli.load_rules_for_language") as mock:
+            with patch("tools.scripts.adg_cli.rules.load_rules_for_language") as mock:
                 mock.return_value = {"anti_patterns": []}
                 result = main()
         assert result == 0
@@ -641,7 +641,7 @@ class TestMainCLI:
         f = tmp_path / "test.py"
         f.write_text("try:\n    pass\nexcept:\n    pass\n")
         with patch("sys.argv", ["adg", "check", str(f), "--lang", "python", "--severity", "error"]):
-            with patch("tools.scripts.adg_cli.load_rules_for_language") as mock:
+            with patch("tools.scripts.adg_cli.rules.load_rules_for_language") as mock:
                 mock.return_value = load_rules_for_language("python")
                 result = main()
         assert result == 1
@@ -651,7 +651,7 @@ class TestMainCLI:
         f = tmp_path / "test.py"
         f.write_text("x = 1\n")
         with patch("sys.argv", ["adg", "report", str(f), "--lang", "python"]):
-            with patch("tools.scripts.adg_cli.load_rules_for_language") as mock:
+            with patch("tools.scripts.adg_cli.rules.load_rules_for_language") as mock:
                 mock.return_value = {"anti_patterns": []}
                 result = main()
         assert result == 0
@@ -661,7 +661,7 @@ class TestMainCLI:
         f = tmp_path / "test.py"
         f.write_text("try:\n    pass\nexcept:\n    pass\n")
         with patch("sys.argv", ["adg", "report", str(f), "--lang", "python"]):
-            with patch("tools.scripts.adg_cli.load_rules_for_language") as mock:
+            with patch("tools.scripts.adg_cli.rules.load_rules_for_language") as mock:
                 mock.return_value = load_rules_for_language("python")
                 result = main()
         assert result == 1
@@ -671,7 +671,7 @@ class TestMainCLI:
         f = tmp_path / "test.py"
         f.write_text("x = 1\n")
         with patch("sys.argv", ["adg", "report", str(f), "--lang", "python", "--json"]):
-            with patch("tools.scripts.adg_cli.load_rules_for_language") as mock:
+            with patch("tools.scripts.adg_cli.rules.load_rules_for_language") as mock:
                 mock.return_value = {"anti_patterns": []}
                 result = main()
         assert result == 0
@@ -681,7 +681,7 @@ class TestMainCLI:
         f = tmp_path / "test.py"
         f.write_text("try:\n    pass\nexcept:\n    pass\n")
         with patch("sys.argv", ["adg", "report", str(f), "--lang", "python", "--error-threshold", "10"]):
-            with patch("tools.scripts.adg_cli.load_rules_for_language") as mock:
+            with patch("tools.scripts.adg_cli.rules.load_rules_for_language") as mock:
                 mock.return_value = load_rules_for_language("python")
                 result = main()
         assert result == 0  # Should pass with high threshold
@@ -790,7 +790,7 @@ class TestMainCLI:
         skipped_file.write_text("try:\n    pass\nexcept:\n    pass\n")
         
         with patch("sys.argv", ["adg", "check", str(tmp_path), "--lang", "python"]):
-            with patch("tools.scripts.adg_cli.load_rules_for_language") as mock:
+            with patch("tools.scripts.adg_cli.rules.load_rules_for_language") as mock:
                 mock.return_value = load_rules_for_language("python")
                 result = main()
         # Only app.py should be checked, app.test.py should be skipped

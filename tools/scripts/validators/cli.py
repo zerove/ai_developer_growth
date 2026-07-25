@@ -207,6 +207,115 @@ Examples:
     return parser
 
 
+def _collect_results(
+    args: argparse.Namespace,
+    language: str | None,
+    custom_rules: dict[str, Any] | None,
+) -> list[ValidationResult]:
+    """Collect validation results based on CLI arguments."""
+    results: list[ValidationResult] = []
+
+    if args.changed_files:
+        for fp in args.changed_files:
+            if not fp.exists():
+                continue
+            lang = language or detect_language_from_file(fp)
+            if lang:
+                results.append(validate_file(fp, lang, custom_rules=custom_rules))
+    elif args.path.is_file():
+        if language is None:
+            language = detect_language_from_file(args.path)
+        if language is None:
+            print(f"Error: Cannot detect language for {args.path}. Use --lang.", file=sys.stderr)
+            return []
+
+        # Incremental: skip unchanged files
+        if args.incremental:
+            fh = _file_hash(args.path)
+            cache_file = args.path.parent / ".rule-cache"
+            cache = _load_cache(cache_file)
+            if cache.get(str(args.path)) == fh:
+                return []  # File unchanged
+            cache[str(args.path)] = fh
+            _save_cache(cache_file, cache)
+
+        results = [validate_file(args.path, language, custom_rules=custom_rules)]
+    else:
+        if language is None and not args.auto_detect:
+            print("Error: Use --lang or --auto-detect for directories.", file=sys.stderr)
+            return []
+
+        # Incremental: skip unchanged files in directory
+        if args.incremental:
+            cache_file = args.path / ".rule-cache"
+            cache = _load_cache(cache_file)
+            all_files = _get_supported_files(args.path, args.exclude)
+            changed = [f for f in all_files if _file_hash(f) != cache.get(str(f))]
+            for f in all_files:
+                cache[str(f)] = _file_hash(f)
+            _save_cache(cache_file, cache)
+            for fp in changed:
+                lang = language or detect_language_from_file(fp)
+                if lang:
+                    results.append(validate_file(fp, lang, custom_rules=custom_rules))
+            if not results:
+                print("No changed files detected (incremental mode).")
+        else:
+            results = validate_directory(args.path, language, args.exclude, custom_rules=custom_rules)
+
+    return results
+
+
+def _apply_auto_fix(
+    results: list[ValidationResult], dry_run: bool
+) -> int:
+    """Apply auto-fixes. Returns 0 on success, 1 if dry-run with no results."""
+    from tools.scripts.fix_applier import apply_fixes
+
+    all_fixes: list[FixResult] = []
+    for result in results:
+        fp = Path(result.file)
+        fixes = apply_fixes(fp, result.issues, dry_run=dry_run)
+        all_fixes.extend(fixes)
+
+    if all_fixes:
+        action = "Would fix" if dry_run else "Fixed"
+        print(f"\n{action} {len(all_fixes)} issue(s):")
+        for fix in all_fixes:
+            print(f"  {fix.file}:{fix.line} [{fix.rule_id}]")
+            print(f"    - {fix.original}")
+            print(f"    + {fix.fixed}")
+
+    if dry_run and not results:
+        return -1  # Signal: return early
+    return 0
+
+
+def _check_thresholds(
+    results: list[ValidationResult],
+    max_errors: int | None,
+    max_warnings: int | None,
+    fail_on_warnings: bool,
+) -> int | None:
+    """Check threshold constraints. Returns 1 for failure, None for pass."""
+    if max_errors is not None:
+        total_errors = sum(r.error_count for r in results)
+        if total_errors > max_errors:
+            print(f"\nFAILED: {total_errors} errors exceeds max-errors={max_errors}")
+            return 1
+
+    if max_warnings is not None:
+        total_warnings = sum(r.warning_count for r in results)
+        if total_warnings > max_warnings:
+            print(f"\nFAILED: {total_warnings} warnings exceeds max-warnings={max_warnings}")
+            return 1
+
+    if fail_on_warnings and any(r.warning_count > 0 for r in results):
+        return 1
+
+    return None
+
+
 def main() -> int:
     """Main entry point for validate_language_rules CLI."""
     from tools.scripts.report_generator import write_report
@@ -230,76 +339,12 @@ def main() -> int:
         project_dir = args.path if args.path.is_dir() else args.path.parent
         custom_rules = load_custom_rules(project_dir)
 
-    if args.changed_files:
-        results = []
-        for fp in args.changed_files:
-            if not fp.exists():
-                continue
-            lang = language or detect_language_from_file(fp)
-            if lang:
-                results.append(validate_file(fp, lang, custom_rules=custom_rules))
-    elif args.path.is_file():
-        if language is None:
-            language = detect_language_from_file(args.path)
-        if language is None:
-            print(f"Error: Cannot detect language for {args.path}. Use --lang.", file=sys.stderr)
-            return 1
-
-        # Incremental: skip unchanged files
-        if args.incremental:
-            fh = _file_hash(args.path)
-            cache_file = args.path.parent / ".rule-cache"
-            cache = _load_cache(cache_file)
-            if cache.get(str(args.path)) == fh:
-                return 0  # File unchanged
-            cache[str(args.path)] = fh
-            _save_cache(cache_file, cache)
-
-        results = [validate_file(args.path, language, custom_rules=custom_rules)]
-    else:
-        if language is None and not args.auto_detect:
-            print("Error: Use --lang or --auto-detect for directories.", file=sys.stderr)
-            return 1
-
-        # Incremental: skip unchanged files in directory
-        if args.incremental:
-            cache_file = args.path / ".rule-cache"
-            cache = _load_cache(cache_file)
-            all_files = _get_supported_files(args.path, args.exclude)
-            changed = [f for f in all_files if _file_hash(f) != cache.get(str(f))]
-            for f in all_files:
-                cache[str(f)] = _file_hash(f)
-            _save_cache(cache_file, cache)
-            results = []
-            for fp in changed:
-                lang = language or detect_language_from_file(fp)
-                if lang:
-                    results.append(validate_file(fp, lang, custom_rules=custom_rules))
-            if not results:
-                print("No changed files detected (incremental mode).")
-                return 0
-        else:
-            results = validate_directory(args.path, language, args.exclude, custom_rules=custom_rules)
+    results = _collect_results(args, language, custom_rules)
 
     # Auto-fix
     if args.fix or args.dry_run:
-        from tools.scripts.fix_applier import apply_fixes
-
-        all_fixes: list[FixResult] = []
-        for result in results:
-            fp = Path(result.file)
-            fixes = apply_fixes(fp, result.issues, dry_run=args.dry_run)
-            all_fixes.extend(fixes)
-
-        if all_fixes:
-            action = "Would fix" if args.dry_run else "Fixed"
-            print(f"\n{action} {len(all_fixes)} issue(s):")
-            for fix in all_fixes:
-                print(f"  {fix.file}:{fix.line} [{fix.rule_id}]")
-                print(f"    - {fix.original}")
-                print(f"    + {fix.fixed}")
-
-        if args.dry_run and not results:
+        fix_result = _apply_auto_fix(results, dry_run=args.dry_run)
+        if fix_result == -1:
             return 0
 
     # Health score
@@ -329,26 +374,12 @@ def main() -> int:
             print(content)
     else:
         exit_code = print_results(results, use_json=False)
-
-        # Check thresholds
-        if args.max_errors is not None:
-            total_errors = sum(r.error_count for r in results)
-            if total_errors > args.max_errors:
-                print(f"\nFAILED: {total_errors} errors exceeds max-errors={args.max_errors}")
-                return 1
-
-        if args.max_warnings is not None:
-            total_warnings = sum(r.warning_count for r in results)
-            if total_warnings > args.max_warnings:
-                print(f"\nFAILED: {total_warnings} warnings exceeds max-warnings={args.max_warnings}")
-                return 1
-
-        if args.fail_on_warnings and any(r.warning_count > 0 for r in results):
-            return 1
-
+        threshold_fail = _check_thresholds(results, args.max_errors, args.max_warnings, args.fail_on_warnings)
+        if threshold_fail is not None:
+            return threshold_fail
         return exit_code
 
-    # For non-text formats, still check thresholds
+    # For non-text formats, check thresholds (no print needed)
     if args.max_errors is not None:
         total_errors = sum(r.error_count for r in results)
         if total_errors > args.max_errors:

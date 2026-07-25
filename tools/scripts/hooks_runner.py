@@ -78,6 +78,7 @@ Examples:
     lr_parser.add_argument("--path", type=Path, default=Path("."), help="Path to validate")
     lr_parser.add_argument("--lang", help="Language (auto-detect if not specified)")
     lr_parser.add_argument("--jobs", "-j", type=int, default=1, help="Parallel workers (default: 1)")
+    lr_parser.add_argument("--fix", action="store_true", help="Apply auto-fixes to fixable issues")
 
     qg_parser = subparsers.add_parser("quality-gate", help="Run AI Quality Gate checks")
     qg_parser.add_argument("--path", type=Path, default=Path("tools/scripts"), help="Path to check")
@@ -214,6 +215,12 @@ def _dispatch(args: argparse.Namespace) -> int:
         return _run_simple(_SIMPLE_COMMANDS[cmd])
 
     if cmd == "language-rules":
+        if getattr(args, "fix", False):
+            from tools.scripts.rules_engine.auto_fix import apply_fixes_to_directory, format_fix_results
+
+            fix_results = apply_fixes_to_directory(args.path, dry_run=False)
+            print(format_fix_results(fix_results))
+            return 0
         return _run_simple(run_language_rules(args.path, args.lang))
 
     if cmd == "quality-gate":

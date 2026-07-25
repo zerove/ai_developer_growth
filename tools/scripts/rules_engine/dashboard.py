@@ -24,7 +24,7 @@ from typing import Any
 
 def init_db(db_path: str = "adg_quality.db") -> sqlite3.Connection:
     """Initialize SQLite database for quality tracking."""
-    conn = sqlite3.connect(db_path)
+    conn = sqlite3.connect(db_path, check_same_thread=False)
     conn.execute("""
         CREATE TABLE IF NOT EXISTS quality_runs (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -49,7 +49,7 @@ def init_db(db_path: str = "adg_quality.db") -> sqlite3.Connection:
             info INTEGER,
             passed BOOLEAN,
             issues_json TEXT,
-            FOREIGN KEY (run_id) FROM quality_runs(id)
+            FOREIGN KEY (run_id) REFERENCES quality_runs(id)
         )
     """)
     conn.execute("""
@@ -59,7 +59,7 @@ def init_db(db_path: str = "adg_quality.db") -> sqlite3.Connection:
             rule_id TEXT,
             severity TEXT,
             count INTEGER,
-            FOREIGN KEY (run_id) FROM quality_runs(id)
+            FOREIGN KEY (run_id) REFERENCES quality_runs(id)
         )
     """)
     conn.commit()

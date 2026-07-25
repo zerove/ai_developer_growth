@@ -1890,6 +1890,83 @@ def cmd_list_rules(args: argparse.Namespace) -> int:
     return 0
 
 
+def _count_issues(all_issues: list[Issue]) -> tuple[dict[str, int], dict[str, int], list[tuple[str, int]]]:
+    """Count issues by severity, category, and file. Returns (severity_counts, category_counts, top_files)."""
+    severity_counts: dict[str, int] = {"error": 0, "warning": 0, "info": 0}
+    for issue in all_issues:
+        if issue.severity in severity_counts:
+            severity_counts[issue.severity] += 1
+
+    category_counts: dict[str, int] = {}
+    for issue in all_issues:
+        cat = issue.category or "unknown"
+        category_counts[cat] = category_counts.get(cat, 0) + 1
+
+    file_counts: dict[str, int] = {}
+    for issue in all_issues:
+        file_counts[issue.file] = file_counts.get(issue.file, 0) + 1
+
+    top_files = sorted(file_counts.items(), key=lambda x: x[1], reverse=True)[:10]
+    return severity_counts, category_counts, top_files
+
+
+def _print_report_text(
+    target: Path,
+    language: str,
+    framework: str | None,
+    files_checked: int,
+    severity_counts: dict[str, int],
+    category_counts: dict[str, int],
+    top_files: list[tuple[str, int]],
+    passed: bool,
+    error_threshold: int,
+    warning_threshold: int,
+) -> None:
+    """Print the human-readable quality gate report."""
+    green = "\033[0;32m"
+    red = "\033[0;31m"
+    yellow = "\033[0;33m"
+    cyan = "\033[0;36m"
+    bold = "\033[1m"
+    nc = "\033[0m"
+
+    print(f"\n{bold}{cyan}{'=' * 60}{nc}")
+    print(f"{bold}{cyan}  ADG Quality Gate Report{nc}")
+    print(f"{bold}{cyan}{'=' * 60}{nc}\n")
+
+    print(f"{bold}Project:{nc} {target}")
+    print(f"{bold}Language:{nc} {language}" + (f" + {framework}" if framework else ""))
+    print(f"{bold}Files Checked:{nc} {files_checked}")
+    print()
+
+    print(f"{bold}Issues by Severity:{nc}")
+    print(f"  {red}Errors:   {severity_counts['error']}{nc}")
+    print(f"  {yellow}Warnings: {severity_counts['warning']}{nc}")
+    print(f"  Info:     {severity_counts['info']}")
+    print()
+
+    if category_counts:
+        print(f"{bold}Issues by Category:{nc}")
+        for cat, count in sorted(category_counts.items(), key=lambda x: x[1], reverse=True):
+            print(f"  {cat}: {count}")
+        print()
+
+    if top_files:
+        print(f"{bold}Top Files by Issues:{nc}")
+        for filepath, count in top_files:
+            print(f"  {filepath}: {count}")
+        print()
+
+    if passed:
+        print(f"{green}{bold}✅ PASSED{nc} - Quality gate met")
+    else:
+        print(f"{red}{bold}❌ FAILED{nc} - Quality gate not met")
+        if severity_counts["error"] > error_threshold:
+            print(f"  Errors ({severity_counts['error']}) exceed threshold ({error_threshold})")
+        if warning_threshold >= 0 and severity_counts["warning"] > warning_threshold:
+            print(f"  Warnings ({severity_counts['warning']}) exceed threshold ({warning_threshold})")
+
+
 def cmd_report(args: argparse.Namespace) -> int:
     """Generate a quality gate report."""
     target = Path(args.path).resolve()
@@ -1926,29 +2003,11 @@ def cmd_report(args: argparse.Namespace) -> int:
                         all_issues.extend(check_file(fp, rules))
                         files_checked += 1
 
-    # Count by severity
-    severity_counts = {"error": 0, "warning": 0, "info": 0}
-    for issue in all_issues:
-        if issue.severity in severity_counts:
-            severity_counts[issue.severity] += 1
-
-    # Count by category
-    category_counts: dict[str, int] = {}
-    for issue in all_issues:
-        cat = issue.category or "unknown"
-        category_counts[cat] = category_counts.get(cat, 0) + 1
-
-    # Count by file
-    file_counts: dict[str, int] = {}
-    for issue in all_issues:
-        file_counts[issue.file] = file_counts.get(issue.file, 0) + 1
-
-    # Top files by issue count
-    top_files = sorted(file_counts.items(), key=lambda x: x[1], reverse=True)[:10]
+    severity_counts, category_counts, top_files = _count_issues(all_issues)
 
     # Determine pass/fail
     error_threshold = getattr(args, "error_threshold", 0)
-    warning_threshold = getattr(args, "warning_threshold", -1)  # -1 = no limit
+    warning_threshold = getattr(args, "warning_threshold", -1)
     passed = severity_counts["error"] <= error_threshold
     if warning_threshold >= 0:
         passed = passed and severity_counts["warning"] <= warning_threshold
@@ -1967,49 +2026,7 @@ def cmd_report(args: argparse.Namespace) -> int:
         }
         print(json.dumps(report, indent=2))
     else:
-        # Color
-        green = "\033[0;32m"
-        red = "\033[0;31m"
-        yellow = "\033[0;33m"
-        cyan = "\033[0;36m"
-        bold = "\033[1m"
-        nc = "\033[0m"
-
-        print(f"\n{bold}{cyan}{'=' * 60}{nc}")
-        print(f"{bold}{cyan}  ADG Quality Gate Report{nc}")
-        print(f"{bold}{cyan}{'=' * 60}{nc}\n")
-
-        print(f"{bold}Project:{nc} {target}")
-        print(f"{bold}Language:{nc} {language}" + (f" + {framework}" if framework else ""))
-        print(f"{bold}Files Checked:{nc} {files_checked}")
-        print()
-
-        print(f"{bold}Issues by Severity:{nc}")
-        print(f"  {red}Errors:   {severity_counts['error']}{nc}")
-        print(f"  {yellow}Warnings: {severity_counts['warning']}{nc}")
-        print(f"  Info:     {severity_counts['info']}")
-        print()
-
-        if category_counts:
-            print(f"{bold}Issues by Category:{nc}")
-            for cat, count in sorted(category_counts.items(), key=lambda x: x[1], reverse=True):
-                print(f"  {cat}: {count}")
-            print()
-
-        if top_files:
-            print(f"{bold}Top Files by Issues:{nc}")
-            for filepath, count in top_files:
-                print(f"  {filepath}: {count}")
-            print()
-
-        if passed:
-            print(f"{green}{bold}✅ PASSED{nc} - Quality gate met")
-        else:
-            print(f"{red}{bold}❌ FAILED{nc} - Quality gate not met")
-            if severity_counts["error"] > error_threshold:
-                print(f"  Errors ({severity_counts['error']}) exceed threshold ({error_threshold})")
-            if warning_threshold >= 0 and severity_counts["warning"] > warning_threshold:
-                print(f"  Warnings ({severity_counts['warning']}) exceed threshold ({warning_threshold})")
+        _print_report_text(target, language, framework, files_checked, severity_counts, category_counts, top_files, passed, error_threshold, warning_threshold)
 
     return 0 if passed else 1
 

@@ -215,6 +215,61 @@ def detect_language(filepath: Path) -> str | None:
     return mapping.get(ext)
 
 
+def _flag_only_fixes(
+    filepath: Path,
+    content: str,
+    rule_id: str,
+    pattern: str,
+    description: str,
+) -> list[FixResult]:
+    """Find flag-only issues that cannot be auto-fixed."""
+    results: list[FixResult] = []
+    for match in re.finditer(pattern, content, re.MULTILINE):
+        line_num = content[: match.start()].count("\n") + 1
+        results.append(
+            FixResult(
+                file=str(filepath),
+                rule_id=rule_id,
+                line=line_num,
+                original=match.group(),
+                fixed="[MANUAL FIX REQUIRED]",
+                description=description,
+            )
+        )
+    return results
+
+
+def _apply_replacement(
+    filepath: Path,
+    content: str,
+    original_content: str,
+    rule_id: str,
+    pattern: str,
+    replacement: str,
+    description: str,
+) -> tuple[str, list[FixResult]]:
+    """Apply regex replacement and return updated content + results."""
+    results: list[FixResult] = []
+    new_content, count = re.subn(pattern, replacement, content, flags=re.MULTILINE)
+    if count == 0:
+        return content, results
+
+    for match in re.finditer(pattern, original_content, re.MULTILINE):
+        line_num = original_content[: match.start()].count("\n") + 1
+        fixed_line = re.sub(pattern, replacement, match.group(), count=1)
+        results.append(
+            FixResult(
+                file=str(filepath),
+                rule_id=rule_id,
+                line=line_num,
+                original=match.group(),
+                fixed=fixed_line,
+                description=description,
+            )
+        )
+    return new_content, results
+
+
 def apply_fixes(
     filepath: Path,
     *,
@@ -245,50 +300,22 @@ def apply_fixes(
     original_content = content
     results: list[FixResult] = []
 
-    patterns = FIX_PATTERNS[lang]
-    for rule_id, fix_config in patterns.items():
+    for rule_id, fix_config in FIX_PATTERNS[lang].items():
         if fix_ids and rule_id not in fix_ids:
             continue
 
         pattern = fix_config["pattern"]
         replacement = fix_config.get("replacement")
+        description = fix_config["description"]
 
         if replacement is None:
-            # Flag-only fix (cannot auto-fix)
-            for match in re.finditer(pattern, content, re.MULTILINE):
-                line_num = content[: match.start()].count("\n") + 1
-                results.append(
-                    FixResult(
-                        file=str(filepath),
-                        rule_id=rule_id,
-                        line=line_num,
-                        original=match.group(),
-                        fixed="[MANUAL FIX REQUIRED]",
-                        description=fix_config["description"],
-                    )
-                )
-            continue
+            results.extend(_flag_only_fixes(filepath, content, rule_id, pattern, description))
+        else:
+            content, new_results = _apply_replacement(
+                filepath, content, original_content, rule_id, pattern, replacement, description
+            )
+            results.extend(new_results)
 
-        # Apply regex replacement
-        new_content, count = re.subn(pattern, replacement, content, flags=re.MULTILINE)
-        if count > 0:
-            # Find line numbers for each replacement
-            for match in re.finditer(pattern, original_content, re.MULTILINE):
-                line_num = original_content[: match.start()].count("\n") + 1
-                fixed_line = re.sub(pattern, replacement, match.group(), count=1)
-                results.append(
-                    FixResult(
-                        file=str(filepath),
-                        rule_id=rule_id,
-                        line=line_num,
-                        original=match.group(),
-                        fixed=fixed_line,
-                        description=fix_config["description"],
-                    )
-                )
-            content = new_content
-
-    # Write back if not dry run and changes were made
     if not dry_run and content != original_content:
         filepath.write_text(content, encoding="utf-8")
 

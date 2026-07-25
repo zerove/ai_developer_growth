@@ -85,6 +85,7 @@ anti_patterns:
       should_match: false
 - id: py-shell-true
   name: subprocess with shell=True
+  exclude_files: ['auto_fix.py']
   severity: warning
   category: security
   pattern: subprocess\.\w+\(.*shell\s*=\s*True

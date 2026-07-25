@@ -17,6 +17,7 @@ import json
 import sys
 from collections import Counter
 from pathlib import Path
+from typing import Any
 
 # Extension to language mapping
 EXTENSION_MAP: dict[str, str] = {
@@ -248,9 +249,9 @@ def detect_framework(dirpath: Path, language: str) -> str | None:
     return None
 
 
-def detect_language(dirpath: Path) -> dict[str, object]:
+def detect_language(dirpath: Path) -> dict[str, Any]:
     """Detect the primary language and framework of a project."""
-    result: dict[str, object] = {
+    result: dict[str, Any] = {
         "language": "unknown",
         "framework": None,
         "confidence": 0.0,
@@ -314,7 +315,7 @@ def main() -> int:
         print(f"Confidence: {result['confidence']}")
         if result["file_counts"]:
             print("File counts:")
-            for lang, count in result["file_counts"].items():  # type: ignore
+            for lang, count in result["file_counts"].items():
                 print(f"  {lang}: {count}")
 
     return 0

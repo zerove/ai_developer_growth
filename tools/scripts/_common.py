@@ -177,7 +177,8 @@ def load_yaml(filepath: Path) -> dict[str, Any] | None:
         import yaml
 
         with open(filepath) as f:
-            return yaml.safe_load(f)
+            result: dict[str, Any] | None = yaml.safe_load(f)
+            return result
     except Exception:
         return None
 

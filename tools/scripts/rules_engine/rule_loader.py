@@ -35,7 +35,8 @@ def _load_disk_cache() -> dict[str, Any]:
     """Load rules from disk cache."""
     if _DISK_CACHE_FILE.exists():
         try:
-            return json.loads(_DISK_CACHE_FILE.read_text())
+            result: dict[str, Any] = json.loads(_DISK_CACHE_FILE.read_text())
+            return result
         except (json.JSONDecodeError, OSError):
             pass
     return {}
@@ -72,7 +73,8 @@ def _load_cache(cache_file: Path) -> dict[str, str]:
     """Load file hash cache from disk."""
     if cache_file.exists():
         try:
-            return json.loads(cache_file.read_text())
+            result: dict[str, str] = json.loads(cache_file.read_text())
+            return result
         except (json.JSONDecodeError, OSError):
             pass
     return {}
@@ -98,7 +100,8 @@ def load_rules(language: str, framework_dir: Path | None = None) -> dict[str, An
     disk_cache = _load_disk_cache()
     if cache_key in disk_cache:
         _RULE_CACHE[cache_key] = disk_cache[cache_key]
-        return disk_cache[cache_key]
+        cached: dict[str, Any] = disk_cache[cache_key]
+        return cached
 
     try:
         import yaml

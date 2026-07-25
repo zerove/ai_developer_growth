@@ -140,7 +140,8 @@ class _FunctionPlugin(CheckerPlugin):
         lang: str,
         rules: dict[str, Any],
     ) -> list[Issue]:
-        return self._func(filepath, content, lines, lang, rules)
+        result: list[Issue] = self._func(filepath, content, lines, lang, rules)
+        return result
 
 
 def register_checker_decorator(

@@ -43,7 +43,8 @@ def update_context_with_llm(current_context: str, changes: str) -> str:
         response = client.chat.completions.create(
             model="gpt-4o", messages=[{"role": "user", "content": prompt}], temperature=0.3
         )
-        return response.choices[0].message.content.strip()
+        content: str = response.choices[0].message.content.strip()
+        return content
     except (APIError, APIConnectionError, RateLimitError, AttributeError) as e:
         print(f"LLM 调用失败: {e}")
         sys.exit(1)

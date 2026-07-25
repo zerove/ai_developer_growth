@@ -24,7 +24,8 @@ from typing import Any
 def load_tracking_data(filepath: str) -> dict[str, Any]:
     """加载追踪数据文件"""
     with open(filepath, encoding="utf-8") as f:
-        return json.load(f)
+        result: dict[str, Any] = json.load(f)
+        return result
 
 
 def analyze_searches(data: dict[str, Any], top_n: int = 10) -> dict[str, Any]:

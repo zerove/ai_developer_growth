@@ -58,7 +58,8 @@ def init_registry() -> None:
 def _load_registry() -> dict[str, Any]:
     if _registry_file().exists():
         with open(_registry_file()) as f:
-            return json.load(f)
+            result: dict[str, Any] = json.load(f)
+            return result
     return {"packs": {}, "version": "1.0"}
 
 

@@ -83,8 +83,8 @@ jobs:
           python-version: ${{ env.PYTHON_VERSION }}
           cache: pip
       - run: pip install mypy
-      - name: Mypy
-        run: mypy tools/scripts/ --ignore-missing-imports
+      - name: Mypy (strict)
+        run: mypy tools/scripts/ --ignore-missing-imports --strict
 
   # ──────────────────────────────────────────────────────
   # Tests
@@ -101,9 +101,9 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
           cache: pip
-      - run: pip install -r requirements.txt pytest pytest-cov
+      - run: pip install pytest pytest-cov pyyaml
       - name: Run tests with coverage
-        run: pytest tests/ -v --cov=tools.scripts.adg_cli --cov-report=xml --cov-report=term-missing --tb=short
+        run: pytest tests/ -v --cov=tools/scripts --cov-report=xml --cov-report=term-missing --tb=short
       - name: Coverage check
         if: matrix.python-version == '3.11'
         run: |
@@ -115,8 +115,8 @@ jobs:
           branch_coverage = float(root.attrib.get('branch-rate', 0)) * 100
           print(f'Line coverage: {coverage:.1f}%')
           print(f'Branch coverage: {branch_coverage:.1f}%')
-          if coverage < 85:
-              print(f'::error::Line coverage {coverage:.1f}% is below 85% threshold')
+          if coverage < 90:
+              print(f'::error::Line coverage {coverage:.1f}% is below 90% threshold')
               exit(1)
           "
       - name: Coverage Report

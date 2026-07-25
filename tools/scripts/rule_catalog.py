@@ -175,7 +175,8 @@ def get_pack_source(pack_id: str) -> Path | None:
     info = BUILTIN_PACKS.get(pack_id)
     if not info:
         return None
-    return framework_dir() / info["source"]
+    path: Path = framework_dir() / info["source"]
+    return path
 
 
 def install_pack(pack_id: str, project_dir: Path, dry_run: bool = False) -> list[Path]:

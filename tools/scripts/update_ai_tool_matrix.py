@@ -83,12 +83,14 @@ class ToolMatrixUpdater:
 
     def _load_config(self) -> dict[str, Any]:
         if CONFIG_PATH.exists():
-            return json.loads(CONFIG_PATH.read_text())
+            result: dict[str, Any] = json.loads(CONFIG_PATH.read_text())
+            return result
         return {}
 
     def _load_cache(self) -> dict[str, Any]:
         if CACHE_PATH.exists():
-            return json.loads(CACHE_PATH.read_text())
+            result: dict[str, Any] = json.loads(CACHE_PATH.read_text())
+            return result
         return {}
 
     def _save_cache(self) -> None:
@@ -213,7 +215,8 @@ class ToolMatrixUpdater:
             if cached and cached.get("checked_at"):
                 checked = datetime.fromisoformat(cached["checked_at"])
                 if datetime.now() - checked < timedelta(hours=24):
-                    return cached.get("latest_version")
+                    version: str | None = cached.get("latest_version")
+                    return version
 
             # Use gh CLI if available
             result = subprocess.run(
@@ -242,7 +245,8 @@ class ToolMatrixUpdater:
             if cached and cached.get("checked_at"):
                 checked = datetime.fromisoformat(cached["checked_at"])
                 if datetime.now() - checked < timedelta(hours=24):
-                    return cached.get("latest_version")
+                    version: str | None = cached.get("latest_version")
+                    return version
 
             result = subprocess.run(
                 ["pip", "index", "versions", package_name], capture_output=True, text=True, timeout=30

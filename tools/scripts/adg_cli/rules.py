@@ -7,6 +7,7 @@ from typing import Any
 from tools.scripts.adg_cli.detect import detect_language, _simple_yaml_parse, _load_yaml
 from tools.scripts.adg_cli.core import _get_rules_path, _ADG_HOME, _ADG_SOURCE
 
+
 def load_rules_for_language(language: str) -> dict[str, Any]:
     """Load anti-pattern rules for a specific language."""
     rules_path = _get_rules_path()

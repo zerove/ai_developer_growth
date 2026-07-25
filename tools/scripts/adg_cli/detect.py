@@ -9,28 +9,56 @@ from pathlib import Path
 from typing import Any
 
 from tools.scripts.adg_cli.core import (
-    _ADG_HOME, _ADG_SOURCE, _get_rules_path,
-    SKIP_DIRS, MAX_FILES,
+    _ADG_HOME,
+    _ADG_SOURCE,
+    _get_rules_path,
+    SKIP_DIRS,
+    MAX_FILES,
 )
 
 # ── Language Detection Constants ──
 
 EXTENSION_MAP: dict[str, str] = {
-    ".py": "python", ".pyi": "python",
-    ".ts": "typescript", ".tsx": "typescript",
-    ".js": "javascript", ".jsx": "javascript", ".mjs": "javascript",
-    ".rs": "rust", ".go": "go", ".java": "java",
-    ".kt": "kotlin", ".kts": "kotlin", ".cs": "csharp",
-    ".php": "php", ".rb": "ruby",
-    ".cpp": "cpp", ".cc": "cpp", ".hpp": "cpp", ".h": "cpp",
-    ".swift": "swift", ".dart": "dart", ".scala": "scala",
-    ".clj": "clojure", ".ex": "elixir", ".exs": "elixir",
-    ".hs": "haskell", ".zig": "zig", ".lua": "lua",
-    ".r": "r", ".R": "r", ".ps1": "powershell",
-    ".pl": "perl", ".pm": "perl",
-    ".asm": "assembly", ".s": "assembly", ".S": "assembly",
-    ".f90": "fortran", ".f": "fortran",
-    ".graphql": "graphql", ".gql": "graphql",
+    ".py": "python",
+    ".pyi": "python",
+    ".ts": "typescript",
+    ".tsx": "typescript",
+    ".js": "javascript",
+    ".jsx": "javascript",
+    ".mjs": "javascript",
+    ".rs": "rust",
+    ".go": "go",
+    ".java": "java",
+    ".kt": "kotlin",
+    ".kts": "kotlin",
+    ".cs": "csharp",
+    ".php": "php",
+    ".rb": "ruby",
+    ".cpp": "cpp",
+    ".cc": "cpp",
+    ".hpp": "cpp",
+    ".h": "cpp",
+    ".swift": "swift",
+    ".dart": "dart",
+    ".scala": "scala",
+    ".clj": "clojure",
+    ".ex": "elixir",
+    ".exs": "elixir",
+    ".hs": "haskell",
+    ".zig": "zig",
+    ".lua": "lua",
+    ".r": "r",
+    ".R": "r",
+    ".ps1": "powershell",
+    ".pl": "perl",
+    ".pm": "perl",
+    ".asm": "assembly",
+    ".s": "assembly",
+    ".S": "assembly",
+    ".f90": "fortran",
+    ".f": "fortran",
+    ".graphql": "graphql",
+    ".gql": "graphql",
 }
 
 CONFIG_MARKERS: dict[str, str | None] = {
@@ -201,6 +229,7 @@ def _load_yaml(path: Path) -> dict[str, Any]:
     """Load YAML file. Tries PyYAML first, falls back to simple parser."""
     try:
         import yaml
+
         return yaml.safe_load(path.read_text(encoding="utf-8")) or {}
     except ImportError:
         return _simple_yaml_parse(path)

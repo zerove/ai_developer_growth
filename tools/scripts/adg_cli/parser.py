@@ -2,11 +2,25 @@ from __future__ import annotations
 
 import argparse
 from tools.scripts.adg_cli.commands import (
-    cmd_check, cmd_detect, cmd_list_rules, cmd_install_hooks,
-    cmd_report, cmd_fix, cmd_rule, cmd_trend, cmd_notify,
-    cmd_html_report, cmd_recommend, cmd_lsp, cmd_dashboard,
-    cmd_marketplace, cmd_monorepo, cmd_bench, cmd_cicd,
+    cmd_check,
+    cmd_detect,
+    cmd_list_rules,
+    cmd_install_hooks,
+    cmd_report,
+    cmd_fix,
+    cmd_rule,
+    cmd_trend,
+    cmd_notify,
+    cmd_html_report,
+    cmd_recommend,
+    cmd_lsp,
+    cmd_dashboard,
+    cmd_marketplace,
+    cmd_monorepo,
+    cmd_bench,
+    cmd_cicd,
 )
+
 
 def _build_parser() -> argparse.ArgumentParser:
     """Build the CLI argument parser with all subcommands."""
@@ -148,8 +162,9 @@ def _build_parser() -> argparse.ArgumentParser:
 
     # cicd
     cicd_p = sub.add_parser("cicd", help="Generate CI/CD configuration files")
-    cicd_p.add_argument("platform", choices=["github", "github-advanced", "gitlab", "jenkins", "docker"],
-                         help="CI/CD platform")
+    cicd_p.add_argument(
+        "platform", choices=["github", "github-advanced", "gitlab", "jenkins", "docker"], help="CI/CD platform"
+    )
     cicd_p.add_argument("-o", "--output", default=".", help="Output directory")
 
     return parser

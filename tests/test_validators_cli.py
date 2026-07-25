@@ -110,7 +110,9 @@ class TestPrintResults:
         assert data["passed"] is True
 
     def test_fix_hint_shown(self, capsys: Any) -> None:
-        issue = Issue(rule_id="r1", severity="error", category="t", file="f.py", line=1, message="m", fix_hint="do this")
+        issue = Issue(
+            rule_id="r1", severity="error", category="t", file="f.py", line=1, message="m", fix_hint="do this"
+        )
         r = ValidationResult(file="f.py", language="python", issues=[issue])
         print_results([r])
         assert "do this" in capsys.readouterr().out

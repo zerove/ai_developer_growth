@@ -5,6 +5,7 @@ Usage:
     from tools.report.html_report import generate_html_report
     html = generate_html_report(issues, language, framework, files_checked)
 """
+
 from __future__ import annotations
 
 import json
@@ -101,14 +102,14 @@ def generate_html_report(
     <h1>🛡️ {title}</h1>
     <div class="meta">
         Language: <strong>{language}</strong>
-        {f' &middot; Framework: <strong>{framework}</strong>' if framework else ''}
+        {f" &middot; Framework: <strong>{framework}</strong>" if framework else ""}
         &middot; Files: <strong>{files_checked}</strong>
         &middot; Generated: <strong>{now}</strong>
     </div>
 
     <div class="cards">
-        <div class="card {'card-pass' if passed else 'card-fail'}">
-            <div class="card-value">{'✅ PASS' if passed else '❌ FAIL'}</div>
+        <div class="card {"card-pass" if passed else "card-fail"}">
+            <div class="card-value">{"✅ PASS" if passed else "❌ FAIL"}</div>
             <div class="card-label">Quality Gate</div>
         </div>
         <div class="card card-error">
@@ -139,35 +140,35 @@ def generate_html_report(
             bar_class = "bar-error" if cat == "security" else ("bar-warn" if cat == "performance" else "bar-info")
             html += f'            <div class="bar-row"><span class="bar-label">{cat}</span>'
             html += f'<div class="bar {bar_class}" style="width:{width_pct}%">{count}</div></div>\n'
-        html += '        </div>\n    </div>\n'
+        html += "        </div>\n    </div>\n"
 
     # Top files table
     if top_files:
         html += '    <div class="section">\n        <h2>Top Files by Issues</h2>\n'
-        html += '        <table><thead><tr><th>File</th><th>Issues</th><th>Errors</th><th>Warnings</th></tr></thead><tbody>\n'
+        html += "        <table><thead><tr><th>File</th><th>Issues</th><th>Errors</th><th>Warnings</th></tr></thead><tbody>\n"
         for filepath, file_issue_list in top_files:
             fe = sum(1 for i in file_issue_list if i.severity == "error")
             fw = sum(1 for i in file_issue_list if i.severity == "warning")
             name = Path(filepath).name
-            html += f'            <tr><td>{name}</td><td>{len(file_issue_list)}</td>'
+            html += f"            <tr><td>{name}</td><td>{len(file_issue_list)}</td>"
             html += f'<td class="severity-error">{fe}</td>'
             html += f'<td class="severity-warning">{fw}</td></tr>\n'
-        html += '        </tbody></table>\n    </div>\n'
+        html += "        </tbody></table>\n    </div>\n"
 
     # Issues table
     if issues:
         html += '    <div class="section">\n'
-        html += f'        <h2>All Issues ({len(issues)})</h2>\n'
-        html += '        <table><thead><tr><th>Severity</th><th>Rule</th><th>File</th><th>Line</th><th>Message</th><th>Fix Hint</th></tr></thead><tbody>\n'
+        html += f"        <h2>All Issues ({len(issues)})</h2>\n"
+        html += "        <table><thead><tr><th>Severity</th><th>Rule</th><th>File</th><th>Line</th><th>Message</th><th>Fix Hint</th></tr></thead><tbody>\n"
         for issue in sorted(issues, key=lambda i: {"error": 0, "warning": 1, "info": 2}.get(i.severity, 3)):
             badge_class = f"badge-{issue.severity[0]}" if issue.severity in ("error", "warning") else "badge-info"
             html += f'            <tr><td><span class="badge {badge_class}">{issue.severity.upper()}</span></td>'
-            html += f'<td><code>{issue.rule_id}</code></td>'
-            html += f'<td>{Path(issue.file).name}</td>'
-            html += f'<td>{issue.line}</td>'
-            html += f'<td>{issue.message}</td>'
-            html += f'<td>{issue.fix_hint}</td></tr>\n'
-        html += '        </tbody></table>\n    </div>\n'
+            html += f"<td><code>{issue.rule_id}</code></td>"
+            html += f"<td>{Path(issue.file).name}</td>"
+            html += f"<td>{issue.line}</td>"
+            html += f"<td>{issue.message}</td>"
+            html += f"<td>{issue.fix_hint}</td></tr>\n"
+        html += "        </tbody></table>\n    </div>\n"
 
     html += f"""
     <div class="footer">

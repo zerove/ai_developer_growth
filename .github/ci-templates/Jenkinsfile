@@ -1,0 +1,37 @@
+// ADG Governance - Jenkins Pipeline Template
+// Add to your Jenkinsfile or pipeline script
+
+pipeline {
+    agent {
+        docker {
+            image 'python:3.12-slim'
+        }
+    }
+    
+    stages {
+        stage('Setup') {
+            steps {
+                sh 'pip install ruff && pip install -e .'
+            }
+        }
+        
+        stage('ADG Governance Check') {
+            steps {
+                sh 'adg check . --severity error --json > adg-report.json || true'
+                sh 'adg check . --severity error'
+            }
+            post {
+                always {
+                    archiveArtifacts artifacts: 'adg-report.json', allowEmptyArchive: true
+                    archiveHTML(target: 'ADG Report', reportDir: '.', reportFiles: 'adg-report.json')
+                }
+            }
+        }
+    }
+    
+    post {
+        failure {
+            echo 'ADG Governance check failed. See report for details.'
+        }
+    }
+}

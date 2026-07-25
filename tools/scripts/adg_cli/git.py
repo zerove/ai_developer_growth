@@ -4,6 +4,7 @@ import subprocess
 import sys
 from pathlib import Path
 
+
 def _get_git_changed_files(since: str, cwd: Path | None = None) -> list[Path]:
     """Get list of files changed since a git reference.
 

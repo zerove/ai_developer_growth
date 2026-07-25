@@ -1,4 +1,5 @@
 """Tests for rule_engine.py — RuleEngine facade."""
+
 from __future__ import annotations
 
 from pathlib import Path
@@ -33,7 +34,9 @@ class TestRuleEngineInit:
 
     def test_rules_dir_property(self) -> None:
         engine = RuleEngine()
-        with patch("tools.scripts.rule_engine.RuleEngine.rules_dir", new_callable=lambda: property(lambda self: Path("/tmp"))):
+        with patch(
+            "tools.scripts.rule_engine.RuleEngine.rules_dir", new_callable=lambda: property(lambda self: Path("/tmp"))
+        ):
             d = engine.rules_dir
             assert isinstance(d, Path)
 
@@ -118,9 +121,11 @@ class TestTracking:
 
     def test_record_results(self) -> None:
         engine = RuleEngine()
-        with patch("tools.scripts.rule_tracker._records_file") as mock_f, \
-             patch("tools.scripts.rule_tracker._count_by_severity") as mock_sev, \
-             patch("tools.scripts.rule_tracker._count_by_rule") as mock_rule:
+        with (
+            patch("tools.scripts.rule_tracker._records_file") as mock_f,
+            patch("tools.scripts.rule_tracker._count_by_severity") as mock_sev,
+            patch("tools.scripts.rule_tracker._count_by_rule") as mock_rule,
+        ):
             mock_f.return_value = Path("/tmp/test.jsonl")
             mock_sev.return_value = {"error": 1}
             mock_rule.return_value = {"py-x": 1}
@@ -137,9 +142,7 @@ class TestTracking:
     def test_get_tracking_report_with_data(self) -> None:
         engine = RuleEngine()
         with patch("tools.scripts.rule_tracker._load_records") as mock_load:
-            mock_load.return_value = [
-                {"summary": {"total_issues": 5, "by_rule": {"py-x": 3, "py-y": 2}}}
-            ]
+            mock_load.return_value = [{"summary": {"total_issues": 5, "by_rule": {"py-x": 3, "py-y": 2}}}]
             result = engine.get_tracking_report(days=7)
             assert result["total_issues"] == 5
             assert result["by_rule"]["py-x"] == 3

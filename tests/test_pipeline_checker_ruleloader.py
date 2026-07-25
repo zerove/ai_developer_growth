@@ -1,4 +1,5 @@
 """Phase 28+29: Tests for validators/pipeline.py, rules_engine/checker.py, rules_engine/rule_loader.py."""
+
 from __future__ import annotations
 
 import json
@@ -56,6 +57,7 @@ from tools.scripts.validators.pipeline import (
 
 # ── detect_language_from_file ──────────────────────────────
 
+
 class TestDetectLanguageFromFile:
     def test_python(self) -> None:
         assert detect_language_from_file(Path("main.py")) == "python"
@@ -68,6 +70,7 @@ class TestDetectLanguageFromFile:
 
 
 # ── _rules_hash ────────────────────────────────────────────
+
 
 class TestRulesHash:
     def test_nonexistent_lang(self, tmp_path: Path) -> None:
@@ -92,6 +95,7 @@ class TestRulesHash:
 
 
 # ── _load_common_rules ────────────────────────────────────
+
 
 class TestLoadCommonRules:
     def test_no_common_file(self, tmp_path: Path) -> None:
@@ -121,6 +125,7 @@ class TestLoadCommonRules:
 
 
 # ── _merge_rules ──────────────────────────────────────────
+
 
 class TestMergeRules:
     def test_new_patterns_added(self) -> None:
@@ -174,6 +179,7 @@ class TestMergeRules:
 
 # ── _get_embedded_rules ──────────────────────────────────
 
+
 class TestGetEmbeddedRules:
     def test_python_embedded(self) -> None:
         rules = _get_embedded_rules("python")
@@ -194,6 +200,7 @@ class TestGetEmbeddedRules:
 
 
 # ── load_rules ────────────────────────────────────────────
+
 
 class TestLoadRulesExtended:
     def test_load_with_framework_dir(self, tmp_path: Path) -> None:
@@ -217,6 +224,7 @@ class TestLoadRulesExtended:
 
 # ── load_custom_rules ────────────────────────────────────
 
+
 class TestLoadCustomRulesExtended:
     def test_no_ai_rules_dir(self, tmp_path: Path) -> None:
         result = load_custom_rules(tmp_path)
@@ -225,9 +233,7 @@ class TestLoadCustomRulesExtended:
     def test_valid_custom_rules(self, tmp_path: Path) -> None:
         rules_dir = tmp_path / ".ai-rules"
         rules_dir.mkdir()
-        (rules_dir / "custom.yml").write_text(
-            "anti_patterns:\n- id: my-rule\n  severity: warning\n  pattern: test\n"
-        )
+        (rules_dir / "custom.yml").write_text("anti_patterns:\n- id: my-rule\n  severity: warning\n  pattern: test\n")
         result = load_custom_rules(tmp_path)
         assert len(result["anti_patterns"]) == 1
         assert result["anti_patterns"][0]["id"] == "my-rule"
@@ -249,9 +255,7 @@ class TestLoadCustomRulesExtended:
     def test_naming_and_thresholds(self, tmp_path: Path) -> None:
         rules_dir = tmp_path / ".ai-rules"
         rules_dir.mkdir()
-        (rules_dir / "c.yml").write_text(
-            "naming:\n  func: snake_case\nthresholds:\n  max_lines: 200\n"
-        )
+        (rules_dir / "c.yml").write_text("naming:\n  func: snake_case\nthresholds:\n  max_lines: 200\n")
         result = load_custom_rules(tmp_path)
         assert result["naming"]["func"] == "snake_case"
         assert result["thresholds"]["max_lines"] == 200
@@ -266,6 +270,7 @@ class TestLoadCustomRulesExtended:
 
 
 # ── check_anti_patterns ──────────────────────────────────
+
 
 class TestCheckAntiPatterns:
     def test_match_found(self) -> None:
@@ -286,6 +291,7 @@ class TestCheckAntiPatterns:
 
 
 # ── validate_file ─────────────────────────────────────────
+
 
 class TestValidateFileExtended:
     def test_validate_with_custom_rules(self, tmp_path: Path) -> None:
@@ -318,9 +324,7 @@ class TestValidateFileExtended:
     def test_validate_fix_replacement_applied(self, tmp_path: Path) -> None:
         f = tmp_path / "test.py"
         f.write_text("x = 1\n")
-        custom = {"anti_patterns": [
-            {"id": "fr", "severity": "error", "pattern": r"x = 1", "fix_replacement": "x = 2"}
-        ]}
+        custom = {"anti_patterns": [{"id": "fr", "severity": "error", "pattern": r"x = 1", "fix_replacement": "x = 2"}]}
         result = validate_file(f, "python", custom_rules=custom)
         fr_issues = [i for i in result.issues if i.rule_id == "fr"]
         if fr_issues:
@@ -328,6 +332,7 @@ class TestValidateFileExtended:
 
 
 # ── validate_directory ────────────────────────────────────
+
 
 class TestValidateDirectoryExtended:
     def test_with_language(self, tmp_path: Path) -> None:
@@ -373,6 +378,7 @@ class TestValidateDirectoryExtended:
 
 # ── checker: _detect_language ─────────────────────────────
 
+
 class TestCheckerDetectLanguage:
     def test_python(self) -> None:
         assert checker_detect_language(Path("main.py")) == "python"
@@ -395,6 +401,7 @@ class TestCheckerDetectLanguage:
 
 # ── checker: _map_severity ────────────────────────────────
 
+
 class TestMapSeverity:
     def test_known_severities(self) -> None:
         assert _map_severity("error") == "error"
@@ -412,14 +419,19 @@ class TestMapSeverity:
 
 # ── checker: _parse_linter_output ─────────────────────────
 
+
 class TestParseLinterOutput:
     def test_ruff_json_output(self) -> None:
-        output = json.dumps([{
-            "code": "E302",
-            "message": "expected 2 blank lines",
-            "location": {"row": 5, "column": 1},
-            "fix": None,
-        }])
+        output = json.dumps(
+            [
+                {
+                    "code": "E302",
+                    "message": "expected 2 blank lines",
+                    "location": {"row": 5, "column": 1},
+                    "fix": None,
+                }
+            ]
+        )
         issues = _parse_linter_output(output, "python", "test.py")
         assert len(issues) >= 1
 
@@ -432,21 +444,28 @@ class TestParseLinterOutput:
         assert issues == []
 
     def test_eslint_output(self) -> None:
-        output = json.dumps([{
-            "filePath": "test.js",
-            "messages": [{
-                "ruleId": "no-eval",
-                "message": "eval is dangerous",
-                "line": 10,
-                "column": 5,
-                "severity": 2,
-            }],
-        }])
+        output = json.dumps(
+            [
+                {
+                    "filePath": "test.js",
+                    "messages": [
+                        {
+                            "ruleId": "no-eval",
+                            "message": "eval is dangerous",
+                            "line": 10,
+                            "column": 5,
+                            "severity": 2,
+                        }
+                    ],
+                }
+            ]
+        )
         issues = _parse_linter_output(output, "javascript", "test.js")
         assert len(issues) >= 1
 
 
 # ── checker: _file_not_found_result ───────────────────────
+
 
 class TestFileNotFoundResult:
     def test_returns_error(self) -> None:
@@ -456,6 +475,7 @@ class TestFileNotFoundResult:
 
 
 # ── checker: check_file ──────────────────────────────────
+
 
 class TestCheckerCheckFileExtended:
     def test_nonexistent_file(self) -> None:
@@ -498,6 +518,7 @@ class TestCheckerCheckFileExtended:
 
 # ── checker: _run_all_checkers ────────────────────────────
 
+
 class TestRunAllCheckers:
     def test_with_python(self, tmp_path: Path) -> None:
         f = tmp_path / "test.py"
@@ -522,6 +543,7 @@ class TestRunAllCheckers:
 
 
 # ── checker: check_directory ──────────────────────────────
+
 
 class TestCheckerCheckDirectory:
     def test_with_files(self, tmp_path: Path) -> None:
@@ -562,6 +584,7 @@ class TestCheckerCheckDirectory:
 
 # ── rule_loader: _file_hash ──────────────────────────────
 
+
 class TestFileHash:
     def test_hash_file(self, tmp_path: Path) -> None:
         f = tmp_path / "test.txt"
@@ -583,9 +606,11 @@ class TestFileHash:
 
 # ── rule_loader: _load_disk_cache / _save_disk_cache ─────
 
+
 class TestDiskCache:
     def test_save_and_load(self) -> None:
         from tools.scripts.rules_engine import rule_loader as rl
+
         cache = {"python:abc": {"anti_patterns": []}}
         rl._save_disk_cache(cache)
         loaded = rl._load_disk_cache()
@@ -593,15 +618,18 @@ class TestDiskCache:
 
     def test_load_empty(self) -> None:
         from tools.scripts.rules_engine import rule_loader as rl
+
         loaded = rl._load_disk_cache()
         assert isinstance(loaded, dict)
 
 
 # ── rule_loader: _save_cache (in-memory) ─────────────────
 
+
 class TestSaveCache:
     def test_save_cache(self, tmp_path: Path) -> None:
         from tools.scripts.rules_engine.rule_loader import _save_cache
+
         cache_file = tmp_path / "cache.json"
         _save_cache(cache_file, {"key1": "value1"})
         assert cache_file.exists()
@@ -610,6 +638,7 @@ class TestSaveCache:
 
 
 # ── rule_loader: _merge_anti_patterns ────────────────────
+
 
 class TestMergeAntiPatterns:
     def test_merge_new_patterns(self) -> None:
@@ -633,6 +662,7 @@ class TestMergeAntiPatterns:
 
 # ── rule_loader: _merge_rules ────────────────────────────
 
+
 class TestRuleLoaderMergeRules:
     def test_merge_with_naming(self) -> None:
         base = {"anti_patterns": [], "naming": {"func": "camelCase"}}
@@ -650,6 +680,7 @@ class TestRuleLoaderMergeRules:
 
 # ── rule_loader: _load_common_rules ──────────────────────
 
+
 class TestRuleLoaderLoadCommon:
     def test_no_common_file(self, tmp_path: Path) -> None:
         result = rl_load_common(tmp_path)
@@ -665,6 +696,7 @@ class TestRuleLoaderLoadCommon:
 
 # ── rule_loader: _get_embedded_rules ─────────────────────
 
+
 class TestRuleLoaderGetEmbedded:
     def test_python(self) -> None:
         rules = rl_get_embedded("python")
@@ -676,6 +708,7 @@ class TestRuleLoaderGetEmbedded:
 
 
 # ── rule_loader: load_rules_for_language / get_language_rules
+
 
 class TestLoadRulesForLanguage:
     def test_load_python(self) -> None:
@@ -693,6 +726,7 @@ class TestLoadRulesForLanguage:
 
 # ── rule_loader: load_rules ──────────────────────────────
 
+
 class TestRuleLoaderLoadRules:
     def test_load_with_framework_dir(self, tmp_path: Path) -> None:
         lang_dir = tmp_path / "languages" / "python" / "rules.d"
@@ -707,6 +741,7 @@ class TestRuleLoaderLoadRules:
 
 
 # ── rule_loader: load_custom_rules ───────────────────────
+
 
 class TestRuleLoaderLoadCustomRules:
     def test_no_dir(self, tmp_path: Path) -> None:

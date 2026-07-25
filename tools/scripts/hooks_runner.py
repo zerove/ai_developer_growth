@@ -77,6 +77,7 @@ Examples:
     lr_parser = subparsers.add_parser("language-rules", help="Run language-specific rules validation")
     lr_parser.add_argument("--path", type=Path, default=Path("."), help="Path to validate")
     lr_parser.add_argument("--lang", help="Language (auto-detect if not specified)")
+    lr_parser.add_argument("--jobs", "-j", type=int, default=1, help="Parallel workers (default: 1)")
 
     qg_parser = subparsers.add_parser("quality-gate", help="Run AI Quality Gate checks")
     qg_parser.add_argument("--path", type=Path, default=Path("tools/scripts"), help="Path to check")
@@ -100,6 +101,22 @@ Examples:
     diff_parser.add_argument("--base", default="HEAD", help="Git ref to diff against (default: HEAD)")
 
     subparsers.add_parser("pre-commit", help="Pre-commit hook: check staged files only")
+
+    install_parser = subparsers.add_parser("install-hooks", help="Install git hooks")
+    install_parser.add_argument("--pre-push", action="store_true", help="Install pre-push hook")
+    install_parser.add_argument("--pre-commit", action="store_true", help="Install pre-commit hook")
+
+    learn_parser = subparsers.add_parser("learn", help="AI-driven rule generation from codebase analysis")
+    learn_parser.add_argument(
+        "project_path", type=Path, nargs="?", default=Path("."), help="Project root (default: current dir)"
+    )
+    learn_parser.add_argument("--output", "-o", type=Path, help="Output rules YAML file")
+    learn_parser.add_argument("--format", choices=["text", "json"], default="text", help="Output format")
+
+    dashboard_parser = subparsers.add_parser("dashboard", help="Start quality dashboard web server")
+    dashboard_parser.add_argument("--port", type=int, default=8765, help="Port (default: 8765)")
+    dashboard_parser.add_argument("--db", default="adg_quality.db", help="SQLite database path")
+
     subparsers.add_parser(
         "full", help="Run all checks (lint, format, typecheck, test, security, quality-gate, governance-audit)"
     )
@@ -107,9 +124,17 @@ Examples:
     return parser
 
 
-def _run_simple(func: tuple) -> int:
-    """Run a simple check function and print output."""
-    passed, output = func()
+def _run_simple(func_or_result) -> int:
+    """Run a simple check function and print output.
+
+    Accepts either:
+    - A callable that returns (bool, str)
+    - An already-evaluated (bool, str) tuple
+    """
+    if callable(func_or_result):
+        passed, output = func_or_result()
+    else:
+        passed, output = func_or_result
     print(output)
     return 0 if passed else 1
 
@@ -192,32 +217,74 @@ def _dispatch(args: argparse.Namespace) -> int:
         return _run_simple(run_language_rules(args.path, args.lang))
 
     if cmd == "quality-gate":
-        return _run_simple(run_quality_gate(
-            args.path,
-            full=args.full,
-            check_annotation=args.check_annotation,
-            check_security=args.check_security,
-            check_type=args.check_type,
-            check_error=args.check_error,
-            check_structure=args.check_structure,
-            check_patterns=args.check_patterns,
-            format=args.format,
-        ))
+        return _run_simple(
+            run_quality_gate(
+                args.path,
+                full=args.full,
+                check_annotation=args.check_annotation,
+                check_security=args.check_security,
+                check_type=args.check_type,
+                check_error=args.check_error,
+                check_structure=args.check_structure,
+                check_patterns=args.check_patterns,
+                format=args.format,
+            )
+        )
 
     if cmd == "governance-audit":
-        return _run_simple(run_governance_audit(
-            full=args.full,
-            validate_docs=args.validate_docs,
-            check_ai_sdlc=args.check_ai_sdlc,
-            audit_hallucination=args.audit_hallucination,
-            check_index=args.check_index,
-        ))
+        return _run_simple(
+            run_governance_audit(
+                full=args.full,
+                validate_docs=args.validate_docs,
+                check_ai_sdlc=args.check_ai_sdlc,
+                audit_hallucination=args.audit_hallucination,
+                check_index=args.check_index,
+            )
+        )
 
     if cmd == "diff":
         return _run_simple(run_diff_checks(args.base))
 
     if cmd == "pre-commit":
         return _run_simple(run_pre_commit_checks())
+
+    if cmd == "install-hooks":
+        if args.pre_push:
+            from tools.scripts.hooks.pre_push import install_pre_push_hook
+
+            success = install_pre_push_hook()
+            return 0 if success else 1
+        if args.pre_commit:
+            print("Pre-commit hook installation not yet implemented")
+            return 1
+        print("Specify --pre-push or --pre-commit")
+        return 1
+
+    if cmd == "learn":
+        from tools.scripts.rules_engine.ai_rules_generator import (
+            analyze_project,
+            format_analysis,
+        )
+
+        result = analyze_project(args.project_path)
+        print(format_analysis(result, format=args.format))
+        if args.output:
+            import yaml
+
+            args.output.parent.mkdir(parents=True, exist_ok=True)
+            with open(args.output, "w") as f:
+                yaml.dump(result["rules"], f, default_flow_style=False, allow_unicode=True)
+            print(f"\nRules written to {args.output}")
+        return 0
+
+    if cmd == "dashboard":
+        from tools.scripts.rules_engine.dashboard import create_app
+        import uvicorn
+
+        app = create_app(args.db)
+        print(f"Starting ADG Quality Dashboard at http://0.0.0.0:{args.port}")
+        uvicorn.run(app, host="0.0.0.0", port=args.port)
+        return 0
 
     if cmd == "full":
         return _run_full()

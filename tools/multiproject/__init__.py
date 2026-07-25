@@ -6,6 +6,7 @@ Usage:
     checker = MonorepoChecker(root_dir)
     results = checker.check_all()
 """
+
 from __future__ import annotations
 
 import json
@@ -34,12 +35,23 @@ class MonorepoChecker:
     ):
         self.root = Path(root_dir)
         self.project_patterns = project_patterns or [
-            "pyproject.toml", "package.json", "Cargo.toml",
-            "go.mod", "build.gradle", "pom.xml", "Gemfile",
+            "pyproject.toml",
+            "package.json",
+            "Cargo.toml",
+            "go.mod",
+            "build.gradle",
+            "pom.xml",
+            "Gemfile",
         ]
         self.exclude_patterns = exclude_patterns or [
-            "node_modules", ".git", "target", "__pycache__",
-            "venv", ".venv", "dist", "build",
+            "node_modules",
+            ".git",
+            "target",
+            "__pycache__",
+            "venv",
+            ".venv",
+            "dist",
+            "build",
         ]
 
     def discover_projects(self) -> list[dict[str, Any]]:
@@ -50,13 +62,15 @@ class MonorepoChecker:
         for pattern in self.project_patterns:
             if (self.root / pattern).exists():
                 detected = detect_language(self.root)
-                projects.append({
-                    "path": str(self.root),
-                    "name": self.root.name,
-                    "language": detected.get("language", "unknown"),
-                    "framework": detected.get("framework"),
-                    "config_file": pattern,
-                })
+                projects.append(
+                    {
+                        "path": str(self.root),
+                        "name": self.root.name,
+                        "language": detected.get("language", "unknown"),
+                        "framework": detected.get("framework"),
+                        "config_file": pattern,
+                    }
+                )
                 break
 
         # Check subdirectories
@@ -69,13 +83,15 @@ class MonorepoChecker:
             for pattern in self.project_patterns:
                 if (subdir / pattern).exists():
                     detected = detect_language(subdir)
-                    projects.append({
-                        "path": str(subdir),
-                        "name": subdir.name,
-                        "language": detected.get("language", "unknown"),
-                        "framework": detected.get("framework"),
-                        "config_file": pattern,
-                    })
+                    projects.append(
+                        {
+                            "path": str(subdir),
+                            "name": subdir.name,
+                            "language": detected.get("language", "unknown"),
+                            "framework": detected.get("framework"),
+                            "config_file": pattern,
+                        }
+                    )
                     break
 
         # Check nested (2 levels deep)
@@ -94,13 +110,15 @@ class MonorepoChecker:
                 for pattern in self.project_patterns:
                     if (nested / pattern).exists():
                         detected = detect_language(nested)
-                        projects.append({
-                            "path": str(nested),
-                            "name": nested.name,
-                            "language": detected.get("language", "unknown"),
-                            "framework": detected.get("framework"),
-                            "config_file": pattern,
-                        })
+                        projects.append(
+                            {
+                                "path": str(nested),
+                                "name": nested.name,
+                                "language": detected.get("language", "unknown"),
+                                "framework": detected.get("framework"),
+                                "config_file": pattern,
+                            }
+                        )
                         break
 
         return projects
@@ -167,15 +185,19 @@ class MonorepoChecker:
         for result in results["results"]:
             status = "✅" if result["summary"]["error"] == 0 else "❌"
             lines.append(f"{status} {result['project']} ({result['language']})")
-            lines.append(f"   Errors: {result['summary']['error']} | Warnings: {result['summary']['warning']} | Files: {result['files_checked']}")
+            lines.append(
+                f"   Errors: {result['summary']['error']} | Warnings: {result['summary']['warning']} | Files: {result['files_checked']}"
+            )
 
-        lines.extend([
-            "",
-            "-" * 60,
-            f"Total errors: {results['total_summary']['error']}",
-            f"Total warnings: {results['total_summary']['warning']}",
-            f"Quality gate: {'✅ PASSED' if results['total_summary']['passed'] else '❌ FAILED'}",
-        ])
+        lines.extend(
+            [
+                "",
+                "-" * 60,
+                f"Total errors: {results['total_summary']['error']}",
+                f"Total warnings: {results['total_summary']['warning']}",
+                f"Quality gate: {'✅ PASSED' if results['total_summary']['passed'] else '❌ FAILED'}",
+            ]
+        )
 
         return "\n".join(lines)
 
@@ -183,6 +205,7 @@ class MonorepoChecker:
 # ─────────────────────────────────────────────────────────────
 # Cross-project Rule Sync
 # ─────────────────────────────────────────────────────────────
+
 
 def sync_rules_across_projects(
     source_project: str | Path,
@@ -196,6 +219,7 @@ def sync_rules_across_projects(
         return {"success": False, "error": "Source project has no ADG config"}
 
     import yaml
+
     source_rules = yaml.safe_load(source_config.read_text()) or {}
     results = []
 
@@ -222,10 +246,12 @@ def sync_rules_across_projects(
         existing["custom_rules"] = target_custom
         target_config.write_text(yaml.dump(existing, default_flow_style=False))
 
-        results.append({
-            "target": str(target),
-            "rules_synced": len(new_rules),
-            "total_rules": len(target_custom),
-        })
+        results.append(
+            {
+                "target": str(target),
+                "rules_synced": len(new_rules),
+                "total_rules": len(target_custom),
+            }
+        )
 
     return {"success": True, "results": results}

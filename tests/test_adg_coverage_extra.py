@@ -1,4 +1,5 @@
 """Additional coverage tests for adg_cli.py to reach 85%+."""
+
 from __future__ import annotations
 
 import json
@@ -118,7 +119,7 @@ class TestCheckPattern:
             "severity": "error",
             "message": "eval is dangerous",
             "category": "security",
-            "fix_hint": "Use ast.literal_eval"
+            "fix_hint": "Use ast.literal_eval",
         }
         issues = _check_pattern(f, "x = eval('1+1')", ["x = eval('1+1')"], pattern_def)
         assert len(issues) == 1
@@ -127,7 +128,13 @@ class TestCheckPattern:
     def test_no_match(self, workspace):
         f = workspace / "test.py"
         f.write_text("x = 1\n")
-        pattern_def = {"pattern": r"eval\(", "severity": "error", "message": "test", "category": "security", "fix_hint": "fix"}
+        pattern_def = {
+            "pattern": r"eval\(",
+            "severity": "error",
+            "message": "test",
+            "category": "security",
+            "fix_hint": "fix",
+        }
         issues = _check_pattern(f, "x = 1", ["x = 1"], pattern_def)
         assert len(issues) == 0
 
@@ -149,10 +156,18 @@ class TestFormatSarif:
         assert "$schema" in sarif
 
     def test_with_issues(self):
-        issues = [Issue(
-            file="test.py", line=1, column=1, rule_id="SEC001",
-            severity="error", category="security", message="bad", fix_hint="fix"
-        )]
+        issues = [
+            Issue(
+                file="test.py",
+                line=1,
+                column=1,
+                rule_id="SEC001",
+                severity="error",
+                category="security",
+                message="bad",
+                fix_hint="fix",
+            )
+        ]
         sarif = _format_sarif(issues, "python", "flask")
         data = json.loads(sarif)
         assert len(data["runs"][0]["results"]) == 1
@@ -164,20 +179,36 @@ class TestFormatHuman:
         assert "python" in output.lower() or "0" in output
 
     def test_format_human_with_issues(self):
-        issues = [Issue(
-            file="test.py", line=1, column=1, rule_id="SEC001",
-            severity="error", category="security", message="bad", fix_hint="fix"
-        )]
+        issues = [
+            Issue(
+                file="test.py",
+                line=1,
+                column=1,
+                rule_id="SEC001",
+                severity="error",
+                category="security",
+                message="bad",
+                fix_hint="fix",
+            )
+        ]
         output = _format_human(issues, "python", None, 1)
         assert "SEC001" in output
 
 
 class TestFormatJson:
     def test_format_json(self):
-        issues = [Issue(
-            file="test.py", line=1, column=1, rule_id="SEC001",
-            severity="error", category="security", message="bad", fix_hint="fix"
-        )]
+        issues = [
+            Issue(
+                file="test.py",
+                line=1,
+                column=1,
+                rule_id="SEC001",
+                severity="error",
+                category="security",
+                message="bad",
+                fix_hint="fix",
+            )
+        ]
         output = _format_json(issues, "python", None, 1)
         data = json.loads(output)
         assert len(data["issues"]) == 1
@@ -245,10 +276,18 @@ class TestTrendData:
 
 class TestRecordTrend:
     def test_record_trend(self, workspace):
-        issues = [Issue(
-            file="test.py", line=1, column=1, rule_id="SEC001",
-            severity="error", category="security", message="bad", fix_hint="fix"
-        )]
+        issues = [
+            Issue(
+                file="test.py",
+                line=1,
+                column=1,
+                rule_id="SEC001",
+                severity="error",
+                category="security",
+                message="bad",
+                fix_hint="fix",
+            )
+        ]
         result = _record_trend(workspace, issues, "python")
         assert "timestamp" in result
         assert result["total"] == 1
@@ -262,8 +301,22 @@ class TestFormatTrendReport:
 
     def test_with_data(self):
         data = [
-            {"timestamp": "2024-01-01T00:00:00", "issues": 10, "errors": 2, "warnings": 5, "info": 3, "language": "python"},
-            {"timestamp": "2024-01-02T00:00:00", "issues": 8, "errors": 1, "warnings": 4, "info": 3, "language": "python"}
+            {
+                "timestamp": "2024-01-01T00:00:00",
+                "issues": 10,
+                "errors": 2,
+                "warnings": 5,
+                "info": 3,
+                "language": "python",
+            },
+            {
+                "timestamp": "2024-01-02T00:00:00",
+                "issues": 8,
+                "errors": 1,
+                "warnings": 4,
+                "info": 3,
+                "language": "python",
+            },
         ]
         report = _format_trend_report(data)
         assert isinstance(report, str)
@@ -291,10 +344,18 @@ class TestApplyFix:
 
 class TestSlackNotification:
     def test_send_slack(self):
-        issues = [Issue(
-            file="test.py", line=1, column=1, rule_id="SEC001",
-            severity="error", category="security", message="bad", fix_hint="fix"
-        )]
+        issues = [
+            Issue(
+                file="test.py",
+                line=1,
+                column=1,
+                rule_id="SEC001",
+                severity="error",
+                category="security",
+                message="bad",
+                fix_hint="fix",
+            )
+        ]
         with patch("urllib.request.urlopen") as mock:
             mock.return_value.__enter__ = lambda s: s
             mock.return_value.__exit__ = MagicMock(return_value=False)
@@ -309,10 +370,18 @@ class TestSlackNotification:
 
 class TestDingtalkNotification:
     def test_send_dingtalk(self):
-        issues = [Issue(
-            file="test.py", line=1, column=1, rule_id="SEC001",
-            severity="error", category="security", message="bad", fix_hint="fix"
-        )]
+        issues = [
+            Issue(
+                file="test.py",
+                line=1,
+                column=1,
+                rule_id="SEC001",
+                severity="error",
+                category="security",
+                message="bad",
+                fix_hint="fix",
+            )
+        ]
         with patch("urllib.request.urlopen") as mock:
             mock.return_value.__enter__ = lambda s: s
             mock.return_value.__exit__ = MagicMock(return_value=False)
@@ -392,16 +461,17 @@ class TestLoadProjectConfig:
         adg_dir = workspace / ".adg"
         adg_dir.mkdir(parents=True, exist_ok=True)
         # Write invalid YAML that triggers an exception
-        (adg_dir / "rules.yml").write_text(":\n  - \"unterminated")
+        (adg_dir / "rules.yml").write_text(':\n  - "unterminated')
         config = load_project_config(workspace)
         assert isinstance(config, dict)
 
     def test_load_with_global_config(self, workspace, monkeypatch):
         import tempfile
+
         global_dir = workspace / "global_config"
         global_dir.mkdir(parents=True, exist_ok=True)
         (global_dir / "rules.yml").write_text("custom_rules:\n  - id: global_rule\n")
-        monkeypatch.setattr(Path, 'home', lambda: global_dir.parent)
+        monkeypatch.setattr(Path, "home", lambda: global_dir.parent)
         # global_config_path would be workspace/global_config/.config/adg/rules.yml
         # just ensure no crash when global doesn't exist
         config = load_project_config(workspace)

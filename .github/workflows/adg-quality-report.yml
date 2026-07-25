@@ -1,0 +1,98 @@
+# ADG Governance - GitHub Actions PR Quality Report
+# Posts quality report as PR comment on every push
+
+name: ADG Quality Report
+
+on:
+  pull_request:
+    branches: [main, master]
+  push:
+    branches: [main, master]
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  governance-check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install dependencies
+        run: |
+          pip install ruff
+          pip install -e .
+
+      - name: ADG Check (JSON report)
+        id: adg-check
+        run: |
+          adg check . --json > adg-report.json || true
+          # Count issues
+          ERRORS=$(python3 -c "import json; d=json.load(open('adg-report.json')); print(d.get('summary',{}).get('errors',0))" 2>/dev/null || echo "0")
+          WARNINGS=$(python3 -c "import json; d=json.load(open('adg-report.json')); print(d.get('summary',{}).get('warnings',0))" 2>/dev/null || echo "0")
+          echo "errors=$ERRORS" >> "$GITHUB_OUTPUT"
+          echo "warnings=$WARNINGS" >> "$GITHUB_OUTPUT"
+
+      - name: Generate quality summary
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const errors = '${{ steps.adg-check.outputs.errors }}';
+            const warnings = '${{ steps.adg-check.outputs.warnings }}';
+            const totalIssues = parseInt(errors) + parseInt(warnings);
+            const status = parseInt(errors) > 0 ? '❌ FAIL' : (parseInt(warnings) > 0 ? '⚠️ WARN' : '✅ PASS');
+
+            let report = `## ${status} ADG Code Governance Report\n\n`;
+            report += `| Metric | Count |\n|--------|-------|\n`;
+            report += `| Errors | ${errors} |\n`;
+            report += `| Warnings | ${warnings} |\n`;
+            report += `| Total Issues | ${totalIssues} |\n\n`;
+
+            if (parseInt(errors) > 0) {
+              report += `### ❌ Errors must be fixed before merge.\n`;
+            } else if (parseInt(warnings) > 0) {
+              report += `### ⚠️ Warnings should be addressed.\n`;
+            } else {
+              report += `### ✅ No issues found. Code quality is good.\n`;
+            }
+
+            // Find and update existing comment
+            const { data: comments } = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+            });
+            const botComment = comments.find(c => c.user.type === 'Bot' && c.body.includes('ADG Code Governance Report'));
+
+            if (botComment) {
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: botComment.id,
+                body: report,
+              });
+            } else {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+                body: report,
+              });
+            }
+
+      - name: Upload report artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: adg-report
+          path: adg-report.json
+
+      - name: Fail on errors
+        if: steps.adg-check.outputs.errors != '0'
+        run: exit 1

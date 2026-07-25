@@ -41,6 +41,7 @@ class TestRunLanguageRules:
     @patch("tools.scripts.hooks.domain_checks.detect_language_from_file")
     def test_file_invalid(self, mock_detect: MagicMock, mock_validate: MagicMock, tmp_path: Path) -> None:
         from tools.scripts.validators.models import Issue
+
         f = tmp_path / "test.py"
         f.write_text("# bad\n")
         mock_detect.return_value = "python"
@@ -261,7 +262,10 @@ class TestCheckCodeFiles:
     @patch("tools.scripts.hooks.incremental_checks.run_format_files")
     @patch("tools.scripts.hooks.incremental_checks.run_lint_files")
     def test_all_pass(
-        self, mock_lint: MagicMock, mock_fmt: MagicMock, mock_detect: MagicMock,
+        self,
+        mock_lint: MagicMock,
+        mock_fmt: MagicMock,
+        mock_detect: MagicMock,
         mock_validate: MagicMock,
     ) -> None:
         mock_lint.return_value = (True, "")
@@ -281,7 +285,10 @@ class TestCheckCodeFiles:
     @patch("tools.scripts.hooks.incremental_checks.run_format_files")
     @patch("tools.scripts.hooks.incremental_checks.run_lint_files")
     def test_lint_fails(
-        self, mock_lint: MagicMock, mock_fmt: MagicMock, mock_detect: MagicMock,
+        self,
+        mock_lint: MagicMock,
+        mock_fmt: MagicMock,
+        mock_detect: MagicMock,
         mock_validate: MagicMock,
     ) -> None:
         mock_lint.return_value = (False, "lint error")

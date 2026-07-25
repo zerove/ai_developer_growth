@@ -41,21 +41,13 @@ class TestCheckNamingConventions:
         assert result[0].fix_hint == "Use snake_case"
 
     def test_comment_lines_skipped(self) -> None:
-        rules = {
-            "naming": {
-                "no-camel": {"pattern": r"[a-z][A-Z]", "severity": "warning", "message": "msg"}
-            }
-        }
+        rules = {"naming": {"no-camel": {"pattern": r"[a-z][A-Z]", "severity": "warning", "message": "msg"}}}
         lines = ["# myVar = 1", "// myVar = 1"]
         result = check_naming_conventions(lines, rules, "test.py", "python")
         assert result == []
 
     def test_multiple_matches(self) -> None:
-        rules = {
-            "naming": {
-                "no-camel": {"pattern": r"[a-z][A-Z]", "severity": "error", "message": "msg"}
-            }
-        }
+        rules = {"naming": {"no-camel": {"pattern": r"[a-z][A-Z]", "severity": "error", "message": "msg"}}}
         lines = ["myVar = 1", "yourVar = 2"]
         result = check_naming_conventions(lines, rules, "f.py", "python")
         assert len(result) == 2
@@ -69,11 +61,7 @@ class TestCheckNamingConventions:
         assert result[0].severity == "warning"  # default
 
     def test_empty_lines(self) -> None:
-        rules = {
-            "naming": {
-                "no-camel": {"pattern": r"[a-z][A-Z]", "severity": "warning", "message": "msg"}
-            }
-        }
+        rules = {"naming": {"no-camel": {"pattern": r"[a-z][A-Z]", "severity": "warning", "message": "msg"}}}
         result = check_naming_conventions([], rules, "f.py", "python")
         assert result == []
 

@@ -95,7 +95,10 @@ class RuleEngine:
         from tools.scripts.rule_author import cmd_add_rule
 
         cmd_init_ns = argparse.Namespace(
-            lang=lang, category=category, id=rule_id, name=name,
+            lang=lang,
+            category=category,
+            id=rule_id,
+            name=name,
             severity=kwargs.get("severity", "warning"),
             message=kwargs.get("message", ""),
             pattern=kwargs.get("pattern"),

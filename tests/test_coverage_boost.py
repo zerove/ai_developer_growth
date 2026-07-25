@@ -40,22 +40,29 @@ class TestRulesModelsIssue(unittest.TestCase):
         assert "fix_replacement" not in d
 
     def test_issue_to_dict_with_fix_hint(self) -> None:
-        issue = Issue(rule_id="r1", severity="error", category="sec", file="a.py", line=1,
-                       fix_hint="use X instead")
+        issue = Issue(rule_id="r1", severity="error", category="sec", file="a.py", line=1, fix_hint="use X instead")
         d = issue.to_dict()
         assert d["fix_hint"] == "use X instead"
         assert "fix_replacement" not in d
 
     def test_issue_to_dict_with_fix_replacement(self) -> None:
-        issue = Issue(rule_id="r1", severity="error", category="sec", file="a.py", line=1,
-                       fix_replacement="new code")
+        issue = Issue(rule_id="r1", severity="error", category="sec", file="a.py", line=1, fix_replacement="new code")
         d = issue.to_dict()
         assert "fix_hint" not in d
         assert d["fix_replacement"] == "new code"
 
     def test_issue_to_dict_all_fields(self) -> None:
-        issue = Issue(rule_id="r1", severity="warning", category="style", file="b.rs", line=10,
-                       column=5, message="msg", fix_hint="hint", fix_replacement="repl")
+        issue = Issue(
+            rule_id="r1",
+            severity="warning",
+            category="style",
+            file="b.rs",
+            line=10,
+            column=5,
+            message="msg",
+            fix_hint="hint",
+            fix_replacement="repl",
+        )
         d = issue.to_dict()
         assert d["rule_id"] == "r1"
         assert d["severity"] == "warning"
@@ -118,8 +125,12 @@ class TestRulesModelsFixResult(unittest.TestCase):
         fr = FixResult(file="a.py", line=5, rule_id="r1", original="old", replacement="new", applied=True)
         d = fr.to_dict()
         assert d == {
-            "file": "a.py", "line": 5, "rule_id": "r1",
-            "original": "old", "replacement": "new", "applied": True,
+            "file": "a.py",
+            "line": 5,
+            "rule_id": "r1",
+            "original": "old",
+            "replacement": "new",
+            "applied": True,
         }
 
 
@@ -206,10 +217,17 @@ class TestAntiPatternCheckerEdgeCases(unittest.TestCase):
     def test_multiline_pattern(self) -> None:
         from tools.scripts.rules_engine.anti_pattern_checker import check_anti_patterns
 
-        rules = {"anti_patterns": [{
-            "id": "ml-test", "pattern": "def foo\\n.*pass", "multiline": True,
-            "severity": "warning", "message": "empty function"
-        }]}
+        rules = {
+            "anti_patterns": [
+                {
+                    "id": "ml-test",
+                    "pattern": "def foo\\n.*pass",
+                    "multiline": True,
+                    "severity": "warning",
+                    "message": "empty function",
+                }
+            ]
+        }
         with tempfile.NamedTemporaryFile(suffix=".py", mode="w", delete=False) as f:
             f.write("def foo\n    pass\n")
             f.flush()
@@ -224,10 +242,17 @@ class TestAntiPatternCheckerEdgeCases(unittest.TestCase):
     def test_exclude_patterns(self) -> None:
         from tools.scripts.rules_engine.anti_pattern_checker import check_anti_patterns
 
-        rules = {"anti_patterns": [{
-            "id": "test", "pattern": r"\beval\s*\(", "severity": "error", "message": "m",
-            "exclude_patterns": [r"# noqa"],
-        }]}
+        rules = {
+            "anti_patterns": [
+                {
+                    "id": "test",
+                    "pattern": r"\beval\s*\(",
+                    "severity": "error",
+                    "message": "m",
+                    "exclude_patterns": [r"# noqa"],
+                }
+            ]
+        }
         with tempfile.NamedTemporaryFile(suffix=".py", mode="w", delete=False) as f:
             f.write("eval(1)  # noqa\n")
             f.flush()
@@ -241,10 +266,17 @@ class TestAntiPatternCheckerEdgeCases(unittest.TestCase):
     def test_ignore_case(self) -> None:
         from tools.scripts.rules_engine.anti_pattern_checker import check_anti_patterns
 
-        rules = {"anti_patterns": [{
-            "id": "test", "pattern": r"EVAL\(", "severity": "error",
-            "message": "m", "ignore_case": True,
-        }]}
+        rules = {
+            "anti_patterns": [
+                {
+                    "id": "test",
+                    "pattern": r"EVAL\(",
+                    "severity": "error",
+                    "message": "m",
+                    "ignore_case": True,
+                }
+            ]
+        }
         with tempfile.NamedTemporaryFile(suffix=".py", mode="w", delete=False) as f:
             f.write("eval(1)\n")
             f.flush()
@@ -258,10 +290,17 @@ class TestAntiPatternCheckerEdgeCases(unittest.TestCase):
     def test_invalid_multiline_regex(self) -> None:
         from tools.scripts.rules_engine.anti_pattern_checker import check_anti_patterns
 
-        rules = {"anti_patterns": [{
-            "id": "ml-bad", "pattern": "[invalid", "multiline": True,
-            "severity": "warning", "message": "m",
-        }]}
+        rules = {
+            "anti_patterns": [
+                {
+                    "id": "ml-bad",
+                    "pattern": "[invalid",
+                    "multiline": True,
+                    "severity": "warning",
+                    "message": "m",
+                }
+            ]
+        }
         with tempfile.NamedTemporaryFile(suffix=".py", mode="w", delete=False) as f:
             f.write("hello\n")
             f.flush()
@@ -287,8 +326,10 @@ class TestRuleLoaderEdgeCases(unittest.TestCase):
             cache_file = cache_dir / "test_cache.json"
             test_data = {"key": "value", "nested": [1, 2, 3]}
 
-            with patch.object(rule_loader, "_DISK_CACHE_DIR", cache_dir), \
-                 patch.object(rule_loader, "_DISK_CACHE_FILE", cache_file):
+            with (
+                patch.object(rule_loader, "_DISK_CACHE_DIR", cache_dir),
+                patch.object(rule_loader, "_DISK_CACHE_FILE", cache_file),
+            ):
                 rule_loader._save_disk_cache(test_data)
                 result = rule_loader._load_disk_cache()
                 assert result == test_data
@@ -551,8 +592,7 @@ class TestValidatorsCLIMain(unittest.TestCase):
             f.flush()
             path = Path(f.name)
         try:
-            with patch("sys.argv", ["prog", "/nonexistent", "--lang", "python",
-                                     "--changed-files", str(path)]):
+            with patch("sys.argv", ["prog", "/nonexistent", "--lang", "python", "--changed-files", str(path)]):
                 result = main()
                 assert result in (0, 1)
         finally:
@@ -561,8 +601,7 @@ class TestValidatorsCLIMain(unittest.TestCase):
     def test_changed_files_nonexistent(self) -> None:
         from tools.scripts.validators.cli import main
 
-        with patch("sys.argv", ["prog", "/nonexistent", "--lang", "python",
-                                 "--changed-files", "/nonexistent/file.py"]):
+        with patch("sys.argv", ["prog", "/nonexistent", "--lang", "python", "--changed-files", "/nonexistent/file.py"]):
             result = main()
             assert result == 1  # Path not found
 
@@ -676,8 +715,9 @@ class TestValidatorsCLIMain(unittest.TestCase):
             with tempfile.NamedTemporaryFile(suffix=".json", delete=False) as out:
                 out_path = Path(out.name)
             try:
-                with patch("sys.argv", ["prog", str(path), "--lang", "python",
-                                         "--format", "json", "-o", str(out_path)]):
+                with patch(
+                    "sys.argv", ["prog", str(path), "--lang", "python", "--format", "json", "-o", str(out_path)]
+                ):
                     result = main()
                     assert result in (0, 1)
             finally:
@@ -749,8 +789,7 @@ class TestValidatorsCLIMain(unittest.TestCase):
             f.flush()
             path = Path(f.name)
         try:
-            with patch("sys.argv", ["prog", str(path), "--lang", "python",
-                                     "--format", "json", "--max-warnings", "0"]):
+            with patch("sys.argv", ["prog", str(path), "--lang", "python", "--format", "json", "--max-warnings", "0"]):
                 result = main()
                 assert result in (0, 1)
         finally:
@@ -1055,8 +1094,10 @@ class TestValidatorsCLIAdditionalPaths(unittest.TestCase):
             mock_issues = [
                 {"linter": "ruff", "file": str(path), "line": 1, "message": "unused var"},
             ]
-            with patch("sys.argv", ["prog", str(path), "--lang", "python", "--linters", "ruff"]), \
-                 patch("tools.scripts.linter_runner.run_linter_aggregation", return_value=mock_issues):
+            with (
+                patch("sys.argv", ["prog", str(path), "--lang", "python", "--linters", "ruff"]),
+                patch("tools.scripts.linter_runner.run_linter_aggregation", return_value=mock_issues),
+            ):
                 result = main()
                 assert result in (0, 1)
         finally:
@@ -1071,12 +1112,11 @@ class TestValidatorsCLIAdditionalPaths(unittest.TestCase):
             f.flush()
             path = Path(f.name)
         try:
-            mock_issues = [
-                {"linter": "ruff", "file": str(path), "line": i, "message": f"issue {i}"}
-                for i in range(25)
-            ]
-            with patch("sys.argv", ["prog", str(path), "--lang", "python", "--linters", "ruff"]), \
-                 patch("tools.scripts.linter_runner.run_linter_aggregation", return_value=mock_issues):
+            mock_issues = [{"linter": "ruff", "file": str(path), "line": i, "message": f"issue {i}"} for i in range(25)]
+            with (
+                patch("sys.argv", ["prog", str(path), "--lang", "python", "--linters", "ruff"]),
+                patch("tools.scripts.linter_runner.run_linter_aggregation", return_value=mock_issues),
+            ):
                 result = main()
                 assert result in (0, 1)
         finally:
@@ -1091,8 +1131,7 @@ class TestValidatorsCLIAdditionalPaths(unittest.TestCase):
             f.flush()
             path = Path(f.name)
         try:
-            with patch("sys.argv", ["prog", str(path), "--lang", "python",
-                                     "--max-warnings", "0"]):
+            with patch("sys.argv", ["prog", str(path), "--lang", "python", "--max-warnings", "0"]):
                 result = main()
                 # May or may not have warnings
                 assert result in (0, 1)
@@ -1108,8 +1147,7 @@ class TestValidatorsCLIAdditionalPaths(unittest.TestCase):
             f.flush()
             path = Path(f.name)
         try:
-            with patch("sys.argv", ["prog", str(path), "--lang", "python",
-                                     "--fail-on-warnings"]):
+            with patch("sys.argv", ["prog", str(path), "--lang", "python", "--fail-on-warnings"]):
                 result = main()
                 assert result in (0, 1)
         finally:
@@ -1124,8 +1162,7 @@ class TestValidatorsCLIAdditionalPaths(unittest.TestCase):
             f.flush()
             path = Path(f.name)
         try:
-            with patch("sys.argv", ["prog", str(path), "--lang", "python",
-                                     "--format", "json", "--max-errors", "0"]):
+            with patch("sys.argv", ["prog", str(path), "--lang", "python", "--format", "json", "--max-errors", "0"]):
                 result = main()
                 assert result in (0, 1)
         finally:
@@ -1140,8 +1177,7 @@ class TestValidatorsCLIAdditionalPaths(unittest.TestCase):
             f.flush()
             path = Path(f.name)
         try:
-            with patch("sys.argv", ["prog", str(path), "--lang", "python",
-                                     "--format", "json", "--max-warnings", "0"]):
+            with patch("sys.argv", ["prog", str(path), "--lang", "python", "--format", "json", "--max-warnings", "0"]):
                 result = main()
                 assert result in (0, 1)
         finally:
@@ -1163,8 +1199,10 @@ class TestValidatorsCLIAdditionalPaths(unittest.TestCase):
             f.flush()
             path = Path(f.name)
         try:
-            with patch("sys.argv", ["prog", str(path), "--lang", "python", "--fix"]), \
-                 patch("tools.scripts.fix_applier.apply_fixes", return_value=[mock_fix]):
+            with (
+                patch("sys.argv", ["prog", str(path), "--lang", "python", "--fix"]),
+                patch("tools.scripts.fix_applier.apply_fixes", return_value=[mock_fix]),
+            ):
                 result = main()
                 assert result in (0, 1)
         finally:
@@ -1225,8 +1263,10 @@ class TestValidatorsCLIAdditionalPaths(unittest.TestCase):
             f.flush()
             path = Path(f.name)
         try:
-            with patch("sys.argv", ["prog", str(path), "--lang", "python", "--linters", "ruff"]), \
-                 patch("tools.scripts.linter_runner.run_linter_aggregation", return_value=[]):
+            with (
+                patch("sys.argv", ["prog", str(path), "--lang", "python", "--linters", "ruff"]),
+                patch("tools.scripts.linter_runner.run_linter_aggregation", return_value=[]),
+            ):
                 result = main()
                 assert result in (0, 1)
         finally:

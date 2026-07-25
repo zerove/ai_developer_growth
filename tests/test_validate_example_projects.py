@@ -1,4 +1,5 @@
 """Tests for validate_example_projects.py (48% → target 85%)."""
+
 from __future__ import annotations
 
 from pathlib import Path
@@ -98,6 +99,7 @@ class TestMain:
     def test_no_examples_dir(self, tmp_path: Path) -> None:
         """When examples/ doesn't exist, main() exits 1."""
         import os
+
         old_cwd = os.getcwd()
         try:
             os.chdir(tmp_path)
@@ -109,6 +111,7 @@ class TestMain:
 
     def test_all_pass(self, tmp_path: Path) -> None:
         import os
+
         old_cwd = os.getcwd()
         try:
             examples_dir = tmp_path / "examples"
@@ -128,6 +131,7 @@ class TestMain:
 
     def test_some_fail(self, tmp_path: Path) -> None:
         import os
+
         old_cwd = os.getcwd()
         try:
             examples_dir = tmp_path / "examples"
@@ -149,6 +153,7 @@ class TestMain:
 
     def test_skip_non_dir_entries(self, tmp_path: Path) -> None:
         import os
+
         old_cwd = os.getcwd()
         try:
             examples_dir = tmp_path / "examples"

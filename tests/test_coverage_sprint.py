@@ -26,6 +26,7 @@ import pytest
 # create_case_study.py
 # ──────────────────────────────────────────────────────────
 
+
 class TestCreateCaseStudy:
     def test_create_with_existing_template(self, tmp_path: Path) -> None:
         from tools.scripts.create_case_study import create_case_study_structure
@@ -69,6 +70,7 @@ class TestCreateCaseStudy:
 # rule_engine.py
 # ──────────────────────────────────────────────────────────
 
+
 class TestRuleEngine:
     def test_asdict_dataclass(self) -> None:
         from tools.scripts.rule_engine import asdict
@@ -83,10 +85,12 @@ class TestRuleEngine:
 
     def test_asdict_dict(self) -> None:
         from tools.scripts.rule_engine import asdict
+
         assert asdict({"a": 1}) == {"a": 1}
 
     def test_asdict_other(self) -> None:
         from tools.scripts.rule_engine import asdict
+
         assert asdict(42) == {"value": 42}
 
     def test_validate_file(self, tmp_path: Path) -> None:
@@ -191,6 +195,7 @@ class TestRuleEngine:
 # fix_metadata.py
 # ──────────────────────────────────────────────────────────
 
+
 class TestFixMetadata:
     def test_get_category_from_path(self) -> None:
         from tools.scripts.fix_metadata import get_category_from_path
@@ -291,6 +296,7 @@ class TestFixMetadata:
 # rule_catalog.py
 # ──────────────────────────────────────────────────────────
 
+
 class TestRuleCatalog:
     def test_validate_rules_not_found(self) -> None:
         from tools.scripts.rule_catalog import validate_rules
@@ -362,6 +368,7 @@ class TestRuleCatalog:
 # ──────────────────────────────────────────────────────────
 # hooks/incremental_checks.py
 # ──────────────────────────────────────────────────────────
+
 
 class TestIncrementalChecks:
     def test_get_changed_files_timeout(self) -> None:
@@ -480,7 +487,9 @@ class TestIncrementalChecks:
         py_file.write_text("x = 1\n")
 
         mock_result = SimpleNamespace(
-            file=str(py_file), language="python", passed=False,
+            file=str(py_file),
+            language="python",
+            passed=False,
             issues=[SimpleNamespace(severity="error", rule_id="r1", message="bad", line=1, column=1, category="c")],
         )
 
@@ -502,18 +511,31 @@ import subprocess  # noqa: E402
 # report_generator.py
 # ──────────────────────────────────────────────────────────
 
+
 class TestReportGenerator:
-    def _make_result(self, *, passed: bool = True, errors: int = 0, warnings: int = 0, infos: int = 0) -> SimpleNamespace:
+    def _make_result(
+        self, *, passed: bool = True, errors: int = 0, warnings: int = 0, infos: int = 0
+    ) -> SimpleNamespace:
         issues = []
         for _ in range(errors):
-            issues.append(SimpleNamespace(severity="error", rule_id="r1", message="err", line=1, column=1, category="c"))
+            issues.append(
+                SimpleNamespace(severity="error", rule_id="r1", message="err", line=1, column=1, category="c")
+            )
         for _ in range(warnings):
-            issues.append(SimpleNamespace(severity="warning", rule_id="r2", message="warn", line=2, column=1, category="c"))
+            issues.append(
+                SimpleNamespace(severity="warning", rule_id="r2", message="warn", line=2, column=1, category="c")
+            )
         for _ in range(infos):
-            issues.append(SimpleNamespace(severity="info", rule_id="r3", message="info", line=3, column=1, category="c"))
+            issues.append(
+                SimpleNamespace(severity="info", rule_id="r3", message="info", line=3, column=1, category="c")
+            )
         return SimpleNamespace(
-            file="test.py", language="python", passed=passed,
-            error_count=errors, warning_count=warnings, info_count=infos,
+            file="test.py",
+            language="python",
+            passed=passed,
+            error_count=errors,
+            warning_count=warnings,
+            info_count=infos,
             issues=issues,
             to_dict=lambda: {"file": "test.py", "language": "python"},
         )
@@ -546,10 +568,12 @@ class TestReportGenerator:
     def test_html_report(self) -> None:
         from tools.scripts.report_generator import generate_html_report
 
-        html = generate_html_report([
-            self._make_result(passed=True),
-            self._make_result(passed=False, errors=1),
-        ])
+        html = generate_html_report(
+            [
+                self._make_result(passed=True),
+                self._make_result(passed=False, errors=1),
+            ]
+        )
         assert "<html" in html
         assert "FAIL" in html
         assert "PASS" in html
@@ -621,12 +645,13 @@ class TestReportGenerator:
     def test_html_escape(self) -> None:
         from tools.scripts.report_generator import _html_escape
 
-        assert _html_escape('<a>&') == "&lt;a&gt;&amp;"
+        assert _html_escape("<a>&") == "&lt;a&gt;&amp;"
 
 
 # ──────────────────────────────────────────────────────────
 # contributor_dashboard.py
 # ──────────────────────────────────────────────────────────
+
 
 class TestContributorDashboard:
     def test_analyze_case_studies_no_dir(self, tmp_path: Path) -> None:

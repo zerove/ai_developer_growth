@@ -118,7 +118,9 @@ class TestCheckFile:
 
     def test_clean_code_no_errors(self, tmp_path: Path):
         test_file = tmp_path / "test.py"
-        test_file.write_text("def process(items: list[str]) -> dict[str, int]:\n    return {i: len(i) for i in items}\n")
+        test_file.write_text(
+            "def process(items: list[str]) -> dict[str, int]:\n    return {i: len(i) for i in items}\n"
+        )
         rules = load_rules_for_language("python")
         issues = check_file(test_file, rules, "error")
         error_issues = [i for i in issues if i.severity == "error"]
@@ -152,169 +154,143 @@ class TestFrameworkDetection:
         # Create manage.py with Django content
         manage_py = tmp_path / "manage.py"
         manage_py.write_text(
-            '#!/usr/bin/env python\n'
-            'import os\n'
-            'import sys\n'
+            "#!/usr/bin/env python\n"
+            "import os\n"
+            "import sys\n"
             'os.environ.setdefault("DJANGO_SETTINGS_MODULE", "myproject.settings")\n'
         )
-        
+
         # Create views.py to make it a Python project
         views_py = tmp_path / "views.py"
-        views_py.write_text('from django.http import JsonResponse\n')
-        
+        views_py.write_text("from django.http import JsonResponse\n")
+
         result = detect_language(tmp_path)
         assert result["framework"] == "django"
-    
+
     def test_django_detection_requirements(self, tmp_path: Path):
         """Test Django detection from requirements.txt."""
         # Create requirements.txt with Django
         req_txt = tmp_path / "requirements.txt"
         req_txt.write_text("Django==4.2\n")
-        
+
         # Create a Python file
         py_file = tmp_path / "app.py"
         py_file.write_text("import django\n")
-        
+
         result = detect_language(tmp_path)
         assert result["framework"] == "django"
-    
+
     def test_fastapi_detection(self, tmp_path: Path):
         """Test FastAPI detection from requirements.txt."""
         # Create requirements.txt with FastAPI
         req_txt = tmp_path / "requirements.txt"
         req_txt.write_text("fastapi==0.104.1\n")
-        
+
         # Create a Python file
         py_file = tmp_path / "main.py"
-        py_file.write_text('from fastapi import FastAPI\n')
-        
+        py_file.write_text("from fastapi import FastAPI\n")
+
         result = detect_language(tmp_path)
         assert result["framework"] == "fastapi"
-    
+
     def test_react_detection(self, tmp_path: Path):
         """Test React detection from package.json."""
         # Create package.json with React
         pkg_json = tmp_path / "package.json"
-        pkg_json.write_text(json.dumps({
-            'name': 'my-react-app',
-            'dependencies': {
-                'react': '^18.2.0',
-                'react-dom': '^18.2.0'
-            }
-        }))
-        
+        pkg_json.write_text(
+            json.dumps({"name": "my-react-app", "dependencies": {"react": "^18.2.0", "react-dom": "^18.2.0"}})
+        )
+
         # Create a JS file
         js_file = tmp_path / "index.js"
         js_file.write_text('import React from "react";\n')
-        
+
         result = detect_language(tmp_path)
         assert result["framework"] == "react"
-    
+
     def test_vue_detection(self, tmp_path: Path):
         """Test Vue detection from package.json."""
         # Create package.json with Vue
         pkg_json = tmp_path / "package.json"
-        pkg_json.write_text(json.dumps({
-            'name': 'my-vue-app',
-            'dependencies': {
-                'vue': '^3.3.0'
-            }
-        }))
-        
+        pkg_json.write_text(json.dumps({"name": "my-vue-app", "dependencies": {"vue": "^3.3.0"}}))
+
         # Create a JS file
         js_file = tmp_path / "main.js"
         js_file.write_text('import { createApp } from "vue";\n')
-        
+
         result = detect_language(tmp_path)
         assert result["framework"] == "vue"
-    
+
     def test_spring_detection(self, tmp_path: Path):
         """Test Spring detection from pom.xml."""
         # Create pom.xml with Spring
         pom_xml = tmp_path / "pom.xml"
         pom_xml.write_text(
             '<?xml version="1.0" encoding="UTF-8"?>\n'
-            '<project>\n'
-            '  <parent>\n'
-            '    <groupId>org.springframework.boot</groupId>\n'
-            '    <artifactId>spring-boot-starter-parent</artifactId>\n'
-            '  </parent>\n'
-            '</project>\n'
+            "<project>\n"
+            "  <parent>\n"
+            "    <groupId>org.springframework.boot</groupId>\n"
+            "    <artifactId>spring-boot-starter-parent</artifactId>\n"
+            "  </parent>\n"
+            "</project>\n"
         )
-        
+
         # Create a Java file
         java_file = tmp_path / "Application.java"
-        java_file.write_text('import org.springframework.boot.SpringApplication;\n')
-        
+        java_file.write_text("import org.springframework.boot.SpringApplication;\n")
+
         result = detect_language(tmp_path)
         assert result["framework"] == "spring"
-    
+
     def test_actix_detection(self, tmp_path: Path):
         """Test Actix detection from Cargo.toml."""
         # Create Cargo.toml with actix
         cargo_toml = tmp_path / "Cargo.toml"
-        cargo_toml.write_text(
-            '[package]\n'
-            'name = "my-app"\n'
-            '\n'
-            '[dependencies]\n'
-            'actix-web = "4"\n'
-        )
-        
+        cargo_toml.write_text('[package]\nname = "my-app"\n\n[dependencies]\nactix-web = "4"\n')
+
         # Create a Rust file
         rs_file = tmp_path / "main.rs"
-        rs_file.write_text('use actix_web::{web, App, HttpServer};\n')
-        
+        rs_file.write_text("use actix_web::{web, App, HttpServer};\n")
+
         result = detect_language(tmp_path)
         assert result["framework"] == "actix"
-    
+
     def test_express_detection(self, tmp_path: Path):
         """Test Express detection from package.json."""
         # Create package.json with express
         pkg_json = tmp_path / "package.json"
-        pkg_json.write_text(json.dumps({
-            'name': 'express-app',
-            'dependencies': {
-                'express': '^4.18.2'
-            }
-        }))
-        
+        pkg_json.write_text(json.dumps({"name": "express-app", "dependencies": {"express": "^4.18.2"}}))
+
         # Create a JS file
         js_file = tmp_path / "app.js"
         js_file.write_text("const express = require('express');\n")
-        
+
         result = detect_language(tmp_path)
         assert result["framework"] == "express"
-    
+
     def test_nextjs_detection(self, tmp_path: Path):
         """Test Next.js detection from package.json."""
         # Create package.json with next
         pkg_json = tmp_path / "package.json"
-        pkg_json.write_text(json.dumps({
-            'name': 'nextjs-app',
-            'dependencies': {
-                'next': '14.0.0',
-                'react': '^18.2.0'
-            }
-        }))
-        
+        pkg_json.write_text(json.dumps({"name": "nextjs-app", "dependencies": {"next": "14.0.0", "react": "^18.2.0"}}))
+
         result = detect_language(tmp_path)
         assert result["framework"] == "nextjs"
-    
+
     def test_springboot_detection(self, tmp_path: Path):
         """Test Spring Boot detection from pom.xml."""
         # Create pom.xml with Spring Boot
         pom_xml = tmp_path / "pom.xml"
         pom_xml.write_text(
             '<?xml version="1.0" encoding="UTF-8"?>\n'
-            '<project>\n'
-            '  <parent>\n'
-            '    <groupId>org.springframework.boot</groupId>\n'
-            '    <artifactId>spring-boot-starter-parent</artifactId>\n'
-            '  </parent>\n'
-            '</project>\n'
+            "<project>\n"
+            "  <parent>\n"
+            "    <groupId>org.springframework.boot</groupId>\n"
+            "    <artifactId>spring-boot-starter-parent</artifactId>\n"
+            "  </parent>\n"
+            "</project>\n"
         )
-        
+
         result = detect_language(tmp_path)
         assert result["framework"] == "spring"
 

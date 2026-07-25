@@ -37,6 +37,7 @@ Architecture:
 
 from .checker import check_directory, check_file
 from .models import CheckResult, Issue, Severity
+from .auto_fix import apply_fixes, apply_fixes_to_directory, format_fix_results
 from .plugins import (
     CheckerPlugin,
     clear_plugins,
@@ -54,10 +55,13 @@ __all__ = [
     "CheckerPlugin",
     "Issue",
     "Severity",
+    "apply_fixes",
+    "apply_fixes_to_directory",
     "check_directory",
     "check_file",
     "clear_plugins",
     "discover_plugins",
+    "format_fix_results",
     "get_plugins_for_language",
     "list_plugins",
     "load_rules_for_language",
@@ -66,4 +70,4 @@ __all__ = [
     "unregister_checker",
 ]
 
-__version__ = "1.1.0"
+__version__ = "1.2.0"

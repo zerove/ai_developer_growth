@@ -68,10 +68,12 @@ class TestCheckAntiPatterns:
         assert result == []
 
     def test_multiple_patterns(self) -> None:
-        rules = {"anti_patterns": [
-            {"id": "a1", "pattern": r"eval\(", "severity": "error", "message": "m1"},
-            {"id": "a2", "pattern": r"exec\(", "severity": "error", "message": "m2"},
-        ]}
+        rules = {
+            "anti_patterns": [
+                {"id": "a1", "pattern": r"eval\(", "severity": "error", "message": "m1"},
+                {"id": "a2", "pattern": r"exec\(", "severity": "error", "message": "m2"},
+            ]
+        }
         result = check_anti_patterns(["eval('x'); exec('y')"], rules, "f.py")
         assert len(result) == 2
 
@@ -123,11 +125,17 @@ class TestLoadCustomRules:
     def test_load_yml_files(self, tmp_path: Path) -> None:
         rules_dir = tmp_path / ".ai-rules"
         rules_dir.mkdir()
-        (rules_dir / "custom.yml").write_text(yaml.dump({
-            "anti_patterns": [{"id": "c1", "pattern": r"FIXME", "severity": "warning", "message": "fixme found"}],
-            "naming": {"func": {"pattern": r"[a-z]", "severity": "info", "message": "msg"}},
-            "thresholds": {"max_lines": 50},
-        }))
+        (rules_dir / "custom.yml").write_text(
+            yaml.dump(
+                {
+                    "anti_patterns": [
+                        {"id": "c1", "pattern": r"FIXME", "severity": "warning", "message": "fixme found"}
+                    ],
+                    "naming": {"func": {"pattern": r"[a-z]", "severity": "info", "message": "msg"}},
+                    "thresholds": {"max_lines": 50},
+                }
+            )
+        )
         result = load_custom_rules(tmp_path)
         assert len(result["anti_patterns"]) == 1
         assert result["naming"]["func"]["pattern"] == r"[a-z]"

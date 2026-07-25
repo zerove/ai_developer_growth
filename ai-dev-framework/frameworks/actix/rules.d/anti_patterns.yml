@@ -66,3 +66,58 @@ anti_patterns:
   pattern: 'format!\(.*SELECT|format!\(.*INSERT|format!\(.*UPDATE|format!\(.*DELETE'
   message: 'Raw SQL with format! enables SQL injection'
   fix_hint: 'Use parameterized queries or ORM'
+
+- id: actix-unhandled-await
+  name: Unhandled Result from async call
+  severity: warning
+  category: error_handling
+  pattern: '\.await\s*;'
+  message: 'Async call result not handled - missing error handling'
+  fix_hint: 'Add .await? with ? operator or match for error handling'
+
+- id: actix-large-payload
+  name: Large payload without size limit
+  severity: warning
+  category: security
+  pattern: 'HttpMessage::from_body|web::Bytes::from'
+  message: 'Unbounded payload can cause memory exhaustion'
+  fix_hint: 'Use web::Payload with size limit via .limit()'
+
+naming:
+  file:
+    pattern: '^[a-z][a-z0-9_]*\.rs$'
+    message: 'Rust files should use snake_case'
+  function:
+    pattern: '^[a-z][a-z0-9_]*$'
+    exceptions:
+      - main
+      - new
+      - build
+      - from
+      - into
+      - default
+    message: 'Rust functions should use snake_case'
+  type:
+    pattern: '^[A-Z][a-zA-Z0-9]*$'
+    message: 'Rust types should use PascalCase'
+  constant:
+    pattern: '^[A-Z][A-Z0-9_]*$'
+    message: 'Rust constants should use UPPER_SNAKE_CASE'
+
+thresholds:
+  max_function_length: 50
+  max_file_length: 500
+  max_line_length: 120
+  max_nesting_depth: 4
+  max_function_params: 7
+  max_cyclomatic_complexity: 10
+
+tooling:
+  linter: clippy
+  formatter: rustfmt
+  type_checker: rustc
+  test_runner: cargo-test
+  config_files:
+    - Cargo.toml
+    - clippy.toml
+    - rustfmt.toml

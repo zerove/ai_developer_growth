@@ -82,3 +82,51 @@ anti_patterns:
   pattern: 'catch\s*\([^)]*\)\s*\{\s*\}'
   message: 'Empty catch blocks hide errors'
   fix_hint: 'Log the exception or rethrow'
+
+- id: spring-missing-bean-validation
+  name: Missing @Validated on controller class
+  severity: info
+  category: security
+  pattern: '@(RestController|Controller)\s'
+  message: 'Controller should have @Validated for method-level validation'
+  fix_hint: 'Add @Validated annotation to controller class'
+
+- id: spring-no-async-on-method
+  name: Missing @Async on long-running methods
+  severity: info
+  category: performance
+  pattern: '@Scheduled\('
+  message: 'Scheduled tasks should not block the scheduler thread'
+  fix_hint: 'Use @Async with @Scheduled for long-running tasks'
+
+naming:
+  file:
+    pattern: '^[A-Z][a-zA-Z0-9]*\.java$'
+    message: 'Java files should use PascalCase'
+  function:
+    pattern: '^[a-z][a-zA-Z0-9]*$'
+    message: 'Methods should use camelCase'
+  class:
+    pattern: '^[A-Z][a-zA-Z0-9]*$'
+    message: 'Classes should use PascalCase'
+  constant:
+    pattern: '^[A-Z][A-Z0-9_]*$'
+    message: 'Constants should use UPPER_SNAKE_CASE'
+
+thresholds:
+  max_function_length: 40
+  max_file_length: 500
+  max_line_length: 120
+  max_nesting_depth: 4
+  max_function_params: 5
+  max_cyclomatic_complexity: 10
+
+tooling:
+  linter: checkstyle
+  formatter: google-java-format
+  type_checker: null
+  test_runner: junit
+  config_files:
+    - pom.xml
+    - build.gradle
+    - checkstyle.xml

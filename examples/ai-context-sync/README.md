@@ -38,6 +38,36 @@ dx guard --branch feature/xxx
 dx audit --fix
 ```
 
+## 1 分钟 Demo 模式
+
+```bash
+# 快速体验：自动检测项目并生成 CONTEXT.md
+dx demo
+
+# Demo 模式会：
+# 1. 检测项目语言和框架
+# 2. 分析 git 历史生成最近变更
+# 3. 自动创建 CONTEXT.md 和 ADR.md
+# 4. 显示同步结果摘要
+```
+
+## 配置
+
+| 配置项 | 默认值 | 说明 |
+|--------|--------|------|
+| `CONTEXT_FILE` | `CONTEXT.md` | 上下文文件路径 |
+| `ADR_DIR` | `docs/adr/` | ADR 存放目录 |
+| `LLM_PROVIDER` | `auto` | LLM 提供商 (openai/claude/gemini/ollama/auto) |
+| `IGNORE_DIRS` | `.git,node_modules` | 忽略的目录 |
+
+## 边缘情况
+
+- **大型仓库**: 使用 `.dxignore` 排除不需要同步的目录
+- **多分支**: 使用 `dx sync --branch <name>` 指定分支
+- **离线模式**: 设置 `LLM_PROVIDER=none` 跳过 AI 生成
+- **CI/CD 集成**: 在 `.github/workflows/` 中添加 `dx sync --check` 验证上下文是否过期
+- **冲突解决**: CONTEXT.md 冲突时使用 `dx sync --force` 覆盖
+
 ## 测试
 
 ```bash

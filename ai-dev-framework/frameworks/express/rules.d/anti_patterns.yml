@@ -66,3 +66,51 @@ anti_patterns:
   pattern: 'app\.listen\('
   message: 'Ensure error handling middleware is registered'
   fix_hint: 'Add: app.use((err, req, res, next) => {...})'
+
+- id: express-no-ratelimit
+  name: Missing rate limiting
+  severity: warning
+  category: security
+  pattern: 'app\.listen\('
+  message: 'Consider adding rate limiting to prevent abuse'
+  fix_hint: 'Add express-rate-limit middleware'
+
+- id: express-sql-string-format
+  name: SQL injection via template literal
+  severity: error
+  category: security
+  pattern: '(?:execute|query)\s*\(.*`[^`]*\$\{'
+  message: 'String interpolation in SQL enables injection'
+  fix_hint: 'Use parameterized queries with ? placeholders'
+
+naming:
+  file:
+    pattern: '^[a-z][a-z0-9-]*\.js$'
+    message: 'JavaScript files should use kebab-case'
+  function:
+    pattern: '^[a-z][a-zA-Z0-9]*$'
+    message: 'Functions should use camelCase'
+  class:
+    pattern: '^[A-Z][a-zA-Z0-9]*$'
+    message: 'Classes should use PascalCase'
+  constant:
+    pattern: '^[A-Z][A-Z0-9_]*$'
+    message: 'Constants should use UPPER_SNAKE_CASE'
+
+thresholds:
+  max_function_length: 40
+  max_file_length: 300
+  max_line_length: 100
+  max_nesting_depth: 4
+  max_function_params: 5
+  max_cyclomatic_complexity: 10
+
+tooling:
+  linter: eslint
+  formatter: prettier
+  type_checker: jscpd
+  test_runner: jest
+  config_files:
+    - .eslintrc.json
+    - .prettierrc
+    - package.json

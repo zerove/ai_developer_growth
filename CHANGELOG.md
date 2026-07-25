@@ -2,6 +2,91 @@
 
 All notable changes to the AI Developer Growth project.
 
+## [2.1.0] - 2026-07-25
+
+### Added
+
+- **P0: Framework Rules Enhancement (9/9)**
+  - Enhanced actix, express, nextjs, spring-boot with naming/thresholds/tooling rules
+  - All 9 frameworks now have complete YAML configurations
+
+- **P0: Auto-fix Engine**
+  - `tools/scripts/rules_engine/auto_fix.py` - Regex-based auto-fix for 5 languages
+  - Python: bare-except, eval, print, yaml.load, Optional syntax
+  - JavaScript: eval, var, innerHTML, console.log, debugger
+  - TypeScript: any type, as any, require()
+  - Rust: unwrap(), panic!
+  - Java: System.out.println, printStackTrace()
+
+- **P0: CI/CD Integration Templates**
+  - GitLab CI template (`.github/ci-templates/gitlab-ci.yml`)
+  - GitLab MR comment integration (`.github/ci-templates/gitlab-mr-integration.yml`)
+  - Azure Pipelines template (`.github/ci-templates/azure-pipelines.yml`)
+  - Jenkins Pipeline template (`.github/ci-templates/Jenkinsfile`)
+  - CircleCI template (`.github/ci-templates/circleci.yml`)
+  - GitHub Actions PR quality report (`.github/workflows/adg-quality-report.yml`)
+  - All produce CodeClimate-compatible JSON output
+
+- **P1: Custom Rules Support**
+  - `.adg/rules.yml` project-level configuration
+  - `~/.config/adg/rules.yml` user global configuration
+  - Priority inheritance: global → project → .ai-rules/
+  - Severity override support for built-in rules
+  - Example: `.adg/rules.yml.example`
+
+- **P1: Parallel Checking**
+  - `--jobs N` flag for `language-rules` and `quality-gate` commands
+  - Uses `ProcessPoolExecutor` for true parallel execution
+  - Auto-fallback to serial for small file sets (≤4 files)
+
+- **P1: Pre-push Hook**
+  - `adg install-hooks --pre-push` installs git pre-push hook
+  - Checks unpushed commits for lint/format/language rules
+  - Incremental checking of changed code files only
+
+- **P2: Quality Dashboard**
+  - `tools/scripts/rules_engine/dashboard.py` - FastAPI + SQLite web dashboard
+  - Quality trend charts (errors/warnings over time)
+  - File-level detail view
+  - API endpoints: `/api/trend`, `/api/latest`, `/api/record`
+  - Dark theme responsive UI with Chart.js
+  - Run: `adg dashboard --port 8765`
+
+- **P2: GitHub/GitLab PR Integration**
+  - Auto-posts quality report as PR/MR comment
+  - Updates comment on subsequent pushes
+  - Fails CI on errors
+
+- **P2: Language Extensions**
+  - Enhanced Kotlin rules (10 patterns: coroutine blocking, null assertion, etc.)
+  - Enhanced Swift rules (10 patterns: force unwrap, retain cycle, etc.)
+  - All include naming/thresholds/tooling sections
+
+- **P3: AI-driven Rule Generation**
+  - `tools/scripts/rules_engine/ai_rules_generator.py`
+  - `adg learn <project_path>` - analyzes codebase, detects 10+ pattern types
+  - Generates custom `.adg/rules.yml` configuration
+  - Run: `adg learn ./my-project -o .adg/rules.yml`
+
+- **P3: LSP Server**
+  - `tools/scripts/rules_engine/lsp_server.py` - IDE diagnostics via LSP
+  - Real-time code quality feedback in supported editors
+  - Hover: shows rule documentation
+  - Code actions: quick-fix suggestions
+  - Run: `python -m tools.scripts.rules_engine.lsp_server`
+  - Requires: `pip install pygls`
+
+- **Tech Debt**
+  - `regex_cache.py` - Compiled regex cache for performance
+  - `constants.py` - Centralized configuration constants
+  - All functions have type annotations
+  - All public functions have docstrings
+
+- **Context-Sync Launch Polish**
+  - Enhanced README with demo mode, config table, edge cases
+  - 1-minute demo mode documentation
+  - CI/CD integration guidance
+
 ## [2.0.0] - 2026-07-22
 
 ### Added

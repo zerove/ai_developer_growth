@@ -8,6 +8,7 @@ from tools.scripts.adg_cli.core import Issue, _severity_rank
 _SEVERITY_COLORS = {"error": "\033[91m", "warning": "\033[93m", "info": "\033[96m"}
 _RESET = "\033[0m"
 
+
 def _format_human(issues: list[Issue], language: str, framework: str | None, files_checked: int) -> str:
     """Format issues as human-readable output."""
     lines: list[str] = []
@@ -69,6 +70,7 @@ def _format_json(issues: list[Issue], language: str, framework: str | None, file
         indent=2,
         ensure_ascii=False,
     )
+
 
 def _format_sarif(issues: list[Issue], language: str, framework: str | None) -> str:
     """Format issues as SARIF 2.1.0 for GitHub Code Scanning."""
@@ -152,6 +154,7 @@ def _format_sarif(issues: list[Issue], language: str, framework: str | None) -> 
     }
 
     return json.dumps(sarif, indent=2)
+
 
 def _count_issues(all_issues: list[Issue]) -> tuple[dict[str, int], dict[str, int], list[tuple[str, int]]]:
     """Count issues by severity, category, and file. Returns (severity_counts, category_counts, top_files)."""

@@ -24,10 +24,10 @@ class TestParallelChecking:
             (tmp_path / f"test_{i}.py").write_text(
                 f"print('hello {i}')\n"  # py-print-statement issue
             )
-        
+
         rules = load_rules_for_language("python")
         issues = check_directory(tmp_path, rules, jobs=1)
-        
+
         # Should find issues in all files
         assert len(issues) == 5
 
@@ -38,18 +38,18 @@ class TestParallelChecking:
             (tmp_path / f"test_{i}.py").write_text(
                 f"print('hello {i}')\n"  # py-print-statement issue
             )
-        
+
         rules = load_rules_for_language("python")
-        
+
         # Sequential check
         issues_seq = check_directory(tmp_path, rules, jobs=1)
-        
+
         # Parallel check
         issues_par = check_directory(tmp_path, rules, jobs=4)
-        
+
         # Both should find same number of issues
         assert len(issues_seq) == len(issues_par)
-        
+
         # Check same files are reported
         files_seq = {str(i.file) for i in issues_seq}
         files_par = {str(i.file) for i in issues_par}
@@ -58,29 +58,26 @@ class TestParallelChecking:
     def test_parallel_performance(self, tmp_path):
         """Parallel checking should not be significantly slower."""
         import time
-        
+
         # Create many files
         for i in range(20):
-            (tmp_path / f"module_{i}.py").write_text(
-                f"print('hello {i}')\n"
-                f"x = None\n"
-            )
-        
+            (tmp_path / f"module_{i}.py").write_text(f"print('hello {i}')\nx = None\n")
+
         rules = load_rules_for_language("python")
-        
+
         # Sequential timing
         start = time.time()
         issues_seq = check_directory(tmp_path, rules, jobs=1)
         seq_time = time.time() - start
-        
+
         # Parallel timing
         start = time.time()
         issues_par = check_directory(tmp_path, rules, jobs=4)
         par_time = time.time() - start
-        
+
         # Both should find same issues
         assert len(issues_seq) == len(issues_par)
-        
+
         # Parallel should not be significantly slower (allow 2x for overhead)
         # Note: For small files, parallel may be slower due to process spawn overhead
         # This test mainly ensures parallel execution doesn't break anything
@@ -90,12 +87,12 @@ class TestParallelChecking:
         # Create files with different severity issues
         (tmp_path / "error_file.py").write_text("except:\n    pass\n")  # error
         (tmp_path / "info_file.py").write_text("print('hello')\n")  # info
-        
+
         rules = load_rules_for_language("python")
-        
+
         # Check only errors
         issues = check_directory(tmp_path, rules, severity_filter="error", jobs=2)
-        
+
         # Should only have error severity issues
         for issue in issues:
             assert issue.severity == "error"
@@ -109,10 +106,10 @@ class TestParallelChecking:
     def test_single_file_parallel_flag(self, tmp_path):
         """With jobs>1 but only 1 file, should still work (use sequential)."""
         (tmp_path / "single.py").write_text("print('hello')\n")
-        
+
         rules = load_rules_for_language("python")
         issues = check_directory(tmp_path, rules, jobs=4)
-        
+
         # Should find the issue
         assert len(issues) == 1
 
@@ -127,10 +124,10 @@ class TestParallelInternalFunction:
             fp = tmp_path / f"file_{i}.py"
             fp.write_text("print('test')\n")
             files.append(fp)
-        
+
         rules = load_rules_for_language("python")
         issues = _check_files_parallel(files, rules, None, 2)
-        
+
         # Should find issues in all files
         assert len(issues) == 3
 

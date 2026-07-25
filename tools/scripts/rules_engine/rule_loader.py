@@ -140,46 +140,64 @@ def load_rules(language: str, framework_dir: Path | None = None) -> dict[str, An
 
 
 def load_custom_rules(project_dir: Path) -> dict[str, Any]:
-    """Load custom rules from .ai-rules/*.yml in the project directory.
+    """Load custom rules from multiple sources with inheritance.
 
-    Custom rules extend (not replace) built-in rules.
+    Priority order (later overrides earlier):
+    1. ~/.config/adg/rules.yml (user global config)
+    2. .adg/rules.yml (project-level config)
+    3. .ai-rules/*.yml (legacy directory-based config)
+
     Rules with the same ID override built-in rules.
     """
     custom: dict[str, Any] = {"anti_patterns": [], "naming": {}, "thresholds": {}}
-    rules_dir_path = project_dir / ".ai-rules"
 
-    if not rules_dir_path.is_dir():
-        return custom
+    # Source 1: User global config (~/.config/adg/rules.yml)
+    global_config = Path.home() / ".config" / "adg" / "rules.yml"
+    if global_config.is_file():
+        _load_single_custom_file(global_config, custom)
 
+    # Source 2: Project-level .adg/rules.yml
+    project_adg_rules = project_dir / ".adg" / "rules.yml"
+    if project_adg_rules.is_file():
+        _load_single_custom_file(project_adg_rules, custom)
+
+    # Source 3: Legacy .ai-rules/*.yml directory
+    ai_rules_dir = project_dir / ".ai-rules"
+    if ai_rules_dir.is_dir():
+        for rule_file in sorted(ai_rules_dir.glob("*.yml")):
+            _load_single_custom_file(rule_file, custom)
+
+    return custom
+
+
+def _load_single_custom_file(rule_file: Path, custom: dict[str, Any]) -> None:
+    """Load a single custom rule file and merge into custom dict."""
     try:
         import yaml
     except ImportError:
         print("Warning: PyYAML not installed. Custom rules skipped.", file=sys.stderr)
-        return custom
+        return
 
-    for rule_file in sorted(rules_dir_path.glob("*.yml")):
-        try:
-            with open(rule_file) as f:
-                data = yaml.safe_load(f)
-            if not isinstance(data, dict):
-                continue
+    try:
+        with open(rule_file) as f:
+            data = yaml.safe_load(f)
+        if not isinstance(data, dict):
+            return
 
-            # Merge anti_patterns (override by ID)
-            new_patterns = data.get("anti_patterns", [])
-            custom["anti_patterns"].extend(new_patterns)
+        # Merge anti_patterns (override by ID)
+        new_patterns = data.get("anti_patterns", [])
+        custom["anti_patterns"].extend(new_patterns)
 
-            # Merge naming rules
-            if "naming" in data:
-                custom["naming"].update(data["naming"])
+        # Merge naming rules
+        if "naming" in data:
+            custom["naming"].update(data["naming"])
 
-            # Merge thresholds (override)
-            if "thresholds" in data:
-                custom["thresholds"].update(data["thresholds"])
+        # Merge thresholds (override)
+        if "thresholds" in data:
+            custom["thresholds"].update(data["thresholds"])
 
-        except Exception as e:
-            print(f"Warning: Failed to load {rule_file}: {e}", file=sys.stderr)
-
-    return custom
+    except Exception as e:
+        print(f"Warning: Failed to load {rule_file}: {e}", file=sys.stderr)
 
 
 def _merge_anti_patterns(

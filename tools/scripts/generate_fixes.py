@@ -18,7 +18,7 @@ import sys
 from typing import Any
 
 import yaml
-from fix_heuristics import (
+from tools.scripts.fix_heuristics import (
     HEURISTIC_FIXES,  # noqa: F401 - re-export for tests
     heuristic_fix,  # noqa: F401 - re-export for tests
 )

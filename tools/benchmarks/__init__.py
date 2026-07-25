@@ -5,6 +5,7 @@ Usage:
     python -m tools.benchmarks.run
     python -m tools.benchmarks.run --files 1000 --languages python,rust
 """
+
 from __future__ import annotations
 
 import json
@@ -52,7 +53,7 @@ class MyClass{i}:
         return self.data
 '''
 
-RUST_TEMPLATE = '''//! Module {i}
+RUST_TEMPLATE = """//! Module {i}
 
 fn main_{i}() {{
     let x = vec![1, 2, 3];
@@ -74,9 +75,9 @@ impl MyStruct{i} {{
         0
     }}
 }}
-'''
+"""
 
-JS_TEMPLATE = '''/**
+JS_TEMPLATE = """/**
  * Module {i}
  */
 const x{i} = (() => {i})();
@@ -102,9 +103,9 @@ class MyClass{i} {{
         }}
     }}
 }}
-'''
+"""
 
-GO_TEMPLATE = '''package main
+GO_TEMPLATE = """package main
 
 import "fmt"
 
@@ -122,7 +123,7 @@ type Struct{i} struct {{
 func New{i}() *Struct{i} {{
     return &Struct{i}{{}}
 }}
-'''
+"""
 
 LANGUAGES = {
     "python": (".py", PYTHON_TEMPLATE),
@@ -154,6 +155,7 @@ def generate_files(
 # ─────────────────────────────────────────────────────────────
 # Benchmarks
 # ─────────────────────────────────────────────────────────────
+
 
 def bench_single_file_check(
     file_count: int = 100,
@@ -311,16 +313,14 @@ def run_all_benchmarks(
 # Entry Point
 # ─────────────────────────────────────────────────────────────
 
+
 def main():
     import argparse
 
     parser = argparse.ArgumentParser(description="ADG Performance Benchmarks")
-    parser.add_argument("--files", type=str, default="100,500,1000",
-                        help="Comma-separated file counts")
-    parser.add_argument("--languages", type=str, default="python,javascript,rust,go",
-                        help="Comma-separated languages")
-    parser.add_argument("--output", type=str, default=None,
-                        help="Output JSON file")
+    parser.add_argument("--files", type=str, default="100,500,1000", help="Comma-separated file counts")
+    parser.add_argument("--languages", type=str, default="python,javascript,rust,go", help="Comma-separated languages")
+    parser.add_argument("--output", type=str, default=None, help="Output JSON file")
     args = parser.parse_args()
 
     file_counts = [int(x) for x in args.files.split(",")]

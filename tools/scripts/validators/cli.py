@@ -270,9 +270,7 @@ def _collect_results(
     return results
 
 
-def _apply_auto_fix(
-    results: list[ValidationResult], dry_run: bool
-) -> int:
+def _apply_auto_fix(results: list[ValidationResult], dry_run: bool) -> int:
     """Apply auto-fixes. Returns 0 on success, 1 if dry-run with no results."""
     from tools.scripts.fix_applier import apply_fixes
 

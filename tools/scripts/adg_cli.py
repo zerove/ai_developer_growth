@@ -2163,7 +2163,8 @@ echo "✅ Governance check passed."
 # ──────────────────────────────────────────────────────────
 
 
-def main() -> int:
+def _build_parser() -> argparse.ArgumentParser:
+    """Build the CLI argument parser with all subcommands."""
     parser = argparse.ArgumentParser(
         prog="adg",
         description="ADG - AI Developer Governance CLI",
@@ -2247,6 +2248,70 @@ def main() -> int:
     notify_p.add_argument("--lang", help="Force language")
     notify_p.add_argument("--project", type=str, default=".", help="Project name")
 
+    # ──────────────────────────────────────────────────
+    # NEW COMMANDS: HTML report, recommend, dashboard, marketplace, monorepo, bench, cicd
+    # ──────────────────────────────────────────────────
+
+    # html-report
+    html_p = sub.add_parser("html-report", help="Generate beautiful HTML quality gate report")
+    html_p.add_argument("path", help="File or directory to report on")
+    html_p.add_argument("-o", "--output", default="adg-report.html", help="Output HTML file (default: adg-report.html)")
+    html_p.add_argument("--lang", help="Force language")
+
+    # recommend
+    recommend_p = sub.add_parser("recommend", help="AI-powered rule recommendations for codebase")
+    recommend_p.add_argument("path", nargs="?", default=".", help="Project directory")
+    recommend_p.add_argument("--json", action="store_true", help="Output as JSON")
+    recommend_p.add_argument("-n", "--max", type=int, default=20, help="Max recommendations")
+
+    # lsp
+    lsp_p = sub.add_parser("lsp", help="Start ADG Language Server (LSP)")
+    lsp_p.add_argument("--stdio", action="store_true", help="Use stdio transport")
+    lsp_p.add_argument("--port", type=int, default=8080, help="TCP port")
+    lsp_p.add_argument("--log-level", default="INFO", help="Log level")
+
+    # dashboard
+    dash_p = sub.add_parser("dashboard", help="Start web dashboard or generate static HTML")
+    dash_p.add_argument("path", nargs="?", default=".", help="Project directory")
+    dash_p.add_argument("--port", type=int, default=8080, help="Server port")
+    dash_p.add_argument("--static", help="Generate static HTML to file")
+    dash_p.add_argument("--host", default="127.0.0.1", help="Server host")
+
+    # marketplace
+    mkt_p = sub.add_parser("marketplace", help="Rule pack marketplace")
+    mkt_sub = mkt_p.add_subparsers(dest="marketplace_command")
+    mkt_list = mkt_sub.add_parser("list", help="List available packs")
+    mkt_search = mkt_sub.add_parser("search", help="Search packs")
+    mkt_search.add_argument("query", help="Search query")
+    mkt_install = mkt_sub.add_parser("install", help="Install a rule pack")
+    mkt_install.add_argument("pack_id", help="Pack ID to install")
+    mkt_install.add_argument("--lang", help="Target language only")
+    mkt_uninstall = mkt_sub.add_parser("uninstall", help="Uninstall a rule pack")
+    mkt_uninstall.add_argument("pack_id", help="Pack ID to uninstall")
+
+    # monorepo
+    mono_p = sub.add_parser("monorepo", help="Check all projects in a monorepo")
+    mono_p.add_argument("path", nargs="?", default=".", help="Monorepo root directory")
+    mono_p.add_argument("--json", action="store_true", help="Output as JSON")
+    mono_p.add_argument("--lang", help="Force language for all projects")
+
+    # bench
+    bench_p = sub.add_parser("bench", help="Run performance benchmarks")
+    bench_p.add_argument("--files", type=str, default="100,500", help="Comma-separated file counts")
+    bench_p.add_argument("--languages", type=str, default="python,javascript", help="Comma-separated languages")
+    bench_p.add_argument("-o", "--output", help="Output JSON file")
+
+    # cicd
+    cicd_p = sub.add_parser("cicd", help="Generate CI/CD configuration files")
+    cicd_p.add_argument("platform", choices=["github", "github-advanced", "gitlab", "jenkins", "docker"],
+                         help="CI/CD platform")
+    cicd_p.add_argument("-o", "--output", default=".", help="Output directory")
+
+    return parser
+
+
+def main() -> int:
+    parser = _build_parser()
     args = parser.parse_args()
 
     if not args.command:
@@ -2263,9 +2328,165 @@ def main() -> int:
         "rule": cmd_rule,
         "trend": cmd_trend,
         "notify": cmd_notify,
+        "html-report": cmd_html_report,
+        "recommend": cmd_recommend,
+        "lsp": cmd_lsp,
+        "dashboard": cmd_dashboard,
+        "marketplace": cmd_marketplace,
+        "monorepo": cmd_monorepo,
+        "bench": cmd_bench,
+        "cicd": cmd_cicd,
     }
 
     return commands[args.command](args)
+
+
+# ──────────────────────────────────────────────────────────
+# New Command Implementations
+# ──────────────────────────────────────────────────────────
+
+def cmd_html_report(args: argparse.Namespace) -> int:
+    """Generate HTML quality gate report."""
+    from tools.report import generate_html_report, save_html_report
+
+    target = Path(args.path).resolve()
+    detected = detect_language(target)
+    language = args.lang or detected.get("language", "unknown")
+    framework = detected.get("framework")
+
+    rules = load_rules_for_language(language)
+    if framework:
+        fw_rules = load_framework_rules(framework)
+        rules["anti_patterns"].extend(fw_rules.get("anti_patterns", []))
+
+    if target.is_file():
+        issues = check_file(target, rules)
+        files_checked = 1
+    else:
+        issues = check_directory(target, rules)
+        files_checked = len(set(i.file for i in issues))
+
+    output_path = save_html_report(issues, args.output, language, framework, files_checked)
+    print(f"HTML report saved to: {output_path}")
+    print(f"  Language: {language}")
+    print(f"  Issues: {len(issues)}")
+    return 0
+
+
+def cmd_recommend(args: argparse.Namespace) -> int:
+    """AI-powered rule recommendations."""
+    from tools.ai_recommender import recommend_rules, format_recommendations_text
+
+    target = Path(args.path).resolve()
+    result = recommend_rules(target, args.max)
+
+    if args.json:
+        print(json.dumps(result, indent=2, ensure_ascii=False))
+    else:
+        print(format_recommendations_text(result))
+    return 0
+
+
+def cmd_lsp(args: argparse.Namespace) -> int:
+    """Start ADG Language Server."""
+    from tools.lsp.server import run_stdio_server, run_tcp_server
+    import logging
+
+    logging.basicConfig(level=getattr(logging, args.log_level.upper()))
+
+    if args.stdio:
+        run_stdio_server()
+    else:
+        run_tcp_server(args.port)
+    return 0
+
+
+def cmd_dashboard(args: argparse.Namespace) -> int:
+    """Start web dashboard or generate static HTML."""
+    from tools.dashboard import generate_dashboard_html, start_dashboard
+
+    if args.static:
+        generate_dashboard_html(args.path, args.static)
+        print(f"Static dashboard saved to: {args.static}")
+        return 0
+
+    start_dashboard(args.path, args.port, args.host)
+    return 0
+
+
+def cmd_marketplace(args: argparse.Namespace) -> int:
+    """Rule pack marketplace operations."""
+    from tools.marketplace import list_packs, search_packs, install_pack, uninstall_pack, format_packs_list
+
+    cmd = args.marketplace_command
+
+    if cmd == "list":
+        packs = list_packs()
+        print(format_packs_list(packs))
+    elif cmd == "search":
+        packs = search_packs(args.query)
+        print(format_packs_list(packs))
+    elif cmd == "install":
+        result = install_pack(args.pack_id, language=args.lang)
+        if result["success"]:
+            print(f"✅ Installed pack: {result['pack']}")
+            print(f"   Rules installed: {result['rules_installed']}")
+            print(f"   Total rules: {result['total_rules']}")
+        else:
+            print(f"❌ Failed: {result['error']}")
+            return 1
+    elif cmd == "uninstall":
+        result = uninstall_pack(args.pack_id)
+        if result["success"]:
+            print(f"✅ Uninstalled pack: removed {result['removed']} rules")
+        else:
+            print(f"❌ Failed: {result['error']}")
+            return 1
+    else:
+        print("Usage: adg marketplace {list|search|install|uninstall}")
+        return 1
+    return 0
+
+
+def cmd_monorepo(args: argparse.Namespace) -> int:
+    """Check all projects in a monorepo."""
+    from tools.multiproject import MonorepoChecker
+
+    checker = MonorepoChecker(args.path)
+    results = checker.check_all()
+
+    if args.json:
+        print(json.dumps(results, indent=2, ensure_ascii=False))
+    else:
+        print(checker.generate_report(results))
+
+    return 0 if results["total_summary"]["passed"] else 1
+
+
+def cmd_bench(args: argparse.Namespace) -> int:
+    """Run performance benchmarks."""
+    from tools.benchmarks import run_all_benchmarks
+
+    file_counts = [int(x) for x in args.files.split(",")]
+    languages = [x.strip() for x in args.languages.split(",")]
+
+    results = run_all_benchmarks(file_counts, languages)
+
+    if args.output:
+        with open(args.output, "w") as f:
+            json.dump(results, f, indent=2)
+        print(f"\nResults saved to: {args.output}")
+
+    return 0
+
+
+def cmd_cicd(args: argparse.Namespace) -> int:
+    """Generate CI/CD configuration files."""
+    from tools.cicd import generate_ci_config
+
+    generate_ci_config(args.platform, args.output)
+    print(f"✅ Generated {args.platform} CI/CD config in: {args.output}")
+    return 0
 
 
 if __name__ == "__main__":

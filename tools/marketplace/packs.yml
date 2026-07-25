@@ -1,0 +1,143 @@
+# ADG Marketplace - Built-in Rule Packs
+# Loaded by tools/marketplace/__init__.py
+
+security-essentials:
+  name: "Security Essentials"
+  description: "Critical security anti-patterns for all languages"
+  author: "ADG Core Team"
+  version: "1.0.0"
+  rules:
+    python:
+      - id: sec-001
+        pattern: "\\b\\w+\\s*\\([^)]*\\)"
+        severity: error
+        category: security
+        message: "Dangerous function call detected"
+        fix_hint: "Review function usage"
+      - id: sec-002
+        pattern: "\\bos\\.system\\s*\\("
+        severity: error
+        category: security
+        message: "os.system() is vulnerable to command injection"
+        fix_hint: "Use subprocess.run() with shell=False"
+      - id: sec-003
+        pattern: "import\\s+pickle"
+        severity: warning
+        category: security
+        message: "pickle deserialization can be exploited"
+        fix_hint: "Use json or messagepack for serialization"
+      - id: sec-004
+        pattern: "yaml\\.load\\s*\\([^)]*\\)"
+        severity: warning
+        category: security
+        message: "yaml.load() without Loader is unsafe"
+        fix_hint: "Use yaml.safe_load()"
+      - id: sec-005
+        pattern: "subprocess\\.call\\s*\\("
+        severity: info
+        category: security
+        message: "subprocess.call() should use shell=False"
+        fix_hint: "Use subprocess.run()"
+    javascript:
+      - id: sec-101
+        pattern: "\\bFunction\\s*\\("
+        severity: error
+        category: security
+        message: "Function constructor is dangerous"
+        fix_hint: "Avoid dynamic code execution"
+      - id: sec-102
+        pattern: "\\.innerHTML\\s*="
+        severity: warning
+        category: security
+        message: "innerHTML can lead to XSS"
+        fix_hint: "Use textContent or sanitize input"
+      - id: sec-103
+        pattern: "document\\.write\\s*\\("
+        severity: warning
+        category: security
+        message: "document.write() is dangerous"
+        fix_hint: "Use DOM manipulation methods"
+
+performance-pro:
+  name: "Performance Pro"
+  description: "Performance anti-patterns and optimizations"
+  author: "ADG Core Team"
+  version: "1.0.0"
+  rules:
+    python:
+      - id: perf-001
+        pattern: "for\\s+\\w+\\s+in\\s+range\\s*\\(\\s*len\\s*\\("
+        severity: warning
+        category: performance
+        message: "Use enumerate() instead of range(len())"
+        fix_hint: "for i, item in enumerate(items)"
+      - id: perf-002
+        pattern: "\\+\\s*=\\s*['\"]"
+        severity: info
+        category: performance
+        message: "String concatenation in loop is slow"
+        fix_hint: "Use join() or f-strings"
+      - id: perf-003
+        pattern: "\\.append\\s*\\("
+        severity: info
+        category: performance
+        message: "Consider list comprehension for better performance"
+        fix_hint: "Use [expr for x in items] pattern"
+      - id: perf-004
+        pattern: "\\btime\\.sleep\\s*\\("
+        severity: warning
+        category: performance
+        message: "Blocking sleep detected"
+        fix_hint: "Use async patterns or reduce sleep duration"
+    javascript:
+      - id: perf-101
+        pattern: "\\.forEach\\s*\\("
+        severity: info
+        category: performance
+        message: "forEach is slower than for...of"
+        fix_hint: "Use for...of or .map()/.filter()"
+      - id: perf-102
+        pattern: "document\\.querySelector\\s*\\("
+        severity: info
+        category: performance
+        message: "Repeated DOM queries"
+        fix_hint: "Cache query results in a variable"
+
+code-quality:
+  name: "Code Quality"
+  description: "Code quality and maintainability rules"
+  author: "ADG Core Team"
+  version: "1.0.0"
+  rules:
+    python:
+      - id: cq-001
+        pattern: "except\\s*:"
+        severity: warning
+        category: code_quality
+        message: "Bare except catches SystemExit and KeyboardInterrupt"
+        fix_hint: "Use except Exception: or catch specific exceptions"
+      - id: cq-002
+        pattern: "from\\s+\\w+\\s+import\\s+\\*"
+        severity: warning
+        category: code_quality
+        message: "Wildcard import pollutes namespace"
+        fix_hint: "Import specific names"
+      - id: cq-003
+        pattern: "\\bglobal\\s+\\w+"
+        severity: info
+        category: code_quality
+        message: "Global variables reduce testability"
+        fix_hint: "Use dependency injection or function parameters"
+      - id: cq-004
+        pattern: "\\bprint\\s*\\("
+        severity: info
+        category: code_quality
+        message: "Consider using logging module"
+        fix_hint: "import logging; logger.info()"
+    javascript:
+      - id: cq-005
+        pattern: "\\bvar\\s+"
+        severity: warning
+        category: code_quality
+        message: "Use const/let instead of var"
+        fix_hint: "Replace 'var' with 'const' or 'let'"

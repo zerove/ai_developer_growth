@@ -1,8 +1,9 @@
 id = "adg-governance"
 name = "ADG Governance"
 version = "1.0.0"
-description = "Code governance rules for 22 languages and 9 frameworks"
+description = "Code governance rules for 22 languages and 9 frameworks - anti-patterns, security, and code quality"
 authors = ["AI Developer Growth <https://github.com/ai-developer-growth>"]
 repository = "https://github.com/ai-developer-growth/ai_developer_growth"
+schema_version = "1.0.0"
 
 [grammars]

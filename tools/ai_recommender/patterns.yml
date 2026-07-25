@@ -1,0 +1,125 @@
+# ADG AI Rule Recommender - Code smell patterns
+# Loaded by tools/ai_recommender/__init__.py
+
+python:
+  - pattern: "\\bexec\\s*\\("
+    recommendation: SEC001
+    reason: "exec() is dangerous"
+  - pattern: "\\beval\\s*\\("
+    recommendation: SEC001
+    reason: "eval() can execute arbitrary code"
+  - pattern: "\\bos\\.system\\s*\\("
+    recommendation: SEC002
+    reason: "os.system() is insecure"
+  - pattern: "import\\s+pickle"
+    recommendation: SEC003
+    reason: "pickle deserialization can be exploited"
+  - pattern: "\\bexcept\\s*:"
+    recommendation: CQ001
+    reason: "Bare except catches all exceptions"
+  - pattern: "\\bprint\\s*\\(.*\\+.*\\)"
+    recommendation: CQ002
+    reason: "Consider using f-strings"
+  - pattern: "from\\s+\\w+\\s+import\\s+\\*"
+    recommendation: CQ003
+    reason: "Wildcard imports make namespace unclear"
+  - pattern: "\\btime\\.sleep\\s*\\("
+    recommendation: PF001
+    reason: "Blocking sleep in code"
+  - pattern: "\\bglobal\\s+\\w+"
+    recommendation: CQ004
+    reason: "Global variables reduce testability"
+  - pattern: "\\blen\\s*\\([^)]+\\)\\s*==\\s*0"
+    recommendation: CQ005
+    reason: "Use 'not x' instead of 'len(x) == 0'"
+  - pattern: "\\.append\\s*\\(\\s*\\["
+    recommendation: PF002
+    reason: "Consider list comprehension"
+  - pattern: "print\\s*\\("
+    recommendation: CQ006
+    reason: "Consider using logging module"
+
+javascript:
+  - pattern: "\\beval\\s*\\("
+    recommendation: SEC001
+    reason: "eval() can execute arbitrary code"
+  - pattern: "\\bnew\\s+Function\\s*\\("
+    recommendation: SEC001
+    reason: "new Function() is equivalent to eval()"
+  - pattern: "\\binnerHTML\\s*="
+    recommendation: SEC004
+    reason: "innerHTML can lead to XSS"
+  - pattern: "document\\.write\\s*\\("
+    recommendation: SEC005
+    reason: "document.write() is dangerous"
+  - pattern: "\\bvar\\s+"
+    recommendation: CQ010
+    reason: "Use const/let instead of var"
+  - pattern: "\\.then\\s*\\(\\s*function"
+    recommendation: CQ011
+    reason: "Consider async/await"
+  - pattern: "console\\.log\\s*\\("
+    recommendation: CQ012
+    reason: "Remove console.log in production"
+  - pattern: "==\\s*null|!=\\s*null"
+    recommendation: CQ013
+    reason: "Use === null instead of == null"
+  - pattern: "\\bsetTimeout\\s*\\(\\s*function"
+    recommendation: PF010
+    reason: "Consider requestAnimationFrame"
+
+typescript:
+  - pattern: ":\\s*any\\b"
+    recommendation: CQ020
+    reason: "Avoid 'any' type"
+  - pattern: "@\\s-ignore"
+    recommendation: CQ021
+    reason: "@ts-ignore suppresses type checking"
+  - pattern: "as\\s+any\\b"
+    recommendation: CQ022
+    reason: "Type assertion to 'any' bypasses type safety"
+
+rust:
+  - pattern: "unwrap\\s*\\(\\)"
+    recommendation: CQ030
+    reason: "unwrap() panics on None/Err"
+  - pattern: "panic!\\s*\\("
+    recommendation: CQ031
+    reason: "panic!() should be avoided in library code"
+  - pattern: "unsafe\\s*\\{"
+    recommendation: SEC010
+    reason: "Unsafe blocks bypass Rust safety"
+  - pattern: "println!\\s*\\("
+    recommendation: CQ032
+    reason: "Use log macros instead of println!"
+  - pattern: "\\.clone\\s*\\(\\)"
+    recommendation: PF020
+    reason: "Cloning may impact performance"
+  - pattern: "Vec::new\\s*\\(\\)"
+    recommendation: PF021
+    reason: "Consider Vec::with_capacity()"
+
+go:
+  - pattern: "panic\\s*\\("
+    recommendation: CQ040
+    reason: "Avoid panic; use error returns"
+  - pattern: "interface\\{\\}"
+    recommendation: CQ041
+    reason: "Use 'any' instead of 'interface{}'"
+  - pattern: "fmt\\.Print"
+    recommendation: CQ042
+    reason: "Use structured logging instead"
+  - pattern: "goroutine.*defer"
+    recommendation: PF030
+    reason: "defer in goroutines may not execute"
+
+java:
+  - pattern: "\\.printStackTrace\\s*\\("
+    recommendation: CQ050
+    reason: "Use logger instead of printStackTrace"
+  - pattern: "catch\\s*\\(\\s*Exception\\s"
+    recommendation: CQ051
+    reason: "Catch specific exceptions"
+  - pattern: "System\\.out\\.print"
+    recommendation: CQ052
+    reason: "Use logging framework"

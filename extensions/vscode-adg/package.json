@@ -8,7 +8,7 @@
     "vscode": "^1.85.0"
   },
   "categories": ["Linters", "Programming Languages", "Other"],
-  "keywords": ["governance", "linting", "anti-patterns", "security", "code-quality"],
+  "keywords": ["governance", "linting", "anti-patterns", "security", "code-quality", "sarif", "quick-fix"],
   "activationEvents": [
     "onLanguage:python",
     "onLanguage:javascript",
@@ -16,7 +16,15 @@
     "onLanguage:rust",
     "onLanguage:go",
     "onLanguage:java",
-    "workspaceContains:**/.adg/**"
+    "onLanguage:kotlin",
+    "onLanguage:ruby",
+    "onLanguage:php",
+    "onLanguage:csharp",
+    "workspaceContains:**/.adg/**",
+    "workspaceContains:**/pyproject.toml",
+    "workspaceContains:**/package.json",
+    "workspaceContains:**/Cargo.toml",
+    "workspaceContains:**/go.mod"
   ],
   "main": "./out/extension.js",
   "contributes": {
@@ -42,8 +50,60 @@
         "title": "ADG: Auto-fix Current File"
       },
       {
+        "command": "adg.fixProject",
+        "title": "ADG: Auto-fix Project"
+      },
+      {
         "command": "adg.listRules",
         "title": "ADG: List Rules for Language"
+      },
+      {
+        "command": "adg.importSarif",
+        "title": "ADG: Import SARIF Report"
+      },
+      {
+        "command": "adg.showTrend",
+        "title": "ADG: Show Quality Trend"
+      },
+      {
+        "command": "adg.installHooks",
+        "title": "ADG: Install Git Hooks"
+      },
+      {
+        "command": "adg.createRule",
+        "title": "ADG: Create Custom Rule"
+      }
+    ],
+    "menus": {
+      "editor/context": [
+        {
+          "command": "adg.check",
+          "when": "editorHasSelection",
+          "group": "ADG@1"
+        },
+        {
+          "command": "adg.fix",
+          "when": "editorHasSelection",
+          "group": "ADG@2"
+        }
+      ],
+      "editor/title": [
+        {
+          "command": "adg.checkProject",
+          "group": "navigation"
+        }
+      ]
+    },
+    "keybindings": [
+      {
+        "command": "adg.check",
+        "key": "ctrl+shift+g",
+        "mac": "cmd+shift+g"
+      },
+      {
+        "command": "adg.fix",
+        "key": "ctrl+shift+f",
+        "mac": "cmd+shift+f"
       }
     ],
     "configuration": {
@@ -65,6 +125,16 @@
           "default": true,
           "description": "Run ADG check on file save"
         },
+        "adg.enableOnType": {
+          "type": "boolean",
+          "default": false,
+          "description": "Run ADG check on type (may be slow)"
+        },
+        "adg.debounceDelay": {
+          "type": "number",
+          "default": 500,
+          "description": "Debounce delay in ms for on-type checking"
+        },
         "adg.enableIncremental": {
           "type": "boolean",
           "default": false,
@@ -74,6 +144,37 @@
           "type": "boolean",
           "default": true,
           "description": "Show issue count in status bar"
+        },
+        "adg.showCodeLens": {
+          "type": "boolean",
+          "default": true,
+          "description": "Show issue count as CodeLens above functions"
+        },
+        "adg.enableQuickFix": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable Quick Fix code actions for fixable issues"
+        },
+        "adg.sarifFilePattern": {
+          "type": "string",
+          "default": "**/*.sarif",
+          "description": "Glob pattern for SARIF files to auto-import"
+        },
+        "adg.trendFile": {
+          "type": "string",
+          "default": ".adg/trend.json",
+          "description": "Path to trend data file"
+        },
+        "adg.lintOnOpen": {
+          "type": "boolean",
+          "default": true,
+          "description": "Run check when a file is opened"
+        },
+        "adg.excludePatterns": {
+          "type": "array",
+          "items": { "type": "string" },
+          "default": ["**/node_modules/**", "**/.git/**", "**/target/**"],
+          "description": "Glob patterns to exclude from checking"
         }
       }
     },
@@ -82,6 +183,11 @@
         "id": "adg-output",
         "aliases": ["ADG Output", "adg-output"],
         "extensions": [".adg-output"]
+      },
+      {
+        "id": "sarif",
+        "aliases": ["SARIF", "sarif"],
+        "extensions": [".sarif"]
       }
     ]
   },

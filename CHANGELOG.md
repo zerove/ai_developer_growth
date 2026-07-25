@@ -82,10 +82,28 @@ All notable changes to the AI Developer Growth project.
   - All functions have type annotations
   - All public functions have docstrings
 
-- **Context-Sync Launch Polish**
-  - Enhanced README with demo mode, config table, edge cases
-  - 1-minute demo mode documentation
-  - CI/CD integration guidance
+- **Test Coverage**
+  - 62 new tests across 4 test files
+  - auto_fix: 30 tests (language detection, patterns, apply, format)
+  - dashboard: 16 tests (DB, API, records, trends)
+  - ai_rules_generator: 16 tests (detection, analysis, formatting)
+  - pre_push: 5 tests (module functions, git integration)
+
+- **CLI Integration**
+  - `adg check . --fix` applies auto-fixes via language-rules command
+  - hooks_runner updated with --fix flag
+
+- **Dashboard Fixes**
+  - SQLite FOREIGN KEY syntax corrected
+  - Thread safety (check_same_thread=False) for FastAPI
+
+- **Documentation**
+  - Dashboard usage, API reference, CI/CD integration guide
+  - AI Learn usage, detectors, output format
+  - LSP Server VS Code/Neovim configuration
+
+- **Release Notes**
+  - RELEASE_v2.1.0.md with full feature summary
 
 ## [2.0.0] - 2026-07-22
 

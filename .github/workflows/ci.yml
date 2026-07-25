@@ -83,6 +83,12 @@ jobs:
           python-version: ${{ env.PYTHON_VERSION }}
           cache: pip
       - run: pip install mypy
+      - name: Mypy cache
+        uses: actions/cache@v4
+        with:
+          path: .mypy_cache
+          key: mypy-${{ runner.os }}-${{ hashFiles('tools/scripts/**/*.py') }}
+          restore-keys: mypy-${{ runner.os }}-
       - name: Mypy (strict)
         run: mypy tools/scripts/ --ignore-missing-imports --strict
 
@@ -238,6 +244,16 @@ jobs:
             count=$(cd examples/$d && python -m pytest tests/ --co -q 2>/dev/null | grep "test" | wc -l || echo "0")
             echo "| $d | $count |" >> $GITHUB_STEP_SUMMARY
           done
+  dependency-review:
+    name: Dependency Review
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/dependency-review-action@v4
+        with:
+          fail-on-severity: high
+
   docs-check:
     name: Docs Structure
     runs-on: ubuntu-latest

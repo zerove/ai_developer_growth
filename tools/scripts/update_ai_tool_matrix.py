@@ -20,6 +20,7 @@ from dataclasses import dataclass
 from datetime import datetime, timedelta
 from enum import Enum
 from pathlib import Path
+from typing import Any
 
 logging.basicConfig(level=logging.INFO, format="%(levelname)s: %(message)s")
 logger = logging.getLogger(__name__)
@@ -80,12 +81,12 @@ class ToolMatrixUpdater:
         self.config = self._load_config()
         self.cache = self._load_cache()
 
-    def _load_config(self) -> dict:
+    def _load_config(self) -> dict[str, Any]:
         if CONFIG_PATH.exists():
             return json.loads(CONFIG_PATH.read_text())
         return {}
 
-    def _load_cache(self) -> dict:
+    def _load_cache(self) -> dict[str, Any]:
         if CACHE_PATH.exists():
             return json.loads(CACHE_PATH.read_text())
         return {}

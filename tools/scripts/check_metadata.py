@@ -6,7 +6,7 @@
 from pathlib import Path
 
 
-def extract_frontmatter(content: str) -> tuple[dict, str]:
+def extract_frontmatter(content: str) -> tuple[dict[str, str], str]:
     """提取 YAML frontmatter"""
     if content.startswith("---"):
         end_idx = content.find("---", 3)

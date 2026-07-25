@@ -43,6 +43,18 @@ from tools.scripts.validators.pipeline import (  # noqa: F401
     validate_file,
 )
 
+__all__ = [
+    # Re-exports
+    "HealthScore", "calculate_health_score",
+    "FixResult", "Issue", "ValidationResult",
+    "EXTENSION_MAP", "check_anti_patterns", "detect_language_from_file",
+    "load_custom_rules", "load_rules", "validate_directory", "validate_file",
+    # Local functions
+    "check_naming_conventions", "check_thresholds", "check_python_ast",
+    "apply_fixes", "generate_junit_xml", "generate_html_report",
+    "generate_sarif", "write_report", "run_linter_aggregation", "print_results",
+]
+
 # Rule cache (kept here for backward compatibility with direct imports)
 _RULE_CACHE: dict[str, dict[str, Any]] = {}
 _FILE_HASH_CACHE: dict[str, str] = {}

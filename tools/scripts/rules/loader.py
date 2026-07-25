@@ -86,7 +86,7 @@ def _merge_rules(base: dict[str, Any], custom: dict[str, Any]) -> dict[str, Any]
 
         if isinstance(base_items, list) and isinstance(custom_items, list):
             # List-based: merge by ID
-            base_map: dict[str, dict] = {}
+            base_map: dict[str, dict[str, Any]] = {}
             for item in base_items:
                 if isinstance(item, dict) and "id" in item:
                     base_map[item["id"]] = item

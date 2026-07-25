@@ -22,6 +22,7 @@ import yaml
 
 from tools.scripts._common import handle_error
 from tools.scripts._common import rules_dir as _rules_dir
+from typing import Any
 
 # Rule templates for each category
 TEMPLATES = {
@@ -157,7 +158,7 @@ def cmd_add_rule(args: argparse.Namespace) -> None:
         return
 
     # Build rule
-    new_rule: dict = {"id": rule_id, "name": name, "severity": severity}
+    new_rule: dict[str, Any] = {"id": rule_id, "name": name, "severity": severity}
     if pattern:
         new_rule["pattern"] = pattern
     if message:

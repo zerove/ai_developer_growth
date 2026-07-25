@@ -18,15 +18,16 @@ import json
 import sys
 from collections import Counter
 from pathlib import Path
+from typing import Any
 
 
-def load_tracking_data(filepath: str) -> dict:
+def load_tracking_data(filepath: str) -> dict[str, Any]:
     """加载追踪数据文件"""
     with open(filepath, encoding="utf-8") as f:
         return json.load(f)
 
 
-def analyze_searches(data: dict, top_n: int = 10) -> dict:
+def analyze_searches(data: dict[str, Any], top_n: int = 10) -> dict[str, Any]:
     """分析搜索查询"""
     searches = data.get("searches", [])
     if not searches:
@@ -50,7 +51,7 @@ def analyze_searches(data: dict, top_n: int = 10) -> dict:
     }
 
 
-def analyze_pageviews(data: dict, top_n: int = 10) -> dict:
+def analyze_pageviews(data: dict[str, Any], top_n: int = 10) -> dict[str, Any]:
     """分析页面访问"""
     pageviews = data.get("pageviews", [])
     if not pageviews:
@@ -67,7 +68,7 @@ def analyze_pageviews(data: dict, top_n: int = 10) -> dict:
     }
 
 
-def analyze_reading_time(data: dict, top_n: int = 10) -> dict:
+def analyze_reading_time(data: dict[str, Any], top_n: int = 10) -> dict[str, Any]:
     """分析阅读时长"""
     reading_time = data.get("reading_time", {})
     if not reading_time:
@@ -117,7 +118,7 @@ def suggest_synonym_groups(searches: list[tuple[str, int]]) -> list[list[str]]:
     return groups
 
 
-def print_report(data: dict, top_n: int = 10) -> None:
+def print_report(data: dict[str, Any], top_n: int = 10) -> None:
     """打印分析报告"""
     searches = analyze_searches(data, top_n)
     pageviews = analyze_pageviews(data, top_n)

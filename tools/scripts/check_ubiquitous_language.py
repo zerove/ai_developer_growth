@@ -8,7 +8,7 @@ import sys
 from pathlib import Path
 
 
-def extract_terms(ubiquitous_file: Path) -> list:
+def extract_terms(ubiquitous_file: Path) -> list[str]:
     """从 UBIQUITOUS_LANGUAGE.md 提取术语"""
     terms = []
     content = ubiquitous_file.read_text(encoding="utf-8")

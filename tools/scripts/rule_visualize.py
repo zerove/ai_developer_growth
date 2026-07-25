@@ -19,11 +19,13 @@ from tools.scripts._common import rules_dir as _rules_dir
 from tools.scripts.rules.loader import load_rules
 from tools.scripts.rules.web_base import RuleWebServer, run_server
 
+__all__ = ["RuleWebServer", "run_server", "get_all_rules", "main"]
 
-def get_all_rules() -> dict:
+
+def get_all_rules() -> dict[str, Any]:
     """Load all rules organized by language."""
     langs_dir = _rules_dir() / "languages"
-    result: dict[str, dict] = {}
+    result: dict[str, dict[str, Any]] = {}
 
     if langs_dir.exists():
         for lang_dir in sorted(langs_dir.iterdir()):

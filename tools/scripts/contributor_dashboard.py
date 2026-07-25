@@ -9,14 +9,15 @@ import re
 from collections import Counter
 from datetime import datetime
 from pathlib import Path
+from typing import Any
 
 
 class ContributorDashboard:
     def __init__(self, repo_root: Path = Path(".")) -> None:
         self.repo_root = repo_root
-        self.stats: dict = {}
+        self.stats: dict[str, Any] = {}
 
-    def analyze_case_studies(self) -> dict:
+    def analyze_case_studies(self) -> dict[str, Any]:
         """分析案例研究统计"""
         cases_dir = self.repo_root / "case-studies"
         if not cases_dir.exists():
@@ -71,7 +72,7 @@ class ContributorDashboard:
 
         return {"recommended": recommended, "stable": stable, "legacy": legacy, "total": recommended + stable + legacy}
 
-    def analyze_contributors(self) -> dict:
+    def analyze_contributors(self) -> dict[str, Any]:
         """分析贡献者 (从 git log)"""
         try:
             import subprocess
@@ -90,7 +91,7 @@ class ContributorDashboard:
         except (subprocess.SubprocessError, ValueError, FileNotFoundError):
             return {"total_contributors": 0, "top_contributors": [], "all": []}
 
-    def analyze_docs_coverage(self) -> dict:
+    def analyze_docs_coverage(self) -> dict[str, Any]:
         """分析文档覆盖率"""
         docs_dir = self.repo_root / "docs"
         if not docs_dir.exists():

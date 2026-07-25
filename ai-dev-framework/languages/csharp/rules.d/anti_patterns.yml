@@ -8,7 +8,7 @@ anti_patterns:
   name: SQL injection via string concatenation
   severity: error
   category: security
-  pattern: "(?:ExecuteNonQuery|ExecuteReader|ExecuteScalar)\s*\(.*(?:\\+|\\.Format|\\$)"
+  pattern: '(?:ExecuteNonQuery|ExecuteReader|ExecuteScalar)\s*\([^)]*(?:\+|\.Format|\$)'
   message: 'String concatenation in SQL enables injection'
   fix_hint: 'Use parameterized queries: command.Parameters.AddWithValue("@id", id)'
 - id: cs-empty-catch
@@ -85,7 +85,7 @@ anti_patterns:
   name: String interpolation in SQL
   severity: error
   category: security
-  pattern: "(?:Execute|Command)\s*\\(\\s*\\$\""
+  pattern: '(?:Execute|Command)\s*\(\s*\$\"'
   message: 'String interpolation in SQL commands enables injection'
   fix_hint: 'Use parameterized queries with SqlCommand.Parameters'
 - id: cs-linq-heavy
@@ -127,6 +127,6 @@ tooling:
   type_checker: null
   test_runner: xunit
   config_files:
-    - *.csproj
+    - '"*.csproj"'
     - .editorconfig
     - Directory.Build.props

@@ -15,6 +15,7 @@ from __future__ import annotations
 import argparse
 import json
 import sys
+from typing import Any
 
 import yaml
 from fix_heuristics import (
@@ -24,7 +25,6 @@ from fix_heuristics import (
 
 from tools.scripts._common import handle_error
 from tools.scripts._common import rules_dir as _rules_dir
-from typing import Any
 
 # Re-export for backward compatibility
 __all__ = ["heuristic_fix", "HEURISTIC_FIXES"]

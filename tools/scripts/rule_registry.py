@@ -22,11 +22,11 @@ import shutil
 import sys
 from datetime import datetime, timezone
 from pathlib import Path
+from typing import Any
 
 import yaml
 
 from tools.scripts._common import handle_error
-from typing import Any
 
 
 def _registry_dir() -> Path:

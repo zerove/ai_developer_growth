@@ -20,12 +20,12 @@ from __future__ import annotations
 
 import re
 import sys
+from typing import Any
 
 import yaml
 
 from tools.scripts._common import handle_error
 from tools.scripts._common import rules_dir as _rules_dir
-from typing import Any
 
 
 def _load_rules_with_tests(lang: str) -> list[dict[str, Any]]:

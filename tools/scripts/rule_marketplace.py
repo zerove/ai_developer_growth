@@ -19,6 +19,9 @@ import sys
 from pathlib import Path
 
 import yaml
+
+from tools.scripts._common import framework_dir as _framework_dir
+from tools.scripts._common import handle_error
 from tools.scripts.rule_catalog import (
     BUILTIN_PACKS,
     export_rules,
@@ -27,9 +30,6 @@ from tools.scripts.rule_catalog import (
     search_rules,
     validate_rules,
 )
-
-from tools.scripts._common import framework_dir as _framework_dir
-from tools.scripts._common import handle_error
 
 # ──────────────────────────────────────────────────────────
 # Commands

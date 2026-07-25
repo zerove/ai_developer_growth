@@ -4,6 +4,7 @@ Extracted from generate_fixes.py for reuse by hooks_runner and other tools.
 """
 
 from __future__ import annotations
+
 from typing import Any
 
 # Maps pattern substrings to fix templates

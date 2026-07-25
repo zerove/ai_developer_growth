@@ -17,12 +17,12 @@ import argparse
 import re
 import sys
 from pathlib import Path
+from typing import Any
 
 import yaml
 
 from tools.scripts._common import handle_error
 from tools.scripts._common import rules_dir as _rules_dir
-from typing import Any
 
 # Rule templates for each category
 TEMPLATES = {

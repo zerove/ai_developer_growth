@@ -16,8 +16,7 @@ import argparse
 import re
 import sys
 from pathlib import Path
-from typing import TypedDict
-from typing import Any
+from typing import Any, TypedDict
 
 
 class CheckResult(TypedDict):

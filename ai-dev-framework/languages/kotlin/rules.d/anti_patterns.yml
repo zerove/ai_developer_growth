@@ -4,13 +4,20 @@ language: kotlin
 version: '>=1.8'
 config_version: '1.0'
 anti_patterns:
-- id: kt-bare-except
-  name: Bare catch clause
-  severity: error
+- id: kt-bang-call
+  name: Non-null assertion operator
+  severity: warning
+  category: type_safety
+  pattern: '\w+!!'
+  message: '!! throws NullPointerException - use safe calls'
+  fix_hint: Use ?. operator or let {} block
+- id: kt-catch-all
+  name: Catching generic Exception
+  severity: warning
   category: error_handling
-  pattern: 'catch\s*\(\s*\w*\s*\)'
-  message: 'Avoid catching generic Throwable/Exception - catch specific types'
-  fix_hint: 'Catch specific exceptions like IOException, IllegalArgumentException'
+  pattern: 'catch\s*\(\s*e:\s*Exception\s*\)'
+  message: Catching generic Exception hides specific errors
+  fix_hint: Catch specific exception types
 
 - id: kt-coroutine-blocking
   name: Blocking call in coroutine
@@ -35,14 +42,29 @@ anti_patterns:
   pattern: '\beval\s*\('
   message: 'eval() is a security risk'
   fix_hint: 'Use safe parsing functions instead'
+- id: kt-lateinit
+  name: Lateinit usage
+  severity: warning
+  category: code_quality
+  pattern: 'lateinit\s+var\s+\w+'
+  message: 'lateinit can cause runtime exceptions if accessed before initialization'
+  fix_hint: 'Initialize the property or use nullable type with !! when needed'
 
-- id: kt-println
+- id: kt-print
   name: println in production code
   severity: info
   category: code_quality
   pattern: 'println\(|print\('
   message: 'Use structured logging (SLF4J/Log4j) instead of println'
   fix_hint: 'private val log = LoggerFactory.getLogger(MyClass::class.java)'
+
+- id: kt-run-blocking
+  name: runBlocking usage
+  severity: warning
+  category: async
+  pattern: 'runBlocking\s*\{'
+  message: 'runBlocking blocks the calling thread - use suspend functions instead'
+  fix_hint: 'Refactor to suspend functions and coroutineScope'
 
 - id: kt-mutable-var
   name: Unnecessary var usage

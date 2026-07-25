@@ -11,7 +11,7 @@ anti_patterns:
   pattern: '\beval\s*\(|\binstance_eval\s*\(|\bclass_eval\s*\('
   message: 'eval() is a security risk'
   fix_hint: 'Use send() or public_send() for dynamic dispatch'
-- id: ruby-send
+- id: rb-send
   name: send() with user input
   severity: error
   category: security
@@ -36,7 +36,7 @@ anti_patterns:
   name: Rescue all exceptions
   severity: error
   category: error_handling
-  pattern: 'rescue\s*=>|rescue\s+Exception\b'
+  pattern: 'rescue\s*=>|rescue\s+Exception\b|rescue\s*$|rescue\s+'
   message: 'Rescuing all exceptions hides specific errors'
   fix_hint: 'Rescue specific exceptions: rescue ActiveRecord::RecordNotFound'
 - id: ruby-empty-rescue
@@ -50,7 +50,7 @@ anti_patterns:
   name: Mutable string literal
   severity: warning
   category: performance
-  pattern: '("[^"]*"|\'[^\']*\')(?!\.freeze)'
+  pattern: '"([^"]*|''[^'']*)(?!\.freeze)"'
   message: 'String literals are mutable in Ruby < 3.0'
   fix_hint: 'Add .freeze or use # frozen_string_literal: true'
 - id: ruby-global-var

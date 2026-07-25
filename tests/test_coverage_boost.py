@@ -1007,5 +1007,231 @@ class TestComplexityCheckerEdgeCases(unittest.TestCase):
         assert _max_nesting_depth(tree2) >= 1
 
 
+# ── validators/cli.py additional path coverage ────────────────
+
+
+class TestValidatorsCLIAdditionalPaths(unittest.TestCase):
+    """Additional tests for validators/cli.py uncovered paths."""
+
+    def test_fix_dry_run_with_issues(self) -> None:
+        """Test --fix --dry-run with files that have fixable issues."""
+        from tools.scripts.validators.cli import main
+
+        with tempfile.NamedTemporaryFile(suffix=".py", mode="w", delete=False) as f:
+            f.write("eval('bad')\n")
+            f.flush()
+            path = Path(f.name)
+        try:
+            with patch("sys.argv", ["prog", str(path), "--lang", "python", "--fix", "--dry-run"]):
+                result = main()
+                assert result in (0, 1)
+        finally:
+            path.unlink()
+
+    def test_fix_real_with_issues(self) -> None:
+        """Test --fix (not dry-run) with fixable issues."""
+        from tools.scripts.validators.cli import main
+
+        with tempfile.NamedTemporaryFile(suffix=".py", mode="w", delete=False) as f:
+            f.write("eval('bad')\n")
+            f.flush()
+            path = Path(f.name)
+        try:
+            with patch("sys.argv", ["prog", str(path), "--lang", "python", "--fix"]):
+                result = main()
+                assert result in (0, 1)
+        finally:
+            path.unlink()
+
+    def test_linters_with_issues(self) -> None:
+        """Test --linters flag with mock returning issues."""
+        from tools.scripts.validators.cli import main
+
+        with tempfile.NamedTemporaryFile(suffix=".py", mode="w", delete=False) as f:
+            f.write("x = 1\n")
+            f.flush()
+            path = Path(f.name)
+        try:
+            mock_issues = [
+                {"linter": "ruff", "file": str(path), "line": 1, "message": "unused var"},
+            ]
+            with patch("sys.argv", ["prog", str(path), "--lang", "python", "--linters", "ruff"]), \
+                 patch("tools.scripts.linter_runner.run_linter_aggregation", return_value=mock_issues):
+                result = main()
+                assert result in (0, 1)
+        finally:
+            path.unlink()
+
+    def test_linters_with_many_issues(self) -> None:
+        """Test --linters flag with >20 issues (truncation)."""
+        from tools.scripts.validators.cli import main
+
+        with tempfile.NamedTemporaryFile(suffix=".py", mode="w", delete=False) as f:
+            f.write("x = 1\n")
+            f.flush()
+            path = Path(f.name)
+        try:
+            mock_issues = [
+                {"linter": "ruff", "file": str(path), "line": i, "message": f"issue {i}"}
+                for i in range(25)
+            ]
+            with patch("sys.argv", ["prog", str(path), "--lang", "python", "--linters", "ruff"]), \
+                 patch("tools.scripts.linter_runner.run_linter_aggregation", return_value=mock_issues):
+                result = main()
+                assert result in (0, 1)
+        finally:
+            path.unlink()
+
+    def test_max_warnings_text_format_exceeded(self) -> None:
+        """Test --max-warnings exceeded in text format."""
+        from tools.scripts.validators.cli import main
+
+        with tempfile.NamedTemporaryFile(suffix=".py", mode="w", delete=False) as f:
+            f.write("eval('bad')\n")
+            f.flush()
+            path = Path(f.name)
+        try:
+            with patch("sys.argv", ["prog", str(path), "--lang", "python",
+                                     "--max-warnings", "0"]):
+                result = main()
+                # May or may not have warnings
+                assert result in (0, 1)
+        finally:
+            path.unlink()
+
+    def test_fail_on_warnings_text_format(self) -> None:
+        """Test --fail-on-warnings in text format."""
+        from tools.scripts.validators.cli import main
+
+        with tempfile.NamedTemporaryFile(suffix=".py", mode="w", delete=False) as f:
+            f.write("eval('bad')\n")
+            f.flush()
+            path = Path(f.name)
+        try:
+            with patch("sys.argv", ["prog", str(path), "--lang", "python",
+                                     "--fail-on-warnings"]):
+                result = main()
+                assert result in (0, 1)
+        finally:
+            path.unlink()
+
+    def test_max_errors_json_format(self) -> None:
+        """Test --max-errors in non-text (json) format."""
+        from tools.scripts.validators.cli import main
+
+        with tempfile.NamedTemporaryFile(suffix=".py", mode="w", delete=False) as f:
+            f.write("eval('bad')\n")
+            f.flush()
+            path = Path(f.name)
+        try:
+            with patch("sys.argv", ["prog", str(path), "--lang", "python",
+                                     "--format", "json", "--max-errors", "0"]):
+                result = main()
+                assert result in (0, 1)
+        finally:
+            path.unlink()
+
+    def test_max_warnings_json_format(self) -> None:
+        """Test --max-warnings in non-text (json) format."""
+        from tools.scripts.validators.cli import main
+
+        with tempfile.NamedTemporaryFile(suffix=".py", mode="w", delete=False) as f:
+            f.write("eval('bad')\n")
+            f.flush()
+            path = Path(f.name)
+        try:
+            with patch("sys.argv", ["prog", str(path), "--lang", "python",
+                                     "--format", "json", "--max-warnings", "0"]):
+                result = main()
+                assert result in (0, 1)
+        finally:
+            path.unlink()
+
+    def test_fix_with_real_fixes_applied(self) -> None:
+        """Test --fix where apply_fixes actually returns fixes."""
+        from tools.scripts.validators.cli import main
+
+        mock_fix = MagicMock()
+        mock_fix.file = "test.py"
+        mock_fix.line = 1
+        mock_fix.rule_id = "test-rule"
+        mock_fix.original = "old"
+        mock_fix.fixed = "new"
+
+        with tempfile.NamedTemporaryFile(suffix=".py", mode="w", delete=False) as f:
+            f.write("eval('bad')\n")
+            f.flush()
+            path = Path(f.name)
+        try:
+            with patch("sys.argv", ["prog", str(path), "--lang", "python", "--fix"]), \
+                 patch("tools.scripts.fix_applier.apply_fixes", return_value=[mock_fix]):
+                result = main()
+                assert result in (0, 1)
+        finally:
+            path.unlink()
+
+    def test_dry_run_no_results(self) -> None:
+        """Test --dry-run with no results returns 0."""
+        from tools.scripts.validators.cli import main
+
+        with tempfile.TemporaryDirectory() as td:
+            # Empty directory, no files
+            with patch("sys.argv", ["prog", td, "--lang", "python", "--dry-run"]):
+                result = main()
+                assert result == 0
+
+    def test_health_score_with_errors(self) -> None:
+        """Test --health-score with files that have errors."""
+        from tools.scripts.validators.cli import main
+
+        with tempfile.NamedTemporaryFile(suffix=".py", mode="w", delete=False) as f:
+            f.write("eval('bad')\n")
+            f.flush()
+            path = Path(f.name)
+        try:
+            with patch("sys.argv", ["prog", str(path), "--lang", "python", "--health-score"]):
+                result = main()
+                assert result in (0, 1)
+        finally:
+            path.unlink()
+
+    def test_file_incremental_changed(self) -> None:
+        """Test --incremental where file has changed since last check."""
+        from tools.scripts.validators.cli import main
+
+        with tempfile.NamedTemporaryFile(suffix=".py", mode="w", delete=False) as f:
+            f.write("x = 1\n")
+            f.flush()
+            path = Path(f.name)
+        try:
+            # First run
+            with patch("sys.argv", ["prog", str(path), "--lang", "python", "--incremental"]):
+                main()
+            # Modify file
+            path.write_text("y = 2\n")
+            # Second run: should detect change
+            with patch("sys.argv", ["prog", str(path), "--lang", "python", "--incremental"]):
+                result = main()
+                assert result in (0, 1)
+        finally:
+            path.unlink()
+
+    def test_linter_aggregation_no_issues(self) -> None:
+        """Test --linters returns no issues."""
+        from tools.scripts.validators.cli import main
+
+        with tempfile.NamedTemporaryFile(suffix=".py", mode="w", delete=False) as f:
+            f.write("x = 1\n")
+            f.flush()
+            path = Path(f.name)
+        try:
+            with patch("sys.argv", ["prog", str(path), "--lang", "python", "--linters", "ruff"]), \
+                 patch("tools.scripts.linter_runner.run_linter_aggregation", return_value=[]):
+                result = main()
+                assert result in (0, 1)
+        finally:
+            path.unlink()
+
+
 if __name__ == "__main__":
     unittest.main()

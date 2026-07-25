@@ -47,12 +47,9 @@ from tools.scripts.hooks.incremental_checks import (  # noqa: F401
     run_pre_commit_checks,
 )
 
-# =============================================================================
-# CLI
-# =============================================================================
 
-
-def main() -> int:
+def _build_parser() -> argparse.ArgumentParser:
+    """Build the CLI argument parser."""
     parser = argparse.ArgumentParser(
         description="统一 Hook 运行器",
         formatter_class=argparse.RawDescriptionHelpFormatter,
@@ -69,30 +66,18 @@ Examples:
   hooks_runner.py full
         """,
     )
-
     subparsers = parser.add_subparsers(dest="command", required=True)
 
-    # lint
     subparsers.add_parser("lint", help="Run ruff lint check")
-
-    # format
     subparsers.add_parser("format", help="Run ruff format check")
-
-    # typecheck
     subparsers.add_parser("typecheck", help="Run mypy type check")
-
-    # test
     subparsers.add_parser("test", help="Run pytest test suite")
-
-    # security
     subparsers.add_parser("security", help="Run security scan (bandit + pip-audit)")
 
-    # language-rules
     lr_parser = subparsers.add_parser("language-rules", help="Run language-specific rules validation")
     lr_parser.add_argument("--path", type=Path, default=Path("."), help="Path to validate")
     lr_parser.add_argument("--lang", help="Language (auto-detect if not specified)")
 
-    # quality-gate
     qg_parser = subparsers.add_parser("quality-gate", help="Run AI Quality Gate checks")
     qg_parser.add_argument("--path", type=Path, default=Path("tools/scripts"), help="Path to check")
     qg_parser.add_argument("--full", action="store_true", help="Run all checks")
@@ -104,7 +89,6 @@ Examples:
     qg_parser.add_argument("--check-patterns", action="store_true", help="Check all anti-patterns")
     qg_parser.add_argument("--format", choices=["text", "json"], default="text", help="Output format")
 
-    # governance-audit
     ga_parser = subparsers.add_parser("governance-audit", help="Run Governance Auditor checks")
     ga_parser.add_argument("--full", action="store_true", help="Run all governance checks")
     ga_parser.add_argument("--validate-docs", action="store_true", help="Validate governance docs")
@@ -112,53 +96,103 @@ Examples:
     ga_parser.add_argument("--audit-hallucination", action="store_true", help="Audit hallucination risks")
     ga_parser.add_argument("--check-index", action="store_true", help="Check index references")
 
-    # diff (incremental)
     diff_parser = subparsers.add_parser("diff", help="Incremental check: only changed files vs base ref")
     diff_parser.add_argument("--base", default="HEAD", help="Git ref to diff against (default: HEAD)")
 
-    # pre-commit
     subparsers.add_parser("pre-commit", help="Pre-commit hook: check staged files only")
-
-    # full
     subparsers.add_parser(
         "full", help="Run all checks (lint, format, typecheck, test, security, quality-gate, governance-audit)"
     )
 
-    args = parser.parse_args()
+    return parser
 
-    # Dispatch commands
-    if args.command == "lint":
-        passed, output = run_lint()
+
+def _run_simple(func: tuple) -> int:
+    """Run a simple check function and print output."""
+    passed, output = func()
+    print(output)
+    return 0 if passed else 1
+
+
+def _run_full() -> int:
+    """Run the full check suite with parallel + sequential phases."""
+    print("=" * 60)
+    print("  FULL HOOKS RUNNER - 完整检查套件")
+    print("=" * 60)
+
+    # Parallel phase: lint + format + typecheck
+    check_funcs = [
+        ("Lint", run_lint),
+        ("Format", run_format_check),
+        ("Type Check", run_typecheck),
+    ]
+    results: dict[str, tuple[bool, str]] = {}
+    with ThreadPoolExecutor(max_workers=3) as executor:
+        futures = {executor.submit(func): name for name, func in check_funcs}
+        for future in as_completed(futures):
+            name = futures[future]
+            try:
+                passed, output = future.result()
+            except Exception as e:
+                passed, output = False, str(e)
+            results[name] = (passed, output)
+
+    # Sequential phase: dependent checks
+    sequential_checks = [
+        ("Test Suite", run_tests),
+        ("Security Scan", run_security),
+        ("AI Quality Gate", lambda: run_quality_gate(Path("tools/scripts"), full=True)),
+        ("Governance Audit", lambda: run_governance_audit(full=True)),
+    ]
+    for name, func in sequential_checks:
+        try:
+            passed, output = func()
+        except Exception as e:
+            passed, output = False, str(e)
+        results[name] = (passed, output)
+
+    # Print results in fixed order
+    order = ["Lint", "Format", "Type Check", "Test Suite", "Security Scan", "AI Quality Gate", "Governance Audit"]
+    all_passed = True
+    for i, name in enumerate(order, 1):
+        print(f"\n📋 {i}/7: {name}")
+        passed, output = results[name]
         print(output)
-        return 0 if passed else 1
+        if not passed:
+            all_passed = False
 
-    elif args.command == "format":
-        passed, output = run_format_check()
-        print(output)
-        return 0 if passed else 1
+    print("\n" + "=" * 60)
+    if all_passed:
+        print("✅ ALL CHECKS PASSED")
+    else:
+        print("❌ SOME CHECKS FAILED")
+    print("=" * 60)
 
-    elif args.command == "typecheck":
-        passed, output = run_typecheck()
-        print(output)
-        return 0 if passed else 1
+    return 0 if all_passed else 1
 
-    elif args.command == "test":
-        passed, output = run_tests()
-        print(output)
-        return 0 if passed else 1
 
-    elif args.command == "security":
-        passed, output = run_security()
-        print(output)
-        return 0 if passed else 1
+# Dispatch table: command -> (func, needs_args)
+_SIMPLE_COMMANDS = {
+    "lint": run_lint,
+    "format": run_format_check,
+    "typecheck": run_typecheck,
+    "test": run_tests,
+    "security": run_security,
+}
 
-    elif args.command == "language-rules":
-        passed, output = run_language_rules(args.path, args.lang)
-        print(output)
-        return 0 if passed else 1
 
-    elif args.command == "quality-gate":
-        passed, output = run_quality_gate(
+def _dispatch(args: argparse.Namespace) -> int:
+    """Dispatch the parsed command to the appropriate handler."""
+    cmd = args.command
+
+    if cmd in _SIMPLE_COMMANDS:
+        return _run_simple(_SIMPLE_COMMANDS[cmd])
+
+    if cmd == "language-rules":
+        return _run_simple(run_language_rules(args.path, args.lang))
+
+    if cmd == "quality-gate":
+        return _run_simple(run_quality_gate(
             args.path,
             full=args.full,
             check_annotation=args.check_annotation,
@@ -168,89 +202,34 @@ Examples:
             check_structure=args.check_structure,
             check_patterns=args.check_patterns,
             format=args.format,
-        )
-        print(output)
-        return 0 if passed else 1
+        ))
 
-    elif args.command == "governance-audit":
-        passed, output = run_governance_audit(
+    if cmd == "governance-audit":
+        return _run_simple(run_governance_audit(
             full=args.full,
             validate_docs=args.validate_docs,
             check_ai_sdlc=args.check_ai_sdlc,
             audit_hallucination=args.audit_hallucination,
             check_index=args.check_index,
-        )
-        print(output)
-        return 0 if passed else 1
+        ))
 
-    elif args.command == "diff":
-        passed, output = run_diff_checks(args.base)
-        print(output)
-        return 0 if passed else 1
+    if cmd == "diff":
+        return _run_simple(run_diff_checks(args.base))
 
-    elif args.command == "pre-commit":
-        passed, output = run_pre_commit_checks()
-        print(output)
-        return 0 if passed else 1
+    if cmd == "pre-commit":
+        return _run_simple(run_pre_commit_checks())
 
-    elif args.command == "full":
-        print("=" * 60)
-        print("  FULL HOOKS RUNNER - 完整检查套件")
-        print("=" * 60)
+    if cmd == "full":
+        return _run_full()
 
-        # 并行执行独立检查 (lint + format + typecheck 可并行)
-        check_funcs = [
-            ("Lint", run_lint),
-            ("Format", run_format_check),
-            ("Type Check", run_typecheck),
-        ]
-        results: dict[str, tuple[bool, str]] = {}
-        with ThreadPoolExecutor(max_workers=3) as executor:
-            futures = {executor.submit(func): name for name, func in check_funcs}
-            for future in as_completed(futures):
-                name = futures[future]
-                try:
-                    passed, output = future.result()
-                except Exception as e:
-                    passed, output = False, str(e)
-                results[name] = (passed, output)
-
-        # 串行执行有依赖的检查
-        sequential_checks = [
-            ("Test Suite", run_tests),
-            ("Security Scan", run_security),
-            ("AI Quality Gate", lambda: run_quality_gate(Path("tools/scripts"), full=True)),
-            ("Governance Audit", lambda: run_governance_audit(full=True)),
-        ]
-        for name, func in sequential_checks:
-            try:
-                passed, output = func()
-            except Exception as e:
-                passed, output = False, str(e)
-            results[name] = (passed, output)
-
-        # 输出结果 (按固定顺序)
-        order = ["Lint", "Format", "Type Check", "Test Suite", "Security Scan", "AI Quality Gate", "Governance Audit"]
-        all_passed = True
-        for i, name in enumerate(order, 1):
-            print(f"\n📋 {i}/7: {name}")
-            passed, output = results[name]
-            print(output)
-            if not passed:
-                all_passed = False
-
-        print("\n" + "=" * 60)
-        if all_passed:
-            print("✅ ALL CHECKS PASSED")
-        else:
-            print("❌ SOME CHECKS FAILED")
-        print("=" * 60)
-
-        return 0 if all_passed else 1
-
-    # Unknown command
-    print(f"Unknown command: {args.command}")
+    print(f"Unknown command: {cmd}")
     return 1
+
+
+def main() -> int:
+    parser = _build_parser()
+    args = parser.parse_args()
+    return _dispatch(args)
 
 
 if __name__ == "__main__":

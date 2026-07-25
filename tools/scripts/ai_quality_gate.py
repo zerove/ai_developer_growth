@@ -17,10 +17,6 @@ import sys
 from pathlib import Path
 from typing import Any
 
-# 兼容 python -m 和 python <path> 两种运行方式
-if __package__ is None or __package__ == "":
-    sys.path.insert(0, str(Path(__file__).resolve().parent.parent.parent))
-
 from tools.scripts.rules_engine import check_directory
 
 # ──────────────────────────────────────────────────────────

@@ -67,7 +67,7 @@ updated: 2026-07-21
 
 ### 参与讨论
 
-- 在 [Discussions](../../discussions) 提问和讨论
+- 在 [Discussions](https://github.com/zerove/ai_developer_growth/discussions) 提问和讨论
 - 分享你的 AI 协作经验
 - 提出改进建议
 

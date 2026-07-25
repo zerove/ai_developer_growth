@@ -132,7 +132,7 @@ def process_data(items: list) -> list:
 
 - [AI 代码生成质量标准](ai-code-generation-quality.md) - 质量验证框架
 - [AI 代码审查专项清单](ai-code-review-checklist.md) - 审查标准
-- [安全规范](../security/) - 安全标准
+- [安全规范](../security/secrets-management.md) - 安全标准
 
 ---
 

@@ -1068,7 +1068,8 @@ def _load_trend_data(project_dir: Path) -> list[dict[str, Any]]:
     trend_file = project_dir / _TREND_DATA_FILE
     if trend_file.exists():
         try:
-            return json.loads(trend_file.read_text(encoding="utf-8"))
+            result: list[dict[str, Any]] = json.loads(trend_file.read_text(encoding="utf-8"))
+            return result
         except (json.JSONDecodeError, OSError):
             return []
     return []

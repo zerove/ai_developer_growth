@@ -31,7 +31,8 @@ def _load_cache(cache_file: Path) -> dict[str, str]:
     """Load file hash cache from disk."""
     if cache_file.exists():
         try:
-            return json.loads(cache_file.read_text())
+            result: dict[str, str] = json.loads(cache_file.read_text())
+            return result
         except (json.JSONDecodeError, OSError):
             pass
     return {}

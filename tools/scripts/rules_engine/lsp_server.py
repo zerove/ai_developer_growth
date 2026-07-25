@@ -35,7 +35,6 @@ try:
         Range,
         TextEdit,
     )
-    from pygls.workspace import Workspace
 
     HAS_PYGLS = True
 except ImportError:
@@ -76,12 +75,11 @@ def _check_document(content: str, language: str) -> list[Diagnostic]:
         return []
 
     try:
+        from tools.scripts._common import rules_dir
+
         from .rule_loader import load_rules_for_language
-        from .anti_pattern_checker import check_anti_patterns
     except ImportError:
         return []
-
-    from tools.scripts._common import rules_dir
 
     try:
         rules = load_rules_for_language(language, rules_dir())
@@ -119,6 +117,7 @@ def _check_document(content: str, language: str) -> list[Diagnostic]:
             pass
 
     return diagnostics
+
 
 
 LANG_MAP = {
@@ -174,8 +173,9 @@ def create_server() -> Any:
         line = content.splitlines()[params.position.line] if params.position.line < len(content.splitlines()) else ""
 
         try:
-            from .rule_loader import load_rules_for_language
             from tools.scripts._common import rules_dir
+
+            from .rule_loader import load_rules_for_language
 
             ext = Path(params.text_document.uri).suffix.lower()
             lang = EXT_LANG_MAP.get(ext)
@@ -210,8 +210,9 @@ def create_server() -> Any:
             rule_id = diag.code if isinstance(diag.code, str) else str(diag.code)
 
             try:
-                from .rule_loader import load_rules_for_language
                 from tools.scripts._common import rules_dir
+
+                from .rule_loader import load_rules_for_language
 
                 ext = Path(params.text_document.uri).suffix.lower()
                 lang = EXT_LANG_MAP.get(ext)
@@ -253,10 +254,14 @@ def create_server() -> Any:
     return server
 
 
-def _publish_diagnostics(server: Any, uri: str) -> None:
+def _publish_diagnostics(server: LanguageServer, uri: str) -> None:
     """Publish diagnostics for a document."""
-    document = server.workspace.get_document(uri)
-    content = document.source
+    try:
+        document = server.workspace.get_document(uri)
+        content = document.source
+    except Exception:
+        return
+
     ext = Path(uri).suffix.lower()
     lang = EXT_LANG_MAP.get(ext)
 

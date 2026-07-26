@@ -21,7 +21,7 @@
 | Markdown 文档 | 407 |
 | Python 脚本 | 390 |
 | YAML 配置 | 63 |
-| 测试用例 | 2,274 通过 / 0 失败 |
+| 测试用例 | 2,370 通过 / 0 失败 |
 | 核心 Agent 定义 | 4 个治理 Agent + 4 个示例 Agent |
 | ADR 架构决策记录 | 10 条 |
 
@@ -157,7 +157,7 @@
 ```
 P0 (已完成 ✅):  测试绿化 (7→0)、ruff 清零、mypy 清零 (49→0)
 P1 (已完成 ✅):  governance-auditor 路径修正、语言规则验证 (26 语言)
-P2 (Phase 2):  Tree-sitter、语义规则、跨文件分析
+P2 (已完成 ✅): Tree-sitter AST (867行)、语义分析 (443行)、AST修复 (364行)、性能优化 (390行)
 P3 (Phase 3+): AI 增强、生态工具、企业特性
 ```
 
@@ -194,7 +194,13 @@ P3 (Phase 3+): AI 增强、生态工具、企业特性
 ### 下一步
 - [x] CI/CD 路径修复 (adg_cli.py → python -m)
 - [x] 性能基准测试入口 (python -m tools.benchmarks)
-- [ ] Phase 2: Tree-sitter 集成
+- [x] Phase 2: Tree-sitter 集成
+- [x] **Phase 2.1**: AST 解析器 (ast_parser.py, 867 行, 5 语言 tree-sitter)
+- [x] **Phase 2.2**: 语义分析引擎 (semantic_checker.py, 443 行, 依赖图/周期检测)
+- [x] **Phase 2.3**: AST 代码修复 (ast_fixer.py, 364 行, 8 种自动修复)
+- [x] **Phase 2.4**: 性能优化 (performance.py, 390 行, 增量检查/缓存/并行)
+- [x] **Phase 2 测试**: 35 个新测试 (tests/test_phase2.py)
+- [ ] Phase 3: AI 增强、生态工具
 
 ---
 
@@ -214,6 +220,10 @@ P3 (Phase 3+): AI 增强、生态工具、企业特性
 - `tools/scripts/rules_engine/security_patterns.py` - 安全模式
 - `tools/scripts/rules_engine/rule_loader.py` - 规则加载+缓存
 - `tools/scripts/rules_engine/models.py` - 数据模型
+- `tools/scripts/rules_engine/ast_parser.py` - Tree-sitter AST 解析器 (867 行)
+- `tools/scripts/rules_engine/semantic_checker.py` - 语义分析引擎 (443 行)
+- `tools/scripts/rules_engine/ast_fixer.py` - AST 代码修复 (364 行)
+- `tools/scripts/rules_engine/performance.py` - 性能优化 (390 行)
 
 ### AI 质量
 - `tools/scripts/ai_quality_gate.py` - 质量门禁

@@ -1,14 +1,12 @@
 from __future__ import annotations
 
 import re
-import subprocess
 import sys
 from pathlib import Path
 from typing import Any
 
-from tools.scripts.adg_cli.core import Issue, _severity_rank, SKIP_EXTENSIONS, _make_issue, SKIP_DIRS
-from tools.scripts.adg_cli.detect import detect_language, _detect_language_from_file
-from tools.scripts.adg_cli.rules import load_rules_for_language, load_framework_rules
+from tools.scripts.adg_cli.core import SKIP_DIRS, SKIP_EXTENSIONS, Issue, _make_issue, _severity_rank
+from tools.scripts.adg_cli.detect import _detect_language_from_file, detect_language
 from tools.scripts.adg_cli.git import _get_git_changed_files, _get_staged_files, _get_unstaged_files
 
 

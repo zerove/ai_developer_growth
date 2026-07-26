@@ -27,6 +27,7 @@ import argparse
 import sys
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
+from typing import Any
 
 from tools.scripts.hooks.basic_checks import (
     run_format_check,
@@ -125,7 +126,7 @@ Examples:
     return parser
 
 
-def _run_simple(func_or_result) -> int:
+def _run_simple(func_or_result: Any) -> int:
     """Run a simple check function and print output.
 
     Accepts either:
@@ -285,8 +286,9 @@ def _dispatch(args: argparse.Namespace) -> int:
         return 0
 
     if cmd == "dashboard":
-        from tools.scripts.rules_engine.dashboard import create_app
         import uvicorn
+
+        from tools.scripts.rules_engine.dashboard import create_app
 
         app = create_app(args.db)
         print(f"Starting ADG Quality Dashboard at http://0.0.0.0:{args.port}")

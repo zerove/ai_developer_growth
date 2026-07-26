@@ -5,14 +5,11 @@ from pathlib import Path
 from typing import Any
 
 from tools.scripts.adg_cli.core import FIX_RULES, SKIP_DIRS, SKIP_EXTENSIONS
-from tools.scripts.adg_cli.detect import detect_language, _detect_language_from_file
-from tools.scripts.adg_cli.rules import load_rules_for_language
-from tools.scripts.adg_cli.check import check_file
+from tools.scripts.adg_cli.detect import _detect_language_from_file
 
 
 def _apply_fix(content: str, rule_id: str, fix_info: dict[str, Any]) -> tuple[str, bool]:
     """Apply a single fix to content. Returns (new_content, was_modified)."""
-    import re
 
     pattern = fix_info.get("pattern")
     replacement = fix_info.get("replacement")

@@ -15,7 +15,6 @@ def _get_git_changed_files(since: str, cwd: Path | None = None) -> list[Path]:
     Returns:
         List of changed file paths
     """
-    import subprocess
 
     try:
         result = subprocess.run(
@@ -43,7 +42,6 @@ def _get_git_changed_files(since: str, cwd: Path | None = None) -> list[Path]:
 
 def _get_unstaged_files(cwd: Path | None = None) -> list[Path]:
     """Get list of unstaged changed files."""
-    import subprocess
 
     try:
         result = subprocess.run(
@@ -69,7 +67,6 @@ def _get_unstaged_files(cwd: Path | None = None) -> list[Path]:
 
 def _get_staged_files(cwd: Path | None = None) -> list[Path]:
     """Get list of staged files."""
-    import subprocess
 
     try:
         result = subprocess.run(

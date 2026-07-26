@@ -8,40 +8,40 @@ import sys
 from pathlib import Path
 from typing import Any
 
+from tools.scripts.adg_cli.check import _check_files_parallel, _collect_check_files, check_directory, check_file
 from tools.scripts.adg_cli.core import (
-    Issue,
-    _get_rules_path,
     _ADG_HOME,
+    _DEFAULT_PRE_COMMIT_HOOK,
+    _DEFAULT_PRE_PUSH_HOOK,
+    FIX_RULES,
     SKIP_DIRS,
     SKIP_EXTENSIONS,
-    _DEFAULT_PRE_PUSH_HOOK,
-    _DEFAULT_PRE_COMMIT_HOOK,
-    FIX_RULES,
+    Issue,
+    _get_rules_path,
     load_project_config,
 )
-from tools.scripts.adg_cli.detect import detect_language, _detect_language_from_file
-from tools.scripts.adg_cli.rules import load_rules_for_language, load_framework_rules
-from tools.scripts.adg_cli.check import check_file, check_directory, _check_files_parallel, _collect_check_files
-from tools.scripts.adg_cli.fix import fix_file, fix_directory
+from tools.scripts.adg_cli.detect import _detect_language_from_file, detect_language
+from tools.scripts.adg_cli.fix import fix_directory, fix_file
 from tools.scripts.adg_cli.format import (
+    _RESET,
+    _SEVERITY_COLORS,
+    _count_issues,
     _format_human,
     _format_json,
     _format_sarif,
-    _count_issues,
     _print_report_text,
-    _SEVERITY_COLORS,
-    _RESET,
 )
 from tools.scripts.adg_cli.git import _get_git_changed_files, _get_staged_files, _get_unstaged_files
+from tools.scripts.adg_cli.notify import _send_dingtalk_notification, _send_slack_notification
+from tools.scripts.adg_cli.rule_author import _RULE_TEMPLATE, _create_rule_interactive, _test_rule, _validate_rule
+from tools.scripts.adg_cli.rules import load_framework_rules, load_rules_for_language
 from tools.scripts.adg_cli.trend import (
-    _load_trend_data,
-    _save_trend_data,
-    _record_trend,
-    _format_trend_report,
     _TREND_DATA_FILE,
+    _format_trend_report,
+    _load_trend_data,
+    _record_trend,
+    _save_trend_data,
 )
-from tools.scripts.adg_cli.notify import _send_slack_notification, _send_dingtalk_notification
-from tools.scripts.adg_cli.rule_author import _create_rule_interactive, _validate_rule, _test_rule, _RULE_TEMPLATE
 
 
 def cmd_check(args: argparse.Namespace) -> int:
@@ -584,7 +584,7 @@ def cmd_html_report(args: argparse.Namespace) -> int:
 
 def cmd_recommend(args: argparse.Namespace) -> int:
     """AI-powered rule recommendations."""
-    from tools.ai_recommender import recommend_rules, format_recommendations_text
+    from tools.ai_recommender import format_recommendations_text, recommend_rules
 
     target = Path(args.path).resolve()
     result = recommend_rules(target, args.max)
@@ -598,8 +598,9 @@ def cmd_recommend(args: argparse.Namespace) -> int:
 
 def cmd_lsp(args: argparse.Namespace) -> int:
     """Start ADG Language Server."""
-    from tools.lsp.server import run_stdio_server, run_tcp_server
     import logging
+
+    from tools.lsp.server import run_stdio_server, run_tcp_server
 
     logging.basicConfig(level=getattr(logging, args.log_level.upper()))
 
@@ -625,7 +626,7 @@ def cmd_dashboard(args: argparse.Namespace) -> int:
 
 def cmd_marketplace(args: argparse.Namespace) -> int:
     """Rule pack marketplace operations."""
-    from tools.marketplace import list_packs, search_packs, install_pack, uninstall_pack, format_packs_list
+    from tools.marketplace import format_packs_list, install_pack, list_packs, search_packs, uninstall_pack
 
     cmd = args.marketplace_command
 

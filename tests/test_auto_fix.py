@@ -5,10 +5,7 @@ from __future__ import annotations
 import tempfile
 from pathlib import Path
 
-import pytest
-
 from tools.scripts.rules_engine.auto_fix import (
-    FIX_PATTERNS,
     _apply_replacement,
     _flag_only_fixes,
     apply_fixes,

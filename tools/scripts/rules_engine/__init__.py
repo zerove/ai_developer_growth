@@ -35,9 +35,9 @@ Architecture:
     - checker.py: Main orchestrator with external linter integration
 """
 
+from .auto_fix import apply_fixes, apply_fixes_to_directory, format_fix_results
 from .checker import check_directory, check_file
 from .models import CheckResult, Issue, Severity
-from .auto_fix import apply_fixes, apply_fixes_to_directory, format_fix_results
 from .plugins import (
     CheckerPlugin,
     clear_plugins,

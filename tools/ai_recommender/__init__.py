@@ -14,11 +14,10 @@ from typing import Any
 import yaml
 
 from tools.scripts.adg_cli import (
+    _detect_language_from_file,
     detect_language,
     load_rules_for_language,
-    _detect_language_from_file,
 )
-
 
 # ─────────────────────────────────────────────────────────────
 # Pattern-based rule recommendations (loaded from YAML)

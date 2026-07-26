@@ -5,7 +5,7 @@ from __future__ import annotations
 import argparse
 import json
 from pathlib import Path
-from unittest.mock import patch, MagicMock
+from unittest.mock import MagicMock, patch
 
 import pytest
 
@@ -169,7 +169,7 @@ class TestMarketplace:
         assert result["success"] is True
 
     def test_format_packs_list(self):
-        from tools.marketplace import list_packs, format_packs_list
+        from tools.marketplace import format_packs_list, list_packs
 
         packs = list_packs()
         text = format_packs_list(packs)
@@ -297,19 +297,19 @@ class TestFixEngine:
 
 class TestChatIntegration:
     def test_create_slack_notifier(self):
-        from tools.chat_integration import create_notifier, SlackNotifier
+        from tools.chat_integration import SlackNotifier, create_notifier
 
         notifier = create_notifier("https://hooks.slack.com/services/T/B")
         assert isinstance(notifier, SlackNotifier)
 
     def test_create_feishu_notifier(self):
-        from tools.chat_integration import create_notifier, FeishuNotifier
+        from tools.chat_integration import FeishuNotifier, create_notifier
 
         notifier = create_notifier("https://open.feishu.cn/open-apis/bot/v2/hook/xxx")
         assert isinstance(notifier, FeishuNotifier)
 
     def test_create_dingtalk_notifier(self):
-        from tools.chat_integration import create_notifier, DingTalkNotifier
+        from tools.chat_integration import DingTalkNotifier, create_notifier
 
         notifier = create_notifier("https://oapi.dingtalk.com/robot/send?access_token=xxx")
         assert isinstance(notifier, DingTalkNotifier)

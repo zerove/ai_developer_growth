@@ -3,31 +3,24 @@
 from __future__ import annotations
 
 import argparse
-import json
-import os
-import sys
 from pathlib import Path
-from unittest.mock import patch, MagicMock
+from unittest.mock import MagicMock, patch
 
 import pytest
 
 from tools.scripts.adg_cli import (
-    Issue,
-    cmd_check,
-    cmd_detect,
-    cmd_list_rules,
-    cmd_report,
-    cmd_fix,
-    cmd_rule,
-    cmd_trend,
-    cmd_notify,
-    cmd_install_hooks,
-    main,
-    load_rules_for_language,
     SKIP_DIRS,
     SKIP_EXTENSIONS,
-    _DEFAULT_PRE_COMMIT_HOOK,
-    _DEFAULT_PRE_PUSH_HOOK,
+    cmd_check,
+    cmd_detect,
+    cmd_fix,
+    cmd_install_hooks,
+    cmd_list_rules,
+    cmd_notify,
+    cmd_report,
+    cmd_rule,
+    cmd_trend,
+    main,
 )
 
 

@@ -1,9 +1,9 @@
 from __future__ import annotations
 
 import json
-from typing import Any
+from pathlib import Path
 
-from tools.scripts.adg_cli.core import Issue, _severity_rank
+from tools.scripts.adg_cli.core import Issue
 
 _SEVERITY_COLORS = {"error": "\033[91m", "warning": "\033[93m", "info": "\033[96m"}
 _RESET = "\033[0m"

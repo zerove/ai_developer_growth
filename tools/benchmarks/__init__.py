@@ -20,12 +20,11 @@ from typing import Any
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
 from tools.scripts.adg_cli import (
-    check_file,
     check_directory,
-    load_rules_for_language,
+    check_file,
     detect_language,
+    load_rules_for_language,
 )
-
 
 # ─────────────────────────────────────────────────────────────
 # File Generators

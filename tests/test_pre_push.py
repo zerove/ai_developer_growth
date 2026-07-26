@@ -2,12 +2,8 @@
 
 from __future__ import annotations
 
-import subprocess
-import tempfile
 from pathlib import Path
 from unittest.mock import patch
-
-import pytest
 
 from tools.scripts.hooks.pre_push import (
     get_changed_files_in_unpushed_commits,

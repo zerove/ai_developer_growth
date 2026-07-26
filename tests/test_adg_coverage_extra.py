@@ -3,47 +3,40 @@
 from __future__ import annotations
 
 import json
-import os
-import sys
 from pathlib import Path
-from unittest.mock import patch, MagicMock
+from unittest.mock import MagicMock, patch
 
 import pytest
 
 from tools.scripts.adg_cli import (
     Issue,
-    _load_yaml,
-    _simple_yaml_parse,
-    _severity_rank,
+    _apply_fix,
     _check_pattern,
-    _make_issue,
     _detect_framework,
     _detect_language_from_file,
-    _format_sarif,
     _format_human,
     _format_json,
-    _validate_rule,
-    _test_rule,
-    _load_trend_data,
-    _save_trend_data,
-    _record_trend,
+    _format_sarif,
     _format_trend_report,
-    _apply_fix,
-    _send_slack_notification,
-    _send_dingtalk_notification,
     _get_git_changed_files,
-    _get_unstaged_files,
     _get_staged_files,
+    _get_unstaged_files,
+    _load_trend_data,
+    _make_issue,
     _match_pattern,
     _merge_config,
+    _record_trend,
+    _save_trend_data,
+    _send_dingtalk_notification,
+    _send_slack_notification,
+    _test_rule,
+    _validate_rule,
+    check_directory,
+    fix_directory,
+    fix_file,
+    load_framework_rules,
     load_project_config,
     load_rules_for_language,
-    load_framework_rules,
-    check_file,
-    check_directory,
-    detect_language,
-    fix_file,
-    fix_directory,
 )
 
 
@@ -466,7 +459,6 @@ class TestLoadProjectConfig:
         assert isinstance(config, dict)
 
     def test_load_with_global_config(self, workspace, monkeypatch):
-        import tempfile
 
         global_dir = workspace / "global_config"
         global_dir.mkdir(parents=True, exist_ok=True)

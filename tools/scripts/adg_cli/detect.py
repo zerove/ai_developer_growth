@@ -3,17 +3,13 @@
 from __future__ import annotations
 
 import json
-import re
 from collections import Counter
 from pathlib import Path
 from typing import Any
 
 from tools.scripts.adg_cli.core import (
-    _ADG_HOME,
-    _ADG_SOURCE,
-    _get_rules_path,
-    SKIP_DIRS,
     MAX_FILES,
+    SKIP_DIRS,
 )
 
 # ── Language Detection Constants ──

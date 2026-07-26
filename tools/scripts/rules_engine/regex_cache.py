@@ -6,7 +6,6 @@ Avoids re-compiling regex patterns on every file check.
 from __future__ import annotations
 
 import re
-from typing import Any
 
 # Module-level compiled regex cache
 _COMPILED_CACHE: dict[str, re.Pattern[str]] = {}

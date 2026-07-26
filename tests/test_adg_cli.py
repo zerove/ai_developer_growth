@@ -3,16 +3,12 @@
 from __future__ import annotations
 
 import json
-import tempfile
 from pathlib import Path
-
-import pytest
 
 from tools.scripts.adg_cli import (
     Issue,
-    _load_yaml,
-    _simple_yaml_parse,
     _severity_rank,
+    _simple_yaml_parse,
     check_file,
     detect_language,
     load_rules_for_language,

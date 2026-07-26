@@ -81,7 +81,7 @@ def get_changed_files_in_unpushed_commits() -> list[Path]:
 
 def run_pre_push_check() -> int:
     """Run checks on unpushed commits. Returns exit code (0 = allow push)."""
-    CODE_EXTENSIONS = {".py", ".js", ".jsx", ".ts", ".tsx", ".rs", ".java", ".cs", ".go", ".cpp"}
+    code_extensions = {".py", ".js", ".jsx", ".ts", ".tsx", ".rs", ".java", ".cs", ".go", ".cpp"}
 
     commits = get_unpushed_commits()
     if not commits:
@@ -91,7 +91,7 @@ def run_pre_push_check() -> int:
     print(f"🔍 Checking {len(commits)} unpushed commit(s)...")
 
     changed_files = get_changed_files_in_unpushed_commits()
-    code_files = [f for f in changed_files if f.suffix in CODE_EXTENSIONS and f.exists()]
+    code_files = [f for f in changed_files if f.suffix in code_extensions and f.exists()]
 
     if not code_files:
         print("✅ No code files changed. Push allowed.")
@@ -102,7 +102,7 @@ def run_pre_push_check() -> int:
         print(f"   {f}")
 
     # Run lint checks on changed files
-    from tools.scripts.hooks.basic_checks import run_lint_files, run_format_files
+    from tools.scripts.hooks.basic_checks import run_format_files, run_lint_files
 
     py_files = [str(f) for f in code_files if f.suffix == ".py"]
     all_passed = True

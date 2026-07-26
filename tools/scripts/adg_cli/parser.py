@@ -1,25 +1,6 @@
 from __future__ import annotations
 
 import argparse
-from tools.scripts.adg_cli.commands import (
-    cmd_check,
-    cmd_detect,
-    cmd_list_rules,
-    cmd_install_hooks,
-    cmd_report,
-    cmd_fix,
-    cmd_rule,
-    cmd_trend,
-    cmd_notify,
-    cmd_html_report,
-    cmd_recommend,
-    cmd_lsp,
-    cmd_dashboard,
-    cmd_marketplace,
-    cmd_monorepo,
-    cmd_bench,
-    cmd_cicd,
-)
 
 
 def _build_parser() -> argparse.ArgumentParser:
@@ -139,7 +120,7 @@ def _build_parser() -> argparse.ArgumentParser:
     # marketplace
     mkt_p = sub.add_parser("marketplace", help="Rule pack marketplace")
     mkt_sub = mkt_p.add_subparsers(dest="marketplace_command")
-    mkt_list = mkt_sub.add_parser("list", help="List available packs")
+    mkt_sub.add_parser("list", help="List available packs")
     mkt_search = mkt_sub.add_parser("search", help="Search packs")
     mkt_search.add_argument("query", help="Search query")
     mkt_install = mkt_sub.add_parser("install", help="Install a rule pack")

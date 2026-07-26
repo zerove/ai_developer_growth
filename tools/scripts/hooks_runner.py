@@ -102,6 +102,15 @@ Examples:
     diff_parser = subparsers.add_parser("diff", help="Incremental check: only changed files vs base ref")
     diff_parser.add_argument("--base", default="HEAD", help="Git ref to diff against (default: HEAD)")
 
+    sc_parser = subparsers.add_parser("semantic-check", help="Run AST-based semantic analysis (tree-sitter)")
+    sc_parser.add_argument("--path", type=Path, default=Path("."), help="Path to check")
+    sc_parser.add_argument("--lang", help="Language filter")
+    sc_parser.add_argument("--jobs", "-j", type=int, default=1, help="Parallel workers")
+
+    af_parser = subparsers.add_parser("ast-fix", help="Run AST-based auto-fix on files")
+    af_parser.add_argument("--path", type=Path, default=Path("."), help="Path to fix")
+    af_parser.add_argument("--dry-run", action="store_true", help="Preview fixes without applying")
+
     subparsers.add_parser("pre-commit", help="Pre-commit hook: check staged files only")
 
     install_parser = subparsers.add_parser("install-hooks", help="Install git hooks")
@@ -139,6 +148,84 @@ def _run_simple(func_or_result: Any) -> int:
         passed, output = func_or_result
     print(output)
     return 0 if passed else 1
+
+
+def _run_semantic_check(path: Path, lang: str | None, jobs: int) -> int:
+    """Run AST-based semantic analysis on a directory or file."""
+    from tools.scripts.rules_engine.checker import check_directory, check_file
+
+    print("=" * 60)
+    print("  SEMANTIC CHECK (tree-sitter AST)")
+    print("=" * 60)
+
+    if path.is_file():
+        result = check_file(path, semantic=True)
+        _print_check_result(result)
+        return 0 if not result.issues else 1
+
+    languages = [lang] if lang else None
+    results = check_directory(path, languages=languages, jobs=jobs, semantic=True)
+
+    total_issues = 0
+    for result in sorted(results, key=lambda r: r.file):
+        _print_check_result(result)
+        total_issues += len(result.issues)
+
+    print(f"\n{'=' * 60}")
+    print(f"  Scanned {len(results)} files, found {total_issues} semantic issues")
+    if total_issues == 0:
+        print("  ✅ ALL CLEAN")
+    else:
+        print("  ⚠️  Issues found")
+    print("=" * 60)
+
+    return 0 if total_issues == 0 else 1
+
+
+def _run_ast_fix(path: Path, dry_run: bool) -> int:
+    """Run AST-based auto-fix on files."""
+    from tools.scripts.rules_engine.ast_fixer import ASTFixer
+
+    print("=" * 60)
+    print("  AST AUTO-FIX" + (" (dry run)" if dry_run else ""))
+    print("=" * 60)
+
+    fixer = ASTFixer()
+
+    if path.is_file():
+        report = fixer.fix_file(path, dry_run=dry_run)
+        print(fixer.format_fix_report(report))
+        return 0 if report.total_fixes == 0 else (0 if dry_run else 1)
+
+    # Directory: fix all Python files
+    total_fixes = 0
+    for filepath in sorted(path.rglob("*.py")):
+        if any(d in filepath.parts for d in {"__pycache__", ".git", "node_modules", ".venv"}):
+            continue
+        report = fixer.fix_file(filepath, dry_run=dry_run)
+        if report.total_fixes > 0:
+            print(fixer.format_fix_report(report))
+            total_fixes += report.total_fixes
+
+    print(f"\n{'=' * 60}")
+    print(f"  Total fixes: {total_fixes}" + (" (dry run)" if dry_run else ""))
+    if total_fixes == 0:
+        print("  ✅ No fixes needed")
+    elif dry_run:
+        print("  ℹ️  Run without --dry-run to apply")
+    else:
+        print("  ✅ Fixes applied")
+    print("=" * 60)
+
+    return 0
+
+
+def _print_check_result(result: Any) -> None:
+    """Print a single check result if it has issues."""
+    if result.issues:
+        for issue in result.issues:
+            severity_icon = {"error": "❌", "warning": "⚠️", "info": "ℹ️"}.get(issue.severity, "?")
+            print(f"  {severity_icon} {result.file}:{issue.line} [{issue.rule_id}] {issue.message}")
 
 
 def _run_full() -> int:
@@ -256,6 +343,12 @@ def _dispatch(args: argparse.Namespace) -> int:
 
     if cmd == "pre-commit":
         return _run_simple(run_pre_commit_checks())
+
+    if cmd == "semantic-check":
+        return _run_semantic_check(args.path, getattr(args, "lang", None), getattr(args, "jobs", 1))
+
+    if cmd == "ast-fix":
+        return _run_ast_fix(args.path, getattr(args, "dry_run", False))
 
     if cmd == "install-hooks":
         if args.pre_push:

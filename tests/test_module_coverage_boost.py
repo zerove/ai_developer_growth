@@ -5,13 +5,7 @@ Covers: fix_engine, multiproject, chat_integration, dashboard, cicd
 
 from __future__ import annotations
 
-import json
-import sys
-from pathlib import Path
-from unittest.mock import MagicMock, patch
-
-import pytest
-
+from unittest.mock import patch
 
 # ─────────────────────────────────────────────────────────────
 # fix_engine

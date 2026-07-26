@@ -9,9 +9,6 @@ Covers:
 
 from __future__ import annotations
 
-import json
-import sys
-from pathlib import Path
 from unittest.mock import patch
 
 import pytest
@@ -23,13 +20,6 @@ class TestConstants:
     def test_import_constants(self):
         from tools.scripts.rules_engine.constants import (
             CODE_EXTENSIONS,
-            DEFAULT_THRESHOLDS,
-            GIT_TIMEOUT_SECONDS,
-            IGNORE_DIRS,
-            INCREMENTAL_EXTENSIONS,
-            SEVERITY_ERROR,
-            SEVERITY_INFO,
-            SEVERITY_WARNING,
         )
 
         assert ".py" in CODE_EXTENSIONS

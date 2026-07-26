@@ -24,15 +24,15 @@ jobs:
       - name: Install dependencies
         run: pip install pyyaml
       - name: Detect language
-        run: python tools/scripts/adg_cli.py detect .
+        run: python -m tools.scripts.adg_cli detect .
       - name: Check anti-patterns (error only)
         run: |
-          python tools/scripts/adg_cli.py check tools/scripts/ --lang python --severity error --json > adg-report.json
+          python -m tools.scripts.adg_cli check tools/scripts/ --lang python --severity error --json > adg-report.json
           ERROR_COUNT=$(python -c "import json; print(json.load(open('adg-report.json'))['summary']['error'])")
           echo "Errors found: $ERROR_COUNT"
           if [ "$ERROR_COUNT" -gt 0 ]; then
             echo "::error::ADG governance check found $ERROR_COUNT errors"
-            python tools/scripts/adg_cli.py check tools/scripts/ --lang python --severity error
+            python -m tools.scripts.adg_cli check tools/scripts/ --lang python --severity error
             exit 1
           fi
       - name: Upload ADG report
@@ -109,7 +109,7 @@ jobs:
           cache: pip
       - run: pip install pytest pytest-cov pyyaml
       - name: Run tests with coverage
-        run: pytest tests/ -v --cov=tools/scripts --cov-report=xml --cov-report=term-missing --tb=short
+        run: pytest tests/ -v --cov=tools --cov-report=xml --cov-report=term-missing --tb=short
       - name: Coverage check
         if: matrix.python-version == '3.11'
         run: |

@@ -192,7 +192,8 @@ P3 (Phase 3+): AI 增强、生态工具、企业特性
 - [x] **验证 TypeScript/Rust 语言规则完整性**
 
 ### 下一步
-- [ ] 建立性能基准测试脚本
+- [x] CI/CD 路径修复 (adg_cli.py → python -m)
+- [x] 性能基准测试入口 (python -m tools.benchmarks)
 - [ ] Phase 2: Tree-sitter 集成
 
 ---

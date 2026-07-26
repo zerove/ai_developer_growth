@@ -17,7 +17,6 @@ from collections import Counter
 from pathlib import Path
 from typing import Any
 
-
 # Patterns that indicate potential rule candidates
 PATTERN_DETECTORS: list[dict[str, Any]] = [
     {

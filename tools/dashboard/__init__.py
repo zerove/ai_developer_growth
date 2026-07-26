@@ -18,15 +18,14 @@ from pathlib import Path
 from typing import Any
 
 from tools.scripts.adg_cli import (
-    check_directory,
-    load_rules_for_language,
-    detect_language,
-    _load_trend_data,
-    _format_trend_report,
     SKIP_DIRS,
     SKIP_EXTENSIONS,
+    _format_trend_report,
+    _load_trend_data,
+    check_directory,
+    detect_language,
+    load_rules_for_language,
 )
-
 
 # ─────────────────────────────────────────────────────────────
 # HTML Dashboard
@@ -233,8 +232,8 @@ def start_dashboard(
     host: str = "127.0.0.1",
 ) -> None:
     """Start a simple HTTP dashboard server."""
-    import http.server
     import functools
+    import http.server
 
     project = Path(project_dir).resolve()
 

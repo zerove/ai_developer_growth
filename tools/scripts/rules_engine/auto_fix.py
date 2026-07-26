@@ -7,12 +7,10 @@ Reads fix patterns from tools/fix_engine/fixes.yml and applies them to files.
 from __future__ import annotations
 
 import re
-import subprocess
-import sys
 from pathlib import Path
 from typing import Any
 
-from .models import FixResult, Severity
+from .models import FixResult
 
 # Fix patterns organized by language
 FIX_PATTERNS: dict[str, dict[str, dict[str, Any]]] = {

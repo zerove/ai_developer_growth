@@ -13,14 +13,11 @@ Targets:
 from __future__ import annotations
 
 import json
-import tempfile
 from pathlib import Path
 from types import SimpleNamespace
-from typing import Any
-from unittest.mock import MagicMock, patch
+from unittest.mock import patch
 
 import pytest
-
 
 # ──────────────────────────────────────────────────────────
 # create_case_study.py
@@ -73,8 +70,9 @@ class TestCreateCaseStudy:
 
 class TestRuleEngine:
     def test_asdict_dataclass(self) -> None:
-        from tools.scripts.rule_engine import asdict
         from dataclasses import dataclass
+
+        from tools.scripts.rule_engine import asdict
 
         @dataclass
         class Obj:
@@ -505,7 +503,6 @@ class TestIncrementalChecks:
 
 
 import subprocess  # noqa: E402
-
 
 # ──────────────────────────────────────────────────────────
 # report_generator.py

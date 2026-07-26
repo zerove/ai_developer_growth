@@ -1,3 +1,4 @@
+# mypy: disable-error-code="untyped-decorator"
 """LSP Server for ADG Governance rules engine.
 
 Provides IDE diagnostics for supported languages using the Language Server Protocol.
@@ -117,7 +118,6 @@ def _check_document(content: str, language: str) -> list[Diagnostic]:
             pass
 
     return diagnostics
-
 
 
 LANG_MAP = {

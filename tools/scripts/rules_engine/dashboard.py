@@ -16,9 +16,7 @@ import argparse
 import json
 import sqlite3
 import sys
-import time
 from datetime import datetime
-from pathlib import Path
 from typing import Any
 
 
@@ -253,7 +251,7 @@ HTML_TEMPLATE = """<!DOCTYPE html>
 </html>"""
 
 
-def create_app(db_path: str = "adg_quality.db"):
+def create_app(db_path: str = "adg_quality.db") -> Any:
     """Create FastAPI app for the quality dashboard."""
     try:
         from fastapi import FastAPI
@@ -266,7 +264,7 @@ def create_app(db_path: str = "adg_quality.db"):
     conn = init_db(db_path)
 
     @app.get("/", response_class=HTMLResponse)
-    def dashboard():
+    def dashboard() -> str:
         trend = get_trend_data(conn)
         latest = get_latest_report(conn)
         html = HTML_TEMPLATE.replace(
@@ -279,15 +277,15 @@ def create_app(db_path: str = "adg_quality.db"):
         return html
 
     @app.get("/api/trend")
-    def api_trend(limit: int = 30):
+    def api_trend(limit: int = 30) -> list[dict[str, Any]]:
         return get_trend_data(conn, limit)
 
     @app.get("/api/latest")
-    def api_latest():
+    def api_latest() -> dict[str, Any] | None:
         return get_latest_report(conn)
 
     @app.post("/api/record")
-    def api_record(report: dict[str, Any]):
+    def api_record(report: dict[str, Any]) -> dict[str, Any]:
         run_id = record_run(conn, report)
         return {"run_id": run_id, "status": "recorded"}
 

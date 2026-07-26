@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import json
 import sys
-from typing import Any
 
 from tools.scripts.adg_cli.core import Issue
 

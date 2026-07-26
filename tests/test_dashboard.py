@@ -2,17 +2,13 @@
 
 from __future__ import annotations
 
-import json
-import sqlite3
-from pathlib import Path
-
 import pytest
 
 from tools.scripts.rules_engine.dashboard import (
-    init_db,
-    record_run,
     get_latest_report,
     get_trend_data,
+    init_db,
+    record_run,
 )
 
 
@@ -125,6 +121,7 @@ class TestCreateApp:
 
     def test_api_endpoints(self, db_path):
         from fastapi.testclient import TestClient
+
         from tools.scripts.rules_engine.dashboard import create_app
 
         app = create_app(db_path)
@@ -145,6 +142,7 @@ class TestCreateApp:
 
     def test_record_api(self, db_path):
         from fastapi.testclient import TestClient
+
         from tools.scripts.rules_engine.dashboard import create_app
 
         app = create_app(db_path)

@@ -21,7 +21,6 @@ from __future__ import annotations
 import argparse
 import json
 import logging
-import re
 import sys
 from pathlib import Path
 from typing import Any
@@ -37,22 +36,9 @@ except ImportError:
 
 # Import ADG core
 from tools.scripts.adg_cli import (
-    Issue,
     check_file,
-    check_directory,
-    load_rules_for_language,
-    load_framework_rules,
     load_project_config,
-    detect_language,
-    _detect_language_from_file,
-    _validate_rule,
-    _test_rule,
-    _send_slack_notification,
-    _send_dingtalk_notification,
-    _record_trend,
-    _format_sarif,
-    SKIP_DIRS,
-    SKIP_EXTENSIONS,
+    load_rules_for_language,
 )
 
 logger = logging.getLogger("adg-lsp")
@@ -475,7 +461,6 @@ def run_stdio_server():
 def run_tcp_server(port: int):
     """Run the LSP server over TCP."""
     import socket
-    import threading
 
     server = AdgLanguageServer()
     logger.info(f"ADG LSP Server starting (TCP mode on port {port})")

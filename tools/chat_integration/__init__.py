@@ -16,11 +16,10 @@ import json
 from datetime import datetime
 from pathlib import Path
 from typing import Any
-from urllib.request import urlopen, Request
 from urllib.error import URLError
+from urllib.request import Request, urlopen
 
 from tools.scripts.adg_cli import Issue
-
 
 # ─────────────────────────────────────────────────────────────
 # Base Notifier

@@ -18,13 +18,13 @@ import sys
 from typing import Any
 
 import yaml
+
+from tools.scripts._common import handle_error
+from tools.scripts._common import rules_dir as _rules_dir
 from tools.scripts.fix_heuristics import (
     HEURISTIC_FIXES,  # noqa: F401 - re-export for tests
     heuristic_fix,  # noqa: F401 - re-export for tests
 )
-
-from tools.scripts._common import handle_error
-from tools.scripts._common import rules_dir as _rules_dir
 
 # Re-export for backward compatibility
 __all__ = ["heuristic_fix", "HEURISTIC_FIXES"]

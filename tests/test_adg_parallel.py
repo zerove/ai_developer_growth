@@ -1,15 +1,8 @@
 """Tests for ADG CLI P1.2 - Parallel checking."""
 
-import json
-import tempfile
-from pathlib import Path
-
-import pytest
-
 from tools.scripts.adg_cli import (
     _check_files_parallel,
     check_directory,
-    check_file,
     load_rules_for_language,
 )
 

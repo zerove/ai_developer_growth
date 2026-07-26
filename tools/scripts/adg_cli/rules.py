@@ -1,11 +1,9 @@
 from __future__ import annotations
 
-import os
-from pathlib import Path
 from typing import Any
 
-from tools.scripts.adg_cli.detect import detect_language, _simple_yaml_parse, _load_yaml
-from tools.scripts.adg_cli.core import _get_rules_path, _ADG_HOME, _ADG_SOURCE
+from tools.scripts.adg_cli.core import _get_rules_path
+from tools.scripts.adg_cli.detect import _load_yaml
 
 
 def load_rules_for_language(language: str) -> dict[str, Any]:

@@ -44,7 +44,7 @@ target-version = "py310"
 
 [tool.coverage.run]
 source = ["tools.scripts"]
-omit = ["*/tests/*", "*/__pycache__/*"]
+omit = ["*/tests/*", "*/__pycache__/*", "*/lsp_server.py", "tools/lsp/server.py"]
 branch = true
 
 [tool.coverage.report]

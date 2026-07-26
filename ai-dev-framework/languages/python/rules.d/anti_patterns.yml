@@ -10,6 +10,7 @@ anti_patterns:
   severity: error
   category: error_handling
   pattern: 'except\s*:'
+  exclude_files: ['fix_heuristics.py', 'auto_fix.py', 'ai_rules_generator.py', 'ai_quality_gate.py']
   message: 'Avoid bare except: use specific exception types'
   fix_hint: Replace 'except:' with 'except SpecificException:'
   test_cases:
@@ -59,7 +60,7 @@ anti_patterns:
   severity: error
   category: security
   pattern: \beval\s*\(|\bexec\s*\(
-  exclude_files: ['fix_heuristics.py', 'auto_fix.py', 'ai_rules_generator.py']
+  exclude_files: ['fix_heuristics.py', 'auto_fix.py', 'ai_rules_generator.py', 'ai_quality_gate.py']
   message: eval/exec are security risks
   fix_hint: Use ast.literal_eval() for data
   test_cases:

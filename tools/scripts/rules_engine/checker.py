@@ -15,8 +15,20 @@ from .plugins import get_plugins_for_language
 from .rule_loader import load_rules_for_language
 
 
-def check_file(filepath: Path, rules: dict[str, Any] | None = None, language: str | None = None) -> CheckResult:
-    """Check a single file against rules."""
+def check_file(
+    filepath: Path,
+    rules: dict[str, Any] | None = None,
+    language: str | None = None,
+    semantic: bool = False,
+) -> CheckResult:
+    """Check a single file against rules.
+
+    Args:
+        filepath: Path to the file.
+        rules: Rules dict. Auto-loaded if None.
+        language: Force language. Auto-detected if None.
+        semantic: Enable AST-based semantic analysis (tree-sitter).
+    """
     if not filepath.exists():
         return _file_not_found_result(filepath)
 
@@ -42,6 +54,10 @@ def check_file(filepath: Path, rules: dict[str, Any] | None = None, language: st
 
     # Run all checkers
     issues = _run_all_checkers(filepath, content, lines, lang, rules)
+
+    # Optional: AST-based semantic analysis
+    if semantic:
+        issues.extend(_run_semantic_checks(filepath, lang))
 
     return CheckResult(
         file=str(filepath),
@@ -105,6 +121,7 @@ def check_directory(
     rules: dict[str, Any] | None = None,
     languages: list[str] | None = None,
     jobs: int = 1,
+    semantic: bool = False,
 ) -> list[CheckResult]:
     """Check all files in a directory.
 
@@ -113,6 +130,7 @@ def check_directory(
         rules: Rules dict. Auto-loaded if None.
         languages: Filter to these languages only.
         jobs: Number of parallel workers (1 = serial).
+        semantic: Enable AST-based semantic analysis.
     """
     results: list[CheckResult] = []
 
@@ -151,7 +169,7 @@ def check_directory(
     if jobs <= 1 or len(files) <= 4:
         # Serial execution for small sets
         for filepath in files:
-            result = check_file(filepath, rules, _detect_language(filepath))
+            result = check_file(filepath, rules, _detect_language(filepath), semantic=semantic)
             if not result.skipped:
                 results.append(result)
     else:
@@ -159,7 +177,10 @@ def check_directory(
         from concurrent.futures import ProcessPoolExecutor, as_completed
 
         with ProcessPoolExecutor(max_workers=jobs) as executor:
-            future_to_file = {executor.submit(check_file, fp, rules, _detect_language(fp)): fp for fp in files}
+            future_to_file = {
+                executor.submit(check_file, fp, rules, _detect_language(fp), semantic): fp
+                for fp in files
+            }
             for future in as_completed(future_to_file):
                 try:
                     result = future.result()
@@ -169,6 +190,89 @@ def check_directory(
                     pass
 
     return results
+
+
+def _run_semantic_checks(filepath: Path, lang: str) -> list[Issue]:
+    """Run AST-based semantic analysis on a file.
+
+    Uses tree-sitter for accurate syntax tree analysis instead of regex.
+    Detects: unused imports, missing docstrings, complexity violations.
+    """
+    issues: list[Issue] = []
+
+    try:
+        from .ast_parser import get_parser
+
+        parser = get_parser()
+        if not parser.available:
+            return issues
+
+        ast_result = parser.parse_file(filepath)
+        if ast_result is None:
+            return issues
+
+        # Check unused imports
+        for imp in ast_result.imports:
+            if imp.is_from and imp.names:
+                try:
+                    content = filepath.read_text(encoding="utf-8")
+                except Exception:
+                    continue
+                for name in imp.names:
+                    # Skip wildcard imports
+                    if name == "*":
+                        continue
+                    if name not in content or content.count(name) <= 1:
+                        issues.append(
+                            Issue(
+                                file=str(filepath),
+                                line=imp.line,
+                                column=0,
+                                severity="warning",
+                                category="unused-import",
+                                rule_id="semantic-unused-import",
+                                message=f"Import '{name}' from '{imp.module}' appears unused",
+                            )
+                        )
+
+        # Check missing docstrings for public functions
+        for func in ast_result.functions:
+            if not func.name.startswith("_") and func.docstring is None:
+                issues.append(
+                    Issue(
+                        file=str(filepath),
+                        line=func.line,
+                        column=0,
+                        severity="info",
+                        category="missing-docstring",
+                        rule_id="semantic-missing-docstring",
+                        message=f"Public function '{func.name}' lacks a docstring",
+                    )
+                )
+
+        # Check complexity via AST
+        for func in ast_result.functions:
+            if func.complexity > 10:
+                issues.append(
+                    Issue(
+                        file=str(filepath),
+                        line=func.line,
+                        column=0,
+                        severity="warning",
+                        category="complexity",
+                        rule_id="semantic-high-complexity",
+                        message=f"Function '{func.name}' has AST-estimated complexity {func.complexity} (>10)",
+                    )
+                )
+
+    except ImportError:
+        # tree-sitter not available - silently skip
+        pass
+    except Exception:
+        # Semantic analysis failed - don't break the check pipeline
+        pass
+
+    return issues
 
 
 def _detect_language(filepath: Path) -> str:

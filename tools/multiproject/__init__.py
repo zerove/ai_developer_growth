@@ -224,7 +224,7 @@ def sync_rules_across_projects(
         target_config = target_path / ".adg" / "rules.yml"
         target_path.mkdir(parents=True, exist_ok=True)
 
-        existing: dict = {}
+        existing: dict[str, Any] = {}
         if target_config.exists():
             try:
                 existing = yaml.safe_load(target_config.read_text()) or {}

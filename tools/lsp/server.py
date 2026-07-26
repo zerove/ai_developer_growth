@@ -35,7 +35,7 @@ from tools.scripts.adg_cli import (
 logger = logging.getLogger("adg-lsp")
 
 # Supported file extensions
-SUPPORTED_EXTENSIONS = {
+SUPPORTED_EXTENSIONS: dict[str, str] = {
     ".py": "python",
     ".js": "javascript",
     ".ts": "typescript",
@@ -67,10 +67,10 @@ SUPPORTED_EXTENSIONS = {
 class AdgLanguageServer:
     """Lightweight LSP server that speaks JSON-RPC over stdio."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.workspace_root: str = "."
         self.documents: dict[str, str] = {}
-        self.rules_cache: dict[str, dict] = {}
+        self.rules_cache: dict[str, dict[str, Any]] = {}
         self.config: dict[str, Any] = {
             "severity_filter": "warning",
             "enable_on_save": True,
@@ -79,11 +79,11 @@ class AdgLanguageServer:
             "trend_enabled": False,
             "exclude_patterns": ["node_modules", ".git", "target", "__pycache__"],
         }
-        self._request_id = 0
+        self._request_id: int = 0
 
-    def handle_request(self, method: str, params: dict) -> Any:
+    def handle_request(self, method: str, params: dict[str, Any]) -> Any:
         """Route incoming LSP requests."""
-        handlers = {
+        handlers: dict[str, Any] = {
             "initialize": self._handle_initialize,
             "initialized": lambda p: {},
             "textDocument/didOpen": self._handle_did_open,
@@ -103,7 +103,7 @@ class AdgLanguageServer:
             return handler(params)
         return None
 
-    def _handle_initialize(self, params: dict) -> dict:
+    def _handle_initialize(self, params: dict[str, Any]) -> dict[str, Any]:
         """Handle initialize request."""
         if "rootUri" in params:
             self.workspace_root = params["rootUri"] or "."
@@ -136,29 +136,29 @@ class AdgLanguageServer:
             }
         }
 
-    def _handle_did_open(self, params: dict) -> None:
+    def _handle_did_open(self, params: dict[str, Any]) -> None:
         """Handle textDocument/didOpen."""
         text_doc = params.get("textDocument", {})
         uri = text_doc.get("uri", "")
         self.documents[uri] = text_doc.get("text", "")
 
-    def _handle_did_change(self, params: dict) -> None:
+    def _handle_did_change(self, params: dict[str, Any]) -> None:
         """Handle textDocument/didChange."""
         uri = params.get("textDocument", {}).get("uri", "")
         content_changes = params.get("contentChanges", [])
         if content_changes:
             self.documents[uri] = content_changes[-1].get("text", "")
 
-    def _handle_did_save(self, params: dict) -> None:
+    def _handle_did_save(self, params: dict[str, Any]) -> None:
         """Handle textDocument/didSave."""
         pass  # Diagnostics are requested by client
 
-    def _handle_did_close(self, params: dict) -> None:
+    def _handle_did_close(self, params: dict[str, Any]) -> None:
         """Handle textDocument/didClose."""
         uri = params.get("textDocument", {}).get("uri", "")
         self.documents.pop(uri, None)
 
-    def _handle_diagnostic(self, params: dict) -> list[dict]:
+    def _handle_diagnostic(self, params: dict[str, Any]) -> list[dict[str, Any]]:
         """Handle textDocument/diagnostic - return diagnostics for a document."""
         uri = params.get("textDocument", {}).get("uri", "")
         file_path = Path(uri.replace("file://", ""))
@@ -184,9 +184,9 @@ class AdgLanguageServer:
         issues = check_file(file_path, rules, severity_filter)
 
         # Convert to LSP diagnostics
-        diagnostics = []
+        diagnostics: list[dict[str, Any]] = []
         for issue in issues:
-            severity_map = {
+            severity_map: dict[str, int] = {
                 "error": 1,  # Error
                 "warning": 2,  # Warning
                 "info": 3,  # Information
@@ -210,20 +210,19 @@ class AdgLanguageServer:
 
         return diagnostics
 
-    def _handle_code_action(self, params: dict) -> list[dict]:
+    def _handle_code_action(self, params: dict[str, Any]) -> list[dict[str, Any]]:
         """Handle textDocument/codeAction - return quick fixes."""
         if not self.config.get("enable_quick_fix", True):
             return []
 
         diagnostics = params.get("context", {}).get("diagnostics", [])
-        actions = []
+        actions: list[dict[str, Any]] = []
 
         for diag in diagnostics:
             if diag.get("source") != "adg":
                 continue
 
             rule_id = diag.get("code", "")
-            diag.get("data", {})
 
             # Fix action
             actions.append(
@@ -255,7 +254,7 @@ class AdgLanguageServer:
 
         return actions
 
-    def _handle_code_lens(self, params: dict) -> list[dict]:
+    def _handle_code_lens(self, params: dict[str, Any]) -> list[dict[str, Any]]:
         """Handle textDocument/codeLens - show issue summary."""
         if not self.config.get("enable_code_lens", True):
             return []
@@ -268,7 +267,6 @@ class AdgLanguageServer:
 
         error_count = sum(1 for d in diagnostics if d.get("severity") == 1)
         warn_count = sum(1 for d in diagnostics if d.get("severity") == 2)
-        sum(1 for d in diagnostics if d.get("severity") == 3)
 
         summary = f"ADG: {len(diagnostics)} issues"
         if error_count:
@@ -286,7 +284,7 @@ class AdgLanguageServer:
             }
         ]
 
-    def _handle_hover(self, params: dict) -> dict | None:
+    def _handle_hover(self, params: dict[str, Any]) -> dict[str, Any] | None:
         """Handle textDocument/hover - show rule info on hover."""
         uri = params.get("textDocument", {}).get("uri", "")
         position = params.get("position", {})
@@ -313,16 +311,16 @@ class AdgLanguageServer:
             }
         }
 
-    def _handle_config_change(self, params: dict) -> None:
+    def _handle_config_change(self, params: dict[str, Any]) -> None:
         """Handle workspace/didChangeConfiguration."""
         settings = params.get("settings", {})
         if "adg" in settings:
             self.config.update(settings["adg"])
 
-    def _handle_workspace_symbol(self, params: dict) -> list[dict]:
+    def _handle_workspace_symbol(self, params: dict[str, Any]) -> list[dict[str, Any]]:
         """Handle workspace/symbol - list all rules."""
         query = params.get("query", "")
-        symbols = []
+        symbols: list[dict[str, Any]] = []
 
         for lang in ["python", "javascript", "typescript", "rust", "go", "java"]:
             rules = self._get_rules(lang)
@@ -346,7 +344,7 @@ class AdgLanguageServer:
 
         return symbols
 
-    def _get_rules(self, language: str) -> dict:
+    def _get_rules(self, language: str) -> dict[str, Any]:
         """Get rules for a language, with caching."""
         if language not in self.rules_cache:
             self.rules_cache[language] = load_rules_for_language(language)
@@ -358,7 +356,7 @@ class AdgLanguageServer:
 # ─────────────────────────────────────────────────────────────
 
 
-def read_message() -> tuple[str, Any]:
+def read_message() -> tuple[str, dict[str, Any], int | None]:
     """Read a JSON-RPC message from stdin."""
     # Read Content-Length header
     content_length = 0
@@ -385,7 +383,7 @@ def read_message() -> tuple[str, Any]:
     return method, params, msg_id
 
 
-def write_message(response: dict) -> None:
+def write_message(response: dict[str, Any]) -> None:
     """Write a JSON-RPC response to stdout."""
     body = json.dumps(response)
     content = f"Content-Length: {len(body.encode('utf-8'))}\r\n\r\n{body}"
@@ -393,7 +391,7 @@ def write_message(response: dict) -> None:
     sys.stdout.buffer.flush()
 
 
-def send_notification(method: str, params: dict) -> None:
+def send_notification(method: str, params: dict[str, Any]) -> None:
     """Send a JSON-RPC notification."""
     write_message({"jsonrpc": "2.0", "method": method, "params": params})
 
@@ -403,7 +401,7 @@ def send_notification(method: str, params: dict) -> None:
 # ─────────────────────────────────────────────────────────────
 
 
-def run_stdio_server():
+def run_stdio_server() -> None:
     """Run the LSP server over stdio."""
     server = AdgLanguageServer()
 
@@ -417,7 +415,7 @@ def run_stdio_server():
             result = server.handle_request(method, params)
 
             if msg_id is not None:
-                response = {"jsonrpc": "2.0", "id": msg_id}
+                response: dict[str, Any] = {"jsonrpc": "2.0", "id": msg_id}
                 if result is not None:
                     response["result"] = result
                 write_message(response)
@@ -449,7 +447,7 @@ def run_stdio_server():
                 )
 
 
-def run_tcp_server(port: int):
+def run_tcp_server(port: int) -> None:
     """Run the LSP server over TCP."""
     import socket
 
@@ -477,7 +475,7 @@ def run_tcp_server(port: int):
 # ─────────────────────────────────────────────────────────────
 
 
-def main():
+def main() -> None:
     parser = argparse.ArgumentParser(description="ADG LSP Server")
     parser.add_argument("--stdio", action="store_true", help="Use stdio transport")
     parser.add_argument("--port", type=int, default=8080, help="TCP port (default: 8080)")

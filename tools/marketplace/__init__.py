@@ -81,7 +81,7 @@ def install_pack(
 
     # Load existing config
     config_file = adg_dir / "rules.yml"
-    existing_rules: list[dict] = []
+    existing_rules: list[dict[str, Any]] = []
     if config_file.exists():
         try:
             content = config_file.read_text()

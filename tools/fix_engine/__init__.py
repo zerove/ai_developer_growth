@@ -15,8 +15,6 @@ from typing import Any
 
 import yaml
 
-from tools.scripts.adg_cli import FIX_RULES, Issue
-
 # ─────────────────────────────────────────────────────────────
 # Custom Fix Patterns (loaded from YAML)
 # ─────────────────────────────────────────────────────────────

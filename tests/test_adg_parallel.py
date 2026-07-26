@@ -61,12 +61,12 @@ class TestParallelChecking:
         # Sequential timing
         start = time.time()
         issues_seq = check_directory(tmp_path, rules, jobs=1)
-        seq_time = time.time() - start
+        time.time() - start
 
         # Parallel timing
         start = time.time()
         issues_par = check_directory(tmp_path, rules, jobs=4)
-        par_time = time.time() - start
+        time.time() - start
 
         # Both should find same issues
         assert len(issues_seq) == len(issues_par)

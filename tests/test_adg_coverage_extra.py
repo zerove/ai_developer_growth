@@ -145,7 +145,7 @@ class TestMakeIssue:
 class TestFormatSarif:
     def test_empty_issues(self):
         sarif = _format_sarif([], "python", None)
-        data = json.loads(sarif)
+        json.loads(sarif)
         assert "$schema" in sarif
 
     def test_with_issues(self):

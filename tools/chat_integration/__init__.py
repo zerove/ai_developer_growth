@@ -15,8 +15,6 @@ from __future__ import annotations
 import json
 from datetime import datetime
 from pathlib import Path
-from typing import Any
-from urllib.error import URLError
 from urllib.request import Request, urlopen
 
 from tools.scripts.adg_cli import Issue

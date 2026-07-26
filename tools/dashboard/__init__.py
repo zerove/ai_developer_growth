@@ -12,20 +12,13 @@ Usage:
 from __future__ import annotations
 
 import json
-import os
 from datetime import datetime
 from pathlib import Path
-from typing import Any
 
-from tools.scripts.adg_cli import (
-    SKIP_DIRS,
-    SKIP_EXTENSIONS,
-    _format_trend_report,
-    _load_trend_data,
-    check_directory,
-    detect_language,
-    load_rules_for_language,
-)
+from tools.scripts.adg_cli.check import check_directory
+from tools.scripts.adg_cli.detect import detect_language
+from tools.scripts.adg_cli.rules import load_rules_for_language
+from tools.scripts.adg_cli.trend import _load_trend_data
 
 # ─────────────────────────────────────────────────────────────
 # HTML Dashboard
@@ -232,7 +225,6 @@ def start_dashboard(
     host: str = "127.0.0.1",
 ) -> None:
     """Start a simple HTTP dashboard server."""
-    import functools
     import http.server
 
     project = Path(project_dir).resolve()

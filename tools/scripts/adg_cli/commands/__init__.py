@@ -2,22 +2,16 @@ from __future__ import annotations
 
 import argparse
 import json
-import os
-import subprocess
 import sys
 from pathlib import Path
-from typing import Any
 
 from tools.scripts.adg_cli.check import _check_files_parallel, _collect_check_files, check_directory, check_file
 from tools.scripts.adg_cli.core import (
-    _ADG_HOME,
     _DEFAULT_PRE_COMMIT_HOOK,
     _DEFAULT_PRE_PUSH_HOOK,
-    FIX_RULES,
     SKIP_DIRS,
     SKIP_EXTENSIONS,
     Issue,
-    _get_rules_path,
     load_project_config,
 )
 from tools.scripts.adg_cli.detect import _detect_language_from_file, detect_language
@@ -31,7 +25,6 @@ from tools.scripts.adg_cli.format import (
     _format_sarif,
     _print_report_text,
 )
-from tools.scripts.adg_cli.git import _get_git_changed_files, _get_staged_files, _get_unstaged_files
 from tools.scripts.adg_cli.notify import _send_dingtalk_notification, _send_slack_notification
 from tools.scripts.adg_cli.rule_author import _RULE_TEMPLATE, _create_rule_interactive, _test_rule, _validate_rule
 from tools.scripts.adg_cli.rules import load_framework_rules, load_rules_for_language
@@ -40,7 +33,6 @@ from tools.scripts.adg_cli.trend import (
     _format_trend_report,
     _load_trend_data,
     _record_trend,
-    _save_trend_data,
 )
 
 
@@ -556,7 +548,7 @@ def cmd_install_hooks(args: argparse.Namespace) -> int:
 
 def cmd_html_report(args: argparse.Namespace) -> int:
     """Generate HTML quality gate report."""
-    from tools.report import generate_html_report, save_html_report
+    from tools.report import save_html_report
 
     target = Path(args.path).resolve()
     detected = detect_language(target)

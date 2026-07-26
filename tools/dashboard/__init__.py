@@ -230,7 +230,7 @@ def start_dashboard(
     project = Path(project_dir).resolve()
 
     class DashboardHandler(http.server.BaseHTTPRequestHandler):
-        def do_GET(self):
+        def do_GET(self) -> None:
             if self.path == "/" or self.path == "/index.html":
                 html = generate_dashboard_html(project)
                 self.send_response(200)
@@ -259,7 +259,7 @@ def start_dashboard(
                 self.send_response(404)
                 self.end_headers()
 
-        def log_message(self, format, *args):
+        def log_message(self, format: str, *args: object) -> None:
             pass  # Suppress logs
 
     server = http.server.HTTPServer((host, port), DashboardHandler)
@@ -268,7 +268,7 @@ def start_dashboard(
     server.serve_forever()
 
 
-def main():
+def main() -> None:
     import argparse
 
     parser = argparse.ArgumentParser(description="ADG Dashboard")

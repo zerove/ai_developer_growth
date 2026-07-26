@@ -279,7 +279,7 @@ def run_all_benchmarks(
             print(f"  {result['files_per_second']} files/sec")
 
     # Summary
-    summary = {
+    summary: dict[str, Any] = {
         "timestamp": time.strftime("%Y-%m-%d %H:%M:%S"),
         "results": results,
         "best_single_file": max(
@@ -311,7 +311,7 @@ def run_all_benchmarks(
 # ─────────────────────────────────────────────────────────────
 
 
-def main():
+def main() -> None:
     import argparse
 
     parser = argparse.ArgumentParser(description="ADG Performance Benchmarks")

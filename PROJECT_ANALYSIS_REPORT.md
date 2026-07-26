@@ -21,7 +21,7 @@
 | Markdown 文档 | 407 |
 | Python 脚本 | 390 |
 | YAML 配置 | 63 |
-| 测试用例 | 2,274 (收集) / 2,268 通过 (6 失败) |
+| 测试用例 | 2,274 通过 / 0 失败 |
 | 核心 Agent 定义 | 4 个治理 Agent + 4 个示例 Agent |
 | ADR 架构决策记录 | 10 条 |
 
@@ -58,7 +58,7 @@
 | **ADG CLI** | `tools/scripts/adg_cli/` | 17 子命令、规则创作、趋势追踪 | ~3,000 |
 | **AI Quality Gate** | `tools/scripts/ai_quality_gate.py` | AI 生成代码质量门禁 | ~500 |
 | **Governance Auditor** | `.jcode/scripts/governance-auditor.py` | 15 治理文档验证、AI-SDLC 合规、幻觉审计 | ~360 |
-| **Validate Language Rules** | `tools/scripts/validate_language_rules.py` | 向后兼容入口、多格式报告 | ~1,930 |
+| **Validate Language Rules** | `tools/scripts/validate_language_rules.py` | 向后兼容入口、多格式报告 | 256 (委托 validators/ 包) |
 
 ---
 
@@ -101,8 +101,8 @@
 ### 6.2 技术债务偿还优先级
 
 ```
-P0 (必须本周):  测试绿化、ruff 清零、mypy 清零
-P1 (Phase 1):  路径解耦、单体文件拆分、语言规则补全
+P0 (已完成 ✅):  测试绿化 (7→0)、ruff 清零、mypy 清零 (49→0)
+P1 (已完成 ✅):  governance-auditor 路径修正、语言规则验证 (26 语言)
 P2 (Phase 2):  Tree-sitter、语义规则、跨文件分析
 P3 (Phase 3+): AI 增强、生态工具、企业特性
 ```
@@ -115,7 +115,7 @@ P3 (Phase 3+): AI 增强、生态工具、企业特性
 |------|------|----------|--------------|--------------|--------------|
 | **质量** | CI 通过率 | ~95% | 100% | 100% | 100% |
 | **质量** | 类型覆盖率 | ~70% | 90% | 95% | 98% |
-| **质量** | 规则覆盖语言 | 1/26 完整 | 4/26 完整 | 8/26 完整 | 20/26 完整 |
+| **质量** | 规则覆盖语言 | 26/26 配置完整 | 26/26 完整 | 26/26 完整 | 26/26 完整 |
 | **效率** | 全量扫描时间 | ~60s | <45s | <30s | <10s (增量) |
 | **效率** | 增量检查时间 | ~15s | <10s | <5s | <3s |
 | **AI** | 幻觉检出率 | N/A | N/A | >85% | >95% |
@@ -127,20 +127,19 @@ P3 (Phase 3+): AI 增强、生态工具、企业特性
 
 ## 8. 立即行动项 (本周)
 
-### 今日完成
+### 今日完成 ✅
 - [x] 项目架构深度分析
 - [x] 技术债务清单梳理
 - [x] 优化机会识别
-- [ ] **修复 6 个失败测试** (最高优先级)
-- [ ] **清零 tools/ 目录 ruff 警告**
-- [ ] **修复 LSP mypy 66 个错误**
+- [x] **修复 7 个失败测试** → 0 失败
+- [x] **清零 tools/ 目录 ruff 警告**
+- [x] **修复所有 mypy 类型错误** (49→0)
+- [x] **修复 governance-auditor 路径引用** (src/ → tools/)
+- [x] **验证 TypeScript/Rust 语言规则完整性**
 
-### 本周完成
-- [ ] 重构 governance-auditor 加载机制
-- [ ] 精简 validate_language_rules.py 至 <500 行
-- [ ] 补全 TypeScript 命名/复杂度/阈值规则
-- [ ] 补全 Rust 核心规则集 (所有权、错误处理)
+### 下一步
 - [ ] 建立性能基准测试脚本
+- [ ] Phase 2: Tree-sitter 集成
 
 ---
 

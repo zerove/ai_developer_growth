@@ -1184,7 +1184,7 @@ class TestCSharpRules(unittest.TestCase):
             filepath = Path(f.name)
         try:
             result = validate_file(filepath, "csharp")
-            ids = [i.rule_id for i in result.issues]
+            [i.rule_id for i in result.issues]
             # Console.WriteLine is not in our patterns - just check no errors
             err_ids = [i.rule_id for i in result.issues if i.severity == "error"]
             self.assertEqual(len(err_ids), 0)
@@ -1278,7 +1278,7 @@ class TestPHPRules(unittest.TestCase):
             filepath = Path(f.name)
         try:
             result = validate_file(filepath, "php")
-            ids = [i.rule_id for i in result.issues]
+            [i.rule_id for i in result.issues]
             # @ suppression is not a pattern we check
             self.assertTrue(True)
         finally:
@@ -1373,7 +1373,7 @@ class TestRubyRules(unittest.TestCase):
             filepath = Path(f.name)
         try:
             result = validate_file(filepath, "ruby")
-            ids = [i.rule_id for i in result.issues]
+            [i.rule_id for i in result.issues]
             # system() doesn't trigger a specific rule, just check no errors
             err_ids = [i.rule_id for i in result.issues if i.severity == "error"]
             self.assertEqual(len(err_ids), 0)
@@ -1411,7 +1411,7 @@ class TestRubyRules(unittest.TestCase):
             filepath = Path(f.name)
         try:
             result = validate_file(filepath, "ruby")
-            ids = [i.rule_id for i in result.issues]
+            [i.rule_id for i in result.issues]
             # attr_accessor is not a pattern we check for
             self.assertTrue(True)
         finally:

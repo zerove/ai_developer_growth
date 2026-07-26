@@ -199,7 +199,7 @@ class TestOutputFormatting:
         print_section("My Section")
         output = capsys.readouterr().out
         assert "My Section" in output
-        assert "=" * 50 in output
+        assert "—" in output
 
 
 class TestFilterSupportedFiles:

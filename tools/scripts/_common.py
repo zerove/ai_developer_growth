@@ -148,8 +148,8 @@ def file_hash(filepath: Path) -> str:
 
 
 def handle_error(e: Exception, script: str = "", exit_code: int = 1) -> None:
-    """Standard error handler with consistent formatting."""
-    msg = f"Error: {e}" if not script else f"Error in {script}: {e}"
+    """统一错误处理器，使用中文格式。"""
+    msg = f"错误: {e}" if not script else f"{script} 出错: {e}"
     print(msg, file=sys.stderr)
     sys.exit(exit_code)
 
@@ -197,19 +197,21 @@ def save_yaml(filepath: Path, data: dict[str, Any]) -> None:
 
 
 def print_check(name: str, passed: bool, output: str = "") -> None:
-    """Format and print check result."""
+    """输出检查结果，使用中文格式。"""
+    label = "通过" if passed else "失败"
     icon = "✅" if passed else "❌"
-    print(f"{icon} {name}")
+    print(f"{icon} [{label}] {name}")
     if output and not passed:
         for line in output.strip().split("\n")[:20]:
             print(f"  {line}")
 
 
 def print_section(title: str) -> None:
-    """Print section separator with title."""
-    print(f"\n{'=' * 50}")
+    """打印中文分隔线和标题。"""
+    line = "—" * 40
+    print(f"\n{line}")
     print(f"  {title}")
-    print(f"{'=' * 50}")
+    print(line)
 
 
 # ──────────────────────────────────────────────────────────

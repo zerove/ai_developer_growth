@@ -198,13 +198,13 @@ def _run_full() -> int:
     return 0 if all_passed else 1
 
 
-# Dispatch table: command -> (func, needs_args)
-_SIMPLE_COMMANDS = {
-    "lint": run_lint,
-    "format": run_format_check,
-    "typecheck": run_typecheck,
-    "test": run_tests,
-    "security": run_security,
+# Dispatch table: command -> function name (lazy lookup for mockability)
+_SIMPLE_COMMANDS: dict[str, str] = {
+    "lint": "run_lint",
+    "format": "run_format_check",
+    "typecheck": "run_typecheck",
+    "test": "run_tests",
+    "security": "run_security",
 }
 
 
@@ -213,7 +213,8 @@ def _dispatch(args: argparse.Namespace) -> int:
     cmd = args.command
 
     if cmd in _SIMPLE_COMMANDS:
-        return _run_simple(_SIMPLE_COMMANDS[cmd])
+        func = globals()[_SIMPLE_COMMANDS[cmd]]
+        return _run_simple(func)
 
     if cmd == "language-rules":
         if getattr(args, "fix", False):

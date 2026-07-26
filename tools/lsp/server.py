@@ -25,15 +25,6 @@ import sys
 from pathlib import Path
 from typing import Any
 
-# Try importing lsprotocol; fall back to basic implementation
-try:
-    from lsprotocol import types
-    from pygls.server import LanguageServer
-
-    HAS_PYGLS = True
-except ImportError:
-    HAS_PYGLS = False
-
 # Import ADG core
 from tools.scripts.adg_cli import (
     check_file,
@@ -232,7 +223,7 @@ class AdgLanguageServer:
                 continue
 
             rule_id = diag.get("code", "")
-            data = diag.get("data", {})
+            diag.get("data", {})
 
             # Fix action
             actions.append(
@@ -277,7 +268,7 @@ class AdgLanguageServer:
 
         error_count = sum(1 for d in diagnostics if d.get("severity") == 1)
         warn_count = sum(1 for d in diagnostics if d.get("severity") == 2)
-        info_count = sum(1 for d in diagnostics if d.get("severity") == 3)
+        sum(1 for d in diagnostics if d.get("severity") == 3)
 
         summary = f"ADG: {len(diagnostics)} issues"
         if error_count:
@@ -462,7 +453,7 @@ def run_tcp_server(port: int):
     """Run the LSP server over TCP."""
     import socket
 
-    server = AdgLanguageServer()
+    AdgLanguageServer()
     logger.info(f"ADG LSP Server starting (TCP mode on port {port})")
 
     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)

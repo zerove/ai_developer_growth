@@ -14,11 +14,7 @@ from pathlib import Path
 from typing import Any
 
 from tools.scripts.adg_cli import (
-    SKIP_DIRS,
-    SKIP_EXTENSIONS,
-    Issue,
     check_directory,
-    check_file,
     detect_language,
     load_rules_for_language,
 )

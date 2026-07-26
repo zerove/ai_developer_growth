@@ -9,8 +9,6 @@ Usage:
 from __future__ import annotations
 
 import json
-import os
-import shutil
 import sys
 import tempfile
 import time
@@ -37,7 +35,7 @@ import sys
 def func_{i}():
     """Function {i}."""
     x = int("{i}") + len("{expr}")
-    os.listdir(".")
+    list(Path(".").iterdir())
     return x
 
 class MyClass{i}:

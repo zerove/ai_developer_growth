@@ -299,7 +299,7 @@ def ai_quality_gate() -> bool:
     ]
     result = subprocess.run(cmd, capture_output=True, text=True, cwd=root)
     passed = result.returncode == 0
-    print_check("AI Quality Gate", passed, result.stdout + result.stderr)
+    print_check("人工智能质量门禁", passed, result.stdout + result.stderr)
     return passed
 
 

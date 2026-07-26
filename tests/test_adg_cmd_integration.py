@@ -264,7 +264,7 @@ class TestCmdDetectExtended:
 
     def test_detect_human(self, py_workspace, capsys):
         args = ns(path=str(py_workspace))
-        result = cmd_detect(args)
+        cmd_detect(args)
         captured = capsys.readouterr()
         assert "Language" in captured.out
 
@@ -277,7 +277,7 @@ class TestCmdListRulesExtended:
 
     def test_list_rules_human(self, capsys):
         args = ns(lang="python", json=False)
-        result = cmd_list_rules(args)
+        cmd_list_rules(args)
         captured = capsys.readouterr()
         assert "Rules for" in captured.out
 
@@ -296,7 +296,7 @@ class TestCmdRuleExtended:
 
     def test_rule_create_with_output(self, workspace):
         args = ns(rule_command="create", output=str(workspace / "rule.yml"))
-        with patch("tools.scripts.adg_cli.rule_author._create_rule_interactive") as mock:
+        with patch("tools.scripts.adg_cli.commands._create_rule_interactive") as mock:
             mock.return_value = {
                 "id": "test/rule",
                 "pattern": r"eval\(",

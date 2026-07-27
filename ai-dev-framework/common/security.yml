@@ -17,7 +17,7 @@ anti_patterns:
   severity: error
   category: security
   pattern: '\beval\s*\(|\bexec\s*\(|\bFunction\s*\('
-  exclude_files: ['fix_heuristics.py', 'auto_fix.py', 'ai_rules_generator.py', 'ai_quality_gate.py']
+  exclude_files: ['fix_heuristics.py', 'auto_fix.py', 'ai_rules_generator.py', 'ai_quality_gate.py', 'hallucination_detector.py']
   message: Dynamic code execution is a security risk (code injection)
   fix_hint: Avoid eval/exec; use safer alternatives
 

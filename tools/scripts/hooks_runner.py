@@ -111,6 +111,10 @@ Examples:
     af_parser.add_argument("--path", type=Path, default=Path("."), help="Path to fix")
     af_parser.add_argument("--dry-run", action="store_true", help="Preview fixes without applying")
 
+    hs_parser = subparsers.add_parser("hallucination-scan", help="Scan for AI hallucination patterns in code")
+    hs_parser.add_argument("--path", type=Path, default=Path("."), help="Path to scan")
+    hs_parser.add_argument("--lang", help="Language filter")
+
     subparsers.add_parser("pre-commit", help="Pre-commit hook: check staged files only")
 
     install_parser = subparsers.add_parser("install-hooks", help="Install git hooks")
@@ -218,6 +222,28 @@ def _run_ast_fix(path: Path, dry_run: bool) -> int:
     print("=" * 60)
 
     return 0
+
+
+def _run_hallucination_scan(path: Path, lang: str | None) -> int:
+    """Run AI hallucination pattern detection."""
+    from tools.scripts.rules_engine.hallucination_detector import (
+        detect_hallucinations,
+        detect_hallucinations_in_file,
+        format_hallucination_report,
+    )
+
+    print("=" * 60)
+    print("  AI HALLUCINATION PATTERN SCAN")
+    print("=" * 60)
+
+    if path.is_file():
+        report = detect_hallucinations_in_file(path)
+    else:
+        report = detect_hallucinations(path)
+
+    print(format_hallucination_report(report))
+
+    return 0 if report.high_count == 0 else 1
 
 
 def _print_check_result(result: Any) -> None:
@@ -349,6 +375,12 @@ def _dispatch(args: argparse.Namespace) -> int:
 
     if cmd == "ast-fix":
         return _run_ast_fix(args.path, getattr(args, "dry_run", False))
+
+    if cmd == "hallucination-scan":
+        return _run_hallucination_scan(
+            getattr(args, "path", Path(".")),
+            getattr(args, "lang", None),
+        )
 
     if cmd == "install-hooks":
         if args.pre_push:

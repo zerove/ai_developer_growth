@@ -1,0 +1,18 @@
+from typing import List, Protocol, runtime_checkable
+from pathlib import Path
+from tools.scripts.rules_engine.models import FunctionInfo, ClassInfo
+
+@runtime_checkable
+class ParserProtocol(Protocol):
+    """AST 解析器的强制契约，确保所有解析器 API 一致。"""
+    
+    def parse(self, root_node: Any, lines: List[str]) -> Tuple[List[FunctionInfo], List[ClassInfo]]:
+        ...
+
+def validate_parser_contract(parser: ParserProtocol) -> bool:
+    """验证解析器是否满足契约。"""
+    try:
+        assert hasattr(parser, 'parse'), "解析器必须实现 parse 方法"
+        return True
+    except AssertionError:
+        return False

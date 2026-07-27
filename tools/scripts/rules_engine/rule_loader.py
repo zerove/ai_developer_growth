@@ -51,16 +51,11 @@ def _save_disk_cache(cache: dict[str, Any]) -> None:
         pass
 
 
-def _rules_hash(language: str) -> str:
+def _rules_hash(language: str, framework_dir: Path | None = None) -> str:
     """Hash of rule file for cache invalidation."""
-    rule_path = (
-        Path(__file__).parent.parent.parent
-        / "ai-dev-framework"
-        / "languages"
-        / language
-        / "rules.d"
-        / "anti_patterns.yml"
-    )
+    if framework_dir is None:
+        framework_dir = rules_dir()
+    rule_path = framework_dir / "languages" / language / "rules.d" / "anti_patterns.yml"
     if not rule_path.exists():
         return ""
     try:
@@ -91,7 +86,7 @@ def _save_cache(cache_file: Path, cache: dict[str, str]) -> None:
 def load_rules(language: str, framework_dir: Path | None = None) -> dict[str, Any]:
     """Load YAML rules for a given language with caching."""
     # Check in-memory cache
-    rh = _rules_hash(language)
+    rh = _rules_hash(language, framework_dir)
     cache_key = f"{language}:{rh}"
     if cache_key in _RULE_CACHE:
         return _RULE_CACHE[cache_key]

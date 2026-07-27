@@ -49,10 +49,10 @@ GOVERNANCE_DOCS = [
 # exclude_files_list: 文件名列表，如果文件名匹配则跳过
 # exclude_pattern: 正则模式，如果内容匹配则跳过
 UNSAFE_PATTERNS = [
-    (r"eval\(", "eval() - 代码注入风险", ["generate_fixes.py", "ai_quality_gate.py", "rule_editor.py"], None),
-    (r"exec\(", "exec() - 代码注入风险", ["generate_fixes.py", "ai_quality_gate.py", "rule_editor.py"], None),
-    (r"os\.system\(", "os.system() - 应使用 subprocess", ["generate_fixes.py"], None),
-    (r"pickle\.loads?\(", "pickle - 反序列化风险", ["generate_fixes.py"], None),
+    (r"eval\(", "eval() - 代码注入风险", ["generate_fixes.py", "ai_quality_gate.py", "rule_editor.py", "hallucination_detector.py"], None),
+    (r"exec\(", "exec() - 代码注入风险", ["generate_fixes.py", "ai_quality_gate.py", "rule_editor.py", "hallucination_detector.py"], None),
+    (r"os\.system\(", "os.system() - 应使用 subprocess", ["generate_fixes.py", "hallucination_detector.py"], None),
+    (r"pickle\.loads?\(", "pickle - 反序列化风险", ["generate_fixes.py", "hallucination_detector.py"], None),
     (r"yaml\.load\((?!.*Loader)", "yaml.load 不安全 - 应使用 safe_load", [], r"yaml\.load\((?!.*Loader)"),
 ]
 

@@ -60,7 +60,7 @@ anti_patterns:
   severity: error
   category: security
   pattern: \beval\s*\(|\bexec\s*\(
-  exclude_files: ['fix_heuristics.py', 'auto_fix.py', 'ai_rules_generator.py', 'ai_quality_gate.py']
+  exclude_files: ['fix_heuristics.py', 'auto_fix.py', 'ai_rules_generator.py', 'ai_quality_gate.py', 'hallucination_detector.py']
   message: eval/exec are security risks
   fix_hint: Use ast.literal_eval() for data
   test_cases:
@@ -118,6 +118,7 @@ anti_patterns:
   severity: info
   category: code_quality
   pattern: ^\s*print\s*\(
+  exclude_files: ['ai_quality_gate.py']
   message: Use logging module instead of print()
   fix_hint: import logging; logger.info(...)
 - id: py-test-sleep

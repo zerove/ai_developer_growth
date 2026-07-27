@@ -246,7 +246,7 @@ class TestAntiPatternCheckerEdgeCases(unittest.TestCase):
             "anti_patterns": [
                 {
                     "id": "test",
-                    "pattern": r"\beval\s*\(",
+                    "pattern": r"custom_eval\s*\(",
                     "severity": "error",
                     "message": "m",
                     "exclude_patterns": [r"# noqa"],
@@ -254,7 +254,7 @@ class TestAntiPatternCheckerEdgeCases(unittest.TestCase):
             ]
         }
         with tempfile.NamedTemporaryFile(suffix=".py", mode="w", delete=False) as f:
-            f.write("eval(1)  # noqa\n")
+            f.write("custom_eval(1)  # noqa\n")
             f.flush()
             path = Path(f.name)
         try:

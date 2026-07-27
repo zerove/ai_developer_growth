@@ -23,7 +23,7 @@ SECURITY_PATTERNS: list[dict[str, Any]] = [
         "pattern": r"\beval\s*\(|\bexec\s*\(",
         "message": "eval/exec are security risks",
         "fix_hint": "Find a safer alternative",
-        "exclude_patterns": [r"\beval\s*\("],  # Exclude pattern definition itself
+        "exclude_files": ["ai_quality_gate.py"],
     },
     {
         "id": "security-sql-injection",
@@ -42,7 +42,6 @@ SECURITY_PATTERNS: list[dict[str, Any]] = [
         "pattern": r"yaml\.load\((?!.*Loader)",
         "message": "yaml.load() is unsafe - use yaml.safe_load()",
         "fix_hint": "Use yaml.safe_load()",
-        "exclude_patterns": [r"yaml\.load\((?!.*Loader)"],  # Exclude pattern definition itself
     },
     {
         "id": "security-pickle-load",

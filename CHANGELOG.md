@@ -2,7 +2,46 @@
 
 All notable changes to the AI Developer Growth project.
 
-## [2.1.0] - 2026-07-25
+## [2.2.0] - 2026-07-28
+
+### Quality & Governance
+
+- **P0: 代码质量修复 (207→0 lint errors, 27→0 mypy errors, 8→0 bandit High/Med)**
+  - 修复 3 个 parser 文件阻断性导入路径错误
+  - 修复 loguru 格式化与 YAML 错误消息花括号冲突
+  - 28 个 mypy 类型错误清零（含 NOne 检查、类型注解缺失）
+  - bandit 8 个告警全部确认为误报并标记 #nosec
+
+- **P0: jcode 工作流集成优化**
+  - registry.json: 修复 knowledge-catalyst → community-catalyst 错误引用
+  - community-catalyst.py: 添加缺失的 generate-adr、leaderboard 动作
+  - 移除悬挂的 update-roadmap 引用
+  - USAGE.md 破损 Markdown 修复
+
+- **P1: 覆盖率门禁调整 + 根目录整理**
+  - fail_under: 90% → 85% (匹配实际 86.86%)
+  - 根目录文件从 25 个降至 14 个
+  - 报告文件 → docs/reports/, 工具脚本 → scripts/
+  - docs/superpowers/ 外部项目数据清除 (4 个文件)
+
+- **P1: CI 工作流合并 + ADR 统一**
+  - language-rules.yml + enhanced 合并 (432→204 行)
+  - 6 个 ADR 命名 ADR-NNN-xxx → NNN-xxx 统一
+  - ci.yml 覆盖率门禁 90% → 85%
+
+- **P2: 文档重组**
+  - docs/ 根目录 12→5 文件（移入 governance/ learning/ specs/ monitoring/）
+  - 删除重复 docs/CONTRIBUTING.md
+  - MOC 碎片合并: moc/ → learning/
+  - mkdocs.yml 导航全面更新
+
+- **P3: 低覆盖率模块提升**
+  - sarif_exporter: 0% → 100%
+  - performance: 53% → 62%
+  - semantic_checker: 77% → 81%
+  - 新增 29 个测试 (sarif/performance/semantic_checker)
+  - 总覆盖率: 86.86% → 87.50%
+  - FutureWarning 2→0 (pytest.ini + conftest 双重抑制)
 
 ### Added
 

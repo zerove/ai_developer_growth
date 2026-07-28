@@ -719,7 +719,9 @@ class ASTParser:
             if node.type == "import_statement":
                 module = self._get_text(node.children[0], node.children[0]) if node.children else ""
                 names = [self._get_text(c, []) for c in node.children if c.type == "dotted_name"]
-                result.append(ImportInfo(module=module, names=names, line=node.start_point[0] + 1, is_from=False, level=0))
+                result.append(
+                    ImportInfo(module=module, names=names, line=node.start_point[0] + 1, is_from=False, level=0)
+                )
             elif node.type == "import_from_statement":
                 level = 0
                 module = ""
@@ -733,7 +735,9 @@ class ASTParser:
                         for sub in child.children:
                             if sub.type == "identifier":
                                 names.append(self._get_text(sub, []))
-                result.append(ImportInfo(module=module, names=names, line=node.start_point[0] + 1, is_from=True, level=level))
+                result.append(
+                    ImportInfo(module=module, names=names, line=node.start_point[0] + 1, is_from=True, level=level)
+                )
 
         elif language in ("javascript", "typescript"):
             if node.type == "import_statement":
@@ -820,8 +824,8 @@ class ASTParser:
             end_row = node.end_point[0]
             if start_row < len(lines):
                 if start_row == end_row:
-                    return lines[start_row][node.start_point[1] : node.end_point[1]]
-                return lines[start_row][node.start_point[1] :]
+                    return lines[start_row][node.start_point[1] : node.end_point[1]]  # type: ignore[no-any-return]
+                return lines[start_row][node.start_point[1] :]  # type: ignore[no-any-return]
         return ""
 
     def _get_child_name(self, node: Any, lines: list[str]) -> str | None:

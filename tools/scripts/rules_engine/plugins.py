@@ -29,7 +29,7 @@ Usage:
     # List registered plugins
     from rules_engine.plugins import list_plugins
     for plugin in list_plugins():
-        print(f"{plugin.name}: {plugin.supported_languages}")
+        logger.info(f"{plugin.name}: {plugin.supported_languages}")
 """
 
 from __future__ import annotations

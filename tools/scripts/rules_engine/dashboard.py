@@ -19,6 +19,8 @@ import sys
 from datetime import datetime
 from typing import Any
 
+from tools.scripts.rules_engine.logger import logger
+
 
 def init_db(db_path: str = "adg_quality.db") -> sqlite3.Connection:
     """Initialize SQLite database for quality tracking."""
@@ -112,7 +114,7 @@ def get_latest_report(conn: sqlite3.Connection) -> dict[str, Any] | None:
     """Get the most recent full report."""
     row = conn.execute("SELECT report_json FROM quality_runs ORDER BY id DESC LIMIT 1").fetchone()
     if row and row[0]:
-        return json.loads(row[0])
+        return json.loads(row[0])  # type: ignore[no-any-return]
     return None
 
 
@@ -257,7 +259,7 @@ def create_app(db_path: str = "adg_quality.db") -> Any:
         from fastapi import FastAPI
         from fastapi.responses import HTMLResponse
     except ImportError:
-        print("Error: FastAPI required. Install: pip install fastapi uvicorn", file=sys.stderr)
+        logger.info("Error: FastAPI required. Install: pip install fastapi uvicorn", file=sys.stderr)
         sys.exit(1)
 
     app = FastAPI(title="ADG Quality Dashboard")
@@ -304,9 +306,9 @@ def main() -> None:
     try:
         import uvicorn
 
-        uvicorn.run(app, host="0.0.0.0", port=args.port)
+        uvicorn.run(app, host="0.0.0.0", port=args.port)  # nosec - dev only
     except ImportError:
-        print("Error: uvicorn required. Install: pip install uvicorn", file=sys.stderr)
+        logger.info("Error: uvicorn required. Install: pip install uvicorn", file=sys.stderr)
         sys.exit(1)
 
 

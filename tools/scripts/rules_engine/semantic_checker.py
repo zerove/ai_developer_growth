@@ -80,7 +80,9 @@ class ImportGraph:
 
         return cycles
 
-    def find_unused_imports(self, file_imports: dict[str, list[ImportInfo]], file_content: dict[str, str]) -> list[SemanticIssue]:
+    def find_unused_imports(
+        self, file_imports: dict[str, list[ImportInfo]], file_content: dict[str, str]
+    ) -> list[SemanticIssue]:
         """Find imports that are not used in the file."""
         issues: list[SemanticIssue] = []
 
@@ -123,11 +125,41 @@ class ImportGraph:
     def find_shadowed_imports(self, file_imports: dict[str, list[ImportInfo]]) -> list[SemanticIssue]:
         """Find imports that shadow built-in names."""
         builtin_names = {
-            "list", "dict", "set", "tuple", "str", "int", "float", "bool",
-            "type", "id", "hash", "input", "map", "filter", "range", "zip",
-            "open", "print", "format", "len", "abs", "min", "max", "sum",
-            "all", "any", "sorted", "reversed", "enumerate", "isinstance",
-            "issubclass", "super", "property", "staticmethod", "classmethod",
+            "list",
+            "dict",
+            "set",
+            "tuple",
+            "str",
+            "int",
+            "float",
+            "bool",
+            "type",
+            "id",
+            "hash",
+            "input",
+            "map",
+            "filter",
+            "range",
+            "zip",
+            "open",
+            "print",
+            "format",
+            "len",
+            "abs",
+            "min",
+            "max",
+            "sum",
+            "all",
+            "any",
+            "sorted",
+            "reversed",
+            "enumerate",
+            "isinstance",
+            "issubclass",
+            "super",
+            "property",
+            "staticmethod",
+            "classmethod",
         }
         issues: list[SemanticIssue] = []
 
@@ -297,9 +329,7 @@ class SemanticChecker:
             files_analyzed=len(file_asts),
         )
 
-    def _collect_source_files(
-        self, dirpath: Path, languages: list[str] | None, max_files: int
-    ) -> list[Path]:
+    def _collect_source_files(self, dirpath: Path, languages: list[str] | None, max_files: int) -> list[Path]:
         """Collect source files from directory."""
         extensions = {
             "python": {".py"},
@@ -385,7 +415,7 @@ class SemanticChecker:
                             file=filepath,
                             line=func.line,
                             message=f"Public function '{func.name}' has no docstring",
-                            fix_hint=f"Add docstring: \"\"\"{func.name} ... \"\"\"",
+                            fix_hint=f'Add docstring: """{func.name} ... """',
                         )
                     )
 
@@ -399,7 +429,7 @@ class SemanticChecker:
                             file=filepath,
                             line=cls.line,
                             message=f"Public class '{cls.name}' has no docstring",
-                            fix_hint=f"Add docstring: \"\"\"{cls.name} ... \"\"\"",
+                            fix_hint=f'Add docstring: """{cls.name} ... """',
                         )
                     )
 

@@ -2,10 +2,6 @@
 
 from __future__ import annotations
 
-from pathlib import Path
-
-import pytest
-
 
 class TestCheckerSemantic:
     """Test checker.py semantic analysis integration."""
@@ -65,7 +61,7 @@ class TestCheckerSemantic:
 
         f = tmp_path / "test.py"
         # Write a function with many branching keywords to ensure AST complexity > 10
-        f.write_text('''\
+        f.write_text("""\
 def complex_func(x, y, z):
     a = x > 0 and y > 0 and z > 0
     b = x > 1 or y > 1 or z > 1
@@ -78,7 +74,7 @@ def complex_func(x, y, z):
     i = x > 8 and y > 8 or f
     j = x > 9 or y > 9 and g
     return a or b or c or d or e or f or g or h or i or j
-''')
+""")
         result = check_file(f, semantic=True)
         rule_ids = [i.rule_id for i in result.issues]
         # Verify the semantic checker runs without errors

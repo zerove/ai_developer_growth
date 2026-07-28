@@ -213,9 +213,7 @@ class ASTFixer:
 
         return fixes
 
-    def _fix_unused_variables(
-        self, content: str, ast_result: FileAST, filepath: Path
-    ) -> list[FixResult]:
+    def _fix_unused_variables(self, content: str, ast_result: FileAST, filepath: Path) -> list[FixResult]:
         """Fix unused variables by prefixing with underscore."""
         fixes: list[FixResult] = []
         lines = content.splitlines()
@@ -253,9 +251,7 @@ class ASTFixer:
 
         return fixes
 
-    def _fix_empty_functions(
-        self, content: str, ast_result: FileAST, filepath: Path
-    ) -> list[FixResult]:
+    def _fix_empty_functions(self, content: str, ast_result: FileAST, filepath: Path) -> list[FixResult]:
         """Add 'pass' to empty function bodies."""
         fixes: list[FixResult] = []
         lines = content.splitlines()
@@ -270,7 +266,7 @@ class ASTFixer:
                     if func_line_idx + 1 < len(lines):
                         next_line = lines[func_line_idx + 1].strip()
                         if not next_line or next_line == "":
-                            if (m := re.match(r"^(\s*)", func_line)):
+                            if m := re.match(r"^(\s*)", func_line):
                                 indent = m.group(1)
                             else:
                                 indent = ""
@@ -290,9 +286,7 @@ class ASTFixer:
 
         return fixes
 
-    def _fix_long_functions(
-        self, content: str, ast_result: FileAST, filepath: Path
-    ) -> list[FixResult]:
+    def _fix_long_functions(self, content: str, ast_result: FileAST, filepath: Path) -> list[FixResult]:
         """Suggest refactoring for long functions (non-auto)."""
         fixes: list[FixResult] = []
 

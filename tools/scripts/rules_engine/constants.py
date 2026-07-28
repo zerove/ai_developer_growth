@@ -1,9 +1,9 @@
+from __future__ import annotations
+
 """Constants for the ADG Governance rules engine.
 
 Centralized configuration constants to avoid magic numbers and strings.
 """
-
-from __future__ import annotations
 
 # File extensions for code detection
 CODE_EXTENSIONS: dict[str, str] = {

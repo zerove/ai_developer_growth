@@ -1,4 +1,3 @@
-# mypy: disable-error-code="untyped-decorator"
 """LSP Server for ADG Governance rules engine.
 
 Provides IDE diagnostics for supported languages using the Language Server Protocol.
@@ -15,10 +14,13 @@ Supported features:
 
 from __future__ import annotations
 
+# mypy: disable-error-code="untyped-decorator"
 import re
 import sys
 from pathlib import Path
 from typing import Any
+
+from tools.scripts.rules_engine.logger import logger
 
 try:
     from pygls.lsp.server import LanguageServer
@@ -51,7 +53,7 @@ def _map_severity(severity: str) -> int:
         "warning": DiagnosticSeverity.Warning,
         "info": DiagnosticSeverity.Information,
     }
-    return mapping.get(severity, DiagnosticSeverity.Information)
+    return mapping.get(severity, DiagnosticSeverity.Information)  # type: ignore[no-any-return]
 
 
 def _text_to_range(text: str, pattern: str, line_offset: int = 0) -> Range | None:
@@ -150,7 +152,7 @@ EXT_LANG_MAP = {
 def create_server() -> Any:
     """Create and configure the ADG LSP server."""
     if not HAS_PYGLS:
-        print("Error: pygls required. Install: pip install pygls", file=sys.stderr)
+        logger.info("Error: pygls required. Install: pip install pygls", file=sys.stderr)
         sys.exit(1)
 
     server = LanguageServer("adg-governance", "v1.0")
@@ -275,7 +277,7 @@ def _publish_diagnostics(server: LanguageServer, uri: str) -> None:
 def main() -> None:
     """Start the ADG LSP server."""
     if not HAS_PYGLS:
-        print("Error: pygls required. Install: pip install pygls", file=sys.stderr)
+        logger.info("Error: pygls required. Install: pip install pygls", file=sys.stderr)
         sys.exit(1)
 
     server = create_server()

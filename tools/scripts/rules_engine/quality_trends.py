@@ -17,6 +17,7 @@ import json
 import time
 from dataclasses import dataclass, field
 from pathlib import Path
+from typing import Any
 
 
 @dataclass
@@ -35,8 +36,7 @@ class QualitySnapshot:
     semantic_issues: int = 0
     hallucination_findings: int = 0
 
-    def to_dict(self) -> dict:
-        """Convert to serializable dict."""
+    def to_dict(self) -> dict[str, Any]:
         return {
             "timestamp": self.timestamp,
             "total_files": self.total_files,
@@ -52,8 +52,7 @@ class QualitySnapshot:
         }
 
     @classmethod
-    def from_dict(cls, data: dict) -> QualitySnapshot:
-        """Create from dict."""
+    def from_dict(cls, data: dict[str, Any]) -> QualitySnapshot:
         return cls(
             timestamp=data["timestamp"],
             total_files=data["total_files"],
@@ -248,14 +247,16 @@ class QualityTracker:
             else:
                 direction = "unchanged"
 
-            report.deltas.append(TrendDelta(
-                metric=label,
-                previous=prev_val,
-                current=curr_val,
-                change=change,
-                change_pct=pct,
-                direction=direction,
-            ))
+            report.deltas.append(
+                TrendDelta(
+                    metric=label,
+                    previous=prev_val,
+                    current=curr_val,
+                    change=change,
+                    change_pct=pct,
+                    direction=direction,
+                )
+            )
 
         # Generate recommendations
         for delta in report.deltas:
@@ -266,13 +267,11 @@ class QualityTracker:
                     )
                 elif delta.metric == "Semantic Issues" and delta.change > 0:
                     report.recommendations.append(
-                        f"Semantic issues increased by {delta.change}. "
-                        "Check for new code without proper structure."
+                        f"Semantic issues increased by {delta.change}. Check for new code without proper structure."
                     )
                 elif delta.metric == "Hallucination Findings" and delta.change > 0:
                     report.recommendations.append(
-                        f"Hallucination patterns increased by {delta.change}. "
-                        "Review recent AI-generated code."
+                        f"Hallucination patterns increased by {delta.change}. Review recent AI-generated code."
                     )
 
         if not report.recommendations:

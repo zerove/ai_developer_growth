@@ -22,8 +22,8 @@ MagicMock/
 tools/.cache/
 *.backup
 
-# AI Sync
-.ai-sync-cache/
+# Generated cache/data
+.cache/
 .ai-audit-history.json
 
 # IDE
@@ -50,11 +50,6 @@ Thumbs.db
 
 # OpenCode (internal state)
 .opencode/
-knowledge_index.json
 
 # MkDocs build output
 site/
-
-# Generated reports
-OPTIMIZATION_SUMMARY.md
-bandit-report.json

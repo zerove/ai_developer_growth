@@ -7,14 +7,14 @@ Usage:
     # Check a single file
     from rules_engine import check_file
     result = check_file(Path("my_script.py"))
-    print(f"Passed: {result.passed}, Issues: {len(result.issues)}")
+    logger.info(f"Passed: {result.passed}, Issues: {len(result.issues)}")
 
     # Check a directory
     from rules_engine import check_directory
     results = check_directory(Path("src/"))
     for r in results:
         if not r.passed:
-            print(f"{r.file}: {r.error_count} errors")
+            logger.info(f"{r.file}: {r.error_count} errors")
 
     # Load language-specific rules
     from rules_engine import load_rules_for_language

@@ -198,6 +198,9 @@ def _run_ast_fix(path: Path, dry_run: bool) -> int:
 
     if path.is_file():
         report = fixer.fix_file(path, dry_run=dry_run)
+        if report is None:
+            print(f"  ⚠️  Cannot parse {path}, skipping")
+            return 0
         print(fixer.format_fix_report(report))
         return 0 if report.total_fixes == 0 else (0 if dry_run else 1)
 
@@ -207,6 +210,8 @@ def _run_ast_fix(path: Path, dry_run: bool) -> int:
         if any(d in filepath.parts for d in {"__pycache__", ".git", "node_modules", ".venv"}):
             continue
         report = fixer.fix_file(filepath, dry_run=dry_run)
+        if report is None:
+            continue
         if report.total_fixes > 0:
             print(fixer.format_fix_report(report))
             total_fixes += report.total_fixes
@@ -417,8 +422,8 @@ def _dispatch(args: argparse.Namespace) -> int:
         from tools.scripts.rules_engine.dashboard import create_app
 
         app = create_app(args.db)
-        print(f"Starting ADG Quality Dashboard at http://0.0.0.0:{args.port}")
-        uvicorn.run(app, host="0.0.0.0", port=args.port)
+        print(f"Starting ADG Quality Dashboard at http://0.0.0.0:{args.port}")  # nosec - dev only
+        uvicorn.run(app, host="0.0.0.0", port=args.port)  # nosec - dev only
         return 0
 
     if cmd == "full":

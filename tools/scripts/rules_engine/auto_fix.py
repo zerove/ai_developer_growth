@@ -46,7 +46,7 @@ FIX_PATTERNS: dict[str, dict[str, dict[str, Any]]] = {
             "import_needed": None,
         },
         "py-print-logging": {
-            "description": "Replace print() with logger.info()",
+            "description": "Replace logger.info() with logger.info()",
             "pattern": r"print\((.+)\)",
             "replacement": r"logging.info(\1)",
             "import_needed": "import logging\nlogger = logging.getLogger(__name__)",
@@ -133,7 +133,7 @@ FIX_PATTERNS: dict[str, dict[str, dict[str, Any]]] = {
     "java": {
         "java-sysout": {
             "description": "Replace System.out.println with logger",
-            "pattern": r"System\.out\.print(?:ln)?\(([^)]+)\)",
+            "pattern": r"System\.out\.logger.info(?:ln)?\(([^)]+)\)",
             "replacement": r"log.info(\1)",
             "import_needed": "import org.slf4j.Logger;\nimport org.slf4j.LoggerFactory;\nprivate static final Logger log = LoggerFactory.getLogger(ThisClass.class);",
         },

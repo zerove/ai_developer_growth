@@ -202,11 +202,19 @@ python .jcode/scripts/community-catalyst.py validate
 
 # 查看社区统计
 python .jcode/scripts/community-catalyst.py stats
+
+# 从 PR 生成 ADR
+python .jcode/scripts/community-catalyst.py generate-adr [--pr PR_NUMBER]
+
+# 贡献者排行榜
+python .jcode/scripts/community-catalyst.py leaderboard
 ```
 
 ---
 
-## 自动触发 (Hooksjcode/hooks.json`，以下事件自动触发相应 skill:
+## 自动触发 (Hooks)
+
+配置在 `.jcode/hooks.json`，以下事件自动触发相应 skill:
 
 | 事件 | 触发的 Skill | 动作 |
 |------|-------------|------|

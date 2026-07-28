@@ -64,13 +64,14 @@ class FileCache:
             return
 
         try:
-            for line in cache_index.read_text().splitlines()[:self.max_entries]:
+            for line in cache_index.read_text().splitlines()[: self.max_entries]:
                 parts = line.strip().split("|")
                 if len(parts) == 4:
                     filepath, file_hash, timestamp, size = parts
                     cache_file = self.cache_dir / f"{file_hash}.cache"
                     if cache_file.exists():
                         import json
+
                         try:
                             result = json.loads(cache_file.read_text())
                             self._memory_cache[filepath] = CacheEntry(
@@ -139,7 +140,7 @@ class FileCache:
                 pass
 
         try:
-            cache_index.write_text("\n".join(lines[:self.max_entries]))
+            cache_index.write_text("\n".join(lines[: self.max_entries]))
         except Exception:
             pass
 
@@ -147,6 +148,7 @@ class FileCache:
         """Clear the cache."""
         self._memory_cache.clear()
         import shutil
+
         if self.cache_dir.exists():
             shutil.rmtree(self.cache_dir)
             self.cache_dir.mkdir(parents=True, exist_ok=True)
@@ -163,7 +165,7 @@ class FileCache:
     @staticmethod
     def _file_hash(filepath: str) -> str:
         """Calculate file hash for change detection."""
-        h = hashlib.md5()
+        h = hashlib.md5()  # nosec - used for file caching, not security
         try:
             with open(filepath, "rb") as f:
                 for chunk in iter(lambda: f.read(8192), b""):
@@ -368,6 +370,7 @@ class PerformanceOptimizer:
         """Get current memory usage in MB."""
         try:
             import resource
+
             usage = resource.getrusage(resource.RUSAGE_SELF)
             return usage.ru_maxrss / 1024  # Convert to MB
         except Exception:

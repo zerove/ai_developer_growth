@@ -9,6 +9,7 @@ from pathlib import Path
 from typing import Any
 
 from tools.scripts._common import rules_dir
+from tools.scripts.rules_engine.logger import logger
 
 # ──────────────────────────────────────────────────────────
 # Rule cache
@@ -102,7 +103,7 @@ def load_rules(language: str, framework_dir: Path | None = None) -> dict[str, An
         import yaml
     except ImportError:
         # PyYAML not available - use embedded rules
-        print("Warning: PyYAML not installed. Using embedded rules.", file=sys.stderr)
+        logger.info("Warning: PyYAML not installed. Using embedded rules.", file=sys.stderr)
         return _get_embedded_rules(language)
 
     if framework_dir is None:
@@ -111,7 +112,7 @@ def load_rules(language: str, framework_dir: Path | None = None) -> dict[str, An
     rule_path = framework_dir / "languages" / language / "rules.d" / "anti_patterns.yml"
 
     if not rule_path.exists():
-        print(f"Warning: Rules not found at {rule_path}, using embedded rules.", file=sys.stderr)
+        logger.info(f"Warning: Rules not found at {rule_path}, using embedded rules.", file=sys.stderr)
         return _get_embedded_rules(language)
 
     with open(rule_path) as f:
@@ -170,7 +171,7 @@ def _load_single_custom_file(rule_file: Path, custom: dict[str, Any]) -> None:
     try:
         import yaml
     except ImportError:
-        print("Warning: PyYAML not installed. Custom rules skipped.", file=sys.stderr)
+        logger.info("Warning: PyYAML not installed. Custom rules skipped.", file=sys.stderr)
         return
 
     try:

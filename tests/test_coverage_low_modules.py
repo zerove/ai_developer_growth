@@ -41,9 +41,7 @@ class TestSarifExporter:
                 message="Test issue",
             )
         ]
-        result = to_sarif(
-            [CheckResult(file="src/main.py", issues=issues, language="python", skipped=False)]
-        )
+        result = to_sarif([CheckResult(file="src/main.py", issues=issues, language="python", skipped=False)])
         data = json.loads(result)
         results = data["runs"][0]["results"]
         assert len(results) == 1
@@ -77,7 +75,9 @@ class TestSarifExporter:
                 file="a.py",
                 issues=[
                     Issue(rule_id="R001", severity="error", category="bug", file="a.py", line=1, message="Error A"),
-                    Issue(rule_id="R002", severity="warning", category="style", file="a.py", line=2, message="Warning A"),
+                    Issue(
+                        rule_id="R002", severity="warning", category="style", file="a.py", line=2, message="Warning A"
+                    ),
                 ],
                 language="python",
             ),

@@ -106,7 +106,7 @@ EVENT_MODE_MAP = {
     "scheduled": "quality",
 }
 
-CONFIG_PATH = Path(__file__).parent / "mode_decision.conf"
+CONFIG_PATH = Path(__file__).parent.parent / "mode_decision.conf"
 
 
 def _set_mode(mode: str) -> None:

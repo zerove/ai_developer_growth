@@ -5,7 +5,7 @@ from __future__ import annotations
 import tempfile
 from pathlib import Path
 
-from tools.scripts.rules_engine.performance import _check_file_worker, PerformanceOptimizer
+from tools.scripts.rules_engine.performance import PerformanceOptimizer, _check_file_worker
 
 
 class TestCheckFileWorker:

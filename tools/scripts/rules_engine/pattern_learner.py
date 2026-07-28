@@ -47,23 +47,27 @@ class PatternLearner:
         for msg_key, issues in pattern_groups.items():
             if len(issues) >= self.MIN_OCCURRENCES:
                 example = issues[0]
-                rules.append({
-                    "pattern": f"Suggested: {example.rule_id}",
-                    "message": example.message,
-                    "severity": example.severity,
-                    "category": example.category,
-                    "frequency": len(issues),
-                    "files": list({i.file for i in issues}),
-                    "confidence": min(len(issues) / 10, 1.0),
-                })
+                rules.append(
+                    {
+                        "pattern": f"Suggested: {example.rule_id}",
+                        "message": example.message,
+                        "severity": example.severity,
+                        "category": example.category,
+                        "frequency": len(issues),
+                        "files": list({i.file for i in issues}),
+                        "confidence": min(len(issues) / 10, 1.0),
+                    }
+                )
 
         if not rules:
-            rules.append({
-                "pattern": "no-frequent-issues",
-                "message": "未发现高频违规模式",
-                "frequency": 0,
-                "confidence": 0,
-            })
+            rules.append(
+                {
+                    "pattern": "no-frequent-issues",
+                    "message": "未发现高频违规模式",
+                    "frequency": 0,
+                    "confidence": 0,
+                }
+            )
 
         return rules
 

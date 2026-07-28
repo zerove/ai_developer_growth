@@ -7,7 +7,7 @@ difficulty: "中级"
 status: "社区投稿"
 source: "社区贡献"
 author: "你的名字"
-updated: $(date +%Y-%m-%d)
+updated: 2026-07-28
 ---
 
 # 案例标题

@@ -184,10 +184,10 @@ ai_developer_growth/
 │   │   ├── basic_checks.py # lint/format/typecheck/test/security
 │   │   ├── domain_checks.py# language-rules/quality-gate/governance
 │   │   └── incremental.py  # diff/pre-commit 增量检查
-│   ├── rules_engine/       # 规则引擎 (21 语言)
+│   ├── rules_engine/       # 规则引擎 (26 语言)
 │   └── rule_catalog.py     # 规则包管理
 ├── agents/                  # Agent 定义
-├── tests/                   # 1093 个测试
+├── tests/                   # 2474 个测试
 ```
 
 ---

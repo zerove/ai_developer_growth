@@ -96,11 +96,6 @@ class TestGetCategoryFromPath(unittest.TestCase):
         cat, tags = get_category_from_path("docs/integration/webhook.md")
         self.assertEqual(cat, "工具层")
 
-    def test_docs_superpowers(self):
-        """Should map docs/superpowers to 效率层."""
-        cat, tags = get_category_from_path("docs/superpowers/cursor.md")
-        self.assertEqual(cat, "效率层")
-
     def test_docs_specs(self):
         """Should map docs/specs to 治理层."""
         cat, tags = get_category_from_path("docs/specs/api-spec.md")

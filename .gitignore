@@ -53,3 +53,5 @@ Thumbs.db
 
 # MkDocs build output
 site/
+# uv package manager lockfile
+uv.lock

@@ -87,7 +87,7 @@ def find_broken_links(directory: str) -> list[tuple[str, str]]:
     index = _build_index(directory)
 
     # Skip template directories and files with template-like patterns
-    skip_dirs = {".github/PULL_REQUEST_TEMPLATE", "docs/superpowers/plans"}
+    skip_dirs = {".github/PULL_REQUEST_TEMPLATE"}
     placeholder_pattern = re.compile(r"^[\{\.\\/]+|[\{\.]{2,}")
 
     for root, _, files in os.walk(directory):
@@ -124,7 +124,7 @@ def find_broken_links_with_index(directory: str, index: dict[str, str]) -> list[
     """
     broken: list[tuple[str, str]] = []
     link_pattern = re.compile(r"\[\[([^\[\]]+?)(?:\\?\|[^\[\]]*)?\]\]")
-    skip_dirs = {".github/PULL_REQUEST_TEMPLATE", "docs/superpowers/plans"}
+    skip_dirs = {".github/PULL_REQUEST_TEMPLATE"}
     placeholder_pattern = re.compile(r"^[\{\.\\/]+|[\{\.]{2,}")
 
     for root, _, files in os.walk(directory):

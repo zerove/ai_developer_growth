@@ -1,0 +1,77 @@
+# Quality Trends — 长期质量趋势追踪
+# Runs after CI, records snapshot, commits trend data
+
+name: Quality Trends
+
+on:
+  workflow_run:
+    workflows: ["CI"]
+    types: [completed]
+  workflow_dispatch:
+
+env:
+  PYTHON_VERSION: "3.11"
+
+jobs:
+  record-trend:
+    name: Record Quality Snapshot
+    runs-on: ubuntu-latest
+    if: github.event.workflow_run.conclusion == 'success' || github.event_name == 'workflow_dispatch'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Install dependencies
+        run: pip install ruff mypy pyyaml
+
+      - name: Take quality snapshot
+        id: snapshot
+        continue-on-error: true
+        run: |
+          python -c "
+          from pathlib import Path
+          from tools.scripts.rules_engine.quality_trends import QualityTracker
+
+          tracker = QualityTracker(data_dir=Path('.quality-trends'))
+          tracker.take_snapshot(Path('tools/scripts'), semantic=True)
+          report = tracker.generate_trend_report()
+          print(tracker.format_trend_report(report))
+
+          # Check for regressions
+          if report.has_regressions():
+              print('::warning::Quality regression detected!')
+          "
+
+      - name: Generate trend chart
+        continue-on-error: true
+        run: |
+          python -c "
+          import json
+          from pathlib import Path
+          from tools.scripts.rules_engine.quality_trends import QualityTracker
+
+          tracker = QualityTracker(data_dir=Path('.quality-trends'))
+
+          # Generate summary
+          if tracker.snapshots:
+              latest = tracker.snapshots[-1]
+              summary = {
+                  'snapshots': len(tracker.snapshots),
+                  'latest': latest.to_dict(),
+              }
+              Path('.quality-trends/summary.json').write_text(json.dumps(summary, indent=2))
+              print(f'Summary: {len(tracker.snapshots)} snapshots, {latest.total_issues} latest issues')
+          "
+
+      - name: Commit trend data
+        continue-on-error: true
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add .quality-trends/ 2>/dev/null || true
+          git diff --cached --quiet || (git commit -m "chore: update quality trends [skip ci]" && git push)

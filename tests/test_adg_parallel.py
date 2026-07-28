@@ -21,8 +21,8 @@ class TestParallelChecking:
         rules = load_rules_for_language("python")
         issues = check_directory(tmp_path, rules, jobs=1)
 
-        # Should find issues in all files
-        assert len(issues) == 5
+        # Should find issues in all files (py-print-statement + py-log-print)
+        assert len(issues) == 10
 
     def test_check_directory_parallel(self, tmp_path):
         """Parallel checking (jobs>1) produces same results as sequential."""
@@ -103,8 +103,8 @@ class TestParallelChecking:
         rules = load_rules_for_language("python")
         issues = check_directory(tmp_path, rules, jobs=4)
 
-        # Should find the issue
-        assert len(issues) == 1
+        # Should find the issue (py-print-statement + py-log-print)
+        assert len(issues) == 2
 
 
 class TestParallelInternalFunction:
@@ -121,8 +121,8 @@ class TestParallelInternalFunction:
         rules = load_rules_for_language("python")
         issues = _check_files_parallel(files, rules, None, 2)
 
-        # Should find issues in all files
-        assert len(issues) == 3
+        # Should find issues in all files (py-print-statement + py-log-print)
+        assert len(issues) == 6
 
     def test_parallel_handles_empty_list(self):
         """_check_files_parallel handles empty file list."""

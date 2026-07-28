@@ -45,6 +45,13 @@ jobs:
           # Check for regressions
           if report.has_regressions():
               print('::warning::Quality regression detected!')
+              for d in report.deltas:
+                  if d.direction == 'regressed':
+                      print(f'  ⚠️  {d.metric}: {d.previous} → {d.current} (+{d.change})')
+                      # Fail CI on error or hallucination regression > 10%
+                      if d.metric in ('Errors', 'Semantic Issues', 'Hallucination Findings') and d.change_pct > 10:
+                          print(f'::error::Critical regression in {d.metric}: +{d.change_pct:.0f}%')
+                          exit(1)
           "
 
       - name: Generate trend chart

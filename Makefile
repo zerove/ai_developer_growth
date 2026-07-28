@@ -1,4 +1,4 @@
-.PHONY: help lint format format-fix typecheck test test-cov check-quality security audit validate-docs check-index sync-refs validate-governance-docs check-ai-sdlc audit-hallucination link-audit validate-cases scan full-audit full-validate mode-show mode-set-perf mode-set-quality mode-set-safe docs-build test-fast check release setup-git clean
+.PHONY: help lint format format-fix typecheck test test-cov check-quality security audit validate-docs check-index sync-refs validate-governance-docs check-ai-sdlc audit-hallucination link-audit validate-cases scan full-audit full-validate mode-show mode-set-perf mode-set-quality mode-set-safe docs-build test-fast check release setup-git workflow-pr workflow-weekly workflow-release clean
 
 help:  ## 显示帮助信息
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-20s\033[0m %s\n", $$1, $$2}'
@@ -108,6 +108,25 @@ setup-git: ## 配置 git 模板和钩子
 	git config commit.template .gitmessage
 	@echo "✅ git 提交模板已配置 (.gitmessage)"
 	@echo "✅ 提交格式: type(scope): 中文描述"
+
+workflow-pr: ## 执行 PR 审查工作流 (registry.json)
+	python .jcode/scripts/governance-auditor.py full
+	python .jcode/scripts/knowledge-curator.py scan
+	python .jcode/scripts/community-catalyst.py triage
+
+workflow-weekly: ## 执行每周维护工作流 (registry.json)
+	python .jcode/scripts/governance-auditor.py full
+	python .jcode/scripts/knowledge-curator.py scan
+	python .jcode/scripts/knowledge-curator.py audit
+	python .jcode/scripts/knowledge-curator.py update-moc
+	python .jcode/scripts/workflow-optimizer.py report
+
+workflow-release: ## 执行发布准备工作流 (registry.json)
+	python .jcode/scripts/governance-auditor.py full
+	python .jcode/scripts/knowledge-curator.py scan
+	python .jcode/scripts/knowledge-curator.py audit
+	python .jcode/scripts/workflow-optimizer.py report
+	python .jcode/scripts/community-catalyst.py leaderboard
 
 clean:  ## 清理临时文件
 	find . -type d -name __pycache__ -exec rm -rf {} + 2>/dev/null || true

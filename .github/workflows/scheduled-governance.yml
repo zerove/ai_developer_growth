@@ -72,3 +72,5 @@ jobs:
         run: python .jcode/scripts/workflow-optimizer.py report || true
       - name: Audit hallucination risks
         run: python .jcode/scripts/governance-auditor.py audit-hallucination-risks || true
+      - name: Run pattern learner
+        run: python -c "from tools.scripts.rules_engine.pattern_learner import run_pattern_learning; run_pattern_learning('.')" || true

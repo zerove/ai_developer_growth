@@ -1,5 +1,9 @@
 # code-quality-validator 代码质量验证器
 
+> 📖 **参考 Skill** — 功能已被 `governance-auditor` 覆盖。
+> 此文件保留作为 AI Agent 在生成代码时的行为参考。
+> 实际规则检查请使用 `/governance` 或 `adg check`。
+
 根据语言特定的最佳实践、反模式和质量阈值验证代码输出。
 
 ## 使用场景

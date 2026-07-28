@@ -52,24 +52,37 @@ markdown_extensions:
 
 nav:
   - Home: index.md
+  - Announcement: announcement.md
   - Language Rules:
-    - Reference: language-rules-reference.md
+    - Reference: governance/language-rules-reference.md
   - Efficiency:
     - Full Cycle Workflow: efficiency/full-cycle-workflow.md
     - Context Engineering: efficiency/context-engineering.md
     - AI Coding Efficiency: efficiency/ai-coding-efficiency.md
     - Prompt Engineering: efficiency/prompt-engineering.md
+  - Learning:
+    - Capability Levels: learning/capability-levels.md
   - Governance:
     - Language Rules Map: governance/MAP.md
     - Coding Standards: governance/coding-standards.md
     - Security Standards: governance/security-standards.md
+    - Community Operations: governance/community-operations-plan.md
+    - Contributor Incentive: governance/contributor-incentive-plan.md
   - Agent Development:
     - Prompt Template: agent-dev/agent-prompt-template.md
     - Context Management: agent-dev/context-management.md
     - Quality Gates: agent-dev/quality-gates.md
-  - ADRs:
-    - ADR: adr/ADR.md
-    - Language Rules Architecture: adr/001-language-rules-engine-architecture.md
+  - ADRs (10):
+    - ADR Index: adr/ADR.md
+    - "001: Language Rules Arch": adr/001-language-rules-engine-architecture.md
+    - "002: Refactor Validation": adr/002-refactor-validate-language-rules.md
+    - "003: Quality Gate System": adr/003-quality-gate-system.md
+    - "004: Agent Collaboration": adr/004-agent-collaboration-model.md
+    - "005: AI Navigation": adr/005-ai-navigation-system.md
+    - "007: M4 Navigation": adr/007-m4-ai-navigation-design.md
+    - "008: Production Workflow": adr/008-production-grade-workflow.md
+  - Monitoring:
+    - AI Audit: monitoring/ai-audit-live.md
   - Tools:
     - IDE Best Practices: tools/ide-best-practices.md
     - Tool Matrix: tools/ai-tool-matrix.md
@@ -78,4 +91,5 @@ nav:
     - CLI: api/cli.md
   - Meta:
     - MOC: MOC.md
-    - Capability Levels: capability-levels.md
+    - ROADMAP: ROADMAP.md
+    - NEXT STEPS: NEXT_STEPS.md

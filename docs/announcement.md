@@ -56,7 +56,7 @@ updated: 2026-07-21
 ### 阅读知识
 
 1. 阅读 [项目首页](index.md) 了解项目概览
-2. 浏览 [能力等级](capability-levels.md) 查看完整知识地图
+2. 浏览 [能力等级](learning/capability-levels.md) 查看完整知识地图
 3. 从 [产品思维](mindset/product-thinking.md) 开始学习
 
 ### 贡献案例

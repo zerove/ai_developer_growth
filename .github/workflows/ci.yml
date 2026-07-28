@@ -107,9 +107,9 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
           cache: pip
-      - run: pip install pytest pytest-cov pyyaml
+      - run: pip install pytest pytest-cov pyyaml pytest-xdist
       - name: Run tests with coverage
-        run: pytest tests/ -v --cov=tools --cov-report=xml --cov-report=term-missing --tb=short
+        run: pytest tests/ -v -n auto --cov=tools --cov-report=xml --cov-report=term-missing --tb=short
       - name: Coverage check
         if: matrix.python-version == '3.11'
         run: |

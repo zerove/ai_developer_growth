@@ -1,7 +1,12 @@
 # Agent Definition Templates
 # 适用于任何项目的 Agent 定义模板
 
-## 通用 Agent 模板
+> 本项目实际使用 Markdown 格式（见下方「项目实际格式」），
+> YAML 格式模板保留作为通用参考。
+
+## 通用 Agent 模板 (YAML 格式)
+
+适用于框架通用场景。
 
 ```yaml
 # Agent: {agent-name}
@@ -49,6 +54,60 @@ triggers:
   scheduled:
     - schedule: "{cron}"
       action: "{action}"
+```
+
+## 项目实际格式 (Markdown)
+
+本项目 `agents/` 目录中的 Agent 定义使用 Markdown 格式，与 AGENTS.md 索引联动。
+
+### 模板
+
+```markdown
+## agent: {agent-name} ({中文名称})
+
+{一句话核心职责}
+
+### 指令
+
+1. **{指令名称}**: 运行 `{具体命令}` {预期结果}，{失败处理}
+2. **{指令名称}**: ...
+
+### 工具
+
+- {tool_1}
+- {tool_2}
+
+### 约束
+
+- {constraint_1}
+- {constraint_2}
+```
+
+### 实际示例 (本项目 governance-auditor)
+
+```markdown
+## agent: governance-auditor (治理审计员)
+
+自动化审计代码质量、安全漏洞、治理标准合规性
+
+### 指令
+
+1. **执行代码风格检查**: 运行 `ruff check tools/ tests/` 验证代码风格
+2. **执行类型检查**: 运行 `mypy tools/scripts/` 类型检查
+3. **执行测试套件**: 运行 `pytest tests/ -v` 要求覆盖率 ≥ 70%
+
+### 工具
+
+- python
+- bash
+- read
+- write
+
+### 约束
+
+- 所有检查必须在 CI/CD 中自动运行
+- 不得修改源代码，仅报告问题
+- 质量门禁不可跳过
 ```
 
 ## 预定义角色模板

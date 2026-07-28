@@ -2,6 +2,10 @@
 Jcode Hooks - 通用钩子系统
 
 适用于任何项目的自动化触发器。
+
+⚠️ 废弃提示: 本项目的实际钩子系统已迁移至 .jcode/scripts/hooks_runner.py
+此文件保留作为框架参考模板，不再被项目代码引用。
+请使用 hooks_runner.py（读取 .jcode/hooks.json 配置）替代。
 """
 
 import json

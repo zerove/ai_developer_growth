@@ -1,4 +1,4 @@
-"""Tests for add_navigation.py."""
+"""Tests for add_navigation module."""
 
 import shutil
 import tempfile

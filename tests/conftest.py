@@ -1,6 +1,11 @@
 """Shared test configuration for ai_developer_growth tests.
 
 Contains project-wide fixtures and FutureWarning suppression for tree-sitter.
+
+测试隔离准则:
+- 所有文件操作使用 `temp_dir` fixture 而非写工作目录
+- 所有 mock 使用 `unittest.mock` 而非猴子补丁
+- 测试不应依赖执行顺序
 """
 
 import tempfile

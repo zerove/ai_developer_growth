@@ -16,13 +16,17 @@ class TestPatternLearner:
         result = learner.learn_from_directory(Path("."))
         assert isinstance(result, list)
 
-    def test_learn_from_directory_stub_returns_default(self):
-        """Learner returns the stub result with 'new_pattern'."""
+    def test_learn_from_directory_real_implementation(self):
+        """Learner now returns real patterns from rules engine."""
         learner = PatternLearner()
         result = learner.learn_from_directory(Path("."))
-        assert len(result) == 1
-        assert result[0]["pattern"] == "new_pattern"
-        assert "潜在" in result[0]["message"]
+        assert isinstance(result, list)
+        # Should find some issues in the project's own code
+        if len(result) > 0 and result[0].get("frequency", 0) > 0:
+            assert "message" in result[0]
+        else:
+            # Graceful fallback when no frequent patterns found
+            assert result[0]["pattern"] == "no-frequent-issues"
 
     def test_learn_from_directory_nonexistent_path(self):
         """Learner handles nonexistent paths (gracefully)."""

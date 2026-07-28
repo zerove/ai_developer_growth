@@ -1,5 +1,3 @@
-# Ruby Language Rules - Machine-Readable Configuration
-
 language: ruby
 version: '>=3.1'
 config_version: '1.0'
@@ -8,101 +6,183 @@ anti_patterns:
   name: eval() usage
   severity: error
   category: security
-  pattern: '\beval\s*\(|\binstance_eval\s*\(|\bclass_eval\s*\('
-  message: 'eval() is a security risk'
-  fix_hint: 'Use send() or public_send() for dynamic dispatch'
+  pattern: \beval\s*\(|\binstance_eval\s*\(|\bclass_eval\s*\(
+  message: eval() is a security risk
+  fix_hint: Use send() or public_send() for dynamic dispatch
 - id: rb-send
   name: send() with user input
   severity: error
   category: security
-  pattern: '\.send\s*\('
-  message: 'send() can call any method - use public_send() for safer dispatch'
-  fix_hint: 'Use public_send() which only calls public methods'
+  pattern: \.send\s*\(
+  message: send() can call any method - use public_send() for safer dispatch
+  fix_hint: Use public_send() which only calls public methods
 - id: ruby-sql-injection
   name: SQL injection via string interpolation
   severity: error
   category: security
-  pattern: "(?:execute|find_by_sql|where)\\s*\\(.*(?:#{|\\.format|%\\()"
-  message: 'String interpolation in SQL enables injection'
+  pattern: (?:execute|find_by_sql|where)\s*\(.*(?:#{|\.format|%\()
+  message: String interpolation in SQL enables injection
   fix_hint: 'Use parameterized queries: where("name = ?", name)'
 - id: ruby-puts
   name: puts/print in production
   severity: info
   category: code_quality
-  pattern: '\b(puts|print|p\s+\w+|pp\s+\w+)\s*\('
-  message: 'Use proper logging instead of puts/print'
-  fix_hint: 'Use Rails.logger or a logging gem'
+  pattern: \b(puts|print|p\s+\w+|pp\s+\w+)\s*\(
+  message: Use proper logging instead of puts/print
+  fix_hint: Use Rails.logger or a logging gem
 - id: ruby-rescue-all
   name: Rescue all exceptions
   severity: error
   category: error_handling
-  pattern: 'rescue\s*=>|rescue\s+Exception\b|rescue\s*$|rescue\s+'
-  message: 'Rescuing all exceptions hides specific errors'
+  pattern: rescue\s*=>|rescue\s+Exception\b|rescue\s*$|rescue\s+
+  message: Rescuing all exceptions hides specific errors
   fix_hint: 'Rescue specific exceptions: rescue ActiveRecord::RecordNotFound'
 - id: ruby-empty-rescue
   name: Empty rescue block
   severity: error
   category: error_handling
-  pattern: 'rescue[^:]*:\s*$'
-  message: 'Empty rescue blocks silently swallow errors'
-  fix_hint: 'Log the error or re-raise it'
+  pattern: rescue[^:]*:\s*$
+  message: Empty rescue blocks silently swallow errors
+  fix_hint: Log the error or re-raise it
 - id: ruby-freeze-string
   name: Mutable string literal
   severity: warning
   category: performance
   pattern: '"([^"]*|''[^'']*)(?!\.freeze)"'
-  message: 'String literals are mutable in Ruby < 3.0'
+  message: String literals are mutable in Ruby < 3.0
   fix_hint: 'Add .freeze or use # frozen_string_literal: true'
 - id: ruby-global-var
   name: Global variable usage
   severity: warning
   category: code_quality
-  pattern: '\$\w+\s*='
-  message: 'Global variables make code hard to test'
-  fix_hint: 'Use constants, class variables, or dependency injection'
+  pattern: \$\w+\s*=
+  message: Global variables make code hard to test
+  fix_hint: Use constants, class variables, or dependency injection
 - id: ruby-magic-number
   name: Magic number
   severity: info
   category: code_quality
-  pattern: '(?:if|while|unless)\s+.*(?:==?|>=?|<=?)\s*\d{2,}'
-  message: 'Magic numbers should be named constants'
-  fix_hint: 'Define MAX_RETRIES = 3'
+  pattern: (?:if|while|unless)\s+.*(?:==?|>=?|<=?)\s*\d{2,}
+  message: Magic numbers should be named constants
+  fix_hint: Define MAX_RETRIES = 3
 - id: ruby-nested-tenary
   name: Nested ternary (inline if)
   severity: warning
   category: code_quality
-  pattern: '\?\s*\S+\s*:\s*\S+\s*\?'
-  message: 'Nested ternaries are hard to read'
-  fix_hint: 'Use if/else or case/when for complex logic'
+  pattern: \?\s*\S+\s*:\s*\S+\s*\?
+  message: Nested ternaries are hard to read
+  fix_hint: Use if/else or case/when for complex logic
 - id: ruby-no-frozen-literal
   name: Missing frozen string literal comment
   severity: info
   category: performance
-  pattern: '^(?!# frozen_string_literal)'
+  pattern: ^(?!# frozen_string_literal)
   message: 'Add # frozen_string_literal: true for performance'
   fix_hint: '# frozen_string_literal: true at top of file'
 - id: ruby-rails-sql-injection
   name: Rails SQL injection via where
   severity: error
   category: security
-  pattern: "\\.where\\s*\\(\\s*\"[^\"]*#\\{"
-  message: 'String interpolation in where() enables SQL injection'
-  fix_hint: 'Use where("column = ?", value) or Arel queries'
-
+  pattern: \.where\s*\(\s*"[^"]*#\{
+  message: String interpolation in where() enables SQL injection
+  fix_hint: Use where("column = ?", value) or Arel queries
+- id: ru-log-sensitive
+  name: Logging sensitive data
+  severity: error
+  category: security
+  pattern: log(?:ger)?\.(?:info|debug|warn|error)\s*\(.*(?:password|secret|token|credential|api_key)
+  message: Never log sensitive data (passwords, tokens, secrets)
+  fix_hint: Use log filtering or redact sensitive fields
+- id: ru-log-print
+  name: Using print for logging
+  severity: warning
+  category: logging
+  pattern: ^\s*print\s*\(
+  message: Use structured logging instead of print statements in production
+  fix_hint: Use logging framework (loguru, structlog, etc.)
+- id: ru-file-leak
+  name: Unclosed file handle
+  severity: error
+  category: resource_management
+  pattern: (?:open|fopen)\s*\([^)]*\)\s*(?!.*\b(with|using|close|finally|defer)\b)
+  message: File handles must be closed properly to avoid resource leaks
+  fix_hint: Use with/using/defer block or ensure close() in finally
+- id: ru-connection-leak
+  name: Unclosed connection
+  severity: error
+  category: resource_management
+  pattern: (?:connect|new connection|getConnection)\s*\([^)]*\)\s*(?!.*\b(with|using|close|finally|defer)\b)
+  message: Database/network connections must be released after use
+  fix_hint: Use connection pool or ensure close() in finally
+- id: ru-missing-await
+  name: Missing await on async call
+  severity: error
+  category: concurrency
+  pattern: (?:async\s+def|async\s+fn)\s+\w+\s*\([^)]*\)\s*\{?\s*$
+  message: Async function called without await may cause race conditions
+  fix_hint: Add await/async keyword or handle the future properly
+- id: ru-shared-mutable
+  name: Shared mutable state without sync
+  severity: warning
+  category: concurrency
+  pattern: (?:global|static|thread_local)\s+\w+(?:\s*=\s*[^;]*)?\s*[;]?$
+  message: Shared mutable state without synchronization can cause race conditions
+  fix_hint: Use mutex/lock/atomic or thread-local storage
+- id: ru-large-alloc-loop
+  name: Large allocation in loop
+  severity: warning
+  category: performance
+  pattern: (?:for|while|loop)\s*\([^)]*\)\s*\{?\s*[^}]*\b(?:append|push|concat|new\s+(?:Array|List|StringBuilder))\b
+  message: Repeated allocations inside loops impact performance
+  fix_hint: Pre-allocate or use builder pattern outside the loop
+- id: ru-n-plus-one
+  name: Potential N+1 query pattern
+  severity: warning
+  category: performance
+  pattern: (?:for|while|loop|each|map)\s*[^)]*\)?\s*\{?[^}]*\b(?:query|find|get|fetch|load)\b[^}]*\}
+  message: Query inside a loop may cause N+1 performance problem
+  fix_hint: Use batch loading, eager loading, or JOIN query
+- id: ru-cors-allow-all
+  name: Overly permissive CORS
+  severity: error
+  category: security
+  pattern: (?:Access-Control-Allow-Origin|origins?)\s*[=:]\s*["\']?\*["\']?
+  message: Wildcard CORS exposes API to any origin
+  fix_hint: Restrict CORS to specific allowed origins
+- id: ru-no-input-validation
+  name: Missing input validation on API
+  severity: warning
+  category: security
+  pattern: (?:@\w+Mapping|def\s+\w+\([^)]*request|route|endpoint|api_view)
+  message: API endpoints should validate all input parameters
+  fix_hint: Add input validation or use schema validation library
+- id: ru-hardcoded-origin
+  name: Hardcoded origin/domain
+  severity: warning
+  category: config
+  pattern: (?:allowed_origins|trusted_origins|ALLOWED_HOSTS)\s*[=:]\s*\["\'\]https?://
+  message: Hardcoded origins in config should be environment variables
+  fix_hint: Use environment variables for allowed origins
+- id: ru-exception-leak
+  name: Exception message leaks internal info
+  severity: warning
+  category: security
+  pattern: (?:print|log|logger)\s*\(.*e(?:rror)?\.(?:message|to_String|getMessage)\s*\)
+  message: Exception messages may leak internal implementation details
+  fix_hint: Log a generic message, add exception details separately
 naming:
   file:
-    pattern: '^[a-z][a-z0-9_]*\.rb$'
-    message: 'Ruby files should use snake_case'
+    pattern: ^[a-z][a-z0-9_]*\.rb$
+    message: Ruby files should use snake_case
   function:
-    pattern: '^[a-z][a-z0-9_]*$'
-    message: 'Methods should use snake_case'
+    pattern: ^[a-z][a-z0-9_]*$
+    message: Methods should use snake_case
   class:
-    pattern: '^[A-Z][a-zA-Z0-9]*$'
-    message: 'Classes should use PascalCase'
+    pattern: ^[A-Z][a-zA-Z0-9]*$
+    message: Classes should use PascalCase
   constant:
-    pattern: '^[A-Z][A-Z0-9_]*$'
-    message: 'Constants should use UPPER_SNAKE_CASE'
-
+    pattern: ^[A-Z][A-Z0-9_]*$
+    message: Constants should use UPPER_SNAKE_CASE
 thresholds:
   max_function_length: 50
   max_file_length: 500
@@ -110,13 +190,12 @@ thresholds:
   max_nesting_depth: 4
   max_function_params: 5
   max_cyclomatic_complexity: 10
-
 tooling:
   linter: rubocop
   formatter: rubocop
   type_checker: steep
   test_runner: rspec
   config_files:
-    - Gemfile
-    - .rubocop.yml
-    - .rspec
+  - Gemfile
+  - .rubocop.yml
+  - .rspec

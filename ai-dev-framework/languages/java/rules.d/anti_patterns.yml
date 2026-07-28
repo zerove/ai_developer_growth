@@ -1,5 +1,3 @@
-# Java Language Rules - Machine-Readable Configuration
-
 language: java
 version: '>=17'
 config_version: '1.0'
@@ -78,51 +76,137 @@ anti_patterns:
   name: Raw generic type usage
   severity: warning
   category: type_safety
-  pattern: '(?:List|Map|Set|ArrayList|HashMap|HashSet|Iterator)\s+\w+\s*[=;,)]'
+  pattern: (?:List|Map|Set|ArrayList|HashMap|HashSet|Iterator)\s+\w+\s*[=;,)]
   message: Raw types bypass generic type checking and cause runtime ClassCastExceptions
   fix_hint: 'Use parameterized types: List<String> instead of List'
 - id: java-missing-final
   name: Missing final on constants and parameters
   severity: info
   category: code_quality
-  pattern: 'private\s+static\s+(?!final)\w+\s+[A-Z_]+\s*='
+  pattern: private\s+static\s+(?!final)\w+\s+[A-Z_]+\s*=
   message: Constants and immutable parameters should be declared final
   fix_hint: Add 'final' to constants, parameters, and fields that should not be reassigned
 - id: java-synchronized-method
   name: Synchronized on entire method
   severity: warning
   category: concurrency
-  pattern: 'public\s+synchronized\s+'
+  pattern: public\s+synchronized\s+
   message: Synchronizing entire methods reduces concurrency and can cause contention
-  fix_hint: Use synchronized blocks on specific fields or ReentrantLock for finer control
+  fix_hint: Use synchronized blocks on specific fields or ReentrantLock for finer
+    control
 - id: java-string-concat-loop
   name: String concatenation in loop
   severity: warning
   category: performance
-  pattern: 'for\s*\([^)]*\)\s*\{[\s\S]*?\+\s*"[^"]*"|for\s*\([^)]*\)\s*\{[\s\S]*?\+=\s*"'
+  pattern: for\s*\([^)]*\)\s*\{[\s\S]*?\+\s*"[^"]*"|for\s*\([^)]*\)\s*\{[\s\S]*?\+=\s*"
   message: String concatenation with + in loops creates many temporary String objects
   fix_hint: Use StringBuilder or StringJoiner for efficient string building
 - id: java-missing-override
   name: Missing @Override annotation
   severity: info
   category: code_quality
-  pattern: 'public\s+(?:String|boolean|int|void|long|double|float)\s+(?:toString|equals|hashCode|compareTo)\s*\('
+  pattern: public\s+(?:String|boolean|int|void|long|double|float)\s+(?:toString|equals|hashCode|compareTo)\s*\(
   message: Methods overriding superclass/interface methods should use @Override
   fix_hint: Add @Override annotation to make override intent explicit
 - id: java-catch-throwable
   name: Catching Throwable instead of Exception
   severity: error
   category: error_handling
-  pattern: 'catch\s*\(\s*Throwable\s+\w+\s*\)'
-  message: Catching Throwable includes Errors (OutOfMemoryError, StackOverflowError) which should not be caught
+  pattern: catch\s*\(\s*Throwable\s+\w+\s*\)
+  message: Catching Throwable includes Errors (OutOfMemoryError, StackOverflowError)
+    which should not be caught
   fix_hint: Catch Exception for recoverable errors, or catch specific exception types
 - id: java-system-out-usage
   name: System.out/err usage in production code
   severity: warning
   category: code_quality
-  pattern: 'System\.(out|err)\.(print|println)\s*\('
+  pattern: System\.(out|err)\.(print|println)\s*\(
   message: System.out is not configurable, has no log levels, and is not async
   fix_hint: 'Use SLF4J: logger.info("message") or java.util.logging'
+- id: ja-log-sensitive
+  name: Logging sensitive data
+  severity: error
+  category: security
+  pattern: log(?:ger)?\.(?:info|debug|warn|error)\s*\(.*(?:password|secret|token|credential|api_key)
+  message: Never log sensitive data (passwords, tokens, secrets)
+  fix_hint: Use log filtering or redact sensitive fields
+- id: ja-log-print
+  name: Using print for logging
+  severity: warning
+  category: logging
+  pattern: ^\s*print\s*\(
+  message: Use structured logging instead of print statements in production
+  fix_hint: Use logging framework (loguru, structlog, etc.)
+- id: ja-file-leak
+  name: Unclosed file handle
+  severity: error
+  category: resource_management
+  pattern: (?:open|fopen)\s*\([^)]*\)\s*(?!.*\b(with|using|close|finally|defer)\b)
+  message: File handles must be closed properly to avoid resource leaks
+  fix_hint: Use with/using/defer block or ensure close() in finally
+- id: ja-connection-leak
+  name: Unclosed connection
+  severity: error
+  category: resource_management
+  pattern: (?:connect|new connection|getConnection)\s*\([^)]*\)\s*(?!.*\b(with|using|close|finally|defer)\b)
+  message: Database/network connections must be released after use
+  fix_hint: Use connection pool or ensure close() in finally
+- id: ja-missing-await
+  name: Missing await on async call
+  severity: error
+  category: concurrency
+  pattern: (?:async\s+def|async\s+fn)\s+\w+\s*\([^)]*\)\s*\{?\s*$
+  message: Async function called without await may cause race conditions
+  fix_hint: Add await/async keyword or handle the future properly
+- id: ja-shared-mutable
+  name: Shared mutable state without sync
+  severity: warning
+  category: concurrency
+  pattern: (?:global|static|thread_local)\s+\w+(?:\s*=\s*[^;]*)?\s*[;]?$
+  message: Shared mutable state without synchronization can cause race conditions
+  fix_hint: Use mutex/lock/atomic or thread-local storage
+- id: ja-large-alloc-loop
+  name: Large allocation in loop
+  severity: warning
+  category: performance
+  pattern: (?:for|while|loop)\s*\([^)]*\)\s*\{?\s*[^}]*\b(?:append|push|concat|new\s+(?:Array|List|StringBuilder))\b
+  message: Repeated allocations inside loops impact performance
+  fix_hint: Pre-allocate or use builder pattern outside the loop
+- id: ja-n-plus-one
+  name: Potential N+1 query pattern
+  severity: warning
+  category: performance
+  pattern: (?:for|while|loop|each|map)\s*[^)]*\)?\s*\{?[^}]*\b(?:query|find|get|fetch|load)\b[^}]*\}
+  message: Query inside a loop may cause N+1 performance problem
+  fix_hint: Use batch loading, eager loading, or JOIN query
+- id: ja-cors-allow-all
+  name: Overly permissive CORS
+  severity: error
+  category: security
+  pattern: (?:Access-Control-Allow-Origin|origins?)\s*[=:]\s*["\']?\*["\']?
+  message: Wildcard CORS exposes API to any origin
+  fix_hint: Restrict CORS to specific allowed origins
+- id: ja-no-input-validation
+  name: Missing input validation on API
+  severity: warning
+  category: security
+  pattern: (?:@\w+Mapping|def\s+\w+\([^)]*request|route|endpoint|api_view)
+  message: API endpoints should validate all input parameters
+  fix_hint: Add input validation or use schema validation library
+- id: ja-hardcoded-origin
+  name: Hardcoded origin/domain
+  severity: warning
+  category: config
+  pattern: (?:allowed_origins|trusted_origins|ALLOWED_HOSTS)\s*[=:]\s*\["\'\]https?://
+  message: Hardcoded origins in config should be environment variables
+  fix_hint: Use environment variables for allowed origins
+- id: ja-exception-leak
+  name: Exception message leaks internal info
+  severity: warning
+  category: security
+  pattern: (?:print|log|logger)\s*\(.*e(?:rror)?\.(?:message|to_String|getMessage)\s*\)
+  message: Exception messages may leak internal implementation details
+  fix_hint: Log a generic message, add exception details separately
 naming:
   file:
     pattern: ^[A-Z][a-zA-Z0-9]*\.java$

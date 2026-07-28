@@ -1,6 +1,3 @@
-# Python Language Rules - Machine-Readable Configuration
-# Used by validate_language_rules.py for automated code validation
-
 language: python
 version: '>=3.10'
 config_version: '1.0'
@@ -10,16 +7,20 @@ anti_patterns:
   severity: error
   category: error_handling
   pattern: 'except\s*:'
-  exclude_files: ['fix_heuristics.py', 'auto_fix.py', 'ai_rules_generator.py', 'ai_quality_gate.py']
+  exclude_files:
+  - fix_heuristics.py
+  - auto_fix.py
+  - ai_rules_generator.py
+  - ai_quality_gate.py
   message: 'Avoid bare except: use specific exception types'
   fix_hint: Replace 'except:' with 'except SpecificException:'
   test_cases:
-    - code: 'except:'
-      should_match: true
-    - code: 'except Exception:'
-      should_match: false
-    - code: 'except (ValueError, TypeError):'
-      should_match: false
+  - code: 'except:'
+    should_match: true
+  - code: 'except Exception:'
+    should_match: false
+  - code: 'except (ValueError, TypeError):'
+    should_match: false
 - id: py-bare-except-pass
   name: Silent exception swallowing
   severity: error
@@ -60,16 +61,21 @@ anti_patterns:
   severity: error
   category: security
   pattern: \beval\s*\(|\bexec\s*\(
-  exclude_files: ['fix_heuristics.py', 'auto_fix.py', 'ai_rules_generator.py', 'ai_quality_gate.py', 'hallucination_detector.py']
+  exclude_files:
+  - fix_heuristics.py
+  - auto_fix.py
+  - ai_rules_generator.py
+  - ai_quality_gate.py
+  - hallucination_detector.py
   message: eval/exec are security risks
   fix_hint: Use ast.literal_eval() for data
   test_cases:
-    - code: 'eval(user_input)'
-      should_match: true
-    - code: 'exec(code_string)'
-      should_match: true
-    - code: 'result = eval expression'
-      should_match: false
+  - code: eval(user_input)
+    should_match: true
+  - code: exec(code_string)
+    should_match: true
+  - code: result = eval expression
+    should_match: false
 - id: py-hardcoded-secret
   name: Hardcoded secret
   severity: error
@@ -78,15 +84,16 @@ anti_patterns:
   message: Hardcoded secrets are a security vulnerability
   fix_hint: Use environment variables or a secrets manager
   test_cases:
-    - code: 'password = "hunter2"'
-      should_match: true
-    - code: 'api_key = "sk-12345"'
-      should_match: true
-    - code: 'os.environ["password"]'
-      should_match: false
+  - code: password = "hunter2"
+    should_match: true
+  - code: api_key = "sk-12345"
+    should_match: true
+  - code: os.environ["password"]
+    should_match: false
 - id: py-shell-true
   name: subprocess with shell=True
-  exclude_files: ['auto_fix.py']
+  exclude_files:
+  - auto_fix.py
   severity: warning
   category: security
   pattern: subprocess\.\w+\(.*shell\s*=\s*True
@@ -118,7 +125,8 @@ anti_patterns:
   severity: info
   category: code_quality
   pattern: ^\s*print\s*\(
-  exclude_files: ['ai_quality_gate.py']
+  exclude_files:
+  - ai_quality_gate.py
   message: Use logging module instead of print()
   fix_hint: import logging; logger.info(...)
 - id: py-test-sleep
@@ -133,50 +141,135 @@ anti_patterns:
   severity: warning
   category: type_safety
   pattern: 'def\s+[a-z]\w+\s*\([^)]*\)\s*:'
-  message: Public functions should have type annotations for parameters and return value
+  message: Public functions should have type annotations for parameters and return
+    value
   fix_hint: 'Add type hints: def func(arg: str) -> int:'
 - id: py-bare-raise
   name: Bare raise outside except block
   severity: error
   category: error_handling
-  pattern: '^\s*raise\s*$'
+  pattern: ^\s*raise\s*$
   message: Bare raise without arguments only works inside an except handler'
   fix_hint: Use 'raise' only inside except blocks, or use 'raise ExceptionType()'
 - id: py-mutable-class-attr
   name: Mutable class attribute
   severity: warning
   category: code_quality
-  pattern: 'class\s+\w+.*:\s*\n\s+\w+\s*=\s*(\[\]|\{|set\()'
+  pattern: class\s+\w+.*:\s*\n\s+\w+\s*=\s*(\[\]|\{|set\()
   message: Mutable class attributes are shared across all instances'
   fix_hint: Initialize mutable attributes in __init__ or use dataclasses
 - id: py-nested-import
   name: Nested import statement
   severity: info
   category: code_quality
-  pattern: '^\s+(?:from\s+\S+\s+)?import\s+\S+'
+  pattern: ^\s+(?:from\s+\S+\s+)?import\s+\S+
   message: Import statements should be at the top of the file'
   fix_hint: Move imports to the top of the module (PEP 8)
 - id: py-star-unpacking
   name: Star unpacking in assignment
   severity: info
   category: code_quality
-  pattern: '^\s*\w+,\s*\*\w+\s*=\s*\w+'
+  pattern: ^\s*\w+,\s*\*\w+\s*=\s*\w+
   message: Star unpacking can obscure the structure of data'
   fix_hint: Use explicit unpacking or dataclasses for clarity
 - id: py-complex-comprehension
   name: Complex list comprehension with too many conditions
   severity: warning
   category: code_quality
-  pattern: '\[.*for\s+.*in\s+.*\s+if\s+.*\s+if\s+.*\s+if\s+.*\]'
+  pattern: \[.*for\s+.*in\s+.*\s+if\s+.*\s+if\s+.*\s+if\s+.*\]
   message: Comprehensions with >3 conditions are hard to read'
   fix_hint: Extract complex logic into a helper function or use a regular loop
 - id: py-missing-all
   name: Missing __all__ in public modules
   severity: info
   category: code_quality
-  pattern: '^(?!.*__all__)\s*(?:class|def|from)\s+\w+'
+  pattern: ^(?!.*__all__)\s*(?:class|def|from)\s+\w+
   message: Public modules should define __all__ to control the public API'
   fix_hint: Add __all__ = ["PublicClass", "public_function"] at module top
+- id: py-log-sensitive
+  name: Logging sensitive data
+  severity: error
+  category: security
+  pattern: log(?:ger)?\.(?:info|debug|warn|error)\s*\(.*(?:password|secret|token|credential|api_key)
+  message: Never log sensitive data (passwords, tokens, secrets)
+  fix_hint: Use log filtering or redact sensitive fields
+- id: py-log-print
+  name: Using print for logging
+  severity: warning
+  category: logging
+  pattern: ^\s*print\s*\(
+  message: Use structured logging instead of print statements in production
+  fix_hint: Use logging framework (loguru, structlog, etc.)
+- id: py-file-leak
+  name: Unclosed file handle
+  severity: error
+  category: resource_management
+  pattern: (?:open|fopen)\s*\([^)]*\)\s*(?!.*\b(with|using|close|finally|defer)\b)
+  message: File handles must be closed properly to avoid resource leaks
+  fix_hint: Use with/using/defer block or ensure close() in finally
+- id: py-connection-leak
+  name: Unclosed connection
+  severity: error
+  category: resource_management
+  pattern: (?:connect|new connection|getConnection)\s*\([^)]*\)\s*(?!.*\b(with|using|close|finally|defer)\b)
+  message: Database/network connections must be released after use
+  fix_hint: Use connection pool or ensure close() in finally
+- id: py-missing-await
+  name: Missing await on async call
+  severity: error
+  category: concurrency
+  pattern: (?:async\s+def|async\s+fn)\s+\w+\s*\([^)]*\)\s*\{?\s*$
+  message: Async function called without await may cause race conditions
+  fix_hint: Add await/async keyword or handle the future properly
+- id: py-shared-mutable
+  name: Shared mutable state without sync
+  severity: warning
+  category: concurrency
+  pattern: (?:global|static|thread_local)\s+\w+(?:\s*=\s*[^;]*)?\s*[;]?$
+  message: Shared mutable state without synchronization can cause race conditions
+  fix_hint: Use mutex/lock/atomic or thread-local storage
+- id: py-large-alloc-loop
+  name: Large allocation in loop
+  severity: warning
+  category: performance
+  pattern: (?:for|while|loop)\s*\([^)]*\)\s*\{?\s*[^}]*\b(?:append|push|concat|new\s+(?:Array|List|StringBuilder))\b
+  message: Repeated allocations inside loops impact performance
+  fix_hint: Pre-allocate or use builder pattern outside the loop
+- id: py-n-plus-one
+  name: Potential N+1 query pattern
+  severity: warning
+  category: performance
+  pattern: (?:for|while|loop|each|map)\s*[^)]*\)?\s*\{?[^}]*\b(?:query|find|get|fetch|load)\b[^}]*\}
+  message: Query inside a loop may cause N+1 performance problem
+  fix_hint: Use batch loading, eager loading, or JOIN query
+- id: py-cors-allow-all
+  name: Overly permissive CORS
+  severity: error
+  category: security
+  pattern: (?:Access-Control-Allow-Origin|origins?)\s*[=:]\s*["\']?\*["\']?
+  message: Wildcard CORS exposes API to any origin
+  fix_hint: Restrict CORS to specific allowed origins
+- id: py-no-input-validation
+  name: Missing input validation on API
+  severity: warning
+  category: security
+  pattern: (?:@\w+Mapping|def\s+\w+\([^)]*request|route|endpoint|api_view)
+  message: API endpoints should validate all input parameters
+  fix_hint: Add input validation or use schema validation library
+- id: py-hardcoded-origin
+  name: Hardcoded origin/domain
+  severity: warning
+  category: config
+  pattern: (?:allowed_origins|trusted_origins|ALLOWED_HOSTS)\s*[=:]\s*\["\'\]https?://
+  message: Hardcoded origins in config should be environment variables
+  fix_hint: Use environment variables for allowed origins
+- id: py-exception-leak
+  name: Exception message leaks internal info
+  severity: warning
+  category: security
+  pattern: (?:print|log|logger)\s*\(.*e(?:rror)?\.(?:message|to_String|getMessage)\s*\)
+  message: Exception messages may leak internal implementation details
+  fix_hint: Log a generic message, add exception details separately
 naming:
   file:
     pattern: ^[a-z][a-z0-9_]*\.py$

@@ -93,6 +93,90 @@ anti_patterns:
   pattern: (?:read|gets?|input)\s*\(
   message: User input must be validated
   fix_hint: Add input validation
+- id: r-log-sensitive
+  name: Logging sensitive data
+  severity: error
+  category: security
+  pattern: log(?:ger)?\.(?:info|debug|warn|error)\s*\(.*(?:password|secret|token|credential|api_key)
+  message: Never log sensitive data (passwords, tokens, secrets)
+  fix_hint: Use log filtering or redact sensitive fields
+- id: r-log-print
+  name: Using print for logging
+  severity: warning
+  category: logging
+  pattern: ^\s*print\s*\(
+  message: Use structured logging instead of print statements in production
+  fix_hint: Use logging framework (loguru, structlog, etc.)
+- id: r-file-leak
+  name: Unclosed file handle
+  severity: error
+  category: resource_management
+  pattern: (?:open|fopen)\s*\([^)]*\)\s*(?!.*\b(with|using|close|finally|defer)\b)
+  message: File handles must be closed properly to avoid resource leaks
+  fix_hint: Use with/using/defer block or ensure close() in finally
+- id: r-connection-leak
+  name: Unclosed connection
+  severity: error
+  category: resource_management
+  pattern: (?:connect|new connection|getConnection)\s*\([^)]*\)\s*(?!.*\b(with|using|close|finally|defer)\b)
+  message: Database/network connections must be released after use
+  fix_hint: Use connection pool or ensure close() in finally
+- id: r-missing-await
+  name: Missing await on async call
+  severity: error
+  category: concurrency
+  pattern: (?:async\s+def|async\s+fn)\s+\w+\s*\([^)]*\)\s*\{?\s*$
+  message: Async function called without await may cause race conditions
+  fix_hint: Add await/async keyword or handle the future properly
+- id: r-shared-mutable
+  name: Shared mutable state without sync
+  severity: warning
+  category: concurrency
+  pattern: (?:global|static|thread_local)\s+\w+(?:\s*=\s*[^;]*)?\s*[;]?$
+  message: Shared mutable state without synchronization can cause race conditions
+  fix_hint: Use mutex/lock/atomic or thread-local storage
+- id: r-large-alloc-loop
+  name: Large allocation in loop
+  severity: warning
+  category: performance
+  pattern: (?:for|while|loop)\s*\([^)]*\)\s*\{?\s*[^}]*\b(?:append|push|concat|new\s+(?:Array|List|StringBuilder))\b
+  message: Repeated allocations inside loops impact performance
+  fix_hint: Pre-allocate or use builder pattern outside the loop
+- id: r-n-plus-one
+  name: Potential N+1 query pattern
+  severity: warning
+  category: performance
+  pattern: (?:for|while|loop|each|map)\s*[^)]*\)?\s*\{?[^}]*\b(?:query|find|get|fetch|load)\b[^}]*\}
+  message: Query inside a loop may cause N+1 performance problem
+  fix_hint: Use batch loading, eager loading, or JOIN query
+- id: r-cors-allow-all
+  name: Overly permissive CORS
+  severity: error
+  category: security
+  pattern: (?:Access-Control-Allow-Origin|origins?)\s*[=:]\s*["\']?\*["\']?
+  message: Wildcard CORS exposes API to any origin
+  fix_hint: Restrict CORS to specific allowed origins
+- id: r-no-input-validation
+  name: Missing input validation on API
+  severity: warning
+  category: security
+  pattern: (?:@\w+Mapping|def\s+\w+\([^)]*request|route|endpoint|api_view)
+  message: API endpoints should validate all input parameters
+  fix_hint: Add input validation or use schema validation library
+- id: r-hardcoded-origin
+  name: Hardcoded origin/domain
+  severity: warning
+  category: config
+  pattern: (?:allowed_origins|trusted_origins|ALLOWED_HOSTS)\s*[=:]\s*\["\'\]https?://
+  message: Hardcoded origins in config should be environment variables
+  fix_hint: Use environment variables for allowed origins
+- id: r-exception-leak
+  name: Exception message leaks internal info
+  severity: warning
+  category: security
+  pattern: (?:print|log|logger)\s*\(.*e(?:rror)?\.(?:message|to_String|getMessage)\s*\)
+  message: Exception messages may leak internal implementation details
+  fix_hint: Log a generic message, add exception details separately
 naming:
   file:
     pattern: ^[a-z][a-z0-9_]*\.r$

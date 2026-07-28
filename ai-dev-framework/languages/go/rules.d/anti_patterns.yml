@@ -1,5 +1,3 @@
-# Go Language Rules - Machine-Readable Configuration
-
 language: go
 version: '>=1.21'
 config_version: '1.0'
@@ -71,51 +69,135 @@ anti_patterns:
   name: Goroutine leak potential
   severity: warning
   category: concurrency
-  pattern: 'go\s+func\s*\(|go\s+\w+\.'
+  pattern: go\s+func\s*\(|go\s+\w+\.
   message: Goroutines that block forever cause memory leaks
   fix_hint: Use context cancellation or done channels to stop goroutines
 - id: go-missing-context
   name: Function missing context.Context parameter
   severity: warning
   category: concurrency
-  pattern: 'func\s+\w+\s*\([^)]*(?:http|net|io|db|sql)'
+  pattern: func\s+\w+\s*\([^)]*(?:http|net|io|db|sql)
   message: Functions performing I/O should accept context.Context for cancellation
   fix_hint: Add ctx context.Context as the first parameter
 - id: go-error-swallowing
   name: Error returned but not checked
   severity: error
   category: error_handling
-  pattern: '_,\s*_\s*=\s*\w+\('
+  pattern: _,\s*_\s*=\s*\w+\(
   message: Discarding both return values hides potential errors
   fix_hint: Check and handle all error return values
 - id: go-init-abuse
   name: Multiple init() functions or complex init logic
   severity: warning
   category: code_quality
-  pattern: '^func\s+init\(\)\s*\{'
+  pattern: ^func\s+init\(\)\s*\{
   message: Complex init() functions have hidden execution order and test difficulties
   fix_hint: Use explicit initialization functions or sync.Once for lazy setup
 - id: go-package-var
   name: Package-level mutable variable
   severity: warning
   category: code_quality
-  pattern: '^var\s+\w+\s*=\s*(?!const)'
+  pattern: ^var\s+\w+\s*=\s*(?!const)
   message: Package-level mutable variables create hidden state and race conditions
   fix_hint: Use function parameters, struct fields, or sync primitives
 - id: go-string-builder-missing
   name: String concatenation in loop with +
   severity: warning
   category: performance
-  pattern: "for\\s+.*\\{[\\s\\S]*?\\+\\s*[\"']|for\\s+.*\\{[\\s\\S]*?\\+=[\"']"
+  pattern: for\s+.*\{[\s\S]*?\+\s*["']|for\s+.*\{[\s\S]*?\+=["']
   message: String concatenation with + in loops creates many temporary allocations
   fix_hint: Use strings.Builder or bytes.Buffer for efficient string building
 - id: go-missing-vet
   name: Potential formatting verb misuse
   severity: info
   category: code_quality
-  pattern: 'fmt\.\w+f?\s*\([^)]*%[sdvf]'
+  pattern: fmt\.\w+f?\s*\([^)]*%[sdvf]
   message: printf-style functions should be validated by go vet
   fix_hint: Run go vet ./... regularly to catch formatting verb mismatches
+- id: go-log-sensitive
+  name: Logging sensitive data
+  severity: error
+  category: security
+  pattern: log(?:ger)?\.(?:info|debug|warn|error)\s*\(.*(?:password|secret|token|credential|api_key)
+  message: Never log sensitive data (passwords, tokens, secrets)
+  fix_hint: Use log filtering or redact sensitive fields
+- id: go-log-print
+  name: Using print for logging
+  severity: warning
+  category: logging
+  pattern: ^\s*print\s*\(
+  message: Use structured logging instead of print statements in production
+  fix_hint: Use logging framework (loguru, structlog, etc.)
+- id: go-file-leak
+  name: Unclosed file handle
+  severity: error
+  category: resource_management
+  pattern: (?:open|fopen)\s*\([^)]*\)\s*(?!.*\b(with|using|close|finally|defer)\b)
+  message: File handles must be closed properly to avoid resource leaks
+  fix_hint: Use with/using/defer block or ensure close() in finally
+- id: go-connection-leak
+  name: Unclosed connection
+  severity: error
+  category: resource_management
+  pattern: (?:connect|new connection|getConnection)\s*\([^)]*\)\s*(?!.*\b(with|using|close|finally|defer)\b)
+  message: Database/network connections must be released after use
+  fix_hint: Use connection pool or ensure close() in finally
+- id: go-missing-await
+  name: Missing await on async call
+  severity: error
+  category: concurrency
+  pattern: (?:async\s+def|async\s+fn)\s+\w+\s*\([^)]*\)\s*\{?\s*$
+  message: Async function called without await may cause race conditions
+  fix_hint: Add await/async keyword or handle the future properly
+- id: go-shared-mutable
+  name: Shared mutable state without sync
+  severity: warning
+  category: concurrency
+  pattern: (?:global|static|thread_local)\s+\w+(?:\s*=\s*[^;]*)?\s*[;]?$
+  message: Shared mutable state without synchronization can cause race conditions
+  fix_hint: Use mutex/lock/atomic or thread-local storage
+- id: go-large-alloc-loop
+  name: Large allocation in loop
+  severity: warning
+  category: performance
+  pattern: (?:for|while|loop)\s*\([^)]*\)\s*\{?\s*[^}]*\b(?:append|push|concat|new\s+(?:Array|List|StringBuilder))\b
+  message: Repeated allocations inside loops impact performance
+  fix_hint: Pre-allocate or use builder pattern outside the loop
+- id: go-n-plus-one
+  name: Potential N+1 query pattern
+  severity: warning
+  category: performance
+  pattern: (?:for|while|loop|each|map)\s*[^)]*\)?\s*\{?[^}]*\b(?:query|find|get|fetch|load)\b[^}]*\}
+  message: Query inside a loop may cause N+1 performance problem
+  fix_hint: Use batch loading, eager loading, or JOIN query
+- id: go-cors-allow-all
+  name: Overly permissive CORS
+  severity: error
+  category: security
+  pattern: (?:Access-Control-Allow-Origin|origins?)\s*[=:]\s*["\']?\*["\']?
+  message: Wildcard CORS exposes API to any origin
+  fix_hint: Restrict CORS to specific allowed origins
+- id: go-no-input-validation
+  name: Missing input validation on API
+  severity: warning
+  category: security
+  pattern: (?:@\w+Mapping|def\s+\w+\([^)]*request|route|endpoint|api_view)
+  message: API endpoints should validate all input parameters
+  fix_hint: Add input validation or use schema validation library
+- id: go-hardcoded-origin
+  name: Hardcoded origin/domain
+  severity: warning
+  category: config
+  pattern: (?:allowed_origins|trusted_origins|ALLOWED_HOSTS)\s*[=:]\s*\["\'\]https?://
+  message: Hardcoded origins in config should be environment variables
+  fix_hint: Use environment variables for allowed origins
+- id: go-exception-leak
+  name: Exception message leaks internal info
+  severity: warning
+  category: security
+  pattern: (?:print|log|logger)\s*\(.*e(?:rror)?\.(?:message|to_String|getMessage)\s*\)
+  message: Exception messages may leak internal implementation details
+  fix_hint: Log a generic message, add exception details separately
 naming:
   file:
     pattern: ^[a-z][a-z0-9_]*\.go$

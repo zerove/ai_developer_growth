@@ -81,6 +81,10 @@ nav:
     - "005: AI Navigation": adr/005-ai-navigation-system.md
     - "007: M4 Navigation": adr/007-m4-ai-navigation-design.md
     - "008: Production Workflow": adr/008-production-grade-workflow.md
+  - Architecture:
+    - Rule Loading: architecture/rule-loading.md
+    - Infinite Language Support: architecture/infinite-language-support.md
+    - LLM Rule Generation: architecture/llm-rule-generation.md
   - Monitoring:
     - AI Audit: monitoring/ai-audit-live.md
   - Tools:

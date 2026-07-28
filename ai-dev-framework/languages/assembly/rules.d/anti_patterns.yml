@@ -15,7 +15,8 @@ anti_patterns:
   category: readability
   pattern: ^\s*(mov|push|pop|call|jmp|je|jne|jg|jl|jge|jle|cmp|add|sub|mul|div|xor|and|or|ret)\s+[^;]*$
   message: Add comments explaining the purpose of non-trivial instructions
-  fix_hint: Use ; comments to document register setup, memory layout, and algorithm steps
+  fix_hint: Use ; comments to document register setup, memory layout, and algorithm
+    steps
 - id: asm-magic-number
   name: Magic number in instructions
   severity: warning
@@ -42,7 +43,8 @@ anti_patterns:
   severity: error
   category: error_handling
   pattern: ^\s*ret\s*$
-  message: Ensure every RET is preceded by balanced PUSH/POP pairs or stack frame restoration
+  message: Ensure every RET is preceded by balanced PUSH/POP pairs or stack frame
+    restoration
   fix_hint: Use ENTER/LEAVE or manual push/pop symmetry with proper stack frame cleanup
 - id: asm-div-zero-risk
   name: Division without zero check
@@ -58,6 +60,41 @@ anti_patterns:
   pattern: ^\s*call\s+\w+
   message: Document which registers the called function may clobber
   fix_hint: Save volatile registers (caller-saved) before CALL and note in comments
+- id: as-hardcoded-config
+  name: Hardcoded configuration
+  severity: warning
+  category: config
+  pattern: (?:url|endpoint|host|port)\s*[=:]\s*["']https?://
+  message: Use configuration for URLs/endpoints
+  fix_hint: Move to config file
+- id: as-todo
+  name: Unresolved TODO
+  severity: info
+  category: code_quality
+  pattern: TODO|FIXME|HACK|XXX
+  message: Unresolved TODO/FIXME comments
+  fix_hint: Create a ticket or resolve
+- id: as-deep-nesting
+  name: Deep nesting
+  severity: warning
+  category: complexity
+  pattern: '    (?:if|for|while|case).*\n(?:        (?:if|for|while|case).*\n){2,}'
+  message: Deep nesting reduces readability
+  fix_hint: Extract helper functions
+- id: as-long-line
+  name: Long line
+  severity: info
+  category: code_quality
+  pattern: ^.{121,}$
+  message: Lines >120 chars
+  fix_hint: Break at logical boundaries
+- id: as-unsafe-input
+  name: Unvalidated input
+  severity: error
+  category: security
+  pattern: (?:read|gets?|input)\s*\(
+  message: User input must be validated
+  fix_hint: Add input validation
 naming:
   file:
     pattern: ^[a-z][a-z0-9_]*\.\w+$

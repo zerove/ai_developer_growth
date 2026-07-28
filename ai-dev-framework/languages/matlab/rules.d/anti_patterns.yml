@@ -15,7 +15,8 @@ anti_patterns:
   category: code_quality
   pattern: ^[a-zA-Z]\w*\s*=\s*(?!\s*$)
   message: Variable names must not shadow MATLAB built-in functions
-  fix_hint: Rename variables to avoid conflicts (e.g., avoid sum, mean, length as variable names)
+  fix_hint: Rename variables to avoid conflicts (e.g., avoid sum, mean, length as
+    variable names)
 - id: mcl-clear-globals
   name: Clearing all workspace variables
   severity: warning
@@ -58,6 +59,41 @@ anti_patterns:
   pattern: for\s+\w+\s*=\s*\d+\s*:\s*\d+
   message: Growing arrays inside loops is slow - preallocate before the loop
   fix_hint: Preallocate with zeros(), ones(), or NaN() before the loop
+- id: ma-hardcoded-config
+  name: Hardcoded configuration
+  severity: warning
+  category: config
+  pattern: (?:url|endpoint|host|port)\s*[=:]\s*["']https?://
+  message: Use configuration for URLs/endpoints
+  fix_hint: Move to config file
+- id: ma-todo
+  name: Unresolved TODO
+  severity: info
+  category: code_quality
+  pattern: TODO|FIXME|HACK|XXX
+  message: Unresolved TODO/FIXME comments
+  fix_hint: Create a ticket or resolve
+- id: ma-deep-nesting
+  name: Deep nesting
+  severity: warning
+  category: complexity
+  pattern: '    (?:if|for|while|case).*\n(?:        (?:if|for|while|case).*\n){2,}'
+  message: Deep nesting reduces readability
+  fix_hint: Extract helper functions
+- id: ma-long-line
+  name: Long line
+  severity: info
+  category: code_quality
+  pattern: ^.{121,}$
+  message: Lines >120 chars
+  fix_hint: Break at logical boundaries
+- id: ma-unsafe-input
+  name: Unvalidated input
+  severity: error
+  category: security
+  pattern: (?:read|gets?|input)\s*\(
+  message: User input must be validated
+  fix_hint: Add input validation
 naming:
   file:
     pattern: ^[A-Z][a-zA-Z0-9]*\.m$

@@ -1,5 +1,3 @@
-# C++ Language Rules - Machine-Readable Configuration
-
 language: cpp
 version: '>=17'
 config_version: '1.0'
@@ -8,111 +6,146 @@ anti_patterns:
   name: Raw new/delete usage
   severity: error
   category: memory_safety
-  pattern: '\bnew\s+\w+|\bdelete\s+'
-  message: 'Raw new/delete causes memory leaks and undefined behavior'
+  pattern: \bnew\s+\w+|\bdelete\s+
+  message: Raw new/delete causes memory leaks and undefined behavior
   fix_hint: 'Use smart pointers: std::unique_ptr or std::shared_ptr'
 - id: cpp-null-pointer
   name: NULL pointer usage
   severity: warning
   category: type_safety
-  pattern: '\bNULL\b'
-  message: 'NULL is not type-safe in C++'
-  fix_hint: 'Use nullptr instead of NULL'
+  pattern: \bNULL\b
+  message: NULL is not type-safe in C++
+  fix_hint: Use nullptr instead of NULL
 - id: cpp-c-style-cast
   name: C-style cast
   severity: warning
   category: type_safety
-  pattern: '\(\s*(?:int|float|double|char|void|const|unsigned)\s*\)\s*\w'
-  message: 'C-style casts are unsafe and bypass type checking'
-  fix_hint: 'Use static_cast<>, dynamic_cast<>, const_cast<> instead'
+  pattern: \(\s*(?:int|float|double|char|void|const|unsigned)\s*\)\s*\w
+  message: C-style casts are unsafe and bypass type checking
+  fix_hint: Use static_cast<>, dynamic_cast<>, const_cast<> instead
 - id: cpp-raw-array
   name: Raw array allocation
   severity: warning
   category: memory_safety
-  pattern: '\w+\s*\*\s*\w+\s*=\s*new\s+\w+\['
-  message: 'Raw array allocation is error-prone'
-  fix_hint: 'Use std::vector, std::array, or std::span'
+  pattern: \w+\s*\*\s*\w+\s*=\s*new\s+\w+\[
+  message: Raw array allocation is error-prone
+  fix_hint: Use std::vector, std::array, or std::span
 - id: cpp-using-namespace
   name: Using namespace in header
   severity: error
   category: code_quality
-  pattern: 'using\s+namespace\s+\w+;'
-  message: 'using namespace pollutes the global namespace'
-  fix_hint: 'Use specific using declarations or fully qualified names'
+  pattern: using\s+namespace\s+\w+;
+  message: using namespace pollutes the global namespace
+  fix_hint: Use specific using declarations or fully qualified names
 - id: cpp-cout-printf
   name: printf/cout for logging
   severity: info
   category: code_quality
-  pattern: '\bprintf\s*\(|std::cout\s*<<|std::cerr\s*<<'
-  message: 'Use a proper logging library instead of printf/cout'
-  fix_hint: 'Use spdlog, fmt, or similar logging library'
+  pattern: \bprintf\s*\(|std::cout\s*<<|std::cerr\s*<<
+  message: Use a proper logging library instead of printf/cout
+  fix_hint: Use spdlog, fmt, or similar logging library
 - id: cpp-magic-number
   name: Magic number
   severity: info
   category: code_quality
-  pattern: '(?:if|while|for)\s*\(.*(?:==?|>=?|<=?)\s*\d{3,}'
-  message: 'Magic numbers should be named constants'
-  fix_hint: 'Define constexpr int MAX_SIZE = 1024;'
+  pattern: (?:if|while|for)\s*\(.*(?:==?|>=?|<=?)\s*\d{3,}
+  message: Magic numbers should be named constants
+  fix_hint: Define constexpr int MAX_SIZE = 1024;
 - id: cpp-global-ctor
   name: Global constructor with side effects
   severity: warning
   category: design
-  pattern: '^\s*\w+\s+\w+\s*\([^)]*\)\s*;'
-  message: 'Global constructors with side effects cause static initialization order fiasco'
-  fix_hint: 'Use function-local statics or lazy initialization'
+  pattern: ^\s*\w+\s+\w+\s*\([^)]*\)\s*;
+  message: Global constructors with side effects cause static initialization order
+    fiasco
+  fix_hint: Use function-local statics or lazy initialization
 - id: cpp-exception-spec
   name: Dynamic exception specification
   severity: error
   category: modern_cpp
-  pattern: 'throw\s*\([^)]*\)'
-  message: 'Dynamic exception specifications are removed in C++17'
-  fix_hint: 'Use noexcept for functions that do not throw'
+  pattern: throw\s*\([^)]*\)
+  message: Dynamic exception specifications are removed in C++17
+  fix_hint: Use noexcept for functions that do not throw
 - id: cpp-uncaught-exception
   name: Throwing in destructor
   severity: error
   category: exception_safety
-  pattern: '~\w+\s*\(\s*\)\s*(?:noexcept\s*\(\s*false\s*\))?\s*\{[^}]*\bthrow\b'
-  message: 'Throwing in destructors causes undefined behavior during stack unwinding'
-  fix_hint: 'Use try-catch in destructors or move dangerous operations to separate methods'
+  pattern: ~\w+\s*\(\s*\)\s*(?:noexcept\s*\(\s*false\s*\))?\s*\{[^}]*\bthrow\b
+  message: Throwing in destructors causes undefined behavior during stack unwinding
+  fix_hint: Use try-catch in destructors or move dangerous operations to separate
+    methods
 - id: cpp-copy-loop
   name: Copying container in loop
   severity: warning
   category: performance
-  pattern: 'for\s*\([^)]*\bauto\b\s+\w+\s*:\s*\w+'
-  message: 'Range-based for loops should use const reference to avoid copies'
+  pattern: for\s*\([^)]*\bauto\b\s+\w+\s*:\s*\w+
+  message: Range-based for loops should use const reference to avoid copies
   fix_hint: 'Use: for (const auto& item : container)'
 - id: cpp-uninitialized-var
   name: Uninitialized member variable
   severity: warning
   category: correctness
-  pattern: '^\s*\w+\s+\w+;'
-  message: 'Member variables should be initialized'
-  fix_hint: 'Initialize in constructor or use default member initializers'
+  pattern: ^\s*\w+\s+\w+;
+  message: Member variables should be initialized
+  fix_hint: Initialize in constructor or use default member initializers
 - id: cpp-deprecated-cast
   name: const_cast to remove const
   severity: error
   category: correctness
-  pattern: 'const_cast\s*<[^>]*>\s*\('
-  message: 'const_cast is almost always a bug or design smell'
-  fix_hint: 'Redesign to avoid removing const qualification'
-
+  pattern: const_cast\s*<[^>]*>\s*\(
+  message: const_cast is almost always a bug or design smell
+  fix_hint: Redesign to avoid removing const qualification
+- id: cp-hardcoded-config
+  name: Hardcoded configuration
+  severity: warning
+  category: config
+  pattern: (?:url|endpoint|host|port)\s*[=:]\s*["']https?://
+  message: Use configuration for URLs/endpoints
+  fix_hint: Move to config file
+- id: cp-todo
+  name: Unresolved TODO
+  severity: info
+  category: code_quality
+  pattern: TODO|FIXME|HACK|XXX
+  message: Unresolved TODO/FIXME comments
+  fix_hint: Create a ticket or resolve
+- id: cp-deep-nesting
+  name: Deep nesting
+  severity: warning
+  category: complexity
+  pattern: '    (?:if|for|while|case).*\n(?:        (?:if|for|while|case).*\n){2,}'
+  message: Deep nesting reduces readability
+  fix_hint: Extract helper functions
+- id: cp-long-line
+  name: Long line
+  severity: info
+  category: code_quality
+  pattern: ^.{121,}$
+  message: Lines >120 chars
+  fix_hint: Break at logical boundaries
+- id: cp-unsafe-input
+  name: Unvalidated input
+  severity: error
+  category: security
+  pattern: (?:read|gets?|input)\s*\(
+  message: User input must be validated
+  fix_hint: Add input validation
 naming:
   file:
-    pattern: '^[a-z][a-z0-9_]*\.(cpp|cc|cxx)$|^[A-Z][a-zA-Z0-9]*\.h$'
-    message: 'C++ source files use snake_case, headers use PascalCase'
+    pattern: ^[a-z][a-z0-9_]*\.(cpp|cc|cxx)$|^[A-Z][a-zA-Z0-9]*\.h$
+    message: C++ source files use snake_case, headers use PascalCase
   function:
-    pattern: '^[a-z][a-z0-9_]*$'
-    message: 'Functions should use snake_case'
+    pattern: ^[a-z][a-z0-9_]*$
+    message: Functions should use snake_case
   class:
-    pattern: '^[A-Z][a-zA-Z0-9]*$'
-    message: 'Classes should use PascalCase'
+    pattern: ^[A-Z][a-zA-Z0-9]*$
+    message: Classes should use PascalCase
   constant:
-    pattern: '^[A-Z][A-Z0-9_]*$'
-    message: 'Constants should use UPPER_SNAKE_CASE'
+    pattern: ^[A-Z][A-Z0-9_]*$
+    message: Constants should use UPPER_SNAKE_CASE
   namespace:
-    pattern: '^[a-z][a-z0-9_]*$'
-    message: 'Namespaces should use snake_case'
-
+    pattern: ^[a-z][a-z0-9_]*$
+    message: Namespaces should use snake_case
 thresholds:
   max_function_length: 50
   max_file_length: 500
@@ -120,13 +153,12 @@ thresholds:
   max_nesting_depth: 4
   max_function_params: 7
   max_cyclomatic_complexity: 10
-
 tooling:
   linter: clang-tidy
   formatter: clang-format
   type_checker: null
   test_runner: gtest
   config_files:
-    - CMakeLists.txt
-    - .clang-tidy
-    - .clang-format
+  - CMakeLists.txt
+  - .clang-tidy
+  - .clang-format

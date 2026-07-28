@@ -99,8 +99,32 @@ def run_hook(hook: dict, changed_files: list[str] | None = None) -> bool:
         return passed
 
 
+EVENT_MODE_MAP = {
+    "on_commit": "quality",
+    "on_pr": "safe",
+    "on_merge": "quality",
+    "scheduled": "quality",
+}
+
+CONFIG_PATH = Path(__file__).parent / "mode_decision.conf"
+
+
+def _set_mode(mode: str) -> None:
+    """写入 mode_decision.conf 自动切换模式。"""
+    try:
+        content = f"mode={mode}\ngovernance_level={'high' if mode in ('quality', 'safe') else 'medium'}\naudit_enabled={'true' if mode != 'perf' else 'false'}\n"
+        CONFIG_PATH.write_text(content)
+        print(f"  🔄 模式: {mode} (governance_level={'high' if mode in ('quality', 'safe') else 'medium'})")
+    except OSError:
+        pass  # 非阻断
+
+
 def run_event_hooks(event: str, changed_files: list[str] | None = None) -> int:
     """运行事件的 hooks 并返回失败数量"""
+    # 事件驱动模式切换
+    if event in EVENT_MODE_MAP:
+        _set_mode(EVENT_MODE_MAP[event])
+
     config = load_hooks_config()
     hooks = config.get("hooks", {}).get(event, [])
 

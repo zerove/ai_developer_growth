@@ -71,8 +71,20 @@ full-audit:  ## 运行完整审计 (所有检查)
 full-validate:  ## 运行
 	python .jcode/scripts/governance-docs-validator.py full
 
-docs-serve:  ## 启动 mkdocs 本地服务器
-	mkdocs serve
+mode-show:  ## 查看当前模式
+	@echo "=== 当前模式 ===" && cat .jcode/mode_decision.conf
+
+mode-set-perf:  ## 切换到性能模式 (跳过 heavy 检查)
+	@printf "mode=perf\ngovernance_level=medium\naudit_enabled=false\n" > .jcode/mode_decision.conf
+	@echo "✅ 切换到 perf 模式"
+
+mode-set-quality:  ## 切换到质量模式 (默认)
+	@printf "mode=quality\ngovernance_level=high\naudit_enabled=true\n" > .jcode/mode_decision.conf
+	@echo "✅ 切换到 quality 模式"
+
+mode-set-safe:  ## 切换到安全模式 (最严格)
+	@printf "mode=safe\ngovernance_level=high\naudit_enabled=true\n" > .jcode/mode_decision.conf
+	@echo "✅ 切换到 safe 模式"
 
 docs-build:  ## 构建文档
 	mkdocs build --strict

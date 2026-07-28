@@ -1,5 +1,3 @@
-# Spring Framework Anti-Pattern Rules - Machine-Readable Configuration
-
 framework: spring
 language: java
 config_version: '1.0'
@@ -8,94 +6,121 @@ anti_patterns:
   name: N+1 query problem
   severity: error
   category: performance
-  pattern: '\.findAll\(\)|\.findById\('
-  message: 'N+1 queries cause severe performance degradation in JPA'
-  fix_hint: 'Use @EntityGraph, JOIN FETCH, or JPQL with JOIN for batch loading'
+  pattern: \.findAll\(\)|\.findById\(
+  message: N+1 queries cause severe performance degradation in JPA
+  fix_hint: Use @EntityGraph, JOIN FETCH, or JPQL with JOIN for batch loading
 - id: spring-missing-transactional
   name: Missing @Transactional on write operations
   severity: error
   category: data_integrity
   pattern: '@(Save|Update|Delete|Persist)\b|\.save\(|\.delete\('
-  message: 'Database writes without @Transactional may leave inconsistent state'
-  fix_hint: 'Add @Transactional to service methods that modify multiple entities'
+  message: Database writes without @Transactional may leave inconsistent state
+  fix_hint: Add @Transactional to service methods that modify multiple entities
 - id: spring-catch-generic
   name: Catching generic Exception
   severity: error
   category: error_handling
-  pattern: 'catch\s*\(\s*Exception\s+\w+\s*\)'
-  message: 'Catching generic Exception masks specific errors and complicates debugging'
-  fix_hint: 'Catch specific exceptions or use @ExceptionHandler in a @ControllerAdvice'
+  pattern: catch\s*\(\s*Exception\s+\w+\s*\)
+  message: Catching generic Exception masks specific errors and complicates debugging
+  fix_hint: Catch specific exceptions or use @ExceptionHandler in a @ControllerAdvice
 - id: spring-field-injection
   name: Field injection with @Autowired
   severity: warning
   category: design
   pattern: '@Autowired\s+\s*private\s+'
-  message: 'Field injection makes testing harder and hides dependencies'
-  fix_hint: 'Use constructor injection: @Autowired public MyClass(Service svc) { ... }'
+  message: Field injection makes testing harder and hides dependencies
+  fix_hint: 'Use constructor injection: @Autowired public MyClass(Service svc) { ...
+    }'
 - id: spring-missing-valid
   name: Missing @Valid on request body
   severity: error
   category: api_design
   pattern: '@RequestBody\s+\w+\s+\w+'
-  message: 'Request bodies without @Valid skip Bean Validation'
+  message: Request bodies without @Valid skip Bean Validation
   fix_hint: 'Add @Valid before @RequestBody: @Valid @RequestBody MyDto dto'
 - id: spring-hardcoded-url
   name: Hardcoded URLs or endpoints
   severity: warning
   category: maintainability
   pattern: '"https?://[^"]*\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}'
-  message: 'Hardcoded URLs prevent environment-specific configuration'
-  fix_hint: 'Use @Value("${service.url}") or @ConfigurationProperties'
+  message: Hardcoded URLs prevent environment-specific configuration
+  fix_hint: Use @Value("${service.url}") or @ConfigurationProperties
 - id: spring-missing-async
   name: Missing @Async for long-running operations
   severity: warning
   category: performance
-  pattern: 'public\s+\w+\s+\w+\s*\([^)]*\)\s*\{'
-  message: 'Long-running operations block the request thread without @Async'
-  fix_hint: 'Add @Async and return CompletableFuture<T> for non-blocking execution'
+  pattern: public\s+\w+\s+\w+\s*\([^)]*\)\s*\{
+  message: Long-running operations block the request thread without @Async
+  fix_hint: Add @Async and return CompletableFuture<T> for non-blocking execution
 - id: spring-lazy-outside-session
   name: Lazy loading outside Hibernate session
   severity: error
   category: data_integrity
-  pattern: 'FetchType\.LAZY|@ManyToOne|@OneToMany'
-  message: 'Lazy-loaded collections throw LazyInitializationException outside session'
-  fix_hint: 'Use JOIN FETCH, @EntityGraph, or open-in-view within transaction boundaries'
+  pattern: FetchType\.LAZY|@ManyToOne|@OneToMany
+  message: Lazy-loaded collections throw LazyInitializationException outside session
+  fix_hint: Use JOIN FETCH, @EntityGraph, or open-in-view within transaction boundaries
 - id: spring-missing-validation
   name: Missing Bean Validation annotations
   severity: warning
   category: security
-  pattern: 'private\s+\w+\s+\w+;'
-  message: 'DTO fields should have validation annotations (@NotNull, @Size, etc.)'
+  pattern: private\s+\w+\s+\w+;
+  message: DTO fields should have validation annotations (@NotNull, @Size, etc.)
   fix_hint: '@NotNull @Size(min=1, max=100) private String name;'
 - id: spring-sys-out
   name: System.out.println in production code
   severity: warning
   category: code_quality
-  pattern: 'System\.out\.print|System\.err\.print|e\.printStackTrace\(\)'
-  message: 'Use SLF4J/Log4j logger instead of System.out'
-  fix_hint: 'private static final Logger log = LoggerFactory.getLogger(MyClass.class);'
+  pattern: System\.out\.print|System\.err\.print|e\.printStackTrace\(\)
+  message: Use SLF4J/Log4j logger instead of System.out
+  fix_hint: private static final Logger log = LoggerFactory.getLogger(MyClass.class);
 - id: spring-magic-number
   name: Magic number in code
   severity: info
   category: code_quality
-  pattern: '(?:if|while|for)\s*\(\s*\w+\s*[><=]+\s*\d{2,}'
-  message: 'Magic numbers should be named constants'
+  pattern: (?:if|while|for)\s*\(\s*\w+\s*[><=]+\s*\d{2,}
+  message: Magic numbers should be named constants
   fix_hint: 'Extract to named constant: private static final int MAX = 100;'
-
+- id: spring-circular-dep
+  name: Potential circular dependency
+  severity: warning
+  category: design
+  pattern: '@Autowired\b.*\n.*@(?:Service|Component|Repository)'
+  message: Circular dependencies between beans cause runtime errors
+  fix_hint: Use @Lazy on one side or refactor to remove cycle
+- id: spring-transaction-required
+  name: Missing transactional boundary
+  severity: warning
+  category: data_integrity
+  pattern: class\s+\w+Service\b
+  message: Service class without @Transactional may cause data inconsistency
+  fix_hint: Add @Transactional(rollbackFor = Exception.class)
+- id: spring-request-mapping
+  name: Broad request mapping
+  severity: info
+  category: api_design
+  pattern: '@RequestMapping\s*\(\s*[\"'']/[^\"'']*[\"'']\s*\)'
+  message: Use specific mapping annotations (@GetMapping, @PostMapping)
+  fix_hint: Replace with @GetMapping, @PostMapping etc.
+- id: spring-data-rest
+  name: Exposed repository REST endpoint
+  severity: error
+  category: security
+  pattern: '@RepositoryRestResource'
+  message: '@RepositoryRestResource exposes all CRUD operations - security risk'
+  fix_hint: Use @RepositoryRestResource(excerptProjection=...) with explicit exposure
 naming:
   file:
-    pattern: '^[A-Z][a-zA-Z0-9]*\.java$'
-    message: 'Java files should use PascalCase'
+    pattern: ^[A-Z][a-zA-Z0-9]*\.java$
+    message: Java files should use PascalCase
   function:
-    pattern: '^[a-z][a-zA-Z0-9]*$'
-    message: 'Methods should use camelCase'
+    pattern: ^[a-z][a-zA-Z0-9]*$
+    message: Methods should use camelCase
   class:
-    pattern: '^[A-Z][a-zA-Z0-9]*$'
-    message: 'Classes should use PascalCase'
+    pattern: ^[A-Z][a-zA-Z0-9]*$
+    message: Classes should use PascalCase
   constant:
-    pattern: '^[A-Z][A-Z0-9_]*$'
-    message: 'Constants should use UPPER_SNAKE_CASE'
-
+    pattern: ^[A-Z][A-Z0-9_]*$
+    message: Constants should use UPPER_SNAKE_CASE
 thresholds:
   max_function_length: 40
   max_file_length: 500
@@ -103,13 +128,12 @@ thresholds:
   max_nesting_depth: 4
   max_function_params: 5
   max_cyclomatic_complexity: 10
-
 tooling:
   linter: checkstyle
   formatter: google-java-format
   type_checker: null
   test_runner: junit
   config_files:
-    - pom.xml
-    - build.gradle
-    - checkstyle.xml
+  - pom.xml
+  - build.gradle
+  - checkstyle.xml

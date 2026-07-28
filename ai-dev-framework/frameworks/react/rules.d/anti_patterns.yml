@@ -1,5 +1,3 @@
-# React Framework Anti-Pattern Rules - Machine-Readable Configuration
-
 framework: react
 language: typescript
 config_version: '1.0'
@@ -8,111 +6,138 @@ anti_patterns:
   name: Direct state mutation
   severity: error
   category: state_management
-  pattern: 'setState\s*\(|this\.state\.\w+\s*=|state\.\w+\s*=\s*(?!.*set)'
-  message: 'Never mutate state directly - use setState or useState setter'
-  fix_hint: 'Use setState({ ...state, key: value }) or setState(prev => ({ ...prev, key: value }))'
+  pattern: setState\s*\(|this\.state\.\w+\s*=|state\.\w+\s*=\s*(?!.*set)
+  message: Never mutate state directly - use setState or useState setter
+  fix_hint: 'Use setState({ ...state, key: value }) or setState(prev => ({ ...prev,
+    key: value }))'
 - id: react-missing-key
   name: Missing key in list rendering
   severity: error
   category: rendering
-  pattern: '\.map\s*\(\s*\([^)]*\)\s*=>\s*<'
-  message: 'List items need a unique "key" prop for efficient reconciliation'
-  fix_hint: 'Add key={item.id} or key={index} (prefer stable IDs over array index)'
+  pattern: \.map\s*\(\s*\([^)]*\)\s*=>\s*<
+  message: List items need a unique "key" prop for efficient reconciliation
+  fix_hint: Add key={item.id} or key={index} (prefer stable IDs over array index)
 - id: react-useeffect-deps
   name: useEffect without dependency array
   severity: warning
   category: performance
-  pattern: 'useEffect\s*\(\s*\(\s*\)\s*=>\s*\{'
-  message: 'useEffect without a dependency array runs after every render'
+  pattern: useEffect\s*\(\s*\(\s*\)\s*=>\s*\{
+  message: useEffect without a dependency array runs after every render
   fix_hint: 'Add a dependency array: useEffect(() => { ... }, [dep1, dep2])'
 - id: react-inline-object
   name: Inline object or function in JSX
   severity: warning
   category: performance
-  pattern: 'style=\{\s*\{|onClick=\{\s*\(\)\s*=>|onSubmit=\{\s*\(\)\s*=>|=\{\s*\(\)\s*=>\s*\w+\.\w+'
-  message: 'Inline objects/functions create new references each render, breaking memoization'
-  fix_hint: 'Extract to useMemo/useCallback or define outside the render function'
+  pattern: style=\{\s*\{|onClick=\{\s*\(\)\s*=>|onSubmit=\{\s*\(\)\s*=>|=\{\s*\(\)\s*=>\s*\w+\.\w+
+  message: Inline objects/functions create new references each render, breaking memoization
+  fix_hint: Extract to useMemo/useCallback or define outside the render function
 - id: react-string-ref
   name: String ref usage
   severity: error
   category: deprecated
-  pattern: "ref\\s*=\\s*[\"']\\w+[\"']"
-  message: 'String refs are deprecated and will be removed in future React versions'
-  fix_hint: 'Use useRef() hook or React.createRef() instead'
+  pattern: ref\s*=\s*["']\w+["']
+  message: String refs are deprecated and will be removed in future React versions
+  fix_hint: Use useRef() hook or React.createRef() instead
 - id: react-prop-drilling
   name: Prop drilling beyond 3 levels
   severity: warning
   category: architecture
-  pattern: "^\\s*(?:const|let|var)\\s+\\{[^}]*\\}\\s*=\\s*props"
-  message: 'Excessive prop drilling indicates poor component architecture'
-  fix_hint: 'Use React Context, Zustand, or other state management for deep data'
+  pattern: ^\s*(?:const|let|var)\s+\{[^}]*\}\s*=\s*props
+  message: Excessive prop drilling indicates poor component architecture
+  fix_hint: Use React Context, Zustand, or other state management for deep data
 - id: react-usestate-loop
   name: useState inside loops or conditionals
   severity: error
   category: correctness
-  pattern: "for\\s*\\(|while\\s*\\(|.forEach\\s*\\([\\s\\S]*useState|if\\s*\\(.*\\)\\s*\\{[\\s\\S]*useState"
-  message: 'Hooks must not be called inside loops, conditions, or nested functions'
-  fix_hint: 'Move hook calls to the top level of your component'
+  pattern: for\s*\(|while\s*\(|.forEach\s*\([\s\S]*useState|if\s*\(.*\)\s*\{[\s\S]*useState
+  message: Hooks must not be called inside loops, conditions, or nested functions
+  fix_hint: Move hook calls to the top level of your component
 - id: react-missing-error-boundary
   name: Missing error boundary
   severity: warning
   category: error_handling
-  pattern: 'componentDidCatch|static getDerivedStateFromError|ErrorBoundary'
-  message: 'No error boundary detected - errors will crash the entire app'
-  fix_hint: 'Wrap risky components in an ErrorBoundary component'
+  pattern: componentDidCatch|static getDerivedStateFromError|ErrorBoundary
+  message: No error boundary detected - errors will crash the entire app
+  fix_hint: Wrap risky components in an ErrorBoundary component
 - id: react-dangerously-set-html
   name: dangerouslySetInnerHTML usage
   severity: error
   category: security
-  pattern: 'dangerouslySetInnerHTML'
-  message: 'dangerouslySetInnerHTML enables XSS if content is not sanitized'
-  fix_hint: 'Sanitize HTML with DOMPurify before rendering'
+  pattern: dangerouslySetInnerHTML
+  message: dangerouslySetInnerHTML enables XSS if content is not sanitized
+  fix_hint: Sanitize HTML with DOMPurify before rendering
 - id: react-memory-leak
   name: Missing cleanup in useEffect
   severity: warning
   category: correctness
-  pattern: 'useEffect\s*\(\s*async|useEffect\s*\(\s*\(\s*\)\s*=>\s*\{\s*\n\s*(?:fetch|axios|setInterval|addEventListener)'
-  message: 'Side effects without cleanup cause memory leaks'
+  pattern: useEffect\s*\(\s*async|useEffect\s*\(\s*\(\s*\)\s*=>\s*\{\s*\n\s*(?:fetch|axios|setInterval|addEventListener)
+  message: Side effects without cleanup cause memory leaks
   fix_hint: 'Return a cleanup function from useEffect: return () => { cleanup() }'
 - id: react-unnecessary-render
   name: Component re-renders on every parent render
   severity: warning
   category: performance
-  pattern: 'export\s+default\s+function\s+\w+.*\{'
-  message: 'Components without memo re-render on every parent render'
-  fix_hint: 'Wrap expensive components with React.memo() or useMemo'
+  pattern: export\s+default\s+function\s+\w+.*\{
+  message: Components without memo re-render on every parent render
+  fix_hint: Wrap expensive components with React.memo() or useMemo
 - id: react-usestate-object
   name: Multiple useState for related state
   severity: info
   category: code_quality
-  pattern: 'const\s*\[\w+,\s*set\w+\]\s*=\s*useState.*\n.*const\s*\[\w+,\s*set\w+\]\s*=\s*useState'
-  message: 'Multiple related useState calls should be combined with useReducer'
-  fix_hint: 'Use useReducer for complex state logic or combine related state'
+  pattern: const\s*\[\w+,\s*set\w+\]\s*=\s*useState.*\n.*const\s*\[\w+,\s*set\w+\]\s*=\s*useState
+  message: Multiple related useState calls should be combined with useReducer
+  fix_hint: Use useReducer for complex state logic or combine related state
 - id: react-missing-key-index
   name: Using array index as key
   severity: warning
   category: performance
-  pattern: '\.map\s*\([^)]*=>\s*<[^>]*\s+key=\{(?:index|i|idx)\}'
-  message: 'Array index as key causes issues with reordering, insertion, deletion'
+  pattern: \.map\s*\([^)]*=>\s*<[^>]*\s+key=\{(?:index|i|idx)\}
+  message: Array index as key causes issues with reordering, insertion, deletion
   fix_hint: 'Use stable, unique IDs: key={item.id} or key={item.uuid}'
-
+- id: react-useless-render
+  name: Unnecessary re-render
+  severity: warning
+  category: performance
+  pattern: \(\)\s*=>\s*<
+  message: Inline arrow function in JSX causes re-render on every render
+  fix_hint: Extract to named function or use useCallback
+- id: react-key-prop
+  name: Missing key prop in list
+  severity: error
+  category: correctness
+  pattern: \.map\s*\([^)]*\)\s*=>\s*<[^>]+>
+  message: List items rendered without key prop
+  fix_hint: Add unique key prop to each item
+- id: react-usestate-direct-mutate
+  name: Direct state mutation
+  severity: error
+  category: state_management
+  pattern: (?:state|setState)\s*\.\s*(?:push|splice|sort|reverse)\s*\(
+  message: Direct state mutation bypasses React's state management
+  fix_hint: 'Use setState with new copy: setState(prev => [...prev, newItem])'
+- id: react-class-without-constructor
+  name: Class component without constructor
+  severity: info
+  category: code_quality
+  pattern: class\s+\w+\s+extends\s+(?:React\.)?Component
+  message: Consider functional component with hooks instead of class component
+  fix_hint: Convert to functional component
 naming:
   file:
-    pattern: '^[A-Z][a-zA-Z0-9]*\.(tsx|jsx)$'
-    message: 'React component files should use PascalCase'
+    pattern: ^[A-Z][a-zA-Z0-9]*\.(tsx|jsx)$
+    message: React component files should use PascalCase
   function:
-    pattern: '^[a-z][a-zA-Z0-9]*$'
-    message: 'Functions should use camelCase'
+    pattern: ^[a-z][a-zA-Z0-9]*$
+    message: Functions should use camelCase
   component:
-    pattern: '^[A-Z][a-zA-Z0-9]*$'
-    message: 'Components should use PascalCase'
+    pattern: ^[A-Z][a-zA-Z0-9]*$
+    message: Components should use PascalCase
   constant:
-    pattern: '^[A-Z][A-Z0-9_]*$'
-    message: 'Constants should use UPPER_SNAKE_CASE'
+    pattern: ^[A-Z][A-Z0-9_]*$
+    message: Constants should use UPPER_SNAKE_CASE
   hook:
-    pattern: '^use[A-Z][a-zA-Z0-9]*$'
-    message: 'Custom hooks must start with "use"'
-
+    pattern: ^use[A-Z][a-zA-Z0-9]*$
+    message: Custom hooks must start with "use"
 thresholds:
   max_function_length: 50
   max_file_length: 300
@@ -120,14 +145,13 @@ thresholds:
   max_nesting_depth: 4
   max_function_params: 5
   max_cyclomatic_complexity: 10
-
 tooling:
   linter: eslint
   formatter: prettier
   type_checker: tsc
   test_runner: vitest
   config_files:
-    - .eslintrc.json
-    - tsconfig.json
-    - vite.config.ts
-    - .prettierrc
+  - .eslintrc.json
+  - tsconfig.json
+  - vite.config.ts
+  - .prettierrc

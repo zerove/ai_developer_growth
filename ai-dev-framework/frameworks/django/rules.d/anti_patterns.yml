@@ -87,6 +87,41 @@ anti_patterns:
   pattern: STATICFILES_STORAGE.*ManifestStaticFilesStorage|whitenoise
   message: Static files should be compressed and cached in production
   fix_hint: Use ManifestStaticFilesStorage or WhiteNoise for static serving
+- id: django-select-related
+  name: Missing select_related
+  severity: warning
+  category: performance
+  pattern: for\s+\w+\s+in\s+\w+\.objects\.(?:all|filter|get)\s*\(
+  message: Foreign key access in loop causes N+1 queries - use select_related
+  fix_hint: Add .select_related('fk_field') to query
+- id: django-csrf-exempt
+  name: CSRF protection disabled
+  severity: error
+  category: security
+  pattern: '@csrf_exempt'
+  message: Disabling CSRF protection opens security vulnerability
+  fix_hint: Use proper CSRF token validation instead
+- id: django-debug-true
+  name: DEBUG=True in production
+  severity: error
+  category: security
+  pattern: DEBUG\s*=\s*True
+  message: DEBUG=True in production exposes sensitive info and runs arbitrary code
+  fix_hint: Use DEBUG = env.bool('DJANGO_DEBUG', default=False)
+- id: django-raw-sql
+  name: Raw SQL query
+  severity: warning
+  category: security
+  pattern: \.raw\s*\(
+  message: Raw SQL bypasses ORM protections
+  fix_hint: Use ORM queryset or ensure parameterized queries
+- id: django-admin-exposed
+  name: Unprotected admin
+  severity: warning
+  category: security
+  pattern: admin\.site\.register\b
+  message: Admin interface should be protected and not exposed on root path
+  fix_hint: Ensure ADMIN_URL is a non-guessable value
 naming:
   file:
     pattern: ^[a-z][a-z0-9_]*\.py$

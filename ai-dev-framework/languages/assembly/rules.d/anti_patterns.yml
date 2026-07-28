@@ -123,13 +123,6 @@ anti_patterns:
   pattern: (?:connect|new connection|getConnection)\s*\([^)]*\)\s*(?!.*\b(with|using|close|finally|defer)\b)
   message: Database/network connections must be released after use
   fix_hint: Use connection pool or ensure close() in finally
-- id: as-missing-await
-  name: Missing await on async call
-  severity: error
-  category: concurrency
-  pattern: (?:async\s+def|async\s+fn)\s+\w+\s*\([^)]*\)\s*\{?\s*$
-  message: Async function called without await may cause race conditions
-  fix_hint: Add await/async keyword or handle the future properly
 - id: as-shared-mutable
   name: Shared mutable state without sync
   severity: warning
@@ -144,34 +137,6 @@ anti_patterns:
   pattern: (?:for|while|loop)\s*\([^)]*\)\s*\{?\s*[^}]*\b(?:append|push|concat|new\s+(?:Array|List|StringBuilder))\b
   message: Repeated allocations inside loops impact performance
   fix_hint: Pre-allocate or use builder pattern outside the loop
-- id: as-n-plus-one
-  name: Potential N+1 query pattern
-  severity: warning
-  category: performance
-  pattern: (?:for|while|loop|each|map)\s*[^)]*\)?\s*\{?[^}]*\b(?:query|find|get|fetch|load)\b[^}]*\}
-  message: Query inside a loop may cause N+1 performance problem
-  fix_hint: Use batch loading, eager loading, or JOIN query
-- id: as-cors-allow-all
-  name: Overly permissive CORS
-  severity: error
-  category: security
-  pattern: (?:Access-Control-Allow-Origin|origins?)\s*[=:]\s*["\']?\*["\']?
-  message: Wildcard CORS exposes API to any origin
-  fix_hint: Restrict CORS to specific allowed origins
-- id: as-no-input-validation
-  name: Missing input validation on API
-  severity: warning
-  category: security
-  pattern: (?:@\w+Mapping|def\s+\w+\([^)]*request|route|endpoint|api_view)
-  message: API endpoints should validate all input parameters
-  fix_hint: Add input validation or use schema validation library
-- id: as-hardcoded-origin
-  name: Hardcoded origin/domain
-  severity: warning
-  category: config
-  pattern: (?:allowed_origins|trusted_origins|ALLOWED_HOSTS)\s*[=:]\s*\["\'\]https?://
-  message: Hardcoded origins in config should be environment variables
-  fix_hint: Use environment variables for allowed origins
 - id: as-exception-leak
   name: Exception message leaks internal info
   severity: warning
@@ -179,6 +144,62 @@ anti_patterns:
   pattern: (?:print|log|logger)\s*\(.*e(?:rror)?\.(?:message|to_String|getMessage)\s*\)
   message: Exception messages may leak internal implementation details
   fix_hint: Log a generic message, add exception details separately
+- id: as-hardcoded-secret-in-ci
+  name: Hardcoded secret in CI config
+  severity: error
+  category: security
+  pattern: (?:GITHUB_TOKEN|API_KEY|SECRET|PASSWORD)\s*[=:]\s*[\"'][^\"']+[\"']
+  message: CI/CD secrets should use GitHub Secrets or vault, not hardcoded strings
+  fix_hint: Use ${{ secrets.MY_SECRET }} in GitHub Actions
+- id: as-ci-disabled-check
+  name: Disabled CI check
+  severity: warning
+  category: ci_cd
+  pattern: continue-on-error:\s*true
+  message: CI checks with continue-on-error silently ignore failures
+  fix_hint: Remove continue-on-error or add explicit error handling
+- id: as-docker-image-latest
+  name: Using :latest tag
+  severity: warning
+  category: ci_cd
+  pattern: FROM\s+\S+:\s*latest\b
+  message: Using :latest tag makes builds non-reproducible
+  fix_hint: Pin to specific version tag
+- id: as-docker-exposed-port
+  name: Exposed port without healthcheck
+  severity: warning
+  category: ci_cd
+  pattern: EXPOSE\s+\d+
+  message: Exposed ports should have corresponding healthcheck
+  fix_hint: Add HEALTHCHECK instruction
+- id: as-iac-hardcoded-secret
+  name: Hardcoded secret in IaC
+  severity: error
+  category: security
+  pattern: (?:password|secret_key|access_key)\s*[=:]\s*[\"'][^\"']+[\"']
+  message: Infrastructure secrets should use vault or secret store
+  fix_hint: Use AWS Secrets Manager, HashiCorp Vault, or SOPS
+- id: as-iac-admin-exposed
+  name: Admin service exposed to internet
+  severity: error
+  category: security
+  pattern: '(?:adminer|phpmyadmin|pgadmin|kibana)\s*:'
+  message: Admin tools should not be publicly accessible
+  fix_hint: Restrict ingress to internal network only
+- id: as-docker-root-user
+  name: Running as root in container
+  severity: error
+  category: security
+  pattern: FROM\s+\S+\s*(?:AS\s+\w+)?\s*\n(?!.*USER\s)
+  message: Running containers as root is a security risk
+  fix_hint: Add 'USER nobody' or create a non-root user
+- id: as-pip-audit-missing
+  name: Missing dependency audit
+  severity: warning
+  category: ci_cd
+  pattern: pip install\b(?!.*pip-audit|.*safety)
+  message: Package installation without vulnerability scanning
+  fix_hint: Add 'pip-audit' or 'safety check' after install
 naming:
   file:
     pattern: ^[a-z][a-z0-9_]*\.\w+$

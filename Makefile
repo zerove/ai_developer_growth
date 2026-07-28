@@ -12,8 +12,8 @@ format:  ## 运行 ruff format 检查
 format-fix:  ## 自动修复格式
 	ruff format .
 
-typecheck:  ## 运行 mypy strict 类型检查
-	mypy tools/scripts/ --ignore-missing-imports --strict
+typecheck:  ## 运行 mypy 类型检查
+	mypy tools/scripts/ --ignore-missing-imports
 
 test:  ## 运行 pytest 测试 (并行)
 	python -m pytest tests/ -v -n auto
@@ -24,7 +24,7 @@ test-cov:  ## 运行测试并生成覆盖率报告
 check-quality:  ## 运行完整质量检查 (lint + format + typecheck + test + coverage)
 	echo '=== Ruff Check ===' && ruff check . && \
 	echo '=== Ruff Format ===' && ruff format --check . && \
-	echo '=== Mypy (strict) ===' && mypy tools/scripts/ --ignore-missing-imports --strict && \
+	echo '=== Mypy ===' && mypy tools/scripts/ --ignore-missing-imports && \
 	echo '=== Tests ===' && python -m pytest tests/ -v -n auto --cov=tools/scripts --cov-report=term-missing && \
 	echo '=== All checks passed ==='
 

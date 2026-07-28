@@ -23,7 +23,7 @@ def _file_hash(filepath: Path) -> str:
 
     try:
         content = filepath.read_bytes()
-        return hashlib.md5(content).hexdigest()
+        return hashlib.md5(content).hexdigest()  # nosec - used for file caching, not security
     except OSError:
         return ""
 

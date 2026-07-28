@@ -1,7 +1,10 @@
 from __future__ import annotations
+
 from abc import ABC, abstractmethod
 from typing import Any
-from tools.scripts.rules_engine.models import FunctionInfo, ClassInfo
+
+from tools.scripts.rules_engine.ast_parser import ClassInfo, FunctionInfo
+
 
 class BaseParser(ABC):
     @abstractmethod

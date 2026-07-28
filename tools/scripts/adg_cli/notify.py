@@ -40,7 +40,7 @@ def _send_slack_notification(webhook_url: str, issues: list[Issue], language: st
             data=data,
             headers={"Content-Type": "application/json"},
         )
-        urllib.request.urlopen(req, timeout=10)
+        urllib.request.urlopen(req, timeout=10)  # nosec - webhook URL from config
         return True
     except Exception as e:
         print(f"Warning: Slack notification failed: {e}", file=sys.stderr)
@@ -80,7 +80,7 @@ def _send_dingtalk_notification(webhook_url: str, issues: list[Issue], language:
             data=data,
             headers={"Content-Type": "application/json"},
         )
-        urllib.request.urlopen(req, timeout=10)
+        urllib.request.urlopen(req, timeout=10)  # nosec - webhook URL from config
         return True
     except Exception as e:
         print(f"Warning: DingTalk notification failed: {e}", file=sys.stderr)

@@ -157,16 +157,16 @@ class TestLoadCustomFixes:
 
         adg = tmp_path / ".adg"
         adg.mkdir()
-        (adg / "fixes.yml").write_text("fixes:\n  python:\n    test-rule:\n      pattern: pass\n      replacement: raise\n")
+        (adg / "fixes.yml").write_text(
+            "fixes:\n  python:\n    test-rule:\n      pattern: pass\n      replacement: raise\n"
+        )
         result = load_custom_fixes(tmp_path)
         assert "test-rule" in result.get("python", {})
 
     def test_save_custom_fix(self, tmp_path):
         from tools.fix_engine import save_custom_fix
 
-        result = save_custom_fix(
-            tmp_path, "python", "my-rule", r"pass", "raise NotImplementedError", "test fix"
-        )
+        result = save_custom_fix(tmp_path, "python", "my-rule", r"pass", "raise NotImplementedError", "test fix")
         assert result is True
         assert (tmp_path / ".adg" / "fixes.yml").exists()
 

@@ -4,9 +4,6 @@ from __future__ import annotations
 
 from pathlib import Path
 
-import pytest
-
-
 # ─────────────────────────────────────────────────────────────
 # AST Parser Tests
 # ─────────────────────────────────────────────────────────────
@@ -16,7 +13,7 @@ class TestASTParser:
     """Test tree-sitter AST parser."""
 
     def test_import(self):
-        from tools.scripts.rules_engine.ast_parser import ASTParser, get_parser
+        from tools.scripts.rules_engine.ast_parser import ASTParser
 
         assert ASTParser is not None
 
@@ -300,6 +297,7 @@ class TestASTFixer:
         assert report is not None
         assert report.total_fixes == 0
 
+
 # ─────────────────────────────────────────────────────────────
 # Performance Module Tests
 # ─────────────────────────────────────────────────────────────
@@ -309,7 +307,7 @@ class TestPerformance:
     """Test performance optimization module."""
 
     def test_import(self):
-        from tools.scripts.rules_engine.performance import PerformanceOptimizer, FileCache
+        from tools.scripts.rules_engine.performance import FileCache, PerformanceOptimizer
 
         assert PerformanceOptimizer is not None
         assert FileCache is not None

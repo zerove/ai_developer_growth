@@ -178,8 +178,7 @@ def check_directory(
 
         with ProcessPoolExecutor(max_workers=jobs) as executor:
             future_to_file = {
-                executor.submit(check_file, fp, rules, _detect_language(fp), semantic): fp
-                for fp in files
+                executor.submit(check_file, fp, rules, _detect_language(fp), semantic): fp for fp in files
             }
             for future in as_completed(future_to_file):
                 try:

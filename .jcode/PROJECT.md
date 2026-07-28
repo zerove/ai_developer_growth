@@ -81,7 +81,7 @@ ai_developer_growth/
 │   ├── PROJECT.md            # 本文件
 │   ├── SWARM作配置
 │   ├── hooks.json            # 自动触发器配置
-│   ├── registry/               # Skill 定义文档
+│   ├── skills/               # Skill 定义文档
 │   │   ├── knowledge-curator.md
 │   │   ├── governance-auditor.md
 │   │   ├── governance-docs-validator.md

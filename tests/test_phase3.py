@@ -2,16 +2,12 @@
 
 from __future__ import annotations
 
-from pathlib import Path
-
-import pytest
-
 
 class TestHallucinationDetector:
     """Test hallucination pattern detection."""
 
     def test_import(self):
-        from tools.scripts.rules_engine.hallucination_detector import detect_hallucinations, HallucinationReport
+        from tools.scripts.rules_engine.hallucination_detector import detect_hallucinations
 
         assert detect_hallucinations is not None
 
@@ -28,7 +24,7 @@ class TestHallucinationDetector:
         from tools.scripts.rules_engine.hallucination_detector import detect_hallucinations_in_file
 
         f = tmp_path / "test.py"
-        f.write_text('result = eval(user_input)\n')
+        f.write_text("result = eval(user_input)\n")
         report = detect_hallucinations_in_file(f)
         assert report.total_findings > 0
         assert any(f.pattern_id == "unsafe-eval" for f in report.findings)
@@ -37,7 +33,7 @@ class TestHallucinationDetector:
         from tools.scripts.rules_engine.hallucination_detector import detect_hallucinations_in_file
 
         f = tmp_path / "test.py"
-        f.write_text('files = os.listdir(path, recursive=True)\n')
+        f.write_text("files = os.listdir(path, recursive=True)\n")
         report = detect_hallucinations_in_file(f)
         assert any(f.pattern_id == "hallucinated-api-os-listdir-recursive" for f in report.findings)
 
@@ -45,7 +41,7 @@ class TestHallucinationDetector:
         from tools.scripts.rules_engine.hallucination_detector import detect_hallucinations_in_file
 
         f = tmp_path / "test.py"
-        f.write_text('data = yaml.load(content)\n')
+        f.write_text("data = yaml.load(content)\n")
         report = detect_hallucinations_in_file(f)
         assert any(f.pattern_id == "unsafe-yaml-load" for f in report.findings)
 
@@ -126,7 +122,7 @@ class TestQualityTrends:
     """Test quality trend tracking."""
 
     def test_import(self):
-        from tools.scripts.rules_engine.quality_trends import QualityTracker, QualitySnapshot
+        from tools.scripts.rules_engine.quality_trends import QualityTracker
 
         assert QualityTracker is not None
 

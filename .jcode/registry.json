@@ -160,11 +160,6 @@
           "args": ["pr_number"],
           "output": "markdown"
         },
-        "update-roadmap": {
-          "description": "更新路线图进度",
-          "command": "python -c \"from tools.scripts.roadmap_updater import update; update()\"",
-          "output": "markdown"
-        },
         "leaderboard": {
           "description": "贡献者排行榜",
           "command": "python tools/scripts/contributor_dashboard.py --leaderboard",
@@ -218,7 +213,7 @@
       "steps": [
         {"skill": "governance-auditor", "action": "full"},
         {"skill": "knowledge-curator", "action": "validate", "condition": "files_contain('case-studies/')"},
-        {"skill": "knowledge-catalyst", "action": "triage"}
+        {"skill": "community-catalyst", "action": "triage"}
       ]
     },
     "weekly-maintenance": {

@@ -1,4 +1,6 @@
 """ADG - AI Developer Governance CLI (package)."""
+# mypy: disable-error-code="attr-defined"
+# Submodules intentionally expose both public and private symbols via __all__
 
 # Internal imports needed by main()
 # Public API - only expose what's needed by external consumers

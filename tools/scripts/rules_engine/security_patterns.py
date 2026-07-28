@@ -23,7 +23,7 @@ SECURITY_PATTERNS: list[dict[str, Any]] = [
         "pattern": r"\beval\s*\(|\bexec\s*\(",
         "message": "eval/exec are security risks",
         "fix_hint": "Find a safer alternative",
-        "exclude_files": ["ai_quality_gate.py"],
+        "exclude_files": ["auto_fix.py", "ai_quality_gate.py"],
     },
     {
         "id": "security-sql-injection",

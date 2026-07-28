@@ -1,4 +1,3 @@
-# Actix Web Framework Anti-Pattern Rules
 framework: actix
 language: rust
 config_version: '1.0'
@@ -7,103 +6,120 @@ anti_patterns:
   name: Synchronous handler in async context
   severity: error
   category: async
-  pattern: 'fn\s+\w+\s*\(.*\)\s*->\s*(HttpResponse|impl\s+Responder)'
-  message: 'Actix handlers should be async functions'
+  pattern: fn\s+\w+\s*\(.*\)\s*->\s*(HttpResponse|impl\s+Responder)
+  message: Actix handlers should be async functions
   fix_hint: 'Add async keyword: pub async fn handler(...)'
-
 - id: actix-unwrap-in-handler
   name: unwrap() in handler
   severity: error
   category: error_handling
-  pattern: '\.unwrap\(\)'
-  message: 'Avoid unwrap() in handlers - use proper error handling'
-  fix_hint: 'Use .map_err()? or match for error handling'
-
+  pattern: \.unwrap\(\)
+  message: Avoid unwrap() in handlers - use proper error handling
+  fix_hint: Use .map_err()? or match for error handling
 - id: actix-panic-in-handler
   name: panic! in handler
   severity: error
   category: error_handling
-  pattern: 'panic!\('
-  message: 'Never panic in handlers - return proper error responses'
-  fix_hint: 'Return HttpResponse::InternalServerError() instead'
-
+  pattern: panic!\(
+  message: Never panic in handlers - return proper error responses
+  fix_hint: Return HttpResponse::InternalServerError() instead
 - id: actix-blocking-db
   name: Blocking database call in async handler
   severity: error
   category: performance
-  pattern: 'block_on\(|\.lock\(\)\.unwrap\(\)'
-  message: 'Blocking calls in async handlers block the event loop'
-  fix_hint: 'Use tokio::spawn_blocking or async DB driver'
-
+  pattern: block_on\(|\.lock\(\)\.unwrap\(\)
+  message: Blocking calls in async handlers block the event loop
+  fix_hint: Use tokio::spawn_blocking or async DB driver
 - id: actix-no-error-handler
   name: Missing error handler for Result
   severity: warning
   category: error_handling
-  pattern: 'let\s+\w+\s*=\s*\w+\.\w+\(\)\s*;'
-  message: 'Unwrap Result without error handling'
-  fix_hint: 'Add .map_err() or use ? operator with ResponseError'
-
+  pattern: let\s+\w+\s*=\s*\w+\.\w+\(\)\s*;
+  message: Unwrap Result without error handling
+  fix_hint: Add .map_err() or use ? operator with ResponseError
 - id: actix-unbounded-collection
   name: Unbounded collection loading
   severity: warning
   category: performance
-  pattern: 'find_many\(|find_all\(|SELECT\s+\*\s+FROM'
-  message: 'Loading unbounded collections can cause memory issues'
-  fix_hint: 'Add pagination or limit results'
-
+  pattern: find_many\(|find_all\(|SELECT\s+\*\s+FROM
+  message: Loading unbounded collections can cause memory issues
+  fix_hint: Add pagination or limit results
 - id: actix-hardcoded-secret
   name: Hardcoded secret in code
   severity: error
   category: security
-  pattern: "(?:SECRET|PASSWORD|API_KEY|TOKEN)\\s*=\\s*[\"']"
-  message: 'Secrets must not be hardcoded'
-  fix_hint: 'Use environment variables or config files'
-
+  pattern: (?:SECRET|PASSWORD|API_KEY|TOKEN)\s*=\s*["']
+  message: Secrets must not be hardcoded
+  fix_hint: Use environment variables or config files
 - id: actix-sql-injection
   name: Raw SQL with string formatting
   severity: error
   category: security
-  pattern: 'format!\(.*SELECT|format!\(.*INSERT|format!\(.*UPDATE|format!\(.*DELETE'
-  message: 'Raw SQL with format! enables SQL injection'
-  fix_hint: 'Use parameterized queries or ORM'
-
+  pattern: format!\(.*SELECT|format!\(.*INSERT|format!\(.*UPDATE|format!\(.*DELETE
+  message: Raw SQL with format! enables SQL injection
+  fix_hint: Use parameterized queries or ORM
 - id: actix-unhandled-await
   name: Unhandled Result from async call
   severity: warning
   category: error_handling
-  pattern: '\.await\s*;'
-  message: 'Async call result not handled - missing error handling'
-  fix_hint: 'Add .await? with ? operator or match for error handling'
-
+  pattern: \.await\s*;
+  message: Async call result not handled - missing error handling
+  fix_hint: Add .await? with ? operator or match for error handling
 - id: actix-large-payload
   name: Large payload without size limit
   severity: warning
   category: security
-  pattern: 'HttpMessage::from_body|web::Bytes::from'
-  message: 'Unbounded payload can cause memory exhaustion'
-  fix_hint: 'Use web::Payload with size limit via .limit()'
-
+  pattern: HttpMessage::from_body|web::Bytes::from
+  message: Unbounded payload can cause memory exhaustion
+  fix_hint: Use web::Payload with size limit via .limit()
+- id: actix-missing-content-type
+  name: Missing content-type header
+  severity: warning
+  category: api_design
+  pattern: HttpResponse\s*::\s*Ok\b
+  message: Response should set Content-Type header
+  fix_hint: Add .content_type() call
+- id: actix-route-large
+  name: Route handler too large
+  severity: info
+  category: code_quality
+  pattern: async\s+fn\s+\w+.*\n(?:.*\n){30,}
+  message: Route handlers over 30 lines should be refactored
+  fix_hint: Extract business logic into service functions
+- id: actix-missing-error-handler
+  name: Missing error handler
+  severity: warning
+  category: error_handling
+  pattern: \.route\b
+  message: Routes should have error handlers configured
+  fix_hint: Add .app_data::<ErrorHandlers>() or use custom error types
+- id: actix-state-leak
+  name: App state without Data
+  severity: warning
+  category: code_quality
+  pattern: struct\s+\w+State
+  message: Shared state should use web::Data
+  fix_hint: Wrap in web::Data<T> and pass with .app_data()
 naming:
   file:
-    pattern: '^[a-z][a-z0-9_]*\.rs$'
-    message: 'Rust files should use snake_case'
+    pattern: ^[a-z][a-z0-9_]*\.rs$
+    message: Rust files should use snake_case
   function:
-    pattern: '^[a-z][a-z0-9_]*$'
+    pattern: ^[a-z][a-z0-9_]*$
     exceptions:
-      - main
-      - new
-      - build
-      - from
-      - into
-      - default
-    message: 'Rust functions should use snake_case'
+    - main
+    - new
+    - build
+    - from
+    - into
+    - default
+    message: Rust functions should use snake_case
   type:
-    pattern: '^[A-Z][a-zA-Z0-9]*$'
-    message: 'Rust types should use PascalCase'
+    pattern: ^[A-Z][a-zA-Z0-9]*$
+    message: Rust types should use PascalCase
   constant:
-    pattern: '^[A-Z][A-Z0-9_]*$'
-    message: 'Rust constants should use UPPER_SNAKE_CASE'
-
+    pattern: ^[A-Z][A-Z0-9_]*$
+    message: Rust constants should use UPPER_SNAKE_CASE
 thresholds:
   max_function_length: 50
   max_file_length: 500
@@ -111,13 +127,12 @@ thresholds:
   max_nesting_depth: 4
   max_function_params: 7
   max_cyclomatic_complexity: 10
-
 tooling:
   linter: clippy
   formatter: rustfmt
   type_checker: rustc
   test_runner: cargo-test
   config_files:
-    - Cargo.toml
-    - clippy.toml
-    - rustfmt.toml
+  - Cargo.toml
+  - clippy.toml
+  - rustfmt.toml

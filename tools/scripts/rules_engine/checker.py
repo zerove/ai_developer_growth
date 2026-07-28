@@ -5,7 +5,7 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Any
 
-from tools.scripts._common import run_command
+from tools.scripts._common import rules_dir, run_command
 
 from .anti_pattern_checker import check_anti_patterns
 from .complexity_checker import check_js_complexity, check_python_complexity
@@ -13,6 +13,59 @@ from .models import CheckResult, Issue
 from .naming_checker import check_naming_conventions
 from .plugins import get_plugins_for_language
 from .rule_loader import load_rules_for_language
+
+# ── 框架检测 ──────────────────────────────────────────────
+
+FRAMEWORK_DETECTORS: dict[str, dict[str, list[str]]] = {
+    "react": {"files": ["package.json"], "packages": ["react", "react-dom"]},
+    "vue": {"files": ["package.json"], "packages": ["vue"]},
+    "express": {"files": ["package.json"], "packages": ["express"]},
+    "nextjs": {"files": ["package.json", "next.config.js"], "packages": ["next"]},
+    "django": {"files": ["manage.py", "requirements.txt"], "packages": ["django"]},
+    "fastapi": {"files": ["requirements.txt", "pyproject.toml"], "packages": ["fastapi"]},
+    "actix": {"files": ["Cargo.toml"], "packages": ["actix-web"]},
+    "spring": {"files": ["pom.xml", "build.gradle"], "packages": ["spring-context"]},
+    "spring-boot": {"files": ["pom.xml", "build.gradle"], "packages": ["spring-boot-starter"]},
+}
+
+
+def _detect_framework(dirpath: Path) -> str | None:
+    """Detect project framework from project files."""
+    for fw_name, hints in FRAMEWORK_DETECTORS.items():
+        # Check for marker files
+        for filename in hints["files"]:
+            marker = dirpath / filename
+            if marker.exists():
+                # For package-based detection, verify dependency
+                if marker.name == "package.json":
+                    try:
+                        import json
+
+                        deps = {
+                            **json.loads(marker.read_text()).get("dependencies", {}),
+                            **json.loads(marker.read_text()).get("devDependencies", {}),
+                        }
+                        if any(pkg in deps for pkg in hints["packages"]):
+                            return fw_name
+                    except Exception:
+                        return fw_name  # best effort
+                elif marker.name == "Cargo.toml":
+                    content = marker.read_text()
+                    if any(pkg in content for pkg in hints["packages"]):
+                        return fw_name
+                elif marker.name == "requirements.txt":
+                    content = marker.read_text().lower()
+                    if any(pkg in content for pkg in hints["packages"]):
+                        return fw_name
+                elif marker.name == "pyproject.toml":
+                    content = marker.read_text().lower()
+                    if any(pkg in content for pkg in hints["packages"]):
+                        return fw_name
+                elif marker.name == "manage.py":
+                    return fw_name
+                elif marker.name in ("pom.xml", "build.gradle"):
+                    return fw_name  # best effort
+    return None
 
 
 def check_file(
@@ -136,6 +189,18 @@ def check_directory(
 
     if not dirpath.exists() or not dirpath.is_dir():
         return results
+
+    # Detect framework and load framework-specific rules
+    framework = _detect_framework(dirpath)
+    if framework:
+        try:
+            fw_rules = load_rules_for_language(framework, rules_dir() / "frameworks" / framework)
+            if rules:
+                from .rule_loader import _merge_rules
+
+                rules = _merge_rules(rules, fw_rules)
+        except Exception:
+            pass  # framework rules are optional
 
     # Collect files
     exts = [

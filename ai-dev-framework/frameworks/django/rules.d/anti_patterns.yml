@@ -122,6 +122,27 @@ anti_patterns:
   pattern: admin\.site\.register\b
   message: Admin interface should be protected and not exposed on root path
   fix_hint: Ensure ADMIN_URL is a non-guessable value
+- id: django-template-injection
+  name: Template injection risk
+  severity: error
+  category: security
+  pattern: render\s*\(.*request.*\{\s*['\"]\w+['\"]\s*:\s*(?:request\.\w+|user_input)
+  message: User data in template context may cause XSS
+  fix_hint: Use mark_safe with caution, always escape user data
+- id: django-mass-assignment
+  name: Mass assignment risk
+  severity: warning
+  category: security
+  pattern: \.objects\.(?:create|update)\s*\(.*\*\*
+  message: Mass assignment may expose fields not intended for update
+  fix_hint: Use serializer or explicitly list allowed fields
+- id: django-signal-leak
+  name: Signal handler in models
+  severity: info
+  category: code_quality
+  pattern: '@receiver\b'
+  message: Signal handlers in models.py cause import-time side effects
+  fix_hint: Move signals to signals.py and configure in AppConfig.ready()
 naming:
   file:
     pattern: ^[a-z][a-z0-9_]*\.py$

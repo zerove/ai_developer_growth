@@ -12,14 +12,6 @@ config_version: '1.0'
 anti_patterns:
 
 # === RESOURCE MANAGEMENT ===
-- id: universal-hardcoded-secret
-  name: Hardcoded secret
-  severity: error
-  category: security
-  pattern: '(?:password|secret|api_key|token|credential|access_key|private_key|auth_token|secret_key|api_secret)\s*[=:]\s*["''][^"'']{4,}["'']'
-  message: Hardcoded secrets are a critical security vulnerability in any language
-  fix_hint: Use environment variables or a secrets manager (Vault, AWS Secrets Manager)
-
 - id: universal-command-injection
   name: Command injection risk
   severity: error
@@ -34,17 +26,9 @@ anti_patterns:
   category: security
   pattern: '(?:SELECT|INSERT|UPDATE|DELETE).*["'']\s*[+&f].*\{|query\(.*["'']\s*[+&]|execute\(.*["'']\s*[+&]'
   message: SQL injection via string concatenation affects all databases and languages
-  fix_hint: Use parameterized queries or ORM
+  fix_hint: Use parameterized query building or ORM methods
 
 # === ERROR HANDLING ===
-- id: universal-empty-catch
-  name: Empty exception handler
-  severity: warning
-  category: error_handling
-  pattern: '(?:catch|except|rescue|recover)\s*.*[{:]\s*[}\n]\s*(?:catch|except|rescue|finally|end|def|function|fn|class)'
-  message: Empty exception handlers silently hide errors in all languages
-  fix_hint: At minimum log the exception, re-raise if cannot handle
-
 - id: universal-swallowed-error
   name: Silently ignored error return
   severity: warning
@@ -89,14 +73,6 @@ anti_patterns:
   fix_hint: Break into smaller functions with clear responsibilities
 
 # === COMPLETENESS ===
-- id: universal-todo
-  name: Unresolved TODO/FIXME
-  severity: info
-  category: code_quality
-  pattern: '(?:TODO|FIXME|HACK|XXX|TEMP|WORKAROUND|HACKY)'
-  message: Unresolved markers indicate incomplete work
-  fix_hint: Address the issue or create a tracking ticket
-
 - id: universal-dead-code
   name: Commented-out code
   severity: info

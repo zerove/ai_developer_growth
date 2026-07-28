@@ -9,7 +9,6 @@ from typing import Any
 from .models import Issue
 from .regex_cache import get_compiled
 from .rule_loader import load_rules_for_language
-from .security_patterns import get_security_rules
 
 
 def check_anti_patterns(filepath: Path, language: str, rules: dict[str, Any] | None = None) -> list[Issue]:
@@ -26,21 +25,15 @@ def check_anti_patterns(filepath: Path, language: str, rules: dict[str, Any] | N
 
     lines = content.split("\n")
 
-    # Load rules for this language
+    # Load rules for this language (includes cross-language security patterns)
     if rules is None:
         rules = load_rules_for_language(language)
 
-    # Get cross-language security rules
-    security_rules = get_security_rules(language)
-
     all_patterns: list[dict[str, Any]] = []
 
-    # Add language-specific anti-patterns
+    # Add language-specific anti-patterns (already includes cross-language patterns)
     lang_patterns = rules.get("anti_patterns", [])
     all_patterns.extend(lang_patterns)
-
-    # Add cross-language patterns
-    all_patterns.extend(security_rules.get("anti_patterns", []))
 
     # Check each pattern
     for pattern_def in all_patterns:

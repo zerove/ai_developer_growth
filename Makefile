@@ -86,6 +86,9 @@ mode-set-safe:  ## 切换到安全模式 (最严格)
 	@printf "mode=safe\ngovernance_level=high\naudit_enabled=true\n" > .jcode/mode_decision.conf
 	@echo "✅ 切换到 safe 模式"
 
+docs-serve:  ## 启动 mkdocs 本地服务器
+	mkdocs serve
+
 docs-build:  ## 构建文档
 	mkdocs build --strict
 

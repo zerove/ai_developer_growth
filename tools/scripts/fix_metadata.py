@@ -21,7 +21,6 @@ DIR_CATEGORY_MAP = {
     "docs/monitoring": ("工具层", ["监控", "可观测性"]),
     "docs/message-queue": ("工具层", ["消息队列", "异步处理"]),
     "docs/integration": ("工具层", ["集成", "API"]),
-    "docs/superpowers": ("效率层", ["超级能力", "AI增强"]),
     "docs/specs": ("治理层", ["规范", "标准"]),
     "docs/specialization": ("学习层", ["专业领域", "深度学习"]),
     "docs/api": ("工具层", ["API设计", "接口规范"]),

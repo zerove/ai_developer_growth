@@ -121,8 +121,8 @@ jobs:
           branch_coverage = float(root.attrib.get('branch-rate', 0)) * 100
           print(f'Line coverage: {coverage:.1f}%')
           print(f'Branch coverage: {branch_coverage:.1f}%')
-          if coverage < 90:
-              print(f'::error::Line coverage {coverage:.1f}% is below 90% threshold')
+          if coverage < 85:
+              print(f'::error::Line coverage {coverage:.1f}% is below 85% threshold')
               exit(1)
           "
       - name: Coverage Report

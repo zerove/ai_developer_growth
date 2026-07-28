@@ -1,4 +1,7 @@
-name: Language Rules Check
+# Language Rules - Merged CI
+# Combines matrix validation (26 languages) with PR comments, SARIF, and trend tracking
+
+name: Language Rules
 
 on:
   push:
@@ -6,14 +9,16 @@ on:
     paths:
       - 'ai-dev-framework/languages/**/*.yml'
       - 'ai-dev-framework/frameworks/**/*.yml'
+      - 'ai-dev-framework/common/**/*.yml'
       - 'tools/scripts/validate_language_rules.py'
       - 'tools/scripts/ai_quality_gate.py'
       - '.ai-rules/**'
   pull_request:
-    branches: [main, master, develop]
+    branches: [main, master]
     paths:
       - 'ai-dev-framework/languages/**/*.yml'
       - 'ai-dev-framework/frameworks/**/*.yml'
+      - 'ai-dev-framework/common/**/*.yml'
       - 'tools/scripts/validate_language_rules.py'
       - 'tools/scripts/ai_quality_gate.py'
       - '.ai-rules/**'
@@ -22,11 +27,9 @@ env:
   PYTHON_VERSION: "3.11"
 
 jobs:
-  # ──────────────────────────────────────────────────────
-  # Language Rules Validation
-  # ──────────────────────────────────────────────────────
-  language-rules:
-    name: Language Rules (${{ matrix.language }})
+  # ── Matrix: validate each language's rule YAML ──────────
+  validate-rules:
+    name: Rules (${{ matrix.language }})
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
@@ -89,12 +92,14 @@ jobs:
           print('All rules valid')
           "
 
-  # ──────────────────────────────────────────────────────
-  # Auto-fix Dry Run
-  # ──────────────────────────────────────────────────────
-  auto-fix:
-    name: Auto-fix Dry Run
+  # ── Full validation + PR report ─────────────────────────
+  report:
+    name: Full Report
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+      checks: write
     steps:
       - uses: actions/checkout@v4
 
@@ -105,117 +110,95 @@ jobs:
       - name: Install dependencies
         run: pip install pyyaml
 
-      - name: Test auto-fix dry run
+      - name: Run full validation
+        id: validate
+        continue-on-error: true
         run: |
-          python tools/scripts/validate_language_rules.py tools/scripts/validate_language_rules.py --lang python --fix --dry-run || true
+          python tools/scripts/validate_language_rules.py \
+            --all --format json --format sarif \
+            -o results.json -o results.sarif \
+            --health-score 2>&1 | tee validate-output.txt || true
 
-  # ──────────────────────────────────────────────────────
-  # Report Generation
-  # ──────────────────────────────────────────────────────
-  reports:
-    name: Report Generation
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
+          # Extract health score
+          HEALTH=$(python -c "
+          import json
+          try:
+              with open('results.json') as f:
+                  data = json.load(f)
+              print(data.get('health_score', {}).get('score', 'N/A'))
+          except: print('N/A')
+          " 2>/dev/null || echo "N/A")
 
-      - uses: actions/setup-python@v5
+          echo "health=$HEALTH" >> $GITHUB_OUTPUT
+
+      - name: Upload SARIF
+        if: always()
+        uses: github/codeql-action/upload-sarif@v3
         with:
-          python-version: ${{ env.PYTHON_VERSION }}
+          sarif_file: results.sarif
+        continue-on-error: true
 
-      - name: Install dependencies
-        run: pip install pyyaml
-
-      - name: Generate HTML report
-        run: |
-          python tools/scripts/validate_language_rules.py tools/scripts/ --auto-detect --format html -o report.html || true
-          test -f report.html && echo "HTML report generated" || echo "No report (no matching files)"
-
-      - name: Generate JUnit report
-        run: |
-          python tools/scripts/validate_language_rules.py tools/scripts/ --auto-detect --format junit -o report.xml || true
-          test -f report.xml && echo "JUnit report generated" || echo "No report"
-
-      - name: Generate JSON report
-        run: |
-          python tools/scripts/validate_language_rules.py tools/scripts/ --auto-detect --format json -o report.json || true
-          test -f report.json && echo "JSON report generated" || echo "No report"
-
-      - name: Health score
-        run: |
-          python tools/scripts/validate_language_rules.py tools/scripts/ --auto-detect --health-score || true
-
-  # ──────────────────────────────────────────────────────
-  # Custom Rules Test
-  # ──────────────────────────────────────────────────────
-  custom-rules:
-    name: Custom Rules
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-
-      - uses: actions/setup-python@v5
+      - name: PR Comment
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v7
         with:
-          python-version: ${{ env.PYTHON_VERSION }}
+          script: |
+            const fs = require('fs');
+            const health = '${{ steps.validate.outputs.health }}';
 
-      - name: Install dependencies
-        run: pip install pyyaml
+            let badge = '';
+            if (health !== 'N/A' && health !== '') {
+              const score = parseInt(health);
+              let color = 'red';
+              if (score >= 90) color = 'brightgreen';
+              else if (score >= 70) color = 'green';
+              else if (score >= 50) color = 'yellow';
+              else if (score >= 30) color = 'orange';
+              badge = `![Health](https://img.shields.io/badge/health-${health}%2F100-${color})`;
+            }
 
-      - name: Test custom rules loading
-        run: |
-          mkdir -p .ai-rules
-          cat > .ai-rules/custom-test.yml << 'EOF'
-          anti_patterns:
-          - id: custom-no-todo
-            name: TODO comments
-            severity: warning
-            category: code_quality
-            pattern: 'TODO|FIXME|HACK|XXX'
-            message: 'Avoid TODO/FIXME comments in production code'
-            fix_hint: 'Resolve the issue or create a ticket'
-          EOF
-          python tools/scripts/validate_language_rules.py tools/scripts/validate_language_rules.py --lang python --auto-detect || true
-          rm -rf .ai-rules
+            const body = `## 🔍 Language Rules Report
 
-  # ──────────────────────────────────────────────────────
-  # Threshold Enforcement
-  # ──────────────────────────────────────────────────────
-  thresholds:
-    name: Threshold Enforcement
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
+            ${badge}
 
-      - uses: actions/setup-python@v5
+            | Metric | Value |
+            |--------|-------|
+            | Health Score | **${health}**/100 |
+            | Languages | 26 |
+            | Rules | 262+ |
+
+            SARIF results uploaded to GitHub Code Scanning.`;
+
+            const { data: comments } = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+            });
+
+            const marker = 'Language Rules Report';
+            const existing = comments.find(c => c.body.includes(marker));
+            if (existing) {
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: existing.id,
+                body: body,
+              });
+            } else {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+                body: body,
+              });
+            }
+
+      - name: Upload artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
         with:
-          python-version: ${{ env.PYTHON_VERSION }}
-
-      - name: Install dependencies
-        run: pip install pyyaml
-
-      - name: Test max-errors threshold
-        run: |
-          python tools/scripts/validate_language_rules.py tools/scripts/validate_language_rules.py --lang python --max-errors 0 || true
-
-      - name: Test max-warnings threshold
-        run: |
-          python tools/scripts/validate_language_rules.py tools/scripts/validate_language_rules.py --lang python --max-warnings 100 || true
-
-  # ──────────────────────────────────────────────────────
-  # Linter Aggregation
-  # ──────────────────────────────────────────────────────
-  linters:
-    name: Linter Aggregation
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-
-      - uses: actions/setup-python@v5
-        with:
-          python-version: ${{ env.PYTHON_VERSION }}
-
-      - name: Install dependencies
-        run: pip install pyyaml ruff mypy
-
-      - name: Test linter aggregation
-        run: |
-          python tools/scripts/validate_language_rules.py tools/scripts/ --auto-detect --linters ruff mypy || true
+          name: language-rules-results
+          path: |
+            results.json
+            results.sarif
+          retention-days: 30

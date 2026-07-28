@@ -1,4 +1,4 @@
-.PHONY: help lint format typecheck test test-cov security audit validate-docs check-index sync-refs full check clean
+.PHONY: help lint format format-fix typecheck test test-cov check-quality security audit validate-docs check-index sync-refs validate-governance-docs check-ai-sdlc audit-hallucination link-audit validate-cases scan full-audit full-validate mode-show mode-set-perf mode-set-quality mode-set-safe docs-build test-fast check release setup-git clean
 
 help:  ## 显示帮助信息
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-20s\033[0m %s\n", $$1, $$2}'
@@ -89,7 +89,25 @@ mode-set-safe:  ## 切换到安全模式 (最严格)
 docs-build:  ## 构建文档
 	mkdocs build --strict
 
+test-fast: ## 运行快速测试（跳过 @pytest.mark.slow）
+	python -m pytest tests/ -q -m "not slow" --tb=short
+
 check: lint format typecheck test validate-docs check-index  ## 运行所有检查
+
+release:  ## 创建新版本（需要 VERSION=vX.Y.Z）
+	@test -n "$(VERSION)" || (echo "用法: make release VERSION=vX.Y.Z 例如: make release VERSION=v2.3.0" && exit 1)
+	@echo "📝 更新 CHANGELOG.md 版本为 $(VERSION) ..."
+	@sed -i "s/## \[Unreleased\]/## [$(VERSION)] - $$(date +%F)/" CHANGELOG.md 2>/dev/null || true
+	git add CHANGELOG.md
+	git commit -m "release: $(VERSION)"
+	git tag -a $(VERSION) -m "$(VERSION)"
+	git push origin master --tags --no-verify
+	@echo "✅ $(VERSION) 发布完成"
+
+setup-git: ## 配置 git 模板和钩子
+	git config commit.template .gitmessage
+	@echo "✅ git 提交模板已配置 (.gitmessage)"
+	@echo "✅ 提交格式: type(scope): 中文描述"
 
 clean:  ## 清理临时文件
 	find . -type d -name __pycache__ -exec rm -rf {} + 2>/dev/null || true

@@ -182,12 +182,28 @@ class TestSemanticCheckerDeep:
     def test_calculate_metrics_with_data(self):
         """_calculate_metrics computes correct aggregates."""
         f1 = FunctionInfo(
-            name="short_func", line=1, col=0, end_line=5, params=[], decorators=[], return_type=None,
-            docstring=None, body_lines=3, complexity=1,
+            name="short_func",
+            line=1,
+            col=0,
+            end_line=5,
+            params=[],
+            decorators=[],
+            return_type=None,
+            docstring=None,
+            body_lines=3,
+            complexity=1,
         )
         f2 = FunctionInfo(
-            name="long_func", line=10, col=0, end_line=70, params=[], decorators=[], return_type=None,
-            docstring=None, body_lines=60, complexity=15,
+            name="long_func",
+            line=10,
+            col=0,
+            end_line=70,
+            params=[],
+            decorators=[],
+            return_type=None,
+            docstring=None,
+            body_lines=60,
+            complexity=15,
         )
         imp = ImportInfo(module="os", names=["path"], line=1, is_from=True, level=0)
         file_ast = _make_ast(functions=[f1, f2], imports=[imp])

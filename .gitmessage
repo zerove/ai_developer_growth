@@ -1,0 +1,20 @@
+# 提交信息模板
+# 格式: type(scope): 中文描述
+#
+# type 说明:
+#   feat    — 新功能 (+0.1.0)
+#   fix     — 修复 (+0.0.1)
+#   refactor— 重构 (无版本变更)
+#   chore   — 杂项 (构建/CI/工具)
+#   docs    — 文档
+#   test    — 测试
+#   style   — 格式/风格
+#   perf    — 性能优化
+#
+# scope 建议: rules, ci, cli, docs, test, lsp, dashboard, framework
+#
+# 示例:
+#   feat(rules): 添加 Kotlin 协程阻塞检测
+#   fix(lsp): 修复类型注解错误
+#   refactor(dashboard): 优化 FastAPI 路由
+#

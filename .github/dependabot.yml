@@ -1,43 +1,46 @@
 version: 2
 updates:
-  # Python dependencies
   - package-ecosystem: "pip"
     directory: "/"
     schedule:
-      interval: "weekly"
-    open-pull-requests-limit: 10
-    labels:
-      - "dependencies"
-      - "python"
-    reviewers:
-      - "zerove"
-
-  # GitHub Actions
-  - package-ecosystem: "github-actions"
-    directory: "/"
-    schedule:
-      interval: "weekly"
+      interval: "monthly"
     open-pull-requests-limit: 5
     labels:
       - "dependencies"
-      - "github-actions"
+      - "automated"
 
-  # AI Context Sync dependencies
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "monthly"
+    open-pull-requests-limit: 3
+    labels:
+      - "ci"
+      - "automated"
+
   - package-ecosystem: "pip"
     directory: "/examples/ai-context-sync"
     schedule:
       interval: "monthly"
-    open-pull-requests-limit: 5
+    open-pull-requests-limit: 3
     labels:
       - "dependencies"
-      - "python"
+      - "examples"
 
-  # ai-task-prioritizer dependencies
   - package-ecosystem: "pip"
     directory: "/examples/ai-task-prioritizer"
     schedule:
       interval: "monthly"
-    open-pull-requests-limit: 5
+    open-pull-requests-limit: 3
     labels:
       - "dependencies"
-      - "python"
+      - "examples"
+
+  - package-ecosystem: "pip"
+    directory: "/examples/capability-radar"
+    schedule:
+      interval: "monthly"
+    open-pull-requests-limit: 3
+    labels:
+      - "dependencies"
+      - "examples"

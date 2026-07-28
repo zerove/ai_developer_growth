@@ -2,6 +2,14 @@
 
 All notable changes to the AI Developer Growth project.
 
+## [Unreleased]
+
+### Added
+- (预留)
+
+### Fixed
+- (预留)
+
 ## [2.2.0] - 2026-07-28
 
 ### Quality & Governance

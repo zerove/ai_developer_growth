@@ -14,7 +14,6 @@
 from __future__ import annotations
 
 import shutil
-import subprocess
 import sys
 from pathlib import Path
 
@@ -22,7 +21,6 @@ from pathlib import Path
 THIS_DIR = Path(__file__).parent
 PROJECT_ROOT = THIS_DIR.parent
 AI_DEV_FRAMEWORK = PROJECT_ROOT / "ai-dev-framework"
-TOOLS_SCRIPTS = PROJECT_ROOT / "tools" / "scripts"
 JCODE_GOVERNANCE = Path.home() / ".jcode" / "governance"
 
 
@@ -40,11 +38,13 @@ def install_global() -> bool:
     shutil.copytree(AI_DEV_FRAMEWORK, target, ignore=shutil.ignore_patterns("__pycache__", ".git"))
     print(f"  ✅ ai-dev-framework → {target}")
 
-    # 创建 adg 包装脚本
+    # 创建 adg 包装脚本（使用相对路径）
     adg_wrapper = JCODE_GOVERNANCE / "adg"
-    adg_wrapper.write_text(f"""#!/bin/bash
+    adg_wrapper.write_text("""#!/bin/bash
 # ADG Governance CLI — 由 install-governance.py 生成
-PYTHONPATH="{TOOLS_SCRIPTS.parent}:$PYTHONPATH" python3 -m tools.scripts.adg_cli "$@"
+# 使用相对路径，安装后可随意移动
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PYTHONPATH="$SCRIPT_DIR/ai-dev-framework/tools:$PYTHONPATH" python3 -m tools.scripts.adg_cli "$@"
 """)
     adg_wrapper.chmod(0o755)
     print(f"  ✅ adg CLI → {adg_wrapper}")
@@ -55,9 +55,9 @@ PYTHONPATH="{TOOLS_SCRIPTS.parent}:$PYTHONPATH" python3 -m tools.scripts.adg_cli
     print(f"  ✅ mode_decision.conf → {mode_conf}")
 
     # 建议加入 PATH
-    print(f"\n💡 将以下内容加入你的 shell 配置 (~/.bashrc / ~/.zshrc):")
-    print(f'    export PATH="$HOME/.jcode/governance:$PATH"')
-    print(f'    export JCODE_GOVERNANCE_DIR="$HOME/.jcode/governance/ai-dev-framework"')
+    print("\n💡 将以下内容加入你的 shell 配置 (~/.bashrc / ~/.zshrc):")
+    print('    export PATH="$HOME/.jcode/governance:$PATH"')
+    print('    export JCODE_GOVERNANCE_DIR="$HOME/.jcode/governance/ai-dev-framework"')
     return True
 
 
@@ -90,12 +90,12 @@ commit_messages:
     - test
     - chore
 """)
-        print(f"  ✅ .jcode/config.yml")
+        print("  ✅ .jcode/config.yml")
 
     # mode_decision.conf
     mode_conf = jcode_dir / "mode_decision.conf"
     mode_conf.write_text("mode=quality\ngovernance_level=high\naudit_enabled=true\n")
-    print(f"  ✅ .jcode/mode_decision.conf")
+    print("  ✅ .jcode/mode_decision.conf")
 
     # .jcode/hooks.json
     hooks_json = jcode_dir / "hooks.json"
@@ -132,7 +132,7 @@ commit_messages:
   }
 }
 """)
-        print(f"  ✅ .jcode/hooks.json")
+        print("  ✅ .jcode/hooks.json")
 
     # .pre-commit-config.yaml (append to existing or create)
     pre_commit = PROJECT_ROOT / ".pre-commit-config.yaml"
@@ -159,13 +159,13 @@ commit_messages:
         files: '\\\\.(py|js|ts|rs|go|java|kt|cs)$'
         stages: [pre-commit]
 """)
-        print(f"  ✅ .pre-commit-config.yaml")
+        print("  ✅ .pre-commit-config.yaml")
 
-    print(f"\n✅ 项目初始化完成！")
-    print(f"后续步骤:")
-    print(f"  1. pip install pre-commit && pre-commit install")
-    print(f"  2. adg check .")
-    print(f"  3. git add . && git commit")
+    print("\n✅ 项目初始化完成！")
+    print("后续步骤:")
+    print("  1. pip install pre-commit && pre-commit install")
+    print("  2. adg check .")
+    print("  3. git add . && git commit")
     return True
 
 

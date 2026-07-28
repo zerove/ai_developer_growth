@@ -29,6 +29,7 @@ Usage:
 from __future__ import annotations
 
 import hashlib
+import os
 import subprocess
 import sys
 from pathlib import Path
@@ -45,8 +46,38 @@ def get_project_root() -> Path:
 
 
 def rules_dir() -> Path:
-    """Return the ai-dev-framework directory."""
-    return get_project_root() / "ai-dev-framework"
+    """Return the ai-dev-framework directory.
+
+    Search order (first found wins):
+    1. Project local: {project_root}/ai-dev-framework/
+    2. Environment variable: $JCODE_GOVERNANCE_DIR
+    3. jcode user-wide install: ~/.jcode/governance/ai-dev-framework/
+    4. User config: ~/.config/adg/framework/
+    5. Fallback: {project_root}/ai-dev-framework/ (original)
+    """
+    project_path = get_project_root() / "ai-dev-framework"
+
+    # 1. Local project
+    if project_path.exists():
+        return project_path
+
+    # 2. Env var
+    env_path = Path(os.environ.get("JCODE_GOVERNANCE_DIR", ""))
+    if env_path and env_path.exists():
+        return env_path
+
+    # 3. jcode user-wide install
+    jcode_path = Path.home() / ".jcode" / "governance" / "ai-dev-framework"
+    if jcode_path.exists():
+        return jcode_path
+
+    # 4. User config
+    config_path = Path.home() / ".config" / "adg" / "framework"
+    if config_path.exists():
+        return config_path
+
+    # 5. Fallback
+    return project_path
 
 
 def framework_dir() -> Path:

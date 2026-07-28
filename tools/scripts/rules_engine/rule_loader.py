@@ -102,9 +102,9 @@ def load_rules(language: str, framework_dir: Path | None = None) -> dict[str, An
     try:
         import yaml
     except ImportError:
-        # PyYAML not available - use embedded rules
-        logger.info("Warning: PyYAML not installed. Using embedded rules.", file=sys.stderr)
-        return _get_embedded_rules(language)
+        # PyYAML not available - use universal rules
+        logger.info("Warning: PyYAML not installed. Using universal rules.", file=sys.stderr)
+        return _load_universal_rules(framework_dir)
 
     if framework_dir is None:
         framework_dir = rules_dir()
@@ -112,8 +112,9 @@ def load_rules(language: str, framework_dir: Path | None = None) -> dict[str, An
     rule_path = framework_dir / "languages" / language / "rules.d" / "anti_patterns.yml"
 
     if not rule_path.exists():
-        logger.info(f"Warning: Rules not found at {rule_path}, using embedded rules.", file=sys.stderr)
-        return _get_embedded_rules(language)
+        # Language not in our database - load universal rules instead
+        logger.info(f"No specific rules for '{language}', using universal quality rules.", file=sys.stderr)
+        return _load_universal_rules(framework_dir)
 
     with open(rule_path) as f:
         data = yaml.safe_load(f)
@@ -298,6 +299,29 @@ def _get_embedded_rules(language: str) -> dict[str, Any]:
         },
     ]
     return {"anti_patterns": common_anti_patterns, "thresholds": {}, "naming": {}}
+
+
+def _load_universal_rules(framework_dir: Path) -> dict[str, Any]:
+    """Load universal quality rules for languages without specific rule sets.
+
+    These rules apply to ANY programming language — they catch common
+    cross-language issues like hardcoded secrets, empty catch blocks,
+    SQL injection patterns, and resource leaks.
+
+    Returns universal rules if available, otherwise falls back to embedded.
+    """
+    universal_path = framework_dir / "common" / "universal.yml"
+    if not universal_path.exists():
+        return _get_embedded_rules("unknown")
+
+    try:
+        import yaml
+
+        with open(universal_path) as f:
+            data = yaml.safe_load(f)
+        return data if isinstance(data, dict) else _get_embedded_rules("unknown")
+    except Exception:
+        return _get_embedded_rules("unknown")
 
 
 def load_rules_for_language(language: str, framework_dir: Path | None = None) -> dict[str, Any]:

@@ -309,7 +309,7 @@ def create_app(db_path: str = "adg_quality.db", ci_data_dir: str | None = None) 
         summary_file = Path(ci_dir) / "summary.json"
         if summary_file.exists():
             try:
-                return json.loads(summary_file.read_text())
+                return json.loads(summary_file.read_text())  # type: ignore[no-any-return]
             except Exception:
                 pass
         return None

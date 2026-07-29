@@ -234,7 +234,8 @@ def load_custom_fixes(project_dir: str | Path) -> dict[str, dict[str, Any]]:
 
     try:
         data = yaml.safe_load(config_file.read_text()) or {}
-        return data.get("fixes", {})
+        fixes = data.get("fixes", {})
+        return {k: v for k, v in fixes.items()} if isinstance(fixes, dict) else {}
     except Exception:
         return {}
 
@@ -252,7 +253,7 @@ def save_custom_fix(
     config_dir.mkdir(parents=True, exist_ok=True)
     config_file = config_dir / "fixes.yml"
 
-    existing: dict = {}
+    existing: dict[str, Any] = {}
     if config_file.exists():
         try:
             existing = yaml.safe_load(config_file.read_text()) or {}

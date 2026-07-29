@@ -29,6 +29,7 @@ from tools.scripts.adg_cli.commands import (
     cmd_marketplace,
     cmd_monorepo,
     cmd_notify,
+    cmd_pattern_learner,
     cmd_recommend,
     cmd_report,
     cmd_rule,
@@ -100,6 +101,7 @@ def main() -> int:
         "monorepo": cmd_monorepo,
         "bench": cmd_bench,
         "cicd": cmd_cicd,
+        "pattern-learner": cmd_pattern_learner,
     }
     return commands[args.command](args)
 

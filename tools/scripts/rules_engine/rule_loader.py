@@ -260,8 +260,10 @@ def _merge_rules(base: dict[str, Any], custom: dict[str, Any]) -> dict[str, Any]
 # ──────────────────────────────────────────────────────────
 
 
-def _load_common_rules(framework_dir: Path) -> dict[str, Any]:
+def _load_common_rules(framework_dir: Path | None = None) -> dict[str, Any]:
     """Load common cross-language rules from common/security.yml."""
+    if framework_dir is None:
+        framework_dir = rules_dir()
     common_path = framework_dir / "common" / "security.yml"
     if not common_path.exists():
         return {}
@@ -301,7 +303,7 @@ def _get_embedded_rules(language: str) -> dict[str, Any]:
     return {"anti_patterns": common_anti_patterns, "thresholds": {}, "naming": {}}
 
 
-def _load_universal_rules(framework_dir: Path) -> dict[str, Any]:
+def _load_universal_rules(framework_dir: Path | None = None) -> dict[str, Any]:
     """Load universal quality rules for languages without specific rule sets.
 
     These rules apply to ANY programming language — they catch common
@@ -310,6 +312,8 @@ def _load_universal_rules(framework_dir: Path) -> dict[str, Any]:
 
     Returns universal rules merged with common cross-language rules.
     """
+    if framework_dir is None:
+        framework_dir = rules_dir()
     result: dict[str, Any] = {"anti_patterns": [], "thresholds": {}, "naming": {}}
 
     # 1. Load universal rules

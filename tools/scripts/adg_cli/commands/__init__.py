@@ -4,6 +4,7 @@ import argparse
 import json
 import sys
 from pathlib import Path
+from typing import Any
 
 from tools.scripts.adg_cli.check import _check_files_parallel, _collect_check_files, check_directory, check_file
 from tools.scripts.adg_cli.core import (
@@ -585,6 +586,90 @@ def cmd_recommend(args: argparse.Namespace) -> int:
         print(json.dumps(result, indent=2, ensure_ascii=False))
     else:
         print(format_recommendations_text(result))
+
+    # Apply: auto-generate .adg/rules.yml
+    if getattr(args, "apply", False):
+        return _apply_recommendations(target, result)
+
+    return 0
+
+
+def _apply_recommendations(project_dir: Path, result: dict[str, Any]) -> int:
+    """Write recommended rules to .adg/rules.yml."""
+    import yaml
+
+    rules_dir = project_dir / ".adg"
+    rules_dir.mkdir(exist_ok=True)
+    rules_file = rules_dir / "rules.yml"
+
+    # Load existing rules if any
+    existing_rules: dict[str, Any] = {"anti_patterns": []}
+    if rules_file.exists():
+        try:
+            with open(rules_file) as f:
+                data = yaml.safe_load(f)
+                if data and "anti_patterns" in data:
+                    existing_rules = data
+        except Exception:
+            pass
+
+    existing_ids = {r.get("id") for r in existing_rules.get("anti_patterns", [])}
+
+    # Add new recommendations as custom rules
+    new_rules: list[dict[str, Any]] = []
+    for rec in result["recommendations"]:
+        if rec["rule_id"] not in existing_ids:
+            new_rules.append({
+                "id": rec["rule_id"],
+                "name": rec["name"],
+                "severity": rec["severity"],
+                "category": rec["category"],
+                "message": rec["reason"],
+                "fix_hint": f"Auto-generated from pattern: {rec['example']['code']}",
+            })
+            existing_ids.add(rec["rule_id"])
+
+    if new_rules:
+        existing_rules.setdefault("anti_patterns", []).extend(new_rules)
+        existing_rules["config_version"] = "1.0"
+        existing_rules["source"] = "auto-generated-by-recommend"
+
+        with open(rules_file, "w") as f:
+            yaml.dump(existing_rules, f, sort_keys=False, allow_unicode=True)
+
+        print(f"\n✅ Applied {len(new_rules)} new rules to {rules_file}")
+        for r in new_rules:
+            print(f"   + {r['id']} ({r['severity']})")
+    else:
+        print(f"\nℹ️  No new rules to apply (all already exist in {rules_file})")
+
+    return 0
+
+
+def cmd_pattern_learner(args: argparse.Namespace) -> int:
+    """Learn team coding norms from codebase."""
+    from tools.scripts.rules_engine.pattern_learner import PatternLearner
+
+    target = Path(args.path).resolve()
+
+    learner = PatternLearner()
+    learner.MIN_OCCURRENCES = getattr(args, "min_occurrences", 3)
+    patterns = learner.learn_from_directory(target)
+
+    if getattr(args, "json", False):
+        import json
+        print(json.dumps(patterns, indent=2, ensure_ascii=False))
+    else:
+        print(f"🔍 AI 分析完成，发现 {len(patterns)} 个模式和建议")
+        for p in patterns:
+            freq = p.get("frequency", p.get("confidence", 0))
+            conf = p.get("confidence", 0)
+            ptype = p.get("type", "pattern")
+            action = p.get("suggested_action", "")
+            if freq > 0 or conf > 0:
+                print(f"\n  [{ptype}] {p.get('message', p.get('pattern', ''))}")
+                print(f"    置信度: {conf:.0%} | 建议: {action}")
+
     return 0
 
 

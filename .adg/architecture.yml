@@ -1,0 +1,135 @@
+# ADG Architecture Configuration
+# Defines layer architecture for dependency rule enforcement
+# Based on tools/scripts/rules_engine/arch/layer_checker.py LayerConfig
+
+config_version: '1.0'
+
+# Layer definitions (outermost to innermost - dependencies must flow inward)
+# Format: layer_name: [glob_patterns]
+# A module in layer A can import from layer B only if B is "deeper" (to the right)
+layers:
+  - name: "external"
+    patterns:
+      - "**/test*.py"
+      - "**/*_test.py"
+      - "**/tests/**"
+    description: "Test code - can import from anywhere"
+
+  - name: "interface"
+    patterns:
+      - "**/api/**"
+      - "**/routes/**"
+      - "**/controllers/**"
+      - "**/handlers/**"
+      - "**/endpoints/**"
+    description: "API/Interface layer - entry points"
+
+  - name: "application"
+    patterns:
+      - "**/services/**"
+      - "**/usecases/**"
+      - "**/application/**"
+      - "**/commands/**"
+      - "**/queries/**"
+    description: "Application/Use case layer - business logic orchestration"
+
+  - name: "domain"
+    patterns:
+      - "**/domain/**"
+      - "**/models/**"
+      - "**/entities/**"
+      - "**/value_objects/**"
+      - "**/aggregates/**"
+    description: "Domain layer - core business logic, rules, entities"
+
+  - name: "infrastructure"
+    patterns:
+      - "**/repositories/**"
+      - "**/persistence/**"
+      - "**/database/**"
+      - "**/orm/**"
+      - "**/migrations/**"
+    description: "Infrastructure - data access, external services"
+
+  - name: "framework"
+    patterns:
+      - "**/framework/**"
+      - "**/lib/**"
+      - "**/shared/**"
+      - "**/utils/**"
+      - "**/helpers/**"
+      - "**/common/**"
+    description: "Framework/Shared utilities - lowest level"
+
+  - name: "config"
+    patterns:
+      - "**/config/**"
+      - "**/settings/**"
+      - "**/conf/**"
+    description: "Configuration - should not be imported by domain"
+
+# Rules
+rules:
+  # Allow test layer to import from anywhere (default)
+  - from: "test"
+    to: "*"
+    allow: true
+
+  # Interface can call Application, Domain
+  - from: "interface"
+    to: ["application", "domain"]
+    allow: true
+
+  # Application can call Domain, Infrastructure
+  - from: "application"
+    to: ["domain", "infrastructure"]
+    allow: true
+
+  # Domain can call Framework, Config
+  - from: "domain"
+    to: ["framework", "config"]
+    allow: true
+
+  # Infrastructure can call Framework, Config
+  - from: "infrastructure"
+    to: ["framework", "config"]
+    allow: true
+
+  # Framework can call Config
+  - from: "framework"
+    to: ["config"]
+    allow: true
+
+  # Config should not import anything (leaf)
+  - from: "config"
+    to: "*"
+    allow: false
+
+# Default deny for undefined cross-layer imports
+default_deny: true
+
+# Exceptions (specific modules allowed to violate layer rules)
+exceptions:
+  - from: "legacy"
+    to: "*"
+    reason: "Legacy code migration in progress"
+  - from: "scripts"
+    to: "*"
+    reason: "Operational scripts need full access"
+  - from: "examples"
+    to: "*"
+    reason: "Example code for demonstration"
+
+# Cycle detection
+cycle_detection:
+  enabled: true
+  max_cycle_length: 10
+
+# Hub detection
+hub_detection:
+  enabled: true
+  threshold: 15  # Modules with >15 dependencies flagged as hub
+  exclude_patterns:
+    - "**/__init__.py"
+    - "**/conftest.py"
+    - "**/migrations/**"

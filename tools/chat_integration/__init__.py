@@ -15,6 +15,7 @@ from __future__ import annotations
 import json
 from datetime import datetime
 from pathlib import Path
+from typing import Any
 from urllib.request import Request, urlopen
 
 from tools.scripts.adg_cli import Issue
@@ -30,13 +31,13 @@ class BaseNotifier:
     def __init__(self, webhook_url: str):
         self.webhook_url = webhook_url
 
-    def _post(self, payload: dict) -> bool:
+    def _post(self, payload: dict[str, Any]) -> bool:
         """Post payload to webhook."""
         try:
             data = json.dumps(payload).encode("utf-8")
             req = Request(self.webhook_url, data=data, headers={"Content-Type": "application/json"})
             with urlopen(req, timeout=10) as resp:
-                return resp.status == 200
+                return bool(resp.status == 200)
         except Exception:
             return False
 

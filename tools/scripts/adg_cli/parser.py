@@ -103,6 +103,7 @@ def _build_parser() -> argparse.ArgumentParser:
     recommend_p.add_argument("path", nargs="?", default=".", help="Project directory")
     recommend_p.add_argument("--json", action="store_true", help="Output as JSON")
     recommend_p.add_argument("-n", "--max", type=int, default=20, help="Max recommendations")
+    recommend_p.add_argument("--apply", action="store_true", help="Auto-generate .adg/rules.yml with recommended rules")
 
     # lsp
     lsp_p = sub.add_parser("lsp", help="Start ADG Language Server (LSP)")
@@ -147,5 +148,11 @@ def _build_parser() -> argparse.ArgumentParser:
         "platform", choices=["github", "github-advanced", "gitlab", "jenkins", "docker"], help="CI/CD platform"
     )
     cicd_p.add_argument("-o", "--output", default=".", help="Output directory")
+
+    # pattern-learner
+    pl_p = sub.add_parser("pattern-learner", help="Learn team coding norms from codebase")
+    pl_p.add_argument("path", nargs="?", default=".", help="Project directory")
+    pl_p.add_argument("--json", action="store_true", help="Output as JSON")
+    pl_p.add_argument("--min-occurrences", type=int, default=3, help="Minimum occurrences for pattern (default: 3)")
 
     return parser

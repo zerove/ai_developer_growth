@@ -248,7 +248,7 @@ def main() -> int:
 
 
 if __name__ == "__main__":
-    from _common import handle_error
+    from _common import handle_error  # type: ignore[import-not-found]
 
     try:
         sys.exit(main())

@@ -8,6 +8,7 @@ from __future__ import annotations
 import json
 import time
 from pathlib import Path
+from typing import Any, TypedDict
 
 # 存储路径: ~/.cache/adg/feedback.json
 CACHE_DIR = Path.home() / ".cache" / "adg"
@@ -20,23 +21,57 @@ AUTO_DOWNGRADE_THRESHOLD = 0.6  # 60% 的报告是误报
 MIN_REPORTS_FOR_DOWNGRADE = 5
 
 
-def _load_feedback() -> dict:
+class RuleFeedback(TypedDict):
+    total_reports: int
+    false_positives: int
+    files: list[dict[str, Any]]
+    downgraded: bool
+
+
+class FeedbackData(TypedDict):
+    rules: dict[str, RuleFeedback]
+    total_feedback: int
+
+
+class FalsePositiveResult(TypedDict):
+    rule_id: str
+    total_reports: int
+    false_positives: int
+    should_downgrade: bool
+
+
+class FeedbackStats(TypedDict):
+    total_feedback: int
+    tracked_rules: int
+    downgraded_rules: int
+
+
+def _load_feedback() -> FeedbackData:
     """加载反馈数据。"""
     if FEEDBACK_FILE.exists():
         try:
-            return json.loads(FEEDBACK_FILE.read_text())
+            raw: dict[str, Any] = json.loads(FEEDBACK_FILE.read_text())
+            return {
+                "rules": {k: {
+                    "total_reports": v.get("total_reports", 0),
+                    "false_positives": v.get("false_positives", 0),
+                    "files": v.get("files", []),
+                    "downgraded": v.get("downgraded", False),
+                } for k, v in raw.get("rules", {}).items()},
+                "total_feedback": raw.get("total_feedback", 0),
+            }
         except (json.JSONDecodeError, OSError):
             pass
     return {"rules": {}, "total_feedback": 0}
 
 
-def _save_feedback(data: dict) -> None:
+def _save_feedback(data: FeedbackData) -> None:
     """保存反馈数据。"""
     CACHE_DIR.mkdir(parents=True, exist_ok=True)
     FEEDBACK_FILE.write_text(json.dumps(data, indent=2))
 
 
-def mark_false_positive(rule_id: str, filepath: str, severity: str) -> dict:
+def mark_false_positive(rule_id: str, filepath: str, severity: str) -> FalsePositiveResult:
     """标记一个问题为误报。
 
     Args:
@@ -85,7 +120,7 @@ def get_effective_severity(rule_id: str, original_severity: str) -> str:
     return original_severity
 
 
-def _should_downgrade(rule_id: str, data: dict) -> bool:
+def _should_downgrade(rule_id: str, data: FeedbackData) -> bool:
     """判断规则是否应该降级。"""
     r = data.get("rules", {}).get(rule_id)
     if not r:
@@ -96,7 +131,7 @@ def _should_downgrade(rule_id: str, data: dict) -> bool:
     return fp_rate >= AUTO_DOWNGRADE_THRESHOLD
 
 
-def get_feedback_stats() -> dict:
+def get_feedback_stats() -> FeedbackStats:
     """获取反馈统计数据。"""
     data = _load_feedback()
     rules = data.get("rules", {})

@@ -308,31 +308,38 @@ def _load_universal_rules(framework_dir: Path) -> dict[str, Any]:
     cross-language issues like hardcoded secrets, empty catch blocks,
     SQL injection patterns, and resource leaks.
 
-    Returns universal rules if available, otherwise falls back to embedded.
+    Returns universal rules merged with common cross-language rules.
     """
+    result: dict[str, Any] = {"anti_patterns": [], "thresholds": {}, "naming": {}}
+
+    # 1. Load universal rules
     universal_path = framework_dir / "common" / "universal.yml"
-    if not universal_path.exists():
-        return _get_embedded_rules("unknown")
+    if universal_path.exists():
+        try:
+            import yaml
+            with open(universal_path) as f:
+                data = yaml.safe_load(f)
+            if isinstance(data, dict):
+                result = data
+        except Exception:
+            pass
 
-    try:
-        import yaml
+    # 2. Load and merge common cross-language rules (security, type, error)
+    common = _load_common_rules(framework_dir)
+    if common:
+        result = _merge_rules(result, common)
 
-        with open(universal_path) as f:
-            data = yaml.safe_load(f)
-        return data if isinstance(data, dict) else _get_embedded_rules("unknown")
-    except Exception:
-        return _get_embedded_rules("unknown")
+    return result
 
 
 def load_rules_for_language(language: str, framework_dir: Path | None = None) -> dict[str, Any]:
-    """Load rules for a language, merging with common security rules."""
-    rules = load_rules(language, framework_dir)
-    # Add cross-language security rules
-    from .security_patterns import get_security_rules
+    """Load rules for a language, merging with common security rules.
 
-    security = get_security_rules(language)
-    rules = _merge_rules(rules, security)
-    return rules
+    Common rules come from common/security.yml (loaded by load_rules()).
+    This function no longer calls security_patterns.py separately —
+    all cross-language rules are consolidated in common/security.yml.
+    """
+    return load_rules(language, framework_dir)
 
 
 def get_language_rules(language: str) -> dict[str, Any]:

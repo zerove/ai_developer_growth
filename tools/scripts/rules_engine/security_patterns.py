@@ -1,4 +1,9 @@
-"""Security patterns for AI quality checks - shared patterns across languages."""
+"""Security patterns for AI quality checks - shared patterns across languages.
+
+⚠️ 废弃提示: 所有跨语言规则已合并到 common/security.yml。
+此文件保留作为参考，不再被 rule_loader 加载。
+请使用 ai-dev-framework/common/security.yml 作为规则来源。
+"""
 
 from __future__ import annotations
 

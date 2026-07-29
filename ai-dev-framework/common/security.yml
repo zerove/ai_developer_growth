@@ -1,9 +1,14 @@
 # Cross-language Security Rules
 # Applied to ALL languages automatically via common/security.yml
 # These are universal patterns that transcend specific languages
+#
+# 统一规则来源 — 所有跨语言规则在此定义。
+# 之前分散在 security_patterns.py 的规则已合并至此文件。
 
 config_version: '1.0'
 anti_patterns:
+
+# ── 安全：密钥与凭据 ──────────────────────────
 - id: common-hardcoded-secret
   name: Hardcoded secret or credential
   severity: error
@@ -12,6 +17,7 @@ anti_patterns:
   message: Hardcoded secrets are a critical security vulnerability
   fix_hint: Use environment variables or a secrets manager
 
+# ── 安全：动态代码执行 ─────────────────────────
 - id: common-eval-exec
   name: Dynamic code execution
   severity: error
@@ -21,6 +27,52 @@ anti_patterns:
   message: Dynamic code execution is a security risk (code injection)
   fix_hint: Avoid eval/exec; use safer alternatives
 
+# ── 安全：SQL 注入 ─────────────────────────────
+- id: common-sql-injection
+  name: SQL injection via string formatting
+  severity: error
+  category: security
+  pattern: 'f["''].*\b(SELECT|INSERT|UPDATE|DELETE)\b.*\{'
+  message: SQL injection via f-string concatenation
+  fix_hint: Use parameterized queries
+
+# ── 安全：不安全的 YAML 加载 ────────────────────
+- id: common-unsafe-yaml-load
+  name: Unsafe YAML load
+  severity: warning
+  category: security
+  pattern: 'yaml\.load\((?!.*Loader)'
+  message: yaml.load() is unsafe - use yaml.safe_load()
+  fix_hint: Use yaml.safe_load()
+
+# ── 安全：Pickle 反序列化 ─────────────────────
+- id: common-pickle-load
+  name: Pickle deserialization
+  severity: error
+  category: security
+  pattern: 'pickle\.loads?\('
+  message: pickle deserialization is a security risk
+  fix_hint: Use JSON or other safe serialization
+
+# ── 安全：SSL 验证 ─────────────────────────────
+- id: common-ssl-verify-false
+  name: SSL verification disabled
+  severity: error
+  category: security
+  pattern: 'verify\s*=\s*False'
+  message: SSL verification disabled - security risk
+  fix_hint: Use proper SSL certificates
+
+# ── 安全：弱哈希算法 ──────────────────────────
+- id: common-weak-hash
+  name: Weak hash algorithm (MD5/SHA1)
+  severity: warning
+  category: security
+  pattern: '\bmd5\s*\(|\bsha1\s*\(|MD5\.|SHA1\.|hashlib\.md5|hashlib\.sha1'
+  message: MD5 and SHA1 are cryptographically weak
+  fix_hint: Use SHA-256 or stronger
+
+# ── HTTP 而非 HTTPS ────────────────────────────
 - id: common-http-url
   name: Hardcoded HTTP URL (not HTTPS)
   severity: warning
@@ -30,14 +82,7 @@ anti_patterns:
   fix_hint: Replace http:// with https://
   fix_replacement: 's|http://|https://|'
 
-- id: common-crypto-md5
-  name: Weak hash algorithm (MD5/SHA1)
-  severity: warning
-  category: security
-  pattern: '\bmd5\s*\(|\bsha1\s*\(|MD5\.|SHA1\.'
-  message: MD5 and SHA1 are cryptographically weak
-  fix_hint: Use SHA-256 or stronger
-
+# ── 调试器 ─────────────────────────────────────
 - id: common-debugger
   name: Debugger statement in production code
   severity: warning
@@ -47,14 +92,7 @@ anti_patterns:
   message: Debugger statements should not be in production code
   fix_hint: Remove debugger statements before committing
 
-- id: common-todo
-  name: TODO/FIXME/HACK comment
-  severity: info
-  category: code_quality
-  pattern: '#.*(?:TODO|FIXME|HACK|XXX|TEMP)'
-  message: Unresolved TODO/FIXME comment found
-  fix_hint: Resolve the issue or create a tracking ticket
-
+# ── 控制台日志 ─────────────────────────────────
 - id: common-console-log
   name: Debug output in code
   severity: info
@@ -64,6 +102,70 @@ anti_patterns:
   message: Debug output should be removed before production
   fix_hint: Use a logging framework instead
 
+# ── 未解决的 TODO ──────────────────────────────
+- id: common-todo
+  name: TODO/FIXME/HACK comment
+  severity: info
+  category: code_quality
+  pattern: '#.*(?:TODO|FIXME|HACK|XXX|TEMP)'
+  message: Unresolved TODO/FIXME comment found
+  fix_hint: Resolve the issue or create a tracking ticket
+
+# ── 类型安全：类型忽略 ─────────────────────────
+- id: common-type-ignore
+  name: Type ignore comment
+  severity: warning
+  category: type_safety
+  pattern: '#\s*type:\s*ignore'
+  message: Type ignore comment suppresses type checking
+  fix_hint: Fix the underlying type issue
+
+# ── 类型安全：Any 类型 ─────────────────────────
+- id: common-type-any
+  name: Use of Any type
+  severity: warning
+  category: type_safety
+  pattern: ':\s*Any\b'
+  message: Use of Any type bypasses type checking
+  fix_hint: Use a more specific type
+
+# ── 类型安全：忽略装饰器 ──────────────────────
+- id: common-type-ignore-decorator
+  name: Ignore decorator
+  severity: warning
+  category: type_safety
+  pattern: '@\w+(?:\.\w+)*\.ignore'
+  message: Ignore decorator suppresses type checking
+  fix_hint: Fix the underlying type issue
+
+# ── 错误处理：裸 except+pass ──────────────────
+- id: common-bare-except-pass
+  name: Bare except with pass
+  severity: warning
+  category: error_handling
+  pattern: 'except\s*:\s*pass'
+  message: Bare except with pass swallows all exceptions
+  fix_hint: Catch specific exceptions or log the error
+
+# ── 错误处理：Exception+pass ─────────────────
+- id: common-except-exception-pass
+  name: Except Exception with pass
+  severity: warning
+  category: error_handling
+  pattern: 'except\s+(?:Exception|BaseException)\s*:\s*pass'
+  message: Catching broad exception and passing swallows errors
+  fix_hint: Catch specific exceptions or log the error
+
+# ── 错误处理：空 except 块 ────────────────────
+- id: common-empty-except-block
+  name: Empty except block
+  severity: warning
+  category: error_handling
+  pattern: 'except\s+(?:\w+(?:\s*,\s*\w+)*)?\s*:\s*\n\s*(?:pass|#.*)?(?=\n|$)'
+  message: Empty except block swallows errors silently
+  fix_hint: Add error handling or logging
+
+# ── 错误处理：空 catch ─────────────────────────
 - id: common-empty-catch
   name: Empty catch/except block
   severity: warning

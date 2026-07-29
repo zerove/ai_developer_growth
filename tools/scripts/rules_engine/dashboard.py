@@ -1,13 +1,21 @@
 """Quality Dashboard: FastAPI + SQLite web interface for code quality reports.
 
 Usage:
-    python -m tools.scripts.rules_engine.dashboard [--port PORT] [--db DB_PATH]
+    python -m tools.scripts.rules_engine.dashboard [--port PORT] [--db DB_PATH] [--ci-data-dir CI_DIR]
 
 Dashboard shows:
 - Quality trend charts (errors/warnings over time)
 - File-level detail view
 - Rule violation breakdown by category
 - Historical comparison
+- CI quality summary (from .quality-trends/summary.json)
+
+API:
+    GET  /             Dashboard HTML
+    GET  /api/trend    Trend data (JSON)
+    GET  /api/latest   Latest report (JSON)
+    GET  /api/ci-summary  CI quality summary (JSON)
+    POST /api/record   Record a quality run
 """
 
 from __future__ import annotations
@@ -17,6 +25,7 @@ import json
 import sqlite3
 import sys
 from datetime import datetime
+from pathlib import Path
 from typing import Any
 
 from tools.scripts.rules_engine.logger import logger
@@ -253,8 +262,13 @@ HTML_TEMPLATE = """<!DOCTYPE html>
 </html>"""
 
 
-def create_app(db_path: str = "adg_quality.db") -> Any:
-    """Create FastAPI app for the quality dashboard."""
+def create_app(db_path: str = "adg_quality.db", ci_data_dir: str | None = None) -> Any:
+    """Create FastAPI app for the quality dashboard.
+
+    Args:
+        db_path: SQLite database path.
+        ci_data_dir: Optional path to CI-generated quality data (.quality-trends/).
+    """
     try:
         from fastapi import FastAPI
         from fastapi.responses import HTMLResponse
@@ -286,6 +300,20 @@ def create_app(db_path: str = "adg_quality.db") -> Any:
     def api_latest() -> dict[str, Any] | None:
         return get_latest_report(conn)
 
+    @app.get("/api/ci-summary")
+    def api_ci_summary() -> dict[str, Any] | None:
+        """Read CI-generated quality summary if available."""
+        ci_dir = ci_data_dir
+        if not ci_dir:
+            ci_dir = str(Path.cwd() / ".quality-trends")
+        summary_file = Path(ci_dir) / "summary.json"
+        if summary_file.exists():
+            try:
+                return json.loads(summary_file.read_text())
+            except Exception:
+                pass
+        return None
+
     @app.post("/api/record")
     def api_record(report: dict[str, Any]) -> dict[str, Any]:
         run_id = record_run(conn, report)
@@ -299,9 +327,10 @@ def main() -> None:
     parser = argparse.ArgumentParser(description="ADG Quality Dashboard")
     parser.add_argument("--port", type=int, default=8765, help="Port (default: 8765)")
     parser.add_argument("--db", default="adg_quality.db", help="SQLite database path")
+    parser.add_argument("--ci-data-dir", default=None, help="CI quality data directory (.quality-trends/)")
     args = parser.parse_args()
 
-    app = create_app(args.db)
+    app = create_app(args.db, ci_data_dir=args.ci_data_dir)
 
     try:
         import uvicorn

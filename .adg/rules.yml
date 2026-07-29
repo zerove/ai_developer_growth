@@ -1,4 +1,5 @@
 anti_patterns:
+# ── 项目特定规则（自动分析生成）───────────────
 - category: code_quality
   exclude_files:
   - __init__.py
@@ -15,5 +16,47 @@ anti_patterns:
   name: Bare except clause
   pattern: 'except\s*:'
   severity: error
+
+# ── 旧版安全规则（已转为新格式）────────────────
+- category: security
+  fix_hint: Use subprocess.run() with shell=False
+  id: sec-os-system
+  language: python
+  message: os.system() is vulnerable to command injection
+  name: os.system() command injection
+  pattern: \bos\.system\s*\(
+  severity: error
+- category: security
+  fix_hint: Use subprocess.Popen()
+  id: sec-os-popen
+  language: python
+  message: os.popen() is insecure
+  name: os.popen() insecure subprocess
+  pattern: \bos\.popen\s*\(
+  severity: warning
+- category: security
+  fix_hint: Use subprocess.run()
+  id: sec-subprocess-call
+  language: python
+  message: subprocess.call() should use shell=False
+  name: subprocess.call() warning
+  pattern: subprocess\.call\s*\(
+  severity: info
+- category: security
+  fix_hint: Use textContent or sanitize input
+  id: sec-innerhtml-xss
+  language: javascript
+  message: innerHTML can lead to XSS
+  name: innerHTML XSS risk
+  pattern: \.innerHTML\s*=
+  severity: warning
+- category: security
+  fix_hint: Use DOM manipulation methods
+  id: sec-document-write
+  language: javascript
+  message: document.write() is dangerous
+  name: document.write() XSS risk
+  pattern: document\.write\s*\(
+  severity: warning
 config_version: '1.0'
 source: auto-generated-by-team-patterns

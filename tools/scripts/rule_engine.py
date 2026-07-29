@@ -88,7 +88,7 @@ class RuleEngine:
 
         cmd_init(argparse.Namespace(lang=lang, force=force))
 
-    def add_rule(self, lang: str, category: str, rule_id: str, name: str, **kwargs: Any) -> None:
+    def add_rule(self, lang: str, category: str, rule_id: str, name: str, **kwargs: object) -> None:
         """Add a rule to a language's rule file."""
         import argparse
 
@@ -204,7 +204,7 @@ class RuleEngine:
         run_server(VisualizeHandler, port=port)
 
 
-def asdict(obj: Any) -> dict[str, Any]:
+def asdict(obj: object) -> dict[str, object]:
     """Convert dataclass to dict, or return as-is if not a dataclass."""
     if hasattr(obj, "__dataclass_fields__"):
         return {f: getattr(obj, f) for f in obj.__dataclass_fields__}

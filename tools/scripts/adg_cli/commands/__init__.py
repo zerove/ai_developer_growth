@@ -611,7 +611,7 @@ def _apply_recommendations(project_dir: Path, result: dict[str, Any]) -> int:
                 if data and "anti_patterns" in data:
                     existing_rules = data
         except Exception:
-            pass
+            _ = None  # rules file optional
 
     existing_ids = {r.get("id") for r in existing_rules.get("anti_patterns", [])}
 

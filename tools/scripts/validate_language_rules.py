@@ -207,7 +207,7 @@ def _get_supported_files(dirpath: Path, exclude: list[str]) -> list[Path]:
     return files
 
 
-def _calc_cyclomatic_complexity(node: Any) -> int:
+def _calc_cyclomatic_complexity(node: ast.AST) -> int:
     """Calculate cyclomatic complexity for an AST node."""
     from .complexity_analyzer import calc_cyclomatic_complexity
 

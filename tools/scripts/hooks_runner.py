@@ -25,9 +25,9 @@ from __future__ import annotations
 
 import argparse
 import sys
+from collections.abc import Callable
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
-from typing import Any
 
 from tools.scripts.hooks.basic_checks import (
     run_format_check,
@@ -41,6 +41,7 @@ from tools.scripts.hooks.domain_checks import (
     run_language_rules,
     run_quality_gate,
 )
+from tools.scripts.rules_engine.models import CheckResult
 from tools.scripts.hooks.incremental_checks import (  # noqa: F401
     get_changed_files,
     get_staged_files,
@@ -139,7 +140,7 @@ Examples:
     return parser
 
 
-def _run_simple(func_or_result: Any) -> int:
+def _run_simple(func_or_result: Callable[[], tuple[bool, str]] | int | str) -> int:
     """Run a simple check function and print output.
 
     Accepts either:
@@ -251,7 +252,7 @@ def _run_hallucination_scan(path: Path, lang: str | None) -> int:
     return 0 if report.high_count == 0 else 1
 
 
-def _print_check_result(result: Any) -> None:
+def _print_check_result(result: "CheckResult") -> None:
     """Print a single check result if it has issues."""
     if result.issues:
         for issue in result.issues:

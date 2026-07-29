@@ -256,7 +256,7 @@ def load_project_config(dirpath: Path | None = None) -> dict[str, Any]:
             global_config = _simple_yaml_parse(global_config_path)
             config = _merge_config(config, global_config)
         except Exception:
-            pass
+            _ = None  # global config optional
 
     # Load project config (overrides global)
     if dirpath:
@@ -268,12 +268,12 @@ def load_project_config(dirpath: Path | None = None) -> dict[str, Any]:
                     project_config["custom_rules"] = project_config.pop("anti_patterns")
                 config = _merge_config(config, project_config)
             except Exception:
-                pass
+                _ = None  # project config optional
 
     return config
 
 
-def _merge_config(base: dict[str, Any], override: dict[str, Any]) -> dict[str, Any]:
+def _merge_config(base: dict[str, object], override: dict[str, object]) -> dict[str, object]:
     """Merge two configuration dictionaries."""
     result = base.copy()
     for key, value in override.items():

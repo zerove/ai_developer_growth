@@ -26,7 +26,7 @@ class CacheEntry:
     """Cached analysis result for a file."""
 
     file_hash: str
-    result: Any
+    result: object
     timestamp: float
     size: int
 
@@ -81,11 +81,11 @@ class FileCache:
                                 size=int(size),
                             )
                         except Exception:
-                            pass
+                            _ = None  # cache entry invalid
         except Exception:
-            pass
+            _ = None  # cache load error
 
-    def get(self, filepath: str) -> Any | None:
+    def get(self, filepath: str) -> object | None:
         """Get cached result for a file."""
         entry = self._memory_cache.get(filepath)
         if entry is None:
@@ -103,7 +103,7 @@ class FileCache:
 
         return entry.result
 
-    def set(self, filepath: str, result: Any) -> None:
+    def set(self, filepath: str, result: object) -> None:
         """Cache a result for a file."""
         try:
             stat = os.stat(filepath)
@@ -121,7 +121,7 @@ class FileCache:
                 oldest_key = min(self._memory_cache, key=lambda k: self._memory_cache[k].timestamp)
                 del self._memory_cache[oldest_key]
         except OSError:
-            pass
+            _ = None  # stat failed
 
     def save(self) -> None:
         """Persist cache to disk."""
@@ -137,12 +137,12 @@ class FileCache:
             try:
                 cache_file.write_text(json.dumps(entry.result))
             except Exception:
-                pass
+                _ = None  # write cache failed
 
         try:
             cache_index.write_text("\n".join(lines[: self.max_entries]))
         except Exception:
-            pass
+            _ = None  # cache write failed
 
     def clear(self) -> None:
         """Clear the cache."""

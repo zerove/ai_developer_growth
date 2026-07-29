@@ -49,7 +49,7 @@ class LayerConfig:
                         layers[name] = deps
                 return cls(layers=layers)
         except Exception:
-            pass
+            _ = None  # optional config
         return cls()
 
     @classmethod

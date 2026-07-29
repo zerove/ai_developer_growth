@@ -18,7 +18,7 @@ from __future__ import annotations
 import re
 import sys
 from pathlib import Path
-from typing import Any
+from typing import Any, cast
 
 from tools.scripts.rules_engine.logger import logger
 
@@ -53,7 +53,7 @@ def _map_severity(severity: str) -> int:
         "warning": DiagnosticSeverity.Warning,
         "info": DiagnosticSeverity.Information,
     }
-    return mapping.get(severity, DiagnosticSeverity.Information)  # type: ignore[no-any-return]
+    return cast(DiagnosticSeverity, mapping.get(severity, DiagnosticSeverity.Information))
 
 
 def _text_to_range(text: str, pattern: str, line_offset: int = 0) -> Range | None:
@@ -195,7 +195,7 @@ def create_server() -> Any:
                         md += f"**Fix:** {rule['fix_hint']}\n"
                     return Hover(contents={"kind": "markdown", "value": md})
         except Exception:
-            pass
+            _ = None  # hover lookup failed
         return None
 
     @server.feature("textDocument/codeAction")
@@ -248,8 +248,8 @@ def create_server() -> Any:
                             )
                         )
                         break
-            except Exception:
-                pass
+            except (FileNotFoundError, PermissionError):
+                _ = None  # file access error
 
         return actions
 

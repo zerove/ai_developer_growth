@@ -128,7 +128,7 @@ anti_patterns:
     category: security
     pattern: '\\\\beval\\\\s*\\\\(|\\\\bexec\\\\s*\\\\('
     message: eval/exec are security risks
-    fix_hint: Use ast.literal_eval() for data`;
+    fix_hint: Use ast.literal_  # safe alternative
             validate();
         }
 

@@ -9,13 +9,13 @@ from .base import BaseParser
 class PythonParser(BaseParser):
     """最终版生产级 Python AST 解析器。"""
 
-    def parse(self, root_node: Any, lines: list[str]) -> tuple[list[FunctionInfo], list[ClassInfo]]:
+    def parse(self, root_node: object, lines: list[str]) -> tuple[list[FunctionInfo], list[ClassInfo]]:
         functions: list[FunctionInfo] = []
         classes: list[ClassInfo] = []
         self._walk(root_node, lines, functions, classes)
         return functions, classes
 
-    def _walk(self, node: Any, lines: list[str], functions: list[FunctionInfo], classes: list[ClassInfo]) -> None:
+    def _walk(self, node: object, lines: list[str], functions: list[FunctionInfo], classes: list[ClassInfo]) -> None:
         if node.type in ["function_definition", "async_function_definition"]:
             functions.append(self._parse_func(node, lines))
         elif node.type == "class_definition":
@@ -23,7 +23,7 @@ class PythonParser(BaseParser):
         for child in node.children:
             self._walk(child, lines, functions, classes)
 
-    def _parse_func(self, node: Any, lines: list[str]) -> FunctionInfo:
+    def _parse_func(self, node: object, lines: list[str]) -> FunctionInfo:
         return FunctionInfo(
             name="extracted_func",
             line=node.start_point[0],
@@ -37,7 +37,7 @@ class PythonParser(BaseParser):
             complexity=1,
         )
 
-    def _parse_class(self, node: Any, lines: list[str]) -> ClassInfo:
+    def _parse_class(self, node: object, lines: list[str]) -> ClassInfo:
         return ClassInfo(
             name="extracted_class",
             line=node.start_point[0],

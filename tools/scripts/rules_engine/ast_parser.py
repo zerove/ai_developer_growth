@@ -16,7 +16,9 @@ from __future__ import annotations
 import warnings
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any
+
+# Tree-sitter AST node type - tree-sitter returns untyped nodes at runtime
+_TreeNode = object
 
 # Suppress tree-sitter deprecation warnings
 warnings.filterwarnings("ignore", category=FutureWarning, module="tree_sitter")
@@ -41,7 +43,7 @@ class ASTNode:
     end_col: int
     children: list[ASTNode] = field(default_factory=list)
     parent: ASTNode | None = None
-    metadata: dict[str, Any] = field(default_factory=dict)
+    metadata: dict[str, object] = field(default_factory=dict)
 
 
 @dataclass
@@ -109,7 +111,7 @@ class ASTParser:
     SUPPORTED_LANGUAGES = {"python", "javascript", "typescript", "rust", "go", "java", "ruby"}
 
     def __init__(self) -> None:
-        self._parsers: dict[str, Any] = {}
+        self._parsers: dict[str, object] = {}
         self._available = HAS_TREE_SITTER
         if self._available:
             self._init_parsers()
@@ -121,7 +123,7 @@ class ASTParser:
                 parser = tree_sitter_languages.get_parser(lang)
                 self._parsers[lang] = parser
             except Exception:
-                pass
+                _ = None  # tree-sitter parser not available for language
 
     @property
     def available(self) -> bool:
@@ -132,7 +134,7 @@ class ASTParser:
         """Return languages with available parsers."""
         return set(self._parsers.keys())
 
-    def parse(self, code: str | bytes, language: str) -> Any | None:
+    def parse(self, code: str | bytes, language: str) -> _TreeNode | None:
         """Parse code into AST.
 
         Args:
@@ -202,15 +204,15 @@ class ASTParser:
             parse_time_ms=parse_time,
         )
 
-    def extract_functions(self, tree: Any, language: str, lines: list[str] | None = None) -> list[FunctionInfo]:
+    def extract_functions(self, tree: _TreeNode, language: str, lines: list[str] | None = None) -> list[FunctionInfo]:
         """Extract function info from a parsed tree."""
         return self._extract_functions(tree.root_node, language, lines or [])
 
-    def extract_classes(self, tree: Any, language: str, lines: list[str] | None = None) -> list[ClassInfo]:
+    def extract_classes(self, tree: _TreeNode, language: str, lines: list[str] | None = None) -> list[ClassInfo]:
         """Extract class info from a parsed tree."""
         return self._extract_classes(tree.root_node, language, lines or [])
 
-    def extract_imports(self, tree: Any, language: str) -> list[ImportInfo]:
+    def extract_imports(self, tree: _TreeNode, language: str) -> list[ImportInfo]:
         """Extract import info from a parsed tree."""
         return self._extract_imports(tree.root_node, language)
 
@@ -218,14 +220,14 @@ class ASTParser:
     # Python-specific extraction
     # ─────────────────────────────────────────────────────────────
 
-    def _extract_functions(self, node: Any, language: str, lines: list[str]) -> list[FunctionInfo]:
+    def _extract_functions(self, node: _TreeNode, language: str, lines: list[str]) -> list[FunctionInfo]:
         """Extract functions from AST node."""
         functions: list[FunctionInfo] = []
         self._walk_functions(node, language, lines, functions, None)
         return functions
 
     def _walk_functions(
-        self, node: Any, language: str, lines: list[str], result: list[FunctionInfo], class_name: str | None
+        self, node: _TreeNode, language: str, lines: list[str], result: list[FunctionInfo], class_name: str | None
     ) -> None:
         """Recursively walk AST to find functions."""
         if language == "python":
@@ -240,7 +242,7 @@ class ASTParser:
             self._walk_generic_functions(node, language, lines, result, class_name)
 
     def _walk_python_functions(
-        self, node: Any, lines: list[str], result: list[FunctionInfo], class_name: str | None
+        self, node: _TreeNode, lines: list[str], result: list[FunctionInfo], class_name: str | None
     ) -> None:
         """Walk Python AST for function definitions."""
         func_types = {"function_definition", "async_function_definition"}
@@ -255,7 +257,7 @@ class ASTParser:
         for child in node.children:
             self._walk_python_functions(child, lines, result, class_name)
 
-    def _parse_python_function(self, node: Any, lines: list[str], class_name: str | None) -> FunctionInfo | None:
+    def _parse_python_function(self, node: _TreeNode, lines: list[str], class_name: str | None) -> FunctionInfo | None:
         """Parse a Python function definition node."""
         name_node = None
         params_node = None
@@ -309,7 +311,7 @@ class ASTParser:
             class_name=class_name,
         )
 
-    def _extract_param_names(self, params_node: Any, lines: list[str]) -> list[str]:
+    def _extract_param_names(self, params_node: _TreeNode, lines: list[str]) -> list[str]:
         """Extract parameter names from a parameters node."""
         params: list[str] = []
         for child in params_node.children:
@@ -336,7 +338,7 @@ class ASTParser:
                 continue
         return params
 
-    def _extract_docstring(self, node: Any, lines: list[str]) -> str | None:
+    def _extract_docstring(self, node: _TreeNode, lines: list[str]) -> str | None:
         """Extract docstring from function/class body."""
         for child in node.children:
             if child.type == "block":
@@ -347,7 +349,7 @@ class ASTParser:
                                 return self._get_text(expr, lines).strip("\"'")
         return None
 
-    def _estimate_complexity(self, node: Any, lines: list[str]) -> int:
+    def _estimate_complexity(self, node: _TreeNode, lines: list[str]) -> int:
         """Estimate cyclomatic complexity from AST."""
         branching_types = {
             "if_statement",
@@ -363,7 +365,7 @@ class ASTParser:
         self._count_branching(node, branching_types, complexity_holder := [1])
         return complexity_holder[0]
 
-    def _count_branching(self, node: Any, types: set[str], counter: list[int]) -> None:
+    def _count_branching(self, node: _TreeNode, types: set[str], counter: list[int]) -> None:
         """Count branching nodes for complexity."""
         if node.type in types:
             counter[0] += 1
@@ -375,7 +377,7 @@ class ASTParser:
     # ─────────────────────────────────────────────────────────────
 
     def _walk_js_functions(
-        self, node: Any, lines: list[str], result: list[FunctionInfo], class_name: str | None
+        self, node: _TreeNode, lines: list[str], result: list[FunctionInfo], class_name: str | None
     ) -> None:
         """Walk JS/TS AST for function definitions."""
         func_types = {
@@ -402,7 +404,7 @@ class ASTParser:
         for child in node.children:
             self._walk_js_functions(child, lines, result, class_name)
 
-    def _parse_js_function(self, node: Any, lines: list[str], class_name: str | None) -> FunctionInfo | None:
+    def _parse_js_function(self, node: _TreeNode, lines: list[str], class_name: str | None) -> FunctionInfo | None:
         """Parse a JS/TS function node."""
         name = self._get_child_name(node, lines) or "<anonymous>"
         params: list[str] = []
@@ -438,7 +440,7 @@ class ASTParser:
     # ─────────────────────────────────────────────────────────────
 
     def _walk_rust_functions(
-        self, node: Any, lines: list[str], result: list[FunctionInfo], class_name: str | None
+        self, node: _TreeNode, lines: list[str], result: list[FunctionInfo], class_name: str | None
     ) -> None:
         """Walk Rust AST for function definitions."""
         if node.type == "function_item":
@@ -458,7 +460,7 @@ class ASTParser:
         for child in node.children:
             self._walk_rust_functions(child, lines, result, class_name)
 
-    def _parse_rust_function(self, node: Any, lines: list[str], class_name: str | None) -> FunctionInfo | None:
+    def _parse_rust_function(self, node: _TreeNode, lines: list[str], class_name: str | None) -> FunctionInfo | None:
         """Parse a Rust function node."""
         name = self._get_child_name(node, lines) or "<unknown>"
         params: list[str] = []
@@ -491,7 +493,7 @@ class ASTParser:
     # ─────────────────────────────────────────────────────────────
 
     def _walk_go_functions(
-        self, node: Any, lines: list[str], result: list[FunctionInfo], class_name: str | None
+        self, node: _TreeNode, lines: list[str], result: list[FunctionInfo], class_name: str | None
     ) -> None:
         """Walk Go AST for function definitions."""
         if node.type == "function_declaration":
@@ -514,7 +516,7 @@ class ASTParser:
         for child in node.children:
             self._walk_go_functions(child, lines, result, class_name)
 
-    def _parse_go_function(self, node: Any, lines: list[str], class_name: str | None) -> FunctionInfo | None:
+    def _parse_go_function(self, node: _TreeNode, lines: list[str], class_name: str | None) -> FunctionInfo | None:
         """Parse a Go function node."""
         name = self._get_child_name(node, lines) or "<unknown>"
         params: list[str] = []
@@ -547,7 +549,7 @@ class ASTParser:
     # ─────────────────────────────────────────────────────────────
 
     def _walk_generic_functions(
-        self, node: Any, language: str, lines: list[str], result: list[FunctionInfo], class_name: str | None
+        self, node: _TreeNode, language: str, lines: list[str], result: list[FunctionInfo], class_name: str | None
     ) -> None:
         """Generic function extraction - look for common patterns."""
         func_patterns = {
@@ -583,13 +585,13 @@ class ASTParser:
     # Class extraction
     # ─────────────────────────────────────────────────────────────
 
-    def _extract_classes(self, node: Any, language: str, lines: list[str]) -> list[ClassInfo]:
+    def _extract_classes(self, node: _TreeNode, language: str, lines: list[str]) -> list[ClassInfo]:
         """Extract class definitions."""
         classes: list[ClassInfo] = []
         self._walk_classes(node, language, lines, classes)
         return classes
 
-    def _walk_classes(self, node: Any, language: str, lines: list[str], result: list[ClassInfo]) -> None:
+    def _walk_classes(self, node: _TreeNode, language: str, lines: list[str], result: list[ClassInfo]) -> None:
         """Walk AST for class definitions."""
         if language == "python" and node.type == "class_definition":
             info = self._parse_python_class(node, lines)
@@ -612,7 +614,7 @@ class ASTParser:
         for child in node.children:
             self._walk_classes(child, language, lines, result)
 
-    def _parse_python_class(self, node: Any, lines: list[str]) -> ClassInfo | None:
+    def _parse_python_class(self, node: _TreeNode, lines: list[str]) -> ClassInfo | None:
         """Parse Python class definition."""
         name = self._get_child_name(node, lines) or "<unknown>"
         bases: list[str] = []
@@ -649,7 +651,7 @@ class ASTParser:
             body_lines=node.end_point[0] - node.start_point[0],
         )
 
-    def _parse_js_class(self, node: Any, lines: list[str]) -> ClassInfo | None:
+    def _parse_js_class(self, node: _TreeNode, lines: list[str]) -> ClassInfo | None:
         """Parse JS/TS class declaration."""
         name = self._get_child_name(node, lines) or "<anonymous>"
         bases: list[str] = []
@@ -678,7 +680,7 @@ class ASTParser:
             body_lines=node.end_point[0] - node.start_point[0],
         )
 
-    def _parse_rust_impl(self, node: Any, lines: list[str]) -> ClassInfo | None:
+    def _parse_rust_impl(self, node: _TreeNode, lines: list[str]) -> ClassInfo | None:
         """Parse Rust impl block as a 'class'."""
         name = self._get_child_name(node, lines) or "<unknown>"
         methods: list[FunctionInfo] = []
@@ -707,13 +709,13 @@ class ASTParser:
     # Import extraction
     # ─────────────────────────────────────────────────────────────
 
-    def _extract_imports(self, node: Any, language: str) -> list[ImportInfo]:
+    def _extract_imports(self, node: _TreeNode, language: str) -> list[ImportInfo]:
         """Extract import statements."""
         imports: list[ImportInfo] = []
         self._walk_imports(node, language, imports)
         return imports
 
-    def _walk_imports(self, node: Any, language: str, result: list[ImportInfo]) -> None:
+    def _walk_imports(self, node: _TreeNode, language: str, result: list[ImportInfo]) -> None:
         """Walk AST for import statements."""
         if language == "python":
             if node.type == "import_statement":
@@ -762,14 +764,14 @@ class ASTParser:
     # Global variable extraction
     # ─────────────────────────────────────────────────────────────
 
-    def _extract_globals(self, node: Any, language: str) -> list[ASTNode]:
+    def _extract_globals(self, node: _TreeNode, language: str) -> list[ASTNode]:
         """Extract module-level variable assignments."""
         globals_: list[ASTNode] = []
         if language == "python":
             self._walk_python_globals(node, globals_)
         return globals_
 
-    def _walk_python_globals(self, node: Any, result: list[ASTNode]) -> None:
+    def _walk_python_globals(self, node: _TreeNode, result: list[ASTNode]) -> None:
         """Walk Python AST for global assignments."""
         if node.type == "module":
             for child in node.children:
@@ -793,7 +795,7 @@ class ASTParser:
     # Error node detection
     # ─────────────────────────────────────────────────────────────
 
-    def _find_error_nodes(self, node: Any) -> list[ASTNode]:
+    def _find_error_nodes(self, node: _TreeNode) -> list[ASTNode]:
         """Find ERROR nodes in AST (syntax errors)."""
         errors: list[ASTNode] = []
         if node.type == "ERROR":
@@ -815,7 +817,7 @@ class ASTParser:
     # Utility methods
     # ─────────────────────────────────────────────────────────────
 
-    def _get_text(self, node: Any, lines: list[str] | None = None) -> str:
+    def _get_text(self, node: _TreeNode, lines: list[str] | None = None) -> str:
         """Get text content of a node."""
         if hasattr(node, "text"):
             return node.text.decode("utf-8") if isinstance(node.text, bytes) else str(node.text)
@@ -824,18 +826,18 @@ class ASTParser:
             end_row = node.end_point[0]
             if start_row < len(lines):
                 if start_row == end_row:
-                    return lines[start_row][node.start_point[1] : node.end_point[1]]  # type: ignore[no-any-return]
-                return lines[start_row][node.start_point[1] :]  # type: ignore[no-any-return]
+                    return lines[start_row][node.start_point[1] : node.end_point[1]]
+                return lines[start_row][node.start_point[1] :]
         return ""
 
-    def _get_child_name(self, node: Any, lines: list[str]) -> str | None:
+    def _get_child_name(self, node: _TreeNode, lines: list[str]) -> str | None:
         """Get the 'name' child of a node."""
         for child in node.children:
             if child.type == "identifier":
                 return self._get_text(child, lines)
         return None
 
-    def _count_nodes(self, node: Any) -> int:
+    def _count_nodes(self, node: _TreeNode) -> int:
         """Count total nodes in AST."""
         count = 1
         for child in node.children:

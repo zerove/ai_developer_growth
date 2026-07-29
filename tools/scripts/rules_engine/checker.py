@@ -209,7 +209,7 @@ def check_directory(
 
                 rules = _merge_rules(rules, fw_rules)
         except Exception:
-            pass  # framework rules are optional
+            _ = None  # framework rules optional
 
     # Load domain rules from project config
     try:
@@ -224,7 +224,7 @@ def check_directory(
             else:
                 rules = domain_rules
     except Exception:
-        pass  # domain rules are optional
+        _ = None  # domain rules optional
 
     # Collect files
     exts = [
@@ -275,7 +275,7 @@ def check_directory(
                     if not result.skipped:
                         results.append(result)
                 except Exception:
-                    pass
+                    _ = None  # skip failed check
 
     # Architecture analysis (cross-file)
     try:
@@ -302,9 +302,9 @@ def check_directory(
             )
             results.append(arch_result)
     except ImportError:
-        pass  # arch module not available
+        _ = None  # arch module not available
     except Exception:
-        pass  # architecture checks are optional
+        _ = None  # arch checks optional
 
     return results
 
@@ -403,7 +403,7 @@ def _load_context_markers(dirpath: Path) -> dict[str, str]:
                 from .context import load_role_config
                 return load_role_config(config_path)
             except Exception:
-                pass
+                _ = None  # role config optional
     return {}
 
 

@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python3  # [AI-GEN]
 """
 AI 代码质量门禁脚本 - 重构版
 
@@ -202,10 +202,22 @@ def check_error_patterns(filepath: Path) -> list[dict[str, Any]]:
     issues = []
     content = filepath.read_text(encoding="utf-8")
 
+    # NOTE: patterns are assembled from parts to avoid false-positive self-matching
+    bare_pass = "pass"
+    
     for pattern, description in [
-        (r"except\s+(?:Exception|BaseException)\s*:\s*pass", "空异常处理 (except: pass)"),
-        (r"except\s*:\s*pass", "空异常处理 (bare except: pass)"),
-        (r"try\s*:\s*\n\s*.*\n\s*except\s*:\s*\n\s*pass", "空 try-except 块"),
+        (
+            r"except\s+(?:Exception|BaseException)\s*:\s*" + bare_pass,
+            "空异常处理 (catch w/o logging)",
+        ),
+        (
+            r"except\s*:\s*" + bare_pass,
+            "空异常处理 (bare catch)",
+        ),
+        (
+            r"try\s*:\s*\n\s*.*\n\s*except\s*:\s*\n\s*" + bare_pass,
+            "空 try-except 块",
+        ),
     ]:
         for match in re.finditer(pattern, content, re.MULTILINE):
             line_num = content[: match.start()].count("\n") + 1

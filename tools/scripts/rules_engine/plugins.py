@@ -122,7 +122,7 @@ class _FunctionPlugin(CheckerPlugin):
 
     def __init__(
         self,
-        func: Any,
+        func: Callable[..., object],
         name: str,
         languages: list[str],
         priority: int = 100,
@@ -148,7 +148,7 @@ def register_checker_decorator(
     name: str,
     languages: list[str] | None = None,
     priority: int = 100,
-) -> Any:
+) -> Callable[..., object]:
     """Decorator to register a function as a checker plugin.
 
     Usage:
@@ -157,7 +157,7 @@ def register_checker_decorator(
             return []
     """
 
-    def decorator(func: Any) -> Any:
+    def decorator(func: Callable[..., object]) -> Callable[..., object]:
         plugin = _FunctionPlugin(func, name=name, languages=languages or [], priority=priority)
         register_checker(plugin)
         return func

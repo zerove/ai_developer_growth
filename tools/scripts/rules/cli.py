@@ -75,7 +75,7 @@ def output_results(
         fmt = "json"
 
     if fmt == "json":
-        data: Any
+        data: object
         if isinstance(results, list):
             data = [r.to_dict() if hasattr(r, "to_dict") else r for r in results]
         elif hasattr(results, "to_dict"):

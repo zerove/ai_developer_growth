@@ -111,7 +111,7 @@ _MESSAGE_HEURISTICS: list[tuple[list[str], str | None, str | None]] = [
 ]
 
 
-def heuristic_fix(rule: dict[str, Any]) -> dict[str, str]:
+def heuristic_fix(rule: dict[str, str]) -> dict[str, str]:
     """Generate a fix using pattern matching heuristics.
 
     Args:
@@ -133,7 +133,7 @@ def heuristic_fix(rule: dict[str, Any]) -> dict[str, str]:
                 "source": "heuristic",
             }
 
-    # Try message-based heuristics (OR logic: any keyword matches)
+    # Try message-based heuristics (OR logic: at least one keyword matches)
     msg_lower = message.lower()
     for keywords, fix, msg in _MESSAGE_HEURISTICS:
         # Check exclude keywords first

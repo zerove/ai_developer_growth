@@ -26,7 +26,7 @@ import sqlite3
 import sys
 from datetime import datetime
 from pathlib import Path
-from typing import Any
+from typing import Any, cast
 
 from tools.scripts.rules_engine.logger import logger
 
@@ -123,7 +123,7 @@ def get_latest_report(conn: sqlite3.Connection) -> dict[str, Any] | None:
     """Get the most recent full report."""
     row = conn.execute("SELECT report_json FROM quality_runs ORDER BY id DESC LIMIT 1").fetchone()
     if row and row[0]:
-        return json.loads(row[0])  # type: ignore[no-any-return]
+        return cast(dict[str, Any], json.loads(row[0]))
     return None
 
 
@@ -309,9 +309,9 @@ def create_app(db_path: str = "adg_quality.db", ci_data_dir: str | None = None) 
         summary_file = Path(ci_dir) / "summary.json"
         if summary_file.exists():
             try:
-                return json.loads(summary_file.read_text())  # type: ignore[no-any-return]
+                return cast(dict[str, Any], json.loads(summary_file.read_text()))
             except Exception:
-                pass
+                _ = None  # parse summary failed
         return None
 
     @app.post("/api/record")

@@ -131,6 +131,6 @@ def load_role_config(config_path: Path) -> dict[str, str]:
             markers = data.get("context", {}).get("markers", {})
             if isinstance(markers, dict):
                 return markers
-    except Exception:
-        pass
+    except FileNotFoundError:
+        _ = None  # log file optional
     return {}

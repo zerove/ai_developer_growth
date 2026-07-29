@@ -316,3 +316,69 @@ class QualityTracker:
         """Clear all stored snapshots."""
         self._snapshots.clear()
         self._save()
+
+    # ── Dashboard enhancements ──────────────────────────────────────────
+
+    def generate_sparkline(self, attr: str = "total_issues", width: int = 20) -> str:
+        """Generate an ASCII sparkline for a metric over all snapshots."""
+        values = [getattr(s, attr, 0) for s in self._snapshots]
+        if not values:
+            return "(no data)"
+
+        mn, mx = min(values), max(values)
+        if mx == mn:
+            return "▁" * min(len(values), width)
+
+        # Scale to 8 braille levels
+        chars = ["▁", "▂", "▃", "▄", "▅", "▆", "▇", "█"]
+        step = (mx - mn) / max(len(chars) - 1, 1)
+
+        # Downsample if needed
+        if len(values) > width:
+            indices = [int(i * len(values) / width) for i in range(width)]
+            values = [values[i] for i in indices]
+
+        return "".join(chars[min(int((v - mn) / step), len(chars) - 1)] for v in values)
+
+    def generate_summary(self, report: TrendReport | None = None) -> str:
+        """Generate a one-line summary suitable for a dashboard header."""
+        if report is None:
+            report = self.generate_trend_report()
+
+        if report.latest is None:
+            return "📊 Quality: no data yet"
+
+        spark = self.generate_sparkline("total_issues")
+        last = report.latest
+        regressions = sum(1 for d in report.deltas if d.direction == "regressed")
+        icon = "✅" if regressions == 0 else "⚠️" if regressions <= 2 else "🔴"
+
+        return (
+            f"{icon} Quality: {last.total_issues} issues / {last.total_files} files "
+            f"[{spark}] "
+            f"{regressions} regressed"
+        )
+
+    def generate_multi_trend_report(self, lookback: int = 10) -> str:
+        """Generate a multi-point trend report comparing all recent snapshots."""
+        snapshots = self._snapshots[-lookback:]
+        if len(snapshots) < 2:
+            return "Need at least 2 snapshots for multi-trend analysis."
+
+        lines = [
+            f"📈 Quality Trend (last {len(snapshots)}/{len(self._snapshots)} snapshots)",
+            "",
+            "  Issues   Errors   Warnings   Files   Date",
+            "  " + "-" * 50,
+        ]
+
+        for s in snapshots:
+            date = time.strftime("%m-%d %H:%M", time.localtime(s.timestamp))
+            lines.append(
+                f"  {s.total_issues:>6d}  {s.errors:>6d}  {s.warnings:>8d}  {s.total_files:>5d}   {date}"
+            )
+
+        lines.append("")
+        lines.append(f"  Sparkline (issues): {self.generate_sparkline('total_issues')}")
+        lines.append(f"  Sparkline (errors):  {self.generate_sparkline('errors')}")
+        return "\n".join(lines)

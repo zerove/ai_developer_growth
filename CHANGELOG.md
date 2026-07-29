@@ -5,7 +5,23 @@ All notable changes to the AI Developer Growth project.
 ## [Unreleased]
 
 ### Added
-- (预留)
+- **方向H: 多 Agent 实战演示脚本** — `examples/multi-agent-orch/demo-adg-workflow.py`
+  - 模拟 PM/Architect/ADG Scan/Coder/Reviewer 全流程
+  - 实时 ADG 扫描 + 修复验证
+  - 修复前/后代码质量对比
+- **方向J: 贡献者仪表板增强** — `tools/scripts/contributor_dashboard.py`
+  - 新增 `analyze_quality_fixes()` 方法追踪质量修复者
+  - 仪表板新增「质量修复统计」板块
+- **方向K: 质量趋势仪表板增强** — `tools/scripts/rules_engine/quality_trends.py`
+  - 新增 `generate_sparkline()` ASCII 迷你趋势图
+  - 新增 `generate_summary()` 单行摘要
+  - 新增 `generate_multi_trend_report()` 多点趋势表格
+- **方向E: 跨项目扫描文章** — `case-studies/adg-cross-project-scan.md`
+  - 记录扫描 FastAPI/Flask/Django/httpx/ruff 5 个项目的发现
+  - 真实问题/误报分析、规则效率排名
+- **CLI 扩展** — `ai-dev-framework/src/ai_dev_framework/cli.py`
+  - 新增 `adg dashboard contributor` 子命令
+  - 新增 `adg dashboard trend [--sparkline|--multi]` 子命令
 
 ### Fixed
 - (预留)

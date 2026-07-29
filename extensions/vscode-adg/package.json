@@ -1,209 +1,43 @@
 {
-  "name": "adg-governance",
-  "displayName": "ADG Governance - AI Developer Growth",
-  "description": "Code governance rules for 22 languages and 9 frameworks",
-  "version": "1.0.0",
-  "publisher": "ai-developer-growth",
+  "name": "vscode-adg",
+  "displayName": "ADG Code Quality",
+  "description": "AI Developer Governance — 实时代码质量扫描",
+  "version": "0.1.0",
+  "publisher": "adg",
+  "license": "MIT",
   "engines": {
     "vscode": "^1.85.0"
   },
-  "categories": ["Linters", "Programming Languages", "Other"],
-  "keywords": ["governance", "linting", "anti-patterns", "security", "code-quality", "sarif", "quick-fix"],
-  "activationEvents": [
-    "onLanguage:python",
-    "onLanguage:javascript",
-    "onLanguage:typescript",
-    "onLanguage:rust",
-    "onLanguage:go",
-    "onLanguage:java",
-    "onLanguage:kotlin",
-    "onLanguage:ruby",
-    "onLanguage:php",
-    "onLanguage:csharp",
-    "workspaceContains:**/.adg/**",
-    "workspaceContains:**/pyproject.toml",
-    "workspaceContains:**/package.json",
-    "workspaceContains:**/Cargo.toml",
-    "workspaceContains:**/go.mod"
-  ],
-  "main": "./out/extension.js",
+  "categories": ["Linters", "Programming Languages"],
+  "keywords": ["adg", "governance", "code-quality", "security", "lint"],
+  "activationEvents": ["onStartupFinished"],
+  "main": "./extension.js",
   "contributes": {
     "commands": [
       {
-        "command": "adg.check",
-        "title": "ADG: Check Current File"
+        "command": "adg.scanFile",
+        "title": "ADG: Scan Current File"
       },
       {
-        "command": "adg.checkProject",
-        "title": "ADG: Check Project"
-      },
-      {
-        "command": "adg.checkIncremental",
-        "title": "ADG: Check Changed Files (git diff)"
-      },
-      {
-        "command": "adg.showOutput",
-        "title": "ADG: Show Output Panel"
-      },
-      {
-        "command": "adg.fix",
-        "title": "ADG: Auto-fix Current File"
-      },
-      {
-        "command": "adg.fixProject",
-        "title": "ADG: Auto-fix Project"
-      },
-      {
-        "command": "adg.listRules",
-        "title": "ADG: List Rules for Language"
-      },
-      {
-        "command": "adg.importSarif",
-        "title": "ADG: Import SARIF Report"
-      },
-      {
-        "command": "adg.showTrend",
-        "title": "ADG: Show Quality Trend"
-      },
-      {
-        "command": "adg.installHooks",
-        "title": "ADG: Install Git Hooks"
-      },
-      {
-        "command": "adg.createRule",
-        "title": "ADG: Create Custom Rule"
-      }
-    ],
-    "menus": {
-      "editor/context": [
-        {
-          "command": "adg.check",
-          "when": "editorHasSelection",
-          "group": "ADG@1"
-        },
-        {
-          "command": "adg.fix",
-          "when": "editorHasSelection",
-          "group": "ADG@2"
-        }
-      ],
-      "editor/title": [
-        {
-          "command": "adg.checkProject",
-          "group": "navigation"
-        }
-      ]
-    },
-    "keybindings": [
-      {
-        "command": "adg.check",
-        "key": "ctrl+shift+g",
-        "mac": "cmd+shift+g"
-      },
-      {
-        "command": "adg.fix",
-        "key": "ctrl+shift+f",
-        "mac": "cmd+shift+f"
+        "command": "adg.scanWorkspace",
+        "title": "ADG: Scan Workspace"
       }
     ],
     "configuration": {
-      "title": "ADG Governance",
+      "title": "ADG",
       "properties": {
-        "adg.executablePath": {
-          "type": "string",
-          "default": "adg",
-          "description": "Path to ADG executable"
+        "adg.scanOnSave": {
+          "type": "boolean",
+          "default": true,
+          "description": "在保存时自动扫描文件"
         },
-        "adg.severityFilter": {
+        "adg.severityThreshold": {
           "type": "string",
           "enum": ["error", "warning", "info"],
           "default": "warning",
-          "description": "Minimum severity to show"
-        },
-        "adg.enableOnSave": {
-          "type": "boolean",
-          "default": true,
-          "description": "Run ADG check on file save"
-        },
-        "adg.enableOnType": {
-          "type": "boolean",
-          "default": false,
-          "description": "Run ADG check on type (may be slow)"
-        },
-        "adg.debounceDelay": {
-          "type": "number",
-          "default": 500,
-          "description": "Debounce delay in ms for on-type checking"
-        },
-        "adg.enableIncremental": {
-          "type": "boolean",
-          "default": false,
-          "description": "Only check changed files (git diff)"
-        },
-        "adg.showStatusBar": {
-          "type": "boolean",
-          "default": true,
-          "description": "Show issue count in status bar"
-        },
-        "adg.showCodeLens": {
-          "type": "boolean",
-          "default": true,
-          "description": "Show issue count as CodeLens above functions"
-        },
-        "adg.enableQuickFix": {
-          "type": "boolean",
-          "default": true,
-          "description": "Enable Quick Fix code actions for fixable issues"
-        },
-        "adg.sarifFilePattern": {
-          "type": "string",
-          "default": "**/*.sarif",
-          "description": "Glob pattern for SARIF files to auto-import"
-        },
-        "adg.trendFile": {
-          "type": "string",
-          "default": ".adg/trend.json",
-          "description": "Path to trend data file"
-        },
-        "adg.lintOnOpen": {
-          "type": "boolean",
-          "default": true,
-          "description": "Run check when a file is opened"
-        },
-        "adg.excludePatterns": {
-          "type": "array",
-          "items": { "type": "string" },
-          "default": ["**/node_modules/**", "**/.git/**", "**/target/**"],
-          "description": "Glob patterns to exclude from checking"
+          "description": "问题严重性阈值"
         }
       }
-    },
-    "languages": [
-      {
-        "id": "adg-output",
-        "aliases": ["ADG Output", "adg-output"],
-        "extensions": [".adg-output"]
-      },
-      {
-        "id": "sarif",
-        "aliases": ["SARIF", "sarif"],
-        "extensions": [".sarif"]
-      }
-    ]
-  },
-  "scripts": {
-    "vscode:prepublish": "npm run compile",
-    "compile": "tsc -p ./",
-    "watch": "tsc -watch -p ./",
-    "lint": "eslint src --ext ts",
-    "test": "node ./out/test/runTest.js"
-  },
-  "devDependencies": {
-    "@types/node": "^20.11.0",
-    "@types/vscode": "^1.85.0",
-    "@vscode/test-electron": "^2.3.6",
-    "eslint": "^8.56.0",
-    "typescript": "^5.3.3"
-  },
-  "dependencies": {}
+    }
+  }
 }

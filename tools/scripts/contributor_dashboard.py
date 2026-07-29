@@ -108,6 +108,29 @@ class ContributorDashboard:
 
         return {"total": total, "categories": categories}
 
+    def analyze_quality_fixes(self) -> dict[str, Any]:
+        """分析质量修复情况 — 每个贡献者修复了多少质量问题"""
+        try:
+            import subprocess
+
+            # 从 git log 分析修复提交
+            result = subprocess.run(
+                ["git", "log", "--all", "--oneline", "--grep=fix", "--grep=quality", "--format=%an %s", "--regexp-ignore-case"],
+                capture_output=True, text=True, cwd=self.repo_root
+            )
+            fixers: Counter[str] = Counter()
+            for line in result.stdout.strip().split("\n"):
+                if line.strip():
+                    name = line.split(" ", 1)[0]
+                    fixers[name] += 1
+
+            return {
+                "total_fix_commits": sum(fixers.values()),
+                "top_fixers": [{"name": k, "fixes": v} for k, v in fixers.most_common(10)],
+            }
+        except (subprocess.SubprocessError, ValueError, FileNotFoundError):
+            return {"total_fix_commits": 0, "top_fixers": []}
+
     def generate_dashboard(self, output_format: str = "markdown") -> str:
         """生成仪表板"""
         case_stats = self.analyze_case_studies()
@@ -159,6 +182,16 @@ class ContributorDashboard:
             lines.append("")
             lines.append(f"**总贡献者**: {contrib_stats['total_contributors']} 人")
             lines.append("")
+
+            # 质量修复统计
+            fix_stats = self.analyze_quality_fixes()
+            if fix_stats["total_fix_commits"] > 0:
+                lines.append("## 🔧 质量修复统计")
+                lines.append(f"- **总修复提交**: {fix_stats['total_fix_commits']} 次")
+                lines.append("### 修复者排行:")
+                for f in fix_stats["top_fixers"][:5]:
+                    lines.append(f"- {f['name']}: {f['fixes']} 次修复")
+                lines.append("")
 
             lines.append("---")
             lines.append("*由 `tools/scripts/contributor_dashboard.py` 自动生成*")

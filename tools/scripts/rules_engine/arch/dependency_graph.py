@@ -107,8 +107,8 @@ class DependencyGraph:
         # 2. Detect cycles
         issues.extend(self._find_cycles())
 
-        # 3. Detect hub modules
-        issues.extend(self._find_hubs(max_deps=15))
+        # 3. Detect hub modules (threshold 25, skip __init__.py)
+        issues.extend(self._find_hubs(max_deps=25))
 
         return issues
 
@@ -185,10 +185,19 @@ class DependencyGraph:
 
         return issues
 
-    def _find_hubs(self, max_deps: int = 15) -> list[DependencyIssue]:
-        """Detect hub modules that depend on too many other modules."""
+    def _find_hubs(self, max_deps: int = 25) -> list[DependencyIssue]:
+        """Detect hub modules that depend on too many other modules.
+
+        Args:
+            max_deps: Maximum allowed dependencies before warning.
+                      Raised from 15 to 25 because orchestrator/entry-point
+                      files naturally import many modules.
+        """
         issues: list[DependencyIssue] = []
         for module, deps in self._graph.items():
+            # Skip __init__.py files (they are package aggregators by design)
+            if "__init__.py" in module or module.endswith("__init__"):
+                continue
             if len(deps) > max_deps:
                 issues.append(
                     DependencyIssue(

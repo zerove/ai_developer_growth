@@ -1,62 +1,59 @@
-anti_patterns:
-# ── 项目特定规则（自动分析生成）───────────────
-- category: code_quality
-  exclude_files:
-  - __init__.py
-  fix_hint: Use logger.info() instead of print()
-  id: adg-print-logging
-  message: Use logging module instead of print()
-  name: Missing logging
-  pattern: ^\s*print\s*\(
-  severity: warning
-- category: error_handling
-  fix_hint: Replace 'except:' with 'except SpecificException:'
-  id: adg-bare-except
-  message: 'Avoid bare except: use specific exception types'
-  name: Bare except clause
-  pattern: 'except\s*:'
+custom_rules:
+- category: security
+  fix_hint: Review function usage
+  id: sec-001
+  language: python
+  message: Dangerous function call detected
+  pattern: \b\w+\s*\([^)]*\)
   severity: error
-
-# ── 旧版安全规则（已转为新格式）────────────────
 - category: security
   fix_hint: Use subprocess.run() with shell=False
-  id: sec-os-system
+  id: sec-002
   language: python
   message: os.system() is vulnerable to command injection
-  name: os.system() command injection
   pattern: \bos\.system\s*\(
   severity: error
 - category: security
-  fix_hint: Use subprocess.Popen()
-  id: sec-os-popen
+  fix_hint: Use json or messagepack for serialization
+  id: sec-003
   language: python
-  message: os.popen() is insecure
-  name: os.popen() insecure subprocess
-  pattern: \bos\.popen\s*\(
+  message: pickle deserialization can be exploited
+  pattern: import\s+pickle
+  severity: warning
+- category: security
+  fix_hint: Use yaml.safe_load()
+  id: sec-004
+  language: python
+  message: yaml.load() without Loader is unsafe
+  pattern: yaml\.load\s*\([^)]*\)
   severity: warning
 - category: security
   fix_hint: Use subprocess.run()
-  id: sec-subprocess-call
+  id: sec-005
   language: python
   message: subprocess.call() should use shell=False
-  name: subprocess.call() warning
   pattern: subprocess\.call\s*\(
   severity: info
 - category: security
+  fix_hint: Avoid dynamic code execution
+  id: sec-101
+  language: javascript
+  message: Function constructor is dangerous
+  pattern: \bFunction\s*\(
+  severity: error
+- category: security
   fix_hint: Use textContent or sanitize input
-  id: sec-innerhtml-xss
+  id: sec-102
   language: javascript
   message: innerHTML can lead to XSS
-  name: innerHTML XSS risk
   pattern: \.innerHTML\s*=
   severity: warning
 - category: security
   fix_hint: Use DOM manipulation methods
-  id: sec-document-write
+  id: sec-103
   language: javascript
   message: document.write() is dangerous
-  name: document.write() XSS risk
   pattern: document\.write\s*\(
   severity: warning
-config_version: '1.0'
-source: auto-generated-by-team-patterns
+installed_packs:
+- security-essentials

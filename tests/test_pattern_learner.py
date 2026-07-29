@@ -42,11 +42,11 @@ class TestPatternLearner:
         """run_pattern_learning prints the correct message."""
         run_pattern_learning(Path("."))
         captured = capsys.readouterr()
-        assert "AI 学习完成" in captured.out
+        assert "AI 分析完成" in captured.out
 
     @pytest.mark.slow
     def test_run_pattern_learning_empty_result(self, capsys):
         """run_pattern_learning works with any path."""
         run_pattern_learning(Path("/tmp"))
         captured = capsys.readouterr()
-        assert "AI 学习完成" in captured.out
+        assert "AI 分析完成" in captured.out

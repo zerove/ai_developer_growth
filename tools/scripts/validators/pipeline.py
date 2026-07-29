@@ -155,7 +155,7 @@ def _rules_hash(language: str, framework_dir: Path | None = None) -> str:
     if not rule_path.exists():
         return ""
     try:
-        return hashlib.md5(rule_path.read_bytes()).hexdigest()  # nosec - file caching, not security
+        return hashlib.sha256(rule_path.read_bytes()).hexdigest()
     except OSError:
         return ""
 

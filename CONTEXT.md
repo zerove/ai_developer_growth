@@ -2,7 +2,7 @@
 
 ## 项目状态
 
-- **阶段**: Phase 15 完成 - validate_language_rules 拆分 + CI 增强 + 测试覆盖 (2026-07-24)
+- **阶段**: Phase 16 完成 - 实战验证 + 包发布 + 内容精炼 + 文章 (2026-07-29)
 - **成熟度**: 99/100 (优秀) - 详见 AUDIT_REPORT.md
 - **核心资产**: 知识库 (218 篇文档) + 治理框架 (26 语言规则 + 11 框架 + 12 领域 = 44 规范) + 35 真实案例 + 7 代码示例 (含向量搜索)
 
@@ -10,6 +10,7 @@
 
 | 日期 | 决策 | 背景 | 影响 |
 |------|------|------|------|
+| 2026-07-29 | Phase 16: 实战验证 + 包发布 + 内容精炼 + 文章 | 从内部建设转向外部验证和影响力 | 4 个方向同时推进，项目进化到实战阶段 |
 | 2026-07-24 | Phase 15: validate_language_rules 拆分 + CI/CD + 覆盖率 | 1115→142+731 行, CI 覆盖率阈值 75%, linter_runner 0→99% | 1139 测试, 模块化验证器, 自动化质量门禁 |
 | 2026-07-24 | Phase 14: hooks 拆分 + 集成测试 + 类型安全 | 747→260 行, 34 集成测试, mypy strict 19→6 | 2474 测试, 模块化架构, 类型安全 |
 | 2026-07-23 | 语言规则优化 + rules/ 包重构 | 21 种语言规则 + 统一 CLI + Web 基类 + 懒加载 | 748 测试全部通过，代码质量提升 |通过，代码质量提升 |
@@ -23,6 +24,11 @@
 
 ## 已完成模块
 
+- ✅ Phase 16 实战验证 + 包发布 + 内容精炼 + 文章
+  - ai-dev-framework 打包发布: pyproject.toml + CLI (adg) + wheel 构建验证通过
+  - 实战验证: quality-gate 审计项目自身 tools/ 目录, 发现 85 个问题, 修复 4 处 MD5 安全风险
+  - 实战案例: case-studies/governance-self-audit.md (用自己的药医自己)
+  - 高质量文章: article-ai-developer-evolution.md (从代码编写者到 AI 协同架构师)
 - ✅ Phase 15 validate_language_rules 拆分 + CI 增强 + 测试覆盖
   - validate_language_rules.py 拆分为 validators/ 包 (1115→142+731 行)
   - validators/: models.py, pipeline.py, cli.py, health.py, __init__.py
@@ -165,4 +171,4 @@
 
 ---
 
-*最后更新: 2026-07-23 22:26*
+*最后更新: 2026-07-29*

@@ -165,7 +165,7 @@ class FileCache:
     @staticmethod
     def _file_hash(filepath: str) -> str:
         """Calculate file hash for change detection."""
-        h = hashlib.md5()  # nosec - used for file caching, not security
+        h = hashlib.sha256()
         try:
             with open(filepath, "rb") as f:
                 for chunk in iter(lambda: f.read(8192), b""):

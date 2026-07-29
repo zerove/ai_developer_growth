@@ -1,0 +1,36 @@
+[build-system]
+requires = ["setuptools>=68.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "ai-dev-framework"
+version = "0.1.0"
+description = "AI Agent 开发治理框架 — 适用于任何项目的 AI Agent 开发治理标准"
+readme = "README.md"
+license = {text = "MIT"}
+authors = [
+    {name = "Zerove", email = "zerove@example.com"},
+]
+keywords = ["ai", "governance", "agent", "framework", "code-quality"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Software Development :: Quality Assurance",
+]
+requires-python = ">=3.10"
+
+[project.urls]
+Homepage = "https://github.com/zerove/ai_developer_growth"
+Repository = "https://github.com/zerove/ai_developer_growth"
+Documentation = "https://zerove.github.io/ai_developer_growth"
+
+[project.scripts]
+adg = "ai_dev_framework.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]

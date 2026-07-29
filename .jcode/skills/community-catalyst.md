@@ -15,6 +15,7 @@
 - `generate-adr <pr>` - 从 PR 生成 ADR
 - `update-roadmap` - 更新路线图进度
 - `leaderboard` - 贡献者排行榜
+- `fix-stats` - 质量修复排行榜（含修复统计）
 
 ## Examples
 

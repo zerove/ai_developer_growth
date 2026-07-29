@@ -22,9 +22,7 @@
         "validate": {
           "description": "验证新提交案例",
           "command": "python tools/scripts/validate_case_study.py --path {file}",
-          "args": [
-            "file"
-          ],
+          "args": ["file"],
           "output": "markdown"
         },
         "sync": {
@@ -39,12 +37,7 @@
         }
       },
       "triggers": {
-        "on_file_change": [
-          "case-studies/**",
-          "docs/**",
-          "INDEX.md",
-          "MOC.md"
-        ],
+        "on_file_change": ["case-studies/**", "docs/**", "INDEX.md", "MOC.md"],
         "on_pr": true,
         "scheduled": "0 10 * * 1"
       }
@@ -53,7 +46,7 @@
       "name": "governance-auditor",
       "display_name": "治理审计员",
       "description": "自动化审计代码质量、安全漏洞、治理标准合规性",
-      "version": "1.1.0",
+      "version": "1.2.0",
       "author": "ai-developer-growth",
       "entry_point": "scripts/governance-auditor.py",
       "actions": {
@@ -88,13 +81,18 @@
           "output": "text"
         },
         "check-ai-sdlc-compliance": {
-          "description": "检查 AI-SDLC 合规性",
+          "description": "检查 AI-SDLC 合规性（文档+配置检查）",
           "command": "python .jcode/scripts/governance-auditor.py check-ai-sdlc-compliance",
           "output": "text"
         },
         "audit-hallucination-risks": {
           "description": "审计幻觉风险",
           "command": "python .jcode/scripts/governance-auditor.py audit-hallucination-risks",
+          "output": "text"
+        },
+        "audit-sdlc": {
+          "description": "AI-SDLC 5阶段流程合规审计（需求→设计→编码→测试→部署）",
+          "command": "adg-dev audit sdlc --path .",
           "output": "text"
         },
         "full": {
@@ -113,7 +111,7 @@
       "name": "workflow-optimizer",
       "display_name": "工作流优化师",
       "description": "分析 AI 协作效率数据、优化全周期工作流、推荐工具组合",
-      "version": "1.0.0",
+      "version": "1.1.0",
       "author": "ai-developer-growth",
       "entry_point": "scripts/workflow-optimizer.py",
       "actions": {
@@ -133,8 +131,8 @@
           "output": "markdown"
         },
         "report": {
-          "description": "生成效率报告",
-          "command": "python tools/scripts/contributor_dashboard.py --report",
+          "description": "生成效率报告（含增强后的贡献者仪表板和修复统计）",
+          "command": "adg-dev dashboard contributor",
           "output": "markdown"
         }
       },
@@ -158,22 +156,23 @@
         "validate": {
           "description": "验证社区案例",
           "command": "python tools/scripts/validate_case_study.py --path {file}",
-          "args": [
-            "file"
-          ],
+          "args": ["file"],
           "output": "markdown"
         },
         "generate-adr": {
           "description": "从 PR 生成 ADR",
           "command": "python tools/scripts/adr_generator.py --pr {pr_number}",
-          "args": [
-            "pr_number"
-          ],
+          "args": ["pr_number"],
           "output": "markdown"
         },
         "leaderboard": {
-          "description": "贡献者排行榜",
-          "command": "python tools/scripts/contributor_dashboard.py --leaderboard",
+          "description": "贡献者排行榜（含质量修复统计）",
+          "command": "adg-dev dashboard contributor",
+          "output": "markdown"
+        },
+        "fix-stats": {
+          "description": "质量修复排行榜",
+          "command": "adg-dev dashboard contributor",
           "output": "markdown"
         }
       },
@@ -212,12 +211,7 @@
         }
       },
       "triggers": {
-        "on_file_change": [
-          "docs/efficiency/ai-*.md",
-          "GOVERNANCE.md",
-          "INDEX.md",
-          "CLAUDE.md"
-        ],
+        "on_file_change": ["docs/efficiency/ai-*.md", "GOVERNANCE.md", "INDEX.md", "CLAUDE.md"],
         "on_pr": true,
         "scheduled": "0 8 * * 1"
       }
@@ -257,14 +251,29 @@
     "quality-snapshot": {
       "name": "quality-snapshot",
       "display_name": "质量快照",
-      "description": "记录当前项目质量快照——错误数、警告数、文件数，存入质量趋势",
-      "version": "1.0.0",
+      "description": "记录当前项目质量快照——错误数、警告数、文件数，存入质量趋势。支持 sparkline 迷你趋势图和多点对比表格。",
+      "version": "1.1.0",
       "author": "ai-developer-growth",
       "entry_point": "",
       "actions": {
         "take": {
-          "description": "记录质量快照",
-          "command": "python -c \"from pathlib import Path; from tools.scripts.rules_engine.quality_trends import QualityTracker; tracker = QualityTracker(); s = tracker.take_snapshot(Path('.')); print(f'文件: {s.total_files}, 问题: {s.total_issues}(错误:{s.errors}, 警告:{s.warnings})'); report = tracker.generate_trend_report(); print(f'趋势: {report.snapshot_count} 个快照'); [print(f'  {d.direction} {d.metric}: {d.previous}→{d.current}') for d in report.deltas if d.direction!='unchanged']\"",
+          "description": "记录质量快照 + 趋势摘要",
+          "command": "python -c \"from pathlib import Path; from tools.scripts.rules_engine.quality_trends import QualityTracker; t = QualityTracker(); s = t.take_snapshot(Path('.')); r = t.generate_trend_report(); print(t.generate_summary(r)); print(); print(t.format_trend_report(r))\"",
+          "output": "text"
+        },
+        "trend": {
+          "description": "显示历史趋势（含 sparkline）",
+          "command": "python -c \"from pathlib import Path; from tools.scripts.rules_engine.quality_trends import QualityTracker; t = QualityTracker(); s = t.take_snapshot(Path('.')); print(f'Sparkline (issues): {t.generate_sparkline(\\\"total_issues\\\")}'); print(f'Sparkline (errors):  {t.generate_sparkline(\\\"errors\\\")}'); print(); r = t.generate_trend_report(); print(t.format_trend_report(r))\"",
+          "output": "text"
+        },
+        "multi": {
+          "description": "多点趋势对比表格",
+          "command": "python -c \"from pathlib import Path; from tools.scripts.rules_engine.quality_trends import QualityTracker; t = QualityTracker(); s = t.take_snapshot(Path('.')); print(t.generate_multi_trend_report())\"",
+          "output": "text"
+        },
+        "sparkline": {
+          "description": "仅显示 sparkline 迷你趋势图",
+          "command": "python -c \"from tools.scripts.rules_engine.quality_trends import QualityTracker; t = QualityTracker(); print(f'Issues sparkline: {t.generate_sparkline(\\\"total_issues\\\")}'); print(f'Errors sparkline:  {t.generate_sparkline(\\\"errors\\\")}')\"",
           "output": "text"
         }
       },
@@ -275,14 +284,24 @@
     "feedback-stats": {
       "name": "feedback-stats",
       "display_name": "误报统计",
-      "description": "查看各规则的误报统计、自动降级情况",
-      "version": "1.0.0",
+      "description": "查看各规则的误报统计、自动降级情况、反馈管理",
+      "version": "1.1.0",
       "author": "ai-developer-growth",
       "entry_point": "",
       "actions": {
         "stats": {
           "description": "显示误报统计",
           "command": "python -c \"from tools.scripts.rules_engine.feedback import get_feedback_stats; s = get_feedback_stats(); print(f'总反馈: {s[\\\"total_feedback\\\"]}, 追踪规则: {s[\\\"tracked_rules\\\"]}, 已降级: {s[\\\"downgraded_rules\\\"]}')\"",
+          "output": "text"
+        },
+        "details": {
+          "description": "显示详细反馈数据（含自动排除/降级详情）",
+          "command": "adg-dev feedback --verbose",
+          "output": "text"
+        },
+        "reset": {
+          "description": "重置所有反馈数据",
+          "command": "adg-dev feedback --reset",
           "output": "text"
         }
       },
@@ -291,15 +310,35 @@
     "dashboard": {
       "name": "dashboard",
       "display_name": "质量仪表盘",
-      "description": "启动本地质量仪表盘 Web 服务",
-      "version": "1.0.0",
+      "description": "质量仪表盘——Web 服务、贡献者统计、质量趋势、sparkline",
+      "version": "1.1.0",
       "author": "ai-developer-growth",
       "entry_point": "",
       "actions": {
         "start": {
-          "description": "启动仪表盘(默认端口8765)",
+          "description": "启动 Web 仪表盘(默认端口8765)",
           "command": "python -m tools.scripts.rules_engine.dashboard",
           "output": "html"
+        },
+        "contributor": {
+          "description": "贡献者仪表盘（含质量修复统计）",
+          "command": "adg-dev dashboard contributor --path .",
+          "output": "markdown"
+        },
+        "trend": {
+          "description": "质量趋势报告（含 sparkline）",
+          "command": "adg-dev dashboard trend --path .",
+          "output": "text"
+        },
+        "sparkline": {
+          "description": "仅显示 sparkline 迷你趋势图",
+          "command": "adg-dev dashboard trend --sparkline",
+          "output": "text"
+        },
+        "multi-trend": {
+          "description": "多点趋势对比表格",
+          "command": "adg-dev dashboard trend --multi",
+          "output": "text"
         }
       },
       "triggers": {}
@@ -325,69 +364,40 @@
     "pr-review": {
       "description": "PR 审查工作流",
       "steps": [
-        {
-          "skill": "governance-auditor",
-          "action": "full"
-        },
-        {
-          "skill": "knowledge-curator",
-          "action": "validate",
-          "condition": "files_contain('case-studies/')"
-        },
-        {
-          "skill": "community-catalyst",
-          "action": "triage"
-        }
+        { "skill": "governance-auditor", "action": "full" },
+        { "skill": "knowledge-curator", "action": "validate", "condition": "files_contain('case-studies/')" },
+        { "skill": "community-catalyst", "action": "triage" }
       ]
     },
     "weekly-maintenance": {
       "description": "每周维护工作流",
       "steps": [
-        {
-          "skill": "governance-auditor",
-          "action": "full"
-        },
-        {
-          "skill": "knowledge-curator",
-          "action": "scan"
-        },
-        {
-          "skill": "knowledge-curator",
-          "action": "audit"
-        },
-        {
-          "skill": "knowledge-curator",
-          "action": "update-moc"
-        },
-        {
-          "skill": "workflow-optimizer",
-          "action": "report"
-        }
+        { "skill": "governance-auditor", "action": "full" },
+        { "skill": "knowledge-curator", "action": "scan" },
+        { "skill": "knowledge-curator", "action": "audit" },
+        { "skill": "knowledge-curator", "action": "update-moc" },
+        { "skill": "quality-snapshot", "action": "trend" },
+        { "skill": "workflow-optimizer", "action": "report" }
       ]
     },
     "release-prep": {
       "description": "发布准备工作流",
       "steps": [
-        {
-          "skill": "governance-auditor",
-          "action": "full"
-        },
-        {
-          "skill": "knowledge-curator",
-          "action": "scan"
-        },
-        {
-          "skill": "knowledge-curator",
-          "action": "audit"
-        },
-        {
-          "skill": "workflow-optimizer",
-          "action": "report"
-        },
-        {
-          "skill": "community-catalyst",
-          "action": "leaderboard"
-        }
+        { "skill": "governance-auditor", "action": "full" },
+        { "skill": "governance-auditor", "action": "audit-sdlc" },
+        { "skill": "knowledge-curator", "action": "scan" },
+        { "skill": "knowledge-curator", "action": "audit" },
+        { "skill": "quality-snapshot", "action": "multi" },
+        { "skill": "workflow-optimizer", "action": "report" },
+        { "skill": "community-catalyst", "action": "leaderboard" }
+      ]
+    },
+    "quick-health": {
+      "description": "快速健康检查工作流",
+      "steps": [
+        { "skill": "quality-snapshot", "action": "take" },
+        { "skill": "feedback-stats", "action": "stats" },
+        { "skill": "governance-auditor", "action": "lint" }
       ]
     }
   }

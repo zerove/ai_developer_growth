@@ -18,6 +18,7 @@
 - `validate-governance-docs` - 验证15个治理层文档
 - `check-ai-sdlc-compliance` - 检查 AI-SDLC 合规性
 - `audit-hallucination-risks` - 审计幻觉风险
+- `audit-sdlc` - AI-SDLC 5 阶段合规审计
 - `validate-agent-definition` - 验证 Agent 定义格式
 - `check-ai-annotation` - 检查 AI 代码标注
 - `ai-quality-gate` - 运行 AI 代码质量门禁
@@ -44,6 +45,9 @@
 # 审计幻觉风险
 /governance-auditor audit-hallucination-risks
 
+# AI-SDLC 合规审计
+/governance-auditor audit-sdlc
+
 # 验证 Agent 定义
 /governance-auditor validate-agent-definition
 
@@ -69,6 +73,7 @@ This skill runs the following commands:
 9. `python tools/scripts/validate_agent_definition.py` - 验证 Agent 定义格式
 10. `python tools/scripts/check_ai_annotation.py` - 检查 AI 代码标注
 11. `python tools/scripts/ai_quality_gate.py --full` - AI 代码质量门禁
+12. `adg-dev audit sdlc --path <project>` - AI-SDLC 5 阶段合规审计（需求→设计→编码→测试→部署）
 
 ## Enforcement Scripts
 

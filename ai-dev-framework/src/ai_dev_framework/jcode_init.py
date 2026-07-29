@@ -114,7 +114,7 @@ jobs:
         run: |
           FILES=$(git diff --name-only --diff-filter=ACM ${{ github.event.before }} ${{ github.sha }} -- '*.py' '*.js' '*.ts' '*.rs' '*.go' '*.java' 2>/dev/null || true)
           if [ -n "$FILES" ]; then
-            adg scan $FILES
+            adg-dev scan $FILES
           else
             echo "No code files changed."
           fi

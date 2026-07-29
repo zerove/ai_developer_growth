@@ -30,7 +30,7 @@ Repository = "https://github.com/zerove/ai_developer_growth"
 Documentation = "https://zerove.github.io/ai_developer_growth"
 
 [project.scripts]
-adg = "ai_dev_framework.cli:main"
+adg-dev = "ai_dev_framework.cli:main"
 
 [tool.setuptools.packages.find]
 where = ["src"]

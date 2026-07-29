@@ -32,6 +32,11 @@ jobs:
         run: |
           pip install ai-dev-framework
 
+      - name: Verify adg-dev installation
+        run: |
+          adg-dev --version
+          adg-dev scan --help
+
       - name: Run ADG scan on changed files
         id: scan
         run: |
@@ -51,13 +56,13 @@ jobs:
           cat /tmp/changed_files.txt >> $GITHUB_OUTPUT
           echo "EOF" >> $GITHUB_OUTPUT
 
-      - name: Run adg scan
+      - name: Run adg-dev scan
         if: steps.scan.outputs.files != ''
         id: adg
         continue-on-error: true
         run: |
           FILES=$(cat /tmp/changed_files.txt | tr '\n' ' ')
-          adg scan $FILES --json > /tmp/adg_results.json 2>&1 || true
+          adg-dev scan $FILES --json > /tmp/adg_results.json 2>&1 || true
           echo "report<<EOF" >> $GITHUB_OUTPUT
           cat /tmp/adg_results.json >> $GITHUB_OUTPUT
           echo "EOF" >> $GITHUB_OUTPUT

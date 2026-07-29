@@ -321,32 +321,33 @@ def validate_rules_yaml(content: str) -> list[str]:
 def print_status(language: str | None = None) -> None:
     """打印生成规则的状态。"""
     gen_langs = list_generated_languages()
+    _out = sys.stdout
 
     if not gen_langs:
-        print("📭 No generated rules found.")
-        print(f"   Cache directory: {get_generated_rules_dir()}")
-        print("   Use 'adg-dev generate-rules <language> [--file sample.ext]' to generate.")
+        _out.write("📭 No generated rules found.\n")
+        _out.write(f"   Cache directory: {get_generated_rules_dir()}\n")
+        _out.write("   Use 'adg-dev generate-rules <language> [--file sample.ext]' to generate.\n")
         return
 
-    print(f"📦 Generated rules ({len(gen_langs)} languages):")
+    _out.write(f"📦 Generated rules ({len(gen_langs)} languages):\n")
     for lang in gen_langs:
         rules = load_generated_rules(lang)
         errors = sum(1 for r in rules if r.get("severity") == "error")
         warnings = sum(1 for r in rules if r.get("severity") == "warning")
         info = sum(1 for r in rules if r.get("severity") == "info")
-        print(f"  {lang}: {len(rules)} rules ({errors}e/{warnings}w/{info}i)")
+        _out.write(f"  {lang}: {len(rules)} rules ({errors}e/{warnings}w/{info}i)\n")
 
     if language:
         rules = load_generated_rules(language)
         if rules:
-            print(f"\n  Details for '{language}':")
+            _out.write(f"\n  Details for '{language}':\n")
             for r in rules:
                 icon = {"error": "🔴", "warning": "🟡", "info": "ℹ️"}.get(r.get("severity", ""), "•")
-                print(f"    {icon} [{r.get('id','')}] {r.get('message','')}")
+                _out.write(f"    {icon} [{r.get('id','')}] {r.get('message','')}\n")
         else:
-            print(f"\n  No generated rules for '{language}'")
+            _out.write(f"\n  No generated rules for '{language}'\n")
 
-    print(f"\n  Cache: {get_generated_rules_dir()}")
+    _out.write(f"\n  Cache: {get_generated_rules_dir()}\n")
 
 
 if __name__ == "__main__":

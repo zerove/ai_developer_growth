@@ -106,6 +106,48 @@ def _detect_language(filepath: str | Path) -> str | None:
 
 _RULES_HOME = Path(os.environ.get("ADG_HOME", Path.home() / ".config" / "adg"))
 
+# 项目本地规则覆盖 — scan.py 所在项目下的 languages/ 目录
+_script_dir = Path(__file__).resolve().parent.parent.parent
+_PROJECT_LANGUAGES = _script_dir / "languages"
+
+
+def _load_project_rules(lang: str) -> list[dict]:
+    """加载项目本地规则覆盖（按 rule ID 覆盖用户级规则）"""
+    project_path = _PROJECT_LANGUAGES / lang / "rules.d" / "anti_patterns.yml"
+    if project_path.exists():
+        return _load_yaml_rules(project_path)
+    return []
+
+
+def _merge_rules_with_overlay(base: list[dict], overlay: list[dict]) -> list[dict]:
+    """合并规则列表：overlay 中同 ID 的规则替换 base 中的"""
+    result: list[dict] = []
+    overlay_ids: set[str] = set()
+
+    for r in overlay:
+        rid = r.get("id")
+        if rid:
+            overlay_ids.add(rid)
+            # 替换 base 中同 ID 的规则
+            replaced = False
+            for i, br in enumerate(result):
+                if br.get("id") == rid:
+                    result[i] = r
+                    replaced = True
+                    break
+            if not replaced:
+                result.append(r)
+        else:
+            result.append(r)  # 无 ID 的 overlay 规则直接附加
+
+    # 追加未被覆盖的 base 规则
+    for r in base:
+        rid = r.get("id")
+        if rid not in overlay_ids:
+            result.append(r)
+
+    return result
+
 
 def _load_yaml_rules(path: Path) -> list[dict]:
     """加载 YAML 规则文件，返回 anti_patterns 列表"""
@@ -122,7 +164,7 @@ def _load_yaml_rules(path: Path) -> list[dict]:
 
 
 def _load_rules_for_language(lang: str) -> list[dict]:
-    """加载指定语言的规则 + 通用规则 + 生成规则"""
+    """加载指定语言的规则 + 通用规则 + 生成规则 + 项目覆盖"""
     rules: list[dict] = []
 
     # 1. 语言特有规则
@@ -146,6 +188,11 @@ def _load_rules_for_language(lang: str) -> list[dict]:
     universal_path = _RULES_HOME / "rules" / "common" / "universal.yml"
     if universal_path.exists():
         rules.extend(_load_yaml_rules(universal_path))
+
+    # 5. 项目本地覆盖规则 (按 rule ID 覆盖以上规则)
+    project_rules = _load_project_rules(lang)
+    if project_rules:
+        rules = _merge_rules_with_overlay(rules, project_rules)
 
     return rules
 
@@ -304,7 +351,9 @@ def print_results(results: list[ScanResult], verbose: bool = False) -> int:
             failed_files += 1
             continue
         if result.issues:
-            print(f"❌ {result.file} ({result.language}) — {len(result.issues)} issue(s)")
+            has_errors = any(issue.severity == "error" for issue in result.issues)
+            icon = "❌" if has_errors else "⚠️"
+            print(f"{icon} {result.file} ({result.language}) — {len(result.issues)} issue(s)")
             for issue in result.issues:
                 sev = issue.severity
                 sev_icon = "🔴" if sev == "error" else ("🟡" if sev == "warning" else "ℹ️")
@@ -312,7 +361,8 @@ def print_results(results: list[ScanResult], verbose: bool = False) -> int:
                 if verbose and issue.fix_hint:
                     print(f"       💡 {issue.fix_hint}")
             total_issues += len(result.issues)
-            failed_files += 1
+            if has_errors:
+                failed_files += 1
         else:
             if verbose:
                 print(f"✅ {result.file} ({result.language})")

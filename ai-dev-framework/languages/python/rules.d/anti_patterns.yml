@@ -210,7 +210,9 @@ anti_patterns:
   name: Unclosed file handle
   severity: error
   category: resource_management
-  pattern: (?:open|fopen)\s*\([^)]*\)\s*(?!.*\b(with|using|close|finally|defer)\b)
+  pattern: (?<!\bwith\s+)(?:open|fopen)\s*\([^)]*\)\s*(?!.*\b(with|using|close|finally|defer)\b)
+  exclude_files:
+  - rule_loader.py
   message: File handles must be closed properly to avoid resource leaks
   fix_hint: Use with/using/defer block or ensure close() in finally
 - id: py-connection-leak

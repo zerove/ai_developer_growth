@@ -11,6 +11,36 @@ from typing import Any
 from tools.scripts._common import rules_dir
 from tools.scripts.rules_engine.logger import logger
 
+# ── 生成规则自动发现 ───────────────────────────────────────
+
+_GENERATED_RULES_CACHE: dict[str, list[dict[str, object]]] = {}
+
+
+def _load_generated_rules(language: str) -> list[dict[str, object]]:
+    """从缓存目录加载 agent 生成的规则。
+
+    生成规则存储在 ~/.config/adg/rules/generated/<language>/rules.d/anti_patterns.yml
+    由 /generate-rules skill 创建。
+
+    Returns:
+        规则列表（空列表表示无生成规则）
+    """
+    if language in _GENERATED_RULES_CACHE:
+        return _GENERATED_RULES_CACHE[language]
+
+    try:
+        from tools.scripts.rules_engine.rule_generator import load_generated_rules
+
+        rules = load_generated_rules(language)
+        _GENERATED_RULES_CACHE[language] = rules
+        if rules:
+            logger.info(f"Loaded {len(rules)} generated rules for '{language}'.")
+        return rules
+    except ImportError:
+        return []
+    except Exception:
+        return []
+
 # ──────────────────────────────────────────────────────────
 # Rule cache
 # ──────────────────────────────────────────────────────────
@@ -112,7 +142,15 @@ def load_rules(language: str, framework_dir: Path | None = None) -> dict[str, ob
     rule_path = framework_dir / "languages" / language / "rules.d" / "anti_patterns.yml"
 
     if not rule_path.exists():
-        # Language not in our database - load universal rules instead
+        # Language not in our database - try generated rules, then universal
+        generated = _load_generated_rules(language)
+        if generated:
+            logger.info(f"Loaded {len(generated)} generated rules for '{language}'.")
+            result: dict[str, object] = {"anti_patterns": generated}
+            common = _load_common_rules(framework_dir)
+            if common:
+                result = _merge_rules(result, common)
+            return result
         logger.info(f"No specific rules for '{language}', using universal quality rules.", file=sys.stderr)
         return _load_universal_rules(framework_dir)
 
@@ -125,6 +163,12 @@ def load_rules(language: str, framework_dir: Path | None = None) -> dict[str, ob
     common = _load_common_rules(framework_dir)
     if common:
         result = _merge_rules(result, common)
+
+    # Load generated rules (from /generate-rules skill)
+    generated = _load_generated_rules(language)
+    if generated:
+        result.setdefault("anti_patterns", [])
+        result["anti_patterns"].extend(generated)
 
     # Cache the result
     _RULE_CACHE[cache_key] = result

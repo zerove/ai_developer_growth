@@ -63,6 +63,15 @@ def main() -> None:
     feedback_parser.add_argument("--verbose", "-v", action="store_true", help="显示详细信息")
     feedback_parser.add_argument("--reset", action="store_true", help="重置所有反馈数据")
 
+    # adg generate-rules
+    gen_parser = sub.add_parser("generate-rules", help="为语言生成代码质量规则（需 Jcode agent 提供规则内容）")
+    gen_parser.add_argument("language", nargs="?", help="语言名称（小写）")
+    gen_parser.add_argument("--file", help="示例文件路径（agent 基于文件分析）")
+    gen_parser.add_argument("--force", action="store_true", help="覆盖已有规则")
+    gen_parser.add_argument("--list", action="store_true", help="列出已生成规则的语言")
+    gen_parser.add_argument("--status", action="store_true", help="查看生成规则状态")
+    gen_parser.add_argument("--verbose", "-v", action="store_true", help="显示详细信息")
+
     # adg dashboard
     dashboard_parser = sub.add_parser("dashboard", help="仪表板与趋势报告")
     dashboard_sub = dashboard_parser.add_subparsers(dest="dashboard_type", help="仪表板类型")
@@ -197,6 +206,45 @@ def main() -> None:
         else:
             print("用法: adg dashboard contributor|trend [--options]")
             sys.exit(1)
+
+    elif args.command == "generate-rules":
+        from tools.scripts.rules_engine.rule_generator import (  # type: ignore[import-untyped]
+            KNOWN_LANGUAGES,
+            list_generated_languages,
+            load_generated_rules,
+            print_status,
+        )
+
+        if args.list:
+            langs = list_generated_languages()
+            if langs:
+                print(f"已生成规则的语言 ({len(langs)}):")
+                for lang in langs:
+                    rules = load_generated_rules(lang)
+                    print(f"  {lang}: {len(rules)} 条规则")
+            else:
+                print("暂无生成规则。使用 `adg-dev generate-rules <language>` 生成。")
+            sys.exit(0)
+
+        if args.status or not args.language:
+            print_status(args.language)
+            sys.exit(0)
+
+        lang = args.language.lower().strip()
+        if lang not in KNOWN_LANGUAGES:
+            print(f"未知语言: '{lang}'。支持的语言:")
+            for name in sorted(KNOWN_LANGUAGES):
+                print(f"  {name}")
+            sys.exit(1)
+
+        print(f"\n📝 为 '{lang}' 生成规则")
+        print(f"   {'使用示例文件: ' + args.file if args.file else '基于 agent 知识'}")
+        print(f"\n   请使用 Jcode skill `/generate-rules {lang}` 来交互式生成规则。")
+        print(f"   agent 会基于对 {lang} 的知识生成适合 ADG 引擎的规则。")
+        print(f"\n   或手动调用 Python API:")
+        print(f"     from tools.scripts.rules_engine.rule_generator import save_rules, format_rules")
+        print(f"     save_rules('{lang}', rules_list, force={args.force})")
+        sys.exit(0)
 
     else:
         parser.print_help()

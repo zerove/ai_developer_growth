@@ -358,6 +358,33 @@
         }
       },
       "triggers": {}
+    },
+    "generate-rules": {
+      "name": "generate-rules",
+      "display_name": "规则生成器",
+      "description": "为 ADG 规则引擎生成新语言的代码质量规则。Jcode agent 本身就是 LLM——基于对语言的知识生成 YAML 规则，保存后自动发现加载。",
+      "version": "1.0.0",
+      "author": "ai-developer-growth",
+      "entry_point": "",
+      "actions": {
+        "generate": {
+          "description": "为指定语言生成规则（交互式，agent 基于知识生成）",
+          "command": "adg-dev generate-rules {language} [--file sample.ext] [--force]",
+          "args": ["language"],
+          "output": "yaml"
+        },
+        "list": {
+          "description": "列出已生成规则的语言",
+          "command": "adg-dev generate-rules --list",
+          "output": "text"
+        },
+        "status": {
+          "description": "查看生成规则状态",
+          "command": "adg-dev generate-rules --status [language]",
+          "output": "text"
+        }
+      },
+      "triggers": {}
     }
   },
   "workflows": {

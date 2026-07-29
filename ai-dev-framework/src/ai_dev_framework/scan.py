@@ -122,7 +122,7 @@ def _load_yaml_rules(path: Path) -> list[dict]:
 
 
 def _load_rules_for_language(lang: str) -> list[dict]:
-    """加载指定语言的规则 + 通用规则"""
+    """加载指定语言的规则 + 通用规则 + 生成规则"""
     rules: list[dict] = []
 
     # 1. 语言特有规则
@@ -130,12 +130,19 @@ def _load_rules_for_language(lang: str) -> list[dict]:
     if lang_path.exists():
         rules.extend(_load_yaml_rules(lang_path))
 
-    # 2. 通用安全规则 (跨语言)
+    # 2. 生成规则 (来自 /generate-rules skill)
+    generated_path = _RULES_HOME / "rules" / "generated" / lang / "rules.d" / "anti_patterns.yml"
+    if generated_path.exists():
+        generated_rules = _load_yaml_rules(generated_path)
+        if generated_rules:
+            rules.extend(generated_rules)
+
+    # 3. 通用安全规则 (跨语言)
     security_path = _RULES_HOME / "rules" / "common" / "security.yml"
     if security_path.exists():
         rules.extend(_load_yaml_rules(security_path))
 
-    # 3. 通用质量规则 (跨语言)
+    # 4. 通用质量规则 (跨语言)
     universal_path = _RULES_HOME / "rules" / "common" / "universal.yml"
     if universal_path.exists():
         rules.extend(_load_yaml_rules(universal_path))

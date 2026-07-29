@@ -11,6 +11,7 @@ from pathlib import Path
 
 from ai_dev_framework import __version__
 from ai_dev_framework.jcode_init import init_jcode
+from ai_dev_framework.scan import scan_files, print_results
 
 
 def main() -> None:
@@ -39,6 +40,12 @@ def main() -> None:
     # adg check
     check_parser = sub.add_parser("check", help="检查项目治理状态")
     check_parser.add_argument("--path", default=".", help="项目路径")
+
+    # adg scan
+    scan_parser = sub.add_parser("scan", help="扫描文件中的反模式")
+    scan_parser.add_argument("files", nargs="+", help="要扫描的文件路径")
+    scan_parser.add_argument("--verbose", "-v", action="store_true", help="显示详细信息")
+    scan_parser.add_argument("--json", action="store_true", help="JSON 格式输出")
 
     args = parser.parse_args()
 
@@ -89,6 +96,38 @@ def main() -> None:
             print(f"✅ Agent 定义: {agents_path}")
         else:
             print("⚠️  未找到 AGENTS.md")
+
+    elif args.command == "scan":
+        import json
+
+        results = scan_files(args.files)
+        if args.json:
+            output = []
+            for r in results:
+                output.append(
+                    {
+                        "file": r.file,
+                        "language": r.language,
+                        "passed": r.passed,
+                        "error": r.error,
+                        "issues": [
+                            {
+                                "line": i.line,
+                                "column": i.column,
+                                "rule_id": i.rule_id,
+                                "severity": i.severity,
+                                "category": i.category,
+                                "message": i.message,
+                                "fix_hint": i.fix_hint,
+                            }
+                            for i in r.issues
+                        ],
+                    }
+                )
+            print(json.dumps(output, indent=2, ensure_ascii=False))
+        else:
+            exit_code = print_results(results, verbose=args.verbose)
+            sys.exit(exit_code)
 
     else:
         parser.print_help()

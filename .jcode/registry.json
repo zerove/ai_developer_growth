@@ -22,7 +22,9 @@
         "validate": {
           "description": "验证新提交案例",
           "command": "python tools/scripts/validate_case_study.py --path {file}",
-          "args": ["file"],
+          "args": [
+            "file"
+          ],
           "output": "markdown"
         },
         "sync": {
@@ -37,7 +39,12 @@
         }
       },
       "triggers": {
-        "on_file_change": ["case-studies/**", "docs/**", "INDEX.md", "MOC.md"],
+        "on_file_change": [
+          "case-studies/**",
+          "docs/**",
+          "INDEX.md",
+          "MOC.md"
+        ],
         "on_pr": true,
         "scheduled": "0 10 * * 1"
       }
@@ -151,13 +158,17 @@
         "validate": {
           "description": "验证社区案例",
           "command": "python tools/scripts/validate_case_study.py --path {file}",
-          "args": ["file"],
+          "args": [
+            "file"
+          ],
           "output": "markdown"
         },
         "generate-adr": {
           "description": "从 PR 生成 ADR",
           "command": "python tools/scripts/adr_generator.py --pr {pr_number}",
-          "args": ["pr_number"],
+          "args": [
+            "pr_number"
+          ],
           "output": "markdown"
         },
         "leaderboard": {
@@ -201,39 +212,182 @@
         }
       },
       "triggers": {
-        "on_file_change": ["docs/efficiency/ai-*.md", "GOVERNANCE.md", "INDEX.md", "CLAUDE.md"],
+        "on_file_change": [
+          "docs/efficiency/ai-*.md",
+          "GOVERNANCE.md",
+          "INDEX.md",
+          "CLAUDE.md"
+        ],
         "on_pr": true,
         "scheduled": "0 8 * * 1"
       }
+    },
+    "arch-check": {
+      "name": "arch-check",
+      "display_name": "架构分析师",
+      "description": "分析项目模块依赖图，检测循环依赖、中心模块、分层违规",
+      "version": "1.0.0",
+      "author": "ai-developer-growth",
+      "entry_point": "",
+      "actions": {
+        "check": {
+          "description": "分析当前项目架构",
+          "command": "python -c \"from pathlib import Path; from tools.scripts.rules_engine.arch import DependencyGraph; g = DependencyGraph(); issues = g.analyze_directory(Path('.')); print(f'模块数: {g.module_count}, 依赖数: {g.edge_count}, 架构问题: {len(issues)}'); [print(f'  [{i.severity}] {i.category}: {i.message}') for i in issues]\"",
+          "output": "text"
+        }
+      },
+      "triggers": {}
+    },
+    "team-patterns": {
+      "name": "team-patterns",
+      "display_name": "团队模式学习",
+      "description": "分析团队编码模式——命名风格、错误处理习惯、高频违规",
+      "version": "1.0.0",
+      "author": "ai-developer-growth",
+      "entry_point": "",
+      "actions": {
+        "learn": {
+          "description": "分析团队编码模式",
+          "command": "python -c \"from pathlib import Path; from tools.scripts.rules_engine.pattern_learner import PatternLearner; patterns = PatternLearner().learn_from_directory(Path('.')); print(f'分析完成, 发现 {len(patterns)} 个模式'); [print(f'[{p.get(\\\"type\\\",\\\"pattern\\\")}] {p.get(\\\"message\\\",p.get(\\\"pattern\\\",\\\"\\\"))} (置信度:{p.get(\\\"confidence\\\",0):.0%})') for p in patterns[:10]]\"",
+          "output": "text"
+        }
+      },
+      "triggers": {}
+    },
+    "quality-snapshot": {
+      "name": "quality-snapshot",
+      "display_name": "质量快照",
+      "description": "记录当前项目质量快照——错误数、警告数、文件数，存入质量趋势",
+      "version": "1.0.0",
+      "author": "ai-developer-growth",
+      "entry_point": "",
+      "actions": {
+        "take": {
+          "description": "记录质量快照",
+          "command": "python -c \"from pathlib import Path; from tools.scripts.rules_engine.quality_trends import QualityTracker; tracker = QualityTracker(); s = tracker.take_snapshot(Path('.')); print(f'文件: {s.total_files}, 问题: {s.total_issues}(错误:{s.errors}, 警告:{s.warnings})'); report = tracker.generate_trend_report(); print(f'趋势: {report.snapshot_count} 个快照'); [print(f'  {d.direction} {d.metric}: {d.previous}→{d.current}') for d in report.deltas if d.direction!='unchanged']\"",
+          "output": "text"
+        }
+      },
+      "triggers": {
+        "scheduled": "0 12 * * 1"
+      }
+    },
+    "feedback-stats": {
+      "name": "feedback-stats",
+      "display_name": "误报统计",
+      "description": "查看各规则的误报统计、自动降级情况",
+      "version": "1.0.0",
+      "author": "ai-developer-growth",
+      "entry_point": "",
+      "actions": {
+        "stats": {
+          "description": "显示误报统计",
+          "command": "python -c \"from tools.scripts.rules_engine.feedback import get_feedback_stats; s = get_feedback_stats(); print(f'总反馈: {s[\\\"total_feedback\\\"]}, 追踪规则: {s[\\\"tracked_rules\\\"]}, 已降级: {s[\\\"downgraded_rules\\\"]}')\"",
+          "output": "text"
+        }
+      },
+      "triggers": {}
+    },
+    "dashboard": {
+      "name": "dashboard",
+      "display_name": "质量仪表盘",
+      "description": "启动本地质量仪表盘 Web 服务",
+      "version": "1.0.0",
+      "author": "ai-developer-growth",
+      "entry_point": "",
+      "actions": {
+        "start": {
+          "description": "启动仪表盘(默认端口8765)",
+          "command": "python -m tools.scripts.rules_engine.dashboard",
+          "output": "html"
+        }
+      },
+      "triggers": {}
+    },
+    "domain-list": {
+      "name": "domain-list",
+      "display_name": "领域规则列表",
+      "description": "查看和管理领域规则包",
+      "version": "1.0.0",
+      "author": "ai-developer-growth",
+      "entry_point": "",
+      "actions": {
+        "list": {
+          "description": "列出可用和已启用的领域规则包",
+          "command": "python -c \"from pathlib import Path; import yaml; domains_dir = Path('ai-dev-framework/domains'); print('可用领域规则包:'); [print(f'  {f.stem}: {len(yaml.safe_load(f.read_text()).get(\\\"anti_patterns\\\",[]))} 条') for f in sorted(domains_dir.glob('*.yml'))]\"",
+          "output": "text"
+        }
+      },
+      "triggers": {}
     }
   },
   "workflows": {
     "pr-review": {
       "description": "PR 审查工作流",
       "steps": [
-        {"skill": "governance-auditor", "action": "full"},
-        {"skill": "knowledge-curator", "action": "validate", "condition": "files_contain('case-studies/')"},
-        {"skill": "community-catalyst", "action": "triage"}
+        {
+          "skill": "governance-auditor",
+          "action": "full"
+        },
+        {
+          "skill": "knowledge-curator",
+          "action": "validate",
+          "condition": "files_contain('case-studies/')"
+        },
+        {
+          "skill": "community-catalyst",
+          "action": "triage"
+        }
       ]
     },
     "weekly-maintenance": {
       "description": "每周维护工作流",
       "steps": [
-        {"skill": "governance-auditor", "action": "full"},
-        {"skill": "knowledge-curator", "action": "scan"},
-        {"skill": "knowledge-curator", "action": "audit"},
-        {"skill": "knowledge-curator", "action": "update-moc"},
-        {"skill": "workflow-optimizer", "action": "report"}
+        {
+          "skill": "governance-auditor",
+          "action": "full"
+        },
+        {
+          "skill": "knowledge-curator",
+          "action": "scan"
+        },
+        {
+          "skill": "knowledge-curator",
+          "action": "audit"
+        },
+        {
+          "skill": "knowledge-curator",
+          "action": "update-moc"
+        },
+        {
+          "skill": "workflow-optimizer",
+          "action": "report"
+        }
       ]
     },
     "release-prep": {
       "description": "发布准备工作流",
       "steps": [
-        {"skill": "governance-auditor", "action": "full"},
-        {"skill": "knowledge-curator", "action": "scan"},
-        {"skill": "knowledge-curator", "action": "audit"},
-        {"skill": "workflow-optimizer", "action": "report"},
-        {"skill": "community-catalyst", "action": "leaderboard"}
+        {
+          "skill": "governance-auditor",
+          "action": "full"
+        },
+        {
+          "skill": "knowledge-curator",
+          "action": "scan"
+        },
+        {
+          "skill": "knowledge-curator",
+          "action": "audit"
+        },
+        {
+          "skill": "workflow-optimizer",
+          "action": "report"
+        },
+        {
+          "skill": "community-catalyst",
+          "action": "leaderboard"
+        }
       ]
     }
   }

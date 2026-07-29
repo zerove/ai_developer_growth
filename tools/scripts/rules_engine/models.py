@@ -17,6 +17,8 @@ class Issue:
     line: int
     message: str
     fix_hint: str = ""
+    explanation: str = ""  # G2: 为什么这是问题 + 学习引导
+    context_role: str = ""  # G1: 检测到的文件角色
     column: int = 0
     fix_replacement: str = ""  # Auto-fix: regex replacement pattern
 

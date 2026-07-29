@@ -9,6 +9,7 @@ from tools.scripts._common import rules_dir, run_command
 
 from .anti_pattern_checker import check_anti_patterns
 from .complexity_checker import check_js_complexity, check_python_complexity
+from .context import adjust_severity, detect_file_role
 from .models import CheckResult, Issue
 from .naming_checker import check_naming_conventions
 from .plugins import get_plugins_for_language
@@ -107,6 +108,14 @@ def check_file(
 
     # Run all checkers
     issues = _run_all_checkers(filepath, content, lines, lang, rules)
+
+    # G1: 上下文感知 — 检测文件角色并调整严重度
+    ctx_markers = _load_context_markers(filepath.parent)
+    file_role = detect_file_role(filepath, ctx_markers)
+    if file_role:
+        for issue in issues:
+            issue.context_role = file_role
+            issue.severity = adjust_severity(issue.severity, file_role)
 
     # Optional: AST-based semantic analysis
     if semantic:
@@ -337,6 +346,21 @@ def _run_semantic_checks(filepath: Path, lang: str) -> list[Issue]:
         pass
 
     return issues
+
+
+def _load_context_markers(dirpath: Path) -> dict[str, str]:
+    """Load user-defined context markers from .adg/config.yml."""
+    for search_dir in [dirpath, dirpath.parent, dirpath.parents[2] if len(dirpath.parents) > 2 else None]:
+        if search_dir is None:
+            continue
+        config_path = search_dir / ".adg" / "config.yml"
+        if config_path.exists():
+            try:
+                from .context import load_role_config
+                return load_role_config(config_path)
+            except Exception:
+                pass
+    return {}
 
 
 def _detect_language(filepath: Path) -> str:

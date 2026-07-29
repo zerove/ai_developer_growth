@@ -195,15 +195,6 @@ def scan_file(filepath: str | Path) -> ScanResult:
 
     lines = content.split("\n")
 
-    # 检查排除文件
-    exclude_names = []
-    for r in rules:
-        for ef in r.get("exclude_files", []):
-            exclude_names.append(ef)
-    if exclude_names and _should_exclude(p, exclude_names):
-        result.passed = True
-        return result
-
     # 应用规则
     for rule in rules:
         pattern_str = rule.get("pattern", "")
@@ -213,6 +204,20 @@ def scan_file(filepath: str | Path) -> ScanResult:
         # 检查 exclude_files
         if rule.get("exclude_files") and _should_exclude(p, rule["exclude_files"]):
             continue
+
+        # 检查 exclude_patterns（基于内容排除）
+        exclude_pats = rule.get("exclude_patterns", [])
+        if exclude_pats:
+            skip_rule = False
+            for ep in exclude_pats:
+                try:
+                    if re.search(ep, content):
+                        skip_rule = True
+                        break
+                except re.error:
+                    continue
+            if skip_rule:
+                continue
 
         try:
             flags = re.IGNORECASE if rule.get("ignore_case", False) else 0
@@ -255,6 +260,17 @@ def scan_file(filepath: str | Path) -> ScanResult:
                         )
         except re.error:
             continue
+
+    # Post-process: deduplicate py-missing-all (file-level check, report once)
+    seen_missing_all = False
+    deduped: list[ScanIssue] = []
+    for issue in result.issues:
+        if issue.rule_id == "py-missing-all":
+            if seen_missing_all:
+                continue
+            seen_missing_all = True
+        deduped.append(issue)
+    result.issues = deduped
 
     result.passed = len(result.issues) == 0
     return result

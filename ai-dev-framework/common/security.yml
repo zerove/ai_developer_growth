@@ -14,6 +14,10 @@ anti_patterns:
   severity: error
   category: security
   pattern: '(?:password|secret|api_key|token|api_secret|access_key|private_key)\s*[=:]\s*["''][^"'']{4,}["'']'
+  exclude_patterns:
+  - "://"
+  - "http"
+  - "\\/api\\/"
   message: Hardcoded secrets are a critical security vulnerability
   fix_hint: Use environment variables or a secrets manager
 

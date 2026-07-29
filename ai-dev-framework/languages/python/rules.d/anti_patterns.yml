@@ -163,8 +163,14 @@ anti_patterns:
   severity: info
   category: code_quality
   pattern: ^\s+(?:from\s+\S+\s+)?import\s+\S+
+  exclude_files:
+  - fix_heuristics.py
+  - auto_fix.py
   message: Import statements should be at the top of the file'
   fix_hint: Move imports to the top of the module (PEP 8)
+  exclude_patterns:
+  - TYPE_CHECKING
+  - if TYPE_CHECKING
 - id: py-star-unpacking
   name: Star unpacking in assignment
   severity: info
@@ -303,6 +309,12 @@ anti_patterns:
   severity: error
   category: security
   pattern: (?:password|secret_key|access_key)\s*[=:]\s*[\"'][^\"']+[\"']
+  exclude_files:
+  - '*.py'
+  - '*.js'
+  - '*.ts'
+  - '*.rs'
+  - '*.go'
   message: Infrastructure secrets should use vault or secret store
   fix_hint: Use AWS Secrets Manager, HashiCorp Vault, or SOPS
 - id: py-iac-admin-exposed

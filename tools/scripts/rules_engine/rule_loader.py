@@ -342,6 +342,55 @@ def load_rules_for_language(language: str, framework_dir: Path | None = None) ->
     return load_rules(language, framework_dir)
 
 
+def load_domain_rules(project_path: Path, framework_dir: Path | None = None) -> dict[str, Any]:
+    """Load domain-specific rules based on project configuration.
+
+    Reads .adg/config.yml for `domains:` field and loads matching
+    rule files from ai-dev-framework/domains/{domain}.yml.
+
+    Args:
+        project_path: Project root directory.
+        framework_dir: Framework root directory.
+
+    Returns:
+        Dict with 'anti_patterns' key containing domain rules.
+    """
+    result: dict[str, Any] = {"anti_patterns": []}
+
+    fd = framework_dir or rules_dir()
+    domains_dir = fd / "domains"
+
+    # Find project config (.adg/config.yml, .jcode/config.yml, pyproject.toml)
+    config_sources = [
+        project_path / ".adg" / "config.yml",
+        project_path / ".jcode" / "config.yml",
+    ]
+    active_domains: list[str] = []
+
+    for config_path in config_sources:
+        if config_path.exists():
+            try:
+                import yaml
+                data = yaml.safe_load(config_path.read_text())
+                active_domains = data.get("domains", [])
+                break
+            except Exception:
+                pass
+
+    for domain in active_domains:
+        rule_file = domains_dir / f"{domain}.yml"
+        if rule_file.exists():
+            try:
+                import yaml
+                data = yaml.safe_load(rule_file.read_text())
+                for p in data.get("anti_patterns", []):
+                    result["anti_patterns"].append(p)
+            except Exception:
+                pass
+
+    return result
+
+
 def get_language_rules(language: str) -> dict[str, Any]:
     """Get rules for a language (cached)."""
     return load_rules_for_language(language)

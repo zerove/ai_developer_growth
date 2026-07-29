@@ -1,0 +1,46 @@
+# 游戏开发领域规则 — 性能敏感、帧率关键
+# 通过 .adg/config.yml 启用:
+#   domains:
+#     - gaming
+
+config_version: '1.0'
+anti_patterns:
+- id: game-alloc-in-hotpath
+  name: Allocation in update loop
+  severity: error
+  category: domain
+  pattern: '(?:Update|FixedUpdate|LateUpdate|onUpdate|tick).*\bnew\b'
+  message: Update 循环中的内存分配会导致 GC 暂停，影响帧率
+  fix_hint: Pre-allocate in Awake/Start or use object pool
+
+- id: game-string-concat
+  name: String concat in hot path
+  severity: warning
+  category: domain
+  pattern: '(?:Update|FixedUpdate|tick).*["'']\s*\+'
+  message: Update 循环中的字符串拼接产生垃圾对象
+  fix_hint: Use StringBuilder or pre-compute strings in Start/Awake
+
+- id: game-find-by-name
+  name: GameObject.Find in hot path
+  severity: warning
+  category: domain
+  pattern: '(?:Find|FindObjectOfType|GetComponent)\s*\('
+  message: 运行时查找对象在 Update 中性能极差，应在 Start 中缓存引用
+  fix_hint: Cache component references in Start() or Awake()
+
+- id: game-linq-in-loop
+  name: LINQ in performance-critical loop
+  severity: warning
+  category: domain
+  pattern: '(?:Update|FixedUpdate|tick).*\.(?:Where|Select|OrderBy|Any|All|First|Count)\b'
+  message: LINQ 查询在 Update 中造成 GC 压力
+  fix_hint: Use for/foreach with cached enumerable, avoid LINQ allocations
+
+- id: game-log-every-frame
+  name: Debug.Log every frame
+  severity: info
+  category: domain
+  pattern: '(?:Debug\.Log|print)\s*\(.*(?:Update|FixedUpdate|tick)'
+  message: 每帧日志拖慢性能，发布前应移除
+  fix_hint: Remove debug logs or guard with #if UNITY_EDITOR

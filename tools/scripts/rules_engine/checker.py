@@ -211,6 +211,21 @@ def check_directory(
         except Exception:
             pass  # framework rules are optional
 
+    # Load domain rules from project config
+    try:
+        from .rule_loader import load_domain_rules
+
+        domain_rules = load_domain_rules(dirpath)
+        if domain_rules.get("anti_patterns"):
+            if rules:
+                from .rule_loader import _merge_rules
+
+                rules = _merge_rules(rules, domain_rules)
+            else:
+                rules = domain_rules
+    except Exception:
+        pass  # domain rules are optional
+
     # Collect files
     exts = [
         ".py",
@@ -261,6 +276,35 @@ def check_directory(
                         results.append(result)
                 except Exception:
                     pass
+
+    # Architecture analysis (cross-file)
+    try:
+        from .arch import DependencyGraph, LayerChecker
+
+        arch_graph = DependencyGraph()
+        arch_issues = arch_graph.analyze_directory(dirpath)
+
+        # Layer check only if we have a config
+        layer_config_path = dirpath / ".adg" / "architecture.yml"
+        if layer_config_path.exists():
+            from .arch import LayerConfig
+
+            lc = LayerConfig.from_yaml(layer_config_path)
+            layer_checker = LayerChecker(lc)
+            arch_issues.extend(layer_checker.check_graph(arch_graph))
+
+        # Convert architecture issues to CheckResult
+        if arch_issues:
+            arch_result = CheckResult(
+                file=str(dirpath / ".architecture"),
+                issues=[i.to_issue("arch-" + i.category) for i in arch_issues],
+                language="architecture",
+            )
+            results.append(arch_result)
+    except ImportError:
+        pass  # arch module not available
+    except Exception:
+        pass  # architecture checks are optional
 
     return results
 

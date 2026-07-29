@@ -1,0 +1,38 @@
+# 医疗/健康数据领域规则 — HIPAA 合规
+# 通过 .adg/config.yml 启用:
+#   domains:
+#     - hipaa
+
+config_version: '1.0'
+anti_patterns:
+- id: hipaa-phi-in-log
+  name: PHI/PII data in logs
+  severity: error
+  category: domain
+  pattern: 'log(?:ger)?\.\w+\s*\(.*(?:ssn|patient|diagnosis|treatment|medical|health|phi|pii)'
+  message: 受保护健康信息 (PHI) 不得出现在日志中
+  fix_hint: Filter or mask PHI data before logging, log only de-identified references
+
+- id: hipaa-unencrypted-pii
+  name: Unencrypted PII storage
+  severity: error
+  category: domain
+  pattern: '(?:patient|ssn|health|medical|phi)_?\s*=\s*["''][^"'']+["'']'
+  message: 个人身份信息 (PII) 必须加密存储
+  fix_hint: Use field-level encryption for all PII data fields
+
+- id: hipaa-access-audit
+  name: Missing access audit
+  severity: warning
+  category: domain
+  pattern: '(?:medical|health|patient|phi).*(?:get|find|search|query|read)'
+  message: 健康数据访问需要记录审计日志（谁、何时、访问了什么数据）
+  fix_hint: Add access audit trail with user ID, timestamp, and data accessed
+
+- id: hipaa-data-retention
+  name: Data deletion without archive
+  severity: warning
+  category: domain
+  pattern: 'DELETE\s+FROM.*(?:patient|medical|health|record)'
+  message: 健康数据不能简单删除，需要遵循数据保留策略
+  fix_hint: Soft-delete or archive with retention date before permanent deletion

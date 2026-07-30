@@ -1,8 +1,8 @@
 {
   "name": "ai-language-rules",
   "displayName": "AI Language Rules",
-  "description": "Multi-language code quality validation with 262+ YAML-defined rules",
-  "version": "1.0.0",
+  "description": "Multi-language code quality validation with 699+ ADG rules",
+  "version": "2.0.0",
   "publisher": "ai-developer-growth",
   "engines": {
     "vscode": "^1.85.0"
@@ -34,27 +34,28 @@
           "default": ".ai-rules",
           "description": "Path to custom rules directory"
         },
+        "aiLanguageRules.severity": {
+          "type": "string",
+          "enum": ["error", "warning", "info"],
+          "default": "warning",
+          "description": "最低报告严重性级别"
+        },
+        "aiLanguageRules.adgPath": {
+          "type": "string",
+          "default": "adg",
+          "description": "adg CLI 路径"
+        },
         "aiLanguageRules.autoFixEnabled": {
           "type": "boolean",
           "default": true,
-          "description": "Show quick fixes for auto-fixable issues"
+          "description": "启用自动修复"
         }
       }
     },
     "commands": [
-      {
-        "command": "aiLanguageRules.validate",
-        "title": "Validate Current File"
-      },
-      {
-        "command": "aiLanguageRules.validateProject",
-        "title": "Validate Entire Project"
-      },
-      {
-        "command": "aiLanguageRules.showHealthScore",
-        "title": "Show Health Score"
-      }
-    ]
+      {"command": "aiLanguageRules.validate", "title": "ADG: Validate Current File"},
+      {"command": "aiLanguageRules.validateProject", "title": "ADG: Validate Workspace"},
+      {"command": "aiLanguageRules.autoFix", "title": "ADG: Auto-fix Current File"}]
   },
   "scripts": {
     "lint": "eslint .",

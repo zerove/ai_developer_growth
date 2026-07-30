@@ -21,6 +21,7 @@ class Issue:
     context_role: str = ""  # G1: 检测到的文件角色
     column: int = 0
     fix_replacement: str = ""  # Auto-fix: regex replacement pattern
+    related_docs: list[dict[str, str]] = field(default_factory=list)  # Knowledge base links
 
     def to_dict(self) -> dict[str, Any]:
         d = {
@@ -35,6 +36,8 @@ class Issue:
         }
         if self.fix_replacement:
             d["fix_replacement"] = self.fix_replacement
+        if self.related_docs:
+            d["related_docs"] = self.related_docs
         return d
 
 

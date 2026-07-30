@@ -1,0 +1,92 @@
+name: Community Case Study PR
+
+on:
+  pull_request:
+    paths:
+      - 'case-studies/**'
+    types: [opened, synchronize, reopened, labeled]
+
+env:
+  PYTHON_VERSION: "3.11"
+
+jobs:
+  validate-community-case:
+    name: Validate Community Case
+    if: contains(github.event.pull_request.labels.*.name, 'community') || contains(github.event.pull_request.labels.*.name, 'case-study')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Get changed case study files
+        id: changed
+        uses: tj-actions/changed-files@v45
+        with:
+          files: case-studies/**/*.md
+
+      - name: Validate case study structure
+        id: validate
+        run: |
+          PASSED=true
+          for file in ${{ steps.changed.outputs.all_changed_files }}; do
+            echo "=== Validating: $file ==="
+            python tools/scripts/validate_case_study.py --path "$file" --strict || PASSED=false
+          done
+          echo "passed=$PASSED" >> $GITHUB_OUTPUT
+
+      - name: ADG check code snippets
+        id: adg-check
+        run: |
+          PASSED=true
+          for file in ${{ steps.changed.outputs.all_changed_files }}; do
+            # Extract code blocks and check each language
+            echo "ADG scanning code snippets in: $file"
+            python -c "
+import re, subprocess, json, sys
+with open('$file') as f:
+    content = f.read()
+# Find all fenced code blocks with language hints
+blocks = re.findall(r'\x60\x60\x60(\w+)\n(.*?)\n\x60\x60\x60', content, re.DOTALL)
+for lang, code in blocks:
+    lang_map = {'py':'python','python':'python','js':'javascript','javascript':'javascript',
+                'ts':'typescript','typescript':'typescript','go':'go','rust':'rust','rs':'rust'}
+    l = lang_map.get(lang, lang)
+    # Write temp file and scan
+    import tempfile, pathlib
+    with tempfile.NamedTemporaryFile(suffix=f'.{lang}', mode='w', delete=False) as f:
+        f.write(code); tmp = f.name
+    r = subprocess.run(['adg','check',tmp,'--severity','error','--json'],
+                       capture_output=True, text=True, timeout=15)
+    if r.returncode == 1:
+        result = json.loads(r.stdout)
+        issues = result.get('issues',[])
+        errors = [i for i in issues if i['severity']=='error']
+        if errors:
+            print(f'::warning file=$file::Found {len(errors)} error(s) in code block ({lang}): {errors[0][\"message\"]}')
+    pathlib.Path(tmp).unlink()
+"
+          done
+
+      - name: Generate review summary
+        if: always()
+        run: |
+          echo "## 📋 Case Study Review" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Files changed:** ${{ steps.changed.outputs.all_changed_files_count }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Validation:** ${{ steps.validate.outputs.passed && '✅ Passed' || '❌ Failed' }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "> Community contributions are reviewed for completeness, authenticity, and reproducibility." >> $GITHUB_STEP_SUMMARY
+
+      - name: Add community label
+        uses: actions/github-script@v7
+        if: success()
+        with:
+          script: |
+            github.rest.issues.addLabels({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              labels: ['community', 'case-study']
+            })

@@ -63,6 +63,24 @@ FIX_PATTERNS: dict[str, dict[str, dict[str, Any]]] = {
             "replacement": r"\1 | None",
             "import_needed": None,
         },
+        "py-mutable-default": {
+            "description": "Replace mutable default argument (=[] or ={}) with =None",
+            "pattern": r"(def \w+\s*\([^)]*?)=\s*(\[\s*\]|\{\s*\})",
+            "replacement": r"\1=None",
+            "import_needed": None,
+        },
+        "py-sql-injection": {
+            "description": "Flag potential SQL injection via f-string in execute()",
+            "pattern": r"\.(?:execute|executemany)\(\s*f[\"']",
+            "replacement": None,
+            "import_needed": None,
+        },
+        "py-global-statement": {
+            "description": "Flag global statement for manual review",
+            "pattern": r"^\s*global\s+\w+",
+            "replacement": None,
+            "import_needed": None,
+        },
     },
     "javascript": {
         "js-eval": {
@@ -115,6 +133,36 @@ FIX_PATTERNS: dict[str, dict[str, dict[str, Any]]] = {
             "replacement": None,  # Cannot auto-fix safely
             "import_needed": None,
         },
+        "ts-var-let": {
+            "description": "Replace var with const",
+            "pattern": r"\bvar\s+",
+            "replacement": "const ",
+            "import_needed": None,
+        },
+        "ts-triple-slash-ref": {
+            "description": "Remove /// <reference directive",
+            "pattern": r"///\s*<reference[^>]*>\s*\n?",
+            "replacement": "",
+            "import_needed": None,
+        },
+        "ts-ignore-comment": {
+            "description": "Replace @ts-ignore with @ts-expect-error",
+            "pattern": r"//\s*@ts-ignore\b",
+            "replacement": "// @ts-expect-error",
+            "import_needed": None,
+        },
+        "ts-explicit-any": {
+            "description": "Replace explicit 'any' type annotation with 'unknown'",
+            "pattern": r"(\([^)]*?:\s*)any\b",
+            "replacement": r"\1unknown",
+            "import_needed": None,
+        },
+        "ts-null-check": {
+            "description": "Replace == null/undefined with === null/undefined",
+            "pattern": r"==\s*(null|undefined)",
+            "replacement": r"=== \1",
+            "import_needed": None,
+        },
     },
     "rust": {
         "rust-unwrap": {
@@ -127,6 +175,24 @@ FIX_PATTERNS: dict[str, dict[str, dict[str, Any]]] = {
             "description": "Flag panic! for manual replacement",
             "pattern": r"panic!\(",
             "replacement": None,  # Cannot auto-fix safely
+            "import_needed": None,
+        },
+        "rust-clone-copy": {
+            "description": "Flag .clone() on possibly Copy types for manual review",
+            "pattern": r"\.clone\(\)",
+            "replacement": None,
+            "import_needed": None,
+        },
+        "rust-shadowing": {
+            "description": "Flag variable shadowing for manual review",
+            "pattern": r"let\s+(\w+)\s*=[^;]*;\s*\n\s*let\s+\1\s*=",
+            "replacement": None,
+            "import_needed": None,
+        },
+        "rust-unused-import": {
+            "description": "Flag use declarations for unused import review",
+            "pattern": r"^\s*use\s+\w+(?:::\w+)*\s*;",
+            "replacement": None,
             "import_needed": None,
         },
     },
@@ -147,6 +213,38 @@ FIX_PATTERNS: dict[str, dict[str, dict[str, Any]]] = {
             "description": "Flag generic Exception catch for manual fix",
             "pattern": r"catch\s*\(\s*Exception\s+\w+\s*\)",
             "replacement": None,  # Cannot auto-fix safely
+            "import_needed": None,
+        },
+    },
+    "go": {
+        "go-err-ignore": {
+            "description": "Flag ignored error return assigned to _",
+            "pattern": r"_\s*=\s*\w+[.(]",
+            "replacement": None,
+            "import_needed": None,
+        },
+        "go-fmt-print": {
+            "description": "Replace fmt.Print/Println/Printf with log.Print/Println/Printf",
+            "pattern": r"fmt\.(Print|Println|Printf)\(",
+            "replacement": r"log.$1(",
+            "import_needed": '"log"',
+        },
+        "go-var-group": {
+            "description": "Flag grouped var declaration for manual expansion",
+            "pattern": r"var\s+\(",
+            "replacement": None,
+            "import_needed": None,
+        },
+        "go-naked-return": {
+            "description": "Flag naked return in long functions for manual review",
+            "pattern": r"^\s+return\s*$",
+            "replacement": None,
+            "import_needed": None,
+        },
+        "go-defer-in-loop": {
+            "description": "Flag defer inside for loop for manual review",
+            "pattern": r"for\s+[\s\S]*?\{[\s\S]*?defer\b",
+            "replacement": None,
             "import_needed": None,
         },
     },

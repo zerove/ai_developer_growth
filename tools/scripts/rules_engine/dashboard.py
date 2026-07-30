@@ -127,6 +127,49 @@ def get_latest_report(conn: sqlite3.Connection) -> dict[str, Any] | None:
     return None
 
 
+def get_language_stats(conn: sqlite3.Connection) -> list[dict[str, Any]]:
+    """Get language breakdown from the latest run."""
+    latest_id = conn.execute("SELECT MAX(id) FROM quality_runs").fetchone()[0]
+    if not latest_id:
+        return []
+    rows = conn.execute(
+        """SELECT language, SUM(errors), SUM(warnings), SUM(info)
+           FROM file_results WHERE run_id = ? GROUP BY language""",
+        (latest_id,),
+    ).fetchall()
+    return [
+        {"language": r[0], "errors": r[1] or 0, "warnings": r[2] or 0, "info": r[3] or 0}
+        for r in rows
+    ]
+
+
+def get_comparison(conn: sqlite3.Connection) -> dict[str, Any] | None:
+    """Compare latest run with previous run for trend diff."""
+    rows = conn.execute(
+        "SELECT id, total_errors, total_warnings, timestamp FROM quality_runs ORDER BY id DESC LIMIT 2"
+    ).fetchall()
+    if len(rows) < 2:
+        return None
+    curr = rows[0]
+    prev = rows[1]
+
+    def pct(a: int, b: int) -> float:
+        if b == 0:
+            return 100.0 if a > 0 else 0.0
+        return round((a - b) / b * 100, 1)
+
+    return {
+        "current_errors": curr[1],
+        "previous_errors": prev[1],
+        "errors_change": pct(curr[1], prev[1]),
+        "current_warnings": curr[2],
+        "previous_warnings": prev[2],
+        "warnings_change": pct(curr[2], prev[2]),
+        "current_timestamp": curr[3],
+        "previous_timestamp": prev[3],
+    }
+
+
 HTML_TEMPLATE = """<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -154,6 +197,7 @@ HTML_TEMPLATE = """<!DOCTYPE html>
                           border: 1px solid #334155; margin-bottom: 24px; }
         .chart-container h2 { font-size: 16px; margin-bottom: 16px; color: #f8fafc; }
         .chart-wrapper { height: 300px; position: relative; }
+        .chart-half { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-bottom: 24px; }
         table { width: 100%; border-collapse: collapse; }
         th, td { padding: 12px 16px; text-align: left; border-bottom: 1px solid #334155; }
         th { color: #94a3b8; font-size: 12px; text-transform: uppercase; font-weight: 600; }
@@ -163,6 +207,9 @@ HTML_TEMPLATE = """<!DOCTYPE html>
         .badge-warning { background: #713f12; color: #fde047; }
         .badge-pass { background: #14532d; color: #86efac; }
         .badge-fail { background: #7f1d1d; color: #fca5a5; }
+        .arrow-up { color: #ef4444; }
+        .arrow-down { color: #22c55e; }
+        .comparison-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-bottom: 24px; }
     </style>
 </head>
 <body>
@@ -190,10 +237,20 @@ HTML_TEMPLATE = """<!DOCTYPE html>
             </div>
         </div>
 
-        <div class="chart-container">
-            <h2>Quality Trend</h2>
-            <div class="chart-wrapper">
-                <canvas id="trendChart"></canvas>
+        <div class="comparison-grid" id="comparison-cards"></div>
+
+        <div class="chart-half">
+            <div class="chart-container">
+                <h2>Quality Trend (14 days)</h2>
+                <div class="chart-wrapper">
+                    <canvas id="trendChart"></canvas>
+                </div>
+            </div>
+            <div class="chart-container">
+                <h2>Language Distribution</h2>
+                <div class="chart-wrapper">
+                    <canvas id="langChart"></canvas>
+                </div>
             </div>
         </div>
 
@@ -211,7 +268,10 @@ HTML_TEMPLATE = """<!DOCTYPE html>
     <script>
         const trendData = {{trend_data | safe}};
         const latestReport = {{latest_report | safe}};
+        const languageData = {{language_data | safe}};
+        const comparisonData = {{comparison_data | safe}};
 
+        // ── Stats Cards ──
         if (latestReport) {
             document.getElementById('total-files').textContent = latestReport.summary?.total_files || 0;
             document.getElementById('total-errors').textContent = latestReport.summary?.errors || 0;
@@ -219,34 +279,57 @@ HTML_TEMPLATE = """<!DOCTYPE html>
             const errors = latestReport.summary?.errors || 0;
             document.getElementById('status').textContent = errors > 0 ? 'FAIL' : 'PASS';
             document.getElementById('status').className = 'value ' + (errors > 0 ? 'red' : 'green');
+        }
 
-            const tbody = document.getElementById('file-results');
-            (latestReport.results || []).forEach(r => {
-                const tr = document.createElement('tr');
-                tr.innerHTML = `<td>${r.file}</td><td>${r.language || '-'}</td>
-                    <td>${r.errors || 0}</td><td>${r.warnings || 0}</td>
-                    <td><span class="badge ${r.passed ? 'badge-pass' : 'badge-fail'}">${r.passed ? 'PASS' : 'FAIL'}</span></td>`;
-                tbody.appendChild(tr);
+        // ── Comparison Cards ──
+        if (comparisonData) {
+            const grid = document.getElementById('comparison-cards');
+            const cards = [
+                { label: 'Errors vs Last Run', val: comparisonData.current_errors,
+                  change: comparisonData.errors_change, prev: comparisonData.previous_errors },
+                { label: 'Warnings vs Last Run', val: comparisonData.current_warnings,
+                  change: comparisonData.warnings_change, prev: comparisonData.previous_warnings },
+                { label: 'Change Trend', val: '',
+                  change: (comparisonData.errors_change + comparisonData.warnings_change) / 2,
+                  prev: '' },
+            ];
+            cards.forEach(c => {
+                const dir = c.change < 0 ? '↓' : (c.change > 0 ? '↑' : '→');
+                const cls = c.change < 0 ? 'arrow-down' : (c.change > 0 ? 'arrow-up' : '');
+                const div = document.createElement('div');
+                div.className = 'stat-card';
+                div.innerHTML = `<div class="label">${c.label}</div>
+                    <div class="value" style="font-size:24px">${c.val} <span class="${cls}">${dir}${Math.abs(c.change)}%</span></div>`;
+                grid.appendChild(div);
             });
         }
 
-        if (trendData.length > 0) {
+        // ── Trend Chart (14 days default) ──
+        const trendData14 = trendData.slice(-14);
+        if (trendData14.length > 0) {
             new Chart(document.getElementById('trendChart'), {
                 type: 'line',
                 data: {
-                    labels: trendData.map(d => d.timestamp?.split('T')[0] || ''),
+                    labels: trendData14.map(d => d.timestamp?.split('T')[0] || ''),
                     datasets: [{
                         label: 'Errors',
-                        data: trendData.map(d => d.errors),
+                        data: trendData14.map(d => d.errors),
                         borderColor: '#ef4444',
                         backgroundColor: '#ef444440',
                         fill: true,
                     }, {
                         label: 'Warnings',
-                        data: trendData.map(d => d.warnings),
+                        data: trendData14.map(d => d.warnings),
                         borderColor: '#eab308',
                         backgroundColor: '#eab30840',
                         fill: true,
+                    }, {
+                        label: 'Passed',
+                        data: trendData14.map(d => d.passed),
+                        borderColor: '#22c55e',
+                        backgroundColor: '#22c55e20',
+                        fill: true,
+                        borderDash: [5, 5],
                     }]
                 },
                 options: {
@@ -257,12 +340,46 @@ HTML_TEMPLATE = """<!DOCTYPE html>
                 }
             });
         }
+
+        // ── Language Distribution ──
+        if (languageData && languageData.length > 0) {
+            const colors = ['#3b82f6', '#ef4444', '#eab308', '#22c55e', '#a855f7', '#f97316', '#06b6d4', '#ec4899'];
+            new Chart(document.getElementById('langChart'), {
+                type: 'doughnut',
+                data: {
+                    labels: languageData.map(d => d.language),
+                    datasets: [{
+                        data: languageData.map(d => d.errors + d.warnings + d.info),
+                        backgroundColor: languageData.map((_, i) => colors[i % colors.length]),
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { position: 'right', labels: { color: '#e2e8f0' } }
+                    }
+                }
+            });
+        }
+
+        // ── File Results Table ──
+        if (latestReport) {
+            const tbody = document.getElementById('file-results');
+            (latestReport.results || []).forEach(r => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `<td>${r.file}</td><td>${r.language || '-'}</td>
+                    <td>${r.errors || 0}</td><td>${r.warnings || 0}</td>
+                    <td><span class="badge ${r.passed ? 'badge-pass' : 'badge-fail'}">${r.passed ? 'PASS' : 'FAIL'}</span></td>`;
+                tbody.appendChild(tr);
+            });
+        }
     </script>
 </body>
 </html>"""
 
 
-def create_app(db_path: str = "adg_quality.db", ci_data_dir: str | None = None) -> Any:
+def create_app(db_path: str = "adg_quality.db", ci_data_dir: str | None = None) -> object:
     """Create FastAPI app for the quality dashboard.
 
     Args:
@@ -281,14 +398,22 @@ def create_app(db_path: str = "adg_quality.db", ci_data_dir: str | None = None) 
 
     @app.get("/", response_class=HTMLResponse)
     def dashboard() -> str:
-        trend = get_trend_data(conn)
+        trend = get_trend_data(conn, 14)
         latest = get_latest_report(conn)
+        lang_stats = get_language_stats(conn)
+        comp = get_comparison(conn)
         html = HTML_TEMPLATE.replace(
             "{{trend_data | safe}}",
             json.dumps(trend, ensure_ascii=False),
         ).replace(
             "{{latest_report | safe}}",
             json.dumps(latest, ensure_ascii=False) if latest else "null",
+        ).replace(
+            "{{language_data | safe}}",
+            json.dumps(lang_stats, ensure_ascii=False),
+        ).replace(
+            "{{comparison_data | safe}}",
+            json.dumps(comp, ensure_ascii=False) if comp else "null",
         )
         return html
 
@@ -299,6 +424,14 @@ def create_app(db_path: str = "adg_quality.db", ci_data_dir: str | None = None) 
     @app.get("/api/latest")
     def api_latest() -> dict[str, Any] | None:
         return get_latest_report(conn)
+
+    @app.get("/api/languages")
+    def api_languages() -> list[dict[str, Any]]:
+        return get_language_stats(conn)
+
+    @app.get("/api/comparison")
+    def api_comparison() -> dict[str, Any] | None:
+        return get_comparison(conn)
 
     @app.get("/api/ci-summary")
     def api_ci_summary() -> dict[str, Any] | None:

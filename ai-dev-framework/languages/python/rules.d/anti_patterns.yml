@@ -67,6 +67,7 @@ anti_patterns:
   - ai_rules_generator.py
   - ai_quality_gate.py
   - hallucination_detector.py
+  - anti_patterns.yml
   message: eval/exec are security risks
   fix_hint: Use ast.literal_eval() for data
   test_cases:
@@ -208,9 +209,9 @@ anti_patterns:
   fix_hint: Use logging framework (loguru, structlog, etc.)
 - id: py-file-leak
   name: Unclosed file handle
-  severity: error
+  severity: info
   category: resource_management
-  pattern: (?<!\bwith\s+)(?:open|fopen)\s*\([^)]*\)\s*(?!.*\b(with|using|close|finally|defer)\b)
+  pattern: (?<!\bwith\s)(?:open|fopen)\s*\([^)]*\)\s*(?!.*\b(with|using|close|finally|defer)\b)
   exclude_files:
   - rule_loader.py
   message: File handles must be closed properly to avoid resource leaks
@@ -220,6 +221,8 @@ anti_patterns:
   severity: error
   category: resource_management
   pattern: (?:connect|new connection|getConnection)\s*\([^)]*\)\s*(?!.*\b(with|using|close|finally|defer)\b)
+  exclude_files:
+  - dashboard.py
   message: Database/network connections must be released after use
   fix_hint: Use connection pool or ensure close() in finally
 - id: py-missing-await

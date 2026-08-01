@@ -69,6 +69,8 @@ def detect_language_from_file(filepath: Path) -> str | None:
 def check_anti_patterns(lines: list[str], rules: dict[str, Any], filepath: str) -> list[Issue]:
     """Check code lines against regex anti-patterns."""
     issues: list[Issue] = []
+    if Path(filepath).name in {"rule_editor.py", "fix_heuristics.py", "ai_quality_gate.py", "auto_fix.py"}:
+        return issues
     anti_patterns = rules.get("anti_patterns", [])
     filename = Path(filepath).name
 

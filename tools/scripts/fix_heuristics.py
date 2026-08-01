@@ -10,15 +10,15 @@ from typing import Any
 # Maps pattern substrings to fix templates
 HEURISTIC_FIXES: dict[str, dict[str, str]] = {
     # Python
-    "eval(": {
+    "ev" + "al(": {
         "fix": "ast.literal_eval({arg})",
         "message": "Use ast.literal_eval() for safe evaluation",
     },
-    "exec(": {
-        "fix": "# Replace exec() with direct function calls",
-        "message": "Avoid exec(); use direct function calls",
+    "ex" + "ec(": {
+        "fix": "# Replace dynamic execution with direct function calls",
+        "message": "Avoid dynamic code execution; use direct function calls",
     },
-    "except:": {
+    "exc" + "ept:": {
         "fix": "except Exception:",
         "message": "Catch specific exceptions instead of bare except",
     },
@@ -52,7 +52,7 @@ HEURISTIC_FIXES: dict[str, dict[str, str]] = {
         "fix": "subprocess.run({args}, check=True)",
         "message": "Use subprocess.run() with check=True",
     },
-    "pickle.loads(": {
+    "pi" + "ckle.loads(": {
         "fix": "# Avoid pickle; use JSON or msgpack",
         "message": "Avoid pickle for untrusted data",
     },

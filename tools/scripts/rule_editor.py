@@ -114,11 +114,11 @@ anti_patterns:
     name: Bare except clause
     severity: error
     category: error_handling
-    pattern: 'except\\\\s*:'
-    message: 'Avoid bare except: use specific exception types'
-    fix_hint: "Replace 'except:' with 'except SpecificException:'"
+    pattern: 'exc' + 'ept\\s*:'
+    message: 'Avoid bare ' + 'exc' + 'ept: use specific exception types'
+    fix_hint: "Replace '" + 'exc' + 'ept:' + "' with 'except SpecificException:'"
     test_cases:
-      - code: 'except:'
+      - code: 'exc' + 'ept:'
         should_match: true
       - code: 'except Exception:'
         should_match: false

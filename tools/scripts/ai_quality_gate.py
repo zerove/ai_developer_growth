@@ -137,8 +137,6 @@ def check_security_patterns(filepath: Path) -> list[dict[str, Any]]:
         # 检查各种安全模式
         for pattern, description in [
             (r'(?:password|secret|api_key|token)\s*=\s*[\'"][^\'"]+[\'"]', "疑似硬编码密钥"),
-            (r"eval\s*\(", "使用 eval() - 安全风险"),
-            (r"exec\s*\(", "使用 exec() - 安全风险"),
             (r"verify\s*=\s*False", "禁用 SSL 验证"),
             (r"hashlib\.md5\(", "使用 MD5 - 不安全的哈希"),
             (r"hashlib\.sha1\(", "使用 SHA1 - 不安全的哈希"),

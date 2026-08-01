@@ -212,7 +212,7 @@ project/
 
 ```scala
 // ❌ 禁止
-val apiKey = "sk-1234567890"
+val apiKey = "YOUR_API_KEY_HERE"
 
 // ✅ 正确
 val apiKey = sys.env.getOrElse("API_KEY", 

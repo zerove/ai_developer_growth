@@ -229,7 +229,7 @@ User.where(name: name)
 
 ```ruby
 # ❌ 禁止
-API_KEY = 'sk-1234567890'
+API_KEY = 'YOUR_API_KEY_HERE'
 
 # ✅ 正确
 API_KEY = ENV.fetch('API_KEY') { raise 'API_KEY not set' }

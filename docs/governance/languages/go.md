@@ -452,7 +452,7 @@ row := db.QueryRow(query, userID)
 
 ```go
 // ❌ 禁止
-const APIKey = "sk-1234567890"
+const APIKey = "YOUR_API_KEY_HERE"
 
 // ✅ 正确
 func getAPIKey() (string, error) {

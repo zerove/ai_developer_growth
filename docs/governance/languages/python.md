@@ -295,7 +295,7 @@ result = db.execute(text(query), {"user_id": user_id})
 import os
 
 # ❌ 禁止
-API_KEY = "sk-1234567890"
+API_KEY = "YOUR_API_KEY_HERE"
 
 # ✅ 正确
 API_KEY = os.getenv("API_KEY")

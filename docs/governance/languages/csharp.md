@@ -317,7 +317,7 @@ var user = await context.Users
 
 ```csharp
 // ❌ 禁止
-var apiKey = "sk-1234567890";
+var apiKey = "YOUR_API_KEY_HERE";
 
 // ✅ 正确
 var apiKey = configuration["ApiKey"];

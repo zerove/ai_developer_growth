@@ -158,7 +158,7 @@ const query = `SELECT * FROM users WHERE id = ${userId}`;
 const apiKey = process.env.API_KEY;
 
 // ❌ 禁止 - 硬编码
-const apiKey = "sk-1234567890abcdef";
+const apiKey = "YOUR_API_KEY_HEREabcdef";
 ```
 
 ---

@@ -257,7 +257,7 @@ std::string buffer(input);
 
 ```cpp
 // ❌ 禁止
-const char* API_KEY = "sk-1234567890";
+const char* API_KEY = "YOUR_API_KEY_HERE";
 
 // ✅ 正确
 const char* API_KEY = std::getenv("API_KEY");

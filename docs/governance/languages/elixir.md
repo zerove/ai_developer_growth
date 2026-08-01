@@ -240,7 +240,7 @@ project/
 
 ```elixir
 # ❌ 禁止
-@api_key "sk-1234567890"
+@api_key "YOUR_API_KEY_HERE"
 
 # ✅ 正确
 @api_key System.get_env("API_KEY") || raise "API_KEY not set"

@@ -334,7 +334,7 @@ stmt.setString(1, userId);
 
 ```java
 // ❌ 禁止
-String apiKey = "sk-1234567890";
+String apiKey = "YOUR_API_KEY_HERE";
 
 // ✅ 正确
 @Value("${api.key}")

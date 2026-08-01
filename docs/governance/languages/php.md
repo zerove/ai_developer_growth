@@ -290,7 +290,7 @@ $user = $stmt->fetch();
 
 ```php
 // ❌ 禁止
-$apiKey = 'sk-1234567890';
+$apiKey = 'YOUR_API_KEY_HERE';
 
 // ✅ 正确
 $apiKey = getenv('API_KEY');

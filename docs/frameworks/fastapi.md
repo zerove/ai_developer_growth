@@ -274,7 +274,7 @@ app.add_middleware(
 
 ```python
 # ❌ 禁止
-SECRET_KEY = 'sk-1234567890'
+SECRET_KEY = 'YOUR_API_KEY_HERE'
 
 # ✅ 正确
 from pydantic_settings import BaseSettings

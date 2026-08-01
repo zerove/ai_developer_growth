@@ -247,7 +247,7 @@ project/
 
 ```swift
 // ❌ 禁止
-let apiKey = "sk-1234567890"
+let apiKey = "YOUR_API_KEY_HERE"
 
 // ✅ 正确
 let apiKey = ProcessInfo.processInfo.environment["API_KEY"]

@@ -241,7 +241,7 @@ describe('Users API', () => {
 
 ```javascript
 // ❌ 禁止
-const API_KEY = 'sk-1234567890';
+const API_KEY = 'YOUR_API_KEY_HERE';
 
 // ✅ 正确
 const API_KEY = process.env.API_KEY;

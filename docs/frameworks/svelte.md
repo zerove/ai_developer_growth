@@ -213,7 +213,7 @@ test('displays user profile', async ({ page }) => {
 
 ```typescript
 // ❌ 禁止
-const API_KEY = 'sk-1234567890';
+const API_KEY = 'YOUR_API_KEY_HERE';
 
 // ✅ 正确: 使用环境变量
 import { env } from '$env/dynamic/private';

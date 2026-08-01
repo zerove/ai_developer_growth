@@ -338,7 +338,7 @@ export class UserController {
 
 ```typescript
 // ❌ 禁止
-const JWT_SECRET = 'sk-1234567890';
+const JWT_SECRET = 'YOUR_API_KEY_HERE';
 
 // ✅ 正确
 const JWT_SECRET = process.env.JWT_SECRET;

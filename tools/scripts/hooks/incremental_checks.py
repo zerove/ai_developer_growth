@@ -118,7 +118,6 @@ def run_diff_checks(base: str = "HEAD") -> tuple[bool, str]:
 
 
 def run_pre_commit_checks() -> tuple[bool, str]:
-    """Run checks on staged files (pre-commit hook)."""
     staged = get_staged_files()
     if not staged:
         return True, "No staged files"
@@ -128,4 +127,20 @@ def run_pre_commit_checks() -> tuple[bool, str]:
     if not code_files:
         return True, f"No code files in {len(staged)} staged files"
 
-    return _check_code_files(code_files, label="Staged")
+    passed, output = _check_code_files(code_files, label="Staged")
+
+    try:
+        from scope_guard import ScopeGuardHook
+        from audit_attestation import AuditAttestationLedger
+        root = Path(__file__).resolve().parent.parent.parent
+        scope_ok, scope_msg = ScopeGuardHook(root_dir=root).check_git_diff()
+        AuditAttestationLedger(root).record_trace("PRE_COMMIT_HOOK", {"staged_count": len(staged), "scope_passed": scope_ok})
+        if not scope_ok:
+            passed = False
+            output += f"\n🛡️ {scope_msg}"
+        else:
+            output += f"\n🛡️ {scope_msg}"
+    except Exception:
+        pass
+
+    return passed, output

@@ -58,12 +58,12 @@ class TestOpenAIGenerate:
         mock_response.json.return_value = {"choices": [{"message": {"content": "ok"}}]}
         mock_response.raise_for_status = MagicMock()
 
-        provider = OpenAIProvider(api_key="sk-test-123")
+        provider = OpenAIProvider(api_key="mock-key-123")
         with patch("src.providers.openai_provider.requests.post", return_value=mock_response) as mock_post:
             provider.generate("prompt", "sys", "gpt-4o")
             _, kwargs = mock_post.call_args
             headers = kwargs["headers"]
-            assert headers["Authorization"] == "Bearer sk-test-123"
+            assert headers["Authorization"] == "Bearer mock-key-123"
             assert headers["Content-Type"] == "application/json"
 
     def test_generate_payload_structure(self):

@@ -11,6 +11,7 @@ from pathlib import Path
 
 # Add tools/scripts and orchestration paths
 sys.path.insert(0, str(Path(__file__).parent.parent / "tools" / "scripts"))
+sys.path.insert(0, str(Path(__file__).parent.parent / "tools" / "scripts" / "hooks"))
 sys.path.insert(0, str(Path(__file__).parent.parent / "examples" / "multi-agent-orch" / "src" / "orchestration"))
 
 import pytest
@@ -100,3 +101,38 @@ def test_runtime_verifier(tmp_path: Path):
     verifier = RuntimeVerifier(tmp_path)
     success, _ = verifier.run_tests()
     assert success is True
+
+
+def test_dor_checker(tmp_path: Path):
+    from dor_checker import DoRChecker
+    checker = DoRChecker(tmp_path)
+    res = checker.evaluate_intent("TBD feature request")
+    assert res["passed"] is False
+    res_pass = checker.evaluate_intent("Implement robust authentication module with JWT tokens and 100% test coverage.")
+    assert res_pass["passed"] is True
+
+
+def test_audit_attestation(tmp_path: Path):
+    from audit_attestation import AuditAttestationLedger
+    ledger = AuditAttestationLedger(tmp_path)
+    entry = ledger.record_trace("TEST_EVENT", {"status": "ok"})
+    assert "current_hash" in entry
+    assert entry["prev_hash"] == "0" * 64
+
+
+def test_tdd_state_machine():
+    from tdd_state_machine import TDDStateMachine
+    sm = TDDStateMachine()
+    assert sm.state == "RED"
+    assert sm.transition("test_written_failing") is True
+    assert sm.state == "GREEN"
+    assert sm.transition("implementation_passing") is True
+    assert sm.state == "REFACTOR"
+
+
+def test_scope_guard(tmp_path: Path):
+    from scope_guard import ScopeGuardHook
+    guard = ScopeGuardHook(max_lines=10, max_files=2, root_dir=tmp_path)
+    passed, msg = guard.check_git_diff()
+    assert isinstance(passed, bool)
+

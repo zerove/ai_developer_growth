@@ -32,7 +32,10 @@ tools/.cache/
 
 # OS
 .DS_Store
-Thumbs.db
+.Thumbs.db
+
+# OpenCode session state & local cache
+.opencode/
 
 # OMO (project management)
 .omo/

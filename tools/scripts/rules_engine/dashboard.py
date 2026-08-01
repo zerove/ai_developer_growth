@@ -10,12 +10,19 @@ Dashboard shows:
 - Historical comparison
 - CI quality summary (from .quality-trends/summary.json)
 
-API:
+API v2:
     GET  /             Dashboard HTML
     GET  /api/trend    Trend data (JSON)
     GET  /api/latest   Latest report (JSON)
     GET  /api/ci-summary  CI quality summary (JSON)
     POST /api/record   Record a quality run
+
+API v3 (新增):
+    GET  /api/v3/health         Service health check
+    POST /api/v3/check          Run adg check remotely (--with-docs supported)
+    GET  /api/v3/rules          List all available rules
+    GET  /api/v3/rules/{rule_id}/docs  Get related docs for a rule
+    GET  /api/v3/status         Dashboard aggregate status
 """
 
 from __future__ import annotations
@@ -23,6 +30,7 @@ from __future__ import annotations
 import argparse
 import json
 import sqlite3
+import subprocess
 import sys
 from datetime import datetime
 from pathlib import Path
@@ -144,14 +152,27 @@ def get_language_stats(conn: sqlite3.Connection) -> list[dict[str, Any]]:
 
 
 def get_comparison(conn: sqlite3.Connection) -> dict[str, Any] | None:
-    """Compare latest run with previous run for trend diff."""
-    rows = conn.execute(
-        "SELECT id, total_errors, total_warnings, timestamp FROM quality_runs ORDER BY id DESC LIMIT 2"
-    ).fetchall()
-    if len(rows) < 2:
+    """Compare latest run with the run from ~7 days ago (week-over-week)."""
+    latest = conn.execute(
+        "SELECT id, total_errors, total_warnings, timestamp FROM quality_runs ORDER BY id DESC LIMIT 1"
+    ).fetchone()
+    if not latest:
         return None
-    curr = rows[0]
-    prev = rows[1]
+    # Find the closest run from ~7 days before the latest run
+    prev = conn.execute(
+        """SELECT id, total_errors, total_warnings, timestamp
+           FROM quality_runs
+           WHERE timestamp <= datetime(?, '-7 days')
+           ORDER BY id DESC LIMIT 1""",
+        (latest[3],),
+    ).fetchone()
+    if not prev:
+        # Fallback: compare with the immediately preceding run
+        prev = conn.execute(
+            "SELECT id, total_errors, total_warnings, timestamp FROM quality_runs ORDER BY id DESC LIMIT 1 OFFSET 1"
+        ).fetchone()
+    if not prev:
+        return None
 
     def pct(a: int, b: int) -> float:
         if b == 0:
@@ -159,13 +180,13 @@ def get_comparison(conn: sqlite3.Connection) -> dict[str, Any] | None:
         return round((a - b) / b * 100, 1)
 
     return {
-        "current_errors": curr[1],
+        "current_errors": latest[1],
         "previous_errors": prev[1],
-        "errors_change": pct(curr[1], prev[1]),
-        "current_warnings": curr[2],
+        "errors_change": pct(latest[1], prev[1]),
+        "current_warnings": latest[2],
         "previous_warnings": prev[2],
-        "warnings_change": pct(curr[2], prev[2]),
-        "current_timestamp": curr[3],
+        "warnings_change": pct(latest[2], prev[2]),
+        "current_timestamp": latest[3],
         "previous_timestamp": prev[3],
     }
 
@@ -330,6 +351,13 @@ HTML_TEMPLATE = """<!DOCTYPE html>
                         backgroundColor: '#22c55e20',
                         fill: true,
                         borderDash: [5, 5],
+                    }, {
+                        label: 'Failed',
+                        data: trendData14.map(d => d.failed),
+                        borderColor: '#f43f5e',
+                        backgroundColor: '#f43f5e20',
+                        fill: true,
+                        borderDash: [3, 3],
                     }]
                 },
                 options: {
@@ -452,7 +480,123 @@ def create_app(db_path: str = "adg_quality.db", ci_data_dir: str | None = None) 
         run_id = record_run(conn, report)
         return {"run_id": run_id, "status": "recorded"}
 
+    # ── Governance API v3 ─────────────────────────────────────
+
+    @app.get("/api/v3/health")
+    def api_v3_health() -> dict[str, Any]:
+        """Health check endpoint."""
+        db_ok = False
+        try:
+            conn.execute("SELECT 1")
+            db_ok = True
+        except Exception:
+            pass
+        return {
+            "status": "ok",
+            "version": "3.0.0",
+            "uptime": datetime.now().isoformat(),
+            "database": "connected" if db_ok else "error",
+        }
+
+    @app.post("/api/v3/check")
+    def api_v3_check(
+        path: str = ".",
+        lang: str | None = None,
+        with_docs: bool = False,
+        severity: str | None = None,
+    ) -> dict[str, Any]:
+        """Run adg check remotely.
+
+        Args:
+            path: File or directory to check.
+            lang: Force language (skip auto-detection).
+            with_docs: Include related documentation links.
+            severity: Filter by severity (error/warning/info).
+        """
+        cmd = ["adg", "check", path, "--json"]
+        if lang:
+            cmd.extend(["--lang", lang])
+        if with_docs:
+            cmd.append("--with-docs")
+        if severity:
+            cmd.extend(["--severity", severity])
+
+        try:
+            result = subprocess.run(cmd, capture_output=True, text=True, timeout=120)
+            if result.returncode != 0:
+                return {"status": "error", "message": result.stderr or "Check failed"}
+            data = json.loads(result.stdout)
+            return {"status": "ok", "data": data}
+        except FileNotFoundError:
+            return {"status": "error", "message": "adg command not found"}
+        except subprocess.TimeoutExpired:
+            return {"status": "error", "message": "Check timed out"}
+        except json.JSONDecodeError as e:
+            return {"status": "error", "message": f"Invalid JSON output: {e}"}
+
+    @app.get("/api/v3/rules")
+    def api_v3_rules(lang: str | None = None) -> dict[str, Any]:
+        """List all available rules, optionally filtered by language."""
+        try:
+            from tools.scripts.adg_cli.rules import load_rules_for_language, load_framework_rules
+        except ImportError:
+            return {"status": "error", "message": "ADG rules module not available"}
+
+        if lang:
+            rules = load_rules_for_language(lang)
+            return {"status": "ok", "language": lang, "rules": rules}
+        # Return summary per language
+        languages = ["python", "javascript", "typescript", "rust", "go", "java", "ruby", "kotlin", "swift", "csharp", "php"]
+        summary: dict[str, int] = {}
+        for l in languages:
+            try:
+                r = load_rules_for_language(l)
+                summary[l] = len(r.get("anti_patterns", [])) + len(r.get("security_patterns", []))
+            except Exception:
+                summary[l] = -1
+        return {"status": "ok", "languages": summary}
+
+    @app.get("/api/v3/rules/{rule_id}/docs")
+    def api_v3_rule_docs(rule_id: str) -> dict[str, Any]:
+        """Get related documentation for a specific rule."""
+        mapping_path = Path(__file__).resolve().parent.parent.parent.parent / ".jcode" / "rule-docs-mapping.json"
+        if not mapping_path.exists():
+            return {"status": "ok", "rule_id": rule_id, "docs": [], "note": "No mapping cache found"}
+        try:
+            mapping = json.loads(mapping_path.read_text())
+            docs = mapping.get(rule_id, [])
+            return {"status": "ok", "rule_id": rule_id, "docs": docs, "count": len(docs)}
+        except Exception as e:
+            return {"status": "error", "message": f"Failed to read mapping: {e}"}
+
+    @app.get("/api/v3/status")
+    def api_v3_status() -> dict[str, Any]:
+        """Dashboard aggregate status across all dimensions."""
+        trend = get_trend_data(conn, 14)
+        latest = get_latest_report(conn)
+        comp = get_comparison(conn)
+        return {
+            "status": "ok",
+            "summary": {
+                "trend_points": len(trend),
+                "latest_report": latest.get("summary") if latest else None,
+                "comparison": comp,
+                "database_size": _get_db_size(db_path),
+            },
+        }
+
     return app
+
+
+def _get_db_size(db_path: str) -> dict[str, Any]:
+    """Get database file size info."""
+    try:
+        p = Path(db_path)
+        if p.exists():
+            return {"path": str(p.resolve()), "bytes": p.stat().st_size, "exists": True}
+    except Exception:
+        pass
+    return {"path": db_path, "bytes": 0, "exists": False}
 
 
 def main() -> None:

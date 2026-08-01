@@ -42,6 +42,7 @@ from tools.scripts.adg_cli.core import (
     SKIP_DIRS,
     SKIP_EXTENSIONS,
     Issue,
+    _attach_docs_to_issues,
     _get_rules_path,
     _make_issue,
     _merge_config,
@@ -142,6 +143,7 @@ __all__ = [
     "_format_sarif",
     "_print_report_text",
     # Core helpers
+    "_attach_docs_to_issues",
     "_get_rules_path",
     "_make_issue",
     "_merge_config",

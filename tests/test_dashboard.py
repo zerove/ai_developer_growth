@@ -152,3 +152,78 @@ class TestCreateApp:
         resp = client.post("/api/record", json=report)
         assert resp.status_code == 200
         assert resp.json()["status"] == "recorded"
+
+    def test_v3_health_endpoint(self, db_path):
+        from fastapi.testclient import TestClient
+
+        from tools.scripts.rules_engine.dashboard import create_app
+
+        app = create_app(db_path)
+        client = TestClient(app)
+
+        resp = client.get("/api/v3/health")
+        assert resp.status_code == 200
+        data = resp.json()
+        assert data["status"] == "ok"
+        assert data["version"] == "3.0.0"
+        assert "database" in data
+
+    def test_v3_rules_endpoint(self, db_path):
+        from fastapi.testclient import TestClient
+
+        from tools.scripts.rules_engine.dashboard import create_app
+
+        app = create_app(db_path)
+        client = TestClient(app)
+
+        resp = client.get("/api/v3/rules")
+        assert resp.status_code == 200
+        data = resp.json()
+        assert data["status"] == "ok"
+        assert "languages" in data
+
+    def test_v3_rules_with_lang(self, db_path):
+        from fastapi.testclient import TestClient
+
+        from tools.scripts.rules_engine.dashboard import create_app
+
+        app = create_app(db_path)
+        client = TestClient(app)
+
+        resp = client.get("/api/v3/rules?lang=python")
+        assert resp.status_code == 200
+        data = resp.json()
+        assert data["status"] == "ok"
+        assert data["language"] == "python"
+
+    def test_v3_status_endpoint(self, db_path):
+        from fastapi.testclient import TestClient
+
+        from tools.scripts.rules_engine.dashboard import create_app
+
+        app = create_app(db_path)
+        client = TestClient(app)
+
+        # Record a run first so we have data
+        report = {"summary": {"total_files": 5, "errors": 0, "warnings": 1, "info": 0, "passed": 5, "failed": 0}}
+        client.post("/api/record", json=report)
+
+        resp = client.get("/api/v3/status")
+        assert resp.status_code == 200
+        data = resp.json()
+        assert data["status"] == "ok"
+        assert "summary" in data
+
+    def test_v3_rule_docs_endpoint_unknown(self, db_path):
+        from fastapi.testclient import TestClient
+
+        from tools.scripts.rules_engine.dashboard import create_app
+
+        app = create_app(db_path)
+        client = TestClient(app)
+
+        resp = client.get("/api/v3/rules/unknown-rule-xyz/docs")
+        assert resp.status_code == 200
+        data = resp.json()
+        assert data["status"] == "ok"
+        assert data["rule_id"] == "unknown-rule-xyz"

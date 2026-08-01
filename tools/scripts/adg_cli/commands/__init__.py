@@ -13,6 +13,7 @@ from tools.scripts.adg_cli.core import (
     SKIP_DIRS,
     SKIP_EXTENSIONS,
     Issue,
+    _attach_docs_to_issues,
     load_project_config,
 )
 from tools.scripts.adg_cli.detect import _detect_language_from_file, detect_language
@@ -86,6 +87,10 @@ def cmd_check(args: argparse.Namespace) -> int:
     else:
         for fp in files:
             all_issues.extend(check_file(fp, rules, args.severity))
+
+    # Attach knowledge base docs if requested
+    if getattr(args, "with_docs", False):
+        _attach_docs_to_issues(all_issues)
 
     # Output
     sarif = getattr(args, "sarif", False)

@@ -32,7 +32,7 @@ def _build_parser() -> argparse.ArgumentParser:
     check_p.add_argument(
         "--notify", type=str, default=None, help="Send results to webhook (slack://... or dingtalk://...)"
     )
-    check_p.add_argument("--project", type=str, default=".", help="Project name for notifications")
+    check_p.add_argument("--with-docs", action="store_true", help="Include related documentation links in output")
 
     # detect
     detect_p = sub.add_parser("detect", help="Detect project language/framework")

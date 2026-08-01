@@ -95,7 +95,43 @@ docs-build:  ## 构建文档
 test-fast: ## 运行快速测试（跳过 @pytest.mark.slow）
 	python -m pytest tests/ -q -m "not slow" --tb=short
 
-check: lint format typecheck test validate-docs check-index  ## 运行所有检查
+check: lint format typecheck test validate-docs check-index semantic-graph architecture-guard slop-scan  ## 运行所有检查 (包含 AI-Native 门禁)
+
+semantic-graph:  ## 生成语义代码知识图谱
+	python tools/scripts/semantic_code_graph.py
+
+architecture-guard:  ## 运行架构漂移防御检查
+	python tools/scripts/architecture_drift_guard.py
+
+runtime-verify:  ## 运行运行时验证测试探针
+	python tools/scripts/runtime_verifier.py
+
+self-healing-ci:  ## 运行自愈式 CI 闭环循环
+	python tools/scripts/self_healing_ci.py
+
+slop-scan:  ## 扫描 AI 代码异味与幻觉风险
+	python tools/scripts/ai_slop_scanner.py
+
+metrics-telemetry:  ## 收集研发效能与质量遥测数据
+	python tools/scripts/metrics_telemetry.py
+
+dashboard:  ## 启动 AI-Native 终端控制台驾驶舱
+	python tools/scripts/ai_native_dashboard.py
+
+mcp-server:  ## 启动 AI-Native 模型上下文协议 (MCP) 服务
+	python tools/scripts/ai_native_mcp_server.py
+
+self-evolve:  ## 运行自适应规则与 Prompt 进化引擎
+	python tools/scripts/self_evolving_engine.py
+
+multi-llm-route:  ## 运行多 LLM 智能模型路由决策
+	python tools/scripts/multi_llm_router.py
+
+case-study-gen:  ## 运行自动化案例生成流水线
+	python tools/scripts/case_study_pipeline.py
+
+swarm-run:  ## 运行全自主智能体蜂群与自举演进闭环
+	python tools/scripts/autonomous_swarm_engine.py
 
 release:  ## 创建新版本（需要 VERSION=vX.Y.Z）
 	@test -n "$(VERSION)" || (echo "用法: make release VERSION=vX.Y.Z 例如: make release VERSION=v2.3.0" && exit 1)
@@ -130,6 +166,9 @@ workflow-release: ## 执行发布准备工作流 (registry.json)
 	python .jcode/scripts/knowledge-curator.py audit
 	python .jcode/scripts/workflow-optimizer.py report
 	python .jcode/scripts/community-catalyst.py leaderboard
+
+workflow-ai-native: ## 执行完整 JCode AI-Native 工作流主管道
+	python tools/scripts/jcode_ai_native_workflow.py "JCode AI-Native Master Workflow Execution"
 
 clean:  ## 清理临时文件
 	find . -type d -name __pycache__ -exec rm -rf {} + 2>/dev/null || true

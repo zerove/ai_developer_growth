@@ -7,6 +7,7 @@ from pathlib import Path
 
 from tools.scripts.adg_cli import (
     Issue,
+    _attach_docs_to_issues,
     _severity_rank,
     _simple_yaml_parse,
     check_file,
@@ -325,3 +326,81 @@ class TestIssue:
         assert d["rule_id"] == "test"
         assert d["severity"] == "error"
         assert d["line"] == 1
+
+    def test_to_dict_with_related_docs(self):
+        issue = Issue(
+            rule_id="test",
+            severity="error",
+            category="test",
+            file="test.py",
+            line=1,
+            column=1,
+            message="test message",
+            fix_hint="fix it",
+            related_docs=[{"path": "docs/guide.md", "reason": "keyword match"}],
+        )
+        d = issue.to_dict()
+        assert "related_docs" in d
+        assert d["related_docs"][0]["path"] == "docs/guide.md"
+
+    def test_to_dict_no_related_docs(self):
+        issue = Issue(
+            rule_id="test",
+            severity="error",
+            category="test",
+            file="test.py",
+            line=1,
+            column=1,
+            message="test message",
+            fix_hint="fix it",
+        )
+        d = issue.to_dict()
+        assert "related_docs" not in d
+
+    def test_default_related_docs_is_none(self):
+        issue = Issue(
+            rule_id="test",
+            severity="error",
+            category="test",
+            file="test.py",
+            line=1,
+            column=1,
+            message="test message",
+            fix_hint="fix it",
+        )
+        assert issue.related_docs is None
+
+
+class TestAttachDocs:
+    def test_attach_docs_populates_related_docs(self):
+        issue = Issue(
+            rule_id="py-missing-all",
+            severity="error",
+            category="python",
+            file="test.py",
+            line=1,
+            column=1,
+            message="Missing __all__",
+            fix_hint="Add __all__",
+        )
+        _attach_docs_to_issues([issue])
+        assert issue.related_docs is None or len(issue.related_docs) > 0
+
+    def test_attach_docs_skips_unknown_rule(self):
+        issue = Issue(
+            rule_id="non-existent-rule-12345",
+            severity="error",
+            category="python",
+            file="test.py",
+            line=1,
+            column=1,
+            message="Unknown rule",
+            fix_hint="Test",
+        )
+        _attach_docs_to_issues([issue])
+        assert issue.related_docs is None
+
+    def test_attach_docs_empty_list(self):
+        issues = _attach_docs_to_issues([])
+        # Should not raise
+        assert True

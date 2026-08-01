@@ -22,6 +22,8 @@
 | `ai-task-prioritizer` | 任务优先级工具 | CLI 任务优先级排序，TDD + AI 驱动 | ✅ 已实现 | `examples/ai-task-prioritizer/prioritizer.py` |
 | `hooks-runner` | 统一 Hook 运行器 | 统一 lint/typecheck/test/security/quality-gate/governance 入口 | ✅ 已实现 | `tools/scripts/hooks_runner.py` |
 | `rules-engine` | 规则引擎 | 语言无关的代码质量检查引擎（反模式/命名/阈值/AST） | ✅ 已实现 | `tools/scripts/rules_engine/` |
+| `jcode-ai-native-workflow` | AI-Native 工作流主管道 | 集成 11 大支柱的全生命周期研发自动化流水线 | ✅ 已实现 | `tools/scripts/jcode_ai_native_workflow.py` |
+| `autonomous-swarm` | 自主智能体蜂群引擎 | 全自主多 Agent 协同、红蓝对抗与自举演进 | ✅ 已实现 | `tools/scripts/autonomous_swarm_engine.py` |
 
 ---
 

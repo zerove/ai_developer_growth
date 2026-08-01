@@ -4,27 +4,46 @@ All notable changes to the AI Developer Growth project.
 
 ## [Unreleased]
 
-### Added
-- **方向H: 多 Agent 实战演示脚本** — `examples/multi-agent-orch/demo-adg-workflow.py`
-  - 模拟 PM/Architect/ADG Scan/Coder/Reviewer 全流程
-  - 实时 ADG 扫描 + 修复验证
-  - 修复前/后代码质量对比
-- **方向J: 贡献者仪表板增强** — `tools/scripts/contributor_dashboard.py`
-  - 新增 `analyze_quality_fixes()` 方法追踪质量修复者
-  - 仪表板新增「质量修复统计」板块
-- **方向K: 质量趋势仪表板增强** — `tools/scripts/rules_engine/quality_trends.py`
-  - 新增 `generate_sparkline()` ASCII 迷你趋势图
-  - 新增 `generate_summary()` 单行摘要
-  - 新增 `generate_multi_trend_report()` 多点趋势表格
-- **方向E: 跨项目扫描文章** — `case-studies/adg-cross-project-scan.md`
-  - 记录扫描 FastAPI/Flask/Django/httpx/ruff 5 个项目的发现
-  - 真实问题/误报分析、规则效率排名
-- **CLI 扩展** — `ai-dev-framework/src/ai_dev_framework/cli.py`
-  - 新增 `adg dashboard contributor` 子命令
-  - 新增 `adg dashboard trend [--sparkline|--multi]` 子命令
-
-### Fixed
+### 预览版计划 (v2.4.0)
 - (预留)
+
+## [2.3.0] - 2026-07-30
+
+### 质量与重构
+
+- **CLI 重构：消除双 FIX_RULES**
+  - 1321 行独立 `~/.local/bin/adg` 替换为薄包装（45 行），全部逻辑委托到模块化 CLI
+  - 新增 `pyproject.toml` 的 `[project.scripts]` 入口：`adg = "tools.scripts.adg_cli:main"`
+  - 新增 `tools/scripts/adg_cli/__main__.py` 支持 `python -m` 调用
+  - 知识库联动：`--with-docs` 参数注入 `related_docs` 到 rule 输出
+
+- **P0: Dashboard 2.0 跨语言自动修复**
+  - Dashboard 支持多项目报告聚合、趋势仪表板
+  - Auto-fix 引擎扩展覆盖 5 语言（Python/JS/TS/Rust/Java）+ 新增 Go/Ruby 规则
+  - CI/CD 集成模板（GitLab/Azure/Jenkins/CircleCI/GitHub Actions）
+
+### 工具生态
+
+- **P1: 编辑器扩展同步（4 扩展全部适配 `adg check --json`）**
+  - VS Code ADG (`vscode-adg/extension.js`): 9 命令 + 状态栏 + Quick Fix + 配置选项
+  - VS Code AI Language Rules (`vscode-ai-language-rules/extension.js`): v2.0 + auto-fix
+  - LSP Server (`ai-language-rules/lsp_server.py`): `adg` 后端替代旧 YAML 解析
+  - Zed ADG (`zed-adg/src/lib.rs`): Rust 库 + CLI 运行器 + 诊断转换 + 测试
+  - 提交 `d248652`（14 文件，+1193/−516 行，pre-commit 通过）
+
+- **P2: 社区 CI + 知识库联动**
+  - `.github/workflows/community-case-pr.yml`: 社区 PR 案例校验工作流
+  - `tools/scripts/rules_engine/rule_docs_mapper.py`: 421 规则→文档映射引擎
+  - `adg check --with-docs` 输出 `related_docs` 字段
+
+### 修复
+- 删除冗余 `python/` 目录 + 残留 `.ai-sync-cache/` 文件
+- `core.py` 缺失 `import json` 修复（`_attach_docs_to_issues` 函数）
+- 规则 ID 到文档映射路径修正
+
+### 文档
+- 规则→文档映射缓存: `.jcode/rule-docs-mapping.json`（421 条）
+- 4 个扩展 README 全部同步更新
 
 ## [2.2.0] - 2026-07-28
 

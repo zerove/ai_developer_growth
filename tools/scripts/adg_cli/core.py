@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 import os
 import sys
 from dataclasses import dataclass
@@ -95,9 +96,10 @@ class Issue:
     column: int
     message: str
     fix_hint: str
+    related_docs: list[dict[str, str]] | None = None
 
     def to_dict(self) -> dict[str, Any]:
-        return {
+        d = {
             "rule_id": self.rule_id,
             "severity": self.severity,
             "category": self.category,
@@ -107,6 +109,27 @@ class Issue:
             "message": self.message,
             "fix_hint": self.fix_hint,
         }
+        if self.related_docs:
+            d["related_docs"] = self.related_docs
+        return d
+
+
+# ── Knowledge Base Docs Lookup ─────────────────────────────
+
+
+def _attach_docs_to_issues(issues: list[Issue]) -> None:
+    """Attach related documentation links to issues from the mapping cache."""
+    _ADG_DOCS_MAPPING = Path(__file__).resolve().parent.parent.parent.parent / ".jcode" / "rule-docs-mapping.json"
+    if not _ADG_DOCS_MAPPING.exists():
+        return
+    try:
+        mapping = json.loads(_ADG_DOCS_MAPPING.read_text())
+    except Exception:
+        return
+    for issue in issues:
+        docs = mapping.get(issue.rule_id)
+        if docs:
+            issue.related_docs = docs
 
 
 # Fix rules: pattern_id -> (regex_pattern, replacement)

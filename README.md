@@ -156,11 +156,11 @@ python ai-dev-framework/core/jcode_init.py your-project --language python
 
 | 指标 | 数量 |
 |------|------|
-| 📄 核心文档 | 200+ 篇 |
-| 📚 实践案例 | 35 个 |
-| 🛠️ 代码示例 | 7 个 |
-| 📋 架构决策 | 7 条 |
-| 🧪 测试用例 | 1093 个 |
+| 📄 核心文档 | 229 篇 |
+| 📚 实践案例 | 43 个 |
+| 🛠️ 代码示例 | 10 个 |
+| 📋 架构决策 | 9 条 |
+| 🧪 测试用例 | 2509 个 |
 | ✅ 测试覆盖率 | 84% |
 
 ---
@@ -169,14 +169,14 @@ python ai-dev-framework/core/jcode_init.py your-project --language python
 
 ```
 ai_developer_growth/
-├── docs/                    # 200+ 篇方法论文档
+├── docs/                    # 229 篇方法论文档
 │   ├── mindset/            # 认知升级
 │   ├── learning/           # 学习方法
 │   ├── efficiency/         # 工程效率
 │   ├── tools/              # 工具选型
 │   └── adr/                # 架构决策
-├── case-studies/            # 35 个实践案例
-├── examples/                # 7 个代码示例
+├── case-studies/            # 43 个实践案例
+├── examples/                # 10 个代码示例
 ├── ai-dev-framework/        # 通用治理框架
 │   └── core/               # 可移植组件
 ├── tools/scripts/           # 自动化工具
@@ -187,7 +187,7 @@ ai_developer_growth/
 │   ├── rules_engine/       # 规则引擎 (26 语言)
 │   └── rule_catalog.py     # 规则包管理
 ├── agents/                  # Agent 定义
-├── tests/                   # 2474 个测试
+├── tests/                   # 2500+ 个测试
 ```
 
 ---

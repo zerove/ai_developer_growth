@@ -1,3 +1,11 @@
+---
+title: "ADG Learn生成"
+description: "adg learn"
+category: 工具层
+tags: ['生成', '分析代码库并自动生成自定义治理规则', '使用', '分析当前项目', '分析指定项目并输出到文件', '格式输出']
+difficulty: 基础
+---
+
 # ADG Learn生成
 
 > 分析代码库并自动生成自定义治理规则。

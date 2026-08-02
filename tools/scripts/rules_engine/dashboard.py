@@ -145,10 +145,7 @@ def get_language_stats(conn: sqlite3.Connection) -> list[dict[str, Any]]:
            FROM file_results WHERE run_id = ? GROUP BY language""",
         (latest_id,),
     ).fetchall()
-    return [
-        {"language": r[0], "errors": r[1] or 0, "warnings": r[2] or 0, "info": r[3] or 0}
-        for r in rows
-    ]
+    return [{"language": r[0], "errors": r[1] or 0, "warnings": r[2] or 0, "info": r[3] or 0} for r in rows]
 
 
 def get_comparison(conn: sqlite3.Connection) -> dict[str, Any] | None:
@@ -407,7 +404,7 @@ HTML_TEMPLATE = """<!DOCTYPE html>
 </html>"""
 
 
-def create_app(db_path: str = "adg_quality.db", ci_data_dir: str | None = None) -> object:
+def create_app(db_path: str = "adg_quality.db", ci_data_dir: str | None = None) -> Any:
     """Create FastAPI app for the quality dashboard.
 
     Args:
@@ -430,18 +427,23 @@ def create_app(db_path: str = "adg_quality.db", ci_data_dir: str | None = None) 
         latest = get_latest_report(conn)
         lang_stats = get_language_stats(conn)
         comp = get_comparison(conn)
-        html = HTML_TEMPLATE.replace(
-            "{{trend_data | safe}}",
-            json.dumps(trend, ensure_ascii=False),
-        ).replace(
-            "{{latest_report | safe}}",
-            json.dumps(latest, ensure_ascii=False) if latest else "null",
-        ).replace(
-            "{{language_data | safe}}",
-            json.dumps(lang_stats, ensure_ascii=False),
-        ).replace(
-            "{{comparison_data | safe}}",
-            json.dumps(comp, ensure_ascii=False) if comp else "null",
+        html = (
+            HTML_TEMPLATE.replace(
+                "{{trend_data | safe}}",
+                json.dumps(trend, ensure_ascii=False),
+            )
+            .replace(
+                "{{latest_report | safe}}",
+                json.dumps(latest, ensure_ascii=False) if latest else "null",
+            )
+            .replace(
+                "{{language_data | safe}}",
+                json.dumps(lang_stats, ensure_ascii=False),
+            )
+            .replace(
+                "{{comparison_data | safe}}",
+                json.dumps(comp, ensure_ascii=False) if comp else "null",
+            )
         )
         return html
 
@@ -538,7 +540,7 @@ def create_app(db_path: str = "adg_quality.db", ci_data_dir: str | None = None) 
     def api_v3_rules(lang: str | None = None) -> dict[str, Any]:
         """List all available rules, optionally filtered by language."""
         try:
-            from tools.scripts.adg_cli.rules import load_rules_for_language, load_framework_rules
+            from tools.scripts.adg_cli.rules import load_rules_for_language
         except ImportError:
             return {"status": "error", "message": "ADG rules module not available"}
 
@@ -546,14 +548,26 @@ def create_app(db_path: str = "adg_quality.db", ci_data_dir: str | None = None) 
             rules = load_rules_for_language(lang)
             return {"status": "ok", "language": lang, "rules": rules}
         # Return summary per language
-        languages = ["python", "javascript", "typescript", "rust", "go", "java", "ruby", "kotlin", "swift", "csharp", "php"]
+        languages = [
+            "python",
+            "javascript",
+            "typescript",
+            "rust",
+            "go",
+            "java",
+            "ruby",
+            "kotlin",
+            "swift",
+            "csharp",
+            "php",
+        ]
         summary: dict[str, int] = {}
-        for l in languages:
+        for lang_id in languages:
             try:
-                r = load_rules_for_language(l)
-                summary[l] = len(r.get("anti_patterns", [])) + len(r.get("security_patterns", []))
+                r = load_rules_for_language(lang_id)
+                summary[lang_id] = len(r.get("anti_patterns", [])) + len(r.get("security_patterns", []))
             except Exception:
-                summary[l] = -1
+                summary[lang_id] = -1
         return {"status": "ok", "languages": summary}
 
     @app.get("/api/v3/rules/{rule_id}/docs")

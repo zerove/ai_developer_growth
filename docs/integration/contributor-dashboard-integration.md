@@ -1,9 +1,9 @@
 ---
 title: 贡献者看板集成
 description: 如何使用 contributor-dashboard 跟踪和管理社区贡献
-category: 集成
+category: 工具层
 tags: ['AI', 'community', 'dashboard']
-difficulty: 中级
+difficulty: 进阶
 reading_time: 5 分钟
 updated: 2026-07-21
 ---
@@ -40,8 +40,8 @@ python dashboard.py
 
 ## 相关资源
 
-- [[community-catalyst|社区催化剂]]
-- [[CONTRIBUTING|贡献指南]]
+- [[../../agents/community-catalyst|社区催化剂]]
+- [[../../CONTRIBUTING|贡献指南]]
 
 ---
 

@@ -3,6 +3,7 @@
 用户在检查结果中标记某个问题为误报后，系统会记录该规则在该文件
 上下文中的误报次数，当同一规则的误报率超过阈值时自动降低其严重度。
 """
+
 from __future__ import annotations
 
 import json
@@ -52,12 +53,15 @@ def _load_feedback() -> FeedbackData:
         try:
             raw: dict[str, Any] = json.loads(FEEDBACK_FILE.read_text())
             return {
-                "rules": {k: {
-                    "total_reports": v.get("total_reports", 0),
-                    "false_positives": v.get("false_positives", 0),
-                    "files": v.get("files", []),
-                    "downgraded": v.get("downgraded", False),
-                } for k, v in raw.get("rules", {}).items()},
+                "rules": {
+                    k: {
+                        "total_reports": v.get("total_reports", 0),
+                        "false_positives": v.get("false_positives", 0),
+                        "files": v.get("files", []),
+                        "downgraded": v.get("downgraded", False),
+                    }
+                    for k, v in raw.get("rules", {}).items()
+                },
                 "total_feedback": raw.get("total_feedback", 0),
             }
         except (json.JSONDecodeError, OSError):

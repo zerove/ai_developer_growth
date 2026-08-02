@@ -3,7 +3,7 @@ title: "AI 代码版本控制标准 (AI Code Version Control)"
 description: AI 生成代码的版本管理、分支策略和回滚机制
 category: 效率层
 tags: ['AI', 'git', 'version-control', 'branching', 'governance']
-difficulty: 中级
+difficulty: 进阶
 reading_time: 8 分钟
 updated: 2026-07-22
 ---

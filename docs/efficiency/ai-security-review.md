@@ -3,7 +3,7 @@ title: AI 代码安全审查 (AI Code Security Review)
 description: > AI 生成的代码，安全不能打折。
 category: 效率层
 tags: ['AI', 'Python', 'NoSQL', '测试', 'SQL']
-difficulty: 初级
+difficulty: 基础
 reading_time: 10 分钟
 updated: 2026-07-21
 ---

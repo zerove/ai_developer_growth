@@ -27,4 +27,4 @@ Proposed
 EOF
 
 # 将 ADR 注册到 ADG 文档索引中
-echo "[[ADR-008|生产级稳健工作流与防御性接口设计]]" >> docs/adr/ADR.md
+echo "[[008-production-grade-workflow|生产级稳健工作流与防御性接口设计]]" >> docs/adr/ADR.md

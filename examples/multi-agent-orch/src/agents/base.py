@@ -46,7 +46,7 @@ class BaseAgent(ABC):
         try:
             return self._generate(history)
         except AgentFailureError:
-            raise
+            raise  # 合法重抛：AgentFailureError 原样透传
         except Exception as exc:
             raise AgentFailureError(
                 f"Agent {self._role.value} failed: {exc}",

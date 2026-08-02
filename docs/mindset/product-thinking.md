@@ -1,7 +1,7 @@
 ---
 title: 产品思维：从"如何实现"到"构建什么以及为什么"
-description: 在 AI 时代，代码的生产成本正在迅速趋近于零。当"实现"不再是壁垒时，开发者最核心的竞争力将从 **实现能力 (Implementation Skill)** 转移到 **产品定义能力 (Produ
-category: 心态层
+description: "在 AI 时代，代码的生产成本正在迅速趋近于零。当"实现"不再是壁垒时，开发者最核心的竞..."
+category: 认知层
 tags: ['thinking', 'product', 'AI']
 difficulty: 高级
 reading_time: 10 分钟

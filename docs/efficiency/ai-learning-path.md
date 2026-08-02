@@ -3,7 +3,7 @@ title: AI 辅助技术学习路径
 description: 使用 AI 制定个性化学习路径
 category: 效率层
 tags: [AI, 学习路径, 职业发展]
-difficulty: 中级
+difficulty: 进阶
 reading_time: 10 分钟
 updated: 2026-07-21
 ---

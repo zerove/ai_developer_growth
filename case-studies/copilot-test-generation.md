@@ -1,3 +1,10 @@
+---
+title: "Copilot 测试生成效率"
+description: "项目: 开源 CLI 工具 "
+category: 案例研究
+tags: ['AI协作', '案例研究']
+difficulty: 基础
+---
 # Copilot 测试生成效率
 
 ## 背景

@@ -1,8 +1,9 @@
 ---
 title: "ADG 扫描在 httpx 上的实战验证"
-category: "tools"
+description: "用 ADG 扫描开源项目 httpx 的实战验证与规则改进"
+category: 工具层
 tags: [governance, validation, adg, external-project]
-difficulty: "intermediate"
+difficulty: 进阶
 created: 2026-07-29
 ai_contribution: 使用 ai-dev-framework 的 adg scan 命令对开源项目 httpx 进行全文件扫描
 status: verified

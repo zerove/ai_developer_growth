@@ -3,7 +3,7 @@ title: Agent 开发流程规范
 description: 本文档定义了 AI Agent 的开发全流程标准，确保从需求到交付的质量和一致性。
 category: 治理层
 tags: ['standards', 'AI', 'workflow']
-difficulty: 初级
+difficulty: 基础
 reading_time: 10 分钟
 updated: 2026-07-21
 ---

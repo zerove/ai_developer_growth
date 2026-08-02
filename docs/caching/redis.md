@@ -3,7 +3,7 @@ title: Redis
 description: > 内存数据库，缓存、会话、排行榜、分布式锁的首选。
 category: 工具层
 tags: ['AI', 'Python', 'SQL', '数据库', 'Docker']
-difficulty: 初级
+difficulty: 基础
 reading_time: 10 分钟
 updated: 2026-07-21
 ---

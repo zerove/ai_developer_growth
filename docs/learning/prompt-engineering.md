@@ -1,6 +1,6 @@
 ---
 title: 结构化 Prompt 工程指南 (Structured Prompt Engineering)
-description: 在 AI 时代，**Prompt 就是新的编程语言**。掌握结构化 Prompt 技能，能够将 LLM 的输出从"随机的灵感"提升为"可复现的工程产出"。
+description: "在 AI 时代，**Prompt 就是新的编程语言**。掌握结构化 Prompt 技能..."
 category: 学习层
 tags: ['AI', 'API', 'REST', 'Python', 'SQL']
 difficulty: 高级

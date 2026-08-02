@@ -3,7 +3,7 @@ title: Docker Governance Rules
 description: > 适用于 Docker 项目的 AI Agent 开发规范。
 category: 工具层
 tags: ['API', 'AI', '测试', 'SQL', '部署']
-difficulty: 初级
+difficulty: 基础
 reading_time: 10 分钟
 updated: 2026-07-21
 ---

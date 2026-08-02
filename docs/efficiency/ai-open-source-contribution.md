@@ -3,7 +3,7 @@ title: AI 辅助技术社区贡献
 description: 使用 AI 工具参与开源社区
 category: 效率层
 tags: [AI, 开源贡献, 社区]
-difficulty: 中级
+difficulty: 进阶
 reading_time: 10 分钟
 updated: 2026-07-21
 ---

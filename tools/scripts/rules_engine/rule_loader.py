@@ -13,10 +13,10 @@ from tools.scripts.rules_engine.logger import logger
 
 # ── 生成规则自动发现 ───────────────────────────────────────
 
-_GENERATED_RULES_CACHE: dict[str, list[dict[str, object]]] = {}
+_GENERATED_RULES_CACHE: dict[str, list[dict[str, Any]]] = {}
 
 
-def _load_generated_rules(language: str) -> list[dict[str, object]]:
+def _load_generated_rules(language: str) -> list[dict[str, Any]]:
     """从缓存目录加载 agent 生成的规则。
 
     生成规则存储在 ~/.config/adg/rules/generated/<language>/rules.d/anti_patterns.yml
@@ -41,11 +41,12 @@ def _load_generated_rules(language: str) -> list[dict[str, object]]:
     except Exception:
         return []
 
+
 # ──────────────────────────────────────────────────────────
 # Rule cache
 # ──────────────────────────────────────────────────────────
 
-_RULE_CACHE: dict[str, dict[str, object]] = {}
+_RULE_CACHE: dict[str, dict[str, Any]] = {}
 _FILE_HASH_CACHE: dict[str, str] = {}
 
 # Disk cache path
@@ -62,18 +63,18 @@ def _file_hash(filepath: Path) -> str:
         return ""
 
 
-def _load_disk_cache() -> dict[str, object]:
+def _load_disk_cache() -> dict[str, Any]:
     """Load rules from disk cache."""
     if _DISK_CACHE_FILE.exists():
         try:
-            result: dict[str, object] = json.loads(_DISK_CACHE_FILE.read_text())
+            result: dict[str, Any] = json.loads(_DISK_CACHE_FILE.read_text())
             return result
         except (json.JSONDecodeError, OSError):
             pass
     return {}
 
 
-def _save_disk_cache(cache: dict[str, object]) -> None:
+def _save_disk_cache(cache: dict[str, Any]) -> None:
     """Save rules to disk cache."""
     try:
         _DISK_CACHE_DIR.mkdir(parents=True, exist_ok=True)
@@ -114,7 +115,7 @@ def _save_cache(cache_file: Path, cache: dict[str, str]) -> None:
         pass
 
 
-def load_rules(language: str, framework_dir: Path | None = None) -> dict[str, object]:
+def load_rules(language: str, framework_dir: Path | None = None) -> dict[str, Any]:
     """Load YAML rules for a given language with caching."""
     # Check in-memory cache
     rh = _rules_hash(language, framework_dir)
@@ -126,7 +127,7 @@ def load_rules(language: str, framework_dir: Path | None = None) -> dict[str, ob
     disk_cache = _load_disk_cache()
     if cache_key in disk_cache:
         _RULE_CACHE[cache_key] = disk_cache[cache_key]
-        cached: dict[str, object] = disk_cache[cache_key]
+        cached: dict[str, Any] = disk_cache[cache_key]
         return cached
 
     try:
@@ -146,7 +147,7 @@ def load_rules(language: str, framework_dir: Path | None = None) -> dict[str, ob
         generated = _load_generated_rules(language)
         if generated:
             logger.info(f"Loaded {len(generated)} generated rules for '{language}'.")
-            result: dict[str, object] = {"anti_patterns": generated}
+            result: dict[str, Any] = {"anti_patterns": generated}
             common = _load_common_rules(framework_dir)
             if common:
                 result = _merge_rules(result, common)
@@ -180,7 +181,7 @@ def load_rules(language: str, framework_dir: Path | None = None) -> dict[str, ob
     return result
 
 
-def load_custom_rules(project_dir: Path) -> dict[str, object]:
+def load_custom_rules(project_dir: Path) -> dict[str, Any]:
     """Load custom rules from multiple sources with inheritance.
 
     Priority order (later overrides earlier):
@@ -190,7 +191,7 @@ def load_custom_rules(project_dir: Path) -> dict[str, object]:
 
     Rules with the same ID override built-in rules.
     """
-    custom: dict[str, object] = {"anti_patterns": [], "naming": {}, "thresholds": {}}
+    custom: dict[str, Any] = {"anti_patterns": [], "naming": {}, "thresholds": {}}
 
     # Source 1: User global config (~/.config/adg/rules.yml)
     global_config = Path.home() / ".config" / "adg" / "rules.yml"
@@ -211,7 +212,7 @@ def load_custom_rules(project_dir: Path) -> dict[str, object]:
     return custom
 
 
-def _load_single_custom_file(rule_file: Path, custom: dict[str, object]) -> None:
+def _load_single_custom_file(rule_file: Path, custom: dict[str, Any]) -> None:
     """Load a single custom rule file and merge into custom dict."""
     try:
         import yaml
@@ -242,8 +243,8 @@ def _load_single_custom_file(rule_file: Path, custom: dict[str, object]) -> None
 
 
 def _merge_anti_patterns(
-    base_patterns: list[dict[str, Any]], custom_patterns: list[dict[str, object]]
-) -> list[dict[str, object]]:
+    base_patterns: list[dict[str, Any]], custom_patterns: list[dict[str, Any]]
+) -> list[dict[str, Any]]:
     """Merge anti-patterns: custom overrides by ID, then appends new ones."""
     if not custom_patterns:
         return base_patterns
@@ -273,7 +274,7 @@ def _merge_anti_patterns(
     return merged_patterns
 
 
-def _merge_rules(base: dict[str, object], custom: dict[str, object]) -> dict[str, object]:
+def _merge_rules(base: dict[str, Any], custom: dict[str, Any]) -> dict[str, Any]:
     """Merge custom rules into base rules. Custom overrides by ID.
 
     Supports two modes:
@@ -304,7 +305,7 @@ def _merge_rules(base: dict[str, object], custom: dict[str, object]) -> dict[str
 # ──────────────────────────────────────────────────────────
 
 
-def _load_common_rules(framework_dir: Path | None = None) -> dict[str, object]:
+def _load_common_rules(framework_dir: Path | None = None) -> dict[str, Any]:
     """Load common cross-language rules from common/security.yml."""
     if framework_dir is None:
         framework_dir = rules_dir()
@@ -322,9 +323,9 @@ def _load_common_rules(framework_dir: Path | None = None) -> dict[str, object]:
         return {}
 
 
-def _get_embedded_rules(language: str) -> dict[str, object]:
+def _get_embedded_rules(language: str) -> dict[str, Any]:
     """Fallback embedded rules when YAML files are unavailable."""
-    common_anti_patterns: list[dict[str, object]] = [
+    common_anti_patterns: list[dict[str, Any]] = [
         {
             "id": f"{language[:2]}-eval-exec",
             "name": "Use of eval/exec",
@@ -347,7 +348,7 @@ def _get_embedded_rules(language: str) -> dict[str, object]:
     return {"anti_patterns": common_anti_patterns, "thresholds": {}, "naming": {}}
 
 
-def _load_universal_rules(framework_dir: Path | None = None) -> dict[str, object]:
+def _load_universal_rules(framework_dir: Path | None = None) -> dict[str, Any]:
     """Load universal quality rules for languages without specific rule sets.
 
     These rules apply to ANY programming language — they catch common
@@ -358,13 +359,14 @@ def _load_universal_rules(framework_dir: Path | None = None) -> dict[str, object
     """
     if framework_dir is None:
         framework_dir = rules_dir()
-    result: dict[str, object] = {"anti_patterns": [], "thresholds": {}, "naming": {}}
+    result: dict[str, Any] = {"anti_patterns": [], "thresholds": {}, "naming": {}}
 
     # 1. Load universal rules
     universal_path = framework_dir / "common" / "universal.yml"
     if universal_path.exists():
         try:
             import yaml
+
             with open(universal_path) as f:
                 data = yaml.safe_load(f)
             if isinstance(data, dict):
@@ -380,7 +382,7 @@ def _load_universal_rules(framework_dir: Path | None = None) -> dict[str, object
     return result
 
 
-def load_rules_for_language(language: str, framework_dir: Path | None = None) -> dict[str, object]:
+def load_rules_for_language(language: str, framework_dir: Path | None = None) -> dict[str, Any]:
     """Load rules for a language, merging with common security rules.
 
     Common rules come from common/security.yml (loaded by load_rules()).
@@ -390,7 +392,7 @@ def load_rules_for_language(language: str, framework_dir: Path | None = None) ->
     return load_rules(language, framework_dir)
 
 
-def load_domain_rules(project_path: Path, framework_dir: Path | None = None) -> dict[str, object]:
+def load_domain_rules(project_path: Path, framework_dir: Path | None = None) -> dict[str, Any]:
     """Load domain-specific rules based on project configuration.
 
     Reads .adg/config.yml for `domains:` field and loads matching
@@ -403,7 +405,7 @@ def load_domain_rules(project_path: Path, framework_dir: Path | None = None) -> 
     Returns:
         Dict with 'anti_patterns' key containing domain rules.
     """
-    result: dict[str, object] = {"anti_patterns": []}
+    result: dict[str, Any] = {"anti_patterns": []}
 
     fd = framework_dir or rules_dir()
     domains_dir = fd / "domains"
@@ -419,6 +421,7 @@ def load_domain_rules(project_path: Path, framework_dir: Path | None = None) -> 
         if config_path.exists():
             try:
                 import yaml
+
                 data = yaml.safe_load(config_path.read_text())
                 active_domains = data.get("domains", [])
                 break
@@ -430,6 +433,7 @@ def load_domain_rules(project_path: Path, framework_dir: Path | None = None) -> 
         if rule_file.exists():
             try:
                 import yaml
+
                 data = yaml.safe_load(rule_file.read_text())
                 for p in data.get("anti_patterns", []):
                     result["anti_patterns"].append(p)
@@ -439,6 +443,6 @@ def load_domain_rules(project_path: Path, framework_dir: Path | None = None) -> 
     return result
 
 
-def get_language_rules(language: str) -> dict[str, object]:
+def get_language_rules(language: str) -> dict[str, Any]:
     """Get rules for a language (cached)."""
     return load_rules_for_language(language)

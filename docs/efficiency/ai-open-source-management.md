@@ -3,7 +3,7 @@ title: AI 辅助开源项目管理
 description: 使用 AI 工具管理开源项目
 category: 效率层
 tags: [AI, 开源, 社区]
-difficulty: 中级
+difficulty: 进阶
 reading_time: 10 分钟
 updated: 2026-07-21
 ---

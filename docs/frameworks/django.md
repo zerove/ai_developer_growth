@@ -3,7 +3,7 @@ title: Django Governance Rules
 description: > 适用于 Django 项目的 AI Agent 开发规范。
 category: 工具层
 tags: ['AI', 'REST', 'API', 'Python', '测试']
-difficulty: 初级
+difficulty: 基础
 reading_time: 10 分钟
 updated: 2026-07-21
 ---

@@ -7,25 +7,13 @@ ADG Feedback — 误报回馈 + 规则自动学习
 
 from __future__ import annotations
 
-import sys
 from pathlib import Path
 
 # Re-export from existing implementation
 from tools.scripts.rules_engine.feedback import (
-    AUTO_DOWNGRADE_THRESHOLD,
-    CACHE_DIR,
-    FEEDBACK_FILE,
-    MIN_REPORTS_FOR_DOWNGRADE,
-    FeedbackData,
-    FeedbackStats,
-    FalsePositiveResult,
-    get_feedback_stats,
-    get_effective_severity,
-    mark_false_positive,
-    reset_feedback,
     _load_feedback,
     _save_feedback,
-    _should_downgrade,
+    get_feedback_stats,
 )
 
 # ── 增强: 自动更新规则配置 ──────────────────────
@@ -35,7 +23,7 @@ _RULES_HOME = Path.home() / ".config" / "adg" / "rules"
 
 def auto_update_config(rule_id: str, filepath: str) -> bool:
     """根据误报反馈自动更新规则配置。
-    
+
     如果某文件对同一规则的误报报告超过阈值，
     自动将该文件加入规则的 exclude_files。
 
@@ -91,7 +79,7 @@ def print_feedback_stats(verbose: bool = False) -> int:
     data = _load_feedback()
     rules = data.get("rules", {})
 
-    print(f"\n📊 ADG 反馈统计")
+    print("\n📊 ADG 反馈统计")
     print(f"{'='*50}")
     print(f"  总反馈数:    {stats['total_feedback']}")
     print(f"  追踪规则数:  {stats['tracked_rules']}")

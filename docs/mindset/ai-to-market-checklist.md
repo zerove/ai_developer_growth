@@ -1,9 +1,9 @@
 ---
 title: AI-to-Market 产品发布清单 (AI-to-Market Product Launch Checklist)
 description: ## 从 "代码完成" 到 "市场就绪" 的战略跃迁
-category: 心态层
+category: 认知层
 tags: ['AI', 'API', 'market', 'LLM', 'React']
-difficulty: 初级
+difficulty: 基础
 reading_time: 10 分钟
 updated: 2026-07-21
 ---

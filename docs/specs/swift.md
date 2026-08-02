@@ -3,7 +3,7 @@ title: Swift AI 开发规范 (Swift AI Spec)
 description: Swift AI 开发规范 (Swift AI Spec) - 技术文档
 category: 治理层
 tags: ['AI', 'API']
-difficulty: 初级
+difficulty: 基础
 reading_time: 10 分钟
 updated: 2026-07-21
 ---

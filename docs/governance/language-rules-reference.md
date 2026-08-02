@@ -1,3 +1,11 @@
+---
+title: "Language Rules Reference"
+description: "Complete reference for all code quality rule..."
+category: 治理层
+tags: ['AI', '开发者成长']
+difficulty: 基础
+---
+
 # Language Rules Reference
 
 Complete reference for all code quality rules across 26 languages and 5 frameworks.

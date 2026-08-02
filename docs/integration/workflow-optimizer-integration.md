@@ -1,9 +1,9 @@
 ---
 title: 工作流优化集成
 description: 如何使用 workflow-optimizer 优化 AI 协作工作流
-category: 集成
+category: 工具层
 tags: ['AI', 'workflow', 'optimization']
-difficulty: 中级
+difficulty: 进阶
 reading_time: 8 分钟
 updated: 2026-07-21
 ---

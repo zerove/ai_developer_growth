@@ -3,7 +3,7 @@ title: Swift Governance Rules
 description: > 适用于 Swift 项目的 AI Agent 开发规范。
 category: 治理层
 tags: ['AI', 'API', 'Python', '测试', '安全']
-difficulty: 初级
+difficulty: 基础
 reading_time: 10 分钟
 updated: 2026-07-21
 ---

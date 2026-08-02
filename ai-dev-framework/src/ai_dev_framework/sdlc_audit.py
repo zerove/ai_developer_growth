@@ -11,8 +11,6 @@ AI-SDLC 合规审计 — 检查项目是否遵循 AI-SDLC 流程
 
 from __future__ import annotations
 
-import json
-import os
 import re
 from dataclasses import dataclass, field
 from datetime import datetime

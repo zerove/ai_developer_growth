@@ -3,7 +3,7 @@ title: 性能测试指南
 description: > 负载、压力、容量、稳定性测试的工具选型、指标定义、基线建立与回归防护。
 category: 工具层
 tags: ['AI', 'API', 'performance', '测试', 'SQL']
-difficulty: 初级
+difficulty: 基础
 reading_time: 10 分钟
 updated: 2026-07-21
 ---

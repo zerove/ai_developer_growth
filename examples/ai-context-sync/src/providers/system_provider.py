@@ -153,7 +153,7 @@ class SystemProvider(LLMProvider):
             return provider_instance.generate(prompt, system_prompt, use_model)
         except (LLMError, requests.RequestException) as e:
             if provider == "ollama":
-                raise
+                raise  # 合法重抛：ollama 自身错误不降级
             logger.warning(f"Provider {provider} failed: {e}, trying Ollama fallback")
             try:
                 ollama = OllamaProvider()

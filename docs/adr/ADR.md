@@ -3,7 +3,7 @@ title: 架构决策记录 (ADR) 索引
 description: > 本文件汇总所有架构决策记录，按时间倒序排列。
 category: 治理层
 tags: ['REST']
-difficulty: 初级
+difficulty: 基础
 reading_time: 10 分钟
 updated: 2026-07-21
 ---
@@ -18,10 +18,10 @@ updated: 2026-07-21
 
 | ID | 标题 | 状态 | 日期 |
 |----|------|------|------|
-| [[ADR-004-agent-collaboration-model\|ADR-004]] | 多 Agent 协作模型与编排模式 | ✅ 已通过 | 2026-07 |
-| [[ADR-003-quality-gate-system\|ADR-003]] | 四道质量门禁系统设计 | ✅ 已通过 | 2026-07 |
-| [[ADR-002-knowledge-first-restructure\|ADR-002]] | 知识优先重构——项目定位重定向 | ✅ 已通过 | 2026-07 |
-| [[ADR-001-enhanced-git-analyzer\|ADR-001]] | 增强 Git 变更解析的鲁棒性 | ✅ 已通过 | 2026-07 |
+| [[004-agent-collaboration-model\|ADR-004]] | 多 Agent 协作模型与编排模式 | ✅ 已通过 | 2026-07 |
+| [[003-quality-gate-system\|ADR-003]] | 四道质量门禁系统设计 | ✅ 已通过 | 2026-07 |
+| [[002-knowledge-first-restructure\|ADR-002]] | 知识优先重构——项目定位重定向 | ✅ 已通过 | 2026-07 |
+| [[001-enhanced-git-analyzer\|ADR-001]] | 增强 Git 变更解析的鲁棒性 | ✅ 已通过 | 2026-07 |
 
 ---
 

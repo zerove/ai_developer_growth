@@ -42,6 +42,7 @@ SKIP_DIRS = {
     ".mypy_cache",
     ".ruff_cache",
     ".pytest_cache",
+    ".opencode",
     "coverage",
     ".next",
     ".nuxt",
@@ -119,11 +120,11 @@ class Issue:
 
 def _attach_docs_to_issues(issues: list[Issue]) -> None:
     """Attach related documentation links to issues from the mapping cache."""
-    _ADG_DOCS_MAPPING = Path(__file__).resolve().parent.parent.parent.parent / ".jcode" / "rule-docs-mapping.json"
-    if not _ADG_DOCS_MAPPING.exists():
+    _adg_docs_mapping = Path(__file__).resolve().parent.parent.parent.parent / ".jcode" / "rule-docs-mapping.json"
+    if not _adg_docs_mapping.exists():
         return
     try:
-        mapping = json.loads(_ADG_DOCS_MAPPING.read_text())
+        mapping = json.loads(_adg_docs_mapping.read_text())
     except Exception:
         return
     for issue in issues:
@@ -296,7 +297,7 @@ def load_project_config(dirpath: Path | None = None) -> dict[str, Any]:
     return config
 
 
-def _merge_config(base: dict[str, object], override: dict[str, object]) -> dict[str, object]:
+def _merge_config(base: dict[str, Any], override: dict[str, Any]) -> dict[str, Any]:
     """Merge two configuration dictionaries."""
     result = base.copy()
     for key, value in override.items():

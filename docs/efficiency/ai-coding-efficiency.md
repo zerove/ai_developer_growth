@@ -3,7 +3,7 @@ title: AI 辅助编码效率
 description: 使用 AI 工具提升编码效率的方法
 category: 效率层
 tags: [AI, 编码效率, Copilot]
-difficulty: 中级
+difficulty: 进阶
 reading_time: 10 分钟
 updated: 2026-07-21
 ---

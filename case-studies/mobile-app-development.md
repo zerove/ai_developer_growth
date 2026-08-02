@@ -1,3 +1,10 @@
+---
+title: "案例研究：AI 辅助的移动端应用开发"
+description: "本案例展示了如何使用 AI 协作快速开发一个 React Native 移动应用。"
+category: 案例研究
+tags: ['AI协作', '案例研究']
+difficulty: 进阶
+---
 # 案例研究：AI 辅助的移动端应用开发
 
 本案例展示了如何使用 AI 协作快速开发一个 React Native 移动应用。

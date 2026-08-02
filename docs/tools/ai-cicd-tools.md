@@ -3,7 +3,7 @@ title: AI CI/CD 工具
 description: 持续集成和部署工具
 category: 工具层
 tags: [AI, CI/CD, 自动化]
-difficulty: 初级
+difficulty: 基础
 reading_time: 8 分钟
 updated: 2026-07-21
 ---

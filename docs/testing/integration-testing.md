@@ -3,7 +3,7 @@ title: 集成/E2E 测试策略
 description: > 覆盖服务间交互、数据库、消息队列、外部 API 的真实集成路径。
 category: 工具层
 tags: ['AI', 'API', 'Python', '测试', 'SQL']
-difficulty: 初级
+difficulty: 基础
 reading_time: 10 分钟
 updated: 2026-07-21
 ---

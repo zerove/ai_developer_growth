@@ -3,7 +3,7 @@ title: AI 驱动的自动化 Bug 修复
 description: 如何用 AI 实现 Bug 的自动检测、定位、修复和验证
 category: 效率层
 tags: ['AI', 'Python', 'automation', 'bugfix']
-difficulty: 中级
+difficulty: 进阶
 reading_time: 8 分钟
 updated: 2026-07-21
 ---
@@ -109,7 +109,7 @@ AI 增强流程：
 
 ## 相关资源
 
-- [[examples/self-correction-loop|修正循环示例]]
+- [[../../examples/self-correction-loop|修正循环示例]]
 - [[efficiency/full-cycle-workflow|全周期工作流]]
 - [[learning/test-driven-development|TDD 方法论]]
 

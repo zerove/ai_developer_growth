@@ -1,5 +1,3 @@
-from typing import Any
-
 from ..ast_parser import ClassInfo, FunctionInfo
 from .base import BaseParser
 

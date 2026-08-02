@@ -3,7 +3,7 @@ title: "AI 辅助单元测试"
 description: "使用 AI 自动生成高覆盖率的单元测试"
 category: 案例研究
 tags: [单元测试, 测试覆盖, TDD]
-difficulty: 中级
+difficulty: 进阶
 reading_time: 12 分钟
 updated: 2026-07-21
 ---

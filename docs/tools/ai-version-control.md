@@ -3,7 +3,7 @@ title: AI 版本控制工具
 description: Git 和版本控制最佳实践
 category: 工具层
 tags: [AI, Git, 版本控制]
-difficulty: 初级
+difficulty: 基础
 reading_time: 8 分钟
 updated: 2026-07-21
 ---

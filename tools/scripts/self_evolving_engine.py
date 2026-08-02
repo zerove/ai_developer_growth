@@ -11,7 +11,8 @@ from pathlib import Path
 from typing import Any
 
 from ai_slop_scanner import AISlopScanner
-from _common import get_project_root
+
+from tools.scripts._common import get_project_root
 
 
 class SelfEvolvingEngine:

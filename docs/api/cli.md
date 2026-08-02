@@ -1,3 +1,11 @@
+---
+title: "CLI API"
+description: "options:"
+category: 工具层
+tags: ['AI', '开发者成长']
+difficulty: 基础
+---
+
 # CLI API
 
 ::: tools.scripts.validators.cli

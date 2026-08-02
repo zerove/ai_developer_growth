@@ -3,7 +3,7 @@ title: AI 容器化工具
 description: Docker 和容器编排工具
 category: 工具层
 tags: [AI, Docker, 容器]
-difficulty: 初级
+difficulty: 基础
 reading_time: 8 分钟
 updated: 2026-07-21
 ---

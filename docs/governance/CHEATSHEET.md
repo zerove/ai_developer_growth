@@ -3,7 +3,7 @@ title: 治理框架快速参考卡
 description: ## 核心原则
 category: 治理层
 tags: ['AI', 'API', 'REST', 'Kubernetes', 'Python']
-difficulty: 初级
+difficulty: 基础
 reading_time: 10 分钟
 updated: 2026-07-21
 ---

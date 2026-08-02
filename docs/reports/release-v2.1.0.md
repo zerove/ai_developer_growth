@@ -1,3 +1,11 @@
+---
+title: "v2.1.0 Release Notes"
+description: "发布日期: 2026-07-25"
+category: 治理层
+tags: ['发布日期', '主要新功能', '框架规则完整覆盖', '所有', '个框架现在都有完整的', '配置']
+difficulty: 基础
+---
+
 # v2.1.0 Release Notes
 
 **发布日期**: 2026-07-25

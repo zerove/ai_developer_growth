@@ -1,7 +1,7 @@
 # CLAUDE.md - AI Developer Growth Project
 
 ## 项目概览
-这是一个开源知识库，专注于 AI 时代开发者成长方法论。包含 243 个方法论文档、35 个真实案例研究、10 个代码示例、7 个 ADR 决策记录，以及 4 个核心治理 Agent。新增 15
+这是一个开源知识库，专注于 AI 时代开发者成长方法论。包含 229 个方法论文档、43 个真实案例研究、10 个代码示例、9 个 ADR 决策记录，以及 4 个核心治理 Agent。新增 15
 
 ## 核心结构
 ```
@@ -13,13 +13,13 @@ ai_developer_growth/
 ├── INDEX.md               # 文档索引
 ├── UBIQUITOUS_LANGUAGE.md # 领域术语表
 ├── agents/                # 4 个核心 Agent 定义
-├── case-studies/          # 15 个真实案例研究
-├── docs/                  # 37 个方法论文档
+├── case-studies/          # 43 个真实案例研究
+├── docs/                  # 229 个方法论文档
 │   ├── efficiency/        # 效率相关
 │   ├── learning/          # 学习相关
 │   ├── tools/             # 工具相关
 │   └── ...
-├── examples/              # 6 个代码示例（可运行）
+├── examples/              # 10 个代码示例（可运行）
 │   ├── ai-context-sync/   # 上下文同步工具
 │   ├── multi-agent-orch/  # 多 Agent 编排
 │   ├── self-correction-loop/ # 自我修正循环

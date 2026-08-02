@@ -1,7 +1,7 @@
 ---
 title: AI 时代开发者能力模型
 description: AI 时代开发者能力模型 - 技术文档
-category: 心态层
+category: 认知层
 tags: ['AI', 'model', 'capability']
 difficulty: 高级
 reading_time: 10 分钟

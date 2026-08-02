@@ -21,7 +21,7 @@ def _get_llm_client() -> Any:
 
     if str(_ai_ctx_sync) not in sys.path:
         sys.path.insert(0, str(_ai_ctx_sync))
-    from src.llm_client import LLMClient  # type: ignore[import-not-found]  # noqa: E402
+    from src.llm_client import LLMClient  # noqa: E402
 
     return LLMClient
 

@@ -22,6 +22,7 @@ Usage:
 
 from __future__ import annotations
 
+import ast
 import hashlib
 import json
 import sys
@@ -248,7 +249,7 @@ def main() -> int:
 
 
 if __name__ == "__main__":
-    from _common import handle_error  # type: ignore[import-not-found]
+    from tools.scripts._common import handle_error
 
     try:
         sys.exit(main())

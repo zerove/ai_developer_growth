@@ -11,7 +11,7 @@ import json
 from pathlib import Path
 from typing import Any
 
-from _common import get_project_root
+from tools.scripts._common import get_project_root
 
 
 class CodeNode:

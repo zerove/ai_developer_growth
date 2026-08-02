@@ -1,3 +1,10 @@
+---
+title: "多 Agent 自动化工作流"
+description: "项目: 开源项目质量保证体系"
+category: 案例研究
+tags: ['AI协作', '案例研究']
+difficulty: 进阶
+---
 # 多 Agent 自动化工作流
 
 ## 背景

@@ -4,6 +4,7 @@
 之后: 分析代码库中的命名模式、错误处理风格、注释风格，
       自动生成 .adg/rules.yml 自定义规则建议。
 """
+
 from __future__ import annotations
 
 import re
@@ -35,17 +36,21 @@ class PatternLearner:
         suggestions.extend(self._learn_error_handling_style(project_path))
 
         if not suggestions:
-            suggestions.append({
-                "pattern": "no-patterns-found",
-                "message": "未发现明显的高频模式或团队规范",
-                "confidence": 0,
-            })
+            suggestions.append(
+                {
+                    "pattern": "no-patterns-found",
+                    "message": "未发现明显的高频模式或团队规范",
+                    "confidence": 0,
+                }
+            )
 
         return suggestions
 
     def _learn_from_issues(self, project_path: Path) -> list[dict[str, Any]]:
         """Aggregate issues from rules engine and find frequent patterns."""
-        results = check_directory(project_path)
+        # run_linters=False: external linter per-file subprocess spawns dominate
+        # runtime for bulk scans; pattern learning only needs internal rule results.
+        results = check_directory(project_path, run_linters=False)
         pattern_groups: dict[str, list[Issue]] = {}
         for result in results:
             for issue in result.issues:
@@ -58,35 +63,43 @@ class PatternLearner:
         for msg_key, issues in pattern_groups.items():
             if len(issues) >= self.MIN_OCCURRENCES:
                 example = issues[0]
-                rules.append({
-                    "type": "issue-pattern",
-                    "rule_id": example.rule_id,
-                    "pattern": f"Suggested: {example.rule_id}",
-                    "message": example.message,
-                    "severity": example.severity,
-                    "frequency": len(issues),
-                    "files": list({i.file for i in issues}),
-                    "confidence": min(len(issues) / 10, 1.0),
-                    "suggested_action": "add_to_rules" if len(issues) >= 5 else "monitor",
-                })
+                rules.append(
+                    {
+                        "type": "issue-pattern",
+                        "rule_id": example.rule_id,
+                        "pattern": f"Suggested: {example.rule_id}",
+                        "message": example.message,
+                        "severity": example.severity,
+                        "frequency": len(issues),
+                        "files": list({i.file for i in issues}),
+                        "confidence": min(len(issues) / 10, 1.0),
+                        "suggested_action": "add_to_rules" if len(issues) >= 5 else "monitor",
+                    }
+                )
         return rules
 
     def _learn_naming_patterns(self, project_path: Path) -> list[dict[str, Any]]:
         """分析代码库命名风格，建议团队命名规范。"""
-        code_files = list(project_path.rglob("*.py")) + list(project_path.rglob("*.ts"))
+        code_files = [
+            f
+            for f in list(project_path.rglob("*.py")) + list(project_path.rglob("*.ts"))
+            if not any(seg in {"node_modules", ".git", "__pycache__", "build", "dist", ".opencode"} for seg in f.parts)
+        ]
         naming_patterns = self._analyze_naming(code_files)
 
         suggestions = []
         for style, examples in naming_patterns.items():
             if len(examples) >= 3:
-                suggestions.append({
-                    "type": "naming-convention",
-                    "pattern": style,
-                    "message": f"团队使用 {style} 命名风格 (发现 {len(examples)} 处)",
-                    "examples": examples[:5],
-                    "confidence": min(len(examples) / 20, 0.95),
-                    "suggested_action": "add_naming_rule",
-                })
+                suggestions.append(
+                    {
+                        "type": "naming-convention",
+                        "pattern": style,
+                        "message": f"团队使用 {style} 命名风格 (发现 {len(examples)} 处)",
+                        "examples": examples[:5],
+                        "confidence": min(len(examples) / 20, 0.95),
+                        "suggested_action": "add_naming_rule",
+                    }
+                )
         return suggestions
 
     def _analyze_naming(self, files: list[Path]) -> dict[str, list[str]]:
@@ -137,13 +150,15 @@ class PatternLearner:
         if try_count > 5:
             specific_ratio = specific_except / try_count if try_count > 0 else 0
             if specific_ratio >= 0.8:
-                suggestions.append({
-                    "type": "error-handling-style",
-                    "pattern": "specific-exceptions",
-                    "message": f"团队使用具体异常类型: {specific_ratio:.0%} 的 except 指定了类型",
-                    "confidence": 0.8,
-                    "suggested_action": "add_exception_rule",
-                })
+                suggestions.append(
+                    {
+                        "type": "error-handling-style",
+                        "pattern": "specific-exceptions",
+                        "message": f"团队使用具体异常类型: {specific_ratio:.0%} 的 except 指定了类型",
+                        "confidence": 0.8,
+                        "suggested_action": "add_exception_rule",
+                    }
+                )
         return suggestions
 
 

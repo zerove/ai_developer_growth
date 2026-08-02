@@ -1,3 +1,10 @@
+---
+title: "案例研究：多 Agent 协作模拟团队开发"
+description: "在本案例中，我们将展示如何利用多 Agent 协作模式模拟一个完整的软件开发团队：Mul..."
+category: 案例研究
+tags: ['AI协作', '案例研究']
+difficulty: 进阶
+---
 # 案例研究：多 Agent 协作模拟团队开发
 
 在本案例中，我们将展示如何利用多 Agent 协作模式模拟一个完整的软件开发团队：**Multi-Agent Workflow Prototype**。这个系统将复杂的开发任务分解为多个具有特定角色的智能体，通过定义好的工作流进行协作。

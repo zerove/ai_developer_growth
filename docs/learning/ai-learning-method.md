@@ -1,6 +1,6 @@
 ---
 title: AI 驱动的快速学习法：从数周缩短至数日
-description: 在 AI 时代，学习新语言或框架的范式已经发生了根本性的转变。传统的"阅读文档 → 观看教程 → 尝试练习"的线性路径过于缓慢且低效。
+description: "在 AI 时代，学习新语言或框架的范式已经发生了根本性的转变。传统的"阅读文档 → 观看..."
 category: 学习层
 tags: ['AI', 'learning', 'LLM', 'React', 'method']
 difficulty: 高级

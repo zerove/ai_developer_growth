@@ -3,7 +3,7 @@ title: AI 辅助技术选型
 description: 使用 AI 工具进行技术选型决策
 category: 效率层
 tags: [AI, 技术选型, 架构决策]
-difficulty: 中级
+difficulty: 进阶
 reading_time: 10 分钟
 updated: 2026-07-21
 ---

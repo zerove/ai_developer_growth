@@ -13,9 +13,8 @@ strict TDD state machine, and small-batch scope guard into a single JCode workfl
 from __future__ import annotations
 
 import sys
-from pathlib import Path
 
-from _common import get_project_root
+from tools.scripts._common import get_project_root
 
 # Insert orchestration path at the very beginning of sys.path using get_project_root()
 sys.path.insert(0, str(get_project_root() / "examples" / "multi-agent-orch" / "src" / "orchestration"))
@@ -23,7 +22,7 @@ sys.path.insert(0, str(get_project_root() / "tools" / "scripts" / "hooks"))
 
 
 class JCodeAINativeWorkflow:
-    def __init__(self):
+    def __init__(self) -> None:
         self.root_dir = get_project_root()
 
     def run_full_pipeline(self, intent: str = "Feature Delivery via AI-Native SDLC") -> bool:
@@ -33,6 +32,7 @@ class JCodeAINativeWorkflow:
 
         # Initialize Audit Ledger
         from audit_attestation import AuditAttestationLedger
+
         ledger = AuditAttestationLedger(self.root_dir)
         ledger.record_trace("PIPELINE_START", {"intent": intent})
 
@@ -41,7 +41,7 @@ class JCodeAINativeWorkflow:
         from dor_checker import DoRChecker
         from intent_delivery import IntentDeliveryEngine
         from multi_llm_router import MultiLLMRouter
-        
+
         dor = DoRChecker(self.root_dir)
         dor_res = dor.evaluate_intent(intent)
         if not dor_res["passed"]:
@@ -49,7 +49,7 @@ class JCodeAINativeWorkflow:
             ledger.record_trace("DOR_FAILED", dor_res)
             return False
         print("✅ DoR Quality Gate Passed (7-point rubric).")
-        
+
         IntentDeliveryEngine(intent).process_intent()
         MultiLLMRouter(self.root_dir).route_task("architecture_design")
         ledger.record_trace("STEP_1_COMPLETE", {"dor": dor_res})
@@ -58,6 +58,7 @@ class JCodeAINativeWorkflow:
         print("\n[Step 2/6] 🕸️ Building Semantic Graph & Checking Architecture Guard...")
         from architecture_drift_guard import ArchitectureDriftGuard
         from semantic_code_graph import SemanticCodeGraph
+
         SemanticCodeGraph(self.root_dir).build_graph()
         violations = ArchitectureDriftGuard(self.root_dir).check_layering()
         if violations:
@@ -69,12 +70,12 @@ class JCodeAINativeWorkflow:
         from autonomous_swarm_engine import AutonomousSwarmOrchestrator
         from self_healing_ci import SelfHealingCILoop
         from tdd_state_machine import TDDStateMachine
-        
+
         sm = TDDStateMachine()
-        sm.transition("test_written_failing") # RED -> GREEN
-        sm.transition("implementation_passing") # GREEN -> REFACTOR
+        sm.transition("test_written_failing")  # RED -> GREEN
+        sm.transition("implementation_passing")  # GREEN -> REFACTOR
         print(f"✅ TDD State Machine verified phase: {sm.state}")
-        
+
         AutonomousSwarmOrchestrator(self.root_dir).execute_swarm_cycle(intent)
         SelfHealingCILoop().execute_with_healing()
         ledger.record_trace("STEP_3_COMPLETE", {"tdd_state": sm.state})
@@ -84,10 +85,10 @@ class JCodeAINativeWorkflow:
         from adversarial_debate import RedBlueDebateOrchestrator
         from ai_slop_scanner import AISlopScanner
         from scope_guard import ScopeGuardHook
-        
+
         RedBlueDebateOrchestrator(intent).run_debate()
         AISlopScanner(self.root_dir).scan_codebase()
-        
+
         scope_passed, scope_msg = ScopeGuardHook(root_dir=self.root_dir).check_git_diff()
         print(f"🛡️ {scope_msg}")
         ledger.record_trace("STEP_4_COMPLETE", {"scope_passed": scope_passed})
@@ -96,6 +97,7 @@ class JCodeAINativeWorkflow:
         print("\n[Step 5/6] 📊 Running Runtime Verification & Telemetry Collection...")
         from metrics_telemetry import MetricsTelemetry
         from runtime_verifier import RuntimeVerifier
+
         RuntimeVerifier(self.root_dir).run_tests()
         MetricsTelemetry(self.root_dir).collect_metrics()
         ledger.record_trace("STEP_5_COMPLETE", {})
@@ -104,9 +106,10 @@ class JCodeAINativeWorkflow:
         print("\n[Step 6/6] 🧬 Triggering Self-Evolution & Case Study Generation...")
         from case_study_pipeline import CaseStudyPipeline
         from self_evolving_engine import SelfEvolvingEngine
+
         SelfEvolvingEngine(self.root_dir).evolve()
         CaseStudyPipeline(self.root_dir).generate_case_study(intent, "Full JCode AI-Native Pipeline Execution", "12x")
-        
+
         ledger.record_trace("PIPELINE_COMPLETE", {"status": "success"})
 
         print("=" * 70)

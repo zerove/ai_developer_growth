@@ -1,3 +1,11 @@
+---
+title: "ADG LSP Server - IDE 集成"
+description: "ADG 语言服务器协议（LSP）服务：编辑器内实时规则提示与诊断"
+category: 工具层
+tags: ['集成', '通过', '提反馈', '安装', '启动', '直接启动']
+difficulty: 基础
+---
+
 # ADG LSP Server - IDE 集成
 
 > 通过 Language Server Protocol 提反馈。

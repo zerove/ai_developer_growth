@@ -27,7 +27,7 @@ def cli_error_handler(func: Any) -> Any:
         try:
             return func(*args, **kwargs)
         except typer.Exit:
-            raise
+            raise  # 合法重抛 typer.Exit（透传退出信号）
         except AISyncError as e:
             logger.error(f"❌ {e}")
             raise typer.Exit(code=1)

@@ -14,21 +14,20 @@ sys.path.insert(0, str(Path(__file__).parent.parent / "tools" / "scripts"))
 sys.path.insert(0, str(Path(__file__).parent.parent / "tools" / "scripts" / "hooks"))
 sys.path.insert(0, str(Path(__file__).parent.parent / "examples" / "multi-agent-orch" / "src" / "orchestration"))
 
-import pytest
-from semantic_code_graph import SemanticCodeGraph, CodeNode
-from architecture_drift_guard import ArchitectureDriftGuard
-from multi_llm_router import MultiLLMRouter
-from autonomous_swarm_engine import AutonomousSwarmOrchestrator
-from self_evolving_engine import SelfEvolvingEngine
-from metrics_telemetry import MetricsTelemetry
-from intent_delivery import IntentDeliveryEngine
-from context_streamer import ContextStreamer
 from ai_slop_scanner import AISlopScanner
+from architecture_drift_guard import ArchitectureDriftGuard
+from autonomous_swarm_engine import AutonomousSwarmOrchestrator
+from context_streamer import ContextStreamer
+from intent_delivery import IntentDeliveryEngine
+from metrics_telemetry import MetricsTelemetry
+from multi_llm_router import MultiLLMRouter
 from runtime_verifier import RuntimeVerifier
+from self_evolving_engine import SelfEvolvingEngine
+from semantic_code_graph import CodeNode, SemanticCodeGraph
 
 
 def test_code_node_serialization():
-    node = TestNode = CodeNode("test_func", "function", "test.py", 10)
+    node = CodeNode("test_func", "function", "test.py", 10)
     node.dependencies.add("helper")
     d = node.to_dict()
     assert d["name"] == "test_func"

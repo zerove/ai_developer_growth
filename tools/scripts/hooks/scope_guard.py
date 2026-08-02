@@ -8,7 +8,8 @@ from __future__ import annotations
 
 import subprocess
 from pathlib import Path
-from _common import get_project_root
+
+from tools.scripts._common import get_project_root
 
 
 class ScopeGuardHook:
@@ -27,7 +28,7 @@ class ScopeGuardHook:
             )
             if res.returncode != 0:
                 return True, "Git diff check skipped (not a git repo or no staged changes)."
-            
+
             lines = res.stdout.strip().splitlines()
             total_added = 0
             total_deleted = 0

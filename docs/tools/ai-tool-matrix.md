@@ -1,6 +1,6 @@
 ---
 title: AI 工具矩阵 (AI Tool Matrix)
-description: 在 AI 时代，开发者的核心竞争力不再是记忆 API 或编写重复性样板代码，而是**选择正确工具的能力**以及**高效调度模型的能力**。本指南旨在提供一个客观、技术导向的 AI 工具对比矩阵，帮助开
+description: "在 AI 时代，开发者的核心竞争力不再是记忆 API 或编写重复性样板代码，而是**选择..."
 category: 工具层
 tags: ['AI', 'tool', 'API', 'Python', 'TypeScript']
 difficulty: 高级

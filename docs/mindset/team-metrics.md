@@ -1,9 +1,9 @@
 ---
 title: 团队级 AI 度量 (Team-Level AI Metrics)
 description: > 从个人效率到团队效能的系统化度量。
-category: 心态层
+category: 认知层
 tags: ['AI', 'API', 'Python', '部署', 'team']
-difficulty: 初级
+difficulty: 基础
 reading_time: 10 分钟
 updated: 2026-07-21
 ---

@@ -1,117 +1,106 @@
-# ADG Project Configuration
-# Priority order (later overrides earlier):
-# 1. ~/.config/adg/config.yml (user global)
-# 2. .adg/config.yml (project)
-# 3. .jcode/config.yml (project)
-# 4. pyproject.toml [tool.adg] (project)
-
 config_version: '1.0'
-
-# Project metadata
 project:
-  name: "ai_developer_growth"
-  description: "AI Developer Growth - Governance Engine"
-  version: "2.2.0"
-
-# Language settings
+  name: ai_developer_growth
+  description: AI Developer Growth - Governance Engine
+  version: 2.2.0
 language:
   auto_detect: true
-  primary: "python"
+  primary: python
   include:
-    - "python"
-    - "javascript"
-    - "typescript"
-    - "yaml"
+  - python
+  - javascript
+  - typescript
+  - yaml
   exclude:
-    - "vendor"
-    - "node_modules"
-    - ".git"
-    - "__pycache__"
-    - ".cache"
-    - "dist"
-    - "build"
-
-# Domain-specific rule packs to enable
+  - vendor
+  - node_modules
+  - .git
+  - __pycache__
+  - .cache
+  - dist
+  - build
 domains:
-  - "finance"
-  - "hipaa"
-  - "gaming"
-
-# Architecture configuration
+- finance
+- hipaa
+- gaming
 architecture:
-  config_file: ".adg/architecture.yml"
+  config_file: .adg/architecture.yml
   enabled: true
-
-# Framework detection
 frameworks:
   auto_detect: true
   enabled:
-    - "fastapi"
-    - "django"
-    - "express"
-    - "react"
-    - "vue"
-    - "nextjs"
-
-# Rule customization
+  - fastapi
+  - django
+  - express
+  - react
+  - vue
+  - nextjs
 rules:
-  # Severity overrides for built-in rules
   severity_overrides:
-    "py-any-type": "warning"  # downgrade from error
-    "py-missing-all": "info"  # downgrade from warning
-    "common-type-any": "warning"
-  
-  # Custom project-specific rules (merged with built-in)
-  custom_rules_file: ".adg/rules.yml"
-
-# Context-aware severity adjustment
+    py-any-type: warning
+    py-missing-all: info
+    common-type-any: warning
+  custom_rules_file: .adg/rules.yml
 context:
   enabled: true
-  role_markers_file: ".adg/role_markers.yml"  # Optional custom markers
-
-# Feedback system
+  role_markers_file: .adg/role_markers.yml
+  role_severity: {}
+  markers:
+    tests/: test
+    test/: test
+    __tests__/: test
+    spec/: test
+    '*_test.py': test
+    test_*.py: test
+    examples/: demo
+    demo/: demo
+    scripts/: prototype
+    bin/: prototype
+    tools/: prototype
+    config/: config
+    '*.config.js': config
+    '*.yml': config
+    '*.yaml': config
+    '*.json': config
+    Dockerfile: config
+    legacy/: legacy
+    deprecated/: legacy
 feedback:
   enabled: true
-  db_path: "~/.cache/adg/feedback.json"
+  db_path: ~/.cache/adg/feedback.json
   fp_downgrade_threshold: 0.6
   fp_min_reports: 5
-
-# Output
 output:
-  default_format: "human"  # human, json, sarif
-  sarif_file: "adg-results.sarif"
+  default_format: human
+  sarif_file: adg-results.sarif
   include_fix_hints: true
   include_explanations: true
-
-# Performance
 performance:
   jobs: 4
   cache_enabled: true
-  cache_dir: ".cache/adg"
+  cache_dir: .cache/adg
   incremental: true
-
-# CI/CD
 ci:
-  mode: "auto"  # auto, github, gitlab, jenkins, local
+  mode: auto
   fail_on_error: true
   fail_on_warning: false
   trend_enabled: true
-  trend_db: "~/.cache/adg/trend.db"
-
-# Notifications
+  trend_db: ~/.cache/adg/trend.db
 notifications:
-  webhook: ""
+  webhook: ''
   on_new_errors: true
   on_trend_regression: true
-
-# LSP Server
 lsp:
   enabled: true
-  port: 0  # 0 = stdio
-
-# Marketplace
+  port: 0
 marketplace:
   enabled: true
-  rules_index: "~/.jcode/governance/rules_index.json"
+  rules_index: ~/.jcode/governance/rules_index.json
   auto_sync: true
   sync_interval_hours: 24
+skip_patterns:
+- '**/test_*.py'
+- '**/*_test.py'
+- '**/tests/**/*.py'
+- '**/demo*.py'
+- '**/*_demo.py'

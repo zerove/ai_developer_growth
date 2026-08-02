@@ -199,7 +199,7 @@ level = total // 5  # 0-5
 |------|----------|
 | L1 → L2 | [[docs/learning/prompt-engineering\|Prompt 工程]] |
 | L2 → L3 | [[docs/efficiency/full-cycle-workflow\|全周期工作流]] |
-| L3 → L4 | [[examples/multi-agent-orch\|多 Agent 编排]] |
+| L3 → L4 | [[../../examples/multi-agent-orch\|多 Agent 编排]] |
 | L4 → L5 | 创新实践 + 社区贡献 |
 
 ### 实践项目

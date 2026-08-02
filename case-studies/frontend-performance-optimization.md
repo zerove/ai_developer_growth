@@ -3,7 +3,7 @@ title: "AI 辅助前端性能优化"
 description: "使用 AI 优化大型 SPA 应用性能"
 category: 案例研究
 tags: [前端, 性能优化, React]
-difficulty: 中级
+difficulty: 进阶
 reading_time: 12 分钟
 updated: 2026-07-21
 ---

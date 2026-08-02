@@ -1,9 +1,9 @@
 ---
 title: 修正循环集成
 description: 如何使用 self-correction-loop 实现 AI 自动修复
-category: 集成
+category: 工具层
 tags: ['AI', 'automation', 'bugfix']
-difficulty: 中级
+difficulty: 进阶
 reading_time: 8 分钟
 updated: 2026-07-21
 ---
@@ -71,7 +71,7 @@ python runner.py <target_file> --max-retries 5
 
 ## 相关资源
 
-- [[examples/self-correction-loop|示例代码]]
+- [[../../examples/self-correction-loop|示例代码]]
 - [[efficiency/automated-bugfix|自动化 Bug 修复]]
 - [[efficiency/full-cycle-workflow|全周期工作流]]
 

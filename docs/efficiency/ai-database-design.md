@@ -3,7 +3,7 @@ title: AI 辅助数据库设计
 description: 使用 AI 工具设计数据库模型
 category: 效率层
 tags: [AI, 数据库, 数据建模]
-difficulty: 中级
+difficulty: 进阶
 reading_time: 10 分钟
 updated: 2026-07-21
 ---

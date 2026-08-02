@@ -3,7 +3,7 @@ title: "AI 开发者培训标准 (AI Developer Training)"
 description: 团队 AI 开发能力培训体系和认证标准
 category: 效率层
 tags: ['AI', 'training', 'education', 'certification', 'governance']
-difficulty: 中级
+difficulty: 进阶
 reading_time: 10 分钟
 updated: 2026-07-22
 ---

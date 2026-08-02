@@ -1,9 +1,9 @@
 ---
 title: TypeScript/JavaScript AI 开发规范 (TS/JS AI Spec)
-description: TypeScript/JavaScript AI 开发规范 (TS/JS AI Spec) - 技术文档
+description: "TypeScript/JavaScript AI 开发规范 (TS/JS AI Spec..."
 category: 治理层
 tags: ['AI', 'TypeScript', 'JavaScript', 'API']
-difficulty: 初级
+difficulty: 基础
 reading_time: 10 分钟
 updated: 2026-07-21
 ---

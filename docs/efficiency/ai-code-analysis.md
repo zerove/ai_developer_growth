@@ -3,7 +3,7 @@ title: AI 辅助代码分析
 description: 使用 AI 工具分析和理解代码库
 category: 效率层
 tags: [AI, 代码分析, 理解]
-difficulty: 中级
+difficulty: 进阶
 reading_time: 10 分钟
 updated: 2026-07-21
 ---

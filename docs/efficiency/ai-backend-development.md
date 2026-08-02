@@ -3,7 +3,7 @@ title: AI 辅助后端开发
 description: 使用 AI 工具提升后端开发效率
 category: 效率层
 tags: [AI, 后端, Python/Java]
-difficulty: 中级
+difficulty: 进阶
 reading_time: 10 分钟
 updated: 2026-07-21
 ---

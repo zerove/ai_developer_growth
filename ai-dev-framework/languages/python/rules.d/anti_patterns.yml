@@ -12,6 +12,8 @@ anti_patterns:
   - auto_fix.py
   - ai_rules_generator.py
   - ai_quality_gate.py
+  - rule_author.py
+  - validate_rule_tests.py
   message: 'Avoid bare except: use specific exception types'
   fix_hint: Replace 'except:' with 'except SpecificException:'
   test_cases:
@@ -334,6 +336,15 @@ anti_patterns:
   severity: error
   category: security
   pattern: FROM\s+\S+\s*(?:AS\s+\w+)?\s*\n(?!.*USER\s)
+  exclude_files:
+  - '*.py'
+  - '*.js'
+  - '*.ts'
+  - '*.tsx'
+  - '*.jsx'
+  - '*.go'
+  - '*.rs'
+  - '*.java'
   message: Running containers as root is a security risk
   fix_hint: Add 'USER nobody' or create a non-root user
 - id: py-pip-audit-missing

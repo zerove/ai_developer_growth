@@ -1,3 +1,10 @@
+---
+title: "案例研究：用 AI 设计与实现 REST API"
+description: "为一个内部工具构建 REST API，需要支持："
+category: 案例研究
+tags: ['AI协作', '案例研究']
+difficulty: 基础
+---
 # 案例研究：用 AI 设计与实现 REST API
 
 ## 背景

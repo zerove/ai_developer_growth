@@ -3,7 +3,7 @@ title: "AI 开发工具链标准 (AI Dev Toolchain)"
 description: AI 开发工具的选型、配置和最佳实践标准
 category: 效率层
 tags: ['AI', 'toolchain', 'tools', 'configuration', 'governance']
-difficulty: 中级
+difficulty: 进阶
 reading_time: 10 分钟
 updated: 2026-07-22
 ---

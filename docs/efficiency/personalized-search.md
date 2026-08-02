@@ -3,7 +3,7 @@ title: AI 驱动的个性化搜索
 description: 如何用 AI 实现知识库的个性化搜索和推荐
 category: 效率层
 tags: ['AI', 'Python', 'search', 'personalization']
-difficulty: 中级
+difficulty: 进阶
 reading_time: 8 分钟
 updated: 2026-07-21
 ---
@@ -121,7 +121,7 @@ def reciprocal_rank_fusion(ranked_lists, k=60):
 
 ## 相关资源
 
-- [[examples/ai-navigation|导航系统示例]]
+- [[../../examples/ai-navigation|导航系统示例]]
 - [[tools/rag-for-developers|RAG 开发指南]]
 - [[efficiency/full-cycle-workflow|全周期工作流]]
 

@@ -3,7 +3,7 @@ title: AI 辅助需求分析
 description: 使用 AI 工具进行需求分析和管理
 category: 效率层
 tags: [AI, 需求分析, 产品]
-difficulty: 中级
+difficulty: 进阶
 reading_time: 10 分钟
 updated: 2026-07-21
 ---

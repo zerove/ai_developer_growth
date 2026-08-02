@@ -3,7 +3,7 @@ title: Shell/Bash Governance Rules
 description: > 适用于: Shell 脚本 (Bash, Zsh, Sh)
 category: 治理层
 tags: ['测试', 'AI', 'API']
-difficulty: 初级
+difficulty: 基础
 reading_time: 10 分钟
 updated: 2026-07-21
 ---

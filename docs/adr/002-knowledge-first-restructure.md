@@ -3,7 +3,7 @@ title: ADR-002: 知识优先重构——项目定位重定向
 description: ADR-002: 知识优先重构——项目定位重定向 - 技术文档
 category: 治理层
 tags: ['AI', 'REST', '002', 'ADR', 'knowledge']
-difficulty: 初级
+difficulty: 基础
 reading_time: 10 分钟
 updated: 2026-07-21
 ---

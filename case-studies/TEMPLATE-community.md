@@ -1,9 +1,9 @@
 ---
 title: "你的案例标题"
 description: "一句话描述：你在 AI 协作中解决的具体问题"
-category: "效率层"
+category: 效率层
 tags: ['AI', 'case-study', '社区贡献']
-difficulty: "中级"
+difficulty: 进阶
 status: "社区投稿"
 source: "社区贡献"
 author: "你的名字"

@@ -1,3 +1,10 @@
+---
+title: "Cursor 大规模重构实战"
+description: "项目: 企业级 SaaS 后端 "
+category: 案例研究
+tags: ['AI协作', '案例研究']
+difficulty: 进阶
+---
 # Cursor 大规模重构实战
 
 ## 背景

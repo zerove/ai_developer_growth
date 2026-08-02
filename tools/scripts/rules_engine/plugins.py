@@ -38,6 +38,7 @@ import importlib
 import importlib.util
 import sys
 from abc import ABC, abstractmethod
+from collections.abc import Callable
 from pathlib import Path
 from typing import Any
 
@@ -122,7 +123,7 @@ class _FunctionPlugin(CheckerPlugin):
 
     def __init__(
         self,
-        func: Callable[..., object],
+        func: Callable[..., list[Issue]],
         name: str,
         languages: list[str],
         priority: int = 100,
@@ -148,7 +149,7 @@ def register_checker_decorator(
     name: str,
     languages: list[str] | None = None,
     priority: int = 100,
-) -> Callable[..., object]:
+) -> Callable[[Callable[..., list[Issue]]], Callable[..., list[Issue]]]:
     """Decorator to register a function as a checker plugin.
 
     Usage:
@@ -157,7 +158,7 @@ def register_checker_decorator(
             return []
     """
 
-    def decorator(func: Callable[..., object]) -> Callable[..., object]:
+    def decorator(func: Callable[..., list[Issue]]) -> Callable[..., list[Issue]]:
         plugin = _FunctionPlugin(func, name=name, languages=languages or [], priority=priority)
         register_checker(plugin)
         return func

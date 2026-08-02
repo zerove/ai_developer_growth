@@ -3,7 +3,7 @@ title: Prompt Engineering 技巧
 description: 高效编写 AI Prompt 的方法论
 category: 效率层
 tags: [prompt, 工程化, AI交互]
-difficulty: 中级
+difficulty: 进阶
 reading_time: 12 分钟
 updated: 2026-07-21
 ---

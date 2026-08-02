@@ -624,14 +624,16 @@ def _apply_recommendations(project_dir: Path, result: dict[str, Any]) -> int:
     new_rules: list[dict[str, Any]] = []
     for rec in result["recommendations"]:
         if rec["rule_id"] not in existing_ids:
-            new_rules.append({
-                "id": rec["rule_id"],
-                "name": rec["name"],
-                "severity": rec["severity"],
-                "category": rec["category"],
-                "message": rec["reason"],
-                "fix_hint": f"Auto-generated from pattern: {rec['example']['code']}",
-            })
+            new_rules.append(
+                {
+                    "id": rec["rule_id"],
+                    "name": rec["name"],
+                    "severity": rec["severity"],
+                    "category": rec["category"],
+                    "message": rec["reason"],
+                    "fix_hint": f"Auto-generated from pattern: {rec['example']['code']}",
+                }
+            )
             existing_ids.add(rec["rule_id"])
 
     if new_rules:
@@ -663,6 +665,7 @@ def cmd_pattern_learner(args: argparse.Namespace) -> int:
 
     if getattr(args, "json", False):
         import json
+
         print(json.dumps(patterns, indent=2, ensure_ascii=False))
     else:
         print(f"🔍 AI 分析完成，发现 {len(patterns)} 个模式和建议")

@@ -9,7 +9,7 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
-from _common import get_project_root
+from tools.scripts._common import get_project_root
 
 
 class AIDashboard:

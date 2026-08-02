@@ -3,7 +3,7 @@ title: AI 时代的开发者体验 (DX)
 description: 如何用 AI 提升开发者的工作体验和效率
 category: 效率层
 tags: ['AI', 'Python', 'DX', 'developer-experience']
-difficulty: 中级
+difficulty: 进阶
 reading_time: 8 分钟
 updated: 2026-07-21
 ---

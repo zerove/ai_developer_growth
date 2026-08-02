@@ -163,7 +163,7 @@ class TestFileCache:
             h1 = FileCache._file_hash(path)
             h2 = FileCache._file_hash(path)
             assert h1 == h2
-            assert len(h1) == 32
+            assert len(h1) == 64
         finally:
             Path(path).unlink(missing_ok=True)
 

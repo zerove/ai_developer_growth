@@ -3,7 +3,7 @@ title: AI API 测试工具
 description: API 测试和调试工具
 category: 工具层
 tags: [AI, API测试, 调试]
-difficulty: 初级
+difficulty: 基础
 reading_time: 8 分钟
 updated: 2026-07-21
 ---

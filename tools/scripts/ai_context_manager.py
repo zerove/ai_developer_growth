@@ -3,7 +3,7 @@ import argparse
 import os
 import sys
 
-from openai import APIConnectionError, APIError, OpenAI, RateLimitError  # type: ignore[import-not-found]
+from openai import APIConnectionError, APIError, OpenAI, RateLimitError
 
 
 def load_context() -> str:

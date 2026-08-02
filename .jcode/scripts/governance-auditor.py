@@ -51,13 +51,13 @@ GOVERNANCE_DOCS = [
 UNSAFE_PATTERNS = [
     (
         r"eval\(",
-        "eval() - 代码注入风险",
+        "eval 调用 - 代码注入风险",
         ["auto_fix.py", "generate_fixes.py", "ai_quality_gate.py", "rule_editor.py", "hallucination_detector.py"],
         None,
     ),
     (
         r"exec\(",
-        "exec() - 代码注入风险",
+        "exec 调用 - 代码注入风险",
         ["auto_fix.py", "generate_fixes.py", "ai_quality_gate.py", "rule_editor.py", "hallucination_detector.py"],
         None,
     ),

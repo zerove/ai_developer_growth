@@ -1,3 +1,11 @@
+---
+title: "无限语言支持架构"
+description: "jcode + LLM 可以开发几乎所有编程语言。aidevelopergrowth 如..."
+category: 工具层
+tags: ['无限语言支持架构', '可以开发几乎所有编程语言', '如何支持', '三层质量保障', '能生成的任何语言', '通用规则层']
+difficulty: 基础
+---
+
 # 无限语言支持架构
 
 jcode + LLM 可以开发几乎所有编程语言。ai_developer_growth 如何支持？

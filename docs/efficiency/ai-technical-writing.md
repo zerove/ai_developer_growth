@@ -3,7 +3,7 @@ title: AI 辅助技术写作
 description: 使用 AI 工具提升技术写作效率
 category: 效率层
 tags: [AI, 技术写作, 博客]
-difficulty: 中级
+difficulty: 进阶
 reading_time: 10 分钟
 updated: 2026-07-21
 ---

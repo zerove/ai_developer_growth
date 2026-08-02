@@ -3,7 +3,7 @@ title: Agent 上下文管理规范
 description: 本文档定义了 agent 开发中的上下文管理标准，确保项目状态的可追溯性和一致性。
 category: 治理层
 tags: ['management', 'API', 'AI', 'context']
-difficulty: 初级
+difficulty: 基础
 reading_time: 10 分钟
 updated: 2026-07-21
 ---

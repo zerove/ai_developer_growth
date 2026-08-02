@@ -26,7 +26,7 @@ class TestFileHash:
         f = tmp_path / "test.py"
         f.write_text("hello world")
         h = _file_hash(f)
-        assert len(h) == 32  # md5 hex
+        assert len(h) == 64  # sha256 hex
 
     def test_hash_missing_file(self) -> None:
         h = _file_hash(Path("/nonexistent/file.py"))

@@ -3,7 +3,7 @@ title: AI 代码质量工具
 description: 代码质量检查和优化工具
 category: 工具层
 tags: [AI, 代码质量, Lint]
-difficulty: 初级
+difficulty: 基础
 reading_time: 8 分钟
 updated: 2026-07-21
 ---

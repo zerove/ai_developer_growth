@@ -3,7 +3,7 @@ title: AI 文档工具
 description: 技术文档生成和管理工具
 category: 工具层
 tags: [AI, 文档, 文档生成]
-difficulty: 初级
+difficulty: 基础
 reading_time: 8 分钟
 updated: 2026-07-21
 ---

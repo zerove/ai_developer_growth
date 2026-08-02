@@ -16,7 +16,7 @@ import json
 import re
 import sys
 from pathlib import Path
-from typing import Any
+from typing import Any, cast
 
 # ─────────────────────────────────────────────────────────────
 # Constants
@@ -142,6 +142,7 @@ def _load_rules_from_yml(filepath: Path) -> list[dict[str, Any]]:
         return []
     try:
         import yaml
+
         data = yaml.safe_load(filepath.read_text(encoding="utf-8"))
         return data.get("anti_patterns", []) if data else []
     except ImportError:
@@ -254,9 +255,9 @@ def build_mapping(
 def rebuild_mapping(
     rule_dir: Path | None = None,
     output_path: Path = MAPPING_CACHE,
-) -> None:
+) -> dict[str, list[dict[str, str]]]:
     """重建映射索引并写入缓存。"""
-    print(f"Building rule-docs mapping...")
+    print("Building rule-docs mapping...")
     mapping = build_mapping(rule_dir=rule_dir)
 
     output_path.parent.mkdir(parents=True, exist_ok=True)
@@ -271,10 +272,10 @@ def rebuild_mapping(
 def query_mapping(rule_id: str, mapping_path: Path = MAPPING_CACHE) -> list[dict[str, str]]:
     """查询单条规则的关联文档。"""
     if not mapping_path.exists():
-        print(f"Mapping not found. Run with --rebuild first.")
+        print("Mapping not found. Run with --rebuild first.")
         return []
     mapping = json.loads(mapping_path.read_text(encoding="utf-8"))
-    return mapping.get(rule_id, [])
+    return cast(list[dict[str, str]], mapping.get(rule_id, []))
 
 
 # ─────────────────────────────────────────────────────────────

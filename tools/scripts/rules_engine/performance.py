@@ -26,7 +26,7 @@ class CacheEntry:
     """Cached analysis result for a file."""
 
     file_hash: str
-    result: object
+    result: dict[str, Any]
     timestamp: float
     size: int
 
@@ -85,7 +85,7 @@ class FileCache:
         except Exception:
             _ = None  # cache load error
 
-    def get(self, filepath: str) -> object | None:
+    def get(self, filepath: str) -> dict[str, Any] | None:
         """Get cached result for a file."""
         entry = self._memory_cache.get(filepath)
         if entry is None:
@@ -103,7 +103,7 @@ class FileCache:
 
         return entry.result
 
-    def set(self, filepath: str, result: object) -> None:
+    def set(self, filepath: str, result: dict[str, Any]) -> None:
         """Cache a result for a file."""
         try:
             stat = os.stat(filepath)

@@ -1,9 +1,9 @@
 ---
 title: 人机协作心智模型 (Human-AI Collaboration Mental Model)
 description: > 理解人机协作的本质，释放协同效应。
-category: 心态层
+category: 认知层
 tags: ['human', 'API', 'AI', 'ai', 'collaboration']
-difficulty: 初级
+difficulty: 基础
 reading_time: 10 分钟
 updated: 2026-07-21
 ---

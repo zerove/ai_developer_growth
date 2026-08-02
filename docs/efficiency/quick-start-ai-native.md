@@ -1,7 +1,9 @@
 ---
-category: efficiency
+title: "🚀 JCode AI-Native SDLC 开发者快速上手指南"
+description: "category: 效率层"
+category: 效率层
 tags: [quick-start, ai-native, sdlc, jcode, workflow]
-difficulty: beginner
+difficulty: 入门
 ---
 
 # 🚀 JCode AI-Native SDLC 开发者快速上手指南

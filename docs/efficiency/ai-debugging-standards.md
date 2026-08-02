@@ -3,7 +3,7 @@ title: "AI 调试专项标准 (AI Debugging Standards)"
 description: AI 辅助调试的专项工作流和方法论
 category: 效率层
 tags: ['AI', 'debugging', 'troubleshooting', 'governance']
-difficulty: 中级
+difficulty: 进阶
 reading_time: 10 分钟
 updated: 2026-07-22
 ---

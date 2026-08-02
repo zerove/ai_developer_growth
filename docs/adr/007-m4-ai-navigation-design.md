@@ -3,7 +3,7 @@ title: ADR-007: M4 AI 导航系统设计
 description: ## 状态
 category: 治理层
 tags: ['AI', 'API', 'Python', 'ADR', 'm4']
-difficulty: 中级
+difficulty: 进阶
 reading_time: 10 分钟
 updated: 2026-07-21
 ---

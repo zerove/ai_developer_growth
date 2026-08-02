@@ -1,9 +1,9 @@
 ---
 title: ORM 最佳实践
-description: > SQLAlchemy (Python)、Prisma (TypeScript)、GORM (Go)、Django ORM 通用原则与避坑指南。
+description: "> SQLAlchemy (Python)、Prisma (TypeScript)、GO..."
 category: 工具层
 tags: ['AI', 'REST', 'Python', 'SQL', 'TypeScript']
-difficulty: 初级
+difficulty: 基础
 reading_time: 10 分钟
 updated: 2026-07-21
 ---

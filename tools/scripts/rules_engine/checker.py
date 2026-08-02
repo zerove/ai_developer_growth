@@ -17,6 +17,29 @@ from .rule_loader import load_rules_for_language
 
 # ── 框架检测 ──────────────────────────────────────────────
 
+# 目录遍历时排除的路径段（避免误扫构建产物、依赖、缓存）
+DEFAULT_EXCLUDED_DIRS = {
+    ".git",
+    ".hg",
+    ".svn",
+    ".venv",
+    "venv",
+    "node_modules",
+    "__pycache__",
+    ".mypy_cache",
+    ".pytest_cache",
+    ".ruff_cache",
+    ".cache",
+    "build",
+    "dist",
+    ".opencode",
+    ".tox",
+    "htmlcov",
+    ".coverage",
+    "site-packages",
+    "MagicMock",
+}
+
 FRAMEWORK_DETECTORS: dict[str, dict[str, list[str]]] = {
     "react": {"files": ["package.json"], "packages": ["react", "react-dom"]},
     "vue": {"files": ["package.json"], "packages": ["vue"]},
@@ -74,6 +97,7 @@ def check_file(
     rules: dict[str, Any] | None = None,
     language: str | None = None,
     semantic: bool = False,
+    run_linters: bool = True,
 ) -> CheckResult:
     """Check a single file against rules.
 
@@ -82,6 +106,8 @@ def check_file(
         rules: Rules dict. Auto-loaded if None.
         language: Force language. Auto-detected if None.
         semantic: Enable AST-based semantic analysis (tree-sitter).
+        run_linters: Run external linters (ruff/eslint) per file. Disable for
+            bulk scans where per-file subprocess spawns dominate runtime.
     """
     if not filepath.exists():
         return _file_not_found_result(filepath)
@@ -107,7 +133,7 @@ def check_file(
     lines = content.splitlines()
 
     # Run all checkers
-    issues = _run_all_checkers(filepath, content, lines, lang, rules)
+    issues = _run_all_checkers(filepath, content, lines, lang, rules, run_linters=run_linters)
 
     # G1: 上下文感知 — 检测文件角色并调整严重度
     ctx_markers = _load_context_markers(filepath.parent)
@@ -148,7 +174,9 @@ def _file_not_found_result(filepath: Path) -> CheckResult:
     )
 
 
-def _run_all_checkers(filepath: Path, content: str, lines: list[str], lang: str, rules: dict[str, Any]) -> list[Issue]:
+def _run_all_checkers(
+    filepath: Path, content: str, lines: list[str], lang: str, rules: dict[str, Any], run_linters: bool = True
+) -> list[Issue]:
     """Run all checkers on file content."""
     issues: list[Issue] = []
 
@@ -173,7 +201,8 @@ def _run_all_checkers(filepath: Path, content: str, lines: list[str], lang: str,
             pass
 
     # Run external linters
-    issues.extend(_run_external_linters(filepath, lang))
+    if run_linters:
+        issues.extend(_run_external_linters(filepath, lang))
 
     return issues
 
@@ -184,6 +213,7 @@ def check_directory(
     languages: list[str] | None = None,
     jobs: int = 1,
     semantic: bool = False,
+    run_linters: bool = True,
 ) -> list[CheckResult]:
     """Check all files in a directory.
 
@@ -193,6 +223,7 @@ def check_directory(
         languages: Filter to these languages only.
         jobs: Number of parallel workers (1 = serial).
         semantic: Enable AST-based semantic analysis.
+        run_linters: Run external linters (ruff/eslint) per file.
     """
     results: list[CheckResult] = []
 
@@ -248,8 +279,13 @@ def check_directory(
     for ext in exts:
         files.extend(dirpath.rglob(f"*{ext}"))
 
-    # Filter out ignored paths
-    files = [f for f in files if "__pycache__" not in str(f) and ".git" not in str(f) and "node_modules" not in str(f)]
+    # Filter out ignored paths (path-segment match to avoid false hits like "dist" in names)
+
+    def _is_excluded(filepath: Path) -> bool:
+        parts = set(filepath.parts)
+        return bool(parts & DEFAULT_EXCLUDED_DIRS)
+
+    files = [f for f in files if not _is_excluded(f)]
 
     # Filter by language
     if languages:
@@ -258,7 +294,7 @@ def check_directory(
     if jobs <= 1 or len(files) <= 4:
         # Serial execution for small sets
         for filepath in files:
-            result = check_file(filepath, rules, _detect_language(filepath), semantic=semantic)
+            result = check_file(filepath, rules, _detect_language(filepath), semantic=semantic, run_linters=run_linters)
             if not result.skipped:
                 results.append(result)
     else:
@@ -401,6 +437,7 @@ def _load_context_markers(dirpath: Path) -> dict[str, str]:
         if config_path.exists():
             try:
                 from .context import load_role_config
+
                 return load_role_config(config_path)
             except Exception:
                 _ = None  # role config optional

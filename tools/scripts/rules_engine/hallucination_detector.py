@@ -124,7 +124,7 @@ _UNSAFE_PATTERNS: list[dict[str, str | float]] = [
         "id": "unsafe-eval",
         "severity": "high",
         "category": "unsafe-pattern",
-        "message": "eval() is unsafe with untrusted input. Consider ast.literal_eval() or a safe parser.",
+        "message": "eval call is unsafe with untrusted input. Consider ast.literal_eval() or a safe parser.",
         "confidence": 0.90,
     },
     {
@@ -132,7 +132,7 @@ _UNSAFE_PATTERNS: list[dict[str, str | float]] = [
         "id": "unsafe-exec",
         "severity": "high",
         "category": "unsafe-pattern",
-        "message": "exec() is unsafe. Consider a safer alternative.",
+        "message": "exec call is unsafe. Consider a safer alternative.",
         "confidence": 0.90,
     },
     {

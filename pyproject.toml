@@ -101,6 +101,15 @@ hub_threshold = 15
 context_aware = true
 severity_overrides = {test = "down-1", prototype = "down-2", legacy = "down-1", config = "down-2", demo = "down-2"}
 
+# Skip patterns for test/demo files
+skip_patterns = [
+    "**/test_*.py",
+    "**/*_test.py",
+    "**/tests/**/*.py",
+    "**/demo*.py",
+    "**/*_demo.py",
+]
+
 # Feedback system
 feedback_enabled = true
 feedback_db = "~/.cache/adg/feedback.json"

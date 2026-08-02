@@ -3,7 +3,7 @@ title: AI 文档自动化 (AI Auto-Documentation)
 description: > 让 AI 替你写文档，你专注写代码。
 category: 效率层
 tags: ['AI', 'API', 'Python', '测试', '数据库']
-difficulty: 初级
+difficulty: 基础
 reading_time: 10 分钟
 updated: 2026-07-21
 ---

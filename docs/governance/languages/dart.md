@@ -3,7 +3,7 @@ title: Dart Governance Rules
 description: > 适用于: Dart 项目 (Flutter, 后端服务)
 category: 治理层
 tags: ['测试', 'AI', 'API']
-difficulty: 初级
+difficulty: 基础
 reading_time: 10 分钟
 updated: 2026-07-21
 ---

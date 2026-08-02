@@ -3,7 +3,7 @@ title: AI 辅助项目管理
 description: 使用 AI 工具优化项目管理流程
 category: 效率层
 tags: [AI, 项目管理, 敏捷]
-difficulty: 中级
+difficulty: 进阶
 reading_time: 10 分钟
 updated: 2026-07-21
 ---

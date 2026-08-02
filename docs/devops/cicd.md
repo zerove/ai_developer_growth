@@ -3,7 +3,7 @@ title: CI/CD Governance Rules
 description: > 适用于 CI/CD 流程的 AI Agent 开发规范。
 category: 工具层
 tags: ['API', 'AI', 'Kubernetes', '测试', '安全']
-difficulty: 初级
+difficulty: 基础
 reading_time: 10 分钟
 updated: 2026-07-21
 ---

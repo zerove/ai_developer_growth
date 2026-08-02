@@ -8,7 +8,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from _common import get_project_root
+from tools.scripts._common import get_project_root
 
 
 class CaseStudyPipeline:
@@ -49,7 +49,5 @@ date: "2026-07-30"
 if __name__ == "__main__":
     pipeline = CaseStudyPipeline()
     path = pipeline.generate_case_study(
-        "Autonomous AI-Native SDLC Delivery",
-        "Full lifecycle development using 5-pillar automation",
-        "10x"
+        "Autonomous AI-Native SDLC Delivery", "Full lifecycle development using 5-pillar automation", "10x"
     )

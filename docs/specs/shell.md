@@ -3,7 +3,7 @@ title: Shell/Bash AI 开发规范 (Shell AI Spec)
 description: Shell/Bash AI 开发规范 (Shell AI Spec) - 技术文档
 category: 治理层
 tags: ['AI']
-difficulty: 初级
+difficulty: 基础
 reading_time: 10 分钟
 updated: 2026-07-21
 ---

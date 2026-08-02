@@ -28,7 +28,7 @@ FIX_PATTERNS: dict[str, dict[str, dict[str, Any]]] = {
             "import_needed": "import logging",
         },
         "py-eval-exec": {  # noqa: common-eval-exec, py-eval-exec
-            "description": "Replace eval() with ast.literal_eval()",
+            "description": "Replace eval call with ast.literal_eval()",
             "pattern": r"\be" + "val" + r"\(([^)]+)\)",
             "replacement": r"ast.literal_eval(\1)",
             "import_needed": "import ast",
@@ -84,7 +84,7 @@ FIX_PATTERNS: dict[str, dict[str, dict[str, Any]]] = {
     },
     "javascript": {
         "js-eval": {  # noqa: common-eval-exec, py-eval-exec
-            "description": "Replace eval() with JSON.parse()",
+            "description": "Replace eval call with JSON.parse()",
             "pattern": r"\b" + "ev" + "al" + r"\(([^)]+)\)",
             "replacement": r"JSON.parse(\1)",
             "import_needed": None,

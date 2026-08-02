@@ -3,7 +3,7 @@ title: "AI 部署与运维标准 (AI Deployment & Operations)"
 description: AI 生成代码的部署检查清单和运维规范
 category: 效率层
 tags: ['AI', 'deployment', 'devops', 'operations', 'governance']
-difficulty: 中级
+difficulty: 进阶
 reading_time: 10 分钟
 updated: 2026-07-22
 ---

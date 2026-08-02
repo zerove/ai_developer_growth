@@ -3,7 +3,7 @@ title: AI 时代的开发者社区
 description: 如何用 AI 运营和增长开发者社区
 category: 效率层
 tags: ['AI', 'community', 'growth']
-difficulty: 中级
+difficulty: 进阶
 reading_time: 8 分钟
 updated: 2026-07-21
 ---
@@ -79,8 +79,8 @@ AI 审核 + 人工终审 → AI 辅助回复 → AI 自动整理 → 高效率
 
 ## 相关资源
 
-- [[community-catalyst|社区催化剂]]
-- [[CONTRIBUTING|贡献指南]]
+- [[../../agents/community-catalyst|社区催化剂]]
+- [[../../CONTRIBUTING|贡献指南]]
 - [[mindset/open-source-operations|开源运营]]
 
 ---

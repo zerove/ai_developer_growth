@@ -1,3 +1,10 @@
+---
+title: "案例研究：AI 辅助的 DevOps 流水线搭建"
+description: "本案例展示了如何使用 AI 协作搭建一个完整的 CI/CD 流水线。"
+category: 案例研究
+tags: ['AI协作', '案例研究']
+difficulty: 进阶
+---
 # 案例研究：AI 辅助的 DevOps 流水线搭建
 
 本案例展示了如何使用 AI 协作搭建一个完整的 CI/CD 流水线。

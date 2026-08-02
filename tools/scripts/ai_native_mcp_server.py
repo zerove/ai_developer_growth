@@ -9,14 +9,14 @@ from __future__ import annotations
 import json
 import sys
 
-from _common import get_project_root
+from tools.scripts._common import get_project_root
 
 
 class AINativeMCPServer:
-    def __init__(self):
+    def __init__(self) -> None:
         self.root_dir = get_project_root()
 
-    def handle_tool_call(self, tool_name: str, arguments: dict) -> dict:
+    def handle_tool_call(self, tool_name: str, arguments: dict[str, object]) -> dict[str, object]:
         if tool_name == "query_semantic_graph":
             symbol = arguments.get("symbol", "")
             graph_path = self.root_dir / ".semantic_graph.json"
@@ -27,6 +27,7 @@ class AINativeMCPServer:
             return {"status": "success", "matches": matches[:10]}
         elif tool_name == "run_architecture_guard":
             from architecture_drift_guard import ArchitectureDriftGuard
+
             guard = ArchitectureDriftGuard(self.root_dir)
             violations = guard.check_layering()
             return {"status": "success", "violations": violations}

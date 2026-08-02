@@ -16,9 +16,26 @@ from __future__ import annotations
 import warnings
 from dataclasses import dataclass, field
 from pathlib import Path
+from typing import Any, Protocol, cast
 
-# Tree-sitter AST node type - tree-sitter returns untyped nodes at runtime
-_TreeNode = object
+
+# Tree-sitter AST node type - tree-sitter returns untyped nodes at runtime.
+# Protocol 提供最小静态接口，供 mypy 检查节点属性访问。
+class _TreeNode(Protocol):
+    """Minimal structural interface of a tree-sitter Node."""
+
+    type: str
+    children: list[_TreeNode]
+    parent: _TreeNode | None
+    text: bytes | str
+    start_point: tuple[int, int]
+    end_point: tuple[int, int]
+
+
+class _TSTree(Protocol):
+    """Minimal structural interface of a tree-sitter Tree."""
+
+    root_node: _TreeNode
 
 # Suppress tree-sitter deprecation warnings
 warnings.filterwarnings("ignore", category=FutureWarning, module="tree_sitter")
@@ -111,7 +128,7 @@ class ASTParser:
     SUPPORTED_LANGUAGES = {"python", "javascript", "typescript", "rust", "go", "java", "ruby"}
 
     def __init__(self) -> None:
-        self._parsers: dict[str, object] = {}
+        self._parsers: dict[str, Any] = {}
         self._available = HAS_TREE_SITTER
         if self._available:
             self._init_parsers()
@@ -134,7 +151,7 @@ class ASTParser:
         """Return languages with available parsers."""
         return set(self._parsers.keys())
 
-    def parse(self, code: str | bytes, language: str) -> _TreeNode | None:
+    def parse(self, code: str | bytes, language: str) -> _TSTree | None:
         """Parse code into AST.
 
         Args:
@@ -152,7 +169,7 @@ class ASTParser:
 
         try:
             parser = self._parsers[language]
-            return parser.parse(code)
+            return cast(_TSTree, parser.parse(code))
         except Exception:
             return None
 
@@ -204,15 +221,15 @@ class ASTParser:
             parse_time_ms=parse_time,
         )
 
-    def extract_functions(self, tree: _TreeNode, language: str, lines: list[str] | None = None) -> list[FunctionInfo]:
+    def extract_functions(self, tree: _TSTree, language: str, lines: list[str] | None = None) -> list[FunctionInfo]:
         """Extract function info from a parsed tree."""
         return self._extract_functions(tree.root_node, language, lines or [])
 
-    def extract_classes(self, tree: _TreeNode, language: str, lines: list[str] | None = None) -> list[ClassInfo]:
+    def extract_classes(self, tree: _TSTree, language: str, lines: list[str] | None = None) -> list[ClassInfo]:
         """Extract class info from a parsed tree."""
         return self._extract_classes(tree.root_node, language, lines or [])
 
-    def extract_imports(self, tree: _TreeNode, language: str) -> list[ImportInfo]:
+    def extract_imports(self, tree: _TSTree, language: str) -> list[ImportInfo]:
         """Extract import info from a parsed tree."""
         return self._extract_imports(tree.root_node, language)
 
@@ -719,7 +736,7 @@ class ASTParser:
         """Walk AST for import statements."""
         if language == "python":
             if node.type == "import_statement":
-                module = self._get_text(node.children[0], node.children[0]) if node.children else ""
+                module = self._get_text(node.children[0]) if node.children else ""
                 names = [self._get_text(c, []) for c in node.children if c.type == "dotted_name"]
                 result.append(
                     ImportInfo(module=module, names=names, line=node.start_point[0] + 1, is_from=False, level=0)
@@ -730,7 +747,11 @@ class ASTParser:
                 names = []
                 for child in node.children:
                     if child.type == "relative_import":
-                        level = child.text.count(b".") if hasattr(child, "text") else 0
+                        level = (
+                            child.text.count(b".")
+                            if isinstance(child.text, bytes)
+                            else str(child.text).count(".")
+                        )
                     elif child.type == "dotted_name":
                         module = self._get_text(child, [])
                     elif child.type == "aliased_import":

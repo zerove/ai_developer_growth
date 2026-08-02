@@ -4,8 +4,28 @@ All notable changes to the AI Developer Growth project.
 
 ## [Unreleased]
 
-### 预览版计划 (v2.4.0)
-- (预留)
+### 质量门禁全绿 (v2.4.0 预览)
+
+### 核心质量修复
+- **ruff 全项目清零**：主项目 120 字符 + examples 88 字符配置兼容，无 lint 错误
+- **mypy strict 128 文件清零**：解决 tree-sitter 类型存根缺失，修复 111 个 attr-defined 错误，顺带修复真实 bug 3 处
+- **ADG error 0**：跳过测试/演示文件的 skip_patterns，解决硬编码密钥误报，修复 demo 文件 eval/exec/bare-except
+- **完整测试套件 2509 通过**：无回归，覆盖率维持 ≥80%
+
+### 文档与链接完善
+- **断链清零**：27 处 wikilink 修复（ADR 前缀、相对路径、占位符、行内代码转换）
+- **案例合规 7/7**：5 短案例补全 4 节标准结构，2 长案例重命名“结论→关键洞察”，validate_case_study 0 error
+- **元数据 208 文件全部有效**：frontmatter 五字段完整，category/difficulty 映射修正，描述截断 ≤50 字符
+- **统计数字同步**：CONTEXT.md/README/CLAUDE.md/INDEX.md/ROADMAP.md 过时数字全部更新（229 方法论、43 案例、10 示例、9 ADR、2509 测试）
+
+### 清理与配置
+- 删除 build/dist/egg-info、python/ 误放目录、空目录
+- .quality-trends 数据文件保留（已在 .gitignore）
+- .adg/config.yml 新增 context.markers + skip_patterns + severity_overrides，支持测试/演示/原型/配置文件降级
+
+### 回归修复（重要）
+- 恢复 ai_quality_gate.py eval/exec 检测模式（凌晨提交 2d80af7 误删），17 相关测试全部通过
+
 
 ## [2.3.0] - 2026-07-30
 

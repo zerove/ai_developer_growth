@@ -3,7 +3,7 @@ title: 文档管理标准
 description: 技术文档编写和管理规范
 category: 治理层
 tags: [文档, 规范, 知识管理]
-difficulty: 初级
+difficulty: 基础
 reading_time: 10 分钟
 updated: 2026-07-21
 ---

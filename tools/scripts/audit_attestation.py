@@ -11,7 +11,7 @@ import json
 from pathlib import Path
 from typing import Any
 
-from _common import get_project_root
+from tools.scripts._common import get_project_root
 
 
 class AuditAttestationLedger:
@@ -21,7 +21,7 @@ class AuditAttestationLedger:
 
     def record_trace(self, event_type: str, details: dict[str, Any]) -> dict[str, Any]:
         self.ledger_file.parent.mkdir(parents=True, exist_ok=True)
-        
+
         # Read last hash
         prev_hash = "0" * 64
         if self.ledger_file.exists():
@@ -38,15 +38,15 @@ class AuditAttestationLedger:
             "details": details,
             "prev_hash": prev_hash,
         }
-        
+
         serialized = json.dumps(payload, sort_keys=True)
         current_hash = hashlib.sha256(serialized.encode("utf-8")).hexdigest()
-        
+
         entry = {**payload, "current_hash": current_hash}
-        
+
         with self.ledger_file.open("a", encoding="utf-8") as f:
             f.write(json.dumps(entry) + "\n")
-            
+
         return entry
 
 

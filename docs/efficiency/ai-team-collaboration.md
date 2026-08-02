@@ -3,7 +3,7 @@ title: AI 辅助团队协作
 description: 使用 AI 工具提升团队协作效率
 category: 效率层
 tags: [AI, 团队协作, 沟通]
-difficulty: 中级
+difficulty: 进阶
 reading_time: 10 分钟
 updated: 2026-07-21
 ---

@@ -3,7 +3,7 @@ title: 🔴 AI-Native Real-time Audit Dashboard
 description: 🔴 AI-Native Real-time Audit Dashboard - 技术文档
 category: 效率层
 tags: ['audit', 'AI', 'live', 'ai']
-difficulty: 初级
+difficulty: 基础
 reading_time: 10 分钟
 updated: 2026-07-21
 ---

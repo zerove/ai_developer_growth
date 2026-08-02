@@ -1,6 +1,6 @@
 ---
 title: 知识内化与反 AI 依赖：构建真正的能力
-description: 在 AI 辅助编程中，开发者最容易陷入的陷阱是**"能力错觉" (Illusion of Competence)**：当你通过 AI 快速生成并运行了一段复杂的代码，且它恰好工作正常时，你会误以为自己
+description: "在 AI 辅助编程中，开发者最容易陷入的陷阱是**"能力错觉" (Illusion of..."
 category: 学习层
 tags: ['AI', 'internalization', 'API', 'knowledge']
 difficulty: 高级

@@ -3,7 +3,7 @@ title: 单元测试最佳实践
 description: > 适用于 AI Agent 生成的测试代码，确保测试可靠、可维护、高覆盖。
 category: 工具层
 tags: ['AI', 'API', 'Python', '测试', 'unit']
-difficulty: 初级
+difficulty: 基础
 reading_time: 10 分钟
 updated: 2026-07-21
 ---

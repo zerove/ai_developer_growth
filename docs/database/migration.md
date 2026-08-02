@@ -3,7 +3,7 @@ title: 数据库迁移策略
 description: > 零停机、可回滚、版本化的 Schema 演进实践。
 category: 工具层
 tags: ['AI', 'Python', '测试', 'SQL', 'TypeScript']
-difficulty: 初级
+difficulty: 基础
 reading_time: 10 分钟
 updated: 2026-07-21
 ---

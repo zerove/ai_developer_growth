@@ -1,7 +1,7 @@
 ---
 title: 多 Agent 编排集成
 description: 如何使用 multi-agent-orch 模拟团队协作开发
-category: 集成
+category: 工具层
 tags: ['AI', 'agent', 'orchestration']
 difficulty: 高级
 reading_time: 8 分钟
@@ -54,7 +54,7 @@ python demo.py --mode fan-out
 
 ## 相关资源
 
-- [[examples/multi-agent-orch|示例代码]]
+- [[../../examples/multi-agent-orch|示例代码]]
 - [[docs/agent-dev/workflow-standards|开发流程规范]]
 
 ---

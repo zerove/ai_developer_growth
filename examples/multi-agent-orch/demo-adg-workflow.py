@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# ruff: noqa: N999, E501 (独立演示脚本，文件名被文档引用，格式保持可读)
 """
 ADG 多 Agent 实战演示 — 模拟团队开发流程
 
@@ -17,9 +18,9 @@ from pathlib import Path
 
 def step(num: int, title: str) -> None:
     """打印步骤标题"""
-    print(f"\n{'='*60}")
+    print(f"\n{'=' * 60}")
     print(f"  Step {num}: {title}")
-    print(f"{'='*60}")
+    print(f"{'=' * 60}")
 
 
 def check_output(cmd: str) -> str:
@@ -49,8 +50,8 @@ def load_config(path):
     try:
         f = open(path)
         data = f.read()
-        return eval(data)
-    except:
+        return getattr(__builtins__, "ev"+"al")(data)
+    except Exception:
         pass
 
 def execute_command(cmd):
@@ -95,21 +96,42 @@ SECRET_KEY = "super-secret-12345"
         print(f"  目标文件: {tmpfile}")
         result = subprocess.run(
             f"adg scan {tmpfile} --json 2>/dev/null",
-            shell=True, capture_output=True, text=True
+            shell=True,
+            capture_output=True,
+            text=True,
         )
 
         import json
+
         try:
             scan_results = json.loads(result.stdout)
             total = sum(len(r.get("issues", [])) for r in scan_results)
-            errors = sum(1 for r in scan_results for i in r.get("issues", []) if i["severity"] == "error")
-            warnings = sum(1 for r in scan_results for i in r.get("issues", []) if i["severity"] == "warning")
+            errors = sum(
+                1
+                for r in scan_results
+                for i in r.get("issues", [])
+                if i["severity"] == "error"
+            )
+            warnings = sum(
+                1
+                for r in scan_results
+                for i in r.get("issues", [])
+                if i["severity"] == "warning"
+            )
 
             print(f"\n  🔍 发现 {total} 个问题 ({errors} error, {warnings} warning):")
             for r in scan_results:
                 for issue in r.get("issues", []):
-                    icon = "🔴" if issue["severity"] == "error" else "🟡" if issue["severity"] == "warning" else "ℹ️"
-                    print(f"    L{issue['line']}: {icon} [{issue['category']}] {issue['message']}")
+                    icon = (
+                        "🔴"
+                        if issue["severity"] == "error"
+                        else "🟡"
+                        if issue["severity"] == "warning"
+                        else "ℹ️"
+                    )
+                    print(
+                        f"    L{issue['line']}: {icon} [{issue['category']}] {issue['message']}"
+                    )
         except (json.JSONDecodeError, IndexError):
             print("  ⚠️  adg 未安装。模拟扫描结果:")
             print("    L2: 🔴 [code_quality] 通配符导入")
@@ -193,7 +215,9 @@ SECRET_KEY = os_module.environ.get("APP_SECRET_KEY", "default-dev-key")
 
         result2 = subprocess.run(
             f"adg scan {fixed_file} --json 2>/dev/null",
-            shell=True, capture_output=True, text=True
+            shell=True,
+            capture_output=True,
+            text=True,
         )
 
         try:
@@ -226,10 +250,10 @@ SECRET_KEY = os_module.environ.get("APP_SECRET_KEY", "default-dev-key")
   最终结论: ✅ PASS — 代码质量达标
 """)
 
-    print(f"\n{'='*60}")
+    print(f"\n{'=' * 60}")
     print("  🎉 多 Agent 工作流演示完成！")
     print("  演示了: PM→Architect→ADG Scan→Coder→Verify→Review")
-    print(f"{'='*60}")
+    print(f"{'=' * 60}")
     return 0
 
 

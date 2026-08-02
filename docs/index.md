@@ -1,3 +1,11 @@
+---
+title: "AI Developer Growth"
+description: "AI 时代开发者成长知识库：系统化学习 AI 辅助开发，提升工程效率"
+category: 认知层
+tags: ['时代开发者成长知识库', '系统化学习', '辅助开发', '提升工程效率', '快速开始', '核心价值']
+difficulty: 基础
+---
+
 # AI Developer Growth
 
 <div class="hero" markdown>

@@ -3,7 +3,7 @@ title: 安全开发标准
 description: 安全编码和应用安全标准
 category: 治理层
 tags: [安全, DevSecOps, 合规]
-difficulty: 中级
+difficulty: 进阶
 reading_time: 10 分钟
 updated: 2026-07-21
 ---

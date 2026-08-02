@@ -3,7 +3,7 @@ title: AI 监控工具
 description: 应用监控和可观测性工具
 category: 工具层
 tags: [AI, 监控, 可观测性]
-difficulty: 初级
+difficulty: 基础
 reading_time: 8 分钟
 updated: 2026-07-21
 ---

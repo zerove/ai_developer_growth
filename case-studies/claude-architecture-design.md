@@ -1,3 +1,10 @@
+---
+title: "Claude 辅助架构设计"
+description: "项目: 电商平台微服务化重构"
+category: 案例研究
+tags: ['AI协作', '案例研究']
+difficulty: 进阶
+---
 # Claude 辅助架构设计
 
 ## 背景

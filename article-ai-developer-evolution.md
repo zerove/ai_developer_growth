@@ -176,4 +176,4 @@ AI 不会取代开发者。但**会用 AI 的开发者会取代不会用的**。
 
 ---
 
-*这篇文章基于 ai_developer_growth 项目的 203 篇方法论文档、35 个真实案例和 7 个代码示例的经验提炼。项目地址: https://github.com/zerove/ai_developer_growth*
+*这篇文章基于 ai_developer_growth 项目的 229 篇方法论文档、43 个真实案例和 10 个代码示例的经验提炼。项目地址: https://github.com/zerove/ai_developer_growth*

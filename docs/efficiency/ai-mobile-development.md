@@ -3,7 +3,7 @@ title: AI 辅助移动端开发
 description: 使用 AI 工具提升移动端开发效率
 category: 效率层
 tags: [AI, 移动端, React Native/Flutter]
-difficulty: 中级
+difficulty: 进阶
 reading_time: 10 分钟
 updated: 2026-07-21
 ---

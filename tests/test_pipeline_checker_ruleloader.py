@@ -82,7 +82,7 @@ class TestRulesHash:
         lang_dir.mkdir(parents=True)
         (lang_dir / "anti_patterns.yml").write_text("anti_patterns: []\n")
         result = _rules_hash("testlang", tmp_path)
-        assert len(result) == 32  # md5 hex digest
+        assert len(result) == 64  # sha256 hex digest
 
     def test_os_error_handling(self, tmp_path: Path) -> None:
         lang_dir = tmp_path / "languages" / "testlang" / "rules.d"

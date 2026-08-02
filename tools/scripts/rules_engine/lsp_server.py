@@ -53,7 +53,7 @@ def _map_severity(severity: str) -> int:
         "warning": DiagnosticSeverity.Warning,
         "info": DiagnosticSeverity.Information,
     }
-    return cast(DiagnosticSeverity, mapping.get(severity, DiagnosticSeverity.Information))
+    return cast(int, mapping.get(severity, DiagnosticSeverity.Information))
 
 
 def _text_to_range(text: str, pattern: str, line_offset: int = 0) -> Range | None:

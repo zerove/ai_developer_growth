@@ -3,7 +3,7 @@ title: 开源项目运营
 description: 如何运营和维护开源项目
 category: 认知层
 tags: [开源, 社区, 运营]
-difficulty: 中级
+difficulty: 进阶
 reading_time: 12 分钟
 updated: 2026-07-21
 ---

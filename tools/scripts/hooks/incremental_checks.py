@@ -130,11 +130,14 @@ def run_pre_commit_checks() -> tuple[bool, str]:
     passed, output = _check_code_files(code_files, label="Staged")
 
     try:
-        from scope_guard import ScopeGuardHook
-        from audit_attestation import AuditAttestationLedger
+        from tools.scripts.audit_attestation import AuditAttestationLedger
+        from tools.scripts.hooks.scope_guard import ScopeGuardHook
+
         root = Path(__file__).resolve().parent.parent.parent
         scope_ok, scope_msg = ScopeGuardHook(root_dir=root).check_git_diff()
-        AuditAttestationLedger(root).record_trace("PRE_COMMIT_HOOK", {"staged_count": len(staged), "scope_passed": scope_ok})
+        AuditAttestationLedger(root).record_trace(
+            "PRE_COMMIT_HOOK", {"staged_count": len(staged), "scope_passed": scope_ok}
+        )
         if not scope_ok:
             passed = False
             output += f"\n🛡️ {scope_msg}"

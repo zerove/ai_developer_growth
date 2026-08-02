@@ -3,7 +3,7 @@ title: SQL Governance Rules
 description: > 适用于 SQL 数据库的 AI Agent 开发规范。
 category: 工具层
 tags: ['测试', 'AI', 'SQL', 'Python']
-difficulty: 初级
+difficulty: 基础
 reading_time: 10 分钟
 updated: 2026-07-21
 ---

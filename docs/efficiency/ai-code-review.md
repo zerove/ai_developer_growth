@@ -3,7 +3,7 @@ title: AI 辅助代码审查
 description: 使用 AI 工具提升代码审查效率
 category: 效率层
 tags: [AI, 代码审查, 质量保证]
-difficulty: 中级
+difficulty: 进阶
 reading_time: 10 分钟
 updated: 2026-07-21
 ---

@@ -1,3 +1,10 @@
+---
+title: "案例研究：AI-Context-Sync 开发全流程"
+description: "本案例展示了如何使用 AI 协作开发一个完整的实用工具：AI-Context-Sync..."
+category: 案例研究
+tags: ['AI协作', '案例研究']
+difficulty: 进阶
+---
 # 案例研究：AI-Context-Sync 开发全流程
 
 本案例展示了如何使用 AI 协作开发一个完整的实用工具：**AI-Context-Sync** —— 一个自动维护项目上下文文档的 AI-Native 研发操作系统。

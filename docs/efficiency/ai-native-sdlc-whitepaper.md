@@ -1,7 +1,9 @@
 ---
-category: efficiency
+title: "🚀 AI-Native SDLC 全生命周期白皮书"
+description: "category: 效率层"
+category: 效率层
 tags: [ai-native, sdlc, architecture-guard, self-healing, telemetry, knowledge-graph]
-difficulty: advanced
+difficulty: 高级
 ---
 
 # 🚀 AI-Native SDLC 全生命周期白皮书

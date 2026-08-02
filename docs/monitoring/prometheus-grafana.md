@@ -3,7 +3,7 @@ title: Prometheus + Grafana
 description: > 云原生监控的事实标准。指标采集、存储、告警、可视化一套搞定。
 category: 工具层
 tags: ['Kubernetes', 'Python', '测试', 'SQL', '安全']
-difficulty: 初级
+difficulty: 基础
 reading_time: 10 分钟
 updated: 2026-07-21
 ---

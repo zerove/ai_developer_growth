@@ -3,7 +3,7 @@ title: "AI 辅助 API 设计"
 description: "使用 AI 设计高质量的 RESTful API"
 category: 案例研究
 tags: [API设计, RESTful, OpenAPI]
-difficulty: 中级
+difficulty: 进阶
 reading_time: 12 分钟
 updated: 2026-07-21
 ---

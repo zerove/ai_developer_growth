@@ -3,7 +3,7 @@ title: "AI 开发性能基准标准 (AI Dev Performance Benchmarks)"
 description: AI 辅助开发效率的量化基准和度量方法
 category: 治理层
 tags: ['AI', 'benchmark', 'performance', 'metrics', 'governance']
-difficulty: 中级
+difficulty: 进阶
 reading_time: 10 分钟
 updated: 2026-07-22
 ---

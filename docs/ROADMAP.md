@@ -1,3 +1,11 @@
+---
+title: "ADG Governance - 后续开发计划"
+description: "目标: 将框架规则从 5/9 扩展到 9/9"
+category: 治理层
+tags: ['后续开发计划', '当前状态', '组件', '状态', '测试覆盖', '完成']
+difficulty: 基础
+---
+
 # ADG Governance - 后续开发计划
 
 ## 当前状态 (v1.0)

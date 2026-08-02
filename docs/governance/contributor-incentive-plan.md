@@ -1,9 +1,9 @@
 ---
 title: 贡献者激励计划
 description: AI Developer Growth 贡献者激励体系 - 等级/积分/月度之星
-category: 社区
+category: 治理层
 tags: ['贡献', '激励', '社区']
-difficulty: 初级
+difficulty: 基础
 reading_time: 5 分钟
 updated: 2026-07-22
 ---

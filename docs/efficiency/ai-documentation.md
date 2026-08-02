@@ -3,7 +3,7 @@ title: AI 辅助文档生成
 description: 使用 AI 工具自动生成技术文档
 category: 效率层
 tags: [AI, 文档, API文档]
-difficulty: 中级
+difficulty: 进阶
 reading_time: 10 分钟
 updated: 2026-07-21
 ---

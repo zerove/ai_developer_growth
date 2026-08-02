@@ -34,14 +34,22 @@ def check_metadata(file_path: Path) -> list[str]:
         content = file_path.read_text(encoding="utf-8")
         frontmatter, body = extract_frontmatter(content)
 
+        # ADR 文档使用独立模板 (id/title/date/status)，不适用五字段规范
+        is_adr = "docs/adr" in str(file_path) and file_path.name != "ADR.md"
+
         # 检查必填字段
-        required_fields = ["title", "description", "category", "tags", "difficulty"]
-        for field in required_fields:
-            if field not in frontmatter:
-                issues.append(f"Missing required field: {field}")
+        if not is_adr:
+            required_fields = ["title", "description", "category", "tags", "difficulty"]
+            for field in required_fields:
+                if field not in frontmatter:
+                    issues.append(f"Missing required field: {field}")
 
         # 检查分类
         valid_categories = ["认知层", "学习层", "效率层", "工具层", "治理层"]
+        # 案例研究是独立文档类型 (GOVERNANCE.md 文档类型表)
+        if "case-studies" in str(file_path):
+            valid_categories.append("案例研究")
+
         if "category" in frontmatter:
             if frontmatter["category"] not in valid_categories:
                 issues.append(f"Invalid category: {frontmatter['category']}")

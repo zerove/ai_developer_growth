@@ -3,7 +3,7 @@ title: ADR-003: 四道质量门禁系统设计
 description: ADR-003: 四道质量门禁系统设计 - 技术文档
 category: 治理层
 tags: ['AI', 'API', 'Python', 'ADR', 'quality']
-difficulty: 初级
+difficulty: 基础
 reading_time: 10 分钟
 updated: 2026-07-21
 ---

@@ -3,7 +3,7 @@ title: AI 测试工具
 description: 自动化测试工具对比和使用
 category: 工具层
 tags: [AI, 测试, 单元测试]
-difficulty: 初级
+difficulty: 基础
 reading_time: 8 分钟
 updated: 2026-07-21
 ---

@@ -3,7 +3,7 @@ title: AI 辅助技术面试
 description: 使用 AI 工具准备技术面试
 category: 效率层
 tags: [AI, 面试, 求职]
-difficulty: 中级
+difficulty: 进阶
 reading_time: 10 分钟
 updated: 2026-07-21
 ---

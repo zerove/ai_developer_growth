@@ -1,3 +1,11 @@
+---
+title: "LLM-Guided Language Rule Generation"
+description: "当 jcode 遇到 ai-dev-framework 不支持的编程语言时，通过此方法动..."
+category: 工具层
+tags: ['遇到', '不支持的编程语言时', '通过此方法动态生成规则', '触发条件', '用户编写', '等语言代码']
+difficulty: 基础
+---
+
 # LLM-Guided Language Rule Generation
 
 当 jcode 遇到 ai-dev-framework 不支持的编程语言时，通过此方法动态生成规则。

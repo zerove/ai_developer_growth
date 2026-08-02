@@ -115,8 +115,19 @@ class ContributorDashboard:
 
             # 从 git log 分析修复提交
             result = subprocess.run(
-                ["git", "log", "--all", "--oneline", "--grep=fix", "--grep=quality", "--format=%an %s", "--regexp-ignore-case"],
-                capture_output=True, text=True, cwd=self.repo_root
+                [
+                    "git",
+                    "log",
+                    "--all",
+                    "--oneline",
+                    "--grep=fix",
+                    "--grep=quality",
+                    "--format=%an %s",
+                    "--regexp-ignore-case",
+                ],
+                capture_output=True,
+                text=True,
+                cwd=self.repo_root,
             )
             fixers: Counter[str] = Counter()
             for line in result.stdout.strip().split("\n"):

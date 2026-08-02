@@ -17,10 +17,10 @@ import os
 import re
 import sys
 from pathlib import Path
-from typing import Any
-
+from typing import Any, cast
 
 # ── 生成规则缓存目录 ──────────────────────────────────────
+
 
 def get_generated_rules_dir() -> Path:
     """获取生成规则的缓存目录。
@@ -118,7 +118,7 @@ def detect_language_from_extension(filepath: str | Path) -> str | None:
 
 # ── 规则模板 ──────────────────────────────────────────────
 
-RULE_TEMPLATE = '''\
+RULE_TEMPLATE = """\
 language: {language}
 version: '>=1.0'
 config_version: '1.0'
@@ -130,7 +130,7 @@ description: >
 
 anti_patterns:
 {patterns}
-'''
+"""
 
 
 def format_rules(language: str, rules: list[dict[str, Any]]) -> str:
@@ -182,6 +182,7 @@ def format_rules(language: str, rules: list[dict[str, Any]]) -> str:
 
 # ── 规则保存 ──────────────────────────────────────────────
 
+
 def save_rules(language: str, rules: list[dict[str, Any]], force: bool = False) -> Path:
     """保存生成的规则到缓存目录。
 
@@ -222,6 +223,7 @@ def save_rules(language: str, rules: list[dict[str, Any]], force: bool = False) 
 
 # ── 规则发现 ──────────────────────────────────────────────
 
+
 def discover_generated_rules() -> list[Path]:
     """发现所有已生成规则文件。"""
     gen_dir = get_generated_rules_dir()
@@ -246,9 +248,10 @@ def load_generated_rules(language: str) -> list[dict[str, Any]]:
 
     try:
         import yaml
+
         data = yaml.safe_load(rule_file.read_text())
         if data and isinstance(data, dict):
-            return data.get("anti_patterns", [])
+            return cast(list[dict[str, Any]], data.get("anti_patterns", []))
     except Exception:
         _ = None  # generated rules are optional; skip malformed files
     return []
@@ -264,12 +267,14 @@ def list_generated_languages() -> list[str]:
 
 # ── 验证 ──────────────────────────────────────────────────
 
+
 def validate_rules_yaml(content: str) -> list[str]:
     """验证 YAML 规则格式，返回错误列表。"""
     errors: list[str] = []
 
     try:
         import yaml
+
         data = yaml.safe_load(content)
     except yaml.YAMLError as e:
         return [f"YAML parse error: {e}"]
@@ -318,6 +323,7 @@ def validate_rules_yaml(content: str) -> list[str]:
 
 # ── CLI ──────────────────────────────────────────────────
 
+
 def print_status(language: str | None = None) -> None:
     """打印生成规则的状态。"""
     gen_langs = list_generated_languages()
@@ -343,7 +349,7 @@ def print_status(language: str | None = None) -> None:
             _out.write(f"\n  Details for '{language}':\n")
             for r in rules:
                 icon = {"error": "🔴", "warning": "🟡", "info": "ℹ️"}.get(r.get("severity", ""), "•")
-                _out.write(f"    {icon} [{r.get('id','')}] {r.get('message','')}\n")
+                _out.write(f"    {icon} [{r.get('id', '')}] {r.get('message', '')}\n")
         else:
             _out.write(f"\n  No generated rules for '{language}'\n")
 

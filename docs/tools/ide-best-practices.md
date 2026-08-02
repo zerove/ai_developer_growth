@@ -1,6 +1,6 @@
 ---
 title: AI IDE 最佳实践 (AI IDE Best Practices)
-description: 在 AI 时代，IDE 不再仅仅是文本编辑器，而是**开发者与大模型之间的协同界面**。Zed 以其极致的性能（Rust 编写）和深度集成的 AI 能力，正成为追求高效工作的个人开发者的首选。
+description: "在 AI 时代，IDE 不再仅仅是文本编辑器，而是**开发者与大模型之间的协同界面**..."
 category: 工具层
 tags: ['AI', 'API', '测试', 'GPT', 'LLM']
 difficulty: 高级

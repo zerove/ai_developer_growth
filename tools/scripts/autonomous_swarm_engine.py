@@ -14,7 +14,7 @@ import json
 from pathlib import Path
 from typing import Any
 
-from _common import get_project_root
+from tools.scripts._common import get_project_root
 
 
 class AutonomousSwarmOrchestrator:
@@ -31,18 +31,14 @@ class AutonomousSwarmOrchestrator:
             "3. Sisyphus / Coder: Executing TDD red-green-refactor loop.",
             "4. Runtime Verifier & Self-Healing CI: Running probes and auto-patching errors.",
             "5. Red-Blue Team: Conducting adversarial security & architecture review.",
-            "6. Self-Hosting Meta-Learning: Evolving rules and telemetry feedback."
+            "6. Self-Hosting Meta-Learning: Evolving rules and telemetry feedback.",
         ]
 
         result = {
             "task": task_description,
             "status": "Swarm Execution Completed Successfully",
             "stages": steps,
-            "metrics": {
-                "first_try_pass_rate": 94.2,
-                "architecture_violations": 0,
-                "ai_slop_detected": 0
-            }
+            "metrics": {"first_try_pass_rate": 94.2, "architecture_violations": 0, "ai_slop_detected": 0},
         }
 
         self.swarm_report.parent.mkdir(parents=True, exist_ok=True)

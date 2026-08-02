@@ -46,6 +46,11 @@ def _check_pattern(filepath: Path, content: str, lines: list[str], pattern_def: 
     if not pattern:
         return issues
 
+    # Check exclude files (glob patterns against path or basename)
+    for exclude in pattern_def.get("exclude_files", []):
+        if _match_pattern(filepath, exclude):
+            return []
+
     # Check exclude patterns
     for exclude in pattern_def.get("exclude_patterns", []):
         if re.search(exclude, content):
@@ -171,9 +176,17 @@ def _collect_check_files(
     else:
         skip_patterns = project_config.get("skip_patterns", [])
         for fp in target.rglob("*"):
-            if fp.is_file() and any(part not in SKIP_DIRS for part in fp.parts):
+            if fp.is_file() and not any(part in SKIP_DIRS for part in fp.parts):
                 if fp.suffix not in SKIP_EXTENSIONS:
                     if any(_match_pattern(fp, pat) for pat in skip_patterns):
+                        continue
+                    # Also match against path relative to scan target (skip_patterns
+                    # are written as repo-relative globs like "tests/*")
+                    try:
+                        rel = fp.relative_to(target)
+                    except ValueError:
+                        rel = fp
+                    if any(_match_pattern(rel, pat) for pat in skip_patterns):
                         continue
                     if _detect_language_from_file(fp):
                         files.append(fp)

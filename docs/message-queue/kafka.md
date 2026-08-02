@@ -3,7 +3,7 @@ title: Apache Kafka
 description: > 分布式事件流平台，适合高吞吐、可回溯的场景。
 category: 工具层
 tags: ['Docker', 'Kubernetes']
-difficulty: 初级
+difficulty: 基础
 reading_time: 10 分钟
 updated: 2026-07-21
 ---

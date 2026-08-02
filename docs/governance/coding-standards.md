@@ -3,7 +3,7 @@ title: 代码规范标准
 description: 代码编写规范和最佳实践
 category: 治理层
 tags: [代码规范, 最佳实践, 团队]
-difficulty: 初级
+difficulty: 基础
 reading_time: 10 分钟
 updated: 2026-07-21
 ---

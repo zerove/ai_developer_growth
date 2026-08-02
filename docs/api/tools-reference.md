@@ -1,3 +1,11 @@
+---
+title: "Tools API Reference"
+description: "All scripts in tools/scripts/ share a unifie..."
+category: 工具层
+tags: ['AI', '开发者成长']
+difficulty: 基础
+---
+
 # Tools API Reference
 
 All scripts in `tools/scripts/` share a unified CLI interface via `rules/cli.py` and `rules/web_base.py`.

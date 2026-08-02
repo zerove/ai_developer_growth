@@ -354,9 +354,7 @@ class QualityTracker:
         icon = "✅" if regressions == 0 else "⚠️" if regressions <= 2 else "🔴"
 
         return (
-            f"{icon} Quality: {last.total_issues} issues / {last.total_files} files "
-            f"[{spark}] "
-            f"{regressions} regressed"
+            f"{icon} Quality: {last.total_issues} issues / {last.total_files} files [{spark}] {regressions} regressed"
         )
 
     def generate_multi_trend_report(self, lookback: int = 10) -> str:
@@ -374,9 +372,7 @@ class QualityTracker:
 
         for s in snapshots:
             date = time.strftime("%m-%d %H:%M", time.localtime(s.timestamp))
-            lines.append(
-                f"  {s.total_issues:>6d}  {s.errors:>6d}  {s.warnings:>8d}  {s.total_files:>5d}   {date}"
-            )
+            lines.append(f"  {s.total_issues:>6d}  {s.errors:>6d}  {s.warnings:>8d}  {s.total_files:>5d}   {date}")
 
         lines.append("")
         lines.append(f"  Sparkline (issues): {self.generate_sparkline('total_issues')}")

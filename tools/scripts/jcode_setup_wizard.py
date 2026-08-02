@@ -9,7 +9,7 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
-from _common import get_project_root
+from tools.scripts._common import get_project_root
 
 
 class JCodeSetupWizard:
@@ -39,10 +39,11 @@ class JCodeSetupWizard:
         mcp_path = self.root_dir / "opencode.json"
         if not mcp_path.exists():
             mcp_path.write_text(json.dumps(mcp_config, indent=2), encoding="utf-8")
-            print(f"✅ Generated opencode.json MCP configuration.")
+            print("✅ Generated opencode.json MCP configuration.")
 
         # 3. Build initial semantic graph
         from semantic_code_graph import SemanticCodeGraph
+
         graph = SemanticCodeGraph(self.root_dir)
         graph.build_graph()
         out = self.root_dir / ".semantic_graph.json"

@@ -2,6 +2,7 @@
 
 Simulates a Red-Blue team debate and expert panel consensus for architectural and security review.
 """
+# ruff: noqa: E501 (prompt 文本刻意保持单行长，便于阅读与测试断言)
 
 from __future__ import annotations
 
@@ -16,7 +17,7 @@ class RedBlueDebateOrchestrator:
 
     def run_debate(self) -> dict[str, Any]:
         print(f"🏛️ Starting Adversarial Red-Blue Debate on proposal: {self.proposal}")
-        
+
         # Blue Team (Implementer / Defender)
         blue_arg = f"Blue Team Defense: The proposal {self.proposal} maximizes modularity and follows existing design patterns, ensuring clean separation of concerns."
         self.transcript.append({"role": "Blue Team (Defender)", "argument": blue_arg})
@@ -27,12 +28,14 @@ class RedBlueDebateOrchestrator:
 
         # Expert Panel Synthesis
         synthesis = "Expert Panel Consensus: Accept proposal with conditions. 1) Add mutex locks for state updates. 2) Enforce strict input validation schema at API boundaries."
-        self.transcript.append({"role": "Expert Panel Synthesis", "argument": synthesis})
+        self.transcript.append(
+            {"role": "Expert Panel Synthesis", "argument": synthesis}
+        )
 
         return {
             "proposal": self.proposal,
             "status": "Approved with Conditions",
-            "transcript": self.transcript
+            "transcript": self.transcript,
         }
 
 

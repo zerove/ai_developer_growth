@@ -8,7 +8,8 @@ from __future__ import annotations
 
 import argparse
 import sys
-from _common import get_project_root, run_command
+
+from tools.scripts._common import get_project_root, run_command
 
 
 def run_task(task_name: str) -> int:
@@ -21,7 +22,11 @@ def run_task(task_name: str) -> int:
         "architecture-guard": [sys.executable, str(root / "tools" / "scripts" / "architecture_drift_guard.py")],
         "slop-scan": [sys.executable, str(root / "tools" / "scripts" / "ai_slop_scanner.py")],
         "metrics-telemetry": [sys.executable, str(root / "tools" / "scripts" / "metrics_telemetry.py")],
-        "workflow-ai-native": [sys.executable, str(root / "tools" / "scripts" / "jcode_ai_native_workflow.py"), "Cross-Platform Workflow Execution"],
+        "workflow-ai-native": [
+            sys.executable,
+            str(root / "tools" / "scripts" / "jcode_ai_native_workflow.py"),
+            "Cross-Platform Workflow Execution",
+        ],
         "swarm-run": [sys.executable, str(root / "tools" / "scripts" / "autonomous_swarm_engine.py")],
         "setup-wizard": [sys.executable, str(root / "tools" / "scripts" / "jcode_setup_wizard.py")],
         "dashboard": [sys.executable, str(root / "tools" / "scripts" / "ai_native_dashboard.py")],
@@ -47,7 +52,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(
         description="JCode Cross-Platform Task Runner (Alternative to Makefile)",
         formatter_class=argparse.RawDescriptionHelpFormatter,
-        epilog="Available tasks:\n  check, semantic-graph, architecture-guard, slop-scan,\n  metrics-telemetry, workflow-ai-native, swarm-run, setup-wizard,\n  dashboard, self-evolve"
+        epilog="Available tasks:\n  check, semantic-graph, architecture-guard, slop-scan,\n  metrics-telemetry, workflow-ai-native, swarm-run, setup-wizard,\n  dashboard, self-evolve",
     )
     parser.add_argument("task", help="Task name to run")
     args = parser.parse_args()

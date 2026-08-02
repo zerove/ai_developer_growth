@@ -3,7 +3,7 @@ title: "AI 代码归属与许可证标准 (AI Code Attribution & Licensing)"
 description: AI 生成代码的版权归属、许可证合规和法律风险管理
 category: 治理层
 tags: ['AI', 'licensing', 'attribution', 'legal', 'governance']
-difficulty: 中级
+difficulty: 进阶
 reading_time: 10 分钟
 updated: 2026-07-22
 ---

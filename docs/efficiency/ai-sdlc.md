@@ -322,7 +322,7 @@ Gate 5: 上线审查     → 监控 + 告警 + 回滚就绪
 - [AI 非标准](ai-nondeterministic-testing.md) - 测试策略
 - [AI 模型选型与评估标准](ai-model-selection.md) - 模型选择
 - [全生命周期工作流](full-cycle-workflow.md) - 开发者工作流
-- [[GOVERNANCE|通用治理标准]] - Agent 治理标准
+- [[../../GOVERNANCE|通用治理标准]] - Agent 治理标准
 
 ---
 

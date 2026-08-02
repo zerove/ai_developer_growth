@@ -1,3 +1,11 @@
+---
+title: "项目全面分析报告"
+description: "aidevelopergrowth 实际上是一个 AI Agent 治理框架，但它的名字..."
+category: 治理层
+tags: ['项目全面分析报告', '基于', '完整代码审计', '文件', '条规则', '测试']
+difficulty: 基础
+---
+
 # 项目全面分析报告
 
 > 基于 v2.2.0 完整代码审计

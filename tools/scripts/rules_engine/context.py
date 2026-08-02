@@ -2,6 +2,7 @@
 
 文件角色通过路径模式声明，规则根据角色自动升降严重度。
 """
+
 from __future__ import annotations
 
 from pathlib import Path
@@ -126,6 +127,7 @@ def load_role_config(config_path: Path) -> dict[str, str]:
     """
     try:
         import yaml
+
         if config_path.exists():
             data = yaml.safe_load(config_path.read_text())
             markers = data.get("context", {}).get("markers", {})

@@ -8,11 +8,9 @@ Enforces strict phase boundaries for agent workflows:
 
 from __future__ import annotations
 
-from typing import Any
-
 
 class TDDStateMachine:
-    def __init__(self):
+    def __init__(self) -> None:
         self.state = "RED"  # RED, GREEN, REFACTOR
 
     def transition(self, action: str) -> bool:

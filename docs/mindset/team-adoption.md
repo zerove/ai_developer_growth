@@ -1,7 +1,7 @@
 ---
 title: 团队 AI 编程采用策略 (Team Adoption Strategy)
 description: > 从个人实践到团队协作的系统化路径。
-category: 心态层
+category: 认知层
 tags: ['adoption', 'AI', 'team']
 difficulty: 高级
 reading_time: 10 分钟

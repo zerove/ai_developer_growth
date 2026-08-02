@@ -544,7 +544,7 @@ class TestCacheAndIncremental:
         f = tmp_path / "test.py"
         f.write_text("x = 1\n")
         h1 = _file_hash(f)
-        assert len(h1) == 32  # MD5 hex
+        assert len(h1) == 64  # SHA-256 hex
         # Same content = same hash
         assert _file_hash(f) == h1
         # Changed content = different hash

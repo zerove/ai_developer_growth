@@ -1,3 +1,11 @@
+---
+title: "规则加载架构"
+description: "YAML 规则文件                       Python 硬编码规则"
+category: 工具层
+tags: ['规则加载架构', '两条加载路径', '规则文件', '硬编码规则']
+difficulty: 基础
+---
+
 # 规则加载架构
 
 ## 两条加载路径

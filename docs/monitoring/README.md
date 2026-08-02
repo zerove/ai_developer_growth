@@ -3,7 +3,7 @@ title: 监控
 description: > 没有监控的系统是黑盒。线上出了问题，你只能祈祷。
 category: 工具层
 tags: ['Docker', 'Kubernetes']
-difficulty: 初级
+difficulty: 基础
 reading_time: 10 分钟
 updated: 2026-07-21
 ---

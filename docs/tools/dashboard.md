@@ -1,3 +1,11 @@
+---
+title: "ADG Quality Dashboard"
+description: "ADG 质量仪表板：可视化代码质量报告、趋势与门禁状态"
+category: 工具层
+tags: ['可视化代码质量报告的', '仪表板', '启动', '安装依赖', '启动仪表板', '访问']
+difficulty: 基础
+---
+
 # ADG Quality Dashboard
 
 > 可视化代码质量报告的 Web 仪表板。

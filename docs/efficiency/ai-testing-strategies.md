@@ -3,7 +3,7 @@ title: AI 辅助测试策略
 description: ## 核心观点
 category: 效率层
 tags: ['AI', 'Python', '测试', 'testing', 'ai']
-difficulty: 初级
+difficulty: 基础
 reading_time: 10 分钟
 updated: 2026-07-21
 ---

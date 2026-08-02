@@ -1,3 +1,10 @@
+---
+title: "案例研究：用 AI 调试复杂生产问题"
+description: "生产环境出现间歇性性能问题："
+category: 案例研究
+tags: ['AI协作', '案例研究']
+difficulty: 基础
+---
 # 案例研究：用 AI 调试复杂生产问题
 
 ## 背景

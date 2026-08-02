@@ -3,7 +3,7 @@ title: AI 辅助 API 设计
 description: 使用 AI 工具设计 RESTful API
 category: 效率层
 tags: [AI, API, RESTful]
-difficulty: 中级
+difficulty: 进阶
 reading_time: 10 分钟
 updated: 2026-07-21
 ---

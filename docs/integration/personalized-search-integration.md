@@ -1,9 +1,9 @@
 ---
 title: 个性化搜索集成
 description: 如何使用 ai-navigation 的个性化搜索功能
-category: 集成
+category: 工具层
 tags: ['AI', 'search', 'personalization']
-difficulty: 中级
+difficulty: 进阶
 reading_time: 8 分钟
 updated: 2026-07-21
 ---
@@ -69,7 +69,7 @@ print(result["answer"])
 
 ## 相关资源
 
-- [[examples/ai-navigation|导航系统示例]]
+- [[../../examples/ai-navigation|导航系统示例]]
 - [[efficiency/personalized-search|个性化搜索方法论]]
 - [[tools/rag-for-developers|RAG 开发指南]]
 

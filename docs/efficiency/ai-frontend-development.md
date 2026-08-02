@@ -3,7 +3,7 @@ title: AI 辅助前端开发
 description: 使用 AI 工具提升前端开发效率
 category: 效率层
 tags: [AI, 前端, React/Vue]
-difficulty: 中级
+difficulty: 进阶
 reading_time: 10 分钟
 updated: 2026-07-21
 ---

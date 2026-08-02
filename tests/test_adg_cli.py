@@ -401,6 +401,5 @@ class TestAttachDocs:
         assert issue.related_docs is None
 
     def test_attach_docs_empty_list(self):
-        issues = _attach_docs_to_issues([])
-        # Should not raise
+        _attach_docs_to_issues([])  # Should not raise
         assert True

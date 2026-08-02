@@ -1,7 +1,7 @@
 ---
 title: 上下文同步集成
 description: 如何使用 ai-context-sync 自动维护项目上下文
-category: 集成
+category: 工具层
 tags: ['AI', 'context', 'sync']
 difficulty: 高级
 reading_time: 8 分钟
@@ -64,7 +64,7 @@ dx audit --fix
 
 ## 相关资源
 
-- [[examples/ai-context-sync|示例代码]]
+- [[../../examples/ai-context-sync|示例代码]]
 - [[efficiency/full-cycle-workflow|全周期工作流]]
 
 ---

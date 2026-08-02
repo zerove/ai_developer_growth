@@ -3,7 +3,7 @@ title: AI 辅助测试生成
 description: 使用 AI 工具自动生成测试用例
 category: 效率层
 tags: [AI, 测试, 单元测试]
-difficulty: 中级
+difficulty: 进阶
 reading_time: 10 分钟
 updated: 2026-07-21
 ---

@@ -3,7 +3,7 @@ title: "AI 辅助技术文档"
 description: "使用 AI 生成和维护技术文档"
 category: 案例研究
 tags: [文档, 技术写作, 知识管理]
-difficulty: 初级
+difficulty: 基础
 reading_time: 10 分钟
 updated: 2026-07-21
 ---

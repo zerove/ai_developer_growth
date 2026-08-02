@@ -3,7 +3,7 @@ title: AI 代码编辑器对比
 description: 主流 AI 代码编辑器功能对比
 category: 工具层
 tags: [AI, IDE, 代码编辑器]
-difficulty: 初级
+difficulty: 基础
 reading_time: 8 分钟
 updated: 2026-07-21
 ---

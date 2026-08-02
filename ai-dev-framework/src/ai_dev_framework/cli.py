@@ -10,10 +10,10 @@ import sys
 from pathlib import Path
 
 from ai_dev_framework import __version__
+from ai_dev_framework.feedback import print_feedback_stats
 from ai_dev_framework.jcode_init import init_jcode
-from ai_dev_framework.scan import scan_files, print_results
+from ai_dev_framework.scan import print_results, scan_files
 from ai_dev_framework.sdlc_audit import audit_sdlc, print_audit
-from ai_dev_framework.feedback import print_feedback_stats, mark_false_positive
 
 
 def main() -> None:
@@ -241,8 +241,8 @@ def main() -> None:
         print(f"   {'使用示例文件: ' + args.file if args.file else '基于 agent 知识'}")
         print(f"\n   请使用 Jcode skill `/generate-rules {lang}` 来交互式生成规则。")
         print(f"   agent 会基于对 {lang} 的知识生成适合 ADG 引擎的规则。")
-        print(f"\n   或手动调用 Python API:")
-        print(f"     from tools.scripts.rules_engine.rule_generator import save_rules, format_rules")
+        print("\n   或手动调用 Python API:")
+        print("     from tools.scripts.rules_engine.rule_generator import save_rules, format_rules")
         print(f"     save_rules('{lang}', rules_list, force={args.force})")
         sys.exit(0)
 

@@ -3,7 +3,7 @@ title: "AI 代码审查专项清单 (AI Code Review Checklist)"
 description: 针对 AI 生成代码的专项审查标准和检查项
 category: 治理层
 tags: ['AI', 'code-review', 'checklist', 'governance']
-difficulty: 中级
+difficulty: 进阶
 reading_time: 12 分钟
 updated: 2026-07-22
 ---

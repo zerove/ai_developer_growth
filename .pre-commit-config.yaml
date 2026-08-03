@@ -1,29 +1,146 @@
+# Pre-commit hooks for ai_developer_growth
+# Install: pre-commit install
+# Run manually: pre-commit run --all-files
+
 repos:
+  # ── Ruff: lint + format ──────────────────────────────────────────
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.6.0
+    hooks:
+      - id: ruff
+        args: [--fix, --exit-non-zero-on-fix]
+      - id: ruff-format
+
+  # ── MyPy: type checking ──────────────────────────────────────────
+  - repo: https://github.com/pre-commit/mirrors-mypy
+    rev: v1.11.0
+    hooks:
+      - id: mypy
+        additional_dependencies: [pyyaml, types-requests, types-pyyaml]
+        args: [--strict, --ignore-missing-imports, tools/scripts/]
+        pass_filenames: false
+
+  # ── Python: basic checks ─────────────────────────────────────────
   - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v5.0.0
+    rev: v4.6.0
     hooks:
       - id: trailing-whitespace
       - id: end-of-file-fixer
       - id: check-yaml
-      - id: check-added-large-files
-  - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.11.0
+      - id: check-toml
+      - id: check-json
+      - id: check-merge-conflict
+      - id: debug-statements
+      - id: check-case-conflict
+      - id: check-docstring-first
+      - id: check-symlinks
+
+  # ── Bandit: security lint ────────────────────────────────────────
+  - repo: https://github.com/PyCQA/bandit
+    rev: 1.8.0
     hooks:
-      - id: ruff
-        args: [--fix]
-      - id: ruff-format
-  # jcode 治理检查
+      - id: bandit
+        args: [-r, tools/scripts/, -lll]
+        additional_dependencies: ["bandit[toml]"]
+
+  # ── TruffleHog: secret scanning ──────────────────────────────────
+  - repo: https://github.com/trufflesecurity/trufflehog
+    rev: v3.84.0
+    hooks:
+      - id: trufflehog
+        args: ["git", "file://.", "--since-commit=HEAD~1", "--json", "--fail"]
+        verbose: true
+
+  # ── ADG Governance: anti-patterns, security, naming ──────────────
   - repo: local
     hooks:
-      - id: jcode-governance
-        name: jcode Governance Check
-        entry: bash .jcode/hooks/pre-commit
+      - id: adg-governance
+        name: ADG Governance Check
+        entry: python -m tools.scripts.adg_cli check tools/scripts/ --lang python --severity error
         language: system
-        files: '\.(py|md)$'
         pass_filenames: false
-        stages: [pre-commit]
+        always_run: true
+
+  # ── Quality Gate: AI annotation, security patterns, type safety ──
+  - repo: local
+    hooks:
+      - id: quality-gate
+        name: AI Quality Gate
+        entry: python tools/scripts/hooks_runner.py quality-gate --path tools/scripts --check-annotation --check-security --check-type --check-error --check-structure
+        language: system
+        pass_filenames: false
+        always_run: true
+
+  # ── Governance Audit: docs, AI-SDLC, hallucination ───────────────
+  - repo: local
+    hooks:
+      - id: governance-audit
+        name: Governance Audit
+        entry: python tools/scripts/hooks_runner.py governance-audit --validate-docs --check-ai-sdlc --audit-hallucination
+        language: system
+        pass_filenames: false
+        always_run: true
+
+  # ── Markdown lint ────────────────────────────────────────────────
+  - repo: https://github.com/igorshubovych/markdownlint-cli
+    rev: v0.43.0
+    hooks:
+      - id: markdownlint
+        args: ["--config", ".markdownlint.json"]
+        files: \.(md|markdown)$
+
+  # ── Check for large files ────────────────────────────────────────
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.6.0
+    hooks:
+      - id: check-added-large-files
+        args: ['--maxkb=500']
+
+  # ── Requirements.txt / uv.lock sync ──────────────────────────────
+  - repo: local
+    hooks:
+      - id: uv-lock-sync
+        name: Check uv.lock sync
+        entry: bash -c 'uv lock --check'
+        language: system
+        pass_filenames: false
+        always_run: true
+
+  # ── Validate ADR index ───────────────────────────────────────────
+  - repo: local
+    hooks:
+      - id: validate-adr-index
+        name: Validate ADR Index
+        entry: python tools/scripts/hooks_runner.py governance-audit --check-index
+        language: system
+        pass_filenames: false
+        always_run: true
+
+  # ── Validate example projects structure ──────────────────────────
+  - repo: local
+    hooks:
+      - id: validate-examples
+        name: Validate Example Projects
+        entry: python tools/scripts/validate_example_projects.py
+        language: system
+        pass_filenames: false
+        always_run: true
+
+  # ── Case study validation ────────────────────────────────────────
+  - repo: local
+    hooks:
+      - id: validate-case-studies
+        name: Validate Case Studies
+        entry: python tools/scripts/validate_case_study.py --path case-studies/
+        language: system
+        pass_filenames: false
+        always_run: true
 
 ci:
+  autofix_commit_msg: "chore: pre-commit autofix"
   autofix_prs: true
-  autoupdate_schedule: monthly
+  autoupdate_branch: ""
+  autoupdate_commit_msg: "chore: pre-commit autoupdate"
+  autoupdate_schedule: weekly
+  skip: []
   submodules: false

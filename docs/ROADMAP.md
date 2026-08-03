@@ -233,7 +233,7 @@ adg learn ./my-project  # 分析项目生成规则
 ## 贡献指南
 
 欢迎贡献！请查看:
-- [CONTRIBUTING.md](https://github.com/1jehuang/ai_developer_growth/blob/main/CONTRIBUTING.md)
+- [CONTRIBUTING.md](https://github.com/zerove/ai_developer_growth/blob/main/CONTRIBUTING.md)
 - [Good First Issues](https://github.com/your-repo/adg/issues?q=is%3Aissue+is%3Aopen+label%3A%22good+first+issue%22)
 
 ---

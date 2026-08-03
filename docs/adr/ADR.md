@@ -5,7 +5,7 @@ category: 治理层
 tags: ['REST']
 difficulty: 基础
 reading_time: 10 分钟
-updated: 2026-07-21
+updated: 2026-08-03
 ---
 
 # 架构决策记录 (ADR) 索引
@@ -18,9 +18,15 @@ updated: 2026-07-21
 
 | ID | 标题 | 状态 | 日期 |
 |----|------|------|------|
+| [[009-ci-cd-optimization-security\|ADR-009]] | CI/CD 流水线优化与安全强化 | ✅ 已通过 | 2026-08 |
+| [[008-production-grade-workflow\|ADR-008]] | 生产级稳健工作流与防御性接口设计 | ⏳ 提议 | 2026-08 |
+| [[007-m4-ai-navigation-design\|ADR-007]] | M4 AI 导航系统设计 | 🔍 待评审 | 2026-07 |
+| [[005-ai-navigation-system\|ADR-005]] | AI 导航系统架构 | ⏳ 提议 | 2026-07 |
 | [[004-agent-collaboration-model\|ADR-004]] | 多 Agent 协作模型与编排模式 | ✅ 已通过 | 2026-07 |
 | [[003-quality-gate-system\|ADR-003]] | 四道质量门禁系统设计 | ✅ 已通过 | 2026-07 |
+| [[002-refactor-validate-language-rules\|ADR-002b]] | 重构 validate_language_rules.py 模块化 | ✅ 已通过 | 2026-07 |
 | [[002-knowledge-first-restructure\|ADR-002]] | 知识优先重构——项目定位重定向 | ✅ 已通过 | 2026-07 |
+| [[001-language-rules-engine-architecture\|ADR-001b]] | 语言规则引擎架构设计 | ✅ 已通过 | 2026-07 |
 | [[001-enhanced-git-analyzer\|ADR-001]] | 增强 Git 变更解析的鲁棒性 | ✅ 已通过 | 2026-07 |
 
 ---
@@ -68,4 +74,4 @@ updated: 2026-07-21
 
 ---
 
-*本索引随新增 ADR 时更新。最后更新: 2026-07-19*
+*本索引随新增 ADR 时更新。最后更新: 2026-08-03*

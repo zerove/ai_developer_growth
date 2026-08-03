@@ -25,3 +25,11 @@ ignore = ["E501", "D100", "D104", "D105", "D107"]
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 asyncio_mode = "auto"
+
+[tool.coverage.run]
+source = ["src"]
+omit = ["*/tests/*", "*/__main__.py"]
+
+[tool.coverage.report]
+fail_under = 70
+show_missing = true

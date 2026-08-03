@@ -1,78 +1,88 @@
-# ADR-002: Refactoring validate_language_rules.py into Modules
+---
+title: ADR-002b: 重构 validate_language_rules.py 模块化
+description: ADR-002b: 重构 validate_language_rules.py 模块化 - 技术文档
+category: 治理层
+tags: ['ADR', '002b', 'refactor', 'rules-engine']
+difficulty: 进阶
+reading_time: 10 分钟
+updated: 2026-07-23
+---
 
-## Status
+# ADR-002b: 重构 validate_language_rules.py 模块化
 
-Accepted (Implemented 2026-07-23)
+## 状态
+已通过
 
-## Date
-
+## 日期
 2026-07-23
 
-## Context
+## 上下文
 
-`validate_language_rules.py` grew to 2166 lines with 50 functions covering:
-- Rule loading and merging
-- Anti-pattern detection
-- Naming convention checking
-- Complexity analysis
-- Python AST analysis
-- Auto-fix engine
-- Report generation (JUnit/HTML/SARIF)
-- Health scoring
-- Linter aggregation
-- File caching
+`validate_language_rules.py` 增长到 2166 行，包含 50 个函数，涵盖：
+- 规则加载与合并
+- 反模式检测
+- 命名约定检查
+- 复杂度分析
+- Python AST 分析
+- 自动修复引擎
+- 报告生成（JUnit/HTML/SARIF）
+- 健康度评分
+- Linter 聚合
+- 文件缓存
 
-This made it hard to navigate, test in isolation, and maintain.
+这导致难以导航、隔离测试和维护。
 
-## Decision
+## 决策
 
-Refactor into a `rules_engine/` package with a unified `hooks_runner.py` entry point:
+重构为 `rules_engine/` 包，统一入口点 `hooks_runner.py`：
 
 ```
 tools/scripts/rules_engine/
-  __init__.py              # Public API + docstring examples
+  __init__.py              # 公共 API + 文档示例
   models.py                # Issue, CheckResult, Severity, HealthScore
-  rule_loader.py           # load_rules(), disk cache, YAML merging
-  anti_pattern_checker.py  # Regex-based anti-pattern detection
-  naming_checker.py        # Naming convention validation
-  complexity_checker.py    # AST complexity (Python) + regex (JS/TS)
-  security_patterns.py     # Cross-language security/type/error patterns
-  checker.py               # Main orchestrator + external linter integration
+  rule_loader.py           # load_rules()、磁盘缓存、YAML 合并
+  anti_pattern_checker.py  # 基于正则的反模式检测
+  naming_checker.py        # 命名约定验证
+  complexity_checker.py    # AST 复杂度（Python）+ 正则（JS/TS）
+  security_patterns.py     # 跨语言安全/类型/错误模式
+  checker.py               # 主编排器 + 外部 linter 集成
 
-tools/scripts/hooks_runner.py    # Unified CLI entry point
-tools/scripts/report_generator.py # JUnit/HTML/SARIF report generation
-tools/scripts/fix_applier.py      # Auto-fix engine
+tools/scripts/hooks_runner.py    # 统一 CLI 入口点
+tools/scripts/report_generator.py # JUnit/HTML/SARIF 报告生成
+tools/scripts/fix_applier.py      # 自动修复引擎
 ```
 
-### Migration Strategy (Completed)
+### 迁移策略（已完成）
 
-1. Created `rules_engine/` package with modular checkers
-2. Created `hooks_runner.py` as unified entry point (lint, format, typecheck, test, security, quality-gate, governance-audit)
-3. Extracted `report_generator.py` and `fix_applier.py` from validate_language_rules.py
-4. Updated `validate_language_rules.py` to delegate to new modules (backward-compatible)
-5. Updated CI/CD to use `hooks_runner.py`
-6. Added 82 new unit tests (748 -> 830 total)
+1. 创建 `rules_engine/` 包，包含模块化检查器
+2. 创建 `hooks_runner.py` 作为统一入口点（lint、format、typecheck、test、security、quality-gate、governance-audit）
+3. 从 validate_language_rules.py 提取 `report_generator.py` 和 `fix_applier.py`
+4. 更新 `validate_language_rules.py` 委托给新模块（向后兼容）
+5. 更新 CI/CD 使用 `hooks_runner.py`
+6. 新增 82 个单元测试（748 -> 830 总计）
 
-## Consequences
+## 影响
 
-### Positive
-- Each module is independently testable (55 new tests for rules_engine)
-- hooks_runner.py reduced full check time via parallelization (lint+format+typecheck concurrent)
-- Clearer dependency graph
-- Disk cache for rule loading across CLI invocations
-- Unified entry point for CI/CD and pre-commit hooks
+### 正面
 
-### Negative
-- More files to navigate (7 modules vs 1 monolith)
-- Import paths changed (mitigated by re-exports in validate_language_rules.py)
+- 每个模块独立可测试（rules_engine 新增 55 个测试）
+- hooks_runner.py 通过并行化缩短全检查时间（lint+format+typecheck 并发）
+- 更清晰的依赖图
+- 规则加载跨 CLI 调用的磁盘缓存
+- CI/CD 和预提交钩子的统一入口点
 
-## Metrics
+### 负面
 
-| Metric | Before | After |
+- 文件更多（7 个模块 vs 1 个单体）
+- 导入路径变更（通过 validate_language_rules.py 的重新导出缓解）
+
+## 指标
+
+| 指标 | 重构前 | 重构后 |
 |--------|--------|-------|
-| validate_language_rules.py | 2166 lines | 1930 lines (-11%) |
-| rules_engine modules | 0 | 7 modules |
-| Test count | 748 | 830 (+82) |
-| hooks_runner.py | N/A | 560 lines |
-| Report generators | inline | 232 lines (report_generator.py) |
-| Fix applier | inline | 85 lines (fix_applier.py) |
+| validate_language_rules.py | 2166 行 | 1930 行 (-11%) |
+| rules_engine 模块 | 0 | 7 个模块 |
+| 测试数量 | 748 | 830 (+82) |
+| hooks_runner.py | N/A | 560 行 |
+| 报告生成器 | 内联 | 232 行 (report_generator.py) |
+| 修复应用器 | 内联 | 85 行 (fix_applier.py) |

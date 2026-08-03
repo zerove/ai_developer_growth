@@ -104,3 +104,4 @@ skip_patterns:
 - '**/tests/**/*.py'
 - '**/demo*.py'
 - '**/*_demo.py'
+- '**/demo-adg-workflow.py'

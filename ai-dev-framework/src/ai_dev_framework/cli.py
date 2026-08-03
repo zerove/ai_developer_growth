@@ -179,6 +179,7 @@ def main() -> None:
     elif args.command == "feedback":
         if args.reset:
             from ai_dev_framework.feedback import reset_feedback
+
             reset_feedback()
             print("✅ 反馈数据已重置")
         else:
@@ -188,10 +189,12 @@ def main() -> None:
     elif args.command == "dashboard":
         if args.dashboard_type == "contributor":
             from tools.scripts.contributor_dashboard import ContributorDashboard  # type: ignore[import-untyped]
+
             db = ContributorDashboard(Path(args.path))
             print(db.generate_dashboard(output_format=args.format))
         elif args.dashboard_type == "trend":
             from tools.scripts.rules_engine.quality_trends import QualityTracker  # type: ignore[import-untyped]
+
             tracker = QualityTracker()
             if args.sparkline:
                 print(f"Issues sparkline: {tracker.generate_sparkline('total_issues')}")

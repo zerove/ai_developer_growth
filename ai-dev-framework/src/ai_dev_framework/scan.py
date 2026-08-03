@@ -198,6 +198,7 @@ def _load_rules_for_language(lang: str) -> list[dict]:
 
 # ── 文件排除 ──────────────────────────────────
 
+
 def _should_exclude(filepath: str | Path, exclude_files: list[str]) -> bool:
     """检查文件是否在排除列表中"""
     p = Path(filepath)
@@ -208,12 +209,14 @@ def _should_exclude(filepath: str | Path, exclude_files: list[str]) -> bool:
         # glob match
         if "*" in pat:
             import fnmatch
+
             if fnmatch.fnmatch(fname, pat) or fnmatch.fnmatch(str(p), pat):
                 return True
     return False
 
 
 # ── 核心扫描 ──────────────────────────────────
+
 
 def scan_file(filepath: str | Path) -> ScanResult:
     """扫描单个文件，返回结果"""
@@ -338,6 +341,7 @@ def scan_files(filepaths: list[str | Path]) -> list[ScanResult]:
 
 
 # ── CLI 输出 ──────────────────────────────────
+
 
 def print_results(results: list[ScanResult], verbose: bool = False) -> int:
     """打印扫描结果。返回 exit code (0=通过)"""

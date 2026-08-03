@@ -2,14 +2,18 @@
 
 ## 项目状态
 
-- **阶段**: Phase 16 完成 - 实战验证 + 包发布 + 内容精炼 + 文章 (2026-07-29)
+- **阶段**: Phase 17 进行中 - AI-Native SDLC 生态 + CI/CD 优化与安全强化 (2026-08-03)
 - **成熟度**: 99/100 (优秀) - 详见 AUDIT_REPORT.md
 - **核心资产**: 知识库 (229 篇方法论文档 + 10 ADR + 13 规范) + 治理框架 (26 语言规则 + 11 框架 + 12 领域 = 44 规范) + 43 真实案例 + 10 代码示例 (含向量搜索)
+- **测试规模**: 2509 测试全部通过 (2026-08-03 实测)
 
 ## 关键决策
 
 | 日期 | 决策 | 背景 | 影响 |
 |------|------|------|------|
+| 2026-08-03 | CI/CD 优化与安全强化 (ADR-009) | 流水线耗时长、缓存缺失、无发布通道 | 分片测试 + 覆盖率合并 + 缓存 + release.yml + 示例 CI 模板 |
+| 2026-08-02 | DoR/TDD/审计/范围守护集成 (ADR-008 配套) | 研发过程需要全链路可审计 | 4 个质量机制接入 JCode hooks 与工作流 |
+| 2026-08-01 | AI-Native SDLC 11 支柱自动化生态 | 从单点工具到全生命周期自动化 | 主管道 + 自主蜂群 + 自我演化引擎 + MCP 服务器 |
 | 2026-07-29 | Phase 16: 实战验证 + 包发布 + 内容精炼 + 文章 | 从内部建设转向外部验证和影响力 | 4 个方向同时推进，项目进化到实战阶段 |
 | 2026-07-24 | Phase 15: validate_language_rules 拆分 + CI/CD + 覆盖率 | 1115→142+731 行, CI 覆盖率阈值 75%, linter_runner 0→99% | 1139 测试, 模块化验证器, 自动化质量门禁 |
 | 2026-07-24 | Phase 14: hooks 拆分 + 集成测试 + 类型安全 | 747→260 行, 34 集成测试, mypy strict 19→6 | 2474 测试, 模块化架构, 类型安全 |
@@ -24,6 +28,21 @@
 
 ## 已完成模块
 
+- ✅ Phase 17 进行中: CI/CD 优化与安全强化 (ADR-009, 2026-08)
+  - pip 缓存键 + 测试分片 (4 shards) + 覆盖率合并 job
+  - 发布工作流 release.yml (tag 触发 + 预发布校验 + twine)
+  - 示例项目 CI 模板 example-ci-template.yml + 9 个示例项目 .github/ 初始化
+  - Justfile 统一命令入口 + .markdownlint.json + requirements-lock.txt
+- ✅ AI-Native SDLC 11 支柱生态 (2026-08-01)
+  - jcode_ai_native_workflow.py 主管道 (集成 11 大支柱)
+  - autonomous_swarm_engine.py 自主蜂群 + self_evolving_engine.py 自我演化
+  - ai_native_mcp_server.py MCP 服务器 + ai_native_dashboard.py 仪表板
+  - DoR gate (dor_checker.py) + TDD 状态机 (tdd_state_machine.py)
+  - 审计证明账本 (audit_attestation.py) + 范围守护 (architecture_drift_guard.py)
+  - 全部集成进 JCode hooks 与 workflow
+- ✅ 安全加固 (2026-08-02)
+  - 文档代码片段消毒 mock sk- API keys (防 secret scanning 误报)
+  - ai_quality_gate 规则自引用假阳性修复 (noqa 注解)
 - ✅ Phase 16 实战验证 + 包发布 + 内容精炼 + 文章
   - ai-dev-framework 打包发布: pyproject.toml + CLI (adg) + wheel 构建验证通过
   - 实战验证: quality-gate 审计项目自身 tools/ 目录, 发现 85 个问题, 修复 4 处 MD5 安全风险
@@ -147,8 +166,8 @@
 | 真实案例数 | 43 | 35 | ✅ 超额完成 |
 | 代码示例 | 10 (全有 README) | 7 | ✅ 超额完成 |
 | 向量搜索 | vector_search + hybrid_search | 完成 | ✅ |
-| 示例测试 | 903 | ≥900 | ✅ 超额 |
-| ADR | 9 | 6+ | ✅ 达标 |
+| 示例测试 | 2509 (2026-08-03 实测) | ≥900 | ✅ 超额 |
+| ADR | 10 | 6+ | ✅ 达标 |
 | 测试覆盖率 | 88% | ≥80% | ✅ 达标 |
 | 代码质量 | ruff 0 errors + mypy strict 0 | 0 errors | ✅ |
 | 安全评分 | 90/100 | 90/100 | ✅ 达标 |
@@ -174,4 +193,4 @@
 
 ---
 
-*最后更新: 2026-08-02*
+*最后更新: 2026-08-03*

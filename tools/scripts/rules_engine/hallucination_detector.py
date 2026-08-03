@@ -245,6 +245,20 @@ _LOGIC_HALLUCINATIONS: list[dict[str, str | float]] = [
     },
 ]
 
+_IGNORE_FILES = {
+    "fix_heuristics.py",
+    "auto_fix.py",
+    "hallucination_detector.py",
+    "anti_pattern_checker.py",
+    "security_patterns.py",
+}
+
+
+def _should_ignore_file(filepath: Path) -> bool:
+    """Check if file should be ignored in hallucination scanning."""
+    return filepath.name in _IGNORE_FILES
+
+
 _ALL_PATTERNS = _HALLUCINATED_APIS + _UNSAFE_PATTERNS + _LOGIC_HALLUCINATIONS
 
 
@@ -299,6 +313,10 @@ def detect_hallucinations_in_file(filepath: Path) -> HallucinationReport:
     Returns:
         HallucinationReport with all findings.
     """
+    # Skip rule definition files that intentionally contain patterns
+    if _should_ignore_file(filepath):
+        return HallucinationReport(files_scanned=1, findings=[])
+
     report = HallucinationReport(files_scanned=0, findings=[])
 
     try:

@@ -104,6 +104,7 @@ def test_runtime_verifier(tmp_path: Path):
 
 def test_dor_checker(tmp_path: Path):
     from dor_checker import DoRChecker
+
     checker = DoRChecker(tmp_path)
     res = checker.evaluate_intent("TBD feature request")
     assert res["passed"] is False
@@ -113,6 +114,7 @@ def test_dor_checker(tmp_path: Path):
 
 def test_audit_attestation(tmp_path: Path):
     from audit_attestation import AuditAttestationLedger
+
     ledger = AuditAttestationLedger(tmp_path)
     entry = ledger.record_trace("TEST_EVENT", {"status": "ok"})
     assert "current_hash" in entry
@@ -121,6 +123,7 @@ def test_audit_attestation(tmp_path: Path):
 
 def test_tdd_state_machine():
     from tdd_state_machine import TDDStateMachine
+
     sm = TDDStateMachine()
     assert sm.state == "RED"
     assert sm.transition("test_written_failing") is True
@@ -131,7 +134,7 @@ def test_tdd_state_machine():
 
 def test_scope_guard(tmp_path: Path):
     from scope_guard import ScopeGuardHook
+
     guard = ScopeGuardHook(max_lines=10, max_files=2, root_dir=tmp_path)
     passed, msg = guard.check_git_diff()
     assert isinstance(passed, bool)
-

@@ -107,7 +107,9 @@ def audit_sdlc(project_path: str | Path) -> SDLCAuditResult:
         req_score += 0.4
 
     has_requirements = _has_content_pattern("requirement|user story|功能需求", root, "*.md")
-    req_checks.append({"check": "需求描述", "passed": has_requirements, "detail": "found" if has_requirements else "not found"})
+    req_checks.append(
+        {"check": "需求描述", "passed": has_requirements, "detail": "found" if has_requirements else "not found"}
+    )
     if has_requirements:
         req_score += 0.3
 
@@ -121,7 +123,15 @@ def audit_sdlc(project_path: str | Path) -> SDLCAuditResult:
         req_suggestions.append("创建 PRD 文档（docs/prd.md）描述项目目标和功能需求")
     if not has_requirements:
         req_suggestions.append("在文档中明确记录用户故事或功能需求")
-    stages.append(SDLCStage(name="需求 (Requirements)", passed=req_score >= 0.7, checks=req_checks, score=req_score, suggestions=req_suggestions))
+    stages.append(
+        SDLCStage(
+            name="需求 (Requirements)",
+            passed=req_score >= 0.7,
+            checks=req_checks,
+            score=req_score,
+            suggestions=req_suggestions,
+        )
+    )
 
     # ── 设计阶段 ──
     des_checks = []
@@ -133,12 +143,16 @@ def audit_sdlc(project_path: str | Path) -> SDLCAuditResult:
         des_score += 0.35
 
     has_arch_doc = _has_content_pattern("architecture|架构|design|设计", root, "*.md")
-    des_checks.append({"check": "架构/设计文档", "passed": has_arch_doc, "detail": "found" if has_arch_doc else "not found"})
+    des_checks.append(
+        {"check": "架构/设计文档", "passed": has_arch_doc, "detail": "found" if has_arch_doc else "not found"}
+    )
     if has_arch_doc:
         des_score += 0.35
 
     has_datamodel = _has_content_pattern("data model|数据模型|entity|实体|schema", root, "*.md")
-    des_checks.append({"check": "数据模型文档", "passed": has_datamodel, "detail": "found" if has_datamodel else "not found"})
+    des_checks.append(
+        {"check": "数据模型文档", "passed": has_datamodel, "detail": "found" if has_datamodel else "not found"}
+    )
     if has_datamodel:
         des_score += 0.3
 
@@ -147,7 +161,15 @@ def audit_sdlc(project_path: str | Path) -> SDLCAuditResult:
         des_suggestions.append("创建 docs/adr/ 目录，记录架构决策")
     if not has_arch_doc:
         des_suggestions.append("编写架构概览文档（docs/architecture.md）")
-    stages.append(SDLCStage(name="设计 (Design)", passed=des_score >= 0.7, checks=des_checks, score=des_score, suggestions=des_suggestions))
+    stages.append(
+        SDLCStage(
+            name="设计 (Design)",
+            passed=des_score >= 0.7,
+            checks=des_checks,
+            score=des_score,
+            suggestions=des_suggestions,
+        )
+    )
 
     # ── 实现阶段 ──
     imp_checks = []
@@ -155,22 +177,32 @@ def audit_sdlc(project_path: str | Path) -> SDLCAuditResult:
 
     typed, total = _count_type_annotations(root)
     type_ratio = typed / total if total > 0 else 0
-    imp_checks.append({"check": "类型注解覆盖率", "passed": type_ratio >= 0.6, "detail": f"{type_ratio:.0%} ({typed}/{total})"})
+    imp_checks.append(
+        {"check": "类型注解覆盖率", "passed": type_ratio >= 0.6, "detail": f"{type_ratio:.0%} ({typed}/{total})"}
+    )
     imp_score += min(0.35 * type_ratio * 1.67, 0.35)
 
     test_count = _count_test_files(root)
     has_tests = test_count > 0
-    imp_checks.append({"check": "测试文件", "passed": has_tests, "detail": f"{test_count} files found" if has_tests else "none found"})
+    imp_checks.append(
+        {"check": "测试文件", "passed": has_tests, "detail": f"{test_count} files found" if has_tests else "none found"}
+    )
     if has_tests:
         imp_score += 0.35
 
-    has_lint_config = (root / "pyproject.toml").exists() or (root / ".ruff.toml").exists() or (root / ".eslintrc").exists()
-    imp_checks.append({"check": "Linter 配置", "passed": has_lint_config, "detail": "found" if has_lint_config else "not found"})
+    has_lint_config = (
+        (root / "pyproject.toml").exists() or (root / ".ruff.toml").exists() or (root / ".eslintrc").exists()
+    )
+    imp_checks.append(
+        {"check": "Linter 配置", "passed": has_lint_config, "detail": "found" if has_lint_config else "not found"}
+    )
     if has_lint_config:
         imp_score += 0.15
 
     has_gitignore = (root / ".gitignore").exists()
-    imp_checks.append({"check": ".gitignore", "passed": has_gitignore, "detail": "found" if has_gitignore else "not found"})
+    imp_checks.append(
+        {"check": ".gitignore", "passed": has_gitignore, "detail": "found" if has_gitignore else "not found"}
+    )
     if has_gitignore:
         imp_score += 0.15
 
@@ -181,29 +213,47 @@ def audit_sdlc(project_path: str | Path) -> SDLCAuditResult:
         imp_suggestions.append("添加测试文件（tests/ 目录）")
     if not has_lint_config:
         imp_suggestions.append("添加 linter 配置文件（pyproject.toml / .ruff.toml）")
-    stages.append(SDLCStage(name="实现 (Implementation)", passed=imp_score >= 0.7, checks=imp_checks, score=imp_score, suggestions=imp_suggestions))
+    stages.append(
+        SDLCStage(
+            name="实现 (Implementation)",
+            passed=imp_score >= 0.7,
+            checks=imp_checks,
+            score=imp_score,
+            suggestions=imp_suggestions,
+        )
+    )
 
     # ── 审查阶段 ──
     rev_checks = []
     rev_score = 0.0
 
-    has_pr_template = _has_file("PULL_REQUEST_TEMPLATE*", root / ".github") or _has_file("pull_request_template*", root / ".github")
-    rev_checks.append({"check": "PR 模板", "passed": has_pr_template, "detail": "found" if has_pr_template else "not found"})
+    has_pr_template = _has_file("PULL_REQUEST_TEMPLATE*", root / ".github") or _has_file(
+        "pull_request_template*", root / ".github"
+    )
+    rev_checks.append(
+        {"check": "PR 模板", "passed": has_pr_template, "detail": "found" if has_pr_template else "not found"}
+    )
     if has_pr_template:
         rev_score += 0.35
 
     has_codeowners = (root / ".github" / "CODEOWNERS").exists()
-    rev_checks.append({"check": "CODEOWNERS", "passed": has_codeowners, "detail": "found" if has_codeowners else "not found"})
+    rev_checks.append(
+        {"check": "CODEOWNERS", "passed": has_codeowners, "detail": "found" if has_codeowners else "not found"}
+    )
     if has_codeowners:
         rev_score += 0.25
 
     has_review_guide = _has_content_pattern("review|code review|代码审查|PR review", root, "*.md")
-    rev_checks.append({"check": "代码审查指南", "passed": has_review_guide, "detail": "found" if has_review_guide else "not found"})
+    rev_checks.append(
+        {"check": "代码审查指南", "passed": has_review_guide, "detail": "found" if has_review_guide else "not found"}
+    )
     if has_review_guide:
         rev_score += 0.2
 
     has_contributing = (root / "CONTRIBUTING.md").exists()
-    rev_checks.append({"check": "CONTRIBUTING.md", "passed": has_contributing, "detail": "found" if has_contributing else "not found"})
+    rev_checks.append(
+        {"check": "CONTRIBUTING.md", "passed": has_contributing, "detail": "found" if has_contributing else "not found"}
+    )
     if has_contributing:
         rev_score += 0.2
 
@@ -214,7 +264,15 @@ def audit_sdlc(project_path: str | Path) -> SDLCAuditResult:
         rev_suggestions.append("创建 .github/CODEOWNERS 指定代码审查者")
     if not has_contributing:
         rev_suggestions.append("创建 CONTRIBUTING.md 指导贡献流程")
-    stages.append(SDLCStage(name="审查 (Review)", passed=rev_score >= 0.7, checks=rev_checks, score=rev_score, suggestions=rev_suggestions))
+    stages.append(
+        SDLCStage(
+            name="审查 (Review)",
+            passed=rev_score >= 0.7,
+            checks=rev_checks,
+            score=rev_score,
+            suggestions=rev_suggestions,
+        )
+    )
 
     # ── 部署阶段 ──
     dep_checks = []
@@ -226,12 +284,16 @@ def audit_sdlc(project_path: str | Path) -> SDLCAuditResult:
         dep_score += 0.4
 
     has_dockerfile = (root / "Dockerfile").exists() or _has_file("Dockerfile*", root)
-    dep_checks.append({"check": "容器化", "passed": has_dockerfile, "detail": "found" if has_dockerfile else "not found"})
+    dep_checks.append(
+        {"check": "容器化", "passed": has_dockerfile, "detail": "found" if has_dockerfile else "not found"}
+    )
     if has_dockerfile:
         dep_score += 0.3
 
     has_deploy_doc = _has_content_pattern("deploy|deployment|部署|release|发布", root, "*.md")
-    dep_checks.append({"check": "部署文档", "passed": has_deploy_doc, "detail": "found" if has_deploy_doc else "not found"})
+    dep_checks.append(
+        {"check": "部署文档", "passed": has_deploy_doc, "detail": "found" if has_deploy_doc else "not found"}
+    )
     if has_deploy_doc:
         dep_score += 0.3
 
@@ -242,17 +304,25 @@ def audit_sdlc(project_path: str | Path) -> SDLCAuditResult:
         dep_suggestions.append("添加 Dockerfile 支持容器化部署")
     if not has_deploy_doc:
         dep_suggestions.append("编写部署文档（docs/deploy.md）")
-    stages.append(SDLCStage(name="部署 (Deploy)", passed=dep_score >= 0.7, checks=dep_checks, score=dep_score, suggestions=dep_suggestions))
+    stages.append(
+        SDLCStage(
+            name="部署 (Deploy)",
+            passed=dep_score >= 0.7,
+            checks=dep_checks,
+            score=dep_score,
+            suggestions=dep_suggestions,
+        )
+    )
 
     return SDLCAuditResult(project=project_name, stages=stages)
 
 
 def print_audit(result: SDLCAuditResult, verbose: bool = False) -> int:
     """打印审计结果。返回 exit code (0=通过)。"""
-    print(f"\n{'='*60}")
+    print(f"\n{'=' * 60}")
     print(f"  AI-SDLC 合规审计: {result.project}")
     print(f"  {result.timestamp}")
-    print(f"{'='*60}\n")
+    print(f"{'=' * 60}\n")
 
     for stage in result.stages:
         icon = "✅" if stage.passed else "❌"

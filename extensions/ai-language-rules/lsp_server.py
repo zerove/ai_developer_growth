@@ -86,7 +86,9 @@ class LanguageRulesLSP:
         try:
             result = subprocess.run(
                 ["adg", "check", str(filepath), "--severity", "warning", "--json"],
-                capture_output=True, text=True, timeout=15,
+                capture_output=True,
+                text=True,
+                timeout=15,
             )
             if result.returncode in (0, 1) and result.stdout:
                 return json.loads(result.stdout)
@@ -106,11 +108,13 @@ class LanguageRulesLSP:
         result = self._run_adg_check(filepath)
         diagnostics = self._result_to_diagnostics(result.get("issues", []))
 
-        self._send_message({
-            "jsonrpc": "2.0",
-            "method": "textDocument/publishDiagnostics",
-            "params": {"uri": uri, "diagnostics": diagnostics},
-        })
+        self._send_message(
+            {
+                "jsonrpc": "2.0",
+                "method": "textDocument/publishDiagnostics",
+                "params": {"uri": uri, "diagnostics": diagnostics},
+            }
+        )
 
     def _result_to_diagnostics(self, issues: list[dict]) -> list[dict]:
         diagnostics = []

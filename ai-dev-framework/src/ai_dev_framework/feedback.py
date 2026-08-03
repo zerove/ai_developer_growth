@@ -51,6 +51,7 @@ def auto_update_config(rule_id: str, filepath: str) -> bool:
 
             # 在规则的 id 行后添加 exclude_files
             import re
+
             updated = re.sub(
                 rf"(- id: {re.escape(rule_id)}\n.*?)(?=\n- id:|\Z)",
                 lambda m: m.group(1) + f"\n  exclude_files:\n  - '{fname}'",
@@ -73,6 +74,7 @@ def auto_update_config(rule_id: str, filepath: str) -> bool:
 
 # ── CLI 输出 ──────────────────────────────────
 
+
 def print_feedback_stats(verbose: bool = False) -> int:
     """打印反馈统计。返回 exit code。"""
     stats = get_feedback_stats()
@@ -80,7 +82,7 @@ def print_feedback_stats(verbose: bool = False) -> int:
     rules = data.get("rules", {})
 
     print("\n📊 ADG 反馈统计")
-    print(f"{'='*50}")
+    print(f"{'=' * 50}")
     print(f"  总反馈数:    {stats['total_feedback']}")
     print(f"  追踪规则数:  {stats['tracked_rules']}")
     print(f"  已降级规则:  {stats['downgraded_rules']}")

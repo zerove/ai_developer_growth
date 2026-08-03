@@ -37,6 +37,7 @@ class _TSTree(Protocol):
 
     root_node: _TreeNode
 
+
 # Suppress tree-sitter deprecation warnings
 warnings.filterwarnings("ignore", category=FutureWarning, module="tree_sitter")
 
@@ -747,11 +748,7 @@ class ASTParser:
                 names = []
                 for child in node.children:
                     if child.type == "relative_import":
-                        level = (
-                            child.text.count(b".")
-                            if isinstance(child.text, bytes)
-                            else str(child.text).count(".")
-                        )
+                        level = child.text.count(b".") if isinstance(child.text, bytes) else str(child.text).count(".")
                     elif child.type == "dotted_name":
                         module = self._get_text(child, [])
                     elif child.type == "aliased_import":

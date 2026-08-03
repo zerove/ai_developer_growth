@@ -10,9 +10,38 @@ Usage:
 
 from __future__ import annotations
 
+import fnmatch
 import subprocess
 import sys
 from pathlib import Path
+
+import yaml
+
+
+def load_skip_patterns() -> list[str]:
+    """Load skip patterns from .adg/config.yml (repo-relative globs).
+
+    Keeps the pre-push hook consistent with the adg CLI: files matching
+    skip_patterns (e.g. tests/, demo files) are not validated.
+    """
+    config_path = Path(".adg") / "config.yml"
+    try:
+        config = yaml.safe_load(config_path.read_text(encoding="utf-8"))
+        patterns = config.get("skip_patterns", []) if isinstance(config, dict) else []
+        return [p for p in patterns if isinstance(p, str)]
+    except (OSError, yaml.YAMLError):
+        return []
+
+
+def _matches_skip_pattern(filepath: Path, patterns: list[str]) -> bool:
+    """Check if filepath matches any skip pattern.
+
+    Patterns like ``**/tests/**/*.py`` require a leading slash to match,
+    so we test the repo-relative path, the absolute path, and the basename
+    (mirrors adg CLI behavior which matches absolute rglob paths).
+    """
+    candidates = (str(filepath), str(filepath.resolve()), filepath.name)
+    return any(fnmatch.fnmatch(c, p) for p in patterns for c in candidates)
 
 
 def get_unpushed_commits(remote: str = "origin", branch: str | None = None) -> list[str]:
@@ -120,17 +149,24 @@ def run_pre_push_check() -> int:
             print(f"❌ Format errors:\n{fmt_out}")
             all_passed = False
 
-    # Run language rules
+    # Run language rules (respecting .adg/config.yml skip_patterns)
     from tools.scripts.validate_language_rules import detect_language_from_file, validate_file
 
+    skip_patterns = load_skip_patterns()
+    skipped: list[Path] = []
     print("🔍 Running language rules...")
     for filepath in code_files:
+        if _matches_skip_pattern(filepath, skip_patterns):
+            skipped.append(filepath)
+            continue
         lang = detect_language_from_file(filepath)
         if lang:
             result = validate_file(filepath, lang)
             if not result.passed:
                 print(f"❌ {filepath}: {len(result.issues)} violations")
                 all_passed = False
+    if skipped:
+        print(f"⏭️  Skipped {len(skipped)} file(s) matching skip_patterns: {', '.join(str(f) for f in skipped)}")
 
     if all_passed:
         print("\n✅ All checks passed. Push allowed.")

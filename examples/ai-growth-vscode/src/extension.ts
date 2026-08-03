@@ -59,7 +59,7 @@ export function activate(context: vscode.ExtensionContext) {
         const docs = [
             'mindset/ai-native-thinking.md - AI 原生思维',
             'mindset/capability-model.md - 能力模型',
-            'tools/ai-coding-assistants.md -,
+            'tools/ai-coding-assistants.md - AI 编码助手',
             'efficiency/full-cycle-workflow.md - 全周期工作流',
         ];
         const selected = await vscode.window.showQuickPick(docs, {

@@ -8,8 +8,27 @@ on:
 
 env:
   PYTHON_VERSION: "3.11"
+  NODE_VERSION: "20"
 
 jobs:
+  # ──────────────────────────────────────────────────────
+  # TypeScript: compile & type-check (VS Code extension)
+  # ──────────────────────────────────────────────────────
+  ts-check:
+    name: TypeScript Check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+          cache-dependency-path: package-lock.json
+      - name: Install dependencies
+        run: npm install
+      - name: TypeScript compile
+        run: npm run compile
+
   # ──────────────────────────────────────────────────────
   # Lint & Format
   # ──────────────────────────────────────────────────────

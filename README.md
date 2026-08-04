@@ -67,8 +67,10 @@
 | 🤖 多 Agent 自动化 | 团队协作自动化 | **9.3x** | [[case-studies/multi-agent-automation]] |
 | 🛠️ AI 任务优先级 | 从 0 到 1 CLI 工具 | **8x** | [[case-studies/ai-task-prioritizer]] |
 | 🔄 AI-Context-Sync | 完整产品开发 | **12x** | [[case-studies/ai-context-sync-development]] |
+| 🧬 AI-Native 主管道 | 全生命周期研发自动化 | **12x** | [[case-studies/jcode-ai-native-master-workflow-execution]] |
+| 🏛️ 治理自审计 | 用自己的药医自己 | **-85 问题** | [[case-studies/governance-self-audit]] |
 
-**目标**: 35+ 真实案例，覆盖不同规模和场景。
+**现状**: 43 个真实案例，覆盖不同规模和场景。目标是 35+，已超额完成。
 
 ---
 
@@ -156,12 +158,12 @@ python ai-dev-framework/core/jcode_init.py your-project --language python
 
 | 指标 | 数量 |
 |------|------|
-| 📄 核心文档 | 229 篇 |
+| 📄 核心文档 | 253 篇 |
 | 📚 实践案例 | 43 个 |
 | 🛠️ 代码示例 | 10 个 |
-| 📋 架构决策 | 9 条 |
-| 🧪 测试用例 | 2509 个 |
-| ✅ 测试覆盖率 | 84% |
+| 📋 架构决策 | 10 条 |
+| 🧪 测试用例 | 2513 个 |
+| ✅ 测试覆盖率 | 85%+ |
 
 ---
 
@@ -169,7 +171,7 @@ python ai-dev-framework/core/jcode_init.py your-project --language python
 
 ```
 ai_developer_growth/
-├── docs/                    # 229 篇方法论文档
+├── docs/                    # 253 篇方法论文档
 │   ├── mindset/            # 认知升级
 │   ├── learning/           # 学习方法
 │   ├── efficiency/         # 工程效率

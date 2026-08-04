@@ -30,6 +30,11 @@ tools/.cache/
 # Generated cache/data
 .cache/
 .ai-audit-history.json
+.semantic_graph.json
+
+# Quality-trends 运行时数据产物（保留目录占位 .gitkeep）
+.quality-trends/*
+!.quality-trends/.gitkeep
 
 # IDE
 .vscode/

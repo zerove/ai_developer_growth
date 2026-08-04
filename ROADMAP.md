@@ -12,25 +12,25 @@
 
 ---
 
-## 当前状态 (2026-07-21)
+## 当前状态 (2026-08-04)
 
 ### ✅ 已完成
-- [x] **核心方法论文档** - 137 篇文档（认知/学习/效率/工具/治理）
+- [x] **核心方法论文档** - 253 篇文档（认知/学习/效率/工具/治理）
 - [x] **工具矩阵** - 模型/IDE/Agent 选型指南（已更新至最新）
-- [x] **工程效率文档** - 全周期工作流、自动化 Bug 修复
+- [x] **工程效率文档** - 全周期工作流、自动化 Bug 修复、AI-Native SDLC 11 支柱
 - [x] **深度文档重写** - 所有核心文档全部 500+ 字
-- [x] **代码示例** - 7 个完整示例（含测试和文档）
-- [x] **通用治理框架** - ai-dev-framework（参数化配置系统）
-- [x] **案例库扩充** - 25 个案例，全部含关键洞察和适用场景
-- [x] **ADR 补充** - 7 条架构决策记录
-- [x] **治理规范** - 18 语言 + 11 框架 + 12 领域 = 41 份规范
+- [x] **代码示例** - 10 个完整示例（含测试和文档）
+- [x] **通用治理框架** - ai-dev-framework（已打包发布，含 adg CLI）
+- [x] **案例库扩充** - 43 个案例（含 AI-Native 主管道执行、治理自审计）
+- [x] **ADR 补充** - 10 条架构决策记录 (ADR-001 ~ ADR-009 + 重复编号清理)
+- [x] **治理规范** - 26 语言 + 11 框架 + 12 领域 = 44 份规范
 - [x] **能力等级模型** - L1-L5 五级能力定义
-- [x] **增强检索** - BM25 算法 + 同义词扩展 + 协同过滤
-- [x] **测试覆盖率** - 84%（162 个测试）
+- [x] **增强检索** - BM25 算法 + 同义词扩展 + 协同过滤 + 向量 RAG
+- [x] **测试覆盖率** - 2513 测试 (2026-08-04 实测全通过)
 
 ### ✅ 已完成
-- [x] **内容完善** - 229 篇文档 (目标 200，超额完成)
-- [x] **案例库扩充** - 35 个案例 (目标 35，达标)
+- [x] **内容完善** - 253 篇文档 (目标 200，超额完成)
+- [x] **案例库扩充** - 43 个案例 (目标 35，超额完成)
 - [x] **元数据标签** - 已添加
 - [x] **文档结构优化** - 已完成
 
@@ -166,6 +166,73 @@
   - 用户进度追踪
   - 个性化推荐
   - 7 个测试
+
+## Phase 9: 测试覆盖提升 (2026-07)
+
+- [x] 覆盖率从 84% → 88% (989 → 2513 测试)
+- [x] test_rule_tracker / test_plugins / test_rule_loader 补全
+- [x] 死代码清理 (validate_language_rules.py 删除 278 行重复函数)
+- [x] 模块化重构: rule_marketplace 拆分、fix_heuristics 拆分
+
+## Phase 10: 代码质量优化 + 模块化 (2026-07)
+
+- [x] hooks_runner.py 并行化 (lint+format+typecheck 并行)
+- [x] rules_engine 磁盘缓存 (.cache/rules_engine/)
+- [x] naming_analyzer / complexity_analyzer / linter_runner / report_generator / fix_applier 新模块
+- [x] ADR-002 更新为 Accepted 状态
+
+## Phase 11: 插件系统 (2026-07)
+
+- [x] rules_engine 插件系统 (CheckerPlugin ABC, registry, decorator, discovery)
+- [x] rule_marketplace.py 拆分 (rule_catalog + CLI)
+- [x] 913 测试全部通过
+
+## Phase 12: 测试补全 + 死代码清理 (2026-07)
+
+- [x] test_rule_tracker (27 tests) / test_plugins (21 tests) / test_rule_loader (29 tests)
+- [x] 989 测试全部通过
+
+## Phase 13: 测试覆盖率提升 (2026-07)
+
+- [x] test_rule_catalog_marketplace (41 tests) / test_detect_language (+10) / test_validate_language_rules_extra (19)
+- [x] rule_catalog 9%→86% / rule_marketplace 0%→80%
+- [x] 1059 测试全部通过
+
+## Phase 14: hooks 拆分 + 集成测试 + 类型安全 (2026-07)
+
+- [x] hooks_runner.py 拆分为 4 模块 (747→260+178+236+131+54 行)
+- [x] 34 集成测试 (端到端管道)
+- [x] mypy strict errors 19→6
+- [x] 2474 测试全部通过
+
+## Phase 15: validate_language_rules 拆分 + CI 增强 (2026-07)
+
+- [x] validate_language_rules.py 拆分为 validators/ 包 (1115→142+731 行)
+- [x] CI/CD 增强: coverage fail_under=75, branch coverage, quality gate
+- [x] linter_runner 0%→99% / basic_checks 65%→94%
+- [x] 1139 测试全部通过
+
+## Phase 16: 实战验证 + 包发布 + 内容精炼 + 文章 (2026-07)
+
+- [x] ai-dev-framework 打包发布 (pyproject + adg CLI + wheel 构建验证)
+- [x] 实战验证: quality-gate 审计自身 tools/ 目录, 发现 85 个问题, 修复 4 处 MD5 安全风险
+- [x] 实战案例: case-studies/governance-self-audit.md (用自己的药医自己)
+- [x] 高质量文章: article-ai-developer-evolution.md
+
+## Phase 17: AI-Native SDLC 生态 + CI/CD 优化与安全强化 (2026-08) 🚧 进行中
+
+- [x] jcode_ai_native_workflow.py 主管道 (集成 11 大支柱)
+- [x] autonomous_swarm_engine.py 自主蜂群 + self_evolving_engine.py 自我演化
+- [x] ai_native_mcp_server.py MCP 服务器 + ai_native_dashboard.py 仪表板
+- [x] DoR gate (dor_checker.py) + TDD 状态机 (tdd_state_machine.py)
+- [x] 审计证明账本 (audit_attestation.py) + 范围守护 (architecture_drift_guard.py)
+- [x] pip 缓存键 + 测试分片 (4 shards) + 覆盖率合并 job
+- [x] 发布工作流 release.yml (tag 触发 + 预发布校验 + twine)
+- [x] 示例项目 CI 模板 example-ci-template.yml + 9 个示例项目 .github/ 初始化
+- [x] Justfile 统一命令入口 + .markdownlint.json + requirements-lock.txt
+- [x] 文档代码片段消毒 mock sk- API keys (防 secret scanning 误报)
+- [x] ai_quality_gate 规则自引用假阳性修复 (noqa 注解)
+- [ ] 剩余: 发布 v2.4.0 + 社区里程碑
 
 ---
 

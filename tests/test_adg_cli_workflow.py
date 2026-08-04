@@ -21,6 +21,7 @@ from tools.scripts.dor_checker import DoRChecker
 # adg_cli - basic import and main() coverage
 # ─────────────────────────────────────────────────────────────
 
+
 def test_adg_cli_module_imports():
     """Ensure module imports without error."""
     assert hasattr(adg_cli, "main")
@@ -74,6 +75,7 @@ def test_adg_cli_main_entry_import():
 # ─────────────────────────────────────────────────────────────
 # jcode_ai_native_workflow - DoR checker and basic import
 # ─────────────────────────────────────────────────────────────
+
 
 def test_jcode_ai_native_workflow_init():
     """Workflow initializes with root dir."""

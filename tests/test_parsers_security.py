@@ -27,6 +27,7 @@ from tools.scripts.rules_engine.security_patterns import (
 # security_patterns
 # ─────────────────────────────────────────────────────────────
 
+
 def test_security_patterns_not_empty():
     assert len(SECURITY_PATTERNS) > 0
     for p in SECURITY_PATTERNS:
@@ -69,6 +70,7 @@ def test_security_patterns_exclude_files():
 # parsers.base - contract validation
 # ─────────────────────────────────────────────────────────────
 
+
 class MockParser(BaseParser):
     def parse(self, root_node, lines):
         return [], []
@@ -82,6 +84,7 @@ def test_validate_parser_contract_valid():
 def test_validate_parser_contract_invalid():
     class NoParse:
         pass
+
     assert validate_parser_contract(NoParse()) is False
 
 
@@ -93,6 +96,7 @@ def test_parser_protocol():
 # ─────────────────────────────────────────────────────────────
 # parsers.go_parser
 # ─────────────────────────────────────────────────────────────
+
 
 def test_go_parser_instantiation():
     parser = GoParser()
@@ -111,6 +115,7 @@ def test_go_parser_parse():
 # parsers.rust_parser
 # ─────────────────────────────────────────────────────────────
 
+
 def test_rust_parser_instantiation():
     parser = RustParser()
     assert isinstance(parser, BaseParser)
@@ -127,6 +132,7 @@ def test_rust_parser_parse():
 # parsers.python_parser
 # ─────────────────────────────────────────────────────────────
 
+
 def test_python_parser_instantiation():
     parser = PythonParser()
     assert isinstance(parser, BaseParser)
@@ -135,6 +141,7 @@ def test_python_parser_instantiation():
 # ─────────────────────────────────────────────────────────────
 # parsers.python_parser_v3
 # ─────────────────────────────────────────────────────────────
+
 
 class MockTreeNode:
     def __init__(self, node_type, start=(0, 0), end=(0, 0), children=None):
@@ -188,12 +195,17 @@ def test_python_parser_v3_walk_children():
     class_node = MockTreeNode("class_definition", (1, 0), (6, 0))
     method_node = MockTreeNode("function_definition", (2, 4), (4, 4))
     class_node.children = [method_node]
-    funcs, classes = parser.parse(class_node, [
-        "class Foo:",
-        "    def method():",
-        "        pass",
-        "", "", "",
-    ])
+    funcs, classes = parser.parse(
+        class_node,
+        [
+            "class Foo:",
+            "    def method():",
+            "        pass",
+            "",
+            "",
+            "",
+        ],
+    )
     assert len(classes) == 1
     assert len(funcs) == 1
     assert funcs[0].is_async is False
@@ -202,6 +214,7 @@ def test_python_parser_v3_walk_children():
 # ─────────────────────────────────────────────────────────────
 # parsers.registry
 # ─────────────────────────────────────────────────────────────
+
 
 def test_parser_registry_contains_known_languages():
     assert "python" in PARSER_REGISTRY

@@ -26,6 +26,7 @@ from tools.scripts.rules_engine.rule_generator import (
 # Language detection
 # ─────────────────────────────────────────────────────────────
 
+
 def test_known_languages_not_empty():
     assert len(KNOWN_LANGUAGES) >= 30
     assert "python" in KNOWN_LANGUAGES
@@ -52,6 +53,7 @@ def test_detect_language_from_extension():
 # get_generated_rules_dir
 # ─────────────────────────────────────────────────────────────
 
+
 def test_get_generated_rules_dir_default(monkeypatch):
     monkeypatch.delenv("ADG_HOME", raising=False)
     dir_path = get_generated_rules_dir()
@@ -70,16 +72,19 @@ def test_get_generated_rules_dir_from_env(monkeypatch, tmp_path: Path):
 # format_rules
 # ─────────────────────────────────────────────────────────────
 
+
 def test_format_rules_basic():
-    rules = [{
-        "id": "python-test-rule",
-        "name": "Test Rule",
-        "severity": "warning",
-        "category": "style",
-        "pattern": r"bad_pattern",
-        "message": "Avoid bad pattern",
-        "fix_hint": "Use good pattern",
-    }]
+    rules = [
+        {
+            "id": "python-test-rule",
+            "name": "Test Rule",
+            "severity": "warning",
+            "category": "style",
+            "pattern": r"bad_pattern",
+            "message": "Avoid bad pattern",
+            "fix_hint": "Use good pattern",
+        }
+    ]
     yaml_str = format_rules("python", rules)
     assert "language: python" in yaml_str
     assert "id: python-test-rule" in yaml_str
@@ -97,18 +102,20 @@ def test_format_rules_multiple():
 
 
 def test_format_rules_all_optional_fields():
-    rules = [{
-        "id": "full-rule",
-        "name": "Full Rule",
-        "severity": "error",
-        "category": "security",
-        "pattern": r"secret",
-        "message": "Secret detected",
-        "fix_hint": "Use env var",
-        "exclude_files": ["config.py", "settings.py"],
-        "exclude_patterns": ["test_*"],
-        "test_cases": [{"code": "secret = 'x'", "should_match": True}],
-    }]
+    rules = [
+        {
+            "id": "full-rule",
+            "name": "Full Rule",
+            "severity": "error",
+            "category": "security",
+            "pattern": r"secret",
+            "message": "Secret detected",
+            "fix_hint": "Use env var",
+            "exclude_files": ["config.py", "settings.py"],
+            "exclude_patterns": ["test_*"],
+            "test_cases": [{"code": "secret = 'x'", "should_match": True}],
+        }
+    ]
     yaml_str = format_rules("python", rules)
     assert "exclude_files:" in yaml_str
     assert "config.py" in yaml_str
@@ -119,17 +126,20 @@ def test_format_rules_all_optional_fields():
 # save_rules / load_generated_rules / discover_generated_rules
 # ─────────────────────────────────────────────────────────────
 
+
 def test_save_and_load_rules(tmp_path: Path, monkeypatch):
     monkeypatch.setenv("ADG_HOME", str(tmp_path))
 
-    rules = [{
-        "id": "python-test",
-        "name": "Test",
-        "severity": "warning",
-        "category": "style",
-        "pattern": r"bad",
-        "message": "Bad style",
-    }]
+    rules = [
+        {
+            "id": "python-test",
+            "name": "Test",
+            "severity": "warning",
+            "category": "style",
+            "pattern": r"bad",
+            "message": "Bad style",
+        }
+    ]
 
     path = save_rules("python", rules, force=True)
     assert path.exists()
@@ -192,6 +202,7 @@ def test_discover_and_list_languages(tmp_path: Path, monkeypatch):
 # ─────────────────────────────────────────────────────────────
 # validate_rules_yaml
 # ─────────────────────────────────────────────────────────────
+
 
 def test_validate_rules_yaml_valid():
     content = """
@@ -307,9 +318,11 @@ anti_patterns: []
 # print_status (smoke test)
 # ─────────────────────────────────────────────────────────────
 
+
 def test_print_status_no_rules(tmp_path: Path, monkeypatch, capsys):
     monkeypatch.setenv("ADG_HOME", str(tmp_path))
     from tools.scripts.rules_engine.rule_generator import print_status
+
     print_status()
     out = capsys.readouterr().out
     assert "No generated rules found" in out

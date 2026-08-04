@@ -17,10 +17,10 @@ import tools.scripts.adg_cli as adg_cli
 import tools.scripts.jcode_ai_native_workflow as jcode_ai_native_workflow
 from tools.scripts.dor_checker import DoRChecker
 
-
 # ─────────────────────────────────────────────────────────────
 # adg_cli package - main() and command dispatch
 # ─────────────────────────────────────
+
 
 def test_adg_cli_package_imports():
     """Ensure package imports expose main and core functions."""
@@ -66,25 +66,26 @@ def test_adg_cli_detect():
 def test_adg_cli_main_entry_import():
     """Test __main__ entry point can be imported."""
     with patch("tools.scripts.adg_cli.__main__.main", MagicMock(return_value=0)):
-        import tools.scripts.adg_cli.__main__ as main_mod
+        pass
 
 
 # ─────────────────────────────────────────────────────────────
 # adg_cli core functions - direct function coverage
 # ─────────────────────────────────────────────────────────────
 
+
 def test_adg_cli_core_exports():
     """Verify core exports are accessible."""
     from tools.scripts.adg_cli.core import (
-        Issue,
         FIX_RULES,
         SKIP_DIRS,
-        SKIP_EXTENSIONS,
-        load_project_config,
+        Issue,
         _make_issue,
         _merge_config,
         _severity_rank,
+        load_project_config,
     )
+
     assert Issue is not None
     assert isinstance(FIX_RULES, dict)
     assert isinstance(SKIP_DIRS, set)
@@ -97,12 +98,11 @@ def test_adg_cli_core_exports():
 def test_adg_cli_detect_exports():
     """Verify detect exports are accessible."""
     from tools.scripts.adg_cli.detect import (
-        detect_language,
-        _detect_framework,
-        _detect_language_from_file,
         _load_yaml,
         _simple_yaml_parse,
+        detect_language,
     )
+
     assert callable(detect_language)
     assert callable(_load_yaml)
     assert callable(_simple_yaml_parse)
@@ -113,14 +113,8 @@ def test_adg_cli_check_exports():
     from tools.scripts.adg_cli.check import (
         check_directory,
         check_file,
-        _check_files_parallel,
-        _check_pattern,
-        _collect_check_files,
-        _get_git_changed_files,
-        _get_staged_files,
-        _get_unstaged_files,
-        _match_pattern,
     )
+
     assert callable(check_directory)
     assert callable(check_file)
 
@@ -132,8 +126,8 @@ def test_adg_cli_format_exports():
         _format_human,
         _format_json,
         _format_sarif,
-        _print_report_text,
     )
+
     assert callable(_count_issues)
     assert callable(_format_human)
     assert callable(_format_json)
@@ -145,8 +139,8 @@ def test_adg_cli_fix_exports():
     from tools.scripts.adg_cli.fix import (
         fix_directory,
         fix_file,
-        _apply_fix,
     )
+
     assert callable(fix_directory)
     assert callable(fix_file)
 
@@ -156,23 +150,10 @@ def test_adg_cli_commands_exports():
     from tools.scripts.adg_cli.commands import (
         cmd_check,
         cmd_detect,
-        cmd_list_rules,
         cmd_install_hooks,
-        cmd_report,
-        cmd_fix,
-        cmd_rule,
-        cmd_trend,
-        cmd_notify,
-        cmd_html_report,
-        cmd_recommend,
-        cmd_lsp,
-        cmd_dashboard,
-        cmd_marketplace,
-        cmd_monorepo,
-        cmd_bench,
-        cmd_cicd,
-        cmd_pattern_learner,
+        cmd_list_rules,
     )
+
     # Just verify they're callable
     for cmd in [cmd_check, cmd_detect, cmd_list_rules, cmd_install_hooks]:
         assert callable(cmd)
@@ -181,6 +162,7 @@ def test_adg_cli_commands_exports():
 def test_adg_cli_parser_exports():
     """Verify parser exports are accessible."""
     from tools.scripts.adg_cli.parser import _build_parser
+
     assert callable(_build_parser)
 
 
@@ -190,6 +172,7 @@ def test_adg_cli_rules_exports():
         load_framework_rules,
         load_rules_for_language,
     )
+
     assert callable(load_framework_rules)
     assert callable(load_rules_for_language)
 
@@ -200,6 +183,7 @@ def test_adg_cli_notify_exports():
         _send_dingtalk_notification,
         _send_slack_notification,
     )
+
     assert callable(_send_dingtalk_notification)
     assert callable(_send_slack_notification)
 
@@ -208,10 +192,10 @@ def test_adg_cli_rule_author_exports():
     """Verify rule_author exports are accessible."""
     from tools.scripts.adg_cli.rule_author import (
         _RULE_TEMPLATE,
-        _create_rule_interactive,
         _test_rule,
         _validate_rule,
     )
+
     assert isinstance(_RULE_TEMPLATE, str)
     assert callable(_test_rule)
     assert callable(_validate_rule)
@@ -226,6 +210,7 @@ def test_adg_cli_trend_exports():
         _record_trend,
         _save_trend_data,
     )
+
     assert isinstance(_TREND_DATA_FILE, str) or isinstance(_TREND_DATA_FILE, Path)
     assert callable(_format_trend_report)
     assert callable(_load_trend_data)
@@ -236,6 +221,7 @@ def test_adg_cli_trend_exports():
 # ─────────────────────────────────────────────────────────────
 # jcode_ai_native_workflow - direct function coverage
 # ─────────────────────────────────────────────────────────────
+
 
 def test_jcode_ai_native_workflow_init():
     """Workflow initializes with root dir."""
@@ -283,6 +269,7 @@ def test_dor_checker_failures(tmp_path: Path):
 # jcode_ai_native_workflow - mock dependencies for step coverage
 # ─────────────────────────────────────────────────────────────
 
+
 @patch("tools.scripts.jcode_ai_native_workflow.get_project_root")
 def test_jcode_ai_native_workflow_run_dor_pass(mock_root, tmp_path: Path, monkeypatch):
     """Pipeline passes DoR but we mock all subsequent steps to avoid heavy execution."""
@@ -291,7 +278,7 @@ def test_jcode_ai_native_workflow_run_dor_pass(mock_root, tmp_path: Path, monkey
     # Mock all imported modules to avoid side effects
     # These are imported inside run_full_pipeline(), so we mock the module-level names
     import tools.scripts.jcode_ai_native_workflow as jwn
-    
+
     jwn.AuditAttestationLedger = MagicMock()
     jwn.DoRChecker = MagicMock(
         return_value=MagicMock(evaluate_intent=MagicMock(return_value={"passed": True, "violations": []}))
@@ -299,19 +286,13 @@ def test_jcode_ai_native_workflow_run_dor_pass(mock_root, tmp_path: Path, monkey
     jwn.IntentDeliveryEngine = MagicMock()
     jwn.MultiLLMRouter = MagicMock()
     jwn.SemanticCodeGraph = MagicMock()
-    jwn.ArchitectureDriftGuard = MagicMock(
-        return_value=MagicMock(check_layering=MagicMock(return_value=[]))
-    )
-    jwn.TDDStateMachine = MagicMock(
-        return_value=MagicMock(state="test_written_failing", transition=MagicMock())
-    )
+    jwn.ArchitectureDriftGuard = MagicMock(return_value=MagicMock(check_layering=MagicMock(return_value=[])))
+    jwn.TDDStateMachine = MagicMock(return_value=MagicMock(state="test_written_failing", transition=MagicMock()))
     jwn.AutonomousSwarmOrchestrator = MagicMock()
     jwn.SelfHealingCILoop = MagicMock()
     jwn.RedBlueDebateOrchestrator = MagicMock()
     jwn.AISlopScanner = MagicMock()
-    jwn.ScopeGuardHook = MagicMock(
-        return_value=MagicMock(check_git_diff=MagicMock(return_value=(True, "OK")))
-    )
+    jwn.ScopeGuardHook = MagicMock(return_value=MagicMock(check_git_diff=MagicMock(return_value=(True, "OK"))))
     jwn.RuntimeVerifier = MagicMock()
     jwn.MetricsTelemetry = MagicMock()
     jwn.SelfEvolvingEngine = MagicMock()

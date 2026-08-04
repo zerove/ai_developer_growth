@@ -45,10 +45,10 @@ from tools.scripts.rules_engine.rule_docs_mapper import (
     rebuild_mapping,
 )
 
-
 # ─────────────────────────────────────────────────────────────
 # jcode_cross_platform_runner
 # ─────────────────────────────────────────────────────────────
+
 
 def test_cross_platform_unknown_task_returns_1(capsys):
     """Unknown task should print available tasks and return 1."""
@@ -80,6 +80,7 @@ def test_cross_platform_known_task_failure(mock_run, capsys):
 # jcode_setup_wizard
 # ─────────────────────────────────────────────────────────────
 
+
 def test_setup_wizard_creates_rules_dir(tmp_path: Path):
     """Wizard creates .jcode/rules and does not overwrite existing opencode.json."""
     (tmp_path / "opencode.json").write_text('{"keep": true}', encoding="utf-8")
@@ -103,6 +104,7 @@ def test_setup_wizard_writes_mcp_config(tmp_path: Path):
 # self_healing_ci
 # ─────────────────────────────────────────────────────────────
 
+
 def test_self_healing_ci_returns_true():
     """Self-healing loop returns True when codebase is healthy."""
     loop = SelfHealingCILoop(max_retries=2)
@@ -113,6 +115,7 @@ def test_self_healing_ci_returns_true():
 # ─────────────────────────────────────────────────────────────
 # ai_native_dashboard
 # ─────────────────────────────────────────────────────────────
+
 
 def test_dashboard_render_without_data(tmp_path: Path, capsys):
     """Dashboard renders gracefully when no telemetry/graph data exists."""
@@ -142,6 +145,7 @@ def test_dashboard_render_with_telemetry(tmp_path: Path, capsys):
 # ─────────────────────────────────────────────────────────────
 # ai_native_mcp_server
 # ─────────────────────────────────────────────────────────────
+
 
 def test_mcp_unknown_tool():
     server = AINativeMCPServer()
@@ -181,6 +185,7 @@ def test_mcp_architecture_guard(tmp_path: Path):
 # case_study_pipeline
 # ─────────────────────────────────────────────────────────────
 
+
 def test_case_study_pipeline_generates_file(tmp_path: Path):
     pipeline = CaseStudyPipeline(root_dir=tmp_path)
     path = pipeline.generate_case_study("Test Case Study", "Automated testing", "5x")
@@ -194,6 +199,7 @@ def test_case_study_pipeline_generates_file(tmp_path: Path):
 # ─────────────────────────────────────────────────────────────
 # rules_engine.feedback
 # ─────────────────────────────────────────────────────────────
+
 
 def test_feedback_load_nonexistent_returns_empty():
     with patch("tools.scripts.rules_engine.feedback.FEEDBACK_FILE", Path("/nonexistent/feedback.json")):
@@ -242,6 +248,7 @@ def test_feedback_threshold_constants():
 # ─────────────────────────────────────────────────────────────
 # rules_engine.rule_docs_mapper
 # ─────────────────────────────────────────────────────────────
+
 
 def test_extract_keywords_from_rule():
     kws = extract_keywords_from_rule("py-bare-except", {"message": "Avoid bare except", "category": "error"})

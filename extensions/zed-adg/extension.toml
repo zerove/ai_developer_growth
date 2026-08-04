@@ -1,0 +1,20 @@
+id = "adg-governance"
+name = "ADG Governance"
+version = "2.0.0"
+description = "Code governance: 26 languages x 699+ rules + 9 frameworks — anti-patterns, security, code quality, auto-fix"
+authors = ["AI Developer Growth"]
+repository = "https://github.com/ai-developer-growth/ai_developer_growth"
+schema_version = "2"
+
+[grammars]
+python = { language = "Python", scopes = ["source.python"] }
+javascript = { language = "JavaScript", scopes = ["source.js"] }
+typescript = { language = "TypeScript", scopes = ["source.ts"] }
+rust = { language = "Rust", scopes = ["source.rust"] }
+go = { language = "Go", scopes = ["source.go"] }
+java = { language = "Java", scopes = ["source.java"] }
+
+[language_servers.adg]
+language = "ADG Language Server"
+name = "AI Language Rules LSP"
+args = ["--stdio"]

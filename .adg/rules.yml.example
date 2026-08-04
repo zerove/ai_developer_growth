@@ -1,0 +1,55 @@
+# ADG Custom Rules Configuration
+# Place this file in your project root for project-specific rules.
+# Place at ~/.config/adg/rules.yml for user-level global rules.
+#
+# Priority order (later overrides earlier):
+# 1. ~/.config/adg/rules.yml (user global)
+# 2. .adg/rules.yml (project)
+# 3. .ai-rules/*.yml (legacy directory)
+#
+# Rules with the same ID override built-in rules.
+
+language: python  # auto-detect or specify
+config_version: '1.0'
+
+anti_patterns:
+  # Add project-specific rules
+  - id: my-no-print
+    name: No print statements
+    severity: warning
+    category: code_quality
+    pattern: 'print\('
+    message: Use logging instead of print
+    fix_hint: 'import logging; logging.info(...)'
+
+  # Override a built-in rule's severity
+  - id: py-any-type
+    severity_override: error  # upgrade from warning to error
+
+  # Add custom security rules
+  - id: my-no-hardcoded-url
+    name: Hardcoded URL
+    severity: warning
+    category: config
+    pattern: '(?:url|endpoint)\s*=\s*["\']https?://'
+    message: Hardcoded URLs should use configuration
+    fix_hint: 'Use os.environ or config files for URLs'
+
+naming:
+  file:
+    pattern: '^[a-z][a-z0-9_]*\.py$'
+    message: Python files should use snake_case
+  function:
+    pattern: '^[a-z][a-z0-9_]*$'
+    exceptions:
+      - __init__
+      - __str__
+    message: Functions should use snake_case
+
+thresholds:
+  max_function_length: 50
+  max_file_length: 500
+  max_line_length: 120
+  max_nesting_depth: 4
+  max_function_params: 7
+  max_cyclomatic_complexity: 10

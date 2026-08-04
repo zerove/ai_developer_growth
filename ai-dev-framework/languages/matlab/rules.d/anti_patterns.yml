@@ -1,0 +1,206 @@
+language: matlab
+version: '>=1.0'
+config_version: '1.0'
+anti_patterns:
+- id: mcl-eval
+  name: Use of eval()
+  severity: error
+  category: security
+  pattern: \beval\s*\(
+  message: eval() is slow and a security risk - use direct function calls
+  fix_hint: Replace eval with direct variable access, struct fields, or function handles
+- id: mcl-shadow-function
+  name: Variable shadowing built-in function
+  severity: warning
+  category: code_quality
+  pattern: ^[a-zA-Z]\w*\s*=\s*(?!\s*$)
+  message: Variable names must not shadow MATLAB built-in functions
+  fix_hint: Rename variables to avoid conflicts (e.g., avoid sum, mean, length as
+    variable names)
+- id: mcl-clear-globals
+  name: Clearing all workspace variables
+  severity: warning
+  category: code_quality
+  pattern: \bclear\s+(all|\s*$)|\bclearvars\b
+  message: Avoid clearing entire workspace in scripts - clear only what is needed
+  fix_hint: Use clear <specific_var> or structure code as functions instead of scripts
+- id: mcl-string-comparison
+  name: String comparison with ==
+  severity: error
+  category: error_handling
+  pattern: (?:==|~=)\s*['"]
+  message: == on strings does element-wise comparison, not logical equality
+  fix_hint: Use strcmp() or strcmpi() for string comparison
+- id: mcl-global-variable
+  name: Global variable declaration
+  severity: warning
+  category: code_quality
+  pattern: \bglobal\s+\w+
+  message: Global variables create hidden dependencies - pass data as arguments
+  fix_hint: Use function parameters, nested functions, or persistent variables instead
+- id: mcl-semicolon-suppress
+  name: Missing semicolon suppressing output
+  severity: info
+  category: code_quality
+  pattern: ^[^%]*[^;\s]\s*$
+  message: Missing semicolons cause unwanted console output in functions
+  fix_hint: Add semicolons at end of statements to suppress output
+- id: mcl-try-catch-no-error-id
+  name: try/catch without error identifier
+  severity: warning
+  category: error_handling
+  pattern: \bcatch\s*(?!\s*\w+\b)
+  message: Catch blocks should capture the error for proper handling
+  fix_hint: Use 'catch ME' and check ME.message or ME.identifier
+- id: mcl-prealloc-missing
+  name: Array growth without preallocation
+  severity: warning
+  category: code_quality
+  pattern: for\s+\w+\s*=\s*\d+\s*:\s*\d+
+  message: Growing arrays inside loops is slow - preallocate before the loop
+  fix_hint: Preallocate with zeros(), ones(), or NaN() before the loop
+- id: ma-hardcoded-config
+  name: Hardcoded configuration
+  severity: warning
+  category: config
+  pattern: (?:url|endpoint|host|port)\s*[=:]\s*["']https?://
+  message: Use configuration for URLs/endpoints
+  fix_hint: Move to config file
+- id: ma-todo
+  name: Unresolved TODO
+  severity: info
+  category: code_quality
+  pattern: TODO|FIXME|HACK|XXX
+  message: Unresolved TODO/FIXME comments
+  fix_hint: Create a ticket or resolve
+- id: ma-deep-nesting
+  name: Deep nesting
+  severity: warning
+  category: complexity
+  pattern: '    (?:if|for|while|case).*\n(?:        (?:if|for|while|case).*\n){2,}'
+  message: Deep nesting reduces readability
+  fix_hint: Extract helper functions
+- id: ma-long-line
+  name: Long line
+  severity: info
+  category: code_quality
+  pattern: ^.{121,}$
+  message: Lines >120 chars
+  fix_hint: Break at logical boundaries
+- id: ma-unsafe-input
+  name: Unvalidated input
+  severity: error
+  category: security
+  pattern: (?:read|gets?|input)\s*\(
+  message: User input must be validated
+  fix_hint: Add input validation
+- id: ma-log-sensitive
+  name: Logging sensitive data
+  severity: error
+  category: security
+  pattern: log(?:ger)?\.(?:info|debug|warn|error)\s*\(.*(?:password|secret|token|credential|api_key)
+  message: Never log sensitive data (passwords, tokens, secrets)
+  fix_hint: Use log filtering or redact sensitive fields
+- id: ma-log-print
+  name: Using print for logging
+  severity: warning
+  category: logging
+  pattern: ^\s*print\s*\(
+  message: Use structured logging instead of print statements in production
+  fix_hint: Use logging framework (loguru, structlog, etc.)
+- id: ma-file-leak
+  name: Unclosed file handle
+  severity: error
+  category: resource_management
+  pattern: (?:open|fopen)\s*\([^)]*\)\s*(?!.*\b(with|using|close|finally|defer)\b)
+  message: File handles must be closed properly to avoid resource leaks
+  fix_hint: Use with/using/defer block or ensure close() in finally
+- id: ma-connection-leak
+  name: Unclosed connection
+  severity: error
+  category: resource_management
+  pattern: (?:connect|new connection|getConnection)\s*\([^)]*\)\s*(?!.*\b(with|using|close|finally|defer)\b)
+  message: Database/network connections must be released after use
+  fix_hint: Use connection pool or ensure close() in finally
+- id: ma-large-alloc-loop
+  name: Large allocation in loop
+  severity: warning
+  category: performance
+  pattern: (?:for|while|loop)\s*\([^)]*\)\s*\{?\s*[^}]*\b(?:append|push|concat|new\s+(?:Array|List|StringBuilder))\b
+  message: Repeated allocations inside loops impact performance
+  fix_hint: Pre-allocate or use builder pattern outside the loop
+- id: ma-exception-leak
+  name: Exception message leaks internal info
+  severity: warning
+  category: security
+  pattern: (?:print|log|logger)\s*\(.*e(?:rror)?\.(?:message|to_String|getMessage)\s*\)
+  message: Exception messages may leak internal implementation details
+  fix_hint: Log a generic message, add exception details separately
+- id: ma-hardcoded-secret-in-ci
+  name: Hardcoded secret in CI config
+  severity: error
+  category: security
+  pattern: (?:GITHUB_TOKEN|API_KEY|SECRET|PASSWORD)\s*[=:]\s*[\"'][^\"']+[\"']
+  message: CI/CD secrets should use GitHub Secrets or vault, not hardcoded strings
+  fix_hint: Use ${{ secrets.MY_SECRET }} in GitHub Actions
+- id: ma-ci-disabled-check
+  name: Disabled CI check
+  severity: warning
+  category: ci_cd
+  pattern: continue-on-error:\s*true
+  message: CI checks with continue-on-error silently ignore failures
+  fix_hint: Remove continue-on-error or add explicit error handling
+- id: ma-docker-image-latest
+  name: Using :latest tag
+  severity: warning
+  category: ci_cd
+  pattern: FROM\s+\S+:\s*latest\b
+  message: Using :latest tag makes builds non-reproducible
+  fix_hint: Pin to specific version tag
+- id: ma-docker-exposed-port
+  name: Exposed port without healthcheck
+  severity: warning
+  category: ci_cd
+  pattern: EXPOSE\s+\d+
+  message: Exposed ports should have corresponding healthcheck
+  fix_hint: Add HEALTHCHECK instruction
+- id: ma-iac-hardcoded-secret
+  name: Hardcoded secret in IaC
+  severity: error
+  category: security
+  pattern: (?:password|secret_key|access_key)\s*[=:]\s*[\"'][^\"']+[\"']
+  message: Infrastructure secrets should use vault or secret store
+  fix_hint: Use AWS Secrets Manager, HashiCorp Vault, or SOPS
+- id: ma-iac-admin-exposed
+  name: Admin service exposed to internet
+  severity: error
+  category: security
+  pattern: '(?:adminer|phpmyadmin|pgadmin|kibana)\s*:'
+  message: Admin tools should not be publicly accessible
+  fix_hint: Restrict ingress to internal network only
+- id: ma-docker-root-user
+  name: Running as root in container
+  severity: error
+  category: security
+  pattern: FROM\s+\S+\s*(?:AS\s+\w+)?\s*\n(?!.*USER\s)
+  message: Running containers as root is a security risk
+  fix_hint: Add 'USER nobody' or create a non-root user
+- id: ma-pip-audit-missing
+  name: Missing dependency audit
+  severity: warning
+  category: ci_cd
+  pattern: pip install\b(?!.*pip-audit|.*safety)
+  message: Package installation without vulnerability scanning
+  fix_hint: Add 'pip-audit' or 'safety check' after install
+naming:
+  file:
+    pattern: ^[A-Z][a-zA-Z0-9]*\.m$
+    message: MATLAB function files should use PascalCase and match the function name
+  function:
+    pattern: ^[a-z][a-zA-Z0-9]*$
+    message: MATLAB functions should use camelCase
+thresholds:
+  max_function_length: 50
+  max_file_length: 500
+  max_line_length: 120
+  max_nesting_depth: 4

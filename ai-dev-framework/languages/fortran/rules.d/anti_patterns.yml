@@ -1,0 +1,149 @@
+language: fortran
+version: '>=1.0'
+config_version: '1.0'
+anti_patterns:
+- id: for-implicit-typing
+  name: Implicit typing via first letter
+  severity: error
+  category: type_safety
+  pattern: ^\s*(?:integer|real|double|character|logical)\s*\*\s*\d
+  message: Avoid implicit typing - always use explicit declarations
+  fix_hint: Add IMPLICIT NONE and declare all variables with explicit types
+- id: for-goto
+  name: GOTO statement
+  severity: warning
+  category: code_quality
+  pattern: \bgoto\s+\d+\b|\bgoto\s+\w+
+  message: GOTO makes control flow hard to follow
+  fix_hint: Replace GOTO with structured constructs (IF/THEN/ELSE, DO loops)
+- id: for-computed-goto
+  name: Computed GOTO
+  severity: error
+  category: code_quality
+  pattern: goto\s*\(\s*[\d\s,]+\s*\)
+  message: Computed GOTO is obsolete - use CASE/SELECT CASE
+  fix_hint: Replace with SELECT CASE statement for multi-way branching
+- id: for-external-procedure
+  name: EXTERNAL declaration (implicit interface)
+  severity: warning
+  category: type_safety
+  pattern: ^\s*external\s+\w+
+  message: EXTERNAL declarations lack compile-time interface checking
+  fix_hint: Use module procedures or INTERFACE blocks for explicit interfaces
+- id: for-common-block
+  name: COMMON block usage
+  severity: error
+  category: code_quality
+  pattern: ^\s*common\s*\(\s*\w+\s*\)
+  message: COMMON blocks are obsolete - use modules for shared data
+  fix_hint: Replace COMMON blocks with MODULE declarations for type-safe shared state
+- id: for-format-statement
+  name: Legacy FORMAT statement
+  severity: info
+  category: readability
+  pattern: ^\s*\d+\s+format\s*\(
+  message: FORMAT statements reduce readability - use free-format I/O
+  fix_hint: Use PRINT *, or WRITE(*,*) with list-directed formatting
+- id: for-data-statement
+  name: DATA statement for initialization
+  severity: info
+  category: readability
+  pattern: ^\s*data\s+\w+
+  message: DATA statements can be replaced with modern initialization syntax
+  fix_hint: Use parameterized initializations or constructor functions in declarations
+- id: for-arith-if
+  name: Arithmetic IF statement
+  severity: error
+  category: code_quality
+  pattern: ^\s*if\s*\(\s*\w+\s*\)\s+\d+\s*,\s*\d+\s*,\s*\d+
+  message: Arithmetic IF is deprecated - use block IF or SELECT CASE
+  fix_hint: Replace with IF (expr < 0) THEN / ELSE IF / END IF construct
+- id: fo-hardcoded-config
+  name: Hardcoded configuration
+  severity: warning
+  category: config
+  pattern: (?:url|endpoint|host|port)\s*[=:]\s*["']https?://
+  message: Use configuration for URLs/endpoints
+  fix_hint: Move to config file
+- id: fo-todo
+  name: Unresolved TODO
+  severity: info
+  category: code_quality
+  pattern: TODO|FIXME|HACK|XXX
+  message: Unresolved TODO/FIXME comments
+  fix_hint: Create a ticket or resolve
+- id: fo-deep-nesting
+  name: Deep nesting
+  severity: warning
+  category: complexity
+  pattern: '    (?:if|for|while|case).*\n(?:        (?:if|for|while|case).*\n){2,}'
+  message: Deep nesting reduces readability
+  fix_hint: Extract helper functions
+- id: fo-long-line
+  name: Long line
+  severity: info
+  category: code_quality
+  pattern: ^.{121,}$
+  message: Lines >120 chars
+  fix_hint: Break at logical boundaries
+- id: fo-unsafe-input
+  name: Unvalidated input
+  severity: error
+  category: security
+  pattern: (?:read|gets?|input)\s*\(
+  message: User input must be validated
+  fix_hint: Add input validation
+- id: fo-log-sensitive
+  name: Logging sensitive data
+  severity: error
+  category: security
+  pattern: log(?:ger)?\.(?:info|debug|warn|error)\s*\(.*(?:password|secret|token|credential|api_key)
+  message: Never log sensitive data (passwords, tokens, secrets)
+  fix_hint: Use log filtering or redact sensitive fields
+- id: fo-log-print
+  name: Using print for logging
+  severity: warning
+  category: logging
+  pattern: ^\s*print\s*\(
+  message: Use structured logging instead of print statements in production
+  fix_hint: Use logging framework (loguru, structlog, etc.)
+- id: fo-file-leak
+  name: Unclosed file handle
+  severity: error
+  category: resource_management
+  pattern: (?:open|fopen)\s*\([^)]*\)\s*(?!.*\b(with|using|close|finally|defer)\b)
+  message: File handles must be closed properly to avoid resource leaks
+  fix_hint: Use with/using/defer block or ensure close() in finally
+- id: fo-connection-leak
+  name: Unclosed connection
+  severity: error
+  category: resource_management
+  pattern: (?:connect|new connection|getConnection)\s*\([^)]*\)\s*(?!.*\b(with|using|close|finally|defer)\b)
+  message: Database/network connections must be released after use
+  fix_hint: Use connection pool or ensure close() in finally
+- id: fo-large-alloc-loop
+  name: Large allocation in loop
+  severity: warning
+  category: performance
+  pattern: (?:for|while|loop)\s*\([^)]*\)\s*\{?\s*[^}]*\b(?:append|push|concat|new\s+(?:Array|List|StringBuilder))\b
+  message: Repeated allocations inside loops impact performance
+  fix_hint: Pre-allocate or use builder pattern outside the loop
+- id: fo-exception-leak
+  name: Exception message leaks internal info
+  severity: warning
+  category: security
+  pattern: (?:print|log|logger)\s*\(.*e(?:rror)?\.(?:message|to_String|getMessage)\s*\)
+  message: Exception messages may leak internal implementation details
+  fix_hint: Log a generic message, add exception details separately
+naming:
+  file:
+    pattern: ^[a-z][a-z0-9_]*\.f(?:90|95|03|08)?$
+    message: Fortran files should use lowercase with underscores
+  function:
+    pattern: ^[a-z][a-z0-9_]*$
+    message: Fortran routines should use lowercase with underscores
+thresholds:
+  max_function_length: 50
+  max_file_length: 500
+  max_line_length: 120
+  max_nesting_depth: 4

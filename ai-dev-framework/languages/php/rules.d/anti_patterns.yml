@@ -1,0 +1,271 @@
+language: php
+version: '>=8.1'
+config_version: '1.0'
+anti_patterns:
+- id: php-sql-injection
+  name: SQL injection via string concatenation
+  severity: error
+  category: security
+  pattern: (?:execute|query)\s*\(.*(?:\$|\.\s*[\"']|\.\s*\$)
+  message: String concatenation in SQL enables injection
+  fix_hint: 'Use prepared statements: $pdo->prepare("... WHERE id = ?")->execute([$id])'
+- id: php-eval
+  name: eval() usage
+  severity: error
+  category: security
+  pattern: \beval\s*\(
+  message: eval() is a critical security risk
+  fix_hint: Use proper parsing functions instead
+- id: php-extract
+  name: extract() usage
+  severity: error
+  category: security
+  pattern: \bextract\s*\(
+  message: extract() can overwrite variables unexpectedly
+  fix_hint: Use explicit variable assignment instead
+- id: php-var-dump
+  name: var_dump/print_r in production
+  severity: warning
+  category: code_quality
+  pattern: \b(var_dump|print_r|echo\s+\$|die\s*\(|exit\s*\()
+  message: Debug output should not be in production code
+  fix_hint: Use error_log() or a logging library
+- id: php-bare-except
+  name: Bare catch clause
+  severity: error
+  category: error_handling
+  pattern: catch\s*\(\s*\w*\s*\$\w+\s*\)
+  message: Catch specific exceptions instead of generic Throwable
+  fix_hint: 'Catch specific exceptions: catch (InvalidArgumentException $e)'
+- id: php-empty-catch
+  name: Empty catch block
+  severity: error
+  category: error_handling
+  pattern: catch\s*\([^)]*\)\s*\{\s*\}
+  message: Empty catch blocks silently swallow errors
+  fix_hint: Log the exception or rethrow it
+- id: php-global-var
+  name: Global variable usage
+  severity: warning
+  category: code_quality
+  pattern: \bglobal\s+\$
+  message: Global variables make code hard to test
+  fix_hint: Use dependency injection or function parameters
+- id: php-magic-number
+  name: Magic number
+  severity: info
+  category: code_quality
+  pattern: (?:if|while|for)\s*\(.*(?:===?|!==?|>=?|<=?)\s*\d{2,}
+  message: Magic numbers should be named constants
+  fix_hint: Define const MAX_VALUE = 100;
+- id: php-short-tags
+  name: Short open tags
+  severity: warning
+  category: code_quality
+  pattern: <\?php(?!\s)|<\?=
+  message: Short tags may not work in all configurations
+  fix_hint: 'Use full PHP tags: <?php ... ?>'
+- id: php-no-type-hints
+  name: Missing type hints
+  severity: warning
+  category: type_safety
+  pattern: function\s+\w+\s*\(\s*\$
+  message: PHP functions should have type hints
+  fix_hint: 'Add parameter and return type hints: function foo(string $bar): int'
+- id: php-comparison-type-juggling
+  name: Loose comparison type juggling
+  severity: warning
+  category: type_safety
+  pattern: ==\s*0(?!\.)|!=\s*0(?!\.)|==\s*""|==\s*false
+  message: Loose comparison with 0, "", false is error-prone in PHP
+  fix_hint: Use strict comparison (===) to avoid type juggling
+- id: php-deprecated-functions
+  name: Deprecated function usage
+  severity: warning
+  category: maintainability
+  pattern: \b(create_function|each\s*\(|mysql_|ereg\s*\(|split\s*\()
+  message: These functions are deprecated or removed
+  fix_hint: 'Use modern equivalents: array functions, PDO, preg_match'
+- id: php-nested-ternary
+  name: Deeply nested ternary
+  severity: warning
+  category: code_quality
+  pattern: '\?[^?:]*\?[^?:]*:'
+  message: Nested ternaries reduce readability
+  fix_hint: Use match expression or if/else blocks
+- id: php-no-return-type
+  name: Missing return type declaration
+  severity: info
+  category: type_safety
+  pattern: function\s+\w+\s*\([^)]*\)\s*(?!:\s*\w)
+  message: Functions should declare return types
+  fix_hint: 'Add return type: function process(): string'
+- id: ph-log-sensitive
+  name: Logging sensitive data
+  severity: error
+  category: security
+  pattern: log(?:ger)?\.(?:info|debug|warn|error)\s*\(.*(?:password|secret|token|credential|api_key)
+  message: Never log sensitive data (passwords, tokens, secrets)
+  fix_hint: Use log filtering or redact sensitive fields
+- id: ph-log-print
+  name: Using print for logging
+  severity: warning
+  category: logging
+  pattern: ^\s*print\s*\(
+  message: Use structured logging instead of print statements in production
+  fix_hint: Use logging framework (loguru, structlog, etc.)
+- id: ph-file-leak
+  name: Unclosed file handle
+  severity: error
+  category: resource_management
+  pattern: (?:open|fopen)\s*\([^)]*\)\s*(?!.*\b(with|using|close|finally|defer)\b)
+  message: File handles must be closed properly to avoid resource leaks
+  fix_hint: Use with/using/defer block or ensure close() in finally
+- id: ph-connection-leak
+  name: Unclosed connection
+  severity: error
+  category: resource_management
+  pattern: (?:connect|new connection|getConnection)\s*\([^)]*\)\s*(?!.*\b(with|using|close|finally|defer)\b)
+  message: Database/network connections must be released after use
+  fix_hint: Use connection pool or ensure close() in finally
+- id: ph-missing-await
+  name: Missing await on async call
+  severity: error
+  category: concurrency
+  pattern: (?:async\s+def|async\s+fn)\s+\w+\s*\([^)]*\)\s*\{?\s*$
+  message: Async function called without await may cause race conditions
+  fix_hint: Add await/async keyword or handle the future properly
+- id: ph-shared-mutable
+  name: Shared mutable state without sync
+  severity: warning
+  category: concurrency
+  pattern: (?:global|static|thread_local)\s+\w+(?:\s*=\s*[^;]*)?\s*[;]?$
+  message: Shared mutable state without synchronization can cause race conditions
+  fix_hint: Use mutex/lock/atomic or thread-local storage
+- id: ph-large-alloc-loop
+  name: Large allocation in loop
+  severity: warning
+  category: performance
+  pattern: (?:for|while|loop)\s*\([^)]*\)\s*\{?\s*[^}]*\b(?:append|push|concat|new\s+(?:Array|List|StringBuilder))\b
+  message: Repeated allocations inside loops impact performance
+  fix_hint: Pre-allocate or use builder pattern outside the loop
+- id: ph-n-plus-one
+  name: Potential N+1 query pattern
+  severity: warning
+  category: performance
+  pattern: (?:for|while|loop|each|map)\s*[^)]*\)?\s*\{?[^}]*\b(?:query|find|get|fetch|load)\b[^}]*\}
+  message: Query inside a loop may cause N+1 performance problem
+  fix_hint: Use batch loading, eager loading, or JOIN query
+- id: ph-cors-allow-all
+  name: Overly permissive CORS
+  severity: error
+  category: security
+  pattern: (?:Access-Control-Allow-Origin|origins?)\s*[=:]\s*["\']?\*["\']?
+  message: Wildcard CORS exposes API to any origin
+  fix_hint: Restrict CORS to specific allowed origins
+- id: ph-no-input-validation
+  name: Missing input validation on API
+  severity: warning
+  category: security
+  pattern: (?:@\w+Mapping|def\s+\w+\([^)]*request|route|endpoint|api_view)
+  message: API endpoints should validate all input parameters
+  fix_hint: Add input validation or use schema validation library
+- id: ph-hardcoded-origin
+  name: Hardcoded origin/domain
+  severity: warning
+  category: config
+  pattern: (?:allowed_origins|trusted_origins|ALLOWED_HOSTS)\s*[=:]\s*\["\'\]https?://
+  message: Hardcoded origins in config should be environment variables
+  fix_hint: Use environment variables for allowed origins
+- id: ph-exception-leak
+  name: Exception message leaks internal info
+  severity: warning
+  category: security
+  pattern: (?:print|log|logger)\s*\(.*e(?:rror)?\.(?:message|to_String|getMessage)\s*\)
+  message: Exception messages may leak internal implementation details
+  fix_hint: Log a generic message, add exception details separately
+- id: ph-hardcoded-secret-in-ci
+  name: Hardcoded secret in CI config
+  severity: error
+  category: security
+  pattern: (?:GITHUB_TOKEN|API_KEY|SECRET|PASSWORD)\s*[=:]\s*[\"'][^\"']+[\"']
+  message: CI/CD secrets should use GitHub Secrets or vault, not hardcoded strings
+  fix_hint: Use ${{ secrets.MY_SECRET }} in GitHub Actions
+- id: ph-ci-disabled-check
+  name: Disabled CI check
+  severity: warning
+  category: ci_cd
+  pattern: continue-on-error:\s*true
+  message: CI checks with continue-on-error silently ignore failures
+  fix_hint: Remove continue-on-error or add explicit error handling
+- id: ph-docker-image-latest
+  name: Using :latest tag
+  severity: warning
+  category: ci_cd
+  pattern: FROM\s+\S+:\s*latest\b
+  message: Using :latest tag makes builds non-reproducible
+  fix_hint: Pin to specific version tag
+- id: ph-docker-exposed-port
+  name: Exposed port without healthcheck
+  severity: warning
+  category: ci_cd
+  pattern: EXPOSE\s+\d+
+  message: Exposed ports should have corresponding healthcheck
+  fix_hint: Add HEALTHCHECK instruction
+- id: ph-iac-hardcoded-secret
+  name: Hardcoded secret in IaC
+  severity: error
+  category: security
+  pattern: (?:password|secret_key|access_key)\s*[=:]\s*[\"'][^\"']+[\"']
+  message: Infrastructure secrets should use vault or secret store
+  fix_hint: Use AWS Secrets Manager, HashiCorp Vault, or SOPS
+- id: ph-iac-admin-exposed
+  name: Admin service exposed to internet
+  severity: error
+  category: security
+  pattern: '(?:adminer|phpmyadmin|pgadmin|kibana)\s*:'
+  message: Admin tools should not be publicly accessible
+  fix_hint: Restrict ingress to internal network only
+- id: ph-docker-root-user
+  name: Running as root in container
+  severity: error
+  category: security
+  pattern: FROM\s+\S+\s*(?:AS\s+\w+)?\s*\n(?!.*USER\s)
+  message: Running containers as root is a security risk
+  fix_hint: Add 'USER nobody' or create a non-root user
+- id: ph-pip-audit-missing
+  name: Missing dependency audit
+  severity: warning
+  category: ci_cd
+  pattern: pip install\b(?!.*pip-audit|.*safety)
+  message: Package installation without vulnerability scanning
+  fix_hint: Add 'pip-audit' or 'safety check' after install
+naming:
+  file:
+    pattern: ^[A-Z][a-zA-Z0-9]*\.php$
+    message: PHP class files should use PascalCase
+  function:
+    pattern: ^[a-z][a-zA-Z0-9]*$
+    message: Functions should use camelCase
+  class:
+    pattern: ^[A-Z][a-zA-Z0-9]*$
+    message: Classes should use PascalCase
+  constant:
+    pattern: ^[A-Z][A-Z0-9_]*$
+    message: Constants should use UPPER_SNAKE_CASE
+thresholds:
+  max_function_length: 50
+  max_file_length: 500
+  max_line_length: 120
+  max_nesting_depth: 4
+  max_function_params: 5
+  max_cyclomatic_complexity: 10
+tooling:
+  linter: phpstan
+  formatter: php-cs-fixer
+  type_checker: phpstan
+  test_runner: phpunit
+  config_files:
+  - composer.json
+  - phpstan.neon
+  - .php-cs-fixer.php

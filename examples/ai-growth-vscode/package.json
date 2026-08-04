@@ -1,0 +1,57 @@
+{
+  "name": "ai-developer-growth",
+  "displayName": "AI Developer Growth",
+  "description": "AI 时代开发者成长知识库 - 能力评估、学习路径、知识导航",
+  "version": "0.1.0",
+  "publisher": "ai-growth",
+  "engines": {
+    "vscode": "^1.85.0"
+  },
+  "categories": ["Other"],
+  "activationEvents": ["onCommand:ai-growth.assess"],
+  "main": "./out/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "ai-growth.assess",
+        "title": "AI Growth: Skill Assessment"
+      },
+      {
+        "command": "ai-growth.progress",
+        "title": "AI Growth: View Progress"
+      },
+      {
+        "command": "ai-growth.recommend",
+        "title": "AI Growth: Get Recommendations"
+      }
+    ],
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "ai-growth",
+          "title": "AI Growth",
+          "icon": "$(growth)"
+        }
+      ]
+    },
+    "views": {
+      "ai-growth": [
+        {
+          "type": "webview",
+          "id": "ai-growth.dashboard",
+          "name": "Dashboard"
+        }
+      ]
+    }
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run compile",
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./"
+  },
+  "devDependencies": {
+    "@types/vscode": "^1.85.0",
+    "@types/node": "^20.0.0",
+    "typescript": "^5.3.0"
+  }
+}

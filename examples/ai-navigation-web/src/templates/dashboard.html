@@ -1,0 +1,70 @@
+{% extends "base.html" %}
+{% block title %}Dashboard - AI Developer Growth{% endblock %}
+{% block content %}
+<h1 style="margin-bottom: 24px;">Welcome, {{ username }} 👋</h1>
+
+<div class="grid grid-3">
+    <div class="card stat-card">
+        <div class="number">{{ progress_stats.get('completed', 0) }}</div>
+        <div class="label">Documents Completed</div>
+    </div>
+    <div class="card stat-card">
+        <div class="number">{{ progress_stats.get('in_progress', 0) }}</div>
+        <div class="label">In Progress</div>
+    </div>
+    <div class="card stat-card">
+        <div class="number">{{ contrib_count }}</div>
+        <div class="label">Contributions</div>
+    </div>
+</div>
+
+<div class="grid grid-2">
+    <div class="card">
+        <h2>📊 Latest Assessment</h2>
+        {% if assessment %}
+        <div style="margin-bottom:12px;">
+            <strong>Overall: {{ '%.1f' | format(assessment.overall * 100) }}%</strong>
+            <span class="badge badge-progress" style="margin-left:8px;">{{ assessment.overall | float * 100 | int // 20 }} / 5</span>
+        </div>
+        <table>
+            <tr><td>AI Comprehension</td><td>{{ '%.0f' | format(assessment.ai_comprehension * 100) }}%</td></tr>
+            <tr><td>Engineering</td><td>{{ '%.0f' | format(assessment.engineering_integration * 100) }}%</td></tr>
+            <tr><td>Learning Method</td><td>{{ '%.0f' | format(assessment.learning_method * 100) }}%</td></tr>
+            <tr><td>Innovation</td><td>{{ '%.0f' | format(assessment.innovation_thinking * 100) }}%</td></tr>
+            <tr><td>Output Quality</td><td>{{ '%.0f' | format(assessment.output_quality * 100) }}%</td></tr>
+        </table>
+        {% else %}
+        <p style="color:var(--text-muted)">No assessment yet. <a href="/assess">Take one now!</a></p>
+        {% endif %}
+    </div>
+
+    <div class="card">
+        <h2>📚 Recent Activity</h2>
+        {% if recent_items %}
+        <table>
+            {% for item in recent_items %}
+            <tr>
+                <td>{{ item.doc_title }}</td>
+                <td>
+                    {% if item.status == 'completed' %}
+                    <span class="badge badge-done">Done</span>
+                    {% elif item.status == 'in_progress' %}
+                    <span class="badge badge-progress">Active</span>
+                    {% else %}
+                    <span class="badge badge-pending">Pending</span>
+                    {% endif %}
+                </td>
+            </tr>
+            {% endfor %}
+        </table>
+        {% else %}
+        <p style="color:var(--text-muted)">No activity yet. Start learning!</p>
+        {% endif %}
+    </div>
+</div>
+
+<div style="margin-top: 16px; display: flex; gap: 12px;">
+    <a href="/assess" class="btn btn-primary">Take Assessment</a>
+    <a href="/progress" class="btn btn-outline">View Progress</a>
+</div>
+{% endblock %}

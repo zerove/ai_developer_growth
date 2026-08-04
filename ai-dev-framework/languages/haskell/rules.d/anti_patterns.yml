@@ -1,0 +1,170 @@
+language: haskell
+version: '>=9.4'
+config_version: '1.0'
+anti_patterns:
+- id: hs-unsafe-perform-io
+  name: unsafePerformIO
+  severity: error
+  category: code_quality
+  pattern: unsafePerformIO
+  message: unsafePerformIO breaks referential transparency
+  fix_hint: Use IO monad properly
+- id: hs-unsafe-impure
+  name: unsafeInterleaveIO
+  severity: error
+  category: code_quality
+  pattern: unsafeInterleaveIO
+  message: unsafeInterleaveIO causes unpredictable evaluation
+  fix_hint: Use strict IO or streaming libraries
+- id: hs-from-just
+  name: fromJust usage
+  severity: error
+  category: type_safety
+  pattern: \bfromJust\b
+  message: fromJust crashes on Nothing - use pattern matching
+  fix_hint: Use fromMaybe, pattern matching, or maybe
+- id: hs-from-list
+  name: fromList without safety
+  severity: warning
+  category: type_safety
+  pattern: \bfromList\s+
+  message: fromList can fail on invalid input
+  fix_hint: Use fromList with verification or safe alternatives
+- id: hs-print
+  name: print in production
+  severity: info
+  category: code_quality
+  pattern: \bprint\s+|\bputStrLn\s+|\bhPutStrLn\s+
+  message: Use proper logging instead of print
+  fix_hint: Use monad-logger or fast-logger
+- id: hs-head
+  name: head/tail partial functions
+  severity: warning
+  category: error_handling
+  pattern: \bhead\s+|\btail\s+|\blast\s+|\binit\s+
+  message: Partial functions crash on empty lists
+  fix_hint: Use pattern matching or safe alternatives like Data.List.uncons
+- id: hs-read
+  name: read partial function
+  severity: error
+  category: error_handling
+  pattern: \bread\s+
+  message: read crashes on invalid input
+  fix_hint: Use readMaybe or reads for safe parsing
+- id: hs-string
+  name: String type usage
+  severity: info
+  category: code_quality
+  pattern: \bString\b
+  message: String is [Char] and is slow - use Text
+  fix_hint: Use Data.Text for better performance
+- id: ha-hardcoded-config
+  name: Hardcoded configuration
+  severity: warning
+  category: config
+  pattern: (?:url|endpoint|host|port)\s*[=:]\s*["']https?://
+  message: Use configuration for URLs/endpoints
+  fix_hint: Move to config file
+- id: ha-todo
+  name: Unresolved TODO
+  severity: info
+  category: code_quality
+  pattern: TODO|FIXME|HACK|XXX
+  message: Unresolved TODO/FIXME comments
+  fix_hint: Create a ticket or resolve
+- id: ha-deep-nesting
+  name: Deep nesting
+  severity: warning
+  category: complexity
+  pattern: '    (?:if|for|while|case).*\n(?:        (?:if|for|while|case).*\n){2,}'
+  message: Deep nesting reduces readability
+  fix_hint: Extract helper functions
+- id: ha-long-line
+  name: Long line
+  severity: info
+  category: code_quality
+  pattern: ^.{121,}$
+  message: Lines >120 chars
+  fix_hint: Break at logical boundaries
+- id: ha-unsafe-input
+  name: Unvalidated input
+  severity: error
+  category: security
+  pattern: (?:read|gets?|input)\s*\(
+  message: User input must be validated
+  fix_hint: Add input validation
+- id: ha-log-sensitive
+  name: Logging sensitive data
+  severity: error
+  category: security
+  pattern: log(?:ger)?\.(?:info|debug|warn|error)\s*\(.*(?:password|secret|token|credential|api_key)
+  message: Never log sensitive data (passwords, tokens, secrets)
+  fix_hint: Use log filtering or redact sensitive fields
+- id: ha-log-print
+  name: Using print for logging
+  severity: warning
+  category: logging
+  pattern: ^\s*print\s*\(
+  message: Use structured logging instead of print statements in production
+  fix_hint: Use logging framework (loguru, structlog, etc.)
+- id: ha-file-leak
+  name: Unclosed file handle
+  severity: error
+  category: resource_management
+  pattern: (?:open|fopen)\s*\([^)]*\)\s*(?!.*\b(with|using|close|finally|defer)\b)
+  message: File handles must be closed properly to avoid resource leaks
+  fix_hint: Use with/using/defer block or ensure close() in finally
+- id: ha-connection-leak
+  name: Unclosed connection
+  severity: error
+  category: resource_management
+  pattern: (?:connect|new connection|getConnection)\s*\([^)]*\)\s*(?!.*\b(with|using|close|finally|defer)\b)
+  message: Database/network connections must be released after use
+  fix_hint: Use connection pool or ensure close() in finally
+- id: ha-shared-mutable
+  name: Shared mutable state without sync
+  severity: warning
+  category: concurrency
+  pattern: (?:global|static|thread_local)\s+\w+(?:\s*=\s*[^;]*)?\s*[;]?$
+  message: Shared mutable state without synchronization can cause race conditions
+  fix_hint: Use mutex/lock/atomic or thread-local storage
+- id: ha-large-alloc-loop
+  name: Large allocation in loop
+  severity: warning
+  category: performance
+  pattern: (?:for|while|loop)\s*\([^)]*\)\s*\{?\s*[^}]*\b(?:append|push|concat|new\s+(?:Array|List|StringBuilder))\b
+  message: Repeated allocations inside loops impact performance
+  fix_hint: Pre-allocate or use builder pattern outside the loop
+- id: ha-exception-leak
+  name: Exception message leaks internal info
+  severity: warning
+  category: security
+  pattern: (?:print|log|logger)\s*\(.*e(?:rror)?\.(?:message|to_String|getMessage)\s*\)
+  message: Exception messages may leak internal implementation details
+  fix_hint: Log a generic message, add exception details separately
+naming:
+  file:
+    pattern: ^[A-Z][a-zA-Z0-9]*\.hs$
+    message: Haskell module files should use PascalCase
+  function:
+    pattern: ^[a-z][a-zA-Z0-9']*$
+    message: Haskell functions should use camelCase
+  class:
+    pattern: ^[A-Z][a-zA-Z0-9']*$
+    message: Haskell types should use PascalCase
+  constant:
+    pattern: ^[A-Z][a-zA-Z0-9']*$
+    message: Haskell constants should use PascalCase
+thresholds:
+  max_function_length: 30
+  max_file_length: 400
+  max_line_length: 120
+  max_nesting_depth: 4
+  max_function_params: 5
+tooling:
+  linter: hlint
+  formatter: ormolu
+  test_runner: hspec
+  config_files:
+  - .hlint.yaml
+  - cabal.project

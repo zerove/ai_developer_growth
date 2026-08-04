@@ -1,0 +1,149 @@
+language: graphql
+version: '>=1.0'
+config_version: '1.0'
+anti_patterns:
+- id: gql-introspection-prod
+  name: Introspection queries in production
+  severity: error
+  category: security
+  pattern: __schema|__type\s*\{
+  message: Disable introspection in production to prevent schema discovery
+  fix_hint: Disable introspection in your server config; use persisted queries
+- id: gql-missing-description
+  name: Type or field without description
+  severity: info
+  category: readability
+  pattern: type\s+\w+\s*\{(?!\\s*""""?)|\w+\s*\(.*\):\s*(?!\\s*""""?)
+  message: Add descriptions to all types and fields for API discoverability
+  fix_hint: Add triple-quoted descriptions above each type and field definition
+- id: gql-deprecated-field-no-reason
+  name: '@deprecated without a reason'
+  severity: warning
+  category: code_quality
+  pattern: '@deprecated(?!\s*\(\s*")'
+  message: '@deprecated directive should include a migration reason'
+  fix_hint: 'Use @deprecated(reason: "Use newField instead") to guide consumers'
+- id: gql-unbounded-complexity
+  name: Unbounded query depth or complexity
+  severity: error
+  category: security
+  pattern: \{[^}]*\{[^}]*\{[^}]*\{[^}]*\{
+  message: Deeply nested queries can cause denial of service
+  fix_hint: Set query depth limit and complexity scoring in server config
+- id: gql-nullable-on-error
+  name: Nullable type masking errors
+  severity: warning
+  category: error_handling
+  pattern: \w+\s*:\s*\w+\s*
+  message: Overuse of nullable types can mask real errors - use non-null where appropriate
+  fix_hint: Use the ! (non-null) modifier for fields that should always return data
+- id: gql-any-scalar
+  name: Use of JSON scalar type
+  severity: warning
+  category: type_safety
+  pattern: \bJSON\b|\bJSONObject\b|\bAny\b\s*}
+  message: JSON scalar bypasses type safety - prefer typed fields
+  fix_hint: Replace JSON scalars with properly typed object fields in your schema
+- id: gql-mutation-input-no-validation
+  name: Mutation input without explicit validation
+  severity: warning
+  category: security
+  pattern: mutation\s+\w+\s*\([^)]*:\s*\w+!\s*\)
+  message: Ensure mutation inputs are validated server-side
+  fix_hint: Add input validation in resolver; use custom scalars with validation
+- id: gr-hardcoded-config
+  name: Hardcoded configuration
+  severity: warning
+  category: config
+  pattern: (?:url|endpoint|host|port)\s*[=:]\s*["']https?://
+  message: Use configuration for URLs/endpoints
+  fix_hint: Move to config file
+- id: gr-todo
+  name: Unresolved TODO
+  severity: info
+  category: code_quality
+  pattern: TODO|FIXME|HACK|XXX
+  message: Unresolved TODO/FIXME comments
+  fix_hint: Create a ticket or resolve
+- id: gr-deep-nesting
+  name: Deep nesting
+  severity: warning
+  category: complexity
+  pattern: '    (?:if|for|while|case).*\n(?:        (?:if|for|while|case).*\n){2,}'
+  message: Deep nesting reduces readability
+  fix_hint: Extract helper functions
+- id: gr-long-line
+  name: Long line
+  severity: info
+  category: code_quality
+  pattern: ^.{121,}$
+  message: Lines >120 chars
+  fix_hint: Break at logical boundaries
+- id: gr-unsafe-input
+  name: Unvalidated input
+  severity: error
+  category: security
+  pattern: (?:read|gets?|input)\s*\(
+  message: User input must be validated
+  fix_hint: Add input validation
+- id: gr-log-sensitive
+  name: Logging sensitive data
+  severity: error
+  category: security
+  pattern: log(?:ger)?\.(?:info|debug|warn|error)\s*\(.*(?:password|secret|token|credential|api_key)
+  message: Never log sensitive data (passwords, tokens, secrets)
+  fix_hint: Use log filtering or redact sensitive fields
+- id: gr-log-print
+  name: Using print for logging
+  severity: warning
+  category: logging
+  pattern: ^\s*print\s*\(
+  message: Use structured logging instead of print statements in production
+  fix_hint: Use logging framework (loguru, structlog, etc.)
+- id: gr-file-leak
+  name: Unclosed file handle
+  severity: error
+  category: resource_management
+  pattern: (?:open|fopen)\s*\([^)]*\)\s*(?!.*\b(with|using|close|finally|defer)\b)
+  message: File handles must be closed properly to avoid resource leaks
+  fix_hint: Use with/using/defer block or ensure close() in finally
+- id: gr-connection-leak
+  name: Unclosed connection
+  severity: error
+  category: resource_management
+  pattern: (?:connect|new connection|getConnection)\s*\([^)]*\)\s*(?!.*\b(with|using|close|finally|defer)\b)
+  message: Database/network connections must be released after use
+  fix_hint: Use connection pool or ensure close() in finally
+- id: gr-shared-mutable
+  name: Shared mutable state without sync
+  severity: warning
+  category: concurrency
+  pattern: (?:global|static|thread_local)\s+\w+(?:\s*=\s*[^;]*)?\s*[;]?$
+  message: Shared mutable state without synchronization can cause race conditions
+  fix_hint: Use mutex/lock/atomic or thread-local storage
+- id: gr-large-alloc-loop
+  name: Large allocation in loop
+  severity: warning
+  category: performance
+  pattern: (?:for|while|loop)\s*\([^)]*\)\s*\{?\s*[^}]*\b(?:append|push|concat|new\s+(?:Array|List|StringBuilder))\b
+  message: Repeated allocations inside loops impact performance
+  fix_hint: Pre-allocate or use builder pattern outside the loop
+- id: gr-exception-leak
+  name: Exception message leaks internal info
+  severity: warning
+  category: security
+  pattern: (?:print|log|logger)\s*\(.*e(?:rror)?\.(?:message|to_String|getMessage)\s*\)
+  message: Exception messages may leak internal implementation details
+  fix_hint: Log a generic message, add exception details separately
+naming:
+  file:
+    pattern: ^[a-z][a-z0-9_-]*\.graphql$
+    message: GraphQL schema files should use kebab-case
+  function:
+    pattern: ^[a-zA-Z][a-zA-Z0-9]*$
+    message: GraphQL fields should use camelCase
+thresholds:
+  max_function_length: 50
+  max_file_length: 500
+  max_line_length: 120
+  max_nesting_depth: 4

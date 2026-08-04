@@ -1,0 +1,104 @@
+site_name: AI Developer Growth
+site_description: Language-agnostic AI developer growth framework with 21 language rules
+site_url: https://zerove.github.io/ai_developer_growth/
+repo_url: https://github.com/zerove/ai_developer_growth
+repo_name: zerove/ai_developer_growth
+
+theme:
+  name: material
+  palette:
+    - scheme: default
+      primary: indigo
+      accent: indigo
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+    - scheme: slate
+      primary: indigo
+      accent: indigo
+      toggle:
+        icon: material/brightness-4
+        name: Switch to light mode
+  features:
+    - navigation.sections
+    - navigation.expand
+    - navigation.top
+    - search.highlight
+    - content.code.copy
+    - content.tabs.link
+
+plugins:
+  - search
+  - mkdocstrings:
+      handlers:
+        python:
+          options:
+            show_source: true
+            show_root_heading: true
+            members_order: source
+            docstring_style: google
+
+markdown_extensions:
+  - pymdownx.highlight:
+      anchor_linenums: true
+  - pymdownx.superfences
+  - pymdownx.tabbed:
+      alternate_style: true
+  - admonition
+  - toc:
+      permalink: true
+  - tables
+  - attr_list
+
+nav:
+  - Home: index.md
+  - Announcement: announcement.md
+  - Language Rules:
+    - Reference: governance/language-rules-reference.md
+  - Efficiency:
+    - Quick Start Guide: efficiency/quick-start-ai-native.md
+    - AI-Native SDLC Whitepaper: efficiency/ai-native-sdlc-whitepaper.md
+    - Full Cycle Workflow: efficiency/full-cycle-workflow.md
+    - Context Engineering: efficiency/context-engineering.md
+    - AI Coding Efficiency: efficiency/ai-coding-efficiency.md
+    - Prompt Engineering: efficiency/prompt-engineering.md
+  - Learning:
+    - Capability Levels: learning/capability-levels.md
+  - Governance:
+    - Language Rules Map: governance/MAP.md
+    - Coding Standards: governance/coding-standards.md
+    - Security Standards: governance/security-standards.md
+    - Community Operations: governance/community-operations-plan.md
+    - Contributor Incentive: governance/contributor-incentive-plan.md
+  - Agent Development:
+    - Prompt Template: agent-dev/agent-prompt-template.md
+    - Context Management: agent-dev/context-management.md
+    - Quality Gates: agent-dev/quality-gates.md
+  - ADRs (11):
+    - ADR Index: adr/ADR.md
+    - "001: Language Rules Arch": adr/001-language-rules-engine-architecture.md
+    - "001b: Enhanced Git Analyzer": adr/001-enhanced-git-analyzer.md
+    - "002: Knowledge First Restructure": adr/002-knowledge-first-restructure.md
+    - "002b: Refactor Validation": adr/002-refactor-validate-language-rules.md
+    - "003: Quality Gate System": adr/003-quality-gate-system.md
+    - "004: Agent Collaboration": adr/004-agent-collaboration-model.md
+    - "005: AI Navigation": adr/005-ai-navigation-system.md
+    - "007: M4 Navigation": adr/007-m4-ai-navigation-design.md
+    - "008: Production Workflow": adr/008-production-grade-workflow.md
+    - "009: CI/CD Optimization": adr/009-ci-cd-optimization-security.md
+  - Architecture:
+    - Rule Loading: architecture/rule-loading.md
+    - Infinite Language Support: architecture/infinite-language-support.md
+    - LLM Rule Generation: architecture/llm-rule-generation.md
+  - Monitoring:
+    - AI Audit: monitoring/ai-audit-live.md
+  - Tools:
+    - IDE Best Practices: tools/ide-best-practices.md
+    - Tool Matrix: tools/ai-tool-matrix.md
+  - API Reference:
+    - Rules Engine: api/rules-engine.md
+    - CLI: api/cli.md
+  - Meta:
+    - MOC: MOC.md
+    - ROADMAP: ROADMAP.md
+    - NEXT STEPS: NEXT_STEPS.md

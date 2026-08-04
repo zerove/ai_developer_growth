@@ -1,0 +1,6 @@
+[package]
+name = "ai-language-rules"
+description = "AI-powered language-specific code quality rules for 26+ languages with auto-fix, health scoring, and SARIF output"
+version = "2.0.0"
+authors = ["Jcode <https://github.com/1jehuang/jcode>"]
+repository = "https://github.com/1jehuang/jcode"

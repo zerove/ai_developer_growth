@@ -1,0 +1,10 @@
+#!/bin/bash
+# Pre-commit hook for ai_developer_growth
+# Runs incremental checks on staged files before allowing commit.
+# Install: cp tools/scripts/pre-commit .git/hooks/pre-commit && chmod +x .git/hooks/pre-commit
+# Or: ln -sf ../../tools/scripts/pre-commit .git/hooks/pre-commit
+
+set -e
+
+echo "Running pre-commit checks..."
+python tools/scripts/hooks_runner.py pre-commit

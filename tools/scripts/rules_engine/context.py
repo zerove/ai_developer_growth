@@ -1,0 +1,138 @@
+"""上下文感知模块 — 根据文件角色调整规则严重度。
+
+文件角色通过路径模式声明，规则根据角色自动升降严重度。
+"""
+
+from __future__ import annotations
+
+from pathlib import Path
+
+# ── 内置角色定义 ──────────────────────────────
+# key: 角色名, value: (描述, 严重度调整值)
+# 调整值: +1=升一级 error→更严格, -1=降一级, -2=降两级
+ROLES: dict[str, tuple[str, int]] = {
+    "test": ("测试文件,降低规则严格度", -1),
+    "prototype": ("原型/一次性脚本,大幅降低严格度", -2),
+    "legacy": ("遗留代码,可警告但不阻止", -1),
+    "production": ("核心生产代码,提高严格度", +1),
+    "config": ("配置/模板文件,跳过大部分检查", -2),
+    "demo": ("示例/演示代码,降低严格度", -2),
+}
+
+# 默认路径 → 角色映射 (可通过 .adg/config.yml 覆盖)
+DEFAULT_MARKERS: dict[str, str] = {
+    # 测试
+    "tests/": "test",
+    "test/": "test",
+    "__tests__/": "test",
+    "spec/": "test",
+    "*_test.go": "test",
+    "*.test.ts": "test",
+    "*.test.js": "test",
+    "*_test.py": "test",
+    # 原型/一次性
+    "scripts/": "prototype",
+    "bin/": "prototype",
+    "tools/": "prototype",
+    "archive/": "prototype",
+    "scratch/": "prototype",
+    "draft/": "prototype",
+    # 遗留
+    "legacy/": "legacy",
+    "deprecated/": "legacy",
+    "old/": "legacy",
+    "v1/": "legacy",
+    "backward/": "legacy",
+    # 配置
+    "config/": "config",
+    "*.config.js": "config",
+    "*.yml": "config",
+    "*.yaml": "config",
+    "*.json": "config",
+    "Dockerfile": "config",
+    # 演示
+    "examples/": "demo",
+    "demo/": "demo",
+    "samples/": "demo",
+}
+
+# 严重度顺序
+SEVERITY_ORDER = {"error": 3, "warning": 2, "info": 1, "off": 0}
+
+
+def detect_file_role(filepath: Path, marker_overrides: dict[str, str] | None = None) -> str | None:
+    """检测文件角色。
+
+    Args:
+        filepath: 文件路径。
+        marker_overrides: 用户自定义覆盖默认路径映射。
+
+    Returns:
+        角色名, 如 'test', 'production'。
+    """
+    markers = dict(DEFAULT_MARKERS)
+    if marker_overrides:
+        markers.update(marker_overrides)
+
+    rel_path_str = str(filepath.as_posix())
+    filename = filepath.name
+
+    for pattern, role in markers.items():
+        if "*" in pattern:
+            # 简单 glob 匹配
+            parts = pattern.split("*")
+            if len(parts) == 2:
+                if rel_path_str.startswith(parts[0]) and rel_path_str.endswith(parts[1]):
+                    return role
+                if filename.startswith(parts[0]) and filename.endswith(parts[1]):
+                    return role
+        elif pattern in rel_path_str:
+            return role
+
+    return None
+
+
+def adjust_severity(original_severity: str, file_role: str | None) -> str:
+    """根据文件角色调整严重度。
+
+    Args:
+        original_severity: 原始严重度 (error/warning/info)
+        file_role: 文件角色
+
+    Returns:
+        调整后的严重度
+    """
+    if not file_role or file_role not in ROLES:
+        return original_severity
+
+    _desc, adjustment = ROLES[file_role]
+    current = SEVERITY_ORDER.get(original_severity, 2)
+    new_level = max(1, min(3, current + adjustment))  # 下限为info(1), 不降到off
+
+    # 映射数字回字符串
+    reverse = {v: k for k, v in SEVERITY_ORDER.items()}
+    adjusted = reverse.get(new_level, original_severity)
+
+    # 不允许从 info 升级到 error (但可以从 error 降级)
+    if adjusted == "error" and original_severity != "error":
+        return original_severity
+
+    return adjusted
+
+
+def load_role_config(config_path: Path) -> dict[str, str]:
+    """从配置文件加载角色映射。
+
+    配置文件格式: .adg/config.yml 中的 context.markers 字段。
+    """
+    try:
+        import yaml
+
+        if config_path.exists():
+            data = yaml.safe_load(config_path.read_text())
+            markers = data.get("context", {}).get("markers", {})
+            if isinstance(markers, dict):
+                return markers
+    except FileNotFoundError:
+        _ = None  # log file optional
+    return {}

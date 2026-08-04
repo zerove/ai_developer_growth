@@ -1,0 +1,106 @@
+# ── ADG Code Quality Scan ──────────────────────────────────
+# Runs on every push/PR to detect anti-patterns, security issues.
+# Requires: pip install ai-dev-framework
+# ───────────────────────────────────────────────────────────
+
+name: ADG Code Quality Scan
+
+on:
+  push:
+    branches: [main, master, develop]
+  pull_request:
+    branches: [main, master, develop]
+
+permissions:
+  contents: read
+  pull-requests: write
+  checks: write
+
+jobs:
+  scan:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+
+      - name: Install ADG
+        run: |
+          pip install ai-dev-framework
+
+      - name: Verify adg-dev installation
+        run: |
+          adg-dev --version
+          adg-dev scan --help
+
+      - name: Run ADG scan on changed files
+        id: scan
+        run: |
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            CHANGED=$(git diff --name-only --diff-filter=ACM "${{ github.event.pull_request.base.sha }}" "${{ github.sha }}" -- '*.py' '*.js' '*.ts' '*.rs' '*.go' '*.java' '*.rb' '*.php' '*.swift' '*.cpp' '*.cs' '*.kt' || true)
+          else
+            CHANGED=$(git diff --name-only --diff-filter=ACM "${{ github.event.before }}" "${{ github.sha }}" -- '*.py' '*.js' '*.ts' '*.rs' '*.go' '*.java' '*.rb' '*.php' '*.swift' '*.cpp' '*.cs' '*.kt' || true)
+          fi
+
+          if [ -z "$CHANGED" ]; then
+            echo "No code files changed. Skipping."
+            exit 0
+          fi
+
+          echo "$CHANGED" > /tmp/changed_files.txt
+          echo "files<<EOF" >> $GITHUB_OUTPUT
+          cat /tmp/changed_files.txt >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+
+      - name: Run adg-dev scan
+        if: steps.scan.outputs.files != ''
+        id: adg
+        continue-on-error: true
+        run: |
+          FILES=$(cat /tmp/changed_files.txt | tr '\n' ' ')
+          adg-dev scan $FILES --json > /tmp/adg_results.json 2>&1 || true
+          echo "report<<EOF" >> $GITHUB_OUTPUT
+          cat /tmp/adg_results.json >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+
+      - name: Annotate PR
+        if: github.event_name == 'pull_request' && steps.adg.outputs.report != ''
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const report = JSON.parse(fs.readFileSync('/tmp/adg_results.json', 'utf8'));
+            let body = '## 🔍 ADG Scan Results\n\n';
+            let hasIssues = false;
+
+            for (const file of report) {
+              if (file.issues && file.issues.length > 0) {
+                hasIssues = true;
+                body += `### ❌ ${file.file} (${file.language})\n`;
+                body += `| Line | Severity | Category | Message |\n`;
+                body += `|------|----------|----------|--------|\n`;
+                for (const issue of file.issues.slice(0, 20)) {
+                  const sevIcon = issue.severity === 'error' ? '🔴' : issue.severity === 'warning' ? '🟡' : 'ℹ️';
+                  body += `| ${issue.line} | ${sevIcon} ${issue.severity} | ${issue.category} | ${issue.message} |\n`;
+                }
+                if (file.issues.length > 20) {
+                  body += `| ... | ... | ... | *+${file.issues.length - 20} more* |\n`;
+                }
+                body += '\n';
+              }
+            }
+
+            if (!hasIssues) {
+              body += '✅ No issues found.\n';
+            }
+
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              body: body,
+            });

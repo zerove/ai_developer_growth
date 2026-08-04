@@ -1,0 +1,123 @@
+# Vue Framework Anti-Pattern Rules - Machine-Readable Configuration
+
+framework: vue
+language: typescript
+config_version: '1.0'
+anti_patterns:
+- id: vue-mutate-props
+  name: Mutating props directly
+  severity: error
+  category: reactivity
+  pattern: 'this\.\$props\.\w+\s*=|props\.\w+\s*=\s*(?!.*emit)'
+  message: 'Never mutate props directly - use emit or computed with local state'
+  fix_hint: 'Use emit("update:propName", newValue) or create a local computed ref'
+- id: vue-watch-broad
+  name: Watching too many reactive properties at once
+  severity: warning
+  category: performance
+  pattern: "watch\\s*\\(\\s*\\(\\s*\\)\\s*=>\\s*\\{"
+  message: 'Watching entire objects or too many props causes unnecessary re-renders'
+  fix_hint: 'Watch specific properties: watch(() => props.specificProp, handler)'
+- id: vue-vfor-key
+  name: Missing key in v-for
+  severity: error
+  category: rendering
+  pattern: 'v-for\s*=\s*"[^"]*\s+in\s+[^"]*"'
+  message: 'v-for must have a :key binding for efficient DOM patching'
+  fix_hint: 'Add :key="item.id" to each v-for element'
+- id: vue-heavy-inline-styles
+  name: Excessive inline styles
+  severity: warning
+  category: performance
+  pattern: ':style\s*=\s*\{\s*\{'
+  message: 'Heavy inline styles bypass Vue CSS optimization and increase render cost'
+  fix_hint: 'Use CSS classes or scoped <style> blocks instead of inline styles'
+- id: vue-async-component-error
+  name: Async component without error handling
+  severity: warning
+  category: error_handling
+  pattern: 'defineAsyncComponent\s*\(|new\s+Promise\s*\(\s*\(\s*resolve\s*,\s*reject\)'
+  message: 'Async components should handle loading and error states'
+  fix_hint: 'Use defineAsyncComponent({ loader, loadingComponent, errorComponent })'
+- id: vue-vif-vshow-misuse
+  name: v-if instead of v-show for frequently toggled content
+  severity: info
+  category: performance
+  pattern: 'v-if\s*=\s*"[^"]*(?:open|visible|show|toggle|display)[^"]*"'
+  message: 'Frequently toggled content should use v-show (CSS toggle) over v-if (DOM re-render)'
+  fix_hint: 'Use v-show for toggle scenarios, v-if for initial conditional render'
+- id: vue-missing-computed
+  name: Missing computed property for derived state
+  severity: warning
+  category: performance
+  pattern: "return\\s+.*\\bthis\\.\\w+\\.\\w+.*\\+.*this\\.\\w+\\.\\w+"
+  message: 'Derived calculations in templates/methods should use computed properties'
+  fix_hint: 'Move to computed: computed: { fullName() { return this.first + " " + this.last } }'
+- id: vue-deep-watcher
+  name: Deep watcher on large objects
+  severity: warning
+  category: performance
+  pattern: "watch\\s*:\\s*\\{[\\s\\S]*deep\\s*:\\s*true"
+  message: 'Deep watchers traverse entire object trees and are expensive'
+  fix_hint: 'Watch specific nested properties or use shallowRef for large data'
+- id: vue-missing-vmodel
+  name: Manual input binding instead of v-model
+  severity: info
+  category: code_quality
+  pattern: ':value\s*=\s*"\w+"\s+@input\s*=\s*"\w+\s*=\s*\$event'
+  message: 'Manual value/input binding should use v-model directive'
+  fix_hint: 'Use v-model="propertyName" for two-way binding'
+- id: vue-mixins-deprecated
+  name: Mixins usage (deprecated in Vue 3)
+  severity: warning
+  category: deprecated
+  pattern: 'mixins\s*:\s*\['
+  message: 'Mixins are deprecated in Vue 3 - use Composition API or provide/inject'
+  fix_hint: 'Refactor to <script setup> with composables or use provide/inject'
+- id: vue-no-template-root
+  name: Multiple root elements without explicit wrapper
+  severity: info
+  category: architecture
+  pattern: '<template>\s*\n\s*<\w+'
+  message: 'Vue 3 supports fragments but explicit wrappers improve readability'
+  fix_hint: 'Consider wrapping in a single root element or <template fragment>'
+- id: vue-vuex-mutation
+  name: Direct Vuex state mutation
+  severity: error
+  category: state_management
+  pattern: 'this\.\$store\.state\.\w+\s*='
+  message: 'Never mutate Vuex state directly - use mutations or actions'
+  fix_hint: 'Use this.$store.commit("MUTATION_NAME", payload) or dispatch actions'
+
+naming:
+  file:
+    pattern: '^[A-Z][a-zA-Z0-9]*\.(vue|ts)$'
+    message: 'Vue component files should use PascalCase'
+  function:
+    pattern: '^[a-z][a-zA-Z0-9]*$'
+    message: 'Functions should use camelCase'
+  component:
+    pattern: '^[A-Z][a-zA-Z0-9]*$'
+    message: 'Components should use PascalCase'
+  constant:
+    pattern: '^[A-Z][A-Z0-9_]*$'
+    message: 'Constants should use UPPER_SNAKE_CASE'
+
+thresholds:
+  max_function_length: 50
+  max_file_length: 400
+  max_line_length: 100
+  max_nesting_depth: 4
+  max_function_params: 5
+  max_cyclomatic_complexity: 10
+
+tooling:
+  linter: eslint
+  formatter: prettier
+  type_checker: vue-tsc
+  test_runner: vitest
+  config_files:
+    - .eslintrc.json
+    - tsconfig.json
+    - vite.config.ts
+    - .prettierrc

@@ -1,0 +1,260 @@
+language: typescript
+version: '>=5.0'
+config_version: '1.0'
+anti_patterns:
+- id: ts-any-type
+  name: Use of any type
+  severity: error
+  category: type_safety
+  pattern: :\s*any\b|as\s+any\b
+  message: any disables TypeScript type checking
+  fix_hint: Use unknown and narrow with type guards, or define a proper type
+  test_cases:
+  - code: 'const x: any = {}'
+    should_match: true
+  - code: data as any
+    should_match: true
+  - code: 'const x: string = ""'
+    should_match: false
+- id: ts-unsafe-non-null
+  name: Non-null assertion
+  severity: warning
+  category: type_safety
+  pattern: \w+!
+  message: Non-null assertions (!) bypass null checks
+  fix_hint: Use optional chaining (?.) or proper null checks
+- id: ts-empty-catch
+  name: Empty catch block
+  severity: error
+  category: error_handling
+  pattern: catch\s*(?:\([^)]*\))?\s*\{\s*\}
+  message: Never silently ignore caught errors
+  fix_hint: 'At minimum: console.error(error) or re-throw'
+- id: ts-inner-html
+  name: innerHTML usage
+  severity: error
+  category: security
+  pattern: \.innerHTML\s*=
+  message: innerHTML enables XSS attacks
+  fix_hint: Use textContent, or sanitize with DOMPurify
+- id: ts-eval
+  name: eval() usage
+  severity: error
+  category: security
+  pattern: \beval\s*\(
+  message: eval() is a security risk
+  fix_hint: Use JSON.parse() for data
+- id: ts-console-log
+  name: console.log in production
+  severity: info
+  category: code_quality
+  pattern: console\.(log|debug|info)\s*\(
+  message: Remove console.log from production code
+  fix_hint: Use a proper logging library
+- id: ts-var-declaration
+  name: var declaration
+  severity: warning
+  category: code_quality
+  pattern: ^\s*var\s+
+  message: var has function scope - use const or let
+  fix_hint: Use const by default, let when reassignment is needed
+  test_cases:
+  - code: var x = 1
+    should_match: true
+  - code: '    var y = 2'
+    should_match: true
+  - code: const x = 1
+    should_match: false
+- id: ts-require-import
+  name: require() instead of import
+  severity: warning
+  category: code_quality
+  pattern: require\s*\(
+  message: Use ES module imports instead of CommonJS require()
+  fix_hint: 'Convert to: import { x } from ''./module'''
+- id: ts-skip-test
+  name: Skipped test
+  severity: info
+  category: testing
+  pattern: (?:it|test|describe)\.skip\s*\(
+  message: Skipped tests reduce coverage
+  fix_hint: Fix the test or document why it is skipped
+- id: ts-no-op-test
+  name: Empty test body
+  severity: error
+  category: testing
+  pattern: (?:it|test)\s*\((?:[^()]|\([^()]*\))*\)\s*\{\s*\}
+  message: Test with empty body always passes
+  fix_hint: Add expect() assertions or delete the test
+- id: ts-missing-strict-null
+  name: Missing strict null checks configuration
+  severity: warning
+  category: type_safety
+  pattern: strictNullChecks\s*:\s*false
+  message: strictNullChecks should be enabled to catch null/undefined errors at compile
+    time
+  fix_hint: 'Set "strictNullChecks": true in tsconfig.json'
+- id: ts-enum-prefer-union
+  name: Numeric/string enum instead of union type
+  severity: info
+  category: type_safety
+  pattern: enum\s+\w+\s*\{
+  message: Enums add runtime overhead - prefer union types for value-only enumerations
+  fix_hint: Use type Status = "active" | "inactive" instead of enum Status { Active,
+    Inactive }
+- id: ts-missing-return-type
+  name: Missing explicit return type on exported function
+  severity: info
+  category: type_safety
+  pattern: (?:export|export\s+default)\s+(?:async\s+)?function\s+\w+\s*\([^)]*\)\s*\{
+  message: Exported functions should have explicit return types
+  fix_hint: 'Add return type: export function greet(name: string): string'
+- id: ts-void-operator
+  name: void operator usage
+  severity: info
+  category: code_quality
+  pattern: \bvoid\s+\w+
+  message: void operator discards return value and can hide errors
+  fix_hint: Handle the return value explicitly or use _ prefix for intentionally unused
+    values
+- id: ts-any-escape
+  name: Type escape via @ts-ignore or @ts-expect-error
+  severity: error
+  category: type_safety
+  pattern: '@ts-ignore|@ts-expect-error'
+  message: '@ts-ignore and @ts-expect-error suppress TypeScript errors without fixing
+    them'
+  fix_hint: Fix the underlying type error instead of suppressing it
+- id: ts-non-null-abuse
+  name: Chained non-null assertions
+  severity: warning
+  category: type_safety
+  pattern: \w+![.\[]\w+!
+  message: Chained non-null assertions (!) bypass multiple null checks unsafely
+  fix_hint: Use optional chaining (?.) or validate the entire chain
+- id: ts-enum-any-cast
+  name: Casting to any via bracket notation
+  severity: warning
+  category: type_safety
+  pattern: <any>|\bas\s+any\b|\bany\[\]
+  message: Casting to any defeats TypeScript's type system
+  fix_hint: Use unknown with type guards, or define a proper type
+- id: ty-log-sensitive
+  name: Logging sensitive data
+  severity: error
+  category: security
+  pattern: log(?:ger)?\.(?:info|debug|warn|error)\s*\(.*(?:password|secret|token|credential|api_key)
+  message: Never log sensitive data (passwords, tokens, secrets)
+  fix_hint: Use log filtering or redact sensitive fields
+- id: ty-log-print
+  name: Using print for logging
+  severity: warning
+  category: logging
+  pattern: ^\s*print\s*\(
+  message: Use structured logging instead of print statements in production
+  fix_hint: Use logging framework (loguru, structlog, etc.)
+- id: ty-file-leak
+  name: Unclosed file handle
+  severity: error
+  category: resource_management
+  pattern: (?:open|fopen)\s*\([^)]*\)\s*(?!.*\b(with|using|close|finally|defer)\b)
+  message: File handles must be closed properly to avoid resource leaks
+  fix_hint: Use with/using/defer block or ensure close() in finally
+- id: ty-connection-leak
+  name: Unclosed connection
+  severity: error
+  category: resource_management
+  pattern: (?:connect|new connection|getConnection)\s*\([^)]*\)\s*(?!.*\b(with|using|close|finally|defer)\b)
+  message: Database/network connections must be released after use
+  fix_hint: Use connection pool or ensure close() in finally
+- id: ty-missing-await
+  name: Missing await on async call
+  severity: error
+  category: concurrency
+  pattern: (?:async\s+def|async\s+fn)\s+\w+\s*\([^)]*\)\s*\{?\s*$
+  message: Async function called without await may cause race conditions
+  fix_hint: Add await/async keyword or handle the future properly
+- id: ty-shared-mutable
+  name: Shared mutable state without sync
+  severity: warning
+  category: concurrency
+  pattern: (?:global|static|thread_local)\s+\w+(?:\s*=\s*[^;]*)?\s*[;]?$
+  message: Shared mutable state without synchronization can cause race conditions
+  fix_hint: Use mutex/lock/atomic or thread-local storage
+- id: ty-large-alloc-loop
+  name: Large allocation in loop
+  severity: warning
+  category: performance
+  pattern: (?:for|while|loop)\s*\([^)]*\)\s*\{?\s*[^}]*\b(?:append|push|concat|new\s+(?:Array|List|StringBuilder))\b
+  message: Repeated allocations inside loops impact performance
+  fix_hint: Pre-allocate or use builder pattern outside the loop
+- id: ty-n-plus-one
+  name: Potential N+1 query pattern
+  severity: warning
+  category: performance
+  pattern: (?:for|while|loop|each|map)\s*[^)]*\)?\s*\{?[^}]*\b(?:query|find|get|fetch|load)\b[^}]*\}
+  message: Query inside a loop may cause N+1 performance problem
+  fix_hint: Use batch loading, eager loading, or JOIN query
+- id: ty-cors-allow-all
+  name: Overly permissive CORS
+  severity: error
+  category: security
+  pattern: (?:Access-Control-Allow-Origin|origins?)\s*[=:]\s*["\']?\*["\']?
+  message: Wildcard CORS exposes API to any origin
+  fix_hint: Restrict CORS to specific allowed origins
+- id: ty-no-input-validation
+  name: Missing input validation on API
+  severity: warning
+  category: security
+  pattern: (?:@\w+Mapping|def\s+\w+\([^)]*request|route|endpoint|api_view)
+  message: API endpoints should validate all input parameters
+  fix_hint: Add input validation or use schema validation library
+- id: ty-hardcoded-origin
+  name: Hardcoded origin/domain
+  severity: warning
+  category: config
+  pattern: (?:allowed_origins|trusted_origins|ALLOWED_HOSTS)\s*[=:]\s*\["\'\]https?://
+  message: Hardcoded origins in config should be environment variables
+  fix_hint: Use environment variables for allowed origins
+- id: ty-exception-leak
+  name: Exception message leaks internal info
+  severity: warning
+  category: security
+  pattern: (?:print|log|logger)\s*\(.*e(?:rror)?\.(?:message|to_String|getMessage)\s*\)
+  message: Exception messages may leak internal implementation details
+  fix_hint: Log a generic message, add exception details separately
+naming:
+  file:
+    pattern: ^[a-z][a-z0-9-]*\.(ts|tsx)$
+    message: TypeScript files should use kebab-case
+  function:
+    pattern: ^[a-z][a-zA-Z0-9]*$
+    exceptions:
+    - useCallback
+    - useState
+    message: Functions should use camelCase
+  class:
+    pattern: ^[A-Z][a-zA-Z0-9]*$
+    message: Classes should use PascalCase
+  interface:
+    pattern: ^I[A-Z][a-zA-Z0-9]*$
+    message: Interfaces should use PascalCase
+  constant:
+    pattern: ^[A-Z][A-Z0-9_]*$
+    message: Constants should use UPPER_SNAKE_CASE
+thresholds:
+  max_function_length: 40
+  max_file_length: 400
+  max_line_length: 100
+  max_nesting_depth: 4
+  max_function_params: 5
+  max_cyclomatic_complexity: 10
+tooling:
+  linter: eslint
+  formatter: prettier
+  type_checker: tsc
+  test_runner: vitest
+  config_files:
+  - .eslintrc.json
+  - tsconfig.json
+  - .prettierrc

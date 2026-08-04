@@ -1,0 +1,294 @@
+language: java
+version: '>=17'
+config_version: '1.0'
+anti_patterns:
+- id: java-catch-all
+  name: Catching generic Exception
+  severity: error
+  category: error_handling
+  pattern: catch\s*\(\s*Exception\s+\w+\s*\)
+  message: Catching generic Exception hides specific errors
+  fix_hint: Catch specific exception types
+- id: java-return-null
+  name: Returning null
+  severity: warning
+  category: error_handling
+  pattern: return\s+null\s*;
+  message: Returning null causes NullPointerExceptions
+  fix_hint: Use Optional<T>, empty collections, or throw
+- id: java-system-exit
+  name: System.exit() in library
+  severity: error
+  category: error_handling
+  pattern: System\.exit\s*\(
+  message: System.exit() kills the JVM - return error instead
+  fix_hint: Return error code or throw exception
+- id: java-eval-runtime
+  name: Runtime.exec()
+  severity: error
+  category: security
+  pattern: Runtime\.getRuntime\(\)\.exec\(|ProcessBuilder
+  message: Process execution can be exploited
+  fix_hint: Validate inputs and use whitelists
+- id: java-sql-string
+  name: SQL injection via string concat
+  severity: error
+  category: security
+  pattern: '".*SELECT.*"\s*\+|".*INSERT.*"\s*\+|".*UPDATE.*"\s*\+|".*DELETE.*"\s*\+'
+  message: String concatenation in SQL enables injection
+  fix_hint: Use PreparedStatement with parameterized queries
+- id: java-print-stacktrace
+  name: printStackTrace() usage
+  severity: warning
+  category: code_quality
+  pattern: \.printStackTrace\s*\(
+  message: printStackTrace() goes to stderr - use logging
+  fix_hint: Use logger.error("msg", exception)
+- id: java-system-out
+  name: System.out.println()
+  severity: info
+  category: code_quality
+  pattern: System\.(out|err)\.print
+  message: Use logging framework instead of System.out
+  fix_hint: Use SLF4J or java.util.logging
+- id: java-finalizer
+  name: finalize() method
+  severity: error
+  category: code_quality
+  pattern: protected\s+void\s+finalize\s*\(
+  message: finalize() is deprecated and unreliable
+  fix_hint: Use try-with-resources or Cleaner API
+- id: java-thread-sleep
+  name: Thread.sleep in production
+  severity: warning
+  category: code_quality
+  pattern: Thread\.sleep\s*\(
+  message: Thread.sleep blocks the thread
+  fix_hint: Use scheduled executors or reactive operators
+- id: java-new-hashmap
+  name: Raw HashMap instantiation
+  severity: info
+  category: type_safety
+  pattern: new\s+HashMap\s*\(\s*\)
+  message: Consider using Map.of() or Map.copyOf() for immutable maps
+  fix_hint: Use Map.of() for small fixed maps
+- id: java-raw-types
+  name: Raw generic type usage
+  severity: warning
+  category: type_safety
+  pattern: (?:List|Map|Set|ArrayList|HashMap|HashSet|Iterator)\s+\w+\s*[=;,)]
+  message: Raw types bypass generic type checking and cause runtime ClassCastExceptions
+  fix_hint: 'Use parameterized types: List<String> instead of List'
+- id: java-missing-final
+  name: Missing final on constants and parameters
+  severity: info
+  category: code_quality
+  pattern: private\s+static\s+(?!final)\w+\s+[A-Z_]+\s*=
+  message: Constants and immutable parameters should be declared final
+  fix_hint: Add 'final' to constants, parameters, and fields that should not be reassigned
+- id: java-synchronized-method
+  name: Synchronized on entire method
+  severity: warning
+  category: concurrency
+  pattern: public\s+synchronized\s+
+  message: Synchronizing entire methods reduces concurrency and can cause contention
+  fix_hint: Use synchronized blocks on specific fields or ReentrantLock for finer
+    control
+- id: java-string-concat-loop
+  name: String concatenation in loop
+  severity: warning
+  category: performance
+  pattern: for\s*\([^)]*\)\s*\{[\s\S]*?\+\s*"[^"]*"|for\s*\([^)]*\)\s*\{[\s\S]*?\+=\s*"
+  message: String concatenation with + in loops creates many temporary String objects
+  fix_hint: Use StringBuilder or StringJoiner for efficient string building
+- id: java-missing-override
+  name: Missing @Override annotation
+  severity: info
+  category: code_quality
+  pattern: public\s+(?:String|boolean|int|void|long|double|float)\s+(?:toString|equals|hashCode|compareTo)\s*\(
+  message: Methods overriding superclass/interface methods should use @Override
+  fix_hint: Add @Override annotation to make override intent explicit
+- id: java-catch-throwable
+  name: Catching Throwable instead of Exception
+  severity: error
+  category: error_handling
+  pattern: catch\s*\(\s*Throwable\s+\w+\s*\)
+  message: Catching Throwable includes Errors (OutOfMemoryError, StackOverflowError)
+    which should not be caught
+  fix_hint: Catch Exception for recoverable errors, or catch specific exception types
+- id: java-system-out-usage
+  name: System.out/err usage in production code
+  severity: warning
+  category: code_quality
+  pattern: System\.(out|err)\.(print|println)\s*\(
+  message: System.out is not configurable, has no log levels, and is not async
+  fix_hint: 'Use SLF4J: logger.info("message") or java.util.logging'
+- id: ja-log-sensitive
+  name: Logging sensitive data
+  severity: error
+  category: security
+  pattern: log(?:ger)?\.(?:info|debug|warn|error)\s*\(.*(?:password|secret|token|credential|api_key)
+  message: Never log sensitive data (passwords, tokens, secrets)
+  fix_hint: Use log filtering or redact sensitive fields
+- id: ja-log-print
+  name: Using print for logging
+  severity: warning
+  category: logging
+  pattern: ^\s*print\s*\(
+  message: Use structured logging instead of print statements in production
+  fix_hint: Use logging framework (loguru, structlog, etc.)
+- id: ja-file-leak
+  name: Unclosed file handle
+  severity: error
+  category: resource_management
+  pattern: (?:open|fopen)\s*\([^)]*\)\s*(?!.*\b(with|using|close|finally|defer)\b)
+  message: File handles must be closed properly to avoid resource leaks
+  fix_hint: Use with/using/defer block or ensure close() in finally
+- id: ja-connection-leak
+  name: Unclosed connection
+  severity: error
+  category: resource_management
+  pattern: (?:connect|new connection|getConnection)\s*\([^)]*\)\s*(?!.*\b(with|using|close|finally|defer)\b)
+  message: Database/network connections must be released after use
+  fix_hint: Use connection pool or ensure close() in finally
+- id: ja-missing-await
+  name: Missing await on async call
+  severity: error
+  category: concurrency
+  pattern: (?:async\s+def|async\s+fn)\s+\w+\s*\([^)]*\)\s*\{?\s*$
+  message: Async function called without await may cause race conditions
+  fix_hint: Add await/async keyword or handle the future properly
+- id: ja-shared-mutable
+  name: Shared mutable state without sync
+  severity: warning
+  category: concurrency
+  pattern: (?:global|static|thread_local)\s+\w+(?:\s*=\s*[^;]*)?\s*[;]?$
+  message: Shared mutable state without synchronization can cause race conditions
+  fix_hint: Use mutex/lock/atomic or thread-local storage
+- id: ja-large-alloc-loop
+  name: Large allocation in loop
+  severity: warning
+  category: performance
+  pattern: (?:for|while|loop)\s*\([^)]*\)\s*\{?\s*[^}]*\b(?:append|push|concat|new\s+(?:Array|List|StringBuilder))\b
+  message: Repeated allocations inside loops impact performance
+  fix_hint: Pre-allocate or use builder pattern outside the loop
+- id: ja-n-plus-one
+  name: Potential N+1 query pattern
+  severity: warning
+  category: performance
+  pattern: (?:for|while|loop|each|map)\s*[^)]*\)?\s*\{?[^}]*\b(?:query|find|get|fetch|load)\b[^}]*\}
+  message: Query inside a loop may cause N+1 performance problem
+  fix_hint: Use batch loading, eager loading, or JOIN query
+- id: ja-cors-allow-all
+  name: Overly permissive CORS
+  severity: error
+  category: security
+  pattern: (?:Access-Control-Allow-Origin|origins?)\s*[=:]\s*["\']?\*["\']?
+  message: Wildcard CORS exposes API to any origin
+  fix_hint: Restrict CORS to specific allowed origins
+- id: ja-no-input-validation
+  name: Missing input validation on API
+  severity: warning
+  category: security
+  pattern: (?:@\w+Mapping|def\s+\w+\([^)]*request|route|endpoint|api_view)
+  message: API endpoints should validate all input parameters
+  fix_hint: Add input validation or use schema validation library
+- id: ja-hardcoded-origin
+  name: Hardcoded origin/domain
+  severity: warning
+  category: config
+  pattern: (?:allowed_origins|trusted_origins|ALLOWED_HOSTS)\s*[=:]\s*\["\'\]https?://
+  message: Hardcoded origins in config should be environment variables
+  fix_hint: Use environment variables for allowed origins
+- id: ja-exception-leak
+  name: Exception message leaks internal info
+  severity: warning
+  category: security
+  pattern: (?:print|log|logger)\s*\(.*e(?:rror)?\.(?:message|to_String|getMessage)\s*\)
+  message: Exception messages may leak internal implementation details
+  fix_hint: Log a generic message, add exception details separately
+- id: ja-hardcoded-secret-in-ci
+  name: Hardcoded secret in CI config
+  severity: error
+  category: security
+  pattern: (?:GITHUB_TOKEN|API_KEY|SECRET|PASSWORD)\s*[=:]\s*[\"'][^\"']+[\"']
+  message: CI/CD secrets should use GitHub Secrets or vault, not hardcoded strings
+  fix_hint: Use ${{ secrets.MY_SECRET }} in GitHub Actions
+- id: ja-ci-disabled-check
+  name: Disabled CI check
+  severity: warning
+  category: ci_cd
+  pattern: continue-on-error:\s*true
+  message: CI checks with continue-on-error silently ignore failures
+  fix_hint: Remove continue-on-error or add explicit error handling
+- id: ja-docker-image-latest
+  name: Using :latest tag
+  severity: warning
+  category: ci_cd
+  pattern: FROM\s+\S+:\s*latest\b
+  message: Using :latest tag makes builds non-reproducible
+  fix_hint: Pin to specific version tag
+- id: ja-docker-exposed-port
+  name: Exposed port without healthcheck
+  severity: warning
+  category: ci_cd
+  pattern: EXPOSE\s+\d+
+  message: Exposed ports should have corresponding healthcheck
+  fix_hint: Add HEALTHCHECK instruction
+- id: ja-iac-hardcoded-secret
+  name: Hardcoded secret in IaC
+  severity: error
+  category: security
+  pattern: (?:password|secret_key|access_key)\s*[=:]\s*[\"'][^\"']+[\"']
+  message: Infrastructure secrets should use vault or secret store
+  fix_hint: Use AWS Secrets Manager, HashiCorp Vault, or SOPS
+- id: ja-iac-admin-exposed
+  name: Admin service exposed to internet
+  severity: error
+  category: security
+  pattern: '(?:adminer|phpmyadmin|pgadmin|kibana)\s*:'
+  message: Admin tools should not be publicly accessible
+  fix_hint: Restrict ingress to internal network only
+- id: ja-docker-root-user
+  name: Running as root in container
+  severity: error
+  category: security
+  pattern: FROM\s+\S+\s*(?:AS\s+\w+)?\s*\n(?!.*USER\s)
+  message: Running containers as root is a security risk
+  fix_hint: Add 'USER nobody' or create a non-root user
+- id: ja-pip-audit-missing
+  name: Missing dependency audit
+  severity: warning
+  category: ci_cd
+  pattern: pip install\b(?!.*pip-audit|.*safety)
+  message: Package installation without vulnerability scanning
+  fix_hint: Add 'pip-audit' or 'safety check' after install
+naming:
+  file:
+    pattern: ^[A-Z][a-zA-Z0-9]*\.java$
+    message: Java files should use PascalCase
+  function:
+    pattern: ^[a-z][a-zA-Z0-9]*$
+    message: Java methods should use camelCase
+  class:
+    pattern: ^[A-Z][a-zA-Z0-9]*$
+    message: Java classes should use PascalCase
+  constant:
+    pattern: ^[A-Z][A-Z0-9_]*$
+    message: Java constants should use UPPER_SNAKE_CASE
+  package:
+    pattern: ^[a-z][a-z0-9]*\.([a-z][a-z0-9]*\.)*[a-z][a-z0-9]*$
+    message: Java packages should use lowercase dot-separated
+thresholds:
+  max_function_length: 50
+  max_file_length: 500
+  max_line_length: 120
+  max_nesting_depth: 4
+  max_function_params: 5
+tooling:
+  linter: checkstyle
+  formatter: google-java-format
+  test_runner: junit5
+  config_files:
+  - pom.xml
+  - build.gradle

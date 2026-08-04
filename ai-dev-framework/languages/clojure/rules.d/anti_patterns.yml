@@ -1,0 +1,170 @@
+language: clojure
+version: '>=1.11'
+config_version: '1.0'
+anti_patterns:
+- id: clj-atom
+  name: Overuse of atoms
+  severity: info
+  category: code_quality
+  pattern: \(atom\s+
+  message: Atoms introduce mutable state - prefer pure functions
+  fix_hint: Use pure functions or agents for async updates
+- id: clj-eval
+  name: eval usage
+  severity: error
+  category: security
+  pattern: \(eval\s+
+  message: eval is a security risk
+  fix_hint: Use macros or pre-compiled code
+- id: clj-var
+  name: Dynamic var rebinding
+  severity: warning
+  category: code_quality
+  pattern: \bbinding\s+\[
+  message: Dynamic var binding is implicit state
+  fix_hint: Pass values explicitly through function args
+- id: clj-print
+  name: println in production
+  severity: info
+  category: code_quality
+  pattern: \(println\s+|\(prn\s+|\(print\s+
+  message: Use logging framework instead of println
+  fix_hint: Use tools.logging or timbre
+- id: clj-nil
+  name: nil punning risks
+  severity: info
+  category: type_safety
+  pattern: \(when\s+\w+\s
+  message: nil punning can mask falsy values
+  fix_hint: Use explicit nil checks when needed
+- id: clj-mutable
+  name: Java interop mutation
+  severity: warning
+  category: code_quality
+  pattern: \(\.\s*set[A-Z]
+  message: Java setter interop breaks referential transparency
+  fix_hint: Use atoms or immutable data structures
+- id: clj-thread-first
+  name: Complex thread-first
+  severity: info
+  category: code_quality
+  pattern: \(->>\s+\w+\s+\(
+  message: Complex threading macros reduce readability
+  fix_hint: Break into named functions or use cond-> for conditional threading
+- id: clj-defonce
+  name: defonce for state
+  severity: info
+  category: code_quality
+  pattern: \(defonce\s+
+  message: defonce hides initialization - prefer explicit state
+  fix_hint: Use def with proper initialization or atoms
+- id: cl-hardcoded-config
+  name: Hardcoded configuration
+  severity: warning
+  category: config
+  pattern: (?:url|endpoint|host|port)\s*[=:]\s*["']https?://
+  message: Use configuration for URLs/endpoints
+  fix_hint: Move to config file
+- id: cl-todo
+  name: Unresolved TODO
+  severity: info
+  category: code_quality
+  pattern: TODO|FIXME|HACK|XXX
+  message: Unresolved TODO/FIXME comments
+  fix_hint: Create a ticket or resolve
+- id: cl-deep-nesting
+  name: Deep nesting
+  severity: warning
+  category: complexity
+  pattern: '    (?:if|for|while|case).*\n(?:        (?:if|for|while|case).*\n){2,}'
+  message: Deep nesting reduces readability
+  fix_hint: Extract helper functions
+- id: cl-long-line
+  name: Long line
+  severity: info
+  category: code_quality
+  pattern: ^.{121,}$
+  message: Lines >120 chars
+  fix_hint: Break at logical boundaries
+- id: cl-unsafe-input
+  name: Unvalidated input
+  severity: error
+  category: security
+  pattern: (?:read|gets?|input)\s*\(
+  message: User input must be validated
+  fix_hint: Add input validation
+- id: cl-log-sensitive
+  name: Logging sensitive data
+  severity: error
+  category: security
+  pattern: log(?:ger)?\.(?:info|debug|warn|error)\s*\(.*(?:password|secret|token|credential|api_key)
+  message: Never log sensitive data (passwords, tokens, secrets)
+  fix_hint: Use log filtering or redact sensitive fields
+- id: cl-log-print
+  name: Using print for logging
+  severity: warning
+  category: logging
+  pattern: ^\s*print\s*\(
+  message: Use structured logging instead of print statements in production
+  fix_hint: Use logging framework (loguru, structlog, etc.)
+- id: cl-file-leak
+  name: Unclosed file handle
+  severity: error
+  category: resource_management
+  pattern: (?:open|fopen)\s*\([^)]*\)\s*(?!.*\b(with|using|close|finally|defer)\b)
+  message: File handles must be closed properly to avoid resource leaks
+  fix_hint: Use with/using/defer block or ensure close() in finally
+- id: cl-connection-leak
+  name: Unclosed connection
+  severity: error
+  category: resource_management
+  pattern: (?:connect|new connection|getConnection)\s*\([^)]*\)\s*(?!.*\b(with|using|close|finally|defer)\b)
+  message: Database/network connections must be released after use
+  fix_hint: Use connection pool or ensure close() in finally
+- id: cl-shared-mutable
+  name: Shared mutable state without sync
+  severity: warning
+  category: concurrency
+  pattern: (?:global|static|thread_local)\s+\w+(?:\s*=\s*[^;]*)?\s*[;]?$
+  message: Shared mutable state without synchronization can cause race conditions
+  fix_hint: Use mutex/lock/atomic or thread-local storage
+- id: cl-large-alloc-loop
+  name: Large allocation in loop
+  severity: warning
+  category: performance
+  pattern: (?:for|while|loop)\s*\([^)]*\)\s*\{?\s*[^}]*\b(?:append|push|concat|new\s+(?:Array|List|StringBuilder))\b
+  message: Repeated allocations inside loops impact performance
+  fix_hint: Pre-allocate or use builder pattern outside the loop
+- id: cl-exception-leak
+  name: Exception message leaks internal info
+  severity: warning
+  category: security
+  pattern: (?:print|log|logger)\s*\(.*e(?:rror)?\.(?:message|to_String|getMessage)\s*\)
+  message: Exception messages may leak internal implementation details
+  fix_hint: Log a generic message, add exception details separately
+naming:
+  file:
+    pattern: ^[a-z][a-z0-9_-]*\.clj$
+    message: Clojure files should use kebab-case
+  function:
+    pattern: ^[a-z][a-z0-9_-]*[!?]?$
+    message: Clojure functions should use kebab-case
+  class:
+    pattern: ^[A-Z][a-zA-Z0-9]*$
+    message: Clojure types should use PascalCase
+  constant:
+    pattern: ^[A-Z][A-Z0-9_-]*$
+    message: Clojure constants should use UPPER-KEBAB-CASE
+thresholds:
+  max_function_length: 30
+  max_file_length: 400
+  max_line_length: 120
+  max_nesting_depth: 4
+  max_function_params: 5
+tooling:
+  linter: clj-kondo
+  formatter: cljfmt
+  test_runner: clojure-test
+  config_files:
+  - .clj-kondo/config.edn
+  - deps.edn

@@ -1,0 +1,100 @@
+# Universal Quality Rules — 适用于所有编程语言
+#
+# 这些规则不依赖特定语言特性，而是基于所有编程语言的共性。
+# 即使 ai-dev-framework 没有该语言的专用规则，这些规则仍然生效。
+# 用于 LLM 生成任意语言代码时的质量保障。
+
+config_version: '1.0'
+
+# ── 语言无关的安全规则 ──────────────────────────
+# 适用场景: 任何语言、任何框架
+
+anti_patterns:
+
+# === RESOURCE MANAGEMENT ===
+- id: universal-command-injection
+  name: Command injection risk
+  severity: error
+  category: security
+  pattern: '(?:exec|system|shell_exec|popen|run_cmd|cmd\.Run|Command)\(.*["'']\s*[+&].*["'']'
+  message: String interpolation in shell commands enables injection in all languages
+  fix_hint: Use parameterized command execution or shell library with proper escaping
+
+- id: universal-sql-injection
+  name: SQL injection via string interpolation
+  severity: error
+  category: security
+  pattern: '(?:SELECT|INSERT|UPDATE|DELETE).*["'']\s*[+&f].*\{|query\(.*["'']\s*[+&]|execute\(.*["'']\s*[+&]'
+  message: SQL injection via string concatenation affects all databases and languages
+  fix_hint: Use parameterized query building or ORM methods
+
+# === ERROR HANDLING ===
+- id: universal-swallowed-error
+  name: Silently ignored error return
+  severity: warning
+  category: error_handling
+  pattern: '_(?:\s*,\s*|=)\s*(?:err|error|result)\b'
+  message: Ignoring error return values with _ can hide failures in any language
+  fix_hint: Handle or propagate the error explicitly
+
+# === LOGGING ===
+- id: universal-print-debug
+  name: Debug output in production code
+  severity: info
+  category: logging
+  pattern: '(?:console\.log|print|println|puts|printf|echo|System\.out\.print|Debug\.WriteLine|fmt\.Print|IO\.puts)'
+  message: Debug output statements should not remain in production code
+  fix_hint: Use a proper logging framework with level control
+
+# === CONFIGURATION ===
+- id: universal-hardcoded-url
+  name: Hardcoded URL/endpoint
+  severity: warning
+  category: config
+  pattern: '(?:https?://localhost|https?://127\.0\.0\.1|https?://0\.0\.0\.0)[:/\s]'
+  message: Hardcoded localhost URLs should use configuration values
+  fix_hint: Use environment variables or config files for service endpoints
+
+# === COMPLEXITY ===
+- id: universal-deep-nesting
+  name: Deep nesting
+  severity: warning
+  category: complexity
+  pattern: '(?:if|for|while|loop|match|switch).*(?:if|for|while).*[{:]\s*\n\s+(?:if|for|while|match|switch)'
+  message: Deeply nested control flow reduces readability in any language
+  fix_hint: Extract nested logic into helper functions or use early returns
+
+- id: universal-long-function
+  name: Long function/block
+  severity: info
+  category: complexity
+  pattern: None  # AST-level check, not regex
+  message: Functions over 50 lines are hard to understand in any language
+  fix_hint: Break into smaller functions with clear responsibilities
+
+# === COMPLETENESS ===
+- id: universal-dead-code
+  name: Commented-out code
+  severity: info
+  category: code_quality
+  pattern: '^\s*[/#]{2,}\s*(?:def|function|fn|func|class|if|for|while|import|from|var|let|const)\s'
+  message: Commented-out code should be removed before production
+  fix_hint: Remove dead code (version control preserves history)
+
+# === INPUT VALIDATION ===
+- id: universal-unvalidated-input
+  name: Unvalidated user input
+  severity: warning
+  category: security
+  pattern: '(?:read|gets|input|prompt|getchar)\s*\('
+  message: User input must be validated in any language
+  fix_hint: Validate type, length, range, and sanitize for injection
+
+# === DATA INTEGRITY ===
+- id: universal-missing-close
+  name: Unclosed resource
+  severity: warning
+  category: resource_management
+  pattern: '(?:open|fopen|File\.open|fs\.open|new\s+File)\s*\([^)]*\)\s*(?!.*\b(?:close|with|using|defer|finally|try)\b)'
+  message: Files/system resources must be closed to avoid leaks in any language
+  fix_hint: Use with/using/defer pattern or ensure close in finally

@@ -1,0 +1,17 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "mcp": {
+    "ai-context-sync": {
+      "command": "python",
+      "args": ["-m", "src.mcp_server"],
+      "cwd": "examples/ai-context-sync",
+      "enabled": true
+    },
+    "ai-native-sdlc": {
+      "command": "python",
+      "args": ["-m", "tools.scripts.ai_native_mcp_server"],
+      "cwd": ".",
+      "enabled": true
+    }
+  }
+}

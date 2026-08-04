@@ -1,0 +1,78 @@
+# ADG Custom Fix Engine - Fix patterns
+# Loaded by tools/fix_engine/__init__.py
+
+python:
+  SEC001:
+    description: "Replace eval() with ast.literal_eval()"
+    pattern: "eval\\(([^)]+)\\)"
+    replacement: "ast.literal_eval(\\1)"
+    import_needed: "import ast"
+    import_position: top
+  SEC002:
+    description: "Replace os.system() with subprocess.run()"
+    pattern: "os\\.system\\(([^)]+)\\)"
+    replacement: "subprocess.run(\\1, shell=True, check=True)"
+    import_needed: "import subprocess"
+    import_position: top
+  SEC003:
+    description: "Replace yaml.load() with yaml.safe_load()"
+    pattern: "yaml\\.load\\(([^,)]+)(?:,\\s*[^)]+)?\\)"
+    replacement: "yaml.safe_load(\\1)"
+    import_needed: null
+  CQ001:
+    description: "Replace bare except with except Exception"
+    pattern: "except\\s*:"
+    replacement: "except Exception:"
+    import_needed: null
+  CQ002:
+    description: "Replace print() with logger.info()"
+    pattern: "print\\((.+)\\)"
+    replacement: "logger.info(\\1)"
+    import_needed: "import logging\nlogger = logging.getLogger(__name__)"
+    import_position: top
+  CQ003:
+    description: "Replace from x import * with specific imports"
+    pattern: "from\\s+(\\w+)\\s+import\\s+\\*"
+    replacement: "from \\1 import main  # TODO: specify imports"
+    import_needed: null
+  PF002:
+    description: "Replace string concatenation with f-string"
+    pattern: '"([^"]*)"\\s*\\+\\s*(\\w+)'
+    replacement: 'f"\\1{\\2}"'
+    import_needed: null
+
+javascript:
+  SEC001:
+    description: "Replace eval() with JSON.parse()"
+    pattern: "eval\\(([^)]+)\\)"
+    replacement: "JSON.parse(\\1)"
+    import_needed: null
+  SEC004:
+    description: "Replace innerHTML with textContent"
+    pattern: "\\.innerHTML\\s*=\\s*"
+    replacement: ".textContent = "
+    import_needed: null
+  CQ010:
+    description: "Replace var with const/let"
+    pattern: "var\\s+"
+    replacement: "const "
+    import_needed: null
+  CQ012:
+    description: "Remove console.log statements"
+    pattern: "console\\.log\\s*\\([^)]*\\);?\\n?"
+    replacement: ""
+    import_needed: null
+
+rust:
+  CQ030:
+    description: "Replace unwrap() with expect()"
+    pattern: "\\.unwrap\\(\\)"
+    replacement: '.expect("TODO: add error message")'
+    import_needed: null
+
+typescript:
+  CQ020:
+    description: "Replace any with unknown"
+    pattern: ":\\s*any\\b"
+    replacement: ": unknown"
+    import_needed: null

@@ -1,0 +1,148 @@
+[build-system]
+requires = ["setuptools>=68.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "ai-developer-growth"
+version = "2.3.0"
+description = "Open-source knowledge base for developer growth in the AI era"
+readme = "README.md"
+license = {text = "MIT"}
+requires-python = ">=3.10"
+dependencies = ["pyyaml>=6.0"]
+
+[project.scripts]
+adg = "tools.scripts.adg_cli:main"
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.0.0",
+    "pytest-xdist>=3.0.0",
+    "pytest-cov>=4.0.0",
+    "ruff>=0.1.0",
+    "mypy>=1.0.0",
+    "pyyaml>=6.0",
+]
+tools = [
+    "openai>=1.0.0",
+    "pyyaml>=6.0",
+]
+
+[tool.setuptools.packages.find]
+include = ["tools*"]
+exclude = ["tests*", "examples*", "docs*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+
+# Example projects have their own test configurations in their respective pyproject.toml
+# Run tests from each example's directory: cd examples/<project> && python -m pytest tests/
+
+[tool.ruff]
+line-length = 120
+target-version = "py310"
+
+[tool.coverage.run]
+source = ["tools.scripts"]
+omit = ["*/tests/*", "*/__pycache__/*", "*/lsp_server.py", "tools/lsp/server.py"]
+branch = true
+
+[tool.coverage.report]
+fail_under = 85
+exclude_lines = [
+    "pragma: no cover",
+    "def __repr__",
+    "if __name__ == .__main__.",
+    "raise AssertionError",
+    "raise NotImplementedError",
+]
+show_missing = true
+skip_covered = true
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "N", "UP"]
+ignore = ["E501"]
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+
+[tool.mypy]
+python_version = "3.10"
+strict = true
+ignore_missing_imports = true
+warn_return_any = false
+warn_unused_configs = true
+disallow_untyped_defs = true
+check_untyped_defs = true
+no_implicit_optional = true
+warn_redundant_casts = true
+warn_unused_ignores = true
+
+[tool.adg]
+# ADG - AI Developer Governance Configuration
+# All settings can be overridden by .adg/config.yml or CLI args
+
+# Rules configuration
+rules_dir = ""  # Empty = auto-discover (project/.adg → env var → ~/.jcode/governance → built-in)
+custom_rules = ".adg/rules.yml"  # Project-specific rules file
+domains = []  # e.g., ["finance", "hipaa", "gaming"]
+
+# Architecture enforcement
+architecture_config = ".adg/architecture.yml"
+enable_layer_check = true
+enable_cycle_detection = true
+hub_threshold = 15
+
+# Context-aware severity
+context_aware = true
+severity_overrides = {test = "down-1", prototype = "down-2", legacy = "down-1", config = "down-2", demo = "down-2"}
+
+# Skip patterns for test/demo files
+skip_patterns = [
+    "**/test_*.py",
+    "**/*_test.py",
+    "**/tests/**/*.py",
+    "**/demo*.py",
+    "**/*_demo.py",
+]
+
+# Feedback system
+feedback_enabled = true
+feedback_db = "~/.cache/adg/feedback.json"
+fp_downgrade_threshold = 0.6  # Auto-downgrade when FP rate > 60%
+fp_min_reports = 5
+
+# Output formats
+default_format = "human"  # human, json, sarif
+sarif_output = "adg-results.sarif"
+
+# Performance
+jobs = 4  # Parallel workers
+cache_enabled = true
+cache_dir = ".cache/adg"
+
+# CI/CD integration
+ci_mode = false  # Auto-detected in CI environments
+fail_on_error = true
+fail_on_warning = false
+trend_enabled = true
+trend_db = "~/.cache/adg/trend.db"
+
+# Notifications
+notify_webhook = ""  # slack://... or dingtalk://...
+notify_on_new_errors = true
+notify_on_trend_regression = true
+
+# LSP Server
+lsp_enabled = true
+lsp_port = 0  # 0 = stdio
+
+# Marketplace
+marketplace_enabled = true
+rules_index = "~/.jcode/governance/rules_index.json"
+auto_sync = true
+sync_interval_hours = 24

@@ -1,0 +1,327 @@
+language: javascript
+version: '>=ES2022'
+config_version: '1.0'
+anti_patterns:
+- id: js-var
+  name: var declaration
+  severity: warning
+  category: type_safety
+  pattern: \bvar\s+\w+
+  message: var has function scope - use let/const
+  fix_hint: Use const by default, let when reassignment needed
+- id: js-eval
+  name: eval() usage
+  severity: error
+  category: security
+  pattern: \beval\s*\(
+  message: eval() is a security risk
+  fix_hint: Find a safer alternative
+- id: js-inner-html
+  name: innerHTML assignment
+  severity: error
+  category: security
+  pattern: \.innerHTML\s*=
+  message: innerHTML enables XSS attacks
+  fix_hint: Use textContent or DOM APIs
+- id: js-empty-catch
+  name: Empty catch block
+  severity: error
+  category: error_handling
+  pattern: catch\s*\(\s*\w+\s*\)\s*\{\s*\}
+  message: Empty catch blocks hide errors
+  fix_hint: Log the error or rethrow
+- id: js-return-null
+  name: Returning null
+  severity: warning
+  category: error_handling
+  pattern: return\s+null\s*;
+  message: Returning null causes TypeError downstream
+  fix_hint: Use undefined, empty array, or throw
+- id: js-console
+  name: console.log in production
+  severity: info
+  category: code_quality
+  pattern: console\.(log|warn|error|debug)\s*\(
+  message: Use proper logging instead of console
+  fix_hint: Use a logging library or console in dev only
+- id: js-alert
+  name: alert() usage
+  severity: warning
+  category: code_quality
+  pattern: \balert\s*\(
+  message: alert() is blocking and not suitable for production
+  fix_hint: Use UI notification or modal component
+- id: js-document-write
+  name: document.write()
+  severity: error
+  category: code_quality
+  pattern: document\.write\s*\(
+  message: document.write() overwrites the page
+  fix_hint: Use DOM manipulation APIs
+- id: js-eq-null
+  name: Loose equality with null
+  severity: warning
+  category: type_safety
+  pattern: ==\s*null|!=\s*null
+  message: Loose equality with null is error-prone
+  fix_hint: Use === null or == null with explicit type coercion
+- id: js-typeof-undefined
+  name: Comparing typeof to string
+  severity: info
+  category: code_quality
+  pattern: typeof\s+\w+\s*===\s*['"]undefined['"]
+  message: Prefer void 0 check or optional chaining
+  fix_hint: Use x === undefined or x?.prop
+- id: js-nested-ternary
+  name: Nested ternary operators
+  severity: warning
+  category: code_quality
+  pattern: '\?[^?:]*\?[^?:]*:'
+  message: Nested ternaries are hard to read
+  fix_hint: Use if/else or switch for complex logic
+- id: js-n-plus-one-select
+  name: N+1 query in loops
+  severity: error
+  category: performance
+  pattern: for\s*\(.*\{[\s\S]*?(?:fetch|axios|\.find\(|\.findOne\()
+  message: Making API calls inside loops causes N+1 query problem
+  fix_hint: Use Promise.all() or batch API calls
+- id: js-synchronous-loop
+  name: Synchronous async in loop
+  severity: error
+  category: async
+  pattern: for\s*\(.*\{[\s\S]*?await\s+
+  message: Sequential await in loops is slow - use Promise.all()
+  fix_hint: const results = await Promise.all(items.map(item => asyncOp(item)))
+- id: js-missing-await
+  name: Missing await on async function
+  severity: warning
+  category: correctness
+  pattern: (?:const|let|var)\s+\w+\s*=\s*(?:async\s+)?(?:fetch|axios|\.then)
+  message: Async function call without await may cause race conditions
+  fix_hint: Add await before async operations or use .then() chain
+- id: js-timeout-string
+  name: setTimeout with string
+  severity: error
+  category: security
+  pattern: setTimeout\s*\(\s*['"]
+  message: setTimeout with string evaluates code - same as eval()
+  fix_hint: Pass a function reference instead of a string
+- id: js-prototype-pollution
+  name: Prototype pollution risk
+  severity: error
+  category: security
+  pattern: __proto__|constructor\s*\[
+  message: Direct prototype manipulation enables pollution attacks
+  fix_hint: Use Object.create(null) or Map for safe dictionaries
+- id: js-reassign-const
+  name: Attempting to reassign const
+  severity: error
+  category: type_safety
+  pattern: const\s+\w+\s*=\s*.*;\s*\w+\s*=
+  message: Cannot reassign a const variable
+  fix_hint: Use let for variables that need reassignment
+- id: ja-hardcoded-config
+  name: Hardcoded configuration
+  severity: warning
+  category: config
+  pattern: (?:url|endpoint|host|port)\s*[=:]\s*["']https?://
+  message: Use configuration for URLs/endpoints
+  fix_hint: Move to config file
+- id: ja-todo
+  name: Unresolved TODO
+  severity: info
+  category: code_quality
+  pattern: TODO|FIXME|HACK|XXX
+  message: Unresolved TODO/FIXME comments
+  fix_hint: Create a ticket or resolve
+- id: ja-deep-nesting
+  name: Deep nesting
+  severity: warning
+  category: complexity
+  pattern: '    (?:if|for|while|case).*\n(?:        (?:if|for|while|case).*\n){2,}'
+  message: Deep nesting reduces readability
+  fix_hint: Extract helper functions
+- id: ja-long-line
+  name: Long line
+  severity: info
+  category: code_quality
+  pattern: ^.{121,}$
+  message: Lines >120 chars
+  fix_hint: Break at logical boundaries
+- id: ja-unsafe-input
+  name: Unvalidated input
+  severity: error
+  category: security
+  pattern: (?:read|gets?|input)\s*\(
+  message: User input must be validated
+  fix_hint: Add input validation
+- id: ja-log-sensitive
+  name: Logging sensitive data
+  severity: error
+  category: security
+  pattern: log(?:ger)?\.(?:info|debug|warn|error)\s*\(.*(?:password|secret|token|credential|api_key)
+  message: Never log sensitive data (passwords, tokens, secrets)
+  fix_hint: Use log filtering or redact sensitive fields
+- id: ja-log-print
+  name: Using print for logging
+  severity: warning
+  category: logging
+  pattern: ^\s*print\s*\(
+  message: Use structured logging instead of print statements in production
+  fix_hint: Use logging framework (loguru, structlog, etc.)
+- id: ja-file-leak
+  name: Unclosed file handle
+  severity: error
+  category: resource_management
+  pattern: (?:open|fopen)\s*\([^)]*\)\s*(?!.*\b(with|using|close|finally|defer)\b)
+  message: File handles must be closed properly to avoid resource leaks
+  fix_hint: Use with/using/defer block or ensure close() in finally
+- id: ja-connection-leak
+  name: Unclosed connection
+  severity: error
+  category: resource_management
+  pattern: (?:connect|new connection|getConnection)\s*\([^)]*\)\s*(?!.*\b(with|using|close|finally|defer)\b)
+  message: Database/network connections must be released after use
+  fix_hint: Use connection pool or ensure close() in finally
+- id: ja-missing-await
+  name: Missing await on async call
+  severity: error
+  category: concurrency
+  pattern: (?:async\s+def|async\s+fn)\s+\w+\s*\([^)]*\)\s*\{?\s*$
+  message: Async function called without await may cause race conditions
+  fix_hint: Add await/async keyword or handle the future properly
+- id: ja-shared-mutable
+  name: Shared mutable state without sync
+  severity: warning
+  category: concurrency
+  pattern: (?:global|static|thread_local)\s+\w+(?:\s*=\s*[^;]*)?\s*[;]?$
+  message: Shared mutable state without synchronization can cause race conditions
+  fix_hint: Use mutex/lock/atomic or thread-local storage
+- id: ja-large-alloc-loop
+  name: Large allocation in loop
+  severity: warning
+  category: performance
+  pattern: (?:for|while|loop)\s*\([^)]*\)\s*\{?\s*[^}]*\b(?:append|push|concat|new\s+(?:Array|List|StringBuilder))\b
+  message: Repeated allocations inside loops impact performance
+  fix_hint: Pre-allocate or use builder pattern outside the loop
+- id: ja-n-plus-one
+  name: Potential N+1 query pattern
+  severity: warning
+  category: performance
+  pattern: (?:for|while|loop|each|map)\s*[^)]*\)?\s*\{?[^}]*\b(?:query|find|get|fetch|load)\b[^}]*\}
+  message: Query inside a loop may cause N+1 performance problem
+  fix_hint: Use batch loading, eager loading, or JOIN query
+- id: ja-cors-allow-all
+  name: Overly permissive CORS
+  severity: error
+  category: security
+  pattern: (?:Access-Control-Allow-Origin|origins?)\s*[=:]\s*["\']?\*["\']?
+  message: Wildcard CORS exposes API to any origin
+  fix_hint: Restrict CORS to specific allowed origins
+- id: ja-no-input-validation
+  name: Missing input validation on API
+  severity: warning
+  category: security
+  pattern: (?:@\w+Mapping|def\s+\w+\([^)]*request|route|endpoint|api_view)
+  message: API endpoints should validate all input parameters
+  fix_hint: Add input validation or use schema validation library
+- id: ja-hardcoded-origin
+  name: Hardcoded origin/domain
+  severity: warning
+  category: config
+  pattern: (?:allowed_origins|trusted_origins|ALLOWED_HOSTS)\s*[=:]\s*\["\'\]https?://
+  message: Hardcoded origins in config should be environment variables
+  fix_hint: Use environment variables for allowed origins
+- id: ja-exception-leak
+  name: Exception message leaks internal info
+  severity: warning
+  category: security
+  pattern: (?:print|log|logger)\s*\(.*e(?:rror)?\.(?:message|to_String|getMessage)\s*\)
+  message: Exception messages may leak internal implementation details
+  fix_hint: Log a generic message, add exception details separately
+- id: ja-hardcoded-secret-in-ci
+  name: Hardcoded secret in CI config
+  severity: error
+  category: security
+  pattern: (?:GITHUB_TOKEN|API_KEY|SECRET|PASSWORD)\s*[=:]\s*[\"'][^\"']+[\"']
+  message: CI/CD secrets should use GitHub Secrets or vault, not hardcoded strings
+  fix_hint: Use ${{ secrets.MY_SECRET }} in GitHub Actions
+- id: ja-ci-disabled-check
+  name: Disabled CI check
+  severity: warning
+  category: ci_cd
+  pattern: continue-on-error:\s*true
+  message: CI checks with continue-on-error silently ignore failures
+  fix_hint: Remove continue-on-error or add explicit error handling
+- id: ja-docker-image-latest
+  name: Using :latest tag
+  severity: warning
+  category: ci_cd
+  pattern: FROM\s+\S+:\s*latest\b
+  message: Using :latest tag makes builds non-reproducible
+  fix_hint: Pin to specific version tag
+- id: ja-docker-exposed-port
+  name: Exposed port without healthcheck
+  severity: warning
+  category: ci_cd
+  pattern: EXPOSE\s+\d+
+  message: Exposed ports should have corresponding healthcheck
+  fix_hint: Add HEALTHCHECK instruction
+- id: ja-iac-hardcoded-secret
+  name: Hardcoded secret in IaC
+  severity: error
+  category: security
+  pattern: (?:password|secret_key|access_key)\s*[=:]\s*[\"'][^\"']+[\"']
+  message: Infrastructure secrets should use vault or secret store
+  fix_hint: Use AWS Secrets Manager, HashiCorp Vault, or SOPS
+- id: ja-iac-admin-exposed
+  name: Admin service exposed to internet
+  severity: error
+  category: security
+  pattern: '(?:adminer|phpmyadmin|pgadmin|kibana)\s*:'
+  message: Admin tools should not be publicly accessible
+  fix_hint: Restrict ingress to internal network only
+- id: ja-docker-root-user
+  name: Running as root in container
+  severity: error
+  category: security
+  pattern: FROM\s+\S+\s*(?:AS\s+\w+)?\s*\n(?!.*USER\s)
+  message: Running containers as root is a security risk
+  fix_hint: Add 'USER nobody' or create a non-root user
+- id: ja-pip-audit-missing
+  name: Missing dependency audit
+  severity: warning
+  category: ci_cd
+  pattern: pip install\b(?!.*pip-audit|.*safety)
+  message: Package installation without vulnerability scanning
+  fix_hint: Add 'pip-audit' or 'safety check' after install
+naming:
+  file:
+    pattern: ^[a-z][a-zA-Z0-9]*\.(js|jsx|mjs)$
+    message: JavaScript files should use camelCase
+  function:
+    pattern: ^[a-z][a-zA-Z0-9]*$|^[A-Z][a-zA-Z0-9]*$
+    message: JS functions use camelCase or PascalCase
+  class:
+    pattern: ^[A-Z][a-zA-Z0-9]*$
+    message: JS classes should use PascalCase
+  constant:
+    pattern: ^[A-Z][A-Z0-9_]*$
+    message: JS constants should use UPPER_SNAKE_CASE
+thresholds:
+  max_function_length: 50
+  max_file_length: 500
+  max_line_length: 120
+  max_nesting_depth: 4
+  max_function_params: 5
+  max_cyclomatic_complexity: 10
+tooling:
+  linter: eslint
+  formatter: prettier
+  type_checker: tsc
+  test_runner: vitest
+  config_files:
+  - .eslintrc.json
+  - .prettierrc
+  - package.json

@@ -1,0 +1,92 @@
+[
+  {
+    "name": "案例",
+    "description": "案例提交",
+    "color": "0075ca"
+  },
+  {
+    "name": "工具",
+    "description": "工具推荐",
+    "color": "c5def5"
+  },
+  {
+    "name": "建议",
+    "description": "功能建议",
+    "color": "84b6eb"
+  },
+  {
+    "name": "问题",
+    "description": "问题反馈",
+    "color": "d73a4a"
+  },
+  {
+    "name": "文档",
+    "description": "文档相关",
+    "color": "0075ca"
+  },
+  {
+    "name": "代码",
+    "description": "代码相关",
+    "color": "e4e669"
+  },
+  {
+    "name": "待审核",
+    "description": "等待社区催化剂审核",
+    "color": "fbca04"
+  },
+  {
+    "name": "待评估",
+    "description": "等待工作流优化师评估",
+    "color": "fbca04"
+  },
+  {
+    "name": "待修复",
+    "description": "等待修复",
+    "color": "d73a4a"
+  },
+  {
+    "name": "已验证",
+    "description": "已通过验证",
+    "color": "0e8a16"
+  },
+  {
+    "name": "已合并",
+    "description": "已合并到主分支",
+    "color": "0e8a16"
+  },
+  {
+    "name": "优先级: 高",
+    "description": "高优先级",
+    "color": "b60205"
+  },
+  {
+    "name": "优先级: 中",
+    "description": "中优先级",
+    "color": "fbca04"
+  },
+  {
+    "name": "优先级: 低",
+    "description": "低优先级",
+    "color": "0e8a16"
+  },
+  {
+    "name": "good first issue",
+    "description": "适合新贡献者",
+    "color": "7057ff"
+  },
+  {
+    "name": "help wanted",
+    "description": "需要帮助",
+    "color": "008672"
+  },
+  {
+    "name": "bug",
+    "description": "bug 报告",
+    "color": "d73a4a"
+  },
+  {
+    "name": "enhancement",
+    "description": "功能增强",
+    "color": "a2eeef"
+  }
+]

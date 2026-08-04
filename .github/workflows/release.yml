@@ -1,0 +1,199 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version to release (e.g., v2.4.0)'
+        required: true
+        type: string
+      dry_run:
+        description: 'Dry run (no actual release)'
+        required: false
+        type: boolean
+        default: false
+
+env:
+  PYTHON_VERSION: "3.11"
+
+jobs:
+  # ──────────────────────────────────────────────────────
+  # Pre-release validation
+  # ──────────────────────────────────────────────────────
+  validate:
+    name: Pre-release Validation
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' || github.event.inputs.dry_run == 'false'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: pip
+      - name: Install dependencies
+        run: |
+          pip install ruff mypy pytest pytest-cov pyyaml pytest-xdist build twine
+      - name: Ruff check
+        run: ruff check .
+      - name: Ruff format check
+        run: ruff format --check .
+      - name: Mypy (strict)
+        run: mypy tools/scripts/ --ignore-missing-imports --strict
+      - name: Run tests with coverage
+        run: pytest tests/ -v -n auto --cov=tools --cov-report=xml --cov-report=term-missing --tb=short
+      - name: Coverage check
+        run: |
+          python -c "
+          import xml.etree.ElementTree as ET
+          tree = ET.parse('coverage.xml')
+          root = tree.getroot()
+          coverage = float(root.attrib.get('line-rate', 0)) * 100
+          if coverage < 85:
+              print(f'::error::Line coverage {coverage:.1f}% is below 85% threshold')
+              exit(1)
+          "
+      - name: ADG governance check
+        run: |
+          python -m tools.scripts.adg_cli check tools/scripts/ --lang python --severity error --json > adg-report.json
+          ERROR_COUNT=$(python -c "import json; print(json.load(open('adg-report.json'))['summary']['error'])")
+          if [ "$ERROR_COUNT" -gt 0 ]; then
+            echo "::error::ADG governance check found $ERROR_COUNT errors"
+            exit 1
+          fi
+      - name: Validate version consistency
+        run: |
+          TAG_VERSION=${GITHUB_REF_NAME#v}
+          PY_VERSION=$(grep '^version = ' pyproject.toml | sed 's/version = "//' | sed 's/"//')
+          if [ "$TAG_VERSION" != "$PY_VERSION" ]; then
+            echo "::error::Version mismatch: tag=$TAG_VERSION pyproject=$PY_VERSION"
+            exit 1
+          fi
+          echo "Version consistent: $TAG_VERSION"
+      - name: Check CHANGELOG
+        run: |
+          if ! grep -q "## \[$TAG_VERSION\]" CHANGELOG.md; then
+            echo "::error::CHANGELOG.md missing entry for $TAG_VERSION"
+            exit 1
+          fi
+          echo "CHANGELOG entry found"
+
+  # ──────────────────────────────────────────────────────
+  # Build package
+  # ──────────────────────────────────────────────────────
+  build:
+    name: Build Package
+    runs-on: ubuntu-latest
+    needs: validate
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: pip
+      - name: Install build
+        run: pip install build
+      - name: Build package
+        run: python -m build
+      - name: Verify package
+        run: |
+          ls -la dist/
+          python -m twine check dist/*
+      - name: Upload package artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: dist
+          path: dist/
+          retention-days: 90
+
+  # ──────────────────────────────────────────────────────
+  # Publish to PyPI
+  # ──────────────────────────────────────────────────────
+  publish-pypi:
+    name: Publish to PyPI
+    runs-on: ubuntu-latest
+    needs: build
+    if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
+    environment: pypi
+    permissions:
+      id-token: write
+      contents: read
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: dist
+          path: dist/
+      - name: Publish to PyPI
+        uses: pypa/gh-action-pypi-publish@release/v1
+
+  # ──────────────────────────────────────────────────────
+  # Create GitHub Release
+  # ──────────────────────────────────────────────────────
+  github-release:
+    name: Create GitHub Release
+    runs-on: ubuntu-latest
+    needs: build
+    if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: dist
+          path: dist/
+      - name: Extract changelog
+        id: changelog
+        run: |
+          TAG_VERSION=${GITHUB_REF_NAME#v}
+          # Extract changelog for this version
+          awk "/^## \\[${TAG_VERSION//./\\.}\\]/,/^## \\[/" CHANGELOG.md | head -n -1 > release_notes.md
+          if [ ! -s release_notes.md ]; then
+            echo "No changelog found, using default"
+            echo "Release $TAG_VERSION" > release_notes.md
+          fi
+          cat release_notes.md
+      - name: Create release
+        uses: softprops/action-gh-release@v1
+        with:
+          files: dist/*
+          body_path: release_notes.md
+          draft: false
+          prerelease: ${{ contains(github.ref_name, '-') }}
+          generate_release_notes: false
+
+  # ──────────────────────────────────────────────────────
+  # Update latest release alias
+  # ──────────────────────────────────────────────────────
+  update-latest:
+    name: Update Latest Release Alias
+    runs-on: ubuntu-latest
+    needs: github-release
+    if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v') && !contains(github.ref_name, '-')
+    permissions:
+      contents: write
+    steps:
+      - name: Update latest release tag
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const tag = context.ref.replace('refs/tags/', '');
+            const { data: releases } = await github.rest.repos.listReleases({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+            });
+            const latestRelease = releases.find(r => !r.draft && !r.prerelease);
+            if (latestRelease && latestRelease.tag_name === tag) {
+              await github.rest.repos.updateRelease({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                release_id: latestRelease.id,
+                make_latest: true,
+              });
+              console.log(`Marked ${tag} as latest release`);
+            }

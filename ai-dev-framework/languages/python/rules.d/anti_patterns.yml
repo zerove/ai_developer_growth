@@ -1,0 +1,390 @@
+language: python
+version: '>=3.10'
+config_version: '1.0'
+anti_patterns:
+- id: py-bare-except
+  name: Bare except clause
+  severity: error
+  category: error_handling
+  pattern: 'except\s*:'
+  exclude_files:
+  - fix_heuristics.py
+  - auto_fix.py
+  - ai_rules_generator.py
+  - ai_quality_gate.py
+  - rule_author.py
+  - validate_rule_tests.py
+  message: 'Avoid bare except: use specific exception types'
+  fix_hint: Replace 'except:' with 'except SpecificException:'
+  test_cases:
+  - code: 'except:'
+    should_match: true
+  - code: 'except Exception:'
+    should_match: false
+  - code: 'except (ValueError, TypeError):'
+    should_match: false
+- id: py-bare-except-pass
+  name: Silent exception swallowing
+  severity: error
+  category: error_handling
+  pattern: except.*:\s*pass\s*$
+  message: Never silently swallow exceptions
+  fix_hint: Add logging or re-raise the exception
+- id: py-bare-except-string
+  name: String exception
+  severity: error
+  category: error_handling
+  pattern: except\s+["']
+  message: Do not use string exceptions - use exception classes
+  fix_hint: 'Use except SpecificException: instead'
+- id: py-any-type
+  name: Use of Any type
+  severity: warning
+  category: type_safety
+  pattern: :\s*Any\b|->\s*Any\b
+  message: Avoid Any type - use specific types
+  fix_hint: Replace Any with a concrete type
+- id: py-union-none
+  name: Optional should use X | None
+  severity: info
+  category: type_safety
+  pattern: Optional\[
+  message: In Python 3.10+, prefer X | None over Optional[X]
+  fix_hint: Use 'str | None' instead of 'Optional[str]'
+- id: py-mutable-default
+  name: Mutable default argument
+  severity: error
+  category: type_safety
+  pattern: def\s+\w+\s*\(.*=\s*(\[\]|\{|set\()
+  message: Mutable default arguments are shared across calls
+  fix_hint: Use None as default and initialize inside
+- id: py-eval-exec
+  name: Use of eval/exec
+  severity: error
+  category: security
+  pattern: \beval\s*\(|\bexec\s*\(
+  exclude_files:
+  - fix_heuristics.py
+  - auto_fix.py
+  - ai_rules_generator.py
+  - ai_quality_gate.py
+  - hallucination_detector.py
+  - anti_patterns.yml
+  message: eval/exec are security risks
+  fix_hint: Use ast.literal_eval() for data
+  test_cases:
+  - code: eval(user_input)
+    should_match: true
+  - code: exec(code_string)
+    should_match: true
+  - code: result = eval expression
+    should_match: false
+- id: py-hardcoded-secret
+  name: Hardcoded secret
+  severity: error
+  category: security
+  pattern: (?:password|secret|api_key|token)\s*=\s*["'][^"']+["']
+  message: Hardcoded secrets are a security vulnerability
+  fix_hint: Use environment variables or a secrets manager
+  test_cases:
+  - code: password = "hunter2"
+    should_match: true
+  - code: api_key = "sk-12345"
+    should_match: true
+  - code: os.environ["password"]
+    should_match: false
+- id: py-shell-true
+  name: subprocess with shell=True
+  exclude_files:
+  - auto_fix.py
+  severity: warning
+  category: security
+  pattern: subprocess\.\w+\(.*shell\s*=\s*True
+  message: shell=True enables shell injection attacks
+  fix_hint: Use shell=False and pass args as a list
+- id: py-sql-string-format
+  name: SQL injection via string formatting
+  severity: error
+  category: security
+  pattern: (?:execute|cursor\.execute)\s*\(.*(?:f["']|\.format\(|%\s)
+  message: String formatting in SQL enables SQL injection
+  fix_hint: Use parameterized queries
+- id: py-star-import
+  name: Wildcard import
+  severity: warning
+  category: code_quality
+  pattern: from\s+\S+\s+import\s+\*
+  message: Wildcard imports pollute the namespace
+  fix_hint: Import specific names
+- id: py-global-statement
+  name: Global statement
+  severity: warning
+  category: code_quality
+  pattern: ^\s*global\s+
+  message: Global statements make code hard to test
+  fix_hint: Use function parameters or class attributes
+- id: py-print-statement
+  name: print() used for logging
+  severity: info
+  category: code_quality
+  pattern: ^\s*print\s*\(
+  exclude_files:
+  - ai_quality_gate.py
+  message: Use logging module instead of print()
+  fix_hint: import logging; logger.info(...)
+- id: py-test-sleep
+  name: Sleep in tests
+  severity: warning
+  category: testing
+  pattern: time\.sleep\(
+  message: Sleep in tests makes them slow and flaky
+  fix_hint: Use mock.patch or polling with timeout
+- id: py-missing-type-hints
+  name: Missing type hints in public functions
+  severity: warning
+  category: type_safety
+  pattern: 'def\s+[a-z]\w+\s*\([^)]*\)\s*:'
+  message: Public functions should have type annotations for parameters and return
+    value
+  fix_hint: 'Add type hints: def func(arg: str) -> int:'
+- id: py-bare-raise
+  name: Bare raise outside except block
+  severity: error
+  category: error_handling
+  pattern: ^\s*raise\s*$
+  message: Bare raise without arguments only works inside an except handler'
+  fix_hint: Use 'raise' only inside except blocks, or use 'raise ExceptionType()'
+- id: py-mutable-class-attr
+  name: Mutable class attribute
+  severity: warning
+  category: code_quality
+  pattern: class\s+\w+.*:\s*\n\s+\w+\s*=\s*(\[\]|\{|set\()
+  message: Mutable class attributes are shared across all instances'
+  fix_hint: Initialize mutable attributes in __init__ or use dataclasses
+- id: py-nested-import
+  name: Nested import statement
+  severity: info
+  category: code_quality
+  pattern: ^\s+(?:from\s+\S+\s+)?import\s+\S+
+  exclude_files:
+  - fix_heuristics.py
+  - auto_fix.py
+  message: Import statements should be at the top of the file'
+  fix_hint: Move imports to the top of the module (PEP 8)
+  exclude_patterns:
+  - TYPE_CHECKING
+  - if TYPE_CHECKING
+- id: py-star-unpacking
+  name: Star unpacking in assignment
+  severity: info
+  category: code_quality
+  pattern: ^\s*\w+,\s*\*\w+\s*=\s*\w+
+  message: Star unpacking can obscure the structure of data'
+  fix_hint: Use explicit unpacking or dataclasses for clarity
+- id: py-complex-comprehension
+  name: Complex list comprehension with too many conditions
+  severity: warning
+  category: code_quality
+  pattern: \[.*for\s+.*in\s+.*\s+if\s+.*\s+if\s+.*\s+if\s+.*\]
+  message: Comprehensions with >3 conditions are hard to read'
+  fix_hint: Extract complex logic into a helper function or use a regular loop
+- id: py-missing-all
+  name: Missing __all__ in public modules
+  severity: info
+  category: code_quality
+  pattern: ^(?!.*__all__)\s*(?:class|def|from)\s+\w+
+  message: Public modules should define __all__ to control the public API'
+  fix_hint: Add __all__ = ["PublicClass", "public_function"] at module top
+- id: py-log-sensitive
+  name: Logging sensitive data
+  severity: error
+  category: security
+  pattern: log(?:ger)?\.(?:info|debug|warn|error)\s*\(.*(?:password|secret|token|credential|api_key)
+  message: Never log sensitive data (passwords, tokens, secrets)
+  fix_hint: Use log filtering or redact sensitive fields
+- id: py-log-print
+  name: Using print for logging
+  severity: warning
+  category: logging
+  pattern: ^\s*print\s*\(
+  message: Use structured logging instead of print statements in production
+  fix_hint: Use logging framework (loguru, structlog, etc.)
+- id: py-file-leak
+  name: Unclosed file handle
+  severity: info
+  category: resource_management
+  pattern: (?<!\bwith\s)(?:open|fopen)\s*\([^)]*\)\s*(?!.*\b(with|using|close|finally|defer)\b)
+  exclude_files:
+  - rule_loader.py
+  message: File handles must be closed properly to avoid resource leaks
+  fix_hint: Use with/using/defer block or ensure close() in finally
+- id: py-connection-leak
+  name: Unclosed connection
+  severity: error
+  category: resource_management
+  pattern: (?:connect|new connection|getConnection)\s*\([^)]*\)\s*(?!.*\b(with|using|close|finally|defer)\b)
+  exclude_files:
+  - dashboard.py
+  message: Database/network connections must be released after use
+  fix_hint: Use connection pool or ensure close() in finally
+- id: py-missing-await
+  name: Missing await on async call
+  severity: error
+  category: concurrency
+  pattern: (?:async\s+def|async\s+fn)\s+\w+\s*\([^)]*\)\s*\{?\s*$
+  message: Async function called without await may cause race conditions
+  fix_hint: Add await/async keyword or handle the future properly
+- id: py-shared-mutable
+  name: Shared mutable state without sync
+  severity: warning
+  category: concurrency
+  pattern: (?:global|static|thread_local)\s+\w+(?:\s*=\s*[^;]*)?\s*[;]?$
+  message: Shared mutable state without synchronization can cause race conditions
+  fix_hint: Use mutex/lock/atomic or thread-local storage
+- id: py-large-alloc-loop
+  name: Large allocation in loop
+  severity: warning
+  category: performance
+  pattern: (?:for|while|loop)\s*\([^)]*\)\s*\{?\s*[^}]*\b(?:append|push|concat|new\s+(?:Array|List|StringBuilder))\b
+  message: Repeated allocations inside loops impact performance
+  fix_hint: Pre-allocate or use builder pattern outside the loop
+- id: py-n-plus-one
+  name: Potential N+1 query pattern
+  severity: warning
+  category: performance
+  pattern: (?:for|while|loop|each|map)\s*[^)]*\)?\s*\{?[^}]*\b(?:query|find|get|fetch|load)\b[^}]*\}
+  message: Query inside a loop may cause N+1 performance problem
+  fix_hint: Use batch loading, eager loading, or JOIN query
+- id: py-cors-allow-all
+  name: Overly permissive CORS
+  severity: error
+  category: security
+  pattern: (?:Access-Control-Allow-Origin|origins?)\s*[=:]\s*["\']?\*["\']?
+  message: Wildcard CORS exposes API to any origin
+  fix_hint: Restrict CORS to specific allowed origins
+- id: py-no-input-validation
+  name: Missing input validation on API
+  severity: warning
+  category: security
+  pattern: (?:@\w+Mapping|def\s+\w+\([^)]*request|route|endpoint|api_view)
+  message: API endpoints should validate all input parameters
+  fix_hint: Add input validation or use schema validation library
+- id: py-hardcoded-origin
+  name: Hardcoded origin/domain
+  severity: warning
+  category: config
+  pattern: (?:allowed_origins|trusted_origins|ALLOWED_HOSTS)\s*[=:]\s*\["\'\]https?://
+  message: Hardcoded origins in config should be environment variables
+  fix_hint: Use environment variables for allowed origins
+- id: py-exception-leak
+  name: Exception message leaks internal info
+  severity: warning
+  category: security
+  pattern: (?:print|log|logger)\s*\(.*e(?:rror)?\.(?:message|to_String|getMessage)\s*\)
+  message: Exception messages may leak internal implementation details
+  fix_hint: Log a generic message, add exception details separately
+- id: py-hardcoded-secret-in-ci
+  name: Hardcoded secret in CI config
+  severity: error
+  category: security
+  pattern: (?:GITHUB_TOKEN|API_KEY|SECRET|PASSWORD)\s*[=:]\s*[\"'][^\"']+[\"']
+  message: CI/CD secrets should use GitHub Secrets or vault, not hardcoded strings
+  fix_hint: Use ${{ secrets.MY_SECRET }} in GitHub Actions
+- id: py-ci-disabled-check
+  name: Disabled CI check
+  severity: warning
+  category: ci_cd
+  pattern: continue-on-error:\s*true
+  message: CI checks with continue-on-error silently ignore failures
+  fix_hint: Remove continue-on-error or add explicit error handling
+- id: py-docker-image-latest
+  name: Using :latest tag
+  severity: warning
+  category: ci_cd
+  pattern: FROM\s+\S+:\s*latest\b
+  message: Using :latest tag makes builds non-reproducible
+  fix_hint: Pin to specific version tag
+- id: py-docker-exposed-port
+  name: Exposed port without healthcheck
+  severity: warning
+  category: ci_cd
+  pattern: EXPOSE\s+\d+
+  message: Exposed ports should have corresponding healthcheck
+  fix_hint: Add HEALTHCHECK instruction
+- id: py-iac-hardcoded-secret
+  name: Hardcoded secret in IaC
+  severity: error
+  category: security
+  pattern: (?:password|secret_key|access_key)\s*[=:]\s*[\"'][^\"']+[\"']
+  exclude_files:
+  - '*.py'
+  - '*.js'
+  - '*.ts'
+  - '*.rs'
+  - '*.go'
+  message: Infrastructure secrets should use vault or secret store
+  fix_hint: Use AWS Secrets Manager, HashiCorp Vault, or SOPS
+- id: py-iac-admin-exposed
+  name: Admin service exposed to internet
+  severity: error
+  category: security
+  pattern: '(?:adminer|phpmyadmin|pgadmin|kibana)\s*:'
+  message: Admin tools should not be publicly accessible
+  fix_hint: Restrict ingress to internal network only
+- id: py-docker-root-user
+  name: Running as root in container
+  severity: error
+  category: security
+  pattern: FROM\s+\S+\s*(?:AS\s+\w+)?\s*\n(?!.*USER\s)
+  exclude_files:
+  - '*.py'
+  - '*.js'
+  - '*.ts'
+  - '*.tsx'
+  - '*.jsx'
+  - '*.go'
+  - '*.rs'
+  - '*.java'
+  message: Running containers as root is a security risk
+  fix_hint: Add 'USER nobody' or create a non-root user
+- id: py-pip-audit-missing
+  name: Missing dependency audit
+  severity: warning
+  category: ci_cd
+  pattern: pip install\b(?!.*pip-audit|.*safety)
+  message: Package installation without vulnerability scanning
+  fix_hint: Add 'pip-audit' or 'safety check' after install
+naming:
+  file:
+    pattern: ^[a-z][a-z0-9_]*\.py$
+    message: Python files should use snake_case
+  function:
+    pattern: ^[a-z][a-z0-9_]*$
+    exceptions:
+    - __init__
+    - __str__
+    - __repr__
+    message: Python functions should use snake_case
+  class:
+    pattern: ^[A-Z][a-zA-Z0-9]*$
+    message: Python classes should use PascalCase
+  constant:
+    pattern: ^[A-Z][A-Z0-9_]*$
+    message: Python constants should use UPPER_SNAKE_CASE
+thresholds:
+  max_function_length: 50
+  max_file_length: 500
+  max_line_length: 120
+  max_nesting_depth: 4
+  max_function_args: 7
+  max_cyclomatic_complexity: 10
+  min_test_coverage: 80
+tooling:
+  linter: ruff
+  formatter: ruff
+  type_checker: mypy
+  test_runner: pytest
+  config_files:
+  - pyproject.toml
+  - .ruff.toml
+  - mypy.ini

@@ -1,0 +1,59 @@
+{
+  "name": "vscode-adg",
+  "displayName": "ADG Code Quality",
+  "description": "AI Developer Governance — 实时代码质量扫描",
+  "version": "0.1.0",
+  "publisher": "adg",
+  "license": "MIT",
+  "engines": {
+    "vscode": "^1.85.0"
+  },
+  "categories": ["Linters", "Programming Languages"],
+  "keywords": ["adg", "governance", "code-quality", "security", "lint"],
+  "activationEvents": ["onStartupFinished"],
+  "main": "./extension.js",
+  "contributes": {
+    "commands": [
+      {"command": "adg.check", "title": "ADG: Check Current File"},
+      {"command": "adg.checkProject", "title": "ADG: Check Workspace"},
+      {"command": "adg.fix", "title": "ADG: Fix Current File"},
+      {"command": "adg.fixProject", "title": "ADG: Fix Workspace"},
+      {"command": "adg.listRules", "title": "ADG: List Rules"},
+      {"command": "adg.showOutput", "title": "ADG: Show Output"},
+      {"command": "adg.installHooks", "title": "ADG: Install Git Hooks"},
+      {"command": "adg.scanFile", "title": "ADG: Scan Current File"},
+      {"command": "adg.scanWorkspace", "title": "ADG: Scan Workspace"}
+    ],
+    "configuration": {
+      "title": "ADG",
+      "properties": {
+        "adg.scanOnSave": {
+          "type": "boolean",
+          "default": true,
+          "description": "在保存时自动扫描文件"
+        },
+        "adg.severityThreshold": {
+          "type": "string",
+          "enum": ["error", "warning", "info"],
+          "default": "warning",
+          "description": "问题严重性阈值"
+        },
+        "adg.scanOnOpen": {
+          "type": "boolean",
+          "default": false,
+          "description": "打开文件时自动扫描"
+        },
+        "adg.enableQuickFix": {
+          "type": "boolean",
+          "default": true,
+          "description": "启用快速修复"
+        },
+        "adg.executablePath": {
+          "type": "string",
+          "default": "adg",
+          "description": "adg CLI 可执行文件路径"
+        }
+      }
+    }
+  }
+}

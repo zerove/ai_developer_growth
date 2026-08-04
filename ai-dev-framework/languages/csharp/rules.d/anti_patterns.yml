@@ -1,0 +1,267 @@
+language: csharp
+version: '>=10.0'
+config_version: '1.0'
+anti_patterns:
+- id: cs-sql-injection
+  name: SQL injection via string concatenation
+  severity: error
+  category: security
+  pattern: (?:ExecuteNonQuery|ExecuteReader|ExecuteScalar)\s*\([^)]*(?:\+|\.Format|\$)
+  message: String concatenation in SQL enables injection
+  fix_hint: 'Use parameterized queries: command.Parameters.AddWithValue("@id", id)'
+- id: cs-empty-catch
+  name: Empty catch block
+  severity: error
+  category: error_handling
+  pattern: catch\s*(?:\([^)]*\))?\s*\{\s*\}
+  message: Empty catch blocks silently swallow errors
+  fix_hint: Log the exception or re-throw it
+- id: cs-catch-exception
+  name: Catching generic Exception
+  severity: warning
+  category: error_handling
+  pattern: catch\s*\(\s*Exception\b
+  message: Catching generic Exception masks specific errors
+  fix_hint: Catch specific exceptions or use when clause
+- id: cs-thread-sleep
+  name: Thread.Sleep usage
+  severity: error
+  category: async
+  pattern: Thread\.Sleep\s*\(
+  message: Thread.Sleep blocks the thread - use async/await
+  fix_hint: Use await Task.Delay() for async waiting
+- id: cs-empty-string
+  name: Comparing to empty string
+  severity: info
+  category: code_quality
+  pattern: ==\s*""|!=\s*""|\.Length\s*==\s*0
+  message: Use string.IsNullOrEmpty() or string.IsNullOrWhiteSpace()
+  fix_hint: string.IsNullOrEmpty(value)
+- id: cs-var-any
+  name: Using var with anonymous types excessively
+  severity: info
+  category: type_safety
+  pattern: var\s+\w+\s*=\s*new\s+\{
+  message: Excessive var usage reduces code readability
+  fix_hint: Use explicit types for complex objects
+- id: cs-magic-number
+  name: Magic number
+  severity: info
+  category: code_quality
+  pattern: (?:if|while|for)\s*\(.*(?:==?|>=?|<=?)\s*\d{2,}
+  message: Magic numbers should be named constants
+  fix_hint: Define const int MaxRetries = 3;
+- id: cs-null-check-pattern
+  name: Redundant null check after as
+  severity: warning
+  category: code_quality
+  pattern: as\s+\w+;\s*\n\s*if\s*\(\w+\s*!=\s*null\)
+  message: Use is pattern matching instead of as + null check
+  fix_hint: if (obj is MyType typed) { ... }
+- id: cs-disposable-not-disposed
+  name: IDisposable not disposed
+  severity: warning
+  category: resource_management
+  pattern: new\s+(?:SqlConnection|HttpClient|StreamReader|StreamWriter)
+  message: IDisposable objects should be disposed properly
+  fix_hint: 'Use using statement: using var conn = new SqlConnection(...)'
+- id: cs-no-async
+  name: Synchronous I/O in async context
+  severity: warning
+  category: async
+  pattern: \.Result\b|\.Wait\(\)|\.GetAwaiter\(\)\.GetResult\(\)
+  message: Blocking on async code causes deadlocks
+  fix_hint: Use await instead of .Result or .Wait()
+- id: cs-async-void
+  name: async void method
+  severity: error
+  category: async
+  pattern: async\s+void\s+
+  message: async void methods cannot be awaited and swallow exceptions
+  fix_hint: Use async Task instead of async void (except for event handlers)
+- id: cs-string-interpolation-sql
+  name: String interpolation in SQL
+  severity: error
+  category: security
+  pattern: (?:Execute|Command)\s*\(\s*\$\"
+  message: String interpolation in SQL commands enables injection
+  fix_hint: Use parameterized queries with SqlCommand.Parameters
+- id: cs-linq-heavy
+  name: Excessive LINQ chains
+  severity: info
+  category: performance
+  pattern: \.Where\(.*\.Select\(.*\.Where\(
+  message: Deeply chained LINQ can be hard to debug and optimize
+  fix_hint: Break complex queries into named variables or methods
+- id: cs-log-sensitive
+  name: Logging sensitive data
+  severity: error
+  category: security
+  pattern: log(?:ger)?\.(?:info|debug|warn|error)\s*\(.*(?:password|secret|token|credential|api_key)
+  message: Never log sensitive data (passwords, tokens, secrets)
+  fix_hint: Use log filtering or redact sensitive fields
+- id: cs-log-print
+  name: Using print for logging
+  severity: warning
+  category: logging
+  pattern: ^\s*print\s*\(
+  message: Use structured logging instead of print statements in production
+  fix_hint: Use logging framework (loguru, structlog, etc.)
+- id: cs-file-leak
+  name: Unclosed file handle
+  severity: error
+  category: resource_management
+  pattern: (?:open|fopen)\s*\([^)]*\)\s*(?!.*\b(with|using|close|finally|defer)\b)
+  message: File handles must be closed properly to avoid resource leaks
+  fix_hint: Use with/using/defer block or ensure close() in finally
+- id: cs-connection-leak
+  name: Unclosed connection
+  severity: error
+  category: resource_management
+  pattern: (?:connect|new connection|getConnection)\s*\([^)]*\)\s*(?!.*\b(with|using|close|finally|defer)\b)
+  message: Database/network connections must be released after use
+  fix_hint: Use connection pool or ensure close() in finally
+- id: cs-missing-await
+  name: Missing await on async call
+  severity: error
+  category: concurrency
+  pattern: (?:async\s+def|async\s+fn)\s+\w+\s*\([^)]*\)\s*\{?\s*$
+  message: Async function called without await may cause race conditions
+  fix_hint: Add await/async keyword or handle the future properly
+- id: cs-shared-mutable
+  name: Shared mutable state without sync
+  severity: warning
+  category: concurrency
+  pattern: (?:global|static|thread_local)\s+\w+(?:\s*=\s*[^;]*)?\s*[;]?$
+  message: Shared mutable state without synchronization can cause race conditions
+  fix_hint: Use mutex/lock/atomic or thread-local storage
+- id: cs-large-alloc-loop
+  name: Large allocation in loop
+  severity: warning
+  category: performance
+  pattern: (?:for|while|loop)\s*\([^)]*\)\s*\{?\s*[^}]*\b(?:append|push|concat|new\s+(?:Array|List|StringBuilder))\b
+  message: Repeated allocations inside loops impact performance
+  fix_hint: Pre-allocate or use builder pattern outside the loop
+- id: cs-n-plus-one
+  name: Potential N+1 query pattern
+  severity: warning
+  category: performance
+  pattern: (?:for|while|loop|each|map)\s*[^)]*\)?\s*\{?[^}]*\b(?:query|find|get|fetch|load)\b[^}]*\}
+  message: Query inside a loop may cause N+1 performance problem
+  fix_hint: Use batch loading, eager loading, or JOIN query
+- id: cs-cors-allow-all
+  name: Overly permissive CORS
+  severity: error
+  category: security
+  pattern: (?:Access-Control-Allow-Origin|origins?)\s*[=:]\s*["\']?\*["\']?
+  message: Wildcard CORS exposes API to any origin
+  fix_hint: Restrict CORS to specific allowed origins
+- id: cs-no-input-validation
+  name: Missing input validation on API
+  severity: warning
+  category: security
+  pattern: (?:@\w+Mapping|def\s+\w+\([^)]*request|route|endpoint|api_view)
+  message: API endpoints should validate all input parameters
+  fix_hint: Add input validation or use schema validation library
+- id: cs-hardcoded-origin
+  name: Hardcoded origin/domain
+  severity: warning
+  category: config
+  pattern: (?:allowed_origins|trusted_origins|ALLOWED_HOSTS)\s*[=:]\s*\["\'\]https?://
+  message: Hardcoded origins in config should be environment variables
+  fix_hint: Use environment variables for allowed origins
+- id: cs-exception-leak
+  name: Exception message leaks internal info
+  severity: warning
+  category: security
+  pattern: (?:print|log|logger)\s*\(.*e(?:rror)?\.(?:message|to_String|getMessage)\s*\)
+  message: Exception messages may leak internal implementation details
+  fix_hint: Log a generic message, add exception details separately
+- id: cs-hardcoded-secret-in-ci
+  name: Hardcoded secret in CI config
+  severity: error
+  category: security
+  pattern: (?:GITHUB_TOKEN|API_KEY|SECRET|PASSWORD)\s*[=:]\s*[\"'][^\"']+[\"']
+  message: CI/CD secrets should use GitHub Secrets or vault, not hardcoded strings
+  fix_hint: Use ${{ secrets.MY_SECRET }} in GitHub Actions
+- id: cs-ci-disabled-check
+  name: Disabled CI check
+  severity: warning
+  category: ci_cd
+  pattern: continue-on-error:\s*true
+  message: CI checks with continue-on-error silently ignore failures
+  fix_hint: Remove continue-on-error or add explicit error handling
+- id: cs-docker-image-latest
+  name: Using :latest tag
+  severity: warning
+  category: ci_cd
+  pattern: FROM\s+\S+:\s*latest\b
+  message: Using :latest tag makes builds non-reproducible
+  fix_hint: Pin to specific version tag
+- id: cs-docker-exposed-port
+  name: Exposed port without healthcheck
+  severity: warning
+  category: ci_cd
+  pattern: EXPOSE\s+\d+
+  message: Exposed ports should have corresponding healthcheck
+  fix_hint: Add HEALTHCHECK instruction
+- id: cs-iac-hardcoded-secret
+  name: Hardcoded secret in IaC
+  severity: error
+  category: security
+  pattern: (?:password|secret_key|access_key)\s*[=:]\s*[\"'][^\"']+[\"']
+  message: Infrastructure secrets should use vault or secret store
+  fix_hint: Use AWS Secrets Manager, HashiCorp Vault, or SOPS
+- id: cs-iac-admin-exposed
+  name: Admin service exposed to internet
+  severity: error
+  category: security
+  pattern: '(?:adminer|phpmyadmin|pgadmin|kibana)\s*:'
+  message: Admin tools should not be publicly accessible
+  fix_hint: Restrict ingress to internal network only
+- id: cs-docker-root-user
+  name: Running as root in container
+  severity: error
+  category: security
+  pattern: FROM\s+\S+\s*(?:AS\s+\w+)?\s*\n(?!.*USER\s)
+  message: Running containers as root is a security risk
+  fix_hint: Add 'USER nobody' or create a non-root user
+- id: cs-pip-audit-missing
+  name: Missing dependency audit
+  severity: warning
+  category: ci_cd
+  pattern: pip install\b(?!.*pip-audit|.*safety)
+  message: Package installation without vulnerability scanning
+  fix_hint: Add 'pip-audit' or 'safety check' after install
+naming:
+  file:
+    pattern: ^[A-Z][a-zA-Z0-9]*\.cs$
+    message: C# files should use PascalCase
+  function:
+    pattern: ^[A-Z][a-zA-Z0-9]*$
+    message: Methods should use PascalCase
+  class:
+    pattern: ^[A-Z][a-zA-Z0-9]*$
+    message: Classes should use PascalCase
+  constant:
+    pattern: ^[A-Z][a-zA-Z0-9]*$
+    message: C# constants use PascalCase
+  interface:
+    pattern: ^I[A-Z][a-zA-Z0-9]*$
+    message: Interfaces should start with I prefix
+thresholds:
+  max_function_length: 50
+  max_file_length: 500
+  max_line_length: 120
+  max_nesting_depth: 4
+  max_function_params: 5
+  max_cyclomatic_complexity: 10
+tooling:
+  linter: dotnet-format
+  formatter: dotnet-format
+  type_checker: null
+  test_runner: xunit
+  config_files:
+  - '"*.csproj"'
+  - .editorconfig
+  - Directory.Build.props

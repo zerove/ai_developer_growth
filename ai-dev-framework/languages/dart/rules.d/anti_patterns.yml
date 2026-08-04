@@ -1,0 +1,205 @@
+language: dart
+version: '>=3.0'
+config_version: '1.0'
+anti_patterns:
+- id: dt-print
+  name: print() in production
+  severity: info
+  category: code_quality
+  pattern: \bprint\s*\(
+  message: Use proper logging instead of print
+  fix_hint: Use dart:developer log() or logging package
+- id: dt-force-unwrap
+  name: Bang operator (!)
+  severity: error
+  category: type_safety
+  pattern: \w+!
+  message: Bang operator crashes on null
+  fix_hint: Use null-aware operators (?. ??)
+- id: dt-empty-catch
+  name: Empty catch block
+  severity: error
+  category: error_handling
+  pattern: catch\s*\(\s*\w+\s*(?:,\s*\w+)?\s*\)\s*\{\s*\}
+  message: Empty catch blocks hide errors
+  fix_hint: Log the error or rethrow
+- id: dt-dynamic
+  name: dynamic type
+  severity: warning
+  category: type_safety
+  pattern: \bdynamic\s+\w+
+  message: dynamic bypasses type safety
+  fix_hint: Use explicit types or generics
+- id: dt-as-cast
+  name: Force cast (as)
+  severity: warning
+  category: type_safety
+  pattern: \bas\s+[A-Z]\w+
+  message: Force cast can throw at runtime
+  fix_hint: Use as? with null check
+- id: dt-ignore
+  name: lint ignore comment
+  severity: info
+  category: code_quality
+  pattern: //\s*ignore:\s+
+  message: Lint ignores should be temporary
+  fix_hint: Fix the underlying issue instead of ignoring
+- id: dt-set-state
+  name: setState without mounted check
+  severity: warning
+  category: error_handling
+  pattern: \bsetState\s*\(
+  message: setState may be called after dispose
+  fix_hint: Check mounted before calling setState in async code
+- id: dt-print-debug
+  name: debugPrint overuse
+  severity: info
+  category: code_quality
+  pattern: \bdebugPrint\s*\(
+  message: debugPrint is for development only
+  fix_hint: Remove debugPrint or use logging package
+- id: da-hardcoded-config
+  name: Hardcoded configuration
+  severity: warning
+  category: config
+  pattern: (?:url|endpoint|host|port)\s*[=:]\s*["']https?://
+  message: Use configuration for URLs/endpoints
+  fix_hint: Move to config file
+- id: da-todo
+  name: Unresolved TODO
+  severity: info
+  category: code_quality
+  pattern: TODO|FIXME|HACK|XXX
+  message: Unresolved TODO/FIXME comments
+  fix_hint: Create a ticket or resolve
+- id: da-deep-nesting
+  name: Deep nesting
+  severity: warning
+  category: complexity
+  pattern: '    (?:if|for|while|case).*\n(?:        (?:if|for|while|case).*\n){2,}'
+  message: Deep nesting reduces readability
+  fix_hint: Extract helper functions
+- id: da-long-line
+  name: Long line
+  severity: info
+  category: code_quality
+  pattern: ^.{121,}$
+  message: Lines >120 chars
+  fix_hint: Break at logical boundaries
+- id: da-unsafe-input
+  name: Unvalidated input
+  severity: error
+  category: security
+  pattern: (?:read|gets?|input)\s*\(
+  message: User input must be validated
+  fix_hint: Add input validation
+- id: da-log-sensitive
+  name: Logging sensitive data
+  severity: error
+  category: security
+  pattern: log(?:ger)?\.(?:info|debug|warn|error)\s*\(.*(?:password|secret|token|credential|api_key)
+  message: Never log sensitive data (passwords, tokens, secrets)
+  fix_hint: Use log filtering or redact sensitive fields
+- id: da-log-print
+  name: Using print for logging
+  severity: warning
+  category: logging
+  pattern: ^\s*print\s*\(
+  message: Use structured logging instead of print statements in production
+  fix_hint: Use logging framework (loguru, structlog, etc.)
+- id: da-file-leak
+  name: Unclosed file handle
+  severity: error
+  category: resource_management
+  pattern: (?:open|fopen)\s*\([^)]*\)\s*(?!.*\b(with|using|close|finally|defer)\b)
+  message: File handles must be closed properly to avoid resource leaks
+  fix_hint: Use with/using/defer block or ensure close() in finally
+- id: da-connection-leak
+  name: Unclosed connection
+  severity: error
+  category: resource_management
+  pattern: (?:connect|new connection|getConnection)\s*\([^)]*\)\s*(?!.*\b(with|using|close|finally|defer)\b)
+  message: Database/network connections must be released after use
+  fix_hint: Use connection pool or ensure close() in finally
+- id: da-missing-await
+  name: Missing await on async call
+  severity: error
+  category: concurrency
+  pattern: (?:async\s+def|async\s+fn)\s+\w+\s*\([^)]*\)\s*\{?\s*$
+  message: Async function called without await may cause race conditions
+  fix_hint: Add await/async keyword or handle the future properly
+- id: da-shared-mutable
+  name: Shared mutable state without sync
+  severity: warning
+  category: concurrency
+  pattern: (?:global|static|thread_local)\s+\w+(?:\s*=\s*[^;]*)?\s*[;]?$
+  message: Shared mutable state without synchronization can cause race conditions
+  fix_hint: Use mutex/lock/atomic or thread-local storage
+- id: da-large-alloc-loop
+  name: Large allocation in loop
+  severity: warning
+  category: performance
+  pattern: (?:for|while|loop)\s*\([^)]*\)\s*\{?\s*[^}]*\b(?:append|push|concat|new\s+(?:Array|List|StringBuilder))\b
+  message: Repeated allocations inside loops impact performance
+  fix_hint: Pre-allocate or use builder pattern outside the loop
+- id: da-n-plus-one
+  name: Potential N+1 query pattern
+  severity: warning
+  category: performance
+  pattern: (?:for|while|loop|each|map)\s*[^)]*\)?\s*\{?[^}]*\b(?:query|find|get|fetch|load)\b[^}]*\}
+  message: Query inside a loop may cause N+1 performance problem
+  fix_hint: Use batch loading, eager loading, or JOIN query
+- id: da-cors-allow-all
+  name: Overly permissive CORS
+  severity: error
+  category: security
+  pattern: (?:Access-Control-Allow-Origin|origins?)\s*[=:]\s*["\']?\*["\']?
+  message: Wildcard CORS exposes API to any origin
+  fix_hint: Restrict CORS to specific allowed origins
+- id: da-no-input-validation
+  name: Missing input validation on API
+  severity: warning
+  category: security
+  pattern: (?:@\w+Mapping|def\s+\w+\([^)]*request|route|endpoint|api_view)
+  message: API endpoints should validate all input parameters
+  fix_hint: Add input validation or use schema validation library
+- id: da-hardcoded-origin
+  name: Hardcoded origin/domain
+  severity: warning
+  category: config
+  pattern: (?:allowed_origins|trusted_origins|ALLOWED_HOSTS)\s*[=:]\s*\["\'\]https?://
+  message: Hardcoded origins in config should be environment variables
+  fix_hint: Use environment variables for allowed origins
+- id: da-exception-leak
+  name: Exception message leaks internal info
+  severity: warning
+  category: security
+  pattern: (?:print|log|logger)\s*\(.*e(?:rror)?\.(?:message|to_String|getMessage)\s*\)
+  message: Exception messages may leak internal implementation details
+  fix_hint: Log a generic message, add exception details separately
+naming:
+  file:
+    pattern: ^[a-z][a-z0-9_]*\.dart$
+    message: Dart files should use snake_case
+  function:
+    pattern: ^[a-z][a-zA-Z0-9]*$
+    message: Dart functions should use camelCase
+  class:
+    pattern: ^[A-Z][a-zA-Z0-9]*$
+    message: Dart classes should use PascalCase
+  constant:
+    pattern: ^[a-z][a-zA-Z0-9]*$
+    message: Dart constants should use camelCase
+thresholds:
+  max_function_length: 50
+  max_file_length: 500
+  max_line_length: 120
+  max_nesting_depth: 4
+  max_function_params: 5
+tooling:
+  linter: dart analyze
+  formatter: dart format
+  test_runner: flutter test
+  config_files:
+  - analysis_options.yaml
+  - pubspec.yaml

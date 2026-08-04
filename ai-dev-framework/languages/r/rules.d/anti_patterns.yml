@@ -1,0 +1,219 @@
+language: r
+version: '>=4.3'
+config_version: '1.0'
+anti_patterns:
+- id: r-library
+  name: library() in production
+  severity: warning
+  category: code_quality
+  pattern: \blibrary\s*\(|\brequire\s*\(
+  message: 'Use namespace:: or :: for explicit imports'
+  fix_hint: Use pkg::func() or pkg:::func()
+- id: r-attach
+  name: attach() usage
+  severity: error
+  category: code_quality
+  pattern: \battach\s*\(
+  message: attach() modifies search path - use with() or explicit namespace
+  fix_hint: Use with(data, expr) or data$column
+- id: r-sapply
+  name: sapply() usage
+  severity: info
+  category: type_safety
+  pattern: \bsapply\s*\(
+  message: sapply() can return inconsistent types
+  fix_hint: Use vapply() for type-safe results
+- id: r-paste-paste0
+  name: paste0 for string concat
+  severity: info
+  category: code_quality
+  pattern: \bpaste0\s*\(|\bpaste\s*\(
+  message: Consider glue package for string interpolation
+  fix_hint: Use glue::glue() for readable string construction
+- id: r-print
+  name: print() in production
+  severity: info
+  category: code_quality
+  pattern: \bprint\s*\(|\bcat\s*\(
+  message: Use message() or logger for output
+  fix_hint: Use message() for user-facing output
+- id: r-1-index
+  name: Magic number indexing
+  severity: info
+  category: code_quality
+  pattern: \[\d+\]
+  message: Hardcoded numeric indices are fragile
+  fix_hint: Use named elements or column names
+- id: r-tapply
+  name: tapply() usage
+  severity: info
+  category: code_quality
+  pattern: \btapply\s*\(
+  message: Consider dplyr/tidyr for grouped operations
+  fix_hint: Use dplyr::group_by() + summarize()
+- id: r-sapply-class
+  name: class(x) == checks
+  severity: warning
+  category: type_safety
+  pattern: class\(\w+\)\s*==
+  message: class() can return multiple values - use inherits()
+  fix_hint: Use inherits(x, 'ClassName') or is(x, 'ClassName')
+- id: r-hardcoded-config
+  name: Hardcoded configuration
+  severity: warning
+  category: config
+  pattern: (?:url|endpoint|host|port)\s*[=:]\s*["']https?://
+  message: Use configuration for URLs/endpoints
+  fix_hint: Move to config file
+- id: r-todo
+  name: Unresolved TODO
+  severity: info
+  category: code_quality
+  pattern: TODO|FIXME|HACK|XXX
+  message: Unresolved TODO/FIXME comments
+  fix_hint: Create a ticket or resolve
+- id: r-deep-nesting
+  name: Deep nesting
+  severity: warning
+  category: complexity
+  pattern: '    (?:if|for|while|case).*\n(?:        (?:if|for|while|case).*\n){2,}'
+  message: Deep nesting reduces readability
+  fix_hint: Extract helper functions
+- id: r-long-line
+  name: Long line
+  severity: info
+  category: code_quality
+  pattern: ^.{121,}$
+  message: Lines >120 chars
+  fix_hint: Break at logical boundaries
+- id: r-unsafe-input
+  name: Unvalidated input
+  severity: error
+  category: security
+  pattern: (?:read|gets?|input)\s*\(
+  message: User input must be validated
+  fix_hint: Add input validation
+- id: r-log-sensitive
+  name: Logging sensitive data
+  severity: error
+  category: security
+  pattern: log(?:ger)?\.(?:info|debug|warn|error)\s*\(.*(?:password|secret|token|credential|api_key)
+  message: Never log sensitive data (passwords, tokens, secrets)
+  fix_hint: Use log filtering or redact sensitive fields
+- id: r-log-print
+  name: Using print for logging
+  severity: warning
+  category: logging
+  pattern: ^\s*print\s*\(
+  message: Use structured logging instead of print statements in production
+  fix_hint: Use logging framework (loguru, structlog, etc.)
+- id: r-file-leak
+  name: Unclosed file handle
+  severity: error
+  category: resource_management
+  pattern: (?:open|fopen)\s*\([^)]*\)\s*(?!.*\b(with|using|close|finally|defer)\b)
+  message: File handles must be closed properly to avoid resource leaks
+  fix_hint: Use with/using/defer block or ensure close() in finally
+- id: r-connection-leak
+  name: Unclosed connection
+  severity: error
+  category: resource_management
+  pattern: (?:connect|new connection|getConnection)\s*\([^)]*\)\s*(?!.*\b(with|using|close|finally|defer)\b)
+  message: Database/network connections must be released after use
+  fix_hint: Use connection pool or ensure close() in finally
+- id: r-large-alloc-loop
+  name: Large allocation in loop
+  severity: warning
+  category: performance
+  pattern: (?:for|while|loop)\s*\([^)]*\)\s*\{?\s*[^}]*\b(?:append|push|concat|new\s+(?:Array|List|StringBuilder))\b
+  message: Repeated allocations inside loops impact performance
+  fix_hint: Pre-allocate or use builder pattern outside the loop
+- id: r-exception-leak
+  name: Exception message leaks internal info
+  severity: warning
+  category: security
+  pattern: (?:print|log|logger)\s*\(.*e(?:rror)?\.(?:message|to_String|getMessage)\s*\)
+  message: Exception messages may leak internal implementation details
+  fix_hint: Log a generic message, add exception details separately
+- id: r-hardcoded-secret-in-ci
+  name: Hardcoded secret in CI config
+  severity: error
+  category: security
+  pattern: (?:GITHUB_TOKEN|API_KEY|SECRET|PASSWORD)\s*[=:]\s*[\"'][^\"']+[\"']
+  message: CI/CD secrets should use GitHub Secrets or vault, not hardcoded strings
+  fix_hint: Use ${{ secrets.MY_SECRET }} in GitHub Actions
+- id: r-ci-disabled-check
+  name: Disabled CI check
+  severity: warning
+  category: ci_cd
+  pattern: continue-on-error:\s*true
+  message: CI checks with continue-on-error silently ignore failures
+  fix_hint: Remove continue-on-error or add explicit error handling
+- id: r-docker-image-latest
+  name: Using :latest tag
+  severity: warning
+  category: ci_cd
+  pattern: FROM\s+\S+:\s*latest\b
+  message: Using :latest tag makes builds non-reproducible
+  fix_hint: Pin to specific version tag
+- id: r-docker-exposed-port
+  name: Exposed port without healthcheck
+  severity: warning
+  category: ci_cd
+  pattern: EXPOSE\s+\d+
+  message: Exposed ports should have corresponding healthcheck
+  fix_hint: Add HEALTHCHECK instruction
+- id: r-iac-hardcoded-secret
+  name: Hardcoded secret in IaC
+  severity: error
+  category: security
+  pattern: (?:password|secret_key|access_key)\s*[=:]\s*[\"'][^\"']+[\"']
+  message: Infrastructure secrets should use vault or secret store
+  fix_hint: Use AWS Secrets Manager, HashiCorp Vault, or SOPS
+- id: r-iac-admin-exposed
+  name: Admin service exposed to internet
+  severity: error
+  category: security
+  pattern: '(?:adminer|phpmyadmin|pgadmin|kibana)\s*:'
+  message: Admin tools should not be publicly accessible
+  fix_hint: Restrict ingress to internal network only
+- id: r-docker-root-user
+  name: Running as root in container
+  severity: error
+  category: security
+  pattern: FROM\s+\S+\s*(?:AS\s+\w+)?\s*\n(?!.*USER\s)
+  message: Running containers as root is a security risk
+  fix_hint: Add 'USER nobody' or create a non-root user
+- id: r-pip-audit-missing
+  name: Missing dependency audit
+  severity: warning
+  category: ci_cd
+  pattern: pip install\b(?!.*pip-audit|.*safety)
+  message: Package installation without vulnerability scanning
+  fix_hint: Add 'pip-audit' or 'safety check' after install
+naming:
+  file:
+    pattern: ^[a-z][a-z0-9_]*\.r$
+    message: R files should use snake_case
+  function:
+    pattern: ^[a-z][a-z0-9_.]*$
+    message: R functions should use snake_case
+  class:
+    pattern: ^[A-Z][a-zA-Z0-9]*$
+    message: R classes should use PascalCase
+  constant:
+    pattern: ^[A-Z][A-Z0-9_]*$
+    message: R constants should use UPPER_SNAKE_CASE
+thresholds:
+  max_function_length: 30
+  max_file_length: 400
+  max_line_length: 120
+  max_nesting_depth: 4
+  max_function_params: 5
+tooling:
+  linter: lintr
+  formatter: styler
+  test_runner: testthat
+  config_files:
+  - .lintr
+  - DESCRIPTION

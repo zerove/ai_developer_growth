@@ -1,0 +1,46 @@
+# 金融领域规则 — 交易系统、支付、账务
+# 通过 .adg/config.yml 启用:
+#   domains:
+#     - finance
+
+config_version: '1.0'
+anti_patterns:
+- id: finance-float-money
+  name: Floating point for money
+  severity: error
+  category: domain
+  pattern: '(?:float|double)\s+\w*(?:price|amount|money|balance|total|fee|rate|payment)'
+  message: 金额必须使用定点数或 decimal，不能使用浮点数
+  fix_hint: Use Decimal or integer cents representation
+
+- id: finance-missing-audit
+  name: Missing audit log
+  severity: error
+  category: domain
+  pattern: '(?:transfer|payment|refund|settle|withdraw|deposit)\s*\('
+  message: 资金变动操作必须记录审计日志
+  fix_hint: Add audit trail entry for all financial transactions
+
+- id: finance-round-ambiguous
+  name: Rounding without strategy
+  severity: warning
+  category: domain
+  pattern: 'round\s*\(.*(?:amount|money|price|total|tax|rate)'
+  message: 金额舍入必须指定舍入模式 (HALF_UP/DOWN/EVEN)，并记录业务理由
+  fix_hint: Specify RoundingMode and document the business rationale
+
+- id: finance-unlogged-error
+  name: Unlogged financial error
+  severity: error
+  category: domain
+  pattern: 'except\s+(?:Exception|Error).*pass|catch\s*\(.*\).*\{\s*\}'
+  message: 金融系统的异常不能静默忽略——可能导致资金差异
+  fix_hint: Log the error with transaction context and alert operations team
+
+- id: finance-race-condition
+  name: Race condition on balance
+  severity: error
+  category: domain
+  pattern: '(?:balance|amount|account).*(?:-=|\+=|--|\+\+)'
+  message: 余额操作需要原子性保障（行锁或乐观锁）
+  fix_hint: Use atomic UPDATE or optimistic locking with retry

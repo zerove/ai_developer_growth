@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+{% block title %}Assessment Result - AI Developer Growth{% endblock %}
+{% block content %}
+<div class="card">
+    <h2>📊 Assessment Result</h2>
+    <div style="text-align:center;padding:20px 0;">
+        <div style="font-size:3em;font-weight:700;color:var(--primary);">{{ '%.0f' | format(overall * 100) }}%</div>
+        <div style="font-size:1.2em;color:var(--text-muted);">{{ level }}</div>
+    </div>
+    <table>
+        <tr><th>Dimension</th><th>Score</th><th>Level</th></tr>
+        {% set dim_names = {
+            'ai_comprehension': 'AI 理解力',
+            'engineering_integration': '工程整合',
+            'learning_method': '学习方法',
+            'innovation_thinking': '创新思维',
+            'output_quality': '输出质量'
+        } %}
+        {% for dim, score in scores.items() %}
+        <tr>
+            <td>{{ dim_names.get(dim, dim) }}</td>
+            <td>{{ '%.0f' | format(score * 100) }}%</td>
+            <td>
+                {% if score < 0.2 %}L0 初学者
+                {% elif score < 0.4 %}L1 进阶
+                {% elif score < 0.6 %}L2 胜任
+                {% elif score < 0.8 %}L3 精通
+                {% else %}L4 专家{% endif %}
+            </td>
+        </tr>
+        {% endfor %}
+    </table>
+</div>
+
+{% if recommendations %}
+<div class="card">
+    <h2>🎯 Recommendations</h2>
+    {% for rec in recommendations %}
+    <div style="margin-bottom:16px;">
+        <h3>{{ rec.dimension }} ({{ '%.0f' | format(rec.score * 100) }}%)</h3>
+        <div style="margin-top:8px;">
+            {% for doc in rec.docs %}
+            <span class="badge badge-progress" style="margin:2px;">{{ doc }}</span>
+            {% endfor %}
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% endif %}
+
+<div style="margin-top:16px;">
+    <a href="/assess" class="btn btn-outline">Retake</a>
+    <a href="/assess/history" class="btn btn-outline">History</a>
+</div>
+{% endblock %}

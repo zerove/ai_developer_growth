@@ -1,0 +1,204 @@
+# Language Rules - Merged CI
+# Combines matrix validation (26 languages) with PR comments, SARIF, and trend tracking
+
+name: Language Rules
+
+on:
+  push:
+    branches: [main, master, develop]
+    paths:
+      - 'ai-dev-framework/languages/**/*.yml'
+      - 'ai-dev-framework/frameworks/**/*.yml'
+      - 'ai-dev-framework/common/**/*.yml'
+      - 'tools/scripts/validate_language_rules.py'
+      - 'tools/scripts/ai_quality_gate.py'
+      - '.ai-rules/**'
+  pull_request:
+    branches: [main, master]
+    paths:
+      - 'ai-dev-framework/languages/**/*.yml'
+      - 'ai-dev-framework/frameworks/**/*.yml'
+      - 'ai-dev-framework/common/**/*.yml'
+      - 'tools/scripts/validate_language_rules.py'
+      - 'tools/scripts/ai_quality_gate.py'
+      - '.ai-rules/**'
+
+env:
+  PYTHON_VERSION: "3.11"
+
+jobs:
+  # ── Matrix: validate each language's rule YAML ──────────
+  validate-rules:
+    name: Rules (${{ matrix.language }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        language:
+          - python
+          - typescript
+          - rust
+          - go
+          - java
+          - kotlin
+          - csharp
+          - javascript
+          - cpp
+          - swift
+          - scala
+          - elixir
+          - lua
+          - ruby
+          - php
+          - zig
+          - r
+          - clojure
+          - haskell
+          - dart
+          - powershell
+          - perl
+          - assembly
+          - fortran
+          - matlab
+          - graphql
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Install dependencies
+        run: pip install pyyaml
+
+      - name: Validate language rules YAML
+        run: |
+          python -c "
+          import yaml, sys
+          from pathlib import Path
+          rule_path = Path('ai-dev-framework/languages/${{ matrix.language }}/rules.d/anti_patterns.yml')
+          if not rule_path.exists():
+              print(f'Rules not found: {rule_path}', file=sys.stderr)
+              sys.exit(1)
+          with open(rule_path) as f:
+              data = yaml.safe_load(f)
+          patterns = data.get('anti_patterns', [])
+          print(f'${{ matrix.language }}: {len(patterns)} rules loaded')
+          for p in patterns:
+              assert 'id' in p, f'Missing id in rule'
+              assert 'pattern' in p, f'Missing pattern in rule {p.get(\"id\")}'
+              assert 'severity' in p, f'Missing severity in rule {p.get(\"id\")}'
+          print('All rules valid')
+          "
+
+  # ── Full validation + PR report ─────────────────────────
+  report:
+    name: Full Report
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+      checks: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Install dependencies
+        run: pip install pyyaml
+
+      - name: Run full validation
+        id: validate
+        continue-on-error: true
+        run: |
+          python tools/scripts/validate_language_rules.py \
+            --all --format json --format sarif \
+            -o results.json -o results.sarif \
+            --health-score 2>&1 | tee validate-output.txt || true
+
+          # Extract health score
+          HEALTH=$(python -c "
+          import json
+          try:
+              with open('results.json') as f:
+                  data = json.load(f)
+              print(data.get('health_score', {}).get('score', 'N/A'))
+          except: print('N/A')
+          " 2>/dev/null || echo "N/A")
+
+          echo "health=$HEALTH" >> $GITHUB_OUTPUT
+
+      - name: Upload SARIF
+        if: always()
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: results.sarif
+        continue-on-error: true
+
+      - name: PR Comment
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const health = '${{ steps.validate.outputs.health }}';
+
+            let badge = '';
+            if (health !== 'N/A' && health !== '') {
+              const score = parseInt(health);
+              let color = 'red';
+              if (score >= 90) color = 'brightgreen';
+              else if (score >= 70) color = 'green';
+              else if (score >= 50) color = 'yellow';
+              else if (score >= 30) color = 'orange';
+              badge = `![Health](https://img.shields.io/badge/health-${health}%2F100-${color})`;
+            }
+
+            const body = `## 🔍 Language Rules Report
+
+            ${badge}
+
+            | Metric | Value |
+            |--------|-------|
+            | Health Score | **${health}**/100 |
+            | Languages | 26 |
+            | Rules | 262+ |
+
+            SARIF results uploaded to GitHub Code Scanning.`;
+
+            const { data: comments } = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+            });
+
+            const marker = 'Language Rules Report';
+            const existing = comments.find(c => c.body.includes(marker));
+            if (existing) {
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: existing.id,
+                body: body,
+              });
+            } else {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+                body: body,
+              });
+            }
+
+      - name: Upload artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: language-rules-results
+          path: |
+            results.json
+            results.sarif
+          retention-days: 30

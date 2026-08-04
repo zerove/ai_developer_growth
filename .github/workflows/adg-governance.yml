@@ -1,0 +1,61 @@
+name: ADG Governance Check
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+    branches: [main, master]
+
+permissions:
+  contents: read
+  security-events: write
+
+jobs:
+  governance:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install ADG
+        run: pip install adg-governance
+
+      - name: Detect Language
+        id: detect
+        run: |
+          LANG=$(adg detect . --json | jq -r '.language')
+          echo "language=$LANG" >> $GITHUB_OUTPUT
+
+      - name: Run ADG Check
+        run: adg check . --lang ${{ steps.detect.outputs.language }} --severity warning --json > adg-report.json
+        continue-on-error: true
+
+      - name: Generate SARIF
+        run: adg check . --lang ${{ steps.detect.outputs.language }} --sarif > results.sarif
+        continue-on-error: true
+
+      - name: Upload SARIF to GitHub Code Scanning
+        uses: github/codeql-action/upload-sarif@v3
+        if: always()
+        with:
+          sarif_file: results.sarif
+
+      - name: Quality Gate
+        run: |
+          ERRORS=$(cat adg-report.json | jq '.summary.error')
+          if [ "$ERRORS" -gt 0 ]; then
+            echo "❌ Quality gate failed: $ERRORS errors found"
+            exit 1
+          fi
+          echo "✅ Quality gate passed"
+
+      - name: Upload Report
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: adg-governance-report
+          path: adg-report.json

@@ -1,0 +1,24 @@
+---
+title: ADR-001: 增强 Git 变更解析的鲁棒性
+description: ADR-001: 增强 Git 变更解析的鲁棒性 - 技术文档
+category: 治理层
+tags: ['ADR', '001', 'enhanced', 'Python']
+difficulty: 高级
+reading_time: 10 分钟
+updated: 2026-07-21
+---
+
+# ADR-001: 增强 Git 变更解析的鲁棒性
+
+## 状态
+已通过
+
+## 上下文
+原有的 `GitAnalyzer` 依赖简单的字符串分割进行 diff 解析，在处理多行变更、文件重命名或复杂二进制 diff 时极易出现误删或忽略错误。
+
+## 决策
+引入 `unidiff` 库作为解析核心，提供基于 AST 的 diff 解析，提高解析准确率。保留基于字符串的 `_basic_filter` 作为解析失败时的兜底方案，确保工具在极端情况下不会彻底崩溃。
+
+## 影响
+- 增加 Python 依赖：`unidiff`
+- 提升了 `analyzer.py` 的鲁棒性，减少因解析错误导致的 `CONTEXT.md` 内容不同步。

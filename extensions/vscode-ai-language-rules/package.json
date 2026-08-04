@@ -1,0 +1,66 @@
+{
+  "name": "ai-language-rules",
+  "displayName": "AI Language Rules",
+  "description": "Multi-language code quality validation with 699+ ADG rules",
+  "version": "2.0.0",
+  "publisher": "ai-developer-growth",
+  "engines": {
+    "vscode": "^1.85.0"
+  },
+  "categories": ["Linters", "Programming Languages", "Other"],
+  "activationEvents": ["onLanguage:python", "onLanguage:typescript", "onLanguage:typescriptreact", "onLanguage:javascript", "onLanguage:javascriptreact", "onLanguage:rust", "onLanguage:go", "onLanguage:java", "onLanguage:kotlin", "onLanguage:csharp", "onLanguage:php", "onLanguage:ruby", "onLanguage:swift", "onLanguage:scala", "onLanguage:dart", "onLanguage:lua", "onLanguage:haskell", "onLanguage:clojure", "onLanguage:r", "onLanguage:perl", "onLanguage:zig", "onLanguage:zig", "workspaceContains:**/.ai-rules/*.yml"],
+  "main": "./extension.js",
+  "contributes": {
+    "configuration": {
+      "title": "AI Language Rules",
+      "properties": {
+        "aiLanguageRules.enabled": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable/disable AI Language Rules validation"
+        },
+        "aiLanguageRules.maxErrors": {
+          "type": "number",
+          "default": 0,
+          "description": "Maximum number of errors allowed (0 = unlimited)"
+        },
+        "aiLanguageRules.maxWarnings": {
+          "type": "number",
+          "default": -1,
+          "description": "Maximum number of warnings allowed (-1 = unlimited)"
+        },
+        "aiLanguageRules.customRulesPath": {
+          "type": "string",
+          "default": ".ai-rules",
+          "description": "Path to custom rules directory"
+        },
+        "aiLanguageRules.severity": {
+          "type": "string",
+          "enum": ["error", "warning", "info"],
+          "default": "warning",
+          "description": "最低报告严重性级别"
+        },
+        "aiLanguageRules.adgPath": {
+          "type": "string",
+          "default": "adg",
+          "description": "adg CLI 路径"
+        },
+        "aiLanguageRules.autoFixEnabled": {
+          "type": "boolean",
+          "default": true,
+          "description": "启用自动修复"
+        }
+      }
+    },
+    "commands": [
+      {"command": "aiLanguageRules.validate", "title": "ADG: Validate Current File"},
+      {"command": "aiLanguageRules.validateProject", "title": "ADG: Validate Workspace"},
+      {"command": "aiLanguageRules.autoFix", "title": "ADG: Auto-fix Current File"}]
+  },
+  "scripts": {
+    "lint": "eslint .",
+    "test": "node ./test/runTest.js"
+  },
+  "devDependencies": {"@types/vscode": "^1.85.0", "eslint": "^8.0.0"},
+  "dependencies": {}
+}

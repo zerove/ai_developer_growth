@@ -1,0 +1,147 @@
+framework: fastapi
+language: python
+config_version: '1.0'
+anti_patterns:
+- id: fastapi-missing-response-model
+  name: Missing response_model on endpoint
+  severity: warning
+  category: api_design
+  pattern: '@app\.\w+\(|@router\.\w+\((?!.*response_model)'
+  message: Missing response_model means no response validation or OpenAPI schema
+  fix_hint: Add response_model=YourResponseSchema to your route decorator
+- id: fastapi-sync-dependency
+  name: Synchronous dependency function
+  severity: warning
+  category: async
+  pattern: def\s+\w+\s*\(.*\)\s*(?:->\s*\w+\s*:)?\s*\n\s+return
+  message: Sync dependencies block the event loop and reduce throughput
+  fix_hint: Use async def for dependencies that perform I/O (DB, HTTP, file access)
+- id: fastapi-large-request-body
+  name: Large request body without size limit
+  severity: warning
+  category: security
+  pattern: body:\s*(?:str|bytes|UploadFile)
+  message: Unbounded request bodies can cause memory exhaustion
+  fix_hint: Use streaming uploads or set content-length limits in middleware
+- id: fastapi-missing-status-code
+  name: Missing explicit status_code
+  severity: info
+  category: api_design
+  pattern: '@(app|router)\.\w+\('
+  message: Explicit status codes improve API clarity and documentation
+  fix_hint: Add status_code=HTTP_200_OK (or appropriate code) to your route
+- id: fastapi-bare-exception
+  name: Bare Exception handler
+  severity: error
+  category: error_handling
+  pattern: except\s+Exception\b(?!.*as)
+  message: Catching bare Exception hides bugs and makes debugging harder
+  fix_hint: Catch specific HTTPException or use custom exception handlers
+- id: fastapi-missing-depends
+  name: Missing Depends for shared logic
+  severity: warning
+  category: api_design
+  pattern: '@(app|router)\.\w+\([^)]*\)\s*\n\s*async\s+def\s+\w+.*:\s*\n\s+\w+\s*='
+  message: Shared initialization logic should use FastAPI dependency injection
+  fix_hint: Extract common logic into Depends() functions for reusability and testability
+- id: fastapi-pydantic-mutation
+  name: Pydantic model mutation
+  severity: warning
+  category: correctness
+  pattern: \w+\.model_fields\[
+  message: Directly mutating Pydantic model fields breaks validation guarantees
+  fix_hint: Use model_copy(update={...}) or create a new instance instead of mutation
+- id: fastapi-missing-middleware
+  name: Missing CORS or security middleware
+  severity: warning
+  category: security
+  pattern: app\s*=\s*FastAPI\(\)
+  message: FastAPI apps should configure CORS, trusted hosts, and security middleware
+  fix_hint: Add CORSMiddleware, TrustedHostMiddleware, and HTTPSRedirectMiddleware
+- id: fastapi-sync-endpoint
+  name: Synchronous endpoint function
+  severity: warning
+  category: async
+  pattern: '@(app|router)\.\w+\([^)]*\)\s*\ndef\s+\w+'
+  message: Sync endpoints block the event loop under high concurrency
+  fix_hint: Use async def for endpoints that perform I/O operations
+- id: fastapi-missing-background-tasks
+  name: Long-running task in endpoint
+  severity: warning
+  category: performance
+  pattern: '@(app|router)\.\w+\([^)]*\)\s*\n\s*async\s+def\s+\w+.*:\s*\n[\s\S]*?time\.sleep|requests\.get|urllib'
+  message: Long-running operations should use BackgroundTasks
+  fix_hint: Use background_tasks.add_task() for non-blocking operations
+- id: fastapi-no-exception-handler
+  name: Missing global exception handler
+  severity: info
+  category: error_handling
+  pattern: app\s*=\s*FastAPI\(\)
+  message: Consider adding global exception handlers for consistent error responses
+  fix_hint: '@app.exception_handler(HTTPException) for custom error formatting'
+- id: fastapi-missing-validation
+  name: Missing request validation
+  severity: warning
+  category: api_design
+  pattern: def\s+\w+\s*\(\s*[^)]*:?\s*(?:str|int|bool|float|dict|list)\s*[),]
+  message: Endpoint parameters should use Pydantic models for validation
+  fix_hint: Define a Pydantic BaseModel and use it as parameter type
+- id: fastapi-return-any
+  name: Unspecified return type
+  severity: info
+  category: api_design
+  pattern: '@\w+\.(?:get|post|put|delete|patch)\b'
+  message: Endpoint should declare response_model for OpenAPI documentation
+  fix_hint: Add response_model= to route decorator
+- id: fastapi-blocking-call
+  name: Blocking call in async endpoint
+  severity: error
+  category: async
+  pattern: async\s+def\s+\w+.*\n.*\b(time\.sleep|requests\.(?:get|post)|open\([^)]*\))
+  message: Blocking I/O calls in async endpoint block the event loop
+  fix_hint: Use httpx.AsyncClient or asyncio.to_thread()
+- id: fastapi-sync-view
+  name: Sync view function
+  severity: info
+  category: performance
+  pattern: '@\w+\.(?:get|post)\b.*\n\s*def\s+\w+\s*\('
+  message: Synchronous endpoint blocks event loop thread pool
+  fix_hint: Use async def for I/O-bound endpoints
+- id: fastapi-missing-error-handler
+  name: No global exception handler
+  severity: warning
+  category: error_handling
+  pattern: '@app\.(?:get|post)'
+  message: FastAPI app without global exception handler may leak internal errors
+  fix_hint: Add @app.exception_handler() for all exceptions
+naming:
+  file:
+    pattern: ^[a-z][a-z0-9_]*\.py$
+    message: Python files should use snake_case
+  function:
+    pattern: ^[a-z][a-z0-9_]*$
+    exceptions:
+    - __init__
+    - __str__
+    message: FastAPI functions should use snake_case
+  class:
+    pattern: ^[A-Z][a-zA-Z0-9]*$
+    message: FastAPI classes should use PascalCase
+  constant:
+    pattern: ^[A-Z][A-Z0-9_]*$
+    message: Constants should use UPPER_SNAKE_CASE
+thresholds:
+  max_function_length: 50
+  max_file_length: 500
+  max_line_length: 120
+  max_nesting_depth: 4
+  max_function_params: 7
+  max_cyclomatic_complexity: 10
+tooling:
+  linter: ruff
+  formatter: ruff
+  type_checker: mypy
+  test_runner: pytest
+  config_files:
+  - pyproject.toml
+  - requirements.txt

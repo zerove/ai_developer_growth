@@ -1,0 +1,4 @@
+Fix critical bug in auth
+Update documentation
+Refactor database layer
+Answer emails

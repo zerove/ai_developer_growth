@@ -1,0 +1,205 @@
+language: elixir
+version: '>=1.15'
+config_version: '1.0'
+anti_patterns:
+- id: ex-catch-all
+  name: Catching all exceptions
+  severity: error
+  category: error_handling
+  pattern: 'rescue\s+_\s*->|rescue\s+_\s*:'
+  message: Catching all exceptions hides specific errors
+  fix_hint: Rescue specific exception types
+- id: ex-io-inspect
+  name: IO.inspect in production
+  severity: info
+  category: code_quality
+  pattern: \bIO\.inspect\s*\(
+  message: IO.inspect is a debugging tool - use Logger
+  fix_hint: Use Logger.info/debug/warning/error
+- id: ex-io-puts
+  name: IO.puts in production
+  severity: info
+  category: code_quality
+  pattern: \bIO\.puts\s*\(|\bIO\.write\s*\(
+  message: Use Logger instead of IO.puts
+  fix_hint: Use Logger module
+- id: ex-process-sleep
+  name: Process.sleep
+  severity: warning
+  category: code_quality
+  pattern: \bProcess\.sleep\s*\(
+  message: Process.sleep blocks the scheduler
+  fix_hint: Use Process.send_after or Task.async with delay
+- id: ex-string-to-charlist
+  name: to_charlist in favor of to_string
+  severity: info
+  category: code_quality
+  pattern: \bto_charlist\s*\(
+  message: Consider if string is preferred over charlist
+  fix_hint: Use to_string unless interfacing with C/Erlang
+- id: ex-empty-else
+  name: Empty else clause
+  severity: info
+  category: code_quality
+  pattern: else\s+\n\s*end
+  message: Empty else clause is redundant
+  fix_hint: Remove the empty else clause
+- id: ex-bare-rescue
+  name: Bare rescue
+  severity: warning
+  category: error_handling
+  pattern: \brescue\s*$
+  message: Bare rescue catches all errors - be specific
+  fix_hint: 'Rescue specific exceptions: rescue ArgumentError'
+- id: ex-io-warn
+  name: IO.warn usage
+  severity: info
+  category: code_quality
+  pattern: \bIO\.warn\s*\(
+  message: Use Logger.warning instead of IO.warn
+  fix_hint: Use Logger.warning
+- id: el-hardcoded-config
+  name: Hardcoded configuration
+  severity: warning
+  category: config
+  pattern: (?:url|endpoint|host|port)\s*[=:]\s*["']https?://
+  message: Use configuration for URLs/endpoints
+  fix_hint: Move to config file
+- id: el-todo
+  name: Unresolved TODO
+  severity: info
+  category: code_quality
+  pattern: TODO|FIXME|HACK|XXX
+  message: Unresolved TODO/FIXME comments
+  fix_hint: Create a ticket or resolve
+- id: el-deep-nesting
+  name: Deep nesting
+  severity: warning
+  category: complexity
+  pattern: '    (?:if|for|while|case).*\n(?:        (?:if|for|while|case).*\n){2,}'
+  message: Deep nesting reduces readability
+  fix_hint: Extract helper functions
+- id: el-long-line
+  name: Long line
+  severity: info
+  category: code_quality
+  pattern: ^.{121,}$
+  message: Lines >120 chars
+  fix_hint: Break at logical boundaries
+- id: el-unsafe-input
+  name: Unvalidated input
+  severity: error
+  category: security
+  pattern: (?:read|gets?|input)\s*\(
+  message: User input must be validated
+  fix_hint: Add input validation
+- id: el-log-sensitive
+  name: Logging sensitive data
+  severity: error
+  category: security
+  pattern: log(?:ger)?\.(?:info|debug|warn|error)\s*\(.*(?:password|secret|token|credential|api_key)
+  message: Never log sensitive data (passwords, tokens, secrets)
+  fix_hint: Use log filtering or redact sensitive fields
+- id: el-log-print
+  name: Using print for logging
+  severity: warning
+  category: logging
+  pattern: ^\s*print\s*\(
+  message: Use structured logging instead of print statements in production
+  fix_hint: Use logging framework (loguru, structlog, etc.)
+- id: el-file-leak
+  name: Unclosed file handle
+  severity: error
+  category: resource_management
+  pattern: (?:open|fopen)\s*\([^)]*\)\s*(?!.*\b(with|using|close|finally|defer)\b)
+  message: File handles must be closed properly to avoid resource leaks
+  fix_hint: Use with/using/defer block or ensure close() in finally
+- id: el-connection-leak
+  name: Unclosed connection
+  severity: error
+  category: resource_management
+  pattern: (?:connect|new connection|getConnection)\s*\([^)]*\)\s*(?!.*\b(with|using|close|finally|defer)\b)
+  message: Database/network connections must be released after use
+  fix_hint: Use connection pool or ensure close() in finally
+- id: el-missing-await
+  name: Missing await on async call
+  severity: error
+  category: concurrency
+  pattern: (?:async\s+def|async\s+fn)\s+\w+\s*\([^)]*\)\s*\{?\s*$
+  message: Async function called without await may cause race conditions
+  fix_hint: Add await/async keyword or handle the future properly
+- id: el-shared-mutable
+  name: Shared mutable state without sync
+  severity: warning
+  category: concurrency
+  pattern: (?:global|static|thread_local)\s+\w+(?:\s*=\s*[^;]*)?\s*[;]?$
+  message: Shared mutable state without synchronization can cause race conditions
+  fix_hint: Use mutex/lock/atomic or thread-local storage
+- id: el-large-alloc-loop
+  name: Large allocation in loop
+  severity: warning
+  category: performance
+  pattern: (?:for|while|loop)\s*\([^)]*\)\s*\{?\s*[^}]*\b(?:append|push|concat|new\s+(?:Array|List|StringBuilder))\b
+  message: Repeated allocations inside loops impact performance
+  fix_hint: Pre-allocate or use builder pattern outside the loop
+- id: el-n-plus-one
+  name: Potential N+1 query pattern
+  severity: warning
+  category: performance
+  pattern: (?:for|while|loop|each|map)\s*[^)]*\)?\s*\{?[^}]*\b(?:query|find|get|fetch|load)\b[^}]*\}
+  message: Query inside a loop may cause N+1 performance problem
+  fix_hint: Use batch loading, eager loading, or JOIN query
+- id: el-cors-allow-all
+  name: Overly permissive CORS
+  severity: error
+  category: security
+  pattern: (?:Access-Control-Allow-Origin|origins?)\s*[=:]\s*["\']?\*["\']?
+  message: Wildcard CORS exposes API to any origin
+  fix_hint: Restrict CORS to specific allowed origins
+- id: el-no-input-validation
+  name: Missing input validation on API
+  severity: warning
+  category: security
+  pattern: (?:@\w+Mapping|def\s+\w+\([^)]*request|route|endpoint|api_view)
+  message: API endpoints should validate all input parameters
+  fix_hint: Add input validation or use schema validation library
+- id: el-hardcoded-origin
+  name: Hardcoded origin/domain
+  severity: warning
+  category: config
+  pattern: (?:allowed_origins|trusted_origins|ALLOWED_HOSTS)\s*[=:]\s*\["\'\]https?://
+  message: Hardcoded origins in config should be environment variables
+  fix_hint: Use environment variables for allowed origins
+- id: el-exception-leak
+  name: Exception message leaks internal info
+  severity: warning
+  category: security
+  pattern: (?:print|log|logger)\s*\(.*e(?:rror)?\.(?:message|to_String|getMessage)\s*\)
+  message: Exception messages may leak internal implementation details
+  fix_hint: Log a generic message, add exception details separately
+naming:
+  file:
+    pattern: ^[a-z][a-z0-9_]*\.ex$
+    message: Elixir files should use snake_case
+  function:
+    pattern: ^[a-z][a-z0-9_]*[!?]?$
+    message: Elixir functions should use snake_case
+  class:
+    pattern: ^[A-Z][a-zA-Z0-9]*$
+    message: Elixir modules should use PascalCase
+  constant:
+    pattern: ^[A-Z][A-Z0-9_]*$
+    message: Elixir constants should use UPPER_SNAKE_CASE
+thresholds:
+  max_function_length: 30
+  max_file_length: 400
+  max_line_length: 120
+  max_nesting_depth: 4
+  max_function_params: 5
+tooling:
+  linter: credo
+  formatter: mix format
+  test_runner: exunit
+  config_files:
+  - .credo.exs
+  - mix.exs

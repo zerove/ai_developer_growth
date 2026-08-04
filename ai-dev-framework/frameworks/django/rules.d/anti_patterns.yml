@@ -1,0 +1,178 @@
+framework: django
+language: python
+config_version: '1.0'
+anti_patterns:
+- id: django-n-plus-one
+  name: N+1 query problem
+  severity: error
+  category: performance
+  pattern: for\s+\w+\s+in\s+\w+\.objects\.all\(\)|\.objects\.get\(|\.objects\.filter\(
+  message: N+1 queries cause performance degradation - use select_related/prefetch_related
+  fix_hint: Use .select_related("fk_field") or .prefetch_related("m2m_field") on querysets
+- id: django-raw-sql-injection
+  name: Raw SQL with string formatting
+  severity: error
+  category: security
+  pattern: raw\s*\(|cursor\.execute\s*\(.*(?:f[\"']|\.format\(|%\s)
+  message: Raw SQL with string interpolation enables SQL injection attacks
+  fix_hint: Use raw(sql, params) with parameterized queries or the ORM
+- id: django-missing-migration
+  name: Model change without migration
+  severity: warning
+  category: database
+  pattern: class\s+\w+\(.*Model\).*:\s*\n\s+\w+\s*=\s*models\.
+  message: Model field changes require makemigrations before deployment
+  fix_hint: 'Run: python manage.py makemigrations && python manage.py migrate'
+- id: django-sync-orm-async
+  name: Synchronous ORM call in async view
+  severity: error
+  category: async
+  pattern: async\s+def\s+\w+.*:\s*\n[\s\S]*?\.objects\.
+  message: Synchronous ORM calls block the event loop in async views
+  fix_hint: Use sync_to_async() wrapper or Django 4.1+ async ORM methods
+- id: django-missing-index
+  name: Missing database index on filter field
+  severity: warning
+  category: performance
+  pattern: models\.\w+\(.*(?:blank|default|choices)
+  message: Fields used in .filter() or .order_by() should have db_index=True
+  fix_hint: Add db_index=True to fields used in queries frequently
+- id: django-selectrelated-abuse
+  name: Unbounded select_related usage
+  severity: info
+  category: performance
+  pattern: select_related\s*\(\s*[\"']\w+[\"']\s*\)
+  message: Overusing select_related on deep relationships increases memory usage
+  fix_hint: Only select_related fields you actually use; consider prefetch_related
+    for M2M
+- id: django-hardcoded-secrets
+  name: Hardcoded secrets in settings
+  severity: error
+  category: security
+  pattern: (?:SECRET_KEY|API_KEY|PASSWORD)\s*=\s*[\"'][^\"']+[\"']
+  message: Secrets must not be hardcoded in settings files
+  fix_hint: Use os.environ.get("SECRET_KEY") or django-environ
+- id: django-missing-csrf
+  name: Missing CSRF protection
+  severity: error
+  category: security
+  pattern: '@csrf_exempt|csrf_exempt\s*\('
+  message: Disabling CSRF protection exposes the endpoint to cross-site request forgery
+  fix_hint: Remove @csrf_exempt and ensure {% csrf_token %} is in your forms
+- id: django-admin-expose
+  name: Admin site exposed in production
+  severity: warning
+  category: security
+  pattern: path\(["\']admin/["\']|url\(["\']admin/["\']
+  message: Admin site should be disabled or restricted in production
+  fix_hint: Use environment checks or IP whitelisting for admin access
+- id: django-debug-toolbar
+  name: Debug toolbar in production
+  severity: error
+  category: security
+  pattern: debug_toolbar|DebugToolbarMiddleware
+  message: Debug toolbar must not be enabled in production
+  fix_hint: 'Wrap debug toolbar config in if DEBUG: checks'
+- id: django-sql-logging
+  name: SQL logging in production
+  severity: warning
+  category: performance
+  pattern: '''loggers''.*''django.db.backends''|LOGGING.*sql'
+  message: SQL logging increases memory usage and reduces performance
+  fix_hint: Disable SQL logging in production settings
+- id: django-missing-static-compression
+  name: Missing static file compression
+  severity: info
+  category: performance
+  pattern: STATICFILES_STORAGE.*ManifestStaticFilesStorage|whitenoise
+  message: Static files should be compressed and cached in production
+  fix_hint: Use ManifestStaticFilesStorage or WhiteNoise for static serving
+- id: django-select-related
+  name: Missing select_related
+  severity: warning
+  category: performance
+  pattern: for\s+\w+\s+in\s+\w+\.objects\.(?:all|filter|get)\s*\(
+  message: Foreign key access in loop causes N+1 queries - use select_related
+  fix_hint: Add .select_related('fk_field') to query
+- id: django-csrf-exempt
+  name: CSRF protection disabled
+  severity: error
+  category: security
+  pattern: '@csrf_exempt'
+  message: Disabling CSRF protection opens security vulnerability
+  fix_hint: Use proper CSRF token validation instead
+- id: django-debug-true
+  name: DEBUG=True in production
+  severity: error
+  category: security
+  pattern: DEBUG\s*=\s*True
+  message: DEBUG=True in production exposes sensitive info and runs arbitrary code
+  fix_hint: Use DEBUG = env.bool('DJANGO_DEBUG', default=False)
+- id: django-raw-sql
+  name: Raw SQL query
+  severity: warning
+  category: security
+  pattern: \.raw\s*\(
+  message: Raw SQL bypasses ORM protections
+  fix_hint: Use ORM queryset or ensure parameterized queries
+- id: django-admin-exposed
+  name: Unprotected admin
+  severity: warning
+  category: security
+  pattern: admin\.site\.register\b
+  message: Admin interface should be protected and not exposed on root path
+  fix_hint: Ensure ADMIN_URL is a non-guessable value
+- id: django-template-injection
+  name: Template injection risk
+  severity: error
+  category: security
+  pattern: render\s*\(.*request.*\{\s*['\"]\w+['\"]\s*:\s*(?:request\.\w+|user_input)
+  message: User data in template context may cause XSS
+  fix_hint: Use mark_safe with caution, always escape user data
+- id: django-mass-assignment
+  name: Mass assignment risk
+  severity: warning
+  category: security
+  pattern: \.objects\.(?:create|update)\s*\(.*\*\*
+  message: Mass assignment may expose fields not intended for update
+  fix_hint: Use serializer or explicitly list allowed fields
+- id: django-signal-leak
+  name: Signal handler in models
+  severity: info
+  category: code_quality
+  pattern: '@receiver\b'
+  message: Signal handlers in models.py cause import-time side effects
+  fix_hint: Move signals to signals.py and configure in AppConfig.ready()
+naming:
+  file:
+    pattern: ^[a-z][a-z0-9_]*\.py$
+    message: Python files should use snake_case
+  function:
+    pattern: ^[a-z][a-z0-9_]*$
+    exceptions:
+    - __init__
+    - __str__
+    - __repr__
+    message: Django views and functions should use snake_case
+  class:
+    pattern: ^[A-Z][a-zA-Z0-9]*$
+    message: Django classes should use PascalCase
+  constant:
+    pattern: ^[A-Z][A-Z0-9_]*$
+    message: Constants should use UPPER_SNAKE_CASE
+thresholds:
+  max_function_length: 50
+  max_file_length: 500
+  max_line_length: 120
+  max_nesting_depth: 4
+  max_function_params: 7
+  max_cyclomatic_complexity: 10
+tooling:
+  linter: ruff
+  formatter: ruff
+  type_checker: mypy
+  test_runner: pytest-django
+  config_files:
+  - pyproject.toml
+  - setup.cfg
+  - manage.py

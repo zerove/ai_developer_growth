@@ -1,0 +1,276 @@
+language: rust
+version: '>=1.70'
+config_version: '1.0'
+anti_patterns:
+- id: rs-unwrap
+  name: unwrap() usage
+  severity: error
+  category: error_handling
+  pattern: \.unwrap\(\)
+  message: unwrap() panics on error - use proper error handling
+  fix_hint: Use match, if let, or the ? operator
+- id: rs-expect
+  name: expect() usage
+  severity: warning
+  category: error_handling
+  pattern: \.expect\(
+  message: expect() panics with a message - consider using ? or Result
+  fix_hint: Use ? operator in functions returning Result
+- id: rs-panic
+  name: panic! macro usage
+  severity: error
+  category: error_handling
+  pattern: panic!\s*\(
+  message: panic! crashes the program - use Result for recoverable errors
+  fix_hint: Return Result<T, E> instead of panicking
+- id: rs-unsafe
+  name: unsafe block
+  severity: warning
+  category: safety
+  pattern: unsafe\s*\{
+  message: unsafe blocks bypass Rust safety guarantees
+  fix_hint: Minimize unsafe code and add safety comments
+- id: rs-transmute
+  name: transmute usage
+  severity: error
+  category: safety
+  pattern: transmute\s*\(
+  message: transmute is extremely unsafe
+  fix_hint: Use From/Into traits or try_from()
+- id: rs-print
+  name: println! in library code
+  severity: info
+  category: code_quality
+  pattern: println!\s*\(|dbg!\s*\(
+  message: Remove println!/dbg! from library code
+  fix_hint: Use the log or tracing crate
+- id: rs-clone-overuse
+  name: Excessive .clone()
+  severity: info
+  category: performance
+  pattern: \.clone\(\)
+  message: Excessive cloning may indicate ownership issues
+  fix_hint: Consider references (&T) or Cow<T>
+- id: rs-hashmap-untyped
+  name: Untyped HashMap
+  severity: info
+  category: type_safety
+  pattern: HashMap::new\(\)
+  message: Consider using typed structs instead of raw HashMaps
+  fix_hint: Define a struct with named fields
+- id: rs-clone-abuse
+  name: Excessive clone() usage in hot path
+  severity: warning
+  category: performance
+  pattern: \.clone\(\)(?:\.|\s*;|\s*\))
+  message: Excessive .clone() causes unnecessary allocations and hurts performance
+  fix_hint: Use references (&T, &mut T), Cow<T>, or Arc<T> for shared ownership
+- id: rs-missing-error-context
+  name: Error propagation without context
+  severity: warning
+  category: error_handling
+  pattern: (\?|Err\()
+  message: Bare ? operator loses error context, making debugging harder
+  fix_hint: Use .context("description") from the anyhow crate, or map_err() for context
+- id: rs-string-concat-loop
+  name: String concatenation in a loop
+  severity: warning
+  category: performance
+  pattern: for\s+.*\{[\s\S]*?\+\s*["']
+  message: String concatenation with + in loops allocates a new String each iteration
+  fix_hint: Use format!(), String::push_str(), or write! macro with fmt::Write
+- id: rs-unbounded-channel
+  name: Unbounded channel creation
+  severity: warning
+  category: safety
+  pattern: unbounded::<|unbounded\(
+  message: Unbounded channels can grow without limit, causing memory exhaustion
+  fix_hint: 'Use bounded channels: bounded(capacity) with a reasonable capacity'
+- id: rs-missing-doc-comments
+  name: Missing doc comments on public items
+  severity: info
+  category: code_quality
+  pattern: pub\s+(?:fn|struct|enum|trait|mod)\s+\w+
+  message: Public API items should have doc comments for documentation
+  fix_hint: 'Add /// doc comments before public items: /// Description of the item'
+- id: rs-transmute-usage
+  name: transmute() usage
+  severity: error
+  category: safety
+  pattern: transmute\s*[\(<]
+  message: transmute is extremely unsafe and can cause undefined behavior
+  fix_hint: Use From/Into traits, try_from(), or bitwise conversion with safety checks
+- id: ru-log-sensitive
+  name: Logging sensitive data
+  severity: error
+  category: security
+  pattern: log(?:ger)?\.(?:info|debug|warn|error)\s*\(.*(?:password|secret|token|credential|api_key)
+  message: Never log sensitive data (passwords, tokens, secrets)
+  fix_hint: Use log filtering or redact sensitive fields
+- id: ru-log-print
+  name: Using print for logging
+  severity: warning
+  category: logging
+  pattern: ^\s*print\s*\(
+  message: Use structured logging instead of print statements in production
+  fix_hint: Use logging framework (loguru, structlog, etc.)
+- id: ru-file-leak
+  name: Unclosed file handle
+  severity: error
+  category: resource_management
+  pattern: (?:open|fopen)\s*\([^)]*\)\s*(?!.*\b(with|using|close|finally|defer)\b)
+  message: File handles must be closed properly to avoid resource leaks
+  fix_hint: Use with/using/defer block or ensure close() in finally
+- id: ru-connection-leak
+  name: Unclosed connection
+  severity: error
+  category: resource_management
+  pattern: (?:connect|new connection|getConnection)\s*\([^)]*\)\s*(?!.*\b(with|using|close|finally|defer)\b)
+  message: Database/network connections must be released after use
+  fix_hint: Use connection pool or ensure close() in finally
+- id: ru-missing-await
+  name: Missing await on async call
+  severity: error
+  category: concurrency
+  pattern: (?:async\s+def|async\s+fn)\s+\w+\s*\([^)]*\)\s*\{?\s*$
+  message: Async function called without await may cause race conditions
+  fix_hint: Add await/async keyword or handle the future properly
+- id: ru-shared-mutable
+  name: Shared mutable state without sync
+  severity: warning
+  category: concurrency
+  pattern: (?:global|static|thread_local)\s+\w+(?:\s*=\s*[^;]*)?\s*[;]?$
+  message: Shared mutable state without synchronization can cause race conditions
+  fix_hint: Use mutex/lock/atomic or thread-local storage
+- id: ru-large-alloc-loop
+  name: Large allocation in loop
+  severity: warning
+  category: performance
+  pattern: (?:for|while|loop)\s*\([^)]*\)\s*\{?\s*[^}]*\b(?:append|push|concat|new\s+(?:Array|List|StringBuilder))\b
+  message: Repeated allocations inside loops impact performance
+  fix_hint: Pre-allocate or use builder pattern outside the loop
+- id: ru-n-plus-one
+  name: Potential N+1 query pattern
+  severity: warning
+  category: performance
+  pattern: (?:for|while|loop|each|map)\s*[^)]*\)?\s*\{?[^}]*\b(?:query|find|get|fetch|load)\b[^}]*\}
+  message: Query inside a loop may cause N+1 performance problem
+  fix_hint: Use batch loading, eager loading, or JOIN query
+- id: ru-cors-allow-all
+  name: Overly permissive CORS
+  severity: error
+  category: security
+  pattern: (?:Access-Control-Allow-Origin|origins?)\s*[=:]\s*["\']?\*["\']?
+  message: Wildcard CORS exposes API to any origin
+  fix_hint: Restrict CORS to specific allowed origins
+- id: ru-no-input-validation
+  name: Missing input validation on API
+  severity: warning
+  category: security
+  pattern: (?:@\w+Mapping|def\s+\w+\([^)]*request|route|endpoint|api_view)
+  message: API endpoints should validate all input parameters
+  fix_hint: Add input validation or use schema validation library
+- id: ru-hardcoded-origin
+  name: Hardcoded origin/domain
+  severity: warning
+  category: config
+  pattern: (?:allowed_origins|trusted_origins|ALLOWED_HOSTS)\s*[=:]\s*\["\'\]https?://
+  message: Hardcoded origins in config should be environment variables
+  fix_hint: Use environment variables for allowed origins
+- id: ru-exception-leak
+  name: Exception message leaks internal info
+  severity: warning
+  category: security
+  pattern: (?:print|log|logger)\s*\(.*e(?:rror)?\.(?:message|to_String|getMessage)\s*\)
+  message: Exception messages may leak internal implementation details
+  fix_hint: Log a generic message, add exception details separately
+- id: ru-hardcoded-secret-in-ci
+  name: Hardcoded secret in CI config
+  severity: error
+  category: security
+  pattern: (?:GITHUB_TOKEN|API_KEY|SECRET|PASSWORD)\s*[=:]\s*[\"'][^\"']+[\"']
+  message: CI/CD secrets should use GitHub Secrets or vault, not hardcoded strings
+  fix_hint: Use ${{ secrets.MY_SECRET }} in GitHub Actions
+- id: ru-ci-disabled-check
+  name: Disabled CI check
+  severity: warning
+  category: ci_cd
+  pattern: continue-on-error:\s*true
+  message: CI checks with continue-on-error silently ignore failures
+  fix_hint: Remove continue-on-error or add explicit error handling
+- id: ru-docker-image-latest
+  name: Using :latest tag
+  severity: warning
+  category: ci_cd
+  pattern: FROM\s+\S+:\s*latest\b
+  message: Using :latest tag makes builds non-reproducible
+  fix_hint: Pin to specific version tag
+- id: ru-docker-exposed-port
+  name: Exposed port without healthcheck
+  severity: warning
+  category: ci_cd
+  pattern: EXPOSE\s+\d+
+  message: Exposed ports should have corresponding healthcheck
+  fix_hint: Add HEALTHCHECK instruction
+- id: ru-iac-hardcoded-secret
+  name: Hardcoded secret in IaC
+  severity: error
+  category: security
+  pattern: (?:password|secret_key|access_key)\s*[=:]\s*[\"'][^\"']+[\"']
+  message: Infrastructure secrets should use vault or secret store
+  fix_hint: Use AWS Secrets Manager, HashiCorp Vault, or SOPS
+- id: ru-iac-admin-exposed
+  name: Admin service exposed to internet
+  severity: error
+  category: security
+  pattern: '(?:adminer|phpmyadmin|pgadmin|kibana)\s*:'
+  message: Admin tools should not be publicly accessible
+  fix_hint: Restrict ingress to internal network only
+- id: ru-docker-root-user
+  name: Running as root in container
+  severity: error
+  category: security
+  pattern: FROM\s+\S+\s*(?:AS\s+\w+)?\s*\n(?!.*USER\s)
+  message: Running containers as root is a security risk
+  fix_hint: Add 'USER nobody' or create a non-root user
+- id: ru-pip-audit-missing
+  name: Missing dependency audit
+  severity: warning
+  category: ci_cd
+  pattern: pip install\b(?!.*pip-audit|.*safety)
+  message: Package installation without vulnerability scanning
+  fix_hint: Add 'pip-audit' or 'safety check' after install
+naming:
+  file:
+    pattern: ^[a-z][a-z0-9_]*\.rs$
+    message: Rust files should use snake_case
+  function:
+    pattern: ^[a-z][a-z0-9_]*$
+    message: Rust functions should use snake_case
+  struct:
+    pattern: ^[A-Z][a-zA-Z0-9]*$
+    message: Rust structs should use PascalCase
+  enum:
+    pattern: ^[A-Z][a-zA-Z0-9]*$
+    message: Rust enums should use PascalCase
+  constant:
+    pattern: ^[A-Z][A-Z0-9_]*$
+    message: Rust constants should use UPPER_SNAKE_CASE
+  trait:
+    pattern: ^[A-Z][a-zA-Z0-9]*$
+    message: Rust traits should use PascalCase
+thresholds:
+  max_function_length: 50
+  max_file_length: 500
+  max_line_length: 100
+  max_nesting_depth: 4
+  max_function_args: 5
+  max_cyclomatic_complexity: 10
+tooling:
+  linter: clippy
+  formatter: rustfmt
+  test_runner: cargo
+  config_files:
+  - rustfmt.toml
+  - .clippy.toml
+  - Cargo.toml

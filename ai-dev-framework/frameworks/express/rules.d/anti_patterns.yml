@@ -1,0 +1,116 @@
+# Express.js Framework Anti-Pattern Rules
+framework: express
+language: javascript
+config_version: '1.0'
+anti_patterns:
+- id: express-no-error-handler
+  name: Missing error handling middleware
+  severity: error
+  category: error_handling
+  pattern: 'app\.\w+\((?!.*err).*\)\s*;'
+  message: 'Routes should have error handling'
+  fix_hint: 'Add try-catch and next(error) in route handlers'
+
+- id: express-synchronous-in-async
+  name: Synchronous blocking in async route
+  severity: warning
+  category: performance
+  pattern: 'readFileSync|writeFileSync|execSync'
+  message: 'Synchronous operations block the event loop'
+  fix_hint: 'Use async alternatives: readFile, writeFile, exec'
+
+- id: express-eval-exec
+  name: eval() or exec() usage
+  severity: error
+  category: security
+  pattern: '\beval\(|\bexec\(|\bFunction\('
+  message: 'Dynamic code execution is a security risk'
+  fix_hint: 'Avoid eval/exec; use safer alternatives'
+
+- id: express-no-helmet
+  name: Missing security headers (helmet)
+  severity: warning
+  category: security
+  pattern: 'app\.listen\('
+  message: 'Consider using helmet middleware for security headers'
+  fix_hint: 'Add: app.use(helmet())'
+
+- id: express-hardcoded-secret
+  name: Hardcoded secret
+  severity: error
+  category: security
+  pattern: "(?:SECRET|PASSWORD|API_KEY|TOKEN)\\s*=\\s*[\"']"
+  message: 'Secrets must not be hardcoded'
+  fix_hint: 'Use process.env or config files'
+
+- id: express-no-cors-config
+  name: Permissive CORS configuration
+  severity: warning
+  category: security
+  pattern: "origin\\s*:\\s*['\"]\\*['\"]|cors\\(\\)"
+  message: 'Permissive CORS allows any origin'
+  fix_hint: 'Configure specific allowed origins'
+
+- id: express-no-body-limit
+  name: Missing body size limit
+  severity: warning
+  category: security
+  pattern: 'express\.json\(\)'
+  message: 'No body size limit configured'
+  fix_hint: 'Use express.json({ limit: "1mb" })'
+
+- id: express-catch-all-error
+  name: Missing catch-all error handler
+  severity: warning
+  category: error_handling
+  pattern: 'app\.listen\('
+  message: 'Ensure error handling middleware is registered'
+  fix_hint: 'Add: app.use((err, req, res, next) => {...})'
+
+- id: express-no-ratelimit
+  name: Missing rate limiting
+  severity: warning
+  category: security
+  pattern: 'app\.listen\('
+  message: 'Consider adding rate limiting to prevent abuse'
+  fix_hint: 'Add express-rate-limit middleware'
+
+- id: express-sql-string-format
+  name: SQL injection via template literal
+  severity: error
+  category: security
+  pattern: '(?:execute|query)\s*\(.*`[^`]*\$\{'
+  message: 'String interpolation in SQL enables injection'
+  fix_hint: 'Use parameterized queries with ? placeholders'
+
+naming:
+  file:
+    pattern: '^[a-z][a-z0-9-]*\.js$'
+    message: 'JavaScript files should use kebab-case'
+  function:
+    pattern: '^[a-z][a-zA-Z0-9]*$'
+    message: 'Functions should use camelCase'
+  class:
+    pattern: '^[A-Z][a-zA-Z0-9]*$'
+    message: 'Classes should use PascalCase'
+  constant:
+    pattern: '^[A-Z][A-Z0-9_]*$'
+    message: 'Constants should use UPPER_SNAKE_CASE'
+
+thresholds:
+  max_function_length: 40
+  max_file_length: 300
+  max_line_length: 100
+  max_nesting_depth: 4
+  max_function_params: 5
+  max_cyclomatic_complexity: 10
+
+tooling:
+  linter: eslint
+  formatter: prettier
+  type_checker: jscpd
+  test_runner: jest
+  config_files:
+    - .eslintrc.json
+    - .prettierrc
+    - package.json

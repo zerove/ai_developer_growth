@@ -1,0 +1,10 @@
+roles:
+- role: test
+  patterns:
+  - '**/test_*.py'
+  - '**/*_test.py'
+  - '**/tests/**/*.py'
+- role: demo
+  patterns:
+  - '**/demo*.py'
+  - '**/*_demo.py'

@@ -1,0 +1,286 @@
+language: go
+version: '>=1.21'
+config_version: '1.0'
+anti_patterns:
+- id: go-underscore-error
+  name: Ignored error with _
+  severity: error
+  category: error_handling
+  pattern: ',\s*_\s*(:=|=)'
+  message: Ignoring errors with _ hides potential failures
+  fix_hint: 'Handle the error: if err != nil { return err }'
+- id: go-panic-in-library
+  name: panic() in library code
+  severity: error
+  category: error_handling
+  pattern: panic\s*\(
+  message: panic() crashes the program - return error instead
+  fix_hint: Return error values and let callers decide
+- id: go-log-fatal
+  name: log.Fatal usage
+  severity: warning
+  category: error_handling
+  pattern: log\.Fatal
+  message: log.Fatal calls os.Exit(1) - prevents cleanup
+  fix_hint: Return error to caller instead
+- id: go-string-error
+  name: String error comparison
+  severity: warning
+  category: error_handling
+  pattern: err\.Error\(\)\s*==
+  message: String comparison on errors is fragile
+  fix_hint: Use errors.Is() or errors.As()
+- id: go-http-tls-skip
+  name: TLS verification disabled
+  severity: error
+  category: security
+  pattern: InsecureSkipVerify\s*:\s*true
+  message: Disabling TLS verification allows MITM attacks
+  fix_hint: Use proper TLS configuration
+- id: go-init-func
+  name: init() function
+  severity: warning
+  category: code_quality
+  pattern: ^func\s+init\(\)
+  message: init() functions have hidden execution order
+  fix_hint: Use NewXxx constructors or explicit Init() methods
+- id: go-fmt-print
+  name: fmt.Print in production
+  severity: info
+  category: code_quality
+  pattern: fmt\.(Print|Println|Printf)\(
+  message: Use structured logging instead of fmt.Print
+  fix_hint: Use log/slog or a third-party logger
+- id: go-test-println
+  name: fmt.Println in tests
+  severity: info
+  category: testing
+  pattern: fmt\.Print|log\.Print
+  message: Use t.Log() instead of fmt.Println in tests
+  fix_hint: Replace with t.Log() or t.Logf()
+- id: go-test-sleep
+  name: time.Sleep in tests
+  severity: warning
+  category: testing
+  pattern: time\.Sleep\(
+  message: Sleep in tests makes them slow and flaky
+  fix_hint: Use channels, context with timeout, or polling
+- id: go-goroutine-leak
+  name: Goroutine leak potential
+  severity: warning
+  category: concurrency
+  pattern: go\s+func\s*\(|go\s+\w+\.
+  message: Goroutines that block forever cause memory leaks
+  fix_hint: Use context cancellation or done channels to stop goroutines
+- id: go-missing-context
+  name: Function missing context.Context parameter
+  severity: warning
+  category: concurrency
+  pattern: func\s+\w+\s*\([^)]*(?:http|net|io|db|sql)
+  message: Functions performing I/O should accept context.Context for cancellation
+  fix_hint: Add ctx context.Context as the first parameter
+- id: go-error-swallowing
+  name: Error returned but not checked
+  severity: error
+  category: error_handling
+  pattern: _,\s*_\s*=\s*\w+\(
+  message: Discarding both return values hides potential errors
+  fix_hint: Check and handle all error return values
+- id: go-init-abuse
+  name: Multiple init() functions or complex init logic
+  severity: warning
+  category: code_quality
+  pattern: ^func\s+init\(\)\s*\{
+  message: Complex init() functions have hidden execution order and test difficulties
+  fix_hint: Use explicit initialization functions or sync.Once for lazy setup
+- id: go-package-var
+  name: Package-level mutable variable
+  severity: warning
+  category: code_quality
+  pattern: ^var\s+\w+\s*=\s*(?!const)
+  message: Package-level mutable variables create hidden state and race conditions
+  fix_hint: Use function parameters, struct fields, or sync primitives
+- id: go-string-builder-missing
+  name: String concatenation in loop with +
+  severity: warning
+  category: performance
+  pattern: for\s+.*\{[\s\S]*?\+\s*["']|for\s+.*\{[\s\S]*?\+=["']
+  message: String concatenation with + in loops creates many temporary allocations
+  fix_hint: Use strings.Builder or bytes.Buffer for efficient string building
+- id: go-missing-vet
+  name: Potential formatting verb misuse
+  severity: info
+  category: code_quality
+  pattern: fmt\.\w+f?\s*\([^)]*%[sdvf]
+  message: printf-style functions should be validated by go vet
+  fix_hint: Run go vet ./... regularly to catch formatting verb mismatches
+- id: go-log-sensitive
+  name: Logging sensitive data
+  severity: error
+  category: security
+  pattern: log(?:ger)?\.(?:info|debug|warn|error)\s*\(.*(?:password|secret|token|credential|api_key)
+  message: Never log sensitive data (passwords, tokens, secrets)
+  fix_hint: Use log filtering or redact sensitive fields
+- id: go-log-print
+  name: Using print for logging
+  severity: warning
+  category: logging
+  pattern: ^\s*print\s*\(
+  message: Use structured logging instead of print statements in production
+  fix_hint: Use logging framework (loguru, structlog, etc.)
+- id: go-file-leak
+  name: Unclosed file handle
+  severity: error
+  category: resource_management
+  pattern: (?:open|fopen)\s*\([^)]*\)\s*(?!.*\b(with|using|close|finally|defer)\b)
+  message: File handles must be closed properly to avoid resource leaks
+  fix_hint: Use with/using/defer block or ensure close() in finally
+- id: go-connection-leak
+  name: Unclosed connection
+  severity: error
+  category: resource_management
+  pattern: (?:connect|new connection|getConnection)\s*\([^)]*\)\s*(?!.*\b(with|using|close|finally|defer)\b)
+  message: Database/network connections must be released after use
+  fix_hint: Use connection pool or ensure close() in finally
+- id: go-missing-await
+  name: Missing await on async call
+  severity: error
+  category: concurrency
+  pattern: (?:async\s+def|async\s+fn)\s+\w+\s*\([^)]*\)\s*\{?\s*$
+  message: Async function called without await may cause race conditions
+  fix_hint: Add await/async keyword or handle the future properly
+- id: go-shared-mutable
+  name: Shared mutable state without sync
+  severity: warning
+  category: concurrency
+  pattern: (?:global|static|thread_local)\s+\w+(?:\s*=\s*[^;]*)?\s*[;]?$
+  message: Shared mutable state without synchronization can cause race conditions
+  fix_hint: Use mutex/lock/atomic or thread-local storage
+- id: go-large-alloc-loop
+  name: Large allocation in loop
+  severity: warning
+  category: performance
+  pattern: (?:for|while|loop)\s*\([^)]*\)\s*\{?\s*[^}]*\b(?:append|push|concat|new\s+(?:Array|List|StringBuilder))\b
+  message: Repeated allocations inside loops impact performance
+  fix_hint: Pre-allocate or use builder pattern outside the loop
+- id: go-n-plus-one
+  name: Potential N+1 query pattern
+  severity: warning
+  category: performance
+  pattern: (?:for|while|loop|each|map)\s*[^)]*\)?\s*\{?[^}]*\b(?:query|find|get|fetch|load)\b[^}]*\}
+  message: Query inside a loop may cause N+1 performance problem
+  fix_hint: Use batch loading, eager loading, or JOIN query
+- id: go-cors-allow-all
+  name: Overly permissive CORS
+  severity: error
+  category: security
+  pattern: (?:Access-Control-Allow-Origin|origins?)\s*[=:]\s*["\']?\*["\']?
+  message: Wildcard CORS exposes API to any origin
+  fix_hint: Restrict CORS to specific allowed origins
+- id: go-no-input-validation
+  name: Missing input validation on API
+  severity: warning
+  category: security
+  pattern: (?:@\w+Mapping|def\s+\w+\([^)]*request|route|endpoint|api_view)
+  message: API endpoints should validate all input parameters
+  fix_hint: Add input validation or use schema validation library
+- id: go-hardcoded-origin
+  name: Hardcoded origin/domain
+  severity: warning
+  category: config
+  pattern: (?:allowed_origins|trusted_origins|ALLOWED_HOSTS)\s*[=:]\s*\["\'\]https?://
+  message: Hardcoded origins in config should be environment variables
+  fix_hint: Use environment variables for allowed origins
+- id: go-exception-leak
+  name: Exception message leaks internal info
+  severity: warning
+  category: security
+  pattern: (?:print|log|logger)\s*\(.*e(?:rror)?\.(?:message|to_String|getMessage)\s*\)
+  message: Exception messages may leak internal implementation details
+  fix_hint: Log a generic message, add exception details separately
+- id: go-hardcoded-secret-in-ci
+  name: Hardcoded secret in CI config
+  severity: error
+  category: security
+  pattern: (?:GITHUB_TOKEN|API_KEY|SECRET|PASSWORD)\s*[=:]\s*[\"'][^\"']+[\"']
+  message: CI/CD secrets should use GitHub Secrets or vault, not hardcoded strings
+  fix_hint: Use ${{ secrets.MY_SECRET }} in GitHub Actions
+- id: go-ci-disabled-check
+  name: Disabled CI check
+  severity: warning
+  category: ci_cd
+  pattern: continue-on-error:\s*true
+  message: CI checks with continue-on-error silently ignore failures
+  fix_hint: Remove continue-on-error or add explicit error handling
+- id: go-docker-image-latest
+  name: Using :latest tag
+  severity: warning
+  category: ci_cd
+  pattern: FROM\s+\S+:\s*latest\b
+  message: Using :latest tag makes builds non-reproducible
+  fix_hint: Pin to specific version tag
+- id: go-docker-exposed-port
+  name: Exposed port without healthcheck
+  severity: warning
+  category: ci_cd
+  pattern: EXPOSE\s+\d+
+  message: Exposed ports should have corresponding healthcheck
+  fix_hint: Add HEALTHCHECK instruction
+- id: go-iac-hardcoded-secret
+  name: Hardcoded secret in IaC
+  severity: error
+  category: security
+  pattern: (?:password|secret_key|access_key)\s*[=:]\s*[\"'][^\"']+[\"']
+  message: Infrastructure secrets should use vault or secret store
+  fix_hint: Use AWS Secrets Manager, HashiCorp Vault, or SOPS
+- id: go-iac-admin-exposed
+  name: Admin service exposed to internet
+  severity: error
+  category: security
+  pattern: '(?:adminer|phpmyadmin|pgadmin|kibana)\s*:'
+  message: Admin tools should not be publicly accessible
+  fix_hint: Restrict ingress to internal network only
+- id: go-docker-root-user
+  name: Running as root in container
+  severity: error
+  category: security
+  pattern: FROM\s+\S+\s*(?:AS\s+\w+)?\s*\n(?!.*USER\s)
+  message: Running containers as root is a security risk
+  fix_hint: Add 'USER nobody' or create a non-root user
+- id: go-pip-audit-missing
+  name: Missing dependency audit
+  severity: warning
+  category: ci_cd
+  pattern: pip install\b(?!.*pip-audit|.*safety)
+  message: Package installation without vulnerability scanning
+  fix_hint: Add 'pip-audit' or 'safety check' after install
+naming:
+  file:
+    pattern: ^[a-z][a-z0-9_]*\.go$
+    message: Go files should use snake_case
+  function:
+    pattern: ^[A-Z][a-zA-Z0-9]*$
+    message: Exported Go functions should use CamelCase
+  struct:
+    pattern: ^[A-Z][a-zA-Z0-9]*$
+    message: Go structs should use PascalCase
+  constant:
+    pattern: ^[A-Z][a-zA-Z0-9]*$
+    message: Go exported constants should use CamelCase
+  package:
+    pattern: ^[a-z][a-z0-9]*$
+    message: Go packages should use lowercase names
+thresholds:
+  max_function_length: 50
+  max_file_length: 500
+  max_line_length: 120
+  max_nesting_depth: 4
+  max_function_params: 5
+  max_cyclomatic_complexity: 10
+tooling:
+  linter: golangci-lint
+  formatter: gofmt
+  test_runner: go
+  config_files:
+  - .golangci.yml
+  - go.mod

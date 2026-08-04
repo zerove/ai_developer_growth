@@ -1,0 +1,137 @@
+{
+  "version": "1.1",
+  "hooks": {
+    "on_commit": [
+      {
+        "name": "lint-check",
+        "skill": "governance-auditor",
+        "action": "lint",
+        "description": "提交时自动检查代码风格",
+        "enabled": true
+      },
+      {
+        "name": "governance-docs-check",
+        "skill": "governance-docs-validator",
+        "action": "validate",
+        "description": "提交时验证治理文档格式",
+        "condition": "files_contain('docs/efficiency/ai-')",
+        "enabled": true
+      },
+      {
+        "name": "ai-quality-gate",
+        "skill": "governance-auditor",
+        "action": "ai-quality-gate",
+        "description": "提交时运行 AI 代码质量门禁",
+        "enabled": true
+      }
+    ],
+    "on_pr": [
+      {
+        "name": "full-audit",
+        "skill": "governance-auditor",
+        "action": "full",
+        "description": "PR 时运行完整审计",
+        "enabled": true
+      },
+      {
+        "name": "case-validation",
+        "skill": "knowledge-curator",
+        "action": "validate",
+        "description": "PR ",
+        "condition": "files_contain('case-studies/')",
+        "enabled": true
+      },
+      {
+        "name": "link-audit",
+        "skill": "knowledge-curator",
+        "action": "audit",
+        "description": "PR 时检查文档断链",
+        "condition": "files_contain('docs/') || files_contain('*.md')",
+        "enabled": true
+      },
+      {
+        "name": "governance-index-check",
+        "skill": "governance-docs-validator",
+        "action": "check-index",
+        "description": "PR 时验证治理层索引完整性",
+        "condition": "files_contain('GOVERNANCE.md') || files_contain('INDEX.md') || files_contain('CLAUDE.md')",
+        "enabled": true
+      },
+      {
+        "name": "agent-definition-validation",
+        "skill": "governance-auditor",
+        "action": "validate-agent-definition",
+        "description": "PR 时验证 Agent 定义格式",
+        "command": "python tools/scripts/validate_agent_definition.py --path agents",
+        "condition": "files_contain('agents/')",
+        "enabled": true
+      },
+      {
+        "name": "ai-annotation-check",
+        "skill": "governance-auditor",
+        "action": "check-ai-annotation",
+        "description": "PR 时检查 AI 代码标注",
+        "command": "python tools/scripts/check_ai_annotation.py --strict",
+        "enabled": true
+      }
+    ],
+    "on_merge": [
+      {
+        "name": "update-moc",
+        "skill": "knowledge-curator",
+        "action": "update-moc",
+        "description": "合并后更新知识图谱",
+        "enabled": true
+      },
+      {
+        "name": "sync-tools",
+        "skill": "knowledge-curator",
+        "action": "sync",
+        "description": "合并后同步工具矩阵",
+        "enabled": true
+      }
+    ],
+    "scheduled": [
+      {
+        "name": "weekly-audit",
+        "skill": "governance-auditor",
+        "action": "full",
+        "description": "每周完整审计",
+        "schedule": "0 9 * * 1",
+        "enabled": true
+      },
+      {
+        "name": "weekly-scan",
+        "skill": "knowledge-curator",
+        "action": "scan",
+        "description": "每周案例扫描",
+        "schedule": "0 10 * * 1",
+        "enabled": true
+      },
+      {
+        "name": "efficiency-report",
+        "skill": "workflow-optimizer",
+        "action": "report",
+        "description": "每月效率报告",
+        "schedule": "0 9 1 * *",
+        "enabled": true
+      },
+      {
+        "name": "monthly-hallucination-audit",
+        "skill": "governance-auditor",
+        "action": "audit-hallucination-risks",
+        "description": "每月幻觉风险审计",
+        "schedule": "0 9 15 * *",
+        "enabled": true
+      },
+      {
+        "name": "monthly-quality-report",
+        "skill": "governance-auditor",
+        "action": "ai-quality-gate",
+        "description": "每月 AI 代码质量报告",
+        "schedule": "0 9 1 * *",
+        "enabled": true
+      }
+    ]
+  }
+}

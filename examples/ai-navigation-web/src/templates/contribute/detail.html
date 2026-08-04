@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+{% block title %}Contribution Detail - AI Developer Growth{% endblock %}
+{% block content %}
+<div class="card">
+    <div class="flex flex-between mb-8">
+        <h2>{{ contribution.doc_title }}</h2>
+        {% if contribution.status == 'submitted' %}<span class="badge badge-submitted">Submitted</span>
+        {% elif contribution.status == 'reviewed' %}<span class="badge badge-reviewed">Reviewed</span>
+        {% else %}<span class="badge badge-pending">{{ contribution.status }}</span>{% endif %}
+    </div>
+    <p style="color:var(--text-muted);font-size:13px;">
+        Path: <code>{{ contribution.doc_path }}</code> | Submitted: {{ contribution.submitted_at }}
+    </p>
+    {% if contribution.reviewed_at %}
+    <p style="color:var(--text-muted);font-size:13px;">Reviewed: {{ contribution.reviewed_at }}</p>
+    {% endif %}
+</div>
+
+<div class="card">
+    <h3>Content Preview</h3>
+    <div style="background:var(--bg);padding:16px;border-radius:var(--radius);font-family:monospace;font-size:13px;white-space:pre-wrap;max-height:400px;overflow-y:auto;">{{ contribution.content }}</div>
+</div>
+
+{% if contribution.reviewer_notes %}
+<div class="card">
+    <h3>Reviewer Notes</h3>
+    <p>{{ contribution.reviewer_notes }}</p>
+</div>
+{% endif %}
+
+<a href="/contribute" class="btn btn-outline">Back to List</a>
+{% endblock %}

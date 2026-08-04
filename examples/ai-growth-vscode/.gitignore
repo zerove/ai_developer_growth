@@ -1,0 +1,12 @@
+# TypeScript / VS Code extension build output
+out/
+node_modules/
+*.vsix
+
+# Coverage & caches
+.coverage
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+__pycache__/
+*.pyc

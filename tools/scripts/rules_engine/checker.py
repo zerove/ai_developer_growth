@@ -544,3 +544,4 @@ def _map_severity(level: str | int) -> str:
     if level in ("error", "critical", "fatal"):
         return "error"
     return "warning"
+# Test change

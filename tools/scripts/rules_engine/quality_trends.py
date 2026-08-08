@@ -19,6 +19,8 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
 
+from .models import CheckResult
+
 
 @dataclass
 class QualitySnapshot:
@@ -94,6 +96,126 @@ class TrendReport:
         return any(d.direction == "regressed" for d in self.deltas)
 
 
+def _aggregate_results(results: list[CheckResult]) -> dict[str, Any]:
+    """Aggregate check results into metrics."""
+    categories: dict[str, int] = {}
+    rule_counts: dict[str, int] = {}
+    languages: dict[str, int] = {}
+    errors = warnings = info_count = 0
+    semantic_issues = 0
+
+    for result in results:
+        lang = result.language or "unknown"
+        languages[lang] = languages.get(lang, 0) + 1
+
+        for issue in result.issues:
+            categories[issue.category] = categories.get(issue.category, 0) + 1
+            rule_counts[issue.rule_id] = rule_counts.get(issue.rule_id, 0) + 1
+
+            if issue.severity == "error":
+                errors += 1
+            elif issue.severity == "warning":
+                warnings += 1
+            else:
+                info_count += 1
+
+            if issue.rule_id.startswith("semantic-"):
+                semantic_issues += 1
+
+    return {
+        "categories": categories,
+        "rule_counts": rule_counts,
+        "languages": languages,
+        "errors": errors,
+        "warnings": warnings,
+        "info_count": info_count,
+        "semantic_issues": semantic_issues,
+    }
+
+
+def _detect_hallucinations(dirpath: Path) -> int:
+    """Detect hallucinations and return count."""
+    try:
+        from tools.scripts.rules_engine.hallucination_detector import detect_hallucinations
+
+        h_report = detect_hallucinations(dirpath)
+        return h_report.total_findings
+    except ImportError:
+        return 0
+
+
+def _calculate_delta(prev_val: int, curr_val: int, lower_is_better: bool | None) -> tuple[int, float, str]:
+    """Calculate delta between two values."""
+    change = curr_val - prev_val
+    pct = (change / prev_val * 100) if prev_val > 0 else (100 if change > 0 else 0)
+
+    if lower_is_better is None:
+        direction = "unchanged"
+    elif change < 0:
+        direction = "improved"
+    elif change > 0:
+        direction = "regressed"
+    else:
+        direction = "unchanged"
+
+    return change, pct, direction
+
+
+def _get_comparison_metrics() -> list[tuple[str, str, bool | None]]:
+    """Get list of metrics to compare."""
+    return [
+        ("total_issues", "Total Issues", False),
+        ("errors", "Errors", False),
+        ("warnings", "Warnings", False),
+        ("semantic_issues", "Semantic Issues", False),
+        ("hallucination_findings", "Hallucination Findings", False),
+        ("total_files", "Files Scanned", None),
+    ]
+
+
+def _build_deltas(prev: QualitySnapshot, curr: QualitySnapshot) -> list[TrendDelta]:
+    """Build TrendDelta list from two snapshots."""
+    deltas: list[TrendDelta] = []
+    for attr, label, lower_is_better in _get_comparison_metrics():
+        prev_val = getattr(prev, attr, 0)
+        curr_val = getattr(curr, attr, 0)
+        change, pct, direction = _calculate_delta(prev_val, curr_val, lower_is_better)
+
+        deltas.append(
+            TrendDelta(
+                metric=label,
+                previous=prev_val,
+                current=curr_val,
+                change=change,
+                change_pct=pct,
+                direction=direction,
+            )
+        )
+    return deltas
+
+
+def _generate_recommendations(deltas: list[TrendDelta]) -> list[str]:
+    """Generate recommendations from deltas."""
+    recommendations: list[str] = []
+    for delta in deltas:
+        if delta.direction == "regressed":
+            if delta.metric == "Errors" and delta.change > 0:
+                recommendations.append(f"Errors increased by {delta.change}. Investigate new error patterns.")
+            elif delta.metric == "Semantic Issues" and delta.change > 0:
+                recommendations.append(
+                    f"Semantic issues increased by {delta.change}. Check for new code without proper structure."
+                )
+            elif delta.metric == "Hallucination Findings" and delta.change > 0:
+                recommendations.append(
+                    f"Hallucination patterns increased by {delta.change}. Review recent AI-generated code."
+                )
+
+    if not recommendations:
+        recommendations.append("Quality metrics are stable or improving. Keep it up!")
+
+    return recommendations
+
+
 class QualityTracker:
     """Track code quality metrics over time.
 
@@ -145,54 +267,23 @@ class QualityTracker:
         from tools.scripts.rules_engine.checker import check_directory
 
         results = check_directory(dirpath, semantic=semantic)
+        metrics = _aggregate_results(results)
 
-        # Aggregate metrics
-        categories: dict[str, int] = {}
-        rule_counts: dict[str, int] = {}
-        languages: dict[str, int] = {}
-        errors = warnings = info_count = 0
-        semantic_issues = 0
-
-        for result in results:
-            lang = result.language or "unknown"
-            languages[lang] = languages.get(lang, 0) + 1
-
-            for issue in result.issues:
-                categories[issue.category] = categories.get(issue.category, 0) + 1
-                rule_counts[issue.rule_id] = rule_counts.get(issue.rule_id, 0) + 1
-
-                if issue.severity == "error":
-                    errors += 1
-                elif issue.severity == "warning":
-                    warnings += 1
-                else:
-                    info_count += 1
-
-                if issue.rule_id.startswith("semantic-"):
-                    semantic_issues += 1
-
-        # Optional: hallucination detection
         hallucination_findings = 0
         if hallucination:
-            try:
-                from tools.scripts.rules_engine.hallucination_detector import detect_hallucinations
-
-                h_report = detect_hallucinations(dirpath)
-                hallucination_findings = h_report.total_findings
-            except ImportError:
-                pass
+            hallucination_findings = _detect_hallucinations(dirpath)
 
         snapshot = QualitySnapshot(
             timestamp=time.time(),
             total_files=len(results),
-            total_issues=errors + warnings + info_count,
-            errors=errors,
-            warnings=warnings,
-            info=info_count,
-            categories=categories,
-            rule_counts=rule_counts,
-            languages=languages,
-            semantic_issues=semantic_issues,
+            total_issues=metrics["errors"] + metrics["warnings"] + metrics["info_count"],
+            errors=metrics["errors"],
+            warnings=metrics["warnings"],
+            info=metrics["info_count"],
+            categories=metrics["categories"],
+            rule_counts=metrics["rule_counts"],
+            languages=metrics["languages"],
+            semantic_issues=metrics["semantic_issues"],
             hallucination_findings=hallucination_findings,
         )
 
@@ -222,60 +313,8 @@ class QualityTracker:
         prev = snapshots[-2]
         curr = snapshots[-1]
 
-        # Compare key metrics
-        comparisons = [
-            ("total_issues", "Total Issues", False),  # lower is better
-            ("errors", "Errors", False),
-            ("warnings", "Warnings", False),
-            ("semantic_issues", "Semantic Issues", False),
-            ("hallucination_findings", "Hallucination Findings", False),
-            ("total_files", "Files Scanned", None),  # informational
-        ]
-
-        for attr, label, lower_is_better in comparisons:
-            prev_val = getattr(prev, attr, 0)
-            curr_val = getattr(curr, attr, 0)
-            change = curr_val - prev_val
-            pct = (change / prev_val * 100) if prev_val > 0 else (100 if change > 0 else 0)
-
-            if lower_is_better is None:
-                direction = "unchanged"
-            elif change < 0:
-                direction = "improved"
-            elif change > 0:
-                direction = "regressed"
-            else:
-                direction = "unchanged"
-
-            report.deltas.append(
-                TrendDelta(
-                    metric=label,
-                    previous=prev_val,
-                    current=curr_val,
-                    change=change,
-                    change_pct=pct,
-                    direction=direction,
-                )
-            )
-
-        # Generate recommendations
-        for delta in report.deltas:
-            if delta.direction == "regressed":
-                if delta.metric == "Errors" and delta.change > 0:
-                    report.recommendations.append(
-                        f"Errors increased by {delta.change}. Investigate new error patterns."
-                    )
-                elif delta.metric == "Semantic Issues" and delta.change > 0:
-                    report.recommendations.append(
-                        f"Semantic issues increased by {delta.change}. Check for new code without proper structure."
-                    )
-                elif delta.metric == "Hallucination Findings" and delta.change > 0:
-                    report.recommendations.append(
-                        f"Hallucination patterns increased by {delta.change}. Review recent AI-generated code."
-                    )
-
-        if not report.recommendations:
-            report.recommendations.append("Quality metrics are stable or improving. Keep it up!")
+        report.deltas = _build_deltas(prev, curr)
+        report.recommendations = _generate_recommendations(report.deltas)
 
         return report
 

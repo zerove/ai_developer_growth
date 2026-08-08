@@ -37,7 +37,8 @@ from tools.scripts.hooks.domain_checks import (
 )
 
 
-def main() -> int:
+def _build_parser() -> argparse.ArgumentParser:
+    """Build the argument parser with all subcommands."""
     parser = argparse.ArgumentParser(
         description="ADG (AI Developer Governance) Unified CLI",
         formatter_class=argparse.RawDescriptionHelpFormatter,
@@ -66,35 +67,41 @@ def main() -> int:
 
     subparsers.add_parser("full", help="Run full pipeline (lint, format, typecheck, test, quality-gate)")
 
+    return parser
+
+
+def _run_full_pipeline() -> bool:
+    """Run the full ADG validation pipeline."""
+    print("Running full ADG validation pipeline...")
+    return (
+        run_lint()
+        and run_format_check()
+        and run_typecheck()
+        and run_tests()
+        and run_quality_gate(Path("tools/scripts"), full=True)
+    )
+
+
+def _dispatch_command(args: argparse.Namespace) -> bool:
+    """Dispatch to the appropriate command handler."""
+    command_map = {
+        "lint": lambda: run_lint(),
+        "format": lambda: run_format_check(),
+        "typecheck": lambda: run_typecheck(),
+        "test": lambda: run_tests(),
+        "security": lambda: run_security(),
+        "language-rules": lambda: run_language_rules(args.path, args.lang, args.jobs, args.fix),
+        "quality-gate": lambda: run_quality_gate(args.path, args.full),
+        "governance-audit": lambda: run_governance_audit(args.full, args.validate_docs),
+        "full": _run_full_pipeline,
+    }
+    return command_map.get(args.command, lambda: False)()
+
+
+def main() -> int:
+    parser = _build_parser()
     args = parser.parse_args()
-
-    success = True
-    if args.command == "lint":
-        success = run_lint()
-    elif args.command == "format":
-        success = run_format_check()
-    elif args.command == "typecheck":
-        success = run_typecheck()
-    elif args.command == "test":
-        success = run_tests()
-    elif args.command == "security":
-        success = run_security()
-    elif args.command == "language-rules":
-        success = run_language_rules(args.path, args.lang, args.jobs, args.fix)
-    elif args.command == "quality-gate":
-        success = run_quality_gate(args.path, args.full)
-    elif args.command == "governance-audit":
-        success = run_governance_audit(args.full, args.validate_docs)
-    elif args.command == "full":
-        print("Running full ADG validation pipeline...")
-        success = (
-            run_lint()
-            and run_format_check()
-            and run_typecheck()
-            and run_tests()
-            and run_quality_gate(Path("tools/scripts"), full=True)
-        )
-
+    success = _dispatch_command(args)
     return 0 if success else 1
 
 

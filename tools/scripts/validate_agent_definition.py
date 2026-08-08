@@ -50,6 +50,91 @@ def validate_agent_name(name: str) -> list[str]:
     return errors
 
 
+def _detect_format(content: str) -> tuple[bool, bool]:
+    """Detect if content has YAML frontmatter or Markdown format."""
+    has_yaml = "agent-name:" in content and "描述:" in content
+    has_md = bool(re.search(r"## agent:", content))
+    return has_yaml, has_md
+
+
+def _extract_name(content: str) -> str | None:
+    """Extract agent name from content."""
+    name_match = re.search(r"agent-name:\s*(.+)", content) or re.search(r"## agent:\s*(\S+)", content)
+    if name_match:
+        name = name_match.group(1).strip()
+        name = re.sub(r"\s*\(.*?\)\s*$", "", name)
+        return name
+    return None
+
+
+def _extract_description(content: str) -> str | None:
+    """Extract description from content."""
+    # Try YAML frontmatter format: 描述: <text>
+    desc_match = re.search(r"描述:\s*(.+)", content)
+    if desc_match:
+        return desc_match.group(1).strip()
+
+    # Try Markdown format with description on next non-empty line after ## agent: name
+    # Skip any parenthetical Chinese name on the same line
+    agent_match = re.search(r"## agent:\s*(\S+)(?:\s*\([^)]*\))?\s*\n", content)
+    if agent_match:
+        # Find the first non-empty line after the agent header
+        after_header = content[agent_match.end() :]
+        for line in after_header.split("\n"):
+            line = line.strip()
+            if line and not line.startswith("#"):
+                return line
+
+    return None
+
+
+def _check_tools(content: str) -> list[str]:
+    """Check tools section for dangerous tools."""
+    warnings: list[str] = []
+    tools_section = re.search(r"工具:(.+?)(?=\n约束:|$)", content, re.DOTALL) or re.search(
+        r"### 工具\n(.+?)(?=\n###|$)", content, re.DOTALL
+    )
+    if tools_section:
+        tools_text = tools_section.group(1)
+        dangerous_tools = ["shell", "exec", "eval", "system"]
+        for tool in dangerous_tools:
+            if tool in tools_text.lower():
+                warnings.append(f"工具 '{tool}' 可能存在安全风险，确认是否需要")
+    else:
+        warnings.append("未找到工具定义")
+    return warnings
+
+
+def _check_constraints(content: str) -> list[str]:
+    """Check constraints section."""
+    warnings: list[str] = []
+    constraints_section = re.search(r"约束:(.+?)(?=\n指令:|$)", content, re.DOTALL) or re.search(
+        r"### 约束\n(.+?)(?=\n###|$)", content, re.DOTALL
+    )
+    if constraints_section:
+        constraints_text = constraints_section.group(1)
+        if len(constraints_text.strip()) < 20:
+            warnings.append("约束内容过少，建议补充")
+    else:
+        warnings.append("未找到约束定义")
+    return warnings
+
+
+def _check_instructions(content: str) -> list[str]:
+    """Check instructions section."""
+    warnings: list[str] = []
+    instructions_section = re.search(r"指令:(.+)", content, re.DOTALL) or re.search(
+        r"### 指令\n(.+)", content, re.DOTALL
+    )
+    if instructions_section:
+        instructions_text = instructions_section.group(1)
+        if not re.search(r"(tools/|scripts/|\.py|\.sh|\.js)", instructions_text):
+            warnings.append("指令缺少具体工具/脚本路径引用")
+    else:
+        warnings.append("未找到指令定义")
+    return warnings
+
+
 def validate_agent_definition(filepath: Path) -> AgentValidationResult:
     """验证单个 Agent 定义文件"""
     result: AgentValidationResult = {
@@ -66,30 +151,24 @@ def validate_agent_definition(filepath: Path) -> AgentValidationResult:
 
     content = filepath.read_text(encoding="utf-8")
 
-    # 检测格式 (YAML frontmatter 或 Markdown)
-    has_yaml = "agent-name:" in content and "描述:" in content
-    has_md = bool(re.search(r"## agent:", content))
-
+    # 检测格式
+    has_yaml, has_md = _detect_format(content)
     if not has_yaml and not has_md:
         result["errors"].append("缺少必需的 frontmatter 或 Markdown 格式")
         result["passed"] = False
         return result
 
-    # 2. 提取并验证名称
-    name_match = re.search(r"agent-name:\s*(.+)", content) or re.search(r"## agent:\s*(\S+)", content)
-    if name_match:
-        name = name_match.group(1).strip()
-        # 去掉括号内的中文名 (如 "knowledge-curator (知识策展人)")
-        name = re.sub(r"\s*\(.*?\)\s*$", "", name)
+    # 提取并验证名称
+    name = _extract_name(content)
+    if name:
         name_errors = validate_agent_name(name)
         result["errors"].extend(name_errors)
     else:
         result["errors"].append("无法提取 Agent 名称")
 
-    # 3. 检查描述质量
-    desc_match = re.search(r"描述:\s*(.+)", content) or re.search(r"## agent:\s*\S+\s*\((.+?)\)", content)
-    if desc_match:
-        desc = desc_match.group(1).strip()
+    # 检查描述质量
+    desc = _extract_description(content)
+    if desc:
         if len(desc) < 10:
             result["warnings"].append("描述太短，建议至少 10 个字符")
         if len(desc) > 100:
@@ -97,39 +176,10 @@ def validate_agent_definition(filepath: Path) -> AgentValidationResult:
     else:
         result["warnings"].append("未找到描述字段")
 
-    # 4. 检查工具权限
-    tools_section = re.search(r"工具:(.+?)(?=\n约束:|$)", content, re.DOTALL) or re.search(
-        r"### 工具\n(.+?)(?=\n###|$)", content, re.DOTALL
-    )
-    if tools_section:
-        tools_text = tools_section.group(1)
-        dangerous_tools = ["shell", "exec", "eval", "system"]
-        for tool in dangerous_tools:
-            if tool in tools_text.lower():
-                result["warnings"].append(f"工具 '{tool}' 可能存在安全风险，确认是否需要")
-    else:
-        result["warnings"].append("未找到工具定义")
-
-    # 5. 检查约束完整性
-    constraints_section = re.search(r"约束:(.+?)(?=\n指令:|$)", content, re.DOTALL) or re.search(
-        r"### 约束\n(.+?)(?=\n###|$)", content, re.DOTALL
-    )
-    if constraints_section:
-        constraints_text = constraints_section.group(1)
-        if len(constraints_text.strip()) < 20:
-            result["warnings"].append("")
-    else:
-        result["warnings"].append("未找到约束定义")
-
-    instructions_section = re.search(r"指令:(.+)", content, re.DOTALL) or re.search(
-        r"### 指令\n(.+)", content, re.DOTALL
-    )
-    if instructions_section:
-        instructions_text = instructions_section.group(1)
-        if not re.search(r"(tools/|scripts/|\.py|\.sh|\.js)", instructions_text):
-            result["warnings"].append("")
-    else:
-        result["warnings"].append("未找到指令定义")
+    # 检查各个章节
+    result["warnings"].extend(_check_tools(content))
+    result["warnings"].extend(_check_constraints(content))
+    result["warnings"].extend(_check_instructions(content))
 
     result["passed"] = len(result["errors"]) == 0
     return result

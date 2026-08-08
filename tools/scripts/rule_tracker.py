@@ -104,15 +104,8 @@ def _load_records(days: int | None = None) -> list[dict[str, Any]]:
     return records
 
 
-def cmd_report(args: argparse.Namespace) -> None:
-    """Generate effectiveness report."""
-    records = _load_records(args.days)
-
-    if not records:
-        print("No records found. Run 'record' first.")
-        return
-
-    # Aggregate
+def _aggregate_records(records: list[dict[str, Any]]) -> dict[str, Any]:
+    """Aggregate statistics from records."""
     total_issues = 0
     rule_counts: dict[str, int] = defaultdict(int)
     severity_counts: dict[str, int] = defaultdict(int)
@@ -128,58 +121,85 @@ def cmd_report(args: argparse.Namespace) -> None:
         for sev, count in summary.get("by_severity", {}).items():
             severity_counts[sev] += count
 
-        # Extract language from rule IDs
         for rule_id in summary.get("by_rule", {}):
             parts = rule_id.split("-")
             if len(parts) >= 2:
                 lang_counts[parts[0]] += summary["by_rule"][rule_id]
 
-        # Trend: date -> issue count
         date_str = rec["timestamp"][:10]
         trend.append((date_str, summary.get("total_issues", 0)))
 
-    if args.json:
-        print(
-            json.dumps(
-                {
-                    "records": len(records),
-                    "total_issues": total_issues,
-                    "by_rule": dict(sorted(rule_counts.items(), key=lambda x: -x[1])),
-                    "by_severity": dict(severity_counts),
-                    "by_language": dict(sorted(lang_counts.items(), key=lambda x: -x[1])),
-                },
-                indent=2,
-            )
-        )
-        return
+    return {
+        "total_issues": total_issues,
+        "rule_counts": rule_counts,
+        "severity_counts": severity_counts,
+        "lang_counts": lang_counts,
+        "trend": trend,
+        "records_count": len(records),
+    }
 
+
+def _print_json_report(stats: dict[str, Any]) -> None:
+    """Print report in JSON format."""
+    print(
+        json.dumps(
+            {
+                "records": stats["records_count"],
+                "total_issues": stats["total_issues"],
+                "by_rule": dict(sorted(stats["rule_counts"].items(), key=lambda x: -x[1])),
+                "by_severity": dict(stats["severity_counts"]),
+                "by_language": dict(sorted(stats["lang_counts"].items(), key=lambda x: -x[1])),
+            },
+            indent=2,
+        )
+    )
+
+
+def _print_text_report(stats: dict[str, Any], args: argparse.Namespace) -> None:
+    """Print report in text format."""
     print("Rule Effectiveness Report")
     print(f"{'=' * 50}")
-    print(f"Period: {len(records)} records")
+    print(f"Period: {stats['records_count']} records")
     if args.days:
         print(f"  (last {args.days} days)")
-    print(f"Total issues found: {total_issues}")
+    print(f"Total issues found: {stats['total_issues']}")
     print()
 
     # Top rules
     print("Top 10 Most-Triggered Rules:")
     print(f"  {'Rule ID':<35} {'Count':<8} {'%'}")
     print(f"  {'-' * 55}")
-    for rule_id, count in sorted(rule_counts.items(), key=lambda x: -x[1])[:10]:
-        pct = (count / total_issues * 100) if total_issues else 0
+    for rule_id, count in sorted(stats["rule_counts"].items(), key=lambda x: -x[1])[:10]:
+        pct = (count / stats["total_issues"] * 100) if stats["total_issues"] else 0
         print(f"  {rule_id:<35} {count:<8} {pct:.1f}%")
     print()
 
     # By language
     print("Issues by Language:")
-    for lang, count in sorted(lang_counts.items(), key=lambda x: -x[1]):
+    for lang, count in sorted(stats["lang_counts"].items(), key=lambda x: -x[1]):
         print(f"  {lang:<15} {count}")
     print()
 
     # By severity
     print("By Severity:")
-    for sev, count in sorted(severity_counts.items()):
+    for sev, count in sorted(stats["severity_counts"].items()):
         print(f"  {sev:<10} {count}")
+
+
+def cmd_report(args: argparse.Namespace) -> None:
+    """Generate effectiveness report."""
+    records = _load_records(args.days)
+
+    if not records:
+        print("No records found. Run 'record' first.")
+        return
+
+    stats = _aggregate_records(records)
+
+    if args.json:
+        _print_json_report(stats)
+    else:
+        _print_text_report(stats, args)
 
 
 def cmd_export(args: argparse.Namespace) -> None:

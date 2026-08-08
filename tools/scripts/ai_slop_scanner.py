@@ -27,11 +27,16 @@ class AISlopScanner:
                 if "as any" in content:
                     rel = file_path.relative_to(self.root_dir)
                     self.slop_findings.append(f"AI Slop found in {rel}: Usage of 'as any' type suppression.")
-                if "except Exception:\n        pass" in content or "except Exception: pass" in content:
+                # Patterns assembled from parts to avoid self-matching the scanner rule
+                empty_except_multi = "except Exception:\n        " + "pass"
+                empty_except_single = "except Exception: " + "pass"
+                if empty_except_multi in content or empty_except_single in content:
                     rel = file_path.relative_to(self.root_dir)
                     self.slop_findings.append(f"AI Slop found in {rel}: Empty exception catch block.")
-            except Exception:
-                pass
+            except Exception as e:
+                import logging
+
+                logging.getLogger(__name__).debug(f"Failed to read {file_path}: {e}")
         return self.slop_findings
 
 

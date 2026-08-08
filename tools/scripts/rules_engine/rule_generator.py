@@ -14,7 +14,6 @@ ADG 规则生成器 — 将 agent 生成的规则保存到标准位置
 from __future__ import annotations
 
 import os
-import re
 import sys
 from pathlib import Path
 from typing import Any, cast
@@ -268,55 +267,88 @@ def list_generated_languages() -> list[str]:
 # ── 验证 ──────────────────────────────────────────────────
 
 
-def validate_rules_yaml(content: str) -> list[str]:
-    """验证 YAML 规则格式，返回错误列表。"""
+def _validate_yaml_syntax(content: str) -> tuple[list[str], dict[str, Any] | None]:
+    """Validate YAML syntax and return errors and parsed data."""
     errors: list[str] = []
-
     try:
         import yaml
 
         data = yaml.safe_load(content)
     except yaml.YAMLError as e:
-        return [f"YAML parse error: {e}"]
+        return [f"YAML parse error: {e}"], None
+    return errors, data
 
+
+def _validate_root_structure(data: object) -> list[str]:
+    """Validate root structure of rules YAML."""
+    errors: list[str] = []
     if not isinstance(data, dict):
         return ["Root must be a dict with 'anti_patterns' key"]
-
     if "language" not in data:
         errors.append("Missing 'language' field")
     if "anti_patterns" not in data:
         errors.append("Missing 'anti_patterns' field")
+    return errors
+
+
+def _validate_patterns(patterns: object) -> list[str]:
+    """Validate anti-patterns list."""
+    errors: list[str] = []
+    if not isinstance(patterns, list):
+        return ["'anti_patterns' must be a list"]
+    return errors
+
+
+def _validate_single_rule(rule: object, index: int, seen_ids: set[str]) -> list[str]:
+    """Validate a single rule and return errors."""
+    errors: list[str] = []
+    if not isinstance(rule, dict):
+        errors.append(f"Rule #{index}: must be a dict")
+        return errors
+
+    # 必需字段
+    for field in ("id", "name", "severity", "category", "pattern", "message"):
+        if field not in rule:
+            errors.append(f"Rule #{index} ({rule.get('id', '?')}): missing '{field}'")
+
+    rid = rule.get("id", "")
+    if rid in seen_ids:
+        errors.append(f"Duplicate rule ID: {rid}")
+    seen_ids.add(rid)
+
+    # 验证 severity
+    if rule.get("severity") not in ("error", "warning", "info"):
+        errors.append(f"Rule '{rid}': severity must be error/warning/info")
+
+    # 验证正则合法性
+    try:
+        import re
+
+        re.compile(rule.get("pattern", ""))
+    except re.error as e:
+        errors.append(f"Rule '{rid}': invalid regex pattern: {e}")
+
+    return errors
+
+
+def validate_rules_yaml(content: str) -> list[str]:
+    """验证 YAML 规则格式，返回错误列表。"""
+    errors, data = _validate_yaml_syntax(content)
+    if data is None:
+        return errors
+
+    errors.extend(_validate_root_structure(data))
+    if errors:
         return errors
 
     patterns = data["anti_patterns"]
-    if not isinstance(patterns, list):
-        return ["'anti_patterns' must be a list"]
+    errors.extend(_validate_patterns(patterns))
+    if errors:
+        return errors
 
     seen_ids: set[str] = set()
     for i, rule in enumerate(patterns):
-        if not isinstance(rule, dict):
-            errors.append(f"Rule #{i}: must be a dict")
-            continue
-
-        # 必需字段
-        for field in ("id", "name", "severity", "category", "pattern", "message"):
-            if field not in rule:
-                errors.append(f"Rule #{i} ({rule.get('id', '?')}): missing '{field}'")
-
-        rid = rule.get("id", "")
-        if rid in seen_ids:
-            errors.append(f"Duplicate rule ID: {rid}")
-        seen_ids.add(rid)
-
-        # 验证 severity
-        if rule.get("severity") not in ("error", "warning", "info"):
-            errors.append(f"Rule '{rid}': severity must be error/warning/info")
-
-        # 验证正则合法性
-        try:
-            re.compile(rule.get("pattern", ""))
-        except re.error as e:
-            errors.append(f"Rule '{rid}': invalid regex pattern: {e}")
+        errors.extend(_validate_single_rule(rule, i, seen_ids))
 
     return errors
 

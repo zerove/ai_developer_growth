@@ -56,6 +56,46 @@ BUILTIN_MAPPINGS: dict[str, list[dict[str, str]]] = {
 }
 
 
+def _extract_frontmatter_keywords(fm_text: str) -> list[str]:
+    """Extract keywords from frontmatter."""
+    keywords: list[str] = []
+    for line in fm_text.split("\n"):
+        if line.strip().startswith("tags:"):
+            tags_part = line[5:].strip()
+            if tags_part.startswith("["):
+                try:
+                    tags = json.loads(tags_part)
+                    keywords.extend(t if isinstance(t, str) else str(t) for t in tags)
+                except json.JSONDecodeError:
+                    pass
+            else:
+                keywords.extend(t.strip().strip('"').strip("'") for t in tags_part.split(",") if t.strip())
+        elif ":" in line and not line.strip().startswith("#"):
+            k, v = line.split(":", 1)
+            k = k.strip().lower()
+            if k in ("category", "topic", "domain", "language", "framework"):
+                keywords.append(v.strip().strip('"').strip("'"))
+    return keywords
+
+
+def _extract_title_keywords(content: str) -> list[str]:
+    """Extract keywords from titles/headings."""
+    keywords: list[str] = []
+    for h_match in re.finditer(r"^#{1,3}\s+(.+)$", content, re.MULTILINE):
+        title = h_match.group(1).strip().lower()
+        keywords.append(title)
+        for word in re.findall(r"[a-zA-Z][a-zA-Z0-9_-]+", title):
+            if len(word) > 3:
+                keywords.append(word.lower())
+    return keywords
+
+
+def _extract_filename_keywords(md_file: Path) -> list[str]:
+    """Extract keywords from filename."""
+    stem = md_file.stem.lower()
+    return re.findall(r"[a-zA-Z][a-zA-Z0-9_-]+", stem)
+
+
 def extract_keywords_from_docs(docs_dir: Path) -> dict[str, list[str]]:
     """
     扫描 docs/ 目录，提取每篇文档的关键词。
@@ -71,36 +111,13 @@ def extract_keywords_from_docs(docs_dir: Path) -> dict[str, list[str]]:
         # 从 frontmatter 提取 tags
         fm_match = re.match(r"^---\s*\n(.*?)\n---\s*\n", content, re.DOTALL)
         if fm_match:
-            fm_text = fm_match.group(1)
-            for line in fm_text.split("\n"):
-                if line.strip().startswith("tags:"):
-                    tags_part = line[5:].strip()
-                    if tags_part.startswith("["):
-                        try:
-                            tags = json.loads(tags_part)
-                            keywords.extend(t if isinstance(t, str) else str(t) for t in tags)
-                        except json.JSONDecodeError:
-                            pass
-                    else:
-                        keywords.extend(t.strip().strip('"').strip("'") for t in tags_part.split(",") if t.strip())
-                elif ":" in line and not line.strip().startswith("#"):
-                    k, v = line.split(":", 1)
-                    k = k.strip().lower()
-                    if k in ("category", "topic", "domain", "language", "framework"):
-                        keywords.append(v.strip().strip('"').strip("'"))
+            keywords.extend(_extract_frontmatter_keywords(fm_match.group(1)))
 
         # 从标题提取
-        for h_match in re.finditer(r"^#{1,3}\s+(.+)$", content, re.MULTILINE):
-            title = h_match.group(1).strip().lower()
-            keywords.append(title)
-            # 拆分标题中的关键词
-            for word in re.findall(r"[a-zA-Z][a-zA-Z0-9_-]+", title):
-                if len(word) > 3:
-                    keywords.append(word.lower())
+        keywords.extend(_extract_title_keywords(content))
 
         # 文件名也是关键词
-        stem = md_file.stem.lower()
-        keywords.extend(re.findall(r"[a-zA-Z][a-zA-Z0-9_-]+", stem))
+        keywords.extend(_extract_filename_keywords(md_file))
 
         if keywords:
             doc_keywords[str(rel_path)] = list(set(keywords))
@@ -176,23 +193,17 @@ def _simple_parse_rules(filepath: Path) -> list[dict[str, Any]]:
     return rules
 
 
-def build_mapping(
-    rule_dir: Path | None = None,
-    docs_dir: Path = DOCS_DIR,
-    case_studies: bool = True,
-) -> dict[str, list[dict[str, str]]]:
-    """
-    构建完整的规则→文档映射。
-    对每条规则，通过关键词匹配找出最相关的 1-3 篇文档。
-    """
-
-    # 1. 扫描文档关键词
+def _scan_documents(docs_dir: Path, case_studies: bool) -> dict[str, list[str]]:
+    """Scan documents and case studies for keywords."""
     doc_keywords = extract_keywords_from_docs(docs_dir)
     if case_studies and CASE_STUDIES_DIR.exists():
         cs_keywords = extract_keywords_from_docs(CASE_STUDIES_DIR)
         doc_keywords.update(cs_keywords)
+    return doc_keywords
 
-    # 2. 加载所有规则（直接解析 YAML）
+
+def _load_all_rules(rule_dir: Path | None) -> dict[str, dict[str, Any]]:
+    """Load all rules from language and framework directories."""
     all_rules: dict[str, dict[str, Any]] = {}
     rule_path = rule_dir or (PROJECT_ROOT / "ai-dev-framework" / "languages")
 
@@ -217,35 +228,63 @@ def build_mapping(
                     if rule_id:
                         all_rules[rule_id] = rule
 
+    return all_rules
+
+
+def _match_rule_to_docs(
+    rule_id: str,
+    rule_data: dict[str, Any],
+    doc_keywords: dict[str, list[str]],
+) -> list[dict[str, str]]:
+    """Match a single rule to relevant documents."""
+    rule_keywords = set(extract_keywords_from_rule(rule_id, rule_data))
+    scored_docs: list[tuple[int, str, str]] = []  # (score, path, reason)
+
+    for doc_path, kw_list in doc_keywords.items():
+        doc_kw_set = set(kw_list)
+        overlap = rule_keywords & doc_kw_set
+        if overlap:
+            reason_keywords = list(overlap)[:3]
+            scored_docs.append((len(overlap), doc_path, f"关联关键词: {', '.join(reason_keywords)}"))
+
+    # Take top 3
+    scored_docs.sort(key=lambda x: -x[0])
+    top_docs = [
+        {"path": doc_path, "reason": reason}
+        for score, doc_path, reason in scored_docs[:3]
+        if score >= 2  # At least 2 keyword overlap
+    ]
+
+    # Merge built-in mappings
+    builtin = BUILTIN_MAPPINGS.get(rule_id, [])
+    seen_paths = {d["path"] for d in top_docs}
+    for b in builtin:
+        if b["path"] not in seen_paths:
+            top_docs.append(b)
+            seen_paths.add(b["path"])
+
+    return top_docs
+
+
+def build_mapping(
+    rule_dir: Path | None = None,
+    docs_dir: Path = DOCS_DIR,
+    case_studies: bool = True,
+) -> dict[str, list[dict[str, str]]]:
+    """
+    构建完整的规则→文档映射。
+    对每条规则，通过关键词匹配找出最相关的 1-3 篇文档。
+    """
+    # 1. 扫描文档关键词
+    doc_keywords = _scan_documents(docs_dir, case_studies)
+
+    # 2. 加载所有规则（直接解析 YAML）
+    all_rules = _load_all_rules(rule_dir)
+
     # 3. 匹配：规则关键词 vs 文档关键词
     mapping: dict[str, list[dict[str, str]]] = {}
     for rule_id, rule_data in all_rules.items():
-        rule_keywords = set(extract_keywords_from_rule(rule_id, rule_data))
-        scored_docs: list[tuple[int, str, str]] = []  # (score, path, reason)
-
-        for doc_path, kw_list in doc_keywords.items():
-            doc_kw_set = set(kw_list)
-            overlap = rule_keywords & doc_kw_set
-            if overlap:
-                reason_keywords = list(overlap)[:3]
-                scored_docs.append((len(overlap), doc_path, f"关联关键词: {', '.join(reason_keywords)}"))
-
-        # 取前 3
-        scored_docs.sort(key=lambda x: -x[0])
-        top_docs = [
-            {"path": doc_path, "reason": reason}
-            for score, doc_path, reason in scored_docs[:3]
-            if score >= 2  # 至少 2 个关键词重叠
-        ]
-
-        # 合并内置映射
-        builtin = BUILTIN_MAPPINGS.get(rule_id, [])
-        seen_paths = {d["path"] for d in top_docs}
-        for b in builtin:
-            if b["path"] not in seen_paths:
-                top_docs.append(b)
-                seen_paths.add(b["path"])
-
+        top_docs = _match_rule_to_docs(rule_id, rule_data, doc_keywords)
         if top_docs:
             mapping[rule_id] = top_docs
 

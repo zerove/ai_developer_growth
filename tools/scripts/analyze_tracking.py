@@ -119,17 +119,8 @@ def suggest_synonym_groups(searches: list[tuple[str, int]]) -> list[list[str]]:
     return groups
 
 
-def print_report(data: dict[str, Any], top_n: int = 10) -> None:
-    """打印分析报告"""
-    searches = analyze_searches(data, top_n)
-    pageviews = analyze_pageviews(data, top_n)
-    reading = analyze_reading_time(data, top_n)
-
-    print("=" * 60)
-    print("  AI Developer Growth - 用户行为分析报告")
-    print("=" * 60)
-
-    # 搜索分析
+def _print_search_analysis(searches: dict[str, Any], top_n: int) -> None:
+    """Print search analysis section."""
     print("\n  搜索查询")
     print(f"  总搜索次数: {searches['total']}")
     print(f"  唯一查询数: {searches['unique']}")
@@ -142,7 +133,9 @@ def print_report(data: dict[str, Any], top_n: int = 10) -> None:
         for q, count in searches["zero_result"]:
             print(f"    {count:>4}x  {q}")
 
-    # 页面分析
+
+def _print_page_analysis(pageviews: dict[str, Any], top_n: int) -> None:
+    """Print page analysis section."""
     print("\n  页面访问")
     print(f"  总访问量: {pageviews['total']}")
     print(f"  独立页面数: {pageviews['unique']}")
@@ -151,7 +144,9 @@ def print_report(data: dict[str, Any], top_n: int = 10) -> None:
         for p, count in pageviews["top"]:
             print(f"    {count:>4}x  {p}")
 
-    # 阅读时长
+
+def _print_reading_analysis(reading: dict[str, Any], top_n: int) -> None:
+    """Print reading time analysis section."""
     print("\n  阅读时长")
     print(f"  总阅读时间: {reading['total_minutes']} 分钟")
     if reading["top"]:
@@ -160,13 +155,31 @@ def print_report(data: dict[str, Any], top_n: int = 10) -> None:
             mins = round(seconds / 60, 1)
             print(f"    {mins:>6.1f}min  {p}")
 
-    # 同义词建议
+
+def _print_synonym_suggestions(searches: dict[str, Any]) -> None:
+    """Print synonym group suggestions."""
     if searches["top"]:
         groups = suggest_synonym_groups(searches["top"])
         if groups:
             print("\n  同义词组建议 (基于搜索模式):")
             for g in groups:
                 print(f"    {' / '.join(g)}")
+
+
+def print_report(data: dict[str, Any], top_n: int = 10) -> None:
+    """打印分析报告"""
+    searches = analyze_searches(data, top_n)
+    pageviews = analyze_pageviews(data, top_n)
+    reading = analyze_reading_time(data, top_n)
+
+    print("=" * 60)
+    print("  AI Developer Growth - 用户行为分析报告")
+    print("=" * 60)
+
+    _print_search_analysis(searches, top_n)
+    _print_page_analysis(pageviews, top_n)
+    _print_reading_analysis(reading, top_n)
+    _print_synonym_suggestions(searches)
 
     print("\n" + "=" * 60)
 

@@ -122,62 +122,64 @@ class ImportGraph:
 
         return issues
 
+    BUILTIN_NAMES = {
+        "list",
+        "dict",
+        "set",
+        "tuple",
+        "str",
+        "int",
+        "float",
+        "bool",
+        "type",
+        "id",
+        "hash",
+        "input",
+        "map",
+        "filter",
+        "range",
+        "zip",
+        "open",
+        "print",
+        "format",
+        "len",
+        "abs",
+        "min",
+        "max",
+        "sum",
+        "all",
+        "any",
+        "sorted",
+        "reversed",
+        "enumerate",
+        "isinstance",
+        "issubclass",
+        "super",
+        "property",
+        "staticmethod",
+        "classmethod",
+    }
+
+    def _create_shadow_issue(self, filepath: str, imp: ImportInfo, name: str) -> SemanticIssue:
+        return SemanticIssue(
+            rule_id="shadowed-import",
+            severity="warning",
+            category="code_quality",
+            file=filepath,
+            line=imp.line,
+            message=f"Import '{name}' shadows Python built-in",
+            fix_hint=f"Rename import to avoid shadowing built-in '{name}'",
+        )
+
     def find_shadowed_imports(self, file_imports: dict[str, list[ImportInfo]]) -> list[SemanticIssue]:
         """Find imports that shadow built-in names."""
-        builtin_names = {
-            "list",
-            "dict",
-            "set",
-            "tuple",
-            "str",
-            "int",
-            "float",
-            "bool",
-            "type",
-            "id",
-            "hash",
-            "input",
-            "map",
-            "filter",
-            "range",
-            "zip",
-            "open",
-            "print",
-            "format",
-            "len",
-            "abs",
-            "min",
-            "max",
-            "sum",
-            "all",
-            "any",
-            "sorted",
-            "reversed",
-            "enumerate",
-            "isinstance",
-            "issubclass",
-            "super",
-            "property",
-            "staticmethod",
-            "classmethod",
-        }
         issues: list[SemanticIssue] = []
 
         for filepath, imports in file_imports.items():
             for imp in imports:
                 for name in imp.names:
-                    if name in builtin_names:
-                        issues.append(
-                            SemanticIssue(
-                                rule_id="shadowed-import",
-                                severity="warning",
-                                category="code_quality",
-                                file=filepath,
-                                line=imp.line,
-                                message=f"Import '{name}' shadows Python built-in",
-                                fix_hint=f"Rename import to avoid shadowing built-in '{name}'",
-                            )
-                        )
+                    if name in self.BUILTIN_NAMES:
+                        issues.append(self._create_shadow_issue(filepath, imp, name))
 
         return issues
 

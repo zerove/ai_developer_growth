@@ -30,8 +30,10 @@ class AuditAttestationLedger:
                 try:
                     last_entry = json.loads(lines[-1])
                     prev_hash = last_entry.get("current_hash", prev_hash)
-                except Exception:
-                    pass
+                except Exception as e:
+                    import logging
+
+                    logging.getLogger(__name__).debug(f"Failed to parse last ledger entry: {e}")
 
         payload = {
             "event_type": event_type,

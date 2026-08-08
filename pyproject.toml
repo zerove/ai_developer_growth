@@ -13,6 +13,7 @@ dependencies = ["pyyaml>=6.0"]
 
 [project.scripts]
 adg = "tools.scripts.adg_cli:main"
+validate-language-rules = "tools.scripts.validators.cli:main"
 
 [project.optional-dependencies]
 dev = [

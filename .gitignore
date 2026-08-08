@@ -36,6 +36,14 @@ tools/.cache/
 .quality-trends/*
 !.quality-trends/.gitkeep
 
+# Mutation testing workspace (regenerated on demand)
+mutants/
+setup.cfg
+
+# Tool reports (regenerated on demand)
+diff-cover-report.html
+bandit-report.json
+
 # IDE
 .vscode/
 .idea/

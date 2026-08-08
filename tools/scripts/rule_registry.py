@@ -20,6 +20,7 @@ import hashlib
 import json
 import shutil
 import sys
+from collections.abc import Callable
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
@@ -231,7 +232,8 @@ def cmd_remove(args: argparse.Namespace) -> None:
     print(f"Removed '{args.pack}' from registry")
 
 
-def main() -> int:
+def _build_parser() -> argparse.ArgumentParser:
+    """Build the argument parser with all subcommands."""
     parser = argparse.ArgumentParser(description="Rule Registry: manage rule packs")
     parser.add_argument("--json", action="store_true", help="JSON output")
 
@@ -260,25 +262,36 @@ def main() -> int:
     rm = sub.add_parser("remove", help="Remove a pack")
     rm.add_argument("pack", type=str, help="Pack name")
 
+    return parser
+
+
+def _dispatch_command(args: argparse.Namespace) -> int:
+    """Dispatch the parsed command to the appropriate handler."""
+    if not args.command:
+        return 0
+
+    commands: dict[str, Callable[[argparse.Namespace], None]] = {
+        "init": cmd_init,
+        "list": cmd_list,
+        "publish": cmd_publish,
+        "install": cmd_install,
+        "search": cmd_search,
+        "info": cmd_info,
+        "remove": cmd_remove,
+    }
+
+    handler = commands.get(args.command)
+    if handler:
+        handler(args)
+    return 0
+
+
+def main() -> int:
+    parser = _build_parser()
     args = parser.parse_args()
 
-    if not args.command:
-        parser.print_help()
-        return 0
-
     try:
-        commands = {
-            "init": cmd_init,
-            "list": cmd_list,
-            "publish": cmd_publish,
-            "install": cmd_install,
-            "search": cmd_search,
-            "info": cmd_info,
-            "remove": cmd_remove,
-        }
-
-        commands[args.command](args)
-        return 0
+        return _dispatch_command(args)
     except Exception as e:
         handle_error(e, script="rule_registry")
         return 1

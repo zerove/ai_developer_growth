@@ -260,13 +260,8 @@ def _print_check_result(result: CheckResult) -> None:
             print(f"  {severity_icon} {result.file}:{issue.line} [{issue.rule_id}] {issue.message}")
 
 
-def _run_full() -> int:
-    """Run the full check suite with parallel + sequential phases."""
-    print("=" * 60)
-    print("  FULL HOOKS RUNNER - 完整检查套件")
-    print("=" * 60)
-
-    # Parallel phase: lint + format + typecheck
+def _run_parallel_checks() -> dict[str, tuple[bool, str]]:
+    """Run parallel phase checks: lint, format, typecheck."""
     check_funcs = [
         ("Lint", run_lint),
         ("Format", run_format_check),
@@ -282,30 +277,51 @@ def _run_full() -> int:
             except Exception as e:
                 passed, output = False, str(e)
             results[name] = (passed, output)
+    return results
 
-    # Sequential phase: dependent checks
+
+def _run_sequential_checks() -> dict[str, tuple[bool, str]]:
+    """Run sequential phase checks: test, security, quality-gate, governance-audit."""
     sequential_checks = [
         ("Test Suite", run_tests),
         ("Security Scan", run_security),
         ("AI Quality Gate", lambda: run_quality_gate(Path("tools/scripts"), full=True)),
         ("Governance Audit", lambda: run_governance_audit(full=True)),
     ]
+    results: dict[str, tuple[bool, str]] = {}
     for name, func in sequential_checks:
         try:
             passed, output = func()
         except Exception as e:
             passed, output = False, str(e)
         results[name] = (passed, output)
+    return results
 
-    # Print results in fixed order
-    order = ["Lint", "Format", "Type Check", "Test Suite", "Security Scan", "AI Quality Gate", "Governance Audit"]
+
+def _print_results_in_order(results: dict[str, tuple[bool, str]], order: list[str]) -> bool:
+    """Print results in fixed order. Returns all_passed."""
     all_passed = True
     for i, name in enumerate(order, 1):
-        print(f"\n📋 {i}/7: {name}")
+        print(f"\n📋 {i}/{len(order)}: {name}")
         passed, output = results[name]
         print(output)
         if not passed:
             all_passed = False
+    return all_passed
+
+
+def _run_full() -> int:
+    """Run the full check suite with parallel + sequential phases."""
+    print("=" * 60)
+    print("  FULL HOOKS RUNNER - 完整检查套件")
+    print("=" * 60)
+
+    results: dict[str, tuple[bool, str]] = {}
+    results.update(_run_parallel_checks())
+    results.update(_run_sequential_checks())
+
+    order = ["Lint", "Format", "Type Check", "Test Suite", "Security Scan", "AI Quality Gate", "Governance Audit"]
+    all_passed = _print_results_in_order(results, order)
 
     print("\n" + "=" * 60)
     if all_passed:
@@ -327,6 +343,92 @@ _SIMPLE_COMMANDS: dict[str, str] = {
 }
 
 
+def _handle_language_rules(args: argparse.Namespace) -> int:
+    """Handle language-rules command."""
+    if getattr(args, "fix", False):
+        from tools.scripts.rules_engine.auto_fix import apply_fixes_to_directory, format_fix_results
+
+        fix_results = apply_fixes_to_directory(args.path, dry_run=False)
+        print(format_fix_results(fix_results))
+        return 0
+    return _run_simple(run_language_rules(args.path, args.lang))
+
+
+def _handle_quality_gate(args: argparse.Namespace) -> int:
+    """Handle quality-gate command."""
+    return _run_simple(
+        run_quality_gate(
+            args.path,
+            full=args.full,
+            check_annotation=args.check_annotation,
+            check_security=args.check_security,
+            check_type=args.check_type,
+            check_error=args.check_error,
+            check_structure=args.check_structure,
+            check_patterns=args.check_patterns,
+            format=args.format,
+        )
+    )
+
+
+def _handle_governance_audit(args: argparse.Namespace) -> int:
+    """Handle governance-audit command."""
+    return _run_simple(
+        run_governance_audit(
+            full=args.full,
+            validate_docs=args.validate_docs,
+            check_ai_sdlc=args.check_ai_sdlc,
+            audit_hallucination=args.audit_hallucination,
+            check_index=args.check_index,
+        )
+    )
+
+
+def _handle_install_hooks(args: argparse.Namespace) -> int:
+    """Handle install-hooks command."""
+    if args.pre_push:
+        from tools.scripts.hooks.pre_push import install_pre_push_hook
+
+        success = install_pre_push_hook()
+        return 0 if success else 1
+    if args.pre_commit:
+        print("Pre-commit hook installation not yet implemented")
+        return 1
+    print("Specify --pre-push or --pre-commit")
+    return 1
+
+
+def _handle_learn(args: argparse.Namespace) -> int:
+    """Handle learn command."""
+    from tools.scripts.rules_engine.ai_rules_generator import (
+        analyze_project,
+        format_analysis,
+    )
+
+    result = analyze_project(args.project_path)
+    print(format_analysis(result, format=args.format))
+    if args.output:
+        import yaml
+
+        args.output.parent.mkdir(parents=True, exist_ok=True)
+        with open(args.output, "w") as f:
+            yaml.dump(result["rules"], f, default_flow_style=False, allow_unicode=True)
+        print(f"\nRules written to {args.output}")
+    return 0
+
+
+def _handle_dashboard(args: argparse.Namespace) -> int:
+    """Handle dashboard command."""
+    import uvicorn
+
+    from tools.scripts.rules_engine.dashboard import create_app
+
+    app = create_app(args.db)
+    print(f"Starting ADG Quality Dashboard at http://0.0.0.0:{args.port}")  # nosec - dev only
+    uvicorn.run(app, host="0.0.0.0", port=args.port)  # nosec - dev only
+    return 0
+
+
 def _dispatch(args: argparse.Namespace) -> int:
     """Dispatch the parsed command to the appropriate handler."""
     cmd = args.command
@@ -335,100 +437,27 @@ def _dispatch(args: argparse.Namespace) -> int:
         func = globals()[_SIMPLE_COMMANDS[cmd]]
         return _run_simple(func)
 
-    if cmd == "language-rules":
-        if getattr(args, "fix", False):
-            from tools.scripts.rules_engine.auto_fix import apply_fixes_to_directory, format_fix_results
+    handlers: dict[str, Callable[[argparse.Namespace], int]] = {
+        "language-rules": _handle_language_rules,
+        "quality-gate": _handle_quality_gate,
+        "governance-audit": _handle_governance_audit,
+        "diff": lambda a: _run_simple(run_diff_checks(a.base)),
+        "pre-commit": lambda a: _run_simple(run_pre_commit_checks()),
+        "semantic-check": lambda a: _run_semantic_check(a.path, getattr(a, "lang", None), getattr(a, "jobs", 1)),
+        "ast-fix": lambda a: _run_ast_fix(a.path, getattr(a, "dry_run", False)),
+        "hallucination-scan": lambda a: _run_hallucination_scan(
+            getattr(a, "path", Path(".")),
+            getattr(a, "lang", None),
+        ),
+        "install-hooks": _handle_install_hooks,
+        "learn": _handle_learn,
+        "dashboard": _handle_dashboard,
+        "full": lambda a: _run_full(),
+    }
 
-            fix_results = apply_fixes_to_directory(args.path, dry_run=False)
-            print(format_fix_results(fix_results))
-            return 0
-        return _run_simple(run_language_rules(args.path, args.lang))
-
-    if cmd == "quality-gate":
-        return _run_simple(
-            run_quality_gate(
-                args.path,
-                full=args.full,
-                check_annotation=args.check_annotation,
-                check_security=args.check_security,
-                check_type=args.check_type,
-                check_error=args.check_error,
-                check_structure=args.check_structure,
-                check_patterns=args.check_patterns,
-                format=args.format,
-            )
-        )
-
-    if cmd == "governance-audit":
-        return _run_simple(
-            run_governance_audit(
-                full=args.full,
-                validate_docs=args.validate_docs,
-                check_ai_sdlc=args.check_ai_sdlc,
-                audit_hallucination=args.audit_hallucination,
-                check_index=args.check_index,
-            )
-        )
-
-    if cmd == "diff":
-        return _run_simple(run_diff_checks(args.base))
-
-    if cmd == "pre-commit":
-        return _run_simple(run_pre_commit_checks())
-
-    if cmd == "semantic-check":
-        return _run_semantic_check(args.path, getattr(args, "lang", None), getattr(args, "jobs", 1))
-
-    if cmd == "ast-fix":
-        return _run_ast_fix(args.path, getattr(args, "dry_run", False))
-
-    if cmd == "hallucination-scan":
-        return _run_hallucination_scan(
-            getattr(args, "path", Path(".")),
-            getattr(args, "lang", None),
-        )
-
-    if cmd == "install-hooks":
-        if args.pre_push:
-            from tools.scripts.hooks.pre_push import install_pre_push_hook
-
-            success = install_pre_push_hook()
-            return 0 if success else 1
-        if args.pre_commit:
-            print("Pre-commit hook installation not yet implemented")
-            return 1
-        print("Specify --pre-push or --pre-commit")
-        return 1
-
-    if cmd == "learn":
-        from tools.scripts.rules_engine.ai_rules_generator import (
-            analyze_project,
-            format_analysis,
-        )
-
-        result = analyze_project(args.project_path)
-        print(format_analysis(result, format=args.format))
-        if args.output:
-            import yaml
-
-            args.output.parent.mkdir(parents=True, exist_ok=True)
-            with open(args.output, "w") as f:
-                yaml.dump(result["rules"], f, default_flow_style=False, allow_unicode=True)
-            print(f"\nRules written to {args.output}")
-        return 0
-
-    if cmd == "dashboard":
-        import uvicorn
-
-        from tools.scripts.rules_engine.dashboard import create_app
-
-        app = create_app(args.db)
-        print(f"Starting ADG Quality Dashboard at http://0.0.0.0:{args.port}")  # nosec - dev only
-        uvicorn.run(app, host="0.0.0.0", port=args.port)  # nosec - dev only
-        return 0
-
-    if cmd == "full":
-        return _run_full()
+    handler = handlers.get(cmd)
+    if handler:
+        return handler(args)
 
     print(f"Unknown command: {cmd}")
     return 1

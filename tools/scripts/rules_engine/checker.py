@@ -8,6 +8,7 @@ from typing import Any
 from tools.scripts._common import rules_dir, run_command
 
 from .anti_pattern_checker import check_anti_patterns
+from .ast_parser import FileAST
 from .complexity_checker import check_js_complexity, check_python_complexity
 from .context import adjust_severity, detect_file_role
 from .models import CheckResult, Issue
@@ -345,6 +346,73 @@ def check_directory(
     return results
 
 
+def _check_unused_imports(filepath: Path, ast_result: FileAST) -> list[Issue]:
+    """Check for unused imports in the AST result."""
+    issues: list[Issue] = []
+    try:
+        content = filepath.read_text(encoding="utf-8")
+    except Exception:
+        return issues
+
+    for imp in ast_result.imports:
+        if imp.is_from and imp.names:
+            for name in imp.names:
+                # Skip wildcard imports
+                if name == "*":
+                    continue
+                if name not in content or content.count(name) <= 1:
+                    issues.append(
+                        Issue(
+                            file=str(filepath),
+                            line=imp.line,
+                            column=0,
+                            severity="warning",
+                            category="unused-import",
+                            rule_id="semantic-unused-import",
+                            message=f"Import '{name}' from '{imp.module}' appears unused",
+                        )
+                    )
+    return issues
+
+
+def _check_missing_docstrings(filepath: Path, ast_result: FileAST) -> list[Issue]:
+    """Check for missing docstrings on public functions."""
+    issues: list[Issue] = []
+    for func in ast_result.functions:
+        if not func.name.startswith("_") and func.docstring is None:
+            issues.append(
+                Issue(
+                    file=str(filepath),
+                    line=func.line,
+                    column=0,
+                    severity="info",
+                    category="missing-docstring",
+                    rule_id="semantic-missing-docstring",
+                    message=f"Public function '{func.name}' lacks a docstring",
+                )
+            )
+    return issues
+
+
+def _check_complexity(filepath: Path, ast_result: FileAST) -> list[Issue]:
+    """Check for high complexity functions."""
+    issues: list[Issue] = []
+    for func in ast_result.functions:
+        if func.complexity > 10:
+            issues.append(
+                Issue(
+                    file=str(filepath),
+                    line=func.line,
+                    column=0,
+                    severity="warning",
+                    category="complexity",
+                    rule_id="semantic-high-complexity",
+                    message=f"Function '{func.name}' has AST-estimated complexity {func.complexity} (>10)",
+                )
+            )
+    return issues
+
+
 def _run_semantic_checks(filepath: Path, lang: str) -> list[Issue]:
     """Run AST-based semantic analysis on a file.
 
@@ -364,59 +432,10 @@ def _run_semantic_checks(filepath: Path, lang: str) -> list[Issue]:
         if ast_result is None:
             return issues
 
-        # Check unused imports
-        for imp in ast_result.imports:
-            if imp.is_from and imp.names:
-                try:
-                    content = filepath.read_text(encoding="utf-8")
-                except Exception:
-                    continue
-                for name in imp.names:
-                    # Skip wildcard imports
-                    if name == "*":
-                        continue
-                    if name not in content or content.count(name) <= 1:
-                        issues.append(
-                            Issue(
-                                file=str(filepath),
-                                line=imp.line,
-                                column=0,
-                                severity="warning",
-                                category="unused-import",
-                                rule_id="semantic-unused-import",
-                                message=f"Import '{name}' from '{imp.module}' appears unused",
-                            )
-                        )
-
-        # Check missing docstrings for public functions
-        for func in ast_result.functions:
-            if not func.name.startswith("_") and func.docstring is None:
-                issues.append(
-                    Issue(
-                        file=str(filepath),
-                        line=func.line,
-                        column=0,
-                        severity="info",
-                        category="missing-docstring",
-                        rule_id="semantic-missing-docstring",
-                        message=f"Public function '{func.name}' lacks a docstring",
-                    )
-                )
-
-        # Check complexity via AST
-        for func in ast_result.functions:
-            if func.complexity > 10:
-                issues.append(
-                    Issue(
-                        file=str(filepath),
-                        line=func.line,
-                        column=0,
-                        severity="warning",
-                        category="complexity",
-                        rule_id="semantic-high-complexity",
-                        message=f"Function '{func.name}' has AST-estimated complexity {func.complexity} (>10)",
-                    )
-                )
+        # Run all semantic checks
+        issues.extend(_check_unused_imports(filepath, ast_result))
+        issues.extend(_check_missing_docstrings(filepath, ast_result))
+        issues.extend(_check_complexity(filepath, ast_result))
 
     except ImportError:
         # tree-sitter not available - silently skip
@@ -544,4 +563,6 @@ def _map_severity(level: str | int) -> str:
     if level in ("error", "critical", "fatal"):
         return "error"
     return "warning"
+
+
 # Test change

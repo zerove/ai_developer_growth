@@ -97,6 +97,7 @@ def check_file(filepath: Path) -> CheckResult:
 
     # 检测可能的 AI 生成函数
     ai_functions = detect_ai_generated_functions(content)
+
     for func in ai_functions:
         result["issues"].append(f"Line {func['line']}: {func['function'][:30]}... - {func['reason']}")
 
@@ -120,6 +121,48 @@ def fix_file(filepath: Path, model: str = "unknown") -> bool:
     return True
 
 
+def _collect_files(args: argparse.Namespace) -> list[Path]:
+    """Collect files to check based on args."""
+    files_to_check = []
+    if args.file:
+        files_to_check = [args.file]
+    elif args.path:
+        files_to_check = list(args.path.rglob("*.py"))
+    else:
+        files_to_check = list(Path("tools/scripts").rglob("*.py"))
+    return [f for f in files_to_check if "__pycache__" not in str(f)]
+
+
+def _process_file(filepath: Path, args: argparse.Namespace) -> tuple[str, int]:
+    """Process a single file, return (status, fix_applied)."""
+    result = check_file(filepath)
+
+    # Failed: 存在未标注的 AI 生成函数
+    if not result["passed"]:
+        for issue in result["issues"]:
+            print(f"   {issue}")
+
+    fix_applied = 0
+    if args.fix and not result["has_annotation"]:
+        if fix_file(filepath, args.model):
+            print(f"   🔧 {filepath.name} - 已自动标注")
+            fix_applied = 1
+
+    if result["passed"]:
+        if args.strict and not result["has_annotation"]:
+            return ("warn", 0)
+        return ("pass", fix_applied)
+    return ("fail", fix_applied)
+
+
+def _print_summary(passed: int, warned: int, failed: int) -> None:
+    """Print summary and exit."""
+    print("\n" + "=" * 60)
+    print(f"  结果: {passed} 通过, {warned} 警告, {failed} 失败")
+    print("=" * 60)
+    sys.exit(1 if failed > 0 else 0)
+
+
 def main() -> None:
     """主函数"""
     parser = argparse.ArgumentParser(description="检查 AI 代码标注")
@@ -134,50 +177,25 @@ def main() -> None:
     print("  AI 代码标注检查")
     print("=" * 60)
 
-    files_to_check = []
-
-    if args.file:
-        files_to_check = [args.file]
-    elif args.path:
-        files_to_check = list(args.path.rglob("*.py"))
-    else:
-        # 默认检查 tools/scripts 目录
-        files_to_check = list(Path("tools/scripts").rglob("*.py"))
+    files_to_check = _collect_files(args)
 
     passed = 0
     warned = 0
     failed = 0
 
     for filepath in sorted(files_to_check):
-        # 跳过 __pycache__
-        if "__pycache__" in str(filepath):
-            continue
-
-        result = check_file(filepath)
-
-        if result["passed"]:
-            if args.strict and not result["has_annotation"]:
-                print(f"⚠️  {filepath.name} - 缺少 [AI-GEN] 标注")
-                warned += 1
-            else:
-                print(f"✅ {filepath.name}")
-                passed += 1
+        status, _ = _process_file(filepath, args)
+        if status == "pass":
+            print(f"✅ {filepath.name}")
+            passed += 1
+        elif status == "warn":
+            print(f"⚠️  {filepath.name} - 缺少 [AI-GEN] 标注")
+            warned += 1
         else:
             print(f"❌ {filepath.name}")
-            for issue in result["issues"]:
-                print(f"   {issue}")
             failed += 1
 
-        # 自动修复
-        if args.fix and not result["has_annotation"]:
-            if fix_file(filepath, args.model):
-                print("   🔧 已添加标注")
-
-    print("\n" + "=" * 60)
-    print(f"  结果: {passed} 通过, {warned} 警告, {failed} 失败")
-    print("=" * 60)
-
-    sys.exit(1 if failed > 0 else 0)
+    _print_summary(passed, warned, failed)
 
 
 if __name__ == "__main__":

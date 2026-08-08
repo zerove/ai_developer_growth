@@ -123,6 +123,94 @@ class FileAST:
     parse_time_ms: float
 
 
+def _extract_decorators(node: _TreeNode, lines: list[str]) -> list[str]:
+    """Extract decorator strings from a function node."""
+    decorators: list[str] = []
+    if node.parent and node.parent.type == "decorated_definition":
+        for sibling in node.parent.children:
+            if sibling.type == "decorator":
+                decorators.append(_get_text_static(sibling, lines))
+    return decorators
+
+
+def _extract_return_type(node: _TreeNode, lines: list[str]) -> str | None:
+    """Extract return type annotation from function node."""
+    for child in node.children:
+        if child.type == "type":
+            return _get_text_static(child, lines)
+    return None
+
+
+def _parse_function_parameters(params_node: _TreeNode, lines: list[str]) -> list[str]:
+    """Extract parameter names from a parameters node."""
+    params: list[str] = []
+    for child in params_node.children:
+        if child.type == "identifier":
+            params.append(_get_text_static(child, lines))
+        elif child.type in ("default_parameter", "typed_parameter", "typed_default_parameter"):
+            for sub in child.children:
+                if sub.type == "identifier":
+                    params.append(_get_text_static(sub, lines))
+                    break
+        elif child.type == "self_parameter":
+            params.append("self")
+        elif child.type == "positional_separator":
+            continue
+    return params
+
+
+def _calculate_body_lines(node: _TreeNode) -> int:
+    """Calculate number of body lines in a function."""
+    body_start = node.start_point[0]
+    body_end = node.end_point[0]
+    return body_end - body_start
+
+
+def _extract_docstring_static(node: _TreeNode, lines: list[str]) -> str | None:
+    """Extract docstring from function/class body."""
+    for child in node.children:
+        if child.type == "block":
+            for stmt in child.children:
+                if stmt.type == "expression_statement":
+                    for expr in stmt.children:
+                        if expr.type == "string":
+                            return _get_text_static(expr, lines).strip("\"'")
+    return None
+
+
+def _estimate_complexity_static(node: _TreeNode, lines: list[str]) -> int:
+    """Estimate cyclomatic complexity from AST."""
+    branching_types = {
+        "if_statement",
+        "elif_clause",
+        "for_statement",
+        "while_statement",
+        "try_statement",
+        "except_clause",
+        "with_statement",
+        "boolean_operation",
+        "conditional_expression",
+    }
+    counter = [1]
+    _count_branching_static(node, branching_types, counter)
+    return counter[0]
+
+
+def _count_branching_static(node: _TreeNode, types: set[str], counter: list[int]) -> None:
+    """Count branching nodes for complexity."""
+    if node.type in types:
+        counter[0] += 1
+    for child in node.children:
+        _count_branching_static(child, types, counter)
+
+
+def _get_text_static(node: _TreeNode, lines: list[str]) -> str:
+    """Get text from a tree-sitter node."""
+    if isinstance(node.text, bytes):
+        return node.text.decode("utf-8", errors="replace")
+    return str(node.text)
+
+
 class ASTParser:
     """Multi-language AST parser using tree-sitter."""
 
@@ -279,8 +367,6 @@ class ASTParser:
         """Parse a Python function definition node."""
         name_node = None
         params_node = None
-        return_type = None
-        decorators: list[str] = []
         is_async = node.type == "async_function_definition"
 
         for child in node.children:
@@ -288,30 +374,16 @@ class ASTParser:
                 name_node = child
             elif child.type == "parameters":
                 params_node = child
-            elif child.type == "type":
-                return_type = self._get_text(child, lines)
-            elif child.type == "decorated_definition":
-                continue
-            elif child.type == "block":
-                pass
-
-        # Check for decorators (parent might be decorated_definition)
-        if node.parent and node.parent.type == "decorated_definition":
-            for sibling in node.parent.children:
-                if sibling.type == "decorator":
-                    decorators.append(self._get_text(sibling, lines))
 
         if name_node is None or params_node is None:
             return None
 
         name = self._get_text(name_node, lines)
-        params = self._extract_param_names(params_node, lines)
-        docstring = self._extract_docstring(node, lines)
-
-        # Count body lines
-        body_start = node.start_point[0]
-        body_end = node.end_point[0]
-        body_lines = body_end - body_start
+        params = _parse_function_parameters(params_node, lines)
+        return_type = _extract_return_type(node, lines)
+        decorators = _extract_decorators(node, lines)
+        docstring = _extract_docstring_static(node, lines)
+        body_lines = _calculate_body_lines(node)
 
         return FunctionInfo(
             name=name,
@@ -323,7 +395,7 @@ class ASTParser:
             return_type=return_type,
             docstring=docstring,
             body_lines=body_lines,
-            complexity=self._estimate_complexity(node, lines),
+            complexity=_estimate_complexity_static(node, lines),
             is_async=is_async,
             is_method=class_name is not None,
             class_name=class_name,

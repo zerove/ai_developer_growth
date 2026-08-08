@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import logging
 import sys
 from pathlib import Path
 from typing import Any
@@ -38,13 +39,10 @@ from tools.scripts.adg_cli.trend import (
 )
 
 
-def cmd_check(args: argparse.Namespace) -> int:
-    """Check code against rules."""
-    target = Path(args.path).resolve()
-
-    # Load project configuration
-    project_config = load_project_config(target if target.is_dir() else target.parent)
-
+def _prepare_check_config(
+    target: Path, args: argparse.Namespace, project_config: dict[str, Any]
+) -> tuple[str, str | None, list[Path]]:
+    """Prepare configuration for check command."""
     files, detected = _collect_check_files(target, args, project_config)
 
     language = args.lang or detected.get("language", "unknown")
@@ -54,14 +52,11 @@ def cmd_check(args: argparse.Namespace) -> int:
     if not framework:
         framework = project_config.get("framework_hints", {}).get(language)
 
-    if language == "unknown":
-        print("Error: Could not detect language. Use --lang to specify.", file=sys.stderr)
-        return 1
+    return language, framework, files
 
-    if not files:
-        return 0
 
-    # Load rules
+def _load_and_merge_rules(language: str, framework: str | None, project_config: dict[str, Any]) -> dict[str, Any]:
+    """Load rules and merge with framework and custom rules."""
     rules = load_rules_for_language(language)
     if framework:
         fw_rules = load_framework_rules(framework)
@@ -78,28 +73,38 @@ def cmd_check(args: argparse.Namespace) -> int:
         if rule["id"] in severity_overrides:
             rule["severity"] = severity_overrides[rule["id"]]
 
-    # Check files
-    all_issues: list[Issue] = []
-    jobs = getattr(args, "jobs", 1)
+    return rules
 
+
+def _run_checks(files: list[Path], rules: dict[str, Any], severity: str, jobs: int) -> list[Issue]:
+    """Run checks on files, either parallel or sequential."""
     if jobs > 1 and len(files) > 1:
-        all_issues = _check_files_parallel(files, rules, args.severity, jobs)
+        return _check_files_parallel(files, rules, severity, jobs)
     else:
+        all_issues: list[Issue] = []
         for fp in files:
-            all_issues.extend(check_file(fp, rules, args.severity))
+            all_issues.extend(check_file(fp, rules, severity))
+        return all_issues
 
-    # Attach knowledge base docs if requested
-    if getattr(args, "with_docs", False):
-        _attach_docs_to_issues(all_issues)
 
-    # Output
+def _output_results(
+    all_issues: list[Issue], language: str, framework: str | None, files_count: int, args: argparse.Namespace
+) -> None:
+    """Output check results in requested format."""
     sarif = getattr(args, "sarif", False)
     if sarif:
         print(_format_sarif(all_issues, language, framework))
     elif args.json:
-        print(_format_json(all_issues, language, framework, len(files)))
+        print(_format_json(all_issues, language, framework, files_count))
     else:
-        print(_format_human(all_issues, language, framework, len(files)))
+        print(_format_human(all_issues, language, framework, files_count))
+
+
+def _handle_post_check_actions(all_issues: list[Issue], target: Path, language: str, args: argparse.Namespace) -> None:
+    """Handle post-check actions: docs, trend recording, notifications."""
+    # Attach knowledge base docs if requested
+    if getattr(args, "with_docs", False):
+        _attach_docs_to_issues(all_issues)
 
     # Record trend if requested
     if getattr(args, "trend", False):
@@ -116,8 +121,78 @@ def cmd_check(args: argparse.Namespace) -> int:
             webhook_url = notify_url.replace("dingtalk://", "https://oapi.dingtalk.com/robot/send?access_token=")
             _send_dingtalk_notification(webhook_url, all_issues, language, project_name)
 
+
+def cmd_check(args: argparse.Namespace) -> int:
+    """Check code against rules."""
+    target = Path(args.path).resolve()
+
+    # Load project configuration
+    project_config = load_project_config(target if target.is_dir() else target.parent)
+
+    language, framework, files = _prepare_check_config(target, args, project_config)
+
+    if language == "unknown":
+        print("Error: Could not detect language. Use --lang to specify.", file=sys.stderr)
+        return 1
+
+    if not files:
+        return 0
+
+    # Load rules
+    rules = _load_and_merge_rules(language, framework, project_config)
+
+    # Check files
+    jobs = getattr(args, "jobs", 1)
+    all_issues = _run_checks(files, rules, args.severity, jobs)
+
+    # Output
+    _output_results(all_issues, language, framework, len(files), args)
+
+    # Handle post-check actions
+    _handle_post_check_actions(all_issues, target, language, args)
+
     has_errors = any(i.severity == "error" for i in all_issues)
     return 1 if has_errors else 0
+
+
+def _print_fix_header(target: Path, language: str | None) -> None:
+    """Print the fix command header."""
+    print(f"\n\033[1m\033[36m{'=' * 60}\033[0m")
+    print("\033[1m\033[36m  ADG 🔧 Auto-fix\033[0m")
+    print(f"\033[1m\033[36m{'=' * 60}\033[0m\n")
+
+    print(f"\033[1mTarget:\033[0m {target}")
+    if language:
+        print(f"\033[1mLanguage:\033[0m {language}")
+    print()
+
+
+def _print_fix_results(stats: dict[str, Any]) -> None:
+    """Print fix results."""
+    print("\033[1mResults:\033[0m")
+    print(f"  Files modified: {stats['files']}")
+    print(f"  Rules applied:  {stats['fixed']}")
+    print(f"  Rules skipped:  {stats['skipped']}")
+    print(f"  Errors:         {stats['errors']}")
+    print()
+
+    if stats["fixed"] > 0:
+        print("\033[32m\033[1m✅ Fixes applied successfully\033[0m")
+    elif stats["errors"] > 0:
+        print("\033[31m\033[1m❌ Some errors occurred\033[0m")
+    else:
+        print("\033[33m\033[1m⚠️  No automatic fixes available\033[0m")
+        print("   Some issues require manual fixes.")
+
+
+def _run_fix(target: Path, language: str | None) -> dict[str, Any]:
+    """Run fix on target and return stats."""
+    if target.is_file():
+        stats = fix_file(target)
+        stats["files"] = 1 if stats["fixed"] > 0 else 0
+    else:
+        stats = fix_directory(target, language)
+    return stats
 
 
 def cmd_fix(args: argparse.Namespace) -> int:
@@ -133,41 +208,12 @@ def cmd_fix(args: argparse.Namespace) -> int:
     language = args.lang or detected.get("language")
 
     if args.json:
-        stats = fix_file(target) if target.is_file() else fix_directory(target, language)
-        # Add files key for single file
-        if target.is_file():
-            stats["files"] = 1 if stats["fixed"] > 0 else 0
+        stats = _run_fix(target, language)
         print(json.dumps(stats, indent=2))
     else:
-        print(f"\n\033[1m\033[36m{'=' * 60}\033[0m")
-        print("\033[1m\033[36m  ADG Auto-fix\033[0m")
-        print(f"\033[1m\033[36m{'=' * 60}\033[0m\n")
-
-        print(f"\033[1mTarget:\033[0m {target}")
-        if language:
-            print(f"\033[1mLanguage:\033[0m {language}")
-        print()
-
-        if target.is_file():
-            stats = fix_file(target)
-            stats["files"] = 1 if stats["fixed"] > 0 else 0
-        else:
-            stats = fix_directory(target, language)
-
-        print("\033[1mResults:\033[0m")
-        print(f"  Files modified: {stats['files']}")
-        print(f"  Rules applied:  {stats['fixed']}")
-        print(f"  Rules skipped:  {stats['skipped']}")
-        print(f"  Errors:         {stats['errors']}")
-        print()
-
-        if stats["fixed"] > 0:
-            print("\033[32m\033[1m✅ Fixes applied successfully\033[0m")
-        elif stats["errors"] > 0:
-            print("\033[31m\033[1m❌ Some errors occurred\033[0m")
-        else:
-            print("\033[33m\033[1m⚠️  No automatic fixes available\033[0m")
-            print("   Some issues require manual fixes.")
+        _print_fix_header(target, language)
+        stats = _run_fix(target, language)
+        _print_fix_results(stats)
 
     return 0 if stats["errors"] == 0 else 1
 
@@ -216,19 +262,14 @@ def _cmd_rule_create(args: argparse.Namespace) -> int:
     return 0
 
 
-def _cmd_rule_test(args: argparse.Namespace) -> int:
-    """Test a rule against files."""
-    rule_file = Path(args.rule_file)
-    if not rule_file.exists():
-        print(f"Error: Rule file not found: {rule_file}", file=sys.stderr)
-        return 1
-
-    # Load rule from YAML
+def _load_rule_from_yaml(rule_file: Path) -> dict[str, Any]:
+    """Load rule from YAML file, with fallback parsing."""
     try:
         import yaml
 
         with open(rule_file) as f:
-            rule_data = yaml.safe_load(f)
+            data = yaml.safe_load(f)
+            return data if isinstance(data, dict) else {}
     except ImportError:
         # Fallback: try simple parsing
         content = rule_file.read_text()
@@ -238,29 +279,23 @@ def _cmd_rule_test(args: argparse.Namespace) -> int:
                 rule_data["pattern"] = line.split("pattern:")[1].strip().strip('"')
             elif "message:" in line:
                 rule_data["message"] = line.split("message:")[1].strip().strip('"')
+        return rule_data
 
-    if not rule_data.get("pattern"):
-        print("Error: No pattern found in rule file", file=sys.stderr)
-        return 1
 
-    # Get test files
-    target = Path(args.path)
-    test_files = []
+def _collect_test_files(target: Path) -> list[Path]:
+    """Collect test files from target path."""
     if target.is_file():
-        test_files = [target]
-    else:
-        for fp in target.rglob("*"):
-            if fp.is_file() and fp.suffix in (".py", ".js", ".ts", ".go", ".rs", ".java"):
-                test_files.append(fp)
+        return [target]
 
-    if not test_files:
-        print("No test files found.", file=sys.stderr)
-        return 1
+    test_files = []
+    for fp in target.rglob("*"):
+        if fp.is_file() and fp.suffix in (".py", ".js", ".ts", ".go", ".rs", ".java"):
+            test_files.append(fp)
+    return test_files
 
-    # Test the rule
-    results = _test_rule(rule_data, test_files)
 
-    # Output
+def _print_test_results(results: dict[str, Any]) -> None:
+    """Print test results."""
     print(f"\nRule: {results['rule_id']}")
     print(f"Files tested: {results['files_tested']}")
     print(f"Matches found: {len(results['matches'])}")
@@ -274,6 +309,35 @@ def _cmd_rule_test(args: argparse.Namespace) -> int:
         print("\nErrors:")
         for e in results["errors"]:
             print(f"  - {e}")
+
+
+def _cmd_rule_test(args: argparse.Namespace) -> int:
+    """Test a rule against files."""
+    rule_file = Path(args.rule_file)
+    if not rule_file.exists():
+        print(f"Error: Rule file not found: {rule_file}", file=sys.stderr)
+        return 1
+
+    # Load rule from YAML
+    rule_data = _load_rule_from_yaml(rule_file)
+
+    if not rule_data.get("pattern"):
+        print("Error: No pattern found in rule file", file=sys.stderr)
+        return 1
+
+    # Get test files
+    target = Path(args.path)
+    test_files = _collect_test_files(target)
+
+    if not test_files:
+        print("No test files found.", file=sys.stderr)
+        return 1
+
+    # Test the rule
+    results = _test_rule(rule_data, test_files)
+
+    # Output
+    _print_test_results(results)
 
     return 0 if not results["errors"] else 1
 
@@ -433,28 +497,8 @@ def cmd_list_rules(args: argparse.Namespace) -> int:
     return 0
 
 
-def cmd_report(args: argparse.Namespace) -> int:
-    """Generate a quality gate report."""
-    target = Path(args.path).resolve()
-    if not target.exists():
-        print(f"Error: Path not found: {target}", file=sys.stderr)
-        return 1
-
-    detected = detect_language(target)
-    language = args.lang or detected.get("language", "unknown")
-    framework = getattr(args, "framework", None) or detected.get("framework")
-
-    if language == "unknown":
-        print("Error: Could not detect language. Use --lang to specify.", file=sys.stderr)
-        return 1
-
-    # Load rules
-    rules = load_rules_for_language(language)
-    if framework:
-        fw_rules = load_framework_rules(framework)
-        rules["anti_patterns"].extend(fw_rules.get("anti_patterns", []))
-
-    # Collect all issues
+def _collect_report_issues(target: Path, rules: dict[str, Any]) -> tuple[list[Issue], int]:
+    """Collect issues for report generation."""
     all_issues: list[Issue] = []
     files_checked = 0
 
@@ -469,41 +513,132 @@ def cmd_report(args: argparse.Namespace) -> int:
                         all_issues.extend(check_file(fp, rules))
                         files_checked += 1
 
+    return all_issues, files_checked
+
+
+def _build_json_report(
+    language: str,
+    framework: str | None,
+    files_checked: int,
+    all_issues: list[Issue],
+    severity_counts: dict[str, int],
+    category_counts: dict[str, int],
+    top_files: list[tuple[str, int]],
+    passed: bool,
+) -> dict[str, Any]:
+    """Build JSON report structure."""
+    return {
+        "language": language,
+        "framework": framework,
+        "files_checked": files_checked,
+        "total_issues": len(all_issues),
+        "severity": severity_counts,
+        "categories": category_counts,
+        "top_files": [{"file": f, "issues": c} for f, c in top_files],
+        "passed": passed,
+    }
+
+
+def _determine_pass_status(severity_counts: dict[str, int], error_threshold: int, warning_threshold: int) -> bool:
+    """Determine if report passes based on thresholds."""
+    passed = bool(severity_counts["error"] <= error_threshold)
+    if warning_threshold >= 0:
+        passed = passed and severity_counts["warning"] <= warning_threshold
+    return passed
+
+
+def _validate_report_target(target: Path, args: argparse.Namespace) -> tuple[str, str | None] | None:
+    """Validate target and return language/framework, or None if error."""
+    if not target.exists():
+        print(f"Error: Path not found: {target}", file=sys.stderr)
+        return None
+
+    detected = detect_language(target)
+    language = args.lang or detected.get("language", "unknown")
+    framework = getattr(args, "framework", None) or detected.get("framework")
+
+    if language == "unknown":
+        print("Error: Could not detect language. Use --lang to specify.", file=sys.stderr)
+        return None
+
+    return language, framework
+
+
+def _load_report_rules(language: str, framework: str | None) -> dict[str, Any]:
+    """Load rules for report generation."""
+    rules = load_rules_for_language(language)
+    if framework:
+        fw_rules = load_framework_rules(framework)
+        rules["anti_patterns"].extend(fw_rules.get("anti_patterns", []))
+    return rules
+
+
+def _output_report(args: argparse.Namespace, report_data: dict[str, Any]) -> None:
+    """Output report in requested format."""
+    if getattr(args, "json", False):
+        report = _build_json_report(
+            report_data["language"],
+            report_data["framework"],
+            report_data["files_checked"],
+            [],  # all_issues not needed for count since we have total
+            report_data["severity_counts"],
+            report_data["category_counts"],
+            report_data["top_files"],
+            report_data["passed"],
+        )
+        print(json.dumps(report, indent=2))
+    else:
+        _print_report_text(
+            report_data["target"],
+            report_data["language"],
+            report_data["framework"],
+            report_data["files_checked"],
+            report_data["severity_counts"],
+            report_data["category_counts"],
+            report_data["top_files"],
+            report_data["passed"],
+            report_data["error_threshold"],
+            report_data["warning_threshold"],
+        )
+
+
+def cmd_report(args: argparse.Namespace) -> int:
+    """Generate a quality gate report."""
+    target = Path(args.path).resolve()
+
+    validation = _validate_report_target(target, args)
+    if validation is None:
+        return 1
+    language, framework = validation
+
+    # Load rules
+    rules = _load_report_rules(language, framework)
+
+    # Collect all issues
+    all_issues, files_checked = _collect_report_issues(target, rules)
     severity_counts, category_counts, top_files = _count_issues(all_issues)
 
     # Determine pass/fail
     error_threshold = getattr(args, "error_threshold", 0)
     warning_threshold = getattr(args, "warning_threshold", -1)
-    passed = severity_counts["error"] <= error_threshold
-    if warning_threshold >= 0:
-        passed = passed and severity_counts["warning"] <= warning_threshold
+    passed = _determine_pass_status(severity_counts, error_threshold, warning_threshold)
+
+    # Build report data
+    report_data = {
+        "target": target,
+        "language": language,
+        "framework": framework,
+        "files_checked": files_checked,
+        "severity_counts": severity_counts,
+        "category_counts": category_counts,
+        "top_files": top_files,
+        "passed": passed,
+        "error_threshold": error_threshold,
+        "warning_threshold": warning_threshold,
+    }
 
     # Output
-    if getattr(args, "json", False):
-        report = {
-            "language": language,
-            "framework": framework,
-            "files_checked": files_checked,
-            "total_issues": len(all_issues),
-            "severity": severity_counts,
-            "categories": category_counts,
-            "top_files": [{"file": f, "issues": c} for f, c in top_files],
-            "passed": passed,
-        }
-        print(json.dumps(report, indent=2))
-    else:
-        _print_report_text(
-            target,
-            language,
-            framework,
-            files_checked,
-            severity_counts,
-            category_counts,
-            top_files,
-            passed,
-            error_threshold,
-            warning_threshold,
-        )
+    _output_report(args, report_data)
 
     return 0 if passed else 1
 
@@ -599,28 +734,24 @@ def cmd_recommend(args: argparse.Namespace) -> int:
     return 0
 
 
-def _apply_recommendations(project_dir: Path, result: dict[str, Any]) -> int:
-    """Write recommended rules to .adg/rules.yml."""
-    import yaml
-
-    rules_dir = project_dir / ".adg"
-    rules_dir.mkdir(exist_ok=True)
-    rules_file = rules_dir / "rules.yml"
-
-    # Load existing rules if any
+def _load_existing_rules(rules_file: Path) -> dict[str, Any]:
+    """Load existing rules from file."""
     existing_rules: dict[str, Any] = {"anti_patterns": []}
     if rules_file.exists():
         try:
+            import yaml
+
             with open(rules_file) as f:
                 data = yaml.safe_load(f)
                 if data and "anti_patterns" in data:
                     existing_rules = data
-        except Exception:
-            _ = None  # rules file optional
+        except Exception as exc:
+            logging.getLogger(__name__).debug(f"Skipped unreadable rules file {rules_file}: {exc}")
+    return existing_rules
 
-    existing_ids = {r.get("id") for r in existing_rules.get("anti_patterns", [])}
 
-    # Add new recommendations as custom rules
+def _build_new_rules(result: dict[str, Any], existing_ids: set[str]) -> list[dict[str, Any]]:
+    """Build new rules from recommendations."""
     new_rules: list[dict[str, Any]] = []
     for rec in result["recommendations"]:
         if rec["rule_id"] not in existing_ids:
@@ -635,14 +766,36 @@ def _apply_recommendations(project_dir: Path, result: dict[str, Any]) -> int:
                 }
             )
             existing_ids.add(rec["rule_id"])
+    return new_rules
+
+
+def _save_rules(rules_file: Path, existing_rules: dict[str, Any]) -> None:
+    """Save rules to file."""
+    import yaml
+
+    existing_rules["config_version"] = "1.0"
+    existing_rules["source"] = "auto-generated-by-recommend"
+
+    with open(rules_file, "w") as f:
+        yaml.dump(existing_rules, f, sort_keys=False, allow_unicode=True)
+
+
+def _apply_recommendations(project_dir: Path, result: dict[str, Any]) -> int:
+    """Write recommended rules to .adg/rules.yml."""
+    rules_dir = project_dir / ".adg"
+    rules_dir.mkdir(exist_ok=True)
+    rules_file = rules_dir / "rules.yml"
+
+    # Load existing rules if any
+    existing_rules = _load_existing_rules(rules_file)
+    existing_ids = {r.get("id") for r in existing_rules.get("anti_patterns", [])}
+
+    # Add new recommendations as custom rules
+    new_rules = _build_new_rules(result, existing_ids)
 
     if new_rules:
         existing_rules.setdefault("anti_patterns", []).extend(new_rules)
-        existing_rules["config_version"] = "1.0"
-        existing_rules["source"] = "auto-generated-by-recommend"
-
-        with open(rules_file, "w") as f:
-            yaml.dump(existing_rules, f, sort_keys=False, allow_unicode=True)
+        _save_rules(rules_file, existing_rules)
 
         print(f"\n✅ Applied {len(new_rules)} new rules to {rules_file}")
         for r in new_rules:

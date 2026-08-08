@@ -211,6 +211,7 @@ class TestAnnotationCLI:
         """--fix 自动添加标注"""
         test_file = tmp_path / "to_fix.py"
         test_file.write_text("x = 1\n")
+        # Ensure we run main with proper arguments and capture the full output
         with patch("sys.argv", ["check_ai_annotation", "--file", str(test_file), "--fix", "--model", "test"]):
             from tools.scripts.check_ai_annotation import main
 
@@ -218,7 +219,11 @@ class TestAnnotationCLI:
                 main()
             except SystemExit:
                 pass
+
+        # Explicitly capture stdout
         out = capsys.readouterr().out
+        # Debugging: Print out to verify content
+        print(f"DEBUG_OUT: {out}")
         assert "🔧" in out
         assert "# [AI-GEN]" in test_file.read_text()
 

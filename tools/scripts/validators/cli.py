@@ -64,20 +64,22 @@ def _get_supported_files(dirpath: Path, exclude: list[str]) -> list[Path]:
 SEVERITY_ICONS = {"error": "error", "warning": "warning", "info": "info"}
 
 
-def print_results(results: list[ValidationResult], use_json: bool = False) -> int:
-    """Print validation results. Returns exit code (0=pass)."""
-    if use_json:
-        output = {
-            "results": [r.to_dict() for r in results],
-            "total_files": len(results),
-            "total_errors": sum(r.error_count for r in results),
-            "total_warnings": sum(r.warning_count for r in results),
-            "total_info": sum(r.info_count for r in results),
-            "passed": all(r.passed for r in results),
-        }
-        print(json.dumps(output, indent=2, ensure_ascii=False))
-        return 0 if output["passed"] else 1
+def _print_json_results(results: list[ValidationResult]) -> int:
+    """Print validation results in JSON format. Returns exit code."""
+    output = {
+        "results": [r.to_dict() for r in results],
+        "total_files": len(results),
+        "total_errors": sum(r.error_count for r in results),
+        "total_warnings": sum(r.warning_count for r in results),
+        "total_info": sum(r.info_count for r in results),
+        "passed": all(r.passed for r in results),
+    }
+    print(json.dumps(output, indent=2, ensure_ascii=False))
+    return 0 if output["passed"] else 1
 
+
+def _print_text_results(results: list[ValidationResult]) -> int:
+    """Print validation results in text format. Returns exit code."""
     total_errors = 0
     total_warnings = 0
 
@@ -114,6 +116,13 @@ def print_results(results: list[ValidationResult], use_json: bool = False) -> in
     else:
         print("\n  PASSED - all checks clean")
         return 0
+
+
+def print_results(results: list[ValidationResult], use_json: bool = False) -> int:
+    """Print validation results. Returns exit code (0=pass)."""
+    if use_json:
+        return _print_json_results(results)
+    return _print_text_results(results)
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -318,12 +327,86 @@ def _check_thresholds(
     return None
 
 
-def main() -> int:
-    """Main entry point for validate_language_rules CLI."""
-    from tools.scripts.report_generator import write_report
-
+def _load_custom_rules(args: argparse.Namespace, path: Path) -> Any:
+    """Load custom rules based on args."""
     from .pipeline import load_custom_rules
 
+    if args.custom_rules:
+        return load_custom_rules(args.custom_rules)
+    elif args.auto_detect or path.is_dir():
+        project_dir = path if path.is_dir() else path.parent
+        return load_custom_rules(project_dir)
+    return None
+
+
+def _handle_auto_fix(results: list[ValidationResult], dry_run: bool) -> int | None:
+    """Handle auto-fix logic. Returns exit code to indicate exit, None to continue."""
+    fix_result = _apply_auto_fix(results, dry_run=dry_run)
+    if fix_result == -1:
+        return 0
+    return None
+
+
+def _handle_health_score(results: list[ValidationResult]) -> None:
+    """Handle health score display."""
+    health = calculate_health_score(results)
+    print(f"\n  Health Score: {health.score}/100 (Grade: {health.grade})")
+    for detail in health.details:
+        print(f"    - {detail}")
+
+
+def _handle_linters(args: argparse.Namespace, path: Path) -> None:
+    """Handle linter aggregation."""
+    if not args.linters:
+        return
+
+    from tools.scripts.linter_runner import run_linter_aggregation
+
+    linter_issues = run_linter_aggregation(path, args.linters)
+    if linter_issues:
+        print(f"\n  Linter Results ({len(linter_issues)} issues from {', '.join(args.linters)}):")
+        for issue in linter_issues[:20]:
+            print(f"    [{issue['linter']}] {issue['file']}:{issue['line']} {issue['message']}")
+        if len(linter_issues) > 20:
+            print(f"    ... and {len(linter_issues) - 20} more")
+
+
+def _handle_output(results: list[ValidationResult], args: argparse.Namespace) -> int | None:
+    """Handle output formats. Returns exit code if handled, None otherwise."""
+    if args.format != "text" or args.json_output:
+        from tools.scripts.report_generator import write_report
+
+        fmt = "json" if args.json_output else args.format
+        content = write_report(results, fmt, args.output)
+        if content and not args.output:
+            print(content)
+
+        # Check thresholds for non-text formats
+        if args.max_errors is not None:
+            total_errors = sum(r.error_count for r in results)
+            if total_errors > args.max_errors:
+                return 1
+        if args.max_warnings is not None:
+            total_warnings = sum(r.warning_count for r in results)
+            if total_warnings > args.max_warnings:
+                return 1
+        if args.fail_on_warnings and any(r.warning_count > 0 for r in results):
+            return 1
+        return 0
+    return None
+
+
+def _handle_text_output(results: list[ValidationResult], args: argparse.Namespace) -> int:
+    """Handle text output format."""
+    exit_code = print_results(results, use_json=False)
+    threshold_fail = _check_thresholds(results, args.max_errors, args.max_warnings, args.fail_on_warnings)
+    if threshold_fail is not None:
+        return threshold_fail
+    return exit_code
+
+
+def main() -> int:
+    """Main entry point for validate_language_rules CLI."""
     parser = build_parser()
     args = parser.parse_args()
 
@@ -334,63 +417,27 @@ def main() -> int:
     language = args.lang
 
     # Load custom rules
-    custom_rules = None
-    if args.custom_rules:
-        custom_rules = load_custom_rules(args.custom_rules)
-    elif args.auto_detect or args.path.is_dir():
-        project_dir = args.path if args.path.is_dir() else args.path.parent
-        custom_rules = load_custom_rules(project_dir)
+    custom_rules = _load_custom_rules(args, args.path)
 
     results = _collect_results(args, language, custom_rules)
     if results is None:
         return 1
 
     # Auto-fix
-    if args.fix or args.dry_run:
-        fix_result = _apply_auto_fix(results, dry_run=args.dry_run)
-        if fix_result == -1:
-            return 0
+    fix_exit = _handle_auto_fix(results, args.dry_run)
+    if fix_exit is not None:
+        return fix_exit
 
     # Health score
     if args.health_score:
-        health = calculate_health_score(results)
-        print(f"\n  Health Score: {health.score}/100 (Grade: {health.grade})")
-        for detail in health.details:
-            print(f"    - {detail}")
+        _handle_health_score(results)
 
     # Linter aggregation
-    if args.linters:
-        from tools.scripts.linter_runner import run_linter_aggregation
+    _handle_linters(args, args.path)
 
-        linter_issues = run_linter_aggregation(args.path, args.linters)
-        if linter_issues:
-            print(f"\n  Linter Results ({len(linter_issues)} issues from {', '.join(args.linters)}):")
-            for issue in linter_issues[:20]:
-                print(f"    [{issue['linter']}] {issue['file']}:{issue['line']} {issue['message']}")
-            if len(linter_issues) > 20:
-                print(f"    ... and {len(linter_issues) - 20} more")
+    # Output handling
+    output_exit = _handle_output(results, args)
+    if output_exit is not None:
+        return output_exit
 
-    # Output
-    if args.format != "text" or args.json_output:
-        fmt = "json" if args.json_output else args.format
-        content = write_report(results, fmt, args.output)
-        if content and not args.output:
-            print(content)
-    else:
-        exit_code = print_results(results, use_json=False)
-        threshold_fail = _check_thresholds(results, args.max_errors, args.max_warnings, args.fail_on_warnings)
-        if threshold_fail is not None:
-            return threshold_fail
-        return exit_code
-
-    # For non-text formats, check thresholds (no print needed)
-    if args.max_errors is not None:
-        total_errors = sum(r.error_count for r in results)
-        if total_errors > args.max_errors:
-            return 1
-    if args.max_warnings is not None:
-        total_warnings = sum(r.warning_count for r in results)
-        if total_warnings > args.max_warnings:
-            return 1
-
-    return 0
+    return _handle_text_output(results, args)

@@ -137,81 +137,136 @@ def detect_language(dirpath: Path) -> dict[str, Any]:
     return result
 
 
-def _detect_framework(dirpath: Path, language: str | None) -> str | None:
-    """Detect framework from project config files."""
-    # Check package.json
+def _detect_framework_from_package_json(dirpath: Path) -> str | None:
+    """Detect framework from package.json."""
     pkg_path = dirpath / "package.json"
-    if pkg_path.exists():
-        try:
-            pkg = json.loads(pkg_path.read_text(encoding="utf-8"))
-            all_deps: dict[str, str] = {}
-            for key in ("dependencies", "devDependencies"):
-                if key in pkg and isinstance(pkg[key], dict):
-                    all_deps.update(pkg[key])
-            for framework, signatures in FRAMEWORK_SIGNATURES.items():
-                if any(sig in all_deps for sig in signatures):
-                    return framework
-        except (OSError, json.JSONDecodeError):
-            pass
+    if not pkg_path.exists():
+        return None
+    try:
+        pkg = json.loads(pkg_path.read_text(encoding="utf-8"))
+        all_deps: dict[str, str] = {}
+        for key in ("dependencies", "devDependencies"):
+            if key in pkg and isinstance(pkg[key], dict):
+                all_deps.update(pkg[key])
+        for framework, signatures in FRAMEWORK_SIGNATURES.items():
+            if any(sig in all_deps for sig in signatures):
+                return framework
+    except (OSError, json.JSONDecodeError):
+        pass
+    return None
 
-    # Check Python requirements
+
+def _detect_framework_from_python_reqs(dirpath: Path) -> str | None:
+    """Detect framework from Python requirements files."""
     for req_file in ("requirements.txt", "pyproject.toml"):
         req_path = dirpath / req_file
-        if req_path.exists():
-            try:
-                content = req_path.read_text(encoding="utf-8").lower()
-                for framework, signatures in FRAMEWORK_SIGNATURES.items():
-                    if any(sig.lower() in content for sig in signatures):
-                        return framework
-            except OSError:
-                pass
-
-    # Check for manage.py (Django indicator)
-    if (dirpath / "manage.py").exists():
+        if not req_path.exists():
+            continue
         try:
-            content = (dirpath / "manage.py").read_text(encoding="utf-8")
-            if "django" in content.lower():
-                return "django"
-        except OSError:
-            pass
-
-    # Check for settings.py in common Django locations
-    for settings_path in ["settings.py", "config/settings.py", "myproject/settings.py"]:
-        if (dirpath / settings_path).exists():
-            return "django"
-
-    # Check go.mod
-    go_mod = dirpath / "go.mod"
-    if go_mod.exists():
-        try:
-            content = go_mod.read_text(encoding="utf-8")
-            for framework, signatures in FRAMEWORK_SIGNATURES.items():
-                if any(sig in content for sig in signatures):
-                    return framework
-        except OSError:
-            pass
-
-    # Check Java build files (pom.xml, build.gradle)
-    for build_file in ("pom.xml", "build.gradle", "build.gradle.kts"):
-        build_path = dirpath / build_file
-        if build_path.exists():
-            try:
-                content = build_path.read_text(encoding="utf-8")
-                if "spring" in content.lower():
-                    return "spring"
-            except OSError:
-                pass
-
-    # Check Rust Cargo.toml
-    cargo_toml = dirpath / "Cargo.toml"
-    if cargo_toml.exists():
-        try:
-            content = cargo_toml.read_text(encoding="utf-8").lower()
+            content = req_path.read_text(encoding="utf-8").lower()
             for framework, signatures in FRAMEWORK_SIGNATURES.items():
                 if any(sig.lower() in content for sig in signatures):
                     return framework
         except OSError:
             pass
+    return None
+
+
+def _detect_framework_from_django(dirpath: Path) -> str | None:
+    """Detect Django framework."""
+    # Check for manage.py
+    manage_py = dirpath / "manage.py"
+    if manage_py.exists():
+        try:
+            content = manage_py.read_text(encoding="utf-8")
+            if "django" in content.lower():
+                return "django"
+        except OSError:
+            pass
+
+    # Check for settings.py in common locations
+    for settings_path in ["settings.py", "config/settings.py", "myproject/settings.py"]:
+        if (dirpath / settings_path).exists():
+            return "django"
+    return None
+
+
+def _detect_framework_from_go_mod(dirpath: Path) -> str | None:
+    """Detect framework from go.mod."""
+    go_mod = dirpath / "go.mod"
+    if not go_mod.exists():
+        return None
+    try:
+        content = go_mod.read_text(encoding="utf-8")
+        for framework, signatures in FRAMEWORK_SIGNATURES.items():
+            if any(sig in content for sig in signatures):
+                return framework
+    except OSError:
+        pass
+    return None
+
+
+def _detect_framework_from_java_build(dirpath: Path) -> str | None:
+    """Detect framework from Java build files."""
+    for build_file in ("pom.xml", "build.gradle", "build.gradle.kts"):
+        build_path = dirpath / build_file
+        if not build_path.exists():
+            continue
+        try:
+            content = build_path.read_text(encoding="utf-8")
+            if "spring" in content.lower():
+                return "spring"
+        except OSError:
+            pass
+    return None
+
+
+def _detect_framework_from_cargo_toml(dirpath: Path) -> str | None:
+    """Detect framework from Cargo.toml."""
+    cargo_toml = dirpath / "Cargo.toml"
+    if not cargo_toml.exists():
+        return None
+    try:
+        content = cargo_toml.read_text(encoding="utf-8").lower()
+        for framework, signatures in FRAMEWORK_SIGNATURES.items():
+            if any(sig.lower() in content for sig in signatures):
+                return framework
+    except OSError:
+        pass
+    return None
+
+
+def _detect_framework(dirpath: Path, language: str | None) -> str | None:
+    """Detect framework from project config files."""
+    # Check package.json (Node.js/TypeScript)
+    result = _detect_framework_from_package_json(dirpath)
+    if result:
+        return result
+
+    # Check Python requirements
+    result = _detect_framework_from_python_reqs(dirpath)
+    if result:
+        return result
+
+    # Check Django
+    result = _detect_framework_from_django(dirpath)
+    if result:
+        return result
+
+    # Check go.mod
+    result = _detect_framework_from_go_mod(dirpath)
+    if result:
+        return result
+
+    # Check Java build files
+    result = _detect_framework_from_java_build(dirpath)
+    if result:
+        return result
+
+    # Check Rust Cargo.toml
+    result = _detect_framework_from_cargo_toml(dirpath)
+    if result:
+        return result
 
     return None
 
@@ -241,79 +296,110 @@ def _simple_yaml_parse(path: Path) -> dict[str, Any]:
     current_section: str | None = None
 
     for line in content.splitlines():
-        stripped = line.strip()
-        if not stripped or stripped.startswith("#"):
-            continue
+        current_rule, current_section = _process_line(line, result, current_rule, current_section)
 
-        # Anti-pattern list item (check BEFORE top-level keys)
-        if stripped.startswith("- id:"):
-            if current_rule:
-                result["anti_patterns"].append(current_rule)
-            current_rule = {"id": stripped.split(":", 1)[1].strip()}
-            current_section = None
-            continue
-
-        # Top-level keys (only lines NOT starting with space and NOT starting with -)
-        if not line.startswith(" ") and not line.startswith("-") and ":" in stripped:
-            key, _, val = stripped.partition(":")
-            key = key.strip()
-            val = val.strip().strip("'\"")
-
-            if key == "language":
-                result["language"] = val
-            elif key == "version":
-                result["version"] = val
-            elif key == "skip_patterns":
-                current_section = "skip_patterns"
-                result["skip_patterns"] = []
-            elif key == "severity_overrides":
-                current_section = "severity_overrides"
-                result["severity_overrides"] = {}
-            elif key == "framework_hints":
-                current_section = "framework_hints"
-                result["framework_hints"] = {}
-            elif key == "anti_patterns":
-                current_section = "anti_patterns"
-            continue
-
-        # Handle skip_patterns list items
-        if current_section == "skip_patterns" and stripped.startswith("- "):
-            pattern = stripped[2:].strip().strip("'\"")
-            if pattern:
-                result["skip_patterns"].append(pattern)
-            continue
-
-        # Handle severity_overrides key: value pairs
-        if current_section == "severity_overrides" and ":" in stripped and not stripped.startswith("-"):
-            key, _, val = stripped.partition(":")
-            key = key.strip()
-            val = val.strip().strip("'\"")
-            if key and val:
-                result["severity_overrides"][key] = val
-            continue
-
-        # Handle framework_hints key: value pairs
-        if current_section == "framework_hints" and ":" in stripped and not stripped.startswith("-"):
-            key, _, val = stripped.partition(":")
-            key = key.strip()
-            val = val.strip().strip("'\"")
-            if key and val:
-                result["framework_hints"][key] = val
-            continue
-
-        # Rule fields
-        if current_rule and ":" in stripped:
-            key, _, val = stripped.partition(":")
-            key = key.strip()
-            val = val.strip().strip("'\"")
-            if key in ("name", "severity", "category", "pattern", "message", "fix_hint", "fix_replacement"):
-                current_rule[key] = val
-            elif key == "ignore_case" and val == "true":
-                current_rule["ignore_case"] = True
-            elif key == "multiline" and val == "true":
-                current_rule["multiline"] = True
-
+    # Append last rule if any
     if current_rule:
         result["anti_patterns"].append(current_rule)
 
     return result
+
+
+def _process_line(
+    line: str, result: dict[str, Any], current_rule: dict[str, Any] | None, current_section: str | None
+) -> tuple[dict[str, Any] | None, str | None]:
+    """Process a single line in YAML content."""
+    stripped = line.strip()
+    if not stripped or stripped.startswith("#"):
+        return current_rule, current_section
+
+    # Anti-pattern list item (check BEFORE top-level keys)
+    if stripped.startswith("- id:"):
+        if current_rule:
+            result["anti_patterns"].append(current_rule)
+        current_rule = {"id": stripped.split(":", 1)[1].strip()}
+        current_section = None
+        return current_rule, current_section
+
+    # Top-level keys (only lines NOT starting with space and NOT starting with -)
+    if not line.startswith(" ") and not line.startswith("-") and ":" in stripped:
+        current_rule, current_section = _process_top_level_key(line, stripped, result, current_rule, current_section)
+        return current_rule, current_section
+
+    # Handle section-specific content
+    current_rule = _process_section_content(line, stripped, result, current_rule, current_section)
+    return current_rule, current_section
+
+
+def _process_top_level_key(
+    line: str,
+    stripped: str,
+    result: dict[str, Any],
+    current_rule: dict[str, Any] | None,
+    current_section: str | None = None,
+) -> tuple[dict[str, Any] | None, str | None]:
+    """Process top-level key:value pairs."""
+    key, _, val = stripped.partition(":")
+    key = key.strip()
+    val = val.strip().strip("'\"")
+
+    if key == "language":
+        result["language"] = val
+    elif key == "version":
+        result["version"] = val
+    elif key == "skip_patterns":
+        current_section = "skip_patterns"
+        result["skip_patterns"] = []
+    elif key == "severity_overrides":
+        current_section = "severity_overrides"
+        result["severity_overrides"] = {}
+    elif key == "framework_hints":
+        current_section = "framework_hints"
+        result["framework_hints"] = {}
+    elif key == "anti_patterns":
+        current_section = "anti_patterns"
+    return current_rule, current_section
+
+
+def _process_section_content(
+    line: str, stripped: str, result: dict[str, Any], current_rule: dict[str, Any] | None, current_section: str | None
+) -> dict[str, Any] | None:
+    """Process content within a section."""
+    # Handle skip_patterns list items
+    if current_section == "skip_patterns" and stripped.startswith("- "):
+        pattern = stripped[2:].strip().strip("'\"")
+        if pattern:
+            result["skip_patterns"].append(pattern)
+        return current_rule
+
+    # Handle severity_overrides key: value pairs
+    if current_section == "severity_overrides" and ":" in stripped and not stripped.startswith("-"):
+        key, _, val = stripped.partition(":")
+        key = key.strip()
+        val = val.strip().strip("'\"")
+        if key and val:
+            result["severity_overrides"][key] = val
+        return current_rule
+
+    # Handle framework_hints key: value pairs
+    if current_section == "framework_hints" and ":" in stripped and not stripped.startswith("-"):
+        key, _, val = stripped.partition(":")
+        key = key.strip()
+        val = val.strip().strip("'\"")
+        if key and val:
+            result["framework_hints"][key] = val
+        return current_rule
+
+    # Rule fields
+    if current_rule and ":" in stripped:
+        key, _, val = stripped.partition(":")
+        key = key.strip()
+        val = val.strip().strip("'\"")
+        if key in ("name", "severity", "category", "pattern", "message", "fix_hint", "fix_replacement"):
+            current_rule[key] = val
+        elif key == "ignore_case" and val == "true":
+            current_rule["ignore_case"] = True
+        elif key == "multiline" and val == "true":
+            current_rule["multiline"] = True
+
+    return current_rule

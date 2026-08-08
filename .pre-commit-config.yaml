@@ -131,7 +131,7 @@ repos:
     hooks:
       - id: validate-case-studies
         name: Validate Case Studies
-        entry: python tools/scripts/validate_case_study.py --path case-studies/
+        entry: python tools/scripts/validate_case_study.py --all
         language: system
         pass_filenames: false
         always_run: true

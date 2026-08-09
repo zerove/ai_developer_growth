@@ -69,6 +69,7 @@ bandit-report.json
 !.jcode/scripts/
 !.jcode/mode_decision.conf
 !.jcode/USAGE.md
+!.jcode/ignored-rules.toml
 
 # OpenCode (internal state)
 .opencode/

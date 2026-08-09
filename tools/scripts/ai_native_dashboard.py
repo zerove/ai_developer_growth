@@ -21,23 +21,29 @@ class AIDashboard:
         print(" 🚀 AI-NATIVE SDLC DEVELOPER DASHBOARD ")
         print("=" * 60)
 
-        # 1. Telemetry
-        telemetry_path = self.root_dir / ".quality-trends" / "telemetry.json"
-        if telemetry_path.exists():
-            data = json.loads(telemetry_path.read_text(encoding="utf-8"))
-            print("📊 Telemetry Metrics:")
-            for k, v in data.items():
-                print(f"   - {k}: {v}")
-        else:
-            print("📊 Telemetry: No metrics generated yet (run `make metrics-telemetry`).")
+        import concurrent.futures
 
-        # 2. Semantic Graph
-        graph_path = self.root_dir / ".semantic_graph.json"
-        if graph_path.exists():
-            gdata = json.loads(graph_path.read_text(encoding="utf-8"))
-            print(f"🕸️ Semantic Knowledge Graph: {len(gdata)} tracked nodes.")
-        else:
-            print("🕸️ Semantic Graph: Not built yet (run `make semantic-graph`).")
+        def get_telemetry() -> str:
+            telemetry_path = self.root_dir / ".quality-trends" / "telemetry.json"
+            if telemetry_path.exists():
+                return "📊 Telemetry Metrics:\n" + "\n".join(
+                    [f"   - {k}: {v}" for k, v in json.loads(telemetry_path.read_text(encoding="utf-8")).items()]
+                )
+            return "📊 Telemetry: No metrics generated yet (run `make metrics-telemetry`)."
+
+        def get_graph() -> str:
+            graph_path = self.root_dir / ".semantic_graph.json"
+            if graph_path.exists():
+                gdata = json.loads(graph_path.read_text(encoding="utf-8"))
+                return f"🕸️ Semantic Knowledge Graph: {len(gdata)} tracked nodes."
+            return "🕸️ Semantic Graph: Not built yet (run `make semantic-graph`)."
+
+        with concurrent.futures.ThreadPoolExecutor() as executor:
+            future_telemetry = executor.submit(get_telemetry)
+            future_graph = executor.submit(get_graph)
+
+            print(future_telemetry.result())
+            print(future_graph.result())
 
         print("=" * 60)
         print("✅ Dashboard rendered successfully.")

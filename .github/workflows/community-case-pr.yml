@@ -85,7 +85,7 @@ jobs:
           echo "> Community contributions are reviewed for completeness, authenticity, and reproducibility." >> $GITHUB_STEP_SUMMARY
 
       - name: Add community label
-        uses: actions/github-script@v7
+        uses: actions/github-script@v9
         if: success()
         with:
           script: |

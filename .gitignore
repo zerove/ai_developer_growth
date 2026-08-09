@@ -83,3 +83,4 @@ tools/scripts/rules_engine/*.bak
 *.db
 *.db-wal
 *.db-shm
+debug_mutmut.py

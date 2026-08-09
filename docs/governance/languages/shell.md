@@ -237,7 +237,7 @@ done
 get_user() {
     local user_id="$1"
     local result
-    
+
     result=$(curl -s "/users/$user_id")
     echo "$result"
 }
@@ -245,7 +245,7 @@ get_user() {
 # ✅ 正确 - 返回值使用 echo，状态使用 return
 is_valid() {
     local input="$1"
-    
+
     if [[ "$input" =~ ^[0-9]+$ ]]; then
         return 0  # 成功
     else
@@ -275,12 +275,12 @@ get_user() {
 # ✅ 正确 - 验证输入
 validate_input() {
     local input="$1"
-    
+
     if [[ -z "$input" ]]; then
         echo "Error: Input is empty" >&2
         return 1
     fi
-    
+
     if [[ ! "$input" =~ ^[a-zA-Z0-9_]+$ ]]; then
         echo "Error: Invalid characters in input" >&2
         return 1

@@ -27,83 +27,20 @@ API v3 (新增):
 
 from __future__ import annotations
 
+# mypy: disable-error-code="untyped-decorator"
 import argparse
 import json
 import sqlite3
 import subprocess
 import sys
-from datetime import datetime
 from pathlib import Path
-from typing import Any, cast
+from typing import TYPE_CHECKING, Any, cast
+
+if TYPE_CHECKING:
+    from fastapi import FastAPI
 
 from tools.scripts.rules_engine.logger import logger
-
-
-def init_db(db_path: str = "adg_quality.db") -> sqlite3.Connection:
-    """Initialize SQLite database for quality tracking."""
-    conn = sqlite3.connect(db_path, check_same_thread=False)
-    conn.execute("""
-        CREATE TABLE IF NOT EXISTS quality_runs (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            timestamp TEXT NOT NULL,
-            total_files INTEGER,
-            total_errors INTEGER,
-            total_warnings INTEGER,
-            total_info INTEGER,
-            passed_files INTEGER,
-            failed_files INTEGER,
-            report_json TEXT
-        )
-    """)
-    conn.execute("""
-        CREATE TABLE IF NOT EXISTS file_results (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            run_id INTEGER,
-            file_path TEXT,
-            language TEXT,
-            errors INTEGER,
-            warnings INTEGER,
-            info INTEGER,
-            passed BOOLEAN,
-            issues_json TEXT,
-            FOREIGN KEY (run_id) REFERENCES quality_runs(id)
-        )
-    """)
-    conn.execute("""
-        CREATE TABLE IF NOT EXISTS rule_violations (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            run_id INTEGER,
-            rule_id TEXT,
-            severity TEXT,
-            count INTEGER,
-            FOREIGN KEY (run_id) REFERENCES quality_runs(id)
-        )
-    """)
-    conn.commit()
-    return conn
-
-
-def record_run(conn: sqlite3.Connection, report: dict[str, Any]) -> int:
-    """Record a quality run result."""
-    summary = report.get("summary", {})
-    cursor = conn.execute(
-        """INSERT INTO quality_runs
-           (timestamp, total_files, total_errors, total_warnings, total_info,
-            passed_files, failed_files, report_json)
-           VALUES (?, ?, ?, ?, ?, ?, ?, ?)""",
-        (
-            datetime.now().isoformat(),
-            summary.get("total_files", 0),
-            summary.get("errors", 0),
-            summary.get("warnings", 0),
-            summary.get("info", 0),
-            summary.get("passed", 0),
-            summary.get("failed", 0),
-            json.dumps(report, ensure_ascii=False),
-        ),
-    )
-    conn.commit()
-    return cursor.lastrowid or 0
+from tools.scripts.rules_engine.store import init_db, record_run  # noqa: F401  (统一 SQLite 存储层，任务7)
 
 
 def get_trend_data(conn: sqlite3.Connection, limit: int = 30) -> list[dict[str, Any]]:
@@ -404,22 +341,11 @@ HTML_TEMPLATE = """<!DOCTYPE html>
 </html>"""
 
 
-def create_app(db_path: str = "adg_quality.db", ci_data_dir: str | None = None) -> Any:
-    """Create FastAPI app for the quality dashboard.
+def _add_basic_routes(app: FastAPI, conn: sqlite3.Connection) -> None:
+    """Add basic dashboard routes."""
+    import json
 
-    Args:
-        db_path: SQLite database path.
-        ci_data_dir: Optional path to CI-generated quality data (.quality-trends/).
-    """
-    try:
-        from fastapi import FastAPI
-        from fastapi.responses import HTMLResponse
-    except ImportError:
-        logger.info("Error: FastAPI required. Install: pip install fastapi uvicorn", file=sys.stderr)
-        sys.exit(1)
-
-    app = FastAPI(title="ADG Quality Dashboard")
-    conn = init_db(db_path)
+    from fastapi.responses import HTMLResponse
 
     @app.get("/", response_class=HTMLResponse)
     def dashboard() -> str:
@@ -463,6 +389,12 @@ def create_app(db_path: str = "adg_quality.db", ci_data_dir: str | None = None) 
     def api_comparison() -> dict[str, Any] | None:
         return get_comparison(conn)
 
+
+def _add_ci_routes(app: FastAPI, ci_data_dir: str | None) -> None:
+    """Add CI data routes."""
+    import json
+    from pathlib import Path
+
     @app.get("/api/ci-summary")
     def api_ci_summary() -> dict[str, Any] | None:
         """Read CI-generated quality summary if available."""
@@ -472,33 +404,48 @@ def create_app(db_path: str = "adg_quality.db", ci_data_dir: str | None = None) 
         summary_file = Path(ci_dir) / "summary.json"
         if summary_file.exists():
             try:
-                return cast(dict[str, Any], json.loads(summary_file.read_text()))
+                data = json.loads(summary_file.read_text())
+                return data if isinstance(data, dict) else None
             except Exception:
                 _ = None  # parse summary failed
         return None
+
+
+def _add_record_routes(app: FastAPI, conn: sqlite3.Connection) -> None:
+    """Add record routes."""
 
     @app.post("/api/record")
     def api_record(report: dict[str, Any]) -> dict[str, Any]:
         run_id = record_run(conn, report)
         return {"run_id": run_id, "status": "recorded"}
 
-    # ── Governance API v3 ─────────────────────────────────────
+
+def _add_v3_health_route(app: FastAPI, conn: sqlite3.Connection) -> None:
+    """Add v3 health route."""
 
     @app.get("/api/v3/health")
     def api_v3_health() -> dict[str, Any]:
         """Health check endpoint."""
+        import logging
+        from datetime import datetime
+
         db_ok = False
         try:
             conn.execute("SELECT 1")
             db_ok = True
-        except Exception:
-            pass
+        except Exception as e:
+            logging.getLogger(__name__).debug(f"Database health check failed: {e}")
         return {
             "status": "ok",
             "version": "3.0.0",
             "uptime": datetime.now().isoformat(),
             "database": "connected" if db_ok else "error",
         }
+
+
+def _add_v3_check_route(app: FastAPI) -> None:
+    """Add v3 check route."""
+    import json
 
     @app.post("/api/v3/check")
     def api_v3_check(
@@ -536,6 +483,59 @@ def create_app(db_path: str = "adg_quality.db", ci_data_dir: str | None = None) 
         except json.JSONDecodeError as e:
             return {"status": "error", "message": f"Invalid JSON output: {e}"}
 
+
+def _load_rules_summary() -> dict[str, Any]:
+    """Load rules summary for all languages."""
+    try:
+        from tools.scripts.adg_cli.rules import load_rules_for_language
+    except ImportError:
+        return {"error": "ADG rules module not available"}
+
+    languages = [
+        "python",
+        "javascript",
+        "typescript",
+        "rust",
+        "go",
+        "java",
+        "ruby",
+        "kotlin",
+        "swift",
+        "csharp",
+        "php",
+    ]
+    summary: dict[str, int] = {}
+    for lang_id in languages:
+        try:
+            r = load_rules_for_language(lang_id)
+            summary[lang_id] = len(r.get("anti_patterns", [])) + len(r.get("security_patterns", []))
+        except Exception as e:
+            import logging
+
+            logging.getLogger(__name__).debug(f"Failed to load rules for {lang_id}: {e}")
+            summary[lang_id] = -1
+    return summary
+
+
+def _get_rule_docs(rule_id: str) -> dict[str, Any]:
+    """Get related documentation for a specific rule."""
+    import json
+    from pathlib import Path
+
+    mapping_path = Path(__file__).resolve().parent.parent.parent.parent / ".jcode" / "rule-docs-mapping.json"
+    if not mapping_path.exists():
+        return {"status": "ok", "rule_id": rule_id, "docs": [], "note": "No mapping cache found"}
+    try:
+        mapping = json.loads(mapping_path.read_text())
+        docs = mapping.get(rule_id, [])
+        return {"status": "ok", "rule_id": rule_id, "docs": docs, "count": len(docs)}
+    except Exception as e:
+        return {"status": "error", "message": f"Failed to read mapping: {e}"}
+
+
+def _add_v3_rules_routes(app: FastAPI) -> None:
+    """Add v3 rules routes."""
+
     @app.get("/api/v3/rules")
     def api_v3_rules(lang: str | None = None) -> dict[str, Any]:
         """List all available rules, optionally filtered by language."""
@@ -547,41 +547,16 @@ def create_app(db_path: str = "adg_quality.db", ci_data_dir: str | None = None) 
         if lang:
             rules = load_rules_for_language(lang)
             return {"status": "ok", "language": lang, "rules": rules}
-        # Return summary per language
-        languages = [
-            "python",
-            "javascript",
-            "typescript",
-            "rust",
-            "go",
-            "java",
-            "ruby",
-            "kotlin",
-            "swift",
-            "csharp",
-            "php",
-        ]
-        summary: dict[str, int] = {}
-        for lang_id in languages:
-            try:
-                r = load_rules_for_language(lang_id)
-                summary[lang_id] = len(r.get("anti_patterns", [])) + len(r.get("security_patterns", []))
-            except Exception:
-                summary[lang_id] = -1
-        return {"status": "ok", "languages": summary}
+        return {"status": "ok", "languages": _load_rules_summary()}
 
     @app.get("/api/v3/rules/{rule_id}/docs")
     def api_v3_rule_docs(rule_id: str) -> dict[str, Any]:
         """Get related documentation for a specific rule."""
-        mapping_path = Path(__file__).resolve().parent.parent.parent.parent / ".jcode" / "rule-docs-mapping.json"
-        if not mapping_path.exists():
-            return {"status": "ok", "rule_id": rule_id, "docs": [], "note": "No mapping cache found"}
-        try:
-            mapping = json.loads(mapping_path.read_text())
-            docs = mapping.get(rule_id, [])
-            return {"status": "ok", "rule_id": rule_id, "docs": docs, "count": len(docs)}
-        except Exception as e:
-            return {"status": "error", "message": f"Failed to read mapping: {e}"}
+        return _get_rule_docs(rule_id)
+
+
+def _add_v3_status_route(app: FastAPI, conn: sqlite3.Connection, db_path: str) -> None:
+    """Add v3 status route."""
 
     @app.get("/api/v3/status")
     def api_v3_status() -> dict[str, Any]:
@@ -599,6 +574,31 @@ def create_app(db_path: str = "adg_quality.db", ci_data_dir: str | None = None) 
             },
         }
 
+
+def create_app(db_path: str = "adg_quality.db", ci_data_dir: str | None = None) -> Any:
+    """Create FastAPI app for the quality dashboard.
+
+    Args:
+        db_path: SQLite database path.
+        ci_data_dir: Optional path to CI-generated quality data (.quality-trends/).
+    """
+    try:
+        from fastapi import FastAPI
+    except ImportError:
+        logger.info("Error: FastAPI required. Install: pip install fastapi uvicorn", file=sys.stderr)
+        sys.exit(1)
+
+    app = FastAPI(title="ADG Quality Dashboard")
+    conn = init_db(db_path)
+
+    _add_basic_routes(app, conn)
+    _add_ci_routes(app, ci_data_dir)
+    _add_record_routes(app, conn)
+    _add_v3_health_route(app, conn)
+    _add_v3_check_route(app)
+    _add_v3_rules_routes(app)
+    _add_v3_status_route(app, conn, db_path)
+
     return app
 
 
@@ -608,8 +608,10 @@ def _get_db_size(db_path: str) -> dict[str, Any]:
         p = Path(db_path)
         if p.exists():
             return {"path": str(p.resolve()), "bytes": p.stat().st_size, "exists": True}
-    except Exception:
-        pass
+    except Exception as e:
+        import logging
+
+        logging.getLogger(__name__).debug(f"Failed to get DB size for {db_path}: {e}")
     return {"path": db_path, "bytes": 0, "exists": False}
 
 

@@ -1,6 +1,6 @@
 # Python 语言规则
 
-> 适用于 Python 
+> 适用于 Python
 
 ---
 
@@ -91,14 +91,14 @@ def test_my_function_error():
 ```python
 def my_function(param1: int, param2: str) -> bool:
     """一句话描述函数功能。
-    
+
     Args:
         param1: 参数1描述
         param2: 参数2描述
-        
+
     Returns:
         返回值描述
-        
+
     Raises:
         ValueError: 当参数无效时
     """
@@ -133,7 +133,7 @@ python_functions = ["test_*"]
 
 ---
 
-## AI 
+## AI
 
 > 以下是 AI 生成代码中最常见的问题，validate_language_rules.py 会自动检测
 

@@ -54,10 +54,10 @@ use thiserror::Error;
 pub enum AppError {
     #[error("Validation error: {field} - {message}")]
     Validation { field: String, message: String },
-    
+
     #[error("{resource} with id {id} not found")]
     NotFound { resource: String, id: String },
-    
+
     #[error("Internal error: {0}")]
     Internal(#[from] anyhow::Error),
 }
@@ -69,7 +69,7 @@ impl AppError {
             message: message.into(),
         }
     }
-    
+
     pub fn not_found(resource: impl Into<String>, id: impl Into<String>) -> Self {
         Self::NotFound {
             resource: resource.into(),
@@ -231,7 +231,7 @@ async fn process_concurrently() {
             })
         })
         .collect();
-    
+
     for handle in handles {
         handle.await.unwrap();
     }
@@ -262,20 +262,20 @@ async fn good_example() {
 #[cfg(test)]
 mod tests {
     use super::*;
-    
+
     #[test]
     fn test_get_user_found() {
         let user = get_user("123").unwrap();
         assert_eq!(user.id, "123");
     }
-    
+
     #[test]
     fn test_get_user_not_found() {
         let result = get_user("nonexistent");
         assert!(result.is_err());
         assert!(matches!(result.unwrap_err(), AppError::NotFound { .. }));
     }
-    
+
     #[tokio::test]
     async fn test_async_operation() {
         let result = async_operation().await;
@@ -294,7 +294,7 @@ use my_crate::{App, UserService};
 async fn test_full_workflow() {
     let app = App::new().await;
     let service = UserService::new(app.db());
-    
+
     let user = service.create_user("test@example.com").await.unwrap();
     assert_eq!(user.email, "test@example.com");
 }

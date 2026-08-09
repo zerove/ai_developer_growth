@@ -99,6 +99,76 @@ def cmd_init(args: argparse.Namespace) -> None:
     print(f"Created: {rules_dir / 'anti_patterns.yml'}")
 
 
+def _get_rule_details(args: argparse.Namespace, lang: str) -> dict[str, str] | None:
+    """Get rule details from args or interactive input."""
+    rule_id = args.id
+    if not rule_id:
+        rule_id = input(f"Rule ID (e.g., {lang}-my-rule): ").strip()
+    if not rule_id:
+        print("Rule ID is required")
+        return None
+
+    name = args.name or input("Rule name: ").strip()
+    severity = args.severity or input(f"Severity ({'/'.join(SEVERITY_LEVELS)}): ").strip() or "warning"
+    message = args.message or input("Message: ").strip()
+
+    if not name or not message:
+        print("Name and message are required")
+        return None
+
+    pattern = args.pattern or input("Regex pattern (leave empty for non-pattern rules): ").strip()
+    fix_hint = args.fix_hint or input("Fix hint (optional): ").strip()
+
+    return {
+        "id": rule_id,
+        "name": name,
+        "severity": severity,
+        "message": message,
+        "pattern": pattern,
+        "fix_hint": fix_hint,
+    }
+
+
+def _validate_pattern(pattern: str) -> bool:
+    """Validate regex pattern."""
+    if pattern:
+        try:
+            re.compile(pattern)
+        except re.error as e:
+            print(f"Invalid regex pattern: {e}")
+            return False
+    return True
+
+
+def _check_duplicate_id(data: dict[str, Any], rule_id: str) -> bool:
+    """Check if rule ID already exists."""
+    existing_ids = set()
+    for cat in ["anti_patterns", "naming_conventions", "complexity"]:
+        for existing_rule in data.get(cat, []):
+            existing_ids.add(existing_rule.get("id", ""))
+
+    if rule_id in existing_ids:
+        print(f"Rule '{rule_id}' already exists. Use a different ID.")
+        return True
+    return False
+
+
+def _build_rule(rule_details: dict[str, str]) -> dict[str, Any]:
+    """Build rule dict from details."""
+    new_rule: dict[str, Any] = {
+        "id": rule_details["id"],
+        "name": rule_details["name"],
+        "severity": rule_details["severity"],
+    }
+    if rule_details["pattern"]:
+        new_rule["pattern"] = rule_details["pattern"]
+    if rule_details["message"]:
+        new_rule["message"] = rule_details["message"]
+    if rule_details["fix_hint"]:
+        new_rule["fix_hint"] = rule_details["fix_hint"]
+    return new_rule
+
+
 def cmd_add_rule(args: argparse.Namespace) -> None:
     """Add a new rule to a language's rule file."""
     lang = args.lang
@@ -121,52 +191,20 @@ def cmd_add_rule(args: argparse.Namespace) -> None:
         data = yaml.safe_load(f) or {}
 
     # Get rule details
-    rule_id = args.id
-    if not rule_id:
-        rule_id = input(f"Rule ID (e.g., {lang}-my-rule): ").strip()
-    if not rule_id:
-        print("Rule ID is required")
+    rule_details = _get_rule_details(args, lang)
+    if not rule_details:
         return
-
-    name = args.name or input("Rule name: ").strip()
-    severity = args.severity or input(f"Severity ({'/'.join(SEVERITY_LEVELS)}): ").strip() or "warning"
-    message = args.message or input("Message: ").strip()
-
-    if not name or not message:
-        print("Name and message are required")
-        return
-
-    pattern = args.pattern or input("Regex pattern (leave empty for non-pattern rules): ").strip()
-    fix_hint = args.fix_hint or input("Fix hint (optional): ").strip()
 
     # Validate pattern
-    if pattern:
-        try:
-            re.compile(pattern)
-        except re.error as e:
-            print(f"Invalid regex pattern: {e}")
-            return
-
-    # Check for duplicate ID
-    existing_ids = set()
-    for cat in ["anti_patterns", "naming_conventions", "complexity"]:
-        for existing_rule in data.get(cat, []):
-            existing_ids.add(existing_rule.get("id", ""))
-
-    if rule_id in existing_ids:
-        print(f"Rule '{rule_id}' already exists. Use a different ID.")
+    if not _validate_pattern(rule_details["pattern"]):
         return
 
-    # Build rule
-    new_rule: dict[str, Any] = {"id": rule_id, "name": name, "severity": severity}
-    if pattern:
-        new_rule["pattern"] = pattern
-    if message:
-        new_rule["message"] = message
-    if fix_hint:
-        new_rule["fix_hint"] = fix_hint
+    # Check for duplicate ID
+    if _check_duplicate_id(data, rule_details["id"]):
+        return
 
-    # Add to appropriate category
+    # Build and add rule
+    new_rule = _build_rule(rule_details)
     if category not in data:
         data[category] = []
     data[category].append(new_rule)
@@ -174,11 +212,54 @@ def cmd_add_rule(args: argparse.Namespace) -> None:
     with open(rules_file, "w") as f:
         yaml.dump(data, f, default_flow_style=False, allow_unicode=True, sort_keys=False)
 
-    print(f"Added rule '{rule_id}' to {category}")
-    print(f"  severity: {severity}")
-    if pattern:
-        print(f"  pattern: {pattern}")
-    print(f"  message: {message}")
+    print(f"Added rule '{rule_details['id']}' to {category}")
+    print(f"  severity: {rule_details['severity']}")
+    if rule_details["pattern"]:
+        print(f"  pattern: {rule_details['pattern']}")
+    print(f"  message: {rule_details['message']}")
+
+
+def _validate_single_rule(category: str, rule: dict[str, Any], rule_id: str) -> tuple[int, int]:
+    """Validate a single rule. Returns (errors, warnings)."""
+    errors = 0
+    warnings = 0
+
+    if not isinstance(rule, dict):
+        print(f"  ✗ {category}: rule is not a dict")
+        return 1, 0
+
+    # Required fields
+    if not rule.get("id"):
+        print(f"  ✗ {category}: rule missing 'id'")
+        errors += 1
+    if not rule.get("name"):
+        print(f"  ✗ {category}/{rule.get('id', '?')}: missing 'name'")
+        warnings += 1
+    if not rule.get("severity"):
+        print(f"  ✗ {category}/{rule.get('id', '?')}: missing 'severity'")
+        errors += 1
+    elif rule["severity"] not in SEVERITY_LEVELS:
+        print(f"  ✗ {category}/{rule['id']}: invalid severity '{rule['severity']}'")
+        errors += 1
+
+    # Validate pattern
+    if "pattern" in rule:
+        try:
+            re.compile(rule["pattern"])
+        except re.error as e:
+            print(f"  ✗ {category}/{rule['id']}: invalid regex: {e}")
+            errors += 1
+
+    # Validate test_cases
+    for i, tc in enumerate(rule.get("test_cases", [])):
+        if "code" not in tc:
+            print(f"  ✗ {category}/{rule['id']}/test[{i}]: missing 'code'")
+            errors += 1
+        if "should_match" not in tc:
+            print(f"  ✗ {category}/{rule['id']}/test[{i}]: missing 'should_match'")
+            errors += 1
+
+    return errors, warnings
 
 
 def cmd_validate(args: argparse.Namespace) -> None:
@@ -206,40 +287,12 @@ def cmd_validate(args: argparse.Namespace) -> None:
     for category in ["anti_patterns", "naming_conventions", "complexity"]:
         for rule in data.get(category, []):
             if not isinstance(rule, dict):
-                print(f"  ✗ {category}: rule is not a dict")
+                print(f"  ✗ Rule in {category} is not a dictionary: {rule}")
                 errors += 1
                 continue
-
-            # Required fields
-            if not rule.get("id"):
-                print(f"  ✗ {category}: rule missing 'id'")
-                errors += 1
-            if not rule.get("name"):
-                print(f"  ✗ {category}/{rule.get('id', '?')}: missing 'name'")
-                warnings += 1
-            if not rule.get("severity"):
-                print(f"  ✗ {category}/{rule.get('id', '?')}: missing 'severity'")
-                errors += 1
-            elif rule["severity"] not in SEVERITY_LEVELS:
-                print(f"  ✗ {category}/{rule['id']}: invalid severity '{rule['severity']}'")
-                errors += 1
-
-            # Validate pattern
-            if "pattern" in rule:
-                try:
-                    re.compile(rule["pattern"])
-                except re.error as e:
-                    print(f"  ✗ {category}/{rule['id']}: invalid regex: {e}")
-                    errors += 1
-
-            # Validate test_cases
-            for i, tc in enumerate(rule.get("test_cases", [])):
-                if "code" not in tc:
-                    print(f"  ✗ {category}/{rule['id']}/test[{i}]: missing 'code'")
-                    errors += 1
-                if "should_match" not in tc:
-                    print(f"  ✗ {category}/{rule['id']}/test[{i}]: missing 'should_match'")
-                    errors += 1
+            rule_errors, rule_warnings = _validate_single_rule(category, rule, rule.get("id", "?"))
+            errors += rule_errors
+            warnings += rule_warnings
 
     if errors == 0 and warnings == 0:
         total_rules = sum(len(data.get(c, [])) for c in ["anti_patterns", "naming_conventions", "complexity"])

@@ -158,7 +158,7 @@ const user = inject('user');
 export const useUserStore = defineStore('user', () => {
   const user = ref<User | null>(null);
   const loading = ref(false);
-  
+
   async function fetchUser(id: string) {
     loading.value = true;
     try {
@@ -167,7 +167,7 @@ export const useUserStore = defineStore('user', () => {
       loading.value = false;
     }
   }
-  
+
   return { user, loading, fetchUser };
 });
 ```
@@ -201,12 +201,12 @@ describe('UserCard', () => {
     });
     expect(wrapper.text()).toContain('John');
   });
-  
+
   it('emits select event', async () => {
     const wrapper = mount(UserCard, {
       props: { user: { id: '1', name: 'John' } },
     });
-    
+
     await wrapper.trigger('click');
     expect(wrapper.emitted('select')).toHaveLength(1);
   });

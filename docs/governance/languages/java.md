@@ -52,12 +52,12 @@ public void GetUser(String id) { ... }  // 应为 camelCase
 // 基础异常
 public class AppException extends Exception {
     private final String code;
-    
+
     public AppException(String message, String code) {
         super(message);
         this.code = code;
     }
-    
+
     public String getCode() { return code; }
 }
 
@@ -71,12 +71,12 @@ public class BusinessException extends AppException {
 // 验证异常
 public class ValidationException extends BusinessException {
     private final String field;
-    
+
     public ValidationException(String field, String message) {
         super(message, "VALIDATION_ERROR");
         this.field = field;
     }
-    
+
     public String getField() { return field; }
 }
 
@@ -174,14 +174,14 @@ public class UserDTO {
 // ❌ 禁止: 共享可变状态
 public class Counter {
     private int count = 0;  // 非线程安全!
-    
+
     public void increment() { count++; }
 }
 
 // ✅ 正确: 使用 synchronized 或原子类
 public class Counter {
     private final AtomicInteger count = new AtomicInteger(0);
-    
+
     public void increment() { count.incrementAndGet(); }
 }
 ```
@@ -223,18 +223,18 @@ import static org.junit.jupiter.api.Assertions.*;
 
 class UserServiceTest {
     private UserService service;
-    
+
     @BeforeEach
     void setUp() {
         service = new UserService();
     }
-    
+
     @Test
     void shouldGetUserWhenFound() {
         User user = service.getUser("123");
         assertEquals("123", user.getId());
     }
-    
+
     @Test
     void shouldThrowWhenNotFound() {
         assertThrows(NotFoundException.class, () -> {
@@ -254,14 +254,14 @@ import static org.mockito.Mockito.*;
 class UserServiceTest {
     @Mock
     private UserRepository repository;
-    
+
     @InjectMocks
     private UserService service;
-    
+
     @Test
     void shouldGetUser() {
         when(repository.findById("123")).thenReturn(Optional.of(new User("123")));
-        
+
         User user = service.getUser("123");
         assertNotNull(user);
         verify(repository).findById("123");

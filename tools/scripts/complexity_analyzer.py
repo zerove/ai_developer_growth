@@ -12,14 +12,9 @@ from typing import Any
 from .validate_language_rules import Issue
 
 
-def check_thresholds(lines: list[str], rules: dict[str, Any], filepath: str) -> list[Issue]:
-    """Check quantitative thresholds."""
+def _check_line_length(lines: list[str], filepath: str, language: str, max_line: int) -> list[Issue]:
+    """Check line length threshold."""
     issues: list[Issue] = []
-    thresholds = rules.get("thresholds", {})
-    language = rules.get("language", "")
-
-    # Line length
-    max_line = thresholds.get("max_line_length", 120)
     for line_num, line in enumerate(lines, 1):
         if len(line.rstrip()) > max_line:
             issues.append(
@@ -32,9 +27,12 @@ def check_thresholds(lines: list[str], rules: dict[str, Any], filepath: str) -> 
                     message=f"Line length {len(line.rstrip())} exceeds {max_line}",
                 )
             )
+    return issues
 
-    # File length
-    max_file = thresholds.get("max_file_length", 500)
+
+def _check_file_length(lines: list[str], filepath: str, language: str, max_file: int) -> list[Issue]:
+    """Check file length threshold."""
+    issues: list[Issue] = []
     if len(lines) > max_file:
         issues.append(
             Issue(
@@ -46,12 +44,14 @@ def check_thresholds(lines: list[str], rules: dict[str, Any], filepath: str) -> 
                 message=f"File has {len(lines)} lines (max {max_file})",
             )
         )
+    return issues
 
-    # Function length and nesting depth
-    max_func = thresholds.get("max_function_length", 50)
-    max_nest = thresholds.get("max_nesting_depth", 4)
 
-    func_lines = extract_function_lines(lines, language)
+def _check_function_length(
+    func_lines: list[tuple[str, int, int]], filepath: str, language: str, max_func: int, max_nest: int, lines: list[str]
+) -> list[Issue]:
+    """Check function length and nesting depth thresholds."""
+    issues: list[Issue] = []
     for func_name, start, end in func_lines:
         length = end - start + 1
         if length > max_func:
@@ -66,7 +66,6 @@ def check_thresholds(lines: list[str], rules: dict[str, Any], filepath: str) -> 
                 )
             )
 
-        # Check nesting depth within function
         depth = max_nesting_depth(lines[start - 1 : end], language)
         if depth > max_nest:
             issues.append(
@@ -79,6 +78,25 @@ def check_thresholds(lines: list[str], rules: dict[str, Any], filepath: str) -> 
                     message=f"Function '{func_name}' has nesting depth {depth} (max {max_nest})",
                 )
             )
+    return issues
+
+
+def check_thresholds(lines: list[str], rules: dict[str, Any], filepath: str) -> list[Issue]:
+    """Check quantitative thresholds."""
+    issues: list[Issue] = []
+    thresholds = rules.get("thresholds", {})
+    language = rules.get("language", "")
+
+    max_line = thresholds.get("max_line_length", 120)
+    max_file = thresholds.get("max_file_length", 500)
+    max_func = thresholds.get("max_function_length", 50)
+    max_nest = thresholds.get("max_nesting_depth", 4)
+
+    issues.extend(_check_line_length(lines, filepath, language, max_line))
+    issues.extend(_check_file_length(lines, filepath, language, max_file))
+
+    func_lines = extract_function_lines(lines, language)
+    issues.extend(_check_function_length(func_lines, filepath, language, max_func, max_nest, lines))
 
     return issues
 
@@ -91,7 +109,7 @@ def extract_function_lines(lines: list[str], language: str) -> list[tuple[str, i
         try:
             tree = ast.parse("\n".join(lines))
             for node in ast.walk(tree):
-                if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
+                if isinstance(node, ast.FunctionDef | ast.AsyncFunctionDef):
                     start = node.lineno
                     end = getattr(node, "end_lineno", start + 50)
                     functions.append((node.name, start, end))
@@ -176,7 +194,7 @@ def check_python_ast(filepath: str, lines: list[str]) -> list[Issue]:
         return issues
 
     for node in ast.walk(tree):
-        if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
+        if isinstance(node, ast.FunctionDef | ast.AsyncFunctionDef):
             _check_python_function(node, filepath, issues)
 
     return issues
@@ -270,13 +288,13 @@ def calc_cyclomatic_complexity(node: ast.AST) -> int:
     complexity = 1
 
     for child in ast.walk(node):
-        if isinstance(child, (ast.If, ast.While, ast.For, ast.AsyncFor)):
+        if isinstance(child, ast.If | ast.While | ast.For | ast.AsyncFor):
             complexity += 1
         elif isinstance(child, ast.BoolOp):
             complexity += len(child.values) - 1
         elif isinstance(child, ast.ExceptHandler):
             complexity += 1
-        elif isinstance(child, (ast.With, ast.AsyncWith)):
+        elif isinstance(child, ast.With | ast.AsyncWith):
             complexity += 1
         elif isinstance(child, ast.Assert):
             complexity += 1

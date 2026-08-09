@@ -135,19 +135,11 @@ def generate_html_report(results: list[Any]) -> str:
 </html>"""
 
 
-def generate_sarif(results: list[Any]) -> str:
-    """Generate SARIF 2.1.0 report for GitHub Code Scanning.
-
-    Args:
-        results: List of ValidationResult objects (duck-typed)
-    """
+def _build_sarif_rules(results: list[Any]) -> dict[str, dict[str, Any]]:
+    """Build SARIF rule definitions from results."""
     rules: dict[str, dict[str, Any]] = {}
-    runs_results: list[dict[str, Any]] = []
-
     for result in results:
-        file_results = []
         for issue in result.issues:
-            # Collect rule definitions
             if issue.rule_id not in rules:
                 rules[issue.rule_id] = {
                     "id": issue.rule_id,
@@ -155,10 +147,16 @@ def generate_sarif(results: list[Any]) -> str:
                     "helpUri": f"https://github.com/example/rules/{issue.rule_id}",
                     "properties": {"category": issue.category},
                 }
+    return rules
 
+
+def _build_sarif_results(results: list[Any]) -> list[dict[str, Any]]:
+    """Build SARIF result entries from validation results."""
+    runs_results: list[dict[str, Any]] = []
+    for result in results:
+        for issue in result.issues:
             level = "error" if issue.severity == "error" else "warning" if issue.severity == "warning" else "note"
-
-            file_results.append(
+            runs_results.append(
                 {
                     "ruleId": issue.rule_id,
                     "level": level,
@@ -173,9 +171,17 @@ def generate_sarif(results: list[Any]) -> str:
                     ],
                 }
             )
+    return runs_results
 
-        if file_results:
-            runs_results.extend(file_results)
+
+def generate_sarif(results: list[Any]) -> str:
+    """Generate SARIF 2.1.0 report for GitHub Code Scanning.
+
+    Args:
+        results: List of ValidationResult objects (duck-typed)
+    """
+    rules = _build_sarif_rules(results)
+    runs_results = _build_sarif_results(results)
 
     sarif = {
         "$schema": "https://raw.githubusercontent.com/oasis-tcs/sarif-spec/master/Schemata/sarif-schema-2.1.0.json",

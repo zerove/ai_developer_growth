@@ -1,0 +1,16 @@
+version: '3.8'
+
+services:
+  ai-developer-framework:
+    build: .
+    image: ai-developer-growth:latest
+    container_name: ai_developer_growth_app
+    ports:
+      - "8000:8000"
+      - "5000:5000"
+    volumes:
+      - .:/app
+    environment:
+      - PYTHONUNBUFFERED=1
+    command: ["python", "ai-dev-framework/core/jcode_ai_native_workflow.py"]
+    restart: unless-stopped

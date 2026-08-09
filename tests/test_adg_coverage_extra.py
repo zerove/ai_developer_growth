@@ -318,7 +318,7 @@ class TestFormatTrendReport:
         data = [{"timestamp": "2024-01-01", "issues": 5, "errors": 1, "warnings": 2, "info": 2, "language": "python"}]
         report = _format_trend_report(data, output_json=True)
         parsed = json.loads(report)
-        assert isinstance(parsed, (dict, list))
+        assert isinstance(parsed, dict | list)
 
 
 class TestApplyFix:
@@ -459,7 +459,6 @@ class TestLoadProjectConfig:
         assert isinstance(config, dict)
 
     def test_load_with_global_config(self, workspace, monkeypatch):
-
         global_dir = workspace / "global_config"
         global_dir.mkdir(parents=True, exist_ok=True)
         (global_dir / "rules.yml").write_text("custom_rules:\n  - id: global_rule\n")

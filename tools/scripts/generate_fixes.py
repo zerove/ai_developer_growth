@@ -109,6 +109,48 @@ def apply_fixes_to_yaml(fixes: list[dict[str, Any]], dry_run: bool = True) -> in
     return applied
 
 
+def _discover_languages(args: argparse.Namespace) -> list[str]:
+    """Discover languages to process based on args."""
+    if args.all:
+        langs_dir = _rules_dir() / "languages"
+        return sorted(d.name for d in langs_dir.iterdir() if d.is_dir() and (d / "rules.d").exists())
+    return [args.lang]
+
+
+def _print_results(fixes: list[dict[str, Any]], args: argparse.Namespace) -> None:
+    """Print results based on output format."""
+    total = len(fixes)
+    with_fix = sum(1 for f in fixes if f["fix_replacement"])
+
+    if args.json_output:
+        print(json.dumps(fixes, indent=2))
+    else:
+        print(f"Generated fixes for {with_fix}/{total} rules")
+        if args.verbose:
+            for fix in fixes:
+                print(f"  [{fix['lang']}] {fix['id']}: {fix.get('fix_replacement', '') or '(no fix)'}")
+
+
+def _handle_output(fixes: list[dict[str, Any]], args: argparse.Namespace) -> None:
+    """Handle output file if specified."""
+    if args.output:
+        with open(args.output, "w") as f:
+            json.dump(fixes, f, indent=2)
+        print(f"Output written to {args.output}")
+
+
+def _handle_apply(fixes: list[dict[str, Any]], args: argparse.Namespace) -> None:
+    """Handle applying fixes to YAML files."""
+    if args.apply:
+        applied = apply_fixes_to_yaml(fixes, dry_run=False)
+        print(f"Applied {applied} fixes to YAML files")
+    elif args.dry_run:
+        for fix in fixes[:10]:
+            print(f"  [{fix['lang']}] {fix['id']}: {fix['fix_replacement'] or '(no fix)'}")
+        if len(fixes) > 10:
+            print(f"  ... and {len(fixes) - 10} more")
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description="Generate fix_replacement for rules")
     parser.add_argument("--lang", type=str, help="Process specific language")
@@ -124,38 +166,12 @@ def main() -> int:
         if not args.all and not args.lang:
             parser.error("Must specify --lang or --all")
 
-        # Discover languages
-        if args.all:
-            langs_dir = _rules_dir() / "languages"
-            languages = sorted(d.name for d in langs_dir.iterdir() if d.is_dir() and (d / "rules.d").exists())
-        else:
-            languages = [args.lang]
-
+        languages = _discover_languages(args)
         fixes = generate_fixes(languages, dry_run=args.dry_run)
-        total = len(fixes)
-        with_fix = sum(1 for f in fixes if f["fix_replacement"])
 
-        if args.json_output:
-            print(json.dumps(fixes, indent=2))
-        else:
-            print(f"Generated fixes for {with_fix}/{total} rules")
-            if args.verbose:
-                for fix in fixes:
-                    print(f"  [{fix['lang']}] {fix['id']}: {fix.get('fix_replacement', '') or '(no fix)'}")
-
-        if args.output:
-            with open(args.output, "w") as f:
-                json.dump(fixes, f, indent=2)
-            print(f"Output written to {args.output}")
-
-        if args.apply:
-            applied = apply_fixes_to_yaml(fixes, dry_run=False)
-            print(f"Applied {applied} fixes to YAML files")
-        elif args.dry_run:
-            for fix in fixes[:10]:
-                print(f"  [{fix['lang']}] {fix['id']}: {fix['fix_replacement'] or '(no fix)'}")
-            if len(fixes) > 10:
-                print(f"  ... and {len(fixes) - 10} more")
+        _print_results(fixes, args)
+        _handle_output(fixes, args)
+        _handle_apply(fixes, args)
 
         return 0
     except Exception as e:

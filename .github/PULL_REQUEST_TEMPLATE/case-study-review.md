@@ -89,14 +89,14 @@ python tools/scripts/link_auditor.py case-studies/<case-name>/README.md
 ## 💬 审查意见
 
 **优点**:
-- 
+-
 
 **需改进**:
-1. 
-2. 
+1.
+2.
 
 **问题**:
-- 
+-
 
 ---
 

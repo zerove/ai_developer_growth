@@ -107,12 +107,12 @@ class ObjectPool:
         self.creator = creator
         self.pool = []
         self.max_size = max_size
-    
+
     def acquire(self):
         if self.pool:
             return self.pool.pop()
         return self.creator()
-    
+
     def release(self, obj):
         if len(self.pool) < self.max_size:
             self.pool.append(obj)
@@ -199,18 +199,18 @@ redis_client = redis.Redis(host='localhost', port=6379, db=0)
 
 def get_user(user_id):
     cache_key = f"user:{user_id}"
-    
+
     # 尝试从缓存获取
     cached = redis_client.get(cache_key)
     if cached:
         return json.loads(cached)
-    
+
     # 从数据库获取
     user = db.query(User).get(user_id)
-    
+
     # 写入缓存
     redis_client.setex(cache_key, 3600, json.dumps(user.__dict__))
-    
+
     return user
 ```
 
@@ -262,11 +262,11 @@ from locust import HttpUser, task, between
 
 class WebsiteUser(HttpUser):
     wait_time = between(1, 3)
-    
+
     @task
     def index(self):
         self.client.get("/")
-    
+
     @task(3)
     def view_item(self):
         item_id = random.randint(1, 1000)

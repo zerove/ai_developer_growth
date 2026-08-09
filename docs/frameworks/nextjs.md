@@ -29,11 +29,11 @@ export default async function UserPage({ params }: { params: { id: string } }) {
 'use client';
 export default function UserPage({ params }: { params: { id: string } }) {
   const [user, setUser] = useState(null);
-  
+
   useEffect(() => {
     getUser(params.id).then(setUser);
   }, [params.id]);
-  
+
   return <UserProfile user={user} />;
 }
 ```
@@ -48,7 +48,7 @@ import { useState } from 'react';
 
 export function UserCard({ user }: { user: User }) {
   const [expanded, setExpanded] = useState(false);
-  
+
   return (
     <div onClick={() => setExpanded(!expanded)}>
       {user.name}
@@ -71,7 +71,7 @@ export function UserCard({ user }: { user: User }) {
 export async function createUser(formData: FormData) {
   const name = formData.get('name') as string;
   const email = formData.get('email') as string;
-  
+
   const user = await db.user.create({ data: { name, email } });
   revalidatePath('/users');
   return user;
@@ -102,7 +102,7 @@ export default async function DashboardPage() {
     getPosts(),
     getStats(),
   ]);
-  
+
   return (
     <div>
       <UserList users={users} />
@@ -139,20 +139,20 @@ app/
 
 ```tsx
 // ✅ 正确: 使用 params
-export default async function UserPage({ 
-  params 
-}: { 
-  params: { id: string } 
+export default async function UserPage({
+  params
+}: {
+  params: { id: string }
 }) {
   const user = await getUser(params.id);
   return <UserProfile user={user} />;
 }
 
 // ❌ 禁止: 使用 searchParams 获取路由参数
-export default async function UserPage({ 
-  searchParams 
-}: { 
-  searchParams: { id: string } 
+export default async function UserPage({
+  searchParams
+}: {
+  searchParams: { id: string }
 }) {
   const user = await getUser(searchParams.id);  // 错误!
 }
@@ -288,18 +288,18 @@ const PUBLIC_KEY = process.env.NEXT_PUBLIC_PUBLIC_KEY;
 export async function updateUser(formData: FormData) {
   const id = formData.get('id') as string;
   const name = formData.get('name') as string;
-  
+
   // 验证
   if (!id || !name) {
     throw new Error('Missing required fields');
   }
-  
+
   // 验证权限
   const session = await getServerSession();
   if (!session) {
     throw new Error('Unauthorized');
   }
-  
+
   await db.user.update({ where: { id }, data: { name } });
 }
 ```

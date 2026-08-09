@@ -352,6 +352,19 @@ class TestMainCLI(unittest.TestCase):
                 result = main()
                 self.assertEqual(result, 0)
 
+    def test_main_docs_validate(self) -> None:
+        """Test docs-validate unified entry invokes governance-docs-validator."""
+        from tools.scripts.hooks_runner import main
+
+        with patch("sys.argv", ["hooks_runner.py", "docs-validate"]):
+            with patch(
+                "tools.scripts.hooks_runner._handle_docs_validate",
+            ) as mock_handle:
+                mock_handle.return_value = 0
+                result = main()
+                self.assertEqual(result, 0)
+                mock_handle.assert_called_once()
+
 
 class TestDiffAndPreCommit(unittest.TestCase):
     """Tests for incremental check functions."""

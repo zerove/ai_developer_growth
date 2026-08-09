@@ -88,10 +88,10 @@ export default async function userRoutes(fastify, options) {
 // ✅ 正确: 全局错误处理
 export function errorHandler(err, req, res, next) {
   console.error(err.stack);
-  
+
   const status = err.status || 500;
   const message = err.message || 'Internal Server Error';
-  
+
   res.status(status).json({ error: message });
 }
 
@@ -105,11 +105,11 @@ app.use(errorHandler);
 // ✅ 正确: JWT 认证
 export function authenticate(req, res, next) {
   const token = req.headers.authorization?.split(' ')[1];
-  
+
   if (!token) {
     return res.status(401).json({ error: 'No token provided' });
   }
-  
+
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
     req.user = decoded;
@@ -171,21 +171,21 @@ export class UserService {
   constructor(userRepository) {
     this.userRepository = userRepository;
   }
-  
+
   async getAll() {
     return this.userRepository.findAll();
   }
-  
+
   async getById(id) {
     return this.userRepository.findById(id);
   }
-  
+
   async create(data) {
     const existing = await this.userRepository.findByEmail(data.email);
     if (existing) {
       throw new AppError('Email already exists', 400);
     }
-    
+
     return this.userRepository.create(data);
   }
 }
@@ -206,10 +206,10 @@ describe('UserService', () => {
     const mockRepo = {
       findAll: vi.fn().mockResolvedValue([{ id: '1', name: 'John' }])
     };
-    
+
     const service = new UserService(mockRepo);
     const users = await service.getAll();
-    
+
     expect(users).toHaveLength(1);
     expect(mockRepo.findAll).toHaveBeenCalled();
   });
@@ -227,7 +227,7 @@ describe('Users API', () => {
     const response = await request(app)
       .get('/api/users')
       .expect(200);
-    
+
     expect(Array.isArray(response.body)).toBe(true);
   });
 });

@@ -149,54 +149,95 @@ EXT_LANG_MAP = {
 }
 
 
-def create_server() -> Any:
-    """Create and configure the ADG LSP server."""
-    if not HAS_PYGLS:
-        logger.info("Error: pygls required. Install: pip install pygls", file=sys.stderr)
-        sys.exit(1)
-
-    server = LanguageServer("adg-governance", "v1.0")
+def _setup_did_open(server: LanguageServer) -> None:
+    """Set up textDocument/didOpen handler."""
 
     @server.feature("textDocument/didOpen")
     def did_open(params: DidOpenTextDocumentParams) -> None:
         """Check document on open."""
         _publish_diagnostics(server, params.text_document.uri)
 
+
+def _setup_did_change(server: LanguageServer) -> None:
+    """Set up textDocument/didChange handler."""
+
     @server.feature("textDocument/didChange")
     def did_change(params: DidChangeTextDocumentParams) -> None:
         """Check document on change."""
         _publish_diagnostics(server, params.text_document.uri)
+
+
+def _get_rule_for_line(line: str, lang: str) -> dict[str, Any] | None:
+    """Get matching rule for a line of code."""
+    try:
+        from tools.scripts._common import rules_dir
+
+        from .rule_loader import load_rules_for_language
+
+        rules = load_rules_for_language(lang, rules_dir())
+        for rule in rules.get("anti_patterns", []):
+            if not isinstance(rule, dict):
+                continue
+            pattern = rule.get("pattern", "")
+            if pattern and re.search(str(pattern), line):
+                return rule
+    except Exception:
+        _ = None  # rule lookup failed
+    return None
+
+
+def _setup_hover(server: LanguageServer) -> None:
+    """Set up textDocument/hover handler."""
 
     @server.feature("textDocument/hover")
     def hover(params: HoverParams) -> Hover | None:
         """Show rule info on hover."""
         document = server.workspace.get_document(params.text_document.uri)
         content = document.source
-        line = content.splitlines()[params.position.line] if params.position.line < len(content.splitlines()) else ""
+        lines = content.splitlines()
+        line = lines[params.position.line] if params.position.line < len(lines) else ""
 
-        try:
-            from tools.scripts._common import rules_dir
+        ext = Path(params.text_document.uri).suffix.lower()
+        lang = EXT_LANG_MAP.get(ext)
+        if not lang:
+            return None
 
-            from .rule_loader import load_rules_for_language
-
-            ext = Path(params.text_document.uri).suffix.lower()
-            lang = EXT_LANG_MAP.get(ext)
-            if not lang:
-                return None
-            rules = load_rules_for_language(lang, rules_dir())
-            for rule in rules.get("anti_patterns", []):
-                pattern = rule.get("pattern", "")
-                if pattern and re.search(pattern, line):
-                    md = f"### {rule.get('name', '')}\n\n"
-                    md += f"**Rule ID:** `{rule.get('id', '')}`\n\n"
-                    md += f"**Severity:** {rule.get('severity', '')}\n\n"
-                    md += f"{rule.get('message', '')}\n\n"
-                    if rule.get("fix_hint"):
-                        md += f"**Fix:** {rule['fix_hint']}\n"
-                    return Hover(contents={"kind": "markdown", "value": md})
-        except Exception:
-            _ = None  # hover lookup failed
+        rule = _get_rule_for_line(line, lang)
+        if rule:
+            md = f"### {rule.get('name', '')}\n\n"
+            md += f"**Rule ID:** `{rule.get('id', '')}`\n\n"
+            md += f"**Severity:** {rule.get('severity', '')}\n\n"
+            md += f"{rule.get('message', '')}\n\n"
+            if rule.get("fix_hint"):
+                md += f"**Fix:** {rule['fix_hint']}\n"
+            return Hover(contents={"kind": "markdown", "value": md})
         return None
+
+
+def _create_code_action(rule: dict[str, Any], diag: Diagnostic, line_text: str, uri: str) -> CodeAction:
+    """Create a code action for a rule fix."""
+    return CodeAction(
+        title=f"Fix: {rule.get('name', rule.get('id', ''))}",
+        kind=CodeActionKind.QuickFix,
+        diagnostics=[diag],
+        edit={
+            "changes": {
+                uri: [
+                    TextEdit(
+                        range=Range(
+                            start=Position(line=diag.range.start.line, character=0),
+                            end=Position(line=diag.range.end.line, character=len(line_text)),
+                        ),
+                        new_text=line_text,  # Placeholder - actual fix requires pattern matching
+                    )
+                ]
+            }
+        },
+    )
+
+
+def _setup_code_actions(server: LanguageServer) -> None:
+    """Set up textDocument/codeAction handler."""
 
     @server.feature("textDocument/codeAction")
     def code_actions(params: CodeActionParams) -> list[CodeAction]:
@@ -221,37 +262,30 @@ def create_server() -> Any:
                 if not lang:
                     continue
                 rules = load_rules_for_language(lang, rules_dir())
+                lines = content.splitlines()
                 for rule in rules.get("anti_patterns", []):
                     if rule.get("id") == rule_id and rule.get("fix_hint"):
-                        # Get the full line text
-                        lines = content.splitlines()
                         line_text = lines[diag.range.start.line] if diag.range.start.line < len(lines) else ""
-                        new_line = line_text  # Placeholder - actual fix requires pattern matching
-                        actions.append(
-                            CodeAction(
-                                title=f"Fix: {rule.get('name', rule_id)}",
-                                kind=CodeActionKind.QuickFix,
-                                diagnostics=[diag],
-                                edit={
-                                    "changes": {
-                                        params.text_document.uri: [
-                                            TextEdit(
-                                                range=Range(
-                                                    start=Position(line=diag.range.start.line, character=0),
-                                                    end=Position(line=diag.range.end.line, character=len(line_text)),
-                                                ),
-                                                new_text=new_line,
-                                            )
-                                        ]
-                                    }
-                                },
-                            )
-                        )
+                        actions.append(_create_code_action(rule, diag, line_text, params.text_document.uri))
                         break
             except (FileNotFoundError, PermissionError):
                 _ = None  # file access error
 
         return actions
+
+
+def create_server() -> Any:
+    """Create and configure the ADG LSP server."""
+    if not HAS_PYGLS:
+        logger.info("Error: pygls required. Install: pip install pygls", file=sys.stderr)
+        sys.exit(1)
+
+    server = LanguageServer("adg-governance", "v1.0")
+
+    _setup_did_open(server)
+    _setup_did_change(server)
+    _setup_hover(server)
+    _setup_code_actions(server)
 
     return server
 

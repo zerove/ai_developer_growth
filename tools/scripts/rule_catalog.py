@@ -106,15 +106,10 @@ def matches(rule: dict[str, Any], query: str) -> bool:
     return query in text
 
 
-def search_rules(query: str) -> list[dict[str, Any]]:
-    """Search all rule sources for rules matching a query.
-
-    Returns list of dicts with pack, category, and rule data.
-    """
-    fw = framework_dir()
+def _search_common_rules(query: str) -> list[dict[str, Any]]:
+    """Search common rules (security)."""
     results: list[dict[str, Any]] = []
-
-    # Search common rules
+    fw = framework_dir()
     common_file = fw / "common" / "security.yml"
     if common_file.exists():
         with open(common_file) as f:
@@ -122,8 +117,13 @@ def search_rules(query: str) -> list[dict[str, Any]]:
         for rule in data.get("anti_patterns", []):
             if matches(rule, query):
                 results.append({"pack": "security", **rule})
+    return results
 
-    # Search language rules
+
+def _search_language_rules(query: str) -> list[dict[str, Any]]:
+    """Search language-specific rules."""
+    results: list[dict[str, Any]] = []
+    fw = framework_dir()
     langs_dir = fw / "languages"
     if langs_dir.exists():
         for lang_dir in sorted(langs_dir.iterdir()):
@@ -139,8 +139,13 @@ def search_rules(query: str) -> list[dict[str, Any]]:
                     for rule in data.get(category, []):
                         if matches(rule, query):
                             results.append({"pack": lang_dir.name, "category": category, **rule})
+    return results
 
-    # Search framework rules
+
+def _search_framework_rules(query: str) -> list[dict[str, Any]]:
+    """Search framework-specific rules."""
+    results: list[dict[str, Any]] = []
+    fw = framework_dir()
     frameworks_dir = fw / "frameworks"
     if frameworks_dir.exists():
         for fw_dir in sorted(frameworks_dir.iterdir()):
@@ -156,7 +161,18 @@ def search_rules(query: str) -> list[dict[str, Any]]:
                     for rule in data.get(category, []):
                         if matches(rule, query):
                             results.append({"pack": fw_dir.name, "category": category, **rule})
+    return results
 
+
+def search_rules(query: str) -> list[dict[str, Any]]:
+    """Search all rule sources for rules matching a query.
+
+    Returns list of dicts with pack, category, and rule data.
+    """
+    results: list[dict[str, Any]] = []
+    results.extend(_search_common_rules(query))
+    results.extend(_search_language_rules(query))
+    results.extend(_search_framework_rules(query))
     return results
 
 

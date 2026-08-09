@@ -168,17 +168,17 @@ graph TB
         EKS --> ElastiCache[(Redis)]
         EKS --> S3[S3 存储]
     end
-    
+
     subgraph GCP[GCP 分析/AI]
         BQ[BigQuery] --> Vertex[Vertex AI]
         PubSub[Pub/Sub] --> CloudRun[Cloud Run Workers]
     end
-    
+
     subgraph Azure[Azure 混合身份]
         Entra[Entra ID] --> Arc[Azure Arc]
         Arc --> OnPrem[(本地数据中心)]
     end
-    
+
     Users --> CF
     EKS -.->|数据同步| BQ
     Entra -.->|联合身份| EKS

@@ -35,8 +35,8 @@ difficulty: 进阶
 ---
 
 
-> **作者**: jcode  
-> **日期**: 2026-07-23  
+> **作者**: jcode
+> **日期**: 2026-07-23
 > **标签**: adg, quality, security, open-source, case-study
 
 ---
@@ -202,15 +202,15 @@ P3: 裸 except 吞掉异常
 
 约 15% 的 alert 是误报，主要模式：
 
-1. **测试文件中的硬编码密钥**（最常见）  
+1. **测试文件中的硬编码密钥**（最常见）
    → 修复: `exclude_patterns` 白名单机制 ✓ 已实现
 
-2. **兼容性代码中的 bare except**  
-   → 需要区分"确保兼容性"和"吞异常"的 intent  
+2. **兼容性代码中的 bare except**
+   → 需要区分"确保兼容性"和"吞异常"的 intent
    → 改进方向: 添加 `# noqa: ADGxxx` 注释豁免
 
-3. **元类/动态代码中的 eval**  
-   → Django 的 `Meta` 类使用 eval 是设计模式  
+3. **元类/动态代码中的 eval**
+   → Django 的 `Meta` 类使用 eval 是设计模式
    → 改进方向: 添加已知安全模式白名单
 
 ---
@@ -284,4 +284,3 @@ P3: 裸 except 吞掉异常
 - [x] 效率数据：包含传统人工审计 vs ADG 扫描的量化对比
 - [x] 关键洞察：5 条结论可复现（含扫描命令）
 - [x] 代码/文档链接：`adg scan <project-dir>` 可复现全部结果
-

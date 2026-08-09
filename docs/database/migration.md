@@ -78,13 +78,13 @@ depends_on = None
 def upgrade():
     # 1. 加列（可空，默认值）
     op.add_column('users', sa.Column('version', sa.Integer, nullable=True, server_default='1'))
-    
+
     # 2. 回填现有数据（大表分批）
     op.execute("UPDATE users SET version = 1 WHERE version IS NULL")
-    
+
     # 3. 设为非空
     op.alter_column('users', 'version', nullable=False, server_default=None)
-    
+
     # 4. 加索引（可选）
     op.create_index('ix_users_version', 'users', ['version'])
 
@@ -119,7 +119,7 @@ ALTER TABLE users DROP COLUMN phone;
 ALTER TABLE users ADD COLUMN full_name VARCHAR(100);
 
 -- 2. 回填（大表分批）
-UPDATE users SET full_name = CONCAT(first_name, ' ', last_name) 
+UPDATE users SET full_name = CONCAT(first_name, ' ', last_name)
 WHERE full_name IS NULL;
 
 -- 3. 代码双写：写入 first_name/last_name 的同时写 full_name
@@ -145,7 +145,7 @@ ALTER TABLE orders DROP COLUMN amount_old;
 ### 4.5 大表加索引（并发）
 ```sql
 -- PostgreSQL: CONCURRENTLY 不锁表
-CREATE INDEX CONCURRENTLY idx_orders_user_created 
+CREATE INDEX CONCURRENTLY idx_orders_user_created
 ON orders (user_id, created_at DESC);
 
 -- MySQL 8.0+: 算法 INPLACE
@@ -193,7 +193,7 @@ FOR EACH ROW EXECUTE FUNCTION sync_to_new();
 INSERT INTO users_new SELECT *, 1 FROM users;
 
 -- 4. 验证数据一致性
-SELECT COUNT(*), SUM(CASE WHEN u.id IS NULL THEN 1 ELSE 0 END) 
+SELECT COUNT(*), SUM(CASE WHEN u.id IS NULL THEN 1 ELSE 0 END)
 FROM users u FULL JOIN users_new n ON u.id = n.id;
 
 -- 5. 切换（重命名、视图、或应用层切换）

@@ -45,11 +45,11 @@ ruff check .
 
 def add(a: int, b: int) -> int:
     """两个数相加。
-    
+
     Args:
         a: 第一个数
         b: 第二个数
-        
+
     Returns:
         两数之和
     """

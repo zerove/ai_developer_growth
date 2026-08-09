@@ -188,15 +188,15 @@ AS
 BEGIN
     BEGIN TRY
         BEGIN TRANSACTION;
-        
+
         UPDATE accounts SET balance = balance - @amount WHERE account_id = @from_account;
         UPDATE accounts SET balance = balance + @amount WHERE account_id = @to_account;
-        
+
         IF @@ROWCOUNT = 0
         BEGIN
             RAISERROR('Account not found', 16, 1);
         END
-        
+
         COMMIT;
     END TRY
     BEGIN CATCH

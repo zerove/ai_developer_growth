@@ -53,28 +53,28 @@ project/
 @RequestMapping('/api/users')
 @RequiredArgsConstructor
 public class UserController {
-    
+
     private final UserService userService;
-    
+
     // ✅ 正确
     @GetMapping
     public ResponseEntity<List<UserDTO>> listUsers() {
         return ResponseEntity.ok(userService.findAll());
     }
-    
+
     @GetMapping("/{id}")
     public ResponseEntity<UserDTO> getUser(@PathVariable String id) {
         return userService.findById(id)
             .map(ResponseEntity::ok)
             .orElse(ResponseEntity.notFound().build());
     }
-    
+
     @PostMapping
     public ResponseEntity<UserDTO> createUser(@Valid @RequestBody CreateUserDTO dto) {
         UserDTO created = userService.create(dto);
         return ResponseEntity.status(HttpStatus.CREATED).body(created);
     }
-    
+
     @PutMapping("/{id}")
     public ResponseEntity<UserDTO> updateUser(
         @PathVariable String id,
@@ -84,7 +84,7 @@ public class UserController {
             .map(ResponseEntity::ok)
             .orElse(ResponseEntity.notFound().build());
     }
-    
+
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteUser(@PathVariable String id) {
         if (userService.delete(id)) {
@@ -129,34 +129,34 @@ public class UserController {
 @RequiredArgsConstructor
 @Transactional
 public class UserServiceImpl implements UserService {
-    
+
     private final UserRepository userRepository;
     private final UserMapper userMapper;
-    
+
     @Override
     public List<UserDTO> findAll() {
         return userRepository.findAll().stream()
             .map(userMapper::toDTO)
             .toList();
     }
-    
+
     @Override
     public Optional<UserDTO> findById(String id) {
         return userRepository.findById(id)
             .map(userMapper::toDTO);
     }
-    
+
     @Override
     public UserDTO create(CreateUserDTO dto) {
         if (userRepository.existsByEmail(dto.getEmail())) {
             throw new BusinessException("Email already exists");
         }
-        
+
         User user = userMapper.toEntity(dto);
         User saved = userRepository.save(user);
         return userMapper.toDTO(saved);
     }
-    
+
     @Override
     @Transactional(readOnly = true)
     public boolean existsByEmail(String email) {
@@ -173,12 +173,12 @@ public class UserServiceImpl implements UserService {
 
 ```java
 public interface UserRepository extends JpaRepository<User, String> {
-    
+
     // ✅ 正确: 方法命名查询
     Optional<User> findByEmail(String email);
     boolean existsByEmail(String email);
     List<User> findByRole(Role role);
-    
+
     // ✅ 正确: JPQL 查询
     @Query("SELECT u FROM User u WHERE u.createdAt > :date")
     List<User> findRecentUsers(@Param("date") LocalDateTime date);
@@ -194,21 +194,21 @@ public interface UserRepository extends JpaRepository<User, String> {
 ```java
 @RestControllerAdvice
 public class GlobalExceptionHandler {
-    
+
     @ExceptionHandler(NotFoundException.class)
     public ResponseEntity<ErrorResponse> handleNotFound(NotFoundException ex) {
         return ResponseEntity
             .status(HttpStatus.NOT_FOUND)
             .body(new ErrorResponse(ex.getMessage()));
     }
-    
+
     @ExceptionHandler(ValidationException.class)
     public ResponseEntity<ErrorResponse> handleValidation(ValidationException ex) {
         return ResponseEntity
             .badRequest()
             .body(new ErrorResponse(ex.getMessage()));
     }
-    
+
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ErrorResponse> handleGeneral(Exception ex) {
         return ResponseEntity
@@ -227,28 +227,28 @@ public class GlobalExceptionHandler {
 ```java
 @ExtendWith(MockitoExtension.class)
 class UserServiceTest {
-    
+
     @Mock
     private UserRepository userRepository;
-    
+
     @Mock
     private UserMapper userMapper;
-    
+
     @InjectMocks
     private UserServiceImpl userService;
-    
+
     @Test
     void shouldReturnUserWhenFound() {
         // Given
         User user = new User("1", "test@example.com");
         UserDTO dto = new UserDTO("1", "test@example.com");
-        
+
         when(userRepository.findById("1")).thenReturn(Optional.of(user));
         when(userMapper.toDTO(user)).thenReturn(dto);
-        
+
         // When
         Optional<UserDTO> result = userService.findById("1");
-        
+
         // Then
         assertThat(result).isPresent();
         assertThat(result.get().getEmail()).isEqualTo("test@example.com");
@@ -262,10 +262,10 @@ class UserServiceTest {
 @SpringBootTest
 @AutoConfigureMockMvc
 class UserControllerTest {
-    
+
     @Autowired
     private MockMvc mockMvc;
-    
+
     @Test
     void shouldReturnUser() throws Exception {
         mockMvc.perform(get("/api/users/1"))
@@ -285,7 +285,7 @@ class UserControllerTest {
 @Configuration
 @EnableWebMvc
 public class WebConfig implements WebMvcConfigurer {
-    
+
     @Override
     public void addCorsMappings(CorsRegistry registry) {
         registry.addMapping("/api/**")
@@ -318,9 +318,9 @@ public record AppProperties(
 @EnableWebSecurity
 @RequiredArgsConstructor
 public class SecurityConfig {
-    
+
     private final JwtAuthenticationFilter jwtFilter;
-    
+
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         return http

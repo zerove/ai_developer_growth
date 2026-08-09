@@ -86,19 +86,19 @@ agents:
   - name: knowledge-curator
     model: default
     tools: [python, bash, read, write, edit]
-    
+
   - name: governance-auditor
     model: default
     tools: [python, bash, read, write]
-    
+
   - name: governance-docs-validator
     model: default
     tools: [python, bash, read]
-    
+
   - name: workflow-optimizer
     model: default
     tools: [python, bash, read, write]
-    
+
   - name: community-catalyst
     model: default
     tools: [python, bash, read, write, edit]

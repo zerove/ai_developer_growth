@@ -82,8 +82,8 @@ AI 可能会引导你走向一些看似快捷但难以维护的路径：
 ```typescript
 // 推荐模式
 const className = cn(
-  "base-styles", 
-  isActive && "active-styles", 
+  "base-styles",
+  isActive && "active-styles",
   variant === 'primary' ? "bg-blue-500" : "bg-gray-500"
 );
 ```

@@ -34,9 +34,29 @@ SYSTEM_PROMPT = (
 )
 
 
+def _get_llm_config() -> dict[str, str]:
+    """获取 LLM 配置：环境变量 > 配置 > 默认值。"""
+    try:
+        from tools.scripts.app_config import get_setting
+
+        # 环境变量优先
+        provider: str = os.getenv("LLM_PROVIDER") or str(get_setting("llm_provider", "openai"))
+        model: str = os.getenv("LLM_MODEL") or str(get_setting("llm_model", "gpt-4o"))
+        return {
+            "provider": provider,
+            "model": model,
+        }
+    except Exception:
+        return {
+            "provider": os.getenv("LLM_PROVIDER", "openai"),
+            "model": os.getenv("LLM_MODEL", "gpt-4o"),
+        }
+
+
 def generate_from_llm(title: str, brief: str) -> str:
     llm_cls = _get_llm_client()
-    llm = llm_cls(provider=os.getenv("LLM_PROVIDER", "openai"), model=os.getenv("LLM_MODEL", "gpt-4o"))
+    config = _get_llm_config()
+    llm = llm_cls(provider=config["provider"], model=config["model"])
     prompt = (
         f"Generate an Architecture Decision Record for:\n"
         f"Title: {title}\n"

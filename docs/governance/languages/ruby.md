@@ -58,7 +58,7 @@ end
 ```ruby
 class AppError < StandardError
   attr_reader :code
-  
+
   def initialize(message, code)
     super(message)
     @code = code
@@ -67,7 +67,7 @@ end
 
 class ValidationException < AppError
   attr_reader :field
-  
+
   def initialize(field, message)
     super(message, 'VALIDATION_ERROR')
     @field = field
@@ -157,13 +157,13 @@ results = ractors.map(&:take)
 ```ruby
 RSpec.describe UserService do
   let(:service) { described_class.new }
-  
+
   describe '#get_user' do
     it 'returns user when found' do
       user = service.get_user('123')
       expect(user.id).to eq('123')
     end
-    
+
     it 'raises when not found' do
       expect { service.get_user('nonexistent') }
         .to raise_error(NotFoundException)
@@ -178,12 +178,12 @@ end
 RSpec.describe UserService do
   let(:repository) { instance_double(UserRepository) }
   let(:service) { described_class.new(repository) }
-  
+
   it 'gets user' do
     allow(repository).to receive(:find_by_id)
       .with('123')
       .and_return(User.new('123'))
-    
+
     user = service.get_user('123')
     expect(user).not_to be_nil
     expect(repository).to have_received(:find_by_id).with('123')

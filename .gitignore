@@ -36,6 +36,14 @@ tools/.cache/
 .quality-trends/*
 !.quality-trends/.gitkeep
 
+# Mutation testing workspace (regenerated on demand)
+mutants/
+setup.cfg
+
+# Tool reports (regenerated on demand)
+diff-cover-report.html
+bandit-report.json
+
 # IDE
 .vscode/
 .idea/
@@ -61,6 +69,7 @@ tools/.cache/
 !.jcode/scripts/
 !.jcode/mode_decision.conf
 !.jcode/USAGE.md
+!.jcode/ignored-rules.toml
 
 # OpenCode (internal state)
 .opencode/
@@ -69,3 +78,10 @@ tools/.cache/
 site/
 # uv package manager lockfile
 uv.lock
+tools/scripts/rules_engine/*.bak
+
+# SQLite 统一存储数据库（运行时生成）
+*.db
+*.db-wal
+*.db-shm
+debug_mutmut.py

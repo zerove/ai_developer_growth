@@ -159,7 +159,7 @@ class UserServiceTest extends AnyFunSuite {
     val user = service.getUser("123")
     assert(user.id == "123")
   }
-  
+
   test("getUser throws when not found") {
     val service = new UserService()
     assertThrows[NotFoundException] {
@@ -215,7 +215,7 @@ project/
 val apiKey = "YOUR_API_KEY_HERE"
 
 // ✅ 正确
-val apiKey = sys.env.getOrElse("API_KEY", 
+val apiKey = sys.env.getOrElse("API_KEY",
   throw new RuntimeException("API_KEY not set"))
 ```
 

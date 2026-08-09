@@ -69,8 +69,8 @@ python tools/scripts/validate_case_study.py --path docs/<category>/<filename>.md
 ## 📝 审查重点
 
 请重点关注：
-1. 
-2. 
+1.
+2.
 
 ---
 

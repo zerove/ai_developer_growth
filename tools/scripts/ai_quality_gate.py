@@ -17,7 +17,7 @@ import sys
 from pathlib import Path
 from typing import Any
 
-from tools.scripts.rules_engine import check_directory
+from tools.scripts.rules_engine import CheckResult, check_directory
 
 # ──────────────────────────────────────────────────────────
 # 向后兼容函数（供 tests/test_enforcement.py 和 test_enforcement_supplement.py 使用）
@@ -281,8 +281,8 @@ def check_file(filepath: Path, checks: list[str]) -> dict[str, Any]:
     return result
 
 
-def main() -> None:
-    """主函数"""
+def _parse_args() -> argparse.Namespace:
+    """Parse command line arguments."""
     parser = argparse.ArgumentParser(description="AI 代码质量门禁")
     parser.add_argument("--path", type=Path, help="检查指定目录")
     parser.add_argument("--file", type=Path, help="检查单个文件")
@@ -296,9 +296,11 @@ def main() -> None:
     parser.add_argument("--check-language-rules", action="store_true", help="检查语言特定规则 (21种语言)")
     parser.add_argument("--lang", help="指定语言 (配合 --check-language-rules)")
     parser.add_argument("--format", choices=["text", "json"], default="text", help="输出格式")
-    args = parser.parse_args()
+    return parser.parse_args()
 
-    # 确定检查项
+
+def _determine_checks(args: argparse.Namespace) -> list[str]:
+    """Determine which checks to run based on args."""
     checks = []
     if args.full or args.check_patterns:
         checks = ["annotation", "security", "type", "error", "structure", "language_rules"]
@@ -318,14 +320,11 @@ def main() -> None:
 
     if not checks:
         checks = ["annotation", "security", "type", "error"]
+    return checks
 
-    print("=" * 60)
-    print("  AI 代码质量门禁 (rules_engine v1.0.0)")
-    print("=" * 60)
-    print(f"  检查项: {', '.join(checks)}")
-    print("=" * 60)
 
-    # 收集文件
+def _collect_files(args: argparse.Namespace) -> list[Path]:
+    """Collect files to check based on args."""
     files_to_check = []
     if args.file:
         files_to_check = [args.file]
@@ -357,45 +356,42 @@ def main() -> None:
             "*.dart",
             "*.ps1",
         ]
-        files_to_check = []
         for ext in exts:
             files_to_check.extend(args.path.rglob(ext))
     else:
         files_to_check = list(Path("tools/scripts").rglob("*.py"))
 
-    # 过滤文件
-    filtered_files = [f for f in files_to_check if "__pycache__" not in str(f) and ".git" not in str(f)]
+    return [f for f in files_to_check if "__pycache__" not in str(f) and ".git" not in str(f)]
 
-    if not filtered_files:
-        print("  未找到可检查的文件")
-        sys.exit(0)
 
-    # 运行检查
+def _run_checks(args: argparse.Namespace, filtered_files: list[Path]) -> list[CheckResult]:
+    """Run quality checks on filtered files."""
     if args.path:
-        results = check_directory(args.path)
-    else:
-        from tools.scripts.rules_engine import check_file
+        return check_directory(args.path)
 
-        results = []
-        for filepath in filtered_files:
-            lang = args.lang
-            if not lang:
-                from tools.scripts.validate_language_rules import detect_language_from_file
+    from tools.scripts.rules_engine import check_file
+    from tools.scripts.validate_language_rules import detect_language_from_file
 
-                lang = detect_language_from_file(filepath)
-            result = check_file(filepath, language=lang)
-            if not result.skipped:
-                results.append(result)
+    results: list[CheckResult] = []
+    for filepath in filtered_files:
+        lang = args.lang
+        if not lang:
+            lang = detect_language_from_file(filepath)
+        result = check_file(filepath, language=lang)
+        if not result.skipped:
+            results.append(result)
+    return results
 
-    # 统计结果
+
+def _print_results(results: list[CheckResult], format_type: str) -> int:
+    """Print results and return exit code."""
     passed = sum(1 for r in results if r.passed)
     failed = sum(1 for r in results if not r.passed)
     total_issues = sum(len(r.issues) for r in results)
     total_errors = sum(r.error_count for r in results)
     total_warnings = sum(r.warning_count for r in results)
 
-    # 输出结果
-    if args.format == "json":
+    if format_type == "json":
         import json
 
         output = {
@@ -411,7 +407,6 @@ def main() -> None:
         }
         print(json.dumps(output, indent=2, ensure_ascii=False))
     else:
-        # 文本格式输出
         for result in results:
             if result.passed:
                 print(f"✅ {result.file}")
@@ -428,7 +423,28 @@ def main() -> None:
         )
         print("=" * 60)
 
-    sys.exit(1 if failed > 0 else 0)
+    return 1 if failed > 0 else 0
+
+
+def main() -> None:
+    """主函数"""
+    args = _parse_args()
+    checks = _determine_checks(args)
+
+    print("=" * 60)
+    print("  AI 代码质量门禁 (rules_engine v1.0.0)")
+    print("=" * 60)
+    print(f"  检查项: {', '.join(checks)}")
+    print("=" * 60)
+
+    filtered_files = _collect_files(args)
+    if not filtered_files:
+        print("  未找到可检查的文件")
+        sys.exit(0)
+
+    results = _run_checks(args, filtered_files)
+    exit_code = _print_results(results, args.format)
+    sys.exit(exit_code)
 
 
 if __name__ == "__main__":

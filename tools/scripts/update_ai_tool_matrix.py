@@ -11,6 +11,7 @@ Usage:
     python update_ai_tool_matrix.py --generate-report # Generate update report
 """
 
+import argparse
 import asyncio
 import json
 import logging
@@ -106,7 +107,11 @@ class ToolMatrixUpdater:
 
     def _parse_matrix(self) -> None:
         """Extract tool and model info from markdown."""
-        # Parse models table
+        self._parse_models()
+        self._parse_tools()
+
+    def _parse_models(self) -> None:
+        """Parse models table from markdown."""
         model_pattern = r"\|\s*(\*\*.+?\*\*)\s*\|\s*(.+?)\s*\|\s*(.+?)\s*\|\s*(.+?)\s*\|\s*(\⭐+)"
         for match in re.finditer(model_pattern, self.matrix_content):
             name = match.group(1).strip("*")
@@ -128,7 +133,8 @@ class ToolMatrixUpdater:
                 pricing_tier=f"{stars}/5",
             )
 
-        # Parse tools table
+    def _parse_tools(self) -> None:
+        """Parse tools table from markdown."""
         tool_pattern = r"\|\s*(.+?)\s*\|\s*(.+?)\s*\|\s*(.+?)\s*\|\s*(.+?)\s*\|\s*(.+?)\s*\|"
         in_tools_section = False
         for line in self.matrix_content.split("\n"):
@@ -374,9 +380,8 @@ class ToolMatrixUpdater:
         return changed
 
 
-async def main() -> int:
-    import argparse
-
+async def _parse_args() -> argparse.Namespace:
+    """Parse command line arguments."""
     parser = argparse.ArgumentParser(description="AI Tool Matrix Updater")
     parser.add_argument("--check", action="store_true", help="Check for updates only")
     parser.add_argument("--update", action="store_true", help="Apply updates to matrix")
@@ -387,29 +392,52 @@ async def main() -> int:
 
     if not any([args.check, args.update, args.report]):
         parser.print_help()
+    return args
+
+
+async def _run_checks(updater: ToolMatrixUpdater) -> None:
+    """Run all update checks."""
+    await updater.check_model_updates()
+    updater._check_cli_versions()
+
+
+async def _handle_report(updater: ToolMatrixUpdater, args: argparse.Namespace) -> None:
+    """Generate and output report."""
+    report = updater.generate_report()
+    if args.output:
+        Path(args.output).write_text(report, encoding="utf-8")
+        logger.info(f"Report saved to {args.output}")
+    else:
+        print(report)
+
+
+async def _handle_update(updater: ToolMatrixUpdater) -> None:
+    """Handle matrix update."""
+    changed = updater.update_matrix()
+    if changed:
+        logger.info("Matrix updated successfully")
+    else:
+        logger.info("No changes needed")
+
+
+async def main() -> int:
+    """Main entry point for AI Tool Matrix Updater."""
+    args = await _parse_args()
+
+    if not any([args.check, args.update, args.report]):
         return 0
 
     updater = ToolMatrixUpdater()
     updater.load_matrix()
 
     # Check versions
-    await updater.check_model_updates()
-    updater._check_cli_versions()
+    await _run_checks(updater)
 
     if args.report or args.check:
-        report = updater.generate_report()
-        if args.output:
-            Path(args.output).write_text(report, encoding="utf-8")
-            logger.info(f"Report saved to {args.output}")
-        else:
-            print(report)
+        await _handle_report(updater, args)
 
     if args.update:
-        changed = updater.update_matrix()
-        if changed:
-            logger.info("Matrix updated successfully")
-        else:
-            logger.info("No changes needed")
+        await _handle_update(updater)
 
     return 0
 

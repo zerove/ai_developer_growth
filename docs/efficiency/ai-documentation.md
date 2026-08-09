@@ -61,11 +61,11 @@ AI 文档 = 代码/需求 + 文档模板 + 智能生成
 def process_order(order_id: int, user_id: int) -> dict:
     """
     处理订单
-    
+
     Args:
         order_id: 订单 ID
         user_id: 用户 ID
-    
+
     Returns:
         dict: 处理结果
     """

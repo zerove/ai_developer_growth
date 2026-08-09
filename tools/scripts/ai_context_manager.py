@@ -19,12 +19,35 @@ def save_context(content: str) -> None:
         f.write(content)
 
 
+def _get_llm_config() -> dict[str, str]:
+    """获取 LLM 配置：环境变量 > 配置 > 默认值。"""
+    try:
+        from tools.scripts.app_config import get_setting
+
+        # 环境变量优先
+        api_key: str = os.getenv("OPENAI_API_KEY") or str(get_setting("openai_api_key", ""))
+        api_base: str = os.getenv("OPENAI_API_BASE") or str(get_setting("openai_api_base", "https://api.openai.com/v1"))
+        model: str = os.getenv("LLM_MODEL") or str(get_setting("llm_model", "gpt-4o"))
+        return {
+            "api_key": api_key,
+            "api_base": api_base,
+            "model": model,
+        }
+    except Exception:
+        return {
+            "api_key": os.getenv("OPENAI_API_KEY", ""),
+            "api_base": os.getenv("OPENAI_API_BASE", "https://api.openai.com/v1"),
+            "model": os.getenv("LLM_MODEL", "gpt-4o"),
+        }
+
+
 def update_context_with_llm(current_context: str, changes: str) -> str:
-    api_key = os.getenv("OPENAI_API_KEY")
-    api_base = os.getenv("OPENAI_API_BASE", "https://api.openai.com/v1")
+    config = _get_llm_config()
+    api_key = config["api_key"]
+    api_base = config["api_base"]
 
     if not api_key:
-        print("错误: 请设置环境变量 OPENAI_API_KEY")
+        print("错误: 请设置环境变量 OPENAI_API_KEY 或在 [tool.adg] 中配置 openai_api_key")
         sys.exit(1)
 
     client = OpenAI(api_key=api_key, base_url=api_base)

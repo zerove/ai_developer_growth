@@ -5,6 +5,7 @@ from __future__ import annotations
 import hashlib
 import json
 import sys
+from functools import lru_cache
 from pathlib import Path
 from typing import Any
 
@@ -83,10 +84,10 @@ def _save_disk_cache(cache: dict[str, Any]) -> None:
         pass
 
 
-def _rules_hash(language: str, framework_dir: Path | None = None) -> str:
-    """Hash of rule file for cache invalidation."""
-    if framework_dir is None:
-        framework_dir = rules_dir()
+@lru_cache(maxsize=64)
+def _rules_hash_cached(language: str, framework_dir_str: str) -> str:
+    """Hash of rule file for cache invalidation (cached per (language, dir))."""
+    framework_dir = Path(framework_dir_str)
     rule_path = framework_dir / "languages" / language / "rules.d" / "anti_patterns.yml"
     if not rule_path.exists():
         return ""
@@ -94,6 +95,66 @@ def _rules_hash(language: str, framework_dir: Path | None = None) -> str:
         return hashlib.sha256(rule_path.read_bytes()).hexdigest()
     except OSError:
         return ""
+
+
+@lru_cache(maxsize=4)
+def _load_common_rules_cached(framework_dir_str: str) -> dict[str, Any]:
+    """Load common cross-language rules (cached by framework dir)."""
+    framework_dir = Path(framework_dir_str)
+    common_path = framework_dir / "common" / "security.yml"
+    if not common_path.exists():
+        return {}
+    try:
+        import yaml
+
+        with open(common_path) as f:
+            data = yaml.safe_load(f)
+        return data if isinstance(data, dict) else {}
+    except Exception:
+        return {}
+
+
+@lru_cache(maxsize=4)
+def _load_universal_rules_cached(framework_dir_str: str) -> dict[str, Any]:
+    """Load universal quality rules (cached by framework dir)."""
+    framework_dir = Path(framework_dir_str)
+    result: dict[str, Any] = {"anti_patterns": [], "thresholds": {}, "naming": {}}
+    universal_path = framework_dir / "common" / "universal.yml"
+    if universal_path.exists():
+        try:
+            import yaml
+
+            with open(universal_path) as f:
+                data = yaml.safe_load(f)
+            if isinstance(data, dict):
+                result = data
+        except Exception:
+            _ = None  # universal rules optional
+    common = _load_common_rules_cached(framework_dir_str)
+    if common:
+        result = _merge_rules(result, common)
+    return result
+
+
+def _rules_hash(language: str, framework_dir: Path | None = None) -> str:
+    """Hash of rule file for cache invalidation (delegates to cached impl)."""
+    if framework_dir is None:
+        framework_dir = rules_dir()
+    return _rules_hash_cached(language, str(framework_dir))
+
+
+def _load_common_rules(framework_dir: Path | None = None) -> dict[str, Any]:
+    """Load common cross-language rules (delegates to cached impl)."""
+    if framework_dir is None:
+        framework_dir = rules_dir()
+    return _load_common_rules_cached(str(framework_dir))
+
+
+def _load_universal_rules(framework_dir: Path | None = None) -> dict[str, Any]:
+    """Load universal quality rules (delegates to cached impl)."""
+    if framework_dir is None:
+        framework_dir = rules_dir()
+    return _load_universal_rules_cached(str(framework_dir))
 
 
 def _load_cache(cache_file: Path) -> dict[str, str]:
@@ -115,6 +176,61 @@ def _save_cache(cache_file: Path, cache: dict[str, str]) -> None:
         pass
 
 
+def _try_load_yaml(rule_path: Path, framework_dir: Path) -> dict[str, Any] | None:
+    """Try to load rules from YAML file, return None if failed."""
+    try:
+        import yaml
+    except ImportError:
+        # PyYAML not available - use universal rules
+        logger.info("Warning: PyYAML not installed. Using universal rules.", file=sys.stderr)
+        return None
+
+    if not rule_path.exists():
+        return None
+
+    try:
+        with open(rule_path) as f:
+            data = yaml.safe_load(f)
+    except Exception:
+        return None
+
+    result = data if isinstance(data, dict) else {}
+
+    # Load common cross-language rules
+    common = _load_common_rules(framework_dir)
+    if common:
+        result = _merge_rules(result, common)
+
+    # Load generated rules (from /generate-rules skill)
+    # Note: language detection would be needed here, but we don't have it
+    # This is handled at the call site
+
+    return result
+
+
+def _load_language_rules_with_fallback(language: str, framework_dir: Path) -> dict[str, Any]:
+    """Load rules for a language with fallback strategies."""
+    rule_path = framework_dir / "languages" / language / "rules.d" / "anti_patterns.yml"
+
+    # Try to load from YAML file
+    result = _try_load_yaml(rule_path, framework_dir)
+    if result is not None:
+        return result
+
+    # Language not in our database - try generated rules, then universal
+    generated = _load_generated_rules(language)
+    if generated:
+        logger.info(f"Loaded {len(generated)} generated rules for '{language}'.")
+        result = {"anti_patterns": generated}
+        common = _load_common_rules(framework_dir)
+        if common:
+            result = _merge_rules(result, common)
+        return result
+
+    logger.info(f"No specific rules for '{language}', using universal quality rules.", file=sys.stderr)
+    return _load_universal_rules(framework_dir)
+
+
 def load_rules(language: str, framework_dir: Path | None = None) -> dict[str, Any]:
     """Load YAML rules for a given language with caching."""
     # Check in-memory cache
@@ -130,40 +246,11 @@ def load_rules(language: str, framework_dir: Path | None = None) -> dict[str, An
         cached: dict[str, Any] = disk_cache[cache_key]
         return cached
 
-    try:
-        import yaml
-    except ImportError:
-        # PyYAML not available - use universal rules
-        logger.info("Warning: PyYAML not installed. Using universal rules.", file=sys.stderr)
-        return _load_universal_rules(framework_dir)
-
     if framework_dir is None:
         framework_dir = rules_dir()
 
-    rule_path = framework_dir / "languages" / language / "rules.d" / "anti_patterns.yml"
-
-    if not rule_path.exists():
-        # Language not in our database - try generated rules, then universal
-        generated = _load_generated_rules(language)
-        if generated:
-            logger.info(f"Loaded {len(generated)} generated rules for '{language}'.")
-            result: dict[str, Any] = {"anti_patterns": generated}
-            common = _load_common_rules(framework_dir)
-            if common:
-                result = _merge_rules(result, common)
-            return result
-        logger.info(f"No specific rules for '{language}', using universal quality rules.", file=sys.stderr)
-        return _load_universal_rules(framework_dir)
-
-    with open(rule_path) as f:
-        data = yaml.safe_load(f)
-
-    result = data if isinstance(data, dict) else {}
-
-    # Load common cross-language rules
-    common = _load_common_rules(framework_dir)
-    if common:
-        result = _merge_rules(result, common)
+    # Load rules with fallback strategies
+    result = _load_language_rules_with_fallback(language, framework_dir)
 
     # Load generated rules (from /generate-rules skill)
     generated = _load_generated_rules(language)
@@ -305,24 +392,6 @@ def _merge_rules(base: dict[str, Any], custom: dict[str, Any]) -> dict[str, Any]
 # ──────────────────────────────────────────────────────────
 
 
-def _load_common_rules(framework_dir: Path | None = None) -> dict[str, Any]:
-    """Load common cross-language rules from common/security.yml."""
-    if framework_dir is None:
-        framework_dir = rules_dir()
-    common_path = framework_dir / "common" / "security.yml"
-    if not common_path.exists():
-        return {}
-
-    try:
-        import yaml
-
-        with open(common_path) as f:
-            data = yaml.safe_load(f)
-        return data if isinstance(data, dict) else {}
-    except Exception:
-        return {}
-
-
 def _get_embedded_rules(language: str) -> dict[str, Any]:
     """Fallback embedded rules when YAML files are unavailable."""
     common_anti_patterns: list[dict[str, Any]] = [
@@ -348,40 +417,6 @@ def _get_embedded_rules(language: str) -> dict[str, Any]:
     return {"anti_patterns": common_anti_patterns, "thresholds": {}, "naming": {}}
 
 
-def _load_universal_rules(framework_dir: Path | None = None) -> dict[str, Any]:
-    """Load universal quality rules for languages without specific rule sets.
-
-    These rules apply to ANY programming language — they catch common
-    cross-language issues like hardcoded secrets, empty catch blocks,
-    SQL injection patterns, and resource leaks.
-
-    Returns universal rules merged with common cross-language rules.
-    """
-    if framework_dir is None:
-        framework_dir = rules_dir()
-    result: dict[str, Any] = {"anti_patterns": [], "thresholds": {}, "naming": {}}
-
-    # 1. Load universal rules
-    universal_path = framework_dir / "common" / "universal.yml"
-    if universal_path.exists():
-        try:
-            import yaml
-
-            with open(universal_path) as f:
-                data = yaml.safe_load(f)
-            if isinstance(data, dict):
-                result = data
-        except (FileNotFoundError, json.JSONDecodeError):
-            _ = None  # cache file optional
-
-    # 2. Load and merge common cross-language rules (security, type, error)
-    common = _load_common_rules(framework_dir)
-    if common:
-        result = _merge_rules(result, common)
-
-    return result
-
-
 def load_rules_for_language(language: str, framework_dir: Path | None = None) -> dict[str, Any]:
     """Load rules for a language, merging with common security rules.
 
@@ -390,6 +425,42 @@ def load_rules_for_language(language: str, framework_dir: Path | None = None) ->
     all cross-language rules are consolidated in common/security.yml.
     """
     return load_rules(language, framework_dir)
+
+
+def _find_active_domains(project_path: Path) -> list[str]:
+    """Find active domains from project configuration files."""
+    config_sources = [
+        project_path / ".adg" / "config.yml",
+        project_path / ".jcode" / "config.yml",
+    ]
+
+    for config_path in config_sources:
+        if config_path.exists():
+            try:
+                import yaml
+
+                data = yaml.safe_load(config_path.read_text())
+                domains = data.get("domains", []) if isinstance(data, dict) else []
+                return list(domains) if isinstance(domains, list) else []
+            except Exception as exc:
+                logger.debug(f"Skipped unreadable domain config {config_path}: {exc}")
+    return []
+
+
+def _load_domain_rule_file(domains_dir: Path, domain: str) -> list[dict[str, Any]]:
+    """Load anti-patterns from a domain rule file."""
+    rule_file = domains_dir / f"{domain}.yml"
+    if not rule_file.exists():
+        return []
+
+    try:
+        import yaml
+
+        data = yaml.safe_load(rule_file.read_text())
+        patterns = data.get("anti_patterns", []) if isinstance(data, dict) else []
+        return list(patterns) if isinstance(patterns, list) else []
+    except Exception:
+        return []
 
 
 def load_domain_rules(project_path: Path, framework_dir: Path | None = None) -> dict[str, Any]:
@@ -410,35 +481,11 @@ def load_domain_rules(project_path: Path, framework_dir: Path | None = None) -> 
     fd = framework_dir or rules_dir()
     domains_dir = fd / "domains"
 
-    # Find project config (.adg/config.yml, .jcode/config.yml, pyproject.toml)
-    config_sources = [
-        project_path / ".adg" / "config.yml",
-        project_path / ".jcode" / "config.yml",
-    ]
-    active_domains: list[str] = []
-
-    for config_path in config_sources:
-        if config_path.exists():
-            try:
-                import yaml
-
-                data = yaml.safe_load(config_path.read_text())
-                active_domains = data.get("domains", [])
-                break
-            except Exception:
-                _ = None  # domain config optional
+    active_domains = _find_active_domains(project_path)
 
     for domain in active_domains:
-        rule_file = domains_dir / f"{domain}.yml"
-        if rule_file.exists():
-            try:
-                import yaml
-
-                data = yaml.safe_load(rule_file.read_text())
-                for p in data.get("anti_patterns", []):
-                    result["anti_patterns"].append(p)
-            except Exception:
-                _ = None  # skip malformed domain rules
+        patterns = _load_domain_rule_file(domains_dir, domain)
+        result["anti_patterns"].extend(patterns)
 
     return result
 

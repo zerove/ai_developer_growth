@@ -87,12 +87,12 @@ monitoring:
     - cpu_usage          # CPU 使用率
     - memory_usage       # 内存使用率
     - disk_usage         # 磁盘使用率
-  
+
   alerts:
     - name: high_error_rate
       condition: error_rate > 1%
       action: auto_rollback
-    
+
     - name: slow_response
       condition: p99_response_time > 500ms
       action: notify_team

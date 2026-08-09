@@ -142,87 +142,123 @@ class ContributorDashboard:
         except (subprocess.SubprocessError, ValueError, FileNotFoundError):
             return {"total_fix_commits": 0, "top_fixers": []}
 
+    def _add_header(self, lines: list[str]) -> None:
+        """Add dashboard header."""
+        date_str = datetime.now().strftime("%Y-%m-%d")
+        lines.append("# 📊 贡献者仪表板")
+        lines.append(f"> 生成时间: {date_str}")
+        lines.append("")
+
+    def _add_case_studies(self, lines: list[str], case_stats: dict[str, Any]) -> None:
+        """Add case studies section."""
+        lines.append("## 📚 案例研究统计")
+        lines.append(f"- **总数**: {case_stats['total']} 个真实案例")
+        lines.append(f"- **平均效率提升**: {case_stats['avg_boost']}x")
+        lines.append(f"- **最高效率提升**: {case_stats['max_boost']}x")
+        lines.append("")
+        lines.append("### 按项目类型分布")
+        for typ, count in sorted(case_stats["by_type"].items(), key=lambda x: -x[1]):
+            lines.append(f"- {typ}: {count}")
+        lines.append("")
+        lines.append("### 按 AI 工具栈分布")
+        for tool, count in sorted(case_stats["by_tool"].items(), key=lambda x: -x[1]):
+            lines.append(f"- {tool}: {count}")
+        lines.append("")
+
+    def _add_tool_matrix(self, lines: list[str], tool_stats: dict[str, Any]) -> None:
+        """Add tool matrix section."""
+        lines.append("## 🛠️ AI 工具矩阵")
+        lines.append(f"- **推荐 (✅)**: {tool_stats['recommended']} 个")
+        lines.append(f"- **稳定 (⚠️)**: {tool_stats['stable']} 个")
+        lines.append(f"- **遗留 (❌)**: {tool_stats['legacy']} 个")
+        lines.append("")
+
+    def _add_docs_coverage(self, lines: list[str], docs_stats: dict[str, Any]) -> None:
+        """Add docs coverage section."""
+        lines.append("## 📚 文档覆盖率")
+        lines.append(f"- **总文档数**: {docs_stats['total']}")
+        for cat, count in sorted(docs_stats["categories"].items(), key=lambda x: -x[1]):
+            lines.append(f"  - {cat}: {count}")
+        lines.append("")
+
+    def _add_contributors(self, lines: list[str], contrib_stats: dict[str, Any]) -> None:
+        """Add contributors section."""
+        lines.append("## 👥 贡献者排行榜")
+        for i, c in enumerate(contrib_stats["top_contributors"][:10], 1):
+            lines.append(f"{i}. **{c['name']}** - {c['commits']} commits")
+        lines.append("")
+        lines.append(f"**总贡献者**: {contrib_stats['total_contributors']} 人")
+        lines.append("")
+
+    def _add_quality_fixes(self, lines: list[str], fix_stats: dict[str, Any]) -> None:
+        """Add quality fixes section."""
+        if fix_stats["total_fix_commits"] > 0:
+            lines.append("## 🔧 质量修复统计")
+            lines.append(f"- **总修复提交**: {fix_stats['total_fix_commits']} 次")
+            lines.append("### 修复者排行:")
+            for f in fix_stats["top_fixers"][:5]:
+                lines.append(f"- {f['name']}: {f['fixes']} 次修复")
+            lines.append("")
+
+    def _add_footer(self, lines: list[str]) -> None:
+        """Add dashboard footer."""
+        lines.append("---")
+        lines.append("*由 `tools/scripts/contributor_dashboard.py` 自动生成*")
+
+    def _generate_markdown_dashboard(
+        self,
+        case_stats: dict[str, Any],
+        tool_stats: dict[str, Any],
+        contrib_stats: dict[str, Any],
+        docs_stats: dict[str, Any],
+        fix_stats: dict[str, Any],
+    ) -> str:
+        """Generate markdown format dashboard."""
+        lines: list[str] = []
+        self._add_header(lines)
+        self._add_case_studies(lines, case_stats)
+        self._add_tool_matrix(lines, tool_stats)
+        self._add_docs_coverage(lines, docs_stats)
+        self._add_contributors(lines, contrib_stats)
+        self._add_quality_fixes(lines, fix_stats)
+        self._add_footer(lines)
+        return "\n".join(lines)
+
+    def _generate_json_dashboard(
+        self,
+        case_stats: dict[str, Any],
+        tool_stats: dict[str, Any],
+        contrib_stats: dict[str, Any],
+        docs_stats: dict[str, Any],
+    ) -> str:
+        """Generate JSON format dashboard."""
+        date_str = datetime.now().strftime("%Y-%m-%d")
+        return json.dumps(
+            {
+                "generated_at": date_str,
+                "case_studies": case_stats,
+                "tool_matrix": tool_stats,
+                "contributors": contrib_stats,
+                "docs_coverage": docs_stats,
+            },
+            ensure_ascii=False,
+            indent=2,
+        )
+
     def generate_dashboard(self, output_format: str = "markdown") -> str:
         """生成仪表板"""
         case_stats = self.analyze_case_studies()
         tool_stats = self.analyze_tool_matrix()
         contrib_stats = self.analyze_contributors()
         docs_stats = self.analyze_docs_coverage()
-
-        date_str = datetime.now().strftime("%Y-%m-%d")
+        fix_stats = self.analyze_quality_fixes()
 
         if output_format == "markdown":
-            lines = []
-            lines.append("# 📊 贡献者仪表板")
-            lines.append(f"> 生成时间: {date_str}")
-            lines.append("")
-
-            # 案例研究统计
-            lines.append("## 📚 案例研究统计")
-            lines.append(f"- **总数**: {case_stats['total']} 个真实案例")
-            lines.append(f"- **平均效率提升**: {case_stats['avg_boost']}x")
-            lines.append(f"- **最高效率提升**: {case_stats['max_boost']}x")
-            lines.append("")
-            lines.append("### 按项目类型分布")
-            for typ, count in sorted(case_stats["by_type"].items(), key=lambda x: -x[1]):
-                lines.append(f"- {typ}: {count}")
-            lines.append("")
-            lines.append("### 按 AI 工具栈分布")
-            for tool, count in sorted(case_stats["by_tool"].items(), key=lambda x: -x[1]):
-                lines.append(f"- {tool}: {count}")
-            lines.append("")
-
-            # 工具矩阵
-            lines.append("## 🛠️ AI 工具矩阵")
-            lines.append(f"- **推荐 (✅)**: {tool_stats['recommended']} 个")
-            lines.append(f"- **稳定 (⚠️)**: {tool_stats['stable']} 个")
-            lines.append(f"- **遗留 (❌)**: {tool_stats['legacy']} 个")
-            lines.append("")
-
-            # 文档覆盖
-            lines.append("## 📚 文档覆盖率")
-            lines.append(f"- **总文档数**: {docs_stats['total']}")
-            for cat, count in sorted(docs_stats["categories"].items(), key=lambda x: -x[1]):
-                lines.append(f"  - {cat}: {count}")
-            lines.append("")
-
-            # 贡献者
-            lines.append("## 👥 贡献者排行榜")
-            for i, c in enumerate(contrib_stats["top_contributors"][:10], 1):
-                lines.append(f"{i}. **{c['name']}** - {c['commits']} commits")
-            lines.append("")
-            lines.append(f"**总贡献者**: {contrib_stats['total_contributors']} 人")
-            lines.append("")
-
-            # 质量修复统计
-            fix_stats = self.analyze_quality_fixes()
-            if fix_stats["total_fix_commits"] > 0:
-                lines.append("## 🔧 质量修复统计")
-                lines.append(f"- **总修复提交**: {fix_stats['total_fix_commits']} 次")
-                lines.append("### 修复者排行:")
-                for f in fix_stats["top_fixers"][:5]:
-                    lines.append(f"- {f['name']}: {f['fixes']} 次修复")
-                lines.append("")
-
-            lines.append("---")
-            lines.append("*由 `tools/scripts/contributor_dashboard.py` 自动生成*")
-
-            return "\n".join(lines)
-
+            return self._generate_markdown_dashboard(case_stats, tool_stats, contrib_stats, docs_stats, fix_stats)
         elif output_format == "json":
-            return json.dumps(
-                {
-                    "generated_at": date_str,
-                    "case_studies": case_stats,
-                    "tool_matrix": tool_stats,
-                    "contributors": contrib_stats,
-                    "docs_coverage": docs_stats,
-                },
-                ensure_ascii=False,
-                indent=2,
-            )
-
-        return ""
+            return self._generate_json_dashboard(case_stats, tool_stats, contrib_stats, docs_stats)
+        else:
+            raise ValueError(f"Unsupported format: {output_format}")
 
 
 def main() -> None:

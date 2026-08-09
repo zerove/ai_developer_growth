@@ -735,11 +735,13 @@ class TestContributorDashboard:
         assert "case_studies" in data
 
     def test_generate_dashboard_unknown(self, tmp_path: Path) -> None:
+        import pytest
+
         from tools.scripts.contributor_dashboard import ContributorDashboard
 
         d = ContributorDashboard(tmp_path)
-        result = d.generate_dashboard("unknown")
-        assert result == ""
+        with pytest.raises(ValueError, match="Unsupported format"):
+            d.generate_dashboard("unknown")
 
     def test_main(self, tmp_path: Path) -> None:
         from tools.scripts.contributor_dashboard import main

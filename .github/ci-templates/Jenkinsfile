@@ -7,14 +7,14 @@ pipeline {
             image 'python:3.12-slim'
         }
     }
-    
+
     stages {
         stage('Setup') {
             steps {
                 sh 'pip install ruff && pip install -e .'
             }
         }
-        
+
         stage('ADG Governance Check') {
             steps {
                 sh 'adg check . --severity error --json > adg-report.json || true'
@@ -28,7 +28,7 @@ pipeline {
             }
         }
     }
-    
+
     post {
         failure {
             echo 'ADG Governance check failed. See report for details.'

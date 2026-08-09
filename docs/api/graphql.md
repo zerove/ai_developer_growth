@@ -77,7 +77,7 @@ from graphql import ValidationRule
 class DepthLimitRule(ValidationRule):
     def __init__(self, max_depth=5):
         self.max_depth = max_depth
-    
+
     # 实现深度检查
 ```
 
@@ -207,7 +207,7 @@ async def test_get_user():
         }
     }
     '''
-    
+
     async with AsyncClient(app=app, base_url='http://test') as client:
         response = await client.post(
             '/graphql',
@@ -230,7 +230,7 @@ async def test_create_user():
         }
     }
     '''
-    
+
     variables = {
         'input': {
             'email': 'test@example.com',
@@ -238,7 +238,7 @@ async def test_create_user():
             'password': 'secret123'
         }
     }
-    
+
     async with AsyncClient(app=app, base_url='http://test') as client:
         response = await client.post(
             '/graphql',

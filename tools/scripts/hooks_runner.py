@@ -105,6 +105,17 @@ Examples:
     ga_parser.add_argument("--audit-hallucination", action="store_true", help="Audit hallucination risks")
     ga_parser.add_argument("--check-index", action="store_true", help="Check index references")
 
+    dv_parser = subparsers.add_parser(
+        "docs-validate", help="治理文档验证统一入口（validate/check-index/sync-refs/full）"
+    )
+    dv_parser.add_argument(
+        "action2",
+        nargs="?",
+        default="validate",
+        choices=["validate", "check-index", "sync-refs", "full"],
+        help="验证动作",
+    )
+
     diff_parser = subparsers.add_parser("diff", help="Incremental check: only changed files vs base ref")
     diff_parser.add_argument("--base", default="HEAD", help="Git ref to diff against (default: HEAD)")
 
@@ -513,6 +524,28 @@ def _handle_dashboard(args: argparse.Namespace) -> int:
     return 0
 
 
+def _handle_docs_validate(args: argparse.Namespace) -> int:
+    """治理文档验证统一入口：validate/check-index/sync-refs/full。"""
+    import subprocess as _subprocess
+
+    action = getattr(args, "action2", "validate")
+    result = _subprocess.run(
+        [
+            sys.executable,
+            str(Path(__file__).resolve().parent.parent.parent / ".jcode" / "scripts" / "governance-docs-validator.py"),
+            action,
+        ],
+        capture_output=True,
+        text=True,
+        timeout=120,
+    )
+    if result.stdout:
+        print(result.stdout, end="")
+    if result.stderr:
+        print(result.stderr, end="")
+    return result.returncode
+
+
 def _dispatch(args: argparse.Namespace) -> int:
     """Dispatch the parsed command to the appropriate handler."""
     cmd = args.command
@@ -536,6 +569,7 @@ def _dispatch(args: argparse.Namespace) -> int:
         "install-hooks": _handle_install_hooks,
         "learn": _handle_learn,
         "dashboard": _handle_dashboard,
+        "docs-validate": _handle_docs_validate,
         "full": lambda a: _run_full(),
     }
 

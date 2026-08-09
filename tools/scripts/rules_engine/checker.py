@@ -8,13 +8,44 @@ from typing import Any
 from tools.scripts._common import rules_dir, run_command
 
 from .anti_pattern_checker import check_anti_patterns
-from .ast_parser import FileAST
 from .complexity_checker import check_js_complexity, check_python_complexity
 from .context import adjust_severity, detect_file_role
 from .models import CheckResult, Issue
 from .naming_checker import check_naming_conventions
 from .plugins import get_plugins_for_language
 from .rule_loader import load_rules_for_language
+
+# Worker 进程内共享的规则缓存（由 _worker_init 注入）
+_WORKER_RULES: dict[str, Any] = {}
+
+
+def _worker_init(shared_rules: dict[str, Any] | None) -> None:
+    """Worker 进程初始化：注入共享规则，避免每文件重复加载。
+
+    通过 ProcessPoolExecutor 的 initializer 调用，仅在 worker 进程中执行。
+    """
+    global _WORKER_RULES
+    _WORKER_RULES = shared_rules or {}
+
+
+def _worker_check(
+    pair: tuple[Path, str],
+    do_semantic: bool = False,
+    do_linters: bool = True,
+) -> CheckResult | None:
+    """Worker 任务：使用预热规则执行单文件检查（模块级，可被 pickle）。"""
+    fp, lang = pair
+    result = check_file(
+        fp,
+        _WORKER_RULES or None,
+        lang,
+        semantic=do_semantic,
+        run_linters=do_linters,
+    )
+    if result.skipped:
+        return None
+    return result
+
 
 # ── 框架检测 ──────────────────────────────────────────────
 
@@ -299,18 +330,27 @@ def check_directory(
             if not result.skipped:
                 results.append(result)
     else:
-        # Parallel execution
-        from concurrent.futures import ProcessPoolExecutor, as_completed
+        # Parallel execution with worker warm-up (shared rules, no re-load)
+        from collections.abc import Iterator
+        from concurrent.futures import ProcessPoolExecutor
 
-        with ProcessPoolExecutor(max_workers=jobs) as executor:
-            future_to_file = {
-                executor.submit(check_file, fp, rules, _detect_language(fp), semantic): fp for fp in files
-            }
-            for future in as_completed(future_to_file):
+        # 预热规则：在主进程加载一次，随后通过 initializer 传递给 worker，
+        # 避免每个任务内部重复读取 YAML / 解析规则文件
+        warmup_rules = rules or {}
+
+        pairs = [(fp, _detect_language(fp)) for fp in files]
+        with ProcessPoolExecutor(max_workers=jobs, initializer=_worker_init, initargs=(warmup_rules,)) as executor:
+            worker_results: Iterator[CheckResult | None] = executor.map(
+                _worker_check,
+                pairs,
+                [semantic] * len(pairs),
+                [run_linters] * len(pairs),
+                chunksize=16,
+            )
+            for worker_result in worker_results:
                 try:
-                    result = future.result()
-                    if not result.skipped:
-                        results.append(result)
+                    if worker_result is not None:
+                        results.append(worker_result)
                 except Exception:
                     _ = None  # skip failed check
 
@@ -346,83 +386,18 @@ def check_directory(
     return results
 
 
-def _check_unused_imports(filepath: Path, ast_result: FileAST) -> list[Issue]:
-    """Check for unused imports in the AST result."""
-    issues: list[Issue] = []
-    try:
-        content = filepath.read_text(encoding="utf-8")
-    except Exception:
-        return issues
-
-    for imp in ast_result.imports:
-        if imp.is_from and imp.names:
-            for name in imp.names:
-                # Skip wildcard imports
-                if name == "*":
-                    continue
-                if name not in content or content.count(name) <= 1:
-                    issues.append(
-                        Issue(
-                            file=str(filepath),
-                            line=imp.line,
-                            column=0,
-                            severity="warning",
-                            category="unused-import",
-                            rule_id="semantic-unused-import",
-                            message=f"Import '{name}' from '{imp.module}' appears unused",
-                        )
-                    )
-    return issues
-
-
-def _check_missing_docstrings(filepath: Path, ast_result: FileAST) -> list[Issue]:
-    """Check for missing docstrings on public functions."""
-    issues: list[Issue] = []
-    for func in ast_result.functions:
-        if not func.name.startswith("_") and func.docstring is None:
-            issues.append(
-                Issue(
-                    file=str(filepath),
-                    line=func.line,
-                    column=0,
-                    severity="info",
-                    category="missing-docstring",
-                    rule_id="semantic-missing-docstring",
-                    message=f"Public function '{func.name}' lacks a docstring",
-                )
-            )
-    return issues
-
-
-def _check_complexity(filepath: Path, ast_result: FileAST) -> list[Issue]:
-    """Check for high complexity functions."""
-    issues: list[Issue] = []
-    for func in ast_result.functions:
-        if func.complexity > 10:
-            issues.append(
-                Issue(
-                    file=str(filepath),
-                    line=func.line,
-                    column=0,
-                    severity="warning",
-                    category="complexity",
-                    rule_id="semantic-high-complexity",
-                    message=f"Function '{func.name}' has AST-estimated complexity {func.complexity} (>10)",
-                )
-            )
-    return issues
-
-
 def _run_semantic_checks(filepath: Path, lang: str) -> list[Issue]:
     """Run AST-based semantic analysis on a file.
 
     Uses tree-sitter for accurate syntax tree analysis instead of regex.
-    Detects: unused imports, missing docstrings, complexity violations.
+    通过语义规则插件系统执行检查（见 semantic_rules.py），
+    新增规则只需注册 SemanticRule，无需修改本模块。
     """
     issues: list[Issue] = []
 
     try:
         from .ast_parser import get_parser
+        from .semantic_rules import run_semantic_rules
 
         parser = get_parser()
         if not parser.available:
@@ -432,10 +407,8 @@ def _run_semantic_checks(filepath: Path, lang: str) -> list[Issue]:
         if ast_result is None:
             return issues
 
-        # Run all semantic checks
-        issues.extend(_check_unused_imports(filepath, ast_result))
-        issues.extend(_check_missing_docstrings(filepath, ast_result))
-        issues.extend(_check_complexity(filepath, ast_result))
+        # 运行所有匹配语言的语义规则插件
+        issues.extend(run_semantic_rules(ast_result, filepath, lang))
 
     except ImportError:
         # tree-sitter not available - silently skip

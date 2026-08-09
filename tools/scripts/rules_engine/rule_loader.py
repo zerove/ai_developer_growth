@@ -5,6 +5,7 @@ from __future__ import annotations
 import hashlib
 import json
 import sys
+from functools import lru_cache
 from pathlib import Path
 from typing import Any
 
@@ -83,10 +84,10 @@ def _save_disk_cache(cache: dict[str, Any]) -> None:
         pass
 
 
-def _rules_hash(language: str, framework_dir: Path | None = None) -> str:
-    """Hash of rule file for cache invalidation."""
-    if framework_dir is None:
-        framework_dir = rules_dir()
+@lru_cache(maxsize=64)
+def _rules_hash_cached(language: str, framework_dir_str: str) -> str:
+    """Hash of rule file for cache invalidation (cached per (language, dir))."""
+    framework_dir = Path(framework_dir_str)
     rule_path = framework_dir / "languages" / language / "rules.d" / "anti_patterns.yml"
     if not rule_path.exists():
         return ""
@@ -94,6 +95,66 @@ def _rules_hash(language: str, framework_dir: Path | None = None) -> str:
         return hashlib.sha256(rule_path.read_bytes()).hexdigest()
     except OSError:
         return ""
+
+
+@lru_cache(maxsize=4)
+def _load_common_rules_cached(framework_dir_str: str) -> dict[str, Any]:
+    """Load common cross-language rules (cached by framework dir)."""
+    framework_dir = Path(framework_dir_str)
+    common_path = framework_dir / "common" / "security.yml"
+    if not common_path.exists():
+        return {}
+    try:
+        import yaml
+
+        with open(common_path) as f:
+            data = yaml.safe_load(f)
+        return data if isinstance(data, dict) else {}
+    except Exception:
+        return {}
+
+
+@lru_cache(maxsize=4)
+def _load_universal_rules_cached(framework_dir_str: str) -> dict[str, Any]:
+    """Load universal quality rules (cached by framework dir)."""
+    framework_dir = Path(framework_dir_str)
+    result: dict[str, Any] = {"anti_patterns": [], "thresholds": {}, "naming": {}}
+    universal_path = framework_dir / "common" / "universal.yml"
+    if universal_path.exists():
+        try:
+            import yaml
+
+            with open(universal_path) as f:
+                data = yaml.safe_load(f)
+            if isinstance(data, dict):
+                result = data
+        except Exception:
+            _ = None  # universal rules optional
+    common = _load_common_rules_cached(framework_dir_str)
+    if common:
+        result = _merge_rules(result, common)
+    return result
+
+
+def _rules_hash(language: str, framework_dir: Path | None = None) -> str:
+    """Hash of rule file for cache invalidation (delegates to cached impl)."""
+    if framework_dir is None:
+        framework_dir = rules_dir()
+    return _rules_hash_cached(language, str(framework_dir))
+
+
+def _load_common_rules(framework_dir: Path | None = None) -> dict[str, Any]:
+    """Load common cross-language rules (delegates to cached impl)."""
+    if framework_dir is None:
+        framework_dir = rules_dir()
+    return _load_common_rules_cached(str(framework_dir))
+
+
+def _load_universal_rules(framework_dir: Path | None = None) -> dict[str, Any]:
+    """Load universal quality rules (delegates to cached impl)."""
+    if framework_dir is None:
+        framework_dir = rules_dir()
+    return _load_universal_rules_cached(str(framework_dir))
 
 
 def _load_cache(cache_file: Path) -> dict[str, str]:
@@ -331,24 +392,6 @@ def _merge_rules(base: dict[str, Any], custom: dict[str, Any]) -> dict[str, Any]
 # ──────────────────────────────────────────────────────────
 
 
-def _load_common_rules(framework_dir: Path | None = None) -> dict[str, Any]:
-    """Load common cross-language rules from common/security.yml."""
-    if framework_dir is None:
-        framework_dir = rules_dir()
-    common_path = framework_dir / "common" / "security.yml"
-    if not common_path.exists():
-        return {}
-
-    try:
-        import yaml
-
-        with open(common_path) as f:
-            data = yaml.safe_load(f)
-        return data if isinstance(data, dict) else {}
-    except Exception:
-        return {}
-
-
 def _get_embedded_rules(language: str) -> dict[str, Any]:
     """Fallback embedded rules when YAML files are unavailable."""
     common_anti_patterns: list[dict[str, Any]] = [
@@ -372,40 +415,6 @@ def _get_embedded_rules(language: str) -> dict[str, Any]:
         },
     ]
     return {"anti_patterns": common_anti_patterns, "thresholds": {}, "naming": {}}
-
-
-def _load_universal_rules(framework_dir: Path | None = None) -> dict[str, Any]:
-    """Load universal quality rules for languages without specific rule sets.
-
-    These rules apply to ANY programming language — they catch common
-    cross-language issues like hardcoded secrets, empty catch blocks,
-    SQL injection patterns, and resource leaks.
-
-    Returns universal rules merged with common cross-language rules.
-    """
-    if framework_dir is None:
-        framework_dir = rules_dir()
-    result: dict[str, Any] = {"anti_patterns": [], "thresholds": {}, "naming": {}}
-
-    # 1. Load universal rules
-    universal_path = framework_dir / "common" / "universal.yml"
-    if universal_path.exists():
-        try:
-            import yaml
-
-            with open(universal_path) as f:
-                data = yaml.safe_load(f)
-            if isinstance(data, dict):
-                result = data
-        except (FileNotFoundError, json.JSONDecodeError):
-            _ = None  # cache file optional
-
-    # 2. Load and merge common cross-language rules (security, type, error)
-    common = _load_common_rules(framework_dir)
-    if common:
-        result = _merge_rules(result, common)
-
-    return result
 
 
 def load_rules_for_language(language: str, framework_dir: Path | None = None) -> dict[str, Any]:

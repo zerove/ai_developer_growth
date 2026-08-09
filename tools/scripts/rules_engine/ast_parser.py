@@ -13,10 +13,13 @@ Usage:
 
 from __future__ import annotations
 
+import os
+import time
 import warnings
 from dataclasses import dataclass, field
+from functools import lru_cache
 from pathlib import Path
-from typing import Any, Protocol, cast
+from typing import Any, ClassVar, Protocol, cast
 
 
 # Tree-sitter AST node type - tree-sitter returns untyped nodes at runtime.
@@ -212,24 +215,38 @@ def _get_text_static(node: _TreeNode, lines: list[str]) -> str:
 
 
 class ASTParser:
-    """Multi-language AST parser using tree-sitter."""
+    """Multi-language AST parser using tree-sitter.
+
+    惰性初始化 + 类级 parser 缓存：多个实例共享同一批 parser，
+    避免重复创建 tree-sitter 语言 parser 的开销。
+    """
 
     SUPPORTED_LANGUAGES = {"python", "javascript", "typescript", "rust", "go", "java", "ruby"}
+    # 类级共享缓存：所有实例复用同一批 language parser
+    _PARSER_CACHE: ClassVar[dict[str, Any]] = {}
+    _PARSER_CACHE_READY: ClassVar[bool] = False
 
     def __init__(self) -> None:
-        self._parsers: dict[str, Any] = {}
+        self._parsers = self._shared_parsers()
         self._available = HAS_TREE_SITTER
-        if self._available:
-            self._init_parsers()
 
-    def _init_parsers(self) -> None:
-        """Initialize parsers for supported languages."""
-        for lang in self.SUPPORTED_LANGUAGES:
-            try:
-                parser = tree_sitter_languages.get_parser(lang)
-                self._parsers[lang] = parser
-            except Exception:
-                _ = None  # tree-sitter parser not available for language
+    @classmethod
+    def _shared_parsers(cls) -> dict[str, Any]:
+        """Get (and lazily build) the class-level shared parser cache."""
+        if not cls._PARSER_CACHE_READY:
+            for lang in cls.SUPPORTED_LANGUAGES:
+                try:
+                    cls._PARSER_CACHE[lang] = tree_sitter_languages.get_parser(lang)
+                except Exception:
+                    _ = None  # tree-sitter parser not available for language
+            cls._PARSER_CACHE_READY = True
+        return cls._PARSER_CACHE
+
+    @classmethod
+    def reset_parser_cache(cls) -> None:
+        """清空类级 parser 缓存（测试或热重载时使用）。"""
+        cls._PARSER_CACHE.clear()
+        cls._PARSER_CACHE_READY = False
 
     @property
     def available(self) -> bool:
@@ -262,12 +279,14 @@ class ASTParser:
         except Exception:
             return None
 
-    def parse_file(self, filepath: Path, language: str | None = None) -> FileAST | None:
+    def parse_file(self, filepath: Path, language: str | None = None, use_cache: bool = False) -> FileAST | None:
         """Parse a file and extract structured information.
 
         Args:
             filepath: Path to the source file.
             language: Language name. Auto-detected if None.
+            use_cache: 启用基于 (mtime, size) 的文件结果缓存，
+                同一文件未变更时跳过重复解析。默认关闭以保持原语义。
 
         Returns:
             FileAST with extracted information, or None if parsing fails.
@@ -278,13 +297,38 @@ class ASTParser:
         if language not in self._parsers:
             return None
 
+        if use_cache:
+            cached = _file_ast_cache_get(filepath)
+            if cached is not None:
+                return cached
+
+        try:
+            stat = filepath.stat()
+        except OSError:
+            return None
         try:
             code = filepath.read_text(encoding="utf-8", errors="ignore")
         except OSError:
             return None
 
-        import time
+        result = self._build_code(code, language)
 
+        if result is None:
+            return None
+        if use_cache:
+            _file_ast_cache_set(filepath, stat, result)
+        return result
+
+    def _build_code(self, code: str, language: str) -> FileAST | None:
+        """从源码字符串构建 FileAST（供 parse_file 与缓存复用）。
+
+        Args:
+            code: 源码内容。
+            language: 文件语言（必须已在 parsers 中）。
+
+        Returns:
+            FileAST 或解析失败返回 None。
+        """
         start = time.monotonic()
         tree = self.parse(code, language)
         parse_time = (time.monotonic() - start) * 1000
@@ -293,19 +337,13 @@ class ASTParser:
             return None
 
         lines = code.splitlines()
-        functions = self._extract_functions(tree.root_node, language, lines)
-        classes = self._extract_classes(tree.root_node, language, lines)
-        imports = self._extract_imports(tree.root_node, language)
-        globals_ = self._extract_globals(tree.root_node, language)
-        error_nodes = self._find_error_nodes(tree.root_node)
-
         return FileAST(
             language=language,
-            functions=functions,
-            classes=classes,
-            imports=imports,
-            global_variables=globals_,
-            error_nodes=error_nodes,
+            functions=self._extract_functions(tree.root_node, language, lines),
+            classes=self._extract_classes(tree.root_node, language, lines),
+            imports=self._extract_imports(tree.root_node, language),
+            global_variables=self._extract_globals(tree.root_node, language),
+            error_nodes=self._find_error_nodes(tree.root_node),
             total_nodes=self._count_nodes(tree.root_node),
             parse_time_ms=parse_time,
         )
@@ -400,67 +438,6 @@ class ASTParser:
             is_method=class_name is not None,
             class_name=class_name,
         )
-
-    def _extract_param_names(self, params_node: _TreeNode, lines: list[str]) -> list[str]:
-        """Extract parameter names from a parameters node."""
-        params: list[str] = []
-        for child in params_node.children:
-            if child.type == "identifier":
-                params.append(self._get_text(child, lines))
-            elif child.type == "default_parameter":
-                for sub in child.children:
-                    if sub.type == "identifier":
-                        params.append(self._get_text(sub, lines))
-                        break
-            elif child.type == "typed_parameter":
-                for sub in child.children:
-                    if sub.type == "identifier":
-                        params.append(self._get_text(sub, lines))
-                        break
-            elif child.type == "typed_default_parameter":
-                for sub in child.children:
-                    if sub.type == "identifier":
-                        params.append(self._get_text(sub, lines))
-                        break
-            elif child.type == "self_parameter":
-                params.append("self")
-            elif child.type == "positional_separator":
-                continue
-        return params
-
-    def _extract_docstring(self, node: _TreeNode, lines: list[str]) -> str | None:
-        """Extract docstring from function/class body."""
-        for child in node.children:
-            if child.type == "block":
-                for stmt in child.children:
-                    if stmt.type == "expression_statement":
-                        for expr in stmt.children:
-                            if expr.type == "string":
-                                return self._get_text(expr, lines).strip("\"'")
-        return None
-
-    def _estimate_complexity(self, node: _TreeNode, lines: list[str]) -> int:
-        """Estimate cyclomatic complexity from AST."""
-        branching_types = {
-            "if_statement",
-            "elif_clause",
-            "for_statement",
-            "while_statement",
-            "try_statement",
-            "except_clause",
-            "with_statement",
-            "boolean_operation",
-            "conditional_expression",
-        }
-        self._count_branching(node, branching_types, complexity_holder := [1])
-        return complexity_holder[0]
-
-    def _count_branching(self, node: _TreeNode, types: set[str], counter: list[int]) -> None:
-        """Count branching nodes for complexity."""
-        if node.type in types:
-            counter[0] += 1
-        for child in node.children:
-            self._count_branching(child, types, counter)
 
     # ─────────────────────────────────────────────────────────────
     # JavaScript/TypeScript extraction
@@ -727,7 +704,7 @@ class ASTParser:
                 if sibling.type == "decorator":
                     decorators.append(self._get_text(sibling, lines))
 
-        docstring = self._extract_docstring(node, lines)
+        docstring = _extract_docstring_static(node, lines)
 
         return ClassInfo(
             name=name,
@@ -908,17 +885,8 @@ class ASTParser:
     # ─────────────────────────────────────────────────────────────
 
     def _get_text(self, node: _TreeNode, lines: list[str] | None = None) -> str:
-        """Get text content of a node."""
-        if hasattr(node, "text"):
-            return node.text.decode("utf-8") if isinstance(node.text, bytes) else str(node.text)
-        if lines and hasattr(node, "start_point") and hasattr(node, "end_point"):
-            start_row = node.start_point[0]
-            end_row = node.end_point[0]
-            if start_row < len(lines):
-                if start_row == end_row:
-                    return lines[start_row][node.start_point[1] : node.end_point[1]]
-                return lines[start_row][node.start_point[1] :]
-        return ""
+        """Get text content of a node (委托静态实现，保持 API 兼容)."""
+        return _get_text_static(node, lines or [])
 
     def _get_child_name(self, node: _TreeNode, lines: list[str]) -> str | None:
         """Get the 'name' child of a node."""
@@ -950,13 +918,51 @@ class ASTParser:
         return ext_map.get(filepath.suffix.lower(), "unknown")
 
 
+# ─────────────────────────────────────────────────────────────
+# 文件解析结果缓存（基于 mtime + size 失效）
+# ─────────────────────────────────────────────────────────────
+
+
+@dataclass(frozen=True)
+class _FileCacheKey:
+    """文件缓存键：路径 + 修改时间 + 大小。"""
+
+    path: str
+    mtime_ns: int
+    size: int
+
+
+_file_ast_cache: dict[_FileCacheKey, FileAST] = {}
+
+
+def _file_ast_cache_get(filepath: Path) -> FileAST | None:
+    """按 (mtime, size) 查找缓存结果。"""
+    try:
+        stat = filepath.stat()
+    except OSError:
+        return None
+    key = _FileCacheKey(str(filepath), stat.st_mtime_ns, stat.st_size)
+    return _file_ast_cache.get(key)
+
+
+def _file_ast_cache_set(filepath: Path, stat: os.stat_result, result: FileAST) -> None:
+    """写入缓存，超限时直接清空（简单策略，避免内存膨胀）。"""
+    key = _FileCacheKey(str(filepath), stat.st_mtime_ns, stat.st_size)
+    _file_ast_cache[key] = result
+    if len(_file_ast_cache) > 2048:
+        _file_ast_cache.clear()
+
+
+def clear_file_ast_cache() -> None:
+    """清空文件解析结果缓存。"""
+    _file_ast_cache.clear()
+
+
 # Singleton instance
 _default_parser: ASTParser | None = None
 
 
+@lru_cache(maxsize=1)
 def get_parser() -> ASTParser:
-    """Get or create the default AST parser singleton."""
-    global _default_parser
-    if _default_parser is None:
-        _default_parser = ASTParser()
-    return _default_parser
+    """Get or create the default AST parser singleton (lru_cache 保证单例)."""
+    return ASTParser()

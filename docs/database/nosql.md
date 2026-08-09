@@ -75,10 +75,10 @@ db.users.createIndex({ email: 1 }, { unique: true });
 db.posts.createIndex({ authorId: 1, createdAt: -1 });
 
 // ✅ 正确: 复合索引
-db.orders.createIndex({ 
-    userId: 1, 
-    status: 1, 
-    createdAt: -1 
+db.orders.createIndex({
+    userId: 1,
+    status: 1,
+    createdAt: -1
 });
 
 // ❌ 禁止: 过度索引
@@ -90,9 +90,9 @@ db.users.createIndex({ createdAt: 1 });  // 很少查询
 
 ```javascript
 // ✅ 正确: 使用投影限制返回字段
-db.users.find({ email: "john@example.com" }, { 
-    name: 1, 
-    email: 1 
+db.users.find({ email: "john@example.com" }, {
+    name: 1,
+    email: 1
 });
 
 // ❌ 禁止: 返回所有字段
@@ -112,17 +112,17 @@ async def get_user(user_id: str):
     cached = await redis.get(f"user:{user_id}")
     if cached:
         return json.loads(cached)
-    
+
     # 缓存未命中，查数据库
     user = await db.users.find_one({"_id": user_id})
     if user:
         # 写入缓存
         await redis.setex(
-            f"user:{user_id}", 
-            3600, 
+            f"user:{user_id}",
+            3600,
             json.dumps(user)
         )
-    
+
     return user
 ```
 
@@ -159,13 +159,13 @@ async def get_user(user_id: str):
     cached = await redis.get(cache_key)
     if cached:
         return json.loads(cached)
-    
+
     # 2. 查数据库
     user = await db.users.find_one({"_id": user_id})
     if user:
         # 3. 写入缓存
         await redis.setex(cache_key, 3600, json.dumps(user))
-    
+
     return user
 
 # ✅ 正确: 缓存失效

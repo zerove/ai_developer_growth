@@ -45,10 +45,10 @@ from .extensions import db, migrate
 def create_app(config_class='config.Config'):
     app = Flask(__name__)
     app.config.from_object(config_class)
-    
+
     register_extensions(app)
     register_blueprints(app)
-    
+
     return app
 
 def register_extensions(app):
@@ -103,7 +103,7 @@ def create_user():
     errors = schema.validate(request.json)
     if errors:
         return jsonify({'errors': errors}), 400
-    
+
     data = schema.load(request.json)
     user = UserService.create(data)
     return jsonify(user.to_dict()), 201
@@ -123,20 +123,20 @@ class UserService:
     @staticmethod
     def get_all():
         return UserRepository.find_all()
-    
+
     @staticmethod
     def get_by_id(id):
         user = UserRepository.find_by_id(id)
         if not user:
             raise NotFoundError('User', id)
         return user
-    
+
     @staticmethod
     def create(data):
         existing = UserRepository.find_by_email(data['email'])
         if existing:
             raise ValidationError('Email already exists')
-        
+
         return UserRepository.create(data)
 
 # ❌ 禁止: 在路由中包含业务逻辑
@@ -145,7 +145,7 @@ def create_user():
     data = request.json
     if User.query.filter_by(email=data['email']).first():
         return jsonify({'error': 'Exists'}), 400
-    
+
     user = User(**data)
     db.session.add(user)
     db.session.commit()
@@ -220,7 +220,7 @@ from unittest.mock import patch, MagicMock
 def test_get_user():
     with patch('app.services.user.UserRepository') as mock_repo:
         mock_repo.find_by_id.return_value = MagicMock(id='123')
-        
+
         user = UserService.get_by_id('123')
         assert user.id == '123'
 ```

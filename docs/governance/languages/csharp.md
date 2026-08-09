@@ -52,8 +52,8 @@ public void GetUser(string id) { ... }  // 应为 camelCase
 public class AppException : Exception
 {
     public string Code { get; }
-    
-    public AppException(string message, string code) 
+
+    public AppException(string message, string code)
         : base(message)
     {
         Code = code;
@@ -63,7 +63,7 @@ public class AppException : Exception
 public class ValidationException : AppException
 {
     public string Field { get; }
-    
+
     public ValidationException(string field, string message)
         : base(message, "VALIDATION_ERROR")
     {
@@ -203,23 +203,23 @@ task.Result;
 public class UserServiceTests
 {
     private readonly UserService _service;
-    
+
     public UserServiceTests()
     {
         _service = new UserService();
     }
-    
+
     [Fact]
     public async Task GetUser_ReturnsUser_WhenFound()
     {
         var user = await _service.GetUserAsync("123");
         Assert.Equal("123", user.Id);
     }
-    
+
     [Fact]
     public async Task GetUser_Throws_WhenNotFound()
     {
-        await Assert.ThrowsAsync<NotFoundException>(() => 
+        await Assert.ThrowsAsync<NotFoundException>(() =>
             _service.GetUserAsync("nonexistent"));
     }
 }
@@ -232,20 +232,20 @@ public class UserServiceTests
 {
     private readonly Mock<IUserRepository> _repositoryMock;
     private readonly UserService _service;
-    
+
     public UserServiceTests()
     {
         _repositoryMock = new Mock<IUserRepository>();
         _service = new UserService(_repositoryMock.Object);
     }
-    
+
     [Fact]
     public async Task GetUser_ReturnsUser()
     {
         _repositoryMock
             .Setup(r => r.GetByIdAsync("123"))
             .ReturnsAsync(new User("123"));
-        
+
         var user = await _service.GetUserAsync("123");
         Assert.NotNull(user);
         _repositoryMock.Verify(r => r.GetByIdAsync("123"), Times.Once);

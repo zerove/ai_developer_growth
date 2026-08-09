@@ -109,7 +109,7 @@ def extract_function_lines(lines: list[str], language: str) -> list[tuple[str, i
         try:
             tree = ast.parse("\n".join(lines))
             for node in ast.walk(tree):
-                if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
+                if isinstance(node, ast.FunctionDef | ast.AsyncFunctionDef):
                     start = node.lineno
                     end = getattr(node, "end_lineno", start + 50)
                     functions.append((node.name, start, end))
@@ -194,7 +194,7 @@ def check_python_ast(filepath: str, lines: list[str]) -> list[Issue]:
         return issues
 
     for node in ast.walk(tree):
-        if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
+        if isinstance(node, ast.FunctionDef | ast.AsyncFunctionDef):
             _check_python_function(node, filepath, issues)
 
     return issues
@@ -288,13 +288,13 @@ def calc_cyclomatic_complexity(node: ast.AST) -> int:
     complexity = 1
 
     for child in ast.walk(node):
-        if isinstance(child, (ast.If, ast.While, ast.For, ast.AsyncFor)):
+        if isinstance(child, ast.If | ast.While | ast.For | ast.AsyncFor):
             complexity += 1
         elif isinstance(child, ast.BoolOp):
             complexity += len(child.values) - 1
         elif isinstance(child, ast.ExceptHandler):
             complexity += 1
-        elif isinstance(child, (ast.With, ast.AsyncWith)):
+        elif isinstance(child, ast.With | ast.AsyncWith):
             complexity += 1
         elif isinstance(child, ast.Assert):
             complexity += 1

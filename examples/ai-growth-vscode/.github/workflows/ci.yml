@@ -106,12 +106,12 @@ jobs:
           python -c "
           import xml.etree.ElementTree as ET
           import tomllib
-          
+
           # Read coverage threshold from pyproject.toml
           with open('pyproject.toml', 'rb') as f:
               config = tomllib.load(f)
           fail_under = config.get('tool', {}).get('coverage', {}).get('report', {}).get('fail_under', 70)
-          
+
           tree = ET.parse('coverage.xml')
           root = tree.getroot()
           coverage = float(root.attrib.get('line-rate', 0)) * 100

@@ -85,7 +85,7 @@ Future<User> getUser(String id) async {
 class ServerException implements Exception {
   final String message;
   ServerException(this.message);
-  
+
   @override
   String toString() => 'ServerException: $message';
 }
@@ -134,13 +134,13 @@ switch (result) {
 class UserCard extends StatelessWidget {
   final String name;
   final String email;
-  
+
   const UserCard({
     super.key,
     required this.name,
     required this.email,
   });
-  
+
   @override
   Widget build(BuildContext context) {
     return Card(
@@ -177,7 +177,7 @@ final userProvider = StateNotifierProvider<UserNotifier, User?>(
 
 class UserNotifier extends StateNotifier<User?> {
   UserNotifier() : super(null);
-  
+
   void updateUser(User user) {
     state = user;
   }
@@ -264,7 +264,7 @@ void main() {
       expect(user.name, equals('Alice'));
       expect(user.id, isNotNull);
     });
-    
+
     test('should throw on invalid email', () {
       final service = UserService();
       expect(
@@ -285,7 +285,7 @@ testWidgets('UserCard should display user info', (tester) async {
       ),
     ),
   );
-  
+
   expect(find.text('Alice'), findsOneWidget);
   expect(find.text('alice@example.com'), findsOneWidget);
 });

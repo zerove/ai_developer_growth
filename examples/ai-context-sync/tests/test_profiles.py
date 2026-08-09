@@ -36,9 +36,9 @@ class TestLanguageProfiles:
         for key, profile in LANGUAGE_PROFILES.items():
             assert profile.recommended_prompt_extension, f"Profile '{key}' has empty recommended_prompt_extension"
             assert isinstance(profile.recommended_prompt_extension, str)
-            assert len(profile.recommended_prompt_extension) > 10, (
-                f"Profile '{key}' recommended_prompt_extension is suspiciously short"
-            )
+            assert (
+                len(profile.recommended_prompt_extension) > 10
+            ), f"Profile '{key}' recommended_prompt_extension is suspiciously short"
 
     def test_python_profile_name(self):
         assert LANGUAGE_PROFILES["python"].name == "Python"

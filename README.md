@@ -29,29 +29,11 @@
 ### 🧠 认知升级
 理解 AI 时代的游戏规则。
 
-| 文档 | 核心观点 | 阅读时间 |
-|------|----------|----------|
-| [[docs/mindset/product-thinking\|产品思维]] | 从"如何实现"到"构建什么" | 10 min |
-| [[docs/mindset/solo-founder-loop\|独立开发闭环]] | 一人公司的运作模式 | 15 min |
-| [[docs/mindset/ai-to-market-checklist\|AI-to-Market]] | 从代码到产品的路径 | 8 min |
-
 ### 📚 学习方法
 掌握 AI 时代的学习范式。
 
-| 文档 | 核心观点 | 阅读时间 |
-|------|----------|----------|
-| [[docs/learning/ai-learning-method\|AI 驱动学习法]] | 用 LLM 快速攻克新领域 | 12 min |
-| [[docs/learning/knowledge-internalization\|知识内化]] | 避免 AI 依赖，构建底层能力 | 10 min |
-| [[docs/learning/prompt-engineering\|Prompt 工程]] | 结构化提示词技巧 | 15 min |
-
 ### ⚡ 工程效率
 将认知转化为生产力。
-
-| 文档 | 核心观点 | 阅读时间 |
-|------|----------|----------|
-| [[docs/efficiency/full-cycle-workflow\|全周期工作流]] | 从需求到部署的 AI 协作 | 20 min |
-| [[docs/efficiency/automated-bug-fixing\|自动化 Bug 修复]] | 感知→推理→行动→验证 | 10 min |
-| [[docs/tools/ai-tool-matrix\|AI 工具矩阵]] | 模型、IDE、Agent 对比 | 15 min |
 
 ---
 
@@ -213,6 +195,6 @@ MIT License - 详见 [[LICENSE]]
 
 ---
 
-*AI 时代的竞争不是人与 AI 的竞争，而是掌握 AI 的人与不掌握 AI 的人的竞争。*
+_AI 时代的竞争不是人与 AI 的竞争，而是掌握 AI 的人与不掌握 AI 的人的竞争。_
 
-*Last Updated: 2026-07-23*
+_Last Updated: 2026-07-23_

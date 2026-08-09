@@ -146,9 +146,9 @@ def _print_json_report(stats: dict[str, Any]) -> None:
             {
                 "records": stats["records_count"],
                 "total_issues": stats["total_issues"],
-                "by_rule": dict(sorted(stats["rule_counts"].items(), key=lambda x: -x[1])),
+                "by_rule": dict(sorted(stats["rule_counts"].items(), key=lambda x: -int(x[1]))),
                 "by_severity": dict(stats["severity_counts"]),
-                "by_language": dict(sorted(stats["lang_counts"].items(), key=lambda x: -x[1])),
+                "by_language": dict(sorted(stats["lang_counts"].items(), key=lambda x: -int(x[1]))),
             },
             indent=2,
         )

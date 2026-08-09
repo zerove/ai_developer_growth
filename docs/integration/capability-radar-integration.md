@@ -45,8 +45,8 @@ updated: 2026-07-21
 - **雷达综合等级**: L__
 - **最强维度**: __ (分数: __)
 - **最弱维度**: __ (分数: __)
-- **下季度重点提升**: 
-- **导师建议资源**: 
+- **下季度重点提升**:
+- **导师建议资源**:
 ```
 
 ### Onboarding 文档集成
@@ -94,7 +94,7 @@ updated: 2026-07-21
 
 ## 核心要求
 - **能力雷达等级**: L2+ (AI 原生工程师) / L3+ (技术负责人)
-- **必备维度**: 
+- **必备维度**:
   - [ ] 问题定义与产品思维 ≥ L2
   - [ ] 架构决策与系统设计 ≥ L2
   - [ ] AI 协作与提示工程 ≥ L2
@@ -135,17 +135,17 @@ updated: 2026-07-21
 # 晋升申请 - 能力雷达评估
 
 ## 申请人信息
-- 姓名: 
+- 姓名:
 - 当前职级: L__
 - 申请职级: L__
-- 申请日期: 
+- 申请日期:
 
 ## 能力雷达评估结果 (必填)
 
 ### 雷达图摘要
 - **综合等级**: L__
-- **最强维度**: 
-- **最弱维度**: 
+- **最强维度**:
+- **最弱维度**:
 
 ### 维度详细评分
 | 维度 | 自评等级 | 评委评分 | 关键证据 |
@@ -204,7 +204,7 @@ def collect_team_radar(team_name: str, members: list):
     """收集团队成员雷达数据"""
     engine = AssessmentEngine()
     results = {}
-    
+
     for member in members:
         print(f"\n--- {member} 的评估 ---")
         # 这里可以集成交互式评估或读取已有 JSON
@@ -213,14 +213,14 @@ def collect_team_radar(team_name: str, members: list):
         if radar_file.exists():
             with open(radar_file) as f:
                 results[member] = json.load(f)
-    
+
     # 聚合团队雷达
     team_radar = aggregate_team_radar(results)
-    
+
     # 保存团队报告
     report_dir = Path(f"radar-reports/{team_name}")
     report_dir.mkdir(parents=True, exist_ok=True)
-    
+
     report_file = report_dir / f"team-radar-{datetime.now().strftime('%Y%m%d')}.json"
     with open(report_file, 'w') as f:
         json.dump({
@@ -230,17 +230,17 @@ def collect_team_radar(team_name: str, members: list):
             "radar": team_radar,
             "individual": results
         }, f, indent=2, ensure_ascii=False)
-    
+
     # 生成 Markdown 报告
     generate_team_report(team_radar, team_name, report_dir)
-    
+
     print(f"✅ 团队雷达报告已生成: {report_file}")
 
 def aggregate_team_radar(individual_results):
     """聚合团队雷达 (匿名平均)"""
     dimensions = ["product", "architecture", "ai_collab", "engineering", "learning"]
     aggregated = {}
-    
+
     for dim in dimensions:
         scores = [r["dimension_scores"][dim] for r in individual_results.values()]
         aggregated[dim] = {
@@ -249,7 +249,7 @@ def aggregate_team_radar(individual_results):
             "max": max(scores),
             "distribution": {f"L{i}": scores.count(i) for i in range(5)}
         }
-    
+
     return aggregated
 
 def generate_team_report(team_radar, team_name, output_dir):
@@ -260,13 +260,13 @@ def generate_team_report(team_radar, team_name, output_dir):
         f"**参与人数**: {len(team_radar.get('individual', {}))}",
         "\n## 📊 团队雷达概览\n"
     ]
-    
+
     for dim_name, data in team_radar.items():
         if dim_name == "individual":
             continue
         bar = "█" * int(data["average"] * 5) + "░" * (20 - int(data["average"] * 5))
         lines.append(f"- **{dim_name}**: {bar} {data['average']:.2f}")
-    
+
     lines.extend([
         "\n## ⚠️ 团队短板识别",
         f"最弱维度: {min(team_radar, key=lambda k: team_radar[k]['average'])}",
@@ -276,7 +276,7 @@ def generate_team_report(team_radar, team_name, output_dir):
         "2. 结对编程/Code Review 重点关注弱项",
         "3. 邀请内部专家分享强项经验",
     ])
-    
+
     report_file = output_dir / f"team-radar-report-{datetime.now().strftime('%Y%m%d')}.md"
     report_file.write_text("\n".join(lines), encoding="utf-8")
     print(f"✅ Markdown 报告已生成: {report_file}")
@@ -313,25 +313,25 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      
+
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
           python-version: '3.11'
-          
+
       - name: Install capability-radar
         run: pip install -e examples/capability-radar
-        
+
       - name: Run team assessment
         run: |
           python scripts/team-radar-collect.py ${{ github.event.inputs.team || 'all' }}
-          
+
       - name: Upload radar report
         uses: actions/upload-artifact@v4
         with:
           name: team-radar-report
           path: radar-reports/
-          
+
       - name: Comment on PR/Issue
         if: github.event_name == 'workflow_dispatch'
         uses: actions/github-script@v7

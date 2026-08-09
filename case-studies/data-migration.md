@@ -56,7 +56,7 @@ updated: 2026-07-21
 **AI 生成迁移脚本**:
 ```sql
 -- Oracle → PostgreSQL 数据类型转换
-CREATE OR REPLACE FUNCTION migrate_number(p_val NUMBER) 
+CREATE OR REPLACE FUNCTION migrate_number(p_val NUMBER)
 RETURNS NUMERIC AS $$
 BEGIN
   RETURN p_val::NUMERIC;
@@ -65,7 +65,7 @@ $$ LANGUAGE plpgsql;
 
 -- 批量数据迁移
 INSERT INTO target_table (col1, col2, col3)
-SELECT 
+SELECT
   source_col1,
   CAST(source_col2 AS VARCHAR),
   migrate_number(source_col3)
@@ -102,7 +102,7 @@ def validate_migration(source_db, target_db):
     source_count = source_db.execute("SELECT COUNT(*) FROM orders").fetchone()[0]
     target_count = target_db.execute("SELECT COUNT(*) FROM orders").fetchone()[0]
     assert source_count == target_count, f"行数不匹配: {source_count} vs {target_count}"
-    
+
     # 验证数据完整性
     source_checksum = source_db.execute("SELECT MD5(ROW_TO_STRING(orders)) FROM orders").fetchone()[0]
     target_checksum = target_db.execute("SELECT MD5(ROW_TO_STRING(orders)) FROM orders").fetchone()[0]

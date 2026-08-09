@@ -230,7 +230,7 @@ def start_dashboard(
     project = Path(project_dir).resolve()
 
     class DashboardHandler(http.server.BaseHTTPRequestHandler):
-        def do_GET(self) -> None:
+        def do_GET(self) -> None:  # noqa: N802
             if self.path == "/" or self.path == "/index.html":
                 html = generate_dashboard_html(project)
                 self.send_response(200)

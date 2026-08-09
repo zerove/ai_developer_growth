@@ -21,7 +21,7 @@
 ## 3. API 契约 (API Contracts)
 ### LLM Prompt 结构
 - **输入**: 任务列表 (string list)。
-- **输出格式**: 
+- **输出格式**:
   ```json
   [
     { "task": "任务名称", "value": 8, "effort": 3 },

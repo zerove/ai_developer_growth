@@ -50,10 +50,10 @@ def test_calculate_total():
         {'price': 10, 'quantity': 2},
         {'price': 20, 'quantity': 1}
     ]
-    
+
     # Act
     total = calculate_total(items)
-    
+
     # Assert
     assert total == 40
 
@@ -90,11 +90,11 @@ def test_calculate():
 def test_divide():
     # 正常情况
     assert divide(10, 2) == 5
-    
+
     # 边界情况
     assert divide(0, 1) == 0
     assert divide(1, 1) == 1
-    
+
     # 异常情况
     with pytest.raises(ZeroDivisionError):
         divide(1, 0)
@@ -121,7 +121,7 @@ def test_create_user(db_session):
     user = User(name='John', email='john@example.com')
     db_session.add(user)
     db_session.commit()
-    
+
     result = db_session.query(User).filter_by(email='john@example.com').first()
     assert result is not None
     assert result.name == 'John'
@@ -140,18 +140,18 @@ async def test_user_crud():
     })
     assert response.status_code == 201
     user_id = response.json()['id']
-    
+
     # Read
     response = await client.get(f'/api/users/{user_id}')
     assert response.status_code == 200
     assert response.json()['name'] == 'John'
-    
+
     # Update
     response = await client.put(f'/api/users/{user_id}', json={
         'name': 'Jane'
     })
     assert response.status_code == 200
-    
+
     # Delete
     response = await client.delete(f'/api/users/{user_id}')
     assert response.status_code == 204
@@ -170,17 +170,17 @@ test.describe('User Management', () => {
   test('should create and view user', async ({ page }) => {
     // Navigate to users page
     await page.goto('/users');
-    
+
     // Click create button
     await page.click('button:text("Create User")');
-    
+
     // Fill form
     await page.fill('input[name="name"]', 'John');
     await page.fill('input[name="email"]', 'john@example.com');
-    
+
     // Submit form
     await page.click('button:text("Submit")');
-    
+
     // Verify user is created
     await expect(page.locator('text=John')).toBeVisible();
   });
@@ -215,10 +215,10 @@ test.afterEach(async ({ page }) => {
 @patch('app.services.user.UserRepository')
 def test_create_user(mock_repo):
     mock_repo.create.return_value = User(id='123', name='John')
-    
+
     service = UserService()
     user = service.create({'name': 'John'})
-    
+
     assert user.id == '123'
     mock_repo.create.assert_called_once()
 
@@ -238,10 +238,10 @@ def test_create_user():
 class FakeUserRepository:
     def __init__(self):
         self.users = {}
-    
+
     def find_by_id(self, id):
         return self.users.get(id)
-    
+
     def create(self, data):
         user = User(id=str(len(self.users) + 1), **data)
         self.users[user.id] = user
@@ -250,7 +250,7 @@ class FakeUserRepository:
 def test_get_user():
     repo = FakeUserRepository()
     repo.create({'name': 'John'})
-    
+
     user = repo.find_by_id('1')
     assert user.name == 'John'
 ```
@@ -291,7 +291,7 @@ export default function () {
 def test_database_query(benchmark):
     def query():
         return db.query('SELECT * FROM users')
-    
+
     result = benchmark(query)
     assert len(result) > 0
 ```

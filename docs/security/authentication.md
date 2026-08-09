@@ -52,7 +52,7 @@ def generate_token(user_id: str) -> str:
         'iat': datetime.utcnow(),
         'scope': 'read write'
     }
-    
+
     return jwt.encode(payload, private_key, algorithm='RS256')
 
 # ❌ 禁止: 使用 HS256
@@ -101,7 +101,7 @@ def verify_token(token: str) -> dict:
 3. 客户端用授权码换取 Token
    POST /token
    Content-Type: application/x-www-form-urlencoded
-   
+
    grant_type=authorization_code&
    code=auth_code_xyz&
    redirect_uri=https://app.example.com/callback&
@@ -145,7 +145,7 @@ def login():
         session['user_id'] = user.id
         session.permanent = True
         return jsonify({'success': True})
-    
+
     return jsonify({'error': 'Invalid credentials'}), 401
 
 # ✅ 正确: 使用安全 Cookie
@@ -265,10 +265,10 @@ class APIKey:
         self.key = key
         self.expires_at = expires_at
         self.is_active = True
-    
+
     def is_valid(self) -> bool:
         return self.is_active and datetime.utcnow() < self.expires_at
-    
+
     def revoke(self):
         self.is_active = False
 ```

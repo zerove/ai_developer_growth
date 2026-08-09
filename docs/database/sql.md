@@ -92,9 +92,9 @@ SELECT id, email, name FROM users WHERE id = '123';
 SELECT * FROM posts ORDER BY created_at DESC OFFSET 10000 LIMIT 10;
 
 -- ✅ 正确: 游标分页
-SELECT * FROM posts 
-WHERE created_at < '2024-01-01' 
-ORDER BY created_at DESC 
+SELECT * FROM posts
+WHERE created_at < '2024-01-01'
+ORDER BY created_at DESC
 LIMIT 10;
 ```
 

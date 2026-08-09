@@ -130,13 +130,13 @@ updated: 2026-07-21
 def get_user(user_id: int) -> dict:
     """
     获取用户信息
-    
+
     Args:
         user_id: 用户 ID
-        
+
     Returns:
         用户信息字典
-        
+
     Raises:
         UserNotFoundError: 用户不存在
     """

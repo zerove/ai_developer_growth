@@ -49,7 +49,7 @@ export class UserCardComponent { }
 export class UserCardComponent {
   user = input.required<User>();
   select = output<User>();
-  
+
   onClick() {
     this.select.emit(this.user());
   }
@@ -75,7 +75,7 @@ export class UserCardComponent { }
 @Injectable({ providedIn: 'root' })
 export class UserService {
   private http = inject(HttpClient);
-  
+
   getUser(id: string): Observable<User> {
     return this.http.get<User>(`/api/users/${id}`);
   }
@@ -102,7 +102,7 @@ export class UserApiService {
 @Injectable({ providedIn: 'root' })
 export class UserStateService {
   private users = signal<Map<string, User>>(new Map());
-  
+
   getUser(id: string): User | undefined {
     return this.users().get(id);
   }
@@ -136,7 +136,7 @@ export class UserService {
 })
 export class CounterComponent {
   count = signal(0);
-  
+
   increment() {
     this.count.update(c => c + 1);
   }
@@ -164,7 +164,7 @@ export class UserStore extends SignalStore<{ users: User[] }> {
   constructor() {
     super({ users: [] });
   }
-  
+
   loadUsers = this.effect<void>((trigger$) =>
     trigger$.pipe(
       switchMap(() => this.userService.getUsers()),
@@ -184,24 +184,24 @@ export class UserStore extends SignalStore<{ users: User[] }> {
 describe('UserCardComponent', () => {
   let component: UserCardComponent;
   let fixture: ComponentFixture<UserCardComponent>;
-  
+
   beforeEach(async () => {
     await TestBed.configureTestingModule({
       imports: [UserCardComponent]
     }).compileComponents();
-    
+
     fixture = TestBed.createComponent(UserCardComponent);
     component = fixture.componentInstance;
   });
-  
+
   it('should create', () => {
     expect(component).toBeTruthy();
   });
-  
+
   it('should display user name', () => {
     component.user.set({ id: '1', name: 'John' });
     fixture.detectChanges();
-    
+
     const el = fixture.nativeElement;
     expect(el.textContent).toContain('John');
   });
@@ -217,11 +217,11 @@ describe('UserModule', () => {
       imports: [UserModule, HttpClientTestingModule]
     }).compileComponents();
   });
-  
+
   it('should list users', () => {
     const fixture = TestBed.createComponent(UserListComponent);
     fixture.detectChanges();
-    
+
     const compiled = fixture.nativeElement;
     expect(compiled.querySelector('app-user-list')).toBeTruthy();
   });

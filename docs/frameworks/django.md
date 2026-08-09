@@ -75,10 +75,10 @@ from django.contrib.auth.models import AbstractUser
 class User(AbstractUser):
     email = models.EmailField(unique=True)
     bio = models.TextField(blank=True, default='')
-    
+
     class Meta:
         ordering = ['-date_joined']
-    
+
     def __str__(self):
         return self.email
 
@@ -88,10 +88,10 @@ class Post(models.Model):
     content = models.TextField()
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
-    
+
     class Meta:
         ordering = ['-created_at']
-    
+
     def __str__(self):
         return self.title
 ```
@@ -128,7 +128,7 @@ class UserViewSet(viewsets.ModelViewSet):
     queryset = User.objects.all()
     serializer_class = UserSerializer
     permission_classes = [IsOwnerOrReadOnly]
-    
+
     @action(detail=False, methods=['get'])
     def me(self, request):
         serializer = self.get_serializer(request.user)
@@ -160,7 +160,7 @@ from .models import User, Post
 # ✅ 正确
 class PostSerializer(serializers.ModelSerializer):
     author = serializers.StringRelatedField()
-    
+
     class Meta:
         model = Post
         fields = ['id', 'title', 'content', 'author', 'created_at']
@@ -168,7 +168,7 @@ class PostSerializer(serializers.ModelSerializer):
 
 class UserSerializer(serializers.ModelSerializer):
     posts = PostSerializer(many=True, read_only=True)
-    
+
     class Meta:
         model = User
         fields = ['id', 'email', 'bio', 'posts']
@@ -181,12 +181,12 @@ class UserSerializer(serializers.ModelSerializer):
 class CreateUserSerializer(serializers.Serializer):
     email = serializers.EmailField()
     password = serializers.CharField(write_only=True, min_length=8)
-    
+
     def validate_email(self, value):
         if User.objects.filter(email=value).exists():
             raise serializers.ValidationError('Email already exists')
         return value
-    
+
     def create(self, validated_data):
         return User.objects.create_user(**validated_data)
 ```
@@ -202,11 +202,11 @@ class CreateUserSerializer(serializers.Serializer):
 class RequestLoggingMiddleware:
     def __init__(self, get_response):
         self.get_response = get_response
-    
+
     def __call__(self, request):
         response = self.get_response(request)
         return response
-    
+
     def process_exception(self, request, exception):
         # 处理异常
         pass
@@ -255,7 +255,7 @@ class UserAPITest(APITestCase):
     def test_list_users(self):
         response = self.client.get('/api/users/')
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-    
+
     def test_create_user(self):
         data = {'email': 'test@example.com', 'password': 'testpass123'}
         response = self.client.post('/api/users/', data)

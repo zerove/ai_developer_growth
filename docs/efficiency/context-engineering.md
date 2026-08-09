@@ -163,7 +163,7 @@ describe('User API Contract', () => {
     const response = await request(app)
       .post('/api/users')
       .send({ email: 'test@example.com', name: 'Test User' });
-    
+
     expect(response.status).toBe(201);
     expect(response.body).toHaveProperty('id');
     expect(response.body.email).toBe('test@example.com');

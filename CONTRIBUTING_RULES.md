@@ -47,7 +47,7 @@ anti_patterns:
   - TYPE_CHECKING
   message: '<human message>'   # 问题的描述
   fix_hint: '<fix suggestion>' # 修复建议
-  
+
 naming:
   file:
     pattern: '^[a-z]...$'      # 文件名正则

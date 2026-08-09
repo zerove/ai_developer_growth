@@ -27,6 +27,7 @@ API v3 (新增):
 
 from __future__ import annotations
 
+# mypy: disable-error-code="untyped-decorator"
 import argparse
 import json
 import sqlite3

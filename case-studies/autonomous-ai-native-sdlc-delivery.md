@@ -66,4 +66,3 @@ Full lifecycle development using 5-pillar automation
 - [x] 效率数据：包含传统 vs AI 的量化对比
 - [x] 关键洞察：3-5 条可验证的实践经验
 - [x] 代码/文档链接：关联实现代码或文档
-

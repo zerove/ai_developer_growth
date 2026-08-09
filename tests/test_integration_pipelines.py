@@ -258,9 +258,9 @@ class TestDetectLanguageIntegration:
 
         lang = detect_language_from_file(filepath)
         if lang is not None:
-            assert expected_lang.lower() in lang.lower() or lang.lower() in expected_lang.lower(), (
-                f"Expected {expected_lang} for {filename}, got {lang}"
-            )
+            assert (
+                expected_lang.lower() in lang.lower() or lang.lower() in expected_lang.lower()
+            ), f"Expected {expected_lang} for {filename}, got {lang}"
 
     def test_detect_from_content(self, tmp_path: Path) -> None:
         """Detect language from file content (shebang)."""

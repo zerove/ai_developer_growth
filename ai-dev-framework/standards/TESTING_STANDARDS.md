@@ -53,10 +53,10 @@ def test_function():
     # Arrange - 准备测试数据和环境
     input_data = create_test_user()
     expected = "expected_result"
-    
+
     # Act - 执行被测操作
     result = function_under_test(input_data)
-    
+
     # Assert - 验证结果
     assert result == expected
 ```

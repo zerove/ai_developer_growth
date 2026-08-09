@@ -94,7 +94,7 @@ service UserService {
 message User {
   reserved 2, 15, 9 to 11;
   reserved "old_field";
-  
+
   string id = 1;
   string name = 3;
 }
@@ -123,7 +123,7 @@ async def get_user(self, request, context):
         context.set_code(StatusCode.NOT_FOUND)
         context.set_details(f'User {request.id} not found')
         return GetUserResponse()
-    
+
     return GetUserResponse(user=user)
 ```
 
@@ -202,7 +202,7 @@ class AuthInterceptor(grpc.ServerInterceptor):
             return grpc.unary_unary_rpc_method_handler(
                 lambda req, ctx: context.abort(StatusCode.UNAUTHENTICATED, 'Invalid token')
             )
-        
+
         return await continuation(handler_call_details)
 ```
 
@@ -215,7 +215,7 @@ class LoggingInterceptor(grpc.ServerInterceptor):
         start_time = time.time()
         response = await continuation(handler_call_details)
         duration = time.time() - start_time
-        
+
         logger.info(
             f'{handler_call_details.method} completed in {duration:.3f}s'
         )
@@ -237,14 +237,14 @@ async def test_get_user():
     server = aio.server()
     server.add_insecure_port('[::]:50051')
     UserServiceServicer.register(server)
-    
+
     await server.start()
-    
+
     async with aio.insecure_channel('localhost:50051') as channel:
         stub = UserServiceStub(channel)
         response = await stub.GetUser(GetUserRequest(id='123'))
         assert response.user.id == '123'
-    
+
     await server.stop(None)
 ```
 
@@ -255,13 +255,13 @@ async def test_get_user():
 async def test_create_user_flow():
     async with create_test_channel() as channel:
         stub = UserServiceStub(channel)
-        
+
         # 创建用户
         create_response = await stub.CreateUser(
             CreateUserRequest(email='test@example.com', name='John')
         )
         user_id = create_response.user.id
-        
+
         # 查询用户
         get_response = await stub.GetUser(GetUserRequest(id=user_id))
         assert get_response.user.email == 'test@example.com'

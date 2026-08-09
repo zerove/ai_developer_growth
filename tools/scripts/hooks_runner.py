@@ -28,15 +28,18 @@ import sys
 from collections.abc import Callable
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
+from typing import cast
 
-from tools.scripts.hooks.basic_checks import (
+# 阶段函数通过名称字符串运行时解析（_CHECK_PHASES / _resolve_phase_func），
+# 必须在模块命名空间中存在，故 noqa: F401
+from tools.scripts.hooks.basic_checks import (  # noqa: F401
     run_format_check,
     run_lint,
     run_security,
     run_tests,
     run_typecheck,
 )
-from tools.scripts.hooks.domain_checks import (
+from tools.scripts.hooks.domain_checks import (  # noqa: F401
     run_governance_audit,
     run_language_rules,
     run_quality_gate,
@@ -260,16 +263,87 @@ def _print_check_result(result: CheckResult) -> None:
             print(f"  {severity_icon} {result.file}:{issue.line} [{issue.rule_id}] {issue.message}")
 
 
+# ─── 检查阶段数据定义 ──────────────────────────────────────
+# 每个阶段: (名称, 函数名, 是否可并行, 依赖阶段)
+# 依赖阶段: 本阶段开始前必须已完成的阶段名列表
+# 函数名在运行时通过 globals() 解析，便于测试 mock 与配置化扩展
+_CHECK_PHASES: list[tuple[str, str, bool, list[str]]] = [
+    ("Lint", "run_lint", True, []),
+    ("Format", "run_format_check", True, []),
+    ("Type Check", "run_typecheck", True, []),
+    ("Test Suite", "run_tests", False, ["Type Check"]),
+    ("Security Scan", "run_security", False, ["Test Suite"]),
+    ("AI Quality Gate", "_run_quality_gate_full", False, ["Type Check"]),
+    ("Governance Audit", "_run_governance_audit_full", False, []),
+]
+
+# 阶段名到 (函数名, 并行标记, 依赖) 的索引
+_PHASE_INDEX: dict[str, tuple[str, bool, list[str]]] = {
+    name: (func_name, parallel, deps) for name, func_name, parallel, deps in _CHECK_PHASES
+}
+
+
+def _run_quality_gate_full() -> tuple[bool, str]:
+    """全量质量门禁检查（阶段用具名函数便于运行时解析与 mock）。"""
+    return run_quality_gate(Path("tools/scripts"), full=True)
+
+
+def _run_governance_audit_full() -> tuple[bool, str]:
+    """全量治理审计（阶段用具名函数）。"""
+    return run_governance_audit(full=True)
+
+
+def _resolve_phase_func(func_name: str) -> Callable[[], tuple[bool, str]]:
+    """运行时解析阶段函数（支持测试 mock 与外部配置）。"""
+    func = globals().get(func_name, None)
+    if not callable(func):
+        raise NameError(f"阶段函数未定义: {func_name}")
+    return cast(Callable[[], tuple[bool, str]], func)
+
+
+def _run_phase(phase_name: str, results: dict[str, tuple[bool, str]]) -> None:
+    """执行单个阶段并记录结果（跳过已执行阶段）。"""
+    if phase_name in results:
+        return
+    func_name, parallel, _ = _PHASE_INDEX[phase_name]
+    _ = parallel  # 依赖解析阶段由 _run_full 统一调度并行
+    try:
+        passed, output = _resolve_phase_func(func_name)()
+    except Exception as e:
+        passed, output = False, str(e)
+    results[phase_name] = (passed, output)
+
+
+def _resolve_order() -> list[str]:
+    """拓扑排序所有阶段，保证依赖先于使用者执行。"""
+    order: list[str] = []
+    visited: set[str] = set()
+
+    def visit(name: str) -> None:
+        if name in visited:
+            return
+        visited.add(name)
+        _, _, deps = _PHASE_INDEX[name]
+        for dep in deps:
+            if dep in _PHASE_INDEX:
+                visit(dep)
+        order.append(name)
+
+    for name in _PHASE_INDEX:
+        visit(name)
+    return order
+
+
 def _run_parallel_checks() -> dict[str, tuple[bool, str]]:
     """Run parallel phase checks: lint, format, typecheck."""
-    check_funcs = [
-        ("Lint", run_lint),
-        ("Format", run_format_check),
-        ("Type Check", run_typecheck),
-    ]
+    parallel_phases = [name for name, _, parallel, _ in _CHECK_PHASES if parallel]
     results: dict[str, tuple[bool, str]] = {}
-    with ThreadPoolExecutor(max_workers=3) as executor:
-        futures = {executor.submit(func): name for name, func in check_funcs}
+    with ThreadPoolExecutor(max_workers=len(parallel_phases)) as executor:
+        futures = {
+            executor.submit(_resolve_phase_func(func_name)): name
+            for name, func_name, parallel, _ in _CHECK_PHASES
+            if name in parallel_phases and parallel  # 仅并行标记为真的阶段进入线程池（防御性检查）
+        }
         for future in as_completed(futures):
             name = futures[future]
             try:
@@ -277,24 +351,6 @@ def _run_parallel_checks() -> dict[str, tuple[bool, str]]:
             except Exception as e:
                 passed, output = False, str(e)
             results[name] = (passed, output)
-    return results
-
-
-def _run_sequential_checks() -> dict[str, tuple[bool, str]]:
-    """Run sequential phase checks: test, security, quality-gate, governance-audit."""
-    sequential_checks = [
-        ("Test Suite", run_tests),
-        ("Security Scan", run_security),
-        ("AI Quality Gate", lambda: run_quality_gate(Path("tools/scripts"), full=True)),
-        ("Governance Audit", lambda: run_governance_audit(full=True)),
-    ]
-    results: dict[str, tuple[bool, str]] = {}
-    for name, func in sequential_checks:
-        try:
-            passed, output = func()
-        except Exception as e:
-            passed, output = False, str(e)
-        results[name] = (passed, output)
     return results
 
 
@@ -318,9 +374,26 @@ def _run_full() -> int:
 
     results: dict[str, tuple[bool, str]] = {}
     results.update(_run_parallel_checks())
-    results.update(_run_sequential_checks())
 
-    order = ["Lint", "Format", "Type Check", "Test Suite", "Security Scan", "AI Quality Gate", "Governance Audit"]
+    # 串行阶段（含依赖解析）
+    sequential_phases = [name for name, _, parallel, _ in _CHECK_PHASES if not parallel]
+    for name in sequential_phases:
+        passed_deps = True
+        _, _, deps = _PHASE_INDEX[name]
+        for dep in deps:
+            if dep not in results:
+                _run_phase(dep, results)
+            if not results[dep][0]:
+                passed_deps = False
+        if passed_deps:
+            _run_phase(name, results)
+        else:
+            results[name] = (
+                False,
+                f"Skipped: dependency '{[d for d in deps if d not in results or not results[d][0]]}' failed",
+            )
+
+    order = _resolve_order()
     all_passed = _print_results_in_order(results, order)
 
     print("\n" + "=" * 60)

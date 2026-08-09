@@ -143,7 +143,9 @@ def run_pre_commit_checks() -> tuple[bool, str]:
             output += f"\n🛡️ {scope_msg}"
         else:
             output += f"\n🛡️ {scope_msg}"
-    except Exception:
-        pass
+    except Exception as e:
+        import logging
+
+        logging.getLogger(__name__).debug(f"Pre-commit scope check failed: {e}")
 
     return passed, output

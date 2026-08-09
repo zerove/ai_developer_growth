@@ -99,25 +99,25 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - run: npm ci
-      
+
       # 格式检查
       - run: npm run format:check
-      
+
       # Lint 检查
       - run: npm run lint
-      
+
       # 类型检查
       - run: npm run type-check
-      
+
       # 单元测试
       - run: npm run test:unit
-      
+
       # 集成测试
       - run: npm run test:integration
-      
+
       # 安全扫描
       - run: npm audit
-      
+
       # 构建验证
       - run: npm run build
 ```
@@ -155,10 +155,10 @@ jobs:
         run: |
           kubectl set image deployment/app-green app=myapp:${{ github.sha }}
           kubectl rollout status deployment/app-green
-      
+
       - name: Switch traffic
         run: kubectl patch service app -p '{"spec":{"selector":{"version":"green"}}}'
-      
+
       - name: Cleanup old version
         run: kubectl delete deployment app-blue
 ```
@@ -174,10 +174,10 @@ jobs:
         run: |
           kubectl set image deployment/app-canary app=myapp:${{ github.sha }}
           kubectl scale deployment/app-canary --replicas=1
-          
+
       - name: Monitor metrics
         run: sleep 300
-      
+
       - name: Promote to production
         run: |
           kubectl set image deployment/app app=myapp:${{ github.sha }}
@@ -197,7 +197,7 @@ jobs:
     steps:
       - name: Deploy
         run: kubectl apply -f k8s/
-      
+
       - name: Verify deployment
         run: |
           kubectl rollout status deployment/app --timeout=300s || \
@@ -232,7 +232,7 @@ jobs:
     steps:
       - name: Deploy
         run: kubectl apply -f k8s/
-      
+
       - name: Verify health
         run: |
           for i in {1..30}; do
@@ -244,11 +244,11 @@ jobs:
           done
           echo "Health check failed"
           exit 1
-      
+
       - name: Notify success
         if: success()
         run: echo "Deployment successful"
-      
+
       - name: Notify failure
         if: failure()
         run: echo "Deployment failed"
@@ -267,7 +267,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - run: npm audit --audit-level=high
-      
+
       - name: Snyk scan
         uses: snyk/actions/node@master
         env:
@@ -283,10 +283,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      
+
       - name: Build image
         run: docker build -t myapp:${{ github.sha }} .
-      
+
       - name: Scan with Trivy
         uses: aquasecurity/trivy-action@master
         with:

@@ -246,16 +246,16 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
-      
+
       - name: Run SAST
         uses: github/codeql-action/analyze@v2
-        
+
       - name: Run Dependency Scan
         run: npm audit --audit-level=high
-        
+
       - name: Run Secret Scan
         uses: trufflesecurity/trufflehog@main
-        
+
       - name: Security Gate
         run: |
           if [ ${{ steps.sast.outputs.severity }} == "high" ]; then

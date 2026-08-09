@@ -67,7 +67,7 @@ class FileHandler {
 public:
     FileHandler(const char* filename) : file(std::fopen(filename, "r")) {}
     ~FileHandler() { if (file) std::fclose(file); }
-    
+
     // 禁止拷贝
     FileHandler(const FileHandler&) = delete;
     FileHandler& operator=(const FileHandler&) = delete;
@@ -231,7 +231,7 @@ TEST(UserServiceTest, GetUser) {
     MockUserRepository repo;
     EXPECT_CALL(repo, findById("123"))
         .WillOnce(testing::Return(User("123")));
-    
+
     UserService service(repo);
     auto user = service.getUser("123");
     EXPECT_TRUE(user.has_value());

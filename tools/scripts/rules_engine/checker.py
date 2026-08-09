@@ -15,30 +15,79 @@ from .naming_checker import check_naming_conventions
 from .plugins import get_plugins_for_language
 from .rule_loader import load_rules_for_language
 
+# Worker 进程内共享的规则缓存（由 _worker_init 注入）
+_WORKER_RULES: dict[str, Any] = {}
+
+
+def _worker_init(shared_rules: dict[str, Any] | None) -> None:
+    """Worker 进程初始化：注入共享规则，避免每文件重复加载。
+
+    通过 ProcessPoolExecutor 的 initializer 调用，仅在 worker 进程中执行。
+    """
+    global _WORKER_RULES
+    _WORKER_RULES = shared_rules or {}
+
+
+def _worker_check(
+    pair: tuple[Path, str],
+    do_semantic: bool = False,
+    do_linters: bool = True,
+) -> CheckResult | None:
+    """Worker 任务：使用预热规则执行单文件检查（模块级，可被 pickle）。"""
+    fp, lang = pair
+    result = check_file(
+        fp,
+        _WORKER_RULES or None,
+        lang,
+        semantic=do_semantic,
+        run_linters=do_linters,
+    )
+    if result.skipped:
+        return None
+    return result
+
+
 # ── 框架检测 ──────────────────────────────────────────────
 
+
+def _config_excluded_dirs() -> set[str]:
+    """从 [tool.adg].exclude 合并额外的排除目录。"""
+    overrides: set[str] = {
+        ".git",
+        ".hg",
+        ".svn",
+        ".venv",
+        "venv",
+        "node_modules",
+        "__pycache__",
+        ".mypy_cache",
+        ".pytest_cache",
+        ".ruff_cache",
+        ".cache",
+        "build",
+        "dist",
+        ".opencode",
+        ".tox",
+        "htmlcov",
+        ".coverage",
+        "site-packages",
+        "MagicMock",
+    }
+    try:
+        from tools.scripts.app_config import get_setting
+
+        extra = get_setting("exclude", [])
+        if isinstance(extra, list):
+            overrides.update(str(item) for item in extra)
+    except Exception:
+        import logging
+
+        logging.getLogger(__name__).warning("Failed to load exclude config", exc_info=True)
+    return overrides
+
+
 # 目录遍历时排除的路径段（避免误扫构建产物、依赖、缓存）
-DEFAULT_EXCLUDED_DIRS = {
-    ".git",
-    ".hg",
-    ".svn",
-    ".venv",
-    "venv",
-    "node_modules",
-    "__pycache__",
-    ".mypy_cache",
-    ".pytest_cache",
-    ".ruff_cache",
-    ".cache",
-    "build",
-    "dist",
-    ".opencode",
-    ".tox",
-    "htmlcov",
-    ".coverage",
-    "site-packages",
-    "MagicMock",
-}
+DEFAULT_EXCLUDED_DIRS: set[str] = _config_excluded_dirs()
 
 FRAMEWORK_DETECTORS: dict[str, dict[str, list[str]]] = {
     "react": {"files": ["package.json"], "packages": ["react", "react-dom"]},
@@ -214,6 +263,8 @@ def check_directory(
     jobs: int = 1,
     semantic: bool = False,
     run_linters: bool = True,
+    use_cache: bool = False,
+    db_path: str | Path = "adg_quality.db",
 ) -> list[CheckResult]:
     """Check all files in a directory.
 
@@ -224,6 +275,8 @@ def check_directory(
         jobs: Number of parallel workers (1 = serial).
         semantic: Enable AST-based semantic analysis.
         run_linters: Run external linters (ruff/eslint) per file.
+        use_cache: 启用增量缓存（mtime+size 未变则复用上次结果）。
+        db_path: 统一存储数据库路径（use_cache=True 时使用）。
     """
     results: list[CheckResult] = []
 
@@ -291,25 +344,70 @@ def check_directory(
     if languages:
         files = [f for f in files if _detect_language(f) in languages]
 
+    # 增量缓存（任务7：复用检查历史，mtime+size 未变直接返回上次结果）
+    store = None
+    if use_cache:
+        try:
+            from .store import CheckStore
+
+            store = CheckStore(db_path)
+        except Exception:
+            store = None  # 缓存不可用时退化为完整检查
+
+    def _checked_result(filepath: Path, lang: str) -> CheckResult:
+        """执行检查（命中缓存则跳过），并更新统一存储。"""
+        if store is not None:
+            stat = filepath.stat()
+            cached = store.get_cached_result(str(filepath), stat.st_mtime, stat.st_size)
+            if cached is not None:
+                issues = [Issue(**i) for i in cached["issues"]]
+                return CheckResult(file=str(filepath), issues=issues, language=cached["language"])
+        result = check_file(filepath, rules, lang, semantic=semantic, run_linters=run_linters)
+        if store is not None and not result.skipped:
+            stat = filepath.stat()
+            store.set_cached_result(
+                str(filepath),
+                stat.st_mtime,
+                stat.st_size,
+                {
+                    "language": result.language,
+                    "passed": result.passed,
+                    "errors": result.error_count,
+                    "warnings": result.warning_count,
+                    "info": result.info_count,
+                    "issues": [i.to_dict() for i in result.issues],
+                },
+            )
+        return result
+
     if jobs <= 1 or len(files) <= 4:
         # Serial execution for small sets
         for filepath in files:
-            result = check_file(filepath, rules, _detect_language(filepath), semantic=semantic, run_linters=run_linters)
+            result = _checked_result(filepath, _detect_language(filepath))
             if not result.skipped:
                 results.append(result)
     else:
-        # Parallel execution
-        from concurrent.futures import ProcessPoolExecutor, as_completed
+        # Parallel execution with worker warm-up (shared rules, no re-load)
+        from collections.abc import Iterator
+        from concurrent.futures import ProcessPoolExecutor
 
-        with ProcessPoolExecutor(max_workers=jobs) as executor:
-            future_to_file = {
-                executor.submit(check_file, fp, rules, _detect_language(fp), semantic): fp for fp in files
-            }
-            for future in as_completed(future_to_file):
+        # 预热规则：在主进程加载一次，随后通过 initializer 传递给 worker，
+        # 避免每个任务内部重复读取 YAML / 解析规则文件
+        warmup_rules = rules or {}
+
+        pairs = [(fp, _detect_language(fp)) for fp in files]
+        with ProcessPoolExecutor(max_workers=jobs, initializer=_worker_init, initargs=(warmup_rules,)) as executor:
+            worker_results: Iterator[CheckResult | None] = executor.map(
+                _worker_check,
+                pairs,
+                [semantic] * len(pairs),
+                [run_linters] * len(pairs),
+                chunksize=16,
+            )
+            for worker_result in worker_results:
                 try:
-                    result = future.result()
-                    if not result.skipped:
-                        results.append(result)
+                    if worker_result is not None:
+                        results.append(worker_result)
                 except Exception:
                     _ = None  # skip failed check
 
@@ -349,12 +447,14 @@ def _run_semantic_checks(filepath: Path, lang: str) -> list[Issue]:
     """Run AST-based semantic analysis on a file.
 
     Uses tree-sitter for accurate syntax tree analysis instead of regex.
-    Detects: unused imports, missing docstrings, complexity violations.
+    通过语义规则插件系统执行检查（见 semantic_rules.py），
+    新增规则只需注册 SemanticRule，无需修改本模块。
     """
     issues: list[Issue] = []
 
     try:
         from .ast_parser import get_parser
+        from .semantic_rules import run_semantic_rules
 
         parser = get_parser()
         if not parser.available:
@@ -364,59 +464,8 @@ def _run_semantic_checks(filepath: Path, lang: str) -> list[Issue]:
         if ast_result is None:
             return issues
 
-        # Check unused imports
-        for imp in ast_result.imports:
-            if imp.is_from and imp.names:
-                try:
-                    content = filepath.read_text(encoding="utf-8")
-                except Exception:
-                    continue
-                for name in imp.names:
-                    # Skip wildcard imports
-                    if name == "*":
-                        continue
-                    if name not in content or content.count(name) <= 1:
-                        issues.append(
-                            Issue(
-                                file=str(filepath),
-                                line=imp.line,
-                                column=0,
-                                severity="warning",
-                                category="unused-import",
-                                rule_id="semantic-unused-import",
-                                message=f"Import '{name}' from '{imp.module}' appears unused",
-                            )
-                        )
-
-        # Check missing docstrings for public functions
-        for func in ast_result.functions:
-            if not func.name.startswith("_") and func.docstring is None:
-                issues.append(
-                    Issue(
-                        file=str(filepath),
-                        line=func.line,
-                        column=0,
-                        severity="info",
-                        category="missing-docstring",
-                        rule_id="semantic-missing-docstring",
-                        message=f"Public function '{func.name}' lacks a docstring",
-                    )
-                )
-
-        # Check complexity via AST
-        for func in ast_result.functions:
-            if func.complexity > 10:
-                issues.append(
-                    Issue(
-                        file=str(filepath),
-                        line=func.line,
-                        column=0,
-                        severity="warning",
-                        category="complexity",
-                        rule_id="semantic-high-complexity",
-                        message=f"Function '{func.name}' has AST-estimated complexity {func.complexity} (>10)",
-                    )
-                )
+        # 运行所有匹配语言的语义规则插件
+        issues.extend(run_semantic_rules(ast_result, filepath, lang))
 
     except ImportError:
         # tree-sitter not available - silently skip
@@ -544,3 +593,6 @@ def _map_severity(level: str | int) -> str:
     if level in ("error", "critical", "fatal"):
         return "error"
     return "warning"
+
+
+# Test change

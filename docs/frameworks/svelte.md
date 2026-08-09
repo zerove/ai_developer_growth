@@ -23,11 +23,11 @@ updated: 2026-07-21
   // ✅ 正确: 使用 runes
   let count = $state(0);
   let doubled = $derived(count * 2);
-  
+
   function increment() {
     count++;
   }
-  
+
   // ✅ 正确: 使用 $effect
   $effect(() => {
     console.log('Count changed:', count);
@@ -59,7 +59,7 @@ updated: 2026-07-21
 <script lang="ts">
   export let user: User;  // 应使用 $props
   export let onSelect: (user: User) => void;
-  
+
   $: doubled = count * 2;  // 应使用 $derived
 </script>
 ```
@@ -86,7 +86,7 @@ export const isLoggedIn = derived(userStore, $user => $user !== null);
 <!-- ✅ 正确: 使用 page store -->
 <script lang="ts">
   import { page } from '$app/stores';
-  
+
   let userId = $derived($page.params.id);
 </script>
 ```
@@ -150,11 +150,11 @@ export const actions: Actions = {
   default: async ({ request }) => {
     const formData = await request.formData();
     const name = formData.get('name');
-    
+
     if (!name) {
       return fail(400, { name, error: 'Name is required' });
     }
-    
+
     await createUser({ name });
     return { success: true };
   }
@@ -188,7 +188,7 @@ describe('UserCard', () => {
         onSelect: () => {}
       }
     });
-    
+
     expect(screen.getByText('John')).toBeInTheDocument();
   });
 });

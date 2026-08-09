@@ -18,6 +18,7 @@ Usage:
 
 from __future__ import annotations
 
+import argparse
 import re
 import sys
 from typing import Any
@@ -100,9 +101,63 @@ def validate_rule_tests(lang: str) -> tuple[int, int, list[str]]:
     return passed, failed, errors
 
 
-def main() -> int:
-    import argparse
+def _discover_languages(args: argparse.Namespace) -> list[str]:
+    """Discover languages to test based on args."""
+    if args.all:
+        langs_dir = _rules_dir() / "languages"
+        return sorted(d.name for d in langs_dir.iterdir() if d.is_dir() and (d / "rules.d").exists())
+    return [args.lang]
 
+
+def _run_language_validation(lang: str) -> tuple[int, int, list[str]]:
+    """Run validation for a single language."""
+    return validate_rule_tests(lang)
+
+
+def _print_results(lang: str, passed: int, failed: int, json_output: bool) -> None:
+    """Print results for a single language."""
+    if not json_output:
+        if failed:
+            print(f"  ✗ {lang}: {passed} passed, {failed} FAILED")
+        else:
+            print(f"  ✓ {lang}: {passed} passed")
+
+
+def _print_summary(
+    total_passed: int,
+    total_failed: int,
+    all_errors: list[str],
+    json_output: bool,
+    verbose: bool,
+    lang_results: list[dict[str, Any]],
+) -> int:
+    """Print summary and return exit code."""
+    if json_output:
+        import json
+
+        print(
+            json.dumps(
+                {
+                    "total_passed": total_passed,
+                    "total_failed": total_failed,
+                    "languages": lang_results,
+                },
+                indent=2,
+            )
+        )
+    else:
+        print(f"\n{'=' * 40}")
+        print(f"Total: {total_passed} passed, {total_failed} failed")
+
+        if all_errors and verbose:
+            print("\nFailures:")
+            for err in all_errors:
+                print(f"  ✗ {err}")
+
+    return 1 if total_failed > 0 else 0
+
+
+def main() -> int:
     parser = argparse.ArgumentParser(description="Validate YAML rule regex test cases")
     parser.add_argument("--lang", type=str, help="Language to test")
     parser.add_argument("--all", action="store_true", help="Test all languages")
@@ -114,12 +169,7 @@ def main() -> int:
         if not args.all and not args.lang:
             parser.error("Must specify --lang or --all")
 
-        # Discover languages
-        if args.all:
-            langs_dir = _rules_dir() / "languages"
-            languages = sorted(d.name for d in langs_dir.iterdir() if d.is_dir() and (d / "rules.d").exists())
-        else:
-            languages = [args.lang]
+        languages = _discover_languages(args)
 
         total_passed = 0
         total_failed = 0
@@ -127,7 +177,7 @@ def main() -> int:
         lang_results: list[dict[str, Any]] = []
 
         for lang in languages:
-            passed, failed, errors = validate_rule_tests(lang)
+            passed, failed, errors = _run_language_validation(lang)
             total_passed += passed
             total_failed += failed
             all_errors.extend(errors)
@@ -141,35 +191,9 @@ def main() -> int:
                 }
             )
 
-            if not args.json_output:
-                if failed:
-                    print(f"  ✗ {lang}: {passed} passed, {failed} FAILED")
-                else:
-                    print(f"  ✓ {lang}: {passed} passed")
+            _print_results(lang, passed, failed, args.json_output)
 
-        if args.json_output:
-            import json
-
-            print(
-                json.dumps(
-                    {
-                        "total_passed": total_passed,
-                        "total_failed": total_failed,
-                        "languages": lang_results,
-                    },
-                    indent=2,
-                )
-            )
-        else:
-            print(f"\n{'=' * 40}")
-            print(f"Total: {total_passed} passed, {total_failed} failed")
-
-            if all_errors and args.verbose:
-                print("\nFailures:")
-                for err in all_errors:
-                    print(f"  ✗ {err}")
-
-        return 1 if total_failed > 0 else 0
+        return _print_summary(total_passed, total_failed, all_errors, args.json_output, args.verbose, lang_results)
     except Exception as e:
         handle_error(e, script="validate_rule_tests")
         return 1

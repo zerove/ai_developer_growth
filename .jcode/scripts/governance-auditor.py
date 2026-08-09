@@ -180,47 +180,16 @@ def security() -> bool:
 
 
 def validate_governance_docs() -> bool:
-    """验证15个治理层文档格式完整性"""
+    """验证15个治理层文档格式完整性。
+
+    统一入口: 委托 governance-docs-validator（唯一实现，避免重复逻辑漂移）。
+    """
     print_section("治理文档验证")
-    issues: list[str] = []
-
-    for doc_path in GOVERNANCE_DOCS:
-        path = get_project_root() / doc_path
-        if not path.exists():
-            issues.append(f"Missing: {doc_path}")
-            continue
-
-        content = path.read_text(encoding="utf-8")
-
-        # frontmatter 检查
-        if not content.startswith("---"):
-            issues.append(f"{doc_path}: Missing frontmatter")
-            continue
-
-        fm_end = content.find("---", 3)
-        if fm_end == -1:
-            issues.append(f"{doc_path}: Unclosed frontmatter")
-            continue
-
-        fm = content[3:fm_end]
-        for field in ["title", "description", "category", "tags", "difficulty"]:
-            if f"{field}:" not in fm:
-                issues.append(f"{doc_path}: Missing field '{field}'")
-
-        # 导航检查
-        if "## 导航" not in content and "## Navigation" not in content:
-            issues.append(f"{doc_path}: Missing navigation section")
-
-        # 相关文档检查
-        if "相关文档" not in content and "## See Also" not in content:
-            issues.append(f"{doc_path}: Missing related docs section")
-
-    passed = len(issues) == 0
-    print_check(f"治理文档 ({len(GOVERNANCE_DOCS)} 个)", passed)
-    if issues:
-        for issue in issues:
-            print(f"  - {issue}")
-    return passed
+    validator_script = Path(__file__).resolve().parent / "governance-docs-validator.py"
+    code, output = run_command([sys.executable, str(validator_script), "validate"])
+    if output.strip():
+        print(output.strip())
+    return code == 0
 
 
 def check_ai_sdlc_compliance() -> bool:

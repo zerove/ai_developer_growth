@@ -67,7 +67,7 @@ class MyFunctionTest : StringSpec({
     "should return correct result" {
         myFunction(1, 2) shouldBe 3
     }
-    
+
     "should throw error for invalid input" {
         shouldThrow<MyError> { myFunction(null, 2) }
     }

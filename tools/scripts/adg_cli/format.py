@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
+from typing import Any
 
 from tools.scripts.adg_cli.core import Issue
 
@@ -72,13 +73,10 @@ def _format_json(issues: list[Issue], language: str, framework: str | None, file
     )
 
 
-def _format_sarif(issues: list[Issue], language: str, framework: str | None) -> str:
-    """Format issues as SARIF 2.1.0 for GitHub Code Scanning."""
+def _build_sarif_rules(issues: list[Issue], language: str) -> dict[str, dict[str, Any]]:
+    """Build SARIF rules dictionary from issues."""
     rules = {}
-    results = []
-
     for issue in issues:
-        # Collect unique rules
         if issue.rule_id not in rules:
             rules[issue.rule_id] = {
                 "id": issue.rule_id,
@@ -90,50 +88,60 @@ def _format_sarif(issues: list[Issue], language: str, framework: str | None) -> 
                     "language": language,
                 },
             }
+    return rules
 
-        # Map severity to SARIF level
-        level_map = {"error": "error", "warning": "warning", "info": "note"}
-        level = level_map.get(issue.severity, "warning")
 
-        results.append(
+def _build_sarif_result(issue: Issue) -> dict[str, Any]:
+    """Build a single SARIF result object from an issue."""
+    level_map = {"error": "error", "warning": "warning", "info": "note"}
+    level = level_map.get(issue.severity, "warning")
+
+    result = {
+        "ruleId": issue.rule_id,
+        "level": level,
+        "message": {"text": issue.message},
+        "locations": [
             {
-                "ruleId": issue.rule_id,
-                "level": level,
-                "message": {"text": issue.message},
-                "locations": [
+                "physicalLocation": {
+                    "artifactLocation": {"uri": issue.file},
+                    "region": {
+                        "startLine": issue.line,
+                        "startColumn": issue.column,
+                    },
+                }
+            }
+        ],
+        "fixes": [],
+    }
+
+    if issue.fix_hint:
+        result["fixes"] = [
+            {
+                "description": {"text": issue.fix_hint},
+                "artifactChanges": [
                     {
-                        "physicalLocation": {
-                            "artifactLocation": {"uri": issue.file},
-                            "region": {
-                                "startLine": issue.line,
-                                "startColumn": issue.column,
-                            },
-                        },
-                    }
-                ],
-                "fixes": [
-                    {
-                        "description": {"text": issue.fix_hint},
-                        "artifactChanges": [
+                        "artifactLocation": {"uri": issue.file},
+                        "replacements": [
                             {
-                                "artifactLocation": {"uri": issue.file},
-                                "replacements": [
-                                    {
-                                        "deletedRegion": {
-                                            "startLine": issue.line,
-                                            "startColumn": issue.column,
-                                        },
-                                        "insertedContent": {"text": issue.fix_hint},
-                                    }
-                                ],
+                                "deletedRegion": {
+                                    "startLine": issue.line,
+                                    "startColumn": issue.column,
+                                },
+                                "insertedContent": {"text": issue.fix_hint},
                             }
                         ],
                     }
-                ]
-                if issue.fix_hint
-                else [],
+                ],
             }
-        )
+        ]
+
+    return result
+
+
+def _format_sarif(issues: list[Issue], language: str, framework: str | None) -> str:
+    """Format issues as SARIF 2.1.0 for GitHub Code Scanning."""
+    rules = _build_sarif_rules(issues, language)
+    results = [_build_sarif_result(issue) for issue in issues]
 
     sarif = {
         "$schema": "https://json.schemastore.org/sarif-2.1.0.json",

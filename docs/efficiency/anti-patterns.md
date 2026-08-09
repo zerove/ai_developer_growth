@@ -36,7 +36,7 @@ AI 辅助编程并非万能药。当使用不当时，AI 不仅不能提升效�
 
 - **问题**: 代码库膨胀 300%，但功能只增加了 50%
 - **根因**: AI 生成了大量冗余代码，开发者没有进行代码审查
-- **后果**: 
+- **后果**:
   - 构建时间从 2 分钟增加到 15 分钟
   - 新人 onboarding 时间从 1 周增加到 1 个月
   - 关键模块无人理解，只能依赖 AI 维护
@@ -116,11 +116,11 @@ describe('calculateDiscount', () => {
   it('should handle zero discount', () => {
     expect(calculateDiscount(100, 0)).toBe(100);
   });
-  
+
   it('should throw on invalid discount', () => {
     expect(() => calculateDiscount(100, -0.5)).toThrow('Invalid discount');
   });
-  
+
   it('should throw on discount > 1', () => {
     expect(() => calculateDiscount(100, 1.5)).toThrow('Invalid discount');
   });

@@ -39,14 +39,14 @@ def process_order(order_id: int, user_id: int) -> dict:
 def calculate_discount(price: float, discount: float) -> float:
     """
     计算折扣后的价格
-    
+
     Args:
         price: 原价
         discount: 折扣率 (0-1)
-    
+
     Returns:
         折扣后的价格
-    
+
     Raises:
         ValueError: 当折扣率不在 0-1 范围内
     """

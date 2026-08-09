@@ -28,8 +28,10 @@ class ArchitectureDriftGuard:
                         self.violations.append(
                             f"Architecture Drift in {rel}: Domain layer imports infrastructure/web components."
                         )
-                except Exception:
-                    pass
+                except Exception as e:
+                    import logging
+
+                    logging.getLogger(__name__).debug(f"Failed to read {file_path}: {e}")
         return self.violations
 
     def check_adr_references(self) -> list[str]:

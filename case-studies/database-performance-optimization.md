@@ -67,15 +67,15 @@ DROP INDEX idx_orders_user ON orders;
 **AI 优化查询**:
 ```sql
 -- 优化前
-SELECT * FROM orders 
-WHERE user_id = 123 
+SELECT * FROM orders
+WHERE user_id = 123
 AND status = 'pending'
 ORDER BY created_at DESC;
 
 -- 优化后
-SELECT id, amount, status, created_at 
-FROM orders 
-WHERE user_id = 123 
+SELECT id, amount, status, created_at
+FROM orders
+WHERE user_id = 123
 AND status = 'pending'
 ORDER BY created_at DESC
 LIMIT 20;

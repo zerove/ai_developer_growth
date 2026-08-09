@@ -169,4 +169,3 @@ ai_developer_growth 项目构建了一套完整的 AI 治理框架（ai-dev-fram
 - [x] 效率数据：包含传统人工审查 vs quality-gate 的量化对比
 - [x] 关键洞察：4 条实践经验（含 MD5 修复、误报回馈、Any 阈值、开发者体验）
 - [x] 代码/文档链接：`tools/scripts/hooks_runner.py quality-gate` 可复现
-

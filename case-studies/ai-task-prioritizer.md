@@ -139,7 +139,7 @@ class Prioritizer:
 class LLMClient:
     def __init__(self, provider="mock"):
         self.provider = provider
-    
+
     def analyze_tasks(self, tasks: list[str]) -> list[dict]:
         if self.provider == "mock":
             return self._mock_response(tasks)

@@ -74,10 +74,10 @@ def test_create_payment():
 class InMemoryUserRepo(UserRepository):
     def __init__(self):
         self._users = {}
-    
+
     def save(self, user):
         self._users[user.id] = user
-    
+
     def find(self, id):
         return self._users.get(id)
 
@@ -110,10 +110,10 @@ class FixedTimeProvider(TimeProvider):
 class InMemoryMessageBus(MessageBus):
     def __init__(self):
         self.published = []
-    
+
     def publish(self, event):
         self.published.append(event)
-    
+
     def subscribe(self, handler, event_type):
         self.handlers[event_type] = handler
 
@@ -148,7 +148,7 @@ def test_external_api(mocker):
     mock_post = mocker.patch("requests.post")
     mock_post.return_value.json.return_value = {"token": "abc"}
     mock_post.return_value.raise_for_status = lambda: None
-    
+
     result = auth_service.login("user", "pass")
     assert result.token == "abc"
     mock_post.assert_called_once()
@@ -160,7 +160,7 @@ def test_external_api(mocker):
 def test_service(mock_client_class):
     mock_client = mock_client_class.return_value
     mock_client.fetch.return_value = {"data": "ok"}
-    
+
     result = MyService().do_work()
     assert result == "ok"
 ```
@@ -191,9 +191,9 @@ beforeEach(() => {
 
 test('fetches user', async () => {
   apiClient.get.mockResolvedValue({ id: 1, name: 'John' });
-  
+
   const user = await UserService.getUser(1);
-  
+
   expect(user.name).toBe('John');
   expect(apiClient.get).toHaveBeenCalledWith('/users/1');
 });
@@ -225,7 +225,7 @@ def test_consumer_pact(pact):
      .upon_receiving("request for user")
      .with_request("GET", "/users/1")
      .will_respond_with(200, body={"id": 1, "name": "John"}))
-    
+
     with pact:
         client = UserClient(pact.uri)
         user = client.get_user(1)

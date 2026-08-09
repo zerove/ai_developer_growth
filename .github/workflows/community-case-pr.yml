@@ -39,35 +39,40 @@ jobs:
       - name: ADG check code snippets
         id: adg-check
         run: |
-          PASSED=true
-          for file in ${{ steps.changed.outputs.all_changed_files }}; do
-            # Extract code blocks and check each language
-            echo "ADG scanning code snippets in: $file"
-            python -c "
-import re, subprocess, json, sys
-with open('$file') as f:
-    content = f.read()
-# Find all fenced code blocks with language hints
-blocks = re.findall(r'\x60\x60\x60(\w+)\n(.*?)\n\x60\x60\x60', content, re.DOTALL)
-for lang, code in blocks:
-    lang_map = {'py':'python','python':'python','js':'javascript','javascript':'javascript',
-                'ts':'typescript','typescript':'typescript','go':'go','rust':'rust','rs':'rust'}
-    l = lang_map.get(lang, lang)
-    # Write temp file and scan
-    import tempfile, pathlib
-    with tempfile.NamedTemporaryFile(suffix=f'.{lang}', mode='w', delete=False) as f:
-        f.write(code); tmp = f.name
-    r = subprocess.run(['adg','check',tmp,'--severity','error','--json'],
-                       capture_output=True, text=True, timeout=15)
-    if r.returncode == 1:
-        result = json.loads(r.stdout)
-        issues = result.get('issues',[])
-        errors = [i for i in issues if i['severity']=='error']
-        if errors:
-            print(f'::warning file=$file::Found {len(errors)} error(s) in code block ({lang}): {errors[0][\"message\"]}')
-    pathlib.Path(tmp).unlink()
-"
-          done
+          cat > /tmp/adg_check.py << 'PYEOF'
+          import re, subprocess, json, sys
+          import os
+
+          changed_files = os.environ.get('CHANGED_FILES', '').split()
+          for file in changed_files:
+              if not file or not os.path.exists(file):
+                  continue
+              # Extract code blocks and check each language
+              print("ADG scanning code snippets in: " + file)
+              with open(file) as f:
+                  content = f.read()
+              # Find all fenced code blocks with language hints
+              blocks = re.findall(r'```(\w+)\n(.*?)\n```', content, re.DOTALL)
+              for lang, code in blocks:
+                  lang_map = {'py':'python','python':'python','js':'javascript','javascript':'javascript',
+                              'ts':'typescript','typescript':'typescript','go':'go','rust':'rust','rs':'rust'}
+                  l = lang_map.get(lang, lang)
+                  # Write temp file and scan
+                  import tempfile, pathlib
+                  with tempfile.NamedTemporaryFile(suffix=f'.{lang}', mode='w', delete=False) as f:
+                      f.write(code); tmp = f.name
+                  r = subprocess.run(['adg','check',tmp,'--severity','error','--json'],
+                                     capture_output=True, text=True, timeout=15)
+                  if r.returncode == 1:
+                      result = json.loads(r.stdout)
+                      issues = result.get('issues',[])
+                      errors = [i for i in issues if i['severity']=='error']
+                      if errors:
+                          print(f'::warning file={file}::Found {len(errors)} error(s) in code block ({lang}): {errors[0]["message"]}')
+                  pathlib.Path(tmp).unlink()
+          PYEOF
+          CHANGED_FILES="${{ steps.changed.outputs.all_changed_files }}" python /tmp/adg_check.py
+          rm -f /tmp/adg_check.py
 
       - name: Generate review summary
         if: always()

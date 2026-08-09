@@ -151,11 +151,11 @@ class UserRepository implements Repository<User> {
   async get(id: string): Promise<User> {
     // 实现
   }
-  
+
   async create(entity: User): Promise<User> {
     // 实现
   }
-  
+
   async update(id: string, entity: Partial<User>): Promise<User> {
     // 实现
   }
@@ -222,17 +222,17 @@ import { NotFoundError } from "../errors";
 
 describe("UserService", () => {
   let service: UserService;
-  
+
   beforeEach(() => {
     service = new UserService();
   });
-  
+
   describe("getUser", () => {
     it("should return user when found", async () => {
       const user = await service.getUser("123");
       expect(user.id).toBe("123");
     });
-    
+
     it("should throw NotFoundError when not found", async () => {
       await expect(service.getUser("nonexistent"))
         .rejects
@@ -357,13 +357,13 @@ class UserCard extends React.Component<UserCardProps> {
 function useUser(id: string) {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
-  
+
   useEffect(() => {
     getUser(id)
       .then(setUser)
       .finally(() => setLoading(false));
   }, [id]);
-  
+
   return { user, loading };
 }
 

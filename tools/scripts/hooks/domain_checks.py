@@ -11,6 +11,7 @@ from typing import TYPE_CHECKING, Any
 
 from tools.scripts.ai_quality_gate import check_file
 from tools.scripts.hooks.basic_checks import CODE_EXTENSIONS
+from tools.scripts.rules_engine.logger import logger
 from tools.scripts.validate_language_rules import (
     detect_language_from_file,
     validate_directory,
@@ -138,6 +139,27 @@ def run_quality_gate(
                     lines.append(f"   ... and {len(result['issues']) - 5} more")
         lines.append(f"\nSummary: {passed_count} passed, {failed_count} failed, {total_issues} issues")
         output = "\n".join(lines)
+
+    # 记录到统一存储（任务7：复用检查历史，供 dashboard/趋势分析使用）
+    try:
+        from tools.scripts.rules_engine.store import get_connection, record_run
+
+        record_run(
+            get_connection(),
+            {
+                "summary": {
+                    "total_files": len(all_results),
+                    "errors": total_issues,
+                    "warnings": 0,
+                    "info": 0,
+                    "passed": passed_count,
+                    "failed": failed_count,
+                },
+                "results": [{"file": str(f), **r} for f, r in all_results],
+            },
+        )
+    except Exception as e:  # 存储失败不影响检查结果
+        logger.warning("记录质量检查历史失败: %s", e)
 
     return failed_count == 0, output
 

@@ -106,7 +106,7 @@ class UserResponse(BaseModel):
     email: str
     name: str
     created_at: datetime
-    
+
     class Config:
         from_attributes = True
 
@@ -245,7 +245,7 @@ from unittest.mock import AsyncMock, patch
 async def test_get_user():
     with patch('app.services.user.UserService.get_by_id') as mock:
         mock.return_value = User(id='1', email='test@example.com')
-        
+
         async with AsyncClient(app=app, base_url='http://test') as client:
             response = await client.get('/api/v1/users/1')
             assert response.status_code == 200
@@ -282,7 +282,7 @@ from pydantic_settings import BaseSettings
 class Settings(BaseSettings):
     secret_key: str
     database_url: str
-    
+
     class Config:
         env_file = '.env'
 

@@ -136,10 +136,10 @@ async def test_async_function():
 def test_example():
     # Arrange
     input_data = [1, 2, 3]
-    
+
     # Act
     result = process(input_data)
-    
+
     # Assert
     assert result == [2, 3, 4]
 ```

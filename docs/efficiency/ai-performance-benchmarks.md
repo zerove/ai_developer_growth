@@ -68,7 +68,7 @@ updated: 2026-07-22
 ### 3.1 自动化采集
 
 ```python
-# 
+#
 METRICS = {
     "time": {
         "task_duration": "任务完成时间",

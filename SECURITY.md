@@ -6,14 +6,14 @@
 
 请通过以下方式报告：
 
-1. **GitHub Security Advisories**: [报告漏洞](https://github.com/zerove/ai_developer_growth/security/advisories/new)
-2. **邮件**: security@example.com (如果可用)
+1.  **GitHub Security Advisories**: [报告漏洞](https://github.com/zerove/ai_developer_growth/security/advisories/new)
+2.  **邮件**: security@example.com (如果可用)
 
 ## 响应时间
 
-- **确认**: 48 小时内确认收到报告
-- **评估**: 7 天内评估漏洞严重程度
-- **修复**: 根据严重程度，14-30 天内发布修复
+-   **确认**: 48 小时内确认收到报告
+-   **评估**: 7 天内评估漏洞严重程度
+-   **修复**: 根据严重程度，14-30 天内发布修复
 
 ## 漏洞严重程度
 
@@ -28,24 +28,24 @@
 
 ### 对于贡献者
 
-- 不要在代码中硬编码敏感信息
-- 使用环境变量存储配置
-- 验证所有用户输入
-- 遵循最小权限原则
+-   不要在代码中硬编码敏感信息
+-   使用环境变量存储配置
+-   验证所有用户输入
+-   遵循最小权限原则
 
 ### 对于用户
 
-- 保持依赖更新
-- 不要在生产环境使用示例代码
-- 定期检查安全更新
+-   保持依赖更新
+-   不要在生产环境使用示例代码
+-   定期检查安全更新
 
 ## 安全更新
 
 安全更新将通过以下方式通知：
 
-- GitHub Security Advisories
-- Release Notes
-- README 更新
+-   GitHub Security Advisories
+-   Release Notes
+-   README 更新
 
 ## 致谢
 

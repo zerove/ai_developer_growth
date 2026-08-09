@@ -65,13 +65,13 @@ def process_order(order):
         raise ValueError("Invalid status")
     if order['amount'] <= 0:
         raise ValueError("Invalid amount")
-    
+
     # 计算折扣
     if order['user_type'] == 'vip':
         discount = 0.2
     else:
         discount = 0.1
-    
+
     # 处理订单
     order['amount'] *= (1 - discount)
     order['status'] = 'processed'

@@ -16,7 +16,7 @@ updated: 2026-07-21
 graph TB
     subgraph "Universal Governance Framework"
         GOV[GOVERNANCE.md<br/>通用治理标准]
-        
+
         subgraph "Programming Languages"
             PY[Python]
             RS[Rust]
@@ -32,7 +32,7 @@ graph TB
             SC[Scala]
             EL[Elixir]
         end
-        
+
         subgraph "Frameworks"
             REACT[React]
             VUE[Vue]
@@ -46,35 +46,35 @@ graph TB
             FAST[FastAPI]
             SPRING[Spring Boot]
         end
-        
+
         subgraph "DevOps & Infrastructure"
             DOCKER[Docker]
             K8S[Kubernetes]
             CICD[CI/CD]
         end
-        
+
         subgraph "Data Layer"
             SQL[SQL]
             NOSQL[NoSQL]
         end
-        
+
         subgraph "API Design"
             REST[RESTful]
             GRAPHQL[GraphQL]
             GRPC[gRPC]
         end
-        
+
         subgraph "Security"
             AUTH[Authentication]
             OWASP[OWASP Top 10]
         end
-        
+
         subgraph "Testing & Workflow"
             TEST[Testing Strategy]
             GIT[Git Workflow]
         end
     end
-    
+
     GOV --> PY & RS & TS & GO & JA & CS & KT & PH & RB & CPP & SW & SC & EL
     GOV --> REACT & VUE & ANG & SVEL & NEXT & NEST & EXPRESS & FLASK & DJANGO & FAST & SPRING
     GOV --> DOCKER & K8S & CICD
@@ -95,18 +95,18 @@ graph LR
         D --> E[资产更新]
         E --> A
     end
-    
+
     subgraph "Quality Gates"
         G1[Gate 1: Design Review]
         G2[Gate 2: Implementation Review]
         G3[Gate 3: Automated Audit]
         G4[Gate 4: Documentation Review]
-        
+
         G1 --> G2
         G2 --> G3
         G3 --> G4
     end
-    
+
     B -.-> G1
     C -.-> G2
     D -.-> G3

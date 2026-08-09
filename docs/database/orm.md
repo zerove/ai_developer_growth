@@ -56,7 +56,7 @@ class User(Base, TimestampMixin, VersionMixin):
     hashed_password = Column(String(255), nullable=False)
     full_name = Column(String(100))
     is_active = Column(Boolean, default=True, nullable=False)
-    
+
     # 关系：显式 lazy="selectin" 避免 N+1
     posts = relationship("Post", back_populates="author", lazy="selectin")
     orders = relationship("Order", back_populates="user", lazy="raise")  # 强制显式加载
@@ -147,7 +147,7 @@ class UserService:
             repo = UserRepository(session)
             if repo.get_by_email(email):
                 raise ValueError("Email already registered")
-            
+
             user = User(
                 email=email,
                 hashed_password=hash_password(password),
@@ -160,10 +160,10 @@ class UserService:
             user = repo.get_by_id(user_id)
             if not user:
                 raise NotFoundError("User")
-            
+
             if repo.get_by_email(new_email):
                 raise ValueError("Email taken")
-            
+
             user.email = new_email
             # version 自动增
             return user
@@ -238,7 +238,7 @@ await prisma.user.update({
 func NewDB(cfg Config) (*gorm.DB, error) {
     dsn := fmt.Sprintf("host=%s user=%s password=%s dbname=%s port=%s sslmode=disable",
         cfg.Host, cfg.User, cfg.Password, cfg.Name, cfg.Port)
-    
+
     db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{
         PrepareStmt:            true,           // 预编译缓存
         SkipDefaultTransaction: true,           // 手动控制事务

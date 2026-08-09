@@ -46,7 +46,7 @@ async def get_user(id: str):
 async def get_user(id: str, current_user: User = Depends(get_current_user)):
     if current_user.id != id and current_user.role != 'admin':
         raise HTTPException(403, 'Forbidden')
-    
+
     user = await db.find_user(id)
     return user
 ```

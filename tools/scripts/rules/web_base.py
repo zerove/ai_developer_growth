@@ -32,7 +32,7 @@ class RuleWebServer(BaseHTTPRequestHandler):
     page_title: str = "AI Language Rules"
     _html_content: str = ""
 
-    def do_GET(self) -> None:
+    def do_GET(self) -> None:  # noqa: N802
         parsed = urlparse(self.path)
         path = parsed.path
         query = parse_qs(parsed.query)
@@ -54,7 +54,7 @@ class RuleWebServer(BaseHTTPRequestHandler):
         self.end_headers()
         self.wfile.write(html.encode())
 
-    def do_POST(self) -> None:
+    def do_POST(self) -> None:  # noqa: N802
         parsed = urlparse(self.path)
         path = parsed.path
 

@@ -14,6 +14,7 @@ from __future__ import annotations
 import re
 from dataclasses import dataclass, field
 from pathlib import Path
+from typing import Any
 
 
 @dataclass
@@ -253,10 +254,17 @@ _IGNORE_FILES = {
     "security_patterns.py",
 }
 
+_IGNORE_DIRS = {"rules.d", "anti_patterns", ".git", "__pycache__", "node_modules"}
+
 
 def _should_ignore_file(filepath: Path) -> bool:
     """Check if file should be ignored in hallucination scanning."""
-    return filepath.name in _IGNORE_FILES
+    # Check by filename
+    if filepath.name in _IGNORE_FILES:
+        return True
+    # Check by directory path
+    parts = filepath.parts
+    return any(part in _IGNORE_DIRS for part in parts)
 
 
 _ALL_PATTERNS = _HALLUCINATED_APIS + _UNSAFE_PATTERNS + _LOGIC_HALLUCINATIONS
@@ -304,6 +312,49 @@ def _is_comment(line: str, pos: int) -> bool:
     return False
 
 
+def _create_finding(
+    filepath: Path,
+    line_num: int,
+    pos: int,
+    pattern_def: dict[str, Any],
+    line: str,
+) -> HallucinationFinding:
+    """Create a hallucination finding."""
+    return HallucinationFinding(
+        file=str(filepath),
+        line=line_num,
+        column=pos,
+        pattern_id=str(pattern_def["id"]),
+        severity=str(pattern_def["severity"]),
+        category=str(pattern_def["category"]),
+        message=str(pattern_def["message"]),
+        evidence=line.strip(),
+        confidence=float(pattern_def["confidence"]),
+    )
+
+
+def _scan_line_for_patterns(
+    line: str,
+    line_num: int,
+    filepath: Path,
+    report: HallucinationReport,
+) -> None:
+    """Scan a single line for hallucination patterns."""
+    for pattern_def in _ALL_PATTERNS:
+        regex = pattern_def["pattern"]
+        assert isinstance(regex, str)
+        match = re.search(regex, line)
+        if match:
+            pos = match.start()
+            if _is_in_string(line, pos):
+                continue
+            if _is_comment(line, pos):
+                continue
+
+            finding = _create_finding(filepath, line_num, pos, pattern_def, line)
+            report.findings.append(finding)
+
+
 def detect_hallucinations_in_file(filepath: Path) -> HallucinationReport:
     """Scan a single file for hallucination patterns.
 
@@ -313,7 +364,6 @@ def detect_hallucinations_in_file(filepath: Path) -> HallucinationReport:
     Returns:
         HallucinationReport with all findings.
     """
-    # Skip rule definition files that intentionally contain patterns
     if _should_ignore_file(filepath):
         return HallucinationReport(files_scanned=1, findings=[])
 
@@ -328,30 +378,7 @@ def detect_hallucinations_in_file(filepath: Path) -> HallucinationReport:
     lines = content.splitlines()
 
     for line_num, line in enumerate(lines, 1):
-        for pattern_def in _ALL_PATTERNS:
-            regex = pattern_def["pattern"]
-            assert isinstance(regex, str)
-            match = re.search(regex, line)
-            if match:
-                pos = match.start()
-                # Skip if in string or comment
-                if _is_in_string(line, pos):
-                    continue
-                if _is_comment(line, pos):
-                    continue
-
-                finding = HallucinationFinding(
-                    file=str(filepath),
-                    line=line_num,
-                    column=pos,
-                    pattern_id=str(pattern_def["id"]),
-                    severity=str(pattern_def["severity"]),
-                    category=str(pattern_def["category"]),
-                    message=str(pattern_def["message"]),
-                    evidence=line.strip(),
-                    confidence=float(pattern_def["confidence"]),
-                )
-                report.findings.append(finding)
+        _scan_line_for_patterns(line, line_num, filepath, report)
 
     report._recount()
     return report

@@ -67,7 +67,7 @@ class MyFunctionTests: XCTestCase {
         let result = myFunction(1, 2)
         XCTAssertEqual(result, 3)
     }
-    
+
     func testError() {
         XCTAssertThrowsError(try myFunction(nil, 2))
     }

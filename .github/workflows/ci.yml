@@ -23,7 +23,7 @@ jobs:
       cache-hit: ${{ steps.cache.outputs.cache-hit }}
     steps:
       - uses: actions/checkout@v4
-      
+
       - name: Setup Python
         uses: actions/setup-python@v5
         with:
@@ -32,7 +32,7 @@ jobs:
           cache-key: ${{ env.CACHE_PREFIX }}-pip-${{ hashFiles('pyproject.toml', 'uv.lock', 'ruff.toml') }}
           restore-keys: |
             ${{ env.CACHE_PREFIX }}-pip-
-      
+
       - name: Cache mypy
         uses: actions/cache@v4
         id: mypy-cache
@@ -41,7 +41,7 @@ jobs:
           key: ${{ env.CACHE_PREFIX }}-mypy-${{ hashFiles('tools/scripts/**/*.py') }}
           restore-keys: |
             ${{ env.CACHE_PREFIX }}-mypy-
-      
+
       - name: Cache pytest
         uses: actions/cache@v4
         id: pytest-cache
@@ -50,7 +50,7 @@ jobs:
           key: ${{ env.CACHE_PREFIX }}-pytest-${{ hashFiles('tests/**/*.py', 'pyproject.toml') }}
           restore-keys: |
             ${{ env.CACHE_PREFIX }}-pytest-
-      
+
       - name: Cache coverage
         uses: actions/cache@v4
         id: coverage-cache
@@ -277,6 +277,24 @@ jobs:
           name: combined-coverage
           path: combined-coverage.xml
           retention-days: 30
+      - name: Diff Cover (PR only)
+        if: github.event_name == 'pull_request'
+        run: |
+          pip install diff-cover
+          # Get base branch
+          BASE_BRANCH=${{ github.base_ref }}
+          # Fetch base branch
+          git fetch origin $BASE_BRANCH --depth=1
+          # Run diff-cover
+          diff-cover combined-coverage.xml --compare-branch=origin/$BASE_BRANCH --fail-under=85 --html-report diff-cover-report.html || true
+      - name: Upload Diff Cover Report
+        if: github.event_name == 'pull_request' && always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: diff-cover-report
+          path: diff-cover-report.html
+          retention-days: 7
+
 
   # ──────────────────────────────────────────────────────
   # Quality Gates (复用 hooks_runner)

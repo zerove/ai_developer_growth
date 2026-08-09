@@ -15,13 +15,9 @@ from typing import Any
 from .validate_language_rules import Issue
 
 
-def check_naming_conventions(lines: list[str], rules: dict[str, Any], filepath: str) -> list[Issue]:
-    """Check naming conventions based on language rules."""
+def _check_filename(filepath: str, language: str, naming: dict[str, Any]) -> list[Issue]:
+    """Check filename against naming convention."""
     issues: list[Issue] = []
-    naming = rules.get("naming", {})
-    language = rules.get("language", "")
-
-    # Check filename
     file_rule = naming.get("file", {})
     if file_rule and "pattern" in file_rule:
         filename = filepath.rsplit("/", 1)[-1] if "/" in filepath else filepath
@@ -36,38 +32,60 @@ def check_naming_conventions(lines: list[str], rules: dict[str, Any], filepath: 
                     message=file_rule.get("message", f"File name '{filename}' violates naming convention"),
                 )
             )
+    return issues
 
-    # Check function/class/variable names in code
-    for kind in ["function", "class", "struct", "enum", "constant", "interface", "module", "trait", "package"]:
-        kind_rule = naming.get(kind, {})
-        if not kind_rule or "pattern" not in kind_rule:
+
+def _check_identifier_kind(
+    lines: list[str], language: str, kind: str, kind_rule: dict[str, Any], filepath: str
+) -> list[Issue]:
+    """Check a single kind of identifier (function, class, etc.) against naming convention."""
+    issues: list[Issue] = []
+
+    if not kind_rule or "pattern" not in kind_rule:
+        return issues
+
+    regex = re.compile(kind_rule["pattern"])
+    exceptions = kind_rule.get("exceptions", [])
+
+    for line_num, line in enumerate(lines, 1):
+        stripped = line.strip()
+        if stripped.startswith("#") or stripped.startswith("//"):
             continue
 
-        regex = re.compile(kind_rule["pattern"])
-        exceptions = kind_rule.get("exceptions", [])
+        identifiers = extract_identifiers(stripped, kind, language)
 
-        for line_num, line in enumerate(lines, 1):
-            stripped = line.strip()
-            if stripped.startswith("#") or stripped.startswith("//"):
+        for ident in identifiers:
+            if ident in exceptions:
                 continue
-
-            # Extract identifier based on language patterns
-            identifiers = extract_identifiers(stripped, kind, language)
-
-            for ident in identifiers:
-                if ident in exceptions:
-                    continue
-                if not regex.match(ident):
-                    issues.append(
-                        Issue(
-                            rule_id=f"{language[:2]}-naming-{kind}",
-                            severity="info",
-                            category="naming",
-                            file=filepath,
-                            line=line_num,
-                            message=kind_rule.get("message", f"'{ident}' violates {kind} naming convention"),
-                        )
+            if not regex.match(ident):
+                issues.append(
+                    Issue(
+                        rule_id=f"{language[:2]}-naming-{kind}",
+                        severity="info",
+                        category="naming",
+                        file=filepath,
+                        line=line_num,
+                        message=kind_rule.get("message", f"'{ident}' violates {kind} naming convention"),
                     )
+                )
+
+    return issues
+
+
+def check_naming_conventions(lines: list[str], rules: dict[str, Any], filepath: str) -> list[Issue]:
+    """Check naming conventions based on language rules."""
+    issues: list[Issue] = []
+    naming = rules.get("naming", {})
+    language = rules.get("language", "")
+
+    # Check filename
+    issues.extend(_check_filename(filepath, language, naming))
+
+    # Check function/class/variable names in code
+    kinds = ["function", "class", "struct", "enum", "constant", "interface", "module", "trait", "package"]
+    for kind in kinds:
+        kind_rule = naming.get(kind, {})
+        issues.extend(_check_identifier_kind(lines, language, kind, kind_rule, filepath))
 
     return issues
 

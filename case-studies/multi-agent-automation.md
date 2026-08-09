@@ -63,7 +63,7 @@ difficulty: 进阶
 class CodeReviewAgent:
     def __init__(self, llm):
         self.llm = llm
-    
+
     async def review(self, diff: str, file_path: str) -> dict:
         prompt = self.review_prompt.format(
             file_path=file_path,
@@ -107,7 +107,7 @@ class CodeReviewAgent:
 class TestGenerationAgent:
     def __init__(self, llm):
         self.llm = llm
-    
+
     async def generate_tests(self, code: str, review: dict) -> dict:
         prompt = self.test_prompt.format(
             code=code,
@@ -155,17 +155,17 @@ class WorkflowOrchestrator:
         self.review_agent = review_agent
         self.test_agent = test_agent
         self.doc_agent = doc_agent
-    
+
     async def run(self, diff: str, file_path: str):
         # 1. 代码审查
         review = await self.review_agent.review(diff, file_path)
-        
+
         # 2. 生成测试 (依赖审查结果)
         tests = await self.test_agent.generate_tests(diff, review)
-        
+
         # 3. 更新文档 (依赖审查结果)
         docs = await self.doc_agent.update(file_path, diff, review)
-        
+
         return {
             "review": review,
             "tests": tests,

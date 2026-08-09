@@ -41,27 +41,27 @@ on:
 jobs:
   test:
     runs-on: ubuntu-latest
-    
+
     steps:
       - uses: actions/checkout@v4
-      
+
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: '20'
-          
+
       - name: Install dependencies
         run: npm ci
-        
+
       - name: Run linting
         run: npm run lint
-        
+
       - name: Run type check
         run: npm run type-check
-        
+
       - name: Run tests
         run: npm test -- --coverage
-        
+
       - name: Upload coverage
         uses: codecov/codecov-action@v3
 ```
@@ -81,7 +81,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      
+
       - name: AI Code Review
         uses: coderabbitai/ai-pr-reviewer@latest
         with:

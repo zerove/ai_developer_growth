@@ -35,7 +35,7 @@
 - 每周扫描 `case-studies/` 目录，验证案例格式完整性（背景/过程/对比/洞察/场景）
 - 运行 `tools/scripts/link_auditor.py` 检查文档断链，生成修复报告
 - 运行 `tools/scripts/validate_case_study.py` 验证新提交案例
-- 更新 `INDEX.md`OC.md` 
+- 更新 `INDEX.md`OC.md`
 - 执行 `tools/scripts/update_ai_tool_matrix.py` 同步
 
 ### 2. governance-auditor (治理审计员 v1.1)

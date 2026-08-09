@@ -67,13 +67,13 @@ export default function() { ... }  // 匿名导出
 function useUser(id: string) {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
-  
+
   useEffect(() => {
     getUser(id)
       .then(setUser)
       .finally(() => setLoading(false));
   }, [id]);
-  
+
   return { user, loading };
 }
 
@@ -121,7 +121,7 @@ function Item({ item }: { item: Item }) {
 // ✅ 正确: 使用 useState/useReducer
 function Counter() {
   const [count, setCount] = useState(0);
-  
+
   return (
     <button onClick={() => setCount(c => c + 1)}>
       Count: {count}
@@ -138,7 +138,7 @@ const UserContext = createContext<User | null>(null);
 
 function App() {
   const [user, setUser] = useState<User | null>(null);
-  
+
   return (
     <UserContext.Provider value={user}>
       <ChildComponent />
@@ -184,11 +184,11 @@ const UserCard = React.memo(function UserCard({ user }: { user: User }) {
 // ✅ 正确
 function App({ items }: { items: Item[] }) {
   const sorted = useMemo(() => items.sort((a, b) => a.id - b.id), [items]);
-  
+
   const handleClick = useCallback(() => {
     console.log('clicked');
   }, []);
-  
+
   return <List items={sorted} onClick={handleClick} />;
 }
 ```
@@ -222,11 +222,11 @@ describe('UserCard', () => {
     render(<UserCard user={{ id: '1', name: 'John' }} onSelect={() => {}} />);
     expect(screen.getByText('John')).toBeInTheDocument();
   });
-  
+
   it('calls onSelect when clicked', () => {
     const onSelect = jest.fn();
     render(<UserCard user={{ id: '1', name: 'John' }} onSelect={onSelect} />);
-    
+
     fireEvent.click(screen.getByText('John'));
     expect(onSelect).toHaveBeenCalledWith({ id: '1', name: 'John' });
   });

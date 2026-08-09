@@ -61,20 +61,20 @@ updated: 2026-07-21
 async def create_user(user: UserCreate):
     """
     创建新用户
-    
+
     Args:
         user: 用户创建信息
             - name: 用户名 (必填)
             - email: 邮箱 (必填，格式校验)
             - password: 密码 (必填，最小 8 位)
-    
+
     Returns:
         User: 创建的用户对象
-    
+
     Raises:
         400: 邮箱格式错误
         409: 邮箱已存在
-    
+
     Example:
         >>> create_user(UserCreate(name="John", email="john@example.com", password="12345678"))
         User(id=1, name="John", email="john@example.com")
@@ -143,20 +143,20 @@ curl -X POST http://localhost:8000/users/ \
 def calculate_discount(price: float, discount_rate: float, min_price: float = 0) -> float:
     """
     计算折扣后的价格
-    
+
     根据折扣率计算折扣后的价格，并确保不低于最低价格。
-    
+
     Args:
         price: 原价 (必须大于 0)
         discount_rate: 折扣率 (0-1 之间，如 0.8 表示 8 折)
         min_price: 最低价格 (默认为 0)
-    
+
     Returns:
         float: 折扣后的价格
-    
+
     Raises:
         ValueError: 当 price <= 0 或 discount_rate 不在 0-1 之间时
-    
+
     Examples:
         >>> calculate_discount(100, 0.8)
         80.0
@@ -167,7 +167,7 @@ def calculate_discount(price: float, discount_rate: float, min_price: float = 0)
         raise ValueError("Price must be positive")
     if not 0 <= discount_rate <= 1:
         raise ValueError("Discount rate must be between 0 and 1")
-    
+
     discounted = price * discount_rate
     return max(discounted, min_price)
 ```
@@ -179,28 +179,28 @@ def calculate_discount(price: float, discount_rate: float, min_price: float = 0)
 class UserManager:
     """
     用户管理器
-    
+
     负责用户的创建、查询、更新和删除操作。
-    
+
     Attributes:
         db: 数据库连接
         cache: 缓存客户端
-    
+
     Methods:
         create_user: 创建新用户
         get_user: 获取用户信息
         update_user: 更新用户信息
         delete_user: 删除用户
-    
+
     Example:
         >>> manager = UserManager(db, cache)
         >>> user = manager.create_user(name="John", email="john@example.com")
     """
-    
+
     def __init__(self, db: Database, cache: Cache):
         """
         初始化用户管理器
-        
+
         Args:
             db: 数据库连接实例
             cache: 缓存客户端实例

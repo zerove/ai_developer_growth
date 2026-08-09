@@ -122,10 +122,10 @@ def test_add_negative_numbers_returns_sum():
 def test_example():
     # Arrange
     input_data = [1, 2, 3]
-    
+
     # Act
     result = process(input_data)
-    
+
     # Assert
     assert result == [2, 3, 4]
 ```

@@ -247,7 +247,7 @@ updated: 2026-07-21
 # 根据任务类型加载相关文档
 load_docs() {
     local task_type=$1
-    
+
     case $task_type in
         "requirement")
             echo "加载需求分析文档..."

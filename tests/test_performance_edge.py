@@ -15,7 +15,7 @@ class TestPerformanceEdgeCases:
         """_get_memory_usage returns a non-negative number."""
         opt = PerformanceOptimizer()
         mem = opt._get_memory_usage()
-        assert isinstance(mem, (int, float))
+        assert isinstance(mem, int | float)
         assert mem >= 0
 
     def test_parallel_check_with_exception(self):

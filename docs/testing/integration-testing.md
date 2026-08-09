@@ -136,7 +136,7 @@ def test_create_payment(pact):
      .upon_receiving("a request to create payment")
      .with_request("POST", "/payments", body={"amount": 100})
      .will_respond_with(201, body={"id": "pay_123", "status": "created"}))
-    
+
     with pact:
         client = PaymentClient(pact.uri)
         result = client.create_payment(100)
@@ -155,11 +155,11 @@ test("完整下单流程", async ({ page }) => {
   await page.goto("/login");
   await page.fill("#email", "user@test.com");
   await page.click("button:has-text('登录')");
-  
+
   await page.goto("/products/123");
   await page.click("button:has-text('加入购物车')");
   await page.click("a:has-text('结算')");
-  
+
   await expect(page.locator(".order-confirmation")).toBeVisible();
 });
 ```

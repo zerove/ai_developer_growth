@@ -189,18 +189,18 @@ val email = user?.address?.email
 ```kotlin
 class UserServiceTest {
     private lateinit var service: UserService
-    
+
     @BeforeEach
     fun setUp() {
         service = UserService()
     }
-    
+
     @Test
     fun `should get user when found`() {
         val user = service.getUser("123")
         assertThat(user.id).isEqualTo("123")
     }
-    
+
     @Test
     fun `should throw when not found`() {
         assertThrows<NotFoundException> {
@@ -216,11 +216,11 @@ class UserServiceTest {
 class UserServiceTest {
     private val repository = mockk<UserRepository>()
     private val service = UserService(repository)
-    
+
     @Test
     fun `should get user`() = runTest {
         coEvery { repository.findById("123") } returns User("123")
-        
+
         val user = service.getUser("123")
         assertThat(user).isNotNull()
         coVerify { repository.findById("123") }

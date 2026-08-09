@@ -1,0 +1,3 @@
+[[ignored_files]]
+file = "scripts/mkdocs-search-plugin.py"
+rules = [ "security-eval", "error-bare-catch",]

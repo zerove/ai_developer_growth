@@ -35,7 +35,7 @@ while IFS= read -r label; do
     name=$(echo "$label" | jq -r '.name')
     description=$(echo "$label" | jq -r '.description')
     color=$(echo "$label" | jq -r '.color')
-    
+
     echo "  Creating label: $name"
     gh label create "$name" \
         --description "$description" \

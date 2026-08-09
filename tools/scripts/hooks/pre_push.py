@@ -104,8 +104,57 @@ def get_changed_files_in_unpushed_commits() -> list[Path]:
         if result.returncode != 0:
             return []
         return [Path(line.strip()) for line in result.stdout.splitlines() if line.strip()]
-    except Exception:
+    except Exception as e:
+        import logging
+
+        logging.getLogger(__name__).debug(f"Failed to get changed files in unpushed commits: {e}")
         return []
+
+
+def _check_code_files(code_files: list[Path]) -> bool:
+    """Run lint and format checks on Python files."""
+    from tools.scripts.hooks.basic_checks import run_format_files, run_lint_files
+
+    py_files = [str(f) for f in code_files if f.suffix == ".py"]
+    all_passed = True
+
+    if py_files:
+        print("\n🔍 Running lint checks...")
+        lint_passed, lint_out = run_lint_files(py_files)
+        if not lint_passed:
+            print(f"❌ Lint errors:\n{lint_out}")
+            all_passed = False
+
+        print("🔍 Running format checks...")
+        fmt_passed, fmt_out = run_format_files(py_files)
+        if not fmt_passed:
+            print(f"❌ Format errors:\n{fmt_out}")
+            all_passed = False
+
+    return all_passed
+
+
+def _check_language_rules(code_files: list[Path]) -> tuple[bool, list[Path]]:
+    """Run language rules checks on code files."""
+    from tools.scripts.validate_language_rules import detect_language_from_file, validate_file
+
+    skip_patterns = load_skip_patterns()
+    skipped: list[Path] = []
+    all_passed = True
+
+    print("🔍 Running language rules...")
+    for filepath in code_files:
+        if _matches_skip_pattern(filepath, skip_patterns):
+            skipped.append(filepath)
+            continue
+        lang = detect_language_from_file(filepath)
+        if lang:
+            result = validate_file(filepath, lang)
+            if not result.passed:
+                print(f"❌ {filepath}: {len(result.issues)} violations")
+                all_passed = False
+
+    return all_passed, skipped
 
 
 def run_pre_push_check() -> int:
@@ -130,41 +179,16 @@ def run_pre_push_check() -> int:
     for f in code_files:
         print(f"   {f}")
 
-    # Run lint checks on changed files
-    from tools.scripts.hooks.basic_checks import run_format_files, run_lint_files
-
-    py_files = [str(f) for f in code_files if f.suffix == ".py"]
+    # Run checks
     all_passed = True
 
-    if py_files:
-        print("\n🔍 Running lint checks...")
-        lint_passed, lint_out = run_lint_files(py_files)
-        if not lint_passed:
-            print(f"❌ Lint errors:\n{lint_out}")
-            all_passed = False
+    # Check 1: Lint and format
+    all_passed = _check_code_files(code_files) and all_passed
 
-        print("🔍 Running format checks...")
-        fmt_passed, fmt_out = run_format_files(py_files)
-        if not fmt_passed:
-            print(f"❌ Format errors:\n{fmt_out}")
-            all_passed = False
+    # Check 2: Language rules
+    lang_passed, skipped = _check_language_rules(code_files)
+    all_passed = lang_passed and all_passed
 
-    # Run language rules (respecting .adg/config.yml skip_patterns)
-    from tools.scripts.validate_language_rules import detect_language_from_file, validate_file
-
-    skip_patterns = load_skip_patterns()
-    skipped: list[Path] = []
-    print("🔍 Running language rules...")
-    for filepath in code_files:
-        if _matches_skip_pattern(filepath, skip_patterns):
-            skipped.append(filepath)
-            continue
-        lang = detect_language_from_file(filepath)
-        if lang:
-            result = validate_file(filepath, lang)
-            if not result.passed:
-                print(f"❌ {filepath}: {len(result.issues)} violations")
-                all_passed = False
     if skipped:
         print(f"⏭️  Skipped {len(skipped)} file(s) matching skip_patterns: {', '.join(str(f) for f in skipped)}")
 

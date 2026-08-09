@@ -137,25 +137,19 @@ def detect_language_from_files(files: list[Path]) -> str:
     return "unknown"
 
 
-def analyze_project(project_path: Path) -> dict[str, Any]:
-    """Analyze a project and generate rule suggestions.
-
-    Args:
-        project_path: Root of the project to analyze.
-
-    Returns:
-        Dict with detected patterns, stats, and generated rules.
-    """
+def _collect_code_files(project_path: Path) -> list[Path]:
+    """Collect code files from project, ignoring common directories."""
     code_extensions = {".py", ".js", ".jsx", ".ts", ".tsx", ".rs", ".java", ".go", ".rb", ".cs", ".kt", ".swift"}
     ignore_dirs = {"node_modules", ".git", "__pycache__", ".venv", "venv", "dist", "build", ".cache"}
 
     files: list[Path] = []
     for ext in code_extensions:
         files.extend(f for f in project_path.rglob(f"*{ext}") if not any(d in f.parts for d in ignore_dirs))
+    return files
 
-    if not files:
-        return {"error": "No code files found", "files": 0}
 
+def _analyze_files(files: list[Path]) -> tuple[str, int, list[dict[str, Any]], dict[str, int]]:
+    """Analyze files to detect patterns and count occurrences."""
     language = detect_language_from_files(files)
     total_lines = 0
     detected_patterns: list[dict[str, Any]] = []
@@ -177,7 +171,15 @@ def analyze_project(project_path: Path) -> dict[str, Any]:
         except (UnicodeDecodeError, OSError):
             continue
 
-    # Generate rules YAML
+    return language, total_lines, detected_patterns, pattern_counts
+
+
+def _build_rules(
+    language: str,
+    detected_patterns: list[dict[str, Any]],
+    pattern_counts: dict[str, int],
+) -> dict[str, Any]:
+    """Build rules dictionary from detected patterns."""
     rules: dict[str, Any] = {
         "language": language,
         "config_version": "1.0",
@@ -199,6 +201,26 @@ def analyze_project(project_path: Path) -> dict[str, Any]:
                 "fix_hint": pattern["fix_hint"],
             }
         )
+
+    return rules
+
+
+def analyze_project(project_path: Path) -> dict[str, Any]:
+    """Analyze a project and generate rule suggestions.
+
+    Args:
+        project_path: Root of the project to analyze.
+
+    Returns:
+        Dict with detected patterns, stats, and generated rules.
+    """
+    files = _collect_code_files(project_path)
+
+    if not files:
+        return {"error": "No code files found", "files": 0}
+
+    language, total_lines, detected_patterns, pattern_counts = _analyze_files(files)
+    rules = _build_rules(language, detected_patterns, pattern_counts)
 
     return {
         "language": language,

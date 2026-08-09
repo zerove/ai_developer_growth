@@ -122,10 +122,10 @@ T = TypeVar("T")
 class Repository(Generic[T]):
     def __init__(self, session: Session):
         self.session = session
-    
+
     def get(self, id: str) -> T:
         ...
-    
+
     def create(self, entity: T) -> T:
         ...
 ```
@@ -179,17 +179,17 @@ from unittest.mock import AsyncMock, patch
 
 class TestUserService:
     """用户服务测试"""
-    
+
     @pytest.fixture
     def service(self):
         return UserService()
-    
+
     @pytest.mark.asyncio
     async def test_get_user_found(self, service):
         """测试获取用户 - 存在"""
         user = await service.get_user("123")
         assert user.id == "123"
-    
+
     @pytest.mark.asyncio
     async def test_get_user_not_found(self, service):
         """测试获取用户 - 不存在"""
@@ -211,10 +211,10 @@ async def test_with_mock(mock_db):
 class MockDB:
     def query(self, model):
         return self
-    
+
     def filter(self, condition):
         return self
-    
+
     def one(self):
         return None
 ```

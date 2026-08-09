@@ -65,22 +65,22 @@ export class UserService {
 @Controller('users')
 export class UserController {
   constructor(private readonly userService: UserService) {}
-  
+
   @Get()
   findAll(): Promise<User[]> {
     return this.userService.findAll();
   }
-  
+
   @Get(':id')
   findOne(@Param('id') id: string): Promise<User> {
     return this.userService.findOne(id);
   }
-  
+
   @Post()
   create(@Body() createUserDto: CreateUserDto): Promise<User> {
     return this.userService.create(createUserDto);
   }
-  
+
   @Put(':id')
   update(
     @Param('id') id: string,
@@ -88,7 +88,7 @@ export class UserController {
   ): Promise<User> {
     return this.userService.update(id, updateUserDto);
   }
-  
+
   @Delete(':id')
   remove(@Param('id') id: string): Promise<void> {
     return this.userService.remove(id);
@@ -104,10 +104,10 @@ export class CreateUserDto {
   @IsString()
   @IsNotEmpty()
   name: string;
-  
+
   @IsEmail()
   email: string;
-  
+
   @IsEnum(Role)
   role: Role;
 }
@@ -133,24 +133,24 @@ export class UserService {
     @InjectRepository(User)
     private userRepository: Repository<User>,
   ) {}
-  
+
   async create(dto: CreateUserDto): Promise<User> {
     const existing = await this.userRepository.findOne({
       where: { email: dto.email },
     });
-    
+
     if (existing) {
       throw new ConflictException('Email already exists');
     }
-    
+
     const user = this.userRepository.create(dto);
     return this.userRepository.save(user);
   }
-  
+
   async findAll(): Promise<User[]> {
     return this.userRepository.find();
   }
-  
+
   async findOne(id: string): Promise<User> {
     const user = await this.userRepository.findOne({ where: { id } });
     if (!user) {
@@ -172,7 +172,7 @@ export class UserController {
     // 不应在控制器中验证业务规则
     const existing = await this.db.query(...);
     if (existing) throw new Error('Exists');
-    
+
     return this.db.query(...);
   }
 }
@@ -206,7 +206,7 @@ export class ValidationPipe implements PipeTransform {
       name: Joi.string().required(),
       email: Joi.string().email().required(),
     });
-    
+
     const { error } = schema.validate(value);
     if (error) {
       throw new BadRequestException(error.message);
@@ -226,7 +226,7 @@ export class ValidationPipe implements PipeTransform {
 describe('UserService', () => {
   let service: UserService;
   let repository: Repository<User>;
-  
+
   beforeEach(async () => {
     const module = await Test.createTestingModule({
       providers: [
@@ -242,15 +242,15 @@ describe('UserService', () => {
         },
       ],
     }).compile();
-    
+
     service = module.get(UserService);
     repository = module.get(getRepositoryToken(User));
   });
-  
+
   it('should return all users', async () => {
     const users = [{ id: '1', name: 'John' }];
     jest.spyOn(repository, 'find').mockResolvedValue(users);
-    
+
     expect(await service.findAll()).toEqual(users);
   });
 });
@@ -261,20 +261,20 @@ describe('UserService', () => {
 ```typescript
 describe('Users (e2e)', () => {
   let app: INestApplication;
-  
+
   beforeAll(async () => {
     const module = await Test.createTestingModule({
       imports: [AppModule],
     }).compile();
-    
+
     app = module.createNestApplication();
     await app.init();
   });
-  
+
   afterAll(async () => {
     await app.close();
   });
-  
+
   it('/users (GET)', () => {
     return request(app.getHttpServer())
       .get('/users')

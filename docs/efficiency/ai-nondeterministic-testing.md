@@ -86,7 +86,7 @@ AI 生成的代码面临独特的测试挑战：
 # 接口契约定义
 class UserRepository:
     """用户仓库接口契约"""
-    
+
     def get_user(self, user_id: int) -> User:
         """
         契约:
@@ -96,7 +96,7 @@ class UserRepository:
         - 副作用: 无
         """
         pass
-    
+
     def create_user(self, data: CreateUserRequest) -> User:
         """
         契约:
@@ -114,28 +114,28 @@ import pytest
 
 class TestUserRepositoryContract:
     """验证 AI 生成的 UserRepository 实现是否满足契约"""
-    
+
     def test_get_user_contract(self, repo):
         """契约测试: get_user"""
         # 正常路径
         user = repo.get_user(1)
         assert isinstance(user, User)
         assert user.id == 1
-        
+
         # 异常路径
         with pytest.raises(UserNotFoundError):
             repo.get_user(999999)
-        
+
         # 副作用检查
         assert repo.get_user(1) == repo.get_user(1)  # 幂等性
-    
+
     def test_create_user_contract(self, repo, valid_data):
         """契约测试: create_user"""
         # 正常路径
         user = repo.create_user(valid_data)
         assert isinstance(user, User)
         assert user.id is not None
-        
+
         # 异常路径
         with pytest.raises(ValidationError):
             repo.create_user(invalid_data)
@@ -150,24 +150,24 @@ from hypothesis import given, strategies as st
 
 class TestSortProperties:
     """属性测试: 排序函数的不变量"""
-    
+
     @given(st.lists(st.integers()))
     def test_sort_preserves_length(self, lst):
         """属性: 排序后长度不变"""
         assert len(sorted(lst)) == len(lst)
-    
+
     @given(st.lists(st.integers()))
     def test_sort_is_ordered(self, lst):
         """属性: 排序后元素有序"""
         result = sorted(lst)
         for i in range(len(result) - 1):
             assert result[i] <= result[i + 1]
-    
+
     @given(st.lists(st.integers()))
     def test_sort_preserves_elements(self, lst):
         """属性: 排序后元素相同 (考虑重复)"""
         assert sorted(lst) == sorted(lst, reverse=True)[::-1]
-    
+
     @given(st.lists(st.integers()))
     def test_sort_idempotent(self, lst):
         """属性: 排序是幂等的"""
@@ -188,10 +188,10 @@ import sys
 def fuzz_handler(data):
     """模糊测试处理器"""
     fdp = atheris.FuzzedDataProvider(data)
-    
+
     # 生成随机输入
     input_type = fdp.choice(["string", "int", "bytes", "none"])
-    
+
     if input_type == "string":
         input_val = fdp.ConsumeUnicodeNoSurrogates(fdp.ConsumeIntInRange(0, 1000))
     elif input_type == "int":
@@ -200,7 +200,7 @@ def fuzz_handler(data):
         input_val = fdp.ConsumeBytes(fdp.ConsumeIntInRange(0, 1000))
     else:
         input_val = None
-    
+
     try:
         assert result is not None
     except (ValueError, TypeError, KeyError):
@@ -222,18 +222,18 @@ import statistics
 
 class TestDeterministicBehavior:
     """多次运行测试: 验证行为一致性"""
-    
+
     def test_function_consistency(self):
         """""
         results = []
         for _ in range(100):
             result = your_function(test_input)
             results.append(result)
-        
+
         # 验证一致性
         assert len(set(str(r) for r in results)) == 1, \
             f"函数输出不一致: {len(set(str(r) for r in results))} 种不同输出"
-    
+
     def test_performance_consistency(self):
         """"""
         times = []
@@ -241,12 +241,12 @@ class TestDeterministicBehavior:
             start = time.time()
             your_function(test_input)
             times.append(time.time() - start)
-        
+
         # 验证性能稳定
         mean_time = statistics.mean(times)
         stdev_time = statistics.stdev(times)
         cv = stdev_time / mean_time  # 变异系数
-        
+
         assert cv < 0.3, f"性能不稳定: CV={cv:.2%}"
 ```
 

@@ -39,13 +39,37 @@ class CaseStudyValidator:
 
     # Support both old and new section headers
     REQUIRED_SECTIONS_ALT = {
-        "背景与挑战": ["## 背景与挑战", "## 项目背景", "## 项目背景与挑战", "## 背景"],
-        "AI 协作过程": ["## AI 协作过程", "## 1. 需求阶段", "## 需求阶段", "## 1. 需求阶段", "## 1. 需求阶段"],
-        "效率对比数据": ["## 效率对比数据", "## 效率提升分析", "## 效率对比", "## 效率对比表"],
-        "关键洞察": ["## 关键洞察", "## 关键洞察与反思", "## 关键洞察与总结"],
-        "适用场景": ["## 适用场景", "## 适用场景与建议"],
-        "交付物清单": ["## 交付物清单", "## 交付物"],
-        "提交前检查": ["## 提交前检查", "## 提交清单"],
+        "背景与挑战": ["## 背景与挑战", "## 项目背景", "## 项目背景与挑战", "## 背景", "## 📋 场景背景", "## 场景背景"],
+        "AI 协作过程": [
+            "## AI 协作过程",
+            "## 1. 需求阶段",
+            "## 需求阶段",
+            "## 1. 需求阶段",
+            "## 1. 需求阶段",
+            "## ⚡ AI 协作过程",
+            "## 过程",
+            "## AI 协作流程",
+        ],
+        "效率对比数据": [
+            "## 效率对比数据",
+            "## 效率提升分析",
+            "## 效率对比",
+            "## 效率对比表",
+            "## 📈 效率提升",
+            "## 效率提升",
+            "## 对比",
+        ],
+        "关键洞察": [
+            "## 关键洞察",
+            "## 关键洞察与反思",
+            "## 关键洞察与总结",
+            "## 💡 关键洞察",
+            "## 关键技术决策",
+            "## 洞察",
+        ],
+        "适用场景": ["## 适用场景", "## 适用场景与建议", "## 🎯 适用场景"],
+        "交付物清单": ["## 交付物清单", "## 交付物", "## 交付清单"],
+        "提交前检查": ["## 提交前检查", "## 提交清单", "## ✅ 提交前检查"],
     }
 
     # Legacy sections (old format - warn only, don't error)
@@ -171,9 +195,20 @@ class CaseStudyValidator:
 
     def _check_efficiency_table(self, content: str) -> None:
         """Validate efficiency comparison table."""
-        # Find the efficiency table
-        table_pattern = r"\|.*阶段.*\|.*传统.*\|.*AI.*\|.*提升.*\|"
-        if not re.search(table_pattern, content):
+        # Find the efficiency table - accept multiple formats
+        table_patterns = [
+            r"\|.*阶段.*\|.*传统.*\|.*AI.*\|.*提升.*\|",
+            r"\|.*指标.*\|.*优化前.*\|.*优化后.*\|.*提升.*\|",
+            r"\|.*指标.*\|.*使用 AI 前.*\|.*使用 AI 后.*\|.*提升.*\|",
+            r"\|.*Metric.*\|.*Before.*\|.*After.*\|.*Boost.*\|",
+        ]
+        found = False
+        for pattern in table_patterns:
+            if re.search(pattern, content):
+                found = True
+                break
+
+        if not found:
             self._add_warning(
                 "Missing efficiency comparison table with required columns (required for new submissions)", "README.md"
             )
@@ -185,7 +220,7 @@ class CaseStudyValidator:
         data_rows = []
 
         for line in lines:
-            if "|" in line and ("阶段" in line or "总计" in line):
+            if "|" in line and ("阶段" in line or "总计" in line or "指标" in line or "Metric" in line):
                 in_table = True
             if in_table and line.strip().startswith("|"):
                 data_rows.append(line)
@@ -371,6 +406,47 @@ def print_results(results: list[ValidationResult], case_name: str = "") -> None:
     print()
 
 
+def _discover_case_studies(base: Path) -> list[Path]:
+    """Discover case study items in the base directory."""
+    return sorted([d for d in base.iterdir() if not d.name.startswith(".") and (d.is_dir() or d.suffix == ".md")])
+
+
+def _validate_all_cases(case_items: list[Path], strict: bool) -> bool:
+    """Validate all case studies. Returns True if all passed."""
+    all_passed = True
+    for case_item in case_items:
+        validator = CaseStudyValidator(strict=strict)
+        results = validator.validate(case_item)
+        print_results(results, case_item.name)
+
+        if any(r.severity == Severity.ERROR for r in results):
+            all_passed = False
+
+    return all_passed
+
+
+def _validate_single_case(case_path: Path, strict: bool, json_output: bool) -> int:
+    """Validate a single case study. Returns exit code."""
+    if not case_path.exists():
+        print(f"Error: Path not found: {case_path}")
+        return 1
+
+    validator = CaseStudyValidator(strict=strict)
+    results = validator.validate(case_path)
+    print_results(results, case_path.name)
+
+    if json_output:
+        print(
+            json.dumps(
+                [{"severity": r.severity.value, "message": r.message, "file": r.file, "line": r.line} for r in results],
+                ensure_ascii=False,
+                indent=2,
+            )
+        )
+
+    return 0 if not any(r.severity == Severity.ERROR for r in results) else 1
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description="Validate case study submissions")
     parser.add_argument("--path", type=str, help="Path to single case study directory")
@@ -382,47 +458,17 @@ def main() -> int:
     base = Path("case-studies")
 
     if args.all:
-        case_items = sorted(
-            [d for d in base.iterdir() if not d.name.startswith(".") and (d.is_dir() or d.suffix == ".md")]
-        )
+        case_items = _discover_case_studies(base)
         if not case_items:
             print("No case studies found in case-studies/")
             return 1
 
-        all_passed = True
-        for case_item in case_items:
-            validator = CaseStudyValidator(strict=args.strict)
-            results = validator.validate(case_item)
-            print_results(results, case_item.name)
-
-            if any(r.severity == Severity.ERROR for r in results):
-                all_passed = False
-
+        all_passed = _validate_all_cases(case_items, args.strict)
         return 0 if all_passed else 1
 
     elif args.path:
         case_path = Path(args.path)
-        if not case_path.exists():
-            print(f"Error: Path not found: {case_path}")
-            return 1
-
-        validator = CaseStudyValidator(strict=args.strict)
-        results = validator.validate(case_path)
-        print_results(results, case_path.name)
-
-        if args.json:
-            print(
-                json.dumps(
-                    [
-                        {"severity": r.severity.value, "message": r.message, "file": r.file, "line": r.line}
-                        for r in results
-                    ],
-                    ensure_ascii=False,
-                    indent=2,
-                )
-            )
-
-        return 0 if not any(r.severity == Severity.ERROR for r in results) else 1
+        return _validate_single_case(case_path, args.strict, args.json)
 
     else:
         parser.print_help()

@@ -108,12 +108,12 @@ func processUser(id string) (*User, error) {
     if err != nil {
         return nil, fmt.Errorf("failed to get user: %w", err)
     }
-    
+
     validated, err := validateUser(user)
     if err != nil {
         return nil, fmt.Errorf("failed to validate user: %w", err)
     }
-    
+
     return validated, nil
 }
 ```
@@ -167,7 +167,7 @@ func process(user *User) string {
 func processConcurrently(items []Item) []Result {
     results := make([]Result, len(items))
     var wg sync.WaitGroup
-    
+
     for i, item := range items {
         wg.Add(1)
         go func(i int, item Item) {
@@ -175,7 +175,7 @@ func processConcurrently(items []Item) []Result {
             results[i] = process(item)
         }(i, item)
     }
-    
+
     wg.Wait()
     return results
 }
@@ -238,7 +238,7 @@ func TestGetUserFound(t *testing.T) {
     if err != nil {
         t.Fatalf("expected no error, got %v", err)
     }
-    
+
     if user.ID != "123" {
         t.Errorf("expected user ID 123, got %s", user.ID)
     }
@@ -272,7 +272,7 @@ func TestValidateUser(t *testing.T) {
             wantErr: true,
         },
     }
-    
+
     for _, tt := range tests {
         t.Run(tt.name, func(t *testing.T) {
             err := ValidateUser(tt.user)
@@ -298,17 +298,17 @@ type UserRepository interface {
 func TestGetUser(t *testing.T) {
     ctrl := gomock.NewController(t)
     defer ctrl.Finish()
-    
+
     mockRepo := NewMockUserRepository(ctrl)
     mockRepo.EXPECT().Get("123").Return(&User{ID: "123"}, nil)
-    
+
     service := NewUserService(mockRepo)
     user, err := service.GetUser("123")
-    
+
     if err != nil {
         t.Fatalf("expected no error, got %v", err)
     }
-    
+
     if user.ID != "123" {
         t.Errorf("expected user ID 123, got %s", user.ID)
     }

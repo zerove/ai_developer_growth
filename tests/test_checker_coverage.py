@@ -236,7 +236,6 @@ except:
 
 
 def test_run_all_checkers_python_eval():
-
     content = "eval('1+1')"
     issues = _run_all_checkers(
         Path("test.py"),

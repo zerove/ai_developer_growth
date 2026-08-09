@@ -52,13 +52,13 @@ function GetUser(string $id) { ... }  // 应为 camelCase
 class AppException extends Exception
 {
     protected string $code;
-    
+
     public function __construct(string $message, string $code)
     {
         parent::__construct($message);
         $this->code = $code;
     }
-    
+
     public function getCode(): string
     {
         return $this->code;
@@ -73,7 +73,7 @@ class ValidationException extends AppException
     ) {
         parent::__construct($message, 'VALIDATION_ERROR');
     }
-    
+
     public function getField(): string
     {
         return $this->field;
@@ -210,18 +210,18 @@ use PHPUnit\Framework\TestCase;
 class UserServiceTest extends TestCase
 {
     private UserService $service;
-    
+
     protected function setUp(): void
     {
         $this->service = new UserService();
     }
-    
+
     public function testGetUserReturnsUserWhenFound(): void
     {
         $user = $this->service->getUser('123');
         $this->assertEquals('123', $user->getId());
     }
-    
+
     public function testGetUserThrowsWhenNotFound(): void
     {
         $this->expectException(NotFoundException::class);
@@ -244,10 +244,10 @@ class UserServiceTest extends TestCase
             ->method('findById')
             ->with('123')
             ->willReturn(new User('123'));
-        
+
         $service = new UserService($repository);
         $user = $service->getUser('123');
-        
+
         $this->assertNotNull($user);
     }
 }

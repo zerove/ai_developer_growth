@@ -61,19 +61,19 @@ class TestPaymentService:
         service = PaymentService()
         result = service.process_payment(order_id=1, amount=100)
         assert result.status == "success"
-    
+
     def test_process_payment_zero_amount(self):
         """测试金额为0"""
         service = PaymentService()
         with pytest.raises(ValueError):
             service.process_payment(order_id=1, amount=0)
-    
+
     def test_process_payment_negative_amount(self):
         """测试负数金额"""
         service = PaymentService()
         with pytest.raises(ValueError):
             service.process_payment(order_id=1, amount=-100)
-    
+
     @patch('payment_service.gateway.charge')
     def test_process_payment_gateway_timeout(self, mock_charge):
         """测试网关超时"""
@@ -110,10 +110,10 @@ def test_payment_flow():
     """测试完整支付流程"""
     # 创建订单
     order = create_order(amount=100)
-    
+
     # 处理支付
     result = process_payment(order.id)
-    
+
     # 验证结果
     assert result.status == "success"
     assert order.status == "paid"

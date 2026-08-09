@@ -153,7 +153,7 @@ func processAll(ids: [String]) async throws -> [User] {
                 try await self.processUser(id: id)
             }
         }
-        
+
         var users: [User] = []
         for try await user in group {
             users.append(user)
@@ -175,17 +175,17 @@ import XCTest
 
 final class UserServiceTests: XCTestCase {
     var service: UserService!
-    
+
     override func setUp() {
         super.setUp()
         service = UserService()
     }
-    
+
     func testGetUserReturnsUser() async throws {
         let user = try await service.getUser(id: "123")
         XCTAssertEqual(user.id, "123")
     }
-    
+
     func testGetUserThrowsWhenNotFound() async {
         do {
             _ = try await service.getUser(id: "nonexistent")
@@ -202,7 +202,7 @@ final class UserServiceTests: XCTestCase {
 ```swift
 final class MockUserRepository: UserFetchable {
     var users: [String: User] = [:]
-    
+
     func fetchUser(id: String) async throws -> User {
         guard let user = users[id] else {
             throw NotFoundError(id)
@@ -215,7 +215,7 @@ final class UserServiceTests: XCTestCase {
     func testGetUser() async throws {
         let repo = MockUserRepository()
         repo.users["123"] = User(id: "123", name: "John")
-        
+
         let service = UserService(repository: repo)
         let user = try await service.getUser(id: "123")
         XCTAssertEqual(user.name, "John")

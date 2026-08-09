@@ -246,6 +246,8 @@ def check_directory(
     jobs: int = 1,
     semantic: bool = False,
     run_linters: bool = True,
+    use_cache: bool = False,
+    db_path: str | Path = "adg_quality.db",
 ) -> list[CheckResult]:
     """Check all files in a directory.
 
@@ -256,6 +258,8 @@ def check_directory(
         jobs: Number of parallel workers (1 = serial).
         semantic: Enable AST-based semantic analysis.
         run_linters: Run external linters (ruff/eslint) per file.
+        use_cache: 启用增量缓存（mtime+size 未变则复用上次结果）。
+        db_path: 统一存储数据库路径（use_cache=True 时使用）。
     """
     results: list[CheckResult] = []
 
@@ -323,10 +327,46 @@ def check_directory(
     if languages:
         files = [f for f in files if _detect_language(f) in languages]
 
+    # 增量缓存（任务7：复用检查历史，mtime+size 未变直接返回上次结果）
+    store = None
+    if use_cache:
+        try:
+            from .store import CheckStore
+
+            store = CheckStore(db_path)
+        except Exception:
+            store = None  # 缓存不可用时退化为完整检查
+
+    def _checked_result(filepath: Path, lang: str) -> CheckResult:
+        """执行检查（命中缓存则跳过），并更新统一存储。"""
+        if store is not None:
+            stat = filepath.stat()
+            cached = store.get_cached_result(str(filepath), stat.st_mtime, stat.st_size)
+            if cached is not None:
+                issues = [Issue(**i) for i in cached["issues"]]
+                return CheckResult(file=str(filepath), issues=issues, language=cached["language"])
+        result = check_file(filepath, rules, lang, semantic=semantic, run_linters=run_linters)
+        if store is not None and not result.skipped:
+            stat = filepath.stat()
+            store.set_cached_result(
+                str(filepath),
+                stat.st_mtime,
+                stat.st_size,
+                {
+                    "language": result.language,
+                    "passed": result.passed,
+                    "errors": result.error_count,
+                    "warnings": result.warning_count,
+                    "info": result.info_count,
+                    "issues": [i.to_dict() for i in result.issues],
+                },
+            )
+        return result
+
     if jobs <= 1 or len(files) <= 4:
         # Serial execution for small sets
         for filepath in files:
-            result = check_file(filepath, rules, _detect_language(filepath), semantic=semantic, run_linters=run_linters)
+            result = _checked_result(filepath, _detect_language(filepath))
             if not result.skipped:
                 results.append(result)
     else:

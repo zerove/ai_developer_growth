@@ -84,6 +84,8 @@ Examples:
     lr_parser.add_argument("--lang", help="Language (auto-detect if not specified)")
     lr_parser.add_argument("--jobs", "-j", type=int, default=1, help="Parallel workers (default: 1)")
     lr_parser.add_argument("--fix", action="store_true", help="Apply auto-fixes to fixable issues")
+    lr_parser.add_argument("--cache", action="store_true", help="启用增量缓存（复用检查历史）")
+    lr_parser.add_argument("--db", default="adg_quality.db", help="统一存储数据库路径（默认 adg_quality.db）")
 
     qg_parser = subparsers.add_parser("quality-gate", help="Run AI Quality Gate checks")
     qg_parser.add_argument("--path", type=Path, default=Path("tools/scripts"), help="Path to check")
@@ -424,6 +426,15 @@ def _handle_language_rules(args: argparse.Namespace) -> int:
         fix_results = apply_fixes_to_directory(args.path, dry_run=False)
         print(format_fix_results(fix_results))
         return 0
+    if getattr(args, "cache", False):
+        # 增量缓存模式：复用统一存储中的检查历史（mtime+size 未变则跳过）
+        from tools.scripts.rules_engine.checker import check_directory
+
+        results = check_directory(args.path, jobs=getattr(args, "jobs", 1), use_cache=True, db_path=args.db)
+        passed = all(r.passed for r in results)
+        lines = [f"{r.file}: {'PASS' if r.passed else 'FAIL'} ({len(r.issues)} issues)" for r in results]
+        print("\n".join(lines) if lines else "No files to check")
+        return 0 if passed else 1
     return _run_simple(run_language_rules(args.path, args.lang))
 
 

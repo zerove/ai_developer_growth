@@ -33,7 +33,6 @@ import json
 import sqlite3
 import subprocess
 import sys
-from datetime import datetime
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, cast
 
@@ -41,73 +40,7 @@ if TYPE_CHECKING:
     from fastapi import FastAPI
 
 from tools.scripts.rules_engine.logger import logger
-
-
-def init_db(db_path: str = "adg_quality.db") -> sqlite3.Connection:
-    """Initialize SQLite database for quality tracking."""
-    conn = sqlite3.connect(db_path, check_same_thread=False)
-    conn.execute("""
-        CREATE TABLE IF NOT EXISTS quality_runs (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            timestamp TEXT NOT NULL,
-            total_files INTEGER,
-            total_errors INTEGER,
-            total_warnings INTEGER,
-            total_info INTEGER,
-            passed_files INTEGER,
-            failed_files INTEGER,
-            report_json TEXT
-        )
-    """)
-    conn.execute("""
-        CREATE TABLE IF NOT EXISTS file_results (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            run_id INTEGER,
-            file_path TEXT,
-            language TEXT,
-            errors INTEGER,
-            warnings INTEGER,
-            info INTEGER,
-            passed BOOLEAN,
-            issues_json TEXT,
-            FOREIGN KEY (run_id) REFERENCES quality_runs(id)
-        )
-    """)
-    conn.execute("""
-        CREATE TABLE IF NOT EXISTS rule_violations (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            run_id INTEGER,
-            rule_id TEXT,
-            severity TEXT,
-            count INTEGER,
-            FOREIGN KEY (run_id) REFERENCES quality_runs(id)
-        )
-    """)
-    conn.commit()
-    return conn
-
-
-def record_run(conn: sqlite3.Connection, report: dict[str, Any]) -> int:
-    """Record a quality run result."""
-    summary = report.get("summary", {})
-    cursor = conn.execute(
-        """INSERT INTO quality_runs
-           (timestamp, total_files, total_errors, total_warnings, total_info,
-            passed_files, failed_files, report_json)
-           VALUES (?, ?, ?, ?, ?, ?, ?, ?)""",
-        (
-            datetime.now().isoformat(),
-            summary.get("total_files", 0),
-            summary.get("errors", 0),
-            summary.get("warnings", 0),
-            summary.get("info", 0),
-            summary.get("passed", 0),
-            summary.get("failed", 0),
-            json.dumps(report, ensure_ascii=False),
-        ),
-    )
-    conn.commit()
-    return cursor.lastrowid or 0
+from tools.scripts.rules_engine.store import init_db, record_run  # noqa: F401  (统一 SQLite 存储层，任务7)
 
 
 def get_trend_data(conn: sqlite3.Connection, limit: int = 30) -> list[dict[str, Any]]:

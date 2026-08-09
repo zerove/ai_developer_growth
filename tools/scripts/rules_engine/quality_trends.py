@@ -13,13 +13,13 @@ Usage:
 
 from __future__ import annotations
 
-import json
 import time
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
 
 from .models import CheckResult
+from .store import CheckStore
 
 
 @dataclass
@@ -225,23 +225,24 @@ class QualityTracker:
     def __init__(self, data_dir: Path | None = None) -> None:
         self.data_dir = data_dir or Path.home() / ".cache" / "adg" / "quality"
         self.data_dir.mkdir(parents=True, exist_ok=True)
-        self._snapshots_file = self.data_dir / "snapshots.json"
+        # 统一 SQLite 存储（任务7：替代 JSON 快照文件）
+        self._db_path = self.data_dir / "quality.db"
+        self._store = CheckStore(self._db_path)
         self._snapshots: list[QualitySnapshot] = []
         self._load()
 
     def _load(self) -> None:
-        """Load snapshots from disk."""
-        if self._snapshots_file.exists():
-            try:
-                data = json.loads(self._snapshots_file.read_text())
-                self._snapshots = [QualitySnapshot.from_dict(s) for s in data]
-            except Exception:
-                self._snapshots = []
+        """从 SQLite 加载快照。"""
+        try:
+            self._snapshots = [QualitySnapshot.from_dict(s) for s in self._store.get_snapshots()]
+        except Exception:
+            self._snapshots = []
 
     def _save(self) -> None:
-        """Save snapshots to disk."""
-        data = [s.to_dict() for s in self._snapshots]
-        self._snapshots_file.write_text(json.dumps(data, indent=2))
+        """持久化快照列表到 SQLite（幂等：先清空再写入）。"""
+        self._store.clear_snapshots()
+        for s in self._snapshots:
+            self._store.add_snapshot(s.to_dict())
 
     @property
     def snapshots(self) -> list[QualitySnapshot]:

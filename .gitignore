@@ -77,3 +77,4 @@ bandit-report.json
 site/
 # uv package manager lockfile
 uv.lock
+tools/scripts/rules_engine/*.bak

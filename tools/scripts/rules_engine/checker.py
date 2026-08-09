@@ -49,28 +49,45 @@ def _worker_check(
 
 # ── 框架检测 ──────────────────────────────────────────────
 
+
+def _config_excluded_dirs() -> set[str]:
+    """从 [tool.adg].exclude 合并额外的排除目录。"""
+    overrides: set[str] = {
+        ".git",
+        ".hg",
+        ".svn",
+        ".venv",
+        "venv",
+        "node_modules",
+        "__pycache__",
+        ".mypy_cache",
+        ".pytest_cache",
+        ".ruff_cache",
+        ".cache",
+        "build",
+        "dist",
+        ".opencode",
+        ".tox",
+        "htmlcov",
+        ".coverage",
+        "site-packages",
+        "MagicMock",
+    }
+    try:
+        from tools.scripts.app_config import get_setting
+
+        extra = get_setting("exclude", [])
+        if isinstance(extra, list):
+            overrides.update(str(item) for item in extra)
+    except Exception:
+        import logging
+
+        logging.getLogger(__name__).warning("Failed to load exclude config", exc_info=True)
+    return overrides
+
+
 # 目录遍历时排除的路径段（避免误扫构建产物、依赖、缓存）
-DEFAULT_EXCLUDED_DIRS = {
-    ".git",
-    ".hg",
-    ".svn",
-    ".venv",
-    "venv",
-    "node_modules",
-    "__pycache__",
-    ".mypy_cache",
-    ".pytest_cache",
-    ".ruff_cache",
-    ".cache",
-    "build",
-    "dist",
-    ".opencode",
-    ".tox",
-    "htmlcov",
-    ".coverage",
-    "site-packages",
-    "MagicMock",
-}
+DEFAULT_EXCLUDED_DIRS: set[str] = _config_excluded_dirs()
 
 FRAMEWORK_DETECTORS: dict[str, dict[str, list[str]]] = {
     "react": {"files": ["package.json"], "packages": ["react", "react-dom"]},

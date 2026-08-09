@@ -53,6 +53,16 @@ from tools.scripts.hooks.incremental_checks import (  # noqa: F401
 from tools.scripts.rules_engine.models import CheckResult
 
 
+def _get_jobs_setting() -> int:
+    """获取 jobs 配置（从 [tool.adg].jobs 或默认值 4）。"""
+    try:
+        from tools.scripts.app_config import get_setting
+
+        return int(str(get_setting("jobs", 4)))
+    except Exception:
+        return 4
+
+
 def _build_parser() -> argparse.ArgumentParser:
     """Build the CLI argument parser."""
     parser = argparse.ArgumentParser(
@@ -82,10 +92,10 @@ Examples:
     lr_parser = subparsers.add_parser("language-rules", help="Run language-specific rules validation")
     lr_parser.add_argument("--path", type=Path, default=Path("."), help="Path to validate")
     lr_parser.add_argument("--lang", help="Language (auto-detect if not specified)")
-    lr_parser.add_argument("--jobs", "-j", type=int, default=1, help="Parallel workers (default: 1)")
+    lr_parser.add_argument("--jobs", "-j", type=int, help="Parallel workers (default: from [tool.adg].jobs)")
     lr_parser.add_argument("--fix", action="store_true", help="Apply auto-fixes to fixable issues")
     lr_parser.add_argument("--cache", action="store_true", help="启用增量缓存（复用检查历史）")
-    lr_parser.add_argument("--db", default="adg_quality.db", help="统一存储数据库路径（默认 adg_quality.db）")
+    lr_parser.add_argument("--db", help="统一存储数据库路径（默认 [tool.adg].trend_db)")
 
     qg_parser = subparsers.add_parser("quality-gate", help="Run AI Quality Gate checks")
     qg_parser.add_argument("--path", type=Path, default=Path("tools/scripts"), help="Path to check")
@@ -122,7 +132,7 @@ Examples:
     sc_parser = subparsers.add_parser("semantic-check", help="Run AST-based semantic analysis (tree-sitter)")
     sc_parser.add_argument("--path", type=Path, default=Path("."), help="Path to check")
     sc_parser.add_argument("--lang", help="Language filter")
-    sc_parser.add_argument("--jobs", "-j", type=int, default=1, help="Parallel workers")
+    sc_parser.add_argument("--jobs", "-j", type=int, help="Parallel workers (default: from [tool.adg].jobs)")
 
     af_parser = subparsers.add_parser("ast-fix", help="Run AST-based auto-fix on files")
     af_parser.add_argument("--path", type=Path, default=Path("."), help="Path to fix")
@@ -147,7 +157,7 @@ Examples:
 
     dashboard_parser = subparsers.add_parser("dashboard", help="Start quality dashboard web server")
     dashboard_parser.add_argument("--port", type=int, default=8765, help="Port (default: 8765)")
-    dashboard_parser.add_argument("--db", default="adg_quality.db", help="SQLite database path")
+    dashboard_parser.add_argument("--db", help="SQLite database path (default: [tool.adg].trend_db)")
 
     subparsers.add_parser(
         "full", help="Run all checks (lint, format, typecheck, test, security, quality-gate, governance-audit)"
@@ -431,6 +441,8 @@ _SIMPLE_COMMANDS: dict[str, str] = {
 
 def _handle_language_rules(args: argparse.Namespace) -> int:
     """Handle language-rules command."""
+    from tools.scripts.app_config import get_setting
+
     if getattr(args, "fix", False):
         from tools.scripts.rules_engine.auto_fix import apply_fixes_to_directory, format_fix_results
 
@@ -441,7 +453,9 @@ def _handle_language_rules(args: argparse.Namespace) -> int:
         # 增量缓存模式：复用统一存储中的检查历史（mtime+size 未变则跳过）
         from tools.scripts.rules_engine.checker import check_directory
 
-        results = check_directory(args.path, jobs=getattr(args, "jobs", 1), use_cache=True, db_path=args.db)
+        jobs: int = int(str(getattr(args, "jobs", None) or get_setting("jobs", 4)))
+        db_path = getattr(args, "db", None) or str(get_setting("trend_db", Path("adg_quality.db")))
+        results = check_directory(args.path, jobs=jobs, use_cache=True, db_path=db_path)
         passed = all(r.passed for r in results)
         lines = [f"{r.file}: {'PASS' if r.passed else 'FAIL'} ({len(r.issues)} issues)" for r in results]
         print("\n".join(lines) if lines else "No files to check")
@@ -516,9 +530,11 @@ def _handle_dashboard(args: argparse.Namespace) -> int:
     """Handle dashboard command."""
     import uvicorn
 
+    from tools.scripts.app_config import get_setting
     from tools.scripts.rules_engine.dashboard import create_app
 
-    app = create_app(args.db)
+    db_path = getattr(args, "db", None) or str(get_setting("trend_db", Path("adg_quality.db")))
+    app = create_app(db_path)
     print(f"Starting ADG Quality Dashboard at http://0.0.0.0:{args.port}")  # nosec - dev only
     uvicorn.run(app, host="0.0.0.0", port=args.port)  # nosec - dev only
     return 0
@@ -560,7 +576,9 @@ def _dispatch(args: argparse.Namespace) -> int:
         "governance-audit": _handle_governance_audit,
         "diff": lambda a: _run_simple(run_diff_checks(a.base)),
         "pre-commit": lambda a: _run_simple(run_pre_commit_checks()),
-        "semantic-check": lambda a: _run_semantic_check(a.path, getattr(a, "lang", None), getattr(a, "jobs", 1)),
+        "semantic-check": lambda a: _run_semantic_check(
+            a.path, getattr(a, "lang", None), getattr(a, "jobs", None) or _get_jobs_setting()
+        ),
         "ast-fix": lambda a: _run_ast_fix(a.path, getattr(a, "dry_run", False)),
         "hallucination-scan": lambda a: _run_hallucination_scan(
             getattr(a, "path", Path(".")),

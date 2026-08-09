@@ -118,13 +118,23 @@ def _create_cache_tables(conn: sqlite3.Connection) -> None:
     )
 
 
-def init_db(db_path: str = "adg_quality.db") -> sqlite3.Connection:
+def _default_db_path() -> str:
+    """统一存储默认路径：优先 [tool.adg].trend_db 配置。"""
+    try:
+        from tools.scripts.app_config import get_path
+
+        return str(get_path("trend_db", Path("adg_quality.db")))
+    except Exception:
+        return "adg_quality.db"
+
+
+def init_db(db_path: str = "") -> sqlite3.Connection:
     """初始化统一存储数据库，返回连接。
 
     Schema 与 dashboard 的 quality_runs 兼容（保留原表），并新增
     check_cache / trend_snapshots 表用于增量检查与趋势存储。
     """
-    conn = sqlite3.connect(db_path, check_same_thread=False)
+    conn = sqlite3.connect(db_path or _default_db_path(), check_same_thread=False)
     conn.row_factory = sqlite3.Row
     conn.execute("PRAGMA journal_mode=WAL")
     _create_quality_tables(conn)
@@ -137,8 +147,9 @@ def init_db(db_path: str = "adg_quality.db") -> sqlite3.Connection:
 class CheckStore:
     """统一检查存储：运行记录、文件结果、增量缓存、趋势快照。"""
 
-    def __init__(self, db_path: str | Path = "adg_quality.db") -> None:
-        self.db_path = str(db_path)
+    def __init__(self, db_path: str | Path | None = None) -> None:
+        resolved = db_path if db_path is not None else _default_db_path()
+        self.db_path = str(resolved)
         self.conn = get_connection(self.db_path)
 
     def close(self) -> None:
@@ -350,21 +361,21 @@ class CheckStore:
 _connections: dict[str, sqlite3.Connection] = {}
 
 
-def get_connection(db_path: str | Path = "adg_quality.db") -> sqlite3.Connection:
+def get_connection(db_path: str | Path | None = None) -> sqlite3.Connection:
     """获取（并缓存）统一数据库连接。
 
     同一路径返回同一连接，避免重复打开；线程安全由调用方保证
     （check_same_thread=False 供 FastAPI 使用）。
     """
-    key = str(db_path)
+    key = str(db_path) if db_path is not None else _default_db_path()
     if key not in _connections:
         _connections[key] = init_db(key)
     return _connections[key]
 
 
-def close_connection(db_path: str | Path = "adg_quality.db") -> None:
+def close_connection(db_path: str | Path | None = None) -> None:
     """关闭并移除缓存的连接。"""
-    key = str(db_path)
+    key = str(db_path) if db_path is not None else _default_db_path()
     conn = _connections.pop(key, None)
     if conn is not None:
         try:

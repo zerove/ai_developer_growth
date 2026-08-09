@@ -148,3 +148,16 @@ marketplace_enabled = true
 rules_index = "~/.jcode/governance/rules_index.json"
 auto_sync = true
 sync_interval_hours = 24
+
+# LLM 配置（adr_generator, ai_context_manager）
+llm_provider = "openai"
+llm_model = "gpt-4o"
+openai_api_key = ""  # 优先环境变量 OPENAI_API_KEY
+openai_api_base = "https://api.openai.com/v1"
+
+# 额外排除目录（合并到 DEFAULT_EXCLUDED_DIRS）
+exclude = [
+    ".venv-*",
+    "*.egg-info",
+    ".mypy_cache-*",
+]

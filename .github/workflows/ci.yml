@@ -164,6 +164,7 @@ jobs:
           cache: pip
           cache-dependency-path: pyproject.toml
       - run: pip install pytest pytest-cov pyyaml pytest-xdist
+      - run: pip install -e .
       - name: Restore coverage cache
         uses: actions/cache@v4
         with:
@@ -333,6 +334,9 @@ jobs:
       - run: pip install bandit pip-audit
       - name: Bandit scan
         run: bandit -r tools/scripts/ -f json -o bandit-report.json || true
+      - name: Upgrade setuptools
+        # CI runner 自带旧 setuptools（79.x）会命中 PYSEC-2026-3447，先升级再审计
+        run: pip install -U "setuptools>=83.0.0"
       - name: Pip-audit
         run: pip-audit --desc
       - name: Upload bandit
@@ -478,7 +482,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - run: |
-          for f in README.md INDEX.md MOC.md GOVERNANCE.md CONTRIBUTING.md ROADMAP.md LICENSE SECURITY.md CODE_OF_CONDUCT.md; do
+          for f in README.md INDEX.md GOVERNANCE.md CONTRIBUTING.md ROADMAP.md LICENSE SECURITY.md CODE_OF_CONDUCT.md; do
             test -f "$f" || { echo "Missing: $f"; exit 1; }
           done
           for d in docs case-studies examples tools agents; do

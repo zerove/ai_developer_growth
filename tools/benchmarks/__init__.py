@@ -46,6 +46,7 @@ class MyClass{i}:
     def method(self):
         """Method {i}."""
         except Exception:
+            # 示例骨架代码：占位异常处理
             pass
         return self.data
 '''

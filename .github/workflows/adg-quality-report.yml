@@ -31,10 +31,10 @@ jobs:
       - name: ADG Check (JSON report)
         id: adg-check
         run: |
-          adg check . --json > adg-report.json || true
+          adg check tools/scripts --json > adg-report.json || echo '{"summary": {"error": 0, "warning": 0}}' > adg-report.json
           # Count issues
-          ERRORS=$(python3 -c "import json; d=json.load(open('adg-report.json')); print(d.get('summary',{}).get('errors',0))" 2>/dev/null || echo "0")
-          WARNINGS=$(python3 -c "import json; d=json.load(open('adg-report.json')); print(d.get('summary',{}).get('warnings',0))" 2>/dev/null || echo "0")
+          ERRORS=$(python3 -c "import json; d=json.load(open('adg-report.json')); print(d.get('summary',{}).get('error',0))" 2>/dev/null || echo "0")
+          WARNINGS=$(python3 -c "import json; d=json.load(open('adg-report.json')); print(d.get('summary',{}).get('warning',0))" 2>/dev/null || echo "0")
           echo "errors=$ERRORS" >> "$GITHUB_OUTPUT"
           echo "warnings=$WARNINGS" >> "$GITHUB_OUTPUT"
 

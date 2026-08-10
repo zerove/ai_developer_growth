@@ -258,6 +258,7 @@ def save_custom_fix(
         try:
             existing = yaml.safe_load(config_file.read_text()) or {}
         except Exception:
+            # 配置损坏时从空字典重建
             pass
 
     if "fixes" not in existing:

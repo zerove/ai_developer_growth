@@ -18,12 +18,27 @@ _ADG_SOURCE = Path.home() / "dev" / "ai_developer_growth" / "ai-dev-framework"
 
 
 def _get_rules_path() -> Path:
-    """Get the rules directory, preferring config, falling back to source."""
-    if _RULES_PATH.exists() and (_RULES_PATH / "languages").exists():
-        return _RULES_PATH
-    if _ADG_SOURCE.exists():
-        return _ADG_SOURCE
-    print(f"Error: Rules not found at {_RULES_PATH} or {_ADG_SOURCE}", file=sys.stderr)
+    """Get the rules directory, preferring config, falling back to source.
+
+    Candidate order: ADG_RULES_DIR env -> GITHUB_WORKSPACE/ai-dev-framework
+    -> cwd/ai-dev-framework -> ~/.config/adg/rules -> ~/dev/... source.
+    This makes the CLI work both locally and in CI checkouts.
+    """
+    env_rules = os.environ.get("ADG_RULES_DIR")
+    workspace = os.environ.get("GITHUB_WORKSPACE")
+    candidates: list[Path] = []
+    if env_rules:
+        candidates.append(Path(env_rules))
+    if workspace:
+        candidates.append(Path(workspace) / "ai-dev-framework")
+    candidates.append(Path.cwd() / "ai-dev-framework")
+    candidates += [_RULES_PATH, _ADG_SOURCE]
+
+    for p in candidates:
+        if p.exists() and (p / "languages").exists():
+            return p
+    checked = ", ".join(str(p) for p in candidates)
+    print(f"Error: Rules not found (checked: {checked})", file=sys.stderr)
     sys.exit(1)
 
 

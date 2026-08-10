@@ -1,10 +1,9 @@
 name: Example CI
 
 on:
-  push:
-    branches: [main, master]
-  pull_request:
-    branches: [main, master]
+  # 模板：供示例仓库（examples/*）复制使用。主仓库不自动运行，
+  # 避免在主仓库根目录执行针对示例项目结构的 lint/test 检查。
+  workflow_dispatch:
 
 env:
   PYTHON_VERSION: "3.11"

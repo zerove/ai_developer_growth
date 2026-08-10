@@ -30,7 +30,7 @@ jobs:
 
       - name: Install ADG
         run: |
-          pip install ai-dev-framework
+          pip install -e ai-dev-framework
 
       - name: Verify adg-dev installation
         run: |

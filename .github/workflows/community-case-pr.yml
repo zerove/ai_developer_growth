@@ -20,6 +20,9 @@ jobs:
         with:
           python-version: ${{ env.PYTHON_VERSION }}
 
+      - name: Install dependencies
+        run: pip install -e . pyyaml
+
       - name: Get changed case study files
         id: changed
         uses: tj-actions/changed-files@v45

@@ -102,6 +102,7 @@ if __name__ == "__main__":
                             )
                             docs.append(doc)
                 except Exception:
+                    # 跳过无法解析的单篇文档，不影响整体索引构建
                     pass
 
     print(f"Loaded {len(docs)} documents")

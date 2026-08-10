@@ -89,6 +89,7 @@ def install_pack(
                 data = yaml.safe_load(content)
                 existing_rules = data.get("custom_rules", [])
         except Exception:
+            # 规则配置损坏时忽略，从零构建
             pass
 
     # Add new rules

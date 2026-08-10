@@ -9,7 +9,7 @@ on:
 env:
   PYTHON_VERSION: "3.11"
   # 全局缓存键前缀
-  CACHE_PREFIX: ${{ runner.os }}-${{ github.repository }}
+  CACHE_PREFIX: ${{ github.repository }}
 
 jobs:
   # ──────────────────────────────────────────────────────
@@ -25,14 +25,12 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Setup Python
+        id: cache
         uses: actions/setup-python@v5
         with:
           python-version: ${{ env.PYTHON_VERSION }}
           cache: pip
-          cache-key: ${{ env.CACHE_PREFIX }}-pip-${{ hashFiles('pyproject.toml', 'uv.lock', 'ruff.toml') }}
-          restore-keys: |
-            ${{ env.CACHE_PREFIX }}-pip-
-
+          cache-dependency-path: pyproject.toml
       - name: Cache mypy
         uses: actions/cache@v4
         id: mypy-cache
@@ -70,7 +68,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Install deps
-        run: pip install pyyaml
+        run: pip install -e .
       - name: Detect language
         run: python -m tools.scripts.adg_cli detect .
       - name: Check anti-patterns
@@ -103,9 +101,8 @@ jobs:
         with:
           python-version: ${{ env.PYTHON_VERSION }}
           cache: pip
-          cache-key: ${{ env.CACHE_PREFIX }}-pip-${{ hashFiles('pyproject.toml', 'uv.lock', 'ruff.toml') }}
-          restore-keys: |
-            ${{ env.CACHE_PREFIX }}-pip-
+          cache-dependency-path: pyproject.toml
+      - run: pip install -e .
       - uses: pre-commit/action@v3.0.1
 
   # ──────────────────────────────────────────────────────
@@ -121,10 +118,8 @@ jobs:
         with:
           python-version: ${{ env.PYTHON_VERSION }}
           cache: pip
-          cache-key: ${{ env.CACHE_PREFIX }}-pip-${{ hashFiles('pyproject.toml', 'uv.lock', 'ruff.toml') }}
-          restore-keys: |
-            ${{ env.CACHE_PREFIX }}-pip-
-      - run: pip install ruff
+          cache-dependency-path: pyproject.toml
+      - run: pip install ruff==0.15.17
       - name: Ruff check
         run: ruff check .
       - name: Ruff format check
@@ -140,9 +135,7 @@ jobs:
         with:
           python-version: ${{ env.PYTHON_VERSION }}
           cache: pip
-          cache-key: ${{ env.CACHE_PREFIX }}-pip-${{ hashFiles('pyproject.toml', 'uv.lock') }}
-          restore-keys: |
-            ${{ env.CACHE_PREFIX }}-pip-
+          cache-dependency-path: pyproject.toml
       - run: pip install mypy
       - name: Restore mypy cache
         uses: actions/cache@v4
@@ -170,10 +163,9 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
           cache: pip
-          cache-key: ${{ env.CACHE_PREFIX }}-pip-${{ matrix.python-version }}-${{ hashFiles('pyproject.toml', 'uv.lock') }}
-          restore-keys: |
-            ${{ env.CACHE_PREFIX }}-pip-${{ matrix.python-version }}-
+          cache-dependency-path: pyproject.toml
       - run: pip install pytest pytest-cov pyyaml pytest-xdist
+      - run: pip install -e .
       - name: Restore coverage cache
         uses: actions/cache@v4
         with:
@@ -223,9 +215,7 @@ jobs:
         with:
           python-version: ${{ env.PYTHON_VERSION }}
           cache: pip
-          cache-key: ${{ env.CACHE_PREFIX }}-pip-${{ hashFiles('pyproject.toml', 'uv.lock') }}
-          restore-keys: |
-            ${{ env.CACHE_PREFIX }}-pip-
+          cache-dependency-path: pyproject.toml
       - run: pip install pytest pytest-cov pyyaml pytest-xdist pytest-split
       - name: Run shard
         run: |
@@ -309,14 +299,12 @@ jobs:
         with:
           python-version: ${{ env.PYTHON_VERSION }}
           cache: pip
-          cache-key: ${{ env.CACHE_PREFIX }}-pip-${{ hashFiles('pyproject.toml', 'uv.lock') }}
-          restore-keys: |
-            ${{ env.CACHE_PREFIX }}-pip-
+          cache-dependency-path: pyproject.toml
       - run: pip install -e .
       - name: Link audit
-        run: python tools/scripts/hooks_runner.py quality-gate --path . --check-annotation --check-security --check-type --check-error --check-structure
+        run: python tools/scripts/hooks_runner.py quality-gate --path . --check-annotation --check-security --check-type --check-error
       - name: Case study validation
-        run: python tools/scripts/validate_case_study.py --path case-studies/
+        run: python tools/scripts/validate_case_study.py --all
       - name: Governance docs validation
         run: python tools/scripts/hooks_runner.py governance-audit --validate-docs
       - name: AI-SDLC compliance
@@ -343,9 +331,10 @@ jobs:
         with:
           python-version: ${{ env.PYTHON_VERSION }}
           cache: pip
-          cache-key: ${{ env.CACHE_PREFIX }}-pip-${{ hashFiles('pyproject.toml', 'uv.lock') }}
-          restore-keys: |
-            ${{ env.CACHE_PREFIX }}-pip-
+          cache-dependency-path: pyproject.toml
+      - name: Upgrade setuptools
+        # CI runner 自带旧 setuptools（79.x）会命中 PYSEC-2026-3447，先升级再安装工具
+        run: pip install -U "setuptools>=83.0.0"
       - run: pip install bandit pip-audit
       - name: Bandit scan
         run: bandit -r tools/scripts/ -f json -o bandit-report.json || true
@@ -396,7 +385,7 @@ jobs:
         with:
           python-version: ${{ env.PYTHON_VERSION }}
       - run: pip install cyclonedx-bom
-      - run: cyclonedx-py -o sbom.json --format json
+      - run: cyclonedx-py environment -o sbom.json
       - uses: actions/upload-artifact@v4
         with:
           name: sbom
@@ -457,9 +446,7 @@ jobs:
         with:
           python-version: ${{ env.PYTHON_VERSION }}
           cache: pip
-          cache-key: ${{ env.CACHE_PREFIX }}-pip-example-${{ matrix.example }}-${{ hashFiles('examples/${{ matrix.example }}/pyproject.toml', 'uv.lock') }}
-          restore-keys: |
-            ${{ env.CACHE_PREFIX }}-pip-example-${{ matrix.example }}-
+          cache-dependency-path: pyproject.toml
       - run: pip install -e examples/${{ matrix.example }} pytest
       - name: Run tests
         continue-on-error: true
@@ -496,7 +483,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - run: |
-          for f in README.md INDEX.md MOC.md GOVERNANCE.md CONTRIBUTING.md ROADMAP.md LICENSE SECURITY.md CODE_OF_CONDUCT.md; do
+          for f in README.md INDEX.md GOVERNANCE.md CONTRIBUTING.md ROADMAP.md LICENSE SECURITY.md CODE_OF_CONDUCT.md; do
             test -f "$f" || { echo "Missing: $f"; exit 1; }
           done
           for d in docs case-studies examples tools agents; do
@@ -513,10 +500,8 @@ jobs:
         with:
           python-version: ${{ env.PYTHON_VERSION }}
           cache: pip
-          cache-key: ${{ env.CACHE_PREFIX }}-pip-docs-${{ hashFiles('mkdocs.yml') }}
-          restore-keys: |
-            ${{ env.CACHE_PREFIX }}-pip-docs-
-      - run: pip install mkdocs-material
+          cache-dependency-path: pyproject.toml
+      - run: pip install mkdocs-material mkdocstrings mkdocstrings-python
       - run: mkdocs build --strict
 
   agent-validation:

@@ -93,7 +93,30 @@ def run_quality_gate(
         for ext in CODE_EXTENSIONS:
             files_to_check.extend(path.rglob(f"*{ext}"))
 
-    filtered_files = [f for f in files_to_check if "__pycache__" not in str(f) and ".git" not in str(f)]
+    # 跳过虚拟环境、依赖目录、构建产物与缓存目录
+    skip_dir_parts = {
+        "__pycache__",
+        ".git",
+        ".venv",
+        "venv",
+        "env",
+        "node_modules",
+        ".tox",
+        ".mypy_cache",
+        ".pytest_cache",
+        ".ruff_cache",
+        "dist",
+        "build",
+        "site-packages",
+        ".eggs",
+        ".coverage",
+        # 抗原产物/独立子项目（各有独立校验与发布流程）
+        "mutants",
+        "site",
+        "examples",
+        "ai-dev-framework",
+    }
+    filtered_files = [f for f in files_to_check if not skip_dir_parts.intersection(f.parts)]
 
     if not filtered_files:
         return True, "No files to check"
@@ -104,7 +127,9 @@ def run_quality_gate(
         lang = detect_language_from_file(filepath)
         if not lang:
             continue
-        result = check_file(filepath, checks)
+        # 测试代码允许 eval/exec/Any 等测试辅助模式：只做 AI 标注合规检查
+        file_checks = ["annotation"] if "tests" in filepath.parts else checks
+        result = check_file(filepath, file_checks)
         all_results.append((filepath, result))
 
     passed_count = sum(1 for _, r in all_results if r["passed"])

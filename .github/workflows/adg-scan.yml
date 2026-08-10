@@ -30,7 +30,10 @@ jobs:
 
       - name: Install ADG
         run: |
-          pip install ai-dev-framework
+          # ai-dev-framework 的 cli 依赖外层仓库 tools 包与 loguru
+          pip install -e .
+          pip install loguru
+          pip install -e ai-dev-framework
 
       - name: Verify adg-dev installation
         run: |

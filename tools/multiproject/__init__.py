@@ -229,6 +229,7 @@ def sync_rules_across_projects(
             try:
                 existing = yaml.safe_load(target_config.read_text()) or {}
             except Exception:
+                # 目标配置不可解析时使用空配置，后续合并会重建
                 pass
 
         # Merge rules

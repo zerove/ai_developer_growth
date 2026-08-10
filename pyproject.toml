@@ -9,7 +9,7 @@ description = "Open-source knowledge base for developer growth in the AI era"
 readme = "README.md"
 license = {text = "MIT"}
 requires-python = ">=3.10"
-dependencies = ["pyyaml>=6.0"]
+dependencies = ["pyyaml>=6.0", "loguru>=0.7"]
 
 [project.scripts]
 adg = "tools.scripts.adg_cli:main"

@@ -38,6 +38,8 @@ class TestGetRulesPath:
         with (
             patch("tools.scripts.adg_cli.core._RULES_PATH", tmp_path / "nope"),
             patch("tools.scripts.adg_cli.core._ADG_SOURCE", tmp_path / "nope2"),
+            patch.dict("os.environ", {}, clear=True),
+            patch("pathlib.Path.cwd", return_value=tmp_path / "cwd"),
         ):
             with pytest.raises(SystemExit):
                 _get_rules_path()
@@ -45,15 +47,21 @@ class TestGetRulesPath:
     def test_returns_config_path(self, tmp_path: Path) -> None:
         rules = tmp_path / "rules"
         (rules / "languages").mkdir(parents=True)
-        with patch("tools.scripts.adg_cli.core._RULES_PATH", rules):
+        with (
+            patch("tools.scripts.adg_cli.core._RULES_PATH", rules),
+            patch.dict("os.environ", {}, clear=True),
+            patch("pathlib.Path.cwd", return_value=tmp_path / "cwd"),
+        ):
             assert _get_rules_path() == rules
 
     def test_returns_source_path(self, tmp_path: Path) -> None:
         source = tmp_path / "source"
-        source.mkdir()
+        (source / "languages").mkdir(parents=True)
         with (
             patch("tools.scripts.adg_cli.core._RULES_PATH", tmp_path / "nope"),
             patch("tools.scripts.adg_cli.core._ADG_SOURCE", source),
+            patch.dict("os.environ", {}, clear=True),
+            patch("pathlib.Path.cwd", return_value=tmp_path / "cwd"),
         ):
             assert _get_rules_path() == source
 

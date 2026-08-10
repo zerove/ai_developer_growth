@@ -33,3 +33,11 @@ omit = ["*/tests/*", "*/__main__.py"]
 [tool.coverage.report]
 fail_under = 70
 show_missing = true
+
+[build-system]
+requires = ["setuptools>=68.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+include = ["ai_navigation_web*"]

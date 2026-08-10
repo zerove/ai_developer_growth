@@ -102,6 +102,7 @@ jobs:
           python-version: ${{ env.PYTHON_VERSION }}
           cache: pip
           cache-dependency-path: pyproject.toml
+      - run: pip install -e .
       - uses: pre-commit/action@v3.0.1
 
   # ──────────────────────────────────────────────────────
@@ -331,12 +332,12 @@ jobs:
           python-version: ${{ env.PYTHON_VERSION }}
           cache: pip
           cache-dependency-path: pyproject.toml
+      - name: Upgrade setuptools
+        # CI runner 自带旧 setuptools（79.x）会命中 PYSEC-2026-3447，先升级再安装工具
+        run: pip install -U "setuptools>=83.0.0"
       - run: pip install bandit pip-audit
       - name: Bandit scan
         run: bandit -r tools/scripts/ -f json -o bandit-report.json || true
-      - name: Upgrade setuptools
-        # CI runner 自带旧 setuptools（79.x）会命中 PYSEC-2026-3447，先升级再审计
-        run: pip install -U "setuptools>=83.0.0"
       - name: Pip-audit
         run: pip-audit --desc
       - name: Upload bandit

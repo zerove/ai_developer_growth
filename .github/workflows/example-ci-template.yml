@@ -105,7 +105,7 @@ jobs:
           "
       - name: Upload coverage artifact
         if: matrix.python-version == '3.11'
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: coverage-${{ github.event.repository.name }}
           path: coverage.xml
@@ -133,7 +133,7 @@ jobs:
           pip-audit --format=json --output=pip-audit-report.json || true
       - name: Upload security reports
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: security-reports-${{ github.event.repository.name }}
           path: |
@@ -166,7 +166,7 @@ jobs:
           fi
       - name: Upload ADG report
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: adg-report-${{ github.event.repository.name }}
           path: adg-report.json

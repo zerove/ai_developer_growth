@@ -86,7 +86,7 @@ jobs:
           fi
       - name: Upload ADG report
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: adg-governance-report
           path: adg-report.json
@@ -200,7 +200,7 @@ jobs:
           "
       - name: Upload coverage
         if: matrix.python-version == '3.11'
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: coverage-data
           path: .coverage
@@ -233,7 +233,7 @@ jobs:
           pytest tests/ -v -n auto --cov=tools --cov-report=xml --cov-report=term-missing --tb=short \
             --split=${{ matrix.shard }}/4 --group-by=duration
       - name: Upload shard coverage
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: coverage-data-shard-${{ matrix.shard }}
           path: .coverage
@@ -273,7 +273,7 @@ jobs:
           if c < 85: exit(1)
           "
       - name: Upload combined
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: combined-coverage
           path: combined-coverage.xml
@@ -290,7 +290,7 @@ jobs:
           diff-cover combined-coverage.xml --compare-branch=origin/$BASE_BRANCH --fail-under=85 --html-report diff-cover-report.html || true
       - name: Upload Diff Cover Report
         if: github.event_name == 'pull_request' && always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: diff-cover-report
           path: diff-cover-report.html
@@ -354,7 +354,7 @@ jobs:
         run: pip-audit --desc
       - name: Upload bandit
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: bandit-report
           path: bandit-report.json
@@ -381,7 +381,7 @@ jobs:
           fi
       - name: Upload results
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: secret-scan
           path: trufflehog-results.json
@@ -398,7 +398,7 @@ jobs:
           python-version: ${{ env.PYTHON_VERSION }}
       - run: pip install cyclonedx-bom
       - run: cyclonedx-py environment -o sbom.json
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: sbom
           path: sbom.json
@@ -424,7 +424,7 @@ jobs:
               exit(1)
           print('All licenses allowed')
           "
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         if: always()
         with:
           name: license-report

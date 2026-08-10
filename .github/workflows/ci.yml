@@ -9,7 +9,7 @@ on:
 env:
   PYTHON_VERSION: "3.11"
   # 全局缓存键前缀
-  CACHE_PREFIX: ${{ runner.os }}-${{ github.repository }}
+  CACHE_PREFIX: ${{ github.repository }}
 
 jobs:
   # ──────────────────────────────────────────────────────
@@ -30,10 +30,7 @@ jobs:
         with:
           python-version: ${{ env.PYTHON_VERSION }}
           cache: pip
-          cache-key: ${{ env.CACHE_PREFIX }}-pip-${{ hashFiles('pyproject.toml', 'uv.lock', 'ruff.toml') }}
-          restore-keys: |
-            ${{ env.CACHE_PREFIX }}-pip-
-
+          cache-dependency-path: pyproject.toml
       - name: Cache mypy
         uses: actions/cache@v4
         id: mypy-cache
@@ -104,9 +101,7 @@ jobs:
         with:
           python-version: ${{ env.PYTHON_VERSION }}
           cache: pip
-          cache-key: ${{ env.CACHE_PREFIX }}-pip-${{ hashFiles('pyproject.toml', 'uv.lock', 'ruff.toml') }}
-          restore-keys: |
-            ${{ env.CACHE_PREFIX }}-pip-
+          cache-dependency-path: pyproject.toml
       - uses: pre-commit/action@v3.0.1
 
   # ──────────────────────────────────────────────────────
@@ -122,9 +117,7 @@ jobs:
         with:
           python-version: ${{ env.PYTHON_VERSION }}
           cache: pip
-          cache-key: ${{ env.CACHE_PREFIX }}-pip-${{ hashFiles('pyproject.toml', 'uv.lock', 'ruff.toml') }}
-          restore-keys: |
-            ${{ env.CACHE_PREFIX }}-pip-
+          cache-dependency-path: pyproject.toml
       - run: pip install ruff==0.15.17
       - name: Ruff check
         run: ruff check .
@@ -141,9 +134,7 @@ jobs:
         with:
           python-version: ${{ env.PYTHON_VERSION }}
           cache: pip
-          cache-key: ${{ env.CACHE_PREFIX }}-pip-${{ hashFiles('pyproject.toml', 'uv.lock') }}
-          restore-keys: |
-            ${{ env.CACHE_PREFIX }}-pip-
+          cache-dependency-path: pyproject.toml
       - run: pip install mypy
       - name: Restore mypy cache
         uses: actions/cache@v4
@@ -171,9 +162,7 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
           cache: pip
-          cache-key: ${{ env.CACHE_PREFIX }}-pip-${{ matrix.python-version }}-${{ hashFiles('pyproject.toml', 'uv.lock') }}
-          restore-keys: |
-            ${{ env.CACHE_PREFIX }}-pip-${{ matrix.python-version }}-
+          cache-dependency-path: pyproject.toml
       - run: pip install pytest pytest-cov pyyaml pytest-xdist
       - name: Restore coverage cache
         uses: actions/cache@v4
@@ -224,9 +213,7 @@ jobs:
         with:
           python-version: ${{ env.PYTHON_VERSION }}
           cache: pip
-          cache-key: ${{ env.CACHE_PREFIX }}-pip-${{ hashFiles('pyproject.toml', 'uv.lock') }}
-          restore-keys: |
-            ${{ env.CACHE_PREFIX }}-pip-
+          cache-dependency-path: pyproject.toml
       - run: pip install pytest pytest-cov pyyaml pytest-xdist pytest-split
       - name: Run shard
         run: |
@@ -310,9 +297,7 @@ jobs:
         with:
           python-version: ${{ env.PYTHON_VERSION }}
           cache: pip
-          cache-key: ${{ env.CACHE_PREFIX }}-pip-${{ hashFiles('pyproject.toml', 'uv.lock') }}
-          restore-keys: |
-            ${{ env.CACHE_PREFIX }}-pip-
+          cache-dependency-path: pyproject.toml
       - run: pip install -e .
       - name: Link audit
         run: python tools/scripts/hooks_runner.py quality-gate --path . --check-annotation --check-security --check-type --check-error
@@ -344,9 +329,7 @@ jobs:
         with:
           python-version: ${{ env.PYTHON_VERSION }}
           cache: pip
-          cache-key: ${{ env.CACHE_PREFIX }}-pip-${{ hashFiles('pyproject.toml', 'uv.lock') }}
-          restore-keys: |
-            ${{ env.CACHE_PREFIX }}-pip-
+          cache-dependency-path: pyproject.toml
       - run: pip install bandit pip-audit
       - name: Bandit scan
         run: bandit -r tools/scripts/ -f json -o bandit-report.json || true
@@ -458,9 +441,7 @@ jobs:
         with:
           python-version: ${{ env.PYTHON_VERSION }}
           cache: pip
-          cache-key: ${{ env.CACHE_PREFIX }}-pip-example-${{ matrix.example }}-${{ hashFiles('examples/${{ matrix.example }}/pyproject.toml', 'uv.lock') }}
-          restore-keys: |
-            ${{ env.CACHE_PREFIX }}-pip-example-${{ matrix.example }}-
+          cache-dependency-path: pyproject.toml
       - run: pip install -e examples/${{ matrix.example }} pytest
       - name: Run tests
         continue-on-error: true
@@ -514,9 +495,7 @@ jobs:
         with:
           python-version: ${{ env.PYTHON_VERSION }}
           cache: pip
-          cache-key: ${{ env.CACHE_PREFIX }}-pip-docs-${{ hashFiles('mkdocs.yml') }}
-          restore-keys: |
-            ${{ env.CACHE_PREFIX }}-pip-docs-
+          cache-dependency-path: pyproject.toml
       - run: pip install mkdocs-material mkdocstrings mkdocstrings-python
       - run: mkdocs build --strict
 

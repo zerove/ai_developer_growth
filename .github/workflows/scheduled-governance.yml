@@ -27,7 +27,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v7
         with:
           python-version: ${{ env.PYTHON_VERSION }}
       - name: Install dependencies
@@ -51,7 +51,7 @@ jobs:
     if: github.event.schedule == '0 9 * * 1' || github.event.inputs.audit_type == 'weekly'
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v7
         with:
           python-version: ${{ env.PYTHON_VERSION }}
       - name: Scan case studies
@@ -65,7 +65,7 @@ jobs:
     if: github.event.schedule == '0 10 1 * *' || github.event.inputs.audit_type == 'monthly'
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v7
         with:
           python-version: ${{ env.PYTHON_VERSION }}
       - name: Generate efficiency report

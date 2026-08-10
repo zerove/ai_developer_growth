@@ -82,7 +82,7 @@ default_naming_rules = {
 
 default_complexity_rules = {
     "thresholds": {
-        "max_nesting_depth": 5,
+        "max_nesting_depth": 4,
         "max_cyclomatic_complexity": 10,
     }
 }

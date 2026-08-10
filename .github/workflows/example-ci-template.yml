@@ -21,9 +21,7 @@ jobs:
         with:
           python-version: ${{ env.PYTHON_VERSION }}
           cache: pip
-          cache-key: ${{ runner.os }}-pip-example-${{ github.event.repository.name }}-lint-${{ hashFiles('pyproject.toml', 'ruff.toml') }}
-          restore-keys: |
-            ${{ runner.os }}-pip-example-${{ github.event.repository.name }}-lint-
+          cache-dependency-path: pyproject.toml
       - run: pip install ruff
       - name: Ruff check
         run: ruff check .
@@ -42,9 +40,7 @@ jobs:
         with:
           python-version: ${{ env.PYTHON_VERSION }}
           cache: pip
-          cache-key: ${{ runner.os }}-pip-example-${{ github.event.repository.name }}-typecheck-${{ hashFiles('pyproject.toml', 'mypy.ini') }}
-          restore-keys: |
-            ${{ runner.os }}-pip-example-${{ github.event.repository.name }}-typecheck-
+          cache-dependency-path: pyproject.toml
       - run: pip install mypy
       - name: Mypy cache
         uses: actions/cache@v4
@@ -71,9 +67,7 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
           cache: pip
-          cache-key: ${{ runner.os }}-pip-example-${{ github.event.repository.name }}-${{ matrix.python-version }}-${{ hashFiles('pyproject.toml') }}
-          restore-keys: |
-            ${{ runner.os }}-pip-example-${{ github.event.repository.name }}-${{ matrix.python-version }}-
+          cache-dependency-path: pyproject.toml
       - name: Install dependencies
         run: |
           pip install -e ".[dev]" 2>/dev/null || pip install -e .
@@ -123,9 +117,7 @@ jobs:
         with:
           python-version: ${{ env.PYTHON_VERSION }}
           cache: pip
-          cache-key: ${{ runner.os }}-pip-example-${{ github.event.repository.name }}-security-${{ hashFiles('pyproject.toml') }}
-          restore-keys: |
-            ${{ runner.os }}-pip-example-${{ github.event.repository.name }}-security-
+          cache-dependency-path: pyproject.toml
       - name: Security scan (bandit + pip-audit)
         run: |
           pip install bandit pip-audit

@@ -27,6 +27,10 @@ omit = ["*/tests/*", "*/__main__.py"]
 [tool.coverage.report]
 fail_under = 70
 show_missing = true
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["bot*"]
 [tool.ruff]
 line-length = 120
 target-version = "py310"

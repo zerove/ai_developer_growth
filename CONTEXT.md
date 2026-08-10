@@ -33,6 +33,7 @@
   - 发布工作流 release.yml (tag 触发 + 预发布校验 + twine)
   - 示例项目 CI 模板 example-ci-template.yml + 9 个示例项目 .github/ 初始化
   - Justfile 统一命令入口 + .markdownlint.json + requirements-lock.txt
+  - ADG CLI 规则路径解析及临时目录 skip_dirs 相对路径过滤优化（100% 测试通过）
 - ✅ AI-Native SDLC 11 支柱生态 (2026-08-01)
   - jcode_ai_native_workflow.py 主管道 (集成 11 大支柱)
   - autonomous_swarm_engine.py 自主蜂群 + self_evolving_engine.py 自我演化

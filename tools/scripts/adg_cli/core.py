@@ -21,7 +21,7 @@ def _get_rules_path() -> Path:
     """Get the rules directory, preferring config, falling back to source.
 
     Candidate order: ADG_RULES_DIR env -> GITHUB_WORKSPACE/ai-dev-framework
-    -> cwd/ai-dev-framework -> ~/.config/adg/rules -> ~/dev/... source.
+    -> script-relative/ai-dev-framework -> cwd/ai-dev-framework -> ~/.config/adg/rules -> ~/dev/... source.
     This makes the CLI work both locally and in CI checkouts.
     """
     env_rules = os.environ.get("ADG_RULES_DIR")
@@ -31,6 +31,8 @@ def _get_rules_path() -> Path:
         candidates.append(Path(env_rules))
     if workspace:
         candidates.append(Path(workspace) / "ai-dev-framework")
+    script_relative = Path(__file__).resolve().parent.parent.parent / "ai-dev-framework"
+    candidates.append(script_relative)
     candidates.append(Path.cwd() / "ai-dev-framework")
     candidates += [_RULES_PATH, _ADG_SOURCE]
 

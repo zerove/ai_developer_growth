@@ -96,7 +96,11 @@ def check_directory(
     for filepath in dirpath.rglob("*"):
         if not filepath.is_file():
             continue
-        if any(part in SKIP_DIRS for part in filepath.parts):
+        try:
+            rel_parts = filepath.relative_to(dirpath).parts
+        except ValueError:
+            rel_parts = filepath.parts
+        if any(part in SKIP_DIRS for part in rel_parts):
             continue
         if filepath.suffix in SKIP_EXTENSIONS:
             continue
@@ -176,7 +180,11 @@ def _collect_check_files(
     else:
         skip_patterns = project_config.get("skip_patterns", [])
         for fp in target.rglob("*"):
-            if fp.is_file() and not any(part in SKIP_DIRS for part in fp.parts):
+            try:
+                rel_parts = fp.relative_to(target).parts
+            except ValueError:
+                rel_parts = fp.parts
+            if fp.is_file() and not any(part in SKIP_DIRS for part in rel_parts):
                 if fp.suffix not in SKIP_EXTENSIONS:
                     if any(_match_pattern(fp, pat) for pat in skip_patterns):
                         continue

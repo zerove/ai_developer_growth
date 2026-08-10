@@ -66,7 +66,11 @@ def fix_directory(dirpath: Path, language: str | None = None) -> dict[str, Any]:
     for filepath in dirpath.rglob("*"):
         if not filepath.is_file():
             continue
-        if any(part in SKIP_DIRS for part in filepath.parts):
+        try:
+            rel_parts = filepath.relative_to(dirpath).parts
+        except ValueError:
+            rel_parts = filepath.parts
+        if any(part in SKIP_DIRS for part in rel_parts):
             continue
         if filepath.suffix in SKIP_EXTENSIONS:
             continue

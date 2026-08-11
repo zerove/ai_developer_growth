@@ -1,5 +1,16 @@
 # Agent 定义索引
 
+> **JCode 工作流配置（重要）**: 本项目的完整 JCode 工作流配置在 `.jcode/AGENTS.md`
+> （合并自 PROJECT.md / USAGE.md / DEV_WORKFLOW.md / SWARM.md）。
+> **启动 JCode 会话后，先读取 `.jcode/AGENTS.md` 再执行任务**，其中包含：
+> 语言规则（默认中文）、5 个 Agent Skill 与入口脚本（`.jcode/scripts/*.py`）、
+> hooks 执行引擎（`hooks_runner.py`）、开发/分支/提交规范、AI-Native 工作流。
+> 简版规则摘要：
+> - 回复、注释、文档、提交信息默认中文；代码标识符与技术术语保留英文
+> - 提交信息格式：`type(scope): 中文描述`（允许类型：feat/fix/refactor/docs/test/...）
+> - 代码风格：Python 走 ruff + mypy + pytest 门禁
+> - 分支策略：`main` / `feature/*` / `fix/*`
+
 本项目中的所有 agent 定义，按职责分类索引。
 
 > **治理标准**: 遵循 `GOVERNANCE.md` 第 1 节 Agent 定义格式和第 3 节质量门禁

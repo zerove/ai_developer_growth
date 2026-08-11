@@ -1,0 +1,12 @@
+name: "Agent Validation Reusable"
+
+on:
+  workflow_call:
+
+jobs:
+  agent-validation:
+    name: Agent Validation
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: python tools/scripts/validate_agent_definition.py --path agents/

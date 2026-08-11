@@ -1,0 +1,31 @@
+name: "License Scan Reusable"
+
+on:
+  workflow_call:
+
+jobs:
+  license-scan:
+    name: License Scan
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: pip install pip-licenses
+      - run: pip-licenses --format=json --output-file=licenses.json
+      - run: |
+          python -c "
+          import json
+          disallowed = ['GPL-3.0', 'AGPL-3.0', 'SSPL-1.0', 'BSL-1.0', 'ELv2']
+          with open('licenses.json') as f: licenses = json.load(f)
+          violations = [f\"{p['Name']}: {p['License']}\" for p in licenses if any(d in p.get('License','') for d in disallowed)]
+          if violations:
+              print('::error::Disallowed licenses:')
+              for v in violations: print(f'  {v}')
+              exit(1)
+          print('All licenses allowed')
+          "
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: license-report
+          path: licenses.json
+          retention-days: 30

@@ -1,0 +1,20 @@
+name: "Dependency Review Reusable"
+
+on:
+  workflow_call:
+    inputs:
+      fail-on-severity:
+        description: "Fail on severity level"
+        type: string
+        default: "high"
+
+jobs:
+  dependency-review:
+    name: Dependency Review
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/dependency-review-action@v4
+        with:
+          fail-on-severity: ${{ inputs.fail-on-severity }}

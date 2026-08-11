@@ -1,0 +1,76 @@
+name: SLSA Provenance & Signing
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  id-token: write  # Required for OIDC token to sign with cosign
+  attestations: write  # Required for SLSA provenance
+
+jobs:
+  build-and-sign:
+    name: Build, Sign & Generate Provenance
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      - name: Install build dependencies
+        run: |
+          pip install build twine
+
+      - name: Build package
+        run: |
+          python -m build --wheel --sdist
+
+      - name: Install cosign
+        uses: sigstore/cosign-installer@v3.5.0
+
+      - name: Sign artifacts with cosign (keyless)
+        env:
+          COSIGN_YES: "true"
+        run: |
+          cosign sign-blob --yes dist/*.whl dist/*.tar.gz \
+            --output-signature dist/ \
+            --output-certificate dist/
+
+      - name: Generate SLSA Provenance
+        uses: slsa-framework/slsa-github-generator/.github/workflows/generator_generic_slsa3.yml@v1.9.0
+        with:
+          base64-subjects: "${{ hashFiles('dist/*.whl') }} ${{ hashFiles('dist/*.tar.gz') }}"
+          provenance-name: slsa-provenance.intoto.jsonl
+
+      - name: Verify provenance
+        run: |
+          slsa-verifier verify-artifact dist/*.whl \
+            --provenance-path slsa-provenance.intoto.jsonl \
+            --source-uri github.com/${{ github.repository }} \
+            --source-tag ${{ github.ref_name }}
+
+      - name: Upload signed artifacts and provenance
+        uses: actions/upload-artifact@v4
+        with:
+          name: slsa-artifacts
+          path: |
+            dist/*.whl
+            dist/*.tar.gz
+            dist/*.sig
+            dist/*.crt
+            slsa-provenance.intoto.jsonl
+          retention-days: 90
+
+      - name: Attest provenance to release
+        uses: actions/attest-build-provenance@v2
+        with:
+          subject-path: dist/*.whl dist/*.tar.gz

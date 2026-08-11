@@ -1,0 +1,65 @@
+name: Mutation Testing (Nightly)
+
+on:
+  schedule:
+    - cron: '0 2 * * 0'  # Weekly on Sunday at 2 AM UTC
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: read
+  checks: write
+
+jobs:
+  mutation-testing:
+    name: Mutation Testing (mutmut)
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      - name: Install dependencies
+        run: |
+          pip install -e .[dev]
+          pip install mutmut>=2.4.0
+
+      - name: Run mutation testing
+        run: |
+          mutmut run --paths-to-mutate tools/scripts/rules_engine --runner "python -m pytest tests/ -x --tb=short -q" --max-runtime=1800
+
+      - name: Generate mutation report
+        run: |
+          mutmut results --show-all > mutation-report.txt
+          cat mutation-report.txt
+
+      - name: Upload mutation report
+        uses: actions/upload-artifact@v4
+        with:
+          name: mutation-report
+          path: mutation-report.txt
+          retention-days: 30
+
+      - name: Comment mutation results on PR
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const report = fs.readFileSync('mutation-report.txt', 'utf8');
+            const summary = report.split('\n').filter(l => l.includes('mutation') || l.includes('killed') || l.includes('survived') || l.includes('timeout') || l.includes('error')).join('\n');
+
+            await github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: `## 🧬 Mutation Testing Results\n\`\`\`\n${summary}\n\`\`\``
+            });

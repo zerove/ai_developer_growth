@@ -1,0 +1,41 @@
+name: "Example Tests Reusable"
+
+on:
+  workflow_call:
+    inputs:
+      examples:
+        description: "Comma-separated list of examples to test"
+        type: string
+        default: "ai-context-sync,multi-agent-orch,self-correction-loop,ai-task-prioritizer,capability-radar,prompt-optimizer,ai-navigation,ai-navigation-web,ai-growth-slack,ai-growth-vscode"
+
+jobs:
+  test-examples:
+    name: Example Tests (${{ matrix.example }})
+    strategy:
+      fail-fast: false
+      matrix:
+        example: ${{ fromJson(format('["{0}"]', replace(inputs.examples, ',', '","'))) }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+          cache-dependency-path: pyproject.toml
+      - run: pip install -e examples/${{ matrix.example }} pytest
+      - name: Run tests
+        continue-on-error: true
+        run: cd examples/${{ matrix.example }} && python -m pytest tests/ -v --tb=short
+      - name: Summary
+        if: always()
+        run: |
+          echo "| ${{ matrix.example }} | $(cd examples/${{ matrix.example }} && python -m pytest tests/ --co -q 2>/dev/null | grep -c test || echo 0) |" >> $GITHUB_STEP_SUMMARY
+
+  validate-examples:
+    name: Validate Examples
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: pip install pytest
+      - run: python tools/scripts/validate_example_projects.py

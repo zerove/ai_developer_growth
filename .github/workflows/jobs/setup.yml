@@ -1,0 +1,56 @@
+name: "Setup & Cache Reusable"
+
+on:
+  workflow_call:
+    outputs:
+      python-version:
+        description: "Python version used"
+        value: ${{ jobs.setup.outputs.python-version }}
+      cache-hit:
+        description: "Whether pip cache was hit"
+        value: ${{ jobs.setup.outputs.cache-hit }}
+
+jobs:
+  setup:
+    name: Setup & Cache
+    runs-on: ubuntu-latest
+    outputs:
+      python-version: ${{ env.PYTHON_VERSION }}
+      cache-hit: ${{ steps.cache.outputs.cache-hit }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Python
+        id: cache
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: pip
+          cache-dependency-path: pyproject.toml
+
+      - name: Cache mypy
+        uses: actions/cache@v4
+        id: mypy-cache
+        with:
+          path: .mypy_cache
+          key: ${{ github.repository }}-mypy-${{ hashFiles('tools/scripts/**/*.py') }}
+          restore-keys: |
+            ${{ github.repository }}-mypy-
+
+      - name: Cache pytest
+        uses: actions/cache@v4
+        id: pytest-cache
+        with:
+          path: .pytest_cache
+          key: ${{ github.repository }}-pytest-${{ hashFiles('tests/**/*.py', 'pyproject.toml') }}
+          restore-keys: |
+            ${{ github.repository }}-pytest-
+
+      - name: Cache coverage
+        uses: actions/cache@v4
+        id: coverage-cache
+        with:
+          path: .coverage*
+          key: ${{ github.repository }}-coverage-${{ github.sha }}
+          restore-keys: |
+            ${{ github.repository }}-coverage-

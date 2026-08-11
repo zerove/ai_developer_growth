@@ -1,0 +1,70 @@
+name: "Tests Reusable"
+
+on:
+  workflow_call:
+    inputs:
+      python-version:
+        description: "Python version"
+        type: string
+        default: "3.11"
+      shard:
+        description: "Shard number (1-4), empty for full test"
+        type: string
+        default: ""
+    outputs:
+      coverage-file:
+        description: "Path to coverage file"
+        value: ${{ jobs.test.outputs.coverage-file }}
+
+jobs:
+  test:
+    name: Tests (Python ${{ inputs.python-version }})${{ inputs.shard != '' && format(' Shard {0}/4', inputs.shard) || '' }}
+    runs-on: ubuntu-latest
+    outputs:
+      coverage-file: ${{ steps.upload.outputs.coverage-path }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ inputs.python-version }}
+          cache: pip
+          cache-dependency-path: pyproject.toml
+      - run: pip install pytest pytest-cov pyyaml pytest-xdist
+      - run: pip install -e .
+      - name: Restore coverage cache
+        uses: actions/cache@v4
+        with:
+          path: .coverage*
+          key: ${{ github.repository }}-coverage-${{ inputs.python-version }}-${{ github.sha }}-${{ inputs.shard }}
+          restore-keys: |
+            ${{ github.repository }}-coverage-${{ inputs.python-version }}-
+      - name: Run tests with coverage
+        run: |
+          if [ -n "${{ inputs.shard }}" ]; then
+            pip install pytest-split
+            pytest tests/ -v -n auto --cov=tools --cov-report=xml --cov-report=term-missing --tb=short --split=${{ inputs.shard }}/4 --group-by=duration
+          else
+            pytest tests/ -v -n auto --cov=tools --cov-report=xml --cov-report=term-missing --tb=short
+          fi
+      - name: Coverage check (only for non-sharded 3.11)
+        if: inputs.python-version == '3.11' && inputs.shard == ''
+        run: |
+          python -c "
+          import xml.etree.ElementTree as ET
+          tree = ET.parse('coverage.xml')
+          root = tree.getroot()
+          coverage = float(root.attrib.get('line-rate', 0)) * 100
+          branch = float(root.attrib.get('branch-rate', 0)) * 100
+          print(f'Line: {coverage:.1f}%, Branch: {branch:.1f}%')
+          if coverage < 85:
+              print(f'::error::Coverage {coverage:.1f}% < 85%')
+              exit(1)
+          "
+      - name: Upload coverage
+        id: upload
+        if: inputs.shard != '' || inputs.python-version == '3.11'
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-data${{ inputs.shard != '' && format('-shard-{0}', inputs.shard) || '' }}
+          path: .coverage
+          retention-days: 7

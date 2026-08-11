@@ -8,516 +8,184 @@ on:
 
 env:
   PYTHON_VERSION: "3.11"
-  # 全局缓存键前缀
-  CACHE_PREFIX: ${{ github.repository }}
 
 jobs:
   # ──────────────────────────────────────────────────────
   # 基础设置 - 复用于所有下游 job
   # ──────────────────────────────────────────────────────
   setup:
-    name: Setup & Cache
-    runs-on: ubuntu-latest
-    outputs:
-      python-version: ${{ env.PYTHON_VERSION }}
-      cache-hit: ${{ steps.cache.outputs.cache-hit }}
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Setup Python
-        id: cache
-        uses: actions/setup-python@v5
-        with:
-          python-version: ${{ env.PYTHON_VERSION }}
-          cache: pip
-          cache-dependency-path: pyproject.toml
-      - name: Cache mypy
-        uses: actions/cache@v4
-        id: mypy-cache
-        with:
-          path: .mypy_cache
-          key: ${{ env.CACHE_PREFIX }}-mypy-${{ hashFiles('tools/scripts/**/*.py') }}
-          restore-keys: |
-            ${{ env.CACHE_PREFIX }}-mypy-
-
-      - name: Cache pytest
-        uses: actions/cache@v4
-        id: pytest-cache
-        with:
-          path: .pytest_cache
-          key: ${{ env.CACHE_PREFIX }}-pytest-${{ hashFiles('tests/**/*.py', 'pyproject.toml') }}
-          restore-keys: |
-            ${{ env.CACHE_PREFIX }}-pytest-
-
-      - name: Cache coverage
-        uses: actions/cache@v4
-        id: coverage-cache
-        with:
-          path: .coverage*
-          key: ${{ env.CACHE_PREFIX }}-coverage-${{ github.sha }}
-          restore-keys: |
-            ${{ env.CACHE_PREFIX }}-coverage-
+    uses: ./.github/workflows/jobs/setup.yml
+    secrets: inherit
 
   # ──────────────────────────────────────────────────────
-  # ADG Governance Check (并行运行)
+  # ADG Governance Check
   # ──────────────────────────────────────────────────────
   adg-governance:
-    name: ADG Governance
     needs: setup
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - name: Install deps
-        run: pip install -e .
-      - name: Detect language
-        run: python -m tools.scripts.adg_cli detect .
-      - name: Check anti-patterns
-        run: |
-          python -m tools.scripts.adg_cli check tools/scripts/ --lang python --severity error --json > adg-report.json
-          ERROR_COUNT=$(python -c "import json; print(json.load(open('adg-report.json'))['summary']['error'])")
-          echo "Errors: $ERROR_COUNT"
-          if [ "$ERROR_COUNT" -gt 0 ]; then
-            echo "::error::ADG governance found $ERROR_COUNT errors"
-            python -m tools.scripts.adg_cli check tools/scripts/ --lang python --severity error
-            exit 1
-          fi
-      - name: Upload ADG report
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: adg-governance-report
-          path: adg-report.json
+    uses: ./.github/workflows/jobs/adg-governance.yml
+    secrets: inherit
 
   # ──────────────────────────────────────────────────────
-  # Pre-commit (可复用 setup 缓存)
+  # Pre-commit
   # ──────────────────────────────────────────────────────
   pre-commit:
-    name: Pre-commit Hooks
     needs: setup
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
-        with:
-          python-version: ${{ env.PYTHON_VERSION }}
-          cache: pip
-          cache-dependency-path: pyproject.toml
-      - run: pip install -e .
-      - uses: pre-commit/action@v3.0.1
+    uses: ./.github/workflows/jobs/pre-commit.yml
+    secrets: inherit
 
   # ──────────────────────────────────────────────────────
   # Lint & Type Check (并行)
   # ──────────────────────────────────────────────────────
   lint:
-    name: Lint & Format
     needs: setup
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
-        with:
-          python-version: ${{ env.PYTHON_VERSION }}
-          cache: pip
-          cache-dependency-path: pyproject.toml
-      - run: pip install ruff==0.15.17
-      - name: Ruff check
-        run: ruff check .
-      - name: Ruff format check
-        run: ruff format --check .
+    uses: ./.github/workflows/jobs/lint.yml
+    secrets: inherit
 
   type-check:
-    name: Type Check
     needs: setup
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
-        with:
-          python-version: ${{ env.PYTHON_VERSION }}
-          cache: pip
-          cache-dependency-path: pyproject.toml
-      - run: pip install mypy
-      - name: Restore mypy cache
-        uses: actions/cache@v4
-        with:
-          path: .mypy_cache
-          key: ${{ env.CACHE_PREFIX }}-mypy-${{ hashFiles('tools/scripts/**/*.py') }}
-          restore-keys: |
-            ${{ env.CACHE_PREFIX }}-mypy-
-      - name: Mypy (strict)
-        run: mypy tools/scripts/ --ignore-missing-imports --strict
+    uses: ./.github/workflows/jobs/type-check.yml
+    secrets: inherit
 
   # ──────────────────────────────────────────────────────
-  # Tests - 矩阵并行 + 分片
+  # Tests - 矩阵并行
   # ──────────────────────────────────────────────────────
-  test:
-    name: Tests (Python ${{ matrix.python-version }})
+  test-311:
     needs: setup
-    runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        python-version: ['3.11', '3.12', '3.13']
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
-        with:
-          python-version: ${{ matrix.python-version }}
-          cache: pip
-          cache-dependency-path: pyproject.toml
-      - run: pip install pytest pytest-cov pyyaml pytest-xdist
-      - run: pip install -e .
-      - name: Restore coverage cache
-        uses: actions/cache@v4
-        with:
-          path: .coverage*
-          key: ${{ env.CACHE_PREFIX }}-coverage-${{ matrix.python-version }}-${{ github.sha }}
-          restore-keys: |
-            ${{ env.CACHE_PREFIX }}-coverage-${{ matrix.python-version }}-
-      - name: Run tests with coverage
-        run: pytest tests/ -v -n auto --cov=tools --cov-report=xml --cov-report=term-missing --tb=short
-      - name: Coverage check (仅 3.11)
-        if: matrix.python-version == '3.11'
-        run: |
-          python -c "
-          import xml.etree.ElementTree as ET
-          tree = ET.parse('coverage.xml')
-          root = tree.getroot()
-          coverage = float(root.attrib.get('line-rate', 0)) * 100
-          branch = float(root.attrib.get('branch-rate', 0)) * 100
-          print(f'Line: {coverage:.1f}%, Branch: {branch:.1f}%')
-          if coverage < 85:
-              print(f'::error::Coverage {coverage:.1f}% < 85%')
-              exit(1)
-          "
-      - name: Upload coverage
-        if: matrix.python-version == '3.11'
-        uses: actions/upload-artifact@v4
-        with:
-          name: coverage-data
-          path: .coverage
-          retention-days: 7
+    uses: ./.github/workflows/jobs/tests.yml
+    with:
+      python-version: "3.11"
+    secrets: inherit
+
+  test-312:
+    needs: setup
+    uses: ./.github/workflows/jobs/tests.yml
+    with:
+      python-version: "3.12"
+    secrets: inherit
+
+  test-313:
+    needs: setup
+    uses: ./.github/workflows/jobs/tests.yml
+    with:
+      python-version: "3.13"
+    secrets: inherit
 
   # ──────────────────────────────────────────────────────
   # Test Sharding (仅主仓库)
   # ──────────────────────────────────────────────────────
-  test-sharded:
-    name: Tests Sharded (Shard ${{ matrix.shard }}/4)
+  test-sharded-1:
     needs: setup
     if: github.repository == 'zerove/ai_developer_growth'
-    runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
-      matrix:
-        shard: [1, 2, 3, 4]
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
-        with:
-          python-version: ${{ env.PYTHON_VERSION }}
-          cache: pip
-          cache-dependency-path: pyproject.toml
-      - run: pip install pytest pytest-cov pyyaml pytest-xdist pytest-split
-      - name: Run shard
-        run: |
-          pytest tests/ -v -n auto --cov=tools --cov-report=xml --cov-report=term-missing --tb=short \
-            --split=${{ matrix.shard }}/4 --group-by=duration
-      - name: Upload shard coverage
-        uses: actions/upload-artifact@v4
-        with:
-          name: coverage-data-shard-${{ matrix.shard }}
-          path: .coverage
-          retention-days: 7
+    uses: ./.github/workflows/jobs/tests.yml
+    with:
+      python-version: "3.11"
+      shard: "1"
+    secrets: inherit
+
+  test-sharded-2:
+    needs: setup
+    if: github.repository == 'zerove/ai_developer_growth'
+    uses: ./.github/workflows/jobs/tests.yml
+    with:
+      python-version: "3.11"
+      shard: "2"
+    secrets: inherit
+
+  test-sharded-3:
+    needs: setup
+    if: github.repository == 'zerove/ai_developer_growth'
+    uses: ./.github/workflows/jobs/tests.yml
+    with:
+      python-version: "3.11"
+      shard: "3"
+    secrets: inherit
+
+  test-sharded-4:
+    needs: setup
+    if: github.repository == 'zerove/ai_developer_growth'
+    uses: ./.github/workflows/jobs/tests.yml
+    with:
+      python-version: "3.11"
+      shard: "4"
+    secrets: inherit
 
   # ──────────────────────────────────────────────────────
   # Combine Coverage
   # ──────────────────────────────────────────────────────
   combine-coverage:
-    name: Combine Coverage
-    needs: [test, test-sharded]
-    if: always() && github.repository == 'zerove/ai_developer_growth'
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
-        with:
-          python-version: ${{ env.PYTHON_VERSION }}
-      - name: Download coverage data
-        uses: actions/download-artifact@v4
-        with:
-          pattern: coverage-data*
-          path: coverage-artifacts/
-          merge-multiple: false
-      - name: Combine
-        run: |
-          pip install coverage
-          coverage combine coverage-artifacts/**/.coverage
-          coverage xml -o combined-coverage.xml
-          python -c "
-          import xml.etree.ElementTree as ET
-          tree = ET.parse('combined-coverage.xml')
-          root = tree.getroot()
-          c = float(root.attrib.get('line-rate', 0)) * 100
-          b = float(root.attrib.get('branch-rate', 0)) * 100
-          print(f'Combined: Line {c:.1f}%, Branch {b:.1f}%')
-          if c < 85: exit(1)
-          "
-      - name: Upload combined
-        uses: actions/upload-artifact@v4
-        with:
-          name: combined-coverage
-          path: combined-coverage.xml
-          retention-days: 30
-      - name: Diff Cover (PR only)
-        if: github.event_name == 'pull_request'
-        run: |
-          pip install diff-cover
-          # Get base branch
-          BASE_BRANCH=${{ github.base_ref }}
-          # Fetch base branch
-          git fetch origin $BASE_BRANCH --depth=1
-          # Run diff-cover
-          diff-cover combined-coverage.xml --compare-branch=origin/$BASE_BRANCH --fail-under=85 --html-report diff-cover-report.html || true
-      - name: Upload Diff Cover Report
-        if: github.event_name == 'pull_request' && always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: diff-cover-report
-          path: diff-cover-report.html
-          retention-days: 7
-
+    needs: [test-311, test-312, test-313, test-sharded-1, test-sharded-2, test-sharded-3, test-sharded-4]
+    uses: ./.github/workflows/jobs/combine-coverage.yml
+    secrets: inherit
 
   # ──────────────────────────────────────────────────────
-  # Quality Gates (复用 hooks_runner)
+  # Quality Gates
   # ──────────────────────────────────────────────────────
   quality-gates:
-    name: Quality Gates
     needs: setup
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
-        with:
-          python-version: ${{ env.PYTHON_VERSION }}
-          cache: pip
-          cache-dependency-path: pyproject.toml
-      - run: pip install -e .
-      - name: Link audit
-        run: python tools/scripts/hooks_runner.py quality-gate --path . --check-annotation --check-security --check-type --check-error
-      - name: Case study validation
-        run: python tools/scripts/validate_case_study.py --all
-      - name: Governance docs validation
-        run: python tools/scripts/hooks_runner.py governance-audit --validate-docs
-      - name: AI-SDLC compliance
-        run: python tools/scripts/hooks_runner.py governance-audit --check-ai-sdlc
-      - name: Hallucination risk audit
-        run: python tools/scripts/hooks_runner.py governance-audit --audit-hallucination || true
-      - name: Language rules check
-        run: python tools/scripts/hooks_runner.py language-rules --path tools/scripts
-      - name: Agent validation
-        run: python tools/scripts/validate_agent_definition.py --path agents/
-      - name: Enforcement check
-        run: python tools/scripts/hooks_runner.py quality-gate --path tools/scripts --check-annotation
+    uses: ./.github/workflows/jobs/quality-gates.yml
+    secrets: inherit
 
   # ──────────────────────────────────────────────────────
   # Security
   # ──────────────────────────────────────────────────────
   security:
-    name: Security Scan
     needs: setup
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
-        with:
-          python-version: ${{ env.PYTHON_VERSION }}
-          cache: pip
-          cache-dependency-path: pyproject.toml
-      - name: Upgrade setuptools
-        # CI runner 自带旧 setuptools（79.x）会命中 PYSEC-2026-3447，先升级再安装工具
-        run: pip install -U "setuptools>=83.0.0"
-      - run: pip install bandit pip-audit
-      - name: Bandit scan
-        run: bandit -r tools/scripts/ -f json -o bandit-report.json || true
-      - name: Pip-audit
-        run: pip-audit --desc
-      - name: Upload bandit
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: bandit-report
-          path: bandit-report.json
+    uses: ./.github/workflows/jobs/security.yml
+    secrets: inherit
 
   secret-scan:
-    name: Secret Scanning
     needs: setup
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-      - name: Install trufflehog
-        run: |
-          curl -sSfL https://raw.githubusercontent.com/trufflesecurity/trufflehog/main/scripts/install.sh | sh -s -- -b /usr/local/bin
-      - name: Run trufflehog
-        run: |
-          trufflehog git file://. --since-commit=HEAD~10 --json > trufflehog-results.json || true
-          FINDINGS=$(cat trufflehog-results.json | jq -s 'flatten | length')
-          if [ "$FINDINGS" -gt 0 ]; then
-            echo "::error::Found $FINDINGS secrets"
-            cat trufflehog-results.json | jq -r '.[] | "\(.DetectorType): \(.Decoder).\(.Verified)"' | head -20
-            exit 1
-          fi
-      - name: Upload results
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: secret-scan
-          path: trufflehog-results.json
-          retention-days: 30
+    uses: ./.github/workflows/jobs/secret-scan.yml
+    secrets: inherit
 
   sbom:
-    name: SBOM Generation
     needs: setup
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
-        with:
-          python-version: ${{ env.PYTHON_VERSION }}
-      - run: pip install cyclonedx-bom
-      - run: cyclonedx-py environment -o sbom.json
-      - uses: actions/upload-artifact@v4
-        with:
-          name: sbom
-          path: sbom.json
-          retention-days: 30
+    uses: ./.github/workflows/jobs/sbom.yml
+    secrets: inherit
 
   license-scan:
-    name: License Scan
     needs: setup
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - run: pip install pip-licenses
-      - run: pip-licenses --format=json --output-file=licenses.json
-      - run: |
-          python -c "
-          import json
-          disallowed = ['GPL-3.0', 'AGPL-3.0', 'SSPL-1.0', 'BSL-1.0', 'ELv2']
-          with open('licenses.json') as f: licenses = json.load(f)
-          violations = [f\"{p['Name']}: {p['License']}\" for p in licenses if any(d in p.get('License','') for d in disallowed)]
-          if violations:
-              print('::error::Disallowed licenses:')
-              for v in violations: print(f'  {v}')
-              exit(1)
-          print('All licenses allowed')
-          "
-      - uses: actions/upload-artifact@v4
-        if: always()
-        with:
-          name: license-report
-          path: licenses.json
-          retention-days: 30
+    uses: ./.github/workflows/jobs/license-scan.yml
+    secrets: inherit
 
   # ──────────────────────────────────────────────────────
   # Example Tests (并行矩阵)
   # ──────────────────────────────────────────────────────
   test-examples:
-    name: Example Tests (${{ matrix.example }})
     needs: setup
-    strategy:
-      fail-fast: false
-      matrix:
-        example:
-          - ai-context-sync
-          - multi-agent-orch
-          - self-correction-loop
-          - ai-task-prioritizer
-          - capability-radar
-          - prompt-optimizer
-          - ai-navigation
-          - ai-navigation-web
-          - ai-growth-slack
-          - ai-growth-vscode
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
-        with:
-          python-version: ${{ env.PYTHON_VERSION }}
-          cache: pip
-          cache-dependency-path: pyproject.toml
-      - run: pip install -e examples/${{ matrix.example }} pytest
-      - name: Run tests
-        continue-on-error: true
-        run: cd examples/${{ matrix.example }} && python -m pytest tests/ -v --tb=short
-      - name: Summary
-        if: always()
-        run: |
-          echo "| ${{ matrix.example }} | $(cd examples/${{ matrix.example }} && python -m pytest tests/ --co -q 2>/dev/null | grep -c test || echo 0) |" >> $GITHUB_STEP_SUMMARY
+    uses: ./.github/workflows/jobs/example-tests.yml
+    secrets: inherit
 
-  validate-examples:
-    name: Validate Examples
-    needs: setup
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - run: pip install pytest
-      - run: python tools/scripts/validate_example_projects.py
-
+  # ──────────────────────────────────────────────────────
+  # Dependency Review
+  # ──────────────────────────────────────────────────────
   dependency-review:
-    name: Dependency Review
     needs: setup
-    if: github.event_name == 'pull_request'
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/dependency-review-action@v4
-        with:
-          fail-on-severity: high
+    uses: ./.github/workflows/jobs/dependency-review.yml
+    secrets: inherit
 
+  # ──────────────────────────────────────────────────────
+  # Docs
+  # ──────────────────────────────────────────────────────
   docs-check:
-    name: Docs Structure
     needs: setup
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - run: |
-          for f in README.md INDEX.md GOVERNANCE.md CONTRIBUTING.md ROADMAP.md LICENSE SECURITY.md CODE_OF_CONDUCT.md; do
-            test -f "$f" || { echo "Missing: $f"; exit 1; }
-          done
-          for d in docs case-studies examples tools agents; do
-            test -d "$d" || { echo "Missing dir: $d"; exit 1; }
-          done
+    uses: ./.github/workflows/jobs/docs.yml
+    secrets: inherit
 
-  docs-build:
-    name: MkDocs Build
-    needs: setup
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
-        with:
-          python-version: ${{ env.PYTHON_VERSION }}
-          cache: pip
-          cache-dependency-path: pyproject.toml
-      - run: pip install mkdocs-material mkdocstrings mkdocstrings-python
-      - run: mkdocs build --strict
-
+  # ──────────────────────────────────────────────────────
+  # Agent Validation
+  # ──────────────────────────────────────────────────────
   agent-validation:
-    name: Agent Validation
     needs: setup
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - run: python tools/scripts/validate_agent_definition.py --path agents/
+    uses: ./.github/workflows/jobs/agent-validation.yml
+    secrets: inherit
 
   # ──────────────────────────────────────────────────────
   # 最终汇总
   # ──────────────────────────────────────────────────────
   ci-summary:
     name: CI Summary
-    needs: [adg-governance, pre-commit, lint, type-check, test, test-sharded, combine-coverage, quality-gates, security, secret-scan, sbom, license-scan, test-examples, validate-examples, dependency-review, docs-check, docs-build, agent-validation]
+    needs: [adg-governance, pre-commit, lint, type-check, test-311, test-312, test-313, test-sharded-1, test-sharded-2, test-sharded-3, test-sharded-4, combine-coverage, quality-gates, security, secret-scan, sbom, license-scan, test-examples, dependency-review, docs-check, agent-validation]
     if: always()
     runs-on: ubuntu-latest
     steps:

@@ -274,3 +274,33 @@ def run_governance_audit(
         output += f"\n\nFailed checks: {', '.join(failed)}"
 
     return len(failed) == 0, output
+
+
+def run_pr_review() -> tuple[bool, str]:
+    """Run automated AI PR review."""
+    from tools.scripts.ai_pr_reviewer import format_review_report, get_git_diff, review_diff
+
+    diff = get_git_diff()
+    res = review_diff(diff)
+    report = format_review_report(res)
+    return res["total_findings"] == 0, report
+
+
+def run_arch_graph() -> tuple[bool, str]:
+    """Run architecture dependency graph generation."""
+    from tools.scripts.arch_visualizer import generate_mermaid_diagram, scan_python_imports
+
+    graph = scan_python_imports(Path("tools/scripts"))
+    mermaid = generate_mermaid_diagram(graph)
+    return (
+        True,
+        f"Architecture graph generated successfully ({len(graph)} modules mapped).\n\n```mermaid\n{mermaid}\n```",
+    )
+
+
+def run_memory_index() -> tuple[bool, str]:
+    """Run session memory vectorizer."""
+    from tools.scripts.session_memory_vectorizer import vectorize_sessions
+
+    index = vectorize_sessions(Path("docs"), Path(".jcode/memory/memory_index.json"))
+    return True, f"Indexed {len(index['entries'])} memory entries into .jcode/memory/memory_index.json"

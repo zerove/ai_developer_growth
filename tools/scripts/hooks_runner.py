@@ -40,8 +40,11 @@ from tools.scripts.hooks.basic_checks import (  # noqa: F401
     run_typecheck,
 )
 from tools.scripts.hooks.domain_checks import (  # noqa: F401
+    run_arch_graph,
     run_governance_audit,
     run_language_rules,
+    run_memory_index,
+    run_pr_review,
     run_quality_gate,
 )
 from tools.scripts.hooks.incremental_checks import (  # noqa: F401
@@ -143,6 +146,9 @@ Examples:
     hs_parser.add_argument("--lang", help="Language filter")
 
     subparsers.add_parser("pre-commit", help="Pre-commit hook: check staged files only")
+    subparsers.add_parser("pr-review", help="Run automated AI PR review")
+    subparsers.add_parser("arch-graph", help="Generate architecture dependency graph (Mermaid)")
+    subparsers.add_parser("memory-index", help="Vectorize session memory and knowledge base")
 
     install_parser = subparsers.add_parser("install-hooks", help="Install git hooks")
     install_parser.add_argument("--pre-push", action="store_true", help="Install pre-push hook")
@@ -576,6 +582,9 @@ def _dispatch(args: argparse.Namespace) -> int:
         "governance-audit": _handle_governance_audit,
         "diff": lambda a: _run_simple(run_diff_checks(a.base)),
         "pre-commit": lambda a: _run_simple(run_pre_commit_checks()),
+        "pr-review": lambda a: _run_simple(run_pr_review()),
+        "arch-graph": lambda a: _run_simple(run_arch_graph()),
+        "memory-index": lambda a: _run_simple(run_memory_index()),
         "semantic-check": lambda a: _run_semantic_check(
             a.path, getattr(a, "lang", None), getattr(a, "jobs", None) or _get_jobs_setting()
         ),

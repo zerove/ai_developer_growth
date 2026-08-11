@@ -1,0 +1,9 @@
+[extension]
+name = "ai-growth-zed"
+version = "0.1.0"
+description = "AI Developer Growth & JCode SDLC integration for Zed editor"
+authors = ["AI Developer Growth Team <dev@ai-developer-growth.org>"]
+repository = "https://github.com/zerove/ai_developer_growth"
+
+[wasm]
+abi = "0.1.0"

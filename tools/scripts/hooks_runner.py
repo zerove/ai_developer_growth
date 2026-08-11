@@ -149,6 +149,7 @@ Examples:
     subparsers.add_parser("pr-review", help="Run automated AI PR review")
     subparsers.add_parser("arch-graph", help="Generate architecture dependency graph (Mermaid)")
     subparsers.add_parser("memory-index", help="Vectorize session memory and knowledge base")
+    subparsers.add_parser("evolve", help="Run self-evolving engine to adapt rules from code telemetry")
 
     install_parser = subparsers.add_parser("install-hooks", help="Install git hooks")
     install_parser.add_argument("--pre-push", action="store_true", help="Install pre-push hook")
@@ -532,6 +533,17 @@ def _handle_learn(args: argparse.Namespace) -> int:
     return 0
 
 
+def _run_self_evolution() -> tuple[bool, str]:
+    """Run self-evolving rules engine."""
+    import json
+
+    from tools.scripts.self_evolving_engine import SelfEvolvingEngine
+
+    engine = SelfEvolvingEngine()
+    res = engine.evolve()
+    return True, f"🧬 Self-Evolving Engine Report:\n{json.dumps(res, indent=2)}"
+
+
 def _handle_dashboard(args: argparse.Namespace) -> int:
     """Handle dashboard command."""
     import uvicorn
@@ -585,6 +597,7 @@ def _dispatch(args: argparse.Namespace) -> int:
         "pr-review": lambda a: _run_simple(run_pr_review()),
         "arch-graph": lambda a: _run_simple(run_arch_graph()),
         "memory-index": lambda a: _run_simple(run_memory_index()),
+        "evolve": lambda a: _run_simple(_run_self_evolution()),
         "semantic-check": lambda a: _run_semantic_check(
             a.path, getattr(a, "lang", None), getattr(a, "jobs", None) or _get_jobs_setting()
         ),

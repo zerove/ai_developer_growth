@@ -35,6 +35,7 @@
   - Justfile 统一命令入口 + .markdownlint.json + requirements-lock.txt + uv.lock
   - ADG CLI 规则路径解析及临时目录 skip_dirs 相对路径过滤优化（100% 测试通过）
   - 新增 5 大高级扩展工具: AI-PR 评审代理、语义化 Commit 生成器、架构依赖图谱、属性基/混沌测试、会话经验向量化沉淀
+  - 新增跨项目工作流同步命令 `adg sync`（支持将最新 JCode 工作流与自动化脚本一键同步到任意目标项目）
 - ✅ AI-Native SDLC 11 支柱生态 (2026-08-01)
   - jcode_ai_native_workflow.py 主管道 (集成 11 大支柱)
   - autonomous_swarm_engine.py 自主蜂群 + self_evolving_engine.py 自我演化

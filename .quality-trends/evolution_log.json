@@ -1,7 +1,7 @@
 {
-  "findings_count": 8,
+  "findings_count": 12,
   "actions_taken": [
-    "Detected 8 slop patterns. Automatically tuning lint rules and prompt constraints.",
+    "Detected 12 slop patterns. Automatically tuning lint rules and prompt constraints.",
     "Persisted adaptive rule to .jcode/rules/adaptive_ai_slop_guard.json"
   ],
   "status": "Evolved Successfully"

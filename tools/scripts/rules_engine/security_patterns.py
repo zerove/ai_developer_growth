@@ -90,12 +90,12 @@ SECURITY_PATTERNS: list[dict[str, Any]] = [
 TYPE_PATTERNS: list[dict[str, Any]] = [
     {
         "id": "type-ignore-comment",
-        "name": "Type ignore comment",
+        "name": "Type ignore comment (bare)",
         "severity": "warning",
         "category": "type-safety",
-        "pattern": r"#\s*type:\s*ignore",
-        "message": "Type ignore comment suppresses type checking",
-        "fix_hint": "Fix the underlying type issue",
+        "pattern": r"#\s*type:\s*ignore(?!\s*\[)",
+        "message": "Bare type ignore comment suppresses type checking; use specific error codes like # type: ignore[attr-defined]",
+        "fix_hint": "Fix the underlying type issue or use specific error codes",
     },
     {
         "id": "type-any-annotation",

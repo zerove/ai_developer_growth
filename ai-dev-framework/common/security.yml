@@ -117,12 +117,12 @@ anti_patterns:
 
 # ── 类型安全：类型忽略 ─────────────────────────
 - id: common-type-ignore
-  name: Type ignore comment
+  name: Type ignore comment (bare)
   severity: warning
   category: type_safety
-  pattern: '#\s*type:\s*ignore'
-  message: Type ignore comment suppresses type checking
-  fix_hint: Fix the underlying type issue
+  pattern: '#\s*type:\s*ignore(?!\s*\[)'
+  message: Bare type ignore comment suppresses type checking; use specific error codes like # type: ignore[attr-defined]
+  fix_hint: Fix the underlying type issue or use specific error codes
 
 # ── 类型安全：Any 类型 ─────────────────────────
 - id: common-type-any

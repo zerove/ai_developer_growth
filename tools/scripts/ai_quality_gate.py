@@ -173,7 +173,7 @@ def check_type_patterns(filepath: Path) -> list[dict[str, Any]]:
 
     for line_num, line in enumerate(lines, 1):
         for pattern, description in [
-            (r"#\s*type:\s*ignore", "类型抑制"),
+            (r"#\s*type:\s*ignore(?!\s*\[)", "类型抑制"),
             (r"@\w+(?:\.\w+)*\.ignore", "使用 @ignore 装饰器"),
             (r":\s*Any\b", "使用 Any 类型"),
         ]:

@@ -15,7 +15,7 @@ def to_sarif(results: list[Any], tool_name: str = "jcode-governance") -> str:
                         {
                             "physicalLocation": {
                                 "artifactLocation": {"uri": res.file},
-                                "region": {"startLine": issue.line},
+                                "region": {"startLine": issue.line, "startColumn": max(1, issue.column)},
                             }
                         }
                     ],

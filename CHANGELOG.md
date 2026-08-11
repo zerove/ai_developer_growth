@@ -27,7 +27,7 @@ All notable changes to the AI Developer Growth project.
 - 恢复 ai_quality_gate.py eval/exec 检测模式（凌晨提交 2d80af7 误删），17 相关测试全部通过
 
 
-## [2.3.0] - 2026-07-30
+## [2.3.0] - 2026-08-11
 
 ### 质量与重构
 
@@ -48,22 +48,28 @@ All notable changes to the AI Developer Growth project.
   - VS Code ADG (`vscode-adg/extension.js`): 9 命令 + 状态栏 + Quick Fix + 配置选项
   - VS Code AI Language Rules (`vscode-ai-language-rules/extension.js`): v2.0 + auto-fix
   - LSP Server (`ai-language-rules/lsp_server.py`): `adg` 后端替代旧 YAML 解析
-  - Zed ADG (`zed-adg/src/lib.rs`): Rust 库 + CLI 运行器 + 诊断转换 + 测试
-  - 提交 `d248652`（14 文件，+1193/−516 行，pre-commit 通过）
 
-- **P2: 社区 CI + 知识库联动**
-  - `.github/workflows/community-case-pr.yml`: 社区 PR 案例校验工作流
-  - `tools/scripts/rules_engine/rule_docs_mapper.py`: 421 规则→文档映射引擎
-  - `adg check --with-docs` 输出 `related_docs` 字段
+- **P1: AI-Native SDLC 11 支柱生态（2026-08-01 完成）**
+  - `jcode_ai_native_workflow.py` 主管道集成 11 大支柱
+  - `autonomous_swarm_engine.py` 自主蜂群 + `self_evolving_engine.py` 自我演化
+  - `ai_native_mcp_server.py` MCP 服务器 + `ai_native_dashboard.py` 仪表板
+  - DoR gate + TDD 状态机 + 审计证明账本 + 范围守护
+
+- **P1: CI/CD 优化与安全强化 (ADR-009, 2026-08)**
+  - pip 缓存键 + 测试分片 (4 shards) + 覆盖率合并 job
+  - 发布工作流 release.yml (tag 触发 + 预发布校验 + twine)
+  - SLSA provenance + cosign 签名 + mutation-testing.yml (周度)
+  - 示例项目 CI 模板 example-ci-template.yml + 9 个示例项目 .github/ 初始化
+  - Justfile 统一命令入口 + .markdownlint.json + requirements-lock.txt + uv.lock
+  - ADG CLI 规则路径解析及临时目录 skip_dirs 相对路径过滤优化（100% 测试通过）
+  - 新增 5 大高级扩展工具: AI-PR 评审代理、语义化 Commit 生成器、架构依赖图谱、属性基/混沌测试、会话经验向量化沉淀
+  - 新增跨项目工作流同步命令 `adg sync`（支持将最新 JCode 工作流与自动化脚本一键同步到任意目标项目）
 
 ### 修复
-- 删除冗余 `python/` 目录 + 残留 `.ai-sync-cache/` 文件
-- `core.py` 缺失 `import json` 修复（`_attach_docs_to_issues` 函数）
-- 规则 ID 到文档映射路径修正
 
-### 文档
-- 规则→文档映射缓存: `.jcode/rule-docs-mapping.json`（421 条）
-- 4 个扩展 README 全部同步更新
+- **删除 adg_cli.py 双入口死代码**：消除 5 个 mypy 类型错误，避免运行时 TypeError
+- **CI 重构**：ci.yml 从 526 行精简到 184 行，拆分为 16 个 reusable workflow (jobs/)
+
 
 ## [2.2.0] - 2026-07-28
 

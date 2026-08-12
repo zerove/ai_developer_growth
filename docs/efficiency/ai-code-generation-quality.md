@@ -218,7 +218,8 @@ def process_payment(amount: Decimal, user_id: str) -> PaymentResult:
 
 **分类**: 治理层
 
-**相关文档**:
+**相关文档
+- [[GOVERNANCE|通用治理标准]]**:
 
 - [[docs/efficiency/ai-model-selection|模型选型]]
 - [[docs/efficiency/ai-sdlc|SDLC]]

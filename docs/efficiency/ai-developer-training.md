@@ -165,7 +165,8 @@ Week 5-8: 团队赋能
 
 **分类**: 效率层
 
-**相关文档**:
+**相关文档
+- [[GOVERNANCE|通用治理标准]]**:
 
 - [[docs/efficiency/full-cycle-workflow|全周期工作流]]
 - [[docs/efficiency/automated-bug-fixing|自动化修复]]

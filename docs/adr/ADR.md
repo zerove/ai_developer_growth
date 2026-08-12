@@ -5,7 +5,7 @@ category: 治理层
 tags: ['REST']
 difficulty: 基础
 reading_time: 10 分钟
-updated: 2026-08-03
+updated: 2026-08-12
 ---
 
 # 架构决策记录 (ADR) 索引
@@ -18,6 +18,7 @@ updated: 2026-08-03
 
 | ID | 标题 | 状态 | 日期 |
 |----|------|------|------|
+| [[ADR-010-community-growth-infrastructure\|ADR-010]] | P2 社区增长基础设施：自动化验证、激励体系、Issue 标准化 | ✅ 已通过 | 2026-08 |
 | [[009-ci-cd-optimization-security\|ADR-009]] | CI/CD 流水线优化与安全强化 | ✅ 已通过 | 2026-08 |
 | [[008-production-grade-workflow\|ADR-008]] | 生产级稳健工作流与防御性接口设计 | ⏳ 提议 | 2026-08 |
 | [[007-m4-ai-navigation-design\|ADR-007]] | M4 AI 导航系统设计 | 🔍 待评审 | 2026-07 |
@@ -74,4 +75,4 @@ updated: 2026-08-03
 
 ---
 
-*本索引随新增 ADR 时更新。最后更新: 2026-08-03*
+*本索引随新增 ADR 时更新。最后更新: 2026-08-12*

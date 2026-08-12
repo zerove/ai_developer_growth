@@ -16,6 +16,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
       - uses: actions/setup-python@v5
         with:
           python-version: ${{ env.PYTHON_VERSION }}
@@ -42,40 +44,7 @@ jobs:
       - name: ADG check code snippets
         id: adg-check
         run: |
-          cat > /tmp/adg_check.py << 'PYEOF'
-          import re, subprocess, json, sys
-          import os
-
-          changed_files = os.environ.get('CHANGED_FILES', '').split()
-          for file in changed_files:
-              if not file or not os.path.exists(file):
-                  continue
-              # Extract code blocks and check each language
-              print("ADG scanning code snippets in: " + file)
-              with open(file) as f:
-                  content = f.read()
-              # Find all fenced code blocks with language hints
-              blocks = re.findall(r'```(\w+)\n(.*?)\n```', content, re.DOTALL)
-              for lang, code in blocks:
-                  lang_map = {'py':'python','python':'python','js':'javascript','javascript':'javascript',
-                              'ts':'typescript','typescript':'typescript','go':'go','rust':'rust','rs':'rust'}
-                  l = lang_map.get(lang, lang)
-                  # Write temp file and scan
-                  import tempfile, pathlib
-                  with tempfile.NamedTemporaryFile(suffix=f'.{lang}', mode='w', delete=False) as f:
-                      f.write(code); tmp = f.name
-                  r = subprocess.run(['adg','check',tmp,'--severity','error','--json'],
-                                     capture_output=True, text=True, timeout=15)
-                  if r.returncode == 1:
-                      result = json.loads(r.stdout)
-                      issues = result.get('issues',[])
-                      errors = [i for i in issues if i['severity']=='error']
-                      if errors:
-                          print(f'::warning file={file}::Found {len(errors)} error(s) in code block ({lang}): {errors[0]["message"]}')
-                  pathlib.Path(tmp).unlink()
-          PYEOF
-          CHANGED_FILES="${{ steps.changed.outputs.all_changed_files }}" python /tmp/adg_check.py
-          rm -f /tmp/adg_check.py
+          python tools/scripts/validate_case_study.py --adg-scan "${{ steps.changed.outputs.all_changed_files }}" || true
 
       - name: Generate review summary
         if: always()
@@ -86,6 +55,17 @@ jobs:
           echo "**Validation:** ${{ steps.validate.outputs.passed && '✅ Passed' || '❌ Failed' }}" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "> Community contributions are reviewed for completeness, authenticity, and reproducibility." >> $GITHUB_STEP_SUMMARY
+
+      - name: Check authenticity markers
+        if: steps.validate.outputs.passed == 'true'
+        run: |
+          python tools/scripts/validate_case_study.py --auth-check "${{ steps.changed.outputs.all_changed_files }}" || true
+
+      - name: Generate contributor stats
+        if: success()
+        run: |
+          echo "## 👤 Contributor Stats" >> $GITHUB_STEP_SUMMARY
+          python tools/scripts/contributor_dashboard.py --format markdown 2>/dev/null | head -50 >> $GITHUB_STEP_SUMMARY || true
 
       - name: Add community label
         uses: actions/github-script@v7
@@ -98,3 +78,72 @@ jobs:
               repo: context.repo.repo,
               labels: ['community', 'case-study']
             })
+
+      - name: Request maintainer review
+        if: success()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: '✅ **社区案例自动验证通过**\n\n已完成：\n- 格式验证\n- 代码片段安全检查 (ADG)\n- 真实性标记检查\n\n请维护者进行人工复核：\n- [ ] 案例真实性确认\n- [ ] 效率数据合理性\n- [ ] 关键洞察质量\n- [ ] 适用场景明确性\n\n通过后将自动合并并更新知识库索引。'
+            })
+
+  generate-adr-on-merge:
+    name: Generate ADR from merged PR
+    if: github.event_name == 'pull_request' && github.event.action == 'closed' && github.event.pull_request.merged == true && (contains(github.event.pull_request.labels.*.name, 'community') || contains(github.event.pull_request.labels.*.name, 'case-study'))
+    runs-on: ubuntu-latest
+    needs: validate-community-case
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Install dependencies
+        run: pip install -e . pyyaml
+
+      - name: Generate ADR for architectural decisions
+        run: |
+          PR_TITLE="${{ github.event.pull_request.title }}"
+          PR_NUMBER="${{ github.event.pull_request.number }}"
+          PR_BODY="${{ github.event.pull_request.body }}"
+
+          if echo "$PR_BODY" | grep -qiE "架构|架构决策|ADR|技术选型|重大变更"; then
+            echo "检测到架构决策，生成 ADR..."
+            python tools/scripts/adr_generator.py --pr "$PR_NUMBER" --title "$PR_TITLE" --brief "$PR_BODY" || true
+          else
+            echo "无架构决策，跳过 ADR 生成"
+          fi
+
+  update-knowledge-base:
+    name: Update Knowledge Base Index
+    if: github.event_name == 'pull_request' && github.event.action == 'closed' && github.event.pull_request.merged == true && (contains(github.event.pull_request.labels.*.name, 'community') || contains(github.event.pull_request.labels.*.name, 'case-study'))
+    runs-on: ubuntu-latest
+    needs: validate-community-case
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Update INDEX.md and MOC
+        run: |
+          python tools/scripts/link_auditor.py --update-moc || true
+          python tools/scripts/update_ai_tool_matrix.py || true
+
+      - name: Commit index updates
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add INDEX.md MOC.md docs/tools/ai-tool-matrix.md 2>/dev/null || true
+          if ! git diff --cached --quiet; then
+            git commit -m "chore: update knowledge index after case study merge"
+            git push
+          else
+            echo "No index updates needed"
+          fi

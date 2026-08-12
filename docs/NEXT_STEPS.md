@@ -17,7 +17,7 @@ updated: 2026-08-04
 ## 战略定位
 
 ```
-ai_developer_growth = 知识库 (229+ 篇方法论) + 治理框架 (44 规范) + AI-Native SDLC 自动化
+ai_developer_growth = 知识库 (229+ 篇方法论) + 治理框架 (38 规范) + AI-Native SDLC 自动化
 ```
 
 **核心原则**: 知识质量 > 交付方式 > 技术复杂度

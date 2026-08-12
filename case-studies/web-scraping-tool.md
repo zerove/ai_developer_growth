@@ -1,15 +1,18 @@
 ---
-title: "案例研究：构建智能网页抓取工具"
-description: "在本案例中，我们将展示如何利用 AI 快速构建一个智能网页抓取工具：Smart Web..."
+title: 案例研究：构建智能网页抓取工具
+description: 在本案例中，我们将展示如何利用 AI 快速构建一个智能网页抓取工具：Smart Web...
 category: 案例研究
 tags: ['AI协作', '案例研究']
 difficulty: 进阶
+status: 已迁移
+source: 社区贡献
+author:
+updated: 2026-08-12
 ---
+
 # 案例研究：构建智能网页抓取工具
 
-在本案例中，我们将展示如何利用 AI 快速构建一个智能网页抓取工具：**Smart Web Scraper**。这个工具能够自动识别网页结构，提取关键信息，并生成结构化数据。
-
-## 项目背景
+## 背景
 
 ### 问题定义
 
@@ -23,7 +26,9 @@ difficulty: 进阶
 
 ---
 
-## 1. 需求阶段：从模糊想法到明确 PRD
+---
+
+## 过程
 
 **初始想法**：我想快速抓取网页内容，但不想写复杂的解析代码。
 
@@ -60,7 +65,7 @@ difficulty: 进阶
 - 输出：结构化数据（JSON/CSV）
 - 选项：输出格式、过滤规则、深度限制
 
-## 2. 设计阶段：技术选型
+---
 
 **AI 建议的技术栈**：
 - 请求库：httpx（异步支持）
@@ -73,7 +78,7 @@ difficulty: 进阶
 URL → Fetcher → Parser → Extractor → Cleaner → Formatter → Output
 ```
 
-## 3. 迭代编码：快速原型
+---
 
 ### 循环 1：基础抓取
 - **Test**：验证能抓取简单网页
@@ -146,7 +151,7 @@ def extract_main_content(soup: BeautifulSoup) -> str:
     return str(best) if best else str(soup.body)
 ```
 
-## 4. 遇到的挑战与解决方案
+---
 
 ### 挑战 1：动态加载内容
 
@@ -176,7 +181,9 @@ def extract_main_content(soup: BeautifulSoup) -> str:
 - 添加负面信号检测：class/id 包含 "ad"/"nav"/"sidebar"/"footer" 的元素扣分
 - 支持用户手动覆盖：配置文件中可以指定"这个网站的主要内容在 `.post-body`"
 
-## 5. 最终结果
+---
+
+## 对比
 
 ### 效率提升分析
 
@@ -203,7 +210,9 @@ smart-scraper/
 └── main.py
 ```
 
-## 关键洞察
+---
+
+## 洞察
 
 ### 1. 启发式算法比想象中更实用
 在 AI 辅助下，文本密度 + 停用词比率 + 标签结构的组合能在 85% 的常见网页上正确识别主要内容。这个"80/20"方案比训练 ML 模型高效得多，而剩下的 15% 可以通过配置文件手动指定。
@@ -213,6 +222,8 @@ smart-scraper/
 
 ### 3. AI 对"模式识别"类问题帮助最大
 内容识别算法涉及大量启发式规则和权重调优，这是 AI 最擅长的领域。一条 Prompt 就能生成完整的评分算法框架，开发者只需要微调参数。
+
+---
 
 ---
 
@@ -235,3 +246,26 @@ smart-scraper/
 - [[../docs/MOC|⬅️ 返回知识地图]]
 - **相关案例**: [[case-studies/data-pipeline|数据管道]] | [[case-studies/api-monitoring|API 监控]]
 - **相关方法**: [[../docs/efficiency/full-cycle-workflow|全周期工作流]] | [[../docs/learning/prompt-engineering|Prompt 工程]]
+
+---
+
+## 交付物清单
+
+- [ ] PRD (产品需求文档)
+- [ ] DESIGN (架构设计文档)
+- [ ] 代码 (实现代码)
+- [ ] 测试 (测试代码)
+- [ ] 数据 (效率对比数据)
+- [ ] 洞察 (关键洞察文档)
+- [ ] 场景 (适用场景文档)
+
+---
+
+## 提交前检查
+
+- [ ] 标题格式：符合 `kebab-case` 命名规范
+- [ ] Label：已添加正确的分类标签
+- [ ] 必填章节：背景、过程、对比、洞察、适用场景、交付物清单、提交前检查
+- [ ] 效率数据：包含 >=3 个维度的量化对比数据
+- [ ] 关键洞察：至少 3 条编号洞察，含具体数字/模式
+- [ ] 代码/文档链接：提供相关仓库、PR、文档链接

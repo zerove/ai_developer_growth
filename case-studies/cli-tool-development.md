@@ -1,15 +1,18 @@
 ---
-title: "案例研究：构建命令行工具的 AI 协作实践"
-description: "在本案例中，我们将展示如何利用 AI 快速构建一个实用的命令行工具：Markdown 转..."
+title: 案例研究：构建命令行工具的 AI 协作实践
+description: 在本案例中，我们将展示如何利用 AI 快速构建一个实用的命令行工具：Markdown 转...
 category: 案例研究
 tags: ['AI协作', '案例研究']
 difficulty: 进阶
+status: 已迁移
+source: 社区贡献
+author:
+updated: 2026-08-12
 ---
+
 # 案例研究：构建命令行工具的 AI 协作实践
 
-在本案例中，我们将展示如何利用 AI 快速构建一个实用的命令行工具：**Markdown 转 HTML 转换器**。这个工具能够将 Markdown 文件转换为格式化的 HTML 页面，支持自定义样式和模板。
-
-## 项目背景
+## 背景
 
 ### 问题定义
 
@@ -23,7 +26,9 @@ difficulty: 进阶
 
 ---
 
-## 1. 需求阶段：从想法到 PRD
+---
+
+## 过程
 
 **初始想法**：我想快速将 Markdown 文档转换为漂亮的 HTML 页面，方便在浏览器中查看。
 
@@ -61,7 +66,7 @@ difficulty: 进阶
 - 输出：HTML 文件或标准输出
 - 选项：主题、模板、输出路径
 
-## 2. 设计阶段：架构定义
+---
 
 **AI 建议的分层架构**：
 ```
@@ -73,7 +78,7 @@ CLI Layer (Click) → Parser Layer (Mistune) → Renderer Layer (HTML) → Templ
 - `parse_markdown(content) → tokens`
 - `render_html(tokens, theme) → html_string`
 
-## 3. 迭代编码：TDD 实践
+---
 
 ### 循环 1：基础转换
 - **Test**：编写测试用例，验证标题、段落、列表转换
@@ -128,7 +133,7 @@ def convert_md_to_html(content: str, theme: str = "default") -> str:
     return template.render(body=body_html)
 ```
 
-## 4. 遇到的挑战与解决方案
+---
 
 ### 挑战 1：代码块高亮
 
@@ -193,7 +198,9 @@ def batch_convert(input_dir: Path, output_dir: Path, theme: str, workers: int = 
     print(f"Converted {success}/{len(md_files)} files")
 ```
 
-## 5. 最终结果
+---
+
+## 对比
 
 ### 效率提升分析
 
@@ -249,7 +256,9 @@ def test_convert_nonexistent_file():
     assert "Error" in result.output or "Invalid value" in result.output
 ```
 
-## 关键洞察
+---
+
+## 洞察
 
 ### 1. AI 极大地加速了样板代码生成
 CLI 工具涉及大量"管道胶水代码"：参数解析、文件 I/O、错误处理。AI 能在几秒内生成这些模式化代码，开发者只需关注核心逻辑。一个 Click CLI 的完整骨架（含参数验证、帮助信息、错误处理）通常需要 30 分钟手动编写，AI 只需一条指令。
@@ -289,6 +298,8 @@ def convert(input_path: str, theme: str, output: str, template: str):
 
 ---
 
+---
+
 ## 适用场景
 
 - 文档转换工具开发
@@ -308,3 +319,26 @@ def convert(input_path: str, theme: str, output: str, template: str):
 - [[../docs/MOC|⬅️ 返回知识地图]]
 - **相关案例**: [[case-studies/ai-task-prioritizer|任务优先级工具]] | [[case-studies/data-pipeline|数据管道]] | [[case-studies/api-monitoring|API 监控]]
 - **相关方法**: [[../docs/efficiency/full-cycle-workflow|全周期工作流]] | [[../docs/learning/prompt-engineering|Prompt 工程]]
+
+---
+
+## 交付物清单
+
+- [ ] PRD (产品需求文档)
+- [ ] DESIGN (架构设计文档)
+- [ ] 代码 (实现代码)
+- [ ] 测试 (测试代码)
+- [ ] 数据 (效率对比数据)
+- [ ] 洞察 (关键洞察文档)
+- [ ] 场景 (适用场景文档)
+
+---
+
+## 提交前检查
+
+- [ ] 标题格式：符合 `kebab-case` 命名规范
+- [ ] Label：已添加正确的分类标签
+- [ ] 必填章节：背景、过程、对比、洞察、适用场景、交付物清单、提交前检查
+- [ ] 效率数据：包含 >=3 个维度的量化对比数据
+- [ ] 关键洞察：至少 3 条编号洞察，含具体数字/模式
+- [ ] 代码/文档链接：提供相关仓库、PR、文档链接

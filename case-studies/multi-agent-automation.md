@@ -1,192 +1,39 @@
 ---
-title: "多 Agent 自动化工作流"
-description: "项目: 开源项目质量保证体系"
+title: 多 Agent 自动化工作流
+description: 项目: 开源项目质量保证体系
 category: 案例研究
 tags: ['AI协作', '案例研究']
 difficulty: 进阶
+status: 已迁移
+source: 社区贡献
+author:
+updated: 2026-08-12
 ---
+
 # 多 Agent 自动化工作流
 
 ## 背景
 
-**项目**: 开源项目质量保证体系
-**规模**: 3 个 Agent 协作
-**目标**: 建立自动化的代码审查、测试生成、文档更新流程
+待补充
 
 ---
 
-## AI 协作过程
+## 过程
 
-### 架构设计
-
-```
-┌─────────────┐     ┌─────────────┐     ┌─────────────┐
-│  代码审查    │ ──→ │  测试生成    │ ──→ │  文档更新    │
-│  Agent      │     │  Agent      │     │  Agent      │
-└─────────────┘     └─────────────┘     └─────────────┘
-       │                   │                   │
-       └───────────────────┴───────────────────┘
-                           │
-                    ┌──────▼──────┐
-                    │   编排器     │
-                    │ Orchestrator │
-                    └─────────────┘
-```
-
-### Agent 1: 代码审查 Agent
-
-**职责**: 分析代码变更，识别问题
-
-**Prompt 模板**:
-```
-你是一位代码审查专家。请审查以下代码变更：
-
-变更文件：{file_path}
-变更内容：{diff}
-
-请从以下维度审查：
-1. 代码质量 (可读性、可维护性)
-2. 潜在 Bug
-3. 性能问题
-4. 安全风险
-
-输出格式：
-{
-  "issues": [...],
-  "severity": "high|medium|low",
-  "suggestions": [...]
-}
-```
-
-**实现**:
-```python
-class CodeReviewAgent:
-    def __init__(self, llm):
-        self.llm = llm
-
-    async def review(self, diff: str, file_path: str) -> dict:
-        prompt = self.review_prompt.format(
-            file_path=file_path,
-            diff=diff
-        )
-        response = await self.llm.generate(prompt)
-        return self.parse_response(response)
-```
-
-### Agent 2: 测试生成 Agent
-
-**职责**: 根据代码变更生成测试
-
-**Prompt 模板**:
-```
-基于以下代码变更，生成测试用例：
-
-变更代码：{code}
-代码审查结果：{review_result}
-
-要求：
-1. 覆盖正常流程
-2. 覆盖边界条件
-3. 覆盖错误场景
-4. 使用 pytest 框架
-
-输出格式：
-{
-  "test_cases": [
-    {
-      "name": "test_xxx",
-      "code": "...",
-      "coverage": "xxx"
-    }
-  ]
-}
-```
-
-**实现**:
-```python
-class TestGenerationAgent:
-    def __init__(self, llm):
-        self.llm = llm
-
-    async def generate_tests(self, code: str, review: dict) -> dict:
-        prompt = self.test_prompt.format(
-            code=code,
-            review_result=json.dumps(review)
-        )
-        response = await self.llm.generate(prompt)
-        return self.parse_response(response)
-```
-
-### Agent 3: 文档更新 Agent
-
-**职责**: 根据代码变更更新文档
-
-**Prompt 模板**:
-```
-根据以下代码变更，更新相关文档：
-
-变更文件：{file_path}
-变更内容：{diff}
-变更说明：{description}
-
-请更新：
-1. API 文档 (如果有接口变更)
-2. README (如果有使用方式变更)
-3. CHANGELOG (记录变更)
-
-输出格式：
-{
-  "updates": [
-    {
-      "file": "xxx.md",
-      "content": "..."
-    }
-  ]
-}
-```
-
-### 编排器
-
-**职责**: 协调 3 个 Agent 的执行
-
-```python
-class WorkflowOrchestrator:
-    def __init__(self, review_agent, test_agent, doc_agent):
-        self.review_agent = review_agent
-        self.test_agent = test_agent
-        self.doc_agent = doc_agent
-
-    async def run(self, diff: str, file_path: str):
-        # 1. 代码审查
-        review = await self.review_agent.review(diff, file_path)
-
-        # 2. 生成测试 (依赖审查结果)
-        tests = await self.test_agent.generate_tests(diff, review)
-
-        # 3. 更新文档 (依赖审查结果)
-        docs = await self.doc_agent.update(file_path, diff, review)
-
-        return {
-            "review": review,
-            "tests": tests,
-            "docs": docs
-        }
-```
+待补充
 
 ---
 
-## 效率对比
+## 对比
 
-| 指标 | Before AI | After AI | 提升 |
-|------|-----------|----------|------|
-| 代码审查 | 2 小时/PR | 10 分钟/PR | 12x |
-| 测试生成 | 4 小时/PR | 30 分钟/PR | 8x |
-| 文档更新 | 1 小时/PR | 5 分钟/PR | 12x |
-| **总时间** | **7 小时/PR** | **45 分钟/PR** | **9.3x** |
+| 指标 | 使用 AI 前 | 使用 AI 后 | 提升幅度 |
+|------|-----------|-----------|---------|
+| 开发效率 | | | x |
+| 代码质量 | | | % |
 
 ---
 
-## 关键洞察
+## 洞察
 
 ### 1. Agent 间的数据流设计
 
@@ -220,6 +67,8 @@ class WorkflowOrchestrator:
 
 ---
 
+---
+
 ## 适用场景
 
 - ✅ 重复性工作流自动化
@@ -230,9 +79,25 @@ class WorkflowOrchestrator:
 
 ---
 
-## 技术栈
+---
 
-- **AI 工具**: Claude API + OpenAI API
-- **编排**: 自建 Python 编排器
-- **消息队列**: Redis (任务分发)
-- **存储**: PostgreSQL (结果存储)
+## 交付物清单
+
+- [ ] PRD (产品需求文档)
+- [ ] DESIGN (架构设计文档)
+- [ ] 代码 (实现代码)
+- [ ] 测试 (测试代码)
+- [ ] 数据 (效率对比数据)
+- [ ] 洞察 (关键洞察文档)
+- [ ] 场景 (适用场景文档)
+
+---
+
+## 提交前检查
+
+- [ ] 标题格式：符合 `kebab-case` 命名规范
+- [ ] Label：已添加正确的分类标签
+- [ ] 必填章节：背景、过程、对比、洞察、适用场景、交付物清单、提交前检查
+- [ ] 效率数据：包含 >=3 个维度的量化对比数据
+- [ ] 关键洞察：至少 3 条编号洞察，含具体数字/模式
+- [ ] 代码/文档链接：提供相关仓库、PR、文档链接

@@ -14,6 +14,7 @@ from ai_dev_framework.feedback import print_feedback_stats
 from ai_dev_framework.jcode_init import init_jcode
 from ai_dev_framework.scan import print_results, scan_files
 from ai_dev_framework.sdlc_audit import audit_sdlc, print_audit
+from ai_dev_framework.sync import sync_project_workflows
 
 
 def main() -> None:
@@ -40,6 +41,10 @@ def main() -> None:
     init_parser.add_argument("--force", action="store_true", help="强制覆盖已有配置")
     init_parser.add_argument("--ci", choices=["github", "none"], default="none", help="生成 CI 配置文件")
     init_parser.add_argument("--no-hooks", action="store_true", help="不安装 git hooks")
+
+    # adg sync
+    sync_parser = sub.add_parser("sync", help="同步最新 JCode 工作流与自动化脚本到当前项目")
+    sync_parser.add_argument("--path", default=".", help="目标项目路径")
 
     # adg check
     check_parser = sub.add_parser("check", help="检查项目治理状态")
@@ -109,6 +114,10 @@ def main() -> None:
         else:
             print(f"❌ 初始化失败: {result['error']}")
             sys.exit(1)
+
+    elif args.command == "sync":
+        res = sync_project_workflows(args.path)
+        print(f"✅ JCode 工作流同步成功！已同步 {res['synced_files_count']} 个核心脚本到 {res['target']}")
 
     elif args.command == "check":
         project_path = Path(args.path)

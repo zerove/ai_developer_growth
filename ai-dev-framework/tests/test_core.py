@@ -9,8 +9,8 @@ import pytest
 
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from core.hook_system import Hook, HookConfig, create_default_config
-from core.project_config import JcodeConfig, ProjectConfig, init_project
+from ai_dev_framework.hook_system import Hook, HookConfig, create_default_config
+from ai_dev_framework.project_config import JcodeConfig, ProjectConfig, init_project
 
 
 class TestProjectConfig:

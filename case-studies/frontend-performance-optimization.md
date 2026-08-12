@@ -1,10 +1,12 @@
 ---
-title: "AI 辅助前端性能优化"
-description: "使用 AI 优化大型 SPA 应用性能"
+title: AI 辅助前端性能优化
+description: 使用 AI 优化大型 SPA 应用性能
 category: 案例研究
 tags: [前端, 性能优化, React]
 difficulty: 进阶
-reading_time: 12 分钟
+status: 已迁移
+source: 社区贡献
+author:
 updated: 2026-07-21
 ---
 
@@ -12,151 +14,56 @@ updated: 2026-07-21
 
 ## 背景
 
-### 项目信息
-- **应用**: 企业管理后台
-- **框架**: React 18 + TypeScript
-- **代码量**: 20 万行
-- **问题**: 加载慢、交互卡顿、内存泄漏
-
-### 性能挑战
-1. 首屏加载: 8 秒
-2. 交互响应: 500ms+
-3. 内存占用: 500MB+
-
-## AI 辅助过程
-
-### 1. 性能分析
-
-**AI 分析任务**:
-```markdown
-请分析前端性能问题:
-1. 打包体积分析
-2. 渲染性能分析
-3. 内存使用分析
-```
-
-**AI 分析结果**:
-```
-打包问题:
-- lodash 完整引入 (70KB)
-- moment.js + 所有 locale (300KB)
-- 未使用的 CSS (50KB)
-
-渲染问题:
-- 频繁重渲染
-- 虚拟列表未使用
-- 图片未懒加载
-
-内存问题:
-- 事件监听器未清理
-- 定时器未清理
-- 大列表未虚拟化
-```
-
-### 2. 打包优化
-
-**AI 优化建议**:
-```javascript
-// 优化前
-import _ from 'lodash';
-import moment from 'moment';
-
-// 优化后
-import debounce from 'lodash/debounce';
-import { format } from 'date-fns';
-```
-
-**代码分割**:
-```javascript
-// 路由级代码分割
-const Dashboard = React.lazy(() => import('./pages/Dashboard'));
-const Users = React.lazy(() => import('./pages/Users'));
-```
-
-### 3. 渲染优化
-
-**AI 生成优化代码**:
-```javascript
-// 虚拟列表
-import { FixedSizeList as List } from 'react-window';
-
-const VirtualList = ({ items }) => (
-  <List
-    height={600}
-    itemCount={items.length}
-    itemSize={50}
-  >
-    {({ index, style }) => (
-      <div style={style}>{items[index].name}</div>
-    )}
-  </List>
-);
-
-// React.memo 优化
-const MemoizedComponent = React.memo(({ data }) => {
-  return <div>{data.name}</div>;
-});
-```
-
-### 4. 内存优化
-
-**AI 检测内存泄漏**:
-```javascript
-// 优化前
-useEffect(() => {
-  const timer = setInterval(() => {
-    // ...
-  }, 1000);
-  // 忘记清理
-}, []);
-
-// 优化后
-useEffect(() => {
-  const timer = setInterval(() => {
-    // ...
-  }, 1000);
-  return () => clearInterval(timer);
-}, []);
-```
-
-## 成果
-
-### 量化指标
-
-| 指标 | 优化前 | 优化后 | 改善 |
-|------|--------|--------|------|
-| 首屏加载 | 8s | 2s | -75% |
-| 交互响应 | 500ms | 50ms | -90% |
-| 内存占用 | 500MB | 150MB | -70% |
-| 打包体积 | 2MB | 500KB | -75% |
-
-### 用户体验
-
-- **Lighthouse 分数**: 45 → 92
-- **用户满意度**: 60% → 95%
-
-## 经验教训
-
-### 1. 性能监控
-
-**原则**:
-- 建立性能基线
-- 持续监控指标
-- 设置告警阈值
-
-### 2. AI 辅助的优势
-
-- **自动分析**: 快速定位问题
-- **智能优化**: 自动生成优化代码
-- **效果验证**: 自动测试优化效果
-
-### 3. 团队协作
-
-**原则**:
-- 性能优化是全员责任
-- 建立性能规范
-- 定期性能评审
+待补充
 
 ---
 
-*最后更新: 2026-07-21*
+## 过程
+
+待补充
+
+---
+
+## 对比
+
+| 指标 | 使用 AI 前 | 使用 AI 后 | 提升幅度 |
+|------|-----------|-----------|---------|
+| 开发效率 | | | x |
+| 代码质量 | | | % |
+
+---
+
+## 洞察
+
+待补充
+
+---
+
+## 适用场景
+
+- **最适用**：待补充
+- **不适用**：待补充
+- **团队要求**：待补充
+
+---
+
+## 交付物清单
+
+- [ ] PRD (产品需求文档)
+- [ ] DESIGN (架构设计文档)
+- [ ] 代码 (实现代码)
+- [ ] 测试 (测试代码)
+- [ ] 数据 (效率对比数据)
+- [ ] 洞察 (关键洞察文档)
+- [ ] 场景 (适用场景文档)
+
+---
+
+## 提交前检查
+
+- [ ] 标题格式：符合 `kebab-case` 命名规范
+- [ ] Label：已添加正确的分类标签
+- [ ] 必填章节：背景、过程、对比、洞察、适用场景、交付物清单、提交前检查
+- [ ] 效率数据：包含 >=3 个维度的量化对比数据
+- [ ] 关键洞察：至少 3 条编号洞察，含具体数字/模式
+- [ ] 代码/文档链接：提供相关仓库、PR、文档链接

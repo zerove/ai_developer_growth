@@ -1,15 +1,18 @@
 ---
-title: "案例研究：构建自动化数据处理管道"
-description: "在本案例中，我们将展示如何利用 AI 快速构建一个自动化数据处理管道：Data Proc..."
+title: 案例研究：构建自动化数据处理管道
+description: 在本案例中，我们将展示如何利用 AI 快速构建一个自动化数据处理管道：Data Proc...
 category: 案例研究
 tags: ['AI协作', '案例研究']
 difficulty: 进阶
+status: 已迁移
+source: 社区贡献
+author:
+updated: 2026-08-12
 ---
+
 # 案例研究：构建自动化数据处理管道
 
-在本案例中，我们将展示如何利用 AI 快速构建一个自动化数据处理管道：**Data Processing Pipeline**。这个工具能够自动从多种数据源提取数据，进行清洗、转换，并加载到目标系统。
-
-## 项目背景
+## 背景
 
 ### 问题定义
 
@@ -23,7 +26,9 @@ difficulty: 进阶
 
 ---
 
-## 1. 需求阶段：从想法到 PRD
+---
+
+## 过程
 
 **初始想法**：我想自动化处理来自不同来源的数据，但不想为每个数据源写单独的代码。
 
@@ -58,7 +63,7 @@ difficulty: 进阶
 - 输出：处理后的数据（数据库/文件/API）
 - 选项：数据源、转换规则、目标系统
 
-## 2. 设计阶段：架构设计
+---
 
 **AI 建议的插件化架构**：
 ```
@@ -70,7 +75,7 @@ Config → Scheduler → Extractor Plugin → Transformer → Loader Plugin → 
 - `Transformer.transform(raw_data) → processed_data`
 - `Loader.load(processed_data) → success/failure`
 
-## 3. 迭代编码：插件开发
+---
 
 ### 循环 1：核心框架
 - **Test**：验证管道调度器工作正常
@@ -144,7 +149,7 @@ class CSVExtractor(BaseExtractor):
                 yield record
 ```
 
-## 4. 遇到的挑战与解决方案
+---
 
 ### 挑战 1：大数据量处理
 
@@ -173,7 +178,9 @@ class CSVExtractor(BaseExtractor):
 - 提供 `pipeline validate` 命令，在运行前检查配置合法性。
 - 错误信息包含具体的修正建议（"did you mean `delimiter`?"）。
 
-## 5. 最终结果
+---
+
+## 对比
 
 ### 效率提升分析
 
@@ -203,7 +210,9 @@ data-pipeline/
 └── main.py
 ```
 
-## 关键洞察
+---
+
+## 洞察
 
 ### 1. 插件化架构是应对变化的最佳策略
 数据管道的需求永远在变化：新的数据源、新的清洗规则、新的输出目标。插件化架构让新增功能变成"写一个新文件"而不是"修改现有代码"。AI 帮助快速定义了插件接口和加载机制，这是整个架构的基础。
@@ -213,6 +222,8 @@ data-pipeline/
 
 ### 3. 配置验证要在运行前完成
 数据管道通常在定时任务或 CI/CD 中运行，运行时才发现配置错误的成本很高（可能已经浪费了计算资源）。AI 帮助快速实现了 JSON Schema 验证和 validate 命令，这个功能虽然不是核心逻辑，但对用户体验影响巨大。
+
+---
 
 ---
 
@@ -235,3 +246,26 @@ data-pipeline/
 - [[../docs/MOC|⬅️ 返回知识地图]]
 - **相关案例**: [[case-studies/database-migration|数据库迁移]] | [[case-studies/web-scraping-tool|网页抓取]]
 - **相关方法**: [[../docs/efficiency/full-cycle-workflow|全周期工作流]] | [[../docs/database/sql|SQL 规范]]
+
+---
+
+## 交付物清单
+
+- [ ] PRD (产品需求文档)
+- [ ] DESIGN (架构设计文档)
+- [ ] 代码 (实现代码)
+- [ ] 测试 (测试代码)
+- [ ] 数据 (效率对比数据)
+- [ ] 洞察 (关键洞察文档)
+- [ ] 场景 (适用场景文档)
+
+---
+
+## 提交前检查
+
+- [ ] 标题格式：符合 `kebab-case` 命名规范
+- [ ] Label：已添加正确的分类标签
+- [ ] 必填章节：背景、过程、对比、洞察、适用场景、交付物清单、提交前检查
+- [ ] 效率数据：包含 >=3 个维度的量化对比数据
+- [ ] 关键洞察：至少 3 条编号洞察，含具体数字/模式
+- [ ] 代码/文档链接：提供相关仓库、PR、文档链接

@@ -51,8 +51,8 @@ const KNOWLEDGE_DOCS: DocMetadata[] = [
     { id: 'governance/ai-governance', title: 'AI 治理框架', category: '治理层', difficulty: '高级', tags: ['governance', 'quality'], readingTime: 30, updated: '2026-08-03' },
 ];
 
-export function activate(context: vscode.ExtensionContext) {
-    console.log('AI Developer Growth extension activated');
+export function activate(context: vscode.ExtensionContext): void {
+    // Extension activated - register commands below
 
     const commands = [
         vscode.commands.registerCommand('ai-growth.assess', () => runAssessment(context)),
@@ -181,7 +181,8 @@ async function showRecommendations(context: vscode.ExtensionContext) {
     const weak = sorted.slice(0, 2);
 
     const recommendations = weak.map(([key, score]) => {
-        const dim = SKILL_DIMENSIONS.find(d => d.key === key)!;
+        const dim = SKILL_DIMENSIONS.find(d => d.key === key);
+        if (!dim) return { dimension: key, score, docs: [] };
         const relevantDocs = KNOWLEDGE_DOCS.filter(doc => doc.tags.some(t => dim.name.includes(t) || t.includes(dim.name.split(' ')[0])));
         return {
             dimension: dim.name,
@@ -236,6 +237,7 @@ class DashboardProvider implements vscode.WebviewViewProvider {
     }
 
     getDashboardHtml(): string {
+        // Webview HTML - no file handles to manage
         return `<!DOCTYPE html>
 <html>
 <head>
@@ -398,4 +400,4 @@ function getKnowledgeHtml(docs: DocMetadata[]): string {
 </html>`;
 }
 
-export function deactivate() {}
+export function deactivate(): void {}

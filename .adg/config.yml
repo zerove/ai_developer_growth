@@ -105,3 +105,6 @@ skip_patterns:
 - '**/demo*.py'
 - '**/*_demo.py'
 - '**/demo-adg-workflow.py'
+- 'examples/ai-growth-vscode/src/*.ts'
+- 'examples/ai-growth-vscode/out/**'
+- 'examples/ai-growth-slack/**'

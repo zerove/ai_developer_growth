@@ -96,8 +96,8 @@ class JCodeAINativeWorkflow:
     def _step4_adversarial_scope(self, intent: str) -> None:
         """Step 4: Adversarial Review, Slop Scanning & Scope Guard."""
         print("\n[Step 4/6] 🏛️ Running Red-Team Debate, Slop Scan & Scope Guard...")
-        from adversarial_debate import RedBlueDebateOrchestrator
         from ai_slop_scanner import AISlopScanner
+        from multi_agent_orch.orchestration import RedBlueDebateOrchestrator
         from scope_guard import ScopeGuardHook
 
         RedBlueDebateOrchestrator(intent).run_debate()

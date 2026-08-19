@@ -51,8 +51,53 @@ class AuditAttestationLedger:
 
         return entry
 
+    def generate_report(self) -> str:
+        """Generate a human-readable audit report."""
+        if not self.ledger_file.exists():
+            return "📋 Audit Ledger: No entries recorded yet."
+
+        lines = self.ledger_file.read_text(encoding="utf-8").splitlines()
+        entries = [json.loads(line) for line in lines if line.strip()]
+
+        report = ["=" * 60, " 🔒 AUDIT ATTESTATION REPORT ", "=" * 60]
+        report.append(f"\nTotal Entries: {len(entries)}")
+        report.append(f"Ledger File: {self.ledger_file}")
+        report.append("\n📜 Recent Entries:")
+
+        for entry in entries[-10:]:
+            event_type = entry.get("event_type", "UNKNOWN")
+            current_hash = entry.get("current_hash", "")[:16]
+            prev_hash = entry.get("prev_hash", "")[:16]
+            details = entry.get("details", {})
+            report.append(f"  • {event_type} | hash={current_hash}... | prev={prev_hash}...")
+            if isinstance(details, dict):
+                for k, v in details.items():
+                    report.append(f"    - {k}: {v}")
+
+        # Verify chain integrity
+        valid = True
+        prev_hash = "0" * 64
+        for entry in entries:
+            payload = {
+                "event_type": entry.get("event_type"),
+                "details": entry.get("details"),
+                "prev_hash": entry.get("prev_hash"),
+            }
+            serialized = json.dumps(payload, sort_keys=True)
+            current_hash = hashlib.sha256(serialized.encode("utf-8")).hexdigest()
+            if current_hash != entry.get("current_hash"):
+                valid = False
+                break
+            prev_hash = current_hash
+
+        report.append(f"\n✅ Chain Integrity: {'VALID' if valid else 'BROKEN'}")
+        report.append("=" * 60)
+
+        return "\n".join(report)
+
 
 if __name__ == "__main__":
     ledger = AuditAttestationLedger()
     entry = ledger.record_trace("WORKFLOW_EXECUTION", {"status": "success", "agent": "Sisyphus"})
     print(f"🔒 Recorded chained audit entry: {entry['current_hash']}")
+    print(ledger.generate_report())

@@ -47,6 +47,7 @@ from app.api.deps import get_current_user
 
 router = APIRouter(prefix="/users", tags=["users"])
 
+
 @router.get("/", response_model=list[UserResponse])
 async def list_users(
     skip: int = 0,
@@ -98,9 +99,11 @@ pytest app/tests/ -v --cov=app
 from fastapi import Depends, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 
+
 async def get_db() -> AsyncSession:
     async with async_session() as session:
         yield session
+
 
 async def get_current_user(
     token: str = Depends(oauth2_scheme),

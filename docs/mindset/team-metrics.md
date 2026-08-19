@@ -127,9 +127,9 @@ git log --since="2026-01-01" --oneline | grep -i "revert\|rollback" | wc -l
 # Token 使用统计
 def collect_ai_metrics():
     metrics = {
-        'token_usage': get_token_usage(),
-        'ai_assisted_commits': get_ai_commits(),
-        'ai_review_time': get_ai_review_time(),
+        "token_usage": get_token_usage(),
+        "ai_assisted_commits": get_ai_commits(),
+        "ai_review_time": get_ai_review_time(),
     }
     return metrics
 ```

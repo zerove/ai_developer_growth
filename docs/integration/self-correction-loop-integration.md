@@ -47,10 +47,7 @@ updated: 2026-07-21
 from src.runner import CorrectionLoop
 from src.strategies import SyntaxFixStrategy, TypeFixStrategy
 
-loop = CorrectionLoop(
-    strategies=[SyntaxFixStrategy(), TypeFixStrategy()],
-    max_retries=5
-)
+loop = CorrectionLoop(strategies=[SyntaxFixStrategy(), TypeFixStrategy()], max_retries=5)
 
 result = loop.run("path/to/file.py")
 print(f"成功: {result.succeeded}, 尝试次数: {result.attempts}")

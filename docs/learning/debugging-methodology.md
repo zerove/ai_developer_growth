@@ -83,6 +83,7 @@ import logging
 logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
 
+
 def process_data(data):
     logger.debug(f"Input: {data}")
     result = transform(data)

@@ -1,6 +1,6 @@
 """Multi-agent orchestration examples."""  # noqa: N999
 
-from agents import (
+from .agents import (
     ArchitectAgent,
     BaseAgent,
     CoderAgent,

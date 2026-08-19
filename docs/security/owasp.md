@@ -36,16 +36,17 @@ async def admin_endpoint():
 
 ```python
 # ❌ 禁止: 水平越权
-@router.get('/users/{id}')
+@router.get("/users/{id}")
 async def get_user(id: str):
     user = await db.find_user(id)  # 未检查当前用户是否有权访问
     return user
 
+
 # ✅ 正确: 对象级授权
-@router.get('/users/{id}')
+@router.get("/users/{id}")
 async def get_user(id: str, current_user: User = Depends(get_current_user)):
-    if current_user.id != id and current_user.role != 'admin':
-        raise HTTPException(403, 'Forbidden')
+    if current_user.id != id and current_user.role != "admin":
+        raise HTTPException(403, "Forbidden")
 
     user = await db.find_user(id)
     return user
@@ -61,18 +62,22 @@ async def get_user(id: str, current_user: User = Depends(get_current_user)):
 # ✅ 正确: 使用 AES-256-GCM
 from cryptography.hazmat.primitives.ciphers.aead import AESGCM
 
+
 def encrypt_data(data: bytes, key: bytes) -> bytes:
     aesgcm = AESGCM(key)
     nonce = os.urandom(12)
     return nonce + aesgcm.encrypt(nonce, data, None)
+
 
 def decrypt_data(encrypted: bytes, key: bytes) -> bytes:
     nonce = encrypted[:12]
     ciphertext = encrypted[12:]
     return AESGCM(key).decrypt(nonce, ciphertext, None)
 
+
 # ❌ 禁止: 使用 ECB 模式
 from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
+
 cipher = Cipher(algorithms.AES(key), modes.ECB())  # 不安全
 ```
 
@@ -83,11 +88,12 @@ cipher = Cipher(algorithms.AES(key), modes.ECB())  # 不安全
 @app.before_request
 def force_https():
     if not request.is_secure:
-        url = request.url.replace('http://', 'https://')
+        url = request.url.replace("http://", "https://")
         return redirect(url, code=301)
 
+
 # ❌ 禁止: 允许 HTTP
-ALLOWED_HOSTS = ['*']  # 不安全
+ALLOWED_HOSTS = ["*"]  # 不安全
 ```
 
 ---
@@ -113,6 +119,7 @@ return f"<div>{user_input}</div>"
 
 # ✅ 正确: 转义输出
 from markupsafe import escape
+
 return f"<div>{escape(user_input)}</div>"
 ```
 
@@ -124,7 +131,8 @@ os.system(f"ping {host}")
 
 # ✅ 正确: 使用 subprocess.run
 import subprocess
-subprocess.run(['ping', host], capture_output=True)
+
+subprocess.run(["ping", host], capture_output=True)
 ```
 
 ---
@@ -165,11 +173,11 @@ GRANT SELECT, INSERT, UPDATE ON orders TO app_user;
 # ✅ 正确: 设置安全头
 @app.after_request
 def set_security_headers(response):
-    response.headers['X-Content-Type-Options'] = 'nosniff'
-    response.headers['X-Frame-Options'] = 'DENY'
-    response.headers['X-XSS-Protection'] = '1; mode=block'
-    response.headers['Strict-Transport-Security'] = 'max-age=31536000; includeSubDomains'
-    response.headers['Content-Security-Policy'] = "default-src 'self'"
+    response.headers["X-Content-Type-Options"] = "nosniff"
+    response.headers["X-Frame-Options"] = "DENY"
+    response.headers["X-XSS-Protection"] = "1; mode=block"
+    response.headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains"
+    response.headers["Content-Security-Policy"] = "default-src 'self'"
     return response
 ```
 
@@ -179,13 +187,14 @@ def set_security_headers(response):
 # ❌ 禁止: 暴露堆栈信息
 @app.errorhandler(500)
 def internal_error(error):
-    return jsonify({'error': str(error)}), 500  # 不安全
+    return jsonify({"error": str(error)}), 500  # 不安全
+
 
 # ✅ 正确: 隐藏敏感信息
 @app.errorhandler(500)
 def internal_error(error):
-    app.logger.error(f'Internal error: {error}')
-    return jsonify({'error': 'Internal server error'}), 500
+    app.logger.error(f"Internal error: {error}")
+    return jsonify({"error": "Internal server error"}), 500
 ```
 
 ---
@@ -220,9 +229,11 @@ updates:
 # ✅ 正确: 使用 bcrypt
 import bcrypt
 
+
 def hash_password(password: str) -> str:
     salt = bcrypt.gensalt(rounds=12)
     return bcrypt.hashpw(password.encode(), salt).decode()
+
 
 # ❌ 禁止: 明文存储
 password_hash = password  # 不安全
@@ -232,10 +243,10 @@ password_hash = password  # 不安全
 
 ```python
 # ✅ 正确: 会话安全
-app.config['SESSION_COOKIE_SECURE'] = True
-app.config['SESSION_COOKIE_HTTPONLY'] = True
-app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
-app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(hours=1)
+app.config["SESSION_COOKIE_SECURE"] = True
+app.config["SESSION_COOKIE_HTTPONLY"] = True
+app.config["SESSION_COOKIE_SAMESITE"] = "Lax"
+app.config["PERMANENT_SESSION_LIFETIME"] = timedelta(hours=1)
 ```
 
 ---
@@ -272,27 +283,25 @@ jobs:
 # ✅ 正确: 记录安全事件
 import logging
 
-security_logger = logging.getLogger('security')
+security_logger = logging.getLogger("security")
+
 
 def log_login_attempt(email: str, success: bool, ip: str):
-    security_logger.info(
-        f'Login attempt: email={email}, success={success}, ip={ip}'
-    )
+    security_logger.info(f"Login attempt: email={email}, success={success}, ip={ip}")
+
 
 def log_permission_denied(user_id: str, resource: str):
-    security_logger.warning(
-        f'Permission denied: user={user_id}, resource={resource}'
-    )
+    security_logger.warning(f"Permission denied: user={user_id}, resource={resource}")
 ```
 
 ### 敏感数据脱敏
 
 ```python
 # ❌ 禁止: 日志中包含敏感信息
-logger.info(f'User login: {email}, password: {password}')
+logger.info(f"User login: {email}, password: {password}")
 
 # ✅ 正确: 脱敏处理
-logger.info(f'User login: {email}, password: ***')
+logger.info(f"User login: {email}, password: ***")
 ```
 
 ---
@@ -306,20 +315,23 @@ logger.info(f'User login: {email}, password: ***')
 async def fetch_url(url: str):
     response = await httpx.get(url)  # 可能访问内部服务
 
+
 # ✅ 正确: 验证 URL
 from urllib.parse import urlparse
 
+
 def is_allowed_url(url: str) -> bool:
     parsed = urlparse(url)
-    if parsed.hostname in ['localhost', '127.0.0.1', '0.0.0.0']:
+    if parsed.hostname in ["localhost", "127.0.0.1", "0.0.0.0"]:
         return False
-    if parsed.scheme not in ['https']:
+    if parsed.scheme not in ["https"]:
         return False
     return True
 
+
 async def fetch_url(url: str):
     if not is_allowed_url(url):
-        raise ValueError('URL not allowed')
+        raise ValueError("URL not allowed")
     response = await httpx.get(url)
     return response
 ```

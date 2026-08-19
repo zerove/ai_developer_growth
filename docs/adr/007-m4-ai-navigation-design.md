@@ -111,22 +111,14 @@ def recommend_path(user_profile: dict) -> list[dict]:
 
 ```python
 # 查询接口
-POST /api/v1/query
-{
-  "question": "如何用 Cursor 重构遗留代码?",
-  "context": {
-    "user_role": "后端工程师",
-    "experience": "5年"
-  }
-}
+POST / api / v1 / query
+{"question": "如何用 Cursor 重构遗留代码?", "context": {"user_role": "后端工程师", "experience": "5年"}}
 
 # 响应
 {
-  "answer": "根据案例库，推荐以下步骤...",
-  "citations": [
-    {"doc_id": "case-003", "title": "Cursor 重构遗留代码", "relevance": 0.95}
-  ],
-  "follow_up": ["如何评估重构效果?", "有哪些避坑指南?"]
+    "answer": "根据案例库，推荐以下步骤...",
+    "citations": [{"doc_id": "case-003", "title": "Cursor 重构遗留代码", "relevance": 0.95}],
+    "follow_up": ["如何评估重构效果?", "有哪些避坑指南?"],
 }
 ```
 

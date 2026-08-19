@@ -70,7 +70,7 @@ orders = db.query(Order).filter(Order.user_id.in_(user_ids)).all()  # 1 次查�
 ```python
 # 添加索引
 class User(Base):
-    __tablename__ = 'users'
+    __tablename__ = "users"
     id = Column(Integer, primary_key=True)
     email = Column(String, index=True)  # 添加索引
     created_at = Column(DateTime, index=True)  # 添加索引
@@ -92,6 +92,7 @@ users = db.query(User).limit(100).offset(0).all()  # 分页查询
 # AI 生成的代码 (内存占用高)
 def get_large_dataset():
     return [process(item) for item in range(1000000)]  # 创建完整列表
+
 
 # 优化后 (使用生成器)
 def get_large_dataset():
@@ -146,6 +147,7 @@ def find_duplicates(arr):
                 duplicates.append(arr[i])
     return duplicates
 
+
 # 优化后 (O(n))
 def find_duplicates(arr):
     seen = set()
@@ -167,6 +169,7 @@ def process_data(data):
         result.append(processed)
     return result
 
+
 # 优化后 (原地处理)
 def process_data(data):
     for i, item in enumerate(data):
@@ -180,11 +183,13 @@ def process_data(data):
 ```python
 from functools import lru_cache
 
+
 @lru_cache(maxsize=128)
 def expensive_function(param):
     # 耗时计算
     result = compute(param)
     return result
+
 
 # 使用
 result1 = expensive_function("key1")  # 计算
@@ -195,7 +200,8 @@ result2 = expensive_function("key1")  # 缓存命中
 ```python
 import redis
 
-redis_client = redis.Redis(host='localhost', port=6379, db=0)
+redis_client = redis.Redis(host="localhost", port=6379, db=0)
+
 
 def get_user(user_id):
     cache_key = f"user:{user_id}"
@@ -224,10 +230,12 @@ def get_user(user_id):
 ```python
 import timeit
 
+
 # 测试函数性能
 def test_function():
     # 待测试代码
     pass
+
 
 # 测试执行时间
 execution_time = timeit.timeit(test_function, number=1000)
@@ -240,11 +248,13 @@ print(f"Average time: {execution_time / 1000 * 1000:.2f} ms")
 def implementation_a():
     return sum(range(1000000))
 
+
 def implementation_b():
     total = 0
     for i in range(1000000):
         total += i
     return total
+
 
 time_a = timeit.timeit(implementation_a, number=100)
 time_b = timeit.timeit(implementation_b, number=100)
@@ -259,6 +269,7 @@ print(f"A is {time_b / time_a:.2f}x faster")
 **Locust 负载测试**:
 ```python
 from locust import HttpUser, task, between
+
 
 class WebsiteUser(HttpUser):
     wait_time = between(1, 3)
@@ -286,8 +297,9 @@ class WebsiteUser(HttpUser):
 from prometheus_client import Counter, Histogram, start_http_server
 
 # 定义指标
-REQUEST_COUNT = Counter('http_requests_total', 'Total HTTP requests')
-REQUEST_LATENCY = Histogram('http_request_latency_seconds', 'HTTP request latency')
+REQUEST_COUNT = Counter("http_requests_total", "Total HTTP requests")
+REQUEST_LATENCY = Histogram("http_request_latency_seconds", "HTTP request latency")
+
 
 # 记录指标
 @REQUEST_LATENCY.time()

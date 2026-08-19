@@ -126,10 +126,10 @@ Level 3: 深度验证 (人工主导)
 
 ```python
 DYNAMIC_CHECKS = {
-    "unit_test":      "验证每个函数的输入/输出正确性",
+    "unit_test": "验证每个函数的输入/输出正确性",
     "integration_test": "验证模块间交互正确性",
-    "property_test":  "验证代码满足不变量",
-    "fuzz_test":      "验证代码对异常输入的鲁棒性",
+    "property_test": "验证代码满足不变量",
+    "fuzz_test": "验证代码对异常输入的鲁棒性",
     "regression_test": "验证修改不引入新 Bug",
 }
 ```
@@ -160,6 +160,7 @@ AI 生成的代码必须在文件头添加标注注释：
 # Model: Claude-4 / Date: 2026-07-22
 # Reviewer: @reviewer / Review Date: 2026-07-22
 # Test Coverage: 85% / Known Limitations: concurrent scenarios
+
 
 def process_payment(amount: Decimal, user_id: str) -> PaymentResult:
     """处理支付"""
@@ -219,6 +220,7 @@ def process_payment(amount: Decimal, user_id: str) -> PaymentResult:
 **分类**: 治理层
 
 **相关文档
+- [[GOVERNANCE|通用治理标准]]
 - [[GOVERNANCE|通用治理标准]]**:
 
 - [[docs/efficiency/ai-model-selection|模型选型]]

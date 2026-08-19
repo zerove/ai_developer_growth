@@ -42,7 +42,8 @@ project/
 from flask import Flask
 from .extensions import db, migrate
 
-def create_app(config_class='config.Config'):
+
+def create_app(config_class="config.Config"):
     app = Flask(__name__)
     app.config.from_object(config_class)
 
@@ -51,13 +52,16 @@ def create_app(config_class='config.Config'):
 
     return app
 
+
 def register_extensions(app):
     db.init_app(app)
     migrate.init_app(app, db)
 
+
 def register_blueprints(app):
     from .api import api_bp
-    app.register_blueprint(api_bp, url_prefix='/api')
+
+    app.register_blueprint(api_bp, url_prefix="/api")
 ```
 
 ---
@@ -70,19 +74,21 @@ def register_blueprints(app):
 from flask import Blueprint, request, jsonify
 from .services import UserService
 
-api_bp = Blueprint('api', __name__)
+api_bp = Blueprint("api", __name__)
+
 
 # ✅ 正确
-@api_bp.route('/users', methods=['GET'])
+@api_bp.route("/users", methods=["GET"])
 def list_users():
     users = UserService.get_all()
     return jsonify([u.to_dict() for u in users])
 
-@api_bp.route('/users/<string:id>', methods=['GET'])
+
+@api_bp.route("/users/<string:id>", methods=["GET"])
 def get_user(id):
     user = UserService.get_by_id(id)
     if not user:
-        return jsonify({'error': 'Not found'}), 404
+        return jsonify({"error": "Not found"}), 404
     return jsonify(user.to_dict())
 ```
 
@@ -92,17 +98,19 @@ def get_user(id):
 from flask import request
 from marshmallow import Schema, fields, validate
 
+
 class CreateUserSchema(Schema):
     name = fields.Str(required=True, validate=validate.Length(min=1))
     email = fields.Email(required=True)
 
+
 # ✅ 正确
-@api_bp.route('/users', methods=['POST'])
+@api_bp.route("/users", methods=["POST"])
 def create_user():
     schema = CreateUserSchema()
     errors = schema.validate(request.json)
     if errors:
-        return jsonify({'errors': errors}), 400
+        return jsonify({"errors": errors}), 400
 
     data = schema.load(request.json)
     user = UserService.create(data)
@@ -119,6 +127,7 @@ def create_user():
 from .repositories import UserRepository
 from .exceptions import NotFoundError, ValidationError
 
+
 class UserService:
     @staticmethod
     def get_all():
@@ -128,23 +137,24 @@ class UserService:
     def get_by_id(id):
         user = UserRepository.find_by_id(id)
         if not user:
-            raise NotFoundError('User', id)
+            raise NotFoundError("User", id)
         return user
 
     @staticmethod
     def create(data):
-        existing = UserRepository.find_by_email(data['email'])
+        existing = UserRepository.find_by_email(data["email"])
         if existing:
-            raise ValidationError('Email already exists')
+            raise ValidationError("Email already exists")
 
         return UserRepository.create(data)
 
+
 # ❌ 禁止: 在路由中包含业务逻辑
-@api_bp.route('/users', methods=['POST'])
+@api_bp.route("/users", methods=["POST"])
 def create_user():
     data = request.json
-    if User.query.filter_by(email=data['email']).first():
-        return jsonify({'error': 'Exists'}), 400
+    if User.query.filter_by(email=data["email"]).first():
+        return jsonify({"error": "Exists"}), 400
 
     user = User(**data)
     db.session.add(user)
@@ -164,18 +174,21 @@ class AppError(Exception):
         self.message = message
         self.status_code = status_code
 
+
 class NotFoundError(AppError):
     def __init__(self, resource, id):
-        super().__init__(f'{resource} with id {id} not found', 404)
+        super().__init__(f"{resource} with id {id} not found", 404)
+
 
 class ValidationError(AppError):
     def __init__(self, message):
         super().__init__(message, 400)
 
+
 # 错误处理器
 @app.errorhandler(AppError)
 def handle_app_error(error):
-    return jsonify({'error': error.message}), error.status_code
+    return jsonify({"error": error.message}), error.status_code
 ```
 
 ---
@@ -188,28 +201,29 @@ def handle_app_error(error):
 import pytest
 from app import create_app
 
+
 @pytest.fixture
 def app():
-    app = create_app('config.TestingConfig')
+    app = create_app("config.TestingConfig")
     with app.app_context():
         yield app
+
 
 @pytest.fixture
 def client(app):
     return app.test_client()
 
+
 def test_list_users(client):
-    response = client.get('/api/users')
+    response = client.get("/api/users")
     assert response.status_code == 200
     assert isinstance(response.json, list)
 
+
 def test_create_user(client):
-    response = client.post('/api/users', json={
-        'name': 'John',
-        'email': 'john@example.com'
-    })
+    response = client.post("/api/users", json={"name": "John", "email": "john@example.com"})
     assert response.status_code == 201
-    assert response.json['name'] == 'John'
+    assert response.json["name"] == "John"
 ```
 
 ### Mock
@@ -217,12 +231,13 @@ def test_create_user(client):
 ```python
 from unittest.mock import patch, MagicMock
 
-def test_get_user():
-    with patch('app.services.user.UserRepository') as mock_repo:
-        mock_repo.find_by_id.return_value = MagicMock(id='123')
 
-        user = UserService.get_by_id('123')
-        assert user.id == '123'
+def test_get_user():
+    with patch("app.services.user.UserRepository") as mock_repo:
+        mock_repo.find_by_id.return_value = MagicMock(id="123")
+
+        user = UserService.get_by_id("123")
+        assert user.id == "123"
 ```
 
 ---
@@ -233,13 +248,14 @@ def test_get_user():
 
 ```python
 # ❌ 禁止
-SECRET_KEY = 'YOUR_API_KEY_HERE'
+SECRET_KEY = "YOUR_API_KEY_HERE"
 
 # ✅ 正确
 import os
-SECRET_KEY = os.environ.get('SECRET_KEY')
+
+SECRET_KEY = os.environ.get("SECRET_KEY")
 if not SECRET_KEY:
-    raise ValueError('SECRET_KEY not set')
+    raise ValueError("SECRET_KEY not set")
 ```
 
 ### CSRF 防护

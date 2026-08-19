@@ -63,6 +63,7 @@ def get_user(user_id):
         redis.setex(f"user:{user_id}", 3600, json.dumps(user))
     return user
 
+
 def update_user(user_id, data):
     db.execute("UPDATE users SET ... WHERE id = %s", user_id)
     redis.delete(f"user:{user_id}")  # 删除缓存，而非更新
@@ -101,9 +102,11 @@ def get_user(user_id):
         redis.setex(f"user:{user_id}", 300, "NULL")  # 空值缓存 5 分钟
     return user
 
+
 # 缓存雪崩：大量 key 同时过期
 # 解法：TTL 加随机偏移
 import random
+
 ttl = 3600 + random.randint(0, 600)  # 3600-4200 秒随机过期
 redis.setex(f"user:{user_id}", ttl, json.dumps(user))
 ```

@@ -61,19 +61,21 @@ GET /posts?sort=-createdAt,title
 
 ```python
 # ✅ 正确
-@router.get('/users/{id}')
+@router.get("/users/{id}")
 async def get_user(id: str):
     user = await get_user_by_id(id)
     if not user:
-        raise HTTPException(status_code=404, detail='User not found')
+        raise HTTPException(status_code=404, detail="User not found")
     return user
 
-@router.post('/users')
+
+@router.post("/users")
 async def create_user(user: UserCreate):
     # 201 Created
     return await create_user(user), 201
 
-@router.put('/users/{id}')
+
+@router.put("/users/{id}")
 async def update_user(id: str, user: UserUpdate):
     # 200 OK 或 204 No Content
     await update_user(id, user)
@@ -207,20 +209,19 @@ grant_type=authorization_code
 import pytest
 from httpx import AsyncClient
 
+
 @pytest.mark.asyncio
 async def test_get_users():
-    async with AsyncClient(app=app, base_url='http://test') as client:
-        response = await client.get('/api/v1/users')
+    async with AsyncClient(app=app, base_url="http://test") as client:
+        response = await client.get("/api/v1/users")
         assert response.status_code == 200
-        assert 'data' in response.json()
+        assert "data" in response.json()
+
 
 @pytest.mark.asyncio
 async def test_create_user():
-    async with AsyncClient(app=app, base_url='http://test') as client:
-        response = await client.post(
-            '/api/v1/users',
-            json={'email': 'test@example.com', 'name': 'John'}
-        )
+    async with AsyncClient(app=app, base_url="http://test") as client:
+        response = await client.post("/api/v1/users", json={"email": "test@example.com", "name": "John"})
         assert response.status_code == 201
 ```
 

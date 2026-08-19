@@ -147,6 +147,12 @@
   - 主要问题: 交叉引用缺失 (37/45)、真实性证据不足 (33/45)、洞察模糊 (10/45)
   - 优势: 效率数据可信度高 (87.1/100)、完整性高 (96.7/100)
   - 已更新 docs/MOC.md 添加全部 45 个案例链接，交叉引用平均分 7.8→17.8
+- ✅ **Phase 18 Track C: AI-Native 11支柱工具独立CLI提取 (2026-08-19)**
+  - tools/scripts/jcode_cli.py: 统一入口，12 个子命令覆盖全生态
+  - 集成: ai-native-workflow, autonomous-swarm, ai-quality-gate, ai-pr-review, case-quality, validate-case, create-case, dor-check, semantic-graph, arch-visualizer, metrics-telemetry, audit-attestation
+  - tools/scripts/audit_attestation.py: 添加 generate_report() 链式哈希审计报告
+  - tests/test_jcode_cli.py: 9 测试全部通过
+  - 现有工具无缝集成: jcode_ai_native_workflow, autonomous_swarm_engine, rules_engine, ai_pr_reviewer, dor_checker, semantic_code_graph, arch_visualizer, metrics_telemetry
 
 ## 已完成全部计划
 

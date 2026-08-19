@@ -103,6 +103,7 @@ Burp Suite: 专业安全测试
 ```python
 from pydantic import BaseModel, EmailStr
 
+
 class UserInput(BaseModel):
     name: str = Field(min_length=1, max_length=100)
     email: EmailStr
@@ -125,6 +126,7 @@ from fastapi import Depends, HTTPException
 from fastapi.security import OAuth2PasswordBearer
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
+
 
 async def get_current_user(token: str = Depends(oauth2_scheme)):
     user = verify_token(token)

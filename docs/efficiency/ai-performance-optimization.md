@@ -67,10 +67,11 @@ O(n) → O(log n): 二分查找
 def find_duplicates(arr):
     duplicates = []
     for i in range(len(arr)):
-        for j in range(i+1, len(arr)):
+        for j in range(i + 1, len(arr)):
             if arr[i] == arr[j]:
                 duplicates.append(arr[i])
     return duplicates
+
 
 # 优化后: O(n)
 def find_duplicates(arr):
@@ -93,6 +94,7 @@ def find_duplicates(arr):
 **实现:**
 ```python
 from functools import lru_cache
+
 
 @lru_cache(maxsize=128)
 def expensive_computation(n):
@@ -127,6 +129,7 @@ SELECT id, amount FROM orders WHERE user_id = 1;
 ```python
 import asyncio
 import aiohttp
+
 
 async def fetch_all(urls):
     async with aiohttp.ClientSession() as session:

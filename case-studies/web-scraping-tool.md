@@ -114,7 +114,30 @@ URL → Fetcher → Parser → Extractor → Cleaner → Formatter → Output
 ```python
 from bs4 import BeautifulSoup
 
-STOP_WORDS = {"的", "了", "在", "是", "我", "有", "和", "就", "不", "人", "都", "一", "个", "上", "也", "很", "到", "说", "要", "去", "你"}
+STOP_WORDS = {
+    "的",
+    "了",
+    "在",
+    "是",
+    "我",
+    "有",
+    "和",
+    "就",
+    "不",
+    "人",
+    "都",
+    "一",
+    "个",
+    "上",
+    "也",
+    "很",
+    "到",
+    "说",
+    "要",
+    "去",
+    "你",
+}
+
 
 def content_density(element) -> float:
     """计算元素的文本密度：文本字符数 / HTML 标签数。"""
@@ -124,6 +147,7 @@ def content_density(element) -> float:
         return 0
     return text_length / tag_count
 
+
 def stop_word_ratio(text: str) -> float:
     """计算文本的停用词比率。"""
     words = list(text)
@@ -131,6 +155,7 @@ def stop_word_ratio(text: str) -> float:
         return 0
     hits = sum(1 for w in words if w in STOP_WORDS)
     return hits / len(words)
+
 
 def extract_main_content(soup: BeautifulSoup) -> str:
     """启发式提取网页主要内容区域。"""

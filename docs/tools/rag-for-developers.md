@@ -101,20 +101,15 @@ from langchain.chains import RetrievalQA
 
 # 初始化组件
 embeddings = OpenAIEmbeddings()
-vectorstore = PineconeVectorStore.from_existing_index(
-    index_name="my-index",
-    embedding=embeddings
-)
+vectorstore = PineconeVectorStore.from_existing_index(index_name="my-index", embedding=embeddings)
 llm = ChatOpenAI(model="gpt-4")
 
 # 创建 RAG 链
 qa_chain = RetrievalQA.from_chain_type(
     llm=llm,
     chain_type="stuff",
-    retriever=vectorstore.as_retriever(
-        search_kwargs={"k": 5}
-    ),
-    return_source_documents=True
+    retriever=vectorstore.as_retriever(search_kwargs={"k": 5}),
+    return_source_documents=True,
 )
 
 # 查询

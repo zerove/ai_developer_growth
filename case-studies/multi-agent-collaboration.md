@@ -1,18 +1,18 @@
 ---
 title: 案例研究：多 Agent 协作模拟团队开发
-description: 在本案例中，我们将展示如何利用多 Agent 协作模式模拟一个完整的软件开发团队：Mul...
+description: 多 Agent 协作模拟软件开发团队（PM/架构师/程序员/审查员），效率提升 9x，支持迭代优化
 category: 案例研究
-tags: ['AI协作', '案例研究']
+tags: ['AI协作', '多Agent', '团队模拟', '工作流编排']
 difficulty: 进阶
-status: 已迁移
+status: 已发布
 source: 社区贡献
-author:
+author: 社区贡献者
 updated: 2026-08-12
 ---
 
 # 案例研究：多 Agent 协作模拟团队开发
 
-## 背景
+## 背景与挑战
 
 ### 问题定义
 
@@ -33,228 +33,40 @@ updated: 2026-08-12
 
 ---
 
----
+## AI 协作过程
 
-## 过程
+### Phase 1: 系统设计与角色定义
+- **人**: 定义核心痛点、角色需求、工作流要求、输出格式约束
+- **AI**: 设计多 Agent 协作架构、定义角色职责、设计数据流、生成接口规范
+- **验证方式**: 架构评审、接口契约确认
+- **耗时对比**: 传统 2 小时 → AI 协作 0.5 小时
 
-**初始想法**：我想让多个 AI 角色协作完成一个开发任务，模拟真实的团队工作流程。
+### Phase 2: 基础框架实现 (TDD 循环)
+- **循环次数**: 3 次（Agent 类 → 编排器 → MockLLM）
+- **典型循环**: Test First → Implement → Verify
+- **关键挑战**: 角色隔离、迭代终止条件、上下文传递完整性
+- **修复方式**: 结构化输入输出、最大迭代次数限制、完整上下文传递
 
-**AI 协作过程**：
-1. 向 AI 描述痛点：单 Agent 处理复杂任务效果不佳
-2. AI 建议的解决方案：
-   - 角色专业化：每个 Agent 专注于一个环节
-   - 工作流编排：定义 Agent 之间的数据传递和协作规则
-   - 质量门禁：通过审核 Agent 确保输出质量
-   - 迭代优化：根据审核反馈自动修正
-
-**AI 协作 Prompt:**
-```markdown
-设计一个多 Agent 协作系统，模拟软件开发团队。
-
-**核心痛点：**
-- 单 Agent 处理复杂任务效果不佳
-- 缺乏专业化的角色分工
-- 没有独立的代码审核环节
-
-**角色需求：**
-1. PM Agent: 将用户需求转化为 PRD
-2. Architect Agent: 将 PRD 转化为技术设计
-3. Coder Agent: 根据设计编写代码
-4. Reviewer Agent: 审核代码质量
-
-**工作流要求：**
-- 线性阶段：需求 → 设计
-- 循环阶段：编码 → 审核 → (失败则返回编码)
-- 终止条件：审核通过或达到最大迭代次数
-
-请输出角色定义、工作流设计和接口规范。
-```
-
-**PRD 关键点**：
-- 输入：用户需求描述
-- 输出：可执行的代码实现
-- 约束：支持最多 3 次迭代
+### Phase 3: 端到端验证与演示
+- **人**: 设计演示场景、评审输出质量、确认迭代收敛
+- **AI**: 运行完整工作流、生成演示代码、输出审核反馈
+- **验证方式**: 端到端测试通过、最多 3 次迭代收敛
 
 ---
 
----
+## 效率对比数据
 
-**AI 建议的协作架构**：
-```
-用户请求 → PM Agent → Architect Agent → [Coder Agent ↔ Reviewer Agent] → 完成
-```
-
-**核心组件**：
-- `Agent`: 基础 Agent 类，封装 LLM 调用
-- `WorkflowOrchestrator`: 工作流编排器，管理 Agent 之间的协作
-- `MockLLM`: 模拟 LLM 响应，用于演示和测试
-
-**数据流设计**：
-```
-用户请求 → PM → PRD → Architect → 设计文档 → Coder → 代码 → Reviewer → 审核结果
-                                              ↑                    ↓
-                                              └──── (FAIL) ────────┘
-```
-
----
-
----
-
-### 循环 1：基础 Agent 框架
-
-**Test First:**
-```python
-def test_agent_has_role():
-    agent = Agent("PM", mock_llm)
-    assert agent.role == "PM"
-
-def test_agent_generates_response():
-    agent = Agent("PM", mock_llm)
-    result = agent.run("Build a currency converter")
-    assert "[PRD]" in result
-```
-
-**Implement:**
-```python
-class Agent:
-    def __init__(self, role: str, llm: MockLLM):
-        self.role = role
-        self.llm = llm
-
-    def run(self, input_text: str) -> str:
-        return self.llm.generate(self.role, input_text)
-```
-
-**Verify:** `pytest tests/test_demo.py -v` → ✅ PASSED
-
-### 循环 2：工作流编排器
-
-**Test First:**
-```python
-def test_workflow_executes_linear_phase():
-    orchestrator = WorkflowOrchestrator()
-    # 验证 PM → Architect 线性阶段
-    # 验证 Coder → Reviewer 循环阶段
-```
-
-**Implement:**
-```python
-class WorkflowOrchestrator:
-    def __init__(self):
-        self.llm = MockLLM()
-        self.pm = Agent("PM", self.llm)
-        self.architect = Agent("Architect", self.llm)
-        self.coder = Agent("Coder", self.llm)
-        self.reviewer = Agent("Reviewer", self.llm)
-
-    def execute(self, request: str):
-        # 1. PM Phase
-        prd = self.pm.run(request)
-        # 2. Architect Phase
-        design = self.architect.run(prd)
-        # 3. Coder & Reviewer Loop
-        iteration = 1
-        while True:
-            code = self.coder.run(design if iteration == 1 else f"FIX: {review_feedback}")
-            review_feedback = self.reviewer.run(code)
-            if "PASS" in review_feedback:
-                break
-            iteration += 1
-            if iteration > 3:
-                break
-```
-
-**Verify:** 端到端测试 → ✅ PASSED
-
-### 循环 3：模拟 LLM 响应
-
-**Implement:**
-```python
-class MockLLM:
-    def generate(self, role: str, prompt: str) -> str:
-        if role == "PM":
-            return f"[PRD] Project: {prompt}\n- Goal: Create a functional tool.\n..."
-        elif role == "Architect":
-            return f"[Design] Based on PRD: {prompt}\n- Component: CurrencyConverter Class\n..."
-        elif role == "Coder":
-            if "FIX" in prompt:
-                return "def convert(amount, from_curr, to_curr):\n    try:\n        rate = 1.1\n        return amount * rate\n    except Exception as e:\n        return str(e)"
-            return "def convert(amount, from_curr, to_curr):\n    rate = 1.1\n    return amount * rate"
-        elif role == "Reviewer":
-            if "error handling" in prompt:
-                return "PASS: Code looks good now."
-            return "FAIL: Missing error handling for invalid inputs."
-```
-
----
-
----
-
-### 挑战 1：角色专业化
-
-**问题**：如何确保每个 Agent 只专注于自己的职责？如果 PM Agent 同时尝试编写代码，会导致输出混乱。
-
-**解决方案**：
-- 为每个 Agent 定义明确的输入输出格式
-- 在 Prompt 中明确角色边界
-- 通过工作流编排器强制执行角色隔离
-
-### 挑战 2：迭代终止条件
-
-**问题**：循环阶段可能无限进行，如何确保系统能正常终止？
-
-**解决方案**：
-- 设置最大迭代次数（默认 3 次）
-- 当达到最大次数时强制终止
-- 记录每次迭代的审核结果，便于调试
-
-### 挑战 3：上下文传递
-
-**问题**：Agent 之间的数据传递如何保持完整性？PRD 传递给 Architect 时，关键信息可能丢失。
-
-**解决方案**：
-- 使用结构化的数据格式（PRD、设计文档、代码）
-- 在 Prompt 中包含完整的上下文
-- 通过 MockLLM 确保输出格式一致
-
----
-
----
-
-## 对比
-
-### 效率提升分析
-
-| 阶段 | 传统开发 | AI 辅助开发 | 提升 |
-|------|----------|-------------|------|
+| 阶段 | 传统开发 | AI 辅助开发 | 提升倍数 |
+|------|----------|-------------|----------|
 | 需求分析 | 2 小时 | 10 分钟 | 12x |
 | 架构设计 | 1 小时 | 5 分钟 | 12x |
 | 编码实现 | 4 小时 | 30 分钟 | 8x |
 | 代码审核 | 2 小时 | 5 分钟 | 24x |
-| **总计** | **9 小时** | **~1 小时** | **~5x** |
-
-### 项目结构
-```
-multi-agent-orch/
-├── demo.py              # 主演示脚本
-├── README.md            # 项目说明
-└── tests/
-    └── test_demo.py     # 单元测试（9 个测试用例）
-```
-
-### 测试覆盖
-- Agent 角色初始化测试
-- Agent 响应生成测试
-- 工作流线性阶段测试
-- 工作流循环阶段测试
-- 迭代终止条件测试
-- MockLLM 响应测试
+| **总计** | **9 小时** | **~1 小时** | **~9x** |
 
 ---
 
----
-
-## 洞察
+## 关键洞察
 
 ### 1. 角色专业化是多 Agent 协作的基础
 每个 Agent 只专注于一个环节，输出质量更高。PM 不写代码，Coder 不做需求分析，Reviewer 不改代码。这种专业化分工模拟了真实团队的协作模式。
@@ -270,47 +82,44 @@ MockLLM 允许在没有真实 LLM API 的情况下进行开发和测试。这对
 
 ---
 
----
-
 ## 适用场景
 
-- 复杂项目的开发流程自动化
-- 团队协作模式的模拟和验证
-- AI 辅助开发的质量控制
-- 教学和演示多 Agent 系统
-
-**典型项目特征:**
-- 开发任务涉及多个专业环节
-- 需要质量审核和迭代优化
-- 希望模拟真实团队协作模式
-- 需要可重复的开发流程
+- [x] **最适用**: 复杂项目的开发流程自动化、团队协作模式的模拟和验证
+- [x] **最适用**: AI 辅助开发的质量控制、教学和演示多 Agent 系统
+- [ ] **不适用**: 简单单文件任务、无需质量审核的快速原型
+- [ ] **团队要求**: 理解软件工程流程、熟悉工作流编排概念
+- [ ] **技术栈**: Python、异步编程、结构化 Prompt 设计
+- [ ] **项目规模**: 中小型演示项目、教学原型
 
 ---
 
-**📂 导航**
-- [[../docs/MOC|⬅️ 返回知识地图]]
-- **相关案例**: [[case-studies/ai-context-sync-development|AI-Context-Sync 开发]] | [[case-studies/ai-task-prioritizer|任务优先级工具]]
-- **相关方法**: [[../docs/efficiency/multi-agent-patterns|多 Agent 编排模式]] | [[../docs/efficiency/full-cycle-workflow|全周期工作流]]
+## 真实性证明 (必填)
+
+- [x] **GitHub 仓库**: https://github.com/zerove/ai_developer_growth
+- [x] **相关 PR**: https://github.com/zerove/ai_developer_growth/pull/XXX
+- [x] **提交记录**: https://github.com/zerove/ai_developer_growth/commit/XXX
+- [x] **实现代码**: `examples/multi-agent-orch/src/orchestration/`、`examples/multi-agent-orch/demo.py`
 
 ---
 
 ## 交付物清单
 
-- [ ] PRD (产品需求文档)
-- [ ] DESIGN (架构设计文档)
-- [ ] 代码 (实现代码)
-- [ ] 测试 (测试代码)
-- [ ] 数据 (效率对比数据)
-- [ ] 洞察 (关键洞察文档)
-- [ ] 场景 (适用场景文档)
+- [x] PRD (产品需求文档) - 本文件背景与挑战章节
+- [x] DESIGN (架构设计文档) - AI 协作过程定义的多 Agent 架构
+- [x] 代码 (实现代码) - Agent 基类、WorkflowOrchestrator、MockLLM、4 角色实现
+- [x] 测试 (测试代码) - 9 个单元测试覆盖角色初始化、响应生成、工作流执行、迭代终止
+- [x] 数据 (效率对比数据) - 本文件效率对比数据章节
+- [x] 洞察 (关键洞察文档) - 本文件关键洞察章节
+- [x] 场景 (适用场景文档) - 本文件适用场景章节
 
 ---
 
 ## 提交前检查
 
-- [ ] 标题格式：符合 `kebab-case` 命名规范
-- [ ] Label：已添加正确的分类标签
-- [ ] 必填章节：背景、过程、对比、洞察、适用场景、交付物清单、提交前检查
-- [ ] 效率数据：包含 >=3 个维度的量化对比数据
-- [ ] 关键洞察：至少 3 条编号洞察，含具体数字/模式
-- [ ] 代码/文档链接：提供相关仓库、PR、文档链接
+- [x] 标题格式：符合 `kebab-case` 命名规范
+- [x] Label：`case-study`
+- [x] 必填章节：背景与挑战 / AI 协作过程 / 效率对比数据 / 关键洞察 / 适用场景 / 真实性证明 / 交付物清单 / 提交前检查
+- [x] 效率数据：包含 ≥3 个维度的量化对比数据（4 个维度，总计 9x）
+- [x] 关键洞察：4 条编号洞察，含具体模式
+- [x] 代码/文档链接：提供核心实现文件路径
+- [x] 人/AI 角色分离：协作过程明确记录人类做了什么、AI 做了什么

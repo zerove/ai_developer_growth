@@ -10,7 +10,6 @@ Usage:
 
 from __future__ import annotations
 
-import fnmatch
 import subprocess
 import sys
 from pathlib import Path
@@ -41,7 +40,7 @@ def _matches_skip_pattern(filepath: Path, patterns: list[str]) -> bool:
     (mirrors adg CLI behavior which matches absolute rglob paths).
     """
     candidates = (str(filepath), str(filepath.resolve()), filepath.name)
-    return any(fnmatch.fnmatch(c, p) for p in patterns for c in candidates)
+    return any(Path(c).match(p) for p in patterns for c in candidates)
 
 
 def get_unpushed_commits(remote: str = "origin", branch: str | None = None) -> list[str]:

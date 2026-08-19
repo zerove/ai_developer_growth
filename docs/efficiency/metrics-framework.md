@@ -101,13 +101,15 @@ git log --since="2026-01-01" --pretty=tformat: --numstat \
 # 记录 API 调用
 def log_token_usage(model, input_tokens, output_tokens, task_type):
     # 存储到数据库
-    db.insert({
-        'model': model,
-        'input_tokens': input_tokens,
-        'output_tokens': output_tokens,
-        'task_type': task_type,
-        'timestamp': datetime.now()
-    })
+    db.insert(
+        {
+            "model": model,
+            "input_tokens": input_tokens,
+            "output_tokens": output_tokens,
+            "task_type": task_type,
+            "timestamp": datetime.now(),
+        }
+    )
 ```
 
 **时间追踪**:

@@ -160,6 +160,7 @@ aws secretsmanager put-secret-value \
 import os
 from functools import lru_cache
 
+
 @lru_cache()
 def get_secret(name: str) -> str:
     value = os.getenv(name)
@@ -169,6 +170,7 @@ def get_secret(name: str) -> str:
     if not value:
         raise RuntimeError(f"Secret {name} not configured")
     return value
+
 
 # 使用
 DATABASE_URL = get_secret("DATABASE_URL")  # 运行时读取

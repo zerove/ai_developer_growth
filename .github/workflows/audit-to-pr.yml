@@ -1,0 +1,65 @@
+name: Governance Audit to PR
+
+on:
+  schedule:
+    # 每周一 10:00 UTC 运行（在 scheduled-governance 之后）
+    - cron: "0 10 * * 1"
+  workflow_dispatch:
+    inputs:
+      create_pr:
+        description: "是否创建 PR"
+        required: true
+        default: "true"
+        type: boolean
+
+permissions:
+  contents: write
+  pull-requests: write
+  issues: write
+
+jobs:
+  audit-and-pr:
+    name: Run Audit & Create PR
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: |
+          pip install -e .
+          pip install ruff mypy pytest pytest-cov pyyaml bandit pip-audit
+
+      - name: Configure Git
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: Run Governance Audit & Create PR
+        if: github.event.inputs.create_pr == 'true' || github.event.schedule != ''
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          python tools/scripts/audit_to_pr.py --run-audit --create-pr --title "chore: weekly governance audit report"
+
+      - name: Run Quick Audit (without PR)
+        if: github.event.inputs.create_pr == 'false'
+        run: |
+          python tools/scripts/audit_to_pr.py --run-audit --no-full --output governance-report.md
+
+      - name: Upload Audit Report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: governance-audit-report
+          path: |
+            governance-report.md
+            *.json

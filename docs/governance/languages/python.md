@@ -55,17 +55,22 @@ from .utils import helper
 ```python
 class AppError(Exception):
     """应用基础异常"""
+
     pass
+
 
 class ValidationError(AppError):
     """验证错误"""
+
     def __init__(self, field: str, message: str):
         self.field = field
         self.message = message
         super().__init__(f"Validation error on {field}: {message}")
 
+
 class NotFoundError(AppError):
     """资源不存在"""
+
     def __init__(self, resource: str, id: str):
         self.resource = resource
         self.id = id
@@ -79,11 +84,13 @@ class NotFoundError(AppError):
 def get_user(id: str) -> User:
     return db.query(User).filter(User.id == id).one()  # 可能抛出异常
 
+
 # ❌ 禁止
 try:
     do_something()
 except:
     pass  # 空 catch
+
 
 # ✅ 正确
 def get_user(id: str) -> User:
@@ -105,8 +112,10 @@ def get_user(id: str) -> User:
 def process(data):
     return data["key"]
 
+
 # ✅ 正确
 from typing import Any
+
 
 def process(data: dict[str, Any]) -> str:
     return data.get("key", "")
@@ -119,15 +128,14 @@ from typing import TypeVar, Generic
 
 T = TypeVar("T")
 
+
 class Repository(Generic[T]):
     def __init__(self, session: Session):
         self.session = session
 
-    def get(self, id: str) -> T:
-        ...
+    def get(self, id: str) -> T: ...
 
-    def create(self, entity: T) -> T:
-        ...
+    def create(self, entity: T) -> T: ...
 ```
 
 ---
@@ -140,11 +148,13 @@ class Repository(Generic[T]):
 import asyncio
 from typing import AsyncGenerator
 
+
 # ✅ 正确
 async def fetch_data(url: str) -> dict:
     async with aiohttp.ClientSession() as session:
         async with session.get(url) as response:
             return await response.json()
+
 
 # ✅ 正确
 async def process_items(items: list[str]) -> AsyncGenerator[str, None]:
@@ -161,6 +171,7 @@ async def bad_example():
     with open("file.txt") as f:  # 阻塞!
         return f.read()
 
+
 # ✅ 正确
 async def good_example():
     async with aiofiles.open("file.txt") as f:
@@ -176,6 +187,7 @@ async def good_example():
 ```python
 import pytest
 from unittest.mock import AsyncMock, patch
+
 
 class TestUserService:
     """用户服务测试"""
@@ -206,6 +218,7 @@ async def test_with_mock(mock_db):
     mock_db.query.return_value = AsyncMock()
     result = await service.get_user("123")
     assert result is not None
+
 
 # ❌ 禁止: 手动创建 mock
 class MockDB:
@@ -254,6 +267,7 @@ project/
 
 ```python
 from functools import lru_cache
+
 
 @lru_cache(maxsize=128)
 def expensive_calculation(n: int) -> int:
@@ -311,6 +325,7 @@ if not API_KEY:
 import logging
 
 logger = logging.getLogger(__name__)
+
 
 # ✅ 正确
 def process_user(user_id: str):

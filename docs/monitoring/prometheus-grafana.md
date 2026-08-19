@@ -28,13 +28,13 @@ Prometheus 负责抓取和存储时间序列数据，Grafana 负责可视化。�
 from prometheus_client import Counter, Histogram, Gauge
 
 # Counter: 只增不减（请求总数、错误总数）
-http_requests_total = Counter('http_requests_total', 'HTTP 请求总数', ['method', 'path', 'status'])
+http_requests_total = Counter("http_requests_total", "HTTP 请求总数", ["method", "path", "status"])
 
 # Histogram: 分布统计（延迟分布）
-http_duration_seconds = Histogram('http_duration_seconds', '请求延迟', ['method', 'path'])
+http_duration_seconds = Histogram("http_duration_seconds", "请求延迟", ["method", "path"])
 
 # Gauge: 可增可减（当前连接数、队列长度）
-active_connections = Gauge('active_connections', '当前活跃连接数')
+active_connections = Gauge("active_connections", "当前活跃连接数")
 ```
 
 四个黄金信号对应的指标：

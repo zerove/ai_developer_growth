@@ -58,11 +58,11 @@ python validate_language_rules.py <path> --auto-detect [options]
 **Python API:**
 ```python
 from validate_language_rules import (
-    load_rules,          # Load YAML rules for a language
-    load_custom_rules,   # Load .ai-rules/ custom rules
-    validate_file,       # Validate a single file
+    load_rules,  # Load YAML rules for a language
+    load_custom_rules,  # Load .ai-rules/ custom rules
+    validate_file,  # Validate a single file
     validate_directory,  # Validate a directory
-    apply_fixes,         # Apply auto-fixes
+    apply_fixes,  # Apply auto-fixes
     calculate_health_score,  # Compute health score (0-100)
 )
 ```
@@ -90,7 +90,7 @@ issue = Issue(
 issue.to_dict()  # -> {"rule_id": ..., "severity": ..., ...}
 
 vr = ValidationResult(file="main.py", language="python", issues=[issue])
-vr.error_count   # 1
+vr.error_count  # 1
 vr.to_dict()
 
 hs = HealthScore(score=85, grade="B", errors=1, warnings=2, infos=3, total_files=10)
@@ -137,6 +137,7 @@ Base HTTP server for web tools.
 ```python
 from rules.web_base import RuleWebServer, run_server
 
+
 class MyHandler(RuleWebServer):
     page_title = "My Tool"
 
@@ -147,6 +148,7 @@ class MyHandler(RuleWebServer):
 
     def get_html_content(self):
         return "<html>...</html>"
+
 
 run_server(MyHandler, port=8080)
 ```
@@ -275,16 +277,16 @@ Common utilities used across all scripts.
 
 ```python
 from _common import (
-    rules_dir,           # -> Path to ai-dev-framework/
-    framework_dir,       # Alias for rules_dir
-    EXTENSION_MAP,       # {".py": "python", ...} (48 extensions)
-    detect_language,     # Path -> language string
-    file_hash,           # SHA256 content hash
-    handle_error,        # Standard error handler with sys.exit
-    safe_import,         # Import module safely (returns None on failure)
-    load_yaml,           # Load YAML file
-    save_yaml,           # Save YAML file
+    rules_dir,  # -> Path to ai-dev-framework/
+    framework_dir,  # Alias for rules_dir
+    EXTENSION_MAP,  # {".py": "python", ...} (48 extensions)
+    detect_language,  # Path -> language string
+    file_hash,  # SHA256 content hash
+    handle_error,  # Standard error handler with sys.exit
+    safe_import,  # Import module safely (returns None on failure)
+    load_yaml,  # Load YAML file
+    save_yaml,  # Save YAML file
     filter_supported_files,  # Filter files by supported extensions
-    SUPPORTED_EXTENSIONS,    # Set of supported file extensions
+    SUPPORTED_EXTENSIONS,  # Set of supported file extensions
 )
 ```

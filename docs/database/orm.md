@@ -37,12 +37,15 @@ from sqlalchemy.ext.hybrid import hybrid_property
 
 Base = declarative_base()
 
+
 class TimestampMixin:
     created_at = Column(DateTime, default=func.now(), nullable=False)
     updated_at = Column(DateTime, default=func.now(), onupdate=func.now(), nullable=False)
 
+
 class VersionMixin:
     version = Column(Integer, default=1, nullable=False)  # 乐观锁
+
 
 class User(Base, TimestampMixin, VersionMixin):
     __tablename__ = "users"
@@ -77,6 +80,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session, selectinload
 from typing import Optional, List
 
+
 class UserRepository:
     def __init__(self, session: Session):
         self.session = session
@@ -88,18 +92,16 @@ class UserRepository:
         return self.session.execute(stmt).scalar_one_or_none()
 
     def get_by_email(self, email: str) -> Optional[User]:
-        return self.session.execute(
-            select(User).where(User.email == email)
-        ).scalar_one_or_none()
+        return self.session.execute(select(User).where(User.email == email)).scalar_one_or_none()
 
     def list_active(self, *, limit: int = 50, offset: int = 0) -> List[User]:
-        return self.session.execute(
-            select(User)
-            .where(User.is_active == True)
-            .order_by(User.created_at.desc())
-            .limit(limit)
-            .offset(offset)
-        ).scalars().all()
+        return (
+            self.session.execute(
+                select(User).where(User.is_active == True).order_by(User.created_at.desc()).limit(limit).offset(offset)
+            )
+            .scalars()
+            .all()
+        )
 
     def create(self, user: User) -> User:
         self.session.add(user)
@@ -125,6 +127,7 @@ class UserRepository:
 ```python
 # services/user_service.py
 from contextlib import contextmanager
+
 
 class UserService:
     def __init__(self, session_factory: sessionmaker):

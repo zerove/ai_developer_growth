@@ -18,6 +18,7 @@ updated: 2026-08-12
 
 | ID | 标题 | 状态 | 日期 |
 |----|------|------|------|
+| [[ADR-011-phase18-ai-native-dialogue-community-cleanup\|ADR-011]] | Phase 18: P1 对话界面 + P2 社区案例清理 + AI-Native 生态完善 | 🔍 提议中 | 2026-08 |
 | [[ADR-010-community-growth-infrastructure\|ADR-010]] | P2 社区增长基础设施：自动化验证、激励体系、Issue 标准化 | ✅ 已通过 | 2026-08 |
 | [[009-ci-cd-optimization-security\|ADR-009]] | CI/CD 流水线优化与安全强化 | ✅ 已通过 | 2026-08 |
 | [[008-production-grade-workflow\|ADR-008]] | 生产级稳健工作流与防御性接口设计 | ⏳ 提议 | 2026-08 |

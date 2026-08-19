@@ -20,7 +20,7 @@ line-length = 88
 select = ["E", "F", "W", "I", "N", "UP", "B", "SIM"]
 
 [tool.coverage.run]
-source = ["src"]
+source = ["multi_agent_orch"]
 omit = ["*/tests/*", "*/__main__.py"]
 
 [tool.coverage.report]
@@ -28,5 +28,4 @@ fail_under = 70
 show_missing = true
 
 [tool.setuptools.packages.find]
-where = ["src"]
-include = ["multi_agent_orch*"]
+where = ["."]

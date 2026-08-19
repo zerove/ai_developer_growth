@@ -211,6 +211,7 @@ def test_sql_injection():
     result = search_users(malicious_input)
     assert result == []  # 应返回空结果，而非执行 SQL
 
+
 # 测试 XSS 防护
 def test_xss_prevention():
     malicious_input = "<script>alert('xss')</script>"
@@ -224,6 +225,7 @@ def test_xss_prevention():
 def test_auth_bypass():
     response = client.get("/admin", headers={"Authorization": ""})
     assert response.status_code == 401  # 应返回未授权
+
 
 # 测试越权访问
 def test_horizontal_privilege():

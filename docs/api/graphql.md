@@ -74,6 +74,7 @@ mutation createUser($user: User!) {  # 应使用 Input 类型
 # ✅ 正确: 限制查询深度
 from graphql import ValidationRule
 
+
 class DepthLimitRule(ValidationRule):
     def __init__(self, max_depth=5):
         self.max_depth = max_depth
@@ -103,11 +104,14 @@ type User {
 # ✅ 正确: 使用 DataLoader
 from aiodataloader import DataLoader
 
+
 async def load_user(user_ids):
     users = await db.users.find({"_id": {"$in": user_ids}})
     return [users.get(id) for id in user_ids]
 
+
 user_loader = DataLoader(load_fn=load_user)
+
 
 # 解析器中使用
 async def resolve_posts(user, info):
@@ -120,10 +124,11 @@ async def resolve_posts(user, info):
 # ✅ 正确: 使用 GraphQL 错误
 from graphql import GraphQLError
 
+
 async def resolve_user(obj, info, id):
     user = await db.users.find_one({"_id": id})
     if not user:
-        raise GraphQLError('User not found', extensions={'code': 'NOT_FOUND'})
+        raise GraphQLError("User not found", extensions={"code": "NOT_FOUND"})
     return user
 ```
 
@@ -196,9 +201,10 @@ async def subscribe_user_created(root, info):
 import pytest
 from httpx import AsyncClient
 
+
 @pytest.mark.asyncio
 async def test_get_user():
-    query = '''
+    query = """
     query GetUser($id: ID!) {
         user(id: $id) {
             id
@@ -206,15 +212,12 @@ async def test_get_user():
             email
         }
     }
-    '''
+    """
 
-    async with AsyncClient(app=app, base_url='http://test') as client:
-        response = await client.post(
-            '/graphql',
-            json={'query': query, 'variables': {'id': '123'}}
-        )
+    async with AsyncClient(app=app, base_url="http://test") as client:
+        response = await client.post("/graphql", json={"query": query, "variables": {"id": "123"}})
         assert response.status_code == 200
-        assert 'data' in response.json()
+        assert "data" in response.json()
 ```
 
 ### 变更测试
@@ -222,28 +225,19 @@ async def test_get_user():
 ```python
 @pytest.mark.asyncio
 async def test_create_user():
-    mutation = '''
+    mutation = """
     mutation CreateUser($input: CreateUserInput!) {
         createUser(input: $input) {
             user { id name }
             errors { message }
         }
     }
-    '''
+    """
 
-    variables = {
-        'input': {
-            'email': 'test@example.com',
-            'name': 'John',
-            'password': 'secret123'
-        }
-    }
+    variables = {"input": {"email": "test@example.com", "name": "John", "password": "secret123"}}
 
-    async with AsyncClient(app=app, base_url='http://test') as client:
-        response = await client.post(
-            '/graphql',
-            json={'query': mutation, 'variables': variables}
-        )
+    async with AsyncClient(app=app, base_url="http://test") as client:
+        response = await client.post("/graphql", json={"query": mutation, "variables": variables})
         assert response.status_code == 200
 ```
 
@@ -257,6 +251,7 @@ async def test_create_user():
 # ✅ 正确: 限制查询复杂度
 from graphql import parse
 from graphql.language import visitor
+
 
 def calculate_complexity(query, max_complexity=1000):
     # 实现复杂度计算

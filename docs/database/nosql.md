@@ -48,10 +48,7 @@ updated: 2026-07-21
 ```python
 # ✅ 正确: 选择合适的数据结构
 # 用户会话
-redis.hset("session:123", mapping={
-    "user_id": "user1",
-    "expires": "1704067200"
-})
+redis.hset("session:123", mapping={"user_id": "user1", "expires": "1704067200"})
 
 # 排行榜
 redis.zadd("leaderboard", {"user1": 100, "user2": 200})
@@ -117,11 +114,7 @@ async def get_user(user_id: str):
     user = await db.users.find_one({"_id": user_id})
     if user:
         # 写入缓存
-        await redis.setex(
-            f"user:{user_id}",
-            3600,
-            json.dumps(user)
-        )
+        await redis.setex(f"user:{user_id}", 3600, json.dumps(user))
 
     return user
 ```
@@ -133,16 +126,8 @@ async def get_user(user_id: str):
 async def transfer_money(from_id: str, to_id: str, amount: int):
     async with await client.start_session() as session:
         async with session.start_transaction():
-            await db.accounts.update_one(
-                {"_id": from_id},
-                {"$inc": {"balance": -amount}},
-                session=session
-            )
-            await db.accounts.update_one(
-                {"_id": to_id},
-                {"$inc": {"balance": amount}},
-                session=session
-            )
+            await db.accounts.update_one({"_id": from_id}, {"$inc": {"balance": -amount}}, session=session)
+            await db.accounts.update_one({"_id": to_id}, {"$inc": {"balance": amount}}, session=session)
 ```
 
 ---
@@ -168,6 +153,7 @@ async def get_user(user_id: str):
 
     return user
 
+
 # ✅ 正确: 缓存失效
 async def update_user(user_id: str, data: dict):
     await db.users.update_one({"_id": user_id}, {"$set": data})
@@ -179,15 +165,16 @@ async def update_user(user_id: str, data: dict):
 
 ```python
 # ✅ 正确: 命名规范
-"user:{id}"           # 用户对象
-"user:{id}:posts"     # 用户的文章列表
-"post:{id}"           # 文章对象
-"session:{id}"        # 会话
-"rate_limit:{ip}"     # 速率限制
+"user:{id}"  # 用户对象
+
+"user:{id}:posts"  # 用户的文章列表
+"post:{id}"  # 文章对象
+"session:{id}"  # 会话
+"rate_limit:{ip}"  # 速率限制
 
 # ❌ 禁止: 混乱的命名
-"u123"                # 不清晰
-"cache_user_data"     # 不规范
+"u123"  # 不清晰
+"cache_user_data"  # 不规范
 ```
 
 ---
@@ -200,20 +187,19 @@ async def update_user(user_id: str, data: dict):
 import pytest
 from motor.motor_asyncio import AsyncIOMotorClient
 
+
 @pytest.fixture
 async def db():
-    client = AsyncIOMotorClient('mongodb://localhost:27017')
+    client = AsyncIOMotorClient("mongodb://localhost:27017")
     db = client.test_db
     yield db
     # 清理测试数据
     await db.users.drop()
     await db.posts.drop()
 
+
 async def test_create_user(db):
-    result = await db.users.insert_one({
-        "name": "John",
-        "email": "john@example.com"
-    })
+    result = await db.users.insert_one({"name": "John", "email": "john@example.com"})
     assert result.inserted_id is not None
 ```
 
@@ -223,12 +209,14 @@ async def test_create_user(db):
 import pytest
 import fakeredis.aioredis
 
+
 @pytest.fixture
 async def redis():
     server = fakeredis.aioredis.FakeServer()
     client = await fakeredis.aioredis.create_redis(server=server)
     yield client
     client.close()
+
 
 async def test_cache_user(redis):
     await redis.setex("user:123", 3600, '{"name": "John"}')

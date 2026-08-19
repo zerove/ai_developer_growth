@@ -157,11 +157,9 @@ paths:
 ```python
 import requests
 
+
 def test_create_user():
-    response = requests.post(
-        'http://localhost:8000/api/users',
-        json={'name': 'test', 'email': 'test@example.com'}
-    )
+    response = requests.post("http://localhost:8000/api/users", json={"name": "test", "email": "test@example.com"})
     assert response.status_code == 201
 ```
 

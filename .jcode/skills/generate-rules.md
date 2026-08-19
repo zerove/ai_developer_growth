@@ -37,9 +37,14 @@
 
 ```python
 from tools.scripts.rules_engine.rule_generator import (
-    save_rules, format_rules, KNOWN_LANGUAGES, load_generated_rules,
-    discover_generated_rules, list_generated_languages,
-    detect_language_from_extension, validate_rules_yaml,
+    save_rules,
+    format_rules,
+    KNOWN_LANGUAGES,
+    load_generated_rules,
+    discover_generated_rules,
+    list_generated_languages,
+    detect_language_from_extension,
+    validate_rules_yaml,
 )
 ```
 
@@ -68,13 +73,13 @@ agent 可以为任意编程语言生成规则，包括：
 
 ```python
 {
-    "id": "mojo-unsafe-cast",          # 唯一 ID: {lang}-{short-name}
+    "id": "mojo-unsafe-cast",  # 唯一 ID: {lang}-{short-name}
     "name": "Unsafe pointer cast",
-    "severity": "error",                # error / warning / info
-    "category": "security",             # 分类
-    "pattern": r"unsafe\s*\{",          # 正则表达式
+    "severity": "error",  # error / warning / info
+    "category": "security",  # 分类
+    "pattern": r"unsafe\s*\{",  # 正则表达式
     "message": "Unsafe blocks should be minimized",
     "fix_hint": "Use safe abstractions",  # 可选
-    "exclude_files": ["test_*.mojo"],     # 可选
+    "exclude_files": ["test_*.mojo"],  # 可选
 }
 ```

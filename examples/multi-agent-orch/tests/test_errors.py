@@ -2,7 +2,7 @@
 
 import unittest
 
-from errors import (
+from multi_agent_orch.errors import (
     AgentError,
     AgentFailureError,
     AgentTimeoutError,

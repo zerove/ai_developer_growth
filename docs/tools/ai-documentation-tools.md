@@ -60,9 +60,9 @@ nav:
 ```python
 # conf.py
 extensions = [
-    'sphinx.ext.autodoc',
-    'sphinx.ext.napoleon',
-    'myst_parser',
+    "sphinx.ext.autodoc",
+    "sphinx.ext.napoleon",
+    "myst_parser",
 ]
 ```
 

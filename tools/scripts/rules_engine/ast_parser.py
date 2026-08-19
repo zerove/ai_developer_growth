@@ -44,8 +44,15 @@ class _TSTree(Protocol):
 # Suppress tree-sitter deprecation warnings
 warnings.filterwarnings("ignore", category=FutureWarning, module="tree_sitter")
 
+# Try to import tree-sitter and language packages (tree-sitter 0.26+ API)
+# Use individual language packages instead of tree_sitter_languages
 try:
-    import tree_sitter_languages
+    import tree_sitter_go
+    import tree_sitter_javascript
+    import tree_sitter_python
+    import tree_sitter_rust
+    import tree_sitter_typescript
+    from tree_sitter import Language, Parser
 
     HAS_TREE_SITTER = True
 except ImportError:
@@ -234,11 +241,29 @@ class ASTParser:
     def _shared_parsers(cls) -> dict[str, Any]:
         """Get (and lazily build) the class-level shared parser cache."""
         if not cls._PARSER_CACHE_READY:
-            for lang in cls.SUPPORTED_LANGUAGES:
-                try:
-                    cls._PARSER_CACHE[lang] = tree_sitter_languages.get_parser(lang)
-                except Exception:
-                    _ = None  # tree-sitter parser not available for language
+            if HAS_TREE_SITTER:
+                # Map language names to their language modules
+                lang_modules = {
+                    "python": tree_sitter_python,
+                    "javascript": tree_sitter_javascript,
+                    "typescript": tree_sitter_typescript,
+                    "rust": tree_sitter_rust,
+                    "go": tree_sitter_go,
+                }
+                for lang in cls.SUPPORTED_LANGUAGES:
+                    if lang in lang_modules:
+                        try:
+                            mod = lang_modules[lang]
+                            # Get the language function (handle TSX/TS variants)
+                            if lang == "typescript":
+                                lang_obj = Language(mod.language_typescript())
+                            else:
+                                lang_obj = Language(mod.language())
+                            parser = Parser(lang_obj)
+                            cls._PARSER_CACHE[lang] = parser
+                        except Exception:
+                            # tree-sitter parser not available for language - silently skip
+                            pass
             cls._PARSER_CACHE_READY = True
         return cls._PARSER_CACHE
 

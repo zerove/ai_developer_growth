@@ -117,11 +117,12 @@ message User {
 # ✅ 正确: 使用合适的 gRPC 状态码
 from grpc import StatusCode
 
+
 async def get_user(self, request, context):
     user = await db.find_user(request.id)
     if not user:
         context.set_code(StatusCode.NOT_FOUND)
-        context.set_details(f'User {request.id} not found')
+        context.set_details(f"User {request.id} not found")
         return GetUserResponse()
 
     return GetUserResponse(user=user)
@@ -133,23 +134,16 @@ async def get_user(self, request, context):
 # ✅ 正确: 使用 grpc-status-details-bin
 from google.rpc import status_pb2, error_details_pb2
 
+
 async def create_user(self, request, context):
     if not is_valid_email(request.email):
-        status = status_pb2.Status(
-            code=StatusCode.INVALID_ARGUMENT.value,
-            message='Invalid email'
-        )
+        status = status_pb2.Status(code=StatusCode.INVALID_ARGUMENT.value, message="Invalid email")
         detail = error_details_pb2.BadRequest(
             field_violations=[
-                error_details_pb2.BadRequest.FieldViolation(
-                    field='email',
-                    description='Invalid email format'
-                )
+                error_details_pb2.BadRequest.FieldViolation(field="email", description="Invalid email format")
             ]
         )
-        context.abort_with_status(
-            gRPCStatus(StatusCode.INVALID_ARGUMENT, 'Invalid email')
-        )
+        context.abort_with_status(gRPCStatus(StatusCode.INVALID_ARGUMENT, "Invalid email"))
 ```
 
 ---
@@ -200,7 +194,7 @@ class AuthInterceptor(grpc.ServerInterceptor):
         token = extract_token(handler_call_details.invocation_metadata)
         if not verify_token(token):
             return grpc.unary_unary_rpc_method_handler(
-                lambda req, ctx: context.abort(StatusCode.UNAUTHENTICATED, 'Invalid token')
+                lambda req, ctx: context.abort(StatusCode.UNAUTHENTICATED, "Invalid token")
             )
 
         return await continuation(handler_call_details)
@@ -216,9 +210,7 @@ class LoggingInterceptor(grpc.ServerInterceptor):
         response = await continuation(handler_call_details)
         duration = time.time() - start_time
 
-        logger.info(
-            f'{handler_call_details.method} completed in {duration:.3f}s'
-        )
+        logger.info(f"{handler_call_details.method} completed in {duration:.3f}s")
         return response
 ```
 
@@ -232,18 +224,19 @@ class LoggingInterceptor(grpc.ServerInterceptor):
 import pytest
 from grpc import aio
 
+
 @pytest.mark.asyncio
 async def test_get_user():
     server = aio.server()
-    server.add_insecure_port('[::]:50051')
+    server.add_insecure_port("[::]:50051")
     UserServiceServicer.register(server)
 
     await server.start()
 
-    async with aio.insecure_channel('localhost:50051') as channel:
+    async with aio.insecure_channel("localhost:50051") as channel:
         stub = UserServiceStub(channel)
-        response = await stub.GetUser(GetUserRequest(id='123'))
-        assert response.user.id == '123'
+        response = await stub.GetUser(GetUserRequest(id="123"))
+        assert response.user.id == "123"
 
     await server.stop(None)
 ```
@@ -257,14 +250,12 @@ async def test_create_user_flow():
         stub = UserServiceStub(channel)
 
         # 创建用户
-        create_response = await stub.CreateUser(
-            CreateUserRequest(email='test@example.com', name='John')
-        )
+        create_response = await stub.CreateUser(CreateUserRequest(email="test@example.com", name="John"))
         user_id = create_response.user.id
 
         # 查询用户
         get_response = await stub.GetUser(GetUserRequest(id=user_id))
-        assert get_response.user.email == 'test@example.com'
+        assert get_response.user.email == "test@example.com"
 ```
 
 ---
@@ -279,13 +270,13 @@ import grpc
 from grpc import aio
 
 channel = aio.insecure_channel(
-    'localhost:50051',
+    "localhost:50051",
     options=[
-        ('grpc.keepalive_time_ms', 10000),
-        ('grpc.keepalive_timeout_ms', 5000),
-        ('grpc.max_send_message_length', 50 * 1024 * 1024),
-        ('grpc.max_receive_message_length', 50 * 1024 * 1024),
-    ]
+        ("grpc.keepalive_time_ms", 10000),
+        ("grpc.keepalive_timeout_ms", 5000),
+        ("grpc.max_send_message_length", 50 * 1024 * 1024),
+        ("grpc.max_receive_message_length", 50 * 1024 * 1024),
+    ],
 )
 ```
 
@@ -293,10 +284,7 @@ channel = aio.insecure_channel(
 
 ```python
 # ✅ 正确: 启用压缩
-channel = aio.insecure_channel(
-    'localhost:50051',
-    compression=grpc.Compression.Gzip
-)
+channel = aio.insecure_channel("localhost:50051", compression=grpc.Compression.Gzip)
 ```
 
 ---

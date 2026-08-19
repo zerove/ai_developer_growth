@@ -67,30 +67,33 @@ Revision ID: 20260720_004
 Revises: 20260719_003
 Create Date: 2026-07-20 10:00:00
 """
+
 from alembic import op
 import sqlalchemy as sa
 
-revision = '20260720_004'
-down_revision = '20260719_003'
+revision = "20260720_004"
+down_revision = "20260719_003"
 branch_labels = None
 depends_on = None
 
+
 def upgrade():
     # 1. 加列（可空，默认值）
-    op.add_column('users', sa.Column('version', sa.Integer, nullable=True, server_default='1'))
+    op.add_column("users", sa.Column("version", sa.Integer, nullable=True, server_default="1"))
 
     # 2. 回填现有数据（大表分批）
     op.execute("UPDATE users SET version = 1 WHERE version IS NULL")
 
     # 3. 设为非空
-    op.alter_column('users', 'version', nullable=False, server_default=None)
+    op.alter_column("users", "version", nullable=False, server_default=None)
 
     # 4. 加索引（可选）
-    op.create_index('ix_users_version', 'users', ['version'])
+    op.create_index("ix_users_version", "users", ["version"])
+
 
 def downgrade():
-    op.drop_index('ix_users_version', table_name='users')
-    op.drop_column('users', 'version')
+    op.drop_index("ix_users_version", table_name="users")
+    op.drop_column("users", "version")
 ```
 
 ---

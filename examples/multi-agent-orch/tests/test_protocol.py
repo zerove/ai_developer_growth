@@ -2,7 +2,7 @@
 
 import unittest
 
-from protocol import Agent, AgentResponse, Message, MessageRole
+from multi_agent_orch.protocol import Agent, AgentResponse, Message, MessageRole
 
 
 class TestMessage(unittest.TestCase):

@@ -2,10 +2,17 @@
 
 import unittest
 
-from agents import ArchitectAgent, CoderAgent, MockLLM, PMAgent, ReviewerAgent
-from config import WorkflowConfig
-from orchestration import FanOutOrchestrator, WaterfallOrchestrator
-from protocol import Message, MessageRole
+from multi_agent_orch import (
+    ArchitectAgent,
+    CoderAgent,
+    MockLLM,
+    PMAgent,
+    ReviewerAgent,
+)
+from multi_agent_orch.config import WorkflowConfig
+from multi_agent_orch.errors import MaxIterationsError
+from multi_agent_orch.orchestration import FanOutOrchestrator, WaterfallOrchestrator
+from multi_agent_orch.protocol import Message, MessageRole
 
 
 class TestWaterfallIntegration(unittest.TestCase):
@@ -96,8 +103,6 @@ class TestWaterfallIntegration(unittest.TestCase):
         }
         config = WorkflowConfig(max_review_iterations=1, fail_fast=True)
         orch = WaterfallOrchestrator(agents=agents, config=config)
-
-        from errors import MaxIterationsError
 
         with self.assertRaises(MaxIterationsError):
             orch.execute("Build a tool")

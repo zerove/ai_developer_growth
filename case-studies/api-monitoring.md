@@ -116,6 +116,7 @@ Config → Scheduler → Health Checker → Data Store → Alert Manager → Not
 from dataclasses import dataclass
 from datetime import datetime, timedelta
 
+
 @dataclass
 class AlertRule:
     name: str
@@ -123,6 +124,7 @@ class AlertRule:
     threshold: float
     duration: timedelta = timedelta(minutes=30)
     severity: str = "warning"
+
 
 class AlertManager:
     def __init__(self, rules: list[AlertRule]):

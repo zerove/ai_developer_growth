@@ -38,9 +38,9 @@ test_fetch_user_when_network_timeout_raises_timeout_error()
 test_validate_email_with_invalid_format_returns_false()
 
 # ❌ 坏的命名
-test_calculate()           # 没有条件和预期
-test_works()               # 不知道测什么
-test_1()                   # 无意义
+test_calculate()  # 没有条件和预期
+test_works()  # 不知道测什么
+test_1()  # 无意义
 test_should_return_true()  # 没有被测行为
 ```
 
@@ -149,16 +149,15 @@ data_rules:
 def create_user(name="test", email="test@example.com", role="user"):
     return User(name=name, email=email, role=role)
 
+
 # Fixture 模式
 @pytest.fixture
 def sample_user():
     return User(name="Alice", email="alice@example.com", role="admin")
 
+
 # Builder 模式
-user = (UserBuilder()
-    .with_name("Bob")
-    .with_role("admin")
-    .build())
+user = UserBuilder().with_name("Bob").with_role("admin").build()
 ```
 
 ---

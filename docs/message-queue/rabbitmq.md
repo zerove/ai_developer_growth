@@ -33,12 +33,12 @@ RabbitMQ 基于 AMQP 协议，通过交换器（Exchange）+ 路由键（Routing
 
 ```python
 # ✅ Topic 交换器：按业务域灵活路由
-channel.exchange_declare(exchange='events', exchange_type='topic')
+channel.exchange_declare(exchange="events", exchange_type="topic")
 
 # 绑定队列到不同的路由键模式
-channel.queue_bind(exchange='events', queue='order_queue', routing_key='order.*')
-channel.queue_bind(exchange='events', queue='payment_queue', routing_key='*.payment')
-channel.queue_bind(exchange='events', queue='all_events', routing_key='#')
+channel.queue_bind(exchange="events", queue="order_queue", routing_key="order.*")
+channel.queue_bind(exchange="events", queue="payment_queue", routing_key="*.payment")
+channel.queue_bind(exchange="events", queue="all_events", routing_key="#")
 ```
 
 ---
@@ -50,17 +50,18 @@ channel.queue_bind(exchange='events', queue='all_events', routing_key='#')
 channel.confirm_delivery()  # 开启发布确认
 try:
     channel.basic_publish(
-        exchange='events',
-        routing_key='order.created',
+        exchange="events",
+        routing_key="order.created",
         body=json.dumps(order).encode(),
         properties=pika.BasicProperties(
             delivery_mode=2,  # 持久化消息
-            content_type='application/json'
+            content_type="application/json",
         ),
-        mandatory=True  # 无法路由时返回给生产者
+        mandatory=True,  # 无法路由时返回给生产者
     )
 except pika.exceptions.UnroutableError:
     handle_unroutable_message()
+
 
 # 消费者：手动确认
 def callback(ch, method, properties, body):
@@ -70,8 +71,9 @@ def callback(ch, method, properties, body):
     except Exception:
         ch.basic_nack(delivery_tag=method.delivery_tag, requeue=True)  # 失败重入队
 
+
 channel.basic_qos(prefetch_count=10)  # 限制未确认消息数
-channel.basic_consume(queue='order_queue', on_message_callback=callback, auto_ack=False)
+channel.basic_consume(queue="order_queue", on_message_callback=callback, auto_ack=False)
 ```
 
 `delivery_mode=2` + `basic_ack` + `basic_qos` 三件套缺一不可。
@@ -83,16 +85,16 @@ channel.basic_consume(queue='order_queue', on_message_callback=callback, auto_ac
 ```python
 # 死信交换器配置
 args = {
-    'x-dead-letter-exchange': 'dlx_exchange',
-    'x-dead-letter-routing-key': 'dlq',
-    'x-message-ttl': 60000  # 60 秒超时进 DLQ
+    "x-dead-letter-exchange": "dlx_exchange",
+    "x-dead-letter-routing-key": "dlq",
+    "x-message-ttl": 60000,  # 60 秒超时进 DLQ
 }
 
-channel.queue_declare(queue='order_queue', arguments=args)
+channel.queue_declare(queue="order_queue", arguments=args)
 
 # 死信队列：单独处理失败消息
-channel.queue_declare(queue='dlq')
-channel.queue_bind(exchange='dlx_exchange', queue='dlq')
+channel.queue_declare(queue="dlq")
+channel.queue_bind(exchange="dlx_exchange", queue="dlq")
 ```
 
 死信队列处理策略：

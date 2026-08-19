@@ -84,6 +84,7 @@ class UserService:
 ```python
 import asyncio
 
+
 async def process_order(order_id: int):
     order = await get_order(order_id)
     await process_payment(order)

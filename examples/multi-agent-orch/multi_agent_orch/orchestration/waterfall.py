@@ -4,9 +4,9 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 
-from config import WorkflowConfig
-from errors import AgentFailureError, MaxIterationsError
-from protocol import Agent, AgentResponse, Message, MessageRole
+from ..config import WorkflowConfig
+from ..errors import AgentFailureError, MaxIterationsError
+from ..protocol import Agent, AgentResponse, Message, MessageRole
 
 
 @dataclass

@@ -22,10 +22,7 @@ Serverless = 无需管理基础设施 + 按需付费 + 自动扩展
 ```python
 def lambda_handler(event, context):
     # 处理事件
-    return {
-        'statusCode': 200,
-        'body': json.dumps('Hello from Lambda!')
-    }
+    return {"statusCode": 200, "body": json.dumps("Hello from Lambda!")}
 ```
 
 **触发器:**
@@ -106,6 +103,7 @@ functions:
 ```python
 import time
 
+
 def retry(func, max_retries=3):
     for i in range(max_retries):
         try:
@@ -113,7 +111,7 @@ def retry(func, max_retries=3):
         except Exception as e:
             if i == max_retries - 1:
                 raise
-            time.sleep(2 ** i)
+            time.sleep(2**i)
 ```
 
 ## 成本优化

@@ -1,0 +1,727 @@
+{
+  "summary": {
+    "total_cases": 45,
+    "average_scores": {
+      "overall": 57.6,
+      "authenticity": 28.6,
+      "efficiency_credibility": 87.1,
+      "insight_quality": 57.6,
+      "completeness": 96.7,
+      "cross_references": 17.8
+    },
+    "categories": {
+      "excellent": 1,
+      "good": 17,
+      "needs_improvement": 27
+    }
+  },
+  "top_cases": [
+    {
+      "name": "adg-scan-httpx",
+      "score": 82.0
+    },
+    {
+      "name": "cli-tool-development",
+      "score": 78.5
+    },
+    {
+      "name": "legacy-refactoring",
+      "score": 73.2
+    },
+    {
+      "name": "adg-cross-project-scan",
+      "score": 72.8
+    },
+    {
+      "name": "governance-self-audit",
+      "score": 72.8
+    }
+  ],
+  "bottom_cases": [
+    {
+      "name": "frontend-performance-optimization",
+      "score": 41.5
+    },
+    {
+      "name": "legacy-system-refactoring",
+      "score": 41.5
+    },
+    {
+      "name": "security-vulnerability-fix",
+      "score": 41.5
+    },
+    {
+      "name": "technical-documentation",
+      "score": 41.5
+    },
+    {
+      "name": "unit-testing",
+      "score": 41.5
+    }
+  ],
+  "common_issues": {
+    "Poor cross-referencing - not linked in INDEX.md/MOC.md": 37,
+    "Low authenticity - missing concrete evidence (links, commits, file paths)": 33,
+    "Insights are vague or insufficient - need specific, actionable findings": 10
+  },
+  "common_strengths": {
+    "Credible efficiency data with validated calculations": 16,
+    "High authenticity with concrete references": 1,
+    "High-quality specific insights with code/tool references": 1
+  },
+  "detailed": [
+    {
+      "case": "adg-scan-httpx",
+      "overall": 82.0,
+      "authenticity": 90.0,
+      "efficiency": 100.0,
+      "insight": 90.0,
+      "completeness": 100,
+      "cross_refs": 10.0,
+      "issues": [
+        "Poor cross-referencing - not linked in INDEX.md/MOC.md"
+      ],
+      "strengths": [
+        "High authenticity with concrete references",
+        "Credible efficiency data with validated calculations",
+        "High-quality specific insights with code/tool references"
+      ]
+    },
+    {
+      "case": "cli-tool-development",
+      "overall": 78.5,
+      "authenticity": 56.0,
+      "efficiency": 100.0,
+      "insight": 70.0,
+      "completeness": 100,
+      "cross_refs": 70.0,
+      "issues": [],
+      "strengths": [
+        "Credible efficiency data with validated calculations"
+      ]
+    },
+    {
+      "case": "legacy-refactoring",
+      "overall": 73.2,
+      "authenticity": 75.0,
+      "efficiency": 100.0,
+      "insight": 65.0,
+      "completeness": 100,
+      "cross_refs": 10.0,
+      "issues": [
+        "Poor cross-referencing - not linked in INDEX.md/MOC.md"
+      ],
+      "strengths": [
+        "Credible efficiency data with validated calculations"
+      ]
+    },
+    {
+      "case": "adg-cross-project-scan",
+      "overall": 72.8,
+      "authenticity": 69.0,
+      "efficiency": 100.0,
+      "insight": 70.0,
+      "completeness": 100,
+      "cross_refs": 10.0,
+      "issues": [
+        "Poor cross-referencing - not linked in INDEX.md/MOC.md"
+      ],
+      "strengths": [
+        "Credible efficiency data with validated calculations"
+      ]
+    },
+    {
+      "case": "governance-self-audit",
+      "overall": 72.8,
+      "authenticity": 65.0,
+      "efficiency": 100.0,
+      "insight": 75.0,
+      "completeness": 100,
+      "cross_refs": 10.0,
+      "issues": [
+        "Poor cross-referencing - not linked in INDEX.md/MOC.md"
+      ],
+      "strengths": [
+        "Credible efficiency data with validated calculations"
+      ]
+    },
+    {
+      "case": "multi-agent-collaboration",
+      "overall": 70.8,
+      "authenticity": 61.0,
+      "efficiency": 100.0,
+      "insight": 70.0,
+      "completeness": 100,
+      "cross_refs": 10.0,
+      "issues": [
+        "Poor cross-referencing - not linked in INDEX.md/MOC.md"
+      ],
+      "strengths": [
+        "Credible efficiency data with validated calculations"
+      ]
+    },
+    {
+      "case": "web-scraping-tool",
+      "overall": 70.2,
+      "authenticity": 40.0,
+      "efficiency": 100.0,
+      "insight": 60.0,
+      "completeness": 100,
+      "cross_refs": 55.0,
+      "issues": [
+        "Low authenticity - missing concrete evidence (links, commits, file paths)"
+      ],
+      "strengths": [
+        "Credible efficiency data with validated calculations"
+      ]
+    },
+    {
+      "case": "cross-platform-workflow-execution",
+      "overall": 69.8,
+      "authenticity": 65.0,
+      "efficiency": 100.0,
+      "insight": 60.0,
+      "completeness": 100,
+      "cross_refs": 10.0,
+      "issues": [
+        "Poor cross-referencing - not linked in INDEX.md/MOC.md"
+      ],
+      "strengths": [
+        "Credible efficiency data with validated calculations"
+      ]
+    },
+    {
+      "case": "jcode-ai-native-master-workflow-execution",
+      "overall": 69.8,
+      "authenticity": 65.0,
+      "efficiency": 100.0,
+      "insight": 60.0,
+      "completeness": 100,
+      "cross_refs": 10.0,
+      "issues": [
+        "Poor cross-referencing - not linked in INDEX.md/MOC.md"
+      ],
+      "strengths": [
+        "Credible efficiency data with validated calculations"
+      ]
+    },
+    {
+      "case": "production-debugging",
+      "overall": 69.8,
+      "authenticity": 57.0,
+      "efficiency": 100.0,
+      "insight": 70.0,
+      "completeness": 100,
+      "cross_refs": 10.0,
+      "issues": [
+        "Poor cross-referencing - not linked in INDEX.md/MOC.md"
+      ],
+      "strengths": [
+        "Credible efficiency data with validated calculations"
+      ]
+    },
+    {
+      "case": "database-migration",
+      "overall": 69.2,
+      "authenticity": 28.0,
+      "efficiency": 100.0,
+      "insight": 70.0,
+      "completeness": 100,
+      "cross_refs": 55.0,
+      "issues": [
+        "Low authenticity - missing concrete evidence (links, commits, file paths)"
+      ],
+      "strengths": [
+        "Credible efficiency data with validated calculations"
+      ]
+    },
+    {
+      "case": "autonomous-ai-native-sdlc-delivery",
+      "overall": 68.5,
+      "authenticity": 60.0,
+      "efficiency": 100.0,
+      "insight": 60.0,
+      "completeness": 100,
+      "cross_refs": 10.0,
+      "issues": [
+        "Poor cross-referencing - not linked in INDEX.md/MOC.md"
+      ],
+      "strengths": [
+        "Credible efficiency data with validated calculations"
+      ]
+    },
+    {
+      "case": "full-integration-test",
+      "overall": 68.5,
+      "authenticity": 60.0,
+      "efficiency": 100.0,
+      "insight": 60.0,
+      "completeness": 100,
+      "cross_refs": 10.0,
+      "issues": [
+        "Poor cross-referencing - not linked in INDEX.md/MOC.md"
+      ],
+      "strengths": [
+        "Credible efficiency data with validated calculations"
+      ]
+    },
+    {
+      "case": "implement-robust-feature-with-full-dor-and-tdd-compliance",
+      "overall": 68.5,
+      "authenticity": 60.0,
+      "efficiency": 100.0,
+      "insight": 60.0,
+      "completeness": 100,
+      "cross_refs": 10.0,
+      "issues": [
+        "Poor cross-referencing - not linked in INDEX.md/MOC.md"
+      ],
+      "strengths": [
+        "Credible efficiency data with validated calculations"
+      ]
+    },
+    {
+      "case": "api-monitoring",
+      "overall": 68.2,
+      "authenticity": 29.0,
+      "efficiency": 100.0,
+      "insight": 60.0,
+      "completeness": 100,
+      "cross_refs": 60.0,
+      "issues": [
+        "Low authenticity - missing concrete evidence (links, commits, file paths)"
+      ],
+      "strengths": [
+        "Credible efficiency data with validated calculations"
+      ]
+    },
+    {
+      "case": "ai-task-prioritizer",
+      "overall": 64.5,
+      "authenticity": 30.0,
+      "efficiency": 80.0,
+      "insight": 80.0,
+      "completeness": 100,
+      "cross_refs": 40.0,
+      "issues": [
+        "Low authenticity - missing concrete evidence (links, commits, file paths)"
+      ],
+      "strengths": []
+    },
+    {
+      "case": "data-pipeline",
+      "overall": 64.5,
+      "authenticity": 25.0,
+      "efficiency": 100.0,
+      "insight": 50.0,
+      "completeness": 100,
+      "cross_refs": 55.0,
+      "issues": [
+        "Low authenticity - missing concrete evidence (links, commits, file paths)"
+      ],
+      "strengths": [
+        "Credible efficiency data with validated calculations"
+      ]
+    },
+    {
+      "case": "ai-native-coverage-governance",
+      "overall": 61.5,
+      "authenticity": 40.0,
+      "efficiency": 80.0,
+      "insight": 75.0,
+      "completeness": 100,
+      "cross_refs": 10.0,
+      "issues": [
+        "Low authenticity - missing concrete evidence (links, commits, file paths)",
+        "Poor cross-referencing - not linked in INDEX.md/MOC.md"
+      ],
+      "strengths": []
+    },
+    {
+      "case": "ast-parser-precision-coverage",
+      "overall": 59.5,
+      "authenticity": 40.0,
+      "efficiency": 80.0,
+      "insight": 65.0,
+      "completeness": 100,
+      "cross_refs": 10.0,
+      "issues": [
+        "Low authenticity - missing concrete evidence (links, commits, file paths)",
+        "Poor cross-referencing - not linked in INDEX.md/MOC.md"
+      ],
+      "strengths": []
+    },
+    {
+      "case": "ai-context-sync-development",
+      "overall": 57.5,
+      "authenticity": 10.0,
+      "efficiency": 80.0,
+      "insight": 70.0,
+      "completeness": 100,
+      "cross_refs": 40.0,
+      "issues": [
+        "Low authenticity - missing concrete evidence (links, commits, file paths)"
+      ],
+      "strengths": []
+    },
+    {
+      "case": "api-design-implementation",
+      "overall": 56.2,
+      "authenticity": 10.0,
+      "efficiency": 80.0,
+      "insight": 60.0,
+      "completeness": 90.0,
+      "cross_refs": 55.0,
+      "issues": [
+        "Low authenticity - missing concrete evidence (links, commits, file paths)"
+      ],
+      "strengths": []
+    },
+    {
+      "case": "microservice-architecture",
+      "overall": 55.0,
+      "authenticity": 10.0,
+      "efficiency": 80.0,
+      "insight": 80.0,
+      "completeness": 100,
+      "cross_refs": 10.0,
+      "issues": [
+        "Low authenticity - missing concrete evidence (links, commits, file paths)",
+        "Poor cross-referencing - not linked in INDEX.md/MOC.md"
+      ],
+      "strengths": []
+    },
+    {
+      "case": "mobile-app-development",
+      "overall": 55.0,
+      "authenticity": 10.0,
+      "efficiency": 80.0,
+      "insight": 80.0,
+      "completeness": 100,
+      "cross_refs": 10.0,
+      "issues": [
+        "Low authenticity - missing concrete evidence (links, commits, file paths)",
+        "Poor cross-referencing - not linked in INDEX.md/MOC.md"
+      ],
+      "strengths": []
+    },
+    {
+      "case": "security-audit",
+      "overall": 55.0,
+      "authenticity": 10.0,
+      "efficiency": 80.0,
+      "insight": 80.0,
+      "completeness": 100,
+      "cross_refs": 10.0,
+      "issues": [
+        "Low authenticity - missing concrete evidence (links, commits, file paths)",
+        "Poor cross-referencing - not linked in INDEX.md/MOC.md"
+      ],
+      "strengths": []
+    },
+    {
+      "case": "devops-pipeline",
+      "overall": 54.0,
+      "authenticity": 10.0,
+      "efficiency": 80.0,
+      "insight": 75.0,
+      "completeness": 100,
+      "cross_refs": 10.0,
+      "issues": [
+        "Low authenticity - missing concrete evidence (links, commits, file paths)",
+        "Poor cross-referencing - not linked in INDEX.md/MOC.md"
+      ],
+      "strengths": []
+    },
+    {
+      "case": "intelligent-customer-service",
+      "overall": 54.0,
+      "authenticity": 10.0,
+      "efficiency": 80.0,
+      "insight": 75.0,
+      "completeness": 100,
+      "cross_refs": 10.0,
+      "issues": [
+        "Low authenticity - missing concrete evidence (links, commits, file paths)",
+        "Poor cross-referencing - not linked in INDEX.md/MOC.md"
+      ],
+      "strengths": []
+    },
+    {
+      "case": "ml-model-deployment",
+      "overall": 54.0,
+      "authenticity": 10.0,
+      "efficiency": 80.0,
+      "insight": 75.0,
+      "completeness": 100,
+      "cross_refs": 10.0,
+      "issues": [
+        "Low authenticity - missing concrete evidence (links, commits, file paths)",
+        "Poor cross-referencing - not linked in INDEX.md/MOC.md"
+      ],
+      "strengths": []
+    },
+    {
+      "case": "copilot-test-generation",
+      "overall": 53.5,
+      "authenticity": 22.0,
+      "efficiency": 80.0,
+      "insight": 65.0,
+      "completeness": 90.0,
+      "cross_refs": 10.0,
+      "issues": [
+        "Low authenticity - missing concrete evidence (links, commits, file paths)",
+        "Poor cross-referencing - not linked in INDEX.md/MOC.md"
+      ],
+      "strengths": []
+    },
+    {
+      "case": "api-doc-generation",
+      "overall": 53.0,
+      "authenticity": 10.0,
+      "efficiency": 80.0,
+      "insight": 70.0,
+      "completeness": 100,
+      "cross_refs": 10.0,
+      "issues": [
+        "Low authenticity - missing concrete evidence (links, commits, file paths)",
+        "Poor cross-referencing - not linked in INDEX.md/MOC.md"
+      ],
+      "strengths": []
+    },
+    {
+      "case": "automated-testing-platform",
+      "overall": 53.0,
+      "authenticity": 10.0,
+      "efficiency": 80.0,
+      "insight": 70.0,
+      "completeness": 100,
+      "cross_refs": 10.0,
+      "issues": [
+        "Low authenticity - missing concrete evidence (links, commits, file paths)",
+        "Poor cross-referencing - not linked in INDEX.md/MOC.md"
+      ],
+      "strengths": []
+    },
+    {
+      "case": "code-review-system",
+      "overall": 53.0,
+      "authenticity": 10.0,
+      "efficiency": 80.0,
+      "insight": 70.0,
+      "completeness": 100,
+      "cross_refs": 10.0,
+      "issues": [
+        "Low authenticity - missing concrete evidence (links, commits, file paths)",
+        "Poor cross-referencing - not linked in INDEX.md/MOC.md"
+      ],
+      "strengths": []
+    },
+    {
+      "case": "realtime-data-processing",
+      "overall": 53.0,
+      "authenticity": 10.0,
+      "efficiency": 80.0,
+      "insight": 70.0,
+      "completeness": 100,
+      "cross_refs": 10.0,
+      "issues": [
+        "Low authenticity - missing concrete evidence (links, commits, file paths)",
+        "Poor cross-referencing - not linked in INDEX.md/MOC.md"
+      ],
+      "strengths": []
+    },
+    {
+      "case": "claude-architecture-design",
+      "overall": 49.5,
+      "authenticity": 10.0,
+      "efficiency": 80.0,
+      "insight": 60.0,
+      "completeness": 90.0,
+      "cross_refs": 10.0,
+      "issues": [
+        "Low authenticity - missing concrete evidence (links, commits, file paths)",
+        "Poor cross-referencing - not linked in INDEX.md/MOC.md"
+      ],
+      "strengths": []
+    },
+    {
+      "case": "cursor-refactoring",
+      "overall": 49.5,
+      "authenticity": 10.0,
+      "efficiency": 80.0,
+      "insight": 60.0,
+      "completeness": 90.0,
+      "cross_refs": 10.0,
+      "issues": [
+        "Low authenticity - missing concrete evidence (links, commits, file paths)",
+        "Poor cross-referencing - not linked in INDEX.md/MOC.md"
+      ],
+      "strengths": []
+    },
+    {
+      "case": "multi-agent-automation",
+      "overall": 49.5,
+      "authenticity": 10.0,
+      "efficiency": 80.0,
+      "insight": 60.0,
+      "completeness": 90.0,
+      "cross_refs": 10.0,
+      "issues": [
+        "Low authenticity - missing concrete evidence (links, commits, file paths)",
+        "Poor cross-referencing - not linked in INDEX.md/MOC.md"
+      ],
+      "strengths": []
+    },
+    {
+      "case": "aiops-automation",
+      "overall": 41.5,
+      "authenticity": 10.0,
+      "efficiency": 80.0,
+      "insight": 20.0,
+      "completeness": 90.0,
+      "cross_refs": 10.0,
+      "issues": [
+        "Low authenticity - missing concrete evidence (links, commits, file paths)",
+        "Insights are vague or insufficient - need specific, actionable findings",
+        "Poor cross-referencing - not linked in INDEX.md/MOC.md"
+      ],
+      "strengths": []
+    },
+    {
+      "case": "api-design",
+      "overall": 41.5,
+      "authenticity": 10.0,
+      "efficiency": 80.0,
+      "insight": 20.0,
+      "completeness": 90.0,
+      "cross_refs": 10.0,
+      "issues": [
+        "Low authenticity - missing concrete evidence (links, commits, file paths)",
+        "Insights are vague or insufficient - need specific, actionable findings",
+        "Poor cross-referencing - not linked in INDEX.md/MOC.md"
+      ],
+      "strengths": []
+    },
+    {
+      "case": "code-review",
+      "overall": 41.5,
+      "authenticity": 10.0,
+      "efficiency": 80.0,
+      "insight": 20.0,
+      "completeness": 90.0,
+      "cross_refs": 10.0,
+      "issues": [
+        "Low authenticity - missing concrete evidence (links, commits, file paths)",
+        "Insights are vague or insufficient - need specific, actionable findings",
+        "Poor cross-referencing - not linked in INDEX.md/MOC.md"
+      ],
+      "strengths": []
+    },
+    {
+      "case": "data-migration",
+      "overall": 41.5,
+      "authenticity": 10.0,
+      "efficiency": 80.0,
+      "insight": 20.0,
+      "completeness": 90.0,
+      "cross_refs": 10.0,
+      "issues": [
+        "Low authenticity - missing concrete evidence (links, commits, file paths)",
+        "Insights are vague or insufficient - need specific, actionable findings",
+        "Poor cross-referencing - not linked in INDEX.md/MOC.md"
+      ],
+      "strengths": []
+    },
+    {
+      "case": "database-performance-optimization",
+      "overall": 41.5,
+      "authenticity": 10.0,
+      "efficiency": 80.0,
+      "insight": 20.0,
+      "completeness": 90.0,
+      "cross_refs": 10.0,
+      "issues": [
+        "Low authenticity - missing concrete evidence (links, commits, file paths)",
+        "Insights are vague or insufficient - need specific, actionable findings",
+        "Poor cross-referencing - not linked in INDEX.md/MOC.md"
+      ],
+      "strengths": []
+    },
+    {
+      "case": "frontend-performance-optimization",
+      "overall": 41.5,
+      "authenticity": 10.0,
+      "efficiency": 80.0,
+      "insight": 20.0,
+      "completeness": 90.0,
+      "cross_refs": 10.0,
+      "issues": [
+        "Low authenticity - missing concrete evidence (links, commits, file paths)",
+        "Insights are vague or insufficient - need specific, actionable findings",
+        "Poor cross-referencing - not linked in INDEX.md/MOC.md"
+      ],
+      "strengths": []
+    },
+    {
+      "case": "legacy-system-refactoring",
+      "overall": 41.5,
+      "authenticity": 10.0,
+      "efficiency": 80.0,
+      "insight": 20.0,
+      "completeness": 90.0,
+      "cross_refs": 10.0,
+      "issues": [
+        "Low authenticity - missing concrete evidence (links, commits, file paths)",
+        "Insights are vague or insufficient - need specific, actionable findings",
+        "Poor cross-referencing - not linked in INDEX.md/MOC.md"
+      ],
+      "strengths": []
+    },
+    {
+      "case": "security-vulnerability-fix",
+      "overall": 41.5,
+      "authenticity": 10.0,
+      "efficiency": 80.0,
+      "insight": 20.0,
+      "completeness": 90.0,
+      "cross_refs": 10.0,
+      "issues": [
+        "Low authenticity - missing concrete evidence (links, commits, file paths)",
+        "Insights are vague or insufficient - need specific, actionable findings",
+        "Poor cross-referencing - not linked in INDEX.md/MOC.md"
+      ],
+      "strengths": []
+    },
+    {
+      "case": "technical-documentation",
+      "overall": 41.5,
+      "authenticity": 10.0,
+      "efficiency": 80.0,
+      "insight": 20.0,
+      "completeness": 90.0,
+      "cross_refs": 10.0,
+      "issues": [
+        "Low authenticity - missing concrete evidence (links, commits, file paths)",
+        "Insights are vague or insufficient - need specific, actionable findings",
+        "Poor cross-referencing - not linked in INDEX.md/MOC.md"
+      ],
+      "strengths": []
+    },
+    {
+      "case": "unit-testing",
+      "overall": 41.5,
+      "authenticity": 10.0,
+      "efficiency": 80.0,
+      "insight": 20.0,
+      "completeness": 90.0,
+      "cross_refs": 10.0,
+      "issues": [
+        "Low authenticity - missing concrete evidence (links, commits, file paths)",
+        "Insights are vague or insufficient - need specific, actionable findings",
+        "Poor cross-referencing - not linked in INDEX.md/MOC.md"
+      ],
+      "strengths": []
+    }
+  ]
+}

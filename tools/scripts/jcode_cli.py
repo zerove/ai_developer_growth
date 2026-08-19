@@ -172,7 +172,7 @@ def cmd_semantic_graph(args: argparse.Namespace) -> int:
 
 def cmd_arch_visualizer(args: argparse.Namespace) -> int:
     """Generate architecture visualizations."""
-    from tools.scripts.arch_visualizer import scan_python_imports, generate_mermaid_diagram
+    from tools.scripts.arch_visualizer import generate_mermaid_diagram, scan_python_imports
 
     graph = scan_python_imports(get_project_root())
     mermaid = generate_mermaid_diagram(graph)

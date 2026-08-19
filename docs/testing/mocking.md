@@ -59,6 +59,7 @@ updated: 2026-07-21
 import respx
 import httpx
 
+
 @respx.mock
 def test_create_payment():
     respx.post("https://api.stripe.com/v1/payments").mock(
@@ -81,6 +82,7 @@ class InMemoryUserRepo(UserRepository):
     def find(self, id):
         return self._users.get(id)
 
+
 def test_user_service_creates_user():
     repo = InMemoryUserRepo()
     service = UserService(repo)
@@ -94,12 +96,19 @@ def test_user_service_creates_user():
 class TimeProvider:
     def now(self) -> datetime: ...
 
+
 class SystemTimeProvider(TimeProvider):
-    def now(self): return datetime.utcnow()
+    def now(self):
+        return datetime.utcnow()
+
 
 class FixedTimeProvider(TimeProvider):
-    def __init__(self, fixed): self.fixed = fixed
-    def now(self): return self.fixed
+    def __init__(self, fixed):
+        self.fixed = fixed
+
+    def now(self):
+        return self.fixed
+
 
 # 测试时注入 FixedTimeProvider
 ```
@@ -116,6 +125,7 @@ class InMemoryMessageBus(MessageBus):
 
     def subscribe(self, handler, event_type):
         self.handlers[event_type] = handler
+
 
 # 测试验证
 def test_order_created_emits_event():
@@ -220,11 +230,12 @@ apiClient.get.mockImplementation(async (url) => {
 ```python
 # 使用 Pact
 def test_consumer_pact(pact):
-    (pact
-     .given("user exists")
-     .upon_receiving("request for user")
-     .with_request("GET", "/users/1")
-     .will_respond_with(200, body={"id": 1, "name": "John"}))
+    (
+        pact.given("user exists")
+        .upon_receiving("request for user")
+        .with_request("GET", "/users/1")
+        .will_respond_with(200, body={"id": 1, "name": "John"})
+    )
 
     with pact:
         client = UserClient(pact.uri)

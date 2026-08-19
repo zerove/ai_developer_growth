@@ -23,10 +23,12 @@ updated: 2026-07-21
 from enum import Enum
 from functools import wraps
 
+
 class Role(Enum):
     VIEWER = "viewer"
     EDITOR = "editor"
     ADMIN = "admin"
+
 
 ROLE_HIERARCHY = {
     Role.ADMIN: {Role.EDITOR, Role.VIEWER},
@@ -34,9 +36,11 @@ ROLE_HIERARCHY = {
     Role.VIEWER: set(),
 }
 
+
 def has_role(user_role: Role, required: Role) -> bool:
     """检查用户角色是否满足要求（支持层级）"""
     return user_role == required or required in ROLE_HIERARCHY[user_role]
+
 
 # ❌ 禁止: 硬编码角色判断
 if user.role == "admin":
@@ -56,12 +60,14 @@ def require_role(required: Role):
             if not has_role(current_user.role, required):
                 raise PermissionError(f"需要 {required.value} 权限")
             return func(current_user, *args, **kwargs)
+
         return wrapper
+
     return decorator
 
+
 @require_role(Role.EDITOR)
-def update_post(current_user, post_id, data):
-    ...
+def update_post(current_user, post_id, data): ...
 ```
 
 ---
@@ -75,25 +81,27 @@ def update_post(current_user, post_id, data):
 from dataclasses import dataclass
 from typing import Callable
 
+
 @dataclass
 class AuthContext:
-    user: dict    # {role, department, clearance_level}
+    user: dict  # {role, department, clearance_level}
     resource: dict  # {owner_id, sensitivity, classification}
-    action: str     # "read", "write", "delete"
+    action: str  # "read", "write", "delete"
     environment: dict  # {time, ip, device_type}
+
 
 Policy = Callable[[AuthContext], bool]
 
+
 def owner_or_admin_policy(ctx: AuthContext) -> bool:
     """资源所有者或管理员可操作"""
-    return (
-        ctx.user["role"] == "admin"
-        or ctx.resource["owner_id"] == ctx.user["id"]
-    )
+    return ctx.user["role"] == "admin" or ctx.resource["owner_id"] == ctx.user["id"]
+
 
 def time_restricted_policy(ctx: AuthContext) -> bool:
     """工作时间内可访问"""
     return ctx.environment["time"].hour in range(9, 18)
+
 
 class PolicyEngine:
     def __init__(self):
@@ -105,6 +113,7 @@ class PolicyEngine:
 
     def evaluate(self, ctx: AuthContext) -> bool:
         return all(p(ctx) for p in self.policies)
+
 
 # 使用
 engine = PolicyEngine()
@@ -157,6 +166,7 @@ def generate_token(user) -> str:
 from fastapi import Depends, HTTPException, Security
 from fastapi.security import SecurityScopes
 
+
 async def verify_scope(
     security_scopes: SecurityScopes,
     token: str = Depends(oauth2_scheme),
@@ -183,6 +193,7 @@ async def verify_scope(
 # ✅ 正确: 使用 OPA 做策略引擎
 import httpx
 
+
 class OPAClient:
     def __init__(self, addr: str = "http://localhost:8181"):
         self.addr = addr
@@ -195,13 +206,16 @@ class OPAClient:
             )
             return resp.json().get("result", False)
 
+
 # 使用
 async def authorize(user, resource, action):
-    allowed = await opa_client.check({
-        "user": {"role": user.role, "department": user.dept},
-        "resource": {"type": resource.type, "owner": resource.owner_id},
-        "action": action,
-    })
+    allowed = await opa_client.check(
+        {
+            "user": {"role": user.role, "department": user.dept},
+            "resource": {"type": resource.type, "owner": resource.owner_id},
+            "action": action,
+        }
+    )
     if not allowed:
         raise PermissionError("OPA 策略拒绝")
 ```

@@ -86,6 +86,7 @@ def get_user(user_id):
     query = "SELECT * FROM users WHERE id = %s"
     return db.execute(query, (user_id,))
 
+
 # 安全的输出
 def render_profile(user):
     return escape_html(user.name)

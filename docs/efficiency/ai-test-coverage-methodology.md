@@ -71,6 +71,7 @@ for p,i in sorted(d['files'].items(), key=lambda x: x[1]['summary']['percent_cov
 ```python
 # 内部导入（模块内 import）：直接注入模块属性
 import tools.scripts.module as m
+
 m.ExternalClass = MagicMock()
 
 # 外部依赖：monkeypatch.setattr

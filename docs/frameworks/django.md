@@ -45,20 +45,20 @@ myapp/
 ```python
 # config/settings/base.py
 INSTALLED_APPS = [
-    'django.contrib.admin',
-    'django.contrib.auth',
+    "django.contrib.admin",
+    "django.contrib.auth",
     # 第三方
-    'rest_framework',
+    "rest_framework",
     # 本地
-    'apps.users',
-    'apps.posts',
+    "apps.users",
+    "apps.posts",
 ]
 
 # config/settings/production.py
 from .base import *
 
 DEBUG = False
-ALLOWED_HOSTS = ['example.com']
+ALLOWED_HOSTS = ["example.com"]
 ```
 
 ---
@@ -71,26 +71,28 @@ ALLOWED_HOSTS = ['example.com']
 from django.db import models
 from django.contrib.auth.models import AbstractUser
 
+
 # ✅ 正确
 class User(AbstractUser):
     email = models.EmailField(unique=True)
-    bio = models.TextField(blank=True, default='')
+    bio = models.TextField(blank=True, default="")
 
     class Meta:
-        ordering = ['-date_joined']
+        ordering = ["-date_joined"]
 
     def __str__(self):
         return self.email
 
+
 class Post(models.Model):
-    author = models.ForeignKey(User, on_delete=models.CASCADE, related_name='posts')
+    author = models.ForeignKey(User, on_delete=models.CASCADE, related_name="posts")
     title = models.CharField(max_length=200)
     content = models.TextField()
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
-        ordering = ['-created_at']
+        ordering = ["-created_at"]
 
     def __str__(self):
         return self.title
@@ -102,6 +104,7 @@ class Post(models.Model):
 # ❌ 禁止: 无 related_name
 class Post(models.Model):
     author = models.ForeignKey(User, on_delete=models.CASCADE)  # 应添加 related_name
+
 
 # ❌ 禁止: 无 __str__
 class Post(models.Model):
@@ -123,13 +126,14 @@ from .models import User
 from .serializers import UserSerializer
 from .permissions import IsOwnerOrReadOnly
 
+
 # ✅ 正确
 class UserViewSet(viewsets.ModelViewSet):
     queryset = User.objects.all()
     serializer_class = UserSerializer
     permission_classes = [IsOwnerOrReadOnly]
 
-    @action(detail=False, methods=['get'])
+    @action(detail=False, methods=["get"])
     def me(self, request):
         serializer = self.get_serializer(request.user)
         return Response(serializer.data)
@@ -141,10 +145,11 @@ class UserViewSet(viewsets.ModelViewSet):
 from django.http import JsonResponse
 from django.views.decorators.http import require_GET
 
+
 # ✅ 正确
 @require_GET
 def health_check(request):
-    return JsonResponse({'status': 'ok'})
+    return JsonResponse({"status": "ok"})
 ```
 
 ---
@@ -157,22 +162,24 @@ def health_check(request):
 from rest_framework import serializers
 from .models import User, Post
 
+
 # ✅ 正确
 class PostSerializer(serializers.ModelSerializer):
     author = serializers.StringRelatedField()
 
     class Meta:
         model = Post
-        fields = ['id', 'title', 'content', 'author', 'created_at']
-        read_only_fields = ['id', 'created_at']
+        fields = ["id", "title", "content", "author", "created_at"]
+        read_only_fields = ["id", "created_at"]
+
 
 class UserSerializer(serializers.ModelSerializer):
     posts = PostSerializer(many=True, read_only=True)
 
     class Meta:
         model = User
-        fields = ['id', 'email', 'bio', 'posts']
-        read_only_fields = ['id']
+        fields = ["id", "email", "bio", "posts"]
+        read_only_fields = ["id"]
 ```
 
 ### 验证
@@ -184,7 +191,7 @@ class CreateUserSerializer(serializers.Serializer):
 
     def validate_email(self, value):
         if User.objects.filter(email=value).exists():
-            raise serializers.ValidationError('Email already exists')
+            raise serializers.ValidationError("Email already exists")
         return value
 
     def create(self, validated_data):
@@ -218,9 +225,10 @@ class RequestLoggingMiddleware:
 from django.contrib.auth.decorators import login_required
 from django.views.decorators.http import require_http_methods
 
+
 # ✅ 正确
 @login_required
-@require_http_methods(['GET', 'POST'])
+@require_http_methods(["GET", "POST"])
 def my_view(request):
     pass
 ```
@@ -235,14 +243,12 @@ def my_view(request):
 from django.test import TestCase
 from .models import User
 
+
 class UserModelTest(TestCase):
     def test_create_user(self):
-        user = User.objects.create_user(
-            email='test@example.com',
-            password='testpass123'
-        )
-        self.assertEqual(user.email, 'test@example.com')
-        self.assertTrue(user.check_password('testpass123'))
+        user = User.objects.create_user(email="test@example.com", password="testpass123")
+        self.assertEqual(user.email, "test@example.com")
+        self.assertTrue(user.check_password("testpass123"))
 ```
 
 ### API 测试
@@ -251,14 +257,15 @@ class UserModelTest(TestCase):
 from rest_framework.test import APITestCase
 from rest_framework import status
 
+
 class UserAPITest(APITestCase):
     def test_list_users(self):
-        response = self.client.get('/api/users/')
+        response = self.client.get("/api/users/")
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
     def test_create_user(self):
-        data = {'email': 'test@example.com', 'password': 'testpass123'}
-        response = self.client.post('/api/users/', data)
+        data = {"email": "test@example.com", "password": "testpass123"}
+        response = self.client.post("/api/users/", data)
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
 ```
 
@@ -291,13 +298,14 @@ User.objects.filter(id=user_id)
 
 ```python
 # ❌ 禁止
-SECRET_KEY = 'YOUR_API_KEY_HERE'
+SECRET_KEY = "YOUR_API_KEY_HERE"
 
 # ✅ 正确
 import os
-SECRET_KEY = os.environ.get('DJANGO_SECRET_KEY')
+
+SECRET_KEY = os.environ.get("DJANGO_SECRET_KEY")
 if not SECRET_KEY:
-    raise ValueError('DJANGO_SECRET_KEY not set')
+    raise ValueError("DJANGO_SECRET_KEY not set")
 ```
 
 ---

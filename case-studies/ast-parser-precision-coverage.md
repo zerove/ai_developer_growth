@@ -77,6 +77,7 @@ def _test_lang(lang, code, expected_name):
     funcs = parser.extract_functions(tree, lang)
     assert any(f.name == expected_name for f in funcs)
 
+
 _test_lang("python", "def foo(): pass", "foo")
 _test_lang("typescript", "function foo(): void {}", "foo")
 _test_lang("rust", "fn foo() {}", "foo")

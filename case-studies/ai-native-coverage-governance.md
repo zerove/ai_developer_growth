@@ -56,17 +56,21 @@ date: "2026-08-04"
 ```python
 # 使用 monkeypatch 直接在模块层注入 Mock
 import tools.scripts.jcode_ai_native_workflow as jwn
+
 jwn.AuditAttestationLedger = MagicMock()
 jwn.DoRChecker = MagicMock(return_value=MagicMock(...))
 ```
 
 ### 2. 多语言测试参数化
 ```python
-@pytest.mark.parametrize("lang,code,expected", [
-    ("python", "def foo(): pass", "foo"),
-    ("typescript", "function foo(): void {}", "foo"),
-    ("rust", "fn foo() {}", "foo"),
-])
+@pytest.mark.parametrize(
+    "lang,code,expected",
+    [
+        ("python", "def foo(): pass", "foo"),
+        ("typescript", "function foo(): void {}", "foo"),
+        ("rust", "fn foo() {}", "foo"),
+    ],
+)
 def test_cross_lang(lang, code, expected):
     parser = ASTParser()
     funcs = parser.extract_functions(parser.parse(code, lang), lang)

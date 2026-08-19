@@ -2,9 +2,9 @@
 
 from __future__ import annotations
 
-from agents.base import BaseAgent, MockLLM
-from config import AgentConfig
-from protocol import AgentResponse, Message, MessageRole
+from .base import BaseAgent, MockLLM
+from ..config import AgentConfig
+from ..protocol import AgentResponse, Message, MessageRole
 
 
 class CoderAgent(BaseAgent):

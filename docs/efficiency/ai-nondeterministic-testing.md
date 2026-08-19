@@ -112,6 +112,7 @@ class UserRepository:
 ```python
 import pytest
 
+
 class TestUserRepositoryContract:
     """验证 AI 生成的 UserRepository 实现是否满足契约"""
 
@@ -147,6 +148,7 @@ class TestUserRepositoryContract:
 
 ```python
 from hypothesis import given, strategies as st
+
 
 class TestSortProperties:
     """属性测试: 排序函数的不变量"""
@@ -185,6 +187,7 @@ class TestSortProperties:
 import atheris
 import sys
 
+
 def fuzz_handler(data):
     """模糊测试处理器"""
     fdp = atheris.FuzzedDataProvider(data)
@@ -209,6 +212,7 @@ def fuzz_handler(data):
     except Exception as e:
         # 非预期异常 - 可能是 Bug
         raise
+
 
 # 运行模糊测试
 atheris.Setup(sys.argv, fuzz_handler)
@@ -399,6 +403,7 @@ jobs:
 **分类**: 治理层
 
 **相关文档
+- [[GOVERNANCE|通用治理标准]]
 - [[GOVERNANCE|通用治理标准]]**:
 
 - [[docs/efficiency/ai-code-generation-quality|代码质量]]

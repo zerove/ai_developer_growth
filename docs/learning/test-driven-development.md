@@ -111,6 +111,7 @@ def test_[功能]_[条件]_[结果]():
 def test_add_positive_numbers_returns_sum():
     assert add(1, 2) == 3
 
+
 def test_add_negative_numbers_returns_sum():
     assert add(-1, -2) == -3
 ```
@@ -136,11 +137,12 @@ def test_example():
 ```python
 from unittest.mock import Mock, patch
 
+
 def test_with_mock():
-    with patch('module.external_api') as mock_api:
-        mock_api.return_value = {'status': 'ok'}
+    with patch("module.external_api") as mock_api:
+        mock_api.return_value = {"status": "ok"}
         result = call_external_api()
-        assert result == {'status': 'ok'}
+        assert result == {"status": "ok"}
 ```
 
 ## TDD 好处

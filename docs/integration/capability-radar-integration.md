@@ -200,6 +200,7 @@ from datetime import datetime
 from capability_radar.src.assessment import AssessmentEngine
 from capability_radar.src.capability_model import Dimension, Level
 
+
 def collect_team_radar(team_name: str, members: list):
     """收集团队成员雷达数据"""
     engine = AssessmentEngine()
@@ -222,19 +223,25 @@ def collect_team_radar(team_name: str, members: list):
     report_dir.mkdir(parents=True, exist_ok=True)
 
     report_file = report_dir / f"team-radar-{datetime.now().strftime('%Y%m%d')}.json"
-    with open(report_file, 'w') as f:
-        json.dump({
-            "team": team_name,
-            "date": datetime.now().isoformat(),
-            "members": len(results),
-            "radar": team_radar,
-            "individual": results
-        }, f, indent=2, ensure_ascii=False)
+    with open(report_file, "w") as f:
+        json.dump(
+            {
+                "team": team_name,
+                "date": datetime.now().isoformat(),
+                "members": len(results),
+                "radar": team_radar,
+                "individual": results,
+            },
+            f,
+            indent=2,
+            ensure_ascii=False,
+        )
 
     # 生成 Markdown 报告
     generate_team_report(team_radar, team_name, report_dir)
 
     print(f"✅ 团队雷达报告已生成: {report_file}")
+
 
 def aggregate_team_radar(individual_results):
     """聚合团队雷达 (匿名平均)"""
@@ -247,10 +254,11 @@ def aggregate_team_radar(individual_results):
             "average": sum(scores) / len(scores),
             "min": min(scores),
             "max": max(scores),
-            "distribution": {f"L{i}": scores.count(i) for i in range(5)}
+            "distribution": {f"L{i}": scores.count(i) for i in range(5)},
         }
 
     return aggregated
+
 
 def generate_team_report(team_radar, team_name, output_dir):
     """生成团队雷达 Markdown 报告"""
@@ -258,7 +266,7 @@ def generate_team_report(team_radar, team_name, output_dir):
         f"# {team_name} 团队能力雷达报告",
         f"\n**生成时间**: {datetime.now().strftime('%Y-%m-%d')}",
         f"**参与人数**: {len(team_radar.get('individual', {}))}",
-        "\n## 📊 团队雷达概览\n"
+        "\n## 📊 团队雷达概览\n",
     ]
 
     for dim_name, data in team_radar.items():
@@ -267,19 +275,22 @@ def generate_team_report(team_radar, team_name, output_dir):
         bar = "█" * int(data["average"] * 5) + "░" * (20 - int(data["average"] * 5))
         lines.append(f"- **{dim_name}**: {bar} {data['average']:.2f}")
 
-    lines.extend([
-        "\n## ⚠️ 团队短板识别",
-        f"最弱维度: {min(team_radar, key=lambda k: team_radar[k]['average'])}",
-        f"最强维度: {max(team_radar, key=lambda k: team_radar[k]['average'])}",
-        "\n## 📋 建议行动",
-        "1. 针对最弱维度安排专项培训",
-        "2. 结对编程/Code Review 重点关注弱项",
-        "3. 邀请内部专家分享强项经验",
-    ])
+    lines.extend(
+        [
+            "\n## ⚠️ 团队短板识别",
+            f"最弱维度: {min(team_radar, key=lambda k: team_radar[k]['average'])}",
+            f"最强维度: {max(team_radar, key=lambda k: team_radar[k]['average'])}",
+            "\n## 📋 建议行动",
+            "1. 针对最弱维度安排专项培训",
+            "2. 结对编程/Code Review 重点关注弱项",
+            "3. 邀请内部专家分享强项经验",
+        ]
+    )
 
     report_file = output_dir / f"team-radar-report-{datetime.now().strftime('%Y%m%d')}.md"
     report_file.write_text("\n".join(lines), encoding="utf-8")
     print(f"✅ Markdown 报告已生成: {report_file}")
+
 
 if __name__ == "__main__":
     # 示例用法

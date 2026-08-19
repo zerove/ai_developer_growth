@@ -117,6 +117,7 @@ Config → Scheduler → Extractor Plugin → Transformer → Loader Plugin → 
 from abc import ABC, abstractmethod
 from pathlib import Path
 
+
 class BaseExtractor(ABC):
     """数据提取插件的抽象基类。"""
 
@@ -124,6 +125,7 @@ class BaseExtractor(ABC):
     async def extract(self, config: dict) -> AsyncIterator[dict]:
         """流式提取数据，每次 yield 一行记录。"""
         ...
+
 
 class CSVExtractor(BaseExtractor):
     """CSV 文件提取器，支持流式读取和编码检测。"""

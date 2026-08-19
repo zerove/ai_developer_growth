@@ -61,39 +61,41 @@ AI 重构 = 代码分析 + 安全策略 + 渐进改进
 ```python
 def process_order(order):
     # 验证订单
-    if order['status'] != 'pending':
+    if order["status"] != "pending":
         raise ValueError("Invalid status")
-    if order['amount'] <= 0:
+    if order["amount"] <= 0:
         raise ValueError("Invalid amount")
 
     # 计算折扣
-    if order['user_type'] == 'vip':
+    if order["user_type"] == "vip":
         discount = 0.2
     else:
         discount = 0.1
 
     # 处理订单
-    order['amount'] *= (1 - discount)
-    order['status'] = 'processed'
+    order["amount"] *= 1 - discount
+    order["status"] = "processed"
     return order
 ```
 
 **重构后:**
 ```python
 def validate_order(order):
-    if order['status'] != 'pending':
+    if order["status"] != "pending":
         raise ValueError("Invalid status")
-    if order['amount'] <= 0:
+    if order["amount"] <= 0:
         raise ValueError("Invalid amount")
 
+
 def calculate_discount(user_type):
-    return 0.2 if user_type == 'vip' else 0.1
+    return 0.2 if user_type == "vip" else 0.1
+
 
 def process_order(order):
     validate_order(order)
-    discount = calculate_discount(order['user_type'])
-    order['amount'] *= (1 - discount)
-    order['status'] = 'processed'
+    discount = calculate_discount(order["user_type"])
+    order["amount"] *= 1 - discount
+    order["status"] = "processed"
     return order
 ```
 
@@ -110,6 +112,7 @@ def process_order(order):
 def calc(a, b):
     return a * b * 0.9
 
+
 # 重构后
 def calculate_discounted_price(original_price, quantity):
     return original_price * quantity * 0.9
@@ -122,6 +125,7 @@ def calculate_discounted_price(original_price, quantity):
 def calculate_tax(amount):
     return amount * 0.08
 
+
 def calculate_tip(amount):
     return amount * 0.15
 ```
@@ -131,8 +135,10 @@ def calculate_tip(amount):
 TAX_RATE = 0.08
 TIP_RATE = 0.15
 
+
 def calculate_tax(amount):
     return amount * TAX_RATE
+
 
 def calculate_tip(amount):
     return amount * TIP_RATE

@@ -43,20 +43,22 @@ updated: 2026-07-21
 import jwt
 from datetime import datetime, timedelta
 
+
 def generate_token(user_id: str) -> str:
     payload = {
-        'sub': user_id,
-        'iss': 'https://auth.example.com',
-        'aud': 'https://api.example.com',
-        'exp': datetime.utcnow() + timedelta(hours=1),
-        'iat': datetime.utcnow(),
-        'scope': 'read write'
+        "sub": user_id,
+        "iss": "https://auth.example.com",
+        "aud": "https://api.example.com",
+        "exp": datetime.utcnow() + timedelta(hours=1),
+        "iat": datetime.utcnow(),
+        "scope": "read write",
     }
 
-    return jwt.encode(payload, private_key, algorithm='RS256')
+    return jwt.encode(payload, private_key, algorithm="RS256")
+
 
 # ❌ 禁止: 使用 HS256
-return jwt.encode(payload, secret_key, algorithm='HS256')  # 不安全
+return jwt.encode(payload, secret_key, algorithm="HS256")  # 不安全
 ```
 
 ### Token 验证
@@ -68,15 +70,15 @@ def verify_token(token: str) -> dict:
         payload = jwt.decode(
             token,
             public_key,
-            algorithms=['RS256'],
-            issuer='https://auth.example.com',
-            audience='https://api.example.com'
+            algorithms=["RS256"],
+            issuer="https://auth.example.com",
+            audience="https://api.example.com",
         )
         return payload
     except jwt.ExpiredSignatureError:
-        raise AuthError('Token expired')
+        raise AuthError("Token expired")
     except jwt.InvalidTokenError:
-        raise AuthError('Invalid token')
+        raise AuthError("Invalid token")
 ```
 
 ---
@@ -138,33 +140,36 @@ def verify_token(token: str) -> dict:
 # ✅ 正确: 服务端 Session
 from flask import session
 
-@app.route('/login', methods=['POST'])
+
+@app.route("/login", methods=["POST"])
 def login():
     user = authenticate(request.json)
     if user:
-        session['user_id'] = user.id
+        session["user_id"] = user.id
         session.permanent = True
-        return jsonify({'success': True})
+        return jsonify({"success": True})
 
-    return jsonify({'error': 'Invalid credentials'}), 401
+    return jsonify({"error": "Invalid credentials"}), 401
+
 
 # ✅ 正确: 使用安全 Cookie
-app.config['SESSION_COOKIE_SECURE'] = True
-app.config['SESSION_COOKIE_HTTPONLY'] = True
-app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
+app.config["SESSION_COOKIE_SECURE"] = True
+app.config["SESSION_COOKIE_HTTPONLY"] = True
+app.config["SESSION_COOKIE_SAMESITE"] = "Lax"
 ```
 
 ### Session 失效
 
 ```python
 # ✅ 正确: 主动失效
-@app.route('/logout', methods=['POST'])
+@app.route("/logout", methods=["POST"])
 def logout():
     session.clear()
-    return jsonify({'success': True})
+    return jsonify({"success": True})
+
 
 # ✅ 正确: 被动失效 (超时)
-app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(hours=1)
+app.config["PERMANENT_SESSION_LIFETIME"] = timedelta(hours=1)
 ```
 
 ---
@@ -177,15 +182,19 @@ app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(hours=1)
 # ✅ 正确: 使用 bcrypt
 import bcrypt
 
+
 def hash_password(password: str) -> str:
     salt = bcrypt.gensalt(rounds=12)
     return bcrypt.hashpw(password.encode(), salt).decode()
 
+
 def verify_password(password: str, hashed: str) -> bool:
     return bcrypt.checkpw(password.encode(), hashed.encode())
 
+
 # ❌ 禁止: 使用 MD5/SHA1
 import hashlib
+
 hashed = hashlib.md5(password.encode()).hexdigest()  # 不安全
 ```
 
@@ -196,13 +205,13 @@ hashed = hashlib.md5(password.encode()).hexdigest()  # 不安全
 def validate_password(password: str) -> bool:
     if len(password) < 12:
         return False
-    if not re.search(r'[A-Z]', password):
+    if not re.search(r"[A-Z]", password):
         return False
-    if not re.search(r'[a-z]', password):
+    if not re.search(r"[a-z]", password):
         return False
-    if not re.search(r'[0-9]', password):
+    if not re.search(r"[0-9]", password):
         return False
-    if not re.search(r'[!@#$%^&*]', password):
+    if not re.search(r"[!@#$%^&*]", password):
         return False
     return True
 ```
@@ -217,12 +226,15 @@ def validate_password(password: str) -> bool:
 # ✅ 正确: TOTP 实现
 import pyotp
 
+
 def generate_totp_secret() -> str:
     return pyotp.random_base32()
 
+
 def generate_totp_url(secret: str, email: str) -> str:
     totp = pyotp.TOTP(secret)
-    return totp.provisioning_uri(email, issuer_name='MyApp')
+    return totp.provisioning_uri(email, issuer_name="MyApp")
+
 
 def verify_totp(secret: str, code: str) -> bool:
     totp = pyotp.TOTP(secret)
@@ -234,6 +246,7 @@ def verify_totp(secret: str, code: str) -> bool:
 ```python
 # ✅ 正确: 生成恢复码
 import secrets
+
 
 def generate_recovery_codes() -> list[str]:
     return [secrets.token_hex(8) for _ in range(10)]
@@ -249,8 +262,10 @@ def generate_recovery_codes() -> list[str]:
 # ✅ 正确: 生成安全的 API 密钥
 import secrets
 
+
 def generate_api_key() -> str:
     return f"sk_{secrets.token_hex(32)}"
+
 
 # ❌ 禁止: 使用可预测的密钥
 api_key = f"api_{user_id}_{timestamp}"  # 可预测
@@ -282,30 +297,24 @@ class APIKey:
 ```python
 import pytest
 
+
 @pytest.mark.asyncio
 async def test_login_success():
-    response = await client.post('/login', json={
-        'email': 'test@example.com',
-        'password': 'correct_password'
-    })
+    response = await client.post("/login", json={"email": "test@example.com", "password": "correct_password"})
     assert response.status_code == 200
-    assert 'token' in response.json()
+    assert "token" in response.json()
+
 
 @pytest.mark.asyncio
 async def test_login_failure():
-    response = await client.post('/login', json={
-        'email': 'test@example.com',
-        'password': 'wrong_password'
-    })
+    response = await client.post("/login", json={"email": "test@example.com", "password": "wrong_password"})
     assert response.status_code == 401
+
 
 @pytest.mark.asyncio
 async def test_protected_endpoint():
-    token = generate_token('user123')
-    response = await client.get(
-        '/protected',
-        headers={'Authorization': f'Bearer {token}'}
-    )
+    token = generate_token("user123")
+    response = await client.get("/protected", headers={"Authorization": f"Bearer {token}"})
     assert response.status_code == 200
 ```
 

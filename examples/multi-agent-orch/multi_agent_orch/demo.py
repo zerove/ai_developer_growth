@@ -1,25 +1,25 @@
 """Multi-agent workflow demo - demonstrates both orchestration modes.
 
 Usage:
-    python -m src.demo                    # Run both modes
-    python -m src.demo --mode waterfall   # Waterfall only
-    python -m src.demo --mode fan-out     # Fan-out only
+    python -m multi_agent_orch.demo                    # Run both modes
+    python -m multi_agent_orch.demo --mode waterfall   # Waterfall only
+    python -m multi_agent_orch.demo --mode fan-out     # Fan-out only
 """
 
 from __future__ import annotations
 
 import argparse
 
-from agents import (
+from .agents import (
     ArchitectAgent,
     CoderAgent,
     MockLLM,
     PMAgent,
     ReviewerAgent,
 )
-from config import WorkflowConfig
-from orchestration import FanOutOrchestrator, WaterfallOrchestrator
-from protocol import Message, MessageRole
+from .config import WorkflowConfig
+from .orchestration import FanOutOrchestrator, WaterfallOrchestrator
+from .protocol import Message, MessageRole
 
 
 def _print_header(title: str) -> None:

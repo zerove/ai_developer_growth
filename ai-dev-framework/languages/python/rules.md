@@ -73,9 +73,11 @@ except:
 import pytest
 from my_module import my_function
 
+
 def test_my_function_success():
     result = my_function(1, 2)
     assert result == 3
+
 
 def test_my_function_error():
     with pytest.raises(ValueError):
@@ -162,6 +164,7 @@ def add_item(item, items=[]):
     items.append(item)
     return items
 
+
 # ✅ 正确: use None as default
 def add_item(item, items=None):
     if items is None:
@@ -218,6 +221,7 @@ def test_api():
     result = call_api()
     time.sleep(5)
     assert result.status == 200
+
 
 # ✅ 正确: polling with timeout
 def test_api():

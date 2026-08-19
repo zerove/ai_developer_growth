@@ -35,6 +35,7 @@ AI 生成的代码涉及三个法律灰色地带：
 # Reviewed by: @developer
 # License: MIT (same as project)
 
+
 def process_data(items: list) -> list:
     """AI 生成的数据处理函数"""
     ...
@@ -145,6 +146,7 @@ def process_data(items: list) -> list:
 **分类**: 治理层
 
 **相关文档
+- [[GOVERNANCE|通用治理标准]]
 - [[GOVERNANCE|通用治理标准]]**:
 
 - [[docs/efficiency/ai-code-generation-quality|代码质量]]

@@ -78,8 +78,7 @@ def test_service_calls_api(mock_call):
 ```python
 # ❌ 禁止: Mock 内部实现细节
 @patch("src.service.internal_helper")
-def test_service(mock_helper):
-    ...
+def test_service(mock_helper): ...
 ```
 
 ---
@@ -88,12 +87,15 @@ def test_service(mock_helper):
 
 ```python
 # ✅ 正确: 覆盖多组输入
-@pytest.mark.parametrize("tier,total,expected", [
-    ("VIP", 1000, 150),
-    ("GOLD", 1000, 100),
-    ("SILVER", 1000, 50),
-    ("BRONZE", 1000, 0),
-])
+@pytest.mark.parametrize(
+    "tier,total,expected",
+    [
+        ("VIP", 1000, 150),
+        ("GOLD", 1000, 100),
+        ("SILVER", 1000, 50),
+        ("BRONZE", 1000, 0),
+    ],
+)
 def test_discount_tiers(tier, total, expected):
     assert DiscountService().calculate(User(tier=tier), Order(total=total)) == expected
 ```
@@ -131,6 +133,7 @@ def test_discount_tiers(tier, total, expected):
 def sample_user():
     return UserFactory.create(tier="GOLD")
 
+
 @pytest.fixture
 def discount_service():
     return DiscountService()
@@ -141,7 +144,7 @@ def discount_service():
 # test_assertions.py
 def assert_discount_applied(result, expected_pct):
     assert result.discount_pct == expected_pct
-    assert result.final_price == round(result.original * (1 - expected_pct/100), 2)
+    assert result.final_price == round(result.original * (1 - expected_pct / 100), 2)
 ```
 
 ---

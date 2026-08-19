@@ -158,10 +158,10 @@ L4 → L5: 创新 AI 应用范式，引领行业趋势
 # 能力评估脚本
 skills = {
     "prompt_engineering": 0,  # 0-5
-    "ai_collaboration": 0,    # 0-5
-    "system_design": 0,       # 0-5
-    "tool_integration": 0,    # 0-5
-    "knowledge_management": 0 # 0-5
+    "ai_collaboration": 0,  # 0-5
+    "system_design": 0,  # 0-5
+    "tool_integration": 0,  # 0-5
+    "knowledge_management": 0,  # 0-5
 }
 
 # 计算总分

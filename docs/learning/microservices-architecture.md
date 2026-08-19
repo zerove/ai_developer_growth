@@ -124,6 +124,7 @@ from pybreaker import CircuitBreaker
 
 breaker = CircuitBreaker(fail_max=5, reset_timeout=60)
 
+
 @breaker
 def call_service():
     return requests.get("http://service/api")

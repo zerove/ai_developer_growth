@@ -4,9 +4,9 @@ from __future__ import annotations
 
 from abc import ABC, abstractmethod
 
-from config import AgentConfig
-from errors import AgentFailureError
-from protocol import AgentResponse, Message, MessageRole
+from ..config import AgentConfig
+from ..errors import AgentFailureError
+from ..protocol import AgentResponse, Message, MessageRole
 
 
 class BaseAgent(ABC):

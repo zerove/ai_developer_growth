@@ -46,10 +46,7 @@ updated: 2026-07-21
 # ✅ 正确: Arrange-Act-Assert
 def test_calculate_total():
     # Arrange
-    items = [
-        {'price': 10, 'quantity': 2},
-        {'price': 20, 'quantity': 1}
-    ]
+    items = [{"price": 10, "quantity": 2}, {"price": 20, "quantity": 1}]
 
     # Act
     total = calculate_total(items)
@@ -57,9 +54,10 @@ def test_calculate_total():
     # Assert
     assert total == 40
 
+
 # ❌ 禁止: 混乱的测试
 def test_calculate_total():
-    assert calculate_total([{'price': 10, 'quantity': 2}, {'price': 20, 'quantity': 1}]) == 40
+    assert calculate_total([{"price": 10, "quantity": 2}, {"price": 20, "quantity": 1}]) == 40
 ```
 
 ### 测试命名
@@ -69,15 +67,19 @@ def test_calculate_total():
 def test_calculate_total_returns_sum_of_prices():
     pass
 
+
 def test_calculate_total_handles_empty_list():
     pass
+
 
 def test_calculate_total_raises_error_for_negative_price():
     pass
 
+
 # ❌ 禁止: 模糊的命名
 def test_total():
     pass
+
 
 def test_calculate():
     pass
@@ -110,21 +112,22 @@ def test_divide():
 # ✅ 正确: 使用测试数据库
 @pytest.fixture
 def db_session():
-    engine = create_engine('postgresql://localhost/test_db')
+    engine = create_engine("postgresql://localhost/test_db")
     Session = sessionmaker(bind=engine)
     session = Session()
     yield session
     session.rollback()
     session.close()
 
+
 def test_create_user(db_session):
-    user = User(name='John', email='john@example.com')
+    user = User(name="John", email="john@example.com")
     db_session.add(user)
     db_session.commit()
 
-    result = db_session.query(User).filter_by(email='john@example.com').first()
+    result = db_session.query(User).filter_by(email="john@example.com").first()
     assert result is not None
-    assert result.name == 'John'
+    assert result.name == "John"
 ```
 
 ### API 测试
@@ -134,26 +137,21 @@ def test_create_user(db_session):
 @pytest.mark.asyncio
 async def test_user_crud():
     # Create
-    response = await client.post('/api/users', json={
-        'name': 'John',
-        'email': 'john@example.com'
-    })
+    response = await client.post("/api/users", json={"name": "John", "email": "john@example.com"})
     assert response.status_code == 201
-    user_id = response.json()['id']
+    user_id = response.json()["id"]
 
     # Read
-    response = await client.get(f'/api/users/{user_id}')
+    response = await client.get(f"/api/users/{user_id}")
     assert response.status_code == 200
-    assert response.json()['name'] == 'John'
+    assert response.json()["name"] == "John"
 
     # Update
-    response = await client.put(f'/api/users/{user_id}', json={
-        'name': 'Jane'
-    })
+    response = await client.put(f"/api/users/{user_id}", json={"name": "Jane"})
     assert response.status_code == 200
 
     # Delete
-    response = await client.delete(f'/api/users/{user_id}')
+    response = await client.delete(f"/api/users/{user_id}")
     assert response.status_code == 204
 ```
 
@@ -212,23 +210,24 @@ test.afterEach(async ({ page }) => {
 
 ```python
 # ✅ 正确: Mock 外部依赖
-@patch('app.services.user.UserRepository')
+@patch("app.services.user.UserRepository")
 def test_create_user(mock_repo):
-    mock_repo.create.return_value = User(id='123', name='John')
+    mock_repo.create.return_value = User(id="123", name="John")
 
     service = UserService()
-    user = service.create({'name': 'John'})
+    user = service.create({"name": "John"})
 
-    assert user.id == '123'
+    assert user.id == "123"
     mock_repo.create.assert_called_once()
+
 
 # ❌ 禁止: Mock 自己的代码
 def test_create_user():
-    with patch('app.services.user.UserService.create') as mock:
-        mock.return_value = User(id='123')
+    with patch("app.services.user.UserService.create") as mock:
+        mock.return_value = User(id="123")
         service = UserService()
-        user = service.create({'name': 'John'})  # Mock 了被测试的代码
-        assert user.id == '123'
+        user = service.create({"name": "John"})  # Mock 了被测试的代码
+        assert user.id == "123"
 ```
 
 ### 测试替身
@@ -247,12 +246,13 @@ class FakeUserRepository:
         self.users[user.id] = user
         return user
 
+
 def test_get_user():
     repo = FakeUserRepository()
-    repo.create({'name': 'John'})
+    repo.create({"name": "John"})
 
-    user = repo.find_by_id('1')
-    assert user.name == 'John'
+    user = repo.find_by_id("1")
+    assert user.name == "John"
 ```
 
 ---
@@ -290,7 +290,7 @@ export default function () {
 # ✅ 正确: 使用 pytest-benchmark
 def test_database_query(benchmark):
     def query():
-        return db.query('SELECT * FROM users')
+        return db.query("SELECT * FROM users")
 
     result = benchmark(query)
     assert len(result) > 0
@@ -322,14 +322,17 @@ markers =
 import pytest
 from app import create_app
 
-@pytest.fixture(scope='session')
+
+@pytest.fixture(scope="session")
 def app():
-    app = create_app('config.TestingConfig')
+    app = create_app("config.TestingConfig")
     yield app
 
-@pytest.fixture(scope='session')
+
+@pytest.fixture(scope="session")
 def client(app):
     return app.test_client()
+
 
 @pytest.fixture(autouse=True)
 def setup_test_database():

@@ -450,12 +450,7 @@ load_docs() {
 # 记录文档引用
 def log_doc_usage(doc_name, task_type, success_rate):
     # 存储到数据库
-    db.insert({
-        'doc_name': doc_name,
-        'task_type': task_type,
-        'success_rate': success_rate,
-        'timestamp': datetime.now()
-    })
+    db.insert({"doc_name": doc_name, "task_type": task_type, "success_rate": success_rate, "timestamp": datetime.now()})
 ```
 
 ### 5.2 文档优化流程

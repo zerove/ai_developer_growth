@@ -54,15 +54,19 @@ def calculate_discount(price: float, user_type: str) -> float:
         return price * 0.9
     return price
 
+
 # AI 生成的测试用例
 def test_calculate_discount_vip():
     assert calculate_discount(100, "vip") == 80.0
 
+
 def test_calculate_discount_member():
     assert calculate_discount(100, "member") == 90.0
 
+
 def test_calculate_discount_regular():
     assert calculate_discount(100, "regular") == 100.0
+
 
 def test_calculate_discount_edge_cases():
     assert calculate_discount(0, "vip") == 0.0

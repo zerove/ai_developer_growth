@@ -51,23 +51,25 @@ from fastapi import APIRouter, Depends, HTTPException
 from app.schemas.user import UserCreate, UserResponse
 from app.services.user import UserService
 
-router = APIRouter(prefix='/users', tags=['users'])
+router = APIRouter(prefix="/users", tags=["users"])
+
 
 # ✅ 正确
-@router.get('/', response_model=list[UserResponse])
+@router.get("/", response_model=list[UserResponse])
 async def list_users(
     service: UserService = Depends(get_user_service),
 ):
     return await service.get_all()
 
-@router.get('/{user_id}', response_model=UserResponse)
+
+@router.get("/{user_id}", response_model=UserResponse)
 async def get_user(
     user_id: str,
     service: UserService = Depends(get_user_service),
 ):
     user = await service.get_by_id(user_id)
     if not user:
-        raise HTTPException(status_code=404, detail='User not found')
+        raise HTTPException(status_code=404, detail="User not found")
     return user
 ```
 
@@ -78,11 +80,11 @@ async def get_user(
 from fastapi import APIRouter
 
 api_router = APIRouter()
-api_router.include_router(users.router, prefix='/users', tags=['users'])
-api_router.include_router(posts.router, prefix='/posts', tags=['posts'])
+api_router.include_router(users.router, prefix="/users", tags=["users"])
+api_router.include_router(posts.router, prefix="/posts", tags=["posts"])
 
 # main.py
-app.include_router(api_router, prefix='/api/v1')
+app.include_router(api_router, prefix="/api/v1")
 ```
 
 ---
@@ -95,11 +97,13 @@ app.include_router(api_router, prefix='/api/v1')
 from pydantic import BaseModel, EmailStr, Field
 from datetime import datetime
 
+
 # ✅ 正确
 class UserCreate(BaseModel):
     email: EmailStr
     password: str = Field(..., min_length=8)
     name: str = Field(..., min_length=1, max_length=100)
+
 
 class UserResponse(BaseModel):
     id: str
@@ -109,6 +113,7 @@ class UserResponse(BaseModel):
 
     class Config:
         from_attributes = True
+
 
 class UserUpdate(BaseModel):
     email: EmailStr | None = None
@@ -122,6 +127,7 @@ class UserUpdate(BaseModel):
 class UserCreate(BaseModel):
     email: str  # 应使用 EmailStr
     password: str  # 应指定 min_length
+
 
 # ❌ 禁止: 手动转换
 def create_user(data: dict):
@@ -138,18 +144,21 @@ def create_user(data: dict):
 from fastapi import Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 
+
 # ✅ 正确
 async def get_db() -> AsyncSession:
     async with async_session() as session:
         yield session
+
 
 async def get_user_service(
     db: AsyncSession = Depends(get_db),
 ) -> UserService:
     return UserService(db)
 
+
 # 路由中使用
-@router.get('/')
+@router.get("/")
 async def list_users(
     service: UserService = Depends(get_user_service),
 ):
@@ -164,16 +173,18 @@ from fastapi.security import HTTPBearer
 
 security = HTTPBearer()
 
+
 async def get_current_user(
     token: str = Security(security),
 ) -> User:
     user = await verify_token(token.credentials)
     if not user:
-        raise HTTPException(status_code=401, detail='Invalid token')
+        raise HTTPException(status_code=401, detail="Invalid token")
     return user
 
+
 # 路由中使用
-@router.get('/me')
+@router.get("/me")
 async def get_me(user: User = Depends(get_current_user)):
     return user
 ```
@@ -186,13 +197,14 @@ async def get_me(user: User = Depends(get_current_user)):
 
 ```python
 # ✅ 正确
-@router.get('/')
+@router.get("/")
 async def list_users():
     users = await db.fetch_all()
     return users
 
+
 # ❌ 禁止: 同步阻塞
-@router.get('/')
+@router.get("/")
 def list_users():
     users = db.fetch_all()  # 阻塞!
     return users
@@ -202,6 +214,7 @@ def list_users():
 
 ```python
 from sqlalchemy.ext.asyncio import AsyncSession
+
 
 # ✅ 正确
 async def get_user(db: AsyncSession, user_id: str) -> User | None:
@@ -220,18 +233,20 @@ import pytest
 from httpx import AsyncClient
 from app.main import app
 
+
 @pytest.mark.asyncio
 async def test_list_users():
-    async with AsyncClient(app=app, base_url='http://test') as client:
-        response = await client.get('/api/v1/users/')
+    async with AsyncClient(app=app, base_url="http://test") as client:
+        response = await client.get("/api/v1/users/")
         assert response.status_code == 200
+
 
 @pytest.mark.asyncio
 async def test_create_user():
-    async with AsyncClient(app=app, base_url='http://test') as client:
+    async with AsyncClient(app=app, base_url="http://test") as client:
         response = await client.post(
-            '/api/v1/users/',
-            json={'email': 'test@example.com', 'password': 'testpass123'},
+            "/api/v1/users/",
+            json={"email": "test@example.com", "password": "testpass123"},
         )
         assert response.status_code == 201
 ```
@@ -241,13 +256,14 @@ async def test_create_user():
 ```python
 from unittest.mock import AsyncMock, patch
 
+
 @pytest.mark.asyncio
 async def test_get_user():
-    with patch('app.services.user.UserService.get_by_id') as mock:
-        mock.return_value = User(id='1', email='test@example.com')
+    with patch("app.services.user.UserService.get_by_id") as mock:
+        mock.return_value = User(id="1", email="test@example.com")
 
-        async with AsyncClient(app=app, base_url='http://test') as client:
-            response = await client.get('/api/v1/users/1')
+        async with AsyncClient(app=app, base_url="http://test") as client:
+            response = await client.get("/api/v1/users/1")
             assert response.status_code == 200
 ```
 
@@ -263,10 +279,10 @@ from fastapi.middleware.cors import CORSMiddleware
 # ✅ 正确
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=['https://example.com'],  # 限制来源
+    allow_origins=["https://example.com"],  # 限制来源
     allow_credentials=True,
-    allow_methods=['GET', 'POST'],
-    allow_headers=['*'],
+    allow_methods=["GET", "POST"],
+    allow_headers=["*"],
 )
 ```
 
@@ -274,17 +290,19 @@ app.add_middleware(
 
 ```python
 # ❌ 禁止
-SECRET_KEY = 'YOUR_API_KEY_HERE'
+SECRET_KEY = "YOUR_API_KEY_HERE"
 
 # ✅ 正确
 from pydantic_settings import BaseSettings
+
 
 class Settings(BaseSettings):
     secret_key: str
     database_url: str
 
     class Config:
-        env_file = '.env'
+        env_file = ".env"
+
 
 settings = Settings()
 ```

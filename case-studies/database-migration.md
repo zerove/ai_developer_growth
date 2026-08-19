@@ -120,6 +120,7 @@ Source DB → Schema Analyzer → Diff Generator → Script Generator → Execut
 from dataclasses import dataclass
 from sqlalchemy import inspect
 
+
 @dataclass
 class ColumnDiff:
     name: str
@@ -127,15 +128,15 @@ class ColumnDiff:
     old_type: str | None = None
     new_type: str | None = None
 
+
 def analyze_schema(engine) -> dict:
     inspector = inspect(engine)
     schema = {}
     for table_name in inspector.get_table_names():
         columns = inspector.get_columns(table_name)
-        schema[table_name] = {
-            col["name"]: str(col["type"]) for col in columns
-        }
+        schema[table_name] = {col["name"]: str(col["type"]) for col in columns}
     return schema
+
 
 def generate_diff(source: dict, target: dict) -> list:
     diffs = []

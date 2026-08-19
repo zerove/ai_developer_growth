@@ -95,11 +95,15 @@ def calculate_discount(price: float, user_type: str) -> float:
 ```python
 import pytest
 
-@pytest.mark.parametrize("price,user_type,expected", [
-    (100.0, "vip", 80.0),
-    (100.0, "normal", 90.0),
-    (100.0, "unknown", 100.0),
-])
+
+@pytest.mark.parametrize(
+    "price,user_type,expected",
+    [
+        (100.0, "vip", 80.0),
+        (100.0, "normal", 90.0),
+        (100.0, "unknown", 100.0),
+    ],
+)
 def test_calculate_discount(price, user_type, expected):
     assert calculate_discount(price, user_type) == expected
 ```
@@ -109,17 +113,19 @@ def test_calculate_discount(price, user_type, expected):
 ```python
 from unittest.mock import Mock, patch
 
+
 def test_with_mock():
-    with patch('module.external_api') as mock_api:
-        mock_api.return_value = {'status': 'ok'}
+    with patch("module.external_api") as mock_api:
+        mock_api.return_value = {"status": "ok"}
         result = call_external_api()
-        assert result == {'status': 'ok'}
+        assert result == {"status": "ok"}
 ```
 
 ### 3. 异步测试
 
 ```python
 import pytest
+
 
 @pytest.mark.asyncio
 async def test_async_function():

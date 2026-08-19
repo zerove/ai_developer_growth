@@ -77,6 +77,7 @@ def db_session():
     session.rollback()  # 关键：回滚而非 drop，保持 schema
     session.close()
 
+
 # test_repository.py
 def test_user_repository_crud(db_session):
     repo = UserRepository(db_session)
@@ -99,6 +100,7 @@ def test_user_repository_crud(db_session):
 def kafka():
     with KafkaContainer() as kafka:
         yield kafka.get_bootstrap_server()
+
 
 def test_producer_consumer(kafka):
     producer = Producer(bootstrap_servers=kafka)
@@ -130,12 +132,14 @@ def test_producer_consumer(kafka):
 def pact():
     return Pact(consumer="OrderService", provider="PaymentService")
 
+
 def test_create_payment(pact):
-    (pact
-     .given("payment service is available")
-     .upon_receiving("a request to create payment")
-     .with_request("POST", "/payments", body={"amount": 100})
-     .will_respond_with(201, body={"id": "pay_123", "status": "created"}))
+    (
+        pact.given("payment service is available")
+        .upon_receiving("a request to create payment")
+        .with_request("POST", "/payments", body={"amount": 100})
+        .will_respond_with(201, body={"id": "pay_123", "status": "created"})
+    )
 
     with pact:
         client = PaymentClient(pact.uri)

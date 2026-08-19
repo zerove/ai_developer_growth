@@ -118,12 +118,14 @@ from pygments import highlight
 from pygments.lexers import get_lexer_by_name
 from pygments.formatters import HtmlFormatter
 
+
 class HighlightRenderer(mistune.HTMLRenderer):
     def block_code(self, code, info=None):
         if info:
             lexer = get_lexer_by_name(info)
             return highlight(code, lexer, HtmlFormatter())
         return f"<pre><code>{mistune.html(code)}</code></pre>"
+
 
 def convert_md_to_html(content: str, theme: str = "default") -> str:
     renderer = HighlightRenderer()
@@ -167,6 +169,7 @@ def convert_md_to_html(content: str, theme: str = "default") -> str:
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
 from rich.progress import Progress
+
 
 def batch_convert(input_dir: Path, output_dir: Path, theme: str, workers: int = 4):
     md_files = list(input_dir.glob("**/*.md"))
@@ -239,6 +242,7 @@ md2html/
 from click.testing import CliRunner
 from md2html.cli import convert
 
+
 def test_convert_single_file(tmp_path):
     md_file = tmp_path / "test.md"
     md_file.write_text("# Hello\n\nThis is a test.")
@@ -248,6 +252,7 @@ def test_convert_single_file(tmp_path):
     assert (tmp_path / "out" / "test.html").exists()
     html = (tmp_path / "out" / "test.html").read_text()
     assert "<h1>Hello</h1>" in html
+
 
 def test_convert_nonexistent_file():
     runner = CliRunner()
@@ -267,6 +272,7 @@ CLI 工具涉及大量"管道胶水代码"：参数解析、文件 I/O、错误�
 ```python
 import click
 from pathlib import Path
+
 
 @click.command()
 @click.argument("input_path", type=click.Path(exists=True))

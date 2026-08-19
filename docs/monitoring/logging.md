@@ -41,13 +41,7 @@ import structlog
 
 # ✅ 正确: 结构化日志
 logger = structlog.get_logger()
-logger.info(
-    "order_created",
-    order_id="ORD-2026-001",
-    user_id=1001,
-    amount=299.99,
-    duration_ms=45
-)
+logger.info("order_created", order_id="ORD-2026-001", user_id=1001, amount=299.99, duration_ms=45)
 
 # 输出: {"event": "order_created", "order_id": "ORD-2026-001", "user_id": 1001, "amount": 299.99, "duration_ms": 45, "timestamp": "2026-07-20T10:30:00Z"}
 
@@ -173,13 +167,13 @@ Loki 的优势：只索引标签不索引内容，存储成本远低于 Elastics
 ```python
 # 完整的日志字段示例
 {
-  "timestamp": "2026-07-20T10:30:00.123Z",
-  "level": "info",
-  "service": "order-service",
-  "trace_id": "abc123def456",
-  "message": "order_created",
-  "order_id": "ORD-001",
-  "user_id": "u_1001"
+    "timestamp": "2026-07-20T10:30:00.123Z",
+    "level": "info",
+    "service": "order-service",
+    "trace_id": "abc123def456",
+    "message": "order_created",
+    "order_id": "ORD-001",
+    "user_id": "u_1001",
 }
 ```
 

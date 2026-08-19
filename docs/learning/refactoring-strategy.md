@@ -34,15 +34,19 @@ updated: 2026-07-21
 def calculate_tax(price):
     return price * 0.1
 
+
 def calculate_discount(price):
     return price * 0.05
+
 
 # After
 def calculate_percentage(price, percentage):
     return price * percentage
 
+
 def calculate_tax(price):
     return calculate_percentage(price, 0.1)
+
 
 def calculate_discount(price):
     return calculate_percentage(price, 0.05)
@@ -101,8 +105,8 @@ class UserRepository:
 **重构:**
 ```python
 # Before
-def create_user(name, email, phone, address):
-    ...
+def create_user(name, email, phone, address): ...
+
 
 # After
 class UserInfo:
@@ -112,8 +116,8 @@ class UserInfo:
         self.phone = phone
         self.address = address
 
-def create_user(user_info: UserInfo):
-    ...
+
+def create_user(user_info: UserInfo): ...
 ```
 
 ## 重构技术

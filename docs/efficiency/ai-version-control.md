@@ -152,6 +152,7 @@ git tag -a v1.0.0-ai -m "AI 生成的 v1.0.0"
 **分类**: 效率层
 
 **相关文档
+- [[GOVERNANCE|通用治理标准]]
 - [[GOVERNANCE|通用治理标准]]**:
 
 - [[docs/efficiency/full-cycle-workflow|全周期工作流]]

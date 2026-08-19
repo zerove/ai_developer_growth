@@ -7,7 +7,11 @@ name = "ai-navigation"
 version = "1.0.0"
 description = "RAG-based AI knowledge navigation system with personalized learning paths"
 requires-python = ">=3.11"
-dependencies = []
+dependencies = [
+    "requests>=2.31.0",
+    "pyyaml>=6.0",
+    "loguru>=0.7.0",
+]
 
 [project.optional-dependencies]
 dev = ["pytest>=7.0", "ruff>=0.1.0", "pytest-cov>=4.0"]

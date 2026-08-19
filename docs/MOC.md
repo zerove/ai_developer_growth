@@ -188,7 +188,7 @@ updated: 2026-07-21
 
 *理论需要实践检验。*
 
-### 案例库 (11 个真实案例)
+### 案例库 (45 个真实案例)
 
 | 案例 | 场景 | 效率提升 | 核心洞察 |
 |------|------|----------|----------|
@@ -203,6 +203,40 @@ updated: 2026-07-21
 | [../case-studies/production-debugging.md\|生产环境调试]] | 问题排查 | 6x | AI 辅助快速定位根因 |
 | [../case-studies/api-design-implementation.md\|API 设计实现]] | 后端开发 | 5x | 契约先行保证接口质量 |
 | [../case-studies/multi-agent-collaboration.md\|多 Agent 协作]] | 模拟团队开发 | 5x | 角色分工 + 迭代 |
+| [../case-studies/adg-scan-httpx.md\|ADG 扫描 httpx]] | 治理工具验证 | 5x | 72% 问题降幅，exclude_patterns 关键 |
+| [../case-studies/adg-cross-project-scan.md\|ADG 跨项目扫描]] | 规则引擎验证 | 4x | 多项目一致性检查 |
+| [../case-studies/governance-self-audit.md\|治理自我审计]] | 质量门禁自检 | 4x | 用自己的工具审计自己 |
+| [../case-studies/ai-native-coverage-governance.md\|AI-Native 覆盖治理]] | 覆盖率治理 | 4x | 自动化覆盖率门禁 |
+| [../case-studies/ast-parser-precision-coverage.md\|AST 解析器精度]] | 代码分析工具 | 3x | 增量解析提升性能 |
+| [../case-studies/autonomous-ai-native-sdlc-delivery.md\|自主 AI-Native SDLC]] | 全生命周期自动化 | 6x | 11 支柱集成 |
+| [../case-studies/full-integration-test.md\|全集成测试]] | 端到端验证 | 4x | 模拟真实流水线 |
+| [../case-studies/implement-robust-feature-with-full-dor-and-tdd-compliance.md\|DoR+TDD 完整实现]] | 特性开发 | 5x | DoR 门禁保证质量 |
+| [../case-studies/jcode-ai-native-master-workflow-execution.md\|JCode 主管道执行]] | 工作流执行 | 4x | 11 支柱编排 |
+| [../case-studies/cross-platform-workflow-execution.md\|跨平台工作流执行]] | 多平台 CI/CD | 3x | 统一执行接口 |
+| [../case-studies/multi-agent-automation.md\|多 Agent 自动化]] | 智能体协作 | 4x | 红蓝对抗验证 |
+| [../case-studies/copilot-test-generation.md\|Copilot 测试生成]] | 测试自动化 | 3x | LLM 生成高覆盖测试 |
+| [../case-studies/api-doc-generation.md\|API 文档生成]] | 文档自动化 | 4x | 契约驱动文档 |
+| [../case-studies/automated-testing-platform.md\|自动化测试平台]] | 测试平台 | 4x | 插件化扩展 |
+| [../case-studies/code-review-system.md\|代码审查系统]] | 审查自动化 | 3x | AI 辅助审查 |
+| [../case-studies/realtime-data-processing.md\|实时数据处理]] | 流处理 | 4x | 窗口聚合优化 |
+| [../case-studies/claude-architecture-design.md\|Claude 架构设计]] | 架构设计 | 4x | AI 辅助架构决策 |
+| [../case-studies/cursor-refactoring.md\|Cursor 重构]] | IDE 重构 | 3x | 智能重构建议 |
+| [../case-studies/aiops-automation.md\|AIOps 自动化]] | 运维自动化 | 4x | 异常检测自动化 |
+| [../case-studies/api-design.md\|API 设计]] | API 设计 | 3x | 契约优先 |
+| [../case-studies/code-review.md\|代码审查]] | 人工审查 | 3x | 检查清单标准化 |
+| [../case-studies/database-performance-optimization.md\|数据库性能优化]] | SQL 优化 | 4x | 索引与查询重写 |
+| [../case-studies/frontend-performance-optimization.md\|前端性能优化]] | Web 性能 | 3x | 打包与加载优化 |
+| [../case-studies/legacy-system-refactoring.md\|遗留系统重构]] | 系统现代化 | 4x | 绞杀者模式 |
+| [../case-studies/security-vulnerability-fix.md\|安全漏洞修复]] | 安全修复 | 3x | 自动化扫描修复 |
+| [../case-studies/technical-documentation.md\|技术文档]] | 文档编写 | 待补充 | 待补充 |
+| [../case-studies/unit-testing.md\|单元测试]] | 测试编写 | 待补充 | 待补充 |
+| [../case-studies/data-migration.md\|数据迁移]] | 数据迁移 | 3x | 增量同步验证 |
+| [../case-studies/devops-pipeline.md\|DevOps 流水线]] | CI/CD | 4x | 流水线即代码 |
+| [../case-studies/intelligent-customer-service.md\|智能客服]] | NLP 应用 | 4x | RAG + 微调 |
+| [../case-studies/ml-model-deployment.md\|ML 模型部署]] | MLOps | 4x | 模型版本管理 |
+| [../case-studies/microservice-architecture.md\|微服务架构]] | 架构设计 | 4x | 服务拆分治理 |
+| [../case-studies/mobile-app-development.md\|移动应用开发]] | App 开发 | 3x | 跨平台复用 |
+| [../case-studies/security-audit.md\|安全审计]] | 安全合规 | 3x | 自动化合规检查 |
 
 ### 代码示例
 | 示例 | 核心机制 | 学习价值 |
@@ -310,7 +344,7 @@ ai-learning-method → automated-bug-fixing → full-cycle-workflow → ide-best
 | 学习层 | 3 | ✅ 完整 |
 | 效率层 | 18 | ✅ 完整 |
 | 工具层 | 2 | ✅ 完整 |
-| 案例库 | 11 | ✅ 达标 |
+| 案例库 | 45 | ✅ 超额完成 |
 | 代码示例 | 2 | ✅ 基础 |
 | 学习路径 | 7 | ✅ 完整 |
 

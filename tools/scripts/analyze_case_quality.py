@@ -75,7 +75,7 @@ class CaseStudyQualityAnalyzer:
 
     def _load_moc(self) -> str:
         """Load MOC.md for cross-reference checking."""
-        moc_path = Path("MOC.md")
+        moc_path = Path("docs/MOC.md")
         if moc_path.exists():
             return moc_path.read_text(encoding="utf-8")
         return ""

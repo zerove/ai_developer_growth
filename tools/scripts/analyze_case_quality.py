@@ -479,7 +479,7 @@ class CaseStudyQualityAnalyzer:
 
     def _aggregate_issues(self, metrics_list: list[QualityMetrics]) -> dict[str, int]:
         """Aggregate common issues."""
-        issues_count = {}
+        issues_count: dict[str, int] = {}
         for m in metrics_list:
             for issue in m.issues:
                 issues_count[issue] = issues_count.get(issue, 0) + 1
@@ -487,14 +487,14 @@ class CaseStudyQualityAnalyzer:
 
     def _aggregate_strengths(self, metrics_list: list[QualityMetrics]) -> dict[str, int]:
         """Aggregate common strengths."""
-        strengths_count = {}
+        strengths_count: dict[str, int] = {}
         for m in metrics_list:
             for strength in m.strengths:
                 strengths_count[strength] = strengths_count.get(strength, 0) + 1
         return dict(sorted(strengths_count.items(), key=lambda x: x[1], reverse=True))
 
 
-def main():
+def main() -> int:
     import argparse
 
     parser = argparse.ArgumentParser(description="Analyze case study quality")
@@ -548,24 +548,24 @@ def format_report(report: dict[str, Any]) -> str:
     lines.append(f"  Completeness:           {summary['average_scores']['completeness']}/100")
     lines.append(f"  Cross-References:       {summary['average_scores']['cross_references']}/100")
 
-    lines.append(f"\n📊 Categories:")
+    lines.append("\n📊 Categories:")
     lines.append(f"  Excellent (≥80):        {summary['categories']['excellent']}")
     lines.append(f"  Good (60-79):           {summary['categories']['good']}")
     lines.append(f"  Needs Improvement (<60): {summary['categories']['needs_improvement']}")
 
-    lines.append(f"\n🏆 Top 5 Cases:")
+    lines.append("\n🏆 Top 5 Cases:")
     for case in report["top_cases"]:
         lines.append(f"  {case['score']:>5.1f}  {case['name']}")
 
-    lines.append(f"\n📉 Bottom 5 Cases:")
+    lines.append("\n📉 Bottom 5 Cases:")
     for case in report["bottom_cases"]:
         lines.append(f"  {case['score']:>5.1f}  {case['name']}")
 
-    lines.append(f"\n⚠️  Common Issues:")
+    lines.append("\n⚠️  Common Issues:")
     for issue, count in list(report["common_issues"].items())[:10]:
         lines.append(f"  [{count}] {issue}")
 
-    lines.append(f"\n✅ Common Strengths:")
+    lines.append("\n✅ Common Strengths:")
     for strength, count in list(report["common_strengths"].items())[:10]:
         lines.append(f"  [{count}] {strength}")
 

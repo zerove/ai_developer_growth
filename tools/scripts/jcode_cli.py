@@ -8,7 +8,6 @@ Main entry point for the JCode AI-Native SDLC ecosystem.
 import argparse
 import sys
 from pathlib import Path
-from typing import Any
 
 
 def get_project_root() -> Path:
@@ -51,7 +50,7 @@ def cmd_ai_quality_gate(args: argparse.Namespace) -> int:
 
     # Print summary
     total_issues = sum(len(r.issues) for r in results)
-    print(f"\n📊 AI Quality Gate Results:")
+    print("\n📊 AI Quality Gate Results:")
     print(f"  Files checked: {len(results)}")
     print(f"  Total issues: {total_issues}")
 
@@ -67,7 +66,7 @@ def cmd_ai_quality_gate(args: argparse.Namespace) -> int:
 
 def cmd_ai_pr_review(args: argparse.Namespace) -> int:
     """Run AI PR review on current changes."""
-    from tools.scripts.ai_pr_reviewer import review_diff, get_git_diff
+    from tools.scripts.ai_pr_reviewer import get_git_diff, review_diff
 
     diff = get_git_diff()
     if not diff:
@@ -132,7 +131,8 @@ def cmd_create_case_study(args: argparse.Namespace) -> int:
     from tools.scripts.create_case_study import main as create_main
 
     sys.argv = ["create_case_study.py"] + args.rest
-    return create_main()
+    create_main()
+    return 0
 
 
 def cmd_dor_check(args: argparse.Namespace) -> int:
@@ -162,7 +162,7 @@ def cmd_semantic_graph(args: argparse.Namespace) -> int:
     graph.build_graph()
 
     if args.query:
-        results = graph.query(args.query)
+        results = graph.query_impact(args.query)
         print(f"Query: {args.query}")
         for r in results:
             print(f"  {r}")
@@ -172,11 +172,14 @@ def cmd_semantic_graph(args: argparse.Namespace) -> int:
 
 def cmd_arch_visualizer(args: argparse.Namespace) -> int:
     """Generate architecture visualizations."""
-    from tools.scripts.arch_visualizer import ArchitectureVisualizer
+    from tools.scripts.arch_visualizer import scan_python_imports, generate_mermaid_diagram
 
-    viz = ArchitectureVisualizer(get_project_root())
-    output = viz.generate(args.output or "architecture.html")
-    print(f"✅ Architecture visualization saved to: {output}")
+    graph = scan_python_imports(get_project_root())
+    mermaid = generate_mermaid_diagram(graph)
+
+    output_path = Path(args.output) if args.output else Path("architecture.md")
+    output_path.write_text(f"## Architecture Dependency Graph\n\n```mermaid\n{mermaid}\n```\n", encoding="utf-8")
+    print(f"✅ Architecture visualization saved to: {output_path}")
     return 0
 
 
@@ -301,7 +304,7 @@ Examples:
         return 1
 
     try:
-        return args.func(args)
+        return args.func(args)  # type: ignore[no-any-return]
     except KeyboardInterrupt:
         print("\n⚠️ Interrupted by user")
         return 130

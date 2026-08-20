@@ -23,7 +23,6 @@ Usage:
 from __future__ import annotations
 
 import ast
-import hashlib
 import json
 import sys
 from pathlib import Path
@@ -32,9 +31,9 @@ from typing import Any
 # ──────────────────────────────────────────────────────────
 # Backward-compatible re-exports from validators package
 # ──────────────────────────────────────────────────────────
-from tools.scripts.validators.health import HealthScore, calculate_health_score  # noqa: F401
-from tools.scripts.validators.models import FixResult, Issue, ValidationResult  # noqa: F401
-from tools.scripts.validators.pipeline import (  # noqa: F401
+from tools.scripts.rules_engine.validators.health import HealthScore, calculate_health_score  # noqa: F401
+from tools.scripts.rules_engine.validators.models import FixResult, Issue, ValidationResult  # noqa: F401
+from tools.scripts.rules_engine.validators.pipeline import (  # noqa: F401
     EXTENSION_MAP,
     check_anti_patterns,
     detect_language_from_file,
@@ -151,28 +150,20 @@ def print_results(results: list[ValidationResult], use_json: bool = False) -> in
     """Print validation results. Returns exit code (0=pass)."""
     from .validators.cli import print_results as _print
 
-    return _print(results, use_json)
+    return _print(results, use_json)  # type: ignore[no-any-return]
 
 
 def _merge_rules(base: dict[str, Any], custom: dict[str, Any]) -> dict[str, Any]:
     """Merge custom rules into base rules."""
     from .validators.pipeline import _merge_rules as _merge
 
-    return _merge(base, custom)
+    return _merge(base, custom)  # type: ignore[no-any-return]
 
 
 # ──────────────────────────────────────────────────────────
 # Private function re-exports (for backward compatibility with tests)
 # ──────────────────────────────────────────────────────────
 
-
-def _file_hash(filepath: Path) -> str:
-    """Quick content hash for incremental checks."""
-    try:
-        content = filepath.read_bytes()
-        return hashlib.sha256(content).hexdigest()
-    except OSError:
-        return ""
 
 
 def _load_cache(cache_file: Path) -> dict[str, str]:
@@ -245,7 +236,7 @@ def main() -> int:
     """Main entry point."""
     from .validators.cli import main as _main
 
-    return _main()
+    return _main()  # type: ignore[no-any-return]
 
 
 if __name__ == "__main__":

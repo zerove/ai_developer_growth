@@ -7,55 +7,11 @@ from collections import Counter
 from pathlib import Path
 from typing import Any
 
+from tools.scripts._common import EXTENSION_MAP
 from tools.scripts.adg_cli.core import (
     MAX_FILES,
     SKIP_DIRS,
 )
-
-# ── Language Detection Constants ──
-
-EXTENSION_MAP: dict[str, str] = {
-    ".py": "python",
-    ".pyi": "python",
-    ".ts": "typescript",
-    ".tsx": "typescript",
-    ".js": "javascript",
-    ".jsx": "javascript",
-    ".mjs": "javascript",
-    ".rs": "rust",
-    ".go": "go",
-    ".java": "java",
-    ".kt": "kotlin",
-    ".kts": "kotlin",
-    ".cs": "csharp",
-    ".php": "php",
-    ".rb": "ruby",
-    ".cpp": "cpp",
-    ".cc": "cpp",
-    ".hpp": "cpp",
-    ".h": "cpp",
-    ".swift": "swift",
-    ".dart": "dart",
-    ".scala": "scala",
-    ".clj": "clojure",
-    ".ex": "elixir",
-    ".exs": "elixir",
-    ".hs": "haskell",
-    ".zig": "zig",
-    ".lua": "lua",
-    ".r": "r",
-    ".R": "r",
-    ".ps1": "powershell",
-    ".pl": "perl",
-    ".pm": "perl",
-    ".asm": "assembly",
-    ".s": "assembly",
-    ".S": "assembly",
-    ".f90": "fortran",
-    ".f": "fortran",
-    ".graphql": "graphql",
-    ".gql": "graphql",
-}
 
 CONFIG_MARKERS: dict[str, str | None] = {
     "pyproject.toml": "python",

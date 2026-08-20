@@ -42,7 +42,7 @@ from tools.scripts.rules_engine.rule_loader import (
 from tools.scripts.rules_engine.rule_loader import (
     load_rules as rl_load_rules,
 )
-from tools.scripts.validators.pipeline import (
+from tools.scripts.rules_engine.validators.pipeline import (
     _get_embedded_rules,
     _load_common_rules,
     _merge_rules,

@@ -1,0 +1,133 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: jcode-cost-monitor-config
+  namespace: monitoring
+data:
+  config.yaml: |
+    # 成本监控配置
+    clusters:
+      - name: production
+        provider: aws
+        region: us-east-1
+        accountId: "123456789012"
+      - name: staging
+        provider: aws
+        region: us-west-2
+        accountId: "123456789013"
+
+    # 成本数据源
+    costSources:
+      - type: aws-ce
+        enabled: true
+        config:
+          granularity: HOURLY
+          metrics:
+            - UnblendedCost
+            - AmortizedCost
+            - NetUnblendedCost
+      - type: kubecost
+        enabled: true
+        config:
+          scrapeInterval: 5m
+          retention: 30d
+
+    # 成本分配规则
+    costAllocation:
+      enabled: true
+      rules:
+        - name: by-namespace
+          type: namespace
+          label: namespace
+        - name: by-team
+          type: label
+          label: team
+        - name: by-project
+          type: label
+          label: project
+        - name: by-environment
+          type: label
+          label: environment
+
+    # 预算告警
+    budgets:
+      - name: monthly-total
+        amount: 10000
+        currency: USD
+        period: monthly
+        threshold: 0.8
+        alertChannels:
+          - slack
+          - email
+      - name: production-monthly
+        amount: 8000
+        currency: USD
+        period: monthly
+        threshold: 0.8
+        labels:
+          environment: production
+        alertChannels:
+          - slack
+          - pagerduty
+
+    # 成本优化建议
+    optimization:
+      enabled: true
+      rules:
+        - name: idle-resources
+          type: idle-detection
+          threshold: 0.1  # 10% 利用率
+          action: notify
+        - name: oversized-pods
+          type: overprovisioned
+          cpuThreshold: 0.3
+          memoryThreshold: 0.3
+          action: recommend-vpa
+        - name: idle-load-balancers
+          type: idle-lb
+          action: delete
+        - name: unused-volumes
+          type: unused-pvc
+          age: 7d
+          action: notify
+
+    # 报告配置
+    reports:
+      daily:
+        enabled: true
+        time: "08:00"
+        channels:
+          - slack
+      weekly:
+        enabled: true
+        day: monday
+        time: "09:00"
+        channels:
+          - slack
+          - email
+      monthly:
+        enabled: true
+        day: 1
+        time: "09:00"
+        channels:
+          - slack
+          - email
+          - confluence
+
+    # 导出配置
+    exporters:
+      - type: prometheus
+        enabled: true
+        port: 9090
+        path: /metrics
+      - type: grafana
+        enabled: true
+        dashboardUid: cost-overview
+      - type: s3
+        enabled: true
+        bucket: jcode-cost-reports
+        prefix: daily/
+      - type: bigquery
+        enabled: false
+        project: cost-analytics
+        dataset: costs

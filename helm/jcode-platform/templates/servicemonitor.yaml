@@ -1,0 +1,22 @@
+{{- if and .Values.monitoring (index .Values.monitoring "enabled") .Values.monitoring.prometheus (index .Values.monitoring.prometheus "enabled") }}
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: {{ include "jcode-platform.fullname" . }}
+  labels:
+    {{- include "jcode-platform.labels" . | nindent 4 }}
+    release: prometheus
+spec:
+  selector:
+    matchLabels:
+      {{- include "jcode-platform.selectorLabels" . | nindent 6 }}
+  endpoints:
+    - port: metrics
+      interval: 30s
+      path: /metrics
+      scheme: http
+  namespaceSelector:
+    matchNames:
+      - {{ .Release.Namespace }}
+  jobLabel: {{ include "jcode-platform.name" . }}
+{{- end }}

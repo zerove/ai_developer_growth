@@ -1,0 +1,146 @@
+apiVersion: argoproj.io/v1alpha1
+kind: AppProject
+metadata:
+  name: production
+  namespace: argocd
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  description: Production environment for JCode Platform
+  sourceRepos:
+    - https://github.com/your-org/jcode-platform
+    - https://prometheus-community.github.io/helm-charts
+    - https://grafana.github.io/helm-charts
+    - https://charts.chaos-mesh.org
+    - https://charts.jetstack.io
+    - https://charts.external-secrets.io
+    - https://kubernetes.github.io/autoscaler
+    - https://charts.jetstack.io
+  destinations:
+    - namespace: production
+      server: https://kubernetes.default.svc
+    - namespace: monitoring
+      server: https://kubernetes.default.svc
+    - namespace: cert-manager
+      server: https://kubernetes.default.svc
+    - namespace: external-secrets
+      server: https://kubernetes.default.svc
+    - namespace: chaos-mesh
+      server: https://kubernetes.default.svc
+    - namespace: cert-manager
+      server: https://kubernetes.default.svc
+    - namespace: kube-system
+      server: https://kubernetes.default.svc
+    - namespace: monitoring
+      server: https://kubernetes.default.svc
+  clusterResourceWhitelist:
+    - group: ""
+      kind: Namespace
+    - group: rbac.authorization.k8s.io
+      kind: ClusterRole
+    - group: rbac.authorization.k8s.io
+      kind: ClusterRoleBinding
+    - group: cert-manager.io
+      kind: ClusterIssuer
+    - group: argoproj.io
+      kind: Application
+    - group: chaos-mesh.org
+      kind: ChaosExperiment
+  namespaceResourceBlacklist:
+    - group: ""
+      kind: Secret
+      # 只允许特定的 Secret
+    - group: ""
+      kind: ConfigMap
+      # 只允许特定的 ConfigMap
+  namespaceResourceWhitelist:
+    - group: ""
+      kind: ConfigMap
+    - group: ""
+      kind: Secret
+    - group: ""
+      kind: Service
+    - group: ""
+      kind: ServiceAccount
+    - group: ""
+      kind: Endpoints
+    - group: apps
+      kind: Deployment
+    - group: apps
+      kind: StatefulSet
+    - group: apps
+      kind: DaemonSet
+    - group: batch
+      kind: CronJob
+    - group: batch
+      kind: Job
+    - group: networking.k8s.io
+      kind: Ingress
+    - group: networking.k8s.io
+      kind: NetworkPolicy
+    - group: policy
+      kind: PodDisruptionBudget
+    - group: rbac.authorization.k8s.io
+      kind: Role
+    - group: rbac.authorization.k8s.io
+      kind: RoleBinding
+    - group: monitoring.coreos.com
+      kind: ServiceMonitor
+    - group: monitoring.coreos.com
+      kind: PrometheusRule
+    - group: monitoring.coreos.com
+      kind: PodMonitor
+    - group: chaos-mesh.org
+      kind: NetworkChaos
+    - group: chaos-mesh.org
+      kind: PodChaos
+    - group: chaos-mesh.org
+      kind: IOChaos
+    - group: chaos-mesh.org
+      kind: TimeChaos
+    - group: chaos-mesh.org
+      kind: KernelChaos
+    - group: cert-manager.io
+      kind: Certificate
+    - group: cert-manager.io
+      kind: Issuer
+    - group: cert-manager.io
+      kind: ClusterIssuer
+    - group: external-secrets.io
+      kind: ExternalSecret
+    - group: external-secrets.io
+      kind: ClusterSecretStore
+    - group: argoproj.io
+      kind: Rollout
+  roles:
+    - name: admin
+      description: Full access to production project
+      policies:
+        - p, proj:production:admin, applications, *, production/*, allow
+        - p, proj:production:admin, repositories, *, production/*, allow
+        - p, proj:production:admin, clusters, *, *, allow
+    - name: developer
+      description: Read-only access with sync permissions
+      policies:
+        - p, proj:production:developer, applications, get, production/*, allow
+        - p, proj:production:developer, applications, sync, production/*, allow
+        - p, proj:production:developer, repositories, get, production/*, allow
+    - name: readonly
+      description: Read-only access
+      policies:
+        - p, proj:production:readonly, applications, get, production/*, allow
+        - p, proj:production:readonly, repositories, get, production/*, allow
+  orphaning:
+    enabled: true
+    ignore: []
+  syncWindows:
+    - kind: allow
+      schedule: "0 2 * * *"  # 每天凌晨 2 点允许同步
+      duration: 4h
+      applications:
+        - '*'
+      namespaces:
+        - production
+        - monitoring
+      clusters:
+        - '*'

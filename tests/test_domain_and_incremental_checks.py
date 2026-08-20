@@ -19,7 +19,7 @@ from tools.scripts.hooks.incremental_checks import (
     run_diff_checks,
     run_pre_commit_checks,
 )
-from tools.scripts.validators.models import ValidationResult
+from tools.scripts.rules_engine.validators.models import ValidationResult
 
 # ──────────────────────────────────────────────────────────
 # domain_checks.py tests
@@ -40,7 +40,7 @@ class TestRunLanguageRules:
     @patch("tools.scripts.hooks.domain_checks.validate_file")
     @patch("tools.scripts.hooks.domain_checks.detect_language_from_file")
     def test_file_invalid(self, mock_detect: MagicMock, mock_validate: MagicMock, tmp_path: Path) -> None:
-        from tools.scripts.validators.models import Issue
+        from tools.scripts.rules_engine.validators.models import Issue
 
         f = tmp_path / "test.py"
         f.write_text("# bad\n")

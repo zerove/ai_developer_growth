@@ -26,6 +26,8 @@
 - glob
 - grep
 - lsp_diagnostics
+- task_tool
+- patch
 
 ### 约束
 

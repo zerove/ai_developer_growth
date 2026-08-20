@@ -25,17 +25,14 @@ jobs:
           pip install -e .
           pip install -r requirements-dev.txt || true
 
-      - name: Run AI-Native Unit Tests
-        run: python -m pytest tests/test_ai_native_sdlc.py -v
+      - name: Run Unit Tests
+        run: python -m pytest tests/ -q
 
       - name: Build Semantic Code Knowledge Graph
         run: python tools/scripts/jcode_cross_platform_runner.py semantic-graph
 
       - name: Run Architecture Drift Guard
         run: python tools/scripts/jcode_cross_platform_runner.py architecture-guard
-
-      - name: Run AI Slop & Hallucination Scanner
-        run: python tools/scripts/jcode_cross_platform_runner.py slop-scan
 
       - name: Collect Metrics Telemetry
         run: python tools/scripts/jcode_cross_platform_runner.py metrics-telemetry

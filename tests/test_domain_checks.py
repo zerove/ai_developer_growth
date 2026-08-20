@@ -10,7 +10,6 @@ from tools.scripts.hooks.domain_checks import (
     run_arch_graph,
     run_governance_audit,
     run_language_rules,
-    run_memory_index,
     run_pr_review,
     run_quality_gate,
 )
@@ -279,19 +278,6 @@ class TestRunArchGraph:
         assert "Architecture graph generated" in output
         assert "mermaid" in output
         assert "2 modules mapped" in output
-
-
-class TestRunMemoryIndex:
-    """Tests for run_memory_index function."""
-
-    @patch("tools.scripts.session_memory_vectorizer.vectorize_sessions")
-    def test_run_memory_index(self, mock_vectorize):
-        """Test memory index generation."""
-        mock_vectorize.return_value = {"entries": [{"id": 1}, {"id": 2}]}
-
-        passed, output = run_memory_index()
-        assert passed is True
-        assert "Indexed 2 memory entries" in output
 
 
 if __name__ == "__main__":

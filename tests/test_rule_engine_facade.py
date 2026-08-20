@@ -48,7 +48,7 @@ class TestValidateFile:
         f = tmp_path / "test.py"
         f.write_text("pass\n")
         engine = RuleEngine()
-        with patch("tools.scripts.validators.pipeline.validate_file") as mock_vf:
+        with patch("tools.scripts.rules_engine.validators.pipeline.validate_file") as mock_vf:
             mock_result = MagicMock()
             mock_result.issues = []
             mock_result.health_score = 100
@@ -63,7 +63,7 @@ class TestValidateDirectory:
 
     def test_validate_directory(self, tmp_path: Path) -> None:
         engine = RuleEngine()
-        with patch("tools.scripts.validators.pipeline.validate_directory") as mock_vd:
+        with patch("tools.scripts.rules_engine.validators.pipeline.validate_directory") as mock_vd:
             mock_result = MagicMock()
             mock_result.file = str(tmp_path / "a.py")
             mock_result.language = "python"

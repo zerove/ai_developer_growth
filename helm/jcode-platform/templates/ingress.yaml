@@ -1,0 +1,45 @@
+{{- if and .Values.ingress (index .Values.ingress "enabled") }}
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: {{ include "jcode-platform.fullname" . }}
+  labels:
+    {{- include "jcode-platform.labels" . | nindent 4 }}
+  annotations:
+    {{- toYaml (index .Values.ingress "annotations") | nindent 4 }}
+spec:
+  ingressClassName: {{ index .Values.ingress "className" }}
+  {{- if and .Values.ingress (index .Values.ingress "tls") }}
+  tls:
+    {{- toYaml (index .Values.ingress "tls") | nindent 4 }}
+  {{- end }}
+  rules:
+    {{- if and .Values.api.ingress (index .Values.api.ingress "enabled") }}
+    {{- range $host := (index .Values.api.ingress "hosts") }}
+    - host: {{ $host.host }}
+      http:
+        paths:
+          {{- range (index $host "paths") }}
+          - path: {{ .path }}
+            pathType: {{ .pathType }}
+            backend:
+              service:
+                name: {{ include "jcode-platform.fullname" . }}-api
+                port:
+                  number: {{ index .Values.api "service.port" }}
+          {{- end }}
+    {{- end }}
+    {{- end }}
+    {{- if and .Values.monitoring (index .Values.monitoring "grafana") (index .Values.monitoring.grafana "enabled") }}
+    - host: grafana.jcode.example.com
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: {{ include "jcode-platform.fullname" . }}-grafana
+                port:
+                  number: 80
+    {{- end }}
+{{- end }}

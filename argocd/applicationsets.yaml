@@ -1,0 +1,252 @@
+apiVersion: argoproj.io/v1alpha1
+kind: ApplicationSet
+metadata:
+  name: jcode-platform-apps
+  namespace: argocd
+spec:
+  generators:
+    - git:
+        repoURL: https://github.com/your-org/jcode-platform
+        revision: main
+        files:
+          - path: argocd/applications.yaml
+  template:
+    metadata:
+      name: '{{path.basename}}'
+      namespace: argocd
+    spec:
+      project: production
+      source:
+        repoURL: https://github.com/your-org/jcode-platform
+        targetRevision: main
+        path: '{{path}}'
+        helm:
+          valueFiles:
+            - values.yaml
+            - values-prod.yaml
+      destination:
+        server: https://kubernetes.default.svc
+        namespace: '{{metadata.namespace}}'
+      syncPolicy:
+        automated:
+          prune: true
+          selfHeal: true
+        syncOptions:
+          - CreateNamespace=true
+          - PrunePropagationPolicy=foreground
+          - PruneLast=true
+        retry:
+          limit: 5
+          backoff:
+            duration: 5s
+            factor: 2
+            maxDuration: 3m
+      ignoreDifferences:
+        - group: ""
+          kind: Secret
+          jsonPointers:
+            - /data
+        - group: apps
+          kind: Deployment
+          jsonPointers:
+            - /spec/template/spec/containers/0/image
+---
+apiVersion: argoproj.io/v1alpha1
+kind: ApplicationSet
+metadata:
+  name: jcode-platform-infra
+  namespace: argocd
+spec:
+  generators:
+    - list:
+        elements:
+          - name: cert-manager
+            namespace: cert-manager
+            chart: cert-manager
+            repo: https://charts.jetstack.io
+            version: v1.14.5
+          - name: external-secrets
+            namespace: external-secrets
+            chart: external-secrets
+            repo: https://charts.external-secrets.io
+            version: 0.9.11
+          - name: cluster-autoscaler
+            namespace: kube-system
+            chart: cluster-autoscaler
+            repo: https://kubernetes.github.io/autoscaler
+            version: 9.32.0
+  template:
+    metadata:
+      name: '{{name}}'
+      namespace: argocd
+    spec:
+      project: production
+      source:
+        repoURL: '{{repo}}'
+        targetRevision: '{{version}}'
+        chart: '{{chart}}'
+        helm:
+          valueFiles:
+            - values.yaml
+      destination:
+        server: https://kubernetes.default.svc
+        namespace: '{{namespace}}'
+      syncPolicy:
+        automated:
+          prune: true
+          selfHeal: true
+        syncOptions:
+          - CreateNamespace=true
+        retry:
+          limit: 3
+---
+apiVersion: argoproj.io/v1alpha1
+kind: ApplicationSet
+metadata:
+  name: monitoring-stack
+  namespace: argocd
+spec:
+  generators:
+    - list:
+        elements:
+          - name: kube-prometheus-stack
+            namespace: monitoring
+            repo: https://prometheus-community.github.io/helm-charts
+            chart: kube-prometheus-stack
+            version: 45.31.1
+          - name: loki
+            namespace: monitoring
+            repo: https://grafana.github.io/helm-charts
+            chart: loki
+            version: 6.55.0
+          - name: tempo
+            namespace: monitoring
+            repo: https://grafana.github.io/helm-charts
+            chart: tempo
+            version: 1.24.4
+  template:
+    metadata:
+      name: '{{name}}'
+      namespace: argocd
+    spec:
+      project: production
+      source:
+        repoURL: '{{repo}}'
+        targetRevision: '{{version}}'
+        chart: '{{chart}}'
+        helm:
+          valueFiles:
+            - values.yaml
+      destination:
+        server: https://kubernetes.default.svc
+        namespace: '{{namespace}}'
+      syncPolicy:
+        automated:
+          prune: true
+          selfHeal: true
+        syncOptions:
+          - CreateNamespace=true
+        retry:
+          limit: 3
+      ignoreDifferences:
+        - group: ""
+          kind: Secret
+          jsonPointers:
+            - /data
+---
+apiVersion: argoproj.io/v1alpha1
+kind: ApplicationSet
+metadata:
+  name: chaos-mesh
+  namespace: argocd
+spec:
+  generators:
+    - list:
+        elements:
+          - name: chaos-mesh
+            namespace: chaos-mesh
+            repo: https://charts.chaos-mesh.org
+            chart: chaos-mesh
+            version: 2.6.7
+  template:
+    metadata:
+      name: '{{name}}'
+      namespace: argocd
+    spec:
+      project: production
+      source:
+        repoURL: '{{repo}}'
+        targetRevision: '{{version}}'
+        chart: '{{chart}}'
+        helm:
+          valueFiles:
+            - values.yaml
+          parameters:
+            - name: chaosMesh.controllerManager.resources.limits.cpu
+              value: "200m"
+            - name: chaosMesh.controllerManager.resources.limits.memory
+              value: 256Mi
+            - name: chaosMesh.chaosDaemon.resources.limits.cpu
+              value: 100m
+            - name: chaosMesh.chaosDaemon.resources.limits.memory
+              value: 128Mi
+      destination:
+        server: https://kubernetes.default.svc
+        namespace: '{{namespace}}'
+      syncPolicy:
+        automated:
+          prune: true
+          selfHeal: true
+        syncOptions:
+          - CreateNamespace=true
+        retry:
+          limit: 3
+---
+apiVersion: argoproj.io/v1alpha1
+kind: ApplicationSet
+metadata:
+  name: cert-manager-stack
+  namespace: argocd
+spec:
+  generators:
+    - list:
+        elements:
+          - name: cert-manager
+            namespace: cert-manager
+            repo: https://charts.jetstack.io
+            chart: cert-manager
+            version: v1.14.5
+          - name: external-secrets
+            namespace: external-secrets
+            repo: https://charts.external-secrets.io
+            chart: external-secrets
+            version: 0.9.11
+          - name: cluster-autoscaler
+            namespace: kube-system
+            repo: https://kubernetes.github.io/autoscaler
+            chart: cluster-autoscaler
+            version: 9.32.0
+  template:
+    metadata:
+      name: '{{name}}'
+      namespace: argocd
+    spec:
+      project: production
+      source:
+        repoURL: '{{repo}}'
+        targetRevision: '{{version}}'
+        chart: '{{chart}}'
+        helm:
+          valueFiles:
+            - values.yaml
+      destination:
+        server: https://kubernetes.default.svc
+        namespace: '{{namespace}}'
+      syncPolicy:
+        automated:
+          prune: true
+          selfHeal: true
+        syncOptions:
+          - CreateNamespace=true
+        retry:
+          limit: 3

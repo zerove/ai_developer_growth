@@ -1,0 +1,300 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: jcode-platform
+  namespace: argocd
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: production
+  source:
+    repoURL: https://github.com/your-org/jcode-platform
+    targetRevision: main
+    path: helm/jcode-platform
+    helm:
+      valueFiles:
+        - values.yaml
+        - values-prod.yaml
+      parameters:
+        - name: global.imageRegistry
+          value: registry.example.com
+        - name: global.imageRegistryUsername
+          valueFrom:
+            secretKeyRef:
+              name: registry-credentials
+              key: username
+        - name: global.imageRegistryPassword
+          valueFrom:
+            secretKeyRef:
+              name: registry-credentials
+              key: password
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: production
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+      allowEmpty: false
+    syncOptions:
+      - CreateNamespace=true
+      - PrunePropagationPolicy=foreground
+      - PruneLast=true
+    retry:
+      limit: 5
+      backoff:
+        duration: 5s
+        factor: 2
+        maxDuration: 3m
+  ignoreDifferences:
+    - group: ""
+      kind: Secret
+      jsonPointers:
+        - /data
+    - group: apps
+      kind: Deployment
+      jsonPointers:
+        - /spec/template/spec/containers/0/image
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: monitoring-stack
+  namespace: argocd
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: production
+  source:
+    repoURL: https://prometheus-community.github.io/helm-charts
+    targetRevision: 45.31.1
+    chart: kube-prometheus-stack
+    helm:
+      valueFiles:
+        - values.yaml
+      parameters:
+        - name: prometheus.prometheusSpec.retention
+          value: 90d
+        - name: prometheus.prometheusSpec.retentionSize
+          value: 200GB
+        - name: prometheus.prometheusSpec.storageSpec.volumeClaimTemplate.spec.resources.requests.storage
+          value: 500Gi
+        - name: grafana.persistence.enabled
+          value: "true"
+        - name: grafana.persistence.size
+          value: 50Gi
+        - name: grafana.adminPassword
+          valueFrom:
+            secretKeyRef:
+              name: grafana-credentials
+              key: admin-password
+        - name: alertmanager.alertmanagerSpec.storage.volumeClaimTemplate.spec.resources.requests.storage
+          value: 10Gi
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: monitoring
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+      - PrunePropagationPolicy=foreground
+    retry:
+      limit: 3
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: loki-stack
+  namespace: argocd
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: production
+  source:
+    repoURL: https://grafana.github.io/helm-charts
+    targetRevision: 6.55.0
+    chart: loki
+    helm:
+      valueFiles:
+        - values.yaml
+      parameters:
+        - name: loki.deploymentMode
+          value: SingleBinary
+        - name: loki.singleBinary.replicas
+          value: "1"
+        - name: loki.persistence.enabled
+          value: "true"
+        - name: loki.persistence.size
+          value: 30Gi
+        - name: loki.loki.storage.type
+          value: filesystem
+        - name: loki.loki.storage.filesystem.directory
+          value: /data/loki/chunks
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: monitoring
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: tempo-stack
+  namespace: argocd
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: production
+  source:
+    repoURL: https://grafana.github.io/helm-charts
+    targetRevision: 1.24.4
+    chart: tempo
+    helm:
+      valueFiles:
+        - values.yaml
+      parameters:
+        - name: tempo.persistence.enabled
+          value: "true"
+        - name: tempo.persistence.size
+          value: 200Gi
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: monitoring
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: chaos-mesh
+  namespace: argocd
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: production
+  source:
+    repoURL: https://charts.chaos-mesh.org
+    targetRevision: 2.6.7
+    chart: chaos-mesh
+    helm:
+      valueFiles:
+        - values.yaml
+      parameters:
+        - name: chaosMesh.controllerManager.resources.limits.cpu
+          value: "200m"
+        - name: chaosMesh.controllerManager.resources.limits.memory
+          value: 256Mi
+        - name: chaosMesh.chaosDaemon.resources.limits.cpu
+          value: 100m
+        - name: chaosMesh.chaosDaemon.resources.limits.memory
+          value: 128Mi
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: chaos-mesh
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: cert-manager
+  namespace: argocd
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: production
+  source:
+    repoURL: https://charts.jetstack.io
+    targetRevision: v1.14.5
+    chart: cert-manager
+    helm:
+      valueFiles:
+        - values.yaml
+      parameters:
+        - name: installCRDs
+          value: "true"
+        - name: prometheus.enabled
+          value: "true"
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: cert-manager
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: external-secrets
+  namespace: argocd
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: production
+  source:
+    repoURL: https://charts.external-secrets.io
+    targetRevision: 0.9.11
+    chart: external-secrets
+    helm:
+      valueFiles:
+        - values.yaml
+      parameters:
+        - name: installCRDs
+          value: "true"
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: external-secrets
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: cluster-autoscaler
+  namespace: argocd
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: production
+  source:
+    repoURL: https://kubernetes.github.io/autoscaler
+    targetRevision: 9.32.0
+    chart: cluster-autoscaler
+    helm:
+      valueFiles:
+        - values.yaml
+      parameters:
+        - name: autoDiscovery.clusterName
+          value: production
+        - name: cloudProvider
+          value: aws
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: kube-system
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true

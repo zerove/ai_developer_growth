@@ -1,0 +1,311 @@
+# Multi-Cluster Configuration for JCode Platform
+# 
+# This file defines multi-cluster deployment configuration
+# using Cluster API and ArgoCD ApplicationSets
+
+# ──────────────────────────────────────────────────────────
+# Cluster Definitions
+# ──────────────────────────────────────────────────────────
+
+clusters:
+  - name: production-us-east-1
+    displayName: "Production US East (N. Virginia)"
+    provider: aws
+    region: us-east-1
+    environment: production
+    kubernetesVersion: "1.28"
+    machineType: m6i.xlarge
+    minNodes: 3
+    maxNodes: 20
+    labels:
+      environment: production
+      region: us-east-1
+      tier: production
+    annotations:
+      cost-center: "engineering"
+      owner: "platform-team"
+    addons:
+      - aws-load-balancer-controller
+      - external-dns
+      - cert-manager
+      - cluster-autoscaler
+      - metrics-server
+      - aws-ebs-csi-driver
+    vpc:
+      cidr: 10.0.0.0/16
+      publicSubnets:
+        - 10.0.1.0/24
+        - 10.0.2.0/24
+        - 10.0.3.0/24
+      privateSubnets:
+        - 10.0.11.0/24
+        - 10.0.12.0/24
+        - 10.0.13.0/24
+      databaseSubnets:
+        - 10.0.21.0/24
+        - 10.0.22.0/24
+        - 10.0.23.0/24
+
+  - name: production-eu-west-1
+    displayName: "Production EU West (Ireland)"
+    provider: aws
+    region: eu-west-1
+    environment: production
+    kubernetesVersion: "1.28"
+    machineType: m6i.xlarge
+    minNodes: 2
+    maxNodes: 10
+    labels:
+      environment: production
+      region: eu-west-1
+      tier: production
+    annotations:
+      cost-center: "engineering-eu"
+      owner: "platform-team-eu"
+    addons:
+      - aws-load-balancer-controller
+      - external-dns
+      - cert-manager
+      - cluster-autoscaler
+      - metrics-server
+      - aws-ebs-csi-driver
+
+  - name: staging-us-west-2
+    displayName: "Staging US West (Oregon)"
+    provider: aws
+    region: us-west-2
+    environment: staging
+    kubernetesVersion: "1.28"
+    machineType: t3.large
+    minNodes: 1
+    maxNodes: 5
+    labels:
+      environment: staging
+      region: us-west-2
+      tier: staging
+    annotations:
+      cost-center: "engineering-staging"
+      owner: "platform-team"
+    addons:
+      - aws-load-balancer-controller
+      - external-dns
+      - cert-manager
+      - cluster-autoscaler
+      - metrics-server
+      - aws-ebs-csi-driver
+
+  - name: dr-us-west-2
+    displayName: "Disaster Recovery US West (Oregon)"
+    provider: aws
+    region: us-west-2
+    environment: dr
+    kubernetesVersion: "1.28"
+    machineType: t3.medium
+    minNodes: 1
+    maxNodes: 3
+    labels:
+      environment: dr
+      region: us-west-2
+      tier: disaster-recovery
+    annotations:
+      cost-center: "engineering-dr"
+      owner: "platform-team"
+    addons:
+      - aws-load-balancer-controller
+      - external-dns
+      - cert-manager
+      - aws-ebs-csi-driver
+    # DR 集群通常不启用 autoscaler，手动扩容
+    minNodes: 1
+    maxNodes: 3
+
+# ──────────────────────────────────────────────────────────
+# Cluster API 配置
+# ──────────────────────────────────────────────────────────
+
+clusterAPI:
+  enabled: true
+  provider: aws
+  managementCluster:
+    name: management
+    namespace: cluster-api-system
+  workloadClusters:
+    - production-us-east-1
+    - production-eu-west-1
+    - staging-us-west-2
+    - dr-us-west-2
+  providerConfig:
+    aws:
+      region: us-east-1
+      credentialsSecret: aws-credentials
+      defaultTags:
+        managed-by: cluster-api
+        platform: jcode-platform
+    controlPlane:
+      machineType: m6i.xlarge
+      replicas: 3
+    worker:
+      machineType: m6i.xlarge
+      minSize: 3
+      maxSize: 20
+
+# ──────────────────────────────────────────────────────────
+# ArgoCD App of Apps - 多集群部署
+# ──────────────────────────────────────────────────────────
+
+argocd:
+  appOfApps:
+    enabled: true
+    rootApplication:
+      name: jcode-platform-root
+      namespace: argocd
+    clusters:
+      - name: production-us-east-1
+        server: https://production-us-east-1.example.com
+        namespace: production
+      - name: production-eu-west-1
+        server: https://production-eu-west-1.example.com
+        namespace: production
+      - name: staging-us-west-2
+        server: https://staging-us-west-2.example.com
+        namespace: staging
+      - name: dr-us-west-2
+        server: https://dr-us-west-2.example.com
+        namespace: dr
+
+# ──────────────────────────────────────────────────────────
+# 灾难恢复配置
+# ──────────────────────────────────────────────────────────
+
+disasterRecovery:
+  enabled: true
+  primaryCluster: production-us-east-1
+  drClusters:
+    - dr-us-west-2
+  rpo: 1h  # 恢复点目标
+  rto: 4h  # 恢复时间目标
+  backup:
+    enabled: true
+    schedule: "0 2 * * *"  # 每天凌晨 2 点
+    retention: 30d
+    storage:
+      provider: aws
+      bucket: jcode-dr-backups
+      region: us-west-2
+      encryption: AES256
+  failover:
+    automated: false  # 需要人工确认
+    runbooks:
+      - name: full-failover
+        path: runbooks/dr-full-failover.md
+      - name: partial-failover
+        path: runbooks/dr-partial-failover.md
+  testing:
+    enabled: true
+    schedule: "0 2 * * 0"  # 每周日凌晨 2 点
+    testTypes:
+      - backup-restore
+      - failover-simulation
+      - data-integrity
+
+# ──────────────────────────────────────────────────────────
+# 跨集群网络
+# ──────────────────────────────────────────────────────────
+
+crossClusterNetworking:
+  enabled: true
+  serviceMesh:
+    provider: istio
+    version: "1.22"
+    controlPlane:
+      replicas: 3
+    meshConfig:
+      enableAutoMtls: true
+      defaultConfig:
+        proxyMetadata:
+          ISTIO_META_DNS_CAPTURE: "true"
+    gateways:
+      - name: ingress-gateway
+        replicas: 2
+      - name: egress-gateway
+        replicas: 2
+    eastWestTraffic:
+      enabled: true
+      mtls: STRICT
+    multiCluster:
+      enabled: true
+      clusters:
+        - production-us-east-1
+        - production-eu-west-1
+        - staging-us-west-2
+        - dr-us-west-2
+
+# ──────────────────────────────────────────────────────────
+# 跨集群观测
+# ──────────────────────────────────────────────────────────
+
+multiClusterObservability:
+  enabled: true
+  prometheus:
+    federation:
+      enabled: true
+      remoteWrite:
+        - url: https://thanos.example.com/api/v1/receive
+          headers:
+            Authorization: Bearer ${THANOS_TOKEN}
+      scrapeInterval: 30s
+    alerting:
+      enabled: true
+      alertmanagers:
+        - namespace: monitoring
+          name: alertmanager
+          port: 9093
+    remoteRead:
+      enabled: true
+      url: https://thanos.example.com/api/v1/query
+  grafana:
+    dashboards:
+      - name: "Multi-Cluster Overview"
+        uid: multi-cluster-overview
+      - name: "Cost Overview"
+        uid: cost-overview
+      - name: "DR Status"
+        uid: dr-status
+  loki:
+    federation:
+      enabled: true
+    query:
+      frontend:
+        enabled: true
+  tempo:
+    federation:
+      enabled: true
+
+# ──────────────────────────────────────────────────────────
+# 跨集群成本管理
+# ──────────────────────────────────────────────────────────
+
+multiClusterCostManagement:
+  enabled: true
+  centralAccount: "123456789012"  # 管理账户
+  linkedAccounts:
+    - "123456789013"  # production-us-east-1
+    - "123456789014"  # production-eu-west-1
+    - "123456789015"  # staging-us-west-2
+    - "123456789016"  # dr-us-west-2
+  costAllocation:
+    byCluster: true
+    byNamespace: true
+    byLabel:
+      - team
+      - environment
+      - project
+  budgetEnforcement:
+    enabled: true
+    actions:
+      - threshold: 0.8
+        action: alert
+      - threshold: 0.95
+        action: throttle
+      - threshold: 1.0
+        action: deny

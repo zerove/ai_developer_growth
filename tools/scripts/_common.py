@@ -10,11 +10,11 @@ Usage:
         # Path helpers
         rules_dir, framework_dir, get_project_root,
         # Extension map
-        EXTENSION_MAP, detect_language,
+        EXTENSION_MAP, detect_language, EXCLUDE_DIRS,
         # Command execution
         run_command,
         # Hashing
-        file_hash,
+        file_hash, file_hash_full,
         # Error handling
         handle_error, safe_import,
         # YAML
@@ -35,9 +35,9 @@ import sys
 from pathlib import Path
 from typing import Any
 
-# ──────────────────────────────────────────────────────────
+# ----------------------------------------------------------
 # Path helpers
-# ──────────────────────────────────────────────────────────
+# ----------------------------------------------------------
 
 
 def get_project_root() -> Path:
@@ -85,20 +85,26 @@ def framework_dir() -> Path:
     return rules_dir()
 
 
-# ──────────────────────────────────────────────────────────
+# ----------------------------------------------------------
 # Extension map (single source of truth)
-# ──────────────────────────────────────────────────────────
+# ----------------------------------------------------------
+
+# 排除目录（通用配置）
+EXCLUDE_DIRS = {".git", "__pycache__", ".pytest_cache", ".ruff_cache", "node_modules", "venv", ".venv", "dist", "build"}
 
 EXTENSION_MAP: dict[str, str] = {
     ".py": "python",
+    ".pyi": "python",
     ".js": "javascript",
     ".jsx": "javascript",
     ".ts": "typescript",
     ".tsx": "typescript",
+    ".mjs": "javascript",
     ".rs": "rust",
     ".go": "go",
     ".java": "java",
     ".kt": "kotlin",
+    ".kts": "kotlin",
     ".cs": "csharp",
     ".fs": "csharp",
     ".vb": "csharp",
@@ -137,6 +143,8 @@ EXTENSION_MAP: dict[str, str] = {
     ".s": "assembly",
     ".S": "assembly",
     ".nasm": "assembly",
+    ".ex": "elixir",
+    ".exs": "elixir",
 }
 
 
@@ -145,9 +153,9 @@ def detect_language(filepath: Path) -> str | None:
     return EXTENSION_MAP.get(filepath.suffix.lower())
 
 
-# ──────────────────────────────────────────────────────────
+# ----------------------------------------------------------
 # Command execution
-# ──────────────────────────────────────────────────────────
+# ----------------------------------------------------------
 
 
 def run_command(cmd: list[str], cwd: Path | None = None) -> tuple[int, str]:
@@ -158,13 +166,13 @@ def run_command(cmd: list[str], cwd: Path | None = None) -> tuple[int, str]:
     return result.returncode, result.stdout + result.stderr
 
 
-# ──────────────────────────────────────────────────────────
+# ----------------------------------------------------------
 # Hashing
-# ──────────────────────────────────────────────────────────
+# ----------------------------------------------------------
 
 
 def file_hash(filepath: Path) -> str:
-    """Compute SHA256 hash of file content (truncated to 16 chars)."""
+    """Compute SHA256 hash of file content (truncated to 16 chars for cache keys)."""
     try:
         h = hashlib.sha256()
         h.update(filepath.read_bytes())
@@ -173,9 +181,19 @@ def file_hash(filepath: Path) -> str:
         return ""
 
 
-# ──────────────────────────────────────────────────────────
+def file_hash_full(filepath: Path) -> str:
+    """Compute full SHA256 hash of file content (64 chars for content comparison)."""
+    try:
+        h = hashlib.sha256()
+        h.update(filepath.read_bytes())
+        return h.hexdigest()
+    except (OSError, ValueError):
+        return ""
+
+
+# ----------------------------------------------------------
 # Error handling
-# ──────────────────────────────────────────────────────────
+# ----------------------------------------------------------
 
 
 def handle_error(e: Exception, script: str = "", exit_code: int = 1) -> None:
@@ -197,9 +215,9 @@ def safe_import(module_name: str, package: str = "") -> Any | None:
         return None
 
 
-# ──────────────────────────────────────────────────────────
+# ----------------------------------------------------------
 # YAML loading
-# ──────────────────────────────────────────────────────────
+# ----------------------------------------------------------
 
 
 def load_yaml(filepath: Path) -> dict[str, Any] | None:
@@ -222,9 +240,9 @@ def save_yaml(filepath: Path, data: dict[str, Any]) -> None:
         yaml.dump(data, f, default_flow_style=False, allow_unicode=True, sort_keys=False)
 
 
-# ──────────────────────────────────────────────────────────
+# ----------------------------------------------------------
 # Output formatting
-# ──────────────────────────────────────────────────────────
+# ----------------------------------------------------------
 
 
 def print_check(name: str, passed: bool, output: str = "") -> None:
@@ -245,9 +263,9 @@ def print_section(title: str) -> None:
     print(line)
 
 
-# ──────────────────────────────────────────────────────────
+# ----------------------------------------------------------
 # Supported file filtering
-# ──────────────────────────────────────────────────────────
+# ----------------------------------------------------------
 
 SUPPORTED_EXTENSIONS = set(EXTENSION_MAP.keys())
 

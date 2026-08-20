@@ -16,7 +16,6 @@ Usage:
 from __future__ import annotations
 
 import argparse
-import hashlib
 import json
 import shutil
 import sys
@@ -69,13 +68,7 @@ def _save_registry(data: dict[str, Any]) -> None:
         json.dump(data, f, indent=2)
 
 
-def _file_hash(filepath: Path) -> str:
-    try:
-        h = hashlib.sha256()
-        h.update(filepath.read_bytes())
-        return h.hexdigest()[:16]
-    except (OSError, ValueError):
-        return ""
+from tools.scripts._common import file_hash as _file_hash
 
 
 def cmd_init(args: argparse.Namespace) -> None:

@@ -9,15 +9,7 @@ import argparse
 import sys
 from pathlib import Path
 
-
-def get_project_root() -> Path:
-    """Find the project root directory."""
-    current = Path.cwd()
-    while current != current.parent:
-        if (current / "pyproject.toml").exists():
-            return current
-        current = current.parent
-    return Path.cwd()
+from tools.scripts._common import get_project_root
 
 
 def cmd_ai_native_workflow(args: argparse.Namespace) -> int:
@@ -28,17 +20,6 @@ def cmd_ai_native_workflow(args: argparse.Namespace) -> int:
     intent = args.intent or "Feature Delivery via AI-Native SDLC"
     success = workflow.run_full_pipeline(intent)
     return 0 if success else 1
-
-
-def cmd_autonomous_swarm(args: argparse.Namespace) -> int:
-    """Run autonomous swarm execution."""
-    from tools.scripts.autonomous_swarm_engine import AutonomousSwarmOrchestrator
-
-    orchestrator = AutonomousSwarmOrchestrator()
-    task = args.task or "Autonomous Self-Hosting Upgrade"
-    result = orchestrator.execute_swarm_cycle(task)
-    print(f"\n✅ Swarm execution completed: {result['status']}")
-    return 0
 
 
 def cmd_ai_quality_gate(args: argparse.Namespace) -> int:
@@ -213,7 +194,6 @@ def main() -> int:
         epilog="""
 Commands:
   ai-native-workflow    Run full AI-Native workflow pipeline
-  autonomous-swarm      Execute autonomous agent swarm
   ai-quality-gate       Run AI code quality checks
   ai-pr-review          Review current git changes
   case-quality          Analyze case study quality
@@ -227,7 +207,6 @@ Commands:
 
 Examples:
   jcode ai-native-workflow --intent "Add user authentication"
-  jcode autonomous-swarm --task "Refactor authentication module"
   jcode ai-quality-gate --path ./src --verbose
   jcode ai-pr-review
   jcode case-quality --case case-studies/ai-task-prioritizer.md
@@ -242,11 +221,6 @@ Examples:
     p = subparsers.add_parser("ai-native-workflow", help="Run full AI-Native workflow")
     p.add_argument("--intent", type=str, help="Feature intent description")
     p.set_defaults(func=cmd_ai_native_workflow)
-
-    # autonomous-swarm
-    p = subparsers.add_parser("autonomous-swarm", help="Execute autonomous swarm")
-    p.add_argument("--task", type=str, help="Task description")
-    p.set_defaults(func=cmd_autonomous_swarm)
 
     # ai-quality-gate
     p = subparsers.add_parser("ai-quality-gate", help="Run AI quality checks")

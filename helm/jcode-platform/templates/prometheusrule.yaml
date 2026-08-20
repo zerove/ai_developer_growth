@@ -1,0 +1,131 @@
+{{- if and .Values.monitoring (index .Values.monitoring "enabled") .Values.monitoring.prometheus (index .Values.monitoring.prometheus "enabled") }}
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: {{ include "jcode-platform.fullname" . }}-alerts
+  labels:
+    {{- include "jcode-platform.labels" . | nindent 4 }}
+    release: prometheus
+spec:
+  groups:
+    - name: jcode-platform.rules
+      rules:
+        # ──────────────────────────────────────────────────────
+        # 可用性告警
+        # ──────────────────────────────────────────────────────
+        - alert: JCodePlatformDown
+          expr: |
+            up{job=~"jcode-platform.*"} == 0
+          for: 2m
+          labels:
+            severity: critical
+            component: "{{`$`}}labels.component}}"
+          annotations:
+            summary: "JCode Platform 组件 {{`$`}}labels.component}} 不可用"
+            description: "组件 {{`$`}}labels.component}} 已停止运行超过 2 分钟"
+
+        - alert: JCodePlatformHighErrorRate
+          expr: |
+            sum(rate(http_requests_total{job=~"jcode-platform.*",code=~"5.."}[5m])) by (component)
+            /
+            sum(rate(http_requests_total{job=~"jcode-platform.*"}[5m])) by (component)
+            > 0.05
+          for: 5m
+          labels:
+            severity: warning
+            component: "{{`$`}}labels.component}}"
+          annotations:
+            summary: "JCode Platform {{`$`}}labels.component}} 错误率过高"
+            description: "组件 {{`$`}}labels.component}} 5xx 错误率超过 5%"
+
+        # ──────────────────────────────────────────────────────
+        # 延迟告警
+        # ──────────────────────────────────────────────────────
+        - alert: JCodePlatformHighLatency
+          expr: |
+            histogram_quantile(0.95, sum(rate(http_request_duration_seconds_bucket{job=~"jcode-platform.*"}[5m])) by (component, le)) > 0.2
+          for: 5m
+          labels:
+            severity: warning
+            component: "{{`$`}}labels.component}}"
+          annotations:
+            summary: "JCode Platform {{`$`}}labels.component}} P95 延迟过高"
+            description: "组件 {{`$`}}labels.component}} P95 延迟超过 200ms"
+
+        # ──────────────────────────────────────────────────────
+        # 资源告警
+        # ──────────────────────────────────────────────────────
+        - alert: JCodePlatformHighCPUUsage
+          expr: |
+            sum(rate(container_cpu_usage_seconds_total{container=~"jcode-platform.*"}[5m])) by (pod) > 0.8
+          for: 10m
+          labels:
+            severity: warning
+          annotations:
+            summary: "Pod {{`$`}}labels.pod}} CPU 使用率过高"
+            description: "Pod {{`$`}}labels.pod}} CPU 使用率超过 80% 持续 10 分钟"
+
+        - alert: JCodePlatformHighMemoryUsage
+          expr: |
+            (container_memory_working_set_bytes{container=~"jcode-platform.*"} / container_spec_memory_limit_bytes) > 0.85
+          for: 10m
+          labels:
+            severity: warning
+          annotations:
+            summary: "Pod {{`$`}}labels.pod}} 内存使用率过高"
+            description: "Pod {{`$`}}labels.pod}} 内存使用率超过 85% 持续 10 分钟"
+
+        # ──────────────────────────────────────────────────────
+        # 业务指标告警
+        # ──────────────────────────────────────────────────────
+        - alert: JCodePlatformWorkflowFailureRate
+          expr: |
+            sum(rate(jcode_workflow_total{status="failed"}[5m])) by (pipeline)
+            /
+            sum(rate(jcode_workflow_total[5m])) by (pipeline)
+            > 0.1
+          for: 5m
+          labels:
+            severity: warning
+            pipeline: "{{`$`}}labels.pipeline}}"
+          annotations:
+            summary: "流水线 {{`$`}}labels.pipeline}} 失败率过高"
+            description: "流水线 {{`$`}}labels.pipeline}} 失败率超过 10%"
+
+        - alert: JCodePlatformQualityGateFailureRate
+          expr: |
+            sum(rate(jcode_quality_gate_total{status="failed"}[5m]))
+            /
+            sum(rate(jcode_quality_gate_total[5m]))
+            > 0.2
+          for: 5m
+          labels:
+            severity: critical
+          annotations:
+            summary: "质量门禁失败率过高"
+            description: "质量门禁失败率超过 20%，可能影响发布"
+
+        # ──────────────────────────────────────────────────────
+        # 基础设施告警
+        # ──────────────────────────────────────────────────────
+        - alert: KubernetesPodNotReady
+          expr: |
+            kube_pod_status_ready{condition="true",namespace=~".+"} == 0
+          for: 5m
+          labels:
+            severity: warning
+          annotations:
+            summary: "Pod {{`$`}}labels.pod}} 在 {{`$`}}labels.namespace}} 命名空间中未就绪"
+            description: "Pod {{`$`}}labels.pod}} 已经超过 5 分钟未就绪"
+
+        - alert: PersistentVolumeUsageHigh
+          expr: |
+            (kubelet_volume_stats_used_bytes / kubelet_volume_stats_capacity_bytes) > 0.85
+          for: 15m
+          labels:
+            severity: warning
+          annotations:
+            summary: "PVC {{`$`}}labels.persistentvolumeclaim}} 使用率过高"
+            description: "PVC {{`$`}}labels.persistentvolumeclaim}} 使用率超过 85%"
+
+{{- end }}

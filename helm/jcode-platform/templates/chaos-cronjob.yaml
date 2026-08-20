@@ -1,0 +1,137 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: monthly-chaos-experiments
+  namespace: chaos-mesh
+  labels:
+    app.kubernetes.io/name: chaos-experiments
+    app.kubernetes.io/part-of: jcode-platform
+spec:
+  schedule: "0 2 1 * *"  # 每月 1 号凌晨 2 点
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 1
+  jobTemplate:
+    spec:
+      template:
+        metadata:
+          labels:
+            app.kubernetes.io/name: chaos-experiments
+            app.kubernetes.io/part-of: jcode-platform
+        spec:
+          serviceAccountName: chaos-experiment-runner
+          restartPolicy: OnFailure
+          containers:
+            - name: chaos-runner
+              image: "{{ .Values.global.imageRegistry }}/jcode-platform/chaos-runner:latest"
+              imagePullPolicy: IfNotPresent
+              command:
+                - python
+                - /tools/scripts/chaos_experiment_runner.py
+                - --all-experiments
+                - --namespace
+                - staging
+              env:
+                - name: KUBECONFIG
+                  value: /etc/kubeconfig
+              volumeMounts:
+                - name: kubeconfig
+                  mountPath: /etc/kubeconfig
+                  readOnly: true
+              resources:
+                limits:
+                  cpu: "500m"
+                  memory: "512Mi"
+                requests:
+                  cpu: "100m"
+                  memory: "128Mi"
+          restartPolicy: OnFailure
+          volumes:
+            - name: kubeconfig
+              configMap:
+                name: chaos-runner-kubeconfig
+          serviceAccountName: chaos-experiment-runner
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: chaos-experiment-runner
+  namespace: chaos-mesh
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: chaos-experiment-runner
+rules:
+  - apiGroups: ["chaos-mesh.org"]
+    resources:
+      - networkchaos
+      - podchaos
+      - stresschaos
+      - diskchaos
+      - dnsuchaos
+      - timechaos
+      - iochaos
+      - kernelchaos
+    verbs:
+      - create
+      - get
+      - list
+      - watch
+      - update
+      - patch
+      - delete
+  - apiGroups: [""]
+    resources:
+      - pods
+      - pods/log
+    verbs:
+      - get
+      - list
+      - watch
+  - apiGroups: ["apps"]
+    resources:
+      - deployments
+      - statefulsets
+    verbs:
+      - get
+      - list
+      - watch
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: chaos-experiment-runner
+subjects:
+  - kind: ServiceAccount
+    name: chaos-experiment-runner
+    namespace: chaos-mesh
+roleRef:
+  kind: ClusterRole
+  name: chaos-experiment-runner
+  apiGroup: rbac.authorization.k8s.io
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: chaos-runner-kubeconfig
+  namespace: chaos-mesh
+data:
+  kubeconfig: |
+    apiVersion: v1
+    kind: Config
+    clusters:
+    - cluster:
+        server: https://kubernetes.default.svc
+      name: in-cluster
+    contexts:
+    - context:
+        cluster: in-cluster
+        namespace: staging
+        user: service-account
+      name: in-cluster
+    current-context: in-cluster
+    users:
+    - name: service-account
+      user:
+        token: {{ .Values.kubeconfig.token | default "" }}

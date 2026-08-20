@@ -1,0 +1,65 @@
+apiVersion: argoproj.io/v1alpha1
+kind: ApplicationSet
+metadata:
+  name: multi-cluster-apps
+  namespace: argocd
+spec:
+  generators:
+    - list:
+        elements:
+          - cluster: production-us-east-1
+            server: https://production-us-east-1.example.com
+            namespace: production
+            environment: production
+            region: us-east-1
+          - cluster: production-eu-west-1
+            server: https://production-eu-west-1.example.com
+            namespace: production
+            environment: production
+            region: eu-west-1
+          - cluster: staging-us-west-2
+            server: https://staging-us-west-2.example.com
+            namespace: staging
+            environment: staging
+            region: us-west-2
+          - cluster: dr-us-west-2
+            server: https://dr-us-west-2.example.com
+            namespace: dr
+            environment: dr
+            region: us-west-2
+  template:
+    metadata:
+      name: '{{cluster}}-jcode-platform'
+      namespace: argocd
+    spec:
+      project: production
+      source:
+        repoURL: https://github.com/your-org/jcode-platform
+        targetRevision: main
+        path: helm/jcode-platform
+        helm:
+          valueFiles:
+            - values.yaml
+            - values-{{environment}}.yaml
+      destination:
+        server: '{{server}}'
+        namespace: '{{namespace}}'
+      syncPolicy:
+        automated:
+          prune: true
+          selfHeal: true
+        syncOptions:
+          - CreateNamespace=true
+          - PrunePropagationPolicy=foreground
+          - PruneLast=true
+        retry:
+          limit: 5
+          backoff:
+            duration: 5s
+            factor: 2
+            maxDuration: 3m
+      ignoreDifferences:
+        - group: argoproj.io
+          kind: ApplicationSet
+          jsonPointers:
+            - /spec/template/spec/source/targetRevision

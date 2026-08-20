@@ -7,7 +7,7 @@ from pathlib import Path
 from typing import Any
 from unittest.mock import patch
 
-from tools.scripts.validators.cli import (
+from tools.scripts.rules_engine.validators.cli import (
     _file_hash,
     _get_supported_files,
     _load_cache,
@@ -16,7 +16,7 @@ from tools.scripts.validators.cli import (
     main,
     print_results,
 )
-from tools.scripts.validators.models import Issue, ValidationResult
+from tools.scripts.rules_engine.validators.models import Issue, ValidationResult
 
 
 class TestFileHash:

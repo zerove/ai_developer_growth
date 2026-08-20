@@ -1,0 +1,124 @@
+# Staging Environment Overrides
+# 
+# helm upgrade --install jcode-platform ./helm/jcode-platform \
+#   -f values.yaml -f values-staging.yaml \
+#   --namespace staging --create-namespace
+
+global:
+  imageRegistry: "registry-staging.example.com"
+  resources:
+    limits:
+      cpu: "1000m"
+      memory: "1Gi"
+    requests:
+      cpu: "200m"
+      memory: "256Mi"
+
+# ──────────────────────────────────────────────────────────
+# Staging 特有配置：资源减少、单副本、混沌工程启用
+# ──────────────────────────────────────────────────────────
+
+api:
+  replicaCount: 1
+  resources:
+    limits:
+      cpu: "500m"
+      memory: "512Mi"
+    requests:
+      cpu: "100m"
+      memory: "128Mi"
+  autoscaling:
+    minReplicas: 1
+    maxReplicas: 3
+
+orchestrator:
+  replicaCount: 1
+  resources:
+    limits:
+      cpu: "500m"
+      memory: "512Mi"
+    requests:
+      cpu: "100m"
+      memory: "128Mi"
+
+qualityGate:
+  replicaCount: 1
+  resources:
+    limits:
+      cpu: "500m"
+      memory: "512Mi"
+    requests:
+      cpu: "100m"
+      memory: "128Mi"
+
+semantic:
+  replicaCount: 1
+  resources:
+    limits:
+      cpu: "1000m"
+      memory: "1Gi"
+    requests:
+      cpu: "200m"
+      memory: "256Mi"
+
+chaos:
+  enabled: true  # Staging 启用混沌工程
+
+monitoring:
+  prometheus:
+    prometheusSpec:
+      retention: 7d
+      storageSpec:
+        volumeClaimTemplate:
+          spec:
+            resources:
+              requests:
+                storage: 20Gi
+
+loki:
+  loki:
+    limits_config:
+      retention_period: 7d
+
+tempo:
+  tempo:
+    persistence:
+      size: 10Gi
+
+chaos:
+  enabled: true
+  chaosMesh:
+    controllerManager:
+      resources:
+        limits:
+          cpu: "200m"
+          memory: "256Mi"
+
+ingress:
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-staging
+  tls:
+    - secretName: jcode-platform-tls-staging
+      hosts:
+        - api-staging.jcode.example.com
+        - grafana-staging.jcode.example.com
+
+# ──────────────────────────────────────────────────────────
+# Staging 域名配置
+# ──────────────────────────────────────────────────────────
+
+api:
+  ingress:
+    enabled: true
+    hosts:
+      - host: api-staging.jcode.example.com
+        paths:
+          - path: /
+            pathType: Prefix
+
+monitoring:
+  grafana:
+    ingress:
+      enabled: true
+      hosts:
+        - grafana-staging.jcode.example.com

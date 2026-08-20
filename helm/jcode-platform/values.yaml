@@ -1,0 +1,188 @@
+# JCode Platform - Default Values
+# 
+# 使用方法:
+#   helm install jcode-platform ./helm/jcode-platform -f values.yaml
+#   helm upgrade jcode-platform ./helm/jcode-platform -f values.yaml -f values-prod.yaml
+#   --namespace production --create-namespace
+
+# ──────────────────────────────────────────────────────────
+# 全局配置
+# ──────────────────────────────────────────────────────────
+
+global:
+  # 镜像仓库配置
+  imageRegistry: "registry.example.com"
+  imageRegistryUsername: ""
+  imageRegistryPassword: ""
+  imagePullSecrets:
+    - name: registry-credentials
+  
+  # 公共标签
+  commonLabels:
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/part-of: jcode-platform
+  
+  # 资源配置
+  resources:
+    limits:
+      cpu: "2000m"
+      memory: "2Gi"
+    requests:
+      cpu: "500m"
+      memory: "512Mi"
+
+  # Service Account
+  serviceAccount:
+    create: true
+    name: ""
+  
+  # Secrets
+  secrets:
+    create: true
+    slackWebhookUrl: ""
+    githubToken: ""
+    gitlabToken: ""
+    openaiApiKey: ""
+    anthropicApiKey: ""
+    vaultToken: ""
+  
+  # RBAC
+  rbac:
+    create: true
+
+# ──────────────────────────────────────────────────────────
+# 安全标准
+# ──────────────────────────────────────────────────────────
+
+security:
+  podSecurityStandards:
+    allowPrivilegeEscalation: false
+    readOnlyRootFilesystem: true
+    runAsNonRoot: true
+    runAsUser: 1000
+    runAsGroup: 1000
+    capabilities:
+      drop:
+        - ALL
+
+# ──────────────────────────────────────────────────────────
+# 镜像配置
+# ──────────────────────────────────────────────────────────
+
+image:
+  registry: "registry.example.com"
+  repository: "jcode-platform"
+  pullPolicy: IfNotPresent
+  # tag 由 CI/CD 自动注入
+
+# ──────────────────────────────────────────────────────────
+# 核心组件配置
+# ──────────────────────────────────────────────────────────
+
+# Loki 配置
+# Loki 配置
+loki:
+  enabled: true
+  deploymentMode: SingleBinary
+  singleBinary:
+    replicas: 1
+  write:
+    replicas: 0
+  read:
+    replicas: 0
+  backend:
+    replicas: 0
+  # Loki chart expects schemaConfig at .Values.loki.schemaConfig for validation
+  loki:
+    schemaConfig:
+      configs:
+        - from: "2024-01-01"
+          store: boltdb-shipper
+          object_store: filesystem
+          schema: v13
+          index:
+            prefix: index_
+            period: 24h
+    limitsConfig:
+      retentionPeriod: 30d
+      ingestionRateMb: 50
+      ingestionBurstSizeMb: 100
+    storageConfig:
+      boltdbShipper:
+        activeIndexDirectory: /var/loki/index
+        cacheLocation: /var/loki/cache
+        sharedStore: filesystem
+      filesystem:
+        directory: /data/loki/chunks
+    persistence:
+      enabled: true
+      size: 30Gi
+    # Root-level storage config for Loki chart's commonStorageConfig
+    storage:
+      type: filesystem
+      filesystem:
+        directory: /data/loki/chunks
+      bucketNames:
+        chunks: ""
+        ruler: ""
+  vpa:
+    enabled: true
+    updateMode: Auto
+
+# Tempo 配置
+tempo:
+  enabled: true
+  tempo:
+    structuredConfig:
+      storage:
+        trace:
+          backend: local
+          local:
+            path: /var/tempo/traces
+          wal:
+            path: /var/tempo/wal
+      limits:
+        ingestionRateMb: 50
+        ingestionBurstSizeMb: 100
+    persistence:
+      enabled: true
+      size: 50Gi
+  vpa:
+    enabled: true
+    updateMode: Auto
+
+# ──────────────────────────────────────────────────────────
+# 混沌工程
+# ──────────────────────────────────────────────────────────
+
+chaos:
+  enabled: false  # 仅在 staging 环境通过 values-staging.yaml 启用
+
+# ──────────────────────────────────────────────────────────
+# Kubeconfig Token (for chaos experiments)
+# ──────────────────────────────────────────────────────────
+
+kubeconfig:
+  token: ""
+
+# ──────────────────────────────────────────────────────────
+# AI 开发框架
+# ──────────────────────────────────────────────────────────
+
+aiDevFramework:
+  enabled: true
+
+# ──────────────────────────────────────────────────────────
+# AI 导航
+# ──────────────────────────────────────────────────────────
+
+aiNavigation:
+  enabled: true
+
+# ──────────────────────────────────────────────────────────
+# 垂直 Pod 自动扩缩容 (VPA)
+# ──────────────────────────────────────────────────────────
+
+vpa:
+  enabled: true
+  updateMode: Auto

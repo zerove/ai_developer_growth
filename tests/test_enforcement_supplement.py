@@ -435,13 +435,15 @@ class TestValidateAgentDefinitionFull:
 
     def test_valid_yaml_format(self, tmp_path):
         f = tmp_path / "agent.md"
-        f.write_text("agent-name: my-agent\n描述: 一个测试 Agent\n工具: [test_tool]\n约束: [约束1]\n指令: [指令1]\n")
+        f.write_text(
+            "---\nname: my-agent\ndescription: 一个测试 Agent\ntools: [test_tool]\nconstraints: [禁止做坏事]\ninstructions: [运行 tools/scripts/test.py 做测试]\n---\n"
+        )
         result = validate_agent_definition(f)
         assert result["passed"]
 
     def test_valid_md_format(self, tmp_path):
         f = tmp_path / "agent.md"
-        f.write_text("## agent: my-agent\n### 指令\n- 做测试\n### 工具\n- tool_a\n### 约束\n- 不做坏事\n")
+        f.write_text("## agent: my-agent\n\n这是一个测试 Agent 的描述\n\n### 指令\n- 运行 `tools/scripts/test.py` 做测试\n### 工具\n- tool_a\n### 约束\n- 禁止做坏事\n")
         result = validate_agent_definition(f)
         assert result["passed"]
 

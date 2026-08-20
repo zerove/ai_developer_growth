@@ -19,21 +19,18 @@ echo "  ai-dev-framework — 自检报告"
 echo "========================================================================"
 echo ""
 
-# --- 1. 核心文件检查 ---
+# --- 1. 核心配置检查 ---
 echo "┌──────────────────────────────────────────────┐"
-echo "│  1. 核心文件                                  │"
+echo "│  1. 核心配置                                  │"
 echo "└──────────────────────────────────────────────┘"
 
-[ -f "$base_dir/core/GOVERNANCE.md" ] && pass "GOVERNANCE.md" || fail "GOVERNANCE.md 缺失"
-[ -f "$base_dir/core/quality-gates/gate1-prompt.md" ] && pass "gate1-prompt.md" || fail "gate1-prompt.md 缺失"
-[ -f "$base_dir/core/quality-gates/gate2-implementation.md" ] && pass "gate2-implementation.md" || fail "gate2-implementation.md 缺失"
-[ -f "$base_dir/core/quality-gates/gate3-audit.md" ] && pass "gate3-audit.md" || fail "gate3-audit.md 缺失"
-[ -f "$base_dir/core/quality-gates/gate4-documentation.md" ] && pass "gate4-documentation.md" || fail "gate4-documentation.md 缺失"
-[ -f "$base_dir/core/templates/CONTEXT.md" ] && pass "CONTEXT.md 模板" || fail "CONTEXT.md 模板缺失"
-[ -f "$base_dir/core/templates/ADR.md" ] && pass "ADR.md 模板" || fail "ADR.md 模板缺失"
-[ -f "$base_dir/core/templates/AGENTS.md" ] && pass "AGENTS.md 模板" || fail "AGENTS.md 模板缺失"
-[ -f "$base_dir/core/templates/agent-prompt.md" ] && pass "agent-prompt.md 模板" || fail "agent-prompt.md 模板缺失"
-[ -f "$base_dir/core/templates/quality-report.md" ] && pass "quality-report.md 模板" || fail "quality-report.md 模板缺失"
+[ -f "$base_dir/common/universal.yml" ] && pass "common/universal.yml" || fail "common/universal.yml 缺失"
+[ -f "$base_dir/common/security.yml" ] && pass "common/security.yml" || fail "common/security.yml 缺失"
+[ -f "$base_dir/standards/CODING_STANDARDS.md" ] && pass "standards/CODING_STANDARDS.md" || fail "standards/CODING_STANDARDS.md 缺失"
+[ -f "$base_dir/standards/SECURITY_HARDENING.md" ] && pass "standards/SECURITY_HARDENING.md" || fail "standards/SECURITY_HARDENING.md 缺失"
+[ -f "$base_dir/standards/TESTING_STANDARDS.md" ] && pass "standards/TESTING_STANDARDS.md" || fail "standards/TESTING_STANDARDS.md 缺失"
+[ -f "$base_dir/standards/ARCHITECTURE_PATTERNS.md" ] && pass "standards/ARCHITECTURE_PATTERNS.md" || fail "standards/ARCHITECTURE_PATTERNS.md 缺失"
+[ -f "$base_dir/standards/API_DESIGN.md" ] && pass "standards/API_DESIGN.md" || fail "standards/API_DESIGN.md 缺失"
 
 echo ""
 
@@ -58,7 +55,7 @@ for lang in "${languages[@]}"; do
                 warn "$lang (check.sh 不可执行)"
             fi
         else
-            pass "$lang"
+            pass "$lang (目录存在)"
             [ ! -f "$check_file" ] && warn "  → $lang/check.sh 缺失"
             [ ! -f "$rules_file" ] && warn "  → $lang/rules.md 缺失"
         fi

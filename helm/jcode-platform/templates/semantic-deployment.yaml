@@ -1,0 +1,135 @@
+{{- if and .Values.semantic (index .Values.semantic "enabled") }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "jcode-platform.fullname" . }}-semantic
+  labels:
+    {{- include "jcode-platform.labels" . | nindent 4 }}
+    app.kubernetes.io/component: semantic
+spec:
+  replicas: {{ index .Values.semantic "replicaCount" }}
+  selector:
+    matchLabels:
+      {{- include "jcode-platform.selectorLabels" . | nindent 6 }}
+      app.kubernetes.io/component: semantic
+  template:
+    metadata:
+      labels:
+        {{- include "jcode-platform.selectorLabels" . | nindent 8 }}
+        app.kubernetes.io/component: semantic
+      annotations:
+        {{- if .Values.global.commonLabels }}
+        {{- toYaml .Values.global.commonLabels | nindent 8 }}
+        {{- end }}
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "8080"
+        prometheus.io/path: "/metrics"
+    spec:
+      {{- with .Values.global.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      serviceAccountName: {{ include "jcode-platform.serviceAccountName" . }}
+      securityContext:
+        {{- toYaml .Values.security.podSecurityStandards | nindent 8 }}
+      containers:
+        - name: semantic
+          image: "{{ .Values.global.imageRegistry }}/{{ .Values.global.repository }}/semantic:{{ .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          ports:
+            - name: http
+              containerPort: 8080
+              protocol: TCP
+            - name: metrics
+              containerPort: 9090
+              protocol: TCP
+          env:
+            - name: PYTHONPATH
+              value: "/app"
+            - name: PYTHONUNBUFFERED
+              value: "1"
+            - name: PYTHONDONTWRITEBYTECODE
+              value: "1"
+          resources:
+            {{- toYaml (index .Values.semantic "resources") | nindent 12 }}
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: http
+            initialDelaySeconds: 30
+            periodSeconds: 30
+          readinessProbe:
+            httpGet:
+              path: /ready
+              port: http
+            initialDelaySeconds: 15
+            periodSeconds: 10
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            runAsNonRoot: true
+            runAsUser: 1000
+            runAsGroup: 1000
+            capabilities:
+              drop:
+                - ALL
+          volumeMounts:
+            - name: semantic-data
+              mountPath: /data
+      {{- if and .Values.semantic (index .Values.semantic "persistence") (index .Values.semantic.persistence "enabled") }}
+      volumes:
+        - name: semantic-data
+          persistentVolumeClaim:
+            claimName: {{ include "jcode-platform.fullname" . }}-semantic-data
+      {{- end }}
+      {{- with (index .Values.semantic "nodeSelector") }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with (index .Values.semantic "affinity") }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with (index .Values.semantic "tolerations") }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "jcode-platform.fullname" . }}-semantic
+  labels:
+    {{- include "jcode-platform.labels" . | nindent 4 }}
+    app.kubernetes.io/component: semantic
+spec:
+  type: ClusterIP
+  ports:
+    - port: 8080
+      targetPort: http
+      protocol: TCP
+      name: http
+    - port: 9090
+      targetPort: metrics
+      protocol: TCP
+      name: metrics
+  selector:
+    {{- include "jcode-platform.selectorLabels" . | nindent 4 }}
+    app.kubernetes.io/component: semantic
+{{- if and .Values.semantic (index .Values.semantic "persistence") (index .Values.semantic.persistence "enabled") }}
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: {{ include "jcode-platform.fullname" . }}-semantic-data
+  labels:
+    {{- include "jcode-platform.labels" . | nindent 4 }}
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: {{ index .Values.semantic.persistence "size" }}
+  storageClassName: {{ index .Values.semantic.persistence "storageClass" }}
+{{- end }}
+{{- end }}

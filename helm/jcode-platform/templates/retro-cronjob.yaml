@@ -1,0 +1,67 @@
+{{- if and .Values.retro (index .Values.retro "enabled") }}
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: {{ include "jcode-platform.fullname" . }}-retro
+  labels:
+    {{- include "jcode-platform.labels" . | nindent 4 }}
+    app.kubernetes.io/component: retro
+spec:
+  schedule: "{{ index .Values.retro "schedule" }}"
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 1
+  concurrencyPolicy: Forbid
+  jobTemplate:
+    spec:
+      template:
+        metadata:
+          labels:
+            {{- include "jcode-platform.selectorLabels" . | nindent 10 }}
+            app.kubernetes.io/component: retro
+          annotations:
+            {{- if .Values.global.commonLabels }}
+            {{- toYaml .Values.global.commonLabels | nindent 12 }}
+            {{- end }}
+        spec:
+          {{- with .Values.global.imagePullSecrets }}
+          imagePullSecrets:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          serviceAccountName: {{ include "jcode-platform.serviceAccountName" . }}
+          securityContext:
+            {{- toYaml .Values.security.podSecurityStandards | nindent 12 }}
+          restartPolicy: OnFailure
+          containers:
+            - name: retro
+              image: "{{ .Values.global.imageRegistry }}/{{ .Values.global.repository }}/retro:{{ .Chart.AppVersion }}"
+              imagePullPolicy: {{ .Values.image.pullPolicy }}
+              env:
+                - name: PYTHONPATH
+                  value: "/app"
+                - name: PYTHONUNBUFFERED
+                  value: "1"
+                - name: PYTHONDONTWRITEBYTECODE
+                  value: "1"
+              resources:
+                limits:
+                  cpu: "500m"
+                  memory: "512Mi"
+                requests:
+                  cpu: "100m"
+                  memory: "128Mi"
+              securityContext:
+                allowPrivilegeEscalation: false
+                readOnlyRootFilesystem: true
+                runAsNonRoot: true
+                runAsUser: 1000
+                runAsGroup: 1000
+                capabilities:
+                  drop:
+                    - ALL
+              command:
+                - python
+                - -m
+                - tools.scripts.retro_generator
+                - --iteration
+                - "{{ .Release.Name }}"
+{{- end }}

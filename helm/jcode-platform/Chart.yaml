@@ -1,0 +1,32 @@
+apiVersion: v2
+name: jcode-platform
+description: JCode AI-Native SDLC Platform - Helm Chart
+type: application
+version: 2.0.0
+appVersion: "2.0.0"
+keywords:
+  - ai
+  - sdlc
+  - platform
+  - quality-gate
+  - governance
+maintainers:
+  - name: JCode Team
+    email: team@example.com
+dependencies:
+  - name: kube-prometheus-stack
+    version: "45.x.x"
+    repository: "https://prometheus-community.github.io/helm-charts"
+    condition: monitoring.enabled
+  - name: loki
+    version: "6.x.x"
+    repository: "https://grafana.github.io/helm-charts"
+    condition: loki.enabled
+  - name: tempo
+    version: "1.x.x"
+    repository: "https://grafana.github.io/helm-charts"
+    condition: tempo.enabled
+  - name: chaos-mesh
+    version: "2.6.x"
+    repository: "https://charts.chaos-mesh.org"
+    condition: chaos.enabled

@@ -5,6 +5,7 @@ from __future__ import annotations
 import json
 import os
 import sys
+import yaml
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
@@ -142,7 +143,7 @@ def _attach_docs_to_issues(issues: list[Issue]) -> None:
         return
     try:
         mapping = json.loads(_adg_docs_mapping.read_text())
-    except Exception:
+    except (OSError, json.JSONDecodeError):
         return
     for issue in issues:
         docs = mapping.get(issue.rule_id)
@@ -296,8 +297,8 @@ def load_project_config(dirpath: Path | None = None) -> dict[str, Any]:
         try:
             global_config = _simple_yaml_parse(global_config_path)
             config = _merge_config(config, global_config)
-        except Exception:
-            _ = None  # global config optional
+        except (OSError, yaml.YAMLError):
+            pass  # global config optional
 
     # Load project config (overrides global)
     if dirpath:
@@ -308,8 +309,8 @@ def load_project_config(dirpath: Path | None = None) -> dict[str, Any]:
                 if "anti_patterns" in project_config:
                     project_config["custom_rules"] = project_config.pop("anti_patterns")
                 config = _merge_config(config, project_config)
-            except Exception:
-                _ = None  # project config optional
+            except (OSError, yaml.YAMLError):
+                pass  # project config optional
 
     return config
 

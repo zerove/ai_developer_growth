@@ -1,0 +1,139 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "jcode-platform.fullname" . }}-cost-monitor
+  namespace: monitoring
+  labels:
+    {{- include "jcode-platform.labels" . | nindent 4 }}
+    app.kubernetes.io/component: cost-monitor
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      {{- include "jcode-platform.selectorLabels" . | nindent 6 }}
+      app.kubernetes.io/component: cost-monitor
+  template:
+    metadata:
+      labels:
+        {{- include "jcode-platform.selectorLabels" . | nindent 8 }}
+        app.kubernetes.io/component: cost-monitor
+      annotations:
+        {{- if .Values.global.commonLabels }}
+        {{- toYaml .Values.global.commonLabels | nindent 8 }}
+        {{- end }}
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "8080"
+        prometheus.io/path: "/metrics"
+    spec:
+      {{- with .Values.global.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      serviceAccountName: {{ include "jcode-platform.serviceAccountName" . }}
+      securityContext:
+        {{- toYaml .Values.security.podSecurityStandards | nindent 8 }}
+      containers:
+        - name: cost-monitor
+          image: "{{ .Values.global.imageRegistry }}/{{ .Values.global.repository }}/cost-monitor:{{ .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          ports:
+            - name: http
+              containerPort: 8080
+              protocol: TCP
+            - name: metrics
+              containerPort: 9090
+              protocol: TCP
+          env:
+            - name: PYTHONPATH
+              value: "/app"
+            - name: PYTHONUNBUFFERED
+              value: "1"
+            - name: PYTHONDONTWRITEBYTECODE
+              value: "1"
+            - name: CONFIG_PATH
+              value: /config/config.yaml
+          resources:
+            limits:
+              cpu: "500m"
+              memory: "512Mi"
+            requests:
+              cpu: "100m"
+              memory: "128Mi"
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: http
+            initialDelaySeconds: 30
+            periodSeconds: 30
+          readinessProbe:
+            httpGet:
+              path: /ready
+              port: http
+            initialDelaySeconds: 10
+            periodSeconds: 10
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            runAsNonRoot: true
+            runAsUser: 1000
+            runAsGroup: 1000
+            capabilities:
+              drop:
+                - ALL
+          volumeMounts:
+            - name: config
+              mountPath: /config
+            - name: credentials
+              mountPath: /secrets
+              readOnly: true
+      volumes:
+        - name: config
+          configMap:
+            name: {{ include "jcode-platform.fullname" . }}-cost-monitor-config
+        - name: credentials
+          secret:
+            secretName: {{ include "jcode-platform.fullname" . }}-cost-credentials
+            optional: true
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "jcode-platform.fullname" . }}-cost-monitor
+  namespace: monitoring
+  labels:
+    {{- include "jcode-platform.labels" . | nindent 4 }}
+    app.kubernetes.io/component: cost-monitor
+spec:
+  type: ClusterIP
+  ports:
+    - port: 8080
+      targetPort: http
+      protocol: TCP
+      name: http
+    - port: 9090
+      targetPort: metrics
+      protocol: TCP
+      name: metrics
+  selector:
+    {{- include "jcode-platform.selectorLabels" . | nindent 4 }}
+    app.kubernetes.io/component: cost-monitor
+---
+apiVersion: v1
+kind: ServiceMonitor
+metadata:
+  name: {{ include "jcode-platform.fullname" . }}-cost-monitor
+  namespace: monitoring
+  labels:
+    release: prometheus
+spec:
+  selector:
+    matchLabels:
+      app.kubernetes.io/component: cost-monitor
+  endpoints:
+    - port: metrics
+      interval: 60s
+      path: /metrics
+      scheme: http
+  namespaceSelector:
+    matchNames:
+      - monitoring

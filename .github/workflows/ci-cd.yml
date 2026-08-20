@@ -1,0 +1,424 @@
+name: JCode Platform CI/CD
+
+on:
+  push:
+    branches: [master, main]
+    tags: ['v*']
+  pull_request:
+    branches: [master, main]
+  workflow_dispatch:
+    inputs:
+      version_type:
+        description: '版本类型'
+        required: false
+        default: 'patch'
+        type: choice
+        options:
+          - patch
+          - minor
+          - major
+      dry_run:
+        description: '试运行'
+        required: false
+        default: 'true'
+        type: boolean
+
+env:
+  REGISTRY: registry.example.com
+  PROJECT: jcode-platform
+  PLATFORMS: linux/amd64,linux/arm64
+  PYTHON_VERSION: '3.11'
+
+jobs:
+  # ─────────────────────────────────────────────────────────
+  # 代码质量检查
+  # ─────────────────────────────────────────────────────────
+  lint:
+    name: Lint & Format
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: 'pip'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install ruff mypy pytest pytest-cov bandit
+          pip install -e .
+          pip install -r requirements-dev.txt 2>/dev/null || true
+
+      - name: Ruff check
+        run: ruff check .
+
+      - name: Ruff format check
+        run: ruff format --check .
+
+      - name: Type check
+        run: mypy tools/scripts/ --strict --ignore-missing-imports --config-file pyproject.toml
+
+  # ─────────────────────────────────────────────────────────
+  # 安全扫描
+  # ─────────────────────────────────────────────────────────
+  security:
+    name: Security Scan
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: 'pip'
+
+      - name: Install security tools
+        run: |
+          pip install bandit pip-audit
+
+      - name: Bandit scan
+        run: bandit -r tools/scripts/ -f json -o bandit-report.json || true
+
+      - name: Upload Bandit report
+        uses: actions/upload-artifact@v4
+        with:
+          name: bandit-report
+          path: bandit-report.json
+
+      - name: Pip-audit
+        run: pip-audit --desc || true
+
+  # ─────────────────────────────────────────────────────────
+  # 单元/集成测试
+  # ─────────────────────────────────────────────────────────
+  test:
+    name: Test Suite
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: 'pip'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install pytest pytest-cov pytest-xdist
+          pip install -e .
+          pip install -r requirements-dev.txt 2>/dev/null || true
+
+      - name: Run tests
+        run: |
+          python -m pytest tests/ -v -n auto \
+            --ignore=tests/test_performance_benchmark.py \
+            --ignore=tests/test_performance_extended.py \
+            --ignore=tests/test_property_chaos.py \
+            --ignore=tests/test_rules_engine.py \
+            --cov=tools/scripts \
+            --cov-report=xml \
+            --cov-report=term-missing \
+            --cov-fail-under=60
+
+      - name: Upload coverage
+        uses: codecov/codecov-action@v4
+        with:
+          files: ./coverage.xml
+          fail_ci_if_error: false
+
+  # ─────────────────────────────────────────────────────────
+  # 核心功能验证
+  # ─────────────────────────────────────────────────────────
+  functional-test:
+    name: Functional Tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    needs: [lint, test]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: 'pip'
+
+      - name: Install
+        run: |
+          pip install -e .
+          pip install -r requirements-dev.txt 2>/dev/null || true
+
+      - name: jcode-cli smoke test
+        run: |
+          jcode-cli --help
+          jcode-cli dor-check --intent "Test intent"
+          jcode-cli ai-quality-gate --path tools/scripts
+
+      - name: hooks_runner smoke test
+        run: |
+          python tools/scripts/hooks_runner.py --help
+          python tools/scripts/hooks_runner.py lint --quiet
+
+      - name: Semantic code graph
+        run: |
+          python tools/scripts/semantic_code_graph.py
+
+      - name: Validate agents
+        run: |
+          python tools/scripts/validate_agent_definition.py --path agents
+
+  # ─────────────────────────────────────────────────────────
+  # Docker 构建
+  # ─────────────────────────────────────────────────────────
+  docker-build:
+    name: Docker Build
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    needs: [lint, test, security, functional-test]
+    if: github.event_name != 'pull_request'
+    permissions:
+      contents: read
+      packages: write
+      id-token: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login to Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ secrets.REGISTRY_USERNAME }}
+          password: ${{ secrets.REGISTRY_PASSWORD }}
+
+      - name: Extract version
+        id: version
+        run: |
+          if [[ "${{ github.ref }}" == refs/tags/v* ]]; then
+            VERSION=${GITHUB_REF_NAME}
+          else
+            VERSION="dev-$(date +%Y%m%d%H%M)-$(echo ${GITHUB_SHA} | cut -c1-7)"
+          fi
+          echo "version=${VERSION}" >> $GITHUB_OUTPUT
+
+      - name: Build and push images
+        run: |
+          python tools/scripts/docker_build.py \
+            --version ${{ steps.version.outputs.version }} \
+            --registry ${{ env.REGISTRY }} \
+            --platforms ${{ env.PLATFORMS }} \
+            --push \
+            --sbom \
+            --sign
+
+      - name: Upload SBOM artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: sbom-${{ steps.version.outputs.version }}
+          path: sbom/
+          retention-days: 30
+
+      - name: Upload SBOM to GitHub
+        if: always()
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: sbom/*.sbom.json
+          category: sbom
+
+  # ─────────────────────────────────────────────────────────
+  # Release 自动化
+  # ─────────────────────────────────────────────────────────
+  release:
+    name: Release
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    needs: [docker-build]
+    if: startsWith(github.ref, 'refs/tags/v')
+    permissions:
+      contents: write
+      packages: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Extract version
+        id: version
+        run: |
+          VERSION=${GITHUB_REF_NAME#v}
+          echo "version=${VERSION}" >> $GITHUB_OUTPUT
+
+      - name: Generate Release Notes
+        id: changelog
+        run: |
+          python tools/scripts/release.py changelog --version v${{ steps.version.outputs.version }} --dry-run > release-notes.md
+          echo "changelog<<EOF" >> $GITHUB_OUTPUT
+          cat release-notes.md >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: v${{ steps.version.outputs.version }}
+          name: Release v${{ steps.version.outputs.version }}
+          body_path: release-notes.md
+          draft: false
+          prerelease: false
+          generate_release_notes: false
+
+      - name: Update latest tag
+        run: |
+          git tag -f latest v${{ steps.version.outputs.version }}
+          git push origin -f latest
+
+      - name: Notify (Slack/DingTalk)
+        if: always()
+        run: |
+          curl -X POST ${{ secrets.SLACK_WEBHOOK }} \
+            -H 'Content-Type: application/json' \
+            -d '{"text": "✅ JCode Platform v${{ steps.version.outputs.version }} 发布成功"}'
+
+  # ─────────────────────────────────────────────────────────
+  # 版本号自动递增 (手动触发)
+  # ─────────────────────────────────────────────────────────
+  version-bump:
+    name: Version Bump
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    if: github.event_name == 'workflow_dispatch'
+    permissions:
+      contents: write
+      packages: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Install
+        run: pip install -e .
+
+      - name: Bump version
+        id: bump
+        run: |
+          python tools/scripts/release.py bump ${{ github.event.inputs.version_type }} --no-push
+          NEW_VERSION=$(python tools/scripts/release.py version)
+          echo "new_version=${NEW_VERSION}" >> $GITHUB_OUTPUT
+
+      - name: Push changes
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git push origin master
+          git push origin v${{ steps.bump.outputs.new_version }}
+
+      - name: Trigger Release workflow
+        run: |
+          gh workflow run release.yml -f tag=v${{ steps.bump.outputs.new_version }}
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  # ─────────────────────────────────────────────────────────
+  # 性能基准回归测试
+  # ─────────────────────────────────────────────────────────
+  perf-benchmark:
+    name: Performance Benchmark
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    needs: [functional-test]
+    if: github.event_name != 'pull_request'
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Install
+        run: pip install -e .
+
+      - name: Run benchmarks
+        run: |
+          python tools/scripts/perf_benchmark.py
+
+      - name: Compare with baseline
+        run: |
+          python tools/scripts/perf_benchmark.py --compare-baseline
+
+      - name: Upload baseline
+        uses: actions/upload-artifact@v4
+        with:
+          name: perf-baseline
+          path: .perf_baseline.json
+          retention-days: 90
+
+  # ─────────────────────────────────────────────────────────
+  # 文档构建
+  # ─────────────────────────────────────────────────────────
+  docs:
+    name: Build Docs
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Install MkDocs
+        run: pip install mkdocs mkdocs-material mkdocstrings[python]
+
+      - name: Build
+        run: mkdocs build --strict
+
+      - name: Upload site
+        uses: actions/upload-artifact@v4
+        with:
+          name: docs-site
+          path: site/
+          retention-days: 30

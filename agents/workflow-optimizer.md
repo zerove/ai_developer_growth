@@ -19,6 +19,9 @@
 - edit
 - glob
 - grep
+- task_tool
+- patch
+- lsp_diagnostics
 
 ### 约束
 

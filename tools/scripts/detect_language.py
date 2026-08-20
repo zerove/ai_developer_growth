@@ -19,304 +19,113 @@ from collections import Counter
 from pathlib import Path
 from typing import Any
 
-# Extension to language mapping
-EXTENSION_MAP: dict[str, str] = {
-    ".py": "python",
-    ".pyi": "python",
-    ".ts": "typescript",
-    ".tsx": "typescript",
-    ".js": "javascript",
-    ".jsx": "javascript",
-    ".mjs": "javascript",
-    ".rs": "rust",
-    ".go": "go",
-    ".java": "java",
-    ".kt": "kotlin",
-    ".kts": "kotlin",
-    ".cs": "csharp",
-    ".php": "php",
-    ".rb": "ruby",
-    ".cpp": "cpp",
-    ".cc": "cpp",
-    ".hpp": "cpp",
-    ".h": "cpp",
-    ".swift": "swift",
-    ".zig": "zig",
-    ".lua": "lua",
-    ".r": "r",
-    ".R": "r",
-    ".scala": "scala",
-    ".clj": "clojure",
-    ".ex": "elixir",
-    ".exs": "elixir",
-    ".hs": "haskell",
-    ".dart": "dart",
-    ".ps1": "powershell",
-    ".pl": "perl",
-    ".pm": "perl",
-    ".asm": "assembly",
-    ".s": "assembly",
-    ".S": "assembly",
-    ".f90": "fortran",
-    ".f": "fortran",
-    ".for": "fortran",
-    ".m": "matlab",
-    ".graphql": "graphql",
-    ".gql": "graphql",
+from tools.scripts._common import EXTENSION_MAP
+
+# Framework detection patterns
+FRAMEWORK_PATTERNS: dict[str, list[str]] = {
+    "django": ["manage.py", "settings.py", "wsgi.py", "urls.py"],
+    "fastapi": ["main.py", "fastapi", "uvicorn"],
+    "flask": ["app.py", "flask"],
+    "express": ["package.json", "express", "server.js"],
+    "nextjs": ["next.config.js", "next.config.ts", "pages/", "app/"],
+    "react": ["package.json", "react", "jsx", "tsx"],
+    "vue": ["package.json", "vue", "vue.config.js"],
+    "spring-boot": ["pom.xml", "build.gradle", "SpringApplication", "@SpringBootApplication"],
+    "rails": ["Gemfile", "rails", "config/application.rb"],
+    "laravel": ["composer.json", "laravel", "artisan"],
+    "dotnet": ["*.csproj", "*.sln", "Program.cs", "Startup.cs"],
+    "go": ["go.mod", "go.sum", "main.go"],
+    "rust": ["Cargo.toml", "Cargo.lock", "src/main.rs"],
+}
+
+# Config file to language/framework mapping
+CONFIG_MARKERS: dict[str, str | list[str]] = {
+    "pyproject.toml": "python",
+    "requirements.txt": "python",
+    "setup.py": "python",
+    "Cargo.toml": "rust",
+    "go.mod": "go",
+    "pom.xml": ["java", "maven"],
+    "build.gradle": ["java", "gradle"],
+    "package.json": ["javascript", "typescript"],
+    "tsconfig.json": "typescript",
+    "composer.json": "php",
+    "Gemfile": "ruby",
+    "CMakeLists.txt": "cpp",
+    "Makefile": ["c", "cpp"],
+    "docker-compose.yml": "docker",
+    "Dockerfile": "docker",
 }
 
 
-def detect_language_from_file(filepath: Path) -> str | None:
-    """Detect language from a file's extension."""
-    return EXTENSION_MAP.get(filepath.suffix.lower())
+def detect_project_language(project_dir: Path) -> dict[str, Any]:
+    """Detect primary language and frameworks in a project directory."""
+    if not project_dir.exists() or not project_dir.is_dir():
+        return {"error": "Invalid directory"}
 
+    # Count files by extension
+    ext_counter: Counter[str] = Counter()
 
-# Config file to (language, framework) mapping
-CONFIG_MARKERS: dict[str, tuple[str, str | None]] = {
-    "pyproject.toml": ("python", None),
-    "setup.py": ("python", None),
-    "setup.cfg": ("python", None),
-    "Pipfile": ("python", None),
-    "requirements.txt": ("python", None),
-    "poetry.lock": ("python", None),
-    "Cargo.toml": ("rust", None),
-    "go.mod": ("go", None),
-    "go.sum": ("go", None),
-    "package.json": ("javascript", None),
-    "tsconfig.json": ("typescript", None),
-    "pom.xml": ("java", None),
-    "build.gradle": ("java", None),
-    "build.gradle.kts": ("kotlin", None),
-    "Gemfile": ("ruby", None),
-    "composer.json": ("php", None),
-    "Cargo.lock": ("rust", None),
-    "CMakeLists.txt": ("cpp", None),
-    "Makefile": ("makefile", None),
-    "build.sbt": ("scala", None),
-}
+    for filepath in project_dir.rglob("*"):
+        if filepath.is_file() and not any(part.startswith(".") for part in filepath.parts):
+            suffix = filepath.suffix.lower()
+            if suffix in EXTENSION_MAP:
+                ext_counter[EXTENSION_MAP[suffix]] += 1
 
-# Framework detection from config file contents
-FRAMEWORK_SIGNATURES: dict[str, list[str]] = {
-    "react": ["react", "react-dom"],
-    "nextjs": ["next", "nextjs"],
-    "vue": ["vue", "nuxt", "nuxtjs"],
-    "angular": ["@angular/core"],
-    "svelte": ["svelte"],
-    "fastapi": ["fastapi"],
-    "django": ["django"],
-    "flask": ["flask"],
-    "tornado": ["tornado"],
-    "express": ["express"],
-    "nestjs": ["@nestjs/core"],
-    "gin": ['"github.com/gin-gonic/gin"'],
-    "echo": ['"github.com/labstack/echo"'],
-    "fiber": ['"github.com/gofiber/fiber"'],
-    "actix": ["actix-web"],
-    "axum": ["axum"],
-    "tokio": ["tokio"],
-    "spring-boot": ["spring-boot"],
-}
+    if not ext_counter:
+        return {"language": "unknown", "frameworks": [], "file_count": 0}
 
-# Directories that indicate a language ecosystem
-DIR_MARKERS: dict[str, str | None] = {
-    "node_modules": "javascript",
-    "vendor": None,
-    "target": "rust",
-    "__pycache__": "python",
-    ".venv": "python",
-    "venv": "python",
-    "dist": None,
-    "build": None,
-    "src": None,
-}
+    primary_language = ext_counter.most_common(1)[0][0]
 
-# Skip patterns
-SKIP_DIRS = {
-    ".git",
-    ".svn",
-    ".hg",
-    "node_modules",
-    "target",
-    "vendor",
-    "__pycache__",
-    ".venv",
-    "venv",
-    "dist",
-    "build",
-    ".tox",
-    ".mypy_cache",
-    ".ruff_cache",
-    ".pytest_cache",
-    "coverage",
-    ".next",
-    ".nuxt",
-    ".output",
-    "__snapshots__",
-}
+    # Detect frameworks
+    frameworks = []
+    for fw, patterns in FRAMEWORK_PATTERNS.items():
+        for pattern in patterns:
+            if any(project_dir.rglob(pattern)) or (project_dir / pattern).exists():
+                frameworks.append(fw)
+                break
 
+    # Check config markers
+    for config_file, langs in CONFIG_MARKERS.items():
+        if (project_dir / config_file).exists():
+            if isinstance(langs, list):
+                frameworks.extend(langs)
+            else:
+                frameworks.append(langs)
 
-def count_extensions(dirpath: Path, max_files: int = 5000) -> Counter[str]:
-    """Count file extensions in a directory (with depth limit)."""
-    counter: Counter[str] = Counter()
-    count = 0
+    frameworks = list(set(frameworks))
 
-    for filepath in dirpath.rglob("*"):
-        if count >= max_files:
-            break
-        if not filepath.is_file():
-            continue
-        if any(part in SKIP_DIRS for part in filepath.parts):
-            continue
-
-        suffix = filepath.suffix.lower()
-        if suffix in EXTENSION_MAP:
-            counter[EXTENSION_MAP[suffix]] += 1
-            count += 1
-
-    return counter
-
-
-def detect_framework_from_package_json(dirpath: Path) -> str | None:
-    """Detect framework from package.json dependencies."""
-    pkg_path = dirpath / "package.json"
-    if not pkg_path.exists():
-        return None
-
-    try:
-        import json as _json
-
-        pkg = _json.loads(pkg_path.read_text(encoding="utf-8"))
-    except (OSError, _json.JSONDecodeError):
-        return None
-
-    all_deps: dict[str, str] = {}
-    for key in ("dependencies", "devDependencies"):
-        if key in pkg and isinstance(pkg[key], dict):
-            all_deps.update(pkg[key])
-
-    for framework, signatures in FRAMEWORK_SIGNATURES.items():
-        if any(sig in all_deps for sig in signatures):
-            return framework
-
-    return None
-
-
-def detect_framework_from_requirements(dirpath: Path) -> str | None:
-    """Detect framework from Python requirements."""
-    for req_file in ("requirements.txt", "pyproject.toml"):
-        req_path = dirpath / req_file
-        if not req_path.exists():
-            continue
-
-        try:
-            content = req_path.read_text(encoding="utf-8")
-        except OSError:
-            continue
-
-        for framework, signatures in FRAMEWORK_SIGNATURES.items():
-            if any(sig in content for sig in signatures):
-                return framework
-
-    return None
-
-
-def detect_framework_from_go_mod(dirpath: Path) -> str | None:
-    """Detect framework from go.mod."""
-    go_mod = dirpath / "go.mod"
-    if not go_mod.exists():
-        return None
-
-    try:
-        content = go_mod.read_text(encoding="utf-8")
-    except OSError:
-        return None
-
-    for framework, signatures in FRAMEWORK_SIGNATURES.items():
-        if any(sig in content for sig in signatures):
-            return framework
-
-    return None
-
-
-def detect_framework(dirpath: Path, language: str) -> str | None:
-    """Detect framework based on language."""
-    if language == "typescript" or language == "javascript":
-        return detect_framework_from_package_json(dirpath)
-    elif language == "python":
-        return detect_framework_from_requirements(dirpath)
-    elif language == "go":
-        return detect_framework_from_go_mod(dirpath)
-    return None
-
-
-def detect_language(dirpath: Path) -> dict[str, Any]:
-    """Detect the primary language and framework of a project."""
-    result: dict[str, Any] = {
-        "language": "unknown",
-        "framework": None,
-        "confidence": 0.0,
-        "file_counts": {},
+    return {
+        "language": primary_language,
+        "frameworks": frameworks,
+        "file_count": sum(ext_counter.values()),
+        "extension_breakdown": dict(ext_counter),
     }
-
-    # 1. Check config markers first (highest confidence)
-    for config_file, lang_info in CONFIG_MARKERS.items():
-        if (dirpath / config_file).exists():
-            if lang_info is not None:
-                lang, framework = lang_info
-                # Special handling for package.json (might be TS)
-                if config_file == "package.json":
-                    tsconfig_exists = (dirpath / "tsconfig.json").exists()
-                    lang = "typescript" if tsconfig_exists else "javascript"
-                result["language"] = lang
-                result["confidence"] = 0.9
-                result["framework"] = detect_framework(dirpath, lang)
-                return result
-
-    # 2. Fall back to file extension counting
-    counts = count_extensions(dirpath)
-    if not counts:
-        return result
-
-    result["file_counts"] = dict(counts.most_common(10))
-
-    total = sum(counts.values())
-    if total == 0:
-        return result
-
-    primary, primary_count = counts.most_common(1)[0]
-    confidence = primary_count / total
-
-    result["language"] = primary
-    result["confidence"] = round(confidence, 2)
-    result["framework"] = detect_framework(dirpath, primary)
-
-    return result
 
 
 def main() -> int:
-    """Main entry point."""
-    parser = argparse.ArgumentParser(description="Detect project language and framework")
-    parser.add_argument("path", type=Path, nargs="?", default=Path("."), help="Project directory (default: current)")
-    parser.add_argument("--json", action="store_true", dest="json_output", help="Output as JSON")
-
+    parser = argparse.ArgumentParser(description="Enhanced Language & Framework Detector")
+    parser.add_argument("project_dir", nargs="?", default=".", help="Project directory to analyze")
+    parser.add_argument("--json", action="store_true", help="Output as JSON")
     args = parser.parse_args()
 
-    if not args.path.is_dir():
-        print(f"Error: Not a directory: {args.path}", file=sys.stderr)
-        return 1
+    project_dir = Path(args.project_dir).resolve()
+    result = detect_project_language(project_dir)
 
-    result = detect_language(args.path)
-
-    if args.json_output:
+    if args.json:
         print(json.dumps(result, indent=2, ensure_ascii=False))
     else:
-        print(f"Language:  {result['language']}")
-        print(f"Framework: {result['framework'] or 'N/A'}")
-        print(f"Confidence: {result['confidence']}")
-        if result["file_counts"]:
-            print("File counts:")
-            for lang, count in result["file_counts"].items():
-                print(f"  {lang}: {count}")
+        if "error" in result:
+            print(f"错误: {result['error']}", file=sys.stderr)
+            return 1
+        print(f"项目目录: {project_dir}")
+        print(f"主要语言: {result['language']}")
+        print(f"检测框架: {', '.join(result['frameworks']) if result['frameworks'] else '无'}")
+        print(f"文件总数: {result['file_count']}")
+        if result.get("extension_breakdown"):
+            print("扩展名分布:")
+            for ext, count in sorted(result["extension_breakdown"].items(), key=lambda x: -x[1]):
+                print(f"  {ext}: {count}")
 
     return 0
 

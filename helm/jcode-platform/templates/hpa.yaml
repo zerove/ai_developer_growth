@@ -1,0 +1,36 @@
+{{- if and .Values.autoscaling (index .Values.autoscaling "enabled") }}
+{{- range $component, $config := .Values }}
+{{- if and (hasKey $config "autoscaling") (index $config.autoscaling "enabled") }}
+{{- $name := printf "%s-%s" $.Chart.Name $component }}
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: {{ include "jcode-platform.fullname" $ }}-{{ $component }}
+  labels:
+    {{- include "jcode-platform.labels" $ | nindent 4 }}
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: {{ include "jcode-platform.fullname" $ }}-{{ $component }}
+  minReplicas: {{ $config.autoscaling.minReplicas }}
+  maxReplicas: {{ $config.autoscaling.maxReplicas }}
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: {{ $config.autoscaling.targetCPUUtilizationPercentage }}
+    - type: Resource
+      resource:
+        name: memory
+        target:
+          type: Utilization
+          averageUtilization: {{ $config.autoscaling.targetMemoryUtilizationPercentage }}
+  behavior:
+    {{- toYaml $.Values.autoscaling.behavior | nindent 4 }}
+---
+{{- end }}
+{{- end }}
+{{- end }}

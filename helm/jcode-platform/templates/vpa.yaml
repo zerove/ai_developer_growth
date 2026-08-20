@@ -1,0 +1,34 @@
+{{- if .Values.vpa.enabled }}
+{{- range $component, $config := .Values }}
+{{- if and (hasKey $config "vpa") $config.vpa.enabled }}
+{{- $name := printf "%s-%s" $.Chart.Name $component }}
+apiVersion: autoscaling.k8s.io/v1
+kind: VerticalPodAutoscaler
+metadata:
+  name: {{ include "jcode-platform.fullname" $ }}-{{ $component }}-vpa
+  labels:
+    {{- include "jcode-platform.labels" $ | nindent 4 }}
+spec:
+  targetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: {{ include "jcode-platform.fullname" $ }}-{{ $component }}
+  updatePolicy:
+    updateMode: {{ $config.vpa.updateMode | default "Auto" }}
+  resourcePolicy:
+    containerPolicies:
+      - containerName: {{ $component }}
+        minAllowed:
+          cpu: {{ $config.vpa.minCpu | default "100m" }}
+          memory: {{ $config.vpa.minMemory | default "128Mi" }}
+        maxAllowed:
+          cpu: {{ $config.vpa.maxCpu | default "2000m" }}
+          memory: {{ $config.vpa.maxMemory | default "2Gi" }}
+        controlledResources:
+          - cpu
+          - memory
+        controlledValues: RequestsAndLimits
+---
+{{- end }}
+{{- end }}
+{{- end }}

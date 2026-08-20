@@ -1,0 +1,24 @@
+{{- if and .Values.tests (index .Values.tests "enabled") }}
+apiVersion: v1
+kind: Pod
+metadata:
+  name: "{{ include "jcode-platform.fullname" . }}-test-connection"
+  labels:
+    {{- include "jcode-platform.labels" . | nindent 4 }}
+  annotations:
+    "helm.sh/hook": test
+spec:
+  serviceAccountName: {{ include "jcode-platform.serviceAccountName" . }}
+  restartPolicy: Never
+  containers:
+    - name: wget
+      image: busybox:1.36
+      command: ['wget']
+      args:
+        [
+          '--spider',
+          '--timeout=10',
+          '--tries=3',
+          'http://{{ include "jcode-platform.fullname" . }}-api:8080/health',
+        ]
+{{- end }}

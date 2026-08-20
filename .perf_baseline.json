@@ -1,0 +1,40 @@
+{
+  "timestamp": "2026-08-20 12:27:27",
+  "results": [
+    {
+      "module": "semantic_code_graph",
+      "iterations": 3,
+      "times_sec": [
+        2.439005812999312,
+        2.4858317199996236,
+        2.3082648830004473
+      ],
+      "mean_sec": 2.411034138666461,
+      "stdev_sec": 0.09202883419999584,
+      "node_count": 5963
+    },
+    {
+      "module": "rules_engine.checker",
+      "iterations": 3,
+      "times_sec": [
+        6.587492632001158,
+        5.859735039000952,
+        6.978172315999473
+      ],
+      "mean_sec": 6.475133329000528,
+      "stdev_sec": 0.5676213045447261,
+      "file_count": 128
+    },
+    {
+      "module": "rules_engine.performance.parallel",
+      "iterations": 3,
+      "times_sec": [
+        2.6292459800006327,
+        2.848764554999434,
+        2.4178534410002612
+      ],
+      "mean_sec": 2.631954658666776,
+      "stdev_sec": 0.21546832655193046
+    }
+  ]
+}

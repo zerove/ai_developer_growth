@@ -12,13 +12,14 @@ Usage:
 
 from __future__ import annotations
 
-import hashlib
 import os
 import time
 from concurrent.futures import ProcessPoolExecutor, as_completed
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
+
+from tools.scripts._common import file_hash_full
 
 
 @dataclass
@@ -80,10 +81,10 @@ class FileCache:
                                 timestamp=float(timestamp),
                                 size=int(size),
                             )
-                        except Exception:
-                            _ = None  # cache entry invalid
-        except Exception:
-            _ = None  # cache load error
+                        except (ValueError, OSError):
+                            pass  # cache entry invalid
+        except (OSError, json.JSONDecodeError):
+            pass  # cache load error
 
     def get(self, filepath: str) -> dict[str, Any] | None:
         """Get cached result for a file."""
@@ -94,7 +95,7 @@ class FileCache:
         # Check if file has changed
         try:
             os.stat(filepath)
-            current_hash = self._file_hash(filepath)
+            current_hash = file_hash_full(Path(filepath))
             if current_hash != entry.file_hash:
                 del self._memory_cache[filepath]
                 return None
@@ -107,7 +108,7 @@ class FileCache:
         """Cache a result for a file."""
         try:
             stat = os.stat(filepath)
-            file_hash = self._file_hash(filepath)
+            file_hash = file_hash_full(Path(filepath))
             entry = CacheEntry(
                 file_hash=file_hash,
                 result=result,
@@ -121,7 +122,7 @@ class FileCache:
                 oldest_key = min(self._memory_cache, key=lambda k: self._memory_cache[k].timestamp)
                 del self._memory_cache[oldest_key]
         except OSError:
-            _ = None  # stat failed
+            pass  # stat failed
 
     def save(self) -> None:
         """Persist cache to disk."""
@@ -136,13 +137,13 @@ class FileCache:
             cache_file = self.cache_dir / f"{entry.file_hash}.cache"
             try:
                 cache_file.write_text(json.dumps(entry.result))
-            except Exception:
-                _ = None  # write cache failed
+            except (OSError, TypeError):
+                pass  # write cache failed
 
         try:
             cache_index.write_text("\n".join(lines[: self.max_entries]))
-        except Exception:
-            _ = None  # cache write failed
+        except OSError:
+            pass  # cache write failed
 
     def clear(self) -> None:
         """Clear the cache."""
@@ -163,35 +164,23 @@ class FileCache:
         }
 
     @staticmethod
-    def _file_hash(filepath: str) -> str:
-        """Calculate file hash for change detection."""
-        h = hashlib.sha256()
+    def _check_file_worker(args: tuple[str, str | None]) -> dict[str, Any] | None:
+        """Worker function for parallel file checking."""
+        filepath, language = args
         try:
-            with open(filepath, "rb") as f:
-                for chunk in iter(lambda: f.read(8192), b""):
-                    h.update(chunk)
-        except OSError:
-            return ""
-        return h.hexdigest()
+            from pathlib import Path
 
+            from tools.scripts.rules_engine.checker import check_file
 
-def _check_file_worker(args: tuple[str, str | None]) -> dict[str, Any] | None:
-    """Worker function for parallel file checking."""
-    filepath, language = args
-    try:
-        from pathlib import Path
-
-        from tools.scripts.rules_engine.checker import check_file
-
-        result = check_file(Path(filepath), language=language)
-        return {
-            "file": filepath,
-            "issues": [{"rule_id": i.rule_id, "severity": i.severity, "message": i.message} for i in result.issues],
-            "language": result.language,
-            "skipped": result.skipped,
-        }
-    except Exception:
-        return None
+            result = check_file(Path(filepath), language=language)
+            return {
+                "file": filepath,
+                "issues": [{"rule_id": i.rule_id, "severity": i.severity, "message": i.message} for i in result.issues],
+                "language": result.language,
+                "skipped": result.skipped,
+            }
+        except (AttributeError, OSError):
+            return None
 
 
 class PerformanceOptimizer:
@@ -302,12 +291,12 @@ class PerformanceOptimizer:
         results: list[dict[str, Any] | None] = []
 
         with ProcessPoolExecutor(max_workers=self.max_workers) as executor:
-            future_to_file = {executor.submit(_check_file_worker, f): f[0] for f in files}
+            future_to_file = {executor.submit(FileCache._check_file_worker, f): f[0] for f in files}
             for future in as_completed(future_to_file):
                 try:
                     result = future.result(timeout=30)
                     results.append(result)
-                except Exception:
+                except (TimeoutError, Exception):
                     results.append(None)
 
         return results
@@ -316,7 +305,7 @@ class PerformanceOptimizer:
         """Run checks serially."""
         results: list[dict[str, Any] | None] = []
         for filepath, language in files:
-            result = _check_file_worker((filepath, language))
+            result = FileCache._check_file_worker((filepath, language))
             results.append(result)
         return results
 
@@ -373,7 +362,7 @@ class PerformanceOptimizer:
 
             usage = resource.getrusage(resource.RUSAGE_SELF)
             return usage.ru_maxrss / 1024  # Convert to MB
-        except Exception:
+        except (AttributeError, OSError):
             return 0.0
 
     def format_metrics(self) -> str:

@@ -20,6 +20,8 @@
 - glob
 - grep
 - gh (GitHub CLI)
+- task_tool
+- patch
 
 ### 约束
 

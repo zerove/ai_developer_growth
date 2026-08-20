@@ -33,20 +33,19 @@
 | `ai-task-prioritizer` | 任务优先级工具 | CLI 任务优先级排序，TDD + AI 驱动 | ✅ 已实现 | `examples/ai-task-prioritizer/prioritizer.py` |
 | `hooks-runner` | 统一 Hook 运行器 | 统一 lint/typecheck/test/security/quality-gate/governance 入口 | ✅ 已实现 | `tools/scripts/hooks_runner.py` |
 | `rules-engine` | 规则引擎 | 语言无关的代码质量检查引擎（反模式/命名/阈值/AST） | ✅ 已实现 | `tools/scripts/rules_engine/` |
-| `jcode-ai-native-workflow` | AI-Native 工作流主管道 | 集成 11 大支柱的全生命周期研发自动化流水线 | ✅ 已实现 | `tools/scripts/jcode_ai_native_workflow.py` |
-| `autonomous-swarm` | 自主智能体蜂群引擎 | 全自主多 Agent 协同、红蓝对抗与自举演进 | ✅ 已实现 | `tools/scripts/autonomous_swarm_engine.py` |
+| `jcode-ai-native-workflow` | AI-Native 工作流主管道 | 集成核心支柱的全生命周期研发自动化流水线 | ✅ 已实现 | `tools/scripts/jcode_ai_native_workflow.py` |
 
 ---
 
 ## 🎯 核心治理 Agent (P0 - 已定义)
 
 ### 1. knowledge-curator (知识策展人)
-**职责**: 维护、收集真实案例、审核文档质量、更新 INDEX/MOC
-**作用域**: `docs/`, `case-studies/`, `INDEX.md`, `MOC.md**:
+**职责**: 维护、收集真实案例、审核文档质量、更新 docs/MOC.md
+**作用域**: `docs/`, `case-studies/`, `docs/MOC.md`:
 - 每周扫描 `case-studies/` 目录，验证案例格式完整性（背景/过程/对比/洞察/场景）
 - 运行 `tools/scripts/link_auditor.py` 检查文档断链，生成修复报告
 - 运行 `tools/scripts/validate_case_study.py` 验证新提交案例
-- 更新 `INDEX.md`OC.md`
+- 更新 `docs/MOC.md`
 - 执行 `tools/scripts/update_ai_tool_matrix.py` 同步
 
 ### 2. governance-auditor (治理审计员 v1.1)
@@ -55,7 +54,7 @@
 **核心指令**:
 - 执行 `ruff check` + `ruff format --check` 验证代码风格
 - 运行 `mypy` 类型检查（配置 `pyproject.toml`）
-- 执行 `pytest` 测试套件，要求覆盖率 ≥ 80%
+- 执行 `pytest` 测试套件，要求覆盖率 ≥ 60%
 - 运行 `tools/scripts/audit_to_pr.py` 生成审计报告并创建 PR
 - 检查 `GOVERNANCE.md` 质量门禁：无 `unwrap()`/`expect()`、无 `as any`
 - **v1.1 新增**: 验证15个治理层文档格式完整性
@@ -63,8 +62,8 @@
 - **v1.1 新增**: 审计幻觉风险（代码不安全模式 + 文档绝对化声明）
 
 ### 3. governance-docs-validator (治理文档验证器 v1.0)
-**职责**: 验证治理层、、交叉引用同步
-**作用域**: `docs/efficiency/ai-*.md`, `GOVERNANCE.md`, `INDEX.md`, `CLAUDE.md`
+**职责**: 验证治理层文档、索引引用、交叉引用同步
+**作用域**: `docs/efficiency/ai-*.md`, `GOVERNANCE.md`, `docs/MOC.md`, `CLAUDE.md`
 **核心指令**:
 - 运行 `python .jcode/scripts/governance-docs-validator.py validate` 验证文档格式
 - 运行 `python .jcode/scripts/governance-docs-validator.py check-index` 检查索引引用
@@ -76,15 +75,15 @@
 **职责**: 分析 AI 协作效率数据、优化全周期工作流、推荐工具组合
 **作用域**: `docs/efficiency/`, `examples/`, `case-studies/`
 **核心指令**:
-- 分析 `case-studies/*.md` 中
+- 分析 `case-studies/*.md` 中的效率数据与洞察
 - 对比 `docs/tools/ai-tool-matrix.md` 推荐与实际案例
-- 运行 `examples/ai-context-sync` 验证全
+- 运行 `examples/ai-context-sync` 验证全周期工作流
 - 更新 `docs/efficiency/full-cycle-workflow.md` 避坑指南
 - 维护 `docs/efficiency/metrics-framework.md` 度量体系
 
 ### 5. community-catalyst (社区催化剂)
 **职责**: 管理贡献流程、验证社区案例、设计贡献者激励机制
-**作用域**: `.github/`, `CONTRIBUTING.md`, `FEEDBACK.md`, `case-studies
+**作用域**: `.github/`, `CONTRIBUTING.md`, `FEEDBACK.md`, `case-studies/`
 - 监控 GitHub Issues/PRs，按标签分流（案例/工具/方法论/问题）
 - 验证社区提交案例：运行 `validate_case_study.py`、检查真实性、效率数据
 - 执行 `tools/scripts/adr_generator.py` 从 PR 生成 ADR

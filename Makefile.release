@@ -1,0 +1,66 @@
+# JCode Platform - Release Automation
+
+# 版本管理
+.PHONY: version bump-major bump-minor bump-patch version-verify
+
+version: ## 显示当前版本
+	python tools/scripts/release.py version
+
+bump-major: ## 主版本号递增
+	python tools/scripts/release.py bump major
+
+bump-minor: ## 次版本号递增
+	python tools/scripts/release.py bump minor
+
+bump-patch: ## 补丁版本号递增 (默认)
+	python tools/scripts/release.py bump patch
+
+version-verify: ## 验证版本一致性
+	python tools/scripts/release.py verify
+
+# CHANGELOG
+.PHONY: changelog
+changelog: ## 生成/更新 CHANGELOG
+	python tools/scripts/release.py changelog
+
+# Docker 构建
+.PHONY: docker-build docker-push docker-build-all
+
+docker-build: ## 构建 Docker 镜像 (本地)
+	python tools/scripts/docker_build.py --version $(VERSION) --no-push --platform linux/amd64
+
+docker-push: ## 构建并推送 Docker 镜像
+	python tools/scripts/docker_build.py --version $(VERSION) --push --platform linux/amd64,linux/arm64 --sbom --sign
+
+docker-build-all: ## 构建所有组件镜像 (本地)
+	python tools/scripts/docker_build.py --version $(VERSION) --no-push --platform linux/amd64,linux/arm64
+
+# 完整发布流程
+.PHONY: release release-dry-run
+
+release: ## 完整发布流程 (版本递增 + CHANGELOG + Docker + 推送)
+	@read -p "版本类型 (major/minor/patch) [patch]: " type; \
+	type=$${type:-patch}; \
+	make bump-$$type && \
+	make docker-push VERSION=$$(python tools/scripts/release.py version) && \
+	echo "✅ 发布完成: v$$(python tools/scripts/release.py version)"
+
+release-dry-run: ## 试运行发布流程
+	@read -p "版本类型 (major/minor/patch) [patch]: " type; \
+	type=$${type:-patch}; \
+	python tools/scripts/release.py bump $$type --dry-run && \
+	python tools/scripts/docker_build.py --version $$(python tools/scripts/release.py version) --dry-run --platform linux/amd64,linux/arm64
+
+# SBOM 生成
+.PHONY: sbom
+sbom: ## 生成所有镜像的 SBOM
+	python tools/scripts/docker_build.py --version $(VERSION) --no-push --sbom
+
+# 版本变量 (可被命令行覆盖)
+VERSION ?= $(shell python tools/scripts/release.py version)
+
+# 默认目标
+.DEFAULT_GOAL := help
+
+help: ## 显示帮助
+	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-20s\033[0m %s\n", $$1, $$2}'

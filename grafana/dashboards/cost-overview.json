@@ -1,0 +1,198 @@
+{
+  "dashboard": {
+    "title": "JCode Platform - Cost Overview",
+    "uid": "cost-overview",
+    "tags": ["cost", "kubernetes", "finops"],
+    "timezone": "Asia/Shanghai",
+    "panels": [
+      {
+        "id": 1,
+        "title": "Total Monthly Cost Trend",
+        "type": "timeseries",
+        "gridPos": {"x": 0, "y": 0, "w": 12, "h": 8},
+        "targets": [
+          {
+            "expr": "sum(increase(kubecost_cluster_costs_hourly[1h])) by (cluster)",
+            "legendFormat": "{{cluster}}",
+            "refId": "A"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "unit": "currencyUSD",
+            "decimals": 2
+          }
+        }
+      },
+      {
+        "id": 2,
+        "title": "Cost by Namespace (Monthly)",
+        "type": "piechart",
+        "gridPos": {"x": 12, "y": 0, "w": 12, "h": 8},
+        "targets": [
+          {
+            "expr": "sum(kubecost_namespace_costs_monthly) by (namespace)",
+            "legendFormat": "{{namespace}}",
+            "refId": "A"
+          }
+        ]
+      },
+      {
+        "id": 3,
+        "title": "Cost by Team (Monthly)",
+        "type": "piechart",
+        "gridPos": {"x": 0, "y": 8, "w": 12, "h": 8},
+        "targets": [
+          {
+            "expr": "sum(kubecost_team_costs_monthly) by (team)",
+            "legendFormat": "{{team}}",
+            "refId": "A"
+          }
+        ]
+      },
+      {
+        "id": 4,
+        "title": "Cost by Project (Monthly)",
+        "type": "piechart",
+        "gridPos": {"x": 12, "y": 8, "w": 12, "h": 8},
+        "targets": [
+          {
+            "expr": "sum(kubecost_project_costs_monthly) by (project)",
+            "legendFormat": "{{project}}",
+            "refId": "A"
+          }
+        ]
+      },
+      {
+        "id": 5,
+        "title": "Resource Efficiency (CPU)",
+        "type": "bargauge",
+        "gridPos": {"x": 0, "y": 16, "w": 12, "h": 8},
+        "targets": [
+          {
+            "expr": "avg(container_cpu_usage_seconds_total / container_spec_cpu_quota / container_spec_cpu_period) by (namespace, pod)",
+            "legendFormat": "{{namespace}}/{{pod}}",
+            "refId": "A"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "unit": "percentunit",
+            "min": 0,
+            "max": 1,
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                {"color": "green", "value": null},
+                {"color": "yellow", "value": 0.3},
+                {"color": "red", "value": 0.7}
+              ]
+            }
+          }
+        }
+      },
+      {
+        "id": 6,
+        "title": "Resource Efficiency (Memory)",
+        "type": "bargauge",
+        "gridPos": {"x": 12, "y": 16, "w": 12, "h": 8},
+        "targets": [
+          {
+            "expr": "avg(container_memory_working_set_bytes / container_spec_memory_limit_bytes) by (namespace, pod)",
+            "legendFormat": "{{namespace}}/{{pod}}",
+            "refId": "A"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "unit": "percentunit",
+            "min": 0,
+            "max": 1,
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                {"color": "green", "value": null},
+                {"color": "yellow", "value": 0.3},
+                {"color": "red", "value": 0.7}
+              ]
+            }
+          }
+        }
+      },
+      {
+        "id": 7,
+        "title": "Cluster Cost Comparison",
+        "type": "table",
+        "gridPos": {"x": 0, "y": 24, "w": 24, "h": 10},
+        "targets": [
+          {
+            "expr": "kubecost_cluster_costs_monthly",
+            "format": "table",
+            "refId": "A"
+          }
+        ],
+        "transformations": [
+          {
+            "id": "organize",
+            "options": {
+              "excludeByName": {},
+              "renameByName": {
+                "Time": "时间",
+                "cluster": "集群",
+                "Value": "月度成本 (USD)",
+                "namespace": "命名空间",
+                "team": "团队",
+                "project": "项目"
+              }
+            }
+          }
+        ],
+        "options": {
+          "showHeader": true,
+          "sortBy": [{"displayName": "月度成本 (USD)", "desc": true}]
+        }
+      },
+      {
+        "id": 8,
+        "title": "Cost Anomaly Detection",
+        "type": "timeseries",
+        "gridPos": {"x": 0, "y": 34, "w": 24, "h": 8},
+        "targets": [
+          {
+            "expr": "kubecost_anomaly_score",
+            "legendFormat": "{{cluster}} - {{namespace}}",
+            "refId": "A"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "unit": "short",
+            "decimals": 2,
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                {"color": "green", "value": null},
+                {"color": "yellow", "value": 1.5},
+                {"color": "red", "value": 3}
+              ]
+            }
+          }
+        }
+      }
+    ],
+    "time": {
+      "from": "now-30d",
+      "to": "now"
+    },
+    "refresh": "5m",
+    "schemaVersion": 38,
+    "version": 1,
+    "links": []
+  },
+  "meta": {
+    "created": "2024-01-20T00:00:00Z",
+    "updated": "2024-01-20T00:00:00Z",
+    "createdBy": "admin",
+    "updatedBy": "admin"
+  }
+}

@@ -6,8 +6,8 @@ from pathlib import Path
 
 import yaml
 
-from tools.scripts.validators.models import ValidationResult
-from tools.scripts.validators.pipeline import (
+from tools.scripts.rules_engine.validators.models import ValidationResult
+from tools.scripts.rules_engine.validators.pipeline import (
     EXTENSION_MAP,
     _get_embedded_rules,
     _merge_rules,

@@ -1,0 +1,150 @@
+{{- if and .Values.api (index .Values.api "enabled") }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "jcode-platform.fullname" . }}-api
+  labels:
+    {{- include "jcode-platform.labels" . | nindent 4 }}
+    app.kubernetes.io/component: api
+spec:
+  replicas: {{ index .Values.api "replicaCount" }}
+  selector:
+    matchLabels:
+      {{- include "jcode-platform.selectorLabels" . | nindent 6 }}
+      app.kubernetes.io/component: api
+  template:
+    metadata:
+      labels:
+        {{- include "jcode-platform.selectorLabels" . | nindent 8 }}
+        app.kubernetes.io/component: api
+      annotations:
+        {{- if .Values.global.commonLabels }}
+        {{- toYaml .Values.global.commonLabels | nindent 8 }}
+        {{- end }}
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "8080"
+        prometheus.io/path: "/metrics"
+    spec:
+      {{- with .Values.global.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      serviceAccountName: {{ include "jcode-platform.serviceAccountName" . }}
+      securityContext:
+        {{- toYaml .Values.security.podSecurityStandards | nindent 8 }}
+      containers:
+        - name: api
+          image: "{{ .Values.global.imageRegistry }}/{{ .Values.global.repository }}/api:{{ .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          ports:
+            - name: http
+              containerPort: 8080
+              protocol: TCP
+            - name: metrics
+              containerPort: 9090
+              protocol: TCP
+          env:
+            - name: PYTHONPATH
+              value: "/app"
+            - name: PYTHONUNBUFFERED
+              value: "1"
+            - name: PYTHONDONTWRITEBYTECODE
+              value: "1"
+          ports:
+            - name: http
+              containerPort: 8080
+            - name: metrics
+              containerPort: 9090
+          resources:
+            {{- toYaml (index .Values.api "resources") | nindent 12 }}
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: http
+            initialDelaySeconds: 10
+            periodSeconds: 30
+            timeoutSeconds: 10
+            failureThreshold: 3
+          readinessProbe:
+            httpGet:
+              path: /ready
+              port: http
+            initialDelaySeconds: 5
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 3
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            runAsNonRoot: true
+            runAsUser: 1000
+            runAsGroup: 1000
+            capabilities:
+              drop:
+                - ALL
+      {{- with (index .Values.api "nodeSelector") }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with (index .Values.api "affinity") }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with (index .Values.api "tolerations") }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "jcode-platform.fullname" . }}-api
+  labels:
+    {{- include "jcode-platform.labels" . | nindent 4 }}
+    app.kubernetes.io/component: api
+spec:
+  type: {{ index .Values.api "service.type" }}
+  ports:
+    - port: {{ index .Values.api "service.port" }}
+      targetPort: http
+      protocol: TCP
+      name: http
+    - port: 9090
+      targetPort: metrics
+      protocol: TCP
+      name: metrics
+  selector:
+    {{- include "jcode-platform.selectorLabels" . | nindent 4 }}
+    app.kubernetes.io/component: api
+---
+{{- if and .Values.api (index .Values.api "autoscaling") (index .Values.api.autoscaling "enabled") }}
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: {{ include "jcode-platform.fullname" . }}-api
+  labels:
+    {{- include "jcode-platform.labels" . | nindent 4 }}
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: {{ include "jcode-platform.fullname" . }}-api
+  minReplicas: {{ index .Values.api.autoscaling "minReplicas" }}
+  maxReplicas: {{ index .Values.api.autoscaling "maxReplicas" }}
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: {{ index .Values.api.autoscaling "targetCPUUtilizationPercentage" }}
+    - type: Resource
+      resource:
+        name: memory
+        target:
+          type: Utilization
+          averageUtilization: {{ index .Values.api.autoscaling "targetMemoryUtilizationPercentage" }}
+  behavior:
+    {{- toYaml .Values.autoscaling.behavior | nindent 4 }}
+{{- end }}
+{{- end }}

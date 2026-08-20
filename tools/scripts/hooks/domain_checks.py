@@ -296,11 +296,3 @@ def run_arch_graph() -> tuple[bool, str]:
         True,
         f"Architecture graph generated successfully ({len(graph)} modules mapped).\n\n```mermaid\n{mermaid}\n```",
     )
-
-
-def run_memory_index() -> tuple[bool, str]:
-    """Run session memory vectorizer."""
-    from tools.scripts.session_memory_vectorizer import vectorize_sessions
-
-    index = vectorize_sessions(Path("docs"), Path(".jcode/memory/memory_index.json"))
-    return True, f"Indexed {len(index['entries'])} memory entries into .jcode/memory/memory_index.json"

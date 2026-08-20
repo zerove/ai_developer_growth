@@ -63,10 +63,14 @@ class TestValidateAgentDefinition(unittest.TestCase):
         agent_file.write_text(
             """## agent: test-agent (Test Agent)
 
+这是一个测试 Agent 的描述段落
+
 ### 指令
 
 1. 运行 `tools/scripts/test.py` 检查代码
 2. 使用 `ruff check .` 验证风格
+
+### 工具
 
 - bash
 

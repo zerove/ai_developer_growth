@@ -1,11 +1,8 @@
 """Smoke tests for entry point modules."""
 
-import importlib.util
 import subprocess
 import sys
 from pathlib import Path
-
-import pytest
 
 
 def test_demo_entry_point():
@@ -34,7 +31,15 @@ def test_demo_cli_help():
 def test_demo_cli_waterfall_mode():
     """Test demo runs in waterfall mode (quick test)."""
     result = subprocess.run(
-        [sys.executable, "-m", "multi_agent_orch.demo", "--mode", "waterfall", "--request", "test"],
+        [
+            sys.executable,
+            "-m",
+            "multi_agent_orch.demo",
+            "--mode",
+            "waterfall",
+            "--request",
+            "test",
+        ],
         cwd=Path(__file__).parent.parent,
         capture_output=True,
         text=True,
@@ -49,7 +54,15 @@ def test_demo_cli_waterfall_mode():
 def test_demo_cli_fan_out_mode():
     """Test demo runs in fan-out mode (quick test)."""
     result = subprocess.run(
-        [sys.executable, "-m", "multi_agent_orch.demo", "--mode", "fan-out", "--request", "test"],
+        [
+            sys.executable,
+            "-m",
+            "multi_agent_orch.demo",
+            "--mode",
+            "fan-out",
+            "--request",
+            "test",
+        ],
         cwd=Path(__file__).parent.parent,
         capture_output=True,
         text=True,
@@ -59,7 +72,3 @@ def test_demo_cli_fan_out_mode():
     assert result.returncode == 0
     assert "Fan-Out Mode" in result.stdout
     assert "Agents:" in result.stdout
-
-
-if __name__ == "__main__":
-    pytest.main([__file__, "-v"])

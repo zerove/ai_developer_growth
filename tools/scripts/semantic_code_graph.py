@@ -52,11 +52,18 @@ class SemanticCodeGraph:
             except Exception as e:
                 print(f"Warning: could not parse {file_path}: {e}")
 
+        # Build name->keys index for O(1) dependency resolution
+        name_to_keys: dict[str, set[str]] = {}
+        for key, node in self.nodes.items():
+            name_to_keys.setdefault(node.name, set()).add(key)
+        
         for key, node in self.nodes.items():
             for dep in node.dependencies:
-                for target_key, target_node in self.nodes.items():
-                    if target_node.name == dep or dep in target_node.file_path:
-                        target_node.dependents.add(key)
+                # Direct name match
+                if dep in name_to_keys:
+                    for target_key in name_to_keys[dep]:
+                        if target_key != key:
+                            self.nodes[target_key].dependents.add(key)
 
     def _parse_ast(self, tree: ast.AST, file_path: str) -> None:
         for node in ast.walk(tree):

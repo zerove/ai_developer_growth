@@ -13,14 +13,21 @@ echo "语言: $LANGUAGE"
 
 # 创建框架目录
 mkdir -p "$PROJECT_DIR/.ai-framework"
-mkdir -p "$PROJECT_DIR/.ai-framework/languages"
+mkdir -p "$PROJECT_DIR/.ai-framework/common"
+mkdir -p "$PROJECT_DIR/.ai-framework/standards"
+mkdir -p "$PROJECT_DIR/.ai-framework/domains"
+mkdir -p "$PROJECT_DIR/.ai-framework/frameworks"
 mkdir -p "$PROJECT_DIR/.ai-framework/hooks"
-mkdir -p "$PROJECT_DIR/.ai-framework/quality-gates/scripts"
+mkdir -p "$PROJECT_DIR/.ai-framework/languages"
 mkdir -p "$PROJECT_DIR/.ai-framework/scripts"
 
 # 复制核心文件
-cp -r "$FRAMEWORK_DIR/core/"* "$PROJECT_DIR/.ai-framework/"
-cp -r "$FRAMEWORK_DIR/hooks/"* "$PROJECT_DIR/.ai-framework/hooks/"
+cp -r "$FRAMEWORK_DIR/common/"* "$PROJECT_DIR/.ai-framework/common/" 2>/dev/null || true
+cp -r "$FRAMEWORK_DIR/standards/"* "$PROJECT_DIR/.ai-framework/standards/" 2>/dev/null || true
+cp -r "$FRAMEWORK_DIR/domains/"* "$PROJECT_DIR/.ai-framework/domains/" 2>/dev/null || true
+cp -r "$FRAMEWORK_DIR/frameworks/"* "$PROJECT_DIR/.ai-framework/frameworks/" 2>/dev/null || true
+cp -r "$FRAMEWORK_DIR/hooks/"* "$PROJECT_DIR/.ai-framework/hooks/" 2>/dev/null || true
+cp -r "$FRAMEWORK_DIR/scripts/"* "$PROJECT_DIR/.ai-framework/scripts/" 2>/dev/null || true
 
 # 检测语言
 if [ "$LANGUAGE" = "auto" ]; then
@@ -52,16 +59,16 @@ fi
 
 # 复制语言特定文件
 mkdir -p "$PROJECT_DIR/.ai-framework/languages/$LANGUAGE"
-cp -r "$FRAMEWORK_DIR/languages/$LANGUAGE/"* "$PROJECT_DIR/.ai-framework/languages/$LANGUAGE/"
+cp -r "$FRAMEWORK_DIR/languages/$LANGUAGE/"* "$PROJECT_DIR/.ai-framework/languages/$LANGUAGE/" 2>/dev/null || true
 
 # 创建质量门禁脚本
-cat > "$PROJECT_DIR/.ai-framework/quality-gates/scripts/check.sh" << 'EOF'
+cat > "$PROJECT_DIR/.ai-framework/scripts/check.sh" << 'EOF'
 #!/bin/bash
 # 质量门禁检查脚本
 
 set -e
 
-FRAMEWORK_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../../" && pwd)"
+FRAMEWORK_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../" && pwd)"
 LANGUAGE="${1:-auto}"
 
 # 检测语言
@@ -91,7 +98,7 @@ else
     echo "请手动配置检查脚本"
 fi
 EOF
-chmod +x "$PROJECT_DIR/.ai-framework/quality-gates/scripts/check.sh"
+chmod +x "$PROJECT_DIR/.ai-framework/scripts/check.sh"
 
 # 创建语言检测脚本
 cat > "$PROJECT_DIR/.ai-framework/scripts/detect-language.sh" << 'EOF'
@@ -146,9 +153,9 @@ cat > "$PROJECT_DIR/CLAUDE.md" << 'EOF'
 
 ## 快速开始
 
-1. 阅读 `.ai-framework/core/GOVERNANCE.md`
-2. 使用 `.ai-framework/core/templates/agent-prompt.md` 创建 agent
-3. 通过 4 道质量门禁
+1. 阅读 `.ai-framework/standards/CODING_STANDARDS.md`
+2. 使用 `.ai-framework/common/universal.yml` 配置通用规则
+3. 通过质量门禁
 
 ## 工具集成
 
@@ -190,11 +197,18 @@ echo "✅ 安装完成!"
 echo ""
 echo "目录结构:"
 echo "  $PROJECT_DIR/.ai-framework/  # 框架文件"
+echo "    common/       # 通用配置 (security.yml, universal.yml)"
+echo "    standards/    # 编码标准文档"
+echo "    domains/      # 领域特定配置"
+echo "    frameworks/   # 框架特定配置"
+echo "    hooks/        # Git/IDE hooks"
+echo "    languages/    # 语言特定规则"
+echo "    scripts/      # 工具脚本"
 echo "  $PROJECT_DIR/CLAUDE.md       # 项目规范"
 echo "  $PROJECT_DIR/AGENTS.md       # Agent 索引"
 echo "  $PROJECT_DIR/CONTEXT.md      # 项目上下文"
 echo ""
 echo "下一步:"
-echo "  1. 阅读 .ai-framework/core/GOVERNANCE.md"
-echo "  2. 使用 .ai-framework/core/templates/agent-prompt.md 创建 agent"
-echo "  3. 通过 4 道质量门禁"
+echo "  1. 阅读 .ai-framework/standards/CODING_STANDARDS.md"
+echo "  2. 配置 .ai-framework/common/universal.yml"
+echo "  3. 运行 .ai-framework/scripts/check.sh 验证"

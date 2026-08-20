@@ -20,7 +20,6 @@ class TestJCodeCLI:
         assert result.returncode == 0
         assert "JCode AI-Native SDLC Command Line Interface" in result.stdout
         assert "ai-native-workflow" in result.stdout
-        assert "autonomous-swarm" in result.stdout
         assert "ai-quality-gate" in result.stdout
 
     def test_case_quality_all(self):
@@ -80,17 +79,6 @@ class TestJCodeCLI:
         )
         # Should not crash
         assert "AI PR Review" in result.stdout or "No changes to review" in result.stdout
-
-    def test_autonomous_swarm(self):
-        """Test autonomous-swarm command."""
-        result = subprocess.run(
-            [sys.executable, "-m", "tools.scripts.jcode_cli", "autonomous-swarm", "--task", "Test task"],
-            capture_output=True,
-            text=True,
-            cwd="/home/zeron/dev/ai_developer_growth",
-        )
-        assert result.returncode == 0
-        assert "Swarm execution completed" in result.stdout
 
     def test_metrics_telemetry(self):
         """Test metrics-telemetry command."""

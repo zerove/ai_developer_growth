@@ -39,7 +39,7 @@ def _load_generated_rules(language: str) -> list[dict[str, Any]]:
         return rules
     except ImportError:
         return []
-    except Exception:
+    except (AttributeError, OSError):
         return []
 
 
@@ -54,14 +54,6 @@ _FILE_HASH_CACHE: dict[str, str] = {}
 _DISK_CACHE_DIR = Path(__file__).parent.parent.parent / ".cache" / "rules_engine"
 _DISK_CACHE_FILE = _DISK_CACHE_DIR / "rules_cache.json"
 
-
-def _file_hash(filepath: Path) -> str:
-    """Quick content hash for incremental checks."""
-    try:
-        content = filepath.read_bytes()
-        return hashlib.sha256(content).hexdigest()
-    except OSError:
-        return ""
 
 
 def _load_disk_cache() -> dict[str, Any]:
@@ -110,7 +102,7 @@ def _load_common_rules_cached(framework_dir_str: str) -> dict[str, Any]:
         with open(common_path) as f:
             data = yaml.safe_load(f)
         return data if isinstance(data, dict) else {}
-    except Exception:
+    except (OSError, yaml.YAMLError):
         return {}
 
 
@@ -128,8 +120,8 @@ def _load_universal_rules_cached(framework_dir_str: str) -> dict[str, Any]:
                 data = yaml.safe_load(f)
             if isinstance(data, dict):
                 result = data
-        except Exception:
-            _ = None  # universal rules optional
+        except (OSError, yaml.YAMLError):
+            pass  # universal rules optional
     common = _load_common_rules_cached(framework_dir_str)
     if common:
         result = _merge_rules(result, common)
@@ -191,7 +183,7 @@ def _try_load_yaml(rule_path: Path, framework_dir: Path) -> dict[str, Any] | Non
     try:
         with open(rule_path) as f:
             data = yaml.safe_load(f)
-    except Exception:
+    except (OSError, yaml.YAMLError):
         return None
 
     result = data if isinstance(data, dict) else {}
@@ -459,7 +451,7 @@ def _load_domain_rule_file(domains_dir: Path, domain: str) -> list[dict[str, Any
         data = yaml.safe_load(rule_file.read_text())
         patterns = data.get("anti_patterns", []) if isinstance(data, dict) else []
         return list(patterns) if isinstance(patterns, list) else []
-    except Exception:
+    except (OSError, yaml.YAMLError):
         return []
 
 

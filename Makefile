@@ -3,34 +3,29 @@
 help:  ## 显示帮助信息
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-20s\033[0m %s\n", $$1, $$2}'
 
-lint:  ## 运行
-	ruff check .
+lint:  ## 运行 lint 检查
+	python tools/scripts/hooks_runner.py lint
 
 format:  ## 运行 ruff format 检查
-	ruff format --check .
+	python tools/scripts/hooks_runner.py format
 
 format-fix:  ## 自动修复格式
-	ruff format .
+	python tools/scripts/hooks_runner.py format
 
 typecheck:  ## 运行 mypy 类型检查
-	mypy tools/scripts/ --ignore-missing-imports
+	python tools/scripts/hooks_runner.py typecheck
 
 test:  ## 运行 pytest 测试 (并行)
-	python -m pytest tests/ -v -n auto
+	python tools/scripts/hooks_runner.py test
 
 test-cov:  ## 运行测试并生成覆盖率报告
-	python -m pytest tests/ -v -n auto --cov=tools/scripts --cov-report=term-missing --cov-report=xml --cov-report=html
+	python tools/scripts/hooks_runner.py test --cov
 
 check-quality:  ## 运行完整质量检查 (lint + format + typecheck + test + coverage)
-	echo '=== Ruff Check ===' && ruff check . && \
-	echo '=== Ruff Format ===' && ruff format --check . && \
-	echo '=== Mypy ===' && mypy tools/scripts/ --ignore-missing-imports && \
-	echo '=== Tests ===' && python -m pytest tests/ -v -n auto --cov=tools/scripts --cov-report=term-missing && \
-	echo '=== All checks passed ==='
+	python tools/scripts/hooks_runner.py full
 
 security:  ## 运行安全扫描
-	bandit -r tools/scripts/ -f json -o bandit-report.json || true
-	pip-audit --desc
+	python tools/scripts/hooks_runner.py security
 
 audit:  ## 运行治理审计 (lint + format + typecheck + test)
 	python .jcode/scripts/governance-auditor.py lint
@@ -103,15 +98,6 @@ semantic-graph:  ## 生成语义代码知识图谱
 architecture-guard:  ## 运行架构漂移防御检查
 	python tools/scripts/architecture_drift_guard.py
 
-runtime-verify:  ## 运行运行时验证测试探针
-	python tools/scripts/runtime_verifier.py
-
-self-healing-ci:  ## 运行自愈式 CI 闭环循环
-	python tools/scripts/self_healing_ci.py
-
-slop-scan:  ## 扫描 AI 代码异味与幻觉风险
-	python tools/scripts/ai_slop_scanner.py
-
 metrics-telemetry:  ## 收集研发效能与质量遥测数据
 	python tools/scripts/metrics_telemetry.py
 
@@ -121,27 +107,18 @@ dashboard:  ## 启动 AI-Native 终端控制台驾驶舱
 mcp-server:  ## 启动 AI-Native 模型上下文协议 (MCP) 服务
 	python tools/scripts/ai_native_mcp_server.py
 
-self-evolve:  ## 运行自适应规则与 Prompt 进化引擎
-	python tools/scripts/self_evolving_engine.py
-
 multi-llm-route:  ## 运行多 LLM 智能模型路由决策
 	python tools/scripts/multi_llm_router.py
 
-case-study-gen:  ## 运行自动化案例生成流水线
-	python tools/scripts/case_study_pipeline.py
+# Release 自动化 (详见 Makefile.release)
+include Makefile.release
 
-swarm-run:  ## 运行全自主智能体蜂群与自举演进闭环
-	python tools/scripts/autonomous_swarm_engine.py
-
-release:  ## 创建新版本（需要 VERSION=vX.Y.Z）
-	@test -n "$(VERSION)" || (echo "用法: make release VERSION=vX.Y.Z 例如: make release VERSION=v2.3.0" && exit 1)
-	@echo "📝 更新 CHANGELOG.md 版本为 $(VERSION) ..."
-	@sed -i "s/## \[Unreleased\]/## [$(VERSION)] - $$(date +%F)/" CHANGELOG.md 2>/dev/null || true
-	git add CHANGELOG.md
-	git commit -m "release: $(VERSION)"
-	git tag -a $(VERSION) -m "$(VERSION)"
-	git push origin master --tags --no-verify
-	@echo "✅ $(VERSION) 发布完成"
+release: ## 完整发布流程 (版本递增 + CHANGELOG + Docker + 推送)
+	@read -p "版本类型 (major/minor/patch) [patch]: " type; \
+	type=$${type:-patch}; \
+	make bump-$$type && \
+	make docker-push VERSION=$$(python tools/scripts/release.py version) && \
+	echo "✅ 发布完成: v$$(python tools/scripts/release.py version)"
 
 setup-git: ## 配置 git 模板和钩子
 	git config commit.template .gitmessage

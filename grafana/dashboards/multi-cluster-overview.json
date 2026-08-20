@@ -1,0 +1,182 @@
+{
+  "dashboard": {
+    "title": "JCode Platform - Multi-Cluster Overview",
+    "uid": "multi-cluster-overview",
+    "tags": ["multi-cluster", "overview", "kubernetes"],
+    "timezone": "Asia/Shanghai",
+    "panels": [
+      {
+        "id": 1,
+        "title": "Cluster Health Overview",
+        "type": "stat",
+        "gridPos": {"x": 0, "y": 0, "w": 6, "h": 4},
+        "targets": [
+          {
+            "expr": "count(kube_node_status_condition{condition=\"Ready\",status=\"true\"}) by (cluster)",
+            "legendFormat": "{{cluster}} Ready Nodes",
+            "refId": "A"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "mappings": [
+              {"type": "value", "options": {"1": {"text": "Healthy", "color": "green"}, "0": {"text": "Unhealthy", "color": "red"}}}
+            ],
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [{"color": "red", "value": null}, {"color": "green", "value": 1}]
+            }
+          }
+        }
+      },
+      {
+        "id": 2,
+        "title": "Cluster CPU Usage",
+        "type": "timeseries",
+        "gridPos": {"x": 6, "y": 0, "w": 18, "h": 8},
+        "targets": [
+          {
+            "expr": "sum(rate(container_cpu_usage_seconds_total{job=\"kubelet\",container!=\"\"}[5m])) by (cluster)",
+            "legendFormat": "{{cluster}}",
+            "refId": "A"
+          }
+        ]
+      },
+      {
+        "id": 3,
+        "title": "Cluster Memory Usage",
+        "type": "timeseries",
+        "gridPos": {"x": 0, "y": 8, "w": 12, "h": 8},
+        "targets": [
+          {
+            "expr": "sum(container_memory_working_set_bytes{container!=\"\"}) by (cluster) / sum(container_spec_memory_limit_bytes{container!=\"\"}) by (cluster)",
+            "legendFormat": "{{cluster}}",
+            "refId": "A"
+          }
+        ]
+      },
+      {
+        "id": 4,
+        "title": "Pod Count by Cluster",
+        "type": "piechart",
+        "gridPos": {"x": 12, "y": 8, "w": 12, "h": 8},
+        "targets": [
+          {
+            "expr": "count(kube_pod_info{namespace!~\"kube-system|monitoring|kube-public|kube-node-lease\"}) by (cluster)",
+            "legendFormat": "{{cluster}}",
+            "refId": "A"
+          }
+        ]
+      },
+      {
+        "id": 5,
+        "title": "Cross-Cluster Latency (P95)",
+        "type": "timeseries",
+        "gridPos": {"x": 0, "y": 16, "w": 24, "h": 8},
+        "targets": [
+          {
+            "expr": "histogram_quantile(0.95, sum(rate(http_request_duration_seconds_bucket{job=~\"jcode-platform.*\"}[5m])) by (cluster, source_cluster, destination_cluster, le))",
+            "legendFormat": "{{source_cluster}} -> {{destination_cluster}}",
+            "refId": "A"
+          }
+        ]
+      },
+      {
+        "id": 6,
+        "title": "Cross-Cluster Error Rate",
+        "type": "timeseries",
+        "gridPos": {"x": 0, "y": 24, "w": 24, "h": 8},
+        "targets": [
+          {
+            "expr": "sum(rate(http_requests_total{job=~\"jcode-platform.*\",code=~\"5..\"}[5m])) by (source_cluster, destination_cluster) / sum(rate(http_requests_total{job=~\"jcode-platform.*\"}[5m])) by (source_cluster, destination_cluster)",
+            "legendFormat": "{{source_cluster}} -> {{destination_cluster}}",
+            "refId": "A"
+          }
+        ]
+      },
+      {
+        "id": 7,
+        "title": "Cluster Resource Utilization",
+        "type": "table",
+        "gridPos": {"x": 0, "y": 32, "w": 24, "h": 10},
+        "targets": [
+          {
+            "expr": "kube_node_status_capacity_cpu_cores",
+            "format": "table",
+            "refId": "A"
+          }
+        ],
+        "transformations": [
+          {
+            "id": "organize",
+            "options": {
+              "excludeByName": {"Time": true, "__name__": true},
+              "renameByName": {
+                "cluster": "集群",
+                "Value": "CPU 核心数",
+                "node": "节点"
+              }
+            }
+          }
+        ],
+        "options": {
+          "showHeader": true,
+          "sortBy": [{"displayName": "集群", "desc": false}]
+        }
+      },
+      {
+        "id": 8,
+        "title": "Cross-Cluster Traffic Volume",
+        "type": "timeseries",
+        "gridPos": {"x": 0, "y": 42, "w": 12, "h": 8},
+        "targets": [
+          {
+            "expr": "sum(rate(http_requests_total{job=~\"jcode-platform.*\"}[5m])) by (source_cluster, destination_cluster)",
+            "legendFormat": "{{source_cluster}} -> {{destination_cluster}}",
+            "refId": "A"
+          }
+        ]
+      },
+      {
+        "id": 9,
+        "title": "DR Cluster Status",
+        "type": "stat",
+        "gridPos": {"x": 12, "y": 42, "w": 12, "h": 4},
+        "targets": [
+          {
+            "expr": "up{job=\"jcode-platform\",cluster=\"dr-us-west-2\"}",
+            "legendFormat": "DR Cluster",
+            "refId": "A"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "mappings": [
+              {"type": "value", "options": {"1": {"text": "Online", "color": "green"}, "0": {"text": "Offline", "color": "red"}}}
+            ],
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [{"color": "red", "value": null}, {"color": "green", "value": 1}]
+            }
+          }
+        }
+      }
+    ],
+    "time": {
+      "from": "now-6h",
+      "to": "now"
+    },
+    "refresh": "30s",
+    "schemaVersion": 38,
+    "version": 1,
+    "links": [],
+    "timezone": "Asia/Shanghai",
+    "tags": ["multi-cluster", "overview"]
+  },
+  "meta": {
+    "created": "2024-01-20T00:00:00Z",
+    "updated": "2024-01-20T00:00:00Z",
+    "createdBy": "admin",
+    "updatedBy": "admin"
+  }
+}

@@ -10,7 +10,7 @@ import re
 from pathlib import Path
 from typing import Any
 
-from tools.scripts.validators.models import FixResult, Issue
+from tools.scripts.rules_engine.validators.models import FixResult, Issue
 
 
 def _read_file_content(filepath: Path) -> tuple[str, bool]:

@@ -19,7 +19,9 @@ class TestValidateExample:
     """Tests for validate_example()."""
 
     def test_perfect_example(self, tmp_path: Path) -> None:
-        (tmp_path / "pyproject.toml").write_text('[project]\nname = "test"\nversion = "1.0"\n')
+        (tmp_path / "pyproject.toml").write_text(
+            '[project]\nname = "test"\nversion = "1.0"\n'
+        )
         (tmp_path / "README.md").write_text("# Test")
         (tmp_path / "tests").mkdir()
         (tmp_path / "main.py").write_text("pass")
@@ -33,21 +35,27 @@ class TestValidateExample:
         assert any("pyproject.toml" in i for i in issues)
 
     def test_missing_readme(self, tmp_path: Path) -> None:
-        (tmp_path / "pyproject.toml").write_text('[project]\nname = "x"\nversion = "1"\n')
+        (tmp_path / "pyproject.toml").write_text(
+            '[project]\nname = "x"\nversion = "1"\n'
+        )
         (tmp_path / "tests").mkdir()
         (tmp_path / "main.py").write_text("pass")
         issues = validate_example(tmp_path)
         assert any("README.md" in i for i in issues)
 
     def test_missing_tests_dir(self, tmp_path: Path) -> None:
-        (tmp_path / "pyproject.toml").write_text('[project]\nname = "x"\nversion = "1"\n')
+        (tmp_path / "pyproject.toml").write_text(
+            '[project]\nname = "x"\nversion = "1"\n'
+        )
         (tmp_path / "README.md").write_text("# Test")
         (tmp_path / "main.py").write_text("pass")
         issues = validate_example(tmp_path)
         assert any("tests/" in i for i in issues)
 
     def test_no_python_files(self, tmp_path: Path) -> None:
-        (tmp_path / "pyproject.toml").write_text('[project]\nname = "x"\nversion = "1"\n')
+        (tmp_path / "pyproject.toml").write_text(
+            '[project]\nname = "x"\nversion = "1"\n'
+        )
         (tmp_path / "README.md").write_text("# Test")
         (tmp_path / "tests").mkdir()
         issues = validate_example(tmp_path)
@@ -70,7 +78,9 @@ class TestValidateExample:
         assert any("version" in i for i in issues)
 
     def test_python_files_under_pycache_excluded(self, tmp_path: Path) -> None:
-        (tmp_path / "pyproject.toml").write_text('[project]\nname = "x"\nversion = "1"\n')
+        (tmp_path / "pyproject.toml").write_text(
+            '[project]\nname = "x"\nversion = "1"\n'
+        )
         (tmp_path / "README.md").write_text("# Test")
         (tmp_path / "tests").mkdir()
         # Only __pycache__ python files
@@ -140,7 +150,9 @@ class TestMain:
             bad.mkdir()
             good = examples_dir / "good"
             good.mkdir()
-            (good / "pyproject.toml").write_text('[project]\nname = "x"\nversion = "1"\n')
+            (good / "pyproject.toml").write_text(
+                '[project]\nname = "x"\nversion = "1"\n'
+            )
             (good / "README.md").write_text("# Test")
             (good / "tests").mkdir()
             (good / "main.py").write_text("pass")

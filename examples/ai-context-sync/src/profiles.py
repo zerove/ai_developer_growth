@@ -14,7 +14,16 @@ class LanguageProfile:
 LANGUAGE_PROFILES: Dict[str, LanguageProfile] = {
     "python": LanguageProfile(
         name="Python",
-        default_ignore=["__pycache__", "*.pyc", ".venv", "venv", ".pytest_cache", ".mypy_cache", "build/", "dist/"],
+        default_ignore=[
+            "__pycache__",
+            "*.pyc",
+            ".venv",
+            "venv",
+            ".pytest_cache",
+            ".mypy_cache",
+            "build/",
+            "dist/",
+        ],
         recommended_prompt_extension="Pay special attention to type hints, docstrings, and Pythonic idioms (PEP 8). Ensure that the context updates reflect changes in dependency management (e.g., requirements.txt, pyproject.toml).",
     ),
     "javascript": LanguageProfile(
@@ -55,7 +64,12 @@ class LanguageDetector:
 
     SIGNATURES = {
         "python": ["requirements.txt", "pyproject.toml", "setup.py", "manage.py"],
-        "javascript": ["package.json", "tsconfig.json", "next.config.js", "tailwind.config.js"],
+        "javascript": [
+            "package.json",
+            "tsconfig.json",
+            "next.config.js",
+            "tailwind.config.js",
+        ],
         "rust": ["Cargo.toml", "Cargo.lock"],
         "go": ["go.mod", "go.sum"],
     }

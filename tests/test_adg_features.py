@@ -100,7 +100,9 @@ class TestIncrementalCheck:
     @patch("subprocess.run")
     def test_get_git_changed_files(self, mock_run):
         """Get files changed since a git ref."""
-        mock_run.return_value = MagicMock(returncode=0, stdout="file1.py\nfile2.py\n", stderr="")
+        mock_run.return_value = MagicMock(
+            returncode=0, stdout="file1.py\nfile2.py\n", stderr=""
+        )
 
         with patch("pathlib.Path.is_file", return_value=True):
             files = _get_git_changed_files("HEAD~1")
@@ -111,7 +113,9 @@ class TestIncrementalCheck:
     @patch("subprocess.run")
     def test_get_git_changed_files_error(self, mock_run):
         """Handle git command error."""
-        mock_run.return_value = MagicMock(returncode=128, stdout="", stderr="not a git repo")
+        mock_run.return_value = MagicMock(
+            returncode=128, stdout="", stderr="not a git repo"
+        )
 
         files = _get_git_changed_files("HEAD~1")
         assert files == []
@@ -129,7 +133,9 @@ class TestIncrementalCheck:
     @patch("subprocess.run")
     def test_get_unstaged_files(self, mock_run):
         """Get unstaged files."""
-        mock_run.return_value = MagicMock(returncode=0, stdout="unstaged.py\n", stderr="")
+        mock_run.return_value = MagicMock(
+            returncode=0, stdout="unstaged.py\n", stderr=""
+        )
 
         with patch("pathlib.Path.is_file", return_value=True):
             files = _get_unstaged_files()
@@ -235,7 +241,12 @@ class TestTrendDashboard:
     def test_save_and_load_trend_data(self, tmp_path):
         """Save and load trend data."""
         data = [
-            {"timestamp": "2024-01-01T00:00:00", "errors": 5, "warnings": 10, "info": 3},
+            {
+                "timestamp": "2024-01-01T00:00:00",
+                "errors": 5,
+                "warnings": 10,
+                "info": 3,
+            },
             {"timestamp": "2024-01-02T00:00:00", "errors": 3, "warnings": 8, "info": 2},
         ]
 
@@ -274,7 +285,12 @@ class TestTrendDashboard:
     def test_format_trend_report_with_data(self):
         """Format trend data."""
         data = [
-            {"timestamp": "2024-01-01T00:00:00", "errors": 5, "warnings": 10, "info": 3},
+            {
+                "timestamp": "2024-01-01T00:00:00",
+                "errors": 5,
+                "warnings": 10,
+                "info": 3,
+            },
             {"timestamp": "2024-01-02T00:00:00", "errors": 3, "warnings": 8, "info": 2},
         ]
 
@@ -319,7 +335,9 @@ class TestWebhookNotification:
 
         with patch("urllib.request.urlopen") as mock_open:
             mock_open.return_value = MagicMock()
-            result = _send_slack_notification("https://hooks.slack.com/test", issues, "python", "test-project")
+            result = _send_slack_notification(
+                "https://hooks.slack.com/test", issues, "python", "test-project"
+            )
 
         assert result is True
         mock_open.assert_called_once()
@@ -332,14 +350,18 @@ class TestWebhookNotification:
 
         with patch("urllib.request.urlopen") as mock_open:
             mock_open.return_value = MagicMock()
-            result = _send_dingtalk_notification("https://oapi.dingtalk.com/test", issues, "python", "test-project")
+            result = _send_dingtalk_notification(
+                "https://oapi.dingtalk.com/test", issues, "python", "test-project"
+            )
 
         assert result is True
 
     def test_slack_notification_error(self):
         """Slack notification handles errors."""
         with patch("urllib.request.urlopen", side_effect=Exception("Network error")):
-            result = _send_slack_notification("https://hooks.slack.com/test", [], "python", "test")
+            result = _send_slack_notification(
+                "https://hooks.slack.com/test", [], "python", "test"
+            )
 
         assert result is False
 
@@ -391,7 +413,9 @@ class TestExtendedAutoFix:
         from tools.scripts.adg_cli import FIX_RULES
 
         assert "rust-unwrap-question" in FIX_RULES
-        assert FIX_RULES["rust-unwrap-question"]["replacement"] == ".unwrap_or_default()"
+        assert (
+            FIX_RULES["rust-unwrap-question"]["replacement"] == ".unwrap_or_default()"
+        )
 
     def test_rust_panic_fix(self, tmp_path):
         """Rust panic fix."""

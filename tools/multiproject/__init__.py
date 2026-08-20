@@ -165,7 +165,9 @@ class MonorepoChecker:
             },
         }
 
-    def generate_report(self, results: dict[str, Any], output_format: str = "text") -> str:
+    def generate_report(
+        self, results: dict[str, Any], output_format: str = "text"
+    ) -> str:
         """Generate a report from check results."""
         if output_format == "json":
             return json.dumps(results, indent=2)

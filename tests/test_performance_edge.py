@@ -50,7 +50,10 @@ class TestPerformanceEdgeCases:
             (tmp_path / "b.py").write_text("y = 2")
 
             opt = PerformanceOptimizer()
-            files = [(str(tmp_path / "a.py"), "python"), (str(tmp_path / "b.py"), "python")]
+            files = [
+                (str(tmp_path / "a.py"), "python"),
+                (str(tmp_path / "b.py"), "python"),
+            ]
             results = opt._serial_check(files)
             assert results is not None
             assert len(results) == 2

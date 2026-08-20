@@ -91,34 +91,76 @@ Examples:
     subparsers.add_parser("test", help="Run pytest test suite")
     subparsers.add_parser("security", help="Run security scan (bandit + pip-audit)")
 
-    lr_parser = subparsers.add_parser("language-rules", help="Run language-specific rules validation")
-    lr_parser.add_argument("--path", type=Path, default=Path("."), help="Path to validate")
+    lr_parser = subparsers.add_parser(
+        "language-rules", help="Run language-specific rules validation"
+    )
+    lr_parser.add_argument(
+        "--path", type=Path, default=Path("."), help="Path to validate"
+    )
     lr_parser.add_argument("--lang", help="Language (auto-detect if not specified)")
-    lr_parser.add_argument("--jobs", "-j", type=int, help="Parallel workers (default: from [tool.adg].jobs)")
-    lr_parser.add_argument("--fix", action="store_true", help="Apply auto-fixes to fixable issues")
-    lr_parser.add_argument("--cache", action="store_true", help="启用增量缓存（复用检查历史）")
+    lr_parser.add_argument(
+        "--jobs",
+        "-j",
+        type=int,
+        help="Parallel workers (default: from [tool.adg].jobs)",
+    )
+    lr_parser.add_argument(
+        "--fix", action="store_true", help="Apply auto-fixes to fixable issues"
+    )
+    lr_parser.add_argument(
+        "--cache", action="store_true", help="启用增量缓存（复用检查历史）"
+    )
     lr_parser.add_argument("--db", help="统一存储数据库路径（默认 [tool.adg].trend_db)")
 
     qg_parser = subparsers.add_parser("quality-gate", help="Run AI Quality Gate checks")
-    qg_parser.add_argument("--path", type=Path, default=Path("tools/scripts"), help="Path to check")
+    qg_parser.add_argument(
+        "--path", type=Path, default=Path("tools/scripts"), help="Path to check"
+    )
     qg_parser.add_argument("--full", action="store_true", help="Run all checks")
-    qg_parser.add_argument("--check-annotation", action="store_true", help="Check AI annotation")
-    qg_parser.add_argument("--check-security", action="store_true", help="Check security patterns")
-    qg_parser.add_argument("--check-type", action="store_true", help="Check type safety")
-    qg_parser.add_argument("--check-error", action="store_true", help="Check error handling")
-    qg_parser.add_argument("--check-structure", action="store_true", help="Check code structure")
-    qg_parser.add_argument("--check-patterns", action="store_true", help="Check all anti-patterns")
-    qg_parser.add_argument("--format", choices=["text", "json"], default="text", help="Output format")
+    qg_parser.add_argument(
+        "--check-annotation", action="store_true", help="Check AI annotation"
+    )
+    qg_parser.add_argument(
+        "--check-security", action="store_true", help="Check security patterns"
+    )
+    qg_parser.add_argument(
+        "--check-type", action="store_true", help="Check type safety"
+    )
+    qg_parser.add_argument(
+        "--check-error", action="store_true", help="Check error handling"
+    )
+    qg_parser.add_argument(
+        "--check-structure", action="store_true", help="Check code structure"
+    )
+    qg_parser.add_argument(
+        "--check-patterns", action="store_true", help="Check all anti-patterns"
+    )
+    qg_parser.add_argument(
+        "--format", choices=["text", "json"], default="text", help="Output format"
+    )
 
-    ga_parser = subparsers.add_parser("governance-audit", help="Run Governance Auditor checks")
-    ga_parser.add_argument("--full", action="store_true", help="Run all governance checks")
-    ga_parser.add_argument("--validate-docs", action="store_true", help="Validate governance docs")
-    ga_parser.add_argument("--check-ai-sdlc", action="store_true", help="Check AI-SDLC compliance")
-    ga_parser.add_argument("--audit-hallucination", action="store_true", help="Audit hallucination risks")
-    ga_parser.add_argument("--check-index", action="store_true", help="Check index references")
+    ga_parser = subparsers.add_parser(
+        "governance-audit", help="Run Governance Auditor checks"
+    )
+    ga_parser.add_argument(
+        "--full", action="store_true", help="Run all governance checks"
+    )
+    ga_parser.add_argument(
+        "--validate-docs", action="store_true", help="Validate governance docs"
+    )
+    ga_parser.add_argument(
+        "--check-ai-sdlc", action="store_true", help="Check AI-SDLC compliance"
+    )
+    ga_parser.add_argument(
+        "--audit-hallucination", action="store_true", help="Audit hallucination risks"
+    )
+    ga_parser.add_argument(
+        "--check-index", action="store_true", help="Check index references"
+    )
 
     dv_parser = subparsers.add_parser(
-        "docs-validate", help="治理文档验证统一入口（validate/check-index/sync-refs/full）"
+        "docs-validate",
+        help="治理文档验证统一入口（validate/check-index/sync-refs/full）",
     )
     dv_parser.add_argument(
         "action2",
@@ -128,49 +170,89 @@ Examples:
         help="验证动作",
     )
 
-    diff_parser = subparsers.add_parser("diff", help="Incremental check: only changed files vs base ref")
-    diff_parser.add_argument("--base", default="HEAD", help="Git ref to diff against (default: HEAD)")
+    diff_parser = subparsers.add_parser(
+        "diff", help="Incremental check: only changed files vs base ref"
+    )
+    diff_parser.add_argument(
+        "--base", default="HEAD", help="Git ref to diff against (default: HEAD)"
+    )
 
-    sc_parser = subparsers.add_parser("semantic-check", help="Run AST-based semantic analysis (tree-sitter)")
+    sc_parser = subparsers.add_parser(
+        "semantic-check", help="Run AST-based semantic analysis (tree-sitter)"
+    )
     sc_parser.add_argument("--path", type=Path, default=Path("."), help="Path to check")
     sc_parser.add_argument("--lang", help="Language filter")
-    sc_parser.add_argument("--jobs", "-j", type=int, help="Parallel workers (default: from [tool.adg].jobs)")
+    sc_parser.add_argument(
+        "--jobs",
+        "-j",
+        type=int,
+        help="Parallel workers (default: from [tool.adg].jobs)",
+    )
 
     af_parser = subparsers.add_parser("ast-fix", help="Run AST-based auto-fix on files")
     af_parser.add_argument("--path", type=Path, default=Path("."), help="Path to fix")
-    af_parser.add_argument("--dry-run", action="store_true", help="Preview fixes without applying")
+    af_parser.add_argument(
+        "--dry-run", action="store_true", help="Preview fixes without applying"
+    )
 
-    hs_parser = subparsers.add_parser("hallucination-scan", help="Scan for AI hallucination patterns in code")
+    hs_parser = subparsers.add_parser(
+        "hallucination-scan", help="Scan for AI hallucination patterns in code"
+    )
     hs_parser.add_argument("--path", type=Path, default=Path("."), help="Path to scan")
     hs_parser.add_argument("--lang", help="Language filter")
 
     subparsers.add_parser("pre-commit", help="Pre-commit hook: check staged files only")
     subparsers.add_parser("pr-review", help="Run automated AI PR review")
-    subparsers.add_parser("arch-graph", help="Generate architecture dependency graph (Mermaid)")
+    subparsers.add_parser(
+        "arch-graph", help="Generate architecture dependency graph (Mermaid)"
+    )
 
     install_parser = subparsers.add_parser("install-hooks", help="Install git hooks")
-    install_parser.add_argument("--pre-push", action="store_true", help="Install pre-push hook")
-    install_parser.add_argument("--pre-commit", action="store_true", help="Install pre-commit hook")
-
-    learn_parser = subparsers.add_parser("learn", help="AI-driven rule generation from codebase analysis")
-    learn_parser.add_argument(
-        "project_path", type=Path, nargs="?", default=Path("."), help="Project root (default: current dir)"
+    install_parser.add_argument(
+        "--pre-push", action="store_true", help="Install pre-push hook"
     )
-    learn_parser.add_argument("--output", "-o", type=Path, help="Output rules YAML file")
-    learn_parser.add_argument("--format", choices=["text", "json"], default="text", help="Output format")
+    install_parser.add_argument(
+        "--pre-commit", action="store_true", help="Install pre-commit hook"
+    )
 
-    dashboard_parser = subparsers.add_parser("dashboard", help="Start quality dashboard web server")
-    dashboard_parser.add_argument("--port", type=int, default=8765, help="Port (default: 8765)")
-    dashboard_parser.add_argument("--db", help="SQLite database path (default: [tool.adg].trend_db)")
+    learn_parser = subparsers.add_parser(
+        "learn", help="AI-driven rule generation from codebase analysis"
+    )
+    learn_parser.add_argument(
+        "project_path",
+        type=Path,
+        nargs="?",
+        default=Path("."),
+        help="Project root (default: current dir)",
+    )
+    learn_parser.add_argument(
+        "--output", "-o", type=Path, help="Output rules YAML file"
+    )
+    learn_parser.add_argument(
+        "--format", choices=["text", "json"], default="text", help="Output format"
+    )
+
+    dashboard_parser = subparsers.add_parser(
+        "dashboard", help="Start quality dashboard web server"
+    )
+    dashboard_parser.add_argument(
+        "--port", type=int, default=8765, help="Port (default: 8765)"
+    )
+    dashboard_parser.add_argument(
+        "--db", help="SQLite database path (default: [tool.adg].trend_db)"
+    )
 
     subparsers.add_parser(
-        "full", help="Run all checks (lint, format, typecheck, test, security, quality-gate, governance-audit)"
+        "full",
+        help="Run all checks (lint, format, typecheck, test, security, quality-gate, governance-audit)",
     )
 
     return parser
 
 
-def _run_simple(func_or_result: Callable[[], tuple[bool, str]] | tuple[bool, str]) -> int:
+def _run_simple(
+    func_or_result: Callable[[], tuple[bool, str]] | tuple[bool, str],
+) -> int:
     """Run a simple check function and print output.
 
     Accepts either:
@@ -238,7 +320,10 @@ def _run_ast_fix(path: Path, dry_run: bool) -> int:
     # Directory: fix all Python files
     total_fixes = 0
     for filepath in sorted(path.rglob("*.py")):
-        if any(d in filepath.parts for d in {"__pycache__", ".git", "node_modules", ".venv"}):
+        if any(
+            d in filepath.parts
+            for d in {"__pycache__", ".git", "node_modules", ".venv"}
+        ):
             continue
         report = fixer.fix_file(filepath, dry_run=dry_run)
         if report is None:
@@ -286,8 +371,12 @@ def _print_check_result(result: CheckResult) -> None:
     """Print a single check result if it has issues."""
     if result.issues:
         for issue in result.issues:
-            severity_icon = {"error": "❌", "warning": "⚠️", "info": "ℹ️"}.get(issue.severity, "?")
-            print(f"  {severity_icon} {result.file}:{issue.line} [{issue.rule_id}] {issue.message}")
+            severity_icon = {"error": "❌", "warning": "⚠️", "info": "ℹ️"}.get(
+                issue.severity, "?"
+            )
+            print(
+                f"  {severity_icon} {result.file}:{issue.line} [{issue.rule_id}] {issue.message}"
+            )
 
 
 # ─── 检查阶段数据定义 ──────────────────────────────────────
@@ -306,7 +395,8 @@ _CHECK_PHASES: list[tuple[str, str, bool, list[str]]] = [
 
 # 阶段名到 (函数名, 并行标记, 依赖) 的索引
 _PHASE_INDEX: dict[str, tuple[str, bool, list[str]]] = {
-    name: (func_name, parallel, deps) for name, func_name, parallel, deps in _CHECK_PHASES
+    name: (func_name, parallel, deps)
+    for name, func_name, parallel, deps in _CHECK_PHASES
 }
 
 
@@ -369,7 +459,8 @@ def _run_parallel_checks() -> dict[str, tuple[bool, str]]:
         futures = {
             executor.submit(_resolve_phase_func(func_name)): name
             for name, func_name, parallel, _ in _CHECK_PHASES
-            if name in parallel_phases and parallel  # 仅并行标记为真的阶段进入线程池（防御性检查）
+            if name in parallel_phases
+            and parallel  # 仅并行标记为真的阶段进入线程池（防御性检查）
         }
         for future in as_completed(futures):
             name = futures[future]
@@ -381,7 +472,9 @@ def _run_parallel_checks() -> dict[str, tuple[bool, str]]:
     return results
 
 
-def _print_results_in_order(results: dict[str, tuple[bool, str]], order: list[str]) -> bool:
+def _print_results_in_order(
+    results: dict[str, tuple[bool, str]], order: list[str]
+) -> bool:
     """Print results in fixed order. Returns all_passed."""
     all_passed = True
     for i, name in enumerate(order, 1):
@@ -448,7 +541,10 @@ def _handle_language_rules(args: argparse.Namespace) -> int:
     from tools.scripts.app_config import get_setting
 
     if getattr(args, "fix", False):
-        from tools.scripts.rules_engine.auto_fix import apply_fixes_to_directory, format_fix_results
+        from tools.scripts.rules_engine.auto_fix import (
+            apply_fixes_to_directory,
+            format_fix_results,
+        )
 
         fix_results = apply_fixes_to_directory(args.path, dry_run=False)
         print(format_fix_results(fix_results))
@@ -458,10 +554,15 @@ def _handle_language_rules(args: argparse.Namespace) -> int:
         from tools.scripts.rules_engine.checker import check_directory
 
         jobs: int = int(str(getattr(args, "jobs", None) or get_setting("jobs", 4)))
-        db_path = getattr(args, "db", None) or str(get_setting("trend_db", Path("adg_quality.db")))
+        db_path = getattr(args, "db", None) or str(
+            get_setting("trend_db", Path("adg_quality.db"))
+        )
         results = check_directory(args.path, jobs=jobs, use_cache=True, db_path=db_path)
         passed = all(r.passed for r in results)
-        lines = [f"{r.file}: {'PASS' if r.passed else 'FAIL'} ({len(r.issues)} issues)" for r in results]
+        lines = [
+            f"{r.file}: {'PASS' if r.passed else 'FAIL'} ({len(r.issues)} issues)"
+            for r in results
+        ]
         print("\n".join(lines) if lines else "No files to check")
         return 0 if passed else 1
     return _run_simple(run_language_rules(args.path, args.lang))
@@ -537,9 +638,13 @@ def _handle_dashboard(args: argparse.Namespace) -> int:
     from tools.scripts.app_config import get_setting
     from tools.scripts.rules_engine.dashboard import create_app
 
-    db_path = getattr(args, "db", None) or str(get_setting("trend_db", Path("adg_quality.db")))
+    db_path = getattr(args, "db", None) or str(
+        get_setting("trend_db", Path("adg_quality.db"))
+    )
     app = create_app(db_path)
-    print(f"Starting ADG Quality Dashboard at http://0.0.0.0:{args.port}")  # nosec - dev only
+    print(
+        f"Starting ADG Quality Dashboard at http://0.0.0.0:{args.port}"
+    )  # nosec - dev only
     uvicorn.run(app, host="0.0.0.0", port=args.port)  # nosec - dev only
     return 0
 
@@ -552,7 +657,12 @@ def _handle_docs_validate(args: argparse.Namespace) -> int:
     result = _subprocess.run(
         [
             sys.executable,
-            str(Path(__file__).resolve().parent.parent.parent / ".jcode" / "scripts" / "governance-docs-validator.py"),
+            str(
+                Path(__file__).resolve().parent.parent.parent
+                / ".jcode"
+                / "scripts"
+                / "governance-docs-validator.py"
+            ),
             action,
         ],
         capture_output=True,
@@ -583,7 +693,9 @@ def _dispatch(args: argparse.Namespace) -> int:
         "pr-review": lambda a: _run_simple(run_pr_review()),
         "arch-graph": lambda a: _run_simple(run_arch_graph()),
         "semantic-check": lambda a: _run_semantic_check(
-            a.path, getattr(a, "lang", None), getattr(a, "jobs", None) or _get_jobs_setting()
+            a.path,
+            getattr(a, "lang", None),
+            getattr(a, "jobs", None) or _get_jobs_setting(),
         ),
         "ast-fix": lambda a: _run_ast_fix(a.path, getattr(a, "dry_run", False)),
         "hallucination-scan": lambda a: _run_hallucination_scan(

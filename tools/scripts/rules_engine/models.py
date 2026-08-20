@@ -21,7 +21,9 @@ class Issue:
     context_role: str = ""  # G1: 检测到的文件角色
     column: int = 0
     fix_replacement: str = ""  # Auto-fix: regex replacement pattern
-    related_docs: list[dict[str, str]] = field(default_factory=list)  # Knowledge base links
+    related_docs: list[dict[str, str]] = field(
+        default_factory=list
+    )  # Knowledge base links
 
     def to_dict(self) -> dict[str, Any]:
         d = {

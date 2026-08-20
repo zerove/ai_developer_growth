@@ -73,19 +73,25 @@ class TestFlagOnlyFixes:
 
     def test_finds_matches(self):
         content = "eval(user_input)\nx = eval('1+1')"
-        results = _flag_only_fixes(Path("test.py"), content, "py-eval-exec", r"\beval\(", "eval detection")
+        results = _flag_only_fixes(
+            Path("test.py"), content, "py-eval-exec", r"\beval\(", "eval detection"
+        )
         assert len(results) == 2
         assert results[0].fixed == "[MANUAL FIX REQUIRED]"
         assert results[0].rule_id == "py-eval-exec"
 
     def test_no_matches(self):
         content = "x = 1\ny = 2"
-        results = _flag_only_fixes(Path("test.py"), content, "py-eval-exec", r"\beval\(", "eval detection")
+        results = _flag_only_fixes(
+            Path("test.py"), content, "py-eval-exec", r"\beval\(", "eval detection"
+        )
         assert len(results) == 0
 
     def test_line_numbers(self):
         content = "line1\nline2\neval(x)"
-        results = _flag_only_fixes(Path("test.py"), content, "test", r"\beval\(", "test")
+        results = _flag_only_fixes(
+            Path("test.py"), content, "test", r"\beval\(", "test"
+        )
         assert results[0].line == 3
 
 
@@ -111,7 +117,13 @@ class TestApplyReplacement:
     def test_no_match(self):
         content = "x = 1"
         new_content, results = _apply_replacement(
-            Path("test.py"), content, content, "test", r"except\s*:", "except Exception:", "fix"
+            Path("test.py"),
+            content,
+            content,
+            "test",
+            r"except\s*:",
+            "except Exception:",
+            "fix",
         )
         assert new_content == content
         assert len(results) == 0
@@ -236,7 +248,14 @@ class TestFormatFixResults:
 
     def test_text_format(self):
         results = [
-            FixResult("a.py", "py-bare-except", 1, "except:", "except Exception:", "fix bare except"),
+            FixResult(
+                "a.py",
+                "py-bare-except",
+                1,
+                "except:",
+                "except Exception:",
+                "fix bare except",
+            ),
         ]
         output = format_fix_results(results, format="text")
         assert "a.py" in output
@@ -246,7 +265,9 @@ class TestFormatFixResults:
         import json
 
         results = [
-            FixResult("a.py", "py-bare-except", 1, "except:", "except Exception:", "fix"),
+            FixResult(
+                "a.py", "py-bare-except", 1, "except:", "except Exception:", "fix"
+            ),
         ]
         output = format_fix_results(results, format="json")
         data = json.loads(output)

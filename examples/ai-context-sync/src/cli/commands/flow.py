@@ -10,7 +10,9 @@ from .. import cli_error_handler
 
 
 @cli_error_handler
-def flow(task: str, config: str = typer.Option(".ai-sync.json", help="Path to config file")) -> None:
+def flow(
+    task: str, config: str = typer.Option(".ai-sync.json", help="Path to config file")
+) -> None:
     """Execute the full AI-Native development flow for a specific task."""
     sync_tool = AIContextSync(config_path=config)
 
@@ -35,5 +37,7 @@ def flow(task: str, config: str = typer.Option(".ai-sync.json", help="Path to co
         confirm = typer.confirm("Do you approve this design? (y/N)")
         return confirm
 
-    result = sync_tool.orchestrator.run_flow(task, approval_callback, initial_context=aggregated_context)
+    result = sync_tool.orchestrator.run_flow(
+        task, approval_callback, initial_context=aggregated_context
+    )
     typer.echo(f"\n--- Workflow Result ---\n{result}\n----------------------\n")

@@ -112,7 +112,9 @@ class TestMap:
             assert result.exit_code == 0
             assert "Architecture map generated" in result.stdout
             mock_graph.generate_mermaid.assert_called_once()
-            m_open.assert_called_once_with("docs/architecture_map.md", "w", encoding="utf-8")
+            m_open.assert_called_once_with(
+                "docs/architecture_map.md", "w", encoding="utf-8"
+            )
 
 
 # ---------------------------------------------------------------------------
@@ -153,7 +155,9 @@ class TestWhy:
         mock_sync_cls.return_value = mock_sync
 
         mock_reasoner = MagicMock()
-        mock_reasoner.explain_decision.return_value = "Please provide a specific question."
+        mock_reasoner.explain_decision.return_value = (
+            "Please provide a specific question."
+        )
         mock_reasoner_cls.return_value = mock_reasoner
 
         result = runner.invoke(app, ["why", ""])

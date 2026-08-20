@@ -1,4 +1,5 @@
 """ADG - AI Developer Governance CLI (package)."""
+
 # mypy: disable-error-code="attr-defined"
 # Submodules intentionally expose both public and private symbols via __all__
 
@@ -64,9 +65,17 @@ from tools.scripts.adg_cli.format import (
     _format_sarif,
     _print_report_text,
 )
-from tools.scripts.adg_cli.notify import _send_dingtalk_notification, _send_slack_notification
+from tools.scripts.adg_cli.notify import (
+    _send_dingtalk_notification,
+    _send_slack_notification,
+)
 from tools.scripts.adg_cli.parser import _build_parser
-from tools.scripts.adg_cli.rule_author import _RULE_TEMPLATE, _create_rule_interactive, _test_rule, _validate_rule
+from tools.scripts.adg_cli.rule_author import (
+    _RULE_TEMPLATE,
+    _create_rule_interactive,
+    _test_rule,
+    _validate_rule,
+)
 from tools.scripts.adg_cli.rules import load_framework_rules, load_rules_for_language
 from tools.scripts.adg_cli.trend import (
     _TREND_DATA_FILE,

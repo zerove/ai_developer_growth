@@ -105,7 +105,11 @@ def list_plugins() -> list[CheckerPlugin]:
 
 def get_plugins_for_language(lang: str) -> list[CheckerPlugin]:
     """Return plugins that support the given language."""
-    return [p for p in _registry if lang in p.supported_languages or not p.supported_languages]
+    return [
+        p
+        for p in _registry
+        if lang in p.supported_languages or not p.supported_languages
+    ]
 
 
 def clear_plugins() -> None:
@@ -159,7 +163,9 @@ def register_checker_decorator(
     """
 
     def decorator(func: Callable[..., list[Issue]]) -> Callable[..., list[Issue]]:
-        plugin = _FunctionPlugin(func, name=name, languages=languages or [], priority=priority)
+        plugin = _FunctionPlugin(
+            func, name=name, languages=languages or [], priority=priority
+        )
         register_checker(plugin)
         return func
 

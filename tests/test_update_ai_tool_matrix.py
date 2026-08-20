@@ -99,8 +99,12 @@ class TestToolMatrixUpdater:
 
     def test_generate_report_no_updates(self):
         """Test report generation with no updates."""
-        self.updater.tools["Cursor"] = ToolInfo(name="Cursor", category="ide", current_version="1.0.0")
-        self.updater.models["GPT-5"] = ModelInfo(name="GPT-5", provider="OpenAI", current_version="latest")
+        self.updater.tools["Cursor"] = ToolInfo(
+            name="Cursor", category="ide", current_version="1.0.0"
+        )
+        self.updater.models["GPT-5"] = ModelInfo(
+            name="GPT-5", provider="OpenAI", current_version="latest"
+        )
 
         report = self.updater.generate_report()
         assert "AI Tool Matrix Update Report" in report
@@ -148,7 +152,9 @@ class TestToolMatrixUpdater:
 
     def test_update_matrix_no_updates(self):
         """Test update_matrix with tools but no updates available."""
-        self.updater.tools["Cursor"] = ToolInfo(name="Cursor", category="ide", current_version="1.0.0")
+        self.updater.tools["Cursor"] = ToolInfo(
+            name="Cursor", category="ide", current_version="1.0.0"
+        )
         self.updater.matrix_content = "some content"
         result = self.updater.update_matrix()
         assert result is False
@@ -161,7 +167,9 @@ class TestToolMatrixUpdater:
         mock_result.stdout = "1.2.3\n"
         mock_run.return_value = mock_result
 
-        self.updater.tools["jcode"] = ToolInfo(name="jcode", category="utility", current_version="latest")
+        self.updater.tools["jcode"] = ToolInfo(
+            name="jcode", category="utility", current_version="latest"
+        )
         self.updater._check_cli_versions()
         assert self.updater.tools["jcode"].current_version == "1.2.3"
 
@@ -170,7 +178,9 @@ class TestToolMatrixUpdater:
         """Test CLI version checking when command not found."""
         mock_run.side_effect = FileNotFoundError("not found")
 
-        self.updater.tools["jcode"] = ToolInfo(name="jcode", category="utility", current_version="latest")
+        self.updater.tools["jcode"] = ToolInfo(
+            name="jcode", category="utility", current_version="latest"
+        )
         # Should not raise
         self.updater._check_cli_versions()
 
@@ -187,7 +197,9 @@ class TestToolMatrixUpdater:
 
         import asyncio
 
-        result = asyncio.run(self.updater._check_github_releases("DeepSeek V3", "deepseek"))
+        result = asyncio.run(
+            self.updater._check_github_releases("DeepSeek V3", "deepseek")
+        )
         assert result == "v3.0.0"
 
     def test_check_github_releases_caching(self):
@@ -202,7 +214,9 @@ class TestToolMatrixUpdater:
             }
         }
 
-        result = asyncio.run(self.updater._check_github_releases("DeepSeek V3", "deepseek"))
+        result = asyncio.run(
+            self.updater._check_github_releases("DeepSeek V3", "deepseek")
+        )
         assert result == "v2.5.0"
 
     @patch("subprocess.run")
@@ -399,7 +413,9 @@ class TestCheckGithubReleasesExtended:
         """Test unknown provider returns None."""
         updater = ToolMatrixUpdater()
         updater.cache = {}
-        result = asyncio.run(updater._check_github_releases("model", "unknown_provider"))
+        result = asyncio.run(
+            updater._check_github_releases("model", "unknown_provider")
+        )
         assert result is None
 
     def test_expired_cache_triggers_check(self):
@@ -415,7 +431,9 @@ class TestCheckGithubReleasesExtended:
         mock_result.returncode = 0
         mock_result.stdout = json.dumps([{"tagName": "v3.1"}])
         with patch("subprocess.run", return_value=mock_result):
-            result = asyncio.run(updater._check_github_releases("DeepSeek V3", "deepseek"))
+            result = asyncio.run(
+                updater._check_github_releases("DeepSeek V3", "deepseek")
+            )
             assert result == "v3.1"
 
     def test_gh_cli_fails(self):
@@ -425,7 +443,9 @@ class TestCheckGithubReleasesExtended:
         mock_result = MagicMock()
         mock_result.returncode = 1
         with patch("subprocess.run", return_value=mock_result):
-            result = asyncio.run(updater._check_github_releases("DeepSeek V3", "deepseek"))
+            result = asyncio.run(
+                updater._check_github_releases("DeepSeek V3", "deepseek")
+            )
             assert result is None
 
 
@@ -516,7 +536,9 @@ class TestMainExtended:
         """Test --check flag."""
         with patch("sys.argv", ["update_ai_tool_matrix.py", "--check"]):
             with patch.object(ToolMatrixUpdater, "load_matrix"):
-                with patch.object(ToolMatrixUpdater, "check_model_updates", return_value=[]):
+                with patch.object(
+                    ToolMatrixUpdater, "check_model_updates", return_value=[]
+                ):
                     with patch.object(ToolMatrixUpdater, "_check_cli_versions"):
                         with patch.object(
                             ToolMatrixUpdater,
@@ -530,9 +552,13 @@ class TestMainExtended:
         """Test --update flag."""
         with patch("sys.argv", ["update_ai_tool_matrix.py", "--update"]):
             with patch.object(ToolMatrixUpdater, "load_matrix"):
-                with patch.object(ToolMatrixUpdater, "check_model_updates", return_value=[]):
+                with patch.object(
+                    ToolMatrixUpdater, "check_model_updates", return_value=[]
+                ):
                     with patch.object(ToolMatrixUpdater, "_check_cli_versions"):
-                        with patch.object(ToolMatrixUpdater, "update_matrix", return_value=False):
+                        with patch.object(
+                            ToolMatrixUpdater, "update_matrix", return_value=False
+                        ):
                             result = asyncio.run(main())
                             assert result == 0
 
@@ -544,7 +570,9 @@ class TestMainExtended:
             ["update_ai_tool_matrix.py", "--report", "--output", str(out_file)],
         ):
             with patch.object(ToolMatrixUpdater, "load_matrix"):
-                with patch.object(ToolMatrixUpdater, "check_model_updates", return_value=[]):
+                with patch.object(
+                    ToolMatrixUpdater, "check_model_updates", return_value=[]
+                ):
                     with patch.object(ToolMatrixUpdater, "_check_cli_versions"):
                         with patch.object(
                             ToolMatrixUpdater,
@@ -559,9 +587,13 @@ class TestMainExtended:
         """Test --update when changes are made."""
         with patch("sys.argv", ["update_ai_tool_matrix.py", "--update"]):
             with patch.object(ToolMatrixUpdater, "load_matrix"):
-                with patch.object(ToolMatrixUpdater, "check_model_updates", return_value=[]):
+                with patch.object(
+                    ToolMatrixUpdater, "check_model_updates", return_value=[]
+                ):
                     with patch.object(ToolMatrixUpdater, "_check_cli_versions"):
-                        with patch.object(ToolMatrixUpdater, "update_matrix", return_value=True):
+                        with patch.object(
+                            ToolMatrixUpdater, "update_matrix", return_value=True
+                        ):
                             result = asyncio.run(main())
                             assert result == 0
 

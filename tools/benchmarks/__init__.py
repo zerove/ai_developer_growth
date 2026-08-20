@@ -183,7 +183,9 @@ def bench_single_file_check(
             "issues_found": total_issues,
             "elapsed_seconds": round(elapsed, 4),
             "files_per_second": round(file_count / elapsed, 1) if elapsed > 0 else 0,
-            "avg_ms_per_file": round(elapsed / file_count * 1000, 2) if file_count > 0 else 0,
+            "avg_ms_per_file": (
+                round(elapsed / file_count * 1000, 2) if file_count > 0 else 0
+            ),
         }
 
 
@@ -272,7 +274,9 @@ def run_all_benchmarks(
             print(f"\n{lang} - {count} files (single file check)...")
             result = bench_single_file_check(count, lang)
             results.append(result)
-            print(f"  {result['files_per_second']} files/sec ({result['avg_ms_per_file']}ms/file)")
+            print(
+                f"  {result['files_per_second']} files/sec ({result['avg_ms_per_file']}ms/file)"
+            )
 
             print(f"{lang} - {count} files (directory check)...")
             result = bench_directory_check(count, lang)
@@ -299,10 +303,14 @@ def run_all_benchmarks(
     print("Summary:")
     if summary["best_single_file"]:
         best = summary["best_single_file"]
-        print(f"  Best single-file: {best['files_per_second']} files/sec ({best['language']})")
+        print(
+            f"  Best single-file: {best['files_per_second']} files/sec ({best['language']})"
+        )
     if summary["best_directory"]:
         best = summary["best_directory"]
-        print(f"  Best directory: {best['files_per_second']} files/sec ({best['language']})")
+        print(
+            f"  Best directory: {best['files_per_second']} files/sec ({best['language']})"
+        )
 
     return summary
 
@@ -316,8 +324,15 @@ def main() -> None:
     import argparse
 
     parser = argparse.ArgumentParser(description="ADG Performance Benchmarks")
-    parser.add_argument("--files", type=str, default="100,500,1000", help="Comma-separated file counts")
-    parser.add_argument("--languages", type=str, default="python,javascript,rust,go", help="Comma-separated languages")
+    parser.add_argument(
+        "--files", type=str, default="100,500,1000", help="Comma-separated file counts"
+    )
+    parser.add_argument(
+        "--languages",
+        type=str,
+        default="python,javascript,rust,go",
+        help="Comma-separated languages",
+    )
     parser.add_argument("--output", type=str, default=None, help="Output JSON file")
     args = parser.parse_args()
 

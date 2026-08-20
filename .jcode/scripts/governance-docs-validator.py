@@ -83,7 +83,9 @@ def validate() -> int:
         if "title" in fm:
             title = fm["title"]
             if not title.endswith(")"):
-                issues.append(f"{doc_path}: Title missing English suffix in parentheses")
+                issues.append(
+                    f"{doc_path}: Title missing English suffix in parentheses"
+                )
 
         valid_categories = ["认知层", "学习层", "效率层", "工具层", "治理层"]
         if "category" in fm and fm["category"] not in valid_categories:
@@ -170,10 +172,14 @@ def sync_refs() -> int:
 
         if "GOVERNANCE.md" not in content:
             if "相关文档" in content:
-                content = content.replace("相关文档", "相关文档\n- [[GOVERNANCE|通用治理标准]]")
+                content = content.replace(
+                    "相关文档", "相关文档\n- [[GOVERNANCE|通用治理标准]]"
+                )
                 modified = True
             elif "See Also" in content:
-                content = content.replace("See Also", "See Also\n- [[GOVERNANCE|通用治理标准]]")
+                content = content.replace(
+                    "See Also", "See Also\n- [[GOVERNANCE|通用治理标准]]"
+                )
                 modified = True
 
         if modified:

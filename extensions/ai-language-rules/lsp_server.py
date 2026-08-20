@@ -93,7 +93,11 @@ class LanguageRulesLSP:
             if result.returncode in (0, 1) and result.stdout:
                 return json.loads(result.stdout)
             return {"issues": [], "summary": {"error": 0, "warning": 0, "info": 0}}
-        except (subprocess.TimeoutExpired, FileNotFoundError, json.JSONDecodeError) as e:
+        except (
+            subprocess.TimeoutExpired,
+            FileNotFoundError,
+            json.JSONDecodeError,
+        ) as e:
             print(f"ADG check failed: {e}", file=sys.stderr)
             return {"issues": [], "summary": {"error": 0, "warning": 0, "info": 0}}
 
@@ -123,8 +127,14 @@ class LanguageRulesLSP:
 
             diag = {
                 "range": {
-                    "start": {"line": max(0, issue.get("line", 1) - 1), "character": issue.get("column", 0)},
-                    "end": {"line": max(0, issue.get("line", 1) - 1), "character": issue.get("column", 0) + 10},
+                    "start": {
+                        "line": max(0, issue.get("line", 1) - 1),
+                        "character": issue.get("column", 0),
+                    },
+                    "end": {
+                        "line": max(0, issue.get("line", 1) - 1),
+                        "character": issue.get("column", 0) + 10,
+                    },
                 },
                 "severity": severity,
                 "source": "ai-language-rules",
@@ -177,7 +187,9 @@ class LanguageRulesLSP:
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="AI Language Rules LSP Server (ADG backend)")
+    parser = argparse.ArgumentParser(
+        description="AI Language Rules LSP Server (ADG backend)"
+    )
     parser.add_argument("--stdio", action="store_true", help="Use stdio transport")
     parser.add_argument("--port", type=int, help="Use TCP transport on specified port")
     args = parser.parse_args()
@@ -190,9 +202,13 @@ def main() -> None:
         class LSPHandler(socketserver.StreamRequestHandler):
             def handle(self) -> None:
                 server._send_message = lambda msg: self.wfile.write(
-                    (f"Content-Length: {len(json.dumps(msg))}\r\n\r\n{json.dumps(msg)}").encode()
+                    (
+                        f"Content-Length: {len(json.dumps(msg))}\r\n\r\n{json.dumps(msg)}"
+                    ).encode()
                 )
-                server.read_message = lambda: json.loads(self.rfile.readline().decode().strip())
+                server.read_message = lambda: json.loads(
+                    self.rfile.readline().decode().strip()
+                )
                 server.run()
 
         with socketserver.TCPServer(("localhost", args.port), LSPHandler) as httpd:

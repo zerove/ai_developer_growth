@@ -134,9 +134,16 @@ def test_recommend_path(path_manager: LearningPathManager):
 
 def test_create_custom_path(path_manager: LearningPathManager):
     steps = [
-        {"step_id": "s1", "title": "Custom Step", "doc_path": "test.md", "estimated_hours": 2.0},
+        {
+            "step_id": "s1",
+            "title": "Custom Step",
+            "doc_path": "test.md",
+            "estimated_hours": 2.0,
+        },
     ]
-    path = path_manager.create_custom_path("custom-1", "Custom Path", "A custom path", steps)
+    path = path_manager.create_custom_path(
+        "custom-1", "Custom Path", "A custom path", steps
+    )
     assert path.path_id == "custom-1"
     assert path.total_estimated_hours == 2.0
 

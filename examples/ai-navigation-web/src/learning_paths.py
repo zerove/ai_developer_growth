@@ -42,11 +42,37 @@ TEMPLATES: dict[str, LearningPathTemplate] = {
         target_level="L1",
         role="any",
         steps=[
-            LearningStep("s1", "AI 原生思维", "mindset/ai-native-thinking.md", "理解 AI 时代的核心思维方式", 2.0),
-            LearningStep("s2", "问题分解", "mindset/problem-decomposition.md", "学会用 AI 辅助分解复杂问题", 2.0),
-            LearningStep("s3", "三层模型", "mindset/three-layer-model.md", "理解能力三层模型", 1.5),
-            LearningStep("s4", "杠杆思维", "mindset/leverage-thinking.md", "找到最大杠杆点", 2.0),
-            LearningStep("s5", "AI 编程助手", "tools/ai-coding-assistants.md", "掌握 AI 辅助编程工具", 3.0),
+            LearningStep(
+                "s1",
+                "AI 原生思维",
+                "mindset/ai-native-thinking.md",
+                "理解 AI 时代的核心思维方式",
+                2.0,
+            ),
+            LearningStep(
+                "s2",
+                "问题分解",
+                "mindset/problem-decomposition.md",
+                "学会用 AI 辅助分解复杂问题",
+                2.0,
+            ),
+            LearningStep(
+                "s3",
+                "三层模型",
+                "mindset/three-layer-model.md",
+                "理解能力三层模型",
+                1.5,
+            ),
+            LearningStep(
+                "s4", "杠杆思维", "mindset/leverage-thinking.md", "找到最大杠杆点", 2.0
+            ),
+            LearningStep(
+                "s5",
+                "AI 编程助手",
+                "tools/ai-coding-assistants.md",
+                "掌握 AI 辅助编程工具",
+                3.0,
+            ),
         ],
     ),
     "ai-practitioner": LearningPathTemplate(
@@ -56,12 +82,36 @@ TEMPLATES: dict[str, LearningPathTemplate] = {
         target_level="L2",
         role="backend",
         steps=[
-            LearningStep("s1", "系统思维", "mindset/systems-thinking.md", "建立系统思维模式", 3.0),
-            LearningStep("s2", "资源整合", "mindset/resource-integration.md", "学会整合 AI 资源", 2.0),
-            LearningStep("s3", "本地 LLM", "tools/local-llm-setup.md", "部署本地大模型", 4.0),
-            LearningStep("s4", "向量搜索", "tools/ai-search-engines.md", "构建语义搜索", 3.0),
-            LearningStep("s5", "全周期工作流", "efficiency/full-cycle-workflow.md", "掌握 AI 协作全流程", 4.0),
-            LearningStep("s6", "成本优化", "efficiency/cost-optimization.md", "优化 AI 使用成本", 2.0),
+            LearningStep(
+                "s1", "系统思维", "mindset/systems-thinking.md", "建立系统思维模式", 3.0
+            ),
+            LearningStep(
+                "s2",
+                "资源整合",
+                "mindset/resource-integration.md",
+                "学会整合 AI 资源",
+                2.0,
+            ),
+            LearningStep(
+                "s3", "本地 LLM", "tools/local-llm-setup.md", "部署本地大模型", 4.0
+            ),
+            LearningStep(
+                "s4", "向量搜索", "tools/ai-search-engines.md", "构建语义搜索", 3.0
+            ),
+            LearningStep(
+                "s5",
+                "全周期工作流",
+                "efficiency/full-cycle-workflow.md",
+                "掌握 AI 协作全流程",
+                4.0,
+            ),
+            LearningStep(
+                "s6",
+                "成本优化",
+                "efficiency/cost-optimization.md",
+                "优化 AI 使用成本",
+                2.0,
+            ),
         ],
     ),
     "ai-leader": LearningPathTemplate(
@@ -71,11 +121,37 @@ TEMPLATES: dict[str, LearningPathTemplate] = {
         target_level="L3",
         role="fullstack",
         steps=[
-            LearningStep("s1", "能力模型", "mindset/capability-model.md", "理解五维能力模型", 2.0),
-            LearningStep("s2", "知识产品化", "efficiency/knowledge-productization.md", "将知识转化为产品", 3.0),
-            LearningStep("s3", "质量比较", "efficiency/quality-comparison.md", "建立质量评估体系", 2.5),
-            LearningStep("s5", "开发者体验", "efficiency/developer-experience.md", "优化开发者体验", 3.0),
-            LearningStep("s6", "治理框架", "governance/governance-framework.md", "建立团队治理规范", 3.0),
+            LearningStep(
+                "s1", "能力模型", "mindset/capability-model.md", "理解五维能力模型", 2.0
+            ),
+            LearningStep(
+                "s2",
+                "知识产品化",
+                "efficiency/knowledge-productization.md",
+                "将知识转化为产品",
+                3.0,
+            ),
+            LearningStep(
+                "s3",
+                "质量比较",
+                "efficiency/quality-comparison.md",
+                "建立质量评估体系",
+                2.5,
+            ),
+            LearningStep(
+                "s5",
+                "开发者体验",
+                "efficiency/developer-experience.md",
+                "优化开发者体验",
+                3.0,
+            ),
+            LearningStep(
+                "s6",
+                "治理框架",
+                "governance/governance-framework.md",
+                "建立团队治理规范",
+                3.0,
+            ),
         ],
     ),
 }
@@ -99,7 +175,9 @@ class LearningPathManager:
             templates = [t for t in templates if t.role == role or t.role == "any"]
         return templates
 
-    def recommend_path(self, current_level: str, target_level: str, role: str = "any") -> list[LearningPathTemplate]:
+    def recommend_path(
+        self, current_level: str, target_level: str, role: str = "any"
+    ) -> list[LearningPathTemplate]:
         """Recommend learning paths based on current/target level."""
         level_order = ["L0", "L1", "L2", "L3", "L4"]
         try:
@@ -119,7 +197,9 @@ class LearningPathManager:
                 continue
         return recommended
 
-    def create_custom_path(self, path_id: str, name: str, description: str, steps: list[dict]) -> LearningPathTemplate:
+    def create_custom_path(
+        self, path_id: str, name: str, description: str, steps: list[dict]
+    ) -> LearningPathTemplate:
         """Create a custom learning path."""
         learning_steps = [LearningStep(**step) for step in steps]
         template = LearningPathTemplate(

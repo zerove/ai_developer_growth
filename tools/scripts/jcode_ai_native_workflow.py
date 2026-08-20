@@ -61,7 +61,9 @@ class JCodeAINativeWorkflow:
 
     def _step2_semantic_arch(self) -> None:
         """Step 2: Semantic Graph & Architecture Guard."""
-        print("\n[Step 2/4] 🕸️ Building Semantic Graph & Checking Architecture Guard...")
+        print(
+            "\n[Step 2/4] 🕸️ Building Semantic Graph & Checking Architecture Guard..."
+        )
         from architecture_drift_guard import ArchitectureDriftGuard
         from semantic_code_graph import SemanticCodeGraph
 
@@ -80,7 +82,9 @@ class JCodeAINativeWorkflow:
 
         RedBlueDebateOrchestrator(intent).run_debate()
 
-        scope_passed, scope_msg = ScopeGuardHook(root_dir=self.root_dir).check_git_diff()
+        scope_passed, scope_msg = ScopeGuardHook(
+            root_dir=self.root_dir
+        ).check_git_diff()
         print(f"🛡️ {scope_msg}")
         if self.ledger:
             self.ledger.record_trace("STEP_3_COMPLETE", {"scope_passed": scope_passed})
@@ -102,7 +106,9 @@ class JCodeAINativeWorkflow:
         print(" ✅ JCODE MASTER AI-NATIVE WORKFLOW COMPLETED SUCCESSFULLY! ")
         print("=" * 70)
 
-    def run_full_pipeline(self, intent: str = "Feature Delivery via AI-Native SDLC") -> bool:
+    def run_full_pipeline(
+        self, intent: str = "Feature Delivery via AI-Native SDLC"
+    ) -> bool:
         self._print_header()
         self._init_ledger(intent)
 
@@ -118,7 +124,11 @@ class JCodeAINativeWorkflow:
 
 
 if __name__ == "__main__":
-    intent_text = sys.argv[1] if len(sys.argv) > 1 else "Implement robust feature with full DoR and TDD compliance"
+    intent_text = (
+        sys.argv[1]
+        if len(sys.argv) > 1
+        else "Implement robust feature with full DoR and TDD compliance"
+    )
     workflow = JCodeAINativeWorkflow()
     success = workflow.run_full_pipeline(intent_text)
     sys.exit(0 if success else 1)

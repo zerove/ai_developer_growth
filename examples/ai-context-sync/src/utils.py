@@ -55,7 +55,9 @@ def parse_llm_json(text: str, label: str = "LLM response") -> Optional[List]:
     try:
         result = json.loads(candidate)
         if not isinstance(result, list):
-            logger.warning(f"⚠️ {label}: parsed JSON is not a list (got {type(result).__name__})")
+            logger.warning(
+                f"⚠️ {label}: parsed JSON is not a list (got {type(result).__name__})"
+            )
             return None
         return result
     except json.JSONDecodeError as e:
@@ -92,7 +94,9 @@ def retry_on_failure(
                 if is_valid:
                     return last_result
 
-                logger.warning(f"⚠️ {label} attempt {attempt}/{max_retries} returned invalid result. Retrying...")
+                logger.warning(
+                    f"⚠️ {label} attempt {attempt}/{max_retries} returned invalid result. Retrying..."
+                )
                 if attempt < max_retries:
                     time.sleep(delay)
 

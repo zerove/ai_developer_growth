@@ -52,26 +52,53 @@ class TestCheckAntiPatterns:
         assert result == []
 
     def test_match_found(self) -> None:
-        rules = {"anti_patterns": [{"id": "a1", "pattern": r"eval\(", "severity": "error", "message": "no eval"}]}
+        rules = {
+            "anti_patterns": [
+                {
+                    "id": "a1",
+                    "pattern": r"eval\(",
+                    "severity": "error",
+                    "message": "no eval",
+                }
+            ]
+        }
         result = check_anti_patterns(["eval('x')"], rules, "f.py")
         assert len(result) == 1
         assert result[0].rule_id == "a1"
 
     def test_comment_lines_skipped(self) -> None:
-        rules = {"anti_patterns": [{"id": "a1", "pattern": r"eval\(", "severity": "error", "message": "m"}]}
+        rules = {
+            "anti_patterns": [
+                {"id": "a1", "pattern": r"eval\(", "severity": "error", "message": "m"}
+            ]
+        }
         result = check_anti_patterns(["# eval('x')"], rules, "f.py")
         assert result == []
 
     def test_no_match(self) -> None:
-        rules = {"anti_patterns": [{"id": "a1", "pattern": r"eval\(", "severity": "error", "message": "m"}]}
+        rules = {
+            "anti_patterns": [
+                {"id": "a1", "pattern": r"eval\(", "severity": "error", "message": "m"}
+            ]
+        }
         result = check_anti_patterns(["pass"], rules, "f.py")
         assert result == []
 
     def test_multiple_patterns(self) -> None:
         rules = {
             "anti_patterns": [
-                {"id": "a1", "pattern": r"eval\(", "severity": "error", "message": "m1"},
-                {"id": "a2", "pattern": r"exec\(", "severity": "error", "message": "m2"},
+                {
+                    "id": "a1",
+                    "pattern": r"eval\(",
+                    "severity": "error",
+                    "message": "m1",
+                },
+                {
+                    "id": "a2",
+                    "pattern": r"exec\(",
+                    "severity": "error",
+                    "message": "m2",
+                },
             ]
         }
         result = check_anti_patterns(["eval('x'); exec('y')"], rules, "f.py")
@@ -129,9 +156,20 @@ class TestLoadCustomRules:
             yaml.dump(
                 {
                     "anti_patterns": [
-                        {"id": "c1", "pattern": r"FIXME", "severity": "warning", "message": "fixme found"}
+                        {
+                            "id": "c1",
+                            "pattern": r"FIXME",
+                            "severity": "warning",
+                            "message": "fixme found",
+                        }
                     ],
-                    "naming": {"func": {"pattern": r"[a-z]", "severity": "info", "message": "msg"}},
+                    "naming": {
+                        "func": {
+                            "pattern": r"[a-z]",
+                            "severity": "info",
+                            "message": "msg",
+                        }
+                    },
                     "thresholds": {"max_lines": 50},
                 }
             )

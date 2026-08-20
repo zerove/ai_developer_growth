@@ -55,13 +55,21 @@ FRAMEWORK_SIGNATURES: dict[str, list[str]] = {
 
 def detect_language(dirpath: Path) -> dict[str, Any]:
     """Detect primary language and framework of a project."""
-    result: dict[str, Any] = {"language": "unknown", "framework": None, "confidence": 0.0}
+    result: dict[str, Any] = {
+        "language": "unknown",
+        "framework": None,
+        "confidence": 0.0,
+    }
 
     # 1. Check config files
     for config_file, lang in CONFIG_MARKERS.items():
         if (dirpath / config_file).exists():
             if config_file == "package.json":
-                lang = "typescript" if (dirpath / "tsconfig.json").exists() else "javascript"
+                lang = (
+                    "typescript"
+                    if (dirpath / "tsconfig.json").exists()
+                    else "javascript"
+                )
             result["language"] = lang or "unknown"
             result["confidence"] = 0.9
             result["framework"] = _detect_framework(dirpath, lang)
@@ -252,7 +260,9 @@ def _simple_yaml_parse(path: Path) -> dict[str, Any]:
     current_section: str | None = None
 
     for line in content.splitlines():
-        current_rule, current_section = _process_line(line, result, current_rule, current_section)
+        current_rule, current_section = _process_line(
+            line, result, current_rule, current_section
+        )
 
     # Append last rule if any
     if current_rule:
@@ -262,7 +272,10 @@ def _simple_yaml_parse(path: Path) -> dict[str, Any]:
 
 
 def _process_line(
-    line: str, result: dict[str, Any], current_rule: dict[str, Any] | None, current_section: str | None
+    line: str,
+    result: dict[str, Any],
+    current_rule: dict[str, Any] | None,
+    current_section: str | None,
 ) -> tuple[dict[str, Any] | None, str | None]:
     """Process a single line in YAML content."""
     stripped = line.strip()
@@ -279,11 +292,15 @@ def _process_line(
 
     # Top-level keys (only lines NOT starting with space and NOT starting with -)
     if not line.startswith(" ") and not line.startswith("-") and ":" in stripped:
-        current_rule, current_section = _process_top_level_key(line, stripped, result, current_rule, current_section)
+        current_rule, current_section = _process_top_level_key(
+            line, stripped, result, current_rule, current_section
+        )
         return current_rule, current_section
 
     # Handle section-specific content
-    current_rule = _process_section_content(line, stripped, result, current_rule, current_section)
+    current_rule = _process_section_content(
+        line, stripped, result, current_rule, current_section
+    )
     return current_rule, current_section
 
 
@@ -318,7 +335,11 @@ def _process_top_level_key(
 
 
 def _process_section_content(
-    line: str, stripped: str, result: dict[str, Any], current_rule: dict[str, Any] | None, current_section: str | None
+    line: str,
+    stripped: str,
+    result: dict[str, Any],
+    current_rule: dict[str, Any] | None,
+    current_section: str | None,
 ) -> dict[str, Any] | None:
     """Process content within a section."""
     # Handle skip_patterns list items
@@ -329,7 +350,11 @@ def _process_section_content(
         return current_rule
 
     # Handle severity_overrides key: value pairs
-    if current_section == "severity_overrides" and ":" in stripped and not stripped.startswith("-"):
+    if (
+        current_section == "severity_overrides"
+        and ":" in stripped
+        and not stripped.startswith("-")
+    ):
         key, _, val = stripped.partition(":")
         key = key.strip()
         val = val.strip().strip("'\"")
@@ -338,7 +363,11 @@ def _process_section_content(
         return current_rule
 
     # Handle framework_hints key: value pairs
-    if current_section == "framework_hints" and ":" in stripped and not stripped.startswith("-"):
+    if (
+        current_section == "framework_hints"
+        and ":" in stripped
+        and not stripped.startswith("-")
+    ):
         key, _, val = stripped.partition(":")
         key = key.strip()
         val = val.strip().strip("'\"")
@@ -351,7 +380,15 @@ def _process_section_content(
         key, _, val = stripped.partition(":")
         key = key.strip()
         val = val.strip().strip("'\"")
-        if key in ("name", "severity", "category", "pattern", "message", "fix_hint", "fix_replacement"):
+        if key in (
+            "name",
+            "severity",
+            "category",
+            "pattern",
+            "message",
+            "fix_hint",
+            "fix_replacement",
+        ):
             current_rule[key] = val
         elif key == "ignore_case" and val == "true":
             current_rule["ignore_case"] = True

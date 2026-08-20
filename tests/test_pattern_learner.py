@@ -6,7 +6,10 @@ from pathlib import Path
 
 import pytest
 
-from tools.scripts.rules_engine.pattern_learner import PatternLearner, run_pattern_learning
+from tools.scripts.rules_engine.pattern_learner import (
+    PatternLearner,
+    run_pattern_learning,
+)
 
 
 class TestPatternLearner:

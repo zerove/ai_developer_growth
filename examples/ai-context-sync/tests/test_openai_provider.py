@@ -18,11 +18,15 @@ class TestOpenAIGenerate:
     def test_generate_success(self):
         """generate() returns the assistant message content on 200."""
         mock_response = MagicMock()
-        mock_response.json.return_value = {"choices": [{"message": {"content": "Hello from OpenAI"}}]}
+        mock_response.json.return_value = {
+            "choices": [{"message": {"content": "Hello from OpenAI"}}]
+        }
         mock_response.raise_for_status = MagicMock()
 
         provider = OpenAIProvider(api_key="test-openai-key")
-        with patch("src.providers.openai_provider.requests.post", return_value=mock_response) as mock_post:
+        with patch(
+            "src.providers.openai_provider.requests.post", return_value=mock_response
+        ) as mock_post:
             result = provider.generate("What is AI?", "You are helpful.", "gpt-4o")
             assert result == "Hello from OpenAI"
             mock_post.assert_called_once()
@@ -35,7 +39,9 @@ class TestOpenAIGenerate:
         mock_response.raise_for_status = MagicMock()
 
         provider = OpenAIProvider(api_key="key")
-        with patch("src.providers.openai_provider.requests.post", return_value=mock_response) as mock_post:
+        with patch(
+            "src.providers.openai_provider.requests.post", return_value=mock_response
+        ) as mock_post:
             provider.generate("prompt", "sys", "gpt-4o")
             url = mock_post.call_args[0][0]
             assert url == f"{OpenAIProvider.DEFAULT_BASE_URL}/chat/completions"
@@ -46,8 +52,12 @@ class TestOpenAIGenerate:
         mock_response.json.return_value = {"choices": [{"message": {"content": "ok"}}]}
         mock_response.raise_for_status = MagicMock()
 
-        provider = OpenAIProvider(api_key="key", api_base="https://proxy.example.com/v1")
-        with patch("src.providers.openai_provider.requests.post", return_value=mock_response) as mock_post:
+        provider = OpenAIProvider(
+            api_key="key", api_base="https://proxy.example.com/v1"
+        )
+        with patch(
+            "src.providers.openai_provider.requests.post", return_value=mock_response
+        ) as mock_post:
             provider.generate("prompt", "sys", "gpt-4o")
             url = mock_post.call_args[0][0]
             assert url == "https://proxy.example.com/v1/chat/completions"
@@ -59,7 +69,9 @@ class TestOpenAIGenerate:
         mock_response.raise_for_status = MagicMock()
 
         provider = OpenAIProvider(api_key="mock-key-123")
-        with patch("src.providers.openai_provider.requests.post", return_value=mock_response) as mock_post:
+        with patch(
+            "src.providers.openai_provider.requests.post", return_value=mock_response
+        ) as mock_post:
             provider.generate("prompt", "sys", "gpt-4o")
             _, kwargs = mock_post.call_args
             headers = kwargs["headers"]
@@ -73,7 +85,9 @@ class TestOpenAIGenerate:
         mock_response.raise_for_status = MagicMock()
 
         provider = OpenAIProvider(api_key="key")
-        with patch("src.providers.openai_provider.requests.post", return_value=mock_response) as mock_post:
+        with patch(
+            "src.providers.openai_provider.requests.post", return_value=mock_response
+        ) as mock_post:
             provider.generate("test prompt", "test system", "gpt-4o")
             _, kwargs = mock_post.call_args
             payload = kwargs["json"]
@@ -90,7 +104,9 @@ class TestOpenAIGenerate:
         provider = OpenAIProvider(api_key="bad-key")
         with patch("src.providers.openai_provider.requests.post") as mock_post:
             mock_response = MagicMock()
-            mock_response.raise_for_status.side_effect = requests.HTTPError("401 Unauthorized")
+            mock_response.raise_for_status.side_effect = requests.HTTPError(
+                "401 Unauthorized"
+            )
             mock_post.return_value = mock_response
 
             with pytest.raises(requests.HTTPError):
@@ -123,7 +139,9 @@ class TestOpenAIGenerate:
         mock_response.raise_for_status = MagicMock()
 
         provider = OpenAIProvider(api_key="key")
-        with patch("src.providers.openai_provider.requests.post", return_value=mock_response) as mock_post:
+        with patch(
+            "src.providers.openai_provider.requests.post", return_value=mock_response
+        ) as mock_post:
             provider.generate("prompt", "sys", "gpt-4o")
             _, kwargs = mock_post.call_args
             assert kwargs["timeout"] == 30

@@ -22,11 +22,15 @@ class OnboardingSession:
 
     def start(self) -> None:
         logger.info("🚀 Welcome to the Project Architecture Tour!")
-        logger.info("I will help you understand how this project is structured and how it works.")
+        logger.info(
+            "I will help you understand how this project is structured and how it works."
+        )
 
         global_context = self.slicer.slice([])
         if not global_context:
-            logger.error("❌ Error: No global CONTEXT.md found. Please initialize the project first.")
+            logger.error(
+                "❌ Error: No global CONTEXT.md found. Please initialize the project first."
+            )
             return
 
         initial_prompt = (
@@ -46,9 +50,13 @@ class OnboardingSession:
         self._offer_capability_assessment()
 
         while True:
-            user_input = input("\nWhat would you like to explore? (Enter an area name, or 'exit' to finish): ")
+            user_input = input(
+                "\nWhat would you like to explore? (Enter an area name, or 'exit' to finish): "
+            )
             if user_input.lower() in ["exit", "quit", "q"]:
-                logger.info("👋 Tour completed! You're now ready to dive into the code.")
+                logger.info(
+                    "👋 Tour completed! You're now ready to dive into the code."
+                )
                 break
 
             self.current_focus = user_input
@@ -69,11 +77,19 @@ class OnboardingSession:
     def _offer_capability_assessment(self) -> None:
         """Offer to run the capability radar self-assessment."""
         logger.info("\n" + "=" * 60)
-        logger.info("🎯 Before we continue: Would you like to run the AI Era Developer Capability Radar?")
-        logger.info("   This 3-minute self-assessment maps your skills across 5 dimensions:")
-        logger.info("   1. 问题定义与产品思维  2. 架构决策与系统设计  3. AI 协作与提示工程")
+        logger.info(
+            "🎯 Before we continue: Would you like to run the AI Era Developer Capability Radar?"
+        )
+        logger.info(
+            "   This 3-minute self-assessment maps your skills across 5 dimensions:"
+        )
+        logger.info(
+            "   1. 问题定义与产品思维  2. 架构决策与系统设计  3. AI 协作与提示工程"
+        )
         logger.info("   4. 工程严谨性与质量文化  5. 学习与知识内化")
-        logger.info("   Result: Your current level (L0-L4), radar chart, and personalized growth plan.")
+        logger.info(
+            "   Result: Your current level (L0-L4), radar chart, and personalized growth plan."
+        )
         logger.info("=" * 60)
 
         choice = input("\nRun capability radar now? (y/n, default n): ").strip().lower()

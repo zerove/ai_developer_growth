@@ -20,7 +20,9 @@ from tools.scripts.git_diff_incremental import (
 class TestGetGitChangedFiles:
     @patch("tools.scripts.git_diff_incremental.subprocess.run")
     def test_success(self, mock_run: MagicMock, tmp_path: Path) -> None:
-        mock_run.return_value = MagicMock(returncode=0, stdout="file1.py\nfile2.rs\n", stderr="")
+        mock_run.return_value = MagicMock(
+            returncode=0, stdout="file1.py\nfile2.rs\n", stderr=""
+        )
         # Need files to exist for path check
         (tmp_path / "file1.py").touch()
         (tmp_path / "file2.rs").touch()
@@ -59,7 +61,9 @@ class TestGetGitChangedFiles:
     @patch("tools.scripts.git_diff_incremental.subprocess.run")
     def test_nonexistent_files_filtered(self, mock_run: MagicMock) -> None:
         """Files that don't exist on disk are filtered out."""
-        mock_run.return_value = MagicMock(returncode=0, stdout="exists.py\nmissing.py\n", stderr="")
+        mock_run.return_value = MagicMock(
+            returncode=0, stdout="exists.py\nmissing.py\n", stderr=""
+        )
         files = get_git_changed_files()
         # Only existing files should be returned
         for f in files:
@@ -69,7 +73,9 @@ class TestGetGitChangedFiles:
 class TestGetGitUntrackedFiles:
     @patch("tools.scripts.git_diff_incremental.subprocess.run")
     def test_success(self, mock_run: MagicMock, tmp_path: Path) -> None:
-        mock_run.return_value = MagicMock(returncode=0, stdout="new_file.py\n", stderr="")
+        mock_run.return_value = MagicMock(
+            returncode=0, stdout="new_file.py\n", stderr=""
+        )
         (tmp_path / "new_file.py").touch()
         files = get_git_untracked_files(str(tmp_path))
         assert len(files) == 1
@@ -103,7 +109,9 @@ class TestGetIncrementalFiles:
     @patch("tools.scripts.git_diff_incremental.get_git_changed_files")
     @patch("tools.scripts.git_diff_incremental.get_git_staged_files")
     @patch("tools.scripts.git_diff_incremental.get_git_untracked_files")
-    def test_with_ref(self, mock_untracked: MagicMock, mock_staged: MagicMock, mock_changed: MagicMock) -> None:
+    def test_with_ref(
+        self, mock_untracked: MagicMock, mock_staged: MagicMock, mock_changed: MagicMock
+    ) -> None:
         mock_changed.return_value = [Path("a.py")]
         mock_staged.return_value = [Path("b.py")]
         mock_untracked.return_value = [Path("c.py")]
@@ -114,7 +122,9 @@ class TestGetIncrementalFiles:
     @patch("tools.scripts.git_diff_incremental.get_git_changed_files")
     @patch("tools.scripts.git_diff_incremental.get_git_staged_files")
     @patch("tools.scripts.git_diff_incremental.get_git_untracked_files")
-    def test_without_ref(self, mock_untracked: MagicMock, mock_staged: MagicMock, mock_changed: MagicMock) -> None:
+    def test_without_ref(
+        self, mock_untracked: MagicMock, mock_staged: MagicMock, mock_changed: MagicMock
+    ) -> None:
         mock_staged.return_value = [Path("a.py")]
         mock_untracked.return_value = [Path("b.py")]
         files = get_incremental_files()
@@ -124,7 +134,9 @@ class TestGetIncrementalFiles:
     @patch("tools.scripts.git_diff_incremental.get_git_changed_files")
     @patch("tools.scripts.git_diff_incremental.get_git_staged_files")
     @patch("tools.scripts.git_diff_incremental.get_git_untracked_files")
-    def test_deduplication(self, mock_untracked: MagicMock, mock_staged: MagicMock, mock_changed: MagicMock) -> None:
+    def test_deduplication(
+        self, mock_untracked: MagicMock, mock_staged: MagicMock, mock_changed: MagicMock
+    ) -> None:
         """Same file from staged and untracked is deduplicated."""
         mock_staged.return_value = [Path("same.py")]
         mock_untracked.return_value = [Path("same.py")]
@@ -139,7 +151,9 @@ class TestMain:
         assert result == 0
 
     @patch("tools.scripts.git_diff_incremental.get_incremental_files")
-    def test_json_output(self, mock_get: MagicMock, capsys: pytest.CaptureFixture[str]) -> None:
+    def test_json_output(
+        self, mock_get: MagicMock, capsys: pytest.CaptureFixture[str]
+    ) -> None:
         mock_get.return_value = [Path("test.py")]
         with patch("sys.argv", ["git_diff_incremental", "--json"]):
             result = main()
@@ -148,7 +162,9 @@ class TestMain:
         assert "test.py" in output
 
     @patch("tools.scripts.git_diff_incremental.get_incremental_files")
-    def test_verbose(self, mock_get: MagicMock, capsys: pytest.CaptureFixture[str]) -> None:
+    def test_verbose(
+        self, mock_get: MagicMock, capsys: pytest.CaptureFixture[str]
+    ) -> None:
         mock_get.return_value = [Path("a.py"), Path("b.py")]
         with patch("sys.argv", ["git_diff_incremental", "--verbose"]):
             result = main()

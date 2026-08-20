@@ -116,4 +116,6 @@ class TestPatternDetectors:
             try:
                 re.compile(detector["pattern"])
             except re.error:
-                pytest.fail(f"Invalid regex in detector {detector['id']}: {detector['pattern']}")
+                pytest.fail(
+                    f"Invalid regex in detector {detector['id']}: {detector['pattern']}"
+                )

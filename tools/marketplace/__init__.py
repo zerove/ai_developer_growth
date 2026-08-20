@@ -61,7 +61,9 @@ def search_packs(query: str) -> list[dict[str, Any]]:
     return [
         p
         for p in list_packs()
-        if query_lower in p["name"].lower() or query_lower in p["description"].lower() or query_lower in p["id"].lower()
+        if query_lower in p["name"].lower()
+        or query_lower in p["description"].lower()
+        or query_lower in p["id"].lower()
     ]
 
 
@@ -141,7 +143,9 @@ def uninstall_pack(
 
         new_rules = [r for r in custom_rules if r.get("id") not in pack_rule_ids]
         config["custom_rules"] = new_rules
-        config["installed_packs"] = [p for p in config.get("installed_packs", []) if p != pack_id]
+        config["installed_packs"] = [
+            p for p in config.get("installed_packs", []) if p != pack_id
+        ]
 
         config_file.write_text(yaml.dump(config, default_flow_style=False))
         return {"success": True, "removed": len(custom_rules) - len(new_rules)}
@@ -158,6 +162,8 @@ def format_packs_list(packs: list[dict[str, Any]]) -> str:
     for p in packs:
         lines.append(f"  {p['id']:25s} {p['name']}")
         lines.append(f"  {'':25s} {p['description']}")
-        lines.append(f"  {'':25s} Rules: {p['total_rules']} | Languages: {', '.join(p['languages'])}")
+        lines.append(
+            f"  {'':25s} Rules: {p['total_rules']} | Languages: {', '.join(p['languages'])}"
+        )
         lines.append("")
     return "\n".join(lines)

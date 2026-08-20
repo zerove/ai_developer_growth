@@ -20,7 +20,9 @@ class TestLanguageProfiles:
 
     def test_all_values_are_language_profile(self):
         for key, profile in LANGUAGE_PROFILES.items():
-            assert isinstance(profile, LanguageProfile), f"Key '{key}' value is not a LanguageProfile"
+            assert isinstance(
+                profile, LanguageProfile
+            ), f"Key '{key}' value is not a LanguageProfile"
 
     def test_all_profiles_have_name(self):
         for key, profile in LANGUAGE_PROFILES.items():
@@ -29,16 +31,22 @@ class TestLanguageProfiles:
 
     def test_all_profiles_have_default_ignore(self):
         for key, profile in LANGUAGE_PROFILES.items():
-            assert isinstance(profile.default_ignore, list), f"Profile '{key}' default_ignore is not a list"
-            assert len(profile.default_ignore) > 0, f"Profile '{key}' default_ignore is empty"
+            assert isinstance(
+                profile.default_ignore, list
+            ), f"Profile '{key}' default_ignore is not a list"
+            assert (
+                len(profile.default_ignore) > 0
+            ), f"Profile '{key}' default_ignore is empty"
 
     def test_all_profiles_have_recommended_prompt_extension(self):
         for key, profile in LANGUAGE_PROFILES.items():
-            assert profile.recommended_prompt_extension, f"Profile '{key}' has empty recommended_prompt_extension"
+            assert (
+                profile.recommended_prompt_extension
+            ), f"Profile '{key}' has empty recommended_prompt_extension"
             assert isinstance(profile.recommended_prompt_extension, str)
-            assert len(profile.recommended_prompt_extension) > 10, (
-                f"Profile '{key}' recommended_prompt_extension is suspiciously short"
-            )
+            assert (
+                len(profile.recommended_prompt_extension) > 10
+            ), f"Profile '{key}' recommended_prompt_extension is suspiciously short"
 
     def test_python_profile_name(self):
         assert LANGUAGE_PROFILES["python"].name == "Python"
@@ -155,7 +163,9 @@ class TestLanguageDetector:
             assert len(files) > 0, f"No signature files for '{lang}'"
             for f in files:
                 assert isinstance(f, str)
-                assert "/" not in f or f.endswith("/"), f"Signature file '{f}' has unexpected path separator"
+                assert "/" not in f or f.endswith(
+                    "/"
+                ), f"Signature file '{f}' has unexpected path separator"
 
     def test_detect_with_subdirectory_signature(self, tmp_path):
         """Signature files in subdirectories should NOT be detected (only root-level)."""

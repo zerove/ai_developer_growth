@@ -162,12 +162,16 @@ def cmd_export(args: argparse.Namespace) -> None:
 
     total, combined = export_rules(rules_dir, output)
     with open(output, "w") as f:
-        yaml.dump(combined, f, default_flow_style=False, allow_unicode=True, sort_keys=False)
+        yaml.dump(
+            combined, f, default_flow_style=False, allow_unicode=True, sort_keys=False
+        )
     print(f"Exported {total} rules to {output}")
 
 
 def main() -> int:
-    parser = argparse.ArgumentParser(description="Rule marketplace: discover, install, search, and manage rule packs")
+    parser = argparse.ArgumentParser(
+        description="Rule marketplace: discover, install, search, and manage rule packs"
+    )
     parser.add_argument("--project-dir", type=str, help="Project directory")
     parser.add_argument("--json", action="store_true", help="JSON output")
 

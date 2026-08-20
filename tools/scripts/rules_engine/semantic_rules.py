@@ -84,7 +84,8 @@ def get_semantic_rules(language: str | None = None) -> list[SemanticRule]:
 def list_semantic_rules() -> list[dict[str, object]]:
     """列出所有规则元数据（供 CLI/文档使用）。"""
     return [
-        {"name": r.name, "languages": sorted(r.languages), "severity": r.severity} for r in _SEMANTIC_RULES.values()
+        {"name": r.name, "languages": sorted(r.languages), "severity": r.severity}
+        for r in _SEMANTIC_RULES.values()
     ]
 
 

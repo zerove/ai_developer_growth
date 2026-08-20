@@ -33,7 +33,9 @@ class AuditAttestationLedger:
                 except Exception as e:
                     import logging
 
-                    logging.getLogger(__name__).debug(f"Failed to parse last ledger entry: {e}")
+                    logging.getLogger(__name__).debug(
+                        f"Failed to parse last ledger entry: {e}"
+                    )
 
         payload = {
             "event_type": event_type,
@@ -69,7 +71,9 @@ class AuditAttestationLedger:
             current_hash = entry.get("current_hash", "")[:16]
             prev_hash = entry.get("prev_hash", "")[:16]
             details = entry.get("details", {})
-            report.append(f"  • {event_type} | hash={current_hash}... | prev={prev_hash}...")
+            report.append(
+                f"  • {event_type} | hash={current_hash}... | prev={prev_hash}..."
+            )
             if isinstance(details, dict):
                 for k, v in details.items():
                     report.append(f"    - {k}: {v}")
@@ -98,6 +102,8 @@ class AuditAttestationLedger:
 
 if __name__ == "__main__":
     ledger = AuditAttestationLedger()
-    entry = ledger.record_trace("WORKFLOW_EXECUTION", {"status": "success", "agent": "Sisyphus"})
+    entry = ledger.record_trace(
+        "WORKFLOW_EXECUTION", {"status": "success", "agent": "Sisyphus"}
+    )
     print(f"🔒 Recorded chained audit entry: {entry['current_hash']}")
     print(ledger.generate_report())

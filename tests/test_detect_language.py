@@ -108,7 +108,9 @@ class TestDetectLanguage:
         assert result["confidence"] == 0.0
 
     def test_framework_detection_react(self, tmp_dir):
-        (tmp_dir / "package.json").write_text('{"dependencies": {"react": "^18.0.0", "next": "^14.0.0"}}')
+        (tmp_dir / "package.json").write_text(
+            '{"dependencies": {"react": "^18.0.0", "next": "^14.0.0"}}'
+        )
         (tmp_dir / "tsconfig.json").write_text("{}")
         result = detect_language(tmp_dir)
         assert result["framework"] in ("react", "nextjs")

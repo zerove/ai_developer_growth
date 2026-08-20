@@ -124,7 +124,9 @@ async def submit_assessment(
                 "innovation_thinking": "创新思维",
                 "output_quality": "输出质量",
             }.get(dim, dim)
-            recommendations.append({"dimension": dim_name, "score": score, "docs": docs})
+            recommendations.append(
+                {"dimension": dim_name, "score": score, "docs": docs}
+            )
 
         return templates.TemplateResponse(
             request,

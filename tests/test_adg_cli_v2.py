@@ -81,7 +81,9 @@ class TestDetectFramework:
         assert _detect_framework(tmp_path, "javascript") is None
 
     def test_package_json_dev_deps(self, tmp_path: Path) -> None:
-        (tmp_path / "package.json").write_text(json.dumps({"devDependencies": {"next": "^14.0.0"}}))
+        (tmp_path / "package.json").write_text(
+            json.dumps({"devDependencies": {"next": "^14.0.0"}})
+        )
         assert _detect_framework(tmp_path, "typescript") == "nextjs"
 
     def test_requirements_txt_django(self, tmp_path: Path) -> None:
@@ -108,11 +110,15 @@ class TestDetectFramework:
             assert _detect_framework(tmp_path, "go") is None
 
     def test_no_framework(self, tmp_path: Path) -> None:
-        (tmp_path / "package.json").write_text(json.dumps({"dependencies": {"lodash": "^4.0"}}))
+        (tmp_path / "package.json").write_text(
+            json.dumps({"dependencies": {"lodash": "^4.0"}})
+        )
         assert _detect_framework(tmp_path, "javascript") is None
 
     def test_pyproject_toml_fastapi(self, tmp_path: Path) -> None:
-        (tmp_path / "pyproject.toml").write_text("[project]\ndependencies = ['fastapi']\n")
+        (tmp_path / "pyproject.toml").write_text(
+            "[project]\ndependencies = ['fastapi']\n"
+        )
         assert _detect_framework(tmp_path, "python") == "fastapi"
 
 
@@ -209,7 +215,9 @@ class TestSimpleYamlParseExtended:
 
     def test_multiple_rules(self, tmp_path: Path) -> None:
         f = tmp_path / "multi.yml"
-        f.write_text("anti_patterns:\n- id: r1\n  severity: error\n- id: r2\n  severity: warning\n")
+        f.write_text(
+            "anti_patterns:\n- id: r1\n  severity: error\n- id: r2\n  severity: warning\n"
+        )
         result = _simple_yaml_parse(f)
         assert len(result["anti_patterns"]) == 2
 
@@ -257,14 +265,20 @@ class TestCheckFileExtended:
     def test_comment_line_skipped(self, tmp_path: Path) -> None:
         f = tmp_path / "test.py"
         f.write_text("# bare except: pass\n")
-        rules = {"anti_patterns": [{"id": "test", "severity": "error", "pattern": "bare except"}]}
+        rules = {
+            "anti_patterns": [
+                {"id": "test", "severity": "error", "pattern": "bare except"}
+            ]
+        }
         issues = check_file(f, rules)
         assert issues == []
 
     def test_js_comment_skipped(self, tmp_path: Path) -> None:
         f = tmp_path / "test.js"
         f.write_text("// eval('bad')\n")
-        rules = {"anti_patterns": [{"id": "test", "severity": "error", "pattern": "eval\\("}]}
+        rules = {
+            "anti_patterns": [{"id": "test", "severity": "error", "pattern": "eval\\("}]
+        }
         issues = check_file(f, rules)
         assert issues == []
 
@@ -295,7 +309,12 @@ class TestCheckFileExtended:
         f.write_text("bare except: pass\nimport re\n")
         rules = {
             "anti_patterns": [
-                {"id": "test", "severity": "error", "pattern": "bare except", "exclude_patterns": [r"import re"]}
+                {
+                    "id": "test",
+                    "severity": "error",
+                    "pattern": "bare except",
+                    "exclude_patterns": [r"import re"],
+                }
             ]
         }
         issues = check_file(f, rules)
@@ -304,7 +323,9 @@ class TestCheckFileExtended:
     def test_invalid_regex(self, tmp_path: Path) -> None:
         f = tmp_path / "test.py"
         f.write_text("x = 1\n")
-        rules = {"anti_patterns": [{"id": "bad", "severity": "error", "pattern": "[invalid"}]}
+        rules = {
+            "anti_patterns": [{"id": "bad", "severity": "error", "pattern": "[invalid"}]
+        }
         issues = check_file(f, rules)
         # Invalid regex should not crash
         assert isinstance(issues, list)
@@ -313,7 +334,14 @@ class TestCheckFileExtended:
         f = tmp_path / "test.py"
         f.write_text("try:\n    pass\nexcept:\n    pass\n")
         rules = {
-            "anti_patterns": [{"id": "ml", "severity": "error", "multiline": True, "pattern": r"try:\n.*\nexcept:\n"}]
+            "anti_patterns": [
+                {
+                    "id": "ml",
+                    "severity": "error",
+                    "multiline": True,
+                    "pattern": r"try:\n.*\nexcept:\n",
+                }
+            ]
         }
         issues = check_file(f, rules)
         assert len(issues) >= 1
@@ -321,21 +349,48 @@ class TestCheckFileExtended:
     def test_multiline_pattern_invalid_regex(self, tmp_path: Path) -> None:
         f = tmp_path / "test.py"
         f.write_text("try:\n    pass\n")
-        rules = {"anti_patterns": [{"id": "ml", "severity": "error", "multiline": True, "pattern": "[invalid"}]}
+        rules = {
+            "anti_patterns": [
+                {
+                    "id": "ml",
+                    "severity": "error",
+                    "multiline": True,
+                    "pattern": "[invalid",
+                }
+            ]
+        }
         issues = check_file(f, rules)
         assert isinstance(issues, list)
 
     def test_ignore_case_pattern(self, tmp_path: Path) -> None:
         f = tmp_path / "test.py"
         f.write_text("BARE EXCEPT: pass\n")
-        rules = {"anti_patterns": [{"id": "ic", "severity": "error", "ignore_case": True, "pattern": "bare except"}]}
+        rules = {
+            "anti_patterns": [
+                {
+                    "id": "ic",
+                    "severity": "error",
+                    "ignore_case": True,
+                    "pattern": "bare except",
+                }
+            ]
+        }
         issues = check_file(f, rules)
         assert len(issues) >= 1
 
     def test_pattern_in_multiline_string(self, tmp_path: Path) -> None:
         f = tmp_path / "test.py"
         f.write_text("try:\n    pass\nexcept:\n    pass\n")
-        rules = {"anti_patterns": [{"id": "nl", "severity": "error", "multiline": True, "pattern": "try:\\n"}]}
+        rules = {
+            "anti_patterns": [
+                {
+                    "id": "nl",
+                    "severity": "error",
+                    "multiline": True,
+                    "pattern": "try:\\n",
+                }
+            ]
+        }
         issues = check_file(f, rules)
         assert len(issues) >= 1
 
@@ -347,7 +402,12 @@ class TestCheckPattern:
     def test_exclude_patterns_no_match(self, tmp_path: Path) -> None:
         f = tmp_path / "test.py"
         f.write_text("bare except: pass\n")
-        pd = {"id": "r", "severity": "error", "pattern": "bare except", "exclude_patterns": ["nomatch"]}
+        pd = {
+            "id": "r",
+            "severity": "error",
+            "pattern": "bare except",
+            "exclude_patterns": ["nomatch"],
+        }
         issues = _check_pattern(f, f.read_text(), f.read_text().split("\n"), pd)
         assert len(issues) >= 1
 
@@ -363,7 +423,13 @@ class TestMakeIssue:
         assert issue.message == "Anti-pattern detected"
 
     def test_custom_values(self) -> None:
-        pd = {"id": "x", "severity": "error", "category": "sec", "message": "bad", "fix_hint": "fix it"}
+        pd = {
+            "id": "x",
+            "severity": "error",
+            "category": "sec",
+            "message": "bad",
+            "fix_hint": "fix it",
+        }
         issue = _make_issue(Path("f.py"), 10, 3, pd)
         assert issue.rule_id == "x"
         assert issue.fix_hint == "fix it"
@@ -391,7 +457,10 @@ class TestCheckDirectory:
         nm = tmp_path / "node_modules" / "pkg"
         nm.mkdir(parents=True)
         (nm / "index.js").write_text("eval('bad')")
-        issues = check_directory(tmp_path, {"anti_patterns": [{"id": "x", "severity": "error", "pattern": "eval"}]})
+        issues = check_directory(
+            tmp_path,
+            {"anti_patterns": [{"id": "x", "severity": "error", "pattern": "eval"}]},
+        )
         assert issues == []
 
     def test_severity_filter(self, tmp_path: Path) -> None:
@@ -497,7 +566,9 @@ class TestCmdCheck:
 
     def test_check_directory(self, tmp_path: Path) -> None:
         (tmp_path / "a.py").write_text("x = 1\n")
-        args = argparse.Namespace(path=str(tmp_path), lang="python", severity=None, json=False)
+        args = argparse.Namespace(
+            path=str(tmp_path), lang="python", severity=None, json=False
+        )
         with patch("tools.scripts.adg_cli.rules.load_rules_for_language") as mock:
             mock.return_value = {"anti_patterns": []}
             result = cmd_check(args)
@@ -531,7 +602,11 @@ class TestCmdCheck:
         ):
             mock_lang.return_value = {"anti_patterns": []}
             mock_fw.return_value = {"anti_patterns": []}
-            mock_det.return_value = {"language": "python", "framework": "django", "confidence": 0.9}
+            mock_det.return_value = {
+                "language": "python",
+                "framework": "django",
+                "confidence": 0.9,
+            }
             result = cmd_check(args)
         assert result == 0
 
@@ -555,7 +630,11 @@ class TestCmdDetect:
     def test_detect_default_path(self, tmp_path: Path) -> None:
         args = argparse.Namespace(path=".", json=False)
         with patch("tools.scripts.adg_cli.detect.detect_language") as mock:
-            mock.return_value = {"language": "python", "framework": None, "confidence": 0.9}
+            mock.return_value = {
+                "language": "python",
+                "framework": None,
+                "confidence": 0.9,
+            }
             result = cmd_detect(args)
         assert result == 0
 
@@ -663,7 +742,10 @@ class TestMainCLI:
     def test_check_severity_flag(self, tmp_path: Path) -> None:
         f = tmp_path / "test.py"
         f.write_text("try:\n    pass\nexcept:\n    pass\n")
-        with patch("sys.argv", ["adg", "check", str(f), "--lang", "python", "--severity", "error"]):
+        with patch(
+            "sys.argv",
+            ["adg", "check", str(f), "--lang", "python", "--severity", "error"],
+        ):
             with patch("tools.scripts.adg_cli.rules.load_rules_for_language") as mock:
                 mock.return_value = load_rules_for_language("python")
                 result = main()
@@ -703,7 +785,10 @@ class TestMainCLI:
         """Test report with error threshold."""
         f = tmp_path / "test.py"
         f.write_text("try:\n    pass\nexcept:\n    pass\n")
-        with patch("sys.argv", ["adg", "report", str(f), "--lang", "python", "--error-threshold", "10"]):
+        with patch(
+            "sys.argv",
+            ["adg", "report", str(f), "--lang", "python", "--error-threshold", "10"],
+        ):
             with patch("tools.scripts.adg_cli.rules.load_rules_for_language") as mock:
                 mock.return_value = load_rules_for_language("python")
                 result = main()
@@ -711,7 +796,10 @@ class TestMainCLI:
 
     def test_report_nonexistent_path(self, tmp_path: Path) -> None:
         """Test report on nonexistent path."""
-        with patch("sys.argv", ["adg", "report", str(tmp_path / "nonexistent"), "--lang", "python"]):
+        with patch(
+            "sys.argv",
+            ["adg", "report", str(tmp_path / "nonexistent"), "--lang", "python"],
+        ):
             result = main()
         assert result == 1
 
@@ -747,7 +835,10 @@ class TestMainCLI:
 
     def test_fix_nonexistent_path(self, tmp_path: Path) -> None:
         """Test fix on nonexistent path."""
-        with patch("sys.argv", ["adg", "fix", str(tmp_path / "nonexistent"), "--lang", "python"]):
+        with patch(
+            "sys.argv",
+            ["adg", "fix", str(tmp_path / "nonexistent"), "--lang", "python"],
+        ):
             result = main()
         assert result == 1
 

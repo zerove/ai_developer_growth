@@ -24,7 +24,8 @@ class AuditHandler(FileSystemEventHandler):
         # Filter out irrelevant files
         filename = str(os.path.basename(event.src_path))
         if filename.startswith(".") or any(
-            str(ignore) in event.src_path for ignore in self.sync_tool.config.settings.ignore
+            str(ignore) in event.src_path
+            for ignore in self.sync_tool.config.settings.ignore
         ):
             return
 
@@ -71,7 +72,9 @@ class AuditHandler(FileSystemEventHandler):
             f.write(f"**Current File:** `{filename}`\n\n")
             f.write("## Audit Results\n\n")
             f.write(f"{report}\n\n")
-            f.write("---\n*Tip: Keep this file open in a split pane to see instant feedback.*")
+            f.write(
+                "---\n*Tip: Keep this file open in a split pane to see instant feedback.*"
+            )
 
 
 class WatchManager:

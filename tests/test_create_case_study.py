@@ -6,7 +6,10 @@ from pathlib import Path
 
 import pytest
 
-from tools.scripts.create_case_study import create_case_study_structure, get_default_template
+from tools.scripts.create_case_study import (
+    create_case_study_structure,
+    get_default_template,
+)
 
 
 class TestCreateCaseStudy:
@@ -92,7 +95,9 @@ class TestCreateCaseStudy:
         # Create a template file
         template_dir = self.base_dir.parent / "templates"
         template_dir.mkdir(exist_ok=True)
-        (template_dir / "case-study-template.md").write_text("# Custom Template: [简短标题]\n", encoding="utf-8")
+        (template_dir / "case-study-template.md").write_text(
+            "# Custom Template: [简短标题]\n", encoding="utf-8"
+        )
 
         case_dir = create_case_study_structure("Custom", self.base_dir)
         readme = case_dir / "README.md"

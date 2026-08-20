@@ -254,7 +254,9 @@ class TestRunTestTargetFiles:
             patch("builtins.open", MagicMock()),
         ):
             # Should not raise
-            result = runner.run_test("def test_ok(): assert True", ["nonexistent/file.py"])
+            result = runner.run_test(
+                "def test_ok(): assert True", ["nonexistent/file.py"]
+            )
 
         assert isinstance(result.output, str)
 

@@ -10,7 +10,9 @@ _SEVERITY_COLORS = {"error": "\033[91m", "warning": "\033[93m", "info": "\033[96
 _RESET = "\033[0m"
 
 
-def _format_human(issues: list[Issue], language: str, framework: str | None, files_checked: int) -> str:
+def _format_human(
+    issues: list[Issue], language: str, framework: str | None, files_checked: int
+) -> str:
     """Format issues as human-readable output."""
     lines: list[str] = []
 
@@ -28,9 +30,13 @@ def _format_human(issues: list[Issue], language: str, framework: str | None, fil
         for issue in sorted(file_issues, key=lambda i: i.line):
             color = _SEVERITY_COLORS.get(issue.severity, "")
             loc = f"{issue.file}:{issue.line}:{issue.column}"
-            lines.append(f"{loc}  {color}{issue.severity:7s}{_RESET}  {issue.rule_id:30s}  {issue.message}")
+            lines.append(
+                f"{loc}  {color}{issue.severity:7s}{_RESET}  {issue.rule_id:30s}  {issue.message}"
+            )
             if issue.fix_hint:
-                lines.append(f"{' ' * len(loc)}  {' ' * 7}  {' ' * 30}  → {issue.fix_hint}")
+                lines.append(
+                    f"{' ' * len(loc)}  {' ' * 7}  {' ' * 30}  → {issue.fix_hint}"
+                )
 
     # Summary
     error_count = sum(1 for i in issues if i.severity == "error")
@@ -40,21 +46,29 @@ def _format_human(issues: list[Issue], language: str, framework: str | None, fil
     lines.append("")
     parts = []
     if error_count:
-        parts.append(f"\033[91m{error_count} error{'s' if error_count != 1 else ''}\033[0m")
+        parts.append(
+            f"\033[91m{error_count} error{'s' if error_count != 1 else ''}\033[0m"
+        )
     if warning_count:
-        parts.append(f"\033[93m{warning_count} warning{'s' if warning_count != 1 else ''}\033[0m")
+        parts.append(
+            f"\033[93m{warning_count} warning{'s' if warning_count != 1 else ''}\033[0m"
+        )
     if info_count:
         parts.append(f"\033[96m{info_count} info\033[0m")
 
     if parts:
-        lines.append(f"{'  '.join(parts)} in {files_checked} file{'s' if files_checked != 1 else ''}")
+        lines.append(
+            f"{'  '.join(parts)} in {files_checked} file{'s' if files_checked != 1 else ''}"
+        )
     else:
         lines.append(f"\033[92m✓ All checks passed\033[0m ({files_checked} files)")
 
     return "\n".join(lines)
 
 
-def _format_json(issues: list[Issue], language: str, framework: str | None, files_checked: int) -> str:
+def _format_json(
+    issues: list[Issue], language: str, framework: str | None, files_checked: int
+) -> str:
     """Format issues as JSON output."""
     error_count = sum(1 for i in issues if i.severity == "error")
     warning_count = sum(1 for i in issues if i.severity == "warning")
@@ -66,7 +80,11 @@ def _format_json(issues: list[Issue], language: str, framework: str | None, file
             "framework": framework,
             "files_checked": files_checked,
             "issues": [i.to_dict() for i in issues],
-            "summary": {"error": error_count, "warning": warning_count, "info": info_count},
+            "summary": {
+                "error": error_count,
+                "warning": warning_count,
+                "info": info_count,
+            },
         },
         indent=2,
         ensure_ascii=False,
@@ -164,7 +182,9 @@ def _format_sarif(issues: list[Issue], language: str, framework: str | None) -> 
     return json.dumps(sarif, indent=2)
 
 
-def _count_issues(all_issues: list[Issue]) -> tuple[dict[str, int], dict[str, int], list[tuple[str, int]]]:
+def _count_issues(
+    all_issues: list[Issue],
+) -> tuple[dict[str, int], dict[str, int], list[tuple[str, int]]]:
     """Count issues by severity, category, and file. Returns (severity_counts, category_counts, top_files)."""
     severity_counts: dict[str, int] = {"error": 0, "warning": 0, "info": 0}
     for issue in all_issues:
@@ -221,7 +241,9 @@ def _print_report_text(
 
     if category_counts:
         print(f"{bold}Issues by Category:{nc}")
-        for cat, count in sorted(category_counts.items(), key=lambda x: x[1], reverse=True):
+        for cat, count in sorted(
+            category_counts.items(), key=lambda x: x[1], reverse=True
+        ):
             print(f"  {cat}: {count}")
         print()
 
@@ -236,6 +258,10 @@ def _print_report_text(
     else:
         print(f"{red}{bold}❌ FAILED{nc} - Quality gate not met")
         if severity_counts["error"] > error_threshold:
-            print(f"  Errors ({severity_counts['error']}) exceed threshold ({error_threshold})")
+            print(
+                f"  Errors ({severity_counts['error']}) exceed threshold ({error_threshold})"
+            )
         if warning_threshold >= 0 and severity_counts["warning"] > warning_threshold:
-            print(f"  Warnings ({severity_counts['warning']}) exceed threshold ({warning_threshold})")
+            print(
+                f"  Warnings ({severity_counts['warning']}) exceed threshold ({warning_threshold})"
+            )

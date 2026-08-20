@@ -27,7 +27,9 @@ class TestCmdInit:
         with patch("tools.scripts.rule_author._rules_dir") as mock_dir:
             mock_dir.return_value = tmp_path
             cmd_init(args)
-            assert (tmp_path / "languages" / "testlang" / "rules.d" / "anti_patterns.yml").exists()
+            assert (
+                tmp_path / "languages" / "testlang" / "rules.d" / "anti_patterns.yml"
+            ).exists()
 
     def test_init_existing_no_force(self, tmp_path: Path) -> None:
         rules_dir = tmp_path / "languages" / "testlang" / "rules.d"
@@ -55,7 +57,9 @@ class TestCmdAddRule:
     def _make_args(self, tmp_path: Path, **kwargs) -> argparse.Namespace:
         rules_dir = tmp_path / "languages" / "python" / "rules.d"
         rules_dir.mkdir(parents=True, exist_ok=True)
-        (rules_dir / "anti_patterns.yml").write_text("language: python\nanti_patterns: []\n")
+        (rules_dir / "anti_patterns.yml").write_text(
+            "language: python\nanti_patterns: []\n"
+        )
         defaults = {
             "lang": "python",
             "category": "anti_patterns",
@@ -86,7 +90,9 @@ class TestCmdAddRule:
         with patch("tools.scripts.rule_author._rules_dir") as mock_dir:
             mock_dir.return_value = tmp_path
             # Remove the rules file
-            (tmp_path / "languages" / "python" / "rules.d" / "anti_patterns.yml").unlink()
+            (
+                tmp_path / "languages" / "python" / "rules.d" / "anti_patterns.yml"
+            ).unlink()
             cmd_add_rule(args)
 
     def test_add_rule_no_id(self, tmp_path: Path) -> None:
@@ -107,7 +113,9 @@ class TestCmdAddRule:
         args = self._make_args(tmp_path, name=None)
         with patch("tools.scripts.rule_author._rules_dir") as mock_dir:
             mock_dir.return_value = tmp_path
-            with patch("builtins.input", side_effect=["test-name", "warning", "msg", "", ""]):
+            with patch(
+                "builtins.input", side_effect=["test-name", "warning", "msg", "", ""]
+            ):
                 cmd_add_rule(args)
 
     def test_add_rule_invalid_regex(self, tmp_path: Path) -> None:
@@ -121,7 +129,9 @@ class TestCmdAddRule:
 
         rules_file = tmp_path / "languages" / "python" / "rules.d" / "anti_patterns.yml"
         rules_file.parent.mkdir(parents=True, exist_ok=True)
-        rules_file.write_text(_yaml.dump({"language": "python", "anti_patterns": [{"id": "py-dup"}]}))
+        rules_file.write_text(
+            _yaml.dump({"language": "python", "anti_patterns": [{"id": "py-dup"}]})
+        )
         args = self._make_args(tmp_path, id="py-dup")
         with patch("tools.scripts.rule_author._rules_dir") as mock_dir:
             mock_dir.return_value = tmp_path
@@ -188,7 +198,9 @@ class TestCmdValidate:
             _yaml.dump(
                 {
                     "language": "python",
-                    "anti_patterns": [{"id": "x", "severity": "error", "pattern": "[invalid"}],
+                    "anti_patterns": [
+                        {"id": "x", "severity": "error", "pattern": "[invalid"}
+                    ],
                 }
             )
         )
@@ -203,7 +215,13 @@ class TestCmdValidate:
             _yaml.dump(
                 {
                     "language": "python",
-                    "anti_patterns": [{"id": "x", "severity": "error", "test_cases": [{"should_match": True}]}],
+                    "anti_patterns": [
+                        {
+                            "id": "x",
+                            "severity": "error",
+                            "test_cases": [{"should_match": True}],
+                        }
+                    ],
                 }
             )
         )
@@ -218,7 +236,9 @@ class TestCmdValidate:
             _yaml.dump(
                 {
                     "language": "python",
-                    "anti_patterns": [{"id": "x", "severity": "error", "test_cases": [{"code": "x"}]}],
+                    "anti_patterns": [
+                        {"id": "x", "severity": "error", "test_cases": [{"code": "x"}]}
+                    ],
                 }
             )
         )
@@ -270,7 +290,9 @@ class TestCmdScaffold:
         with patch("tools.scripts.rule_author._rules_dir") as mock_dir:
             mock_dir.return_value = tmp_path
             cmd_scaffold(args)
-            assert (tmp_path / "languages" / "mylang" / "rules.d" / "anti_patterns.yml").exists()
+            assert (
+                tmp_path / "languages" / "mylang" / "rules.d" / "anti_patterns.yml"
+            ).exists()
 
     def test_scaffold_appends_to_existing(self, tmp_path: Path) -> None:
         import yaml as _yaml

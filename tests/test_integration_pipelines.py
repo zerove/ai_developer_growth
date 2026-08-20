@@ -107,7 +107,9 @@ class TestHooksRunnerCLIPipeline:
             m.setattr(sys, "argv", ["hooks_runner.py", "lint"])
             m.setattr(
                 "tools.scripts.hooks.basic_checks.subprocess.run",
-                lambda *a, **kw: subprocess.CompletedProcess(args=a[0], returncode=0, stdout="OK", stderr=""),
+                lambda *a, **kw: subprocess.CompletedProcess(
+                    args=a[0], returncode=0, stdout="OK", stderr=""
+                ),
             )
             result = hooks_main()
             assert result == 0
@@ -118,12 +120,28 @@ class TestHooksRunnerCLIPipeline:
             m.setattr(sys, "argv", ["hooks_runner.py", "full"])
             # Mock all check functions to avoid real execution
             m.setattr("tools.scripts.hooks_runner.run_lint", lambda: (True, "lint ok"))
-            m.setattr("tools.scripts.hooks_runner.run_format_check", lambda: (True, "format ok"))
-            m.setattr("tools.scripts.hooks_runner.run_typecheck", lambda: (True, "typecheck ok"))
-            m.setattr("tools.scripts.hooks_runner.run_tests", lambda: (True, "tests ok"))
-            m.setattr("tools.scripts.hooks_runner.run_security", lambda: (True, "security ok"))
-            m.setattr("tools.scripts.hooks_runner.run_quality_gate", lambda *a, **kw: (True, "qg ok"))
-            m.setattr("tools.scripts.hooks_runner.run_governance_audit", lambda *a, **kw: (True, "ga ok"))
+            m.setattr(
+                "tools.scripts.hooks_runner.run_format_check",
+                lambda: (True, "format ok"),
+            )
+            m.setattr(
+                "tools.scripts.hooks_runner.run_typecheck",
+                lambda: (True, "typecheck ok"),
+            )
+            m.setattr(
+                "tools.scripts.hooks_runner.run_tests", lambda: (True, "tests ok")
+            )
+            m.setattr(
+                "tools.scripts.hooks_runner.run_security", lambda: (True, "security ok")
+            )
+            m.setattr(
+                "tools.scripts.hooks_runner.run_quality_gate",
+                lambda *a, **kw: (True, "qg ok"),
+            )
+            m.setattr(
+                "tools.scripts.hooks_runner.run_governance_audit",
+                lambda *a, **kw: (True, "ga ok"),
+            )
             result = hooks_main()
             assert result == 0
 
@@ -251,16 +269,19 @@ class TestDetectLanguageIntegration:
             ("Main.scala", "scala"),
         ],
     )
-    def test_detect_by_extension(self, tmp_path: Path, filename: str, expected_lang: str) -> None:
+    def test_detect_by_extension(
+        self, tmp_path: Path, filename: str, expected_lang: str
+    ) -> None:
         """Detect language from file extension for all supported languages."""
         filepath = tmp_path / filename
         filepath.write_text("// placeholder\n")
 
         lang = detect_language_from_file(filepath)
         if lang is not None:
-            assert expected_lang.lower() in lang.lower() or lang.lower() in expected_lang.lower(), (
-                f"Expected {expected_lang} for {filename}, got {lang}"
-            )
+            assert (
+                expected_lang.lower() in lang.lower()
+                or lang.lower() in expected_lang.lower()
+            ), f"Expected {expected_lang} for {filename}, got {lang}"
 
     def test_detect_from_content(self, tmp_path: Path) -> None:
         """Detect language from file content (shebang)."""

@@ -2,6 +2,7 @@
 
 Simulates a Red-Blue team debate and expert panel consensus for architectural and security review.
 """
+
 # ruff: noqa: E501 (prompt 文本刻意保持单行长，便于阅读与测试断言)
 
 from __future__ import annotations

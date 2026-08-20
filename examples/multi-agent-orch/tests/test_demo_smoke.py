@@ -8,6 +8,7 @@ from pathlib import Path
 def test_demo_entry_point():
     """Test that multi_agent_orch.demo can be imported and runs without error."""
     import multi_agent_orch.demo as demo
+
     # Check functions exist
     assert hasattr(demo, "run_waterfall")
     assert hasattr(demo, "run_fan_out")

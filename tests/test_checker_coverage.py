@@ -86,7 +86,9 @@ def test_detect_framework_python_django(temp_dir: Path):
 
 
 def test_detect_framework_javascript_react(temp_dir: Path):
-    (temp_dir / "package.json").write_text(json.dumps({"dependencies": {"react": "^18"}}))
+    (temp_dir / "package.json").write_text(
+        json.dumps({"dependencies": {"react": "^18"}})
+    )
     fw = _detect_framework(temp_dir)
     assert fw == "react"
 
@@ -230,7 +232,9 @@ except:
         run_linters=False,
     )
     # Should detect bare except
-    bare_excepts = [i for i in issues if "bare-except" in i.rule_id or "bare" in i.message.lower()]
+    bare_excepts = [
+        i for i in issues if "bare-except" in i.rule_id or "bare" in i.message.lower()
+    ]
     # May or may not detect depending on rule loading
     assert len(bare_excepts) >= 0  # Just verify it runs
 
@@ -267,13 +271,17 @@ def test_run_all_checkers_python_eval():
 
 def test_load_rules_python_has_bare_except():
     rules = load_rules_for_language("python")
-    bare_except_rules = [r for r in rules.get("anti_patterns", []) if "bare-except" in r.get("id", "")]
+    bare_except_rules = [
+        r for r in rules.get("anti_patterns", []) if "bare-except" in r.get("id", "")
+    ]
     assert len(bare_except_rules) > 0
 
 
 def test_load_rules_python_has_eval_exec():
     rules = load_rules_for_language("python")
-    eval_rules = [r for r in rules.get("anti_patterns", []) if "eval" in r.get("id", "")]
+    eval_rules = [
+        r for r in rules.get("anti_patterns", []) if "eval" in r.get("id", "")
+    ]
     assert len(eval_rules) > 0
 
 

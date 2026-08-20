@@ -63,7 +63,9 @@ def _load_project_overrides() -> dict[str, Any]:
     except Exception:
         import logging
 
-        logging.getLogger(__name__).warning("Failed to load .adg/config.yml", exc_info=True)
+        logging.getLogger(__name__).warning(
+            "Failed to load .adg/config.yml", exc_info=True
+        )
         return {}
 
 

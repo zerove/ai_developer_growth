@@ -90,12 +90,18 @@ def print_feedback_stats(verbose: bool = False) -> int:
 
     if verbose and rules:
         for rule_id, r in sorted(rules.items()):
-            fp_rate = r["false_positives"] / r["total_reports"] * 100 if r["total_reports"] > 0 else 0
+            fp_rate = (
+                r["false_positives"] / r["total_reports"] * 100
+                if r["total_reports"] > 0
+                else 0
+            )
             status = "⬇️  已降级" if r.get("downgraded") else "✅"
             excluded = r.get("auto_excluded", [])
             excl_str = f", 自动排除: {len(excluded)} 文件" if excluded else ""
             print(f"  {status} {rule_id}")
-            print(f"     总报告: {r['total_reports']}, 误报: {r['false_positives']} ({fp_rate:.0f}%){excl_str}")
+            print(
+                f"     总报告: {r['total_reports']}, 误报: {r['false_positives']} ({fp_rate:.0f}%){excl_str}"
+            )
 
     print()
     return 0

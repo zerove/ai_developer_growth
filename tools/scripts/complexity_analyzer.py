@@ -12,7 +12,9 @@ from typing import Any
 from .validate_language_rules import Issue
 
 
-def _check_line_length(lines: list[str], filepath: str, language: str, max_line: int) -> list[Issue]:
+def _check_line_length(
+    lines: list[str], filepath: str, language: str, max_line: int
+) -> list[Issue]:
     """Check line length threshold."""
     issues: list[Issue] = []
     for line_num, line in enumerate(lines, 1):
@@ -30,7 +32,9 @@ def _check_line_length(lines: list[str], filepath: str, language: str, max_line:
     return issues
 
 
-def _check_file_length(lines: list[str], filepath: str, language: str, max_file: int) -> list[Issue]:
+def _check_file_length(
+    lines: list[str], filepath: str, language: str, max_file: int
+) -> list[Issue]:
     """Check file length threshold."""
     issues: list[Issue] = []
     if len(lines) > max_file:
@@ -48,7 +52,12 @@ def _check_file_length(lines: list[str], filepath: str, language: str, max_file:
 
 
 def _check_function_length(
-    func_lines: list[tuple[str, int, int]], filepath: str, language: str, max_func: int, max_nest: int, lines: list[str]
+    func_lines: list[tuple[str, int, int]],
+    filepath: str,
+    language: str,
+    max_func: int,
+    max_nest: int,
+    lines: list[str],
 ) -> list[Issue]:
     """Check function length and nesting depth thresholds."""
     issues: list[Issue] = []
@@ -81,7 +90,9 @@ def _check_function_length(
     return issues
 
 
-def check_thresholds(lines: list[str], rules: dict[str, Any], filepath: str) -> list[Issue]:
+def check_thresholds(
+    lines: list[str], rules: dict[str, Any], filepath: str
+) -> list[Issue]:
     """Check quantitative thresholds."""
     issues: list[Issue] = []
     thresholds = rules.get("thresholds", {})
@@ -96,12 +107,18 @@ def check_thresholds(lines: list[str], rules: dict[str, Any], filepath: str) -> 
     issues.extend(_check_file_length(lines, filepath, language, max_file))
 
     func_lines = extract_function_lines(lines, language)
-    issues.extend(_check_function_length(func_lines, filepath, language, max_func, max_nest, lines))
+    issues.extend(
+        _check_function_length(
+            func_lines, filepath, language, max_func, max_nest, lines
+        )
+    )
 
     return issues
 
 
-def extract_function_lines(lines: list[str], language: str) -> list[tuple[str, int, int]]:
+def extract_function_lines(
+    lines: list[str], language: str
+) -> list[tuple[str, int, int]]:
     """Extract function name, start line, end line."""
     functions: list[tuple[str, int, int]] = []
 

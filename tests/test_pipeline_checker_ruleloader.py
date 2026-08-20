@@ -137,7 +137,9 @@ class TestMergeRules:
 
     def test_existing_pattern_overridden(self) -> None:
         base = {"anti_patterns": [{"id": "r1", "severity": "error", "pattern": "old"}]}
-        custom = {"anti_patterns": [{"id": "r1", "severity": "warning", "pattern": "new"}]}
+        custom = {
+            "anti_patterns": [{"id": "r1", "severity": "warning", "pattern": "new"}]
+        }
         result = _merge_rules(base, custom)
         r1 = next(p for p in result["anti_patterns"] if p["id"] == "r1")
         assert r1["pattern"] == "new"
@@ -233,7 +235,9 @@ class TestLoadCustomRulesExtended:
     def test_valid_custom_rules(self, tmp_path: Path) -> None:
         rules_dir = tmp_path / ".ai-rules"
         rules_dir.mkdir()
-        (rules_dir / "custom.yml").write_text("anti_patterns:\n- id: my-rule\n  severity: warning\n  pattern: test\n")
+        (rules_dir / "custom.yml").write_text(
+            "anti_patterns:\n- id: my-rule\n  severity: warning\n  pattern: test\n"
+        )
         result = load_custom_rules(tmp_path)
         assert len(result["anti_patterns"]) == 1
         assert result["anti_patterns"][0]["id"] == "my-rule"
@@ -255,7 +259,9 @@ class TestLoadCustomRulesExtended:
     def test_naming_and_thresholds(self, tmp_path: Path) -> None:
         rules_dir = tmp_path / ".ai-rules"
         rules_dir.mkdir()
-        (rules_dir / "c.yml").write_text("naming:\n  func: snake_case\nthresholds:\n  max_lines: 200\n")
+        (rules_dir / "c.yml").write_text(
+            "naming:\n  func: snake_case\nthresholds:\n  max_lines: 200\n"
+        )
         result = load_custom_rules(tmp_path)
         assert result["naming"]["func"] == "snake_case"
         assert result["thresholds"]["max_lines"] == 200
@@ -275,13 +281,17 @@ class TestLoadCustomRulesExtended:
 class TestCheckAntiPatterns:
     def test_match_found(self) -> None:
         lines = ["x = eval('bad')"]
-        rules = {"anti_patterns": [{"id": "r1", "severity": "error", "pattern": r"eval\("}]}
+        rules = {
+            "anti_patterns": [{"id": "r1", "severity": "error", "pattern": r"eval\("}]
+        }
         issues = check_anti_patterns(lines, rules, "test.py")
         assert len(issues) >= 1
 
     def test_no_match(self) -> None:
         lines = ["x = 1"]
-        rules = {"anti_patterns": [{"id": "r1", "severity": "error", "pattern": r"eval\("}]}
+        rules = {
+            "anti_patterns": [{"id": "r1", "severity": "error", "pattern": r"eval\("}]
+        }
         issues = check_anti_patterns(lines, rules, "test.py")
         assert issues == []
 
@@ -297,7 +307,11 @@ class TestValidateFileExtended:
     def test_validate_with_custom_rules(self, tmp_path: Path) -> None:
         f = tmp_path / "test.py"
         f.write_text("x = eval('bad')\n")
-        custom = {"anti_patterns": [{"id": "custom-r", "severity": "error", "pattern": r"eval\("}]}
+        custom = {
+            "anti_patterns": [
+                {"id": "custom-r", "severity": "error", "pattern": r"eval\("}
+            ]
+        }
         result = validate_file(f, "python", custom_rules=custom)
         ids = {i.rule_id for i in result.issues}
         assert "custom-r" in ids
@@ -318,13 +332,24 @@ class TestValidateFileExtended:
     def test_validate_empty_custom_rules(self, tmp_path: Path) -> None:
         f = tmp_path / "test.py"
         f.write_text("x = 1\n")
-        result = validate_file(f, "python", custom_rules={"anti_patterns": [], "thresholds": {}})
+        result = validate_file(
+            f, "python", custom_rules={"anti_patterns": [], "thresholds": {}}
+        )
         assert isinstance(result.issues, list)
 
     def test_validate_fix_replacement_applied(self, tmp_path: Path) -> None:
         f = tmp_path / "test.py"
         f.write_text("x = 1\n")
-        custom = {"anti_patterns": [{"id": "fr", "severity": "error", "pattern": r"x = 1", "fix_replacement": "x = 2"}]}
+        custom = {
+            "anti_patterns": [
+                {
+                    "id": "fr",
+                    "severity": "error",
+                    "pattern": r"x = 1",
+                    "fix_replacement": "x = 2",
+                }
+            ]
+        }
         result = validate_file(f, "python", custom_rules=custom)
         fr_issues = [i for i in result.issues if i.rule_id == "fr"]
         if fr_issues:
@@ -511,7 +536,9 @@ class TestCheckerCheckFileExtended:
     def test_with_custom_rules(self, tmp_path: Path) -> None:
         f = tmp_path / "test.py"
         f.write_text("x = eval('bad')\n")
-        rules = {"anti_patterns": [{"id": "r1", "severity": "error", "pattern": r"eval\("}]}
+        rules = {
+            "anti_patterns": [{"id": "r1", "severity": "error", "pattern": r"eval\("}]
+        }
         result = engine_check_file(f, rules=rules, language="python")
         assert any(i.rule_id == "r1" for i in result.issues)
 
@@ -531,7 +558,9 @@ class TestRunAllCheckers:
         f = tmp_path / "test.js"
         f.write_text("var x = 1;\n")
         rules = {"anti_patterns": [], "naming": {}, "thresholds": {}}
-        issues = _run_all_checkers(f, "var x = 1;\n", ["var x = 1;"], "javascript", rules)
+        issues = _run_all_checkers(
+            f, "var x = 1;\n", ["var x = 1;"], "javascript", rules
+        )
         assert isinstance(issues, list)
 
     def test_with_unknown_lang(self, tmp_path: Path) -> None:
@@ -751,7 +780,9 @@ class TestRuleLoaderLoadCustomRules:
     def test_with_valid_rules(self, tmp_path: Path) -> None:
         rules_dir = tmp_path / ".ai-rules"
         rules_dir.mkdir()
-        (rules_dir / "c.yml").write_text("anti_patterns:\n- id: my-rule\n  severity: error\n")
+        (rules_dir / "c.yml").write_text(
+            "anti_patterns:\n- id: my-rule\n  severity: error\n"
+        )
         result = rl_load_custom(tmp_path)
         assert len(result["anti_patterns"]) == 1
 

@@ -74,7 +74,12 @@ class TestInitProject:
     def test_init_python_project(self):
         """Test initializing a Python project."""
         with tempfile.TemporaryDirectory() as tmpdir:
-            config = init_project(project_name="my-lib", project_type="library", language="python", output_dir=tmpdir)
+            config = init_project(
+                project_name="my-lib",
+                project_type="library",
+                language="python",
+                output_dir=tmpdir,
+            )
 
             assert config.project.name == "my-lib"
             assert config.project.language == "python"
@@ -88,7 +93,10 @@ class TestInitProject:
         """Test initializing a TypeScript project."""
         with tempfile.TemporaryDirectory() as tmpdir:
             config = init_project(
-                project_name="my-app", project_type="webapp", language="typescript", output_dir=tmpdir
+                project_name="my-app",
+                project_type="webapp",
+                language="typescript",
+                output_dir=tmpdir,
             )
 
             assert config.project.lint_tool == "eslint"
@@ -100,7 +108,12 @@ class TestHook:
 
     def test_create_hook(self):
         """Test creating a hook."""
-        hook = Hook(name="lint-check", agent="code-guardian", action="lint", description="Check code style")
+        hook = Hook(
+            name="lint-check",
+            agent="code-guardian",
+            action="lint",
+            description="Check code style",
+        )
         assert hook.name == "lint-check"
         assert hook.enabled is True
 

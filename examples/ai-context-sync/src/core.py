@@ -42,7 +42,9 @@ class AIContextSync:
             model=self.config.llm.model,
             api_base=self.config.llm.api_base,
         )
-        self.analyzer = analyzer or GitAnalyzer(ignore_patterns=self.config.settings.ignore)
+        self.analyzer = analyzer or GitAnalyzer(
+            ignore_patterns=self.config.settings.ignore
+        )
 
         if synthesizer is None:
             lang = LanguageDetector.detect(os.getcwd())
@@ -51,10 +53,16 @@ class AIContextSync:
         else:
             self.synthesizer = synthesizer
 
-        self.guard = guard or ArchitectureGuard(self.llm_client, self.config.settings.adr_dir)
-        self.auditor = auditor or SpecAuditor(self.llm_client, specs_dir=self.config.settings.specs_dir)
+        self.guard = guard or ArchitectureGuard(
+            self.llm_client, self.config.settings.adr_dir
+        )
+        self.auditor = auditor or SpecAuditor(
+            self.llm_client, specs_dir=self.config.settings.specs_dir
+        )
         self.feedback = feedback or FeedbackManager()
-        self.evolution = evolution or EvolutionEngine(self.llm_client, self.feedback, self.config.settings.specs_dir)
+        self.evolution = evolution or EvolutionEngine(
+            self.llm_client, self.feedback, self.config.settings.specs_dir
+        )
         self.orchestrator = orchestrator or WorkflowManager(
             self.llm_client,
             self.analyzer,
@@ -117,7 +125,9 @@ class AIContextSync:
                 current_context = f.read()
 
         logger.info(f"📝 Synthesizing updates for {context_file}...")
-        updated_context = self.synthesizer.synthesize_context_update(filtered_diff, commit_msg, current_context)
+        updated_context = self.synthesizer.synthesize_context_update(
+            filtered_diff, commit_msg, current_context
+        )
 
         if not self.dry_run:
             with open(context_file, "w", encoding="utf-8") as f:

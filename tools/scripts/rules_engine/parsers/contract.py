@@ -7,7 +7,9 @@ from tools.scripts.rules_engine.ast_parser import ClassInfo, FunctionInfo
 class ParserProtocol(Protocol):
     """AST 解析器的强制契约，确保所有解析器 API 一致。"""
 
-    def parse(self, root_node: object, lines: list[str]) -> tuple[list[FunctionInfo], list[ClassInfo]]: ...
+    def parse(
+        self, root_node: object, lines: list[str]
+    ) -> tuple[list[FunctionInfo], list[ClassInfo]]: ...
 
 
 def validate_parser_contract(parser: ParserProtocol) -> bool:

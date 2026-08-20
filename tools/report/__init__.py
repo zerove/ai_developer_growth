@@ -135,8 +135,14 @@ def generate_html_report(
         html += '    <div class="section">\n        <h2>Issues by Category</h2>\n        <div class="bar-chart">\n'
         for cat, count in sorted(categories.items(), key=lambda x: x[1], reverse=True):
             width_pct = int(count / max_count * 100)
-            bar_class = "bar-error" if cat == "security" else ("bar-warn" if cat == "performance" else "bar-info")
-            html += f'            <div class="bar-row"><span class="bar-label">{cat}</span>'
+            bar_class = (
+                "bar-error"
+                if cat == "security"
+                else ("bar-warn" if cat == "performance" else "bar-info")
+            )
+            html += (
+                f'            <div class="bar-row"><span class="bar-label">{cat}</span>'
+            )
             html += f'<div class="bar {bar_class}" style="width:{width_pct}%">{count}</div></div>\n'
         html += "        </div>\n    </div>\n"
 
@@ -158,8 +164,15 @@ def generate_html_report(
         html += '    <div class="section">\n'
         html += f"        <h2>All Issues ({len(issues)})</h2>\n"
         html += "        <table><thead><tr><th>Severity</th><th>Rule</th><th>File</th><th>Line</th><th>Message</th><th>Fix Hint</th></tr></thead><tbody>\n"
-        for issue in sorted(issues, key=lambda i: {"error": 0, "warning": 1, "info": 2}.get(i.severity, 3)):
-            badge_class = f"badge-{issue.severity[0]}" if issue.severity in ("error", "warning") else "badge-info"
+        for issue in sorted(
+            issues,
+            key=lambda i: {"error": 0, "warning": 1, "info": 2}.get(i.severity, 3),
+        ):
+            badge_class = (
+                f"badge-{issue.severity[0]}"
+                if issue.severity in ("error", "warning")
+                else "badge-info"
+            )
             html += f'            <tr><td><span class="badge {badge_class}">{issue.severity.upper()}</span></td>'
             html += f"<td><code>{issue.rule_id}</code></td>"
             html += f"<td>{Path(issue.file).name}</td>"

@@ -189,7 +189,9 @@ class TestRunServer:
         mock_server.serve_forever.assert_called_once()
 
     @patch("tools.scripts.rules.web_base.HTTPServer")
-    def test_keyboard_interrupt_stops(self, mock_server_cls: MagicMock, capsys: Any) -> None:
+    def test_keyboard_interrupt_stops(
+        self, mock_server_cls: MagicMock, capsys: Any
+    ) -> None:
         mock_server = MagicMock()
         mock_server.serve_forever.side_effect = KeyboardInterrupt
         mock_server_cls.return_value = mock_server

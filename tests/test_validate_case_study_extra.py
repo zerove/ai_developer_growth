@@ -443,7 +443,9 @@ PRD DESIGN 代码 测试 数据 洞察 场景
 标题格式 Label 必填章节 效率数据 关键洞察 代码/文档链接
 """
         (self.case_dir / "README.md").write_text(content, encoding="utf-8")
-        with patch("sys.argv", ["validate_case_study.py", "--path", str(self.case_dir)]):
+        with patch(
+            "sys.argv", ["validate_case_study.py", "--path", str(self.case_dir)]
+        ):
             result = main()
             self.assertEqual(result, 0)
 
@@ -451,7 +453,10 @@ PRD DESIGN 代码 测试 数据 洞察 场景
         """main() with --json outputs JSON."""
         content = "# Test\n"
         (self.case_dir / "README.md").write_text(content, encoding="utf-8")
-        with patch("sys.argv", ["validate_case_study.py", "--path", str(self.case_dir), "--json"]):
+        with patch(
+            "sys.argv",
+            ["validate_case_study.py", "--path", str(self.case_dir), "--json"],
+        ):
             result = main()
             # Just verify it doesn't crash
             self.assertIn(result, [0, 1])
@@ -464,7 +469,10 @@ PRD DESIGN 代码 测试 数据 洞察 场景
 Old format.
 """
         (self.case_dir / "README.md").write_text(content, encoding="utf-8")
-        with patch("sys.argv", ["validate_case_study.py", "--path", str(self.case_dir), "--strict"]):
+        with patch(
+            "sys.argv",
+            ["validate_case_study.py", "--path", str(self.case_dir), "--strict"],
+        ):
             result = main()
             self.assertEqual(result, 1)
 

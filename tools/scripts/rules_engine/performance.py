@@ -119,7 +119,9 @@ class FileCache:
 
             # Evict if over limit
             if len(self._memory_cache) > self.max_entries:
-                oldest_key = min(self._memory_cache, key=lambda k: self._memory_cache[k].timestamp)
+                oldest_key = min(
+                    self._memory_cache, key=lambda k: self._memory_cache[k].timestamp
+                )
                 del self._memory_cache[oldest_key]
         except OSError:
             pass  # stat failed
@@ -175,7 +177,10 @@ class FileCache:
             result = check_file(Path(filepath), language=language)
             return {
                 "file": filepath,
-                "issues": [{"rule_id": i.rule_id, "severity": i.severity, "message": i.message} for i in result.issues],
+                "issues": [
+                    {"rule_id": i.rule_id, "severity": i.severity, "message": i.message}
+                    for i in result.issues
+                ],
                 "language": result.language,
                 "skipped": result.skipped,
             }
@@ -186,7 +191,9 @@ class FileCache:
 class PerformanceOptimizer:
     """Performance optimization for code analysis."""
 
-    def __init__(self, max_workers: int | None = None, cache_enabled: bool = True) -> None:
+    def __init__(
+        self, max_workers: int | None = None, cache_enabled: bool = True
+    ) -> None:
         self.max_workers = max_workers or min(os.cpu_count() or 4, 8)
         self.cache = FileCache() if cache_enabled else None
         self._metrics = PerformanceMetrics(
@@ -286,12 +293,16 @@ class PerformanceOptimizer:
 
         return all_results
 
-    def _parallel_check(self, files: list[tuple[str, str | None]]) -> list[dict[str, Any] | None]:
+    def _parallel_check(
+        self, files: list[tuple[str, str | None]]
+    ) -> list[dict[str, Any] | None]:
         """Run checks in parallel using ProcessPoolExecutor."""
         results: list[dict[str, Any] | None] = []
 
         with ProcessPoolExecutor(max_workers=self.max_workers) as executor:
-            future_to_file = {executor.submit(FileCache._check_file_worker, f): f[0] for f in files}
+            future_to_file = {
+                executor.submit(FileCache._check_file_worker, f): f[0] for f in files
+            }
             for future in as_completed(future_to_file):
                 try:
                     result = future.result(timeout=30)
@@ -301,7 +312,9 @@ class PerformanceOptimizer:
 
         return results
 
-    def _serial_check(self, files: list[tuple[str, str | None]]) -> list[dict[str, Any] | None]:
+    def _serial_check(
+        self, files: list[tuple[str, str | None]]
+    ) -> list[dict[str, Any] | None]:
         """Run checks serially."""
         results: list[dict[str, Any] | None] = []
         for filepath, language in files:
@@ -329,7 +342,16 @@ class PerformanceOptimizer:
             for ext_set in extensions.values():
                 exts.update(ext_set)
 
-        ignore_dirs = {"node_modules", ".git", "__pycache__", ".venv", "venv", "dist", "build", ".cache"}
+        ignore_dirs = {
+            "node_modules",
+            ".git",
+            "__pycache__",
+            ".venv",
+            "venv",
+            "dist",
+            "build",
+            ".cache",
+        }
 
         files: list[Path] = []
         for ext in exts:

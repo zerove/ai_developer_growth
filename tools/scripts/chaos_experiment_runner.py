@@ -18,11 +18,9 @@ from __future__ import annotations
 
 import argparse
 import json
-import os
 import sys
 import time
 from datetime import datetime
-from pathlib import Path
 from typing import Any
 
 from kubernetes import client, config
@@ -35,17 +33,17 @@ class ChaosExperimentRunner:
     def __init__(self, namespace: str = "default", dry_run: bool = False):
         self.namespace = namespace
         self.dry_run = dry_run
-        
+
         # 初始化 Kubernetes 客户端
         try:
             config.load_incluster_config()
         except config.ConfigException:
             config.load_kube_config()
-        
+
         self.custom_api = client.CustomObjectsApi()
         self.core_api = client.CoreV1Api()
         self.apps_api = client.AppsV1Api()
-        
+
         # 实验定义
         self.experiments = {
             "POD_KILL": self._create_pod_kill_experiment,
@@ -59,7 +57,7 @@ class ChaosExperimentRunner:
             "IO_CHAOS": self._create_io_chaos_experiment,
             "KERNEL_CHAOS": self._create_kernel_chaos_experiment,
         }
-        
+
         # 实验配置
         self.experiment_configs = {
             "POD_KILL": {
@@ -121,74 +119,126 @@ class ChaosExperimentRunner:
             },
         }
 
-    def run_experiment(self, experiment_name: str, target_namespace: str = None, 
-                      custom_config: dict = None) -> dict[str, Any]:
+    def run_experiment(
+        self,
+        experiment_name: str,
+        target_namespace: str = None,
+        custom_config: dict = None,
+    ) -> dict[str, Any]:
         """运行指定的混沌实验"""
         if experiment_name not in self.experiments:
-            raise ValueError(f"未知实验: {experiment_name}. 可用实验: {list(self.experiments.keys())}")
-        
+            raise ValueError(
+                f"未知实验: {experiment_name}. 可用实验: {list(self.experiments.keys())}"
+            )
+
         ns = target_namespace or self.namespace
         config = self.experiment_configs.get(experiment_name, {}).copy()
         if custom_config:
             config.update(custom_config)
-        
+
         print(f"开始实验: {experiment_name}")
         print(f"命名空间: {ns}")
         print(f"配置: {json.dumps(config, indent=2)}")
-        
+
         # 创建实验 CR
         experiment_creator = self.experiments[experiment_name]
         experiment_yaml = experiment_creator(config)
-        
+
         if self.dry_run:
             print("=== DRY RUN 模式，仅输出 YAML ===")
             print(yaml.dump(experiment_yaml))
-            return {"status": "dry_run", "experiment": experiment_name, "yaml": experiment_yaml}
-        
+            return {
+                "status": "dry_run",
+                "experiment": experiment_name,
+                "yaml": experiment_yaml,
+            }
+
         # 创建实验
         try:
             self.custom_api.create_namespaced_custom_object(
                 group="chaos-mesh.org",
                 version="v1alpha1",
                 namespace="chaos-mesh",
-                plural="networkchaos" if experiment_name.startswith("NETWORK") else 
-                         "podchaos" if experiment_name == "POD_KILL" else
-                         "stresschaos" if experiment_name in ["CPU_STRESS", "MEMORY_STRESS"] else
-                         "diskchaos" if experiment_name == "DISK_FILL" else
-                         "dnsuchaos" if experiment_name == "DNS_FAILURE" else
-                         "timechaos" if experiment_name == "TIME_CHAOS" else
-                         "iochaos" if experiment_name == "IO_CHAOS" else
-                         "kernelchaos",
+                plural=(
+                    "networkchaos"
+                    if experiment_name.startswith("NETWORK")
+                    else (
+                        "podchaos"
+                        if experiment_name == "POD_KILL"
+                        else (
+                            "stresschaos"
+                            if experiment_name in ["CPU_STRESS", "MEMORY_STRESS"]
+                            else (
+                                "diskchaos"
+                                if experiment_name == "DISK_FILL"
+                                else (
+                                    "dnsuchaos"
+                                    if experiment_name == "DNS_FAILURE"
+                                    else (
+                                        "timechaos"
+                                        if experiment_name == "TIME_CHAOS"
+                                        else (
+                                            "iochaos"
+                                            if experiment_name == "IO_CHAOS"
+                                            else "kernelchaos"
+                                        )
+                                    )
+                                )
+                            )
+                        )
+                    )
+                ),
                 body=experiment_yaml,
             )
             print(f"✅ 实验 {experiment_name} 创建成功")
         except ApiException as e:
             if e.status == 409:
-                print(f"⚠️ 实验已存在，尝试更新...")
+                print("⚠️ 实验已存在，尝试更新...")
                 self.custom_api.replace_namespaced_custom_object(
                     group="chaos-mesh.org",
                     version="v1alpha1",
                     namespace="chaos-mesh",
-                    plural="networkchaos" if experiment_name.startswith("NETWORK") else 
-                             "podchaos" if experiment_name == "POD_KILL" else
-                             "stresschaos" if experiment_name in ["CPU_STRESS", "MEMORY_STRESS"] else
-                             "diskchaos" if experiment_name == "DISK_FILL" else
-                             "dnsuchaos" if experiment_name == "DNS_FAILURE" else
-                             "timechaos" if experiment_name == "TIME_CHAOS" else
-                             "iochaos" if experiment_name == "IO_CHAOS" else
-                             "kernelchaos",
+                    plural=(
+                        "networkchaos"
+                        if experiment_name.startswith("NETWORK")
+                        else (
+                            "podchaos"
+                            if experiment_name == "POD_KILL"
+                            else (
+                                "stresschaos"
+                                if experiment_name in ["CPU_STRESS", "MEMORY_STRESS"]
+                                else (
+                                    "diskchaos"
+                                    if experiment_name == "DISK_FILL"
+                                    else (
+                                        "dnsuchaos"
+                                        if experiment_name == "DNS_FAILURE"
+                                        else (
+                                            "timechaos"
+                                            if experiment_name == "TIME_CHAOS"
+                                            else (
+                                                "iochaos"
+                                                if experiment_name == "IO_CHAOS"
+                                                else "kernelchaos"
+                                            )
+                                        )
+                                    )
+                                )
+                            )
+                        )
+                    ),
                     name=experiment_yaml["metadata"]["name"],
                     body=experiment_yaml,
                 )
             else:
                 raise
-        
+
         # 监控实验执行
         result = self._monitor_experiment(experiment_name, config.get("duration", "5m"))
-        
+
         # 清理实验
         self._cleanup_experiment(experiment_name)
-        
+
         return result
 
     def _create_pod_kill_experiment(self, config: dict) -> dict:
@@ -378,35 +428,39 @@ class ChaosExperimentRunner:
             },
         }
 
-    def _monitor_experiment(self, experiment_name: str, duration: str) -> dict[str, Any]:
+    def _monitor_experiment(
+        self, experiment_name: str, duration: str
+    ) -> dict[str, Any]:
         """监控实验执行过程"""
         # 解析持续时间
         duration_seconds = self._parse_duration(duration)
-        
+
         print(f"监控实验执行 ({duration_seconds}秒)...")
-        
+
         # 简化监控：定期检查 Pod 状态
         start_time = time.time()
         end_time = start_time + duration_seconds
-        
+
         affected_pods = []
-        
+
         while time.time() < end_time:
             time.sleep(10)
-            
+
             # 检查目标命名空间的 Pod 状态
             try:
                 pods = self.core_api.list_namespaced_pod("staging")
                 for pod in pods.items:
                     if pod.status.phase != "Running":
-                        affected_pods.append({
-                            "name": pod.metadata.name,
-                            "phase": pod.status.phase,
-                            "reason": pod.status.reason,
-                        })
+                        affected_pods.append(
+                            {
+                                "name": pod.metadata.name,
+                                "phase": pod.status.phase,
+                                "reason": pod.status.reason,
+                            }
+                        )
             except Exception as e:
                 print(f"监控检查异常: {e}")
-        
+
         return {
             "experiment": "completed",
             "duration_seconds": duration_seconds,
@@ -428,9 +482,9 @@ class ChaosExperimentRunner:
             "IO_CHAOS": "iochaos",
             "KERNEL_CHAOS": "kernelchaos",
         }
-        
+
         plural = plural_map.get(experiment_name, "podchaos")
-        
+
         try:
             self.custom_api.delete_namespaced_custom_object(
                 group="chaos-mesh.org",
@@ -455,7 +509,9 @@ class ChaosExperimentRunner:
             return int(duration[:-1]) * 3600
         return 300  # 默认 5 分钟
 
-    def run_scheduled_experiments(self, experiments: list[str] = None) -> dict[str, Any]:
+    def run_scheduled_experiments(
+        self, experiments: list[str] = None
+    ) -> dict[str, Any]:
         """运行预定的实验套件"""
         if experiments is None:
             experiments = [
@@ -465,13 +521,13 @@ class ChaosExperimentRunner:
                 "CPU_STRESS",
                 "MEMORY_STRESS",
             ]
-        
+
         results = {}
         for exp in experiments:
             print(f"\n{'='*50}")
             print(f"执行实验: {exp}")
             print(f"{'='*50}")
-            
+
             try:
                 result = self.run_experiment(exp)
                 results[exp] = result
@@ -479,10 +535,10 @@ class ChaosExperimentRunner:
             except Exception as e:
                 print(f"❌ {exp} 失败: {e}")
                 results[exp] = {"error": str(e)}
-            
+
             # 实验间隔
             time.sleep(30)
-        
+
         return {"experiments": results, "timestamp": datetime.now().isoformat()}
 
 
@@ -490,35 +546,39 @@ def main():
     parser = argparse.ArgumentParser(description="Chaos Mesh 月度演练自动化")
     parser.add_argument("--namespace", default="staging", help="目标命名空间")
     parser.add_argument("--experiment", help="指定实验名称")
-    parser.add_argument("--all-experiments", action="store_true", help="运行所有预定实验")
+    parser.add_argument(
+        "--all-experiments", action="store_true", help="运行所有预定实验"
+    )
     parser.add_argument("--dry-run", action="store_true", help="试运行模式")
-    parser.add_argument("--schedule", choices=["monthly", "weekly", "daily"], help="定时运行模式")
+    parser.add_argument(
+        "--schedule", choices=["monthly", "weekly", "daily"], help="定时运行模式"
+    )
     parser.add_argument("--dry-run", action="store_true", help="试运行模式")
-    
+
     args = parser.parse_args()
-    
+
     runner = ChaosExperimentRunner(
         namespace=args.namespace,
         dry_run=args.dry_run,
     )
-    
+
     if args.experiment:
         result = runner.run_experiment(args.experiment)
         print(json.dumps(result, indent=2, ensure_ascii=False))
-    
+
     elif args.all_experiments:
         result = runner.run_scheduled_experiments()
         print(json.dumps(result, indent=2, ensure_ascii=False))
-    
+
     elif args.schedule:
         print(f"定时任务模式: {args.schedule}")
         # 这里可以集成 cron 或 Kubernetes CronJob
         print("建议使用 Kubernetes CronJob 部署定时任务")
-    
+
     else:
         print("请指定 --experiment 或 --all-experiments")
         return 1
-    
+
     return 0
 
 

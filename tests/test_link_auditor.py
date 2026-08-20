@@ -4,7 +4,12 @@ import subprocess
 import sys
 import unittest
 
-from tools.scripts.link_auditor import _build_index, _check_target, _strip_code_blocks, find_broken_links
+from tools.scripts.link_auditor import (
+    _build_index,
+    _check_target,
+    _strip_code_blocks,
+    find_broken_links,
+)
 
 
 class TestLinkAuditor(unittest.TestCase):
@@ -171,7 +176,9 @@ class TestCheckTarget(unittest.TestCase):
     def test_check_target_not_found(self):
         """Test target that doesn't exist returns False."""
         index = _build_index(self.test_dir)
-        self.assertFalse(_check_target("nonexistent", index, self.test_dir, self.test_dir))
+        self.assertFalse(
+            _check_target("nonexistent", index, self.test_dir, self.test_dir)
+        )
 
 
 class TestMain(unittest.TestCase):
@@ -244,7 +251,12 @@ class TestMain(unittest.TestCase):
             f.write("[[missing.md]]")
 
         result = subprocess.run(
-            [sys.executable, "tools/scripts/link_auditor.py", self.test_dir, "--fail-on-broken"],
+            [
+                sys.executable,
+                "tools/scripts/link_auditor.py",
+                self.test_dir,
+                "--fail-on-broken",
+            ],
             capture_output=True,
             text=True,
             cwd=os.path.join(os.path.dirname(__file__), ".."),

@@ -27,9 +27,16 @@ class AIDashboard:
             telemetry_path = self.root_dir / ".quality-trends" / "telemetry.json"
             if telemetry_path.exists():
                 return "📊 Telemetry Metrics:\n" + "\n".join(
-                    [f"   - {k}: {v}" for k, v in json.loads(telemetry_path.read_text(encoding="utf-8")).items()]
+                    [
+                        f"   - {k}: {v}"
+                        for k, v in json.loads(
+                            telemetry_path.read_text(encoding="utf-8")
+                        ).items()
+                    ]
                 )
-            return "📊 Telemetry: No metrics generated yet (run `make metrics-telemetry`)."
+            return (
+                "📊 Telemetry: No metrics generated yet (run `make metrics-telemetry`)."
+            )
 
         def get_graph() -> str:
             graph_path = self.root_dir / ".semantic_graph.json"

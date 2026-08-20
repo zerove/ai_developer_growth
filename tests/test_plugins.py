@@ -35,7 +35,14 @@ class _DummyChecker(CheckerPlugin):
     supported_languages = ["python"]
     priority = 50
 
-    def check(self, filepath: Path, content: str, lines: list[str], lang: str, rules: dict[str, Any]) -> list[Issue]:
+    def check(
+        self,
+        filepath: Path,
+        content: str,
+        lines: list[str],
+        lang: str,
+        rules: dict[str, Any],
+    ) -> list[Issue]:
         return [
             Issue(
                 rule_id="dummy-rule",
@@ -53,7 +60,14 @@ class _AnotherChecker(CheckerPlugin):
     supported_languages = ["javascript", "typescript"]
     priority = 10
 
-    def check(self, filepath: Path, content: str, lines: list[str], lang: str, rules: dict[str, Any]) -> list[Issue]:
+    def check(
+        self,
+        filepath: Path,
+        content: str,
+        lines: list[str],
+        lang: str,
+        rules: dict[str, Any],
+    ) -> list[Issue]:
         return []
 
 
@@ -64,7 +78,14 @@ class _AllLangChecker(CheckerPlugin):
     supported_languages = []
     priority = 200
 
-    def check(self, filepath: Path, content: str, lines: list[str], lang: str, rules: dict[str, Any]) -> list[Issue]:
+    def check(
+        self,
+        filepath: Path,
+        content: str,
+        lines: list[str],
+        lang: str,
+        rules: dict[str, Any],
+    ) -> list[Issue]:
         return []
 
 
@@ -174,14 +195,23 @@ class TestGetPluginsForLanguage:
 
 class TestFunctionPlugin:
     def test_check_delegates_to_function(self, tmp_path: Path) -> None:
-        def my_check(filepath: Path, content: str, lines: list[str], lang: str, rules: dict) -> list[Issue]:
+        def my_check(
+            filepath: Path, content: str, lines: list[str], lang: str, rules: dict
+        ) -> list[Issue]:
             return [
                 Issue(
-                    rule_id="fn-rule", severity="info", category="test", file=str(filepath), line=1, message="from fn"
+                    rule_id="fn-rule",
+                    severity="info",
+                    category="test",
+                    file=str(filepath),
+                    line=1,
+                    message="from fn",
                 )
             ]
 
-        plugin = _FunctionPlugin(my_check, name="fn_plugin", languages=["python"], priority=5)
+        plugin = _FunctionPlugin(
+            my_check, name="fn_plugin", languages=["python"], priority=5
+        )
         assert plugin.name == "fn_plugin"
         assert plugin.supported_languages == ["python"]
         assert plugin.priority == 5
@@ -202,7 +232,9 @@ class TestDecorator:
 
     def test_decorator_registers_plugin(self) -> None:
         @register_checker_decorator(name="dec_check", languages=["python"], priority=42)
-        def my_check(filepath: Path, content: str, lines: list[str], lang: str, rules: dict) -> list[Issue]:
+        def my_check(
+            filepath: Path, content: str, lines: list[str], lang: str, rules: dict
+        ) -> list[Issue]:
             return []
 
         plugins = list_plugins()

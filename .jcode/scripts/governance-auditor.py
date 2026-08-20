@@ -78,15 +78,32 @@ UNSAFE_PATTERNS = [
     (
         r"os\.system\(",
         "os.system() - 应使用 subprocess",
-        ["generate_fixes.py", "hallucination_detector.py", "fix_heuristics.py", "auto_fix.py"],
+        [
+            "generate_fixes.py",
+            "hallucination_detector.py",
+            "fix_heuristics.py",
+            "auto_fix.py",
+        ],
         None,
     ),
-    (r"pickle\.loads?\(", "pickle - 反序列化风险", ["generate_fixes.py", "hallucination_detector.py"], None),
-    (r"yaml\.load\((?!.*Loader)", "yaml.load 不安全 - 应使用 safe_load", [], r"yaml\.load\((?!.*Loader)"),
+    (
+        r"pickle\.loads?\(",
+        "pickle - 反序列化风险",
+        ["generate_fixes.py", "hallucination_detector.py"],
+        None,
+    ),
+    (
+        r"yaml\.load\((?!.*Loader)",
+        "yaml.load 不安全 - 应使用 safe_load",
+        [],
+        r"yaml\.load\((?!.*Loader)",
+    ),
 ]
 
 
-def _check_unsafe_patterns(content: str, patterns: list, filepath: str = "") -> list[str]:
+def _check_unsafe_patterns(
+    content: str, patterns: list, filepath: str = ""
+) -> list[str]:
     """检查不安全模式，支持排除文件和排除模式"""
     risks = []
     filename = Path(filepath).name if filepath else ""
@@ -132,7 +149,9 @@ def format_check() -> bool:
 def typecheck() -> bool:
     """运行 mypy 类型检查"""
     print_section("类型检查")
-    code, output = run_command([sys.executable, "-m", "mypy", "tools/scripts/", "--ignore-missing-imports"])
+    code, output = run_command(
+        [sys.executable, "-m", "mypy", "tools/scripts/", "--ignore-missing-imports"]
+    )
     print_check("mypy", code == 0, output)
     if code != 0:
         print(output)
@@ -165,7 +184,18 @@ def security() -> bool:
     print_section("安全扫描")
 
     # bandit
-    code1, output1 = run_command(["bandit", "-r", "tools/scripts/", "-f", "json", "-o", "bandit-report.json", "-ll"])
+    code1, output1 = run_command(
+        [
+            "bandit",
+            "-r",
+            "tools/scripts/",
+            "-f",
+            "json",
+            "-o",
+            "bandit-report.json",
+            "-ll",
+        ]
+    )
     print_check("bandit", code1 == 0, output1)
 
     # pip-audit

@@ -18,7 +18,17 @@ from _common import get_project_root, print_check, print_section, run_command
 def triage() -> int:
     """分流 Issues"""
     print_section("Issue 分流")
-    labels = ["案例", "工具推荐", "方法论", "问题", "文档", "question", "bug", "enhancement", "good first issue"]
+    labels = [
+        "案例",
+        "工具推荐",
+        "方法论",
+        "问题",
+        "文档",
+        "question",
+        "bug",
+        "enhancement",
+        "good first issue",
+    ]
     print("可用标签:")
     for label in labels:
         print(f"  - {label}")
@@ -30,7 +40,9 @@ def triage() -> int:
 def validate() -> int:
     """验证社区提交的案例"""
     print_section("社区案例验证")
-    code, output = run_command([sys.executable, "tools/scripts/validate_case_study.py", "--all"])
+    code, output = run_command(
+        [sys.executable, "tools/scripts/validate_case_study.py", "--all"]
+    )
     print_check("案例验证", code == 0, output)
     if code != 0:
         print(output)
@@ -41,7 +53,12 @@ def generate_adr() -> int:
     """从 PR 生成 ADR"""
     print_section("ADR 生成")
     code, output = run_command(
-        [sys.executable, "tools/scripts/adr_generator.py", "--pr", sys.argv[2] if len(sys.argv) > 2 else "HEAD"]
+        [
+            sys.executable,
+            "tools/scripts/adr_generator.py",
+            "--pr",
+            sys.argv[2] if len(sys.argv) > 2 else "HEAD",
+        ]
     )
     print_check("ADR 生成", code == 0, output)
     if code != 0:
@@ -52,7 +69,9 @@ def generate_adr() -> int:
 def leaderboard() -> int:
     """贡献者排行榜"""
     print_section("贡献者排行榜")
-    code, output = run_command([sys.executable, "tools/scripts/contributor_dashboard.py", "--leaderboard"])
+    code, output = run_command(
+        [sys.executable, "tools/scripts/contributor_dashboard.py", "--leaderboard"]
+    )
     print_check("排行榜", code == 0, output)
     if code != 0:
         print(output)

@@ -100,7 +100,17 @@ def recommend_rules(
         for file_path in project_dir.rglob(f"*{ext}"):
             # Skip common non-source directories
             parts = file_path.parts
-            if any(skip in parts for skip in ["node_modules", ".git", "target", "__pycache__", "venv", ".venv"]):
+            if any(
+                skip in parts
+                for skip in [
+                    "node_modules",
+                    ".git",
+                    "target",
+                    "__pycache__",
+                    "venv",
+                    ".venv",
+                ]
+            ):
                 continue
 
             try:
@@ -143,8 +153,14 @@ def recommend_rules(
                 "severity": rule_info.get("severity", "warning"),
                 "category": rule_info.get("category", "code_quality"),
                 "reason": rec["reason"],
-                "affected_files": len([r for r in unique_recs if r["rule"] == rec["rule"]]),
-                "example": {"file": rec["file"], "line": rec["line"], "code": rec["code"]},
+                "affected_files": len(
+                    [r for r in unique_recs if r["rule"] == rec["rule"]]
+                ),
+                "example": {
+                    "file": rec["file"],
+                    "line": rec["line"],
+                    "code": rec["code"],
+                },
             }
         )
 

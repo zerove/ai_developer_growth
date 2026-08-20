@@ -12,7 +12,9 @@ from src.exceptions import LLMError
 # ---------------------------------------------------------------------------
 class TestViolation:
     def test_to_dict(self):
-        v = Violation(rule_id="R1", message="msg", severity="Critical", file_path="a.py")
+        v = Violation(
+            rule_id="R1", message="msg", severity="Critical", file_path="a.py"
+        )
         d = v.to_dict()
         assert d == {
             "rule_id": "R1",
@@ -52,7 +54,15 @@ class TestFeedbackManager:
 
     def test_load_history_valid_file(self, tmp_path):
         path = tmp_path / "history.json"
-        data = [{"rule_id": "R1", "file_path": "a.py", "message": "m", "severity": "Warning", "status": "open"}]
+        data = [
+            {
+                "rule_id": "R1",
+                "file_path": "a.py",
+                "message": "m",
+                "severity": "Warning",
+                "status": "open",
+            }
+        ]
         path.write_text(json.dumps(data), encoding="utf-8")
         fm = FeedbackManager(history_file=str(path))
         assert len(fm.history) == 1
@@ -86,18 +96,26 @@ class TestFeedbackManager:
     def test_save_violation_duplicate_skipped(self, tmp_path):
         path = tmp_path / "history.json"
         fm = FeedbackManager(history_file=str(path))
-        v1 = Violation(rule_id="R1", message="msg", severity="Warning", file_path="a.py")
+        v1 = Violation(
+            rule_id="R1", message="msg", severity="Warning", file_path="a.py"
+        )
         fm.save_violation(v1)
-        v2 = Violation(rule_id="R1", message="msg", severity="Warning", file_path="a.py")
+        v2 = Violation(
+            rule_id="R1", message="msg", severity="Warning", file_path="a.py"
+        )
         fm.save_violation(v2)
         assert len(fm.history) == 1
 
     def test_save_violation_different_not_duplicate(self, tmp_path):
         path = tmp_path / "history.json"
         fm = FeedbackManager(history_file=str(path))
-        v1 = Violation(rule_id="R1", message="msg", severity="Warning", file_path="a.py")
+        v1 = Violation(
+            rule_id="R1", message="msg", severity="Warning", file_path="a.py"
+        )
         fm.save_violation(v1)
-        v2 = Violation(rule_id="R1", message="different msg", severity="Warning", file_path="a.py")
+        v2 = Violation(
+            rule_id="R1", message="different msg", severity="Warning", file_path="a.py"
+        )
         fm.save_violation(v2)
         assert len(fm.history) == 2
 
@@ -133,7 +151,11 @@ class TestSpecAuditor:
         mock_client = MagicMock()
         specs_dir = tmp_path / "specs"
         specs_dir.mkdir()
-        return SpecAuditor(llm_client=mock_client, specs_dir=str(specs_dir)), mock_client, specs_dir
+        return (
+            SpecAuditor(llm_client=mock_client, specs_dir=str(specs_dir)),
+            mock_client,
+            specs_dir,
+        )
 
     def test_init(self, tmp_path):
         auditor, _, _ = self._make_auditor(tmp_path)
@@ -192,28 +214,36 @@ class TestSpecAuditor:
     def test_generate_fix_success(self, tmp_path):
         auditor, mock_client, _ = self._make_auditor(tmp_path)
         mock_client.generate.return_value = "def fixed(): pass"
-        v = Violation(rule_id="R1", message="bad", severity="Critical", file_path="a.py")
+        v = Violation(
+            rule_id="R1", message="bad", severity="Critical", file_path="a.py"
+        )
         result = auditor.generate_fix(v, "diff", "spec")
         assert result == "def fixed(): pass"
 
     def test_generate_fix_empty_response(self, tmp_path):
         auditor, mock_client, _ = self._make_auditor(tmp_path)
         mock_client.generate.return_value = ""
-        v = Violation(rule_id="R1", message="bad", severity="Critical", file_path="a.py")
+        v = Violation(
+            rule_id="R1", message="bad", severity="Critical", file_path="a.py"
+        )
         result = auditor.generate_fix(v, "diff", "spec")
         assert result == "Could not generate a fix."
 
     def test_generate_fix_none_response(self, tmp_path):
         auditor, mock_client, _ = self._make_auditor(tmp_path)
         mock_client.generate.return_value = None
-        v = Violation(rule_id="R1", message="bad", severity="Critical", file_path="a.py")
+        v = Violation(
+            rule_id="R1", message="bad", severity="Critical", file_path="a.py"
+        )
         result = auditor.generate_fix(v, "diff", "spec")
         assert result == "Could not generate a fix."
 
     def test_generate_fix_llm_error(self, tmp_path):
         auditor, mock_client, _ = self._make_auditor(tmp_path)
         mock_client.generate.side_effect = LLMError("api down")
-        v = Violation(rule_id="R1", message="bad", severity="Critical", file_path="a.py")
+        v = Violation(
+            rule_id="R1", message="bad", severity="Critical", file_path="a.py"
+        )
         result = auditor.generate_fix(v, "diff", "spec")
         assert result == "Error generating fix."
 
@@ -247,7 +277,9 @@ class TestSpecAuditor:
         auditor, mock_client, specs_dir = self._make_auditor(tmp_path)
         (specs_dir / "spec.md").write_text("rule content", encoding="utf-8")
         mock_client.generate.return_value = "[]"
-        mock_parse.return_value = [{"rule_id": "R1", "message": "bad code", "severity": "Warning"}]
+        mock_parse.return_value = [
+            {"rule_id": "R1", "message": "bad code", "severity": "Warning"}
+        ]
         # Verification: first call is attack, subsequent are verify
         mock_client.generate.side_effect = [
             "[]",  # attack response
@@ -261,7 +293,9 @@ class TestSpecAuditor:
     def test_audit_rejects_false_positive(self, mock_parse, tmp_path):
         auditor, mock_client, specs_dir = self._make_auditor(tmp_path)
         (specs_dir / "spec.md").write_text("rule content", encoding="utf-8")
-        mock_parse.return_value = [{"rule_id": "R1", "message": "not real", "severity": "Info"}]
+        mock_parse.return_value = [
+            {"rule_id": "R1", "message": "not real", "severity": "Info"}
+        ]
         mock_client.generate.side_effect = [
             "[]",  # attack
             "NO - false positive",  # verify

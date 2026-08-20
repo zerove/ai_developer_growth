@@ -10,7 +10,11 @@ async def test_home(client: AsyncClient):
 async def test_register_and_login(client: AsyncClient):
     resp = await client.post(
         "/auth/register",
-        data={"username": "testuser", "email": "test@example.com", "password": "pass123"},
+        data={
+            "username": "testuser",
+            "email": "test@example.com",
+            "password": "pass123",
+        },
         follow_redirects=False,
     )
     assert resp.status_code == 303
@@ -44,7 +48,11 @@ async def test_assessment_requires_login(client: AsyncClient):
 async def test_full_flow(client: AsyncClient):
     await client.post(
         "/auth/register",
-        data={"username": "flowuser", "email": "flow@example.com", "password": "pass123"},
+        data={
+            "username": "flowuser",
+            "email": "flow@example.com",
+            "password": "pass123",
+        },
         follow_redirects=False,
     )
 

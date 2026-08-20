@@ -8,7 +8,10 @@ import unittest
 from unittest.mock import MagicMock, patch
 
 spec = importlib.util.spec_from_file_location(
-    "adr_generator", os.path.join(os.path.dirname(__file__), "..", "tools", "scripts", "adr_generator.py")
+    "adr_generator",
+    os.path.join(
+        os.path.dirname(__file__), "..", "tools", "scripts", "adr_generator.py"
+    ),
 )
 adr_generator = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(adr_generator)
@@ -52,7 +55,16 @@ class TestGenerateFromLLM(unittest.TestCase):
 class TestGenerateInteractive(unittest.TestCase):
     """Test interactive ADR generation."""
 
-    @patch("builtins.input", side_effect=["Test Title", "Context", "Alternatives", "Decision", "Consequences"])
+    @patch(
+        "builtins.input",
+        side_effect=[
+            "Test Title",
+            "Context",
+            "Alternatives",
+            "Decision",
+            "Consequences",
+        ],
+    )
     def test_generate_interactive_returns_tuple(self, mock_input):
         """Test that generate_interactive returns (title, body) tuple."""
         title, body = generate_interactive()
@@ -117,7 +129,9 @@ class TestGenerateFromLLMMode(unittest.TestCase):
     """Test LLM mode ADR generation."""
 
     @patch("builtins.input", side_effect=["Test Title", "Test brief description", "y"])
-    @patch.object(adr_generator, "generate_from_llm", return_value="## Context\nGenerated content")
+    @patch.object(
+        adr_generator, "generate_from_llm", return_value="## Context\nGenerated content"
+    )
     def test_generate_from_llm_mode_returns_tuple(self, mock_llm, mock_input):
         """Test that generate_from_llm_mode returns (title, body) tuple."""
         title, body = generate_from_llm_mode()
@@ -137,7 +151,9 @@ class TestGenerateFromLLMMode(unittest.TestCase):
             "Consequences",
         ],
     )
-    @patch.object(adr_generator, "generate_from_llm", return_value="## Context\nGenerated content")
+    @patch.object(
+        adr_generator, "generate_from_llm", return_value="## Context\nGenerated content"
+    )
     def test_generate_from_llm_mode_fallback_on_reject(self, mock_llm, mock_input):
         """Test fallback to interactive when user rejects LLM output."""
         title, body = generate_from_llm_mode()
@@ -166,7 +182,17 @@ class TestMain(unittest.TestCase):
         main()
         mock_save.assert_called_once()
 
-    @patch("builtins.input", side_effect=["1", "Test Title", "Context", "Alternatives", "Decision", "Consequences"])
+    @patch(
+        "builtins.input",
+        side_effect=[
+            "1",
+            "Test Title",
+            "Context",
+            "Alternatives",
+            "Decision",
+            "Consequences",
+        ],
+    )
     @patch.object(adr_generator, "save_adr")
     def test_main_interactive_mode(self, mock_save, mock_input):
         """Test main in interactive mode."""
@@ -174,10 +200,18 @@ class TestMain(unittest.TestCase):
         mock_save.assert_called_once()
 
     @patch("builtins.input", side_effect=["2", "Test Title", "Test brief", "y"])
-    @patch.object(adr_generator, "generate_from_llm", side_effect=Exception("LLM Error"))
-    @patch.object(adr_generator, "generate_interactive", return_value=("Fallback Title", "## Context\nFallback"))
+    @patch.object(
+        adr_generator, "generate_from_llm", side_effect=Exception("LLM Error")
+    )
+    @patch.object(
+        adr_generator,
+        "generate_interactive",
+        return_value=("Fallback Title", "## Context\nFallback"),
+    )
     @patch.object(adr_generator, "save_adr")
-    def test_main_llm_fallback_to_interactive(self, mock_save, mock_interactive, mock_llm, mock_input):
+    def test_main_llm_fallback_to_interactive(
+        self, mock_save, mock_interactive, mock_llm, mock_input
+    ):
         """Test main falls back to interactive on LLM error."""
         main()
         mock_save.assert_called_once()

@@ -5,10 +5,11 @@ from __future__ import annotations
 import json
 import os
 import sys
-import yaml
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
+
+import yaml
 
 # ── Configuration ──
 _ADG_HOME = Path(os.environ.get("ADG_HOME", Path.home() / ".config" / "adg"))
@@ -138,7 +139,11 @@ class Issue:
 
 def _attach_docs_to_issues(issues: list[Issue]) -> None:
     """Attach related documentation links to issues from the mapping cache."""
-    _adg_docs_mapping = Path(__file__).resolve().parent.parent.parent.parent / ".jcode" / "rule-docs-mapping.json"
+    _adg_docs_mapping = (
+        Path(__file__).resolve().parent.parent.parent.parent
+        / ".jcode"
+        / "rule-docs-mapping.json"
+    )
     if not _adg_docs_mapping.exists():
         return
     try:
@@ -259,7 +264,9 @@ def _severity_rank(severity: str) -> int:
     return {"error": 0, "warning": 1, "info": 2}.get(severity, 3)
 
 
-def _make_issue(filepath: Path, line: int, column: int, pattern_def: dict[str, Any]) -> Issue:
+def _make_issue(
+    filepath: Path, line: int, column: int, pattern_def: dict[str, Any]
+) -> Issue:
     """Create an Issue from a pattern definition."""
     return Issue(
         rule_id=pattern_def.get("id", "unknown"),

@@ -90,13 +90,27 @@ class TestPrintResults:
         assert "PASSED" in capsys.readouterr().out
 
     def test_with_errors(self, capsys: Any) -> None:
-        issue = Issue(rule_id="r1", severity="error", category="test", file="test.py", line=1, message="bad")
+        issue = Issue(
+            rule_id="r1",
+            severity="error",
+            category="test",
+            file="test.py",
+            line=1,
+            message="bad",
+        )
         r = ValidationResult(file="test.py", language="python", issues=[issue])
         code = print_results([r])
         assert code == 1
 
     def test_with_warnings(self, capsys: Any) -> None:
-        issue = Issue(rule_id="r1", severity="warning", category="test", file="test.py", line=1, message="warn")
+        issue = Issue(
+            rule_id="r1",
+            severity="warning",
+            category="test",
+            file="test.py",
+            line=1,
+            message="warn",
+        )
         r = ValidationResult(file="test.py", language="python", issues=[issue])
         code = print_results([r])
         assert code == 0
@@ -111,7 +125,13 @@ class TestPrintResults:
 
     def test_fix_hint_shown(self, capsys: Any) -> None:
         issue = Issue(
-            rule_id="r1", severity="error", category="t", file="f.py", line=1, message="m", fix_hint="do this"
+            rule_id="r1",
+            severity="error",
+            category="t",
+            file="f.py",
+            line=1,
+            message="m",
+            fix_hint="do this",
         )
         r = ValidationResult(file="f.py", language="python", issues=[issue])
         print_results([r])
@@ -194,48 +214,67 @@ class TestMainExtended:
 
     def test_incremental_directory(self, tmp_path: Path) -> None:
         (tmp_path / "a.py").write_text("pass\n")
-        with patch("sys.argv", ["cli", str(tmp_path), "--auto-detect", "--incremental"]):
+        with patch(
+            "sys.argv", ["cli", str(tmp_path), "--auto-detect", "--incremental"]
+        ):
             ret = main()
         assert ret == 0
         # Second run - no changed files
-        with patch("sys.argv", ["cli", str(tmp_path), "--auto-detect", "--incremental"]):
+        with patch(
+            "sys.argv", ["cli", str(tmp_path), "--auto-detect", "--incremental"]
+        ):
             ret = main()
         assert ret == 0
 
     def test_changed_files(self, tmp_path: Path) -> None:
         f = tmp_path / "test.py"
         f.write_text("pass\n")
-        with patch("sys.argv", ["cli", str(tmp_path), "--lang", "python", "--changed-files", str(f)]):
+        with patch(
+            "sys.argv",
+            ["cli", str(tmp_path), "--lang", "python", "--changed-files", str(f)],
+        ):
             ret = main()
         assert ret == 0
 
     def test_changed_files_nonexistent_skipped(self, tmp_path: Path) -> None:
         missing = tmp_path / "nope.py"
-        with patch("sys.argv", ["cli", str(tmp_path), "--lang", "python", "--changed-files", str(missing)]):
+        with patch(
+            "sys.argv",
+            ["cli", str(tmp_path), "--lang", "python", "--changed-files", str(missing)],
+        ):
             ret = main()
         assert ret == 0
 
     def test_custom_rules(self, tmp_path: Path) -> None:
         rules_dir = tmp_path / ".ai-rules"
         rules_dir.mkdir()
-        (rules_dir / "custom.yml").write_text("anti_patterns: []\nnaming: {}\nthresholds: {}\n")
+        (rules_dir / "custom.yml").write_text(
+            "anti_patterns: []\nnaming: {}\nthresholds: {}\n"
+        )
         f = tmp_path / "code.py"
         f.write_text("pass\n")
-        with patch("sys.argv", ["cli", str(f), "--lang", "python", "--custom-rules", str(rules_dir)]):
+        with patch(
+            "sys.argv",
+            ["cli", str(f), "--lang", "python", "--custom-rules", str(rules_dir)],
+        ):
             ret = main()
         assert ret == 0
 
     def test_fix_dry_run(self, tmp_path: Path) -> None:
         f = tmp_path / "fixme.py"
         f.write_text("x = 1\n")
-        with patch("sys.argv", ["cli", str(f), "--lang", "python", "--fix", "--dry-run"]):
+        with patch(
+            "sys.argv", ["cli", str(f), "--lang", "python", "--fix", "--dry-run"]
+        ):
             ret = main()
         assert ret == 0
 
     def test_max_warnings(self, tmp_path: Path) -> None:
         f = tmp_path / "warn.py"
         f.write_text("x = 1\n")
-        with patch("sys.argv", ["cli", str(f), "--lang", "python", "--max-warnings", "0"]):
+        with patch(
+            "sys.argv", ["cli", str(f), "--lang", "python", "--max-warnings", "0"]
+        ):
             ret = main()
         # Warnings may or may not exist, just verify no crash
         assert ret in (0, 1)
@@ -243,7 +282,9 @@ class TestMainExtended:
     def test_fail_on_warnings(self, tmp_path: Path) -> None:
         f = tmp_path / "w.py"
         f.write_text("x = 1\n")
-        with patch("sys.argv", ["cli", str(f), "--lang", "python", "--fail-on-warnings"]):
+        with patch(
+            "sys.argv", ["cli", str(f), "--lang", "python", "--fail-on-warnings"]
+        ):
             ret = main()
         assert ret in (0, 1)
 
@@ -257,24 +298,32 @@ class TestMainExtended:
     def test_format_junit(self, tmp_path: Path) -> None:
         f = tmp_path / "j.py"
         f.write_text("pass\n")
-        with patch("sys.argv", ["cli", str(f), "--lang", "python", "--format", "junit"]):
+        with patch(
+            "sys.argv", ["cli", str(f), "--lang", "python", "--format", "junit"]
+        ):
             ret = main()
         assert ret == 0
 
     def test_linters(self, tmp_path: Path) -> None:
         f = tmp_path / "lint.py"
         f.write_text("pass\n")
-        with patch("sys.argv", ["cli", str(f), "--lang", "python", "--linters", "ruff"]):
+        with patch(
+            "sys.argv", ["cli", str(f), "--lang", "python", "--linters", "ruff"]
+        ):
             ret = main()
         assert ret == 0
 
     def test_incremental_directory_no_changes(self, tmp_path: Path) -> None:
         (tmp_path / "a.py").write_text("pass\n")
         # First run to populate cache
-        with patch("sys.argv", ["cli", str(tmp_path), "--auto-detect", "--incremental"]):
+        with patch(
+            "sys.argv", ["cli", str(tmp_path), "--auto-detect", "--incremental"]
+        ):
             main()
         # Second run - no changes
-        with patch("sys.argv", ["cli", str(tmp_path), "--auto-detect", "--incremental"]):
+        with patch(
+            "sys.argv", ["cli", str(tmp_path), "--auto-detect", "--incremental"]
+        ):
             ret = main()
         assert ret == 0
 
@@ -282,14 +331,19 @@ class TestMainExtended:
         f = tmp_path / "s.py"
         f.write_text("pass\n")
         out = tmp_path / "out.sarif"
-        with patch("sys.argv", ["cli", str(f), "--lang", "python", "--format", "sarif", "-o", str(out)]):
+        with patch(
+            "sys.argv",
+            ["cli", str(f), "--lang", "python", "--format", "sarif", "-o", str(out)],
+        ):
             main()
         assert out.exists()
 
     def test_max_errors_in_text_mode(self, tmp_path: Path) -> None:
         f = tmp_path / "e.py"
         f.write_text("eval('x')\n")
-        with patch("sys.argv", ["cli", str(f), "--lang", "python", "--max-errors", "100"]):
+        with patch(
+            "sys.argv", ["cli", str(f), "--lang", "python", "--max-errors", "100"]
+        ):
             ret = main()
         # print_results returns 1 for errors, max-errors only blocks when exceeded
         assert ret == 1  # eval generates errors, print_results returns 1
@@ -297,6 +351,8 @@ class TestMainExtended:
     def test_max_warnings_in_text_mode(self, tmp_path: Path) -> None:
         f = tmp_path / "w.py"
         f.write_text("x = 1\n")
-        with patch("sys.argv", ["cli", str(f), "--lang", "python", "--max-warnings", "100"]):
+        with patch(
+            "sys.argv", ["cli", str(f), "--lang", "python", "--max-warnings", "100"]
+        ):
             ret = main()
         assert ret == 0

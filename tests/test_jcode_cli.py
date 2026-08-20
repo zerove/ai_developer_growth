@@ -37,7 +37,14 @@ class TestJCodeCLI:
     def test_case_quality_specific(self):
         """Test case-quality command with specific case."""
         result = subprocess.run(
-            [sys.executable, "-m", "tools.scripts.jcode_cli", "case-quality", "--case", "case-studies/adg-scan-httpx.md"],
+            [
+                sys.executable,
+                "-m",
+                "tools.scripts.jcode_cli",
+                "case-quality",
+                "--case",
+                "case-studies/adg-scan-httpx.md",
+            ],
             capture_output=True,
             text=True,
             cwd="/home/zeron/dev/ai_developer_growth",
@@ -49,7 +56,14 @@ class TestJCodeCLI:
     def test_dor_check(self):
         """Test dor-check command."""
         result = subprocess.run(
-            [sys.executable, "-m", "tools.scripts.jcode_cli", "dor-check", "--intent", "Add user authentication with JWT tokens and refresh logic"],
+            [
+                sys.executable,
+                "-m",
+                "tools.scripts.jcode_cli",
+                "dor-check",
+                "--intent",
+                "Add user authentication with JWT tokens and refresh logic",
+            ],
             capture_output=True,
             text=True,
             cwd="/home/zeron/dev/ai_developer_growth",
@@ -61,7 +75,14 @@ class TestJCodeCLI:
     def test_ai_quality_gate(self):
         """Test ai-quality-gate command."""
         result = subprocess.run(
-            [sys.executable, "-m", "tools.scripts.jcode_cli", "ai-quality-gate", "--path", "tools/scripts/jcode_cli.py"],
+            [
+                sys.executable,
+                "-m",
+                "tools.scripts.jcode_cli",
+                "ai-quality-gate",
+                "--path",
+                "tools/scripts/jcode_cli.py",
+            ],
             capture_output=True,
             text=True,
             cwd="/home/zeron/dev/ai_developer_growth",
@@ -78,7 +99,9 @@ class TestJCodeCLI:
             cwd="/home/zeron/dev/ai_developer_growth",
         )
         # Should not crash
-        assert "AI PR Review" in result.stdout or "No changes to review" in result.stdout
+        assert (
+            "AI PR Review" in result.stdout or "No changes to review" in result.stdout
+        )
 
     def test_metrics_telemetry(self):
         """Test metrics-telemetry command."""
@@ -94,7 +117,14 @@ class TestJCodeCLI:
     def test_audit_attestation(self):
         """Test audit-attestation command."""
         result = subprocess.run(
-            [sys.executable, "-m", "tools.scripts.jcode_cli", "audit-attestation", "--intent", "Test audit"],
+            [
+                sys.executable,
+                "-m",
+                "tools.scripts.jcode_cli",
+                "audit-attestation",
+                "--intent",
+                "Test audit",
+            ],
             capture_output=True,
             text=True,
             cwd="/home/zeron/dev/ai_developer_growth",

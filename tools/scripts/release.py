@@ -18,13 +18,11 @@ JCode Platform - Release Automation Script
 from __future__ import annotations
 
 import argparse
-import json
 import re
 import subprocess
 import sys
 from datetime import datetime
 from pathlib import Path
-from typing import Any
 
 # ──────────────────────────────────────────────────────────
 # 常量与配置
@@ -59,7 +57,9 @@ VERSION_TYPES = ["major", "minor", "patch"]
 # ──────────────────────────────────────────────────────────
 
 
-def run_cmd(cmd: list[str], cwd: Path | None = None, capture: bool = True) -> tuple[int, str]:
+def run_cmd(
+    cmd: list[str], cwd: Path | None = None, capture: bool = True
+) -> tuple[int, str]:
     """运行命令，返回 (退出码, 输出)"""
     try:
         result = subprocess.run(
@@ -126,19 +126,21 @@ def get_git_log(since_tag: str | None = None) -> list[dict[str, str]]:
     code, output = run_cmd(cmd)
     if code != 0:
         return []
-    
+
     commits = []
     for line in output.split("\n"):
         if not line:
             continue
         parts = line.split("|", 3)
         if len(parts) == 4:
-            commits.append({
-                "hash": parts[0][:8],
-                "subject": parts[1],
-                "author": parts[2],
-                "date": parts[3],
-            })
+            commits.append(
+                {
+                    "hash": parts[0][:8],
+                    "subject": parts[1],
+                    "author": parts[2],
+                    "date": parts[3],
+                }
+            )
     return commits
 
 
@@ -150,11 +152,13 @@ def parse_conventional_commit(subject: str) -> tuple[str | None, str]:
     return None, subject
 
 
-def group_commits_by_type(commits: list[dict[str, str]]) -> dict[str, list[dict[str, str]]]:
+def group_commits_by_type(
+    commits: list[dict[str, str]],
+) -> dict[str, list[dict[str, str]]]:
     """按提交类型分组"""
     groups: dict[str, list[dict[str, str]]] = {k: [] for k in COMMIT_TYPES}
     groups["其他"] = []
-    
+
     for commit in commits:
         ctype, desc = parse_conventional_commit(commit["subject"])
         if ctype and ctype in COMMIT_TYPES:
@@ -165,7 +169,7 @@ def group_commits_by_type(commits: list[dict[str, str]]) -> dict[str, list[dict[
             commit["type"] = "其他"
             commit["description"] = commit["subject"]
             groups["其他"].append(commit)
-    
+
     # 移除空分组
     return {k: v for k, v in groups.items() if v}
 
@@ -174,16 +178,18 @@ def generate_changelog_entry(version: str, commits: list[dict[str, str]]) -> str
     """生成 CHANGELOG 条目"""
     groups = group_commits_by_type(commits)
     date = datetime.now().strftime("%Y-%m-%d")
-    
+
     lines = [f"## [{version}] - {date}", ""]
-    
+
     for ctype, items in groups.items():
         label = COMMIT_TYPES.get(ctype, ctype)
         lines.append(f"### {label}")
         for item in items:
-            lines.append(f"- {item['description']} ([{item['hash']}](https://github.com/{{repo}}/commit/{item['hash']}))")
+            lines.append(
+                f"- {item['description']} ([{item['hash']}](https://github.com/{{repo}}/commit/{item['hash']}))"
+            )
         lines.append("")
-    
+
     return "\n".join(lines).rstrip() + "\n"
 
 
@@ -193,7 +199,7 @@ def update_changelog(version: str, entry: str) -> None:
         content = CHANGELOG_PATH.read_text(encoding="utf-8")
     else:
         content = "# 更新日志\n\n本项目遵循 [语义化版本](https://semver.org/lang/zh-CN/) 和 [约定式提交](https://www.conventionalcommits.org/zh-hans/v1.0.0/)。\n\n"
-    
+
     # 在第一个版本条目前插入
     lines = content.split("\n")
     insert_idx = 0
@@ -203,7 +209,7 @@ def update_changelog(version: str, entry: str) -> None:
             break
     else:
         insert_idx = len(lines)
-    
+
     lines.insert(insert_idx, entry.rstrip())
     CHANGELOG_PATH.write_text("\n".join(lines) + "\n", encoding="utf-8")
 
@@ -212,15 +218,11 @@ def update_version_files(version: str) -> None:
     """更新版本文件"""
     # VERSION 文件
     VERSION_FILE.write_text(f"{version}\n")
-    
+
     # pyproject.toml
     if PYPROJECT_PATH.exists():
         content = PYPROJECT_PATH.read_text()
-        content = re.sub(
-            r'version\s*=\s*"[^"]+"',
-            f'version = "{version}"',
-            content
-        )
+        content = re.sub(r'version\s*=\s*"[^"]+"', f'version = "{version}"', content)
         PYPROJECT_PATH.write_text(content)
 
 
@@ -250,6 +252,7 @@ def get_last_tag() -> str | None:
 # 主流程
 # ──────────────────────────────────────────────────────────
 
+
 def cmd_version(args: argparse.Namespace) -> int:
     """显示当前版本"""
     print(get_current_version())
@@ -262,36 +265,36 @@ def cmd_bump(args: argparse.Namespace) -> int:
     new_version = bump_version(current, args.type)
     print(f"当前版本: {current}")
     print(f"新版本: {new_version}")
-    
+
     if args.dry_run:
         print("🔍 试运行模式，不写入文件")
         return 0
-    
+
     # 获取最后标签后的提交
     last_tag = get_last_tag()
     commits = get_git_log(last_tag)
-    
+
     # 生成 CHANGELOG
     entry = generate_changelog_entry(new_version, commits)
     update_changelog(new_version, entry)
-    
+
     # 更新版本文件
     update_version_files(new_version)
-    
+
     # Git 提交
     run_cmd(["git", "add", "CHANGELOG.md", "pyproject.toml", "VERSION"])
     commit_msg = f"chore: release v{new_version}"
     run_cmd(["git", "commit", "-m", commit_msg])
-    
+
     # 创建标签
     create_git_tag(new_version)
-    
+
     print(f"✅ 版本已更新至 v{new_version}")
     if not args.no_push:
         run_cmd(["git", "push"])
         push_git_tag(f"v{new_version}")
         print("✅ 已推送到远程")
-    
+
     return 0
 
 
@@ -301,11 +304,11 @@ def cmd_changelog(args: argparse.Namespace) -> int:
     last_tag = get_last_tag()
     commits = get_git_log(last_tag)
     entry = generate_changelog_entry(version, commits)
-    
+
     if args.dry_run:
         print(entry)
         return 0
-    
+
     update_changelog(version, entry)
     print(f"✅ CHANGELOG 已更新 (版本: {version})")
     return 0
@@ -315,7 +318,7 @@ def cmd_verify(args: argparse.Namespace) -> int:
     """验证版本一致性"""
     version = get_current_version()
     print(f"当前版本: {version}")
-    
+
     # 检查 pyproject.toml
     if PYPROJECT_PATH.exists():
         content = PYPROJECT_PATH.read_text()
@@ -323,19 +326,19 @@ def cmd_verify(args: argparse.Namespace) -> int:
         if match and match.group(1) != version:
             print(f"❌ pyproject.toml 版本不一致: {match.group(1)} != {version}")
             return 1
-    
+
     # 检查 VERSION 文件
     if VERSION_FILE.exists():
         file_version = VERSION_FILE.read_text().strip()
         if file_version != version:
             print(f"❌ VERSION 文件不一致: {file_version} != {version}")
             return 1
-    
+
     # 检查 Git 标签
     last_tag = get_last_tag()
     if last_tag and last_tag.lstrip("v") != version:
         print(f"⚠️  最新标签 ({last_tag}) 与当前版本 ({version}) 不一致")
-    
+
     print("✅ 版本一致性验证通过")
     return 0
 
@@ -353,39 +356,39 @@ def main() -> int:
   python release.py --verify
         """,
     )
-    
+
     subparsers = parser.add_subparsers(dest="command", help="子命令")
-    
+
     # version
     subparsers.add_parser("version", help="显示当前版本")
-    
+
     # bump
     bump_parser = subparsers.add_parser("bump", help="版本递增")
     bump_parser.add_argument("type", choices=VERSION_TYPES, help="版本类型")
     bump_parser.add_argument("--dry-run", action="store_true", help="试运行")
     bump_parser.add_argument("--no-push", action="store_true", help="不推送到远程")
-    
+
     # changelog
     cl_parser = subparsers.add_parser("changelog", help="生成/更新 CHANGELOG")
     cl_parser.add_argument("--version", help="指定版本")
     cl_parser.add_argument("--dry-run", action="store_true", help="仅打印不写入")
-    
+
     # verify
     subparsers.add_parser("verify", help="验证版本一致性")
-    
+
     args = parser.parse_args()
-    
+
     if not args.command:
         parser.print_help()
         return 1
-    
+
     handlers = {
         "version": cmd_version,
         "bump": cmd_bump,
         "changelog": cmd_changelog,
         "verify": cmd_verify,
     }
-    
+
     return handlers[args.command](args)
 
 

@@ -60,10 +60,16 @@ class DecisionGraph:
                 supersedes = {s.strip() for s in sups if s.strip()}
 
             self.nodes[adr_id] = ADRNode(
-                id=adr_id, title=title, dependencies=depends_on, supersedes=supersedes, content=content
+                id=adr_id,
+                title=title,
+                dependencies=depends_on,
+                supersedes=supersedes,
+                content=content,
             )
 
-    def trace_causality(self, start_id: str, visited: Optional[List[str]] = None) -> List[str]:
+    def trace_causality(
+        self, start_id: str, visited: Optional[List[str]] = None
+    ) -> List[str]:
         """
         Returns the causal chain leading up to a specific decision.
         """

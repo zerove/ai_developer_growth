@@ -30,7 +30,12 @@ FRAMEWORK_PATTERNS: dict[str, list[str]] = {
     "nextjs": ["next.config.js", "next.config.ts", "pages/", "app/"],
     "react": ["package.json", "react", "jsx", "tsx"],
     "vue": ["package.json", "vue", "vue.config.js"],
-    "spring-boot": ["pom.xml", "build.gradle", "SpringApplication", "@SpringBootApplication"],
+    "spring-boot": [
+        "pom.xml",
+        "build.gradle",
+        "SpringApplication",
+        "@SpringBootApplication",
+    ],
     "rails": ["Gemfile", "rails", "config/application.rb"],
     "laravel": ["composer.json", "laravel", "artisan"],
     "dotnet": ["*.csproj", "*.sln", "Program.cs", "Startup.cs"],
@@ -67,7 +72,9 @@ def detect_project_language(project_dir: Path) -> dict[str, Any]:
     ext_counter: Counter[str] = Counter()
 
     for filepath in project_dir.rglob("*"):
-        if filepath.is_file() and not any(part.startswith(".") for part in filepath.parts):
+        if filepath.is_file() and not any(
+            part.startswith(".") for part in filepath.parts
+        ):
             suffix = filepath.suffix.lower()
             if suffix in EXTENSION_MAP:
                 ext_counter[EXTENSION_MAP[suffix]] += 1
@@ -104,8 +111,12 @@ def detect_project_language(project_dir: Path) -> dict[str, Any]:
 
 
 def main() -> int:
-    parser = argparse.ArgumentParser(description="Enhanced Language & Framework Detector")
-    parser.add_argument("project_dir", nargs="?", default=".", help="Project directory to analyze")
+    parser = argparse.ArgumentParser(
+        description="Enhanced Language & Framework Detector"
+    )
+    parser.add_argument(
+        "project_dir", nargs="?", default=".", help="Project directory to analyze"
+    )
     parser.add_argument("--json", action="store_true", help="Output as JSON")
     args = parser.parse_args()
 
@@ -120,11 +131,15 @@ def main() -> int:
             return 1
         print(f"项目目录: {project_dir}")
         print(f"主要语言: {result['language']}")
-        print(f"检测框架: {', '.join(result['frameworks']) if result['frameworks'] else '无'}")
+        print(
+            f"检测框架: {', '.join(result['frameworks']) if result['frameworks'] else '无'}"
+        )
         print(f"文件总数: {result['file_count']}")
         if result.get("extension_breakdown"):
             print("扩展名分布:")
-            for ext, count in sorted(result["extension_breakdown"].items(), key=lambda x: -x[1]):
+            for ext, count in sorted(
+                result["extension_breakdown"].items(), key=lambda x: -x[1]
+            ):
                 print(f"  {ext}: {count}")
 
     return 0

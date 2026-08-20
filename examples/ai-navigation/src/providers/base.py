@@ -1,7 +1,6 @@
 """Base class for LLM providers."""
 
 
-
 class LLMProvider:
     """Base class for LLM providers."""
 

@@ -61,7 +61,9 @@ def register(mcp: object, get_sync_tool: Callable) -> None:
                 with open(spec_file, "r", encoding="utf-8") as f:
                     return f.read()
             available = (
-                [f[:-3] for f in os.listdir(specs_dir) if f.endswith(".md")] if os.path.exists(specs_dir) else []
+                [f[:-3] for f in os.listdir(specs_dir) if f.endswith(".md")]
+                if os.path.exists(specs_dir)
+                else []
             )
             return f"No spec for {language}. Available: {available}"
         except (AISyncError, OSError) as e:

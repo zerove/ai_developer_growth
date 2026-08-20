@@ -36,6 +36,7 @@ class ConversationRole(Enum):
 @dataclass
 class SourceCitation:
     """A citation to a source document."""
+
     doc_id: str
     title: str
     doc_type: str
@@ -55,23 +56,42 @@ class SourceCitation:
 @dataclass
 class ChatMessage:
     """A single chat message with full metadata."""
-    def __init__(self, role: ConversationRole | str = ConversationRole.USER, content: str = "", sources: list = None, metadata: dict = None, message_id: str = None, timestamp: str = None):
+
+    def __init__(
+        self,
+        role: ConversationRole | str = ConversationRole.USER,
+        content: str = "",
+        sources: list = None,
+        metadata: dict = None,
+        message_id: str = None,
+        timestamp: str = None,
+    ):
         # Use object.__setattr__ to bypass dataclass init
-        object.__setattr__(self, '_role', ConversationRole.USER)
-        object.__setattr__(self, 'content', content)
-        object.__setattr__(self, 'sources', sources if sources is not None else [])
-        object.__setattr__(self, 'metadata', metadata if metadata is not None else {})
-        object.__setattr__(self, 'message_id', message_id if message_id is not None else str(uuid.uuid4())[:8])
-        object.__setattr__(self, 'timestamp', timestamp if timestamp is not None else datetime.now().isoformat())
+        object.__setattr__(self, "_role", ConversationRole.USER)
+        object.__setattr__(self, "content", content)
+        object.__setattr__(self, "sources", sources if sources is not None else [])
+        object.__setattr__(self, "metadata", metadata if metadata is not None else {})
+        object.__setattr__(
+            self,
+            "message_id",
+            message_id if message_id is not None else str(uuid.uuid4())[:8],
+        )
+        object.__setattr__(
+            self,
+            "timestamp",
+            timestamp if timestamp is not None else datetime.now().isoformat(),
+        )
 
         # Handle role parameter
         if isinstance(role, str):
             try:
                 self._role = ConversationRole(role)
             except ValueError:
+
                 class _DummyRole:
                     def __init__(self, val):
                         self.value = val
+
                 self._role = _DummyRole(role)
         elif isinstance(role, ConversationRole):
             self._role = role
@@ -92,9 +112,11 @@ class ChatMessage:
             try:
                 self._role = ConversationRole(value)
             except ValueError:
+
                 class _DummyRole:
                     def __init__(self, val):
                         self.value = val
+
                 self._role = _DummyRole(value)
         else:
             self._role = value
@@ -113,6 +135,7 @@ class ChatMessage:
 @dataclass
 class Entity:
     """Tracked entity in conversation."""
+
     name: str
     type: str  # document, concept, tool, person, etc.
     references: list[str] = field(default_factory=list)  # message_ids
@@ -122,6 +145,7 @@ class Entity:
 @dataclass
 class ChatSession:
     """A chat session with full context management."""
+
     session_id: str = field(default_factory=lambda: str(uuid.uuid4())[:8])
     messages: list[ChatMessage] = field(default_factory=list)
     entities: dict[str, Entity] = field(default_factory=dict)
@@ -145,7 +169,7 @@ class ChatSession:
                     name=source.title,
                     type="document",
                     references=[message.message_id],
-                    metadata={"doc_type": source.doc_type, "score": source.score}
+                    metadata={"doc_type": source.doc_type, "score": source.score},
                 )
             else:
                 self.entities[source.doc_id].references.append(message.message_id)
@@ -163,7 +187,7 @@ class ChatSession:
     def get_full_context(self) -> str:
         """Get formatted conversation history."""
         lines = []
-        for msg in self.messages[-self.max_history:]:
+        for msg in self.messages[-self.max_history :]:
             prefix = "用户" if msg._role == ConversationRole.USER else "助手"
             lines.append(f"{prefix}: {msg.content}")
         return "\n".join(lines)
@@ -189,16 +213,20 @@ class ChatSession:
             for s in sources:
                 if isinstance(s, dict):
                     # Handle incomplete source dicts (from tests)
-                    source_citations.append(SourceCitation(
-                        doc_id=s.get("doc_id", "unknown"),
-                        title=s.get("title", "Unknown"),
-                        doc_type=s.get("doc_type", "general"),
-                        score=s.get("score", 0.0),
-                        snippet=s.get("snippet", ""),
-                    ))
+                    source_citations.append(
+                        SourceCitation(
+                            doc_id=s.get("doc_id", "unknown"),
+                            title=s.get("title", "Unknown"),
+                            doc_type=s.get("doc_type", "general"),
+                            score=s.get("score", 0.0),
+                            snippet=s.get("snippet", ""),
+                        )
+                    )
                 else:
                     source_citations.append(s)
-        msg = ChatMessage(role=ConversationRole.ASSISTANT, content=content, sources=source_citations)
+        msg = ChatMessage(
+            role=ConversationRole.ASSISTANT, content=content, sources=source_citations
+        )
         self.add_message(msg)
 
     def to_dict(self) -> dict:
@@ -256,7 +284,9 @@ class IntentClassifier:
             if any(kw in question_lower for kw in keywords):
                 return intent
         # Check if it references previous context
-        if previous_question and any(w in question_lower for w in ["它", "这", "那个", "上面", "刚才"]):
+        if previous_question and any(
+            w in question_lower for w in ["它", "这", "那个", "上面", "刚才"]
+        ):
             return "follow_up"
         return "new_topic"
 
@@ -333,7 +363,9 @@ class EnhancedChatInterface:
 
         # Classify intent
         previous_q = ""
-        user_messages = [m for m in self.session.messages if m.role == ConversationRole.USER]
+        user_messages = [
+            m for m in self.session.messages if m.role == ConversationRole.USER
+        ]
         if user_messages:
             previous_q = user_messages[-1].content
         intent = IntentClassifier.classify(question, previous_q)
@@ -344,7 +376,9 @@ class EnhancedChatInterface:
 
         # Retrieve relevant documents
         if isinstance(self.search_engine, HybridSearchEngine):
-            results = self.search_engine.search(question, top_k=self.top_k, mode="hybrid")
+            results = self.search_engine.search(
+                question, top_k=self.top_k, mode="hybrid"
+            )
         else:
             # Fallback to vector search
             vector_results = self.search_engine.search(question, top_k=self.top_k)
@@ -363,12 +397,15 @@ class EnhancedChatInterface:
             ]
 
         if not results:
-            answer = "抱歉，知识库中没有找到相关信息。请尝试换个问法，或提供更多上下文。"
-            self.session.add_message(ChatMessage(
-                role=ConversationRole.ASSISTANT,
-                content=answer
-            ))
-            return self._build_response(answer, [], 0.0, intent, needs_clarification=True)
+            answer = (
+                "抱歉，知识库中没有找到相关信息。请尝试换个问法，或提供更多上下文。"
+            )
+            self.session.add_message(
+                ChatMessage(role=ConversationRole.ASSISTANT, content=answer)
+            )
+            return self._build_response(
+                answer, [], 0.0, intent, needs_clarification=True
+            )
 
         # Build sources
         sources = [
@@ -394,7 +431,7 @@ class EnhancedChatInterface:
             role=ConversationRole.ASSISTANT,
             content=answer,
             sources=sources,
-            metadata={"intent": intent, "confidence": confidence}
+            metadata={"intent": intent, "confidence": confidence},
         )
         self.session.add_message(assistant_msg)
 
@@ -467,7 +504,9 @@ class EnhancedChatInterface:
         parts = [f"根据知识库，找到 {len(results)} 个相关文档：\n"]
 
         for i, r in enumerate(results, 1):
-            parts.append(f"**{i}. {r.title}** ({r.doc_type}) - 相关度: {r.combined_score:.3f}")
+            parts.append(
+                f"**{i}. {r.title}** ({r.doc_type}) - 相关度: {r.combined_score:.3f}"
+            )
             snippet = r.snippet.strip()
             if len(snippet) > 300:
                 snippet = snippet[:300] + "..."
@@ -485,9 +524,12 @@ class EnhancedChatInterface:
         parts.append("\n**引用来源:**")
         for s in [
             SourceCitation(
-                doc_id=r.doc_id, title=r.title, doc_type=r.doc_type,
-                score=r.combined_score, snippet=r.snippet[:200],
-                search_method=r.search_method
+                doc_id=r.doc_id,
+                title=r.title,
+                doc_type=r.doc_type,
+                score=r.combined_score,
+                snippet=r.snippet[:200],
+                search_method=r.search_method,
             )
             for r in results
         ]:
@@ -512,16 +554,15 @@ class EnhancedChatInterface:
 
         # Based on intent
         if intent == "new_topic":
-            suggestions.extend([
-                "能详细解释一下核心概念吗？",
-                "有实操的最佳实践吗？",
-                "常见坑点有哪些？"
-            ])
+            suggestions.extend(
+                [
+                    "能详细解释一下核心概念吗？",
+                    "有实操的最佳实践吗？",
+                    "常见坑点有哪些？",
+                ]
+            )
         elif intent == "follow_up":
-            suggestions.extend([
-                "能举个具体例子吗？",
-                "这个方案的优缺点对比？"
-            ])
+            suggestions.extend(["能举个具体例子吗？", "这个方案的优缺点对比？"])
 
         # Limit to 3
         return suggestions[:3]
@@ -560,7 +601,12 @@ class EnhancedChatInterface:
     def get_entities(self) -> list[dict]:
         """Get tracked entities."""
         return [
-            {"name": e.name, "type": e.type, "mentions": len(e.references), "metadata": e.metadata}
+            {
+                "name": e.name,
+                "type": e.type,
+                "mentions": len(e.references),
+                "metadata": e.metadata,
+            }
             for e in self.session.entities.values()
         ]
 
@@ -569,7 +615,7 @@ class EnhancedChatInterface:
         path = Path(path)
         path.write_text(
             json.dumps(self.session.to_dict(), ensure_ascii=False, indent=2),
-            encoding="utf-8"
+            encoding="utf-8",
         )
         logger.info(f"Exported session to {path}")
 
@@ -640,7 +686,9 @@ class EnhancedChatInterface:
             if response["sources"]:
                 print("\n📚 引用来源:")
                 for i, src in enumerate(response["sources"], 1):
-                    print(f"  {i}. {src['title']} ({src['doc_type']}) - 相关度: {src['score']:.3f}")
+                    print(
+                        f"  {i}. {src['title']} ({src['doc_type']}) - 相关度: {src['score']:.3f}"
+                    )
 
             # Show follow-ups
             if response["follow_up_suggestions"]:
@@ -775,12 +823,16 @@ class ChatInterface:
         """
         self.engine = engine
         # Create enhanced interface with no LLM (template mode)
-        if hasattr(engine, 'search') and 'mode' in engine.search.__code__.co_varnames:
+        if hasattr(engine, "search") and "mode" in engine.search.__code__.co_varnames:
             # HybridSearchEngine
-            self._enhanced = EnhancedChatInterface(search_engine=engine, llm_client=None, use_llm=False)
+            self._enhanced = EnhancedChatInterface(
+                search_engine=engine, llm_client=None, use_llm=False
+            )
         else:
             # VectorSearchEngine
-            self._enhanced = EnhancedChatInterface(search_engine=engine, llm_client=None, use_llm=False)
+            self._enhanced = EnhancedChatInterface(
+                search_engine=engine, llm_client=None, use_llm=False
+            )
         self.session = self._enhanced.session
 
     def ask(self, question: str) -> dict:
@@ -795,7 +847,9 @@ class ChatInterface:
 
     def add_user_message(self, content: str) -> None:
         """Add a user message to history."""
-        self.session.add_message(ChatMessage(role=ConversationRole.USER, content=content))
+        self.session.add_message(
+            ChatMessage(role=ConversationRole.USER, content=content)
+        )
 
     def add_assistant_message(self, content: str, sources: list = None) -> None:
         """Add an assistant message to history."""
@@ -806,11 +860,13 @@ class ChatInterface:
                     source_citations.append(SourceCitation(**s))
                 else:
                     source_citations.append(s)
-        self.session.add_message(ChatMessage(
-            role=ConversationRole.ASSISTANT,
-            content=content,
-            sources=source_citations
-        ))
+        self.session.add_message(
+            ChatMessage(
+                role=ConversationRole.ASSISTANT,
+                content=content,
+                sources=source_citations,
+            )
+        )
 
     def get_context(self) -> str:
         """Get formatted conversation context."""
@@ -836,7 +892,7 @@ class ChatInterface:
 
         # Get score attribute (combined_score for HybridSearchResult, score for VectorSearchResult)
         def get_score(r):
-            return getattr(r, 'combined_score', getattr(r, 'score', 0.0))
+            return getattr(r, "combined_score", getattr(r, "score", 0.0))
 
         avg_score = sum(get_score(r) for r in results) / len(results)
 
@@ -863,9 +919,12 @@ class ChatInterface:
         for r in results:
             score = get_score(r)
             s = SourceCitation(
-                doc_id=r.doc_id, title=r.title, doc_type=r.doc_type,
-                score=score, snippet=r.snippet[:200],
-                search_method=getattr(r, 'search_method', 'vector')
+                doc_id=r.doc_id,
+                title=r.title,
+                doc_type=r.doc_type,
+                score=score,
+                snippet=r.snippet[:200],
+                search_method=getattr(r, "search_method", "vector"),
             )
             parts.append(f"- {s.format_markdown()}")
 

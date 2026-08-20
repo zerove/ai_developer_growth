@@ -38,7 +38,9 @@ def _parse_regex_replacement(replacement: str, original_line: str) -> str | None
         return None
 
 
-def _apply_literal_replacement(original_line: str, replacement: str, message: str) -> str:
+def _apply_literal_replacement(
+    original_line: str, replacement: str, message: str
+) -> str:
     """Apply literal string replacement."""
     match_text = message.split(":")[-1].strip() if ":" in message else ""
     return original_line.replace(match_text, replacement, 1)
@@ -62,7 +64,9 @@ def _apply_fix_to_line(issue: Issue, original_line: str) -> str | None:
     return _apply_literal_replacement(original_line, replacement, issue.message)
 
 
-def _create_fix_result(filepath: Path, issue: Issue, original_line: str, new_line: str) -> FixResult:
+def _create_fix_result(
+    filepath: Path, issue: Issue, original_line: str, new_line: str
+) -> FixResult:
     """Create a FixResult from fix details."""
     return FixResult(
         file=str(filepath),
@@ -83,7 +87,11 @@ def _process_issues(
     modified = False
 
     for issue in issues:
-        if not issue.fix_replacement or issue.line < 1 or issue.line > len(modified_lines):
+        if (
+            not issue.fix_replacement
+            or issue.line < 1
+            or issue.line > len(modified_lines)
+        ):
             continue
 
         line_idx = issue.line - 1

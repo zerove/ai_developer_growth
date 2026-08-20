@@ -4,7 +4,12 @@ from __future__ import annotations
 
 import pytest
 
-from tools.scripts.rules_engine.store import CheckStore, close_connection, get_connection, init_db
+from tools.scripts.rules_engine.store import (
+    CheckStore,
+    close_connection,
+    get_connection,
+    init_db,
+)
 
 
 @pytest.fixture
@@ -27,8 +32,19 @@ class TestInitDb:
 
     def test_creates_all_tables(self, db_path):
         conn = init_db(db_path)
-        tables = {t[0] for t in conn.execute("SELECT name FROM sqlite_master WHERE type='table'").fetchall()}
-        assert {"quality_runs", "file_results", "rule_violations", "check_cache", "trend_snapshots"} <= tables
+        tables = {
+            t[0]
+            for t in conn.execute(
+                "SELECT name FROM sqlite_master WHERE type='table'"
+            ).fetchall()
+        }
+        assert {
+            "quality_runs",
+            "file_results",
+            "rule_violations",
+            "check_cache",
+            "trend_snapshots",
+        } <= tables
         conn.close()
 
     def test_connection_caching(self, db_path):
@@ -43,7 +59,14 @@ class TestCheckStoreRuns:
 
     def test_record_run_with_file_results(self, store: CheckStore):
         report = {
-            "summary": {"total_files": 1, "errors": 1, "warnings": 2, "info": 0, "passed": 0, "failed": 1},
+            "summary": {
+                "total_files": 1,
+                "errors": 1,
+                "warnings": 2,
+                "info": 0,
+                "passed": 0,
+                "failed": 1,
+            },
             "results": [
                 {
                     "file": "a.py",
@@ -52,8 +75,16 @@ class TestCheckStoreRuns:
                     "errors": 1,
                     "warnings": 2,
                     "issues": [
-                        {"rule_id": "no-bare-except", "severity": "error", "category": "anti-pattern"},
-                        {"rule_id": "long-line", "severity": "warning", "category": "style"},
+                        {
+                            "rule_id": "no-bare-except",
+                            "severity": "error",
+                            "category": "anti-pattern",
+                        },
+                        {
+                            "rule_id": "long-line",
+                            "severity": "warning",
+                            "category": "style",
+                        },
                     ],
                 }
             ],
@@ -70,12 +101,23 @@ class TestCheckStoreRuns:
         assert files[0]["file"] == "a.py"
         assert files[0]["errors"] == 1
 
-        violations = store.conn.execute("SELECT * FROM rule_violations WHERE run_id = ?", (run_id,)).fetchall()
+        violations = store.conn.execute(
+            "SELECT * FROM rule_violations WHERE run_id = ?", (run_id,)
+        ).fetchall()
         assert len(violations) == 2
 
     def test_run_history(self, store: CheckStore):
         for i in range(3):
-            report = {"summary": {"total_files": 1, "errors": i, "warnings": 0, "info": 0, "passed": 1, "failed": 0}}
+            report = {
+                "summary": {
+                    "total_files": 1,
+                    "errors": i,
+                    "warnings": 0,
+                    "info": 0,
+                    "passed": 1,
+                    "failed": 0,
+                }
+            }
             store.record_run(report)
 
         history = store.get_run_history(limit=2)
@@ -116,13 +158,27 @@ class TestCheckCache:
             "b.py",
             mtime=1.0,
             size=1,
-            result={"language": "python", "passed": True, "errors": 0, "warnings": 0, "info": 0, "issues": []},
+            result={
+                "language": "python",
+                "passed": True,
+                "errors": 0,
+                "warnings": 0,
+                "info": 0,
+                "issues": [],
+            },
         )
         store.set_cached_result(
             "b.py",
             mtime=1.0,
             size=1,
-            result={"language": "python", "passed": False, "errors": 5, "warnings": 0, "info": 0, "issues": []},
+            result={
+                "language": "python",
+                "passed": False,
+                "errors": 5,
+                "warnings": 0,
+                "info": 0,
+                "issues": [],
+            },
         )
         cached = store.get_cached_result("b.py", mtime=1.0, size=1)
         assert cached is not None
@@ -134,7 +190,14 @@ class TestCheckCache:
                 f"f{i}.py",
                 mtime=float(i),
                 size=i,
-                result={"language": "py", "passed": True, "errors": 0, "warnings": 0, "info": 0, "issues": []},
+                result={
+                    "language": "py",
+                    "passed": True,
+                    "errors": 0,
+                    "warnings": 0,
+                    "info": 0,
+                    "issues": [],
+                },
             )
         stats = store.cache_hit_rate()
         assert stats["cached_files"] == 5
@@ -170,7 +233,14 @@ class TestSnapshots:
 
     def test_clear(self, store: CheckStore):
         store.add_snapshot(
-            {"timestamp": 1.0, "total_files": 1, "total_issues": 0, "errors": 0, "warnings": 0, "info": 0}
+            {
+                "timestamp": 1.0,
+                "total_files": 1,
+                "total_issues": 0,
+                "errors": 0,
+                "warnings": 0,
+                "info": 0,
+            }
         )
         store.clear_snapshots()
         assert store.get_snapshots() == []
@@ -184,7 +254,17 @@ class TestModuleLevelRecordRun:
         from tools.scripts.rules_engine.store import record_run
 
         run_id = record_run(
-            conn, {"summary": {"total_files": 1, "errors": 0, "warnings": 0, "info": 0, "passed": 1, "failed": 0}}
+            conn,
+            {
+                "summary": {
+                    "total_files": 1,
+                    "errors": 0,
+                    "warnings": 0,
+                    "info": 0,
+                    "passed": 1,
+                    "failed": 0,
+                }
+            },
         )
         assert run_id > 0
         conn.close()
@@ -194,7 +274,14 @@ class TestModuleLevelRecordRun:
         from tools.scripts.rules_engine.store import record_run
 
         report = {
-            "summary": {"total_files": 1, "errors": 1, "warnings": 0, "info": 0, "passed": 0, "failed": 1},
+            "summary": {
+                "total_files": 1,
+                "errors": 1,
+                "warnings": 0,
+                "info": 0,
+                "passed": 0,
+                "failed": 1,
+            },
             "results": [
                 {
                     "file": "x.py",
@@ -208,7 +295,9 @@ class TestModuleLevelRecordRun:
             ],
         }
         run_id = record_run(conn, report)
-        rows = conn.execute("SELECT * FROM file_results WHERE run_id = ?", (run_id,)).fetchall()
+        rows = conn.execute(
+            "SELECT * FROM file_results WHERE run_id = ?", (run_id,)
+        ).fetchall()
         assert len(rows) == 1
         assert rows[0][2] == "x.py"
         conn.close()

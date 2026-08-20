@@ -31,7 +31,9 @@ class TestInitDb:
 
     def test_creates_tables(self, db_path):
         conn = init_db(db_path)
-        tables = conn.execute("SELECT name FROM sqlite_master WHERE type='table'").fetchall()
+        tables = conn.execute(
+            "SELECT name FROM sqlite_master WHERE type='table'"
+        ).fetchall()
         table_names = {t[0] for t in tables}
         assert "quality_runs" in table_names
         assert "file_results" in table_names
@@ -77,7 +79,14 @@ class TestRecordRun:
     def test_multiple_runs(self, conn):
         for i in range(3):
             report = {
-                "summary": {"total_files": 10, "errors": i, "warnings": 0, "info": 0, "passed": 10 - i, "failed": i}
+                "summary": {
+                    "total_files": 10,
+                    "errors": i,
+                    "warnings": 0,
+                    "info": 0,
+                    "passed": 10 - i,
+                    "failed": i,
+                }
             }
             record_run(conn, report)
 
@@ -93,7 +102,16 @@ class TestGetTrendData:
         assert trend == []
 
     def test_trend_data(self, conn):
-        report = {"summary": {"total_files": 10, "errors": 1, "warnings": 2, "info": 0, "passed": 9, "failed": 1}}
+        report = {
+            "summary": {
+                "total_files": 10,
+                "errors": 1,
+                "warnings": 2,
+                "info": 0,
+                "passed": 9,
+                "failed": 1,
+            }
+        }
         record_run(conn, report)
 
         trend = get_trend_data(conn)
@@ -102,7 +120,16 @@ class TestGetTrendData:
 
     def test_trend_limit(self, conn):
         for i in range(5):
-            report = {"summary": {"total_files": 10, "errors": i, "warnings": 0, "info": 0, "passed": 10, "failed": 0}}
+            report = {
+                "summary": {
+                    "total_files": 10,
+                    "errors": i,
+                    "warnings": 0,
+                    "info": 0,
+                    "passed": 10,
+                    "failed": 0,
+                }
+            }
             record_run(conn, report)
 
         trend = get_trend_data(conn, limit=3)
@@ -148,7 +175,16 @@ class TestCreateApp:
         app = create_app(db_path)
         client = TestClient(app)
 
-        report = {"summary": {"total_files": 5, "errors": 0, "warnings": 1, "info": 0, "passed": 5, "failed": 0}}
+        report = {
+            "summary": {
+                "total_files": 5,
+                "errors": 0,
+                "warnings": 1,
+                "info": 0,
+                "passed": 5,
+                "failed": 0,
+            }
+        }
         resp = client.post("/api/record", json=report)
         assert resp.status_code == 200
         assert resp.json()["status"] == "recorded"
@@ -205,7 +241,16 @@ class TestCreateApp:
         client = TestClient(app)
 
         # Record a run first so we have data
-        report = {"summary": {"total_files": 5, "errors": 0, "warnings": 1, "info": 0, "passed": 5, "failed": 0}}
+        report = {
+            "summary": {
+                "total_files": 5,
+                "errors": 0,
+                "warnings": 1,
+                "info": 0,
+                "passed": 5,
+                "failed": 0,
+            }
+        }
         client.post("/api/record", json=report)
 
         resp = client.get("/api/v3/status")

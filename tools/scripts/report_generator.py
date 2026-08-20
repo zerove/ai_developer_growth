@@ -14,7 +14,12 @@ from typing import Any
 
 def _xml_escape(s: str) -> str:
     """Escape XML special characters."""
-    return s.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;").replace('"', "&quot;")
+    return (
+        s.replace("&", "&amp;")
+        .replace("<", "&lt;")
+        .replace(">", "&gt;")
+        .replace('"', "&quot;")
+    )
 
 
 def _html_escape(s: str) -> str:
@@ -45,8 +50,12 @@ def generate_junit_xml(results: list[Any]) -> str:
             for issue in result.issues:
                 if issue.severity == "error":
                     lines.append(f"{testcase}")
-                    lines.append(f'    <failure message="{_xml_escape(issue.message)}">')
-                    lines.append(f"      {issue.rule_id}: {issue.message} (line {issue.line})")
+                    lines.append(
+                        f'    <failure message="{_xml_escape(issue.message)}">'
+                    )
+                    lines.append(
+                        f"      {issue.rule_id}: {issue.message} (line {issue.line})"
+                    )
                     lines.append("    </failure>")
                     lines.append("  </testcase>")
                     break
@@ -155,7 +164,11 @@ def _build_sarif_results(results: list[Any]) -> list[dict[str, Any]]:
     runs_results: list[dict[str, Any]] = []
     for result in results:
         for issue in result.issues:
-            level = "error" if issue.severity == "error" else "warning" if issue.severity == "warning" else "note"
+            level = (
+                "error"
+                if issue.severity == "error"
+                else "warning" if issue.severity == "warning" else "note"
+            )
             runs_results.append(
                 {
                     "ruleId": issue.rule_id,
@@ -165,7 +178,10 @@ def _build_sarif_results(results: list[Any]) -> list[dict[str, Any]]:
                         {
                             "physicalLocation": {
                                 "artifactLocation": {"uri": result.file},
-                                "region": {"startLine": issue.line, "startColumn": getattr(issue, "column", 1) or 1},
+                                "region": {
+                                    "startLine": issue.line,
+                                    "startColumn": getattr(issue, "column", 1) or 1,
+                                },
                             }
                         }
                     ],
@@ -203,7 +219,9 @@ def generate_sarif(results: list[Any]) -> str:
     return json.dumps(sarif, indent=2, ensure_ascii=False)
 
 
-def write_report(results: list[Any], format: str, output: Path | None = None) -> str | None:
+def write_report(
+    results: list[Any], format: str, output: Path | None = None
+) -> str | None:
     """Write report in specified format. Returns content or writes to file.
 
     Args:

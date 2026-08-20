@@ -41,7 +41,9 @@ class WorkflowManager:
         self.config = AppConfig.load(config_path)
         self.tester = TestRunner(timeout=self.config.settings.test_timeout)
         self.slicer = ContextSlicer()
-        self.executor = ParallelExecutor(max_workers=self.config.settings.executor_max_workers)
+        self.executor = ParallelExecutor(
+            max_workers=self.config.settings.executor_max_workers
+        )
 
     def _validate_path(self, path: str) -> bool:
         """
@@ -83,7 +85,9 @@ class WorkflowManager:
             full_path = os.path.abspath(os.path.join(cwd, normalized))
             # Check if the resolved path is within the current directory
             if not full_path.startswith(cwd):
-                logger.warning(f"Rejected path outside project directory: {path} -> {full_path}")
+                logger.warning(
+                    f"Rejected path outside project directory: {path} -> {full_path}"
+                )
                 return False
         except (OSError, ValueError) as e:
             logger.warning(f"Failed to validate path '{path}': {e}")
@@ -101,7 +105,9 @@ class WorkflowManager:
             return False
 
         try:
-            os.makedirs(os.path.dirname(path) if os.path.dirname(path) else ".", exist_ok=True)
+            os.makedirs(
+                os.path.dirname(path) if os.path.dirname(path) else ".", exist_ok=True
+            )
             with open(path, "w", encoding="utf-8") as f:
                 f.write(content)
             logger.info(f"💾 Wrote content to {path}")
@@ -150,7 +156,9 @@ class WorkflowManager:
 
         while attempt < max_retries:
             attempt += 1
-            logger.info(f"🛠️ Worker executing {tid} (Attempt {attempt}/{max_retries}): {desc}")
+            logger.info(
+                f"🛠️ Worker executing {tid} (Attempt {attempt}/{max_retries}): {desc}"
+            )
 
             # 1. Generate/Fix Prompt with Sliced Context
             sliced_context = self.slicer.slice(files)
@@ -179,7 +187,8 @@ class WorkflowManager:
 
             try:
                 code_output = self.llm_client.generate(
-                    prompt, system_prompt="You are a focused implementation expert who writes test-passing code."
+                    prompt,
+                    system_prompt="You are a focused implementation expert who writes test-passing code.",
                 )
                 if not code_output:
                     return f"Error: No output for {tid}"
@@ -192,11 +201,15 @@ class WorkflowManager:
                 # 3. Verify
                 result = self.tester.run_test(test_code, files)
                 if result.success:
-                    logger.info(f"✅ Task {tid} passed verification on attempt {attempt}!")
+                    logger.info(
+                        f"✅ Task {tid} passed verification on attempt {attempt}!"
+                    )
                     return f"Successfully implemented and verified {tid}"
 
                 last_error = result.output
-                logger.warning(f"⚠️ Task {tid} failed verification (Attempt {attempt}):\n{last_error}")
+                logger.warning(
+                    f"⚠️ Task {tid} failed verification (Attempt {attempt}):\n{last_error}"
+                )
 
             except (LLMError, OSError) as e:
                 logger.error(f"Error in sub-task {tid} iteration {attempt}: {e}")
@@ -204,10 +217,14 @@ class WorkflowManager:
 
         return f"Failed {tid} after {max_retries} attempts. Last error: {last_error}"
 
-    def run_flow(self, task: str, approval_callback: Any, initial_context: str = "") -> str:
+    def run_flow(
+        self, task: str, approval_callback: Any, initial_context: str = ""
+    ) -> str:
         logger.info(f"🚀 Starting AI-Native Parallel Workflow for task: {task}")
 
-        current_context, sub_tasks = self._phase_design(task, initial_context, approval_callback)
+        current_context, sub_tasks = self._phase_design(
+            task, initial_context, approval_callback
+        )
         if sub_tasks is None:
             return current_context  # Error or rejection message
 
@@ -225,17 +242,23 @@ class WorkflowManager:
         logger.info("✅ Parallel Workflow completed successfully.")
         return f"Task '{task}' completed. {len(sub_tasks)} sub-tasks implemented in parallel and verified."
 
-    def _phase_design(self, task: str, initial_context: str, approval_callback: Any) -> tuple[str, Any]:
+    def _phase_design(
+        self, task: str, initial_context: str, approval_callback: Any
+    ) -> tuple[str, Any]:
         current_context = initial_context or self.slicer.slice([])
 
         logger.info("📐 Phase 2: Generating technical design and task decomposition...")
         design_prompt = self._build_design_prompt(task, current_context)
         design_doc = self.llm_client.generate(design_prompt) or ""
-        logger.info(f"\n--- Proposed Technical Design & Plan ---\n{design_doc}\n------------------------------\n")
+        logger.info(
+            f"\n--- Proposed Technical Design & Plan ---\n{design_doc}\n------------------------------\n"
+        )
 
         logger.info("🛡️ Running Architecture Design Drift Check...")
         drift_report = self.guard.check_design_drift(design_doc, task)
-        logger.info(f"\n--- Architecture Drift Report ---\n{drift_report}\n----------------------------------\n")
+        logger.info(
+            f"\n--- Architecture Drift Report ---\n{drift_report}\n----------------------------------\n"
+        )
 
         if not approval_callback():
             logger.info("❌ Design rejected. Workflow terminated.")
@@ -248,10 +271,14 @@ class WorkflowManager:
         return current_context, sub_tasks
 
     def _phase_implement(self, sub_tasks: list, task: str) -> str:
-        logger.info(f"💻 Phase 3: Implementing {len(sub_tasks)} sub-tasks in parallel...")
+        logger.info(
+            f"💻 Phase 3: Implementing {len(sub_tasks)} sub-tasks in parallel..."
+        )
         results = self.executor.execute(sub_tasks, self._execute_subtask)
 
-        failures = [tid for tid, res in results.items() if res is None or "Failed" in res]
+        failures = [
+            tid for tid, res in results.items() if res is None or "Failed" in res
+        ]
         if failures:
             logger.error(f"❌ Some sub-tasks failed: {failures}")
             return f"Parallel implementation failed for tasks: {failures}"
@@ -286,13 +313,16 @@ class WorkflowManager:
                 f"Return the result as file blocks: [FILE: path]\nCode...\n[END]"
             )
             fix_code = self.llm_client.generate(
-                fix_prompt, system_prompt="You are a global integrator and quality gate."
+                fix_prompt,
+                system_prompt="You are a global integrator and quality gate.",
             )
             if not fix_code:
                 continue
             written_files = self._apply_file_blocks(fix_code)
             if not written_files:
-                logger.warning(f"No valid file blocks found in fix output for audit attempt {audit_attempt}")
+                logger.warning(
+                    f"No valid file blocks found in fix output for audit attempt {audit_attempt}"
+                )
 
         logger.error("❌ Failed to reach global compliance after maximum retries.")
         return "Global Audit failed. Manual intervention required."
@@ -307,7 +337,9 @@ class WorkflowManager:
             if os.path.exists(f):
                 with open(f, "r", encoding="utf-8") as file:
                     combined_diff += f"+++ b/{f}\n{file.read()}\n"
-        updated_context = self.synthesizer.synthesize_context_update(combined_diff, task, current_context)
+        updated_context = self.synthesizer.synthesize_context_update(
+            combined_diff, task, current_context
+        )
         with open(self.config.settings.context_file, "w", encoding="utf-8") as f:
             f.write(updated_context)
 
@@ -330,7 +362,9 @@ class WorkflowManager:
             "Return the result as a series of file blocks: [FILE: path]\nCode...\n[END]\n"
         )
         try:
-            code_output = self.llm_client.generate(prompt, system_prompt="You are a focused implementation expert.")
+            code_output = self.llm_client.generate(
+                prompt, system_prompt="You are a focused implementation expert."
+            )
             if not code_output:
                 return f"Error: No output for {tid}"
             written_files = self._apply_file_blocks(code_output)

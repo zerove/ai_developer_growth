@@ -15,7 +15,9 @@ from src.tester import TestResult
 # ---------------------------------------------------------------------------
 
 
-def _make_config(max_retries=3, test_timeout=30, executor_max_workers=4, context_file="CONTEXT.md"):
+def _make_config(
+    max_retries=3, test_timeout=30, executor_max_workers=4, context_file="CONTEXT.md"
+):
     """Build a real AppConfig with sensible defaults for tests."""
     cfg = AppConfig()
     cfg.settings.max_retries = max_retries
@@ -26,7 +28,14 @@ def _make_config(max_retries=3, test_timeout=30, executor_max_workers=4, context
 
 
 def _make_manager(
-    cfg=None, *, llm_client=None, analyzer=None, synthesizer=None, guard=None, auditor=None, evolution=None
+    cfg=None,
+    *,
+    llm_client=None,
+    analyzer=None,
+    synthesizer=None,
+    guard=None,
+    auditor=None,
+    evolution=None,
 ):
     """Construct a WorkflowManager with all dependencies pre-mocked."""
     cfg = cfg or _make_config()
@@ -44,7 +53,13 @@ def _make_manager(
     return manager
 
 
-def _task(id_="TASK-1", desc="Implement foo", files=None, test_code="assert True", depends_on=None):
+def _task(
+    id_="TASK-1",
+    desc="Implement foo",
+    files=None,
+    test_code="assert True",
+    depends_on=None,
+):
     """Build a task dict matching the orchestrator's expected shape."""
     return {
         "id": id_,
@@ -240,7 +255,9 @@ class TestExecuteSubtask:
         t = _task()
         t["verification"] = {}
         self.mgr.llm_client.generate.return_value = "[FILE: out.py]\ncode\n[END]"
-        with patch.object(WorkflowManager, "_apply_file_blocks", return_value=["out.py"]):
+        with patch.object(
+            WorkflowManager, "_apply_file_blocks", return_value=["out.py"]
+        ):
             result = self.mgr._execute_subtask(t)
         assert "single-shot" in result
 
@@ -418,7 +435,9 @@ class TestPhaseAudit:
             [],
         ]
         self.mgr.llm_client.generate.return_value = "[FILE: foo.py]\nfixed\n[END]"
-        with patch.object(WorkflowManager, "_apply_file_blocks", return_value=["foo.py"]):
+        with patch.object(
+            WorkflowManager, "_apply_file_blocks", return_value=["foo.py"]
+        ):
             result = self.mgr._phase_audit([_task()], "task")
         assert result == ""
 
@@ -427,7 +446,9 @@ class TestPhaseAudit:
         """After 3 failed fix attempts, returns error."""
         self.mgr.auditor.audit.return_value = [{"file": "foo.py", "rule": "R1"}]
         self.mgr.llm_client.generate.return_value = "[FILE: foo.py]\nbad\n[END]"
-        with patch.object(WorkflowManager, "_apply_file_blocks", return_value=["foo.py"]):
+        with patch.object(
+            WorkflowManager, "_apply_file_blocks", return_value=["foo.py"]
+        ):
             result = self.mgr._phase_audit([_task()], "task")
         assert "failed" in result.lower()
         assert self.mgr.auditor.audit.call_count == 3
@@ -561,7 +582,9 @@ class TestRunFlow:
         self.mgr.llm_client.generate.return_value = json.dumps(sub_tasks)
         self.mgr.slicer.slice.return_value = "ctx"
         approval = MagicMock(return_value=True)
-        self.mgr.executor.execute.return_value = {"TASK-1": "Successfully implemented TASK-1"}
+        self.mgr.executor.execute.return_value = {
+            "TASK-1": "Successfully implemented TASK-1"
+        }
         self.mgr.auditor.audit.return_value = []
         self.mgr.evolution.analyze_conflicts.return_value = []
         self.mgr.synthesizer.synthesize_context_update.return_value = "updated"
@@ -575,7 +598,9 @@ class TestRunFlow:
         self.mgr.llm_client.generate.return_value = json.dumps(sub_tasks)
         self.mgr.slicer.slice.return_value = "ctx"
         approval = MagicMock(return_value=True)
-        self.mgr.executor.execute.return_value = {"TASK-1": "Failed TASK-1 after 3 attempts"}
+        self.mgr.executor.execute.return_value = {
+            "TASK-1": "Failed TASK-1 after 3 attempts"
+        }
 
         result = self.mgr.run_flow("task", approval)
         assert "failed" in result.lower()
@@ -591,7 +616,9 @@ class TestRunFlow:
         ]
         self.mgr.slicer.slice.return_value = "ctx"
         approval = MagicMock(return_value=True)
-        self.mgr.executor.execute.return_value = {"TASK-1": "Successfully implemented TASK-1"}
+        self.mgr.executor.execute.return_value = {
+            "TASK-1": "Successfully implemented TASK-1"
+        }
         # Audit always returns violations, never fixes
         self.mgr.auditor.audit.return_value = [{"file": "f.py", "rule": "R1"}]
 

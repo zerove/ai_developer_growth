@@ -22,7 +22,11 @@ class SystemProvider(LLMProvider):
     """
 
     ENV_PATTERNS = {
-        "openai": ["JCODE_PROVIDER_OPENAI_API_KEY", "OPENAI_API_KEY", "OPENAI_COMPAT_API_KEY"],
+        "openai": [
+            "JCODE_PROVIDER_OPENAI_API_KEY",
+            "OPENAI_API_KEY",
+            "OPENAI_COMPAT_API_KEY",
+        ],
         "claude": ["JCODE_PROVIDER_ANTHROPIC_API_KEY", "ANTHROPIC_API_KEY"],
         "gemini": ["JCODE_PROVIDER_GEMINI_API_KEY", "GEMINI_API_KEY"],
     }
@@ -103,7 +107,9 @@ class SystemProvider(LLMProvider):
                 if provider:
                     self._detected_provider = provider
                     self._detected_model = model
-                    logger.info(f"Loaded opencode config: provider={provider}, model={model}")
+                    logger.info(
+                        f"Loaded opencode config: provider={provider}, model={model}"
+                    )
                     return True
             except (OSError, json.JSONDecodeError) as e:
                 logger.debug(f"Failed to load opencode config from {config_path}: {e}")
@@ -137,13 +143,21 @@ class SystemProvider(LLMProvider):
             raise LLMError(f"No API key found for provider: {provider}")
 
         if provider in ("openai", "openai-compatible"):
-            provider_instance = OpenAIProvider(api_key=api_key, api_base=self._detected_base_url or self.api_base)
+            provider_instance = OpenAIProvider(
+                api_key=api_key, api_base=self._detected_base_url or self.api_base
+            )
         elif provider in ("claude", "anthropic"):
-            provider_instance = ClaudeProvider(api_key=api_key, api_base=self._detected_base_url or self.api_base)
+            provider_instance = ClaudeProvider(
+                api_key=api_key, api_base=self._detected_base_url or self.api_base
+            )
         elif provider == "gemini":
-            provider_instance = GeminiProvider(api_key=api_key, api_base=self._detected_base_url or self.api_base)
+            provider_instance = GeminiProvider(
+                api_key=api_key, api_base=self._detected_base_url or self.api_base
+            )
         elif provider == "ollama":
-            provider_instance = OllamaProvider(api_base=self._detected_base_url or self.api_base)
+            provider_instance = OllamaProvider(
+                api_base=self._detected_base_url or self.api_base
+            )
         else:
             raise LLMError(f"Unsupported detected provider: {provider}")
 

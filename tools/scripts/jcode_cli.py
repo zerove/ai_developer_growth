@@ -60,7 +60,9 @@ def cmd_ai_pr_review(args: argparse.Namespace) -> int:
     if findings:
         print(f"\n🔍 AI PR Review Found {len(findings)} Issues:")
         for finding in findings:
-            print(f"  [{finding['category']}] {finding['rule']}: {finding['description']}")
+            print(
+                f"  [{finding['category']}] {finding['rule']}: {finding['description']}"
+            )
         return 1
     else:
         print("✅ No issues found in PR review.")
@@ -69,7 +71,10 @@ def cmd_ai_pr_review(args: argparse.Namespace) -> int:
 
 def cmd_case_quality(args: argparse.Namespace) -> int:
     """Analyze case study quality."""
-    from tools.scripts.analyze_case_quality import CaseStudyQualityAnalyzer, format_report
+    from tools.scripts.analyze_case_quality import (
+        CaseStudyQualityAnalyzer,
+        format_report,
+    )
 
     analyzer = CaseStudyQualityAnalyzer()
 
@@ -153,13 +158,19 @@ def cmd_semantic_graph(args: argparse.Namespace) -> int:
 
 def cmd_arch_visualizer(args: argparse.Namespace) -> int:
     """Generate architecture visualizations."""
-    from tools.scripts.arch_visualizer import generate_mermaid_diagram, scan_python_imports
+    from tools.scripts.arch_visualizer import (
+        generate_mermaid_diagram,
+        scan_python_imports,
+    )
 
     graph = scan_python_imports(get_project_root())
     mermaid = generate_mermaid_diagram(graph)
 
     output_path = Path(args.output) if args.output else Path("architecture.md")
-    output_path.write_text(f"## Architecture Dependency Graph\n\n```mermaid\n{mermaid}\n```\n", encoding="utf-8")
+    output_path.write_text(
+        f"## Architecture Dependency Graph\n\n```mermaid\n{mermaid}\n```\n",
+        encoding="utf-8",
+    )
     print(f"✅ Architecture visualization saved to: {output_path}")
     return 0
 
@@ -258,7 +269,9 @@ Examples:
     p.set_defaults(func=cmd_semantic_graph)
 
     # arch-visualizer
-    p = subparsers.add_parser("arch-visualizer", help="Generate architecture visualization")
+    p = subparsers.add_parser(
+        "arch-visualizer", help="Generate architecture visualization"
+    )
     p.add_argument("--output", "-o", type=str, help="Output file path")
     p.set_defaults(func=cmd_arch_visualizer)
 

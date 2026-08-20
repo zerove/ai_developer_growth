@@ -32,17 +32,25 @@ def test_agent_chaos_recovery_simulation(tmp_path: Path) -> None:
     # Run check
     rules = {
         "anti_patterns": [
-            {"id": "eval-exec", "severity": "error", "pattern": "exec\\(", "message": "No exec"},
-            {"id": "bare-except", "severity": "error", "pattern": "except\\s*:", "message": "No bare except"},
+            {
+                "id": "eval-exec",
+                "severity": "error",
+                "pattern": "exec\\(",
+                "message": "No exec",
+            },
+            {
+                "id": "bare-except",
+                "severity": "error",
+                "pattern": "except\\s*:",
+                "message": "No bare except",
+            },
         ]
     }
     issues = check_file(corrupted_file, rules)
     assert len(issues) >= 2
 
     # Simulate agent self-correction: fix issues
-    fixed_content = (
-        "import os\n# exec removed\ntry:\n    do_something()\nexcept Exception:\n    logging.error('handled')\n"
-    )
+    fixed_content = "import os\n# exec removed\ntry:\n    do_something()\nexcept Exception:\n    logging.error('handled')\n"
     corrupted_file.write_text(fixed_content)
 
     issues_after_fix = check_file(corrupted_file, rules)

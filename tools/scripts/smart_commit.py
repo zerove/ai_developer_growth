@@ -11,7 +11,12 @@ import sys
 def get_staged_files() -> list[str]:
     """Get list of staged files."""
     try:
-        res = subprocess.run(["git", "diff", "--cached", "--name-only"], capture_output=True, text=True, check=True)
+        res = subprocess.run(
+            ["git", "diff", "--cached", "--name-only"],
+            capture_output=True,
+            text=True,
+            check=True,
+        )
         return [f.strip() for f in res.stdout.splitlines() if f.strip()]
     except (subprocess.SubprocessError, FileNotFoundError):
         return []
@@ -43,7 +48,11 @@ def generate_commit_message(files: list[str]) -> str:
 
 def main() -> int:
     parser = argparse.ArgumentParser(description="Semantic Commit Generator")
-    parser.add_argument("--dry-run", action="store_true", help="Print generated commit message without committing")
+    parser.add_argument(
+        "--dry-run",
+        action="store_true",
+        help="Print generated commit message without committing",
+    )
     args = parser.parse_args()
 
     files = get_staged_files()

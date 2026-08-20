@@ -216,7 +216,9 @@ class VisualizeHandler(RuleWebServer):
 
     page_title = "AI Language Rules - Visual Browser"
 
-    def handle_api(self, path: str, query: dict[str, list[str]], data: dict[str, Any] | None = None) -> Any:
+    def handle_api(
+        self, path: str, query: dict[str, list[str]], data: dict[str, Any] | None = None
+    ) -> Any:
         if path == "/api/rules":
             return get_all_rules()
         elif path == "/api/languages":

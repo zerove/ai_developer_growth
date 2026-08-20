@@ -17,13 +17,19 @@ class DoRChecker:
     def __init__(self, root_dir: Path | None = None):
         self.root_dir = root_dir or get_project_root()
         self.rubric = [
-            ("acceptance_criteria_testable", "Acceptance criteria must be binary-testable"),
+            (
+                "acceptance_criteria_testable",
+                "Acceptance criteria must be binary-testable",
+            ),
             ("no_unresolved_markers", "No unresolved markers (TBD, ???, etc.)"),
             ("named_references_resolve", "References to named things must resolve"),
             ("scope_bounded", "Scope must be strictly bounded"),
             ("affected_surface_named", "Affected file/module surface explicitly named"),
             ("done_state_describable", "End done-state clearly describable"),
-            ("no_invisible_dependencies", "No invisible or untracked upstream dependencies"),
+            (
+                "no_invisible_dependencies",
+                "No invisible or untracked upstream dependencies",
+            ),
         ]
 
     def evaluate_intent(self, intent_text: str) -> dict[str, Any]:

@@ -25,7 +25,8 @@ async def dashboard(request: Request):
 
         # Get latest assessment
         assessment = await db.execute(
-            "SELECT * FROM assessments WHERE user_id = ? ORDER BY created_at DESC LIMIT 1", (user_id,)
+            "SELECT * FROM assessments WHERE user_id = ? ORDER BY created_at DESC LIMIT 1",
+            (user_id,),
         )
         assessment_row = await assessment.fetchone()
 
@@ -45,7 +46,9 @@ async def dashboard(request: Request):
         recent_items = await recent.fetchall()
 
         # Get contributions count
-        contrib = await db.execute("SELECT COUNT(*) as cnt FROM contributions WHERE user_id = ?", (user_id,))
+        contrib = await db.execute(
+            "SELECT COUNT(*) as cnt FROM contributions WHERE user_id = ?", (user_id,)
+        )
         contrib_row = await contrib.fetchone()
 
         return templates.TemplateResponse(

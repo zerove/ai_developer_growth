@@ -41,7 +41,9 @@ class TestAuditCommand:
     def test_audit_text_output(self, mock_sync_cls, mock_typer):
         mock_sync = MagicMock()
         mock_sync_cls.return_value = mock_sync
-        mock_sync.analyzer.get_last_commit_diff.return_value = "diff --git a/src/main.py\n"
+        mock_sync.analyzer.get_last_commit_diff.return_value = (
+            "diff --git a/src/main.py\n"
+        )
         mock_sync.analyzer.get_last_commit_message.return_value = "chore: update"
         mock_sync.analyzer.filter_diff.return_value = "diff --git a/src/main.py\n"
         mock_sync.feedback.history = []

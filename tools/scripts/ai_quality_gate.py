@@ -138,7 +138,10 @@ def check_security_patterns(filepath: Path) -> list[dict[str, Any]]:
 
         # 检查各种安全模式
         for pattern, description in [
-            (r'(?:password|secret|api_key|token)\s*=\s*[\'"][^\'"]+[\'"]', "疑似硬编码密钥"),
+            (
+                r'(?:password|secret|api_key|token)\s*=\s*[\'"][^\'"]+[\'"]',
+                "疑似硬编码密钥",
+            ),
             (rf"(?<!literal_){ev}\s*\(", f"使用 {ev}() - 安全风险"),
             (rf"(?<!literal_){ex}\s*\(", f"使用 {ex}() - 安全风险"),
             (r"verify\s*=\s*False", "禁用 SSL 验证"),
@@ -293,9 +296,15 @@ def _parse_args() -> argparse.Namespace:
     parser.add_argument("--check-error", action="store_true", help="检查错误处理")
     parser.add_argument("--check-structure", action="store_true", help="检查代码结构")
     parser.add_argument("--check-patterns", action="store_true", help="检查所有反模式")
-    parser.add_argument("--check-language-rules", action="store_true", help="检查语言特定规则 (21种语言)")
+    parser.add_argument(
+        "--check-language-rules",
+        action="store_true",
+        help="检查语言特定规则 (21种语言)",
+    )
     parser.add_argument("--lang", help="指定语言 (配合 --check-language-rules)")
-    parser.add_argument("--format", choices=["text", "json"], default="text", help="输出格式")
+    parser.add_argument(
+        "--format", choices=["text", "json"], default="text", help="输出格式"
+    )
     return parser.parse_args()
 
 
@@ -303,7 +312,14 @@ def _determine_checks(args: argparse.Namespace) -> list[str]:
     """Determine which checks to run based on args."""
     checks = []
     if args.full or args.check_patterns:
-        checks = ["annotation", "security", "type", "error", "structure", "language_rules"]
+        checks = [
+            "annotation",
+            "security",
+            "type",
+            "error",
+            "structure",
+            "language_rules",
+        ]
     else:
         if args.check_annotation:
             checks.append("annotation")
@@ -361,10 +377,16 @@ def _collect_files(args: argparse.Namespace) -> list[Path]:
     else:
         files_to_check = list(Path("tools/scripts").rglob("*.py"))
 
-    return [f for f in files_to_check if "__pycache__" not in str(f) and ".git" not in str(f)]
+    return [
+        f
+        for f in files_to_check
+        if "__pycache__" not in str(f) and ".git" not in str(f)
+    ]
 
 
-def _run_checks(args: argparse.Namespace, filtered_files: list[Path]) -> list[CheckResult]:
+def _run_checks(
+    args: argparse.Namespace, filtered_files: list[Path]
+) -> list[CheckResult]:
     """Run quality checks on filtered files."""
     if args.path:
         return check_directory(args.path)
@@ -413,7 +435,9 @@ def _print_results(results: list[CheckResult], format_type: str) -> int:
             else:
                 print(f"❌ {result.file} ({len(result.issues)} issues)")
                 for issue in result.issues[:5]:
-                    print(f"   Line {issue.line}: [{issue.severity}] {issue.rule_id}: {issue.message}")
+                    print(
+                        f"   Line {issue.line}: [{issue.severity}] {issue.rule_id}: {issue.message}"
+                    )
                 if len(result.issues) > 5:
                     print(f"   ... and {len(result.issues) - 5} more")
 

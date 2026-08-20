@@ -24,7 +24,9 @@ class ArchitectureGuard:
         adr_contents = []
         for filename in sorted(os.listdir(self.adr_dir)):
             if filename.endswith(".md"):
-                with open(os.path.join(self.adr_dir, filename), "r", encoding="utf-8") as f:
+                with open(
+                    os.path.join(self.adr_dir, filename), "r", encoding="utf-8"
+                ) as f:
                     adr_contents.append(f"--- File: {filename} ---\n{f.read()}")
 
         return "\n\n".join(adr_contents) if adr_contents else "No ADRs defined yet."

@@ -18,16 +18,31 @@ def run_task(task_name: str) -> int:
 
     commands = {
         "check": [sys.executable, "-m", "pytest", "tests/", "-q"],
-        "semantic-graph": [sys.executable, str(root / "tools" / "scripts" / "semantic_code_graph.py")],
-        "architecture-guard": [sys.executable, str(root / "tools" / "scripts" / "architecture_drift_guard.py")],
-        "metrics-telemetry": [sys.executable, str(root / "tools" / "scripts" / "metrics_telemetry.py")],
+        "semantic-graph": [
+            sys.executable,
+            str(root / "tools" / "scripts" / "semantic_code_graph.py"),
+        ],
+        "architecture-guard": [
+            sys.executable,
+            str(root / "tools" / "scripts" / "architecture_drift_guard.py"),
+        ],
+        "metrics-telemetry": [
+            sys.executable,
+            str(root / "tools" / "scripts" / "metrics_telemetry.py"),
+        ],
         "workflow-ai-native": [
             sys.executable,
             str(root / "tools" / "scripts" / "jcode_ai_native_workflow.py"),
             "Cross-Platform Workflow Execution",
         ],
-        "setup-wizard": [sys.executable, str(root / "tools" / "scripts" / "jcode_setup_wizard.py")],
-        "dashboard": [sys.executable, str(root / "tools" / "scripts" / "ai_native_dashboard.py")],
+        "setup-wizard": [
+            sys.executable,
+            str(root / "tools" / "scripts" / "jcode_setup_wizard.py"),
+        ],
+        "dashboard": [
+            sys.executable,
+            str(root / "tools" / "scripts" / "ai_native_dashboard.py"),
+        ],
     }
 
     if task_name not in commands:

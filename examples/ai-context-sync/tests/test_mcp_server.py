@@ -170,7 +170,9 @@ class TestAiEvolve:
 
     def test_with_candidates(self, mcp_server):
         mcp, mock_sync = mcp_server
-        mock_sync.evolution.analyze_conflicts.return_value = [{"rule_id": "R1", "ratio": 0.8}]
+        mock_sync.evolution.analyze_conflicts.return_value = [
+            {"rule_id": "R1", "ratio": 0.8}
+        ]
         mock_sync.evolution.propose_evolution.return_value = "proposal text"
         result = mcp.tools["ai_evolve"]()
         data = json.loads(result)
@@ -179,7 +181,9 @@ class TestAiEvolve:
 
     def test_batch_mode(self, mcp_server):
         mcp, mock_sync = mcp_server
-        mock_sync.evolution.analyze_conflicts.return_value = [{"rule_id": "R1", "ratio": 0.8}]
+        mock_sync.evolution.analyze_conflicts.return_value = [
+            {"rule_id": "R1", "ratio": 0.8}
+        ]
         mock_sync.evolution.propose_batch_evolution.return_value = "batch proposal"
         result = mcp.tools["ai_evolve"](batch=True)
         data = json.loads(result)

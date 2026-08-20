@@ -38,7 +38,10 @@ def run_language_rules(path: Path, lang: str | None = None) -> tuple[bool, str]:
     else:
         results = validate_directory(path)
         passed = all(r.passed for r in results)
-        output = "\n".join(f"{r.file}: {'PASS' if r.passed else 'FAIL'} ({len(r.issues)} issues)" for r in results)
+        output = "\n".join(
+            f"{r.file}: {'PASS' if r.passed else 'FAIL'} ({len(r.issues)} issues)"
+            for r in results
+        )
         return passed, output
 
 
@@ -69,7 +72,14 @@ def run_quality_gate(
     """
     checks: list[str] = []
     if full or check_patterns:
-        checks = ["annotation", "security", "type", "error", "structure", "language_rules"]
+        checks = [
+            "annotation",
+            "security",
+            "type",
+            "error",
+            "structure",
+            "language_rules",
+        ]
     else:
         if check_annotation:
             checks.append("annotation")
@@ -116,7 +126,9 @@ def run_quality_gate(
         "examples",
         "ai-dev-framework",
     }
-    filtered_files = [f for f in files_to_check if not skip_dir_parts.intersection(f.parts)]
+    filtered_files = [
+        f for f in files_to_check if not skip_dir_parts.intersection(f.parts)
+    ]
 
     if not filtered_files:
         return True, "No files to check"
@@ -159,10 +171,14 @@ def run_quality_gate(
             else:
                 lines.append(f"❌ {filepath} ({len(result['issues'])} issues)")
                 for issue in result["issues"][:5]:
-                    lines.append(f"   Line {issue['line']}: [{issue['type']}] {issue['message']}")
+                    lines.append(
+                        f"   Line {issue['line']}: [{issue['type']}] {issue['message']}"
+                    )
                 if len(result["issues"]) > 5:
                     lines.append(f"   ... and {len(result['issues']) - 5} more")
-        lines.append(f"\nSummary: {passed_count} passed, {failed_count} failed, {total_issues} issues")
+        lines.append(
+            f"\nSummary: {passed_count} passed, {failed_count} failed, {total_issues} issues"
+        )
         output = "\n".join(lines)
 
     # 记录到统一存储（任务7：复用检查历史，供 dashboard/趋势分析使用）
@@ -193,7 +209,10 @@ def _load_governance_auditor() -> Any:
     """Dynamically load the governance auditor module."""
     spec = importlib.util.spec_from_file_location(
         "governance_auditor",
-        Path(__file__).resolve().parent.parent.parent.parent / ".jcode" / "scripts" / "governance-auditor.py",
+        Path(__file__).resolve().parent.parent.parent.parent
+        / ".jcode"
+        / "scripts"
+        / "governance-auditor.py",
     )
     if spec is None or spec.loader is None:
         raise ImportError("Failed to load governance_auditor module")
@@ -232,7 +251,11 @@ def run_governance_audit(
 
         def _check_index() -> bool:
             result = subprocess.run(
-                [sys.executable, ".jcode/scripts/governance-docs-validator.py", "check-index"],
+                [
+                    sys.executable,
+                    ".jcode/scripts/governance-docs-validator.py",
+                    "check-index",
+                ],
                 capture_output=True,
                 text=True,
                 timeout=60,
@@ -278,7 +301,11 @@ def run_governance_audit(
 
 def run_pr_review() -> tuple[bool, str]:
     """Run automated AI PR review."""
-    from tools.scripts.ai_pr_reviewer import format_review_report, get_git_diff, review_diff
+    from tools.scripts.ai_pr_reviewer import (
+        format_review_report,
+        get_git_diff,
+        review_diff,
+    )
 
     diff = get_git_diff()
     res = review_diff(diff)
@@ -288,7 +315,10 @@ def run_pr_review() -> tuple[bool, str]:
 
 def run_arch_graph() -> tuple[bool, str]:
     """Run architecture dependency graph generation."""
-    from tools.scripts.arch_visualizer import generate_mermaid_diagram, scan_python_imports
+    from tools.scripts.arch_visualizer import (
+        generate_mermaid_diagram,
+        scan_python_imports,
+    )
 
     graph = scan_python_imports(Path("tools/scripts"))
     mermaid = generate_mermaid_diagram(graph)

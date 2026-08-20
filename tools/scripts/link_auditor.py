@@ -31,7 +31,9 @@ def _build_index(directory: str) -> dict[str, str]:
     return index
 
 
-def _check_target(target: str, index: dict[str, str], directory: str, file_dir: str) -> bool:
+def _check_target(
+    target: str, index: dict[str, str], directory: str, file_dir: str
+) -> bool:
     """Check if a wikilink target resolves to an existing file."""
     target = target.rstrip("\\")
 
@@ -116,7 +118,9 @@ def find_broken_links(directory: str) -> list[tuple[str, str]]:
     return broken
 
 
-def find_broken_links_with_index(directory: str, index: dict[str, str]) -> list[tuple[str, str]]:
+def find_broken_links_with_index(
+    directory: str, index: dict[str, str]
+) -> list[tuple[str, str]]:
     """Like find_broken_links, but accepts an externally-built index.
 
     Used by check_all_links() to scan subdirectories with a project-wide
@@ -179,9 +183,19 @@ def check_all_links() -> bool:
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Audit markdown links")
     parser.add_argument("directory", nargs="?", help="Directory to scan")
-    parser.add_argument("--check-all", action="store_true", help="Check all project directories")
-    parser.add_argument("--fail-on-broken", action="store_true", help="Exit with error code if broken links found")
-    parser.add_argument("--internal-only", action="store_true", help="Only check internal links (skip external)")
+    parser.add_argument(
+        "--check-all", action="store_true", help="Check all project directories"
+    )
+    parser.add_argument(
+        "--fail-on-broken",
+        action="store_true",
+        help="Exit with error code if broken links found",
+    )
+    parser.add_argument(
+        "--internal-only",
+        action="store_true",
+        help="Only check internal links (skip external)",
+    )
     args = parser.parse_args()
 
     if args.check_all:
@@ -197,7 +211,9 @@ if __name__ == "__main__":
             print("All links are valid.")
             success = True
     else:
-        print("Usage: python link_auditor.py <directory> [--check-all] [--fail-on-broken]")
+        print(
+            "Usage: python link_auditor.py <directory> [--check-all] [--fail-on-broken]"
+        )
         sys.exit(1)
 
     if args.fail_on_broken and not success:

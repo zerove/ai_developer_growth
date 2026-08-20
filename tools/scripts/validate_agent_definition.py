@@ -44,7 +44,9 @@ def parse_markdown_format(content: str) -> dict[str, Any]:
         result["name"] = name_match.group(1).strip()
 
     # 提取描述: 紧跟在名称行后的第一段非标题文本
-    desc_match = re.search(r"^##\s*agent:.*?\n\n(.*?)(?:\n###|\n##|\Z)", content, re.DOTALL)
+    desc_match = re.search(
+        r"^##\s*agent:.*?\n\n(.*?)(?:\n###|\n##|\Z)", content, re.DOTALL
+    )
     if desc_match:
         result["description"] = desc_match.group(1).strip()
 
@@ -54,14 +56,22 @@ def parse_markdown_format(content: str) -> dict[str, Any]:
         result["instructions"] = inst_match.group(1).strip()
 
     # 提取工具
-    tools_match = re.search(r"### 工具\s*\n(.*?)(?:\n### |\n## |\Z)", content, re.DOTALL)
+    tools_match = re.search(
+        r"### 工具\s*\n(.*?)(?:\n### |\n## |\Z)", content, re.DOTALL
+    )
     if tools_match:
         tools_text = tools_match.group(1).strip()
-        tools = [line.strip().lstrip("- ").strip() for line in tools_text.split("\n") if line.strip().startswith("-")]
+        tools = [
+            line.strip().lstrip("- ").strip()
+            for line in tools_text.split("\n")
+            if line.strip().startswith("-")
+        ]
         result["tools"] = tools
 
     # 提取约束
-    constraints_match = re.search(r"### 约束\s*\n(.*?)(?:\n### |\n## |\Z)", content, re.DOTALL)
+    constraints_match = re.search(
+        r"### 约束\s*\n(.*?)(?:\n### |\n## |\Z)", content, re.DOTALL
+    )
     if constraints_match:
         result["constraints"] = constraints_match.group(1).strip()
 
@@ -118,7 +128,8 @@ def validate_agent_file(filepath: Path) -> list[str]:
         # 检查是否包含具体路径/函数名/工具名
         has_specific = bool(
             re.search(
-                r"(tools/scripts/|\.py|函数|工具|运行|执行|验证|检查|ruff|mypy|pytest|bandit|pip-audit)", instructions
+                r"(tools/scripts/|\.py|函数|工具|运行|执行|验证|检查|ruff|mypy|pytest|bandit|pip-audit)",
+                instructions,
             )
         )
         if not has_specific:
@@ -131,7 +142,9 @@ def validate_agent_file(filepath: Path) -> list[str]:
     if isinstance(constraints, list):
         constraints = " ".join(str(x) for x in constraints)
     if constraints:
-        has_prohibition = bool(re.search(r"(禁止|不得|不允许|必须不|严禁)", constraints))
+        has_prohibition = bool(
+            re.search(r"(禁止|不得|不允许|必须不|严禁)", constraints)
+        )
         if not has_prohibition:
             errors.append("约束应明确包含禁止行为")
     else:

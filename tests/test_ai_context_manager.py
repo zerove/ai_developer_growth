@@ -14,7 +14,10 @@ mock_openai = MagicMock()
 sys.modules["openai"] = mock_openai
 
 spec = importlib.util.spec_from_file_location(
-    "ai_context_manager", os.path.join(os.path.dirname(__file__), "..", "tools", "scripts", "ai_context_manager.py")
+    "ai_context_manager",
+    os.path.join(
+        os.path.dirname(__file__), "..", "tools", "scripts", "ai_context_manager.py"
+    ),
 )
 ai_context_manager = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(ai_context_manager)
@@ -113,7 +116,13 @@ class TestUpdateContextWithLLM(unittest.TestCase):
         mock_client = MagicMock()
         mock_openai_class.return_value = mock_client
         mock_response = MagicMock()
-        mock_response.choices = [MagicMock(message=MagicMock(content="# Updated Context\n\n## Progress\n- New item"))]
+        mock_response.choices = [
+            MagicMock(
+                message=MagicMock(
+                    content="# Updated Context\n\n## Progress\n- New item"
+                )
+            )
+        ]
         mock_client.chat.completions.create.return_value = mock_response
 
         result = update_context_with_llm("# Current Context", "Added new feature")
@@ -124,11 +133,21 @@ class TestUpdateContextWithLLM(unittest.TestCase):
 
     @patch.dict(os.environ, {"OPENAI_API_KEY": "test-key"})
     @patch.object(ai_context_manager, "OpenAI")
-    @patch.object(ai_context_manager, "APIError", new_callable=lambda: type("APIError", (Exception,), {}))
     @patch.object(
-        ai_context_manager, "APIConnectionError", new_callable=lambda: type("APIConnectionError", (Exception,), {})
+        ai_context_manager,
+        "APIError",
+        new_callable=lambda: type("APIError", (Exception,), {}),
     )
-    @patch.object(ai_context_manager, "RateLimitError", new_callable=lambda: type("RateLimitError", (Exception,), {}))
+    @patch.object(
+        ai_context_manager,
+        "APIConnectionError",
+        new_callable=lambda: type("APIConnectionError", (Exception,), {}),
+    )
+    @patch.object(
+        ai_context_manager,
+        "RateLimitError",
+        new_callable=lambda: type("RateLimitError", (Exception,), {}),
+    )
     def test_update_context_with_llm_handles_error(
         self, mock_rate_error, mock_conn_error, mock_api_error, mock_openai_class
     ):
@@ -163,7 +182,11 @@ class TestMain(unittest.TestCase):
 
     @patch.dict(os.environ, {"OPENAI_API_KEY": "test-key"})
     @patch("builtins.input", return_value="Test changes")
-    @patch.object(ai_context_manager, "update_context_with_llm", return_value="# Updated\n\n## Progress\n- Test")
+    @patch.object(
+        ai_context_manager,
+        "update_context_with_llm",
+        return_value="# Updated\n\n## Progress\n- Test",
+    )
     @patch("sys.stdout", new_callable=StringIO)
     def test_main_with_changes_argument(self, mock_stdout, mock_update, mock_input):
         """Test main with changes as argument."""
@@ -176,7 +199,11 @@ class TestMain(unittest.TestCase):
 
     @patch.dict(os.environ, {"OPENAI_API_KEY": "test-key"})
     @patch("builtins.input", return_value="Test changes")
-    @patch.object(ai_context_manager, "update_context_with_llm", return_value="# Updated\n\n## Progress\n- Test")
+    @patch.object(
+        ai_context_manager,
+        "update_context_with_llm",
+        return_value="# Updated\n\n## Progress\n- Test",
+    )
     @patch("sys.stdout", new_callable=StringIO)
     def test_main_interactive_input(self, mock_stdout, mock_update, mock_input):
         """Test main with interactive input."""

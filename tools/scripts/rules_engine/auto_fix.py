@@ -405,10 +405,18 @@ def apply_fixes(
         description = fix_config["description"]
 
         if replacement is None:
-            results.extend(_flag_only_fixes(filepath, content, rule_id, pattern, description))
+            results.extend(
+                _flag_only_fixes(filepath, content, rule_id, pattern, description)
+            )
         else:
             content, new_results = _apply_replacement(
-                filepath, content, original_content, rule_id, pattern, replacement, description
+                filepath,
+                content,
+                original_content,
+                rule_id,
+                pattern,
+                replacement,
+                description,
             )
             results.extend(new_results)
 
@@ -436,13 +444,29 @@ def apply_fixes_to_directory(
     Returns:
         List of all FixResults across all files.
     """
-    extensions = {".py", ".js", ".jsx", ".mjs", ".ts", ".tsx", ".rs", ".java", ".cs", ".cpp", ".go"}
+    extensions = {
+        ".py",
+        ".js",
+        ".jsx",
+        ".mjs",
+        ".ts",
+        ".tsx",
+        ".rs",
+        ".java",
+        ".cs",
+        ".cpp",
+        ".go",
+    }
     all_results: list[FixResult] = []
 
     for filepath in dirpath.rglob("*"):
         if not filepath.is_file():
             continue
-        if "__pycache__" in str(filepath) or ".git" in str(filepath) or "node_modules" in str(filepath):
+        if (
+            "__pycache__" in str(filepath)
+            or ".git" in str(filepath)
+            or "node_modules" in str(filepath)
+        ):
             continue
         if filepath.suffix.lower() not in extensions:
             continue
@@ -491,6 +515,8 @@ def format_fix_results(results: list[FixResult], *, format: str = "text") -> str
     total = len(results)
     auto_fixed = sum(1 for r in results if r.fixed != "[MANUAL FIX REQUIRED]")
     manual_needed = total - auto_fixed
-    lines.append(f"\nSummary: {total} issues found, {auto_fixed} auto-fixed, {manual_needed} manual fixes needed")
+    lines.append(
+        f"\nSummary: {total} issues found, {auto_fixed} auto-fixed, {manual_needed} manual fixes needed"
+    )
 
     return "\n".join(lines)

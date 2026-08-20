@@ -21,7 +21,13 @@ class ContributorDashboard:
         """分析案例研究统计"""
         cases_dir = self.repo_root / "case-studies"
         if not cases_dir.exists():
-            return {"total": 0, "by_type": {}, "by_tool": {}, "avg_boost": 0, "max_boost": 0}
+            return {
+                "total": 0,
+                "by_type": {},
+                "by_tool": {},
+                "avg_boost": 0,
+                "max_boost": 0,
+            }
 
         total = 0
         by_type: Counter[str] = Counter()
@@ -70,7 +76,12 @@ class ContributorDashboard:
         stable = len(re.findall(r"⚠️\s*\*\*稳定\*\*", content))
         legacy = len(re.findall(r"❌\s*\*\*遗留\*\*", content))
 
-        return {"recommended": recommended, "stable": stable, "legacy": legacy, "total": recommended + stable + legacy}
+        return {
+            "recommended": recommended,
+            "stable": stable,
+            "legacy": legacy,
+            "total": recommended + stable + legacy,
+        }
 
     def analyze_contributors(self) -> dict[str, Any]:
         """分析贡献者 (从 git log)"""
@@ -79,7 +90,10 @@ class ContributorDashboard:
 
             # 获取贡献者提交数
             result = subprocess.run(
-                ["git", "shortlog", "-sn", "--all"], capture_output=True, text=True, cwd=self.repo_root
+                ["git", "shortlog", "-sn", "--all"],
+                capture_output=True,
+                text=True,
+                cwd=self.repo_root,
             )
             contributors = []
             for line in result.stdout.strip().split("\n"):
@@ -87,7 +101,11 @@ class ContributorDashboard:
                     count, name = line.strip().split("\t", 1)
                     contributors.append({"name": name, "commits": int(count)})
 
-            return {"total_contributors": len(contributors), "top_contributors": contributors[:10], "all": contributors}
+            return {
+                "total_contributors": len(contributors),
+                "top_contributors": contributors[:10],
+                "all": contributors,
+            }
         except (subprocess.SubprocessError, ValueError, FileNotFoundError):
             return {"total_contributors": 0, "top_contributors": [], "all": []}
 
@@ -137,7 +155,9 @@ class ContributorDashboard:
 
             return {
                 "total_fix_commits": sum(fixers.values()),
-                "top_fixers": [{"name": k, "fixes": v} for k, v in fixers.most_common(10)],
+                "top_fixers": [
+                    {"name": k, "fixes": v} for k, v in fixers.most_common(10)
+                ],
             }
         except (subprocess.SubprocessError, ValueError, FileNotFoundError):
             return {"total_fix_commits": 0, "top_fixers": []}
@@ -181,7 +201,9 @@ class ContributorDashboard:
             lines.append(f"  - {cat}: {count}")
         lines.append("")
 
-    def _add_contributors(self, lines: list[str], contrib_stats: dict[str, Any]) -> None:
+    def _add_contributors(
+        self, lines: list[str], contrib_stats: dict[str, Any]
+    ) -> None:
         """Add contributors section."""
         lines.append("## 👥 贡献者排行榜")
         for i, c in enumerate(contrib_stats["top_contributors"][:10], 1):
@@ -254,9 +276,13 @@ class ContributorDashboard:
         fix_stats = self.analyze_quality_fixes()
 
         if output_format == "markdown":
-            return self._generate_markdown_dashboard(case_stats, tool_stats, contrib_stats, docs_stats, fix_stats)
+            return self._generate_markdown_dashboard(
+                case_stats, tool_stats, contrib_stats, docs_stats, fix_stats
+            )
         elif output_format == "json":
-            return self._generate_json_dashboard(case_stats, tool_stats, contrib_stats, docs_stats)
+            return self._generate_json_dashboard(
+                case_stats, tool_stats, contrib_stats, docs_stats
+            )
         else:
             raise ValueError(f"Unsupported format: {output_format}")
 

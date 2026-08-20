@@ -77,7 +77,9 @@ class TestScopeGuardHook:
     @patch("tools.scripts.hooks.scope_guard.subprocess.run")
     def test_check_git_diff_not_git_repo(self, mock_run):
         """Test when not a git repo."""
-        mock_run.return_value = MagicMock(returncode=1, stderr="fatal: not a git repository")
+        mock_run.return_value = MagicMock(
+            returncode=1, stderr="fatal: not a git repository"
+        )
         guard = ScopeGuardHook()
         passed, msg = guard.check_git_diff()
         assert passed is True
@@ -126,11 +128,15 @@ class TestScopeGuardHookMain:
     def test_main(self, mock_guard_class):
         """Test main function."""
         mock_guard = MagicMock()
-        mock_guard.check_git_diff.return_value = (True, "Scope check passed: 1 files, 10 lines changed.")
+        mock_guard.check_git_diff.return_value = (
+            True,
+            "Scope check passed: 1 files, 10 lines changed.",
+        )
         mock_guard_class.return_value = mock_guard
 
         # Run main directly from the module
         import tools.scripts.hooks.scope_guard as scope_guard
+
         # Just verify it runs without error by checking the class was instantiated
         assert scope_guard.ScopeGuardHook is not None
 

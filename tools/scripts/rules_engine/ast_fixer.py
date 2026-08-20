@@ -161,7 +161,9 @@ class ASTFixer:
     # Fix Strategies
     # ─────────────────────────────────────────────────────────────
 
-    def _fix_bare_except(self, content: str, ast_result: FileAST, filepath: Path) -> list[FixResult]:
+    def _fix_bare_except(
+        self, content: str, ast_result: FileAST, filepath: Path
+    ) -> list[FixResult]:
         """Fix bare except clauses by replacing with except Exception."""
         fixes: list[FixResult] = []
         lines = content.splitlines()
@@ -213,7 +215,9 @@ class ASTFixer:
 
         return fixes
 
-    def _fix_unused_variables(self, content: str, ast_result: FileAST, filepath: Path) -> list[FixResult]:
+    def _fix_unused_variables(
+        self, content: str, ast_result: FileAST, filepath: Path
+    ) -> list[FixResult]:
         """Fix unused variables by prefixing with underscore."""
         fixes: list[FixResult] = []
         lines = content.splitlines()
@@ -229,7 +233,21 @@ class ASTFixer:
                 # Skip common patterns
                 if var_name.startswith("_") or var_name.isupper():
                     continue
-                if var_name in ("self", "cls", "i", "j", "k", "n", "x", "y", "e", "ex", "result", "data", "value"):
+                if var_name in (
+                    "self",
+                    "cls",
+                    "i",
+                    "j",
+                    "k",
+                    "n",
+                    "x",
+                    "y",
+                    "e",
+                    "ex",
+                    "result",
+                    "data",
+                    "value",
+                ):
                     continue
 
                 # Check if variable is used elsewhere (simple heuristic)
@@ -251,7 +269,9 @@ class ASTFixer:
 
         return fixes
 
-    def _fix_empty_functions(self, content: str, ast_result: FileAST, filepath: Path) -> list[FixResult]:
+    def _fix_empty_functions(
+        self, content: str, ast_result: FileAST, filepath: Path
+    ) -> list[FixResult]:
         """Add 'pass' to empty function bodies."""
         fixes: list[FixResult] = []
         lines = content.splitlines()
@@ -286,7 +306,9 @@ class ASTFixer:
 
         return fixes
 
-    def _fix_long_functions(self, content: str, ast_result: FileAST, filepath: Path) -> list[FixResult]:
+    def _fix_long_functions(
+        self, content: str, ast_result: FileAST, filepath: Path
+    ) -> list[FixResult]:
         """Suggest refactoring for long functions (non-auto)."""
         fixes: list[FixResult] = []
 

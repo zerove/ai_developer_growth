@@ -15,7 +15,9 @@ from .rule_loader import load_rules_for_language
 _MATCH_TIMEOUT_S = 0.1
 
 
-def check_anti_patterns(filepath: Path, language: str, rules: dict[str, Any] | None = None) -> list[Issue]:
+def check_anti_patterns(
+    filepath: Path, language: str, rules: dict[str, Any] | None = None
+) -> list[Issue]:
     """Check a file for anti-patterns using regex rules."""
     issues: list[Issue] = []
 
@@ -46,7 +48,9 @@ def check_anti_patterns(filepath: Path, language: str, rules: dict[str, Any] | N
     return issues
 
 
-def _check_pattern(filepath: Path, content: str, lines: list[str], pattern_def: dict[str, Any]) -> list[Issue]:
+def _check_pattern(
+    filepath: Path, content: str, lines: list[str], pattern_def: dict[str, Any]
+) -> list[Issue]:
     """Check a single pattern against file content."""
     issues: list[Issue] = []
     pattern = pattern_def.get("pattern", "")
@@ -68,12 +72,18 @@ def _check_pattern(filepath: Path, content: str, lines: list[str], pattern_def: 
     flags = re.IGNORECASE if pattern_def.get("ignore_case", False) else 0
     # Check if pattern is multi-line (contains \n or \\n)
     pattern_str = pattern_def.get("pattern", "")
-    is_multiline = ("\n" in pattern_str or "\\n" in pattern_str) or pattern_def.get("multiline", False)
+    is_multiline = ("\n" in pattern_str or "\\n" in pattern_str) or pattern_def.get(
+        "multiline", False
+    )
 
     if is_multiline:
-        issues.extend(_check_multiline_pattern(filepath, content, pattern, flags, pattern_def))
+        issues.extend(
+            _check_multiline_pattern(filepath, content, pattern, flags, pattern_def)
+        )
     else:
-        issues.extend(_check_line_patterns(lines, pattern, flags, pattern_def, str(filepath)))
+        issues.extend(
+            _check_line_patterns(lines, pattern, flags, pattern_def, str(filepath))
+        )
 
     return issues
 
@@ -115,7 +125,11 @@ def _check_multiline_pattern(
 
 
 def _check_line_patterns(
-    lines: list[str], pattern: str, flags: int, pattern_def: dict[str, Any], filepath: str
+    lines: list[str],
+    pattern: str,
+    flags: int,
+    pattern_def: dict[str, Any],
+    filepath: str,
 ) -> list[Issue]:
     """Check pattern against each line.
 

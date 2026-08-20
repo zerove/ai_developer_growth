@@ -46,13 +46,20 @@ class MockLLMClient:
         if "Task ID: TASK-1" in prompt:
             # Simulate a bug on the first attempt
             if "Previous Attempt Error" not in prompt:
-                return "[FILE: calc.py]\ndef calculate_sum(a, b):\n    return a - b\n[END]"
+                return (
+                    "[FILE: calc.py]\ndef calculate_sum(a, b):\n    return a - b\n[END]"
+                )
             # Fix it on the second attempt
             else:
-                return "[FILE: calc.py]\ndef calculate_sum(a, b):\n    return a + b\n[END]"
+                return (
+                    "[FILE: calc.py]\ndef calculate_sum(a, b):\n    return a + b\n[END]"
+                )
 
         # 3. Handle Audit Phase (Phase 4) - Return empty violations
-        if "The parallel implementation of task" in prompt or "find ALL possible violations" in prompt:
+        if (
+            "The parallel implementation of task" in prompt
+            or "find ALL possible violations" in prompt
+        ):
             return "[]"
 
         return "Mock response"

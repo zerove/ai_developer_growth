@@ -7,8 +7,15 @@ Submodules:
     health: Health score calculation.
 """
 
-from tools.scripts.rules_engine.validators.health import HealthScore, calculate_health_score
-from tools.scripts.rules_engine.validators.models import FixResult, Issue, ValidationResult
+from tools.scripts.rules_engine.validators.health import (
+    HealthScore,
+    calculate_health_score,
+)
+from tools.scripts.rules_engine.validators.models import (
+    FixResult,
+    Issue,
+    ValidationResult,
+)
 from tools.scripts.rules_engine.validators.pipeline import (
     EXTENSION_MAP,
     check_anti_patterns,

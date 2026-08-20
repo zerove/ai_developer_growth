@@ -37,7 +37,12 @@ class TestCmdSearch:
     def test_search_with_results(self) -> None:
         with patch("tools.scripts.rule_marketplace.search_rules") as mock_search:
             mock_search.return_value = [
-                {"id": "py-bare-except", "severity": "error", "message": "test", "pattern": "except"}
+                {
+                    "id": "py-bare-except",
+                    "severity": "error",
+                    "message": "test",
+                    "pattern": "except",
+                }
             ]
             args = argparse.Namespace(query="except", json=False)
             cmd_search(args)
@@ -56,7 +61,9 @@ class TestCmdSearch:
 
     def test_search_no_pattern(self) -> None:
         with patch("tools.scripts.rule_marketplace.search_rules") as mock_search:
-            mock_search.return_value = [{"id": "x", "severity": "error", "message": "msg"}]
+            mock_search.return_value = [
+                {"id": "x", "severity": "error", "message": "msg"}
+            ]
             args = argparse.Namespace(query="x", json=False)
             cmd_search(args)
 
@@ -86,7 +93,13 @@ class TestCmdInfo:
 
     def test_info_json(self) -> None:
         with patch("tools.scripts.rule_marketplace.get_pack_info") as mock_info:
-            mock_info.return_value = {"name": "x", "description": "d", "rule_count": 1, "categories": [], "source": "f"}
+            mock_info.return_value = {
+                "name": "x",
+                "description": "d",
+                "rule_count": 1,
+                "categories": [],
+                "source": "f",
+            }
             args = argparse.Namespace(pack="x", json=True)
             with patch("tools.scripts.rule_marketplace._framework_dir") as mock_fd:
                 mock_fd.return_value = Path("/tmp")
@@ -132,23 +145,31 @@ class TestCmdInstall:
     def test_install_success(self, tmp_path: Path) -> None:
         with patch("tools.scripts.rule_marketplace.install_pack") as mock_install:
             mock_install.return_value = ["file1.yml"]
-            args = argparse.Namespace(pack="security", project_dir=str(tmp_path), dry_run=False)
+            args = argparse.Namespace(
+                pack="security", project_dir=str(tmp_path), dry_run=False
+            )
             cmd_install(args)
 
     def test_install_dry_run(self, tmp_path: Path) -> None:
-        args = argparse.Namespace(pack="security", project_dir=str(tmp_path), dry_run=True)
+        args = argparse.Namespace(
+            pack="security", project_dir=str(tmp_path), dry_run=True
+        )
         cmd_install(args)
 
     def test_install_value_error(self, tmp_path: Path) -> None:
         with patch("tools.scripts.rule_marketplace.install_pack") as mock_install:
             mock_install.side_effect = ValueError("bad pack")
-            args = argparse.Namespace(pack="bad", project_dir=str(tmp_path), dry_run=False)
+            args = argparse.Namespace(
+                pack="bad", project_dir=str(tmp_path), dry_run=False
+            )
             cmd_install(args)
 
     def test_install_no_files(self, tmp_path: Path) -> None:
         with patch("tools.scripts.rule_marketplace.install_pack") as mock_install:
             mock_install.return_value = []
-            args = argparse.Namespace(pack="empty", project_dir=str(tmp_path), dry_run=False)
+            args = argparse.Namespace(
+                pack="empty", project_dir=str(tmp_path), dry_run=False
+            )
             cmd_install(args)
 
 
@@ -198,7 +219,11 @@ class TestCmdExport:
         rules_dir.mkdir()
         with patch("tools.scripts.rule_marketplace.export_rules") as mock_exp:
             mock_exp.return_value = (5, {})
-            args = argparse.Namespace(project_dir=str(tmp_path), output=str(tmp_path / "out.yml"), dry_run=True)
+            args = argparse.Namespace(
+                project_dir=str(tmp_path),
+                output=str(tmp_path / "out.yml"),
+                dry_run=True,
+            )
             cmd_export(args)
 
     def test_export_success(self, tmp_path: Path) -> None:
@@ -206,7 +231,11 @@ class TestCmdExport:
         rules_dir.mkdir()
         with patch("tools.scripts.rule_marketplace.export_rules") as mock_exp:
             mock_exp.return_value = (3, {"anti_patterns": []})
-            args = argparse.Namespace(project_dir=str(tmp_path), output=str(tmp_path / "out.yml"), dry_run=False)
+            args = argparse.Namespace(
+                project_dir=str(tmp_path),
+                output=str(tmp_path / "out.yml"),
+                dry_run=False,
+            )
             cmd_export(args)
 
 

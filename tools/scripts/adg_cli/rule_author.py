@@ -30,7 +30,9 @@ def _create_rule_interactive() -> dict[str, Any]:
     if not language:
         return {}
 
-    category = input("Category (security/code_quality/performance/maintainability): ").strip()
+    category = input(
+        "Category (security/code_quality/performance/maintainability): "
+    ).strip()
     if not category:
         category = "code_quality"
 
@@ -68,7 +70,12 @@ def _validate_rule(rule: dict[str, Any]) -> list[str]:
     if rule.get("severity") not in ("error", "warning", "info"):
         errors.append(f"Invalid severity: {rule.get('severity')}")
 
-    if rule.get("category") not in ("security", "code_quality", "performance", "maintainability"):
+    if rule.get("category") not in (
+        "security",
+        "code_quality",
+        "performance",
+        "maintainability",
+    ):
         errors.append(f"Invalid category: {rule.get('category')}")
 
     # Test regex pattern

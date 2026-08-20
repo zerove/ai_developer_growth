@@ -157,7 +157,11 @@ AI 工具栈: Cursor
         with patch.object(
             self.dashboard,
             "analyze_contributors",
-            return_value={"total_contributors": 1, "top_contributors": [{"name": "Test", "commits": 5}], "all": []},
+            return_value={
+                "total_contributors": 1,
+                "top_contributors": [{"name": "Test", "commits": 5}],
+                "all": [],
+            },
         ):
             result = self.dashboard.generate_dashboard("markdown")
 

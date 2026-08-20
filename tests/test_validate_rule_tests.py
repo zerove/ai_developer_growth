@@ -52,7 +52,9 @@ class TestLoadRulesWithTests:
     def test_rules_without_test_cases(self, tmp_path: Path) -> None:
         rules_dir = tmp_path / "languages" / "python" / "rules.d"
         rules_dir.mkdir(parents=True)
-        (rules_dir / "anti.yml").write_text("anti_patterns:\n  - id: py-no-test\n    pattern: 'bad'\n")
+        (rules_dir / "anti.yml").write_text(
+            "anti_patterns:\n  - id: py-no-test\n    pattern: 'bad'\n"
+        )
         with patch("tools.scripts.validate_rule_tests._rules_dir") as mock_dir:
             mock_dir.return_value = tmp_path
             result = _load_rules_with_tests("python")
@@ -116,7 +118,9 @@ class TestValidateRuleTests:
     """Tests for validate_rule_tests()."""
 
     def test_no_rules_with_tests(self, tmp_path: Path) -> None:
-        with patch("tools.scripts.validate_rule_tests._load_rules_with_tests") as mock_load:
+        with patch(
+            "tools.scripts.validate_rule_tests._load_rules_with_tests"
+        ) as mock_load:
             mock_load.return_value = []
             passed, failed, errors = validate_rule_tests("python")
             assert passed == 0
@@ -138,7 +142,9 @@ class TestValidateRuleTests:
                 },
             }
         ]
-        with patch("tools.scripts.validate_rule_tests._load_rules_with_tests") as mock_load:
+        with patch(
+            "tools.scripts.validate_rule_tests._load_rules_with_tests"
+        ) as mock_load:
             mock_load.return_value = mock_rules
             passed, failed, errors = validate_rule_tests("python")
             assert passed == 2
@@ -158,7 +164,9 @@ class TestValidateRuleTests:
                 },
             }
         ]
-        with patch("tools.scripts.validate_rule_tests._load_rules_with_tests") as mock_load:
+        with patch(
+            "tools.scripts.validate_rule_tests._load_rules_with_tests"
+        ) as mock_load:
             mock_load.return_value = mock_rules
             passed, failed, errors = validate_rule_tests("python")
             # May pass or fail depending on regex, just check no crash
@@ -175,7 +183,9 @@ class TestValidateRuleTests:
                 },
             }
         ]
-        with patch("tools.scripts.validate_rule_tests._load_rules_with_tests") as mock_load:
+        with patch(
+            "tools.scripts.validate_rule_tests._load_rules_with_tests"
+        ) as mock_load:
             mock_load.return_value = mock_rules
             passed, failed, errors = validate_rule_tests("python")
             assert failed == 0
@@ -193,7 +203,9 @@ class TestValidateRuleTests:
                 },
             }
         ]
-        with patch("tools.scripts.validate_rule_tests._load_rules_with_tests") as mock_load:
+        with patch(
+            "tools.scripts.validate_rule_tests._load_rules_with_tests"
+        ) as mock_load:
             mock_load.return_value = mock_rules
             passed, failed, errors = validate_rule_tests("python")
             assert failed >= 1
@@ -211,7 +223,9 @@ class TestValidateRuleTests:
                 },
             }
         ]
-        with patch("tools.scripts.validate_rule_tests._load_rules_with_tests") as mock_load:
+        with patch(
+            "tools.scripts.validate_rule_tests._load_rules_with_tests"
+        ) as mock_load:
             mock_load.return_value = mock_rules
             passed, failed, errors = validate_rule_tests("python")
             assert any("no pattern" in e for e in errors)
@@ -228,7 +242,9 @@ class TestValidateRuleTests:
                 },
             }
         ]
-        with patch("tools.scripts.validate_rule_tests._load_rules_with_tests") as mock_load:
+        with patch(
+            "tools.scripts.validate_rule_tests._load_rules_with_tests"
+        ) as mock_load:
             mock_load.return_value = mock_rules
             passed, failed, errors = validate_rule_tests("python")
             assert passed == 1
@@ -244,7 +260,9 @@ class TestMain:
 
     def test_json_output(self, tmp_path: Path) -> None:
         with patch("sys.argv", ["prog", "--lang", "python", "--json"]):
-            with patch("tools.scripts.validate_rule_tests.validate_rule_tests") as mock_val:
+            with patch(
+                "tools.scripts.validate_rule_tests.validate_rule_tests"
+            ) as mock_val:
                 mock_val.return_value = (5, 0, [])
                 with patch("builtins.print") as mock_print:
                     ret = main()
@@ -256,7 +274,9 @@ class TestMain:
 
     def test_verbose_output(self, tmp_path: Path) -> None:
         with patch("sys.argv", ["prog", "--lang", "python", "--verbose"]):
-            with patch("tools.scripts.validate_rule_tests.validate_rule_tests") as mock_val:
+            with patch(
+                "tools.scripts.validate_rule_tests.validate_rule_tests"
+            ) as mock_val:
                 mock_val.return_value = (1, 1, ["error msg"])
                 with patch("builtins.print") as mock_print:
                     ret = main()
@@ -266,14 +286,18 @@ class TestMain:
 
     def test_all_languages(self) -> None:
         with patch("sys.argv", ["prog", "--all"]):
-            with patch("tools.scripts.validate_rule_tests.validate_rule_tests") as mock_val:
+            with patch(
+                "tools.scripts.validate_rule_tests.validate_rule_tests"
+            ) as mock_val:
                 mock_val.return_value = (0, 0, ["No rules"])
                 ret = main()
                 assert ret == 0
 
     def test_failed_returns_1(self) -> None:
         with patch("sys.argv", ["prog", "--lang", "python"]):
-            with patch("tools.scripts.validate_rule_tests.validate_rule_tests") as mock_val:
+            with patch(
+                "tools.scripts.validate_rule_tests.validate_rule_tests"
+            ) as mock_val:
                 mock_val.return_value = (3, 2, ["err1", "err2"])
                 ret = main()
                 assert ret == 1

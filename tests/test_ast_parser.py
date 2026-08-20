@@ -33,7 +33,15 @@ def test_ast_node_creation():
 
 def test_ast_node_with_children():
     child = ASTNode(type="param", name="x", line=1, col=10, end_line=1, end_col=11)
-    parent = ASTNode(type="function", name="foo", line=1, col=0, end_line=5, end_col=10, children=[child])
+    parent = ASTNode(
+        type="function",
+        name="foo",
+        line=1,
+        col=0,
+        end_line=5,
+        end_col=10,
+        children=[child],
+    )
     assert len(parent.children) == 1
     assert parent.children[0].name == "x"
     assert child.parent is None  # Not auto-set

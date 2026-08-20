@@ -16,7 +16,9 @@ class LLMConfig:
 
 @dataclass
 class SyncSettings:
-    ignore: List[str] = field(default_factory=lambda: ["package-lock.json", ".gitignore", "dist/*"])
+    ignore: List[str] = field(
+        default_factory=lambda: ["package-lock.json", ".gitignore", "dist/*"]
+    )
     auto_commit: bool = False
     context_file: str = "CONTEXT.md"
     adr_dir: str = "docs/adr/"
@@ -42,7 +44,9 @@ class AppConfig:
                 data = {"llm": asdict(self.llm), "settings": asdict(self.settings)}
                 json.dump(data, f, indent=2)
         except OSError as e:
-            raise ConfigError(f"Failed to save config to {self.config_path}: {e}") from e
+            raise ConfigError(
+                f"Failed to save config to {self.config_path}: {e}"
+            ) from e
 
     @classmethod
     def load(cls, path: str) -> "AppConfig":
@@ -60,7 +64,11 @@ class AppConfig:
             if "overridden_violations" not in settings_data:
                 settings_data["overridden_violations"] = []
 
-            config = cls(llm=LLMConfig(**llm_data), settings=SyncSettings(**settings_data), config_path=path)
+            config = cls(
+                llm=LLMConfig(**llm_data),
+                settings=SyncSettings(**settings_data),
+                config_path=path,
+            )
         except (json.JSONDecodeError, KeyError, TypeError) as e:
             logging.warning(f"Error loading config, using defaults: {e}")
             config = cls(config_path=path)

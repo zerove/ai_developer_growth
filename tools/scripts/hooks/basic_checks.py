@@ -99,7 +99,9 @@ def run_lint() -> tuple[bool, str]:
 
 def run_format_check() -> tuple[bool, str]:
     """Run ruff format check."""
-    return _run_subprocess(["ruff", "format", "--check", "."], timeout=120, description="Format")
+    return _run_subprocess(
+        ["ruff", "format", "--check", "."], timeout=120, description="Format"
+    )
 
 
 def run_typecheck() -> tuple[bool, str]:
@@ -135,7 +137,16 @@ def run_security() -> tuple[bool, str]:
 
     # bandit
     bandit_passed, bandit_out = _run_subprocess(
-        ["bandit", "-r", "tools/scripts/", "-f", "json", "-o", "bandit-report.json", "-ll"],
+        [
+            "bandit",
+            "-r",
+            "tools/scripts/",
+            "-f",
+            "json",
+            "-o",
+            "bandit-report.json",
+            "-ll",
+        ],
         timeout=120,
         description="Bandit",
     )
@@ -165,7 +176,9 @@ def run_format_files(paths: list[str]) -> tuple[bool, str]:
     """Run ruff format check on specific files."""
     if not paths:
         return True, "No Python files to format-check"
-    return _run_subprocess(["ruff", "format", "--check", *paths], timeout=60, description="Format")
+    return _run_subprocess(
+        ["ruff", "format", "--check", *paths], timeout=60, description="Format"
+    )
 
 
 # Registry of all basic check functions for discovery

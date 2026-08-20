@@ -9,7 +9,9 @@ class Settings(BaseSettings):
     algorithm: str = "HS256"
     access_token_expire_minutes: int = 30
     docs_path: str = "../../../docs"
-    knowledge_index_path: str = "../../../examples/ai-navigation/data/knowledge_index.json"
+    knowledge_index_path: str = (
+        "../../../examples/ai-navigation/data/knowledge_index.json"
+    )
 
     class Config:
         env_file = ".env"

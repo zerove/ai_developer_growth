@@ -12,7 +12,9 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
 # 添加搜索模块路径
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), "examples/ai-navigation/src"))
+sys.path.insert(
+    0, os.path.join(os.path.dirname(__file__), "examples/ai-navigation/src")
+)
 
 from enhanced_tfidf import Document, EnhancedTFIDF, create_enhanced_index
 
@@ -33,7 +35,11 @@ class SearchSuggestion(BaseModel):
     count: int
 
 
-app = FastAPI(title="AI Developer Growth Search API", description="AI 时代开发者成长知识库搜索 API", version="1.0.0")
+app = FastAPI(
+    title="AI Developer Growth Search API",
+    description="AI 时代开发者成长知识库搜索 API",
+    version="1.0.0",
+)
 
 # CORS 配置
 app.add_middleware(
@@ -75,7 +81,9 @@ def load_documents():
                                 if line.startswith("title:"):
                                     title = line.split(":", 1)[1].strip().strip("\"'")
                                 elif line.startswith("category:"):
-                                    category = line.split(":", 1)[1].strip().strip("\"'")
+                                    category = (
+                                        line.split(":", 1)[1].strip().strip("\"'")
+                                    )
                                 elif line.startswith("tags:"):
                                     tags_str = line.split(":", 1)[1].strip()
                                     if tags_str.startswith("["):
@@ -85,11 +93,17 @@ def load_documents():
                                     else:
                                         tags = [t.strip() for t in tags_str.split(",")]
                                 elif line.startswith("difficulty:"):
-                                    difficulty = line.split(":", 1)[1].strip().strip("\"'")
+                                    difficulty = (
+                                        line.split(":", 1)[1].strip().strip("\"'")
+                                    )
 
                     # 移除 frontmatter 获取正文
                     if content.startswith("---"):
-                        content = content.split("---", 2)[2] if len(content.split("---", 2)) >= 3 else content
+                        content = (
+                            content.split("---", 2)[2]
+                            if len(content.split("---", 2)) >= 3
+                            else content
+                        )
 
                     rel_path = os.path.relpath(filepath, docs_dir)
                     doc_id = rel_path.replace(".md", "").replace("/", "_")
@@ -157,7 +171,10 @@ async def search(
         )
 
     return SearchResponse(
-        query=q, total=len(formatted_results), results=formatted_results, time_ms=round((time.time() - start) * 1000, 2)
+        query=q,
+        total=len(formatted_results),
+        results=formatted_results,
+        time_ms=round((time.time() - start) * 1000, 2),
     )
 
 

@@ -40,7 +40,10 @@ if TYPE_CHECKING:
     from fastapi import FastAPI
 
 from tools.scripts.rules_engine.logger import logger
-from tools.scripts.rules_engine.store import init_db, record_run  # noqa: F401  (统一 SQLite 存储层，任务7)
+from tools.scripts.rules_engine.store import (
+    init_db,
+    record_run,
+)  # noqa: F401  (统一 SQLite 存储层，任务7)
 
 
 def get_trend_data(conn: sqlite3.Connection, limit: int = 30) -> list[dict[str, Any]]:
@@ -66,7 +69,9 @@ def get_trend_data(conn: sqlite3.Connection, limit: int = 30) -> list[dict[str, 
 
 def get_latest_report(conn: sqlite3.Connection) -> dict[str, Any] | None:
     """Get the most recent full report."""
-    row = conn.execute("SELECT report_json FROM quality_runs ORDER BY id DESC LIMIT 1").fetchone()
+    row = conn.execute(
+        "SELECT report_json FROM quality_runs ORDER BY id DESC LIMIT 1"
+    ).fetchone()
     if row and row[0]:
         return cast(dict[str, Any], json.loads(row[0]))
     return None
@@ -82,7 +87,15 @@ def get_language_stats(conn: sqlite3.Connection) -> list[dict[str, Any]]:
            FROM file_results WHERE run_id = ? GROUP BY language""",
         (latest_id,),
     ).fetchall()
-    return [{"language": r[0], "errors": r[1] or 0, "warnings": r[2] or 0, "info": r[3] or 0} for r in rows]
+    return [
+        {
+            "language": r[0],
+            "errors": r[1] or 0,
+            "warnings": r[2] or 0,
+            "info": r[3] or 0,
+        }
+        for r in rows
+    ]
 
 
 def get_comparison(conn: sqlite3.Connection) -> dict[str, Any] | None:
@@ -508,11 +521,15 @@ def _load_rules_summary() -> dict[str, Any]:
     for lang_id in languages:
         try:
             r = load_rules_for_language(lang_id)
-            summary[lang_id] = len(r.get("anti_patterns", [])) + len(r.get("security_patterns", []))
+            summary[lang_id] = len(r.get("anti_patterns", [])) + len(
+                r.get("security_patterns", [])
+            )
         except Exception as e:
             import logging
 
-            logging.getLogger(__name__).debug(f"Failed to load rules for {lang_id}: {e}")
+            logging.getLogger(__name__).debug(
+                f"Failed to load rules for {lang_id}: {e}"
+            )
             summary[lang_id] = -1
     return summary
 
@@ -522,9 +539,18 @@ def _get_rule_docs(rule_id: str) -> dict[str, Any]:
     import json
     from pathlib import Path
 
-    mapping_path = Path(__file__).resolve().parent.parent.parent.parent / ".jcode" / "rule-docs-mapping.json"
+    mapping_path = (
+        Path(__file__).resolve().parent.parent.parent.parent
+        / ".jcode"
+        / "rule-docs-mapping.json"
+    )
     if not mapping_path.exists():
-        return {"status": "ok", "rule_id": rule_id, "docs": [], "note": "No mapping cache found"}
+        return {
+            "status": "ok",
+            "rule_id": rule_id,
+            "docs": [],
+            "note": "No mapping cache found",
+        }
     try:
         mapping = json.loads(mapping_path.read_text())
         docs = mapping.get(rule_id, [])
@@ -585,7 +611,10 @@ def create_app(db_path: str = "adg_quality.db", ci_data_dir: str | None = None) 
     try:
         from fastapi import FastAPI
     except ImportError:
-        logger.info("Error: FastAPI required. Install: pip install fastapi uvicorn", file=sys.stderr)
+        logger.info(
+            "Error: FastAPI required. Install: pip install fastapi uvicorn",
+            file=sys.stderr,
+        )
         sys.exit(1)
 
     app = FastAPI(title="ADG Quality Dashboard")
@@ -620,7 +649,11 @@ def main() -> None:
     parser = argparse.ArgumentParser(description="ADG Quality Dashboard")
     parser.add_argument("--port", type=int, default=8765, help="Port (default: 8765)")
     parser.add_argument("--db", default="adg_quality.db", help="SQLite database path")
-    parser.add_argument("--ci-data-dir", default=None, help="CI quality data directory (.quality-trends/)")
+    parser.add_argument(
+        "--ci-data-dir",
+        default=None,
+        help="CI quality data directory (.quality-trends/)",
+    )
     args = parser.parse_args()
 
     app = create_app(args.db, ci_data_dir=args.ci_data_dir)
@@ -630,7 +663,9 @@ def main() -> None:
 
         uvicorn.run(app, host="0.0.0.0", port=args.port)  # nosec - dev only
     except ImportError:
-        logger.info("Error: uvicorn required. Install: pip install uvicorn", file=sys.stderr)
+        logger.info(
+            "Error: uvicorn required. Install: pip install uvicorn", file=sys.stderr
+        )
         sys.exit(1)
 
 

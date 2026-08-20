@@ -125,9 +125,7 @@ SECRET_KEY = "super-secret-12345"
                     icon = (
                         "🔴"
                         if issue["severity"] == "error"
-                        else "🟡"
-                        if issue["severity"] == "warning"
-                        else "ℹ️"
+                        else "🟡" if issue["severity"] == "warning" else "ℹ️"
                     )
                     print(
                         f"    L{issue['line']}: {icon} [{issue['category']}] {issue['message']}"

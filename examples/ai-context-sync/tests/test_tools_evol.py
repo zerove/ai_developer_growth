@@ -67,7 +67,10 @@ class TestAiEvolve:
         ]
         evolve = MagicMock()
         evolve.analyze_conflicts.return_value = candidates
-        evolve.propose_batch_evolution.return_value = {"action": "update", "rules": ["R1", "R2"]}
+        evolve.propose_batch_evolution.return_value = {
+            "action": "update",
+            "rules": ["R1", "R2"],
+        }
         sync = MagicMock()
         sync.evolution = evolve
 
@@ -157,7 +160,9 @@ class TestAiScaffold:
         MockSession.return_value = mock_session
 
         ai_scaffold = self._register(get_sync_tool=lambda **kw: sync)
-        result = json.loads(ai_scaffold(template="python-fastapi", target_dir="/tmp/proj"))
+        result = json.loads(
+            ai_scaffold(template="python-fastapi", target_dir="/tmp/proj")
+        )
 
         assert result["status"] == "success"
         assert result["template"] == "python-fastapi"

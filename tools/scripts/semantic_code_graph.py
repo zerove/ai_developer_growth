@@ -42,7 +42,10 @@ class SemanticCodeGraph:
     def build_graph(self) -> None:
         py_files = list(self.root_dir.glob("**/*.py"))
         for file_path in py_files:
-            if any(p in str(file_path) for p in [".venv", "build", "dist", ".git", "__pycache__"]):
+            if any(
+                p in str(file_path)
+                for p in [".venv", "build", "dist", ".git", "__pycache__"]
+            ):
                 continue
             try:
                 content = file_path.read_text(encoding="utf-8")
@@ -56,7 +59,7 @@ class SemanticCodeGraph:
         name_to_keys: dict[str, set[str]] = {}
         for key, node in self.nodes.items():
             name_to_keys.setdefault(node.name, set()).add(key)
-        
+
         for key, node in self.nodes.items():
             for dep in node.dependencies:
                 # Direct name match

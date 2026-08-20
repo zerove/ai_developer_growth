@@ -94,8 +94,22 @@ def test_format_rules_basic():
 
 def test_format_rules_multiple():
     rules = [
-        {"id": "r1", "name": "R1", "severity": "error", "category": "sec", "pattern": "p1", "message": "m1"},
-        {"id": "r2", "name": "R2", "severity": "info", "category": "style", "pattern": "p2", "message": "m2"},
+        {
+            "id": "r1",
+            "name": "R1",
+            "severity": "error",
+            "category": "sec",
+            "pattern": "p1",
+            "message": "m1",
+        },
+        {
+            "id": "r2",
+            "name": "R2",
+            "severity": "info",
+            "category": "style",
+            "pattern": "p2",
+            "message": "m2",
+        },
     ]
     yaml_str = format_rules("python", rules)
     assert yaml_str.count("id: ") == 2
@@ -155,10 +169,28 @@ def test_save_and_load_rules(tmp_path: Path, monkeypatch):
 def test_save_rules_force_overwrite(tmp_path: Path, monkeypatch):
     monkeypatch.setenv("ADG_HOME", str(tmp_path))
 
-    rules1 = [{"id": "r1", "name": "R1", "severity": "error", "category": "c", "pattern": "p1", "message": "m1"}]
+    rules1 = [
+        {
+            "id": "r1",
+            "name": "R1",
+            "severity": "error",
+            "category": "c",
+            "pattern": "p1",
+            "message": "m1",
+        }
+    ]
     save_rules("python", rules1, force=True)
 
-    rules2 = [{"id": "r2", "name": "R2", "severity": "warning", "category": "c", "pattern": "p2", "message": "m2"}]
+    rules2 = [
+        {
+            "id": "r2",
+            "name": "R2",
+            "severity": "warning",
+            "category": "c",
+            "pattern": "p2",
+            "message": "m2",
+        }
+    ]
     save_rules("python", rules2, force=True)
 
     loaded = load_generated_rules("python")
@@ -168,7 +200,16 @@ def test_save_rules_force_overwrite(tmp_path: Path, monkeypatch):
 
 def test_save_rules_rejects_unknown_language(tmp_path: Path, monkeypatch):
     monkeypatch.setenv("ADG_HOME", str(tmp_path))
-    rules = [{"id": "x", "name": "X", "severity": "error", "category": "c", "pattern": "p", "message": "m"}]
+    rules = [
+        {
+            "id": "x",
+            "name": "X",
+            "severity": "error",
+            "category": "c",
+            "pattern": "p",
+            "message": "m",
+        }
+    ]
     with pytest.raises(ValueError, match="Unknown language"):
         save_rules("unknown-lang", rules, force=True)
 
@@ -187,7 +228,16 @@ def test_load_generated_rules_nonexistent(tmp_path: Path, monkeypatch):
 
 def test_discover_and_list_languages(tmp_path: Path, monkeypatch):
     monkeypatch.setenv("ADG_HOME", str(tmp_path))
-    rules = [{"id": "r1", "name": "R1", "severity": "error", "category": "c", "pattern": "p", "message": "m"}]
+    rules = [
+        {
+            "id": "r1",
+            "name": "R1",
+            "severity": "error",
+            "category": "c",
+            "pattern": "p",
+            "message": "m",
+        }
+    ]
 
     assert list_generated_languages() == []
     save_rules("python", rules, force=True)
@@ -332,7 +382,16 @@ def test_print_status_with_rules(tmp_path: Path, monkeypatch, capsys):
     monkeypatch.setenv("ADG_HOME", str(tmp_path))
     from tools.scripts.rules_engine.rule_generator import print_status, save_rules
 
-    rules = [{"id": "r1", "name": "R1", "severity": "error", "category": "c", "pattern": "p", "message": "m"}]
+    rules = [
+        {
+            "id": "r1",
+            "name": "R1",
+            "severity": "error",
+            "category": "c",
+            "pattern": "p",
+            "message": "m",
+        }
+    ]
     save_rules("python", rules, force=True)
 
     print_status()

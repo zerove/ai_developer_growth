@@ -138,7 +138,9 @@ def _search_language_rules(query: str) -> list[dict[str, Any]]:
                 for category in _CATEGORIES:
                     for rule in data.get(category, []):
                         if matches(rule, query):
-                            results.append({"pack": lang_dir.name, "category": category, **rule})
+                            results.append(
+                                {"pack": lang_dir.name, "category": category, **rule}
+                            )
     return results
 
 
@@ -160,7 +162,9 @@ def _search_framework_rules(query: str) -> list[dict[str, Any]]:
                 for category in _CATEGORIES:
                     for rule in data.get(category, []):
                         if matches(rule, query):
-                            results.append({"pack": fw_dir.name, "category": category, **rule})
+                            results.append(
+                                {"pack": fw_dir.name, "category": category, **rule}
+                            )
     return results
 
 
@@ -249,11 +253,18 @@ def validate_rules(rules_dir: Path) -> tuple[int, int, list[str]]:
                     if not rule.get("id"):
                         messages.append(f"{yml.name}: rule missing 'id'")
                         errors += 1
-                    if not rule.get("pattern") and category in ["anti_patterns", "complexity"]:
-                        messages.append(f"{yml.name}/{rule.get('id', '?')}: missing 'pattern'")
+                    if not rule.get("pattern") and category in [
+                        "anti_patterns",
+                        "complexity",
+                    ]:
+                        messages.append(
+                            f"{yml.name}/{rule.get('id', '?')}: missing 'pattern'"
+                        )
                         errors += 1
                     if not rule.get("message"):
-                        messages.append(f"{yml.name}/{rule.get('id', '?')}: missing 'message'")
+                        messages.append(
+                            f"{yml.name}/{rule.get('id', '?')}: missing 'message'"
+                        )
                         errors += 1
                     total_rules += 1
         except yaml.YAMLError as e:
@@ -268,7 +279,11 @@ def export_rules(rules_dir: Path, output: Path) -> tuple[int, dict[str, Any]]:
 
     Returns (rule_count, combined_dict).
     """
-    combined: dict[str, Any] = {"anti_patterns": [], "naming_conventions": [], "complexity": []}
+    combined: dict[str, Any] = {
+        "anti_patterns": [],
+        "naming_conventions": [],
+        "complexity": [],
+    }
 
     for yml in sorted(rules_dir.glob("*.yml")):
         with open(yml) as f:

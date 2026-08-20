@@ -134,10 +134,18 @@ def main() -> int:
     import argparse
 
     parser = argparse.ArgumentParser(description="Get files changed by git diff")
-    parser.add_argument("--ref", type=str, default=None, help="Git ref to compare against")
+    parser.add_argument(
+        "--ref", type=str, default=None, help="Git ref to compare against"
+    )
     parser.add_argument("--repo-dir", type=str, default=None, help="Repository root")
-    parser.add_argument("--supported-only", action="store_true", help="Filter to supported languages only")
-    parser.add_argument("--json", action="store_true", dest="json_output", help="Output as JSON")
+    parser.add_argument(
+        "--supported-only",
+        action="store_true",
+        help="Filter to supported languages only",
+    )
+    parser.add_argument(
+        "--json", action="store_true", dest="json_output", help="Output as JSON"
+    )
     parser.add_argument("--verbose", action="store_true", help="Detailed output")
     args = parser.parse_args()
 

@@ -14,8 +14,20 @@ class TestGenerateHTMLReport:
 
     def test_with_violations(self):
         violations = [
-            {"severity": "Critical", "rule_id": "R1", "message": "Type error", "file": "src/main.py", "line": 10},
-            {"severity": "Warning", "rule_id": "R2", "message": "Long function", "file": "src/utils.py", "line": 25},
+            {
+                "severity": "Critical",
+                "rule_id": "R1",
+                "message": "Type error",
+                "file": "src/main.py",
+                "line": 10,
+            },
+            {
+                "severity": "Warning",
+                "rule_id": "R2",
+                "message": "Long function",
+                "file": "src/utils.py",
+                "line": 25,
+            },
         ]
         html_content = generate_html_report(violations)
         assert "Critical" in html_content

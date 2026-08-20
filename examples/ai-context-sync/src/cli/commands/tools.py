@@ -50,7 +50,9 @@ def scaffold(
 
 
 @app.command()
-def init(config: str = typer.Option(".ai-sync.json", help="Path to config file")) -> None:
+def init(
+    config: str = typer.Option(".ai-sync.json", help="Path to config file")
+) -> None:
     """Initialize a default .ai-sync.json configuration file."""
     if os.path.exists(config):
         logger.warning(f"Config file {config} already exists. Skipping.")
@@ -74,7 +76,10 @@ def init(config: str = typer.Option(".ai-sync.json", help="Path to config file")
 
 @app.command()
 @cli_error_handler
-def override(rule_id: str, config: str = typer.Option(".ai-sync.json", help="Path to config file")) -> None:
+def override(
+    rule_id: str,
+    config: str = typer.Option(".ai-sync.json", help="Path to config file"),
+) -> None:
     """Mark a specification violation as overridden."""
     from ...config import AppConfig
 
@@ -90,7 +95,9 @@ def override(rule_id: str, config: str = typer.Option(".ai-sync.json", help="Pat
 
 @app.command()
 @cli_error_handler
-def onboard(config: str = typer.Option(".ai-sync.json", help="Path to config file")) -> None:
+def onboard(
+    config: str = typer.Option(".ai-sync.json", help="Path to config file")
+) -> None:
     """Start an interactive architecture onboarding tour."""
     sync_tool = AIContextSync(config_path=config)
     from ...onboarding import OnboardingSession
@@ -160,7 +167,8 @@ def report(
     """Generate an HTML audit report for visualization."""
     sync_tool = AIContextSync(config_path=config)
     violations = sync_tool.auditor.audit(
-        sync_tool.analyzer.get_last_commit_diff(), sync_tool.analyzer.get_last_commit_message()
+        sync_tool.analyzer.get_last_commit_diff(),
+        sync_tool.analyzer.get_last_commit_message(),
     )
     violation_dicts = [v.to_dict() for v in violations]
 

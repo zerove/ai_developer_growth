@@ -19,7 +19,12 @@ class GitAnalyzer:
         Gets the raw diff of the last commit.
         """
         try:
-            result = subprocess.run(["git", "diff", "HEAD~1", "HEAD"], capture_output=True, text=True, check=True)
+            result = subprocess.run(
+                ["git", "diff", "HEAD~1", "HEAD"],
+                capture_output=True,
+                text=True,
+                check=True,
+            )
             return result.stdout
         except subprocess.CalledProcessError as e:
             logger.warning(f"Error getting git diff: {e}")
@@ -30,7 +35,12 @@ class GitAnalyzer:
         Gets the last commit message.
         """
         try:
-            result = subprocess.run(["git", "log", "-1", "--pretty=%B"], capture_output=True, text=True, check=True)
+            result = subprocess.run(
+                ["git", "log", "-1", "--pretty=%B"],
+                capture_output=True,
+                text=True,
+                check=True,
+            )
             return result.stdout.strip()
         except subprocess.CalledProcessError as e:
             logger.warning(f"Error getting commit message: {e}")
@@ -61,7 +71,9 @@ class GitAnalyzer:
 
             return "".join(filtered_diffs)
         except (ValueError, IndexError) as e:
-            logger.warning(f"Error parsing diff with unidiff: {e}. Falling back to basic filter.")
+            logger.warning(
+                f"Error parsing diff with unidiff: {e}. Falling back to basic filter."
+            )
             return self._basic_filter(diff_text)
 
     def _basic_filter(self, diff: str) -> str:

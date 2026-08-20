@@ -214,7 +214,9 @@ def _setup_hover(server: LanguageServer) -> None:
         return None
 
 
-def _create_code_action(rule: dict[str, Any], diag: Diagnostic, line_text: str, uri: str) -> CodeAction:
+def _create_code_action(
+    rule: dict[str, Any], diag: Diagnostic, line_text: str, uri: str
+) -> CodeAction:
     """Create a code action for a rule fix."""
     return CodeAction(
         title=f"Fix: {rule.get('name', rule.get('id', ''))}",
@@ -226,7 +228,9 @@ def _create_code_action(rule: dict[str, Any], diag: Diagnostic, line_text: str, 
                     TextEdit(
                         range=Range(
                             start=Position(line=diag.range.start.line, character=0),
-                            end=Position(line=diag.range.end.line, character=len(line_text)),
+                            end=Position(
+                                line=diag.range.end.line, character=len(line_text)
+                            ),
                         ),
                         new_text=line_text,  # Placeholder - actual fix requires pattern matching
                     )
@@ -265,8 +269,16 @@ def _setup_code_actions(server: LanguageServer) -> None:
                 lines = content.splitlines()
                 for rule in rules.get("anti_patterns", []):
                     if rule.get("id") == rule_id and rule.get("fix_hint"):
-                        line_text = lines[diag.range.start.line] if diag.range.start.line < len(lines) else ""
-                        actions.append(_create_code_action(rule, diag, line_text, params.text_document.uri))
+                        line_text = (
+                            lines[diag.range.start.line]
+                            if diag.range.start.line < len(lines)
+                            else ""
+                        )
+                        actions.append(
+                            _create_code_action(
+                                rule, diag, line_text, params.text_document.uri
+                            )
+                        )
                         break
             except (FileNotFoundError, PermissionError):
                 _ = None  # file access error
@@ -277,7 +289,9 @@ def _setup_code_actions(server: LanguageServer) -> None:
 def create_server() -> Any:
     """Create and configure the ADG LSP server."""
     if not HAS_PYGLS:
-        logger.info("Error: pygls required. Install: pip install pygls", file=sys.stderr)
+        logger.info(
+            "Error: pygls required. Install: pip install pygls", file=sys.stderr
+        )
         sys.exit(1)
 
     server = LanguageServer("adg-governance", "v1.0")
@@ -311,7 +325,9 @@ def _publish_diagnostics(server: LanguageServer, uri: str) -> None:
 def main() -> None:
     """Start the ADG LSP server."""
     if not HAS_PYGLS:
-        logger.info("Error: pygls required. Install: pip install pygls", file=sys.stderr)
+        logger.info(
+            "Error: pygls required. Install: pip install pygls", file=sys.stderr
+        )
         sys.exit(1)
 
     server = create_server()

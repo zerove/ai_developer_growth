@@ -211,7 +211,9 @@ class TestSync:
         sync.analyzer.get_last_commit_diff.return_value = "diff"
         sync.analyzer.filter_diff.return_value = "filtered"
         sync.synthesizer.synthesize_context_update.return_value = "ctx"
-        sync.synthesizer.synthesize_adr.return_value = "# ADR: Test Decision\n\nSome content."
+        sync.synthesizer.synthesize_adr.return_value = (
+            "# ADR: Test Decision\n\nSome content."
+        )
 
         # Ensure CONTEXT.md exists so the non-adr branch doesn't error
         ctx_path = os.path.join(tmpdir, "CONTEXT.md")
@@ -221,7 +223,9 @@ class TestSync:
 
         # Verify ADR file was created
         assert os.path.isdir(adr_dir)
-        adr_files = [f for f in os.listdir(adr_dir) if f.startswith("ADR-") and f.endswith(".md")]
+        adr_files = [
+            f for f in os.listdir(adr_dir) if f.startswith("ADR-") and f.endswith(".md")
+        ]
         assert len(adr_files) == 1
         with open(os.path.join(adr_dir, adr_files[0])) as f:
             assert "Test Decision" in f.read()
@@ -326,8 +330,12 @@ class TestSpecAudit:
         sync.analyzer.get_last_commit_diff.return_value = "diff"
         sync.analyzer.filter_diff.return_value = "filtered"
 
-        v1 = Violation(rule_id="R1", message="bad import", severity="Critical", file_path="a.py")
-        v2 = Violation(rule_id="R2", message="missing type", severity="Warning", file_path="b.py")
+        v1 = Violation(
+            rule_id="R1", message="bad import", severity="Critical", file_path="a.py"
+        )
+        v2 = Violation(
+            rule_id="R2", message="missing type", severity="Warning", file_path="b.py"
+        )
         sync.auditor.audit.return_value = [v1, v2]
 
         result = sync.spec_audit()

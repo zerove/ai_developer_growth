@@ -15,7 +15,9 @@ import sys
 from pathlib import Path
 
 # 动态导入 tools/scripts/_common.py，避免循环导入
-_tools_common_path = Path(__file__).parent.parent.parent / "tools" / "scripts" / "_common.py"
+_tools_common_path = (
+    Path(__file__).parent.parent.parent / "tools" / "scripts" / "_common.py"
+)
 spec = importlib.util.spec_from_file_location("_common_tools", _tools_common_path)
 _common_tools = importlib.util.module_from_spec(spec)
 sys.modules["_common_tools"] = _common_tools

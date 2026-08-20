@@ -24,7 +24,9 @@ from src.handlers import register_resources, register_tools
 mcp = FastMCP("AI-Context-Sync")
 
 
-def _get_sync_tool(config: str = ".ai-sync.json", dry_run: bool = False) -> AIContextSync:
+def _get_sync_tool(
+    config: str = ".ai-sync.json", dry_run: bool = False
+) -> AIContextSync:
     return AIContextSync(config_path=config, dry_run=dry_run)
 
 

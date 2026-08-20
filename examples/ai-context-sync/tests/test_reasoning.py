@@ -47,7 +47,9 @@ class TestDecisionReasoner:
         reasoner = DecisionReasoner(mock_llm, adr_dir)
         result = reasoner.explain_decision("quantum computing")
         assert (
-            "no relevant adr" in result.lower() or "couldn't find" in result.lower() or "no specific" in result.lower()
+            "no relevant adr" in result.lower()
+            or "couldn't find" in result.lower()
+            or "no specific" in result.lower()
         )
 
     def test_explain_decision_with_llm(self, adr_dir):

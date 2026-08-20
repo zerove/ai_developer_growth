@@ -14,7 +14,10 @@ class OllamaProvider(LLMProvider):
         url = f"{self.api_base or self.DEFAULT_BASE_URL}/api/chat"
         payload = {
             "model": model,
-            "messages": [{"role": "system", "content": system_prompt}, {"role": "user", "content": prompt}],
+            "messages": [
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": prompt},
+            ],
             "stream": False,
         }
         response = requests.post(url, json=payload, timeout=120)  # type: ignore[arg-type]

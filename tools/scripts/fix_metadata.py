@@ -56,7 +56,9 @@ def infer_title_from_content(content: str, filepath: str) -> str:
 def infer_difficulty(content: str) -> str:
     """推断难度"""
     content_lower = content.lower()
-    if any(word in content_lower for word in ["高级", "深入", "复杂", "advanced", "expert"]):
+    if any(
+        word in content_lower for word in ["高级", "深入", "复杂", "advanced", "expert"]
+    ):
         return "高级"
     elif any(word in content_lower for word in ["中级", "进阶", "intermediate"]):
         return "中级"

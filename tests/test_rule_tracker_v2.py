@@ -68,7 +68,10 @@ class TestLoadRecords:
 
     def test_load_records(self, tmp_path: Path) -> None:
         records_file = tmp_path / "records.jsonl"
-        record = {"timestamp": "2026-01-01T00:00:00+00:00", "summary": {"total_issues": 5}}
+        record = {
+            "timestamp": "2026-01-01T00:00:00+00:00",
+            "summary": {"total_issues": 5},
+        }
         records_file.write_text(json.dumps(record) + "\n")
         with patch("tools.scripts.rule_tracker._records_file") as mock_f:
             mock_f.return_value = records_file
@@ -112,7 +115,12 @@ class TestCmdRecord:
     def test_record_from_file(self, tmp_path: Path) -> None:
         data_file = tmp_path / "results.json"
         data_file.write_text(
-            json.dumps({"results": [{"issues": [{"severity": "error", "rule_id": "x"}]}], "health_score": 80})
+            json.dumps(
+                {
+                    "results": [{"issues": [{"severity": "error", "rule_id": "x"}]}],
+                    "health_score": 80,
+                }
+            )
         )
         args = argparse.Namespace(file=str(data_file), project="test-project")
         with patch("tools.scripts.rule_tracker._records_file") as mock_f:

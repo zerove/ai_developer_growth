@@ -86,7 +86,10 @@ async def delete_progress(request: Request, progress_id: int):
 
     db = await get_db()
     try:
-        await db.execute("DELETE FROM learning_progress WHERE id = ? AND user_id = ?", (progress_id, user_id))
+        await db.execute(
+            "DELETE FROM learning_progress WHERE id = ? AND user_id = ?",
+            (progress_id, user_id),
+        )
         await db.commit()
         return RedirectResponse(url="/progress", status_code=303)
     finally:

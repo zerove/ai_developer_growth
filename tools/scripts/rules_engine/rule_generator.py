@@ -174,7 +174,9 @@ def format_rules(language: str, rules: list[dict[str, Any]]) -> str:
 
     patterns_yaml = yaml.dump(rule_dicts, default_flow_style=False, allow_unicode=True)
     # Indent for template insertion
-    indented = "\n".join("  " + line if line.strip() else "" for line in patterns_yaml.split("\n"))
+    indented = "\n".join(
+        "  " + line if line.strip() else "" for line in patterns_yaml.split("\n")
+    )
 
     return RULE_TEMPLATE.format(language=language, patterns=indented)
 
@@ -199,7 +201,9 @@ def save_rules(language: str, rules: list[dict[str, Any]], force: bool = False) 
     """
     lang = language.lower().strip()
     if lang not in KNOWN_LANGUAGES:
-        raise ValueError(f"Unknown language: {language}. Known: {', '.join(sorted(KNOWN_LANGUAGES))}")
+        raise ValueError(
+            f"Unknown language: {language}. Known: {', '.join(sorted(KNOWN_LANGUAGES))}"
+        )
     if not rules:
         raise ValueError("At least one rule is required")
 
@@ -261,7 +265,11 @@ def list_generated_languages() -> list[str]:
     gen_dir = get_generated_rules_dir()
     if not gen_dir.exists():
         return []
-    return sorted(d.name for d in gen_dir.iterdir() if d.is_dir() and (d / "rules.d" / "anti_patterns.yml").exists())
+    return sorted(
+        d.name
+        for d in gen_dir.iterdir()
+        if d.is_dir() and (d / "rules.d" / "anti_patterns.yml").exists()
+    )
 
 
 # ── 验证 ──────────────────────────────────────────────────
@@ -364,7 +372,9 @@ def print_status(language: str | None = None) -> None:
     if not gen_langs:
         _out.write("📭 No generated rules found.\n")
         _out.write(f"   Cache directory: {get_generated_rules_dir()}\n")
-        _out.write("   Use 'adg-dev generate-rules <language> [--file sample.ext]' to generate.\n")
+        _out.write(
+            "   Use 'adg-dev generate-rules <language> [--file sample.ext]' to generate.\n"
+        )
         return
 
     _out.write(f"📦 Generated rules ({len(gen_langs)} languages):\n")
@@ -380,7 +390,9 @@ def print_status(language: str | None = None) -> None:
         if rules:
             _out.write(f"\n  Details for '{language}':\n")
             for r in rules:
-                icon = {"error": "🔴", "warning": "🟡", "info": "ℹ️"}.get(r.get("severity", ""), "•")
+                icon = {"error": "🔴", "warning": "🟡", "info": "ℹ️"}.get(
+                    r.get("severity", ""), "•"
+                )
                 _out.write(f"    {icon} [{r.get('id', '')}] {r.get('message', '')}\n")
         else:
             _out.write(f"\n  No generated rules for '{language}'\n")

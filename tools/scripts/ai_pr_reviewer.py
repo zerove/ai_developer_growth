@@ -15,13 +15,17 @@ def get_git_diff() -> str:
     """Get git diff against master/main or unstaged changes."""
     for ref in ["origin/master", "origin/main", "HEAD~1"]:
         try:
-            res = subprocess.run(["git", "diff", ref], capture_output=True, text=True, check=True)
+            res = subprocess.run(
+                ["git", "diff", ref], capture_output=True, text=True, check=True
+            )
             if res.stdout.strip():
                 return res.stdout
         except (subprocess.SubprocessError, FileNotFoundError):
             continue
     try:
-        res = subprocess.run(["git", "diff"], capture_output=True, text=True, check=True)
+        res = subprocess.run(
+            ["git", "diff"], capture_output=True, text=True, check=True
+        )
         return res.stdout
     except (subprocess.SubprocessError, FileNotFoundError):
         return ""
@@ -54,7 +58,9 @@ def check_security_findings(added_text: str, findings: list[dict[str, str]]) -> 
         )
 
 
-def check_architecture_findings(added_text: str, findings: list[dict[str, str]]) -> None:
+def check_architecture_findings(
+    added_text: str, findings: list[dict[str, str]]
+) -> None:
     """Check architecture patterns in added text."""
     if "import *" in added_text:
         findings.append(
@@ -75,7 +81,9 @@ def check_architecture_findings(added_text: str, findings: list[dict[str, str]])
         )
 
 
-def check_spec_findings(added_lines: list[str], lines: list[str], findings: list[dict[str, str]]) -> None:
+def check_spec_findings(
+    added_lines: list[str], lines: list[str], findings: list[dict[str, str]]
+) -> None:
     """Check spec and testing coverage in diff."""
     has_test_changes = any("test" in line.lower() for line in lines)
     if len(added_lines) > 50 and not has_test_changes:
@@ -93,7 +101,11 @@ def review_diff(diff_content: str) -> dict[str, Any]:
     findings: list[dict[str, str]] = []
     lines = diff_content.splitlines()
 
-    added_lines = [line[1:] for line in lines if line.startswith("+") and not line.startswith("+++")]
+    added_lines = [
+        line[1:]
+        for line in lines
+        if line.startswith("+") and not line.startswith("+++")
+    ]
     added_text = "\n".join(added_lines)
 
     check_security_findings(added_text, findings)

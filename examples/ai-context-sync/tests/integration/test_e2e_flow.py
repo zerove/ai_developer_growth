@@ -22,7 +22,9 @@ class TestEndToEndFlow:
         with open(self.config_path, "w") as f:
             import json
 
-            json.dump({"llm": {"provider": "openai", "model": "gpt-4o"}, "settings": {}}, f)
+            json.dump(
+                {"llm": {"provider": "openai", "model": "gpt-4o"}, "settings": {}}, f
+            )
         sync = AIContextSync(config_path=self.config_path, dry_run=True)
         assert sync.dry_run is True
         assert sync.config is not None
@@ -49,7 +51,15 @@ class TestEndToEndFlow:
         with open(self.config_path, "w") as f:
             import json
 
-            json.dump({"llm": {}, "settings": {"context_file": os.path.join(self.tmpdir, "CONTEXT.md")}}, f)
+            json.dump(
+                {
+                    "llm": {},
+                    "settings": {
+                        "context_file": os.path.join(self.tmpdir, "CONTEXT.md")
+                    },
+                },
+                f,
+            )
         with open(os.path.join(self.tmpdir, "CONTEXT.md"), "w") as f:
             f.write("# Test Context\nProject description.")
         sync = AIContextSync(config_path=self.config_path, dry_run=True)
@@ -60,7 +70,13 @@ class TestEndToEndFlow:
         with open(self.config_path, "w") as f:
             import json
 
-            json.dump({"llm": {"provider": "anthropic", "model": "claude-3"}, "settings": {"test_timeout": 60}}, f)
+            json.dump(
+                {
+                    "llm": {"provider": "anthropic", "model": "claude-3"},
+                    "settings": {"test_timeout": 60},
+                },
+                f,
+            )
         sync = AIContextSync(config_path=self.config_path, dry_run=True)
         assert sync.config.llm.provider == "anthropic"
         assert sync.config.settings.test_timeout == 60

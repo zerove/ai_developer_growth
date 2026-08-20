@@ -95,10 +95,14 @@ class JcodeConfig:
             tests_dir=project_data.get("directories", {}).get("tests", "tests"),
             docs_dir=project_data.get("directories", {}).get("docs", "docs"),
             scripts_dir=project_data.get("directories", {}).get("scripts", "scripts"),
-            min_test_coverage=project_data.get("quality", {}).get("min_test_coverage", 70),
+            min_test_coverage=project_data.get("quality", {}).get(
+                "min_test_coverage", 70
+            ),
             lint_tool=project_data.get("quality", {}).get("lint_tool", "ruff"),
             type_checker=project_data.get("quality", {}).get("type_checker"),
-            security_scanner=project_data.get("quality", {}).get("security_scanner", "bandit"),
+            security_scanner=project_data.get("quality", {}).get(
+                "security_scanner", "bandit"
+            ),
         )
 
         agents = []
@@ -218,10 +222,30 @@ def init_project(
         JcodeConfig: 项目配置
     """
     tool_defaults = {
-        "python": {"lint": "ruff", "type": "mypy", "test": "pytest", "security": "bandit"},
-        "typescript": {"lint": "eslint", "type": "tsc", "test": "vitest", "security": "semgrep"},
-        "rust": {"lint": "clippy", "type": "cargo", "test": "cargo", "security": "cargo-audit"},
-        "go": {"lint": "golangci-lint", "type": "go vet", "test": "go test", "security": "gosec"},
+        "python": {
+            "lint": "ruff",
+            "type": "mypy",
+            "test": "pytest",
+            "security": "bandit",
+        },
+        "typescript": {
+            "lint": "eslint",
+            "type": "tsc",
+            "test": "vitest",
+            "security": "semgrep",
+        },
+        "rust": {
+            "lint": "clippy",
+            "type": "cargo",
+            "test": "cargo",
+            "security": "cargo-audit",
+        },
+        "go": {
+            "lint": "golangci-lint",
+            "type": "go vet",
+            "test": "go test",
+            "security": "gosec",
+        },
     }
 
     defaults = tool_defaults.get(language, tool_defaults["python"])

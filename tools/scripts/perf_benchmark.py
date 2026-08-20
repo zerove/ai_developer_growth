@@ -13,9 +13,9 @@ import time
 from pathlib import Path
 from typing import Any
 
-from tools.scripts.semantic_code_graph import SemanticCodeGraph
-from tools.scripts.rules_engine.performance import PerformanceOptimizer
 from tools.scripts.rules_engine.checker import check_directory
+from tools.scripts.rules_engine.performance import PerformanceOptimizer
+from tools.scripts.semantic_code_graph import SemanticCodeGraph
 
 
 def benchmark_semantic_code_graph(iterations: int = 3) -> dict[str, Any]:
@@ -124,4 +124,5 @@ def main() -> int:
 
 if __name__ == "__main__":
     import sys
+
     sys.exit(main())

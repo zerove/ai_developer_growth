@@ -39,11 +39,15 @@ def main() -> None:
     init_parser.add_argument("--framework", default=None, help="框架名称")
     init_parser.add_argument("--output", default=".", help="输出目录")
     init_parser.add_argument("--force", action="store_true", help="强制覆盖已有配置")
-    init_parser.add_argument("--ci", choices=["github", "none"], default="none", help="生成 CI 配置文件")
+    init_parser.add_argument(
+        "--ci", choices=["github", "none"], default="none", help="生成 CI 配置文件"
+    )
     init_parser.add_argument("--no-hooks", action="store_true", help="不安装 git hooks")
 
     # adg sync
-    sync_parser = sub.add_parser("sync", help="同步最新 JCode 工作流与自动化脚本到当前项目")
+    sync_parser = sub.add_parser(
+        "sync", help="同步最新 JCode 工作流与自动化脚本到当前项目"
+    )
     sync_parser.add_argument("--path", default=".", help="目标项目路径")
 
     # adg check
@@ -53,7 +57,9 @@ def main() -> None:
     # adg scan
     scan_parser = sub.add_parser("scan", help="扫描文件中的反模式")
     scan_parser.add_argument("files", nargs="+", help="要扫描的文件路径")
-    scan_parser.add_argument("--verbose", "-v", action="store_true", help="显示详细信息")
+    scan_parser.add_argument(
+        "--verbose", "-v", action="store_true", help="显示详细信息"
+    )
     scan_parser.add_argument("--json", action="store_true", help="JSON 格式输出")
 
     # adg audit
@@ -61,15 +67,23 @@ def main() -> None:
     audit_sub = audit_parser.add_subparsers(dest="audit_type", help="审计类型")
     sdlc_parser = audit_sub.add_parser("sdlc", help="AI-SDLC 流程合规审计")
     sdlc_parser.add_argument("--path", default=".", help="项目路径")
-    sdlc_parser.add_argument("--verbose", "-v", action="store_true", help="显示详细信息")
+    sdlc_parser.add_argument(
+        "--verbose", "-v", action="store_true", help="显示详细信息"
+    )
 
     # adg feedback
     feedback_parser = sub.add_parser("feedback", help="误报反馈管理")
-    feedback_parser.add_argument("--verbose", "-v", action="store_true", help="显示详细信息")
-    feedback_parser.add_argument("--reset", action="store_true", help="重置所有反馈数据")
+    feedback_parser.add_argument(
+        "--verbose", "-v", action="store_true", help="显示详细信息"
+    )
+    feedback_parser.add_argument(
+        "--reset", action="store_true", help="重置所有反馈数据"
+    )
 
     # adg generate-rules
-    gen_parser = sub.add_parser("generate-rules", help="为语言生成代码质量规则（需 Jcode agent 提供规则内容）")
+    gen_parser = sub.add_parser(
+        "generate-rules", help="为语言生成代码质量规则（需 Jcode agent 提供规则内容）"
+    )
     gen_parser.add_argument("language", nargs="?", help="语言名称（小写）")
     gen_parser.add_argument("--file", help="示例文件路径（agent 基于文件分析）")
     gen_parser.add_argument("--force", action="store_true", help="覆盖已有规则")
@@ -79,11 +93,15 @@ def main() -> None:
 
     # adg dashboard
     dashboard_parser = sub.add_parser("dashboard", help="仪表板与趋势报告")
-    dashboard_sub = dashboard_parser.add_subparsers(dest="dashboard_type", help="仪表板类型")
+    dashboard_sub = dashboard_parser.add_subparsers(
+        dest="dashboard_type", help="仪表板类型"
+    )
     # adg dashboard contributor
     db_contrib = dashboard_sub.add_parser("contributor", help="贡献者仪表板")
     db_contrib.add_argument("--path", default=".", help="项目路径")
-    db_contrib.add_argument("--format", choices=["markdown", "text"], default="markdown", help="输出格式")
+    db_contrib.add_argument(
+        "--format", choices=["markdown", "text"], default="markdown", help="输出格式"
+    )
     # adg dashboard trend
     db_trend = dashboard_sub.add_parser("trend", help="质量趋势报告")
     db_trend.add_argument("--path", default=".", help="项目路径")
@@ -117,7 +135,9 @@ def main() -> None:
 
     elif args.command == "sync":
         res = sync_project_workflows(args.path)
-        print(f"✅ JCode 工作流同步成功！已同步 {res['synced_files_count']} 个核心脚本到 {res['target']}")
+        print(
+            f"✅ JCode 工作流同步成功！已同步 {res['synced_files_count']} 个核心脚本到 {res['target']}"
+        )
 
     elif args.command == "check":
         project_path = Path(args.path)
@@ -254,7 +274,9 @@ def main() -> None:
         print(f"\n   请使用 Jcode skill `/generate-rules {lang}` 来交互式生成规则。")
         print(f"   agent 会基于对 {lang} 的知识生成适合 ADG 引擎的规则。")
         print("\n   或手动调用 Python API:")
-        print("     from tools.scripts.rules_engine.rule_generator import save_rules, format_rules")
+        print(
+            "     from tools.scripts.rules_engine.rule_generator import save_rules, format_rules"
+        )
         print(f"     save_rules('{lang}', rules_list, force={args.force})")
         sys.exit(0)
 

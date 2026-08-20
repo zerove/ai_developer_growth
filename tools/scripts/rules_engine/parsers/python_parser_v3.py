@@ -7,13 +7,21 @@ from .base import BaseParser
 class PythonParser(BaseParser):
     """语义级 Python 解析器，支持 async/decorator 特性。"""
 
-    def parse(self, root_node: _TreeNode, lines: list[str]) -> tuple[list[FunctionInfo], list[ClassInfo]]:
+    def parse(
+        self, root_node: _TreeNode, lines: list[str]
+    ) -> tuple[list[FunctionInfo], list[ClassInfo]]:
         functions: list[FunctionInfo] = []
         classes: list[ClassInfo] = []
         self._walk(root_node, lines, functions, classes)
         return functions, classes
 
-    def _walk(self, node: _TreeNode, lines: list[str], functions: list[FunctionInfo], classes: list[ClassInfo]) -> None:
+    def _walk(
+        self,
+        node: _TreeNode,
+        lines: list[str],
+        functions: list[FunctionInfo],
+        classes: list[ClassInfo],
+    ) -> None:
         if node.type in ["function_definition", "async_function_definition"]:
             functions.append(self._parse_func(node, lines))
         elif node.type == "class_definition":

@@ -51,7 +51,10 @@ def temp_project():
 
     config = {
         "llm": {"provider": "openai", "model": "gpt-4o"},
-        "settings": {"context_file": os.path.join(tmpdir, "CONTEXT.md"), "adr_dir": os.path.join(tmpdir, "docs/adr")},
+        "settings": {
+            "context_file": os.path.join(tmpdir, "CONTEXT.md"),
+            "adr_dir": os.path.join(tmpdir, "docs/adr"),
+        },
     }
 
     with open(config_path, "w") as f:

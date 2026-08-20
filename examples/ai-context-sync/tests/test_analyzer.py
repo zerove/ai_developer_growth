@@ -32,7 +32,9 @@ class TestGetLastCommitDiff(unittest.TestCase):
     @patch("subprocess.run")
     def test_returns_empty_on_called_process_error(self, mock_run):
         """Lines 26-28: CalledProcessError branch."""
-        mock_run.side_effect = subprocess.CalledProcessError(returncode=128, cmd=["git", "diff"])
+        mock_run.side_effect = subprocess.CalledProcessError(
+            returncode=128, cmd=["git", "diff"]
+        )
         result = self.analyzer.get_last_commit_diff()
         self.assertEqual(result, "")
 
@@ -52,7 +54,9 @@ class TestGetLastCommitMessage(unittest.TestCase):
     @patch("subprocess.run")
     def test_returns_empty_on_called_process_error(self, mock_run):
         """Lines 40-42: CalledProcessError branch."""
-        mock_run.side_effect = subprocess.CalledProcessError(returncode=128, cmd=["git", "log"])
+        mock_run.side_effect = subprocess.CalledProcessError(
+            returncode=128, cmd=["git", "log"]
+        )
         result = self.analyzer.get_last_commit_message()
         self.assertEqual(result, "")
 

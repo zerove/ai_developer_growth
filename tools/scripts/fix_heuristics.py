@@ -8,15 +8,18 @@ from __future__ import annotations
 # Maps pattern substrings to fix templates
 HEURISTIC_FIXES: dict[str, dict[str, str]] = {
     # Python
-    "ev" + "al(": {
+    "ev"
+    + "al(": {
         "fix": "ast.literal_eval({arg})",
         "message": "Use ast.literal_eval() for safe evaluation",
     },
-    "ex" + "ec(": {
+    "ex"
+    + "ec(": {
         "fix": "# Replace dynamic execution with direct function calls",
         "message": "Avoid dynamic code execution; use direct function calls",
     },
-    "exc" + "ept:": {
+    "exc"
+    + "ept:": {
         "fix": "except Exception:",
         "message": "Catch specific exceptions instead of bare except",
     },
@@ -50,7 +53,8 @@ HEURISTIC_FIXES: dict[str, dict[str, str]] = {
         "fix": "subprocess.run({args}, check=True)",
         "message": "Use subprocess.run() with check=True",
     },
-    "pi" + "ckle.loads(": {
+    "pi"
+    + "ckle.loads(": {
         "fix": "# Avoid pickle; use JSON or msgpack",
         "message": "Avoid pickle for untrusted data",
     },
@@ -91,15 +95,31 @@ HEURISTIC_FIXES: dict[str, dict[str, str]] = {
 # Special keyword "__exclude:X" means "don't match if X is present".
 _MESSAGE_HEURISTICS: list[tuple[list[str], str | None, str | None]] = [
     (["bare except", "catch all"], "except Exception:", "Catch specific exceptions"),
-    (["eval", "__exclude:literal"], "ast.literal_eval()", "Use ast.literal_eval() instead"),
-    (["hardcoded", "secret"], 'os.environ["{SECRET_NAME}"]', "Move secrets to environment variables"),
+    (
+        ["eval", "__exclude:literal"],
+        "ast.literal_eval()",
+        "Use ast.literal_eval() instead",
+    ),
+    (
+        ["hardcoded", "secret"],
+        'os.environ["{SECRET_NAME}"]',
+        "Move secrets to environment variables",
+    ),
     (["sql", "inject"], "cursor.execute(query, params)", "Use parameterized queries"),
     (["sql", "string"], "cursor.execute(query, params)", "Use parameterized queries"),
     (["sql", "format"], "cursor.execute(query, params)", "Use parameterized queries"),
     (["print", "logging"], "logging.info()", "Replace print with logging"),
     (["print", "use"], "logging.info()", "Replace print with logging"),
-    (["type", "any"], "// Add specific type annotation", "Replace 'any' with specific types"),
-    (["type", "specific"], "// Add specific type annotation", "Replace 'any' with specific types"),
+    (
+        ["type", "any"],
+        "// Add specific type annotation",
+        "Replace 'any' with specific types",
+    ),
+    (
+        ["type", "specific"],
+        "// Add specific type annotation",
+        "Replace 'any' with specific types",
+    ),
     (["console.log"], "", "Remove console.log"),
     (["debugger"], "", "Remove debugger statement"),
     (["shadowing"], "", "Rename variable to avoid shadowing"),
@@ -144,7 +164,11 @@ def heuristic_fix(rule: dict[str, str]) -> dict[str, str]:
             elif kw in msg_lower:
                 match_found = True
         if match_found and not exclude:
-            return {"fix_replacement": fix or "", "fix_message": msg or "", "source": "heuristic"}
+            return {
+                "fix_replacement": fix or "",
+                "fix_message": msg or "",
+                "source": "heuristic",
+            }
 
     # Use fix_hint if available
     if fix_hint:
@@ -154,4 +178,8 @@ def heuristic_fix(rule: dict[str, str]) -> dict[str, str]:
             "source": "fix_hint",
         }
 
-    return {"fix_replacement": "", "fix_message": "Manual fix required", "source": "none"}
+    return {
+        "fix_replacement": "",
+        "fix_message": "Manual fix required",
+        "source": "none",
+    }

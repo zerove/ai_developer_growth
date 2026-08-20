@@ -172,7 +172,9 @@ class TestLoadCommonRules:
     def test_with_common_security(self, tmp_path: Path) -> None:
         common = tmp_path / "common"
         common.mkdir()
-        (common / "security.yml").write_text(yaml.dump({"anti_patterns": [{"id": "sec"}]}))
+        (common / "security.yml").write_text(
+            yaml.dump({"anti_patterns": [{"id": "sec"}]})
+        )
         result = _load_common_rules(tmp_path)
         assert "anti_patterns" in result
 

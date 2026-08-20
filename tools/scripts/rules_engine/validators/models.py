@@ -12,7 +12,14 @@ from typing import Any
 # Re-export from rules_engine for backward compatibility
 from tools.scripts.rules_engine.models import Issue, ValidationResult  # noqa: F401
 
-__all__ = ["Issue", "ValidationResult", "FixResult", "ValidationError", "RuleLoadError", "ValidationExecutionError"]
+__all__ = [
+    "Issue",
+    "ValidationResult",
+    "FixResult",
+    "ValidationError",
+    "RuleLoadError",
+    "ValidationExecutionError",
+]
 
 
 class ValidationError(Exception):

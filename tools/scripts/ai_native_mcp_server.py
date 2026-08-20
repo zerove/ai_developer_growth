@@ -16,7 +16,9 @@ class AINativeMCPServer:
     def __init__(self) -> None:
         self.root_dir = get_project_root()
 
-    def handle_tool_call(self, tool_name: str, arguments: dict[str, object]) -> dict[str, object]:
+    def handle_tool_call(
+        self, tool_name: str, arguments: dict[str, object]
+    ) -> dict[str, object]:
         if tool_name == "query_semantic_graph":
             symbol = arguments.get("symbol", "")
             graph_path = self.root_dir / ".semantic_graph.json"

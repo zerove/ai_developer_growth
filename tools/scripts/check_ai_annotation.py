@@ -79,7 +79,13 @@ def check_file(filepath: Path) -> dict[str, Any]:
 
     # 检查是否有 AI 生成标记但缺少标准标注
     has_ai_marker = False
-    for pattern in [r"# AI-generated", r"# Generated with", r"# AI assistant", r"# This code is AI", r"# This function was generated"]:
+    for pattern in [
+        r"# AI-generated",
+        r"# Generated with",
+        r"# AI assistant",
+        r"# This code is AI",
+        r"# This function was generated",
+    ]:
         if re.search(pattern, content, re.IGNORECASE):
             has_ai_marker = True
             break
@@ -87,7 +93,11 @@ def check_file(filepath: Path) -> dict[str, Any]:
     if has_ai_marker and not has_annotation:
         issues.append("检测到 AI 生成标记但缺少标准 # [AI-GEN] 标注")
 
-    return {"passed": len(issues) == 0, "issues": issues, "has_annotation": has_annotation}
+    return {
+        "passed": len(issues) == 0,
+        "issues": issues,
+        "has_annotation": has_annotation,
+    }
 
 
 def fix_file(filepath: Path, model: str = "AI") -> bool:
@@ -125,7 +135,11 @@ def check_strict_mode(filepath: Path) -> list[dict[str, Any]]:
     lines = content.split("\n")
     has_annotation = False
     for line in lines[:30]:
-        if AI_GENERATED_PATTERN.match(line) or AI_ASSISTED_PATTERN.match(line) or AI_REVIEWED_PATTERN.match(line):
+        if (
+            AI_GENERATED_PATTERN.match(line)
+            or AI_ASSISTED_PATTERN.match(line)
+            or AI_REVIEWED_PATTERN.match(line)
+        ):
             has_annotation = True
             break
 
@@ -147,8 +161,14 @@ def _collect_files(args: argparse.Namespace) -> list[Path]:
     if args.file:
         return [args.file]
     if args.path:
-        return [f for f in Path(args.path).rglob("*") if f.is_file() and f.suffix in TARGET_EXTENSIONS]
-    return [f for f in Path("tools/scripts").rglob("*.py") if "__pycache__" not in str(f)]
+        return [
+            f
+            for f in Path(args.path).rglob("*")
+            if f.is_file() and f.suffix in TARGET_EXTENSIONS
+        ]
+    return [
+        f for f in Path("tools/scripts").rglob("*.py") if "__pycache__" not in str(f)
+    ]
 
 
 def _process_file(filepath: Path, args: argparse.Namespace) -> tuple[str, int]:

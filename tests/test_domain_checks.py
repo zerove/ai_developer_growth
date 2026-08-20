@@ -20,7 +20,9 @@ class TestRunLanguageRules:
 
     @patch("tools.scripts.hooks.domain_checks.detect_language_from_file")
     @patch("tools.scripts.hooks.domain_checks.validate_file")
-    def test_run_language_rules_file_pass(self, mock_validate, mock_detect, tmp_path: Path):
+    def test_run_language_rules_file_pass(
+        self, mock_validate, mock_detect, tmp_path: Path
+    ):
         """Test language rules on a passing file."""
         test_file = tmp_path / "test.py"
         test_file.write_text("print('hello')")
@@ -38,7 +40,9 @@ class TestRunLanguageRules:
 
     @patch("tools.scripts.hooks.domain_checks.detect_language_from_file")
     @patch("tools.scripts.hooks.domain_checks.validate_file")
-    def test_run_language_rules_file_fail(self, mock_validate, mock_detect, tmp_path: Path):
+    def test_run_language_rules_file_fail(
+        self, mock_validate, mock_detect, tmp_path: Path
+    ):
         """Test language rules on a failing file."""
         test_file = tmp_path / "test.py"
         test_file.write_text("print('hello')")
@@ -47,7 +51,10 @@ class TestRunLanguageRules:
         mock_result = MagicMock()
         mock_result.passed = False
         mock_result.issues = [MagicMock(line=1, type="error", message="test issue")]
-        mock_result.to_dict.return_value = {"passed": False, "issues": [{"line": 1, "type": "error", "message": "test issue"}]}
+        mock_result.to_dict.return_value = {
+            "passed": False,
+            "issues": [{"line": 1, "type": "error", "message": "test issue"}],
+        }
         mock_validate.return_value = mock_result
 
         passed, output = run_language_rules(test_file)
@@ -57,7 +64,9 @@ class TestRunLanguageRules:
 
     @patch("tools.scripts.hooks.domain_checks.detect_language_from_file")
     @patch("tools.scripts.hooks.domain_checks.validate_file")
-    def test_run_language_rules_unknown_lang(self, mock_validate, mock_detect, tmp_path: Path):
+    def test_run_language_rules_unknown_lang(
+        self, mock_validate, mock_detect, tmp_path: Path
+    ):
         """Test language rules with unknown language."""
         test_file = tmp_path / "test.xyz"
         test_file.write_text("unknown")
@@ -107,7 +116,10 @@ class TestRunQualityGate:
         test_file.write_text("def foo(): return 1")
 
         mock_detect.return_value = "python"
-        mock_check.return_value = {"passed": False, "issues": [{"line": 1, "type": "error", "message": "test"}]}
+        mock_check.return_value = {
+            "passed": False,
+            "issues": [{"line": 1, "type": "error", "message": "test"}],
+        }
 
         passed, output = run_quality_gate(test_file)
         assert passed is False
@@ -128,7 +140,9 @@ class TestRunQualityGate:
 
     @patch("tools.scripts.hooks.domain_checks.detect_language_from_file")
     @patch("tools.scripts.hooks.domain_checks.check_file")
-    def test_run_quality_gate_json_format(self, mock_check, mock_detect, tmp_path: Path):
+    def test_run_quality_gate_json_format(
+        self, mock_check, mock_detect, tmp_path: Path
+    ):
         """Test quality gate with JSON output."""
         test_file = tmp_path / "test.py"
         test_file.write_text("def foo(): return 1")
@@ -144,7 +158,9 @@ class TestRunQualityGate:
 
     @patch("tools.scripts.hooks.domain_checks.detect_language_from_file")
     @patch("tools.scripts.hooks.domain_checks.check_file")
-    def test_run_quality_gate_skips_test_files(self, mock_check, mock_detect, tmp_path: Path):
+    def test_run_quality_gate_skips_test_files(
+        self, mock_check, mock_detect, tmp_path: Path
+    ):
         """Test quality gate skips certain checks for test files."""
         test_file = tmp_path / "tests" / "test_file.py"
         test_file.parent.mkdir(parents=True)

@@ -20,6 +20,7 @@ from typing import Any
 @dataclass
 class QualityMetrics:
     """Quality metrics for a case study."""
+
     case_name: str
     authenticity_score: float = 0.0  # 0-100
     efficiency_credibility: float = 0.0  # 0-100
@@ -85,7 +86,10 @@ class CaseStudyQualityAnalyzer:
         results = []
         for case_path in sorted(self.case_studies_dir.iterdir()):
             if case_path.is_dir() or case_path.suffix == ".md":
-                if case_path.name.startswith(".") or case_path.name == "TEMPLATE-community.md":
+                if (
+                    case_path.name.startswith(".")
+                    or case_path.name == "TEMPLATE-community.md"
+                ):
                     continue
                 metrics = self.analyze_case(case_path)
                 results.append(metrics)
@@ -101,7 +105,7 @@ class CaseStudyQualityAnalyzer:
         if not readme_path.exists():
             return QualityMetrics(
                 case_name=case_path.name,
-                issues=["Missing README.md or case study file"]
+                issues=["Missing README.md or case study file"],
             )
 
         content = readme_path.read_text(encoding="utf-8")
@@ -125,11 +129,11 @@ class CaseStudyQualityAnalyzer:
             "cross_refs": 0.15,
         }
         metrics.overall_score = (
-            metrics.authenticity_score * weights["authenticity"] +
-            metrics.efficiency_credibility * weights["efficiency"] +
-            metrics.insight_quality * weights["insight"] +
-            metrics.completeness * weights["completeness"] +
-            metrics.cross_references * weights["cross_refs"]
+            metrics.authenticity_score * weights["authenticity"]
+            + metrics.efficiency_credibility * weights["efficiency"]
+            + metrics.insight_quality * weights["insight"]
+            + metrics.completeness * weights["completeness"]
+            + metrics.cross_references * weights["cross_refs"]
         )
 
         # Generate issues and strengths
@@ -212,7 +216,13 @@ class CaseStudyQualityAnalyzer:
         data_rows = []
 
         for line in lines:
-            if "|" in line and ("阶段" in line or "总计" in line or "指标" in line or "Metric" in line or "---" in line):
+            if "|" in line and (
+                "阶段" in line
+                or "总计" in line
+                or "指标" in line
+                or "Metric" in line
+                or "---" in line
+            ):
                 in_table = True
             if in_table and line.strip().startswith("|"):
                 if "---" not in line:  # Skip separator rows
@@ -278,7 +288,11 @@ class CaseStudyQualityAnalyzer:
             score += min(specific_count * 5, 25)
 
             # Check for code/pattern references
-            code_refs = sum(1 for i in insights if re.search(r"(函数|类|模块|API|pattern|模式|pattern)", i))
+            code_refs = sum(
+                1
+                for i in insights
+                if re.search(r"(函数|类|模块|API|pattern|模式|pattern)", i)
+            )
             score += min(code_refs * 5, 15)
 
         return min(max_score, score)
@@ -305,7 +319,9 @@ class CaseStudyQualityAnalyzer:
     def _extract_numbered_insights(self, insights_text: str) -> list[str]:
         """Extract numbered insights."""
         # Format 1: "1. **洞察 1** : ..."
-        numbered = re.findall(r"^\d+\.\s+\*\*(洞察\s*\d+)?\*?\*\s*:?\s*(.+)$", insights_text, re.MULTILINE)
+        numbered = re.findall(
+            r"^\d+\.\s+\*\*(洞察\s*\d+)?\*?\*\s*:?\s*(.+)$", insights_text, re.MULTILINE
+        )
         if numbered:
             return [item[-1] for item in numbered]
 
@@ -332,14 +348,22 @@ class CaseStudyQualityAnalyzer:
         if re.search(r"(函数|类|模块|API|pattern|模式|工具|技术|方法)", insight):
             return True
         # Mentions specific tools/tech
-        if re.search(r"(Claude|GPT|Cursor|Copilot|ruff|mypy|pytest|ADG|AST|MCP)", insight):
+        if re.search(
+            r"(Claude|GPT|Cursor|Copilot|ruff|mypy|pytest|ADG|AST|MCP)", insight
+        ):
             return True
         return False
 
     def _analyze_completeness(self, content: str) -> float:
         """Score completeness of required sections."""
         required = [
-            "背景", "AI 协作", "效率", "洞察", "适用场景", "交付物", "提交前检查"
+            "背景",
+            "AI 协作",
+            "效率",
+            "洞察",
+            "适用场景",
+            "交付物",
+            "提交前检查",
         ]
         found = 0
         for req in required:
@@ -392,25 +416,37 @@ class CaseStudyQualityAnalyzer:
     def _generate_feedback(self, metrics: QualityMetrics, content: str) -> None:
         """Generate issues and strengths based on analysis."""
         if metrics.authenticity_score < 50:
-            metrics.issues.append("Low authenticity - missing concrete evidence (links, commits, file paths)")
+            metrics.issues.append(
+                "Low authenticity - missing concrete evidence (links, commits, file paths)"
+            )
         elif metrics.authenticity_score > 80:
             metrics.strengths.append("High authenticity with concrete references")
 
         if metrics.efficiency_credibility < 50:
-            metrics.issues.append("Efficiency data lacks credibility - missing or unrealistic tables")
+            metrics.issues.append(
+                "Efficiency data lacks credibility - missing or unrealistic tables"
+            )
         elif metrics.efficiency_credibility > 80:
-            metrics.strengths.append("Credible efficiency data with validated calculations")
+            metrics.strengths.append(
+                "Credible efficiency data with validated calculations"
+            )
 
         if metrics.insight_quality < 50:
-            metrics.issues.append("Insights are vague or insufficient - need specific, actionable findings")
+            metrics.issues.append(
+                "Insights are vague or insufficient - need specific, actionable findings"
+            )
         elif metrics.insight_quality > 80:
-            metrics.strengths.append("High-quality specific insights with code/tool references")
+            metrics.strengths.append(
+                "High-quality specific insights with code/tool references"
+            )
 
         if metrics.completeness < 70:
             metrics.issues.append("Missing required sections")
 
         if metrics.cross_references < 30:
-            metrics.issues.append("Poor cross-referencing - not linked in INDEX.md/MOC.md")
+            metrics.issues.append(
+                "Poor cross-referencing - not linked in INDEX.md/MOC.md"
+            )
         elif metrics.cross_references > 70:
             metrics.strengths.append("Well integrated with knowledge base")
 
@@ -420,11 +456,17 @@ class CaseStudyQualityAnalyzer:
             return {"error": "No case studies analyzed"}
 
         # Sort by overall score
-        sorted_metrics = sorted(metrics_list, key=lambda m: m.overall_score, reverse=True)
+        sorted_metrics = sorted(
+            metrics_list, key=lambda m: m.overall_score, reverse=True
+        )
 
         avg_overall = sum(m.overall_score for m in metrics_list) / len(metrics_list)
-        avg_authenticity = sum(m.authenticity_score for m in metrics_list) / len(metrics_list)
-        avg_efficiency = sum(m.efficiency_credibility for m in metrics_list) / len(metrics_list)
+        avg_authenticity = sum(m.authenticity_score for m in metrics_list) / len(
+            metrics_list
+        )
+        avg_efficiency = sum(m.efficiency_credibility for m in metrics_list) / len(
+            metrics_list
+        )
         avg_insight = sum(m.insight_quality for m in metrics_list) / len(metrics_list)
         avg_completeness = sum(m.completeness for m in metrics_list) / len(metrics_list)
         avg_cross = sum(m.cross_references for m in metrics_list) / len(metrics_list)
@@ -485,7 +527,9 @@ class CaseStudyQualityAnalyzer:
                 issues_count[issue] = issues_count.get(issue, 0) + 1
         return dict(sorted(issues_count.items(), key=lambda x: x[1], reverse=True))
 
-    def _aggregate_strengths(self, metrics_list: list[QualityMetrics]) -> dict[str, int]:
+    def _aggregate_strengths(
+        self, metrics_list: list[QualityMetrics]
+    ) -> dict[str, int]:
         """Aggregate common strengths."""
         strengths_count: dict[str, int] = {}
         for m in metrics_list:
@@ -541,17 +585,31 @@ def format_report(report: dict[str, Any]) -> str:
 
     summary = report["summary"]
     lines.append(f"\n📈 Summary ({summary['total_cases']} cases)")
-    lines.append(f"  Overall Average:        {summary['average_scores']['overall']}/100")
-    lines.append(f"  Authenticity:           {summary['average_scores']['authenticity']}/100")
-    lines.append(f"  Efficiency Credibility: {summary['average_scores']['efficiency_credibility']}/100")
-    lines.append(f"  Insight Quality:        {summary['average_scores']['insight_quality']}/100")
-    lines.append(f"  Completeness:           {summary['average_scores']['completeness']}/100")
-    lines.append(f"  Cross-References:       {summary['average_scores']['cross_references']}/100")
+    lines.append(
+        f"  Overall Average:        {summary['average_scores']['overall']}/100"
+    )
+    lines.append(
+        f"  Authenticity:           {summary['average_scores']['authenticity']}/100"
+    )
+    lines.append(
+        f"  Efficiency Credibility: {summary['average_scores']['efficiency_credibility']}/100"
+    )
+    lines.append(
+        f"  Insight Quality:        {summary['average_scores']['insight_quality']}/100"
+    )
+    lines.append(
+        f"  Completeness:           {summary['average_scores']['completeness']}/100"
+    )
+    lines.append(
+        f"  Cross-References:       {summary['average_scores']['cross_references']}/100"
+    )
 
     lines.append("\n📊 Categories:")
     lines.append(f"  Excellent (≥80):        {summary['categories']['excellent']}")
     lines.append(f"  Good (60-79):           {summary['categories']['good']}")
-    lines.append(f"  Needs Improvement (<60): {summary['categories']['needs_improvement']}")
+    lines.append(
+        f"  Needs Improvement (<60): {summary['categories']['needs_improvement']}"
+    )
 
     lines.append("\n🏆 Top 5 Cases:")
     for case in report["top_cases"]:
@@ -572,7 +630,9 @@ def format_report(report: dict[str, Any]) -> str:
     lines.append(f"\n{'=' * 70}")
     lines.append("  Detailed Scores")
     lines.append(f"{'=' * 70}")
-    lines.append(f"{'Case':<40} {'Overall':>7} {'Auth':>6} {'Eff':>6} {'Insight':>7} {'Complete':>8} {'X-Ref':>6}")
+    lines.append(
+        f"{'Case':<40} {'Overall':>7} {'Auth':>6} {'Eff':>6} {'Insight':>7} {'Complete':>8} {'X-Ref':>6}"
+    )
     lines.append("-" * 85)
     for detail in report["detailed"]:
         lines.append(
@@ -590,4 +650,5 @@ def format_report(report: dict[str, Any]) -> str:
 
 if __name__ == "__main__":
     import sys
+
     sys.exit(main())

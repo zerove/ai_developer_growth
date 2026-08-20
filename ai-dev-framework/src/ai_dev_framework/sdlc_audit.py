@@ -86,7 +86,11 @@ def _count_test_files(root: Path) -> int:
     for p in root.rglob("*"):
         if p.is_file():
             name = p.name
-            if name.startswith("test_") or name.endswith("_test.py") or name.endswith(".spec.ts"):
+            if (
+                name.startswith("test_")
+                or name.endswith("_test.py")
+                or name.endswith(".spec.ts")
+            ):
                 count += 1
     return count
 
@@ -102,19 +106,37 @@ def audit_sdlc(project_path: str | Path) -> SDLCAuditResult:
     req_score = 0.0
 
     has_prd = _has_file("*PRD*", root) or _has_file("*prd*", root)
-    req_checks.append({"check": "PRD 文档", "passed": has_prd, "detail": "found" if has_prd else "not found"})
+    req_checks.append(
+        {
+            "check": "PRD 文档",
+            "passed": has_prd,
+            "detail": "found" if has_prd else "not found",
+        }
+    )
     if has_prd:
         req_score += 0.4
 
-    has_requirements = _has_content_pattern("requirement|user story|功能需求", root, "*.md")
+    has_requirements = _has_content_pattern(
+        "requirement|user story|功能需求", root, "*.md"
+    )
     req_checks.append(
-        {"check": "需求描述", "passed": has_requirements, "detail": "found" if has_requirements else "not found"}
+        {
+            "check": "需求描述",
+            "passed": has_requirements,
+            "detail": "found" if has_requirements else "not found",
+        }
     )
     if has_requirements:
         req_score += 0.3
 
     has_readme = (root / "README.md").exists()
-    req_checks.append({"check": "README", "passed": has_readme, "detail": "found" if has_readme else "not found"})
+    req_checks.append(
+        {
+            "check": "README",
+            "passed": has_readme,
+            "detail": "found" if has_readme else "not found",
+        }
+    )
     if has_readme:
         req_score += 0.3
 
@@ -137,21 +159,41 @@ def audit_sdlc(project_path: str | Path) -> SDLCAuditResult:
     des_checks = []
     des_score = 0.0
 
-    has_adr = _has_file("ADR*", root) or _has_file("adr*", root) or (root / "docs/adr").is_dir()
-    des_checks.append({"check": "架构决策记录 (ADR)", "passed": has_adr, "detail": "found" if has_adr else "not found"})
+    has_adr = (
+        _has_file("ADR*", root)
+        or _has_file("adr*", root)
+        or (root / "docs/adr").is_dir()
+    )
+    des_checks.append(
+        {
+            "check": "架构决策记录 (ADR)",
+            "passed": has_adr,
+            "detail": "found" if has_adr else "not found",
+        }
+    )
     if has_adr:
         des_score += 0.35
 
     has_arch_doc = _has_content_pattern("architecture|架构|design|设计", root, "*.md")
     des_checks.append(
-        {"check": "架构/设计文档", "passed": has_arch_doc, "detail": "found" if has_arch_doc else "not found"}
+        {
+            "check": "架构/设计文档",
+            "passed": has_arch_doc,
+            "detail": "found" if has_arch_doc else "not found",
+        }
     )
     if has_arch_doc:
         des_score += 0.35
 
-    has_datamodel = _has_content_pattern("data model|数据模型|entity|实体|schema", root, "*.md")
+    has_datamodel = _has_content_pattern(
+        "data model|数据模型|entity|实体|schema", root, "*.md"
+    )
     des_checks.append(
-        {"check": "数据模型文档", "passed": has_datamodel, "detail": "found" if has_datamodel else "not found"}
+        {
+            "check": "数据模型文档",
+            "passed": has_datamodel,
+            "detail": "found" if has_datamodel else "not found",
+        }
     )
     if has_datamodel:
         des_score += 0.3
@@ -178,37 +220,57 @@ def audit_sdlc(project_path: str | Path) -> SDLCAuditResult:
     typed, total = _count_type_annotations(root)
     type_ratio = typed / total if total > 0 else 0
     imp_checks.append(
-        {"check": "类型注解覆盖率", "passed": type_ratio >= 0.6, "detail": f"{type_ratio:.0%} ({typed}/{total})"}
+        {
+            "check": "类型注解覆盖率",
+            "passed": type_ratio >= 0.6,
+            "detail": f"{type_ratio:.0%} ({typed}/{total})",
+        }
     )
     imp_score += min(0.35 * type_ratio * 1.67, 0.35)
 
     test_count = _count_test_files(root)
     has_tests = test_count > 0
     imp_checks.append(
-        {"check": "测试文件", "passed": has_tests, "detail": f"{test_count} files found" if has_tests else "none found"}
+        {
+            "check": "测试文件",
+            "passed": has_tests,
+            "detail": f"{test_count} files found" if has_tests else "none found",
+        }
     )
     if has_tests:
         imp_score += 0.35
 
     has_lint_config = (
-        (root / "pyproject.toml").exists() or (root / ".ruff.toml").exists() or (root / ".eslintrc").exists()
+        (root / "pyproject.toml").exists()
+        or (root / ".ruff.toml").exists()
+        or (root / ".eslintrc").exists()
     )
     imp_checks.append(
-        {"check": "Linter 配置", "passed": has_lint_config, "detail": "found" if has_lint_config else "not found"}
+        {
+            "check": "Linter 配置",
+            "passed": has_lint_config,
+            "detail": "found" if has_lint_config else "not found",
+        }
     )
     if has_lint_config:
         imp_score += 0.15
 
     has_gitignore = (root / ".gitignore").exists()
     imp_checks.append(
-        {"check": ".gitignore", "passed": has_gitignore, "detail": "found" if has_gitignore else "not found"}
+        {
+            "check": ".gitignore",
+            "passed": has_gitignore,
+            "detail": "found" if has_gitignore else "not found",
+        }
     )
     if has_gitignore:
         imp_score += 0.15
 
     imp_suggestions = []
     if type_ratio < 0.6:
-        imp_suggestions.append(f"增加类型注解: 当前覆盖率 {type_ratio:.0%}，建议达到 60%+")
+        imp_suggestions.append(
+            f"增加类型注解: 当前覆盖率 {type_ratio:.0%}，建议达到 60%+"
+        )
     if not has_tests:
         imp_suggestions.append("添加测试文件（tests/ 目录）")
     if not has_lint_config:
@@ -227,32 +289,50 @@ def audit_sdlc(project_path: str | Path) -> SDLCAuditResult:
     rev_checks = []
     rev_score = 0.0
 
-    has_pr_template = _has_file("PULL_REQUEST_TEMPLATE*", root / ".github") or _has_file(
-        "pull_request_template*", root / ".github"
-    )
+    has_pr_template = _has_file(
+        "PULL_REQUEST_TEMPLATE*", root / ".github"
+    ) or _has_file("pull_request_template*", root / ".github")
     rev_checks.append(
-        {"check": "PR 模板", "passed": has_pr_template, "detail": "found" if has_pr_template else "not found"}
+        {
+            "check": "PR 模板",
+            "passed": has_pr_template,
+            "detail": "found" if has_pr_template else "not found",
+        }
     )
     if has_pr_template:
         rev_score += 0.35
 
     has_codeowners = (root / ".github" / "CODEOWNERS").exists()
     rev_checks.append(
-        {"check": "CODEOWNERS", "passed": has_codeowners, "detail": "found" if has_codeowners else "not found"}
+        {
+            "check": "CODEOWNERS",
+            "passed": has_codeowners,
+            "detail": "found" if has_codeowners else "not found",
+        }
     )
     if has_codeowners:
         rev_score += 0.25
 
-    has_review_guide = _has_content_pattern("review|code review|代码审查|PR review", root, "*.md")
+    has_review_guide = _has_content_pattern(
+        "review|code review|代码审查|PR review", root, "*.md"
+    )
     rev_checks.append(
-        {"check": "代码审查指南", "passed": has_review_guide, "detail": "found" if has_review_guide else "not found"}
+        {
+            "check": "代码审查指南",
+            "passed": has_review_guide,
+            "detail": "found" if has_review_guide else "not found",
+        }
     )
     if has_review_guide:
         rev_score += 0.2
 
     has_contributing = (root / "CONTRIBUTING.md").exists()
     rev_checks.append(
-        {"check": "CONTRIBUTING.md", "passed": has_contributing, "detail": "found" if has_contributing else "not found"}
+        {
+            "check": "CONTRIBUTING.md",
+            "passed": has_contributing,
+            "detail": "found" if has_contributing else "not found",
+        }
     )
     if has_contributing:
         rev_score += 0.2
@@ -279,20 +359,36 @@ def audit_sdlc(project_path: str | Path) -> SDLCAuditResult:
     dep_score = 0.0
 
     has_ci = _has_file(".github/workflows/*.yml", root)
-    dep_checks.append({"check": "CI 配置", "passed": has_ci, "detail": "found" if has_ci else "not found"})
+    dep_checks.append(
+        {
+            "check": "CI 配置",
+            "passed": has_ci,
+            "detail": "found" if has_ci else "not found",
+        }
+    )
     if has_ci:
         dep_score += 0.4
 
     has_dockerfile = (root / "Dockerfile").exists() or _has_file("Dockerfile*", root)
     dep_checks.append(
-        {"check": "容器化", "passed": has_dockerfile, "detail": "found" if has_dockerfile else "not found"}
+        {
+            "check": "容器化",
+            "passed": has_dockerfile,
+            "detail": "found" if has_dockerfile else "not found",
+        }
     )
     if has_dockerfile:
         dep_score += 0.3
 
-    has_deploy_doc = _has_content_pattern("deploy|deployment|部署|release|发布", root, "*.md")
+    has_deploy_doc = _has_content_pattern(
+        "deploy|deployment|部署|release|发布", root, "*.md"
+    )
     dep_checks.append(
-        {"check": "部署文档", "passed": has_deploy_doc, "detail": "found" if has_deploy_doc else "not found"}
+        {
+            "check": "部署文档",
+            "passed": has_deploy_doc,
+            "detail": "found" if has_deploy_doc else "not found",
+        }
     )
     if has_deploy_doc:
         dep_score += 0.3

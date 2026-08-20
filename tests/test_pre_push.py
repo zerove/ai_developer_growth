@@ -26,7 +26,9 @@ class TestLoadSkipPatterns:
         config_dir = tmp_path / ".adg"
         config_dir.mkdir()
         config_file = config_dir / "config.yml"
-        config_file.write_text("skip_patterns:\n  - '**/tests/**/*.py'\n  - '**/demo/**/*.py'\n")
+        config_file.write_text(
+            "skip_patterns:\n  - '**/tests/**/*.py'\n  - '**/demo/**/*.py'\n"
+        )
 
         old_cwd = os.getcwd()
         try:
@@ -149,6 +151,7 @@ class TestGetUnpushedCommits:
     def test_get_unpushed_commits_timeout(self, mock_run):
         """Test timeout handling."""
         from subprocess import TimeoutExpired
+
         mock_run.side_effect = TimeoutExpired("git", 10)
         commits = get_unpushed_commits()
         assert commits == []

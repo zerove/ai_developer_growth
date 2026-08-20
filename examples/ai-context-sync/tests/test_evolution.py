@@ -32,8 +32,18 @@ class TestEvolutionEngine(unittest.TestCase):
 
     def test_detects_high_override_ratio(self):
         self.mock_feedback.history = [
-            {"rule_id": "R1", "status": "overridden", "message": "m1", "file_path": "a.py"},
-            {"rule_id": "R1", "status": "overridden", "message": "m2", "file_path": "b.py"},
+            {
+                "rule_id": "R1",
+                "status": "overridden",
+                "message": "m1",
+                "file_path": "a.py",
+            },
+            {
+                "rule_id": "R1",
+                "status": "overridden",
+                "message": "m2",
+                "file_path": "b.py",
+            },
             {"rule_id": "R1", "status": "active", "message": "m3", "file_path": "c.py"},
         ]
         result = self.engine.analyze_conflicts()
@@ -43,15 +53,30 @@ class TestEvolutionEngine(unittest.TestCase):
 
     def test_requires_minimum_occurrences(self):
         self.mock_feedback.history = [
-            {"rule_id": "R1", "status": "overridden", "message": "m1", "file_path": "a.py"},
+            {
+                "rule_id": "R1",
+                "status": "overridden",
+                "message": "m1",
+                "file_path": "a.py",
+            },
         ]
         result = self.engine.analyze_conflicts()
         self.assertEqual(result, [])
 
     def test_multiple_rules_analyzed_independently(self):
         self.mock_feedback.history = [
-            {"rule_id": "R1", "status": "overridden", "message": "m1", "file_path": "a.py"},
-            {"rule_id": "R1", "status": "overridden", "message": "m2", "file_path": "b.py"},
+            {
+                "rule_id": "R1",
+                "status": "overridden",
+                "message": "m1",
+                "file_path": "a.py",
+            },
+            {
+                "rule_id": "R1",
+                "status": "overridden",
+                "message": "m2",
+                "file_path": "b.py",
+            },
             {"rule_id": "R2", "status": "active", "message": "m3", "file_path": "c.py"},
             {"rule_id": "R2", "status": "active", "message": "m4", "file_path": "d.py"},
         ]

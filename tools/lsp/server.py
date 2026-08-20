@@ -194,8 +194,14 @@ class AdgLanguageServer:
             diagnostics.append(
                 {
                     "range": {
-                        "start": {"line": max(0, issue.line - 1), "character": max(0, issue.column - 1)},
-                        "end": {"line": max(0, issue.line - 1), "character": issue.column + 80},
+                        "start": {
+                            "line": max(0, issue.line - 1),
+                            "character": max(0, issue.column - 1),
+                        },
+                        "end": {
+                            "line": max(0, issue.line - 1),
+                            "character": issue.column + 80,
+                        },
                     },
                     "severity": severity_map.get(issue.severity, 2),
                     "code": issue.rule_id,
@@ -233,7 +239,10 @@ class AdgLanguageServer:
                     "command": {
                         "command": "adg.fix",
                         "title": "Apply Fix",
-                        "arguments": [params.get("textDocument", {}).get("uri", ""), rule_id],
+                        "arguments": [
+                            params.get("textDocument", {}).get("uri", ""),
+                            rule_id,
+                        ],
                     },
                 }
             )
@@ -276,7 +285,10 @@ class AdgLanguageServer:
 
         return [
             {
-                "range": {"start": {"line": 0, "character": 0}, "end": {"line": 0, "character": 0}},
+                "range": {
+                    "start": {"line": 0, "character": 0},
+                    "end": {"line": 0, "character": 0},
+                },
                 "command": {
                     "title": summary,
                     "command": "adg.showOutput",
@@ -421,10 +433,16 @@ def run_stdio_server() -> None:
                 write_message(response)
 
             # Send diagnostics after document changes
-            if method in ("textDocument/didOpen", "textDocument/didChange", "textDocument/didSave"):
+            if method in (
+                "textDocument/didOpen",
+                "textDocument/didChange",
+                "textDocument/didSave",
+            ):
                 uri = params.get("textDocument", {}).get("uri", "")
                 if uri:
-                    diagnostics = server._handle_diagnostic({"textDocument": {"uri": uri}})
+                    diagnostics = server._handle_diagnostic(
+                        {"textDocument": {"uri": uri}}
+                    )
                     send_notification(
                         "textDocument/publishDiagnostics",
                         {
@@ -478,7 +496,9 @@ def run_tcp_server(port: int) -> None:
 def main() -> None:
     parser = argparse.ArgumentParser(description="ADG LSP Server")
     parser.add_argument("--stdio", action="store_true", help="Use stdio transport")
-    parser.add_argument("--port", type=int, default=8080, help="TCP port (default: 8080)")
+    parser.add_argument(
+        "--port", type=int, default=8080, help="TCP port (default: 8080)"
+    )
     parser.add_argument("--log-level", default="INFO", help="Log level")
     args = parser.parse_args()
 

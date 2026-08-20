@@ -90,7 +90,17 @@ def framework_dir() -> Path:
 # ----------------------------------------------------------
 
 # 排除目录（通用配置）
-EXCLUDE_DIRS = {".git", "__pycache__", ".pytest_cache", ".ruff_cache", "node_modules", "venv", ".venv", "dist", "build"}
+EXCLUDE_DIRS = {
+    ".git",
+    "__pycache__",
+    ".pytest_cache",
+    ".ruff_cache",
+    "node_modules",
+    "venv",
+    ".venv",
+    "dist",
+    "build",
+}
 
 EXTENSION_MAP: dict[str, str] = {
     ".py": "python",
@@ -237,7 +247,9 @@ def save_yaml(filepath: Path, data: dict[str, Any]) -> None:
     import yaml
 
     with open(filepath, "w") as f:
-        yaml.dump(data, f, default_flow_style=False, allow_unicode=True, sort_keys=False)
+        yaml.dump(
+            data, f, default_flow_style=False, allow_unicode=True, sort_keys=False
+        )
 
 
 # ----------------------------------------------------------

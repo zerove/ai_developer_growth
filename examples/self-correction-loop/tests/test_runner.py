@@ -104,7 +104,9 @@ class TestCorrectionLoop:
 
     @patch.object(_runner_mod, "run_tests", return_value=(1, "FAIL", "err"))
     @patch.object(_runner_mod, "_write_code", side_effect=FixError("perm denied"))
-    def test_write_failure(self, _write: MagicMock, _run: MagicMock, tmp_path: Path) -> None:
+    def test_write_failure(
+        self, _write: MagicMock, _run: MagicMock, tmp_path: Path
+    ) -> None:
         loop = self._make_loop(tmp_path, [_AlwaysPass()], max_attempts=1)
         result = loop.run()
         assert not result.is_success
@@ -141,7 +143,9 @@ class TestCorrectionLoop:
             def name(self) -> str:
                 return "first"
 
-            def fix(self, code: str, error_output: str, file_path: str | None = None) -> str:
+            def fix(
+                self, code: str, error_output: str, file_path: str | None = None
+            ) -> str:
                 return "fixed_by_a"
 
         class B(Strategy):
@@ -149,7 +153,9 @@ class TestCorrectionLoop:
             def name(self) -> str:
                 return "second"
 
-            def fix(self, code: str, error_output: str, file_path: str | None = None) -> str:
+            def fix(
+                self, code: str, error_output: str, file_path: str | None = None
+            ) -> str:
                 return "fixed_by_b"
 
         loop = self._make_loop(tmp_path, [A(), B()])

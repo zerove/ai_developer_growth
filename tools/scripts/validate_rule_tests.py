@@ -41,7 +41,12 @@ def _load_rules_with_tests(lang: str) -> list[dict[str, Any]]:
             data = yaml.safe_load(f)
         if not data:
             continue
-        for category in ["anti_patterns", "naming_conventions", "complexity", "thresholds"]:
+        for category in [
+            "anti_patterns",
+            "naming_conventions",
+            "complexity",
+            "thresholds",
+        ]:
             for rule in data.get(category, []):
                 if isinstance(rule, dict) and rule.get("test_cases"):
                     rules.append(
@@ -96,7 +101,9 @@ def validate_rule_tests(lang: str) -> tuple[int, int, list[str]]:
                 failed += 1
                 expected = "match" if should_match else "no match"
                 actual = "matched" if did_match else "no match"
-                errors.append(f"[{category}] {rule_id} case {i + 1}: expected {expected}, got {actual} on: {code!r}")
+                errors.append(
+                    f"[{category}] {rule_id} case {i + 1}: expected {expected}, got {actual} on: {code!r}"
+                )
 
     return passed, failed, errors
 
@@ -105,7 +112,11 @@ def _discover_languages(args: argparse.Namespace) -> list[str]:
     """Discover languages to test based on args."""
     if args.all:
         langs_dir = _rules_dir() / "languages"
-        return sorted(d.name for d in langs_dir.iterdir() if d.is_dir() and (d / "rules.d").exists())
+        return sorted(
+            d.name
+            for d in langs_dir.iterdir()
+            if d.is_dir() and (d / "rules.d").exists()
+        )
     return [args.lang]
 
 
@@ -161,7 +172,9 @@ def main() -> int:
     parser = argparse.ArgumentParser(description="Validate YAML rule regex test cases")
     parser.add_argument("--lang", type=str, help="Language to test")
     parser.add_argument("--all", action="store_true", help="Test all languages")
-    parser.add_argument("--json", action="store_true", dest="json_output", help="Output as JSON")
+    parser.add_argument(
+        "--json", action="store_true", dest="json_output", help="Output as JSON"
+    )
     parser.add_argument("--verbose", action="store_true", help="Detailed output")
     args = parser.parse_args()
 
@@ -193,7 +206,14 @@ def main() -> int:
 
             _print_results(lang, passed, failed, args.json_output)
 
-        return _print_summary(total_passed, total_failed, all_errors, args.json_output, args.verbose, lang_results)
+        return _print_summary(
+            total_passed,
+            total_failed,
+            all_errors,
+            args.json_output,
+            args.verbose,
+            lang_results,
+        )
     except Exception as e:
         handle_error(e, script="validate_rule_tests")
         return 1

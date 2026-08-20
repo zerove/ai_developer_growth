@@ -31,8 +31,15 @@ from typing import Any
 # ──────────────────────────────────────────────────────────
 # Backward-compatible re-exports from validators package
 # ──────────────────────────────────────────────────────────
-from tools.scripts.rules_engine.validators.health import HealthScore, calculate_health_score  # noqa: F401
-from tools.scripts.rules_engine.validators.models import FixResult, Issue, ValidationResult  # noqa: F401
+from tools.scripts.rules_engine.validators.health import (
+    HealthScore,
+    calculate_health_score,
+)  # noqa: F401
+from tools.scripts.rules_engine.validators.models import (
+    FixResult,
+    Issue,
+    ValidationResult,
+)  # noqa: F401
 from tools.scripts.rules_engine.validators.pipeline import (  # noqa: F401
     EXTENSION_MAP,
     check_anti_patterns,
@@ -80,14 +87,18 @@ _FILE_HASH_CACHE: dict[str, str] = {}
 # ──────────────────────────────────────────────────────────
 
 
-def check_naming_conventions(lines: list[str], rules: dict[str, Any], filepath: str) -> list[Issue]:
+def check_naming_conventions(
+    lines: list[str], rules: dict[str, Any], filepath: str
+) -> list[Issue]:
     """Check naming conventions based on language rules."""
     from .naming_analyzer import check_naming_conventions as _check
 
     return _check(lines, rules, filepath)
 
 
-def check_thresholds(lines: list[str], rules: dict[str, Any], filepath: str) -> list[Issue]:
+def check_thresholds(
+    lines: list[str], rules: dict[str, Any], filepath: str
+) -> list[Issue]:
     """Check quantitative thresholds."""
     from .complexity_analyzer import check_thresholds as _check
 
@@ -101,7 +112,9 @@ def check_python_ast(filepath: str, lines: list[str]) -> list[Issue]:
     return _check(filepath, lines)
 
 
-def apply_fixes(filepath: Path, issues: list[Issue], dry_run: bool = False) -> list[FixResult]:
+def apply_fixes(
+    filepath: Path, issues: list[Issue], dry_run: bool = False
+) -> list[FixResult]:
     """Apply auto-fixes to a file based on issues with fix_replacement."""
     from .fix_applier import apply_fixes as _apply_fixes
 
@@ -129,7 +142,9 @@ def generate_sarif(results: list[ValidationResult]) -> str:
     return _gen(results)
 
 
-def write_report(results: list[ValidationResult], format: str, output: Path | None = None) -> str | None:
+def write_report(
+    results: list[ValidationResult], format: str, output: Path | None = None
+) -> str | None:
     """Write report in specified format."""
     from .report_generator import write_report as _write
 
@@ -165,7 +180,6 @@ def _merge_rules(base: dict[str, Any], custom: dict[str, Any]) -> dict[str, Any]
 # ──────────────────────────────────────────────────────────
 
 
-
 def _load_cache(cache_file: Path) -> dict[str, str]:
     """Load file hash cache from disk."""
     if cache_file.exists():
@@ -187,7 +201,14 @@ def _save_cache(cache_file: Path, cache: dict[str, str]) -> None:
 
 def _get_supported_files(dirpath: Path, exclude: list[str]) -> list[Path]:
     """Get all supported files in a directory."""
-    exclude = exclude or ["node_modules", "target", "vendor", ".git", "__pycache__", ".venv"]
+    exclude = exclude or [
+        "node_modules",
+        "target",
+        "vendor",
+        ".git",
+        "__pycache__",
+        ".venv",
+    ]
     files = []
     for fp in sorted(dirpath.rglob("*")):
         if not fp.is_file():
@@ -206,7 +227,9 @@ def _calc_cyclomatic_complexity(node: ast.AST) -> int:
     return calc_cyclomatic_complexity(node)
 
 
-def _extract_function_lines(lines: list[str], language: str) -> list[tuple[str, int, int]]:
+def _extract_function_lines(
+    lines: list[str], language: str
+) -> list[tuple[str, int, int]]:
     """Extract function name, start line, end line."""
     from .complexity_analyzer import extract_function_lines
 

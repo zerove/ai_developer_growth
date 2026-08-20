@@ -32,8 +32,7 @@ def _now_iso() -> str:
 
 def _create_quality_tables(conn: sqlite3.Connection) -> None:
     """创建质量运行/文件结果/规则违规表（与 dashboard 兼容）。"""
-    conn.execute(
-        """
+    conn.execute("""
         CREATE TABLE IF NOT EXISTS quality_runs (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             timestamp TEXT NOT NULL,
@@ -45,10 +44,8 @@ def _create_quality_tables(conn: sqlite3.Connection) -> None:
             failed_files INTEGER,
             report_json TEXT
         )
-        """
-    )
-    conn.execute(
-        """
+        """)
+    conn.execute("""
         CREATE TABLE IF NOT EXISTS file_results (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             run_id INTEGER,
@@ -61,10 +58,8 @@ def _create_quality_tables(conn: sqlite3.Connection) -> None:
             issues_json TEXT,
             FOREIGN KEY (run_id) REFERENCES quality_runs(id)
         )
-        """
-    )
-    conn.execute(
-        """
+        """)
+    conn.execute("""
         CREATE TABLE IF NOT EXISTS rule_violations (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             run_id INTEGER,
@@ -73,15 +68,13 @@ def _create_quality_tables(conn: sqlite3.Connection) -> None:
             count INTEGER,
             FOREIGN KEY (run_id) REFERENCES quality_runs(id)
         )
-        """
-    )
+        """)
 
 
 def _create_cache_tables(conn: sqlite3.Connection) -> None:
     """创建增量缓存与趋势快照表（任务7 新增）。"""
     # 增量检查缓存: (file_path, mtime, size) 唯一 → 上次结果
-    conn.execute(
-        """
+    conn.execute("""
         CREATE TABLE IF NOT EXISTS check_cache (
             file_path TEXT NOT NULL,
             mtime REAL NOT NULL,
@@ -95,11 +88,9 @@ def _create_cache_tables(conn: sqlite3.Connection) -> None:
             updated_at TEXT NOT NULL,
             PRIMARY KEY (file_path, mtime, size)
         )
-        """
-    )
+        """)
     # 趋势快照（替代 quality_trends 的 JSON 文件）
-    conn.execute(
-        """
+    conn.execute("""
         CREATE TABLE IF NOT EXISTS trend_snapshots (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             timestamp REAL NOT NULL,
@@ -114,8 +105,7 @@ def _create_cache_tables(conn: sqlite3.Connection) -> None:
             semantic_issues INTEGER,
             hallucination_findings INTEGER
         )
-        """
-    )
+        """)
 
 
 def _default_db_path() -> str:
@@ -161,7 +151,9 @@ class CheckStore:
 
     # ── 检查运行 ──────────────────────────────────────────────
 
-    def record_run(self, report: dict[str, Any], file_results: list[dict[str, Any]] | None = None) -> int:
+    def record_run(
+        self, report: dict[str, Any], file_results: list[dict[str, Any]] | None = None
+    ) -> int:
         """记录一次检查运行，返回 run_id。
 
         Args:
@@ -172,7 +164,9 @@ class CheckStore:
 
     def get_latest_run(self) -> dict[str, Any] | None:
         """获取最近一次运行摘要。"""
-        row = self.conn.execute("SELECT report_json FROM quality_runs ORDER BY id DESC LIMIT 1").fetchone()
+        row = self.conn.execute(
+            "SELECT report_json FROM quality_runs ORDER BY id DESC LIMIT 1"
+        ).fetchone()
         if row and row[0]:
             return cast(dict[str, Any], json.loads(row[0]))
         return None
@@ -224,7 +218,9 @@ class CheckStore:
 
     # ── 增量缓存 ──────────────────────────────────────────────
 
-    def get_cached_result(self, file_path: str, mtime: float, size: int) -> dict[str, Any] | None:
+    def get_cached_result(
+        self, file_path: str, mtime: float, size: int
+    ) -> dict[str, Any] | None:
         """按 mtime+size 取缓存。命中返回 {passed, errors, warnings, info, issues}，未命中返回 None。"""
         row = self.conn.execute(
             """SELECT language, passed, errors, warnings, info, issues_json
@@ -276,7 +272,14 @@ class CheckStore:
             """SELECT file_path, mtime, size, errors, warnings, info FROM check_cache"""
         ).fetchall()
         return [
-            {"file_path": r[0], "mtime": r[1], "size": r[2], "errors": r[3], "warnings": r[4], "info": r[5]}
+            {
+                "file_path": r[0],
+                "mtime": r[1],
+                "size": r[2],
+                "errors": r[3],
+                "warnings": r[4],
+                "info": r[5],
+            }
             for r in rows
         ]
 
@@ -385,7 +388,9 @@ def close_connection(db_path: str | Path | None = None) -> None:
 
 
 def _record_run(
-    conn: sqlite3.Connection, report: dict[str, Any], file_results: list[dict[str, Any]] | None = None
+    conn: sqlite3.Connection,
+    report: dict[str, Any],
+    file_results: list[dict[str, Any]] | None = None,
 ) -> int:
     """在给定连接上记录一次检查运行（供 CheckStore 与模块级 record_run 复用）。"""
     summary = report.get("summary", {})
@@ -412,7 +417,9 @@ def _record_run(
     return run_id
 
 
-def _insert_file_results(conn: sqlite3.Connection, run_id: int, file_results: list[dict[str, Any]]) -> None:
+def _insert_file_results(
+    conn: sqlite3.Connection, run_id: int, file_results: list[dict[str, Any]]
+) -> None:
     """写入逐文件结果。"""
     if not file_results:
         return
@@ -436,7 +443,9 @@ def _insert_file_results(conn: sqlite3.Connection, run_id: int, file_results: li
     )
 
 
-def _insert_rule_violations(conn: sqlite3.Connection, run_id: int, results: list[dict[str, Any]]) -> None:
+def _insert_rule_violations(
+    conn: sqlite3.Connection, run_id: int, results: list[dict[str, Any]]
+) -> None:
     """聚合规则违规计数。"""
     counts: dict[tuple[str, str], int] = {}
     for result in results:
@@ -448,7 +457,10 @@ def _insert_rule_violations(conn: sqlite3.Connection, run_id: int, results: list
     conn.executemany(
         """INSERT INTO rule_violations (run_id, rule_id, severity, count)
            VALUES (?, ?, ?, ?)""",
-        [(run_id, rule_id, severity, count) for (rule_id, severity), count in counts.items()],
+        [
+            (run_id, rule_id, severity, count)
+            for (rule_id, severity), count in counts.items()
+        ],
     )
 
 

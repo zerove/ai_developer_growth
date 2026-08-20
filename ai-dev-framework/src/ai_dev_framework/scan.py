@@ -167,12 +167,16 @@ def _load_rules_for_language(lang: str) -> list[dict]:
     rules: list[dict] = []
 
     # 1. 语言特有规则
-    lang_path = _RULES_HOME / "rules" / "languages" / lang / "rules.d" / "anti_patterns.yml"
+    lang_path = (
+        _RULES_HOME / "rules" / "languages" / lang / "rules.d" / "anti_patterns.yml"
+    )
     if lang_path.exists():
         rules.extend(_load_yaml_rules(lang_path))
 
     # 2. 生成规则 (来自 /generate-rules skill)
-    generated_path = _RULES_HOME / "rules" / "generated" / lang / "rules.d" / "anti_patterns.yml"
+    generated_path = (
+        _RULES_HOME / "rules" / "generated" / lang / "rules.d" / "anti_patterns.yml"
+    )
     if generated_path.exists():
         generated_rules = _load_yaml_rules(generated_path)
         if generated_rules:
@@ -356,11 +360,17 @@ def print_results(results: list[ScanResult], verbose: bool = False) -> int:
         if result.issues:
             has_errors = any(issue.severity == "error" for issue in result.issues)
             icon = "❌" if has_errors else "⚠️"
-            print(f"{icon} {result.file} ({result.language}) — {len(result.issues)} issue(s)")
+            print(
+                f"{icon} {result.file} ({result.language}) — {len(result.issues)} issue(s)"
+            )
             for issue in result.issues:
                 sev = issue.severity
-                sev_icon = "🔴" if sev == "error" else ("🟡" if sev == "warning" else "ℹ️")
-                print(f"   Line {issue.line}: {sev_icon} [{issue.category}] {issue.message}")
+                sev_icon = (
+                    "🔴" if sev == "error" else ("🟡" if sev == "warning" else "ℹ️")
+                )
+                print(
+                    f"   Line {issue.line}: {sev_icon} [{issue.category}] {issue.message}"
+                )
                 if verbose and issue.fix_hint:
                     print(f"       💡 {issue.fix_hint}")
             total_issues += len(result.issues)
@@ -370,5 +380,7 @@ def print_results(results: list[ScanResult], verbose: bool = False) -> int:
             if verbose:
                 print(f"✅ {result.file} ({result.language})")
 
-    print(f"\nSummary: {len(results)} files, {failed_files} failed, {total_issues} issues")
+    print(
+        f"\nSummary: {len(results)} files, {failed_files} failed, {total_issues} issues"
+    )
     return 1 if failed_files > 0 else 0

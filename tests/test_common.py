@@ -190,7 +190,9 @@ class TestOutputFormatting:
         assert "" in output
         assert "error details" in output
 
-    def test_print_check_failed_no_output(self, capsys: pytest.CaptureFixture[str]) -> None:
+    def test_print_check_failed_no_output(
+        self, capsys: pytest.CaptureFixture[str]
+    ) -> None:
         print_check("Test", False)
         output = capsys.readouterr().out
         assert "❌" in output

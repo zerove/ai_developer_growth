@@ -27,7 +27,9 @@ class TestFlowCommand:
     @patch("src.cli.commands.flow.os.path.exists", return_value=False)
     @patch("src.cli.commands.flow.typer")
     @patch("src.cli.commands.flow.AIContextSync")
-    def test_flow_without_diff_no_context_file(self, mock_sync_cls, mock_typer, mock_exists):
+    def test_flow_without_diff_no_context_file(
+        self, mock_sync_cls, mock_typer, mock_exists
+    ):
         mock_sync = MagicMock()
         mock_sync_cls.return_value = mock_sync
         mock_sync.analyzer.get_last_commit_diff.return_value = ""
@@ -41,10 +43,14 @@ class TestFlowCommand:
         assert any("flow result" in c for c in calls)
 
     @patch("src.cli.commands.flow.os.path.exists", return_value=True)
-    @patch("src.cli.commands.flow.open", mock_open(read_data="# Context\n\nRoot context."))
+    @patch(
+        "src.cli.commands.flow.open", mock_open(read_data="# Context\n\nRoot context.")
+    )
     @patch("src.cli.commands.flow.typer")
     @patch("src.cli.commands.flow.AIContextSync")
-    def test_flow_without_diff_fallback_to_context_file(self, mock_sync_cls, mock_typer, mock_exists):
+    def test_flow_without_diff_fallback_to_context_file(
+        self, mock_sync_cls, mock_typer, mock_exists
+    ):
         mock_sync = MagicMock()
         mock_sync_cls.return_value = mock_sync
         mock_sync.analyzer.get_last_commit_diff.return_value = ""

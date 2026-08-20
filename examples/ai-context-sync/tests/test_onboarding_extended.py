@@ -23,11 +23,16 @@ class TestStartInteractiveFlow:
     def test_start_normal_flow_exit_immediately(self):
         """User types 'exit' immediately after the initial prompt."""
         mock_llm = MagicMock()
-        mock_llm.generate.return_value = "Overview:\n- Point 1\nSuggested Areas: auth, db, api"
+        mock_llm.generate.return_value = (
+            "Overview:\n- Point 1\nSuggested Areas: auth, db, api"
+        )
 
         session = OnboardingSession(mock_llm, self.tmpdir)
 
-        with patch("builtins.input", return_value="exit"), patch("src.onboarding.logger"):
+        with (
+            patch("builtins.input", return_value="exit"),
+            patch("src.onboarding.logger"),
+        ):
             session.start()
 
         # LLM was called once for initial prompt
@@ -40,7 +45,10 @@ class TestStartInteractiveFlow:
 
         session = OnboardingSession(mock_llm, self.tmpdir)
 
-        with patch("builtins.input", return_value="quit"), patch("src.onboarding.logger"):
+        with (
+            patch("builtins.input", return_value="quit"),
+            patch("src.onboarding.logger"),
+        ):
             session.start()
 
         assert mock_llm.generate.call_count == 1
@@ -80,7 +88,10 @@ class TestStartExploreMultipleAreas:
 
         session = OnboardingSession(mock_llm, self.tmpdir)
 
-        with patch("builtins.input", side_effect=["n", "auth", "api", "exit"]), patch("src.onboarding.logger"):
+        with (
+            patch("builtins.input", side_effect=["n", "auth", "api", "exit"]),
+            patch("src.onboarding.logger"),
+        ):
             session.start()
 
         # Initial prompt + 2 area explorations = 3 calls
@@ -94,7 +105,10 @@ class TestStartExploreMultipleAreas:
 
         session = OnboardingSession(mock_llm, self.tmpdir)
 
-        with patch("builtins.input", side_effect=["n", "database", "exit"]), patch("src.onboarding.logger"):
+        with (
+            patch("builtins.input", side_effect=["n", "database", "exit"]),
+            patch("src.onboarding.logger"),
+        ):
             session.start()
 
         assert session.current_focus == "database"

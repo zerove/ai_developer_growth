@@ -55,7 +55,6 @@ _DISK_CACHE_DIR = Path(__file__).parent.parent.parent / ".cache" / "rules_engine
 _DISK_CACHE_FILE = _DISK_CACHE_DIR / "rules_cache.json"
 
 
-
 def _load_disk_cache() -> dict[str, Any]:
     """Load rules from disk cache."""
     if _DISK_CACHE_FILE.exists():
@@ -174,7 +173,9 @@ def _try_load_yaml(rule_path: Path, framework_dir: Path) -> dict[str, Any] | Non
         import yaml
     except ImportError:
         # PyYAML not available - use universal rules
-        logger.info("Warning: PyYAML not installed. Using universal rules.", file=sys.stderr)
+        logger.info(
+            "Warning: PyYAML not installed. Using universal rules.", file=sys.stderr
+        )
         return None
 
     if not rule_path.exists():
@@ -200,7 +201,9 @@ def _try_load_yaml(rule_path: Path, framework_dir: Path) -> dict[str, Any] | Non
     return result
 
 
-def _load_language_rules_with_fallback(language: str, framework_dir: Path) -> dict[str, Any]:
+def _load_language_rules_with_fallback(
+    language: str, framework_dir: Path
+) -> dict[str, Any]:
     """Load rules for a language with fallback strategies."""
     rule_path = framework_dir / "languages" / language / "rules.d" / "anti_patterns.yml"
 
@@ -219,7 +222,10 @@ def _load_language_rules_with_fallback(language: str, framework_dir: Path) -> di
             result = _merge_rules(result, common)
         return result
 
-    logger.info(f"No specific rules for '{language}', using universal quality rules.", file=sys.stderr)
+    logger.info(
+        f"No specific rules for '{language}', using universal quality rules.",
+        file=sys.stderr,
+    )
     return _load_universal_rules(framework_dir)
 
 
@@ -296,7 +302,9 @@ def _load_single_custom_file(rule_file: Path, custom: dict[str, Any]) -> None:
     try:
         import yaml
     except ImportError:
-        logger.info("Warning: PyYAML not installed. Custom rules skipped.", file=sys.stderr)
+        logger.info(
+            "Warning: PyYAML not installed. Custom rules skipped.", file=sys.stderr
+        )
         return
 
     try:
@@ -409,7 +417,9 @@ def _get_embedded_rules(language: str) -> dict[str, Any]:
     return {"anti_patterns": common_anti_patterns, "thresholds": {}, "naming": {}}
 
 
-def load_rules_for_language(language: str, framework_dir: Path | None = None) -> dict[str, Any]:
+def load_rules_for_language(
+    language: str, framework_dir: Path | None = None
+) -> dict[str, Any]:
     """Load rules for a language, merging with common security rules.
 
     Common rules come from common/security.yml (loaded by load_rules()).
@@ -455,7 +465,9 @@ def _load_domain_rule_file(domains_dir: Path, domain: str) -> list[dict[str, Any
         return []
 
 
-def load_domain_rules(project_path: Path, framework_dir: Path | None = None) -> dict[str, Any]:
+def load_domain_rules(
+    project_path: Path, framework_dir: Path | None = None
+) -> dict[str, Any]:
     """Load domain-specific rules based on project configuration.
 
     Reads .adg/config.yml for `domains:` field and loads matching

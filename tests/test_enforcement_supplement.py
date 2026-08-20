@@ -6,7 +6,6 @@ Enforcement 脚本补充测试
 的未覆盖路径，将工具脚本覆盖率从 74% 提升到 85%+。
 """
 
-
 # --- check_ai_annotation.py tests ---
 
 from tools.scripts.check_ai_annotation import (
@@ -443,7 +442,9 @@ class TestValidateAgentDefinitionFull:
 
     def test_valid_md_format(self, tmp_path):
         f = tmp_path / "agent.md"
-        f.write_text("## agent: my-agent\n\n这是一个测试 Agent 的描述\n\n### 指令\n- 运行 `tools/scripts/test.py` 做测试\n### 工具\n- tool_a\n### 约束\n- 禁止做坏事\n")
+        f.write_text(
+            "## agent: my-agent\n\n这是一个测试 Agent 的描述\n\n### 指令\n- 运行 `tools/scripts/test.py` 做测试\n### 工具\n- tool_a\n### 约束\n- 禁止做坏事\n"
+        )
         result = validate_agent_definition(f)
         assert result["passed"]
 

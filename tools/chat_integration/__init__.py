@@ -35,7 +35,11 @@ class BaseNotifier:
         """Post payload to webhook."""
         try:
             data = json.dumps(payload).encode("utf-8")
-            req = Request(self.webhook_url, data=data, headers={"Content-Type": "application/json"})
+            req = Request(
+                self.webhook_url,
+                data=data,
+                headers={"Content-Type": "application/json"},
+            )
             with urlopen(req, timeout=10) as resp:
                 return bool(resp.status == 200)
         except Exception:
@@ -87,7 +91,10 @@ class SlackNotifier(BaseNotifier):
 
         # Build blocks
         blocks = [
-            {"type": "header", "text": {"type": "plain_text", "text": f"{status_emoji} {title}"}},
+            {
+                "type": "header",
+                "text": {"type": "plain_text", "text": f"{status_emoji} {title}"},
+            },
             {
                 "type": "section",
                 "fields": [
@@ -102,10 +109,20 @@ class SlackNotifier(BaseNotifier):
         ]
 
         # Add top issues
-        top_issues = sorted(issues, key=lambda i: {"error": 0, "warning": 1, "info": 2}.get(i.severity, 3))[:5]
+        top_issues = sorted(
+            issues,
+            key=lambda i: {"error": 0, "warning": 1, "info": 2}.get(i.severity, 3),
+        )[:5]
         if top_issues:
-            issue_text = "\n".join([f"• `{i.rule_id}` {i.file}:{i.line} - {i.message}" for i in top_issues])
-            blocks.append({"type": "section", "text": {"type": "mrkdwn", "text": f"*Top Issues:*\n{issue_text}"}})
+            issue_text = "\n".join(
+                [f"• `{i.rule_id}` {i.file}:{i.line} - {i.message}" for i in top_issues]
+            )
+            blocks.append(
+                {
+                    "type": "section",
+                    "text": {"type": "mrkdwn", "text": f"*Top Issues:*\n{issue_text}"},
+                }
+            )
 
         blocks.append({"type": "divider"})
         blocks.append(
@@ -126,7 +143,15 @@ class SlackNotifier(BaseNotifier):
     def send_alert(self, message: str, level: str = "warning") -> bool:
         emoji = {"error": "🔴", "warning": "🟡", "info": "🔵"}.get(level, "⚠️")
         payload = {
-            "blocks": [{"type": "section", "text": {"type": "mrkdwn", "text": f"{emoji} *ADG Alert*\n{message}"}}]
+            "blocks": [
+                {
+                    "type": "section",
+                    "text": {
+                        "type": "mrkdwn",
+                        "text": f"{emoji} *ADG Alert*\n{message}",
+                    },
+                }
+            ]
         }
         return self._post(payload)
 
@@ -150,38 +175,89 @@ class FeishuNotifier(BaseNotifier):
         warn_count = sum(1 for i in issues if i.severity == "warning")
         info_count = sum(1 for i in issues if i.severity == "info")
 
-        status = "🔴 FAIL" if error_count > 0 else ("🟡 WARN" if warn_count > 0 else "✅ PASS")
+        status = (
+            "🔴 FAIL"
+            if error_count > 0
+            else ("🟡 WARN" if warn_count > 0 else "✅ PASS")
+        )
 
         # Build Feishu card
         elements = [
             {
                 "tag": "div",
-                "text": {"tag": "lark_md", "content": f"**项目:** {project}\n**语言:** {language}\n**状态:** {status}"},
+                "text": {
+                    "tag": "lark_md",
+                    "content": f"**项目:** {project}\n**语言:** {language}\n**状态:** {status}",
+                },
             },
             {
                 "tag": "div",
                 "fields": [
-                    {"is_short": True, "text": {"tag": "lark_md", "content": f"**错误:** {error_count}"}},
-                    {"is_short": True, "text": {"tag": "lark_md", "content": f"**警告:** {warn_count}"}},
-                    {"is_short": True, "text": {"tag": "lark_md", "content": f"**信息:** {info_count}"}},
-                    {"is_short": True, "text": {"tag": "lark_md", "content": f"**总计:** {len(issues)}"}},
+                    {
+                        "is_short": True,
+                        "text": {
+                            "tag": "lark_md",
+                            "content": f"**错误:** {error_count}",
+                        },
+                    },
+                    {
+                        "is_short": True,
+                        "text": {
+                            "tag": "lark_md",
+                            "content": f"**警告:** {warn_count}",
+                        },
+                    },
+                    {
+                        "is_short": True,
+                        "text": {
+                            "tag": "lark_md",
+                            "content": f"**信息:** {info_count}",
+                        },
+                    },
+                    {
+                        "is_short": True,
+                        "text": {
+                            "tag": "lark_md",
+                            "content": f"**总计:** {len(issues)}",
+                        },
+                    },
                 ],
             },
             {"tag": "hr"},
         ]
 
         # Add top issues
-        top_issues = sorted(issues, key=lambda i: {"error": 0, "warning": 1, "info": 2}.get(i.severity, 3))[:5]
+        top_issues = sorted(
+            issues,
+            key=lambda i: {"error": 0, "warning": 1, "info": 2}.get(i.severity, 3),
+        )[:5]
         if top_issues:
-            issue_lines = "\n".join([f"- `{i.rule_id}` {Path(i.file).name}:{i.line} {i.message}" for i in top_issues])
-            elements.append({"tag": "div", "text": {"tag": "lark_md", "content": f"**主要问题:**\n{issue_lines}"}})
+            issue_lines = "\n".join(
+                [
+                    f"- `{i.rule_id}` {Path(i.file).name}:{i.line} {i.message}"
+                    for i in top_issues
+                ]
+            )
+            elements.append(
+                {
+                    "tag": "div",
+                    "text": {
+                        "tag": "lark_md",
+                        "content": f"**主要问题:**\n{issue_lines}",
+                    },
+                }
+            )
 
         payload = {
             "msg_type": "interactive",
             "card": {
                 "header": {
                     "title": {"tag": "plain_text", "content": f"🛡️ {title}"},
-                    "template": "red" if error_count > 0 else ("yellow" if warn_count > 0 else "green"),
+                    "template": (
+                        "red"
+                        if error_count > 0
+                        else ("yellow" if warn_count > 0 else "green")
+                    ),
                 },
                 "elements": elements,
             },
@@ -190,7 +266,9 @@ class FeishuNotifier(BaseNotifier):
         return self._post(payload)
 
     def send_alert(self, message: str, level: str = "warning") -> bool:
-        template = {"error": "red", "warning": "yellow", "info": "blue"}.get(level, "orange")
+        template = {"error": "red", "warning": "yellow", "info": "blue"}.get(
+            level, "orange"
+        )
         payload = {
             "msg_type": "interactive",
             "card": {
@@ -224,8 +302,15 @@ class DingTalkNotifier(BaseNotifier):
         error_count = sum(1 for i in issues if i.severity == "error")
         warn_count = sum(1 for i in issues if i.severity == "warning")
 
-        status = "🔴 FAIL" if error_count > 0 else ("🟡 WARN" if warn_count > 0 else "✅ PASS")
-        top_issues = sorted(issues, key=lambda i: {"error": 0, "warning": 1, "info": 2}.get(i.severity, 3))[:5]
+        status = (
+            "🔴 FAIL"
+            if error_count > 0
+            else ("🟡 WARN" if warn_count > 0 else "✅ PASS")
+        )
+        top_issues = sorted(
+            issues,
+            key=lambda i: {"error": 0, "warning": 1, "info": 2}.get(i.severity, 3),
+        )[:5]
 
         text = f"### {title}\n\n"
         text += f"**项目:** {project} | **语言:** {language} | **状态:** {status}\n\n"

@@ -38,7 +38,17 @@ CODE_EXTENSIONS: dict[str, str] = {
 }
 
 # File extensions for incremental checks (subset of CODE_EXTENSIONS)
-INCREMENTAL_EXTENSIONS: set[str] = {".py", ".js", ".jsx", ".ts", ".tsx", ".rs", ".java", ".go", ".cs"}
+INCREMENTAL_EXTENSIONS: set[str] = {
+    ".py",
+    ".js",
+    ".jsx",
+    ".ts",
+    ".tsx",
+    ".rs",
+    ".java",
+    ".go",
+    ".cs",
+}
 
 # Directories to ignore during scanning
 IGNORE_DIRS: set[str] = {

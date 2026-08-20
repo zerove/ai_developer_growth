@@ -82,7 +82,9 @@ def _config_excluded_dirs() -> set[str]:
     except Exception:
         import logging
 
-        logging.getLogger(__name__).warning("Failed to load exclude config", exc_info=True)
+        logging.getLogger(__name__).warning(
+            "Failed to load exclude config", exc_info=True
+        )
     return overrides
 
 
@@ -95,10 +97,16 @@ FRAMEWORK_DETECTORS: dict[str, dict[str, list[str]]] = {
     "express": {"files": ["package.json"], "packages": ["express"]},
     "nextjs": {"files": ["package.json", "next.config.js"], "packages": ["next"]},
     "django": {"files": ["manage.py", "requirements.txt"], "packages": ["django"]},
-    "fastapi": {"files": ["requirements.txt", "pyproject.toml"], "packages": ["fastapi"]},
+    "fastapi": {
+        "files": ["requirements.txt", "pyproject.toml"],
+        "packages": ["fastapi"],
+    },
     "actix": {"files": ["Cargo.toml"], "packages": ["actix-web"]},
     "spring": {"files": ["pom.xml", "build.gradle"], "packages": ["spring-context"]},
-    "spring-boot": {"files": ["pom.xml", "build.gradle"], "packages": ["spring-boot-starter"]},
+    "spring-boot": {
+        "files": ["pom.xml", "build.gradle"],
+        "packages": ["spring-boot-starter"],
+    },
 }
 
 
@@ -162,12 +170,19 @@ def check_file(
         return _file_not_found_result(filepath)
 
     if filepath.stat().st_size == 0:
-        return CheckResult(file=str(filepath), issues=[], language=filepath.suffix.lower().lstrip("."), skipped=True)
+        return CheckResult(
+            file=str(filepath),
+            issues=[],
+            language=filepath.suffix.lower().lstrip("."),
+            skipped=True,
+        )
 
     # Determine language
     lang = language or _detect_language(filepath)
     if lang == "unknown":
-        return CheckResult(file=str(filepath), issues=[], language="unknown", skipped=True)
+        return CheckResult(
+            file=str(filepath), issues=[], language="unknown", skipped=True
+        )
 
     # Load rules if not provided
     if rules is None:
@@ -182,7 +197,9 @@ def check_file(
     lines = content.splitlines()
 
     # Run all checkers
-    issues = _run_all_checkers(filepath, content, lines, lang, rules, run_linters=run_linters)
+    issues = _run_all_checkers(
+        filepath, content, lines, lang, rules, run_linters=run_linters
+    )
 
     # G1: 上下文感知 — 检测文件角色并调整严重度
     ctx_markers = _load_context_markers(filepath.parent)
@@ -224,7 +241,12 @@ def _file_not_found_result(filepath: Path) -> CheckResult:
 
 
 def _run_all_checkers(
-    filepath: Path, content: str, lines: list[str], lang: str, rules: dict[str, Any], run_linters: bool = True
+    filepath: Path,
+    content: str,
+    lines: list[str],
+    lang: str,
+    rules: dict[str, Any],
+    run_linters: bool = True,
 ) -> list[Issue]:
     """Run all checkers on file content."""
     issues: list[Issue] = []
@@ -287,7 +309,9 @@ def check_directory(
     framework = _detect_framework(dirpath)
     if framework:
         try:
-            fw_rules = load_rules_for_language(framework, rules_dir() / "frameworks" / framework)
+            fw_rules = load_rules_for_language(
+                framework, rules_dir() / "frameworks" / framework
+            )
             if rules:
                 from .rule_loader import _merge_rules
 
@@ -361,8 +385,12 @@ def check_directory(
             cached = store.get_cached_result(str(filepath), stat.st_mtime, stat.st_size)
             if cached is not None:
                 issues = [Issue(**i) for i in cached["issues"]]
-                return CheckResult(file=str(filepath), issues=issues, language=cached["language"])
-        result = check_file(filepath, rules, lang, semantic=semantic, run_linters=run_linters)
+                return CheckResult(
+                    file=str(filepath), issues=issues, language=cached["language"]
+                )
+        result = check_file(
+            filepath, rules, lang, semantic=semantic, run_linters=run_linters
+        )
         if store is not None and not result.skipped:
             stat = filepath.stat()
             store.set_cached_result(
@@ -396,7 +424,9 @@ def check_directory(
         warmup_rules = rules or {}
 
         pairs = [(fp, _detect_language(fp)) for fp in files]
-        with ProcessPoolExecutor(max_workers=jobs, initializer=_worker_init, initargs=(warmup_rules,)) as executor:
+        with ProcessPoolExecutor(
+            max_workers=jobs, initializer=_worker_init, initargs=(warmup_rules,)
+        ) as executor:
             worker_results: Iterator[CheckResult | None] = executor.map(
                 _worker_check,
                 pairs,
@@ -479,7 +509,11 @@ def _run_semantic_checks(filepath: Path, lang: str) -> list[Issue]:
 
 def _load_context_markers(dirpath: Path) -> dict[str, str]:
     """Load user-defined context markers from .adg/config.yml."""
-    for search_dir in [dirpath, dirpath.parent, dirpath.parents[2] if len(dirpath.parents) > 2 else None]:
+    for search_dir in [
+        dirpath,
+        dirpath.parent,
+        dirpath.parents[2] if len(dirpath.parents) > 2 else None,
+    ]:
         if search_dir is None:
             continue
         config_path = search_dir / ".adg" / "config.yml"

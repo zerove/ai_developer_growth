@@ -47,7 +47,9 @@ class EnhancedSearchPlugin(BasePlugin):
 if __name__ == "__main__":
     import sys
 
-    sys.path.insert(0, os.path.join(os.path.dirname(__file__), "examples/ai-navigation/src"))
+    sys.path.insert(
+        0, os.path.join(os.path.dirname(__file__), "examples/ai-navigation/src")
+    )
 
     import json
 
@@ -87,12 +89,18 @@ if __name__ == "__main__":
                                     else:
                                         tags = [t.strip() for t in tags_str.split(",")]
                                 elif line.startswith("category:"):
-                                    category = line.split(":", 1)[1].strip().strip("\"'")
+                                    category = (
+                                        line.split(":", 1)[1].strip().strip("\"'")
+                                    )
                                 elif line.startswith("difficulty:"):
-                                    difficulty = line.split(":", 1)[1].strip().strip("\"'")
+                                    difficulty = (
+                                        line.split(":", 1)[1].strip().strip("\"'")
+                                    )
 
                             doc = Document(
-                                id=path.replace(".md", "").replace("/", "_").replace(docs_dir + "_", ""),
+                                id=path.replace(".md", "")
+                                .replace("/", "_")
+                                .replace(docs_dir + "_", ""),
                                 title=title,
                                 content=body[:3000],
                                 doc_type="doc",

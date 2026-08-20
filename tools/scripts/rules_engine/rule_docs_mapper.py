@@ -42,10 +42,16 @@ BUILTIN_MAPPINGS: dict[str, list[dict[str, str]]] = {
         {"path": "docs/learning/python-basics.md", "reason": "assert 用法注意事项"},
     ],
     "ts-any-usage": [
-        {"path": "docs/learning/typescript-best-practices.md", "reason": "TypeScript 类型安全最佳实践"},
+        {
+            "path": "docs/learning/typescript-best-practices.md",
+            "reason": "TypeScript 类型安全最佳实践",
+        },
     ],
     "ts-ignore-comment": [
-        {"path": "docs/learning/typescript-best-practices.md", "reason": "@ts-ignore 替代方案"},
+        {
+            "path": "docs/learning/typescript-best-practices.md",
+            "reason": "@ts-ignore 替代方案",
+        },
     ],
     "rs-unsafe-code": [
         {"path": "docs/learning/rust-safety.md", "reason": "Rust 安全编程"},
@@ -69,7 +75,11 @@ def _extract_frontmatter_keywords(fm_text: str) -> list[str]:
                 except json.JSONDecodeError:
                     pass
             else:
-                keywords.extend(t.strip().strip('"').strip("'") for t in tags_part.split(",") if t.strip())
+                keywords.extend(
+                    t.strip().strip('"').strip("'")
+                    for t in tags_part.split(",")
+                    if t.strip()
+                )
         elif ":" in line and not line.strip().startswith("#"):
             k, v = line.split(":", 1)
             k = k.strip().lower()
@@ -134,7 +144,12 @@ def extract_keywords_from_rule(rule_id: str, rule_data: dict[str, Any]) -> list[
     for p in parts:
         keywords.append(p.lower())
         # 语言映射
-        lang_map = {"py": "python", "ts": "typescript", "rs": "rust", "js": "javascript"}
+        lang_map = {
+            "py": "python",
+            "ts": "typescript",
+            "rs": "rust",
+            "js": "javascript",
+        }
         if p.lower() in lang_map:
             keywords.append(lang_map[p.lower()])
 
@@ -186,7 +201,14 @@ def _simple_parse_rules(filepath: Path) -> list[dict[str, Any]]:
             key, _, val = stripped.partition(":")
             key = key.strip()
             val = val.strip().strip("'\"")
-            if key in ("name", "severity", "category", "pattern", "message", "fix_hint"):
+            if key in (
+                "name",
+                "severity",
+                "category",
+                "pattern",
+                "message",
+                "fix_hint",
+            ):
                 current[key] = val
     if current:
         rules.append(current)
@@ -245,7 +267,9 @@ def _match_rule_to_docs(
         overlap = rule_keywords & doc_kw_set
         if overlap:
             reason_keywords = list(overlap)[:3]
-            scored_docs.append((len(overlap), doc_path, f"关联关键词: {', '.join(reason_keywords)}"))
+            scored_docs.append(
+                (len(overlap), doc_path, f"关联关键词: {', '.join(reason_keywords)}")
+            )
 
     # Take top 3
     scored_docs.sort(key=lambda x: -x[0])
@@ -308,7 +332,9 @@ def rebuild_mapping(
     return mapping
 
 
-def query_mapping(rule_id: str, mapping_path: Path = MAPPING_CACHE) -> list[dict[str, str]]:
+def query_mapping(
+    rule_id: str, mapping_path: Path = MAPPING_CACHE
+) -> list[dict[str, str]]:
     """查询单条规则的关联文档。"""
     if not mapping_path.exists():
         print("Mapping not found. Run with --rebuild first.")

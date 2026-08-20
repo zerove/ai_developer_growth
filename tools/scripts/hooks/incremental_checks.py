@@ -10,7 +10,10 @@ from tools.scripts.hooks.basic_checks import (
     run_format_files,
     run_lint_files,
 )
-from tools.scripts.validate_language_rules import detect_language_from_file, validate_file
+from tools.scripts.validate_language_rules import (
+    detect_language_from_file,
+    validate_file,
+)
 
 
 def get_changed_files(base: str = "HEAD") -> list[Path]:
@@ -38,7 +41,9 @@ def get_changed_files(base: str = "HEAD") -> list[Path]:
                 if result.returncode == 0 and result.stdout.strip():
                     break
 
-        return [Path(line.strip()) for line in result.stdout.splitlines() if line.strip()]
+        return [
+            Path(line.strip()) for line in result.stdout.splitlines() if line.strip()
+        ]
     except (subprocess.TimeoutExpired, FileNotFoundError):
         return []
 
@@ -52,7 +57,9 @@ def get_staged_files() -> list[Path]:
             text=True,
             timeout=30,
         )
-        return [Path(line.strip()) for line in result.stdout.splitlines() if line.strip()]
+        return [
+            Path(line.strip()) for line in result.stdout.splitlines() if line.strip()
+        ]
     except (subprocess.TimeoutExpired, FileNotFoundError):
         return []
 
@@ -81,7 +88,9 @@ def _check_code_files(
 
         fmt_passed, fmt_out = run_format_files(py_files)
         if not fmt_passed:
-            output_lines.append(f"❌ Format errors (run: ruff format {py_files[0]} ...):\n{fmt_out}")
+            output_lines.append(
+                f"❌ Format errors (run: ruff format {py_files[0]} ...):\n{fmt_out}"
+            )
             all_passed = False
 
     # Language rules on all code files
@@ -109,7 +118,9 @@ def run_diff_checks(base: str = "HEAD") -> tuple[bool, str]:
     if not changed:
         return True, "No changed files detected"
 
-    code_files = [f for f in changed if f.suffix in INCREMENTAL_EXTENSIONS and f.exists()]
+    code_files = [
+        f for f in changed if f.suffix in INCREMENTAL_EXTENSIONS and f.exists()
+    ]
 
     if not code_files:
         return True, f"No code files in {len(changed)} changed files"
@@ -122,7 +133,9 @@ def run_pre_commit_checks() -> tuple[bool, str]:
     if not staged:
         return True, "No staged files"
 
-    code_files = [f for f in staged if f.suffix in INCREMENTAL_EXTENSIONS and f.exists()]
+    code_files = [
+        f for f in staged if f.suffix in INCREMENTAL_EXTENSIONS and f.exists()
+    ]
 
     if not code_files:
         return True, f"No code files in {len(staged)} staged files"

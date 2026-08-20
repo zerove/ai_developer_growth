@@ -217,7 +217,9 @@ Specific numbers and patterns.
 
         warnings = [r for r in results if r.severity == Severity.WARNING]
         # 10 hours = 600 min, 5 hours = 300 min, ratio = 2x, but claimed 3x -> should warn
-        self.assertTrue(any("Boost calculation may be off" in w.message for w in warnings))
+        self.assertTrue(
+            any("Boost calculation may be off" in w.message for w in warnings)
+        )
 
     def test_vague_insights_warning(self):
         """Test vague insights trigger warning."""
@@ -327,7 +329,9 @@ Specific pattern.
         results = validator.validate(self.case_dir)
 
         warnings = [r for r in results if r.severity == Severity.WARNING]
-        self.assertTrue(any("Missing deliverable checkboxes" in w.message for w in warnings))
+        self.assertTrue(
+            any("Missing deliverable checkboxes" in w.message for w in warnings)
+        )
 
     def test_submission_checklist(self):
         """Test submission checklist validation."""
@@ -372,7 +376,9 @@ Specific pattern.
         results = validator.validate(self.case_dir)
 
         warnings = [r for r in results if r.severity == Severity.WARNING]
-        self.assertTrue(any("Submission checklist incomplete" in w.message for w in warnings))
+        self.assertTrue(
+            any("Submission checklist incomplete" in w.message for w in warnings)
+        )
 
     def test_trailing_whitespace_warning(self):
         """Test trailing whitespace detection."""
@@ -510,7 +516,12 @@ Specific pattern.
         results = validator.validate(self.case_dir)
 
         warnings = [r for r in results if r.severity == Severity.WARNING]
-        self.assertTrue(any("phase keywords found" in w.message or "phase keywords" in w.message for w in warnings))
+        self.assertTrue(
+            any(
+                "phase keywords found" in w.message or "phase keywords" in w.message
+                for w in warnings
+            )
+        )
 
     def test_ai_human_role_separation(self):
         """Test AI/human role separation check - proper content should pass."""
@@ -568,7 +579,11 @@ Specific pattern.
         # Should have no role separation warning since "Human" and "AI" are present
         warnings = [r for r in results if r.severity == Severity.WARNING]
         role_warnings = [w for w in warnings if "role separation" in w.message]
-        self.assertEqual(len(role_warnings), 0, f"Unexpected role separation warning: {role_warnings}")
+        self.assertEqual(
+            len(role_warnings),
+            0,
+            f"Unexpected role separation warning: {role_warnings}",
+        )
 
     def test_ai_human_role_separation_warning(self):
         """Test that missing role separation triggers warning."""
@@ -626,7 +641,9 @@ Specific pattern.
         # Should have role separation warning since no "Human"/"AI"/"人" etc.
         warnings = [r for r in results if r.severity == Severity.WARNING]
         role_warnings = [w for w in warnings if "role separation" in w.message]
-        self.assertEqual(len(role_warnings), 1, f"Expected role separation warning: {role_warnings}")
+        self.assertEqual(
+            len(role_warnings), 1, f"Expected role separation warning: {role_warnings}"
+        )
 
 
 class TestValidateCaseStudyMain(unittest.TestCase):
@@ -647,7 +664,11 @@ class TestValidateCaseStudyMain(unittest.TestCase):
 
     def _run_main(self, *args):
         return subprocess.run(
-            [sys.executable, "/home/zeron/dev/ai_developer_growth/tools/scripts/validate_case_study.py", *args],
+            [
+                sys.executable,
+                "/home/zeron/dev/ai_developer_growth/tools/scripts/validate_case_study.py",
+                *args,
+            ],
             capture_output=True,
             text=True,
             cwd=self.test_dir,
@@ -729,7 +750,11 @@ Specific.
         self.assertEqual(result.returncode, 1)
         # Output may be on stderr or stdout
         combined = result.stdout + result.stderr
-        self.assertTrue("No case studies found" in combined or "error" in combined.lower() or result.returncode == 1)
+        self.assertTrue(
+            "No case studies found" in combined
+            or "error" in combined.lower()
+            or result.returncode == 1
+        )
 
     def test_main_with_strict_flag(self):
         """Test main with --strict flag."""

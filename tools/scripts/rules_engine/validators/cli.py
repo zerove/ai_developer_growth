@@ -12,11 +12,11 @@ import sys
 from pathlib import Path
 from typing import Any
 
+from tools.scripts._common import file_hash_full as _file_hash
+
 from .health import calculate_health_score
 from .models import FixResult, ValidationResult
 from .pipeline import detect_language_from_file, validate_directory, validate_file
-
-from tools.scripts._common import file_hash_full as _file_hash
 
 
 def _load_cache(cache_file: Path) -> dict[str, str]:
@@ -40,7 +40,14 @@ def _save_cache(cache_file: Path, cache: dict[str, str]) -> None:
 
 def _get_supported_files(dirpath: Path, exclude: list[str]) -> list[Path]:
     """Get all supported files in a directory."""
-    exclude = exclude or ["node_modules", "target", "vendor", ".git", "__pycache__", ".venv"]
+    exclude = exclude or [
+        "node_modules",
+        "target",
+        "vendor",
+        ".git",
+        "__pycache__",
+        ".venv",
+    ]
     files = []
     for fp in sorted(dirpath.rglob("*")):
         if not fp.is_file():
@@ -166,9 +173,20 @@ Examples:
         ],
         help="Language to validate against",
     )
-    parser.add_argument("--auto-detect", action="store_true", help="Auto-detect language from file extensions")
-    parser.add_argument("--json", action="store_true", dest="json_output", help="Output results as JSON (legacy)")
-    parser.add_argument("--fail-on-warnings", action="store_true", help="Exit with error on warnings")
+    parser.add_argument(
+        "--auto-detect",
+        action="store_true",
+        help="Auto-detect language from file extensions",
+    )
+    parser.add_argument(
+        "--json",
+        action="store_true",
+        dest="json_output",
+        help="Output results as JSON (legacy)",
+    )
+    parser.add_argument(
+        "--fail-on-warnings", action="store_true", help="Exit with error on warnings"
+    )
     parser.add_argument(
         "--exclude",
         nargs="*",
@@ -182,12 +200,32 @@ Examples:
         help="Output format (default: text). sarif = GitHub Code Scanning",
     )
     parser.add_argument("-o", "--output", type=Path, help="Write report to file")
-    parser.add_argument("--max-errors", type=int, default=None, help="Max allowed errors (exit 1 if exceeded)")
-    parser.add_argument("--max-warnings", type=int, default=None, help="Max allowed warnings (exit 1 if exceeded)")
+    parser.add_argument(
+        "--max-errors",
+        type=int,
+        default=None,
+        help="Max allowed errors (exit 1 if exceeded)",
+    )
+    parser.add_argument(
+        "--max-warnings",
+        type=int,
+        default=None,
+        help="Max allowed warnings (exit 1 if exceeded)",
+    )
     parser.add_argument("--fix", action="store_true", help="Apply auto-fixes")
-    parser.add_argument("--dry-run", action="store_true", help="Show what --fix would change without writing")
-    parser.add_argument("--custom-rules", type=Path, help="Directory with custom .yml rules (default: .ai-rules/)")
-    parser.add_argument("--health-score", action="store_true", help="Show project health score")
+    parser.add_argument(
+        "--dry-run",
+        action="store_true",
+        help="Show what --fix would change without writing",
+    )
+    parser.add_argument(
+        "--custom-rules",
+        type=Path,
+        help="Directory with custom .yml rules (default: .ai-rules/)",
+    )
+    parser.add_argument(
+        "--health-score", action="store_true", help="Show project health score"
+    )
     parser.add_argument(
         "--incremental",
         action="store_true",
@@ -230,7 +268,10 @@ def _collect_results(
         if language is None:
             language = detect_language_from_file(args.path)
         if language is None:
-            print(f"Error: Cannot detect language for {args.path}. Use --lang.", file=sys.stderr)
+            print(
+                f"Error: Cannot detect language for {args.path}. Use --lang.",
+                file=sys.stderr,
+            )
             return None
 
         # Incremental: skip unchanged files
@@ -246,7 +287,9 @@ def _collect_results(
         results = [validate_file(args.path, language, custom_rules=custom_rules)]
     else:
         if language is None and not args.auto_detect:
-            print("Error: Use --lang or --auto-detect for directories.", file=sys.stderr)
+            print(
+                "Error: Use --lang or --auto-detect for directories.", file=sys.stderr
+            )
             return None
 
         # Incremental: skip unchanged files in directory
@@ -265,7 +308,9 @@ def _collect_results(
             if not results:
                 print("No changed files detected (incremental mode).")
         else:
-            results = validate_directory(args.path, language, args.exclude, custom_rules=custom_rules)
+            results = validate_directory(
+                args.path, language, args.exclude, custom_rules=custom_rules
+            )
 
     return results
 
@@ -309,7 +354,9 @@ def _check_thresholds(
     if max_warnings is not None:
         total_warnings = sum(r.warning_count for r in results)
         if total_warnings > max_warnings:
-            print(f"\nFAILED: {total_warnings} warnings exceeds max-warnings={max_warnings}")
+            print(
+                f"\nFAILED: {total_warnings} warnings exceeds max-warnings={max_warnings}"
+            )
             return 1
 
     if fail_on_warnings and any(r.warning_count > 0 for r in results):
@@ -355,14 +402,20 @@ def _handle_linters(args: argparse.Namespace, path: Path) -> None:
 
     linter_issues = run_linter_aggregation(path, args.linters)
     if linter_issues:
-        print(f"\n  Linter Results ({len(linter_issues)} issues from {', '.join(args.linters)}):")
+        print(
+            f"\n  Linter Results ({len(linter_issues)} issues from {', '.join(args.linters)}):"
+        )
         for issue in linter_issues[:20]:
-            print(f"    [{issue['linter']}] {issue['file']}:{issue['line']} {issue['message']}")
+            print(
+                f"    [{issue['linter']}] {issue['file']}:{issue['line']} {issue['message']}"
+            )
         if len(linter_issues) > 20:
             print(f"    ... and {len(linter_issues) - 20} more")
 
 
-def _handle_output(results: list[ValidationResult], args: argparse.Namespace) -> int | None:
+def _handle_output(
+    results: list[ValidationResult], args: argparse.Namespace
+) -> int | None:
     """Handle output formats. Returns exit code if handled, None otherwise."""
     if args.format != "text" or args.json_output:
         from tools.scripts.report_generator import write_report
@@ -387,10 +440,14 @@ def _handle_output(results: list[ValidationResult], args: argparse.Namespace) ->
     return None
 
 
-def _handle_text_output(results: list[ValidationResult], args: argparse.Namespace) -> int:
+def _handle_text_output(
+    results: list[ValidationResult], args: argparse.Namespace
+) -> int:
     """Handle text output format."""
     exit_code = print_results(results, use_json=False)
-    threshold_fail = _check_thresholds(results, args.max_errors, args.max_warnings, args.fail_on_warnings)
+    threshold_fail = _check_thresholds(
+        results, args.max_errors, args.max_warnings, args.fail_on_warnings
+    )
     if threshold_fail is not None:
         return threshold_fail
     return exit_code

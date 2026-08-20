@@ -34,16 +34,22 @@ class LLMCache:
 
     DEFAULT_TTL = 3600  # 1 hour
 
-    def __init__(self, cache_dir: str = ".ai-sync-cache", ttl: int = DEFAULT_TTL) -> None:
+    def __init__(
+        self, cache_dir: str = ".ai-sync-cache", ttl: int = DEFAULT_TTL
+    ) -> None:
         self.cache_dir = cache_dir
         self.ttl = ttl
         os.makedirs(cache_dir, exist_ok=True)
 
-    def _make_key(self, provider: str, model: str, prompt: str, system_prompt: str) -> str:
+    def _make_key(
+        self, provider: str, model: str, prompt: str, system_prompt: str
+    ) -> str:
         content = f"{provider}:{model}:{system_prompt}:{prompt}"
         return hashlib.sha256(content.encode()).hexdigest()
 
-    def get(self, provider: str, model: str, prompt: str, system_prompt: str) -> str | None:
+    def get(
+        self, provider: str, model: str, prompt: str, system_prompt: str
+    ) -> str | None:
         key = self._make_key(provider, model, prompt, system_prompt)
         path = os.path.join(self.cache_dir, f"{key}.json")
         if not os.path.exists(path):
@@ -58,7 +64,9 @@ class LLMCache:
         except (json.JSONDecodeError, OSError):
             return None
 
-    def set(self, provider: str, model: str, prompt: str, system_prompt: str, response: str) -> None:
+    def set(
+        self, provider: str, model: str, prompt: str, system_prompt: str, response: str
+    ) -> None:
         key = self._make_key(provider, model, prompt, system_prompt)
         path = os.path.join(self.cache_dir, f"{key}.json")
         try:
@@ -100,7 +108,9 @@ class LLMClient:
 
         provider_class = PROVIDERS.get(provider)
         if not provider_class:
-            raise LLMError(f"Unsupported provider: {provider}. Supported: {list(PROVIDERS.keys())}")
+            raise LLMError(
+                f"Unsupported provider: {provider}. Supported: {list(PROVIDERS.keys())}"
+            )
 
         self._provider = provider_class(api_key=self.api_key, api_base=api_base)
         self._cache = LLMCache(ttl=cache_ttl) if cache_enabled else None
@@ -108,14 +118,18 @@ class LLMClient:
         if not self.api_key and provider != "ollama":
             logger.warning("AI_SYNC_KEY environment variable not set.")
 
-    def generate(self, prompt: str, system_prompt: str = "You are a helpful assistant.") -> str | None:
+    def generate(
+        self, prompt: str, system_prompt: str = "You are a helpful assistant."
+    ) -> str | None:
         if self.provider_name == "system":
             pass
         elif not self.api_key and self.provider_name != "ollama":
             return f"[Mock Response] (API Key missing) Based on the prompt: {prompt[:50]}..."
 
         if self._cache:
-            cached = self._cache.get(self.provider_name, self.model, prompt, system_prompt)
+            cached = self._cache.get(
+                self.provider_name, self.model, prompt, system_prompt
+            )
             if cached is not None:
                 logger.debug(f"LLM cache hit for {self.provider_name}/{self.model}")
                 return cached
@@ -123,7 +137,9 @@ class LLMClient:
         try:
             result = self._provider.generate(prompt, system_prompt, self.model)
             if self._cache and result:
-                self._cache.set(self.provider_name, self.model, prompt, system_prompt, result)
+                self._cache.set(
+                    self.provider_name, self.model, prompt, system_prompt, result
+                )
             return result
         except requests.RequestException as e:
             logger.error(f"Error calling LLM ({self.provider_name}): {e}")

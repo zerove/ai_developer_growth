@@ -63,7 +63,11 @@ class TestGetAllRules:
             patch("tools.scripts.rule_visualize.load_rules") as mock_load,
         ):
             mock_dir.return_value = tmp_path
-            mock_load.return_value = {"anti_patterns": [], "naming_conventions": [], "complexity": []}
+            mock_load.return_value = {
+                "anti_patterns": [],
+                "naming_conventions": [],
+                "complexity": [],
+            }
             result = get_all_rules()
             assert "python" in result
             assert result["python"]["total"] == 0
@@ -76,7 +80,12 @@ class TestVisualizeHandler:
         handler = VisualizeHandler.__new__(VisualizeHandler)
         with patch("tools.scripts.rule_visualize.get_all_rules") as mock_rules:
             mock_rules.return_value = {
-                "python": {"anti_patterns": [], "naming_conventions": [], "complexity": [], "total": 0}
+                "python": {
+                    "anti_patterns": [],
+                    "naming_conventions": [],
+                    "complexity": [],
+                    "total": 0,
+                }
             }
             result = handler.handle_api("/api/rules", {})
             assert "python" in result

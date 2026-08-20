@@ -36,7 +36,13 @@ class TestAuditToPr(unittest.TestCase):
     def test_single_violation(self):
         """Test formatting with a single violation."""
         violations = [
-            {"rule_id": "TEST-001", "severity": "Critical", "message": "Test violation", "file": "test.py", "line": 10}
+            {
+                "rule_id": "TEST-001",
+                "severity": "Critical",
+                "message": "Test violation",
+                "file": "test.py",
+                "line": 10,
+            }
         ]
         json_input = json.dumps(violations)
         result = format_audit_results_json(json_input)
@@ -62,7 +68,13 @@ class TestAuditToPr(unittest.TestCase):
                 "file": "test2.py",
                 "line": 20,
             },
-            {"rule_id": "TEST-003", "severity": "Info", "message": "Info violation", "file": "test3.py", "line": 30},
+            {
+                "rule_id": "TEST-003",
+                "severity": "Info",
+                "message": "Info violation",
+                "file": "test3.py",
+                "line": 30,
+            },
         ]
         json_input = json.dumps(violations)
         result = format_audit_results_json(json_input)
@@ -75,7 +87,15 @@ class TestAuditToPr(unittest.TestCase):
     @patch("sys.stdout", new_callable=StringIO)
     def test_main_with_valid_input(self, mock_stdout, mock_stdin):
         """Test main logic with valid JSON input."""
-        violations = [{"rule_id": "TEST-001", "severity": "Critical", "message": "Test", "file": "test.py", "line": 10}]
+        violations = [
+            {
+                "rule_id": "TEST-001",
+                "severity": "Critical",
+                "message": "Test",
+                "file": "test.py",
+                "line": 10,
+            }
+        ]
         mock_stdin.write(json.dumps(violations))
         mock_stdin.seek(0)
 
@@ -439,7 +459,10 @@ class TestMainFunction(unittest.TestCase):
             "passed_check_names": ["Lint"],
         }
         mock_format.return_value = "Test report"
-        mock_create_pr.return_value = {"success": True, "pr_url": "https://github.com/test/pr/1"}
+        mock_create_pr.return_value = {
+            "success": True,
+            "pr_url": "https://github.com/test/pr/1",
+        }
 
         with patch("sys.argv", ["audit_to_pr.py", "--run-audit", "--create-pr"]):
             result = main()
@@ -451,7 +474,9 @@ class TestMainFunction(unittest.TestCase):
     @patch("audit_to_pr.parse_audit_output")
     @patch("audit_to_pr.format_pr_report")
     @patch("audit_to_pr.create_github_pr")
-    def test_main_create_pr_failure(self, mock_create_pr, mock_format, mock_parse, mock_run):
+    def test_main_create_pr_failure(
+        self, mock_create_pr, mock_format, mock_parse, mock_run
+    ):
         """Test main with --create-pr when PR creation fails."""
         mock_run.return_value = {
             "success": True,

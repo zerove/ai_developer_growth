@@ -135,7 +135,12 @@ class TestCheckPattern:
 class TestMakeIssue:
     def test_make_issue(self, workspace):
         f = workspace / "test.py"
-        pattern_def = {"severity": "error", "message": "test msg", "category": "security", "fix_hint": "fix it"}
+        pattern_def = {
+            "severity": "error",
+            "message": "test msg",
+            "category": "security",
+            "fix_hint": "fix it",
+        }
         issue = _make_issue(f, 10, 5, pattern_def)
         assert issue.line == 10
         assert issue.column == 5
@@ -209,7 +214,13 @@ class TestFormatJson:
 
 class TestValidateRule:
     def test_valid_rule(self):
-        rule = {"id": "test/1", "pattern": r"eval\(", "severity": "error", "message": "test", "category": "security"}
+        rule = {
+            "id": "test/1",
+            "pattern": r"eval\(",
+            "severity": "error",
+            "message": "test",
+            "category": "security",
+        }
         errors = _validate_rule(rule)
         assert len(errors) == 0
 
@@ -315,7 +326,16 @@ class TestFormatTrendReport:
         assert isinstance(report, str)
 
     def test_json_format(self):
-        data = [{"timestamp": "2024-01-01", "issues": 5, "errors": 1, "warnings": 2, "info": 2, "language": "python"}]
+        data = [
+            {
+                "timestamp": "2024-01-01",
+                "issues": 5,
+                "errors": 1,
+                "warnings": 2,
+                "info": 2,
+                "language": "python",
+            }
+        ]
         report = _format_trend_report(data, output_json=True)
         parsed = json.loads(report)
         assert isinstance(parsed, dict | list)
@@ -324,7 +344,9 @@ class TestFormatTrendReport:
 class TestApplyFix:
     def test_eval_fix(self):
         content = "x = eval('1+1')\n"
-        fixed, applied = _apply_fix(content, "SEC001", {"pattern": r"eval\(", "replacement": "ast.literal_eval"})
+        fixed, applied = _apply_fix(
+            content, "SEC001", {"pattern": r"eval\(", "replacement": "ast.literal_eval"}
+        )
         # If the fix rule exists, it should apply
         assert isinstance(fixed, str)
 
@@ -352,12 +374,16 @@ class TestSlackNotification:
         with patch("urllib.request.urlopen") as mock:
             mock.return_value.__enter__ = lambda s: s
             mock.return_value.__exit__ = MagicMock(return_value=False)
-            result = _send_slack_notification("https://hooks.slack.com/test", issues, "python", "test")
+            result = _send_slack_notification(
+                "https://hooks.slack.com/test", issues, "python", "test"
+            )
             assert isinstance(result, bool)
 
     def test_send_slack_error(self):
         with patch("urllib.request.urlopen", side_effect=Exception("network error")):
-            result = _send_slack_notification("https://hooks.slack.com/test", [], "python", "test")
+            result = _send_slack_notification(
+                "https://hooks.slack.com/test", [], "python", "test"
+            )
             assert result is False
 
 
@@ -378,12 +404,16 @@ class TestDingtalkNotification:
         with patch("urllib.request.urlopen") as mock:
             mock.return_value.__enter__ = lambda s: s
             mock.return_value.__exit__ = MagicMock(return_value=False)
-            result = _send_dingtalk_notification("https://oapi.dingtalk.com/test", issues, "python", "test")
+            result = _send_dingtalk_notification(
+                "https://oapi.dingtalk.com/test", issues, "python", "test"
+            )
             assert isinstance(result, bool)
 
     def test_send_dingtalk_error(self):
         with patch("urllib.request.urlopen", side_effect=Exception("network error")):
-            result = _send_dingtalk_notification("https://oapi.dingtalk.com/test", [], "python", "test")
+            result = _send_dingtalk_notification(
+                "https://oapi.dingtalk.com/test", [], "python", "test"
+            )
             assert result is False
 
 

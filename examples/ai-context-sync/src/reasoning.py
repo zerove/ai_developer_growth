@@ -67,5 +67,6 @@ class DecisionReasoner:
         )
 
         return (
-            self.llm_client.generate(prompt, system_prompt=system_prompt) or "LLM failed to synthesize an explanation."
+            self.llm_client.generate(prompt, system_prompt=system_prompt)
+            or "LLM failed to synthesize an explanation."
         )

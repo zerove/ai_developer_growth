@@ -114,7 +114,9 @@ def cache_stats() -> dict[str, int]:
     """Get cache statistics."""
     return {
         "cached_patterns": len(_COMPILED_CACHE),
-        "memory_estimate_bytes": sum(len(p.pattern.encode()) for p in _COMPILED_CACHE.values()),
+        "memory_estimate_bytes": sum(
+            len(p.pattern.encode()) for p in _COMPILED_CACHE.values()
+        ),
     }
 
 

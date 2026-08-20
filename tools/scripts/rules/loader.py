@@ -77,7 +77,13 @@ def _merge_rules(base: dict[str, Any], custom: dict[str, Any]) -> dict[str, Any]
     """
     result = dict(base)
 
-    for category in ["anti_patterns", "naming_conventions", "complexity", "naming", "thresholds"]:
+    for category in [
+        "anti_patterns",
+        "naming_conventions",
+        "complexity",
+        "naming",
+        "thresholds",
+    ]:
         base_items = base.get(category, [])
         custom_items = custom.get(category, [])
 
@@ -97,7 +103,10 @@ def _merge_rules(base: dict[str, Any], custom: dict[str, Any]) -> dict[str, Any]
                 rule_id = rule.get("id", "")
                 if rule_id in base_map:
                     if "severity_override" in rule:
-                        base_map[rule_id] = {**base_map[rule_id], "severity": rule["severity_override"]}
+                        base_map[rule_id] = {
+                            **base_map[rule_id],
+                            "severity": rule["severity_override"],
+                        }
                     else:
                         base_map[rule_id].update(rule)
                 else:

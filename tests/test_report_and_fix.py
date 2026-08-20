@@ -206,13 +206,17 @@ class TestApplyFixes(unittest.TestCase):
         with tempfile.NamedTemporaryFile(mode="w", suffix=".py", delete=False) as f:
             f.write("x = 1\n")
             f.flush()
-            issue = Issue("r1", "error", "security", f.name, 999, "msg", fix_replacement="new")
+            issue = Issue(
+                "r1", "error", "security", f.name, 999, "msg", fix_replacement="new"
+            )
             fixes = apply_fixes(Path(f.name), [issue])
             self.assertEqual(len(fixes), 0)
         Path(f.name).unlink(missing_ok=True)
 
     def test_nonexistent_file(self) -> None:
-        issue = Issue("r1", "error", "security", "nonexistent.py", 1, "msg", fix_replacement="new")
+        issue = Issue(
+            "r1", "error", "security", "nonexistent.py", 1, "msg", fix_replacement="new"
+        )
         fixes = apply_fixes(Path("nonexistent.py"), [issue])
         self.assertEqual(len(fixes), 0)
 

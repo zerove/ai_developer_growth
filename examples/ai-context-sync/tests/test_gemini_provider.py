@@ -17,23 +17,33 @@ class TestGeminiGenerate:
 
     def test_generate_success(self):
         mock_response = MagicMock()
-        mock_response.json.return_value = {"candidates": [{"content": {"parts": [{"text": "Hello from Gemini"}]}}]}
+        mock_response.json.return_value = {
+            "candidates": [{"content": {"parts": [{"text": "Hello from Gemini"}]}}]
+        }
         mock_response.raise_for_status = MagicMock()
 
         provider = GeminiProvider(api_key="test-gemini-key")
-        with patch("src.providers.gemini_provider.requests.post", return_value=mock_response) as mock_post:
-            result = provider.generate("What is AI?", "You are helpful.", "gemini-2.5-flash")
+        with patch(
+            "src.providers.gemini_provider.requests.post", return_value=mock_response
+        ) as mock_post:
+            result = provider.generate(
+                "What is AI?", "You are helpful.", "gemini-2.5-flash"
+            )
             assert result == "Hello from Gemini"
             mock_post.assert_called_once()
             mock_response.raise_for_status.assert_called_once()
 
     def test_generate_url_construction(self):
         mock_response = MagicMock()
-        mock_response.json.return_value = {"candidates": [{"content": {"parts": [{"text": "ok"}]}}]}
+        mock_response.json.return_value = {
+            "candidates": [{"content": {"parts": [{"text": "ok"}]}}]
+        }
         mock_response.raise_for_status = MagicMock()
 
         provider = GeminiProvider(api_key="key", api_base="https://custom.api.com/v1")
-        with patch("src.providers.gemini_provider.requests.post", return_value=mock_response) as mock_post:
+        with patch(
+            "src.providers.gemini_provider.requests.post", return_value=mock_response
+        ) as mock_post:
             provider.generate("prompt", "sys", "my-model")
             call_args = mock_post.call_args
             url = call_args[0][0]
@@ -41,11 +51,15 @@ class TestGeminiGenerate:
 
     def test_generate_default_url(self):
         mock_response = MagicMock()
-        mock_response.json.return_value = {"candidates": [{"content": {"parts": [{"text": "ok"}]}}]}
+        mock_response.json.return_value = {
+            "candidates": [{"content": {"parts": [{"text": "ok"}]}}]
+        }
         mock_response.raise_for_status = MagicMock()
 
         provider = GeminiProvider(api_key="key")
-        with patch("src.providers.gemini_provider.requests.post", return_value=mock_response) as mock_post:
+        with patch(
+            "src.providers.gemini_provider.requests.post", return_value=mock_response
+        ) as mock_post:
             provider.generate("prompt", "sys", "gemini-2.5-flash")
             url = mock_post.call_args[0][0]
             assert url.startswith(GeminiProvider.DEFAULT_BASE_URL)
@@ -53,11 +67,15 @@ class TestGeminiGenerate:
 
     def test_generate_payload_structure(self):
         mock_response = MagicMock()
-        mock_response.json.return_value = {"candidates": [{"content": {"parts": [{"text": "response"}]}}]}
+        mock_response.json.return_value = {
+            "candidates": [{"content": {"parts": [{"text": "response"}]}}]
+        }
         mock_response.raise_for_status = MagicMock()
 
         provider = GeminiProvider(api_key="key")
-        with patch("src.providers.gemini_provider.requests.post", return_value=mock_response) as mock_post:
+        with patch(
+            "src.providers.gemini_provider.requests.post", return_value=mock_response
+        ) as mock_post:
             provider.generate("test prompt", "test system", "gemini-2.5-flash")
             _, kwargs = mock_post.call_args
             payload = kwargs["json"]
@@ -77,7 +95,9 @@ class TestGeminiGenerate:
         provider = GeminiProvider(api_key="bad-key")
         with patch("src.providers.gemini_provider.requests.post") as mock_post:
             mock_response = MagicMock()
-            mock_response.raise_for_status.side_effect = requests.HTTPError("403 Forbidden")
+            mock_response.raise_for_status.side_effect = requests.HTTPError(
+                "403 Forbidden"
+            )
             mock_post.return_value = mock_response
 
             with pytest.raises(requests.HTTPError):
@@ -85,6 +105,9 @@ class TestGeminiGenerate:
 
     def test_generate_connection_error_raises(self):
         provider = GeminiProvider(api_key="key")
-        with patch("src.providers.gemini_provider.requests.post", side_effect=requests.ConnectionError("refused")):
+        with patch(
+            "src.providers.gemini_provider.requests.post",
+            side_effect=requests.ConnectionError("refused"),
+        ):
             with pytest.raises(requests.ConnectionError):
                 provider.generate("prompt", "sys", "gemini-2.5-flash")

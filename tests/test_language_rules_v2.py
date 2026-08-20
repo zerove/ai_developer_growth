@@ -318,7 +318,9 @@ class TestReports:
 
 class TestHealthScore:
     def test_perfect_score(self) -> None:
-        results = [ValidationResult(file="clean.py", language="python", lines_checked=10)]
+        results = [
+            ValidationResult(file="clean.py", language="python", lines_checked=10)
+        ]
         health = calculate_health_score(results)
         assert health.score >= 90
         assert health.grade == "A"
@@ -326,7 +328,14 @@ class TestHealthScore:
     def test_errors_reduce_score(self) -> None:
         r = ValidationResult(file="bad.py", language="python", lines_checked=10)
         r.issues.append(
-            Issue(rule_id="test", severity="error", category="security", file="bad.py", line=1, message="err")
+            Issue(
+                rule_id="test",
+                severity="error",
+                category="security",
+                file="bad.py",
+                line=1,
+                message="err",
+            )
         )
         health = calculate_health_score([r])
         assert health.score < 100
@@ -335,7 +344,14 @@ class TestHealthScore:
     def test_warnings_reduce_score(self) -> None:
         r = ValidationResult(file="warn.py", language="python", lines_checked=10)
         r.issues.append(
-            Issue(rule_id="test", severity="warning", category="general", file="warn.py", line=1, message="warn")
+            Issue(
+                rule_id="test",
+                severity="warning",
+                category="general",
+                file="warn.py",
+                line=1,
+                message="warn",
+            )
         )
         health = calculate_health_score([r])
         # Warning penalty (-2) is offset by clean file bonus (+2), so score may stay 100
@@ -349,7 +365,12 @@ class TestHealthScore:
         for i in range(20):
             r.issues.append(
                 Issue(
-                    rule_id=f"test-{i}", severity="error", category="security", file="bad.py", line=i + 1, message="err"
+                    rule_id=f"test-{i}",
+                    severity="error",
+                    category="security",
+                    file="bad.py",
+                    line=i + 1,
+                    message="err",
                 )
             )
         health = calculate_health_score([r])
@@ -357,7 +378,9 @@ class TestHealthScore:
         assert health.grade in ("D", "F")
 
     def test_to_dict(self) -> None:
-        results = [ValidationResult(file="clean.py", language="python", lines_checked=10)]
+        results = [
+            ValidationResult(file="clean.py", language="python", lines_checked=10)
+        ]
         health = calculate_health_score(results)
         d = health.to_dict()
         assert "score" in d
@@ -374,8 +397,26 @@ class TestThresholds:
     def test_max_errors_cli(self, tmp_path: Path) -> None:
         """Test that max-errors threshold works via validate_file."""
         r = ValidationResult(file="test.py", language="python")
-        r.issues.append(Issue(rule_id="e1", severity="error", category="sec", file="test.py", line=1, message="err1"))
-        r.issues.append(Issue(rule_id="e2", severity="error", category="sec", file="test.py", line=2, message="err2"))
+        r.issues.append(
+            Issue(
+                rule_id="e1",
+                severity="error",
+                category="sec",
+                file="test.py",
+                line=1,
+                message="err1",
+            )
+        )
+        r.issues.append(
+            Issue(
+                rule_id="e2",
+                severity="error",
+                category="sec",
+                file="test.py",
+                line=2,
+                message="err2",
+            )
+        )
 
         # 2 errors, threshold 1 -> should fail
         total_errors = sum(1 for i in r.issues if i.severity == "error")
@@ -386,7 +427,14 @@ class TestThresholds:
         r = ValidationResult(file="test.py", language="python")
         for i in range(5):
             r.issues.append(
-                Issue(rule_id=f"w{i}", severity="warning", category="gen", file="test.py", line=i + 1, message="warn")
+                Issue(
+                    rule_id=f"w{i}",
+                    severity="warning",
+                    category="gen",
+                    file="test.py",
+                    line=i + 1,
+                    message="warn",
+                )
             )
         total_warnings = sum(1 for i in r.issues if i.severity == "warning")
         assert total_warnings == 5
@@ -458,9 +506,36 @@ class TestSARIF:
 
     def test_sarif_severity_levels(self) -> None:
         r = ValidationResult(file="test.py", language="python", lines_checked=10)
-        r.issues.append(Issue(rule_id="e", severity="error", category="c", file="test.py", line=1, message="e"))
-        r.issues.append(Issue(rule_id="w", severity="warning", category="c", file="test.py", line=2, message="w"))
-        r.issues.append(Issue(rule_id="i", severity="info", category="c", file="test.py", line=3, message="i"))
+        r.issues.append(
+            Issue(
+                rule_id="e",
+                severity="error",
+                category="c",
+                file="test.py",
+                line=1,
+                message="e",
+            )
+        )
+        r.issues.append(
+            Issue(
+                rule_id="w",
+                severity="warning",
+                category="c",
+                file="test.py",
+                line=2,
+                message="w",
+            )
+        )
+        r.issues.append(
+            Issue(
+                rule_id="i",
+                severity="info",
+                category="c",
+                file="test.py",
+                line=3,
+                message="i",
+            )
+        )
         sarif = json.loads(generate_sarif([r]))
         levels = [res["level"] for res in sarif["runs"][0]["results"]]
         assert levels == ["error", "warning", "note"]
@@ -468,7 +543,14 @@ class TestSARIF:
     def test_write_report_sarif(self, tmp_path: Path) -> None:
         r = ValidationResult(file="test.py", language="python", lines_checked=10)
         r.issues.append(
-            Issue(rule_id="py-test", severity="error", category="security", file="test.py", line=1, message="err")
+            Issue(
+                rule_id="py-test",
+                severity="error",
+                category="security",
+                file="test.py",
+                line=1,
+                message="err",
+            )
         )
         out = tmp_path / "report.sarif"
         content = write_report([r], "sarif", out)
@@ -489,7 +571,9 @@ class TestCommonRules:
         rules = load_rules("python")
         anti_ids = [p["id"] for p in rules.get("anti_patterns", [])]
         # Common rules should be present
-        assert any("common-" in rid for rid in anti_ids), f"Common rules not found in: {anti_ids[:10]}"
+        assert any(
+            "common-" in rid for rid in anti_ids
+        ), f"Common rules not found in: {anti_ids[:10]}"
 
     def test_common_secret_rule(self) -> None:
         """Verify common-hardcoded-secret rule exists."""

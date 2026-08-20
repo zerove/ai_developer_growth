@@ -3,7 +3,11 @@ import shutil
 import unittest
 from pathlib import Path
 
-from tools.scripts.check_metadata import check_metadata, extract_frontmatter, scan_directory
+from tools.scripts.check_metadata import (
+    check_metadata,
+    extract_frontmatter,
+    scan_directory,
+)
 
 
 class TestExtractFrontmatter(unittest.TestCase):
@@ -262,7 +266,9 @@ difficulty: 中级
                 encoding="utf-8",
             )
             issues = check_metadata(self.test_file)
-            self.assertFalse(any("Invalid category" in i for i in issues), f"Failed for {cat}")
+            self.assertFalse(
+                any("Invalid category" in i for i in issues), f"Failed for {cat}"
+            )
 
     def test_all_valid_difficulties(self):
         """All valid difficulties should pass."""
@@ -280,7 +286,9 @@ difficulty: {diff}
                 encoding="utf-8",
             )
             issues = check_metadata(self.test_file)
-            self.assertFalse(any("Invalid difficulty" in i for i in issues), f"Failed for {diff}")
+            self.assertFalse(
+                any("Invalid difficulty" in i for i in issues), f"Failed for {diff}"
+            )
 
     def test_file_read_error(self):
         """Should handle file read errors gracefully."""
@@ -299,7 +307,9 @@ title: Test
             encoding="utf-8",
         )
         issues = check_metadata(self.test_file)
-        self.assertGreaterEqual(len(issues), 3)  # missing description, category, tags, difficulty
+        self.assertGreaterEqual(
+            len(issues), 3
+        )  # missing description, category, tags, difficulty
 
 
 class TestScanDirectory(unittest.TestCase):
@@ -315,7 +325,9 @@ class TestScanDirectory(unittest.TestCase):
 
     def test_scan_finds_issues(self):
         """Should find files with metadata issues."""
-        (Path(self.test_dir) / "bad.md").write_text("# No frontmatter", encoding="utf-8")
+        (Path(self.test_dir) / "bad.md").write_text(
+            "# No frontmatter", encoding="utf-8"
+        )
         results = scan_directory(Path(self.test_dir))
         self.assertGreater(len(results), 0)
 
@@ -362,7 +374,9 @@ difficulty: 进阶
 
     def test_scan_non_md_files_ignored(self):
         """Non-markdown files should be ignored."""
-        (Path(self.test_dir) / "notes.txt").write_text("# Not markdown", encoding="utf-8")
+        (Path(self.test_dir) / "notes.txt").write_text(
+            "# Not markdown", encoding="utf-8"
+        )
         results = scan_directory(Path(self.test_dir))
         self.assertEqual(len(results), 0)
 

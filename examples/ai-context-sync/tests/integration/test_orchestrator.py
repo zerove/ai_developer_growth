@@ -3,7 +3,9 @@ import sys
 import unittest
 from unittest.mock import MagicMock, patch
 
-sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
+sys.path.insert(
+    0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+)
 
 from src.orchestrator import WorkflowManager
 
@@ -39,7 +41,9 @@ class TestWorkflowManager(unittest.TestCase):
     def test_run_flow_invalid_json_returns_error(self):
         self.mock_llm.generate.return_value = "No JSON here"
         result = self.wm.run_flow("test task", lambda: True, initial_context="ctx")
-        self.assertIn("decomposition", result.lower()) or self.assertIn("Design", result)
+        self.assertIn("decomposition", result.lower()) or self.assertIn(
+            "Design", result
+        )
 
     def test_single_shot_implement_no_files(self):
         self.mock_llm.generate.return_value = ""

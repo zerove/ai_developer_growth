@@ -13,7 +13,9 @@ from tools.scripts._common import get_project_root
 
 
 class ScopeGuardHook:
-    def __init__(self, max_lines: int = 300, max_files: int = 5, root_dir: Path | None = None):
+    def __init__(
+        self, max_lines: int = 300, max_files: int = 5, root_dir: Path | None = None
+    ):
         self.max_lines = max_lines
         self.max_files = max_files
         self.root_dir = root_dir or get_project_root()
@@ -27,7 +29,10 @@ class ScopeGuardHook:
                 cwd=self.root_dir,
             )
             if res.returncode != 0:
-                return True, "Git diff check skipped (not a git repo or no staged changes)."
+                return (
+                    True,
+                    "Git diff check skipped (not a git repo or no staged changes).",
+                )
 
             lines = res.stdout.strip().splitlines()
             total_added = 0
@@ -46,7 +51,10 @@ class ScopeGuardHook:
                 msg = f"Scope Guard Warning: Large diff detected ({file_count} files, {total_changed} lines changed). Exceeds recommended small-batch limits ({self.max_files} files, {self.max_lines} lines). Consider splitting commit."
                 return False, msg
 
-            return True, f"Scope check passed: {file_count} files, {total_changed} lines changed."
+            return (
+                True,
+                f"Scope check passed: {file_count} files, {total_changed} lines changed.",
+            )
         except Exception as e:
             return True, f"Scope check skipped due to error: {e}"
 

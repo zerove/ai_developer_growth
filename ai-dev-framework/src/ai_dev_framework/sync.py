@@ -16,7 +16,9 @@ def sync_project_workflows(target_dir: str | Path = ".") -> dict[str, Any]:
     jcode_dir.mkdir(parents=True, exist_ok=True)
 
     # Source tools directory in ai_developer_growth repo root or package bundle
-    source_tools = Path(__file__).resolve().parent.parent.parent.parent / "tools" / "scripts"
+    source_tools = (
+        Path(__file__).resolve().parent.parent.parent.parent / "tools" / "scripts"
+    )
     if not source_tools.exists():
         # Fallback if running from installed package
         source_tools = Path(__file__).resolve().parent / "bundled_tools"

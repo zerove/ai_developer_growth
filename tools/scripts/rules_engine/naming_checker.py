@@ -24,7 +24,9 @@ def check_naming_conventions(
 
         pattern = convention.get("pattern")
         severity = convention.get("severity", "warning")
-        message = convention.get("message", f"Naming convention '{convention_name}' violated")
+        message = convention.get(
+            "message", f"Naming convention '{convention_name}' violated"
+        )
         fix_hint = convention.get("fix_hint", "")
 
         if not pattern:

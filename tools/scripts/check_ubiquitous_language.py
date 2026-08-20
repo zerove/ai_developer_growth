@@ -14,7 +14,11 @@ def extract_terms(ubiquitous_file: Path) -> list[str]:
     content = ubiquitous_file.read_text(encoding="utf-8")
     # 匹配表格行 | 术语 | 英文 | 定义 | ...
     for line in content.split("\n"):
-        if line.startswith("| ") and not line.startswith("| 术语") and not line.startswith("|---"):
+        if (
+            line.startswith("| ")
+            and not line.startswith("| 术语")
+            and not line.startswith("|---")
+        ):
             parts = [p.strip() for p in line.split("|")]
             if len(parts) >= 3:
                 term = parts[1].strip()

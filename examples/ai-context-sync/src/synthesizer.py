@@ -7,14 +7,18 @@ from .utils import retry_on_failure
 class ContextSynthesizer:
     """Uses LLM to synthesize git diffs into document updates."""
 
-    def __init__(self, client: LLMClient, profile: LanguageProfile, max_retries: int = 3):
+    def __init__(
+        self, client: LLMClient, profile: LanguageProfile, max_retries: int = 3
+    ):
         self.client = client
         self.profile = profile
         self.max_retries = max_retries
         self.optimizer = PromptOptimizer()
 
     @retry_on_failure(max_retries=3, delay=1.0, label="context synthesis")
-    def synthesize_context_update(self, diff: str, commit_msg: str, current_context: str) -> str:
+    def synthesize_context_update(
+        self, diff: str, commit_msg: str, current_context: str
+    ) -> str:
         base_system_prompt = (
             "You are a professional project chronicler. Your task is to update the project's "
             "CONTEXT.md file based on the provided git diff and commit message. "
@@ -48,9 +52,7 @@ class ContextSynthesizer:
             "Title, Status, Context, Decision, Consequences."
         )
 
-        system_prompt += (
-            f"\n\n**Technical Context:** This is a {self.profile.name} project. Please use appropriate terminology."
-        )
+        system_prompt += f"\n\n**Technical Context:** This is a {self.profile.name} project. Please use appropriate terminology."
 
         prompt = (
             f"Commit Message: {commit_msg}\n"

@@ -31,7 +31,9 @@ from tools.scripts.rule_registry import (
 def fake_registry(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
     """Redirect registry to tmp_path."""
     monkeypatch.setattr("tools.scripts.rule_registry._registry_dir", lambda: tmp_path)
-    monkeypatch.setattr("tools.scripts.rule_registry._packs_dir", lambda: tmp_path / "packs")
+    monkeypatch.setattr(
+        "tools.scripts.rule_registry._packs_dir", lambda: tmp_path / "packs"
+    )
     return tmp_path
 
 
@@ -111,7 +113,16 @@ class TestCmdList:
 
     def test_list_with_packs(self, fake_registry: Path, capsys: Any) -> None:
         _save_registry(
-            {"packs": {"my-pack": {"version": "1.0", "rule_count": 5, "updated": "2024-01-01"}}, "version": "1.0"}
+            {
+                "packs": {
+                    "my-pack": {
+                        "version": "1.0",
+                        "rule_count": 5,
+                        "updated": "2024-01-01",
+                    }
+                },
+                "version": "1.0",
+            }
         )
         cmd_list(_make_args())
         assert "my-pack" in capsys.readouterr().out
@@ -154,7 +165,9 @@ class TestCmdPublish:
 class TestCmdInstall:
     """Tests for cmd_install()."""
 
-    def test_install_pack(self, fake_registry: Path, capsys: Any, tmp_path: Path) -> None:
+    def test_install_pack(
+        self, fake_registry: Path, capsys: Any, tmp_path: Path
+    ) -> None:
         # Publish first
         packs = fake_registry / "packs"
         packs.mkdir(exist_ok=True)
@@ -181,7 +194,13 @@ class TestCmdSearch:
     def test_search_found(self, fake_registry: Path, capsys: Any) -> None:
         _save_registry(
             {
-                "packs": {"sec-rules": {"version": "1.0", "description": "security rules", "tags": ["security"]}},
+                "packs": {
+                    "sec-rules": {
+                        "version": "1.0",
+                        "description": "security rules",
+                        "tags": ["security"],
+                    }
+                },
                 "version": "1.0",
             }
         )
@@ -189,12 +208,22 @@ class TestCmdSearch:
         assert "Found" in capsys.readouterr().out
 
     def test_search_not_found(self, fake_registry: Path, capsys: Any) -> None:
-        _save_registry({"packs": {"a": {"version": "1.0", "description": "other", "tags": []}}, "version": "1.0"})
+        _save_registry(
+            {
+                "packs": {"a": {"version": "1.0", "description": "other", "tags": []}},
+                "version": "1.0",
+            }
+        )
         cmd_search(_make_args(query="zzz"))
         assert "No packs matching" in capsys.readouterr().out
 
     def test_search_json(self, fake_registry: Path, capsys: Any) -> None:
-        _save_registry({"packs": {"my": {"version": "1.0", "description": "mine", "tags": []}}, "version": "1.0"})
+        _save_registry(
+            {
+                "packs": {"my": {"version": "1.0", "description": "mine", "tags": []}},
+                "version": "1.0",
+            }
+        )
         cmd_search(_make_args(query="mine", json=True))
         data = json.loads(capsys.readouterr().out)
         assert "my" in data
@@ -204,7 +233,12 @@ class TestCmdInfo:
     """Tests for cmd_info()."""
 
     def test_info_found(self, fake_registry: Path, capsys: Any) -> None:
-        _save_registry({"packs": {"mypack": {"version": "2.0", "description": "test"}}, "version": "1.0"})
+        _save_registry(
+            {
+                "packs": {"mypack": {"version": "2.0", "description": "test"}},
+                "version": "1.0",
+            }
+        )
         cmd_info(_make_args(pack="mypack"))
         assert "mypack" in capsys.readouterr().out
 
@@ -260,7 +294,10 @@ class TestMain:
     @patch("tools.scripts.rule_registry.handle_error")
     def test_main_exception(self, mock_handle: MagicMock, fake_registry: Path) -> None:
         with patch("sys.argv", ["registry", "init"]):
-            with patch("tools.scripts.rule_registry.init_registry", side_effect=RuntimeError("fail")):
+            with patch(
+                "tools.scripts.rule_registry.init_registry",
+                side_effect=RuntimeError("fail"),
+            ):
                 ret = main()
         assert ret == 1
         mock_handle.assert_called_once()

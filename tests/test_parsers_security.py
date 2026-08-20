@@ -10,10 +10,15 @@ import pytest
 sys.path.insert(0, str(Path(__file__).parent.parent / "tools" / "scripts"))
 
 from tools.scripts.rules_engine.parsers.base import BaseParser
-from tools.scripts.rules_engine.parsers.contract import ParserProtocol, validate_parser_contract
+from tools.scripts.rules_engine.parsers.contract import (
+    ParserProtocol,
+    validate_parser_contract,
+)
 from tools.scripts.rules_engine.parsers.go_parser import GoParser
 from tools.scripts.rules_engine.parsers.python_parser import PythonParser
-from tools.scripts.rules_engine.parsers.python_parser_v3 import PythonParser as PythonParserV3
+from tools.scripts.rules_engine.parsers.python_parser_v3 import (
+    PythonParser as PythonParserV3,
+)
 from tools.scripts.rules_engine.parsers.registry import PARSER_REGISTRY, get_parser
 from tools.scripts.rules_engine.parsers.rust_parser import RustParser
 from tools.scripts.rules_engine.security_patterns import (
@@ -56,7 +61,9 @@ def test_error_patterns_not_empty():
 def test_get_security_rules_returns_dict():
     rules = get_security_rules("python")
     assert "anti_patterns" in rules
-    assert len(rules["anti_patterns"]) == len(SECURITY_PATTERNS) + len(TYPE_PATTERNS) + len(ERROR_PATTERNS)
+    assert len(rules["anti_patterns"]) == len(SECURITY_PATTERNS) + len(
+        TYPE_PATTERNS
+    ) + len(ERROR_PATTERNS)
 
 
 def test_security_patterns_exclude_files():

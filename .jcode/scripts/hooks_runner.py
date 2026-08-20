@@ -75,7 +75,9 @@ def run_hook(hook: dict, changed_files: list[str] | None = None) -> bool:
 
     if command:
         # 直接执行命令
-        result = subprocess.run(command, shell=True, capture_output=True, text=True, cwd=get_project_root())
+        result = subprocess.run(
+            command, shell=True, capture_output=True, text=True, cwd=get_project_root()
+        )
         output = result.stdout + result.stderr
         passed = result.returncode == 0
         print_check(name, passed, output)
@@ -90,7 +92,9 @@ def run_hook(hook: dict, changed_files: list[str] | None = None) -> bool:
             return False
 
         cmd = [sys.executable, str(script), action]
-        result = subprocess.run(cmd, capture_output=True, text=True, cwd=get_project_root())
+        result = subprocess.run(
+            cmd, capture_output=True, text=True, cwd=get_project_root()
+        )
         output = result.stdout + result.stderr
         passed = result.returncode == 0
         print_check(name, passed, output)
@@ -114,7 +118,9 @@ def _set_mode(mode: str) -> None:
     try:
         content = f"mode={mode}\ngovernance_level={'high' if mode in ('quality', 'safe') else 'medium'}\naudit_enabled={'true' if mode != 'perf' else 'false'}\n"
         CONFIG_PATH.write_text(content)
-        print(f"  🔄 模式: {mode} (governance_level={'high' if mode in ('quality', 'safe') else 'medium'})")
+        print(
+            f"  🔄 模式: {mode} (governance_level={'high' if mode in ('quality', 'safe') else 'medium'})"
+        )
     except OSError:
         pass  # 非阻断
 

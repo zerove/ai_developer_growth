@@ -139,16 +139,44 @@ def detect_language_from_files(files: list[Path]) -> str:
 
 def _collect_code_files(project_path: Path) -> list[Path]:
     """Collect code files from project, ignoring common directories."""
-    code_extensions = {".py", ".js", ".jsx", ".ts", ".tsx", ".rs", ".java", ".go", ".rb", ".cs", ".kt", ".swift"}
-    ignore_dirs = {"node_modules", ".git", "__pycache__", ".venv", "venv", "dist", "build", ".cache"}
+    code_extensions = {
+        ".py",
+        ".js",
+        ".jsx",
+        ".ts",
+        ".tsx",
+        ".rs",
+        ".java",
+        ".go",
+        ".rb",
+        ".cs",
+        ".kt",
+        ".swift",
+    }
+    ignore_dirs = {
+        "node_modules",
+        ".git",
+        "__pycache__",
+        ".venv",
+        "venv",
+        "dist",
+        "build",
+        ".cache",
+    }
 
     files: list[Path] = []
     for ext in code_extensions:
-        files.extend(f for f in project_path.rglob(f"*{ext}") if not any(d in f.parts for d in ignore_dirs))
+        files.extend(
+            f
+            for f in project_path.rglob(f"*{ext}")
+            if not any(d in f.parts for d in ignore_dirs)
+        )
     return files
 
 
-def _analyze_files(files: list[Path]) -> tuple[str, int, list[dict[str, Any]], dict[str, int]]:
+def _analyze_files(
+    files: list[Path],
+) -> tuple[str, int, list[dict[str, Any]], dict[str, int]]:
     """Analyze files to detect patterns and count occurrences."""
     language = detect_language_from_files(files)
     total_lines = 0
@@ -196,7 +224,9 @@ def _build_rules(
                 "name": pattern["name"],
                 "severity": pattern["severity"],
                 "category": pattern["category"],
-                "pattern": PATTERN_DETECTORS[PATTERN_DETECTORS.index(pattern)]["pattern"],
+                "pattern": PATTERN_DETECTORS[PATTERN_DETECTORS.index(pattern)][
+                    "pattern"
+                ],
                 "message": f"{pattern['message']} (found {count} occurrences)",
                 "fix_hint": pattern["fix_hint"],
             }
@@ -251,7 +281,9 @@ def format_analysis(result: dict[str, Any], *, format: str = "text") -> str:
         "Detected patterns:",
     ]
 
-    for pattern_id, count in sorted(result["pattern_counts"].items(), key=lambda x: -x[1]):
+    for pattern_id, count in sorted(
+        result["pattern_counts"].items(), key=lambda x: -x[1]
+    ):
         lines.append(f"  {pattern_id}: {count} occurrences")
 
     lines.append(f"\nGenerated {len(result['rules']['anti_patterns'])} rules")
@@ -280,19 +312,27 @@ def main() -> None:
 
             args.output.parent.mkdir(parents=True, exist_ok=True)
             with open(args.output, "w") as f:
-                yaml.dump(result["rules"], f, default_flow_style=False, allow_unicode=True)
+                yaml.dump(
+                    result["rules"], f, default_flow_style=False, allow_unicode=True
+                )
             print(f"\n✅ Rules written to {args.output}")
         except ImportError:
             # Fallback to JSON
-            args.output.write_text(json.dumps(result["rules"], indent=2, ensure_ascii=False))
-            print(f"\n✅ Rules written to {args.output} (JSON - install PyYAML for YAML output)")
+            args.output.write_text(
+                json.dumps(result["rules"], indent=2, ensure_ascii=False)
+            )
+            print(
+                f"\n✅ Rules written to {args.output} (JSON - install PyYAML for YAML output)"
+            )
     elif not sys.stdin.isatty():
         # Pipe mode: output rules to stdout
         try:
             import yaml
 
             print("\n---\n# Generated rules YAML")
-            print(yaml.dump(result["rules"], default_flow_style=False, allow_unicode=True))
+            print(
+                yaml.dump(result["rules"], default_flow_style=False, allow_unicode=True)
+            )
         except ImportError:
             print("\n---\n# Generated rules JSON")
             print(json.dumps(result["rules"], indent=2, ensure_ascii=False))

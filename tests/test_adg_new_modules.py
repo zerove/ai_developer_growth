@@ -18,7 +18,9 @@ def workspace(tmp_path):
     d.mkdir()
     (d / ".git").mkdir()
     (d / "pyproject.toml").write_text("[project]\nname='test'\n")
-    (d / "main.py").write_text("import os\nos.system('ls')\nx = eval('1+1')\nimport pickle\n")
+    (d / "main.py").write_text(
+        "import os\nos.system('ls')\nx = eval('1+1')\nimport pickle\n"
+    )
     (d / "utils.py").write_text("import sys\nprint(sys.argv)\n")
     return d
 
@@ -33,8 +35,26 @@ class TestHtmlReport:
         from tools.report import generate_html_report
 
         issues = [
-            Issue("SEC001", "error", "security", "main.py", 1, 1, "eval", "Use ast.literal_eval"),
-            Issue("CQ001", "warning", "code_quality", "main.py", 5, 1, "print", "Use logging"),
+            Issue(
+                "SEC001",
+                "error",
+                "security",
+                "main.py",
+                1,
+                1,
+                "eval",
+                "Use ast.literal_eval",
+            ),
+            Issue(
+                "CQ001",
+                "warning",
+                "code_quality",
+                "main.py",
+                5,
+                1,
+                "print",
+                "Use logging",
+            ),
         ]
         html = generate_html_report(issues, "python", "flask", 2)
         assert "<!DOCTYPE html>" in html
@@ -311,7 +331,9 @@ class TestChatIntegration:
     def test_create_dingtalk_notifier(self):
         from tools.chat_integration import DingTalkNotifier, create_notifier
 
-        notifier = create_notifier("https://oapi.dingtalk.com/robot/send?access_token=xxx")
+        notifier = create_notifier(
+            "https://oapi.dingtalk.com/robot/send?access_token=xxx"
+        )
         assert isinstance(notifier, DingTalkNotifier)
 
     def test_send_report(self):
@@ -414,7 +436,9 @@ class TestNewCliCommands:
     def test_html_report_command(self, workspace):
         from tools.scripts.adg_cli import cmd_html_report
 
-        args = argparse.Namespace(path=str(workspace), output=str(workspace / "report.html"), lang=None)
+        args = argparse.Namespace(
+            path=str(workspace), output=str(workspace / "report.html"), lang=None
+        )
         result = cmd_html_report(args)
         assert result == 0
         assert (workspace / "report.html").exists()
@@ -443,7 +467,9 @@ class TestNewCliCommands:
     def test_marketplace_install(self, workspace):
         from tools.scripts.adg_cli import cmd_marketplace
 
-        args = argparse.Namespace(marketplace_command="install", pack_id="security-essentials", lang=None)
+        args = argparse.Namespace(
+            marketplace_command="install", pack_id="security-essentials", lang=None
+        )
         result = cmd_marketplace(args)
         assert result == 0
 
@@ -472,7 +498,9 @@ class TestNewCliCommands:
         from tools.scripts.adg_cli import cmd_dashboard
 
         output = tmp_path / "dash.html"
-        args = argparse.Namespace(path=str(workspace), static=str(output), port=8080, host="127.0.0.1")
+        args = argparse.Namespace(
+            path=str(workspace), static=str(output), port=8080, host="127.0.0.1"
+        )
         result = cmd_dashboard(args)
         assert result == 0
         assert output.exists()

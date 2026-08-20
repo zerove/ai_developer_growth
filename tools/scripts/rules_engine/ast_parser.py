@@ -157,7 +157,11 @@ def _parse_function_parameters(params_node: _TreeNode, lines: list[str]) -> list
     for child in params_node.children:
         if child.type == "identifier":
             params.append(_get_text_static(child, lines))
-        elif child.type in ("default_parameter", "typed_parameter", "typed_default_parameter"):
+        elif child.type in (
+            "default_parameter",
+            "typed_parameter",
+            "typed_default_parameter",
+        ):
             for sub in child.children:
                 if sub.type == "identifier":
                     params.append(_get_text_static(sub, lines))
@@ -206,7 +210,9 @@ def _estimate_complexity_static(node: _TreeNode, lines: list[str]) -> int:
     return counter[0]
 
 
-def _count_branching_static(node: _TreeNode, types: set[str], counter: list[int]) -> None:
+def _count_branching_static(
+    node: _TreeNode, types: set[str], counter: list[int]
+) -> None:
     """Count branching nodes for complexity."""
     if node.type in types:
         counter[0] += 1
@@ -228,7 +234,15 @@ class ASTParser:
     避免重复创建 tree-sitter 语言 parser 的开销。
     """
 
-    SUPPORTED_LANGUAGES = {"python", "javascript", "typescript", "rust", "go", "java", "ruby"}
+    SUPPORTED_LANGUAGES = {
+        "python",
+        "javascript",
+        "typescript",
+        "rust",
+        "go",
+        "java",
+        "ruby",
+    }
     # 类级共享缓存：所有实例复用同一批 language parser
     _PARSER_CACHE: ClassVar[dict[str, Any]] = {}
     _PARSER_CACHE_READY: ClassVar[bool] = False
@@ -304,7 +318,9 @@ class ASTParser:
         except Exception:
             return None
 
-    def parse_file(self, filepath: Path, language: str | None = None, use_cache: bool = False) -> FileAST | None:
+    def parse_file(
+        self, filepath: Path, language: str | None = None, use_cache: bool = False
+    ) -> FileAST | None:
         """Parse a file and extract structured information.
 
         Args:
@@ -373,11 +389,15 @@ class ASTParser:
             parse_time_ms=parse_time,
         )
 
-    def extract_functions(self, tree: _TSTree, language: str, lines: list[str] | None = None) -> list[FunctionInfo]:
+    def extract_functions(
+        self, tree: _TSTree, language: str, lines: list[str] | None = None
+    ) -> list[FunctionInfo]:
         """Extract function info from a parsed tree."""
         return self._extract_functions(tree.root_node, language, lines or [])
 
-    def extract_classes(self, tree: _TSTree, language: str, lines: list[str] | None = None) -> list[ClassInfo]:
+    def extract_classes(
+        self, tree: _TSTree, language: str, lines: list[str] | None = None
+    ) -> list[ClassInfo]:
         """Extract class info from a parsed tree."""
         return self._extract_classes(tree.root_node, language, lines or [])
 
@@ -389,14 +409,21 @@ class ASTParser:
     # Python-specific extraction
     # ─────────────────────────────────────────────────────────────
 
-    def _extract_functions(self, node: _TreeNode, language: str, lines: list[str]) -> list[FunctionInfo]:
+    def _extract_functions(
+        self, node: _TreeNode, language: str, lines: list[str]
+    ) -> list[FunctionInfo]:
         """Extract functions from AST node."""
         functions: list[FunctionInfo] = []
         self._walk_functions(node, language, lines, functions, None)
         return functions
 
     def _walk_functions(
-        self, node: _TreeNode, language: str, lines: list[str], result: list[FunctionInfo], class_name: str | None
+        self,
+        node: _TreeNode,
+        language: str,
+        lines: list[str],
+        result: list[FunctionInfo],
+        class_name: str | None,
     ) -> None:
         """Recursively walk AST to find functions."""
         if language == "python":
@@ -411,7 +438,11 @@ class ASTParser:
             self._walk_generic_functions(node, language, lines, result, class_name)
 
     def _walk_python_functions(
-        self, node: _TreeNode, lines: list[str], result: list[FunctionInfo], class_name: str | None
+        self,
+        node: _TreeNode,
+        lines: list[str],
+        result: list[FunctionInfo],
+        class_name: str | None,
     ) -> None:
         """Walk Python AST for function definitions."""
         func_types = {"function_definition", "async_function_definition"}
@@ -426,7 +457,9 @@ class ASTParser:
         for child in node.children:
             self._walk_python_functions(child, lines, result, class_name)
 
-    def _parse_python_function(self, node: _TreeNode, lines: list[str], class_name: str | None) -> FunctionInfo | None:
+    def _parse_python_function(
+        self, node: _TreeNode, lines: list[str], class_name: str | None
+    ) -> FunctionInfo | None:
         """Parse a Python function definition node."""
         name_node = None
         params_node = None
@@ -469,7 +502,11 @@ class ASTParser:
     # ─────────────────────────────────────────────────────────────
 
     def _walk_js_functions(
-        self, node: _TreeNode, lines: list[str], result: list[FunctionInfo], class_name: str | None
+        self,
+        node: _TreeNode,
+        lines: list[str],
+        result: list[FunctionInfo],
+        class_name: str | None,
     ) -> None:
         """Walk JS/TS AST for function definitions."""
         func_types = {
@@ -496,7 +533,9 @@ class ASTParser:
         for child in node.children:
             self._walk_js_functions(child, lines, result, class_name)
 
-    def _parse_js_function(self, node: _TreeNode, lines: list[str], class_name: str | None) -> FunctionInfo | None:
+    def _parse_js_function(
+        self, node: _TreeNode, lines: list[str], class_name: str | None
+    ) -> FunctionInfo | None:
         """Parse a JS/TS function node."""
         name = self._get_child_name(node, lines) or "<anonymous>"
         params: list[str] = []
@@ -504,7 +543,11 @@ class ASTParser:
         for child in node.children:
             if child.type == "formal_parameters":
                 for param in child.children:
-                    if param.type in ("identifier", "required_parameter", "optional_parameter"):
+                    if param.type in (
+                        "identifier",
+                        "required_parameter",
+                        "optional_parameter",
+                    ):
                         param_name = self._get_child_name(param, lines)
                         if param_name:
                             params.append(param_name)
@@ -532,7 +575,11 @@ class ASTParser:
     # ─────────────────────────────────────────────────────────────
 
     def _walk_rust_functions(
-        self, node: _TreeNode, lines: list[str], result: list[FunctionInfo], class_name: str | None
+        self,
+        node: _TreeNode,
+        lines: list[str],
+        result: list[FunctionInfo],
+        class_name: str | None,
     ) -> None:
         """Walk Rust AST for function definitions."""
         if node.type == "function_item":
@@ -552,7 +599,9 @@ class ASTParser:
         for child in node.children:
             self._walk_rust_functions(child, lines, result, class_name)
 
-    def _parse_rust_function(self, node: _TreeNode, lines: list[str], class_name: str | None) -> FunctionInfo | None:
+    def _parse_rust_function(
+        self, node: _TreeNode, lines: list[str], class_name: str | None
+    ) -> FunctionInfo | None:
         """Parse a Rust function node."""
         name = self._get_child_name(node, lines) or "<unknown>"
         params: list[str] = []
@@ -585,7 +634,11 @@ class ASTParser:
     # ─────────────────────────────────────────────────────────────
 
     def _walk_go_functions(
-        self, node: _TreeNode, lines: list[str], result: list[FunctionInfo], class_name: str | None
+        self,
+        node: _TreeNode,
+        lines: list[str],
+        result: list[FunctionInfo],
+        class_name: str | None,
     ) -> None:
         """Walk Go AST for function definitions."""
         if node.type == "function_declaration":
@@ -608,7 +661,9 @@ class ASTParser:
         for child in node.children:
             self._walk_go_functions(child, lines, result, class_name)
 
-    def _parse_go_function(self, node: _TreeNode, lines: list[str], class_name: str | None) -> FunctionInfo | None:
+    def _parse_go_function(
+        self, node: _TreeNode, lines: list[str], class_name: str | None
+    ) -> FunctionInfo | None:
         """Parse a Go function node."""
         name = self._get_child_name(node, lines) or "<unknown>"
         params: list[str] = []
@@ -641,7 +696,12 @@ class ASTParser:
     # ─────────────────────────────────────────────────────────────
 
     def _walk_generic_functions(
-        self, node: _TreeNode, language: str, lines: list[str], result: list[FunctionInfo], class_name: str | None
+        self,
+        node: _TreeNode,
+        language: str,
+        lines: list[str],
+        result: list[FunctionInfo],
+        class_name: str | None,
     ) -> None:
         """Generic function extraction - look for common patterns."""
         func_patterns = {
@@ -677,13 +737,17 @@ class ASTParser:
     # Class extraction
     # ─────────────────────────────────────────────────────────────
 
-    def _extract_classes(self, node: _TreeNode, language: str, lines: list[str]) -> list[ClassInfo]:
+    def _extract_classes(
+        self, node: _TreeNode, language: str, lines: list[str]
+    ) -> list[ClassInfo]:
         """Extract class definitions."""
         classes: list[ClassInfo] = []
         self._walk_classes(node, language, lines, classes)
         return classes
 
-    def _walk_classes(self, node: _TreeNode, language: str, lines: list[str], result: list[ClassInfo]) -> None:
+    def _walk_classes(
+        self, node: _TreeNode, language: str, lines: list[str], result: list[ClassInfo]
+    ) -> None:
         """Walk AST for class definitions."""
         if language == "python" and node.type == "class_definition":
             info = self._parse_python_class(node, lines)
@@ -691,7 +755,10 @@ class ASTParser:
                 result.append(info)
             return
 
-        if language in ("javascript", "typescript") and node.type == "class_declaration":
+        if (
+            language in ("javascript", "typescript")
+            and node.type == "class_declaration"
+        ):
             info = self._parse_js_class(node, lines)
             if info:
                 result.append(info)
@@ -706,7 +773,9 @@ class ASTParser:
         for child in node.children:
             self._walk_classes(child, language, lines, result)
 
-    def _parse_python_class(self, node: _TreeNode, lines: list[str]) -> ClassInfo | None:
+    def _parse_python_class(
+        self, node: _TreeNode, lines: list[str]
+    ) -> ClassInfo | None:
         """Parse Python class definition."""
         name = self._get_child_name(node, lines) or "<unknown>"
         bases: list[str] = []
@@ -719,7 +788,10 @@ class ASTParser:
                     bases.append(self._get_text(arg, lines))
             elif child.type == "block":
                 for stmt in child.children:
-                    if stmt.type in ("function_definition", "async_function_definition"):
+                    if stmt.type in (
+                        "function_definition",
+                        "async_function_definition",
+                    ):
                         method = self._parse_python_function(stmt, lines, name)
                         if method:
                             methods.append(method)
@@ -807,14 +879,26 @@ class ASTParser:
         self._walk_imports(node, language, imports)
         return imports
 
-    def _walk_imports(self, node: _TreeNode, language: str, result: list[ImportInfo]) -> None:
+    def _walk_imports(
+        self, node: _TreeNode, language: str, result: list[ImportInfo]
+    ) -> None:
         """Walk AST for import statements."""
         if language == "python":
             if node.type == "import_statement":
                 module = self._get_text(node.children[0]) if node.children else ""
-                names = [self._get_text(c, []) for c in node.children if c.type == "dotted_name"]
+                names = [
+                    self._get_text(c, [])
+                    for c in node.children
+                    if c.type == "dotted_name"
+                ]
                 result.append(
-                    ImportInfo(module=module, names=names, line=node.start_point[0] + 1, is_from=False, level=0)
+                    ImportInfo(
+                        module=module,
+                        names=names,
+                        line=node.start_point[0] + 1,
+                        is_from=False,
+                        level=0,
+                    )
                 )
             elif node.type == "import_from_statement":
                 level = 0
@@ -822,7 +906,11 @@ class ASTParser:
                 names = []
                 for child in node.children:
                     if child.type == "relative_import":
-                        level = child.text.count(b".") if isinstance(child.text, bytes) else str(child.text).count(".")
+                        level = (
+                            child.text.count(b".")
+                            if isinstance(child.text, bytes)
+                            else str(child.text).count(".")
+                        )
                     elif child.type == "dotted_name":
                         module = self._get_text(child, [])
                     elif child.type == "aliased_import":
@@ -830,7 +918,13 @@ class ASTParser:
                             if sub.type == "identifier":
                                 names.append(self._get_text(sub, []))
                 result.append(
-                    ImportInfo(module=module, names=names, line=node.start_point[0] + 1, is_from=True, level=level)
+                    ImportInfo(
+                        module=module,
+                        names=names,
+                        line=node.start_point[0] + 1,
+                        is_from=True,
+                        level=level,
+                    )
                 )
 
         elif language in ("javascript", "typescript"):
@@ -848,7 +942,10 @@ class ASTParser:
                 pass  # handled by parent
 
         for child in node.children:
-            if language == "python" and node.type in ("import_statement", "import_from_statement"):
+            if language == "python" and node.type in (
+                "import_statement",
+                "import_from_statement",
+            ):
                 continue  # don't recurse into already-parsed imports
             self._walk_imports(child, language, result)
 

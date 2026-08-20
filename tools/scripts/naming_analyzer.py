@@ -15,7 +15,9 @@ from typing import Any
 from .validate_language_rules import Issue
 
 
-def _check_filename(filepath: str, language: str, naming: dict[str, Any]) -> list[Issue]:
+def _check_filename(
+    filepath: str, language: str, naming: dict[str, Any]
+) -> list[Issue]:
     """Check filename against naming convention."""
     issues: list[Issue] = []
     file_rule = naming.get("file", {})
@@ -29,7 +31,9 @@ def _check_filename(filepath: str, language: str, naming: dict[str, Any]) -> lis
                     category="naming",
                     file=filepath,
                     line=0,
-                    message=file_rule.get("message", f"File name '{filename}' violates naming convention"),
+                    message=file_rule.get(
+                        "message", f"File name '{filename}' violates naming convention"
+                    ),
                 )
             )
     return issues
@@ -65,14 +69,18 @@ def _check_identifier_kind(
                         category="naming",
                         file=filepath,
                         line=line_num,
-                        message=kind_rule.get("message", f"'{ident}' violates {kind} naming convention"),
+                        message=kind_rule.get(
+                            "message", f"'{ident}' violates {kind} naming convention"
+                        ),
                     )
                 )
 
     return issues
 
 
-def check_naming_conventions(lines: list[str], rules: dict[str, Any], filepath: str) -> list[Issue]:
+def check_naming_conventions(
+    lines: list[str], rules: dict[str, Any], filepath: str
+) -> list[Issue]:
     """Check naming conventions based on language rules."""
     issues: list[Issue] = []
     naming = rules.get("naming", {})
@@ -82,10 +90,22 @@ def check_naming_conventions(lines: list[str], rules: dict[str, Any], filepath: 
     issues.extend(_check_filename(filepath, language, naming))
 
     # Check function/class/variable names in code
-    kinds = ["function", "class", "struct", "enum", "constant", "interface", "module", "trait", "package"]
+    kinds = [
+        "function",
+        "class",
+        "struct",
+        "enum",
+        "constant",
+        "interface",
+        "module",
+        "trait",
+        "package",
+    ]
     for kind in kinds:
         kind_rule = naming.get(kind, {})
-        issues.extend(_check_identifier_kind(lines, language, kind, kind_rule, filepath))
+        issues.extend(
+            _check_identifier_kind(lines, language, kind, kind_rule, filepath)
+        )
 
     return issues
 
@@ -97,9 +117,44 @@ def check_naming_conventions(lines: list[str], rules: dict[str, Any], filepath: 
 # Keyword sets per language to exclude from function detection
 _KEYWORDS: dict[str, set[str]] = {
     "java": {"if", "for", "while", "switch", "catch", "try", "return", "new", "throw"},
-    "csharp": {"if", "for", "while", "switch", "catch", "try", "return", "new", "throw", "using"},
-    "cpp": {"if", "for", "while", "switch", "catch", "try", "return", "new", "delete", "sizeof", "typeof"},
-    "javascript": {"if", "for", "while", "switch", "catch", "try", "return", "new", "delete", "typeof", "instanceof"},
+    "csharp": {
+        "if",
+        "for",
+        "while",
+        "switch",
+        "catch",
+        "try",
+        "return",
+        "new",
+        "throw",
+        "using",
+    },
+    "cpp": {
+        "if",
+        "for",
+        "while",
+        "switch",
+        "catch",
+        "try",
+        "return",
+        "new",
+        "delete",
+        "sizeof",
+        "typeof",
+    },
+    "javascript": {
+        "if",
+        "for",
+        "while",
+        "switch",
+        "catch",
+        "try",
+        "return",
+        "new",
+        "delete",
+        "typeof",
+        "instanceof",
+    },
 }
 
 # Regex patterns per (language, kind) combination
@@ -131,8 +186,14 @@ _PATTERNS: dict[tuple[str, str], str] = {
         "java",
         "function",
     ): r"(?:public|private|protected)?\s*(?:static\s+)?(?:final\s+)?(?:synchronized\s+)?(?:<[^>]+>\s+)?(\w+)\s+\w+\s*\(",
-    ("java", "class"): r"(?:public|private|protected)?\s*(?:abstract\s+)?(?:final\s+)?class\s+(\w+)",
-    ("java", "constant"): r"(?:public|private|protected)?\s*static\s+final\s+\w+\s+([A-Z][A-Z0-9_]*)",
+    (
+        "java",
+        "class",
+    ): r"(?:public|private|protected)?\s*(?:abstract\s+)?(?:final\s+)?class\s+(\w+)",
+    (
+        "java",
+        "constant",
+    ): r"(?:public|private|protected)?\s*static\s+final\s+\w+\s+([A-Z][A-Z0-9_]*)",
     ("java", "package"): r"package\s+([\w.]+)",
     # Kotlin
     ("kotlin", "function"): r"(?:fun|suspend\s+fun)\s+(\w+)",
@@ -147,10 +208,19 @@ _PATTERNS: dict[tuple[str, str], str] = {
         "csharp",
         "class",
     ): r"(?:public|private|protected|internal)?\s*(?:abstract\s+)?(?:sealed\s+)?(?:partial\s+)?class\s+(\w+)",
-    ("csharp", "interface"): r"(?:public|private|protected|internal)?\s*(?:partial\s+)?interface\s+(\w+)",
-    ("csharp", "constant"): r"(?:public|private|protected|internal)?\s*const\s+\w+\s+(\w+)",
+    (
+        "csharp",
+        "interface",
+    ): r"(?:public|private|protected|internal)?\s*(?:partial\s+)?interface\s+(\w+)",
+    (
+        "csharp",
+        "constant",
+    ): r"(?:public|private|protected|internal)?\s*const\s+\w+\s+(\w+)",
     # PHP
-    ("php", "function"): r"(?:public|private|protected)?\s*(?:static\s+)?function\s+(\w+)",
+    (
+        "php",
+        "function",
+    ): r"(?:public|private|protected)?\s*(?:static\s+)?function\s+(\w+)",
     ("php", "class"): r"(?:abstract\s+)?class\s+(\w+)",
     ("php", "constant"): r"(?:public|private|protected)?\s*const\s+([A-Z][A-Z0-9_]*)",
     # Ruby
@@ -161,7 +231,10 @@ _PATTERNS: dict[tuple[str, str], str] = {
     # C++
     ("cpp", "function"): r"(?:[\w:*&<>\s]+?)\s+(\w+)\s*\(",
     ("cpp", "class"): r"(?:class|struct)\s+(\w+)",
-    ("cpp", "constant"): r"(?:const|constexpr|static\s+const)\s+\w+\s+([A-Z][A-Z0-9_]*)",
+    (
+        "cpp",
+        "constant",
+    ): r"(?:const|constexpr|static\s+const)\s+\w+\s+([A-Z][A-Z0-9_]*)",
     # Swift
     ("swift", "function"): r"(?:func|static\s+func)\s+(\w+)",
     ("swift", "class"): r"(?:class|struct|enum|protocol)\s+(\w+)",
@@ -179,7 +252,10 @@ _PATTERNS: dict[tuple[str, str], str] = {
     ("lua", "class"): r"(?:local\s+)?(\w+)\s*=\s*\{\s*\}",
     ("lua", "constant"): r"([A-Z][A-Z0-9_]*)\s*=",
     # JavaScript
-    ("javascript", "function"): r"(?:export\s+)?(?:async\s+)?(?:function|const|let|var)\s+(\w+)",
+    (
+        "javascript",
+        "function",
+    ): r"(?:export\s+)?(?:async\s+)?(?:function|const|let|var)\s+(\w+)",
     ("javascript", "class"): r"(?:export\s+)?class\s+(\w+)",
     ("javascript", "constant"): r"(?:export\s+)?const\s+([A-Z][A-Z0-9_]*)",
     # Zig
@@ -233,7 +309,11 @@ def extract_identifiers(line: str, kind: str, language: str) -> list[str]:
             if lang_key == "lua" and kind == "function":
                 name = name.split(".")[-1]
             # For java/csharp/cpp/javascript, exclude keywords
-            if lang_key in _KEYWORDS and kind == "function" and name in _KEYWORDS[lang_key]:
+            if (
+                lang_key in _KEYWORDS
+                and kind == "function"
+                and name in _KEYWORDS[lang_key]
+            ):
                 return []
             return [name]
 

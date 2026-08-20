@@ -384,7 +384,9 @@ def detect_hallucinations_in_file(filepath: Path) -> HallucinationReport:
     return report
 
 
-def detect_hallucinations(dirpath: Path, languages: list[str] | None = None) -> HallucinationReport:
+def detect_hallucinations(
+    dirpath: Path, languages: list[str] | None = None
+) -> HallucinationReport:
     """Scan a directory for hallucination patterns.
 
     Args:
@@ -396,8 +398,29 @@ def detect_hallucinations(dirpath: Path, languages: list[str] | None = None) -> 
     """
     combined = HallucinationReport(files_scanned=0, findings=[])
 
-    exts = {".py", ".js", ".jsx", ".ts", ".tsx", ".rs", ".go", ".java", ".cs", ".rb", ".php"}
-    ignore_dirs = {"node_modules", ".git", "__pycache__", ".venv", "venv", "dist", "build", ".cache"}
+    exts = {
+        ".py",
+        ".js",
+        ".jsx",
+        ".ts",
+        ".tsx",
+        ".rs",
+        ".go",
+        ".java",
+        ".cs",
+        ".rb",
+        ".php",
+    }
+    ignore_dirs = {
+        "node_modules",
+        ".git",
+        "__pycache__",
+        ".venv",
+        "venv",
+        "dist",
+        "build",
+        ".cache",
+    }
 
     files: list[Path] = []
     for ext in exts:

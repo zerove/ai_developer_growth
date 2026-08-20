@@ -56,7 +56,9 @@ class TestHeuristicFix:
         assert "Exception" in fix["fix_replacement"]
 
     def test_sql_injection(self) -> None:
-        fix = heuristic_fix({"pattern": "", "message": "SQL string formatting injection"})
+        fix = heuristic_fix(
+            {"pattern": "", "message": "SQL string formatting injection"}
+        )
         assert "execute" in fix["fix_replacement"]
 
     def test_console_log(self) -> None:
@@ -64,7 +66,13 @@ class TestHeuristicFix:
         assert fix["source"] == "heuristic"
 
     def test_fix_hint_fallback(self) -> None:
-        fix = heuristic_fix({"pattern": "unknown_pattern", "message": "unknown", "fix_hint": "Use safer approach"})
+        fix = heuristic_fix(
+            {
+                "pattern": "unknown_pattern",
+                "message": "unknown",
+                "fix_hint": "Use safer approach",
+            }
+        )
         assert "safer" in fix["fix_replacement"]
 
     def test_no_match_returns_none(self) -> None:
@@ -111,7 +119,11 @@ class TestMarketplace:
             assert "rule_count" in info, f"{pack_id} missing rule_count"
 
     def test_matches_sql(self) -> None:
-        rule = {"id": "py-sql-injection", "message": "SQL injection via string concat", "pattern": "SELECT.*\\+"}
+        rule = {
+            "id": "py-sql-injection",
+            "message": "SQL injection via string concat",
+            "pattern": "SELECT.*\\+",
+        }
         assert _matches(rule, "sql")
 
     def test_matches_id(self) -> None:

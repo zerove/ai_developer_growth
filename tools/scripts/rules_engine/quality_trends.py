@@ -136,7 +136,9 @@ def _aggregate_results(results: list[CheckResult]) -> dict[str, Any]:
 def _detect_hallucinations(dirpath: Path) -> int:
     """Detect hallucinations and return count."""
     try:
-        from tools.scripts.rules_engine.hallucination_detector import detect_hallucinations
+        from tools.scripts.rules_engine.hallucination_detector import (
+            detect_hallucinations,
+        )
 
         h_report = detect_hallucinations(dirpath)
         return h_report.total_findings
@@ -144,7 +146,9 @@ def _detect_hallucinations(dirpath: Path) -> int:
         return 0
 
 
-def _calculate_delta(prev_val: int, curr_val: int, lower_is_better: bool | None) -> tuple[int, float, str]:
+def _calculate_delta(
+    prev_val: int, curr_val: int, lower_is_better: bool | None
+) -> tuple[int, float, str]:
     """Calculate delta between two values."""
     change = curr_val - prev_val
     pct = (change / prev_val * 100) if prev_val > 0 else (100 if change > 0 else 0)
@@ -200,7 +204,9 @@ def _generate_recommendations(deltas: list[TrendDelta]) -> list[str]:
     for delta in deltas:
         if delta.direction == "regressed":
             if delta.metric == "Errors" and delta.change > 0:
-                recommendations.append(f"Errors increased by {delta.change}. Investigate new error patterns.")
+                recommendations.append(
+                    f"Errors increased by {delta.change}. Investigate new error patterns."
+                )
             elif delta.metric == "Semantic Issues" and delta.change > 0:
                 recommendations.append(
                     f"Semantic issues increased by {delta.change}. Check for new code without proper structure."
@@ -234,7 +240,9 @@ class QualityTracker:
     def _load(self) -> None:
         """从 SQLite 加载快照。"""
         try:
-            self._snapshots = [QualitySnapshot.from_dict(s) for s in self._store.get_snapshots()]
+            self._snapshots = [
+                QualitySnapshot.from_dict(s) for s in self._store.get_snapshots()
+            ]
         except Exception:
             self._snapshots = []
 
@@ -277,7 +285,9 @@ class QualityTracker:
         snapshot = QualitySnapshot(
             timestamp=time.time(),
             total_files=len(results),
-            total_issues=metrics["errors"] + metrics["warnings"] + metrics["info_count"],
+            total_issues=metrics["errors"]
+            + metrics["warnings"]
+            + metrics["info_count"],
             errors=metrics["errors"],
             warnings=metrics["warnings"],
             info=metrics["info_count"],
@@ -308,7 +318,9 @@ class QualityTracker:
         )
 
         if len(snapshots) < 2:
-            report.recommendations.append("Need at least 2 snapshots for trend analysis.")
+            report.recommendations.append(
+                "Need at least 2 snapshots for trend analysis."
+            )
             return report
 
         prev = snapshots[-2]
@@ -331,14 +343,20 @@ class QualityTracker:
         ]
 
         if report.latest:
-            lines.append(f"Latest scan: {time.strftime('%Y-%m-%d %H:%M', time.localtime(report.latest.timestamp))}")
-            lines.append(f"Files: {report.latest.total_files}, Issues: {report.latest.total_issues}")
+            lines.append(
+                f"Latest scan: {time.strftime('%Y-%m-%d %H:%M', time.localtime(report.latest.timestamp))}"
+            )
+            lines.append(
+                f"Files: {report.latest.total_files}, Issues: {report.latest.total_issues}"
+            )
 
         if report.deltas:
             lines.append("\nTrend Changes:")
             lines.append("-" * 40)
             for delta in report.deltas:
-                icon = {"improved": "✅", "regressed": "⚠️", "unchanged": "➡️"}[delta.direction]
+                icon = {"improved": "✅", "regressed": "⚠️", "unchanged": "➡️"}[
+                    delta.direction
+                ]
                 lines.append(
                     f"  {icon} {delta.metric}: {delta.previous} → {delta.current} "
                     f"({delta.change:+d}, {delta.change_pct:+.1f}%)"
@@ -393,9 +411,7 @@ class QualityTracker:
         regressions = sum(1 for d in report.deltas if d.direction == "regressed")
         icon = "✅" if regressions == 0 else "⚠️" if regressions <= 2 else "🔴"
 
-        return (
-            f"{icon} Quality: {last.total_issues} issues / {last.total_files} files [{spark}] {regressions} regressed"
-        )
+        return f"{icon} Quality: {last.total_issues} issues / {last.total_files} files [{spark}] {regressions} regressed"
 
     def generate_multi_trend_report(self, lookback: int = 10) -> str:
         """Generate a multi-point trend report comparing all recent snapshots."""
@@ -412,7 +428,9 @@ class QualityTracker:
 
         for s in snapshots:
             date = time.strftime("%m-%d %H:%M", time.localtime(s.timestamp))
-            lines.append(f"  {s.total_issues:>6d}  {s.errors:>6d}  {s.warnings:>8d}  {s.total_files:>5d}   {date}")
+            lines.append(
+                f"  {s.total_issues:>6d}  {s.errors:>6d}  {s.warnings:>8d}  {s.total_files:>5d}   {date}"
+            )
 
         lines.append("")
         lines.append(f"  Sparkline (issues): {self.generate_sparkline('total_issues')}")

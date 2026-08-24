@@ -227,81 +227,98 @@ class AutoFixOrchestrator:
                 return provider
         return None
 
+    def _resolve_file_path(self, file_path: str, project_root: Path) -> Path | None:
+        """解析相对/绝对路径; 文件不存在返回 None。"""
+        fp = Path(file_path)
+        full_path = fp if fp.is_absolute() else project_root / fp
+        return full_path if full_path.exists() else None
+
+    def _group_actions_by_provider(self, actions: list[FixAction]) -> dict[FixProvider | None, list[FixAction]]:
+        """按 provider 分组修复动作; 无 provider 归入 None 组 (默认行替换)。"""
+        grouped: dict[FixProvider | None, list[FixAction]] = {}
+        for action in actions:
+            provider = self._find_provider_for_action(action)
+            grouped.setdefault(provider, []).append(action)
+        return grouped
+
+    def _apply_line_replacements(
+        self,
+        full_path: Path,
+        file_path: str,
+        actions: list[FixAction],
+        applied: list[FixAction],
+        skipped: list[FixAction],
+    ) -> str:
+        """默认修复方式: 逐行替换 (倒序避免行号偏移), 返回 diff。"""
+        content = full_path.read_text()
+        lines = content.splitlines(keepends=True)
+        for action in sorted(actions, key=lambda a: a.line, reverse=True):
+            if not 0 < action.line <= len(lines):
+                skipped.append(action)
+                action.errors.append(f"Line out of range: {action.line}")
+                continue
+            line_idx = action.line - 1
+            if lines[line_idx].rstrip("\n\r") == action.original.rstrip("\n\r"):
+                lines[line_idx] = action.replacement + ("\n" if action.original.endswith("\n") else "")
+                applied.append(action)
+            else:
+                skipped.append(action)
+                action.errors.append(f"Line content mismatch at {file_path}:{action.line}")
+        new_content = "".join(lines)
+        full_path.write_text(new_content)
+        if applied:
+            return self._generate_diff_from_content(content, new_content, file_path)
+        return ""
+
+    def _apply_via_provider(
+        self,
+        provider: FixProvider,
+        full_path: Path,
+        file_path: str,
+        actions: list[FixAction],
+        applied: list[FixAction],
+        skipped: list[FixAction],
+        errors: list[str],
+        project_root: Path,
+    ) -> str:
+        """provider 方式修复, 返回 diff。"""
+        if self.backup:
+            backup_path = full_path.with_suffix(full_path.suffix + ".bak")
+            backup_path.write_text(full_path.read_text())
+        result = provider.apply_fixes(file_path, actions, project_root)
+        applied.extend(result.applied)
+        skipped.extend(result.skipped)
+        errors.extend(result.errors)
+        return result.diff or ""
+
+    def _process_single_file(self, file_path: str, actions: list[FixAction], project_root: Path) -> FixResult:
+        """处理单个文件的全部修复动作。"""
+        full_path = self._resolve_file_path(file_path, project_root)
+        if full_path is None:
+            return FixResult(file=file_path, errors=[f"File not found: {file_path}"])
+
+        applied: list[FixAction] = []
+        skipped: list[FixAction] = []
+        errors: list[str] = []
+        diff = ""
+
+        for provider, provider_actions in self._group_actions_by_provider(actions).items():
+            if provider is None:
+                diff = self._apply_line_replacements(full_path, file_path, provider_actions, applied, skipped) or diff
+            else:
+                d = self._apply_via_provider(
+                    provider, full_path, file_path, provider_actions, applied, skipped, errors, project_root
+                )
+                diff = d or diff
+
+        return FixResult(file=file_path, applied=applied, skipped=skipped, errors=errors, diff=diff)
+
     def _execute_auto(self, plan: FixPlan, project_root: Path) -> list[FixResult]:
         """自动执行修复 - 按 provider 分组执行"""
-        results = []
-        grouped = plan.group_by_file()
-
-        for file_path, actions in grouped.items():
-            # 处理绝对路径和相对路径
-            fp = Path(file_path)
-            if fp.is_absolute():
-                full_path = fp
-            else:
-                full_path = project_root / fp
-
-            if not full_path.exists():
-                results.append(FixResult(file=file_path, errors=[f"File not found: {file_path}"]))
-                continue
-
-            # 按 provider 分组 actions
-            provider_actions: dict[FixProvider | None, list[FixAction]] = {}
-            for action in actions:
-                provider = self._find_provider_for_action(action)
-                if provider:
-                    provider_actions.setdefault(provider, []).append(action)
-                else:
-                    # 没有找到 provider，使用默认方式
-                    provider_actions.setdefault(None, []).append(action)
-
-            # 对每个 provider 执行修复
-            file_applied = []
-            file_skipped = []
-            file_errors = []
-            file_diff = ""
-
-            for provider, provider_action_list in provider_actions.items():
-                if provider is None:
-                    # 默认行替换方式
-                    content = full_path.read_text()
-                    lines = content.splitlines(keepends=True)
-                    for action in sorted(provider_action_list, key=lambda a: a.line, reverse=True):
-                        if 0 < action.line <= len(lines):
-                            line_idx = action.line - 1
-                            if lines[line_idx].rstrip("\n\r") == action.original.rstrip("\n\r"):
-                                lines[line_idx] = action.replacement + ("\n" if action.original.endswith("\n") else "")
-                                file_applied.append(action)
-                            else:
-                                file_skipped.append(action)
-                                action.errors.append(f"Line content mismatch at {file_path}:{action.line}")
-                        else:
-                            file_skipped.append(action)
-                            action.errors.append(f"Line out of range: {action.line}")
-                    new_content = "".join(lines)
-                    full_path.write_text(new_content)
-                    if file_applied:
-                        file_diff = self._generate_diff_from_content(content, new_content, file_path)
-                else:
-                    # 使用 provider 的 apply_fixes
-                    if self.backup:
-                        backup_path = full_path.with_suffix(full_path.suffix + ".bak")
-                        backup_path.write_text(full_path.read_text())
-                    result = provider.apply_fixes(file_path, provider_action_list, project_root)
-                    file_applied.extend(result.applied)
-                    file_skipped.extend(result.skipped)
-                    file_errors.extend(result.errors)
-                    if result.diff and not file_diff:
-                        file_diff = result.diff
-
-            results.append(
-                FixResult(
-                    file=file_path,
-                    applied=file_applied,
-                    skipped=file_skipped,
-                    errors=file_errors,
-                    diff=file_diff,
-                )
-            )
+        results = [
+            self._process_single_file(file_path, actions, project_root)
+            for file_path, actions in plan.group_by_file().items()
+        ]
 
         # 运行测试
         if self.run_tests_after and results:
@@ -553,6 +570,22 @@ class ToolBasedFixProvider(FixProvider):
             )
         ]
 
+    def _run_tool(self, full_path: Path) -> tuple[bool, str]:
+        """运行外部工具; 返回 (是否成功, 错误消息)。"""
+        import subprocess
+
+        cmd = self.tool_command + [str(full_path)]
+        try:
+            result = subprocess.run(cmd, capture_output=True, text=True, timeout=60)
+        except subprocess.TimeoutExpired:
+            return False, "Tool timed out"
+        except Exception as e:  # noqa: BLE001 - 工具异常统一转为错误消息
+            return False, f"Tool error: {e}"
+
+        if result.returncode != 0 and "error" in result.stderr.lower():
+            return False, f"Tool failed: {result.stderr}"
+        return True, ""
+
     def apply_fixes(self, file_path: str, actions: list[FixAction], project_root: Path) -> FixResult:
         """运行外部工具修复文件"""
         full_path = project_root / file_path
@@ -563,49 +596,18 @@ class ToolBasedFixProvider(FixProvider):
         backup_path = full_path.with_suffix(full_path.suffix + ".bak")
         backup_path.write_text(full_path.read_text())
 
-        # 运行工具
-        import subprocess
-
-        cmd = self.tool_command + [str(full_path)]
-        try:
-            result = subprocess.run(cmd, capture_output=True, text=True, timeout=60)
-            if result.returncode != 0 and "error" in result.stderr.lower():
-                # 恢复备份
-                full_path.write_text(backup_path.read_text())
-                return FixResult(
-                    file=file_path,
-                    applied=[],
-                    skipped=actions,
-                    errors=[f"Tool failed: {result.stderr}"],
-                )
-        except subprocess.TimeoutExpired:
+        ok, error = self._run_tool(full_path)
+        if not ok:
+            # 恢复备份
             full_path.write_text(backup_path.read_text())
-            return FixResult(
-                file=file_path,
-                applied=[],
-                skipped=actions,
-                errors=["Tool timed out"],
-            )
-        except Exception as e:
-            full_path.write_text(backup_path.read_text())
-            return FixResult(
-                file=file_path,
-                applied=[],
-                skipped=actions,
-                errors=[f"Tool error: {e}"],
-            )
+            return FixResult(file=file_path, applied=[], skipped=actions, errors=[error])
 
         # 生成 diff
         original_content = backup_path.read_text()
         new_content = full_path.read_text()
         diff = self._generate_diff(original_content, new_content, file_path)
 
-        return FixResult(
-            file=file_path,
-            applied=actions,
-            skipped=[],
-            diff=diff,
-        )
+        return FixResult(file=file_path, applied=actions, skipped=[], diff=diff)
 
 
 class RuffFixProvider(ToolBasedFixProvider):

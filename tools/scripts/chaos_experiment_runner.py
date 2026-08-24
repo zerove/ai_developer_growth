@@ -27,6 +27,81 @@ import yaml
 from kubernetes import client, config
 from kubernetes.client.rest import ApiException
 
+# 实验名称 -> Chaos Mesh CRD 复数资源名
+EXPERIMENT_PLURAL_MAP: dict[str, str] = {
+    "POD_KILL": "podchaos",
+    "NETWORK_LATENCY": "networkchaos",
+    "NETWORK_LOSS": "networkchaos",
+    "CPU_STRESS": "stresschaos",
+    "MEMORY_STRESS": "stresschaos",
+    "DISK_FILL": "diskchaos",
+    "DNS_FAILURE": "dnsuchaos",
+    "TIME_CHAOS": "timechaos",
+    "IO_CHAOS": "iochaos",
+    "KERNEL_CHAOS": "kernelchaos",
+}
+
+# 实验配置: 名称 -> 默认参数。对应的创建方法命名为 _create_<lower>_experiment。
+EXPERIMENT_CONFIGS: dict[str, dict[str, Any]] = {
+    "POD_KILL": {
+        "description": "随机杀死目标命名空间下的 Pod，验证自愈能力",
+        "duration": "30s",
+        "mode": "one",
+        "selector": {"namespaces": ["staging"]},
+    },
+    "NETWORK_LATENCY": {
+        "description": "注入网络延迟，验证服务熔断和降级",
+        "duration": "5m",
+        "latency": "200ms",
+        "jitter": "50ms",
+        "correlation": "25",
+    },
+    "NETWORK_LOSS": {
+        "description": "注入网络丢包，验证重试机制",
+        "duration": "3m",
+        "loss": "10%",
+        "correlation": "25",
+    },
+    "CPU_STRESS": {
+        "description": "CPU 压力测试，验证 HPA 扩容",
+        "duration": "5m",
+        "workers": 2,
+        "load": 80,
+    },
+    "MEMORY_STRESS": {
+        "description": "内存压力测试，验证 OOM 处理",
+        "duration": "3m",
+        "workers": 1,
+        "size": "512MB",
+    },
+    "DISK_FILL": {
+        "description": "磁盘填满测试，验证告警和清理",
+        "duration": "2m",
+        "size": "80%",
+    },
+    "DNS_FAILURE": {
+        "description": "DNS 解析失败，验证重试和熔断",
+        "duration": "2m",
+        "domain": "external-api.example.com",
+    },
+    "TIME_CHAOS": {
+        "description": "时钟偏移测试，验证证书和定时任务",
+        "duration": "1m",
+        "offset": "10s",
+    },
+    "IO_CHAOS": {
+        "description": "IO 延迟/错误注入，验证存储层异常处理",
+        "duration": "2m",
+        "latency": "100ms",
+        "error_rate": "5%",
+    },
+    "KERNEL_CHAOS": {
+        "description": "内核级故障注入，验证系统级恢复",
+        "duration": "30s",
+        "fail_type": "page_fault",
+    },
+}
+
 
 class ChaosExperimentRunner:
     """Chaos Mesh 实验运行器"""
@@ -45,80 +120,34 @@ class ChaosExperimentRunner:
         self.core_api = client.CoreV1Api()
         self.apps_api = client.AppsV1Api()
 
-        # 实验定义
-        self.experiments = {
-            "POD_KILL": self._create_pod_kill_experiment,
-            "NETWORK_LATENCY": self._create_network_latency_experiment,
-            "NETWORK_LOSS": self._create_network_loss_experiment,
-            "CPU_STRESS": self._create_cpu_stress_experiment,
-            "MEMORY_STRESS": self._create_memory_stress_experiment,
-            "DISK_FILL": self._create_disk_fill_experiment,
-            "DNS_FAILURE": self._create_dns_failure_experiment,
-            "TIME_CHAOS": self._create_time_chaos_experiment,
-            "IO_CHAOS": self._create_io_chaos_experiment,
-            "KERNEL_CHAOS": self._create_kernel_chaos_experiment,
-        }
+        # 实验定义与配置 (见模块级常量)
+        self.experiments = {name: getattr(self, f"_create_{name.lower()}_experiment") for name in EXPERIMENT_CONFIGS}
+        self.experiment_configs: dict[str, dict[str, Any]] = {k: dict(v) for k, v in EXPERIMENT_CONFIGS.items()}
 
-        # 实验配置
-        self.experiment_configs: dict[str, dict[str, Any]] = {
-            "POD_KILL": {
-                "description": "随机杀死目标命名空间下的 Pod，验证自愈能力",
-                "duration": "30s",
-                "mode": "one",
-                "selector": {"namespaces": ["staging"]},
-            },
-            "NETWORK_LATENCY": {
-                "description": "注入网络延迟，验证服务熔断和降级",
-                "duration": "5m",
-                "latency": "200ms",
-                "jitter": "50ms",
-                "correlation": "25",
-            },
-            "NETWORK_LOSS": {
-                "description": "注入网络丢包，验证重试机制",
-                "duration": "3m",
-                "loss": "10%",
-                "correlation": "25",
-            },
-            "CPU_STRESS": {
-                "description": "CPU 压力测试，验证 HPA 扩容",
-                "duration": "5m",
-                "workers": 2,
-                "load": 80,
-            },
-            "MEMORY_STRESS": {
-                "description": "内存压力测试，验证 OOM 处理",
-                "duration": "3m",
-                "workers": 1,
-                "size": "512MB",
-            },
-            "DISK_FILL": {
-                "description": "磁盘填满测试，验证告警和清理",
-                "duration": "2m",
-                "size": "80%",
-            },
-            "DNS_FAILURE": {
-                "description": "DNS 解析失败，验证重试和熔断",
-                "duration": "2m",
-                "domain": "external-api.example.com",
-            },
-            "TIME_CHAOS": {
-                "description": "时钟偏移测试，验证证书和定时任务",
-                "duration": "1m",
-                "offset": "10s",
-            },
-            "IO_CHAOS": {
-                "description": "IO 延迟/错误注入，验证存储层异常处理",
-                "duration": "2m",
-                "latency": "100ms",
-                "error_rate": "5%",
-            },
-            "KERNEL_CHAOS": {
-                "description": "内核级故障注入，验证系统级恢复",
-                "duration": "30s",
-                "fail_type": "page_fault",
-            },
-        }
+    def _apply_experiment(self, experiment_name: str, experiment_yaml: dict[str, Any]) -> None:
+        """向 Chaos Mesh 提交实验 CR; 已存在 (409) 时更新。"""
+        plural = EXPERIMENT_PLURAL_MAP.get(experiment_name, "podchaos")
+        try:
+            self.custom_api.create_namespaced_custom_object(
+                group="chaos-mesh.org",
+                version="v1alpha1",
+                namespace="chaos-mesh",
+                plural=plural,
+                body=experiment_yaml,
+            )
+            print(f"✅ 实验 {experiment_name} 创建成功")
+        except ApiException as e:
+            if e.status != 409:
+                raise
+            print("⚠️ 实验已存在，尝试更新...")
+            self.custom_api.replace_namespaced_custom_object(
+                group="chaos-mesh.org",
+                version="v1alpha1",
+                namespace="chaos-mesh",
+                plural=plural,
+                name=experiment_yaml["metadata"]["name"],
+                body=experiment_yaml,
+            )
 
     def run_experiment(
         self, experiment_name: str, target_namespace: str | None = None, custom_config: dict[str, Any] | None = None
@@ -137,55 +166,16 @@ class ChaosExperimentRunner:
         print(f"配置: {json.dumps(config, indent=2)}")
 
         # 创建实验 CR
-        experiment_creator = self.experiments[experiment_name]
-        experiment_yaml = experiment_creator(config)
+        experiment_yaml = self.experiments[experiment_name](config)
 
         if self.dry_run:
             print("=== DRY RUN 模式，仅输出 YAML ===")
             print(yaml.dump(experiment_yaml))
             return {"status": "dry_run", "experiment": experiment_name, "yaml": experiment_yaml}
 
-        # 创建实验
-        try:
-            plural_map = {
-                "POD_KILL": "podchaos",
-                "NETWORK_LATENCY": "networkchaos",
-                "NETWORK_LOSS": "networkchaos",
-                "CPU_STRESS": "stresschaos",
-                "MEMORY_STRESS": "stresschaos",
-                "DISK_FILL": "diskchaos",
-                "DNS_FAILURE": "dnsuchaos",
-                "TIME_CHAOS": "timechaos",
-                "IO_CHAOS": "iochaos",
-                "KERNEL_CHAOS": "kernelchaos",
-            }
-            plural = plural_map.get(experiment_name, "podchaos")
-            self.custom_api.create_namespaced_custom_object(
-                group="chaos-mesh.org",
-                version="v1alpha1",
-                namespace="chaos-mesh",
-                plural=plural,
-                body=experiment_yaml,
-            )
-            print(f"✅ 实验 {experiment_name} 创建成功")
-        except ApiException as e:
-            if e.status == 409:
-                print("⚠️ 实验已存在，尝试更新...")
-                self.custom_api.replace_namespaced_custom_object(
-                    group="chaos-mesh.org",
-                    version="v1alpha1",
-                    namespace="chaos-mesh",
-                    plural=plural_map.get(experiment_name, "podchaos"),
-                    name=experiment_yaml["metadata"]["name"],
-                    body=experiment_yaml,
-                )
-            else:
-                raise
-
-        # 监控实验执行
+        # 创建并监控、清理
+        self._apply_experiment(experiment_name, experiment_yaml)
         result = self._monitor_experiment(experiment_name, config.get("duration", "5m"))
-
-        # 清理实验
         self._cleanup_experiment(experiment_name)
 
         return result

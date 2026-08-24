@@ -80,6 +80,43 @@ def get_git_tag() -> str | None:
     return output if code == 0 else None
 
 
+def _build_tag_list(component: str, version: str, registry: str, extra_tags: list[str]) -> list[str]:
+    """组装镜像标签列表。"""
+    image_name = f"{registry}/{PROJECT}/{component}"
+    tags = [f"{image_name}:{version}", f"{image_name}:latest"]
+    tags.extend([f"{image_name}:{tag}" for tag in extra_tags])
+    return tags
+
+
+def _buildx_command(dockerfile: str, platforms: str, tags: list[str], push: bool) -> list[str]:
+    """构造 docker buildx build 命令。"""
+    cmd = [
+        "docker",
+        "buildx",
+        "build",
+        "--platform",
+        platforms,
+        "-f",
+        dockerfile,
+    ]
+    for tag in tags:
+        cmd.extend(["-t", tag])
+    cmd.append("--push" if push else "--load")
+    cmd.append(".")
+    return cmd
+
+
+def _print_component_header(component: str, dockerfile: str, platforms: str, tags: list[str], push: bool) -> None:
+    """打印组件构建信息头。"""
+    print(f"\n{'=' * 60}")
+    print(f"构建组件: {component}")
+    print(f"Dockerfile: {dockerfile}")
+    print(f"平台: {platforms}")
+    print(f"标签: {', '.join(tags)}")
+    print(f"推送: {'是' if push else '否 (本地加载)'}")
+    print(f"{'=' * 60}")
+
+
 def build_image(
     component: str,
     dockerfile: str,
@@ -91,42 +128,10 @@ def build_image(
     extra_tags: list[str],
 ) -> tuple[bool, str]:
     """构建单个组件镜像"""
-    image_name = f"{registry}/{PROJECT}/{component}"
+    tags = _build_tag_list(component, version, registry, extra_tags)
+    cmd = _buildx_command(dockerfile, platforms, tags, push)
 
-    # 标签列表
-    tags = [f"{image_name}:{version}", f"{image_name}:latest"]
-    tags.extend([f"{image_name}:{tag}" for tag in extra_tags])
-
-    # Buildx 命令
-    cmd = [
-        "docker",
-        "buildx",
-        "build",
-        "--platform",
-        platforms,
-        "-f",
-        dockerfile,
-        "-t",
-        tags[0],
-    ]
-
-    for tag in tags[1:]:
-        cmd.extend(["-t", tag])
-
-    if push:
-        cmd.append("--push")
-    else:
-        cmd.append("--load")
-
-    cmd.append(".")
-
-    print(f"\n{'=' * 60}")
-    print(f"构建组件: {component}")
-    print(f"Dockerfile: {dockerfile}")
-    print(f"平台: {platforms}")
-    print(f"标签: {', '.join(tags)}")
-    print(f"推送: {'是' if push else '否 (本地加载)'}")
-    print(f"{'=' * 60}")
+    _print_component_header(component, dockerfile, platforms, tags, push)
 
     if dry_run:
         print(f"🔍 试运行模式，命令: {' '.join(cmd)}")
@@ -139,10 +144,9 @@ def build_image(
     if code == 0:
         print(f"✅ {component} 构建成功 ({elapsed:.1f}s)")
         return True, ""
-    else:
-        print(f"❌ {component} 构建失败 ({elapsed:.1f}s)")
-        print(output)
-        return False, output
+    print(f"❌ {component} 构建失败 ({elapsed:.1f}s)")
+    print(output)
+    return False, output
 
 
 def generate_sbom(image: str, output_dir: Path) -> tuple[bool, str]:
@@ -181,7 +185,8 @@ def verify_signature(image: str) -> bool:
 # ──────────────────────────────────────────────────────────
 
 
-def main() -> int:
+def _parse_build_args() -> argparse.Namespace:
+    """解析命令行参数。"""
     parser = argparse.ArgumentParser(
         prog="docker_build",
         description="JCode Platform Docker Build & Push",
@@ -200,30 +205,33 @@ def main() -> int:
     parser.add_argument("--extra-tags", help="额外标签 (逗号分隔)")
     parser.set_defaults(push=True)
 
-    args = parser.parse_args()
+    return parser.parse_args()
 
-    # 解析组件
-    if args.components:
-        selected = [c.strip() for c in args.components.split(",")]
-        components = [(name, df) for name, df in COMPONENTS if name in selected]
-        if len(components) != len(selected):
-            print(f"❌ 未知组件: {set(selected) - {c[0] for c in COMPONENTS}}")
-            return 1
-    else:
-        components = COMPONENTS
 
-    # 额外标签
-    extra_tags = [t.strip() for t in args.extra_tags.split(",")] if args.extra_tags else []
+def _select_components(args: argparse.Namespace) -> list[tuple[str, str]] | None:
+    """按 --components 过滤组件; 含未知组件时打印错误并返回 None。"""
+    if not args.components:
+        return list(COMPONENTS)
+    selected = [c.strip() for c in args.components.split(",")]
+    components = [(name, df) for name, df in COMPONENTS if name in selected]
+    if len(components) != len(selected):
+        print(f"❌ 未知组件: {set(selected) - {c[0] for c in COMPONENTS}}")
+        return None
+    return components
+
+
+def _collect_extra_tags(args: argparse.Namespace) -> list[str]:
+    """合并 --extra-tags、git sha 与时间戳标签。"""
+    tags = [t.strip() for t in args.extra_tags.split(",")] if args.extra_tags else []
     git_sha = get_git_sha()
     if git_sha != "unknown":
-        extra_tags.append(f"sha-{git_sha}")
-    extra_tags.append(f"build-{datetime.now().strftime('%Y%m%d%H%M')}")
+        tags.append(f"sha-{git_sha}")
+    tags.append(f"build-{datetime.now().strftime('%Y%m%d%H%M')}")
+    return tags
 
-    # 创建 SBOM 输出目录
-    sbom_dir = Path("sbom") / args.version.lstrip("v")
-    if args.sbom:
-        sbom_dir.mkdir(parents=True, exist_ok=True)
 
+def _print_build_header(args: argparse.Namespace, components: list[tuple[str, str]]) -> None:
+    """打印构建信息头。"""
     print(f"\n{'=' * 60}")
     print("JCode Platform Docker Build")
     print(f"版本: {args.version}")
@@ -235,20 +243,20 @@ def main() -> int:
     print(f"组件: {', '.join(c[0] for c in components)}")
     print(f"{'=' * 60}\n")
 
-    # 验证 Dockerfile 存在
-    for name, df in components:
-        df_path = Path(df)
-        if not df_path.exists():
-            print(f"❌ Dockerfile 不存在: {df}")
-            return 1
 
-    # 检查 buildx
+def _preflight_checks(components: list[tuple[str, str]]) -> bool:
+    """验证 Dockerfile 存在与 buildx 可用。"""
+    for name, df in components:
+        if not Path(df).exists():
+            print(f"❌ Dockerfile 不存在: {df}")
+            return False
+
     code, _ = run_cmd(["docker", "buildx", "version"])
     if code != 0:
         print("❌ docker buildx 不可用")
-        return 1
+        return False
 
-    # 创建/使用 builder
+    # 创建/使用 builder (失败不阻断, 后续构建会给出明确错误)
     run_cmd(
         [
             "docker",
@@ -261,10 +269,18 @@ def main() -> int:
         ],
         capture=False,
     )
+    return True
 
-    # 构建各组件
-    failed = []
-    sbom_files = []
+
+def _build_all_components(
+    args: argparse.Namespace,
+    components: list[tuple[str, str]],
+    extra_tags: list[str],
+    sbom_dir: Path,
+) -> tuple[list[str], list[str]]:
+    """逐组件构建, 返回 (失败列表, SBOM 文件列表)。"""
+    failed: list[str] = []
+    sbom_files: list[str] = []
 
     for name, dockerfile in components:
         success, err = build_image(
@@ -277,25 +293,30 @@ def main() -> int:
             dry_run=args.dry_run,
             extra_tags=extra_tags,
         )
-
         if not success:
             failed.append(name)
             continue
 
-        # 生成 SBOM
+        image_ref = f"{args.registry}/{PROJECT}/{name}:{args.version}"
+
         if args.sbom and not args.dry_run:
-            image_ref = f"{args.registry}/{PROJECT}/{name}:{args.version}"
-            ok, sbom_file = generate_sbom(image_ref, Path(sbom_dir))
+            ok, sbom_file = generate_sbom(image_ref, sbom_dir)
             if ok:
                 sbom_files.append(sbom_file)
 
-        # 签名
-        if args.sign and not args.dry_run:
-            image_ref = f"{args.registry}/{PROJECT}/{name}:{args.version}"
-            if not sign_image(image_ref):
-                print(f"⚠️ {name} 签名失败")
+        if args.sign and not args.dry_run and not sign_image(image_ref):
+            print(f"⚠️ {name} 签名失败")
 
-    # 汇总
+    return failed, sbom_files
+
+
+def _print_summary(
+    args: argparse.Namespace,
+    components: list[tuple[str, str]],
+    failed: list[str],
+    sbom_files: list[str],
+) -> int:
+    """打印构建汇总; 有失败返回 1。"""
     print(f"\n{'=' * 60}")
     print("构建汇总")
     print(f"{'=' * 60}")
@@ -315,6 +336,28 @@ def main() -> int:
 
     print("\n✅ 所有组件构建成功!")
     return 0
+
+
+def main() -> int:
+    args = _parse_build_args()
+
+    components = _select_components(args)
+    if components is None:
+        return 1
+
+    extra_tags = _collect_extra_tags(args)
+
+    sbom_dir = Path("sbom") / args.version.lstrip("v")
+    if args.sbom:
+        sbom_dir.mkdir(parents=True, exist_ok=True)
+
+    _print_build_header(args, components)
+
+    if not _preflight_checks(components):
+        return 1
+
+    failed, sbom_files = _build_all_components(args, components, extra_tags, sbom_dir)
+    return _print_summary(args, components, failed, sbom_files)
 
 
 if __name__ == "__main__":

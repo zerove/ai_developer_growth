@@ -22,9 +22,21 @@ import yaml
 
 from .models import (
     DEFAULT_CONFIG_PATHS,
+    BaselineConfig,
+    CacheConfig,
+    ExceptionRule,
+    GitHooksConfig,
     GovernanceConfig,
+    LanguageConfig,
+    MetricsConfig,
+    OutputConfig,
+    ParallelConfig,
+    QualityGateConfig,
+    SecretScanConfig,
     SeverityLevel,
+    SupplyChainConfig,
     ToolCategory,
+    ToolConfig,
 )
 
 # 全局配置实例与锁
@@ -66,6 +78,154 @@ def _dataclass_to_dict(obj: Any) -> Any:
         return obj
 
 
+def _known_sections() -> set[str]:
+    """已知的配置节点名 (用于环境变量路径分割)。"""
+    return {
+        "languages",
+        "default_tools",
+        "exceptions",
+        "quality_gates",
+        "qualitygates",
+        "baseline",
+        "secrets",
+        "supply_chain",
+        "supplychain",
+        "cache",
+        "parallel",
+        "output",
+        "git_hooks",
+        "githooks",
+        "metrics",
+        "custom",
+    }
+
+
+def _parse_env_path(env_key: str, prefix: str) -> list[str]:
+    """解析 JCODE_GOVERNANCE_PARALLEL_MAX_WORKERS -> ["parallel", "max_workers"]。"""
+    path_str = env_key[len(prefix) :].lower()
+    known_sections = _known_sections()
+
+    # 找到第一个匹配的 section
+    section = None
+    rest = ""
+    for known in known_sections:
+        if path_str.startswith(known + "_"):
+            section = known
+            rest = path_str[len(known) + 1 :]
+            break
+        elif path_str == known:
+            section = known
+            rest = ""
+            break
+
+    if section is None:
+        # 没有匹配的 section，按下划线分割第一个作为 section
+        parts = path_str.split("_", 1)
+        section = parts[0]
+        rest = parts[1] if len(parts) > 1 else ""
+
+    path_parts = [section]
+    if rest:
+        if rest in _KNOWN_COMPOUND_KEYS:
+            path_parts.append(rest)
+        else:
+            # 否则按下划线分割
+            path_parts.extend(rest.split("_"))
+    return path_parts
+
+
+_KNOWN_COMPOUND_KEYS = {
+    "max_workers",
+    "max_size_mb",
+    "ttl_hours",
+    "entropy_threshold",
+    "min_coverage_overall",
+    "min_coverage_changed",
+    "max_critical",
+    "max_high",
+    "max_medium",
+    "max_critical_vulns",
+    "max_high_vulns",
+    "prometheus_port",
+    "push_gateway",
+    "retention_days",
+    "version_flag",
+    "severity_threshold",
+    "install_hint",
+    "config_file",
+    "key_factors",
+    "sarif_output",
+    "junit_output",
+    "sbom_format",
+    "sbom_output",
+    "vulnerability_sources",
+    "allowed_licenses",
+    "denied_licenses",
+    "trusted_publishers",
+    "allowlist",
+    "rules",
+    "exclude",
+    "include",
+    "pre_commit",
+    "pre_push",
+    "commit_msg",
+    "prepare_commit_msg",
+    "run_on_partial_staging",
+    "skip_on_merge_commit",
+    "skip_on_fixup_commit",
+    "scan_workspace",
+    "scan_git_history",
+    "scan_pr_diff",
+    "scan_containers",
+    "verify_active",
+    "auto_update",
+    "update_on_success",
+    "compare_against",
+    "fail_on_new",
+    "fail_on_worsened",
+    "require_zero_new_errors",
+    "require_zero_new_warnings",
+    "max_new_errors",
+    "max_new_warnings",
+    "allow_secrets",
+    "allow_exceptions",
+    "require_approval_for_exceptions",
+    "baseline_branch",
+    "generate_sbom",
+    "verify_signatures",
+    "enabled",
+    "paths",
+    "thresholds",
+    "tools",
+    "per_category",
+    "verbose",
+    "show_passed",
+    "summary_only",
+    "format",
+}
+
+
+def _set_nested_value(config_dict: dict[str, Any], path_parts: list[str], env_value: str) -> None:
+    """导航嵌套字典并设置类型转换后的值。"""
+    current = config_dict
+    for i, part in enumerate(path_parts):
+        if i == len(path_parts) - 1:
+            # 尝试类型转换
+            if env_value.lower() in ("true", "false"):
+                current[part] = env_value.lower() == "true"
+            elif env_value.isdigit():
+                current[part] = int(env_value)
+            else:
+                try:
+                    current[part] = float(env_value)
+                except ValueError:
+                    current[part] = env_value
+        else:
+            if part not in current:
+                current[part] = {}
+            current = current[part]
+
+
 def _apply_env_overrides(config: GovernanceConfig) -> GovernanceConfig:
     """应用环境变量覆盖
 
@@ -79,250 +239,75 @@ def _apply_env_overrides(config: GovernanceConfig) -> GovernanceConfig:
     for env_key, env_value in os.environ.items():
         if not env_key.startswith(prefix):
             continue
-
-        # 解析路径: PARALLEL_MAX_WORKERS -> parallel.max_workers
-        # 需要处理连续大写的情况，如 MAX_WORKERS 应该是一个键
-        path_str = env_key[len(prefix) :].lower()
-        # 使用已知的配置节点名来分割
-        known_sections = {
-            "languages",
-            "default_tools",
-            "exceptions",
-            "quality_gates",
-            "qualitygates",
-            "baseline",
-            "secrets",
-            "supply_chain",
-            "supplychain",
-            "cache",
-            "parallel",
-            "output",
-            "git_hooks",
-            "githooks",
-            "metrics",
-            "custom",
-        }
-
-        # 找到第一个匹配的 section
-        section = None
-        rest = ""
-        for known in known_sections:
-            if path_str.startswith(known + "_"):
-                section = known
-                rest = path_str[len(known) + 1 :]
-                break
-            elif path_str == known:
-                section = known
-                rest = ""
-                break
-
-        if section is None:
-            # 没有匹配的 section，按下划线分割第一个作为 section
-            parts = path_str.split("_", 1)
-            section = parts[0]
-            rest = parts[1] if len(parts) > 1 else ""
-
-        # 现在 rest 可能包含嵌套键，如 max_workers -> max.workers
-        # 我们需要识别已知的嵌套键
-        # 简单处理：如果 rest 包含下划线，作为单个键处理（如 max_workers）
-        path_parts = [section]
-        if rest:
-            # 检查是否是已知的复合键
-            known_compound_keys = {
-                "max_workers",
-                "max_size_mb",
-                "ttl_hours",
-                "entropy_threshold",
-                "min_coverage_overall",
-                "min_coverage_changed",
-                "max_critical",
-                "max_high",
-                "max_medium",
-                "max_critical_vulns",
-                "max_high_vulns",
-                "prometheus_port",
-                "push_gateway",
-                "retention_days",
-                "version_flag",
-                "severity_threshold",
-                "install_hint",
-                "config_file",
-                "key_factors",
-                "sarif_output",
-                "junit_output",
-                "sbom_format",
-                "sbom_output",
-                "vulnerability_sources",
-                "allowed_licenses",
-                "denied_licenses",
-                "trusted_publishers",
-                "allowlist",
-                "rules",
-                "exclude",
-                "include",
-                "pre_commit",
-                "pre_push",
-                "commit_msg",
-                "prepare_commit_msg",
-                "run_on_partial_staging",
-                "skip_on_merge_commit",
-                "skip_on_fixup_commit",
-                "scan_workspace",
-                "scan_git_history",
-                "scan_pr_diff",
-                "scan_containers",
-                "verify_active",
-                "auto_update",
-                "update_on_success",
-                "compare_against",
-                "fail_on_new",
-                "fail_on_worsened",
-                "require_zero_new_errors",
-                "require_zero_new_warnings",
-                "max_new_errors",
-                "max_new_warnings",
-                "allow_secrets",
-                "allow_exceptions",
-                "require_approval_for_exceptions",
-                "baseline_branch",
-                "generate_sbom",
-                "verify_signatures",
-                "enabled",
-                "paths",
-                "thresholds",
-                "tools",
-                "per_category",
-                "verbose",
-                "show_passed",
-                "summary_only",
-                "format",
-            }
-
-            if rest in known_compound_keys:
-                path_parts.append(rest)
-            else:
-                # 否则按下划线分割
-                path_parts.extend(rest.split("_"))
-
-        # 导航并设置值
-        current = config_dict
-        for i, part in enumerate(path_parts):
-            if i == len(path_parts) - 1:
-                # 尝试类型转换
-                if env_value.lower() in ("true", "false"):
-                    current[part] = env_value.lower() == "true"
-                elif env_value.isdigit():
-                    current[part] = int(env_value)
-                else:
-                    try:
-                        current[part] = float(env_value)
-                    except ValueError:
-                        current[part] = env_value
-            else:
-                if part not in current:
-                    current[part] = {}
-                current = current[part]
+        path_parts = _parse_env_path(env_key, prefix)
+        _set_nested_value(config_dict, path_parts, env_value)
 
     return _dict_to_config(config_dict)
 
 
+def _convert_tool_config(d: dict[str, Any]) -> ToolConfig:
+    """处理 severity_threshold 枚举转换。"""
+    if "severity_threshold" in d and isinstance(d["severity_threshold"], str):
+        d["severity_threshold"] = SeverityLevel(d["severity_threshold"])
+    return ToolConfig(**d)
+
+
+def _convert_language_config(d: dict[str, Any]) -> LanguageConfig:
+    tools = {}
+    for k, v in d.get("tools", {}).items():
+        if isinstance(k, str):
+            try:
+                cat = ToolCategory(k)
+            except ValueError:
+                continue
+        else:
+            cat = k
+        tools[cat] = _convert_tool_config(v)
+    d = {**d, "tools": tools}
+    return LanguageConfig(**d)
+
+
+def _convert_exception_rule(d: dict[str, Any]) -> ExceptionRule:
+    if "severity" in d and isinstance(d["severity"], str):
+        d["severity"] = SeverityLevel(d["severity"])
+    return ExceptionRule(**d)
+
+
+def _convert_parallel_config(d: dict[str, Any]) -> ParallelConfig:
+    per_cat = {}
+    for k, v in d.get("per_category", {}).items():
+        if isinstance(k, str):
+            try:
+                cat = ToolCategory(k)
+            except ValueError:
+                continue
+        else:
+            cat = k
+        per_cat[cat] = v
+    d = {**d, "per_category": per_cat}
+    return ParallelConfig(**d)
+
+
 def _dict_to_config(data: dict[str, Any]) -> GovernanceConfig:
     """将字典转换为 GovernanceConfig (处理嵌套 dataclass)"""
-    from .models import (
-        BaselineConfig,
-        CacheConfig,
-        ExceptionRule,
-        GitHooksConfig,
-        GovernanceConfig,
-        LanguageConfig,
-        MetricsConfig,
-        OutputConfig,
-        ParallelConfig,
-        QualityGateConfig,
-        SecretScanConfig,
-        SupplyChainConfig,
-        ToolConfig,
-    )
-
-    def convert_tool_config(d: dict[str, Any]) -> ToolConfig:
-        # 处理 severity_threshold
-        if "severity_threshold" in d and isinstance(d["severity_threshold"], str):
-            d["severity_threshold"] = SeverityLevel(d["severity_threshold"])
-        return ToolConfig(**d)
-
-    def convert_language_config(d: dict[str, Any]) -> LanguageConfig:
-        tools = {}
-        for k, v in d.get("tools", {}).items():
-            if isinstance(k, str):
-                try:
-                    cat = ToolCategory(k)
-                except ValueError:
-                    continue
-            else:
-                cat = k
-            tools[cat] = convert_tool_config(v)
-        d = {**d, "tools": tools}
-        return LanguageConfig(**d)
-
-    def convert_exception_rule(d: dict[str, Any]) -> ExceptionRule:
-        if "severity" in d and isinstance(d["severity"], str):
-            d["severity"] = SeverityLevel(d["severity"])
-        return ExceptionRule(**d)
-
-    def convert_quality_gate(d: dict[str, Any]) -> QualityGateConfig:
-        return QualityGateConfig(**d)
-
-    def convert_baseline(d: dict[str, Any]) -> BaselineConfig:
-        return BaselineConfig(**d)
-
-    def convert_secrets(d: dict[str, Any]) -> SecretScanConfig:
-        return SecretScanConfig(**d)
-
-    def convert_supply_chain(d: dict[str, Any]) -> SupplyChainConfig:
-        return SupplyChainConfig(**d)
-
-    def convert_cache(d: dict[str, Any]) -> CacheConfig:
-        return CacheConfig(**d)
-
-    def convert_parallel(d: dict[str, Any]) -> ParallelConfig:
-        per_cat = {}
-        for k, v in d.get("per_category", {}).items():
-            if isinstance(k, str):
-                try:
-                    cat = ToolCategory(k)
-                except ValueError:
-                    continue
-            else:
-                cat = k
-            per_cat[cat] = v
-        d = {**d, "per_category": per_cat}
-        return ParallelConfig(**d)
-
-    def convert_output(d: dict[str, Any]) -> OutputConfig:
-        return OutputConfig(**d)
-
-    def convert_git_hooks(d: dict[str, Any]) -> GitHooksConfig:
-        return GitHooksConfig(**d)
-
-    def convert_metrics(d: dict[str, Any]) -> MetricsConfig:
-        return MetricsConfig(**d)
+    from .models import GovernanceConfig
 
     # 转换嵌套结构
     converted = {
         "version": data.get("version", 1),
         "extends": data.get("extends", []),
-        "languages": {k: convert_language_config(v) for k, v in data.get("languages", {}).items()},
-        "default_tools": {ToolCategory(k): convert_tool_config(v) for k, v in data.get("default_tools", {}).items()},
-        "exceptions": [convert_exception_rule(e) for e in data.get("exceptions", [])],
-        "quality_gates": {k: convert_quality_gate(v) for k, v in data.get("quality_gates", {}).items()},
-        "baseline": convert_baseline(data.get("baseline", {})),
-        "secrets": convert_secrets(data.get("secrets", {})),
-        "supply_chain": convert_supply_chain(data.get("supply_chain", {})),
-        "cache": convert_cache(data.get("cache", {})),
-        "parallel": convert_parallel(data.get("parallel", {})),
-        "output": convert_output(data.get("output", {})),
-        "git_hooks": convert_git_hooks(data.get("git_hooks", {})),
-        "metrics": convert_metrics(data.get("metrics", {})),
+        "languages": {k: _convert_language_config(v) for k, v in data.get("languages", {}).items()},
+        "default_tools": {ToolCategory(k): _convert_tool_config(v) for k, v in data.get("default_tools", {}).items()},
+        "exceptions": [_convert_exception_rule(e) for e in data.get("exceptions", [])],
+        "quality_gates": {k: QualityGateConfig(**v) for k, v in data.get("quality_gates", {}).items()},
+        "baseline": BaselineConfig(**data.get("baseline", {})),
+        "secrets": SecretScanConfig(**data.get("secrets", {})),
+        "supply_chain": SupplyChainConfig(**data.get("supply_chain", {})),
+        "cache": CacheConfig(**data.get("cache", {})),
+        "parallel": _convert_parallel_config(data.get("parallel", {})),
+        "output": OutputConfig(**data.get("output", {})),
+        "git_hooks": GitHooksConfig(**data.get("git_hooks", {})),
+        "metrics": MetricsConfig(**data.get("metrics", {})),
         "custom": data.get("custom", {}),
     }
 

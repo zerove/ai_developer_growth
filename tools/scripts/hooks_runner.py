@@ -86,7 +86,6 @@ from tools.scripts.language_registry import (
     ToolCategory,
     detect_language,
     get_tool,
-    list_supported_languages,
 )
 from tools.scripts.quality_gate import run_quality_gate as run_quality_gate_new
 from tools.scripts.rules_engine.models import CheckResult
@@ -219,25 +218,51 @@ def _build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         description="统一 Hook 运行器 - 多语言支持",
         formatter_class=argparse.RawDescriptionHelpFormatter,
-        epilog=f"""
-支持的语言: {", ".join(lang.value for lang in list_supported_languages())}
+        epilog="""
+支持的语言: see `hooks_runner.py full --help`
 
 Examples:
-  hooks_runner.py lint --lang python
-  hooks_runner.py format --lang typescript
-  hooks_runner.py typecheck --lang rust
-  hooks_runner.py test --lang go
-  hooks_runner.py security --lang python
-  hooks_runner.py language-rules --path tools/scripts --lang python
-  hooks_runner.py quality-gate --path tools/scripts --full
-  hooks_runner.py governance-audit --full
   hooks_runner.py full --lang python,typescript
-  hooks_runner.py full --path .  # 自动检测所有语言
+  hooks_runner.py quality-gate --path tools/scripts --full
         """,
     )
     subparsers = parser.add_subparsers(dest="command", required=True)
 
-    # 门禁健康自检: 校验钩子环境、工具链与基线，防止门禁静默失效
+    # 基础检查命令 - 支持 --lang 和 --path
+    for cmd_name, help_text in [
+        ("lint", "Run lint check"),
+        ("format", "Run format check"),
+        ("typecheck", "Run type check"),
+        ("test", "Run test suite"),
+        ("security", "Run security scan"),
+    ]:
+        sp = subparsers.add_parser(cmd_name, help=help_text)
+        sp.add_argument("--lang", help="Language (auto-detect if not specified)")
+        sp.add_argument("--path", type=Path, default=Path("."), help="Path to check (default: current dir)")
+        sp.add_argument("--fix", action="store_true", help="Apply auto-fixes (lint/format only)")
+        if cmd_name == "test":
+            sp.add_argument(
+                "--incremental",
+                action="store_true",
+                help="Only run tests affected by changed files vs --base",
+            )
+            sp.add_argument("--base", default="HEAD", help="Base ref for incremental test selection")
+
+    # doctor 与 baseline 棘轮管理
+    _add_doctor_baseline_parsers(subparsers)
+    _add_core_gate_parsers(subparsers)
+    _add_analysis_parsers(subparsers)
+    _add_extended_scan_parsers(subparsers)
+    _add_exception_dep_parsers(subparsers)
+    _add_dep_graph_parsers(subparsers)
+    _add_signature_sbom_parsers(subparsers)
+    _add_security_parsers(subparsers)
+    _add_workflow_parsers(subparsers)
+    return parser
+
+
+def _add_doctor_baseline_parsers(subparsers: argparse._SubParsersAction[argparse.ArgumentParser]) -> None:
+    """doctor 与 baseline 棘轮管理命令。"""
     doctor_parser = subparsers.add_parser(
         "doctor",
         help="Diagnose hook/gate environment health (pre-commit, tools, baseline)",
@@ -260,26 +285,50 @@ Examples:
         "--file", type=Path, default=None, help="Baseline path (default: <root>/.jcode/baseline.json)"
     )
 
-    # 基础检查命令 - 支持 --lang 和 --path
-    for cmd_name, help_text in [
-        ("lint", "Run lint check"),
-        ("format", "Run format check"),
-        ("typecheck", "Run type check"),
-        ("test", "Run test suite"),
-        ("security", "Run security scan"),
-    ]:
-        sp = subparsers.add_parser(cmd_name, help=help_text)
-        sp.add_argument("--lang", help="Language (auto-detect if not specified)")
-        sp.add_argument("--path", type=Path, default=Path("."), help="Path to check (default: current dir)")
-        sp.add_argument("--fix", action="store_true", help="Apply auto-fixes (lint/format only)")
-        if cmd_name == "test":
-            sp.add_argument(
-                "--incremental",
-                action="store_true",
-                help="Only run tests affected by changed files vs --base",
-            )
-            sp.add_argument("--base", default="HEAD", help="Base ref for incremental test selection")
 
+def _add_extended_scan_parsers(subparsers: argparse._SubParsersAction[argparse.ArgumentParser]) -> None:
+    """扩展扫描命令: secret-scan/quality-gate-new/auto-fix。"""
+    # 新增: Secret Scan
+    ss_parser = subparsers.add_parser("secret-scan", help="Scan for secrets in code (gitleaks, trufflehog)")
+    ss_parser.add_argument("--path", type=Path, default=Path("."), help="Path to scan")
+    ss_parser.add_argument("--workspace", action="store_true", default=True, help="Scan workspace")
+    ss_parser.add_argument("--no-workspace", action="store_false", dest="workspace", help="Skip workspace scan")
+    ss_parser.add_argument("--history", action="store_true", default=True, help="Scan git history")
+    ss_parser.add_argument("--no-history", action="store_false", dest="history", help="Skip git history scan")
+    ss_parser.add_argument("--pr-diff", action="store_true", help="Scan PR diff only")
+    ss_parser.add_argument("--tools", help="Comma-separated tools: gitleaks,trufflehog,detect-secrets")
+    ss_parser.add_argument("--format", choices=["text", "json", "sarif"], default="text", help="Output format")
+    ss_parser.add_argument("--output", type=Path, help="Output file path")
+
+    # 新增: Quality Gate (新引擎)
+    qg2_parser = subparsers.add_parser("quality-gate-new", help="Run new Quality Gate engine")
+    qg2_parser.add_argument("--path", type=Path, default=Path("."), help="Path to check")
+    qg2_parser.add_argument("--gate", default="default", help="Gate name from config")
+    qg2_parser.add_argument("--baseline", type=Path, help="Baseline file path")
+    qg2_parser.add_argument("--format", choices=["text", "json", "sarif"], default="text", help="Output format")
+    qg2_parser.add_argument("--output", type=Path, help="Output file path")
+
+    # 新增: Auto-fix
+    af_parser = subparsers.add_parser("auto-fix", help="Run auto-fix on code issues")
+    af_parser.add_argument("--path", type=Path, default=Path("."), help="Path to fix")
+    af_parser.add_argument(
+        "--strategy", choices=["auto", "interactive", "dry_run", "batch_pr"], default="auto", help="Fix strategy"
+    )
+    af_parser.add_argument(
+        "--safety", choices=["safe", "low_risk", "medium_risk", "high_risk"], default="safe", help="Max safety level"
+    )
+    af_parser.add_argument("--max-per-file", type=int, default=50, help="Max fixes per file")
+    af_parser.add_argument("--no-backup", action="store_true", help="Don't create backups")
+    af_parser.add_argument("--run-tests", action="store_true", help="Run regression tests after fix")
+    af_parser.add_argument("--test-cmd", help="Test command to run")
+    af_parser.add_argument("--format", choices=["text", "json"], default="text", help="Output format")
+    af_parser.add_argument("--output", type=Path, help="Output file path")
+
+    # 新增: Supply Chain Security
+
+
+def _add_core_gate_parsers(subparsers: argparse._SubParsersAction[argparse.ArgumentParser]) -> None:
+    """核心门禁命令: language-rules/quality-gate/governance-audit/docs-validate/diff 等"""
     lr_parser = subparsers.add_parser("language-rules", help="Run language-specific rules validation")
     lr_parser.add_argument("--path", type=Path, default=Path("."), help="Path to validate")
     lr_parser.add_argument("--lang", help="Language (auto-detect if not specified)")
@@ -318,6 +367,9 @@ Examples:
         help="验证动作",
     )
 
+
+def _add_analysis_parsers(subparsers: argparse._SubParsersAction[argparse.ArgumentParser]) -> None:
+    """增量与静态分析命令。"""
     diff_parser = subparsers.add_parser("diff", help="Incremental check: only changed files vs base ref")
     diff_parser.add_argument("--base", default="HEAD", help="Git ref to diff against (default: HEAD)")
 
@@ -334,94 +386,9 @@ Examples:
     hs_parser.add_argument("--path", type=Path, default=Path("."), help="Path to scan")
     hs_parser.add_argument("--lang", help="Language filter")
 
-    # 新增: Secret Scan
-    ss_parser = subparsers.add_parser("secret-scan", help="Scan for secrets in code (gitleaks, trufflehog)")
-    ss_parser.add_argument("--path", type=Path, default=Path("."), help="Path to scan")
-    ss_parser.add_argument("--workspace", action="store_true", default=True, help="Scan workspace")
-    ss_parser.add_argument("--no-workspace", action="store_false", dest="workspace", help="Skip workspace scan")
-    ss_parser.add_argument("--history", action="store_true", default=True, help="Scan git history")
-    ss_parser.add_argument("--no-history", action="store_false", dest="history", help="Skip git history scan")
-    ss_parser.add_argument("--pr-diff", action="store_true", help="Scan PR diff only")
-    ss_parser.add_argument("--tools", help="Comma-separated tools: gitleaks,trufflehog,detect-secrets")
-    ss_parser.add_argument("--format", choices=["text", "json", "sarif"], default="text", help="Output format")
-    ss_parser.add_argument("--output", type=Path, help="Output file path")
 
-    # 新增: Quality Gate (新引擎)
-    qg2_parser = subparsers.add_parser("quality-gate-new", help="Run new Quality Gate engine")
-    qg2_parser.add_argument("--path", type=Path, default=Path("."), help="Path to check")
-    qg2_parser.add_argument("--gate", default="default", help="Gate name from config")
-    qg2_parser.add_argument("--baseline", type=Path, help="Baseline file path")
-    qg2_parser.add_argument("--format", choices=["text", "json", "sarif"], default="text", help="Output format")
-    qg2_parser.add_argument("--output", type=Path, help="Output file path")
-
-    # 新增: Auto-fix
-    af_parser = subparsers.add_parser("auto-fix", help="Run auto-fix on code issues")
-    af_parser.add_argument("--path", type=Path, default=Path("."), help="Path to fix")
-    af_parser.add_argument(
-        "--strategy", choices=["auto", "interactive", "dry_run", "batch_pr"], default="auto", help="Fix strategy"
-    )
-    af_parser.add_argument(
-        "--safety", choices=["safe", "low_risk", "medium_risk", "high_risk"], default="safe", help="Max safety level"
-    )
-    af_parser.add_argument("--max-per-file", type=int, default=50, help="Max fixes per file")
-    af_parser.add_argument("--no-backup", action="store_true", help="Don't create backups")
-    af_parser.add_argument("--run-tests", action="store_true", help="Run regression tests after fix")
-    af_parser.add_argument("--test-cmd", help="Test command to run")
-    af_parser.add_argument("--format", choices=["text", "json"], default="text", help="Output format")
-    af_parser.add_argument("--output", type=Path, help="Output file path")
-
-    # 新增: Supply Chain Security
-    sc_parser = subparsers.add_parser("supply-chain", help="Multi-language supply chain security")
-    sc_subparsers = sc_parser.add_subparsers(dest="sc_action", required=True)
-
-    # supply-chain scan
-    sc_scan = sc_subparsers.add_parser("scan", help="Scan supply chain for vulnerabilities")
-    sc_scan.add_argument("--path", type=Path, default=Path("."), help="Project root path")
-    sc_scan.add_argument("--format", choices=["text", "json", "sarif"], default="text", help="Output format")
-    sc_scan.add_argument("--output", type=Path, help="Output file path")
-    sc_scan.add_argument(
-        "--fail-on", choices=["critical", "high", "medium", "low"], default="high", help="Fail on severity level"
-    )
-
-    # supply-chain sbom
-    sc_sbom = sc_subparsers.add_parser("sbom", help="Generate SBOM (Software Bill of Materials)")
-    sc_sbom.add_argument("--path", type=Path, default=Path("."), help="Project root path")
-    sc_sbom.add_argument("--output", type=Path, help="Output file path (default: stdout)")
-    sc_sbom.add_argument("--format", choices=["json", "spdx", "cyclonedx"], default="json", help="Output format")
-
-    # supply-chain compliance
-    sc_compliance = sc_subparsers.add_parser("compliance", help="Check supply chain compliance against policy")
-    sc_compliance.add_argument("--path", type=Path, default=Path("."), help="Project root path")
-    sc_compliance.add_argument("--policy-file", type=Path, help="Path to policy file")
-    sc_compliance.add_argument("--format", choices=["text", "json"], default="text", help="Output format")
-    sc_compliance.add_argument("--output", type=Path, help="Output file path")
-
-    # supply-chain freshness
-    sc_freshness = sc_subparsers.add_parser("freshness", help="Check dependency freshness")
-    sc_freshness.add_argument("--path", type=Path, default=Path("."), help="Project root path")
-    sc_freshness.add_argument("--max-age-days", type=int, default=90, help="Maximum age in days")
-    sc_freshness.add_argument("--format", choices=["text", "json"], default="text", help="Output format")
-    sc_freshness.add_argument("--output", type=Path, help="Output file path")
-
-    # supply-chain verify
-    sc_verify = sc_subparsers.add_parser("verify", help="Verify supply chain integrity (SLSA provenance)")
-    sc_verify.add_argument("--path", type=Path, default=Path("."), help="Project root path")
-    sc_verify.add_argument("--format", choices=["text", "json"], default="text", help="Output format")
-    sc_verify.add_argument("--output", type=Path, help="Output file path")
-
-    # Keep backward compatible sbom parser at top level
-    sbom_parser = subparsers.add_parser("sbom", help="Generate SBOM (Software Bill of Materials)")
-    sbom_parser.add_argument("--path", type=Path, default=Path("."), help="Project root path")
-    sbom_parser.add_argument("--output", type=Path, help="Output file path (default: stdout)")
-    sbom_parser.add_argument("--format", choices=["json", "spdx"], default="json", help="Output format")
-
-    # 新增: 签名验证
-    vs_parser = subparsers.add_parser("verify-signature", help="Verify package/container signatures")
-    vs_parser.add_argument("--cosign", help="Container image to verify with cosign")
-    vs_parser.add_argument("--cosign-key", help="Cosign public key path")
-    vs_parser.add_argument("--slsa", type=Path, help="Path to package for SLSA provenance verification")
-    vs_parser.add_argument("--format", choices=["text", "json"], default="text", help="Output format")
-
+def _add_exception_dep_parsers(subparsers: argparse._SubParsersAction[argparse.ArgumentParser]) -> None:
+    """例外管理与依赖图命令。"""
     # 新增: Exception Manager (例外管理)
     em_parser = subparsers.add_parser("exception", help="Manage quality gate exceptions")
     em_subparsers = em_parser.add_subparsers(dest="exception_action", required=True)
@@ -468,7 +435,9 @@ Examples:
     # exception sync-gitops
     em_subparsers.add_parser("sync-gitops", help="Sync exceptions to/from GitOps repo")
 
-    # 新增: Dependency Graph (依赖图分析)
+
+def _add_dep_graph_parsers(subparsers: argparse._SubParsersAction[argparse.ArgumentParser]) -> None:
+    """依赖图分析命令。"""
     dg_parser = subparsers.add_parser("dep-graph", help="Analyze dependency graph")
     dg_subparsers = dg_parser.add_subparsers(dest="dep_graph_action", required=True)
 
@@ -498,6 +467,66 @@ Examples:
     dg_impact.add_argument("--version", help="Specific version (optional)")
     dg_impact.add_argument("--output", type=Path, help="Output file (JSON)")
 
+
+def _add_security_parsers(subparsers: argparse._SubParsersAction[argparse.ArgumentParser]) -> None:
+    """安全类命令: semantic-check/ast-fix/hallucination-scan/secret-scan/auto-fix/supply-chain/sbom/verify-signature"""
+    sc_parser = subparsers.add_parser("supply-chain", help="Multi-language supply chain security")
+    sc_subparsers = sc_parser.add_subparsers(dest="sc_action", required=True)
+
+    # supply-chain scan
+    sc_scan = sc_subparsers.add_parser("scan", help="Scan supply chain for vulnerabilities")
+    sc_scan.add_argument("--path", type=Path, default=Path("."), help="Project root path")
+    sc_scan.add_argument("--format", choices=["text", "json", "sarif"], default="text", help="Output format")
+    sc_scan.add_argument("--output", type=Path, help="Output file path")
+    sc_scan.add_argument(
+        "--fail-on", choices=["critical", "high", "medium", "low"], default="high", help="Fail on severity level"
+    )
+
+    # supply-chain sbom
+    sc_sbom = sc_subparsers.add_parser("sbom", help="Generate SBOM (Software Bill of Materials)")
+    sc_sbom.add_argument("--path", type=Path, default=Path("."), help="Project root path")
+    sc_sbom.add_argument("--output", type=Path, help="Output file path (default: stdout)")
+    sc_sbom.add_argument("--format", choices=["json", "spdx", "cyclonedx"], default="json", help="Output format")
+
+    # supply-chain compliance
+    sc_compliance = sc_subparsers.add_parser("compliance", help="Check supply chain compliance against policy")
+    sc_compliance.add_argument("--path", type=Path, default=Path("."), help="Project root path")
+    sc_compliance.add_argument("--policy-file", type=Path, help="Path to policy file")
+    sc_compliance.add_argument("--format", choices=["text", "json"], default="text", help="Output format")
+    sc_compliance.add_argument("--output", type=Path, help="Output file path")
+
+    # supply-chain freshness
+    sc_freshness = sc_subparsers.add_parser("freshness", help="Check dependency freshness")
+    sc_freshness.add_argument("--path", type=Path, default=Path("."), help="Project root path")
+    sc_freshness.add_argument("--max-age-days", type=int, default=90, help="Maximum age in days")
+    sc_freshness.add_argument("--format", choices=["text", "json"], default="text", help="Output format")
+    sc_freshness.add_argument("--output", type=Path, help="Output file path")
+
+    # supply-chain verify
+    sc_verify = sc_subparsers.add_parser("verify", help="Verify supply chain integrity (SLSA provenance)")
+    sc_verify.add_argument("--path", type=Path, default=Path("."), help="Project root path")
+    sc_verify.add_argument("--format", choices=["text", "json"], default="text", help="Output format")
+    sc_verify.add_argument("--output", type=Path, help="Output file path")
+
+
+def _add_signature_sbom_parsers(subparsers: argparse._SubParsersAction[argparse.ArgumentParser]) -> None:
+    """SBOM 兼容与签名验证命令。"""
+    # Keep backward compatible sbom parser at top level
+    sbom_parser = subparsers.add_parser("sbom", help="Generate SBOM (Software Bill of Materials)")
+    sbom_parser.add_argument("--path", type=Path, default=Path("."), help="Project root path")
+    sbom_parser.add_argument("--output", type=Path, help="Output file path (default: stdout)")
+    sbom_parser.add_argument("--format", choices=["json", "spdx"], default="json", help="Output format")
+
+    # 新增: 签名验证
+    vs_parser = subparsers.add_parser("verify-signature", help="Verify package/container signatures")
+    vs_parser.add_argument("--cosign", help="Container image to verify with cosign")
+    vs_parser.add_argument("--cosign-key", help="Cosign public key path")
+    vs_parser.add_argument("--slsa", type=Path, help="Path to package for SLSA provenance verification")
+    vs_parser.add_argument("--format", choices=["text", "json"], default="text", help="Output format")
+
+
+def _add_workflow_parsers(subparsers: argparse._SubParsersAction[argparse.ArgumentParser]) -> None:
+    """工作流辅助命令: exception/dep-graph/pre-commit/pr-review/arch-graph/install-hooks/learn/dashboard/full"""
     subparsers.add_parser("pre-commit", help="Pre-commit hook: check staged files only")
     subparsers.add_parser("pr-review", help="Run automated AI PR review")
     subparsers.add_parser("arch-graph", help="Generate architecture dependency graph (Mermaid)")
@@ -523,8 +552,6 @@ Examples:
     )
     full_parser.add_argument("--lang", help="Comma-separated languages (auto-detect if not specified)")
     full_parser.add_argument("--path", type=Path, default=Path("."), help="Project root path")
-
-    return parser
 
 
 def _run_simple(

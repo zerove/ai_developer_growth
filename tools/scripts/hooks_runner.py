@@ -1049,7 +1049,7 @@ def _print_check_result(result: CheckResult) -> None:
 
 def _handle_language_rules(args: argparse.Namespace) -> int:
     """Handle language-rules command."""
-    from tools.scripts.app_config import get_setting
+    from tools.scripts.app_config import get_path, get_setting
 
     if getattr(args, "fix", False):
         from tools.scripts.rules_engine.auto_fix import (
@@ -1065,7 +1065,9 @@ def _handle_language_rules(args: argparse.Namespace) -> int:
         from tools.scripts.rules_engine.checker import check_directory
 
         jobs: int = int(str(getattr(args, "jobs", None) or get_setting("jobs", 4)))
-        db_path = getattr(args, "db", None) or str(get_setting("trend_db", Path("adg_quality.db")))
+        # 注意必须走 get_path（展开 ~），get_setting 返回字面量 "~/.cache/..." 会导致
+        # sqlite3.connect 无法建库，缓存静默失效（历史 bug：check_cache 恒 0 行）
+        db_path = getattr(args, "db", None) or str(get_path("trend_db", Path("adg_quality.db")))
         results = check_directory(args.path, jobs=jobs, use_cache=True, db_path=db_path)
         passed = all(r.passed for r in results)
         lines = [f"{r.file}: {'PASS' if r.passed else 'FAIL'} ({len(r.issues)} issues)" for r in results]
@@ -2416,10 +2418,10 @@ def _handle_dashboard(args: argparse.Namespace) -> int:
     """Handle dashboard command."""
     import uvicorn
 
-    from tools.scripts.app_config import get_setting
+    from tools.scripts.app_config import get_path
     from tools.scripts.rules_engine.dashboard import create_app
 
-    db_path = getattr(args, "db", None) or str(get_setting("trend_db", Path("adg_quality.db")))
+    db_path = getattr(args, "db", None) or str(get_path("trend_db", Path("adg_quality.db")))
     app = create_app(db_path)
     print(f"Starting ADG Quality Dashboard at http://0.0.0.0:{args.port}")  # nosec - dev only
     uvicorn.run(app, host="0.0.0.0", port=args.port)  # nosec - dev only

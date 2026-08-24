@@ -7,6 +7,7 @@ from pathlib import Path
 from typing import Any
 
 from tools.scripts._common import rules_dir, run_command
+from tools.scripts.rules_engine.logger import logger
 
 from .anti_pattern_checker import check_anti_patterns
 from .complexity_checker import check_js_complexity, check_python_complexity
@@ -33,9 +34,27 @@ def _worker_check(
     pair: tuple[Path, str],
     do_semantic: bool = False,
     do_linters: bool = True,
+    cache_db: str | None = None,
 ) -> CheckResult | None:
-    """Worker 任务：使用预热规则执行单文件检查（模块级，可被 pickle）。"""
+    """Worker 任务：使用预热规则执行单文件检查（模块级，可被 pickle）。
+
+    cache_db 非空时启用增量缓存写入（每个 worker 独立 SQLite 连接，
+    WAL 模式下多进程并发写安全）。
+    """
     fp, lang = pair
+    store = None
+    if cache_db:
+        try:
+            from .store import CheckStore
+
+            store = CheckStore(cache_db)
+            stat = fp.stat()
+            cached = store.get_cached_result(str(fp), stat.st_mtime, stat.st_size)
+            if cached is not None:
+                issues = [Issue(**i) for i in cached["issues"]]
+                return CheckResult(file=str(fp), issues=issues, language=cached["language"])
+        except Exception:
+            store = None  # 缓存不可用时退化为完整检查
     result = check_file(
         fp,
         _WORKER_RULES or None,
@@ -45,6 +64,24 @@ def _worker_check(
     )
     if result.skipped:
         return None
+    if store is not None:
+        try:
+            stat = fp.stat()
+            store.set_cached_result(
+                str(fp),
+                stat.st_mtime,
+                stat.st_size,
+                {
+                    "language": result.language,
+                    "passed": result.passed,
+                    "errors": result.error_count,
+                    "warnings": result.warning_count,
+                    "info": result.info_count,
+                    "issues": [i.to_dict() for i in result.issues],
+                },
+            )
+        except Exception as exc:  # noqa: BLE001
+            logger.debug("worker 缓存写入失败（不影响检查结果）: %s: %s", type(exc).__name__, exc)
     return result
 
 
@@ -494,12 +531,16 @@ def check_directory(
         warmup_rules = rules or {}
 
         pairs = [(fp, _detect_language(fp)) for fp in files]
+        # 增量缓存：worker 进程各自持有独立 SQLite 连接读写缓存
+        # （历史 bug：并行分支完全不接 store，导致 --cache 模式缓存恒为空）
+        cache_db: str | None = str(db_path) if use_cache and store is not None else None
         with ProcessPoolExecutor(max_workers=jobs, initializer=_worker_init, initargs=(warmup_rules,)) as executor:
             worker_results: Iterator[CheckResult | None] = executor.map(
                 _worker_check,
                 pairs,
                 [semantic] * len(pairs),
                 [run_linters] * len(pairs),
+                [cache_db] * len(pairs),
                 chunksize=16,
             )
             for worker_result in worker_results:

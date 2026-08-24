@@ -347,6 +347,11 @@ def validate_file(
 
         result.issues.extend(check_python_ast(str(filepath), lines))
 
+    # 5. 豁免过滤: 行级 noqa + 文件级 ignored-rules.toml (与 checker.check_file 同源)
+    from tools.scripts.rules_engine.checker import _filter_suppressed_issues
+
+    result.issues = _filter_suppressed_issues(filepath, result.issues, lines)
+
     return result
 
 

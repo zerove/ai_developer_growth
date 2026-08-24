@@ -237,7 +237,7 @@ def _filter_suppressed_issues(
     # --- 行级 noqa ---
     noqa_by_line: dict[int, set[str] | None] = {}
     for idx, line in enumerate(lines, start=1):
-        m = re.search(r"#\s*noqa(?::\s*([A-Za-z0-9_,\-\s]+))?", line)
+        m = re.search(r"#\s*noqa(?::\s*([A-Za-z0-9_,\-]+))?", line)
         if m:
             rules_str = m.group(1)
             noqa_by_line[idx] = None if not rules_str else {r.strip() for r in rules_str.split(",") if r.strip()}
@@ -248,11 +248,16 @@ def _filter_suppressed_issues(
     result: list[Issue] = []
     for issue in issues:
         suppressed = False
-        line_noqa = noqa_by_line.get(issue.line)
-        if line_noqa is None and issue.line in noqa_by_line:
-            suppressed = True  # 裸 noqa: 全豁免
-        elif line_noqa and issue.rule_id in line_noqa:
-            suppressed = True
+        # 违规行本身, 以及其前一行 (部分检测器把多行语句的违规归到语句尾/下一行)
+        candidate_lines = (issue.line, issue.line - 1)
+        for ln in candidate_lines:
+            line_noqa = noqa_by_line.get(ln)
+            if line_noqa is None and ln in noqa_by_line:
+                suppressed = True  # 裸 noqa: 全豁免
+            elif line_noqa and issue.rule_id in line_noqa:
+                suppressed = True
+            if suppressed:
+                break
         if not suppressed and file_rules and issue.rule_id in file_rules:
             suppressed = True
         if not suppressed:

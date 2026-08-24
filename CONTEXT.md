@@ -1,3 +1,55 @@
+## 更新记录: 2026-08-25 06:27:56
+
+### 任务
+Git 变更同步
+
+### 变更摘要
+diff --git a/.mise.toml b/.mise.toml
+new file mode 100644
+index 0000000..a190abb
+--- /dev/null
++++ b/.mise.toml
+@@ -0,0 +1,2 @@
++[tools]
++python = "3.12"
+diff --git a/CONTEXT.md b/CONTEXT.md
+index 9cd8014..e5ac5ac 100644
+--- a/CONTEXT.md
++++ b/CONTEXT.md
+@@ -1,3 +1,213 @@
++## 更新记录: 2026-08-25 06:21:52
++
++### 任务
++Git 变更同步
++
++### 变更摘要
++diff --git a/.gitignore b/.gitignore
++index b7b3d1f..7b03ddc 100644
++--- a/.gitignore
+++++ b/.gitignore
++@@ -88,3 +88,9 @@ tools/scripts/rules_engine/*.bak
++ *.db-wal
++ *.db-shm
++ debug_mutmut.py
+++
+++# 审计台账与运行时遥测（每轮操作自动追加，属本地运行状态而非源码）
+++.quality-trends/audit_ledger.jsonl
+++.quality-trends/evolution_log.json
+++.quality-trends/swarm_execution.json
+++.quality-trends/telemetry.json
++diff --git a/.quality-trends/audit_ledger.jsonl b/.quality-trends/audit_ledger.jsonl
++deleted file mode 100644
++index 0d2c561..0000000
++--- a/.quality-trends/audit_ledger.jsonl
+++++ /dev/null
++@@ -1,91 +0,0 @@
++-{"event_type": "PIPELINE_START", "details": {"intent": "Implement robust feature with full DoR and TDD compliance"}, "prev_hash": "0000000000000000000000000000000000000000000000000000000000000000", "current_hash": "10c141f63c90a0e553578b0788fc440b682fb853744ded960313a5a21c1aca8b"}
++-{"event_type": "STEP_1_COMPLETE", "details": {"dor": {"intent": "Implement robust feature with full DoR and TDD compliance", "passed": true, "score": 7, "violations": []}}, "prev_hash": "10c141f63c90a0e553578b0788fc440b682fb853744ded960313a5a21c1aca8b", "current_hash": "092495b8cb9a24de52793e64f798f8e8ab9564129c17ff03f08f6e2ee430f31c"}
++-{"event_type": "STEP_2_COMPLETE", "details": {"violations": []}, "prev_hash": "092495b8cb9a24de52793e64f798f8e8ab9564129c17ff03f08f6e2ee430f31c", "current_hash": "fee81e1ff645a5a00ef333d24d4dbdb9e6112e6fe165e02d5f1c2754926970f5"}
++-{"event_type": "STEP_3_COMPLETE", "details": {"tdd_state": "REFACTOR"}, "prev_hash": "fee81e1ff645a5a00ef333d24d4dbdb9e6112e6fe165e02d5f1c2754926970f5", "current_hash": "aaa546add190c2617c40abe161dc49a8000b9cb6bea...
+
+---
+
 ## 更新记录: 2026-08-25 06:21:52
 
 ### 任务

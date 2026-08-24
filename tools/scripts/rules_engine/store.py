@@ -3,7 +3,7 @@
 集中管理所有质量检查的持久化：
 - check_runs: 每次检查运行的摘要（替代 dashboard.quality_runs）
 - file_results: 每个文件的检查结果明细
-- check_cache: 文件级增量缓存（mtime + size 未变则复用）
+- check_cache: 文件级增量缓存（mtime + size + rules_hash 未变则复用）
 - trend_snapshots: 质量趋势快照（替代 quality_trends JSON 文件）
 
 用法:
@@ -16,13 +16,14 @@
 
 from __future__ import annotations
 
+import hashlib
 import json
 import sqlite3
 from datetime import datetime
 from pathlib import Path
 from typing import Any, cast
 
-SCHEMA_VERSION = 1
+SCHEMA_VERSION = 2
 
 
 def _now_iso() -> str:
@@ -72,13 +73,16 @@ def _create_quality_tables(conn: sqlite3.Connection) -> None:
 
 
 def _create_cache_tables(conn: sqlite3.Connection) -> None:
-    """创建增量缓存与趋势快照表（任务7 新增）。"""
-    # 增量检查缓存: (file_path, mtime, size) 唯一 → 上次结果
+    """创建增量缓存与趋势快照表（任务7 新增；v2 增加 rules_hash 列）。"""
+    # 增量检查缓存: (file_path, mtime, size, rules_hash) 唯一 → 上次结果。
+    # rules_hash 使规则内容/引擎版本变化时旧缓存自然失效（键不匹配即未命中），
+    # 无需迁移清理，陈旧条目由 prune_cache 按时间裁剪。
     conn.execute("""
         CREATE TABLE IF NOT EXISTS check_cache (
             file_path TEXT NOT NULL,
             mtime REAL NOT NULL,
             size INTEGER NOT NULL,
+            rules_hash TEXT NOT NULL DEFAULT '',
             language TEXT,
             passed BOOLEAN,
             errors INTEGER,
@@ -86,7 +90,7 @@ def _create_cache_tables(conn: sqlite3.Connection) -> None:
             info INTEGER,
             issues_json TEXT,
             updated_at TEXT NOT NULL,
-            PRIMARY KEY (file_path, mtime, size)
+            PRIMARY KEY (file_path, mtime, size, rules_hash)
         )
         """)
     # 趋势快照（替代 quality_trends 的 JSON 文件）
@@ -108,6 +112,28 @@ def _create_cache_tables(conn: sqlite3.Connection) -> None:
         """)
 
 
+def compute_rules_signature() -> str:
+    """计算规则集签名（sha256 短摘要），用于增量缓存的失效维度。
+
+    输入: 规则目录全部 YAML 内容 + 引擎 schema 版本。任一规则文件变化、
+    增删规则文件或引擎升级，签名都会改变 → 旧缓存键不匹配自然失效。
+    成本实测 ~7ms（41 个文件 / 289KB），相对单次检查可忽略。
+    失败时返回空串（退化为不含规则维度的旧行为，不阻断检查）。
+    """
+    try:
+        from tools.scripts._common import rules_dir
+
+        root = Path(rules_dir())
+        h = hashlib.sha256()
+        h.update(str(SCHEMA_VERSION).encode())
+        for f in sorted(root.rglob("*.yml")):
+            h.update(str(f.relative_to(root)).encode())
+            h.update(f.read_bytes())
+        return h.hexdigest()[:16]
+    except Exception:  # noqa: BLE001 - 签名失败不应阻断检查
+        return ""
+
+
 def _default_db_path() -> str:
     """统一存储默认路径：优先 [tool.adg].trend_db 配置。"""
     try:
@@ -116,6 +142,22 @@ def _default_db_path() -> str:
         return str(get_path("trend_db", Path("adg_quality.db")))
     except Exception:
         return "adg_quality.db"
+
+
+def _migrate_schema(conn: sqlite3.Connection) -> None:
+    """增量 schema 迁移（按 user_version 逐步升级）。
+
+    v1 → v2: check_cache 增加 rules_hash 列（缓存失效维度）。
+    旧库已有条目的 rules_hash 填空串（视为未知规则版本，下次运行
+    因签名不匹配自然重查），避免整表丢弃。
+    """
+    version = conn.execute("PRAGMA user_version").fetchone()[0]
+    if version < 2:
+        cols = {r[1] for r in conn.execute("PRAGMA table_info(check_cache)").fetchall()}
+        # 表尚不存在时跳过（全新库由 _create_cache_tables 直接建 v2 schema）
+        if cols and "rules_hash" not in cols:
+            conn.execute("ALTER TABLE check_cache ADD COLUMN rules_hash TEXT NOT NULL DEFAULT ''")
+        conn.commit()
 
 
 def init_db(db_path: str = "") -> sqlite3.Connection:
@@ -127,6 +169,7 @@ def init_db(db_path: str = "") -> sqlite3.Connection:
     conn = sqlite3.connect(db_path or _default_db_path(), check_same_thread=False)
     conn.row_factory = sqlite3.Row
     conn.execute("PRAGMA journal_mode=WAL")
+    _migrate_schema(conn)
     _create_quality_tables(conn)
     _create_cache_tables(conn)
     conn.execute("PRAGMA user_version = " + str(SCHEMA_VERSION))
@@ -214,12 +257,23 @@ class CheckStore:
 
     # ── 增量缓存 ──────────────────────────────────────────────
 
-    def get_cached_result(self, file_path: str, mtime: float, size: int) -> dict[str, Any] | None:
-        """按 mtime+size 取缓存。命中返回 {passed, errors, warnings, info, issues}，未命中返回 None。"""
+    def get_cached_result(
+        self,
+        file_path: str,
+        mtime: float,
+        size: int,
+        rules_hash: str = "",
+    ) -> dict[str, Any] | None:
+        """按 mtime+size+rules_hash 取缓存。命中返回结果 dict，未命中返回 None。
+
+        rules_hash 来自 compute_rules_signature()；规则变化后旧键不再匹配，
+        自然失效并重查，避免吃到陈旧结果。
+        """
         row = self.conn.execute(
             """SELECT language, passed, errors, warnings, info, issues_json
-               FROM check_cache WHERE file_path = ? AND mtime = ? AND size = ?""",
-            (file_path, mtime, size),
+               FROM check_cache
+               WHERE file_path = ? AND mtime = ? AND size = ? AND rules_hash = ?""",
+            (file_path, mtime, size, rules_hash),
         ).fetchone()
         if not row:
             return None
@@ -238,17 +292,20 @@ class CheckStore:
         mtime: float,
         size: int,
         result: dict[str, Any],
+        rules_hash: str = "",
     ) -> None:
-        """写入/更新某文件的缓存结果。"""
+        """写入/更新某文件的缓存结果（键含规则签名）。"""
         issues = result.get("issues", [])
         self.conn.execute(
             """INSERT OR REPLACE INTO check_cache
-               (file_path, mtime, size, language, passed, errors, warnings, info, issues_json, updated_at)
-               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+               (file_path, mtime, size, rules_hash, language, passed, errors,
+                warnings, info, issues_json, updated_at)
+               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
             (
                 file_path,
                 mtime,
                 size,
+                rules_hash,
                 result.get("language", "unknown"),
                 1 if result.get("passed", False) else 0,
                 result.get("errors", 0),

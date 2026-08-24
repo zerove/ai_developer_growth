@@ -35,11 +35,13 @@ def _worker_check(
     do_semantic: bool = False,
     do_linters: bool = True,
     cache_db: str | None = None,
+    rules_hash: str = "",
 ) -> CheckResult | None:
     """Worker 任务：使用预热规则执行单文件检查（模块级，可被 pickle）。
 
     cache_db 非空时启用增量缓存写入（每个 worker 独立 SQLite 连接，
-    WAL 模式下多进程并发写安全）。
+    WAL 模式下多进程并发写安全）。rules_hash 为规则集签名，
+    规则/引擎变化时旧缓存键不匹配自然失效。
     """
     fp, lang = pair
     store = None
@@ -49,11 +51,12 @@ def _worker_check(
 
             store = CheckStore(cache_db)
             stat = fp.stat()
-            cached = store.get_cached_result(str(fp), stat.st_mtime, stat.st_size)
+            cached = store.get_cached_result(str(fp), stat.st_mtime, stat.st_size, rules_hash)
             if cached is not None:
                 issues = [Issue(**i) for i in cached["issues"]]
                 return CheckResult(file=str(fp), issues=issues, language=cached["language"])
-        except Exception:
+        except Exception as exc:  # noqa: BLE001
+            logger.debug("worker 缓存读取失败，回退完整检查 %s: %s", fp, exc)
             store = None  # 缓存不可用时退化为完整检查
     result = check_file(
         fp,
@@ -79,6 +82,7 @@ def _worker_check(
                     "info": result.info_count,
                     "issues": [i.to_dict() for i in result.issues],
                 },
+                rules_hash,
             )
         except Exception as exc:  # noqa: BLE001
             logger.debug("worker 缓存写入失败（不影响检查结果）: %s: %s", type(exc).__name__, exc)
@@ -479,40 +483,54 @@ def check_directory(
     if languages:
         files = [f for f in files if _detect_language(f) in languages]
 
-    # 增量缓存（任务7：复用检查历史，mtime+size 未变直接返回上次结果）
+    # 增量缓存（任务7：复用检查历史；v2 键含规则签名，规则变化自动失效）
     store = None
+    rules_hash = ""
+    cache_degraded = 0  # B: 静默降级可观测性计数
     if use_cache:
         try:
-            from .store import CheckStore
+            from .store import CheckStore, compute_rules_signature
 
             store = CheckStore(db_path)
-        except Exception:
+            rules_hash = compute_rules_signature()
+        except Exception as exc:  # noqa: BLE001
             store = None  # 缓存不可用时退化为完整检查
+            logger.warning("增量缓存初始化失败，本次退化为完整检查: %s: %s", type(exc).__name__, exc)
 
     def _checked_result(filepath: Path, lang: str) -> CheckResult:
         """执行检查（命中缓存则跳过），并更新统一存储。"""
+        nonlocal cache_degraded
         if store is not None:
-            stat = filepath.stat()
-            cached = store.get_cached_result(str(filepath), stat.st_mtime, stat.st_size)
-            if cached is not None:
-                issues = [Issue(**i) for i in cached["issues"]]
-                return CheckResult(file=str(filepath), issues=issues, language=cached["language"])
+            try:
+                stat = filepath.stat()
+                cached = store.get_cached_result(str(filepath), stat.st_mtime, stat.st_size, rules_hash)
+                if cached is not None:
+                    issues = [Issue(**i) for i in cached["issues"]]
+                    return CheckResult(file=str(filepath), issues=issues, language=cached["language"])
+            except Exception as exc:  # noqa: BLE001
+                cache_degraded += 1
+                logger.debug("缓存读取失败，回退完整检查 %s: %s", filepath, exc)
         result = check_file(filepath, rules, lang, semantic=semantic, run_linters=run_linters)
         if store is not None and not result.skipped:
-            stat = filepath.stat()
-            store.set_cached_result(
-                str(filepath),
-                stat.st_mtime,
-                stat.st_size,
-                {
-                    "language": result.language,
-                    "passed": result.passed,
-                    "errors": result.error_count,
-                    "warnings": result.warning_count,
-                    "info": result.info_count,
-                    "issues": [i.to_dict() for i in result.issues],
-                },
-            )
+            try:
+                stat = filepath.stat()
+                store.set_cached_result(
+                    str(filepath),
+                    stat.st_mtime,
+                    stat.st_size,
+                    {
+                        "language": result.language,
+                        "passed": result.passed,
+                        "errors": result.error_count,
+                        "warnings": result.warning_count,
+                        "info": result.info_count,
+                        "issues": [i.to_dict() for i in result.issues],
+                    },
+                    rules_hash,
+                )
+            except Exception as exc:  # noqa: BLE001
+                cache_degraded += 1
+                logger.debug("缓存写入失败（不影响检查结果）%s: %s", filepath, exc)
         return result
 
     if jobs <= 1 or len(files) <= 4:
@@ -531,9 +549,10 @@ def check_directory(
         warmup_rules = rules or {}
 
         pairs = [(fp, _detect_language(fp)) for fp in files]
-        # 增量缓存：worker 进程各自持有独立 SQLite 连接读写缓存
+        # 增量缓存：worker 进程各自持有独立 SQLite 连接读写缓存，键含规则签名
         # （历史 bug：并行分支完全不接 store，导致 --cache 模式缓存恒为空）
         cache_db: str | None = str(db_path) if use_cache and store is not None else None
+        worker_rules_hash = rules_hash
         with ProcessPoolExecutor(max_workers=jobs, initializer=_worker_init, initargs=(warmup_rules,)) as executor:
             worker_results: Iterator[CheckResult | None] = executor.map(
                 _worker_check,
@@ -541,6 +560,7 @@ def check_directory(
                 [semantic] * len(pairs),
                 [run_linters] * len(pairs),
                 [cache_db] * len(pairs),
+                [worker_rules_hash] * len(pairs),
                 chunksize=16,
             )
             for worker_result in worker_results:
@@ -578,6 +598,10 @@ def check_directory(
         _ = None  # arch module not available
     except Exception:
         _ = None  # arch checks optional
+
+    # B: 降级可观测性 —— 缓存读写失败次数汇总，避免"看似工作实则未生效"
+    if use_cache and cache_degraded:
+        logger.warning("本次运行缓存降级 %d 次（读取/写入失败已回退完整检查）", cache_degraded)
 
     return results
 

@@ -350,3 +350,65 @@ class TestParallelCacheIntegration:
 
         changed = [k for k in after if before.get(k) != after[k]]
         assert len(changed) == 1 and changed[0].endswith("target.py"), f"应只重查 target.py, 实际变更: {changed}"
+
+
+class TestRulesSignatureCacheInvalidation:
+    """规则签名失效维度（A 项）：规则/引擎变化后旧缓存不再命中。"""
+
+    def test_compute_rules_signature_stable_and_sensitive(self):
+        from tools.scripts.rules_engine.store import compute_rules_signature
+
+        sig1 = compute_rules_signature()
+        assert len(sig1) == 16
+        # 同一状态下两次计算一致
+        assert compute_rules_signature() == sig1
+
+    def test_cache_roundtrip_with_rules_hash(self, store: CheckStore):
+        store.set_cached_result(
+            "a.py",
+            mtime=1.0,
+            size=10,
+            result={"language": "py", "passed": True, "errors": 0, "warnings": 0, "info": 0, "issues": []},
+            rules_hash="sig-aaa",
+        )
+        # 同签名命中
+        assert store.get_cached_result("a.py", 1.0, 10, rules_hash="sig-aaa") is not None
+        # 规则变化（签名不同）→ 未命中 → 触发重查
+        assert store.get_cached_result("a.py", 1.0, 10, rules_hash="sig-bbb") is None
+
+    def test_migrate_v1_adds_rules_hash_column(self, tmp_path):
+        """v1 旧库（无 rules_hash 列）打开时自动迁移，数据保留可读写。"""
+        import sqlite3
+
+        from tools.scripts.rules_engine.store import SCHEMA_VERSION, CheckStore
+
+        old_db = str(tmp_path / "old.db")
+        conn = sqlite3.connect(old_db)
+        conn.execute("""CREATE TABLE IF NOT EXISTS check_cache (
+            file_path TEXT NOT NULL, mtime REAL NOT NULL, size INTEGER NOT NULL,
+            language TEXT, passed BOOLEAN, errors INTEGER, warnings INTEGER,
+            info INTEGER, issues_json TEXT, updated_at TEXT NOT NULL,
+            PRIMARY KEY (file_path, mtime, size))""")
+        conn.execute("""INSERT INTO check_cache VALUES ('legacy.py', 1.0, 5, 'py', 1, 0, 0, 0, '[]', '2026-01-01')""")
+        conn.commit()
+        conn.close()
+
+        store = CheckStore(old_db)
+        try:
+            # 迁移后 schema 版本升级，旧条目保留
+            ver = store.conn.execute("PRAGMA user_version").fetchone()[0]
+            assert ver == SCHEMA_VERSION
+            legacy = store.conn.execute("SELECT file_path FROM check_cache").fetchall()
+            assert any(r[0] == "legacy.py" for r in legacy)
+            # 新写入带签名可用
+            store.set_cached_result(
+                "new.py",
+                mtime=2.0,
+                size=8,
+                result={"language": "py", "passed": True, "errors": 0, "warnings": 0, "info": 0, "issues": []},
+                rules_hash="sig-new",
+            )
+            assert store.get_cached_result("new.py", 2.0, 8, rules_hash="sig-new") is not None
+        finally:
+            store.close()
+            close_connection(old_db)

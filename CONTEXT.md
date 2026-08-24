@@ -1,3 +1,80 @@
+## 更新记录: 2026-08-24 21:30:41
+
+### 任务
+Git 变更同步
+
+### 变更摘要
+diff --git a/.github/workflows/ci-cd.yml b/.github/workflows/ci-cd.yml
+index 32507be..9b33451 100644
+--- a/.github/workflows/ci-cd.yml
++++ b/.github/workflows/ci-cd.yml
+@@ -136,7 +136,7 @@ jobs:
+             --cov=tools/scripts \
+             --cov-report=xml \
+             --cov-report=term-missing \
+-            --cov-fail-under=60
++            --cov-fail-under=75
+
+       - name: Upload coverage
+         uses: codecov/codecov-action@v4
+diff --git a/CONTEXT.md b/CONTEXT.md
+index e23342f..8e20afc 100644
+--- a/CONTEXT.md
++++ b/CONTEXT.md
+@@ -1,3 +1,76 @@
++## 更新记录: 2026-08-24 21:01:53
++
++### 任务
++Git 变更同步
++
++### 变更摘要
++diff --git a/.github/workflows/ci-cd.yml b/.github/workflows/ci-cd.yml
++index 32507be..9b33451 100644
++--- a/.github/workflows/ci-cd.yml
+++++ b/.github/workflows/ci-cd.yml
++@@ -136,7 +136,7 @@ jobs:
++             --cov=tools/scripts \
++             --cov-report=xml \
++             --cov-report=term-missing \
++-            --cov-fail-under=60
+++            --cov-fail-under=75
++
++       - name: Upload coverage
++         uses: codecov/codecov-action@v4
++diff --git a/.jcode/baseline.json b/.jcode/baseline.json
++index 7c8d7c8..64b2017 100644
++--- a/.jcode/baseline.json
+++++ b/.jcode/baseline.json
++@@ -17,9 +17,6 @@
++     ".jcode/scripts/governance-auditor.py": {
++       "structure:函数超过 50 行 (实际 54 行)": 1
++     },
++-    ".jcode/scripts/multi_agent_orch.py": {
++-      "type:使用 Any 类型": 1
++-    },
++     ".jcode/scripts/jcode-init.py": {
++       "structure:函数超过 50 行 (实际 110 行)": 1
++     },
++@@ -27,9 +24,6 @@
++       "structure:函数超过 50 行 (实际 59 行)": 1,
++       "structure:函数超过 50 行 (实际 55 行)": 1
++     },
++-    "tools/scripts/sync_issues.py": {
++-      "type:使用 Any 类型": 1
++-    },
++     "tools/scripts/dependency_graph.py": {
++       "structure:函数超过 50 行 (实际 54 行)": 1
++     },
++@@ -37,11 +31,6 @@
++       "structure:函数超过 50 行 (实际 57 行)": 1,
++       "structure:函数超过 50 行 (实际 56 行)": 1
++     },
++-    "tools/scripts/supply_chain.py": {
++-      "type:使用 Any 类型": 1,
++-     ...
+
+---
+
 ## 更新记录: 2026-08-24 21:01:53
 
 ### 任务

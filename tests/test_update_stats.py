@@ -82,3 +82,44 @@ class TestHistory:
         entry = json.loads(lines[1])
         assert entry["tests"] == 12
         assert "timestamp" in entry
+
+
+class TestCollectQualityGate:
+    """F 项: quality-gate JSON 采集进趋势历史。"""
+
+    def test_collect_parses_summary(self, tmp_path: Path) -> None:
+        import subprocess as sp
+
+        import tools.scripts.update_stats as us
+        from tools.scripts.update_stats import collect_quality_gate
+
+        hooks_runner = tmp_path / "tools" / "scripts" / "hooks_runner.py"
+        hooks_runner.parent.mkdir(parents=True)
+        hooks_runner.write_text("# fake\n")
+
+        fake_json = (
+            '{"summary": {"passed": 145, "failed": 2, "total_files": 147,'
+            ' "total_issues": 9, "baseline_exempt": 9}, "results": []}'
+        )
+
+        def fake_run(*args, **kwargs):
+            return sp.CompletedProcess(args[0], 0, stdout=fake_json, stderr="")
+
+        original = us.subprocess.run
+        us.subprocess.run = fake_run  # type: ignore[method-assign]
+        try:
+            out = collect_quality_gate(tmp_path)
+        finally:
+            us.subprocess.run = original
+        assert out is not None
+        assert out["gate_failed"] == 2
+        assert out["gate_issues"] == 9
+        assert out["gate_baseline_exempt"] == 9
+        total = 147
+        assert out["gate_pass_rate"] == round(145 / total * 100)
+
+    def test_collect_returns_none_when_unparseable(self, tmp_path: Path) -> None:
+        from tools.scripts.update_stats import collect_quality_gate
+
+        # 无 hooks_runner 文件 → None（不阻断统计）
+        assert collect_quality_gate(tmp_path) is None

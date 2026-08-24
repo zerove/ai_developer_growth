@@ -1791,7 +1791,7 @@ def _check_dependency_freshness(project_root: Path, max_age: int) -> dict[str, A
 
     result: dict[str, Any] = {
         "project": str(project_root),
-        "checked_at": datetime.datetime.now(tz=datetime.UTC).isoformat(),
+        "checked_at": datetime.datetime.now(tz=datetime.timezone.utc).isoformat(),
         "max_age_days": max_age,
         "total_dependencies": len(all_deps),
         "fresh": [],
@@ -1856,7 +1856,7 @@ def _verify_packages(project_root: Path) -> dict[str, Any]:
 
     result: dict[str, Any] = {
         "project": str(project_root),
-        "verified_at": datetime.datetime.now(tz=datetime.UTC).isoformat(),
+        "verified_at": datetime.datetime.now(tz=datetime.timezone.utc).isoformat(),
         "total_packages": len(all_deps),
         "verified": [],
         "unverified": [],

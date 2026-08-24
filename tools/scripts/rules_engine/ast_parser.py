@@ -852,57 +852,50 @@ class ASTParser:
         self._walk_imports(node, language, imports)
         return imports
 
+    def _parse_python_import(self, node: _TreeNode) -> ImportInfo | None:
+        """解析 Python import 语句。"""
+        if node.type == "import_statement":
+            module = self._get_text(node.children[0]) if node.children else ""
+            dotted_names = [self._get_text(c, []) for c in node.children if c.type == "dotted_name"]
+            return ImportInfo(module=module, names=dotted_names, line=node.start_point[0] + 1, is_from=False, level=0)
+        if node.type == "import_from_statement":
+            level = 0
+            module = ""
+            names: list[str] = []
+            for child in node.children:
+                if child.type == "relative_import":
+                    level = child.text.count(b".") if isinstance(child.text, bytes) else str(child.text).count(".")
+                elif child.type == "dotted_name":
+                    module = self._get_text(child, [])
+                elif child.type == "aliased_import":
+                    for sub in child.children:
+                        if sub.type == "identifier":
+                            names.append(self._get_text(sub, []))
+            return ImportInfo(module=module, names=names, line=node.start_point[0] + 1, is_from=True, level=level)
+        return None
+
+    def _parse_js_import(self, node: _TreeNode) -> ImportInfo | None:
+        """解析 JavaScript/TypeScript import 语句。"""
+        if node.type == "import_statement":
+            return ImportInfo(
+                module=self._get_text(node, []),
+                names=[],
+                line=node.start_point[0] + 1,
+                is_from=True,
+                level=0,
+            )
+        return None  # import_clause 由父节点处理
+
     def _walk_imports(self, node: _TreeNode, language: str, result: list[ImportInfo]) -> None:
         """Walk AST for import statements."""
         if language == "python":
-            if node.type == "import_statement":
-                module = self._get_text(node.children[0]) if node.children else ""
-                names = [self._get_text(c, []) for c in node.children if c.type == "dotted_name"]
-                result.append(
-                    ImportInfo(
-                        module=module,
-                        names=names,
-                        line=node.start_point[0] + 1,
-                        is_from=False,
-                        level=0,
-                    )
-                )
-            elif node.type == "import_from_statement":
-                level = 0
-                module = ""
-                names = []
-                for child in node.children:
-                    if child.type == "relative_import":
-                        level = child.text.count(b".") if isinstance(child.text, bytes) else str(child.text).count(".")
-                    elif child.type == "dotted_name":
-                        module = self._get_text(child, [])
-                    elif child.type == "aliased_import":
-                        for sub in child.children:
-                            if sub.type == "identifier":
-                                names.append(self._get_text(sub, []))
-                result.append(
-                    ImportInfo(
-                        module=module,
-                        names=names,
-                        line=node.start_point[0] + 1,
-                        is_from=True,
-                        level=level,
-                    )
-                )
-
+            info = self._parse_python_import(node)
+            if info:
+                result.append(info)
         elif language in ("javascript", "typescript"):
-            if node.type == "import_statement":
-                result.append(
-                    ImportInfo(
-                        module=self._get_text(node, []),
-                        names=[],
-                        line=node.start_point[0] + 1,
-                        is_from=True,
-                        level=0,
-                    )
-                )
-            elif node.type == "import_clause":
-                pass  # handled by parent
+            info = self._parse_js_import(node)
+            if info:
+                result.append(info)
 
         for child in node.children:
             if language == "python" and node.type in (

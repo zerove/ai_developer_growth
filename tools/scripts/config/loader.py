@@ -66,7 +66,7 @@ def _deep_merge(base: dict[str, Any], override: dict[str, Any]) -> dict[str, Any
     return result
 
 
-def _dataclass_to_dict(obj: Any) -> Any:
+def _dataclass_to_dict(obj: object) -> Any:
     """递归转换 dataclass 为字典"""
     if is_dataclass(obj) and not isinstance(obj, type):
         return {k: _dataclass_to_dict(v) for k, v in asdict(obj).items()}

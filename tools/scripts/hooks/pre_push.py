@@ -16,6 +16,22 @@ from pathlib import Path
 
 import yaml
 
+# 视为代码文件的扩展名
+CODE_FILE_EXTENSIONS: frozenset[str] = frozenset(
+    {
+        ".py",
+        ".js",
+        ".jsx",
+        ".ts",
+        ".tsx",
+        ".rs",
+        ".java",
+        ".cs",
+        ".go",
+        ".cpp",
+    }
+)
+
 
 def load_skip_patterns() -> list[str]:
     """Load skip patterns from .adg/config.yml (repo-relative globs).
@@ -159,21 +175,20 @@ def _check_language_rules(code_files: list[Path]) -> tuple[bool, list[Path]]:
     return all_passed, skipped
 
 
+def _collect_changed_code_files(changed_files: list[Path]) -> list[Path]:
+    """筛选出存在且为代码文件的变更。"""
+    return [f for f in changed_files if f.suffix in CODE_FILE_EXTENSIONS and f.exists()]
+
+
+def _run_all_checks(code_files: list[Path]) -> tuple[bool, list[Path]]:
+    """执行 lint/格式与语言规则检查; 返回 (是否全部通过, 跳过文件)。"""
+    all_passed = _check_code_files(code_files)
+    lang_passed, skipped = _check_language_rules(code_files)
+    return (lang_passed and all_passed), skipped
+
+
 def run_pre_push_check() -> int:
     """Run checks on unpushed commits. Returns exit code (0 = allow push)."""
-    code_extensions = {
-        ".py",
-        ".js",
-        ".jsx",
-        ".ts",
-        ".tsx",
-        ".rs",
-        ".java",
-        ".cs",
-        ".go",
-        ".cpp",
-    }
-
     commits = get_unpushed_commits()
     if not commits:
         print("✅ No unpushed commits. Push allowed.")
@@ -181,9 +196,7 @@ def run_pre_push_check() -> int:
 
     print(f"🔍 Checking {len(commits)} unpushed commit(s)...")
 
-    changed_files = get_changed_files_in_unpushed_commits()
-    code_files = [f for f in changed_files if f.suffix in code_extensions and f.exists()]
-
+    code_files = _collect_changed_code_files(get_changed_files_in_unpushed_commits())
     if not code_files:
         print("✅ No code files changed. Push allowed.")
         return 0
@@ -193,14 +206,7 @@ def run_pre_push_check() -> int:
         print(f"   {f}")
 
     # Run checks
-    all_passed = True
-
-    # Check 1: Lint and format
-    all_passed = _check_code_files(code_files) and all_passed
-
-    # Check 2: Language rules
-    lang_passed, skipped = _check_language_rules(code_files)
-    all_passed = lang_passed and all_passed
+    all_passed, skipped = _run_all_checks(code_files)
 
     if skipped:
         print(f"⏭️  Skipped {len(skipped)} file(s) matching skip_patterns: {', '.join(str(f) for f in skipped)}")
@@ -208,10 +214,9 @@ def run_pre_push_check() -> int:
     if all_passed:
         print("\n✅ All checks passed. Push allowed.")
         return 0
-    else:
-        print("\n❌ Checks failed. Fix issues before pushing.")
-        print("   Use: git commit --no-verify to bypass (not recommended)")
-        return 1
+    print("\n❌ Checks failed. Fix issues before pushing.")
+    print("   Use: git commit --no-verify to bypass (not recommended)")
+    return 1
 
 
 def install_pre_push_hook() -> bool:

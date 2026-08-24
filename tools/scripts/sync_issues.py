@@ -20,13 +20,33 @@ import argparse
 import json
 import os
 import sys
-from typing import Any
+from dataclasses import dataclass
+from typing import Any, Protocol
 
 import requests
 from github import Github
 from github.Issue import Issue
 from github.Label import Label
 from github.Milestone import Milestone
+
+
+class ProjectCard(Protocol):
+    """Project 卡片最小接口 (PyGithub ColumnCard 动态属性)。"""
+
+    id: int
+    column_id: str
+    content_url: str | None
+    note: str | None
+
+
+@dataclass
+class _SimpleCard:
+    """ProjectCard 协议的轻量实现。"""
+
+    id: int
+    column_id: str
+    content_url: str | None = None
+    note: str | None = None
 
 
 class GitHubProjectsSync:
@@ -83,12 +103,20 @@ class GitHubProjectsSync:
             # 创建新卡片
             return self._create_project_card(issue)
 
-    def _get_project_cards(self) -> list[Any]:
-        """获取 Project 中所有卡片"""
-        cards = []
+    def _get_project_cards(self) -> list[ProjectCard]:
+        """获取 Project 中所有卡片 (转换为结构化协议对象)"""
+        cards: list[ProjectCard] = []
         if hasattr(self.project, "get_columns"):
             for column in self.project.get_columns():
-                cards.extend(list(column.get_cards()))
+                for card in column.get_cards():
+                    cards.append(
+                        _SimpleCard(
+                            id=card.id,
+                            column_id=str(getattr(card, "column_id", "")),
+                            content_url=getattr(card, "content_url", None),
+                            note=getattr(card, "note", None),
+                        )
+                    )
         return cards
 
     def _create_project_card(self, issue: Issue) -> dict[str, Any]:
@@ -110,7 +138,7 @@ class GitHubProjectsSync:
         else:
             return {"status": "error", "error": response.text}
 
-    def _update_project_card(self, card: Any, issue: Issue) -> dict[str, Any]:
+    def _update_project_card(self, card: ProjectCard, issue: Issue) -> dict[str, Any]:
         """更新 Project 卡片（移动到正确的列）"""
         target_column_id = self._get_target_column_id(issue)
 
@@ -184,8 +212,9 @@ class GitHubProjectsSync:
 
         return results
 
-    def _sync_card_to_issue(self, issue: Issue, column_id: str, note: str = "") -> dict[str, Any]:
+    def _sync_card_to_issue(self, issue: Issue, column_id: str, note: str | None = None) -> dict[str, Any]:
         """将卡片状态同步回 Issue"""
+        note = note or ""
         # 获取列名
         column_name = ""
         for name, cid in self._project_columns_cache.items():

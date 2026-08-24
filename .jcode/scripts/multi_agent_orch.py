@@ -384,7 +384,7 @@ def run_workflow(
     llm = MockLLM()
     agents = create_agents(llm)
 
-    orchestrator: Any
+    orchestrator: WaterfallOrchestrator | FanOutOrchestrator
     if mode == "waterfall":
         config = WorkflowConfig(max_review_iterations=max_iterations, fail_fast=False)
         orchestrator = WaterfallOrchestrator(agents, config)

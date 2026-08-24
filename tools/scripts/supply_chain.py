@@ -368,47 +368,41 @@ class SBOMGenerator:
 
         return sbom
 
+    def _collect_all_dependencies(self, project_root: Path) -> list[Dependency]:
+        """收集全部生态的依赖声明。"""
+        all_deps: list[Dependency] = []
+        parsers = [
+            self._parse_python_deps,
+            self._parse_npm_deps,
+            self._parse_cargo_deps,
+            self._parse_go_deps,
+            self._parse_maven_deps,
+        ]
+        for parser in parsers:
+            all_deps.extend(parser(project_root))
+        return all_deps
+
+    @staticmethod
+    def _dedupe_dependencies(deps: list[Dependency]) -> list[Dependency]:
+        """按 name+version+ecosystem 去重。"""
+        seen: set[tuple[str, str, str]] = set()
+        unique: list[Dependency] = []
+        for dep in deps:
+            key = (dep.name, dep.version, dep.ecosystem)
+            if key not in seen:
+                seen.add(key)
+                unique.append(dep)
+        return unique
+
     def generate_from_project(self, project_root: Path) -> SBOM:
         """自动检测项目语言并生成完整 SBOM"""
         sbom = SBOM()
         sbom.name = project_root.name
 
-        all_deps = []
-
-        # Python
-        py_deps = self._parse_python_deps(project_root)
-        all_deps.extend(py_deps)
-
-        # npm/Node.js
-        npm_deps = self._parse_npm_deps(project_root)
-        all_deps.extend(npm_deps)
-
-        # Cargo/Rust
-        cargo_deps = self._parse_cargo_deps(project_root)
-        all_deps.extend(cargo_deps)
-
-        # Go
-        go_deps = self._parse_go_deps(project_root)
-        all_deps.extend(go_deps)
-
-        # Maven/Java
-        maven_deps = self._parse_maven_deps(project_root)
-        all_deps.extend(maven_deps)
-
-        # 去重 (按 name+version+ecosystem)
-        seen = set()
-        unique_deps = []
-        for dep in all_deps:
-            key = (dep.name, dep.version, dep.ecosystem)
-            if key not in seen:
-                seen.add(key)
-                unique_deps.append(dep)
-
-        for dep in unique_deps:
-            sbom.packages.append(dep)
+        sbom.packages = self._dedupe_dependencies(self._collect_all_dependencies(project_root))
 
         # 添加关系
-        for i, dep in enumerate(sbom.packages):
+        for i in range(len(sbom.packages)):
             sbom.relationships.append(
                 {
                     "spdxElementId": f"SPDXRef-Package-{i}",
@@ -523,109 +517,106 @@ class SBOMGenerator:
             logger.warning(f"Failed to parse Pipfile.lock: {e}")
         return deps
 
-    def _parse_npm_deps(self, project_root: Path) -> list[Dependency]:
-        """解析 npm 依赖 (package.json + package-lock.json)"""
-        deps = []
-
-        # 解析 package.json
+    @staticmethod
+    def _parse_package_json(project_root: Path) -> list[Dependency]:
+        """解析 package.json 的直接依赖。"""
+        deps: list[Dependency] = []
         package_json = project_root / "package.json"
-        if package_json.exists():
-            try:
-                with open(package_json) as f:
-                    data = json.load(f)
-
-                # dependencies + devDependencies
-                for dep_type in ["dependencies", "devDependencies", "peerDependencies", "optionalDependencies"]:
-                    for name, version in data.get(dep_type, {}).items():
-                        dep = Dependency(
-                            name=name,
-                            version=version.lstrip("^~>="),
-                            ecosystem="npm",
-                            is_direct=True,
-                        )
-                        deps.append(dep)
-            except Exception as e:
-                logger.warning(f"Failed to parse package.json: {e}")
-
-        # 解析 package-lock.json 获取准确版本和传递依赖
-        lock_file = project_root / "package-lock.json"
-        if lock_file.exists():
-            try:
-                with open(lock_file) as f:
-                    data = json.load(f)
-
-                # v2 格式
-                if "packages" in data:
-                    for path, info in data["packages"].items():
-                        if path == "":
-                            continue
-                        name = path.split("node_modules/")[-1]
-                        version = info.get("version", "")
-                        is_dev = info.get("dev", False)
-                        dep = Dependency(
-                            name=name,
-                            version=version,
-                            ecosystem="npm",
-                            is_direct=not is_dev,
-                        )
-                        deps.append(dep)
-            except Exception as e:
-                logger.warning(f"Failed to parse package-lock.json: {e}")
-
+        if not package_json.exists():
+            return deps
+        try:
+            with open(package_json) as f:
+                data = json.load(f)
+            for dep_type in ["dependencies", "devDependencies", "peerDependencies", "optionalDependencies"]:
+                for name, version in data.get(dep_type, {}).items():
+                    deps.append(Dependency(name=name, version=version.lstrip("^~>="), ecosystem="npm", is_direct=True))
+        except Exception as e:
+            logger.warning(f"Failed to parse package.json: {e}")
         return deps
 
-    def _parse_cargo_deps(self, project_root: Path) -> list[Dependency]:
-        """解析 Cargo 依赖 (Cargo.toml + Cargo.lock)"""
-        deps = []
+    @staticmethod
+    def _parse_package_lock(project_root: Path) -> list[Dependency]:
+        """解析 package-lock.json 获取准确版本和传递依赖 (v2 packages 格式)。"""
+        deps: list[Dependency] = []
+        lock_file = project_root / "package-lock.json"
+        if not lock_file.exists():
+            return deps
+        try:
+            with open(lock_file) as f:
+                data = json.load(f)
+            for path, info in data.get("packages", {}).items():
+                if path == "":
+                    continue
+                name = path.split("node_modules/")[-1]
+                deps.append(
+                    Dependency(
+                        name=name,
+                        version=info.get("version", ""),
+                        ecosystem="npm",
+                        is_direct=not info.get("dev", False),
+                    )
+                )
+        except Exception as e:
+            logger.warning(f"Failed to parse package-lock.json: {e}")
+        return deps
 
-        # 解析 Cargo.toml
+    def _parse_npm_deps(self, project_root: Path) -> list[Dependency]:
+        """解析 npm 依赖 (package.json + package-lock.json)"""
+        return self._parse_package_json(project_root) + self._parse_package_lock(project_root)
+
+    @staticmethod
+    def _load_toml(path: Path) -> dict[str, Any]:
+        """加载 TOML 文件; 失败返回空字典。"""
+        import tomllib
+
+        with open(path, "rb") as f:
+            return tomllib.load(f)
+
+    def _parse_cargo_toml(self, project_root: Path) -> list[Dependency]:
+        """解析 Cargo.toml 的直接依赖声明。"""
+        deps: list[Dependency] = []
         cargo_toml = project_root / "Cargo.toml"
-        if cargo_toml.exists():
-            try:
-                import tomllib
+        if not cargo_toml.exists():
+            return deps
+        try:
+            data = self._load_toml(cargo_toml)
+            for dep_type in ["dependencies", "dev-dependencies", "build-dependencies"]:
+                for name, spec in data.get(dep_type, {}).items():
+                    if isinstance(spec, str):
+                        version = spec
+                    elif isinstance(spec, dict):
+                        version = spec.get("version", "")
+                    else:
+                        version = ""
+                    deps.append(Dependency(name=name, version=version, ecosystem="cargo", is_direct=True))
+        except Exception as e:
+            logger.warning(f"Failed to parse Cargo.toml: {e}")
+        return deps
 
-                with open(cargo_toml, "rb") as f:
-                    data = tomllib.load(f)
-
-                for dep_type in ["dependencies", "dev-dependencies", "build-dependencies"]:
-                    for name, spec in data.get(dep_type, {}).items():
-                        if isinstance(spec, str):
-                            version = spec
-                        elif isinstance(spec, dict):
-                            version = spec.get("version", "")
-                        else:
-                            version = ""
-                        dep = Dependency(
-                            name=name,
-                            version=version,
-                            ecosystem="cargo",
-                            is_direct=True,
-                        )
-                        deps.append(dep)
-            except Exception as e:
-                logger.warning(f"Failed to parse Cargo.toml: {e}")
-
-        # 解析 Cargo.lock 获取准确版本和传递依赖
+    def _parse_cargo_lock(self, project_root: Path) -> list[Dependency]:
+        """解析 Cargo.lock 的全部传递依赖。"""
+        deps: list[Dependency] = []
         cargo_lock = project_root / "Cargo.lock"
-        if cargo_lock.exists():
-            try:
-                import tomllib
-
-                with open(cargo_lock, "rb") as f:
-                    data = tomllib.load(f)
-
-                for pkg in data.get("package", []):
-                    dep = Dependency(
+        if not cargo_lock.exists():
+            return deps
+        try:
+            data = self._load_toml(cargo_lock)
+            for pkg in data.get("package", []):
+                deps.append(
+                    Dependency(
                         name=pkg.get("name", ""),
                         version=pkg.get("version", ""),
                         ecosystem="cargo",
                         is_direct=False,  # Cargo.lock 包含所有传递依赖
                     )
-                    deps.append(dep)
-            except Exception as e:
-                logger.warning(f"Failed to parse Cargo.lock: {e}")
-
+                )
+        except Exception as e:
+            logger.warning(f"Failed to parse Cargo.lock: {e}")
         return deps
+
+    def _parse_cargo_deps(self, project_root: Path) -> list[Dependency]:
+        """解析 Cargo 依赖 (Cargo.toml + Cargo.lock)"""
+        return self._parse_cargo_toml(project_root) + self._parse_cargo_lock(project_root)
 
     def _parse_go_deps(self, project_root: Path) -> list[Dependency]:
         """解析 Go 依赖 (go.mod + go.sum)"""
@@ -716,7 +707,7 @@ class SBOMGenerator:
             return Dependency(name=name, version=version, ecosystem="pypi")
         return None
 
-    def _parse_poetry_dep(self, name: str, spec: Any) -> Dependency | None:
+    def _parse_poetry_dep(self, name: str, spec: str | dict[str, Any]) -> Dependency | None:
         if isinstance(spec, str):
             return Dependency(name=name, version=spec, ecosystem="pypi")
         elif isinstance(spec, dict):

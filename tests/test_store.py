@@ -412,3 +412,34 @@ class TestRulesSignatureCacheInvalidation:
         finally:
             store.close()
             close_connection(old_db)
+
+
+class TestPruneHistory:
+    """运行历史保留策略（E 项）：按时间窗裁剪 + VACUUM 回收。"""
+
+    def test_prune_history_respects_window(self, store: CheckStore):
+        from datetime import datetime, timedelta
+
+        old_ts = (datetime.now() - timedelta(days=120)).isoformat()
+        new_ts = datetime.now().isoformat()
+        for ts in (old_ts, old_ts, new_ts):
+            store.conn.execute("INSERT INTO quality_runs (timestamp) VALUES (?)", (ts,))
+        run_ids = [r[0] for r in store.conn.execute("SELECT id FROM quality_runs").fetchall()]
+        for rid in run_ids:
+            store.conn.execute("INSERT INTO file_results (run_id, file_path) VALUES (?, ?)", (rid, "x.py"))
+        store.conn.commit()
+
+        deleted = store.prune_history(retention_days=90)
+        assert deleted == 2
+        remaining = store.conn.execute("SELECT COUNT(*) FROM quality_runs").fetchone()[0]
+        assert remaining == 1
+        # 关联表同步清理：保留的 run 的 file_results 不应被误删
+        kept_files = store.conn.execute("SELECT COUNT(*) FROM file_results").fetchone()[0]
+        assert kept_files == 1
+
+    def test_prune_history_noop_when_all_recent(self, store: CheckStore):
+        from datetime import datetime
+
+        store.conn.execute("INSERT INTO quality_runs (timestamp) VALUES (?)", (datetime.now().isoformat(),))
+        store.conn.commit()
+        assert store.prune_history(retention_days=90) == 0

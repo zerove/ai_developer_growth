@@ -19,7 +19,7 @@ from __future__ import annotations
 import hashlib
 import json
 import sqlite3
-from datetime import datetime
+from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Any, cast
 
@@ -341,6 +341,35 @@ class CheckStore:
             "SELECT COALESCE(SUM(errors + warnings + info), 0) FROM check_cache"
         ).fetchone()[0]
         return {"cached_files": total, "cached_issues": total_issues}
+
+    def prune_history(self, retention_days: int = 90) -> int:
+        """裁剪运行历史（quality_runs/file_results/rule_violations），返回删除的运行数。
+
+        E 项改进：trend.db 此前无限增长（实测 quality_runs 3238 行 /
+        file_results 58946 行）。按时间窗保留最近 N 天，删除后 VACUUM
+        回收空间。check_cache 的裁剪仍走 prune_cache（按条数）。
+        """
+        # timestamp 列存 ISO 字符串（_now_iso），ISO 格式字典序即时间序，
+        # 直接用字符串比较即可正确裁剪
+        cutoff = (datetime.now() - timedelta(days=retention_days)).isoformat()
+        rows = self.conn.execute("SELECT id FROM quality_runs WHERE timestamp < ?", (cutoff,)).fetchall()
+        if not rows:
+            return 0
+        ids = [r[0] for r in rows]
+        # 逐条参数化删除（ids 来自本表主键查询，无注入面；
+        # 避免 f-string 拼 IN 占位符触发 SQL 注入规则误报）
+        deleted = 0
+        for rid in ids:
+            self.conn.execute("DELETE FROM file_results WHERE run_id = ?", (rid,))
+            self.conn.execute("DELETE FROM rule_violations WHERE run_id = ?", (rid,))
+            cursor = self.conn.execute("DELETE FROM quality_runs WHERE id = ?", (rid,))
+            deleted += cursor.rowcount
+        self.conn.commit()
+        if deleted:
+            # WAL 模式下先 checkpoint 再 VACUUM，确保空间真正归还操作系统
+            self.conn.execute("PRAGMA wal_checkpoint(TRUNCATE)")
+            self.conn.execute("VACUUM")
+        return deleted
 
     def prune_cache(self, keep: int = 500) -> int:
         """裁剪缓存，保留最近 keep 条（按时间戳），返回删除条数。"""

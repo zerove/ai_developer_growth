@@ -3,6 +3,13 @@
 Provides incremental checking, parallel processing, caching,
 and scan time optimization.
 
+.. deprecated:: 现状说明（2026-08 核实）
+    本模块当前无生产调用方：仅 perf_benchmark.py（基准工具）与
+    测试引用。生产路径的增量缓存由 checker.check_directory(use_cache=True)
+    + store.CheckStore 提供，并行执行也内置于 check_directory。
+    本模块保留用于基准对比实验；若确认不再需要可整体移除。
+    请勿在文档中声称其为生产加速组件。
+
 Usage:
     from tools.scripts.rules_engine.performance import PerformanceOptimizer
 

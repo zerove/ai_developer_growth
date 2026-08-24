@@ -559,6 +559,10 @@ def _add_workflow_parsers(subparsers: argparse._SubParsersAction[argparse.Argume
     dashboard_parser.add_argument("--port", type=int, default=8765, help="Port (default: 8765)")
     dashboard_parser.add_argument("--db", help="SQLite database path (default: [tool.adg].trend_db)")
 
+    db_maintain_parser = subparsers.add_parser("db-maintain", help="统一存储维护：裁剪运行历史（保留窗口）并回收空间")
+    db_maintain_parser.add_argument("--retention-days", type=int, default=90, help="运行历史保留天数 (default: 90)")
+    db_maintain_parser.add_argument("--db", help="SQLite database path (default: [tool.adg].trend_db)")
+
     full_parser = subparsers.add_parser(
         "full",
         help="Run all checks (lint, format, typecheck, test, security, quality-gate, governance-audit)",
@@ -2414,6 +2418,39 @@ def _handle_learn(args: argparse.Namespace) -> int:
     return 0
 
 
+def _handle_db_maintain(args: argparse.Namespace) -> int:
+    """统一存储维护：裁剪运行历史（E 项保留策略）并回收空间。"""
+    from tools.scripts.app_config import get_path
+    from tools.scripts.rules_engine.store import CheckStore
+
+    db_path = getattr(args, "db", None) or str(get_path("trend_db", Path("adg_quality.db")))
+    retention = int(getattr(args, "retention_days", 90))
+    try:
+        store = CheckStore(db_path)
+    except Exception as exc:  # noqa: BLE001
+        print(f"❌ 无法打开统一存储 {db_path}: {exc}")
+        return 1
+
+    try:
+        deleted = store.prune_history(retention_days=retention)
+        stats = store.cache_hit_rate()
+        print(f"✅ 运行历史裁剪完成: 删除 {deleted} 条运行记录 (保留窗口 {retention} 天)")
+        print(f"   当前缓存文件数: {stats['cached_files']}")
+        return 0
+    finally:
+        _close_store_quietly(store)
+
+
+def _close_store_quietly(store: object) -> None:
+    """静默关闭 CheckStore 连接（维护命令收尾用）。"""
+    close = getattr(store, "close", None)
+    if callable(close):
+        try:
+            close()
+        except Exception:  # noqa: BLE001
+            pass
+
+
 def _handle_dashboard(args: argparse.Namespace) -> int:
     """Handle dashboard command."""
     import uvicorn
@@ -2500,6 +2537,7 @@ def _build_handlers() -> dict[str, Callable[[argparse.Namespace], int]]:
         "install-hooks": _handle_install_hooks,
         "learn": _handle_learn,
         "dashboard": _handle_dashboard,
+        "db-maintain": _handle_db_maintain,
         "docs-validate": _handle_docs_validate,
         "exception": _handle_exception,
         "dep-graph": _handle_dep_graph,

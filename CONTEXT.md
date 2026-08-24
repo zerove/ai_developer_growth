@@ -1,3 +1,768 @@
+## 更新记录: 2026-08-24 16:23:06
+
+### 任务
+Git 变更同步
+
+### 变更摘要
+diff --git a/.jcode/baseline.json b/.jcode/baseline.json
+index 564517b..711e3cb 100644
+--- a/.jcode/baseline.json
++++ b/.jcode/baseline.json
+@@ -11,6 +11,26 @@
+     "tools/multiproject/__init__.py": {
+       "structure:函数超过 50 行 (实际 69 行)": 1
+     },
++    "tools/lsp/server.py": {
++      "structure:函数超过 50 行 (实际 58 行)": 1
++    },
++    ".jcode/scripts/context-sync.py": {
++      "type:使用 Any 类型": 1
++    },
++    ".jcode/scripts/governance-auditor.py": {
++      "structure:函数超过 50 行 (实际 54 行)": 1
++    },
++    ".jcode/scripts/multi_agent_orch.py": {
++      "type:使用 Any 类型": 1
++    },
++    ".jcode/scripts/jcode-init.py": {
++      "structure:函数超过 50 行 (实际 110 行)": 1
++    },
++    ".jcode/scripts/self_correction_loop.py": {
++      "type:使用 Any 类型": 3,
++      "structure:函数超过 50 行 (实际 59 行)": 1,
++      "structure:函数超过 50 行 (实际 55 行)": 1
++    },
+     "tools/scripts/sync_issues.py": {
+       "type:使用 Any 类型": 1,
+       "structure:函数超过 50 行 (实际 72 行)": 1
+@@ -66,9 +86,6 @@
+     "tools/scripts/fix_heuristics.py": {
+       "structure:函数超过 50 行 (实际 55 行)": 1
+     },
+-    "tools/lsp/server.py": {
+-      "structure:函数超过 50 行 (实际 58 行)": 1
+-    },
+     "tools/scripts/config/loader.py": {
+       "type:使用 Any 类型": 1,
+       "structure:函数超过 50 行 (实际 160 行)": 1,
+@@ -89,23 +106,6 @@
+     },
+     "tools/scripts/hooks/pre_push.py": {
+       "structure:函数超过 50 行 (实际 55 行)": 1
+-    },
+-    ".jcode/scripts/context-sync.py": {
+-      "type:使用 Any 类型": 1
+-    },
+-    ".jcode/scripts/governance-auditor.py": {
+-      "structure:函数超过 50 行 (实际 54 行)": 1
+-    },
+-    ".jcode/scripts/multi_agent_orch.py": {
+-      "type:使用 Any 类型": 1
+-    },
+-    ".jcode/scripts/jcode-init.py": {
+-      "structure:函数超过 50 行 (实际 110 行)": 1
+-    },
+-    ".jcode/scripts/self_correction_loop.py": {
+-      "type:使用 Any 类型": 3,
+-      "structure:函数超过 50 行 (实际 59 行)": 1,
+-      "structure:函数超过 50 行 (实际 55 行)": 1
+     }
+   }
+-}
+\ No newline at end of file
++}
+diff --git a/.jcode/scripts/context-sync.py b/.jcode/scripts/context-sync...
+
+---
+
+## 更新记录: 2026-08-24 16:20:09
+
+### 任务
+Git 变更同步
+
+### 变更摘要
+diff --git a/.jcode/baseline.json b/.jcode/baseline.json
+index 564517b..711e3cb 100644
+--- a/.jcode/baseline.json
++++ b/.jcode/baseline.json
+@@ -11,6 +11,26 @@
+     "tools/multiproject/__init__.py": {
+       "structure:函数超过 50 行 (实际 69 行)": 1
+     },
++    "tools/lsp/server.py": {
++      "structure:函数超过 50 行 (实际 58 行)": 1
++    },
++    ".jcode/scripts/context-sync.py": {
++      "type:使用 Any 类型": 1
++    },
++    ".jcode/scripts/governance-auditor.py": {
++      "structure:函数超过 50 行 (实际 54 行)": 1
++    },
++    ".jcode/scripts/multi_agent_orch.py": {
++      "type:使用 Any 类型": 1
++    },
++    ".jcode/scripts/jcode-init.py": {
++      "structure:函数超过 50 行 (实际 110 行)": 1
++    },
++    ".jcode/scripts/self_correction_loop.py": {
++      "type:使用 Any 类型": 3,
++      "structure:函数超过 50 行 (实际 59 行)": 1,
++      "structure:函数超过 50 行 (实际 55 行)": 1
++    },
+     "tools/scripts/sync_issues.py": {
+       "type:使用 Any 类型": 1,
+       "structure:函数超过 50 行 (实际 72 行)": 1
+@@ -66,9 +86,6 @@
+     "tools/scripts/fix_heuristics.py": {
+       "structure:函数超过 50 行 (实际 55 行)": 1
+     },
+-    "tools/lsp/server.py": {
+-      "structure:函数超过 50 行 (实际 58 行)": 1
+-    },
+     "tools/scripts/config/loader.py": {
+       "type:使用 Any 类型": 1,
+       "structure:函数超过 50 行 (实际 160 行)": 1,
+@@ -89,23 +106,6 @@
+     },
+     "tools/scripts/hooks/pre_push.py": {
+       "structure:函数超过 50 行 (实际 55 行)": 1
+-    },
+-    ".jcode/scripts/context-sync.py": {
+-      "type:使用 Any 类型": 1
+-    },
+-    ".jcode/scripts/governance-auditor.py": {
+-      "structure:函数超过 50 行 (实际 54 行)": 1
+-    },
+-    ".jcode/scripts/multi_agent_orch.py": {
+-      "type:使用 Any 类型": 1
+-    },
+-    ".jcode/scripts/jcode-init.py": {
+-      "structure:函数超过 50 行 (实际 110 行)": 1
+-    },
+-    ".jcode/scripts/self_correction_loop.py": {
+-      "type:使用 Any 类型": 3,
+-      "structure:函数超过 50 行 (实际 59 行)": 1,
+-      "structure:函数超过 50 行 (实际 55 行)": 1
+     }
+   }
+-}
+\ No newline at end of file
++}
+diff --git a/.jcode/scripts/context-sync.py b/.jcode/scripts/context-sync...
+
+---
+
+## 更新记录: 2026-08-24 16:19:19
+
+### 任务
+Git 变更同步
+
+### 变更摘要
+diff --git a/.jcode/baseline.json b/.jcode/baseline.json
+index 564517b..711e3cb 100644
+--- a/.jcode/baseline.json
++++ b/.jcode/baseline.json
+@@ -11,6 +11,26 @@
+     "tools/multiproject/__init__.py": {
+       "structure:函数超过 50 行 (实际 69 行)": 1
+     },
++    "tools/lsp/server.py": {
++      "structure:函数超过 50 行 (实际 58 行)": 1
++    },
++    ".jcode/scripts/context-sync.py": {
++      "type:使用 Any 类型": 1
++    },
++    ".jcode/scripts/governance-auditor.py": {
++      "structure:函数超过 50 行 (实际 54 行)": 1
++    },
++    ".jcode/scripts/multi_agent_orch.py": {
++      "type:使用 Any 类型": 1
++    },
++    ".jcode/scripts/jcode-init.py": {
++      "structure:函数超过 50 行 (实际 110 行)": 1
++    },
++    ".jcode/scripts/self_correction_loop.py": {
++      "type:使用 Any 类型": 3,
++      "structure:函数超过 50 行 (实际 59 行)": 1,
++      "structure:函数超过 50 行 (实际 55 行)": 1
++    },
+     "tools/scripts/sync_issues.py": {
+       "type:使用 Any 类型": 1,
+       "structure:函数超过 50 行 (实际 72 行)": 1
+@@ -66,9 +86,6 @@
+     "tools/scripts/fix_heuristics.py": {
+       "structure:函数超过 50 行 (实际 55 行)": 1
+     },
+-    "tools/lsp/server.py": {
+-      "structure:函数超过 50 行 (实际 58 行)": 1
+-    },
+     "tools/scripts/config/loader.py": {
+       "type:使用 Any 类型": 1,
+       "structure:函数超过 50 行 (实际 160 行)": 1,
+@@ -89,23 +106,6 @@
+     },
+     "tools/scripts/hooks/pre_push.py": {
+       "structure:函数超过 50 行 (实际 55 行)": 1
+-    },
+-    ".jcode/scripts/context-sync.py": {
+-      "type:使用 Any 类型": 1
+-    },
+-    ".jcode/scripts/governance-auditor.py": {
+-      "structure:函数超过 50 行 (实际 54 行)": 1
+-    },
+-    ".jcode/scripts/multi_agent_orch.py": {
+-      "type:使用 Any 类型": 1
+-    },
+-    ".jcode/scripts/jcode-init.py": {
+-      "structure:函数超过 50 行 (实际 110 行)": 1
+-    },
+-    ".jcode/scripts/self_correction_loop.py": {
+-      "type:使用 Any 类型": 3,
+-      "structure:函数超过 50 行 (实际 59 行)": 1,
+-      "structure:函数超过 50 行 (实际 55 行)": 1
+     }
+   }
+-}
+\ No newline at end of file
++}
+diff --git a/.jcode/scripts/context-sync.py b/.jcode/scripts/context-sync...
+
+---
+
+## 更新记录: 2026-08-24 16:18:51
+
+### 任务
+Git 变更同步
+
+### 变更摘要
+diff --git a/.jcode/baseline.json b/.jcode/baseline.json
+index 564517b..711e3cb 100644
+--- a/.jcode/baseline.json
++++ b/.jcode/baseline.json
+@@ -11,6 +11,26 @@
+     "tools/multiproject/__init__.py": {
+       "structure:函数超过 50 行 (实际 69 行)": 1
+     },
++    "tools/lsp/server.py": {
++      "structure:函数超过 50 行 (实际 58 行)": 1
++    },
++    ".jcode/scripts/context-sync.py": {
++      "type:使用 Any 类型": 1
++    },
++    ".jcode/scripts/governance-auditor.py": {
++      "structure:函数超过 50 行 (实际 54 行)": 1
++    },
++    ".jcode/scripts/multi_agent_orch.py": {
++      "type:使用 Any 类型": 1
++    },
++    ".jcode/scripts/jcode-init.py": {
++      "structure:函数超过 50 行 (实际 110 行)": 1
++    },
++    ".jcode/scripts/self_correction_loop.py": {
++      "type:使用 Any 类型": 3,
++      "structure:函数超过 50 行 (实际 59 行)": 1,
++      "structure:函数超过 50 行 (实际 55 行)": 1
++    },
+     "tools/scripts/sync_issues.py": {
+       "type:使用 Any 类型": 1,
+       "structure:函数超过 50 行 (实际 72 行)": 1
+@@ -66,9 +86,6 @@
+     "tools/scripts/fix_heuristics.py": {
+       "structure:函数超过 50 行 (实际 55 行)": 1
+     },
+-    "tools/lsp/server.py": {
+-      "structure:函数超过 50 行 (实际 58 行)": 1
+-    },
+     "tools/scripts/config/loader.py": {
+       "type:使用 Any 类型": 1,
+       "structure:函数超过 50 行 (实际 160 行)": 1,
+@@ -89,23 +106,6 @@
+     },
+     "tools/scripts/hooks/pre_push.py": {
+       "structure:函数超过 50 行 (实际 55 行)": 1
+-    },
+-    ".jcode/scripts/context-sync.py": {
+-      "type:使用 Any 类型": 1
+-    },
+-    ".jcode/scripts/governance-auditor.py": {
+-      "structure:函数超过 50 行 (实际 54 行)": 1
+-    },
+-    ".jcode/scripts/multi_agent_orch.py": {
+-      "type:使用 Any 类型": 1
+-    },
+-    ".jcode/scripts/jcode-init.py": {
+-      "structure:函数超过 50 行 (实际 110 行)": 1
+-    },
+-    ".jcode/scripts/self_correction_loop.py": {
+-      "type:使用 Any 类型": 3,
+-      "structure:函数超过 50 行 (实际 59 行)": 1,
+-      "structure:函数超过 50 行 (实际 55 行)": 1
+     }
+   }
+-}
+\ No newline at end of file
++}
+diff --git a/.jcode/scripts/context-sync.py b/.jcode/scripts/context-sync...
+
+---
+
+## 更新记录: 2026-08-24 16:17:41
+
+### 任务
+Git 变更同步
+
+### 变更摘要
+diff --git a/.jcode/baseline.json b/.jcode/baseline.json
+index 564517b..711e3cb 100644
+--- a/.jcode/baseline.json
++++ b/.jcode/baseline.json
+@@ -11,6 +11,26 @@
+     "tools/multiproject/__init__.py": {
+       "structure:函数超过 50 行 (实际 69 行)": 1
+     },
++    "tools/lsp/server.py": {
++      "structure:函数超过 50 行 (实际 58 行)": 1
++    },
++    ".jcode/scripts/context-sync.py": {
++      "type:使用 Any 类型": 1
++    },
++    ".jcode/scripts/governance-auditor.py": {
++      "structure:函数超过 50 行 (实际 54 行)": 1
++    },
++    ".jcode/scripts/multi_agent_orch.py": {
++      "type:使用 Any 类型": 1
++    },
++    ".jcode/scripts/jcode-init.py": {
++      "structure:函数超过 50 行 (实际 110 行)": 1
++    },
++    ".jcode/scripts/self_correction_loop.py": {
++      "type:使用 Any 类型": 3,
++      "structure:函数超过 50 行 (实际 59 行)": 1,
++      "structure:函数超过 50 行 (实际 55 行)": 1
++    },
+     "tools/scripts/sync_issues.py": {
+       "type:使用 Any 类型": 1,
+       "structure:函数超过 50 行 (实际 72 行)": 1
+@@ -66,9 +86,6 @@
+     "tools/scripts/fix_heuristics.py": {
+       "structure:函数超过 50 行 (实际 55 行)": 1
+     },
+-    "tools/lsp/server.py": {
+-      "structure:函数超过 50 行 (实际 58 行)": 1
+-    },
+     "tools/scripts/config/loader.py": {
+       "type:使用 Any 类型": 1,
+       "structure:函数超过 50 行 (实际 160 行)": 1,
+@@ -89,23 +106,6 @@
+     },
+     "tools/scripts/hooks/pre_push.py": {
+       "structure:函数超过 50 行 (实际 55 行)": 1
+-    },
+-    ".jcode/scripts/context-sync.py": {
+-      "type:使用 Any 类型": 1
+-    },
+-    ".jcode/scripts/governance-auditor.py": {
+-      "structure:函数超过 50 行 (实际 54 行)": 1
+-    },
+-    ".jcode/scripts/multi_agent_orch.py": {
+-      "type:使用 Any 类型": 1
+-    },
+-    ".jcode/scripts/jcode-init.py": {
+-      "structure:函数超过 50 行 (实际 110 行)": 1
+-    },
+-    ".jcode/scripts/self_correction_loop.py": {
+-      "type:使用 Any 类型": 3,
+-      "structure:函数超过 50 行 (实际 59 行)": 1,
+-      "structure:函数超过 50 行 (实际 55 行)": 1
+     }
+   }
+-}
+\ No newline at end of file
++}
+diff --git a/.jcode/scripts/governance-docs-validator.py b/.jcode/scripts...
+
+---
+
+## 更新记录: 2026-08-24 16:14:15
+
+### 任务
+Git 变更同步
+
+### 变更摘要
+diff --git a/.jcode/baseline.json b/.jcode/baseline.json
+index 564517b..9738540 100644
+--- a/.jcode/baseline.json
++++ b/.jcode/baseline.json
+@@ -11,6 +11,26 @@
+     "tools/multiproject/__init__.py": {
+       "structure:函数超过 50 行 (实际 69 行)": 1
+     },
++    "tools/lsp/server.py": {
++      "structure:函数超过 50 行 (实际 58 行)": 1
++    },
++    ".jcode/scripts/context-sync.py": {
++      "type:使用 Any 类型": 1
++    },
++    ".jcode/scripts/governance-auditor.py": {
++      "structure:函数超过 50 行 (实际 54 行)": 1
++    },
++    ".jcode/scripts/multi_agent_orch.py": {
++      "type:使用 Any 类型": 1
++    },
++    ".jcode/scripts/jcode-init.py": {
++      "structure:函数超过 50 行 (实际 110 行)": 1
++    },
++    ".jcode/scripts/self_correction_loop.py": {
++      "type:使用 Any 类型": 3,
++      "structure:函数超过 50 行 (实际 59 行)": 1,
++      "structure:函数超过 50 行 (实际 55 行)": 1
++    },
+     "tools/scripts/sync_issues.py": {
+       "type:使用 Any 类型": 1,
+       "structure:函数超过 50 行 (实际 72 行)": 1
+@@ -66,9 +86,6 @@
+     "tools/scripts/fix_heuristics.py": {
+       "structure:函数超过 50 行 (实际 55 行)": 1
+     },
+-    "tools/lsp/server.py": {
+-      "structure:函数超过 50 行 (实际 58 行)": 1
+-    },
+     "tools/scripts/config/loader.py": {
+       "type:使用 Any 类型": 1,
+       "structure:函数超过 50 行 (实际 160 行)": 1,
+@@ -89,23 +106,6 @@
+     },
+     "tools/scripts/hooks/pre_push.py": {
+       "structure:函数超过 50 行 (实际 55 行)": 1
+-    },
+-    ".jcode/scripts/context-sync.py": {
+-      "type:使用 Any 类型": 1
+-    },
+-    ".jcode/scripts/governance-auditor.py": {
+-      "structure:函数超过 50 行 (实际 54 行)": 1
+-    },
+-    ".jcode/scripts/multi_agent_orch.py": {
+-      "type:使用 Any 类型": 1
+-    },
+-    ".jcode/scripts/jcode-init.py": {
+-      "structure:函数超过 50 行 (实际 110 行)": 1
+-    },
+-    ".jcode/scripts/self_correction_loop.py": {
+-      "type:使用 Any 类型": 3,
+-      "structure:函数超过 50 行 (实际 59 行)": 1,
+-      "structure:函数超过 50 行 (实际 55 行)": 1
+     }
+   }
+ }
+\ No newline at end of file
+diff --git a/.jcode/scripts/governance-docs-validator.py b/.jcode/scripts/go...
+
+---
+
+## 更新记录: 2026-08-24 16:13:12
+
+### 任务
+Git 变更同步
+
+### 变更摘要
+diff --git a/.jcode/baseline.json b/.jcode/baseline.json
+index 564517b..9738540 100644
+--- a/.jcode/baseline.json
++++ b/.jcode/baseline.json
+@@ -11,6 +11,26 @@
+     "tools/multiproject/__init__.py": {
+       "structure:函数超过 50 行 (实际 69 行)": 1
+     },
++    "tools/lsp/server.py": {
++      "structure:函数超过 50 行 (实际 58 行)": 1
++    },
++    ".jcode/scripts/context-sync.py": {
++      "type:使用 Any 类型": 1
++    },
++    ".jcode/scripts/governance-auditor.py": {
++      "structure:函数超过 50 行 (实际 54 行)": 1
++    },
++    ".jcode/scripts/multi_agent_orch.py": {
++      "type:使用 Any 类型": 1
++    },
++    ".jcode/scripts/jcode-init.py": {
++      "structure:函数超过 50 行 (实际 110 行)": 1
++    },
++    ".jcode/scripts/self_correction_loop.py": {
++      "type:使用 Any 类型": 3,
++      "structure:函数超过 50 行 (实际 59 行)": 1,
++      "structure:函数超过 50 行 (实际 55 行)": 1
++    },
+     "tools/scripts/sync_issues.py": {
+       "type:使用 Any 类型": 1,
+       "structure:函数超过 50 行 (实际 72 行)": 1
+@@ -66,9 +86,6 @@
+     "tools/scripts/fix_heuristics.py": {
+       "structure:函数超过 50 行 (实际 55 行)": 1
+     },
+-    "tools/lsp/server.py": {
+-      "structure:函数超过 50 行 (实际 58 行)": 1
+-    },
+     "tools/scripts/config/loader.py": {
+       "type:使用 Any 类型": 1,
+       "structure:函数超过 50 行 (实际 160 行)": 1,
+@@ -89,23 +106,6 @@
+     },
+     "tools/scripts/hooks/pre_push.py": {
+       "structure:函数超过 50 行 (实际 55 行)": 1
+-    },
+-    ".jcode/scripts/context-sync.py": {
+-      "type:使用 Any 类型": 1
+-    },
+-    ".jcode/scripts/governance-auditor.py": {
+-      "structure:函数超过 50 行 (实际 54 行)": 1
+-    },
+-    ".jcode/scripts/multi_agent_orch.py": {
+-      "type:使用 Any 类型": 1
+-    },
+-    ".jcode/scripts/jcode-init.py": {
+-      "structure:函数超过 50 行 (实际 110 行)": 1
+-    },
+-    ".jcode/scripts/self_correction_loop.py": {
+-      "type:使用 Any 类型": 3,
+-      "structure:函数超过 50 行 (实际 59 行)": 1,
+-      "structure:函数超过 50 行 (实际 55 行)": 1
+     }
+   }
+ }
+\ No newline at end of file
+diff --git a/.jcode/scripts/governance-docs-validator.py b/.jcode/scripts/go...
+
+---
+
+## 更新记录: 2026-08-24 16:10:27
+
+### 任务
+Git 变更同步
+
+### 变更摘要
+diff --git a/.jcode/baseline.json b/.jcode/baseline.json
+index 564517b..9738540 100644
+--- a/.jcode/baseline.json
++++ b/.jcode/baseline.json
+@@ -11,6 +11,26 @@
+     "tools/multiproject/__init__.py": {
+       "structure:函数超过 50 行 (实际 69 行)": 1
+     },
++    "tools/lsp/server.py": {
++      "structure:函数超过 50 行 (实际 58 行)": 1
++    },
++    ".jcode/scripts/context-sync.py": {
++      "type:使用 Any 类型": 1
++    },
++    ".jcode/scripts/governance-auditor.py": {
++      "structure:函数超过 50 行 (实际 54 行)": 1
++    },
++    ".jcode/scripts/multi_agent_orch.py": {
++      "type:使用 Any 类型": 1
++    },
++    ".jcode/scripts/jcode-init.py": {
++      "structure:函数超过 50 行 (实际 110 行)": 1
++    },
++    ".jcode/scripts/self_correction_loop.py": {
++      "type:使用 Any 类型": 3,
++      "structure:函数超过 50 行 (实际 59 行)": 1,
++      "structure:函数超过 50 行 (实际 55 行)": 1
++    },
+     "tools/scripts/sync_issues.py": {
+       "type:使用 Any 类型": 1,
+       "structure:函数超过 50 行 (实际 72 行)": 1
+@@ -66,9 +86,6 @@
+     "tools/scripts/fix_heuristics.py": {
+       "structure:函数超过 50 行 (实际 55 行)": 1
+     },
+-    "tools/lsp/server.py": {
+-      "structure:函数超过 50 行 (实际 58 行)": 1
+-    },
+     "tools/scripts/config/loader.py": {
+       "type:使用 Any 类型": 1,
+       "structure:函数超过 50 行 (实际 160 行)": 1,
+@@ -89,23 +106,6 @@
+     },
+     "tools/scripts/hooks/pre_push.py": {
+       "structure:函数超过 50 行 (实际 55 行)": 1
+-    },
+-    ".jcode/scripts/context-sync.py": {
+-      "type:使用 Any 类型": 1
+-    },
+-    ".jcode/scripts/governance-auditor.py": {
+-      "structure:函数超过 50 行 (实际 54 行)": 1
+-    },
+-    ".jcode/scripts/multi_agent_orch.py": {
+-      "type:使用 Any 类型": 1
+-    },
+-    ".jcode/scripts/jcode-init.py": {
+-      "structure:函数超过 50 行 (实际 110 行)": 1
+-    },
+-    ".jcode/scripts/self_correction_loop.py": {
+-      "type:使用 Any 类型": 3,
+-      "structure:函数超过 50 行 (实际 59 行)": 1,
+-      "structure:函数超过 50 行 (实际 55 行)": 1
+     }
+   }
+ }
+\ No newline at end of file
+diff --git a/.jcode/scripts/governance-docs-validator.py b/.jcode/scripts/go...
+
+---
+
+## 更新记录: 2026-08-24 16:05:28
+
+### 任务
+Git 变更同步
+
+### 变更摘要
+diff --git a/.jcode/baseline.json b/.jcode/baseline.json
+index 564517b..9738540 100644
+--- a/.jcode/baseline.json
++++ b/.jcode/baseline.json
+@@ -11,6 +11,26 @@
+     "tools/multiproject/__init__.py": {
+       "structure:函数超过 50 行 (实际 69 行)": 1
+     },
++    "tools/lsp/server.py": {
++      "structure:函数超过 50 行 (实际 58 行)": 1
++    },
++    ".jcode/scripts/context-sync.py": {
++      "type:使用 Any 类型": 1
++    },
++    ".jcode/scripts/governance-auditor.py": {
++      "structure:函数超过 50 行 (实际 54 行)": 1
++    },
++    ".jcode/scripts/multi_agent_orch.py": {
++      "type:使用 Any 类型": 1
++    },
++    ".jcode/scripts/jcode-init.py": {
++      "structure:函数超过 50 行 (实际 110 行)": 1
++    },
++    ".jcode/scripts/self_correction_loop.py": {
++      "type:使用 Any 类型": 3,
++      "structure:函数超过 50 行 (实际 59 行)": 1,
++      "structure:函数超过 50 行 (实际 55 行)": 1
++    },
+     "tools/scripts/sync_issues.py": {
+       "type:使用 Any 类型": 1,
+       "structure:函数超过 50 行 (实际 72 行)": 1
+@@ -66,9 +86,6 @@
+     "tools/scripts/fix_heuristics.py": {
+       "structure:函数超过 50 行 (实际 55 行)": 1
+     },
+-    "tools/lsp/server.py": {
+-      "structure:函数超过 50 行 (实际 58 行)": 1
+-    },
+     "tools/scripts/config/loader.py": {
+       "type:使用 Any 类型": 1,
+       "structure:函数超过 50 行 (实际 160 行)": 1,
+@@ -89,23 +106,6 @@
+     },
+     "tools/scripts/hooks/pre_push.py": {
+       "structure:函数超过 50 行 (实际 55 行)": 1
+-    },
+-    ".jcode/scripts/context-sync.py": {
+-      "type:使用 Any 类型": 1
+-    },
+-    ".jcode/scripts/governance-auditor.py": {
+-      "structure:函数超过 50 行 (实际 54 行)": 1
+-    },
+-    ".jcode/scripts/multi_agent_orch.py": {
+-      "type:使用 Any 类型": 1
+-    },
+-    ".jcode/scripts/jcode-init.py": {
+-      "structure:函数超过 50 行 (实际 110 行)": 1
+-    },
+-    ".jcode/scripts/self_correction_loop.py": {
+-      "type:使用 Any 类型": 3,
+-      "structure:函数超过 50 行 (实际 59 行)": 1,
+-      "structure:函数超过 50 行 (实际 55 行)": 1
+     }
+   }
+ }
+\ No newline at end of file
+diff --git a/.quality-trends/audit_ledger.jsonl b/.quality-trends/audit_ledg...
+
+---
+
+## 更新记录: 2026-08-24 16:00:00
+
+### 任务
+Git 变更同步
+
+### 变更摘要
+diff --git a/.jcode/baseline.json b/.jcode/baseline.json
+index 564517b..9738540 100644
+--- a/.jcode/baseline.json
++++ b/.jcode/baseline.json
+@@ -11,6 +11,26 @@
+     "tools/multiproject/__init__.py": {
+       "structure:函数超过 50 行 (实际 69 行)": 1
+     },
++    "tools/lsp/server.py": {
++      "structure:函数超过 50 行 (实际 58 行)": 1
++    },
++    ".jcode/scripts/context-sync.py": {
++      "type:使用 Any 类型": 1
++    },
++    ".jcode/scripts/governance-auditor.py": {
++      "structure:函数超过 50 行 (实际 54 行)": 1
++    },
++    ".jcode/scripts/multi_agent_orch.py": {
++      "type:使用 Any 类型": 1
++    },
++    ".jcode/scripts/jcode-init.py": {
++      "structure:函数超过 50 行 (实际 110 行)": 1
++    },
++    ".jcode/scripts/self_correction_loop.py": {
++      "type:使用 Any 类型": 3,
++      "structure:函数超过 50 行 (实际 59 行)": 1,
++      "structure:函数超过 50 行 (实际 55 行)": 1
++    },
+     "tools/scripts/sync_issues.py": {
+       "type:使用 Any 类型": 1,
+       "structure:函数超过 50 行 (实际 72 行)": 1
+@@ -66,9 +86,6 @@
+     "tools/scripts/fix_heuristics.py": {
+       "structure:函数超过 50 行 (实际 55 行)": 1
+     },
+-    "tools/lsp/server.py": {
+-      "structure:函数超过 50 行 (实际 58 行)": 1
+-    },
+     "tools/scripts/config/loader.py": {
+       "type:使用 Any 类型": 1,
+       "structure:函数超过 50 行 (实际 160 行)": 1,
+@@ -89,23 +106,6 @@
+     },
+     "tools/scripts/hooks/pre_push.py": {
+       "structure:函数超过 50 行 (实际 55 行)": 1
+-    },
+-    ".jcode/scripts/context-sync.py": {
+-      "type:使用 Any 类型": 1
+-    },
+-    ".jcode/scripts/governance-auditor.py": {
+-      "structure:函数超过 50 行 (实际 54 行)": 1
+-    },
+-    ".jcode/scripts/multi_agent_orch.py": {
+-      "type:使用 Any 类型": 1
+-    },
+-    ".jcode/scripts/jcode-init.py": {
+-      "structure:函数超过 50 行 (实际 110 行)": 1
+-    },
+-    ".jcode/scripts/self_correction_loop.py": {
+-      "type:使用 Any 类型": 3,
+-      "structure:函数超过 50 行 (实际 59 行)": 1,
+-      "structure:函数超过 50 行 (实际 55 行)": 1
+     }
+   }
+ }
+\ No newline at end of file
+diff --git a/.quality-trends/audit_ledger.jsonl b/.quality-trends/audit_ledg...
+
+---
+
 ## 更新记录: 2026-08-24 15:07:22
 
 ### 任务
@@ -31,13 +796,13 @@ index 6c84622..7261e7a 100644
            - pip install -U "setuptools>=83.0.0" -q
            - pip install -e . -q
            - pip install opa-wasm cyclonedx-bom -q
--          
+-
 +
            # Exception Manager
            - python -m tools.scripts.hooks_runner exception check-expirations
            - python -m tools.scripts.hooks_runner exception audit
            - python -m tools.scripts.hooks_runner exception sync-gitops
--          
+-
 +
            # Supply Chain
            - python -m tools.scripts.hooks_runner supply-chain sbom --format json --output sbom.json

@@ -222,7 +222,8 @@ anti_patterns:
   name: Unclosed connection
   severity: error
   category: resource_management
-  pattern: (?:connect|new connection|getConnection)\s*\([^)]*\)\s*(?!.*\b(with|using|close|finally|defer)\b)
+  # \b 防止误匹配 strongconnect/reconnect 等包含 connect 子串的标识符
+  pattern: \b(?:connect|new connection|getConnection)\s*\([^)]*\)\s*(?!.*\b(with|using|close|finally|defer)\b)
   exclude_files:
   - dashboard.py
   - store.py

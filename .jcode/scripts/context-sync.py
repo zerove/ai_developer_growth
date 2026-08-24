@@ -321,7 +321,9 @@ class ContextSyncManager:
         updated_context = self.synthesizer.synthesize_context_update(diff, "Git 变更同步", current_context)
 
         # 5. 写入
-        context_file.write_text(updated_context, encoding="utf-8")
+        context_file.write_text(
+            updated_context if updated_context.endswith("\n") else updated_context + "\n", encoding="utf-8"
+        )
         print_check(f"已更新: {context_file}", True)
 
         # 6. 同步 ADR（如果有架构决策）
@@ -345,7 +347,7 @@ class ContextSyncManager:
 ---
 
 """
-            adr_file.write_text(adr_content, encoding="utf-8")
+            adr_file.write_text(adr_content if adr_content.endswith("\n") else adr_content + "\n", encoding="utf-8")
             print_check(f"已创建初始 ADR: {adr_file}", True)
 
     def validate_context(self, context_file: str, adr_file: str) -> int:

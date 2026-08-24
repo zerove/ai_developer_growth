@@ -124,7 +124,7 @@ def check_index() -> int:
     else:
         issues.append("GOVERNANCE.md not found")
 
-    # 检查 INDEX.md
+    # 检查 INDEX.md (可选索引: 仅在存在时校验, 项目可能用 docs/MOC.md 替代)
     index_path = root / "INDEX.md"
     if index_path.exists():
         content = index_path.read_text(encoding="utf-8")
@@ -132,10 +132,8 @@ def check_index() -> int:
             doc_name = Path(doc_path).stem
             if doc_name not in content:
                 issues.append(f"INDEX.md: Missing reference to {doc_name}")
-    else:
-        issues.append("INDEX.md not found")
 
-    # 检查 CLAUDE.md
+    # 检查 CLAUDE.md (可选: AI 助手入口文件不一定存在于所有项目)
     claude_path = root / "CLAUDE.md"
     if claude_path.exists():
         content = claude_path.read_text(encoding="utf-8")
@@ -143,8 +141,6 @@ def check_index() -> int:
             doc_name = Path(doc_path).stem
             if doc_name not in content:
                 issues.append(f"CLAUDE.md: Missing reference to {doc_name}")
-    else:
-        issues.append("CLAUDE.md not found")
 
     passed = len(issues) == 0
     print_check("索引完整性", passed)

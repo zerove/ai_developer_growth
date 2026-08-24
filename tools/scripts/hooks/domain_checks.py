@@ -62,7 +62,7 @@ def _save_issue_baseline(baseline_path: Path, all_results: list[tuple[Path, dict
             files[str(filepath)] = counts
     payload = {"version": 1, "files": files}
     baseline_path.parent.mkdir(parents=True, exist_ok=True)
-    baseline_path.write_text(json.dumps(payload, indent=2, ensure_ascii=False), encoding="utf-8")
+    baseline_path.write_text(json.dumps(payload, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
 
 
 def _merge_issue_baseline(
@@ -86,7 +86,7 @@ def _merge_issue_baseline(
             files[str(filepath)] = counts
     payload = {"version": 1, "files": files}
     baseline_path.parent.mkdir(parents=True, exist_ok=True)
-    baseline_path.write_text(json.dumps(payload, indent=2, ensure_ascii=False), encoding="utf-8")
+    baseline_path.write_text(json.dumps(payload, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
 
 
 def validate_baseline_structure(baseline_path: Path) -> tuple[bool, str]:
@@ -138,7 +138,7 @@ def prune_stale_baseline_entries(baseline_path: Path) -> int:
     for f in stale:
         del files[f]
     data["files"] = files
-    baseline_path.write_text(json.dumps(data, indent=2, ensure_ascii=False), encoding="utf-8")
+    baseline_path.write_text(json.dumps(data, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
     return len(stale)
 
 

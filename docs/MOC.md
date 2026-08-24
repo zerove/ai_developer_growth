@@ -99,6 +99,7 @@ updated: 2026-07-21
 |------|----------|------|
 | 通用治理标准 | 项目开发的完整规范 | [[../GOVERNANCE.md]] |
 | 安装指南 | 如何在任何项目中使用 | [[docs/governance/INSTALL.md]] |
+| 质量门禁使用指南 | hooks_runner 自检/基线棘轮/增量测试 | [[docs/governance/quality-gates-usage]] |
 
 ### 编程语言规范
 

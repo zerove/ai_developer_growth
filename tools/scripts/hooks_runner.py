@@ -526,13 +526,15 @@ def _run_tool_for_language(
 
     print(f"  🔧 {language.value}: 运行 {category.value} ({' '.join(cmd)})")
 
+    # 测试套件在全量运行且与其他阶段并行时耗时显著变长，单独放宽
+    timeout_seconds = 900 if category == ToolCategory.TEST else 300
     try:
         result: subprocess.CompletedProcess[str] = subprocess.run(
             cmd,
             cwd=project_root,
             capture_output=True,
             text=True,
-            timeout=300,
+            timeout=timeout_seconds,
         )
         output = result.stdout
         if result.stderr:
@@ -542,7 +544,7 @@ def _run_tool_for_language(
         status = "✅" if passed else "❌"
         return passed, f"  {status} {language.value}: {category.value} {'通过' if passed else '失败'}\n{output}"
     except subprocess.TimeoutExpired:
-        return False, f"  ❌ {language.value}: {category.value} 超时 (300s)"
+        return False, f"  ❌ {language.value}: {category.value} 超时 ({timeout_seconds}s)"
     except Exception as e:
         return False, f"  ❌ {language.value}: {category.value} 错误 - {e}"
 

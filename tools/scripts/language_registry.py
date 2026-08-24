@@ -1503,6 +1503,43 @@ LANGUAGE_ALIASES: dict[str, Language] = {
 # ============================================================================
 
 
+_CONFIG_FILE_LANGUAGES: dict[str, Language] = {
+    "pyproject.toml": Language.PYTHON,
+    "setup.py": Language.PYTHON,
+    "requirements.txt": Language.PYTHON,
+    "Pipfile": Language.PYTHON,
+    "poetry.lock": Language.PYTHON,
+    "tsconfig.json": Language.TYPESCRIPT,
+    "package.json": Language.TYPESCRIPT,  # 可能是 JS 或 TS
+    "Cargo.toml": Language.RUST,
+    "go.mod": Language.GO,
+    "pom.xml": Language.JAVA,
+    "build.gradle": Language.JAVA,
+    "build.gradle.kts": Language.KOTLIN,
+    "settings.gradle.kts": Language.KOTLIN,
+    "build.sbt": Language.SCALA,
+    "CMakeLists.txt": Language.CPP,
+    "meson.build": Language.CPP,
+    "*.csproj": Language.CSHARP,
+    "*.sln": Language.CSHARP,
+    "Gemfile": Language.RUBY,
+    "composer.json": Language.PHP,
+    "Package.swift": Language.SWIFT,
+    "pubspec.yaml": Language.DART,
+    "build.zig": Language.ZIG,
+    "mix.exs": Language.ELIXIR,
+    "deps.edn": Language.CLOJURE,
+    "*.cabal": Language.HASKELL,
+    "cabal.project": Language.HASKELL,
+    "paket.dependencies": Language.FSHARP,
+    "*.fsproj": Language.FSHARP,
+    ".luacheckrc": Language.LUA,
+    "lua.toml": Language.LUA,
+    ".sqlfluff": Language.SQL,
+    "sqlfluff.cfg": Language.SQL,
+}
+
+
 class LanguageRegistry:
     """语言工具链注册表 - 单例"""
 
@@ -1557,69 +1594,27 @@ class LanguageRegistry:
         all_langs = set(self._toolchains.keys()) | set(self._custom_toolchains.keys())
         return sorted(all_langs, key=lambda lang: lang.value)
 
-    def detect_language(self, project_root: Path) -> Language | None:
-        """从项目文件自动检测语言"""
-        # 检查配置文件
-        config_files = {
-            "pyproject.toml": Language.PYTHON,
-            "setup.py": Language.PYTHON,
-            "requirements.txt": Language.PYTHON,
-            "Pipfile": Language.PYTHON,
-            "poetry.lock": Language.PYTHON,
-            "tsconfig.json": Language.TYPESCRIPT,
-            "package.json": Language.TYPESCRIPT,  # 可能是 JS 或 TS
-            "Cargo.toml": Language.RUST,
-            "go.mod": Language.GO,
-            "pom.xml": Language.JAVA,
-            "build.gradle": Language.JAVA,
-            "build.gradle.kts": Language.KOTLIN,
-            "settings.gradle.kts": Language.KOTLIN,
-            "build.sbt": Language.SCALA,
-            "CMakeLists.txt": Language.CPP,
-            "meson.build": Language.CPP,
-            "*.csproj": Language.CSHARP,
-            "*.sln": Language.CSHARP,
-            "Gemfile": Language.RUBY,
-            "composer.json": Language.PHP,
-            "Package.swift": Language.SWIFT,
-            "pubspec.yaml": Language.DART,
-            "build.zig": Language.ZIG,
-            "mix.exs": Language.ELIXIR,
-            "deps.edn": Language.CLOJURE,
-            "*.cabal": Language.HASKELL,
-            "cabal.project": Language.HASKELL,
-            "paket.dependencies": Language.FSHARP,
-            "*.fsproj": Language.FSHARP,
-            ".luacheckrc": Language.LUA,
-            "lua.toml": Language.LUA,
-            ".sqlfluff": Language.SQL,
-            "sqlfluff.cfg": Language.SQL,
-        }
+    def _detect_from_package_json(self, project_root: Path) -> Language:
+        """package.json 存在时判定 TS 或 JS。"""
+        pkg = project_root / "package.json"
+        try:
+            import json
 
-        for pattern, lang in config_files.items():
-            if list(project_root.glob(pattern)):
-                # package.json 需要进一步判断 TS/JS
-                if pattern == "package.json":
-                    pkg = project_root / "package.json"
-                    try:
-                        import json
+            data = json.loads(pkg.read_text())
+            if "typescript" in data.get("devDependencies", {}) or "typescript" in data.get("dependencies", {}):
+                return Language.TYPESCRIPT
+            if any(p.endswith(".ts") or p.endswith(".tsx") for p in data.get("scripts", {}).values()):
+                return Language.TYPESCRIPT
+            # 检查源文件
+            if any(project_root.rglob("*.ts")) or any(project_root.rglob("*.tsx")):
+                return Language.TYPESCRIPT
+        except Exception:  # noqa: empty-except
+            # TS 探测失败时降级为 JS, 属预期回退路径
+            pass
+        return Language.JAVASCRIPT
 
-                        data = json.loads(pkg.read_text())
-                        if "typescript" in data.get("devDependencies", {}) or "typescript" in data.get(
-                            "dependencies", {}
-                        ):
-                            return Language.TYPESCRIPT
-                        if any(p.endswith(".ts") or p.endswith(".tsx") for p in data.get("scripts", {}).values()):
-                            return Language.TYPESCRIPT
-                        # 检查源文件
-                        if any(project_root.rglob("*.ts")) or any(project_root.rglob("*.tsx")):
-                            return Language.TYPESCRIPT
-                    except Exception:
-                        pass  # TS 探测失败时降级为 JS, 属预期回退路径
-                    return Language.JAVASCRIPT
-                return lang
-
-        # 检查源文件扩展名
+    def _detect_from_extensions(self, project_root: Path) -> Language | None:
+        """按源文件扩展名统计取占比最高语言。"""
         ext_counts: dict[Language, int] = {}
         for ext, lang in EXTENSION_MAP.items():
             count = len(list(project_root.rglob(f"*{ext}")))
@@ -1628,8 +1623,17 @@ class LanguageRegistry:
 
         if ext_counts:
             return max(ext_counts, key=lambda k: ext_counts[k])
-
         return None
+
+    def detect_language(self, project_root: Path) -> Language | None:
+        """从项目文件自动检测语言"""
+        for pattern, lang in _CONFIG_FILE_LANGUAGES.items():
+            if list(project_root.glob(pattern)):
+                # package.json 需要进一步判断 TS/JS
+                if pattern == "package.json":
+                    return self._detect_from_package_json(project_root)
+                return lang
+        return self._detect_from_extensions(project_root)
 
     def validate_toolchain(self, language: str | Language) -> list[str]:
         """验证工具链可用性，返回缺失工具列表"""

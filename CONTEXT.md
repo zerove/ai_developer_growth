@@ -1,3 +1,350 @@
+## 更新记录: 2026-08-24 19:33:10
+
+### 任务
+Git 变更同步
+
+### 变更摘要
+diff --git a/.jcode/baseline.json b/.jcode/baseline.json
+index 2c6e7e0..f62ce07 100644
+--- a/.jcode/baseline.json
++++ b/.jcode/baseline.json
+@@ -41,10 +41,6 @@
+     "tools/scripts/docker_build.py": {
+       "structure:函数超过 50 行 (实际 136 行)": 1
+     },
+-    "tools/scripts/language_registry.py": {
+-      "error:空异常处理 (catch w/o logging)": 1,
+-      "structure:函数超过 50 行 (实际 74 行)": 1
+-    },
+     "tools/scripts/analyze_case_quality.py": {
+       "structure:函数超过 50 行 (实际 57 行)": 1,
+       "structure:函数超过 50 行 (实际 56 行)": 1
+@@ -58,19 +54,7 @@
+       "structure:函数超过 50 行 (实际 73 行)": 1,
+       "structure:函数超过 50 行 (实际 56 行)": 1
+     },
+-    "tools/scripts/hooks_runner.py": {
+-      "structure:函数超过 50 行 (实际 54 行)": 1,
+-      "structure:函数超过 50 行 (实际 57 行)": 1,
+-      "structure:函数超过 50 行 (实际 91 行)": 1,
+-      "structure:函数超过 50 行 (实际 115 行)": 1,
+-      "structure:函数超过 50 行 (实际 97 行)": 1,
+-      "structure:函数超过 50 行 (实际 66 行)": 1,
+-      "structure:函数超过 50 行 (实际 65 行)": 1,
+-      "structure:函数超过 50 行 (实际 123 行)": 1,
+-      "structure:函数超过 50 行 (实际 134 行)": 1
+-    },
+     "tools/scripts/detect_language.py": {
+-      "error:空异常处理 (catch w/o logging)": 2,
+       "structure:函数超过 50 行 (实际 72 行)": 1
+     },
+     "tools/scripts/rule_registry.py": {
+diff --git a/CONTEXT.md b/CONTEXT.md
+index 6c08fc9..ab16772 100644
+--- a/CONTEXT.md
++++ b/CONTEXT.md
+@@ -1,3 +1,419 @@
++## 更新记录: 2026-08-24 19:29:25
++
++### 任务
++Git 变更同步
++
++### 变更摘要
++diff --git a/.jcode/baseline.json b/.jcode/baseline.json
++index 2c6e7e0..cfef778 100644
++--- a/.jcode/baseline.json
+++++ b/.jcode/baseline.json
++@@ -32,78 +32,13 @@
++       "structure:函数超过 50 行 (实际 55 行)": 1
++     },
++     "tools/scripts/sync_issues.py": {
++-      "type:使用 Any 类型": 1,
++-      "structure:函数超过 50 行 (实际 72 行)": 1
++-    },
++-    "tools/scripts/dependency_graph.py": {
++-      "structure:函数超过 50 行 (实际 54 行)": 1
++-    },
++-    "tools/scripts/docker_build.py": {
++-      "structure:函数超过 50 行 (实际 136 行)": 1
++-    },
++-    "tools/scripts/language_registr...
+
+---
+
+## 更新记录: 2026-08-24 19:29:25
+
+### 任务
+Git 变更同步
+
+### 变更摘要
+diff --git a/.jcode/baseline.json b/.jcode/baseline.json
+index 2c6e7e0..cfef778 100644
+--- a/.jcode/baseline.json
++++ b/.jcode/baseline.json
+@@ -32,78 +32,13 @@
+       "structure:函数超过 50 行 (实际 55 行)": 1
+     },
+     "tools/scripts/sync_issues.py": {
+-      "type:使用 Any 类型": 1,
+-      "structure:函数超过 50 行 (实际 72 行)": 1
+-    },
+-    "tools/scripts/dependency_graph.py": {
+-      "structure:函数超过 50 行 (实际 54 行)": 1
+-    },
+-    "tools/scripts/docker_build.py": {
+-      "structure:函数超过 50 行 (实际 136 行)": 1
+-    },
+-    "tools/scripts/language_registry.py": {
+-      "error:空异常处理 (catch w/o logging)": 1,
+-      "structure:函数超过 50 行 (实际 74 行)": 1
+-    },
+-    "tools/scripts/analyze_case_quality.py": {
+-      "structure:函数超过 50 行 (实际 57 行)": 1,
+-      "structure:函数超过 50 行 (实际 56 行)": 1
++      "type:使用 Any 类型": 1
+     },
+     "tools/scripts/supply_chain.py": {
+-      "type:使用 Any 类型": 1,
+-      "structure:函数超过 50 行 (实际 51 行)": 2,
+-      "structure:函数超过 50 行 (实际 53 行)": 1
+-    },
+-    "tools/scripts/validate_agent_definition.py": {
+-      "structure:函数超过 50 行 (实际 73 行)": 1,
+-      "structure:函数超过 50 行 (实际 56 行)": 1
+-    },
+-    "tools/scripts/hooks_runner.py": {
+-      "structure:函数超过 50 行 (实际 54 行)": 1,
+-      "structure:函数超过 50 行 (实际 57 行)": 1,
+-      "structure:函数超过 50 行 (实际 91 行)": 1,
+-      "structure:函数超过 50 行 (实际 115 行)": 1,
+-      "structure:函数超过 50 行 (实际 97 行)": 1,
+-      "structure:函数超过 50 行 (实际 66 行)": 1,
+-      "structure:函数超过 50 行 (实际 65 行)": 1,
+-      "structure:函数超过 50 行 (实际 123 行)": 1,
+-      "structure:函数超过 50 行 (实际 134 行)": 1
+-    },
+-    "tools/scripts/detect_language.py": {
+-      "error:空异常处理 (catch w/o logging)": 2,
+-      "structure:函数超过 50 行 (实际 72 行)": 1
+-    },
+-    "tools/scripts/rule_registry.py": {
+-      "structure:函数超过 50 行 (实际 59 行)": 1
+-    },
+-    "tools/scripts/auto_fix.py": {
+-      "structure:函数超过 50 行 (实际 82 行)": 1,
+-      "structure:函数超过 50 行 (实际 55 行)": 1
+-    },
+-    "tools/scripts/chaos_experiment_runner.py": {
+-      "structure:函数超过 50 ...
+
+---
+
+## 更新记录: 2026-08-24 19:27:49
+
+### 任务
+Git 变更同步
+
+### 变更摘要
+diff --git a/.jcode/baseline.json b/.jcode/baseline.json
+index 2c6e7e0..cfef778 100644
+--- a/.jcode/baseline.json
++++ b/.jcode/baseline.json
+@@ -32,78 +32,13 @@
+       "structure:函数超过 50 行 (实际 55 行)": 1
+     },
+     "tools/scripts/sync_issues.py": {
+-      "type:使用 Any 类型": 1,
+-      "structure:函数超过 50 行 (实际 72 行)": 1
+-    },
+-    "tools/scripts/dependency_graph.py": {
+-      "structure:函数超过 50 行 (实际 54 行)": 1
+-    },
+-    "tools/scripts/docker_build.py": {
+-      "structure:函数超过 50 行 (实际 136 行)": 1
+-    },
+-    "tools/scripts/language_registry.py": {
+-      "error:空异常处理 (catch w/o logging)": 1,
+-      "structure:函数超过 50 行 (实际 74 行)": 1
+-    },
+-    "tools/scripts/analyze_case_quality.py": {
+-      "structure:函数超过 50 行 (实际 57 行)": 1,
+-      "structure:函数超过 50 行 (实际 56 行)": 1
++      "type:使用 Any 类型": 1
+     },
+     "tools/scripts/supply_chain.py": {
+-      "type:使用 Any 类型": 1,
+-      "structure:函数超过 50 行 (实际 51 行)": 2,
+-      "structure:函数超过 50 行 (实际 53 行)": 1
+-    },
+-    "tools/scripts/validate_agent_definition.py": {
+-      "structure:函数超过 50 行 (实际 73 行)": 1,
+-      "structure:函数超过 50 行 (实际 56 行)": 1
+-    },
+-    "tools/scripts/hooks_runner.py": {
+-      "structure:函数超过 50 行 (实际 54 行)": 1,
+-      "structure:函数超过 50 行 (实际 57 行)": 1,
+-      "structure:函数超过 50 行 (实际 91 行)": 1,
+-      "structure:函数超过 50 行 (实际 115 行)": 1,
+-      "structure:函数超过 50 行 (实际 97 行)": 1,
+-      "structure:函数超过 50 行 (实际 66 行)": 1,
+-      "structure:函数超过 50 行 (实际 65 行)": 1,
+-      "structure:函数超过 50 行 (实际 123 行)": 1,
+-      "structure:函数超过 50 行 (实际 134 行)": 1
+-    },
+-    "tools/scripts/detect_language.py": {
+-      "error:空异常处理 (catch w/o logging)": 2,
+-      "structure:函数超过 50 行 (实际 72 行)": 1
+-    },
+-    "tools/scripts/rule_registry.py": {
+-      "structure:函数超过 50 行 (实际 59 行)": 1
+-    },
+-    "tools/scripts/auto_fix.py": {
+-      "structure:函数超过 50 行 (实际 82 行)": 1,
+-      "structure:函数超过 50 行 (实际 55 行)": 1
+-    },
+-    "tools/scripts/chaos_experiment_runner.py": {
+-      "structure:函数超过 50 ...
+
+---
+
+## 更新记录: 2026-08-24 19:26:42
+
+### 任务
+Git 变更同步
+
+### 变更摘要
+diff --git a/.jcode/baseline.json b/.jcode/baseline.json
+index 2c6e7e0..cfef778 100644
+--- a/.jcode/baseline.json
++++ b/.jcode/baseline.json
+@@ -32,78 +32,13 @@
+       "structure:函数超过 50 行 (实际 55 行)": 1
+     },
+     "tools/scripts/sync_issues.py": {
+-      "type:使用 Any 类型": 1,
+-      "structure:函数超过 50 行 (实际 72 行)": 1
+-    },
+-    "tools/scripts/dependency_graph.py": {
+-      "structure:函数超过 50 行 (实际 54 行)": 1
+-    },
+-    "tools/scripts/docker_build.py": {
+-      "structure:函数超过 50 行 (实际 136 行)": 1
+-    },
+-    "tools/scripts/language_registry.py": {
+-      "error:空异常处理 (catch w/o logging)": 1,
+-      "structure:函数超过 50 行 (实际 74 行)": 1
+-    },
+-    "tools/scripts/analyze_case_quality.py": {
+-      "structure:函数超过 50 行 (实际 57 行)": 1,
+-      "structure:函数超过 50 行 (实际 56 行)": 1
++      "type:使用 Any 类型": 1
+     },
+     "tools/scripts/supply_chain.py": {
+-      "type:使用 Any 类型": 1,
+-      "structure:函数超过 50 行 (实际 51 行)": 2,
+-      "structure:函数超过 50 行 (实际 53 行)": 1
+-    },
+-    "tools/scripts/validate_agent_definition.py": {
+-      "structure:函数超过 50 行 (实际 73 行)": 1,
+-      "structure:函数超过 50 行 (实际 56 行)": 1
+-    },
+-    "tools/scripts/hooks_runner.py": {
+-      "structure:函数超过 50 行 (实际 54 行)": 1,
+-      "structure:函数超过 50 行 (实际 57 行)": 1,
+-      "structure:函数超过 50 行 (实际 91 行)": 1,
+-      "structure:函数超过 50 行 (实际 115 行)": 1,
+-      "structure:函数超过 50 行 (实际 97 行)": 1,
+-      "structure:函数超过 50 行 (实际 66 行)": 1,
+-      "structure:函数超过 50 行 (实际 65 行)": 1,
+-      "structure:函数超过 50 行 (实际 123 行)": 1,
+-      "structure:函数超过 50 行 (实际 134 行)": 1
+-    },
+-    "tools/scripts/detect_language.py": {
+-      "error:空异常处理 (catch w/o logging)": 2,
+-      "structure:函数超过 50 行 (实际 72 行)": 1
+-    },
+-    "tools/scripts/rule_registry.py": {
+-      "structure:函数超过 50 行 (实际 59 行)": 1
+-    },
+-    "tools/scripts/auto_fix.py": {
+-      "structure:函数超过 50 行 (实际 82 行)": 1,
+-      "structure:函数超过 50 行 (实际 55 行)": 1
+-    },
+-    "tools/scripts/chaos_experiment_runner.py": {
+-      "structure:函数超过 50 ...
+
+---
+
+## 更新记录: 2026-08-24 19:25:01
+
+### 任务
+Git 变更同步
+
+### 变更摘要
+diff --git a/.jcode/baseline.json b/.jcode/baseline.json
+index 2c6e7e0..579ea7f 100644
+--- a/.jcode/baseline.json
++++ b/.jcode/baseline.json
+@@ -58,17 +58,6 @@
+       "structure:函数超过 50 行 (实际 73 行)": 1,
+       "structure:函数超过 50 行 (实际 56 行)": 1
+     },
+-    "tools/scripts/hooks_runner.py": {
+-      "structure:函数超过 50 行 (实际 54 行)": 1,
+-      "structure:函数超过 50 行 (实际 57 行)": 1,
+-      "structure:函数超过 50 行 (实际 91 行)": 1,
+-      "structure:函数超过 50 行 (实际 115 行)": 1,
+-      "structure:函数超过 50 行 (实际 97 行)": 1,
+-      "structure:函数超过 50 行 (实际 66 行)": 1,
+-      "structure:函数超过 50 行 (实际 65 行)": 1,
+-      "structure:函数超过 50 行 (实际 123 行)": 1,
+-      "structure:函数超过 50 行 (实际 134 行)": 1
+-    },
+     "tools/scripts/detect_language.py": {
+       "error:空异常处理 (catch w/o logging)": 2,
+       "structure:函数超过 50 行 (实际 72 行)": 1
+diff --git a/CONTEXT.md b/CONTEXT.md
+index 6c08fc9..4cce4f2 100644
+--- a/CONTEXT.md
++++ b/CONTEXT.md
+@@ -1,3 +1,145 @@
++## 更新记录: 2026-08-24 19:18:13
++
++### 任务
++Git 变更同步
++
++### 变更摘要
++diff --git a/.jcode/baseline.json b/.jcode/baseline.json
++index 711e3cb..579ea7f 100644
++--- a/.jcode/baseline.json
+++++ b/.jcode/baseline.json
++@@ -58,17 +58,6 @@
++       "structure:函数超过 50 行 (实际 73 行)": 1,
++       "structure:函数超过 50 行 (实际 56 行)": 1
++     },
++-    "tools/scripts/hooks_runner.py": {
++-      "structure:函数超过 50 行 (实际 54 行)": 1,
++-      "structure:函数超过 50 行 (实际 57 行)": 1,
++-      "structure:函数超过 50 行 (实际 91 行)": 1,
++-      "structure:函数超过 50 行 (实际 115 行)": 1,
++-      "structure:函数超过 50 行 (实际 97 行)": 1,
++-      "structure:函数超过 50 行 (实际 66 行)": 1,
++-      "structure:函数超过 50 行 (实际 65 行)": 1,
++-      "structure:函数超过 50 行 (实际 123 行)": 1,
++-      "structure:函数超过 50 行 (实际 134 行)": 1
++-    },
++     "tools/scripts/detect_language.py": {
++       "error:空异常处理 (catch w/o logging)": 2,
++       "structure:函数超过 50 行 (实际 72 行)": 1
++@@ -88,8 +77,6 @@
++     },
++     "tools/scripts/config/loader.py": {
++       "type:使用 Any 类型": 1,
++-      "structure:函数超过 50 行 (实际 160 行)": 1,
++-      "stru...
+
+---
+
 ## 更新记录: 2026-08-24 19:18:13
 
 ### 任务

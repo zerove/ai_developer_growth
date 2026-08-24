@@ -57,8 +57,9 @@ def _check_requirements_for_framework(project_dir: Path) -> str | None:
             return "fastapi"
         if "flask" in content:
             return "flask"
-    except Exception:
-        pass  # 框架探测失败属正常降级, 静默回退到 None 由调用方兜底
+    except Exception:  # noqa: empty-except
+        # 框架探测失败属正常降级, 静默回退到 None 由调用方兜底
+        pass
     return None
 
 
@@ -77,8 +78,9 @@ def detect_framework_from_go_mod(project_dir: Path) -> str | None:
             return "echo"
         if "github.com/gorilla/mux" in content:
             return "gorilla/mux"
-    except Exception:
-        pass  # 框架探测失败属正常降级, 静默回退到 None 由调用方兜底
+    except Exception:  # noqa: empty-except
+        # 框架探测失败属正常降级, 静默回退到 None 由调用方兜底
+        pass
     return None
 
 

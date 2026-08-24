@@ -41,10 +41,6 @@
     "tools/scripts/docker_build.py": {
       "structure:函数超过 50 行 (实际 136 行)": 1
     },
-    "tools/scripts/language_registry.py": {
-      "error:空异常处理 (catch w/o logging)": 1,
-      "structure:函数超过 50 行 (实际 74 行)": 1
-    },
     "tools/scripts/analyze_case_quality.py": {
       "structure:函数超过 50 行 (实际 57 行)": 1,
       "structure:函数超过 50 行 (实际 56 行)": 1
@@ -59,7 +55,6 @@
       "structure:函数超过 50 行 (实际 56 行)": 1
     },
     "tools/scripts/detect_language.py": {
-      "error:空异常处理 (catch w/o logging)": 2,
       "structure:函数超过 50 行 (实际 72 行)": 1
     },
     "tools/scripts/rule_registry.py": {

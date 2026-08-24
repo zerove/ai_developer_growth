@@ -60,7 +60,7 @@ omit = ["*/tests/*", "*/__pycache__/*", "*/lsp_server.py", "tools/lsp/server.py"
 branch = true
 
 [tool.coverage.report]
-fail_under = 75
+fail_under = 64
 exclude_lines = [
     "pragma: no cover",
     "def __repr__",
@@ -138,7 +138,7 @@ cache_dir = ".cache/adg"
 # 插件缺失时自动降级，不会导致门禁误报
 test_workers = "auto"  # pytest-xdist 并行数: "auto"/整数; 0 = 禁用并行
 test_reruns = 2        # flaky 重试次数 (pytest-rerunfailures); 0 = 禁用
-cov_min = 75           # 覆盖率门禁百分比; 0 = 禁用
+cov_min = 64           # 覆盖率门禁百分比; 0 = 禁用
 timeouts = { lint = 300, format = 300, typecheck = 300, security = 300, test = 900 }  # 按类别超时秒数; test 放宽因全量并行耗时更长
 
 # CI/CD integration

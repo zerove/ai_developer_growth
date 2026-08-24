@@ -321,10 +321,10 @@ class ContextSyncManager:
         # 4. 合成更新
         updated_context = self.synthesizer.synthesize_context_update(diff, "Git 变更同步", current_context)
 
-        # 5. 写入
-        context_file.write_text(
-            updated_context if updated_context.endswith("\n") else updated_context + "\n", encoding="utf-8"
-        )
+        # 5. 写入 (diff 内容可能携带尾随空格, 统一清除避免与
+        #    pre-commit trailing-whitespace 钩子形成修改循环)
+        cleaned = "\n".join(line.rstrip() for line in updated_context.splitlines())
+        context_file.write_text(cleaned if cleaned.endswith("\n") else cleaned + "\n", encoding="utf-8")
         print_check(f"已更新: {context_file}", True)
 
         # 6. 同步 ADR（如果有架构决策）

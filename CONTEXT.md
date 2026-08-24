@@ -1,3 +1,167 @@
+## 更新记录: 2026-08-24 18:05:37
+
+### 任务
+Git 变更同步
+
+### 变更摘要
+diff --git a/.jcode/scripts/context-sync.py b/.jcode/scripts/context-sync.py
+index bf57e0e..0cf3789 100644
+--- a/.jcode/scripts/context-sync.py
++++ b/.jcode/scripts/context-sync.py
+@@ -15,6 +15,7 @@ import argparse
+ import os
+ import re
+ import sys
++from collections.abc import Callable
+ from dataclasses import dataclass
+ from pathlib import Path
+ from typing import Any
+@@ -73,7 +74,7 @@ class SpecAuditor:
+             violations.append("检测到可能的 SQL 拼接，建议使用参数化查询")
+
+         # 检查未处理异常
+-        if re.search(r"except\s*:", diff) and not re.search(r"except\s+\w+", diff):  # noqa: py-bare-except -- 检测逻辑本身, 非真实 except 语句
++        if re.search(r"except\s*:", diff) and not re.search(r"except\s+\w+", diff):  # noqa: py-bare-except
+             violations.append("检测到裸露的 except:，建议指定异常类型")
+
+         # 检查类型注解
+@@ -180,7 +181,7 @@ class ParallelExecutor:
+     def __init__(self, max_workers: int = 4) -> None:
+         self.max_workers = max_workers
+
+-    def execute(self, tasks: list[dict[str, Any]], worker_fn: Any) -> dict[str, str]:
++    def execute(self, tasks: list[dict[str, Any]], worker_fn: Callable[[dict[str, Any]], str]) -> dict[str, str]:
+         from concurrent.futures import ThreadPoolExecutor, as_completed
+
+         results: dict[str, str] = {}
+@@ -320,10 +321,10 @@ class ContextSyncManager:
+         # 4. 合成更新
+         updated_context = self.synthesizer.synthesize_context_update(diff, "Git 变更同步", current_context)
+
+-        # 5. 写入
+-        context_file.write_text(
+-            updated_context if updated_context.endswith("\n") else updated_context + "\n", encoding="utf-8"
+-        )
++        # 5. 写入 (diff 内容可能携带尾随空格, 统一清除避免与
++        #    pre-commit trailing-whitespace 钩子形成修改循环)
++        cleaned = "\n".join(line.rstrip() for line in updated_context.splitlines())
++        context_file.write_text(cleaned if cleaned.endswith("\n") else cleaned + "\n", encoding="utf-8")
+         print_check(f"已更新: {context_file}", True)
+
+         # 6. 同步 ADR（如果有架构决策）
+diff --git a/.jcod...
+
+---
+
+## 更新记录: 2026-08-24 18:05:01
+
+### 任务
+Git 变更同步
+
+### 变更摘要
+diff --git a/.jcode/scripts/context-sync.py b/.jcode/scripts/context-sync.py
+index bf57e0e..0cf3789 100644
+--- a/.jcode/scripts/context-sync.py
++++ b/.jcode/scripts/context-sync.py
+@@ -15,6 +15,7 @@ import argparse
+ import os
+ import re
+ import sys
++from collections.abc import Callable
+ from dataclasses import dataclass
+ from pathlib import Path
+ from typing import Any
+@@ -73,7 +74,7 @@ class SpecAuditor:
+             violations.append("检测到可能的 SQL 拼接，建议使用参数化查询")
+
+         # 检查未处理异常
+-        if re.search(r"except\s*:", diff) and not re.search(r"except\s+\w+", diff):  # noqa: py-bare-except -- 检测逻辑本身, 非真实 except 语句
++        if re.search(r"except\s*:", diff) and not re.search(r"except\s+\w+", diff):  # noqa: py-bare-except
+             violations.append("检测到裸露的 except:，建议指定异常类型")
+
+         # 检查类型注解
+@@ -180,7 +181,7 @@ class ParallelExecutor:
+     def __init__(self, max_workers: int = 4) -> None:
+         self.max_workers = max_workers
+
+-    def execute(self, tasks: list[dict[str, Any]], worker_fn: Any) -> dict[str, str]:
++    def execute(self, tasks: list[dict[str, Any]], worker_fn: Callable[[dict[str, Any]], str]) -> dict[str, str]:
+         from concurrent.futures import ThreadPoolExecutor, as_completed
+
+         results: dict[str, str] = {}
+@@ -320,10 +321,10 @@ class ContextSyncManager:
+         # 4. 合成更新
+         updated_context = self.synthesizer.synthesize_context_update(diff, "Git 变更同步", current_context)
+
+-        # 5. 写入
+-        context_file.write_text(
+-            updated_context if updated_context.endswith("\n") else updated_context + "\n", encoding="utf-8"
+-        )
++        # 5. 写入 (diff 内容可能携带尾随空格, 统一清除避免与
++        #    pre-commit trailing-whitespace 钩子形成修改循环)
++        cleaned = "\n".join(line.rstrip() for line in updated_context.splitlines())
++        context_file.write_text(cleaned if cleaned.endswith("\n") else cleaned + "\n", encoding="utf-8")
+         print_check(f"已更新: {context_file}", True)
+
+         # 6. 同步 ADR（如果有架构决策）
+diff --git a/.jcod...
+
+---
+
+## 更新记录: 2026-08-24 18:04:46
+
+### 任务
+Git 变更同步
+
+### 变更摘要
+diff --git a/.jcode/scripts/context-sync.py b/.jcode/scripts/context-sync.py
+index bf57e0e..432824d 100644
+--- a/.jcode/scripts/context-sync.py
++++ b/.jcode/scripts/context-sync.py
+@@ -15,6 +15,7 @@ import argparse
+ import os
+ import re
+ import sys
++from collections.abc import Callable
+ from dataclasses import dataclass
+ from pathlib import Path
+ from typing import Any
+@@ -73,7 +74,7 @@ class SpecAuditor:
+             violations.append("检测到可能的 SQL 拼接，建议使用参数化查询")
+
+         # 检查未处理异常
+-        if re.search(r"except\s*:", diff) and not re.search(r"except\s+\w+", diff):  # noqa: py-bare-except -- 检测逻辑本身, 非真实 except 语句
++        if re.search(r"except\s*:", diff) and not re.search(r"except\s+\w+", diff):  # noqa: py-bare-except
+             violations.append("检测到裸露的 except:，建议指定异常类型")
+
+         # 检查类型注解
+@@ -180,7 +181,7 @@ class ParallelExecutor:
+     def __init__(self, max_workers: int = 4) -> None:
+         self.max_workers = max_workers
+
+-    def execute(self, tasks: list[dict[str, Any]], worker_fn: Any) -> dict[str, str]:
++    def execute(self, tasks: list[dict[str, Any]], worker_fn: Callable[[dict[str, Any]], str]) -> dict[str, str]:
+         from concurrent.futures import ThreadPoolExecutor, as_completed
+
+         results: dict[str, str] = {}
+@@ -320,9 +321,11 @@ class ContextSyncManager:
+         # 4. 合成更新
+         updated_context = self.synthesizer.synthesize_context_update(diff, "Git 变更同步", current_context)
+
+-        # 5. 写入
++        # 5. 写入 (diff 内容可能携带尾随空格, 统一清除避免与
++        #    pre-commit trailing-whitespace 钩子形成修改循环)
++        cleaned = "\n".join(line.rstrip() for line in updated_context.splitlines())
+         context_file.write_text(
+-            updated_context if updated_context.endswith("\n") else updated_context + "\n", encoding="utf-8"
++            cleaned if cleaned.endswith("\n") else cleaned + "\n", encoding="utf-8"
+         )
+         print_check(f"已更新: {context_file}", True)
+
+diff --git a/.jcode/scripts/self_correction_loop.py b/.jcode/scripts/s...
+
+---
+
 ## 更新记录: 2026-08-24 18:03:28
 
 ### 任务
@@ -18,21 +182,21 @@ index bf57e0e..7fef0cc 100644
  from typing import Any
 @@ -73,7 +74,7 @@ class SpecAuditor:
              violations.append("检测到可能的 SQL 拼接，建议使用参数化查询")
- 
+
          # 检查未处理异常
 -        if re.search(r"except\s*:", diff) and not re.search(r"except\s+\w+", diff):  # noqa: py-bare-except -- 检测逻辑本身, 非真实 except 语句
 +        if re.search(r"except\s*:", diff) and not re.search(r"except\s+\w+", diff):  # noqa: py-bare-except
              violations.append("检测到裸露的 except:，建议指定异常类型")
- 
+
          # 检查类型注解
 @@ -180,7 +181,7 @@ class ParallelExecutor:
      def __init__(self, max_workers: int = 4) -> None:
          self.max_workers = max_workers
- 
+
 -    def execute(self, tasks: list[dict[str, Any]], worker_fn: Any) -> dict[str, str]:
 +    def execute(self, tasks: list[dict[str, Any]], worker_fn: Callable[[dict[str, Any]], str]) -> dict[str, str]:
          from concurrent.futures import ThreadPoolExecutor, as_completed
- 
+
          results: dict[str, str] = {}
 diff --git a/.jcode/scripts/self_correction_loop.py b/.jcode/scripts/self_correction_loop.py
 index a43145d..dac66b9 100644
@@ -49,12 +213,12 @@ index a43145d..dac66b9 100644
 -from typing import Any, ClassVar
 +from types import ModuleType
 +from typing import ClassVar
- 
+
  from _common import print_check, print_section
- 
+
 @@ -45,7 +47,7 @@ class Strategy(ABC):
          pass
- 
+
      @classmethod
 -    def register(cls, kind: StrategyKind) -> Any:
 +    def register(...

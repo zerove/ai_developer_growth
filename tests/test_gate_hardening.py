@@ -198,7 +198,7 @@ class TestAuditTrends:
         assert not ok
 
     def test_analyze_counts_and_alerts(self) -> None:
-        now_iso = __import__("datetime").datetime.now(__import__("datetime").UTC).isoformat()
+        now_iso = __import__("datetime").datetime.now(__import__("datetime").timezone.utc).isoformat()
         entries = [{"event_type": f"E{i}", "timestamp": now_iso} for i in range(10)]
         report = analyze(entries)
         assert report["total"] == 10
@@ -209,7 +209,7 @@ class TestAuditTrends:
     def test_analyze_flags_spike(self) -> None:
         import datetime as dt
 
-        now = dt.datetime.now(dt.UTC)
+        now = dt.datetime.now(dt.timezone.utc)
         # 同一类型最近24h 6 次（≥ 下限5），历史为 0 → 应告警
         entries = [{"event_type": "SPIKE", "timestamp": (now - dt.timedelta(hours=i)).isoformat()} for i in range(6)]
         report = analyze(entries)

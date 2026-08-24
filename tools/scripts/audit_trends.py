@@ -16,7 +16,7 @@ import argparse
 import json
 import sys
 from collections import Counter, defaultdict
-from datetime import UTC, datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any
 
@@ -65,7 +65,7 @@ def analyze(entries: list[dict[str, Any]]) -> dict[str, Any]:
     """统计与异常检测。"""
     type_counts: Counter[str] = Counter()
     daily: dict[str, Counter[str]] = defaultdict(Counter)
-    now = datetime.now(UTC)
+    now = datetime.now(timezone.utc)
     last_24h: Counter[str] = Counter()
 
     for entry in entries:
@@ -74,7 +74,7 @@ def analyze(entries: list[dict[str, Any]]) -> dict[str, Any]:
         ts = _parse_timestamp(entry)
         if ts is None:
             continue
-        day = ts.astimezone(UTC).date().isoformat()
+        day = ts.astimezone(timezone.utc).date().isoformat()
         daily[day][etype] += 1
         if now - ts <= timedelta(hours=24):
             last_24h[etype] += 1

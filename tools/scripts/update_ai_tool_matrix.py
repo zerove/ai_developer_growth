@@ -90,8 +90,12 @@ class ToolMatrixUpdater:
 
     def _load_cache(self) -> dict[str, Any]:
         if CACHE_PATH.exists():
-            result: dict[str, Any] = json.loads(CACHE_PATH.read_text())
-            return result
+            try:
+                result: dict[str, Any] = json.loads(CACHE_PATH.read_text())
+                return result
+            except json.JSONDecodeError:
+                # 缓存损坏 (如并行写入交错) 时视为无缓存, 重新检查
+                return {}
         return {}
 
     def _save_cache(self) -> None:

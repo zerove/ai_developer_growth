@@ -10,7 +10,6 @@ from unittest.mock import MagicMock, patch
 import pytest
 
 from tools.scripts.update_ai_tool_matrix import (
-    CACHE_PATH,
     ModelInfo,
     SourceType,
     ToolInfo,
@@ -252,12 +251,13 @@ class TestToolMatrixUpdater:
         updates = asyncio.run(self.updater.check_model_updates())
         assert isinstance(updates, list)
 
-    def test_save_cache(self):
+    def test_save_cache(self, tmp_path):
         """Test cache saving."""
-        self.updater.cache = {"test": {"value": 123}}
-        self.updater._save_cache()
+        with patch("tools.scripts.update_ai_tool_matrix.CACHE_PATH", tmp_path / "cache.json"):
+            self.updater.cache = {"test": {"value": 123}}
+            self.updater._save_cache()
 
-        assert CACHE_PATH.exists()
+        assert (tmp_path / "cache.json").exists()
 
 
 # ---------------------------------------------------------------------------
@@ -569,12 +569,13 @@ class TestMainExtended:
 class TestSaveCacheExtended:
     """Test cache saving."""
 
-    def test_save_cache_writes_file(self):
+    def test_save_cache_writes_file(self, tmp_path):
         """Test cache is written to file."""
-        updater = ToolMatrixUpdater()
-        updater.cache = {"test": {"value": 42}}
-        updater._save_cache()
-        assert CACHE_PATH.exists()
+        with patch("tools.scripts.update_ai_tool_matrix.CACHE_PATH", tmp_path / "cache.json"):
+            updater = ToolMatrixUpdater()
+            updater.cache = {"test": {"value": 42}}
+            updater._save_cache()
+        assert (tmp_path / "cache.json").exists()
 
 
 if __name__ == "__main__":

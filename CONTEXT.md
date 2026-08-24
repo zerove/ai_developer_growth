@@ -1,3 +1,89 @@
+## 更新记录: 2026-08-24 22:18:03
+
+### 任务
+Git 变更同步
+
+### 变更摘要
+diff --git a/CONTEXT.md b/CONTEXT.md
+index 058005a..cf7298e 100644
+--- a/CONTEXT.md
++++ b/CONTEXT.md
+@@ -1,3 +1,86 @@
++## 更新记录: 2026-08-24 22:01:28
++
++### 任务
++Git 变更同步
++
++### 变更摘要
++diff --git a/CONTEXT.md b/CONTEXT.md
++index 7a98b62..058005a 100644
++--- a/CONTEXT.md
+++++ b/CONTEXT.md
++@@ -1,3 +1,83 @@
+++## 更新记录: 2026-08-24 21:31:59
+++
+++### 任务
+++Git 变更同步
+++
+++### 变更摘要
+++diff --git a/CONTEXT.md b/CONTEXT.md
+++index 8e20afc..7a98b62 100644
+++--- a/CONTEXT.md
++++++ b/CONTEXT.md
+++@@ -1,3 +1,80 @@
++++## 更新记录: 2026-08-24 21:30:41
++++
++++### 任务
++++Git 变更同步
++++
++++### 变更摘要
++++diff --git a/.github/workflows/ci-cd.yml b/.github/workflows/ci-cd.yml
++++index 32507be..9b33451 100644
++++--- a/.github/workflows/ci-cd.yml
+++++++ b/.github/workflows/ci-cd.yml
++++@@ -136,7 +136,7 @@ jobs:
++++             --cov=tools/scripts \
++++             --cov-report=xml \
++++             --cov-report=term-missing \
++++-            --cov-fail-under=60
+++++            --cov-fail-under=75
++++
++++       - name: Upload coverage
++++         uses: codecov/codecov-action@v4
++++diff --git a/CONTEXT.md b/CONTEXT.md
++++index e23342f..8e20afc 100644
++++--- a/CONTEXT.md
+++++++ b/CONTEXT.md
++++@@ -1,3 +1,76 @@
+++++## 更新记录: 2026-08-24 21:01:53
+++++
+++++### 任务
+++++Git 变更同步
+++++
+++++### 变更摘要
+++++diff --git a/.github/workflows/ci-cd.yml b/.github/workflows/ci-cd.yml
+++++index 32507be..9b33451 100644
+++++--- a/.github/workflows/ci-cd.yml
++++++++ b/.github/workflows/ci-cd.yml
+++++@@ -136,7 +136,7 @@ jobs:
+++++             --cov=tools/scripts \
+++++             --cov-report=xml \
+++++             --cov-report=term-missing \
+++++-            --cov-fail-under=60
++++++            --cov-fail-under=75
+++++
+++++       - name: Upload coverage
+++++         uses: codecov/codecov-action@v4
+++++diff --git a/.jcode/baseline.json b/.jcode/baseline.json
+++++index 7c8d7c8..64b2017 100644
+++++--- a/.jcode/baseline.json
++++++++ b/.jcode/baseline.json
+++++@@ -17,9 +17,6 @@
+++++     ".jcode/scripts/governance-auditor.py": {
+++++     ...
+
+---
+
 ## 更新记录: 2026-08-24 22:01:28
 
 ### 任务

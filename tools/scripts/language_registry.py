@@ -1615,7 +1615,7 @@ class LanguageRegistry:
                         if any(project_root.rglob("*.ts")) or any(project_root.rglob("*.tsx")):
                             return Language.TYPESCRIPT
                     except Exception:
-                        pass
+                        pass  # TS 探测失败时降级为 JS, 属预期回退路径
                     return Language.JAVASCRIPT
                 return lang
 

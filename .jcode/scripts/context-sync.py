@@ -15,6 +15,7 @@ import argparse
 import os
 import re
 import sys
+from collections.abc import Callable
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
@@ -73,7 +74,7 @@ class SpecAuditor:
             violations.append("检测到可能的 SQL 拼接，建议使用参数化查询")
 
         # 检查未处理异常
-        if re.search(r"except\s*:", diff) and not re.search(r"except\s+\w+", diff):  # noqa: py-bare-except -- 检测逻辑本身, 非真实 except 语句
+        if re.search(r"except\s*:", diff) and not re.search(r"except\s+\w+", diff):  # noqa: py-bare-except
             violations.append("检测到裸露的 except:，建议指定异常类型")
 
         # 检查类型注解
@@ -180,7 +181,7 @@ class ParallelExecutor:
     def __init__(self, max_workers: int = 4) -> None:
         self.max_workers = max_workers
 
-    def execute(self, tasks: list[dict[str, Any]], worker_fn: Any) -> dict[str, str]:
+    def execute(self, tasks: list[dict[str, Any]], worker_fn: Callable[[dict[str, Any]], str]) -> dict[str, str]:
         from concurrent.futures import ThreadPoolExecutor, as_completed
 
         results: dict[str, str] = {}

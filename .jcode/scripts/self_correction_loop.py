@@ -19,10 +19,12 @@ import subprocess
 import sys
 import time
 from abc import ABC, abstractmethod
+from collections.abc import Callable
 from dataclasses import dataclass, field
 from enum import Enum, auto
 from pathlib import Path
-from typing import Any, ClassVar
+from types import ModuleType
+from typing import ClassVar
 
 from _common import print_check, print_section
 
@@ -45,7 +47,7 @@ class Strategy(ABC):
         pass
 
     @classmethod
-    def register(cls, kind: StrategyKind) -> Any:
+    def register(cls, kind: StrategyKind) -> type["Strategy"]:
         def decorator(subclass: type["Strategy"]) -> type["Strategy"]:
             cls._registry[kind] = subclass
             return subclass
@@ -121,7 +123,7 @@ def get_registry(
     enable_pattern: bool = True,
     enable_llm: bool = True,
     llm_model: str = "gpt-4-turbo-preview",
-    **llm_kwargs: Any,
+    **llm_kwargs: object,
 ) -> StrategyRegistry:
     chain: list[Strategy] = []
     if enable_retry:
@@ -253,10 +255,10 @@ class RetryStrategy(Strategy):
 # ============================================================================
 
 
-_openai_mod: Any | None = None
+_openai_mod: ModuleType | None = None
 
 
-def _get_openai() -> Any:
+def _get_openai() -> ModuleType:
     global _openai_mod
     if _openai_mod is None:
         try:
@@ -356,7 +358,7 @@ class CorrectionResult:
     test_output: str = ""
     duration_s: float = 0.0
 
-    def to_dict(self) -> dict[str, Any]:
+    def to_dict(self) -> dict[str, object]:
         return {
             "is_success": self.is_success,
             "attempt": self.attempt,
@@ -471,7 +473,7 @@ class CorrectionLoop:
         max_attempts: int = 3,
         runner: str = "unittest",
         registry: StrategyRegistry | None = None,
-        on_attempt: Any | None = None,
+        on_attempt: Callable[["CorrectionResult"], None] | None = None,
     ) -> None:
         self._target_file = Path(target_file)
         self._test_dir = test_dir

@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import re
 from pathlib import Path
 from typing import Any
 
@@ -195,6 +196,9 @@ def check_file(
     # Run all checkers
     issues = _run_all_checkers(filepath, content, lines, lang, rules, run_linters=run_linters)
 
+    # 豁免过滤: 行级 noqa 注释 + 文件级 ignored-rules.toml
+    issues = _filter_suppressed_issues(filepath, issues, lines)
+
     # G1: 上下文感知 — 检测文件角色并调整严重度
     ctx_markers = _load_context_markers(filepath.parent)
     file_role = detect_file_role(filepath, ctx_markers)
@@ -212,6 +216,73 @@ def check_file(
         issues=issues,
         language=lang,
     )
+
+
+def _filter_suppressed_issues(
+    filepath: Path,
+    issues: list[Issue],
+    lines: list[str],
+) -> list[Issue]:
+    """过滤被豁免的违规。
+
+    支持两种机制:
+    1. 行级 noqa 注释: ``# noqa`` (全豁免) 或 ``# noqa: rule-id[,rule-id]``
+       规则引擎不依赖外部 linter 的 noqa 处理, 需自行解析。
+    2. 文件级豁免: ``.jcode/ignored-rules.toml`` 的 [[ignored_files]] 段,
+       按 file 路径片段 + rules 列表豁免。
+    """
+    if not issues:
+        return issues
+
+    # --- 行级 noqa ---
+    noqa_by_line: dict[int, set[str] | None] = {}
+    for idx, line in enumerate(lines, start=1):
+        m = re.search(r"#\s*noqa(?::\s*([A-Za-z0-9_,\-\s]+))?", line)
+        if m:
+            rules_str = m.group(1)
+            noqa_by_line[idx] = None if not rules_str else {r.strip() for r in rules_str.split(",") if r.strip()}
+
+    # --- 文件级 ignored-rules.toml ---
+    file_rules = _load_ignored_rules(filepath)
+
+    result: list[Issue] = []
+    for issue in issues:
+        suppressed = False
+        line_noqa = noqa_by_line.get(issue.line)
+        if line_noqa is None and issue.line in noqa_by_line:
+            suppressed = True  # 裸 noqa: 全豁免
+        elif line_noqa and issue.rule_id in line_noqa:
+            suppressed = True
+        if not suppressed and file_rules and issue.rule_id in file_rules:
+            suppressed = True
+        if not suppressed:
+            result.append(issue)
+    return result
+
+
+def _load_ignored_rules(filepath: Path) -> set[str]:
+    """从 .jcode/ignored-rules.toml 加载针对该文件的规则豁免列表。"""
+    try:
+        import tomllib
+    except ImportError:
+        return set()
+
+    config_path = Path(".jcode/ignored-rules.toml")
+    if not config_path.exists():
+        return set()
+
+    try:
+        data = tomllib.loads(config_path.read_text(encoding="utf-8"))
+    except Exception:
+        return set()
+
+    path_str = str(filepath)
+    ignored: set[str] = set()
+    for entry in data.get("ignored_files", []):
+        pattern = str(entry.get("file", ""))
+        if pattern and pattern in path_str:
+            ignored.update(str(r) for r in entry.get("rules", []))
+    return ignored
 
 
 def _file_not_found_result(filepath: Path) -> CheckResult:

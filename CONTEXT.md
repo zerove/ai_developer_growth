@@ -1,3 +1,72 @@
+## 更新记录: 2026-08-24 16:43:13
+
+### 任务
+Git 变更同步
+
+### 变更摘要
+diff --git a/.jcode/scripts/context-sync.py b/.jcode/scripts/context-sync.py
+index c507a24..bf57e0e 100644
+--- a/.jcode/scripts/context-sync.py
++++ b/.jcode/scripts/context-sync.py
+@@ -73,7 +73,7 @@ class SpecAuditor:
+             violations.append("检测到可能的 SQL 拼接，建议使用参数化查询")
+ 
+         # 检查未处理异常
+-        if re.search(r"except\s*:", diff) and not re.search(r"except\s+\w+", diff):
++        if re.search(r"except\s*:", diff) and not re.search(r"except\s+\w+", diff):  # noqa: py-bare-except -- 检测逻辑本身, 非真实 except 语句
+             violations.append("检测到裸露的 except:，建议指定异常类型")
+ 
+         # 检查类型注解
+diff --git a/.jcode/scripts/multi_agent_orch.py b/.jcode/scripts/multi_agent_orch.py
+index 2a61129..e6c2976 100644
+--- a/.jcode/scripts/multi_agent_orch.py
++++ b/.jcode/scripts/multi_agent_orch.py
+@@ -162,7 +162,7 @@ class BaseAgent:
+         try:
+             return self._generate(history)
+         except AgentFailureError:
+-            raise
++            raise  # noqa: py-bare-raise -- except 块内合法重抛
+         except Exception as exc:
+             raise AgentFailureError(
+                 f"Agent {self._role.value} failed: {exc}",
+diff --git a/CONTEXT.md b/CONTEXT.md
+index e1763c1..8ea5429 100644
+--- a/CONTEXT.md
++++ b/CONTEXT.md
+@@ -1,3 +1,157 @@
++## 更新记录: 2026-08-24 16:39:53
++
++### 任务
++Git 变更同步
++
++### 变更摘要
++diff --git a/.jcode/baseline.json b/.jcode/baseline.json
++index 564517b..711e3cb 100644
++--- a/.jcode/baseline.json
+++++ b/.jcode/baseline.json
++@@ -11,6 +11,26 @@
++     "tools/multiproject/__init__.py": {
++       "structure:函数超过 50 行 (实际 69 行)": 1
++     },
+++    "tools/lsp/server.py": {
+++      "structure:函数超过 50 行 (实际 58 行)": 1
+++    },
+++    ".jcode/scripts/context-sync.py": {
+++      "type:使用 Any 类型": 1
+++    },
+++    ".jcode/scripts/governance-auditor.py": {
+++      "structure:函数超过 50 行 (实际 54 行)": 1
+++    },
+++    ".jcode/scripts/multi_agent_orch.py": {
+++      "type:使用 Any 类型": 1
+++    },
+++    ".jcode/scripts/jcode-init.py": {
+++      "structure:函数超过 50 行 (实际 110 行)": 1
+...
+
+---
+
 ## 更新记录: 2026-08-24 16:39:53
 
 ### 任务

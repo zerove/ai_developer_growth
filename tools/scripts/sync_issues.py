@@ -316,7 +316,8 @@ def create_sync_tool() -> GitHubProjectsSync:
 # ==================== CLI 入口 ====================
 
 
-def main() -> int:
+def _build_sync_parser() -> argparse.ArgumentParser:
+    """构建 CLI 参数解析器。"""
     parser = argparse.ArgumentParser(description="GitHub Projects/Issue 双向同步工具")
     parser.add_argument("--repo", required=True, help="仓库 (格式: owner/repo)")
     parser.add_argument("--project", type=int, required=True, help="Project 编号")
@@ -333,7 +334,6 @@ def main() -> int:
     issue_parser.add_argument("--issue", type=int, required=True, help="Issue 编号")
 
     # sync-project
-    _project_parser = subparsers.add_parser("sync-project", help="从 Project 同步回 Issue")
 
     # list-project
 
@@ -343,6 +343,38 @@ def main() -> int:
     specific_parser = subparsers.add_parser("sync-issues", help="同步指定 Issue 列表")
     specific_parser.add_argument("--issues", nargs="+", type=int, required=True, help="Issue 编号列表")
 
+    return parser
+
+
+def _execute_sync_command(sync: GitHubProjectsSync, args: argparse.Namespace) -> None:
+    """执行同步子命令并打印 JSON 结果。"""
+    if args.command == "full-sync":
+        result = sync.full_sync(dry_run=args.dry_run)
+        print(json.dumps(result, indent=2, ensure_ascii=False))
+
+    elif args.command == "sync-issue":
+        result = sync.sync_issue_to_project(args.issue)
+        print(json.dumps(result, indent=2, ensure_ascii=False))
+
+    elif args.command == "sync-project":
+        project_result: list[dict[str, Any]] = sync.sync_project_to_issues()
+        print(json.dumps(project_result, indent=2, ensure_ascii=False))
+
+    elif args.command == "list-project":
+        issues = sync.list_project_issues()
+        print(json.dumps(issues, indent=2, ensure_ascii=False))
+
+    elif args.command == "project-info":
+        info = sync.get_project_info()
+        print(json.dumps(info, indent=2, ensure_ascii=False))
+
+    elif args.command == "sync-issues":
+        result = sync.sync_specific_issues(args.issues)
+        print(json.dumps(result, indent=2, ensure_ascii=False))
+
+
+def main() -> int:
+    parser = _build_sync_parser()
     args = parser.parse_args()
 
     if not args.command:
@@ -356,33 +388,8 @@ def main() -> int:
 
     try:
         sync = GitHubProjectsSync(args.token, args.repo, args.project)
-
-        if args.command == "full-sync":
-            result = sync.full_sync(dry_run=args.dry_run)
-            print(json.dumps(result, indent=2, ensure_ascii=False))
-
-        elif args.command == "sync-issue":
-            result = sync.sync_issue_to_project(args.issue)
-            print(json.dumps(result, indent=2, ensure_ascii=False))
-
-        elif args.command == "sync-project":
-            project_result: list[dict[str, Any]] = sync.sync_project_to_issues()
-            print(json.dumps(project_result, indent=2, ensure_ascii=False))
-
-        elif args.command == "list-project":
-            issues = sync.list_project_issues()
-            print(json.dumps(issues, indent=2, ensure_ascii=False))
-
-        elif args.command == "project-info":
-            info = sync.get_project_info()
-            print(json.dumps(info, indent=2, ensure_ascii=False))
-
-        elif args.command == "sync-issues":
-            result = sync.sync_specific_issues(args.issues)
-            print(json.dumps(result, indent=2, ensure_ascii=False))
-
+        _execute_sync_command(sync, args)
         return 0
-
     except Exception as e:
         print(f"错误: {e}")
         return 1

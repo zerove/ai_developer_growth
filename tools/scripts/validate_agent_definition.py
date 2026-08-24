@@ -68,29 +68,61 @@ def parse_markdown_format(content: str) -> dict[str, Any]:
     return result
 
 
+def _parse_frontmatter(content: str, errors: list[str]) -> dict[str, Any]:
+    """解析 YAML frontmatter; 无则回退 Markdown 格式解析。"""
+    if not content.startswith("---"):
+        return parse_markdown_format(content)
+    parts = content.split("---", 2)
+    if len(parts) < 3:
+        return parse_markdown_format(content)
+    frontmatter: dict[str, Any] | None
+    try:
+        frontmatter = yaml.safe_load(parts[1]) or {}
+    except yaml.YAMLError as e:
+        errors.append(f"Frontmatter YAML 解析失败: {e}")
+        return {}
+    return frontmatter or parse_markdown_format(content)
+
+
+def _check_instructions(frontmatter: dict[str, Any], errors: list[str]) -> None:
+    """检查指令具体性: 应包含工具名/文件路径/函数名。"""
+    instructions = frontmatter.get("instructions", "")
+    if isinstance(instructions, list):
+        instructions = " ".join(str(x) for x in instructions)
+    if not instructions:
+        errors.append("指令内容为空")
+        return
+    has_specific = bool(
+        re.search(
+            r"(tools/scripts/|\.py|函数|工具|运行|执行|验证|检查|ruff|mypy|pytest|bandit|pip-audit)", instructions
+        )
+    )
+    if not has_specific:
+        errors.append("指令不够具体: 应包含工具名/文件路径/函数名")
+
+
+def _check_constraints(frontmatter: dict[str, Any], errors: list[str]) -> None:
+    """检查约束明确性: 应包含禁止行为表述。"""
+    constraints = frontmatter.get("constraints", "")
+    if isinstance(constraints, list):
+        constraints = " ".join(str(x) for x in constraints)
+    if not constraints:
+        errors.append("约束内容为空")
+        return
+    if not re.search(r"(禁止|不得|不允许|必须不|严禁)", constraints):
+        errors.append("约束应明确包含禁止行为")
+
+
 def validate_agent_file(filepath: Path) -> list[str]:
     """验证单个 Agent 定义文件，返回错误列表"""
-    errors = []
+    errors: list[str] = []
 
     try:
         content = filepath.read_text(encoding="utf-8")
     except Exception as e:
         return [f"读取文件失败: {e}"]
 
-    # 尝试解析 frontmatter
-    frontmatter: dict[str, Any] = {}
-    if content.startswith("---"):
-        parts = content.split("---", 2)
-        if len(parts) >= 3:
-            try:
-                frontmatter = yaml.safe_load(parts[1]) or {}
-            except yaml.YAMLError as e:
-                errors.append(f"Frontmatter YAML 解析失败: {e}")
-            parts[2]  # body 内容已在 parse_markdown_format 中处理
-
-    # 如果没有 frontmatter，尝试解析 Markdown 格式
-    if not frontmatter:
-        frontmatter = parse_markdown_format(content)
+    frontmatter = _parse_frontmatter(content, errors)
 
     # 检查命名规范 (kebab-case)
     name = frontmatter.get("name", filepath.stem)
@@ -110,35 +142,32 @@ def validate_agent_file(filepath: Path) -> list[str]:
     else:
         errors.append("工具列表格式错误")
 
-    # 检查指令具体性
-    instructions = frontmatter.get("instructions", "")
-    if isinstance(instructions, list):
-        instructions = " ".join(str(x) for x in instructions)
-    if instructions:
-        # 检查是否包含具体路径/函数名/工具名
-        has_specific = bool(
-            re.search(
-                r"(tools/scripts/|\.py|函数|工具|运行|执行|验证|检查|ruff|mypy|pytest|bandit|pip-audit)",
-                instructions,
-            )
-        )
-        if not has_specific:
-            errors.append("指令不够具体: 应包含工具名/文件路径/函数名")
-    else:
-        errors.append("指令内容为空")
-
-    # 检查约束
-    constraints = frontmatter.get("constraints", "")
-    if isinstance(constraints, list):
-        constraints = " ".join(str(x) for x in constraints)
-    if constraints:
-        has_prohibition = bool(re.search(r"(禁止|不得|不允许|必须不|严禁)", constraints))
-        if not has_prohibition:
-            errors.append("约束应明确包含禁止行为")
-    else:
-        errors.append("约束内容为空")
+    _check_instructions(frontmatter, errors)
+    _check_constraints(frontmatter, errors)
 
     return errors
+
+
+def _validate_single_file(filepath: Path) -> int:
+    """验证单个文件并输出结果。"""
+    if not filepath.exists():
+        print(f"❌ 文件不存在: {filepath}")
+        return 1
+    errors = validate_agent_file(filepath)
+    if errors:
+        print(f"❌ {filepath.name}")
+        for err in errors:
+            print(f"   - {err}")
+        return 1
+    print(f"✅ {filepath.name}")
+    return 0
+
+
+def _print_errors(name: str, errors: list[str]) -> None:
+    """打印单文件的错误列表。"""
+    print(f"❌ {name}")
+    for err in errors:
+        print(f"   - {err}")
 
 
 def main() -> int:
@@ -154,17 +183,7 @@ def main() -> int:
     print("=" * 60)
 
     if args.file:
-        if not args.file.exists():
-            print(f"❌ 文件不存在: {args.file}")
-            return 1
-        errors = validate_agent_file(args.file)
-        if errors:
-            print(f"❌ {args.file.name}")
-            for err in errors:
-                print(f"   - {err}")
-            return 1
-        print(f"✅ {args.file.name}")
-        return 0
+        return _validate_single_file(args.file)
 
     agents_dir = args.path or Path("agents")
     if not agents_dir.exists() or not agents_dir.is_dir():
@@ -183,9 +202,7 @@ def main() -> int:
         errors = validate_agent_file(agent_file)
         if errors:
             all_errors[agent_file.name] = errors
-            print(f"❌ {agent_file.name}")
-            for err in errors:
-                print(f"   - {err}")
+            _print_errors(agent_file.name, errors)
         else:
             print(f"✅ {agent_file.name}")
 

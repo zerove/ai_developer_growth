@@ -186,37 +186,69 @@ def detect_language(project_dir: Path) -> dict[str, Any]:
     }
 
 
-def detect_project_language(project_dir: Path) -> dict[str, Any]:
-    """Detect primary language and frameworks in a project directory."""
-    if not project_dir.exists() or not project_dir.is_dir():
-        return {"error": "Invalid directory"}
-
-    # Count files by extension
+def _count_language_files(project_dir: Path) -> Counter[str]:
+    """按扩展名统计语言文件数 (跳过隐藏目录与排除目录)。"""
     ext_counter: Counter[str] = Counter()
-
     for filepath in project_dir.rglob("*"):
-        if filepath.is_file():
-            # Check if any part of the relative path is in EXCLUDE_DIRS or starts with .
-            try:
-                rel_parts = filepath.relative_to(project_dir).parts
-            except ValueError:
-                continue
-            if any(part.startswith(".") for part in rel_parts):
-                continue
-            if any(part in EXCLUDE_DIRS for part in rel_parts):
-                continue
-            suffix = filepath.suffix.lower()
-            if suffix in EXTENSION_MAP:
-                ext_counter[EXTENSION_MAP[suffix]] += 1
+        if not filepath.is_file():
+            continue
+        try:
+            rel_parts = filepath.relative_to(project_dir).parts
+        except ValueError:
+            continue
+        if any(part.startswith(".") for part in rel_parts):
+            continue
+        if any(part in EXCLUDE_DIRS for part in rel_parts):
+            continue
+        suffix = filepath.suffix.lower()
+        if suffix in EXTENSION_MAP:
+            ext_counter[EXTENSION_MAP[suffix]] += 1
+    return ext_counter
 
-    # Check config markers for language
-    config_languages = []
+
+def _detect_config_languages(project_dir: Path) -> list[str]:
+    """根据配置文件标记文件 (如 go.mod/pyproject.toml) 推断语言。"""
+    config_languages: list[str] = []
     for config_file, langs in CONFIG_MARKERS.items():
         if (project_dir / config_file).exists():
             if isinstance(langs, list):
                 config_languages.extend(langs)
             else:
                 config_languages.append(langs)
+    return config_languages
+
+
+def _detect_frameworks(project_dir: Path, primary_language: str, config_languages: list[str]) -> list[str]:
+    """检测项目框架; 无实际框架时以配置语言兜底。"""
+    frameworks = []
+    for fw, patterns in FRAMEWORK_PATTERNS.items():
+        for pattern in patterns:
+            if any(project_dir.rglob(pattern)) or (project_dir / pattern).exists():
+                frameworks.append(fw)
+                break
+
+    req_framework = _check_requirements_for_framework(project_dir)
+    if req_framework:
+        frameworks.insert(0, req_framework)  # Prioritize requirements.txt detection
+
+    go_framework = detect_framework_from_go_mod(project_dir)
+    if go_framework:
+        frameworks.insert(0, go_framework)
+
+    if not frameworks:
+        frameworks.extend(config_languages)
+
+    return list(dict.fromkeys(frameworks))  # preserve order while deduping
+
+
+def detect_project_language(project_dir: Path) -> dict[str, Any]:
+    """Detect primary language and frameworks in a project directory."""
+    if not project_dir.exists() or not project_dir.is_dir():
+        return {"error": "Invalid directory"}
+
+    # Count files by extension
+    ext_counter = _count_language_files(project_dir)
+    config_languages = _detect_config_languages(project_dir)
 
     # Determine primary language
     if ext_counter:
@@ -226,29 +258,7 @@ def detect_project_language(project_dir: Path) -> dict[str, Any]:
     else:
         return {"language": "unknown", "frameworks": [], "file_count": 0}
 
-    # Detect frameworks
-    frameworks = []
-    for fw, patterns in FRAMEWORK_PATTERNS.items():
-        for pattern in patterns:
-            if any(project_dir.rglob(pattern)) or (project_dir / pattern).exists():
-                frameworks.append(fw)
-                break
-
-    # Check requirements.txt for Python frameworks
-    req_framework = _check_requirements_for_framework(project_dir)
-    if req_framework:
-        frameworks.insert(0, req_framework)  # Prioritize requirements.txt detection
-
-    # Check go.mod for Go frameworks
-    go_framework = detect_framework_from_go_mod(project_dir)
-    if go_framework:
-        frameworks.insert(0, go_framework)
-
-    # Add config languages as fallback only if no actual framework was detected
-    if not frameworks:
-        frameworks.extend(config_languages)
-
-    frameworks = list(dict.fromkeys(frameworks))  # preserve order while deduping
+    frameworks = _detect_frameworks(project_dir, primary_language, config_languages)
 
     return {
         "language": primary_language,

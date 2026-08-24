@@ -5,9 +5,7 @@ import yaml
 from jinja2 import Template
 
 
-def load_prompt(
-    prompt_id: str, context: Optional[dict[str, Any]] = None, version: str = "v1"
-) -> tuple[str, str]:
+def load_prompt(prompt_id: str, context: Optional[dict[str, Any]] = None, version: str = "v1") -> tuple[str, str]:
     # Corrected path handling for the project
     # The file is in src/prompt_loader.py, needs to reach prompts/
     prompt_path = os.path.join(

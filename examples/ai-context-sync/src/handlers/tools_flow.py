@@ -52,9 +52,7 @@ def register(mcp: object, get_sync_tool: Callable) -> None:
             def approval_callback() -> bool:
                 return True
 
-            result = sync_tool.orchestrator.run_flow(
-                task, approval_callback, initial_context=aggregated_context
-            )
+            result = sync_tool.orchestrator.run_flow(task, approval_callback, initial_context=aggregated_context)
             return json.dumps({"status": "success", "result": result})
         except (LLMError, OSError, json.JSONDecodeError, KeyError) as e:
             return json.dumps({"status": "error", "error": str(e)})
@@ -90,9 +88,7 @@ def register(mcp: object, get_sync_tool: Callable) -> None:
 
             nodes = []
             for node_id in chain:
-                title = (
-                    graph.nodes[node_id].title if node_id in graph.nodes else "Unknown"
-                )
+                title = graph.nodes[node_id].title if node_id in graph.nodes else "Unknown"
                 nodes.append({"id": node_id, "title": title})
 
             return json.dumps({"status": "success", "adr_id": adr_id, "chain": nodes})
@@ -116,9 +112,7 @@ def register(mcp: object, get_sync_tool: Callable) -> None:
             sync_tool = get_sync_tool(config=config)
             from src.reasoning import DecisionReasoner
 
-            reasoner = DecisionReasoner(
-                sync_tool.llm_client, sync_tool.config.settings.adr_dir
-            )
+            reasoner = DecisionReasoner(sync_tool.llm_client, sync_tool.config.settings.adr_dir)
             result = reasoner.explain_decision(query)
             return json.dumps({"status": "success", "explanation": result})
         except (LLMError, OSError, json.JSONDecodeError) as e:

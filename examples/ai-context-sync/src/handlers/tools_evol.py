@@ -51,13 +51,9 @@ def register(mcp: object, get_sync_tool: Callable) -> None:
             proposals = []
             for c in candidates:
                 proposal = sync_tool.evolution.propose_evolution(c)
-                proposals.append(
-                    {"rule_id": c["rule_id"], "ratio": c["ratio"], "proposal": proposal}
-                )
+                proposals.append({"rule_id": c["rule_id"], "ratio": c["ratio"], "proposal": proposal})
 
-            return json.dumps(
-                {"status": "success", "candidates": candidates, "proposals": proposals}
-            )
+            return json.dumps({"status": "success", "candidates": candidates, "proposals": proposals})
         except (LLMError, OSError, json.JSONDecodeError, KeyError) as e:
             return json.dumps({"status": "error", "error": str(e)})
         except Exception as e:
@@ -66,9 +62,7 @@ def register(mcp: object, get_sync_tool: Callable) -> None:
             return json.dumps({"status": "error", "error": str(e)})
 
     @mcp.tool()
-    def ai_scaffold(
-        template: str, target_dir: str = ".", config: str = ".ai-sync.json"
-    ) -> str:
+    def ai_scaffold(template: str, target_dir: str = ".", config: str = ".ai-sync.json") -> str:
         """Initialize a project from a template.
 
         Creates directory structure, CONTEXT.md, and specs based on a template.
@@ -84,9 +78,7 @@ def register(mcp: object, get_sync_tool: Callable) -> None:
 
             session = OnboardingSession(sync_tool.llm_client, root_dir=target_dir)
             session.start()
-            return json.dumps(
-                {"status": "success", "template": template, "target": target_dir}
-            )
+            return json.dumps({"status": "success", "template": template, "target": target_dir})
         except (LLMError, OSError, json.JSONDecodeError) as e:
             return json.dumps({"status": "error", "error": str(e)})
         except Exception as e:

@@ -185,16 +185,12 @@ class SemanticSearcher:
         if not query_tokens:
             return []
         query_tf = compute_tf(query_tokens)
-        query_vec = {
-            word: tf * self.idf.get(word, 0.0) for word, tf in query_tf.items()
-        }
+        query_vec = {word: tf * self.idf.get(word, 0.0) for word, tf in query_tf.items()}
 
         scores: List[Tuple[str, float]] = []
         for doc_content, doc_tok in zip(self.documents, self.doc_tokens):
             doc_tf = compute_tf(doc_tok)
-            doc_vec = {
-                word: tf * self.idf.get(word, 0.0) for word, tf in doc_tf.items()
-            }
+            doc_vec = {word: tf * self.idf.get(word, 0.0) for word, tf in doc_tf.items()}
             score = cosine_similarity(query_vec, doc_vec)
             if score > 0:
                 scores.append((doc_content, score))

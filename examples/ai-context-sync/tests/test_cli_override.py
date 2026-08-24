@@ -31,9 +31,7 @@ class TestCLIOverride(unittest.TestCase):
         self.assertNotIn("ADR-001", data["settings"]["overridden_violations"])
 
         # 执行 override
-        result = self.runner.invoke(
-            app, ["override", "ADR-001", "--config", self.config_path]
-        )
+        result = self.runner.invoke(app, ["override", "ADR-001", "--config", self.config_path])
         self.assertEqual(result.exit_code, 0)
 
         # 验证已添加

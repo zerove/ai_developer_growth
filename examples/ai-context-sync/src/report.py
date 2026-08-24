@@ -19,9 +19,7 @@ def generate_html_report(
     violation_rows = ""
     for v in violations:
         sev = v.get("severity", "Unknown")
-        color = {"Critical": "#dc3545", "Warning": "#ffc107", "Info": "#17a2b8"}.get(
-            sev, "#6c757d"
-        )
+        color = {"Critical": "#dc3545", "Warning": "#ffc107", "Info": "#17a2b8"}.get(sev, "#6c757d")
         rule = html.escape(v.get("rule_id", ""))
         message = html.escape(v.get("message", ""))
         file_path = html.escape(v.get("file", ""))

@@ -46,14 +46,14 @@ from .commands.evolution import evolve  # noqa: E402
 from .commands.flow import flow  # noqa: E402
 from .commands.monitoring import apply_fix, watch  # noqa: E402
 from .commands.sync_guard import guard, sync  # noqa: E402
-from .commands.tools import (
+from .commands.tools import (  # noqa: E402
     init,
     install_hook,
     onboard,
     override,
     report,
     scaffold,
-)  # noqa: E402
+)
 
 # Register all commands as flat (no nested groups)
 app.command("sync")(sync)

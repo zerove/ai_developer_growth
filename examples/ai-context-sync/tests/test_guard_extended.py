@@ -132,9 +132,7 @@ class TestCheckDriftJsonExtended:
             with open(os.path.join(tmpdir, "ADR-001.md"), "w") as f:
                 f.write("# ADR-001: Decision")
             guard = ArchitectureGuard(self.mock_client, tmpdir)
-            self.mock_client.generate.return_value = (
-                "This is not JSON at all, just plain text."
-            )
+            self.mock_client.generate.return_value = "This is not JSON at all, just plain text."
             result = guard.check_drift_json("diff", "msg")
             assert result == []
         finally:
@@ -160,7 +158,9 @@ class TestCheckDriftJsonExtended:
             with open(os.path.join(tmpdir, "ADR-001.md"), "w") as f:
                 f.write("# ADR-001: Decision")
             guard = ArchitectureGuard(self.mock_client, tmpdir)
-            self.mock_client.generate.return_value = '```json\n[{"rule_id": "R1", "severity": "High", "description": "Bad", "adr_file": "f.md"}]\n```'
+            self.mock_client.generate.return_value = (
+                '```json\n[{"rule_id": "R1", "severity": "High", "description": "Bad", "adr_file": "f.md"}]\n```'
+            )
             result = guard.check_drift_json("diff", "msg")
             assert len(result) == 1
             assert result[0]["rule_id"] == "R1"

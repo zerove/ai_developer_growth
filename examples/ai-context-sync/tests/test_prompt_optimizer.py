@@ -10,9 +10,7 @@ from src.prompt_optimizer import PromptOptimizer
 
 
 def _make_profile(name="Python", prompt_ext="Be Pythonic."):
-    return LanguageProfile(
-        name=name, default_ignore=[], recommended_prompt_extension=prompt_ext
-    )
+    return LanguageProfile(name=name, default_ignore=[], recommended_prompt_extension=prompt_ext)
 
 
 class TestDetectTaskType:
@@ -26,15 +24,10 @@ class TestDetectTaskType:
         assert self.optimizer._detect_task_type("fix: resolve null pointer") == "Bugfix"
 
     def test_refactor_commit(self):
-        assert (
-            self.optimizer._detect_task_type("refactor: extract service layer")
-            == "Refactor"
-        )
+        assert self.optimizer._detect_task_type("refactor: extract service layer") == "Refactor"
 
     def test_docs_commit(self):
-        assert (
-            self.optimizer._detect_task_type("docs: update README") == "Documentation"
-        )
+        assert self.optimizer._detect_task_type("docs: update README") == "Documentation"
 
     def test_general_commit(self):
         assert self.optimizer._detect_task_type("chore: clean up") == "General"
@@ -54,9 +47,7 @@ class TestDetectTaskType:
         assert self.optimizer._detect_task_type("feat: fix something") == "Feature"
 
     def test_multiple_keywords_feat_wins(self):
-        assert (
-            self.optimizer._detect_task_type("feat: refactor and fix bugs") == "Feature"
-        )
+        assert self.optimizer._detect_task_type("feat: refactor and fix bugs") == "Feature"
 
 
 class TestCalculateComplexity:

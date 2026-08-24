@@ -22,9 +22,7 @@ class TestOllamaGenerate:
         mock_response.raise_for_status = MagicMock()
 
         provider = OllamaProvider()
-        with patch(
-            "src.providers.ollama_provider.requests.post", return_value=mock_response
-        ) as mock_post:
+        with patch("src.providers.ollama_provider.requests.post", return_value=mock_response) as mock_post:
             result = provider.generate("What is AI?", "You are helpful.", "llama3")
             assert result == "Hello from Ollama"
             mock_post.assert_called_once()
@@ -37,9 +35,7 @@ class TestOllamaGenerate:
         mock_response.raise_for_status = MagicMock()
 
         provider = OllamaProvider()
-        with patch(
-            "src.providers.ollama_provider.requests.post", return_value=mock_response
-        ) as mock_post:
+        with patch("src.providers.ollama_provider.requests.post", return_value=mock_response) as mock_post:
             provider.generate("prompt", "sys", "llama3")
             url = mock_post.call_args[0][0]
             assert url == f"{OllamaProvider.DEFAULT_BASE_URL}/api/chat"
@@ -51,9 +47,7 @@ class TestOllamaGenerate:
         mock_response.raise_for_status = MagicMock()
 
         provider = OllamaProvider(api_base="http://remote-host:11434")
-        with patch(
-            "src.providers.ollama_provider.requests.post", return_value=mock_response
-        ) as mock_post:
+        with patch("src.providers.ollama_provider.requests.post", return_value=mock_response) as mock_post:
             provider.generate("prompt", "sys", "llama3")
             url = mock_post.call_args[0][0]
             assert url == "http://remote-host:11434/api/chat"
@@ -65,9 +59,7 @@ class TestOllamaGenerate:
         mock_response.raise_for_status = MagicMock()
 
         provider = OllamaProvider()
-        with patch(
-            "src.providers.ollama_provider.requests.post", return_value=mock_response
-        ) as mock_post:
+        with patch("src.providers.ollama_provider.requests.post", return_value=mock_response) as mock_post:
             provider.generate("prompt", "sys", "llama3")
             _, kwargs = mock_post.call_args
             # Ollama doesn't use auth headers
@@ -80,9 +72,7 @@ class TestOllamaGenerate:
         mock_response.raise_for_status = MagicMock()
 
         provider = OllamaProvider()
-        with patch(
-            "src.providers.ollama_provider.requests.post", return_value=mock_response
-        ) as mock_post:
+        with patch("src.providers.ollama_provider.requests.post", return_value=mock_response) as mock_post:
             provider.generate("test prompt", "test system", "llama3")
             _, kwargs = mock_post.call_args
             payload = kwargs["json"]
@@ -110,9 +100,7 @@ class TestOllamaGenerate:
         provider = OllamaProvider()
         with patch("src.providers.ollama_provider.requests.post") as mock_post:
             mock_response = MagicMock()
-            mock_response.raise_for_status.side_effect = requests.HTTPError(
-                "500 Internal"
-            )
+            mock_response.raise_for_status.side_effect = requests.HTTPError("500 Internal")
             mock_post.return_value = mock_response
 
             with pytest.raises(requests.HTTPError):
@@ -135,9 +123,7 @@ class TestOllamaGenerate:
         mock_response.raise_for_status = MagicMock()
 
         provider = OllamaProvider()
-        with patch(
-            "src.providers.ollama_provider.requests.post", return_value=mock_response
-        ) as mock_post:
+        with patch("src.providers.ollama_provider.requests.post", return_value=mock_response) as mock_post:
             provider.generate("prompt", "sys", "llama3")
             _, kwargs = mock_post.call_args
             assert kwargs["timeout"] == 120
@@ -149,9 +135,7 @@ class TestOllamaGenerate:
         mock_response.raise_for_status = MagicMock()
 
         provider = OllamaProvider()
-        with patch(
-            "src.providers.ollama_provider.requests.post", return_value=mock_response
-        ):
+        with patch("src.providers.ollama_provider.requests.post", return_value=mock_response):
             with pytest.raises(ValueError):
                 provider.generate("prompt", "sys", "llama3")
 

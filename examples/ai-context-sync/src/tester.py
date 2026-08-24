@@ -46,12 +46,8 @@ class TestRunner:
             import resource
 
             def _limit() -> None:
-                resource.setrlimit(
-                    resource.RLIMIT_AS, (512 * 1024 * 1024, 512 * 1024 * 1024)
-                )
-                resource.setrlimit(
-                    resource.RLIMIT_FSIZE, (64 * 1024 * 1024, 64 * 1024 * 1024)
-                )
+                resource.setrlimit(resource.RLIMIT_AS, (512 * 1024 * 1024, 512 * 1024 * 1024))
+                resource.setrlimit(resource.RLIMIT_FSIZE, (64 * 1024 * 1024, 64 * 1024 * 1024))
                 resource.setrlimit(resource.RLIMIT_NPROC, (32, 32))
 
             return _limit
@@ -120,13 +116,7 @@ class TestRunner:
                 except (OSError, subprocess.SubprocessError) as e:
                     return TestResult(False, f"Execution failed: {str(e)}", -1)
             except subprocess.TimeoutExpired as e:
-                stdout = (
-                    e.stdout.decode("utf-8", errors="replace")
-                    if isinstance(e.stdout, bytes)
-                    else (e.stdout or "")
-                )
-                return TestResult(
-                    False, f"Test timed out after {self.timeout}s\n{stdout}", 124
-                )
+                stdout = e.stdout.decode("utf-8", errors="replace") if isinstance(e.stdout, bytes) else (e.stdout or "")
+                return TestResult(False, f"Test timed out after {self.timeout}s\n{stdout}", 124)
             except (OSError, subprocess.SubprocessError) as e:
                 return TestResult(False, f"Unexpected error: {str(e)}", -1)

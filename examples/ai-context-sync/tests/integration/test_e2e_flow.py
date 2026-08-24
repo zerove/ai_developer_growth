@@ -22,9 +22,7 @@ class TestEndToEndFlow:
         with open(self.config_path, "w") as f:
             import json
 
-            json.dump(
-                {"llm": {"provider": "openai", "model": "gpt-4o"}, "settings": {}}, f
-            )
+            json.dump({"llm": {"provider": "openai", "model": "gpt-4o"}, "settings": {}}, f)
         sync = AIContextSync(config_path=self.config_path, dry_run=True)
         assert sync.dry_run is True
         assert sync.config is not None
@@ -54,9 +52,7 @@ class TestEndToEndFlow:
             json.dump(
                 {
                     "llm": {},
-                    "settings": {
-                        "context_file": os.path.join(self.tmpdir, "CONTEXT.md")
-                    },
+                    "settings": {"context_file": os.path.join(self.tmpdir, "CONTEXT.md")},
                 },
                 f,
             )

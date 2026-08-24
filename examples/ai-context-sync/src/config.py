@@ -16,9 +16,7 @@ class LLMConfig:
 
 @dataclass
 class SyncSettings:
-    ignore: List[str] = field(
-        default_factory=lambda: ["package-lock.json", ".gitignore", "dist/*"]
-    )
+    ignore: List[str] = field(default_factory=lambda: ["package-lock.json", ".gitignore", "dist/*"])
     auto_commit: bool = False
     context_file: str = "CONTEXT.md"
     adr_dir: str = "docs/adr/"
@@ -44,9 +42,7 @@ class AppConfig:
                 data = {"llm": asdict(self.llm), "settings": asdict(self.settings)}
                 json.dump(data, f, indent=2)
         except OSError as e:
-            raise ConfigError(
-                f"Failed to save config to {self.config_path}: {e}"
-            ) from e
+            raise ConfigError(f"Failed to save config to {self.config_path}: {e}") from e
 
     @classmethod
     def load(cls, path: str) -> "AppConfig":

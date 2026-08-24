@@ -67,9 +67,7 @@ def watch(
 def apply_fix(
     rule_id: str,
     config: str = typer.Option(".ai-sync.json", help="Path to config file"),
-    dry_run: bool = typer.Option(
-        False, "--dry-run", help="Preview changes without applying"
-    ),
+    dry_run: bool = typer.Option(False, "--dry-run", help="Preview changes without applying"),
 ) -> None:
     """Automatically apply the suggested fix for a specific rule violation."""
     sync_tool = AIContextSync(config_path=config)

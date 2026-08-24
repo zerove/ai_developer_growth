@@ -62,9 +62,7 @@ TEMPLATES: dict[str, LearningPathTemplate] = {
                 "理解能力三层模型",
                 1.5,
             ),
-            LearningStep(
-                "s4", "杠杆思维", "mindset/leverage-thinking.md", "找到最大杠杆点", 2.0
-            ),
+            LearningStep("s4", "杠杆思维", "mindset/leverage-thinking.md", "找到最大杠杆点", 2.0),
             LearningStep(
                 "s5",
                 "AI 编程助手",
@@ -81,9 +79,7 @@ TEMPLATES: dict[str, LearningPathTemplate] = {
         target_level="L2",
         role="backend",
         steps=[
-            LearningStep(
-                "s1", "系统思维", "mindset/systems-thinking.md", "建立系统思维模式", 3.0
-            ),
+            LearningStep("s1", "系统思维", "mindset/systems-thinking.md", "建立系统思维模式", 3.0),
             LearningStep(
                 "s2",
                 "资源整合",
@@ -91,12 +87,8 @@ TEMPLATES: dict[str, LearningPathTemplate] = {
                 "学会整合 AI 资源",
                 2.0,
             ),
-            LearningStep(
-                "s3", "本地 LLM", "tools/local-llm-setup.md", "部署本地大模型", 4.0
-            ),
-            LearningStep(
-                "s4", "向量搜索", "tools/ai-search-engines.md", "构建语义搜索", 3.0
-            ),
+            LearningStep("s3", "本地 LLM", "tools/local-llm-setup.md", "部署本地大模型", 4.0),
+            LearningStep("s4", "向量搜索", "tools/ai-search-engines.md", "构建语义搜索", 3.0),
             LearningStep(
                 "s5",
                 "全周期工作流",
@@ -120,9 +112,7 @@ TEMPLATES: dict[str, LearningPathTemplate] = {
         target_level="L3",
         role="fullstack",
         steps=[
-            LearningStep(
-                "s1", "能力模型", "mindset/capability-model.md", "理解五维能力模型", 2.0
-            ),
+            LearningStep("s1", "能力模型", "mindset/capability-model.md", "理解五维能力模型", 2.0),
             LearningStep(
                 "s2",
                 "知识产品化",
@@ -174,9 +164,7 @@ class LearningPathManager:
             templates = [t for t in templates if t.role == role or t.role == "any"]
         return templates
 
-    def recommend_path(
-        self, current_level: str, target_level: str, role: str = "any"
-    ) -> list[LearningPathTemplate]:
+    def recommend_path(self, current_level: str, target_level: str, role: str = "any") -> list[LearningPathTemplate]:
         """Recommend learning paths based on current/target level."""
         level_order = ["L0", "L1", "L2", "L3", "L4"]
         try:
@@ -189,16 +177,13 @@ class LearningPathManager:
         for template in TEMPLATES.values():
             try:
                 template_idx = level_order.index(template.target_level)
-                if current_idx <= template_idx <= target_idx:
-                    if template.role == role or template.role == "any":
-                        recommended.append(template)
+                if current_idx <= template_idx <= target_idx and (template.role == role or template.role == "any"):
+                    recommended.append(template)
             except ValueError:
                 continue
         return recommended
 
-    def create_custom_path(
-        self, path_id: str, name: str, description: str, steps: list[dict]
-    ) -> LearningPathTemplate:
+    def create_custom_path(self, path_id: str, name: str, description: str, steps: list[dict]) -> LearningPathTemplate:
         """Create a custom learning path."""
         learning_steps = [LearningStep(**step) for step in steps]
         template = LearningPathTemplate(

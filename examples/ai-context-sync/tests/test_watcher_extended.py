@@ -19,9 +19,7 @@ class TestAuditHandlerViolations:
     @patch("src.watcher.time.time", return_value=1000.0)
     @patch("builtins.open", MagicMock())
     @patch("src.watcher.os.makedirs")
-    def test_on_modified_with_violations_no_critical(
-        self, _mock_makedirs, _mock_time, _mock_strftime
-    ):
+    def test_on_modified_with_violations_no_critical(self, _mock_makedirs, _mock_time, _mock_strftime):
         """Non-Critical violations are listed without fix suggestions."""
         violation1 = MagicMock()
         violation1.severity = "Warning"
@@ -49,9 +47,7 @@ class TestAuditHandlerViolations:
     @patch("src.watcher.time.time", return_value=1000.0)
     @patch("builtins.open", MagicMock())
     @patch("src.watcher.os.makedirs")
-    def test_on_modified_with_critical_violation(
-        self, _mock_makedirs, _mock_time, _mock_strftime
-    ):
+    def test_on_modified_with_critical_violation(self, _mock_makedirs, _mock_time, _mock_strftime):
         """Critical violations trigger fix generation."""
         critical = MagicMock()
         critical.severity = "Critical"
@@ -69,17 +65,13 @@ class TestAuditHandlerViolations:
 
         handler.on_modified(event)
 
-        self.mock_sync.auditor.generate_fix.assert_called_once_with(
-            critical, "N/A", "relevant specs"
-        )
+        self.mock_sync.auditor.generate_fix.assert_called_once_with(critical, "N/A", "relevant specs")
 
     @patch("src.watcher.time.strftime", return_value="2025-01-01 00:00:00")
     @patch("src.watcher.time.time", return_value=1000.0)
     @patch("builtins.open", MagicMock())
     @patch("src.watcher.os.makedirs")
-    def test_on_modified_mixed_severities(
-        self, _mock_makedirs, _mock_time, _mock_strftime
-    ):
+    def test_on_modified_mixed_severities(self, _mock_makedirs, _mock_time, _mock_strftime):
         """Mix of Critical and Warning violations generates fixes only for Critical."""
         critical = MagicMock()
         critical.severity = "Critical"
@@ -107,9 +99,7 @@ class TestAuditHandlerViolations:
     @patch("src.watcher.time.strftime", return_value="2025-01-01 00:00:00")
     @patch("src.watcher.os.makedirs")
     @patch("builtins.open", MagicMock())
-    def test_on_modified_debounce_prevents_rapid_fire(
-        self, _mock_makedirs, _mock_strftime
-    ):
+    def test_on_modified_debounce_prevents_rapid_fire(self, _mock_makedirs, _mock_strftime):
         """Second call within debounce window is skipped."""
         self.mock_sync.auditor.audit.return_value = []
         self.mock_sync.config.settings.watcher_debounce = 1.0

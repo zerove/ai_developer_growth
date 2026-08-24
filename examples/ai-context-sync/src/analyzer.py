@@ -71,9 +71,7 @@ class GitAnalyzer:
 
             return "".join(filtered_diffs)
         except (ValueError, IndexError) as e:
-            logger.warning(
-                f"Error parsing diff with unidiff: {e}. Falling back to basic filter."
-            )
+            logger.warning(f"Error parsing diff with unidiff: {e}. Falling back to basic filter.")
             return self._basic_filter(diff_text)
 
     def _basic_filter(self, diff: str) -> str:

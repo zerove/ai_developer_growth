@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 
 from fastapi import APIRouter, Form, Request
@@ -53,7 +53,7 @@ async def start_learning(
         if not await existing.fetchone():
             await db.execute(
                 "INSERT INTO learning_progress (user_id, doc_path, doc_title, status, started_at) VALUES (?, ?, ?, 'in_progress', ?)",
-                (user_id, doc_path, doc_title, datetime.now().isoformat()),
+                (user_id, doc_path, doc_title, datetime.now(timezone.utc).isoformat()),
             )
             await db.commit()
         return RedirectResponse(url="/progress", status_code=303)
@@ -71,7 +71,7 @@ async def complete_learning(request: Request, progress_id: int, notes: str = For
     try:
         await db.execute(
             "UPDATE learning_progress SET status = 'completed', completed_at = ?, notes = ? WHERE id = ? AND user_id = ?",
-            (datetime.now().isoformat(), notes, progress_id, user_id),
+            (datetime.now(timezone.utc).isoformat(), notes, progress_id, user_id),
         )
         await db.commit()
         return RedirectResponse(url="/progress", status_code=303)

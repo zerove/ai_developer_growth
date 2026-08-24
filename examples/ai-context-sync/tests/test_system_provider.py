@@ -31,31 +31,19 @@ class TestParseTomlValue:
 
     def test_parse_quoted_value(self):
         p = _make_provider()
-        assert (
-            p._parse_toml_value('default_provider = "openai"', "default_provider")
-            == "openai"
-        )
+        assert p._parse_toml_value('default_provider = "openai"', "default_provider") == "openai"
 
     def test_parse_single_quoted_value(self):
         p = _make_provider()
-        assert (
-            p._parse_toml_value("default_provider = 'claude'", "default_provider")
-            == "claude"
-        )
+        assert p._parse_toml_value("default_provider = 'claude'", "default_provider") == "claude"
 
     def test_parse_unquoted_value(self):
         p = _make_provider()
-        assert (
-            p._parse_toml_value("default_provider = openai", "default_provider")
-            == "openai"
-        )
+        assert p._parse_toml_value("default_provider = openai", "default_provider") == "openai"
 
     def test_parse_missing_key(self):
         p = _make_provider()
-        assert (
-            p._parse_toml_value('default_provider = "openai"', "nonexistent_key")
-            is None
-        )
+        assert p._parse_toml_value('default_provider = "openai"', "nonexistent_key") is None
 
     def test_parse_multiline_content(self):
         p = _make_provider()
@@ -184,9 +172,7 @@ class TestDetectEnvironment:
     def test_env_var_detection(self):
         p = _make_provider()
         with patch("src.providers.system_provider.os.path.exists", return_value=False):
-            with patch(
-                "src.providers.system_provider.os.getenv", return_value="sk-fake-key"
-            ):
+            with patch("src.providers.system_provider.os.getenv", return_value="sk-fake-key"):
                 p._detect_environment()
                 assert p._detected_provider == "openai"
                 assert p._detected_api_key == "sk-fake-key"
@@ -265,9 +251,7 @@ class TestGenerate:
                 except Exception:
                     # If fallback doesn't work with generic Exception, that's the expected behavior
                     # of the current implementation (only catches LLMError and requests.RequestException)
-                    pytest.skip(
-                        "Fallback only works for LLMError/requests.RequestException"
-                    )
+                    pytest.skip("Fallback only works for LLMError/requests.RequestException")
 
     def test_generate_ollama_provider_reraises_on_failure(self):
         """When ollama itself fails, exception propagates (no further fallback)."""

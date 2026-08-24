@@ -75,9 +75,7 @@ class TestSemanticSearcher:
     def test_index_directory(self):
         with tempfile.TemporaryDirectory() as tmpdir:
             with open(os.path.join(tmpdir, "adr001.md"), "w") as f:
-                f.write(
-                    "# ADR-001: Use PostgreSQL\n\nWe decided to use PostgreSQL for our database."
-                )
+                f.write("# ADR-001: Use PostgreSQL\n\nWe decided to use PostgreSQL for our database.")
             with open(os.path.join(tmpdir, "adr002.md"), "w") as f:
                 f.write("# ADR-002: Use Redis\n\nWe decided to use Redis for caching.")
             searcher = SemanticSearcher()
@@ -87,9 +85,7 @@ class TestSemanticSearcher:
     def test_search_returns_relevant(self):
         with tempfile.TemporaryDirectory() as tmpdir:
             with open(os.path.join(tmpdir, "adr001.md"), "w") as f:
-                f.write(
-                    "# ADR-001: Use PostgreSQL\n\nWe chose PostgreSQL for database storage."
-                )
+                f.write("# ADR-001: Use PostgreSQL\n\nWe chose PostgreSQL for database storage.")
             with open(os.path.join(tmpdir, "adr002.md"), "w") as f:
                 f.write("# ADR-002: Use Redis\n\nWe chose Redis for caching layer.")
             searcher = SemanticSearcher()

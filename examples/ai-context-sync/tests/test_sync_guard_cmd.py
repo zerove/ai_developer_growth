@@ -16,9 +16,7 @@ class TestSyncCommand:
 
         sync(config=".ai-sync.json", dry_run=False, detach=False)
 
-        mock_sync_cls.assert_called_once_with(
-            config_path=".ai-sync.json", dry_run=False
-        )
+        mock_sync_cls.assert_called_once_with(config_path=".ai-sync.json", dry_run=False)
         mock_sync.sync.assert_called_once()
 
     @patch("src.cli.commands.sync_guard.AIContextSync")
@@ -104,9 +102,7 @@ class TestGuardCommand:
     @patch("src.config.AppConfig")
     @patch("src.cli.commands.sync_guard.AIContextSync")
     @patch("src.cli.commands.sync_guard.typer")
-    def test_guard_overridden_violations_filtered(
-        self, mock_typer, mock_sync_cls, mock_config_cls
-    ):
+    def test_guard_overridden_violations_filtered(self, mock_typer, mock_sync_cls, mock_config_cls):
         mock_config = MagicMock()
         mock_config.settings.overridden_violations = ["R001"]
         mock_config_cls.load.return_value = mock_config

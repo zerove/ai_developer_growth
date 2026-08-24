@@ -23,9 +23,7 @@ class TestStartInteractiveFlow:
     def test_start_normal_flow_exit_immediately(self):
         """User types 'exit' immediately after the initial prompt."""
         mock_llm = MagicMock()
-        mock_llm.generate.return_value = (
-            "Overview:\n- Point 1\nSuggested Areas: auth, db, api"
-        )
+        mock_llm.generate.return_value = "Overview:\n- Point 1\nSuggested Areas: auth, db, api"
 
         session = OnboardingSession(mock_llm, self.tmpdir)
 

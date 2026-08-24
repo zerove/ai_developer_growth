@@ -120,7 +120,7 @@ anti_patterns:
   name: Unclosed connection
   severity: error
   category: resource_management
-  pattern: (?:connect|new connection|getConnection)\s*\([^)]*\)\s*(?!.*\b(with|using|close|finally|defer)\b)
+  pattern: \b(?:connect|new connection|getConnection)\s*\([^)]*\)\s*(?!.*\b(with|using|close|finally|defer)\b)
   message: Database/network connections must be released after use
   fix_hint: Use connection pool or ensure close() in finally
 - id: as-shared-mutable

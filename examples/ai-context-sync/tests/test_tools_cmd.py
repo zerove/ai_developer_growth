@@ -65,9 +65,7 @@ class TestScaffold:
     @patch("builtins.open", mock_open())
     def test_scaffold_copies_files(self, mock_init, mock_os, mock_shutil):
         """Scaffold copies individual files from template."""
-        mock_os.listdir.side_effect = lambda p: (
-            [".git"] if p == "." else ["file1.txt", "file2.py"]
-        )
+        mock_os.listdir.side_effect = lambda p: [".git"] if p == "." else ["file1.txt", "file2.py"]
         mock_os.path.exists.return_value = True
         mock_os.path.isdir.return_value = False
         mock_os.path.join.side_effect = os.path.join

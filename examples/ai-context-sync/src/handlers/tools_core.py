@@ -29,9 +29,7 @@ def register(mcp: object, get_sync_tool: Callable) -> None:
         try:
             sync_tool = get_sync_tool(config=config, dry_run=dry_run)
             sync_tool.sync()
-            return json.dumps(
-                {"status": "success", "config": config, "dry_run": dry_run}
-            )
+            return json.dumps({"status": "success", "config": config, "dry_run": dry_run})
         except AISyncError as e:
             return json.dumps({"status": "error", "error": str(e)})
 

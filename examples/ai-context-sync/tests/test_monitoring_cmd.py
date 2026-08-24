@@ -71,9 +71,7 @@ class TestApplyFixCommand:
     def test_apply_fix_unsafe_path(self, mock_sync_cls, mock_typer):
         mock_sync = MagicMock()
         mock_sync_cls.return_value = mock_sync
-        mock_sync.analyzer.get_last_commit_diff.return_value = (
-            "+++ b/../../etc/passwd\n"
-        )
+        mock_sync.analyzer.get_last_commit_diff.return_value = "+++ b/../../etc/passwd\n"
 
         apply_fix(rule_id="R001", config=".ai-sync.json", dry_run=False)
 

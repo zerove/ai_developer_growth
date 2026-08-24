@@ -12,15 +12,11 @@ class EvolutionEngine:
     and proposes updates to the project's specifications.
     """
 
-    def __init__(
-        self, llm_client: LLMClient, feedback_manager: FeedbackManager, specs_dir: str
-    ):
+    def __init__(self, llm_client: LLMClient, feedback_manager: FeedbackManager, specs_dir: str):
         self.llm_client = llm_client
         self.feedback_manager = feedback_manager
         self.specs_dir = specs_dir
-        self.conflict_threshold = (
-            0.6  # If >60% of occurrences are overridden, suggest evolution
-        )
+        self.conflict_threshold = 0.6  # If >60% of occurrences are overridden, suggest evolution
 
     def analyze_conflicts(self) -> List[Dict]:
         """
@@ -42,9 +38,7 @@ class EvolutionEngine:
                 stats[rid]["overridden"] += 1
                 # Store a few examples of the violation for the LLM to analyze
                 if len(stats[rid]["examples"]) < 3:
-                    stats[rid]["examples"].append(
-                        {"message": item["message"], "file": item["file_path"]}
-                    )
+                    stats[rid]["examples"].append({"message": item["message"], "file": item["file_path"]})
 
         # Identify candidates for evolution
         candidates = []
@@ -105,9 +99,7 @@ class EvolutionEngine:
         specs_info = []
         for c in candidates:
             content = self._find_spec_content(c["rule_id"])
-            specs_info.append(
-                f"Rule {c['rule_id']}:\n{content}\nExamples: {json.dumps(c['examples'])}"
-            )
+            specs_info.append(f"Rule {c['rule_id']}:\n{content}\nExamples: {json.dumps(c['examples'])}")
 
         system_prompt = (
             "You are a senior software architect. You are reviewing a set of project specifications "
@@ -136,9 +128,7 @@ class EvolutionEngine:
 
         for file in os.listdir(self.specs_dir):
             if file.endswith(".md"):
-                with open(
-                    os.path.join(self.specs_dir, file), "r", encoding="utf-8"
-                ) as f:
+                with open(os.path.join(self.specs_dir, file), "r", encoding="utf-8") as f:
                     content = f.read()
                     if rule_id in content:
                         # Return the paragraph containing the rule_id

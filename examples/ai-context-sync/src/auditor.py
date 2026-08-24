@@ -85,15 +85,11 @@ class SpecAuditor:
         if os.path.exists(self.specs_dir):
             for file in os.listdir(self.specs_dir):
                 if file.endswith(".md"):
-                    with open(
-                        os.path.join(self.specs_dir, file), "r", encoding="utf-8"
-                    ) as f:
+                    with open(os.path.join(self.specs_dir, file), "r", encoding="utf-8") as f:
                         all_specs += f"\n--- Spec: {file} ---\n{f.read()}\n"
         return all_specs
 
-    def _verify_violation(
-        self, violation: Violation, diff: str, spec_text: str
-    ) -> bool:
+    def _verify_violation(self, violation: Violation, diff: str, spec_text: str) -> bool:
         """
         The Verifier Agent checks if a candidate violation is actually a violation.
         """
@@ -165,9 +161,7 @@ class SpecAuditor:
         attack_prompt = f"Task: {task}\n\nCode Diff:\n{diff}"
 
         try:
-            attack_response = self.llm_client.generate(
-                attack_prompt, system_prompt=attack_system_prompt
-            )
+            attack_response = self.llm_client.generate(attack_prompt, system_prompt=attack_system_prompt)
             candidates_data = parse_llm_json(attack_response, label="adversarial audit")
             if not candidates_data:
                 return []
@@ -182,9 +176,7 @@ class SpecAuditor:
                 for v in candidates_data
             ]
 
-            confirmed_violations = [
-                v for v in candidates if self._verify_violation(v, diff, specs)
-            ]
+            confirmed_violations = [v for v in candidates if self._verify_violation(v, diff, specs)]
 
             return confirmed_violations
         except LLMError as e:

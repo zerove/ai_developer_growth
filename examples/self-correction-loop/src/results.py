@@ -41,9 +41,7 @@ class CorrectionResult:
     fixed_code: str | None = None
     test_output: str = ""
     duration_s: float = 0.0
-    timestamp: str = field(
-        default_factory=lambda: datetime.now(timezone.utc).isoformat()
-    )
+    timestamp: str = field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
 
     @property
     def is_success(self) -> bool:

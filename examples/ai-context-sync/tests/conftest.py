@@ -21,9 +21,7 @@ def adr_dir():
 
     # ADR-002: Depends on ADR-001
     with open(os.path.join(tmpdir, "ADR-002.md"), "w") as f:
-        f.write(
-            "# ADR-002: Add Authentication\n\n- **Depends On:** [ADR-001]\n\nWe add JWT auth to the REST API.\n"
-        )
+        f.write("# ADR-002: Add Authentication\n\n- **Depends On:** [ADR-001]\n\nWe add JWT auth to the REST API.\n")
 
     # ADR-003: Depends on ADR-002, supersedes ADR-001
     with open(os.path.join(tmpdir, "ADR-003.md"), "w") as f:

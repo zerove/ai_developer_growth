@@ -29,9 +29,7 @@ class TestStrategyRegistry:
             def name(self) -> str:
                 return "fixed"
 
-            def fix(
-                self, code: str, error_output: str, file_path: str | None = None
-            ) -> str:
+            def fix(self, code: str, error_output: str, file_path: str | None = None) -> str:
                 return "FIXED"
 
         class Decline(Strategy):
@@ -39,9 +37,7 @@ class TestStrategyRegistry:
             def name(self) -> str:
                 return "decline"
 
-            def fix(
-                self, code: str, error_output: str, file_path: str | None = None
-            ) -> None:
+            def fix(self, code: str, error_output: str, file_path: str | None = None) -> None:
                 return None
 
         reg = StrategyRegistry([Decline(), Fixed()])
@@ -57,9 +53,7 @@ class TestStrategyRegistry:
             def name(self) -> str:
                 return "s"
 
-            def fix(
-                self, code: str, error_output: str, file_path: str | None = None
-            ) -> None:
+            def fix(self, code: str, error_output: str, file_path: str | None = None) -> None:
                 return None
 
         reg.add(S())

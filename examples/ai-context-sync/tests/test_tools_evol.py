@@ -160,9 +160,7 @@ class TestAiScaffold:
         MockSession.return_value = mock_session
 
         ai_scaffold = self._register(get_sync_tool=lambda **kw: sync)
-        result = json.loads(
-            ai_scaffold(template="python-fastapi", target_dir="/tmp/proj")
-        )
+        result = json.loads(ai_scaffold(template="python-fastapi", target_dir="/tmp/proj"))
 
         assert result["status"] == "success"
         assert result["template"] == "python-fastapi"

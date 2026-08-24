@@ -73,7 +73,7 @@ class SpecAuditor:
             violations.append("检测到可能的 SQL 拼接，建议使用参数化查询")
 
         # 检查未处理异常
-        if re.search(r"except\s*:", diff) and not re.search(r"except\s+\w+", diff):
+        if re.search(r"except\s*:", diff) and not re.search(r"except\s+\w+", diff):  # noqa: py-bare-except -- 检测逻辑本身, 非真实 except 语句
             violations.append("检测到裸露的 except:，建议指定异常类型")
 
         # 检查类型注解

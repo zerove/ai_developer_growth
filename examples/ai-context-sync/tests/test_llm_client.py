@@ -47,9 +47,7 @@ class TestLLMCache:
 class TestLLMClientCache:
     def test_cache_hit_skips_api(self):
         mock_response = MagicMock()
-        mock_response.json.return_value = {
-            "choices": [{"message": {"content": "cached"}}]
-        }
+        mock_response.json.return_value = {"choices": [{"message": {"content": "cached"}}]}
         mock_response.raise_for_status = MagicMock()
         with tempfile.TemporaryDirectory():
             with patch.dict(os.environ, {"AI_SYNC_KEY": "test-key"}):
@@ -64,9 +62,7 @@ class TestLLMClientCache:
 
     def test_cache_disabled(self):
         mock_response = MagicMock()
-        mock_response.json.return_value = {
-            "choices": [{"message": {"content": "fresh"}}]
-        }
+        mock_response.json.return_value = {"choices": [{"message": {"content": "fresh"}}]}
         mock_response.raise_for_status = MagicMock()
         with patch.dict(os.environ, {"AI_SYNC_KEY": "test-key"}):
             with patch("requests.post", return_value=mock_response) as mock_post:
@@ -97,9 +93,7 @@ class TestLLMClient:
 
     def test_generate_success(self):
         mock_response = MagicMock()
-        mock_response.json.return_value = {
-            "choices": [{"message": {"content": "Hi there"}}]
-        }
+        mock_response.json.return_value = {"choices": [{"message": {"content": "Hi there"}}]}
         mock_response.raise_for_status = MagicMock()
         with patch.dict(os.environ, {"AI_SYNC_KEY": "test-key"}):
             with patch("requests.post", return_value=mock_response) as mock_post:
@@ -110,9 +104,7 @@ class TestLLMClient:
 
     def test_generate_raises_on_failure(self):
         with patch.dict(os.environ, {"AI_SYNC_KEY": "test-key"}):
-            with patch(
-                "requests.post", side_effect=requests.ConnectionError("timeout")
-            ):
+            with patch("requests.post", side_effect=requests.ConnectionError("timeout")):
                 client = LLMClient(cache_enabled=False)
                 with pytest.raises(LLMError):
                     client.generate("Hello")
@@ -143,9 +135,7 @@ class TestClaudeProvider:
 
     def test_claude_generate_raises_on_failure(self):
         with patch.dict(os.environ, {"AI_SYNC_KEY": "test-key"}):
-            with patch(
-                "requests.post", side_effect=requests.ConnectionError("timeout")
-            ):
+            with patch("requests.post", side_effect=requests.ConnectionError("timeout")):
                 client = LLMClient(provider="claude", cache_enabled=False)
                 with pytest.raises(LLMError):
                     client.generate("Hello")
@@ -177,9 +167,7 @@ class TestOllamaProvider:
 
     def test_ollama_custom_base_url(self):
         mock_response = MagicMock()
-        mock_response.json.return_value = {
-            "message": {"content": "Custom URL response"}
-        }
+        mock_response.json.return_value = {"message": {"content": "Custom URL response"}}
         mock_response.raise_for_status = MagicMock()
         with patch("requests.post", return_value=mock_response) as mock_post:
             client = LLMClient(

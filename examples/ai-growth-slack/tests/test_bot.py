@@ -27,9 +27,7 @@ def test_assess_without_scores():
 
 def test_assess_with_scores():
     bot = create_bot()
-    msg = SlackMessage(
-        text="!growth assess ai=70 eng=60 learn=80", channel="#test", user="U123"
-    )
+    msg = SlackMessage(text="!growth assess ai=70 eng=60 learn=80", channel="#test", user="U123")
     resp = bot.handle_message(msg)
     assert resp is not None
     assert "Overall" in resp

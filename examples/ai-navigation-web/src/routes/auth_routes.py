@@ -25,9 +25,7 @@ async def register(
 ):
     db = await get_db()
     try:
-        existing = await db.execute(
-            "SELECT id FROM users WHERE username = ? OR email = ?", (username, email)
-        )
+        existing = await db.execute("SELECT id FROM users WHERE username = ? OR email = ?", (username, email))
         if await existing.fetchone():
             return templates.TemplateResponse(
                 request,
@@ -78,9 +76,7 @@ async def login(
                 context={"request": request, "error": "Invalid credentials"},
                 status_code=400,
             )
-        token = create_access_token(
-            {"user_id": user["id"], "username": user["username"]}
-        )
+        token = create_access_token({"user_id": user["id"], "username": user["username"]})
         response = RedirectResponse(url="/dashboard", status_code=303)
         set_auth_cookie(response, token)
         return response

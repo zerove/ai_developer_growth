@@ -133,6 +133,7 @@ from src.exceptions import AISyncError, ConfigError
 
 try:
     from src.core import AIContextSync
+
     sync = AIContextSync()
     sync.sync_context()
 except ConfigError as e:

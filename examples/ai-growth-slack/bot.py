@@ -106,9 +106,7 @@ class GrowthBot:
         progress = self.user_progress.get(msg.user, [])
         if not progress:
             return "📚 No learning progress yet. Start with `!growth assess`"
-        return f"📚 You've completed {len(progress)} documents:\n" + "\n".join(
-            f"• {d}" for d in progress[-5:]
-        )
+        return f"📚 You've completed {len(progress)} documents:\n" + "\n".join(f"• {d}" for d in progress[-5:])
 
     def cmd_recommend(self, msg: SlackMessage) -> str:
         """Get learning recommendations based on actual scores."""
@@ -120,9 +118,7 @@ class GrowthBot:
         recs = []
         for name, score in weak:
             if score < 40:
-                recs.append(
-                    f"• *{name}* ({score}%) - 建议从基础文档开始，先掌握核心概念"
-                )
+                recs.append(f"• *{name}* ({score}%) - 建议从基础文档开始，先掌握核心概念")
             elif score < 70:
                 recs.append(f"• *{name}* ({score}%) - 建议通过实践项目强化，参考案例库")
             else:

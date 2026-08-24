@@ -16,27 +16,17 @@ def _add_base_check_parser(sub: argparse._SubParsersAction[Any]) -> None:
         help="Only show issues at this severity or higher",
     )
     check_p.add_argument("--json", action="store_true", help="Output as JSON")
-    check_p.add_argument(
-        "--sarif", action="store_true", help="Output as SARIF (GitHub Code Scanning)"
-    )
-    check_p.add_argument(
-        "-j", "--jobs", type=int, default=1, help="Number of parallel jobs (default: 1)"
-    )
+    check_p.add_argument("--sarif", action="store_true", help="Output as SARIF (GitHub Code Scanning)")
+    check_p.add_argument("-j", "--jobs", type=int, default=1, help="Number of parallel jobs (default: 1)")
     check_p.add_argument(
         "--since",
         type=str,
         default=None,
         help="Only check files changed since git ref (e.g., HEAD~1, main)",
     )
-    check_p.add_argument(
-        "--staged", action="store_true", help="Only check staged files (for pre-commit)"
-    )
-    check_p.add_argument(
-        "--unstaged", action="store_true", help="Only check unstaged changed files"
-    )
-    check_p.add_argument(
-        "--trend", action="store_true", help="Record results for trend tracking"
-    )
+    check_p.add_argument("--staged", action="store_true", help="Only check staged files (for pre-commit)")
+    check_p.add_argument("--unstaged", action="store_true", help="Only check unstaged changed files")
+    check_p.add_argument("--trend", action="store_true", help="Record results for trend tracking")
     check_p.add_argument(
         "--notify",
         type=str,
@@ -81,9 +71,7 @@ def _add_report_parser(sub: argparse._SubParsersAction[Any]) -> None:
     report_p.add_argument("path", help="File or directory to report on")
     report_p.add_argument("--lang", help="Force language (skip auto-detection)")
     report_p.add_argument("--framework", help="Force framework (skip auto-detection)")
-    report_p.add_argument(
-        "--error-threshold", type=int, default=0, help="Max errors allowed (default: 0)"
-    )
+    report_p.add_argument("--error-threshold", type=int, default=0, help="Max errors allowed (default: 0)")
     report_p.add_argument(
         "--warning-threshold",
         type=int,
@@ -126,18 +114,14 @@ def _add_notify_parser(sub: argparse._SubParsersAction[Any]) -> None:
     """Add 'notify' subcommand parser."""
     notify_p = sub.add_parser("notify", help="Send governance report via webhook")
     notify_p.add_argument("path", help="File or directory to check")
-    notify_p.add_argument(
-        "--webhook", required=True, help="Webhook URL (slack://... or dingtalk://...)"
-    )
+    notify_p.add_argument("--webhook", required=True, help="Webhook URL (slack://... or dingtalk://...)")
     notify_p.add_argument("--lang", help="Force language")
     notify_p.add_argument("--project", type=str, default=".", help="Project name")
 
 
 def _add_html_report_parser(sub: argparse._SubParsersAction[Any]) -> None:
     """Add 'html-report' subcommand parser."""
-    html_p = sub.add_parser(
-        "html-report", help="Generate beautiful HTML quality gate report"
-    )
+    html_p = sub.add_parser("html-report", help="Generate beautiful HTML quality gate report")
     html_p.add_argument("path", help="File or directory to report on")
     html_p.add_argument(
         "-o",
@@ -150,14 +134,10 @@ def _add_html_report_parser(sub: argparse._SubParsersAction[Any]) -> None:
 
 def _add_recommend_parser(sub: argparse._SubParsersAction[Any]) -> None:
     """Add 'recommend' subcommand parser."""
-    recommend_p = sub.add_parser(
-        "recommend", help="AI-powered rule recommendations for codebase"
-    )
+    recommend_p = sub.add_parser("recommend", help="AI-powered rule recommendations for codebase")
     recommend_p.add_argument("path", nargs="?", default=".", help="Project directory")
     recommend_p.add_argument("--json", action="store_true", help="Output as JSON")
-    recommend_p.add_argument(
-        "-n", "--max", type=int, default=20, help="Max recommendations"
-    )
+    recommend_p.add_argument("-n", "--max", type=int, default=20, help="Max recommendations")
     recommend_p.add_argument(
         "--apply",
         action="store_true",
@@ -175,9 +155,7 @@ def _add_lsp_parser(sub: argparse._SubParsersAction[Any]) -> None:
 
 def _add_dashboard_parser(sub: argparse._SubParsersAction[Any]) -> None:
     """Add 'dashboard' subcommand parser."""
-    dash_p = sub.add_parser(
-        "dashboard", help="Start web dashboard or generate static HTML"
-    )
+    dash_p = sub.add_parser("dashboard", help="Start web dashboard or generate static HTML")
     dash_p.add_argument("path", nargs="?", default=".", help="Project directory")
     dash_p.add_argument("--port", type=int, default=8080, help="Server port")
     dash_p.add_argument("--static", help="Generate static HTML to file")
@@ -209,9 +187,7 @@ def _add_monorepo_parser(sub: argparse._SubParsersAction[Any]) -> None:
 def _add_bench_parser(sub: argparse._SubParsersAction[Any]) -> None:
     """Add 'bench' subcommand parser."""
     bench_p = sub.add_parser("bench", help="Run performance benchmarks")
-    bench_p.add_argument(
-        "--files", type=str, default="100,500", help="Comma-separated file counts"
-    )
+    bench_p.add_argument("--files", type=str, default="100,500", help="Comma-separated file counts")
     bench_p.add_argument(
         "--languages",
         type=str,
@@ -234,9 +210,7 @@ def _add_cicd_parser(sub: argparse._SubParsersAction[Any]) -> None:
 
 def _add_pattern_learner_parser(sub: argparse._SubParsersAction[Any]) -> None:
     """Add 'pattern-learner' subcommand parser."""
-    pl_p = sub.add_parser(
-        "pattern-learner", help="Learn team coding norms from codebase"
-    )
+    pl_p = sub.add_parser("pattern-learner", help="Learn team coding norms from codebase")
     pl_p.add_argument("path", nargs="?", default=".", help="Project directory")
     pl_p.add_argument("--json", action="store_true", help="Output as JSON")
     pl_p.add_argument(

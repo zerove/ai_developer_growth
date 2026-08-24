@@ -68,9 +68,7 @@ def _prepare_check_config(
     return language, framework, files
 
 
-def _load_and_merge_rules(
-    language: str, framework: str | None, project_config: dict[str, Any]
-) -> dict[str, Any]:
+def _load_and_merge_rules(language: str, framework: str | None, project_config: dict[str, Any]) -> dict[str, Any]:
     """Load rules and merge with framework and custom rules."""
     rules = load_rules_for_language(language)
     if framework:
@@ -91,9 +89,7 @@ def _load_and_merge_rules(
     return rules
 
 
-def _run_checks(
-    files: list[Path], rules: dict[str, Any], severity: str, jobs: int
-) -> list[Issue]:
+def _run_checks(files: list[Path], rules: dict[str, Any], severity: str, jobs: int) -> list[Issue]:
     """Run checks on files, either parallel or sequential."""
     if jobs > 1 and len(files) > 1:
         return _check_files_parallel(files, rules, severity, jobs)
@@ -121,9 +117,7 @@ def _output_results(
         print(_format_human(all_issues, language, framework, files_count))
 
 
-def _handle_post_check_actions(
-    all_issues: list[Issue], target: Path, language: str, args: argparse.Namespace
-) -> None:
+def _handle_post_check_actions(all_issues: list[Issue], target: Path, language: str, args: argparse.Namespace) -> None:
     """Handle post-check actions: docs, trend recording, notifications."""
     # Attach knowledge base docs if requested
     if getattr(args, "with_docs", False):
@@ -131,23 +125,17 @@ def _handle_post_check_actions(
 
     # Record trend if requested
     if getattr(args, "trend", False):
-        _record_trend(
-            target if target.is_dir() else target.parent, all_issues, language
-        )
+        _record_trend(target if target.is_dir() else target.parent, all_issues, language)
 
     # Send notification if requested
     notify_url = getattr(args, "notify", None)
     if notify_url:
         project_name = getattr(args, "project", ".")
         if notify_url.startswith("slack://"):
-            webhook_url = notify_url.replace(
-                "slack://", "https://hooks.slack.com/services/"
-            )
+            webhook_url = notify_url.replace("slack://", "https://hooks.slack.com/services/")
             _send_slack_notification(webhook_url, all_issues, language, project_name)
         elif notify_url.startswith("dingtalk://"):
-            webhook_url = notify_url.replace(
-                "dingtalk://", "https://oapi.dingtalk.com/robot/send?access_token="
-            )
+            webhook_url = notify_url.replace("dingtalk://", "https://oapi.dingtalk.com/robot/send?access_token=")
             _send_dingtalk_notification(webhook_url, all_issues, language, project_name)
 
 
@@ -161,9 +149,7 @@ def cmd_check(args: argparse.Namespace) -> int:
     language, framework, files = _prepare_check_config(target, args, project_config)
 
     if language == "unknown":
-        print(
-            "Error: Could not detect language. Use --lang to specify.", file=sys.stderr
-        )
+        print("Error: Could not detect language. Use --lang to specify.", file=sys.stderr)
         return 1
 
     if not files:
@@ -446,9 +432,7 @@ def cmd_notify(args: argparse.Namespace) -> int:
     language = args.lang or detected.get("language", "unknown")
 
     if language == "unknown":
-        print(
-            "Error: Could not detect language. Use --lang to specify.", file=sys.stderr
-        )
+        print("Error: Could not detect language. Use --lang to specify.", file=sys.stderr)
         return 1
 
     # Load rules and check
@@ -471,9 +455,7 @@ def cmd_notify(args: argparse.Namespace) -> int:
         url = webhook_url.replace("slack://", "https://hooks.slack.com/services/")
         success = _send_slack_notification(url, all_issues, language, project_name)
     elif webhook_url.startswith("dingtalk://"):
-        url = webhook_url.replace(
-            "dingtalk://", "https://oapi.dingtalk.com/robot/send?access_token="
-        )
+        url = webhook_url.replace("dingtalk://", "https://oapi.dingtalk.com/robot/send?access_token=")
         success = _send_dingtalk_notification(url, all_issues, language, project_name)
     else:
         print(
@@ -535,9 +517,7 @@ def cmd_list_rules(args: argparse.Namespace) -> int:
     return 0
 
 
-def _collect_report_issues(
-    target: Path, rules: dict[str, Any]
-) -> tuple[list[Issue], int]:
+def _collect_report_issues(target: Path, rules: dict[str, Any]) -> tuple[list[Issue], int]:
     """Collect issues for report generation."""
     all_issues: list[Issue] = []
     files_checked = 0
@@ -579,9 +559,7 @@ def _build_json_report(
     }
 
 
-def _determine_pass_status(
-    severity_counts: dict[str, int], error_threshold: int, warning_threshold: int
-) -> bool:
+def _determine_pass_status(severity_counts: dict[str, int], error_threshold: int, warning_threshold: int) -> bool:
     """Determine if report passes based on thresholds."""
     passed = bool(severity_counts["error"] <= error_threshold)
     if warning_threshold >= 0:
@@ -589,9 +567,7 @@ def _determine_pass_status(
     return passed
 
 
-def _validate_report_target(
-    target: Path, args: argparse.Namespace
-) -> tuple[str, str | None] | None:
+def _validate_report_target(target: Path, args: argparse.Namespace) -> tuple[str, str | None] | None:
     """Validate target and return language/framework, or None if error."""
     if not target.exists():
         print(f"Error: Path not found: {target}", file=sys.stderr)
@@ -602,9 +578,7 @@ def _validate_report_target(
     framework = getattr(args, "framework", None) or detected.get("framework")
 
     if language == "unknown":
-        print(
-            "Error: Could not detect language. Use --lang to specify.", file=sys.stderr
-        )
+        print("Error: Could not detect language. Use --lang to specify.", file=sys.stderr)
         return None
 
     return language, framework
@@ -754,9 +728,7 @@ def cmd_html_report(args: argparse.Namespace) -> int:
         issues = check_directory(target, rules)
         files_checked = len(set(i.file for i in issues))
 
-    output_path = save_html_report(
-        issues, args.output, language, framework, files_checked
-    )
+    output_path = save_html_report(issues, args.output, language, framework, files_checked)
     print(f"HTML report saved to: {output_path}")
     print(f"  Language: {language}")
     print(f"  Issues: {len(issues)}")
@@ -794,15 +766,11 @@ def _load_existing_rules(rules_file: Path) -> dict[str, Any]:
                 if data and "anti_patterns" in data:
                     existing_rules = data
         except Exception as exc:
-            logging.getLogger(__name__).debug(
-                f"Skipped unreadable rules file {rules_file}: {exc}"
-            )
+            logging.getLogger(__name__).debug(f"Skipped unreadable rules file {rules_file}: {exc}")
     return existing_rules
 
 
-def _build_new_rules(
-    result: dict[str, Any], existing_ids: set[str]
-) -> list[dict[str, Any]]:
+def _build_new_rules(result: dict[str, Any], existing_ids: set[str]) -> list[dict[str, Any]]:
     """Build new rules from recommendations."""
     new_rules: list[dict[str, Any]] = []
     for rec in result["recommendations"]:

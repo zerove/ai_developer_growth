@@ -99,9 +99,7 @@ class TestJCodeCLI:
             cwd="/home/zeron/dev/ai_developer_growth",
         )
         # Should not crash
-        assert (
-            "AI PR Review" in result.stdout or "No changes to review" in result.stdout
-        )
+        assert "AI PR Review" in result.stdout or "No changes to review" in result.stdout
 
     def test_metrics_telemetry(self):
         """Test metrics-telemetry command."""

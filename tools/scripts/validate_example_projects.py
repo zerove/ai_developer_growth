@@ -35,9 +35,7 @@ def validate_example(example_dir: Path) -> list[str]:
     py_files = list(example_dir.rglob("*.py"))
     py_files = [f for f in py_files if "__pycache__" not in str(f)]
     if len(py_files) < MIN_PYTHON_FILES:
-        issues.append(
-            f"Python 文件不足 (找到 {len(py_files)}, 至少需要 {MIN_PYTHON_FILES})"
-        )
+        issues.append(f"Python 文件不足 (找到 {len(py_files)}, 至少需要 {MIN_PYTHON_FILES})")
 
     # 检查 pyproject.toml 内容
     pyproject = example_dir / "pyproject.toml"

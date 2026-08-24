@@ -135,11 +135,7 @@ def check_strict_mode(filepath: Path) -> list[dict[str, Any]]:
     lines = content.split("\n")
     has_annotation = False
     for line in lines[:30]:
-        if (
-            AI_GENERATED_PATTERN.match(line)
-            or AI_ASSISTED_PATTERN.match(line)
-            or AI_REVIEWED_PATTERN.match(line)
-        ):
+        if AI_GENERATED_PATTERN.match(line) or AI_ASSISTED_PATTERN.match(line) or AI_REVIEWED_PATTERN.match(line):
             has_annotation = True
             break
 
@@ -161,14 +157,8 @@ def _collect_files(args: argparse.Namespace) -> list[Path]:
     if args.file:
         return [args.file]
     if args.path:
-        return [
-            f
-            for f in Path(args.path).rglob("*")
-            if f.is_file() and f.suffix in TARGET_EXTENSIONS
-        ]
-    return [
-        f for f in Path("tools/scripts").rglob("*.py") if "__pycache__" not in str(f)
-    ]
+        return [f for f in Path(args.path).rglob("*") if f.is_file() and f.suffix in TARGET_EXTENSIONS]
+    return [f for f in Path("tools/scripts").rglob("*.py") if "__pycache__" not in str(f)]
 
 
 def _process_file(filepath: Path, args: argparse.Namespace) -> tuple[str, int]:

@@ -67,20 +67,12 @@ class TestCheckAntiPatterns:
         assert result[0].rule_id == "a1"
 
     def test_comment_lines_skipped(self) -> None:
-        rules = {
-            "anti_patterns": [
-                {"id": "a1", "pattern": r"eval\(", "severity": "error", "message": "m"}
-            ]
-        }
+        rules = {"anti_patterns": [{"id": "a1", "pattern": r"eval\(", "severity": "error", "message": "m"}]}
         result = check_anti_patterns(["# eval('x')"], rules, "f.py")
         assert result == []
 
     def test_no_match(self) -> None:
-        rules = {
-            "anti_patterns": [
-                {"id": "a1", "pattern": r"eval\(", "severity": "error", "message": "m"}
-            ]
-        }
+        rules = {"anti_patterns": [{"id": "a1", "pattern": r"eval\(", "severity": "error", "message": "m"}]}
         result = check_anti_patterns(["pass"], rules, "f.py")
         assert result == []
 

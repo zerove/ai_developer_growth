@@ -51,7 +51,7 @@ def run_cmd(
     cmd: list[str],
     cwd: Path | None = None,
     capture: bool = True,
-    env: dict | None = None,
+    env: dict[str, str] | None = None,
 ) -> tuple[int, str]:
     """运行命令"""
     try:
@@ -120,13 +120,13 @@ def build_image(
 
     cmd.append(".")
 
-    print(f"\n{'='*60}")
+    print(f"\n{'=' * 60}")
     print(f"构建组件: {component}")
     print(f"Dockerfile: {dockerfile}")
     print(f"平台: {platforms}")
     print(f"标签: {', '.join(tags)}")
     print(f"推送: {'是' if push else '否 (本地加载)'}")
-    print(f"{'='*60}")
+    print(f"{'=' * 60}")
 
     if dry_run:
         print(f"🔍 试运行模式，命令: {' '.join(cmd)}")
@@ -190,13 +190,9 @@ def main() -> int:
 
     parser.add_argument("--version", required=True, help="版本号 (如 v2.0.0)")
     parser.add_argument("--registry", default=REGISTRY, help="镜像仓库地址")
-    parser.add_argument(
-        "--platforms", default=DEFAULT_PLATFORMS, help="目标平台 (逗号分隔)"
-    )
+    parser.add_argument("--platforms", default=DEFAULT_PLATFORMS, help="目标平台 (逗号分隔)")
     parser.add_argument("--push", action="store_true", help="推送到镜像仓库")
-    parser.add_argument(
-        "--no-push", dest="push", action="store_false", help="仅本地构建"
-    )
+    parser.add_argument("--no-push", dest="push", action="store_false", help="仅本地构建")
     parser.add_argument("--dry-run", action="store_true", help="试运行")
     parser.add_argument("--sbom", action="store_true", help="生成 SBOM")
     parser.add_argument("--sign", action="store_true", help="Cosign 签名")
@@ -217,9 +213,7 @@ def main() -> int:
         components = COMPONENTS
 
     # 额外标签
-    extra_tags = (
-        [t.strip() for t in args.extra_tags.split(",")] if args.extra_tags else []
-    )
+    extra_tags = [t.strip() for t in args.extra_tags.split(",")] if args.extra_tags else []
     git_sha = get_git_sha()
     if git_sha != "unknown":
         extra_tags.append(f"sha-{git_sha}")
@@ -230,7 +224,7 @@ def main() -> int:
     if args.sbom:
         sbom_dir.mkdir(parents=True, exist_ok=True)
 
-    print(f"\n{'='*60}")
+    print(f"\n{'=' * 60}")
     print("JCode Platform Docker Build")
     print(f"版本: {args.version}")
     print(f"仓库: {args.registry}")
@@ -239,7 +233,7 @@ def main() -> int:
     print(f"SBOM: {'是' if args.sbom else '否'}")
     print(f"签名: {'是' if args.sign else '否'}")
     print(f"组件: {', '.join(c[0] for c in components)}")
-    print(f"{'='*60}\n")
+    print(f"{'=' * 60}\n")
 
     # 验证 Dockerfile 存在
     for name, df in components:
@@ -302,9 +296,9 @@ def main() -> int:
                 print(f"⚠️ {name} 签名失败")
 
     # 汇总
-    print(f"\n{'='*60}")
+    print(f"\n{'=' * 60}")
     print("构建汇总")
-    print(f"{'='*60}")
+    print(f"{'=' * 60}")
     print(f"版本: {args.version}")
     print(f"成功: {len(components) - len(failed)}/{len(components)}")
     if failed:

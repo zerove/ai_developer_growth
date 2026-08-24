@@ -198,10 +198,7 @@ class FixEngine:
         for fp in files_to_check:
             if not fp.is_file():
                 continue
-            if any(
-                skip in fp.parts
-                for skip in ["node_modules", ".git", "target", "__pycache__"]
-            ):
+            if any(skip in fp.parts for skip in ["node_modules", ".git", "target", "__pycache__"]):
                 continue
 
             file_lang = language or ext_map.get(fp.suffix.lower())

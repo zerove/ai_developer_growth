@@ -154,24 +154,14 @@ def generate_team_report(team_radar: dict, team_name: str, output_dir: Path) -> 
         max_s = data["max"]
         dist = data["distribution"]
         dist_str = ", ".join(f"{k}:{v}" for k, v in sorted(dist.items()))
-        lines.append(
-            f"| {dim_name} | {avg:.2f} | {min_s:.2f} | {max_s:.2f} | {dist_str} |"
-        )
+        lines.append(f"| {dim_name} | {avg:.2f} | {min_s:.2f} | {max_s:.2f} | {dist_str} |")
 
     # 个性化建议
     lines.extend(
         [
             "\n## ⚠️ 团队短板识别",
-            (
-                f"最弱维度: {weakest} ({team_radar[weakest]['average']:.2f})"
-                if weakest
-                else "无数据"
-            ),
-            (
-                f"最强维度: {strongest} ({team_radar[strongest]['average']:.2f})"
-                if strongest
-                else "无数据"
-            ),
+            (f"最弱维度: {weakest} ({team_radar[weakest]['average']:.2f})" if weakest else "无数据"),
+            (f"最强维度: {strongest} ({team_radar[strongest]['average']:.2f})" if strongest else "无数据"),
             "\n## 📋 建议行动",
             "1. **针对最弱维度安排专项培训/工作坊**",
             "2. **结对编程/Code Review 重点关注弱项**",
@@ -183,9 +173,7 @@ def generate_team_report(team_radar: dict, team_name: str, output_dir: Path) -> 
         ]
     )
 
-    report_file = (
-        Path(output_dir) / f"team-radar-report-{datetime.now().strftime('%Y%m%d')}.md"
-    )
+    report_file = Path(output_dir) / f"team-radar-report-{datetime.now().strftime('%Y%m%d')}.md"
     report_file.parent.mkdir(parents=True, exist_ok=True)
     report_file.write_text("\n".join(lines), encoding="utf-8")
 
@@ -201,12 +189,8 @@ def main():
         default="radar-data",
         help="输入数据目录 (包含 radar-report-*.json)",
     )
-    parser.add_argument(
-        "--output-dir", "-o", default="radar-reports", help="输出报告目录"
-    )
-    parser.add_argument(
-        "--member", "-m", action="append", help="指定成员列表 (可多次使用)"
-    )
+    parser.add_argument("--output-dir", "-o", default="radar-reports", help="输出报告目录")
+    parser.add_argument("--member", "-m", action="append", help="指定成员列表 (可多次使用)")
     args = parser.parse_args()
 
     input_dir = Path(args.input_dir)
@@ -214,9 +198,7 @@ def main():
 
     if not input_dir.exists():
         print(f"❌ 输入目录不存在: {input_dir}")
-        print(
-            f"请先运行能力雷达评估生成数据，或将 radar-report-*.json 放入 {input_dir}/"
-        )
+        print(f"请先运行能力雷达评估生成数据，或将 radar-report-*.json 放入 {input_dir}/")
         return 1
 
     print(f"🔍 扫描目录: {input_dir}")
@@ -265,9 +247,7 @@ def main():
         "radar": {k: v for k, v in team_radar.items() if k != "individual"},
         "individual": individual_results,
     }
-    json_file.write_text(
-        json.dumps(report_data, ensure_ascii=False, indent=2), encoding="utf-8"
-    )
+    json_file.write_text(json.dumps(report_data, ensure_ascii=False, indent=2), encoding="utf-8")
 
     print("\n✅ 团队雷达报告已生成:")
     print(f"   📄 Markdown: {report_file}")

@@ -73,9 +73,7 @@ class PatternLearner:
                         "frequency": len(issues),
                         "files": list({i.file for i in issues}),
                         "confidence": min(len(issues) / 10, 1.0),
-                        "suggested_action": (
-                            "add_to_rules" if len(issues) >= 5 else "monitor"
-                        ),
+                        "suggested_action": ("add_to_rules" if len(issues) >= 5 else "monitor"),
                     }
                 )
         return rules
@@ -85,11 +83,7 @@ class PatternLearner:
         code_files = [
             f
             for f in list(project_path.rglob("*.py")) + list(project_path.rglob("*.ts"))
-            if not any(
-                seg
-                in {"node_modules", ".git", "__pycache__", "build", "dist", ".opencode"}
-                for seg in f.parts
-            )
+            if not any(seg in {"node_modules", ".git", "__pycache__", "build", "dist", ".opencode"} for seg in f.parts)
         ]
         naming_patterns = self._analyze_naming(code_files)
 

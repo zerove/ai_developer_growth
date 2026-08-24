@@ -30,7 +30,7 @@ def benchmark_semantic_code_graph(iterations: int = 3) -> dict[str, Any]:
         elapsed = time.perf_counter() - start
         times.append(elapsed)
         node_counts.append(len(graph.nodes))
-        print(f"  Iteration {i+1}: {elapsed:.3f}s, {len(graph.nodes)} nodes")
+        print(f"  Iteration {i + 1}: {elapsed:.3f}s, {len(graph.nodes)} nodes")
 
     return {
         "module": "semantic_code_graph",
@@ -53,7 +53,7 @@ def benchmark_rules_engine(iterations: int = 3) -> dict[str, Any]:
         elapsed = time.perf_counter() - start
         times.append(elapsed)
         file_counts.append(len(results))
-        print(f"  Iteration {i+1}: {elapsed:.3f}s, {len(results)} files")
+        print(f"  Iteration {i + 1}: {elapsed:.3f}s, {len(results)} files")
 
     return {
         "module": "rules_engine.checker",
@@ -75,7 +75,7 @@ def benchmark_rules_engine_parallel(iterations: int = 3) -> dict[str, Any]:
         optimizer.optimized_check_directory(Path("tools/scripts"))
         elapsed = time.perf_counter() - start
         times.append(elapsed)
-        print(f"  Iteration {i+1}: {elapsed:.3f}s")
+        print(f"  Iteration {i + 1}: {elapsed:.3f}s")
 
     return {
         "module": "rules_engine.performance.parallel",

@@ -45,9 +45,7 @@ class TestSemanticCheckerAnalyze:
             (tmp_path / "__pycache__" / "c.py").touch()
 
             checker = SemanticChecker()
-            files = checker._collect_source_files(
-                tmp_path, languages=None, max_files=100
-            )
+            files = checker._collect_source_files(tmp_path, languages=None, max_files=100)
             paths = {str(f.relative_to(tmp_path)) for f in files}
             assert "a.py" in paths
             assert "b.py" in paths
@@ -61,9 +59,7 @@ class TestSemanticCheckerAnalyze:
             (tmp_path / "b.ts").touch()
 
             checker = SemanticChecker()
-            files = checker._collect_source_files(
-                tmp_path, languages=["python"], max_files=100
-            )
+            files = checker._collect_source_files(tmp_path, languages=["python"], max_files=100)
             paths = {str(f.relative_to(tmp_path)) for f in files}
             assert "a.py" in paths
             assert "b.ts" not in paths

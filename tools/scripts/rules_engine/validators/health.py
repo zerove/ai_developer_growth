@@ -82,17 +82,11 @@ def _generate_details(penalties: dict[str, float], bonus: float) -> list[str]:
     """Generate human-readable detail strings."""
     details: list[str] = []
     if penalties["total_errors"] > 0:
-        details.append(
-            f"{penalties['total_errors']} errors found ({penalties['error_penalty']:.0f} points)"
-        )
+        details.append(f"{penalties['total_errors']} errors found ({penalties['error_penalty']:.0f} points)")
     if penalties["total_warnings"] > 0:
-        details.append(
-            f"{penalties['total_warnings']} warnings found ({penalties['warning_penalty']:.0f} points)"
-        )
+        details.append(f"{penalties['total_warnings']} warnings found ({penalties['warning_penalty']:.0f} points)")
     if penalties["failed_files"] > 0:
-        details.append(
-            f"{penalties['failed_files']} files failed ({penalties['failure_penalty']:.0f} points)"
-        )
+        details.append(f"{penalties['failed_files']} files failed ({penalties['failure_penalty']:.0f} points)")
     if penalties["clean_files"] > 0:
         details.append(f"{penalties['clean_files']} files clean (+{bonus:.0f} points)")
     if not details:

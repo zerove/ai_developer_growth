@@ -57,9 +57,7 @@ VERSION_TYPES = ["major", "minor", "patch"]
 # ──────────────────────────────────────────────────────────
 
 
-def run_cmd(
-    cmd: list[str], cwd: Path | None = None, capture: bool = True
-) -> tuple[int, str]:
+def run_cmd(cmd: list[str], cwd: Path | None = None, capture: bool = True) -> tuple[int, str]:
     """运行命令，返回 (退出码, 输出)"""
     try:
         result = subprocess.run(
@@ -98,7 +96,7 @@ def parse_version(version: str) -> tuple[int, int, int]:
     parts = version.split(".")
     while len(parts) < 3:
         parts.append("0")
-    return tuple(int(p) for p in parts[:3])
+    return int(parts[0]), int(parts[1]), int(parts[2])
 
 
 def bump_version(version: str, bump_type: str) -> str:

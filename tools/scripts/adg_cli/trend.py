@@ -14,9 +14,7 @@ def _load_trend_data(project_dir: Path) -> list[dict[str, Any]]:
     trend_file = project_dir / _TREND_DATA_FILE
     if trend_file.exists():
         try:
-            result: list[dict[str, Any]] = json.loads(
-                trend_file.read_text(encoding="utf-8")
-            )
+            result: list[dict[str, Any]] = json.loads(trend_file.read_text(encoding="utf-8"))
             return result
         except (json.JSONDecodeError, OSError):
             return []
@@ -30,9 +28,7 @@ def _save_trend_data(project_dir: Path, data: list[dict[str, Any]]) -> None:
     trend_file.write_text(json.dumps(data, indent=2), encoding="utf-8")
 
 
-def _record_trend(
-    project_dir: Path, issues: list[Issue], language: str
-) -> dict[str, Any]:
+def _record_trend(project_dir: Path, issues: list[Issue], language: str) -> dict[str, Any]:
     """Record current check results as a trend data point."""
     from datetime import datetime
 
@@ -61,9 +57,7 @@ def _record_trend(
     return data_point
 
 
-def _format_trend_report(
-    trend_data: list[dict[str, Any]], output_json: bool = False
-) -> str:
+def _format_trend_report(trend_data: list[dict[str, Any]], output_json: bool = False) -> str:
     """Format trend data as a report."""
     if not trend_data:
         return "No trend data available. Run 'adg check' first."
@@ -100,8 +94,6 @@ def _format_trend_report(
     lines.append("-" * 40)
     for point in trend_data[-10:]:
         ts = point["timestamp"][:16].replace("T", " ")
-        lines.append(
-            f"  {ts}: E={point['errors']} W={point['warnings']} I={point['info']}"
-        )
+        lines.append(f"  {ts}: E={point['errors']} W={point['warnings']} I={point['info']}")
 
     return "\n".join(lines)

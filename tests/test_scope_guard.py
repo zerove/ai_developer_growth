@@ -77,9 +77,7 @@ class TestScopeGuardHook:
     @patch("tools.scripts.hooks.scope_guard.subprocess.run")
     def test_check_git_diff_not_git_repo(self, mock_run):
         """Test when not a git repo."""
-        mock_run.return_value = MagicMock(
-            returncode=1, stderr="fatal: not a git repository"
-        )
+        mock_run.return_value = MagicMock(returncode=1, stderr="fatal: not a git repository")
         guard = ScopeGuardHook()
         passed, msg = guard.check_git_diff()
         assert passed is True

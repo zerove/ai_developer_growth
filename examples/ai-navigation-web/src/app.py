@@ -1,12 +1,13 @@
-from fastapi import FastAPI
 from contextlib import asynccontextmanager
 
+from fastapi import FastAPI
+
 from .database import init_db
-from .routes.auth_routes import router as auth_router
-from .routes.dashboard_routes import router as dashboard_router
 from .routes.assess_routes import router as assess_router
-from .routes.progress_routes import router as progress_router
+from .routes.auth_routes import router as auth_router
 from .routes.contribute_routes import router as contribute_router
+from .routes.dashboard_routes import router as dashboard_router
+from .routes.progress_routes import router as progress_router
 
 
 @asynccontextmanager

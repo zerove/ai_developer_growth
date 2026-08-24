@@ -66,9 +66,7 @@ def detect_language_from_file(filepath: Path) -> str | None:
     return EXTENSION_MAP.get(filepath.suffix.lower())
 
 
-def check_anti_patterns(
-    lines: list[str], rules: dict[str, Any], filepath: str
-) -> list[Issue]:
+def check_anti_patterns(lines: list[str], rules: dict[str, Any], filepath: str) -> list[Issue]:
     """Check code lines against regex anti-patterns."""
     issues: list[Issue] = []
     if Path(filepath).name in {
@@ -84,9 +82,7 @@ def check_anti_patterns(
     for pattern_def in anti_patterns:
         # Skip rule if file is in exclude_files list
         exclude_files = pattern_def.get("exclude_files", [])
-        if exclude_files and any(
-            filename == ef or Path(filepath).match(ef) for ef in exclude_files
-        ):
+        if exclude_files and any(filename == ef or Path(filepath).match(ef) for ef in exclude_files):
             continue
 
         regex = re.compile(pattern_def["pattern"])
@@ -131,7 +127,9 @@ def load_rules(language: str, framework_dir: Path | None = None) -> dict[str, An
         return _get_embedded_rules(language)
 
     if framework_dir is None:
-        framework_dir = Path(__file__).parent.parent.parent.parent / "ai-dev-framework"
+        # Use project root to find ai-dev-framework
+        project_root = Path(__file__).parent.parent.parent.parent.parent
+        framework_dir = project_root / "ai-dev-framework"
 
     rule_path = framework_dir / "languages" / language / "rules.d" / "anti_patterns.yml"
 
@@ -322,9 +320,7 @@ def validate_file(
     result.lines_checked = len(lines)
     rules = load_rules(language)
 
-    if custom_rules and (
-        custom_rules.get("anti_patterns") or custom_rules.get("thresholds")
-    ):
+    if custom_rules and (custom_rules.get("anti_patterns") or custom_rules.get("thresholds")):
         rules = _merge_rules(rules, custom_rules)
 
     # 1. Regex anti-pattern checks

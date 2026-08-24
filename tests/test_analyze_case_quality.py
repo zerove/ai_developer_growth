@@ -62,9 +62,7 @@ class TestCaseStudyQualityAnalyzer:
 
     def test_analyze_empty_case(self):
         """Test analyzing case with minimal content."""
-        case_path = self.create_test_case(
-            "empty.md", "# Empty Case\n\nNo content here."
-        )
+        case_path = self.create_test_case("empty.md", "# Empty Case\n\nNo content here.")
         metrics = self.analyzer.analyze_case(case_path)
 
         assert metrics.case_name == "empty"

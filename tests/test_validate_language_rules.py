@@ -936,9 +936,7 @@ class TestJavaRules(unittest.TestCase):
 
     def test_java_catch_all(self):
         with tempfile.NamedTemporaryFile(suffix=".java", mode="w", delete=False) as f:
-            f.write(
-                "try {\n    doSomething();\n} catch (Exception e) {\n    return null;\n}\n"
-            )
+            f.write("try {\n    doSomething();\n} catch (Exception e) {\n    return null;\n}\n")
             f.flush()
             filepath = Path(f.name)
         try:
@@ -999,9 +997,7 @@ class TestJavaRules(unittest.TestCase):
 
     def test_java_finalizer(self):
         with tempfile.NamedTemporaryFile(suffix=".java", mode="w", delete=False) as f:
-            f.write(
-                "protected void finalize() throws Throwable { super.finalize(); }\n"
-            )
+            f.write("protected void finalize() throws Throwable { super.finalize(); }\n")
             f.flush()
             filepath = Path(f.name)
         try:
@@ -1128,9 +1124,7 @@ class TestKotlinRules(unittest.TestCase):
 
     def test_kt_clean_code(self):
         with tempfile.NamedTemporaryFile(suffix=".kt", mode="w", delete=False) as f:
-            f.write(
-                'fun doWork(): Result<String> {\n    return Result.success("done")\n}\n'
-            )
+            f.write('fun doWork(): Result<String> {\n    return Result.success("done")\n}\n')
             f.flush()
             filepath = Path(f.name)
         try:
@@ -1173,9 +1167,7 @@ class TestCSharpRules(unittest.TestCase):
 
     def test_cs_sql_injection(self):
         with tempfile.NamedTemporaryFile(suffix=".cs", mode="w", delete=False) as f:
-            f.write(
-                'command.ExecuteNonQuery("SELECT * FROM users WHERE id=" + userId);\n'
-            )
+            f.write('command.ExecuteNonQuery("SELECT * FROM users WHERE id=" + userId);\n')
             f.flush()
             filepath = Path(f.name)
         try:
@@ -1244,9 +1236,7 @@ class TestPHPRules(unittest.TestCase):
 
     def test_php_catch_all(self):
         with tempfile.NamedTemporaryFile(suffix=".php", mode="w", delete=False) as f:
-            f.write(
-                "<?php\ntry {\n    doSomething();\n} catch (Exception $e) {\n    return null;\n}\n"
-            )
+            f.write("<?php\ntry {\n    doSomething();\n} catch (Exception $e) {\n    return null;\n}\n")
             f.flush()
             filepath = Path(f.name)
         try:
@@ -1404,9 +1394,7 @@ class TestRubyRules(unittest.TestCase):
 
     def test_rb_clean_code(self):
         with tempfile.NamedTemporaryFile(suffix=".rb", mode="w", delete=False) as f:
-            f.write(
-                'class MyService\n  def do_work\n    logger.info("start")\n  end\nend\n'
-            )
+            f.write('class MyService\n  def do_work\n    logger.info("start")\n  end\nend\n')
             f.flush()
             filepath = Path(f.name)
         try:
@@ -1436,11 +1424,7 @@ class TestRubyRules(unittest.TestCase):
             filepath = Path(f.name)
         try:
             result = validate_file(filepath, "ruby")
-            mod_issues = [
-                i
-                for i in result.issues
-                if "module" in i.rule_id and i.category == "naming"
-            ]
+            mod_issues = [i for i in result.issues if "module" in i.rule_id and i.category == "naming"]
             self.assertEqual(len(mod_issues), 0)
         finally:
             filepath.unlink()
@@ -1630,9 +1614,7 @@ class TestSwiftRules(unittest.TestCase):
 
     def test_sw_clean_code(self):
         with tempfile.NamedTemporaryFile(suffix=".swift", mode="w", delete=False) as f:
-            f.write(
-                'struct MyView: View {\n    var body: some View {\n        Text("hello")\n    }\n}\n'
-            )
+            f.write('struct MyView: View {\n    var body: some View {\n        Text("hello")\n    }\n}\n')
             f.flush()
             filepath = Path(f.name)
         try:
@@ -1723,9 +1705,7 @@ class TestScalaRules(unittest.TestCase):
 
     def test_sc_clean_code(self):
         with tempfile.NamedTemporaryFile(suffix=".scala", mode="w", delete=False) as f:
-            f.write(
-                'object MyApp {\n  def main(args: Array[String]): Unit = {\n    println("hello")\n  }\n}\n'
-            )
+            f.write('object MyApp {\n  def main(args: Array[String]): Unit = {\n    println("hello")\n  }\n}\n')
             f.flush()
             filepath = Path(f.name)
         try:
@@ -1909,9 +1889,7 @@ class TestLuaRules(unittest.TestCase):
 
     def test_lua_clean_code(self):
         with tempfile.NamedTemporaryFile(suffix=".lua", mode="w", delete=False) as f:
-            f.write(
-                "local M = {}\n\nfunction M.do_work()\n  return true\nend\n\nreturn M\n"
-            )
+            f.write("local M = {}\n\nfunction M.do_work()\n  return true\nend\n\nreturn M\n")
             f.flush()
             filepath = Path(f.name)
         try:
@@ -2105,9 +2083,7 @@ class TestZigRules(unittest.TestCase):
 
     def test_zig_clean_code(self):
         with tempfile.NamedTemporaryFile(suffix=".zig", mode="w", delete=False) as f:
-            f.write(
-                "pub fn do_work() !void {\n    const x = try foo();\n    return x;\n}\n"
-            )
+            f.write("pub fn do_work() !void {\n    const x = try foo();\n    return x;\n}\n")
             f.flush()
             filepath = Path(f.name)
         try:
@@ -2186,9 +2162,7 @@ class TestRRules(unittest.TestCase):
 
     def test_r_clean_code(self):
         with tempfile.NamedTemporaryFile(suffix=".r", mode="w", delete=False) as f:
-            f.write(
-                'my_function <- function(x) {\n  message("processing")\n  x * 2\n}\n'
-            )
+            f.write('my_function <- function(x) {\n  message("processing")\n  x * 2\n}\n')
             f.flush()
             filepath = Path(f.name)
         try:
@@ -2518,9 +2492,7 @@ class TestPowerShellRules(unittest.TestCase):
 
     def test_ps_clean_code(self):
         with tempfile.NamedTemporaryFile(suffix=".ps1", mode="w", delete=False) as f:
-            f.write(
-                'function Invoke-Process {\n    [CmdletBinding()]\n    param()\n    Write-Output "done"\n}\n'
-            )
+            f.write('function Invoke-Process {\n    [CmdletBinding()]\n    param()\n    Write-Output "done"\n}\n')
             f.flush()
             filepath = Path(f.name)
         try:

@@ -247,9 +247,7 @@ def save_yaml(filepath: Path, data: dict[str, Any]) -> None:
     import yaml
 
     with open(filepath, "w") as f:
-        yaml.dump(
-            data, f, default_flow_style=False, allow_unicode=True, sort_keys=False
-        )
+        yaml.dump(data, f, default_flow_style=False, allow_unicode=True, sort_keys=False)
 
 
 # ----------------------------------------------------------

@@ -63,9 +63,7 @@ def check_metadata(file_path: Path) -> list[str]:
         # 检查描述长度
         if "description" in frontmatter:
             if len(frontmatter["description"]) > 50:
-                issues.append(
-                    f"Description too long: {len(frontmatter['description'])} chars"
-                )
+                issues.append(f"Description too long: {len(frontmatter['description'])} chars")
 
     except Exception as e:
         issues.append(f"Error reading file: {e}")
@@ -79,9 +77,7 @@ def scan_directory(directory: Path) -> dict[str, list[str]]:
 
     for md_file in directory.rglob("*.md"):
         # 跳过某些目录
-        if any(
-            skip in str(md_file) for skip in [".git", "node_modules", "__pycache__"]
-        ):
+        if any(skip in str(md_file) for skip in [".git", "node_modules", "__pycache__"]):
             continue
 
         issues = check_metadata(md_file)

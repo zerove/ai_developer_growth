@@ -155,9 +155,7 @@ class ContributorDashboard:
 
             return {
                 "total_fix_commits": sum(fixers.values()),
-                "top_fixers": [
-                    {"name": k, "fixes": v} for k, v in fixers.most_common(10)
-                ],
+                "top_fixers": [{"name": k, "fixes": v} for k, v in fixers.most_common(10)],
             }
         except (subprocess.SubprocessError, ValueError, FileNotFoundError):
             return {"total_fix_commits": 0, "top_fixers": []}
@@ -201,9 +199,7 @@ class ContributorDashboard:
             lines.append(f"  - {cat}: {count}")
         lines.append("")
 
-    def _add_contributors(
-        self, lines: list[str], contrib_stats: dict[str, Any]
-    ) -> None:
+    def _add_contributors(self, lines: list[str], contrib_stats: dict[str, Any]) -> None:
         """Add contributors section."""
         lines.append("## 👥 贡献者排行榜")
         for i, c in enumerate(contrib_stats["top_contributors"][:10], 1):
@@ -276,13 +272,9 @@ class ContributorDashboard:
         fix_stats = self.analyze_quality_fixes()
 
         if output_format == "markdown":
-            return self._generate_markdown_dashboard(
-                case_stats, tool_stats, contrib_stats, docs_stats, fix_stats
-            )
+            return self._generate_markdown_dashboard(case_stats, tool_stats, contrib_stats, docs_stats, fix_stats)
         elif output_format == "json":
-            return self._generate_json_dashboard(
-                case_stats, tool_stats, contrib_stats, docs_stats
-            )
+            return self._generate_json_dashboard(case_stats, tool_stats, contrib_stats, docs_stats)
         else:
             raise ValueError(f"Unsupported format: {output_format}")
 

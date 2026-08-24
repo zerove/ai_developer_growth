@@ -26,6 +26,17 @@ jobs:
     secrets: inherit
 
   # ──────────────────────────────────────────────────────
+  # Governance Audit (完整审计：lint + typecheck + test + security + governance-docs + AI-SDLC + AI质量门禁)
+  # ──────────────────────────────────────────────────────
+  governance-audit:
+    needs: setup
+    uses: ./.github/workflows/jobs/governance-audit.yml
+    with:
+      languages: "python,typescript,javascript,go,rust,java,cpp,csharp,ruby,php,swift,kotlin,scala,dart,zig,elixir,clojure,haskell,fsharp,lua,shell,sql"
+      timeout-minutes: 20
+    secrets: inherit
+
+  # ──────────────────────────────────────────────────────
   # Pre-commit
   # ──────────────────────────────────────────────────────
   pre-commit:
@@ -185,7 +196,7 @@ jobs:
   # ──────────────────────────────────────────────────────
   ci-summary:
     name: CI Summary
-    needs: [adg-governance, pre-commit, lint, type-check, test-311, test-312, test-313, test-sharded-1, test-sharded-2, test-sharded-3, test-sharded-4, combine-coverage, quality-gates, security, secret-scan, sbom, license-scan, test-examples, dependency-review, docs-check, agent-validation]
+    needs: [adg-governance, governance-audit, pre-commit, lint, type-check, test-311, test-312, test-313, test-sharded-1, test-sharded-2, test-sharded-3, test-sharded-4, combine-coverage, quality-gates, security, secret-scan, sbom, license-scan, test-examples, dependency-review, docs-check, agent-validation]
     if: always()
     runs-on: ubuntu-latest
     steps:

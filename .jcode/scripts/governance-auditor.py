@@ -1,31 +1,42 @@
 #!/usr/bin/env python3
 """
-jcode Skill Runner - 治理审计员 (v2.0)
+jcode Skill Runner - 治理审计员 (v3.0 - 多语言支持)
 
-重构版: 使用 _common.py 共享模块，修复 sys.exit 早期退出问题。
+重构版: 使用 language_registry 实现多语言工具链支持
 所有子检查返回 bool 而非直接 sys.exit，由 main() 统一处理退出码。
 
 用法:
-    python .jcode/scripts/governance-auditor.py lint
-    python .jcode/scripts/governance-auditor.py format
-    python .jcode/scripts/governance-auditor.py typecheck
-    python .jcode/scripts/governance-auditor.py test
-    python .jcode/scripts/governance-auditor.py security
+    python .jcode/scripts/governance-auditor.py lint [--lang python|typescript|...]
+    python .jcode/scripts/governance-auditor.py format [--lang python|...]
+    python .jcode/scripts/governance-auditor.py typecheck [--lang python|...]
+    python .jcode/scripts/governance-auditor.py test [--lang python|...]
+    python .jcode/scripts/governance-auditor.py security [--lang python|...]
     python .jcode/scripts/governance-auditor.py validate-governance-docs
     python .jcode/scripts/governance-auditor.py check-ai-sdlc-compliance
     python .jcode/scripts/governance-auditor.py audit-hallucination-risks
     python .jcode/scripts/governance-auditor.py ai-quality-gate
-    python .jcode/scripts/governance-auditor.py full
+    python .jcode/scripts/governance-auditor.py full [--lang python,typescript]
 """
 
+import argparse
 import re
 import subprocess
 import sys
+from collections.abc import Callable
 from pathlib import Path
 
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent.parent / "tools" / "scripts"))
 from _common import get_project_root, print_check, print_section, run_command
+from language_registry import (
+    EXTENSION_MAP,
+    Language,
+    ToolCategory,
+    detect_language,
+    get_tool,
+    list_supported_languages,
+)
 
-# ── 15 个 ────────────────────────────────────────────────
+# ── 15 个治理层文档 ────────────────────────────────────────────────
 GOVERNANCE_DOCS = [
     "docs/efficiency/ai-code-generation-quality.md",
     "docs/efficiency/ai-model-selection.md",
@@ -45,10 +56,7 @@ GOVERNANCE_DOCS = [
 ]
 
 # ── 代码不安全模式 ────────────────────────────────────────────────
-# 格式: (pattern, description, exclude_files_list, exclude_pattern)
-# exclude_files_list: 文件名列表，如果文件名匹配则跳过
-# exclude_pattern: 正则模式，如果内容匹配则跳过
-UNSAFE_PATTERNS = [
+UNSAFE_PATTERNS: list[tuple[str, str, list[str], str | None]] = [
     (
         r"eval\(",
         "eval 调用 - 代码注入风险",
@@ -102,7 +110,7 @@ UNSAFE_PATTERNS = [
 
 
 def _check_unsafe_patterns(
-    content: str, patterns: list, filepath: str = ""
+    content: str, patterns: list[tuple[str, str, list[str], str | None]], filepath: str = ""
 ) -> list[str]:
     """检查不安全模式，支持排除文件和排除模式"""
     risks = []
@@ -126,87 +134,212 @@ def _check_unsafe_patterns(
     return risks
 
 
-def lint() -> bool:
-    """运行 ruff lint 检查"""
+def _parse_languages(lang_str: str) -> list[Language]:
+    """解析逗号分隔的语言字符串"""
+    languages = []
+    for part in lang_str.split(","):
+        part = part.strip()
+        if part:
+            try:
+                languages.append(Language(part.lower()))
+            except ValueError:
+                from language_registry import LANGUAGE_ALIASES
+
+                if part.lower() in LANGUAGE_ALIASES:
+                    languages.append(LANGUAGE_ALIASES[part.lower()])
+                else:
+                    print(f"  ⚠️  未知语言: {part}，跳过")
+    return languages
+
+
+def _detect_project_languages(project_root: Path) -> list[Language]:
+    """检测项目中使用的所有语言"""
+    languages: list[Language] = []
+
+    # 1. 通过配置文件检测主要语言
+    main_lang = detect_language(project_root)
+    if main_lang:
+        languages.append(main_lang)
+
+    # 2. 扫描所有扩展名，统计语言分布
+    ext_counts: dict[Language, int] = {}
+    for ext, lang in EXTENSION_MAP.items():
+        count = len(list(project_root.rglob(f"*{ext}")))
+        if count > 0:
+            ext_counts[lang] = ext_counts.get(lang, 0) + count
+
+    # 按文件数排序，添加前 3 种语言
+    for lang in sorted(ext_counts, key=lambda k: ext_counts.get(k, 0), reverse=True)[:3]:
+        if lang not in languages:
+            languages.append(lang)
+
+    return languages
+
+
+def _run_tool_for_language(
+    language: Language,
+    category: ToolCategory,
+    project_root: Path,
+    check_only: bool = False,
+) -> tuple[bool, str]:
+    """使用语言工具链运行特定类别工具"""
+    tool = get_tool(language, category)
+    if tool is None:
+        return False, f"  ⚠️  {language.value}: {category.value} 工具未配置"
+
+    # 检查工具是否可用
+    try:
+        result = subprocess.run(
+            [tool.command, tool.version_flag],
+            capture_output=True,
+            timeout=5,
+        )
+        if result.returncode != 0:
+            return False, f"  ❌ {language.value}: {tool.command} 不可用 ({tool.install_hint})"
+    except (FileNotFoundError, subprocess.TimeoutExpired):
+        return False, f"  ❌ {language.value}: {tool.command} 未安装 ({tool.install_hint})"
+
+    # 构建命令
+    cmd = [tool.command]
+    if check_only and tool.check_args:
+        cmd.extend(tool.check_args)
+    else:
+        cmd.extend(tool.args)
+
+    print(f"  🔧 {language.value}: 运行 {category.value} ({' '.join(cmd)})")
+
+    try:
+        proc_result: subprocess.CompletedProcess[str] = subprocess.run(
+            cmd,
+            cwd=project_root,
+            capture_output=True,
+            text=True,
+            timeout=600,
+        )
+        output = proc_result.stdout
+        if proc_result.stderr:
+            output += "\n" + proc_result.stderr
+
+        passed = proc_result.returncode == 0
+        status = "✅" if passed else "❌"
+        return passed, f"  {status} {language.value}: {category.value} {'通过' if passed else '失败'}\n{output}"
+    except subprocess.TimeoutExpired:
+        return False, f"  ❌ {language.value}: {category.value} 超时 (600s)"
+    except Exception as e:
+        return False, f"  ❌ {language.value}: {category.value} 错误 - {e}"
+
+
+def _run_check_for_languages(
+    languages: list[Language],
+    category: ToolCategory,
+    project_root: Path,
+    check_only: bool = False,
+) -> tuple[bool, str]:
+    """为多个语言运行检查"""
+    all_passed = True
+    outputs = []
+
+    for lang in languages:
+        passed, output = _run_tool_for_language(lang, category, project_root, check_only)
+        all_passed = all_passed and passed
+        outputs.append(output)
+
+    return all_passed, "\n".join(outputs)
+
+
+def lint(lang: str | None = None) -> bool:
+    """运行 lint 检查 - 支持多语言"""
     print_section("Lint 检查")
-    code, output = run_command(["ruff", "check", "."])
-    print_check("ruff check", code == 0, output)
-    if code != 0:
-        print(output)
-    return code == 0
+    root = get_project_root()
+
+    if lang:
+        languages = _parse_languages(lang)
+    else:
+        languages = _detect_project_languages(root)
+
+    if not languages:
+        print("⚠️  未检测到支持的语言，默认使用 Python")
+        languages = [Language.PYTHON]
+
+    passed, output = _run_check_for_languages(languages, ToolCategory.LINT, root, check_only=True)
+    print_check("lint", passed, output)
+    return passed
 
 
-def format_check() -> bool:
-    """运行 ruff format 检查"""
+def format_check(lang: str | None = None) -> bool:
+    """运行 format 检查 - 支持多语言"""
     print_section("Format 检查")
-    code, output = run_command(["ruff", "format", "--check", "."])
-    print_check("ruff format", code == 0, output)
-    if code != 0:
-        print(output)
-    return code == 0
+    root = get_project_root()
+
+    if lang:
+        languages = _parse_languages(lang)
+    else:
+        languages = _detect_project_languages(root)
+
+    if not languages:
+        print("⚠️  未检测到支持的语言，默认使用 Python")
+        languages = [Language.PYTHON]
+
+    passed, output = _run_check_for_languages(languages, ToolCategory.FORMAT, root, check_only=True)
+    print_check("format", passed, output)
+    return passed
 
 
-def typecheck() -> bool:
-    """运行 mypy 类型检查"""
+def typecheck(lang: str | None = None) -> bool:
+    """运行类型检查 - 支持多语言"""
     print_section("类型检查")
-    code, output = run_command(
-        [sys.executable, "-m", "mypy", "tools/scripts/", "--ignore-missing-imports"]
-    )
-    print_check("mypy", code == 0, output)
-    if code != 0:
-        print(output)
-    return code == 0
+    root = get_project_root()
+
+    if lang:
+        languages = _parse_languages(lang)
+    else:
+        languages = _detect_project_languages(root)
+
+    if not languages:
+        print("⚠️  未检测到支持的语言，默认使用 Python")
+        languages = [Language.PYTHON]
+
+    passed, output = _run_check_for_languages(languages, ToolCategory.TYPECHECK, root)
+    print_check("typecheck", passed, output)
+    return passed
 
 
-def test() -> bool:
-    """运行 pytest 测试套件"""
+def test(lang: str | None = None) -> bool:
+    """运行测试套件 - 支持多语言"""
     print_section("测试套件")
-    code, output = run_command(
-        [
-            sys.executable,
-            "-m",
-            "pytest",
-            "tests/",
-            "-v",
-            "--cov=tools/scripts",
-            "--cov-report=term-missing",
-            "--tb=short",
-        ]
-    )
-    print_check("pytest", code == 0, output)
-    if code != 0:
-        print(output)
-    return code == 0
+    root = get_project_root()
+
+    if lang:
+        languages = _parse_languages(lang)
+    else:
+        languages = _detect_project_languages(root)
+
+    if not languages:
+        print("⚠️  未检测到支持的语言，默认使用 Python")
+        languages = [Language.PYTHON]
+
+    passed, output = _run_check_for_languages(languages, ToolCategory.TEST, root)
+    print_check("test", passed, output)
+    return passed
 
 
-def security() -> bool:
-    """运行安全扫描"""
+def security(lang: str | None = None) -> bool:
+    """运行安全扫描 - 支持多语言"""
     print_section("安全扫描")
+    root = get_project_root()
 
-    # bandit
-    code1, output1 = run_command(
-        [
-            "bandit",
-            "-r",
-            "tools/scripts/",
-            "-f",
-            "json",
-            "-o",
-            "bandit-report.json",
-            "-ll",
-        ]
-    )
-    print_check("bandit", code1 == 0, output1)
+    if lang:
+        languages = _parse_languages(lang)
+    else:
+        languages = _detect_project_languages(root)
 
-    # pip-audit
-    code2, output2 = run_command(["pip-audit", "--desc"])
-    print_check("pip-audit", code2 == 0, output2)
+    if not languages:
+        print("⚠️  未检测到支持的语言，默认使用 Python")
+        languages = [Language.PYTHON]
 
-    if code1 != 0:
-        print(output1)
-    if code2 != 0:
-        print(output2)
-    return code1 == 0 and code2 == 0
+    passed, output = _run_check_for_languages(languages, ToolCategory.SECURITY, root)
+    print_check("security", passed, output)
+    return passed
 
 
 def validate_governance_docs() -> bool:
@@ -219,7 +352,7 @@ def validate_governance_docs() -> bool:
     code, output = run_command([sys.executable, str(validator_script), "validate"])
     if output.strip():
         print(output.strip())
-    return code == 0
+    return bool(code == 0)
 
 
 def check_ai_sdlc_compliance() -> bool:
@@ -273,7 +406,6 @@ def audit_hallucination_risks() -> bool:
             risks.append(f"{rel}: {risk}")
 
     # 文档绝对化声明
-    # "100%" 只在断言性语句中标记（如 "永远100%"、"保证100%"），不在度量值中标记（如 "覆盖率100%"）
     abs_patterns = [
         (r"永远\s*100%", "永远100%"),
         (r"绝对\s*100%", "绝对100%"),
@@ -286,7 +418,6 @@ def audit_hallucination_risks() -> bool:
     for md_file in (root / "docs" / "efficiency").rglob("*.md"):
         content = md_file.read_text(encoding="utf-8")
         for line_num, line in enumerate(content.split("\n"), 1):
-            # 跳过标题行、代码块、图表行
             stripped = line.strip()
             if (
                 stripped.startswith("#")
@@ -331,15 +462,27 @@ def ai_quality_gate() -> bool:
     return passed
 
 
-def full() -> int:
-    """运行失败数量"""
-    print_section("🚀 完整治理审计 (v2.0)")
+def full(lang: str | None = None) -> int:
+    """运行完整治理审计"""
+    print_section("🚀 完整治理审计 (v3.0 - 多语言)")
 
-    checks = [
-        ("Lint", lint),
-        ("Format", format_check),
-        ("Type Check", typecheck),
-        ("Test", test),
+    if lang:
+        languages = _parse_languages(lang)
+    else:
+        languages = _detect_project_languages(get_project_root())
+
+    if not languages:
+        print("⚠️  未检测到支持的语言，默认使用 Python")
+        languages = [Language.PYTHON]
+
+    print(f"检测语言: {', '.join(lang.value for lang in languages)}")
+
+    checks: list[tuple[str, Callable[[], bool]]] = [
+        ("Lint", lambda: lint(lang)),
+        ("Format", lambda: format_check(lang)),
+        ("Type Check", lambda: typecheck(lang)),
+        ("Test", lambda: test(lang)),
+        ("Security", lambda: security(lang)),
         ("Governance Docs", validate_governance_docs),
         ("AI-SDLC Compliance", check_ai_sdlc_compliance),
         ("AI Quality Gate", ai_quality_gate),
@@ -360,34 +503,51 @@ def full() -> int:
 
 
 def main() -> None:
-    if len(sys.argv) < 2:
-        print("用法: governance-auditor.py <action>")
-        print(
-            "Actions: lint, format, typecheck, test, security, "
-            "validate-governance-docs, check-ai-sdlc-compliance, "
-            "audit-hallucination-risks, ai-quality-gate, full"
-        )
+    parser = argparse.ArgumentParser(
+        description="治理审计员 - 多语言支持",
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        epilog=f"""
+支持的语言: {", ".join(lang.value for lang in list_supported_languages())}
+
+Actions:
+  lint [--lang LANG]              运行 lint 检查
+  format [--lang LANG]            运行 format 检查
+  typecheck [--lang LANG]         运行类型检查
+  test [--lang LANG]              运行测试套件
+  security [--lang LANG]          运行安全扫描
+  validate-governance-docs        验证治理文档
+  check-ai-sdlc-compliance        检查 AI-SDLC 合规性
+  audit-hallucination-risks       审计幻觉风险
+  ai-quality-gate                 运行 AI 代码质量门禁
+  full [--lang LANG]              运行完整审计
+        """,
+    )
+    parser.add_argument("action", nargs="?", help="要执行的动作")
+    parser.add_argument("--lang", help="逗号分隔的语言列表 (如: python,typescript)")
+
+    args = parser.parse_args()
+
+    if not args.action:
+        parser.print_help()
         sys.exit(1)
 
-    action = sys.argv[1]
-
-    action_map = {
-        "lint": lambda: 0 if lint() else 1,
-        "format": lambda: 0 if format_check() else 1,
-        "typecheck": lambda: 0 if typecheck() else 1,
-        "test": lambda: 0 if test() else 1,
-        "security": lambda: 0 if security() else 1,
+    action_map: dict[str, Callable[[], int]] = {
+        "lint": lambda: 0 if lint(args.lang) else 1,
+        "format": lambda: 0 if format_check(args.lang) else 1,
+        "typecheck": lambda: 0 if typecheck(args.lang) else 1,
+        "test": lambda: 0 if test(args.lang) else 1,
+        "security": lambda: 0 if security(args.lang) else 1,
         "validate-governance-docs": lambda: 0 if validate_governance_docs() else 1,
         "check-ai-sdlc-compliance": lambda: 0 if check_ai_sdlc_compliance() else 1,
         "audit-hallucination-risks": lambda: 0 if audit_hallucination_risks() else 1,
         "ai-quality-gate": lambda: 0 if ai_quality_gate() else 1,
-        "full": full,
+        "full": lambda: full(args.lang),
     }
 
-    if action in action_map:
-        sys.exit(action_map[action]())
+    if args.action in action_map:
+        sys.exit(action_map[args.action]())
     else:
-        print(f"❌ 未知 action: {action}")
+        print(f"❌ 未知 action: {args.action}")
         print(f"可用 actions: {', '.join(action_map.keys())}")
         sys.exit(1)
 

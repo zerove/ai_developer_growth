@@ -3,9 +3,8 @@
 from __future__ import annotations
 
 import json
-from dataclasses import dataclass, field, asdict
+from dataclasses import asdict, dataclass, field
 from pathlib import Path
-from typing import Optional
 
 
 @dataclass
@@ -44,7 +43,7 @@ class TeamManager:
         self._save(config)
         return config
 
-    def get_team(self, team_id: str) -> Optional[TeamConfig]:
+    def get_team(self, team_id: str) -> TeamConfig | None:
         """Get team configuration."""
         f = self._team_file(team_id)
         if not f.exists():

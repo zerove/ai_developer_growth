@@ -318,9 +318,7 @@ class TestReports:
 
 class TestHealthScore:
     def test_perfect_score(self) -> None:
-        results = [
-            ValidationResult(file="clean.py", language="python", lines_checked=10)
-        ]
+        results = [ValidationResult(file="clean.py", language="python", lines_checked=10)]
         health = calculate_health_score(results)
         assert health.score >= 90
         assert health.grade == "A"
@@ -378,9 +376,7 @@ class TestHealthScore:
         assert health.grade in ("D", "F")
 
     def test_to_dict(self) -> None:
-        results = [
-            ValidationResult(file="clean.py", language="python", lines_checked=10)
-        ]
+        results = [ValidationResult(file="clean.py", language="python", lines_checked=10)]
         health = calculate_health_score(results)
         d = health.to_dict()
         assert "score" in d
@@ -571,9 +567,7 @@ class TestCommonRules:
         rules = load_rules("python")
         anti_ids = [p["id"] for p in rules.get("anti_patterns", [])]
         # Common rules should be present
-        assert any(
-            "common-" in rid for rid in anti_ids
-        ), f"Common rules not found in: {anti_ids[:10]}"
+        assert any("common-" in rid for rid in anti_ids), f"Common rules not found in: {anti_ids[:10]}"
 
     def test_common_secret_rule(self) -> None:
         """Verify common-hardcoded-secret rule exists."""

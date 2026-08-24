@@ -13,9 +13,7 @@ from tools.scripts._common import get_project_root
 
 
 class ScopeGuardHook:
-    def __init__(
-        self, max_lines: int = 300, max_files: int = 5, root_dir: Path | None = None
-    ):
+    def __init__(self, max_lines: int = 300, max_files: int = 5, root_dir: Path | None = None):
         self.max_lines = max_lines
         self.max_files = max_files
         self.root_dir = root_dir or get_project_root()

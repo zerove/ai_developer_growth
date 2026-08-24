@@ -1,0 +1,671 @@
+"""
+Auto-fix 编排器
+
+核心功能:
+- 安全自动修复 (仅格式化、导入排序、无副作用重构)
+- 半自动修复 (提供 diff、需人工确认)
+- 批量 PR 生成 (按规则/目录分组)
+- 修复后回归测试触发
+- 修复策略配置
+"""
+
+from __future__ import annotations
+
+import logging
+import subprocess
+from dataclasses import dataclass, field
+from datetime import datetime
+from enum import Enum
+from pathlib import Path
+from typing import Any
+
+from tools.scripts.rules_engine.models import CheckResult, Issue
+
+logger = logging.getLogger(__name__)
+
+
+class FixStrategy(str, Enum):
+    """修复策略"""
+    AUTO = "auto"           # 完全自动应用
+    INTERACTIVE = "interactive"  # 交互式确认
+    DRY_RUN = "dry_run"     # 仅预览
+    BATCH_PR = "batch_pr"   # 生成批量 PR
+
+
+class FixSafetyLevel(str, Enum):
+    """修复安全级别"""
+    SAFE = "safe"           # 无副作用: 格式化、导入排序、空行调整
+    LOW_RISK = "low_risk"   # 低风险: 未使用导入移除、类型注解添加
+    MEDIUM_RISK = "medium_risk"  # 中风险: 重命名、重构、逻辑等价变换
+    HIGH_RISK = "high_risk"      # 高风险: 逻辑修复、算法变更
+
+
+@dataclass
+class FixAction:
+    """单个修复动作"""
+    rule_id: str
+    file: str
+    line: int
+    column: int
+    original: str
+    replacement: str
+    safety_level: FixSafetyLevel = FixSafetyLevel.SAFE
+    description: str = ""
+    confidence: float = 1.0  # 0-1
+
+
+@dataclass
+class FixResult:
+    """修复结果"""
+    file: str
+    applied: list[FixAction] = field(default_factory=list)
+    skipped: list[FixAction] = field(default_factory=list)
+    errors: list[str] = field(default_factory=list)
+    diff: str = ""
+
+
+@dataclass
+class FixPlan:
+    """修复计划"""
+    actions: list[FixAction] = field(default_factory=list)
+    strategy: FixStrategy = FixStrategy.AUTO
+    safety_level: FixSafetyLevel = FixSafetyLevel.SAFE
+    created_at: str = field(default_factory=lambda: datetime.utcnow().isoformat())
+    metadata: dict[str, Any] = field(default_factory=dict)
+
+    def filter_by_safety(self, max_level: FixSafetyLevel) -> FixPlan:
+        """按安全级别过滤"""
+        level_order = {
+            FixSafetyLevel.SAFE: 0,
+            FixSafetyLevel.LOW_RISK: 1,
+            FixSafetyLevel.MEDIUM_RISK: 2,
+            FixSafetyLevel.HIGH_RISK: 3,
+        }
+        max_order = level_order[max_level]
+        filtered = [a for a in self.actions if level_order.get(a.safety_level, 99) <= max_order]
+        return FixPlan(
+            actions=filtered,
+            strategy=self.strategy,
+            safety_level=max_level,
+            metadata=self.metadata,
+        )
+
+    def group_by_file(self) -> dict[str, list[FixAction]]:
+        """按文件分组"""
+        groups: dict[str, list[FixAction]] = {}
+        for action in self.actions:
+            groups.setdefault(action.file, []).append(action)
+        return groups
+
+    def group_by_rule(self) -> dict[str, list[FixAction]]:
+        """按规则分组"""
+        groups: dict[str, list[FixAction]] = {}
+        for action in self.actions:
+            groups.setdefault(action.rule_id, []).append(action)
+        return groups
+
+
+class AutoFixOrchestrator:
+    """自动修复编排器"""
+
+    def __init__(
+        self,
+        strategy: FixStrategy = FixStrategy.AUTO,
+        safety_level: FixSafetyLevel = FixSafetyLevel.SAFE,
+        max_fixes_per_file: int = 50,
+        backup: bool = True,
+        run_tests_after: bool = False,
+        test_command: str | None = None,
+    ):
+        self.strategy = strategy
+        self.safety_level = safety_level
+        self.max_fixes_per_file = max_fixes_per_file
+        self.backup = backup
+        self.run_tests_after = run_tests_after
+        self.test_command = test_command or "pytest -x -q"
+        self.fix_providers: dict[str, FixProvider] = {}
+
+    def register_provider(self, provider: FixProvider) -> None:
+        """注册修复提供者"""
+        self.fix_providers[provider.name] = provider
+
+    def create_plan(
+        self,
+        results: list[CheckResult],
+        config: dict[str, Any] | None = None,
+    ) -> FixPlan:
+        """从检查结果创建修复计划"""
+        all_actions = []
+
+        for result in results:
+            for issue in result.issues:
+                # 尝试所有提供者
+                for provider in self.fix_providers.values():
+                    actions = provider.generate_fixes(issue, result.file, config)
+                    all_actions.extend(actions)
+
+        # 过滤安全级别
+        plan = FixPlan(
+            actions=all_actions,
+            strategy=self.strategy,
+            safety_level=self.safety_level,
+        ).filter_by_safety(self.safety_level)
+
+        # 限制每文件修复数
+        grouped = plan.group_by_file()
+        limited_actions = []
+        for file_actions in grouped.values():
+            limited_actions.extend(file_actions[:self.max_fixes_per_file])
+
+        return FixPlan(
+            actions=limited_actions,
+            strategy=self.strategy,
+            safety_level=self.safety_level,
+            metadata={"total_actions": len(all_actions), "limited": len(limited_actions)},
+        )
+
+    def execute_plan(self, plan: FixPlan, project_root: Path) -> list[FixResult]:
+        """执行修复计划"""
+        results = []
+
+        if self.strategy == FixStrategy.DRY_RUN:
+            # 仅预览
+            for file_path, actions in plan.group_by_file().items():
+                # 找到第一个 action 的 provider 来生成预览
+                first_action = actions[0]
+                provider = self._find_provider_for_action(first_action)
+                if provider:
+                    diff = provider._generate_diff(
+                        (project_root / file_path).read_text() if (project_root / file_path).exists() else "",
+                        "",  # 占位符
+                        file_path
+                    )
+                else:
+                    diff = self._generate_diff(project_root / file_path, actions)
+                results.append(FixResult(
+                    file=file_path,
+                    applied=[],
+                    skipped=actions,
+                    diff=diff,
+                ))
+            return results
+
+        if self.strategy == FixStrategy.INTERACTIVE:
+            # 交互式确认
+            return self._execute_interactive(plan, project_root)
+
+        if self.strategy == FixStrategy.BATCH_PR:
+            # 批量 PR 模式
+            return self._execute_batch_pr(plan, project_root)
+
+        # 自动模式
+        return self._execute_auto(plan, project_root)
+
+    def _find_provider_for_action(self, action: FixAction) -> FixProvider | None:
+        """根据 action 找到对应的 provider"""
+        for provider in self.fix_providers.values():
+            # 简单匹配：检查 provider 是否能处理这个 rule_id
+            test_issue = Issue(
+                rule_id=action.rule_id,
+                severity="error",
+                category="style",
+                file=action.file,
+                line=action.line,
+                message="",
+                column=action.column,
+            )
+            fixes = provider.generate_fixes(test_issue, action.file, None)
+            if fixes:
+                return provider
+        return None
+
+    def _execute_auto(self, plan: FixPlan, project_root: Path) -> list[FixResult]:
+        """自动执行修复 - 按 provider 分组执行"""
+        results = []
+        grouped = plan.group_by_file()
+
+        for file_path, actions in grouped.items():
+            # 处理绝对路径和相对路径
+            fp = Path(file_path)
+            if fp.is_absolute():
+                full_path = fp
+            else:
+                full_path = project_root / fp
+            
+            if not full_path.exists():
+                results.append(FixResult(file=file_path, errors=[f"File not found: {file_path}"]))
+                continue
+
+            # 按 provider 分组 actions
+            provider_actions: dict[FixProvider, list[FixAction]] = {}
+            for action in actions:
+                provider = self._find_provider_for_action(action)
+                if provider:
+                    provider_actions.setdefault(provider, []).append(action)
+                else:
+                    # 没有找到 provider，使用默认方式
+                    provider_actions.setdefault(None, []).append(action)
+
+            # 对每个 provider 执行修复
+            file_applied = []
+            file_skipped = []
+            file_errors = []
+            file_diff = ""
+
+            for provider, provider_action_list in provider_actions.items():
+                if provider is None:
+                    # 默认行替换方式
+                    content = full_path.read_text()
+                    lines = content.splitlines(keepends=True)
+                    for action in sorted(provider_action_list, key=lambda a: a.line, reverse=True):
+                        if 0 < action.line <= len(lines):
+                            line_idx = action.line - 1
+                            if lines[line_idx].rstrip("\n\r") == action.original.rstrip("\n\r"):
+                                lines[line_idx] = action.replacement + ("\n" if action.original.endswith("\n") else "")
+                                file_applied.append(action)
+                            else:
+                                file_skipped.append(action)
+                                action.errors.append(f"Line content mismatch at {file_path}:{action.line}")
+                        else:
+                            file_skipped.append(action)
+                            action.errors.append(f"Line out of range: {action.line}")
+                    new_content = "".join(lines)
+                    full_path.write_text(new_content)
+                    if file_applied:
+                        file_diff = self._generate_diff_from_content(content, new_content, file_path)
+                else:
+                    # 使用 provider 的 apply_fixes
+                    if self.backup:
+                        backup_path = full_path.with_suffix(full_path.suffix + ".bak")
+                        backup_path.write_text(full_path.read_text())
+                    result = provider.apply_fixes(file_path, provider_action_list, project_root)
+                    file_applied.extend(result.applied)
+                    file_skipped.extend(result.skipped)
+                    file_errors.extend(result.errors)
+                    if result.diff and not file_diff:
+                        file_diff = result.diff
+
+            results.append(FixResult(
+                file=file_path,
+                applied=file_applied,
+                skipped=file_skipped,
+                errors=file_errors,
+                diff=file_diff,
+            ))
+
+        # 运行测试
+        if self.run_tests_after and results:
+            self._run_regression_tests(project_root)
+
+        return results
+
+    def _execute_interactive(self, plan: FixPlan, project_root: Path) -> list[FixResult]:
+        """交互式执行"""
+        results = []
+        grouped = plan.group_by_file()
+
+        print(f"\n📋 发现 {len(plan.actions)} 个可修复问题，分布在 {len(grouped)} 个文件中")
+        print("安全级别:", self.safety_level.value)
+        print()
+
+        for file_path, actions in grouped.items():
+            full_path = project_root / file_path
+            if not full_path.exists():
+                continue
+
+            diff = self._generate_diff(full_path, actions)
+            print(f"\n📄 {file_path} ({len(actions)} fixes):")
+            print(diff[:500] + ("..." if len(diff) > 500 else ""))
+
+            # 实际应用中这里应该等待用户输入
+            # 简化版：自动应用安全级别内的
+            if self.safety_level in (FixSafetyLevel.SAFE, FixSafetyLevel.LOW_RISK):
+                print("  -> 自动应用 (安全级别)")
+                auto_results = self._execute_auto(
+                    FixPlan(actions=actions, strategy=FixStrategy.AUTO, safety_level=self.safety_level),
+                    project_root
+                )
+                results.extend(auto_results)
+            else:
+                print("  -> 跳过 (需人工确认)")
+                results.append(FixResult(file=file_path, skipped=actions, diff=diff))
+
+        return results
+
+    def _execute_batch_pr(self, plan: FixPlan, project_root: Path) -> list[FixResult]:
+        """批量 PR 模式：按规则/目录分组生成 PR"""
+        results = []
+        grouped_by_rule = plan.group_by_rule()
+
+        for rule_id, actions in grouped_by_rule.items():
+            # 每个规则生成一个 PR 分支
+            branch_name = f"fix/{rule_id.lower().replace(':', '-')}-{datetime.utcnow().strftime('%Y%m%d-%H%M%S')}"
+
+            # 这里应该调用 git 创建分支、应用修复、提交、推送
+            # 简化版：只记录计划
+            print(f"📦 规则 {rule_id}: 将生成 PR 分支 {branch_name} ({len(actions)} 个修复)")
+
+            for action in actions:
+                results.append(FixResult(
+                    file=action.file,
+                    applied=[action],
+                    diff=f"# Planned for PR: {branch_name}\n{action.original} -> {action.replacement}",
+                ))
+
+        return results
+
+    def _generate_diff(self, file_path: Path, actions: list[FixAction]) -> str:
+        """生成文件修复 diff"""
+        if not file_path.exists():
+            return f"# File not found: {file_path}"
+
+        content = file_path.read_text()
+        lines = content.splitlines(keepends=True)
+
+        for action in sorted(actions, key=lambda a: a.line, reverse=True):
+            if 0 < action.line <= len(lines):
+                line_idx = action.line - 1
+                lines[line_idx] = action.replacement + ("\n" if action.original.endswith("\n") else "")
+
+        new_content = "".join(lines)
+        return self._generate_diff_from_content(content, new_content, file_path.name)
+
+    def _generate_diff_from_content(self, original: str, modified: str, file_name: str) -> str:
+        """生成 unified diff"""
+        import difflib
+        diff = difflib.unified_diff(
+            original.splitlines(keepends=True),
+            modified.splitlines(keepends=True),
+            fromfile=f"a/{file_name}",
+            tofile=f"b/{file_name}",
+        )
+        return "".join(diff)
+
+    def _run_regression_tests(self, project_root: Path) -> None:
+        """运行回归测试"""
+        try:
+            result = subprocess.run(
+                self.test_command.split(),
+                cwd=project_root,
+                capture_output=True,
+                text=True,
+                timeout=300,
+            )
+            if result.returncode != 0:
+                logger.warning(f"Regression tests failed: {result.stdout}")
+            else:
+                logger.info("✅ Regression tests passed")
+        except subprocess.TimeoutExpired:
+            logger.warning("Regression tests timed out")
+        except Exception as e:
+            logger.warning(f"Regression tests error: {e}")
+
+
+class FixProvider:
+    """修复提供者基类"""
+
+    def __init__(self, name: str, safety_level: FixSafetyLevel = FixSafetyLevel.SAFE):
+        self.name = name
+        self.safety_level = safety_level
+        self.use_external_tool = False  # 是否需要调用外部工具
+        self.tool_command: list[str] | None = None  # 工具命令
+
+    def generate_fixes(
+        self,
+        issue: Issue,
+        file_path: str,
+        config: dict[str, Any] | None = None,
+    ) -> list[FixAction]:
+        """生成修复动作 (子类实现)"""
+        raise NotImplementedError
+
+    def apply_fixes(self, file_path: str, actions: list[FixAction], project_root: Path) -> FixResult:
+        """应用修复 (默认实现：直接替换行内容)"""
+        full_path = project_root / file_path
+        if not full_path.exists():
+            return FixResult(file=file_path, errors=[f"File not found: {file_path}"])
+
+        content = full_path.read_text()
+        lines = content.splitlines(keepends=True)
+        applied = []
+        skipped = []
+
+        for action in sorted(actions, key=lambda a: a.line, reverse=True):
+            if 0 < action.line <= len(lines):
+                line_idx = action.line - 1
+                if lines[line_idx].rstrip("\n\r") == action.original.rstrip("\n\r"):
+                    lines[line_idx] = action.replacement + ("\n" if action.original.endswith("\n") else "")
+                    applied.append(action)
+                else:
+                    skipped.append(action)
+            else:
+                skipped.append(action)
+
+        new_content = "".join(lines)
+        diff = self._generate_diff(content, new_content, file_path)
+        full_path.write_text(new_content)
+
+        return FixResult(
+            file=file_path,
+            applied=applied,
+            skipped=skipped,
+            diff=diff,
+        )
+
+    def _generate_diff(self, original: str, modified: str, file_name: str) -> str:
+        import difflib
+        diff = difflib.unified_diff(
+            original.splitlines(keepends=True),
+            modified.splitlines(keepends=True),
+            fromfile=f"a/{file_name}",
+            tofile=f"b/{file_name}",
+        )
+        return "".join(diff)
+
+
+class RegexFixProvider(FixProvider):
+    """基于 fix_replacement 正则的通用修复提供者"""
+
+    def __init__(self, name: str, safety_level: FixSafetyLevel = FixSafetyLevel.SAFE):
+        super().__init__(name, safety_level)
+
+    def generate_fixes(self, issue: Issue, file_path: str, config: dict | None) -> list[FixAction]:
+        if not issue.fix_replacement:
+            return []
+
+        # 读取文件获取原始行内容
+        try:
+            full_path = Path(file_path)
+            if not full_path.exists():
+                return []
+
+            lines = full_path.read_text().splitlines(keepends=True)
+            if 0 < issue.line <= len(lines):
+                original_line = lines[issue.line - 1]
+                # 简单的正则替换
+                import re
+                fixed_line = re.sub(issue.rule_id.replace(":", r"\:"), issue.fix_replacement, original_line)
+                if fixed_line != original_line:
+                    return [FixAction(
+                        rule_id=issue.rule_id,
+                        file=file_path,
+                        line=issue.line,
+                        column=issue.column,
+                        original=original_line.rstrip("\n\r"),
+                        replacement=fixed_line.rstrip("\n\r"),
+                        safety_level=self.safety_level,
+                        description=issue.fix_hint or f"Auto-fix for {issue.rule_id}",
+                        confidence=0.8,
+                    )]
+        except Exception as e:
+            logger.warning(f"Regex fix failed for {issue.rule_id}: {e}")
+
+        return []
+
+
+class ToolBasedFixProvider(FixProvider):
+    """基于外部工具的修复提供者 (ruff, isort, autoflake 等)"""
+
+    def __init__(self, name: str, safety_level: FixSafetyLevel, tool_command: list[str]):
+        super().__init__(name, safety_level)
+        self.use_external_tool = True
+        self.tool_command = tool_command
+
+    def generate_fixes(self, issue: Issue, file_path: str, config: dict | None) -> list[FixAction]:
+        # 返回标记，实际修复由 apply_fixes 通过运行工具完成
+        return [FixAction(
+            rule_id=issue.rule_id,
+            file=file_path,
+            line=issue.line,
+            column=issue.column,
+            original="",  # 占位符，实际由工具处理
+            replacement="",  # 占位符
+            safety_level=self.safety_level,
+            description=f"{self.name} auto-fix for {issue.rule_id}",
+            confidence=0.9,
+        )]
+
+    def apply_fixes(self, file_path: str, actions: list[FixAction], project_root: Path) -> FixResult:
+        """运行外部工具修复文件"""
+        full_path = project_root / file_path
+        if not full_path.exists():
+            return FixResult(file=file_path, errors=[f"File not found: {file_path}"])
+
+        # 备份
+        backup_path = full_path.with_suffix(full_path.suffix + ".bak")
+        backup_path.write_text(full_path.read_text())
+
+        # 运行工具
+        import subprocess
+        cmd = self.tool_command + [str(full_path)]
+        try:
+            result = subprocess.run(cmd, capture_output=True, text=True, timeout=60)
+            if result.returncode != 0 and "error" in result.stderr.lower():
+                # 恢复备份
+                full_path.write_text(backup_path.read_text())
+                return FixResult(
+                    file=file_path,
+                    applied=[],
+                    skipped=actions,
+                    errors=[f"Tool failed: {result.stderr}"],
+                )
+        except subprocess.TimeoutExpired:
+            full_path.write_text(backup_path.read_text())
+            return FixResult(
+                file=file_path,
+                applied=[],
+                skipped=actions,
+                errors=["Tool timed out"],
+            )
+        except Exception as e:
+            full_path.write_text(backup_path.read_text())
+            return FixResult(
+                file=file_path,
+                applied=[],
+                skipped=actions,
+                errors=[f"Tool error: {e}"],
+            )
+
+        # 生成 diff
+        original_content = backup_path.read_text()
+        new_content = full_path.read_text()
+        diff = self._generate_diff(original_content, new_content, file_path)
+
+        return FixResult(
+            file=file_path,
+            applied=actions,
+            skipped=[],
+            diff=diff,
+        )
+
+
+class RuffFixProvider(ToolBasedFixProvider):
+    """Ruff 修复提供者 (格式化、导入排序、安全重构)"""
+
+    def __init__(self):
+        super().__init__("ruff", FixSafetyLevel.SAFE, ["ruff", "check", "--fix"])
+
+    def generate_fixes(self, issue: Issue, file_path: str, config: dict | None) -> list[FixAction]:
+        if issue.rule_id.startswith(("E", "W", "F", "I", "UP", "B", "C4", "SIM", "TID", "PTH", "ERA", "RET", "ARG", "PL", "TRY", "NPY", "RUF")):
+            return [FixAction(
+                rule_id=issue.rule_id,
+                file=file_path,
+                line=issue.line,
+                column=issue.column,
+                original="",
+                replacement="",
+                safety_level=FixSafetyLevel.SAFE,
+                description=f"Ruff auto-fix for {issue.rule_id}",
+                confidence=0.9,
+            )]
+        return []
+
+
+class IsortFixProvider(ToolBasedFixProvider):
+    """isort 导入排序修复"""
+
+    def __init__(self):
+        super().__init__("isort", FixSafetyLevel.SAFE, ["isort"])
+
+    def generate_fixes(self, issue: Issue, file_path: str, config: dict | None) -> list[FixAction]:
+        if issue.rule_id in ("I001", "I002", "I003", "I004", "I005"):
+            return [FixAction(
+                rule_id=issue.rule_id,
+                file=file_path,
+                line=issue.line,
+                column=issue.column,
+                original="",
+                replacement="",
+                safety_level=FixSafetyLevel.SAFE,
+                description="Sort imports with isort",
+                confidence=0.95,
+            )]
+        return []
+
+
+class AutoFlakeFixProvider(ToolBasedFixProvider):
+    """autoflake 移除未使用导入"""
+
+    def __init__(self):
+        super().__init__("autoflake", FixSafetyLevel.LOW_RISK, ["autoflake", "--remove-all-unused-imports", "--in-place"])
+
+    def generate_fixes(self, issue: Issue, file_path: str, config: dict | None) -> list[FixAction]:
+        if issue.rule_id in ("F401", "F811", "F841"):
+            return [FixAction(
+                rule_id=issue.rule_id,
+                file=file_path,
+                line=issue.line,
+                column=issue.column,
+                original="",
+                replacement="",
+                safety_level=FixSafetyLevel.LOW_RISK,
+                description="Remove unused imports with autoflake",
+                confidence=0.85,
+            )]
+        return []
+
+
+def create_default_orchestrator() -> AutoFixOrchestrator:
+    """创建默认编排器并注册内置提供者"""
+    orchestrator = AutoFixOrchestrator()
+    orchestrator.register_provider(RegexFixProvider("regex", FixSafetyLevel.SAFE))
+    orchestrator.register_provider(RuffFixProvider())
+    orchestrator.register_provider(IsortFixProvider())
+    orchestrator.register_provider(AutoFlakeFixProvider())
+    return orchestrator
+
+
+def run_auto_fix(
+    results: list[CheckResult],
+    project_root: Path,
+    strategy: FixStrategy = FixStrategy.AUTO,
+    safety_level: FixSafetyLevel = FixSafetyLevel.SAFE,
+    config: dict[str, Any] | None = None,
+) -> list[FixResult]:
+    """便捷函数: 运行自动修复"""
+    orchestrator = create_default_orchestrator()
+    orchestrator.strategy = strategy
+    orchestrator.safety_level = safety_level
+
+    plan = orchestrator.create_plan(results, config)
+    return orchestrator.execute_plan(plan, project_root)

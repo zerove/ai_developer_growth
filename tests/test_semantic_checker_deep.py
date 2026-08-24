@@ -48,9 +48,7 @@ class TestSemanticCheckerDeep:
             complexity=1,
         )
         checker = SemanticChecker()
-        issues = checker._check_complexity(
-            {"test.py": _make_ast(functions=[func])}, Path(".")
-        )
+        issues = checker._check_complexity({"test.py": _make_ast(functions=[func])}, Path("."))
         longs = [i for i in issues if i.rule_id == "long-function"]
         assert len(longs) == 1
         assert "long_function" in longs[0].message
@@ -70,9 +68,7 @@ class TestSemanticCheckerDeep:
             complexity=15,
         )
         checker = SemanticChecker()
-        issues = checker._check_complexity(
-            {"test.py": _make_ast(functions=[func])}, Path(".")
-        )
+        issues = checker._check_complexity({"test.py": _make_ast(functions=[func])}, Path("."))
         highs = [i for i in issues if i.rule_id == "high-complexity"]
         assert len(highs) == 1
         assert "complexity 15" in highs[0].message
@@ -92,9 +88,7 @@ class TestSemanticCheckerDeep:
             complexity=20,
         )
         checker = SemanticChecker()
-        issues = checker._check_complexity(
-            {"test.py": _make_ast(functions=[func])}, Path(".")
-        )
+        issues = checker._check_complexity({"test.py": _make_ast(functions=[func])}, Path("."))
         rule_ids = {i.rule_id for i in issues}
         assert "long-function" in rule_ids
         assert "high-complexity" in rule_ids
@@ -114,9 +108,7 @@ class TestSemanticCheckerDeep:
             complexity=1,
         )
         checker = SemanticChecker()
-        issues = checker._check_complexity(
-            {"test.py": _make_ast(functions=[func])}, Path(".")
-        )
+        issues = checker._check_complexity({"test.py": _make_ast(functions=[func])}, Path("."))
         assert issues == []
 
     def test_check_missing_docstrings_public_func(self):
@@ -134,9 +126,7 @@ class TestSemanticCheckerDeep:
             complexity=1,
         )
         checker = SemanticChecker()
-        issues = checker._check_missing_docstrings(
-            {"test.py": _make_ast(functions=[func])}, Path(".")
-        )
+        issues = checker._check_missing_docstrings({"test.py": _make_ast(functions=[func])}, Path("."))
         assert len(issues) == 1
         assert "public_api" in issues[0].message
 
@@ -155,9 +145,7 @@ class TestSemanticCheckerDeep:
             complexity=1,
         )
         checker = SemanticChecker()
-        issues = checker._check_missing_docstrings(
-            {"test.py": _make_ast(functions=[func])}, Path(".")
-        )
+        issues = checker._check_missing_docstrings({"test.py": _make_ast(functions=[func])}, Path("."))
         assert issues == []
 
     def test_check_missing_docstrings_with_docstring_ok(self):
@@ -175,9 +163,7 @@ class TestSemanticCheckerDeep:
             complexity=1,
         )
         checker = SemanticChecker()
-        issues = checker._check_missing_docstrings(
-            {"test.py": _make_ast(functions=[func])}, Path(".")
-        )
+        issues = checker._check_missing_docstrings({"test.py": _make_ast(functions=[func])}, Path("."))
         assert issues == []
 
     def test_check_missing_docstrings_public_class(self):
@@ -194,9 +180,7 @@ class TestSemanticCheckerDeep:
             body_lines=15,
         )
         checker = SemanticChecker()
-        issues = checker._check_missing_docstrings(
-            {"test.py": _make_ast(classes=[cls])}, Path(".")
-        )
+        issues = checker._check_missing_docstrings({"test.py": _make_ast(classes=[cls])}, Path("."))
         assert len(issues) == 1
         assert "PublicClass" in issues[0].message
 

@@ -60,9 +60,7 @@ DEFAULT_MARKERS: dict[str, str] = {
 SEVERITY_ORDER = {"error": 3, "warning": 2, "info": 1, "off": 0}
 
 
-def detect_file_role(
-    filepath: Path, marker_overrides: dict[str, str] | None = None
-) -> str | None:
+def detect_file_role(filepath: Path, marker_overrides: dict[str, str] | None = None) -> str | None:
     """检测文件角色。
 
     Args:
@@ -84,9 +82,7 @@ def detect_file_role(
             # 简单 glob 匹配
             parts = pattern.split("*")
             if len(parts) == 2:
-                if rel_path_str.startswith(parts[0]) and rel_path_str.endswith(
-                    parts[1]
-                ):
+                if rel_path_str.startswith(parts[0]) and rel_path_str.endswith(parts[1]):
                     return role
                 if filename.startswith(parts[0]) and filename.endswith(parts[1]):
                     return role

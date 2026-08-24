@@ -29,23 +29,17 @@ from tools.scripts.rules_engine.validators.models import ValidationResult
 class TestRunLanguageRules:
     @patch("tools.scripts.hooks.domain_checks.validate_file")
     @patch("tools.scripts.hooks.domain_checks.detect_language_from_file")
-    def test_file_valid(
-        self, mock_detect: MagicMock, mock_validate: MagicMock, tmp_path: Path
-    ) -> None:
+    def test_file_valid(self, mock_detect: MagicMock, mock_validate: MagicMock, tmp_path: Path) -> None:
         f = tmp_path / "test.py"
         f.write_text("# ok\n")
         mock_detect.return_value = "python"
-        mock_validate.return_value = ValidationResult(
-            file=str(f), language="python", issues=[]
-        )
+        mock_validate.return_value = ValidationResult(file=str(f), language="python", issues=[])
         passed, output = run_language_rules(f)
         assert passed is True
 
     @patch("tools.scripts.hooks.domain_checks.validate_file")
     @patch("tools.scripts.hooks.domain_checks.detect_language_from_file")
-    def test_file_invalid(
-        self, mock_detect: MagicMock, mock_validate: MagicMock, tmp_path: Path
-    ) -> None:
+    def test_file_invalid(self, mock_detect: MagicMock, mock_validate: MagicMock, tmp_path: Path) -> None:
         from tools.scripts.rules_engine.validators.models import Issue
 
         f = tmp_path / "test.py"
@@ -59,17 +53,13 @@ class TestRunLanguageRules:
             line=1,
             message="bad",
         )
-        mock_validate.return_value = ValidationResult(
-            file=str(f), language="python", issues=[issue]
-        )
+        mock_validate.return_value = ValidationResult(file=str(f), language="python", issues=[issue])
         passed, output = run_language_rules(f)
         assert passed is False
 
     @patch("tools.scripts.hooks.domain_checks.detect_language_from_file")
     @patch("tools.scripts.hooks.domain_checks.validate_file")
-    def test_file_unknown_language(
-        self, mock_validate: MagicMock, mock_detect: MagicMock, tmp_path: Path
-    ) -> None:
+    def test_file_unknown_language(self, mock_validate: MagicMock, mock_detect: MagicMock, tmp_path: Path) -> None:
         f = tmp_path / "test.xyz"
         f.touch()
         mock_detect.return_value = None
@@ -88,15 +78,11 @@ class TestRunLanguageRules:
 
     @patch("tools.scripts.hooks.domain_checks.validate_file")
     @patch("tools.scripts.hooks.domain_checks.detect_language_from_file")
-    def test_file_with_lang_override(
-        self, mock_detect: MagicMock, mock_validate: MagicMock, tmp_path: Path
-    ) -> None:
+    def test_file_with_lang_override(self, mock_detect: MagicMock, mock_validate: MagicMock, tmp_path: Path) -> None:
         f = tmp_path / "test.py"
         f.write_text("# ok\n")
         mock_detect.return_value = "typescript"  # Would return ts if detected
-        mock_validate.return_value = ValidationResult(
-            file=str(f), language="python", issues=[]
-        )
+        mock_validate.return_value = ValidationResult(file=str(f), language="python", issues=[])
         passed, output = run_language_rules(f, lang="python")
         # lang override bypasses detect_language_from_file
         mock_detect.assert_not_called()
@@ -105,9 +91,7 @@ class TestRunLanguageRules:
 class TestRunQualityGate:
     @patch("tools.scripts.hooks.domain_checks.check_file")
     @patch("tools.scripts.hooks.domain_checks.detect_language_from_file")
-    def test_file_check(
-        self, mock_detect: MagicMock, mock_check: MagicMock, tmp_path: Path
-    ) -> None:
+    def test_file_check(self, mock_detect: MagicMock, mock_check: MagicMock, tmp_path: Path) -> None:
         f = tmp_path / "test.py"
         f.write_text("# test\n")
         mock_detect.return_value = "python"
@@ -117,9 +101,7 @@ class TestRunQualityGate:
 
     @patch("tools.scripts.hooks.domain_checks.check_file")
     @patch("tools.scripts.hooks.domain_checks.detect_language_from_file")
-    def test_full_checks(
-        self, mock_detect: MagicMock, mock_check: MagicMock, tmp_path: Path
-    ) -> None:
+    def test_full_checks(self, mock_detect: MagicMock, mock_check: MagicMock, tmp_path: Path) -> None:
         f = tmp_path / "test.py"
         f.write_text("# test\n")
         mock_detect.return_value = "python"
@@ -129,9 +111,7 @@ class TestRunQualityGate:
 
     @patch("tools.scripts.hooks.domain_checks.check_file")
     @patch("tools.scripts.hooks.domain_checks.detect_language_from_file")
-    def test_json_format(
-        self, mock_detect: MagicMock, mock_check: MagicMock, tmp_path: Path
-    ) -> None:
+    def test_json_format(self, mock_detect: MagicMock, mock_check: MagicMock, tmp_path: Path) -> None:
         f = tmp_path / "test.py"
         f.write_text("# test\n")
         mock_detect.return_value = "python"
@@ -142,18 +122,14 @@ class TestRunQualityGate:
 
     @patch("tools.scripts.hooks.domain_checks.check_file")
     @patch("tools.scripts.hooks.domain_checks.detect_language_from_file")
-    def test_no_files(
-        self, mock_detect: MagicMock, mock_check: MagicMock, tmp_path: Path
-    ) -> None:
+    def test_no_files(self, mock_detect: MagicMock, mock_check: MagicMock, tmp_path: Path) -> None:
         passed, output = run_quality_gate(tmp_path / "nonexistent_dir")
         assert passed is True
         assert "No files" in output
 
     @patch("tools.scripts.hooks.domain_checks.check_file")
     @patch("tools.scripts.hooks.domain_checks.detect_language_from_file")
-    def test_failed_checks(
-        self, mock_detect: MagicMock, mock_check: MagicMock, tmp_path: Path
-    ) -> None:
+    def test_failed_checks(self, mock_detect: MagicMock, mock_check: MagicMock, tmp_path: Path) -> None:
         f = tmp_path / "test.py"
         f.write_text("# bad\n")
         mock_detect.return_value = "python"
@@ -166,9 +142,7 @@ class TestRunQualityGate:
 
     @patch("tools.scripts.hooks.domain_checks.check_file")
     @patch("tools.scripts.hooks.domain_checks.detect_language_from_file")
-    def test_check_patterns(
-        self, mock_detect: MagicMock, mock_check: MagicMock, tmp_path: Path
-    ) -> None:
+    def test_check_patterns(self, mock_detect: MagicMock, mock_check: MagicMock, tmp_path: Path) -> None:
         f = tmp_path / "test.py"
         f.write_text("# test\n")
         mock_detect.return_value = "python"
@@ -178,15 +152,11 @@ class TestRunQualityGate:
 
     @patch("tools.scripts.hooks.domain_checks.check_file")
     @patch("tools.scripts.hooks.domain_checks.detect_language_from_file")
-    def test_many_issues_truncation(
-        self, mock_detect: MagicMock, mock_check: MagicMock, tmp_path: Path
-    ) -> None:
+    def test_many_issues_truncation(self, mock_detect: MagicMock, mock_check: MagicMock, tmp_path: Path) -> None:
         f = tmp_path / "test.py"
         f.write_text("# test\n")
         mock_detect.return_value = "python"
-        issues = [
-            {"line": i, "type": "error", "message": f"issue {i}"} for i in range(10)
-        ]
+        issues = [{"line": i, "type": "error", "message": f"issue {i}"} for i in range(10)]
         mock_check.return_value = {"passed": False, "issues": issues}
         passed, output = run_quality_gate(f)
         assert "more" in output
@@ -263,9 +233,7 @@ class TestRunGovernanceAudit:
 class TestGetChangedFiles:
     @patch("tools.scripts.hooks.incremental_checks.subprocess.run")
     def test_success(self, mock_run: MagicMock) -> None:
-        mock_run.return_value = MagicMock(
-            returncode=0, stdout="a.py\nb.rs\n", stderr=""
-        )
+        mock_run.return_value = MagicMock(returncode=0, stdout="a.py\nb.rs\n", stderr="")
         files = get_changed_files("HEAD")
         assert len(files) == 2
 
@@ -313,9 +281,7 @@ class TestCheckCodeFiles:
         mock_lint.return_value = (True, "")
         mock_fmt.return_value = (True, "")
         mock_detect.return_value = "python"
-        mock_validate.return_value = ValidationResult(
-            file="test.py", language="python", issues=[]
-        )
+        mock_validate.return_value = ValidationResult(file="test.py", language="python", issues=[])
         passed, output = _check_code_files([Path("test.py")], label="Test")
         assert passed is True
 
@@ -338,9 +304,7 @@ class TestCheckCodeFiles:
         mock_lint.return_value = (False, "lint error")
         mock_fmt.return_value = (True, "")
         mock_detect.return_value = "python"
-        mock_validate.return_value = ValidationResult(
-            file="test.py", language="python", issues=[]
-        )
+        mock_validate.return_value = ValidationResult(file="test.py", language="python", issues=[])
         passed, output = _check_code_files([Path("test.py")], label="Test")
         assert passed is False
         assert "Lint errors" in output

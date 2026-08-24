@@ -31,9 +31,7 @@ class TestInitDb:
 
     def test_creates_tables(self, db_path):
         conn = init_db(db_path)
-        tables = conn.execute(
-            "SELECT name FROM sqlite_master WHERE type='table'"
-        ).fetchall()
+        tables = conn.execute("SELECT name FROM sqlite_master WHERE type='table'").fetchall()
         table_names = {t[0] for t in tables}
         assert "quality_runs" in table_names
         assert "file_results" in table_names

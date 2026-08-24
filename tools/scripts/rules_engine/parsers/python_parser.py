@@ -7,9 +7,7 @@ from .base import BaseParser
 class PythonParser(BaseParser):
     """最终版生产级 Python AST 解析器。"""
 
-    def parse(
-        self, root_node: _TreeNode, lines: list[str]
-    ) -> tuple[list[FunctionInfo], list[ClassInfo]]:
+    def parse(self, root_node: _TreeNode, lines: list[str]) -> tuple[list[FunctionInfo], list[ClassInfo]]:
         functions: list[FunctionInfo] = []
         classes: list[ClassInfo] = []
         self._walk(root_node, lines, functions, classes)

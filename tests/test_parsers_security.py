@@ -61,9 +61,7 @@ def test_error_patterns_not_empty():
 def test_get_security_rules_returns_dict():
     rules = get_security_rules("python")
     assert "anti_patterns" in rules
-    assert len(rules["anti_patterns"]) == len(SECURITY_PATTERNS) + len(
-        TYPE_PATTERNS
-    ) + len(ERROR_PATTERNS)
+    assert len(rules["anti_patterns"]) == len(SECURITY_PATTERNS) + len(TYPE_PATTERNS) + len(ERROR_PATTERNS)
 
 
 def test_security_patterns_exclude_files():

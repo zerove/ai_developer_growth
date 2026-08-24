@@ -195,9 +195,7 @@ class TestGetPluginsForLanguage:
 
 class TestFunctionPlugin:
     def test_check_delegates_to_function(self, tmp_path: Path) -> None:
-        def my_check(
-            filepath: Path, content: str, lines: list[str], lang: str, rules: dict
-        ) -> list[Issue]:
+        def my_check(filepath: Path, content: str, lines: list[str], lang: str, rules: dict) -> list[Issue]:
             return [
                 Issue(
                     rule_id="fn-rule",
@@ -209,9 +207,7 @@ class TestFunctionPlugin:
                 )
             ]
 
-        plugin = _FunctionPlugin(
-            my_check, name="fn_plugin", languages=["python"], priority=5
-        )
+        plugin = _FunctionPlugin(my_check, name="fn_plugin", languages=["python"], priority=5)
         assert plugin.name == "fn_plugin"
         assert plugin.supported_languages == ["python"]
         assert plugin.priority == 5
@@ -232,9 +228,7 @@ class TestDecorator:
 
     def test_decorator_registers_plugin(self) -> None:
         @register_checker_decorator(name="dec_check", languages=["python"], priority=42)
-        def my_check(
-            filepath: Path, content: str, lines: list[str], lang: str, rules: dict
-        ) -> list[Issue]:
+        def my_check(filepath: Path, content: str, lines: list[str], lang: str, rules: dict) -> list[Issue]:
             return []
 
         plugins = list_plugins()

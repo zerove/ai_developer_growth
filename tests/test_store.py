@@ -32,12 +32,7 @@ class TestInitDb:
 
     def test_creates_all_tables(self, db_path):
         conn = init_db(db_path)
-        tables = {
-            t[0]
-            for t in conn.execute(
-                "SELECT name FROM sqlite_master WHERE type='table'"
-            ).fetchall()
-        }
+        tables = {t[0] for t in conn.execute("SELECT name FROM sqlite_master WHERE type='table'").fetchall()}
         assert {
             "quality_runs",
             "file_results",
@@ -101,9 +96,7 @@ class TestCheckStoreRuns:
         assert files[0]["file"] == "a.py"
         assert files[0]["errors"] == 1
 
-        violations = store.conn.execute(
-            "SELECT * FROM rule_violations WHERE run_id = ?", (run_id,)
-        ).fetchall()
+        violations = store.conn.execute("SELECT * FROM rule_violations WHERE run_id = ?", (run_id,)).fetchall()
         assert len(violations) == 2
 
     def test_run_history(self, store: CheckStore):
@@ -295,9 +288,7 @@ class TestModuleLevelRecordRun:
             ],
         }
         run_id = record_run(conn, report)
-        rows = conn.execute(
-            "SELECT * FROM file_results WHERE run_id = ?", (run_id,)
-        ).fetchall()
+        rows = conn.execute("SELECT * FROM file_results WHERE run_id = ?", (run_id,)).fetchall()
         assert len(rows) == 1
         assert rows[0][2] == "x.py"
         conn.close()

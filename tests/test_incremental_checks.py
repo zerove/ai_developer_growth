@@ -159,9 +159,7 @@ class TestRunPreCommitChecks:
     @patch("tools.scripts.hooks.incremental_checks._check_code_files")
     @patch("tools.scripts.hooks.scope_guard.ScopeGuardHook")
     @patch("tools.scripts.audit_attestation.AuditAttestationLedger")
-    def test_run_pre_commit_with_files(
-        self, mock_ledger, mock_scope, mock_check, mock_get, tmp_path: Path
-    ):
+    def test_run_pre_commit_with_files(self, mock_ledger, mock_scope, mock_check, mock_get, tmp_path: Path):
         """Test with staged code files."""
         test_file = tmp_path / "test.py"
         test_file.write_text("print('hello')")
@@ -183,9 +181,7 @@ class TestRunPreCommitChecks:
     @patch("tools.scripts.hooks.incremental_checks._check_code_files")
     @patch("tools.scripts.hooks.scope_guard.ScopeGuardHook")
     @patch("tools.scripts.audit_attestation.AuditAttestationLedger")
-    def test_run_pre_commit_scope_fail(
-        self, mock_ledger, mock_scope, mock_check, mock_get, tmp_path: Path
-    ):
+    def test_run_pre_commit_scope_fail(self, mock_ledger, mock_scope, mock_check, mock_get, tmp_path: Path):
         """Test when scope guard fails."""
         test_file = tmp_path / "test.py"
         test_file.write_text("print('hello')")
@@ -209,9 +205,7 @@ class TestRunPreCommitChecks:
     @patch("tools.scripts.hooks.incremental_checks.get_staged_files")
     @patch("tools.scripts.hooks.incremental_checks._check_code_files")
     @patch("tools.scripts.hooks.scope_guard.ScopeGuardHook")
-    def test_run_pre_commit_exception_handling(
-        self, mock_scope, mock_check, mock_get, tmp_path: Path
-    ):
+    def test_run_pre_commit_exception_handling(self, mock_scope, mock_check, mock_get, tmp_path: Path):
         """Test exception handling in scope guard."""
         test_file = tmp_path / "test.py"
         test_file.write_text("print('hello')")
@@ -234,9 +228,7 @@ class TestCheckCodeFiles:
     @patch("tools.scripts.hooks.incremental_checks.run_format_files")
     @patch("tools.scripts.hooks.incremental_checks.detect_language_from_file")
     @patch("tools.scripts.hooks.incremental_checks.validate_file")
-    def test_check_code_files_all_pass(
-        self, mock_validate, mock_detect, mock_fmt, mock_lint
-    ):
+    def test_check_code_files_all_pass(self, mock_validate, mock_detect, mock_fmt, mock_lint):
         """Test all checks pass."""
         mock_lint.return_value = (True, "")
         mock_fmt.return_value = (True, "")
@@ -255,9 +247,7 @@ class TestCheckCodeFiles:
     @patch("tools.scripts.hooks.incremental_checks.run_format_files")
     @patch("tools.scripts.hooks.incremental_checks.detect_language_from_file")
     @patch("tools.scripts.hooks.incremental_checks.validate_file")
-    def test_check_code_files_lint_fail(
-        self, mock_validate, mock_detect, mock_fmt, mock_lint
-    ):
+    def test_check_code_files_lint_fail(self, mock_validate, mock_detect, mock_fmt, mock_lint):
         """Test lint fails."""
         mock_lint.return_value = (False, "lint error")
         mock_fmt.return_value = (True, "")
@@ -275,9 +265,7 @@ class TestCheckCodeFiles:
     @patch("tools.scripts.hooks.incremental_checks.run_format_files")
     @patch("tools.scripts.hooks.incremental_checks.detect_language_from_file")
     @patch("tools.scripts.hooks.incremental_checks.validate_file")
-    def test_check_code_files_format_fail(
-        self, mock_validate, mock_detect, mock_fmt, mock_lint
-    ):
+    def test_check_code_files_format_fail(self, mock_validate, mock_detect, mock_fmt, mock_lint):
         """Test format fails."""
         mock_lint.return_value = (True, "")
         mock_fmt.return_value = (False, "format error")
@@ -294,16 +282,12 @@ class TestCheckCodeFiles:
     @patch("tools.scripts.hooks.incremental_checks.run_format_files")
     @patch("tools.scripts.hooks.incremental_checks.detect_language_from_file")
     @patch("tools.scripts.hooks.incremental_checks.validate_file")
-    def test_check_code_files_language_rules_fail(
-        self, mock_validate, mock_detect, mock_fmt, mock_lint
-    ):
+    def test_check_code_files_language_rules_fail(self, mock_validate, mock_detect, mock_fmt, mock_lint):
         """Test language rules fail."""
         mock_lint.return_value = (True, "")
         mock_fmt.return_value = (True, "")
         mock_detect.return_value = "python"
-        mock_validate.return_value = MagicMock(
-            passed=False, issues=[MagicMock(), MagicMock()]
-        )
+        mock_validate.return_value = MagicMock(passed=False, issues=[MagicMock(), MagicMock()])
 
         files = [Path("src/file1.py")]
         passed, output = _check_code_files(files, label="Test")
@@ -315,9 +299,7 @@ class TestCheckCodeFiles:
     @patch("tools.scripts.hooks.incremental_checks.run_format_files")
     @patch("tools.scripts.hooks.incremental_checks.detect_language_from_file")
     @patch("tools.scripts.hooks.incremental_checks.validate_file")
-    def test_check_code_files_no_py_files(
-        self, mock_validate, mock_detect, mock_fmt, mock_lint
-    ):
+    def test_check_code_files_no_py_files(self, mock_validate, mock_detect, mock_fmt, mock_lint):
         """Test with no Python files (skips lint/format)."""
         mock_detect.return_value = "typescript"
         mock_validate.return_value = MagicMock(passed=True, issues=[])
@@ -335,9 +317,7 @@ class TestCheckCodeFiles:
     @patch("tools.scripts.hooks.incremental_checks.run_format_files")
     @patch("tools.scripts.hooks.incremental_checks.detect_language_from_file")
     @patch("tools.scripts.hooks.incremental_checks.validate_file")
-    def test_check_code_files_unknown_lang(
-        self, mock_validate, mock_detect, mock_fmt, mock_lint
-    ):
+    def test_check_code_files_unknown_lang(self, mock_validate, mock_detect, mock_fmt, mock_lint):
         """Test with unknown language (skips language rules)."""
         mock_lint.return_value = (True, "")
         mock_fmt.return_value = (True, "")

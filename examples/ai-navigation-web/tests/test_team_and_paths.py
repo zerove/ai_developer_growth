@@ -1,8 +1,10 @@
-import pytest
-from src.team_config import TeamManager
-from src.learning_paths import LearningPathManager, TEMPLATES
-import tempfile
 import shutil
+import tempfile
+
+import pytest
+
+from src.learning_paths import TEMPLATES, LearningPathManager
+from src.team_config import TeamManager
 
 
 @pytest.fixture

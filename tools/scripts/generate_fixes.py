@@ -104,9 +104,7 @@ def apply_fixes_to_yaml(fixes: list[dict[str, Any]], dry_run: bool = True) -> in
                         applied += 1
 
         with open(filepath, "w") as f:
-            yaml.dump(
-                data, f, default_flow_style=False, allow_unicode=True, sort_keys=False
-            )
+            yaml.dump(data, f, default_flow_style=False, allow_unicode=True, sort_keys=False)
 
     return applied
 
@@ -115,11 +113,7 @@ def _discover_languages(args: argparse.Namespace) -> list[str]:
     """Discover languages to process based on args."""
     if args.all:
         langs_dir = _rules_dir() / "languages"
-        return sorted(
-            d.name
-            for d in langs_dir.iterdir()
-            if d.is_dir() and (d / "rules.d").exists()
-        )
+        return sorted(d.name for d in langs_dir.iterdir() if d.is_dir() and (d / "rules.d").exists())
     return [args.lang]
 
 
@@ -134,9 +128,7 @@ def _print_results(fixes: list[dict[str, Any]], args: argparse.Namespace) -> Non
         print(f"Generated fixes for {with_fix}/{total} rules")
         if args.verbose:
             for fix in fixes:
-                print(
-                    f"  [{fix['lang']}] {fix['id']}: {fix.get('fix_replacement', '') or '(no fix)'}"
-                )
+                print(f"  [{fix['lang']}] {fix['id']}: {fix.get('fix_replacement', '') or '(no fix)'}")
 
 
 def _handle_output(fixes: list[dict[str, Any]], args: argparse.Namespace) -> None:
@@ -154,9 +146,7 @@ def _handle_apply(fixes: list[dict[str, Any]], args: argparse.Namespace) -> None
         print(f"Applied {applied} fixes to YAML files")
     elif args.dry_run:
         for fix in fixes[:10]:
-            print(
-                f"  [{fix['lang']}] {fix['id']}: {fix['fix_replacement'] or '(no fix)'}"
-            )
+            print(f"  [{fix['lang']}] {fix['id']}: {fix['fix_replacement'] or '(no fix)'}")
         if len(fixes) > 10:
             print(f"  ... and {len(fixes) - 10} more")
 
@@ -165,16 +155,10 @@ def main() -> int:
     parser = argparse.ArgumentParser(description="Generate fix_replacement for rules")
     parser.add_argument("--lang", type=str, help="Process specific language")
     parser.add_argument("--all", action="store_true", help="Process all languages")
-    parser.add_argument(
-        "--dry-run", action="store_true", help="Preview without writing"
-    )
-    parser.add_argument(
-        "--apply", action="store_true", help="Apply fixes to YAML files"
-    )
+    parser.add_argument("--dry-run", action="store_true", help="Preview without writing")
+    parser.add_argument("--apply", action="store_true", help="Apply fixes to YAML files")
     parser.add_argument("-o", "--output", type=str, help="Output JSON file")
-    parser.add_argument(
-        "--json", action="store_true", dest="json_output", help="Output as JSON"
-    )
+    parser.add_argument("--json", action="store_true", dest="json_output", help="Output as JSON")
     parser.add_argument("--verbose", action="store_true", help="Detailed output")
     args = parser.parse_args()
 

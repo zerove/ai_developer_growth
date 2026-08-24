@@ -246,13 +246,7 @@ class TestValidateRules:
         rules_dir = tmp_path / ".ai-rules"
         rules_dir.mkdir()
         (rules_dir / "bad.yml").write_text(
-            yaml.dump(
-                {
-                    "anti_patterns": [
-                        {"severity": "error", "pattern": "x", "message": "bad"}
-                    ]
-                }
-            )
+            yaml.dump({"anti_patterns": [{"severity": "error", "pattern": "x", "message": "bad"}]})
         )
         total, errors, msgs = validate_rules(rules_dir)
         assert errors >= 1
@@ -283,9 +277,7 @@ class TestExportRules:
         rules_dir = tmp_path / ".ai-rules"
         rules_dir.mkdir()
         (rules_dir / "a.yml").write_text(
-            yaml.dump(
-                {"anti_patterns": [{"id": "a1"}], "naming_conventions": [{"id": "n1"}]}
-            )
+            yaml.dump({"anti_patterns": [{"id": "a1"}], "naming_conventions": [{"id": "n1"}]})
         )
         (rules_dir / "b.yml").write_text(yaml.dump({"complexity": [{"id": "c1"}]}))
         total, combined = export_rules(rules_dir, tmp_path / "out.yml")
@@ -325,9 +317,7 @@ class TestCmdSearch:
         out = capsys.readouterr().out
         assert "matching" in out
 
-    def test_search_json(
-        self, fw_dir: Path, capsys: pytest.CaptureFixture[str]
-    ) -> None:
+    def test_search_json(self, fw_dir: Path, capsys: pytest.CaptureFixture[str]) -> None:
         with mock.patch("rule_catalog.framework_dir", return_value=fw_dir):
             args = argparse.Namespace(query="eval", json=True)
             cmd_search(args)
@@ -358,51 +348,33 @@ class TestCmdInfo:
 
 
 class TestCmdInstall:
-    def test_install(
-        self, fw_dir: Path, tmp_path: Path, capsys: pytest.CaptureFixture[str]
-    ) -> None:
+    def test_install(self, fw_dir: Path, tmp_path: Path, capsys: pytest.CaptureFixture[str]) -> None:
         with mock.patch("rule_catalog.framework_dir", return_value=fw_dir):
-            args = argparse.Namespace(
-                pack="security", dry_run=False, project_dir=str(tmp_path)
-            )
+            args = argparse.Namespace(pack="security", dry_run=False, project_dir=str(tmp_path))
             cmd_install(args)
         out = capsys.readouterr().out
         assert "Installed" in out or "installed" in out
 
-    def test_dry_run(
-        self, fw_dir: Path, tmp_path: Path, capsys: pytest.CaptureFixture[str]
-    ) -> None:
+    def test_dry_run(self, fw_dir: Path, tmp_path: Path, capsys: pytest.CaptureFixture[str]) -> None:
         with mock.patch("rule_catalog.framework_dir", return_value=fw_dir):
-            args = argparse.Namespace(
-                pack="security", dry_run=True, project_dir=str(tmp_path)
-            )
+            args = argparse.Namespace(pack="security", dry_run=True, project_dir=str(tmp_path))
             cmd_install(args)
         out = capsys.readouterr().out
         assert "dry-run" in out
 
 
 class TestCmdValidate:
-    def test_no_rules_dir(
-        self, tmp_path: Path, capsys: pytest.CaptureFixture[str]
-    ) -> None:
+    def test_no_rules_dir(self, tmp_path: Path, capsys: pytest.CaptureFixture[str]) -> None:
         args = argparse.Namespace(project_dir=str(tmp_path))
         cmd_validate(args)
         out = capsys.readouterr().out
         assert "No .ai-rules" in out or "not found" in out.lower()
 
-    def test_valid_rules(
-        self, tmp_path: Path, capsys: pytest.CaptureFixture[str]
-    ) -> None:
+    def test_valid_rules(self, tmp_path: Path, capsys: pytest.CaptureFixture[str]) -> None:
         rules_dir = tmp_path / ".ai-rules"
         rules_dir.mkdir()
         (rules_dir / "ok.yml").write_text(
-            yaml.dump(
-                {
-                    "anti_patterns": [
-                        {"id": "x", "severity": "error", "pattern": "y", "message": "z"}
-                    ]
-                }
-            )
+            yaml.dump({"anti_patterns": [{"id": "x", "severity": "error", "pattern": "y", "message": "z"}]})
         )
         args = argparse.Namespace(project_dir=str(tmp_path))
         cmd_validate(args)
@@ -411,17 +383,13 @@ class TestCmdValidate:
 
 
 class TestCmdExport:
-    def test_no_rules_dir(
-        self, tmp_path: Path, capsys: pytest.CaptureFixture[str]
-    ) -> None:
+    def test_no_rules_dir(self, tmp_path: Path, capsys: pytest.CaptureFixture[str]) -> None:
         args = argparse.Namespace(project_dir=str(tmp_path), output=None, dry_run=False)
         cmd_export(args)
         out = capsys.readouterr().out
         assert "No .ai-rules" in out or "not found" in out.lower()
 
-    def test_export_dry_run(
-        self, tmp_path: Path, capsys: pytest.CaptureFixture[str]
-    ) -> None:
+    def test_export_dry_run(self, tmp_path: Path, capsys: pytest.CaptureFixture[str]) -> None:
         rules_dir = tmp_path / ".ai-rules"
         rules_dir.mkdir()
         (rules_dir / "a.yml").write_text(yaml.dump({"anti_patterns": [{"id": "x"}]}))

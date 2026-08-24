@@ -62,18 +62,10 @@ def report() -> int:
     root = get_project_root()
 
     stats = {
-        "cases": (
-            len(list((root / "case-studies").glob("*.md")))
-            if (root / "case-studies").exists()
-            else 0
-        ),
-        "docs": (
-            len(list((root / "docs").rglob("*.md"))) if (root / "docs").exists() else 0
-        ),
+        "cases": (len(list((root / "case-studies").glob("*.md"))) if (root / "case-studies").exists() else 0),
+        "docs": (len(list((root / "docs").rglob("*.md"))) if (root / "docs").exists() else 0),
         "examples": (
-            len([d for d in (root / "examples").iterdir() if d.is_dir()])
-            if (root / "examples").exists()
-            else 0
+            len([d for d in (root / "examples").iterdir() if d.is_dir()]) if (root / "examples").exists() else 0
         ),
     }
 

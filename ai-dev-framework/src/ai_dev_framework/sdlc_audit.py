@@ -86,11 +86,7 @@ def _count_test_files(root: Path) -> int:
     for p in root.rglob("*"):
         if p.is_file():
             name = p.name
-            if (
-                name.startswith("test_")
-                or name.endswith("_test.py")
-                or name.endswith(".spec.ts")
-            ):
+            if name.startswith("test_") or name.endswith("_test.py") or name.endswith(".spec.ts"):
                 count += 1
     return count
 
@@ -116,9 +112,7 @@ def audit_sdlc(project_path: str | Path) -> SDLCAuditResult:
     if has_prd:
         req_score += 0.4
 
-    has_requirements = _has_content_pattern(
-        "requirement|user story|功能需求", root, "*.md"
-    )
+    has_requirements = _has_content_pattern("requirement|user story|功能需求", root, "*.md")
     req_checks.append(
         {
             "check": "需求描述",
@@ -159,11 +153,7 @@ def audit_sdlc(project_path: str | Path) -> SDLCAuditResult:
     des_checks = []
     des_score = 0.0
 
-    has_adr = (
-        _has_file("ADR*", root)
-        or _has_file("adr*", root)
-        or (root / "docs/adr").is_dir()
-    )
+    has_adr = _has_file("ADR*", root) or _has_file("adr*", root) or (root / "docs/adr").is_dir()
     des_checks.append(
         {
             "check": "架构决策记录 (ADR)",
@@ -185,9 +175,7 @@ def audit_sdlc(project_path: str | Path) -> SDLCAuditResult:
     if has_arch_doc:
         des_score += 0.35
 
-    has_datamodel = _has_content_pattern(
-        "data model|数据模型|entity|实体|schema", root, "*.md"
-    )
+    has_datamodel = _has_content_pattern("data model|数据模型|entity|实体|schema", root, "*.md")
     des_checks.append(
         {
             "check": "数据模型文档",
@@ -241,9 +229,7 @@ def audit_sdlc(project_path: str | Path) -> SDLCAuditResult:
         imp_score += 0.35
 
     has_lint_config = (
-        (root / "pyproject.toml").exists()
-        or (root / ".ruff.toml").exists()
-        or (root / ".eslintrc").exists()
+        (root / "pyproject.toml").exists() or (root / ".ruff.toml").exists() or (root / ".eslintrc").exists()
     )
     imp_checks.append(
         {
@@ -268,9 +254,7 @@ def audit_sdlc(project_path: str | Path) -> SDLCAuditResult:
 
     imp_suggestions = []
     if type_ratio < 0.6:
-        imp_suggestions.append(
-            f"增加类型注解: 当前覆盖率 {type_ratio:.0%}，建议达到 60%+"
-        )
+        imp_suggestions.append(f"增加类型注解: 当前覆盖率 {type_ratio:.0%}，建议达到 60%+")
     if not has_tests:
         imp_suggestions.append("添加测试文件（tests/ 目录）")
     if not has_lint_config:
@@ -289,9 +273,9 @@ def audit_sdlc(project_path: str | Path) -> SDLCAuditResult:
     rev_checks = []
     rev_score = 0.0
 
-    has_pr_template = _has_file(
-        "PULL_REQUEST_TEMPLATE*", root / ".github"
-    ) or _has_file("pull_request_template*", root / ".github")
+    has_pr_template = _has_file("PULL_REQUEST_TEMPLATE*", root / ".github") or _has_file(
+        "pull_request_template*", root / ".github"
+    )
     rev_checks.append(
         {
             "check": "PR 模板",
@@ -313,9 +297,7 @@ def audit_sdlc(project_path: str | Path) -> SDLCAuditResult:
     if has_codeowners:
         rev_score += 0.25
 
-    has_review_guide = _has_content_pattern(
-        "review|code review|代码审查|PR review", root, "*.md"
-    )
+    has_review_guide = _has_content_pattern("review|code review|代码审查|PR review", root, "*.md")
     rev_checks.append(
         {
             "check": "代码审查指南",
@@ -380,9 +362,7 @@ def audit_sdlc(project_path: str | Path) -> SDLCAuditResult:
     if has_dockerfile:
         dep_score += 0.3
 
-    has_deploy_doc = _has_content_pattern(
-        "deploy|deployment|部署|release|发布", root, "*.md"
-    )
+    has_deploy_doc = _has_content_pattern("deploy|deployment|部署|release|发布", root, "*.md")
     dep_checks.append(
         {
             "check": "部署文档",

@@ -48,9 +48,7 @@ def cmd_record(args: argparse.Namespace) -> None:
         "health_score": data.get("health_score"),
         "summary": {
             "total_files": len(data.get("results", [])),
-            "total_issues": sum(
-                len(r.get("issues", [])) for r in data.get("results", [])
-            ),
+            "total_issues": sum(len(r.get("issues", [])) for r in data.get("results", [])),
             "by_severity": _count_by_severity(data.get("results", [])),
             "by_rule": _count_by_rule(data.get("results", [])),
         },
@@ -59,9 +57,7 @@ def cmd_record(args: argparse.Namespace) -> None:
     with open(_records_file(), "a") as f:
         f.write(json.dumps(record) + "\n")
 
-    print(
-        f"Recorded: {record['summary']['total_issues']} issues in {record['summary']['total_files']} files"
-    )
+    print(f"Recorded: {record['summary']['total_issues']} issues in {record['summary']['total_files']} files")
 
 
 def _count_by_severity(results: list[Any]) -> dict[str, int]:
@@ -150,13 +146,9 @@ def _print_json_report(stats: dict[str, Any]) -> None:
             {
                 "records": stats["records_count"],
                 "total_issues": stats["total_issues"],
-                "by_rule": dict(
-                    sorted(stats["rule_counts"].items(), key=lambda x: -int(x[1]))
-                ),
+                "by_rule": dict(sorted(stats["rule_counts"].items(), key=lambda x: -int(x[1]))),
                 "by_severity": dict(stats["severity_counts"]),
-                "by_language": dict(
-                    sorted(stats["lang_counts"].items(), key=lambda x: -int(x[1]))
-                ),
+                "by_language": dict(sorted(stats["lang_counts"].items(), key=lambda x: -int(x[1]))),
             },
             indent=2,
         )
@@ -177,9 +169,7 @@ def _print_text_report(stats: dict[str, Any], args: argparse.Namespace) -> None:
     print("Top 10 Most-Triggered Rules:")
     print(f"  {'Rule ID':<35} {'Count':<8} {'%'}")
     print(f"  {'-' * 55}")
-    for rule_id, count in sorted(stats["rule_counts"].items(), key=lambda x: -x[1])[
-        :10
-    ]:
+    for rule_id, count in sorted(stats["rule_counts"].items(), key=lambda x: -x[1])[:10]:
         pct = (count / stats["total_issues"] * 100) if stats["total_issues"] else 0
         print(f"  {rule_id:<35} {count:<8} {pct:.1f}%")
     print()
@@ -253,9 +243,7 @@ def main() -> int:
     sub = parser.add_subparsers(dest="command")
 
     rec_p = sub.add_parser("record", help="Record validation results")
-    rec_p.add_argument(
-        "--file", type=str, required=True, help="JSON results file (or - for stdin)"
-    )
+    rec_p.add_argument("--file", type=str, required=True, help="JSON results file (or - for stdin)")
     rec_p.add_argument("--project", type=str, help="Project name")
 
     rep_p = sub.add_parser("report", help="Generate report")
@@ -267,9 +255,7 @@ def main() -> int:
     exp_p.add_argument("--days", type=int, help="Last N days")
 
     pru_p = sub.add_parser("prune", help="Prune old records")
-    pru_p.add_argument(
-        "--keep", type=int, default=100, help="Number of records to keep"
-    )
+    pru_p.add_argument("--keep", type=int, default=100, help="Number of records to keep")
 
     args = parser.parse_args()
 

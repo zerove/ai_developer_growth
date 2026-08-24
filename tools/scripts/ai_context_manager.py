@@ -25,12 +25,8 @@ def _get_llm_config() -> dict[str, str]:
         from tools.scripts.app_config import get_setting
 
         # 环境变量优先
-        api_key: str = os.getenv("OPENAI_API_KEY") or str(
-            get_setting("openai_api_key", "")
-        )
-        api_base: str = os.getenv("OPENAI_API_BASE") or str(
-            get_setting("openai_api_base", "https://api.openai.com/v1")
-        )
+        api_key: str = os.getenv("OPENAI_API_KEY") or str(get_setting("openai_api_key", ""))
+        api_base: str = os.getenv("OPENAI_API_BASE") or str(get_setting("openai_api_base", "https://api.openai.com/v1"))
         model: str = os.getenv("LLM_MODEL") or str(get_setting("llm_model", "gpt-4o"))
         return {
             "api_key": api_key,
@@ -51,9 +47,7 @@ def update_context_with_llm(current_context: str, changes: str) -> str:
     api_base = config["api_base"]
 
     if not api_key:
-        print(
-            "错误: 请设置环境变量 OPENAI_API_KEY 或在 [tool.adg] 中配置 openai_api_key"
-        )
+        print("错误: 请设置环境变量 OPENAI_API_KEY 或在 [tool.adg] 中配置 openai_api_key")
         sys.exit(1)
 
     client = OpenAI(api_key=api_key, base_url=api_base)
@@ -82,9 +76,7 @@ def update_context_with_llm(current_context: str, changes: str) -> str:
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(
-        description="AI Context Manager - 自动更新 CONTEXT.md"
-    )
+    parser = argparse.ArgumentParser(description="AI Context Manager - 自动更新 CONTEXT.md")
     parser.add_argument("changes", nargs="?", help="变更总结或提交信息")
     args = parser.parse_args()
 

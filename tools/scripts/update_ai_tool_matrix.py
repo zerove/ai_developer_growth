@@ -26,9 +26,7 @@ from typing import Any
 logging.basicConfig(level=logging.INFO, format="%(levelname)s: %(message)s")
 logger = logging.getLogger(__name__)
 
-MATRIX_PATH = (
-    Path(__file__).parent.parent.parent / "docs" / "tools" / "ai-tool-matrix.md"
-)
+MATRIX_PATH = Path(__file__).parent.parent.parent / "docs" / "tools" / "ai-tool-matrix.md"
 CONFIG_PATH = Path(__file__).parent / "tool_matrix_config.json"
 CACHE_PATH = Path(__file__).parent / ".tool_matrix_cache.json"
 
@@ -114,9 +112,7 @@ class ToolMatrixUpdater:
 
     def _parse_models(self) -> None:
         """Parse models table from markdown."""
-        model_pattern = (
-            r"\|\s*(\*\*.+?\*\*)\s*\|\s*(.+?)\s*\|\s*(.+?)\s*\|\s*(.+?)\s*\|\s*(\⭐+)"
-        )
+        model_pattern = r"\|\s*(\*\*.+?\*\*)\s*\|\s*(.+?)\s*\|\s*(.+?)\s*\|\s*(.+?)\s*\|\s*(\⭐+)"
         for match in re.finditer(model_pattern, self.matrix_content):
             name = match.group(1).strip("*")
             core_advantage = match.group(2).strip()
@@ -139,9 +135,7 @@ class ToolMatrixUpdater:
 
     def _parse_tools(self) -> None:
         """Parse tools table from markdown."""
-        tool_pattern = (
-            r"\|\s*(.+?)\s*\|\s*(.+?)\s*\|\s*(.+?)\s*\|\s*(.+?)\s*\|\s*(.+?)\s*\|"
-        )
+        tool_pattern = r"\|\s*(.+?)\s*\|\s*(.+?)\s*\|\s*(.+?)\s*\|\s*(.+?)\s*\|\s*(.+?)\s*\|"
         in_tools_section = False
         for line in self.matrix_content.split("\n"):
             if "AI Coding Agent Harness" in line or "编码代理框架" in line:
@@ -178,11 +172,7 @@ class ToolMatrixUpdater:
                             category=(
                                 "coding_agent"
                                 if "Agent" in line or "Agent" in name
-                                else (
-                                    "ide"
-                                    if name in ["VS Code", "Cursor", "Windsurf", "Zed"]
-                                    else "utility"
-                                )
+                                else ("ide" if name in ["VS Code", "Cursor", "Windsurf", "Zed"] else "utility")
                             ),
                             current_version="latest",
                             description=f"{core_feature}. {advantage}",
@@ -214,9 +204,7 @@ class ToolMatrixUpdater:
 
         return updates
 
-    async def _check_github_releases(
-        self, model_name: str, provider: str
-    ) -> str | None:
+    async def _check_github_releases(self, model_name: str, provider: str) -> str | None:
         """Check GitHub for latest releases."""
         repo_map = {
             "deepseek": "deepseek-ai/DeepSeek-V3",
@@ -348,9 +336,7 @@ class ToolMatrixUpdater:
         if model_updates:
             report.append("## 📦 Model Updates Available")
             for m in model_updates:
-                report.append(
-                    f"- **{m.name}**: {m.current_version} → {m.latest_version}"
-                )
+                report.append(f"- **{m.name}**: {m.current_version} → {m.latest_version}")
         else:
             report.append("## ✅ All Models Up to Date")
 
@@ -359,9 +345,7 @@ class ToolMatrixUpdater:
         if tool_updates:
             report.append("\n## 🔧 Tool Updates Available")
             for t in tool_updates:
-                report.append(
-                    f"- **{t.name}**: {t.current_version} → {t.latest_version}"
-                )
+                report.append(f"- **{t.name}**: {t.current_version} → {t.latest_version}")
         else:
             report.append("\n## ✅ All Tools Up to Date")
 
@@ -376,15 +360,11 @@ class ToolMatrixUpdater:
         if model_updates or tool_updates:
             report.append("1. Update the matrix file with new versions")
             report.append("2. Run integration tests after updates")
-            report.append(
-                "3. Consider updating configuration files (.ai-sync.json, etc.)"
-            )
+            report.append("3. Consider updating configuration files (.ai-sync.json, etc.)")
         else:
             report.append("No immediate updates required. Re-check in 1 week.")
 
-        report.append(
-            f"\n---\n*Next check recommended: {(datetime.now() + timedelta(days=7)).strftime('%Y-%m-%d')}*"
-        )
+        report.append(f"\n---\n*Next check recommended: {(datetime.now() + timedelta(days=7)).strftime('%Y-%m-%d')}*")
 
         return "\n".join(report)
 

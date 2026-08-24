@@ -6,9 +6,12 @@ import tempfile
 from pathlib import Path
 
 from tools.scripts.rules_engine.performance import (
+    FileCache,
     PerformanceOptimizer,
-    _check_file_worker,
 )
+
+# _check_file_worker 是 FileCache 的静态方法
+_check_file_worker = FileCache._check_file_worker
 
 
 class TestCheckFileWorker:

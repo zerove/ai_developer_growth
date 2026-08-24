@@ -16,9 +16,7 @@ from tools.scripts.check_ubiquitous_language import (
 class TestCheckUbiquitousLanguage(unittest.TestCase):
     def setUp(self):
         self.test_dir = tempfile.mkdtemp()
-        self.ubiquitous_file = Path(
-            os.path.join(self.test_dir, "UBIQUITOUS_LANGUAGE.md")
-        )
+        self.ubiquitous_file = Path(os.path.join(self.test_dir, "UBIQUITOUS_LANGUAGE.md"))
         self.docs_dir = Path(os.path.join(self.test_dir, "docs"))
         self.docs_dir.mkdir(exist_ok=True)
 
@@ -63,9 +61,7 @@ class TestCheckUbiquitousLanguage(unittest.TestCase):
 
     def test_check_term_usage_found(self):
         """Test checking term usage when term exists in docs."""
-        (self.docs_dir / "test.md").write_text(
-            "This document mentions Agent and ADR in context.", encoding="utf-8"
-        )
+        (self.docs_dir / "test.md").write_text("This document mentions Agent and ADR in context.", encoding="utf-8")
 
         count = check_term_usage("Agent", self.docs_dir)
         self.assertEqual(count, 1)
@@ -75,9 +71,7 @@ class TestCheckUbiquitousLanguage(unittest.TestCase):
 
     def test_check_term_usage_not_found(self):
         """Test checking term usage when term doesn't exist."""
-        (self.docs_dir / "test.md").write_text(
-            "This document mentions something else.", encoding="utf-8"
-        )
+        (self.docs_dir / "test.md").write_text("This document mentions something else.", encoding="utf-8")
 
         count = check_term_usage("NonExistentTerm", self.docs_dir)
         self.assertEqual(count, 0)
@@ -92,9 +86,7 @@ class TestCheckUbiquitousLanguage(unittest.TestCase):
     def test_check_term_usage_multiple_files(self):
         """Test term usage across multiple files."""
         (self.docs_dir / "a.md").write_text("Agent is here.", encoding="utf-8")
-        (self.docs_dir / "b.md").write_text(
-            "Agent appears twice. Agent again.", encoding="utf-8"
-        )
+        (self.docs_dir / "b.md").write_text("Agent appears twice. Agent again.", encoding="utf-8")
 
         count = check_term_usage("Agent", self.docs_dir)
         self.assertEqual(count, 3)
@@ -131,9 +123,7 @@ class TestCheckUbiquitousLanguage(unittest.TestCase):
 
     def test_main_with_terms(self):
         """Test main runs successfully with all terms used."""
-        self.ubiquitous_file.write_text(
-            "| 术语 | 英文 | 定义 |\n| Agent | Agent | AI agent |\n", encoding="utf-8"
-        )
+        self.ubiquitous_file.write_text("| 术语 | 英文 | 定义 |\n| Agent | Agent | AI agent |\n", encoding="utf-8")
         (self.docs_dir / "test.md").write_text("Agent is used here.", encoding="utf-8")
 
         # Change cwd to test_dir so main() finds the files
@@ -147,9 +137,7 @@ class TestCheckUbiquitousLanguage(unittest.TestCase):
 
     def test_main_with_missing_terms(self):
         """Test main runs with terms not used in docs."""
-        self.ubiquitous_file.write_text(
-            "| 术语 | 英文 | 定义 |\n| Agent | Agent | AI agent |\n", encoding="utf-8"
-        )
+        self.ubiquitous_file.write_text("| 术语 | 英文 | 定义 |\n| Agent | Agent | AI agent |\n", encoding="utf-8")
         # Don't create any docs with the term
 
         old_cwd = os.getcwd()

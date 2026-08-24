@@ -143,6 +143,16 @@ repos:
         pass_filenames: false
         always_run: true
 
+  # ── JCode Hooks Runner: on_commit ───────────────────────────────
+  - repo: local
+    hooks:
+      - id: jcode-on-commit
+        name: JCode on_commit Hooks
+        entry: python .jcode/scripts/hooks_runner.py on_commit
+        language: system
+        pass_filenames: false
+        always_run: true
+
 ci:
   autofix_commit_msg: "chore: pre-commit autofix"
   autofix_prs: true

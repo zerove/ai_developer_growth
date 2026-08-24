@@ -1,3 +1,757 @@
+## 更新记录: 2026-08-23 21:25:33
+
+### 任务
+Git 变更同步
+
+### 变更摘要
+diff --git a/.github/ci-templates/README.md b/.github/ci-templates/README.md
+index 128661d..8aca453 100644
+--- a/.github/ci-templates/README.md
++++ b/.github/ci-templates/README.md
+@@ -6,18 +6,33 @@ This directory contains ready-to-use CI/CD templates for integrating ADG Governa
+ 
+ | Template | File | Platform |
+ |----------|------|----------|
+-| GitLab CI | `gitlab-ci.yml` | GitLab CI/CD |
++| GitLab CI (Basic) | `gitlab-ci.yml` | GitLab CI/CD |
++| GitLab CI (Advanced) | `gitlab-advanced-governance.yml` | GitLab CI/CD |
++| GitHub Actions (Advanced) | `github-advanced-governance.yml` | GitHub Actions |
++| Bitbucket Pipelines (Advanced) | `bitbucket-advanced-governance.yml` | Bitbucket Pipelines |
+ | Azure Pipelines | `azure-pipelines.yml` | Azure DevOps |
+ | Jenkins | `Jenkinsfile` | Jenkins |
+ | CircleCI | `circleci.yml` | CircleCI |
+ 
+ ## Quick Start
+ 
+-### GitLab CI
++### GitHub Actions (Advanced Governance)
++Add to your `.github/workflows/jcode-governance.yml`:
++```yaml
++# Copy the contents of github-advanced-governance.yml
++```
++
++### GitLab CI (Advanced Governance)
+ Add to your `.gitlab-ci.yml`:
+ ```yaml
+ include:
+-  - local: '.github/ci-templates/gitlab-ci.yml'
++  - local: '.github/ci-templates/gitlab-advanced-governance.yml'
++```
++
++### Bitbucket Pipelines (Advanced Governance)
++Add to your `bitbucket-pipelines.yml`:
++```yaml
++# Copy the contents of bitbucket-advanced-governance.yml
+ ```
+ 
+ ### Azure Pipelines
+@@ -38,6 +53,37 @@ include:
+   - local: '.github/ci-templates/circleci.yml'
+ ```
+ 
++## Advanced Governance Features
++
++The advanced templates include all Phase 2 features:
++
++### Exception Manager
++- Expiration checking with configurable alert days (30/14/7/3/1)
++- Full approval workflow: Request → Pending → Approve/Reject/Revoke
++- GitOps sync (bidirectional sync to `.jcode/exceptions.yaml`)
++- Audit report generation
++
++### Multi-language Supply Chain
++- SBOM generation for Python, npm, Cargo, Go, Maven
++- Vulnerability scanning
++- Compliance checking ...
+
+---
+
+## 更新记录: 2026-08-23 21:22:56
+
+### 任务
+Git 变更同步
+
+### 变更摘要
+diff --git a/.github/ci-templates/README.md b/.github/ci-templates/README.md
+index 128661d..8aca453 100644
+--- a/.github/ci-templates/README.md
++++ b/.github/ci-templates/README.md
+@@ -6,18 +6,33 @@ This directory contains ready-to-use CI/CD templates for integrating ADG Governa
+ 
+ | Template | File | Platform |
+ |----------|------|----------|
+-| GitLab CI | `gitlab-ci.yml` | GitLab CI/CD |
++| GitLab CI (Basic) | `gitlab-ci.yml` | GitLab CI/CD |
++| GitLab CI (Advanced) | `gitlab-advanced-governance.yml` | GitLab CI/CD |
++| GitHub Actions (Advanced) | `github-advanced-governance.yml` | GitHub Actions |
++| Bitbucket Pipelines (Advanced) | `bitbucket-advanced-governance.yml` | Bitbucket Pipelines |
+ | Azure Pipelines | `azure-pipelines.yml` | Azure DevOps |
+ | Jenkins | `Jenkinsfile` | Jenkins |
+ | CircleCI | `circleci.yml` | CircleCI |
+ 
+ ## Quick Start
+ 
+-### GitLab CI
++### GitHub Actions (Advanced Governance)
++Add to your `.github/workflows/jcode-governance.yml`:
++```yaml
++# Copy the contents of github-advanced-governance.yml
++```
++
++### GitLab CI (Advanced Governance)
+ Add to your `.gitlab-ci.yml`:
+ ```yaml
+ include:
+-  - local: '.github/ci-templates/gitlab-ci.yml'
++  - local: '.github/ci-templates/gitlab-advanced-governance.yml'
++```
++
++### Bitbucket Pipelines (Advanced Governance)
++Add to your `bitbucket-pipelines.yml`:
++```yaml
++# Copy the contents of bitbucket-advanced-governance.yml
+ ```
+ 
+ ### Azure Pipelines
+@@ -38,6 +53,37 @@ include:
+   - local: '.github/ci-templates/circleci.yml'
+ ```
+ 
++## Advanced Governance Features
++
++The advanced templates include all Phase 2 features:
++
++### Exception Manager
++- Expiration checking with configurable alert days (30/14/7/3/1)
++- Full approval workflow: Request → Pending → Approve/Reject/Revoke
++- GitOps sync (bidirectional sync to `.jcode/exceptions.yaml`)
++- Audit report generation
++
++### Multi-language Supply Chain
++- SBOM generation for Python, npm, Cargo, Go, Maven
++- Vulnerability scanning
++- Compliance checking ...
+
+---
+
+## 更新记录: 2026-08-23 21:22:44
+
+### 任务
+Git 变更同步
+
+### 变更摘要
+diff --git a/.github/ci-templates/README.md b/.github/ci-templates/README.md
+index 128661d..8aca453 100644
+--- a/.github/ci-templates/README.md
++++ b/.github/ci-templates/README.md
+@@ -6,18 +6,33 @@ This directory contains ready-to-use CI/CD templates for integrating ADG Governa
+ 
+ | Template | File | Platform |
+ |----------|------|----------|
+-| GitLab CI | `gitlab-ci.yml` | GitLab CI/CD |
++| GitLab CI (Basic) | `gitlab-ci.yml` | GitLab CI/CD |
++| GitLab CI (Advanced) | `gitlab-advanced-governance.yml` | GitLab CI/CD |
++| GitHub Actions (Advanced) | `github-advanced-governance.yml` | GitHub Actions |
++| Bitbucket Pipelines (Advanced) | `bitbucket-advanced-governance.yml` | Bitbucket Pipelines |
+ | Azure Pipelines | `azure-pipelines.yml` | Azure DevOps |
+ | Jenkins | `Jenkinsfile` | Jenkins |
+ | CircleCI | `circleci.yml` | CircleCI |
+ 
+ ## Quick Start
+ 
+-### GitLab CI
++### GitHub Actions (Advanced Governance)
++Add to your `.github/workflows/jcode-governance.yml`:
++```yaml
++# Copy the contents of github-advanced-governance.yml
++```
++
++### GitLab CI (Advanced Governance)
+ Add to your `.gitlab-ci.yml`:
+ ```yaml
+ include:
+-  - local: '.github/ci-templates/gitlab-ci.yml'
++  - local: '.github/ci-templates/gitlab-advanced-governance.yml'
++```
++
++### Bitbucket Pipelines (Advanced Governance)
++Add to your `bitbucket-pipelines.yml`:
++```yaml
++# Copy the contents of bitbucket-advanced-governance.yml
+ ```
+ 
+ ### Azure Pipelines
+@@ -38,6 +53,37 @@ include:
+   - local: '.github/ci-templates/circleci.yml'
+ ```
+ 
++## Advanced Governance Features
++
++The advanced templates include all Phase 2 features:
++
++### Exception Manager
++- Expiration checking with configurable alert days (30/14/7/3/1)
++- Full approval workflow: Request → Pending → Approve/Reject/Revoke
++- GitOps sync (bidirectional sync to `.jcode/exceptions.yaml`)
++- Audit report generation
++
++### Multi-language Supply Chain
++- SBOM generation for Python, npm, Cargo, Go, Maven
++- Vulnerability scanning
++- Compliance checking ...
+
+---
+
+## 更新记录: 2026-08-23 21:22:09
+
+### 任务
+Git 变更同步
+
+### 变更摘要
+diff --git a/.github/ci-templates/README.md b/.github/ci-templates/README.md
+index 128661d..8aca453 100644
+--- a/.github/ci-templates/README.md
++++ b/.github/ci-templates/README.md
+@@ -6,18 +6,33 @@ This directory contains ready-to-use CI/CD templates for integrating ADG Governa
+ 
+ | Template | File | Platform |
+ |----------|------|----------|
+-| GitLab CI | `gitlab-ci.yml` | GitLab CI/CD |
++| GitLab CI (Basic) | `gitlab-ci.yml` | GitLab CI/CD |
++| GitLab CI (Advanced) | `gitlab-advanced-governance.yml` | GitLab CI/CD |
++| GitHub Actions (Advanced) | `github-advanced-governance.yml` | GitHub Actions |
++| Bitbucket Pipelines (Advanced) | `bitbucket-advanced-governance.yml` | Bitbucket Pipelines |
+ | Azure Pipelines | `azure-pipelines.yml` | Azure DevOps |
+ | Jenkins | `Jenkinsfile` | Jenkins |
+ | CircleCI | `circleci.yml` | CircleCI |
+ 
+ ## Quick Start
+ 
+-### GitLab CI
++### GitHub Actions (Advanced Governance)
++Add to your `.github/workflows/jcode-governance.yml`:
++```yaml
++# Copy the contents of github-advanced-governance.yml
++```
++
++### GitLab CI (Advanced Governance)
+ Add to your `.gitlab-ci.yml`:
+ ```yaml
+ include:
+-  - local: '.github/ci-templates/gitlab-ci.yml'
++  - local: '.github/ci-templates/gitlab-advanced-governance.yml'
++```
++
++### Bitbucket Pipelines (Advanced Governance)
++Add to your `bitbucket-pipelines.yml`:
++```yaml
++# Copy the contents of bitbucket-advanced-governance.yml
+ ```
+ 
+ ### Azure Pipelines
+@@ -38,6 +53,37 @@ include:
+   - local: '.github/ci-templates/circleci.yml'
+ ```
+ 
++## Advanced Governance Features
++
++The advanced templates include all Phase 2 features:
++
++### Exception Manager
++- Expiration checking with configurable alert days (30/14/7/3/1)
++- Full approval workflow: Request → Pending → Approve/Reject/Revoke
++- GitOps sync (bidirectional sync to `.jcode/exceptions.yaml`)
++- Audit report generation
++
++### Multi-language Supply Chain
++- SBOM generation for Python, npm, Cargo, Go, Maven
++- Vulnerability scanning
++- Compliance checking ...
+
+---
+
+## 更新记录: 2026-08-23 21:20:41
+
+### 任务
+Git 变更同步
+
+### 变更摘要
+diff --git a/.github/ci-templates/README.md b/.github/ci-templates/README.md
+index 128661d..8aca453 100644
+--- a/.github/ci-templates/README.md
++++ b/.github/ci-templates/README.md
+@@ -6,18 +6,33 @@ This directory contains ready-to-use CI/CD templates for integrating ADG Governa
+ 
+ | Template | File | Platform |
+ |----------|------|----------|
+-| GitLab CI | `gitlab-ci.yml` | GitLab CI/CD |
++| GitLab CI (Basic) | `gitlab-ci.yml` | GitLab CI/CD |
++| GitLab CI (Advanced) | `gitlab-advanced-governance.yml` | GitLab CI/CD |
++| GitHub Actions (Advanced) | `github-advanced-governance.yml` | GitHub Actions |
++| Bitbucket Pipelines (Advanced) | `bitbucket-advanced-governance.yml` | Bitbucket Pipelines |
+ | Azure Pipelines | `azure-pipelines.yml` | Azure DevOps |
+ | Jenkins | `Jenkinsfile` | Jenkins |
+ | CircleCI | `circleci.yml` | CircleCI |
+ 
+ ## Quick Start
+ 
+-### GitLab CI
++### GitHub Actions (Advanced Governance)
++Add to your `.github/workflows/jcode-governance.yml`:
++```yaml
++# Copy the contents of github-advanced-governance.yml
++```
++
++### GitLab CI (Advanced Governance)
+ Add to your `.gitlab-ci.yml`:
+ ```yaml
+ include:
+-  - local: '.github/ci-templates/gitlab-ci.yml'
++  - local: '.github/ci-templates/gitlab-advanced-governance.yml'
++```
++
++### Bitbucket Pipelines (Advanced Governance)
++Add to your `bitbucket-pipelines.yml`:
++```yaml
++# Copy the contents of bitbucket-advanced-governance.yml
+ ```
+ 
+ ### Azure Pipelines
+@@ -38,6 +53,37 @@ include:
+   - local: '.github/ci-templates/circleci.yml'
+ ```
+ 
++## Advanced Governance Features
++
++The advanced templates include all Phase 2 features:
++
++### Exception Manager
++- Expiration checking with configurable alert days (30/14/7/3/1)
++- Full approval workflow: Request → Pending → Approve/Reject/Revoke
++- GitOps sync (bidirectional sync to `.jcode/exceptions.yaml`)
++- Audit report generation
++
++### Multi-language Supply Chain
++- SBOM generation for Python, npm, Cargo, Go, Maven
++- Vulnerability scanning
++- Compliance checking ...
+
+---
+
+## 更新记录: 2026-08-23 21:19:40
+
+### 任务
+Git 变更同步
+
+### 变更摘要
+diff --git a/.github/ci-templates/README.md b/.github/ci-templates/README.md
+index 128661d..8aca453 100644
+--- a/.github/ci-templates/README.md
++++ b/.github/ci-templates/README.md
+@@ -6,18 +6,33 @@ This directory contains ready-to-use CI/CD templates for integrating ADG Governa
+ 
+ | Template | File | Platform |
+ |----------|------|----------|
+-| GitLab CI | `gitlab-ci.yml` | GitLab CI/CD |
++| GitLab CI (Basic) | `gitlab-ci.yml` | GitLab CI/CD |
++| GitLab CI (Advanced) | `gitlab-advanced-governance.yml` | GitLab CI/CD |
++| GitHub Actions (Advanced) | `github-advanced-governance.yml` | GitHub Actions |
++| Bitbucket Pipelines (Advanced) | `bitbucket-advanced-governance.yml` | Bitbucket Pipelines |
+ | Azure Pipelines | `azure-pipelines.yml` | Azure DevOps |
+ | Jenkins | `Jenkinsfile` | Jenkins |
+ | CircleCI | `circleci.yml` | CircleCI |
+ 
+ ## Quick Start
+ 
+-### GitLab CI
++### GitHub Actions (Advanced Governance)
++Add to your `.github/workflows/jcode-governance.yml`:
++```yaml
++# Copy the contents of github-advanced-governance.yml
++```
++
++### GitLab CI (Advanced Governance)
+ Add to your `.gitlab-ci.yml`:
+ ```yaml
+ include:
+-  - local: '.github/ci-templates/gitlab-ci.yml'
++  - local: '.github/ci-templates/gitlab-advanced-governance.yml'
++```
++
++### Bitbucket Pipelines (Advanced Governance)
++Add to your `bitbucket-pipelines.yml`:
++```yaml
++# Copy the contents of bitbucket-advanced-governance.yml
+ ```
+ 
+ ### Azure Pipelines
+@@ -38,6 +53,37 @@ include:
+   - local: '.github/ci-templates/circleci.yml'
+ ```
+ 
++## Advanced Governance Features
++
++The advanced templates include all Phase 2 features:
++
++### Exception Manager
++- Expiration checking with configurable alert days (30/14/7/3/1)
++- Full approval workflow: Request → Pending → Approve/Reject/Revoke
++- GitOps sync (bidirectional sync to `.jcode/exceptions.yaml`)
++- Audit report generation
++
++### Multi-language Supply Chain
++- SBOM generation for Python, npm, Cargo, Go, Maven
++- Vulnerability scanning
++- Compliance checking ...
+
+---
+
+## 更新记录: 2026-08-23 10:27:31
+
+### 任务
+Git 变更同步
+
+### 变更摘要
+diff --git a/.github/workflows/ci.yml b/.github/workflows/ci.yml
+index 3131a7d..24f8759 100644
+--- a/.github/workflows/ci.yml
++++ b/.github/workflows/ci.yml
+@@ -25,6 +25,17 @@ jobs:
+     uses: ./.github/workflows/jobs/adg-governance.yml
+     secrets: inherit
+ 
++  # ──────────────────────────────────────────────────────
++  # Governance Audit (完整审计：lint + typecheck + test + security + governance-docs + AI-SDLC + AI质量门禁)
++  # ──────────────────────────────────────────────────────
++  governance-audit:
++    needs: setup
++    uses: ./.github/workflows/jobs/governance-audit.yml
++    with:
++      language: "python"
++      timeout-minutes: 20
++    secrets: inherit
++
+   # ──────────────────────────────────────────────────────
+   # Pre-commit
+   # ──────────────────────────────────────────────────────
+@@ -185,7 +196,7 @@ jobs:
+   # ──────────────────────────────────────────────────────
+   ci-summary:
+     name: CI Summary
+-    needs: [adg-governance, pre-commit, lint, type-check, test-311, test-312, test-313, test-sharded-1, test-sharded-2, test-sharded-3, test-sharded-4, combine-coverage, quality-gates, security, secret-scan, sbom, license-scan, test-examples, dependency-review, docs-check, agent-validation]
++    needs: [adg-governance, governance-audit, pre-commit, lint, type-check, test-311, test-312, test-313, test-sharded-1, test-sharded-2, test-sharded-3, test-sharded-4, combine-coverage, quality-gates, security, secret-scan, sbom, license-scan, test-examples, dependency-review, docs-check, agent-validation]
+     if: always()
+     runs-on: ubuntu-latest
+     steps:
+diff --git a/.jcode/hooks.json b/.jcode/hooks.json
+index 77fe1bb..cb0d0c5 100644
+--- a/.jcode/hooks.json
++++ b/.jcode/hooks.json
+@@ -7,6 +7,7 @@
+         "skill": "governance-auditor",
+         "action": "lint",
+         "description": "提交时自动检查代码风格",
++        "command": "python .jcode/scripts/governance-auditor.py lint --lang python",
+         "enabled": true
+       },
+       {
+@@ -23,6 +24,13 @@
+         "act...
+
+---
+
+## 更新记录: 2026-08-23 00:41:52
+
+### 任务
+Git 变更同步
+
+### 变更摘要
+diff --git a/.jcode/hooks.json b/.jcode/hooks.json
+index 77fe1bb..3d29563 100644
+--- a/.jcode/hooks.json
++++ b/.jcode/hooks.json
+@@ -7,6 +7,7 @@
+         "skill": "governance-auditor",
+         "action": "lint",
+         "description": "提交时自动检查代码风格",
++        "command": "python .jcode/scripts/governance-auditor.py lint --lang python",
+         "enabled": true
+       },
+       {
+@@ -23,6 +24,13 @@
+         "action": "ai-quality-gate",
+         "description": "提交时运行 AI 代码质量门禁",
+         "enabled": true
++      },
++      {
++        "name": "context-sync",
++        "skill": "context-sync",
++        "action": "sync",
++        "description": "提交时同步上下文 (CONTEXT.md/ADR.md)",
++        "enabled": true
+       }
+     ],
+     "on_pr": [
+@@ -37,7 +45,7 @@
+         "name": "case-validation",
+         "skill": "knowledge-curator",
+         "action": "validate",
+-        "description": "PR ",
++        "description": "PR 时验证案例格式",
+         "condition": "files_contain('case-studies/')",
+         "enabled": true
+       },
+@@ -73,6 +81,30 @@
+         "description": "PR 时检查 AI 代码标注",
+         "command": "python tools/scripts/check_ai_annotation.py --strict",
+         "enabled": true
++      },
++      {
++        "name": "self-correction-loop",
++        "skill": "self-correction-loop",
++        "action": "validate",
++        "description": "PR 时对失败测试尝试自动修正",
++        "condition": "files_contain('tests/') && test_failed",
++        "enabled": true
++      },
++      {
++        "name": "context-audit",
++        "skill": "context-sync",
++        "action": "audit",
++        "description": "PR 时审计规范合规性",
++        "condition": "files_contain('tools/') || files_contain('examples/')",
++        "enabled": true
++      },
++      {
++        "name": "multi-agent-design",
++        "skill": "multi-agent-orch",
++        "action": "run",
++        "description": "PR 时对设计类需求运行多 Agent 编排",
++        "condition": "files_contain('design/') || files_contain('spec/') || pr_label('design')",
++        "enabled": true
+   ...
+
+---
+
+## 更新记录: 2026-08-23 00:20:16
+
+### 任务
+Git 变更同步
+
+### 变更摘要
+diff --git a/.jcode/hooks.json b/.jcode/hooks.json
+index 77fe1bb..3d29563 100644
+--- a/.jcode/hooks.json
++++ b/.jcode/hooks.json
+@@ -7,6 +7,7 @@
+         "skill": "governance-auditor",
+         "action": "lint",
+         "description": "提交时自动检查代码风格",
++        "command": "python .jcode/scripts/governance-auditor.py lint --lang python",
+         "enabled": true
+       },
+       {
+@@ -23,6 +24,13 @@
+         "action": "ai-quality-gate",
+         "description": "提交时运行 AI 代码质量门禁",
+         "enabled": true
++      },
++      {
++        "name": "context-sync",
++        "skill": "context-sync",
++        "action": "sync",
++        "description": "提交时同步上下文 (CONTEXT.md/ADR.md)",
++        "enabled": true
+       }
+     ],
+     "on_pr": [
+@@ -37,7 +45,7 @@
+         "name": "case-validation",
+         "skill": "knowledge-curator",
+         "action": "validate",
+-        "description": "PR ",
++        "description": "PR 时验证案例格式",
+         "condition": "files_contain('case-studies/')",
+         "enabled": true
+       },
+@@ -73,6 +81,30 @@
+         "description": "PR 时检查 AI 代码标注",
+         "command": "python tools/scripts/check_ai_annotation.py --strict",
+         "enabled": true
++      },
++      {
++        "name": "self-correction-loop",
++        "skill": "self-correction-loop",
++        "action": "validate",
++        "description": "PR 时对失败测试尝试自动修正",
++        "condition": "files_contain('tests/') && test_failed",
++        "enabled": true
++      },
++      {
++        "name": "context-audit",
++        "skill": "context-sync",
++        "action": "audit",
++        "description": "PR 时审计规范合规性",
++        "condition": "files_contain('tools/') || files_contain('examples/')",
++        "enabled": true
++      },
++      {
++        "name": "multi-agent-design",
++        "skill": "multi-agent-orch",
++        "action": "run",
++        "description": "PR 时对设计类需求运行多 Agent 编排",
++        "condition": "files_contain('design/') || files_contain('spec/') || pr_label('design')",
++        "enabled": true
+   ...
+
+---
+
+## 更新记录: 2026-08-23 00:18:52
+
+### 任务
+Git 变更同步
+
+### 变更摘要
+diff --git a/.jcode/hooks.json b/.jcode/hooks.json
+index 77fe1bb..d971889 100644
+--- a/.jcode/hooks.json
++++ b/.jcode/hooks.json
+@@ -23,6 +23,13 @@
+         "action": "ai-quality-gate",
+         "description": "提交时运行 AI 代码质量门禁",
+         "enabled": true
++      },
++      {
++        "name": "context-sync",
++        "skill": "context-sync",
++        "action": "sync",
++        "description": "提交时同步上下文 (CONTEXT.md/ADR.md)",
++        "enabled": true
+       }
+     ],
+     "on_pr": [
+@@ -37,7 +44,7 @@
+         "name": "case-validation",
+         "skill": "knowledge-curator",
+         "action": "validate",
+-        "description": "PR ",
++        "description": "PR 时验证案例格式",
+         "condition": "files_contain('case-studies/')",
+         "enabled": true
+       },
+@@ -73,6 +80,30 @@
+         "description": "PR 时检查 AI 代码标注",
+         "command": "python tools/scripts/check_ai_annotation.py --strict",
+         "enabled": true
++      },
++      {
++        "name": "self-correction-loop",
++        "skill": "self-correction-loop",
++        "action": "validate",
++        "description": "PR 时对失败测试尝试自动修正",
++        "condition": "files_contain('tests/') && test_failed",
++        "enabled": true
++      },
++      {
++        "name": "context-audit",
++        "skill": "context-sync",
++        "action": "audit",
++        "description": "PR 时审计规范合规性",
++        "condition": "files_contain('tools/') || files_contain('examples/')",
++        "enabled": true
++      },
++      {
++        "name": "multi-agent-design",
++        "skill": "multi-agent-orch",
++        "action": "run",
++        "description": "PR 时对设计类需求运行多 Agent 编排",
++        "condition": "files_contain('design/') || files_contain('spec/') || pr_label('design')",
++        "enabled": true
+       }
+     ],
+     "on_merge": [
+@@ -89,6 +120,13 @@
+         "action": "sync",
+         "description": "合并后同步工具矩阵",
+         "enabled": true
++      },
++      {
++        "name": "context-sync-merge",
++        "skill": "context-sync",
++        "action":...
+
+---
+
+## 更新记录: 2026-08-22 14:23:18
+
+### 任务
+Git 变更同步
+
+### 变更摘要
+diff --git a/.jcode/scripts/community-catalyst.py b/.jcode/scripts/community-catalyst.py
+index 1f1ec9a..d8268ca 100644
+--- a/.jcode/scripts/community-catalyst.py
++++ b/.jcode/scripts/community-catalyst.py
+@@ -18,7 +18,17 @@ from _common import get_project_root, print_check, print_section, run_command
+ def triage() -> int:
+     """分流 Issues"""
+     print_section("Issue 分流")
+-    labels = ["案例", "工具推荐", "方法论", "问题", "文档", "question", "bug", "enhancement", "good first issue"]
++    labels = [
++        "案例",
++        "工具推荐",
++        "方法论",
++        "问题",
++        "文档",
++        "question",
++        "bug",
++        "enhancement",
++        "good first issue",
++    ]
+     print("可用标签:")
+     for label in labels:
+         print(f"  - {label}")
+@@ -41,7 +51,12 @@ def generate_adr() -> int:
+     """从 PR 生成 ADR"""
+     print_section("ADR 生成")
+     code, output = run_command(
+-        [sys.executable, "tools/scripts/adr_generator.py", "--pr", sys.argv[2] if len(sys.argv) > 2 else "HEAD"]
++        [
++            sys.executable,
++            "tools/scripts/adr_generator.py",
++            "--pr",
++            sys.argv[2] if len(sys.argv) > 2 else "HEAD",
++        ]
+     )
+     print_check("ADR 生成", code == 0, output)
+     if code != 0:
+diff --git a/.jcode/scripts/governance-auditor.py b/.jcode/scripts/governance-auditor.py
+index a1fbf6f..8c0b965 100755
+--- a/.jcode/scripts/governance-auditor.py
++++ b/.jcode/scripts/governance-auditor.py
+@@ -78,11 +78,26 @@ UNSAFE_PATTERNS = [
+     (
+         r"os\.system\(",
+         "os.system() - 应使用 subprocess",
+-        ["generate_fixes.py", "hallucination_detector.py", "fix_heuristics.py", "auto_fix.py"],
++        [
++            "generate_fixes.py",
++            "hallucination_detector.py",
++            "fix_heuristics.py",
++            "auto_fix.py",
++        ],
++        None,
++    ),
++    (
++        r"pickle\.loads?\(",
++        "pickle - 反序列化风险",
++        ["generate_fixes.py", "hallucination_detector.py"],
+         None,
+     ),
+-    (r"pi...
+
+---
+
 # 项目上下文
 
 ## 项目状态

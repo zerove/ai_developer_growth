@@ -114,9 +114,7 @@ class SlackNotifier(BaseNotifier):
             key=lambda i: {"error": 0, "warning": 1, "info": 2}.get(i.severity, 3),
         )[:5]
         if top_issues:
-            issue_text = "\n".join(
-                [f"• `{i.rule_id}` {i.file}:{i.line} - {i.message}" for i in top_issues]
-            )
+            issue_text = "\n".join([f"• `{i.rule_id}` {i.file}:{i.line} - {i.message}" for i in top_issues])
             blocks.append(
                 {
                     "type": "section",
@@ -175,11 +173,7 @@ class FeishuNotifier(BaseNotifier):
         warn_count = sum(1 for i in issues if i.severity == "warning")
         info_count = sum(1 for i in issues if i.severity == "info")
 
-        status = (
-            "🔴 FAIL"
-            if error_count > 0
-            else ("🟡 WARN" if warn_count > 0 else "✅ PASS")
-        )
+        status = "🔴 FAIL" if error_count > 0 else ("🟡 WARN" if warn_count > 0 else "✅ PASS")
 
         # Build Feishu card
         elements = [
@@ -232,12 +226,7 @@ class FeishuNotifier(BaseNotifier):
             key=lambda i: {"error": 0, "warning": 1, "info": 2}.get(i.severity, 3),
         )[:5]
         if top_issues:
-            issue_lines = "\n".join(
-                [
-                    f"- `{i.rule_id}` {Path(i.file).name}:{i.line} {i.message}"
-                    for i in top_issues
-                ]
-            )
+            issue_lines = "\n".join([f"- `{i.rule_id}` {Path(i.file).name}:{i.line} {i.message}" for i in top_issues])
             elements.append(
                 {
                     "tag": "div",
@@ -253,11 +242,7 @@ class FeishuNotifier(BaseNotifier):
             "card": {
                 "header": {
                     "title": {"tag": "plain_text", "content": f"🛡️ {title}"},
-                    "template": (
-                        "red"
-                        if error_count > 0
-                        else ("yellow" if warn_count > 0 else "green")
-                    ),
+                    "template": ("red" if error_count > 0 else ("yellow" if warn_count > 0 else "green")),
                 },
                 "elements": elements,
             },
@@ -266,9 +251,7 @@ class FeishuNotifier(BaseNotifier):
         return self._post(payload)
 
     def send_alert(self, message: str, level: str = "warning") -> bool:
-        template = {"error": "red", "warning": "yellow", "info": "blue"}.get(
-            level, "orange"
-        )
+        template = {"error": "red", "warning": "yellow", "info": "blue"}.get(level, "orange")
         payload = {
             "msg_type": "interactive",
             "card": {
@@ -302,11 +285,7 @@ class DingTalkNotifier(BaseNotifier):
         error_count = sum(1 for i in issues if i.severity == "error")
         warn_count = sum(1 for i in issues if i.severity == "warning")
 
-        status = (
-            "🔴 FAIL"
-            if error_count > 0
-            else ("🟡 WARN" if warn_count > 0 else "✅ PASS")
-        )
+        status = "🔴 FAIL" if error_count > 0 else ("🟡 WARN" if warn_count > 0 else "✅ PASS")
         top_issues = sorted(
             issues,
             key=lambda i: {"error": 0, "warning": 1, "info": 2}.get(i.severity, 3),

@@ -23,6 +23,7 @@ Usage:
 from __future__ import annotations
 
 import ast
+import hashlib
 import json
 import sys
 from pathlib import Path
@@ -87,18 +88,14 @@ _FILE_HASH_CACHE: dict[str, str] = {}
 # ──────────────────────────────────────────────────────────
 
 
-def check_naming_conventions(
-    lines: list[str], rules: dict[str, Any], filepath: str
-) -> list[Issue]:
+def check_naming_conventions(lines: list[str], rules: dict[str, Any], filepath: str) -> list[Issue]:
     """Check naming conventions based on language rules."""
     from .naming_analyzer import check_naming_conventions as _check
 
     return _check(lines, rules, filepath)
 
 
-def check_thresholds(
-    lines: list[str], rules: dict[str, Any], filepath: str
-) -> list[Issue]:
+def check_thresholds(lines: list[str], rules: dict[str, Any], filepath: str) -> list[Issue]:
     """Check quantitative thresholds."""
     from .complexity_analyzer import check_thresholds as _check
 
@@ -112,9 +109,7 @@ def check_python_ast(filepath: str, lines: list[str]) -> list[Issue]:
     return _check(filepath, lines)
 
 
-def apply_fixes(
-    filepath: Path, issues: list[Issue], dry_run: bool = False
-) -> list[FixResult]:
+def apply_fixes(filepath: Path, issues: list[Issue], dry_run: bool = False) -> list[FixResult]:
     """Apply auto-fixes to a file based on issues with fix_replacement."""
     from .fix_applier import apply_fixes as _apply_fixes
 
@@ -142,9 +137,7 @@ def generate_sarif(results: list[ValidationResult]) -> str:
     return _gen(results)
 
 
-def write_report(
-    results: list[ValidationResult], format: str, output: Path | None = None
-) -> str | None:
+def write_report(results: list[ValidationResult], format: str, output: Path | None = None) -> str | None:
     """Write report in specified format."""
     from .report_generator import write_report as _write
 
@@ -163,21 +156,32 @@ def run_linter_aggregation(
 
 def print_results(results: list[ValidationResult], use_json: bool = False) -> int:
     """Print validation results. Returns exit code (0=pass)."""
-    from .validators.cli import print_results as _print
+    from tools.scripts.rules_engine.validators.cli import print_results as _print
 
-    return _print(results, use_json)  # type: ignore[no-any-return]
+    return _print(results, use_json)
 
 
 def _merge_rules(base: dict[str, Any], custom: dict[str, Any]) -> dict[str, Any]:
     """Merge custom rules into base rules."""
-    from .validators.pipeline import _merge_rules as _merge
+    from tools.scripts.rules_engine.validators.pipeline import _merge_rules as _merge
 
-    return _merge(base, custom)  # type: ignore[no-any-return]
+    return _merge(base, custom)
 
 
 # ──────────────────────────────────────────────────────────
 # Private function re-exports (for backward compatibility with tests)
 # ──────────────────────────────────────────────────────────
+
+
+def _file_hash(filepath: Path) -> str:
+    """Calculate SHA-256 hash of file content. Returns empty string if file doesn't exist."""
+    if not filepath.exists():
+        return ""
+    try:
+        content = filepath.read_bytes()
+        return hashlib.sha256(content).hexdigest()
+    except OSError:
+        return ""
 
 
 def _load_cache(cache_file: Path) -> dict[str, str]:
@@ -227,9 +231,7 @@ def _calc_cyclomatic_complexity(node: ast.AST) -> int:
     return calc_cyclomatic_complexity(node)
 
 
-def _extract_function_lines(
-    lines: list[str], language: str
-) -> list[tuple[str, int, int]]:
+def _extract_function_lines(lines: list[str], language: str) -> list[tuple[str, int, int]]:
     """Extract function name, start line, end line."""
     from .complexity_analyzer import extract_function_lines
 
@@ -257,9 +259,9 @@ def _max_python_indent_depth(lines: list[str]) -> int:
 
 def main() -> int:
     """Main entry point."""
-    from .validators.cli import main as _main
+    from tools.scripts.rules_engine.validators.cli import main as _main
 
-    return _main()  # type: ignore[no-any-return]
+    return _main()
 
 
 if __name__ == "__main__":

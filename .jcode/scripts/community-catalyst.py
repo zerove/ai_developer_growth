@@ -40,9 +40,7 @@ def triage() -> int:
 def validate() -> int:
     """验证社区提交的案例"""
     print_section("社区案例验证")
-    code, output = run_command(
-        [sys.executable, "tools/scripts/validate_case_study.py", "--all"]
-    )
+    code, output = run_command([sys.executable, "tools/scripts/validate_case_study.py", "--all"])
     print_check("案例验证", code == 0, output)
     if code != 0:
         print(output)
@@ -69,9 +67,7 @@ def generate_adr() -> int:
 def leaderboard() -> int:
     """贡献者排行榜"""
     print_section("贡献者排行榜")
-    code, output = run_command(
-        [sys.executable, "tools/scripts/contributor_dashboard.py", "--leaderboard"]
-    )
+    code, output = run_command([sys.executable, "tools/scripts/contributor_dashboard.py", "--leaderboard"])
     print_check("排行榜", code == 0, output)
     if code != 0:
         print(output)

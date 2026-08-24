@@ -125,9 +125,7 @@ def _run_eslint(dirpath: Path) -> list[dict[str, Any]]:
                         {
                             "linter": "eslint",
                             "rule_id": msg.get("ruleId", ""),
-                            "severity": (
-                                "error" if msg.get("severity") == 2 else "warning"
-                            ),
+                            "severity": ("error" if msg.get("severity") == 2 else "warning"),
                             "file": file_entry.get("filePath", ""),
                             "line": msg.get("line", 0),
                             "message": msg.get("message", ""),

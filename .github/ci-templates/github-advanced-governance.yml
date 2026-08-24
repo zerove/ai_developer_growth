@@ -1,0 +1,255 @@
+# JCode Advanced Governance - GitHub Actions Template
+# Add this to your .github/workflows/jcode-governance.yml
+
+name: "JCode Governance"
+
+on:
+  push:
+    branches: [main, master, develop]
+  pull_request:
+    branches: [main, master, develop]
+  workflow_dispatch:
+
+jobs:
+  # Quick governance check (runs on every PR)
+  governance-quick:
+    name: Quick Governance Check
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+          cache-dependency-path: pyproject.toml
+
+      - name: Upgrade setuptools
+        run: pip install -U "setuptools>=83.0.0"
+
+      - name: Install JCode
+        run: pip install -e .
+
+      - name: Exception Check
+        run: |
+          python -m tools.scripts.hooks_runner exception check-expirations
+          python -m tools.scripts.hooks_runner exception list --status approved --format json > exceptions.json
+
+      - name: ADG Governance Check
+        run: |
+          adg check . --severity error --json > adg-report.json || true
+          adg check . --severity error
+
+      - name: Upload ADG Report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: adg-report
+          path: adg-report.json
+          retention-days: 30
+
+  # Full governance pipeline (runs on main branch)
+  governance-full:
+    name: Full Governance Pipeline
+    needs: governance-quick
+    if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master' || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+          cache-dependency-path: pyproject.toml
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: "1.22"
+
+      - name: Setup Rust
+        uses: actions-rust-lang/setup-rust@v1
+        with:
+          rust-version: "stable"
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: "temurin"
+          java-version: "21"
+          cache: maven
+
+      - name: Upgrade setuptools
+        run: pip install -U "setuptools>=83.0.0"
+
+      - name: Install JCode
+        run: pip install -e .
+
+      # ──────────────────────────────────────────────────────
+      # Exception Manager
+      # ──────────────────────────────────────────────────────
+      - name: Check Exception Expirations
+        run: python -m tools.scripts.hooks_runner exception check-expirations
+
+      - name: Audit Exceptions
+        run: python -m tools.scripts.hooks_runner exception audit
+
+      - name: Sync Exceptions (GitOps)
+        run: python -m tools.scripts.hooks_runner exception sync-gitops
+
+      # ──────────────────────────────────────────────────────
+      # Multi-language Supply Chain
+      # ──────────────────────────────────────────────────────
+      - name: Generate Multi-language SBOM
+        run: python -m tools.scripts.hooks_runner supply-chain sbom --format json --output sbom.json
+
+      - name: Supply Chain Scan
+        run: python -m tools.scripts.hooks_runner supply-chain scan --format json --output supply-chain-scan.json
+
+      - name: Supply Chain Compliance
+        run: python -m tools.scripts.hooks_runner supply-chain compliance --policy-file .jcode/policies/supply-chain-policy.yaml --format json --output supply-chain-compliance.json
+
+      - name: Dependency Freshness Check
+        run: python -m tools.scripts.hooks_runner supply-chain freshness --max-age-days 90 --format json --output supply-chain-freshness.json
+
+      - name: Supply Chain Verification (SLSA)
+        run: python -m tools.scripts.hooks_runner supply-chain verify --format json --output supply-chain-verify.json
+
+      # ──────────────────────────────────────────────────────
+      # Dependency Graph Analysis
+      # ──────────────────────────────────────────────────────
+      - name: Dependency Graph Analysis
+        run: python -m tools.scripts.hooks_runner dep-graph analyze --sbom sbom.json --format json --output dep-graph-analysis.json
+
+      - name: Circular Dependency Detection
+        run: python -m tools.scripts.hooks_runner dep-graph circular --sbom sbom.json --format json --output dep-graph-circular.json
+
+      - name: Version Conflict Detection
+        run: python -m tools.scripts.hooks_runner dep-graph conflicts --sbom sbom.json --format json --output dep-graph-conflicts.json
+
+      - name: Export Dependency Graph (Mermaid)
+        run: python -m tools.scripts.hooks_runner dep-graph export --sbom sbom.json --format mermaid --output dep-graph.mmd
+
+      # ──────────────────────────────────────────────────────
+      # Policy as Code (OPA/Rego)
+      # ──────────────────────────────────────────────────────
+      - name: Setup OPA
+        uses: open-policy-agent/setup-opa@v3
+
+      - name: Evaluate Policies
+        run: |
+          # Combine all governance data for policy evaluation
+          python -c "
+          import json
+          data = {}
+          for f in ['sbom.json', 'dep-graph-analysis.json', 'supply-chain-scan.json', 'supply-chain-compliance.json', 'exceptions.json']:
+              try:
+                  with open(f) as fp:
+                      data[f.replace('.json', '')] = json.load(fp)
+              except:
+                  pass
+          data['repository'] = '${{ github.repository }}'
+          data['branch'] = '${{ github.ref_name }}'
+          data['commit'] = '${{ github.sha }}'
+          with open('opa-input.json', 'w') as fp:
+              json.dump(data, fp)
+          "
+          opa eval --data .jcode/policies --input opa-input.json --format json "data.jcode.governance" > policy-results.json || true
+
+      - name: Check Policy Violations
+        run: |
+          VIOLATIONS=$(cat policy-results.json | jq -r '.result[0].expressions[0].value.violations // [] | length')
+          echo "Policy violations: $VIOLATIONS"
+          if [ "$VIOLATIONS" -gt 0 ]; then
+            cat policy-results.json | jq -r '.result[0].expressions[0].value.violations[] | "\(.rule): \(.message) [\(.severity)]"'
+            exit 1
+          fi
+
+      # ──────────────────────────────────────────────────────
+      # Existing Quality Checks
+      # ──────────────────────────────────────────────────────
+      - name: Run Tests
+        run: pytest tests/ -v --tb=short -x
+
+      - name: Lint & Type Check
+        run: |
+          ruff check tools/scripts/
+          mypy tools/scripts/
+
+      # ──────────────────────────────────────────────────────
+      # Artifact Upload
+      # ──────────────────────────────────────────────────────
+      - name: Upload Governance Artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: governance-artifacts
+          path: |
+            sbom.json
+            supply-chain-*.json
+            dep-graph-*.json
+            dep-graph.mmd
+            policy-results.json
+            exceptions.json
+          retention-days: 30
+
+      - name: Comment on PR
+        if: github.event_name == 'pull_request' && always()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            let body = '## JCode Governance Report\n\n';
+            
+            // Check for policy violations
+            try {
+              const policy = JSON.parse(fs.readFileSync('policy-results.json', 'utf8'));
+              const violations = policy.result[0].expressions[0].value.violations || [];
+              if (violations.length > 0) {
+                body += '### ⚠️ Policy Violations\n\n';
+                body += '| Rule | Message | Severity |\n';
+                body += '|------|---------|----------|\n';
+                for (const v of violations) {
+                  body += `| ${v.rule} | ${v.message} | ${v.severity} |\n`;
+                }
+                body += '\n';
+              }
+            } catch (e) {}
+            
+            // Check for circular dependencies
+            try {
+              const circular = JSON.parse(fs.readFileSync('dep-graph-circular.json', 'utf8'));
+              if (circular.cycles && circular.cycles.length > 0) {
+                body += '### 🔄 Circular Dependencies\n\n';
+                body += `Found ${circular.cycles.length} circular dependencies\n\n`;
+              }
+            } catch (e) {}
+            
+            // Check for version conflicts
+            try {
+              const conflicts = JSON.parse(fs.readFileSync('dep-graph-conflicts.json', 'utf8'));
+              if (conflicts.conflicts && conflicts.conflicts.length > 0) {
+                body += '### ⚔️ Version Conflicts\n\n';
+                body += `Found ${conflicts.conflicts.length} version conflicts\n\n`;
+              }
+            } catch (e) {}
+            
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: body
+            });

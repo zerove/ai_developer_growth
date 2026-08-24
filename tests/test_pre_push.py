@@ -26,9 +26,7 @@ class TestLoadSkipPatterns:
         config_dir = tmp_path / ".adg"
         config_dir.mkdir()
         config_file = config_dir / "config.yml"
-        config_file.write_text(
-            "skip_patterns:\n  - '**/tests/**/*.py'\n  - '**/demo/**/*.py'\n"
-        )
+        config_file.write_text("skip_patterns:\n  - '**/tests/**/*.py'\n  - '**/demo/**/*.py'\n")
 
         old_cwd = os.getcwd()
         try:

@@ -20,10 +20,7 @@ class ContextStreamer:
         if not file_path.exists():
             return []
         lines = file_path.read_text(encoding="utf-8").splitlines()
-        chunks = [
-            "\n".join(lines[i : i + self.page_size])
-            for i in range(0, len(lines), self.page_size)
-        ]
+        chunks = ["\n".join(lines[i : i + self.page_size]) for i in range(0, len(lines), self.page_size)]
         return chunks
 
 
@@ -31,6 +28,4 @@ if __name__ == "__main__":
     streamer = ContextStreamer()
     readme = streamer.root_dir / "README.md"
     chunks = streamer.stream_file_chunks(readme)
-    print(
-        f"📦 Context Streamer successfully virtualized README.md into {len(chunks)} chunks."
-    )
+    print(f"📦 Context Streamer successfully virtualized README.md into {len(chunks)} chunks.")

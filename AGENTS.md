@@ -27,9 +27,9 @@
 | `governance-docs-validator` | 治理文档验证器 | 验证治理层文档、索引引用、交叉引用 | ✅ 已定义 (v1.0) | `.jcode/skills/governance-docs-validator.md` |
 | `workflow-optimizer` | 工作流优化师 | 分析效率数据、优化 AI 协作工作流、推荐工具组合 | ✅ 已定义 | `agents/workflow-optimizer.md` |
 | `community-catalyst` | 社区催化剂 | 管理贡献流程、案例验证、贡献者激励 | ✅ 已定义 | `agents/community-catalyst.md` |
-| `context-sync` | 上下文同步 | 自动维护 CONTEXT.md、ADR.md、同步项目状态 | ✅ 已实现 | `examples/ai-context-sync/src/orchestrator.py` |
-| `multi-agent-orch` | 多 Agent 编排器 | 模拟团队开发：PM/Architect/Coder/Reviewer 协作 | ✅ 已实现 | `examples/multi-agent-orch/src/orchestration/` |
-| `self-correction-loop` | 自我修正循环 | AI 代码质量保证：验证→重试→修正闭环 | ✅ 已实现 | `examples/self-correction-loop/src/strategies/` |
+| `context-sync` | 上下文同步 | 自动维护 CONTEXT.md、ADR.md、同步项目状态 | ✅ 已集成 (v1.0) | `agents/context-sync.md` / `.jcode/scripts/context_sync.py` |
+| `multi-agent-orch` | 多 Agent 编排器 | 模拟团队开发：PM/Architect/Coder/Reviewer 协作 | ✅ 已集成 (v1.0) | `agents/multi-agent-orch.md` / `.jcode/scripts/multi_agent_orch.py` |
+| `self-correction-loop` | 自我修正循环 | AI 代码质量保证：验证→重试→修正闭环 | ✅ 已集成 (v1.0) | `agents/self-correction-loop.md` / `.jcode/scripts/self_correction_loop.py` |
 | `ai-task-prioritizer` | 任务优先级工具 | CLI 任务优先级排序，TDD + AI 驱动 | ✅ 已实现 | `examples/ai-task-prioritizer/prioritizer.py` |
 | `hooks-runner` | 统一 Hook 运行器 | 统一 lint/typecheck/test/security/quality-gate/governance 入口 | ✅ 已实现 | `tools/scripts/hooks_runner.py` |
 | `rules-engine` | 规则引擎 | 语言无关的代码质量检查引擎（反模式/命名/阈值/AST） | ✅ 已实现 | `tools/scripts/rules_engine/` |
@@ -92,32 +92,44 @@
 
 ---
 
+## ⚙️ 核心技能 Agent (P1 - 已集成到 Hooks 流程)
+
+### 6. context-sync (上下文同步 v1.0)
+**职责**: 自动维护 CONTEXT.md、ADR.md、同步项目状态，架构决策防护，规范审计
+**作用域**: 全项目 Git 历史、CONTEXT.md、ADR.md、SPEC.md
+**核心指令**:
+- 运行 `python .jcode/scripts/context_sync.py sync --project-root .` 分析 Git 变更，自动更新 CONTEXT.md 和 ADR.md
+- 运行 `python .jcode/scripts/context_sync.py validate --context-file CONTEXT.md --adr-file ADR.md` 验证文档结构完整性
+- 运行 `python .jcode/scripts/context_sync.py audit --spec-file SPEC.md` 检查代码/文档规范合规（硬编码密钥、eval/exec、SQL注入、裸露except等）
+- 架构防护：检查设计文档偏移（TODO/FIXME、过于简短、缺少子任务分解）
+- 演化分析：运行 `python .jcode/scripts/context_sync.py evolve` 检查规范演化机会
+**Hooks 集成**: on_commit (sync), on_merge (sync), on_pr (audit), scheduled (validate/audit)
+
+### 7. multi-agent-orch (多 Agent 编排器 v1.0)
+**职责**: 模拟团队开发：PM/Architect/Coder/Reviewer 角色分工协作，结构化消息协议，迭代优化
+**作用域**: 设计类需求、规格文档、架构决策
+**核心指令**:
+- 接收用户自然语言需求描述
+- PM 阶段生成 PRD（目标、需求、成功标准）
+- Architect 阶段生成技术设计（架构、API、实施计划、子任务分解 JSON）
+- Coder-Reviewer 循环：Coder 生成代码 → Reviewer 审查 PASS/FAIL → FAIL 反馈 FIX 进入下一轮
+- 支持模式：waterfall（串行瀑布）、fanout（并行扇出）
+- 最大迭代次数默认 3，可配置
+**Hooks 集成**: on_pr (design 标签或 design/spec 目录变更)
+
+### 8. self-correction-loop (自我修正循环 v1.0)
+**职责**: AI 代码质量保证闭环：验证 → 重试 → 修正，自动修复测试失败
+**作用域**: 失败的测试文件、CI/CD 流程
+**核心指令**:
+- 运行 `python .jcode/scripts/self_correction_loop.py validate --target <file> --tests <dir>` 验证当前测试状态
+- 运行 `python .jcode/scripts/self_correction_loop.py run --target <file> --tests <dir> --max-attempts 3` 启动测试→修复→验证闭环
+- 策略链：retry（重试）→ pattern（模式匹配：off-by-one、missing-import、zero-division）→ llm（大模型修复，回退 Mock）
+- 输出结构化 JSON 报告：成功/失败、尝试次数、使用策略、耗时、修正前后代码对比
+**Hooks 集成**: on_pr (测试失败时自动触发)
+
+---
+
 ## ⚙️ 已实现参考 Agent (验证方法论用)
-
-### 6. context-sync (上下文同步)
-**定位**: 参考实现 | 验证 `docs/efficiency/full-cycle-workflow` 和 `learning/prompt-engineering`
-**实现**: `examples/ai-context-sync/src/orchestrator.py` - `ContextSyncOrchestrator`
-**核心能力.md`（项目状态、决策、计划）
-- 生成 `ADR.md` 架构决策记录
-- 规范审计：检查代码是否符合项目规范
-- 多 LLM 支持：OpenAI/Claude/Gemini/Ollama/系统自动检测
-- MCP Server 集成（opencode 配置见 `opencode.json`）
-
-### 7. multi-agent-orch (多 Agent 编排器)
-**定位**: 代码示例 | 模拟团队开发：PM/Architect/Coder/Reviewer 角色分工
-**实现**: `examples/multi-agent-orch/src/orchestration/`
-**核心能力**:
-- 4 角色 Agent：PM(需求分析)、Architect(架构设计)、Coder(实现)、Reviewer(审查)
-- 协作协议：结构化消息文、迭代优化
-- 演示文件：`demo.py`
-
-### 8. self-correction-loop (自我修正循环)
-**定位**: 代码示例 | AI 代码→重试模式
-**实现**: `examples/self-correction-loop/src/strategies/`
-**核心能力**:
-- 多修复、类型修复、逻辑修复、测试驱动修复
-- 运行器：`runner.py` 执行修正循环
-- 结果追踪：`results.py` 记录修正历史
 
 ### 9. ai-task-prioritizer (任务优先级工具)
 **定位**: 代码示例 | CLI 任务优先级排序，TDD + AI 驱动开发
@@ -126,6 +138,21 @@
 - LLM 评分任务优先级（影响力、紧急度、工作量）
 - 交互式任务管理：`main.py`
 - 设计文档：`DESIGN.md`、PRD: `PRD.md`
+
+### 10. hooks-runner (统一 Hook 运行器)
+**定位**: 核心基础设施 | 统一执行引擎
+**实现**: `tools/scripts/hooks_runner.py`
+**核心能力**: 解析 `.jcode/hooks.json`，按条件执行 skills
+
+### 11. rules-engine (规则引擎)
+**定位**: 核心基础设施 | 语言无关质量检查
+**实现**: `tools/scripts/rules_engine/`
+**核心能力**: 反模式检测、命名规范、复杂度阈值、安全模式、AST 分析
+
+### 12. jcode-ai-native-workflow (AI-Native 工作流主管道)
+**定位**: 核心基础设施 | 全生命周期自动化
+**实现**: `tools/scripts/jcode_ai_native_workflow.py`
+**核心能力**: 集成 Sense/Design/Implement/Audit/Sync 五阶段
 
 ---
 
@@ -138,13 +165,28 @@ ai_developer_growth/
 │   ├── knowledge-curator.md
 │   ├── governance-auditor.md
 │   ├── workflow-optimizer.md
-│   └── community-catalyst.md
-├── .jcode/skills/              # jcode Skill 定义
-│   ├── governance-docs-validator.md
-│   └── ...
-├── tools/scripts/              # 核心工具脚本
-│   ├── hooks_runner.py         # 统一 Hook 运行器
-│   └── rules_engine/           # 模块化规则引擎
+│   ├── community-catalyst.md
+│   ├── context-sync.md              # NEW: 已集成
+│   ├── multi-agent-orch.md          # NEW: 已集成
+│   └── self-correction-loop.md      # NEW: 已集成
+├── .jcode/
+│   ├── hooks.json               # Hooks 配置（含新技能）
+│   ├── scripts/                 # Skill 入口脚本
+│   │   ├── governance-auditor.py
+│   │   ├── governance-docs-validator.py
+│   │   ├── knowledge-curator.py
+│   │   ├── workflow-optimizer.py
+│   │   ├── community-catalyst.py
+│   │   ├── hooks_runner.py
+│   │   ├── context_sync.py            # NEW
+│   │   ├── multi_agent_orch.py        # NEW
+│   │   └── self_correction_loop.py    # NEW
+│   └── skills/                  # Skill 定义
+│       ├── governance-docs-validator.md
+│       └── ...
+├── tools/scripts/               # 核心工具脚本
+│   ├── hooks_runner.py
+│   └── rules_engine/
 │       ├── __init__.py
 │       ├── models.py
 │       ├── rule_loader.py
@@ -154,10 +196,10 @@ ai_developer_growth/
 │       ├── security_patterns.py
 │       └── checker.py
 ├── examples/                    # 参考实现
-│   ├── ai-context-sync/         # context-sync
-│   ├── multi-agent-orch/        # multi-agent-orch
-│   ├── self-correction-loop/    # self-correction-loop
-│   └── ai-task-prioritizer/     # ai-task-prioritizer
+│   ├── ai-context-sync/
+│   ├── multi-agent-orch/
+│   ├── self-correction-loop/
+│   └── ai-task-prioritizer/
 └── docs/agent-dev/              # 开发规范
     ├── agent-prompt-template.md
     ├── prompt-standards.md
@@ -196,4 +238,4 @@ ai_developer_growth/
 
 ---
 
-*本索引随 Agent 新增/修改时更新。最后更新: 2026-08-12*
+*本索引随 Agent 新增/修改时更新。最后更新: 2026-08-22*

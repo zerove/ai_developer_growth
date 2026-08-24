@@ -165,9 +165,7 @@ class ImportGraph:
         "classmethod",
     }
 
-    def _create_shadow_issue(
-        self, filepath: str, imp: ImportInfo, name: str
-    ) -> SemanticIssue:
+    def _create_shadow_issue(self, filepath: str, imp: ImportInfo, name: str) -> SemanticIssue:
         return SemanticIssue(
             rule_id="shadowed-import",
             severity="warning",
@@ -178,9 +176,7 @@ class ImportGraph:
             fix_hint=f"Rename import to avoid shadowing built-in '{name}'",
         )
 
-    def find_shadowed_imports(
-        self, file_imports: dict[str, list[ImportInfo]]
-    ) -> list[SemanticIssue]:
+    def find_shadowed_imports(self, file_imports: dict[str, list[ImportInfo]]) -> list[SemanticIssue]:
         """Find imports that shadow built-in names."""
         issues: list[SemanticIssue] = []
 
@@ -230,9 +226,7 @@ class SemanticChecker:
         self.parser: ASTParser = get_parser()
         self.import_graph = ImportGraph()
 
-    def analyze_file(
-        self, filepath: Path, language: str | None = None
-    ) -> FileAST | None:
+    def analyze_file(self, filepath: Path, language: str | None = None) -> FileAST | None:
         """Analyze a single file using AST parsing."""
         return self.parser.parse_file(filepath, language)
 
@@ -271,9 +265,7 @@ class SemanticChecker:
                     file_asts[rel_path] = ast_result
                     file_imports[rel_path] = ast_result.imports
                     try:
-                        file_content[rel_path] = filepath.read_text(
-                            encoding="utf-8", errors="ignore"
-                        )
+                        file_content[rel_path] = filepath.read_text(encoding="utf-8", errors="ignore")
                     except OSError:
                         pass
 
@@ -344,9 +336,7 @@ class SemanticChecker:
             files_analyzed=len(file_asts),
         )
 
-    def _collect_source_files(
-        self, dirpath: Path, languages: list[str] | None, max_files: int
-    ) -> list[Path]:
+    def _collect_source_files(self, dirpath: Path, languages: list[str] | None, max_files: int) -> list[Path]:
         """Collect source files from directory."""
         extensions = {
             "python": {".py"},
@@ -390,9 +380,7 @@ class SemanticChecker:
 
         return sorted(files)
 
-    def _check_complexity(
-        self, file_asts: dict[str, FileAST], base_dir: Path
-    ) -> list[SemanticIssue]:
+    def _check_complexity(self, file_asts: dict[str, FileAST], base_dir: Path) -> list[SemanticIssue]:
         """Check for overly complex functions."""
         issues: list[SemanticIssue] = []
 
@@ -424,18 +412,12 @@ class SemanticChecker:
                         )
                     )
 
-                if (
-                    func.is_method
-                    and func.name.startswith("_")
-                    and not func.name.startswith("__")
-                ):
+                if func.is_method and func.name.startswith("_") and not func.name.startswith("__"):
                     pass  # private methods are OK
 
         return issues
 
-    def _check_missing_docstrings(
-        self, file_asts: dict[str, FileAST], base_dir: Path
-    ) -> list[SemanticIssue]:
+    def _check_missing_docstrings(self, file_asts: dict[str, FileAST], base_dir: Path) -> list[SemanticIssue]:
         """Check for missing docstrings on public functions/classes."""
         issues: list[SemanticIssue] = []
 
@@ -490,17 +472,9 @@ class SemanticChecker:
                 if func.complexity > metrics.max_complexity:
                     metrics.max_complexity = func.complexity
                 if func.body_lines > 50:
-                    metrics.long_functions.append(
-                        f"{func.class_name}.{func.name}"
-                        if func.class_name
-                        else func.name
-                    )
+                    metrics.long_functions.append(f"{func.class_name}.{func.name}" if func.class_name else func.name)
                 if func.complexity > 10:
-                    metrics.complex_functions.append(
-                        f"{func.class_name}.{func.name}"
-                        if func.class_name
-                        else func.name
-                    )
+                    metrics.complex_functions.append(f"{func.class_name}.{func.name}" if func.class_name else func.name)
                 if func.docstring is None and not func.name.startswith("_"):
                     metrics.functions_without_docstring += 1
 

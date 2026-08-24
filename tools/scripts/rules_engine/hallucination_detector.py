@@ -384,9 +384,7 @@ def detect_hallucinations_in_file(filepath: Path) -> HallucinationReport:
     return report
 
 
-def detect_hallucinations(
-    dirpath: Path, languages: list[str] | None = None
-) -> HallucinationReport:
+def detect_hallucinations(dirpath: Path, languages: list[str] | None = None) -> HallucinationReport:
     """Scan a directory for hallucination patterns.
 
     Args:

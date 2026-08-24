@@ -210,9 +210,7 @@ def _estimate_complexity_static(node: _TreeNode, lines: list[str]) -> int:
     return counter[0]
 
 
-def _count_branching_static(
-    node: _TreeNode, types: set[str], counter: list[int]
-) -> None:
+def _count_branching_static(node: _TreeNode, types: set[str], counter: list[int]) -> None:
     """Count branching nodes for complexity."""
     if node.type in types:
         counter[0] += 1
@@ -318,9 +316,7 @@ class ASTParser:
         except Exception:
             return None
 
-    def parse_file(
-        self, filepath: Path, language: str | None = None, use_cache: bool = False
-    ) -> FileAST | None:
+    def parse_file(self, filepath: Path, language: str | None = None, use_cache: bool = False) -> FileAST | None:
         """Parse a file and extract structured information.
 
         Args:
@@ -389,15 +385,11 @@ class ASTParser:
             parse_time_ms=parse_time,
         )
 
-    def extract_functions(
-        self, tree: _TSTree, language: str, lines: list[str] | None = None
-    ) -> list[FunctionInfo]:
+    def extract_functions(self, tree: _TSTree, language: str, lines: list[str] | None = None) -> list[FunctionInfo]:
         """Extract function info from a parsed tree."""
         return self._extract_functions(tree.root_node, language, lines or [])
 
-    def extract_classes(
-        self, tree: _TSTree, language: str, lines: list[str] | None = None
-    ) -> list[ClassInfo]:
+    def extract_classes(self, tree: _TSTree, language: str, lines: list[str] | None = None) -> list[ClassInfo]:
         """Extract class info from a parsed tree."""
         return self._extract_classes(tree.root_node, language, lines or [])
 
@@ -409,9 +401,7 @@ class ASTParser:
     # Python-specific extraction
     # ─────────────────────────────────────────────────────────────
 
-    def _extract_functions(
-        self, node: _TreeNode, language: str, lines: list[str]
-    ) -> list[FunctionInfo]:
+    def _extract_functions(self, node: _TreeNode, language: str, lines: list[str]) -> list[FunctionInfo]:
         """Extract functions from AST node."""
         functions: list[FunctionInfo] = []
         self._walk_functions(node, language, lines, functions, None)
@@ -457,9 +447,7 @@ class ASTParser:
         for child in node.children:
             self._walk_python_functions(child, lines, result, class_name)
 
-    def _parse_python_function(
-        self, node: _TreeNode, lines: list[str], class_name: str | None
-    ) -> FunctionInfo | None:
+    def _parse_python_function(self, node: _TreeNode, lines: list[str], class_name: str | None) -> FunctionInfo | None:
         """Parse a Python function definition node."""
         name_node = None
         params_node = None
@@ -533,9 +521,7 @@ class ASTParser:
         for child in node.children:
             self._walk_js_functions(child, lines, result, class_name)
 
-    def _parse_js_function(
-        self, node: _TreeNode, lines: list[str], class_name: str | None
-    ) -> FunctionInfo | None:
+    def _parse_js_function(self, node: _TreeNode, lines: list[str], class_name: str | None) -> FunctionInfo | None:
         """Parse a JS/TS function node."""
         name = self._get_child_name(node, lines) or "<anonymous>"
         params: list[str] = []
@@ -599,9 +585,7 @@ class ASTParser:
         for child in node.children:
             self._walk_rust_functions(child, lines, result, class_name)
 
-    def _parse_rust_function(
-        self, node: _TreeNode, lines: list[str], class_name: str | None
-    ) -> FunctionInfo | None:
+    def _parse_rust_function(self, node: _TreeNode, lines: list[str], class_name: str | None) -> FunctionInfo | None:
         """Parse a Rust function node."""
         name = self._get_child_name(node, lines) or "<unknown>"
         params: list[str] = []
@@ -661,9 +645,7 @@ class ASTParser:
         for child in node.children:
             self._walk_go_functions(child, lines, result, class_name)
 
-    def _parse_go_function(
-        self, node: _TreeNode, lines: list[str], class_name: str | None
-    ) -> FunctionInfo | None:
+    def _parse_go_function(self, node: _TreeNode, lines: list[str], class_name: str | None) -> FunctionInfo | None:
         """Parse a Go function node."""
         name = self._get_child_name(node, lines) or "<unknown>"
         params: list[str] = []
@@ -737,17 +719,13 @@ class ASTParser:
     # Class extraction
     # ─────────────────────────────────────────────────────────────
 
-    def _extract_classes(
-        self, node: _TreeNode, language: str, lines: list[str]
-    ) -> list[ClassInfo]:
+    def _extract_classes(self, node: _TreeNode, language: str, lines: list[str]) -> list[ClassInfo]:
         """Extract class definitions."""
         classes: list[ClassInfo] = []
         self._walk_classes(node, language, lines, classes)
         return classes
 
-    def _walk_classes(
-        self, node: _TreeNode, language: str, lines: list[str], result: list[ClassInfo]
-    ) -> None:
+    def _walk_classes(self, node: _TreeNode, language: str, lines: list[str], result: list[ClassInfo]) -> None:
         """Walk AST for class definitions."""
         if language == "python" and node.type == "class_definition":
             info = self._parse_python_class(node, lines)
@@ -755,10 +733,7 @@ class ASTParser:
                 result.append(info)
             return
 
-        if (
-            language in ("javascript", "typescript")
-            and node.type == "class_declaration"
-        ):
+        if language in ("javascript", "typescript") and node.type == "class_declaration":
             info = self._parse_js_class(node, lines)
             if info:
                 result.append(info)
@@ -773,9 +748,7 @@ class ASTParser:
         for child in node.children:
             self._walk_classes(child, language, lines, result)
 
-    def _parse_python_class(
-        self, node: _TreeNode, lines: list[str]
-    ) -> ClassInfo | None:
+    def _parse_python_class(self, node: _TreeNode, lines: list[str]) -> ClassInfo | None:
         """Parse Python class definition."""
         name = self._get_child_name(node, lines) or "<unknown>"
         bases: list[str] = []
@@ -879,18 +852,12 @@ class ASTParser:
         self._walk_imports(node, language, imports)
         return imports
 
-    def _walk_imports(
-        self, node: _TreeNode, language: str, result: list[ImportInfo]
-    ) -> None:
+    def _walk_imports(self, node: _TreeNode, language: str, result: list[ImportInfo]) -> None:
         """Walk AST for import statements."""
         if language == "python":
             if node.type == "import_statement":
                 module = self._get_text(node.children[0]) if node.children else ""
-                names = [
-                    self._get_text(c, [])
-                    for c in node.children
-                    if c.type == "dotted_name"
-                ]
+                names = [self._get_text(c, []) for c in node.children if c.type == "dotted_name"]
                 result.append(
                     ImportInfo(
                         module=module,
@@ -906,11 +873,7 @@ class ASTParser:
                 names = []
                 for child in node.children:
                     if child.type == "relative_import":
-                        level = (
-                            child.text.count(b".")
-                            if isinstance(child.text, bytes)
-                            else str(child.text).count(".")
-                        )
+                        level = child.text.count(b".") if isinstance(child.text, bytes) else str(child.text).count(".")
                     elif child.type == "dotted_name":
                         module = self._get_text(child, [])
                     elif child.type == "aliased_import":

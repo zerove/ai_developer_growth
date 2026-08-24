@@ -7,9 +7,7 @@ from .base import BaseParser
 class PythonParser(BaseParser):
     """语义级 Python 解析器，支持 async/decorator 特性。"""
 
-    def parse(
-        self, root_node: _TreeNode, lines: list[str]
-    ) -> tuple[list[FunctionInfo], list[ClassInfo]]:
+    def parse(self, root_node: _TreeNode, lines: list[str]) -> tuple[list[FunctionInfo], list[ClassInfo]]:
         functions: list[FunctionInfo] = []
         classes: list[ClassInfo] = []
         self._walk(root_node, lines, functions, classes)

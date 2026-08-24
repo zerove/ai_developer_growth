@@ -35,9 +35,7 @@ python_code_snippets = st.one_of(
     st.just("eval('x')"),
     st.just("exec('x')"),
     st.just("import os\nos.system('ls')"),
-    st.text(
-        alphabet=characters(blacklist_categories=("Cc", "Cs")), min_size=0, max_size=200
-    ),
+    st.text(alphabet=characters(blacklist_categories=("Cc", "Cs")), min_size=0, max_size=200),
 )
 
 # 严重级别策略
@@ -200,11 +198,7 @@ def test_complexity_nested_loops(depth: int) -> None:
         f.flush()
         issues = check_python_complexity(lines, default_complexity_rules, f.name)
 
-    nesting_issues = [
-        i
-        for i in issues
-        if "nesting" in i.rule_id.lower() or "depth" in i.message.lower()
-    ]
+    nesting_issues = [i for i in issues if "nesting" in i.rule_id.lower() or "depth" in i.message.lower()]
     if depth > 4:  # 默认阈值 max_nesting = 4
         assert len(nesting_issues) > 0
 
@@ -220,9 +214,7 @@ def test_complexity_nested_loops(depth: int) -> None:
     st.text(min_size=1, max_size=50),
 )
 @settings(max_examples=100, deadline=None)
-def test_issue_creation(
-    rule_id: str, line: int, severity: str, message: str, category: str
-) -> None:
+def test_issue_creation(rule_id: str, line: int, severity: str, message: str, category: str) -> None:
     """Issue 创建应该保持字段完整性。"""
     issue = Issue(
         rule_id=rule_id,
@@ -281,9 +273,7 @@ def test_empty_file(code: str) -> None:
         f.flush()
         issues = check_anti_patterns(Path(f.name), "python", default_anti_pattern_rules)
         lines = code.splitlines()
-        issues.extend(
-            check_naming_conventions(lines, default_naming_rules, f.name, "python")
-        )
+        issues.extend(check_naming_conventions(lines, default_naming_rules, f.name, "python"))
         issues.extend(check_python_complexity(lines, default_complexity_rules, f.name))
     assert isinstance(issues, list)
 
@@ -312,9 +302,7 @@ def test_unicode_in_strings(code: str) -> None:
         f.flush()
         issues = check_anti_patterns(Path(f.name), "python", default_anti_pattern_rules)
         lines = safe_code.splitlines()
-        issues.extend(
-            check_naming_conventions(lines, default_naming_rules, f.name, "python")
-        )
+        issues.extend(check_naming_conventions(lines, default_naming_rules, f.name, "python"))
         issues.extend(check_python_complexity(lines, default_complexity_rules, f.name))
     assert isinstance(issues, list)
 
@@ -333,9 +321,7 @@ def test_many_lines(lines_count: int) -> None:
         f.flush()
         issues = check_anti_patterns(Path(f.name), "python", default_anti_pattern_rules)
         lines = repeated_code.splitlines()
-        issues.extend(
-            check_naming_conventions(lines, default_naming_rules, f.name, "python")
-        )
+        issues.extend(check_naming_conventions(lines, default_naming_rules, f.name, "python"))
         issues.extend(check_python_complexity(lines, default_complexity_rules, f.name))
     assert isinstance(issues, list)
 

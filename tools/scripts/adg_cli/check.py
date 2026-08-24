@@ -21,9 +21,7 @@ from tools.scripts.adg_cli.git import (
 )
 
 
-def check_file(
-    filepath: Path, rules: dict[str, Any], severity_filter: str | None = None
-) -> list[Issue]:
+def check_file(filepath: Path, rules: dict[str, Any], severity_filter: str | None = None) -> list[Issue]:
     """Check a single file against rules."""
     issues: list[Issue] = []
 
@@ -43,9 +41,7 @@ def check_file(
 
     for pattern_def in rules.get("anti_patterns", []):
         severity = pattern_def.get("severity", "warning")
-        if severity_filter and _severity_rank(severity) > _severity_rank(
-            severity_filter
-        ):
+        if severity_filter and _severity_rank(severity) > _severity_rank(severity_filter):
             continue
 
         issues.extend(_check_pattern(filepath, content, lines, pattern_def))
@@ -53,9 +49,7 @@ def check_file(
     return issues
 
 
-def _check_pattern(
-    filepath: Path, content: str, lines: list[str], pattern_def: dict[str, Any]
-) -> list[Issue]:
+def _check_pattern(filepath: Path, content: str, lines: list[str], pattern_def: dict[str, Any]) -> list[Issue]:
     """Check a single pattern against file content."""
     issues: list[Issue] = []
     pattern = pattern_def.get("pattern", "")
@@ -73,9 +67,7 @@ def _check_pattern(
             return []
 
     flags = re.IGNORECASE if pattern_def.get("ignore_case", False) else 0
-    is_multiline = ("\n" in pattern or "\\n" in pattern) or pattern_def.get(
-        "multiline", False
-    )
+    is_multiline = ("\n" in pattern or "\\n" in pattern) or pattern_def.get("multiline", False)
 
     if is_multiline:
         try:
@@ -91,9 +83,7 @@ def _check_pattern(
                 continue
             try:
                 for match in re.finditer(pattern, line, flags):
-                    issues.append(
-                        _make_issue(filepath, line_num, match.start() + 1, pattern_def)
-                    )
+                    issues.append(_make_issue(filepath, line_num, match.start() + 1, pattern_def))
             except re.error:
                 continue
 
@@ -158,10 +148,7 @@ def _check_files_parallel(
 
     with ProcessPoolExecutor(max_workers=max_workers) as executor:
         # Submit all files for checking
-        future_to_file = {
-            executor.submit(check_file, filepath, rules, severity_filter): filepath
-            for filepath in files
-        }
+        future_to_file = {executor.submit(check_file, filepath, rules, severity_filter): filepath for filepath in files}
 
         # Collect results as they complete
         for future in as_completed(future_to_file):
@@ -233,6 +220,4 @@ def _match_pattern(filepath: Path, pattern: str) -> bool:
     """Check if filepath matches a glob pattern."""
     import fnmatch
 
-    return fnmatch.fnmatch(str(filepath), pattern) or fnmatch.fnmatch(
-        filepath.name, pattern
-    )
+    return fnmatch.fnmatch(str(filepath), pattern) or fnmatch.fnmatch(filepath.name, pattern)

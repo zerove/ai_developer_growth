@@ -89,9 +89,7 @@ class DependencyGraph:
         self._file_to_module: dict[str, str] = {}
         self._module_to_files: dict[str, list[str]] = defaultdict(list)
 
-    def analyze_directory(
-        self, dirpath: Path, languages: list[str] | None = None
-    ) -> list[DependencyIssue]:
+    def analyze_directory(self, dirpath: Path, languages: list[str] | None = None) -> list[DependencyIssue]:
         """Analyze all source files in directory and find architecture issues.
 
         Args:
@@ -134,9 +132,7 @@ class DependencyGraph:
             "build",
             ".mypy_cache",
         }
-        code_files = [
-            f for f in code_files if not any(d in f.parts for d in ignore_dirs)
-        ]
+        code_files = [f for f in code_files if not any(d in f.parts for d in ignore_dirs)]
 
         for filepath in code_files:
             try:
@@ -159,11 +155,7 @@ class DependencyGraph:
                 for match in re.finditer(pattern, content):
                     imported = match.group(1)
                     # Only track local imports
-                    if (
-                        imported.startswith(".")
-                        or "/" in imported
-                        or imported[0].islower()
-                    ):
+                    if imported.startswith(".") or "/" in imported or imported[0].islower():
                         self._graph[rel].add(imported)
 
     def _find_cycles(self) -> list[DependencyIssue]:

@@ -1,0 +1,244 @@
+# JCode Advanced Governance - GitLab CI Template
+# Add this to your .gitlab-ci.yml
+
+stages:
+  - quick-check
+  - governance
+  - test
+  - quality
+  - report
+
+variables:
+  PYTHON_VERSION: "3.11"
+  PIP_CACHE_DIR: "$CI_PROJECT_DIR/.pip-cache"
+
+# ──────────────────────────────────────────────────────
+# Cache configuration
+# ──────────────────────────────────────────────────────
+cache:
+  key: "${CI_COMMIT_REF_SLUG}"
+  paths:
+    - .pip-cache/
+    - .cache/
+    - node_modules/
+    - target/
+
+# ──────────────────────────────────────────────────────
+# Quick Governance Check (runs on every MR)
+# ──────────────────────────────────────────────────────
+governance-quick:
+  stage: quick-check
+  image: python:3.11-slim
+  before_script:
+    - pip install -U "setuptools>=83.0.0" -q
+    - pip install -e . -q
+    - pip install ruff mypy pytest -q
+  script:
+    - python -m tools.scripts.hooks_runner exception check-expirations
+    - python -m tools.scripts.hooks_runner exception list --status approved --format json > exceptions.json
+    - adg check . --severity error --json > adg-report.json || true
+    - adg check . --severity error
+  artifacts:
+    reports:
+      codequality: adg-report.json
+    paths:
+      - adg-report.json
+      - exceptions.json
+    expire_in: 30 days
+    when: always
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+    - if: $CI_PIPELINE_SOURCE == "web"
+
+# ──────────────────────────────────────────────────────
+# Full Governance Pipeline (main branch + tags)
+# ──────────────────────────────────────────────────────
+governance-full:
+  stage: governance
+  image: python:3.11-slim
+  needs:
+    - job: governance-quick
+      artifacts: true
+  before_script:
+    - apt-get update -q && apt-get install -y -q nodejs npm golang-go rustc cargo openjdk-21-jdk maven > /dev/null
+    - pip install -U "setuptools>=83.0.0" -q
+    - pip install -e . -q
+    - pip install opa-wasm cyclonedx-bom -q
+  script:
+    # Exception Manager
+    - python -m tools.scripts.hooks_runner exception check-expirations
+    - python -m tools.scripts.hooks_runner exception audit
+    - python -m tools.scripts.hooks_runner exception sync-gitops
+    
+    # Supply Chain
+    - python -m tools.scripts.hooks_runner supply-chain sbom --format json --output sbom.json
+    - python -m tools.scripts.hooks_runner supply-chain scan --format json --output supply-chain-scan.json
+    - python -m tools.scripts.hooks_runner supply-chain compliance --policy-file .jcode/policies/supply-chain-policy.yaml --format json --output supply-chain-compliance.json
+    - python -m tools.scripts.hooks_runner supply-chain freshness --max-age-days 90 --format json --output supply-chain-freshness.json
+    - python -m tools.scripts.hooks_runner supply-chain verify --format json --output supply-chain-verify.json
+    
+    # Dependency Graph
+    - python -m tools.scripts.hooks_runner dep-graph analyze --sbom sbom.json --format json --output dep-graph-analysis.json
+    - python -m tools.scripts.hooks_runner dep-graph circular --sbom sbom.json --format json --output dep-graph-circular.json
+    - python -m tools.scripts.hooks_runner dep-graph conflicts --sbom sbom.json --format json --output dep-graph-conflicts.json
+    - python -m tools.scripts.hooks_runner dep-graph export --sbom sbom.json --format mermaid --output dep-graph.mmd
+    
+    # Policy as Code
+    - opa version
+    - |
+      python -c "
+      import json
+      data = {}
+      for f in ['sbom.json', 'dep-graph-analysis.json', 'supply-chain-scan.json', 'supply-chain-compliance.json', 'exceptions.json']:
+          try:
+              with open(f) as fp:
+                  data[f.replace('.json', '')] = json.load(fp)
+          except:
+              pass
+      data['repository'] = '$CI_PROJECT_PATH'
+      data['branch'] = '$CI_COMMIT_REF_NAME'
+      data['commit'] = '$CI_COMMIT_SHA'
+      with open('opa-input.json', 'w') as fp:
+          json.dump(data, fp)
+      "
+    - opa eval --data .jcode/policies --input opa-input.json --format json "data.jcode.governance" > policy-results.json || true
+    - |
+      VIOLATIONS=$(cat policy-results.json | jq -r '.result[0].expressions[0].value.violations // [] | length')
+      echo "Policy violations: $VIOLATIONS"
+      if [ "$VIOLATIONS" -gt 0 ]; then
+        cat policy-results.json | jq -r '.result[0].expressions[0].value.violations[] | "\(.rule): \(.message) [\(.severity)]"'
+        exit 1
+      fi
+  artifacts:
+    paths:
+      - sbom.json
+      - supply-chain-*.json
+      - dep-graph-*.json
+      - dep-graph.mmd
+      - policy-results.json
+      - exceptions.json
+    expire_in: 30 days
+    when: always
+  rules:
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+    - if: $CI_COMMIT_TAG
+    - if: $CI_PIPELINE_SOURCE == "web"
+
+# ──────────────────────────────────────────────────────
+# Tests (parallel)
+# ──────────────────────────────────────────────────────
+test-python:
+  stage: test
+  image: python:3.11-slim
+  needs:
+    - job: governance-quick
+      artifacts: true
+  before_script:
+    - pip install -U "setuptools>=83.0.0" -q
+    - pip install -e . -q
+    - pip install pytest pytest-cov pytest-xdist -q
+  script:
+    - pytest tests/ -v --tb=short -x -n auto
+  coverage: '/TOTAL\s+\d+\s+\d+\s+(\d+%/)'
+  artifacts:
+    reports:
+      coverage_report:
+        coverage.xml
+    paths:
+      - coverage.xml
+    expire_in: 30 days
+
+test-examples:
+  stage: test
+  image: python:3.11-slim
+  needs:
+    - job: governance-quick
+      artifacts: true
+  before_script:
+    - pip install -U "setuptools>=83.0.0" -q
+    - pip install -e . -q
+  script:
+    - pytest examples/ -v --tb=short -x
+  rules:
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+    - if: $CI_PIPELINE_SOURCE == "web"
+
+# ──────────────────────────────────────────────────────
+# Quality Gates
+# ──────────────────────────────────────────────────────
+quality-gates:
+  stage: quality
+  image: python:3.11-slim
+  needs:
+    - job: test-python
+      artifacts: true
+  before_script:
+    - pip install -U "setuptools>=83.0.0" -q
+    - pip install -e . -q
+    - pip install ruff mypy bandit pip-audit -q
+  script:
+    - ruff check tools/scripts/
+    - mypy tools/scripts/
+    - bandit -r tools/scripts/ -f json -o bandit-report.json || true
+    - pip-audit --desc
+  artifacts:
+    paths:
+      - bandit-report.json
+    expire_in: 30 days
+    when: always
+
+# ──────────────────────────────────────────────────────
+# Governance Report (MR comment)
+# ──────────────────────────────────────────────────────
+governance-report:
+  stage: report
+  image: python:3.11-slim
+  needs:
+    - job: governance-full
+      artifacts: true
+    - job: quality-gates
+      artifacts: true
+  script:
+    - |
+      python -c "
+      import json, os
+      body = '## JCode Governance Report\n\n'
+      
+      # Policy violations
+      if os.path.exists('policy-results.json'):
+          with open('policy-results.json') as f:
+              policy = json.load(f)
+          violations = policy.get('result', [{}])[0].get('expressions', [{}])[0].get('value', {}).get('violations', [])
+          if violations:
+              body += '### ⚠️ Policy Violations\n\n'
+              body += '| Rule | Message | Severity |\n'
+              body += '|------|---------|----------|\n'
+              for v in violations:
+                  body += f'| {v[\"rule\"]} | {v[\"message\"]} | {v[\"severity\"]} |\n'
+              body += '\n'
+      
+      # Circular dependencies
+      if os.path.exists('dep-graph-circular.json'):
+          with open('dep-graph-circular.json') as f:
+              circular = json.load(f)
+          if circular.get('cycles'):
+              body += f'### 🔄 Circular Dependencies\n\nFound {len(circular[\"cycles\"])} circular dependencies\n\n'
+      
+      # Version conflicts
+      if os.path.exists('dep-graph-conflicts.json'):
+          with open('dep-graph-conflicts.json') as f:
+              conflicts = json.load(f)
+          if conflicts.get('conflicts'):
+              body += f'### ⚔️ Version Conflicts\n\nFound {len(conflicts[\"conflicts\"])} version conflicts\n\n'
+      
+      print(body)
+      " > governance-comment.md
+    - cat governance-comment.md
+  artifacts:
+    paths:
+      - governance-comment.md
+    expire_in: 1 day
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+  allow_failure: true

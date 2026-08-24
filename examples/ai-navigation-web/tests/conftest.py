@@ -1,8 +1,10 @@
-import pytest
-from httpx import AsyncClient, ASGITransport
-from src.app import app
-from src.database import init_db, DB_PATH
 import os
+
+import pytest
+from httpx import ASGITransport, AsyncClient
+
+from src.app import app
+from src.database import DB_PATH, init_db
 
 
 @pytest.fixture(autouse=True)

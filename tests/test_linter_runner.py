@@ -40,9 +40,7 @@ class TestRunLinterAggregation:
 
     @patch("tools.scripts.linter_runner._run_mypy")
     @patch("tools.scripts.linter_runner._run_ruff")
-    def test_multiple_linters(
-        self, mock_ruff: MagicMock, mock_mypy: MagicMock, tmp_path: Path
-    ) -> None:
+    def test_multiple_linters(self, mock_ruff: MagicMock, mock_mypy: MagicMock, tmp_path: Path) -> None:
         """Multiple linters aggregate results."""
         mock_ruff.return_value = [{"linter": "ruff"}]
         mock_mypy.return_value = [{"linter": "mypy"}, {"linter": "mypy"}]
@@ -91,9 +89,7 @@ class TestRunRuff:
                 "fix": {"applicability": "safe"},
             },
         ]
-        mock_run.return_value = MagicMock(
-            returncode=0, stdout=json.dumps(ruff_output), stderr=""
-        )
+        mock_run.return_value = MagicMock(returncode=0, stdout=json.dumps(ruff_output), stderr="")
         issues = _run_ruff(tmp_path)
         assert len(issues) == 2
         assert issues[0]["linter"] == "ruff"
@@ -136,7 +132,9 @@ class TestRunMypy:
     @patch("tools.scripts.linter_runner.subprocess.run")
     def test_mypy_errors(self, mock_run: MagicMock, tmp_path: Path) -> None:
         """Mypy error lines parsed correctly."""
-        mypy_output = "test.py:10: error: Incompatible types [assignment]\nother.py:5: error: Missing return [return-value]\n"
+        mypy_output = (
+            "test.py:10: error: Incompatible types [assignment]\nother.py:5: error: Missing return [return-value]\n"
+        )
         mock_run.return_value = MagicMock(returncode=1, stdout=mypy_output, stderr="")
         issues = _run_mypy(tmp_path)
         assert len(issues) == 2
@@ -148,9 +146,7 @@ class TestRunMypy:
     @patch("tools.scripts.linter_runner.subprocess.run")
     def test_mypy_clean(self, mock_run: MagicMock, tmp_path: Path) -> None:
         """Mypy with no errors returns empty list."""
-        mock_run.return_value = MagicMock(
-            returncode=0, stdout="Success: no issues found\n", stderr=""
-        )
+        mock_run.return_value = MagicMock(returncode=0, stdout="Success: no issues found\n", stderr="")
         issues = _run_mypy(tmp_path)
         assert issues == []
 
@@ -205,9 +201,7 @@ class TestRunEslint:
                 ],
             }
         ]
-        mock_run.return_value = MagicMock(
-            returncode=1, stdout=json.dumps(eslint_output), stderr=""
-        )
+        mock_run.return_value = MagicMock(returncode=1, stdout=json.dumps(eslint_output), stderr="")
         issues = _run_eslint(tmp_path)
         assert len(issues) == 2
         assert issues[0]["linter"] == "eslint"
@@ -251,9 +245,7 @@ class TestRunGolangci:
                 }
             ]
         }
-        mock_run.return_value = MagicMock(
-            returncode=1, stdout=json.dumps(golangci_output), stderr=""
-        )
+        mock_run.return_value = MagicMock(returncode=1, stdout=json.dumps(golangci_output), stderr="")
         issues = _run_golangci(tmp_path)
         assert len(issues) == 1
         assert issues[0]["linter"] == "golangci-lint"
@@ -271,9 +263,7 @@ class TestRunGolangci:
     @patch("tools.scripts.linter_runner.subprocess.run")
     def test_golangci_timeout(self, mock_run: MagicMock, tmp_path: Path) -> None:
         """Golangci-lint timeout handled gracefully."""
-        mock_run.side_effect = subprocess.TimeoutExpired(
-            cmd="golangci-lint", timeout=120
-        )
+        mock_run.side_effect = subprocess.TimeoutExpired(cmd="golangci-lint", timeout=120)
         issues = _run_golangci(tmp_path)
         assert issues == []
 

@@ -133,9 +133,7 @@ severity: invalid
 
     def test_rule_validate_nonexistent(self):
         """Rule validate with nonexistent file."""
-        args = argparse.Namespace(
-            rule_command="validate", rule_file="/nonexistent.yaml"
-        )
+        args = argparse.Namespace(rule_command="validate", rule_file="/nonexistent.yaml")
         result = cmd_rule(args)
         assert result == 1
 
@@ -150,9 +148,7 @@ message: "Use logging"
         test_file = tmp_path / "test.py"
         test_file.write_text("print_pattern('hello')\n")
 
-        args = argparse.Namespace(
-            rule_command="test", rule_file=str(rule_file), path=str(tmp_path)
-        )
+        args = argparse.Namespace(rule_command="test", rule_file=str(rule_file), path=str(tmp_path))
         result = cmd_rule(args)
         assert result == 0
 
@@ -167,9 +163,7 @@ message: "Test"
         test_file = tmp_path / "test.py"
         test_file.write_text("x = 1\n")
 
-        args = argparse.Namespace(
-            rule_command="test", rule_file=str(rule_file), path=str(tmp_path)
-        )
+        args = argparse.Namespace(rule_command="test", rule_file=str(rule_file), path=str(tmp_path))
         result = cmd_rule(args)
         assert result == 0
 
@@ -271,9 +265,7 @@ class TestCmdNotify:
         test_file = tmp_path / "test.py"
         test_file.write_text("print('hello')\n")
 
-        args = argparse.Namespace(
-            path=str(test_file), webhook="unknown://test", lang="python", project="test"
-        )
+        args = argparse.Namespace(path=str(test_file), webhook="unknown://test", lang="python", project="test")
         result = cmd_notify(args)
         assert result == 1
 
@@ -329,9 +321,7 @@ class TestSarifExtended:
 
     def test_sarif_with_fixes(self):
         """SARIF includes fix hints."""
-        issues = [
-            Issue("r1", "error", "security", "/a.py", 10, 5, "Error msg", "Fix hint")
-        ]
+        issues = [Issue("r1", "error", "security", "/a.py", 10, 5, "Error msg", "Fix hint")]
         result = _format_sarif(issues, "python", None)
         data = json.loads(result)
 

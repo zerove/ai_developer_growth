@@ -13,10 +13,7 @@ def scan_python_imports(root_dir: Path) -> dict[str, set[str]]:
     """Scan Python files and build module import dependency graph."""
     graph: dict[str, set[str]] = {}
     for py_file in root_dir.rglob("*.py"):
-        if any(
-            p in py_file.parts
-            for p in [".git", ".venv", "venv", "__pycache__", ".pytest_cache"]
-        ):
+        if any(p in py_file.parts for p in [".git", ".venv", "venv", "__pycache__", ".pytest_cache"]):
             continue
         rel_path = str(py_file.relative_to(root_dir).with_suffix("")).replace("/", ".")
         graph[rel_path] = set()
@@ -51,15 +48,9 @@ def generate_mermaid_diagram(graph: dict[str, set[str]]) -> str:
 
 
 def main() -> int:
-    parser = argparse.ArgumentParser(
-        description="Architecture Dependency Graph Visualizer"
-    )
-    parser.add_argument(
-        "--path", type=Path, default=Path("tools/scripts"), help="Root path to scan"
-    )
-    parser.add_argument(
-        "--output", type=Path, help="Optional output markdown/mermaid file"
-    )
+    parser = argparse.ArgumentParser(description="Architecture Dependency Graph Visualizer")
+    parser.add_argument("--path", type=Path, default=Path("tools/scripts"), help="Root path to scan")
+    parser.add_argument("--output", type=Path, help="Optional output markdown/mermaid file")
     args = parser.parse_args()
 
     if not args.path.exists():

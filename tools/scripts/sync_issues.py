@@ -104,7 +104,7 @@ class GitHubProjectsSync:
         }
         data: dict[str, Any] = {"content_type": "Issue", "content_id": issue.id}
 
-        response = requests.post(url, headers=headers, json=data)
+        response = requests.post(url, headers=headers, json=data, timeout=10)
         if response.status_code == 201:
             return {"status": "created", "card": response.json()}
         else:
@@ -125,7 +125,7 @@ class GitHubProjectsSync:
         }
         data = {"position": "top", "column_id": target_column_id}
 
-        response = requests.post(url, headers=headers, json=data)
+        response = requests.post(url, headers=headers, json=data, timeout=10)
         if response.status_code == 201:
             return {"status": "moved", "card": response.json()}
         else:
@@ -179,15 +179,12 @@ class GitHubProjectsSync:
             issue = self.repo.get_issue(int(issue_number))
 
             # 根据列名更新 Issue 状态/标签
-            column_name = card.column_name if hasattr(card, "column_name") else ""
             result = self._sync_card_to_issue(issue, card.column_id, card.note)
             results.append({"issue": issue.number, "result": result})
 
         return results
 
-    def _sync_card_to_issue(
-        self, issue: Issue, column_id: str, note: str = ""
-    ) -> dict[str, Any]:
+    def _sync_card_to_issue(self, issue: Issue, column_id: str, note: str = "") -> dict[str, Any]:
         """将卡片状态同步回 Issue"""
         # 获取列名
         column_name = ""
@@ -219,7 +216,7 @@ class GitHubProjectsSync:
         # 更新标签
         if column_name in column_to_label:
             label_name = column_to_label[column_name]
-            if not any(l.name.lower() == label_name.lower() for l in issue.labels):
+            if not any(label.name.lower() == label_name.lower() for label in issue.labels):
                 issue.add_to_labels(label_name)
                 changes.append(f"added label: {label_name}")
 
@@ -253,9 +250,7 @@ class GitHubProjectsSync:
             try:
                 if not dry_run:
                     result = self.sync_issue_to_project(issue.number)
-                    results["issues_to_project"].append(
-                        {"issue": issue.number, "result": result}
-                    )
+                    results["issues_to_project"].append({"issue": issue.number, "result": result})
             except Exception as e:
                 results["errors"].append({"issue": issue.number, "error": str(e)})
 
@@ -301,13 +296,9 @@ class GitHubProjectsSync:
                         "number": issue.number,
                         "title": issue.title,
                         "state": issue.state,
-                        "labels": [l.name for l in issue.labels],
-                        "assignees": [a.login for a in issue.assignees],
-                        "column": (
-                            card.column_name
-                            if hasattr(card, "column_name")
-                            else "Unknown"
-                        ),
+                        "labels": [label.name for label in issue.labels],
+                        "assignees": [assignee.login for assignee in issue.assignees],
+                        "column": (card.column_name if hasattr(card, "column_name") else "Unknown"),
                     }
                 )
         return issues
@@ -342,21 +333,15 @@ def main() -> int:
     issue_parser.add_argument("--issue", type=int, required=True, help="Issue 编号")
 
     # sync-project
-    project_parser = subparsers.add_parser(
-        "sync-project", help="从 Project 同步回 Issue"
-    )
+    _project_parser = subparsers.add_parser("sync-project", help="从 Project 同步回 Issue")
 
     # list-project
-    list_parser = subparsers.add_parser("list-project", help="列出 Project 中的 Issue")
 
     # project-info
-    info_parser = subparsers.add_parser("project-info", help="显示 Project 信息")
 
     # sync-specific
     specific_parser = subparsers.add_parser("sync-issues", help="同步指定 Issue 列表")
-    specific_parser.add_argument(
-        "--issues", nargs="+", type=int, required=True, help="Issue 编号列表"
-    )
+    specific_parser.add_argument("--issues", nargs="+", type=int, required=True, help="Issue 编号列表")
 
     args = parser.parse_args()
 
@@ -364,7 +349,7 @@ def main() -> int:
         parser.print_help()
         return 1
 
-    token = args.token or os.getenv("GITHUB_TOKEN")
+    args.token or os.getenv("GITHUB_TOKEN")
     if not args.token and not os.getenv("GITHUB_TOKEN"):
         print("错误: 请提供 GitHub Token (--token 或 GITHUB_TOKEN 环境变量)")
         return 1

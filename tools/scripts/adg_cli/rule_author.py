@@ -30,9 +30,7 @@ def _create_rule_interactive() -> dict[str, Any]:
     if not language:
         return {}
 
-    category = input(
-        "Category (security/code_quality/performance/maintainability): "
-    ).strip()
+    category = input("Category (security/code_quality/performance/maintainability): ").strip()
     if not category:
         category = "code_quality"
 

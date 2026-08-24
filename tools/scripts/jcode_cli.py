@@ -7,7 +7,9 @@ Main entry point for the JCode AI-Native SDLC ecosystem.
 
 import argparse
 import sys
+from collections.abc import Callable
 from pathlib import Path
+from typing import cast
 
 from tools.scripts._common import get_project_root
 
@@ -60,9 +62,7 @@ def cmd_ai_pr_review(args: argparse.Namespace) -> int:
     if findings:
         print(f"\n🔍 AI PR Review Found {len(findings)} Issues:")
         for finding in findings:
-            print(
-                f"  [{finding['category']}] {finding['rule']}: {finding['description']}"
-            )
+            print(f"  [{finding['category']}] {finding['rule']}: {finding['description']}")
         return 1
     else:
         print("✅ No issues found in PR review.")
@@ -269,9 +269,7 @@ Examples:
     p.set_defaults(func=cmd_semantic_graph)
 
     # arch-visualizer
-    p = subparsers.add_parser(
-        "arch-visualizer", help="Generate architecture visualization"
-    )
+    p = subparsers.add_parser("arch-visualizer", help="Generate architecture visualization")
     p.add_argument("--output", "-o", type=str, help="Output file path")
     p.set_defaults(func=cmd_arch_visualizer)
 
@@ -291,7 +289,8 @@ Examples:
         return 1
 
     try:
-        return args.func(args)  # type: ignore[no-any-return]
+        func: Callable[[argparse.Namespace], int] = cast(Callable[[argparse.Namespace], int], args.func)
+        return func(args)
     except KeyboardInterrupt:
         print("\n⚠️ Interrupted by user")
         return 130

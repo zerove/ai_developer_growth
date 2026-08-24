@@ -23,6 +23,7 @@ import time
 from datetime import datetime
 from typing import Any
 
+import yaml
 from kubernetes import client, config
 from kubernetes.client.rest import ApiException
 
@@ -59,7 +60,7 @@ class ChaosExperimentRunner:
         }
 
         # 实验配置
-        self.experiment_configs = {
+        self.experiment_configs: dict[str, dict[str, Any]] = {
             "POD_KILL": {
                 "description": "随机杀死目标命名空间下的 Pod，验证自愈能力",
                 "duration": "30s",
@@ -120,19 +121,14 @@ class ChaosExperimentRunner:
         }
 
     def run_experiment(
-        self,
-        experiment_name: str,
-        target_namespace: str = None,
-        custom_config: dict = None,
+        self, experiment_name: str, target_namespace: str | None = None, custom_config: dict[str, Any] | None = None
     ) -> dict[str, Any]:
         """运行指定的混沌实验"""
         if experiment_name not in self.experiments:
-            raise ValueError(
-                f"未知实验: {experiment_name}. 可用实验: {list(self.experiments.keys())}"
-            )
+            raise ValueError(f"未知实验: {experiment_name}. 可用实验: {list(self.experiments.keys())}")
 
         ns = target_namespace or self.namespace
-        config = self.experiment_configs.get(experiment_name, {}).copy()
+        config: dict[str, Any] = self.experiment_configs.get(experiment_name, {}).copy()
         if custom_config:
             config.update(custom_config)
 
@@ -147,47 +143,28 @@ class ChaosExperimentRunner:
         if self.dry_run:
             print("=== DRY RUN 模式，仅输出 YAML ===")
             print(yaml.dump(experiment_yaml))
-            return {
-                "status": "dry_run",
-                "experiment": experiment_name,
-                "yaml": experiment_yaml,
-            }
+            return {"status": "dry_run", "experiment": experiment_name, "yaml": experiment_yaml}
 
         # 创建实验
         try:
+            plural_map = {
+                "POD_KILL": "podchaos",
+                "NETWORK_LATENCY": "networkchaos",
+                "NETWORK_LOSS": "networkchaos",
+                "CPU_STRESS": "stresschaos",
+                "MEMORY_STRESS": "stresschaos",
+                "DISK_FILL": "diskchaos",
+                "DNS_FAILURE": "dnsuchaos",
+                "TIME_CHAOS": "timechaos",
+                "IO_CHAOS": "iochaos",
+                "KERNEL_CHAOS": "kernelchaos",
+            }
+            plural = plural_map.get(experiment_name, "podchaos")
             self.custom_api.create_namespaced_custom_object(
                 group="chaos-mesh.org",
                 version="v1alpha1",
                 namespace="chaos-mesh",
-                plural=(
-                    "networkchaos"
-                    if experiment_name.startswith("NETWORK")
-                    else (
-                        "podchaos"
-                        if experiment_name == "POD_KILL"
-                        else (
-                            "stresschaos"
-                            if experiment_name in ["CPU_STRESS", "MEMORY_STRESS"]
-                            else (
-                                "diskchaos"
-                                if experiment_name == "DISK_FILL"
-                                else (
-                                    "dnsuchaos"
-                                    if experiment_name == "DNS_FAILURE"
-                                    else (
-                                        "timechaos"
-                                        if experiment_name == "TIME_CHAOS"
-                                        else (
-                                            "iochaos"
-                                            if experiment_name == "IO_CHAOS"
-                                            else "kernelchaos"
-                                        )
-                                    )
-                                )
-                            )
-                        )
-                    )
-                ),
+                plural=plural,
                 body=experiment_yaml,
             )
             print(f"✅ 实验 {experiment_name} 创建成功")
@@ -198,35 +175,7 @@ class ChaosExperimentRunner:
                     group="chaos-mesh.org",
                     version="v1alpha1",
                     namespace="chaos-mesh",
-                    plural=(
-                        "networkchaos"
-                        if experiment_name.startswith("NETWORK")
-                        else (
-                            "podchaos"
-                            if experiment_name == "POD_KILL"
-                            else (
-                                "stresschaos"
-                                if experiment_name in ["CPU_STRESS", "MEMORY_STRESS"]
-                                else (
-                                    "diskchaos"
-                                    if experiment_name == "DISK_FILL"
-                                    else (
-                                        "dnsuchaos"
-                                        if experiment_name == "DNS_FAILURE"
-                                        else (
-                                            "timechaos"
-                                            if experiment_name == "TIME_CHAOS"
-                                            else (
-                                                "iochaos"
-                                                if experiment_name == "IO_CHAOS"
-                                                else "kernelchaos"
-                                            )
-                                        )
-                                    )
-                                )
-                            )
-                        )
-                    ),
+                    plural=plural_map.get(experiment_name, "podchaos"),
                     name=experiment_yaml["metadata"]["name"],
                     body=experiment_yaml,
                 )
@@ -241,7 +190,7 @@ class ChaosExperimentRunner:
 
         return result
 
-    def _create_pod_kill_experiment(self, config: dict) -> dict:
+    def _create_pod_kill_experiment(self, config: dict[str, Any]) -> dict[str, Any]:
         return {
             "apiVersion": "chaos-mesh.org/v1alpha1",
             "kind": "PodChaos",
@@ -257,7 +206,7 @@ class ChaosExperimentRunner:
             },
         }
 
-    def _create_network_latency_experiment(self, config: dict) -> dict:
+    def _create_network_latency_experiment(self, config: dict[str, Any]) -> dict[str, Any]:
         return {
             "apiVersion": "chaos-mesh.org/v1alpha1",
             "kind": "NetworkChaos",
@@ -278,7 +227,7 @@ class ChaosExperimentRunner:
             },
         }
 
-    def _create_network_loss_experiment(self, config: dict) -> dict:
+    def _create_network_loss_experiment(self, config: dict[str, Any]) -> dict[str, Any]:
         return {
             "apiVersion": "chaos-mesh.org/v1alpha1",
             "kind": "NetworkChaos",
@@ -298,7 +247,7 @@ class ChaosExperimentRunner:
             },
         }
 
-    def _create_cpu_stress_experiment(self, config: dict) -> dict:
+    def _create_cpu_stress_experiment(self, config: dict[str, Any]) -> dict[str, Any]:
         return {
             "apiVersion": "chaos-mesh.org/v1alpha1",
             "kind": "StressChaos",
@@ -319,7 +268,7 @@ class ChaosExperimentRunner:
             },
         }
 
-    def _create_memory_stress_experiment(self, config: dict) -> dict:
+    def _create_memory_stress_experiment(self, config: dict[str, Any]) -> dict[str, Any]:
         return {
             "apiVersion": "chaos-mesh.org/v1alpha1",
             "kind": "StressChaos",
@@ -340,7 +289,7 @@ class ChaosExperimentRunner:
             },
         }
 
-    def _create_disk_fill_experiment(self, config: dict) -> dict:
+    def _create_disk_fill_experiment(self, config: dict[str, Any]) -> dict[str, Any]:
         return {
             "apiVersion": "chaos-mesh.org/v1alpha1",
             "kind": "DiskChaos",
@@ -359,7 +308,7 @@ class ChaosExperimentRunner:
             },
         }
 
-    def _create_dns_failure_experiment(self, config: dict) -> dict:
+    def _create_dns_failure_experiment(self, config: dict[str, Any]) -> dict[str, Any]:
         return {
             "apiVersion": "chaos-mesh.org/v1alpha1",
             "kind": "DNSChaos",
@@ -368,17 +317,15 @@ class ChaosExperimentRunner:
                 "namespace": "chaos-mesh",
             },
             "spec": {
-                "action": "error",
                 "mode": "all",
                 "selector": {"namespaces": ["staging"]},
                 "dnsServer": "8.8.8.8",
                 "patterns": [config.get("domain", "external-api.example.com")],
-                "action": "error",
                 "duration": config.get("duration", "2m"),
             },
         }
 
-    def _create_time_chaos_experiment(self, config: dict) -> dict:
+    def _create_time_chaos_experiment(self, config: dict[str, Any]) -> dict[str, Any]:
         return {
             "apiVersion": "chaos-mesh.org/v1alpha1",
             "kind": "TimeChaos",
@@ -394,7 +341,7 @@ class ChaosExperimentRunner:
             },
         }
 
-    def _create_io_chaos_experiment(self, config: dict) -> dict:
+    def _create_io_chaos_experiment(self, config: dict[str, Any]) -> dict[str, Any]:
         return {
             "apiVersion": "chaos-mesh.org/v1alpha1",
             "kind": "IOChaos",
@@ -412,7 +359,7 @@ class ChaosExperimentRunner:
             },
         }
 
-    def _create_kernel_chaos_experiment(self, config: dict) -> dict:
+    def _create_kernel_chaos_experiment(self, config: dict[str, Any]) -> dict[str, Any]:
         return {
             "apiVersion": "chaos-mesh.org/v1alpha1",
             "kind": "KernelChaos",
@@ -428,9 +375,7 @@ class ChaosExperimentRunner:
             },
         }
 
-    def _monitor_experiment(
-        self, experiment_name: str, duration: str
-    ) -> dict[str, Any]:
+    def _monitor_experiment(self, experiment_name: str, duration: str) -> dict[str, Any]:
         """监控实验执行过程"""
         # 解析持续时间
         duration_seconds = self._parse_duration(duration)
@@ -465,7 +410,7 @@ class ChaosExperimentRunner:
             "experiment": "completed",
             "duration_seconds": duration_seconds,
             "affected_pods_count": len(affected_pods),
-            "affected_pods": affected_pods[:10],  # 只返回前10个
+            "affected_pods": affected_pods[:10],
         }
 
     def _cleanup_experiment(self, experiment_name: str) -> None:
@@ -507,11 +452,9 @@ class ChaosExperimentRunner:
             return int(duration[:-1]) * 60
         elif duration.endswith("h"):
             return int(duration[:-1]) * 3600
-        return 300  # 默认 5 分钟
+        return 300
 
-    def run_scheduled_experiments(
-        self, experiments: list[str] = None
-    ) -> dict[str, Any]:
+    def run_scheduled_experiments(self, experiments: list[str] | None = None) -> dict[str, Any]:
         """运行预定的实验套件"""
         if experiments is None:
             experiments = [
@@ -524,9 +467,9 @@ class ChaosExperimentRunner:
 
         results = {}
         for exp in experiments:
-            print(f"\n{'='*50}")
+            print(f"\n{'=' * 50}")
             print(f"执行实验: {exp}")
-            print(f"{'='*50}")
+            print(f"{'=' * 50}")
 
             try:
                 result = self.run_experiment(exp)
@@ -542,18 +485,13 @@ class ChaosExperimentRunner:
         return {"experiments": results, "timestamp": datetime.now().isoformat()}
 
 
-def main():
+def main() -> int:
     parser = argparse.ArgumentParser(description="Chaos Mesh 月度演练自动化")
     parser.add_argument("--namespace", default="staging", help="目标命名空间")
     parser.add_argument("--experiment", help="指定实验名称")
-    parser.add_argument(
-        "--all-experiments", action="store_true", help="运行所有预定实验"
-    )
+    parser.add_argument("--all-experiments", action="store_true", help="运行所有预定实验")
     parser.add_argument("--dry-run", action="store_true", help="试运行模式")
-    parser.add_argument(
-        "--schedule", choices=["monthly", "weekly", "daily"], help="定时运行模式"
-    )
-    parser.add_argument("--dry-run", action="store_true", help="试运行模式")
+    parser.add_argument("--schedule", choices=["monthly", "weekly", "daily"], help="定时运行模式")
 
     args = parser.parse_args()
 

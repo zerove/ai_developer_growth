@@ -14,6 +14,7 @@ jcode Hooks 执行引擎
 """
 
 import json
+import shlex
 import subprocess
 import sys
 from pathlib import Path
@@ -74,10 +75,9 @@ def run_hook(hook: dict, changed_files: list[str] | None = None) -> bool:
     print(f"\n🔄 执行: {name} ({skill}/{action})")
 
     if command:
-        # 直接执行命令
-        result = subprocess.run(
-            command, shell=True, capture_output=True, text=True, cwd=get_project_root()
-        )
+        # 直接执行命令 - 使用 shlex.split 避免 shell=True
+        cmd_args = shlex.split(command)
+        result = subprocess.run(cmd_args, capture_output=True, text=True, cwd=get_project_root())  # nosec B603
         output = result.stdout + result.stderr
         passed = result.returncode == 0
         print_check(name, passed, output)
@@ -85,16 +85,13 @@ def run_hook(hook: dict, changed_files: list[str] | None = None) -> bool:
             print(output)
         return passed
     else:
-        # 调用 skill 脚本
+        # 调用 skill 脚本 - 受信任路径 # nosec B603
         script = get_project_root() / ".jcode" / "scripts" / f"{skill}.py"
         if not script.exists():
             print(f"❌ 未找到 skill 脚本: {script}")
             return False
-
         cmd = [sys.executable, str(script), action]
-        result = subprocess.run(
-            cmd, capture_output=True, text=True, cwd=get_project_root()
-        )
+        result = subprocess.run(cmd, capture_output=True, text=True, cwd=get_project_root())  # nosec B603
         output = result.stdout + result.stderr
         passed = result.returncode == 0
         print_check(name, passed, output)
@@ -118,9 +115,7 @@ def _set_mode(mode: str) -> None:
     try:
         content = f"mode={mode}\ngovernance_level={'high' if mode in ('quality', 'safe') else 'medium'}\naudit_enabled={'true' if mode != 'perf' else 'false'}\n"
         CONFIG_PATH.write_text(content)
-        print(
-            f"  🔄 模式: {mode} (governance_level={'high' if mode in ('quality', 'safe') else 'medium'})"
-        )
+        print(f"  🔄 模式: {mode} (governance_level={'high' if mode in ('quality', 'safe') else 'medium'})")
     except OSError:
         pass  # 非阻断
 

@@ -302,9 +302,7 @@ def _parse_args() -> argparse.Namespace:
         help="检查语言特定规则 (21种语言)",
     )
     parser.add_argument("--lang", help="指定语言 (配合 --check-language-rules)")
-    parser.add_argument(
-        "--format", choices=["text", "json"], default="text", help="输出格式"
-    )
+    parser.add_argument("--format", choices=["text", "json"], default="text", help="输出格式")
     return parser.parse_args()
 
 
@@ -377,16 +375,10 @@ def _collect_files(args: argparse.Namespace) -> list[Path]:
     else:
         files_to_check = list(Path("tools/scripts").rglob("*.py"))
 
-    return [
-        f
-        for f in files_to_check
-        if "__pycache__" not in str(f) and ".git" not in str(f)
-    ]
+    return [f for f in files_to_check if "__pycache__" not in str(f) and ".git" not in str(f)]
 
 
-def _run_checks(
-    args: argparse.Namespace, filtered_files: list[Path]
-) -> list[CheckResult]:
+def _run_checks(args: argparse.Namespace, filtered_files: list[Path]) -> list[CheckResult]:
     """Run quality checks on filtered files."""
     if args.path:
         return check_directory(args.path)
@@ -435,9 +427,7 @@ def _print_results(results: list[CheckResult], format_type: str) -> int:
             else:
                 print(f"❌ {result.file} ({len(result.issues)} issues)")
                 for issue in result.issues[:5]:
-                    print(
-                        f"   Line {issue.line}: [{issue.severity}] {issue.rule_id}: {issue.message}"
-                    )
+                    print(f"   Line {issue.line}: [{issue.severity}] {issue.rule_id}: {issue.message}")
                 if len(result.issues) > 5:
                     print(f"   ... and {len(result.issues) - 5} more")
 

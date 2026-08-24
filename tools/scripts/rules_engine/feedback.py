@@ -75,9 +75,7 @@ def _save_feedback(data: FeedbackData) -> None:
     FEEDBACK_FILE.write_text(json.dumps(data, indent=2))
 
 
-def mark_false_positive(
-    rule_id: str, filepath: str, severity: str
-) -> FalsePositiveResult:
+def mark_false_positive(rule_id: str, filepath: str, severity: str) -> FalsePositiveResult:
     """标记一个问题为误报。
 
     Args:
@@ -102,9 +100,7 @@ def mark_false_positive(
     r = data["rules"][rule_id]
     r["total_reports"] += 1
     r["false_positives"] += 1
-    r["files"].append(
-        {"file": filepath, "severity": severity, "timestamp": time.time()}
-    )
+    r["files"].append({"file": filepath, "severity": severity, "timestamp": time.time()})
     r["files"] = r["files"][-50:]  # 只保留最近 50 条
 
     _save_feedback(data)

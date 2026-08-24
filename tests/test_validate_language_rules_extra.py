@@ -32,9 +32,7 @@ class TestMainCLI:
     def test_validate_file(self, tmp_path: Path) -> None:
         test_file = tmp_path / "test.py"
         test_file.write_text("x = 1\n")
-        with mock.patch(
-            "sys.argv", ["validate_language_rules", str(test_file), "--lang", "python"]
-        ):
+        with mock.patch("sys.argv", ["validate_language_rules", str(test_file), "--lang", "python"]):
             result = main()
             assert result in (0, 1)
 
@@ -48,9 +46,7 @@ class TestMainCLI:
 
     def test_validate_directory(self, tmp_path: Path) -> None:
         (tmp_path / "a.py").write_text("x = 1\n")
-        with mock.patch(
-            "sys.argv", ["validate_language_rules", str(tmp_path), "--lang", "python"]
-        ):
+        with mock.patch("sys.argv", ["validate_language_rules", str(tmp_path), "--lang", "python"]):
             result = main()
             assert result in (0, 1)
 

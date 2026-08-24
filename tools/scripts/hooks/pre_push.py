@@ -43,9 +43,7 @@ def _matches_skip_pattern(filepath: Path, patterns: list[str]) -> bool:
     return any(Path(c).match(p) for p in patterns for c in candidates)
 
 
-def get_unpushed_commits(
-    remote: str = "origin", branch: str | None = None
-) -> list[str]:
+def get_unpushed_commits(remote: str = "origin", branch: str | None = None) -> list[str]:
     """Get list of commit hashes that haven't been pushed to remote.
 
     Args:
@@ -104,15 +102,11 @@ def get_changed_files_in_unpushed_commits() -> list[Path]:
         )
         if result.returncode != 0:
             return []
-        return [
-            Path(line.strip()) for line in result.stdout.splitlines() if line.strip()
-        ]
+        return [Path(line.strip()) for line in result.stdout.splitlines() if line.strip()]
     except Exception as e:
         import logging
 
-        logging.getLogger(__name__).debug(
-            f"Failed to get changed files in unpushed commits: {e}"
-        )
+        logging.getLogger(__name__).debug(f"Failed to get changed files in unpushed commits: {e}")
         return []
 
 
@@ -188,9 +182,7 @@ def run_pre_push_check() -> int:
     print(f"🔍 Checking {len(commits)} unpushed commit(s)...")
 
     changed_files = get_changed_files_in_unpushed_commits()
-    code_files = [
-        f for f in changed_files if f.suffix in code_extensions and f.exists()
-    ]
+    code_files = [f for f in changed_files if f.suffix in code_extensions and f.exists()]
 
     if not code_files:
         print("✅ No code files changed. Push allowed.")
@@ -211,9 +203,7 @@ def run_pre_push_check() -> int:
     all_passed = lang_passed and all_passed
 
     if skipped:
-        print(
-            f"⏭️  Skipped {len(skipped)} file(s) matching skip_patterns: {', '.join(str(f) for f in skipped)}"
-        )
+        print(f"⏭️  Skipped {len(skipped)} file(s) matching skip_patterns: {', '.join(str(f) for f in skipped)}")
 
     if all_passed:
         print("\n✅ All checks passed. Push allowed.")

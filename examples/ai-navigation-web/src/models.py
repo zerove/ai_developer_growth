@@ -1,5 +1,5 @@
+
 from pydantic import BaseModel, Field
-from typing import Optional
 
 
 class UserCreate(BaseModel):
@@ -27,9 +27,9 @@ class LearningProgress(BaseModel):
     doc_path: str
     doc_title: str
     status: str = "pending"
-    started_at: Optional[str] = None
-    completed_at: Optional[str] = None
-    notes: Optional[str] = None
+    started_at: str | None = None
+    completed_at: str | None = None
+    notes: str | None = None
 
 
 class ContributionCreate(BaseModel):
@@ -44,8 +44,8 @@ class Contribution(BaseModel):
     doc_title: str
     status: str
     submitted_at: str
-    reviewed_at: Optional[str] = None
-    reviewer_notes: Optional[str] = None
+    reviewed_at: str | None = None
+    reviewer_notes: str | None = None
 
 
 class LearningPath(BaseModel):

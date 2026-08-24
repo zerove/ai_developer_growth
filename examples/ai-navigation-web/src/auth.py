@@ -1,9 +1,8 @@
-from datetime import datetime, timedelta, timezone
-from typing import Optional
+from datetime import UTC, datetime, timedelta
 
 import bcrypt
-from jose import JWTError, jwt
 from fastapi import Request, Response
+from jose import JWTError, jwt
 
 from .config import get_settings
 
@@ -16,17 +15,17 @@ def verify_password(plain: str, hashed: str) -> bool:
     return bcrypt.checkpw(plain.encode(), hashed.encode())
 
 
-def create_access_token(data: dict, expires_delta: Optional[timedelta] = None) -> str:
+def create_access_token(data: dict, expires_delta: timedelta | None = None) -> str:
     settings = get_settings()
     to_encode = data.copy()
-    expire = datetime.now(timezone.utc) + (
+    expire = datetime.now(UTC) + (
         expires_delta or timedelta(minutes=settings.access_token_expire_minutes)
     )
     to_encode.update({"exp": expire})
     return jwt.encode(to_encode, settings.secret_key, algorithm=settings.algorithm)
 
 
-def decode_token(token: str) -> Optional[dict]:
+def decode_token(token: str) -> dict | None:
     settings = get_settings()
     try:
         return jwt.decode(token, settings.secret_key, algorithms=[settings.algorithm])
@@ -48,7 +47,7 @@ def clear_auth_cookie(response: Response) -> None:
     response.delete_cookie(key="access_token")
 
 
-def get_current_user_id(request: Request) -> Optional[int]:
+def get_current_user_id(request: Request) -> int | None:
     token = request.cookies.get("access_token")
     if not token:
         return None

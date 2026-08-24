@@ -8,18 +8,15 @@ from __future__ import annotations
 # Maps pattern substrings to fix templates
 HEURISTIC_FIXES: dict[str, dict[str, str]] = {
     # Python
-    "ev"
-    + "al(": {
+    "ev" + "al(": {
         "fix": "ast.literal_eval({arg})",
         "message": "Use ast.literal_eval() for safe evaluation",
     },
-    "ex"
-    + "ec(": {
+    "ex" + "ec(": {
         "fix": "# Replace dynamic execution with direct function calls",
         "message": "Avoid dynamic code execution; use direct function calls",
     },
-    "exc"
-    + "ept:": {
+    "exc" + "ept:": {
         "fix": "except Exception:",
         "message": "Catch specific exceptions instead of bare except",
     },
@@ -53,8 +50,7 @@ HEURISTIC_FIXES: dict[str, dict[str, str]] = {
         "fix": "subprocess.run({args}, check=True)",
         "message": "Use subprocess.run() with check=True",
     },
-    "pi"
-    + "ckle.loads(": {
+    "pi" + "ckle.loads(": {
         "fix": "# Avoid pickle; use JSON or msgpack",
         "message": "Avoid pickle for untrusted data",
     },

@@ -161,9 +161,7 @@ class ASTFixer:
     # Fix Strategies
     # ─────────────────────────────────────────────────────────────
 
-    def _fix_bare_except(
-        self, content: str, ast_result: FileAST, filepath: Path
-    ) -> list[FixResult]:
+    def _fix_bare_except(self, content: str, ast_result: FileAST, filepath: Path) -> list[FixResult]:
         """Fix bare except clauses by replacing with except Exception."""
         fixes: list[FixResult] = []
         lines = content.splitlines()
@@ -215,9 +213,7 @@ class ASTFixer:
 
         return fixes
 
-    def _fix_unused_variables(
-        self, content: str, ast_result: FileAST, filepath: Path
-    ) -> list[FixResult]:
+    def _fix_unused_variables(self, content: str, ast_result: FileAST, filepath: Path) -> list[FixResult]:
         """Fix unused variables by prefixing with underscore."""
         fixes: list[FixResult] = []
         lines = content.splitlines()
@@ -269,9 +265,7 @@ class ASTFixer:
 
         return fixes
 
-    def _fix_empty_functions(
-        self, content: str, ast_result: FileAST, filepath: Path
-    ) -> list[FixResult]:
+    def _fix_empty_functions(self, content: str, ast_result: FileAST, filepath: Path) -> list[FixResult]:
         """Add 'pass' to empty function bodies."""
         fixes: list[FixResult] = []
         lines = content.splitlines()
@@ -306,9 +300,7 @@ class ASTFixer:
 
         return fixes
 
-    def _fix_long_functions(
-        self, content: str, ast_result: FileAST, filepath: Path
-    ) -> list[FixResult]:
+    def _fix_long_functions(self, content: str, ast_result: FileAST, filepath: Path) -> list[FixResult]:
         """Suggest refactoring for long functions (non-auto)."""
         fixes: list[FixResult] = []
 

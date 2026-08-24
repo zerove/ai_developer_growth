@@ -88,11 +88,7 @@ def parse_audit_output(output: str) -> dict[str, Any]:
                 checks.append({"name": name, "passed": "PASS" in status})
 
         if "Failed checks:" in line:
-            failed_checks = [
-                c.strip()
-                for c in line.replace("Failed checks:", "").split(",")
-                if c.strip()
-            ]
+            failed_checks = [c.strip() for c in line.replace("Failed checks:", "").split(",") if c.strip()]
 
     return {
         "total_checks": len(checks),
@@ -248,22 +244,16 @@ def _create_temp_branch() -> str:
     import uuid
 
     head_branch = f"audit-report-{uuid.uuid4().hex[:8]}"
-    subprocess.run(
-        ["git", "checkout", "-b", head_branch], check=True, capture_output=True
-    )
+    subprocess.run(["git", "checkout", "-b", head_branch], check=True, capture_output=True)
     return head_branch
 
 
 def _push_branch(head_branch: str) -> None:
     """推送分支到远程。"""
-    subprocess.run(
-        ["git", "push", "-u", "origin", head_branch], check=True, capture_output=True
-    )
+    subprocess.run(["git", "push", "-u", "origin", head_branch], check=True, capture_output=True)
 
 
-def _create_pr_with_body(
-    title: str, body_file: str, base_branch: str, head_branch: str
-) -> dict[str, Any]:
+def _create_pr_with_body(title: str, body_file: str, base_branch: str, head_branch: str) -> dict[str, Any]:
     """使用 body 文件创建 PR。"""
     cmd = [
         "gh",
@@ -284,9 +274,7 @@ def _create_pr_with_body(
     return {"success": False, "error": result.stderr}
 
 
-def create_github_pr(
-    title: str, body: str, base_branch: str = "main"
-) -> dict[str, Any]:
+def create_github_pr(title: str, body: str, base_branch: str = "main") -> dict[str, Any]:
     """使用 GitHub CLI 创建 PR。"""
     # 检查前置条件
     if error := _check_git_repo():
@@ -352,11 +340,7 @@ def format_audit_results_json(json_input: str) -> str:
     ]
 
     for v in violations:
-        severity_icon = (
-            "🔴"
-            if v.get("severity") == "Critical"
-            else "🟡" if v.get("severity") == "Warning" else "🔵"
-        )
+        severity_icon = "🔴" if v.get("severity") == "Critical" else "🟡" if v.get("severity") == "Warning" else "🔵"
         report.append(
             f"| {severity_icon} {v.get('severity', 'Unknown')} | `{v.get('rule_id', 'N/A')}` | {v.get('message', 'N/A')} |"
         )
@@ -364,9 +348,7 @@ def format_audit_results_json(json_input: str) -> str:
     report.append("\n---\n")
     report.append("**如何解决？**")
     report.append("1. **修复代码**: 使变更符合项目规范。")
-    report.append(
-        "2. **覆盖规则**: 若为有意偏离，使用本地覆盖并提交至 `.ai-audit-history.json`。"
-    )
+    report.append("2. **覆盖规则**: 若为有意偏离，使用本地覆盖并提交至 `.ai-audit-history.json`。")
 
     return "\n".join(report)
 
@@ -418,20 +400,12 @@ def _handle_stdout_output(report: str, output: Path | None, create_pr: bool) -> 
 def main() -> int:
     parser = argparse.ArgumentParser(description="治理审计到 PR 报告生成器")
     parser.add_argument("--run-audit", action="store_true", help="运行完整治理审计")
-    parser.add_argument(
-        "--create-pr", action="store_true", help="创建 GitHub PR (需配合 --run-audit)"
-    )
+    parser.add_argument("--create-pr", action="store_true", help="创建 GitHub PR (需配合 --run-audit)")
     parser.add_argument("--output", type=Path, help="输出报告到文件")
-    parser.add_argument(
-        "--stdin", action="store_true", help="从 stdin 读取 JSON 数据 (旧版本兼容)"
-    )
-    parser.add_argument(
-        "--title", default="chore: governance audit report", help="PR 标题"
-    )
+    parser.add_argument("--stdin", action="store_true", help="从 stdin 读取 JSON 数据 (旧版本兼容)")
+    parser.add_argument("--title", default="chore: governance audit report", help="PR 标题")
     parser.add_argument("--base", default="main", help="PR 基础分支")
-    parser.add_argument(
-        "--no-full", action="store_true", help="运行快速审计 (不含 security/test)"
-    )
+    parser.add_argument("--no-full", action="store_true", help="运行快速审计 (不含 security/test)")
 
     args = parser.parse_args()
 

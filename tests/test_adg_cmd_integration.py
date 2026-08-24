@@ -112,11 +112,7 @@ class TestCmdCheckExtended:
         args = ns(path=str(py_workspace))
         result = cmd_check(args)
         captured = capsys.readouterr()
-        assert (
-            "python" in captured.out.lower()
-            or "check" in captured.out.lower()
-            or result >= 0
-        )
+        assert "python" in captured.out.lower() or "check" in captured.out.lower() or result >= 0
 
     def test_check_with_framework(self, py_workspace):
         (py_workspace / "requirements.txt").write_text("flask==2.0\n")
@@ -153,9 +149,7 @@ class TestCmdCheckExtended:
         assert result >= 0
 
     def test_check_with_notify_dingtalk(self, py_workspace):
-        args = ns(
-            path=str(py_workspace), notify="dingtalk://test", project="test", json=True
-        )
+        args = ns(path=str(py_workspace), notify="dingtalk://test", project="test", json=True)
         with patch("urllib.request.urlopen") as mock:
             mock.return_value.__enter__ = lambda s: s
             mock.return_value.__exit__ = MagicMock(return_value=False)
@@ -328,9 +322,7 @@ class TestCmdRuleExtended:
 
     def test_rule_validate_valid(self, workspace):
         rule_file = workspace / "rule.yml"
-        rule_file.write_text(
-            "id: test\npattern: eval\\(\nseverity: error\nmessage: test\ncategory: security\n"
-        )
+        rule_file.write_text("id: test\npattern: eval\\(\nseverity: error\nmessage: test\ncategory: security\n")
         args = ns(rule_command="validate", rule_file=str(rule_file))
         result = cmd_rule(args)
         assert result == 0
@@ -392,9 +384,7 @@ class TestCmdRuleExtended:
 
     def test_rule_validate_yaml_import_error(self, workspace, monkeypatch):
         rule_file = workspace / "rule.yml"
-        rule_file.write_text(
-            "id: test\npattern: eval\\(\nseverity: error\nmessage: test\n"
-        )
+        rule_file.write_text("id: test\npattern: eval\\(\nseverity: error\nmessage: test\n")
         # Simulate yaml import failure
         import builtins
 

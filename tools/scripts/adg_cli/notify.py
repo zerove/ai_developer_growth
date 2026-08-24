@@ -6,9 +6,7 @@ import sys
 from tools.scripts.adg_cli.core import Issue
 
 
-def _send_slack_notification(
-    webhook_url: str, issues: list[Issue], language: str, project: str
-) -> bool:
+def _send_slack_notification(webhook_url: str, issues: list[Issue], language: str, project: str) -> bool:
     """Send issues notification to Slack."""
     import time
     import urllib.request
@@ -53,9 +51,7 @@ def _send_slack_notification(
         return False
 
 
-def _send_dingtalk_notification(
-    webhook_url: str, issues: list[Issue], language: str, project: str
-) -> bool:
+def _send_dingtalk_notification(webhook_url: str, issues: list[Issue], language: str, project: str) -> bool:
     """Send issues notification to DingTalk."""
     import urllib.request
 

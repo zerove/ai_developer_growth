@@ -81,9 +81,7 @@ class TestDetectFramework:
         assert _detect_framework(tmp_path, "javascript") is None
 
     def test_package_json_dev_deps(self, tmp_path: Path) -> None:
-        (tmp_path / "package.json").write_text(
-            json.dumps({"devDependencies": {"next": "^14.0.0"}})
-        )
+        (tmp_path / "package.json").write_text(json.dumps({"devDependencies": {"next": "^14.0.0"}}))
         assert _detect_framework(tmp_path, "typescript") == "nextjs"
 
     def test_requirements_txt_django(self, tmp_path: Path) -> None:
@@ -110,15 +108,11 @@ class TestDetectFramework:
             assert _detect_framework(tmp_path, "go") is None
 
     def test_no_framework(self, tmp_path: Path) -> None:
-        (tmp_path / "package.json").write_text(
-            json.dumps({"dependencies": {"lodash": "^4.0"}})
-        )
+        (tmp_path / "package.json").write_text(json.dumps({"dependencies": {"lodash": "^4.0"}}))
         assert _detect_framework(tmp_path, "javascript") is None
 
     def test_pyproject_toml_fastapi(self, tmp_path: Path) -> None:
-        (tmp_path / "pyproject.toml").write_text(
-            "[project]\ndependencies = ['fastapi']\n"
-        )
+        (tmp_path / "pyproject.toml").write_text("[project]\ndependencies = ['fastapi']\n")
         assert _detect_framework(tmp_path, "python") == "fastapi"
 
 
@@ -215,9 +209,7 @@ class TestSimpleYamlParseExtended:
 
     def test_multiple_rules(self, tmp_path: Path) -> None:
         f = tmp_path / "multi.yml"
-        f.write_text(
-            "anti_patterns:\n- id: r1\n  severity: error\n- id: r2\n  severity: warning\n"
-        )
+        f.write_text("anti_patterns:\n- id: r1\n  severity: error\n- id: r2\n  severity: warning\n")
         result = _simple_yaml_parse(f)
         assert len(result["anti_patterns"]) == 2
 
@@ -265,20 +257,14 @@ class TestCheckFileExtended:
     def test_comment_line_skipped(self, tmp_path: Path) -> None:
         f = tmp_path / "test.py"
         f.write_text("# bare except: pass\n")
-        rules = {
-            "anti_patterns": [
-                {"id": "test", "severity": "error", "pattern": "bare except"}
-            ]
-        }
+        rules = {"anti_patterns": [{"id": "test", "severity": "error", "pattern": "bare except"}]}
         issues = check_file(f, rules)
         assert issues == []
 
     def test_js_comment_skipped(self, tmp_path: Path) -> None:
         f = tmp_path / "test.js"
         f.write_text("// eval('bad')\n")
-        rules = {
-            "anti_patterns": [{"id": "test", "severity": "error", "pattern": "eval\\("}]
-        }
+        rules = {"anti_patterns": [{"id": "test", "severity": "error", "pattern": "eval\\("}]}
         issues = check_file(f, rules)
         assert issues == []
 
@@ -323,9 +309,7 @@ class TestCheckFileExtended:
     def test_invalid_regex(self, tmp_path: Path) -> None:
         f = tmp_path / "test.py"
         f.write_text("x = 1\n")
-        rules = {
-            "anti_patterns": [{"id": "bad", "severity": "error", "pattern": "[invalid"}]
-        }
+        rules = {"anti_patterns": [{"id": "bad", "severity": "error", "pattern": "[invalid"}]}
         issues = check_file(f, rules)
         # Invalid regex should not crash
         assert isinstance(issues, list)
@@ -566,9 +550,7 @@ class TestCmdCheck:
 
     def test_check_directory(self, tmp_path: Path) -> None:
         (tmp_path / "a.py").write_text("x = 1\n")
-        args = argparse.Namespace(
-            path=str(tmp_path), lang="python", severity=None, json=False
-        )
+        args = argparse.Namespace(path=str(tmp_path), lang="python", severity=None, json=False)
         with patch("tools.scripts.adg_cli.rules.load_rules_for_language") as mock:
             mock.return_value = {"anti_patterns": []}
             result = cmd_check(args)

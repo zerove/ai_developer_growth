@@ -40,9 +40,7 @@ def _get_llm_config() -> dict[str, str]:
         from tools.scripts.app_config import get_setting
 
         # 环境变量优先
-        provider: str = os.getenv("LLM_PROVIDER") or str(
-            get_setting("llm_provider", "openai")
-        )
+        provider: str = os.getenv("LLM_PROVIDER") or str(get_setting("llm_provider", "openai"))
         model: str = os.getenv("LLM_MODEL") or str(get_setting("llm_model", "gpt-4o"))
         return {
             "provider": provider,

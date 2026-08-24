@@ -7,6 +7,7 @@
         "skill": "governance-auditor",
         "action": "lint",
         "description": "提交时自动检查代码风格",
+        "command": "python .jcode/scripts/governance-auditor.py lint --lang python",
         "enabled": true
       },
       {
@@ -23,6 +24,13 @@
         "action": "ai-quality-gate",
         "description": "提交时运行 AI 代码质量门禁",
         "enabled": true
+      },
+      {
+        "name": "context-sync",
+        "skill": "context-sync",
+        "action": "sync",
+        "description": "提交时同步上下文 (CONTEXT.md/ADR.md)",
+        "enabled": true
       }
     ],
     "on_pr": [
@@ -31,13 +39,14 @@
         "skill": "governance-auditor",
         "action": "full",
         "description": "PR 时运行完整审计",
+        "command": "python .jcode/scripts/governance-auditor.py full --lang python",
         "enabled": true
       },
       {
         "name": "case-validation",
         "skill": "knowledge-curator",
         "action": "validate",
-        "description": "PR ",
+        "description": "PR 时验证案例格式",
         "condition": "files_contain('case-studies/')",
         "enabled": true
       },
@@ -73,6 +82,30 @@
         "description": "PR 时检查 AI 代码标注",
         "command": "python tools/scripts/check_ai_annotation.py --strict",
         "enabled": true
+      },
+      {
+        "name": "self-correction-loop",
+        "skill": "self-correction-loop",
+        "action": "validate",
+        "description": "PR 时对失败测试尝试自动修正",
+        "condition": "files_contain('tests/') && test_failed",
+        "enabled": true
+      },
+      {
+        "name": "context-audit",
+        "skill": "context-sync",
+        "action": "audit",
+        "description": "PR 时审计规范合规性",
+        "condition": "files_contain('tools/') || files_contain('examples/')",
+        "enabled": true
+      },
+      {
+        "name": "multi-agent-design",
+        "skill": "multi-agent-orch",
+        "action": "run",
+        "description": "PR 时对设计类需求运行多 Agent 编排",
+        "condition": "files_contain('design/') || files_contain('spec/') || pr_label('design')",
+        "enabled": true
       }
     ],
     "on_merge": [
@@ -88,6 +121,13 @@
         "skill": "knowledge-curator",
         "action": "sync",
         "description": "合并后同步工具矩阵",
+        "enabled": true
+      },
+      {
+        "name": "context-sync-merge",
+        "skill": "context-sync",
+        "action": "sync",
+        "description": "合并后同步上下文",
         "enabled": true
       }
     ],
@@ -130,6 +170,22 @@
         "action": "ai-quality-gate",
         "description": "每月 AI 代码质量报告",
         "schedule": "0 9 1 * *",
+        "enabled": true
+      },
+      {
+        "name": "weekly-context-sync",
+        "skill": "context-sync",
+        "action": "validate",
+        "description": "每周验证上下文文档格式",
+        "schedule": "0 11 * * 1",
+        "enabled": true
+      },
+      {
+        "name": "monthly-spec-audit",
+        "skill": "context-sync",
+        "action": "audit",
+        "description": "每月规范审计",
+        "schedule": "0 9 15 * *",
         "enabled": true
       }
     ]

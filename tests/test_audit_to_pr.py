@@ -474,9 +474,7 @@ class TestMainFunction(unittest.TestCase):
     @patch("audit_to_pr.parse_audit_output")
     @patch("audit_to_pr.format_pr_report")
     @patch("audit_to_pr.create_github_pr")
-    def test_main_create_pr_failure(
-        self, mock_create_pr, mock_format, mock_parse, mock_run
-    ):
+    def test_main_create_pr_failure(self, mock_create_pr, mock_format, mock_parse, mock_run):
         """Test main with --create-pr when PR creation fails."""
         mock_run.return_value = {
             "success": True,

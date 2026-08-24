@@ -174,3 +174,6 @@ source_paths = ["tools/scripts/rules_engine"]
 pytest_add_cli_args_test_selection = ["tests"]
 backup = false
 runner = "python -m pytest tests/ -x --tb=short -q"
+
+[tool.bandit]
+exclude_dirs = [".venv", "examples", "tests", ".jcode/scratch"]

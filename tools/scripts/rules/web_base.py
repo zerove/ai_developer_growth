@@ -73,18 +73,14 @@ class RuleWebServer(BaseHTTPRequestHandler):
         self.send_response(404)
         self.end_headers()
 
-    def _handle_api_request(
-        self, path: str, query: dict[str, list[str]], data: dict[str, Any] | None = None
-    ) -> None:
+    def _handle_api_request(self, path: str, query: dict[str, list[str]], data: dict[str, Any] | None = None) -> None:
         try:
             result = self.handle_api(path, query, data)
             self._send_json(result)
         except Exception as e:
             self._send_json({"error": str(e)}, status=500)
 
-    def handle_api(
-        self, path: str, query: dict[str, list[str]], data: dict[str, Any] | None = None
-    ) -> Any:
+    def handle_api(self, path: str, query: dict[str, list[str]], data: dict[str, Any] | None = None) -> Any:
         """Override this to handle API requests. Return a JSON-serializable object."""
         return {"error": "Not implemented"}
 

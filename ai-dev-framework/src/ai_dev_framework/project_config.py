@@ -95,14 +95,10 @@ class JcodeConfig:
             tests_dir=project_data.get("directories", {}).get("tests", "tests"),
             docs_dir=project_data.get("directories", {}).get("docs", "docs"),
             scripts_dir=project_data.get("directories", {}).get("scripts", "scripts"),
-            min_test_coverage=project_data.get("quality", {}).get(
-                "min_test_coverage", 70
-            ),
+            min_test_coverage=project_data.get("quality", {}).get("min_test_coverage", 70),
             lint_tool=project_data.get("quality", {}).get("lint_tool", "ruff"),
             type_checker=project_data.get("quality", {}).get("type_checker"),
-            security_scanner=project_data.get("quality", {}).get(
-                "security_scanner", "bandit"
-            ),
+            security_scanner=project_data.get("quality", {}).get("security_scanner", "bandit"),
         )
 
         agents = []

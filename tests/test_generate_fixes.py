@@ -72,15 +72,11 @@ class TestHeuristicFix(unittest.TestCase):
         self.assertIn("query", result["fix_replacement"])
 
     def test_message_print_logging(self) -> None:
-        result = heuristic_fix(
-            {"pattern": "unknown", "message": "use logging instead of print"}
-        )
+        result = heuristic_fix({"pattern": "unknown", "message": "use logging instead of print"})
         self.assertIn("logging", result["fix_replacement"])
 
     def test_message_type_any(self) -> None:
-        result = heuristic_fix(
-            {"pattern": "unknown", "message": "use specific type instead of any"}
-        )
+        result = heuristic_fix({"pattern": "unknown", "message": "use specific type instead of any"})
         self.assertNotEqual(result["fix_replacement"], "")
 
     def test_message_console_log(self) -> None:
@@ -88,9 +84,7 @@ class TestHeuristicFix(unittest.TestCase):
         self.assertEqual(result["fix_replacement"], "")
 
     def test_message_debugger(self) -> None:
-        result = heuristic_fix(
-            {"pattern": "unknown", "message": "remove debugger statement"}
-        )
+        result = heuristic_fix({"pattern": "unknown", "message": "remove debugger statement"})
         self.assertEqual(result["fix_replacement"], "")
 
     def test_message_shadowing(self) -> None:
@@ -204,9 +198,7 @@ class TestGenerateFixesMain(unittest.TestCase):
     def test_main_with_output_file(self) -> None:
         with tempfile.NamedTemporaryFile(suffix=".json", delete=False) as f:
             out_path = f.name
-        with patch(
-            "sys.argv", ["generate_fixes.py", "--lang", "python", "-o", out_path]
-        ):
+        with patch("sys.argv", ["generate_fixes.py", "--lang", "python", "-o", out_path]):
             result = main()
             self.assertEqual(result, 0)
             self.assertTrue(Path(out_path).exists())

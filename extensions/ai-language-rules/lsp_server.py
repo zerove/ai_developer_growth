@@ -187,9 +187,7 @@ class LanguageRulesLSP:
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(
-        description="AI Language Rules LSP Server (ADG backend)"
-    )
+    parser = argparse.ArgumentParser(description="AI Language Rules LSP Server (ADG backend)")
     parser.add_argument("--stdio", action="store_true", help="Use stdio transport")
     parser.add_argument("--port", type=int, help="Use TCP transport on specified port")
     args = parser.parse_args()
@@ -202,13 +200,9 @@ def main() -> None:
         class LSPHandler(socketserver.StreamRequestHandler):
             def handle(self) -> None:
                 server._send_message = lambda msg: self.wfile.write(
-                    (
-                        f"Content-Length: {len(json.dumps(msg))}\r\n\r\n{json.dumps(msg)}"
-                    ).encode()
+                    (f"Content-Length: {len(json.dumps(msg))}\r\n\r\n{json.dumps(msg)}").encode()
                 )
-                server.read_message = lambda: json.loads(
-                    self.rfile.readline().decode().strip()
-                )
+                server.read_message = lambda: json.loads(self.rfile.readline().decode().strip())
                 server.run()
 
         with socketserver.TCPServer(("localhost", args.port), LSPHandler) as httpd:

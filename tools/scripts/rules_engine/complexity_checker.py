@@ -80,11 +80,7 @@ def check_python_complexity(
 
         elif isinstance(node, ast.ClassDef):
             # Count methods
-            methods = [
-                n
-                for n in node.body
-                if isinstance(n, ast.FunctionDef | ast.AsyncFunctionDef)
-            ]
+            methods = [n for n in node.body if isinstance(n, ast.FunctionDef | ast.AsyncFunctionDef)]
             max_methods = thresholds.get("max_methods_per_class", 20)
             if len(methods) > max_methods:
                 issues.append(
@@ -110,9 +106,7 @@ def _max_nesting_depth(node: ast.AST) -> int:
         nonlocal max_depth
         max_depth = max(max_depth, depth)
         for child in ast.iter_child_nodes(n):
-            if isinstance(
-                child, ast.If | ast.For | ast.While | ast.Try | ast.With | ast.AsyncWith
-            ):
+            if isinstance(child, ast.If | ast.For | ast.While | ast.Try | ast.With | ast.AsyncWith):
                 visit(child, depth + 1)
             else:
                 visit(child, depth)

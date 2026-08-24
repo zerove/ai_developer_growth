@@ -440,9 +440,7 @@ def run_stdio_server() -> None:
             ):
                 uri = params.get("textDocument", {}).get("uri", "")
                 if uri:
-                    diagnostics = server._handle_diagnostic(
-                        {"textDocument": {"uri": uri}}
-                    )
+                    diagnostics = server._handle_diagnostic({"textDocument": {"uri": uri}})
                     send_notification(
                         "textDocument/publishDiagnostics",
                         {
@@ -496,9 +494,7 @@ def run_tcp_server(port: int) -> None:
 def main() -> None:
     parser = argparse.ArgumentParser(description="ADG LSP Server")
     parser.add_argument("--stdio", action="store_true", help="Use stdio transport")
-    parser.add_argument(
-        "--port", type=int, default=8080, help="TCP port (default: 8080)"
-    )
+    parser.add_argument("--port", type=int, default=8080, help="TCP port (default: 8080)")
     parser.add_argument("--log-level", default="INFO", help="Log level")
     args = parser.parse_args()
 

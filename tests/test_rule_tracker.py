@@ -139,9 +139,7 @@ class TestCountByRule:
 
 class TestLoadRecords:
     def test_no_file(self, tmp_path: Path) -> None:
-        with mock.patch(
-            "rule_tracker._records_file", return_value=tmp_path / "nonexistent.jsonl"
-        ):
+        with mock.patch("rule_tracker._records_file", return_value=tmp_path / "nonexistent.jsonl"):
             assert _load_records() == []
 
     def test_load_all(self, tracking_dir: Path) -> None:
@@ -183,9 +181,7 @@ class TestLoadRecords:
     def test_skips_invalid_json(self, tracking_dir: Path) -> None:
         records_file = tracking_dir / "records.jsonl"
         records_file.write_text(
-            "not json\n"
-            + json.dumps({"timestamp": "2026-07-23T00:00:00+00:00", "summary": {}})
-            + "\n"
+            "not json\n" + json.dumps({"timestamp": "2026-07-23T00:00:00+00:00", "summary": {}}) + "\n"
         )
         records = _load_records()
         assert len(records) == 1
@@ -259,9 +255,7 @@ class TestCmdRecord:
 
 
 class TestCmdReport:
-    def test_report_no_records(
-        self, tracking_dir: Path, capsys: pytest.CaptureFixture[str]
-    ) -> None:
+    def test_report_no_records(self, tracking_dir: Path, capsys: pytest.CaptureFixture[str]) -> None:
         args = argparse.Namespace(days=None, json=False)
         cmd_report(args)
         assert "No records found" in capsys.readouterr().out
@@ -307,9 +301,7 @@ class TestCmdReport:
 
 
 class TestCmdExport:
-    def test_export_no_records(
-        self, tracking_dir: Path, capsys: pytest.CaptureFixture[str]
-    ) -> None:
+    def test_export_no_records(self, tracking_dir: Path, capsys: pytest.CaptureFixture[str]) -> None:
         args = argparse.Namespace(days=None)
         cmd_export(args)
         assert "No records found" in capsys.readouterr().out
@@ -337,27 +329,18 @@ class TestCmdExport:
 
 
 class TestCmdPrune:
-    def test_prune_nothing(
-        self, tracking_dir: Path, capsys: pytest.CaptureFixture[str]
-    ) -> None:
+    def test_prune_nothing(self, tracking_dir: Path, capsys: pytest.CaptureFixture[str]) -> None:
         records_file = tracking_dir / "records.jsonl"
-        records_file.write_text(
-            json.dumps({"timestamp": "2026-07-23T00:00:00+00:00", "summary": {}}) + "\n"
-        )
+        records_file.write_text(json.dumps({"timestamp": "2026-07-23T00:00:00+00:00", "summary": {}}) + "\n")
 
         args = argparse.Namespace(keep=100)
         cmd_prune(args)
         assert "nothing to prune" in capsys.readouterr().out
 
-    def test_prune_records(
-        self, tracking_dir: Path, capsys: pytest.CaptureFixture[str]
-    ) -> None:
+    def test_prune_records(self, tracking_dir: Path, capsys: pytest.CaptureFixture[str]) -> None:
         records_file = tracking_dir / "records.jsonl"
         lines = [
-            json.dumps(
-                {"timestamp": f"2026-07-{i:02d}T00:00:00+00:00", "summary": {"i": i}}
-            )
-            for i in range(1, 11)
+            json.dumps({"timestamp": f"2026-07-{i:02d}T00:00:00+00:00", "summary": {"i": i}}) for i in range(1, 11)
         ]
         records_file.write_text("\n".join(lines) + "\n")
 

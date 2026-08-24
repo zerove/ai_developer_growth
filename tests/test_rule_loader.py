@@ -115,9 +115,7 @@ class TestFileHash:
 
 class TestDiskCache:
     def test_load_nonexistent(self, tmp_path: Path) -> None:
-        with mock.patch(
-            "rules_engine.rule_loader._DISK_CACHE_FILE", tmp_path / "cache.json"
-        ):
+        with mock.patch("rules_engine.rule_loader._DISK_CACHE_FILE", tmp_path / "cache.json"):
             assert _load_disk_cache() == {}
 
     def test_load_valid(self, tmp_path: Path) -> None:
@@ -293,9 +291,7 @@ class TestLoadCustomRules:
         (rules_dir / "custom.yml").write_text(
             yaml.dump(
                 {
-                    "anti_patterns": [
-                        {"id": "custom-rule", "severity": "error", "pattern": "x"}
-                    ],
+                    "anti_patterns": [{"id": "custom-rule", "severity": "error", "pattern": "x"}],
                     "naming": {"function": "camelCase"},
                     "thresholds": {"max_lines": 500},
                 }

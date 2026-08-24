@@ -70,9 +70,7 @@ class TestRunSubprocess:
             stdout="success output",
             stderr="",
         )
-        passed, output = _run_subprocess(
-            ["echo", "test"], timeout=10, description="Test"
-        )
+        passed, output = _run_subprocess(["echo", "test"], timeout=10, description="Test")
         assert passed is True
         assert "success output" in output
 
@@ -92,9 +90,7 @@ class TestRunSubprocess:
     def test_timeout(self, mock_run):
         """Test subprocess timeout."""
         mock_run.side_effect = subprocess.TimeoutExpired("cmd", 10)
-        passed, output = _run_subprocess(
-            ["sleep", "100"], timeout=1, description="Test"
-        )
+        passed, output = _run_subprocess(["sleep", "100"], timeout=1, description="Test")
         assert passed is False
         assert "timed out" in output
 
@@ -102,9 +98,7 @@ class TestRunSubprocess:
     def test_command_not_found(self, mock_run):
         """Test command not found."""
         mock_run.side_effect = FileNotFoundError()
-        passed, output = _run_subprocess(
-            ["nonexistent"], timeout=10, description="Test"
-        )
+        passed, output = _run_subprocess(["nonexistent"], timeout=10, description="Test")
         assert passed is False
         assert "command not found" in output
 

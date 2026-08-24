@@ -61,9 +61,7 @@ class TestCmdSearch:
 
     def test_search_no_pattern(self) -> None:
         with patch("tools.scripts.rule_marketplace.search_rules") as mock_search:
-            mock_search.return_value = [
-                {"id": "x", "severity": "error", "message": "msg"}
-            ]
+            mock_search.return_value = [{"id": "x", "severity": "error", "message": "msg"}]
             args = argparse.Namespace(query="x", json=False)
             cmd_search(args)
 
@@ -145,31 +143,23 @@ class TestCmdInstall:
     def test_install_success(self, tmp_path: Path) -> None:
         with patch("tools.scripts.rule_marketplace.install_pack") as mock_install:
             mock_install.return_value = ["file1.yml"]
-            args = argparse.Namespace(
-                pack="security", project_dir=str(tmp_path), dry_run=False
-            )
+            args = argparse.Namespace(pack="security", project_dir=str(tmp_path), dry_run=False)
             cmd_install(args)
 
     def test_install_dry_run(self, tmp_path: Path) -> None:
-        args = argparse.Namespace(
-            pack="security", project_dir=str(tmp_path), dry_run=True
-        )
+        args = argparse.Namespace(pack="security", project_dir=str(tmp_path), dry_run=True)
         cmd_install(args)
 
     def test_install_value_error(self, tmp_path: Path) -> None:
         with patch("tools.scripts.rule_marketplace.install_pack") as mock_install:
             mock_install.side_effect = ValueError("bad pack")
-            args = argparse.Namespace(
-                pack="bad", project_dir=str(tmp_path), dry_run=False
-            )
+            args = argparse.Namespace(pack="bad", project_dir=str(tmp_path), dry_run=False)
             cmd_install(args)
 
     def test_install_no_files(self, tmp_path: Path) -> None:
         with patch("tools.scripts.rule_marketplace.install_pack") as mock_install:
             mock_install.return_value = []
-            args = argparse.Namespace(
-                pack="empty", project_dir=str(tmp_path), dry_run=False
-            )
+            args = argparse.Namespace(pack="empty", project_dir=str(tmp_path), dry_run=False)
             cmd_install(args)
 
 

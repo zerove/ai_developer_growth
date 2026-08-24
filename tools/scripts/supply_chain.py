@@ -1,0 +1,863 @@
+"""
+Supply Chain Security Module
+
+核心功能:
+- OSV/GHSA 漏洞扫描
+- 许可证合规检查
+- SBOM (Software Bill of Materials) 生成
+- 签名验证
+- 依赖图分析
+"""
+
+from __future__ import annotations
+
+import json
+import logging
+import subprocess
+import urllib.request
+from dataclasses import dataclass, field
+from datetime import datetime
+from enum import Enum
+from pathlib import Path
+from typing import Any
+
+logger = logging.getLogger(__name__)
+
+
+class Severity(str, Enum):
+    """漏洞严重性"""
+
+    CRITICAL = "critical"
+    HIGH = "high"
+    MEDIUM = "medium"
+    LOW = "low"
+    NONE = "none"
+
+
+class LicensePolicy(str, Enum):
+    """许可证策略"""
+
+    ALLOW = "allow"
+    DENY = "deny"
+    REVIEW = "review"
+
+
+@dataclass
+class Vulnerability:
+    """漏洞信息"""
+
+    id: str  # CVE-xxxx-xxxx or GHSA-xxxx
+    source: str  # OSV, GHSA
+    summary: str
+    severity: Severity
+    affected_package: str
+    affected_version: str
+    fixed_version: str | None = None
+    references: list[str] = field(default_factory=list)
+    published_at: str | None = None
+    modified_at: str | None = None
+    cvss_score: float | None = None
+    cvss_vector: str | None = None
+
+
+@dataclass
+class Dependency:
+    """依赖项"""
+
+    name: str
+    version: str
+    ecosystem: str  # pypi, npm, cargo, go, maven, etc.
+    license: str | None = None
+    license_policy: LicensePolicy = LicensePolicy.REVIEW
+    vulnerabilities: list[Vulnerability] = field(default_factory=list)
+    is_direct: bool = True
+    dependencies: list[Dependency] = field(default_factory=list)  # 传递依赖
+
+
+@dataclass
+class SBOM:
+    """Software Bill of Materials"""
+
+    spec_version: str = "1.5"
+    spdx_version: str = "SPDX-2.3"
+    name: str = ""
+    version: str = ""
+    created_at: str = field(default_factory=lambda: datetime.utcnow().isoformat())
+    packages: list[Dependency] = field(default_factory=list)
+    relationships: list[dict[str, str]] = field(default_factory=list)
+
+    def to_json(self) -> str:
+        return json.dumps(self.to_dict(), indent=2, ensure_ascii=False)
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "specVersion": self.spec_version,
+            "spdxVersion": self.spdx_version,
+            "name": self.name,
+            "version": self.version,
+            "createdAt": self.created_at,
+            "packages": [self._dep_to_dict(p) for p in self.packages],
+            "relationships": self.relationships,
+        }
+
+    def _dep_to_dict(self, dep: Dependency) -> dict[str, Any]:
+        return {
+            "name": dep.name,
+            "version": dep.version,
+            "ecosystem": dep.ecosystem,
+            "license": dep.license,
+            "licensePolicy": dep.license_policy.value,
+            "vulnerabilities": [self._vuln_to_dict(v) for v in dep.vulnerabilities],
+            "isDirect": dep.is_direct,
+            "dependencies": [self._dep_to_dict(d) for d in dep.dependencies],
+        }
+
+    def _vuln_to_dict(self, vuln: Vulnerability) -> dict[str, Any]:
+        return {
+            "id": vuln.id,
+            "source": vuln.source,
+            "summary": vuln.summary,
+            "severity": vuln.severity.value,
+            "affectedPackage": vuln.affected_package,
+            "affectedVersion": vuln.affected_version,
+            "fixedVersion": vuln.fixed_version,
+            "references": vuln.references,
+            "publishedAt": vuln.published_at,
+            "modifiedAt": vuln.modified_at,
+            "cvssScore": vuln.cvss_score,
+            "cvssVector": vuln.cvss_vector,
+        }
+
+
+@dataclass
+class ScanResult:
+    """扫描结果"""
+
+    project_path: str
+    scanned_at: str = field(default_factory=lambda: datetime.utcnow().isoformat())
+    dependencies: list[Dependency] = field(default_factory=list)
+    vulnerabilities: list[Vulnerability] = field(default_factory=list)
+    license_issues: list[str] = field(default_factory=list)
+    summary: dict[str, int] = field(default_factory=dict)
+
+    @property
+    def critical_count(self) -> int:
+        return sum(1 for v in self.vulnerabilities if v.severity == Severity.CRITICAL)
+
+    @property
+    def high_count(self) -> int:
+        return sum(1 for v in self.vulnerabilities if v.severity == Severity.HIGH)
+
+    @property
+    def total_vulns(self) -> int:
+        return len(self.vulnerabilities)
+
+
+class OSVScanner:
+    """OSV (Open Source Vulnerabilities) 扫描器"""
+
+    OSV_API = "https://api.osv.dev/v1/querybatch"
+    ECOSYSTEM_MAP = {
+        "pypi": "PyPI",
+        "npm": "npm",
+        "cargo": "crates.io",
+        "go": "Go",
+        "maven": "Maven",
+        "nuget": "NuGet",
+        "rubygems": "RubyGems",
+        "packagist": "Packagist",
+    }
+
+    def __init__(self, timeout: int = 30):
+        self.timeout = timeout
+
+    def scan_dependencies(self, dependencies: list[Dependency]) -> list[Vulnerability]:
+        """批量扫描依赖漏洞"""
+        # 按生态系统分组
+        queries = []
+        for dep in dependencies:
+            ecosystem = self.ECOSYSTEM_MAP.get(dep.ecosystem.lower(), dep.ecosystem)
+            queries.append(
+                {
+                    "package": {"name": dep.name, "ecosystem": ecosystem},
+                    "version": dep.version,
+                }
+            )
+
+        if not queries:
+            return []
+
+        # 批量查询 OSV API
+        try:
+            payload = json.dumps({"queries": queries}).encode()
+            req = urllib.request.Request(
+                self.OSV_API,
+                data=payload,
+                headers={"Content-Type": "application/json"},
+            )
+            with urllib.request.urlopen(req, timeout=self.timeout) as response:  # nosec B310
+                data = json.loads(response.read().decode())
+
+            vulns = []
+            for i, result in enumerate(data.get("results", [])):
+                dep = dependencies[i]
+                for vuln_data in result.get("vulns", []):
+                    vulns.append(self._parse_osv_vuln(vuln_data, dep))
+            return vulns
+
+        except Exception as e:
+            logger.warning(f"OSV scan failed: {e}")
+            return []
+
+    def _parse_osv_vuln(self, data: dict[str, Any], dep: Dependency) -> Vulnerability:
+        # 解析严重性
+        severity = Severity.NONE
+        cvss_score = None
+        cvss_vector = None
+
+        for sev in data.get("severity", []):
+            if sev.get("type") == "CVSS_V3":
+                cvss_score = sev.get("score")
+                cvss_vector = sev.get("vector")
+                # 根据 CVSS 分数判断严重性
+                if cvss_score is not None:
+                    if cvss_score >= 9.0:
+                        severity = Severity.CRITICAL
+                    elif cvss_score >= 7.0:
+                        severity = Severity.HIGH
+                    elif cvss_score >= 4.0:
+                        severity = Severity.MEDIUM
+                    else:
+                        severity = Severity.LOW
+                break
+
+        # 修复版本
+        fixed_version = None
+        for affected in data.get("affected", []):
+            for r in affected.get("ranges", []):
+                for event in r.get("events", []):
+                    if "fixed" in event:
+                        fixed_version = event["fixed"]
+                        break
+
+        return Vulnerability(
+            id=data.get("id", ""),
+            source="OSV",
+            summary=data.get("summary", ""),
+            severity=severity,
+            affected_package=dep.name,
+            affected_version=dep.version,
+            fixed_version=fixed_version,
+            references=[r.get("url", "") for r in data.get("references", [])],
+            published_at=data.get("published"),
+            modified_at=data.get("modified"),
+            cvss_score=cvss_score,
+            cvss_vector=cvss_vector,
+        )
+
+
+class GHSASource:
+    """GHSA (GitHub Security Advisories) 数据源"""
+
+    def __init__(self, github_token: str | None = None):
+        self.github_token = github_token
+
+    def fetch_advisories(self, ecosystem: str, package: str) -> list[Vulnerability]:
+        """获取 GHSA 公告 (需要 GitHub API)"""
+        # 简化实现：实际需要调用 GitHub GraphQL API
+        # 这里返回空列表，实际使用时需集成 GitHub API
+        return []
+
+
+class LicenseChecker:
+    """许可证合规检查器"""
+
+    # 常见许可证分类
+    PERMISSIVE_LICENSES = {
+        "MIT",
+        "BSD-2-Clause",
+        "BSD-3-Clause",
+        "Apache-2.0",
+        "ISC",
+        "Unlicense",
+        "CC0-1.0",
+        "Zlib",
+        "HPND",
+    }
+    COPYLEFT_LICENSES = {
+        "GPL-2.0",
+        "GPL-3.0",
+        "LGPL-2.1",
+        "LGPL-3.0",
+        "AGPL-3.0",
+        "MPL-2.0",
+        "EPL-2.0",
+        "CDDL-1.0",
+    }
+    PROPRIETARY_LICENSES = {
+        "Proprietary",
+        "Commercial",
+        "Non-OSI",
+        "Custom",
+    }
+
+    def __init__(self, policy: dict[str, LicensePolicy] | None = None):
+        """policy: 许可证 -> 策略映射，如 {"GPL-3.0": LicensePolicy.DENY}"""
+        self.policy = policy or {}
+
+    def check_license(self, license_str: str | None) -> LicensePolicy:
+        """检查单个许可证"""
+        if not license_str:
+            return LicensePolicy.REVIEW
+
+        # 标准化许可证字符串
+        license_str = license_str.strip()
+
+        # 直接策略匹配
+        if license_str in self.policy:
+            return self.policy[license_str]
+
+        # 基于分类的默认策略
+        if license_str in self.PERMISSIVE_LICENSES:
+            return LicensePolicy.ALLOW
+        elif license_str in self.COPYLEFT_LICENSES:
+            return LicensePolicy.REVIEW  # 需要人工评估
+        elif license_str in self.PROPRIETARY_LICENSES:
+            return LicensePolicy.DENY
+
+        return LicensePolicy.REVIEW
+
+    def check_dependencies(self, dependencies: list[Dependency]) -> list[str]:
+        """检查依赖许可证合规"""
+        issues = []
+        for dep in dependencies:
+            policy = self.check_license(dep.license)
+            dep.license_policy = policy
+            if policy == LicensePolicy.DENY:
+                issues.append(f"DENIED license: {dep.name}@{dep.version} ({dep.license})")
+            elif policy == LicensePolicy.REVIEW:
+                issues.append(f"REVIEW needed: {dep.name}@{dep.version} ({dep.license})")
+        return issues
+
+
+class SBOMGenerator:
+    """SBOM 生成器"""
+
+    def __init__(self) -> None:
+        pass
+
+    def generate_from_python(self, project_root: Path) -> SBOM:
+        """从 Python 项目生成 SBOM"""
+        sbom = SBOM()
+        sbom.name = project_root.name
+
+        # 读取 pyproject.toml 或 requirements.txt
+        deps = self._parse_python_deps(project_root)
+        for dep in deps:
+            sbom.packages.append(dep)
+
+        # 添加关系
+        for i, dep in enumerate(sbom.packages):
+            sbom.relationships.append(
+                {
+                    "spdxElementId": f"SPDXRef-Package-{i}",
+                    "relationshipType": "DEPENDS_ON",
+                    "relatedSpdxElement": "SPDXRef-Package-ROOT",
+                }
+            )
+
+        return sbom
+
+    def generate_from_project(self, project_root: Path) -> SBOM:
+        """自动检测项目语言并生成完整 SBOM"""
+        sbom = SBOM()
+        sbom.name = project_root.name
+
+        all_deps = []
+
+        # Python
+        py_deps = self._parse_python_deps(project_root)
+        all_deps.extend(py_deps)
+
+        # npm/Node.js
+        npm_deps = self._parse_npm_deps(project_root)
+        all_deps.extend(npm_deps)
+
+        # Cargo/Rust
+        cargo_deps = self._parse_cargo_deps(project_root)
+        all_deps.extend(cargo_deps)
+
+        # Go
+        go_deps = self._parse_go_deps(project_root)
+        all_deps.extend(go_deps)
+
+        # Maven/Java
+        maven_deps = self._parse_maven_deps(project_root)
+        all_deps.extend(maven_deps)
+
+        # 去重 (按 name+version+ecosystem)
+        seen = set()
+        unique_deps = []
+        for dep in all_deps:
+            key = (dep.name, dep.version, dep.ecosystem)
+            if key not in seen:
+                seen.add(key)
+                unique_deps.append(dep)
+
+        for dep in unique_deps:
+            sbom.packages.append(dep)
+
+        # 添加关系
+        for i, dep in enumerate(sbom.packages):
+            sbom.relationships.append(
+                {
+                    "spdxElementId": f"SPDXRef-Package-{i}",
+                    "relationshipType": "DEPENDS_ON",
+                    "relatedSpdxElement": "SPDXRef-Package-ROOT",
+                }
+            )
+
+        return sbom
+
+    def _parse_python_deps(self, project_root: Path) -> list[Dependency]:
+        """解析 Python 依赖"""
+        deps = []
+
+        # 尝试解析 pyproject.toml
+        pyproject = project_root / "pyproject.toml"
+        if pyproject.exists():
+            deps.extend(self._parse_pyproject(pyproject))
+
+        # 尝试解析 requirements.txt
+        req_file = project_root / "requirements.txt"
+        if req_file.exists():
+            deps.extend(self._parse_requirements(req_file))
+
+        # 尝试解析 poetry.lock
+        poetry_lock = project_root / "poetry.lock"
+        if poetry_lock.exists():
+            deps.extend(self._parse_poetry_lock(poetry_lock))
+
+        # 尝试解析 pipenv.lock
+        pipenv_lock = project_root / "Pipfile.lock"
+        if pipenv_lock.exists():
+            deps.extend(self._parse_pipenv_lock(pipenv_lock))
+
+        return deps
+
+    def _parse_pyproject(self, path: Path) -> list[Dependency]:
+        deps = []
+        try:
+            import tomllib
+
+            with open(path, "rb") as f:
+                data = tomllib.load(f)
+
+            # [project] dependencies
+            for dep_spec in data.get("project", {}).get("dependencies", []):
+                dep = self._parse_dep_spec(dep_spec)
+                if dep:
+                    deps.append(dep)
+
+            # [tool.poetry] dependencies
+            for name, spec in data.get("tool", {}).get("poetry", {}).get("dependencies", {}).items():
+                if name != "python":
+                    dep = self._parse_poetry_dep(name, spec)
+                    if dep:
+                        deps.append(dep)
+        except Exception as e:
+            logger.warning(f"Failed to parse pyproject.toml: {e}")
+
+        return deps
+
+    def _parse_requirements(self, path: Path) -> list[Dependency]:
+        deps = []
+        try:
+            content = path.read_text()
+            for line in content.splitlines():
+                line = line.strip()
+                if line and not line.startswith("#"):
+                    dep = self._parse_dep_spec(line)
+                    if dep:
+                        deps.append(dep)
+        except Exception as e:
+            logger.warning(f"Failed to parse requirements.txt: {e}")
+        return deps
+
+    def _parse_poetry_lock(self, path: Path) -> list[Dependency]:
+        deps = []
+        try:
+            import tomllib
+
+            with open(path, "rb") as f:
+                data = tomllib.load(f)
+
+            for pkg in data.get("package", []):
+                dep = Dependency(
+                    name=pkg.get("name", ""),
+                    version=pkg.get("version", ""),
+                    ecosystem="pypi",
+                    is_direct=True,
+                )
+                deps.append(dep)
+        except Exception as e:
+            logger.warning(f"Failed to parse poetry.lock: {e}")
+        return deps
+
+    def _parse_pipenv_lock(self, path: Path) -> list[Dependency]:
+        deps = []
+        try:
+            with open(path) as f:
+                data = json.load(f)
+
+            for name, info in data.get("default", {}).items():
+                version = info.get("version", "").lstrip("==")
+                dep = Dependency(
+                    name=name,
+                    version=version,
+                    ecosystem="pypi",
+                    is_direct=True,
+                )
+                deps.append(dep)
+        except Exception as e:
+            logger.warning(f"Failed to parse Pipfile.lock: {e}")
+        return deps
+
+    def _parse_npm_deps(self, project_root: Path) -> list[Dependency]:
+        """解析 npm 依赖 (package.json + package-lock.json)"""
+        deps = []
+
+        # 解析 package.json
+        package_json = project_root / "package.json"
+        if package_json.exists():
+            try:
+                with open(package_json) as f:
+                    data = json.load(f)
+
+                # dependencies + devDependencies
+                for dep_type in ["dependencies", "devDependencies", "peerDependencies", "optionalDependencies"]:
+                    for name, version in data.get(dep_type, {}).items():
+                        dep = Dependency(
+                            name=name,
+                            version=version.lstrip("^~>="),
+                            ecosystem="npm",
+                            is_direct=True,
+                        )
+                        deps.append(dep)
+            except Exception as e:
+                logger.warning(f"Failed to parse package.json: {e}")
+
+        # 解析 package-lock.json 获取准确版本和传递依赖
+        lock_file = project_root / "package-lock.json"
+        if lock_file.exists():
+            try:
+                with open(lock_file) as f:
+                    data = json.load(f)
+
+                # v2 格式
+                if "packages" in data:
+                    for path, info in data["packages"].items():
+                        if path == "":
+                            continue
+                        name = path.split("node_modules/")[-1]
+                        version = info.get("version", "")
+                        is_dev = info.get("dev", False)
+                        dep = Dependency(
+                            name=name,
+                            version=version,
+                            ecosystem="npm",
+                            is_direct=not is_dev,
+                        )
+                        deps.append(dep)
+            except Exception as e:
+                logger.warning(f"Failed to parse package-lock.json: {e}")
+
+        return deps
+
+    def _parse_cargo_deps(self, project_root: Path) -> list[Dependency]:
+        """解析 Cargo 依赖 (Cargo.toml + Cargo.lock)"""
+        deps = []
+
+        # 解析 Cargo.toml
+        cargo_toml = project_root / "Cargo.toml"
+        if cargo_toml.exists():
+            try:
+                import tomllib
+
+                with open(cargo_toml, "rb") as f:
+                    data = tomllib.load(f)
+
+                for dep_type in ["dependencies", "dev-dependencies", "build-dependencies"]:
+                    for name, spec in data.get(dep_type, {}).items():
+                        if isinstance(spec, str):
+                            version = spec
+                        elif isinstance(spec, dict):
+                            version = spec.get("version", "")
+                        else:
+                            version = ""
+                        dep = Dependency(
+                            name=name,
+                            version=version,
+                            ecosystem="cargo",
+                            is_direct=True,
+                        )
+                        deps.append(dep)
+            except Exception as e:
+                logger.warning(f"Failed to parse Cargo.toml: {e}")
+
+        # 解析 Cargo.lock 获取准确版本和传递依赖
+        cargo_lock = project_root / "Cargo.lock"
+        if cargo_lock.exists():
+            try:
+                import tomllib
+
+                with open(cargo_lock, "rb") as f:
+                    data = tomllib.load(f)
+
+                for pkg in data.get("package", []):
+                    dep = Dependency(
+                        name=pkg.get("name", ""),
+                        version=pkg.get("version", ""),
+                        ecosystem="cargo",
+                        is_direct=False,  # Cargo.lock 包含所有传递依赖
+                    )
+                    deps.append(dep)
+            except Exception as e:
+                logger.warning(f"Failed to parse Cargo.lock: {e}")
+
+        return deps
+
+    def _parse_go_deps(self, project_root: Path) -> list[Dependency]:
+        """解析 Go 依赖 (go.mod + go.sum)"""
+        deps = []
+
+        # 解析 go.mod
+        go_mod = project_root / "go.mod"
+        if go_mod.exists():
+            try:
+                content = go_mod.read_text()
+                in_require = False
+                for line in content.splitlines():
+                    line = line.strip()
+                    if line.startswith("require ("):
+                        in_require = True
+                        continue
+                    if in_require and line == ")":
+                        in_require = False
+                        continue
+                    if in_require or line.startswith("require "):
+                        # require github.com/pkg/name v1.2.3
+                        parts = line.replace("require ", "").split()
+                        if len(parts) >= 2:
+                            name = parts[0]
+                            version = parts[1]
+                            dep = Dependency(
+                                name=name,
+                                version=version,
+                                ecosystem="go",
+                                is_direct=True,
+                            )
+                            deps.append(dep)
+            except Exception as e:
+                logger.warning(f"Failed to parse go.mod: {e}")
+
+        return deps
+
+    def _parse_maven_deps(self, project_root: Path) -> list[Dependency]:
+        """解析 Maven 依赖 (pom.xml)"""
+        deps = []
+
+        # 尝试使用 maven-dependency-plugin 或解析 pom.xml
+        pom_xml = project_root / "pom.xml"
+        if pom_xml.exists():
+            try:
+                import xml.etree.ElementTree as ET
+
+                tree = ET.parse(pom_xml)  # nosec B320 - parsing local trusted pom.xml
+                root = tree.getroot()
+
+                # Maven 命名空间
+                ns = {"m": "http://maven.apache.org/POM/4.0.0"}
+
+                # 解析 dependencies
+                for dep_elem in root.findall(".//m:dependency", ns):
+                    group_id = dep_elem.find("m:groupId", ns)
+                    artifact_id = dep_elem.find("m:artifactId", ns)
+                    version_elem = dep_elem.find("m:version", ns)
+                    scope_elem = dep_elem.find("m:scope", ns)
+
+                    if group_id is not None and artifact_id is not None:
+                        name = f"{group_id.text}:{artifact_id.text}"
+                        version = version_elem.text if version_elem is not None else ""
+                        scope = scope_elem.text if scope_elem is not None else "compile"
+                        is_direct = scope == "compile"
+
+                        dep = Dependency(
+                            name=name,
+                            version=version or "",
+                            ecosystem="maven",
+                            is_direct=is_direct,
+                        )
+                        deps.append(dep)
+            except Exception as e:
+                logger.warning(f"Failed to parse pom.xml: {e}")
+
+        return deps
+
+    def _parse_dep_spec(self, spec: str) -> Dependency | None:
+        """解析依赖规格"""
+        # 简化解析: package>=1.0, package==1.0, package~=1.0
+        import re
+
+        match = re.match(r"^([A-Za-z0-9_.-]+)([=<>!~]+.*)?$", spec.strip())
+        if match:
+            name = match.group(1)
+            version = match.group(2).lstrip("=<>~!") if match.group(2) else ""
+            return Dependency(name=name, version=version, ecosystem="pypi")
+        return None
+
+    def _parse_poetry_dep(self, name: str, spec: Any) -> Dependency | None:
+        if isinstance(spec, str):
+            return Dependency(name=name, version=spec, ecosystem="pypi")
+        elif isinstance(spec, dict):
+            return Dependency(name=name, version=spec.get("version", ""), ecosystem="pypi")
+        return None
+
+
+class SignatureVerifier:
+    """签名验证器"""
+
+    def __init__(self) -> None:
+        pass
+
+    def verify_pypi_package(self, name: str, version: str) -> dict[str, Any]:
+        """验证 PyPI 包签名 (需要 PyPI API)"""
+        # 简化实现
+        return {"verified": False, "message": "Not implemented"}
+
+    def verify_cosign_signature(self, image: str, public_key: str | None = None) -> dict[str, Any]:
+        """验证容器镜像签名"""
+        try:
+            cmd = ["cosign", "verify", image]
+            if public_key:
+                cmd.extend(["--key", public_key])
+            result = subprocess.run(cmd, capture_output=True, text=True, timeout=60)
+            return {
+                "verified": result.returncode == 0,
+                "output": result.stdout,
+                "error": result.stderr,
+            }
+        except FileNotFoundError:
+            return {"verified": False, "message": "cosign not installed"}
+        except Exception as e:
+            return {"verified": False, "message": str(e)}
+
+    def verify_slsa_provenance(self, package_path: Path) -> dict[str, Any]:
+        """验证 SLSA provenance"""
+        # 简化实现
+        return {"verified": False, "message": "Not implemented"}
+
+
+class SupplyChainScanner:
+    """供应链安全扫描器主入口"""
+
+    def __init__(
+        self,
+        osv_timeout: int = 30,
+        license_policy: dict[str, LicensePolicy] | None = None,
+    ):
+        self.osv_scanner = OSVScanner(timeout=osv_timeout)
+        self.license_checker = LicenseChecker(policy=license_policy)
+        self.sbom_generator = SBOMGenerator()
+        self.signature_verifier = SignatureVerifier()
+
+    def scan_project(self, project_root: Path) -> ScanResult:
+        """扫描整个项目"""
+        # 1. 生成 SBOM / 解析依赖 (多语言支持)
+        sbom = self.sbom_generator.generate_from_project(project_root)
+
+        # 2. 扫描漏洞
+        all_deps = self._flatten_deps(sbom.packages)
+        vulns = self.osv_scanner.scan_dependencies(all_deps)
+
+        # 将漏洞关联到依赖
+        vuln_by_package: dict[str, list[Vulnerability]] = {}
+        for v in vulns:
+            vuln_by_package.setdefault(v.affected_package, []).append(v)
+
+        for dep in all_deps:
+            if dep.name in vuln_by_package:
+                dep.vulnerabilities = vuln_by_package[dep.name]
+
+        # 3. 检查许可证
+        license_issues = self.license_checker.check_dependencies(all_deps)
+
+        # 4. 汇总
+        result = ScanResult(
+            project_path=str(project_root),
+            dependencies=all_deps,
+            vulnerabilities=vulns,
+            license_issues=license_issues,
+            summary={
+                "total_dependencies": len(all_deps),
+                "direct_dependencies": sum(1 for d in all_deps if d.is_direct),
+                "vulnerabilities": len(vulns),
+                "critical": sum(1 for v in vulns if v.severity == Severity.CRITICAL),
+                "high": sum(1 for v in vulns if v.severity == Severity.HIGH),
+                "medium": sum(1 for v in vulns if v.severity == Severity.MEDIUM),
+                "low": sum(1 for v in vulns if v.severity == Severity.LOW),
+                "license_issues": len(license_issues),
+            },
+        )
+        return result
+
+    def _flatten_deps(self, deps: list[Dependency]) -> list[Dependency]:
+        """扁平化依赖树"""
+        result = []
+        for dep in deps:
+            result.append(dep)
+            result.extend(self._flatten_deps(dep.dependencies))
+        return result
+
+    def generate_sbom(self, project_root: Path, output: Path | None = None) -> SBOM:
+        """生成 SBOM (多语言支持)"""
+        sbom = self.sbom_generator.generate_from_project(project_root)
+
+        # 扫描漏洞并关联
+        all_deps = self._flatten_deps(sbom.packages)
+        vulns = self.osv_scanner.scan_dependencies(all_deps)
+
+        vuln_by_package: dict[str, list[Vulnerability]] = {}
+        for v in vulns:
+            vuln_by_package.setdefault(v.affected_package, []).append(v)
+
+        for dep in all_deps:
+            if dep.name in vuln_by_package:
+                dep.vulnerabilities = vuln_by_package[dep.name]
+
+        # 更新 sbom
+        sbom.packages = all_deps
+
+        if output:
+            output.write_text(sbom.to_json())
+
+        return sbom
+
+
+def run_supply_chain_scan(
+    project_root: Path,
+    osv_timeout: int = 30,
+    license_policy: dict[str, LicensePolicy] | None = None,
+) -> ScanResult:
+    """便捷函数: 运行供应链扫描"""
+    scanner = SupplyChainScanner(osv_timeout=osv_timeout, license_policy=license_policy)
+    return scanner.scan_project(project_root)
+
+
+def generate_sbom(
+    project_root: Path,
+    output: Path | None = None,
+) -> SBOM:
+    """便捷函数: 生成 SBOM"""
+    scanner = SupplyChainScanner()
+    return scanner.generate_sbom(project_root, output)

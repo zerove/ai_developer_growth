@@ -10,9 +10,7 @@ class TestCheckerSemantic:
         from tools.scripts.rules_engine.checker import check_file
 
         f = tmp_path / "test.py"
-        f.write_text(
-            'import os\n\ndef hello():\n    """Say hello."""\n    return "world"\n'
-        )
+        f.write_text('import os\n\ndef hello():\n    """Say hello."""\n    return "world"\n')
         result = check_file(f, semantic=True)
         assert result is not None
         # os is imported but only used in the import itself
@@ -35,12 +33,8 @@ class TestCheckerSemantic:
     def test_check_directory_with_semantic(self, tmp_path):
         from tools.scripts.rules_engine.checker import check_directory
 
-        (tmp_path / "a.py").write_text(
-            'def hello():\n    """Doc."""\n    return "world"\n'
-        )
-        (tmp_path / "b.py").write_text(
-            'def add(a, b):\n    """Add."""\n    return a + b\n'
-        )
+        (tmp_path / "a.py").write_text('def hello():\n    """Doc."""\n    return "world"\n')
+        (tmp_path / "b.py").write_text('def add(a, b):\n    """Add."""\n    return a + b\n')
         results = check_directory(tmp_path, semantic=True)
         assert len(results) >= 2
 

@@ -153,9 +153,7 @@ def recommend_rules(
                 "severity": rule_info.get("severity", "warning"),
                 "category": rule_info.get("category", "code_quality"),
                 "reason": rec["reason"],
-                "affected_files": len(
-                    [r for r in unique_recs if r["rule"] == rec["rule"]]
-                ),
+                "affected_files": len([r for r in unique_recs if r["rule"] == rec["rule"]]),
                 "example": {
                     "file": rec["file"],
                     "line": rec["line"],

@@ -56,9 +56,7 @@ class TestHeuristicFix:
         assert "Exception" in fix["fix_replacement"]
 
     def test_sql_injection(self) -> None:
-        fix = heuristic_fix(
-            {"pattern": "", "message": "SQL string formatting injection"}
-        )
+        fix = heuristic_fix({"pattern": "", "message": "SQL string formatting injection"})
         assert "execute" in fix["fix_replacement"]
 
     def test_console_log(self) -> None:

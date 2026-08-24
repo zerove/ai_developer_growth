@@ -1,11 +1,12 @@
-from fastapi import APIRouter, Request, Form
+from datetime import datetime
+from pathlib import Path
+
+from fastapi import APIRouter, Form, Request
 from fastapi.responses import RedirectResponse
 from fastapi.templating import Jinja2Templates
-from pathlib import Path
-from datetime import datetime
 
-from ..database import get_db
 from ..auth import get_current_user_id
+from ..database import get_db
 
 router = APIRouter(prefix="/progress", tags=["progress"])
 templates = Jinja2Templates(directory=str(Path(__file__).parent.parent / "templates"))

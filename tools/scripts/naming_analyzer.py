@@ -15,9 +15,7 @@ from typing import Any
 from .validate_language_rules import Issue
 
 
-def _check_filename(
-    filepath: str, language: str, naming: dict[str, Any]
-) -> list[Issue]:
+def _check_filename(filepath: str, language: str, naming: dict[str, Any]) -> list[Issue]:
     """Check filename against naming convention."""
     issues: list[Issue] = []
     file_rule = naming.get("file", {})
@@ -31,9 +29,7 @@ def _check_filename(
                     category="naming",
                     file=filepath,
                     line=0,
-                    message=file_rule.get(
-                        "message", f"File name '{filename}' violates naming convention"
-                    ),
+                    message=file_rule.get("message", f"File name '{filename}' violates naming convention"),
                 )
             )
     return issues
@@ -69,18 +65,14 @@ def _check_identifier_kind(
                         category="naming",
                         file=filepath,
                         line=line_num,
-                        message=kind_rule.get(
-                            "message", f"'{ident}' violates {kind} naming convention"
-                        ),
+                        message=kind_rule.get("message", f"'{ident}' violates {kind} naming convention"),
                     )
                 )
 
     return issues
 
 
-def check_naming_conventions(
-    lines: list[str], rules: dict[str, Any], filepath: str
-) -> list[Issue]:
+def check_naming_conventions(lines: list[str], rules: dict[str, Any], filepath: str) -> list[Issue]:
     """Check naming conventions based on language rules."""
     issues: list[Issue] = []
     naming = rules.get("naming", {})
@@ -103,9 +95,7 @@ def check_naming_conventions(
     ]
     for kind in kinds:
         kind_rule = naming.get(kind, {})
-        issues.extend(
-            _check_identifier_kind(lines, language, kind, kind_rule, filepath)
-        )
+        issues.extend(_check_identifier_kind(lines, language, kind, kind_rule, filepath))
 
     return issues
 
@@ -309,11 +299,7 @@ def extract_identifiers(line: str, kind: str, language: str) -> list[str]:
             if lang_key == "lua" and kind == "function":
                 name = name.split(".")[-1]
             # For java/csharp/cpp/javascript, exclude keywords
-            if (
-                lang_key in _KEYWORDS
-                and kind == "function"
-                and name in _KEYWORDS[lang_key]
-            ):
+            if lang_key in _KEYWORDS and kind == "function" and name in _KEYWORDS[lang_key]:
                 return []
             return [name]
 

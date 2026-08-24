@@ -1,0 +1,200 @@
+# JCode Advanced Governance - Bitbucket Pipelines Template
+# Add this to your bitbucket-pipelines.yml
+
+definitions:
+  caches:
+    pip: ~/.cache/pip
+    npm: ~/.npm
+    cargo: ~/.cargo
+    maven: ~/.m2
+
+  steps:
+    # ──────────────────────────────────────────────────────
+    # Quick Governance Check
+    # ──────────────────────────────────────────────────────
+    - step: &quick-governance
+        name: Quick Governance Check
+        image: python:3.11-slim
+        caches:
+          - pip
+        script:
+          - pip install -U "setuptools>=83.0.0" -q
+          - pip install -e . -q
+          - python -m tools.scripts.hooks_runner exception check-expirations
+          - python -m tools.scripts.hooks_runner exception list --status approved --format json > exceptions.json
+          - adg check . --severity error --json > adg-report.json || true
+          - adg check . --severity error
+        artifacts:
+          - adg-report.json
+          - exceptions.json
+
+    # ──────────────────────────────────────────────────────
+    # Full Governance Pipeline
+    # ──────────────────────────────────────────────────────
+    - step: &full-governance
+        name: Full Governance Pipeline
+        image: python:3.11-slim
+        size: 2x
+        max-time: 60
+        caches:
+          - pip
+          - npm
+          - cargo
+          - maven
+        script:
+          # Install system dependencies
+          - apt-get update -q && apt-get install -y -q nodejs npm golang-go rustc cargo openjdk-21-jdk maven > /dev/null
+          - pip install -U "setuptools>=83.0.0" -q
+          - pip install -e . -q
+          - pip install opa-wasm cyclonedx-bom -q
+          
+          # Exception Manager
+          - python -m tools.scripts.hooks_runner exception check-expirations
+          - python -m tools.scripts.hooks_runner exception audit
+          - python -m tools.scripts.hooks_runner exception sync-gitops
+          
+          # Supply Chain
+          - python -m tools.scripts.hooks_runner supply-chain sbom --format json --output sbom.json
+          - python -m tools.scripts.hooks_runner supply-chain scan --format json --output supply-chain-scan.json
+          - python -m tools.scripts.hooks_runner supply-chain compliance --policy-file .jcode/policies/supply-chain-policy.yaml --format json --output supply-chain-compliance.json
+          - python -m tools.scripts.hooks_runner supply-chain freshness --max-age-days 90 --format json --output supply-chain-freshness.json
+          - python -m tools.scripts.hooks_runner supply-chain verify --format json --output supply-chain-verify.json
+          
+          # Dependency Graph
+          - python -m tools.scripts.hooks_runner dep-graph analyze --sbom sbom.json --format json --output dep-graph-analysis.json
+          - python -m tools.scripts.hooks_runner dep-graph circular --sbom sbom.json --format json --output dep-graph-circular.json
+          - python -m tools.scripts.hooks_runner dep-graph conflicts --sbom sbom.json --format json --output dep-graph-conflicts.json
+          - python -m tools.scripts.hooks_runner dep-graph export --sbom sbom.json --format mermaid --output dep-graph.mmd
+          
+          # Policy as Code
+          - opa version
+          - |
+            python -c "
+            import json
+            data = {}
+            for f in ['sbom.json', 'dep-graph-analysis.json', 'supply-chain-scan.json', 'supply-chain-compliance.json', 'exceptions.json']:
+                try:
+                    with open(f) as fp:
+                        data[f.replace('.json', '')] = json.load(fp)
+                except:
+                    pass
+            data['repository'] = '$BITBUCKET_REPO_SLUG'
+            data['branch'] = '$BITBUCKET_BRANCH'
+            data['commit'] = '$BITBUCKET_COMMIT'
+            with open('opa-input.json', 'w') as fp:
+                json.dump(data, fp)
+            "
+          - opa eval --data .jcode/policies --input opa-input.json --format json "data.jcode.governance" > policy-results.json || true
+          - |
+            VIOLATIONS=$(cat policy-results.json | jq -r '.result[0].expressions[0].value.violations // [] | length')
+            echo "Policy violations: $VIOLATIONS"
+            if [ "$VIOLATIONS" -gt 0 ]; then
+              cat policy-results.json | jq -r '.result[0].expressions[0].value.violations[] | "\(.rule): \(.message) [\(.severity)]"'
+              exit 1
+            fi
+        artifacts:
+          - sbom.json
+          - supply-chain-*.json
+          - dep-graph-*.json
+          - dep-graph.mmd
+          - policy-results.json
+          - exceptions.json
+
+    # ──────────────────────────────────────────────────────
+    # Tests
+    # ──────────────────────────────────────────────────────
+    - step: &test-python
+        name: Test Python
+        image: python:3.11-slim
+        caches:
+          - pip
+        script:
+          - pip install -U "setuptools>=83.0.0" -q
+          - pip install -e . -q
+          - pip install pytest pytest-cov pytest-xdist -q
+          - pytest tests/ -v --tb=short -x -n auto --cov=tools/scripts --cov-report=xml
+        artifacts:
+          - coverage.xml
+
+    - step: &test-examples
+        name: Test Examples
+        image: python:3.11-slim
+        caches:
+          - pip
+        script:
+          - pip install -U "setuptools>=83.0.0" -q
+          - pip install -e . -q
+          - pytest examples/ -v --tb=short -x
+
+    # ──────────────────────────────────────────────────────
+    # Quality Gates
+    # ──────────────────────────────────────────────────────
+    - step: &quality-gates
+        name: Quality Gates
+        image: python:3.11-slim
+        caches:
+          - pip
+        script:
+          - pip install -U "setuptools>=83.0.0" -q
+          - pip install -e . -q
+          - pip install ruff mypy bandit pip-audit -q
+          - ruff check tools/scripts/
+          - mypy tools/scripts/
+          - bandit -r tools/scripts/ -f json -o bandit-report.json || true
+          - pip-audit --desc
+        artifacts:
+          - bandit-report.json
+
+pipelines:
+  # ──────────────────────────────────────────────────────
+  # Pull Request Pipeline
+  # ──────────────────────────────────────────────────────
+  pull-requests:
+    '**':
+      - step: *quick-governance
+      - step: *test-python
+
+  # ──────────────────────────────────────────────────────
+  # Branch Pipeline (main/master/develop)
+  # ──────────────────────────────────────────────────────
+  branches:
+    main:
+      - step: *quick-governance
+      - step: *full-governance
+      - step: *test-python
+      - step: *test-examples
+      - step: *quality-gates
+    master:
+      - step: *quick-governance
+      - step: *full-governance
+      - step: *test-python
+      - step: *test-examples
+      - step: *quality-gates
+    develop:
+      - step: *quick-governance
+      - step: *full-governance
+      - step: *test-python
+      - step: *test-examples
+      - step: *quality-gates
+
+  # ──────────────────────────────────────────────────────
+  # Tag Pipeline (releases)
+  # ──────────────────────────────────────────────────────
+  tags:
+    '*':
+      - step: *quick-governance
+      - step: *full-governance
+      - step: *test-python
+      - step: *test-examples
+      - step: *quality-gates
+
+  # ──────────────────────────────────────────────────────
+  # Manual Pipeline
+  # ──────────────────────────────────────────────────────
+  custom:
+    full-governance:
+      - step: *quick-governance
+      - step: *full-governance
+      - step: *test-python
+      - step: *test-examples
+      - step: *quality-gates

@@ -388,20 +388,16 @@ class RetroCollector:
             lead_time=self._get_lead_time(),
             change_failure_rate=self._get_cfr(),
             mttr=self._get_mttr(),
-            
             # 质量指标
             test_coverage=self._get_coverage(),
             defect_density=self._get_defect_density(),
             security_findings=self._get_security_findings(),
-            
             # 架构指标
             arch_violations=self._get_arch_violations(),
             tech_debt_ratio=self._get_tech_debt(),
-            
             # 团队指标
             cycle_time=self._get_cycle_time(),
             wip_limit_breaches=self._get_wip_breaches(),
-            
             # AI 协作指标
             ai_pr_review_ratio=self._get_ai_review_ratio(),
             ai_code_gen_ratio=self._get_ai_gen_ratio(),

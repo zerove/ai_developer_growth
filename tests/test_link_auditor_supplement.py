@@ -249,9 +249,7 @@ class TestCheckTargetEdgeCases(unittest.TestCase):
     def test_check_target_nonexistent_returns_false(self):
         """Target that doesn't exist should return False."""
         index = {}
-        result = _check_target(
-            "totally_nonexistent", index, self.test_dir, self.test_dir
-        )
+        result = _check_target("totally_nonexistent", index, self.test_dir, self.test_dir)
         self.assertFalse(result)
 
     def test_check_target_trailing_backslash_stripped(self):

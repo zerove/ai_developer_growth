@@ -82,9 +82,7 @@ def _config_excluded_dirs() -> set[str]:
     except Exception:
         import logging
 
-        logging.getLogger(__name__).warning(
-            "Failed to load exclude config", exc_info=True
-        )
+        logging.getLogger(__name__).warning("Failed to load exclude config", exc_info=True)
     return overrides
 
 
@@ -180,9 +178,7 @@ def check_file(
     # Determine language
     lang = language or _detect_language(filepath)
     if lang == "unknown":
-        return CheckResult(
-            file=str(filepath), issues=[], language="unknown", skipped=True
-        )
+        return CheckResult(file=str(filepath), issues=[], language="unknown", skipped=True)
 
     # Load rules if not provided
     if rules is None:
@@ -197,9 +193,7 @@ def check_file(
     lines = content.splitlines()
 
     # Run all checkers
-    issues = _run_all_checkers(
-        filepath, content, lines, lang, rules, run_linters=run_linters
-    )
+    issues = _run_all_checkers(filepath, content, lines, lang, rules, run_linters=run_linters)
 
     # G1: 上下文感知 — 检测文件角色并调整严重度
     ctx_markers = _load_context_markers(filepath.parent)
@@ -309,9 +303,7 @@ def check_directory(
     framework = _detect_framework(dirpath)
     if framework:
         try:
-            fw_rules = load_rules_for_language(
-                framework, rules_dir() / "frameworks" / framework
-            )
+            fw_rules = load_rules_for_language(framework, rules_dir() / "frameworks" / framework)
             if rules:
                 from .rule_loader import _merge_rules
 
@@ -385,12 +377,8 @@ def check_directory(
             cached = store.get_cached_result(str(filepath), stat.st_mtime, stat.st_size)
             if cached is not None:
                 issues = [Issue(**i) for i in cached["issues"]]
-                return CheckResult(
-                    file=str(filepath), issues=issues, language=cached["language"]
-                )
-        result = check_file(
-            filepath, rules, lang, semantic=semantic, run_linters=run_linters
-        )
+                return CheckResult(file=str(filepath), issues=issues, language=cached["language"])
+        result = check_file(filepath, rules, lang, semantic=semantic, run_linters=run_linters)
         if store is not None and not result.skipped:
             stat = filepath.stat()
             store.set_cached_result(
@@ -424,9 +412,7 @@ def check_directory(
         warmup_rules = rules or {}
 
         pairs = [(fp, _detect_language(fp)) for fp in files]
-        with ProcessPoolExecutor(
-            max_workers=jobs, initializer=_worker_init, initargs=(warmup_rules,)
-        ) as executor:
+        with ProcessPoolExecutor(max_workers=jobs, initializer=_worker_init, initargs=(warmup_rules,)) as executor:
             worker_results: Iterator[CheckResult | None] = executor.map(
                 _worker_check,
                 pairs,

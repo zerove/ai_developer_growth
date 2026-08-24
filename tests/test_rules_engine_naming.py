@@ -90,11 +90,7 @@ class TestCheckNamingConventions:
         assert result == []
 
     def test_fix_hint_empty(self) -> None:
-        rules = {
-            "naming": {
-                "r": {"pattern": r"FIXME", "severity": "info", "message": "found"}
-            }
-        }
+        rules = {"naming": {"r": {"pattern": r"FIXME", "severity": "info", "message": "found"}}}
         result = check_naming_conventions(["x = FIXME"], rules, "f.py", "python")
         assert result[0].fix_hint == ""
 

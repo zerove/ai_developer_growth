@@ -69,9 +69,7 @@ def get_trend_data(conn: sqlite3.Connection, limit: int = 30) -> list[dict[str, 
 
 def get_latest_report(conn: sqlite3.Connection) -> dict[str, Any] | None:
     """Get the most recent full report."""
-    row = conn.execute(
-        "SELECT report_json FROM quality_runs ORDER BY id DESC LIMIT 1"
-    ).fetchone()
+    row = conn.execute("SELECT report_json FROM quality_runs ORDER BY id DESC LIMIT 1").fetchone()
     if row and row[0]:
         return cast(dict[str, Any], json.loads(row[0]))
     return None
@@ -521,15 +519,11 @@ def _load_rules_summary() -> dict[str, Any]:
     for lang_id in languages:
         try:
             r = load_rules_for_language(lang_id)
-            summary[lang_id] = len(r.get("anti_patterns", [])) + len(
-                r.get("security_patterns", [])
-            )
+            summary[lang_id] = len(r.get("anti_patterns", [])) + len(r.get("security_patterns", []))
         except Exception as e:
             import logging
 
-            logging.getLogger(__name__).debug(
-                f"Failed to load rules for {lang_id}: {e}"
-            )
+            logging.getLogger(__name__).debug(f"Failed to load rules for {lang_id}: {e}")
             summary[lang_id] = -1
     return summary
 
@@ -539,11 +533,7 @@ def _get_rule_docs(rule_id: str) -> dict[str, Any]:
     import json
     from pathlib import Path
 
-    mapping_path = (
-        Path(__file__).resolve().parent.parent.parent.parent
-        / ".jcode"
-        / "rule-docs-mapping.json"
-    )
+    mapping_path = Path(__file__).resolve().parent.parent.parent.parent / ".jcode" / "rule-docs-mapping.json"
     if not mapping_path.exists():
         return {
             "status": "ok",
@@ -663,9 +653,7 @@ def main() -> None:
 
         uvicorn.run(app, host="0.0.0.0", port=args.port)  # nosec - dev only
     except ImportError:
-        logger.info(
-            "Error: uvicorn required. Install: pip install uvicorn", file=sys.stderr
-        )
+        logger.info("Error: uvicorn required. Install: pip install uvicorn", file=sys.stderr)
         sys.exit(1)
 
 

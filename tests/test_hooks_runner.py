@@ -214,9 +214,7 @@ class TestRunGovernanceAudit(unittest.TestCase):
     def test_governance_audit_import_fails(self, mock_path: MagicMock) -> None:
         """Test governance audit when module import fails."""
         # This tests the ImportError path
-        mock_path.return_value.resolve.return_value.parent.parent.parent = Path(
-            "/nonexistent"
-        )
+        mock_path.return_value.resolve.return_value.parent.parent.parent = Path("/nonexistent")
         # The function will raise ImportError due to missing module
         # We just verify it doesn't crash silently
         try:
@@ -233,9 +231,7 @@ class TestMainCLI(unittest.TestCase):
         from tools.scripts.hooks_runner import main
 
         with patch("sys.argv", ["hooks_runner.py", "lint"]):
-            with patch(
-                "tools.scripts.hooks_runner.run_lint", return_value=(True, "ok")
-            ) as mock:
+            with patch("tools.scripts.hooks_runner.run_lint", return_value=(True, "ok")) as mock:
                 result = main()
                 self.assertEqual(result, 0)
                 mock.assert_called_once()
@@ -245,9 +241,7 @@ class TestMainCLI(unittest.TestCase):
         from tools.scripts.hooks_runner import main
 
         with patch("sys.argv", ["hooks_runner.py", "format"]):
-            with patch(
-                "tools.scripts.hooks_runner.run_format_check", return_value=(True, "ok")
-            ):
+            with patch("tools.scripts.hooks_runner.run_format_check", return_value=(True, "ok")):
                 result = main()
                 self.assertEqual(result, 0)
 
@@ -256,9 +250,7 @@ class TestMainCLI(unittest.TestCase):
         from tools.scripts.hooks_runner import main
 
         with patch("sys.argv", ["hooks_runner.py", "typecheck"]):
-            with patch(
-                "tools.scripts.hooks_runner.run_typecheck", return_value=(True, "ok")
-            ):
+            with patch("tools.scripts.hooks_runner.run_typecheck", return_value=(True, "ok")):
                 result = main()
                 self.assertEqual(result, 0)
 
@@ -267,9 +259,7 @@ class TestMainCLI(unittest.TestCase):
         from tools.scripts.hooks_runner import main
 
         with patch("sys.argv", ["hooks_runner.py", "test"]):
-            with patch(
-                "tools.scripts.hooks_runner.run_tests", return_value=(True, "ok")
-            ):
+            with patch("tools.scripts.hooks_runner.run_tests", return_value=(True, "ok")):
                 result = main()
                 self.assertEqual(result, 0)
 
@@ -278,9 +268,7 @@ class TestMainCLI(unittest.TestCase):
         from tools.scripts.hooks_runner import main
 
         with patch("sys.argv", ["hooks_runner.py", "security"]):
-            with patch(
-                "tools.scripts.hooks_runner.run_security", return_value=(True, "ok")
-            ):
+            with patch("tools.scripts.hooks_runner.run_security", return_value=(True, "ok")):
                 result = main()
                 self.assertEqual(result, 0)
 
@@ -300,12 +288,8 @@ class TestMainCLI(unittest.TestCase):
         """Test quality-gate command dispatch."""
         from tools.scripts.hooks_runner import main
 
-        with patch(
-            "sys.argv", ["hooks_runner.py", "quality-gate", "--path", ".", "--full"]
-        ):
-            with patch(
-                "tools.scripts.hooks_runner.run_quality_gate", return_value=(True, "ok")
-            ):
+        with patch("sys.argv", ["hooks_runner.py", "quality-gate", "--path", ".", "--full"]):
+            with patch("tools.scripts.hooks_runner.run_quality_gate", return_value=(True, "ok")):
                 result = main()
                 self.assertEqual(result, 0)
 
@@ -326,9 +310,7 @@ class TestMainCLI(unittest.TestCase):
         from tools.scripts.hooks_runner import main
 
         with patch("sys.argv", ["hooks_runner.py", "full"]):
-            with patch(
-                "tools.scripts.hooks_runner.run_lint", return_value=(True, "ok")
-            ):
+            with patch("tools.scripts.hooks_runner.run_lint", return_value=(True, "ok")):
                 with patch(
                     "tools.scripts.hooks_runner.run_format_check",
                     return_value=(True, "ok"),
@@ -361,9 +343,7 @@ class TestMainCLI(unittest.TestCase):
         from tools.scripts.hooks_runner import main
 
         with patch("sys.argv", ["hooks_runner.py", "lint"]):
-            with patch(
-                "tools.scripts.hooks_runner.run_lint", return_value=(False, "errors")
-            ):
+            with patch("tools.scripts.hooks_runner.run_lint", return_value=(False, "errors")):
                 result = main()
                 self.assertEqual(result, 1)
 
@@ -372,9 +352,7 @@ class TestMainCLI(unittest.TestCase):
         from tools.scripts.hooks_runner import main
 
         with patch("sys.argv", ["hooks_runner.py", "diff"]):
-            with patch(
-                "tools.scripts.hooks_runner.run_diff_checks", return_value=(True, "ok")
-            ):
+            with patch("tools.scripts.hooks_runner.run_diff_checks", return_value=(True, "ok")):
                 result = main()
                 self.assertEqual(result, 0)
 

@@ -176,9 +176,7 @@ class TestCheckTarget(unittest.TestCase):
     def test_check_target_not_found(self):
         """Test target that doesn't exist returns False."""
         index = _build_index(self.test_dir)
-        self.assertFalse(
-            _check_target("nonexistent", index, self.test_dir, self.test_dir)
-        )
+        self.assertFalse(_check_target("nonexistent", index, self.test_dir, self.test_dir))
 
 
 class TestMain(unittest.TestCase):

@@ -12,9 +12,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
 # 添加搜索模块路径
-sys.path.insert(
-    0, os.path.join(os.path.dirname(__file__), "examples/ai-navigation/src")
-)
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "examples/ai-navigation/src"))
 
 from enhanced_tfidf import Document, EnhancedTFIDF, create_enhanced_index
 
@@ -81,9 +79,7 @@ def load_documents():
                                 if line.startswith("title:"):
                                     title = line.split(":", 1)[1].strip().strip("\"'")
                                 elif line.startswith("category:"):
-                                    category = (
-                                        line.split(":", 1)[1].strip().strip("\"'")
-                                    )
+                                    category = line.split(":", 1)[1].strip().strip("\"'")
                                 elif line.startswith("tags:"):
                                     tags_str = line.split(":", 1)[1].strip()
                                     if tags_str.startswith("["):
@@ -93,17 +89,11 @@ def load_documents():
                                     else:
                                         tags = [t.strip() for t in tags_str.split(",")]
                                 elif line.startswith("difficulty:"):
-                                    difficulty = (
-                                        line.split(":", 1)[1].strip().strip("\"'")
-                                    )
+                                    difficulty = line.split(":", 1)[1].strip().strip("\"'")
 
                     # 移除 frontmatter 获取正文
                     if content.startswith("---"):
-                        content = (
-                            content.split("---", 2)[2]
-                            if len(content.split("---", 2)) >= 3
-                            else content
-                        )
+                        content = content.split("---", 2)[2] if len(content.split("---", 2)) >= 3 else content
 
                     rel_path = os.path.relpath(filepath, docs_dir)
                     doc_id = rel_path.replace(".md", "").replace("/", "_")

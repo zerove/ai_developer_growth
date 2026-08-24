@@ -35,9 +35,7 @@ def install_global() -> bool:
     target = JCODE_GOVERNANCE / "ai-dev-framework"
     if target.exists():
         shutil.rmtree(target)
-    shutil.copytree(
-        AI_DEV_FRAMEWORK, target, ignore=shutil.ignore_patterns("__pycache__", ".git")
-    )
+    shutil.copytree(AI_DEV_FRAMEWORK, target, ignore=shutil.ignore_patterns("__pycache__", ".git"))
     print(f"  ✅ ai-dev-framework → {target}")
 
     # 创建 adg 包装脚本（使用相对路径）
@@ -176,9 +174,7 @@ def main() -> int:
 
     parser = argparse.ArgumentParser(description="jcode Governance Installer")
     parser.add_argument("--path", help="仅初始化指定项目（不安装全局）")
-    parser.add_argument(
-        "--global-only", action="store_true", help="仅安装全局，不初始化项目"
-    )
+    parser.add_argument("--global-only", action="store_true", help="仅安装全局，不初始化项目")
 
     args = parser.parse_args()
 

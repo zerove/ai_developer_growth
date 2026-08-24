@@ -2,10 +2,9 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field, asdict
-from pathlib import Path
-from typing import Optional
 import json
+from dataclasses import asdict, dataclass, field
+from pathlib import Path
 
 
 @dataclass
@@ -164,7 +163,7 @@ class LearningPathManager:
         self.data_dir = Path(data_dir)
         self.data_dir.mkdir(parents=True, exist_ok=True)
 
-    def get_template(self, path_id: str) -> Optional[LearningPathTemplate]:
+    def get_template(self, path_id: str) -> LearningPathTemplate | None:
         """Get a built-in or custom template."""
         return TEMPLATES.get(path_id)
 

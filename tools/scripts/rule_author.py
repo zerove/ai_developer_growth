@@ -109,9 +109,7 @@ def cmd_init(args: argparse.Namespace) -> None:
     }
 
     with open(rules_dir / "anti_patterns.yml", "w") as f:
-        yaml.dump(
-            base, f, default_flow_style=False, allow_unicode=True, sort_keys=False
-        )
+        yaml.dump(base, f, default_flow_style=False, allow_unicode=True, sort_keys=False)
 
     print(f"Initialized rule directory for '{lang}' at {rules_dir}")
     print(f"Created: {rules_dir / 'anti_patterns.yml'}")
@@ -127,21 +125,14 @@ def _get_rule_details(args: argparse.Namespace, lang: str) -> dict[str, str] | N
         return None
 
     name = args.name or input("Rule name: ").strip()
-    severity = (
-        args.severity
-        or input(f"Severity ({'/'.join(SEVERITY_LEVELS)}): ").strip()
-        or "warning"
-    )
+    severity = args.severity or input(f"Severity ({'/'.join(SEVERITY_LEVELS)}): ").strip() or "warning"
     message = args.message or input("Message: ").strip()
 
     if not name or not message:
         print("Name and message are required")
         return None
 
-    pattern = (
-        args.pattern
-        or input("Regex pattern (leave empty for non-pattern rules): ").strip()
-    )
+    pattern = args.pattern or input("Regex pattern (leave empty for non-pattern rules): ").strip()
     fix_hint = args.fix_hint or input("Fix hint (optional): ").strip()
 
     return {
@@ -235,9 +226,7 @@ def cmd_add_rule(args: argparse.Namespace) -> None:
     data[category].append(new_rule)
 
     with open(rules_file, "w") as f:
-        yaml.dump(
-            data, f, default_flow_style=False, allow_unicode=True, sort_keys=False
-        )
+        yaml.dump(data, f, default_flow_style=False, allow_unicode=True, sort_keys=False)
 
     print(f"Added rule '{rule_details['id']}' to {category}")
     print(f"  severity: {rule_details['severity']}")
@@ -246,9 +235,7 @@ def cmd_add_rule(args: argparse.Namespace) -> None:
     print(f"  message: {rule_details['message']}")
 
 
-def _validate_single_rule(
-    category: str, rule: dict[str, Any], rule_id: str
-) -> tuple[int, int]:
+def _validate_single_rule(category: str, rule: dict[str, Any], rule_id: str) -> tuple[int, int]:
     """Validate a single rule. Returns (errors, warnings)."""
     errors = 0
     warnings = 0
@@ -319,17 +306,12 @@ def cmd_validate(args: argparse.Namespace) -> None:
                 print(f"  ✗ Rule in {category} is not a dictionary: {rule}")
                 errors += 1
                 continue
-            rule_errors, rule_warnings = _validate_single_rule(
-                category, rule, rule.get("id", "?")
-            )
+            rule_errors, rule_warnings = _validate_single_rule(category, rule, rule.get("id", "?"))
             errors += rule_errors
             warnings += rule_warnings
 
     if errors == 0 and warnings == 0:
-        total_rules = sum(
-            len(data.get(c, []))
-            for c in ["anti_patterns", "naming_conventions", "complexity"]
-        )
+        total_rules = sum(len(data.get(c, [])) for c in ["anti_patterns", "naming_conventions", "complexity"])
         print(f"  ✓ Valid ({total_rules} rules)")
     else:
         print(f"\n  {errors} errors, {warnings} warnings")
@@ -358,9 +340,7 @@ def cmd_scaffold(args: argparse.Namespace) -> None:
             data = existing
 
         with open(filepath, "w") as f:
-            yaml.dump(
-                data, f, default_flow_style=False, allow_unicode=True, sort_keys=False
-            )
+            yaml.dump(data, f, default_flow_style=False, allow_unicode=True, sort_keys=False)
 
     print(f"Scaffolded rule set for '{lang}' at {rules_dir}")
     print("  Created: anti_patterns.yml (with 1 example rule per category)")
@@ -383,9 +363,7 @@ def cmd_template(args: argparse.Namespace) -> None:
 
 
 def main() -> int:
-    parser = argparse.ArgumentParser(
-        description="Rule Authoring CLI: create and validate rules"
-    )
+    parser = argparse.ArgumentParser(description="Rule Authoring CLI: create and validate rules")
     sub = parser.add_subparsers(dest="command")
 
     init_p = sub.add_parser("init", help="Initialize rule directory")
@@ -394,9 +372,7 @@ def main() -> int:
 
     add_p = sub.add_parser("add-rule", help="Add a new rule")
     add_p.add_argument("--lang", type=str, required=True, help="Language")
-    add_p.add_argument(
-        "--category", type=str, required=True, choices=list(TEMPLATES.keys())
-    )
+    add_p.add_argument("--category", type=str, required=True, choices=list(TEMPLATES.keys()))
     add_p.add_argument("--id", type=str, help="Rule ID")
     add_p.add_argument("--name", type=str, help="Rule name")
     add_p.add_argument("--severity", type=str, choices=SEVERITY_LEVELS)
@@ -411,9 +387,7 @@ def main() -> int:
     sc_p.add_argument("--lang", type=str, required=True, help="Language name")
 
     tmpl_p = sub.add_parser("template", help="Show category template")
-    tmpl_p.add_argument(
-        "--category", type=str, required=True, choices=list(TEMPLATES.keys())
-    )
+    tmpl_p.add_argument("--category", type=str, required=True, choices=list(TEMPLATES.keys()))
 
     args = parser.parse_args()
 

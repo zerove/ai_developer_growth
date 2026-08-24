@@ -31,9 +31,7 @@ from tools.scripts.rule_registry import (
 def fake_registry(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
     """Redirect registry to tmp_path."""
     monkeypatch.setattr("tools.scripts.rule_registry._registry_dir", lambda: tmp_path)
-    monkeypatch.setattr(
-        "tools.scripts.rule_registry._packs_dir", lambda: tmp_path / "packs"
-    )
+    monkeypatch.setattr("tools.scripts.rule_registry._packs_dir", lambda: tmp_path / "packs")
     return tmp_path
 
 
@@ -165,9 +163,7 @@ class TestCmdPublish:
 class TestCmdInstall:
     """Tests for cmd_install()."""
 
-    def test_install_pack(
-        self, fake_registry: Path, capsys: Any, tmp_path: Path
-    ) -> None:
+    def test_install_pack(self, fake_registry: Path, capsys: Any, tmp_path: Path) -> None:
         # Publish first
         packs = fake_registry / "packs"
         packs.mkdir(exist_ok=True)

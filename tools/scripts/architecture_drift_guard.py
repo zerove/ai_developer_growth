@@ -23,11 +23,7 @@ class ArchitectureDriftGuard:
             if "domain" in file_path.parts:
                 try:
                     content = file_path.read_text(encoding="utf-8")
-                    if (
-                        "infrastructure" in content
-                        or "web" in content
-                        or "fastapi" in content
-                    ):
+                    if "infrastructure" in content or "web" in content or "fastapi" in content:
                         rel = file_path.relative_to(self.root_dir)
                         self.violations.append(
                             f"Architecture Drift in {rel}: Domain layer imports infrastructure/web components."
@@ -35,9 +31,7 @@ class ArchitectureDriftGuard:
                 except Exception as e:
                     import logging
 
-                    logging.getLogger(__name__).debug(
-                        f"Failed to read {file_path}: {e}"
-                    )
+                    logging.getLogger(__name__).debug(f"Failed to read {file_path}: {e}")
         return self.violations
 
     def check_adr_references(self) -> list[str]:

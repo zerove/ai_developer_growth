@@ -162,7 +162,7 @@ class BaseAgent:
         try:
             return self._generate(history)
         except AgentFailureError:
-            raise  # noqa: py-bare-raise -- except 块内合法重抛
+            raise
         except Exception as exc:
             raise AgentFailureError(
                 f"Agent {self._role.value} failed: {exc}",

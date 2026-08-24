@@ -180,7 +180,7 @@ class ChaosExperimentRunner:
                     body=experiment_yaml,
                 )
             else:
-                raise  # noqa: py-bare-raise -- except 块内合法重抛非 409 异常
+                raise
 
         # 监控实验执行
         result = self._monitor_experiment(experiment_name, config.get("duration", "5m"))

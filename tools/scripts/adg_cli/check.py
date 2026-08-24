@@ -21,6 +21,36 @@ from tools.scripts.adg_cli.git import (
 )
 
 
+def _check_ast_semantic(
+    filepath: Path,
+    lines: list[str],
+    severity_filter: str | None,
+) -> list[Issue]:
+    """AST 语义检查: bare-raise 的 except 块判定 (正则无法表达)。"""
+    if filepath.suffix != ".py":
+        return []
+
+    from tools.scripts.rules_engine.ast_semantic import check_python_bare_raise
+
+    result: list[Issue] = []
+    for ast_issue in check_python_bare_raise(str(filepath), lines):
+        if severity_filter and _severity_rank(ast_issue.severity) > _severity_rank(severity_filter):
+            continue
+        result.append(
+            Issue(
+                rule_id=ast_issue.rule_id,
+                severity=ast_issue.severity,
+                category=ast_issue.category,
+                file=str(filepath),
+                line=ast_issue.line,
+                column=ast_issue.column,
+                message=ast_issue.message,
+                fix_hint=ast_issue.fix_hint,
+            )
+        )
+    return result
+
+
 def check_file(filepath: Path, rules: dict[str, Any], severity_filter: str | None = None) -> list[Issue]:
     """Check a single file against rules."""
     issues: list[Issue] = []
@@ -40,11 +70,16 @@ def check_file(filepath: Path, rules: dict[str, Any], severity_filter: str | Non
     lines = content.split("\n")
 
     for pattern_def in rules.get("anti_patterns", []):
+        # 显式禁用的规则跳过 (如已迁移到 AST 实现的 py-bare-raise)
+        if pattern_def.get("enabled") is False:
+            continue
         severity = pattern_def.get("severity", "warning")
         if severity_filter and _severity_rank(severity) > _severity_rank(severity_filter):
             continue
 
         issues.extend(_check_pattern(filepath, content, lines, pattern_def))
+
+    issues.extend(_check_ast_semantic(filepath, lines, severity_filter))
 
     return issues
 

@@ -333,6 +333,12 @@ def _run_all_checkers(
     elif lang in ("javascript", "typescript"):
         issues.extend(check_js_complexity(lines, rules, str(filepath)))
 
+    # AST 语义检查: 正则无法表达的规则 (bare-raise 的 except 块判定)
+    if lang == "python":
+        from .ast_semantic import check_python_bare_raise
+
+        issues.extend(check_python_bare_raise(str(filepath), lines))
+
     # Run registered plugins
     for plugin in get_plugins_for_language(lang):
         try:

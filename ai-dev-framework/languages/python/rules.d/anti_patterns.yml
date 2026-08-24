@@ -151,6 +151,9 @@ anti_patterns:
   name: Bare raise outside except block
   severity: error
   category: error_handling
+  # 正则版已停用: 无法判断 except 块语义, 误报合法 re-raise。
+  # 由 rules_engine/ast_semantic.py 的 AST 实现接管 (保留条目供文档引用)
+  enabled: false
   pattern: ^\s*raise\s*$
   message: Bare raise without arguments only works inside an except handler'
   fix_hint: Use 'raise' only inside except blocks, or use 'raise ExceptionType()'

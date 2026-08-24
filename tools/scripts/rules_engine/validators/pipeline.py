@@ -80,6 +80,9 @@ def check_anti_patterns(lines: list[str], rules: dict[str, Any], filepath: str) 
     filename = Path(filepath).name
 
     for pattern_def in anti_patterns:
+        # 显式禁用的规则跳过 (如已迁移到 AST 实现的 py-bare-raise)
+        if pattern_def.get("enabled") is False:
+            continue
         # Skip rule if file is in exclude_files list
         exclude_files = pattern_def.get("exclude_files", [])
         if exclude_files and any(filename == ef or Path(filepath).match(ef) for ef in exclude_files):
@@ -346,6 +349,11 @@ def validate_file(
         from tools.scripts.complexity_analyzer import check_python_ast
 
         result.issues.extend(check_python_ast(str(filepath), lines))
+
+        # AST 语义检查: bare-raise 的 except 块判定 (正则无法表达)
+        from tools.scripts.rules_engine.ast_semantic import check_python_bare_raise
+
+        result.issues.extend(check_python_bare_raise(str(filepath), lines))
 
     # 5. 豁免过滤: 行级 noqa + 文件级 ignored-rules.toml (与 checker.check_file 同源)
     from tools.scripts.rules_engine.checker import _filter_suppressed_issues

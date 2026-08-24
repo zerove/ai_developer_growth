@@ -41,6 +41,8 @@ def check_anti_patterns(filepath: Path, language: str, rules: dict[str, Any] | N
 
     # Check each pattern
     for pattern_def in all_patterns:
+        if pattern_def.get("enabled") is False:
+            continue
         issues.extend(_check_pattern(filepath, content, lines, pattern_def))
 
     return issues

@@ -1,3 +1,359 @@
+## 更新记录: 2026-08-24 17:33:38
+
+### 任务
+Git 变更同步
+
+### 变更摘要
+diff --git a/.jcode/scripts/multi_agent_orch.py b/.jcode/scripts/multi_agent_orch.py
+index e6c2976..2a61129 100644
+--- a/.jcode/scripts/multi_agent_orch.py
++++ b/.jcode/scripts/multi_agent_orch.py
+@@ -162,7 +162,7 @@ class BaseAgent:
+         try:
+             return self._generate(history)
+         except AgentFailureError:
+-            raise  # noqa: py-bare-raise -- except 块内合法重抛
++            raise
+         except Exception as exc:
+             raise AgentFailureError(
+                 f"Agent {self._role.value} failed: {exc}",
+diff --git a/CONTEXT.md b/CONTEXT.md
+index 1497279..609b2c3 100644
+--- a/CONTEXT.md
++++ b/CONTEXT.md
+@@ -1,3 +1,361 @@
++## 更新记录: 2026-08-24 17:32:28
++
++### 任务
++Git 变更同步
++
++### 变更摘要
++diff --git a/.jcode/scripts/multi_agent_orch.py b/.jcode/scripts/multi_agent_orch.py
++index e6c2976..2a61129 100644
++--- a/.jcode/scripts/multi_agent_orch.py
+++++ b/.jcode/scripts/multi_agent_orch.py
++@@ -162,7 +162,7 @@ class BaseAgent:
++         try:
++             return self._generate(history)
++         except AgentFailureError:
++-            raise  # noqa: py-bare-raise -- except 块内合法重抛
+++            raise
++         except Exception as exc:
++             raise AgentFailureError(
++                 f"Agent {self._role.value} failed: {exc}",
++diff --git a/CONTEXT.md b/CONTEXT.md
++index 1497279..97e030c 100644
++--- a/CONTEXT.md
+++++ b/CONTEXT.md
++@@ -1,3 +1,291 @@
+++## 更新记录: 2026-08-24 17:29:35
+++
+++### 任务
+++Git 变更同步
+++
+++### 变更摘要
+++diff --git a/.jcode/scripts/multi_agent_orch.py b/.jcode/scripts/multi_agent_orch.py
+++index e6c2976..2a61129 100644
+++--- a/.jcode/scripts/multi_agent_orch.py
++++++ b/.jcode/scripts/multi_agent_orch.py
+++@@ -162,7 +162,7 @@ class BaseAgent:
+++         try:
+++             return self._generate(history)
+++         except AgentFailureError:
+++-            raise  # noqa: py-bare-raise -- except 块内合法重抛
++++            raise
+++         except Exception as exc:
+++             raise AgentFailureError(
+++                 f"Agent {self._role....
+
+---
+
+## 更新记录: 2026-08-24 17:32:28
+
+### 任务
+Git 变更同步
+
+### 变更摘要
+diff --git a/.jcode/scripts/multi_agent_orch.py b/.jcode/scripts/multi_agent_orch.py
+index e6c2976..2a61129 100644
+--- a/.jcode/scripts/multi_agent_orch.py
++++ b/.jcode/scripts/multi_agent_orch.py
+@@ -162,7 +162,7 @@ class BaseAgent:
+         try:
+             return self._generate(history)
+         except AgentFailureError:
+-            raise  # noqa: py-bare-raise -- except 块内合法重抛
++            raise
+         except Exception as exc:
+             raise AgentFailureError(
+                 f"Agent {self._role.value} failed: {exc}",
+diff --git a/CONTEXT.md b/CONTEXT.md
+index 1497279..97e030c 100644
+--- a/CONTEXT.md
++++ b/CONTEXT.md
+@@ -1,3 +1,291 @@
++## 更新记录: 2026-08-24 17:29:35
++
++### 任务
++Git 变更同步
++
++### 变更摘要
++diff --git a/.jcode/scripts/multi_agent_orch.py b/.jcode/scripts/multi_agent_orch.py
++index e6c2976..2a61129 100644
++--- a/.jcode/scripts/multi_agent_orch.py
+++++ b/.jcode/scripts/multi_agent_orch.py
++@@ -162,7 +162,7 @@ class BaseAgent:
++         try:
++             return self._generate(history)
++         except AgentFailureError:
++-            raise  # noqa: py-bare-raise -- except 块内合法重抛
+++            raise
++         except Exception as exc:
++             raise AgentFailureError(
++                 f"Agent {self._role.value} failed: {exc}",
++diff --git a/CONTEXT.md b/CONTEXT.md
++index 1497279..8c93f0d 100644
++--- a/CONTEXT.md
+++++ b/CONTEXT.md
++@@ -1,3 +1,221 @@
+++## 更新记录: 2026-08-24 17:27:21
+++
+++### 任务
+++Git 变更同步
+++
+++### 变更摘要
+++diff --git a/.jcode/scripts/multi_agent_orch.py b/.jcode/scripts/multi_agent_orch.py
+++index e6c2976..2a61129 100644
+++--- a/.jcode/scripts/multi_agent_orch.py
++++++ b/.jcode/scripts/multi_agent_orch.py
+++@@ -162,7 +162,7 @@ class BaseAgent:
+++         try:
+++             return self._generate(history)
+++         except AgentFailureError:
+++-            raise  # noqa: py-bare-raise -- except 块内合法重抛
++++            raise
+++         except Exception as exc:
+++             raise AgentFailureError(
+++                 f"Agent {self._role....
+
+---
+
+## 更新记录: 2026-08-24 17:29:35
+
+### 任务
+Git 变更同步
+
+### 变更摘要
+diff --git a/.jcode/scripts/multi_agent_orch.py b/.jcode/scripts/multi_agent_orch.py
+index e6c2976..2a61129 100644
+--- a/.jcode/scripts/multi_agent_orch.py
++++ b/.jcode/scripts/multi_agent_orch.py
+@@ -162,7 +162,7 @@ class BaseAgent:
+         try:
+             return self._generate(history)
+         except AgentFailureError:
+-            raise  # noqa: py-bare-raise -- except 块内合法重抛
++            raise
+         except Exception as exc:
+             raise AgentFailureError(
+                 f"Agent {self._role.value} failed: {exc}",
+diff --git a/CONTEXT.md b/CONTEXT.md
+index 1497279..8c93f0d 100644
+--- a/CONTEXT.md
++++ b/CONTEXT.md
+@@ -1,3 +1,221 @@
++## 更新记录: 2026-08-24 17:27:21
++
++### 任务
++Git 变更同步
++
++### 变更摘要
++diff --git a/.jcode/scripts/multi_agent_orch.py b/.jcode/scripts/multi_agent_orch.py
++index e6c2976..2a61129 100644
++--- a/.jcode/scripts/multi_agent_orch.py
+++++ b/.jcode/scripts/multi_agent_orch.py
++@@ -162,7 +162,7 @@ class BaseAgent:
++         try:
++             return self._generate(history)
++         except AgentFailureError:
++-            raise  # noqa: py-bare-raise -- except 块内合法重抛
+++            raise
++         except Exception as exc:
++             raise AgentFailureError(
++                 f"Agent {self._role.value} failed: {exc}",
++diff --git a/CONTEXT.md b/CONTEXT.md
++index 1497279..9db7d1b 100644
++--- a/CONTEXT.md
+++++ b/CONTEXT.md
++@@ -1,3 +1,144 @@
+++## 更新记录: 2026-08-24 17:23:26
+++
+++### 任务
+++Git 变更同步
+++
+++### 变更摘要
+++diff --git a/.jcode/scripts/multi_agent_orch.py b/.jcode/scripts/multi_agent_orch.py
+++index e6c2976..2a61129 100644
+++--- a/.jcode/scripts/multi_agent_orch.py
++++++ b/.jcode/scripts/multi_agent_orch.py
+++@@ -162,7 +162,7 @@ class BaseAgent:
+++         try:
+++             return self._generate(history)
+++         except AgentFailureError:
+++-            raise  # noqa: py-bare-raise -- except 块内合法重抛
++++            raise
+++         except Exception as exc:
+++             raise AgentFailureError(
+++                 f"Agent {self._role....
+
+---
+
+## 更新记录: 2026-08-24 17:27:21
+
+### 任务
+Git 变更同步
+
+### 变更摘要
+diff --git a/.jcode/scripts/multi_agent_orch.py b/.jcode/scripts/multi_agent_orch.py
+index e6c2976..2a61129 100644
+--- a/.jcode/scripts/multi_agent_orch.py
++++ b/.jcode/scripts/multi_agent_orch.py
+@@ -162,7 +162,7 @@ class BaseAgent:
+         try:
+             return self._generate(history)
+         except AgentFailureError:
+-            raise  # noqa: py-bare-raise -- except 块内合法重抛
++            raise
+         except Exception as exc:
+             raise AgentFailureError(
+                 f"Agent {self._role.value} failed: {exc}",
+diff --git a/CONTEXT.md b/CONTEXT.md
+index 1497279..9db7d1b 100644
+--- a/CONTEXT.md
++++ b/CONTEXT.md
+@@ -1,3 +1,144 @@
++## 更新记录: 2026-08-24 17:23:26
++
++### 任务
++Git 变更同步
++
++### 变更摘要
++diff --git a/.jcode/scripts/multi_agent_orch.py b/.jcode/scripts/multi_agent_orch.py
++index e6c2976..2a61129 100644
++--- a/.jcode/scripts/multi_agent_orch.py
+++++ b/.jcode/scripts/multi_agent_orch.py
++@@ -162,7 +162,7 @@ class BaseAgent:
++         try:
++             return self._generate(history)
++         except AgentFailureError:
++-            raise  # noqa: py-bare-raise -- except 块内合法重抛
+++            raise
++         except Exception as exc:
++             raise AgentFailureError(
++                 f"Agent {self._role.value} failed: {exc}",
++diff --git a/CONTEXT.md b/CONTEXT.md
++index 1497279..68031de 100644
++--- a/CONTEXT.md
+++++ b/CONTEXT.md
++@@ -1,3 +1,75 @@
+++## 更新记录: 2026-08-24 17:11:57
+++
+++### 任务
+++Git 变更同步
+++
+++### 变更摘要
+++diff --git a/CONTEXT.md b/CONTEXT.md
+++index 8ea5429..1497279 100644
+++--- a/CONTEXT.md
++++++ b/CONTEXT.md
+++@@ -1,3 +1,72 @@
++++## 更新记录: 2026-08-24 16:43:13
++++
++++### 任务
++++Git 变更同步
++++
++++### 变更摘要
++++diff --git a/.jcode/scripts/context-sync.py b/.jcode/scripts/context-sync.py
++++index c507a24..bf57e0e 100644
++++--- a/.jcode/scripts/context-sync.py
+++++++ b/.jcode/scripts/context-sync.py
++++@@ -73,7 +73,7 @@ class SpecAuditor:
++++             violations.append("检测到可能的 SQL 拼接，建议使用参数化查询")
++++
++++         # 检查未处理异常
++++-        if re.s...
+
+---
+
+## 更新记录: 2026-08-24 17:23:26
+
+### 任务
+Git 变更同步
+
+### 变更摘要
+diff --git a/.jcode/scripts/multi_agent_orch.py b/.jcode/scripts/multi_agent_orch.py
+index e6c2976..2a61129 100644
+--- a/.jcode/scripts/multi_agent_orch.py
++++ b/.jcode/scripts/multi_agent_orch.py
+@@ -162,7 +162,7 @@ class BaseAgent:
+         try:
+             return self._generate(history)
+         except AgentFailureError:
+-            raise  # noqa: py-bare-raise -- except 块内合法重抛
++            raise
+         except Exception as exc:
+             raise AgentFailureError(
+                 f"Agent {self._role.value} failed: {exc}",
+diff --git a/CONTEXT.md b/CONTEXT.md
+index 1497279..68031de 100644
+--- a/CONTEXT.md
++++ b/CONTEXT.md
+@@ -1,3 +1,75 @@
++## 更新记录: 2026-08-24 17:11:57
++
++### 任务
++Git 变更同步
++
++### 变更摘要
++diff --git a/CONTEXT.md b/CONTEXT.md
++index 8ea5429..1497279 100644
++--- a/CONTEXT.md
+++++ b/CONTEXT.md
++@@ -1,3 +1,72 @@
+++## 更新记录: 2026-08-24 16:43:13
+++
+++### 任务
+++Git 变更同步
+++
+++### 变更摘要
+++diff --git a/.jcode/scripts/context-sync.py b/.jcode/scripts/context-sync.py
+++index c507a24..bf57e0e 100644
+++--- a/.jcode/scripts/context-sync.py
++++++ b/.jcode/scripts/context-sync.py
+++@@ -73,7 +73,7 @@ class SpecAuditor:
+++             violations.append("检测到可能的 SQL 拼接，建议使用参数化查询")
+++
+++         # 检查未处理异常
+++-        if re.search(r"except\s*:", diff) and not re.search(r"except\s+\w+", diff):
++++        if re.search(r"except\s*:", diff) and not re.search(r"except\s+\w+", diff):  # noqa: py-bare-except -- 检测逻辑本身, 非真实 except 语句
+++             violations.append("检测到裸露的 except:，建议指定异常类型")
+++
+++         # 检查类型注解
+++diff --git a/.jcode/scripts/multi_agent_orch.py b/.jcode/scripts/multi_agent_orch.py
+++index 2a61129..e6c2976 100644
+++--- a/.jcode/scripts/multi_agent_orch.py
++++++ b/.jcode/scripts/multi_agent_orch.py
+++@@ -162,7 +162,7 @@ class BaseAgent:
+++         try:
+++             return self._generate(history)
+++         except AgentFailureError:
+++-            raise
++++            raise  # noqa: py-bare-raise -- except 块内合法重抛
+++         except Exception as exc:
+++         ...
+
+---
+
 ## 更新记录: 2026-08-24 17:11:57
 
 ### 任务
@@ -21,12 +377,12 @@ index 8ea5429..1497279 100644
 ++++ b/.jcode/scripts/context-sync.py
 +@@ -73,7 +73,7 @@ class SpecAuditor:
 +             violations.append("检测到可能的 SQL 拼接，建议使用参数化查询")
-+ 
++
 +         # 检查未处理异常
 +-        if re.search(r"except\s*:", diff) and not re.search(r"except\s+\w+", diff):
 ++        if re.search(r"except\s*:", diff) and not re.search(r"except\s+\w+", diff):  # noqa: py-bare-except -- 检测逻辑本身, 非真实 except 语句
 +             violations.append("检测到裸露的 except:，建议指定异常类型")
-+ 
++
 +         # 检查类型注解
 +diff --git a/.jcode/scripts/multi_agent_orch.py b/.jcode/scripts/multi_agent_orch.py
 +index 2a61129..e6c2976 100644
@@ -82,12 +438,12 @@ index c507a24..bf57e0e 100644
 +++ b/.jcode/scripts/context-sync.py
 @@ -73,7 +73,7 @@ class SpecAuditor:
              violations.append("检测到可能的 SQL 拼接，建议使用参数化查询")
- 
+
          # 检查未处理异常
 -        if re.search(r"except\s*:", diff) and not re.search(r"except\s+\w+", diff):
 +        if re.search(r"except\s*:", diff) and not re.search(r"except\s+\w+", diff):  # noqa: py-bare-except -- 检测逻辑本身, 非真实 except 语句
              violations.append("检测到裸露的 except:，建议指定异常类型")
- 
+
          # 检查类型注解
 diff --git a/.jcode/scripts/multi_agent_orch.py b/.jcode/scripts/multi_agent_orch.py
 index 2a61129..e6c2976 100644

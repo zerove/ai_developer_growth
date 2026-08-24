@@ -214,3 +214,66 @@ class TestAuditTrends:
         entries = [{"event_type": "SPIKE", "timestamp": (now - dt.timedelta(hours=i)).isoformat()} for i in range(6)]
         report = analyze(entries)
         assert any("SPIKE" in a for a in report["alerts"])
+
+
+# ── AST 语义检查: py-bare-raise ────────────────────────────
+
+
+class TestAstBareRaise:
+    """AST 版 bare-raise: 正则无法表达的 except 块语义判定。"""
+
+    def _check(self, code: str) -> list:
+        from tools.scripts.rules_engine.ast_semantic import check_python_bare_raise
+
+        return check_python_bare_raise("test.py", code.splitlines())
+
+    def test_legal_reraise_inside_except(self) -> None:
+        code = "def f():\n    try:\n        pass\n    except ValueError:\n        raise\n"
+        assert self._check(code) == []
+
+    def test_illegal_raise_in_function_body(self) -> None:
+        code = "def f():\n    raise\n"
+        issues = self._check(code)
+        assert len(issues) == 1
+        assert issues[0].rule_id == "py-bare-raise"
+        assert issues[0].line == 2
+        assert issues[0].severity == "error"
+
+    def test_module_level_raise_detected(self) -> None:
+        issues = self._check("raise\n")
+        assert len(issues) == 1
+
+    def test_nested_try_except_legal(self) -> None:
+        code = (
+            "def f():\n"
+            "    try:\n"
+            "        try:\n"
+            "            pass\n"
+            "        except KeyError:\n"
+            "            raise\n"
+            "    except Exception:\n"
+            "        pass\n"
+        )
+        assert self._check(code) == []
+
+    def test_syntax_error_returns_empty(self) -> None:
+        assert self._check("def f(:\n") == []
+
+    def test_enabled_false_disables_regex_version(self) -> None:
+        """enabled=false 的规则应被正则检查器跳过 (AST 版接管)。"""
+        from tools.scripts.rules_engine.validators.pipeline import check_anti_patterns
+
+        rules = {
+            "anti_patterns": [
+                {
+                    "id": "py-bare-raise",
+                    "severity": "error",
+                    "category": "error_handling",
+                    "pattern": r"^\s*raise\s*$",
+                    "enabled": False,
+                }
+            ]
+        }
+        lines = ["def f():", "    pass", "raise"]
+        # 正则版被禁用: 模块级裸 raise 不由正则报告 (AST 版负责)
+        assert check_anti_patterns(lines, rules, "x.py") == []

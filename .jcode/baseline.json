@@ -58,17 +58,6 @@
       "structure:函数超过 50 行 (实际 73 行)": 1,
       "structure:函数超过 50 行 (实际 56 行)": 1
     },
-    "tools/scripts/hooks_runner.py": {
-      "structure:函数超过 50 行 (实际 54 行)": 1,
-      "structure:函数超过 50 行 (实际 57 行)": 1,
-      "structure:函数超过 50 行 (实际 91 行)": 1,
-      "structure:函数超过 50 行 (实际 115 行)": 1,
-      "structure:函数超过 50 行 (实际 97 行)": 1,
-      "structure:函数超过 50 行 (实际 66 行)": 1,
-      "structure:函数超过 50 行 (实际 65 行)": 1,
-      "structure:函数超过 50 行 (实际 123 行)": 1,
-      "structure:函数超过 50 行 (实际 134 行)": 1
-    },
     "tools/scripts/detect_language.py": {
       "error:空异常处理 (catch w/o logging)": 2,
       "structure:函数超过 50 行 (实际 72 行)": 1

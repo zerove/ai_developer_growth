@@ -39,13 +39,15 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
 from typing import Any, cast
 
-from tools.scripts.auto_fix import FixSafetyLevel, FixStrategy
+from tools.scripts.auto_fix import AutoFixOrchestrator, FixResult, FixSafetyLevel, FixStrategy
 from tools.scripts.dependency_graph import (
     CircularDependency,
     DependencyConflict,
+    DependencyGraph,
     analyze_dependency_graph,
 )
 from tools.scripts.exception_manager import (
+    EnhancedExceptionManager,
     ExceptionStatus,
     create_enhanced_manager,
 )
@@ -84,6 +86,7 @@ from tools.scripts.language_registry import (
     EXTENSION_MAP,
     Language,
     ToolCategory,
+    ToolConfig,
     detect_language,
     get_tool,
 )
@@ -96,6 +99,7 @@ from tools.scripts.supply_chain import (
     ScanResult,
     Severity,
     SupplyChainScanner,
+    Vulnerability,
 )
 
 logger = logging.getLogger(__name__)
@@ -159,6 +163,41 @@ def _timeout_for_category(category: object) -> int:
     return default
 
 
+def _excluded_scan_dirs() -> set[str]:
+    """扫描时排除的目录: 虚拟环境、依赖与构建产物。"""
+    return {
+        ".venv",
+        "venv",
+        "node_modules",
+        ".git",
+        ".mypy_cache",
+        ".pytest_cache",
+        ".ruff_cache",
+        "__pycache__",
+        "site-packages",
+        "dist",
+        "build",
+        "target",
+        "site",
+    }
+
+
+def _count_language_files(project_root: Path) -> dict[Language, int]:
+    """扫描所有扩展名, 统计各语言文件数 (排除第三方/构建目录)。"""
+    _node_ecosystem_languages = {Language.TYPESCRIPT, Language.JAVASCRIPT}
+    has_package_json = (project_root / "package.json").exists()
+    excluded = _excluded_scan_dirs()
+
+    ext_counts: dict[Language, int] = {}
+    for ext, lang in EXTENSION_MAP.items():
+        if lang in _node_ecosystem_languages and not has_package_json:
+            continue
+        count = sum(1 for p in project_root.rglob(f"*{ext}") if not (set(p.parts) & excluded))
+        if count > 0:
+            ext_counts[lang] = ext_counts.get(lang, 0) + count
+    return ext_counts
+
+
 def _detect_project_languages(project_root: Path) -> list[Language]:
     """检测项目中使用的所有语言"""
     languages: list[Language] = []
@@ -174,39 +213,13 @@ def _detect_project_languages(project_root: Path) -> list[Language]:
     if main_lang and not (main_lang in _node_ecosystem_languages and not has_package_json):
         languages.append(main_lang)
 
-    # 2. 扫描所有扩展名，统计语言分布
-    # 排除虚拟环境、依赖与构建产物目录，
-    # 避免把第三方库文件误判为项目语言（如 .venv 中 lxml 的 .h 头文件）
-    _excluded_dirs = {
-        ".venv",
-        "venv",
-        "node_modules",
-        ".git",
-        ".mypy_cache",
-        ".pytest_cache",
-        ".ruff_cache",
-        "__pycache__",
-        "site-packages",
-        "dist",
-        "build",
-        "target",
-        "site",
-    }
-    ext_counts: dict[Language, int] = {}
-    for ext, lang in EXTENSION_MAP.items():
-        if lang in _node_ecosystem_languages and not has_package_json:
-            continue
-        count = sum(1 for p in project_root.rglob(f"*{ext}") if not (set(p.parts) & _excluded_dirs))
-        if count > 0:
-            ext_counts[lang] = ext_counts.get(lang, 0) + count
-
-    # 按文件数排序，仅纳入占比显著的语言：
+    # 2. 扫描扩展名统计语言分布, 按文件数排序后仅纳入占比显著的语言：
     # 示例脚本、编辑器扩展等附带文件不应触发全量工具链门禁
+    ext_counts = _count_language_files(project_root)
     total = sum(ext_counts.values())
-    for lang in sorted(ext_counts, key=lambda k: ext_counts[k], reverse=True)[:3]:
+    for lang, count in sorted(ext_counts.items(), key=lambda kv: kv[1], reverse=True):
         if lang in languages:
             continue
-        count = ext_counts.get(lang, 0)
         if count >= 50 or (total > 0 and count / total >= 0.2):
             languages.append(lang)
 
@@ -566,6 +579,60 @@ def _run_simple(
     return 0 if passed else 1
 
 
+def _tool_available(language: Language, tool: ToolConfig) -> str | None:
+    """检查工具是否可用, 返回错误消息或 None。"""
+    try:
+        version_result: subprocess.CompletedProcess[str] = subprocess.run(
+            [tool.command, tool.version_flag],
+            capture_output=True,
+            text=True,
+            timeout=5,
+        )
+        if version_result.returncode != 0:
+            return f"  ❌ {language.value}: {tool.command} 不可用 ({tool.install_hint})"
+    except (FileNotFoundError, subprocess.TimeoutExpired):
+        return f"  ❌ {language.value}: {tool.command} 未安装 ({tool.install_hint})"
+    return None
+
+
+def _build_tool_command(tool: ToolConfig, fix: bool, check_only: bool) -> list[str]:
+    """按 fix/check_only 模式构建工具命令行。"""
+    cmd = [tool.command]
+    if fix and tool.fix_args:
+        cmd.extend(tool.fix_args)
+    elif check_only and tool.check_args:
+        cmd.extend(tool.check_args)
+    else:
+        cmd.extend(tool.args)
+    return cmd
+
+
+def _execute_tool(cmd: list[str], language: Language, category: ToolCategory, project_root: Path) -> tuple[bool, str]:
+    """执行工具命令并格式化输出。"""
+    timeout_seconds = _timeout_for_category(category)
+    try:
+        result: subprocess.CompletedProcess[str] = subprocess.run(
+            cmd,
+            cwd=project_root,
+            capture_output=True,
+            text=True,
+            timeout=timeout_seconds,
+        )
+    except subprocess.TimeoutExpired:
+        return False, f"  ❌ {language.value}: {category.value} 超时 ({timeout_seconds}s)"
+    except Exception as e:
+        return False, f"  ❌ {language.value}: {category.value} 错误 - {e}"
+
+    output = result.stdout
+    if result.stderr:
+        output += "\n" + result.stderr
+
+    passed = result.returncode == 0
+    status = "✅" if passed else "❌"
+    suffix = "通过" if passed else "失败"
+    return passed, f"  {status} {language.value}: {category.value} {suffix}\n{output}"
+
+
 def _run_tool_for_language(
     language: Language,
     category: ToolCategory,
@@ -578,55 +645,13 @@ def _run_tool_for_language(
     if tool is None:
         return False, f"  ⚠️  {language.value}: {category.value} 工具未配置"
 
-    # 检查工具是否可用
-    try:
-        version_result: subprocess.CompletedProcess[str] = subprocess.run(
-            [tool.command, tool.version_flag],
-            capture_output=True,
-            text=True,
-            timeout=5,
-        )
-        if version_result.returncode != 0:
-            return False, f"  ❌ {language.value}: {tool.command} 不可用 ({tool.install_hint})"
-    except (FileNotFoundError, subprocess.TimeoutExpired):
-        return False, f"  ❌ {language.value}: {tool.command} 未安装 ({tool.install_hint})"
+    unavailable = _tool_available(language, tool)
+    if unavailable:
+        return False, unavailable
 
-    # 构建命令
-    cmd = [tool.command]
-    if fix and tool.fix_args:
-        cmd.extend(tool.fix_args)
-    elif check_only and tool.check_args:
-        cmd.extend(tool.check_args)
-    else:
-        cmd.extend(tool.args)
-
-    # 添加项目路径（如果工具支持）
-    if category in (ToolCategory.FORMAT, ToolCategory.LINT, ToolCategory.TYPECHECK):
-        # 大多数工具默认检查当前目录
-        pass
-
+    cmd = _build_tool_command(tool, fix, check_only)
     print(f"  🔧 {language.value}: 运行 {category.value} ({' '.join(cmd)})")
-
-    timeout_seconds = _timeout_for_category(category)
-    try:
-        result: subprocess.CompletedProcess[str] = subprocess.run(
-            cmd,
-            cwd=project_root,
-            capture_output=True,
-            text=True,
-            timeout=timeout_seconds,
-        )
-        output = result.stdout
-        if result.stderr:
-            output += "\n" + result.stderr
-
-        passed = result.returncode == 0
-        status = "✅" if passed else "❌"
-        return passed, f"  {status} {language.value}: {category.value} {'通过' if passed else '失败'}\n{output}"
-    except subprocess.TimeoutExpired:
-        return False, f"  ❌ {language.value}: {category.value} 超时 ({timeout_seconds}s)"
-    except Exception as e:
-        return False, f"  ❌ {language.value}: {category.value} 错误 - {e}"
+    return _execute_tool(cmd, language, category, project_root)
 
 
 def _run_basic_check_for_languages(
@@ -861,6 +886,25 @@ def _print_results_in_order(results: dict[str, tuple[bool, str]], order: list[st
     return all_passed
 
 
+def _run_sequential_phases(results: dict[str, tuple[bool, str]]) -> None:
+    """执行串行阶段 (含依赖解析: 依赖失败则跳过)。"""
+    sequential_phases = [name for name, _, parallel, _ in _CHECK_PHASES if not parallel]
+    for name in sequential_phases:
+        _, _, deps = _PHASE_INDEX[name]
+        passed_deps = True
+        failed_deps: list[str] = []
+        for dep in deps:
+            if dep not in results:
+                _run_phase(dep, results)
+            if not results[dep][0]:
+                passed_deps = False
+                failed_deps.append(dep)
+        if passed_deps:
+            _run_phase(name, results)
+        else:
+            results[name] = (False, f"Skipped: dependency '{failed_deps}' failed")
+
+
 def _run_full(args: argparse.Namespace) -> int:
     """Run the full check suite with parallel + sequential phases."""
     global _full_args, _full_langs, _full_path
@@ -886,33 +930,13 @@ def _run_full(args: argparse.Namespace) -> int:
 
     results: dict[str, tuple[bool, str]] = {}
     results.update(_run_parallel_checks())
-
-    # 串行阶段（含依赖解析）
-    sequential_phases = [name for name, _, parallel, _ in _CHECK_PHASES if not parallel]
-    for name in sequential_phases:
-        passed_deps = True
-        _, _, deps = _PHASE_INDEX[name]
-        for dep in deps:
-            if dep not in results:
-                _run_phase(dep, results)
-            if not results[dep][0]:
-                passed_deps = False
-        if passed_deps:
-            _run_phase(name, results)
-        else:
-            results[name] = (
-                False,
-                f"Skipped: dependency '{[d for d in deps if d not in results or not results[d][0]]}' failed",
-            )
+    _run_sequential_phases(results)
 
     order = _resolve_order()
     all_passed = _print_results_in_order(results, order)
 
     print("\n" + "=" * 60)
-    if all_passed:
-        print("✅ ALL CHECKS PASSED")
-    else:
-        print("❌ SOME CHECKS FAILED")
+    print("✅ ALL CHECKS PASSED" if all_passed else "❌ SOME CHECKS FAILED")
     print("=" * 60)
 
     return 0 if all_passed else 1
@@ -1395,93 +1419,97 @@ def _handle_quality_gate_new(args: argparse.Namespace) -> int:
     return 0
 
 
-def _handle_auto_fix(args: argparse.Namespace) -> int:
-    """Handle auto-fix command."""
-    from pathlib import Path
-
-    from tools.scripts.app_config import get_setting
-    from tools.scripts.auto_fix import create_default_orchestrator
+def _collect_check_results(target_path: Path, jobs: int) -> list[CheckResult]:
+    """对单文件或目录执行规则检查, 收集结果。"""
     from tools.scripts.language_registry import EXTENSION_MAP, Language
     from tools.scripts.rules_engine.checker import check_directory, check_file
 
-    jobs = getattr(args, "jobs", None) or int(str(get_setting("jobs", 4)))
-    target_path = args.path
-
-    # 支持文件和目录
     if target_path.is_file():
-        # 单文件：通过扩展名检测语言
         ext = target_path.suffix
-        lang = EXTENSION_MAP.get(ext, Language.PYTHON)  # 默认 Python
-        results = [check_file(target_path, None, lang, semantic=False, run_linters=True)]
-    else:
-        results = check_directory(target_path, jobs=jobs, semantic=False)
+        lang = EXTENSION_MAP.get(ext, Language.PYTHON)
+        return [check_file(target_path, None, lang, semantic=False, run_linters=True)]
+    return check_directory(target_path, jobs=jobs, semantic=False)
 
-    # 转换策略和安全级别
-    strategy = FixStrategy(args.strategy)
-    safety_level = FixSafetyLevel(args.safety)
 
-    # 创建编排器 (使用默认提供者)
+def _build_fix_orchestrator(args: argparse.Namespace) -> AutoFixOrchestrator:
+    """按命令行参数配置修复编排器。"""
+    from tools.scripts.auto_fix import create_default_orchestrator
+
     orchestrator = create_default_orchestrator()
-    orchestrator.strategy = strategy
-    orchestrator.safety_level = safety_level
+    orchestrator.strategy = FixStrategy(args.strategy)
+    orchestrator.safety_level = FixSafetyLevel(args.safety)
     orchestrator.max_fixes_per_file = args.max_per_file
     orchestrator.backup = not args.no_backup
     orchestrator.run_tests_after = args.run_tests
     orchestrator.test_command = args.test_cmd
+    return orchestrator
 
-    # 执行修复
+
+def _print_fix_text(fix_results: list[FixResult]) -> None:
+    """文本格式输出修复结果。"""
+    total_applied = sum(len(r.applied) for r in fix_results)
+    total_skipped = sum(len(r.skipped) for r in fix_results)
+    total_errors = sum(len(r.errors) for r in fix_results)
+
+    print("\n🔧 Auto-fix 完成")
+    print(f"  应用: {total_applied}")
+    print(f"  跳过: {total_skipped}")
+    print(f"  错误: {total_errors}")
+
+    for result in fix_results:
+        if result.applied:
+            print(f"\n  📄 {result.file}:")
+            for action in result.applied:
+                print(f"    ✅ {action.rule_id} @ line {action.line}")
+            if result.diff:
+                print(f"    Diff:\n{result.diff[:200]}...")
+
+        if result.skipped:
+            for action in result.skipped:
+                print(f"    ⏭️  {action.rule_id} @ line {action.line} (skipped)")
+
+        if result.errors:
+            for err in result.errors:
+                print(f"    ❌ {err}")
+
+
+def _fix_result_dicts(fix_results: list[FixResult]) -> list[dict[str, object]]:
+    """将修复结果序列化为 JSON 兼容字典。"""
+    return [
+        {
+            "file": r.file,
+            "applied": [{"rule_id": a.rule_id, "line": a.line} for a in r.applied],
+            "skipped": [{"rule_id": a.rule_id, "line": a.line} for a in r.skipped],
+            "errors": r.errors,
+            "diff": r.diff,
+        }
+        for r in fix_results
+    ]
+
+
+def _handle_auto_fix(args: argparse.Namespace) -> int:
+    """Handle auto-fix command."""
+    import json
+    from pathlib import Path
+
+    from tools.scripts.app_config import get_setting
+
+    jobs = getattr(args, "jobs", None) or int(str(get_setting("jobs", 4)))
+
+    results = _collect_check_results(args.path, jobs)
+
+    orchestrator = _build_fix_orchestrator(args)
     fix_results = orchestrator.execute_plan(
         orchestrator.create_plan(results),
         Path.cwd(),
     )
 
-    # 统计
-    total_applied = sum(len(r.applied) for r in fix_results)
-    total_skipped = sum(len(r.skipped) for r in fix_results)
     total_errors = sum(len(r.errors) for r in fix_results)
 
-    # 打印结果
     if args.format == "text":
-        print("\n🔧 Auto-fix 完成")
-        print(f"  应用: {total_applied}")
-        print(f"  跳过: {total_skipped}")
-        print(f"  错误: {total_errors}")
-
-        for result in fix_results:
-            if result.applied:
-                print(f"\n  📄 {result.file}:")
-                for action in result.applied:
-                    print(f"    ✅ {action.rule_id} @ line {action.line}")
-                if result.diff:
-                    print(f"    Diff:\n{result.diff[:200]}...")
-
-            if result.skipped:
-                for action in result.skipped:
-                    print(f"    ⏭️  {action.rule_id} @ line {action.line} (skipped)")
-
-            if result.errors:
-                for err in result.errors:
-                    print(f"    ❌ {err}")
-
-    elif args.format == "json" and not args.output:
-        import json
-
-        print(
-            json.dumps(
-                [
-                    {
-                        "file": r.file,
-                        "applied": [{"rule_id": a.rule_id, "line": a.line} for a in r.applied],
-                        "skipped": [{"rule_id": a.rule_id, "line": a.line} for a in r.skipped],
-                        "errors": r.errors,
-                        "diff": r.diff,
-                    }
-                    for r in fix_results
-                ],
-                indent=2,
-                ensure_ascii=False,
-            )
-        )
+        _print_fix_text(fix_results)
+    elif args.format == "json":
+        print(json.dumps(_fix_result_dicts(fix_results), indent=2, ensure_ascii=False))
 
     return 0 if total_errors == 0 else 1
 
@@ -1515,10 +1543,16 @@ def _handle_supply_chain_scan(args: argparse.Namespace) -> int:
     scanner = SupplyChainScanner()
     result = scanner.scan_project(project_root)
 
-    # 确定是否失败
-    fail_on = Severity(args.fail_on)
-    should_fail = False
+    _, fail_level = _scan_severity_threshold(args)
+    should_fail = _scan_has_failing_vulns(result.vulnerabilities, fail_level)
 
+    _output_scan_result(args, project_root, result)
+
+    return 1 if should_fail else 0
+
+
+def _scan_severity_threshold(args: argparse.Namespace) -> tuple[Severity, int]:
+    """解析 --fail-on 为严重级别及其序数值。"""
     severity_order = {
         Severity.CRITICAL: 4,
         Severity.HIGH: 3,
@@ -1526,98 +1560,95 @@ def _handle_supply_chain_scan(args: argparse.Namespace) -> int:
         Severity.LOW: 1,
         Severity.NONE: 0,
     }
-    fail_level = severity_order.get(fail_on, 0)
+    fail_on = Severity(args.fail_on)
+    return fail_on, severity_order.get(fail_on, 0)
 
-    for vuln in result.vulnerabilities:
-        vuln_level = severity_order.get(vuln.severity, 0)
-        if vuln_level >= fail_level and vuln_level > 0:
-            should_fail = True
-            break
 
-    # 输出结果
+def _scan_has_failing_vulns(vulnerabilities: list[Vulnerability], threshold: int) -> bool:
+    """判断是否存在达到阈值的漏洞。"""
+    severity_order = {
+        Severity.CRITICAL: 4,
+        Severity.HIGH: 3,
+        Severity.MEDIUM: 2,
+        Severity.LOW: 1,
+        Severity.NONE: 0,
+    }
+    levels = (severity_order.get(v.severity, 0) for v in vulnerabilities)
+    return any(lv >= threshold and lv > 0 for lv in levels)
+
+
+def _scan_vulnerability_dicts(result: ScanResult) -> list[dict[str, object]]:
+    """将漏洞列表序列化为 JSON 兼容字典。"""
+    return [
+        {
+            "id": v.id,
+            "source": v.source,
+            "severity": v.severity.value,
+            "package": v.affected_package,
+            "version": v.affected_version,
+            "fixed_version": v.fixed_version,
+            "summary": v.summary,
+        }
+        for v in result.vulnerabilities
+    ]
+
+
+def _print_scan_text(project_root: Path, result: ScanResult) -> None:
+    """文本格式输出扫描结果。"""
+    print(f"\n🔒 Supply Chain Scan: {project_root}")
+    print(f"  依赖总数: {result.summary['total_dependencies']}")
+    print(f"  直接依赖: {result.summary['direct_dependencies']}")
+    print(f"  漏洞总数: {result.summary['vulnerabilities']}")
+    print(f"    Critical: {result.summary['critical']}")
+    print(f"    High:     {result.summary['high']}")
+    print(f"    Medium:   {result.summary['medium']}")
+    print(f"    Low:      {result.summary['low']}")
+    print(f"  许可证问题: {result.summary['license_issues']}")
+
+    if result.vulnerabilities:
+        print("\n📋 漏洞详情:")
+        for vuln in result.vulnerabilities:
+            print(f"  [{vuln.severity.value.upper()}] {vuln.id}: {vuln.affected_package}@{vuln.affected_version}")
+            print(f"    {vuln.summary[:100]}...")
+            if vuln.fixed_version:
+                print(f"    修复版本: {vuln.fixed_version}")
+
+    if result.license_issues:
+        print("\n⚖️  许可证问题:")
+        for issue in result.license_issues:
+            print(f"  {issue}")
+
+
+def _output_scan_result(args: argparse.Namespace, project_root: Path, result: ScanResult) -> None:
+    """按 --format 输出扫描结果 (text/json/sarif), 支持 --output 落盘。"""
+    import json
+
+    vuln_dicts = _scan_vulnerability_dicts(result)
+
     if args.format == "text":
-        print(f"\n🔒 Supply Chain Scan: {project_root}")
-        print(f"  依赖总数: {result.summary['total_dependencies']}")
-        print(f"  直接依赖: {result.summary['direct_dependencies']}")
-        print(f"  漏洞总数: {result.summary['vulnerabilities']}")
-        print(f"    Critical: {result.summary['critical']}")
-        print(f"    High:     {result.summary['high']}")
-        print(f"    Medium:   {result.summary['medium']}")
-        print(f"    Low:      {result.summary['low']}")
-        print(f"  许可证问题: {result.summary['license_issues']}")
-
-        if result.vulnerabilities:
-            print("\n📋 漏洞详情:")
-            for vuln in result.vulnerabilities:
-                print(f"  [{vuln.severity.value.upper()}] {vuln.id}: {vuln.affected_package}@{vuln.affected_version}")
-                print(f"    {vuln.summary[:100]}...")
-                if vuln.fixed_version:
-                    print(f"    修复版本: {vuln.fixed_version}")
-
-        if result.license_issues:
-            print("\n⚖️  许可证问题:")
-            for issue in result.license_issues:
-                print(f"  {issue}")
-
-    elif args.format == "json" and not args.output:
-        import json
-
-        print(
-            json.dumps(
-                {
-                    "project": str(project_root),
-                    "scanned_at": result.scanned_at,
-                    "summary": result.summary,
-                    "vulnerabilities": [
-                        {
-                            "id": v.id,
-                            "source": v.source,
-                            "severity": v.severity.value,
-                            "package": v.affected_package,
-                            "version": v.affected_version,
-                            "fixed_version": v.fixed_version,
-                            "summary": v.summary,
-                        }
-                        for v in result.vulnerabilities
-                    ],
-                    "license_issues": result.license_issues,
-                },
-                indent=2,
-                ensure_ascii=False,
-            )
-        )
-
-    elif args.format == "sarif" and not args.output:
-        import json
-
-        sarif = _to_sarif_supply_chain(result)
-        print(json.dumps(sarif, indent=2))
-
-    if args.output:
-        import json
-
+        _print_scan_text(project_root, result)
+    elif args.output:
         output_data = {
             "project": str(project_root),
             "scanned_at": result.scanned_at,
             "summary": result.summary,
-            "vulnerabilities": [
-                {
-                    "id": v.id,
-                    "source": v.source,
-                    "severity": v.severity.value,
-                    "package": v.affected_package,
-                    "version": v.affected_version,
-                    "fixed_version": v.fixed_version,
-                    "summary": v.summary,
-                }
-                for v in result.vulnerabilities
-            ],
+            "vulnerabilities": vuln_dicts,
             "license_issues": result.license_issues,
         }
         args.output.write_text(json.dumps(output_data, indent=2, ensure_ascii=False))
         print(f"Results written to {args.output}")
-
-    return 1 if should_fail else 0
+    elif args.format == "json":
+        payload = {
+            "project": str(project_root),
+            "scanned_at": result.scanned_at,
+            "summary": result.summary,
+            "vulnerabilities": vuln_dicts,
+            "license_issues": result.license_issues,
+        }
+        print(json.dumps(payload, indent=2, ensure_ascii=False))
+    elif args.format == "sarif":
+        sarif = _to_sarif_supply_chain(result)
+        print(json.dumps(sarif, indent=2))
 
 
 def _handle_supply_chain_sbom(args: argparse.Namespace) -> int:
@@ -1656,34 +1687,26 @@ def _handle_supply_chain_sbom(args: argparse.Namespace) -> int:
     return 0
 
 
-def _handle_supply_chain_compliance(args: argparse.Namespace) -> int:
-    """Handle supply-chain compliance subcommand."""
-    project_root = args.path
-    if not project_root.exists():
-        print(f"Path not found: {project_root}")
-        return 1
+def _load_license_policy(policy_file: Path | None) -> dict[str, LicensePolicy] | None:
+    """从 YAML 策略文件加载许可证白/黑名单。"""
+    if not (policy_file and policy_file.exists()):
+        return None
 
-    scanner = SupplyChainScanner()
+    import yaml
 
-    # Load policy if provided
-    license_policy = None
-    if args.policy_file and args.policy_file.exists():
-        import yaml
+    with open(policy_file) as f:
+        policy = yaml.safe_load(f)
+    license_policy: dict[str, LicensePolicy] = {}
+    for lic in policy.get("allowed_licenses", []):
+        license_policy[lic] = LicensePolicy.ALLOW
+    for lic in policy.get("disallowed_licenses", []):
+        license_policy[lic] = LicensePolicy.DENY
+    return license_policy
 
-        with open(args.policy_file) as f:
-            policy = yaml.safe_load(f)
-        # Convert policy to LicensePolicy dict
-        license_policy = {}
-        for lic in policy.get("allowed_licenses", []):
-            license_policy[lic] = LicensePolicy.ALLOW
-        for lic in policy.get("disallowed_licenses", []):
-            license_policy[lic] = LicensePolicy.DENY
 
-    # Run scan with custom policy
-    result = scanner.scan_project(project_root)
-
-    # Additional compliance checks
-    compliance_result: dict[str, Any] = {
+def _run_compliance_checks(project_root: Path, result: ScanResult) -> dict[str, Any]:
+    """执行合规检查: 许可证问题与漏洞阈值。"""
+    compliance: dict[str, Any] = {
         "project": str(project_root),
         "scanned_at": result.scanned_at,
         "passed": True,
@@ -1692,65 +1715,112 @@ def _handle_supply_chain_compliance(args: argparse.Namespace) -> int:
         "summary": result.summary,
     }
 
-    # Check license violations
     for issue in result.license_issues:
-        compliance_result["violations"].append(
-            {
-                "type": "license",
-                "message": issue,
-                "severity": "high",
-            }
-        )
-        compliance_result["passed"] = False
+        compliance["violations"].append({"type": "license", "message": issue, "severity": "high"})
+        compliance["passed"] = False
 
-    # Check vulnerability thresholds
     for vuln in result.vulnerabilities:
+        message = f"{vuln.id}: {vuln.affected_package}@{vuln.affected_version} - {vuln.summary}"
         if vuln.severity in (Severity.CRITICAL, Severity.HIGH):
-            compliance_result["violations"].append(
-                {
-                    "type": "vulnerability",
-                    "message": f"{vuln.id}: {vuln.affected_package}@{vuln.affected_version} - {vuln.summary}",
-                    "severity": vuln.severity.value,
-                }
+            compliance["violations"].append(
+                {"type": "vulnerability", "message": message, "severity": vuln.severity.value}
             )
-            compliance_result["passed"] = False
+            compliance["passed"] = False
         elif vuln.severity == Severity.MEDIUM:
-            compliance_result["warnings"].append(
-                {
-                    "type": "vulnerability",
-                    "message": f"{vuln.id}: {vuln.affected_package}@{vuln.affected_version} - {vuln.summary}",
-                    "severity": "medium",
-                }
-            )
+            compliance["warnings"].append({"type": "vulnerability", "message": message, "severity": "medium"})
+
+    return compliance
+
+
+def _print_compliance_text(project_root: Path, compliance: dict[str, Any]) -> None:
+    """文本格式输出合规结果。"""
+    print(f"\n📋 Supply Chain Compliance: {project_root}")
+    print(f"  Status: {'✅ PASSED' if compliance['passed'] else '❌ FAILED'}")
+    print(f"  Violations: {len(compliance['violations'])}")
+    print(f"  Warnings: {len(compliance['warnings'])}")
+
+    if compliance["violations"]:
+        print("\n❌ Violations:")
+        for v in compliance["violations"]:
+            print(f"  [{str(v['severity']).upper()}] {v['message']}")
+
+    if compliance["warnings"]:
+        print("\n⚠️ Warnings:")
+        for w in compliance["warnings"]:
+            print(f"  [{str(w['severity']).upper()}] {w['message']}")
+
+
+def _output_compliance(args: argparse.Namespace, project_root: Path, compliance: dict[str, Any]) -> None:
+    """按 --format 输出合规报告。"""
+    import json
 
     if args.format == "text":
-        print(f"\n📋 Supply Chain Compliance: {project_root}")
-        print(f"  Status: {'✅ PASSED' if compliance_result['passed'] else '❌ FAILED'}")
-        print(f"  Violations: {len(compliance_result['violations'])}")
-        print(f"  Warnings: {len(compliance_result['warnings'])}")
-
-        if compliance_result["violations"]:
-            print("\n❌ Violations:")
-            for v in compliance_result["violations"]:
-                print(f"  [{v['severity'].upper()}] {v['message']}")
-
-        if compliance_result["warnings"]:
-            print("\n⚠️ Warnings:")
-            for w in compliance_result["warnings"]:
-                print(f"  [{w['severity'].upper()}] {w['message']}")
-
-    elif args.format == "json" and not args.output:
-        import json
-
-        print(json.dumps(compliance_result, indent=2, ensure_ascii=False))
+        _print_compliance_text(project_root, compliance)
+    elif args.format == "json":
+        print(json.dumps(compliance, indent=2, ensure_ascii=False))
 
     if args.output:
-        import json
-
-        args.output.write_text(json.dumps(compliance_result, indent=2, ensure_ascii=False))
+        args.output.write_text(json.dumps(compliance, indent=2, ensure_ascii=False))
         print(f"Compliance report written to {args.output}")
 
-    return 0 if compliance_result["passed"] else 1
+
+def _handle_supply_chain_compliance(args: argparse.Namespace) -> int:
+    """Handle supply-chain compliance subcommand."""
+    project_root = args.path
+    if not project_root.exists():
+        print(f"Path not found: {project_root}")
+        return 1
+
+    _load_license_policy(args.policy_file)
+    scanner = SupplyChainScanner()
+    result = scanner.scan_project(project_root)
+
+    compliance = _run_compliance_checks(project_root, result)
+    _output_compliance(args, project_root, compliance)
+
+    return 0 if compliance["passed"] else 1
+
+
+def _check_dependency_freshness(project_root: Path, max_age: int) -> dict[str, Any]:
+    """检查依赖新鲜度 (当前实现将全部依赖归为 unknown)。"""
+    import datetime
+
+    scanner = SupplyChainScanner()
+    sbom = scanner.sbom_generator.generate_from_project(project_root)
+    all_deps = scanner._flatten_deps(sbom.packages)
+
+    result: dict[str, Any] = {
+        "project": str(project_root),
+        "checked_at": datetime.datetime.now(tz=datetime.UTC).isoformat(),
+        "max_age_days": max_age,
+        "total_dependencies": len(all_deps),
+        "fresh": [],
+        "stale": [],
+        "unknown": [],
+    }
+
+    for dep in all_deps:
+        # 真实实现应查询注册表获取最近更新日期; 当前归为 unknown
+        result["unknown"].append({"name": dep.name, "version": dep.version, "ecosystem": dep.ecosystem})
+
+    return result
+
+
+def _print_freshness_text(project_root: Path, report: dict[str, Any]) -> None:
+    """文本格式输出新鲜度报告。"""
+    print(f"\n📅 Dependency Freshness: {project_root}")
+    print(f"  Max age: {report['max_age_days']} days")
+    print(f"  Total dependencies: {report['total_dependencies']}")
+    print(f"  Fresh: {len(report['fresh'])}")
+    print(f"  Stale: {len(report['stale'])}")
+    print(f"  Unknown: {len(report['unknown'])}")
+
+    if report["stale"]:
+        print("\n📦 Stale dependencies:")
+        for d in report["stale"]:
+            print(
+                f"  {d['name']}@{d['version']} ({d['ecosystem']}) - last updated {d.get('days_since_update', 'N/A')} days ago"
+            )
 
 
 def _handle_supply_chain_freshness(args: argparse.Namespace) -> int:
@@ -1760,63 +1830,70 @@ def _handle_supply_chain_freshness(args: argparse.Namespace) -> int:
         print(f"Path not found: {project_root}")
         return 1
 
+    import json
+
+    report = _check_dependency_freshness(project_root, args.max_age_days)
+
+    if args.format == "text":
+        _print_freshness_text(project_root, report)
+    elif args.format == "json":
+        print(json.dumps(report, indent=2, ensure_ascii=False))
+
+    if args.output:
+        args.output.write_text(json.dumps(report, indent=2, ensure_ascii=False))
+        print(f"Freshness report written to {args.output}")
+
+    return 0
+
+
+def _verify_packages(project_root: Path) -> dict[str, Any]:
+    """逐依赖执行签名验证并汇总结果。"""
     import datetime
 
     scanner = SupplyChainScanner()
     sbom = scanner.sbom_generator.generate_from_project(project_root)
     all_deps = scanner._flatten_deps(sbom.packages)
 
-    # Check freshness (simplified - in real impl would check actual last update dates)
-    max_age = args.max_age_days
-
-    freshness_result = {
+    result: dict[str, Any] = {
         "project": str(project_root),
-        "checked_at": datetime.datetime.utcnow().isoformat(),
-        "max_age_days": max_age,
-        "total_dependencies": len(all_deps),
-        "fresh": [],
-        "stale": [],
-        "unknown": [],
+        "verified_at": datetime.datetime.now(tz=datetime.UTC).isoformat(),
+        "total_packages": len(all_deps),
+        "verified": [],
+        "unverified": [],
+        "failed": [],
     }
 
     for dep in all_deps:
-        # In a real implementation, we'd fetch actual last update dates from registries
-        # For now, categorize as unknown
-        freshness_result["unknown"].append(
-            {
-                "name": dep.name,
-                "version": dep.version,
-                "ecosystem": dep.ecosystem,
-            }
-        )
+        if dep.ecosystem != "pypi":
+            result["unverified"].append(
+                {"name": dep.name, "version": dep.version, "reason": f"No verifier for {dep.ecosystem}"}
+            )
+            continue
+        vres = scanner.signature_verifier.verify_pypi_package(dep.name, dep.version)
+        if vres.get("verified"):
+            result["verified"].append({"name": dep.name, "version": dep.version, "details": vres})
+        else:
+            result["unverified"].append(
+                {"name": dep.name, "version": dep.version, "reason": vres.get("error", "No verification data")}
+            )
 
-    if args.format == "text":
-        print(f"\n📅 Dependency Freshness: {project_root}")
-        print(f"  Max age: {max_age} days")
-        print(f"  Total dependencies: {freshness_result['total_dependencies']}")
-        print(f"  Fresh: {len(freshness_result['fresh'])}")
-        print(f"  Stale: {len(freshness_result['stale'])}")
-        print(f"  Unknown: {len(freshness_result['unknown'])}")
+    return result
 
-        if freshness_result["stale"]:
-            print("\n📦 Stale dependencies:")
-            for d in freshness_result["stale"]:
-                print(
-                    f"  {d['name']}@{d['version']} ({d['ecosystem']}) - last updated {d.get('days_since_update', 'N/A')} days ago"
-                )
 
-    elif args.format == "json" and not args.output:
-        import json
+def _print_verify_text(project_root: Path, report: dict[str, Any]) -> None:
+    """文本格式输出验证报告。"""
+    print(f"\n🔐 Supply Chain Verification: {project_root}")
+    print(f"  Total packages: {report['total_packages']}")
+    print(f"  Verified: {len(report['verified'])}")
+    print(f"  Unverified: {len(report['unverified'])}")
+    print(f"  Failed: {len(report['failed'])}")
 
-        print(json.dumps(freshness_result, indent=2, ensure_ascii=False))
-
-    if args.output:
-        import json
-
-        args.output.write_text(json.dumps(freshness_result, indent=2, ensure_ascii=False))
-        print(f"Freshness report written to {args.output}")
-
-    return 0
+    if report["unverified"]:
+        print("\n⚠️ Unverified packages:")
+        for u in report["unverified"][:10]:
+            print(f"  {u['name']}@{u['version']}: {u['reason']}")
+        if len(report["unverified"]) > 10:
+            print(f"  ... and {len(report['unverified']) - 10} more")
 
 
 def _handle_supply_chain_verify(args: argparse.Namespace) -> int:
@@ -1826,62 +1903,21 @@ def _handle_supply_chain_verify(args: argparse.Namespace) -> int:
         print(f"Path not found: {project_root}")
         return 1
 
-    import datetime
+    import json
 
-    scanner = SupplyChainScanner()
-    sbom = scanner.sbom_generator.generate_from_project(project_root)
-    all_deps = scanner._flatten_deps(sbom.packages)
-
-    verify_result: dict[str, Any] = {
-        "project": str(project_root),
-        "verified_at": datetime.datetime.utcnow().isoformat(),
-        "total_packages": len(all_deps),
-        "verified": [],
-        "unverified": [],
-        "failed": [],
-    }
-
-    for dep in all_deps:
-        if dep.ecosystem == "pypi":
-            result = scanner.signature_verifier.verify_pypi_package(dep.name, dep.version)
-            if result.get("verified"):
-                verify_result["verified"].append({"name": dep.name, "version": dep.version, "details": result})
-            else:
-                verify_result["unverified"].append(
-                    {"name": dep.name, "version": dep.version, "reason": result.get("error", "No verification data")}
-                )
-        else:
-            verify_result["unverified"].append(
-                {"name": dep.name, "version": dep.version, "reason": f"No verifier for {dep.ecosystem}"}
-            )
+    report = _verify_packages(project_root)
 
     if args.format == "text":
-        print(f"\n🔐 Supply Chain Verification: {project_root}")
-        print(f"  Total packages: {verify_result['total_packages']}")
-        print(f"  Verified: {len(verify_result['verified'])}")
-        print(f"  Unverified: {len(verify_result['unverified'])}")
-        print(f"  Failed: {len(verify_result['failed'])}")
-
-        if verify_result["unverified"]:
-            print("\n⚠️ Unverified packages:")
-            for u in verify_result["unverified"][:10]:
-                print(f"  {u['name']}@{u['version']}: {u['reason']}")
-            if len(verify_result["unverified"]) > 10:
-                print(f"  ... and {len(verify_result['unverified']) - 10} more")
-
-    elif args.format == "json" and not args.output:
-        import json
-
-        print(json.dumps(verify_result, indent=2, ensure_ascii=False))
+        _print_verify_text(project_root, report)
+    elif args.format == "json":
+        print(json.dumps(report, indent=2, ensure_ascii=False))
 
     if args.output:
-        import json
-
-        args.output.write_text(json.dumps(verify_result, indent=2, ensure_ascii=False))
+        args.output.write_text(json.dumps(report, indent=2, ensure_ascii=False))
         print(f"Verification report written to {args.output}")
 
-    # Return non-zero if any unverified (strict mode)
-    return 0 if len(verify_result["unverified"]) == 0 else 1
+    # 存在未验证包时返回非零 (严格模式)
+    return 0 if not report["unverified"] else 1
 
 
 def _handle_sbom(args: argparse.Namespace) -> int:
@@ -1951,261 +1987,276 @@ def _handle_verify_signature(args: argparse.Namespace) -> int:
     return 1
 
 
-def _handle_exception(args: argparse.Namespace) -> int:
-    """Handle exception command."""
-    action = args.exception_action
-
-    # 创建管理器
-    manager = create_enhanced_manager(
+def _make_exception_manager() -> EnhancedExceptionManager:
+    """创建例外管理器实例。"""
+    return create_enhanced_manager(
         config_path=Path(".jcode/governance.yaml"),
         repo_path=Path("."),
     )
 
-    if action == "request":
-        paths = [p.strip() for p in args.paths.split(",")]
-        reviewers = [r.strip() for r in args.reviewers.split(",")] if args.reviewers else None
 
-        req = manager.request_exception(
-            rule_id=args.rule_id,
-            paths=paths,
-            reason=args.reason,
-            severity=args.severity,
-            requested_severity=args.requested_severity,
-            expires=args.expires,
-            created_by=args.created_by,
-            reviewers=reviewers,
+def _exception_request(manager: EnhancedExceptionManager, args: argparse.Namespace) -> int:
+    """处理 exception request 子命令。"""
+    paths = [p.strip() for p in args.paths.split(",")]
+    reviewers = [r.strip() for r in args.reviewers.split(",")] if args.reviewers else None
+
+    req = manager.request_exception(
+        rule_id=args.rule_id,
+        paths=paths,
+        reason=args.reason,
+        severity=args.severity,
+        requested_severity=args.requested_severity,
+        expires=args.expires,
+        created_by=args.created_by,
+        reviewers=reviewers,
+    )
+
+    print(f"✅ Exception request created: {req.id}")
+    print(f"   Rule: {req.rule_id}")
+    print(f"   Paths: {', '.join(req.paths)}")
+    print(f"   Reason: {req.reason}")
+    print(f"   Severity: {req.severity} -> {req.requested_severity}")
+    print(f"   Expires: {req.expires or 'Never'}")
+    print(f"   Status: {req.status.value}")
+    return 0
+
+
+def _exception_review(manager: EnhancedExceptionManager, args: argparse.Namespace, action: str) -> int:
+    """处理 approve/reject/revoke 三个审批动作。"""
+    if action == "approve":
+        ok, fail_msg = (
+            manager.approve_exception(args.request_id, args.reviewer, args.comment),
+            "not approved (may not be pending)",
         )
-
-        print(f"✅ Exception request created: {req.id}")
-        print(f"   Rule: {req.rule_id}")
-        print(f"   Paths: {', '.join(req.paths)}")
-        print(f"   Reason: {req.reason}")
-        print(f"   Severity: {req.severity} -> {req.requested_severity}")
-        print(f"   Expires: {req.expires or 'Never'}")
-        print(f"   Status: {req.status.value}")
-        return 0
-
-    elif action == "approve":
-        success = manager.approve_exception(args.request_id, args.reviewer, args.comment)
-        if success:
-            print(f"✅ Exception {args.request_id} approved")
-            return 0
-        else:
-            print(f"❌ Exception {args.request_id} not approved (may not be pending)")
-            return 1
-
+        ok_msg = "approved"
     elif action == "reject":
-        success = manager.reject_exception(args.request_id, args.reviewer, args.comment)
-        if success:
-            print(f"✅ Exception {args.request_id} rejected")
-            return 0
-        else:
-            print(f"❌ Exception {args.request_id} not rejected (may not be pending)")
-            return 1
+        ok, fail_msg = (
+            manager.reject_exception(args.request_id, args.reviewer, args.comment),
+            "not rejected (may not be pending)",
+        )
+        ok_msg = "rejected"
+    else:
+        ok, fail_msg = manager.revoke_exception(args.request_id), "not found"
+        ok_msg = "revoked"
 
-    elif action == "revoke":
-        success = manager.revoke_exception(args.request_id)
-        if success:
-            print(f"✅ Exception {args.request_id} revoked")
-            return 0
-        else:
-            print(f"❌ Exception {args.request_id} not found")
-            return 1
+    if ok:
+        print(f"✅ Exception {args.request_id} {ok_msg}")
+        return 0
+    print(f"❌ Exception {args.request_id} {fail_msg}")
+    return 1
 
-    elif action == "list":
-        status_filter = ExceptionStatus(args.status) if args.status else None
-        requests = manager.approval.list_requests(status_filter)
 
-        if not requests:
-            print("No exception requests found")
-            return 0
+def _exception_list(manager: EnhancedExceptionManager, args: argparse.Namespace) -> int:
+    """处理 exception list 子命令。"""
+    status_filter = ExceptionStatus(args.status) if args.status else None
+    requests = manager.approval.list_requests(status_filter)
 
-        for req in requests:
-            status_icon = {
-                ExceptionStatus.PENDING: "⏳",
-                ExceptionStatus.APPROVED: "✅",
-                ExceptionStatus.REJECTED: "❌",
-                ExceptionStatus.EXPIRED: "⏰",
-                ExceptionStatus.REVOKED: "🚫",
-            }.get(req.status, "?")
-            print(
-                f"{status_icon} {req.id} [{req.status.value}] {req.rule_id} - {req.created_by} ({req.created_at[:10]})"
-            )
-            if req.expires:
-                print(f"    Expires: {req.expires}")
+    if not requests:
+        print("No exception requests found")
         return 0
 
-    elif action == "check-expirations":
-        alerts = manager.check_expirations()
-        if not alerts:
-            print("✅ No exceptions expiring soon")
-            return 0
+    for req in requests:
+        status_icon = {
+            ExceptionStatus.PENDING: "⏳",
+            ExceptionStatus.APPROVED: "✅",
+            ExceptionStatus.REJECTED: "❌",
+            ExceptionStatus.EXPIRED: "⏰",
+            ExceptionStatus.REVOKED: "🚫",
+        }.get(req.status, "?")
+        print(f"{status_icon} {req.id} [{req.status.value}] {req.rule_id} - {req.created_by} ({req.created_at[:10]})")
+        if req.expires:
+            print(f"    Expires: {req.expires}")
+    return 0
 
-        print(f"⚠️  Found {len(alerts)} expiring exception(s):")
-        for alert in alerts:
-            print(f"  [{alert.days_until_expiry}d] {alert.request_id} - {alert.rule_id} (expires {alert.expires_at})")
+
+def _exception_check_expirations(manager: EnhancedExceptionManager) -> int:
+    """处理 check-expirations 子命令。"""
+    alerts = manager.check_expirations()
+    if not alerts:
+        print("✅ No exceptions expiring soon")
         return 0
 
-    elif action == "audit":
-        report = manager.generate_audit_report()
+    print(f"⚠️  Found {len(alerts)} expiring exception(s):")
+    for alert in alerts:
+        print(f"  [{alert.days_until_expiry}d] {alert.request_id} - {alert.rule_id} (expires {alert.expires_at})")
+    return 0
+
+
+def _exception_sync_gitops(manager: EnhancedExceptionManager) -> int:
+    """处理 sync-gitops 子命令。"""
+    if not manager.gitops:
+        print("❌ GitOps not configured (repo_path required)")
+        return 1
+
+    manager.gitops.pull_latest()
+    success = manager.gitops.sync_to_git(manager.get_all_requests())
+    if success:
+        print("✅ Exceptions synced to GitOps repo")
+        return 0
+    print("❌ Failed to sync exceptions")
+    return 1
+
+
+def _handle_exception(args: argparse.Namespace) -> int:
+    """Handle exception command."""
+    manager = _make_exception_manager()
+    action = args.exception_action
+
+    if action == "request":
+        return _exception_request(manager, args)
+    if action in ("approve", "reject", "revoke"):
+        return _exception_review(manager, args, action)
+    if action == "list":
+        return _exception_list(manager, args)
+    if action == "check-expirations":
+        return _exception_check_expirations(manager)
+    if action == "audit":
         import json
 
+        report = manager.generate_audit_report()
         print(json.dumps(report, indent=2, ensure_ascii=False))
         return 0
-
-    elif action == "sync-gitops":
-        if not manager.gitops:
-            print("❌ GitOps not configured (repo_path required)")
-            return 1
-
-        # 先拉取最新
-        manager.gitops.pull_latest()
-
-        # 同步到 Git
-        success = manager.gitops.sync_to_git(manager.get_all_requests())
-        if success:
-            print("✅ Exceptions synced to GitOps repo")
-            return 0
-        else:
-            print("❌ Failed to sync exceptions")
-            return 1
+    if action == "sync-gitops":
+        return _exception_sync_gitops(manager)
 
     print(f"Unknown exception action: {action}")
     return 1
 
 
+def _emit_or_write(output: str, output_path: Path | None, label: str) -> None:
+    """输出到文件或 stdout 的公共助手。"""
+    if output_path:
+        output_path.write_text(output)
+        print(f"{label} written to {output_path}")
+    else:
+        print(output)
+
+
+def _dep_graph_build(project_root: Path) -> DependencyGraph:
+    """生成 SBOM 并构建依赖图。"""
+    scanner = SupplyChainScanner()
+    sbom = scanner.generate_sbom(project_root)
+    return analyze_dependency_graph(project_root, sbom)
+
+
+def _dep_graph_analyze(graph: DependencyGraph, args: argparse.Namespace) -> int:
+    """处理 dep-graph analyze 子命令。"""
+    import json
+
+    if args.format == "json":
+        output = graph.to_json()
+    elif args.format == "graphviz":
+        output = graph.export_graphviz(args.output)
+    elif args.format == "mermaid":
+        output = graph.export_mermaid(args.output)
+    else:  # tree
+        dep_tree = graph.get_dependency_tree(max_depth=args.max_depth)
+        output = json.dumps(dep_tree, indent=2, ensure_ascii=False)
+
+    _emit_or_write(output, args.output, "Dependency graph")
+    return 0
+
+
+def _dep_graph_circular(graph: DependencyGraph, args: argparse.Namespace) -> int:
+    """处理 dep-graph circular 子命令。"""
+    import json
+
+    cycles: list[CircularDependency] = graph.detect_circular_dependencies()
+    output = json.dumps(
+        [{"cycle": c.cycle, "ecosystems": c.ecosystems, "severity": c.severity} for c in cycles],
+        indent=2,
+        ensure_ascii=False,
+    )
+    _emit_or_write(output, args.output, "Circular dependencies")
+
+    if cycles:
+        print(f"\n⚠️  Found {len(cycles)} circular dependency(ies)")
+        for c in cycles:
+            print(f"  {' -> '.join(c.cycle)}")
+        return 1
+    print("✅ No circular dependencies found")
+    return 0
+
+
+def _dep_graph_conflicts(graph: DependencyGraph, args: argparse.Namespace) -> int:
+    """处理 dep-graph conflicts 子命令。"""
+    import json
+
+    conflicts: list[DependencyConflict] = graph.detect_conflicts()
+    output = json.dumps(
+        [{"package": conf.package_name, "versions": conf.versions, "severity": conf.severity} for conf in conflicts],
+        indent=2,
+        ensure_ascii=False,
+    )
+    _emit_or_write(output, args.output, "Conflicts")
+
+    if conflicts:
+        print(f"\n⚠️  Found {len(conflicts)} version conflict(s)")
+        for conf in conflicts:
+            print(f"  {conf.package_name}: {list(conf.versions.keys())}")
+        return 1
+    print("✅ No version conflicts found")
+    return 0
+
+
+def _dep_graph_impact(graph: DependencyGraph, args: argparse.Namespace) -> int:
+    """处理 dep-graph impact 子命令。"""
+    import json
+
+    impacts = graph.analyze_impact(args.package, args.version)
+    output = json.dumps(
+        [
+            {
+                "package": i.package,
+                "version": i.version,
+                "direct_dependents": i.direct_dependents,
+                "transitive_dependents": i.transitive_dependents,
+                "total_affected": i.total_affected,
+                "critical_path": i.critical_path,
+            }
+            for i in impacts
+        ],
+        indent=2,
+        ensure_ascii=False,
+    )
+    _emit_or_write(output, args.output, "Impact analysis")
+
+    if not impacts:
+        print(f"Package {args.package} not found in dependencies")
+        return 1
+
+    for i in impacts:
+        print(f"\nPackage: {i.package}@{i.version}")
+        print(f"  Direct dependents: {len(i.direct_dependents)}")
+        print(f"  Transitive dependents: {len(i.transitive_dependents)}")
+        print(f"  Total affected: {i.total_affected}")
+        if i.critical_path:
+            print(f"  Critical path: {' -> '.join(i.critical_path)}")
+
+    return 0
+
+
 def _handle_dep_graph(args: argparse.Namespace) -> int:
     """Handle dep-graph command."""
-    action = args.dep_graph_action
-
-    # 分析依赖图
     project_root = args.path
     if not project_root.exists():
         print(f"Path not found: {project_root}")
         return 1
 
-    # 生成 SBOM 并构建图
-    from tools.scripts.supply_chain import SupplyChainScanner
+    graph = _dep_graph_build(project_root)
+    action = args.dep_graph_action
 
-    scanner = SupplyChainScanner()
-    sbom = scanner.generate_sbom(project_root)
-    graph = analyze_dependency_graph(project_root, sbom)
-
-    if action == "analyze":
-        if args.format == "json":
-            output = graph.to_json()
-        elif args.format == "graphviz":
-            output = graph.export_graphviz(args.output)
-        elif args.format == "mermaid":
-            output = graph.export_mermaid(args.output)
-        elif args.format == "tree":
-            import json
-
-            tree = graph.get_dependency_tree(max_depth=args.max_depth)
-            output = json.dumps(tree, indent=2, ensure_ascii=False)
-
-        if args.output:
-            args.output.write_text(output)
-            print(f"Dependency graph written to {args.output}")
-        else:
-            print(output)
-        return 0
-
-    elif action == "circular":
-        cycles: list[CircularDependency] = graph.detect_circular_dependencies()
-        import json
-
-        output = json.dumps(
-            [{"cycle": c.cycle, "ecosystems": c.ecosystems, "severity": c.severity} for c in cycles],
-            indent=2,
-            ensure_ascii=False,
-        )
-
-        if args.output:
-            args.output.write_text(output)
-            print(f"Circular dependencies written to {args.output}")
-        else:
-            print(output)
-
-        if cycles:
-            print(f"\n⚠️  Found {len(cycles)} circular dependency(ies)")
-            for c in cycles:
-                print(f"  {' -> '.join(c.cycle)}")
-            return 1
-        else:
-            print("✅ No circular dependencies found")
-        return 0
-
-    elif action == "conflicts":
-        conflicts: list[DependencyConflict] = graph.detect_conflicts()
-        import json
-
-        output = json.dumps(
-            [
-                {"package": conf.package_name, "versions": conf.versions, "severity": conf.severity}
-                for conf in conflicts
-            ],
-            indent=2,
-            ensure_ascii=False,
-        )
-
-        if args.output:
-            args.output.write_text(output)
-            print(f"Conflicts written to {args.output}")
-        else:
-            print(output)
-
-        if conflicts:
-            print(f"\n⚠️  Found {len(conflicts)} version conflict(s)")
-            for conf in conflicts:
-                print(f"  {conf.package_name}: {list(conf.versions.keys())}")
-            return 1
-        else:
-            print("✅ No version conflicts found")
-        return 0
-
-    elif action == "impact":
-        impacts = graph.analyze_impact(args.package, args.version)
-        import json
-
-        output = json.dumps(
-            [
-                {
-                    "package": i.package,
-                    "version": i.version,
-                    "direct_dependents": i.direct_dependents,
-                    "transitive_dependents": i.transitive_dependents,
-                    "total_affected": i.total_affected,
-                    "critical_path": i.critical_path,
-                }
-                for i in impacts
-            ],
-            indent=2,
-            ensure_ascii=False,
-        )
-
-        if args.output:
-            args.output.write_text(output)
-            print(f"Impact analysis written to {args.output}")
-        else:
-            print(output)
-
-        if not impacts:
-            print(f"Package {args.package} not found in dependencies")
-            return 1
-
-        for i in impacts:
-            print(f"\nPackage: {i.package}@{i.version}")
-            print(f"  Direct dependents: {len(i.direct_dependents)}")
-            print(f"  Transitive dependents: {len(i.transitive_dependents)}")
-            print(f"  Total affected: {i.total_affected}")
-            if i.critical_path:
-                print(f"  Critical path: {' -> '.join(i.critical_path)}")
-
-        return 0
-
-    print(f"Unknown dep-graph action: {action}")
-    return 1
+    handlers = {
+        "analyze": _dep_graph_analyze,
+        "circular": _dep_graph_circular,
+        "conflicts": _dep_graph_conflicts,
+        "impact": _dep_graph_impact,
+    }
+    handler = handlers.get(action)
+    if handler is None:
+        print(f"Unknown dep-graph action: {action}")
+        return 1
+    return handler(graph, args)
 
 
 def _to_sarif_supply_chain(result: ScanResult) -> dict[str, Any]:

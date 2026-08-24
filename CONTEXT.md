@@ -1,3 +1,145 @@
+## 更新记录: 2026-08-24 19:18:13
+
+### 任务
+Git 变更同步
+
+### 变更摘要
+diff --git a/.jcode/baseline.json b/.jcode/baseline.json
+index 711e3cb..579ea7f 100644
+--- a/.jcode/baseline.json
++++ b/.jcode/baseline.json
+@@ -58,17 +58,6 @@
+       "structure:函数超过 50 行 (实际 73 行)": 1,
+       "structure:函数超过 50 行 (实际 56 行)": 1
+     },
+-    "tools/scripts/hooks_runner.py": {
+-      "structure:函数超过 50 行 (实际 54 行)": 1,
+-      "structure:函数超过 50 行 (实际 57 行)": 1,
+-      "structure:函数超过 50 行 (实际 91 行)": 1,
+-      "structure:函数超过 50 行 (实际 115 行)": 1,
+-      "structure:函数超过 50 行 (实际 97 行)": 1,
+-      "structure:函数超过 50 行 (实际 66 行)": 1,
+-      "structure:函数超过 50 行 (实际 65 行)": 1,
+-      "structure:函数超过 50 行 (实际 123 行)": 1,
+-      "structure:函数超过 50 行 (实际 134 行)": 1
+-    },
+     "tools/scripts/detect_language.py": {
+       "error:空异常处理 (catch w/o logging)": 2,
+       "structure:函数超过 50 行 (实际 72 行)": 1
+@@ -88,8 +77,6 @@
+     },
+     "tools/scripts/config/loader.py": {
+       "type:使用 Any 类型": 1,
+-      "structure:函数超过 50 行 (实际 160 行)": 1,
+-      "structure:函数超过 50 行 (实际 103 行)": 1,
+       "structure:函数超过 50 行 (实际 61 行)": 1
+     },
+     "tools/scripts/rules_engine/ast_fixer.py": {
+diff --git a/CONTEXT.md b/CONTEXT.md
+index 06533fa..028c6a0 100644
+--- a/CONTEXT.md
++++ b/CONTEXT.md
+@@ -1,3 +1,265 @@
++## 更新记录: 2026-08-24 19:17:26
++
++### 任务
++Git 变更同步
++
++### 变更摘要
++diff --git a/.jcode/baseline.json b/.jcode/baseline.json
++index 711e3cb..579ea7f 100644
++--- a/.jcode/baseline.json
+++++ b/.jcode/baseline.json
++@@ -58,17 +58,6 @@
++       "structure:函数超过 50 行 (实际 73 行)": 1,
++       "structure:函数超过 50 行 (实际 56 行)": 1
++     },
++-    "tools/scripts/hooks_runner.py": {
++-      "structure:函数超过 50 行 (实际 54 行)": 1,
++-      "structure:函数超过 50 行 (实际 57 行)": 1,
++-      "structure:函数超过 50 行 (实际 91 行)": 1,
++-      "structure:函数超过 50 行 (实际 115 行)": 1,
++-      "structure:函数超过 50 行 (实际 97 行)": 1,
++-      "structure:函数超过 50 行 (实际 66 行)": 1,
++-      "structure:函数超过 50 行 (实际 65 行)": 1,
++-      "structure:函数超过 50 行 (实际 123 行)": 1,
++-      "structure:函数超过 50 行 (实际 134 行)": 1
++-    },
++     "...
+
+---
+
+## 更新记录: 2026-08-24 19:17:26
+
+### 任务
+Git 变更同步
+
+### 变更摘要
+diff --git a/.jcode/baseline.json b/.jcode/baseline.json
+index 711e3cb..579ea7f 100644
+--- a/.jcode/baseline.json
++++ b/.jcode/baseline.json
+@@ -58,17 +58,6 @@
+       "structure:函数超过 50 行 (实际 73 行)": 1,
+       "structure:函数超过 50 行 (实际 56 行)": 1
+     },
+-    "tools/scripts/hooks_runner.py": {
+-      "structure:函数超过 50 行 (实际 54 行)": 1,
+-      "structure:函数超过 50 行 (实际 57 行)": 1,
+-      "structure:函数超过 50 行 (实际 91 行)": 1,
+-      "structure:函数超过 50 行 (实际 115 行)": 1,
+-      "structure:函数超过 50 行 (实际 97 行)": 1,
+-      "structure:函数超过 50 行 (实际 66 行)": 1,
+-      "structure:函数超过 50 行 (实际 65 行)": 1,
+-      "structure:函数超过 50 行 (实际 123 行)": 1,
+-      "structure:函数超过 50 行 (实际 134 行)": 1
+-    },
+     "tools/scripts/detect_language.py": {
+       "error:空异常处理 (catch w/o logging)": 2,
+       "structure:函数超过 50 行 (实际 72 行)": 1
+@@ -88,8 +77,6 @@
+     },
+     "tools/scripts/config/loader.py": {
+       "type:使用 Any 类型": 1,
+-      "structure:函数超过 50 行 (实际 160 行)": 1,
+-      "structure:函数超过 50 行 (实际 103 行)": 1,
+       "structure:函数超过 50 行 (实际 61 行)": 1
+     },
+     "tools/scripts/rules_engine/ast_fixer.py": {
+diff --git a/CONTEXT.md b/CONTEXT.md
+index 06533fa..6c08fc9 100644
+--- a/CONTEXT.md
++++ b/CONTEXT.md
+@@ -1,3 +1,194 @@
++## 更新记录: 2026-08-24 18:40:31
++
++### 任务
++Git 变更同步
++
++### 变更摘要
++diff --git a/.jcode/baseline.json b/.jcode/baseline.json
++index 711e3cb..2c6e7e0 100644
++--- a/.jcode/baseline.json
+++++ b/.jcode/baseline.json
++@@ -88,8 +88,6 @@
++     },
++     "tools/scripts/config/loader.py": {
++       "type:使用 Any 类型": 1,
++-      "structure:函数超过 50 行 (实际 160 行)": 1,
++-      "structure:函数超过 50 行 (实际 103 行)": 1,
++       "structure:函数超过 50 行 (实际 61 行)": 1
++     },
++     "tools/scripts/rules_engine/ast_fixer.py": {
++diff --git a/.jcode/scripts/context-sync.py b/.jcode/scripts/context-sync.py
++index 7fef0cc..0cf3789 100644
++--- a/.jcode/scripts/context-sync.py
+++++ b/.jcode/scripts/context-sync.py
++@@ -321,10 +321,10 @@ class ContextSyncManager:
++         # 4. 合成更新
++         updated_context...
+
+---
+
 ## 更新记录: 2026-08-24 18:40:31
 
 ### 任务

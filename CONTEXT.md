@@ -1,3 +1,77 @@
+## 更新记录: 2026-08-24 19:43:20
+
+### 任务
+Git 变更同步
+
+### 变更摘要
+diff --git a/.jcode/baseline.json b/.jcode/baseline.json
+index 579ea7f..f62ce07 100644
+--- a/.jcode/baseline.json
++++ b/.jcode/baseline.json
+@@ -41,10 +41,6 @@
+     "tools/scripts/docker_build.py": {
+       "structure:函数超过 50 行 (实际 136 行)": 1
+     },
+-    "tools/scripts/language_registry.py": {
+-      "error:空异常处理 (catch w/o logging)": 1,
+-      "structure:函数超过 50 行 (实际 74 行)": 1
+-    },
+     "tools/scripts/analyze_case_quality.py": {
+       "structure:函数超过 50 行 (实际 57 行)": 1,
+       "structure:函数超过 50 行 (实际 56 行)": 1
+@@ -59,7 +55,6 @@
+       "structure:函数超过 50 行 (实际 56 行)": 1
+     },
+     "tools/scripts/detect_language.py": {
+-      "error:空异常处理 (catch w/o logging)": 2,
+       "structure:函数超过 50 行 (实际 72 行)": 1
+     },
+     "tools/scripts/rule_registry.py": {
+diff --git a/ANALYSIS_REPORT_2026-08-24.md b/ANALYSIS_REPORT_2026-08-24.md
+new file mode 100644
+index 0000000..317c52f
+--- /dev/null
++++ b/ANALYSIS_REPORT_2026-08-24.md
+@@ -0,0 +1,165 @@
++# 项目全面分析与优化开发计划 (2026-08-24)
++
++> 基于 2026-08-24 代码库实测状态，衔接 Phase 17 收尾与后续阶段规划。
++> 数据来源: 实际运行 quality-gate/pytest/validate_case_study/gh CLI + 文档交叉核对。
++
++---
++
++## 一、项目定位回顾
++
++**ai_developer_growth = 知识库 (261 篇方法论) + 治理框架 (38 规范) + AI-Native SDLC 自动化**
++
++核心原则: 知识质量 > 交付方式 > 技术复杂度；验证 > 声称。
++
++### 当前健康度快照
++
++| 维度 | 状态 | 数据 |
++|------|------|------|
++| 测试 | ✅ 健康 | 2423 全通过，173s (本地无 xdist) |
++| 覆盖率 | ⚠️ 偏低门禁 | fail_under=60 (CI 配置 75，本地 60，不一致) |
++| lint/format/mypy strict | ✅ 清零 | 本轮 3 提交后全绿 |
++| 质量基线棘轮 | ✅ 收敛中 | 54→46→43→**39** 条存量豁免 |
++| 案例合规 | ✅ 100% | validate_case_study 0 error (46 案例) |
++| 文档链接 | ✅ 健康 | MOC.md 抽样 50 链接 0 断链 |
++| CI/CD | 🔴 **全红** | Billing 计费失败，所有 job 未启动 (外部阻塞) |
++| 发布状态 | 🚧 待做 | v2.4.0 在 Unreleased，最新 tag v2.3.0 |
++
++---
++
++## 二、可修复问题 (按优先级)
++
++### P0 — 外部阻塞与发布阻断
++
++#### 1. GitHub Actions 计费阻塞 [外部依赖]
++- **现状**: 所有 19 个 workflow job 因 "account payments have failed" 未启动，连续多轮提交的 CI 验证全部缺失
++- **影响**: doctor-gate 三 OS matrix、测试分片、覆盖率合并、SBOM/SLSA 等实战验证持续空缺；无法确认远端真实 CI 绿灯
++- **行动**: 用户在 Billing & plans 处理付款/额度 ...
+
+---
+
 ## 更新记录: 2026-08-24 19:33:10
 
 ### 任务

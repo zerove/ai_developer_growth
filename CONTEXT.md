@@ -1,3 +1,177 @@
+## 更新记录: 2026-08-25 07:32:53
+
+### 任务
+Git 变更同步
+
+### 变更摘要
+diff --git a/.github/workflows/ci-cd.yml b/.github/workflows/ci-cd.yml
+index f53f3da..cec3692 100644
+--- a/.github/workflows/ci-cd.yml
++++ b/.github/workflows/ci-cd.yml
+@@ -136,7 +136,7 @@ jobs:
+             --cov=tools/scripts \
+             --cov-report=xml \
+             --cov-report=term-missing \
+-            --cov-fail-under=64
++            --cov-fail-under=65
+
+       - name: Upload coverage
+         uses: codecov/codecov-action@v4
+diff --git a/CONTEXT.md b/CONTEXT.md
+index fcf142e..728e6a1 100644
+--- a/CONTEXT.md
++++ b/CONTEXT.md
+@@ -1,3 +1,176 @@
++## 更新记录: 2026-08-25 07:32:28
++
++### 任务
++Git 变更同步
++
++### 变更摘要
++diff --git a/.github/workflows/ci-cd.yml b/.github/workflows/ci-cd.yml
++index f53f3da..cec3692 100644
++--- a/.github/workflows/ci-cd.yml
+++++ b/.github/workflows/ci-cd.yml
++@@ -136,7 +136,7 @@ jobs:
++             --cov=tools/scripts \
++             --cov-report=xml \
++             --cov-report=term-missing \
++-            --cov-fail-under=64
+++            --cov-fail-under=65
++
++       - name: Upload coverage
++         uses: codecov/codecov-action@v4
++diff --git a/CONTEXT.md b/CONTEXT.md
++index fcf142e..6ffe18a 100644
++--- a/CONTEXT.md
+++++ b/CONTEXT.md
++@@ -1,3 +1,84 @@
+++## 更新记录: 2026-08-25 06:56:46
+++
+++### 任务
+++Git 变更同步
+++
+++### 变更摘要
+++diff --git a/.github/workflows/ci-cd.yml b/.github/workflows/ci-cd.yml
+++index f53f3da..cec3692 100644
+++--- a/.github/workflows/ci-cd.yml
++++++ b/.github/workflows/ci-cd.yml
+++@@ -136,7 +136,7 @@ jobs:
+++             --cov=tools/scripts \
+++             --cov-report=xml \
+++             --cov-report=term-missing \
+++-            --cov-fail-under=64
++++            --cov-fail-under=65
+++
+++       - name: Upload coverage
+++         uses: codecov/codecov-action@v4
+++diff --git a/.mise.toml b/.mise.toml
+++new file mode 100644
+++index 0000000..a190abb
+++--- /dev/null
++++++ b/.mise.toml
+++@@ -0,0 +1,2 @@
++++[tools]
++++python = "3.12"
+++diff --git a/CONTEXT.md b/CONTEXT.md
+++index e5ac5ac..fcf142e 100644
+++--- a/CONTEXT.md
+++...
+
+---
+
+## 更新记录: 2026-08-25 07:32:28
+
+### 任务
+Git 变更同步
+
+### 变更摘要
+diff --git a/.github/workflows/ci-cd.yml b/.github/workflows/ci-cd.yml
+index f53f3da..cec3692 100644
+--- a/.github/workflows/ci-cd.yml
++++ b/.github/workflows/ci-cd.yml
+@@ -136,7 +136,7 @@ jobs:
+             --cov=tools/scripts \
+             --cov-report=xml \
+             --cov-report=term-missing \
+-            --cov-fail-under=64
++            --cov-fail-under=65
+
+       - name: Upload coverage
+         uses: codecov/codecov-action@v4
+diff --git a/CONTEXT.md b/CONTEXT.md
+index fcf142e..6ffe18a 100644
+--- a/CONTEXT.md
++++ b/CONTEXT.md
+@@ -1,3 +1,84 @@
++## 更新记录: 2026-08-25 06:56:46
++
++### 任务
++Git 变更同步
++
++### 变更摘要
++diff --git a/.github/workflows/ci-cd.yml b/.github/workflows/ci-cd.yml
++index f53f3da..cec3692 100644
++--- a/.github/workflows/ci-cd.yml
+++++ b/.github/workflows/ci-cd.yml
++@@ -136,7 +136,7 @@ jobs:
++             --cov=tools/scripts \
++             --cov-report=xml \
++             --cov-report=term-missing \
++-            --cov-fail-under=64
+++            --cov-fail-under=65
++
++       - name: Upload coverage
++         uses: codecov/codecov-action@v4
++diff --git a/.mise.toml b/.mise.toml
++new file mode 100644
++index 0000000..a190abb
++--- /dev/null
+++++ b/.mise.toml
++@@ -0,0 +1,2 @@
+++[tools]
+++python = "3.12"
++diff --git a/CONTEXT.md b/CONTEXT.md
++index e5ac5ac..fcf142e 100644
++--- a/CONTEXT.md
+++++ b/CONTEXT.md
++@@ -1,3 +1,55 @@
+++## 更新记录: 2026-08-25 06:27:56
+++
+++### 任务
+++Git 变更同步
+++
+++### 变更摘要
+++diff --git a/.mise.toml b/.mise.toml
+++new file mode 100644
+++index 0000000..a190abb
+++--- /dev/null
++++++ b/.mise.toml
+++@@ -0,0 +1,2 @@
++++[tools]
++++python = "3.12"
+++diff --git a/CONTEXT.md b/CONTEXT.md
+++index 9cd8014..e5ac5ac 100644
+++--- a/CONTEXT.md
++++++ b/CONTEXT.md
+++@@ -1,3 +1,213 @@
++++## 更新记录: 2026-08-25 06:21:52
++++
++++### 任务
++++Git 变更同步
++++
++++### 变更摘要
++++diff --git a/.gitignore b/.gitignore
++++index b7b3d1f..7b03ddc 100644
++++--- a/.gitignore
+++++++ b/.gitignore
++++@@ -88,3 +88,9 @@ tools/scripts/rules_engine/*.bak
++++ *.db-wal
++++ *.db-shm
++++...
+
+---
+
 ## 更新记录: 2026-08-25 06:56:46
 
 ### 任务

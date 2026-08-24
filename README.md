@@ -144,7 +144,7 @@ python ai-dev-framework/core/jcode_init.py your-project --language python
 | 📚 实践案例 | 46 个 |
 | 🛠️ 代码示例 | 10 个 |
 | 📋 架构决策 | 13 条 |
-| 🧪 测试用例 | 2423 个 |
+| 🧪 测试用例 | 2429 个 |
 | ✅ 测试覆盖率 | 85%+ |
 
 ---

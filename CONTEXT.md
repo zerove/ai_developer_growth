@@ -1,3 +1,73 @@
+## 更新记录: 2026-08-24 17:41:56
+
+### 任务
+Git 变更同步
+
+### 变更摘要
+diff --git a/.jcode/scripts/multi_agent_orch.py b/.jcode/scripts/multi_agent_orch.py
+index e6c2976..2a61129 100644
+--- a/.jcode/scripts/multi_agent_orch.py
++++ b/.jcode/scripts/multi_agent_orch.py
+@@ -162,7 +162,7 @@ class BaseAgent:
+         try:
+             return self._generate(history)
+         except AgentFailureError:
+-            raise  # noqa: py-bare-raise -- except 块内合法重抛
++            raise
+         except Exception as exc:
+             raise AgentFailureError(
+                 f"Agent {self._role.value} failed: {exc}",
+diff --git a/CONTEXT.md b/CONTEXT.md
+index 68031de..4ec4474 100644
+--- a/CONTEXT.md
++++ b/CONTEXT.md
+@@ -1,3 +1,359 @@
++## 更新记录: 2026-08-24 17:33:38
++
++### 任务
++Git 变更同步
++
++### 变更摘要
++diff --git a/.jcode/scripts/multi_agent_orch.py b/.jcode/scripts/multi_agent_orch.py
++index e6c2976..2a61129 100644
++--- a/.jcode/scripts/multi_agent_orch.py
+++++ b/.jcode/scripts/multi_agent_orch.py
++@@ -162,7 +162,7 @@ class BaseAgent:
++         try:
++             return self._generate(history)
++         except AgentFailureError:
++-            raise  # noqa: py-bare-raise -- except 块内合法重抛
+++            raise
++         except Exception as exc:
++             raise AgentFailureError(
++                 f"Agent {self._role.value} failed: {exc}",
++diff --git a/CONTEXT.md b/CONTEXT.md
++index 1497279..609b2c3 100644
++--- a/CONTEXT.md
+++++ b/CONTEXT.md
++@@ -1,3 +1,361 @@
+++## 更新记录: 2026-08-24 17:32:28
+++
+++### 任务
+++Git 变更同步
+++
+++### 变更摘要
+++diff --git a/.jcode/scripts/multi_agent_orch.py b/.jcode/scripts/multi_agent_orch.py
+++index e6c2976..2a61129 100644
+++--- a/.jcode/scripts/multi_agent_orch.py
++++++ b/.jcode/scripts/multi_agent_orch.py
+++@@ -162,7 +162,7 @@ class BaseAgent:
+++         try:
+++             return self._generate(history)
+++         except AgentFailureError:
+++-            raise  # noqa: py-bare-raise -- except 块内合法重抛
++++            raise
+++         except Exception as exc:
+++             raise AgentFailureError(
+++                 f"Agent {self._role....
+
+---
+
 ## 更新记录: 2026-08-24 17:33:38
 
 ### 任务

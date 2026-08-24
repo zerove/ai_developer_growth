@@ -1,5 +1,5 @@
 import os
-import shutil
+import tempfile
 import unittest
 from pathlib import Path
 
@@ -75,13 +75,12 @@ class TestCheckMetadata(unittest.TestCase):
     """Test single file metadata checking."""
 
     def setUp(self):
-        self.test_dir = "test_metadata"
-        os.makedirs(self.test_dir, exist_ok=True)
+        self._tmp = tempfile.TemporaryDirectory()
+        self.test_dir = self._tmp.name
         self.test_file = Path(self.test_dir) / "test.md"
 
     def tearDown(self):
-        if os.path.exists(self.test_dir):
-            shutil.rmtree(self.test_dir)
+        self._tmp.cleanup()
 
     def test_valid_file_no_issues(self):
         """File with all required fields should have no issues."""
@@ -310,12 +309,11 @@ class TestScanDirectory(unittest.TestCase):
     """Test directory scanning."""
 
     def setUp(self):
-        self.test_dir = "test_metadata_scan"
-        os.makedirs(self.test_dir, exist_ok=True)
+        self._tmp = tempfile.TemporaryDirectory()
+        self.test_dir = self._tmp.name
 
     def tearDown(self):
-        if os.path.exists(self.test_dir):
-            shutil.rmtree(self.test_dir)
+        self._tmp.cleanup()
 
     def test_scan_finds_issues(self):
         """Should find files with metadata issues."""

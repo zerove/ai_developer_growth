@@ -1,7 +1,7 @@
 import os
-import shutil
 import subprocess
 import sys
+import tempfile
 import unittest
 
 from tools.scripts.link_auditor import (
@@ -14,12 +14,11 @@ from tools.scripts.link_auditor import (
 
 class TestLinkAuditor(unittest.TestCase):
     def setUp(self):
-        self.test_dir = "test_docs"
-        os.makedirs(self.test_dir, exist_ok=True)
+        self._tmp = tempfile.TemporaryDirectory()
+        self.test_dir = self._tmp.name
 
     def tearDown(self):
-        if os.path.exists(self.test_dir):
-            shutil.rmtree(self.test_dir)
+        self._tmp.cleanup()
 
     def test_strip_code_blocks_removes_fenced(self):
         """Test that fenced code blocks are stripped."""
@@ -118,8 +117,8 @@ class TestCheckTarget(unittest.TestCase):
     """Test _check_target internal function."""
 
     def setUp(self):
-        self.test_dir = "test_docs"
-        os.makedirs(self.test_dir, exist_ok=True)
+        self._tmp = tempfile.TemporaryDirectory()
+        self.test_dir = self._tmp.name
         # Create a test file for index
         with open(os.path.join(self.test_dir, "target.md"), "w") as f:
             f.write("content")
@@ -133,8 +132,7 @@ class TestCheckTarget(unittest.TestCase):
             f.write("readme")
 
     def tearDown(self):
-        if os.path.exists(self.test_dir):
-            shutil.rmtree(self.test_dir)
+        self._tmp.cleanup()
 
     def test_check_target_exact_path(self):
         """Test exact path match in index (covers line 37-38)."""
@@ -183,15 +181,14 @@ class TestMain(unittest.TestCase):
     """Test main block via subprocess to cover lines 84-97."""
 
     def setUp(self):
-        self.test_dir = "test_docs"
-        os.makedirs(self.test_dir, exist_ok=True)
+        self._tmp = tempfile.TemporaryDirectory()
+        self.test_dir = self._tmp.name
         # Create a README.md so directory links work
         with open(os.path.join(self.test_dir, "README.md"), "w") as f:
             f.write("# Root README")
 
     def tearDown(self):
-        if os.path.exists(self.test_dir):
-            shutil.rmtree(self.test_dir)
+        self._tmp.cleanup()
 
     def test_main_no_args(self):
         """Test main exits with usage when no args provided."""

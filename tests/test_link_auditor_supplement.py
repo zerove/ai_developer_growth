@@ -2,6 +2,7 @@
 
 import os
 import shutil
+import tempfile
 import unittest
 
 from tools.scripts.link_auditor import (
@@ -17,12 +18,11 @@ class TestFindBrokenLinksWithIndex(unittest.TestCase):
     """Test find_broken_links_with_index function."""
 
     def setUp(self):
-        self.test_dir = "test_docs_wi"
-        os.makedirs(self.test_dir, exist_ok=True)
+        self._tmp = tempfile.TemporaryDirectory()
+        self.test_dir = self._tmp.name
 
     def tearDown(self):
-        if os.path.exists(self.test_dir):
-            shutil.rmtree(self.test_dir)
+        self._tmp.cleanup()
 
     def test_with_external_index_valid_link(self):
         """Link resolving via external index should not be broken."""

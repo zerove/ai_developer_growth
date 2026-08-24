@@ -68,6 +68,8 @@ bandit-report.json
 !.jcode/registry.json
 !.jcode/scripts/
 !.jcode/mode_decision.conf
+# 质量门禁棘轮基线: 需随仓库分发，CI 才能豁免存量问题
+!.jcode/baseline.json
 !.jcode/USAGE.md
 !.jcode/exceptions.yaml
 !.jcode/ignored-rules.toml

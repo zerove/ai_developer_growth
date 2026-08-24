@@ -4,11 +4,13 @@ from __future__ import annotations
 
 import importlib.util
 import json
+import os
 import subprocess
 import sys
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
+from tools.scripts._common import get_project_root
 from tools.scripts.ai_quality_gate import check_file
 from tools.scripts.hooks.basic_checks import CODE_EXTENSIONS
 from tools.scripts.rules_engine.logger import logger
@@ -20,6 +22,71 @@ from tools.scripts.validate_language_rules import (
 
 if TYPE_CHECKING:
     from collections.abc import Callable
+
+
+def _issue_key(issue: dict[str, Any]) -> str:
+    """构造问题的稳定标识 (类型 + 消息)，容忍行号漂移。"""
+    return f"{issue.get('type', 'unknown')}:{issue.get('message', '')}"
+
+
+def _count_issues(issues: list[dict[str, Any]]) -> dict[str, int]:
+    """按稳定标识统计问题数量。"""
+    counts: dict[str, int] = {}
+    for issue in issues:
+        key = _issue_key(issue)
+        counts[key] = counts.get(key, 0) + 1
+    return counts
+
+
+def _load_issue_baseline(baseline_path: Path) -> dict[str, dict[str, int]] | None:
+    """加载问题计数基线；文件不存在或损坏时返回 None。"""
+    if not baseline_path.exists():
+        return None
+    try:
+        data = json.loads(baseline_path.read_text(encoding="utf-8"))
+    except Exception:
+        return None
+    result: dict[str, dict[str, int]] = {}
+    for fpath, issues in data.get("files", {}).items():
+        if isinstance(issues, dict):
+            result[fpath] = {str(k): int(v) for k, v in issues.items()}
+    return result
+
+
+def _save_issue_baseline(baseline_path: Path, all_results: list[tuple[Path, dict[str, Any]]]) -> None:
+    """将当前全部问题写入基线（含存量，保证棘轮只减不增）。"""
+    files: dict[str, dict[str, int]] = {}
+    for filepath, r in all_results:
+        counts = _count_issues(r["issues"])
+        if counts:
+            files[str(filepath)] = counts
+    payload = {"version": 1, "files": files}
+    baseline_path.parent.mkdir(parents=True, exist_ok=True)
+    baseline_path.write_text(json.dumps(payload, indent=2, ensure_ascii=False), encoding="utf-8")
+
+
+def _merge_issue_baseline(
+    baseline_path: Path,
+    all_results: list[tuple[Path, dict[str, Any]]],
+    existing_baseline: dict[str, dict[str, int]],
+) -> None:
+    """合并式刷新基线。
+
+    局部运行（单文件/子目录）只更新本次检查到的文件，
+    未检查文件保留原有计数，避免局部结果覆盖全量基线。
+    """
+    checked = {str(filepath) for filepath, _ in all_results}
+    files: dict[str, dict[str, int]] = {}
+    for fpath, counts in existing_baseline.items():
+        if fpath not in checked:
+            files[fpath] = dict(counts)
+    for filepath, r in all_results:
+        counts = _count_issues(r["issues"])
+        if counts:
+            files[str(filepath)] = counts
+    payload = {"version": 1, "files": files}
+    baseline_path.parent.mkdir(parents=True, exist_ok=True)
+    baseline_path.write_text(json.dumps(payload, indent=2, ensure_ascii=False), encoding="utf-8")
 
 
 def run_language_rules(path: Path, lang: str | None = None) -> tuple[bool, str]:
@@ -139,9 +206,62 @@ def run_quality_gate(
         result = check_file(filepath, file_checks)
         all_results.append((filepath, result))
 
+    # 基线棘轮: 存量问题豁免，只拦截新增问题
+    # - 基线不存在: 记录现状作为起点，本次保持严格判定
+    #   （基线随仓库分发后，后续运行才开始豁免存量）
+    # - 有新增问题: 失败，基线保持不变
+    # - 无新增问题: 通过并用当前状态合并刷新基线（已修复的问题随之移出）
+    # 任何基线机制自身的异常都不应阻断门禁，此时退回无基线行为
+    # 基线默认放在项目根目录（基于模块位置定位，不受 cwd 影响），
+    # 测试可通过 JCODE_QUALITY_BASELINE 环境变量指向临时目录实现隔离
+    env_baseline = os.environ.get("JCODE_QUALITY_BASELINE")
+    baseline_path = Path(env_baseline) if env_baseline else get_project_root() / ".jcode" / "baseline.json"
+    original_results = list(all_results)
+    existing_baseline = _load_issue_baseline(baseline_path)
+    baseline_exempt = 0
+    baseline_note = ""
+
+    try:
+        if existing_baseline is None:
+            _save_issue_baseline(baseline_path, all_results)
+            baseline_note = f"首次运行，已创建质量基线（本次按严格模式判定）: {baseline_path}"
+        elif existing_baseline:
+            filtered_results: list[tuple[Path, dict[str, Any]]] = []
+            for filepath, r in all_results:
+                base_counts = existing_baseline.get(str(filepath), {})
+                cur_counts: dict[str, int] = {}
+                kept_issues: list[dict[str, Any]] = []
+                for issue in r["issues"]:
+                    key = _issue_key(issue)
+                    cur_counts[key] = cur_counts.get(key, 0) + 1
+                    if cur_counts[key] <= base_counts.get(key, 0):
+                        baseline_exempt += 1
+                        continue
+                    kept_issues.append(issue)
+                new_r = {**r, "issues": kept_issues}
+                if kept_issues:
+                    new_r["passed"] = False
+                elif not r["passed"] and r["issues"]:
+                    new_r["passed"] = True
+                filtered_results.append((filepath, new_r))
+            all_results = filtered_results
+            if baseline_exempt:
+                baseline_note = f"基线豁免存量问题 {baseline_exempt} 个"
+    except Exception as e:  # noqa: BLE001 - 基线失败时退回严格模式
+        logger.warning("质量基线处理失败，退回无基线严格模式: %s", e)
+        all_results = original_results
+        baseline_note = ""
+
     passed_count = sum(1 for _, r in all_results if r["passed"])
     failed_count = len(all_results) - passed_count
     total_issues = sum(len(r["issues"]) for _, r in all_results)
+
+    # 无新增问题时合并刷新基线，使已修复的存量问题移出基线（棘轮只紧不松）
+    if failed_count == 0 and existing_baseline:
+        try:
+            _merge_issue_baseline(baseline_path, original_results, existing_baseline)
+        except Exception as e:  # noqa: BLE001 - 刷新失败不影响本次结果
+            logger.warning("质量基线刷新失败: %s", e)
 
     # Format output
     if format == "json":
@@ -152,6 +272,7 @@ def run_quality_gate(
                     "failed": failed_count,
                     "total_files": len(all_results),
                     "total_issues": total_issues,
+                    "baseline_exempt": baseline_exempt,
                 },
                 "results": [{"file": str(f), **r} for f, r in all_results],
             },
@@ -170,6 +291,8 @@ def run_quality_gate(
                 if len(result["issues"]) > 5:
                     lines.append(f"   ... and {len(result['issues']) - 5} more")
         lines.append(f"\nSummary: {passed_count} passed, {failed_count} failed, {total_issues} issues")
+        if baseline_note:
+            lines.append(f"ℹ️  {baseline_note}")
         output = "\n".join(lines)
 
     # 记录到统一存储（任务7：复用检查历史，供 dashboard/趋势分析使用）

@@ -1,0 +1,112 @@
+{
+  "version": 1,
+  "files": {
+    "scripts/team-radar-collect.py": {
+      "structure:函数超过 50 行 (实际 63 行)": 1,
+      "structure:函数超过 50 行 (实际 83 行)": 1
+    },
+    "scripts/search-server.py": {
+      "structure:函数超过 50 行 (实际 62 行)": 1
+    },
+    "tools/multiproject/__init__.py": {
+      "structure:函数超过 50 行 (实际 69 行)": 1
+    },
+    "tools/scripts/sync_issues.py": {
+      "type:使用 Any 类型": 1,
+      "structure:函数超过 50 行 (实际 72 行)": 1
+    },
+    "tools/scripts/dependency_graph.py": {
+      "structure:函数超过 50 行 (实际 54 行)": 1
+    },
+    "tools/scripts/docker_build.py": {
+      "structure:函数超过 50 行 (实际 136 行)": 1
+    },
+    "tools/scripts/language_registry.py": {
+      "error:空异常处理 (catch w/o logging)": 1,
+      "structure:函数超过 50 行 (实际 74 行)": 1
+    },
+    "tools/scripts/analyze_case_quality.py": {
+      "structure:函数超过 50 行 (实际 57 行)": 1,
+      "structure:函数超过 50 行 (实际 56 行)": 1
+    },
+    "tools/scripts/supply_chain.py": {
+      "type:使用 Any 类型": 1,
+      "structure:函数超过 50 行 (实际 51 行)": 2,
+      "structure:函数超过 50 行 (实际 53 行)": 1
+    },
+    "tools/scripts/validate_agent_definition.py": {
+      "structure:函数超过 50 行 (实际 73 行)": 1,
+      "structure:函数超过 50 行 (实际 56 行)": 1
+    },
+    "tools/scripts/hooks_runner.py": {
+      "structure:函数超过 50 行 (实际 54 行)": 1,
+      "structure:函数超过 50 行 (实际 57 行)": 1,
+      "structure:函数超过 50 行 (实际 91 行)": 1,
+      "structure:函数超过 50 行 (实际 115 行)": 1,
+      "structure:函数超过 50 行 (实际 97 行)": 1,
+      "structure:函数超过 50 行 (实际 66 行)": 1,
+      "structure:函数超过 50 行 (实际 65 行)": 1,
+      "structure:函数超过 50 行 (实际 123 行)": 1,
+      "structure:函数超过 50 行 (实际 134 行)": 1,
+      "structure:函数超过 50 行 (实际 72 行)": 1
+    },
+    "tools/scripts/detect_language.py": {
+      "error:空异常处理 (catch w/o logging)": 2,
+      "structure:函数超过 50 行 (实际 72 行)": 1
+    },
+    "tools/scripts/rule_registry.py": {
+      "structure:函数超过 50 行 (实际 59 行)": 1
+    },
+    "tools/scripts/auto_fix.py": {
+      "structure:函数超过 50 行 (实际 82 行)": 1,
+      "structure:函数超过 50 行 (实际 55 行)": 1
+    },
+    "tools/scripts/chaos_experiment_runner.py": {
+      "structure:函数超过 50 行 (实际 89 行)": 1
+    },
+    "tools/scripts/fix_heuristics.py": {
+      "structure:函数超过 50 行 (实际 55 行)": 1
+    },
+    "tools/lsp/server.py": {
+      "structure:函数超过 50 行 (实际 58 行)": 1
+    },
+    "tools/scripts/config/loader.py": {
+      "type:使用 Any 类型": 1,
+      "structure:函数超过 50 行 (实际 160 行)": 1,
+      "structure:函数超过 50 行 (实际 103 行)": 1,
+      "structure:函数超过 50 行 (实际 61 行)": 1
+    },
+    "tools/scripts/rules_engine/ast_fixer.py": {
+      "structure:函数超过 50 行 (实际 52 行)": 1
+    },
+    "tools/scripts/rules_engine/ast_parser.py": {
+      "structure:函数超过 50 行 (实际 64 行)": 1
+    },
+    "tools/scripts/rules_engine/hallucination_detector.py": {
+      "structure:函数超过 50 行 (实际 56 行)": 1
+    },
+    "tools/scripts/rules/loader.py": {
+      "structure:函数超过 50 行 (实际 53 行)": 1
+    },
+    "tools/scripts/hooks/pre_push.py": {
+      "structure:函数超过 50 行 (实际 55 行)": 1
+    },
+    ".jcode/scripts/context-sync.py": {
+      "type:使用 Any 类型": 1
+    },
+    ".jcode/scripts/governance-auditor.py": {
+      "structure:函数超过 50 行 (实际 54 行)": 1
+    },
+    ".jcode/scripts/multi_agent_orch.py": {
+      "type:使用 Any 类型": 1
+    },
+    ".jcode/scripts/jcode-init.py": {
+      "structure:函数超过 50 行 (实际 110 行)": 1
+    },
+    ".jcode/scripts/self_correction_loop.py": {
+      "type:使用 Any 类型": 3,
+      "structure:函数超过 50 行 (实际 59 行)": 1,
+      "structure:函数超过 50 行 (实际 55 行)": 1
+    }
+  }
+}

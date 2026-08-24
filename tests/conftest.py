@@ -18,6 +18,12 @@ import pytest
 warnings.filterwarnings("ignore", category=FutureWarning, module="tree_sitter")
 
 
+@pytest.fixture(autouse=True)
+def _isolate_quality_baseline(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
+    """将质量门禁基线隔离到临时目录，防止测试污染真实项目基线。"""
+    monkeypatch.setenv("JCODE_QUALITY_BASELINE", str(tmp_path / ".jcode" / "baseline.json"))
+
+
 @pytest.fixture
 def temp_dir():
     """Create a temporary directory and clean up after test."""

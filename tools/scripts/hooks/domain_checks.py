@@ -89,6 +89,94 @@ def _merge_issue_baseline(
     baseline_path.write_text(json.dumps(payload, indent=2, ensure_ascii=False), encoding="utf-8")
 
 
+def validate_baseline_structure(baseline_path: Path) -> tuple[bool, str]:
+    """校验基线文件结构合法性（防误编辑/篡改导致棘轮静默失效）。
+
+    合法格式: {"version": int, "files": {相对路径: {"type:message": 正整数}}}
+    """
+    if not baseline_path.exists():
+        return False, f"基线文件不存在: {baseline_path}"
+    try:
+        data = json.loads(baseline_path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError) as e:
+        return False, f"基线文件不是合法 JSON: {e}"
+
+    if not isinstance(data, dict):
+        return False, "顶层必须是对象"
+    version = data.get("version")
+    if not isinstance(version, int):
+        return False, "缺少整数 version 字段"
+    files = data.get("files")
+    if not isinstance(files, dict):
+        return False, "缺少 files 对象"
+
+    for filepath, counts in files.items():
+        if not isinstance(counts, dict) or not counts:
+            return False, f"文件条目必须是非空对象: {filepath}"
+        for key, count in counts.items():
+            if not isinstance(key, str) or ":" not in key:
+                return False, f"问题键必须是 'type:message' 格式: {key!r} ({filepath})"
+            if not isinstance(count, int) or count < 1:
+                return False, f"问题计数必须是正整数: {filepath} -> {key} = {count}"
+    total = sum(sum(c.values()) for c in files.values())
+    return True, f"基线合法: {len(files)} 个文件, {total} 个存量问题"
+
+
+def prune_stale_baseline_entries(baseline_path: Path) -> int:
+    """清除指向已不存在文件的基线条目（全量刷新后调用）。
+
+    返回删除的文件条目数。基线不存在或为空时返回 0。
+    """
+    try:
+        data = json.loads(baseline_path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        return 0
+    files = data.get("files", {})
+    stale = [f for f in files if not Path(f).exists()]
+    if not stale:
+        return 0
+    for f in stale:
+        del files[f]
+    data["files"] = files
+    baseline_path.write_text(json.dumps(data, indent=2, ensure_ascii=False), encoding="utf-8")
+    return len(stale)
+
+
+# 跳过虚拟环境、依赖目录、构建产物与缓存目录
+_SKIP_DIR_PARTS = {
+    "__pycache__",
+    ".git",
+    ".venv",
+    "venv",
+    "env",
+    "node_modules",
+    ".tox",
+    ".mypy_cache",
+    ".pytest_cache",
+    ".ruff_cache",
+    "dist",
+    "build",
+    "site-packages",
+    ".eggs",
+    ".coverage",
+    # 抗原产物/独立子项目（各有独立校验与发布流程）
+    "mutants",
+    "site",
+    "examples",
+    "ai-dev-framework",
+}
+
+
+def _collect_checkable_files(path: Path) -> list[Path]:
+    """收集待检查的代码文件（供 run_quality_gate 与 baseline recompute 共用）。"""
+    if path.is_file():
+        return [path]
+    files_to_check: list[Path] = []
+    for ext in CODE_EXTENSIONS:
+        files_to_check.extend(path.rglob(f"*{ext}"))
+    return [f for f in files_to_check if not _SKIP_DIR_PARTS.intersection(f.parts)]
+
+
 def run_language_rules(path: Path, lang: str | None = None) -> tuple[bool, str]:
     """Run language-specific rules validation.
 
@@ -159,39 +247,7 @@ def run_quality_gate(
     if not checks:
         checks = ["annotation", "security", "type", "error"]
 
-    # Collect files to check
-    files_to_check: list[Path] = []
-    if path.is_file():
-        files_to_check = [path]
-    else:
-        for ext in CODE_EXTENSIONS:
-            files_to_check.extend(path.rglob(f"*{ext}"))
-
-    # 跳过虚拟环境、依赖目录、构建产物与缓存目录
-    skip_dir_parts = {
-        "__pycache__",
-        ".git",
-        ".venv",
-        "venv",
-        "env",
-        "node_modules",
-        ".tox",
-        ".mypy_cache",
-        ".pytest_cache",
-        ".ruff_cache",
-        "dist",
-        "build",
-        "site-packages",
-        ".eggs",
-        ".coverage",
-        # 抗原产物/独立子项目（各有独立校验与发布流程）
-        "mutants",
-        "site",
-        "examples",
-        "ai-dev-framework",
-    }
-    filtered_files = [f for f in files_to_check if not skip_dir_parts.intersection(f.parts)]
-
+    filtered_files = _collect_checkable_files(path)
     if not filtered_files:
         return True, "No files to check"
 
@@ -260,6 +316,12 @@ def run_quality_gate(
     if failed_count == 0 and existing_baseline:
         try:
             _merge_issue_baseline(baseline_path, original_results, existing_baseline)
+            if full:
+                # 全量运行覆盖了项目全部代码文件，
+                # 基线中残留的已删除文件条目可以安全清除
+                pruned = prune_stale_baseline_entries(baseline_path)
+                if pruned:
+                    logger.info("质量基线清理失效条目 %d 个", pruned)
         except Exception as e:  # noqa: BLE001 - 刷新失败不影响本次结果
             logger.warning("质量基线刷新失败: %s", e)
 

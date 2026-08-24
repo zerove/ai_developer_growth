@@ -21,7 +21,7 @@ updated: 2026-08-12
 2. 需要区分真实问题与误报，特别是 import 位置、__all__ 缺失、Any 类型使用等风格性问题
 3. 验证 ADG 的 exclude_patterns 机制能否正确过滤测试文件误报
 
-**约束条件**: 
+**约束条件**:
 - 不修改 httpx 源码，仅运行扫描并分析结果
 - 对比本项目（已全量修复）与 httpx（原始代码）的质量门禁差异
 
@@ -44,7 +44,7 @@ updated: 2026-08-12
 ### Phase 3: 迭代编码 (TDD 循环)
 - **循环次数**: 3 次（初始扫描 → 规则调整 → 复测验证）
 - **典型循环**: `adg scan httpx` → 解析 749 error → 分析误报模式 → 调整 exclude_patterns/白名单 → 重新扫描
-- **关键 Bug/挑战**: 
+- **关键 Bug/挑战**:
   - import 位置不规范触发 py-import-position (200+ 处)
   - 缺失 `__all__` 触发 py-missing-all (150+ 处)
   - 大量 `Any` 类型触发 py-any-type (300+ 处)

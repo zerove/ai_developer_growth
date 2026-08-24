@@ -231,7 +231,7 @@ class AutoFixOrchestrator:
                 full_path = fp
             else:
                 full_path = project_root / fp
-            
+
             if not full_path.exists():
                 results.append(FixResult(file=file_path, errors=[f"File not found: {file_path}"]))
                 continue

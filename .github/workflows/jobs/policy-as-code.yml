@@ -72,14 +72,14 @@ jobs:
           python -m tools.scripts.hooks_runner supply-chain sbom --output opa-input.json --format json
           python -m tools.scripts.hooks_runner dep-graph analyze --sbom opa-input.json --output opa-deps.json --format json
           python -m tools.scripts.hooks_runner exception list --format json --output opa-exceptions.json
-          
+
           # Combine all data
           python -c "
           import json
           with open('opa-input.json') as f: sbom = json.load(f)
           with open('opa-deps.json') as f: deps = json.load(f)
           with open('opa-exceptions.json') as f: exc = json.load(f)
-          
+
           combined = {
             'sbom': sbom,
             'dependencies': deps,
@@ -110,19 +110,19 @@ jobs:
           POLICY_DIR="${{ inputs.policy-dir }}"
           INPUT="${{ inputs.input-data != '' && inputs.input-data || steps.generate-input.outputs.input-data }}"
           FORMAT="${{ inputs.output-format }}"
-          
+
           if [ ! -d "\$POLICY_DIR" ]; then
             echo "Policy directory \$POLICY_DIR does not exist"
             exit 1
           fi
-          
+
           # Run OPA eval
           opa eval \
             --data "\$POLICY_DIR" \
             --input "\$INPUT" \
             --format "\$FORMAT" \
             "data.jcode.governance" > policy-results.json
-          
+
           # Check for violations
           VIOLATIONS=$(cat policy-results.json | jq -r '.result[0].expressions[0].value.violations // [] | length')
           echo "Violations found: \$VIOLATIONS"
@@ -151,14 +151,14 @@ jobs:
             const fs = require('fs');
             const results = JSON.parse(fs.readFileSync('policy-results.json', 'utf8'));
             const violations = results.result[0].expressions[0].value.violations || [];
-            
+
             let body = '## ⚠️ Policy Violations Detected\n\n';
             body += '| Rule | Message | Severity |\n';
             body += '|------|---------|----------|\n';
             for (const v of violations) {
               body += `| ${v.rule} | ${v.message} | ${v.severity} |\n`;
             }
-            
+
             github.rest.issues.createComment({
               issue_number: context.issue.number,
               owner: context.repo.owner,

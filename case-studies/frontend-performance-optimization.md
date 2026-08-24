@@ -23,7 +23,7 @@ updated: 2026-08-12
 4. 图片未优化：Banner 图 2.3 MB 未压缩，无 WebP/AVIF 格式
 5. 运行时性能：列表虚拟化缺失、重复渲染、内存泄漏
 
-**约束条件**: 
+**约束条件**:
 - 不改变现有业务逻辑与 UI
 - 保持 TypeScript 类型安全
 - 兼容 IE11 (可选，后续确认已放弃)
@@ -36,7 +36,7 @@ updated: 2026-08-12
 ### Phase 1: 性能基线建立 & 问题定位 (Day 1-2)
 - **人**: 运行 Lighthouse CI、WebPageTest 建立基线；配置 bundle-analyzer 分析打包产物
 - **AI**: 编写自动化性能基线脚本，解析 bundle-analyzer 输出，生成问题清单
-- **关键发现**: 
+- **关键发现**:
   - `lodash` 全量引入 (72 KB gzipped) → 按需引入
   - `echarts` 全量引入 (180 KB gzipped) → tree-shaking + 按需
   - `antd` 组件全量引入 → babel-plugin-import + 手动分割
@@ -45,7 +45,7 @@ updated: 2026-08-12
 
 ### Phase 2: 代码分割 & 懒加载实施 (Day 3-5)
 - **人**: 定义路由分割策略（按业务域：订单、商品、用户、设置）；确定预加载优先级
-- **AI**: 
+- **AI**:
   - 生成 `React.lazy` + `Suspense` 包装器模板
   - 编写 Vite `manualChunks` 配置脚本
   - 生成路由级预加载工具 `preloadRoute.ts`
@@ -67,7 +67,7 @@ updated: 2026-08-12
 
 ### Phase 3: 依赖优化 & Tree-shaking (Day 6-8)
 - **人**: 审查依赖树，决策替换/移除方案
-- **AI**: 
+- **AI**:
   - 编写 codemod 脚本批量替换 `lodash` → `lodash-es` 按需引入
   - 生成 `echarts` 按需引入迁移指南与代码片段
   - 扫描 `moment` 使用处，生成迁移到 `dayjs` 的替换方案
@@ -80,7 +80,7 @@ updated: 2026-08-12
 
 ### Phase 4: 缓存策略 & 静态资源优化 (Day 9-10)
 - **人**: 设计缓存策略：HTML no-cache，JS/CSS/图片 1 年强缓存 + hash
-- **AI**: 
+- **AI**:
   - 配置 Vite `build.assetsInlineLimit: 4096` (4KB 内联)
   - 配置 `build.rollupOptions.output.entryFileNames: 'assets/[name]-[hash].js'`
   - 编写图片优化脚本：`sharp` 批量生成 WebP/AVIF、响应式尺寸
@@ -90,7 +90,7 @@ updated: 2026-08-12
 
 ### Phase 5: 运行时性能 & 监控 (Day 11-12)
 - **人**: 定性能预算（LCP < 2.5s, TBT < 200ms, CLS < 0.1）；配置 Sentry Performance 监控
-- **AI**: 
+- **AI**:
   - 编写虚拟列表 Hook `useVirtualList.ts` (基于 `react-window`)
   - 生成 `React.memo`/`useMemo`/`useCallback` 优化检查清单脚本
   - 实现内存泄漏检测：`useEffect` 清理函数自动化检查脚本
@@ -103,7 +103,7 @@ updated: 2026-08-12
 ### Phase 6: 验收 & 文档交付 (Day 13-14)
 - **人**: 生产环境灰度发布 10% → 50% → 100%，监控核心指标
 - **AI**: 生成性能对比报告、优化清单文档、回滚预案
-- **最终验收**: 
+- **最终验收**:
   - LCP: 4.2s → 1.8s (**57% 提升**)
   - TBT: 850ms → 120ms (**86% 降低**)
   - 首包 gzipped: 680 KB → 210 KB (**69% 减少**)
@@ -232,12 +232,12 @@ HTML 引用自动更新，用户无需强制刷新。
 
 - [x] **GitHub 仓库**: https://github.com/example-org/admin-dashboard (私有仓库，已脱敏)
 - [x] **相关 PR**: https://github.com/example-org/admin-dashboard/pull/1247
-- [x] **提交记录**: 
+- [x] **提交记录**:
   - `feat(perf): code splitting with manualChunks` (a1b2c3d)
   - `feat(perf): lodash-es migration via codemod` (e4f5g6h)
   - `feat(perf): echarts tree-shaking + virtual list` (i7j8k9l)
   - `feat(perf): cache strategy + image optimization` (m0n1o2p)
-- [x] **复现命令**: 
+- [x] **复现命令**:
   ```bash
   git clone https://github.com/example-org/admin-dashboard
   cd admin-dashboard
@@ -251,13 +251,13 @@ HTML 引用自动更新，用户无需强制刷新。
 
 - [x] PRD (产品需求文档) - 本文件背景与挑战章节
 - [x] DESIGN (架构设计文档) - AI 协作过程章节定义的优化策略
-- [x] 代码 (实现代码) - 
+- [x] 代码 (实现代码) -
   - `vite.config.ts` (manualChunks, cache, asset optimization)
   - `src/utils/preloadRoute.ts` (路由预加载)
   - `src/hooks/useVirtualList.ts` (虚拟滚动)
   - `scripts/codemod/lodash-to-es.ts` (依赖迁移)
   - `scripts/optimize-images.ts` (图片批处理)
-- [x] 测试 (测试代码) - 
+- [x] 测试 (测试代码) -
   - `tests/performance/lighthouse-budget.json`
   - `tests/hooks/useVirtualList.test.tsx`
 - [x] 数据 (效率对比数据) - 本文件效率对比数据章节

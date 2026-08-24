@@ -23,7 +23,7 @@ updated: 2026-08-12
 4. **边界情况遗漏**: 人工写测试易漏掉空指针、边界值、并发、幂等等场景
 5. **团队 TDD 意识弱**: 开发习惯"先写代码后补测试"，测试常成摆设
 
-**约束条件**: 
+**约束条件**:
 - 不修改现有业务代码 (仅添加测试、必要时重构为可测试)
 - 保持构建时间 < 10 分钟 (并行测试)
 - 团队 8 人 (2 QA + 6 开发)，6 周交付
@@ -34,19 +34,19 @@ updated: 2026-08-12
 
 ### Phase 1: 代码库分析 & 可测试性评估 (Week 1)
 - **人**: 梳理核心业务流程，识别高优先级测试目标
-- **AI**: 
+- **AI**:
   - 运行 `JaCoCo` + `Pitest` 变异测试建立基线
   - 静态分析：识别 `God Class`、循环依赖、静态依赖、难以 Mock 的外部调用
   - 生成可测试性报告：每类标记 `易测/需重构/需适配器`
   - 优先级矩阵：`业务关键度 × 当前覆盖率 × 可测试性`
-- **关键发现**: 
+- **关键发现**:
   - `OrderService` 3200 行、12 个依赖、覆盖率 0% → 优先重构为可测试
   - `PaymentClient` 静态调用 47 处 → 引入适配器接口
   - `PromotionEngine` 规则引擎、分支复杂度 89 → 重点生成边界测试
 
 ### Phase 2: 测试基础设施建设 (Week 2)
 - **人**: 选型测试框架、Mock 库、测试数据工厂方案
-- **AI**: 
+- **AI**:
   - **统一测试模板**: JUnit 5 + Mockito 5 + AssertJ + Testcontainers
   - **测试数据工厂**: 基于 `Instancio` / `Podam` 生成 `TestDataFactory`，支持：
     ```java
@@ -59,7 +59,7 @@ updated: 2026-08-12
     ```
   - **切片测试配置**: `@SpringBootTest` vs `@WebMvcTest` vs `@DataJpaTest` 选择指南
   - **并行执行优化**: `forkCount=4C`, `reuseForks=true`, `jvmArgs="-Xmx2g"`
-- **CI 门禁**: 
+- **CI 门禁**:
   ```xml
   <!-- jacoco-maven-plugin -->
   <rules>
@@ -78,7 +78,7 @@ updated: 2026-08-12
   2. **分支覆盖驱动**: 分析控制流图，为每个分支生成测试用例
   3. **边界值自动推导**: 基于参数类型、注解 (`@Min`, `@Max`, `@NotNull`) 生成边界测试
   4. **异常路径生成**: 识别 `throw` 语句、检查异常、RuntimeException，生成异常测试
-- **关键技巧**: 
+- **关键技巧**:
   - 使用 `@ParameterizedTest` + `MethodSource` 批量测试多组输入
   - Mockito `Answer` 自定义模拟复杂依赖行为
   - `ArgumentCaptor` 验证 Repository 保存参数
@@ -87,24 +87,24 @@ updated: 2026-08-12
 #### 组 B: Repository & Controller 测试
 - **Repository**: `@DataJpaTest` + Testcontainers (PostgreSQL) 集成测试
 - **Controller**: `@WebMvcTest` + `MockMvc` 切片测试，验证序列化、参数校验、异常处理
-- **AI 生成**: 
+- **AI 生成**:
   - 从 OpenAPI Spec 生成 Controller 测试骨架
   - 从 Entity 定义生成 Repository 查询测试
 
 ### Phase 4: 变异测试驱动质量提升 (Week 5)
 - **人**: 评审变异测试存活变异体，决策加强测试还是接受风险
-- **AI**: 
+- **AI**:
   - 运行 `Pitest` 识别存活变异体 (条件取反、返回值替换、边界值偏移)
   - 自动分类：`等价变异体` (忽略) vs `真实缺陷` (需加测试)
   - 生成针对性测试补全存活变异体
-- **关键指标**: 
+- **关键指标**:
   - 变异杀灭率: 45% → 85%
   - 存活变异体: 234 → 31 (多为等价变异)
 
 ### Phase 5: TDD 工作流固化 & 新代码强制覆盖 (Week 6)
 - **人**: 制定 TDD 规范、PR 模板、代码审查清单
-- **AI**: 
-  - **TDD 循环模板**: 
+- **AI**:
+  - **TDD 循环模板**:
     ```markdown
     ## TDD 循环检查清单
     - [ ] 红: 编写失败测试 (描述需求行为)
@@ -112,12 +112,12 @@ updated: 2026-08-12
     - [ ] 重构: 消除重复、改善设计、测试保持通过
     - [ ] 提交: 测试先行提交 (test-first commit)
     ```
-  - **PR 自动检查**: 
+  - **PR 自动检查**:
     - 新增/修改类必须有对应测试文件
     - 覆盖率不降 (diff coverage ≥ 80%)
     - 变异测试通过
   - **IDE 插件配置**: IntelliJ `Generate Test` 模板、快捷键绑定
-- **文化建设**: 
+- **文化建设**:
   - "测试周三": 每周三下午 2 小时专注补测试/改测试
   - "红绿重构"编程练习月赛
 
@@ -246,7 +246,7 @@ AI 让 TDD 门槛降低：生成测试骨架、补全实现、重构建议。
 ## 真实性证明 (必填)
 
 - [x] **GitHub 仓库**: https://github.com/example-org/trading-domain (私有仓库，已脱敏)
-- [x] **相关 PR 系列**: 
+- [x] **相关 PR 系列**:
   - `#6012` 测试基础设施 (工厂、模板、CI)
   - `#6089` OrderService 测试生成 (45 个测试)
   - `#6123` PaymentService 测试生成 (38 个测试)
@@ -256,14 +256,14 @@ AI 让 TDD 门槛降低：生成测试骨架、补全实现、重构建议。
 - [x] **提交记录**: 500+ 提交，`test:` 前缀标准化
 - [x] **覆盖率报告**: `target/site/jacoco/index.html` (CI 制品)
 - [x] **变异测试报告**: `target/pit-reports/mutations.html`
-- [x] **复现命令**: 
+- [x] **复现命令**:
   ```bash
   # 运行测试 + 覆盖率
   ./mvnw clean test jacoco:report
-  
+
   # 运行变异测试
   ./mvnw org.pitest:pitest-maven:mutationCoverage
-  
+
   # 检查覆盖率门禁
   ./mvnw jacoco:check
   ```
@@ -274,14 +274,14 @@ AI 让 TDD 门槛降低：生成测试骨架、补全实现、重构建议。
 
 - [x] PRD - 本文件背景与挑战章节
 - [x] DESIGN - AI 协作过程章节 + 测试架构图
-- [x] 代码 - 
+- [x] 代码 -
   - 测试数据工厂 (`src/test/java/factory/`)
   - 核心 Service 测试 (`src/test/java/service/`)
   - Repository 测试 (`src/test/java/repository/`)
   - Controller 测试 (`src/test/java/controller/`)
   - 共享测试工具 (`src/test/java/support/`)
   - CI 配置 (`.github/workflows/test.yml`, `pom.xml` plugins)
-- [x] 测试 - 
+- [x] 测试 -
   - 312 个测试类、5600+ 测试方法
   - 变异测试报告
   - 性能基准测试

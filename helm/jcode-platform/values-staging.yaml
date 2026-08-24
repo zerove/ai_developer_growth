@@ -1,5 +1,5 @@
 # Staging Environment Overrides
-# 
+#
 # helm upgrade --install jcode-platform ./helm/jcode-platform \
 #   -f values.yaml -f values-staging.yaml \
 #   --namespace staging --create-namespace

@@ -24,7 +24,7 @@ updated: 2026-08-12
 5. **合规证据收集繁琐**: 审计员需人工截图、整理报告，耗时 80% 在文书工作
 6. **开发团队抵触**: 安全阻断流水线被视为"拦路虎"，绕过机制泛滥
 
-**约束条件**: 
+**约束条件**:
 - 零停机部署，生产环境不允许侵入式探测
 - 多云混合部署 (AWS/Aliyun/私有云)，工具需支持异构环境
 - 团队 15 人 (4 安全专家 + 11 开发轮值)，预算有限优先开源
@@ -35,7 +35,7 @@ updated: 2026-08-12
 
 ### Phase 1: 统一扫描编排平台建设 (Week 1-2)
 - **人**: 选型开源工具链，定义扫描策略、严重度映射、阻断阈值
-- **AI**: 
+- **AI**:
   - **编排引擎**: `security-orchestrator` (Go) 统一调度：
     - SAST: `Semgrep` (自定义规则包) + `CodeQL` (深度语义分析)
     - SCA: `Trivy` + `Grype` + `OSV-Scanner` (漏洞/许可证/恶意包)
@@ -45,7 +45,7 @@ updated: 2026-08-12
   - **结果归一化**: 统一输出 SARIF 2.1，转换为内部 `Finding` 模型
   - **去重关联**: 基于 `文件:行号:规则ID` + 语义指纹去重，关联 SCA 漏洞到调用链
   - **智能分级**: CVSS + EPSS + 资产关键度 + 可达性分析 = 优先级分数
-- **CI/CD 集成**: 
+- **CI/CD 集成**:
   ```yaml
   # .github/workflows/security.yml
   jobs:
@@ -58,8 +58,8 @@ updated: 2026-08-12
 
 ### Phase 2: 语义规则引擎与误报消除 (Week 3-4)
 - **人**: 整理历史误报案例，定义业务白名单、安全模式库
-- **AI**: 
-  - **Semgrep 规则开发加速器**: 
+- **AI**:
+  - **Semgrep 规则开发加速器**:
     - 从 CWE/CAPEC/OWASP 映射生成规则骨架
     - `metavariable-regex` / `metavariable-pattern` 精准匹配业务模式
     - `taint-mode` 污点分析追踪用户输入到敏感汇聚点
@@ -73,7 +73,7 @@ updated: 2026-08-12
     rules:
       - id: financial-pii-logging
         pattern-either:
-          - pattern: log.$M(..., $X, ...) 
+          - pattern: log.$M(..., $X, ...)
             metavariable-regex: { metavariable: $X, regex: "(?i)(id_card|bank_card|phone|password|secret|token)" }
         message: "日志疑似记录敏感信息: $X"
         severity: ERROR
@@ -81,7 +81,7 @@ updated: 2026-08-12
 
 ### Phase 3: 运行时防护与 IAST/RASP 落地 (Week 5-6)
 - **人**: 评估性能开销、兼容性、数据隐私合规
-- **AI**: 
+- **AI**:
   - **IAST Agent** (Java Agent / Go pprof / Python sys.settrace):
     - 运行时污点追踪：HTTP 入参 → 数据库/文件/网络调用
     - 发现 SAST 漏报: 反序列化、动态代码执行、JNDI 注入
@@ -97,7 +97,7 @@ updated: 2026-08-12
 
 ### Phase 4: 威胁建模自动化 (Week 7)
 - **人**: 组织架构评审会，确认资产价值、信任边界
-- **AI**: 
+- **AI**:
   - **从代码/配置自动生成威胁模型** (基于 STRIDE):
     - 解析 OpenAPI Spec → 数据流图 (DFD)
     - 解析 K8s 清单/服务网格配置 → 网络拓扑、信任边界
@@ -120,14 +120,14 @@ updated: 2026-08-12
 
 ### Phase 5: 合规自动化与证据链 (Week 8)
 - **人**: 梳理等保/PCI-DSS/SOC2 控制点映射表
-- **AI**: 
-  - **证据自动收集器**: 
+- **AI**:
+  - **证据自动收集器**:
     - 从 CI/CD 制品、扫描报告、部署记录、变更日志、事件响应记录自动聚合
     - 生成标准化证据包：`控制点ID、描述、实施状态、测试结果、截图/日志链接、负责人、时间`
-  - **合规报告生成器**: 
+  - **合规报告生成器**:
     - 模板化输出：`合规报告.pdf`、`差距分析.xlsx`、`整改计划.md`
     - 支持多标准交叉映射：一个漏洞修复同时满足等保 A.1.4.3、PCI 6.5.6、SOC2 CC6.1
-  - **持续监控仪表盘**: 
+  - **持续监控仪表盘**:
     - 实时合规姿态分数 (0-100)
     - 控制点通过/失败/过期状态
     - 趋势图、基线对比
@@ -227,7 +227,7 @@ IAST 在测试/预发环境运行，RASP 在生产环境防护，形成"测时�
 ## 真实性证明 (必填)
 
 - [x] **GitHub 仓库**: https://github.com/example-org/security-platform (私有仓库，已脱敏)
-- [x] **相关 PR 系列**: 
+- [x] **相关 PR 系列**:
   - `#7012` 统一编排引擎 `security-orchestrator`
   - `#7089` Semgrep 规则包 (120+ 规则) + 误报分类器
   - `#7123` Java/Go/Python IAST Agent + RASP 模块
@@ -235,14 +235,14 @@ IAST 在测试/预发环境运行，RASP 在生产环境防护，形成"测时�
   - `#7201` 合规证据收集器 + 报告生成器
 - [x] **提交记录**: 400+ 提交，`security:` 前缀标准化
 - [x] **SARIF 制品库**: GitHub Packages `security/sarif/`
-- [x] **复现命令**: 
+- [x] **复现命令**:
   ```bash
   # 本地全量扫描
   docker run --rm -v $(pwd):/src security-orchestrator scan /src --output sarif
-  
+
   # 运行 IAST (测试环境)
   java -javaagent:iast-agent.jar -jar app.jar
-  
+
   # 生成合规报告
   python scripts/compliance-report.py --standard pci-dss --output report.pdf
   ```
@@ -254,7 +254,7 @@ IAST 在测试/预发环境运行，RASP 在生产环境防护，形成"测时�
 
 - [x] PRD - 本文件背景与挑战章节
 - [x] DESIGN - AI 协作过程章节 + 安全架构图 (C4 模型)
-- [x] 代码 - 
+- [x] 代码 -
   - 编排引擎 (`security-orchestrator/`)
   - Semgrep 规则包 (`.semgrep/rules/financial/`, `owasp/`, `custom/`)
   - 误报分类器 (`ml/false-positive-classifier/`)
@@ -264,7 +264,7 @@ IAST 在测试/预发环境运行，RASP 在生产环境防护，形成"测时�
   - 威胁建模 (`threat-model/opa/`)
   - 合规自动化 (`compliance/collector/`, `generator/`)
   - CI/CD 模板 (`.github/workflows/security.yml`)
-- [x] 测试 - 
+- [x] 测试 -
   - 安全回归测试套件 (`tests/security/`)
   - 恶意样本语料库 (`tests/fixtures/malicious/`)
   - 渗透测试报告 (季度)

@@ -63,7 +63,7 @@ jobs:
           SBOM="${{ inputs.sbom-path != '' && inputs.sbom-path || steps.sbom.outputs.sbom-path }}"
           FORMAT="${{ inputs.format }}"
           OUTPUT="${{ inputs.output }}"
-          
+
           case "$ACTION" in
             analyze)
               python -m tools.scripts.hooks_runner dep-graph analyze \

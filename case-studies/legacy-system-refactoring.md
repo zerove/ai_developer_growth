@@ -24,7 +24,7 @@ updated: 2026-08-12
 5. **文档缺失**: 业务逻辑仅存在代码与口头传承，核心领域知识流失 60%
 6. **零停机要求**: 7×24 交易系统，重构期间不允许停机窗口
 
-**约束条件**: 
+**约束条件**:
 - 采用 Strangler Fig (绞杀者模式) 渐进式重构
 - 每个微服务独立代码库、独立 CI/CD、独立数据库
 - 保持 API 向后兼容，老客户端无感知
@@ -36,7 +36,7 @@ updated: 2026-08-12
 
 ### Phase 1: 系统考古 & 领域建模 (Week 1-2)
 - **人**: 组织领域专家访谈，梳理核心业务流程 (下单、支付、结算、退款、对账)
-- **AI**: 
+- **AI**:
   - 运行 `jdeps` + `archunit` 分析模块依赖，生成依赖图谱
   - 解析 87 张表 Schema，识别隐含聚合根 (Order, Payment, User, Account, Ledger)
   - 基于代码命名约定、包结构、SQL 查询模式，推断限界上下文边界
@@ -46,12 +46,12 @@ updated: 2026-08-12
 
 ### Phase 2: 测试安全网建设 (Week 3-4)
 - **人**: 定义验收标准：每个提取服务需达到 80% 单测覆盖、核心路径 100% 集成测试
-- **AI**: 
+- **AI**:
   - 基于现有代码生成特征测试 - 为 47 个核心类生成 `CharacterizationTest` 基线
   - 使用 `Diffblue Cover` / `GitHub Copilot` 批量生成单元测试 (覆盖率 12% → 65%)
   - 编写契约测试框架 (Pact) 验证服务间接口兼容性
   - 生成测试数据工厂 `TestDataFactory` 支持复杂对象图构建
-- **关键技巧**: 
+- **关键技巧**:
   - 先写测试锁定现有行为，再重构 (TDD 逆向应用)
   - 使用 `ArchUnit` 编写架构守护测试：禁止循环依赖、强制分层、禁止跨服务直接访问 DB
 - **耗时对比**: 传统手写测试 8 周 → AI 协作 2 周
@@ -59,7 +59,7 @@ updated: 2026-08-12
 ### Phase 3: 绞杀者模式实施 - 首个服务拆分 (Week 5-8)
 - **目标服务**: `NotificationService` (通知发送，相对独立，风险最低)
 - **人**: 设计 API 契约，定义事件驱动架构 (Kafka: OrderCreated, PaymentCompleted, RefundInitiated)
-- **AI**: 
+- **AI**:
   - 生成 Spring Boot 3 + Java 21 项目脚手架 (Gradle, Spotless, Detekt, Testcontainers)
   - 编写数据库迁移脚本 - 将 `notification` 相关 5 张表迁移至独立 Schema
   - 实现双写模式：旧单体写通知表 + 发 Kafka 事件，新服务消费事件写独立表
@@ -82,12 +82,12 @@ updated: 2026-08-12
 
 ### Phase 5: 基础设施收尾 & 全链路验收 (Week 21-24)
 - **人**: 制定运维标准：SLA、SLO、SLI、告警规则、Runbook
-- **AI**: 
+- **AI**:
   - 生成 Kubernetes manifests (Helm Chart 标准化: Deployment, Service, HPA, PDB, NetworkPolicy)
   - 生成 Grafana Dashboard JSON (RED 指标: Rate/Errors/Duration + USE: Utilization/Saturation/Errors)
   - 生成混沌工程实验脚本 (LitmusChaos: Pod 杀掉、网络分区、CPU 压力)
   - 编写架构决策记录 (ADR) 模板，自动从 Git 提交生成
-- **最终验收**: 
+- **最终验收**:
   - 12 服务全上线，P99 延迟 < 200ms，可用性 99.95%
   - 部署频次: 月 1 次 → 日 50+ 次
   - 变更失败率: 15% → 0.8%
@@ -143,14 +143,14 @@ updated: 2026-08-12
 ```java
 // ArchUnit 规则示例 - 禁止跨服务直接访问数据库
 @ArchTest
-static final ArchRule no_cross_service_db_access = 
+static final ArchRule no_cross_service_db_access =
     noClasses()
         .that().resideInAPackage("..service..")
         .should().accessClassesThat().resideInAPackage("..other_service..repository..");
 
 // 禁止循环依赖
 @ArchTest
-static final ArchRule no_cycles = 
+static final ArchRule no_cycles =
     slices().matching("com.company.(*)..")
         .should().beFreeOfCycles();
 ```
@@ -184,22 +184,22 @@ static final ArchRule no_cycles =
 ## 真实性证明 (必填)
 
 - [x] **GitHub 仓库**: https://github.com/example-org/legacy-refactor (私有仓库，已脱敏)
-- [x] **相关 PR 系列**: 
+- [x] **相关 PR 系列**:
   - `#3421` NotificationService 拆分
-  - `#3567` OrderService 拆分  
+  - `#3567` OrderService 拆分
   - `#3689` PaymentService 拆分
   - `#3742` UserService 拆分
   - `#3801` 基础设施标准化
 - [x] **提交记录**: 800+ 提交，标准化格式 `refactor(svc-name): ...`
 - [x] **架构决策记录**: `.adr/` 目录 24 个 ADR 文档
-- [x] **复现命令**: 
+- [x] **复现命令**:
   ```bash
   # 查看服务拆分进度
   git log --oneline --grep="refactor" --since="2026-01-01"
-  
+
   # 运行架构守护测试
   ./gradlew archUnitTest
-  
+
   # 运行契约测试
   ./gradlew pactVerify
   ```
@@ -212,7 +212,7 @@ static final ArchRule no_cycles =
 - [x] PRD - 本文件背景与挑战章节
 - [x] DESIGN - AI 协作过程章节 + `.adr/` 24 个 ADR
 - [x] 代码 - 12 个微服务仓库 + 共享库 (`common-kernel`, `common-events`, `common-web`)
-- [x] 测试 - 
+- [x] 测试 -
   - 特征测试基线 (`tests/characterization/`)
   - 单元测试 (`src/test/` 覆盖率 85%+)
   - 契约测试 (`pacts/`)

@@ -29,8 +29,11 @@
 from __future__ import annotations
 
 import argparse
+import json
+import logging
 import subprocess
 import sys
+import time
 from collections.abc import Callable
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
@@ -96,6 +99,8 @@ from tools.scripts.supply_chain import (
     SupplyChainScanner,
 )
 
+logger = logging.getLogger(__name__)
+
 # ─── Backward compatibility aliases for tests ───
 # Tests patch these function names, so we provide aliases
 # that delegate to the original implementations
@@ -134,6 +139,25 @@ def _get_jobs_setting() -> int:
         return int(str(get_setting("jobs", 4)))
     except Exception:
         return 4
+
+
+def _timeout_for_category(category: object) -> int:
+    """按工具类别获取超时秒数，支持 [tool.adg].timeouts 配置覆盖。
+
+    默认: 测试套件 900s（全量运行且与其他阶段并行时耗时显著变长），其余 300s。
+    配置格式: [tool.adg.timeouts] test = 1200, lint = 180 ...
+    """
+    default = 900 if getattr(category, "name", "") == "TEST" else 300
+    key = getattr(category, "name", "").lower()
+    try:
+        from tools.scripts.app_config import get_setting
+
+        timeouts = get_setting("timeouts", None)
+        if isinstance(timeouts, dict) and key in timeouts:
+            return int(str(timeouts[key]))
+    except Exception as e:  # noqa: BLE001 - 配置缺失时使用默认超时
+        logger.debug("读取超时配置失败，使用默认 %ss: %s", default, e)
+    return default
 
 
 def _detect_project_languages(project_root: Path) -> list[Language]:
@@ -213,6 +237,29 @@ Examples:
     )
     subparsers = parser.add_subparsers(dest="command", required=True)
 
+    # 门禁健康自检: 校验钩子环境、工具链与基线，防止门禁静默失效
+    doctor_parser = subparsers.add_parser(
+        "doctor",
+        help="Diagnose hook/gate environment health (pre-commit, tools, baseline)",
+    )
+    doctor_parser.add_argument("--path", type=Path, default=Path("."), help="Project root")
+
+    # 质量基线管理
+    baseline_parser = subparsers.add_parser("baseline", help="Quality ratchet baseline management")
+    baseline_sub = baseline_parser.add_subparsers(dest="baseline_action", required=True)
+    bl_validate = baseline_sub.add_parser("validate", help="Validate baseline file structure")
+    bl_validate.add_argument(
+        "--file", type=Path, default=None, help="Baseline path (default: <root>/.jcode/baseline.json)"
+    )
+    bl_recompute = baseline_sub.add_parser(
+        "recompute",
+        help="Recompute current issues and compare with baseline (CI anti-tamper check)",
+    )
+    bl_recompute.add_argument("--path", type=Path, default=Path("."), help="Project root")
+    bl_recompute.add_argument(
+        "--file", type=Path, default=None, help="Baseline path (default: <root>/.jcode/baseline.json)"
+    )
+
     # 基础检查命令 - 支持 --lang 和 --path
     for cmd_name, help_text in [
         ("lint", "Run lint check"),
@@ -225,6 +272,13 @@ Examples:
         sp.add_argument("--lang", help="Language (auto-detect if not specified)")
         sp.add_argument("--path", type=Path, default=Path("."), help="Path to check (default: current dir)")
         sp.add_argument("--fix", action="store_true", help="Apply auto-fixes (lint/format only)")
+        if cmd_name == "test":
+            sp.add_argument(
+                "--incremental",
+                action="store_true",
+                help="Only run tests affected by changed files vs --base",
+            )
+            sp.add_argument("--base", default="HEAD", help="Base ref for incremental test selection")
 
     lr_parser = subparsers.add_parser("language-rules", help="Run language-specific rules validation")
     lr_parser.add_argument("--path", type=Path, default=Path("."), help="Path to validate")
@@ -526,8 +580,7 @@ def _run_tool_for_language(
 
     print(f"  🔧 {language.value}: 运行 {category.value} ({' '.join(cmd)})")
 
-    # 测试套件在全量运行且与其他阶段并行时耗时显著变长，单独放宽
-    timeout_seconds = 900 if category == ToolCategory.TEST else 300
+    timeout_seconds = _timeout_for_category(category)
     try:
         result: subprocess.CompletedProcess[str] = subprocess.run(
             cmd,
@@ -715,10 +768,15 @@ def _run_phase(phase_name: str, results: dict[str, tuple[bool, str]]) -> None:
         return
     func_name, parallel, _ = _PHASE_INDEX[phase_name]
     _ = parallel  # 依赖解析阶段由 _run_full 统一调度并行
+    print(f"⏳ [hooks] 阶段开始: {phase_name}", flush=True)
+    start = time.monotonic()
     try:
         passed, output = _resolve_phase_func(func_name)()
     except Exception as e:
         passed, output = False, str(e)
+    elapsed = time.monotonic() - start
+    status = "✅" if passed else "❌"
+    print(f"{status} [hooks] 阶段完成: {phase_name} ({elapsed:.1f}s)", flush=True)
     results[phase_name] = (passed, output)
 
 
@@ -758,6 +816,8 @@ def _run_parallel_checks() -> dict[str, tuple[bool, str]]:
                 passed, output = future.result()
             except Exception as e:
                 passed, output = False, str(e)
+            status = "✅" if passed else "❌"
+            print(f"{status} [hooks] 并行阶段完成: {name}", flush=True)
             results[name] = (passed, output)
     return results
 
@@ -991,6 +1051,250 @@ def _handle_governance_audit(args: argparse.Namespace) -> int:
             check_index=args.check_index,
         )
     )
+
+
+def _check_pre_commit_hook() -> tuple[bool, str]:
+    """检查 .git/hooks/pre-commit 是否健康（本次会话曾因环境损坏阻断提交）。"""
+    hook = Path(".git/hooks/pre-commit")
+    if not hook.exists():
+        return True, "pre-commit 钩子未安装（跳过）"
+    text = hook.read_text(encoding="utf-8", errors="replace")
+    # pre-commit 生成脚本头部声明 INSTALL_PYTHON
+    install_python: Path | None = None
+    for line in text.splitlines():
+        if line.startswith("INSTALL_PYTHON="):
+            install_python = Path(line.split("=", 1)[1].strip())
+            break
+    if install_python is None:
+        return True, "非 pre-commit 生成的钩子（跳过环境校验）"
+    if not install_python.is_file():
+        return False, (
+            f"pre-commit 钩子指向不存在的 Python: {install_python}；"
+            f"修复: mise install python 或 pre-commit uninstall && pre-commit install"
+        )
+    try:
+        probe = subprocess.run(
+            [str(install_python), "-m", "pre_commit", "--version"],
+            capture_output=True,
+            text=True,
+            timeout=30,
+        )
+    except (subprocess.TimeoutExpired, OSError) as e:
+        return False, f"pre-commit 探测失败: {e}"
+    if probe.returncode != 0:
+        return False, f"{install_python} 缺少 pre_commit 模块；修复: {install_python} -m pip install pre-commit"
+    return True, f"pre-commit 健康 ({install_python})"
+
+
+def _check_tool_available(cmd: list[str], name: str, required: bool, hint: str = "") -> tuple[bool, str, bool]:
+    """探测外部工具可用性。返回 (通过, 描述, 是否必需)。"""
+    try:
+        result = subprocess.run(
+            cmd,
+            capture_output=True,
+            text=True,
+            timeout=30,
+        )
+        ok = result.returncode == 0
+    except (subprocess.TimeoutExpired, OSError):
+        ok = False
+    desc = f"{'✅' if ok else ('❌' if required else '⚠️ ')} {name}"
+    if not ok and hint:
+        desc += f" ({hint})"
+    return ok or not required, desc, required
+
+
+def _doctor_check_toolchain(checks: list[tuple[bool, str]]) -> None:
+    """检查外部工具链可用性并打印结果（必需项缺失则门禁失败）。"""
+    tools_to_check: list[tuple[list[str], str, bool, str]] = [
+        (["ruff", "--version"], "ruff", True, "pip install ruff"),
+        ([sys.executable, "-m", "mypy", "--version"], "mypy", True, "pip install mypy"),
+        ([sys.executable, "-m", "pytest", "--version"], "pytest", True, "pip install pytest"),
+        (["bandit", "--version"], "bandit", True, "pip install bandit"),
+        (["pip-audit", "--version"], "pip-audit", True, "pip install pip-audit"),
+    ]
+    for cmd, name, required, hint in tools_to_check:
+        ok, desc, _ = _check_tool_available(cmd, name, required, hint)
+        checks.append((ok, desc))
+        print(desc)
+
+
+def _doctor_check_plugins() -> None:
+    """检查 pytest 加速插件（可选，缺失自动降级）。"""
+    for module, label in [
+        ("xdist", "pytest-xdist (并行测试)"),
+        ("pytest_rerunfailures", "pytest-rerunfailures (flaky 重试)"),
+        ("pytest_cov", "pytest-cov (覆盖率门禁)"),
+    ]:
+        try:
+            __import__(module)
+            print(f"✅ {label}")
+        except ImportError:
+            print(f"⚠️  {label} 未安装，将自动降级")
+
+
+def _doctor_check_hooks_json(root: Path, checks: list[tuple[bool, str]]) -> None:
+    """检查 hooks.json 可解析性。"""
+    hooks_json = root / ".jcode" / "hooks.json"
+    try:
+        json.loads(hooks_json.read_text(encoding="utf-8"))
+        hooks_ok = True
+        hooks_desc = "✅ hooks.json 可解析"
+    except Exception as e:  # noqa: BLE001 - 自检需要捕获全部异常并报告
+        hooks_ok = False
+        hooks_desc = f"❌ hooks.json 解析失败: {e}"
+    checks.append((hooks_ok, "hooks.json"))
+    print(hooks_desc)
+
+
+def _handle_doctor(args: argparse.Namespace) -> int:
+    """门禁健康自检: 校验钩子环境、工具链、pytest 插件与基线完整性。
+
+    必需项缺失返回 1（CI 应失败），可选项缺失仅警告。
+    """
+    root = args.path
+    checks: list[tuple[bool, str]] = []
+
+    print("=" * 60)
+    print("  HOOKS DOCTOR - 门禁环境自检")
+    print("=" * 60)
+
+    # 1. git 仓库
+    git_ok = (root / ".git").exists()
+    checks.append((git_ok, "git 仓库" if git_ok else "❌ 不是 git 仓库"))
+    print(f"{'✅' if git_ok else '❌'} git 仓库: {root}")
+
+    # 2. pre-commit 钩子健康
+    pc_ok, pc_desc = _check_pre_commit_hook()
+    checks.append((pc_ok, "pre-commit 钩子"))
+    print(f"{'✅' if pc_ok else '❌'} {pc_desc}")
+
+    # 3-4. 工具链与插件
+    _doctor_check_toolchain(checks)
+    _doctor_check_plugins()
+
+    # 5. 基线文件结构校验
+    from tools.scripts.hooks.domain_checks import validate_baseline_structure
+
+    baseline_file = root / ".jcode" / "baseline.json"
+    bl_ok, bl_desc = validate_baseline_structure(baseline_file)
+    checks.append((bl_ok, "质量基线文件"))
+    print(f"{'✅' if bl_ok else '❌'} 质量基线: {bl_desc}")
+
+    # 6. hooks.json 可解析
+    _doctor_check_hooks_json(root, checks)
+
+    failed_required = [d for ok, d in checks if not ok]
+    print("=" * 60)
+    if failed_required:
+        print(f"❌ DOCTOR: {len(failed_required)} 项必需检查未通过")
+        for d in failed_required:
+            print(f"   - {d}")
+        print("=" * 60)
+        return 1
+    print("✅ DOCTOR: 全部必需检查通过")
+    print("=" * 60)
+    return 0
+
+
+def _baseline_file_for(path: Path, explicit: Path | None) -> Path:
+    """解析基线文件路径（显式参数优先，否则项目根目录默认值）。"""
+    if explicit is not None:
+        return explicit
+    return path.resolve() / ".jcode" / "baseline.json"
+
+
+def _handle_baseline_validate(args: argparse.Namespace) -> int:
+    """基线结构校验（快速，供 CI 与本地使用）。"""
+    from tools.scripts.hooks.domain_checks import validate_baseline_structure
+
+    baseline_file = _baseline_file_for(Path("."), args.file)
+    ok, desc = validate_baseline_structure(baseline_file)
+    print(("✅" if ok else "❌") + " " + desc)
+    return 0 if ok else 1
+
+
+def _count_current_issues(project_root: Path) -> dict[str, dict[str, int]]:
+    """用与 run_quality_gate(full=True) 相同的规则重算当前问题计数（不写基线）。"""
+    from tools.scripts.ai_quality_gate import check_file
+    from tools.scripts.hooks import domain_checks as dc
+    from tools.scripts.validate_language_rules import detect_language_from_file
+
+    # 与 run_quality_gate(full=True) 的 checks 列表严格一致，否则重算会误报
+    file_checks = ["annotation", "security", "type", "error", "structure", "language_rules"]
+    counts: dict[str, dict[str, int]] = {}
+    for filepath in dc._collect_checkable_files(project_root):  # noqa: SLF001 - 同包内复用
+        if not detect_language_from_file(filepath):
+            continue
+        # 与 run_quality_gate 一致: 测试文件只做标注检查
+        effective = ["annotation"] if "tests" in filepath.parts else file_checks
+        result = check_file(filepath, effective)
+        issue_counts = dc._count_issues(result["issues"])  # noqa: SLF001 - 同包内复用
+        if issue_counts:
+            counts[str(filepath)] = issue_counts
+    return counts
+
+
+def _compare_baseline_with_current(
+    baseline_counts: dict[str, dict[str, int]],
+    current: dict[str, dict[str, int]],
+) -> list[str]:
+    """逐文件对比基线与重算结果，返回不一致描述列表。"""
+    problems: list[str] = []
+    all_files = set(baseline_counts) | set(current)
+    for filepath in sorted(all_files):
+        b_counts = baseline_counts.get(filepath, {})
+        c_counts = current.get(filepath, {})
+        for key in set(b_counts) | set(c_counts):
+            b, c = b_counts.get(key, 0), c_counts.get(key, 0)
+            if c > b:
+                problems.append(f"{filepath}: {key} 实际 {c} > 基线 {b}（新增存量未入基线）")
+            elif b > c:
+                problems.append(f"{filepath}: {key} 基线 {b} > 实际 {c}（基线过松，应刷新）")
+    return problems
+
+
+def _handle_baseline_recompute(args: argparse.Namespace) -> int:
+    """重算当前问题数并与基线对比（CI 防篡改校验）。
+
+    - 基线计数 < 重算计数: 存量问题增加但基线未更新 → 失败
+      （正常开发中这会被棘轮拦截，此处兜底防绕过）
+    - 基线计数 > 重算计数: 基线过松 → 失败（防止人为放宽）
+    """
+    from tools.scripts.hooks.domain_checks import validate_baseline_structure
+
+    baseline_file = _baseline_file_for(Path("."), args.file)
+
+    ok, desc = validate_baseline_structure(baseline_file)
+    if not ok:
+        print(f"❌ 基线校验失败: {desc}")
+        return 1
+
+    data = json.loads(baseline_file.read_text(encoding="utf-8"))
+    baseline_counts: dict[str, dict[str, int]] = data["files"]
+
+    # 注意: 必须用相对路径收集（与本地 quality-gate --full 生成基线时的键一致），
+    # 绝对路径会导致与基线条目全部错位
+    current = _count_current_issues(args.path)
+
+    baseline_total = sum(sum(c.values()) for c in baseline_counts.values())
+    current_total = sum(sum(c.values()) for c in current.values())
+    print(f"   基线存量: {baseline_total} ({len(baseline_counts)} 文件)")
+    print(f"   当前实际: {current_total} ({len(current)} 文件)")
+
+    problems = _compare_baseline_with_current(baseline_counts, current)
+
+    if problems:
+        print(f"\n❌ 基线与现状不一致 ({len(problems)} 处):")
+        for p in problems[:20]:
+            print(f"   - {p}")
+        if len(problems) > 20:
+            print(f"   ... 共 {len(problems)} 处")
+        print("\n修复: 本地运行 quality-gate --full 刷新基线后提交")
+        return 1
+
+    print("\n✅ 基线与代码现状一致")
+    return 0
 
 
 def _handle_secret_scan(args: argparse.Namespace) -> int:
@@ -2064,38 +2368,32 @@ def _handle_docs_validate(args: argparse.Namespace) -> int:
     return result.returncode
 
 
-def _dispatch(args: argparse.Namespace) -> int:
-    """Dispatch the parsed command to the appropriate handler."""
-    cmd = args.command
+# 基础检查命令 → 可 mock 别名函数名（测试通过 globals() patch 这些名字）
+_SIMPLE_COMMANDS = {
+    "lint": "run_lint",
+    "format": "run_format_check",
+    "typecheck": "run_typecheck",
+    "test": "run_tests",
+    "security": "run_security",
+}
 
-    # 基础检查命令 - 使用可 mock 的别名函数（向后兼容）
-    # 这些函数在测试中被 patch，所以需要通过 globals() 调用
-    simple_commands = {
-        "lint": "run_lint",
-        "format": "run_format_check",
-        "typecheck": "run_typecheck",
-        "test": "run_tests",
-        "security": "run_security",
-    }
+# 多语言版本命令（显式指定 --lang 时使用）
+_MULTI_COMMANDS = {
+    "lint": _run_lint_multi,
+    "format": _run_format_multi,
+    "typecheck": _run_typecheck_multi,
+    "test": _run_test_multi,
+    "security": _run_security_multi,
+}
 
-    if cmd in simple_commands:
-        func = globals()[simple_commands[cmd]]
-        return _run_simple(func)
 
-    # 多语言版本命令（显式指定 --lang 时使用）
-    multi_commands = {
-        "lint": _run_lint_multi,
-        "format": _run_format_multi,
-        "typecheck": _run_typecheck_multi,
-        "test": _run_test_multi,
-        "security": _run_security_multi,
-    }
-
-    # 如果显式指定了 --lang，使用多语言版本
-    if cmd in multi_commands and getattr(args, "lang", None):
-        return _run_simple(multi_commands[cmd](args))
-
-    handlers: dict[str, Callable[[argparse.Namespace], int]] = {
+def _build_handlers() -> dict[str, Callable[[argparse.Namespace], int]]:
+    """构建命令处理器注册表（从 _dispatch 拆出以控制函数长度）。"""
+    return {
+        "doctor": _handle_doctor,
+        "baseline": lambda a: (
+            _handle_baseline_validate(a) if a.baseline_action == "validate" else _handle_baseline_recompute(a)
+        ),
         "language-rules": _handle_language_rules,
         "quality-gate": _handle_quality_gate,
         "quality-gate-new": _handle_quality_gate_new,
@@ -2128,7 +2426,29 @@ def _dispatch(args: argparse.Namespace) -> int:
         "full": lambda a: _run_full(a),
     }
 
-    handler = handlers.get(cmd)
+
+def _dispatch(args: argparse.Namespace) -> int:
+    """Dispatch the parsed command to the appropriate handler."""
+    cmd = args.command
+
+    # 增量测试: 只跑受变更影响的测试（PR 级时间预算）
+    if cmd == "test" and getattr(args, "incremental", False) and not getattr(args, "lang", None):
+        from tools.scripts.hooks.basic_checks import run_tests_incremental
+
+        return _run_simple(lambda: run_tests_incremental(args.base))
+
+    if cmd in _SIMPLE_COMMANDS:
+        func = globals()[_SIMPLE_COMMANDS[cmd]]
+        return _run_simple(func)
+
+    # 多语言版本命令（显式指定 --lang 时使用）
+    multi_commands = _MULTI_COMMANDS
+
+    # 如果显式指定了 --lang，使用多语言版本
+    if cmd in multi_commands and getattr(args, "lang", None):
+        return _run_simple(multi_commands[cmd](args))
+
+    handler = _build_handlers().get(cmd)
     if handler:
         return handler(args)
 

@@ -1,5 +1,5 @@
 # JCode Platform - Default Values
-# 
+#
 # 使用方法:
 #   helm install jcode-platform ./helm/jcode-platform -f values.yaml
 #   helm upgrade jcode-platform ./helm/jcode-platform -f values.yaml -f values-prod.yaml
@@ -16,12 +16,12 @@ global:
   imageRegistryPassword: ""
   imagePullSecrets:
     - name: registry-credentials
-  
+
   # 公共标签
   commonLabels:
     app.kubernetes.io/managed-by: Helm
     app.kubernetes.io/part-of: jcode-platform
-  
+
   # 资源配置
   resources:
     limits:
@@ -35,7 +35,7 @@ global:
   serviceAccount:
     create: true
     name: ""
-  
+
   # Secrets
   secrets:
     create: true
@@ -45,7 +45,7 @@ global:
     openaiApiKey: ""
     anthropicApiKey: ""
     vaultToken: ""
-  
+
   # RBAC
   rbac:
     create: true

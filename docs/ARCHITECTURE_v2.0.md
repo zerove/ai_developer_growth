@@ -1,7 +1,7 @@
 # JCode Platform v2.0 - 架构设计文档
 
-> **版本**: 2.0  
-> **状态**: 设计中  
+> **版本**: 2.0
+> **状态**: 设计中
 > **关联**: PRD_v2.0.md
 
 ---
@@ -349,12 +349,12 @@ budgets:
     build_time_p95: 5s      # 当前 2.4s
     memory_p95: 500Mi       # 当前 ~200Mi
     node_count_max: 10000   # 当前 5963
-  
+
   rules_engine:
     check_directory_p95: 10s    # 当前 6.5s
     parallel_speedup_min: 2.0x  # 当前 ~2.5x
     cache_hit_rate_min: 80%     # 当前 ~85%
-  
+
   api:
     p95_latency: 200ms
     p99_latency: 500ms
@@ -412,15 +412,15 @@ class RetroGenerator:
     def generate_report(self, metrics: IterationMetrics, context: str) -> Report:
         prompt = f"""
         基于以下迭代指标，生成结构化复盘报告：
-        
+
         交付指标: {metrics.delivery}
         质量指标: {metrics.quality}
         架构指标: {metrics.architecture}
         团队指标: {metrics.team}
         AI协作: {metrics.ai_collaboration}
-        
+
         上下文: {context}
-        
+
         输出格式:
         1. 执行摘要 (3 句)
         2. 关键成就 (3-5 项)
@@ -458,31 +458,31 @@ gantt
     title JCode v2.0 实施路线图
     dateFormat  YYYY-MM-DD
     axisFormat  %m/%d
-    
+
     section M1: Release & Deploy 基建
     Release 自动化           :active, m1_1, 2026-08-21, 5d
     Helm Chart + OCI Registry  :m1_2, after m1_1, 3d
     ArgoCD + App of Apps       :m1_3, after m1_2, 3d
     基础监控栈部署              :m1_4, after m1_2, 2d
-    
+
     section M2: Issue/MR + 监控闭环
     GitHub Projects 同步        :m2_1, after m1_3, 4d
     MR 检查清单 + Dependabot    :m2_2, after m2_1, 3d
     Prometheus/Grafana/Alertmanager :m2_3, after m1_4, 4d
     SLO/SLI 定义 + 告警路由       :m2_4, after m2_3, 3d
-    
+
     section M3: 混沌/性能/复盘
     Chaos Mesh 部署 + 实验库      :m3_1, after m2_3, 4d
     性能预算门禁 CI 集成          :m3_2, after m3_1, 2d
     自动复盘报告生成              :m3_3, after m2_4, 4d
     月度混沌演练标准化            :m3_4, after m3_1, 3d
-    
+
     section M4: 全链路验证
     E2E 测试套件                 :m4_1, after m3_2, 3d
     契约测试                     :m4_2, after m3_2, 2d
     混沌演练 + 发布演练           :m4_3, after m3_4, 3d
     文档完善 + Runbook + 培训     :m4_4, after m4_3, 3d
-    
+
     section 发布准备
     v2.0 Release Candidate       :release_rc, after m4_4, 2d
     生产灰度验证                  :release_prod, after release_rc, 3d
@@ -553,7 +553,7 @@ components:
 
 ---
 
-**文档版本**: 2.0  
-**最后更新**: 2026-08-20  
-**负责人**: Platform Engineering Team  
+**文档版本**: 2.0
+**最后更新**: 2026-08-20
+**负责人**: Platform Engineering Team
 **评审状态**: 待评审

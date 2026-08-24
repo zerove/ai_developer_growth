@@ -86,7 +86,7 @@ jobs:
           PROJECT="${{ inputs.project-path }}"
           FORMAT="${{ inputs.format }}"
           OUTPUT="${{ inputs.output }}"
-          
+
           case "$ACTION" in
             sbom)
               python -m tools.scripts.hooks_runner supply-chain sbom \

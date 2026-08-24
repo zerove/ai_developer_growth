@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
@@ -39,6 +40,7 @@ class AuditAttestationLedger:
             "event_type": event_type,
             "details": details,
             "prev_hash": prev_hash,
+            "timestamp": datetime.now(UTC).isoformat(),
         }
 
         serialized = json.dumps(payload, sort_keys=True)

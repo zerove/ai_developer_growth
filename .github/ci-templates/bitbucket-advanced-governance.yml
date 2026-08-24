@@ -47,25 +47,25 @@ definitions:
           - pip install -U "setuptools>=83.0.0" -q
           - pip install -e . -q
           - pip install opa-wasm cyclonedx-bom -q
-          
+
           # Exception Manager
           - python -m tools.scripts.hooks_runner exception check-expirations
           - python -m tools.scripts.hooks_runner exception audit
           - python -m tools.scripts.hooks_runner exception sync-gitops
-          
+
           # Supply Chain
           - python -m tools.scripts.hooks_runner supply-chain sbom --format json --output sbom.json
           - python -m tools.scripts.hooks_runner supply-chain scan --format json --output supply-chain-scan.json
           - python -m tools.scripts.hooks_runner supply-chain compliance --policy-file .jcode/policies/supply-chain-policy.yaml --format json --output supply-chain-compliance.json
           - python -m tools.scripts.hooks_runner supply-chain freshness --max-age-days 90 --format json --output supply-chain-freshness.json
           - python -m tools.scripts.hooks_runner supply-chain verify --format json --output supply-chain-verify.json
-          
+
           # Dependency Graph
           - python -m tools.scripts.hooks_runner dep-graph analyze --sbom sbom.json --format json --output dep-graph-analysis.json
           - python -m tools.scripts.hooks_runner dep-graph circular --sbom sbom.json --format json --output dep-graph-circular.json
           - python -m tools.scripts.hooks_runner dep-graph conflicts --sbom sbom.json --format json --output dep-graph-conflicts.json
           - python -m tools.scripts.hooks_runner dep-graph export --sbom sbom.json --format mermaid --output dep-graph.mmd
-          
+
           # Policy as Code
           - opa version
           - |

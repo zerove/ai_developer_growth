@@ -1,5 +1,5 @@
 # Multi-Cluster Configuration for JCode Platform
-# 
+#
 # This file defines multi-cluster deployment configuration
 # using Cluster API and ArgoCD ApplicationSets
 

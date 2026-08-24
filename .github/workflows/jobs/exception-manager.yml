@@ -78,7 +78,7 @@ jobs:
         run: |
           set -e
           ACTION="${{ inputs.action }}"
-          
+
           case "$ACTION" in
             request)
               python -m tools.scripts.hooks_runner exception request \

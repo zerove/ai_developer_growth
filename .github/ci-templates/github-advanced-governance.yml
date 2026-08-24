@@ -213,7 +213,7 @@ jobs:
           script: |
             const fs = require('fs');
             let body = '## JCode Governance Report\n\n';
-            
+
             // Check for policy violations
             try {
               const policy = JSON.parse(fs.readFileSync('policy-results.json', 'utf8'));
@@ -228,7 +228,7 @@ jobs:
                 body += '\n';
               }
             } catch (e) {}
-            
+
             // Check for circular dependencies
             try {
               const circular = JSON.parse(fs.readFileSync('dep-graph-circular.json', 'utf8'));
@@ -237,7 +237,7 @@ jobs:
                 body += `Found ${circular.cycles.length} circular dependencies\n\n`;
               }
             } catch (e) {}
-            
+
             // Check for version conflicts
             try {
               const conflicts = JSON.parse(fs.readFileSync('dep-graph-conflicts.json', 'utf8'));
@@ -246,7 +246,7 @@ jobs:
                 body += `Found ${conflicts.conflicts.length} version conflicts\n\n`;
               }
             } catch (e) {}
-            
+
             github.rest.issues.createComment({
               issue_number: context.issue.number,
               owner: context.repo.owner,

@@ -123,16 +123,24 @@ class TestRunTests(unittest.TestCase):
 class TestRunSecurity(unittest.TestCase):
     """Test run_security function."""
 
+    @patch("tools.scripts.hooks.basic_checks.scan_secrets")
     @patch("tools.scripts.hooks.basic_checks.subprocess.run")
-    def test_security_pass(self, mock_run: MagicMock) -> None:
+    def test_security_pass(self, mock_run: MagicMock, mock_scan: MagicMock) -> None:
+        from tools.scripts.secret_scanner import SecretScanResult
+
         mock_run.return_value = _mock_process(0, '{"results": []}')
+        mock_scan.return_value = SecretScanResult(findings=[], tools_used=["builtin"])
         passed, output = run_security()
         self.assertTrue(passed)
-        # Called twice: bandit + pip-audit
+        # Called twice: bandit + pip-audit (secret scan is in-process)
         self.assertEqual(mock_run.call_count, 2)
 
+    @patch("tools.scripts.hooks.basic_checks.scan_secrets")
     @patch("tools.scripts.hooks.basic_checks.subprocess.run")
-    def test_security_bandit_fails(self, mock_run: MagicMock) -> None:
+    def test_security_bandit_fails(self, mock_run: MagicMock, mock_scan: MagicMock) -> None:
+        from tools.scripts.secret_scanner import SecretScanResult
+
+        mock_scan.return_value = SecretScanResult(findings=[], tools_used=["builtin"])
         mock_run.side_effect = [
             _mock_process(1, "", "Issue found"),
             _mock_process(0, ""),

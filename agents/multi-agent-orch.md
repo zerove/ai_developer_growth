@@ -7,7 +7,7 @@
 1. **接收需求**: 接收用户自然语言需求描述
 2. **PM 阶段**: 运行 PM Agent 生成 PRD（产品需求文档），包含目标、需求、成功标准
 3. **Architect 阶段**: 运行 Architect Agent 基于 PRD 生成技术设计，包含架构、API、实施计划
-4. **Coder-Reviewer 循环**: 
+4. **Coder-Reviewer 循环**:
    - Coder Agent 基于设计生成代码
    - Reviewer Agent 审查代码，输出 PASS/FAIL
    - FAIL 时反馈 "FIX: <意见>" 进入下一轮迭代

@@ -1,3 +1,52 @@
+## 更新记录: 2026-08-24 15:07:22
+
+### 任务
+Git 变更同步
+
+### 变更摘要
+diff --git a/.ai-rules/orph.yml b/.ai-rules/orph.yml
+index 5c12c1d..048b364 100644
+--- a/.ai-rules/orph.yml
++++ b/.ai-rules/orph.yml
+@@ -1 +1 @@
+-anti_patterns: []
+\ No newline at end of file
++anti_patterns: []
+diff --git a/.github/ci-templates/README.md b/.github/ci-templates/README.md
+index 8aca453..6d0e25f 100644
+--- a/.github/ci-templates/README.md
++++ b/.github/ci-templates/README.md
+@@ -126,4 +126,4 @@ For modular pipeline composition, reusable workflow jobs are available in `.gith
+ - `exception-manager.yml` - Exception management
+ - `dependency-graph.yml` - Dependency graph analysis
+ - `supply-chain.yml` - Multi-language supply chain
+-- `policy-as-code.yml` - OPA/Rego policy evaluation
+\ No newline at end of file
++- `policy-as-code.yml` - OPA/Rego policy evaluation
+diff --git a/.github/ci-templates/bitbucket-advanced-governance.yml b/.github/ci-templates/bitbucket-advanced-governance.yml
+index 6c84622..7261e7a 100644
+--- a/.github/ci-templates/bitbucket-advanced-governance.yml
++++ b/.github/ci-templates/bitbucket-advanced-governance.yml
+@@ -47,25 +47,25 @@ definitions:
+           - pip install -U "setuptools>=83.0.0" -q
+           - pip install -e . -q
+           - pip install opa-wasm cyclonedx-bom -q
+-          
++
+           # Exception Manager
+           - python -m tools.scripts.hooks_runner exception check-expirations
+           - python -m tools.scripts.hooks_runner exception audit
+           - python -m tools.scripts.hooks_runner exception sync-gitops
+-          
++
+           # Supply Chain
+           - python -m tools.scripts.hooks_runner supply-chain sbom --format json --output sbom.json
+           - python -m tools.scripts.hooks_runner supply-chain scan --format json --output supply-chain-scan.json
+           - python -m tools.scripts.hooks_runner supply-chain compliance --policy-file .jcode/policies/supply-chain-policy.yaml --format json --output supply-chain-compliance.json
+           - python -m tools.scripts.hooks_runner supply-chain freshness -...
+
+---
+
 ## 更新记录: 2026-08-23 21:25:33
 
 ### 任务
@@ -9,7 +58,7 @@ index 128661d..8aca453 100644
 --- a/.github/ci-templates/README.md
 +++ b/.github/ci-templates/README.md
 @@ -6,18 +6,33 @@ This directory contains ready-to-use CI/CD templates for integrating ADG Governa
- 
+
  | Template | File | Platform |
  |----------|------|----------|
 -| GitLab CI | `gitlab-ci.yml` | GitLab CI/CD |
@@ -20,9 +69,9 @@ index 128661d..8aca453 100644
  | Azure Pipelines | `azure-pipelines.yml` | Azure DevOps |
  | Jenkins | `Jenkinsfile` | Jenkins |
  | CircleCI | `circleci.yml` | CircleCI |
- 
+
  ## Quick Start
- 
+
 -### GitLab CI
 +### GitHub Actions (Advanced Governance)
 +Add to your `.github/workflows/jcode-governance.yml`:
@@ -43,12 +92,12 @@ index 128661d..8aca453 100644
 +```yaml
 +# Copy the contents of bitbucket-advanced-governance.yml
  ```
- 
+
  ### Azure Pipelines
 @@ -38,6 +53,37 @@ include:
    - local: '.github/ci-templates/circleci.yml'
  ```
- 
+
 +## Advanced Governance Features
 +
 +The advanced templates include all Phase 2 features:
@@ -77,7 +126,7 @@ index 128661d..8aca453 100644
 --- a/.github/ci-templates/README.md
 +++ b/.github/ci-templates/README.md
 @@ -6,18 +6,33 @@ This directory contains ready-to-use CI/CD templates for integrating ADG Governa
- 
+
  | Template | File | Platform |
  |----------|------|----------|
 -| GitLab CI | `gitlab-ci.yml` | GitLab CI/CD |
@@ -88,9 +137,9 @@ index 128661d..8aca453 100644
  | Azure Pipelines | `azure-pipelines.yml` | Azure DevOps |
  | Jenkins | `Jenkinsfile` | Jenkins |
  | CircleCI | `circleci.yml` | CircleCI |
- 
+
  ## Quick Start
- 
+
 -### GitLab CI
 +### GitHub Actions (Advanced Governance)
 +Add to your `.github/workflows/jcode-governance.yml`:
@@ -111,12 +160,12 @@ index 128661d..8aca453 100644
 +```yaml
 +# Copy the contents of bitbucket-advanced-governance.yml
  ```
- 
+
  ### Azure Pipelines
 @@ -38,6 +53,37 @@ include:
    - local: '.github/ci-templates/circleci.yml'
  ```
- 
+
 +## Advanced Governance Features
 +
 +The advanced templates include all Phase 2 features:
@@ -145,7 +194,7 @@ index 128661d..8aca453 100644
 --- a/.github/ci-templates/README.md
 +++ b/.github/ci-templates/README.md
 @@ -6,18 +6,33 @@ This directory contains ready-to-use CI/CD templates for integrating ADG Governa
- 
+
  | Template | File | Platform |
  |----------|------|----------|
 -| GitLab CI | `gitlab-ci.yml` | GitLab CI/CD |
@@ -156,9 +205,9 @@ index 128661d..8aca453 100644
  | Azure Pipelines | `azure-pipelines.yml` | Azure DevOps |
  | Jenkins | `Jenkinsfile` | Jenkins |
  | CircleCI | `circleci.yml` | CircleCI |
- 
+
  ## Quick Start
- 
+
 -### GitLab CI
 +### GitHub Actions (Advanced Governance)
 +Add to your `.github/workflows/jcode-governance.yml`:
@@ -179,12 +228,12 @@ index 128661d..8aca453 100644
 +```yaml
 +# Copy the contents of bitbucket-advanced-governance.yml
  ```
- 
+
  ### Azure Pipelines
 @@ -38,6 +53,37 @@ include:
    - local: '.github/ci-templates/circleci.yml'
  ```
- 
+
 +## Advanced Governance Features
 +
 +The advanced templates include all Phase 2 features:
@@ -213,7 +262,7 @@ index 128661d..8aca453 100644
 --- a/.github/ci-templates/README.md
 +++ b/.github/ci-templates/README.md
 @@ -6,18 +6,33 @@ This directory contains ready-to-use CI/CD templates for integrating ADG Governa
- 
+
  | Template | File | Platform |
  |----------|------|----------|
 -| GitLab CI | `gitlab-ci.yml` | GitLab CI/CD |
@@ -224,9 +273,9 @@ index 128661d..8aca453 100644
  | Azure Pipelines | `azure-pipelines.yml` | Azure DevOps |
  | Jenkins | `Jenkinsfile` | Jenkins |
  | CircleCI | `circleci.yml` | CircleCI |
- 
+
  ## Quick Start
- 
+
 -### GitLab CI
 +### GitHub Actions (Advanced Governance)
 +Add to your `.github/workflows/jcode-governance.yml`:
@@ -247,12 +296,12 @@ index 128661d..8aca453 100644
 +```yaml
 +# Copy the contents of bitbucket-advanced-governance.yml
  ```
- 
+
  ### Azure Pipelines
 @@ -38,6 +53,37 @@ include:
    - local: '.github/ci-templates/circleci.yml'
  ```
- 
+
 +## Advanced Governance Features
 +
 +The advanced templates include all Phase 2 features:
@@ -281,7 +330,7 @@ index 128661d..8aca453 100644
 --- a/.github/ci-templates/README.md
 +++ b/.github/ci-templates/README.md
 @@ -6,18 +6,33 @@ This directory contains ready-to-use CI/CD templates for integrating ADG Governa
- 
+
  | Template | File | Platform |
  |----------|------|----------|
 -| GitLab CI | `gitlab-ci.yml` | GitLab CI/CD |
@@ -292,9 +341,9 @@ index 128661d..8aca453 100644
  | Azure Pipelines | `azure-pipelines.yml` | Azure DevOps |
  | Jenkins | `Jenkinsfile` | Jenkins |
  | CircleCI | `circleci.yml` | CircleCI |
- 
+
  ## Quick Start
- 
+
 -### GitLab CI
 +### GitHub Actions (Advanced Governance)
 +Add to your `.github/workflows/jcode-governance.yml`:
@@ -315,12 +364,12 @@ index 128661d..8aca453 100644
 +```yaml
 +# Copy the contents of bitbucket-advanced-governance.yml
  ```
- 
+
  ### Azure Pipelines
 @@ -38,6 +53,37 @@ include:
    - local: '.github/ci-templates/circleci.yml'
  ```
- 
+
 +## Advanced Governance Features
 +
 +The advanced templates include all Phase 2 features:
@@ -349,7 +398,7 @@ index 128661d..8aca453 100644
 --- a/.github/ci-templates/README.md
 +++ b/.github/ci-templates/README.md
 @@ -6,18 +6,33 @@ This directory contains ready-to-use CI/CD templates for integrating ADG Governa
- 
+
  | Template | File | Platform |
  |----------|------|----------|
 -| GitLab CI | `gitlab-ci.yml` | GitLab CI/CD |
@@ -360,9 +409,9 @@ index 128661d..8aca453 100644
  | Azure Pipelines | `azure-pipelines.yml` | Azure DevOps |
  | Jenkins | `Jenkinsfile` | Jenkins |
  | CircleCI | `circleci.yml` | CircleCI |
- 
+
  ## Quick Start
- 
+
 -### GitLab CI
 +### GitHub Actions (Advanced Governance)
 +Add to your `.github/workflows/jcode-governance.yml`:
@@ -383,12 +432,12 @@ index 128661d..8aca453 100644
 +```yaml
 +# Copy the contents of bitbucket-advanced-governance.yml
  ```
- 
+
  ### Azure Pipelines
 @@ -38,6 +53,37 @@ include:
    - local: '.github/ci-templates/circleci.yml'
  ```
- 
+
 +## Advanced Governance Features
 +
 +The advanced templates include all Phase 2 features:
@@ -419,7 +468,7 @@ index 3131a7d..24f8759 100644
 @@ -25,6 +25,17 @@ jobs:
      uses: ./.github/workflows/jobs/adg-governance.yml
      secrets: inherit
- 
+
 +  # ──────────────────────────────────────────────────────
 +  # Governance Audit (完整审计：lint + typecheck + test + security + governance-docs + AI-SDLC + AI质量门禁)
 +  # ──────────────────────────────────────────────────────

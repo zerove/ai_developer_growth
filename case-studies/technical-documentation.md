@@ -23,7 +23,7 @@ updated: 2026-08-12
 4. **缺乏所有权**: 谁负责更新什么文档不明确，PR 审查不包含文档检查
 5. **搜索困难**: 知识分散在 5 个平台，新人找不到答案
 
-**约束条件**: 
+**约束条件**:
 - 不改变现有开发流程 (PR-based)
 - 支持多语言 (Go/TypeScript/Python/Java)
 - 文档即代码，版本控制在 Git
@@ -35,7 +35,7 @@ updated: 2026-08-12
 
 ### Phase 1: 现状审计 & 标准制定 (Week 1)
 - **人**: 盘点现有文档资产，定义文档分类体系、模板标准、质量门禁
-- **AI**: 
+- **AI**:
   - 扫描全仓库：统计 README 覆盖率、API 文档缺失服务、架构图过期时间
   - 生成文档债务报告：`docs/debt-report.md` (按服务、类型、优先级分类)
   - 设计统一文档模板：`API.md`、`ARCHITECTURE.md`、`RUNBOOK.md`、`ADR.md`、`ONBOARDING.md`
@@ -44,13 +44,13 @@ updated: 2026-08-12
 
 ### Phase 2: API 文档自动化生成 (Week 2)
 - **人**: 选型 OpenAPI/Swagger 工具链，定义代码注解规范
-- **AI**: 
+- **AI**:
   - **Go 服务**: `swaggo/swag` + 代码注解自动生成 → `docs/api/{service}.yaml`
   - **TypeScript 服务**: `tsoa` 从装饰器生成 OpenAPI → 统一规范
   - **Python 服务**: `fastapi` 自带 `/openapi.json` + `pydantic` 模型文档
   - **Java 服务**: `springdoc-openapi` 自动扫描 Controller
   - 统一聚合网关：`Redocly` 合并 35 服务 OpenAPI 为单一门户
-- **CI 集成**: 
+- **CI 集成**:
   ```yaml
   - name: Generate API Docs
     run: make generate-api-docs  # 并行各语言生成
@@ -66,7 +66,7 @@ updated: 2026-08-12
 
 ### Phase 3: 架构决策记录 (ADR) 自动化 (Week 3)
 - **人**: 建立 ADR 流程：提案 → 评审 → 决定 → 归档
-- **AI**: 
+- **AI**:
   - 从 Git 历史挖掘架构决策：分析 PR 标题/描述/讨论，识别 `feat(arch):`、`refactor(arch):`、`decision:` 前缀
   - 自动生成 ADR 草稿：`scripts/generate-adr.py` 输出标准格式
   - 模板包含：背景、决策、后果、替代方案、相关链接、状态
@@ -74,15 +74,15 @@ updated: 2026-08-12
 - **示例 ADR**:
   ```markdown
   # ADR-0042: 采用 Kafka 作为事件总线替代 RabbitMQ
-  
+
   ## 状态: Accepted (2026-06-15)
-  
+
   ## 背景
   RabbitMQ 吞吐量瓶颈、运维复杂、缺乏多租户隔离...
-  
+
   ## 决策
   迁移至 Apache Kafka 3.6，使用 KRaft 模式...
-  
+
   ## 后果
   - 正面: 吞吐量 10x、原生分区/复制、Schema Registry 集成
   - 负面: 运维复杂度暂时上升、团队需学习曲线
@@ -91,7 +91,7 @@ updated: 2026-08-12
 
 ### Phase 4: 运维手册与故障复盘自动化 (Week 4)
 - **人**: 定义 Runbook 结构、故障复盘模板、告警文档映射
-- **AI**: 
+- **AI**:
   - **Runbook 生成**: 从 Kubernetes 资源、Prometheus 告警规则、Grafana Dashboard 自动生成
     - 服务依赖拓扑 → 故障影响范围分析
     - 告警规则 → 诊断步骤、缓解措施、升级路径
@@ -99,7 +99,7 @@ updated: 2026-08-12
   - **故障复盘**: 从 Incident 系统 + Slack 线程 + Git 提交自动生成时间线
     - 时间线重构、根因分析 (5 Whys)、行动项追踪
   - **变更记录**: 从合并 PR 自动生成 `CHANGELOG.md` (按 Conventional Commits 分类)
-- **关键工具**: 
+- **关键工具**:
   - `prometheus-rule-to-runbook` - 告警转 Runbook
   - `incident-timeline-generator` - 复盘时间线
   - `auto-changelog` - 变更日志
@@ -107,20 +107,20 @@ updated: 2026-08-12
 
 ### Phase 5: 知识库统一 & 搜索增强 (Week 5-6)
 - **人**: 迁移 Confluence/Notion 内容到 Git，建立统一入口
-- **AI**: 
+- **AI**:
   - 批量导入脚本：HTML/Notion API → Markdown，保留结构
   - 语义搜索索引：`sentence-transformers` 向量化所有文档，构建 `docs/search/index.faiss`
   - 智能问答 Bot：RAG 管道 (检索 + LLM 综合) 接入 Slack/Discord
   - 相关文档推荐：阅读页面时侧边栏显示 "相关: ADR-0042, API-auth, Runbook-payment"
-- **验收**: 
+- **验收**:
   - 单一入口：`https://docs.company.com` (VitePress 部署)
   - 搜索延迟 < 200ms、相关度 Top-3 准确率 90%+
   - Bot 回答准确率 85%+ (人工抽检)
 
 ### Phase 6: 文档质量门禁 & 文化建设 (持续)
 - **人**: 推行"文档即代码"文化，PR 模板加入文档检查清单
-- **AI**: 
-  - **CI 门禁**: 
+- **AI**:
+  - **CI 门禁**:
     - `markdownlint` 格式规范
     - `vale` 文风/术语一致性 (自定义词典)
     - `link-checker` 死链检测
@@ -128,7 +128,7 @@ updated: 2026-08-12
     - `adr-required` 重大变更必须关联 ADR
   - **PR 审查助手**: GitHub Action 自动评论："此 PR 修改了 API，请同步更新 `docs/api/xxx.yaml`"
   - **周度报告**: 文档健康度仪表盘 (覆盖率、过期率、贡献者排行)
-- **文化机制**: 
+- **文化机制**:
   - "文档轮值周": 每周 1 人专注文档债务偿还
   - "文档之星": 月度表彰贡献最多文档的工程师
   - 新人 Onboarding: 第 1 周任务包含"修复 1 个文档问题"
@@ -235,7 +235,7 @@ Prometheus 告警规则已包含：指标、阈值、标签、摘要。AI 转换
 ## 真实性证明 (必填)
 
 - [x] **GitHub 仓库**: https://github.com/example-org/docs-platform (私有仓库，已脱敏)
-- [x] **相关 PR 系列**: 
+- [x] **相关 PR 系列**:
   - `#5012` 统一文档模板与 CI 门禁
   - `#5089` 多语言 API 文档自动化生成
   - `#5123` ADR 历史挖掘与生成 (24 个 ADR)
@@ -243,17 +243,17 @@ Prometheus 告警规则已包含：指标、阈值、标签、摘要。AI 转换
   - `#5201` 知识库迁移与语义搜索上线
 - [x] **提交记录**: 300+ 提交，`docs:` 前缀标准化
 - [x] **文档门户**: https://docs.example.com (内网 VitePress 部署)
-- [x] **复现命令**: 
+- [x] **复现命令**:
   ```bash
   # 本地预览文档站点
   cd docs && pnpm install && pnpm dev
-  
+
   # 生成 API 文档
   make generate-api-docs
-  
+
   # 生成 ADR
   python scripts/generate-adr.py --since="2026-01-01"
-  
+
   # 运行文档质量检查
   make docs-lint
   ```
@@ -265,7 +265,7 @@ Prometheus 告警规则已包含：指标、阈值、标签、摘要。AI 转换
 
 - [x] PRD - 本文件背景与挑战章节
 - [x] DESIGN - AI 协作过程章节 + 文档架构图
-- [x] 代码 - 
+- [x] 代码 -
   - 统一文档模板 (`docs/templates/`)
   - CI 门禁工作流 (`.github/workflows/docs.yml`)
   - API 文档生成脚本 (`scripts/api-docs/`)
@@ -274,7 +274,7 @@ Prometheus 告警规则已包含：指标、阈值、标签、摘要。AI 转换
   - 语义搜索索引构建 (`scripts/search-index/`)
   - RAG Bot (`apps/docs-bot/`)
   - 文档迁移脚本 (`scripts/migrate/`)
-- [x] 测试 - 
+- [x] 测试 -
   - 文档链接检查测试
   - API 文档覆盖率测试
   - RAG Bot 问答准确率测试

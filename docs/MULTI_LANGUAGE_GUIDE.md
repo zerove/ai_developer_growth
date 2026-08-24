@@ -249,26 +249,26 @@ thresholds:
     overall: 80           # 整体覆盖率
     per_file: 70          # 单文件最低
     critical_paths: 90    # 关键路径
-  
+
   complexity:
     cyclomatic: 10        # 圈复杂度
     cognitive: 15         # 认知复杂度
     nesting: 4            # 最大嵌套
     function_length: 50   # 函数最大行数
-  
+
   naming:
     style: "camelCase"    # snake_case | camelCase | PascalCase
     max_length: 64
-  
+
   documentation:
     public_api: 80
     internal: 40
-  
+
   security:
     max_high: 0
     max_medium: 5
     max_low: 20
-  
+
   performance:
     max_build_time: 300
     max_test_time: 180
@@ -292,7 +292,7 @@ hooks:
       action: "check"
       enabled: true
       condition: "files_contain('src/')"  # 条件表达式
-  
+
   on_pr:
     - name: "full-test"
       skill: "test"
@@ -302,7 +302,7 @@ hooks:
       skill: "governance"
       action: "gate"
       enabled: true
-  
+
   scheduled:
     - name: "weekly-audit"
       skill: "governance"
@@ -329,22 +329,22 @@ jobs:
     strategy:
       matrix:
         python: ["3.11", "3.12"]
-    
+
     steps:
       - uses: actions/checkout@v4
-      
+
       - name: Setup Python
         uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python }}
-      
+
       - name: Install JCode
         run: pip install -e .
-      
+
       - name: Run hooks
         run: |
           python -m tools.scripts.hooks_runner full
-      
+
       - name: Governance audit
         run: |
           python .jcode/scripts/governance-auditor.py full
@@ -437,7 +437,7 @@ paths:
   # Python 后端
   src: "backend/src"
   tests: "backend/tests"
-  
+
   # TypeScript 前端 (通过 secondary 语言单独配置)
 language:
   primary: "python"

@@ -70,20 +70,20 @@ governance-full:
     - python -m tools.scripts.hooks_runner exception check-expirations
     - python -m tools.scripts.hooks_runner exception audit
     - python -m tools.scripts.hooks_runner exception sync-gitops
-    
+
     # Supply Chain
     - python -m tools.scripts.hooks_runner supply-chain sbom --format json --output sbom.json
     - python -m tools.scripts.hooks_runner supply-chain scan --format json --output supply-chain-scan.json
     - python -m tools.scripts.hooks_runner supply-chain compliance --policy-file .jcode/policies/supply-chain-policy.yaml --format json --output supply-chain-compliance.json
     - python -m tools.scripts.hooks_runner supply-chain freshness --max-age-days 90 --format json --output supply-chain-freshness.json
     - python -m tools.scripts.hooks_runner supply-chain verify --format json --output supply-chain-verify.json
-    
+
     # Dependency Graph
     - python -m tools.scripts.hooks_runner dep-graph analyze --sbom sbom.json --format json --output dep-graph-analysis.json
     - python -m tools.scripts.hooks_runner dep-graph circular --sbom sbom.json --format json --output dep-graph-circular.json
     - python -m tools.scripts.hooks_runner dep-graph conflicts --sbom sbom.json --format json --output dep-graph-conflicts.json
     - python -m tools.scripts.hooks_runner dep-graph export --sbom sbom.json --format mermaid --output dep-graph.mmd
-    
+
     # Policy as Code
     - opa version
     - |
@@ -204,7 +204,7 @@ governance-report:
       python -c "
       import json, os
       body = '## JCode Governance Report\n\n'
-      
+
       # Policy violations
       if os.path.exists('policy-results.json'):
           with open('policy-results.json') as f:
@@ -217,21 +217,21 @@ governance-report:
               for v in violations:
                   body += f'| {v[\"rule\"]} | {v[\"message\"]} | {v[\"severity\"]} |\n'
               body += '\n'
-      
+
       # Circular dependencies
       if os.path.exists('dep-graph-circular.json'):
           with open('dep-graph-circular.json') as f:
               circular = json.load(f)
           if circular.get('cycles'):
               body += f'### 🔄 Circular Dependencies\n\nFound {len(circular[\"cycles\"])} circular dependencies\n\n'
-      
+
       # Version conflicts
       if os.path.exists('dep-graph-conflicts.json'):
           with open('dep-graph-conflicts.json') as f:
               conflicts = json.load(f)
           if conflicts.get('conflicts'):
               body += f'### ⚔️ Version Conflicts\n\nFound {len(conflicts[\"conflicts\"])} version conflicts\n\n'
-      
+
       print(body)
       " > governance-comment.md
     - cat governance-comment.md

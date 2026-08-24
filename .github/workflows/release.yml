@@ -37,7 +37,11 @@ jobs:
           cache: pip
       - name: Install dependencies
         run: |
-          pip install ruff mypy pytest pytest-cov pyyaml pytest-xdist build twine
+          pip install ruff mypy pytest pytest-cov pyyaml pytest-xdist pytest-rerunfailures bandit pip-audit tree-sitter tree-sitter-python build twine
+      - name: Gate environment doctor
+        run: python tools/scripts/hooks_runner.py doctor
+      - name: Baseline structure validation
+        run: python tools/scripts/hooks_runner.py baseline validate
       - name: Ruff check
         run: ruff check .
       - name: Ruff format check

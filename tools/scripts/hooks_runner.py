@@ -140,21 +140,51 @@ def _detect_project_languages(project_root: Path) -> list[Language]:
     """检测项目中使用的所有语言"""
     languages: list[Language] = []
 
+    # Node 生态语言需要 package.json 作为工程化标志；
+    # 否则散落的 .ts/.js（如编辑器扩展、构建产物）会因缺少
+    # eslint/prettier/tsc 工具链而误报失败
+    _node_ecosystem_languages = {Language.TYPESCRIPT, Language.JAVASCRIPT}
+    has_package_json = (project_root / "package.json").exists()
+
     # 1. 通过配置文件检测主要语言
     main_lang = detect_language(project_root)
-    if main_lang:
+    if main_lang and not (main_lang in _node_ecosystem_languages and not has_package_json):
         languages.append(main_lang)
 
     # 2. 扫描所有扩展名，统计语言分布
+    # 排除虚拟环境、依赖与构建产物目录，
+    # 避免把第三方库文件误判为项目语言（如 .venv 中 lxml 的 .h 头文件）
+    _excluded_dirs = {
+        ".venv",
+        "venv",
+        "node_modules",
+        ".git",
+        ".mypy_cache",
+        ".pytest_cache",
+        ".ruff_cache",
+        "__pycache__",
+        "site-packages",
+        "dist",
+        "build",
+        "target",
+        "site",
+    }
     ext_counts: dict[Language, int] = {}
     for ext, lang in EXTENSION_MAP.items():
-        count = len(list(project_root.rglob(f"*{ext}")))
+        if lang in _node_ecosystem_languages and not has_package_json:
+            continue
+        count = sum(1 for p in project_root.rglob(f"*{ext}") if not (set(p.parts) & _excluded_dirs))
         if count > 0:
             ext_counts[lang] = ext_counts.get(lang, 0) + count
 
-    # 按文件数排序，添加前 3 种语言
+    # 按文件数排序，仅纳入占比显著的语言：
+    # 示例脚本、编辑器扩展等附带文件不应触发全量工具链门禁
+    total = sum(ext_counts.values())
     for lang in sorted(ext_counts, key=lambda k: ext_counts[k], reverse=True)[:3]:
-        if lang not in languages:
+        if lang in languages:
+            continue
+        count = ext_counts.get(lang, 0)
+        if count >= 50 or (total > 0 and count / total >= 0.2):
             languages.append(lang)
 
     return languages

@@ -1,3 +1,800 @@
+## 更新记录: 2026-08-25 11:34:25
+
+### 任务
+Git 变更同步
+
+### 变更摘要
+diff --git a/CONTEXT.md b/CONTEXT.md
+index 591df56..2c4e927 100644
+--- a/CONTEXT.md
++++ b/CONTEXT.md
+@@ -1,1033 +1,1821 @@
+-## 更新记录: 2026-08-25 10:35:44
++## 更新记录: 2026-08-25 11:33:58
+
+ ### 任务
+ Git 变更同步
+
+ ### 变更摘要
+-diff --git a/CHANGELOG.md b/CHANGELOG.md
+-index 4126bb7..1fd8913 100644
+---- a/CHANGELOG.md
+-+++ b/CHANGELOG.md
+-@@ -4,7 +4,12 @@ All notable changes to the AI Developer Growth project.
+-
+- ## [Unreleased]
+-
+--### 质量门禁全绿 (v2.4.0 预览)
+-+### 第三轮改进进行中
+-+- docs/ROADMAP.md 归档化，消除与根目录 ROADMAP.md 的双源漂移
+-+
+-+## [2.4.0] - 2026-08-25
+-+
+-+### 质量门禁全绿
+-
+- ### 核心质量修复
+- - **ruff 全项目清零**：主项目 120 字符 + examples 88 字符配置兼容，无 lint 错误
+ diff --git a/CONTEXT.md b/CONTEXT.md
+-index 5013473..8754a4f 100644
++index 591df56..a0bb771 100644
+ --- a/CONTEXT.md
+ +++ b/CONTEXT.md
+-@@ -1,3 +1,382 @@
+-+## 更新记录: 2026-08-25 10:32:38
+-+
+-+### 任务
+-+Git 变更同步
+-+
+-+### 变更摘要
+-+diff --git a/CHANGELOG.md b/CHANGELOG.md
+-+index 4126bb7..1fd8913 100644
+-+--- a/CHANGELOG.md
+-++++ b/CHANGELOG.md
+-+@@ -4,7 +4,12 @@ All notable changes to the AI Developer Growth project.
+-+
+-+ ## [Unreleased]
+-+
+-+-### 质量门禁全绿 (v2.4.0 预览)
+-++### 第三轮改进进行中
+-++- docs/ROADMAP.md 归档化，消除与根目录 ROADMAP.md 的双源漂移
+-++
+-++## [2.4.0] - 2026-08-25
+-++
+-++### 质量门禁全绿
+-+
+-+ ### 核心质量修复
+-+ - **ruff 全项目清零**：主项目 120 字符 + examples 88 字符配置兼容，无 lint 错误
+-+diff --git a/CONTEXT.md b/CONTEXT.md
+-+index 1000f04..b74fc27 100644
+-+--- a/CONTEXT.md
+-++++ b/CONTEXT.md
+-+@@ -1,52 +1,407 @@
+-+-## 更新记录: 2026-08-25 09:48:50
+-++## 更新记录: 2026-08-25 10:31:57
++@@ -1,1151 +1,1561 @@
++-## 更新记录: 2026-08-25 10:35:44
+++## 更新记录: 2026-08-25 11:33:03
++
++ ### 任务
++ Git 变更同步
++
++ ### 变更摘要
++-diff --git a/CHANGELOG.md b/CHANGELOG.md
++-index 4126bb7..1fd8913 100644
++---- a/CHANGELOG.md
++-+++ b/CHANGELOG.md
++-@@ -4,7 +4,12 @@ All notable changes to the AI Developer Growth project.
++-
++- ## [Unreleased]
++-
++--### 质量门禁全绿 (v2.4.0 预览)
++-+### 第三轮改进进行中
++-+- docs/ROADMAP.md 归档化，消除与根目录 ROADMAP.md 的双源漂移
++-+
++-+## [2.4.0] - 2026-08-25
++-+
++-+### 质量门禁全绿
++-
++- ### 核心质量修复
++- - **ruff 全项目清零**：...
+
+---
+
+## 更新记录: 2026-08-25 11:33:58
+
+### 任务
+Git 变更同步
+
+### 变更摘要
+diff --git a/CONTEXT.md b/CONTEXT.md
+index 591df56..a0bb771 100644
+--- a/CONTEXT.md
++++ b/CONTEXT.md
+@@ -1,1151 +1,1561 @@
+-## 更新记录: 2026-08-25 10:35:44
++## 更新记录: 2026-08-25 11:33:03
+
+ ### 任务
+ Git 变更同步
+
+ ### 变更摘要
+-diff --git a/CHANGELOG.md b/CHANGELOG.md
+-index 4126bb7..1fd8913 100644
+---- a/CHANGELOG.md
+-+++ b/CHANGELOG.md
+-@@ -4,7 +4,12 @@ All notable changes to the AI Developer Growth project.
+-
+- ## [Unreleased]
+-
+--### 质量门禁全绿 (v2.4.0 预览)
+-+### 第三轮改进进行中
+-+- docs/ROADMAP.md 归档化，消除与根目录 ROADMAP.md 的双源漂移
+-+
+-+## [2.4.0] - 2026-08-25
+-+
+-+### 质量门禁全绿
+-
+- ### 核心质量修复
+- - **ruff 全项目清零**：主项目 120 字符 + examples 88 字符配置兼容，无 lint 错误
+ diff --git a/CONTEXT.md b/CONTEXT.md
+-index 5013473..8754a4f 100644
++index 591df56..e09aea7 100644
+ --- a/CONTEXT.md
+ +++ b/CONTEXT.md
+-@@ -1,3 +1,382 @@
+-+## 更新记录: 2026-08-25 10:32:38
+-+
+-+### 任务
+-+Git 变更同步
+-+
+-+### 变更摘要
+-+diff --git a/CHANGELOG.md b/CHANGELOG.md
+-+index 4126bb7..1fd8913 100644
+-+--- a/CHANGELOG.md
+-++++ b/CHANGELOG.md
+-+@@ -4,7 +4,12 @@ All notable changes to the AI Developer Growth project.
+-+
+-+ ## [Unreleased]
+-+
+-+-### 质量门禁全绿 (v2.4.0 预览)
+-++### 第三轮改进进行中
+-++- docs/ROADMAP.md 归档化，消除与根目录 ROADMAP.md 的双源漂移
+-++
+-++## [2.4.0] - 2026-08-25
+-++
+-++### 质量门禁全绿
+-+
+-+ ### 核心质量修复
+-+ - **ruff 全项目清零**：主项目 120 字符 + examples 88 字符配置兼容，无 lint 错误
++@@ -1,236 +1,521 @@
++-## 更新记录: 2026-08-25 10:35:44
+++## 更新记录: 2026-08-25 11:32:29
++
++ ### 任务
++ Git 变更同步
++
++ ### 变更摘要
++-diff --git a/CHANGELOG.md b/CHANGELOG.md
++-index 4126bb7..1fd8913 100644
++---- a/CHANGELOG.md
++-+++ b/CHANGELOG.md
++-@@ -4,7 +4,12 @@ All notable changes to the AI Developer Growth project.
+ +diff --git a/CONTEXT.md b/CONTEXT.md
+-+index 1000f04..b74fc27 100644
+++index 591df56..bb4ced0 100644
+ +--- a/CONTEXT.md
+ ++++ b/CONTEXT.md
+-+@@ -1,52 +1,407 @@
+-+-## 更新记录: 2026-08-25 09:48:50
+-++## 更新记录: 2026-08-25 10:31:57
+-+
+++@@ -1,236 +1,427 @@
+++-## 更新记录: 2026-08-25 10:35:44
++++## 更新记录: 2026-08-25 11:29:41
++
++- ## [Unreleased]
+ + ### 任务
+ + Git 变更同步
+-+
++
++--### 质量门禁全绿 (v2.4.0 预览)
++-+### 第三...
+
+---
+
+## 更新记录: 2026-08-25 11:33:03
+
+### 任务
+Git 变更同步
+
+### 变更摘要
+diff --git a/CONTEXT.md b/CONTEXT.md
+index 591df56..e09aea7 100644
+--- a/CONTEXT.md
++++ b/CONTEXT.md
+@@ -1,236 +1,521 @@
+-## 更新记录: 2026-08-25 10:35:44
++## 更新记录: 2026-08-25 11:32:29
+
+ ### 任务
+ Git 变更同步
+
+ ### 变更摘要
+-diff --git a/CHANGELOG.md b/CHANGELOG.md
+-index 4126bb7..1fd8913 100644
+---- a/CHANGELOG.md
+-+++ b/CHANGELOG.md
+-@@ -4,7 +4,12 @@ All notable changes to the AI Developer Growth project.
++diff --git a/CONTEXT.md b/CONTEXT.md
++index 591df56..bb4ced0 100644
++--- a/CONTEXT.md
+++++ b/CONTEXT.md
++@@ -1,236 +1,427 @@
++-## 更新记录: 2026-08-25 10:35:44
+++## 更新记录: 2026-08-25 11:29:41
+
+- ## [Unreleased]
++ ### 任务
++ Git 变更同步
+
+--### 质量门禁全绿 (v2.4.0 预览)
+-+### 第三轮改进进行中
+-+- docs/ROADMAP.md 归档化，消除与根目录 ROADMAP.md 的双源漂移
+-+
+-+## [2.4.0] - 2026-08-25
+-+
+-+### 质量门禁全绿
++ ### 变更摘要
++-diff --git a/CHANGELOG.md b/CHANGELOG.md
++-index 4126bb7..1fd8913 100644
++---- a/CHANGELOG.md
++-+++ b/CHANGELOG.md
++-@@ -4,7 +4,12 @@ All notable changes to the AI Developer Growth project.
++-
++- ## [Unreleased]
++-
++--### 质量门禁全绿 (v2.4.0 预览)
++-+### 第三轮改进进行中
++-+- docs/ROADMAP.md 归档化，消除与根目录 ROADMAP.md 的双源漂移
++-+
++-+## [2.4.0] - 2026-08-25
++-+
++-+### 质量门禁全绿
++-
++- ### 核心质量修复
++- - **ruff 全项目清零**：主项目 120 字符 + examples 88 字符配置兼容，无 lint 错误
++ diff --git a/CONTEXT.md b/CONTEXT.md
++-index 5013473..8754a4f 100644
+++index 591df56..3f719cd 100644
++ --- a/CONTEXT.md
++ +++ b/CONTEXT.md
++-@@ -1,3 +1,382 @@
++-+## 更新记录: 2026-08-25 10:32:38
+++@@ -1,3 +1,395 @@
++++## 更新记录: 2026-08-25 11:29:19
++ +
++ +### 任务
++ +Git 变更同步
++ +
++ +### 变更摘要
++-+diff --git a/CHANGELOG.md b/CHANGELOG.md
++-+index 4126bb7..1fd8913 100644
++-+--- a/CHANGELOG.md
++-++++ b/CHANGELOG.md
++-+@@ -4,7 +4,12 @@ All notable changes to the AI Developer Growth project.
++-+
++-+ ## [Unreleased]
++-+
++-+-### 质量门禁全绿 (v2.4.0 预览)
++-++### 第三轮改进进行中
++-++- docs/ROADMAP.md 归档化，消除与根目录 ROADMAP.md 的双源漂移
++-++
++-++## [2.4.0] - 2026-08-25
++-++
++-++### 质量门禁全绿
++-+
++-+ ### 核心质量修复
++-+ - **ruff 全项目清零**：主项目 120 字符 + examples 88 字符配置兼容，无 lint 错误
++ +diff --git a/CONTEXT.md b/CONTEXT.md
++-+index ...
+
+---
+
+## 更新记录: 2026-08-25 11:32:29
+
+### 任务
+Git 变更同步
+
+### 变更摘要
+diff --git a/CONTEXT.md b/CONTEXT.md
+index 591df56..bb4ced0 100644
+--- a/CONTEXT.md
++++ b/CONTEXT.md
+@@ -1,236 +1,427 @@
+-## 更新记录: 2026-08-25 10:35:44
++## 更新记录: 2026-08-25 11:29:41
+
+ ### 任务
+ Git 变更同步
+
+ ### 变更摘要
+-diff --git a/CHANGELOG.md b/CHANGELOG.md
+-index 4126bb7..1fd8913 100644
+---- a/CHANGELOG.md
+-+++ b/CHANGELOG.md
+-@@ -4,7 +4,12 @@ All notable changes to the AI Developer Growth project.
+-
+- ## [Unreleased]
+-
+--### 质量门禁全绿 (v2.4.0 预览)
+-+### 第三轮改进进行中
+-+- docs/ROADMAP.md 归档化，消除与根目录 ROADMAP.md 的双源漂移
+-+
+-+## [2.4.0] - 2026-08-25
+-+
+-+### 质量门禁全绿
+-
+- ### 核心质量修复
+- - **ruff 全项目清零**：主项目 120 字符 + examples 88 字符配置兼容，无 lint 错误
+ diff --git a/CONTEXT.md b/CONTEXT.md
+-index 5013473..8754a4f 100644
++index 591df56..3f719cd 100644
+ --- a/CONTEXT.md
+ +++ b/CONTEXT.md
+-@@ -1,3 +1,382 @@
+-+## 更新记录: 2026-08-25 10:32:38
++@@ -1,3 +1,395 @@
+++## 更新记录: 2026-08-25 11:29:19
+ +
+ +### 任务
+ +Git 变更同步
+ +
+ +### 变更摘要
+-+diff --git a/CHANGELOG.md b/CHANGELOG.md
+-+index 4126bb7..1fd8913 100644
+-+--- a/CHANGELOG.md
+-++++ b/CHANGELOG.md
+-+@@ -4,7 +4,12 @@ All notable changes to the AI Developer Growth project.
+-+
+-+ ## [Unreleased]
+-+
+-+-### 质量门禁全绿 (v2.4.0 预览)
+-++### 第三轮改进进行中
+-++- docs/ROADMAP.md 归档化，消除与根目录 ROADMAP.md 的双源漂移
+-++
+-++## [2.4.0] - 2026-08-25
+-++
+-++### 质量门禁全绿
+-+
+-+ ### 核心质量修复
+-+ - **ruff 全项目清零**：主项目 120 字符 + examples 88 字符配置兼容，无 lint 错误
+ +diff --git a/CONTEXT.md b/CONTEXT.md
+-+index 1000f04..b74fc27 100644
+++index 591df56..e322bd0 100644
+ +--- a/CONTEXT.md
+ ++++ b/CONTEXT.md
+-+@@ -1,52 +1,407 @@
+-+-## 更新记录: 2026-08-25 09:48:50
+-++## 更新记录: 2026-08-25 10:31:57
+-+
+-+ ### 任务
+-+ Git 变更同步
+-+
+-+ ### 变更摘要
+-+-diff --git a/.github/workflows/mutation-testing.yml b/.github/workflows/mutation-testing.yml
+-+-index 0774805..c7d7adf 100644
+-+---- a/.github/workflows/mutation-testing.yml
+-+-+++ b/.github/workflows/mutation-testing.yml
+-+-@@ -30,7 +30,7 @@ jobs:
+-+-       - name: Install dependencies
+-+-         run: |
+-+-           pip install -e .[dev]
+-+--          pip install mutmut>=2.4.0
+-+-+    ...
+
+---
+
+## 更新记录: 2026-08-25 11:29:41
+
+### 任务
+Git 变更同步
+
+### 变更摘要
+diff --git a/CONTEXT.md b/CONTEXT.md
+index 591df56..3f719cd 100644
+--- a/CONTEXT.md
++++ b/CONTEXT.md
+@@ -1,3 +1,395 @@
++## 更新记录: 2026-08-25 11:29:19
++
++### 任务
++Git 变更同步
++
++### 变更摘要
++diff --git a/CONTEXT.md b/CONTEXT.md
++index 591df56..e322bd0 100644
++--- a/CONTEXT.md
+++++ b/CONTEXT.md
++@@ -1,3 +1,294 @@
+++## 更新记录: 2026-08-25 11:28:10
+++
+++### 任务
+++Git 变更同步
+++
+++### 变更摘要
+++diff --git a/CONTEXT.md b/CONTEXT.md
+++index 591df56..4d422c7 100644
+++--- a/CONTEXT.md
++++++ b/CONTEXT.md
+++@@ -1,3 +1,192 @@
++++## 更新记录: 2026-08-25 11:27:40
++++
++++### 任务
++++Git 变更同步
++++
++++### 变更摘要
++++diff --git a/CONTEXT.md b/CONTEXT.md
++++index 591df56..98f97d8 100644
++++--- a/CONTEXT.md
+++++++ b/CONTEXT.md
++++@@ -1,3 +1,96 @@
+++++## 更新记录: 2026-08-25 10:39:19
+++++
+++++### 任务
+++++Git 变更同步
+++++
+++++### 变更摘要
+++++diff --git a/CONTEXT.md b/CONTEXT.md
+++++index 8754a4f..591df56 100644
+++++--- a/CONTEXT.md
++++++++ b/CONTEXT.md
+++++@@ -1,3 +1,94 @@
++++++## 更新记录: 2026-08-25 10:35:44
++++++
++++++### 任务
++++++Git 变更同步
++++++
++++++### 变更摘要
++++++diff --git a/CHANGELOG.md b/CHANGELOG.md
++++++index 4126bb7..1fd8913 100644
++++++--- a/CHANGELOG.md
+++++++++ b/CHANGELOG.md
++++++@@ -4,7 +4,12 @@ All notable changes to the AI Developer Growth project.
++++++
++++++ ## [Unreleased]
++++++
++++++-### 质量门禁全绿 (v2.4.0 预览)
+++++++### 第三轮改进进行中
+++++++- docs/ROADMAP.md 归档化，消除与根目录 ROADMAP.md 的双源漂移
+++++++
+++++++## [2.4.0] - 2026-08-25
+++++++
+++++++### 质量门禁全绿
++++++
++++++ ### 核心质量修复
++++++ - **ruff 全项目清零**：主项目 120 字符 + examples 88 字符配置兼容，无 lint 错误
++++++diff --git a/CONTEXT.md b/CONTEXT.md
++++++index 5013473..8754a4f 100644
++++++--- a/CONTEXT.md
+++++++++ b/CONTEXT.md
++++++@@ -1,3 +1,382 @@
+++++++## 更新记录: 2026-08-25 10:32:38
+++++++
+++++++### 任务
+++++++Git 变更同步
+++++++
+++++++### 变更摘要
+++++++diff --git a/CHANGELOG.md b/CHANGELOG.md
+++++++index 4126bb7..1fd8913 100644
+++++++--- a/CHANGELOG.md
++++++++++ b/CHANGELOG.md
+++++++@@ -4,7 +4,12 @@ All notable changes to the AI Developer Growth project.
+++++++
+++++++ ## [Unreleased]
+++++++
+++++++-### 质...
+
+---
+
+## 更新记录: 2026-08-25 11:29:19
+
+### 任务
+Git 变更同步
+
+### 变更摘要
+diff --git a/CONTEXT.md b/CONTEXT.md
+index 591df56..e322bd0 100644
+--- a/CONTEXT.md
++++ b/CONTEXT.md
+@@ -1,3 +1,294 @@
++## 更新记录: 2026-08-25 11:28:10
++
++### 任务
++Git 变更同步
++
++### 变更摘要
++diff --git a/CONTEXT.md b/CONTEXT.md
++index 591df56..4d422c7 100644
++--- a/CONTEXT.md
+++++ b/CONTEXT.md
++@@ -1,3 +1,192 @@
+++## 更新记录: 2026-08-25 11:27:40
+++
+++### 任务
+++Git 变更同步
+++
+++### 变更摘要
+++diff --git a/CONTEXT.md b/CONTEXT.md
+++index 591df56..98f97d8 100644
+++--- a/CONTEXT.md
++++++ b/CONTEXT.md
+++@@ -1,3 +1,96 @@
++++## 更新记录: 2026-08-25 10:39:19
++++
++++### 任务
++++Git 变更同步
++++
++++### 变更摘要
++++diff --git a/CONTEXT.md b/CONTEXT.md
++++index 8754a4f..591df56 100644
++++--- a/CONTEXT.md
+++++++ b/CONTEXT.md
++++@@ -1,3 +1,94 @@
+++++## 更新记录: 2026-08-25 10:35:44
+++++
+++++### 任务
+++++Git 变更同步
+++++
+++++### 变更摘要
+++++diff --git a/CHANGELOG.md b/CHANGELOG.md
+++++index 4126bb7..1fd8913 100644
+++++--- a/CHANGELOG.md
++++++++ b/CHANGELOG.md
+++++@@ -4,7 +4,12 @@ All notable changes to the AI Developer Growth project.
+++++
+++++ ## [Unreleased]
+++++
+++++-### 质量门禁全绿 (v2.4.0 预览)
++++++### 第三轮改进进行中
++++++- docs/ROADMAP.md 归档化，消除与根目录 ROADMAP.md 的双源漂移
++++++
++++++## [2.4.0] - 2026-08-25
++++++
++++++### 质量门禁全绿
+++++
+++++ ### 核心质量修复
+++++ - **ruff 全项目清零**：主项目 120 字符 + examples 88 字符配置兼容，无 lint 错误
+++++diff --git a/CONTEXT.md b/CONTEXT.md
+++++index 5013473..8754a4f 100644
+++++--- a/CONTEXT.md
++++++++ b/CONTEXT.md
+++++@@ -1,3 +1,382 @@
++++++## 更新记录: 2026-08-25 10:32:38
++++++
++++++### 任务
++++++Git 变更同步
++++++
++++++### 变更摘要
++++++diff --git a/CHANGELOG.md b/CHANGELOG.md
++++++index 4126bb7..1fd8913 100644
++++++--- a/CHANGELOG.md
+++++++++ b/CHANGELOG.md
++++++@@ -4,7 +4,12 @@ All notable changes to the AI Developer Growth project.
++++++
++++++ ## [Unreleased]
++++++
++++++-### 质量门禁全绿 (v2.4.0 预览)
+++++++### 第三轮改进进行中
+++++++- docs/ROADMAP.md 归档化，消除与根目录 ROADMAP.md 的双源漂移
+++++++
+++++++## [2.4.0] - 2026-08-25
+++++++
+++++++### 质量门禁全绿
++++++
++++++ ### 核心质量修复
++++++ - **ruff 全项目清零**：主项目 120 字符 + examples 88 字符配置兼容，无 lint 错误
++++++diff --git a/CONTEXT...
+
+---
+
+## 更新记录: 2026-08-25 11:28:10
+
+### 任务
+Git 变更同步
+
+### 变更摘要
+diff --git a/CONTEXT.md b/CONTEXT.md
+index 591df56..4d422c7 100644
+--- a/CONTEXT.md
++++ b/CONTEXT.md
+@@ -1,3 +1,192 @@
++## 更新记录: 2026-08-25 11:27:40
++
++### 任务
++Git 变更同步
++
++### 变更摘要
++diff --git a/CONTEXT.md b/CONTEXT.md
++index 591df56..98f97d8 100644
++--- a/CONTEXT.md
+++++ b/CONTEXT.md
++@@ -1,3 +1,96 @@
+++## 更新记录: 2026-08-25 10:39:19
+++
+++### 任务
+++Git 变更同步
+++
+++### 变更摘要
+++diff --git a/CONTEXT.md b/CONTEXT.md
+++index 8754a4f..591df56 100644
+++--- a/CONTEXT.md
++++++ b/CONTEXT.md
+++@@ -1,3 +1,94 @@
++++## 更新记录: 2026-08-25 10:35:44
++++
++++### 任务
++++Git 变更同步
++++
++++### 变更摘要
++++diff --git a/CHANGELOG.md b/CHANGELOG.md
++++index 4126bb7..1fd8913 100644
++++--- a/CHANGELOG.md
+++++++ b/CHANGELOG.md
++++@@ -4,7 +4,12 @@ All notable changes to the AI Developer Growth project.
++++
++++ ## [Unreleased]
++++
++++-### 质量门禁全绿 (v2.4.0 预览)
+++++### 第三轮改进进行中
+++++- docs/ROADMAP.md 归档化，消除与根目录 ROADMAP.md 的双源漂移
+++++
+++++## [2.4.0] - 2026-08-25
+++++
+++++### 质量门禁全绿
++++
++++ ### 核心质量修复
++++ - **ruff 全项目清零**：主项目 120 字符 + examples 88 字符配置兼容，无 lint 错误
++++diff --git a/CONTEXT.md b/CONTEXT.md
++++index 5013473..8754a4f 100644
++++--- a/CONTEXT.md
+++++++ b/CONTEXT.md
++++@@ -1,3 +1,382 @@
+++++## 更新记录: 2026-08-25 10:32:38
+++++
+++++### 任务
+++++Git 变更同步
+++++
+++++### 变更摘要
+++++diff --git a/CHANGELOG.md b/CHANGELOG.md
+++++index 4126bb7..1fd8913 100644
+++++--- a/CHANGELOG.md
++++++++ b/CHANGELOG.md
+++++@@ -4,7 +4,12 @@ All notable changes to the AI Developer Growth project.
+++++
+++++ ## [Unreleased]
+++++
+++++-### 质量门禁全绿 (v2.4.0 预览)
++++++### 第三轮改进进行中
++++++- docs/ROADMAP.md 归档化，消除与根目录 ROADMAP.md 的双源漂移
++++++
++++++## [2.4.0] - 2026-08-25
++++++
++++++### 质量门禁全绿
+++++
+++++ ### 核心质量修复
+++++ - **ruff 全项目清零**：主项目 120 字符 + examples 88 字符配置兼容，无 lint 错误
+++++diff --git a/CONTEXT.md b/CONTEXT.md
+++++index 1000f04..b74fc27 100644
+++++--- a/CONTEXT.md
++++++++ b/CONTEXT.md
+++++@@ -1,52 +1,407 @@
+++++-## 更新记录: 2026-08-25 09:48:50
++++++## 更新记录: 2026-08-25 10:31:57
+++++
+++++ ### 任务
+++++ Git 变更同步
+++++
+++++ ### 变更摘要
+++++-diff --git a/.github/wo...
+
+---
+
+## 更新记录: 2026-08-25 11:27:40
+
+### 任务
+Git 变更同步
+
+### 变更摘要
+diff --git a/CONTEXT.md b/CONTEXT.md
+index 591df56..98f97d8 100644
+--- a/CONTEXT.md
++++ b/CONTEXT.md
+@@ -1,3 +1,96 @@
++## 更新记录: 2026-08-25 10:39:19
++
++### 任务
++Git 变更同步
++
++### 变更摘要
++diff --git a/CONTEXT.md b/CONTEXT.md
++index 8754a4f..591df56 100644
++--- a/CONTEXT.md
+++++ b/CONTEXT.md
++@@ -1,3 +1,94 @@
+++## 更新记录: 2026-08-25 10:35:44
+++
+++### 任务
+++Git 变更同步
+++
+++### 变更摘要
+++diff --git a/CHANGELOG.md b/CHANGELOG.md
+++index 4126bb7..1fd8913 100644
+++--- a/CHANGELOG.md
++++++ b/CHANGELOG.md
+++@@ -4,7 +4,12 @@ All notable changes to the AI Developer Growth project.
+++
+++ ## [Unreleased]
+++
+++-### 质量门禁全绿 (v2.4.0 预览)
++++### 第三轮改进进行中
++++- docs/ROADMAP.md 归档化，消除与根目录 ROADMAP.md 的双源漂移
++++
++++## [2.4.0] - 2026-08-25
++++
++++### 质量门禁全绿
+++
+++ ### 核心质量修复
+++ - **ruff 全项目清零**：主项目 120 字符 + examples 88 字符配置兼容，无 lint 错误
+++diff --git a/CONTEXT.md b/CONTEXT.md
+++index 5013473..8754a4f 100644
+++--- a/CONTEXT.md
++++++ b/CONTEXT.md
+++@@ -1,3 +1,382 @@
++++## 更新记录: 2026-08-25 10:32:38
++++
++++### 任务
++++Git 变更同步
++++
++++### 变更摘要
++++diff --git a/CHANGELOG.md b/CHANGELOG.md
++++index 4126bb7..1fd8913 100644
++++--- a/CHANGELOG.md
+++++++ b/CHANGELOG.md
++++@@ -4,7 +4,12 @@ All notable changes to the AI Developer Growth project.
++++
++++ ## [Unreleased]
++++
++++-### 质量门禁全绿 (v2.4.0 预览)
+++++### 第三轮改进进行中
+++++- docs/ROADMAP.md 归档化，消除与根目录 ROADMAP.md 的双源漂移
+++++
+++++## [2.4.0] - 2026-08-25
+++++
+++++### 质量门禁全绿
++++
++++ ### 核心质量修复
++++ - **ruff 全项目清零**：主项目 120 字符 + examples 88 字符配置兼容，无 lint 错误
++++diff --git a/CONTEXT.md b/CONTEXT.md
++++index 1000f04..b74fc27 100644
++++--- a/CONTEXT.md
+++++++ b/CONTEXT.md
++++@@ -1,52 +1,407 @@
++++-## 更新记录: 2026-08-25 09:48:50
+++++## 更新记录: 2026-08-25 10:31:57
++++
++++ ### 任务
++++ Git 变更同步
++++
++++ ### 变更摘要
++++-diff --git a/.github/workflows/mutation-testing.yml b/.github/workflows/mutation-testing.yml
++++-index 0774805..c7d7adf 100644
++++---- a/.github/workflows/mutation-testing.yml
++++-+++ b/.github/workflows/mutation-testing.yml
++++-@@ -30,7 +30,7 @@ jobs:
++++-       - name: Install depend...
+
+---
+
 ## 更新记录: 2026-08-25 10:39:19
 
 ### 任务
@@ -2732,689 +3529,6 @@ index 0d2c561..0000000
 -{"event_type": "STEP_3_COMPLETE", "details": {"tdd_state": "REFACTOR"}, "prev_hash": "fee81e1ff645a5a00ef333d24d4dbdb9e6112e6fe165e02d5f1c2754926970f5", "current_hash": "aaa546add190c2617c40abe161dc49a8000b9cb6beab37ebebf2ef603cbff1ce"}
 -{"event_type": "STEP_4_COMPLETE", "details": {"scope_passed": true}, "prev_hash": "aaa546add190c2617c40abe161dc49a8000b9cb6beab37ebebf2ef603cbff1ce", "current_hash": "d4c53656bee2233222314d29c5d59a6032a2a335f895e0d00895e29b54e9b295"}
 -{"event_type": "STEP_5_COMPLETE", "details": {}, "prev_hash": "d4c53656bee2233222314d29c5d59a6032a2...
-
----
-
-## 更新记录: 2026-08-25 06:01:46
-
-### 任务
-Git 变更同步
-
-### 变更摘要
-diff --git a/CONTEXT.md b/CONTEXT.md
-index 77fe489..31c31d1 100644
---- a/CONTEXT.md
-+++ b/CONTEXT.md
-@@ -1,3 +1,260 @@
-+## 更新记录: 2026-08-25 06:00:51
-+
-+### 任务
-+Git 变更同步
-+
-+### 变更摘要
-+diff --git a/CONTEXT.md b/CONTEXT.md
-+index 77fe489..14b5ffc 100644
-+--- a/CONTEXT.md
-++++ b/CONTEXT.md
-+@@ -1,3 +1,178 @@
-++## 更新记录: 2026-08-25 05:22:37
-++
-++### 任务
-++Git 变更同步
-++
-++### 变更摘要
-++diff --git a/.github/workflows/ci-cd.yml b/.github/workflows/ci-cd.yml
-++index 9b33451..f53f3da 100644
-++--- a/.github/workflows/ci-cd.yml
-+++++ b/.github/workflows/ci-cd.yml
-++@@ -136,7 +136,7 @@ jobs:
-++             --cov=tools/scripts \
-++             --cov-report=xml \
-++             --cov-report=term-missing \
-++-            --cov-fail-under=75
-+++            --cov-fail-under=64
-++
-++       - name: Upload coverage
-++         uses: codecov/codecov-action@v4
-++diff --git a/CONTEXT.md b/CONTEXT.md
-++index 3e97caa..5e22715 100644
-++--- a/CONTEXT.md
-+++++ b/CONTEXT.md
-++@@ -1,3 +1,186 @@
-+++## 更新记录: 2026-08-25 05:20:58
-+++
-+++### 任务
-+++Git 变更同步
-+++
-+++### 变更摘要
-+++diff --git a/.github/workflows/ci-cd.yml b/.github/workflows/ci-cd.yml
-+++index 9b33451..f53f3da 100644
-+++--- a/.github/workflows/ci-cd.yml
-++++++ b/.github/workflows/ci-cd.yml
-+++@@ -136,7 +136,7 @@ jobs:
-+++             --cov=tools/scripts \
-+++             --cov-report=xml \
-+++             --cov-report=term-missing \
-+++-            --cov-fail-under=75
-++++            --cov-fail-under=64
-+++
-+++       - name: Upload coverage
-+++         uses: codecov/codecov-action@v4
-+++diff --git a/CONTEXT.md b/CONTEXT.md
-+++index 3e97caa..77fe489 100644
-+++--- a/CONTEXT.md
-++++++ b/CONTEXT.md
-+++@@ -1,3 +1,94 @@
-++++## 更新记录: 2026-08-24 22:49:02
-++++
-++++### 任务
-++++Git 变更同步
-++++
-++++### 变更摘要
-++++diff --git a/.github/workflows/ci-cd.yml b/.github/workflows/ci-cd.yml
-++++index 9b33451..f53f3da 100644
-++++--- a/.github/workflows/ci-cd.yml
-+++++++ b/.github/workflows/ci-cd.yml
-++++@@ -136,7 +136,7 @@ jobs:
-++++             --cov=tools/scripts \
-++++    ...
-
----
-
-## 更新记录: 2026-08-25 06:00:51
-
-### 任务
-Git 变更同步
-
-### 变更摘要
-diff --git a/CONTEXT.md b/CONTEXT.md
-index 77fe489..14b5ffc 100644
---- a/CONTEXT.md
-+++ b/CONTEXT.md
-@@ -1,3 +1,178 @@
-+## 更新记录: 2026-08-25 05:22:37
-+
-+### 任务
-+Git 变更同步
-+
-+### 变更摘要
-+diff --git a/.github/workflows/ci-cd.yml b/.github/workflows/ci-cd.yml
-+index 9b33451..f53f3da 100644
-+--- a/.github/workflows/ci-cd.yml
-++++ b/.github/workflows/ci-cd.yml
-+@@ -136,7 +136,7 @@ jobs:
-+             --cov=tools/scripts \
-+             --cov-report=xml \
-+             --cov-report=term-missing \
-+-            --cov-fail-under=75
-++            --cov-fail-under=64
-+
-+       - name: Upload coverage
-+         uses: codecov/codecov-action@v4
-+diff --git a/CONTEXT.md b/CONTEXT.md
-+index 3e97caa..5e22715 100644
-+--- a/CONTEXT.md
-++++ b/CONTEXT.md
-+@@ -1,3 +1,186 @@
-++## 更新记录: 2026-08-25 05:20:58
-++
-++### 任务
-++Git 变更同步
-++
-++### 变更摘要
-++diff --git a/.github/workflows/ci-cd.yml b/.github/workflows/ci-cd.yml
-++index 9b33451..f53f3da 100644
-++--- a/.github/workflows/ci-cd.yml
-+++++ b/.github/workflows/ci-cd.yml
-++@@ -136,7 +136,7 @@ jobs:
-++             --cov=tools/scripts \
-++             --cov-report=xml \
-++             --cov-report=term-missing \
-++-            --cov-fail-under=75
-+++            --cov-fail-under=64
-++
-++       - name: Upload coverage
-++         uses: codecov/codecov-action@v4
-++diff --git a/CONTEXT.md b/CONTEXT.md
-++index 3e97caa..77fe489 100644
-++--- a/CONTEXT.md
-+++++ b/CONTEXT.md
-++@@ -1,3 +1,94 @@
-+++## 更新记录: 2026-08-24 22:49:02
-+++
-+++### 任务
-+++Git 变更同步
-+++
-+++### 变更摘要
-+++diff --git a/.github/workflows/ci-cd.yml b/.github/workflows/ci-cd.yml
-+++index 9b33451..f53f3da 100644
-+++--- a/.github/workflows/ci-cd.yml
-++++++ b/.github/workflows/ci-cd.yml
-+++@@ -136,7 +136,7 @@ jobs:
-+++             --cov=tools/scripts \
-+++             --cov-report=xml \
-+++             --cov-report=term-missing \
-+++-            --cov-fail-under=75
-++++            --cov-fail-under=64
-+++
-+++       - name: Upload coverage
-+++         uses: codecov/codecov-action@v4
-+++diff --git a/CONTE...
-
----
-
-## 更新记录: 2026-08-25 05:22:37
-
-### 任务
-Git 变更同步
-
-### 变更摘要
-diff --git a/.github/workflows/ci-cd.yml b/.github/workflows/ci-cd.yml
-index 9b33451..f53f3da 100644
---- a/.github/workflows/ci-cd.yml
-+++ b/.github/workflows/ci-cd.yml
-@@ -136,7 +136,7 @@ jobs:
-             --cov=tools/scripts \
-             --cov-report=xml \
-             --cov-report=term-missing \
--            --cov-fail-under=75
-+            --cov-fail-under=64
-
-       - name: Upload coverage
-         uses: codecov/codecov-action@v4
-diff --git a/CONTEXT.md b/CONTEXT.md
-index 3e97caa..5e22715 100644
---- a/CONTEXT.md
-+++ b/CONTEXT.md
-@@ -1,3 +1,186 @@
-+## 更新记录: 2026-08-25 05:20:58
-+
-+### 任务
-+Git 变更同步
-+
-+### 变更摘要
-+diff --git a/.github/workflows/ci-cd.yml b/.github/workflows/ci-cd.yml
-+index 9b33451..f53f3da 100644
-+--- a/.github/workflows/ci-cd.yml
-++++ b/.github/workflows/ci-cd.yml
-+@@ -136,7 +136,7 @@ jobs:
-+             --cov=tools/scripts \
-+             --cov-report=xml \
-+             --cov-report=term-missing \
-+-            --cov-fail-under=75
-++            --cov-fail-under=64
-+
-+       - name: Upload coverage
-+         uses: codecov/codecov-action@v4
-+diff --git a/CONTEXT.md b/CONTEXT.md
-+index 3e97caa..77fe489 100644
-+--- a/CONTEXT.md
-++++ b/CONTEXT.md
-+@@ -1,3 +1,94 @@
-++## 更新记录: 2026-08-24 22:49:02
-++
-++### 任务
-++Git 变更同步
-++
-++### 变更摘要
-++diff --git a/.github/workflows/ci-cd.yml b/.github/workflows/ci-cd.yml
-++index 9b33451..f53f3da 100644
-++--- a/.github/workflows/ci-cd.yml
-+++++ b/.github/workflows/ci-cd.yml
-++@@ -136,7 +136,7 @@ jobs:
-++             --cov=tools/scripts \
-++             --cov-report=xml \
-++             --cov-report=term-missing \
-++-            --cov-fail-under=75
-+++            --cov-fail-under=64
-++
-++       - name: Upload coverage
-++         uses: codecov/codecov-action@v4
-++diff --git a/CONTEXT.md b/CONTEXT.md
-++index cf7298e..3e97caa 100644
-++--- a/CONTEXT.md
-+++++ b/CONTEXT.md
-++@@ -1,3 +1,89 @@
-+++## 更新记录: 2026-08-24 22:18:03
-+++
-+++### 任务
-+++Git 变更同步
-+++
-+++### 变更摘要
-+++diff --git a/CONTEXT.md b/CONTEXT.md
-+++index 058005a..cf...
-
----
-
-## 更新记录: 2026-08-25 05:20:58
-
-### 任务
-Git 变更同步
-
-### 变更摘要
-diff --git a/.github/workflows/ci-cd.yml b/.github/workflows/ci-cd.yml
-index 9b33451..f53f3da 100644
---- a/.github/workflows/ci-cd.yml
-+++ b/.github/workflows/ci-cd.yml
-@@ -136,7 +136,7 @@ jobs:
-             --cov=tools/scripts \
-             --cov-report=xml \
-             --cov-report=term-missing \
--            --cov-fail-under=75
-+            --cov-fail-under=64
-
-       - name: Upload coverage
-         uses: codecov/codecov-action@v4
-diff --git a/CONTEXT.md b/CONTEXT.md
-index 3e97caa..77fe489 100644
---- a/CONTEXT.md
-+++ b/CONTEXT.md
-@@ -1,3 +1,94 @@
-+## 更新记录: 2026-08-24 22:49:02
-+
-+### 任务
-+Git 变更同步
-+
-+### 变更摘要
-+diff --git a/.github/workflows/ci-cd.yml b/.github/workflows/ci-cd.yml
-+index 9b33451..f53f3da 100644
-+--- a/.github/workflows/ci-cd.yml
-++++ b/.github/workflows/ci-cd.yml
-+@@ -136,7 +136,7 @@ jobs:
-+             --cov=tools/scripts \
-+             --cov-report=xml \
-+             --cov-report=term-missing \
-+-            --cov-fail-under=75
-++            --cov-fail-under=64
-+
-+       - name: Upload coverage
-+         uses: codecov/codecov-action@v4
-+diff --git a/CONTEXT.md b/CONTEXT.md
-+index cf7298e..3e97caa 100644
-+--- a/CONTEXT.md
-++++ b/CONTEXT.md
-+@@ -1,3 +1,89 @@
-++## 更新记录: 2026-08-24 22:18:03
-++
-++### 任务
-++Git 变更同步
-++
-++### 变更摘要
-++diff --git a/CONTEXT.md b/CONTEXT.md
-++index 058005a..cf7298e 100644
-++--- a/CONTEXT.md
-+++++ b/CONTEXT.md
-++@@ -1,3 +1,86 @@
-+++## 更新记录: 2026-08-24 22:01:28
-+++
-+++### 任务
-+++Git 变更同步
-+++
-+++### 变更摘要
-+++diff --git a/CONTEXT.md b/CONTEXT.md
-+++index 7a98b62..058005a 100644
-+++--- a/CONTEXT.md
-++++++ b/CONTEXT.md
-+++@@ -1,3 +1,83 @@
-++++## 更新记录: 2026-08-24 21:31:59
-++++
-++++### 任务
-++++Git 变更同步
-++++
-++++### 变更摘要
-++++diff --git a/CONTEXT.md b/CONTEXT.md
-++++index 8e20afc..7a98b62 100644
-++++--- a/CONTEXT.md
-+++++++ b/CONTEXT.md
-++++@@ -1,3 +1,80 @@
-+++++## 更新记录: 2026-08-24 21:30:41
-+++++
-+++++### 任务
-+++++Git 变更同步
-+++++
-+++++### 变更摘要
-+++++diff --git a/.github/workflows/ci-cd.yml b/.github/workflows/ci-cd.yml
-+++++index 32507...
-
----
-
-## 更新记录: 2026-08-24 22:49:02
-
-### 任务
-Git 变更同步
-
-### 变更摘要
-diff --git a/.github/workflows/ci-cd.yml b/.github/workflows/ci-cd.yml
-index 9b33451..f53f3da 100644
---- a/.github/workflows/ci-cd.yml
-+++ b/.github/workflows/ci-cd.yml
-@@ -136,7 +136,7 @@ jobs:
-             --cov=tools/scripts \
-             --cov-report=xml \
-             --cov-report=term-missing \
--            --cov-fail-under=75
-+            --cov-fail-under=64
-
-       - name: Upload coverage
-         uses: codecov/codecov-action@v4
-diff --git a/CONTEXT.md b/CONTEXT.md
-index cf7298e..3e97caa 100644
---- a/CONTEXT.md
-+++ b/CONTEXT.md
-@@ -1,3 +1,89 @@
-+## 更新记录: 2026-08-24 22:18:03
-+
-+### 任务
-+Git 变更同步
-+
-+### 变更摘要
-+diff --git a/CONTEXT.md b/CONTEXT.md
-+index 058005a..cf7298e 100644
-+--- a/CONTEXT.md
-++++ b/CONTEXT.md
-+@@ -1,3 +1,86 @@
-++## 更新记录: 2026-08-24 22:01:28
-++
-++### 任务
-++Git 变更同步
-++
-++### 变更摘要
-++diff --git a/CONTEXT.md b/CONTEXT.md
-++index 7a98b62..058005a 100644
-++--- a/CONTEXT.md
-+++++ b/CONTEXT.md
-++@@ -1,3 +1,83 @@
-+++## 更新记录: 2026-08-24 21:31:59
-+++
-+++### 任务
-+++Git 变更同步
-+++
-+++### 变更摘要
-+++diff --git a/CONTEXT.md b/CONTEXT.md
-+++index 8e20afc..7a98b62 100644
-+++--- a/CONTEXT.md
-++++++ b/CONTEXT.md
-+++@@ -1,3 +1,80 @@
-++++## 更新记录: 2026-08-24 21:30:41
-++++
-++++### 任务
-++++Git 变更同步
-++++
-++++### 变更摘要
-++++diff --git a/.github/workflows/ci-cd.yml b/.github/workflows/ci-cd.yml
-++++index 32507be..9b33451 100644
-++++--- a/.github/workflows/ci-cd.yml
-+++++++ b/.github/workflows/ci-cd.yml
-++++@@ -136,7 +136,7 @@ jobs:
-++++             --cov=tools/scripts \
-++++             --cov-report=xml \
-++++             --cov-report=term-missing \
-++++-            --cov-fail-under=60
-+++++            --cov-fail-under=75
-++++
-++++       - name: Upload coverage
-++++         uses: codecov/codecov-action@v4
-++++diff --git a/CONTEXT.md b/CONTEXT.md
-++++index e23342f..8e20afc 100644
-++++--- a/CONTEXT.md
-+++++++ b/CONTEXT.md
-++++@@ -1,3 +1,76 @@
-+++++## 更新记录: 2026-08-24 21:01:53
-+++++
-+++++### 任务
-+++++Git 变更同步
-+++++
-+++++### 变更摘要
-+++++diff --git a/.github/workflows/ci-cd.yml b/.gith...
-
----
-
-## 更新记录: 2026-08-24 22:18:03
-
-### 任务
-Git 变更同步
-
-### 变更摘要
-diff --git a/CONTEXT.md b/CONTEXT.md
-index 058005a..cf7298e 100644
---- a/CONTEXT.md
-+++ b/CONTEXT.md
-@@ -1,3 +1,86 @@
-+## 更新记录: 2026-08-24 22:01:28
-+
-+### 任务
-+Git 变更同步
-+
-+### 变更摘要
-+diff --git a/CONTEXT.md b/CONTEXT.md
-+index 7a98b62..058005a 100644
-+--- a/CONTEXT.md
-++++ b/CONTEXT.md
-+@@ -1,3 +1,83 @@
-++## 更新记录: 2026-08-24 21:31:59
-++
-++### 任务
-++Git 变更同步
-++
-++### 变更摘要
-++diff --git a/CONTEXT.md b/CONTEXT.md
-++index 8e20afc..7a98b62 100644
-++--- a/CONTEXT.md
-+++++ b/CONTEXT.md
-++@@ -1,3 +1,80 @@
-+++## 更新记录: 2026-08-24 21:30:41
-+++
-+++### 任务
-+++Git 变更同步
-+++
-+++### 变更摘要
-+++diff --git a/.github/workflows/ci-cd.yml b/.github/workflows/ci-cd.yml
-+++index 32507be..9b33451 100644
-+++--- a/.github/workflows/ci-cd.yml
-++++++ b/.github/workflows/ci-cd.yml
-+++@@ -136,7 +136,7 @@ jobs:
-+++             --cov=tools/scripts \
-+++             --cov-report=xml \
-+++             --cov-report=term-missing \
-+++-            --cov-fail-under=60
-++++            --cov-fail-under=75
-+++
-+++       - name: Upload coverage
-+++         uses: codecov/codecov-action@v4
-+++diff --git a/CONTEXT.md b/CONTEXT.md
-+++index e23342f..8e20afc 100644
-+++--- a/CONTEXT.md
-++++++ b/CONTEXT.md
-+++@@ -1,3 +1,76 @@
-++++## 更新记录: 2026-08-24 21:01:53
-++++
-++++### 任务
-++++Git 变更同步
-++++
-++++### 变更摘要
-++++diff --git a/.github/workflows/ci-cd.yml b/.github/workflows/ci-cd.yml
-++++index 32507be..9b33451 100644
-++++--- a/.github/workflows/ci-cd.yml
-+++++++ b/.github/workflows/ci-cd.yml
-++++@@ -136,7 +136,7 @@ jobs:
-++++             --cov=tools/scripts \
-++++             --cov-report=xml \
-++++             --cov-report=term-missing \
-++++-            --cov-fail-under=60
-+++++            --cov-fail-under=75
-++++
-++++       - name: Upload coverage
-++++         uses: codecov/codecov-action@v4
-++++diff --git a/.jcode/baseline.json b/.jcode/baseline.json
-++++index 7c8d7c8..64b2017 100644
-++++--- a/.jcode/baseline.json
-+++++++ b/.jcode/baseline.json
-++++@@ -17,9 +17,6 @@
-++++     ".jcode/scripts/governance-auditor.py": {
-++++     ...
-
----
-
-## 更新记录: 2026-08-24 22:01:28
-
-### 任务
-Git 变更同步
-
-### 变更摘要
-diff --git a/CONTEXT.md b/CONTEXT.md
-index 7a98b62..058005a 100644
---- a/CONTEXT.md
-+++ b/CONTEXT.md
-@@ -1,3 +1,83 @@
-+## 更新记录: 2026-08-24 21:31:59
-+
-+### 任务
-+Git 变更同步
-+
-+### 变更摘要
-+diff --git a/CONTEXT.md b/CONTEXT.md
-+index 8e20afc..7a98b62 100644
-+--- a/CONTEXT.md
-++++ b/CONTEXT.md
-+@@ -1,3 +1,80 @@
-++## 更新记录: 2026-08-24 21:30:41
-++
-++### 任务
-++Git 变更同步
-++
-++### 变更摘要
-++diff --git a/.github/workflows/ci-cd.yml b/.github/workflows/ci-cd.yml
-++index 32507be..9b33451 100644
-++--- a/.github/workflows/ci-cd.yml
-+++++ b/.github/workflows/ci-cd.yml
-++@@ -136,7 +136,7 @@ jobs:
-++             --cov=tools/scripts \
-++             --cov-report=xml \
-++             --cov-report=term-missing \
-++-            --cov-fail-under=60
-+++            --cov-fail-under=75
-++
-++       - name: Upload coverage
-++         uses: codecov/codecov-action@v4
-++diff --git a/CONTEXT.md b/CONTEXT.md
-++index e23342f..8e20afc 100644
-++--- a/CONTEXT.md
-+++++ b/CONTEXT.md
-++@@ -1,3 +1,76 @@
-+++## 更新记录: 2026-08-24 21:01:53
-+++
-+++### 任务
-+++Git 变更同步
-+++
-+++### 变更摘要
-+++diff --git a/.github/workflows/ci-cd.yml b/.github/workflows/ci-cd.yml
-+++index 32507be..9b33451 100644
-+++--- a/.github/workflows/ci-cd.yml
-++++++ b/.github/workflows/ci-cd.yml
-+++@@ -136,7 +136,7 @@ jobs:
-+++             --cov=tools/scripts \
-+++             --cov-report=xml \
-+++             --cov-report=term-missing \
-+++-            --cov-fail-under=60
-++++            --cov-fail-under=75
-+++
-+++       - name: Upload coverage
-+++         uses: codecov/codecov-action@v4
-+++diff --git a/.jcode/baseline.json b/.jcode/baseline.json
-+++index 7c8d7c8..64b2017 100644
-+++--- a/.jcode/baseline.json
-++++++ b/.jcode/baseline.json
-+++@@ -17,9 +17,6 @@
-+++     ".jcode/scripts/governance-auditor.py": {
-+++       "structure:函数超过 50 行 (实际 54 行)": 1
-+++     },
-+++-    ".jcode/scripts/multi_agent_orch.py": {
-+++-      "type:使用 Any 类型": 1
-+++-    },
-+++     ".jcode/scripts/jcode-init.py": {
-+++       "structure:函数超过 50 行 (实际 110 行)": 1
-+++     },
-+++@@ -27,...
-
----
-
-## 更新记录: 2026-08-24 21:31:59
-
-### 任务
-Git 变更同步
-
-### 变更摘要
-diff --git a/CONTEXT.md b/CONTEXT.md
-index 8e20afc..7a98b62 100644
---- a/CONTEXT.md
-+++ b/CONTEXT.md
-@@ -1,3 +1,80 @@
-+## 更新记录: 2026-08-24 21:30:41
-+
-+### 任务
-+Git 变更同步
-+
-+### 变更摘要
-+diff --git a/.github/workflows/ci-cd.yml b/.github/workflows/ci-cd.yml
-+index 32507be..9b33451 100644
-+--- a/.github/workflows/ci-cd.yml
-++++ b/.github/workflows/ci-cd.yml
-+@@ -136,7 +136,7 @@ jobs:
-+             --cov=tools/scripts \
-+             --cov-report=xml \
-+             --cov-report=term-missing \
-+-            --cov-fail-under=60
-++            --cov-fail-under=75
-+
-+       - name: Upload coverage
-+         uses: codecov/codecov-action@v4
-+diff --git a/CONTEXT.md b/CONTEXT.md
-+index e23342f..8e20afc 100644
-+--- a/CONTEXT.md
-++++ b/CONTEXT.md
-+@@ -1,3 +1,76 @@
-++## 更新记录: 2026-08-24 21:01:53
-++
-++### 任务
-++Git 变更同步
-++
-++### 变更摘要
-++diff --git a/.github/workflows/ci-cd.yml b/.github/workflows/ci-cd.yml
-++index 32507be..9b33451 100644
-++--- a/.github/workflows/ci-cd.yml
-+++++ b/.github/workflows/ci-cd.yml
-++@@ -136,7 +136,7 @@ jobs:
-++             --cov=tools/scripts \
-++             --cov-report=xml \
-++             --cov-report=term-missing \
-++-            --cov-fail-under=60
-+++            --cov-fail-under=75
-++
-++       - name: Upload coverage
-++         uses: codecov/codecov-action@v4
-++diff --git a/.jcode/baseline.json b/.jcode/baseline.json
-++index 7c8d7c8..64b2017 100644
-++--- a/.jcode/baseline.json
-+++++ b/.jcode/baseline.json
-++@@ -17,9 +17,6 @@
-++     ".jcode/scripts/governance-auditor.py": {
-++       "structure:函数超过 50 行 (实际 54 行)": 1
-++     },
-++-    ".jcode/scripts/multi_agent_orch.py": {
-++-      "type:使用 Any 类型": 1
-++-    },
-++     ".jcode/scripts/jcode-init.py": {
-++       "structure:函数超过 50 行 (实际 110 行)": 1
-++     },
-++@@ -27,9 +24,6 @@
-++       "structure:函数超过 50 行 (实际 59 行)": 1,
-++       "structure:函数超过 50 行 (实际 55 行)": 1
-++     },
-++-    "tools/scripts/sync_issues.py": {
-++-      "type:使用 Any 类型": 1
-++-    },
-++     "tools/scripts/dependency_graph.py": {
-++     ...
 
 ---
 

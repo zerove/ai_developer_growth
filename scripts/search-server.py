@@ -11,10 +11,16 @@ from fastapi import FastAPI, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
-# 添加搜索模块路径
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), "examples/ai-navigation/src"))
+# 确保项目根目录在导入路径上（支持从任意工作目录启动）
+_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+if _ROOT not in sys.path:
+    sys.path.insert(0, _ROOT)
 
-from enhanced_tfidf import Document, EnhancedTFIDF, create_enhanced_index
+from tools.scripts.search.tfidf_engine import (  # noqa: E402 -- 需先注入项目根路径
+    Document,
+    EnhancedTFIDF,
+    create_enhanced_index,
+)
 
 
 class SearchResponse(BaseModel):
@@ -55,7 +61,7 @@ search_index: EnhancedTFIDF | None = None
 def load_documents():
     """从 docs 目录加载文档"""
     documents = []
-    docs_dir = os.path.join(os.path.dirname(__file__), "docs")
+    docs_dir = _ROOT and os.path.join(_ROOT, "docs")
 
     for root, dirs, files in os.walk(docs_dir):
         for file in files:
@@ -82,12 +88,12 @@ def load_documents():
                                     category = line.split(":", 1)[1].strip().strip("\"'")
                                 elif line.startswith("tags:"):
                                     tags_str = line.split(":", 1)[1].strip()
-                                    if tags_str.startswith("["):
-                                        import ast
-
-                                        tags = ast.literal_eval(tags_str)
+                                    if tags_str.startswith("[") and tags_str.endswith("]"):
+                                        # YAML 内联数组: [A, B, C] -> 逐项去引号
+                                        inner = tags_str[1:-1]
+                                        tags = [t.strip().strip("\"'") for t in inner.split(",") if t.strip()]
                                     else:
-                                        tags = [t.strip() for t in tags_str.split(",")]
+                                        tags = [t.strip() for t in tags_str.split(",") if t.strip()]
                                 elif line.startswith("difficulty:"):
                                     difficulty = line.split(":", 1)[1].strip().strip("\"'")
 

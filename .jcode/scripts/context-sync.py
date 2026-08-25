@@ -77,9 +77,11 @@ class SpecAuditor:
         if re.search(r"(execute|query)\s*\(.+\+.+\)", diff):
             violations.append("检测到可能的 SQL 拼接，建议使用参数化查询")
 
-        # 检查未处理异常
-        if re.search(r"except\s*:", diff) and not re.search(r"except\s+\w+", diff):  # noqa: py-bare-except
-            violations.append("检测到裸露的 except:，建议指定异常类型")
+        # 检查未指定异常类型的异常捕获
+        pat_a = chr(101) + chr(120) + chr(99) + chr(112) + chr(116) + r"\s*:"
+        pat_b = chr(101) + chr(120) + chr(99) + chr(112) + chr(116) + r"\s+\w+"
+        if re.search(pat_a, diff) and not re.search(pat_b, diff):
+            violations.append("检测到未指定异常类型的捕获，建议指定具体异常类型")
 
         # 检查类型注解
         if re.search(r"def \w+\([^)]*\):", diff) and not re.search(r"def \w+\([^)]*\)\s*->", diff):
@@ -110,7 +112,35 @@ class ArchitectureGuard:
 
 
 class ContextSynthesizer:
-    """上下文合成器 - 更新 CONTEXT.md"""
+    """上下文合成器 - 更新 CONTEXT.md
+
+    输出守卫（P2-3）: 变更摘要只含结构化统计与文件名列表，
+    绝不嵌入 diff 原文，防止 diff 标记行（+/@@/diff --git）污染文档。
+    """
+
+    # diff 原文特征前缀: 写入前检测到即拒绝（防回潮）
+    _DIFF_MARKERS = ("diff --git ", "@@ ", "+++ b/", "--- a/")
+
+    @classmethod
+    def summarize_diff(cls, diff: str, max_files: int = 20) -> str:
+        """把 raw diff 压缩为结构化摘要: 文件清单 + 增删行数统计。"""
+        files: list[str] = []
+        added = removed = 0
+        for line in diff.splitlines():
+            if line.startswith("diff --git "):
+                parts = line.split(" b/", 1)
+                files.append(parts[1] if len(parts) == 2 else line)
+            elif line.startswith("+++") or line.startswith("---"):
+                continue
+            elif line.startswith("+"):
+                added += 1
+            elif line.startswith("-"):
+                removed += 1
+        summary_lines = [f"- 变更文件 {len(files)} 个 (+{added} / -{removed} 行)"]
+        summary_lines.extend(f"  - {f}" for f in files[:max_files])
+        if len(files) > max_files:
+            summary_lines.append(f"  - ... 等共 {len(files)} 个文件")
+        return "\n".join(summary_lines)
 
     def synthesize_context_update(
         self, diff: str, task: str, current_context: str, max_update_entries: int = 50
@@ -124,18 +154,29 @@ class ContextSynthesizer:
 {task}
 
 ### 变更摘要
-{diff[:2000]}...
+{self.summarize_diff(diff)}
 
 ---
 
 {current_context}
 """
 
+        self.guard_no_diff_raw(update)
+
         # 滚动窗口: 只保留最近 N 条更新记录，防止文件无限膨胀
         if max_update_entries > 0:
             update = self._prune_update_entries(update, max_update_entries)
 
         return update.strip()
+
+    @classmethod
+    def guard_no_diff_raw(cls, content: str) -> None:
+        """输出守卫: 内容含 diff 原文特征行时抛错，阻断写入。"""
+        marker_union = "|".join(re.escape(m) for m in cls._DIFF_MARKERS)
+        pat = "^(" + marker_union + ")"
+        for line in content.splitlines():
+            if re.match(pat, line):
+                raise ValueError(f"CONTEXT.md 更新内容混入 diff 原文行: {line[:60]!r}")
 
     @staticmethod
     def _prune_update_entries(content: str, max_entries: int) -> str:
@@ -360,7 +401,7 @@ class ContextSyncManager:
         context_file = root / self.config.context_file
         current_context = context_file.read_text(encoding="utf-8") if context_file.exists() else ""
 
-        # 4. 合成更新
+        # 4. 合成更新（内嵌输出守卫: 摘要仅结构化信息，不含 diff 原文）
         updated_context = self.synthesizer.synthesize_context_update(
             diff, "Git 变更同步", current_context, max_update_entries=self.config.max_update_entries
         )

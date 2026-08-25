@@ -50,3 +50,40 @@ class TestPruneUpdateEntries:
         result = self.synth.synthesize_context_update("d", "t", content, max_update_entries=0)
         assert "task 4" in result and "task 0" in result
         assert "已自动裁剪" not in result
+
+
+class TestSummarizeDiffAndGuard:
+    """P2-3: 变更摘要结构化 + diff 原文输出守卫。"""
+
+    def setup_method(self) -> None:
+        self.synth = ContextSynthesizer()
+
+    def test_summarize_diff_no_raw_lines(self) -> None:
+        diff = (
+            "diff --git a/foo.py b/foo.py\n"
+            "index 123..456 100644\n"
+            "--- a/foo.py\n"
+            "+++ b/foo.py\n"
+            "@@ -1,2 +1,3 @@\n"
+            "+added line\n"
+            "-removed line\n"
+        )
+        summary = ContextSynthesizer.summarize_diff(diff)
+        assert "+added line" not in summary
+        assert "diff --git" not in summary
+        assert "@@" not in summary
+        assert "foo.py" in summary
+        assert "(+1 / -1 行)" in summary
+
+    def test_guard_blocks_diff_raw(self) -> None:
+        import pytest
+
+        with pytest.raises(ValueError, match="diff 原文"):
+            self.synth.guard_no_diff_raw("正常行\ndiff --git a/x b/x\n")
+
+    def test_synthesize_output_is_clean(self) -> None:
+        diff = "diff --git a/x.py b/x.py\n@@ -1 +1 @@\n+print(1)\n"
+        out = self.synth.synthesize_context_update(diff, "t", "", max_update_entries=5)
+        assert "diff --git" not in out
+        assert "@@" not in out
+        assert "x.py" in out

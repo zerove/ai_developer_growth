@@ -1,3 +1,538 @@
+## 更新记录: 2026-08-25 12:59:40
+
+### 任务
+Git 变更同步
+
+### 变更摘要
+diff --git a/CONTEXT.md b/CONTEXT.md
+index 8954bc5..26a8f3e 100644
+--- a/CONTEXT.md
++++ b/CONTEXT.md
+@@ -1,3 +1,538 @@
++## 更新记录: 2026-08-25 12:58:05
++
++### 任务
++Git 变更同步
++
++### 变更摘要
++diff --git a/CONTEXT.md b/CONTEXT.md
++index 8954bc5..d1d261b 100644
++--- a/CONTEXT.md
+++++ b/CONTEXT.md
++@@ -1,3 +1,431 @@
+++## 更新记录: 2026-08-25 12:57:40
+++
+++### 任务
+++Git 变更同步
+++
+++### 变更摘要
+++diff --git a/CONTEXT.md b/CONTEXT.md
+++index 8954bc5..a7a3369 100644
+++--- a/CONTEXT.md
++++++ b/CONTEXT.md
+++@@ -1,3 +1,324 @@
++++## 更新记录: 2026-08-25 12:57:04
++++
++++### 任务
++++Git 变更同步
++++
++++### 变更摘要
++++diff --git a/CONTEXT.md b/CONTEXT.md
++++index 8954bc5..b82eb34 100644
++++--- a/CONTEXT.md
+++++++ b/CONTEXT.md
++++@@ -1,3 +1,217 @@
+++++## 更新记录: 2026-08-25 12:56:05
+++++
+++++### 任务
+++++Git 变更同步
+++++
+++++### 变更摘要
+++++diff --git a/CONTEXT.md b/CONTEXT.md
+++++index 8954bc5..871a1ab 100644
+++++--- a/CONTEXT.md
++++++++ b/CONTEXT.md
+++++@@ -1,3 +1,110 @@
++++++## 更新记录: 2026-08-25 12:50:24
++++++
++++++### 任务
++++++Git 变更同步
++++++
++++++### 变更摘要
++++++diff --git a/CONTEXT.md b/CONTEXT.md
++++++index 10802e3..8954bc5 100644
++++++--- a/CONTEXT.md
+++++++++ b/CONTEXT.md
++++++@@ -1,3 +1,424 @@
+++++++## 更新记录: 2026-08-25 12:20:54
+++++++
+++++++### 任务
+++++++Git 变更同步
+++++++
+++++++### 变更摘要
+++++++diff --git a/CONTEXT.md b/CONTEXT.md
+++++++index 647b634..469cd57 100644
+++++++--- a/CONTEXT.md
++++++++++ b/CONTEXT.md
+++++++@@ -1,3 +1,421 @@
++++++++## 更新记录: 2026-08-25 12:19:38
++++++++
++++++++### 任务
++++++++Git 变更同步
++++++++
++++++++### 变更摘要
++++++++diff --git a/CONTEXT.md b/CONTEXT.md
++++++++index 647b634..b689caa 100644
++++++++--- a/CONTEXT.md
+++++++++++ b/CONTEXT.md
++++++++@@ -1,3 +1,316 @@
+++++++++## 更新记录: 2026-08-25 12:18:34
+++++++++
+++++++++### 任务
+++++++++Git 变更同步
+++++++++
+++++++++### 变更摘要
+++++++++diff --git a/CONTEXT.md b/CONTEXT.md
+++++++++index 647b634..789d2a8 100644
+++++++++--- a/CONTEXT.md
++++++++++++ b/CONTEXT.md
+++++++++@@ -1,3 +1,211 @@
++++++++++## 更新记录: 2026-08-25 12:16:44
++++++++++
++++++++++### 任务
++++++++++Git 变更同步
++++...
+
+---
+
+## 更新记录: 2026-08-25 12:58:05
+
+### 任务
+Git 变更同步
+
+### 变更摘要
+diff --git a/CONTEXT.md b/CONTEXT.md
+index 8954bc5..d1d261b 100644
+--- a/CONTEXT.md
++++ b/CONTEXT.md
+@@ -1,3 +1,431 @@
++## 更新记录: 2026-08-25 12:57:40
++
++### 任务
++Git 变更同步
++
++### 变更摘要
++diff --git a/CONTEXT.md b/CONTEXT.md
++index 8954bc5..a7a3369 100644
++--- a/CONTEXT.md
+++++ b/CONTEXT.md
++@@ -1,3 +1,324 @@
+++## 更新记录: 2026-08-25 12:57:04
+++
+++### 任务
+++Git 变更同步
+++
+++### 变更摘要
+++diff --git a/CONTEXT.md b/CONTEXT.md
+++index 8954bc5..b82eb34 100644
+++--- a/CONTEXT.md
++++++ b/CONTEXT.md
+++@@ -1,3 +1,217 @@
++++## 更新记录: 2026-08-25 12:56:05
++++
++++### 任务
++++Git 变更同步
++++
++++### 变更摘要
++++diff --git a/CONTEXT.md b/CONTEXT.md
++++index 8954bc5..871a1ab 100644
++++--- a/CONTEXT.md
+++++++ b/CONTEXT.md
++++@@ -1,3 +1,110 @@
+++++## 更新记录: 2026-08-25 12:50:24
+++++
+++++### 任务
+++++Git 变更同步
+++++
+++++### 变更摘要
+++++diff --git a/CONTEXT.md b/CONTEXT.md
+++++index 10802e3..8954bc5 100644
+++++--- a/CONTEXT.md
++++++++ b/CONTEXT.md
+++++@@ -1,3 +1,424 @@
++++++## 更新记录: 2026-08-25 12:20:54
++++++
++++++### 任务
++++++Git 变更同步
++++++
++++++### 变更摘要
++++++diff --git a/CONTEXT.md b/CONTEXT.md
++++++index 647b634..469cd57 100644
++++++--- a/CONTEXT.md
+++++++++ b/CONTEXT.md
++++++@@ -1,3 +1,421 @@
+++++++## 更新记录: 2026-08-25 12:19:38
+++++++
+++++++### 任务
+++++++Git 变更同步
+++++++
+++++++### 变更摘要
+++++++diff --git a/CONTEXT.md b/CONTEXT.md
+++++++index 647b634..b689caa 100644
+++++++--- a/CONTEXT.md
++++++++++ b/CONTEXT.md
+++++++@@ -1,3 +1,316 @@
++++++++## 更新记录: 2026-08-25 12:18:34
++++++++
++++++++### 任务
++++++++Git 变更同步
++++++++
++++++++### 变更摘要
++++++++diff --git a/CONTEXT.md b/CONTEXT.md
++++++++index 647b634..789d2a8 100644
++++++++--- a/CONTEXT.md
+++++++++++ b/CONTEXT.md
++++++++@@ -1,3 +1,211 @@
+++++++++## 更新记录: 2026-08-25 12:16:44
+++++++++
+++++++++### 任务
+++++++++Git 变更同步
+++++++++
+++++++++### 变更摘要
+++++++++diff --git a/CONTEXT.md b/CONTEXT.md
+++++++++index 647b634..10802e3 100644
+++++++++--- a/CONTEXT.md
++++++++++++ b/CONTEXT.md
+++++++++@@ -1,3 +1,107 @@
++++++++++## 更新记录: 2026-08-25 12:10:34
++++++++++
++++++++++### 任务
++++++++++Git 变更同步
++++...
+
+---
+
+## 更新记录: 2026-08-25 12:57:40
+
+### 任务
+Git 变更同步
+
+### 变更摘要
+diff --git a/CONTEXT.md b/CONTEXT.md
+index 8954bc5..a7a3369 100644
+--- a/CONTEXT.md
++++ b/CONTEXT.md
+@@ -1,3 +1,324 @@
++## 更新记录: 2026-08-25 12:57:04
++
++### 任务
++Git 变更同步
++
++### 变更摘要
++diff --git a/CONTEXT.md b/CONTEXT.md
++index 8954bc5..b82eb34 100644
++--- a/CONTEXT.md
+++++ b/CONTEXT.md
++@@ -1,3 +1,217 @@
+++## 更新记录: 2026-08-25 12:56:05
+++
+++### 任务
+++Git 变更同步
+++
+++### 变更摘要
+++diff --git a/CONTEXT.md b/CONTEXT.md
+++index 8954bc5..871a1ab 100644
+++--- a/CONTEXT.md
++++++ b/CONTEXT.md
+++@@ -1,3 +1,110 @@
++++## 更新记录: 2026-08-25 12:50:24
++++
++++### 任务
++++Git 变更同步
++++
++++### 变更摘要
++++diff --git a/CONTEXT.md b/CONTEXT.md
++++index 10802e3..8954bc5 100644
++++--- a/CONTEXT.md
+++++++ b/CONTEXT.md
++++@@ -1,3 +1,424 @@
+++++## 更新记录: 2026-08-25 12:20:54
+++++
+++++### 任务
+++++Git 变更同步
+++++
+++++### 变更摘要
+++++diff --git a/CONTEXT.md b/CONTEXT.md
+++++index 647b634..469cd57 100644
+++++--- a/CONTEXT.md
++++++++ b/CONTEXT.md
+++++@@ -1,3 +1,421 @@
++++++## 更新记录: 2026-08-25 12:19:38
++++++
++++++### 任务
++++++Git 变更同步
++++++
++++++### 变更摘要
++++++diff --git a/CONTEXT.md b/CONTEXT.md
++++++index 647b634..b689caa 100644
++++++--- a/CONTEXT.md
+++++++++ b/CONTEXT.md
++++++@@ -1,3 +1,316 @@
+++++++## 更新记录: 2026-08-25 12:18:34
+++++++
+++++++### 任务
+++++++Git 变更同步
+++++++
+++++++### 变更摘要
+++++++diff --git a/CONTEXT.md b/CONTEXT.md
+++++++index 647b634..789d2a8 100644
+++++++--- a/CONTEXT.md
++++++++++ b/CONTEXT.md
+++++++@@ -1,3 +1,211 @@
++++++++## 更新记录: 2026-08-25 12:16:44
++++++++
++++++++### 任务
++++++++Git 变更同步
++++++++
++++++++### 变更摘要
++++++++diff --git a/CONTEXT.md b/CONTEXT.md
++++++++index 647b634..10802e3 100644
++++++++--- a/CONTEXT.md
+++++++++++ b/CONTEXT.md
++++++++@@ -1,3 +1,107 @@
+++++++++## 更新记录: 2026-08-25 12:10:34
+++++++++
+++++++++### 任务
+++++++++Git 变更同步
+++++++++
+++++++++### 变更摘要
+++++++++diff --git a/CONTEXT.md b/CONTEXT.md
+++++++++index 88837ec..647b634 100644
+++++++++--- a/CONTEXT.md
++++++++++++ b/CONTEXT.md
+++++++++@@ -1,3 +1,105 @@
++++++++++## 更新记录: 2026-08-25 11:55:34
++++++++++
++++++++++### 任务
++++++++++Git 变更同步
++++...
+
+---
+
+## 更新记录: 2026-08-25 12:57:04
+
+### 任务
+Git 变更同步
+
+### 变更摘要
+diff --git a/CONTEXT.md b/CONTEXT.md
+index 8954bc5..b82eb34 100644
+--- a/CONTEXT.md
++++ b/CONTEXT.md
+@@ -1,3 +1,217 @@
++## 更新记录: 2026-08-25 12:56:05
++
++### 任务
++Git 变更同步
++
++### 变更摘要
++diff --git a/CONTEXT.md b/CONTEXT.md
++index 8954bc5..871a1ab 100644
++--- a/CONTEXT.md
+++++ b/CONTEXT.md
++@@ -1,3 +1,110 @@
+++## 更新记录: 2026-08-25 12:50:24
+++
+++### 任务
+++Git 变更同步
+++
+++### 变更摘要
+++diff --git a/CONTEXT.md b/CONTEXT.md
+++index 10802e3..8954bc5 100644
+++--- a/CONTEXT.md
++++++ b/CONTEXT.md
+++@@ -1,3 +1,424 @@
++++## 更新记录: 2026-08-25 12:20:54
++++
++++### 任务
++++Git 变更同步
++++
++++### 变更摘要
++++diff --git a/CONTEXT.md b/CONTEXT.md
++++index 647b634..469cd57 100644
++++--- a/CONTEXT.md
+++++++ b/CONTEXT.md
++++@@ -1,3 +1,421 @@
+++++## 更新记录: 2026-08-25 12:19:38
+++++
+++++### 任务
+++++Git 变更同步
+++++
+++++### 变更摘要
+++++diff --git a/CONTEXT.md b/CONTEXT.md
+++++index 647b634..b689caa 100644
+++++--- a/CONTEXT.md
++++++++ b/CONTEXT.md
+++++@@ -1,3 +1,316 @@
++++++## 更新记录: 2026-08-25 12:18:34
++++++
++++++### 任务
++++++Git 变更同步
++++++
++++++### 变更摘要
++++++diff --git a/CONTEXT.md b/CONTEXT.md
++++++index 647b634..789d2a8 100644
++++++--- a/CONTEXT.md
+++++++++ b/CONTEXT.md
++++++@@ -1,3 +1,211 @@
+++++++## 更新记录: 2026-08-25 12:16:44
+++++++
+++++++### 任务
+++++++Git 变更同步
+++++++
+++++++### 变更摘要
+++++++diff --git a/CONTEXT.md b/CONTEXT.md
+++++++index 647b634..10802e3 100644
+++++++--- a/CONTEXT.md
++++++++++ b/CONTEXT.md
+++++++@@ -1,3 +1,107 @@
++++++++## 更新记录: 2026-08-25 12:10:34
++++++++
++++++++### 任务
++++++++Git 变更同步
++++++++
++++++++### 变更摘要
++++++++diff --git a/CONTEXT.md b/CONTEXT.md
++++++++index 88837ec..647b634 100644
++++++++--- a/CONTEXT.md
+++++++++++ b/CONTEXT.md
++++++++@@ -1,3 +1,105 @@
+++++++++## 更新记录: 2026-08-25 11:55:34
+++++++++
+++++++++### 任务
+++++++++Git 变更同步
+++++++++
+++++++++### 变更摘要
+++++++++diff --git a/CONTEXT.md b/CONTEXT.md
+++++++++index 27448d4..88837ec 100644
+++++++++--- a/CONTEXT.md
++++++++++++ b/CONTEXT.md
+++++++++@@ -1,3 +1,104 @@
++++++++++## 更新记录: 2026-08-25 11:41:37
++++++++++
++++++++++### 任务
++++++++++Git 变更同步
++++...
+
+---
+
+## 更新记录: 2026-08-25 12:56:05
+
+### 任务
+Git 变更同步
+
+### 变更摘要
+diff --git a/CONTEXT.md b/CONTEXT.md
+index 8954bc5..871a1ab 100644
+--- a/CONTEXT.md
++++ b/CONTEXT.md
+@@ -1,3 +1,110 @@
++## 更新记录: 2026-08-25 12:50:24
++
++### 任务
++Git 变更同步
++
++### 变更摘要
++diff --git a/CONTEXT.md b/CONTEXT.md
++index 10802e3..8954bc5 100644
++--- a/CONTEXT.md
+++++ b/CONTEXT.md
++@@ -1,3 +1,424 @@
+++## 更新记录: 2026-08-25 12:20:54
+++
+++### 任务
+++Git 变更同步
+++
+++### 变更摘要
+++diff --git a/CONTEXT.md b/CONTEXT.md
+++index 647b634..469cd57 100644
+++--- a/CONTEXT.md
++++++ b/CONTEXT.md
+++@@ -1,3 +1,421 @@
++++## 更新记录: 2026-08-25 12:19:38
++++
++++### 任务
++++Git 变更同步
++++
++++### 变更摘要
++++diff --git a/CONTEXT.md b/CONTEXT.md
++++index 647b634..b689caa 100644
++++--- a/CONTEXT.md
+++++++ b/CONTEXT.md
++++@@ -1,3 +1,316 @@
+++++## 更新记录: 2026-08-25 12:18:34
+++++
+++++### 任务
+++++Git 变更同步
+++++
+++++### 变更摘要
+++++diff --git a/CONTEXT.md b/CONTEXT.md
+++++index 647b634..789d2a8 100644
+++++--- a/CONTEXT.md
++++++++ b/CONTEXT.md
+++++@@ -1,3 +1,211 @@
++++++## 更新记录: 2026-08-25 12:16:44
++++++
++++++### 任务
++++++Git 变更同步
++++++
++++++### 变更摘要
++++++diff --git a/CONTEXT.md b/CONTEXT.md
++++++index 647b634..10802e3 100644
++++++--- a/CONTEXT.md
+++++++++ b/CONTEXT.md
++++++@@ -1,3 +1,107 @@
+++++++## 更新记录: 2026-08-25 12:10:34
+++++++
+++++++### 任务
+++++++Git 变更同步
+++++++
+++++++### 变更摘要
+++++++diff --git a/CONTEXT.md b/CONTEXT.md
+++++++index 88837ec..647b634 100644
+++++++--- a/CONTEXT.md
++++++++++ b/CONTEXT.md
+++++++@@ -1,3 +1,105 @@
++++++++## 更新记录: 2026-08-25 11:55:34
++++++++
++++++++### 任务
++++++++Git 变更同步
++++++++
++++++++### 变更摘要
++++++++diff --git a/CONTEXT.md b/CONTEXT.md
++++++++index 27448d4..88837ec 100644
++++++++--- a/CONTEXT.md
+++++++++++ b/CONTEXT.md
++++++++@@ -1,3 +1,104 @@
+++++++++## 更新记录: 2026-08-25 11:41:37
+++++++++
+++++++++### 任务
+++++++++Git 变更同步
+++++++++
+++++++++### 变更摘要
+++++++++diff --git a/CONTEXT.md b/CONTEXT.md
+++++++++index f580498..27448d4 100644
+++++++++--- a/CONTEXT.md
++++++++++++ b/CONTEXT.md
+++++++++@@ -1,3 +1,205 @@
++++++++++## 更新记录: 2026-08-25 11:36:30
++++++++++
++++++++++### 任务
++++++++++Git 变更同步
++++...
+
+---
+
 ## 更新记录: 2026-08-25 12:50:24
 
 ### 任务
@@ -3939,348 +4474,6 @@ index 6ffe18a..50e5133 100644
 +++       - name: Upload coverage
 +++         uses: codecov/codecov-action@v4
 +++diff --git a/.mise...
-
----
-
-## 更新记录: 2026-08-25 07:32:53
-
-### 任务
-Git 变更同步
-
-### 变更摘要
-diff --git a/.github/workflows/ci-cd.yml b/.github/workflows/ci-cd.yml
-index f53f3da..cec3692 100644
---- a/.github/workflows/ci-cd.yml
-+++ b/.github/workflows/ci-cd.yml
-@@ -136,7 +136,7 @@ jobs:
-             --cov=tools/scripts \
-             --cov-report=xml \
-             --cov-report=term-missing \
--            --cov-fail-under=64
-+            --cov-fail-under=65
-
-       - name: Upload coverage
-         uses: codecov/codecov-action@v4
-diff --git a/CONTEXT.md b/CONTEXT.md
-index fcf142e..728e6a1 100644
---- a/CONTEXT.md
-+++ b/CONTEXT.md
-@@ -1,3 +1,176 @@
-+## 更新记录: 2026-08-25 07:32:28
-+
-+### 任务
-+Git 变更同步
-+
-+### 变更摘要
-+diff --git a/.github/workflows/ci-cd.yml b/.github/workflows/ci-cd.yml
-+index f53f3da..cec3692 100644
-+--- a/.github/workflows/ci-cd.yml
-++++ b/.github/workflows/ci-cd.yml
-+@@ -136,7 +136,7 @@ jobs:
-+             --cov=tools/scripts \
-+             --cov-report=xml \
-+             --cov-report=term-missing \
-+-            --cov-fail-under=64
-++            --cov-fail-under=65
-+
-+       - name: Upload coverage
-+         uses: codecov/codecov-action@v4
-+diff --git a/CONTEXT.md b/CONTEXT.md
-+index fcf142e..6ffe18a 100644
-+--- a/CONTEXT.md
-++++ b/CONTEXT.md
-+@@ -1,3 +1,84 @@
-++## 更新记录: 2026-08-25 06:56:46
-++
-++### 任务
-++Git 变更同步
-++
-++### 变更摘要
-++diff --git a/.github/workflows/ci-cd.yml b/.github/workflows/ci-cd.yml
-++index f53f3da..cec3692 100644
-++--- a/.github/workflows/ci-cd.yml
-+++++ b/.github/workflows/ci-cd.yml
-++@@ -136,7 +136,7 @@ jobs:
-++             --cov=tools/scripts \
-++             --cov-report=xml \
-++             --cov-report=term-missing \
-++-            --cov-fail-under=64
-+++            --cov-fail-under=65
-++
-++       - name: Upload coverage
-++         uses: codecov/codecov-action@v4
-++diff --git a/.mise.toml b/.mise.toml
-++new file mode 100644
-++index 0000000..a190abb
-++--- /dev/null
-+++++ b/.mise.toml
-++@@ -0,0 +1,2 @@
-+++[tools]
-+++python = "3.12"
-++diff --git a/CONTEXT.md b/CONTEXT.md
-++index e5ac5ac..fcf142e 100644
-++--- a/CONTEXT.md
-++...
-
----
-
-## 更新记录: 2026-08-25 07:32:28
-
-### 任务
-Git 变更同步
-
-### 变更摘要
-diff --git a/.github/workflows/ci-cd.yml b/.github/workflows/ci-cd.yml
-index f53f3da..cec3692 100644
---- a/.github/workflows/ci-cd.yml
-+++ b/.github/workflows/ci-cd.yml
-@@ -136,7 +136,7 @@ jobs:
-             --cov=tools/scripts \
-             --cov-report=xml \
-             --cov-report=term-missing \
--            --cov-fail-under=64
-+            --cov-fail-under=65
-
-       - name: Upload coverage
-         uses: codecov/codecov-action@v4
-diff --git a/CONTEXT.md b/CONTEXT.md
-index fcf142e..6ffe18a 100644
---- a/CONTEXT.md
-+++ b/CONTEXT.md
-@@ -1,3 +1,84 @@
-+## 更新记录: 2026-08-25 06:56:46
-+
-+### 任务
-+Git 变更同步
-+
-+### 变更摘要
-+diff --git a/.github/workflows/ci-cd.yml b/.github/workflows/ci-cd.yml
-+index f53f3da..cec3692 100644
-+--- a/.github/workflows/ci-cd.yml
-++++ b/.github/workflows/ci-cd.yml
-+@@ -136,7 +136,7 @@ jobs:
-+             --cov=tools/scripts \
-+             --cov-report=xml \
-+             --cov-report=term-missing \
-+-            --cov-fail-under=64
-++            --cov-fail-under=65
-+
-+       - name: Upload coverage
-+         uses: codecov/codecov-action@v4
-+diff --git a/.mise.toml b/.mise.toml
-+new file mode 100644
-+index 0000000..a190abb
-+--- /dev/null
-++++ b/.mise.toml
-+@@ -0,0 +1,2 @@
-++[tools]
-++python = "3.12"
-+diff --git a/CONTEXT.md b/CONTEXT.md
-+index e5ac5ac..fcf142e 100644
-+--- a/CONTEXT.md
-++++ b/CONTEXT.md
-+@@ -1,3 +1,55 @@
-++## 更新记录: 2026-08-25 06:27:56
-++
-++### 任务
-++Git 变更同步
-++
-++### 变更摘要
-++diff --git a/.mise.toml b/.mise.toml
-++new file mode 100644
-++index 0000000..a190abb
-++--- /dev/null
-+++++ b/.mise.toml
-++@@ -0,0 +1,2 @@
-+++[tools]
-+++python = "3.12"
-++diff --git a/CONTEXT.md b/CONTEXT.md
-++index 9cd8014..e5ac5ac 100644
-++--- a/CONTEXT.md
-+++++ b/CONTEXT.md
-++@@ -1,3 +1,213 @@
-+++## 更新记录: 2026-08-25 06:21:52
-+++
-+++### 任务
-+++Git 变更同步
-+++
-+++### 变更摘要
-+++diff --git a/.gitignore b/.gitignore
-+++index b7b3d1f..7b03ddc 100644
-+++--- a/.gitignore
-++++++ b/.gitignore
-+++@@ -88,3 +88,9 @@ tools/scripts/rules_engine/*.bak
-+++ *.db-wal
-+++ *.db-shm
-+++...
-
----
-
-## 更新记录: 2026-08-25 06:56:46
-
-### 任务
-Git 变更同步
-
-### 变更摘要
-diff --git a/.github/workflows/ci-cd.yml b/.github/workflows/ci-cd.yml
-index f53f3da..cec3692 100644
---- a/.github/workflows/ci-cd.yml
-+++ b/.github/workflows/ci-cd.yml
-@@ -136,7 +136,7 @@ jobs:
-             --cov=tools/scripts \
-             --cov-report=xml \
-             --cov-report=term-missing \
--            --cov-fail-under=64
-+            --cov-fail-under=65
-
-       - name: Upload coverage
-         uses: codecov/codecov-action@v4
-diff --git a/.mise.toml b/.mise.toml
-new file mode 100644
-index 0000000..a190abb
---- /dev/null
-+++ b/.mise.toml
-@@ -0,0 +1,2 @@
-+[tools]
-+python = "3.12"
-diff --git a/CONTEXT.md b/CONTEXT.md
-index e5ac5ac..fcf142e 100644
---- a/CONTEXT.md
-+++ b/CONTEXT.md
-@@ -1,3 +1,55 @@
-+## 更新记录: 2026-08-25 06:27:56
-+
-+### 任务
-+Git 变更同步
-+
-+### 变更摘要
-+diff --git a/.mise.toml b/.mise.toml
-+new file mode 100644
-+index 0000000..a190abb
-+--- /dev/null
-++++ b/.mise.toml
-+@@ -0,0 +1,2 @@
-++[tools]
-++python = "3.12"
-+diff --git a/CONTEXT.md b/CONTEXT.md
-+index 9cd8014..e5ac5ac 100644
-+--- a/CONTEXT.md
-++++ b/CONTEXT.md
-+@@ -1,3 +1,213 @@
-++## 更新记录: 2026-08-25 06:21:52
-++
-++### 任务
-++Git 变更同步
-++
-++### 变更摘要
-++diff --git a/.gitignore b/.gitignore
-++index b7b3d1f..7b03ddc 100644
-++--- a/.gitignore
-+++++ b/.gitignore
-++@@ -88,3 +88,9 @@ tools/scripts/rules_engine/*.bak
-++ *.db-wal
-++ *.db-shm
-++ debug_mutmut.py
-+++
-+++# 审计台账与运行时遥测（每轮操作自动追加，属本地运行状态而非源码）
-+++.quality-trends/audit_ledger.jsonl
-+++.quality-trends/evolution_log.json
-+++.quality-trends/swarm_execution.json
-+++.quality-trends/telemetry.json
-++diff --git a/.quality-trends/audit_ledger.jsonl b/.quality-trends/audit_ledger.jsonl
-++deleted file mode 100644
-++index 0d2c561..0000000
-++--- a/.quality-trends/audit_ledger.jsonl
-+++++ /dev/null
-++@@ -1,91 +0,0 @@
-++-{"event_type": "PIPELINE_START", "details": {"intent": "Implement robust feature with full DoR and TDD compliance"}, "prev_hash": "0000000000000000000000000000000000000000000000000000000000000000", "current_hash": "10c141f63c90a0e553578b0788fc440b682fb...
-
----
-
-## 更新记录: 2026-08-25 06:27:56
-
-### 任务
-Git 变更同步
-
-### 变更摘要
-diff --git a/.mise.toml b/.mise.toml
-new file mode 100644
-index 0000000..a190abb
---- /dev/null
-+++ b/.mise.toml
-@@ -0,0 +1,2 @@
-+[tools]
-+python = "3.12"
-diff --git a/CONTEXT.md b/CONTEXT.md
-index 9cd8014..e5ac5ac 100644
---- a/CONTEXT.md
-+++ b/CONTEXT.md
-@@ -1,3 +1,213 @@
-+## 更新记录: 2026-08-25 06:21:52
-+
-+### 任务
-+Git 变更同步
-+
-+### 变更摘要
-+diff --git a/.gitignore b/.gitignore
-+index b7b3d1f..7b03ddc 100644
-+--- a/.gitignore
-++++ b/.gitignore
-+@@ -88,3 +88,9 @@ tools/scripts/rules_engine/*.bak
-+ *.db-wal
-+ *.db-shm
-+ debug_mutmut.py
-++
-++# 审计台账与运行时遥测（每轮操作自动追加，属本地运行状态而非源码）
-++.quality-trends/audit_ledger.jsonl
-++.quality-trends/evolution_log.json
-++.quality-trends/swarm_execution.json
-++.quality-trends/telemetry.json
-+diff --git a/.quality-trends/audit_ledger.jsonl b/.quality-trends/audit_ledger.jsonl
-+deleted file mode 100644
-+index 0d2c561..0000000
-+--- a/.quality-trends/audit_ledger.jsonl
-++++ /dev/null
-+@@ -1,91 +0,0 @@
-+-{"event_type": "PIPELINE_START", "details": {"intent": "Implement robust feature with full DoR and TDD compliance"}, "prev_hash": "0000000000000000000000000000000000000000000000000000000000000000", "current_hash": "10c141f63c90a0e553578b0788fc440b682fb853744ded960313a5a21c1aca8b"}
-+-{"event_type": "STEP_1_COMPLETE", "details": {"dor": {"intent": "Implement robust feature with full DoR and TDD compliance", "passed": true, "score": 7, "violations": []}}, "prev_hash": "10c141f63c90a0e553578b0788fc440b682fb853744ded960313a5a21c1aca8b", "current_hash": "092495b8cb9a24de52793e64f798f8e8ab9564129c17ff03f08f6e2ee430f31c"}
-+-{"event_type": "STEP_2_COMPLETE", "details": {"violations": []}, "prev_hash": "092495b8cb9a24de52793e64f798f8e8ab9564129c17ff03f08f6e2ee430f31c", "current_hash": "fee81e1ff645a5a00ef333d24d4dbdb9e6112e6fe165e02d5f1c2754926970f5"}
-+-{"event_type": "STEP_3_COMPLETE", "details": {"tdd_state": "REFACTOR"}, "prev_hash": "fee81e1ff645a5a00ef333d24d4dbdb9e6112e6fe165e02d5f1c2754926970f5", "current_hash": "aaa546add190c2617c40abe161dc49a8000b9cb6bea...
-
----
-
-## 更新记录: 2026-08-25 06:21:52
-
-### 任务
-Git 变更同步
-
-### 变更摘要
-diff --git a/.gitignore b/.gitignore
-index b7b3d1f..7b03ddc 100644
---- a/.gitignore
-+++ b/.gitignore
-@@ -88,3 +88,9 @@ tools/scripts/rules_engine/*.bak
- *.db-wal
- *.db-shm
- debug_mutmut.py
-+
-+# 审计台账与运行时遥测（每轮操作自动追加，属本地运行状态而非源码）
-+.quality-trends/audit_ledger.jsonl
-+.quality-trends/evolution_log.json
-+.quality-trends/swarm_execution.json
-+.quality-trends/telemetry.json
-diff --git a/.quality-trends/audit_ledger.jsonl b/.quality-trends/audit_ledger.jsonl
-deleted file mode 100644
-index 0d2c561..0000000
---- a/.quality-trends/audit_ledger.jsonl
-+++ /dev/null
-@@ -1,91 +0,0 @@
--{"event_type": "PIPELINE_START", "details": {"intent": "Implement robust feature with full DoR and TDD compliance"}, "prev_hash": "0000000000000000000000000000000000000000000000000000000000000000", "current_hash": "10c141f63c90a0e553578b0788fc440b682fb853744ded960313a5a21c1aca8b"}
--{"event_type": "STEP_1_COMPLETE", "details": {"dor": {"intent": "Implement robust feature with full DoR and TDD compliance", "passed": true, "score": 7, "violations": []}}, "prev_hash": "10c141f63c90a0e553578b0788fc440b682fb853744ded960313a5a21c1aca8b", "current_hash": "092495b8cb9a24de52793e64f798f8e8ab9564129c17ff03f08f6e2ee430f31c"}
--{"event_type": "STEP_2_COMPLETE", "details": {"violations": []}, "prev_hash": "092495b8cb9a24de52793e64f798f8e8ab9564129c17ff03f08f6e2ee430f31c", "current_hash": "fee81e1ff645a5a00ef333d24d4dbdb9e6112e6fe165e02d5f1c2754926970f5"}
--{"event_type": "STEP_3_COMPLETE", "details": {"tdd_state": "REFACTOR"}, "prev_hash": "fee81e1ff645a5a00ef333d24d4dbdb9e6112e6fe165e02d5f1c2754926970f5", "current_hash": "aaa546add190c2617c40abe161dc49a8000b9cb6beab37ebebf2ef603cbff1ce"}
--{"event_type": "STEP_4_COMPLETE", "details": {"scope_passed": true}, "prev_hash": "aaa546add190c2617c40abe161dc49a8000b9cb6beab37ebebf2ef603cbff1ce", "current_hash": "d4c53656bee2233222314d29c5d59a6032a2a335f895e0d00895e29b54e9b295"}
--{"event_type": "STEP_5_COMPLETE", "details": {}, "prev_hash": "d4c53656bee2233222314d29c5d59a6032a2...
 
 ---
 

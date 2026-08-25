@@ -112,3 +112,38 @@ class TestProtocolCompat:
         args = req.get("arguments") or (req.get("params", {}) or {}).get("arguments", {})
         result = server.handle_tool_call(tool, args)
         assert result["status"] == "success"
+
+
+class TestJSONRPC20:
+    """标准 JSON-RPC 2.0 协议（initialize/tools/list/tools/call/ping）。"""
+
+    def test_initialize_returns_protocol_info(self, server: AINativeMCPServer) -> None:
+        res = server.handle_request({"jsonrpc": "2.0", "id": 1, "method": "initialize", "params": {}})
+        assert res["jsonrpc"] == "2.0"
+        assert res["id"] == 1
+        assert res["result"]["protocolVersion"] == "2024-11-05"
+        assert res["result"]["serverInfo"]["name"] == "ai-native-sdlc"
+
+    def test_tools_list_via_rpc(self, server: AINativeMCPServer) -> None:
+        res = server.handle_request({"jsonrpc": "2.0", "id": 2, "method": "tools/list"})
+        tools = res["result"]["tools"]
+        assert isinstance(tools, list) and len(tools) >= 2
+
+    def test_ping_returns_empty_result(self, server: AINativeMCPServer) -> None:
+        res = server.handle_request({"jsonrpc": "2.0", "id": 3, "method": "ping"})
+        assert res["result"] == {}
+
+    def test_tools_call_success_wraps_content(self, server: AINativeMCPServer) -> None:
+        req = {"jsonrpc": "2.0", "id": 4, "method": "tools/call", "params": {"name": "list_tools", "arguments": {}}}
+        result = server.handle_request(req)["result"]
+        assert result["isError"] is False
+        assert json.loads(result["content"][0]["text"])["status"] == "success"
+
+    def test_unknown_method_returns_error_code(self, server: AINativeMCPServer) -> None:
+        res = server.handle_request({"jsonrpc": "2.0", "id": 5, "method": "no/such"})
+        assert res["error"]["code"] == -32601
+
+    def test_legacy_tool_field_still_works(self, server: AINativeMCPServer) -> None:
+        """旧协议（裸 tool 字段）回归保护。"""
+        res = server.handle_request({"tool": "list_tools", "arguments": {}})
+        assert res["status"] == "success"

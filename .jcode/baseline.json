@@ -5,9 +5,6 @@
       "structure:函数超过 50 行 (实际 63 行)": 1,
       "structure:函数超过 50 行 (实际 83 行)": 1
     },
-    "scripts/search-server.py": {
-      "structure:函数超过 50 行 (实际 62 行)": 1
-    },
     "tools/multiproject/__init__.py": {
       "structure:函数超过 50 行 (实际 69 行)": 1
     },

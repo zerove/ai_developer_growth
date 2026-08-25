@@ -11,13 +11,29 @@ import sys
 
 from tools.scripts._common import get_project_root
 
+# 工具元数据注册表：新增工具时同步维护，供 list_tools 发现接口返回
+TOOL_REGISTRY: list[dict[str, object]] = [
+    {
+        "name": "query_semantic_graph",
+        "description": "查询语义代码图中的符号及其依赖关系",
+        "arguments": {"symbol": {"type": "string", "required": True, "description": "要查找的符号名（子串匹配）"}},
+    },
+    {
+        "name": "run_architecture_guard",
+        "description": "运行架构漂移守卫，检查分层违规",
+        "arguments": {},
+    },
+]
+
 
 class AINativeMCPServer:
     def __init__(self) -> None:
         self.root_dir = get_project_root()
 
     def handle_tool_call(self, tool_name: str, arguments: dict[str, object]) -> dict[str, object]:
-        if tool_name == "query_semantic_graph":
+        if tool_name == "list_tools":
+            return {"status": "success", "tools": TOOL_REGISTRY}
+        elif tool_name == "query_semantic_graph":
             symbol = arguments.get("symbol", "")
             graph_path = self.root_dir / ".semantic_graph.json"
             if not graph_path.exists():
@@ -42,8 +58,11 @@ if __name__ == "__main__":
     for line in sys.stdin:
         try:
             req = json.loads(line)
-            tool = req.get("tool")
-            args = req.get("arguments", {})
+            # 兼容 MCP 风格 method 分发与原有裸 tool 字段两种协议
+            tool = req.get("tool") or (req.get("params", {}) or {}).get("name")
+            args = req.get("arguments") or (req.get("params", {}) or {}).get("arguments", {})
+            if not isinstance(tool, str):
+                raise ValueError("missing 'tool' field in request")
             res = server.handle_tool_call(tool, args)
             print(json.dumps(res))
             sys.stdout.flush()

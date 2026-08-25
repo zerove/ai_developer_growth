@@ -84,3 +84,31 @@ class TestProtocol:
             break
         out = capsys.readouterr().out.strip()
         assert json.loads(out)["status"] == "error"
+
+
+class TestListTools:
+    """list_tools 发现接口。"""
+
+    def test_lists_all_registered_tools(self, server: AINativeMCPServer) -> None:
+        result = server.handle_tool_call("list_tools", {})
+        assert result["status"] == "success"
+        names = [t["name"] for t in result["tools"]]  # type: ignore[index,union-attr]
+        assert "query_semantic_graph" in names
+        assert "run_architecture_guard" in names
+
+    def test_registry_entries_have_metadata(self, server: AINativeMCPServer) -> None:
+        result = server.handle_tool_call("list_tools", {})
+        for t in result["tools"]:  # type: ignore[union-attr]
+            assert "description" in t
+            assert "arguments" in t
+
+
+class TestProtocolCompat:
+    """stdin 协议：裸 tool 字段与 MCP 风格 params.name 双兼容。"""
+
+    def test_mcp_style_params_dispatch(self, server: AINativeMCPServer) -> None:
+        req = {"method": "tools/call", "params": {"name": "list_tools", "arguments": {}}}
+        tool = req.get("tool") or (req.get("params", {}) or {}).get("name")
+        args = req.get("arguments") or (req.get("params", {}) or {}).get("arguments", {})
+        result = server.handle_tool_call(tool, args)
+        assert result["status"] == "success"

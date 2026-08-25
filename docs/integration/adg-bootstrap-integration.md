@@ -60,3 +60,11 @@ python · go · rust · java · typescript · javascript · kotlin · csharp · 
 - **同源排除**：adg_cli 与 rules_engine 共享 `[tool.adg].exclude` 配置，
   在目标项目新增目录时一处配置即可全局生效。
 - **独立运行**：目标项目无需克隆本项目；所有脚本按相对路径自举。
+
+
+## v2.4.0 发布状态 (2026-08-25)
+
+- 标签 `v2.4.0` 已指向 442f182 并强推远端（修正旧 tag 指向历史提交的问题）
+- release.yml 触发正常，但 GitHub Actions 因账户 Billing 阻塞无法启动 job（非代码问题）
+- Billing 恢复后：`gh run rerun` 或删标签重推即可完成正式发布
+- 本地闭环已验证：`pip wheel ai-dev-framework/` 构建 OK（24945 字节）

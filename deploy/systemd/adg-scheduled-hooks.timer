@@ -1,0 +1,10 @@
+[Unit]
+Description=Hourly tick for ADG scheduled hooks
+
+[Timer]
+# 每小时第 5 分触发一次；脚本按 cron 表达式自行判断哪些任务到期
+OnCalendar=*-*-* *:05:00
+Persistent=true
+
+[Install]
+WantedBy=timers.target

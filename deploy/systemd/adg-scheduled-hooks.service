@@ -1,0 +1,10 @@
+[Unit]
+Description=ADG scheduled hooks dispatcher (runs due hooks from hooks.json)
+
+[Service]
+Type=oneshot
+WorkingDirectory=%h/dev/ai_developer_growth
+ExecStart=/usr/bin/env python3 .jcode/scripts/scheduled_dispatch.py
+# 覆盖 hooks.json 中全部 7 个 scheduled 触发器（weekly-audit/weekly-scan/
+# efficiency-report/monthly-hallucination-audit/monthly-quality-report/
+# weekly-context-sync/monthly-spec-audit），到期判断与去重由脚本负责

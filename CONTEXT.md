@@ -1,3 +1,155 @@
+## 更新记录: 2026-08-25 14:31:59
+
+### 任务
+Git 变更同步
+
+### 变更摘要
+diff --git a/.jcode/scripts/scheduled_dispatch.py b/.jcode/scripts/scheduled_dispatch.py
+new file mode 100644
+index 0000000..2a0678f
+--- /dev/null
++++ b/.jcode/scripts/scheduled_dispatch.py
+@@ -0,0 +1,105 @@
++#!/usr/bin/env python3
++"""scheduled hooks 到期调度器。
++
++读取 hooks.json 的 scheduled 触发器，用 croniter 判断（或内置简化 cron 解析）
++哪些任务在本次调用时到期，逐个执行并记录 last-run 时间戳防重复。
++配合 systemd timer 每小时调用一次：
++    python3 .jcode/scripts/scheduled_dispatch.py --due-now
++"""
++
++from __future__ import annotations
++
++import json
++import subprocess
++import sys
++import time
++from pathlib import Path
++from time import struct_time
++
++ROOT = Path(__file__).resolve().parent.parent.parent
++CONFIG = ROOT / ".jcode" / "hooks.json"
++STATE = ROOT / ".jcode" / ".scheduled-last-run.json"
++
++
++def load_state() -> dict[str, float]:
++    if STATE.exists():
++        try:
++            return {k: float(v) for k, v in json.loads(STATE.read_text()).items()}
++        except (json.JSONDecodeError, ValueError):
++            return {}
++    return {}
++
++
++def save_state(state: dict[str, float]) -> None:
++    STATE.write_text(json.dumps(state, indent=2))
++
++
++def parse_cron(expr: str) -> tuple[set[int], set[int]]:
++    """解析 '分 时 日 月 周' 中分/时字段，支持 *、数字、逗号、范围。返回 (分钟集, 小时集)。"""
++    fields = expr.split()
++    if len(fields) != 5:
++        raise ValueError(f"bad cron: {expr}")
++
++    def expand(field: str, low: int, high: int) -> set[int]:
++        vals: set[int] = set()
++        for part in field.split(","):
++            if part == "*":
++                vals.update(range(low, high + 1))
++            elif "-" in part:
++                a, b = part.split("-")
++                vals.update(range(int(a), int(b) + 1))
++            else:
++                vals.add(int(part))
++        return vals
++
++    minutes = expand(fields[0], 0, 59)
++    hours = expand(fields[1], 0, 23)
++    return minutes, hours
++
++
++def is_due(hook: dict, now: struct_time | None = None, state: dict[str, float] | None = None) -> bool:
++    """判断 hook 是否到期：启用中、时间...
+
+---
+
+## 更新记录: 2026-08-25 14:31:18
+
+### 任务
+Git 变更同步
+
+### 变更摘要
+diff --git a/.jcode/scripts/scheduled_dispatch.py b/.jcode/scripts/scheduled_dispatch.py
+new file mode 100644
+index 0000000..e49b089
+--- /dev/null
++++ b/.jcode/scripts/scheduled_dispatch.py
+@@ -0,0 +1,106 @@
++#!/usr/bin/env python3
++"""scheduled hooks 到期调度器。
++
++读取 hooks.json 的 scheduled 触发器，用 croniter 判断（或内置简化 cron 解析）
++哪些任务在本次调用时到期，逐个执行并记录 last-run 时间戳防重复。
++配合 systemd timer 每小时调用一次：
++    python3 .jcode/scripts/scheduled_dispatch.py --due-now
++"""
++
++from __future__ import annotations
++
++import json
++import subprocess
++import sys
++import time
++from pathlib import Path
++from time import struct_time
++
++ROOT = Path(__file__).resolve().parent.parent.parent
++CONFIG = ROOT / ".jcode" / "hooks.json"
++STATE = ROOT / ".jcode" / ".scheduled-last-run.json"
++
++
++def load_state() -> dict[str, float]:
++    if STATE.exists():
++        try:
++            return {k: float(v) for k, v in json.loads(STATE.read_text()).items()}
++        except (json.JSONDecodeError, ValueError):
++            return {}
++    return {}
++
++
++def save_state(state: dict[str, float]) -> None:
++    STATE.write_text(json.dumps(state, indent=2))
++
++
++def parse_cron(expr: str) -> tuple[set[int], set[int]]:
++    """解析 '分 时 日 月 周' 中分/时字段，支持 *、数字、逗号、范围。返回 (分钟集, 小时集)。"""
++    fields = expr.split()
++    if len(fields) != 5:
++        raise ValueError(f"bad cron: {expr}")
++
++    def expand(field: str, low: int, high: int) -> set[int]:
++        vals: set[int] = set()
++        for part in field.split(","):
++            if part == "*":
++                vals.update(range(low, high + 1))
++            elif "-" in part:
++                a, b = part.split("-")
++                vals.update(range(int(a), int(b) + 1))
++            else:
++                vals.add(int(part))
++        return vals
++
++    minutes = expand(fields[0], 0, 59)
++    hours = expand(fields[1], 0, 23)
++    return minutes, hours
++
++
++def is_due(hook: dict, now: struct_time | None = None, state: dict[str, float] | None = None) -> bool:
++    """判断 hook 是否到期：启用中、时间...
+
+---
+
 ## 更新记录: 2026-08-25 14:14:49
 
 ### 任务
@@ -4845,163 +4997,6 @@ index cd61d1f..c0ac481 100644
 ++++--- a/.github/workflows/mutation-testing.yml
 +++++++ b/.github/workflows/mutation-testing.yml
 ++++@@ -30,7...
-
----
-
-## 更新记录: 2026-08-25 10:13:49
-
-### 任务
-Git 变更同步
-
-### 变更摘要
-diff --git a/CONTEXT.md b/CONTEXT.md
-index cd61d1f..1000f04 100644
---- a/CONTEXT.md
-+++ b/CONTEXT.md
-@@ -1,3 +1,149 @@
-+## 更新记录: 2026-08-25 09:48:50
-+
-+### 任务
-+Git 变更同步
-+
-+### 变更摘要
-+diff --git a/.github/workflows/mutation-testing.yml b/.github/workflows/mutation-testing.yml
-+index 0774805..c7d7adf 100644
-+--- a/.github/workflows/mutation-testing.yml
-++++ b/.github/workflows/mutation-testing.yml
-+@@ -30,7 +30,7 @@ jobs:
-+       - name: Install dependencies
-+         run: |
-+           pip install -e .[dev]
-+-          pip install mutmut>=2.4.0
-++          pip install mutmut>=2.4.0,<3
-+
-+       - name: Run mutation testing
-+         run: |
-+diff --git a/CONTEXT.md b/CONTEXT.md
-+index 33e1b5c..e8be9cb 100644
-+--- a/CONTEXT.md
-++++ b/CONTEXT.md
-+@@ -1,3 +1,487 @@
-++## 更新记录: 2026-08-25 09:48:14
-++
-++### 任务
-++Git 变更同步
-++
-++### 变更摘要
-++diff --git a/.github/workflows/mutation-testing.yml b/.github/workflows/mutation-testing.yml
-++index 0774805..c7d7adf 100644
-++--- a/.github/workflows/mutation-testing.yml
-+++++ b/.github/workflows/mutation-testing.yml
-++@@ -30,7 +30,7 @@ jobs:
-++       - name: Install dependencies
-++         run: |
-++           pip install -e .[dev]
-++-          pip install mutmut>=2.4.0
-+++          pip install mutmut>=2.4.0,<3
-++
-++       - name: Run mutation testing
-++         run: |
-++diff --git a/CONTEXT.md b/CONTEXT.md
-++index 33e1b5c..cd61d1f 100644
-++--- a/CONTEXT.md
-+++++ b/CONTEXT.md
-++@@ -1,3 +1,417 @@
-+++## 更新记录: 2026-08-25 09:46:20
-+++
-+++### 任务
-+++Git 变更同步
-+++
-+++### 变更摘要
-+++diff --git a/.github/workflows/mutation-testing.yml b/.github/workflows/mutation-testing.yml
-+++index 0774805..c7d7adf 100644
-+++--- a/.github/workflows/mutation-testing.yml
-++++++ b/.github/workflows/mutation-testing.yml
-+++@@ -30,7 +30,7 @@ jobs:
-+++       - name: Install dependencies
-+++         run: |
-+++           pip install -e .[dev]
-+++-          pip install mutmut>=2.4.0
-++++          pip install mutmut>=2.4.0,<3
-+++
-+++       - name: Run mutation testing
-+++      ...
-
----
-
-## 更新记录: 2026-08-25 09:48:50
-
-### 任务
-Git 变更同步
-
-### 变更摘要
-diff --git a/.github/workflows/mutation-testing.yml b/.github/workflows/mutation-testing.yml
-index 0774805..c7d7adf 100644
---- a/.github/workflows/mutation-testing.yml
-+++ b/.github/workflows/mutation-testing.yml
-@@ -30,7 +30,7 @@ jobs:
-       - name: Install dependencies
-         run: |
-           pip install -e .[dev]
--          pip install mutmut>=2.4.0
-+          pip install mutmut>=2.4.0,<3
-
-       - name: Run mutation testing
-         run: |
-diff --git a/CONTEXT.md b/CONTEXT.md
-index 33e1b5c..e8be9cb 100644
---- a/CONTEXT.md
-+++ b/CONTEXT.md
-@@ -1,3 +1,487 @@
-+## 更新记录: 2026-08-25 09:48:14
-+
-+### 任务
-+Git 变更同步
-+
-+### 变更摘要
-+diff --git a/.github/workflows/mutation-testing.yml b/.github/workflows/mutation-testing.yml
-+index 0774805..c7d7adf 100644
-+--- a/.github/workflows/mutation-testing.yml
-++++ b/.github/workflows/mutation-testing.yml
-+@@ -30,7 +30,7 @@ jobs:
-+       - name: Install dependencies
-+         run: |
-+           pip install -e .[dev]
-+-          pip install mutmut>=2.4.0
-++          pip install mutmut>=2.4.0,<3
-+
-+       - name: Run mutation testing
-+         run: |
-+diff --git a/CONTEXT.md b/CONTEXT.md
-+index 33e1b5c..cd61d1f 100644
-+--- a/CONTEXT.md
-++++ b/CONTEXT.md
-+@@ -1,3 +1,417 @@
-++## 更新记录: 2026-08-25 09:46:20
-++
-++### 任务
-++Git 变更同步
-++
-++### 变更摘要
-++diff --git a/.github/workflows/mutation-testing.yml b/.github/workflows/mutation-testing.yml
-++index 0774805..c7d7adf 100644
-++--- a/.github/workflows/mutation-testing.yml
-+++++ b/.github/workflows/mutation-testing.yml
-++@@ -30,7 +30,7 @@ jobs:
-++       - name: Install dependencies
-++         run: |
-++           pip install -e .[dev]
-++-          pip install mutmut>=2.4.0
-+++          pip install mutmut>=2.4.0,<3
-++
-++       - name: Run mutation testing
-++         run: |
-++diff --git a/.jcode/scripts/context-sync.py b/.jcode/scripts/context-sync.py
-++index 0cf3789..67bd316 100644
-++--- a/.jcode/scripts/context-sync.py
-+++++ b/.jcode/scripts/context-sync.py
-++@@ -35,6 +35,10 @@ class ContextConfig:
-...
 
 ---
 

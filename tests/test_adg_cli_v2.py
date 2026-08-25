@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import types
 from pathlib import Path
 from unittest.mock import patch
 
@@ -888,3 +889,34 @@ class TestMainCLI:
                 result = main()
         # Only app.py should be checked, app.test.py should be skipped
         assert result == 1  # error in app.py only
+
+
+def test_check_sarif_output_e2e(tmp_path, monkeypatch, capsys):
+    """check --sarif 应输出合法 SARIF 2.1.0（GitHub Code Scanning 集成契约）。"""
+    import json as _json
+
+    target = tmp_path / "bad.py"
+    target.write_text("x = eval('1+1')\n", encoding="utf-8")
+
+    from tools.scripts.adg_cli.commands import cmd_check
+
+    args = types.SimpleNamespace(
+        path=str(target),
+        lang="python",
+        severity="info",
+        json=False,
+        sarif=True,
+        framework=None,
+        with_docs=False,
+        no_trend=True,
+        notify=None,
+        min_severity=None,
+        exclude=None,
+    )
+    rc = cmd_check(args)
+    out = capsys.readouterr().out
+    data = _json.loads(out)
+    assert data["version"] == "2.1.0"
+    assert data["runs"][0]["tool"]["driver"]["name"] == "adg"
+    assert len(data["runs"][0]["results"]) > 0
+    assert rc != 0  # 有 error 级问题时非零退出

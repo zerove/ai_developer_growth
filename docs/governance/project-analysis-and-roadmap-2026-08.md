@@ -34,7 +34,7 @@
 
 ### C. 能力不均衡（P1 补强项）
 6. **18 语言无 AST 解析器**：csharp/kotlin/swift/php/scala/dart/zig 等仅正则匹配，复杂度分析/函数提取不可用；其中 kotlin/swift 是企业高频语言。
-7. **SARIF 导出器未接 CLI**：format.py 有 `_format_sarif` 但 check 命令无 `--sarif` 参数（企业 GitHub Code Scanning 集成缺口）。sarif_exporter.py 本身覆盖率 0%。
+7. **【已更正 2026-08-25】**初判有误：`check --sarif` 实际已实现（parser.py:19 注册，_output_results 分发）。真实缺口是缺 e2e 测试锁定契约 → 已补 test_check_sarif_output_e2e。sarif_exporter.py 覆盖率 0% 仍在 P1-4 攻坚范围。
 8. **auto_fix 双轨制**：`adg_cli fix`（正则 FIX_RULES）与 `auto_fix.py`（AutoFixOrchestrator + Ruff/Isort Provider）互不引用，能力重复且口径不一。
 9. **quality_gate.py 未进 adg_cli 主链**：被 bootstrap/hooks_runner/jcode_cli 引用，但 check 流程外独立存在。
 
@@ -79,6 +79,15 @@
 | P2-4 | examples 空壳处置 | ai-growth-vscode/slack：补 README 定位说明或归档移除 |
 | P2-5 | 向量 RAG 立项评估 | 若检索是核心场景则集成 chroma+embedding；否则从愿景文档移除 |
 | P2-6 | CI 收敛为单一真源 | ci.yml 复用 jobs 成为唯一 lint/test 执行点，release/ci-cd 只调 jobs |
+
+### N3 钩子首次真实调优 (2026-08-25)
+
+pre_tool 门禁上线后首次拦截到"误伤"：编辑 tests/test_adg_cli_v2.py 被
+27 个**存量** error 阻断。已修复：钩子增加测试文件路径豁免
+（*/tests/*、test_*.py、*Test.java 等，与 .adg/config.yml 口径一致），
+生产文件仍严格拦截。实测：测试文件放行、坏生产文件阻断均正确。
+
+---
 
 ## 四、量化目标（下个里程碑 v2.5.0）
 

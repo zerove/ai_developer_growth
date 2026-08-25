@@ -217,7 +217,7 @@
 - [x] ai-dev-framework 打包发布 (pyproject + adg CLI + wheel 构建验证)
 - [x] 实战验证: quality-gate 审计自身 tools/ 目录, 发现 85 个问题, 修复 4 处 MD5 安全风险
 - [x] 实战案例: case-studies/governance-self-audit.md (用自己的药医自己)
-- [x] 高质量文章: article-ai-developer-evolution.md
+- [x] 高质量文章: docs/articles/ai-developer-evolution.md
 
 ## Phase 17: AI-Native SDLC 生态 + CI/CD 优化与安全强化 (2026-08) 🚧 进行中
 

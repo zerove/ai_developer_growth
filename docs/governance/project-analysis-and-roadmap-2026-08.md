@@ -114,3 +114,9 @@ pre_tool 门禁上线后首次拦截到"误伤"：编辑 tests/test_adg_cli_v2.p
 sentence-transformers + cosine + BM25 混合 RRF，11 测试通过）。
 ROADMAP.md 口径准确（已标注"参考实现，尚未集成主链"）。
 CONTEXT.md 两处表述补注 examples 参考实现限定，与 ROADMAP 对齐。
+
+### P2-6 CI 收敛单一真源
+- 删除 ci-cd.yml（"JCode Platform" Docker 模板残留，registry 为 example.com 占位符，与本项目无关）
+- 5 个与 ci.yml 聚合门禁重复的独立 workflow（adg-governance/adg-quality-report/adg-scan/ai-native-sdlc/advanced-governance）
+  触发器收敛为 workflow_dispatch 手动触发；ci.yml 是 push/PR 唯一自动门禁
+- 全部 37 个 workflow YAML 解析校验通过

@@ -1,3 +1,20 @@
+## 更新记录: 2026-08-26 01:01:20
+
+### 任务
+Git 变更同步
+
+### 变更摘要
+- 变更文件 7 个 (+30 / -442 行)
+  - .github/workflows/adg-governance.yml
+  - .github/workflows/adg-quality-report.yml
+  - .github/workflows/adg-scan.yml
+  - .github/workflows/ai-native-sdlc.yml
+  - .github/workflows/ci-cd.yml
+  - CONTEXT.md
+  - docs/governance/project-analysis-and-roadmap-2026-08.md
+
+---
+
 ## 更新记录: 2026-08-26 00:56:57
 
 ### 任务

@@ -6,10 +6,7 @@
 name: ADG Code Quality Scan
 
 on:
-  push:
-    branches: [main, master, develop]
-  pull_request:
-    branches: [main, master, develop]
+  workflow_dispatch:
 
 permissions:
   contents: read

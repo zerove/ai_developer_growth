@@ -6,6 +6,7 @@ Web Search API Server for AI Developer Growth
 
 import os
 import sys
+import time
 
 from fastapi import FastAPI, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
@@ -45,6 +46,19 @@ app = FastAPI(
     version="1.0.0",
 )
 
+
+@app.middleware("http")
+async def observe_requests(request, call_next):
+    """轻量可观测性：慢请求（>500ms）打警告日志，含耗时与路径。"""
+    start = time.time()
+    response = await call_next(request)
+    elapsed_ms = (time.time() - start) * 1000
+    if elapsed_ms > 500:
+        print(f"SLOW {request.method} {request.url.path} {elapsed_ms:.0f}ms", flush=True)
+    response.headers["X-Process-Time-Ms"] = f"{elapsed_ms:.1f}"
+    return response
+
+
 # CORS 配置
 app.add_middleware(
     CORSMiddleware,
@@ -56,6 +70,21 @@ app.add_middleware(
 
 # 全局索引
 search_index: EnhancedTFIDF | None = None
+# 索引元数据（构建时间/耗时），供 /api/health 观测
+index_meta: dict = {"built_at": None, "build_ms": None}
+
+
+def build_index() -> tuple[EnhancedTFIDF, dict]:
+    """构建索引并返回（索引，元数据）。供启动与热重载复用。"""
+    start = time.time()
+    documents = load_documents()
+    index = create_enhanced_index(documents)
+    meta = {
+        "built_at": time.strftime("%Y-%m-%dT%H:%M:%S%z"),
+        "build_ms": round((time.time() - start) * 1000, 2),
+        "document_count": len(documents),
+    }
+    return index, meta
 
 
 def load_documents():
@@ -123,11 +152,9 @@ def load_documents():
 @app.on_event("startup")
 async def startup_event():
     """启动时初始化搜索索引"""
-    global search_index
+    global search_index, index_meta
     print("Loading documents...")
-    documents = load_documents()
-    print(f"Loaded {len(documents)} documents")
-    search_index = create_enhanced_index(documents)
+    search_index, index_meta = build_index()
     print(f"Index stats: {search_index.get_stats()}")
 
 
@@ -215,10 +242,37 @@ async def health():
         "status": "ok",
         "index_ready": search_index is not None,
         "document_count": len(search_index.documents) if search_index else 0,
+        "index_built_at": index_meta.get("built_at"),
+        "index_build_ms": index_meta.get("build_ms"),
+    }
+
+
+@app.post("/api/reload")
+async def reload_index():
+    """热重载：docs 内容变更后重建索引，无需重启服务。
+
+    构建失败时保留旧索引继续服务（fail-safe）。
+    """
+    global search_index, index_meta
+    try:
+        new_index, new_meta = build_index()
+    except Exception as e:  # pragma: no cover - 防御性分支
+        raise HTTPException(status_code=500, detail=f"reload failed, old index kept: {e}") from e
+    old_count = len(search_index.documents) if search_index else 0
+    search_index, index_meta = new_index, new_meta
+    return {
+        "status": "reloaded",
+        "old_document_count": old_count,
+        "document_count": new_meta["document_count"],
+        "build_ms": new_meta["build_ms"],
+        "built_at": new_meta["built_at"],
     }
 
 
 if __name__ == "__main__":
     import uvicorn
 
-    uvicorn.run(app, host="0.0.0.0", port=8001)
+    # 安全默认仅绑本机回环；需局域网访问时显式设置 SEARCH_HOST 环境变量并自行加鉴权
+    host = os.environ.get("SEARCH_HOST", "127.0.0.1")
+    port = int(os.environ.get("SEARCH_PORT", "8001"))
+    uvicorn.run(app, host=host, port=port)

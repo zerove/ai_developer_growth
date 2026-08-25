@@ -23,12 +23,37 @@ TOOL_REGISTRY: list[dict[str, object]] = [
         "description": "运行架构漂移守卫，检查分层违规",
         "arguments": {},
     },
+    {
+        "name": "knowledge_search",
+        "description": "全文检索 docs/ 下知识库文档（BM25+同义词+jieba 中文分词），返回标题、摘要、评分与路径",
+        "arguments": {
+            "query": {"type": "string", "required": True, "description": "查询词（中英文均可）"},
+            "limit": {"type": "integer", "required": False, "description": "返回条数，默认 5，上限 20"},
+        },
+    },
 ]
 
 
 class AINativeMCPServer:
     def __init__(self) -> None:
         self.root_dir = get_project_root()
+        self._search_index: object | None = None
+
+    def _get_search_index(self) -> object:
+        """惰性构建知识库索引（首次调用时加载，后续复用）。"""
+        if self._search_index is None:
+            import importlib.util
+
+            spec = importlib.util.spec_from_file_location(
+                "adg_search_server", self.root_dir / "scripts/search-server.py"
+            )
+            assert spec and spec.loader
+            mod = importlib.util.module_from_spec(spec)
+            spec.loader.exec_module(mod)
+            from tools.scripts.search.tfidf_engine import create_enhanced_index
+
+            self._search_index = create_enhanced_index(mod.load_documents())
+        return self._search_index
 
     def handle_request(self, req: dict[str, object]) -> dict[str, object]:
         """处理单条 JSON-RPC 2.0 请求，返回带 id 的响应。
@@ -94,6 +119,35 @@ class AINativeMCPServer:
             data = json.loads(graph_path.read_text(encoding="utf-8"))
             matches = [v for k, v in data.items() if symbol in k]
             return {"status": "success", "matches": matches[:10]}
+        elif tool_name == "knowledge_search":
+            from tools.scripts.search.tfidf_engine import EnhancedTFIDF
+
+            query = str(arguments.get("query", "")).strip()
+            if not query:
+                return {"status": "error", "message": "missing 'query' argument"}
+            try:
+                raw_limit = arguments.get("limit", 5)
+                limit = min(max(int(raw_limit), 1), 20) if isinstance(raw_limit, (int, str, float)) else 5
+            except (TypeError, ValueError):
+                limit = 5
+            index = self._get_search_index()
+            assert isinstance(index, EnhancedTFIDF)
+            hits = index.search(query, top_k=limit)
+            return {
+                "status": "success",
+                "total": len(hits),
+                "results": [
+                    {
+                        "id": h.doc.id,
+                        "title": h.doc.title,
+                        "snippet": h.snippet[:200],
+                        "score": round(h.score, 4),
+                        "category": h.doc.category,
+                        "path": f"docs/{h.doc.id.replace('_', '/')}.md",
+                    }
+                    for h in hits
+                ],
+            }
         elif tool_name == "run_architecture_guard":
             from tools.scripts.architecture_drift_guard import ArchitectureDriftGuard
 

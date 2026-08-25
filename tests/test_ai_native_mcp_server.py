@@ -147,3 +147,22 @@ class TestJSONRPC20:
         """旧协议（裸 tool 字段）回归保护。"""
         res = server.handle_request({"tool": "list_tools", "arguments": {}})
         assert res["status"] == "success"
+
+
+@pytest.fixture(scope="class")
+def real_server() -> AINativeMCPServer:
+    """真实仓库根目录实例（knowledge_search 需加载 docs/）。"""
+    return AINativeMCPServer()
+
+
+class TestKnowledgeSearchReal:
+    """knowledge_search 真实索引行为（依赖仓库 docs/）。"""
+
+    def test_search_hits_expected_doc(self, real_server: AINativeMCPServer) -> None:
+        result = real_server.handle_tool_call("knowledge_search", {"query": "质量门禁", "limit": 3})
+        assert result["status"] == "success"
+        assert result["total"] >= 1
+
+    def test_missing_query_on_real_server(self, real_server: AINativeMCPServer) -> None:
+        result = real_server.handle_tool_call("knowledge_search", {"query": "  "})
+        assert result["status"] == "error"

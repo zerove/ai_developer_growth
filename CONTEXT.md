@@ -1,3 +1,62 @@
+## 更新记录: 2026-08-25 20:03:35
+
+### 任务
+Git 变更同步
+
+### 变更摘要
+diff --git a/.github/workflows/release.yml b/.github/workflows/release.yml
+index 926b6ab..e2d5e32 100644
+--- a/.github/workflows/release.yml
++++ b/.github/workflows/release.yml
+@@ -155,8 +155,11 @@ jobs:
+         id: changelog
+         run: |
+           TAG_VERSION=${GITHUB_REF_NAME#v}
+-          # Extract changelog for this version
+-          awk "/^## \\[${TAG_VERSION//./\\.}\\]/,/^## \\[/" CHANGELOG.md | head -n -1 > release_notes.md
++          # 提取指定版本的 changelog 区块（至下一个版本标题为止）。
++          # 注意不能用 /start/,/end/ 区间：start 行自身满足 /^## \[/ 会立即关闭区间，只输出 1 行
++          awk -v v="$TAG_VERSION" \
++            '$0 ~ "^## \\[" v "\\]" {f=1; print; next} f && $0 ~ /^## \[/ {exit} f' \
++            CHANGELOG.md > release_notes.md
+           if [ ! -s release_notes.md ]; then
+             echo "No changelog found, using default"
+             echo "Release $TAG_VERSION" > release_notes.md
+diff --git a/CONTEXT.md b/CONTEXT.md
+index d7cf5b0..bd2ed01 100644
+--- a/CONTEXT.md
++++ b/CONTEXT.md
+@@ -1,3 +1,63 @@
++## 更新记录: 2026-08-25 19:48:43
++
++### 任务
++Git 变更同步
++
++### 变更摘要
++diff --git a/CHANGELOG.md b/CHANGELOG.md
++index 1fd8913..b3ec6e9 100644
++--- a/CHANGELOG.md
+++++ b/CHANGELOG.md
++@@ -31,6 +31,17 @@ All notable changes to the AI Developer Growth project.
++ ### 回归修复（重要）
++ - 恢复 ai_quality_gate.py eval/exec 检测模式（凌晨提交 2d80af7 误删），17 相关测试全部通过
++
+++### 多语言与生态扩展（2026-08-25 补充）
+++- **解析器 5 语言**：Go/Rust 真实提取升级 + Java/TypeScript tree-sitter 新增（去重、heritage 顺序修复）
+++- **分层规则 12 语言**：补 kotlin/csharp/ruby/php/swift/cpp 等
+++- **供应链依赖解析 9 生态**：Gradle/Gemfile/composer/NuGet 等
+++- **源码知识索引 16 扩展名**
+++- **规则缓存键缺陷修复**：common/security.yml 变更此前不触发缓存失效（66925b2）
+++- **Java 集成测试豁免**：*IntegrationTest.java/*IT.java/*Tests.java 豁免进程执行规则，普通代码仍报错
+++- **venv 目录变体扫描泄漏修复**：.venv-adg 等非标准名被扫入第三方包（d2612a3），sisyphus-engine 实测 918→454 文件、site-packages 零命中
+++- **ADG Bootstrap**：一键跨项目移植（探测→复制→适配→生成→注入），真实外部项目 maturin 混合仓库实测通过
+++- **Jcode 钩子集成**：pre_tool 门禁（exit 2 阻断+反馈回传）+ post_tool 异步检查 + turn_end 会话质量摘要 + 观察报告工具
+++
++
++ ...
+
+---
+
 ## 更新记录: 2026-08-25 19:48:43
 
 ### 任务
@@ -4665,113 +4724,6 @@ index 8954bc5..26a8f3e 100644
 +++++++++++ b/CONTEXT.md
 ++++++++@@ -1,3 +1,211 @@
 +++++++++## 更新记录: 2026-08-25 12:16:44
-+++++++++
-+++++++++### 任务
-+++++++++Git 变更同步
-+++...
-
----
-
-## 更新记录: 2026-08-25 12:58:05
-
-### 任务
-Git 变更同步
-
-### 变更摘要
-diff --git a/CONTEXT.md b/CONTEXT.md
-index 8954bc5..d1d261b 100644
---- a/CONTEXT.md
-+++ b/CONTEXT.md
-@@ -1,3 +1,431 @@
-+## 更新记录: 2026-08-25 12:57:40
-+
-+### 任务
-+Git 变更同步
-+
-+### 变更摘要
-+diff --git a/CONTEXT.md b/CONTEXT.md
-+index 8954bc5..a7a3369 100644
-+--- a/CONTEXT.md
-++++ b/CONTEXT.md
-+@@ -1,3 +1,324 @@
-++## 更新记录: 2026-08-25 12:57:04
-++
-++### 任务
-++Git 变更同步
-++
-++### 变更摘要
-++diff --git a/CONTEXT.md b/CONTEXT.md
-++index 8954bc5..b82eb34 100644
-++--- a/CONTEXT.md
-+++++ b/CONTEXT.md
-++@@ -1,3 +1,217 @@
-+++## 更新记录: 2026-08-25 12:56:05
-+++
-+++### 任务
-+++Git 变更同步
-+++
-+++### 变更摘要
-+++diff --git a/CONTEXT.md b/CONTEXT.md
-+++index 8954bc5..871a1ab 100644
-+++--- a/CONTEXT.md
-++++++ b/CONTEXT.md
-+++@@ -1,3 +1,110 @@
-++++## 更新记录: 2026-08-25 12:50:24
-++++
-++++### 任务
-++++Git 变更同步
-++++
-++++### 变更摘要
-++++diff --git a/CONTEXT.md b/CONTEXT.md
-++++index 10802e3..8954bc5 100644
-++++--- a/CONTEXT.md
-+++++++ b/CONTEXT.md
-++++@@ -1,3 +1,424 @@
-+++++## 更新记录: 2026-08-25 12:20:54
-+++++
-+++++### 任务
-+++++Git 变更同步
-+++++
-+++++### 变更摘要
-+++++diff --git a/CONTEXT.md b/CONTEXT.md
-+++++index 647b634..469cd57 100644
-+++++--- a/CONTEXT.md
-++++++++ b/CONTEXT.md
-+++++@@ -1,3 +1,421 @@
-++++++## 更新记录: 2026-08-25 12:19:38
-++++++
-++++++### 任务
-++++++Git 变更同步
-++++++
-++++++### 变更摘要
-++++++diff --git a/CONTEXT.md b/CONTEXT.md
-++++++index 647b634..b689caa 100644
-++++++--- a/CONTEXT.md
-+++++++++ b/CONTEXT.md
-++++++@@ -1,3 +1,316 @@
-+++++++## 更新记录: 2026-08-25 12:18:34
-+++++++
-+++++++### 任务
-+++++++Git 变更同步
-+++++++
-+++++++### 变更摘要
-+++++++diff --git a/CONTEXT.md b/CONTEXT.md
-+++++++index 647b634..789d2a8 100644
-+++++++--- a/CONTEXT.md
-++++++++++ b/CONTEXT.md
-+++++++@@ -1,3 +1,211 @@
-++++++++## 更新记录: 2026-08-25 12:16:44
-++++++++
-++++++++### 任务
-++++++++Git 变更同步
-++++++++
-++++++++### 变更摘要
-++++++++diff --git a/CONTEXT.md b/CONTEXT.md
-++++++++index 647b634..10802e3 100644
-++++++++--- a/CONTEXT.md
-+++++++++++ b/CONTEXT.md
-++++++++@@ -1,3 +1,107 @@
-+++++++++## 更新记录: 2026-08-25 12:10:34
 +++++++++
 +++++++++### 任务
 +++++++++Git 变更同步

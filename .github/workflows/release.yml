@@ -155,8 +155,11 @@ jobs:
         id: changelog
         run: |
           TAG_VERSION=${GITHUB_REF_NAME#v}
-          # Extract changelog for this version
-          awk "/^## \\[${TAG_VERSION//./\\.}\\]/,/^## \\[/" CHANGELOG.md | head -n -1 > release_notes.md
+          # 提取指定版本的 changelog 区块（至下一个版本标题为止）。
+          # 注意不能用 /start/,/end/ 区间：start 行自身满足 /^## \[/ 会立即关闭区间，只输出 1 行
+          awk -v v="$TAG_VERSION" \
+            '$0 ~ "^## \\[" v "\\]" {f=1; print; next} f && $0 ~ /^## \[/ {exit} f' \
+            CHANGELOG.md > release_notes.md
           if [ ! -s release_notes.md ]; then
             echo "No changelog found, using default"
             echo "Release $TAG_VERSION" > release_notes.md

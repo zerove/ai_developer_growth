@@ -76,6 +76,8 @@ search_index: EnhancedTFIDF | None = None
 index_meta: dict = {"built_at": None, "build_ms": None}
 
 # 匿名查询日志：只记查询行为，不记 IP/UA 等个人数据（消费侧证据链）
+_SOURCE_DOCS_ENABLED = os.environ.get("SEARCH_INDEX_SOURCE_DOCS", "1") == "1"
+
 QUERY_LOG_PATH = Path(
     os.environ.get("SEARCH_QUERY_LOG", str(Path(__file__).resolve().parent.parent / "logs" / "search-queries.jsonl"))
 )
@@ -105,6 +107,8 @@ def build_index() -> tuple[EnhancedTFIDF, dict]:
     """构建索引并返回（索引，元数据）。供启动与热重载复用。"""
     start = time.time()
     documents = load_documents()
+    source_docs = extract_source_docs(Path(_ROOT)) if _SOURCE_DOCS_ENABLED else []
+    documents.extend(source_docs)
     index = create_enhanced_index(documents)
     meta = {
         "built_at": time.strftime("%Y-%m-%dT%H:%M:%S%z"),
@@ -112,6 +116,79 @@ def build_index() -> tuple[EnhancedTFIDF, dict]:
         "document_count": len(documents),
     }
     return index, meta
+
+
+# 源码注释/docstring 的提取规则：按语言分组的行注释与块注释前缀
+CODE_DOC_PATTERNS = {
+    ".py": ('"""', "'''", "#"),
+    ".go": ("//",),
+    ".rs": ("///", "//"),
+    ".java": ("//", "/**", "*"),
+    ".ts": ("//", "/**", "*"),
+    ".tsx": ("//", "/**", "*"),
+    ".js": ("//", "/**", "*"),
+    ".rb": ("#", "=begin"),
+    ".kt": ("//", "/**", "*"),
+    ".cs": ("///", "//"),
+}
+
+
+def extract_source_docs(source_dir, max_files=2000):
+    """扫描源码文件中的 docstring/注释块，作为知识文档加入索引。
+
+    让代码里的知识（函数说明、架构注释）也能被检索到，
+    覆盖 Python/Go/Rust/Java/TS/Ruby/Kotlin/C# 等语言。
+    """
+    from tools.scripts.search.tfidf_engine import Document
+
+    documents = []
+    scanned = 0
+    skip_dirs = {".git", "node_modules", ".venv", "venv", "__pycache__", "dist", "build", "target"}
+    for path in source_dir.rglob("*"):
+        if scanned >= max_files:
+            break
+        if not path.is_file():
+            continue
+        try:
+            rel_parts = path.relative_to(source_dir).parts[:-1]
+        except ValueError:
+            rel_parts = ()
+        if any(part in skip_dirs for part in rel_parts):
+            continue
+        ext = path.suffix.lower()
+        prefixes = CODE_DOC_PATTERNS.get(ext)
+        if not prefixes:
+            continue
+        try:
+            lines = path.read_text(encoding="utf-8", errors="ignore").splitlines()
+        except OSError:
+            continue
+        scanned += 1
+        doc_lines = []
+        for line in lines:
+            stripped = line.strip()
+            if any(stripped.startswith(pfx) for pfx in prefixes):
+                cleaned = stripped
+                for pfx in prefixes:
+                    cleaned = cleaned.lstrip(pfx)
+                cleaned = cleaned.strip("/*").strip().rstrip("*/").strip()
+                doc_lines.append(cleaned)
+        meaningful = [ln for ln in doc_lines if len(ln) >= 10 and any(c.isalpha() for c in ln)]
+        if len(meaningful) < 3:
+            continue
+        rel = path.relative_to(source_dir)
+        documents.append(
+            Document(
+                id="src_" + str(rel).replace("/", "_"),
+                title="源码注释: " + str(rel),
+                content=chr(10).join(meaningful)[:5000],
+                doc_type="source",
+                tags=[ext.lstrip("."), "source-code"],
+                category="源码",
+                difficulty="",
+            )
+        )
+    return documents
 
 
 def load_documents():

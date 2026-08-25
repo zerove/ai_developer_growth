@@ -1,3 +1,417 @@
+## 更新记录: 2026-08-25 09:46:20
+
+### 任务
+Git 变更同步
+
+### 变更摘要
+diff --git a/.github/workflows/mutation-testing.yml b/.github/workflows/mutation-testing.yml
+index 0774805..c7d7adf 100644
+--- a/.github/workflows/mutation-testing.yml
++++ b/.github/workflows/mutation-testing.yml
+@@ -30,7 +30,7 @@ jobs:
+       - name: Install dependencies
+         run: |
+           pip install -e .[dev]
+-          pip install mutmut>=2.4.0
++          pip install mutmut>=2.4.0,<3
+
+       - name: Run mutation testing
+         run: |
+diff --git a/.jcode/scripts/context-sync.py b/.jcode/scripts/context-sync.py
+index 0cf3789..67bd316 100644
+--- a/.jcode/scripts/context-sync.py
++++ b/.jcode/scripts/context-sync.py
+@@ -35,6 +35,10 @@ class ContextConfig:
+     test_timeout: int = 30
+     max_retries: int = 3
+     executor_max_workers: int = 4
++    # CONTEXT.md 滚动窗口: 保留最近 N 条更新记录（0 = 不限制）。
++    # 背景: 更新记录只追加不裁剪，实测膨胀至 6300+ 行/220KB，
++    # 持续稀释 AI 上下文质量（改进建议 6）
++    max_update_entries: int = 50
+
+
+ class ContextSlicer:
+@@ -108,7 +112,9 @@ class ArchitectureGuard:
+ class ContextSynthesizer:
+     """上下文合成器 - 更新 CONTEXT.md"""
+
+-    def synthesize_context_update(self, diff: str, task: str, current_context: str) -> str:
++    def synthesize_context_update(
++        self, diff: str, task: str, current_context: str, max_update_entries: int = 50
++    ) -> str:
+         timestamp = __import__("datetime").datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+
+         update = f"""
+@@ -124,8 +130,44 @@ class ContextSynthesizer:
+
+ {current_context}
+ """
++
++        # 滚动窗口: 只保留最近 N 条更新记录，防止文件无限膨胀
++        if max_update_entries > 0:
++            update = self._prune_update_entries(update, max_update_entries)
++
+         return update.strip()
+
++    @staticmethod
++    def _prune_update_entries(content: str, max_entries: int) -> str:
++        """按 '## 更新记录:' 标题切分，保留头部说明 + 最近 N 条记录。
++
++        首个更新记录之前的所有内容（项目概述等）视为固定头部原样保留。
++        """
++        lines = content.splitlines()
++        header_end = 0
++        for i, line in enumerate(lines):
++            if line.startswith("## 更新记录:"...
+
+---
+
+## 更新记录: 2026-08-25 09:46:00
+
+### 任务
+Git 变更同步
+
+### 变更摘要
+diff --git a/.github/workflows/mutation-testing.yml b/.github/workflows/mutation-testing.yml
+index 0774805..c7d7adf 100644
+--- a/.github/workflows/mutation-testing.yml
++++ b/.github/workflows/mutation-testing.yml
+@@ -30,7 +30,7 @@ jobs:
+       - name: Install dependencies
+         run: |
+           pip install -e .[dev]
+-          pip install mutmut>=2.4.0
++          pip install mutmut>=2.4.0,<3
+
+       - name: Run mutation testing
+         run: |
+diff --git a/.jcode/scripts/context-sync.py b/.jcode/scripts/context-sync.py
+index 0cf3789..67bd316 100644
+--- a/.jcode/scripts/context-sync.py
++++ b/.jcode/scripts/context-sync.py
+@@ -35,6 +35,10 @@ class ContextConfig:
+     test_timeout: int = 30
+     max_retries: int = 3
+     executor_max_workers: int = 4
++    # CONTEXT.md 滚动窗口: 保留最近 N 条更新记录（0 = 不限制）。
++    # 背景: 更新记录只追加不裁剪，实测膨胀至 6300+ 行/220KB，
++    # 持续稀释 AI 上下文质量（改进建议 6）
++    max_update_entries: int = 50
+
+
+ class ContextSlicer:
+@@ -108,7 +112,9 @@ class ArchitectureGuard:
+ class ContextSynthesizer:
+     """上下文合成器 - 更新 CONTEXT.md"""
+
+-    def synthesize_context_update(self, diff: str, task: str, current_context: str) -> str:
++    def synthesize_context_update(
++        self, diff: str, task: str, current_context: str, max_update_entries: int = 50
++    ) -> str:
+         timestamp = __import__("datetime").datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+
+         update = f"""
+@@ -124,8 +130,44 @@ class ContextSynthesizer:
+
+ {current_context}
+ """
++
++        # 滚动窗口: 只保留最近 N 条更新记录，防止文件无限膨胀
++        if max_update_entries > 0:
++            update = self._prune_update_entries(update, max_update_entries)
++
+         return update.strip()
+
++    @staticmethod
++    def _prune_update_entries(content: str, max_entries: int) -> str:
++        """按 '## 更新记录:' 标题切分，保留头部说明 + 最近 N 条记录。
++
++        首个更新记录之前的所有内容（项目概述等）视为固定头部原样保留。
++        """
++        lines = content.splitlines()
++        header_end = 0
++        for i, line in enumerate(lines):
++            if line.startswith("## 更新记录:"...
+
+---
+
+## 更新记录: 2026-08-25 09:45:35
+
+### 任务
+Git 变更同步
+
+### 变更摘要
+diff --git a/.github/workflows/mutation-testing.yml b/.github/workflows/mutation-testing.yml
+index 0774805..c7d7adf 100644
+--- a/.github/workflows/mutation-testing.yml
++++ b/.github/workflows/mutation-testing.yml
+@@ -30,7 +30,7 @@ jobs:
+       - name: Install dependencies
+         run: |
+           pip install -e .[dev]
+-          pip install mutmut>=2.4.0
++          pip install mutmut>=2.4.0,<3
+
+       - name: Run mutation testing
+         run: |
+diff --git a/.jcode/scripts/context-sync.py b/.jcode/scripts/context-sync.py
+index 0cf3789..67bd316 100644
+--- a/.jcode/scripts/context-sync.py
++++ b/.jcode/scripts/context-sync.py
+@@ -35,6 +35,10 @@ class ContextConfig:
+     test_timeout: int = 30
+     max_retries: int = 3
+     executor_max_workers: int = 4
++    # CONTEXT.md 滚动窗口: 保留最近 N 条更新记录（0 = 不限制）。
++    # 背景: 更新记录只追加不裁剪，实测膨胀至 6300+ 行/220KB，
++    # 持续稀释 AI 上下文质量（改进建议 6）
++    max_update_entries: int = 50
+
+
+ class ContextSlicer:
+@@ -108,7 +112,9 @@ class ArchitectureGuard:
+ class ContextSynthesizer:
+     """上下文合成器 - 更新 CONTEXT.md"""
+
+-    def synthesize_context_update(self, diff: str, task: str, current_context: str) -> str:
++    def synthesize_context_update(
++        self, diff: str, task: str, current_context: str, max_update_entries: int = 50
++    ) -> str:
+         timestamp = __import__("datetime").datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+
+         update = f"""
+@@ -124,8 +130,44 @@ class ContextSynthesizer:
+
+ {current_context}
+ """
++
++        # 滚动窗口: 只保留最近 N 条更新记录，防止文件无限膨胀
++        if max_update_entries > 0:
++            update = self._prune_update_entries(update, max_update_entries)
++
+         return update.strip()
+
++    @staticmethod
++    def _prune_update_entries(content: str, max_entries: int) -> str:
++        """按 '## 更新记录:' 标题切分，保留头部说明 + 最近 N 条记录。
++
++        首个更新记录之前的所有内容（项目概述等）视为固定头部原样保留。
++        """
++        lines = content.splitlines()
++        header_end = 0
++        for i, line in enumerate(lines):
++            if line.startswith("## 更新记录:"...
+
+---
+
+## 更新记录: 2026-08-25 09:44:58
+
+### 任务
+Git 变更同步
+
+### 变更摘要
+diff --git a/.github/workflows/mutation-testing.yml b/.github/workflows/mutation-testing.yml
+index 0774805..c7d7adf 100644
+--- a/.github/workflows/mutation-testing.yml
++++ b/.github/workflows/mutation-testing.yml
+@@ -30,7 +30,7 @@ jobs:
+       - name: Install dependencies
+         run: |
+           pip install -e .[dev]
+-          pip install mutmut>=2.4.0
++          pip install mutmut>=2.4.0,<3
+
+       - name: Run mutation testing
+         run: |
+diff --git a/.jcode/scripts/context-sync.py b/.jcode/scripts/context-sync.py
+index 0cf3789..67bd316 100644
+--- a/.jcode/scripts/context-sync.py
++++ b/.jcode/scripts/context-sync.py
+@@ -35,6 +35,10 @@ class ContextConfig:
+     test_timeout: int = 30
+     max_retries: int = 3
+     executor_max_workers: int = 4
++    # CONTEXT.md 滚动窗口: 保留最近 N 条更新记录（0 = 不限制）。
++    # 背景: 更新记录只追加不裁剪，实测膨胀至 6300+ 行/220KB，
++    # 持续稀释 AI 上下文质量（改进建议 6）
++    max_update_entries: int = 50
+
+
+ class ContextSlicer:
+@@ -108,7 +112,9 @@ class ArchitectureGuard:
+ class ContextSynthesizer:
+     """上下文合成器 - 更新 CONTEXT.md"""
+
+-    def synthesize_context_update(self, diff: str, task: str, current_context: str) -> str:
++    def synthesize_context_update(
++        self, diff: str, task: str, current_context: str, max_update_entries: int = 50
++    ) -> str:
+         timestamp = __import__("datetime").datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+
+         update = f"""
+@@ -124,8 +130,44 @@ class ContextSynthesizer:
+
+ {current_context}
+ """
++
++        # 滚动窗口: 只保留最近 N 条更新记录，防止文件无限膨胀
++        if max_update_entries > 0:
++            update = self._prune_update_entries(update, max_update_entries)
++
+         return update.strip()
+
++    @staticmethod
++    def _prune_update_entries(content: str, max_entries: int) -> str:
++        """按 '## 更新记录:' 标题切分，保留头部说明 + 最近 N 条记录。
++
++        首个更新记录之前的所有内容（项目概述等）视为固定头部原样保留。
++        """
++        lines = content.splitlines()
++        header_end = 0
++        for i, line in enumerate(lines):
++            if line.startswith("## 更新记录:"...
+
+---
+
+## 更新记录: 2026-08-25 09:43:45
+
+### 任务
+Git 变更同步
+
+### 变更摘要
+diff --git a/.github/workflows/mutation-testing.yml b/.github/workflows/mutation-testing.yml
+index 0774805..c7d7adf 100644
+--- a/.github/workflows/mutation-testing.yml
++++ b/.github/workflows/mutation-testing.yml
+@@ -30,7 +30,7 @@ jobs:
+       - name: Install dependencies
+         run: |
+           pip install -e .[dev]
+-          pip install mutmut>=2.4.0
++          pip install mutmut>=2.4.0,<3
+
+       - name: Run mutation testing
+         run: |
+diff --git a/.jcode/scripts/context-sync.py b/.jcode/scripts/context-sync.py
+index 0cf3789..67bd316 100644
+--- a/.jcode/scripts/context-sync.py
++++ b/.jcode/scripts/context-sync.py
+@@ -35,6 +35,10 @@ class ContextConfig:
+     test_timeout: int = 30
+     max_retries: int = 3
+     executor_max_workers: int = 4
++    # CONTEXT.md 滚动窗口: 保留最近 N 条更新记录（0 = 不限制）。
++    # 背景: 更新记录只追加不裁剪，实测膨胀至 6300+ 行/220KB，
++    # 持续稀释 AI 上下文质量（改进建议 6）
++    max_update_entries: int = 50
+
+
+ class ContextSlicer:
+@@ -108,7 +112,9 @@ class ArchitectureGuard:
+ class ContextSynthesizer:
+     """上下文合成器 - 更新 CONTEXT.md"""
+
+-    def synthesize_context_update(self, diff: str, task: str, current_context: str) -> str:
++    def synthesize_context_update(
++        self, diff: str, task: str, current_context: str, max_update_entries: int = 50
++    ) -> str:
+         timestamp = __import__("datetime").datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+
+         update = f"""
+@@ -124,8 +130,44 @@ class ContextSynthesizer:
+
+ {current_context}
+ """
++
++        # 滚动窗口: 只保留最近 N 条更新记录，防止文件无限膨胀
++        if max_update_entries > 0:
++            update = self._prune_update_entries(update, max_update_entries)
++
+         return update.strip()
+
++    @staticmethod
++    def _prune_update_entries(content: str, max_entries: int) -> str:
++        """按 '## 更新记录:' 标题切分，保留头部说明 + 最近 N 条记录。
++
++        首个更新记录之前的所有内容（项目概述等）视为固定头部原样保留。
++        """
++        lines = content.splitlines()
++        header_end = 0
++        for i, line in enumerate(lines):
++            if line.startswith("## 更新记录:"...
+
+---
+
+## 更新记录: 2026-08-25 09:41:59
+
+### 任务
+Git 变更同步
+
+### 变更摘要
+diff --git a/.github/workflows/mutation-testing.yml b/.github/workflows/mutation-testing.yml
+index 0774805..c7d7adf 100644
+--- a/.github/workflows/mutation-testing.yml
++++ b/.github/workflows/mutation-testing.yml
+@@ -30,7 +30,7 @@ jobs:
+       - name: Install dependencies
+         run: |
+           pip install -e .[dev]
+-          pip install mutmut>=2.4.0
++          pip install mutmut>=2.4.0,<3
+
+       - name: Run mutation testing
+         run: |
+diff --git a/.jcode/scripts/context-sync.py b/.jcode/scripts/context-sync.py
+index 0cf3789..67bd316 100644
+--- a/.jcode/scripts/context-sync.py
++++ b/.jcode/scripts/context-sync.py
+@@ -35,6 +35,10 @@ class ContextConfig:
+     test_timeout: int = 30
+     max_retries: int = 3
+     executor_max_workers: int = 4
++    # CONTEXT.md 滚动窗口: 保留最近 N 条更新记录（0 = 不限制）。
++    # 背景: 更新记录只追加不裁剪，实测膨胀至 6300+ 行/220KB，
++    # 持续稀释 AI 上下文质量（改进建议 6）
++    max_update_entries: int = 50
+
+
+ class ContextSlicer:
+@@ -108,7 +112,9 @@ class ArchitectureGuard:
+ class ContextSynthesizer:
+     """上下文合成器 - 更新 CONTEXT.md"""
+
+-    def synthesize_context_update(self, diff: str, task: str, current_context: str) -> str:
++    def synthesize_context_update(
++        self, diff: str, task: str, current_context: str, max_update_entries: int = 50
++    ) -> str:
+         timestamp = __import__("datetime").datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+
+         update = f"""
+@@ -124,8 +130,44 @@ class ContextSynthesizer:
+
+ {current_context}
+ """
++
++        # 滚动窗口: 只保留最近 N 条更新记录，防止文件无限膨胀
++        if max_update_entries > 0:
++            update = self._prune_update_entries(update, max_update_entries)
++
+         return update.strip()
+
++    @staticmethod
++    def _prune_update_entries(content: str, max_entries: int) -> str:
++        """按 '## 更新记录:' 标题切分，保留头部说明 + 最近 N 条记录。
++
++        首个更新记录之前的所有内容（项目概述等）视为固定头部原样保留。
++        """
++        lines = content.splitlines()
++        header_end = 0
++        for i, line in enumerate(lines):
++            if line.startswith("## 更新记录:"...
+
+---
+
 ## 更新记录: 2026-08-25 09:37:26
 
 ### 任务
@@ -2856,460 +3270,6 @@ index b823922..636a0b4 100644
 +++ b/CONTEXT.md
 @@ -1,3 +1,310 @@
 +#...
-
----
-
-## 更新记录: 2026-08-24 20:16:08
-
-### 任务
-Git 变更同步
-
-### 变更摘要
-diff --git a/.jcode/baseline.json b/.jcode/baseline.json
-index f62ce07..7c8d7c8 100644
---- a/.jcode/baseline.json
-+++ b/.jcode/baseline.json
-@@ -14,9 +14,6 @@
-     "tools/lsp/server.py": {
-       "structure:函数超过 50 行 (实际 58 行)": 1
-     },
--    ".jcode/scripts/context-sync.py": {
--      "type:使用 Any 类型": 1
--    },
-     ".jcode/scripts/governance-auditor.py": {
-       "structure:函数超过 50 行 (实际 54 行)": 1
-     },
-@@ -27,20 +24,15 @@
-       "structure:函数超过 50 行 (实际 110 行)": 1
-     },
-     ".jcode/scripts/self_correction_loop.py": {
--      "type:使用 Any 类型": 3,
-       "structure:函数超过 50 行 (实际 59 行)": 1,
-       "structure:函数超过 50 行 (实际 55 行)": 1
-     },
-     "tools/scripts/sync_issues.py": {
--      "type:使用 Any 类型": 1,
--      "structure:函数超过 50 行 (实际 72 行)": 1
-+      "type:使用 Any 类型": 1
-     },
-     "tools/scripts/dependency_graph.py": {
-       "structure:函数超过 50 行 (实际 54 行)": 1
-     },
--    "tools/scripts/docker_build.py": {
--      "structure:函数超过 50 行 (实际 136 行)": 1
--    },
-     "tools/scripts/analyze_case_quality.py": {
-       "structure:函数超过 50 行 (实际 57 行)": 1,
-       "structure:函数超过 50 行 (实际 56 行)": 1
-@@ -50,23 +42,9 @@
-       "structure:函数超过 50 行 (实际 51 行)": 2,
-       "structure:函数超过 50 行 (实际 53 行)": 1
-     },
--    "tools/scripts/validate_agent_definition.py": {
--      "structure:函数超过 50 行 (实际 73 行)": 1,
--      "structure:函数超过 50 行 (实际 56 行)": 1
--    },
--    "tools/scripts/detect_language.py": {
--      "structure:函数超过 50 行 (实际 72 行)": 1
--    },
-     "tools/scripts/rule_registry.py": {
-       "structure:函数超过 50 行 (实际 59 行)": 1
-     },
--    "tools/scripts/auto_fix.py": {
--      "structure:函数超过 50 行 (实际 82 行)": 1,
--      "structure:函数超过 50 行 (实际 55 行)": 1
--    },
--    "tools/scripts/chaos_experiment_runner.py": {
--      "structure:函数超过 50 行 (实际 89 行)": 1
--    },
-     "tools/scripts/fix_heuristics.py": {
-       "structure:函数超过 50 行 (实际 55 行)": 1
-     },
-diff --git a/CONTEXT.md b/CONTEXT.md
-index b823922..5b3746b 100644
---- a/CONTEXT.md
-+++ b/CONTEXT.md
-@@ -1,3 +1,235 @@
-+#...
-
----
-
-## 更新记录: 2026-08-24 20:15:11
-
-### 任务
-Git 变更同步
-
-### 变更摘要
-diff --git a/.jcode/baseline.json b/.jcode/baseline.json
-index f62ce07..7c8d7c8 100644
---- a/.jcode/baseline.json
-+++ b/.jcode/baseline.json
-@@ -14,9 +14,6 @@
-     "tools/lsp/server.py": {
-       "structure:函数超过 50 行 (实际 58 行)": 1
-     },
--    ".jcode/scripts/context-sync.py": {
--      "type:使用 Any 类型": 1
--    },
-     ".jcode/scripts/governance-auditor.py": {
-       "structure:函数超过 50 行 (实际 54 行)": 1
-     },
-@@ -27,20 +24,15 @@
-       "structure:函数超过 50 行 (实际 110 行)": 1
-     },
-     ".jcode/scripts/self_correction_loop.py": {
--      "type:使用 Any 类型": 3,
-       "structure:函数超过 50 行 (实际 59 行)": 1,
-       "structure:函数超过 50 行 (实际 55 行)": 1
-     },
-     "tools/scripts/sync_issues.py": {
--      "type:使用 Any 类型": 1,
--      "structure:函数超过 50 行 (实际 72 行)": 1
-+      "type:使用 Any 类型": 1
-     },
-     "tools/scripts/dependency_graph.py": {
-       "structure:函数超过 50 行 (实际 54 行)": 1
-     },
--    "tools/scripts/docker_build.py": {
--      "structure:函数超过 50 行 (实际 136 行)": 1
--    },
-     "tools/scripts/analyze_case_quality.py": {
-       "structure:函数超过 50 行 (实际 57 行)": 1,
-       "structure:函数超过 50 行 (实际 56 行)": 1
-@@ -50,23 +42,9 @@
-       "structure:函数超过 50 行 (实际 51 行)": 2,
-       "structure:函数超过 50 行 (实际 53 行)": 1
-     },
--    "tools/scripts/validate_agent_definition.py": {
--      "structure:函数超过 50 行 (实际 73 行)": 1,
--      "structure:函数超过 50 行 (实际 56 行)": 1
--    },
--    "tools/scripts/detect_language.py": {
--      "structure:函数超过 50 行 (实际 72 行)": 1
--    },
-     "tools/scripts/rule_registry.py": {
-       "structure:函数超过 50 行 (实际 59 行)": 1
-     },
--    "tools/scripts/auto_fix.py": {
--      "structure:函数超过 50 行 (实际 82 行)": 1,
--      "structure:函数超过 50 行 (实际 55 行)": 1
--    },
--    "tools/scripts/chaos_experiment_runner.py": {
--      "structure:函数超过 50 行 (实际 89 行)": 1
--    },
-     "tools/scripts/fix_heuristics.py": {
-       "structure:函数超过 50 行 (实际 55 行)": 1
-     },
-diff --git a/CONTEXT.md b/CONTEXT.md
-index b823922..77366fc 100644
---- a/CONTEXT.md
-+++ b/CONTEXT.md
-@@ -1,3 +1,160 @@
-+#...
-
----
-
-## 更新记录: 2026-08-24 20:12:07
-
-### 任务
-Git 变更同步
-
-### 变更摘要
-diff --git a/.jcode/baseline.json b/.jcode/baseline.json
-index f62ce07..3f61ca3 100644
---- a/.jcode/baseline.json
-+++ b/.jcode/baseline.json
-@@ -14,9 +14,6 @@
-     "tools/lsp/server.py": {
-       "structure:函数超过 50 行 (实际 58 行)": 1
-     },
--    ".jcode/scripts/context-sync.py": {
--      "type:使用 Any 类型": 1
--    },
-     ".jcode/scripts/governance-auditor.py": {
-       "structure:函数超过 50 行 (实际 54 行)": 1
-     },
-@@ -27,7 +24,6 @@
-       "structure:函数超过 50 行 (实际 110 行)": 1
-     },
-     ".jcode/scripts/self_correction_loop.py": {
--      "type:使用 Any 类型": 3,
-       "structure:函数超过 50 行 (实际 59 行)": 1,
-       "structure:函数超过 50 行 (实际 55 行)": 1
-     },
-@@ -38,9 +34,6 @@
-     "tools/scripts/dependency_graph.py": {
-       "structure:函数超过 50 行 (实际 54 行)": 1
-     },
--    "tools/scripts/docker_build.py": {
--      "structure:函数超过 50 行 (实际 136 行)": 1
--    },
-     "tools/scripts/analyze_case_quality.py": {
-       "structure:函数超过 50 行 (实际 57 行)": 1,
-       "structure:函数超过 50 行 (实际 56 行)": 1
-@@ -60,13 +53,6 @@
-     "tools/scripts/rule_registry.py": {
-       "structure:函数超过 50 行 (实际 59 行)": 1
-     },
--    "tools/scripts/auto_fix.py": {
--      "structure:函数超过 50 行 (实际 82 行)": 1,
--      "structure:函数超过 50 行 (实际 55 行)": 1
--    },
--    "tools/scripts/chaos_experiment_runner.py": {
--      "structure:函数超过 50 行 (实际 89 行)": 1
--    },
-     "tools/scripts/fix_heuristics.py": {
-       "structure:函数超过 50 行 (实际 55 行)": 1
-     },
-diff --git a/ANALYSIS_REPORT_2026-08-24.md b/ANALYSIS_REPORT_2026-08-24.md
-new file mode 100644
-index 0000000..317c52f
---- /dev/null
-+++ b/ANALYSIS_REPORT_2026-08-24.md
-@@ -0,0 +1,165 @@
-+# 项目全面分析与优化开发计划 (2026-08-24)
-+
-+> 基于 2026-08-24 代码库实测状态，衔接 Phase 17 收尾与后续阶段规划。
-+> 数据来源: 实际运行 quality-gate/pytest/validate_case_study/gh CLI + 文档交叉核对。
-+
-+---
-+
-+## 一、项目定位回顾
-+
-+**ai_developer_growth = 知识库 (261 篇方法论) + 治理框架 (38 规范) + AI-Native SDLC 自动化**
-+
-+核心原则: 知识质量 > 交付方式 > 技术复杂度；验证 > 声称。
-+
-+### 当前健康度快照
-+
-+| 维度 | 状态 | 数据 |
-+|------|------|------|
-+| 测试 | ✅ 健康 | 2423 全通过，173s (本地无 xdist) |
-+...
-
----
-
-## 更新记录: 2026-08-24 20:06:23
-
-### 任务
-Git 变更同步
-
-### 变更摘要
-diff --git a/.jcode/baseline.json b/.jcode/baseline.json
-index f62ce07..5bda296 100644
---- a/.jcode/baseline.json
-+++ b/.jcode/baseline.json
-@@ -38,9 +38,6 @@
-     "tools/scripts/dependency_graph.py": {
-       "structure:函数超过 50 行 (实际 54 行)": 1
-     },
--    "tools/scripts/docker_build.py": {
--      "structure:函数超过 50 行 (实际 136 行)": 1
--    },
-     "tools/scripts/analyze_case_quality.py": {
-       "structure:函数超过 50 行 (实际 57 行)": 1,
-       "structure:函数超过 50 行 (实际 56 行)": 1
-@@ -60,13 +57,6 @@
-     "tools/scripts/rule_registry.py": {
-       "structure:函数超过 50 行 (实际 59 行)": 1
-     },
--    "tools/scripts/auto_fix.py": {
--      "structure:函数超过 50 行 (实际 82 行)": 1,
--      "structure:函数超过 50 行 (实际 55 行)": 1
--    },
--    "tools/scripts/chaos_experiment_runner.py": {
--      "structure:函数超过 50 行 (实际 89 行)": 1
--    },
-     "tools/scripts/fix_heuristics.py": {
-       "structure:函数超过 50 行 (实际 55 行)": 1
-     },
-diff --git a/ANALYSIS_REPORT_2026-08-24.md b/ANALYSIS_REPORT_2026-08-24.md
-new file mode 100644
-index 0000000..317c52f
---- /dev/null
-+++ b/ANALYSIS_REPORT_2026-08-24.md
-@@ -0,0 +1,165 @@
-+# 项目全面分析与优化开发计划 (2026-08-24)
-+
-+> 基于 2026-08-24 代码库实测状态，衔接 Phase 17 收尾与后续阶段规划。
-+> 数据来源: 实际运行 quality-gate/pytest/validate_case_study/gh CLI + 文档交叉核对。
-+
-+---
-+
-+## 一、项目定位回顾
-+
-+**ai_developer_growth = 知识库 (261 篇方法论) + 治理框架 (38 规范) + AI-Native SDLC 自动化**
-+
-+核心原则: 知识质量 > 交付方式 > 技术复杂度；验证 > 声称。
-+
-+### 当前健康度快照
-+
-+| 维度 | 状态 | 数据 |
-+|------|------|------|
-+| 测试 | ✅ 健康 | 2423 全通过，173s (本地无 xdist) |
-+| 覆盖率 | ⚠️ 偏低门禁 | fail_under=60 (CI 配置 75，本地 60，不一致) |
-+| lint/format/mypy strict | ✅ 清零 | 本轮 3 提交后全绿 |
-+| 质量基线棘轮 | ✅ 收敛中 | 54→46→43→**39** 条存量豁免 |
-+| 案例合规 | ✅ 100% | validate_case_study 0 error (46 案例) |
-+| 文档链接 | ✅ 健康 | MOC.md 抽样 50 链接 0 断链 |
-+| CI/CD | 🔴 **全红** | Billing 计费失败，所有 job 未启动 (外部阻塞) |
-+| 发布状态 | 🚧 待做 | v2.4.0 在 Unreleased，最新 tag v2.3.0 |
-+
-+---
-+
-+## 二、可修复问题 (按优先级)
-+
-+### P0 — 外部阻塞与发布阻断
-+
-+#### 1. GitHub Actions 计费阻塞 [外部依赖]
-+- **现状**: 所有 19 个 workflow job 因 "account payments have failed" 未启动，...
-
----
-
-## 更新记录: 2026-08-24 19:43:20
-
-### 任务
-Git 变更同步
-
-### 变更摘要
-diff --git a/.jcode/baseline.json b/.jcode/baseline.json
-index 579ea7f..f62ce07 100644
---- a/.jcode/baseline.json
-+++ b/.jcode/baseline.json
-@@ -41,10 +41,6 @@
-     "tools/scripts/docker_build.py": {
-       "structure:函数超过 50 行 (实际 136 行)": 1
-     },
--    "tools/scripts/language_registry.py": {
--      "error:空异常处理 (catch w/o logging)": 1,
--      "structure:函数超过 50 行 (实际 74 行)": 1
--    },
-     "tools/scripts/analyze_case_quality.py": {
-       "structure:函数超过 50 行 (实际 57 行)": 1,
-       "structure:函数超过 50 行 (实际 56 行)": 1
-@@ -59,7 +55,6 @@
-       "structure:函数超过 50 行 (实际 56 行)": 1
-     },
-     "tools/scripts/detect_language.py": {
--      "error:空异常处理 (catch w/o logging)": 2,
-       "structure:函数超过 50 行 (实际 72 行)": 1
-     },
-     "tools/scripts/rule_registry.py": {
-diff --git a/ANALYSIS_REPORT_2026-08-24.md b/ANALYSIS_REPORT_2026-08-24.md
-new file mode 100644
-index 0000000..317c52f
---- /dev/null
-+++ b/ANALYSIS_REPORT_2026-08-24.md
-@@ -0,0 +1,165 @@
-+# 项目全面分析与优化开发计划 (2026-08-24)
-+
-+> 基于 2026-08-24 代码库实测状态，衔接 Phase 17 收尾与后续阶段规划。
-+> 数据来源: 实际运行 quality-gate/pytest/validate_case_study/gh CLI + 文档交叉核对。
-+
-+---
-+
-+## 一、项目定位回顾
-+
-+**ai_developer_growth = 知识库 (261 篇方法论) + 治理框架 (38 规范) + AI-Native SDLC 自动化**
-+
-+核心原则: 知识质量 > 交付方式 > 技术复杂度；验证 > 声称。
-+
-+### 当前健康度快照
-+
-+| 维度 | 状态 | 数据 |
-+|------|------|------|
-+| 测试 | ✅ 健康 | 2423 全通过，173s (本地无 xdist) |
-+| 覆盖率 | ⚠️ 偏低门禁 | fail_under=60 (CI 配置 75，本地 60，不一致) |
-+| lint/format/mypy strict | ✅ 清零 | 本轮 3 提交后全绿 |
-+| 质量基线棘轮 | ✅ 收敛中 | 54→46→43→**39** 条存量豁免 |
-+| 案例合规 | ✅ 100% | validate_case_study 0 error (46 案例) |
-+| 文档链接 | ✅ 健康 | MOC.md 抽样 50 链接 0 断链 |
-+| CI/CD | 🔴 **全红** | Billing 计费失败，所有 job 未启动 (外部阻塞) |
-+| 发布状态 | 🚧 待做 | v2.4.0 在 Unreleased，最新 tag v2.3.0 |
-+
-+---
-+
-+## 二、可修复问题 (按优先级)
-+
-+### P0 — 外部阻塞与发布阻断
-+
-+#### 1. GitHub Actions 计费阻塞 [外部依赖]
-+- **现状**: 所有 19 个 workflow job 因 "account payments have failed" 未启动，连续多轮提交的 CI 验证全部缺失
-+- **影响**: doctor-gate 三 OS matrix、测试分片、覆盖率合并、SBOM/SLSA 等实战验证持续空缺；无法确认远端真实 CI 绿灯
-+- **行动**: 用户在 Billing & plans 处理付款/额度 ...
-
----
-
-## 更新记录: 2026-08-24 19:33:10
-
-### 任务
-Git 变更同步
-
-### 变更摘要
-diff --git a/.jcode/baseline.json b/.jcode/baseline.json
-index 2c6e7e0..f62ce07 100644
---- a/.jcode/baseline.json
-+++ b/.jcode/baseline.json
-@@ -41,10 +41,6 @@
-     "tools/scripts/docker_build.py": {
-       "structure:函数超过 50 行 (实际 136 行)": 1
-     },
--    "tools/scripts/language_registry.py": {
--      "error:空异常处理 (catch w/o logging)": 1,
--      "structure:函数超过 50 行 (实际 74 行)": 1
--    },
-     "tools/scripts/analyze_case_quality.py": {
-       "structure:函数超过 50 行 (实际 57 行)": 1,
-       "structure:函数超过 50 行 (实际 56 行)": 1
-@@ -58,19 +54,7 @@
-       "structure:函数超过 50 行 (实际 73 行)": 1,
-       "structure:函数超过 50 行 (实际 56 行)": 1
-     },
--    "tools/scripts/hooks_runner.py": {
--      "structure:函数超过 50 行 (实际 54 行)": 1,
--      "structure:函数超过 50 行 (实际 57 行)": 1,
--      "structure:函数超过 50 行 (实际 91 行)": 1,
--      "structure:函数超过 50 行 (实际 115 行)": 1,
--      "structure:函数超过 50 行 (实际 97 行)": 1,
--      "structure:函数超过 50 行 (实际 66 行)": 1,
--      "structure:函数超过 50 行 (实际 65 行)": 1,
--      "structure:函数超过 50 行 (实际 123 行)": 1,
--      "structure:函数超过 50 行 (实际 134 行)": 1
--    },
-     "tools/scripts/detect_language.py": {
--      "error:空异常处理 (catch w/o logging)": 2,
-       "structure:函数超过 50 行 (实际 72 行)": 1
-     },
-     "tools/scripts/rule_registry.py": {
-diff --git a/CONTEXT.md b/CONTEXT.md
-index 6c08fc9..ab16772 100644
---- a/CONTEXT.md
-+++ b/CONTEXT.md
-@@ -1,3 +1,419 @@
-+## 更新记录: 2026-08-24 19:29:25
-+
-+### 任务
-+Git 变更同步
-+
-+### 变更摘要
-+diff --git a/.jcode/baseline.json b/.jcode/baseline.json
-+index 2c6e7e0..cfef778 100644
-+--- a/.jcode/baseline.json
-++++ b/.jcode/baseline.json
-+@@ -32,78 +32,13 @@
-+       "structure:函数超过 50 行 (实际 55 行)": 1
-+     },
-+     "tools/scripts/sync_issues.py": {
-+-      "type:使用 Any 类型": 1,
-+-      "structure:函数超过 50 行 (实际 72 行)": 1
-+-    },
-+-    "tools/scripts/dependency_graph.py": {
-+-      "structure:函数超过 50 行 (实际 54 行)": 1
-+-    },
-+-    "tools/scripts/docker_build.py": {
-+-      "structure:函数超过 50 行 (实际 136 行)": 1
-+-    },
-+-    "tools/scripts/language_registr...
 
 ---
 

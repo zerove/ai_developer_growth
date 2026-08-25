@@ -30,7 +30,7 @@ jobs:
       - name: Install dependencies
         run: |
           pip install -e .[dev]
-          pip install mutmut>=2.4.0
+          pip install mutmut>=2.4.0,<3
 
       - name: Run mutation testing
         run: |

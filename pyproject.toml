@@ -25,7 +25,7 @@ dev = [
     "ruff==0.15.17",
     "mypy>=1.0.0",
     "pyyaml>=6.0",
-    "mutmut>=2.4.0",
+    "mutmut>=2.4.0,<3",
     "opentelemetry-api",
     "opentelemetry-sdk",
     "opentelemetry-exporter-otlp",

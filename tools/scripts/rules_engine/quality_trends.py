@@ -229,22 +229,48 @@ class QualityTracker:
         self.data_dir.mkdir(parents=True, exist_ok=True)
         # 统一 SQLite 存储（任务7：替代 JSON 快照文件）
         self._db_path = self.data_dir / "quality.db"
-        self._store = CheckStore(self._db_path)
+        self._store: CheckStore | None = CheckStore(self._db_path)
         self._snapshots: list[QualitySnapshot] = []
         self._load()
+
+    def __enter__(self) -> QualityTracker:
+        return self
+
+    def __exit__(self, *exc_info: object) -> None:
+        self.close()
+
+    @property
+    def store(self) -> CheckStore:
+        """惰性访问底层存储；close 后再访问会重建连接。
+
+        背景: 此前 _store 无 close 途径，连接滞留进程级池导致全量测试时
+        大量 ResourceWarning: unclosed database。
+        """
+        if self._store is None:
+            self._store = CheckStore(self._db_path)
+        return self._store
+
+    def close(self) -> None:
+        """关闭并从进程级连接池移除本库连接。幂等，可重复调用。"""
+        if self._store is not None:
+            self._store.close()
+            self._store = None
+        from tools.scripts.rules_engine import store as _store_mod
+
+        _store_mod.close_connection(str(self._db_path))
 
     def _load(self) -> None:
         """从 SQLite 加载快照。"""
         try:
-            self._snapshots = [QualitySnapshot.from_dict(s) for s in self._store.get_snapshots()]
+            self._snapshots = [QualitySnapshot.from_dict(s) for s in self.store.get_snapshots()]
         except Exception:
             self._snapshots = []
 
     def _save(self) -> None:
         """持久化快照列表到 SQLite（幂等：先清空再写入）。"""
-        self._store.clear_snapshots()
+        self.store.clear_snapshots()
         for s in self._snapshots:
-            self._store.add_snapshot(s.to_dict())
+            self.store.add_snapshot(s.to_dict())
 
     @property
     def snapshots(self) -> list[QualitySnapshot]:

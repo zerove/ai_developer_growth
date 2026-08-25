@@ -1,3 +1,258 @@
+## 更新记录: 2026-08-25 10:19:04
+
+### 任务
+Git 变更同步
+
+### 变更摘要
+diff --git a/CONTEXT.md b/CONTEXT.md
+index cd61d1f..39fd723 100644
+--- a/CONTEXT.md
++++ b/CONTEXT.md
+@@ -1,3 +1,314 @@
++## 更新记录: 2026-08-25 10:17:23
++
++### 任务
++Git 变更同步
++
++### 变更摘要
++diff --git a/CONTEXT.md b/CONTEXT.md
++index cd61d1f..c0ac481 100644
++--- a/CONTEXT.md
+++++ b/CONTEXT.md
++@@ -1,3 +1,230 @@
+++## 更新记录: 2026-08-25 10:13:49
+++
+++### 任务
+++Git 变更同步
+++
+++### 变更摘要
+++diff --git a/CONTEXT.md b/CONTEXT.md
+++index cd61d1f..1000f04 100644
+++--- a/CONTEXT.md
++++++ b/CONTEXT.md
+++@@ -1,3 +1,149 @@
++++## 更新记录: 2026-08-25 09:48:50
++++
++++### 任务
++++Git 变更同步
++++
++++### 变更摘要
++++diff --git a/.github/workflows/mutation-testing.yml b/.github/workflows/mutation-testing.yml
++++index 0774805..c7d7adf 100644
++++--- a/.github/workflows/mutation-testing.yml
+++++++ b/.github/workflows/mutation-testing.yml
++++@@ -30,7 +30,7 @@ jobs:
++++       - name: Install dependencies
++++         run: |
++++           pip install -e .[dev]
++++-          pip install mutmut>=2.4.0
+++++          pip install mutmut>=2.4.0,<3
++++
++++       - name: Run mutation testing
++++         run: |
++++diff --git a/CONTEXT.md b/CONTEXT.md
++++index 33e1b5c..e8be9cb 100644
++++--- a/CONTEXT.md
+++++++ b/CONTEXT.md
++++@@ -1,3 +1,487 @@
+++++## 更新记录: 2026-08-25 09:48:14
+++++
+++++### 任务
+++++Git 变更同步
+++++
+++++### 变更摘要
+++++diff --git a/.github/workflows/mutation-testing.yml b/.github/workflows/mutation-testing.yml
+++++index 0774805..c7d7adf 100644
+++++--- a/.github/workflows/mutation-testing.yml
++++++++ b/.github/workflows/mutation-testing.yml
+++++@@ -30,7 +30,7 @@ jobs:
+++++       - name: Install dependencies
+++++         run: |
+++++           pip install -e .[dev]
+++++-          pip install mutmut>=2.4.0
++++++          pip install mutmut>=2.4.0,<3
+++++
+++++       - name: Run mutation testing
+++++         run: |
+++++diff --git a/CONTEXT.md b/CONTEXT.md
+++++index 33e1b5c..cd61d1f 100644
+++++--- a/CONTEXT.md
++++++++ b/CONTEXT.md
+++++@@ -1,3 +1,417 @@
++++++## 更新记录: 2026-08-25 09:46:20
++++++
++++++### 任务
++++++Git 变更同步
++++++
+++++...
+
+---
+
+## 更新记录: 2026-08-25 10:17:23
+
+### 任务
+Git 变更同步
+
+### 变更摘要
+diff --git a/CONTEXT.md b/CONTEXT.md
+index cd61d1f..c0ac481 100644
+--- a/CONTEXT.md
++++ b/CONTEXT.md
+@@ -1,3 +1,230 @@
++## 更新记录: 2026-08-25 10:13:49
++
++### 任务
++Git 变更同步
++
++### 变更摘要
++diff --git a/CONTEXT.md b/CONTEXT.md
++index cd61d1f..1000f04 100644
++--- a/CONTEXT.md
+++++ b/CONTEXT.md
++@@ -1,3 +1,149 @@
+++## 更新记录: 2026-08-25 09:48:50
+++
+++### 任务
+++Git 变更同步
+++
+++### 变更摘要
+++diff --git a/.github/workflows/mutation-testing.yml b/.github/workflows/mutation-testing.yml
+++index 0774805..c7d7adf 100644
+++--- a/.github/workflows/mutation-testing.yml
++++++ b/.github/workflows/mutation-testing.yml
+++@@ -30,7 +30,7 @@ jobs:
+++       - name: Install dependencies
+++         run: |
+++           pip install -e .[dev]
+++-          pip install mutmut>=2.4.0
++++          pip install mutmut>=2.4.0,<3
+++
+++       - name: Run mutation testing
+++         run: |
+++diff --git a/CONTEXT.md b/CONTEXT.md
+++index 33e1b5c..e8be9cb 100644
+++--- a/CONTEXT.md
++++++ b/CONTEXT.md
+++@@ -1,3 +1,487 @@
++++## 更新记录: 2026-08-25 09:48:14
++++
++++### 任务
++++Git 变更同步
++++
++++### 变更摘要
++++diff --git a/.github/workflows/mutation-testing.yml b/.github/workflows/mutation-testing.yml
++++index 0774805..c7d7adf 100644
++++--- a/.github/workflows/mutation-testing.yml
+++++++ b/.github/workflows/mutation-testing.yml
++++@@ -30,7 +30,7 @@ jobs:
++++       - name: Install dependencies
++++         run: |
++++           pip install -e .[dev]
++++-          pip install mutmut>=2.4.0
+++++          pip install mutmut>=2.4.0,<3
++++
++++       - name: Run mutation testing
++++         run: |
++++diff --git a/CONTEXT.md b/CONTEXT.md
++++index 33e1b5c..cd61d1f 100644
++++--- a/CONTEXT.md
+++++++ b/CONTEXT.md
++++@@ -1,3 +1,417 @@
+++++## 更新记录: 2026-08-25 09:46:20
+++++
+++++### 任务
+++++Git 变更同步
+++++
+++++### 变更摘要
+++++diff --git a/.github/workflows/mutation-testing.yml b/.github/workflows/mutation-testing.yml
+++++index 0774805..c7d7adf 100644
+++++--- a/.github/workflows/mutation-testing.yml
++++++++ b/.github/workflows/mutation-testing.yml
+++++@@ -30,7...
+
+---
+
+## 更新记录: 2026-08-25 10:13:49
+
+### 任务
+Git 变更同步
+
+### 变更摘要
+diff --git a/CONTEXT.md b/CONTEXT.md
+index cd61d1f..1000f04 100644
+--- a/CONTEXT.md
++++ b/CONTEXT.md
+@@ -1,3 +1,149 @@
++## 更新记录: 2026-08-25 09:48:50
++
++### 任务
++Git 变更同步
++
++### 变更摘要
++diff --git a/.github/workflows/mutation-testing.yml b/.github/workflows/mutation-testing.yml
++index 0774805..c7d7adf 100644
++--- a/.github/workflows/mutation-testing.yml
+++++ b/.github/workflows/mutation-testing.yml
++@@ -30,7 +30,7 @@ jobs:
++       - name: Install dependencies
++         run: |
++           pip install -e .[dev]
++-          pip install mutmut>=2.4.0
+++          pip install mutmut>=2.4.0,<3
++
++       - name: Run mutation testing
++         run: |
++diff --git a/CONTEXT.md b/CONTEXT.md
++index 33e1b5c..e8be9cb 100644
++--- a/CONTEXT.md
+++++ b/CONTEXT.md
++@@ -1,3 +1,487 @@
+++## 更新记录: 2026-08-25 09:48:14
+++
+++### 任务
+++Git 变更同步
+++
+++### 变更摘要
+++diff --git a/.github/workflows/mutation-testing.yml b/.github/workflows/mutation-testing.yml
+++index 0774805..c7d7adf 100644
+++--- a/.github/workflows/mutation-testing.yml
++++++ b/.github/workflows/mutation-testing.yml
+++@@ -30,7 +30,7 @@ jobs:
+++       - name: Install dependencies
+++         run: |
+++           pip install -e .[dev]
+++-          pip install mutmut>=2.4.0
++++          pip install mutmut>=2.4.0,<3
+++
+++       - name: Run mutation testing
+++         run: |
+++diff --git a/CONTEXT.md b/CONTEXT.md
+++index 33e1b5c..cd61d1f 100644
+++--- a/CONTEXT.md
++++++ b/CONTEXT.md
+++@@ -1,3 +1,417 @@
++++## 更新记录: 2026-08-25 09:46:20
++++
++++### 任务
++++Git 变更同步
++++
++++### 变更摘要
++++diff --git a/.github/workflows/mutation-testing.yml b/.github/workflows/mutation-testing.yml
++++index 0774805..c7d7adf 100644
++++--- a/.github/workflows/mutation-testing.yml
+++++++ b/.github/workflows/mutation-testing.yml
++++@@ -30,7 +30,7 @@ jobs:
++++       - name: Install dependencies
++++         run: |
++++           pip install -e .[dev]
++++-          pip install mutmut>=2.4.0
+++++          pip install mutmut>=2.4.0,<3
++++
++++       - name: Run mutation testing
++++      ...
+
+---
+
 ## 更新记录: 2026-08-25 09:48:50
 
 ### 任务
@@ -3043,229 +3298,6 @@ index 3f61ca3..64b2017 100644
 -    },
 -    "tools/scripts/hooks/pre_push.py": {
 -      "struc...
-
----
-
-## 更新记录: 2026-08-24 20:33:43
-
-### 任务
-Git 变更同步
-
-### 变更摘要
-diff --git a/.jcode/baseline.json b/.jcode/baseline.json
-index 3f61ca3..64b2017 100644
---- a/.jcode/baseline.json
-+++ b/.jcode/baseline.json
-@@ -17,9 +17,6 @@
-     ".jcode/scripts/governance-auditor.py": {
-       "structure:函数超过 50 行 (实际 54 行)": 1
-     },
--    ".jcode/scripts/multi_agent_orch.py": {
--      "type:使用 Any 类型": 1
--    },
-     ".jcode/scripts/jcode-init.py": {
-       "structure:函数超过 50 行 (实际 110 行)": 1
-     },
-@@ -27,10 +24,6 @@
-       "structure:函数超过 50 行 (实际 59 行)": 1,
-       "structure:函数超过 50 行 (实际 55 行)": 1
-     },
--    "tools/scripts/sync_issues.py": {
--      "type:使用 Any 类型": 1,
--      "structure:函数超过 50 行 (实际 72 行)": 1
--    },
-     "tools/scripts/dependency_graph.py": {
-       "structure:函数超过 50 行 (实际 54 行)": 1
-     },
-@@ -38,18 +31,6 @@
-       "structure:函数超过 50 行 (实际 57 行)": 1,
-       "structure:函数超过 50 行 (实际 56 行)": 1
-     },
--    "tools/scripts/supply_chain.py": {
--      "type:使用 Any 类型": 1,
--      "structure:函数超过 50 行 (实际 51 行)": 2,
--      "structure:函数超过 50 行 (实际 53 行)": 1
--    },
--    "tools/scripts/validate_agent_definition.py": {
--      "structure:函数超过 50 行 (实际 73 行)": 1,
--      "structure:函数超过 50 行 (实际 56 行)": 1
--    },
--    "tools/scripts/detect_language.py": {
--      "structure:函数超过 50 行 (实际 72 行)": 1
--    },
-     "tools/scripts/rule_registry.py": {
-       "structure:函数超过 50 行 (实际 59 行)": 1
-     },
-@@ -57,23 +38,16 @@
-       "structure:函数超过 50 行 (实际 55 行)": 1
-     },
-     "tools/scripts/config/loader.py": {
--      "type:使用 Any 类型": 1,
-       "structure:函数超过 50 行 (实际 61 行)": 1
-     },
-     "tools/scripts/rules_engine/ast_fixer.py": {
-       "structure:函数超过 50 行 (实际 52 行)": 1
-     },
--    "tools/scripts/rules_engine/ast_parser.py": {
--      "structure:函数超过 50 行 (实际 64 行)": 1
--    },
-     "tools/scripts/rules_engine/hallucination_detector.py": {
-       "structure:函数超过 50 行 (实际 56 行)": 1
-     },
-     "tools/scripts/rules/loader.py": {
-       "structure:函数超过 50 行 (实际 53 行)": 1
--    },
--    "tools/scripts/hooks/pre_push.py": {
--      "struc...
-
----
-
-## 更新记录: 2026-08-24 20:32:30
-
-### 任务
-Git 变更同步
-
-### 变更摘要
-diff --git a/.jcode/baseline.json b/.jcode/baseline.json
-index 3f61ca3..64b2017 100644
---- a/.jcode/baseline.json
-+++ b/.jcode/baseline.json
-@@ -17,9 +17,6 @@
-     ".jcode/scripts/governance-auditor.py": {
-       "structure:函数超过 50 行 (实际 54 行)": 1
-     },
--    ".jcode/scripts/multi_agent_orch.py": {
--      "type:使用 Any 类型": 1
--    },
-     ".jcode/scripts/jcode-init.py": {
-       "structure:函数超过 50 行 (实际 110 行)": 1
-     },
-@@ -27,10 +24,6 @@
-       "structure:函数超过 50 行 (实际 59 行)": 1,
-       "structure:函数超过 50 行 (实际 55 行)": 1
-     },
--    "tools/scripts/sync_issues.py": {
--      "type:使用 Any 类型": 1,
--      "structure:函数超过 50 行 (实际 72 行)": 1
--    },
-     "tools/scripts/dependency_graph.py": {
-       "structure:函数超过 50 行 (实际 54 行)": 1
-     },
-@@ -38,18 +31,6 @@
-       "structure:函数超过 50 行 (实际 57 行)": 1,
-       "structure:函数超过 50 行 (实际 56 行)": 1
-     },
--    "tools/scripts/supply_chain.py": {
--      "type:使用 Any 类型": 1,
--      "structure:函数超过 50 行 (实际 51 行)": 2,
--      "structure:函数超过 50 行 (实际 53 行)": 1
--    },
--    "tools/scripts/validate_agent_definition.py": {
--      "structure:函数超过 50 行 (实际 73 行)": 1,
--      "structure:函数超过 50 行 (实际 56 行)": 1
--    },
--    "tools/scripts/detect_language.py": {
--      "structure:函数超过 50 行 (实际 72 行)": 1
--    },
-     "tools/scripts/rule_registry.py": {
-       "structure:函数超过 50 行 (实际 59 行)": 1
-     },
-@@ -57,23 +38,16 @@
-       "structure:函数超过 50 行 (实际 55 行)": 1
-     },
-     "tools/scripts/config/loader.py": {
--      "type:使用 Any 类型": 1,
-       "structure:函数超过 50 行 (实际 61 行)": 1
-     },
-     "tools/scripts/rules_engine/ast_fixer.py": {
-       "structure:函数超过 50 行 (实际 52 行)": 1
-     },
--    "tools/scripts/rules_engine/ast_parser.py": {
--      "structure:函数超过 50 行 (实际 64 行)": 1
--    },
-     "tools/scripts/rules_engine/hallucination_detector.py": {
-       "structure:函数超过 50 行 (实际 56 行)": 1
-     },
-     "tools/scripts/rules/loader.py": {
-       "structure:函数超过 50 行 (实际 53 行)": 1
--    },
--    "tools/scripts/hooks/pre_push.py": {
--      "struc...
-
----
-
-## 更新记录: 2026-08-24 20:19:52
-
-### 任务
-Git 变更同步
-
-### 变更摘要
-diff --git a/.jcode/baseline.json b/.jcode/baseline.json
-index f62ce07..7c8d7c8 100644
---- a/.jcode/baseline.json
-+++ b/.jcode/baseline.json
-@@ -14,9 +14,6 @@
-     "tools/lsp/server.py": {
-       "structure:函数超过 50 行 (实际 58 行)": 1
-     },
--    ".jcode/scripts/context-sync.py": {
--      "type:使用 Any 类型": 1
--    },
-     ".jcode/scripts/governance-auditor.py": {
-       "structure:函数超过 50 行 (实际 54 行)": 1
-     },
-@@ -27,20 +24,15 @@
-       "structure:函数超过 50 行 (实际 110 行)": 1
-     },
-     ".jcode/scripts/self_correction_loop.py": {
--      "type:使用 Any 类型": 3,
-       "structure:函数超过 50 行 (实际 59 行)": 1,
-       "structure:函数超过 50 行 (实际 55 行)": 1
-     },
-     "tools/scripts/sync_issues.py": {
--      "type:使用 Any 类型": 1,
--      "structure:函数超过 50 行 (实际 72 行)": 1
-+      "type:使用 Any 类型": 1
-     },
-     "tools/scripts/dependency_graph.py": {
-       "structure:函数超过 50 行 (实际 54 行)": 1
-     },
--    "tools/scripts/docker_build.py": {
--      "structure:函数超过 50 行 (实际 136 行)": 1
--    },
-     "tools/scripts/analyze_case_quality.py": {
-       "structure:函数超过 50 行 (实际 57 行)": 1,
-       "structure:函数超过 50 行 (实际 56 行)": 1
-@@ -50,23 +42,9 @@
-       "structure:函数超过 50 行 (实际 51 行)": 2,
-       "structure:函数超过 50 行 (实际 53 行)": 1
-     },
--    "tools/scripts/validate_agent_definition.py": {
--      "structure:函数超过 50 行 (实际 73 行)": 1,
--      "structure:函数超过 50 行 (实际 56 行)": 1
--    },
--    "tools/scripts/detect_language.py": {
--      "structure:函数超过 50 行 (实际 72 行)": 1
--    },
-     "tools/scripts/rule_registry.py": {
-       "structure:函数超过 50 行 (实际 59 行)": 1
-     },
--    "tools/scripts/auto_fix.py": {
--      "structure:函数超过 50 行 (实际 82 行)": 1,
--      "structure:函数超过 50 行 (实际 55 行)": 1
--    },
--    "tools/scripts/chaos_experiment_runner.py": {
--      "structure:函数超过 50 行 (实际 89 行)": 1
--    },
-     "tools/scripts/fix_heuristics.py": {
-       "structure:函数超过 50 行 (实际 55 行)": 1
-     },
-diff --git a/CONTEXT.md b/CONTEXT.md
-index b823922..7caf38f 100644
---- a/CONTEXT.md
-+++ b/CONTEXT.md
-@@ -1,3 +1,460 @@
-+#...
 
 ---
 

@@ -377,6 +377,10 @@ class SBOMGenerator:
             self._parse_cargo_deps,
             self._parse_go_deps,
             self._parse_maven_deps,
+            self._parse_gradle_deps,
+            self._parse_gemfile_deps,
+            self._parse_composer_deps,
+            self._parse_nuget_deps,
         ]
         for parser in parsers:
             all_deps.extend(parser(project_root))
@@ -693,6 +697,100 @@ class SBOMGenerator:
             except Exception as e:
                 logger.warning(f"Failed to parse pom.xml: {e}")
 
+        return deps
+
+    def _parse_gradle_deps(self, project_root: Path) -> list[Dependency]:
+        """解析 Gradle 依赖 (build.gradle / build.gradle.kts)。"""
+        deps: list[Dependency] = []
+        for gradle_name in ("build.gradle", "build.gradle.kts"):
+            gradle_file = project_root / gradle_name
+            if not gradle_file.exists():
+                continue
+            try:
+                content = gradle_file.read_text(encoding="utf-8", errors="ignore")
+            except OSError as e:
+                logger.warning(f"Failed to parse {gradle_name}: {e}")
+                continue
+            # 匹配 implementation/api/testImplementation 'group:artifact:version' 两种引号风格
+            import re
+
+            pattern = re.compile(
+                r"""(?:implementation|api|compile|runtimeOnly|testImplementation)\s+['"]([^'":]+):([^'":]+):([^'"]+)['"]"""
+            )
+            for match in pattern.finditer(content):
+                group, artifact, version = match.group(1), match.group(2), match.group(3)
+                deps.append(
+                    Dependency(
+                        name=f"{group}:{artifact}",
+                        version=version.strip(),
+                        ecosystem="maven",
+                        is_direct=True,
+                    )
+                )
+        return deps
+
+    def _parse_gemfile_deps(self, project_root: Path) -> list[Dependency]:
+        """解析 Ruby 依赖 (Gemfile + Gemfile.lock)。"""
+        deps: list[Dependency] = []
+        gemfile = project_root / "Gemfile"
+        if not gemfile.exists():
+            return deps
+        try:
+            content = gemfile.read_text(encoding="utf-8", errors="ignore")
+        except OSError as e:
+            logger.warning(f"Failed to parse Gemfile: {e}")
+            return deps
+        import re
+
+        # 匹配 gem "rails", "~> 7.0" 与 gem 'sinatra', '4.0'
+        for match in re.compile(r"""^\s*gem\s+['"]([^'"]+)['"](?:\s*,\s*['"]([^'"]+)['"])?""", re.M).finditer(content):
+            name = match.group(1)
+            version = (match.group(2) or "").lstrip("~><= ")
+            deps.append(Dependency(name=name, version=version, ecosystem="rubygems", is_direct=True))
+        return deps
+
+    def _parse_composer_deps(self, project_root: Path) -> list[Dependency]:
+        """解析 PHP 依赖 (composer.json require 段)。"""
+        composer_json = project_root / "composer.json"
+        if not composer_json.exists():
+            return []
+        try:
+            with open(composer_json, encoding="utf-8") as f:
+                data = json.load(f)
+        except (OSError, ValueError) as e:
+            logger.warning(f"Failed to parse composer.json: {e}")
+            return []
+        deps = []
+        for name, constraint in (data.get("require") or {}).items():
+            if name == "php":
+                continue
+            version = constraint.lstrip("v^~>=< ")
+            deps.append(Dependency(name=name, version=version, ecosystem="packagist", is_direct=True))
+        return deps
+
+    def _parse_nuget_deps(self, project_root: Path) -> list[Dependency]:
+        """解析 .NET 依赖 (csproj 的 PackageReference)。"""
+        deps: list[Dependency] = []
+        csproj_files = list(project_root.rglob("*.csproj"))
+        if not csproj_files:
+            return deps
+        import re
+
+        for csproj in csproj_files[:20]:  # 防御超大仓库
+            try:
+                content = csproj.read_text(encoding="utf-8", errors="ignore")
+            except OSError as e:
+                logger.warning(f"Failed to parse {csproj.name}: {e}")
+                continue
+            for match in re.compile(r'<PackageReference\s+Include="([^"]+)"\s+Version="([^"]+)"').finditer(content):
+                deps.append(
+                    Dependency(
+                        name=match.group(1),
+                        version=match.group(2),
+                        ecosystem="nuget",
+                        is_direct=True,
+                    )
+                )
         return deps
 
     def _parse_dep_spec(self, spec: str) -> Dependency | None:

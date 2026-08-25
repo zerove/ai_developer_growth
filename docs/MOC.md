@@ -84,6 +84,7 @@ updated: 2026-07-21
 |------|----------|----------|
 | [[docs/tools/ai-tool-matrix\|工具矩阵]] | 选什么模型/IDE？ | jcode vs opencode 深度对比 |
 | [[docs/tools/ide-best-practices\|IDE 实践]] | 如何配置开发环境？ | 极速编辑 + AI 协同 |
+| [[docs/tools/search-server-and-mcp\|检索服务与 MCP]] | 知识库如何服务化取用？ | HTTP 检索 API + JSON-RPC 2.0 MCP 工具部署排障 |
 
 **最新更新**: 已更新至 Claude 4、GPT-5、jcode、opencode 等最新工具。
 

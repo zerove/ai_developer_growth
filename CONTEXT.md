@@ -1,3 +1,110 @@
+## 更新记录: 2026-08-25 13:01:23
+
+### 任务
+Git 变更同步
+
+### 变更摘要
+diff --git a/CONTEXT.md b/CONTEXT.md
+index 871a1ab..0e09f0f 100644
+--- a/CONTEXT.md
++++ b/CONTEXT.md
+@@ -1,3 +1,538 @@
++## 更新记录: 2026-08-25 12:59:40
++
++### 任务
++Git 变更同步
++
++### 变更摘要
++diff --git a/CONTEXT.md b/CONTEXT.md
++index 8954bc5..26a8f3e 100644
++--- a/CONTEXT.md
+++++ b/CONTEXT.md
++@@ -1,3 +1,538 @@
+++## 更新记录: 2026-08-25 12:58:05
+++
+++### 任务
+++Git 变更同步
+++
+++### 变更摘要
+++diff --git a/CONTEXT.md b/CONTEXT.md
+++index 8954bc5..d1d261b 100644
+++--- a/CONTEXT.md
++++++ b/CONTEXT.md
+++@@ -1,3 +1,431 @@
++++## 更新记录: 2026-08-25 12:57:40
++++
++++### 任务
++++Git 变更同步
++++
++++### 变更摘要
++++diff --git a/CONTEXT.md b/CONTEXT.md
++++index 8954bc5..a7a3369 100644
++++--- a/CONTEXT.md
+++++++ b/CONTEXT.md
++++@@ -1,3 +1,324 @@
+++++## 更新记录: 2026-08-25 12:57:04
+++++
+++++### 任务
+++++Git 变更同步
+++++
+++++### 变更摘要
+++++diff --git a/CONTEXT.md b/CONTEXT.md
+++++index 8954bc5..b82eb34 100644
+++++--- a/CONTEXT.md
++++++++ b/CONTEXT.md
+++++@@ -1,3 +1,217 @@
++++++## 更新记录: 2026-08-25 12:56:05
++++++
++++++### 任务
++++++Git 变更同步
++++++
++++++### 变更摘要
++++++diff --git a/CONTEXT.md b/CONTEXT.md
++++++index 8954bc5..871a1ab 100644
++++++--- a/CONTEXT.md
+++++++++ b/CONTEXT.md
++++++@@ -1,3 +1,110 @@
+++++++## 更新记录: 2026-08-25 12:50:24
+++++++
+++++++### 任务
+++++++Git 变更同步
+++++++
+++++++### 变更摘要
+++++++diff --git a/CONTEXT.md b/CONTEXT.md
+++++++index 10802e3..8954bc5 100644
+++++++--- a/CONTEXT.md
++++++++++ b/CONTEXT.md
+++++++@@ -1,3 +1,424 @@
++++++++## 更新记录: 2026-08-25 12:20:54
++++++++
++++++++### 任务
++++++++Git 变更同步
++++++++
++++++++### 变更摘要
++++++++diff --git a/CONTEXT.md b/CONTEXT.md
++++++++index 647b634..469cd57 100644
++++++++--- a/CONTEXT.md
+++++++++++ b/CONTEXT.md
++++++++@@ -1,3 +1,421 @@
+++++++++## 更新记录: 2026-08-25 12:19:38
+++++++++
+++++++++### 任务
+++++++++Git 变更同步
+++++++++
+++++++++### 变更摘要
+++++++++diff --git a/CONTEXT.md b/CONTEXT.md
+++++++++index 647b634..b689caa 100644
+++++++++--- a/CONTEXT.md
++++++++++++ b/CONTEXT.md
+++++++++@@ -1,3 +1,316 @@
++++++++++## 更新记录: 2026-08-25 12:18:34
++++++++++
++++++++++### 任务
++++++++++Git 变更同步
++++...
+
+---
+
 ## 更新记录: 2026-08-25 12:59:40
 
 ### 任务
@@ -4392,88 +4499,6 @@ index 50e5133..5b63041 100644
 ++++@@ -136,7 +136,7 @@ jobs:
 ++++             --cov=tools/scripts \
 ++++     ...
-
----
-
-## 更新记录: 2026-08-25 09:07:22
-
-### 任务
-Git 变更同步
-
-### 变更摘要
-diff --git a/CONTEXT.md b/CONTEXT.md
-index 6ffe18a..50e5133 100644
---- a/CONTEXT.md
-+++ b/CONTEXT.md
-@@ -1,3 +1,177 @@
-+## 更新记录: 2026-08-25 07:32:53
-+
-+### 任务
-+Git 变更同步
-+
-+### 变更摘要
-+diff --git a/.github/workflows/ci-cd.yml b/.github/workflows/ci-cd.yml
-+index f53f3da..cec3692 100644
-+--- a/.github/workflows/ci-cd.yml
-++++ b/.github/workflows/ci-cd.yml
-+@@ -136,7 +136,7 @@ jobs:
-+             --cov=tools/scripts \
-+             --cov-report=xml \
-+             --cov-report=term-missing \
-+-            --cov-fail-under=64
-++            --cov-fail-under=65
-+
-+       - name: Upload coverage
-+         uses: codecov/codecov-action@v4
-+diff --git a/CONTEXT.md b/CONTEXT.md
-+index fcf142e..728e6a1 100644
-+--- a/CONTEXT.md
-++++ b/CONTEXT.md
-+@@ -1,3 +1,176 @@
-++## 更新记录: 2026-08-25 07:32:28
-++
-++### 任务
-++Git 变更同步
-++
-++### 变更摘要
-++diff --git a/.github/workflows/ci-cd.yml b/.github/workflows/ci-cd.yml
-++index f53f3da..cec3692 100644
-++--- a/.github/workflows/ci-cd.yml
-+++++ b/.github/workflows/ci-cd.yml
-++@@ -136,7 +136,7 @@ jobs:
-++             --cov=tools/scripts \
-++             --cov-report=xml \
-++             --cov-report=term-missing \
-++-            --cov-fail-under=64
-+++            --cov-fail-under=65
-++
-++       - name: Upload coverage
-++         uses: codecov/codecov-action@v4
-++diff --git a/CONTEXT.md b/CONTEXT.md
-++index fcf142e..6ffe18a 100644
-++--- a/CONTEXT.md
-+++++ b/CONTEXT.md
-++@@ -1,3 +1,84 @@
-+++## 更新记录: 2026-08-25 06:56:46
-+++
-+++### 任务
-+++Git 变更同步
-+++
-+++### 变更摘要
-+++diff --git a/.github/workflows/ci-cd.yml b/.github/workflows/ci-cd.yml
-+++index f53f3da..cec3692 100644
-+++--- a/.github/workflows/ci-cd.yml
-++++++ b/.github/workflows/ci-cd.yml
-+++@@ -136,7 +136,7 @@ jobs:
-+++             --cov=tools/scripts \
-+++             --cov-report=xml \
-+++             --cov-report=term-missing \
-+++-            --cov-fail-under=64
-++++            --cov-fail-under=65
-+++
-+++       - name: Upload coverage
-+++         uses: codecov/codecov-action@v4
-+++diff --git a/.mise...
 
 ---
 

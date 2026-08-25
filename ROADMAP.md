@@ -12,7 +12,7 @@
 
 ---
 
-## 当前状态 (2026-08-04)
+## 当前状态 (2026-08-25)
 
 ### ✅ 已完成
 - [x] **核心方法论文档** - docs/ 下 markdown 数量动态增长（2026-08-24 清点 261 篇；以 `find docs -name "*.md" | wc -l` 实时为准，详见 [声称审计](docs/governance/roadmap-claims-audit.md)）
@@ -26,7 +26,10 @@
 - [x] **治理规范** - 26 语言 + 9 框架 + 3 领域 = 38 份规范
 - [x] **能力等级模型** - L1-L5 五级能力定义
 - [x] **增强检索** - BM25 算法 + 同义词扩展 + 协同过滤 + 向量 RAG
-- [x] **测试覆盖率** - 以 CI 最近一次绿色运行为准（2026-08-25: 2470 用例收集、覆盖率门禁 65%）
+- [x] **测试覆盖率** - 以 CI 最近一次绿色运行为准（2026-08-25: 2640 用例收集、覆盖率门禁 65%）
+- [x] **多语言规则引擎** - 解析器 5 语言 (Python/JS/Go/Rust/Java/TS) + 分层规则 12 语言 + 依赖解析 9 生态 + 源码知识索引 16 扩展名
+- [x] **ADG Bootstrap** - 一键跨项目移植 (探测→复制→适配→生成→注入)，7 轮端到端实测通过
+- [x] **Jcode 钩子集成** - pre_tool 门禁 (exit 2 阻断+反馈回传) + post_tool 异步检查，fail-open 设计
 
 ### ✅ 已完成
 - [x] **内容完善** - 超额完成目标 200 篇（2026-08-24: 261 篇）
@@ -232,6 +235,10 @@
 - [x] Justfile 统一命令入口 + .markdownlint.json + requirements-lock.txt
 - [x] 文档代码片段消毒 mock sk- API keys (防 secret scanning 误报)
 - [x] ai_quality_gate 规则自引用假阳性修复 (noqa 注解)
+- [x] Go/Rust 真实提取 + Java/TypeScript tree-sitter 解析器，PARSER_REGISTRY 达 5 语言
+- [x] 分层规则扩展至 12 语言 (kotlin/csharp/ruby/php/swift/cpp 等) + 供应链依赖解析 9 生态
+- [x] ADG Bootstrap 一键移植脚本 + adg_cli exclude 配置合并
+- [x] Jcode pre/post tool 钩子集成 + Java 集成测试豁免 + 规则缓存键失效缺陷修复
 - [ ] 剩余: 发布 v2.4.0 + 社区里程碑
 
 ---

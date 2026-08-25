@@ -28,7 +28,7 @@
 2. **coverage.xml 报告路径错位**：class filename 无 `tools/` 前缀（如 `scripts/foo.py`），CI 的 XML 解析恰好兼容但本地分析工具按 `tools/` 过滤会得 0 模块。低危但易误导。
 
 ### B. 死代码与孤儿（P0 清理项)
-3. **孤儿子包 2 个**：`tools/chat_integration`（340 行）、`tools/fix_engine`（276 行）——无 CLI 入口、无主代码引用。另有 `auto_fix.py.bak` 遗留。
+3. **【已更正 2026-08-25】**初判 chat_integration/fix_engine 为孤儿不准确：两者均有测试(test_adg_new_modules.py)；fix_engine 另被 rules_engine/auto_fix.py 读取 fixes.yml。真实问题是双轨：notify.py 自带 slack/dingtalk 实现与 chat_integration 重叠 → 已统一复用。auto_fix.py.bak 已删除。
 4. **lsp 子包 0 测试引用**（511 行），CLI 有 lsp 命令但无测试保护。
 5. **examples 两项目近空壳**：ai-growth-vscode（1 个 ts 文件 0 测试）、ai-growth-slack（2 py 文件 1 测试）。
 

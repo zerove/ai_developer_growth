@@ -1,91 +1,41 @@
+"""ADG CLI notify command - 通知分发。
+
+统一复用 tools.chat_integration 的三平台 Notifier 实现，
+避免与库层双轨维护。CLI 层只做平台选择与错误提示。
+"""
+
 from __future__ import annotations
 
-import json
 import sys
 
 from tools.scripts.adg_cli.core import Issue
 
 
 def _send_slack_notification(webhook_url: str, issues: list[Issue], language: str, project: str) -> bool:
-    """Send issues notification to Slack."""
-    import time
-    import urllib.request
+    """Send issues notification to Slack (via chat_integration)."""
+    from tools.chat_integration import SlackNotifier
 
-    error_count = sum(1 for i in issues if i.severity == "error")
-    warning_count = sum(1 for i in issues if i.severity == "warning")
-    info_count = sum(1 for i in issues if i.severity == "info")
-
-    color = "#36a64f" if error_count == 0 else "#ff0000"
-
-    payload = {
-        "attachments": [
-            {
-                "color": color,
-                "title": f"ADG Governance Report - {project}",
-                "text": f"Language: {language}\nErrors: {error_count} | Warnings: {warning_count} | Info: {info_count}",
-                "fields": [
-                    {
-                        "title": "Status",
-                        "value": "✅ Passed" if error_count == 0 else "❌ Failed",
-                        "short": True,
-                    },
-                    {"title": "Total Issues", "value": str(len(issues)), "short": True},
-                ],
-                "footer": "ADG CLI",
-                "ts": int(time.time()),
-            }
-        ],
-    }
-
-    try:
-        data = json.dumps(payload).encode("utf-8")
-        req = urllib.request.Request(
-            webhook_url,
-            data=data,
-            headers={"Content-Type": "application/json"},
-        )
-        urllib.request.urlopen(req, timeout=10)  # nosec - webhook URL from config
-        return True
-    except Exception as e:
-        print(f"Warning: Slack notification failed: {e}", file=sys.stderr)
-        return False
+    ok = SlackNotifier(webhook_url).send_report(issues, language, project)
+    if not ok:
+        print("Warning: Slack notification failed", file=sys.stderr)
+    return ok
 
 
 def _send_dingtalk_notification(webhook_url: str, issues: list[Issue], language: str, project: str) -> bool:
-    """Send issues notification to DingTalk."""
-    import urllib.request
+    """Send issues notification to DingTalk (via chat_integration)."""
+    from tools.chat_integration import DingTalkNotifier
 
-    error_count = sum(1 for i in issues if i.severity == "error")
-    warning_count = sum(1 for i in issues if i.severity == "warning")
-    info_count = sum(1 for i in issues if i.severity == "info")
+    ok = DingTalkNotifier(webhook_url).send_report(issues, language, project)
+    if not ok:
+        print("Warning: DingTalk notification failed", file=sys.stderr)
+    return ok
 
-    status = "✅ 通过" if error_count == 0 else "❌ 失败"
 
-    payload = {
-        "msgtype": "markdown",
-        "markdown": {
-            "title": f"ADG 治理报告 - {project}",
-            "text": f"## ADG 治理报告\n\n"
-            f"**项目**: {project}\n"
-            f"**语言**: {language}\n"
-            f"**状态**: {status}\n\n"
-            f"---\n\n"
-            f"**错误**: {error_count}\n"
-            f"**警告**: {warning_count}\n"
-            f"**信息**: {info_count}\n"
-            f"**总计**: {len(issues)}\n",
-        },
-    }
+def _send_feishu_notification(webhook_url: str, issues: list[Issue], language: str, project: str) -> bool:
+    """Send issues notification to Feishu (via chat_integration)."""
+    from tools.chat_integration import FeishuNotifier
 
-    try:
-        data = json.dumps(payload).encode("utf-8")
-        req = urllib.request.Request(
-            webhook_url,
-            data=data,
-            headers={"Content-Type": "application/json"},
-        )
-        urllib.request.urlopen(req, timeout=10)  # nosec - webhook URL from config
-        return True
-    except Exception as e:
-        print(f"Warning: DingTalk notification failed: {e}", file=sys.stderr)
-        return False
+    ok = FeishuNotifier(webhook_url).send_report(issues, language, project)
+    if not ok:
+        print("Warning: Feishu notification failed", file=sys.stderr)
+    return ok

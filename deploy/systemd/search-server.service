@@ -1,0 +1,14 @@
+[Unit]
+Description=ADG knowledge search API server (ai_developer_growth)
+After=network.target
+
+[Service]
+Type=simple
+WorkingDirectory=%h/dev/ai_developer_growth
+ExecStart=%h/.local/share/mise/installs/python/3.14/bin/python3 %h/dev/ai_developer_growth/scripts/search-server.py
+Restart=on-failure
+RestartSec=5
+# 端口 8001, 健康检查: curl http://127.0.0.1:8001/api/health
+
+[Install]
+WantedBy=default.target

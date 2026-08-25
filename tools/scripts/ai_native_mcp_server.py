@@ -108,52 +108,66 @@ class AINativeMCPServer:
     def _rpc_error(req_id: object, code: int, message: str) -> dict[str, object]:
         return {"jsonrpc": "2.0", "id": req_id, "error": {"code": code, "message": message}}
 
+    def _tool_semantic_graph(self, arguments: dict[str, object]) -> dict[str, object]:
+        symbol = arguments.get("symbol", "")
+        graph_path = self.root_dir / ".semantic_graph.json"
+        if not graph_path.exists():
+            return {"status": "error", "message": "Semantic graph not built yet."}
+        data = json.loads(graph_path.read_text(encoding="utf-8"))
+        matches = [v for k, v in data.items() if str(symbol) in k]
+        return {"status": "success", "matches": matches[:10]}
+
+    def _tool_knowledge_search(self, arguments: dict[str, object]) -> dict[str, object]:
+        from tools.scripts.search.tfidf_engine import EnhancedTFIDF
+
+        query = str(arguments.get("query", "")).strip()
+        if not query:
+            return {"status": "error", "message": "missing 'query' argument"}
+        try:
+            raw_limit = arguments.get("limit", 5)
+            limit = min(max(int(raw_limit), 1), 20) if isinstance(raw_limit, (int, str, float)) else 5
+        except (TypeError, ValueError):
+            limit = 5
+        index = self._get_search_index()
+        assert isinstance(index, EnhancedTFIDF)
+        hits = index.search(query, top_k=limit)
+        return {
+            "status": "success",
+            "total": len(hits),
+            "results": [
+                {
+                    "id": h.doc.id,
+                    "title": h.doc.title,
+                    "snippet": h.snippet[:200],
+                    "score": round(h.score, 4),
+                    "category": h.doc.category,
+                    "path": f"docs/{h.doc.id.replace('_', '/')}.md",
+                }
+                for h in hits
+            ],
+        }
+
+    def _tool_architecture_guard(self, arguments: dict[str, object]) -> dict[str, object]:
+        from tools.scripts.architecture_drift_guard import ArchitectureDriftGuard
+
+        guard = ArchitectureDriftGuard(self.root_dir)
+        violations = guard.check_layering()
+        return {
+            "status": "success",
+            "violations": violations,
+            "scanned_languages": guard.scanned_languages,
+            "unsupported_languages": guard.unsupported_languages,
+        }
+
     def handle_tool_call(self, tool_name: str | None, arguments: dict[str, object]) -> dict[str, object]:
         if tool_name == "list_tools":
             return {"status": "success", "tools": TOOL_REGISTRY}
         elif tool_name == "query_semantic_graph":
-            symbol = arguments.get("symbol", "")
-            graph_path = self.root_dir / ".semantic_graph.json"
-            if not graph_path.exists():
-                return {"status": "error", "message": "Semantic graph not built yet."}
-            data = json.loads(graph_path.read_text(encoding="utf-8"))
-            matches = [v for k, v in data.items() if symbol in k]
-            return {"status": "success", "matches": matches[:10]}
+            return self._tool_semantic_graph(arguments)
         elif tool_name == "knowledge_search":
-            from tools.scripts.search.tfidf_engine import EnhancedTFIDF
-
-            query = str(arguments.get("query", "")).strip()
-            if not query:
-                return {"status": "error", "message": "missing 'query' argument"}
-            try:
-                raw_limit = arguments.get("limit", 5)
-                limit = min(max(int(raw_limit), 1), 20) if isinstance(raw_limit, (int, str, float)) else 5
-            except (TypeError, ValueError):
-                limit = 5
-            index = self._get_search_index()
-            assert isinstance(index, EnhancedTFIDF)
-            hits = index.search(query, top_k=limit)
-            return {
-                "status": "success",
-                "total": len(hits),
-                "results": [
-                    {
-                        "id": h.doc.id,
-                        "title": h.doc.title,
-                        "snippet": h.snippet[:200],
-                        "score": round(h.score, 4),
-                        "category": h.doc.category,
-                        "path": f"docs/{h.doc.id.replace('_', '/')}.md",
-                    }
-                    for h in hits
-                ],
-            }
+            return self._tool_knowledge_search(arguments)
         elif tool_name == "run_architecture_guard":
-            from tools.scripts.architecture_drift_guard import ArchitectureDriftGuard
-
-            guard = ArchitectureDriftGuard(self.root_dir)
-            violations = guard.check_layering()
-            return {"status": "success", "violations": violations}
+            return self._tool_architecture_guard(arguments)
         else:
             return {"status": "error", "message": f"Unknown tool: {tool_name}"}
 

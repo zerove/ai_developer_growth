@@ -47,9 +47,12 @@ warnings.filterwarnings("ignore", category=FutureWarning, module="tree_sitter")
 # Try to import tree-sitter and language packages (tree-sitter 0.26+ API)
 # Use individual language packages instead of tree_sitter_languages
 try:
+    import tree_sitter_cpp
     import tree_sitter_go
+    import tree_sitter_java
     import tree_sitter_javascript
     import tree_sitter_python
+    import tree_sitter_ruby
     import tree_sitter_rust
     import tree_sitter_typescript
     from tree_sitter import Language, Parser
@@ -240,6 +243,7 @@ class ASTParser:
         "go",
         "java",
         "ruby",
+        "cpp",
     }
     # 类级共享缓存：所有实例复用同一批 language parser
     _PARSER_CACHE: ClassVar[dict[str, Any]] = {}
@@ -261,6 +265,9 @@ class ASTParser:
                     "typescript": tree_sitter_typescript,
                     "rust": tree_sitter_rust,
                     "go": tree_sitter_go,
+                    "java": tree_sitter_java,
+                    "ruby": tree_sitter_ruby,
+                    "cpp": tree_sitter_cpp,
                 }
                 for lang in cls.SUPPORTED_LANGUAGES:
                     if lang in lang_modules:

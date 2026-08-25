@@ -72,6 +72,8 @@ def detect_language(dirpath: Path) -> dict[str, Any]:
             return result
 
     # 2. Count file extensions
+    # 注意：只对 target 内部的相对路径做 SKIP_DIRS 过滤，
+    # 避免用户把项目放在名为 tmp/dist 等目录下时整个项目被静默跳过。
     counter: Counter[str] = Counter()
     count = 0
     for filepath in dirpath.rglob("*"):
@@ -79,7 +81,11 @@ def detect_language(dirpath: Path) -> dict[str, Any]:
             break
         if not filepath.is_file():
             continue
-        if any(part in SKIP_DIRS for part in filepath.parts):
+        try:
+            rel_parts = filepath.relative_to(dirpath).parts[:-1]
+        except ValueError:
+            rel_parts = ()
+        if any(part in SKIP_DIRS for part in rel_parts):
             continue
         suffix = filepath.suffix.lower()
         if suffix in EXTENSION_MAP:

@@ -1,3 +1,382 @@
+## 更新记录: 2026-08-25 10:32:38
+
+### 任务
+Git 变更同步
+
+### 变更摘要
+diff --git a/CHANGELOG.md b/CHANGELOG.md
+index 4126bb7..1fd8913 100644
+--- a/CHANGELOG.md
++++ b/CHANGELOG.md
+@@ -4,7 +4,12 @@ All notable changes to the AI Developer Growth project.
+
+ ## [Unreleased]
+
+-### 质量门禁全绿 (v2.4.0 预览)
++### 第三轮改进进行中
++- docs/ROADMAP.md 归档化，消除与根目录 ROADMAP.md 的双源漂移
++
++## [2.4.0] - 2026-08-25
++
++### 质量门禁全绿
+
+ ### 核心质量修复
+ - **ruff 全项目清零**：主项目 120 字符 + examples 88 字符配置兼容，无 lint 错误
+diff --git a/CONTEXT.md b/CONTEXT.md
+index 1000f04..b74fc27 100644
+--- a/CONTEXT.md
++++ b/CONTEXT.md
+@@ -1,52 +1,407 @@
+-## 更新记录: 2026-08-25 09:48:50
++## 更新记录: 2026-08-25 10:31:57
+
+ ### 任务
+ Git 变更同步
+
+ ### 变更摘要
+-diff --git a/.github/workflows/mutation-testing.yml b/.github/workflows/mutation-testing.yml
+-index 0774805..c7d7adf 100644
+---- a/.github/workflows/mutation-testing.yml
+-+++ b/.github/workflows/mutation-testing.yml
+-@@ -30,7 +30,7 @@ jobs:
+-       - name: Install dependencies
+-         run: |
+-           pip install -e .[dev]
+--          pip install mutmut>=2.4.0
+-+          pip install mutmut>=2.4.0,<3
++diff --git a/CHANGELOG.md b/CHANGELOG.md
++index 4126bb7..1fd8913 100644
++--- a/CHANGELOG.md
+++++ b/CHANGELOG.md
++@@ -4,7 +4,12 @@ All notable changes to the AI Developer Growth project.
+
+-       - name: Run mutation testing
+-         run: |
++ ## [Unreleased]
++
++-### 质量门禁全绿 (v2.4.0 预览)
+++### 第三轮改进进行中
+++- docs/ROADMAP.md 归档化，消除与根目录 ROADMAP.md 的双源漂移
+++
+++## [2.4.0] - 2026-08-25
+++
+++### 质量门禁全绿
++
++ ### 核心质量修复
++ - **ruff 全项目清零**：主项目 120 字符 + examples 88 字符配置兼容，无 lint 错误
+ diff --git a/CONTEXT.md b/CONTEXT.md
+-index 33e1b5c..e8be9cb 100644
++index 1000f04..1ae21a9 100644
+ --- a/CONTEXT.md
+ +++ b/CONTEXT.md
+-@@ -1,3 +1,487 @@
+-+## 更新记录: 2026-08-25 09:48:14
++@@ -1,28 +1,388 @@
++-## 更新记录: 2026-08-25 09:48:50
+++## 更新记录: 2026-08-25 10:24:54
++
++ ### 任务
++ Git 变更同步
++
++ ### 变更摘要
++-diff --git a/.github/workflows/mutation-testing.yml b/.github/workflows/mutation-testing.yml
++-index 0774805..c7d7adf 100644
++---- a/.github/workflows/mutation-testing.yml
++-+++ b/.github/workflows/m...
+
+---
+
+## 更新记录: 2026-08-25 10:31:57
+
+### 任务
+Git 变更同步
+
+### 变更摘要
+diff --git a/CHANGELOG.md b/CHANGELOG.md
+index 4126bb7..1fd8913 100644
+--- a/CHANGELOG.md
++++ b/CHANGELOG.md
+@@ -4,7 +4,12 @@ All notable changes to the AI Developer Growth project.
+
+ ## [Unreleased]
+
+-### 质量门禁全绿 (v2.4.0 预览)
++### 第三轮改进进行中
++- docs/ROADMAP.md 归档化，消除与根目录 ROADMAP.md 的双源漂移
++
++## [2.4.0] - 2026-08-25
++
++### 质量门禁全绿
+
+ ### 核心质量修复
+ - **ruff 全项目清零**：主项目 120 字符 + examples 88 字符配置兼容，无 lint 错误
+diff --git a/CONTEXT.md b/CONTEXT.md
+index 1000f04..1ae21a9 100644
+--- a/CONTEXT.md
++++ b/CONTEXT.md
+@@ -1,28 +1,388 @@
+-## 更新记录: 2026-08-25 09:48:50
++## 更新记录: 2026-08-25 10:24:54
+
+ ### 任务
+ Git 变更同步
+
+ ### 变更摘要
+-diff --git a/.github/workflows/mutation-testing.yml b/.github/workflows/mutation-testing.yml
+-index 0774805..c7d7adf 100644
+---- a/.github/workflows/mutation-testing.yml
+-+++ b/.github/workflows/mutation-testing.yml
+-@@ -30,7 +30,7 @@ jobs:
+-       - name: Install dependencies
+-         run: |
+-           pip install -e .[dev]
+--          pip install mutmut>=2.4.0
+-+          pip install mutmut>=2.4.0,<3
++diff --git a/CHANGELOG.md b/CHANGELOG.md
++index 4126bb7..1fd8913 100644
++--- a/CHANGELOG.md
+++++ b/CHANGELOG.md
++@@ -4,7 +4,12 @@ All notable changes to the AI Developer Growth project.
+
+-       - name: Run mutation testing
+-         run: |
++ ## [Unreleased]
++
++-### 质量门禁全绿 (v2.4.0 预览)
+++### 第三轮改进进行中
+++- docs/ROADMAP.md 归档化，消除与根目录 ROADMAP.md 的双源漂移
+++
+++## [2.4.0] - 2026-08-25
+++
+++### 质量门禁全绿
++
++ ### 核心质量修复
++ - **ruff 全项目清零**：主项目 120 字符 + examples 88 字符配置兼容，无 lint 错误
+ diff --git a/CONTEXT.md b/CONTEXT.md
+-index 33e1b5c..e8be9cb 100644
++index 1000f04..fbef8df 100644
+ --- a/CONTEXT.md
+ +++ b/CONTEXT.md
+-@@ -1,3 +1,487 @@
+-+## 更新记录: 2026-08-25 09:48:14
++@@ -1,3 +1,354 @@
+++## 更新记录: 2026-08-25 10:22:05
+++
+++### 任务
+++Git 变更同步
+++
+++### 变更摘要
+++diff --git a/CHANGELOG.md b/CHANGELOG.md
+++index 4126bb7..1fd8913 100644
+++--- a/CHANGELOG.md
++++++ b/CHANGELOG.md
+++@@ -4,7 +4,12 @@ All notable changes to the AI Developer Growth project.
+++
+++ ## [Unreleased]
+++
+++-### 质量门禁全绿 ...
+
+---
+
+## 更新记录: 2026-08-25 10:24:54
+
+### 任务
+Git 变更同步
+
+### 变更摘要
+diff --git a/CHANGELOG.md b/CHANGELOG.md
+index 4126bb7..1fd8913 100644
+--- a/CHANGELOG.md
++++ b/CHANGELOG.md
+@@ -4,7 +4,12 @@ All notable changes to the AI Developer Growth project.
+
+ ## [Unreleased]
+
+-### 质量门禁全绿 (v2.4.0 预览)
++### 第三轮改进进行中
++- docs/ROADMAP.md 归档化，消除与根目录 ROADMAP.md 的双源漂移
++
++## [2.4.0] - 2026-08-25
++
++### 质量门禁全绿
+
+ ### 核心质量修复
+ - **ruff 全项目清零**：主项目 120 字符 + examples 88 字符配置兼容，无 lint 错误
+diff --git a/CONTEXT.md b/CONTEXT.md
+index 1000f04..fbef8df 100644
+--- a/CONTEXT.md
++++ b/CONTEXT.md
+@@ -1,3 +1,354 @@
++## 更新记录: 2026-08-25 10:22:05
++
++### 任务
++Git 变更同步
++
++### 变更摘要
++diff --git a/CHANGELOG.md b/CHANGELOG.md
++index 4126bb7..1fd8913 100644
++--- a/CHANGELOG.md
+++++ b/CHANGELOG.md
++@@ -4,7 +4,12 @@ All notable changes to the AI Developer Growth project.
++
++ ## [Unreleased]
++
++-### 质量门禁全绿 (v2.4.0 预览)
+++### 第三轮改进进行中
+++- docs/ROADMAP.md 归档化，消除与根目录 ROADMAP.md 的双源漂移
+++
+++## [2.4.0] - 2026-08-25
+++
+++### 质量门禁全绿
++
++ ### 核心质量修复
++ - **ruff 全项目清零**：主项目 120 字符 + examples 88 字符配置兼容，无 lint 错误
++diff --git a/CONTEXT.md b/CONTEXT.md
++index 1000f04..5013473 100644
++--- a/CONTEXT.md
+++++ b/CONTEXT.md
++@@ -1,3 +1,258 @@
+++## 更新记录: 2026-08-25 10:19:04
+++
+++### 任务
+++Git 变更同步
+++
+++### 变更摘要
+++diff --git a/CONTEXT.md b/CONTEXT.md
+++index cd61d1f..39fd723 100644
+++--- a/CONTEXT.md
++++++ b/CONTEXT.md
+++@@ -1,3 +1,314 @@
++++## 更新记录: 2026-08-25 10:17:23
++++
++++### 任务
++++Git 变更同步
++++
++++### 变更摘要
++++diff --git a/CONTEXT.md b/CONTEXT.md
++++index cd61d1f..c0ac481 100644
++++--- a/CONTEXT.md
+++++++ b/CONTEXT.md
++++@@ -1,3 +1,230 @@
+++++## 更新记录: 2026-08-25 10:13:49
+++++
+++++### 任务
+++++Git 变更同步
+++++
+++++### 变更摘要
+++++diff --git a/CONTEXT.md b/CONTEXT.md
+++++index cd61d1f..1000f04 100644
+++++--- a/CONTEXT.md
++++++++ b/CONTEXT.md
+++++@@ -1,3 +1,149 @@
++++++## 更新记录: 2026-08-25 09:48:50
++++++
++++++### 任务
++++++Git 变更同步
++++++
++++++### 变更摘要
++++++diff --git a/.github/workflows/mutation-testing.yml b/.github/workflows/mutation-testing.yml
++++++index 0774805..c7d7adf 100644
++++++--- a/.github/workflows/mu...
+
+---
+
+## 更新记录: 2026-08-25 10:22:05
+
+### 任务
+Git 变更同步
+
+### 变更摘要
+diff --git a/CHANGELOG.md b/CHANGELOG.md
+index 4126bb7..1fd8913 100644
+--- a/CHANGELOG.md
++++ b/CHANGELOG.md
+@@ -4,7 +4,12 @@ All notable changes to the AI Developer Growth project.
+
+ ## [Unreleased]
+
+-### 质量门禁全绿 (v2.4.0 预览)
++### 第三轮改进进行中
++- docs/ROADMAP.md 归档化，消除与根目录 ROADMAP.md 的双源漂移
++
++## [2.4.0] - 2026-08-25
++
++### 质量门禁全绿
+
+ ### 核心质量修复
+ - **ruff 全项目清零**：主项目 120 字符 + examples 88 字符配置兼容，无 lint 错误
+diff --git a/CONTEXT.md b/CONTEXT.md
+index 1000f04..5013473 100644
+--- a/CONTEXT.md
++++ b/CONTEXT.md
+@@ -1,3 +1,258 @@
++## 更新记录: 2026-08-25 10:19:04
++
++### 任务
++Git 变更同步
++
++### 变更摘要
++diff --git a/CONTEXT.md b/CONTEXT.md
++index cd61d1f..39fd723 100644
++--- a/CONTEXT.md
+++++ b/CONTEXT.md
++@@ -1,3 +1,314 @@
+++## 更新记录: 2026-08-25 10:17:23
+++
+++### 任务
+++Git 变更同步
+++
+++### 变更摘要
+++diff --git a/CONTEXT.md b/CONTEXT.md
+++index cd61d1f..c0ac481 100644
+++--- a/CONTEXT.md
++++++ b/CONTEXT.md
+++@@ -1,3 +1,230 @@
++++## 更新记录: 2026-08-25 10:13:49
++++
++++### 任务
++++Git 变更同步
++++
++++### 变更摘要
++++diff --git a/CONTEXT.md b/CONTEXT.md
++++index cd61d1f..1000f04 100644
++++--- a/CONTEXT.md
+++++++ b/CONTEXT.md
++++@@ -1,3 +1,149 @@
+++++## 更新记录: 2026-08-25 09:48:50
+++++
+++++### 任务
+++++Git 变更同步
+++++
+++++### 变更摘要
+++++diff --git a/.github/workflows/mutation-testing.yml b/.github/workflows/mutation-testing.yml
+++++index 0774805..c7d7adf 100644
+++++--- a/.github/workflows/mutation-testing.yml
++++++++ b/.github/workflows/mutation-testing.yml
+++++@@ -30,7 +30,7 @@ jobs:
+++++       - name: Install dependencies
+++++         run: |
+++++           pip install -e .[dev]
+++++-          pip install mutmut>=2.4.0
++++++          pip install mutmut>=2.4.0,<3
+++++
+++++       - name: Run mutation testing
+++++         run: |
+++++diff --git a/CONTEXT.md b/CONTEXT.md
+++++index 33e1b5c..e8be9cb 100644
+++++--- a/CONTEXT.md
++++++++ b/CONTEXT.md
+++++@@ -1,3 +1,487 @@
++++++## 更新记录: 2026-08-25 09:48:14
++++++
++++++### 任务
++++++Git 变更同步
++++++
++++++### 变更摘要
++++++diff --git a/.github/workflows/mutation-testing.yml b/.github/workflows/m...
+
+---
+
 ## 更新记录: 2026-08-25 10:19:04
 
 ### 任务
@@ -3002,302 +3381,6 @@ index 7c8d7c8..64b2017 100644
 -    },
      "tools/scripts/rules_engine/hallucination_detector.py": {
        "structure:函数超过 50 行 (实际 56 ...
-
----
-
-## 更新记录: 2026-08-24 20:40:54
-
-### 任务
-Git 变更同步
-
-### 变更摘要
-diff --git a/.jcode/baseline.json b/.jcode/baseline.json
-index 3f61ca3..64b2017 100644
---- a/.jcode/baseline.json
-+++ b/.jcode/baseline.json
-@@ -17,9 +17,6 @@
-     ".jcode/scripts/governance-auditor.py": {
-       "structure:函数超过 50 行 (实际 54 行)": 1
-     },
--    ".jcode/scripts/multi_agent_orch.py": {
--      "type:使用 Any 类型": 1
--    },
-     ".jcode/scripts/jcode-init.py": {
-       "structure:函数超过 50 行 (实际 110 行)": 1
-     },
-@@ -27,10 +24,6 @@
-       "structure:函数超过 50 行 (实际 59 行)": 1,
-       "structure:函数超过 50 行 (实际 55 行)": 1
-     },
--    "tools/scripts/sync_issues.py": {
--      "type:使用 Any 类型": 1,
--      "structure:函数超过 50 行 (实际 72 行)": 1
--    },
-     "tools/scripts/dependency_graph.py": {
-       "structure:函数超过 50 行 (实际 54 行)": 1
-     },
-@@ -38,18 +31,6 @@
-       "structure:函数超过 50 行 (实际 57 行)": 1,
-       "structure:函数超过 50 行 (实际 56 行)": 1
-     },
--    "tools/scripts/supply_chain.py": {
--      "type:使用 Any 类型": 1,
--      "structure:函数超过 50 行 (实际 51 行)": 2,
--      "structure:函数超过 50 行 (实际 53 行)": 1
--    },
--    "tools/scripts/validate_agent_definition.py": {
--      "structure:函数超过 50 行 (实际 73 行)": 1,
--      "structure:函数超过 50 行 (实际 56 行)": 1
--    },
--    "tools/scripts/detect_language.py": {
--      "structure:函数超过 50 行 (实际 72 行)": 1
--    },
-     "tools/scripts/rule_registry.py": {
-       "structure:函数超过 50 行 (实际 59 行)": 1
-     },
-@@ -57,23 +38,16 @@
-       "structure:函数超过 50 行 (实际 55 行)": 1
-     },
-     "tools/scripts/config/loader.py": {
--      "type:使用 Any 类型": 1,
-       "structure:函数超过 50 行 (实际 61 行)": 1
-     },
-     "tools/scripts/rules_engine/ast_fixer.py": {
-       "structure:函数超过 50 行 (实际 52 行)": 1
-     },
--    "tools/scripts/rules_engine/ast_parser.py": {
--      "structure:函数超过 50 行 (实际 64 行)": 1
--    },
-     "tools/scripts/rules_engine/hallucination_detector.py": {
-       "structure:函数超过 50 行 (实际 56 行)": 1
-     },
-     "tools/scripts/rules/loader.py": {
-       "structure:函数超过 50 行 (实际 53 行)": 1
--    },
--    "tools/scripts/hooks/pre_push.py": {
--      "struc...
-
----
-
-## 更新记录: 2026-08-24 20:38:59
-
-### 任务
-Git 变更同步
-
-### 变更摘要
-diff --git a/.jcode/baseline.json b/.jcode/baseline.json
-index 3f61ca3..64b2017 100644
---- a/.jcode/baseline.json
-+++ b/.jcode/baseline.json
-@@ -17,9 +17,6 @@
-     ".jcode/scripts/governance-auditor.py": {
-       "structure:函数超过 50 行 (实际 54 行)": 1
-     },
--    ".jcode/scripts/multi_agent_orch.py": {
--      "type:使用 Any 类型": 1
--    },
-     ".jcode/scripts/jcode-init.py": {
-       "structure:函数超过 50 行 (实际 110 行)": 1
-     },
-@@ -27,10 +24,6 @@
-       "structure:函数超过 50 行 (实际 59 行)": 1,
-       "structure:函数超过 50 行 (实际 55 行)": 1
-     },
--    "tools/scripts/sync_issues.py": {
--      "type:使用 Any 类型": 1,
--      "structure:函数超过 50 行 (实际 72 行)": 1
--    },
-     "tools/scripts/dependency_graph.py": {
-       "structure:函数超过 50 行 (实际 54 行)": 1
-     },
-@@ -38,18 +31,6 @@
-       "structure:函数超过 50 行 (实际 57 行)": 1,
-       "structure:函数超过 50 行 (实际 56 行)": 1
-     },
--    "tools/scripts/supply_chain.py": {
--      "type:使用 Any 类型": 1,
--      "structure:函数超过 50 行 (实际 51 行)": 2,
--      "structure:函数超过 50 行 (实际 53 行)": 1
--    },
--    "tools/scripts/validate_agent_definition.py": {
--      "structure:函数超过 50 行 (实际 73 行)": 1,
--      "structure:函数超过 50 行 (实际 56 行)": 1
--    },
--    "tools/scripts/detect_language.py": {
--      "structure:函数超过 50 行 (实际 72 行)": 1
--    },
-     "tools/scripts/rule_registry.py": {
-       "structure:函数超过 50 行 (实际 59 行)": 1
-     },
-@@ -57,23 +38,16 @@
-       "structure:函数超过 50 行 (实际 55 行)": 1
-     },
-     "tools/scripts/config/loader.py": {
--      "type:使用 Any 类型": 1,
-       "structure:函数超过 50 行 (实际 61 行)": 1
-     },
-     "tools/scripts/rules_engine/ast_fixer.py": {
-       "structure:函数超过 50 行 (实际 52 行)": 1
-     },
--    "tools/scripts/rules_engine/ast_parser.py": {
--      "structure:函数超过 50 行 (实际 64 行)": 1
--    },
-     "tools/scripts/rules_engine/hallucination_detector.py": {
-       "structure:函数超过 50 行 (实际 56 行)": 1
-     },
-     "tools/scripts/rules/loader.py": {
-       "structure:函数超过 50 行 (实际 53 行)": 1
--    },
--    "tools/scripts/hooks/pre_push.py": {
--      "struc...
-
----
-
-## 更新记录: 2026-08-24 20:36:29
-
-### 任务
-Git 变更同步
-
-### 变更摘要
-diff --git a/.jcode/baseline.json b/.jcode/baseline.json
-index 3f61ca3..64b2017 100644
---- a/.jcode/baseline.json
-+++ b/.jcode/baseline.json
-@@ -17,9 +17,6 @@
-     ".jcode/scripts/governance-auditor.py": {
-       "structure:函数超过 50 行 (实际 54 行)": 1
-     },
--    ".jcode/scripts/multi_agent_orch.py": {
--      "type:使用 Any 类型": 1
--    },
-     ".jcode/scripts/jcode-init.py": {
-       "structure:函数超过 50 行 (实际 110 行)": 1
-     },
-@@ -27,10 +24,6 @@
-       "structure:函数超过 50 行 (实际 59 行)": 1,
-       "structure:函数超过 50 行 (实际 55 行)": 1
-     },
--    "tools/scripts/sync_issues.py": {
--      "type:使用 Any 类型": 1,
--      "structure:函数超过 50 行 (实际 72 行)": 1
--    },
-     "tools/scripts/dependency_graph.py": {
-       "structure:函数超过 50 行 (实际 54 行)": 1
-     },
-@@ -38,18 +31,6 @@
-       "structure:函数超过 50 行 (实际 57 行)": 1,
-       "structure:函数超过 50 行 (实际 56 行)": 1
-     },
--    "tools/scripts/supply_chain.py": {
--      "type:使用 Any 类型": 1,
--      "structure:函数超过 50 行 (实际 51 行)": 2,
--      "structure:函数超过 50 行 (实际 53 行)": 1
--    },
--    "tools/scripts/validate_agent_definition.py": {
--      "structure:函数超过 50 行 (实际 73 行)": 1,
--      "structure:函数超过 50 行 (实际 56 行)": 1
--    },
--    "tools/scripts/detect_language.py": {
--      "structure:函数超过 50 行 (实际 72 行)": 1
--    },
-     "tools/scripts/rule_registry.py": {
-       "structure:函数超过 50 行 (实际 59 行)": 1
-     },
-@@ -57,23 +38,16 @@
-       "structure:函数超过 50 行 (实际 55 行)": 1
-     },
-     "tools/scripts/config/loader.py": {
--      "type:使用 Any 类型": 1,
-       "structure:函数超过 50 行 (实际 61 行)": 1
-     },
-     "tools/scripts/rules_engine/ast_fixer.py": {
-       "structure:函数超过 50 行 (实际 52 行)": 1
-     },
--    "tools/scripts/rules_engine/ast_parser.py": {
--      "structure:函数超过 50 行 (实际 64 行)": 1
--    },
-     "tools/scripts/rules_engine/hallucination_detector.py": {
-       "structure:函数超过 50 行 (实际 56 行)": 1
-     },
-     "tools/scripts/rules/loader.py": {
-       "structure:函数超过 50 行 (实际 53 行)": 1
--    },
--    "tools/scripts/hooks/pre_push.py": {
--      "struc...
-
----
-
-## 更新记录: 2026-08-24 20:35:10
-
-### 任务
-Git 变更同步
-
-### 变更摘要
-diff --git a/.jcode/baseline.json b/.jcode/baseline.json
-index 3f61ca3..64b2017 100644
---- a/.jcode/baseline.json
-+++ b/.jcode/baseline.json
-@@ -17,9 +17,6 @@
-     ".jcode/scripts/governance-auditor.py": {
-       "structure:函数超过 50 行 (实际 54 行)": 1
-     },
--    ".jcode/scripts/multi_agent_orch.py": {
--      "type:使用 Any 类型": 1
--    },
-     ".jcode/scripts/jcode-init.py": {
-       "structure:函数超过 50 行 (实际 110 行)": 1
-     },
-@@ -27,10 +24,6 @@
-       "structure:函数超过 50 行 (实际 59 行)": 1,
-       "structure:函数超过 50 行 (实际 55 行)": 1
-     },
--    "tools/scripts/sync_issues.py": {
--      "type:使用 Any 类型": 1,
--      "structure:函数超过 50 行 (实际 72 行)": 1
--    },
-     "tools/scripts/dependency_graph.py": {
-       "structure:函数超过 50 行 (实际 54 行)": 1
-     },
-@@ -38,18 +31,6 @@
-       "structure:函数超过 50 行 (实际 57 行)": 1,
-       "structure:函数超过 50 行 (实际 56 行)": 1
-     },
--    "tools/scripts/supply_chain.py": {
--      "type:使用 Any 类型": 1,
--      "structure:函数超过 50 行 (实际 51 行)": 2,
--      "structure:函数超过 50 行 (实际 53 行)": 1
--    },
--    "tools/scripts/validate_agent_definition.py": {
--      "structure:函数超过 50 行 (实际 73 行)": 1,
--      "structure:函数超过 50 行 (实际 56 行)": 1
--    },
--    "tools/scripts/detect_language.py": {
--      "structure:函数超过 50 行 (实际 72 行)": 1
--    },
-     "tools/scripts/rule_registry.py": {
-       "structure:函数超过 50 行 (实际 59 行)": 1
-     },
-@@ -57,23 +38,16 @@
-       "structure:函数超过 50 行 (实际 55 行)": 1
-     },
-     "tools/scripts/config/loader.py": {
--      "type:使用 Any 类型": 1,
-       "structure:函数超过 50 行 (实际 61 行)": 1
-     },
-     "tools/scripts/rules_engine/ast_fixer.py": {
-       "structure:函数超过 50 行 (实际 52 行)": 1
-     },
--    "tools/scripts/rules_engine/ast_parser.py": {
--      "structure:函数超过 50 行 (实际 64 行)": 1
--    },
-     "tools/scripts/rules_engine/hallucination_detector.py": {
-       "structure:函数超过 50 行 (实际 56 行)": 1
-     },
-     "tools/scripts/rules/loader.py": {
-       "structure:函数超过 50 行 (实际 53 行)": 1
--    },
--    "tools/scripts/hooks/pre_push.py": {
--      "struc...
 
 ---
 

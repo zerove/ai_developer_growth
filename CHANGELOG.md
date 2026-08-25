@@ -4,7 +4,12 @@ All notable changes to the AI Developer Growth project.
 
 ## [Unreleased]
 
-### 质量门禁全绿 (v2.4.0 预览)
+### 第三轮改进进行中
+- docs/ROADMAP.md 归档化，消除与根目录 ROADMAP.md 的双源漂移
+
+## [2.4.0] - 2026-08-25
+
+### 质量门禁全绿
 
 ### 核心质量修复
 - **ruff 全项目清零**：主项目 120 字符 + examples 88 字符配置兼容，无 lint 错误

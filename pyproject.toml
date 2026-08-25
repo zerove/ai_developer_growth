@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "ai-developer-growth"
-version = "2.3.0"
+version = "2.4.0"
 description = "Open-source knowledge base for developer growth in the AI era"
 readme = "README.md"
 license = {text = "MIT"}

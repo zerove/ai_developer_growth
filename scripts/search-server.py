@@ -133,6 +133,25 @@ CODE_DOC_PATTERNS = {
 }
 
 
+def _extract_doc_lines(lines, prefixes):
+    """从文件行中提取并清洗注释文本。"""
+    doc_lines = []
+    for line in lines:
+        stripped = line.strip()
+        if any(stripped.startswith(pfx) for pfx in prefixes):
+            cleaned = stripped
+            for pfx in prefixes:
+                cleaned = cleaned.lstrip(pfx)
+            cleaned = cleaned.strip("/*").strip().rstrip("*/").strip()
+            doc_lines.append(cleaned)
+    return [ln for ln in doc_lines if len(ln) >= 10 and any(c.isalpha() for c in ln)]
+
+
+def _is_skipped(rel_parts, skip_dirs):
+    """判断路径的任一父目录是否命中跳过名单。"""
+    return any(part in skip_dirs for part in rel_parts)
+
+
 def extract_source_docs(source_dir, max_files=2000):
     """扫描源码文件中的 docstring/注释块，作为知识文档加入索引。
 
@@ -145,15 +164,13 @@ def extract_source_docs(source_dir, max_files=2000):
     scanned = 0
     skip_dirs = {".git", "node_modules", ".venv", "venv", "__pycache__", "dist", "build", "target"}
     for path in source_dir.rglob("*"):
-        if scanned >= max_files:
-            break
-        if not path.is_file():
+        if scanned >= max_files or not path.is_file():
             continue
         try:
             rel_parts = path.relative_to(source_dir).parts[:-1]
         except ValueError:
             rel_parts = ()
-        if any(part in skip_dirs for part in rel_parts):
+        if _is_skipped(rel_parts, skip_dirs):
             continue
         ext = path.suffix.lower()
         prefixes = CODE_DOC_PATTERNS.get(ext)
@@ -164,16 +181,7 @@ def extract_source_docs(source_dir, max_files=2000):
         except OSError:
             continue
         scanned += 1
-        doc_lines = []
-        for line in lines:
-            stripped = line.strip()
-            if any(stripped.startswith(pfx) for pfx in prefixes):
-                cleaned = stripped
-                for pfx in prefixes:
-                    cleaned = cleaned.lstrip(pfx)
-                cleaned = cleaned.strip("/*").strip().rstrip("*/").strip()
-                doc_lines.append(cleaned)
-        meaningful = [ln for ln in doc_lines if len(ln) >= 10 and any(c.isalpha() for c in ln)]
+        meaningful = _extract_doc_lines(lines, prefixes)
         if len(meaningful) < 3:
             continue
         rel = path.relative_to(source_dir)
@@ -191,6 +199,36 @@ def extract_source_docs(source_dir, max_files=2000):
     return documents
 
 
+def _parse_frontmatter(content, fallback_title):
+    """解析 markdown frontmatter，返回 (标题, 分类, 标签, 难度, 正文)。"""
+    title = fallback_title
+    category = ""
+    tags = []
+    difficulty = "初级"
+
+    if not content.startswith("---"):
+        return title, category, tags, difficulty, content
+
+    parts = content.split("---", 2)
+    if len(parts) >= 3:
+        for line in parts[1].strip().split("\n"):
+            if line.startswith("title:"):
+                title = line.split(":", 1)[1].strip().strip("\"'")
+            elif line.startswith("category:"):
+                category = line.split(":", 1)[1].strip().strip("\"'")
+            elif line.startswith("tags:"):
+                tags_str = line.split(":", 1)[1].strip()
+                if tags_str.startswith("[") and tags_str.endswith("]"):
+                    inner = tags_str[1:-1]
+                    tags = [t.strip().strip("\"'") for t in inner.split(",") if t.strip()]
+                else:
+                    tags = [t.strip() for t in tags_str.split(",") if t.strip()]
+            elif line.startswith("difficulty:"):
+                difficulty = line.split(":", 1)[1].strip().strip("\"'")
+        content = parts[2] if len(parts) >= 3 else content
+    return title, category, tags, difficulty, content
+
+
 def load_documents():
     """从 docs 目录加载文档"""
     documents = []
@@ -204,35 +242,8 @@ def load_documents():
                     with open(filepath, encoding="utf-8") as f:
                         content = f.read()
 
-                    # 解析 frontmatter
-                    title = file.replace(".md", "").replace("-", " ").title()
-                    category = ""
-                    tags = []
-                    difficulty = "初级"
-
-                    if content.startswith("---"):
-                        parts = content.split("---", 2)
-                        if len(parts) >= 3:
-                            frontmatter = parts[1]
-                            for line in frontmatter.strip().split("\n"):
-                                if line.startswith("title:"):
-                                    title = line.split(":", 1)[1].strip().strip("\"'")
-                                elif line.startswith("category:"):
-                                    category = line.split(":", 1)[1].strip().strip("\"'")
-                                elif line.startswith("tags:"):
-                                    tags_str = line.split(":", 1)[1].strip()
-                                    if tags_str.startswith("[") and tags_str.endswith("]"):
-                                        # YAML 内联数组: [A, B, C] -> 逐项去引号
-                                        inner = tags_str[1:-1]
-                                        tags = [t.strip().strip("\"'") for t in inner.split(",") if t.strip()]
-                                    else:
-                                        tags = [t.strip() for t in tags_str.split(",") if t.strip()]
-                                elif line.startswith("difficulty:"):
-                                    difficulty = line.split(":", 1)[1].strip().strip("\"'")
-
-                    # 移除 frontmatter 获取正文
-                    if content.startswith("---"):
-                        content = content.split("---", 2)[2] if len(content.split("---", 2)) >= 3 else content
+                    fallback_title = file.replace(".md", "").replace("-", " ").title()
+                    title, category, tags, difficulty, content = _parse_frontmatter(content, fallback_title)
 
                     rel_path = os.path.relpath(filepath, docs_dir)
                     doc_id = rel_path.replace(".md", "").replace("/", "_")

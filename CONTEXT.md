@@ -1,3 +1,97 @@
+## 更新记录: 2026-08-25 16:12:26
+
+### 任务
+Git 变更同步
+
+### 变更摘要
+diff --git a/CONTEXT.md b/CONTEXT.md
+index 0835011..8fe0e75 100644
+--- a/CONTEXT.md
++++ b/CONTEXT.md
+@@ -1,3 +1,92 @@
++## 更新记录: 2026-08-25 15:58:51
++
++### 任务
++Git 变更同步
++
++### 变更摘要
++diff --git a/CONTEXT.md b/CONTEXT.md
++index 0266100..0835011 100644
++--- a/CONTEXT.md
+++++ b/CONTEXT.md
++@@ -1,3 +1,177 @@
+++## 更新记录: 2026-08-25 15:37:27
+++
+++### 任务
+++Git 变更同步
+++
+++### 变更摘要
+++diff --git a/CONTEXT.md b/CONTEXT.md
+++index f6349a9..45f1870 100644
+++--- a/CONTEXT.md
++++++ b/CONTEXT.md
+++@@ -1,3 +1,251 @@
++++## 更新记录: 2026-08-25 15:33:56
++++
++++### 任务
++++Git 变更同步
++++
++++### 变更摘要
++++diff --git a/CONTEXT.md b/CONTEXT.md
++++index f6349a9..0266100 100644
++++--- a/CONTEXT.md
+++++++ b/CONTEXT.md
++++@@ -1,3 +1,165 @@
+++++## 更新记录: 2026-08-25 15:30:14
+++++
+++++### 任务
+++++Git 变更同步
+++++
+++++### 变更摘要
+++++diff --git a/CONTEXT.md b/CONTEXT.md
+++++index 7083cec..888bb1f 100644
+++++--- a/CONTEXT.md
++++++++ b/CONTEXT.md
+++++@@ -1,3 +1,313 @@
++++++## 更新记录: 2026-08-25 15:29:21
++++++
++++++### 任务
++++++Git 变更同步
++++++
++++++### 变更摘要
++++++diff --git a/CONTEXT.md b/CONTEXT.md
++++++index 7083cec..f6349a9 100644
++++++--- a/CONTEXT.md
+++++++++ b/CONTEXT.md
++++++@@ -1,3 +1,234 @@
+++++++## 更新记录: 2026-08-25 15:24:44
+++++++
+++++++### 任务
+++++++Git 变更同步
+++++++
+++++++### 变更摘要
+++++++diff --git a/.jcode/hooks.json b/.jcode/hooks.json
+++++++index a11c875..73adae0 100644
+++++++--- a/.jcode/hooks.json
++++++++++ b/.jcode/hooks.json
+++++++@@ -106,6 +106,14 @@
+++++++         "description": "PR 时对设计类需求运行多 Agent 编排",
+++++++         "condition": "files_contain('design/') || files_contain('spec/') || pr_label('design')",
+++++++         "enabled": true
++++++++      },
++++++++      {
++++++++        "name": "self-correction",
++++++++        "skill": "self-correction-loop",
++++++++        "action": "validate",
++++++++        "description": "PR 时验证测试状态，失败给修正建议",
++++++++        "command": "python .jcode/scripts/self-correction-loop.py validate --target . --tests tests",
++++++++        "enabled": true
+++++++       }
+++++++     ],
+...
+
+---
+
 ## 更新记录: 2026-08-25 15:58:51
 
 ### 任务
@@ -4795,108 +4889,6 @@ index 591df56..e322bd0 100644
 +++++ ### 核心质量修复
 +++++ - **ruff 全项目清零**：主项目 120 字符 + examples 88 字符配置兼容，无 lint 错误
 +++++diff --git a/CONTEXT...
-
----
-
-## 更新记录: 2026-08-25 11:28:10
-
-### 任务
-Git 变更同步
-
-### 变更摘要
-diff --git a/CONTEXT.md b/CONTEXT.md
-index 591df56..4d422c7 100644
---- a/CONTEXT.md
-+++ b/CONTEXT.md
-@@ -1,3 +1,192 @@
-+## 更新记录: 2026-08-25 11:27:40
-+
-+### 任务
-+Git 变更同步
-+
-+### 变更摘要
-+diff --git a/CONTEXT.md b/CONTEXT.md
-+index 591df56..98f97d8 100644
-+--- a/CONTEXT.md
-++++ b/CONTEXT.md
-+@@ -1,3 +1,96 @@
-++## 更新记录: 2026-08-25 10:39:19
-++
-++### 任务
-++Git 变更同步
-++
-++### 变更摘要
-++diff --git a/CONTEXT.md b/CONTEXT.md
-++index 8754a4f..591df56 100644
-++--- a/CONTEXT.md
-+++++ b/CONTEXT.md
-++@@ -1,3 +1,94 @@
-+++## 更新记录: 2026-08-25 10:35:44
-+++
-+++### 任务
-+++Git 变更同步
-+++
-+++### 变更摘要
-+++diff --git a/CHANGELOG.md b/CHANGELOG.md
-+++index 4126bb7..1fd8913 100644
-+++--- a/CHANGELOG.md
-++++++ b/CHANGELOG.md
-+++@@ -4,7 +4,12 @@ All notable changes to the AI Developer Growth project.
-+++
-+++ ## [Unreleased]
-+++
-+++-### 质量门禁全绿 (v2.4.0 预览)
-++++### 第三轮改进进行中
-++++- docs/ROADMAP.md 归档化，消除与根目录 ROADMAP.md 的双源漂移
-++++
-++++## [2.4.0] - 2026-08-25
-++++
-++++### 质量门禁全绿
-+++
-+++ ### 核心质量修复
-+++ - **ruff 全项目清零**：主项目 120 字符 + examples 88 字符配置兼容，无 lint 错误
-+++diff --git a/CONTEXT.md b/CONTEXT.md
-+++index 5013473..8754a4f 100644
-+++--- a/CONTEXT.md
-++++++ b/CONTEXT.md
-+++@@ -1,3 +1,382 @@
-++++## 更新记录: 2026-08-25 10:32:38
-++++
-++++### 任务
-++++Git 变更同步
-++++
-++++### 变更摘要
-++++diff --git a/CHANGELOG.md b/CHANGELOG.md
-++++index 4126bb7..1fd8913 100644
-++++--- a/CHANGELOG.md
-+++++++ b/CHANGELOG.md
-++++@@ -4,7 +4,12 @@ All notable changes to the AI Developer Growth project.
-++++
-++++ ## [Unreleased]
-++++
-++++-### 质量门禁全绿 (v2.4.0 预览)
-+++++### 第三轮改进进行中
-+++++- docs/ROADMAP.md 归档化，消除与根目录 ROADMAP.md 的双源漂移
-+++++
-+++++## [2.4.0] - 2026-08-25
-+++++
-+++++### 质量门禁全绿
-++++
-++++ ### 核心质量修复
-++++ - **ruff 全项目清零**：主项目 120 字符 + examples 88 字符配置兼容，无 lint 错误
-++++diff --git a/CONTEXT.md b/CONTEXT.md
-++++index 1000f04..b74fc27 100644
-++++--- a/CONTEXT.md
-+++++++ b/CONTEXT.md
-++++@@ -1,52 +1,407 @@
-++++-## 更新记录: 2026-08-25 09:48:50
-+++++## 更新记录: 2026-08-25 10:31:57
-++++
-++++ ### 任务
-++++ Git 变更同步
-++++
-++++ ### 变更摘要
-++++-diff --git a/.github/wo...
 
 ---
 

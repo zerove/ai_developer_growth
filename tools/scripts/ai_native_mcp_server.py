@@ -26,7 +26,7 @@ class AINativeMCPServer:
             matches = [v for k, v in data.items() if symbol in k]
             return {"status": "success", "matches": matches[:10]}
         elif tool_name == "run_architecture_guard":
-            from architecture_drift_guard import ArchitectureDriftGuard
+            from tools.scripts.architecture_drift_guard import ArchitectureDriftGuard
 
             guard = ArchitectureDriftGuard(self.root_dir)
             violations = guard.check_layering()

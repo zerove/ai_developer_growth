@@ -1,0 +1,86 @@
+"""AI-Native MCP Server 回归测试。
+
+背景: run_architecture_guard 工具曾用裸模块名 `from architecture_drift_guard import ...`
+导致 ImportError，工具从未真正可用。本测试固化三个工具调用的行为契约，
+防止导入断链与协议回归。
+"""
+
+from __future__ import annotations
+
+import json
+import sys
+from pathlib import Path
+from typing import Any
+
+import pytest
+
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+
+from tools.scripts.ai_native_mcp_server import AINativeMCPServer  # noqa: E402
+
+
+@pytest.fixture()
+def server(tmp_path: Path) -> AINativeMCPServer:
+    """带临时根目录的服务器实例（不依赖真实仓库数据）。"""
+    s = AINativeMCPServer()
+    s.root_dir = tmp_path
+    return s
+
+
+class TestSemanticGraphQuery:
+    """query_semantic_graph 工具。"""
+
+    def test_error_when_graph_missing(self, server: AINativeMCPServer) -> None:
+        result = server.handle_tool_call("query_semantic_graph", {"symbol": "Foo"})
+        assert result["status"] == "error"
+        assert "not built" in result["message"]
+
+    def test_returns_matching_symbols(self, server: AINativeMCPServer, tmp_path: Path) -> None:
+        graph = {"QualityGate.check": {"file": "a.py"}, "QualityGate.run": {"file": "b.py"}}
+        (tmp_path / ".semantic_graph.json").write_text(json.dumps(graph), encoding="utf-8")
+        result: dict[str, Any] = server.handle_tool_call("query_semantic_graph", {"symbol": "QualityGate"})
+        assert result["status"] == "success"
+        assert len(result["matches"]) == 2
+
+    def test_caps_matches_at_ten(self, server: AINativeMCPServer, tmp_path: Path) -> None:
+        graph = {f"Sym{i}": {"file": f"{i}.py"} for i in range(20)}
+        # 全部包含公共子串 "Sym"
+        graph = {f"Sym{i}x": v for i, v in enumerate(graph.values())}
+        (tmp_path / ".semantic_graph.json").write_text(json.dumps(graph), encoding="utf-8")
+        result: dict[str, Any] = server.handle_tool_call("query_semantic_graph", {"symbol": "Sym"})
+        assert len(result["matches"]) <= 10
+
+
+class TestArchitectureGuard:
+    """run_architecture_guard 工具：核心回归点（导入断链修复）。"""
+
+    def test_tool_executes_without_importerror(self, server: AINativeMCPServer) -> None:
+        """裸模块导入已修为 tools.scripts.architecture_drift_guard，不再 ImportError。"""
+        result = server.handle_tool_call("run_architecture_guard", {})
+        assert result["status"] == "success"
+        assert isinstance(result["violations"], list)
+
+
+class TestProtocol:
+    """JSON-RPC stdin/stdout 协议桩。"""
+
+    def test_unknown_tool_returns_error(self, server: AINativeMCPServer) -> None:
+        result = server.handle_tool_call("nonexistent", {})
+        assert result["status"] == "error"
+        assert "Unknown tool" in result["message"]
+
+    def test_stdin_loop_roundtrip(self, capsys: pytest.CaptureFixture[str], monkeypatch: pytest.MonkeyPatch) -> None:
+        """模拟一行 JSON-RPC 请求获得一行 JSON 响应。"""
+        import io
+
+        req = json.dumps({"tool": "nonexistent", "arguments": {}})
+        monkeypatch.setattr("sys.stdin", io.StringIO(req + "\n"))
+        # __main__ 块逻辑内联执行（避免 import 时触发）
+        server = AINativeMCPServer()
+        for line in sys.stdin:
+            parsed = json.loads(line)
+            res = server.handle_tool_call(parsed.get("tool"), parsed.get("arguments", {}))
+            print(json.dumps(res))
+            break
+        out = capsys.readouterr().out.strip()
+        assert json.loads(out)["status"] == "error"

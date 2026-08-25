@@ -108,3 +108,9 @@ pre_tool 门禁上线后首次拦截到"误伤"：编辑 tests/test_adg_cli_v2.p
 两者均有完整 README、实质代码（bot.py 6KB / extension.ts）与测试。
 实测验证：slack bot 15 测试通过；vscode 扩展 npm ci + tsc 编译通过。
 处置结论：保留，无需归档。
+
+### P2-5 向量 RAG 声称排查结论
+全仓 grep 排查: 实现真实存在（examples/ai-navigation/src/vector_search.py，
+sentence-transformers + cosine + BM25 混合 RRF，11 测试通过）。
+ROADMAP.md 口径准确（已标注"参考实现，尚未集成主链"）。
+CONTEXT.md 两处表述补注 examples 参考实现限定，与 ROADMAP 对齐。

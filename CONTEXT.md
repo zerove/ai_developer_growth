@@ -1,3 +1,15 @@
+## 更新记录: 2026-08-26 00:56:57
+
+### 任务
+Git 变更同步
+
+### 变更摘要
+- 变更文件 2 个 (+31 / -2 行)
+  - CONTEXT.md
+  - docs/governance/project-analysis-and-roadmap-2026-08.md
+
+---
+
 ## 更新记录: 2026-08-26 00:54:20
 
 ### 任务
@@ -229,7 +241,7 @@ Git 变更同步
 - ✅ Phase 1-4 全部完成
 - ✅ GitHub Pages 部署上线
 - ✅ 7 个示例全部有 README
-- ✅ 向量搜索引擎集成
+- ✅ 向量搜索引擎集成 (examples/ai-navigation 参考实现)
 
 ## 下一步计划 (长期)
 
@@ -260,7 +272,7 @@ Git 变更同步
 | 核心文档数 | 253 | 200 | ✅ 超额完成 |
 | 真实案例数 | 43 | 35 | ✅ 超额完成 |
 | 代码示例 | 10 (全有 README) | 7 | ✅ 超额完成 |
-| 向量搜索 | vector_search + hybrid_search | 完成 | ✅ |
+| 向量搜索 | vector_search + hybrid_search (examples/ai-navigation 参考实现, 未集成主工具链) | 完成 | ✅ |
 | 示例测试 | 2513 (2026-08-04 实测) | ≥900 | ✅ 超额 |
 | ADR | 10 | 6+ | ✅ 达标 |
 | 测试覆盖率 | 84% | ≥80% | ✅ 达标 |

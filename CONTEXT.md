@@ -1,3 +1,80 @@
+## 更新记录: 2026-08-25 14:40:55
+
+### 任务
+Git 变更同步
+
+### 变更摘要
+diff --git a/.jcode/hooks.json b/.jcode/hooks.json
+index a11c875..73adae0 100644
+--- a/.jcode/hooks.json
++++ b/.jcode/hooks.json
+@@ -106,6 +106,14 @@
+         "description": "PR 时对设计类需求运行多 Agent 编排",
+         "condition": "files_contain('design/') || files_contain('spec/') || pr_label('design')",
+         "enabled": true
++      },
++      {
++        "name": "self-correction",
++        "skill": "self-correction-loop",
++        "action": "validate",
++        "description": "PR 时验证测试状态，失败给修正建议",
++        "command": "python .jcode/scripts/self-correction-loop.py validate --target . --tests tests",
++        "enabled": true
+       }
+     ],
+     "on_merge": [
+diff --git a/.jcode/scripts/multi-agent-orch.py b/.jcode/scripts/multi-agent-orch.py
+new file mode 100644
+index 0000000..ada5e6b
+--- /dev/null
++++ b/.jcode/scripts/multi-agent-orch.py
+@@ -0,0 +1,44 @@
++#!/usr/bin/env python3
++"""
++jcode Skill Runner - 多 Agent 编排器
++
++用法:
++    python .jcode/scripts/multi-agent-orch.py waterfall "<需求描述>"
++    python .jcode/scripts/multi-agent-orch.py fanout "<需求描述>"
++"""
++
++import sys
++from pathlib import Path
++
++ROOT = Path(__file__).resolve().parent.parent.parent
++EXAMPLE = ROOT / "examples" / "multi-agent-orch"
++
++
++def _load_orch():
++    """从示例项目导入编排包（mock LLM 模式，无需 API key）。"""
++    sys.path.insert(0, str(EXAMPLE))
++    try:
++        from multi_agent_orch import demo  # type: ignore[import-not-found]
++    except ImportError as e:
++        print(f"❌ 无法加载 multi_agent_orch: {e}")
++        sys.exit(1)
++    return demo
++
++
++def main() -> None:
++    args = sys.argv[1:]
++    if len(args) < 2 or args[0] not in ("waterfall", "fanout"):
++        print('用法: multi-agent-orch.py <waterfall|fanout> "<需求描述>"')
++        sys.exit(1)
++
++    mode, request = args[0], " ".join(args[1:])
++    demo = _load_orch()
++    print(f"[multi-agent-orch] 模式={mode} 需求={request[:50]}")
++    if mode == "waterfall":
++        demo.run_waterfall(request)
++    else:
++        demo.run_fan_out(request)
++
++
++if __name__ == "...
+
+---
+
 ## 更新记录: 2026-08-25 14:31:59
 
 ### 任务
@@ -4913,90 +4990,6 @@ index cd61d1f..39fd723 100644
 +++++Git 变更同步
 +++++
 ++++...
-
----
-
-## 更新记录: 2026-08-25 10:17:23
-
-### 任务
-Git 变更同步
-
-### 变更摘要
-diff --git a/CONTEXT.md b/CONTEXT.md
-index cd61d1f..c0ac481 100644
---- a/CONTEXT.md
-+++ b/CONTEXT.md
-@@ -1,3 +1,230 @@
-+## 更新记录: 2026-08-25 10:13:49
-+
-+### 任务
-+Git 变更同步
-+
-+### 变更摘要
-+diff --git a/CONTEXT.md b/CONTEXT.md
-+index cd61d1f..1000f04 100644
-+--- a/CONTEXT.md
-++++ b/CONTEXT.md
-+@@ -1,3 +1,149 @@
-++## 更新记录: 2026-08-25 09:48:50
-++
-++### 任务
-++Git 变更同步
-++
-++### 变更摘要
-++diff --git a/.github/workflows/mutation-testing.yml b/.github/workflows/mutation-testing.yml
-++index 0774805..c7d7adf 100644
-++--- a/.github/workflows/mutation-testing.yml
-+++++ b/.github/workflows/mutation-testing.yml
-++@@ -30,7 +30,7 @@ jobs:
-++       - name: Install dependencies
-++         run: |
-++           pip install -e .[dev]
-++-          pip install mutmut>=2.4.0
-+++          pip install mutmut>=2.4.0,<3
-++
-++       - name: Run mutation testing
-++         run: |
-++diff --git a/CONTEXT.md b/CONTEXT.md
-++index 33e1b5c..e8be9cb 100644
-++--- a/CONTEXT.md
-+++++ b/CONTEXT.md
-++@@ -1,3 +1,487 @@
-+++## 更新记录: 2026-08-25 09:48:14
-+++
-+++### 任务
-+++Git 变更同步
-+++
-+++### 变更摘要
-+++diff --git a/.github/workflows/mutation-testing.yml b/.github/workflows/mutation-testing.yml
-+++index 0774805..c7d7adf 100644
-+++--- a/.github/workflows/mutation-testing.yml
-++++++ b/.github/workflows/mutation-testing.yml
-+++@@ -30,7 +30,7 @@ jobs:
-+++       - name: Install dependencies
-+++         run: |
-+++           pip install -e .[dev]
-+++-          pip install mutmut>=2.4.0
-++++          pip install mutmut>=2.4.0,<3
-+++
-+++       - name: Run mutation testing
-+++         run: |
-+++diff --git a/CONTEXT.md b/CONTEXT.md
-+++index 33e1b5c..cd61d1f 100644
-+++--- a/CONTEXT.md
-++++++ b/CONTEXT.md
-+++@@ -1,3 +1,417 @@
-++++## 更新记录: 2026-08-25 09:46:20
-++++
-++++### 任务
-++++Git 变更同步
-++++
-++++### 变更摘要
-++++diff --git a/.github/workflows/mutation-testing.yml b/.github/workflows/mutation-testing.yml
-++++index 0774805..c7d7adf 100644
-++++--- a/.github/workflows/mutation-testing.yml
-+++++++ b/.github/workflows/mutation-testing.yml
-++++@@ -30,7...
 
 ---
 

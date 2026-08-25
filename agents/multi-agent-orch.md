@@ -2,8 +2,7 @@
 
 模拟团队开发：PM/Architect/Coder/Reviewer 角色分工协作，结构化消息协议，迭代优化
 
-> **状态: planned（未接线）** — 定义已完成，入口脚本尚未创建。
-> 参考实现位于 `examples/multi-agent-orch/`，接线步骤：在 `.jcode/scripts/multi-agent-orch.py` 创建入口脚本并接入 hooks.json。
+> **状态: integrated（已接线）** — 入口脚本 `.jcode/scripts/multi-agent-orch.py`（waterfall/fanout 模式，mock LLM）。
 
 ### 指令
 

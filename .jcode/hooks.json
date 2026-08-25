@@ -106,6 +106,14 @@
         "description": "PR 时对设计类需求运行多 Agent 编排",
         "condition": "files_contain('design/') || files_contain('spec/') || pr_label('design')",
         "enabled": true
+      },
+      {
+        "name": "self-correction",
+        "skill": "self-correction-loop",
+        "action": "validate",
+        "description": "PR 时验证测试状态，失败给修正建议",
+        "command": "python .jcode/scripts/self-correction-loop.py validate --target . --tests tests",
+        "enabled": true
       }
     ],
     "on_merge": [

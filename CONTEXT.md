@@ -1,3 +1,89 @@
+## 更新记录: 2026-08-25 09:16:53
+
+### 任务
+Git 变更同步
+
+### 变更摘要
+diff --git a/CONTEXT.md b/CONTEXT.md
+index 50e5133..5b63041 100644
+--- a/CONTEXT.md
++++ b/CONTEXT.md
+@@ -1,3 +1,85 @@
++## 更新记录: 2026-08-25 09:07:22
++
++### 任务
++Git 变更同步
++
++### 变更摘要
++diff --git a/CONTEXT.md b/CONTEXT.md
++index 6ffe18a..50e5133 100644
++--- a/CONTEXT.md
+++++ b/CONTEXT.md
++@@ -1,3 +1,177 @@
+++## 更新记录: 2026-08-25 07:32:53
+++
+++### 任务
+++Git 变更同步
+++
+++### 变更摘要
+++diff --git a/.github/workflows/ci-cd.yml b/.github/workflows/ci-cd.yml
+++index f53f3da..cec3692 100644
+++--- a/.github/workflows/ci-cd.yml
++++++ b/.github/workflows/ci-cd.yml
+++@@ -136,7 +136,7 @@ jobs:
+++             --cov=tools/scripts \
+++             --cov-report=xml \
+++             --cov-report=term-missing \
+++-            --cov-fail-under=64
++++            --cov-fail-under=65
+++
+++       - name: Upload coverage
+++         uses: codecov/codecov-action@v4
+++diff --git a/CONTEXT.md b/CONTEXT.md
+++index fcf142e..728e6a1 100644
+++--- a/CONTEXT.md
++++++ b/CONTEXT.md
+++@@ -1,3 +1,176 @@
++++## 更新记录: 2026-08-25 07:32:28
++++
++++### 任务
++++Git 变更同步
++++
++++### 变更摘要
++++diff --git a/.github/workflows/ci-cd.yml b/.github/workflows/ci-cd.yml
++++index f53f3da..cec3692 100644
++++--- a/.github/workflows/ci-cd.yml
+++++++ b/.github/workflows/ci-cd.yml
++++@@ -136,7 +136,7 @@ jobs:
++++             --cov=tools/scripts \
++++             --cov-report=xml \
++++             --cov-report=term-missing \
++++-            --cov-fail-under=64
+++++            --cov-fail-under=65
++++
++++       - name: Upload coverage
++++         uses: codecov/codecov-action@v4
++++diff --git a/CONTEXT.md b/CONTEXT.md
++++index fcf142e..6ffe18a 100644
++++--- a/CONTEXT.md
+++++++ b/CONTEXT.md
++++@@ -1,3 +1,84 @@
+++++## 更新记录: 2026-08-25 06:56:46
+++++
+++++### 任务
+++++Git 变更同步
+++++
+++++### 变更摘要
+++++diff --git a/.github/workflows/ci-cd.yml b/.github/workflows/ci-cd.yml
+++++index f53f3da..cec3692 100644
+++++--- a/.github/workflows/ci-cd.yml
++++++++ b/.github/workflows/ci-cd.yml
+++++@@ -136,7 +136,7 @@ jobs:
+++++             --cov=tools/scripts \
+++++     ...
+
+---
+
 ## 更新记录: 2026-08-25 09:07:22
 
 ### 任务

@@ -53,7 +53,14 @@ curl --noproxy '*' http://127.0.0.1:8001/api/health
 
 ```
 GET /api/health
-→ {"status":"ok","index_ready":true,"document_count":267}
+→ {"status":"ok","index_ready":true,"document_count":268,"index_built_at":"...","index_build_ms":1524.89}
+```
+
+**热重载**（docs 内容变更后免重启重建索引）
+
+```
+POST /api/reload
+→ {"status":"reloaded","old_document_count":268,"document_count":268,"build_ms":1524.89}
 ```
 
 **搜索**（中文查询务必 URL 编码，curl 用 `--get --data-urlencode`）
@@ -63,11 +70,18 @@ GET /api/search?q=质量门禁&limit=3
 → {"query":"质量门禁","total":3,"results":[{"id":...,"title":...,"snippet":...,"score":...,"url":...}],"time_ms":11.69}
 ```
 
+### 安全与资源约束
+
+- 默认仅绑定 `127.0.0.1`；需局域网访问时设 `SEARCH_HOST` 环境变量并自行加鉴权（当前无内置鉴权/限流）
+- systemd 单元已配 `MemoryMax=512M`、`CPUQuota=50%`、`ProtectSystem=strict` 等约束
+- 慢请求（>500ms）会打告警日志，响应带 `X-Process-Time-Ms` 头
+
 ### 排障
 
 | 现象 | 根因与处置 |
 |------|-----------|
-| 中文长查询全部零召回 | 环境缺 jieba，分词回退为整串正则匹配。`uv pip install -p .venv jieba` 后重启服务 |
+| 中文长查询全部零召回 | 环境缺 jieba，分词回退为整串匹配。`uv pip install -p .venv jieba` 后重启服务 |
+| 召回质量疑似退化 | 跑 `pytest tests/test_search_recall.py -q`（14 条基准断言）定位是否分词/评分变更引入回归 |
 | `ModuleNotFoundError: fastapi` | venv 未装依赖，见部署第 1 步 |
 | curl 返回 502 | 本机代理劫持了 127.0.0.1，加 `--noproxy '*'` 或设置 `no_proxy` |
 | systemd 启动即失败 | 检查 ExecStart 解释器路径是否存在；`journalctl --user -u search-server.service` 看日志 |
@@ -82,6 +96,7 @@ GET /api/search?q=质量门禁&limit=3
 
 1. **query_semantic_graph** — 查询语义代码图符号及依赖（参数：`symbol`）
 2. **run_architecture_guard** — 架构漂移守卫分层检查（无参数）
+3. **knowledge_search** — 全文检索 docs/ 知识库（参数：`query` 必填，`limit` 可选默认 5 上限 20），进程内 TF-IDF 引擎无需 HTTP 服务
 
 ### 协议（JSON-RPC 2.0）
 
@@ -134,3 +149,21 @@ python -m pytest tests/test_search_server_smoke.py tests/test_ai_native_mcp_serv
 - [[deploy/systemd/search-server.service|systemd 服务单元]]
 - [[tools/scripts/tfidf_engine|TF-IDF/BM25 引擎]]
 - [[efficiency/ai-sdlc|AI 开发全生命周期标准]]
+
+---
+
+## 四、embedding 引入评估结论（2026-08）
+
+用 4 条同义改写查询实测当前 BM25+TF-IDF 引擎：整体可用但存在语义误配
+（如"服务器挂了怎么办"命中《无服务器架构》，属字面匹配陷阱）。
+
+**结论：暂不引入 embedding**。理由：
+
+1. 关键词型查询（主流场景）召回已达标，14 条基准全过；
+2. 同义改写缺口真实但低频，可通过补充同义词典低成本缓解；
+3. embedding 引入成本高（模型依赖、索引重建管道、推理延迟）。
+
+**触发重评条件**（满足其一再评估）：
+- 知识库规模超千篇，关键词检索首屏命中率明显下降；
+- 真实使用中同义改写类查询占比显著上升；
+- `tests/test_search_recall.py` 基准集需加入语义改写断言才能守住质量。

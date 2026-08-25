@@ -1,3 +1,133 @@
+## 更新记录: 2026-08-25 09:27:00
+
+### 任务
+Git 变更同步
+
+### 变更摘要
+diff --git a/CONTEXT.md b/CONTEXT.md
+index 683ee3e..424d2cd 100644
+--- a/CONTEXT.md
++++ b/CONTEXT.md
+@@ -1,3 +1,120 @@
++## 更新记录: 2026-08-25 09:25:38
++
++### 任务
++Git 变更同步
++
++### 变更摘要
++diff --git a/CONTEXT.md b/CONTEXT.md
++index 683ee3e..f596705 100644
++--- a/CONTEXT.md
+++++ b/CONTEXT.md
++@@ -1,3 +1,58 @@
+++## 更新记录: 2026-08-25 09:18:57
+++
+++### 任务
+++Git 变更同步
+++
+++### 变更摘要
+++diff --git a/.github/workflows/scheduled-governance.yml b/.github/workflows/scheduled-governance.yml
+++index 6c281d4..a21b975 100644
+++--- a/.github/workflows/scheduled-governance.yml
++++++ b/.github/workflows/scheduled-governance.yml
+++@@ -74,3 +74,19 @@ jobs:
+++         run: python .jcode/scripts/governance-auditor.py audit-hallucination-risks || true
+++       - name: Run pattern learner
+++         run: python -c "from tools.scripts.rules_engine.pattern_learner import run_pattern_learning; run_pattern_learning('.')" || true
++++
++++  monthly-db-maintain:
++++    name: Monthly DB Maintenance & Trend Collection
++++    runs-on: ubuntu-latest
++++    if: github.event.schedule == '0 10 1 * *' || github.event.inputs.audit_type == 'monthly'
++++    steps:
++++      - uses: actions/checkout@v4
++++      - uses: actions/setup-python@v5
++++        with:
++++          python-version: ${{ env.PYTHON_VERSION }}
++++      - name: Install dependencies
++++        run: pip install ruff mypy pytest pytest-cov pyyaml bandit
++++      - name: Prune quality_runs history (90d retention)
++++        run: python tools/scripts/hooks_runner.py db-maintain --retention-days 90 || true
++++      - name: Collect quality gate trend snapshot
++++        run: python tools/scripts/update_stats.py --json || true
+++diff --git a/CONTEXT.md b/CONTEXT.md
+++index 9da5c34..683ee3e 100644
+++--- a/CONTEXT.md
++++++ b/CONTEXT.md
+++@@ -1,3 +1,74 @@
++++## 更新记录: 2026-08-25 09:17:59
++++
++++### 任务
++++Git 变更同步
++++
++++### 变更摘要
++++diff --git a/.github/workflows/scheduled-governance.yml b/.github/workflows/scheduled-governance.yml
++++index 6c281d4..a21b975 10064...
+
+---
+
+## 更新记录: 2026-08-25 09:25:38
+
+### 任务
+Git 变更同步
+
+### 变更摘要
+diff --git a/CONTEXT.md b/CONTEXT.md
+index 683ee3e..f596705 100644
+--- a/CONTEXT.md
++++ b/CONTEXT.md
+@@ -1,3 +1,58 @@
++## 更新记录: 2026-08-25 09:18:57
++
++### 任务
++Git 变更同步
++
++### 变更摘要
++diff --git a/.github/workflows/scheduled-governance.yml b/.github/workflows/scheduled-governance.yml
++index 6c281d4..a21b975 100644
++--- a/.github/workflows/scheduled-governance.yml
+++++ b/.github/workflows/scheduled-governance.yml
++@@ -74,3 +74,19 @@ jobs:
++         run: python .jcode/scripts/governance-auditor.py audit-hallucination-risks || true
++       - name: Run pattern learner
++         run: python -c "from tools.scripts.rules_engine.pattern_learner import run_pattern_learning; run_pattern_learning('.')" || true
+++
+++  monthly-db-maintain:
+++    name: Monthly DB Maintenance & Trend Collection
+++    runs-on: ubuntu-latest
+++    if: github.event.schedule == '0 10 1 * *' || github.event.inputs.audit_type == 'monthly'
+++    steps:
+++      - uses: actions/checkout@v4
+++      - uses: actions/setup-python@v5
+++        with:
+++          python-version: ${{ env.PYTHON_VERSION }}
+++      - name: Install dependencies
+++        run: pip install ruff mypy pytest pytest-cov pyyaml bandit
+++      - name: Prune quality_runs history (90d retention)
+++        run: python tools/scripts/hooks_runner.py db-maintain --retention-days 90 || true
+++      - name: Collect quality gate trend snapshot
+++        run: python tools/scripts/update_stats.py --json || true
++diff --git a/CONTEXT.md b/CONTEXT.md
++index 9da5c34..683ee3e 100644
++--- a/CONTEXT.md
+++++ b/CONTEXT.md
++@@ -1,3 +1,74 @@
+++## 更新记录: 2026-08-25 09:17:59
+++
+++### 任务
+++Git 变更同步
+++
+++### 变更摘要
+++diff --git a/.github/workflows/scheduled-governance.yml b/.github/workflows/scheduled-governance.yml
+++index 6c281d4..a21b975 100644
+++--- a/.github/workflows/scheduled-governance.yml
++++++ b/.github/workflows/scheduled-governance.yml
+++@@ -74,3 +74,19 @@ jobs:
+++         run: python .jcode/scripts/governance-auditor.py audit-hallucination-risks || true
+++  ...
+
+---
+
 ## 更新记录: 2026-08-25 09:18:57
 
 ### 任务

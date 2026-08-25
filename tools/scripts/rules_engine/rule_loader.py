@@ -89,13 +89,23 @@ def _save_disk_cache(cache: dict[str, Any]) -> None:
 
 @lru_cache(maxsize=64)
 def _rules_hash_cached(language: str, framework_dir_str: str) -> str:
-    """Hash of rule file for cache invalidation (cached per (language, dir))."""
+    """Hash of rule files for cache invalidation (cached per (language, dir)).
+
+    必须同时纳入语言规则与 common/security.yml：后者是合并进最终规则的
+    输入之一，只哈希语言文件会导致 common 规则变更后缓存不失效。
+    """
     framework_dir = Path(framework_dir_str)
-    rule_path = framework_dir / "languages" / language / "rules.d" / "anti_patterns.yml"
-    if not rule_path.exists():
-        return ""
+    paths = [
+        framework_dir / "languages" / language / "rules.d" / "anti_patterns.yml",
+        framework_dir / "common" / "security.yml",
+    ]
+    digest = hashlib.sha256()
     try:
-        return hashlib.sha256(rule_path.read_bytes()).hexdigest()
+        for path in paths:
+            if path.exists():
+                digest.update(path.read_bytes())
+                digest.update(b"\x00")
+        return digest.hexdigest()
     except OSError:
         return ""
 

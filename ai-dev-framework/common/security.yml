@@ -27,7 +27,16 @@ anti_patterns:
   severity: error
   category: security
   pattern: '\beval\s*\(|\bexec\s*\(|\bFunction\s*\('
-  exclude_files: ['fix_heuristics.py', 'auto_fix.py', 'ai_rules_generator.py', 'ai_quality_gate.py', 'hallucination_detector.py']
+  # Java 集成测试需以子进程启动真实服务；Python 工具脚本自身需要动态执行能力
+  exclude_files:
+  - 'fix_heuristics.py'
+  - 'auto_fix.py'
+  - 'ai_rules_generator.py'
+  - 'ai_quality_gate.py'
+  - 'hallucination_detector.py'
+  - '*IntegrationTest.java'
+  - '*IT.java'
+  - '*Tests.java'
   message: Dynamic code execution is a security risk (code injection)
   fix_hint: Avoid eval/exec; use safer alternatives
 

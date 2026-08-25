@@ -30,6 +30,11 @@ anti_patterns:
   pattern: Runtime\.getRuntime\(\)\.exec\(|ProcessBuilder
   message: Process execution can be exploited
   fix_hint: Validate inputs and use whitelists
+  # 集成测试需以子进程启动真实服务（进程隔离），生产代码仍禁止
+  exclude_files:
+  - "*IntegrationTest.java"
+  - "*IT.java"
+  - "*Tests.java"
 - id: java-sql-string
   name: SQL injection via string concat
   severity: error

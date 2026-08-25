@@ -18,6 +18,11 @@ jcode-cli = "tools.scripts.jcode_cli:main"
 validate-language-rules = "tools.scripts.validators.cli:main"
 
 [project.optional-dependencies]
+search = [
+    "fastapi>=0.110",
+    "uvicorn>=0.29",
+    "jieba>=0.42",
+]
 dev = [
     "pytest>=7.0.0",
     "pytest-xdist>=3.0.0",

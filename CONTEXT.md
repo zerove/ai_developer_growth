@@ -1,3 +1,96 @@
+## 更新记录: 2026-08-25 10:39:19
+
+### 任务
+Git 变更同步
+
+### 变更摘要
+diff --git a/CONTEXT.md b/CONTEXT.md
+index 8754a4f..591df56 100644
+--- a/CONTEXT.md
++++ b/CONTEXT.md
+@@ -1,3 +1,94 @@
++## 更新记录: 2026-08-25 10:35:44
++
++### 任务
++Git 变更同步
++
++### 变更摘要
++diff --git a/CHANGELOG.md b/CHANGELOG.md
++index 4126bb7..1fd8913 100644
++--- a/CHANGELOG.md
+++++ b/CHANGELOG.md
++@@ -4,7 +4,12 @@ All notable changes to the AI Developer Growth project.
++
++ ## [Unreleased]
++
++-### 质量门禁全绿 (v2.4.0 预览)
+++### 第三轮改进进行中
+++- docs/ROADMAP.md 归档化，消除与根目录 ROADMAP.md 的双源漂移
+++
+++## [2.4.0] - 2026-08-25
+++
+++### 质量门禁全绿
++
++ ### 核心质量修复
++ - **ruff 全项目清零**：主项目 120 字符 + examples 88 字符配置兼容，无 lint 错误
++diff --git a/CONTEXT.md b/CONTEXT.md
++index 5013473..8754a4f 100644
++--- a/CONTEXT.md
+++++ b/CONTEXT.md
++@@ -1,3 +1,382 @@
+++## 更新记录: 2026-08-25 10:32:38
+++
+++### 任务
+++Git 变更同步
+++
+++### 变更摘要
+++diff --git a/CHANGELOG.md b/CHANGELOG.md
+++index 4126bb7..1fd8913 100644
+++--- a/CHANGELOG.md
++++++ b/CHANGELOG.md
+++@@ -4,7 +4,12 @@ All notable changes to the AI Developer Growth project.
+++
+++ ## [Unreleased]
+++
+++-### 质量门禁全绿 (v2.4.0 预览)
++++### 第三轮改进进行中
++++- docs/ROADMAP.md 归档化，消除与根目录 ROADMAP.md 的双源漂移
++++
++++## [2.4.0] - 2026-08-25
++++
++++### 质量门禁全绿
+++
+++ ### 核心质量修复
+++ - **ruff 全项目清零**：主项目 120 字符 + examples 88 字符配置兼容，无 lint 错误
+++diff --git a/CONTEXT.md b/CONTEXT.md
+++index 1000f04..b74fc27 100644
+++--- a/CONTEXT.md
++++++ b/CONTEXT.md
+++@@ -1,52 +1,407 @@
+++-## 更新记录: 2026-08-25 09:48:50
++++## 更新记录: 2026-08-25 10:31:57
+++
+++ ### 任务
+++ Git 变更同步
+++
+++ ### 变更摘要
+++-diff --git a/.github/workflows/mutation-testing.yml b/.github/workflows/mutation-testing.yml
+++-index 0774805..c7d7adf 100644
+++---- a/.github/workflows/mutation-testing.yml
+++-+++ b/.github/workflows/mutation-testing.yml
+++-@@ -30,7 +30,7 @@ jobs:
+++-       - name: Install dependencies
+++-         run: |
+++-           pip install -e .[dev]
+++--          pip install mutmut>=2.4.0
+++-+          pip install mutmut>=2.4.0,<3
++++diff --git a/CHANGELOG.md b/CHANGELOG.md
++++index 4126bb7..1fd8913 100644
++++--- a/CHANGELOG.md
+++++++ b/CHA...
+
+---
+
 ## 更新记录: 2026-08-25 10:35:44
 
 ### 任务
@@ -3322,83 +3415,6 @@ index 8e20afc..7a98b62 100644
 ++-    },
 ++     "tools/scripts/dependency_graph.py": {
 ++     ...
-
----
-
-## 更新记录: 2026-08-24 21:30:41
-
-### 任务
-Git 变更同步
-
-### 变更摘要
-diff --git a/.github/workflows/ci-cd.yml b/.github/workflows/ci-cd.yml
-index 32507be..9b33451 100644
---- a/.github/workflows/ci-cd.yml
-+++ b/.github/workflows/ci-cd.yml
-@@ -136,7 +136,7 @@ jobs:
-             --cov=tools/scripts \
-             --cov-report=xml \
-             --cov-report=term-missing \
--            --cov-fail-under=60
-+            --cov-fail-under=75
-
-       - name: Upload coverage
-         uses: codecov/codecov-action@v4
-diff --git a/CONTEXT.md b/CONTEXT.md
-index e23342f..8e20afc 100644
---- a/CONTEXT.md
-+++ b/CONTEXT.md
-@@ -1,3 +1,76 @@
-+## 更新记录: 2026-08-24 21:01:53
-+
-+### 任务
-+Git 变更同步
-+
-+### 变更摘要
-+diff --git a/.github/workflows/ci-cd.yml b/.github/workflows/ci-cd.yml
-+index 32507be..9b33451 100644
-+--- a/.github/workflows/ci-cd.yml
-++++ b/.github/workflows/ci-cd.yml
-+@@ -136,7 +136,7 @@ jobs:
-+             --cov=tools/scripts \
-+             --cov-report=xml \
-+             --cov-report=term-missing \
-+-            --cov-fail-under=60
-++            --cov-fail-under=75
-+
-+       - name: Upload coverage
-+         uses: codecov/codecov-action@v4
-+diff --git a/.jcode/baseline.json b/.jcode/baseline.json
-+index 7c8d7c8..64b2017 100644
-+--- a/.jcode/baseline.json
-++++ b/.jcode/baseline.json
-+@@ -17,9 +17,6 @@
-+     ".jcode/scripts/governance-auditor.py": {
-+       "structure:函数超过 50 行 (实际 54 行)": 1
-+     },
-+-    ".jcode/scripts/multi_agent_orch.py": {
-+-      "type:使用 Any 类型": 1
-+-    },
-+     ".jcode/scripts/jcode-init.py": {
-+       "structure:函数超过 50 行 (实际 110 行)": 1
-+     },
-+@@ -27,9 +24,6 @@
-+       "structure:函数超过 50 行 (实际 59 行)": 1,
-+       "structure:函数超过 50 行 (实际 55 行)": 1
-+     },
-+-    "tools/scripts/sync_issues.py": {
-+-      "type:使用 Any 类型": 1
-+-    },
-+     "tools/scripts/dependency_graph.py": {
-+       "structure:函数超过 50 行 (实际 54 行)": 1
-+     },
-+@@ -37,11 +31,6 @@
-+       "structure:函数超过 50 行 (实际 57 行)": 1,
-+       "structure:函数超过 50 行 (实际 56 行)": 1
-+     },
-+-    "tools/scripts/supply_chain.py": {
-+-      "type:使用 Any 类型": 1,
-+-     ...
 
 ---
 

@@ -51,4 +51,4 @@ python -m pytest tests/ -v
 ## 相关文档
 
 - [[docs/mindset/capability-model|能力模型]]
-- [[docs/capability-levels|能力等级定义]]
+- [[../../docs/learning/capability-levels|能力等级定义]]

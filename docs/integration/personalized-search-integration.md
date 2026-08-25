@@ -69,7 +69,7 @@ print(result["answer"])
 
 ## 相关资源
 
-- [[../../examples/ai-navigation|导航系统示例]]
+- [[../../examples/ai-navigation/README|导航系统示例]]
 - [[efficiency/personalized-search|个性化搜索方法论]]
 - [[tools/rag-for-developers|RAG 开发指南]]
 

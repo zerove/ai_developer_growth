@@ -113,7 +113,7 @@ python .ai-framework/jcode_init.py
 ## 相关资源
 
 - [[../../GOVERNANCE|治理标准]]
-- [[../../ai-dev-framework/core/GOVERNANCE|通用框架]]
+- [[../../GOVERNANCE|通用框架]]
 - [[../../agents/governance-auditor|审计 Agent]]
 
 ---

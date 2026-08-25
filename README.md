@@ -112,11 +112,11 @@ python ai-dev-framework/core/jcode_init.py your-project --language python
 
 | 示例 | 功能 | 亮点 |
 |------|------|------|
-| [[examples/ai-context-sync\|ai-context-sync]] | 上下文同步 MCP Server | 多 LLM 支持 |
-| [[examples/ai-navigation\|ai-navigation]] | AI 知识导航系统 | RAG + 个性化推荐 |
-| [[examples/multi-agent-orch\|multi-agent-orch]] | 多 Agent 编排 | 4 角色协作 |
-| [[examples/self-correction-loop\|self-correction-loop]] | 自我修正循环 | 验证→重试模式 |
-| [[examples/prompt-optimizer\|prompt-optimizer]] | Prompt 优化器 | LLM 评分 |
+| [[examples/ai-context-sync/README\|ai-context-sync]] | 上下文同步 MCP Server | 多 LLM 支持 |
+| [[examples/ai-navigation/README\|ai-navigation]] | AI 知识导航系统 | RAG + 个性化推荐 |
+| [[examples/multi-agent-orch/README\|multi-agent-orch]] | 多 Agent 编排 | 4 角色协作 |
+| [[examples/self-correction-loop/README\|self-correction-loop]] | 自我修正循环 | 验证→重试模式 |
+| [[examples/prompt-optimizer/README\|prompt-optimizer]] | Prompt 优化器 | LLM 评分 |
 
 ---
 

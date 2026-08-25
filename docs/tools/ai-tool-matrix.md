@@ -130,7 +130,7 @@ IDE 是 AI 能力的承载体，决定了 AI 能获取多少上下文。
 - **Cline (原 Claude Dev):** 强大的 VS Code 插件，支持读写文件、执行终端命令、浏览器操作。是目前最接近"独立 AI 工程师"的工具。
 - **v0.dev / Lovable / Bolt.new:** 专注于前端 UI 的生成式 AI。通过 Prompt 直接生成可部署的 React/Next.js 界面。
 - **Perplexity AI:** 替代传统搜索。在调研新技术栈或查找 API 最新文档时，比 Google 搜索效率高出 10 倍。
-- **AI-Context-Sync:** 自动维护项目上下文的 AI 工具，确保 `CONTEXT.md` 和 `ADR.md` 永远与代码同步。详见 [[products/ai-context-sync/README|AI-Context-Sync]]。
+- **AI-Context-Sync:** 自动维护项目上下文的 AI 工具，确保 `CONTEXT.md` 和 `ADR.md` 永远与代码同步。详见 [[../examples/ai-context-sync/README|AI-Context-Sync]]。
 
 ---
 

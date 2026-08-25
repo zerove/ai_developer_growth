@@ -54,7 +54,7 @@ python demo.py --mode fan-out
 
 ## 相关资源
 
-- [[../../examples/multi-agent-orch|示例代码]]
+- [[../../examples/multi-agent-orch/README|示例代码]]
 - [[docs/agent-dev/workflow-standards|开发流程规范]]
 
 ---

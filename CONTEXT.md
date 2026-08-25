@@ -1,3 +1,73 @@
+## 更新记录: 2026-08-26 00:45:45
+
+### 任务
+Git 变更同步
+
+### 变更摘要
+diff --git a/.github/PULL_REQUEST_TEMPLATE/case-study-review.md b/.github/PULL_REQUEST_TEMPLATE/case-study-review.md
+index 838c26a..31cca00 100644
+--- a/.github/PULL_REQUEST_TEMPLATE/case-study-review.md
++++ b/.github/PULL_REQUEST_TEMPLATE/case-study-review.md
+@@ -49,7 +49,7 @@ assignees: ""
+ ### 📄 格式规范
+
+ - [ ] 文件命名: `case-studies/<kebab-case-title>/README.md`
+-- [ ] 使用 Wikilink 格式引用内部文档: `[[../docs/...|显示文本]]`
++- [ ] 使用 Wikilink 格式引用内部文档: `[[../docs/MOC|显示文本]]`
+ - [ ] 表格对齐正确
+ - [ ] 代码块标注语言
+ - [ ] 无明显错别字/语法错误
+diff --git a/CLAUDE.md b/CLAUDE.md
+index 9ad4906..a70e46c 100644
+--- a/CLAUDE.md
++++ b/CLAUDE.md
+@@ -151,7 +151,7 @@ Agent 定义必须包含：
+ - Git commit message 使用中文，如 `feat: 添加自动修复引擎`
+
+ ## 注意事项
+-- 所有文档使用 Wikilink 格式：`[[../docs/...|显示文本]]`
++- 所有文档使用 Wikilink 格式：`[[../docs/MOC|显示文本]]`
+ - 案例研究必须包含：背景/过程/对比/洞察/场景五要素 + 效率对比表
+ - 新术语先在 `UBIQUITOUS_LANGUAGE.md` 定义
+ - 禁止硬编码路径，使用相对路径或环境变量
+diff --git a/CONTEXT.md b/CONTEXT.md
+index b6eeda6..ae3306b 100644
+--- a/CONTEXT.md
++++ b/CONTEXT.md
+@@ -1,3 +1,133 @@
++## 更新记录: 2026-08-26 00:37:16
++
++### 任务
++Git 变更同步
++
++### 变更摘要
++diff --git a/.github/workflows/ci-cd.yml b/.github/workflows/ci-cd.yml
++index cec3692..25cfc20 100644
++--- a/.github/workflows/ci-cd.yml
+++++ b/.github/workflows/ci-cd.yml
++@@ -63,7 +63,7 @@ jobs:
++         run: ruff format --check .
++
++       - name: Type check
++-        run: mypy tools/scripts/ --strict --ignore-missing-imports --config-file pyproject.toml
+++        run: mypy tools/scripts/
++
++   # ─────────────────────────────────────────────────────────
++   # 安全扫描
++diff --git a/.github/workflows/jobs/type-check.yml b/.github/workflows/jobs/type-check.yml
++index 9afd263..5e7e247 100644
++--- a/.github/workflows/jobs/type-check.yml
+++++ b/.github/workflows/jobs/type-check.yml
++@@ -23,4 +23,4 @@ jobs:
++           restore-keys: |
++             ${{ github.repository }}-mypy-
++       - name: Mypy (strict)
++-        run: mypy tools/scripts/ --ignore-missing-imports --strict
+++        run: mypy tools/scripts/
++diff --...
+
+---
+
 ## 更新记录: 2026-08-26 00:37:16
 
 ### 任务
@@ -4264,82 +4334,6 @@ index 0000000..2a0678f
 --- /dev/null
 +++ b/.jcode/scripts/scheduled_dispatch.py
 @@ -0,0 +1,105 @@
-+#!/usr/bin/env python3
-+"""scheduled hooks 到期调度器。
-+
-+读取 hooks.json 的 scheduled 触发器，用 croniter 判断（或内置简化 cron 解析）
-+哪些任务在本次调用时到期，逐个执行并记录 last-run 时间戳防重复。
-+配合 systemd timer 每小时调用一次：
-+    python3 .jcode/scripts/scheduled_dispatch.py --due-now
-+"""
-+
-+from __future__ import annotations
-+
-+import json
-+import subprocess
-+import sys
-+import time
-+from pathlib import Path
-+from time import struct_time
-+
-+ROOT = Path(__file__).resolve().parent.parent.parent
-+CONFIG = ROOT / ".jcode" / "hooks.json"
-+STATE = ROOT / ".jcode" / ".scheduled-last-run.json"
-+
-+
-+def load_state() -> dict[str, float]:
-+    if STATE.exists():
-+        try:
-+            return {k: float(v) for k, v in json.loads(STATE.read_text()).items()}
-+        except (json.JSONDecodeError, ValueError):
-+            return {}
-+    return {}
-+
-+
-+def save_state(state: dict[str, float]) -> None:
-+    STATE.write_text(json.dumps(state, indent=2))
-+
-+
-+def parse_cron(expr: str) -> tuple[set[int], set[int]]:
-+    """解析 '分 时 日 月 周' 中分/时字段，支持 *、数字、逗号、范围。返回 (分钟集, 小时集)。"""
-+    fields = expr.split()
-+    if len(fields) != 5:
-+        raise ValueError(f"bad cron: {expr}")
-+
-+    def expand(field: str, low: int, high: int) -> set[int]:
-+        vals: set[int] = set()
-+        for part in field.split(","):
-+            if part == "*":
-+                vals.update(range(low, high + 1))
-+            elif "-" in part:
-+                a, b = part.split("-")
-+                vals.update(range(int(a), int(b) + 1))
-+            else:
-+                vals.add(int(part))
-+        return vals
-+
-+    minutes = expand(fields[0], 0, 59)
-+    hours = expand(fields[1], 0, 23)
-+    return minutes, hours
-+
-+
-+def is_due(hook: dict, now: struct_time | None = None, state: dict[str, float] | None = None) -> bool:
-+    """判断 hook 是否到期：启用中、时间...
-
----
-
-## 更新记录: 2026-08-25 14:31:18
-
-### 任务
-Git 变更同步
-
-### 变更摘要
-diff --git a/.jcode/scripts/scheduled_dispatch.py b/.jcode/scripts/scheduled_dispatch.py
-new file mode 100644
-index 0000000..e49b089
---- /dev/null
-+++ b/.jcode/scripts/scheduled_dispatch.py
-@@ -0,0 +1,106 @@
 +#!/usr/bin/env python3
 +"""scheduled hooks 到期调度器。
 +

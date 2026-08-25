@@ -35,6 +35,10 @@ class ContextConfig:
     test_timeout: int = 30
     max_retries: int = 3
     executor_max_workers: int = 4
+    # CONTEXT.md 滚动窗口: 保留最近 N 条更新记录（0 = 不限制）。
+    # 背景: 更新记录只追加不裁剪，实测膨胀至 6300+ 行/220KB，
+    # 持续稀释 AI 上下文质量（改进建议 6）
+    max_update_entries: int = 50
 
 
 class ContextSlicer:
@@ -108,7 +112,9 @@ class ArchitectureGuard:
 class ContextSynthesizer:
     """上下文合成器 - 更新 CONTEXT.md"""
 
-    def synthesize_context_update(self, diff: str, task: str, current_context: str) -> str:
+    def synthesize_context_update(
+        self, diff: str, task: str, current_context: str, max_update_entries: int = 50
+    ) -> str:
         timestamp = __import__("datetime").datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
         update = f"""
@@ -124,7 +130,43 @@ class ContextSynthesizer:
 
 {current_context}
 """
+
+        # 滚动窗口: 只保留最近 N 条更新记录，防止文件无限膨胀
+        if max_update_entries > 0:
+            update = self._prune_update_entries(update, max_update_entries)
+
         return update.strip()
+
+    @staticmethod
+    def _prune_update_entries(content: str, max_entries: int) -> str:
+        """按 '## 更新记录:' 标题切分，保留头部说明 + 最近 N 条记录。
+
+        首个更新记录之前的所有内容（项目概述等）视为固定头部原样保留。
+        """
+        lines = content.splitlines()
+        header_end = 0
+        for i, line in enumerate(lines):
+            if line.startswith("## 更新记录:"):
+                header_end = i
+                break
+        else:
+            return content  # 无更新记录, 原样返回
+
+        header = "\n".join(lines[:header_end]).rstrip("\n")
+
+        # 收集每条记录的起止行号
+        starts = [i for i in range(header_end, len(lines)) if lines[i].startswith("## 更新记录:")]
+        entries = []
+        for idx, start in enumerate(starts):
+            end = starts[idx + 1] if idx + 1 < len(starts) else len(lines)
+            entries.append("\n".join(lines[start:end]).strip("\n"))
+
+        kept = entries[:max_entries]
+        pruned = len(entries) - len(kept)
+        result = header + ("\n\n" if header else "") + "\n\n".join(kept) + "\n"
+        if pruned > 0:
+            result += f"\n<!-- 滚动窗口: 已自动裁剪 {pruned} 条旧更新记录 -->\n"
+        return result
 
 
 class GitAnalyzer:
@@ -319,7 +361,9 @@ class ContextSyncManager:
         current_context = context_file.read_text(encoding="utf-8") if context_file.exists() else ""
 
         # 4. 合成更新
-        updated_context = self.synthesizer.synthesize_context_update(diff, "Git 变更同步", current_context)
+        updated_context = self.synthesizer.synthesize_context_update(
+            diff, "Git 变更同步", current_context, max_update_entries=self.config.max_update_entries
+        )
 
         # 5. 写入 (diff 内容可能携带尾随空格, 统一清除避免与
         #    pre-commit trailing-whitespace 钩子形成修改循环)

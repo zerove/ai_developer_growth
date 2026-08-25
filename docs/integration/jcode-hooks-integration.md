@@ -37,3 +37,23 @@ pre_tool_timeout_ms = 5000
 - 项目级 `.jcode/hooks.json`（hooks_runner）：管 git 提交/PR 门禁。
 - 本文档的 `~/.jcode/config.toml`：管 agent 工具调用实时门禁。
 - 两者互补：前者保证入库质量，后者把问题拦截在"写盘之前"。
+
+
+## turn_end 会话质量摘要钩子 (2026-08-25)
+
+`~/bin/jcode-adg-turn-end`：观察者钩子（fire-and-forget，永不阻断）。
+
+| 项 | 值 |
+|---|---|
+| 触发 | 每次 turn_end 事件 |
+| 输出 | `~/.local/state/adg/turn-summaries.jsonl` |
+| 字段 | ts/session/project/status/duration_ms/model/assistant_chars/last_reply_head |
+| 用途 | N3 门禁观察调优的数据源之一；按项目聚合会话质量趋势 |
+
+配置（`~/.jcode/config.toml` `[hooks]` 段）：
+
+```toml
+turn_end = "~/bin/jcode-adg-turn-end"
+```
+
+实测：turn_end 事件正确落盘 JSONL；session_start/post_tool 事件被过滤零写入。

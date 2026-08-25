@@ -32,7 +32,10 @@ class TestJCodeCLI:
         )
         assert result.returncode == 0
         assert "Case Study Quality Analysis Report" in result.stdout
-        assert "45 cases" in result.stdout
+        # 案例数量随知识库增长动态变化，只断言格式而非具体数字
+        import re as _re
+
+        assert _re.search(r"\d+ cases", result.stdout), result.stdout
 
     def test_case_quality_specific(self):
         """Test case-quality command with specific case."""

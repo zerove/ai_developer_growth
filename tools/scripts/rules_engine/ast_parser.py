@@ -47,13 +47,16 @@ warnings.filterwarnings("ignore", category=FutureWarning, module="tree_sitter")
 # Try to import tree-sitter and language packages (tree-sitter 0.26+ API)
 # Use individual language packages instead of tree_sitter_languages
 try:
+    import tree_sitter_c_sharp
     import tree_sitter_cpp
     import tree_sitter_go
     import tree_sitter_java
     import tree_sitter_javascript
+    import tree_sitter_kotlin
     import tree_sitter_python
     import tree_sitter_ruby
     import tree_sitter_rust
+    import tree_sitter_swift
     import tree_sitter_typescript
     from tree_sitter import Language, Parser
 
@@ -244,6 +247,9 @@ class ASTParser:
         "java",
         "ruby",
         "cpp",
+        "csharp",
+        "kotlin",
+        "swift",
     }
     # 类级共享缓存：所有实例复用同一批 language parser
     _PARSER_CACHE: ClassVar[dict[str, Any]] = {}
@@ -268,6 +274,9 @@ class ASTParser:
                     "java": tree_sitter_java,
                     "ruby": tree_sitter_ruby,
                     "cpp": tree_sitter_cpp,
+                    "csharp": tree_sitter_c_sharp,
+                    "kotlin": tree_sitter_kotlin,
+                    "swift": tree_sitter_swift,
                 }
                 for lang in cls.SUPPORTED_LANGUAGES:
                     if lang in lang_modules:
@@ -408,8 +417,27 @@ class ASTParser:
     # Python-specific extraction
     # ─────────────────────────────────────────────────────────────
 
+    # 这些语言的提取委托给 parsers/registry 的专用解析器（含类方法归属、基类收集）
+    _REGISTRY_DELEGATED_LANGUAGES = frozenset({"java", "csharp", "kotlin", "swift"})
+
+    def _registry_parse(self, tree_root: _TreeNode, language: str) -> tuple[list[FunctionInfo], list[ClassInfo]] | None:
+        """尝试用 parsers/registry 专用解析器提取；语言未注册返回 None。"""
+        try:
+            from tools.scripts.rules_engine.parsers.registry import get_registry_parser
+
+            reg = get_registry_parser(language)
+            if reg is None:
+                return None
+            return reg.parse(tree_root, [])
+        except Exception:
+            return None
+
     def _extract_functions(self, node: _TreeNode, language: str, lines: list[str]) -> list[FunctionInfo]:
         """Extract functions from AST node."""
+        if language in self._REGISTRY_DELEGATED_LANGUAGES:
+            delegated = self._registry_parse(node, language)
+            if delegated is not None:
+                return delegated[0]
         functions: list[FunctionInfo] = []
         self._walk_functions(node, language, lines, functions, None)
         return functions
@@ -728,6 +756,10 @@ class ASTParser:
 
     def _extract_classes(self, node: _TreeNode, language: str, lines: list[str]) -> list[ClassInfo]:
         """Extract class definitions."""
+        if language in self._REGISTRY_DELEGATED_LANGUAGES:
+            delegated = self._registry_parse(node, language)
+            if delegated is not None:
+                return delegated[1]
         classes: list[ClassInfo] = []
         self._walk_classes(node, language, lines, classes)
         return classes
@@ -998,6 +1030,10 @@ class ASTParser:
             ".rs": "rust",
             ".go": "go",
             ".java": "java",
+            ".cs": "csharp",
+            ".kt": "kotlin",
+            ".kts": "kotlin",
+            ".swift": "swift",
             ".rb": "ruby",
         }
         return ext_map.get(filepath.suffix.lower(), "unknown")

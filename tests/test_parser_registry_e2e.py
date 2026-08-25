@@ -15,6 +15,8 @@ from tools.scripts.rules_engine.parsers.registry import PARSER_REGISTRY, get_par
 
 def _parse_code(language: str, code: bytes):
     """用对应 tree-sitter 语言解析源码并返回根节点。"""
+    import importlib
+
     import tree_sitter_go
     import tree_sitter_java
     import tree_sitter_python
@@ -27,6 +29,9 @@ def _parse_code(language: str, code: bytes):
         "rust": (tree_sitter_rust, None),
         "java": (tree_sitter_java, None),
         "typescript": (tree_sitter_typescript, "language_typescript"),
+        "csharp": (importlib.import_module("tree_sitter_c_sharp"), None),
+        "kotlin": (importlib.import_module("tree_sitter_kotlin"), None),
+        "swift": (importlib.import_module("tree_sitter_swift"), None),
     }
     mod, ts_fn = modules[language]
     lang_obj = Language(getattr(mod, ts_fn)()) if ts_fn else Language(mod.language())
@@ -35,8 +40,17 @@ def _parse_code(language: str, code: bytes):
 
 
 class TestParserRegistry:
-    def test_registry_contains_five_languages(self) -> None:
-        assert set(PARSER_REGISTRY.keys()) == {"python", "go", "rust", "java", "typescript"}
+    def test_registry_contains_eight_languages(self) -> None:
+        assert set(PARSER_REGISTRY.keys()) == {
+            "python",
+            "go",
+            "rust",
+            "java",
+            "typescript",
+            "csharp",
+            "kotlin",
+            "swift",
+        }
 
     def test_all_parsers_satisfy_base(self) -> None:
         for lang, parser in PARSER_REGISTRY.items():
@@ -158,3 +172,65 @@ class TestAllLanguagesEndToEnd:
         }
         functions, classes = _parse_code(language, samples[language])
         assert functions or classes, f"{language} 未提取到任何符号"
+
+
+class TestNewLanguageParsers:
+    """csharp/kotlin/swift 解析器端到端（2026-08-25 扩展）。"""
+
+    @pytest.mark.parametrize(
+        ("language", "code", "expected_funcs", "expected_class"),
+        [
+            (
+                "java",
+                "public class Svc { public User find(int id) { return null; } }",
+                {"find"},
+                "Svc",
+            ),
+            (
+                "csharp",
+                "public class Svc : Base { public User Find(int id) { return null; } }",
+                {"Find"},
+                "Svc",
+            ),
+            (
+                "kotlin",
+                "class Svc : Base { fun create(item: String): Boolean { return true } }",
+                {"create"},
+                "Svc",
+            ),
+            (
+                "swift",
+                "class Net: Base { func fetch(url: String) -> Bool { return true } }",
+                {"fetch"},
+                "Net",
+            ),
+        ],
+    )
+    def test_parse_extracts_methods_and_class(self, language, code, expected_funcs, expected_class):
+        get_parser(language)  # 确认可实例化（注册表含该语言）
+        assert language in PARSER_REGISTRY
+        functions, classes = _parse_code(language, code.encode())
+        names = {f.name for f in functions}
+        assert expected_funcs <= names, f"{language}: {names}"
+        assert any(c.name == expected_class for c in classes)
+
+    def test_ast_parser_delegates_new_languages(self, tmp_path):
+        """ASTParser 主提取路径对新语言委托 registry（java 修复回归）。"""
+        from tools.scripts.rules_engine.ast_parser import ASTParser
+
+        cases = [
+            (".java", "java", "public class A { void go() { } }", {"go"}, "A"),
+            (".cs", "csharp", "public class A { void Go() { } }", {"Go"}, "A"),
+            (".kt", "kotlin", "class A { fun go() { } }", {"go"}, "A"),
+            (".swift", "swift", "class A { func go() { } }", {"go"}, "A"),
+        ]
+        parser = ASTParser()
+        for ext, lang, code, want_fns, want_cls in cases:
+            f = tmp_path / f"sample{ext}"
+            f.write_text(code, encoding="utf-8")
+            ast_obj = parser.parse_file(f, lang)
+            assert ast_obj is not None, lang
+            got_fns = {x.name for x in ast_obj.functions}
+            got_cls = {c.name for c in ast_obj.classes}
+            assert want_fns <= got_fns, f"{lang}: {got_fns}"
+            assert want_cls in got_cls, f"{lang}: {got_cls}"

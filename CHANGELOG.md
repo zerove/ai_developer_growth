@@ -31,6 +31,17 @@ All notable changes to the AI Developer Growth project.
 ### 回归修复（重要）
 - 恢复 ai_quality_gate.py eval/exec 检测模式（凌晨提交 2d80af7 误删），17 相关测试全部通过
 
+### 多语言与生态扩展（2026-08-25 补充）
+- **解析器 5 语言**：Go/Rust 真实提取升级 + Java/TypeScript tree-sitter 新增（去重、heritage 顺序修复）
+- **分层规则 12 语言**：补 kotlin/csharp/ruby/php/swift/cpp 等
+- **供应链依赖解析 9 生态**：Gradle/Gemfile/composer/NuGet 等
+- **源码知识索引 16 扩展名**
+- **规则缓存键缺陷修复**：common/security.yml 变更此前不触发缓存失效（66925b2）
+- **Java 集成测试豁免**：*IntegrationTest.java/*IT.java/*Tests.java 豁免进程执行规则，普通代码仍报错
+- **venv 目录变体扫描泄漏修复**：.venv-adg 等非标准名被扫入第三方包（d2612a3），sisyphus-engine 实测 918→454 文件、site-packages 零命中
+- **ADG Bootstrap**：一键跨项目移植（探测→复制→适配→生成→注入），真实外部项目 maturin 混合仓库实测通过
+- **Jcode 钩子集成**：pre_tool 门禁（exit 2 阻断+反馈回传）+ post_tool 异步检查 + turn_end 会话质量摘要 + 观察报告工具
+
 
 ## [2.3.0] - 2026-08-11
 

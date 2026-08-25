@@ -3,9 +3,13 @@ from __future__ import annotations
 import argparse
 import json
 import logging
+import subprocess
 import sys
 from pathlib import Path
-from typing import Any
+from typing import TYPE_CHECKING, Any
+
+if TYPE_CHECKING:
+    from tools.scripts.rules_engine.models import CheckResult as CheckResultLike
 
 from tools.scripts.adg_cli.check import (
     _check_files_parallel,
@@ -17,6 +21,7 @@ from tools.scripts.adg_cli.core import (
     _DEFAULT_PRE_COMMIT_HOOK,
     _DEFAULT_PRE_PUSH_HOOK,
     SKIP_DIRS,
+    SKIP_DIRS_ALL,
     SKIP_EXTENSIONS,
     Issue,
     _attach_docs_to_issues,
@@ -212,6 +217,95 @@ def _run_fix(target: Path, language: str | None) -> dict[str, Any]:
     return stats
 
 
+def _smart_scan_ruff_issues(files: list[Path]) -> tuple[list[CheckResultLike], int]:
+    """对文件列表跑 ruff check，产出 CheckResult 列表（供 create_plan）。"""
+    from tools.scripts.rules_engine.models import CheckResult, Issue
+
+    results: list[CheckResult] = []
+    scan_errors = 0
+    for f in files:
+        try:
+            proc = subprocess.run(
+                ["ruff", "check", "--output-format=concise", str(f)],
+                capture_output=True,
+                text=True,
+                timeout=60,
+            )
+        except Exception as exc:  # noqa: BLE001 - 单文件扫描失败不中断整体
+            print(f"Warning: ruff scan {f} failed: {exc}", file=sys.stderr)
+            scan_errors += 1
+            continue
+        issues: list[Issue] = []
+        for line in (proc.stdout or "").splitlines():
+            parts = line.split(":", 4)
+            if len(parts) >= 4 and parts[1].isdigit() and parts[2].isdigit():
+                code = parts[3].split()[0] if parts[3].split() else "E501"
+                issues.append(
+                    Issue(
+                        rule_id=code,
+                        severity="warning",
+                        category="style",
+                        file=str(f),
+                        line=int(parts[1]),
+                        column=int(parts[2]),
+                        message=parts[-1],
+                        fix_hint="ruff --fix",
+                    )
+                )
+        results.append(CheckResult(file=str(f), issues=issues, language="python"))
+    return results, scan_errors
+
+
+def _collect_python_files(target: Path) -> list[Path]:
+    """收集目标路径下全部 Python 文件（跳过 SKIP_DIRS_ALL）。"""
+    files: list[Path] = [target] if target.is_file() else []
+    if not files:
+        for fp in sorted(target.rglob("*.py")):
+            rel_parts = fp.relative_to(target).parts
+            if any(part in SKIP_DIRS_ALL for part in rel_parts):
+                continue
+            files.append(fp)
+    return files
+
+
+def _run_smart_fix(target: Path, language: str | None, as_json: bool) -> int:
+    """--smart 模式: AutoFixOrchestrator + 工具级 provider（Ruff）修复 Python 文件。"""
+    from tools.scripts.auto_fix import AutoFixOrchestrator, FixSafetyLevel, FixStrategy, RuffFixProvider
+
+    orchestrator = AutoFixOrchestrator(
+        strategy=FixStrategy.AUTO,
+        safety_level=FixSafetyLevel.SAFE,
+        backup=True,
+    )
+    orchestrator.register_provider(RuffFixProvider())
+
+    files = _collect_python_files(target)
+    results, scan_errors = _smart_scan_ruff_issues(files)
+
+    plan = orchestrator.create_plan(results)
+    fix_results = orchestrator.execute_plan(plan, Path.cwd())
+    total_applied = sum(len(r.applied or []) for r in fix_results)
+    total_errors = scan_errors + sum(len(r.errors or []) for r in fix_results)
+
+    stats: dict[str, object] = {
+        "mode": "smart",
+        "files_scanned": len(files),
+        "fixes_applied": total_applied,
+        "errors": total_errors,
+    }
+    print(json.dumps(stats, indent=2) if as_json else _render_smart_stats(stats))
+    return 0 if total_errors == 0 else 1
+
+
+def _render_smart_stats(stats: dict[str, object]) -> str:
+    lines = [
+        f"Smart fix (AutoFixOrchestrator): scanned {stats['files_scanned']} files",
+        f"  fixes applied: {stats['fixes_applied']}",
+        f"  errors: {stats['errors']}",
+    ]
+    return "\n".join(lines)
+
+
 def cmd_fix(args: argparse.Namespace) -> int:
     """Apply automatic fixes to code files."""
     target = Path(args.path).resolve()
@@ -223,6 +317,10 @@ def cmd_fix(args: argparse.Namespace) -> int:
     # Detect language
     detected = detect_language(target)
     language = args.lang or detected.get("language")
+
+    smart = getattr(args, "smart", False)
+    if smart:
+        return _run_smart_fix(target, language, args.json)
 
     if args.json:
         stats = _run_fix(target, language)

@@ -920,3 +920,41 @@ def test_check_sarif_output_e2e(tmp_path, monkeypatch, capsys):
     assert data["runs"][0]["tool"]["driver"]["name"] == "adg"
     assert len(data["runs"][0]["results"]) > 0
     assert rc != 0  # 有 error 级问题时非零退出
+
+
+def test_fix_smart_e2e(tmp_path, capsys):
+    """fix --smart 应经 AutoFixOrchestrator 用 Ruff 修复未用导入。"""
+    import json as _json
+
+    target = tmp_path / "messy.py"
+    target.write_text("import os\nimport sys\nx = 1\n", encoding="utf-8")
+
+    from tools.scripts.adg_cli.commands import cmd_fix
+
+    args = types.SimpleNamespace(
+        path=str(target),
+        lang="python",
+        json=True,
+        smart=True,
+    )
+    rc = cmd_fix(args)
+    out = capsys.readouterr().out
+    stats = _json.loads(out)
+    assert stats["mode"] == "smart"
+    assert stats["errors"] == 0
+    assert stats["fixes_applied"] > 0
+    assert "import os" not in target.read_text(encoding="utf-8")
+    assert rc == 0
+
+
+def test_fix_regex_mode_unchanged(tmp_path):
+    """默认（正则）模式行为保持: py-bare-except 可被修复。"""
+    target = tmp_path / "legacy.py"
+    target.write_text("try:\n    pass\nexcept:\n    pass\n", encoding="utf-8")
+
+    from tools.scripts.adg_cli.fix import fix_file
+
+    result = fix_file(target)
+    assert result["errors"] == 0
+    assert result["fixed"] >= 1
+    assert "except Exception:" in target.read_text(encoding="utf-8")

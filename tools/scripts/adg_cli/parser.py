@@ -87,6 +87,11 @@ def _add_fix_parser(sub: argparse._SubParsersAction[Any]) -> None:
     fix_p.add_argument("path", help="File or directory to fix")
     fix_p.add_argument("--lang", help="Force language (skip auto-detection)")
     fix_p.add_argument("--json", action="store_true", help="Output as JSON")
+    fix_p.add_argument(
+        "--smart",
+        action="store_true",
+        help="Use AutoFixOrchestrator (tool-based providers like Ruff for Python) instead of regex rules",
+    )
 
 
 def _add_rule_parser(sub: argparse._SubParsersAction[Any]) -> None:

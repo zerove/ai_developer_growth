@@ -1,3 +1,302 @@
+## 更新记录: 2026-08-25 22:55:37
+
+### 任务
+Git 变更同步
+
+### 变更摘要
+diff --git a/CONTEXT.md b/CONTEXT.md
+index d1063ab..9eaadb0 100644
+--- a/CONTEXT.md
++++ b/CONTEXT.md
+@@ -1,3039 +1,3363 @@
+-## 更新记录: 2026-08-25 22:25:33
++## 更新记录: 2026-08-25 22:52:20
+
+ ### 任务
+ Git 变更同步
+
+ ### 变更摘要
+ diff --git a/CONTEXT.md b/CONTEXT.md
+-index c4953f6..8cf2858 100644
++index d1063ab..e858082 100644
+ --- a/CONTEXT.md
+ +++ b/CONTEXT.md
+-@@ -1,3 +1,152 @@
+-+## 更新记录: 2026-08-25 22:24:51
++@@ -1,3 +1,374 @@
+++## 更新记录: 2026-08-25 22:51:42
+ +
+ +### 任务
+ +Git 变更同步
+ +
+ +### 变更摘要
+ +diff --git a/CONTEXT.md b/CONTEXT.md
+-+index c4953f6..c2e9113 100644
+++index d1063ab..b7f99c1 100644
+ +--- a/CONTEXT.md
+ ++++ b/CONTEXT.md
+-+@@ -1,3 +1,74 @@
+-++## 更新记录: 2026-08-25 22:19:48
+++@@ -1,3 +1,271 @@
++++## 更新记录: 2026-08-25 22:43:04
+ ++
+ ++### 任务
+ ++Git 变更同步
+ ++
+ ++### 变更摘要
+ ++diff --git a/CONTEXT.md b/CONTEXT.md
+-++index 30a8170..c4953f6 100644
++++index c2e9113..985db30 100644
+ ++--- a/CONTEXT.md
+ +++++ b/CONTEXT.md
+-++@@ -1,3 +1,67 @@
+-+++## 更新记录: 2026-08-25 22:01:36
++++@@ -1,3 +1,336 @@
+++++## 更新记录: 2026-08-25 22:41:29
+ +++
+ +++### 任务
+ +++Git 变更同步
+ +++
+ +++### 变更摘要
+ +++diff --git a/CONTEXT.md b/CONTEXT.md
+-+++index 754b878..30a8170 100644
+++++index c2e9113..20aa854 100644
+ +++--- a/CONTEXT.md
+ ++++++ b/CONTEXT.md
+-+++@@ -1,3 +1,60 @@
+-++++## 更新记录: 2026-08-25 20:10:44
+++++@@ -1,3 +1,247 @@
++++++## 更新记录: 2026-08-25 22:40:54
+ ++++
+ ++++### 任务
+ ++++Git 变更同步
+ ++++
+ ++++### 变更摘要
+-++++diff --git a/.github/workflows/release.yml b/.github/workflows/release.yml
+-++++index 926b6ab..e2d5e32 100644
+-++++--- a/.github/workflows/release.yml
+-+++++++ b/.github/workflows/release.yml
+-++++@@ -155,8 +155,11 @@ jobs:
+-++++         id: changelog
+-++++         run: |
+-++++           TAG_VERSION=${GITHUB_REF_NAME#v}
+-++++-          # Extract changelog for this version
+-++++-          awk "/^## \\[${TAG_VERSION//./\\.}\\]/,/^## \\[/" CHANGELOG.md | head -n -1 > release_notes.md
+-+++++          # 提取指定版本的 changelog 区块（至下一个版本标题为止）。
+-+++++          # 注意不能用 /start/,/end/ 区间：start 行自身满足 /^## \[/ 会立即关闭区间...
+
+---
+
+## 更新记录: 2026-08-25 22:52:20
+
+### 任务
+Git 变更同步
+
+### 变更摘要
+diff --git a/CONTEXT.md b/CONTEXT.md
+index d1063ab..e858082 100644
+--- a/CONTEXT.md
++++ b/CONTEXT.md
+@@ -1,3 +1,374 @@
++## 更新记录: 2026-08-25 22:51:42
++
++### 任务
++Git 变更同步
++
++### 变更摘要
++diff --git a/CONTEXT.md b/CONTEXT.md
++index d1063ab..b7f99c1 100644
++--- a/CONTEXT.md
+++++ b/CONTEXT.md
++@@ -1,3 +1,271 @@
+++## 更新记录: 2026-08-25 22:43:04
+++
+++### 任务
+++Git 变更同步
+++
+++### 变更摘要
+++diff --git a/CONTEXT.md b/CONTEXT.md
+++index c2e9113..985db30 100644
+++--- a/CONTEXT.md
++++++ b/CONTEXT.md
+++@@ -1,3 +1,336 @@
++++## 更新记录: 2026-08-25 22:41:29
++++
++++### 任务
++++Git 变更同步
++++
++++### 变更摘要
++++diff --git a/CONTEXT.md b/CONTEXT.md
++++index c2e9113..20aa854 100644
++++--- a/CONTEXT.md
+++++++ b/CONTEXT.md
++++@@ -1,3 +1,247 @@
+++++## 更新记录: 2026-08-25 22:40:54
+++++
+++++### 任务
+++++Git 变更同步
+++++
+++++### 变更摘要
+++++diff --git a/CONTEXT.md b/CONTEXT.md
+++++index c2e9113..d1063ab 100644
+++++--- a/CONTEXT.md
++++++++ b/CONTEXT.md
+++++@@ -1,3 +1,164 @@
++++++## 更新记录: 2026-08-25 22:25:33
++++++
++++++### 任务
++++++Git 变更同步
++++++
++++++### 变更摘要
++++++diff --git a/CONTEXT.md b/CONTEXT.md
++++++index c4953f6..8cf2858 100644
++++++--- a/CONTEXT.md
+++++++++ b/CONTEXT.md
++++++@@ -1,3 +1,152 @@
+++++++## 更新记录: 2026-08-25 22:24:51
+++++++
+++++++### 任务
+++++++Git 变更同步
+++++++
+++++++### 变更摘要
+++++++diff --git a/CONTEXT.md b/CONTEXT.md
+++++++index c4953f6..c2e9113 100644
+++++++--- a/CONTEXT.md
++++++++++ b/CONTEXT.md
+++++++@@ -1,3 +1,74 @@
++++++++## 更新记录: 2026-08-25 22:19:48
++++++++
++++++++### 任务
++++++++Git 变更同步
++++++++
++++++++### 变更摘要
++++++++diff --git a/CONTEXT.md b/CONTEXT.md
++++++++index 30a8170..c4953f6 100644
++++++++--- a/CONTEXT.md
+++++++++++ b/CONTEXT.md
++++++++@@ -1,3 +1,67 @@
+++++++++## 更新记录: 2026-08-25 22:01:36
+++++++++
+++++++++### 任务
+++++++++Git 变更同步
+++++++++
+++++++++### 变更摘要
+++++++++diff --git a/CONTEXT.md b/CONTEXT.md
+++++++++index 754b878..30a8170 100644
+++++++++--- a/CONTEXT.md
++++++++++++ b/CONTEXT.md
+++++++++@@ -1,3 +1,60 @@
++++++++++## 更新记录: 2026-08-25 20:10:44
++++++++++
++++++++++### 任务
++++++++++Git 变更同步
+++++++...
+
+---
+
+## 更新记录: 2026-08-25 22:51:42
+
+### 任务
+Git 变更同步
+
+### 变更摘要
+diff --git a/CONTEXT.md b/CONTEXT.md
+index d1063ab..b7f99c1 100644
+--- a/CONTEXT.md
++++ b/CONTEXT.md
+@@ -1,3 +1,271 @@
++## 更新记录: 2026-08-25 22:43:04
++
++### 任务
++Git 变更同步
++
++### 变更摘要
++diff --git a/CONTEXT.md b/CONTEXT.md
++index c2e9113..985db30 100644
++--- a/CONTEXT.md
+++++ b/CONTEXT.md
++@@ -1,3 +1,336 @@
+++## 更新记录: 2026-08-25 22:41:29
+++
+++### 任务
+++Git 变更同步
+++
+++### 变更摘要
+++diff --git a/CONTEXT.md b/CONTEXT.md
+++index c2e9113..20aa854 100644
+++--- a/CONTEXT.md
++++++ b/CONTEXT.md
+++@@ -1,3 +1,247 @@
++++## 更新记录: 2026-08-25 22:40:54
++++
++++### 任务
++++Git 变更同步
++++
++++### 变更摘要
++++diff --git a/CONTEXT.md b/CONTEXT.md
++++index c2e9113..d1063ab 100644
++++--- a/CONTEXT.md
+++++++ b/CONTEXT.md
++++@@ -1,3 +1,164 @@
+++++## 更新记录: 2026-08-25 22:25:33
+++++
+++++### 任务
+++++Git 变更同步
+++++
+++++### 变更摘要
+++++diff --git a/CONTEXT.md b/CONTEXT.md
+++++index c4953f6..8cf2858 100644
+++++--- a/CONTEXT.md
++++++++ b/CONTEXT.md
+++++@@ -1,3 +1,152 @@
++++++## 更新记录: 2026-08-25 22:24:51
++++++
++++++### 任务
++++++Git 变更同步
++++++
++++++### 变更摘要
++++++diff --git a/CONTEXT.md b/CONTEXT.md
++++++index c4953f6..c2e9113 100644
++++++--- a/CONTEXT.md
+++++++++ b/CONTEXT.md
++++++@@ -1,3 +1,74 @@
+++++++## 更新记录: 2026-08-25 22:19:48
+++++++
+++++++### 任务
+++++++Git 变更同步
+++++++
+++++++### 变更摘要
+++++++diff --git a/CONTEXT.md b/CONTEXT.md
+++++++index 30a8170..c4953f6 100644
+++++++--- a/CONTEXT.md
++++++++++ b/CONTEXT.md
+++++++@@ -1,3 +1,67 @@
++++++++## 更新记录: 2026-08-25 22:01:36
++++++++
++++++++### 任务
++++++++Git 变更同步
++++++++
++++++++### 变更摘要
++++++++diff --git a/CONTEXT.md b/CONTEXT.md
++++++++index 754b878..30a8170 100644
++++++++--- a/CONTEXT.md
+++++++++++ b/CONTEXT.md
++++++++@@ -1,3 +1,60 @@
+++++++++## 更新记录: 2026-08-25 20:10:44
+++++++++
+++++++++### 任务
+++++++++Git 变更同步
+++++++++
+++++++++### 变更摘要
+++++++++diff --git a/.github/workflows/release.yml b/.github/workflows/release.yml
+++++++++index 926b6ab..e2d5e32 100644
+++++++++--- a/.github/workflows/release.yml
++++++++++++ b/.github/workflows/release.yml
+++++++++@@ -155,8 +155,11 @@ jobs:
++++...
+
+---
+
 ## 更新记录: 2026-08-25 22:43:04
 
 ### 任务
@@ -4176,323 +4475,6 @@ index 94de011..2e43091 100644
 ++++++### 任务
 ++++++Git 变更同步
 ...
-
----
-
-## 更新记录: 2026-08-25 13:50:54
-
-### 任务
-Git 变更同步
-
-### 变更摘要
-diff --git a/.gitignore b/.gitignore
-index 7b03ddc..76a1399 100644
---- a/.gitignore
-+++ b/.gitignore
-@@ -94,3 +94,4 @@ debug_mutmut.py
- .quality-trends/evolution_log.json
- .quality-trends/swarm_execution.json
- .quality-trends/telemetry.json
-+logs/
-diff --git a/CONTEXT.md b/CONTEXT.md
-index 94de011..ee1bc28 100644
---- a/CONTEXT.md
-+++ b/CONTEXT.md
-@@ -1,3 +1,216 @@
-+## 更新记录: 2026-08-25 13:49:54
-+
-+### 任务
-+Git 变更同步
-+
-+### 变更摘要
-+diff --git a/.gitignore b/.gitignore
-+index 7b03ddc..76a1399 100644
-+--- a/.gitignore
-++++ b/.gitignore
-+@@ -94,3 +94,4 @@ debug_mutmut.py
-+ .quality-trends/evolution_log.json
-+ .quality-trends/swarm_execution.json
-+ .quality-trends/telemetry.json
-++logs/
-+diff --git a/CONTEXT.md b/CONTEXT.md
-+index 94de011..08fe834 100644
-+--- a/CONTEXT.md
-++++ b/CONTEXT.md
-+@@ -1,3 +1,110 @@
-++## 更新记录: 2026-08-25 13:26:13
-++
-++### 任务
-++Git 变更同步
-++
-++### 变更摘要
-++diff --git a/CONTEXT.md b/CONTEXT.md
-++index 249134b..94de011 100644
-++--- a/CONTEXT.md
-+++++ b/CONTEXT.md
-++@@ -1,3 +1,110 @@
-+++## 更新记录: 2026-08-25 13:24:54
-+++
-+++### 任务
-+++Git 变更同步
-+++
-+++### 变更摘要
-+++diff --git a/CONTEXT.md b/CONTEXT.md
-+++index ddf4a4b..249134b 100644
-+++--- a/CONTEXT.md
-++++++ b/CONTEXT.md
-+++@@ -1,3 +1,538 @@
-++++## 更新记录: 2026-08-25 13:23:23
-++++
-++++### 任务
-++++Git 变更同步
-++++
-++++### 变更摘要
-++++diff --git a/CONTEXT.md b/CONTEXT.md
-++++index 0e09f0f..d7965cd 100644
-++++--- a/CONTEXT.md
-+++++++ b/CONTEXT.md
-++++@@ -1,3 +1,538 @@
-+++++## 更新记录: 2026-08-25 13:20:48
-+++++
-+++++### 任务
-+++++Git 变更同步
-+++++
-+++++### 变更摘要
-+++++diff --git a/CONTEXT.md b/CONTEXT.md
-+++++index 0e09f0f..916e5a2 100644
-+++++--- a/CONTEXT.md
-++++++++ b/CONTEXT.md
-+++++@@ -1,3 +1,431 @@
-++++++## 更新记录: 2026-08-25 13:20:18
-++++++
-++++++### 任务
-++++++Git 变更同步
-++++++
-++++++### 变更摘要
-++++++diff --git a/CONTEXT.md b/CONTEXT.md
-++++++index 0e09f0f..a92e61d 100644
-++++++--- a/CONTEXT.md
-+++++++++ b/CONTEXT.md
-++++++@@ -1,3 +1,324 @@
-+++++++## 更新记录: 2026-08-25 13:18:45
-+++++++
-+++++++### 任务
-+++++++Git 变更同步
-+++++++
-+++++++### 变更...
-
----
-
-## 更新记录: 2026-08-25 13:49:54
-
-### 任务
-Git 变更同步
-
-### 变更摘要
-diff --git a/.gitignore b/.gitignore
-index 7b03ddc..76a1399 100644
---- a/.gitignore
-+++ b/.gitignore
-@@ -94,3 +94,4 @@ debug_mutmut.py
- .quality-trends/evolution_log.json
- .quality-trends/swarm_execution.json
- .quality-trends/telemetry.json
-+logs/
-diff --git a/CONTEXT.md b/CONTEXT.md
-index 94de011..08fe834 100644
---- a/CONTEXT.md
-+++ b/CONTEXT.md
-@@ -1,3 +1,110 @@
-+## 更新记录: 2026-08-25 13:26:13
-+
-+### 任务
-+Git 变更同步
-+
-+### 变更摘要
-+diff --git a/CONTEXT.md b/CONTEXT.md
-+index 249134b..94de011 100644
-+--- a/CONTEXT.md
-++++ b/CONTEXT.md
-+@@ -1,3 +1,110 @@
-++## 更新记录: 2026-08-25 13:24:54
-++
-++### 任务
-++Git 变更同步
-++
-++### 变更摘要
-++diff --git a/CONTEXT.md b/CONTEXT.md
-++index ddf4a4b..249134b 100644
-++--- a/CONTEXT.md
-+++++ b/CONTEXT.md
-++@@ -1,3 +1,538 @@
-+++## 更新记录: 2026-08-25 13:23:23
-+++
-+++### 任务
-+++Git 变更同步
-+++
-+++### 变更摘要
-+++diff --git a/CONTEXT.md b/CONTEXT.md
-+++index 0e09f0f..d7965cd 100644
-+++--- a/CONTEXT.md
-++++++ b/CONTEXT.md
-+++@@ -1,3 +1,538 @@
-++++## 更新记录: 2026-08-25 13:20:48
-++++
-++++### 任务
-++++Git 变更同步
-++++
-++++### 变更摘要
-++++diff --git a/CONTEXT.md b/CONTEXT.md
-++++index 0e09f0f..916e5a2 100644
-++++--- a/CONTEXT.md
-+++++++ b/CONTEXT.md
-++++@@ -1,3 +1,431 @@
-+++++## 更新记录: 2026-08-25 13:20:18
-+++++
-+++++### 任务
-+++++Git 变更同步
-+++++
-+++++### 变更摘要
-+++++diff --git a/CONTEXT.md b/CONTEXT.md
-+++++index 0e09f0f..a92e61d 100644
-+++++--- a/CONTEXT.md
-++++++++ b/CONTEXT.md
-+++++@@ -1,3 +1,324 @@
-++++++## 更新记录: 2026-08-25 13:18:45
-++++++
-++++++### 任务
-++++++Git 变更同步
-++++++
-++++++### 变更摘要
-++++++diff --git a/CONTEXT.md b/CONTEXT.md
-++++++index 0e09f0f..cccd6b0 100644
-++++++--- a/CONTEXT.md
-+++++++++ b/CONTEXT.md
-++++++@@ -1,3 +1,217 @@
-+++++++## 更新记录: 2026-08-25 13:18:14
-+++++++
-+++++++### 任务
-+++++++Git 变更同步
-+++++++
-+++++++### 变更摘要
-+++++++diff --git a/CONTEXT.md b/CONTEXT.md
-+++++++index 0e09f0f..ddf4a4b 100644
-+++++++--- a/CONTEXT.md
-++++++++++ b/CONTEXT.md
-+++++++@@ -1,3 +1,110 @@
-++++++++## 更新记录: 2026-08-25 13:01:23
-++++++++
-++++++++### 任务
-++++++++Git 变更同步
-++++++++
-++++++++### 变...
-
----
-
-## 更新记录: 2026-08-25 13:26:13
-
-### 任务
-Git 变更同步
-
-### 变更摘要
-diff --git a/CONTEXT.md b/CONTEXT.md
-index 249134b..94de011 100644
---- a/CONTEXT.md
-+++ b/CONTEXT.md
-@@ -1,3 +1,110 @@
-+## 更新记录: 2026-08-25 13:24:54
-+
-+### 任务
-+Git 变更同步
-+
-+### 变更摘要
-+diff --git a/CONTEXT.md b/CONTEXT.md
-+index ddf4a4b..249134b 100644
-+--- a/CONTEXT.md
-++++ b/CONTEXT.md
-+@@ -1,3 +1,538 @@
-++## 更新记录: 2026-08-25 13:23:23
-++
-++### 任务
-++Git 变更同步
-++
-++### 变更摘要
-++diff --git a/CONTEXT.md b/CONTEXT.md
-++index 0e09f0f..d7965cd 100644
-++--- a/CONTEXT.md
-+++++ b/CONTEXT.md
-++@@ -1,3 +1,538 @@
-+++## 更新记录: 2026-08-25 13:20:48
-+++
-+++### 任务
-+++Git 变更同步
-+++
-+++### 变更摘要
-+++diff --git a/CONTEXT.md b/CONTEXT.md
-+++index 0e09f0f..916e5a2 100644
-+++--- a/CONTEXT.md
-++++++ b/CONTEXT.md
-+++@@ -1,3 +1,431 @@
-++++## 更新记录: 2026-08-25 13:20:18
-++++
-++++### 任务
-++++Git 变更同步
-++++
-++++### 变更摘要
-++++diff --git a/CONTEXT.md b/CONTEXT.md
-++++index 0e09f0f..a92e61d 100644
-++++--- a/CONTEXT.md
-+++++++ b/CONTEXT.md
-++++@@ -1,3 +1,324 @@
-+++++## 更新记录: 2026-08-25 13:18:45
-+++++
-+++++### 任务
-+++++Git 变更同步
-+++++
-+++++### 变更摘要
-+++++diff --git a/CONTEXT.md b/CONTEXT.md
-+++++index 0e09f0f..cccd6b0 100644
-+++++--- a/CONTEXT.md
-++++++++ b/CONTEXT.md
-+++++@@ -1,3 +1,217 @@
-++++++## 更新记录: 2026-08-25 13:18:14
-++++++
-++++++### 任务
-++++++Git 变更同步
-++++++
-++++++### 变更摘要
-++++++diff --git a/CONTEXT.md b/CONTEXT.md
-++++++index 0e09f0f..ddf4a4b 100644
-++++++--- a/CONTEXT.md
-+++++++++ b/CONTEXT.md
-++++++@@ -1,3 +1,110 @@
-+++++++## 更新记录: 2026-08-25 13:01:23
-+++++++
-+++++++### 任务
-+++++++Git 变更同步
-+++++++
-+++++++### 变更摘要
-+++++++diff --git a/CONTEXT.md b/CONTEXT.md
-+++++++index 871a1ab..0e09f0f 100644
-+++++++--- a/CONTEXT.md
-++++++++++ b/CONTEXT.md
-+++++++@@ -1,3 +1,538 @@
-++++++++## 更新记录: 2026-08-25 12:59:40
-++++++++
-++++++++### 任务
-++++++++Git 变更同步
-++++++++
-++++++++### 变更摘要
-++++++++diff --git a/CONTEXT.md b/CONTEXT.md
-++++++++index 8954bc5..26a8f3e 100644
-++++++++--- a/CONTEXT.md
-+++++++++++ b/CONTEXT.md
-++++++++@@ -1,3 +1,538 @@
-+++++++++## 更新记录: 2026-08-25 12:58:05
-+++++++++
-+++++++++### 任务
-+++++++++Git 变更同步
-+++...
 
 ---
 

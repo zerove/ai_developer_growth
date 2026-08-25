@@ -21,7 +21,7 @@ def py_project(tmp_path: Path) -> Path:
 
 @pytest.fixture()
 def mixed_project(tmp_path: Path) -> Path:
-    """混合项目：Go 主导 + 少量 Ruby（Ruby 无分层规则 → unsupported）。"""
+    """混合项目：Go 主导 + 少量 Ruby（Ruby 现已有分层规则，加入 scanned）。"""
     (tmp_path / "cmd").mkdir(parents=True)
     (tmp_path / "internal" / "domain").mkdir(parents=True)
     (tmp_path / "go.mod").write_text("module x\n", encoding="utf-8")
@@ -44,12 +44,39 @@ class TestMultiLanguageLayering:
         violations = guard.check_layering()
         assert any("[go]" in v and "net/http" in v for v in violations)
 
-    def test_unsupported_language_reported_not_silent(self, mixed_project: Path) -> None:
-        """核心断言：无规则语言必须出现在 unsupported_languages，不得静默跳过。"""
+    def test_all_detected_languages_have_rules(self, mixed_project: Path) -> None:
+        """12 种语言全部有分层规则：探测到的语言都应进入 scanned 而非 unsupported。"""
         guard = ArchitectureDriftGuard(mixed_project)
         guard.check_layering()
-        assert "ruby" in guard.unsupported_languages
+        assert guard.unsupported_languages == []
         assert "go" in guard.scanned_languages
+        assert "ruby" in guard.scanned_languages
+
+    def test_unsupported_mechanism_still_guards_future(self) -> None:
+        """防静默回归机制仍在：LAYERING_IMPORT_PATTERNS 与 LANGUAGE_EXTENSIONS 键集合一致。"""
+        from tools.scripts.architecture_drift_guard import (
+            LANGUAGE_EXTENSIONS,
+            LAYERING_IMPORT_PATTERNS,
+        )
+
+        assert set(LAYERING_IMPORT_PATTERNS.keys()) == set(LANGUAGE_EXTENSIONS.keys()), (
+            "分层规则与语言扩展名映射必须一一对应，否则新语言会静默漏检"
+        )
+
+    def test_new_language_rules_violations(self, tmp_path: Path) -> None:
+        """抽查 kotlin/csharp/ruby 新规则的违规检测。"""
+        cases = [
+            ("kt", "kotlin", "import org.springframework.web.client.RestTemplate"),
+            ("cs", "csharp", "using Microsoft.AspNetCore.Builder;"),
+            ("rb", "ruby", 'require "net/http"'),
+        ]
+        for ext, lang, bad_import in cases:
+            proj = tmp_path / f"proj_{lang}"
+            (proj / "domain").mkdir(parents=True)
+            (proj / "domain" / f"svc.{ext}").write_text(bad_import + "\n", encoding="utf-8")
+            guard = ArchitectureDriftGuard(proj)
+            violations = guard.check_layering()
+            assert any(f"[{lang}]" in v for v in violations), f"{lang} 违规未被识别: {violations}"
 
     def test_clean_project_zero_violations(self, tmp_path: Path) -> None:
         (tmp_path / "domain").mkdir()

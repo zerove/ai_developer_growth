@@ -42,14 +42,14 @@ class TestArchitectureGuardE2E:
         violations = guard.check_layering()
         assert any("domain" in str(v) or "http" in str(v) for v in violations), f"go 违规未被识别: {violations}"
 
-    def test_ruby_reported_unsupported_not_silent(self, mixed_project: Path) -> None:
+    def test_ruby_scanned_with_rules(self, mixed_project: Path) -> None:
         from tools.scripts.architecture_drift_guard import ArchitectureDriftGuard
 
         guard = ArchitectureDriftGuard(mixed_project)
         guard.check_layering()
-        assert "ruby" in [str(lang).lower() for lang in guard.unsupported_languages], (
-            "Ruby 应记入 unsupported_languages 而非静默跳过"
-        )
+        # Ruby 现已具备分层规则，应进入 scanned 而非 unsupported
+        assert "ruby" in [str(lang).lower() for lang in guard.scanned_languages]
+        assert guard.unsupported_languages == []
 
     def test_scanned_languages_contains_go(self, mixed_project: Path) -> None:
         from tools.scripts.architecture_drift_guard import ArchitectureDriftGuard

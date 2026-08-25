@@ -39,6 +39,12 @@ LAYERING_IMPORT_PATTERNS: dict[str, tuple[str, ...]] = {
     "go": ("infrastructure/", "net/http", "gin-gonic"),
     "rust": ("infrastructure::", "actix_web", "warp"),
     "java": ("infrastructure.", "org.springframework.web"),
+    "kotlin": ("infrastructure.", "org.springframework.web", "io.ktor.client"),
+    "csharp": ("Infrastructure", "Microsoft.AspNetCore", "System.Net.Http"),
+    "ruby": ("infrastructure/", "net/http", "sinatra", "rails"),
+    "php": ("Infrastructure\\", "Symfony\\", "GuzzleHttp\\"),
+    "swift": ("infrastructure.", "FoundationNetworking", "Alamofire"),
+    "cpp": ("infrastructure/", "boost/asio", "libcurl"),
 }
 
 

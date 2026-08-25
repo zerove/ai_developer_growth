@@ -30,6 +30,21 @@ python tools/scripts/hooks_runner.py test --incremental --base main # 指定基�
 # ── 台账分析 ──────────────────────────────────────────────
 python tools/scripts/audit_trends.py          # hash 链校验 + 类型统计 + 24h 异常告警
 python tools/scripts/audit_trends.py --json   # JSON 输出(供 CI/看板消费)
+
+# ── 运行历史维护 ──────────────────────────────────────────
+python tools/scripts/hooks_runner.py db-maintain                     # 裁剪 90 天前的 quality_runs
+python tools/scripts/hooks_runner.py db-maintain --retention-days 30 # 自定义保留窗口
+# 行为: ISO 时间窗裁剪 quality_runs 及关联 file_results/rule_violations,
+#       checkpoint + VACUUM 回收空间; 全部在保留期内时 noop(幂等)
+# 接入: scheduled-governance.yml 每月 cron 自动执行
+
+# ── 统计趋势采集 ──────────────────────────────────────────
+python tools/scripts/update_stats.py --json            # 采集统计并输出 JSON
+python tools/scripts/update_stats.py --check           # CI 模式: 漂移检测, 不一致退出码 1
+python tools/scripts/update_stats.py --skip-quality-gate  # 快速模式: 跳过门禁采集
+# 默认会调 quality-gate --full --format json 提取 gate_failed/gate_issues/
+# gate_baseline_exempt/gate_pass_rate 四指标写入 .quality-trends/stats_history.jsonl;
+# 门禁失败值本身也是趋势数据, 不算采集失败
 ```
 
 ## 配置项 ([tool.adg] in pyproject.toml)

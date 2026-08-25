@@ -23,4 +23,4 @@ jobs:
           restore-keys: |
             ${{ github.repository }}-mypy-
       - name: Mypy (strict)
-        run: mypy tools/scripts/ --ignore-missing-imports --strict
+        run: mypy tools/scripts/

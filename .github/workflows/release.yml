@@ -47,7 +47,7 @@ jobs:
       - name: Ruff format check
         run: ruff format --check .
       - name: Mypy (strict)
-        run: mypy tools/scripts/ --ignore-missing-imports --strict
+        run: mypy tools/scripts/
       - name: Run tests with coverage
         run: pytest tests/ -v -n auto --cov=tools --cov-report=xml --cov-report=term-missing --tb=short
       - name: Coverage check

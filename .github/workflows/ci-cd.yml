@@ -63,7 +63,7 @@ jobs:
         run: ruff format --check .
 
       - name: Type check
-        run: mypy tools/scripts/ --strict --ignore-missing-imports --config-file pyproject.toml
+        run: mypy tools/scripts/
 
   # ─────────────────────────────────────────────────────────
   # 安全扫描

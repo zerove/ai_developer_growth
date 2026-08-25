@@ -1,3 +1,17 @@
+## 更新记录: 2026-08-26 00:54:20
+
+### 任务
+Git 变更同步
+
+### 变更摘要
+- 变更文件 4 个 (+370 / -4283 行)
+  - .jcode/scripts/context-sync.py
+  - CONTEXT.md
+  - docs/governance/project-analysis-and-roadmap-2026-08.md
+  - tests/test_context_sync_prune.py
+
+---
+
 ## 更新记录: 2026-08-26 00:52:17
 
 ### 任务

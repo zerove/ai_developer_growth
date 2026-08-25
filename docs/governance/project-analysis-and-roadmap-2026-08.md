@@ -99,3 +99,12 @@ pre_tool 门禁上线后首次拦截到"误伤"：编辑 tests/test_adg_cli_v2.p
 
 ---
 *生成方式：全部结论来自本机实测命令（pytest/coverage/grep/计时/YAML 校验），无凭记忆推断项。*
+
+
+## P2 实施记录
+
+### P2-4 examples 空壳处置【已更正】
+初判 ai-growth-vscode / ai-growth-slack 为空壳目录，复核不成立：
+两者均有完整 README、实质代码（bot.py 6KB / extension.ts）与测试。
+实测验证：slack bot 15 测试通过；vscode 扩展 npm ci + tsc 编译通过。
+处置结论：保留，无需归档。

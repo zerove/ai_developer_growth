@@ -1,3 +1,133 @@
+## 更新记录: 2026-08-26 00:37:16
+
+### 任务
+Git 变更同步
+
+### 变更摘要
+diff --git a/.github/workflows/ci-cd.yml b/.github/workflows/ci-cd.yml
+index cec3692..25cfc20 100644
+--- a/.github/workflows/ci-cd.yml
++++ b/.github/workflows/ci-cd.yml
+@@ -63,7 +63,7 @@ jobs:
+         run: ruff format --check .
+
+       - name: Type check
+-        run: mypy tools/scripts/ --strict --ignore-missing-imports --config-file pyproject.toml
++        run: mypy tools/scripts/
+
+   # ─────────────────────────────────────────────────────────
+   # 安全扫描
+diff --git a/.github/workflows/jobs/type-check.yml b/.github/workflows/jobs/type-check.yml
+index 9afd263..5e7e247 100644
+--- a/.github/workflows/jobs/type-check.yml
++++ b/.github/workflows/jobs/type-check.yml
+@@ -23,4 +23,4 @@ jobs:
+           restore-keys: |
+             ${{ github.repository }}-mypy-
+       - name: Mypy (strict)
+-        run: mypy tools/scripts/ --ignore-missing-imports --strict
++        run: mypy tools/scripts/
+diff --git a/.github/workflows/release.yml b/.github/workflows/release.yml
+index e2d5e32..0490566 100644
+--- a/.github/workflows/release.yml
++++ b/.github/workflows/release.yml
+@@ -47,7 +47,7 @@ jobs:
+       - name: Ruff format check
+         run: ruff format --check .
+       - name: Mypy (strict)
+-        run: mypy tools/scripts/ --ignore-missing-imports --strict
++        run: mypy tools/scripts/
+       - name: Run tests with coverage
+         run: pytest tests/ -v -n auto --cov=tools --cov-report=xml --cov-report=term-missing --tb=short
+       - name: Coverage check
+diff --git a/CONTEXT.md b/CONTEXT.md
+index a1422de..700a448 100644
+--- a/CONTEXT.md
++++ b/CONTEXT.md
+@@ -1,3 +1,141 @@
++## 更新记录: 2026-08-26 00:36:33
++
++### 任务
++Git 变更同步
++
++### 变更摘要
++diff --git a/.github/workflows/ci-cd.yml b/.github/workflows/ci-cd.yml
++index cec3692..25cfc20 100644
++--- a/.github/workflows/ci-cd.yml
+++++ b/.github/workflows/ci-cd.yml
++@@ -63,7 +63,7 @@ jobs:
++         run: ruff format --check .
++
++       - name: Type check
++-        run: mypy tools/scripts/ --strict --ignore-missing-imports --config-file...
+
+---
+
+## 更新记录: 2026-08-26 00:36:33
+
+### 任务
+Git 变更同步
+
+### 变更摘要
+diff --git a/.github/workflows/ci-cd.yml b/.github/workflows/ci-cd.yml
+index cec3692..25cfc20 100644
+--- a/.github/workflows/ci-cd.yml
++++ b/.github/workflows/ci-cd.yml
+@@ -63,7 +63,7 @@ jobs:
+         run: ruff format --check .
+
+       - name: Type check
+-        run: mypy tools/scripts/ --strict --ignore-missing-imports --config-file pyproject.toml
++        run: mypy tools/scripts/
+
+   # ─────────────────────────────────────────────────────────
+   # 安全扫描
+diff --git a/.github/workflows/jobs/type-check.yml b/.github/workflows/jobs/type-check.yml
+index 9afd263..5e7e247 100644
+--- a/.github/workflows/jobs/type-check.yml
++++ b/.github/workflows/jobs/type-check.yml
+@@ -23,4 +23,4 @@ jobs:
+           restore-keys: |
+             ${{ github.repository }}-mypy-
+       - name: Mypy (strict)
+-        run: mypy tools/scripts/ --ignore-missing-imports --strict
++        run: mypy tools/scripts/
+diff --git a/.github/workflows/release.yml b/.github/workflows/release.yml
+index e2d5e32..0490566 100644
+--- a/.github/workflows/release.yml
++++ b/.github/workflows/release.yml
+@@ -47,7 +47,7 @@ jobs:
+       - name: Ruff format check
+         run: ruff format --check .
+       - name: Mypy (strict)
+-        run: mypy tools/scripts/ --ignore-missing-imports --strict
++        run: mypy tools/scripts/
+       - name: Run tests with coverage
+         run: pytest tests/ -v -n auto --cov=tools --cov-report=xml --cov-report=term-missing --tb=short
+       - name: Coverage check
+diff --git a/CONTEXT.md b/CONTEXT.md
+index a1422de..b6eeda6 100644
+--- a/CONTEXT.md
++++ b/CONTEXT.md
+@@ -1,3 +1,76 @@
++## 更新记录: 2026-08-25 23:03:10
++
++### 任务
++Git 变更同步
++
++### 变更摘要
++diff --git a/.github/workflows/ci-cd.yml b/.github/workflows/ci-cd.yml
++index cec3692..25cfc20 100644
++--- a/.github/workflows/ci-cd.yml
+++++ b/.github/workflows/ci-cd.yml
++@@ -63,7 +63,7 @@ jobs:
++         run: ruff format --check .
++
++       - name: Type check
++-        run: mypy tools/scripts/ --strict --ignore-missing-imports --config-file ...
+
+---
+
 ## 更新记录: 2026-08-25 23:03:10
 
 ### 任务
@@ -4271,199 +4401,6 @@ index 0000000..e49b089
 +
 +def is_due(hook: dict, now: struct_time | None = None, state: dict[str, float] | None = None) -> bool:
 +    """判断 hook 是否到期：启用中、时间...
-
----
-
-## 更新记录: 2026-08-25 14:14:49
-
-### 任务
-Git 变更同步
-
-### 变更摘要
-diff --git a/CONTEXT.md b/CONTEXT.md
-index 40c5c02..a9d96f7 100644
---- a/CONTEXT.md
-+++ b/CONTEXT.md
-@@ -1,3 +1,194 @@
-+## 更新记录: 2026-08-25 14:01:52
-+
-+### 任务
-+Git 变更同步
-+
-+### 变更摘要
-+diff --git a/CONTEXT.md b/CONTEXT.md
-+index 7a5d78f..00ef9c2 100644
-+--- a/CONTEXT.md
-++++ b/CONTEXT.md
-+@@ -1,3 +1,192 @@
-++## 更新记录: 2026-08-25 14:00:55
-++
-++### 任务
-++Git 变更同步
-++
-++### 变更摘要
-++diff --git a/CONTEXT.md b/CONTEXT.md
-++index 7a5d78f..40c5c02 100644
-++--- a/CONTEXT.md
-+++++ b/CONTEXT.md
-++@@ -1,3 +1,98 @@
-+++## 更新记录: 2026-08-25 13:58:29
-+++
-+++### 任务
-+++Git 变更同步
-+++
-+++### 变更摘要
-+++diff --git a/.gitignore b/.gitignore
-+++index 7b03ddc..76a1399 100644
-+++--- a/.gitignore
-++++++ b/.gitignore
-+++@@ -94,3 +94,4 @@ debug_mutmut.py
-+++ .quality-trends/evolution_log.json
-+++ .quality-trends/swarm_execution.json
-+++ .quality-trends/telemetry.json
-++++logs/
-+++diff --git a/CONTEXT.md b/CONTEXT.md
-+++index 08fe834..7a5d78f 100644
-+++--- a/CONTEXT.md
-++++++ b/CONTEXT.md
-+++@@ -1,3 +1,409 @@
-++++## 更新记录: 2026-08-25 13:54:57
-++++
-++++### 任务
-++++Git 变更同步
-++++
-++++### 变更摘要
-++++diff --git a/.gitignore b/.gitignore
-++++index 7b03ddc..76a1399 100644
-++++--- a/.gitignore
-+++++++ b/.gitignore
-++++@@ -94,3 +94,4 @@ debug_mutmut.py
-++++ .quality-trends/evolution_log.json
-++++ .quality-trends/swarm_execution.json
-++++ .quality-trends/telemetry.json
-+++++logs/
-++++diff --git a/CONTEXT.md b/CONTEXT.md
-++++index 94de011..22a824f 100644
-++++--- a/CONTEXT.md
-+++++++ b/CONTEXT.md
-++++@@ -1,3 +1,421 @@
-+++++## 更新记录: 2026-08-25 13:53:21
-+++++
-+++++### 任务
-+++++Git 变更同步
-+++++
-+++++### 变更摘要
-+++++diff --git a/.gitignore b/.gitignore
-+++++index 7b03ddc..76a1399 100644
-+++++--- a/.gitignore
-++++++++ b/.gitignore
-+++++@@ -94,3 +94,4 @@ debug_mutmut.py
-+++++ .quality-trends/evolution_log.json
-+++++ .quality-trends/swarm_execution.json
-+++++ .quality-trends/telemetry.json
-++++++logs/
-+++++diff --git a/CONTEXT.md b/CONTEXT.md
-+++++index 94de011..2e43091 100644
-+++++--- a/CONTEXT.md
-++++++++ b/CONTEXT.md
-+++++@@ -1,3 ...
-
----
-
-## 更新记录: 2026-08-25 14:01:52
-
-### 任务
-Git 变更同步
-
-### 变更摘要
-diff --git a/CONTEXT.md b/CONTEXT.md
-index 7a5d78f..00ef9c2 100644
---- a/CONTEXT.md
-+++ b/CONTEXT.md
-@@ -1,3 +1,192 @@
-+## 更新记录: 2026-08-25 14:00:55
-+
-+### 任务
-+Git 变更同步
-+
-+### 变更摘要
-+diff --git a/CONTEXT.md b/CONTEXT.md
-+index 7a5d78f..40c5c02 100644
-+--- a/CONTEXT.md
-++++ b/CONTEXT.md
-+@@ -1,3 +1,98 @@
-++## 更新记录: 2026-08-25 13:58:29
-++
-++### 任务
-++Git 变更同步
-++
-++### 变更摘要
-++diff --git a/.gitignore b/.gitignore
-++index 7b03ddc..76a1399 100644
-++--- a/.gitignore
-+++++ b/.gitignore
-++@@ -94,3 +94,4 @@ debug_mutmut.py
-++ .quality-trends/evolution_log.json
-++ .quality-trends/swarm_execution.json
-++ .quality-trends/telemetry.json
-+++logs/
-++diff --git a/CONTEXT.md b/CONTEXT.md
-++index 08fe834..7a5d78f 100644
-++--- a/CONTEXT.md
-+++++ b/CONTEXT.md
-++@@ -1,3 +1,409 @@
-+++## 更新记录: 2026-08-25 13:54:57
-+++
-+++### 任务
-+++Git 变更同步
-+++
-+++### 变更摘要
-+++diff --git a/.gitignore b/.gitignore
-+++index 7b03ddc..76a1399 100644
-+++--- a/.gitignore
-++++++ b/.gitignore
-+++@@ -94,3 +94,4 @@ debug_mutmut.py
-+++ .quality-trends/evolution_log.json
-+++ .quality-trends/swarm_execution.json
-+++ .quality-trends/telemetry.json
-++++logs/
-+++diff --git a/CONTEXT.md b/CONTEXT.md
-+++index 94de011..22a824f 100644
-+++--- a/CONTEXT.md
-++++++ b/CONTEXT.md
-+++@@ -1,3 +1,421 @@
-++++## 更新记录: 2026-08-25 13:53:21
-++++
-++++### 任务
-++++Git 变更同步
-++++
-++++### 变更摘要
-++++diff --git a/.gitignore b/.gitignore
-++++index 7b03ddc..76a1399 100644
-++++--- a/.gitignore
-+++++++ b/.gitignore
-++++@@ -94,3 +94,4 @@ debug_mutmut.py
-++++ .quality-trends/evolution_log.json
-++++ .quality-trends/swarm_execution.json
-++++ .quality-trends/telemetry.json
-+++++logs/
-++++diff --git a/CONTEXT.md b/CONTEXT.md
-++++index 94de011..2e43091 100644
-++++--- a/CONTEXT.md
-+++++++ b/CONTEXT.md
-++++@@ -1,3 +1,320 @@
-+++++## 更新记录: 2026-08-25 13:50:54
-+++++
-+++++### 任务
-+++++Git 变更同步
-+++++
-+++++### 变更摘要
-+++++diff --git a/.gitignore b/.gitignore
-+++++index 7b03ddc..76a1399 100644
-+++++--- a/.gitignore
-++++++++ b/.gitignore
-+++++@@ -94,3 +94,4 @@ debug_mutmut.py
-+...
 
 ---
 

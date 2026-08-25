@@ -146,8 +146,8 @@ python -m pytest tests/test_search_server_smoke.py tests/test_ai_native_mcp_serv
 
 ## 相关文档
 
-- [[deploy/systemd/search-server.service|systemd 服务单元]]
-- [[tools/scripts/tfidf_engine|TF-IDF/BM25 引擎]]
+- systemd 服务单元：`deploy/systemd/search-server.service`
+- TF-IDF/BM25 引擎：`tools/scripts/search/tfidf_engine.py`
 - [[efficiency/ai-sdlc|AI 开发全生命周期标准]]
 
 ---

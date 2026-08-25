@@ -1,0 +1,10 @@
+[Unit]
+Description=ADG knowledge-curator weekly audit (scan/audit/sync)
+
+[Service]
+Type=oneshot
+WorkingDirectory=%h/dev/ai_developer_growth
+ExecStart=/usr/bin/env python3 .jcode/scripts/knowledge-curator.py scan
+ExecStart=/usr/bin/env python3 .jcode/scripts/knowledge-curator.py audit
+ExecStart=/usr/bin/env python3 .jcode/scripts/knowledge-curator.py sync
+# 输出进 journal：journalctl --user -u knowledge-curator.service

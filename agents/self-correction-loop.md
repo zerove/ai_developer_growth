@@ -2,6 +2,9 @@
 
 AI 代码质量保证闭环：验证 → 重试 → 修正，自动修复测试失败
 
+> **状态: planned（未接线）** — 定义已完成，入口脚本尚未创建。
+> 参考实现位于 `examples/self-correction-loop/`，接线步骤：在 `.jcode/scripts/self-correction-loop.py` 创建入口脚本并接入 hooks.json。
+
 ### 指令
 
 1. **运行测试验证**: 执行 `python .jcode/scripts/self_correction_loop.py validate --target <file> --tests <dir> --runner pytest` 验证目标文件当前测试状态

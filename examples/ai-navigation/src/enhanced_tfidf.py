@@ -12,4 +12,10 @@ from tools.scripts.search.tfidf_engine import (  # noqa: F401
     create_enhanced_index,
 )
 
-__all__ = ["Document", "EnhancedTFIDF", "SearchResult", "SynonymDictionary", "create_enhanced_index"]
+__all__ = [
+    "Document",
+    "EnhancedTFIDF",
+    "SearchResult",
+    "SynonymDictionary",
+    "create_enhanced_index",
+]

@@ -57,3 +57,19 @@ turn_end = "~/bin/jcode-adg-turn-end"
 ```
 
 实测：turn_end 事件正确落盘 JSONL；session_start/post_tool 事件被过滤零写入。
+
+
+## pre_tool 门禁观察调优 (N3, 持续项)
+
+观察工具：`~/bin/jcode-adg-hook-report [根目录]`
+
+- 汇总各项目 `.adg-hook.log`（post_tool 产物）：检查数、阻断数、错误率
+- 附带 turn_end 会话摘要统计（`~/.local/state/adg/turn-summaries.jsonl`）
+
+调优判据（观察一周后评估）：
+
+| 信号 | 处置 |
+|---|---|
+| 阻断率 >10% 且多为误报 | 收紧规则或加 exclude_files |
+| 阻断全部为真实问题 | 保持，考虑提升 severity |
+| post_tool 错误率高但 pre_tool 无阻断 | 规则阈值与门禁口径需对齐 |

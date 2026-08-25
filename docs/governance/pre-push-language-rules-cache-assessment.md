@@ -1,3 +1,12 @@
+---
+title: pre-push 语言规则缓存评估
+description: 语言规则检查缓存机制评估报告
+category: 治理层
+tags: [pre-push, 缓存, 性能]
+difficulty: 进阶
+updated: 2026-08-25
+---
+
 # pre-push 阶段 language-rules 缓存评估结论（改进 G）
 
 > 日期: 2026-08-25

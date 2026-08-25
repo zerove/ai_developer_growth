@@ -1,3 +1,12 @@
+---
+title: 架构文档 v2.0
+description: AI Developer Growth 平台架构设计
+category: 架构设计
+tags: [架构, 平台, v2.0]
+difficulty: 进阶
+updated: 2026-08-25
+---
+
 # JCode Platform v2.0 - 架构设计文档
 
 > **版本**: 2.0

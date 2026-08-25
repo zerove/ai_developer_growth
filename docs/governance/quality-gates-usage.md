@@ -1,3 +1,12 @@
+---
+title: 质量门禁使用指南
+description: hooks_runner 生产化加固能力与命令速查
+category: 治理层
+tags: [质量门禁, hooks, CI]
+difficulty: 中级
+updated: 2026-08-25
+---
+
 # 质量门禁使用指南 (hooks_runner)
 
 > 本文档记录 hooks_runner 的生产化加固能力：环境自检、基线棘轮、增量测试、台账分析。

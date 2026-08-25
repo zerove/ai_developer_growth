@@ -1,3 +1,12 @@
+---
+title: 路线图声明审计
+description: ROADMAP 文档声明与实际状态对照审计
+category: 治理层
+tags: [审计, 路线图, 治理]
+difficulty: 进阶
+updated: 2026-08-25
+---
+
 # ROADMAP 声称真实性清单
 
 > 生成日期: 2026-08-24

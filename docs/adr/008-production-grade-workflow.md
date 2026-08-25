@@ -1,3 +1,12 @@
+---
+title: ADR-008: 生产级工作流
+description: hooks_runner 生产化加固决策记录
+category: 治理层
+tags: [ADR, 工作流, 质量门禁]
+difficulty: 进阶
+updated: 2026-08-25
+---
+
 # ADR-008: 生产级稳健工作流与防御性接口设计
 
 ## 状态

@@ -1,3 +1,12 @@
+---
+title: 产品需求文档 v2.0
+description: AI Developer Growth v2.0 产品需求与范围
+category: 计划
+tags: [PRD, 产品, v2.0]
+difficulty: 中级
+updated: 2026-08-25
+---
+
 # JCode AI-Native SDLC Platform - 产品需求文档 (PRD v2.0)
 
 > **版本**: 2.0 (工业化产品级)

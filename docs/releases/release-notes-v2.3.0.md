@@ -1,3 +1,12 @@
+---
+title: v2.3.0 发布说明
+description: 版本 2.3.0 变更内容与升级说明
+category: 发布
+tags: [release, changelog, v2.3.0]
+difficulty: 初级
+updated: 2026-08-25
+---
+
 # 发布说明 v2.3.0
 
 **日期**: 2026-07-30

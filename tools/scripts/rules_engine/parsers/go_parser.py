@@ -1,8 +1,128 @@
-from ..ast_parser import ClassInfo, FunctionInfo
+"""Go 语言 tree-sitter 解析器：提取函数、方法与结构体。"""
+
+from __future__ import annotations
+
+from tools.scripts.rules_engine.ast_parser import ClassInfo, FunctionInfo, _TreeNode
+
 from .base import BaseParser
 
 
 class GoParser(BaseParser):
-    def parse(self, root_node: object, lines: list[str]) -> tuple[list[FunctionInfo], list[ClassInfo]]:
-        # Go 语言的 AST 逻辑接入点
-        return [], []
+    """解析 Go 的 func 声明、方法与 type struct 定义。"""
+
+    def parse(self, root_node: _TreeNode, lines: list[str]) -> tuple[list[FunctionInfo], list[ClassInfo]]:
+        functions: list[FunctionInfo] = []
+        classes: list[ClassInfo] = []
+        if root_node is not None:
+            self._walk(root_node, lines, functions, classes)
+        return functions, classes
+
+    def _walk(
+        self,
+        node: _TreeNode,
+        lines: list[str],
+        functions: list[FunctionInfo],
+        classes: list[ClassInfo],
+    ) -> None:
+        if node is None:
+            return
+        if node.type == "function_declaration":
+            functions.append(self._parse_func(node, lines))
+        elif node.type == "method_declaration":
+            functions.append(self._parse_method(node, lines))
+        elif node.type in ("type_spec",):
+            info = self._parse_struct(node, lines)
+            if info:
+                classes.append(info)
+        for child in node.children:
+            if child is not None:
+                self._walk(child, lines, functions, classes)
+
+    def _child_by_type(self, node: _TreeNode, node_type: str) -> _TreeNode | None:
+        for child in node.children:
+            if child.type == node_type:
+                return child
+        return None
+
+    def _node_text(self, node: _TreeNode) -> str:
+        text = node.text
+        if text is None:
+            return ""
+        return text.decode("utf-8", errors="replace") if isinstance(text, bytes) else str(text)
+
+    def _parse_func(self, node: _TreeNode, lines: list[str]) -> FunctionInfo:
+        name_node = self._child_by_type(node, "identifier")
+        params_node = self._child_by_type(node, "parameter_list")
+        return FunctionInfo(
+            name=self._node_text(name_node) if name_node else "extracted_func",
+            line=node.start_point[0],
+            col=node.start_point[1],
+            end_line=node.end_point[0],
+            params=self._collect_params(params_node) if params_node else [],
+            decorators=[],
+            return_type=None,
+            docstring=None,
+            body_lines=node.end_point[0] - node.start_point[0],
+            complexity=1,
+        )
+
+    def _parse_method(self, node: _TreeNode, lines: list[str]) -> FunctionInfo:
+        name_node = self._child_by_type(node, "field_identifier")
+        receiver = self._child_by_type(node, "parameter_list")
+        receiver_name = ""
+        if receiver:
+            for child in receiver.children:
+                if child.type == "parameter_declaration":
+                    pointer = self._child_by_type(child, "pointer_type")
+                    target = pointer or child
+                    ident = self._find_first(target, "type_identifier")
+                    receiver_name = self._node_text(ident) if ident else ""
+                    break
+        params_node = [c for c in node.children if c.type == "parameter_list"]
+        return FunctionInfo(
+            name=f"{receiver_name}.{self._node_text(name_node)}" if name_node else "extracted_method",
+            line=node.start_point[0],
+            col=node.start_point[1],
+            end_line=node.end_point[0],
+            params=self._collect_params(params_node[-1]) if params_node else [],
+            decorators=[],
+            return_type=None,
+            docstring=None,
+            body_lines=node.end_point[0] - node.start_point[0],
+            complexity=1,
+            is_method=True,
+            class_name=receiver_name or None,
+        )
+
+    def _parse_struct(self, node: _TreeNode, lines: list[str]) -> ClassInfo | None:
+        name_node = self._child_by_type(node, "type_identifier")
+        struct_node = self._child_by_type(node, "struct_type")
+        if not struct_node:
+            return None
+        return ClassInfo(
+            name=self._node_text(name_node) if name_node else "extracted_struct",
+            line=node.start_point[0],
+            col=node.start_point[1],
+            end_line=node.end_point[0],
+            bases=[],
+            decorators=[],
+            docstring=None,
+            methods=[],
+            body_lines=node.end_point[0] - node.start_point[0],
+        )
+
+    def _collect_params(self, params_node: _TreeNode) -> list[str]:
+        params: list[str] = []
+        for child in params_node.children:
+            if child.type == "parameter_declaration":
+                params.append(self._node_text(child))
+        return params
+
+    def _find_first(self, node: _TreeNode, node_type: str) -> _TreeNode | None:
+        if node.type == node_type:
+            return node
+        for child in node.children:
+            found = self._find_first(child, node_type)
+            if found:
+                return found
+        return None

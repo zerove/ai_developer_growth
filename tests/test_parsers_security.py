@@ -110,7 +110,7 @@ def test_go_parser_instantiation():
 
 def test_go_parser_parse():
     parser = GoParser()
-    # Go parser returns empty lists (placeholder implementation)
+    # 真实实现：None 根节点安全返回空结果
     funcs, classes = parser.parse(None, [])
     assert funcs == []
     assert classes == []
@@ -128,6 +128,7 @@ def test_rust_parser_instantiation():
 
 def test_rust_parser_parse():
     parser = RustParser()
+    # 真实实现：None 根节点安全返回空结果
     funcs, classes = parser.parse(None, [])
     assert funcs == []
     assert classes == []

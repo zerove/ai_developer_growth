@@ -4,9 +4,11 @@ Web Search API Server for AI Developer Growth
 基于 Enhanced TF-IDF 的 Web 搜索 API
 """
 
+import json
 import os
 import sys
 import time
+from pathlib import Path
 
 from fastapi import FastAPI, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
@@ -72,6 +74,31 @@ app.add_middleware(
 search_index: EnhancedTFIDF | None = None
 # 索引元数据（构建时间/耗时），供 /api/health 观测
 index_meta: dict = {"built_at": None, "build_ms": None}
+
+# 匿名查询日志：只记查询行为，不记 IP/UA 等个人数据（消费侧证据链）
+QUERY_LOG_PATH = Path(
+    os.environ.get("SEARCH_QUERY_LOG", str(Path(__file__).resolve().parent.parent / "logs" / "search-queries.jsonl"))
+)
+
+
+def log_query_anonymous(query: str, total: int, top_score: float, time_ms: float) -> None:
+    """追加一条匿名查询记录到 logs/search-queries.jsonl。
+
+    记录字段仅含查询词、命中数、最高分与耗时；日志失败不影响搜索服务。
+    """
+    try:
+        QUERY_LOG_PATH.parent.mkdir(parents=True, exist_ok=True)
+        record = {
+            "ts": time.strftime("%Y-%m-%dT%H:%M:%S%z"),
+            "query": query,
+            "total": total,
+            "top_score": round(top_score, 4),
+            "time_ms": round(time_ms, 2),
+        }
+        with open(QUERY_LOG_PATH, "a", encoding="utf-8") as f:
+            f.write(json.dumps(record, ensure_ascii=False) + "\n")
+    except OSError:
+        pass  # 日志写入失败静默降级，不阻塞主流程
 
 
 def build_index() -> tuple[EnhancedTFIDF, dict]:
@@ -193,11 +220,19 @@ async def search(
             }
         )
 
+    query_time_ms = (time.time() - start) * 1000
+    log_query_anonymous(
+        q,
+        len(formatted_results),
+        formatted_results[0]["score"] if formatted_results else 0.0,
+        query_time_ms,
+    )
+
     return SearchResponse(
         query=q,
         total=len(formatted_results),
         results=formatted_results,
-        time_ms=round((time.time() - start) * 1000, 2),
+        time_ms=round(query_time_ms, 2),
     )
 
 

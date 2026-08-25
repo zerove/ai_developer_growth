@@ -1,3 +1,60 @@
+## 更新记录: 2026-08-25 20:10:44
+
+### 任务
+Git 变更同步
+
+### 变更摘要
+diff --git a/.github/workflows/release.yml b/.github/workflows/release.yml
+index 926b6ab..e2d5e32 100644
+--- a/.github/workflows/release.yml
++++ b/.github/workflows/release.yml
+@@ -155,8 +155,11 @@ jobs:
+         id: changelog
+         run: |
+           TAG_VERSION=${GITHUB_REF_NAME#v}
+-          # Extract changelog for this version
+-          awk "/^## \\[${TAG_VERSION//./\\.}\\]/,/^## \\[/" CHANGELOG.md | head -n -1 > release_notes.md
++          # 提取指定版本的 changelog 区块（至下一个版本标题为止）。
++          # 注意不能用 /start/,/end/ 区间：start 行自身满足 /^## \[/ 会立即关闭区间，只输出 1 行
++          awk -v v="$TAG_VERSION" \
++            '$0 ~ "^## \\[" v "\\]" {f=1; print; next} f && $0 ~ /^## \[/ {exit} f' \
++            CHANGELOG.md > release_notes.md
+           if [ ! -s release_notes.md ]; then
+             echo "No changelog found, using default"
+             echo "Release $TAG_VERSION" > release_notes.md
+diff --git a/CONTEXT.md b/CONTEXT.md
+index bd2ed01..754b878 100644
+--- a/CONTEXT.md
++++ b/CONTEXT.md
+@@ -1,3 +1,62 @@
++## 更新记录: 2026-08-25 20:03:35
++
++### 任务
++Git 变更同步
++
++### 变更摘要
++diff --git a/.github/workflows/release.yml b/.github/workflows/release.yml
++index 926b6ab..e2d5e32 100644
++--- a/.github/workflows/release.yml
+++++ b/.github/workflows/release.yml
++@@ -155,8 +155,11 @@ jobs:
++         id: changelog
++         run: |
++           TAG_VERSION=${GITHUB_REF_NAME#v}
++-          # Extract changelog for this version
++-          awk "/^## \\[${TAG_VERSION//./\\.}\\]/,/^## \\[/" CHANGELOG.md | head -n -1 > release_notes.md
+++          # 提取指定版本的 changelog 区块（至下一个版本标题为止）。
+++          # 注意不能用 /start/,/end/ 区间：start 行自身满足 /^## \[/ 会立即关闭区间，只输出 1 行
+++          awk -v v="$TAG_VERSION" \
+++            '$0 ~ "^## \\[" v "\\]" {f=1; print; next} f && $0 ~ /^## \[/ {exit} f' \
+++            CHANGELOG.md > release_notes.md
++           if [ ! -s release_notes.md ]; then
++             echo "No changelog found, using default"
++             echo "Release $TAG_VERSION" > release_notes.md
++diff --git a/CONTEXT....
+
+---
+
 ## 更新记录: 2026-08-25 20:03:35
 
 ### 任务
@@ -4617,113 +4674,6 @@ index 871a1ab..0e09f0f 100644
 +++++++++++ b/CONTEXT.md
 ++++++++@@ -1,3 +1,316 @@
 +++++++++## 更新记录: 2026-08-25 12:18:34
-+++++++++
-+++++++++### 任务
-+++++++++Git 变更同步
-+++...
-
----
-
-## 更新记录: 2026-08-25 12:59:40
-
-### 任务
-Git 变更同步
-
-### 变更摘要
-diff --git a/CONTEXT.md b/CONTEXT.md
-index 8954bc5..26a8f3e 100644
---- a/CONTEXT.md
-+++ b/CONTEXT.md
-@@ -1,3 +1,538 @@
-+## 更新记录: 2026-08-25 12:58:05
-+
-+### 任务
-+Git 变更同步
-+
-+### 变更摘要
-+diff --git a/CONTEXT.md b/CONTEXT.md
-+index 8954bc5..d1d261b 100644
-+--- a/CONTEXT.md
-++++ b/CONTEXT.md
-+@@ -1,3 +1,431 @@
-++## 更新记录: 2026-08-25 12:57:40
-++
-++### 任务
-++Git 变更同步
-++
-++### 变更摘要
-++diff --git a/CONTEXT.md b/CONTEXT.md
-++index 8954bc5..a7a3369 100644
-++--- a/CONTEXT.md
-+++++ b/CONTEXT.md
-++@@ -1,3 +1,324 @@
-+++## 更新记录: 2026-08-25 12:57:04
-+++
-+++### 任务
-+++Git 变更同步
-+++
-+++### 变更摘要
-+++diff --git a/CONTEXT.md b/CONTEXT.md
-+++index 8954bc5..b82eb34 100644
-+++--- a/CONTEXT.md
-++++++ b/CONTEXT.md
-+++@@ -1,3 +1,217 @@
-++++## 更新记录: 2026-08-25 12:56:05
-++++
-++++### 任务
-++++Git 变更同步
-++++
-++++### 变更摘要
-++++diff --git a/CONTEXT.md b/CONTEXT.md
-++++index 8954bc5..871a1ab 100644
-++++--- a/CONTEXT.md
-+++++++ b/CONTEXT.md
-++++@@ -1,3 +1,110 @@
-+++++## 更新记录: 2026-08-25 12:50:24
-+++++
-+++++### 任务
-+++++Git 变更同步
-+++++
-+++++### 变更摘要
-+++++diff --git a/CONTEXT.md b/CONTEXT.md
-+++++index 10802e3..8954bc5 100644
-+++++--- a/CONTEXT.md
-++++++++ b/CONTEXT.md
-+++++@@ -1,3 +1,424 @@
-++++++## 更新记录: 2026-08-25 12:20:54
-++++++
-++++++### 任务
-++++++Git 变更同步
-++++++
-++++++### 变更摘要
-++++++diff --git a/CONTEXT.md b/CONTEXT.md
-++++++index 647b634..469cd57 100644
-++++++--- a/CONTEXT.md
-+++++++++ b/CONTEXT.md
-++++++@@ -1,3 +1,421 @@
-+++++++## 更新记录: 2026-08-25 12:19:38
-+++++++
-+++++++### 任务
-+++++++Git 变更同步
-+++++++
-+++++++### 变更摘要
-+++++++diff --git a/CONTEXT.md b/CONTEXT.md
-+++++++index 647b634..b689caa 100644
-+++++++--- a/CONTEXT.md
-++++++++++ b/CONTEXT.md
-+++++++@@ -1,3 +1,316 @@
-++++++++## 更新记录: 2026-08-25 12:18:34
-++++++++
-++++++++### 任务
-++++++++Git 变更同步
-++++++++
-++++++++### 变更摘要
-++++++++diff --git a/CONTEXT.md b/CONTEXT.md
-++++++++index 647b634..789d2a8 100644
-++++++++--- a/CONTEXT.md
-+++++++++++ b/CONTEXT.md
-++++++++@@ -1,3 +1,211 @@
-+++++++++## 更新记录: 2026-08-25 12:16:44
 +++++++++
 +++++++++### 任务
 +++++++++Git 变更同步

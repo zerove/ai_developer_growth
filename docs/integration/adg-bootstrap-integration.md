@@ -68,3 +68,21 @@ python · go · rust · java · typescript · javascript · kotlin · csharp · 
 - release.yml 触发正常，但 GitHub Actions 因账户 Billing 阻塞无法启动 job（非代码问题）
 - Billing 恢复后：`gh run rerun` 或删标签重推即可完成正式发布
 - 本地闭环已验证：`pip wheel ai-dev-framework/` 构建 OK（24945 字节）
+
+
+### Billing 恢复前的本地预演 (2026-08-25 补)
+
+validate job 全部 8 步已在本地同命令预演通过：
+
+| 步骤 | 结果 |
+|---|---|
+| ruff check / format --check | PASS |
+| mypy strict | PASS |
+| hooks_runner doctor / baseline validate | PASS |
+| coverage 阈值 | 85.3% ≥ 60% |
+| ADG governance error=0 | PASS |
+| 版本一致 (tag=pyproject=2.4.0) + CHANGELOG 条目 | PASS |
+| python -m build + twine check | PASSED ×2 |
+
+另发现并修复 workflow 真实 bug：changelog 提取区间匹配恒为空（a3879e1），
+tag 已同步指向该修复。Billing 恢复后 rerun 即可完成发布。

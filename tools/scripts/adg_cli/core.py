@@ -83,6 +83,23 @@ SKIP_DIRS = {
     ".tmp",
 }
 
+
+def _config_excluded_dirs() -> set[str]:
+    """合并 [tool.adg].exclude 配置到跳过集合（与 rules_engine 同源）。"""
+    try:
+        from tools.scripts.app_config import get_setting
+
+        extra = get_setting("exclude", [])
+        if isinstance(extra, list):
+            return {str(item) for item in extra}
+    except Exception:  # noqa: BLE001 - 配置读取失败时回退静态集合
+        pass
+    return set()
+
+
+# 含用户配置的完整排除集：段匹配用（模块加载时冻结一次）
+SKIP_DIRS_ALL = SKIP_DIRS | _config_excluded_dirs()
+
 MAX_FILES = 5000
 
 SKIP_EXTENSIONS = {

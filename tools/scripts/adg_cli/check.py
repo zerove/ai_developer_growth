@@ -7,7 +7,7 @@ from pathlib import Path
 from typing import Any
 
 from tools.scripts.adg_cli.core import (
-    SKIP_DIRS,
+    SKIP_DIRS_ALL,
     SKIP_EXTENSIONS,
     Issue,
     _make_issue,
@@ -148,7 +148,7 @@ def check_directory(
             rel_parts = filepath.relative_to(dirpath).parts
         except ValueError:
             rel_parts = filepath.parts
-        if any(part in SKIP_DIRS for part in rel_parts):
+        if any(part in SKIP_DIRS_ALL for part in rel_parts):
             continue
         if filepath.suffix in SKIP_EXTENSIONS:
             continue
@@ -232,7 +232,7 @@ def _collect_check_files(
                 rel_parts = fp.relative_to(target).parts
             except ValueError:
                 rel_parts = fp.parts
-            if fp.is_file() and not any(part in SKIP_DIRS for part in rel_parts):
+            if fp.is_file() and not any(part in SKIP_DIRS_ALL for part in rel_parts):
                 if fp.suffix not in SKIP_EXTENSIONS:
                     if any(_match_pattern(fp, pat) for pat in skip_patterns):
                         continue

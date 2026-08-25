@@ -10,7 +10,7 @@ from typing import Any
 from tools.scripts._common import EXTENSION_MAP
 from tools.scripts.adg_cli.core import (
     MAX_FILES,
-    SKIP_DIRS,
+    SKIP_DIRS_ALL,
 )
 
 CONFIG_MARKERS: dict[str, str | None] = {
@@ -85,7 +85,7 @@ def detect_language(dirpath: Path) -> dict[str, Any]:
             rel_parts = filepath.relative_to(dirpath).parts[:-1]
         except ValueError:
             rel_parts = ()
-        if any(part in SKIP_DIRS for part in rel_parts):
+        if any(part in SKIP_DIRS_ALL for part in rel_parts):
             continue
         suffix = filepath.suffix.lower()
         if suffix in EXTENSION_MAP:

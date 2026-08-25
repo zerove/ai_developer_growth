@@ -4,7 +4,7 @@ import re
 from pathlib import Path
 from typing import Any
 
-from tools.scripts.adg_cli.core import FIX_RULES, SKIP_DIRS, SKIP_EXTENSIONS
+from tools.scripts.adg_cli.core import FIX_RULES, SKIP_DIRS_ALL, SKIP_EXTENSIONS
 from tools.scripts.adg_cli.detect import _detect_language_from_file
 
 
@@ -70,7 +70,7 @@ def fix_directory(dirpath: Path, language: str | None = None) -> dict[str, Any]:
             rel_parts = filepath.relative_to(dirpath).parts
         except ValueError:
             rel_parts = filepath.parts
-        if any(part in SKIP_DIRS for part in rel_parts):
+        if any(part in SKIP_DIRS_ALL for part in rel_parts):
             continue
         if filepath.suffix in SKIP_EXTENSIONS:
             continue

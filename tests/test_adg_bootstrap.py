@@ -96,3 +96,15 @@ class TestCliInTarget:
             text=True,
         )
         assert "Traceback" not in result.stderr
+
+
+def test_is_skipped_dir_venv_variants():
+    """虚拟环境目录名变体（.venv-adg 等）应被跳过。"""
+    from tools.scripts.adg_cli.core import is_skipped_dir
+
+    assert is_skipped_dir(".venv")  # 精确集合
+    assert is_skipped_dir(".venv-adg")  # 前缀模式
+    assert is_skipped_dir("venv-test")  # 前缀模式
+    assert is_skipped_dir("node_modules")  # 精确集合
+    assert not is_skipped_dir("vendor_check")  # 非虚拟环境前缀
+    assert not is_skipped_dir("src")

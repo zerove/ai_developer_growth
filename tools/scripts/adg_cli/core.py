@@ -100,6 +100,17 @@ def _config_excluded_dirs() -> set[str]:
 # 含用户配置的完整排除集：段匹配用（模块加载时冻结一次）
 SKIP_DIRS_ALL = SKIP_DIRS | _config_excluded_dirs()
 
+# 目录名前缀模式：.venv-adg / venv-test 等变体也视为虚拟环境
+_DIR_PREFIX_PATTERNS = (".venv", "venv")
+
+
+def is_skipped_dir(name: str) -> bool:
+    """目录名是否应跳过：精确集合命中，或虚拟环境类前缀模式命中。"""
+    if name in SKIP_DIRS_ALL:
+        return True
+    return name.startswith(_DIR_PREFIX_PATTERNS)
+
+
 MAX_FILES = 5000
 
 SKIP_EXTENSIONS = {

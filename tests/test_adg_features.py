@@ -25,6 +25,14 @@ from tools.scripts.adg_cli import (
     cmd_trend,
 )
 
+
+def _mock_urlopen(mock):
+    """urlopen 返回 status=200 的上下文管理器（对齐 chat_integration 契约）。"""
+    ctx = MagicMock()
+    ctx.status = 200
+    mock.return_value.__enter__.return_value = ctx
+
+
 # ──────────────────────────────────────────────────────────
 # SARIF Output Tests
 # ──────────────────────────────────────────────────────────
@@ -327,8 +335,8 @@ class TestWebhookNotification:
             Issue("r1", "error", "security", "/a.py", 1, 1, "err", ""),
         ]
 
-        with patch("urllib.request.urlopen") as mock_open:
-            mock_open.return_value = MagicMock()
+        with patch("tools.chat_integration.urlopen") as mock_open:
+            _mock_urlopen(mock_open)
             result = _send_slack_notification("https://hooks.slack.com/test", issues, "python", "test-project")
 
         assert result is True
@@ -340,15 +348,15 @@ class TestWebhookNotification:
             Issue("r1", "warning", "code_quality", "/a.py", 1, 1, "warn", ""),
         ]
 
-        with patch("urllib.request.urlopen") as mock_open:
-            mock_open.return_value = MagicMock()
+        with patch("tools.chat_integration.urlopen") as mock_open:
+            _mock_urlopen(mock_open)
             result = _send_dingtalk_notification("https://oapi.dingtalk.com/test", issues, "python", "test-project")
 
         assert result is True
 
     def test_slack_notification_error(self):
         """Slack notification handles errors."""
-        with patch("urllib.request.urlopen", side_effect=Exception("Network error")):
+        with patch("tools.chat_integration.urlopen", side_effect=Exception("Network error")):
             result = _send_slack_notification("https://hooks.slack.com/test", [], "python", "test")
 
         assert result is False

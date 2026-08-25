@@ -369,14 +369,14 @@ class TestSlackNotification:
                 fix_hint="fix",
             )
         ]
-        with patch("urllib.request.urlopen") as mock:
+        with patch("tools.chat_integration.urlopen") as mock:
             mock.return_value.__enter__ = lambda s: s
             mock.return_value.__exit__ = MagicMock(return_value=False)
             result = _send_slack_notification("https://hooks.slack.com/test", issues, "python", "test")
             assert isinstance(result, bool)
 
     def test_send_slack_error(self):
-        with patch("urllib.request.urlopen", side_effect=Exception("network error")):
+        with patch("tools.chat_integration.urlopen", side_effect=Exception("network error")):
             result = _send_slack_notification("https://hooks.slack.com/test", [], "python", "test")
             assert result is False
 
@@ -395,14 +395,14 @@ class TestDingtalkNotification:
                 fix_hint="fix",
             )
         ]
-        with patch("urllib.request.urlopen") as mock:
+        with patch("tools.chat_integration.urlopen") as mock:
             mock.return_value.__enter__ = lambda s: s
             mock.return_value.__exit__ = MagicMock(return_value=False)
             result = _send_dingtalk_notification("https://oapi.dingtalk.com/test", issues, "python", "test")
             assert isinstance(result, bool)
 
     def test_send_dingtalk_error(self):
-        with patch("urllib.request.urlopen", side_effect=Exception("network error")):
+        with patch("tools.chat_integration.urlopen", side_effect=Exception("network error")):
             result = _send_dingtalk_notification("https://oapi.dingtalk.com/test", [], "python", "test")
             assert result is False
 

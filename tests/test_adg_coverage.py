@@ -23,6 +23,13 @@ from tools.scripts.adg_cli import (
 )
 
 
+def _mock_urlopen(mock):
+    """urlopen 返回 status=200 的上下文管理器（对齐 chat_integration 契约）。"""
+    ctx = MagicMock()
+    ctx.status = 200
+    mock.return_value.__enter__.return_value = ctx
+
+
 class TestCreateRuleInteractive:
     """Test interactive rule creation."""
 
@@ -231,8 +238,8 @@ class TestCmdNotify:
         test_file = tmp_path / "test.py"
         test_file.write_text("print('hello')\n")
 
-        with patch("urllib.request.urlopen") as mock_open:
-            mock_open.return_value = MagicMock()
+        with patch("tools.chat_integration.urlopen") as mock_open:
+            _mock_urlopen(mock_open)
             args = argparse.Namespace(
                 path=str(test_file),
                 webhook="slack://test-token",
@@ -248,8 +255,8 @@ class TestCmdNotify:
         test_file = tmp_path / "test.py"
         test_file.write_text("print('hello')\n")
 
-        with patch("urllib.request.urlopen") as mock_open:
-            mock_open.return_value = MagicMock()
+        with patch("tools.chat_integration.urlopen") as mock_open:
+            _mock_urlopen(mock_open)
             args = argparse.Namespace(
                 path=str(test_file),
                 webhook="dingtalk://test-token",
@@ -305,13 +312,13 @@ class TestWebhookErrors:
 
     def test_slack_notification_exception(self):
         """Slack notification handles exceptions."""
-        with patch("urllib.request.urlopen", side_effect=Exception("Network error")):
+        with patch("tools.chat_integration.urlopen", side_effect=Exception("Network error")):
             result = _send_slack_notification("https://test", [], "python", "test")
             assert result is False
 
     def test_dingtalk_notification_exception(self):
         """DingTalk notification handles exceptions."""
-        with patch("urllib.request.urlopen", side_effect=Exception("Network error")):
+        with patch("tools.chat_integration.urlopen", side_effect=Exception("Network error")):
             result = _send_dingtalk_notification("https://test", [], "python", "test")
             assert result is False
 

@@ -24,6 +24,13 @@ from tools.scripts.adg_cli import (
 )
 
 
+def _mock_urlopen(mock):
+    """urlopen 返回 status=200 的上下文管理器（对齐 chat_integration 契约）。"""
+    ctx = MagicMock()
+    ctx.status = 200
+    mock.return_value.__enter__.return_value = ctx
+
+
 @pytest.fixture
 def workspace(tmp_path):
     d = tmp_path / "project"
@@ -142,7 +149,7 @@ class TestCmdCheckExtended:
             project="test",
             json=True,
         )
-        with patch("urllib.request.urlopen") as mock:
+        with patch("tools.chat_integration.urlopen") as mock:
             mock.return_value.__enter__ = lambda s: s
             mock.return_value.__exit__ = MagicMock(return_value=False)
             result = cmd_check(args)
@@ -150,7 +157,7 @@ class TestCmdCheckExtended:
 
     def test_check_with_notify_dingtalk(self, py_workspace):
         args = ns(path=str(py_workspace), notify="dingtalk://test", project="test", json=True)
-        with patch("urllib.request.urlopen") as mock:
+        with patch("tools.chat_integration.urlopen") as mock:
             mock.return_value.__enter__ = lambda s: s
             mock.return_value.__exit__ = MagicMock(return_value=False)
             result = cmd_check(args)
@@ -435,7 +442,8 @@ class TestCmdNotifyExtended:
             lang="python",
             project="test",
         )
-        with patch("urllib.request.urlopen") as mock:
+        with patch("tools.chat_integration.urlopen") as mock:
+            mock.return_value.status = 200
             mock.return_value.__enter__ = lambda s: s
             mock.return_value.__exit__ = MagicMock(return_value=False)
             result = cmd_notify(args)
@@ -448,7 +456,8 @@ class TestCmdNotifyExtended:
             lang="python",
             project="test",
         )
-        with patch("urllib.request.urlopen") as mock:
+        with patch("tools.chat_integration.urlopen") as mock:
+            mock.return_value.status = 200
             mock.return_value.__enter__ = lambda s: s
             mock.return_value.__exit__ = MagicMock(return_value=False)
             result = cmd_notify(args)
@@ -466,7 +475,7 @@ class TestCmdNotifyExtended:
             lang="python",
             project="test",
         )
-        with patch("urllib.request.urlopen", side_effect=Exception("network error")):
+        with patch("tools.chat_integration.urlopen", side_effect=Exception("network error")):
             result = cmd_notify(args)
         assert result == 1
 
@@ -482,7 +491,8 @@ class TestCmdNotifyExtended:
             lang="python",
             project="test",
         )
-        with patch("urllib.request.urlopen") as mock:
+        with patch("tools.chat_integration.urlopen") as mock:
+            mock.return_value.status = 200
             mock.return_value.__enter__ = lambda s: s
             mock.return_value.__exit__ = MagicMock(return_value=False)
             result = cmd_notify(args)

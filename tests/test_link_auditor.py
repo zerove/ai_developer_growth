@@ -191,15 +191,15 @@ class TestMain(unittest.TestCase):
         self._tmp.cleanup()
 
     def test_main_no_args(self):
-        """Test main exits with usage when no args provided."""
+        """No args now defaults to project-wide check (P1 unification)."""
         result = subprocess.run(
             [sys.executable, "tools/scripts/link_auditor.py"],
             capture_output=True,
             text=True,
             cwd=os.path.join(os.path.dirname(__file__), ".."),
         )
-        self.assertEqual(result.returncode, 1)
-        self.assertIn("Usage:", result.stdout)
+        self.assertIn("All links are valid.", result.stdout)
+        self.assertNotIn("Usage:", result.stdout)
 
     def test_main_with_valid_directory(self):
         """Test main with valid directory and no broken links."""

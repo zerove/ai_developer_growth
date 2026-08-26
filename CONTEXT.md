@@ -1,3 +1,17 @@
+## 更新记录: 2026-08-26 11:42:23
+
+### 任务
+Git 变更同步
+
+### 变更摘要
+- 变更文件 4 个 (+92 / -4 行)
+  - CONTEXT.md
+  - tests/test_link_auditor.py
+  - tests/test_link_auditor_supplement.py
+  - tools/scripts/link_auditor.py
+
+---
+
 ## 更新记录: 2026-08-26 11:41:04
 
 ### 任务

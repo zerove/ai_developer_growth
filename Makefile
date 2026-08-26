@@ -1,4 +1,4 @@
-.PHONY: help lint format format-fix typecheck test test-cov check-quality security audit validate-docs check-index sync-refs validate-governance-docs check-ai-sdlc audit-hallucination link-audit validate-cases scan full-audit full-validate mode-show mode-set-perf mode-set-quality mode-set-safe docs-build test-fast check release setup-git workflow-pr workflow-weekly workflow-release clean quick discover jcode list-tools new-skill release-version
+.PHONY: help lint format format-fix typecheck test test-cov check-quality security audit validate-docs check-index sync-refs validate-governance-docs check-ai-sdlc audit-hallucination link-audit validate-cases scan full-audit full-validate mode-show mode-set-perf mode-set-quality mode-set-safe docs-build test-fast check release setup-git workflow-pr workflow-weekly workflow-release clean quick discover jcode list-tools new-skill release-version cov-diff cov-module cov-gate cov-snapshot
 
 help:  ## 显示帮助信息
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-20s\033[0m %s\n", $$1, $$2}'
@@ -196,3 +196,18 @@ release-version:  ## 一键发版: lint→test→cov→升版→CHANGELOG→tag�
 	@git push origin master --tags
 	@git ls-remote origin refs/tags/v$(VERSION) | head -1
 	@echo "✓ v$(VERSION) published"
+
+# ─── 覆盖率 diff 与单模块门禁 (P1-1) ─────────────────────────
+cov-snapshot:  ## 生成基线 coverage.json (用法: make cov-snapshot [OUTPUT=.jcode/cov-baseline.json])
+	@python -m coverage json -o $(or $(OUTPUT),.jcode/cov-baseline.json) --include=tools/scripts/*
+	@echo "✓ baseline written to $(or $(OUTPUT),.jcode/cov-baseline.json)"
+
+cov-diff:  ## 对比覆盖率 (用法: make cov-diff OLD=a.json NEW=b.json [THRESHOLD=2.0])
+	@python tools/scripts/cov_tool.py gate --coverage $(NEW) --baseline $(OLD) --threshold $(or $(THRESHOLD),2.0)
+
+cov-module:  ## 单模块覆盖率详情 (用法: make cov-module MODULE=tools.scripts.foo)
+	@python tools/scripts/cov_tool.py module --coverage $(or $(COVERAGE),coverage.json) --module $(MODULE)
+
+cov-gate:  ## 与基线对比门禁 (用法: make cov-gate BASELINE=.jcode/cov-baseline.json [THRESHOLD=2.0])
+	@python -m coverage json -o /tmp/cov-gate-current.json --include=tools/scripts/*
+	@python tools/scripts/cov_tool.py gate --coverage /tmp/cov-gate-current.json --baseline $(BASELINE) --threshold $(or $(THRESHOLD),2.0)

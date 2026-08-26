@@ -1,3 +1,31 @@
+## 更新记录: 2026-08-26 15:40:47
+
+### 任务
+Git 变更同步
+
+### 变更摘要
+- 变更文件 4 个 (+134 / -36 行)
+  - CONTEXT.md
+  - examples/ai-context-sync/src/tester.py
+  - examples/ai-growth-vscode/tests/test_extension_mirror.py
+  - examples/ai-navigation-web/tests/test_units_round2.py
+
+---
+
+## 更新记录: 2026-08-26 15:39:16
+
+### 任务
+Git 变更同步
+
+### 变更摘要
+- 变更文件 4 个 (+120 / -19 行)
+  - CONTEXT.md
+  - examples/ai-context-sync/src/tester.py
+  - examples/ai-growth-vscode/tests/test_extension_mirror.py
+  - examples/ai-navigation-web/tests/test_units_round2.py
+
+---
+
 ## 更新记录: 2026-08-26 15:17:22
 
 ### 任务
@@ -744,43 +772,6 @@ Git 变更同步
   - tools/scripts/rules_engine/parsers/php_parser.py
   - tools/scripts/rules_engine/parsers/registry.py
   - tools/scripts/rules_engine/parsers/ruby_parser.py
-
----
-
-## 更新记录: 2026-08-26 08:47:44
-
-### 任务
-Git 变更同步
-
-### 变更摘要
-- 变更文件 9 个 (+626 / -2 行)
-  - CONTEXT.md
-  - case-studies/adg-field-validation-requests-rich.md
-  - docs/MOC.md
-  - requirements.txt
-  - tests/test_parser_registry_e2e.py
-  - tools/scripts/rules_engine/ast_parser.py
-  - tools/scripts/rules_engine/parsers/php_parser.py
-  - tools/scripts/rules_engine/parsers/registry.py
-  - tools/scripts/rules_engine/parsers/ruby_parser.py
-
----
-
-## 更新记录: 2026-08-26 08:32:08
-
-### 任务
-Git 变更同步
-
-### 变更摘要
-- 变更文件 8 个 (+372 / -0 行)
-  - CONTEXT.md
-  - ai-dev-framework/languages/python/rules.d/anti_patterns.yml
-  - case-studies/adg-field-validation-requests-rich.md
-  - docs/MOC.md
-  - tests/test_adg_cli_exclude_and_line_excludes.py
-  - tools/scripts/adg_cli/check.py
-  - tools/scripts/adg_cli/parser.py
-  - tools/scripts/rules_engine/anti_pattern_checker.py
 
 ---
 

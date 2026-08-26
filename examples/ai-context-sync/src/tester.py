@@ -81,7 +81,9 @@ class TestRunner:
             try:
                 logger.info(f"🧪 Running verification test in {tmpdir}...")
                 result = subprocess.run(
-                    ["pytest", test_file_path, "-q"],
+                    # -p no:rerunfailures: 该插件 ≥15 在 configure 时起 ServerStatusDB
+                    # 后台线程, 与沙箱 RLIMIT_NPROC=32 冲突(RuntimeError: can't start new thread)
+                    ["pytest", test_file_path, "-q", "-p", "no:rerunfailures"],
                     capture_output=True,
                     text=True,
                     timeout=self.timeout,

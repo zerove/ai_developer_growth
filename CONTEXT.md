@@ -1,3 +1,18 @@
+## 更新记录: 2026-08-26 12:08:21
+
+### 任务
+Git 变更同步
+
+### 变更摘要
+- 变更文件 5 个 (+45 / -6 行)
+  - CHANGELOG.md
+  - CONTEXT.md
+  - pyproject.toml
+  - tests/test_release.py
+  - uv.lock
+
+---
+
 ## 更新记录: 2026-08-26 11:57:02
 
 ### 任务

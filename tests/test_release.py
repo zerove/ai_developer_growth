@@ -66,8 +66,12 @@ class TestVersionOps:
             bump_version("1.0.0", "mega")
 
     def test_get_current_version_from_pyproject(self) -> None:
-        # 本仓库无 VERSION 文件, 回退 pyproject
-        assert get_current_version() == "2.6.0"
+        # 本仓库无 VERSION 文件, 回退 pyproject; 断言与文件一致而非硬编码版本
+        import re
+
+        content = (REPO_ROOT / "pyproject.toml").read_text()
+        expected = re.search(r'version\s*=\s*"([^"]+)"', content).group(1)
+        assert get_current_version() == expected
 
     def test_get_current_version_fallback_chain(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
         import tools.scripts.release as rel
@@ -167,6 +171,8 @@ def argparse_ns() -> object:
 
 class TestCliSubcommands:
     def test_version_subcommand(self) -> None:
+        import re
+
         r = subprocess.run(
             [PY, "-m", "tools.scripts.release", "version"],
             cwd=REPO_ROOT,
@@ -175,9 +181,13 @@ class TestCliSubcommands:
             timeout=60,
         )
         assert r.returncode == 0
-        assert "2.6.0" in r.stdout
+        content = (REPO_ROOT / "pyproject.toml").read_text()
+        expected = re.search(r'version\s*=\s*"([^"]+)"', content).group(1)
+        assert expected in r.stdout
 
     def test_bump_dry_run(self) -> None:
+        import re
+
         r = subprocess.run(
             [PY, "-m", "tools.scripts.release", "bump", "patch", "--dry-run"],
             cwd=REPO_ROOT,
@@ -186,7 +196,10 @@ class TestCliSubcommands:
             timeout=60,
         )
         assert r.returncode == 0
-        assert "试运行" in r.stdout and "2.6.1" in r.stdout
+        content = (REPO_ROOT / "pyproject.toml").read_text()
+        cur = parse_version(re.search(r'version\s*=\s*"([^"]+)"', content).group(1))
+        expected = f"{cur[0]}.{cur[1]}.{cur[2] + 1}"
+        assert "试运行" in r.stdout and expected in r.stdout
 
     def test_changelog_dry_run(self) -> None:
         r = subprocess.run(

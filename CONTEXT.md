@@ -1,3 +1,20 @@
+## 更新记录: 2026-08-26 08:09:18
+
+### 任务
+Git 变更同步
+
+### 变更摘要
+- 变更文件 7 个 (+379 / -22 行)
+  - CONTEXT.md
+  - tests/test_adg_cmd_integration.py
+  - tests/test_adg_coverage.py
+  - tests/test_adg_coverage_extra.py
+  - tests/test_adg_features.py
+  - tests/test_zero_coverage_batch2.py
+  - tools/scripts/jcode_setup_wizard.py
+
+---
+
 ## 更新记录: 2026-08-26 01:32:00
 
 ### 任务

@@ -42,7 +42,7 @@ class JCodeSetupWizard:
             print("✅ Generated opencode.json MCP configuration.")
 
         # 3. Build initial semantic graph
-        from semantic_code_graph import SemanticCodeGraph
+        from tools.scripts.semantic_code_graph import SemanticCodeGraph
 
         graph = SemanticCodeGraph(self.root_dir)
         graph.build_graph()

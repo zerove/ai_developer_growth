@@ -434,14 +434,17 @@ class ChaosExperimentRunner:
                 print(f"⚠️ 清理实验失败: {e}")
 
     def _parse_duration(self, duration: str) -> int:
-        """解析持续时间字符串为秒数"""
-        duration = duration.lower()
-        if duration.endswith("s"):
-            return int(duration[:-1])
-        elif duration.endswith("m"):
-            return int(duration[:-1]) * 60
-        elif duration.endswith("h"):
-            return int(duration[:-1]) * 3600
+        """解析持续时间字符串为秒数；无法解析时回退 300 秒。"""
+        duration = duration.lower().strip()
+        try:
+            if duration.endswith("s"):
+                return int(duration[:-1])
+            elif duration.endswith("m"):
+                return int(duration[:-1]) * 60
+            elif duration.endswith("h"):
+                return int(duration[:-1]) * 3600
+        except ValueError:
+            pass
         return 300
 
     def run_scheduled_experiments(self, experiments: list[str] | None = None) -> dict[str, Any]:

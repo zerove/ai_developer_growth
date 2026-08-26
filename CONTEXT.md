@@ -1,3 +1,39 @@
+## 更新记录: 2026-08-26 11:01:42
+
+### 任务
+Git 变更同步
+
+### 变更摘要
+- 变更文件 8 个 (+663 / -38 行)
+  - .gitignore
+  - CONTEXT.md
+  - tests/test_adg_cli_smoke.py
+  - tests/test_chaos_runner.py
+  - tools/scripts/adg_cli/commands/__init__.py
+  - tools/scripts/adg_cli/parser.py
+  - tools/scripts/adg_cli/rule_author.py
+  - tools/scripts/chaos_experiment_runner.py
+
+---
+
+## 更新记录: 2026-08-26 11:00:37
+
+### 任务
+Git 变更同步
+
+### 变更摘要
+- 变更文件 8 个 (+645 / -38 行)
+  - .gitignore
+  - CONTEXT.md
+  - tests/test_adg_cli_smoke.py
+  - tests/test_chaos_runner.py
+  - tools/scripts/adg_cli/commands/__init__.py
+  - tools/scripts/adg_cli/parser.py
+  - tools/scripts/adg_cli/rule_author.py
+  - tools/scripts/chaos_experiment_runner.py
+
+---
+
 ## 更新记录: 2026-08-26 09:05:47
 
 ### 任务

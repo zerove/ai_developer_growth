@@ -7,6 +7,20 @@ All notable changes to the AI Developer Growth project.
 ### 第三轮改进进行中
 - docs/ROADMAP.md 归档化，消除与根目录 ROADMAP.md 的双源漂移
 
+## [2.6.0] - 2026-08-26
+
+### 零覆盖模块清零
+
+### 测试覆盖攻坚（P0）
+- **chaos_experiment_runner 0%→93%**：32 测试（10 实验构造器/dry_run/409 replace/monitor/cleanup/scheduled/CLI 子进程）；修复 `_parse_duration("bogus")` 抛 ValueError 致默认回退不可达
+- **docker_build 0%→88%**：32 测试（run_cmd/标签/buildx/SBOM/cosign/preflight/main dry-run 全流程）
+- **release 0%→83%**：32 测试（版本解析递增/回退链/约定式提交/CHANGELOG/bump 全流程/cmd_verify/main 分发）；修复 v2.5.0 发布时 pyproject 版本号未提交的疏漏
+- **sync_issues 0%→80%**：28 测试（双向同步/列映射/full_sync/CLI 全子命令）；**真 bug 修复**：`_build_sync_parser` 漏注册 sync-project/list-project/project-info 三子命令（CLI 报 invalid choice 但执行分支存在）
+
+### 质量指标
+- 全量回归 2864 passed；CI 口径覆盖率 73%（门禁 fail_under=65）
+- 四个零覆盖模块均值 85%
+
 ## [2.4.0] - 2026-08-25
 
 ### 质量门禁全绿

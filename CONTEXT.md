@@ -1,3 +1,18 @@
+## 更新记录: 2026-08-26 11:35:05
+
+### 任务
+Git 变更同步
+
+### 变更摘要
+- 变更文件 5 个 (+326 / -1 行)
+  - CHANGELOG.md
+  - CONTEXT.md
+  - ROADMAP.md
+  - tests/test_sync_issues.py
+  - tools/scripts/sync_issues.py
+
+---
+
 ## 更新记录: 2026-08-26 11:18:32
 
 ### 任务

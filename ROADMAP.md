@@ -12,9 +12,11 @@
 
 ---
 
-## 当前状态 (2026-08-25)
+## 当前状态 (2026-08-26)
 
 ### ✅ 已完成
+- [x] **v2.5.0 (2026-08-26)** - 规则引擎 V4 行级排除 + PHP/Ruby 解析器(10 语言) + smoke 端到端 17 例 + 字段验证案例
+- [x] **v2.6.0 零覆盖清零 (2026-08-26)** - chaos_experiment_runner 0%→93%、docker_build 0%→88%、release 0%→83%、sync_issues 0%→80%；顺带修复 sync_issues 三个未注册子命令(sync-project/list-project/project-info)与 release 版本号疏漏；全量回归 2864 passed，CI 口径覆盖率 73%(门禁 65%)
 - [x] **核心方法论文档** - docs/ 下 markdown 数量动态增长（2026-08-24 清点 261 篇；以 `find docs -name "*.md" | wc -l` 实时为准，详见 [声称审计](docs/governance/roadmap-claims-audit.md)）
 - [x] **工具矩阵** - 模型/IDE/Agent 选型指南（已更新至最新）
 - [x] **工程效率文档** - 全周期工作流、自动化 Bug 修复、AI-Native SDLC 11 支柱

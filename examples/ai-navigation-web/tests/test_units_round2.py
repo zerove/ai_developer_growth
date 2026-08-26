@@ -19,7 +19,6 @@ from src.models import (
     UserCreate,
 )
 
-
 # ── models ──────────────────────────────────────────────────
 
 

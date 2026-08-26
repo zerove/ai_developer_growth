@@ -14,6 +14,137 @@ from typing import cast
 from tools.scripts._common import get_project_root
 
 
+def _list_cli_subcommands() -> list[tuple[str, str]]:
+    """Return static (name, description) tuples for jcode CLI subcommands."""
+    return [
+        ("ai-native-workflow", "Run full 4-step AI-Native pipeline"),
+        ("ai-quality-gate", "AI code quality checks"),
+        ("ai-pr-review", "Review current git changes"),
+        ("case-quality", "Analyze case study quality"),
+        ("validate-case", "Validate case study structure"),
+        ("create-case", "Create new case study from template"),
+        ("dor-check", "Check Definition of Readiness"),
+        ("semantic-graph", "Build/query semantic code graph"),
+        ("arch-visualizer", "Generate architecture visualization"),
+        ("metrics-telemetry", "Collect metrics telemetry"),
+        ("audit-attestation", "Generate audit attestation report"),
+        ("list-tools", "Show this listing (this command)"),
+        ("explain <name>", "Show detailed help for a command"),
+    ]
+
+
+def _list_standalone_scripts(root: Path) -> list[tuple[str, str]]:
+    """Scan tools/scripts/ and extract first-line docstring per script."""
+    out: list[tuple[str, str]] = []
+    for f in sorted((root / "tools" / "scripts").glob("*.py")):
+        if f.name.startswith("_") or f.name == "__init__.py":
+            continue
+        doc = ""
+        try:
+            with f.open(encoding="utf-8") as fh:
+                for i, line in enumerate(fh, 1):
+                    s = line.strip()
+                    if s.startswith('"""') or s.startswith("'''"):
+                        doc = s.strip("\"'").strip()
+                        break
+                    if i > 5:
+                        break
+        except OSError:
+            pass
+        out.append((f"python -m tools.scripts.{f.stem}", doc or "(no docstring)"))
+    return out
+
+
+def _list_skills(root: Path) -> list[tuple[str, str]]:
+    """Read .jcode/skills/*.md and return (command-name, title)."""
+    out: list[tuple[str, str]] = []
+    skills_dir = root / ".jcode" / "skills"
+    if not skills_dir.exists():
+        return out
+    for f in sorted(skills_dir.glob("*.md")):
+        title = f.stem
+        try:
+            first = f.read_text(encoding="utf-8").splitlines()[0]
+            if first.startswith("#"):
+                title = first.lstrip("#").strip()
+        except OSError:
+            pass
+        out.append((f"/{f.stem}", title[:60]))
+    return out
+
+
+def cmd_list_tools(args: argparse.Namespace) -> int:
+    """Enumerate all CLI subcommands, scripts, and skills for discoverability."""
+    root = get_project_root()
+    cat = getattr(args, "category", "all")
+
+    print("═" * 60)
+    print(" JCode Discover — Available Tools & Commands")
+    print("═" * 60)
+
+    if cat in ("cli", "all"):
+        print("\n📦 jcode CLI Subcommands (via `jcode <name>`):")
+        for name, desc in _list_cli_subcommands():
+            print(f"  jcode {name:<22} — {desc}")
+
+    if cat in ("scripts", "all"):
+        print("\n🛠  Standalone tools (in tools/scripts/):")
+        for cmd, desc in _list_standalone_scripts(root):
+            print(f"  {cmd:<42} — {desc}")
+
+    if cat in ("skills", "all"):
+        skills = _list_skills(root)
+        if skills:
+            print("\n🧠 Skills (via .jcode/skills/*.md, agent-invoked):")
+            for name, desc in skills:
+                print(f"  {name:<28} — {desc}")
+
+    print("\n💡 Tips:")
+    print("  • `make help`            — list all `make` targets")
+    print("  • `make quick`           — fast feedback loop (lint + changed tests only)")
+    print("  • `jcode explain <name>` — detailed help for any command")
+    return 0
+
+
+def cmd_explain(args: argparse.Namespace) -> int:
+    """Show detailed explanation and example for a command."""
+    name = args.command
+
+    cli_map = {
+        "ai-native-workflow": "Run the master JCode AI-Native pipeline (DoR + Semantic + Adversarial + Telemetry).",
+        "ai-quality-gate": "AI-style code quality check (hallucination, anti-pattern, security).",
+        "ai-pr-review": "AI review of staged/working-tree changes before commit.",
+        "case-quality": "Analyze case studies for completeness, efficiency data, and insights.",
+        "validate-case": "Validate case study structure against the schema.",
+        "create-case": "Create a new case study from the standard template.",
+        "dor-check": "Run the 7-point Definition-of-Ready rubric on an intent.",
+        "semantic-graph": "Build the semantic code graph (modules/classes/functions/imports).",
+        "arch-visualizer": "Generate a visual architecture diagram from the semantic graph.",
+        "metrics-telemetry": "Collect dev workflow metrics (commits, tests, coverage trends).",
+        "audit-attestation": "Generate cryptographic audit attestation from the on-disk ledger.",
+        "list-tools": "This command — show all discoverable tools.",
+    }
+
+    if name in cli_map:
+        print(f"📖 jcode {name}\n")
+        print(f"  {cli_map[name]}")
+        print(f"\n  Usage:  jcode {name} [options]")
+        print(f"  Help:   jcode {name} --help")
+        return 0
+
+    # 不在 cli_map, 检查 make target
+    makefile = get_project_root() / "Makefile"
+    if makefile.exists():
+        for line in makefile.read_text(encoding="utf-8").splitlines():
+            if line.startswith(f"{name}:") and "##" in line:
+                _, desc = line.split("##", 1)
+                print(f"📖 make {name}\n\n  {desc.strip()}")
+                return 0
+
+    print(f"❓ Unknown command: {name}\n  Run `jcode list-tools` to see all available commands.")
+    return 1
+
+
 def cmd_ai_native_workflow(args: argparse.Namespace) -> int:
     """Run the full AI-Native workflow pipeline."""
     from tools.scripts.jcode_ai_native_workflow import JCodeAINativeWorkflow
@@ -281,6 +412,16 @@ Examples:
     p = subparsers.add_parser("audit-attestation", help="Generate audit attestation")
     p.add_argument("--intent", type=str, help="Intent for audit record")
     p.set_defaults(func=cmd_audit_attestation)
+
+    # list-tools: 枚举所有可用入口
+    p = subparsers.add_parser("list-tools", help="List all available CLI subcommands and standalone scripts")
+    p.add_argument("--category", choices=["cli", "scripts", "skills", "all"], default="all")
+    p.set_defaults(func=cmd_list_tools)
+
+    # explain: 显示命令用途
+    p = subparsers.add_parser("explain", help="Explain what a command does and show example usage")
+    p.add_argument("command", type=str, help="Command name to explain")
+    p.set_defaults(func=cmd_explain)
 
     args = parser.parse_args()
 

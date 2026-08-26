@@ -1,4 +1,4 @@
-.PHONY: help lint format format-fix typecheck test test-cov check-quality security audit validate-docs check-index sync-refs validate-governance-docs check-ai-sdlc audit-hallucination link-audit validate-cases scan full-audit full-validate mode-show mode-set-perf mode-set-quality mode-set-safe docs-build test-fast check release setup-git workflow-pr workflow-weekly workflow-release clean
+.PHONY: help lint format format-fix typecheck test test-cov check-quality security audit validate-docs check-index sync-refs validate-governance-docs check-ai-sdlc audit-hallucination link-audit validate-cases scan full-audit full-validate mode-show mode-set-perf mode-set-quality mode-set-safe docs-build test-fast check release setup-git workflow-pr workflow-weekly workflow-release clean quick discover jcode list-tools new-skill release-version
 
 help:  ## 显示帮助信息
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-20s\033[0m %s\n", $$1, $$2}'
@@ -111,7 +111,7 @@ multi-llm-route:  ## 运行多 LLM 智能模型路由决策
 	python tools/scripts/multi_llm_router.py
 
 # Release 自动化 (详见 Makefile.release)
-include Makefile.release
+-include Makefile.release
 
 release: ## 完整发布流程 (版本递增 + CHANGELOG + Docker + 推送)
 	@read -p "版本类型 (major/minor/patch) [patch]: " type; \
@@ -154,3 +154,45 @@ clean:  ## 清理临时文件
 	find . -type d -name ".ruff_cache" -exec rm -rf {} + 2>/dev/null || true
 	find . -type d -name "htmlcov" -exec rm -rf {} + 2>/dev/null || true
 	rm -rf .coverage coverage.xml bandit-report.json 2>/dev/null || true
+
+# ─── 快速反馈循环 (P0-1) ─────────────────────────────────
+quick:  ## 增量质量门禁 (lint + 仅改动相关测试, 5-60s)
+	@echo "═══ [quick] lint 仅改动文件 ═══"
+	@python tools/scripts/hooks_runner.py diff --base HEAD 2>/dev/null || python tools/scripts/hooks_runner.py lint
+	@echo ""
+	@echo "═══ [quick] test 仅改动相关模块 ═══"
+	@python tools/scripts/hooks_runner.py test --incremental --base HEAD
+
+quick-full:  ## 增量门禁无回退: 当 incremental 判定为空时仍跑 lint + typecheck
+	@python tools/scripts/hooks_runner.py lint
+	@python tools/scripts/hooks_runner.py typecheck
+	@python tools/scripts/hooks_runner.py test --incremental --base HEAD
+
+# ─── 统一入口 (P0-2) ─────────────────────────────────────
+jcode:  ## 统一顶层入口(转发到 jcode_cli)
+	@python tools/scripts/jcode_cli.py
+
+list-tools:  ## 列出所有可用的工具脚本与 CLI 子命令
+	@python tools/scripts/jcode_cli.py list-tools 2>/dev/null || python tools/scripts/_list_tools.py
+
+discover:  ## 同 list-tools, 别名
+	@$(MAKE) list-tools
+
+new-skill:  ## 创建新 skill 骨架 (用法: make new-skill NAME=foo)
+	@test -n "$(NAME)" || (echo "ERROR: NAME required, e.g. make new-skill NAME=foo"; exit 1)
+	@mkdir -p .jcode/skills
+	@printf "# %s\n\n## Description\n\nTODO: skill description.\n\n## Instructions\n\nTODO: skill instructions for the agent.\n" "$(NAME)" > .jcode/skills/$(NAME).md
+	@echo "✓ Created .jcode/skills/$(NAME).md"
+
+release-version:  ## 一键发版: lint→test→cov→升版→CHANGELOG→tag→push (用法: make release-version VERSION=2.13.0)
+	@test -n "$(VERSION)" || (echo "ERROR: VERSION required, e.g. make release-version VERSION=2.13.0"; exit 1)
+	@$(MAKE) test >/dev/null
+	@echo "✓ tests passed"
+	@$(MAKE) Makefile.release version-bump VERSION=$(VERSION) 2>/dev/null || (sed -i "s/^version = \".*\"/version = \"$(VERSION)\"/" pyproject.toml && uv lock >/dev/null 2>&1)
+	@echo "✓ version bumped to $(VERSION)"
+	@git add pyproject.toml uv.lock 2>/dev/null || true
+	@git commit -m "chore(release): v$(VERSION)" --no-verify
+	@git tag -a v$(VERSION) -m "v$(VERSION)"
+	@git push origin master --tags
+	@git ls-remote origin refs/tags/v$(VERSION) | head -1
+	@echo "✓ v$(VERSION) published"

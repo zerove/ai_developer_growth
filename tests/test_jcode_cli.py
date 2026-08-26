@@ -137,6 +137,67 @@ class TestJCodeCLI:
         assert result.returncode == 0
         assert "audit" in result.stdout.lower() or "trace" in result.stdout.lower()
 
+    def test_list_tools_default(self):
+        """list-tools shows all categories by default."""
+        result = subprocess.run(
+            [sys.executable, "-m", "tools.scripts.jcode_cli", "list-tools"],
+            capture_output=True,
+            text=True,
+            cwd="/home/zeron/dev/ai_developer_growth",
+        )
+        assert result.returncode == 0
+        assert "JCode Discover" in result.stdout
+        assert "ai-native-workflow" in result.stdout
+        assert "Standalone tools" in result.stdout
+        assert "Skills" in result.stdout
+
+    def test_list_tools_cli_only(self):
+        """list-tools --category cli filters to CLI subcommands only."""
+        result = subprocess.run(
+            [sys.executable, "-m", "tools.scripts.jcode_cli", "list-tools", "--category", "cli"],
+            capture_output=True,
+            text=True,
+            cwd="/home/zeron/dev/ai_developer_growth",
+        )
+        assert result.returncode == 0
+        assert "ai-native-workflow" in result.stdout
+        assert "Standalone tools" not in result.stdout  # 过滤掉了
+
+    def test_explain_known_cli(self):
+        """explain recognizes CLI subcommand names."""
+        result = subprocess.run(
+            [sys.executable, "-m", "tools.scripts.jcode_cli", "explain", "ai-native-workflow"],
+            capture_output=True,
+            text=True,
+            cwd="/home/zeron/dev/ai_developer_growth",
+        )
+        assert result.returncode == 0
+        assert "📖 jcode ai-native-workflow" in result.stdout
+        assert "DoR" in result.stdout
+
+    def test_explain_make_target(self):
+        """explain falls back to Makefile targets for non-CLI names."""
+        result = subprocess.run(
+            [sys.executable, "-m", "tools.scripts.jcode_cli", "explain", "quick"],
+            capture_output=True,
+            text=True,
+            cwd="/home/zeron/dev/ai_developer_growth",
+        )
+        assert result.returncode == 0
+        assert "📖 make quick" in result.stdout
+        assert "增量" in result.stdout or "改动" in result.stdout
+
+    def test_explain_unknown(self):
+        """explain returns exit 1 and shows hint for unknown command."""
+        result = subprocess.run(
+            [sys.executable, "-m", "tools.scripts.jcode_cli", "explain", "no-such-cmd"],
+            capture_output=True,
+            text=True,
+            cwd="/home/zeron/dev/ai_developer_growth",
+        )
+        assert result.returncode == 1
+        assert "list-tools" in result.stdout
+
 
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])

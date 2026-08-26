@@ -33,7 +33,10 @@ def _load_toml_config(path: str) -> dict[str, Any]:
     try:
         with pp.open("rb") as f:
             data = tomllib.load(f)
-        section = data.get("tool", {}).get("adg", {})
+        tool_section = data.get("tool", {})
+        if not isinstance(tool_section, dict):
+            return {}
+        section = tool_section.get("adg", {})
         return section if isinstance(section, dict) else {}
     except (tomllib.TOMLDecodeError, OSError):
         return {}

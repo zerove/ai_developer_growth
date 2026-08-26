@@ -1,3 +1,17 @@
+## 更新记录: 2026-08-26 20:47:04
+
+### 任务
+Git 变更同步
+
+### 变更摘要
+- 变更文件 4 个 (+225 / -13 行)
+  - CONTEXT.md
+  - tests/test_app_config_full.py
+  - tests/test_perf_benchmark_full.py
+  - tools/scripts/app_config.py
+
+---
+
 ## 更新记录: 2026-08-26 20:40:23
 
 ### 任务
@@ -681,19 +695,6 @@ Git 变更同步
 
 ### 变更摘要
 - 变更文件 3 个 (+387 / -0 行)
-  - CONTEXT.md
-  - tests/test_ast_fixer_full.py
-  - tests/test_misc_runner_full.py
-
----
-
-## 更新记录: 2026-08-26 12:50:17
-
-### 任务
-Git 变更同步
-
-### 变更摘要
-- 变更文件 3 个 (+374 / -0 行)
   - CONTEXT.md
   - tests/test_ast_fixer_full.py
   - tests/test_misc_runner_full.py

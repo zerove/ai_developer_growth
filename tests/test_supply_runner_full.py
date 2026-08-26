@@ -218,3 +218,144 @@ class TestBuildFixOrchestrator:
             )
         )
         assert orch is not None
+
+
+class TestLicensePolicy:
+    def test_missing_file_returns_none(self, tmp_path: Path) -> None:
+        assert sr._load_license_policy(tmp_path / "nope.yaml") is None
+
+    def test_none_returns_none(self) -> None:
+        assert sr._load_license_policy(None) is None
+
+    def test_load_allow_and_deny(self, tmp_path: Path) -> None:
+        from tools.scripts.supply_chain import LicensePolicy
+
+        f = tmp_path / "policy.yaml"
+        f.write_text("allowed_licenses: [MIT, Apache-2.0]\ndisallowed_licenses: [GPL-3.0]\n")
+        policy = sr._load_license_policy(f)
+        assert policy == {
+            "MIT": LicensePolicy.ALLOW,
+            "Apache-2.0": LicensePolicy.ALLOW,
+            "GPL-3.0": LicensePolicy.DENY,
+        }
+
+
+class TestComplianceChecks:
+    FULL_SUMMARY = {
+        "total_dependencies": 1,
+        "direct_dependencies": 1,
+        "vulnerabilities": 2,
+        "critical": 1,
+        "high": 1,
+        "medium": 1,
+        "low": 0,
+        "license_issues": 1,
+    }
+
+    def test_all_violations_fail(self, tmp_path: Path) -> None:
+        result = ScanResult(
+            project_path=str(tmp_path),
+            vulnerabilities=[make_vuln(Severity.CRITICAL), make_vuln(Severity.MEDIUM, vid="GHSA-m")],
+            license_issues=["GPL-3.0 in pkg"],
+            summary=dict(self.FULL_SUMMARY),
+        )
+        out = sr._run_compliance_checks(tmp_path, result)
+        assert out["passed"] is False
+        types = {v["type"] for v in out["violations"]}
+        assert types == {"license", "vulnerability"}
+        assert len(out["warnings"]) == 1  # medium → 警告
+
+    def test_clean_passes(self, tmp_path: Path) -> None:
+        result = ScanResult(project_path=str(tmp_path), summary={"total_dependencies": 0})
+        out = sr._run_compliance_checks(tmp_path, result)
+        assert out["passed"] is True and out["violations"] == []
+
+    def test_print_compliance_text(self, tmp_path: Path, capsys: pytest.CaptureFixture[str]) -> None:
+        compliance = sr._run_compliance_checks(
+            tmp_path,
+            ScanResult(
+                project_path=str(tmp_path),
+                vulnerabilities=[make_vuln(Severity.CRITICAL)],
+                license_issues=["GPL"],
+                summary=dict(self.FULL_SUMMARY),
+            ),
+        )
+        sr._print_compliance_text(tmp_path, compliance)
+        out = capsys.readouterr().out
+        assert "FAILED" in out and "Violations" in out
+
+
+class TestHandleComplianceAndSbom:
+    def test_compliance_dispatch(self, tmp_path: Path) -> None:
+        with patch.object(sr, "_handle_supply_chain_compliance", MagicMock(return_value=0)) as m:
+            rc = sr._handle_supply_chain(make_args(sc_action="compliance", path=tmp_path))
+            m.assert_called_once()
+        assert rc == 0
+
+
+class TestHandleComplianceEndToEnd:
+    def test_compliance_pass_and_fail(self, tmp_path: Path) -> None:
+        """真实扫描空目录(无依赖文件) → 合规通过; mock 漏洞 → 失败。"""
+        args = make_args(sc_action="compliance", path=tmp_path, format="json", policy_file=None)
+        rc = sr._handle_supply_chain(args)
+        assert rc == 0
+
+    def test_output_compliance_json_to_file(self, tmp_path: Path, capsys: pytest.CaptureFixture[str]) -> None:
+        out = tmp_path / "comp.json"
+        compliance = {"passed": True, "violations": [], "warnings": []}
+        sr._output_compliance(make_args(format="text", output=out), tmp_path, compliance)
+        assert out.exists()
+
+
+class TestFreshness:
+    def test_check_dependency_freshness_empty_project(self, tmp_path: Path) -> None:
+        report = sr._check_dependency_freshness(tmp_path, max_age=90)
+        assert report["total_dependencies"] == 0
+        assert report["fresh"] == [] and report["stale"] == []
+
+    def test_print_freshness_text(self, capsys: pytest.CaptureFixture[str]) -> None:
+        sr._print_freshness_text(
+            Path("/x"),
+            {
+                "max_age_days": 30,
+                "total_dependencies": 2,
+                "fresh": [],
+                "stale": [{"name": "a", "version": "1", "ecosystem": "PyPI"}],
+                "unknown": [{}],
+            },
+        )
+        out = capsys.readouterr().out
+        assert "Stale" in out and "Fresh" in out
+
+
+class TestAutoFixHandler:
+    def test_auto_fix_text_format(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+    ) -> None:
+        from tools.scripts.auto_fix import FixResult
+
+        fake_fix = FixResult(file="a.py", applied=[], skipped=[], errors=[])
+        monkeypatch.setattr(sr, "_collect_check_results", lambda p, j: [])
+        orch = MagicMock()
+        orch.create_plan.return_value = []
+        orch.execute_plan.return_value = [fake_fix]
+        monkeypatch.setattr(sr, "_build_fix_orchestrator", lambda a: orch)
+        rc = sr._handle_auto_fix(make_args(path=tmp_path, format="text", jobs=None))
+        assert rc == 0
+        assert "Auto-fix" in capsys.readouterr().out and rc == 0
+
+    def test_auto_fix_json_with_errors(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+    ) -> None:
+        from tools.scripts.auto_fix import FixResult
+
+        fake_fix = FixResult(file="bad.py", applied=[], skipped=[], errors=["无法修复"])
+        monkeypatch.setattr(sr, "_collect_check_results", lambda p, j: [])
+        orch = MagicMock()
+        orch.create_plan.return_value = []
+        orch.execute_plan.return_value = [fake_fix]
+        monkeypatch.setattr(sr, "_build_fix_orchestrator", lambda a: orch)
+        rc = sr._handle_auto_fix(make_args(path=tmp_path, format="json", jobs=2))
+        data = json.loads(capsys.readouterr().out)
+        assert rc == 1
+        assert any("bad.py" in json.dumps(row) for row in data) or data

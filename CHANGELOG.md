@@ -7,6 +7,15 @@ All notable changes to the AI Developer Growth project.
 ### 第三轮改进进行中
 - docs/ROADMAP.md 归档化，消除与根目录 ROADMAP.md 的双源漂移
 
+## [2.9.1] - 2026-08-26
+
+### 覆盖率小模块收官
+
+- **ai_pr_reviewer 49%→98%**：review_diff 集成(安全/架构/spec 全触发)、format 两分支、get_git_diff 三级 ref 回退、CLI --diff-file 分支
+- **dev_metrics 58%→100%**：monthly_distribution/render/main、git_log_since --since、first_commit_date 空仓库
+
+质量指标：全量回归 **3118 passed**，CI 口径覆盖率 79%
+
 ## [2.9.0] - 2026-08-26
 
 ### 覆盖率收官: hooks 双雄攻坚

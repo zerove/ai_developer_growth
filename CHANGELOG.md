@@ -7,6 +7,21 @@ All notable changes to the AI Developer Growth project.
 ### 第三轮改进进行中
 - docs/ROADMAP.md 归档化，消除与根目录 ROADMAP.md 的双源漂移
 
+## [2.10.0] - 2026-08-26
+
+### 覆盖率攻坚第三轮: 核心基础设施
+
+### 测试覆盖
+- **hooks_runner 27%→86%**：doctor 自检/pre-commit 钩子健康/baseline validate+recompute/secret-scan/quality-gate-new/dispatch 分流，33 新测试
+- **jcode_cli 13%→97%**：11 个 cmd 处理器全分支 + main 异常处理，22 新测试
+- **secret_scanner 21%→93%**：gitleaks/trufflehog/detect-secrets 三工具适配器、去重聚合、SARIF/JSON 输出，24 新测试
+- **ai-navigation-web**：25→51 测试，74%→95%（Phase 5 学习平台）
+- **ai-context-sync 真 bug 修复**：沙箱 RLIMIT_NPROC=32 与 pytest-rerunfailures ≥15 后台线程冲突致 INTERNALERROR，子进程加 -p no:rerunfailures
+- **ai-growth-vscode**：0→7 测试（TS 源码镜像一致性验证）
+
+### 质量指标
+- 全量回归 **3187 passed**；CI 口径覆盖率 **81%**（v2.9.1 时 79%）
+
 ## [2.9.1] - 2026-08-26
 
 ### 覆盖率小模块收官

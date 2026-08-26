@@ -1,3 +1,18 @@
+## 更新记录: 2026-08-26 16:33:50
+
+### 任务
+Git 变更同步
+
+### 变更摘要
+- 变更文件 5 个 (+226 / -23 行)
+  - CHANGELOG.md
+  - CONTEXT.md
+  - pyproject.toml
+  - tests/test_secret_scanner_round2.py
+  - uv.lock
+
+---
+
 ## 更新记录: 2026-08-26 16:26:41
 
 ### 任务
@@ -704,28 +719,6 @@ Git 变更同步
 
 ### 变更摘要
 - 变更文件 12 个 (+821 / -32 行)
-  - .gitignore
-  - CONTEXT.md
-  - requirements.txt
-  - tests/test_adg_cli_smoke.py
-  - tests/test_parser_registry_e2e.py
-  - tools/scripts/adg_cli/commands/__init__.py
-  - tools/scripts/adg_cli/parser.py
-  - tools/scripts/adg_cli/rule_author.py
-  - tools/scripts/rules_engine/ast_parser.py
-  - tools/scripts/rules_engine/parsers/php_parser.py
-  - tools/scripts/rules_engine/parsers/registry.py
-  - tools/scripts/rules_engine/parsers/ruby_parser.py
-
----
-
-## 更新记录: 2026-08-26 09:01:09
-
-### 任务
-Git 变更同步
-
-### 变更摘要
-- 变更文件 12 个 (+787 / -26 行)
   - .gitignore
   - CONTEXT.md
   - requirements.txt

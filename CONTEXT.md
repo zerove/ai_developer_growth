@@ -1,3 +1,18 @@
+## 更新记录: 2026-08-26 19:18:55
+
+### 任务
+Git 变更同步
+
+### 变更摘要
+- 变更文件 5 个 (+256 / -34 行)
+  - CHANGELOG.md
+  - CONTEXT.md
+  - pyproject.toml
+  - tests/test_rule_docs_mapper_round2.py
+  - uv.lock
+
+---
+
 ## 更新记录: 2026-08-26 18:36:47
 
 ### 任务
@@ -675,21 +690,6 @@ Git 变更同步
   - CONTEXT.md
   - tests/test_quality_gate_full.py
   - tests/test_release.py
-
----
-
-## 更新记录: 2026-08-26 12:08:21
-
-### 任务
-Git 变更同步
-
-### 变更摘要
-- 变更文件 5 个 (+45 / -6 行)
-  - CHANGELOG.md
-  - CONTEXT.md
-  - pyproject.toml
-  - tests/test_release.py
-  - uv.lock
 
 ---
 

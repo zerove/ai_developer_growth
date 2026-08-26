@@ -7,6 +7,16 @@ All notable changes to the AI Developer Growth project.
 ### 第三轮改进进行中
 - docs/ROADMAP.md 归档化，消除与根目录 ROADMAP.md 的双源漂移
 
+## [2.11.2] - 2026-08-26
+
+### 覆盖率攻坚第六轮: 规则联动与可视化大模块
+
+- **rule_docs_mapper 44%→91%**：YAML/极简双解析器、语言+框架规则聚合、关键词重叠打分匹配(top3, ≥2 阈值)、内置映射去重合并、rebuild/query/main 全分支
+- **quality_trends 60%→94%**：SQLite 快照持久化跨实例、take_snapshot(mock checker)、趋势 delta/recommendations、sparkline 8 级缩放与降采样、multi-trend 表格
+- **dashboard 62%→88%**：v3 全路由(health/check 六分支/rules/docs/status)、CI summary、record、main 双模式(uvicorn 缺失退出/run mock)
+
+### 质量指标
+- 全量回归 **3431 passed**（+57）；CI 口径覆盖率 **86%**（v2.11.1 时 85%）
 ## [2.11.1] - 2026-08-26
 
 ### 覆盖率攻坚第五轮: 小模块清扫 + 1 个真 bug 修复

@@ -1,3 +1,29 @@
+## 更新记录: 2026-08-26 16:56:26
+
+### 任务
+Git 变更同步
+
+### 变更摘要
+- 变更文件 3 个 (+663 / -63 行)
+  - CONTEXT.md
+  - tests/test_exception_manager_round2.py
+  - tests/test_supply_chain_round2.py
+
+---
+
+## 更新记录: 2026-08-26 16:55:30
+
+### 任务
+Git 变更同步
+
+### 变更摘要
+- 变更文件 3 个 (+652 / -42 行)
+  - CONTEXT.md
+  - tests/test_exception_manager_round2.py
+  - tests/test_supply_chain_round2.py
+
+---
+
 ## 更新记录: 2026-08-26 16:47:17
 
 ### 任务
@@ -677,46 +703,6 @@ Git 变更同步
   - tools/scripts/adg_cli/parser.py
   - tools/scripts/adg_cli/rule_author.py
   - tools/scripts/chaos_experiment_runner.py
-
----
-
-## 更新记录: 2026-08-26 11:00:37
-
-### 任务
-Git 变更同步
-
-### 变更摘要
-- 变更文件 8 个 (+645 / -38 行)
-  - .gitignore
-  - CONTEXT.md
-  - tests/test_adg_cli_smoke.py
-  - tests/test_chaos_runner.py
-  - tools/scripts/adg_cli/commands/__init__.py
-  - tools/scripts/adg_cli/parser.py
-  - tools/scripts/adg_cli/rule_author.py
-  - tools/scripts/chaos_experiment_runner.py
-
----
-
-## 更新记录: 2026-08-26 09:05:47
-
-### 任务
-Git 变更同步
-
-### 变更摘要
-- 变更文件 12 个 (+867 / -32 行)
-  - .gitignore
-  - CONTEXT.md
-  - requirements.txt
-  - tests/test_adg_cli_smoke.py
-  - tests/test_parser_registry_e2e.py
-  - tools/scripts/adg_cli/commands/__init__.py
-  - tools/scripts/adg_cli/parser.py
-  - tools/scripts/adg_cli/rule_author.py
-  - tools/scripts/rules_engine/ast_parser.py
-  - tools/scripts/rules_engine/parsers/php_parser.py
-  - tools/scripts/rules_engine/parsers/registry.py
-  - tools/scripts/rules_engine/parsers/ruby_parser.py
 
 ---
 

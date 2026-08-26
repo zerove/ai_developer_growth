@@ -1,3 +1,29 @@
+## 更新记录: 2026-08-26 19:25:18
+
+### 任务
+Git 变更同步
+
+### 变更摘要
+- 变更文件 3 个 (+386 / -26 行)
+  - CONTEXT.md
+  - tests/test_quality_trends_round2.py
+  - tests/test_rule_docs_mapper_round2.py
+
+---
+
+## 更新记录: 2026-08-26 19:24:29
+
+### 任务
+Git 变更同步
+
+### 变更摘要
+- 变更文件 3 个 (+373 / -14 行)
+  - CONTEXT.md
+  - tests/test_quality_trends_round2.py
+  - tests/test_rule_docs_mapper_round2.py
+
+---
+
 ## 更新记录: 2026-08-26 19:18:55
 
 ### 任务
@@ -664,32 +690,6 @@ Git 变更同步
   - CONTEXT.md
   - tests/test_config_loader_full.py
   - tests/test_tool_runner_full.py
-
----
-
-## 更新记录: 2026-08-26 12:27:37
-
-### 任务
-Git 变更同步
-
-### 变更摘要
-- 变更文件 3 个 (+526 / -0 行)
-  - CONTEXT.md
-  - tests/test_config_loader_full.py
-  - tests/test_quality_gate_full.py
-
----
-
-## 更新记录: 2026-08-26 12:22:26
-
-### 任务
-Git 变更同步
-
-### 变更摘要
-- 变更文件 3 个 (+296 / -4 行)
-  - CONTEXT.md
-  - tests/test_quality_gate_full.py
-  - tests/test_release.py
 
 ---
 

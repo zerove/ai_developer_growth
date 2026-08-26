@@ -42,7 +42,7 @@ class SemanticCodeGraph:
     def build_graph(self) -> None:
         py_files = list(self.root_dir.glob("**/*.py"))
         for file_path in py_files:
-            if any(p in str(file_path) for p in [".venv", "build", "dist", ".git", "__pycache__"]):
+            if any(part in {".venv", "build", "dist", ".git", "__pycache__"} for part in file_path.parts):
                 continue
             try:
                 content = file_path.read_text(encoding="utf-8")

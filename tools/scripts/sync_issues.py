@@ -363,10 +363,13 @@ def _build_sync_parser() -> argparse.ArgumentParser:
     issue_parser.add_argument("--issue", type=int, required=True, help="Issue 编号")
 
     # sync-project
+    subparsers.add_parser("sync-project", help="从 Project 同步回 Issue")
 
     # list-project
+    subparsers.add_parser("list-project", help="列出 Project 中的 Issue")
 
     # project-info
+    subparsers.add_parser("project-info", help="显示 Project 信息")
 
     # sync-specific
     specific_parser = subparsers.add_parser("sync-issues", help="同步指定 Issue 列表")

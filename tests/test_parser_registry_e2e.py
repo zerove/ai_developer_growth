@@ -6,6 +6,8 @@ python / go / rust / java / typescript。
 
 from __future__ import annotations
 
+from pathlib import Path
+
 import pytest
 from tree_sitter import Language, Parser
 
@@ -32,6 +34,8 @@ def _parse_code(language: str, code: bytes):
         "csharp": (importlib.import_module("tree_sitter_c_sharp"), None),
         "kotlin": (importlib.import_module("tree_sitter_kotlin"), None),
         "swift": (importlib.import_module("tree_sitter_swift"), None),
+        "php": (importlib.import_module("tree_sitter_php"), "language_php"),
+        "ruby": (importlib.import_module("tree_sitter_ruby"), None),
     }
     mod, ts_fn = modules[language]
     lang_obj = Language(getattr(mod, ts_fn)()) if ts_fn else Language(mod.language())
@@ -40,7 +44,7 @@ def _parse_code(language: str, code: bytes):
 
 
 class TestParserRegistry:
-    def test_registry_contains_eight_languages(self) -> None:
+    def test_registry_contains_ten_languages(self) -> None:
         assert set(PARSER_REGISTRY.keys()) == {
             "python",
             "go",
@@ -50,6 +54,8 @@ class TestParserRegistry:
             "csharp",
             "kotlin",
             "swift",
+            "php",
+            "ruby",
         }
 
     def test_all_parsers_satisfy_base(self) -> None:
@@ -234,3 +240,94 @@ class TestNewLanguageParsers:
             got_cls = {c.name for c in ast_obj.classes}
             assert want_fns <= got_fns, f"{lang}: {got_fns}"
             assert want_cls in got_cls, f"{lang}: {got_cls}"
+
+
+class TestPhpParser:
+    def test_extracts_class_with_extends_implements(self) -> None:
+        code = b"<?php\nclass UserService extends BaseService implements UserInterface {}\n"
+        _, classes = _parse_code("php", code)
+        assert len(classes) == 1
+        assert classes[0].name == "UserService"
+        assert set(classes[0].bases) == {"BaseService", "UserInterface"}
+
+    def test_extracts_methods_with_class_name(self) -> None:
+        code = (
+            b"<?php\nclass Svc {\n"
+            b"    public function getName(int $id): ?string { return 'x'; }\n"
+            b"    private function helper(array $items): int { return 1; }\n"
+            b"}\n"
+        )
+        functions, classes = _parse_code("php", code)
+        names = [f.name for f in functions]
+        assert set(names) == {"getName", "helper"}
+        assert all(f.is_method and f.class_name == "Svc" for f in functions)
+        assert len(classes) == 1 and len(classes[0].methods) == 2
+
+    def test_standalone_function(self) -> None:
+        code = b"<?php\nfunction standalone(): void {}\n"
+        functions, _ = _parse_code("php", code)
+        assert [f.name for f in functions] == ["standalone"]
+        assert not functions[0].is_method
+
+    def test_promoted_constructor_params(self) -> None:
+        code = b"<?php\nclass Svc {\n    public function __construct(private Logger $logger) {}\n}\n"
+        functions, _ = _parse_code("php", code)
+        assert len(functions) == 1
+        assert "$logger" in functions[0].params
+
+
+class TestRubyParser:
+    def test_extracts_class_with_superclass(self) -> None:
+        code = b"class UserService < BaseService\nend\n"
+        _, classes = _parse_code("ruby", code)
+        assert len(classes) == 1
+        assert classes[0].name == "UserService"
+        assert classes[0].bases == ["BaseService"]
+
+    def test_instance_and_singleton_methods(self) -> None:
+        code = b"class Svc\n  def find_user(id)\n    id\n  end\n  def self.helper(items)\n    items.size\n  end\nend\n"
+        functions, classes = _parse_code("ruby", code)
+        names = {f.name for f in functions}
+        assert names == {"find_user", "self.helper"}
+        assert all(f.class_name == "Svc" and f.is_method for f in functions)
+        assert len(classes) == 1 and len(classes[0].methods) == 2
+
+    def test_module_methods_attributed(self) -> None:
+        code = b"module Mixin\n  def included_method; end\nend\n"
+        functions, classes = _parse_code("ruby", code)
+        assert [(f.name, f.class_name) for f in functions] == [("included_method", "Mixin")]
+        assert classes == []  # 模块不进 classes
+
+    def test_nested_class_not_leaking(self) -> None:
+        code = b"class Outer\n  class Inner\n    def deep; end\n  end\n  def shallow; end\nend\n"
+        functions, classes = _parse_code("ruby", code)
+        names = {f.name for f in functions}
+        assert names == {"deep", "shallow"}
+        assert {c.name for c in classes} == {"Outer", "Inner"}
+
+
+class TestPhpRubyAstDelegation:
+    def test_ast_parser_delegates_php_ruby(self, tmp_path: Path) -> None:
+        """ASTParser 主提取路径对 php/ruby 委托 registry。"""
+        from tools.scripts.rules_engine.ast_parser import ASTParser
+
+        parser = ASTParser()
+        php_file = tmp_path / "sample.php"
+        php_file.write_text(
+            "<?php\nclass A {\n    public function go($x) { return $x; }\n}\n",
+            encoding="utf-8",
+        )
+        ast_obj = parser.parse_file(php_file, "php")
+        assert ast_obj is not None
+        assert {x.name for x in ast_obj.functions} == {"go"}
+        assert {c.name for c in ast_obj.classes} == {"A"}
+
+        ruby_file = tmp_path / "sample.rb"
+        ruby_file.write_text(
+            "class B\n  def go(x)\n    x\n  end\nend\n",
+            encoding="utf-8",
+        )
+        ast_obj = parser.parse_file(ruby_file, "ruby")
+        assert ast_obj is not None
+        got = {(x.name, x.class_name) for x in ast_obj.functions}
+        assert ("go", "B") in got

@@ -1,3 +1,22 @@
+## 更新记录: 2026-08-26 08:47:44
+
+### 任务
+Git 变更同步
+
+### 变更摘要
+- 变更文件 9 个 (+626 / -2 行)
+  - CONTEXT.md
+  - case-studies/adg-field-validation-requests-rich.md
+  - docs/MOC.md
+  - requirements.txt
+  - tests/test_parser_registry_e2e.py
+  - tools/scripts/rules_engine/ast_parser.py
+  - tools/scripts/rules_engine/parsers/php_parser.py
+  - tools/scripts/rules_engine/parsers/registry.py
+  - tools/scripts/rules_engine/parsers/ruby_parser.py
+
+---
+
 ## 更新记录: 2026-08-26 08:32:08
 
 ### 任务

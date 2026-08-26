@@ -53,6 +53,7 @@ try:
     import tree_sitter_java
     import tree_sitter_javascript
     import tree_sitter_kotlin
+    import tree_sitter_php
     import tree_sitter_python
     import tree_sitter_ruby
     import tree_sitter_rust
@@ -249,6 +250,7 @@ class ASTParser:
         "cpp",
         "csharp",
         "kotlin",
+        "php",
         "swift",
     }
     # 类级共享缓存：所有实例复用同一批 language parser
@@ -276,6 +278,7 @@ class ASTParser:
                     "cpp": tree_sitter_cpp,
                     "csharp": tree_sitter_c_sharp,
                     "kotlin": tree_sitter_kotlin,
+                    "php": tree_sitter_php,
                     "swift": tree_sitter_swift,
                 }
                 for lang in cls.SUPPORTED_LANGUAGES:
@@ -285,6 +288,8 @@ class ASTParser:
                             # Get the language function (handle TSX/TS variants)
                             if lang == "typescript":
                                 lang_obj = Language(mod.language_typescript())
+                            elif lang == "php":
+                                lang_obj = Language(mod.language_php())
                             else:
                                 lang_obj = Language(mod.language())
                             parser = Parser(lang_obj)
@@ -418,7 +423,7 @@ class ASTParser:
     # ─────────────────────────────────────────────────────────────
 
     # 这些语言的提取委托给 parsers/registry 的专用解析器（含类方法归属、基类收集）
-    _REGISTRY_DELEGATED_LANGUAGES = frozenset({"java", "csharp", "kotlin", "swift"})
+    _REGISTRY_DELEGATED_LANGUAGES = frozenset({"java", "csharp", "kotlin", "swift", "php", "ruby"})
 
     def _registry_parse(self, tree_root: _TreeNode, language: str) -> tuple[list[FunctionInfo], list[ClassInfo]] | None:
         """尝试用 parsers/registry 专用解析器提取；语言未注册返回 None。"""
@@ -1035,6 +1040,7 @@ class ASTParser:
             ".kts": "kotlin",
             ".swift": "swift",
             ".rb": "ruby",
+            ".php": "php",
         }
         return ext_map.get(filepath.suffix.lower(), "unknown")
 

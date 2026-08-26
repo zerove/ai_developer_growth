@@ -241,7 +241,9 @@
 - [x] 分层规则扩展至 12 语言 (kotlin/csharp/ruby/php/swift/cpp 等) + 供应链依赖解析 9 生态
 - [x] ADG Bootstrap 一键移植脚本 + adg_cli exclude 配置合并
 - [x] Jcode pre/post tool 钩子集成 + Java 集成测试豁免 + 规则缓存键失效缺陷修复
-- [ ] 剩余: 发布 v2.4.0 + 社区里程碑
+- [x] Phase 5 交互式学习平台测试强化: 25→51 测试, 覆盖率 74%→95% (2026-08)
+- [x] 发布 v2.9.x 系列并推送 tag
+- [ ] 社区里程碑
 
 ---
 

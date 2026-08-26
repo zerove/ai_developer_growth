@@ -7,6 +7,10 @@ anti_patterns:
   severity: error
   category: error_handling
   pattern: 'except\s*:'
+  exclude_patterns:
+  - "['\"]except\\s*:[\"']"
+  exclude_lines:
+  - "[^\\s'\"#][^#]*['\"][^'\"]*except\\s*:"
   exclude_files:
   - fix_heuristics.py
   - auto_fix.py

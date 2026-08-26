@@ -101,6 +101,10 @@ def _check_pattern(filepath: Path, content: str, lines: list[str], pattern_def: 
         if re.search(exclude, content):
             return []
 
+    # 行级排除（exclude_lines）：命中任一模式的行不报告，
+    # 用于过滤字符串字面量/文档中的误报（如 "in except: block"）
+    exclude_lines = pattern_def.get("exclude_lines", [])
+
     flags = re.IGNORECASE if pattern_def.get("ignore_case", False) else 0
     is_multiline = ("\n" in pattern or "\\n" in pattern) or pattern_def.get("multiline", False)
 
@@ -115,6 +119,8 @@ def _check_pattern(filepath: Path, content: str, lines: list[str], pattern_def: 
         for line_num, line in enumerate(lines, 1):
             stripped = line.strip()
             if stripped.startswith("#") or stripped.startswith("//"):
+                continue
+            if any(re.search(ex_pat, line) for ex_pat in exclude_lines):
                 continue
             try:
                 for match in re.finditer(pattern, line, flags):
@@ -198,6 +204,22 @@ def _check_files_parallel(
     return all_issues
 
 
+def _is_test_file(fp: Path) -> bool:
+    """Heuristically determine whether this is a test file (consistent with the pre_tool hook exemption criteria)."""
+    parts = fp.parts
+    name = fp.name
+    return (
+        "tests" in parts
+        or "test" in parts
+        or name.startswith("test_")
+        or name.endswith("_test.py")
+        or name.endswith("_test.go")
+        or name.endswith("Test.java")
+        or name.endswith("Tests.cs")
+        or name == "conftest.py"
+    )
+
+
 def _collect_check_files(
     target: Path, args: argparse.Namespace, project_config: dict[str, Any]
 ) -> tuple[list[Path], dict[str, Any]]:
@@ -206,6 +228,11 @@ def _collect_check_files(
     since = getattr(args, "since", None)
     staged = getattr(args, "staged", False)
     unstaged = getattr(args, "unstaged", False)
+
+    # CLI-level exclusion: --exclude glob + --exclude-tests convenience switch (V4 field validation finding)
+    exclude_patterns: list[str] = list(getattr(args, "exclude", []) or [])
+    if getattr(args, "exclude_tests", False):
+        exclude_patterns += ["tests/*", "**/tests/*", "test_*", "*_test.py", "conftest.py"]
 
     if since:
         files = _get_git_changed_files(since, cwd=target.parent)
@@ -247,6 +274,24 @@ def _collect_check_files(
                     if _detect_language_from_file(fp):
                         files.append(fp)
         detected = detect_language(target)
+
+    # 统一应用 --exclude / --exclude-tests 过滤(对 git 变更路径同样生效)
+    if exclude_patterns:
+        filtered: list[Path] = []
+        for fp in files:
+            try:
+                rel = fp.relative_to(target)
+            except ValueError:
+                rel = fp
+            if any(_match_pattern(fp, pat) or _match_pattern(rel, pat) for pat in exclude_patterns):
+                continue
+            if getattr(args, "exclude_tests", False) and _is_test_file(fp):
+                continue
+            filtered.append(fp)
+        removed = len(files) - len(filtered)
+        if removed:
+            print(f"Excluded {removed} file(s) by pattern.", file=sys.stderr)
+        files = filtered
 
     return files, detected
 

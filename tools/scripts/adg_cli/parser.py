@@ -38,6 +38,18 @@ def _add_base_check_parser(sub: argparse._SubParsersAction[Any]) -> None:
         action="store_true",
         help="Include related documentation links in output",
     )
+    check_p.add_argument(
+        "--exclude",
+        action="append",
+        default=[],
+        metavar="PATTERN",
+        help="Exclude files matching glob pattern (repeatable, e.g. --exclude 'tests/*')",
+    )
+    check_p.add_argument(
+        "--exclude-tests",
+        action="store_true",
+        help="Shorthand for excluding common test paths (tests/, test_*.py, *_test.py, conftest.py)",
+    )
 
 
 def _add_detect_parser(sub: argparse._SubParsersAction[Any]) -> None:

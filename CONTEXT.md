@@ -1,3 +1,21 @@
+## 更新记录: 2026-08-26 08:26:49
+
+### 任务
+Git 变更同步
+
+### 变更摘要
+- 变更文件 8 个 (+516 / -1 行)
+  - CONTEXT.md
+  - ai-dev-framework/languages/python/rules.d/anti_patterns.yml
+  - tests/test_adg_cli_exclude_and_line_excludes.py
+  - tests/test_zero_coverage_batch2.py
+  - tools/scripts/adg_cli/check.py
+  - tools/scripts/adg_cli/parser.py
+  - tools/scripts/jcode_setup_wizard.py
+  - tools/scripts/rules_engine/anti_pattern_checker.py
+
+---
+
 ## 更新记录: 2026-08-26 08:09:18
 
 ### 任务

@@ -144,6 +144,12 @@ def _check_line_patterns(
         if stripped.startswith("#") or stripped.startswith("//"):
             continue
 
+        # 行级排除（exclude_lines）：命中任一模式的行不报告，
+        # 用于过滤字符串字面量/文档中的误报（如 "in except: block"）
+        exclude_lines = pattern_def.get("exclude_lines", [])
+        if any(re.search(ex_pat, line) for ex_pat in exclude_lines):
+            continue
+
         for match in compiled.finditer(line):
             issues.append(
                 Issue(

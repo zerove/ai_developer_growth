@@ -7,6 +7,43 @@ All notable changes to the AI Developer Growth project.
 ### 第三轮改进进行中
 - docs/ROADMAP.md 归档化，消除与根目录 ROADMAP.md 的双源漂移
 
+## [2.12.0] - 2026-08-26
+
+### 覆盖率攻坚第七轮: 主管道 + 小模块 + 2 个真 bug 修复
+
+- **真 bug 修复 (高优先级)**: `jcode_ai_native_workflow` 在多测试组合下崩溃
+  - 根因: `test_context_sync_prune.py` 顶层 `load_context_sync_module()` 永久把 `.jcode/scripts` 插入 `sys.path[0]`
+  - 该目录下存在与 `examples/multi-agent-orch/multi_agent_orch/` 同名的扁平 `multi_agent_orch.py`, 遮蔽真包
+  - `_step3_adversarial_scope` 延迟导入 `from multi_agent_orch.orchestration import ...` 命中扁平文件 → `ModuleNotFoundError: not a package`
+  - 修复: 模块级 `sys.path` 注入后清理 `sys.modules` 缓存并预导入真包
+  - 复现路径: `pytest tests/test_ai_native_workflow.py tests/test_context_sync_prune.py`
+
+- **真 bug 修复 (健壮性)**: `app_config` 加载 `pyproject.toml` 链式调用崩溃
+  - 根因: 当 `tool = "flat"` 等非表结构时, `data.get("tool", {}).get("adg", {})` 抛 `AttributeError`, 异常捕获范围不含此类型
+  - 修复: 加 `isinstance(tool_section, dict)` 防御, 非字典返回空配置
+  - 触发场景: 用户自定义 `pyproject.toml` 中 `[tool]` 不是 section 时的优雅降级
+
+- **jcode_ai_native_workflow 45%→94%**: _step1_dor_routing 全分支(pass/TBD/过短/无 ledger)、_step2~4 主流程、run_full_pipeline 端到端、DoR 失败提前中止、台账六事件断言
+
+- **hallucination_detector 66%→96%**: 字符串/注释豁免、转义边界 (`\"`)、文件/目录扫描、报告格式化(分组图标 + 置信度百分比)
+
+- **multi_llm_router 67%→100%**: 路由表命中、自定义 root_dir、未知 task 回退、main 入口子进程
+
+- **smart_commit 68%→100%**: 五分支消息生成(docs/tests/ci/tools/refactor)、暂存列表失败容忍、dry-run、提交成功/失败双路径
+
+- **perf_benchmark 69%→100%**: 并行基准(1 次迭代无标准差)、`build_graph` / `check_directory` tmp 真实小规模基准、main 全流程落盘基线
+
+- **app_config 64%→97%**: TOML 解析容错、向上查找、YAML 覆盖(嵌套 dict)、环境变量优先级(`ADG_*`)、get_path
+
+### 质量指标
+- 全量回归 **3493 passed**（+62）；CI 口径覆盖率 **87%**（v2.11.2 时 86%）
+- 发现并修复 2 个真实 bug（模块遮蔽 + 配置健壮性）
+
+### 技术沉淀
+- **真 bug 链**: 跨测试文件状态污染——测试助手脚本在 sys.path 注入位置不当, 引发多模块名冲突
+- **真 bug 链**: 配置容错盲区——防御式编程中异常类型清单遗漏, 需全链路 isinstance
+- **meta_path 探针定位法**: 跨测试污染定位时, 在 `sys.meta_path` 插钩记录首次导入调用栈是最直接的方式
+
 ## [2.11.2] - 2026-08-26
 
 ### 覆盖率攻坚第六轮: 规则联动与可视化大模块

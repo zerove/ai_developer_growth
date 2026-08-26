@@ -206,6 +206,7 @@ updated: 2026-07-21
 | [../case-studies/api-design-implementation.md\|API 设计实现]] | 后端开发 | 5x | 契约先行保证接口质量 |
 | [../case-studies/multi-agent-collaboration.md\|多 Agent 协作]] | 模拟团队开发 | 5x | 角色分工 + 迭代 |
 | [../case-studies/adg-scan-httpx.md\|ADG 扫描 httpx]] | 治理工具验证 | 5x | 72% 问题降幅，exclude_patterns 关键 |
+| [../case-studies/adg-field-validation-requests-rich.md\|ADG 实战验证 requests/rich]] | 治理工具验证 | 6x | error 噪声 22→0，exclude_lines 行级排除 |
 | [../case-studies/adg-cross-project-scan.md\|ADG 跨项目扫描]] | 规则引擎验证 | 4x | 多项目一致性检查 |
 | [../case-studies/governance-self-audit.md\|治理自我审计]] | 质量门禁自检 | 4x | 用自己的工具审计自己 |
 | [../case-studies/ai-native-coverage-governance.md\|AI-Native 覆盖治理]] | 覆盖率治理 | 4x | 自动化覆盖率门禁 |

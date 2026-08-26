@@ -95,3 +95,4 @@ debug_mutmut.py
 .quality-trends/swarm_execution.json
 .quality-trends/telemetry.json
 logs/
+adg-report.html

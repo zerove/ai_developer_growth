@@ -1,3 +1,179 @@
+## 更新记录: 2026-08-26 09:05:47
+
+### 任务
+Git 变更同步
+
+### 变更摘要
+- 变更文件 12 个 (+867 / -32 行)
+  - .gitignore
+  - CONTEXT.md
+  - requirements.txt
+  - tests/test_adg_cli_smoke.py
+  - tests/test_parser_registry_e2e.py
+  - tools/scripts/adg_cli/commands/__init__.py
+  - tools/scripts/adg_cli/parser.py
+  - tools/scripts/adg_cli/rule_author.py
+  - tools/scripts/rules_engine/ast_parser.py
+  - tools/scripts/rules_engine/parsers/php_parser.py
+  - tools/scripts/rules_engine/parsers/registry.py
+  - tools/scripts/rules_engine/parsers/ruby_parser.py
+
+---
+
+## 更新记录: 2026-08-26 09:04:02
+
+### 任务
+Git 变更同步
+
+### 变更摘要
+- 变更文件 12 个 (+843 / -32 行)
+  - .gitignore
+  - CONTEXT.md
+  - requirements.txt
+  - tests/test_adg_cli_smoke.py
+  - tests/test_parser_registry_e2e.py
+  - tools/scripts/adg_cli/commands/__init__.py
+  - tools/scripts/adg_cli/parser.py
+  - tools/scripts/adg_cli/rule_author.py
+  - tools/scripts/rules_engine/ast_parser.py
+  - tools/scripts/rules_engine/parsers/php_parser.py
+  - tools/scripts/rules_engine/parsers/registry.py
+  - tools/scripts/rules_engine/parsers/ruby_parser.py
+
+---
+
+## 更新记录: 2026-08-26 09:03:25
+
+### 任务
+Git 变更同步
+
+### 变更摘要
+- 变更文件 12 个 (+821 / -32 行)
+  - .gitignore
+  - CONTEXT.md
+  - requirements.txt
+  - tests/test_adg_cli_smoke.py
+  - tests/test_parser_registry_e2e.py
+  - tools/scripts/adg_cli/commands/__init__.py
+  - tools/scripts/adg_cli/parser.py
+  - tools/scripts/adg_cli/rule_author.py
+  - tools/scripts/rules_engine/ast_parser.py
+  - tools/scripts/rules_engine/parsers/php_parser.py
+  - tools/scripts/rules_engine/parsers/registry.py
+  - tools/scripts/rules_engine/parsers/ruby_parser.py
+
+---
+
+## 更新记录: 2026-08-26 09:01:09
+
+### 任务
+Git 变更同步
+
+### 变更摘要
+- 变更文件 12 个 (+787 / -26 行)
+  - .gitignore
+  - CONTEXT.md
+  - requirements.txt
+  - tests/test_adg_cli_smoke.py
+  - tests/test_parser_registry_e2e.py
+  - tools/scripts/adg_cli/commands/__init__.py
+  - tools/scripts/adg_cli/parser.py
+  - tools/scripts/adg_cli/rule_author.py
+  - tools/scripts/rules_engine/ast_parser.py
+  - tools/scripts/rules_engine/parsers/php_parser.py
+  - tools/scripts/rules_engine/parsers/registry.py
+  - tools/scripts/rules_engine/parsers/ruby_parser.py
+
+---
+
+## 更新记录: 2026-08-26 09:00:50
+
+### 任务
+Git 变更同步
+
+### 变更摘要
+- 变更文件 12 个 (+765 / -26 行)
+  - .gitignore
+  - CONTEXT.md
+  - requirements.txt
+  - tests/test_adg_cli_smoke.py
+  - tests/test_parser_registry_e2e.py
+  - tools/scripts/adg_cli/commands/__init__.py
+  - tools/scripts/adg_cli/parser.py
+  - tools/scripts/adg_cli/rule_author.py
+  - tools/scripts/rules_engine/ast_parser.py
+  - tools/scripts/rules_engine/parsers/php_parser.py
+  - tools/scripts/rules_engine/parsers/registry.py
+  - tools/scripts/rules_engine/parsers/ruby_parser.py
+
+---
+
+## 更新记录: 2026-08-26 09:00:09
+
+### 任务
+Git 变更同步
+
+### 变更摘要
+- 变更文件 12 个 (+743 / -26 行)
+  - .gitignore
+  - CONTEXT.md
+  - requirements.txt
+  - tests/test_adg_cli_smoke.py
+  - tests/test_parser_registry_e2e.py
+  - tools/scripts/adg_cli/commands/__init__.py
+  - tools/scripts/adg_cli/parser.py
+  - tools/scripts/adg_cli/rule_author.py
+  - tools/scripts/rules_engine/ast_parser.py
+  - tools/scripts/rules_engine/parsers/php_parser.py
+  - tools/scripts/rules_engine/parsers/registry.py
+  - tools/scripts/rules_engine/parsers/ruby_parser.py
+
+---
+
+## 更新记录: 2026-08-26 08:58:59
+
+### 任务
+Git 变更同步
+
+### 变更摘要
+- 变更文件 12 个 (+721 / -26 行)
+  - .gitignore
+  - CONTEXT.md
+  - requirements.txt
+  - tests/test_adg_cli_smoke.py
+  - tests/test_parser_registry_e2e.py
+  - tools/scripts/adg_cli/commands/__init__.py
+  - tools/scripts/adg_cli/parser.py
+  - tools/scripts/adg_cli/rule_author.py
+  - tools/scripts/rules_engine/ast_parser.py
+  - tools/scripts/rules_engine/parsers/php_parser.py
+  - tools/scripts/rules_engine/parsers/registry.py
+  - tools/scripts/rules_engine/parsers/ruby_parser.py
+
+---
+
+## 更新记录: 2026-08-26 08:57:56
+
+### 任务
+Git 变更同步
+
+### 变更摘要
+- 变更文件 12 个 (+787 / -26 行)
+  - CONTEXT.md
+  - adg-report.html
+  - requirements.txt
+  - tests/test_adg_cli_smoke.py
+  - tests/test_parser_registry_e2e.py
+  - tools/scripts/adg_cli/commands/__init__.py
+  - tools/scripts/adg_cli/parser.py
+  - tools/scripts/adg_cli/rule_author.py
+  - tools/scripts/rules_engine/ast_parser.py
+  - tools/scripts/rules_engine/parsers/php_parser.py
+  - tools/scripts/rules_engine/parsers/registry.py
+  - tools/scripts/rules_engine/parsers/ruby_parser.py
+
+---
+
 ## 更新记录: 2026-08-26 08:47:44
 
 ### 任务

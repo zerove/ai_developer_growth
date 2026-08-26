@@ -113,10 +113,10 @@ def _add_rule_parser(sub: argparse._SubParsersAction[Any]) -> None:
     rule_create = rule_sub.add_parser("create", help="Create a new rule interactively")
     rule_create.add_argument("--output", type=str, help="Output YAML file path")
     rule_test = rule_sub.add_parser("test", help="Test a rule against files")
-    rule_test.add_argument("rule-file", type=str, help="Rule YAML file to test")
+    rule_test.add_argument("rule_file", metavar="RULE_FILE", type=str, help="Rule YAML file to test")
     rule_test.add_argument("path", type=str, help="Files/directory to test against")
     rule_validate = rule_sub.add_parser("validate", help="Validate a rule file")
-    rule_validate.add_argument("rule-file", type=str, help="Rule YAML file to validate")
+    rule_validate.add_argument("rule_file", metavar="RULE_FILE", type=str, help="Rule YAML file to validate")
 
 
 def _add_trend_parser(sub: argparse._SubParsersAction[Any]) -> None:

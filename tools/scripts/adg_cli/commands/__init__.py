@@ -457,45 +457,75 @@ def _cmd_rule_test(args: argparse.Namespace) -> int:
     return 0 if not results["errors"] else 1
 
 
+def _load_rules_from_file(rule_file: Path) -> object:
+    """Load rules from YAML file, fallback to simple parsing without yaml."""
+    try:
+        import yaml
+
+        with open(rule_file) as f:
+            return yaml.safe_load(f)
+    except ImportError:
+        content = rule_file.read_text()
+        data: dict[str, Any] = {}
+        for line in content.split("\n"):
+            if "pattern:" in line:
+                data["pattern"] = line.split("pattern:")[1].strip().strip('"')
+            elif "message:" in line:
+                data["message"] = line.split("message:")[1].strip().strip('"')
+            elif "severity:" in line:
+                data["severity"] = line.split("severity:")[1].strip()
+            elif "category:" in line:
+                data["category"] = line.split("category:")[1].strip()
+            elif "id:" in line and not line.strip().startswith("#"):
+                data["id"] = line.split("id:")[1].strip()
+        return data
+
+
+def _expand_rule_set(data: object) -> list[tuple[str, dict[str, Any]]]:
+    """展开规则集合为 (标签, 规则) 列表；单规则 dict 返回单项。"""
+    if isinstance(data, list):
+        return [(f"#{i + 1}", r) for i, r in enumerate(data) if isinstance(r, dict)]
+    if isinstance(data, dict) and isinstance(data.get("anti_patterns"), list):
+        return [(str(r.get("id", f"#{i + 1}")), r) for i, r in enumerate(data["anti_patterns"]) if isinstance(r, dict)]
+    if isinstance(data, dict):
+        return [("rule", data)]
+    return []
+
+
 def _cmd_rule_validate(args: argparse.Namespace) -> int:
-    """Validate a rule file."""
+    """Validate a rule file.
+
+    支持两种格式：
+    - 单规则 dict（含 id/severity/category/pattern/message）
+    - 规则集合（{"anti_patterns": [...]} 或顶层 list），逐条校验
+    """
     rule_file = Path(args.rule_file)
     if not rule_file.exists():
         print(f"Error: Rule file not found: {rule_file}", file=sys.stderr)
         return 1
 
-    # Load rule
-    try:
-        import yaml
+    rules = _expand_rule_set(_load_rules_from_file(rule_file))
 
-        with open(rule_file) as f:
-            rule = yaml.safe_load(f)
-    except ImportError:
-        content = rule_file.read_text()
-        rule = {}
-        for line in content.split("\n"):
-            if "pattern:" in line:
-                rule["pattern"] = line.split("pattern:")[1].strip().strip('"')
-            elif "message:" in line:
-                rule["message"] = line.split("message:")[1].strip().strip('"')
-            elif "severity:" in line:
-                rule["severity"] = line.split("severity:")[1].strip()
-            elif "category:" in line:
-                rule["category"] = line.split("category:")[1].strip()
-            elif "id:" in line and not line.strip().startswith("#"):
-                rule["id"] = line.split("id:")[1].strip()
-
-    # Validate
-    errors = _validate_rule(rule)
-
-    if errors:
+    if not rules:
         print(f"\n❌ Validation failed for: {rule_file}")
-        for e in errors:
-            print(f"  - {e}")
+        print("  - No rules found in file")
         return 1
-    else:
-        print(f"\n✅ Validation passed for: {rule_file}")
-        return 0
+
+    all_errors: list[str] = []
+    for label, rule in rules:
+        for e in _validate_rule(rule):
+            all_errors.append(f"{label}: {e}")
+
+    if all_errors:
+        print(f"\n❌ Validation failed for: {rule_file} ({len(rules)} rules)")
+        for e in all_errors[:30]:
+            print(f"  - {e}")
+        if len(all_errors) > 30:
+            print(f"  ... and {len(all_errors) - 30} more")
+        return 1
+
+    print(f"\n✅ Validation passed for: {rule_file} ({len(rules)} rules)")
+    return 0
 
 
 def cmd_trend(args: argparse.Namespace) -> int:

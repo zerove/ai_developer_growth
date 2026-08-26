@@ -56,6 +56,34 @@ def _create_rule_interactive() -> dict[str, Any]:
     }
 
 
+VALID_CATEGORIES: frozenset[str] = frozenset(
+    {
+        "security",
+        "code_quality",
+        "performance",
+        "maintainability",
+        # 内置规则库实际使用的类别
+        "ci_cd",
+        "resource_management",
+        "error_handling",
+        "type_safety",
+        "concurrency",
+        "config",
+        "logging",
+        "complexity",
+        "async",
+        "readability",
+        "correctness",
+        "memory_safety",
+        "modern_swift",
+        "modern_cpp",
+        "exception_safety",
+        "design",
+        "testing",
+    }
+)
+
+
 def _validate_rule(rule: dict[str, Any]) -> list[str]:
     """Validate a rule definition. Returns list of errors."""
     errors = []
@@ -68,12 +96,7 @@ def _validate_rule(rule: dict[str, Any]) -> list[str]:
     if rule.get("severity") not in ("error", "warning", "info"):
         errors.append(f"Invalid severity: {rule.get('severity')}")
 
-    if rule.get("category") not in (
-        "security",
-        "code_quality",
-        "performance",
-        "maintainability",
-    ):
+    if rule.get("category") not in VALID_CATEGORIES:
         errors.append(f"Invalid category: {rule.get('category')}")
 
     # Test regex pattern

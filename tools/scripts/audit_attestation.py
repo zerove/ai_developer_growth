@@ -84,6 +84,7 @@ class AuditAttestationLedger:
                 "event_type": entry.get("event_type"),
                 "details": entry.get("details"),
                 "prev_hash": entry.get("prev_hash"),
+                "timestamp": entry.get("timestamp"),
             }
             serialized = json.dumps(payload, sort_keys=True)
             current_hash = hashlib.sha256(serialized.encode("utf-8")).hexdigest()

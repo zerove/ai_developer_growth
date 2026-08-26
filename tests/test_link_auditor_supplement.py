@@ -303,3 +303,75 @@ class TestStripCodeBlocksEdgeCases(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class TestDefaultCheckAll:
+    """P1: 无参数时默认执行全仓库检查(而非打印 usage)。"""
+
+    def test_no_args_defaults_to_check_all(self) -> None:
+        import subprocess
+        import sys
+        from pathlib import Path
+
+        root = Path(__file__).resolve().parents[1]
+        r = subprocess.run(
+            [sys.executable, "tools/scripts/link_auditor.py"],
+            cwd=root,
+            capture_output=True,
+            text=True,
+            timeout=120,
+        )
+        # 当前仓库全仓库 0 断链
+        assert "All links are valid." in r.stdout
+        assert "Usage:" not in r.stdout
+
+    def test_explicit_check_all_unchanged(self) -> None:
+        import subprocess
+        import sys
+        from pathlib import Path
+
+        root = Path(__file__).resolve().parents[1]
+        r = subprocess.run(
+            [sys.executable, "tools/scripts/link_auditor.py", "--check-all"],
+            cwd=root,
+            capture_output=True,
+            text=True,
+            timeout=120,
+        )
+        assert r.returncode == 0
+
+    def test_directory_mode_still_works(self) -> None:
+        import subprocess
+        import sys
+        from pathlib import Path
+
+        root = Path(__file__).resolve().parents[1]
+        tmp = root / ".tmp_link_test"
+        tmp.mkdir(exist_ok=True)
+        (tmp / "a.md").write_text("[[missing-target-xyz]]\n")
+        try:
+            r = subprocess.run(
+                [sys.executable, "tools/scripts/link_auditor.py", str(tmp)],
+                cwd=root,
+                capture_output=True,
+                text=True,
+                timeout=60,
+            )
+            assert r.returncode == 1
+            assert "missing-target-xyz" in r.stdout
+        finally:
+            (tmp / "a.md").unlink()
+            tmp.rmdir()
+
+    def test_code_block_wikilink_ignored(self) -> None:
+        import sys
+        from pathlib import Path
+
+        sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "tools" / "scripts"))
+        from link_auditor import _strip_code_blocks
+
+        content = "正文 [[real-link]] 与 ```toml\n[[rules]]\n``` 及 `[[inline]]`"
+        cleaned = _strip_code_blocks(content)
+        assert "[[rules]]" not in cleaned
+        assert "[[inline]]" not in cleaned
+        assert "[[real-link]]" in cleaned

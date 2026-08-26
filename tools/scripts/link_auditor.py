@@ -192,7 +192,8 @@ if __name__ == "__main__":
     )
     args = parser.parse_args()
 
-    if args.check_all:
+    if args.check_all or not args.directory:
+        # --check-all 显式指定, 或无目录参数时默认全仓库检查
         success = check_all_links()
     elif args.directory:
         broken = find_broken_links(args.directory)

@@ -7,6 +7,21 @@ All notable changes to the AI Developer Growth project.
 ### 第三轮改进进行中
 - docs/ROADMAP.md 归档化，消除与根目录 ROADMAP.md 的双源漂移
 
+## [2.11.1] - 2026-08-26
+
+### 覆盖率攻坚第五轮: 小模块清扫 + 1 个真 bug 修复
+
+- **audit_attestation 真 bug 修复**：generate_report 链验证哈希 payload 漏 timestamp 字段，导致任何正常写入的账本恒判 BROKEN；补齐后 VALID/BROKEN 判定恢复正确
+- **add_navigation 32%→100%**：frontmatter 解析/分类映射/5 条上限/追加幂等/main
+- **context_streamer 40%→100%**：分页边界(精确倍数无空尾)/缺失文件
+- **audit_attestation 40%→97%**：链式写入/损坏行回退创世哈希/篡改检测 BROKEN
+- **layer_checker 33%→100%** + **dependency_graph 64%→96%**：YAML 加载全路径/DEFAULT_LAYER_MAP/违规检测/多语言建图/cycle-hub
+- **update_stats 45%→97%**：计数器/门禁采集/漂移检测/main 全分支
+- **audit_trends 48%→95%**：链校验/按天聚合/异常检测双阈值/JSON+文本输出
+- **search_analytics 57%→97%**：时间戳双格式/天数过滤保守保留/render/export-zero
+
+### 质量指标
+- 全量回归 **3374 passed**（+99）；CI 口径覆盖率 **85%**（v2.11.0 时 83%）
 ## [2.11.0] - 2026-08-26
 
 ### 覆盖率攻坚第四轮: 治理与供应链大模块

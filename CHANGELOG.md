@@ -7,6 +7,16 @@ All notable changes to the AI Developer Growth project.
 ### 第三轮改进进行中
 - docs/ROADMAP.md 归档化，消除与根目录 ROADMAP.md 的双源漂移
 
+## [2.11.0] - 2026-08-26
+
+### 覆盖率攻坚第四轮: 治理与供应链大模块
+
+- **supply_chain 47%→91%**：OSV batch 扫描(空列表/API 异常/结果回填/CVSS 分级)、LicenseChecker 策略、11 语言解析器(python/npm/cargo/go/maven/gradle/gemfile/composer/nuget/poetry/pipenv)、cosign 验证、主入口 scan_project/generate_sbom，33 新测试
+- **exception_manager 62%→90%**：webhook 线程通知、到期告警全分支(去重/无效日期/自动撤销)、GitOps 双向同步(YAML round-trip/pull/git commit)、EnhancedExceptionManager 全生命周期集成，26 新测试
+- **auto_fix 52%→94%**：AutoFixOrchestrator 四策略(auto/dry_run/interactive/batch_pr)执行、行替换边界(越界/内容不匹配)、Provider 家族(regex/ruff/isort/autoflake/ToolBased 失败恢复)，29 新测试
+
+### 质量指标
+- 全量回归 **3275 passed**；CI 口径覆盖率 **83%**（v2.10.0 时 81%）
 ## [2.10.0] - 2026-08-26
 
 ### 覆盖率攻坚第三轮: 核心基础设施

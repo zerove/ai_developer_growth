@@ -7,6 +7,14 @@ All notable changes to the AI Developer Growth project.
 ### 第三轮改进进行中
 - docs/ROADMAP.md 归档化，消除与根目录 ROADMAP.md 的双源漂移
 
+## [2.7.0] - 2026-08-26
+
+### 工具链增强
+
+- **link_auditor 统一**：无参数默认全仓库检查(全局索引解析跨目录 wikilink，消除单目录假断链)；显式目录模式保留
+- **C/C++ 解析器**：注册表 10→11 语言；class/struct/继承/方法/自由函数；扩展名映射补齐(.cpp/.cc/.cxx/.hpp/.hh/.hxx/.c/.h)
+- 全量回归 2875 passed
+
 ## [2.6.0] - 2026-08-26
 
 ### 零覆盖模块清零

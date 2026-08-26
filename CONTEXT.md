@@ -1,3 +1,21 @@
+## 更新记录: 2026-08-26 11:57:02
+
+### 任务
+Git 变更同步
+
+### 变更摘要
+- 变更文件 8 个 (+280 / -4 行)
+  - CHANGELOG.md
+  - CONTEXT.md
+  - pyproject.toml
+  - tests/test_parser_registry_e2e.py
+  - tools/scripts/rules_engine/ast_parser.py
+  - tools/scripts/rules_engine/parsers/cpp_parser.py
+  - tools/scripts/rules_engine/parsers/registry.py
+  - uv.lock
+
+---
+
 ## 更新记录: 2026-08-26 11:50:54
 
 ### 任务

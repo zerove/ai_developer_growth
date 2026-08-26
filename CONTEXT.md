@@ -1,3 +1,16 @@
+## 更新记录: 2026-08-26 16:26:41
+
+### 任务
+Git 变更同步
+
+### 变更摘要
+- 变更文件 3 个 (+490 / -21 行)
+  - CONTEXT.md
+  - tests/test_jcode_cli_round2.py
+  - tests/test_secret_scanner_round2.py
+
+---
+
 ## 更新记录: 2026-08-26 16:22:39
 
 ### 任务
@@ -713,28 +726,6 @@ Git 变更同步
 
 ### 变更摘要
 - 变更文件 12 个 (+787 / -26 行)
-  - .gitignore
-  - CONTEXT.md
-  - requirements.txt
-  - tests/test_adg_cli_smoke.py
-  - tests/test_parser_registry_e2e.py
-  - tools/scripts/adg_cli/commands/__init__.py
-  - tools/scripts/adg_cli/parser.py
-  - tools/scripts/adg_cli/rule_author.py
-  - tools/scripts/rules_engine/ast_parser.py
-  - tools/scripts/rules_engine/parsers/php_parser.py
-  - tools/scripts/rules_engine/parsers/registry.py
-  - tools/scripts/rules_engine/parsers/ruby_parser.py
-
----
-
-## 更新记录: 2026-08-26 09:00:50
-
-### 任务
-Git 变更同步
-
-### 变更摘要
-- 变更文件 12 个 (+765 / -26 行)
   - .gitignore
   - CONTEXT.md
   - requirements.txt

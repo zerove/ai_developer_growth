@@ -1,3 +1,16 @@
+## 更新记录: 2026-08-26 20:32:19
+
+### 任务
+Git 变更同步
+
+### 变更摘要
+- 变更文件 3 个 (+195 / -12 行)
+  - CONTEXT.md
+  - tests/test_hallucination_round2.py
+  - tests/test_multi_llm_router_full.py
+
+---
+
 ## 更新记录: 2026-08-26 20:30:03
 
 ### 任务
@@ -681,19 +694,6 @@ Git 变更同步
 
 ### 变更摘要
 - 变更文件 3 个 (+327 / -0 行)
-  - CONTEXT.md
-  - tests/test_misc_runner_full.py
-  - tests/test_supply_runner_full.py
-
----
-
-## 更新记录: 2026-08-26 12:46:03
-
-### 任务
-Git 变更同步
-
-### 变更摘要
-- 变更文件 3 个 (+314 / -0 行)
   - CONTEXT.md
   - tests/test_misc_runner_full.py
   - tests/test_supply_runner_full.py

@@ -1,3 +1,60 @@
+## 更新记录: 2026-08-26 11:13:36
+
+### 任务
+Git 变更同步
+
+### 变更摘要
+- 变更文件 5 个 (+731 / -2 行)
+  - CONTEXT.md
+  - pyproject.toml
+  - tests/test_docker_build.py
+  - tests/test_release.py
+  - uv.lock
+
+---
+
+## 更新记录: 2026-08-26 11:12:57
+
+### 任务
+Git 变更同步
+
+### 变更摘要
+- 变更文件 4 个 (+716 / -1 行)
+  - CONTEXT.md
+  - pyproject.toml
+  - tests/test_docker_build.py
+  - tests/test_release.py
+
+---
+
+## 更新记录: 2026-08-26 11:12:20
+
+### 任务
+Git 变更同步
+
+### 变更摘要
+- 变更文件 4 个 (+702 / -1 行)
+  - CONTEXT.md
+  - pyproject.toml
+  - tests/test_docker_build.py
+  - tests/test_release.py
+
+---
+
+## 更新记录: 2026-08-26 11:11:03
+
+### 任务
+Git 变更同步
+
+### 变更摘要
+- 变更文件 4 个 (+688 / -1 行)
+  - CONTEXT.md
+  - pyproject.toml
+  - tests/test_docker_build.py
+  - tests/test_release.py
+
+---
+
 ## 更新记录: 2026-08-26 11:06:27
 
 ### 任务

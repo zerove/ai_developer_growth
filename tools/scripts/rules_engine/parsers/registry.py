@@ -1,4 +1,5 @@
 from .base import BaseParser
+from .cpp_parser import CppParser
 from .csharp_parser import CSharpParser
 from .go_parser import GoParser
 from .java_parser import JavaParser
@@ -19,6 +20,7 @@ PARSER_REGISTRY: dict[str, BaseParser] = {
     "csharp": CSharpParser(),
     "kotlin": KotlinParser(),
     "swift": SwiftParser(),
+    "cpp": CppParser(),
     "php": PhpParser(),
     "ruby": RubyParser(),
 }

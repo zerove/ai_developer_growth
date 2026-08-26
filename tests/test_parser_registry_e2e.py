@@ -36,6 +36,7 @@ def _parse_code(language: str, code: bytes):
         "swift": (importlib.import_module("tree_sitter_swift"), None),
         "php": (importlib.import_module("tree_sitter_php"), "language_php"),
         "ruby": (importlib.import_module("tree_sitter_ruby"), None),
+        "cpp": (importlib.import_module("tree_sitter_cpp"), None),
     }
     mod, ts_fn = modules[language]
     lang_obj = Language(getattr(mod, ts_fn)()) if ts_fn else Language(mod.language())
@@ -44,7 +45,7 @@ def _parse_code(language: str, code: bytes):
 
 
 class TestParserRegistry:
-    def test_registry_contains_ten_languages(self) -> None:
+    def test_registry_contains_eleven_languages(self) -> None:
         assert set(PARSER_REGISTRY.keys()) == {
             "python",
             "go",
@@ -56,6 +57,7 @@ class TestParserRegistry:
             "swift",
             "php",
             "ruby",
+            "cpp",
         }
 
     def test_all_parsers_satisfy_base(self) -> None:
@@ -331,3 +333,52 @@ class TestPhpRubyAstDelegation:
         assert ast_obj is not None
         got = {(x.name, x.class_name) for x in ast_obj.functions}
         assert ("go", "B") in got
+
+
+class TestCppParser:
+    """C/C++ 解析器(第 11 语言): 类/结构体/继承/方法/自由函数。"""
+
+    def test_extracts_class_with_bases(self) -> None:
+        code = b"class BaseService : public Parent, private Other {};\n"
+        _, classes = _parse_code("cpp", code)
+        assert len(classes) == 1
+        assert classes[0].name == "BaseService"
+        assert set(classes[0].bases) == {"Parent", "Other"}
+
+    def test_extracts_struct(self) -> None:
+        code = b"struct Point { int x; int y; };\n"
+        _, classes = _parse_code("cpp", code)
+        assert [c.name for c in classes] == ["Point"]
+
+    def test_class_methods_inline_and_declared(self) -> None:
+        code = (
+            b"class Svc {\n"
+            b"public:\n"
+            b"    virtual void run(int speed);\n"
+            b"    int compute(int a, int b) { return a + b; }\n"
+            b"};\n"
+        )
+        functions, classes = _parse_code("cpp", code)
+        assert [m.name for m in classes[0].methods] == ["run", "compute"]
+        assert all(f.is_method for f in functions)
+
+    def test_free_functions(self) -> None:
+        code = b"static int helper(double x) { return 0; }\nint main() { return 0; }\n"
+        functions, _ = _parse_code("cpp", code)
+        assert [f.name for f in functions] == ["helper", "main"]
+        assert all(not f.is_method for f in functions)
+
+    def test_return_type_captured(self) -> None:
+        code = b"int add(int a, int b) { return a + b; }\n"
+        functions, _ = _parse_code("cpp", code)
+        assert functions[0].return_type == "int"
+
+    def test_pointer_declarator_name(self) -> None:
+        code = b"char *make_buffer(int size) { return 0; }\n"
+        functions, _ = _parse_code("cpp", code)
+        assert functions[0].name == "make_buffer"
+
+    def test_nested_namespace_class(self) -> None:
+        code = b"namespace demo {\nclass Inner : public Base {};\n}\n"
+        _, classes = _parse_code("cpp", code)
+        assert [c.name for c in classes] == ["Inner"]

@@ -423,7 +423,7 @@ class ASTParser:
     # ─────────────────────────────────────────────────────────────
 
     # 这些语言的提取委托给 parsers/registry 的专用解析器（含类方法归属、基类收集）
-    _REGISTRY_DELEGATED_LANGUAGES = frozenset({"java", "csharp", "kotlin", "swift", "php", "ruby"})
+    _REGISTRY_DELEGATED_LANGUAGES = frozenset({"java", "csharp", "kotlin", "swift", "php", "ruby", "cpp"})
 
     def _registry_parse(self, tree_root: _TreeNode, language: str) -> tuple[list[FunctionInfo], list[ClassInfo]] | None:
         """尝试用 parsers/registry 专用解析器提取；语言未注册返回 None。"""
@@ -1041,6 +1041,14 @@ class ASTParser:
             ".swift": "swift",
             ".rb": "ruby",
             ".php": "php",
+            ".cpp": "cpp",
+            ".cc": "cpp",
+            ".cxx": "cpp",
+            ".hpp": "cpp",
+            ".hh": "cpp",
+            ".hxx": "cpp",
+            ".c": "cpp",
+            ".h": "cpp",
         }
         return ext_map.get(filepath.suffix.lower(), "unknown")
 

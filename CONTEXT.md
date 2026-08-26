@@ -1,3 +1,19 @@
+## 更新记录: 2026-08-26 11:50:54
+
+### 任务
+Git 变更同步
+
+### 变更摘要
+- 变更文件 6 个 (+271 / -5 行)
+  - CONTEXT.md
+  - tests/test_link_auditor.py
+  - tests/test_parser_registry_e2e.py
+  - tools/scripts/rules_engine/ast_parser.py
+  - tools/scripts/rules_engine/parsers/cpp_parser.py
+  - tools/scripts/rules_engine/parsers/registry.py
+
+---
+
 ## 更新记录: 2026-08-26 11:42:23
 
 ### 任务

@@ -7,6 +7,27 @@ All notable changes to the AI Developer Growth project.
 ### 第三轮改进进行中
 - docs/ROADMAP.md 归档化，消除与根目录 ROADMAP.md 的双源漂移
 
+## [2.8.0] - 2026-08-26
+
+### 低覆盖模块攻坚 + 覆盖率门禁提级
+
+### 测试覆盖（P0-P2）
+- **quality_gate 17%→91%**：基线全语义(新增/修复/恶化/改善)、例外管理(过期/glob/降级)、门禁规则分支
+- **config/loader 10%→82%**：深合并/env 覆盖/三格式加载/extends 继承链/watch 回调
+- **hooks/tool_runner 37%→76%**：语言检测/命令构建/执行超时
+- **hooks/supply_runner 8%→48%**：严重性阈值/compliance 全分支/freshness/auto_fix
+- **hooks/misc_runner 19%→44%**：dep-graph 分发/install-hooks/db-maintain
+- **ast_fixer 18%→83%**：修复策略与 apply 三分支
+- **小模块清扫**：semantic_code_graph 87%/arch_visualizer 71%/dev_metrics 58%/ai_pr_reviewer 46%
+
+### 真 bug 修复
+- semantic_code_graph.build_graph 用子串匹配过滤 "build" 目录，
+  路径含 build 子串的合法文件被误杀；改为 path.parts 精确段匹配
+
+### 质量指标
+- 全量回归 3034 passed；CI 口径覆盖率 77%
+- **覆盖率门禁 fail_under 65→75**（锁定成果防回退）
+
 ## [2.7.0] - 2026-08-26
 
 ### 工具链增强

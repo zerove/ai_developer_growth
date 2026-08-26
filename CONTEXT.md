@@ -1,3 +1,18 @@
+## 更新记录: 2026-08-26 20:23:31
+
+### 任务
+Git 变更同步
+
+### 变更摘要
+- 变更文件 5 个 (+140 / -26 行)
+  - CHANGELOG.md
+  - CONTEXT.md
+  - pyproject.toml
+  - tests/test_ai_native_workflow.py
+  - uv.lock
+
+---
+
 ## 更新记录: 2026-08-26 20:03:08
 
 ### 任务
@@ -681,18 +696,6 @@ Git 变更同步
 - 变更文件 3 个 (+301 / -0 行)
   - CONTEXT.md
   - tests/test_misc_runner_full.py
-  - tests/test_supply_runner_full.py
-
----
-
-## 更新记录: 2026-08-26 12:43:08
-
-### 任务
-Git 变更同步
-
-### 变更摘要
-- 变更文件 2 个 (+374 / -0 行)
-  - CONTEXT.md
   - tests/test_supply_runner_full.py
 
 ---

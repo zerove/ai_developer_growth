@@ -22,6 +22,16 @@ sys.path.insert(0, str(get_project_root() / "tools" / "scripts"))
 sys.path.insert(0, str(get_project_root() / "tools" / "scripts" / "hooks"))
 sys.path.insert(0, str(get_project_root() / "examples" / "multi-agent-orch"))
 
+# 防范 .jcode/scripts 中同名扁平模块遮蔽包: 预导入关键包
+# 注: 仅当 'multi_agent_orch' 缓存为扁平模块时才需清理
+_cached = sys.modules.get("multi_agent_orch")
+if _cached is not None and not hasattr(_cached, "__path__"):
+    del sys.modules["multi_agent_orch"]
+    for _name in list(sys.modules):
+        if _name == "multi_agent_orch" or _name.startswith("multi_agent_orch."):
+            del sys.modules[_name]
+import multi_agent_orch  # noqa: E402,F401  (后置导入防遮蔽)
+
 
 class JCodeAINativeWorkflow:
     def __init__(self) -> None:

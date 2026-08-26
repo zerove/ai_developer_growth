@@ -7,6 +7,17 @@ All notable changes to the AI Developer Growth project.
 ### 第三轮改进进行中
 - docs/ROADMAP.md 归档化，消除与根目录 ROADMAP.md 的双源漂移
 
+## [2.9.0] - 2026-08-26
+
+### 覆盖率收官: hooks 双雄攻坚
+
+### 测试覆盖
+- **supply_runner 48%→86%**：SBOM(json/spdx/cyclonedx × stdout/file)/freshness/verify 汇总/verify-signature(cosign/slsa)/SARIF/SPDX/CycloneDX 全分支，31 新测试
+- **misc_runner 35%→97%**：exception 全子命令(request/approve/reject/revoke/list/check-expirations/audit/sync-gitops)/dep-graph 四动作(analyze/circular/conflicts/impact)/learn/dashboard/docs_validate，32 新测试
+
+### 质量指标
+- 全量回归 3096 passed；CI 口径覆盖率 **79%**（v2.8.0 时 77%）
+
 ## [2.8.0] - 2026-08-26
 
 ### 低覆盖模块攻坚 + 覆盖率门禁提级

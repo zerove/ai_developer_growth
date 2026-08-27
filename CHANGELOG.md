@@ -2,6 +2,22 @@
 
 All notable changes to the AI Developer Growth project.
 
+## [2.13.6] - 2026-08-27
+
+### 修补: wikilink 断链清零（P2-2 计划执行）
+
+`tools/scripts/link_auditor.py docs/` 报 32 处 `[[GOVERNANCE]]` wikilink 断链。
+`GOVERNANCE.md` 在仓库根，docs/ 子目录引用需 `../` 前缀。
+
+#### 修复
+- `docs/efficiency/*.md` (15 个文件)：`[[GOVERNANCE|display]]` → `[[../GOVERNANCE|display]]`
+- `docs/governance/project-analysis-and-roadmap-2026-08.md`：2 处 P2-2 任务描述
+  里的 `[[GOVERNANCE]]` 文字加反引号（不是真引用，是任务描述）
+
+#### 验证
+- 修复前：`link_auditor docs/` 报 32 处断链
+- 修复后：`link_auditor docs/` 输出 **"All links are valid."**
+
 ## [2.13.5] - 2026-08-27
 
 ### 修补: jcode-init main 函数拆分 + coverage 临时文件忽略

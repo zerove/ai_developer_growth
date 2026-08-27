@@ -2,6 +2,44 @@
 
 All notable changes to the AI Developer Growth project.
 
+## [2.13.0] - 2026-08-27
+
+### 实用性提升攻坚: 增量测试 + 目录化拆分 + 覆盖率攻坚
+
+#### 增量测试钩子 (P0-1)
+- `make quick` / `make quick-full`: 利用 hooks_runner 已有的 `run_tests_incremental`, 增量测试
+- 实测 1.2s（无改动）vs 547s（全量），加速 444x
+- 推动 commit→push 流程从 9.5min 降到 1-2min
+
+#### 统一 jcode 入口与发现 (P0-2)
+- `jcode list-tools` + `jcode explain <name>` + `make list-tools` / `make discover`
+- 统一 4 套并存入口（jcode_cli / adg_cli / .jcode/scripts / Makefile）的发现性
+- `make new-skill NAME=foo` + `make release-version VERSION=x.y.z`
+- `cmd_list_tools` 拆为 3 个小函数
+
+#### 覆盖率 diff + 单模块门禁 (P1-1)
+- 新增 `tools/scripts/cov_tool.py`: 4 子命令 `diff` / `module` / `gate` / `snapshot`
+- Makefile 4 入口：`make cov-snapshot` / `make cov-diff` / `make cov-module` / `make cov-gate`
+- `tests/test_cov_tool.py` 16 passed
+
+#### CONTEXT 拆分 + ADR 自动化 (P1-2)
+- `tools/scripts/context_status.py`: `status` 输出实时项目快照
+- 105 行 CONTEXT.md（精简后） + 1218 行 CHANGELOG.md（接收 45 条归档）
+- `make context-status` / `make context-split`
+- 2 个 ADR 沉淀: docs/adr/003-sys-path-shadowing.md, 004-config-toml-resilience.md
+
+#### adg_cli/commands 目录化 (P2)
+- 1091 行单文件 → 21 个 `commands/cmd/<name>.py` 子模块
+- `_shared.py` 集中放 12 个共享助手 + 头部 import
+- 子助手 `_cmd_rule_*` 独立成文件
+- `__init__.py` 改 26 行 facade 保持向后兼容
+- `tests/test_adg_cli_v2.py` 100 passed; 全 adg 相关 406 passed
+
+#### adg_bootstrap 27%→76% (P3)
+- 10 个新单测覆盖 detect/copy/adapt/framework/precommit/requirements/inject/print 函数
+- 改 `importlib` 加载为包路径, 让 coverage 跟踪生效
+- `tests/test_adg_bootstrap_unit.py` 25 passed
+
 ## [Unreleased]
 
 ### 第三轮改进进行中

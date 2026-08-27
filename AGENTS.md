@@ -29,7 +29,7 @@
 | `community-catalyst` | 社区催化剂 | 管理贡献流程、案例验证、贡献者激励 | ✅ 已定义 | `agents/community-catalyst.md` |
 | `context-sync` | 上下文同步 | 自动维护 CONTEXT.md、ADR.md、同步项目状态 | ✅ 已集成 (v1.0) | `agents/context-sync.md` / `.jcode/scripts/context_sync.py` |
 | `multi-agent-orch` | 多 Agent 编排器 | 模拟团队开发：PM/Architect/Coder/Reviewer 协作 | ✅ 已集成 (v1.0) | `agents/multi-agent-orch.md` / `.jcode/scripts/multi_agent_orch.py` |
-| `self-correction-loop` | 自我修正循环 | AI 代码质量保证：验证→重试→修正闭环 | ✅ 已集成 (v1.0) | `agents/self-correction-loop.md` / `.jcode/scripts/self_correction_loop.py` |
+| `self-correction-loop` | 自我修正循环 | AI 代码质量保证：验证→重试→修正闭环 | ✅ 已集成 (v1.0) | `agents/self-correction-loop.md` / `.jcode/scripts/self-correction-loop.py` |
 | `ai-task-prioritizer` | 任务优先级工具 | CLI 任务优先级排序，TDD + AI 驱动 | ✅ 已实现 | `examples/ai-task-prioritizer/prioritizer.py` |
 | `hooks-runner` | 统一 Hook 运行器 | 统一 lint/typecheck/test/security/quality-gate/governance 入口 | ✅ 已实现 | `tools/scripts/hooks_runner.py` |
 | `rules-engine` | 规则引擎 | 语言无关的代码质量检查引擎（反模式/命名/阈值/AST） | ✅ 已实现 | `tools/scripts/rules_engine/` |
@@ -121,8 +121,8 @@
 **职责**: AI 代码质量保证闭环：验证 → 重试 → 修正，自动修复测试失败
 **作用域**: 失败的测试文件、CI/CD 流程
 **核心指令**:
-- 运行 `python .jcode/scripts/self_correction_loop.py validate --target <file> --tests <dir>` 验证当前测试状态
-- 运行 `python .jcode/scripts/self_correction_loop.py run --target <file> --tests <dir> --max-attempts 3` 启动测试→修复→验证闭环
+- 运行 `python .jcode/scripts/self-correction-loop.py validate --target <file> --tests <dir>` 验证当前测试状态
+- 运行 `python .jcode/scripts/self-correction-loop.py run --target <file> --tests <dir> --max-attempts 3` 启动测试→修复→验证闭环
 - 策略链：retry（重试）→ pattern（模式匹配：off-by-one、missing-import、zero-division）→ llm（大模型修复，回退 Mock）
 - 输出结构化 JSON 报告：成功/失败、尝试次数、使用策略、耗时、修正前后代码对比
 **Hooks 集成**: on_pr (测试失败时自动触发)
@@ -180,7 +180,7 @@ ai_developer_growth/
 │   │   ├── hooks_runner.py
 │   │   ├── context_sync.py            # NEW
 │   │   ├── multi_agent_orch.py        # NEW
-│   │   └── self_correction_loop.py    # NEW
+│   │   └── self-correction-loop.py    # NEW
 │   └── skills/                  # Skill 定义
 │       ├── governance-docs-validator.md
 │       └── ...

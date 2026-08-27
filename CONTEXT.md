@@ -1,3 +1,39 @@
+## 更新记录: 2026-08-27 13:58:25
+
+### 任务
+Git 变更同步
+
+### 变更摘要
+- 变更文件 9 个 (+777 / -848 行)
+  - .jcode/baseline.json
+  - .jcode/scripts/self-correction-loop.py
+  - .jcode/scripts/self_correction_loop.py
+  - AGENTS.md
+  - CHANGELOG.md
+  - CONTEXT.md
+  - agents/self-correction-loop.md
+  - pyproject.toml
+  - uv.lock
+
+---
+
+## 更新记录: 2026-08-27 13:57:09
+
+### 任务
+Git 变更同步
+
+### 变更摘要
+- 变更文件 7 个 (+759 / -835 行)
+  - .jcode/baseline.json
+  - .jcode/scripts/self-correction-loop.py
+  - .jcode/scripts/self_correction_loop.py
+  - AGENTS.md
+  - CHANGELOG.md
+  - agents/self-correction-loop.md
+  - pyproject.toml
+
+---
+
 ## 更新记录: 2026-08-27 11:10:47
 
 ### 任务
@@ -723,32 +759,6 @@ Git 变更同步
   - CONTEXT.md
   - tests/test_auto_fix_orchestrator.py
   - tests/test_exception_manager_round2.py
-
----
-
-## 更新记录: 2026-08-26 16:56:26
-
-### 任务
-Git 变更同步
-
-### 变更摘要
-- 变更文件 3 个 (+663 / -63 行)
-  - CONTEXT.md
-  - tests/test_exception_manager_round2.py
-  - tests/test_supply_chain_round2.py
-
----
-
-## 更新记录: 2026-08-26 16:55:30
-
-### 任务
-Git 变更同步
-
-### 变更摘要
-- 变更文件 3 个 (+652 / -42 行)
-  - CONTEXT.md
-  - tests/test_exception_manager_round2.py
-  - tests/test_supply_chain_round2.py
 
 ---
 

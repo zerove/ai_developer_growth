@@ -2,6 +2,30 @@
 
 All notable changes to the AI Developer Growth project.
 
+## [2.13.7] - 2026-08-27
+
+### 修补: 第二轮 wikilink 修复——子目录级漏检补全
+
+v2.13.6 修复后用 `link_auditor docs/` 验证通过，但**子目录扫描**（不指定
+`--check-all`）会漏检 docs/ 下子目录间的兄弟引用。
+
+#### 修复
+34 文件 / 58 处净修改，主要为子目录 wikilink 加 `../` 前缀：
+- `docs/agent-dev/*.md`: `[[MOC|...]]` → `[[../MOC|...]]` (6 文件)
+- `docs/agent-dev/*.md`: `[[agent-dev/...]]` → `[[../agent-dev/...]]` (5 文件)
+- `docs/efficiency/*.md`: `[[MOC|...]]` / `[[learning/...]]` / `[[tools/...]]` / `[[mindset/...]]` → 加 `../` 前缀
+- `docs/integration/*.md`: `[[efficiency/...]]` / `[[docs/agent-dev/...]]` / `[[mindset/...]]` / `[[tools/...]]` → 加 `../` 前缀
+
+#### 验证
+- `link_auditor --check-all` → "All links are valid." (项目级)
+- `link_auditor docs/` → "All links are valid." (顶级)
+- `link_auditor docs/agent-dev` → "All links are valid."
+- `link_auditor docs/integration` → "All links are valid."
+- `link_auditor docs/efficiency` → "All links are valid."
+
+v2.13.6 修复了 docs/ 顶级断链 32 处; v2.13.7 补上 docs/ 子目录级
+`link_auditor` 扫描下的 58 处遗漏。
+
 ## [2.13.6] - 2026-08-27
 
 ### 修补: wikilink 断链清零（P2-2 计划执行）

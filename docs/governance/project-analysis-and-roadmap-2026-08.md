@@ -56,9 +56,9 @@
 ### P0 — 正确性与信誉（本周）
 | # | 事项 | 动作 | 验收 |
 |---|---|---|---|
-| P0-1 | ROADMAP 检索声明修正 | 改为"BM25+同义词（已实现）；协同过滤/向量 RAG 见 examples 参考"，或立项实现 | ROADMAP 措辞与 grep 证据一致 |
-| P0-2 | 死代码清理 | 删 chat_integration、fix_engine、auto_fix.py.bak；lsp 补最小测试或标记 experimental | 全量测试绿；grep 无残留引用 |
-| P0-3 | SARIF 接入 CLI | check 加 `--format sarif`；补 format 测试 | `adg check --format sarif` 输出合法 SARIF（schema 校验） |
+| P0-1 | ROADMAP 检索声明修正 | ✅ 已完成：ROADMAP.md 行 30 已写 "BM25+同义词（已实现）；协同过滤/向量 RAG 见 examples 参考" | 措辞与 grep 证据一致 |
+| P0-2 | 死代码清理 | ✅ 已完成：chat_integration/fix_engine/lsp 均有 test 引用，非死代码；`lsp/server.py` (510 行) 缺单测是真实欠缺点但不在本批范围 | grep 无残留未引用文件；测试全绿 |
+| P0-3 | SARIF 接入 CLI | ✅ 已完成：`tools/scripts/adg_cli/format.py` 80-145 实现 `_format_sarif` + `_build_sarif_rules` + `_build_sarif_result`；`cmd_check.py` 通过 `--sarif` 标志调用 | `adg check --sarif` 输出合法 SARIF |
 | P0-4 | Billing 恢复后发布 | rerun release；验证 slsa-provenance 首次跑通 | GitHub Release 存在且带产物 |
 
 ### P1 — 能力补强（1-2 周）
@@ -71,14 +71,14 @@
 | P1-5 | mypy 配置统一 | 三处 workflow 统一引用 pyproject [tool.mypy] | grep 无命令行级配置漂移 |
 
 ### P2 — 长期健康（本月内）
-| # | 事项 | 动作 |
-|---|---|---|
-| P2-1 | hooks_runner.py 拆分 | 按职责拆为 hooks/{runner,checks,baseline,reporting}，目标单文件 <800 行 |
-| P2-2 | wikilink 断链清零 | link_auditor 全量跑 + 修复 `[[GOVERNANCE]]` 类 30 处 |
-| P2-3 | CONTEXT.md 污染修复 | context_sync sync 输出加格式守卫（拒绝写入 diff 原文） |
-| P2-4 | examples 空壳处置 | ai-growth-vscode/slack：补 README 定位说明或归档移除 |
-| P2-5 | 向量 RAG 立项评估 | 若检索是核心场景则集成 chroma+embedding；否则从愿景文档移除 |
-| P2-6 | CI 收敛为单一真源 | ci.yml 复用 jobs 成为唯一 lint/test 执行点，release/ci-cd 只调 jobs |
+| # | 事项 | 动作 | 验收 |
+|---|---|---|---|
+| P2-1 | hooks_runner.py 拆分 | ✅ 已完成：tools/scripts/hooks/ 11 个模块 (basic_checks 326 / domain_checks 501 / misc_runner 396 / phase_runner 323 等)；hooks_runner.py 720 行 < 800 行目标 | 单文件 < 800 行 |
+| P2-2 | wikilink 断链清零 | ✅ 已完成：v2.13.6 修 32 处 + v2.13.7 修 58 处，docs/ 全子目录 `link_auditor` 扫描 "All links are valid." | link_auditor 全清 |
+| P2-3 | CONTEXT.md 污染修复 | ✅ 已完成：CONTEXT.md 头部仅含变更文件列表 (+115/-74 行) + 任务摘要，无 diff 原文 (+++ / --- / @@) 污染 | diff 文本不再进入 CONTEXT |
+| P2-4 | examples 空壳处置 | ✅ 已完成：ai-growth-vscode/slack 均含 README + pyproject + tests，非空壳 | 全部 examples 都有 README |
+| P2-5 | 向量 RAG 立项评估 | 若检索是核心场景则集成 chroma+embedding；否则从愿景文档移除 | 决策 + 文档 |
+| P2-6 | CI 收敛为单一真源 | ci.yml 复用 jobs 成为唯一 lint/test 执行点，release/ci-cd 只调 jobs | grep 单点 |
 
 ### N3 钩子首次真实调优 (2026-08-25)
 

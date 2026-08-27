@@ -2,6 +2,22 @@
 
 All notable changes to the AI Developer Growth project.
 
+## [2.13.5] - 2026-08-27
+
+### 修补: jcode-init main 函数拆分 + coverage 临时文件忽略
+
+- `.jcode/scripts/jcode-init.py` main 函数 64 行 → 3 行
+  - 拆为 `_build_parser()` (49 行 argparse 集中) + `_write_config()` (12 行写文件)
+  - main 留 3 行业务串联：parse args → generate config → write
+  - `generate_config` 108 行保留：是数据驱动的纯字典构造，拆分会产生虚假片段化
+- `.gitignore` 加 `.coverage.*.*.*` 模式，忽略 coverage 并行产生的
+  `DESKTOP-xxx.pidxxx.hash` 临时文件
+
+#### 验证
+- `ruff check` + `mypy` 通过
+- `baseline recompute` 一致
+- `jcode init -- --lang python --name test --output /tmp/x.yaml` 成功生成
+
 ## [2.13.4] - 2026-08-27
 
 ### 修补: jcode CLI 集成 init 子命令

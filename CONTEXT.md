@@ -1,3 +1,18 @@
+## 更新记录: 2026-08-27 16:57:38
+
+### 任务
+Git 变更同步
+
+### 变更摘要
+- 变更文件 5 个 (+79 / -35 行)
+  - CHANGELOG.md
+  - CONTEXT.md
+  - Makefile.release
+  - pyproject.toml
+  - uv.lock
+
+---
+
 ## 更新记录: 2026-08-27 16:46:29
 
 ### 任务
@@ -759,22 +774,6 @@ Git 变更同步
   - tests/test_arch_layer_round.py
   - tests/test_small_modules_round.py
   - tools/scripts/audit_attestation.py
-
----
-
-## 更新记录: 2026-08-26 18:01:31
-
-### 任务
-Git 变更同步
-
-### 变更摘要
-- 变更文件 6 个 (+226 / -41 行)
-  - CHANGELOG.md
-  - CONTEXT.md
-  - pyproject.toml
-  - tests/test_small_modules_round.py
-  - tools/scripts/audit_attestation.py
-  - uv.lock
 
 ---
 

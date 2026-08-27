@@ -36,9 +36,12 @@ docker-build-all: ## 构建所有组件镜像 (本地)
 	python tools/scripts/docker_build.py --version $(VERSION) --no-push --platform linux/amd64,linux/arm64
 
 # 完整发布流程
-.PHONY: release release-dry-run
+# 修复: 与 Makefile 的 release target 重复定义警告。
+# 解决: 用 release-with-docker 替代, 不再重复定义 release。
+# 用法: make -f Makefile.release release-with-docker
+.PHONY: release-with-docker release-dry-run
 
-release: ## 完整发布流程 (版本递增 + CHANGELOG + Docker + 推送)
+release-with-docker: ## 完整发布流程 (版本递增 + CHANGELOG + Docker + 推送)
 	@read -p "版本类型 (major/minor/patch) [patch]: " type; \
 	type=$${type:-patch}; \
 	make bump-$$type && \
@@ -60,7 +63,11 @@ sbom: ## 生成所有镜像的 SBOM
 VERSION ?= $(shell python tools/scripts/release.py version)
 
 # 默认目标
-.DEFAULT_GOAL := help
+# 修复: 与 Makefile 的 help target 重复定义警告。
+# 解决: 用 release-help 替代, 不再重复定义 help。
+# 用法: make -f Makefile.release release-help
+.DEFAULT_GOAL := release-help
 
-help: ## 显示帮助
+.PHONY: release-help
+release-help:  ## 显示帮助
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-20s\033[0m %s\n", $$1, $$2}'

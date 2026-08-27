@@ -360,8 +360,8 @@ CEO (Master Agent)
 ---
 
 **📂 导航**
-- [[MOC|⬅️ 返回知识地图]]
-- **相关**: [[efficiency/full-cycle-workflow|全周期工作流]] | [[tools/ai-tool-matrix|工具矩阵]]
+- [[../MOC|⬅️ 返回知识地图]]
+- **相关**: [[efficiency/full-cycle-workflow|全周期工作流]] | [[../tools/ai-tool-matrix|工具矩阵]]
 ---
 
 ## 导航

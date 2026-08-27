@@ -271,8 +271,8 @@ Error Log → Context Gathering → Root Cause Analysis → Proposed Fix → Tes
 ---
 
 **📂 导航**
-- [[MOC|⬅️ 返回知识地图]]
-- **相关文章**：[[efficiency/full-cycle-workflow|全生命周期工作流]] | [[tools/ide-best-practices|IDE 最佳实践]]
+- [[../MOC|⬅️ 返回知识地图]]
+- **相关文章**：[[efficiency/full-cycle-workflow|全生命周期工作流]] | [[../tools/ide-best-practices|IDE 最佳实践]]
 
 ---
 

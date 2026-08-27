@@ -341,5 +341,5 @@ ai_map
 ---
 
 **📂 导航**
-- [[MOC|⬅️ 返回知识地图]]
-- **相关文章**: [[agent-dev/prompt-standards|Prompt 编写规范]] | [[agent-dev/workflow-standards|开发流程规范]]
+- [[../MOC|⬅️ 返回知识地图]]
+- **相关文章**: [[../agent-dev/prompt-standards|Prompt 编写规范]] | [[../agent-dev/workflow-standards|开发流程规范]]

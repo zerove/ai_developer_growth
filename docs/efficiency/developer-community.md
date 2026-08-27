@@ -81,7 +81,7 @@ AI 审核 + 人工终审 → AI 辅助回复 → AI 自动整理 → 高效率
 
 - [[../../agents/community-catalyst|社区催化剂]]
 - [[../../CONTRIBUTING|贡献指南]]
-- [[mindset/open-source-operations|开源运营]]
+- [[../mindset/open-source-operations|开源运营]]
 
 ---
 

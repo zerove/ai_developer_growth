@@ -450,8 +450,8 @@ def test_memory():
 ---
 
 **📂 导航**
-- [[MOC|⬅️ 返回知识地图]]
-- **相关文章**: [[efficiency/full-cycle-workflow|全周期工作流]] | [[mindset/team-adoption|团队采用策略]]
+- [[../MOC|⬅️ 返回知识地图]]
+- **相关文章**: [[efficiency/full-cycle-workflow|全周期工作流]] | [[../mindset/team-adoption|团队采用策略]]
 ---
 
 ## 导航

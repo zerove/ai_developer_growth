@@ -290,7 +290,7 @@ describe('calculateDiscount', () => {
 ---
 
 **📂 导航**
-- [[MOC|⬅️ 返回知识地图]]
+- [[../MOC|⬅️ 返回知识地图]]
 - **相关**: [[efficiency/automated-bug-fixing|自动化修复]] | [[efficiency/full-cycle-workflow|全周期工作流]]
 ---
 

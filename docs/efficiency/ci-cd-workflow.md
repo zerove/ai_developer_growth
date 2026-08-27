@@ -138,7 +138,7 @@ ai-debug --log error.log --suggest-fix
 ---
 
 **📂 导航**
-- [[MOC|⬅️ 返回知识地图]]
+- [[../MOC|⬅️ 返回知识地图]]
 - **相关**: [[efficiency/full-cycle-workflow|全周期工作流]] | [[efficiency/ai-security-review|安全审查]]
 ---
 

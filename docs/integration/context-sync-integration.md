@@ -65,7 +65,7 @@ dx audit --fix
 ## 相关资源
 
 - [[../../examples/ai-context-sync/README|示例代码]]
-- [[efficiency/full-cycle-workflow|全周期工作流]]
+- [[../efficiency/full-cycle-workflow|全周期工作流]]
 
 ---
 

@@ -111,7 +111,7 @@ AI 增强流程：
 
 - [[../../examples/self-correction-loop/README|修正循环示例]]
 - [[efficiency/full-cycle-workflow|全周期工作流]]
-- [[learning/test-driven-development|TDD 方法论]]
+- [[../learning/test-driven-development|TDD 方法论]]
 
 ---
 

@@ -58,9 +58,9 @@ optimizer.update_docs(suggestions)
 
 ## 相关资源
 
-- [[efficiency/full-cycle-workflow|全周期工作流]]
-- [[efficiency/developer-experience|开发者体验]]
-- [[mindset/capability-model|能力模型]]
+- [[../efficiency/full-cycle-workflow|全周期工作流]]
+- [[../efficiency/developer-experience|开发者体验]]
+- [[../mindset/capability-model|能力模型]]
 
 ---
 

@@ -468,7 +468,7 @@ groups:
 ---
 
 **📂 导航**
-- [[MOC|⬅️ 返回知识地图]]
+- [[../MOC|⬅️ 返回知识地图]]
 - **相关文章**: [[efficiency/full-cycle-workflow|全周期工作流]] | [[efficiency/anti-patterns|反模式与失败案例]]
 ---
 

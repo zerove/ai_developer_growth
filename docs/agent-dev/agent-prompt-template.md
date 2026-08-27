@@ -224,5 +224,5 @@ updated: 2026-07-21
 ---
 
 **📂 导航**
-- [[MOC|⬅️ 返回知识地图]]
-- **相关文章**: [[agent-dev/prompt-standards|Prompt 编写规范]] | [[agent-dev/quality-gates|质量门禁]]
+- [[../MOC|⬅️ 返回知识地图]]
+- **相关文章**: [[../agent-dev/prompt-standards|Prompt 编写规范]] | [[../agent-dev/quality-gates|质量门禁]]

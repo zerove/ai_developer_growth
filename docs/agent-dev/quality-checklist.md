@@ -223,5 +223,5 @@ Gate 4: [通过/不通过]
 ---
 
 **📂 导航**
-- [[MOC|⬅️ 返回知识地图]]
-- **相关文章**: [[agent-dev/quality-gates|质量门禁标准]] | [[agent-dev/prompt-standards|Prompt 编写规范]]
+- [[../MOC|⬅️ 返回知识地图]]
+- **相关文章**: [[../agent-dev/quality-gates|质量门禁标准]] | [[../agent-dev/prompt-standards|Prompt 编写规范]]

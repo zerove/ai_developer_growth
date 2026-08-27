@@ -148,7 +148,7 @@ review:
 ---
 
 **📂 导航**
-- [[MOC|⬅️ 返回知识地图]]
+- [[../MOC|⬅️ 返回知识地图]]
 - **相关**: [[efficiency/anti-patterns|反模式]] | [[efficiency/ai-security-review|安全审查]]
 ---
 

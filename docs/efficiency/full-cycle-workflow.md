@@ -246,7 +246,7 @@ git commit -m "feat: add user system"  # ❌ 太大，难以追踪
 ---
 
 **📂 导航**
-- [[MOC|⬅️ 返回知识地图]]
+- [[../MOC|⬅️ 返回知识地图]]
 - **相关文章**: [[efficiency/automated-bug-fixing|自动化修复]] | [[efficiency/context-engineering|上下文工程]]
 
 ---

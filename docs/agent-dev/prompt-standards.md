@@ -249,5 +249,5 @@ fn do_something() {
 ---
 
 **📂 导航**
-- [[MOC|⬅️ 返回知识地图]]
-- **相关文章**: [[agent-dev/workflow-standards|开发流程规范]] | [[agent-dev/quality-gates|质量门禁]]
+- [[../MOC|⬅️ 返回知识地图]]
+- **相关文章**: [[../agent-dev/workflow-standards|开发流程规范]] | [[../agent-dev/quality-gates|质量门禁]]

@@ -43,7 +43,7 @@ updated: 2026-07-21
 ## 引用文档
 - 核心文档: [[efficiency/full-cycle-workflow|全周期工作流]]
 - 参考文档: [[efficiency/anti-patterns|反模式与失败案例]]
-- 工具文档: [[tools/ai-tool-matrix|工具矩阵]]
+- 工具文档: [[../tools/ai-tool-matrix|工具矩阵]]
 
 ## 约束条件
 - 遵循文档中的最佳实践
@@ -63,7 +63,7 @@ updated: 2026-07-21
 ### 2.1 需求分析阶段
 
 **引用文档**:
-- [[mindset/product-thinking|产品思维]]
+- [[../mindset/product-thinking|产品思维]]
 - [[efficiency/full-cycle-workflow|全周期工作流]]
 
 **OpenCode Prompt**:
@@ -71,7 +71,7 @@ updated: 2026-07-21
 ## 任务: 需求分析
 
 ### 参考文档
-- [[mindset/product-thinking]]: 产品思维原则
+- [[../mindset/product-thinking]]: 产品思维原则
 - [[efficiency/full-cycle-workflow]]: 需求分析阶段
 
 ### 输入
@@ -346,11 +346,11 @@ load_docs() {
 ## 任务: 用户认证需求分析
 
 ### 引用文档
-- [[mindset/product-thinking]]: 产品思维
+- [[../mindset/product-thinking]]: 产品思维
 - [[efficiency/full-cycle-workflow]]: 需求分析阶段
 
 ### Prompt
-参考 [[mindset/product-thinking]] 中的"用户价值优先"原则，
+参考 [[../mindset/product-thinking]] 中的"用户价值优先"原则，
 分析用户认证模块的核心价值。
 
 参考 [[efficiency/full-cycle-workflow]] 中的需求分析阶段，
@@ -516,8 +516,8 @@ def log_doc_usage(doc_name, task_type, success_rate):
 ---
 
 **📂 导航**
-- [[MOC|⬅️ 返回知识地图]]
-- **相关文章**: [[efficiency/full-cycle-workflow|全周期工作流]] | [[tools/ide-best-practices|IDE 最佳实践]]
+- [[../MOC|⬅️ 返回知识地图]]
+- **相关文章**: [[efficiency/full-cycle-workflow|全周期工作流]] | [[../tools/ide-best-practices|IDE 最佳实践]]
 ---
 
 ## 导航

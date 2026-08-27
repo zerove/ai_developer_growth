@@ -252,7 +252,7 @@ window.addEventListener('unhandledrejection', (event) => {
 ---
 
 **📂 导航**
-- [[MOC|⬅️ 返回知识地图]]
+- [[../MOC|⬅️ 返回知识地图]]
 - **相关**: [[efficiency/debugging-workflow|调试工作流]] | [[efficiency/anti-patterns|反模式]]
 ---
 

@@ -186,7 +186,7 @@ API: POST /api/users
 ---
 
 **📂 导航**
-- [[MOC|⬅️ 返回知识地图]]
+- [[../MOC|⬅️ 返回知识地图]]
 - **相关**: [[efficiency/error-handling-patterns|错误处理]] | [[efficiency/full-cycle-workflow|全周期工作流]]
 ---
 

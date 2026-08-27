@@ -1,3 +1,34 @@
+## 更新记录: 2026-08-27 22:19:26
+
+### 任务
+Git 变更同步
+
+### 变更摘要
+- 变更文件 38 个 (+107 / -74 行)
+  - CHANGELOG.md
+  - CONTEXT.md
+  - docs/agent-dev/agent-prompt-template.md
+  - docs/agent-dev/context-management.md
+  - docs/agent-dev/prompt-standards.md
+  - docs/agent-dev/quality-checklist.md
+  - docs/agent-dev/quality-gates.md
+  - docs/agent-dev/workflow-standards.md
+  - docs/efficiency/ai-code-performance.md
+  - docs/efficiency/ai-security-review.md
+  - docs/efficiency/anti-patterns.md
+  - docs/efficiency/api-design-guide.md
+  - docs/efficiency/auto-documentation.md
+  - docs/efficiency/automated-bug-fixing.md
+  - docs/efficiency/automated-bugfix.md
+  - docs/efficiency/ci-cd-workflow.md
+  - docs/efficiency/code-review-guide.md
+  - docs/efficiency/context-engineering.md
+  - docs/efficiency/debugging-workflow.md
+  - docs/efficiency/developer-community.md
+  - ... 等共 38 个文件
+
+---
+
 ## 更新记录: 2026-08-27 21:29:59
 
 ### 任务
@@ -804,21 +835,6 @@ Git 变更同步
   - CONTEXT.md
   - pyproject.toml
   - tests/test_rule_docs_mapper_round2.py
-  - uv.lock
-
----
-
-## 更新记录: 2026-08-26 18:36:47
-
-### 任务
-Git 变更同步
-
-### 变更摘要
-- 变更文件 5 个 (+173 / -30 行)
-  - CHANGELOG.md
-  - CONTEXT.md
-  - pyproject.toml
-  - tests/test_search_analytics_round2.py
   - uv.lock
 
 ---

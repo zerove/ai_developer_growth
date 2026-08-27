@@ -269,8 +269,8 @@ AI 编程 ROI = (传统成本 - AI 辅助成本) / AI 成本 × 100%
 ---
 
 **📂 导航**
-- [[MOC|⬅️ 返回知识地图]]
-- **相关文章**: [[tools/ai-tool-matrix|工具矩阵]] | [[efficiency/full-cycle-workflow|全周期工作流]]
+- [[../MOC|⬅️ 返回知识地图]]
+- **相关文章**: [[../tools/ai-tool-matrix|工具矩阵]] | [[efficiency/full-cycle-workflow|全周期工作流]]
 ---
 
 ## 导航

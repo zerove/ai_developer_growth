@@ -69,8 +69,8 @@ python runner.py <target_file> --max-retries 5
 ## 相关资源
 
 - [[../../examples/self-correction-loop/README|示例代码]]
-- [[efficiency/automated-bugfix|自动化 Bug 修复]]
-- [[efficiency/full-cycle-workflow|全周期工作流]]
+- [[../efficiency/automated-bugfix|自动化 Bug 修复]]
+- [[../efficiency/full-cycle-workflow|全周期工作流]]
 
 ---
 

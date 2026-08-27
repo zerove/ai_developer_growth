@@ -122,7 +122,7 @@ def reciprocal_rank_fusion(ranked_lists, k=60):
 ## 相关资源
 
 - [[../../examples/ai-navigation/README|导航系统示例]]
-- [[tools/rag-for-developers|RAG 开发指南]]
+- [[../tools/rag-for-developers|RAG 开发指南]]
 - [[efficiency/full-cycle-workflow|全周期工作流]]
 
 ---

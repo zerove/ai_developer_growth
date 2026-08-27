@@ -104,8 +104,8 @@ IDE (Cursor/VSCode)
 ## 相关资源
 
 - [[efficiency/full-cycle-workflow|全周期工作流]]
-- [[tools/ai-editor-comparison|编辑器对比]]
-- [[mindset/capability-model|能力模型]]
+- [[../tools/ai-editor-comparison|编辑器对比]]
+- [[../mindset/capability-model|能力模型]]
 
 ---
 

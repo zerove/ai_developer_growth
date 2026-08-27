@@ -1,3 +1,38 @@
+## 更新记录: 2026-08-27 16:46:29
+
+### 任务
+Git 变更同步
+
+### 变更摘要
+- 变更文件 8 个 (+78 / -534 行)
+  - .jcode/scripts/multi_agent_orch.py
+  - AGENTS.md
+  - CHANGELOG.md
+  - CONTEXT.md
+  - docs/adr/003-sys-path-shadowing.md
+  - pyproject.toml
+  - tools/scripts/jcode_ai_native_workflow.py
+  - uv.lock
+
+---
+
+## 更新记录: 2026-08-27 16:44:58
+
+### 任务
+Git 变更同步
+
+### 变更摘要
+- 变更文件 7 个 (+60 / -519 行)
+  - .jcode/scripts/multi_agent_orch.py
+  - AGENTS.md
+  - CHANGELOG.md
+  - CONTEXT.md
+  - docs/adr/003-sys-path-shadowing.md
+  - pyproject.toml
+  - tools/scripts/jcode_ai_native_workflow.py
+
+---
+
 ## 更新记录: 2026-08-27 16:42:54
 
 ### 任务
@@ -739,37 +774,6 @@ Git 变更同步
   - pyproject.toml
   - tests/test_small_modules_round.py
   - tools/scripts/audit_attestation.py
-  - uv.lock
-
----
-
-## 更新记录: 2026-08-26 18:00:22
-
-### 任务
-Git 变更同步
-
-### 变更摘要
-- 变更文件 6 个 (+209 / -28 行)
-  - CHANGELOG.md
-  - CONTEXT.md
-  - pyproject.toml
-  - tests/test_small_modules_round.py
-  - tools/scripts/audit_attestation.py
-  - uv.lock
-
----
-
-## 更新记录: 2026-08-26 17:18:52
-
-### 任务
-Git 变更同步
-
-### 变更摘要
-- 变更文件 5 个 (+370 / -45 行)
-  - CHANGELOG.md
-  - CONTEXT.md
-  - pyproject.toml
-  - tests/test_auto_fix_orchestrator.py
   - uv.lock
 
 ---

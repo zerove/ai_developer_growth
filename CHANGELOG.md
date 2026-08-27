@@ -2,6 +2,37 @@
 
 All notable changes to the AI Developer Growth project.
 
+## [2.13.2] - 2026-08-27
+
+### 修补: multi_agent_orch 死代码删除 + sys.path 简化
+
+v2.13.1 修复 self-correction-loop 双胞胎后继续诊断，发现 `.jcode/scripts/`
+下还存在**反向双胞胎**问题：
+
+| 文件 | 行数 | hooks 调用？ | 状态 |
+|------|------|------------|------|
+| `multi-agent-orch.py`（连字符，44 行） | 44 | 是（hooks.json 解析 `multi-agent-orch` skill） | 薄 wrapper，包装 examples 包 |
+| `multi_agent_orch.py`（下划线，491 行） | 491 | 否 | 自包含重写 + sys.path 遮蔽源 |
+
+`.jcode/scripts/hooks_runner.py` 的 skill 解析规则是 `f"{skill}.py"`，按
+`multi-agent-orch`（连字符）找的是连字符版 44 行 wrapper。**491 行下划线版
+实测无任何 hooks 调用、无任何 import 引用，是死代码**。
+
+ADR-003 当时"为什么不删扁平模块"理由是"jcode CLI 子命令加载入口（hooks 体系
+用），删除会破坏 hooks.json"——但 hooks 实际加载的是连字符版，该理由已不成立。
+
+#### 修复
+- 删除 `multi_agent_orch.py`（491 行死代码 + 遮蔽源）
+- 简化 `tools/scripts/jcode_ai_native_workflow.py` 防遮蔽代码（27-33 行）—— 根因消除后不再需要运行时清理
+- `AGENTS.md` 文档同步：下划线版路径改指连字符版
+- `docs/adr/003-sys-path-shadowing.md` 状态改"已废弃" + 注释本次修复
+- `ruff check` + `mypy` + `ai-quality-gate` + pre-commit 22 hook 全过
+
+#### 验证
+- `tests/test_ai_native_workflow.py` 11 passed
+- `tests/test_context_sync_prune.py + test_ai_native_workflow.py` 19 passed
+- adg + multi_agent + orch 相关 458 passed
+
 ## [2.13.1] - 2026-08-27
 
 ### 修补: self-correction-loop 双胞胎文件合并

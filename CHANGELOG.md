@@ -2,6 +2,36 @@
 
 All notable changes to the AI Developer Growth project.
 
+## [2.13.1] - 2026-08-27
+
+### 修补: self-correction-loop 双胞胎文件合并
+
+v2.13.0 后发现 `.jcode/scripts/` 下存在两个同名变体文件（仅命名风格不同），
+但实际是两个不同实现，造成严重歧义：
+
+| 文件 | 行数 | hooks 调用？ | 能力 |
+|------|------|------------|------|
+| `self-correction-loop.py`（连字符，114 行） | 114 | 是（hooks.json） | 仅 mock 模式匹配 |
+| `self_correction_loop.py`（下划线，746 行） | 746 | 否 | LLM 策略 + retry/pattern/llm 策略链 + run/validate 闭环 |
+
+`AGENTS.md` 与 `agents/self-correction-loop.md` 都指向后者（746 行版），
+但 `hooks.json` 调的是前者（114 行版）。用户按文档跑会调到一个能力严重
+不完整的死代码版本。
+
+#### 修复
+- 删除 `self-correction-loop.py`（114 行 mock 简化版，hooks.json 实际从未调用）
+- 重命名 `self_correction_loop.py` → `self-correction-loop.py`（746 行版，hooks.json 实际正确指向的目标）
+- `baseline.json` 改键名 + 同步豁免行数 59/55 → 64/53（实际函数行数）
+- `AGENTS.md` / `agents/self-correction-loop.md` 文档同步文件名
+- `self-correction-loop.py` 内部 docstring 用法示例同步
+- `ruff` + `ai-quality-gate` + 真实 `validate` 子命令验证通过
+- `pre-commit` 22 个 hook 全过（含 `uv-lock-sync` / `mypy` / `Governance Audit`）
+
+#### 验证
+- `python .jcode/scripts/self-correction-loop.py --help` → 显示 `{run,validate}` 子命令
+- `python .jcode/scripts/self-correction-loop.py validate --target . --tests tests` → ✅ 测试通过
+- `git commit` 走完整 `pre-commit` 框架 22 hook 全部 Passed
+
 ## [2.13.0] - 2026-08-27
 
 ### 实用性提升攻坚: 增量测试 + 目录化拆分 + 覆盖率攻坚

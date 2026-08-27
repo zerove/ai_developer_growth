@@ -1,3 +1,37 @@
+## 更新记录: 2026-08-27 14:14:11
+
+### 任务
+Git 变更同步
+
+### 变更摘要
+- 变更文件 5 个 (+53 / -16 行)
+  - .jcode/baseline.json
+  - CHANGELOG.md
+  - CONTEXT.md
+  - pyproject.toml
+  - uv.lock
+
+---
+
+## 更新记录: 2026-08-27 13:59:48
+
+### 任务
+Git 变更同步
+
+### 变更摘要
+- 变更文件 9 个 (+788 / -860 行)
+  - .jcode/baseline.json
+  - .jcode/scripts/self-correction-loop.py
+  - .jcode/scripts/self_correction_loop.py
+  - AGENTS.md
+  - CHANGELOG.md
+  - CONTEXT.md
+  - agents/self-correction-loop.md
+  - pyproject.toml
+  - uv.lock
+
+---
+
 ## 更新记录: 2026-08-27 13:58:25
 
 ### 任务
@@ -733,32 +767,6 @@ Git 变更同步
   - pyproject.toml
   - tests/test_auto_fix_orchestrator.py
   - uv.lock
-
----
-
-## 更新记录: 2026-08-26 17:04:10
-
-### 任务
-Git 变更同步
-
-### 变更摘要
-- 变更文件 3 个 (+621 / -55 行)
-  - CONTEXT.md
-  - tests/test_auto_fix_orchestrator.py
-  - tests/test_exception_manager_round2.py
-
----
-
-## 更新记录: 2026-08-26 17:03:37
-
-### 任务
-Git 变更同步
-
-### 变更摘要
-- 变更文件 3 个 (+608 / -38 行)
-  - CONTEXT.md
-  - tests/test_auto_fix_orchestrator.py
-  - tests/test_exception_manager_round2.py
 
 ---
 

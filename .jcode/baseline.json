@@ -18,8 +18,8 @@
       "structure:函数超过 50 行 (实际 110 行)": 1
     },
     ".jcode/scripts/self-correction-loop.py": {
-      "structure:函数超过 50 行 (实际 64 行)": 1,
-      "structure:函数超过 50 行 (实际 53 行)": 1
+      "structure:函数超过 50 行 (实际 59 行)": 1,
+      "structure:函数超过 50 行 (实际 55 行)": 1
     },
     "tools/scripts/dependency_graph.py": {
       "structure:函数超过 50 行 (实际 54 行)": 1

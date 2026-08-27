@@ -206,7 +206,7 @@ def process_payment(amount: Decimal, user_id: str) -> PaymentResult:
 
 - [AI 代码审查专项清单](ai-code-review-checklist.md) - 代码审查标准
 - [AI 非确定性输出测试标准](ai-nondeterministic-testing.md) - 测试策略
-- [[../../GOVERNANCE|通用治理标准]] - Agent 定义格式、5步闭环、4道门禁
+- [../GOVERNANCE|通用治理标准]] - Agent 定义格式、5步闭环、4道门禁
 - [AI 辅助测试策略](ai-testing-strategies.md) - 测试方法论
 
 ---
@@ -220,8 +220,8 @@ def process_payment(amount: Decimal, user_id: str) -> PaymentResult:
 **分类**: 治理层
 
 **相关文档
-- [[GOVERNANCE|通用治理标准]]
-- [[GOVERNANCE|通用治理标准]]**:
+- [[../GOVERNANCE|通用治理标准]]
+- [[../GOVERNANCE|通用治理标准]]**:
 
 - [[docs/efficiency/ai-model-selection|模型选型]]
 - [[docs/efficiency/ai-sdlc|SDLC]]

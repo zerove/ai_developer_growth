@@ -182,8 +182,8 @@ prompt = f"修改这个函数:\n{function_code}\n\n调用者:\n{callers}\n\n测�
 **分类**: 治理层
 
 **相关文档
-- [[GOVERNANCE|通用治理标准]]
-- [[GOVERNANCE|通用治理标准]]**:
+- [[../GOVERNANCE|通用治理标准]]
+- [[../GOVERNANCE|通用治理标准]]**:
 
 - [[docs/efficiency/ai-code-generation-quality|代码质量]]
 - [[docs/efficiency/ai-model-selection|模型选型]]

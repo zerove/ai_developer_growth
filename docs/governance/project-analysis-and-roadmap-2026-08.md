@@ -43,7 +43,7 @@
 11. **15 个 0% 模块**集中在：运维类（docker_build/release/perf_benchmark）、新功能（sarif_exporter/rules_engine feedback/context_streamer）、jcode_cli 等。
 
 ### E. 文档健康（P2）
-12. **30 处 wikilink 断链**（docs/efficiency 下 [[GOVERNANCE]] 类引用为主）——上轮清零后新增。
+12. **30 处 wikilink 断链**（docs/efficiency 下 `[[GOVERNANCE]]` 类引用为主）——上轮清零后新增。
 13. **CONTEXT.md 被 diff 原文污染**（头部是 git diff 输出而非摘要）——context_sync 自身的输出质量问题。
 
 ### F. 架构观察（P2）
@@ -74,7 +74,7 @@
 | # | 事项 | 动作 |
 |---|---|---|
 | P2-1 | hooks_runner.py 拆分 | 按职责拆为 hooks/{runner,checks,baseline,reporting}，目标单文件 <800 行 |
-| P2-2 | wikilink 断链清零 | link_auditor 全量跑 + 修复 [[GOVERNANCE]] 类 30 处 |
+| P2-2 | wikilink 断链清零 | link_auditor 全量跑 + 修复 `[[GOVERNANCE]]` 类 30 处 |
 | P2-3 | CONTEXT.md 污染修复 | context_sync sync 输出加格式守卫（拒绝写入 diff 原文） |
 | P2-4 | examples 空壳处置 | ai-growth-vscode/slack：补 README 定位说明或归档移除 |
 | P2-5 | 向量 RAG 立项评估 | 若检索是核心场景则集成 chroma+embedding；否则从愿景文档移除 |

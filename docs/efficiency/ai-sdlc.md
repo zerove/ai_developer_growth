@@ -239,8 +239,8 @@ Level 3: 人工设计 + AI 实现
 | 修复建议 | 生成修复方案 | 选择最优方案 | 修复方案 |
 | 代码修复 | 生成修复代码 | 审查+测试 | 修复代码 |
 | 文档更新 | 更新相关文档
-- [[GOVERNANCE|通用治理标准]]
-- [[GOVERNANCE|通用治理标准]] | 审查 | 更新文档 |
+- [[../GOVERNANCE|通用治理标准]]
+- [[../GOVERNANCE|通用治理标准]] | 审查 | 更新文档 |
 
 ---
 
@@ -324,7 +324,7 @@ Gate 5: 上线审查     → 监控 + 告警 + 回滚就绪
 - [AI 非标准](ai-nondeterministic-testing.md) - 测试策略
 - [AI 模型选型与评估标准](ai-model-selection.md) - 模型选择
 - [全生命周期工作流](full-cycle-workflow.md) - 开发者工作流
-- [[../../GOVERNANCE|通用治理标准]] - Agent 治理标准
+- [../GOVERNANCE|通用治理标准]] - Agent 治理标准
 
 ---
 
@@ -337,8 +337,8 @@ Gate 5: 上线审查     → 监控 + 告警 + 回滚就绪
 **分类**: 治理层
 
 **相关文档
-- [[GOVERNANCE|通用治理标准]]
-- [[GOVERNANCE|通用治理标准]]**:
+- [[../GOVERNANCE|通用治理标准]]
+- [[../GOVERNANCE|通用治理标准]]**:
 
 - [[docs/efficiency/ai-code-generation-quality|代码质量]]
 - [[docs/efficiency/ai-model-selection|模型选型]]

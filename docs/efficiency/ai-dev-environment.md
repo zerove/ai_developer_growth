@@ -233,8 +233,8 @@ AI_MAX_TOKENS=4096
 **分类**: 治理层
 
 **相关文档
-- [[GOVERNANCE|通用治理标准]]
-- [[GOVERNANCE|通用治理标准]]**:
+- [[../GOVERNANCE|通用治理标准]]
+- [[../GOVERNANCE|通用治理标准]]**:
 
 - [[docs/efficiency/ai-code-generation-quality|代码质量]]
 - [[docs/efficiency/ai-model-selection|模型选型]]

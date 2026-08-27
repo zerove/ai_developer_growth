@@ -2,6 +2,30 @@
 
 All notable changes to the AI Developer Growth project.
 
+## [2.13.3] - 2026-08-27
+
+### 修补: Makefile vs Makefile.release target 重复定义警告
+
+`make` 默认同时加载 `Makefile` 与 `Makefile.release`，两者都定义了 `help` 和 `release` target，导致启动警告：
+
+```
+Makefile.release:66: warning: overriding recipe for target 'help'
+Makefile:4: warning: ignoring old recipe for target 'help'
+Makefile.release:42: warning: overriding recipe for target 'release'
+Makefile:117: warning: ignoring old recipe for target 'release'
+```
+
+#### 修复
+- `Makefile.release` 的 `help` target → 改名为 `release-help`
+- `Makefile.release` 的 `release` target → 改名为 `release-with-docker`
+- `.DEFAULT_GOAL := release-help`（仅 `make -f Makefile.release` 时生效）
+- 验证：`make help` 无警告；`make -f Makefile.release release-help` 无警告
+
+#### 向后兼容
+- `make` 用户：行为不变（始终用 Makefile 的 help/release）
+- `make -f Makefile.release` 用户：help 改用 `release-help`，release 改用 `release-with-docker`
+- docker 流程（bump-*/docker-*/sbom/changelog）保持原 target 名不变
+
 ## [2.13.2] - 2026-08-27
 
 ### 修补: multi_agent_orch 死代码删除 + sys.path 简化

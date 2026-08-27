@@ -335,7 +335,8 @@ def dict_to_yaml(data: dict[str, Any], indent: int = 0) -> str:
     return "\n".join(lines)
 
 
-def main() -> int:
+def _build_parser() -> argparse.ArgumentParser:
+    """构建 CLI 参数解析器。"""
     parser = argparse.ArgumentParser(
         description="JCode 项目初始化",
         formatter_class=argparse.RawDescriptionHelpFormatter,
@@ -382,23 +383,28 @@ def main() -> int:
     )
     parser.add_argument("--output", "-o", type=Path, default=Path(".jcode/project.yaml"), help="输出路径")
     parser.add_argument("--force", "-f", action="store_true", help="覆盖已存在的文件")
-    args = parser.parse_args()
-    # 检查输出文件
-    output_path = args.output
+    return parser
+
+
+def _write_config(output_path: Path, content: str, args: argparse.Namespace) -> int:
+    """写入生成的配置到目标路径。返回 0 成功 / 1 失败。"""
     if output_path.exists() and not args.force:
         print(f"❌ 文件已存在: {output_path}")
         print("使用 --force 覆盖，或指定其他 --output 路径")
         return 1
-    # 生成配置
-    yaml_content = generate_config(args)
-    # 写入文件
     output_path.parent.mkdir(parents=True, exist_ok=True)
-    output_path.write_text(yaml_content, encoding="utf-8")
+    output_path.write_text(content, encoding="utf-8")
     print(f"✅ 配置已生成: {output_path}")
     print(f"   项目: {args.name or 'my-project'}")
     print(f"   主语言: {args.lang or args.template or 'python'}")
     print(f"   模板: {args.template or '无'}")
     return 0
+
+
+def main() -> int:
+    args = _build_parser().parse_args()
+    yaml_content = generate_config(args)
+    return _write_config(args.output, yaml_content, args)
 
 
 if __name__ == "__main__":

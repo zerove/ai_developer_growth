@@ -1,4 +1,4 @@
-.PHONY: help lint format format-fix typecheck test test-cov check-quality security audit validate-docs check-index sync-refs validate-governance-docs check-ai-sdlc audit-hallucination link-audit validate-cases scan full-audit full-validate mode-show mode-set-perf mode-set-quality mode-set-safe docs-build test-fast check release setup-git workflow-pr workflow-weekly workflow-release clean quick discover jcode list-tools new-skill release-version cov-diff cov-module cov-gate cov-snapshot
+.PHONY: help lint format format-fix typecheck test test-cov check-quality security audit validate-docs check-index sync-refs validate-governance-docs check-ai-sdlc audit-hallucination link-audit validate-cases scan full-audit full-validate mode-show mode-set-perf mode-set-quality mode-set-safe docs-build test-fast check release setup-git workflow-pr workflow-weekly workflow-release clean quick discover jcode list-tools new-skill release-version cov-diff cov-module cov-gate cov-snapshot context-status context-split
 
 help:  ## 显示帮助信息
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-20s\033[0m %s\n", $$1, $$2}'
@@ -211,3 +211,9 @@ cov-module:  ## 单模块覆盖率详情 (用法: make cov-module MODULE=tools.s
 cov-gate:  ## 与基线对比门禁 (用法: make cov-gate BASELINE=.jcode/cov-baseline.json [THRESHOLD=2.0])
 	@python -m coverage json -o /tmp/cov-gate-current.json --include=tools/scripts/*
 	@python tools/scripts/cov_tool.py gate --coverage /tmp/cov-gate-current.json --baseline $(BASELINE) --threshold $(or $(THRESHOLD),2.0)
+
+context-status:  ## 输出项目实时快照 (版本/最新 tag/最近 5 commit/测试数)
+	@python tools/scripts/context_status.py status
+
+context-split:  ## 一次性拆分 CONTEXT.md: 滚动日志归档到 CHANGELOG (用法: make context-split [KEEP=5])
+	@python tools/scripts/context_status.py split --keep $(or $(KEEP),5)

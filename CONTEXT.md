@@ -1,3 +1,34 @@
+## 更新记录: 2026-08-27 11:10:47
+
+### 任务
+Git 变更同步
+
+### 变更摘要
+- 变更文件 34 个 (+2390 / -1214 行)
+  - CONTEXT.md
+  - Makefile
+  - docs/adr/003-sys-path-shadowing.md
+  - docs/adr/004-config-toml-resilience.md
+  - tests/test_adg_bootstrap_unit.py
+  - tests/test_adg_cmd_integration.py
+  - tests/test_context_status.py
+  - tests/test_cov_tool.py
+  - tools/scripts/adg_cli/commands/__init__.py
+  - tools/scripts/adg_cli/commands/cmd/__init__.py
+  - tools/scripts/adg_cli/commands/cmd/_cmd_rule_create.py
+  - tools/scripts/adg_cli/commands/cmd/_cmd_rule_test.py
+  - tools/scripts/adg_cli/commands/cmd/_cmd_rule_validate.py
+  - tools/scripts/adg_cli/commands/cmd/_shared.py
+  - tools/scripts/adg_cli/commands/cmd/cmd_bench.py
+  - tools/scripts/adg_cli/commands/cmd/cmd_check.py
+  - tools/scripts/adg_cli/commands/cmd/cmd_cicd.py
+  - tools/scripts/adg_cli/commands/cmd/cmd_dashboard.py
+  - tools/scripts/adg_cli/commands/cmd/cmd_detect.py
+  - tools/scripts/adg_cli/commands/cmd/cmd_fix.py
+  - ... 等共 34 个文件
+
+---
+
 ## 更新记录: 2026-08-27 07:26:13
 
 ### 任务
@@ -718,21 +749,6 @@ Git 变更同步
   - CONTEXT.md
   - tests/test_exception_manager_round2.py
   - tests/test_supply_chain_round2.py
-
----
-
-## 更新记录: 2026-08-26 16:47:17
-
-### 任务
-Git 变更同步
-
-### 变更摘要
-- 变更文件 5 个 (+402 / -44 行)
-  - CHANGELOG.md
-  - CONTEXT.md
-  - pyproject.toml
-  - tests/test_supply_chain_round2.py
-  - uv.lock
 
 ---
 

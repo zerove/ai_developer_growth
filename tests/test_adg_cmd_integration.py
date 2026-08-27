@@ -313,7 +313,7 @@ class TestCmdRuleExtended:
 
     def test_rule_create_with_output(self, workspace):
         args = ns(rule_command="create", output=str(workspace / "rule.yml"))
-        with patch("tools.scripts.adg_cli.commands._create_rule_interactive") as mock:
+        with patch("tools.scripts.adg_cli.commands.cmd._cmd_rule_create._create_rule_interactive") as mock:
             mock.return_value = {
                 "id": "test/rule",
                 "pattern": r"eval\(",

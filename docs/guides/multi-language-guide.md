@@ -52,18 +52,19 @@ JCode 框架通过 **语言工具链注册表** (`tools/scripts/language_registr
 # 交互式
 jcode init
 
-# 指定语言
-jcode init --lang python
-jcode init --lang typescript
-jcode init --lang rust
-jcode init --lang go
+# 指定语言（注意 -- 分隔符: jcode init 用 argparse REMAINDER 模式，
+# 与 jcode create-case / jcode validate-case 一致）
+jcode init -- --lang python
+jcode init -- --lang typescript
+jcode init -- --lang rust
+jcode init -- --lang go
 
 # 使用模板
-jcode init --template api      # Go + Python API 服务
-jcode init --template web      # TypeScript + Python 全栈
-jcode init --template cli      # Rust CLI 工具
-jcode init --template library  # 多语言库开发
-jcode init --template data     # Python 数据科学
+jcode init -- --template api      # Go + Python API 服务
+jcode init -- --template web      # TypeScript + Python 全栈
+jcode init -- --template cli      # Rust CLI 工具
+jcode init -- --template library  # 多语言库开发
+jcode init -- --template data     # Python 数据科学
 ```
 
 ### 2. 生成的配置文件

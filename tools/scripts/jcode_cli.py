@@ -23,6 +23,7 @@ def _list_cli_subcommands() -> list[tuple[str, str]]:
         ("case-quality", "Analyze case study quality"),
         ("validate-case", "Validate case study structure"),
         ("create-case", "Create new case study from template"),
+        ("init", "Initialize a new JCode project (.jcode/project.yaml generation)"),
         ("dor-check", "Check Definition of Readiness"),
         ("semantic-graph", "Build/query semantic code graph"),
         ("arch-visualizer", "Generate architecture visualization"),
@@ -117,6 +118,7 @@ def cmd_explain(args: argparse.Namespace) -> int:
         "case-quality": "Analyze case studies for completeness, efficiency data, and insights.",
         "validate-case": "Validate case study structure against the schema.",
         "create-case": "Create a new case study from the standard template.",
+        "init": "Initialize a new JCode project (generate .jcode/project.yaml).",
         "dor-check": "Run the 7-point Definition-of-Ready rubric on an intent.",
         "semantic-graph": "Build the semantic code graph (modules/classes/functions/imports).",
         "arch-visualizer": "Generate a visual architecture diagram from the semantic graph.",
@@ -252,6 +254,27 @@ def cmd_create_case_study(args: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_init(args: argparse.Namespace) -> int:
+    """Initialize a new JCode project (project.yaml generation).
+
+    Forwards to .jcode/scripts/jcode-init.py — supports --lang/--template/--output.
+    用法: jcode init -- --lang python --name foo
+    （argparse REMAINDER 模式需要 -- 分隔符，与 create-case 一致）
+    """
+    import subprocess
+
+    root = get_project_root()
+    init_script = root / ".jcode" / "scripts" / "jcode-init.py"
+    if not init_script.exists():
+        print(f"❌ 找不到 jcode-init 脚本: {init_script}")
+        return 1
+    forwarded = list(args.rest or [])
+    # 去掉 argparse REMAINDER 自带的前导 '--' 分隔符
+    forwarded = [a for a in forwarded if a != "--"]
+    cmd = [sys.executable, str(init_script), *forwarded]
+    return subprocess.call(cmd)
+
+
 def cmd_dor_check(args: argparse.Namespace) -> int:
     """Check Definition of Readiness."""
     from tools.scripts.dor_checker import DoRChecker
@@ -341,6 +364,7 @@ Commands:
   case-quality          Analyze case study quality
   validate-case         Validate case study structure
   create-case           Create new case study from template
+  init                  Initialize a new JCode project (.jcode/project.yaml)
   dor-check             Check Definition of Readiness
   semantic-graph        Build/query semantic code graph
   arch-visualizer       Generate architecture visualization
@@ -388,6 +412,16 @@ Examples:
     p = subparsers.add_parser("create-case", help="Create new case study")
     p.add_argument("rest", nargs=argparse.REMAINDER, help="Arguments to pass through")
     p.set_defaults(func=cmd_create_case_study)
+
+    # init: 用 REMAINDER 接收 jcode-init 的所有参数
+    # 用户调用形式: jcode init -- --lang python --name foo
+    # （argparse REMAINDER 需要 -- 分隔符；这是 jcode CLI 已知模式，与 create-case 一致）
+    p = subparsers.add_parser(
+        "init",
+        help="Initialize a new JCode project (generate .jcode/project.yaml)",
+    )
+    p.add_argument("rest", nargs=argparse.REMAINDER, help="Arguments forwarded to jcode-init.py (after --)")
+    p.set_defaults(func=cmd_init)
 
     # dor-check
     p = subparsers.add_parser("dor-check", help="Check Definition of Readiness")

@@ -1,6 +1,6 @@
 # ADR-003: 防范 sys.path 顺序导致的模块遮蔽
 
-**状态**: 接受
+**状态**: 已废弃（v2.13.2 根因消除，扁平模块已删）
 **日期**: 2026-08-27
 **影响范围**: `tools/scripts/jcode_ai_native_workflow.py` + 跨测试文件状态隔离
 
@@ -44,7 +44,11 @@ import multi_agent_orch  # noqa
 
 **为什么不修测试助手**：助手的设计意图是支持对 `.jcode/scripts/context-sync.py` 的 `from _common import ...` 同级导入。如果改为局部 sys.path 注入，要重写 4 个测试文件，且助手的语义会变。
 
-**为什么不删扁平模块**：`.jcode/scripts/multi_agent_orch.py` 是 jcode CLI 的子命令加载入口（hooks 体系用），删除会破坏 hooks.json 现有配置。
+**为什么不删扁平模块**（历史决定，v2.13.2 已删）：`.jcode/scripts/multi_agent_orch.py` 曾是 jcode CLI 的子命令加载入口（hooks 体系用），删除会破坏 hooks.json 现有配置。
+
+> **v2.13.2 更新**：经实测验证，`.jcode/scripts/hooks_runner.py` 的 skill 解析规则是 `f"{skill}.py"`，而 hooks.json 中 skill 为 `multi-agent-orch`（连字符），实际加载的是 `.jcode/scripts/multi-agent-orch.py`（44 行薄 wrapper，包装 examples 包 demo），**不是**下划线版 491 行扁平模块。491 行版 `multi_agent_orch.py` 实测无任何 hooks 调用、无 import 引用，是死代码且是 sys.path 遮蔽源。
+>
+> 修复：删除 491 行扁平模块 + 简化 `jcode_ai_native_workflow.py` 防遮蔽代码（27-33 行） + 更新 AGENTS.md 文档指向。
 
 ## 后果
 

@@ -1,3 +1,22 @@
+## 更新记录: 2026-08-27 16:42:54
+
+### 任务
+Git 变更同步
+
+### 变更摘要
+- 变更文件 9 个 (+77 / -532 行)
+  - .jcode/baseline.json
+  - .jcode/scripts/multi_agent_orch.py
+  - AGENTS.md
+  - CHANGELOG.md
+  - CONTEXT.md
+  - docs/adr/003-sys-path-shadowing.md
+  - pyproject.toml
+  - tools/scripts/jcode_ai_native_workflow.py
+  - uv.lock
+
+---
+
 ## 更新记录: 2026-08-27 14:14:11
 
 ### 任务
@@ -747,21 +766,6 @@ Git 变更同步
 
 ### 变更摘要
 - 变更文件 5 个 (+370 / -45 行)
-  - CHANGELOG.md
-  - CONTEXT.md
-  - pyproject.toml
-  - tests/test_auto_fix_orchestrator.py
-  - uv.lock
-
----
-
-## 更新记录: 2026-08-26 17:18:15
-
-### 任务
-Git 变更同步
-
-### 变更摘要
-- 变更文件 5 个 (+355 / -32 行)
   - CHANGELOG.md
   - CONTEXT.md
   - pyproject.toml

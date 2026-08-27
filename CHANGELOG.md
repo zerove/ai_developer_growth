@@ -2,6 +2,41 @@
 
 All notable changes to the AI Developer Growth project.
 
+## [2.13.4] - 2026-08-27
+
+### 修补: jcode CLI 集成 init 子命令
+
+`docs/guides/multi-language-guide.md` 文档教用户跑 `jcode init --lang python` 等
+命令生成 `.jcode/project.yaml`，但 `tools/scripts/jcode_cli.py` 一直没有
+`init` 子命令——用户按文档跑会报 `error: argument command: invalid choice: 'init'`。
+
+底层实现是 `.jcode/scripts/jcode-init.py`（405 行，完整 project.yaml 生成器），
+但**没有任何代码调用**它。
+
+#### 修复
+- `tools/scripts/jcode_cli.py` 新增 `cmd_init` 转发函数（subprocess.call 透传）
+- 注册 `init` subparser（argparse REMAINDER 模式）
+- 加进 `_list_cli_subcommands`（`jcode list-tools` 显示）
+- 加进 `cli_map`（`jcode explain init` 可用）
+- `epilog` 加 `init` 命令行提示
+- `docs/guides/multi-language-guide.md` 文档同步：所有 `jcode init --lang` 改
+  为 `jcode init -- --lang`，加注释说明 `--` 分隔符
+
+#### 用法
+```
+jcode init                                       # 交互式生成
+jcode init -- --lang python --name foo           # 指定语言
+jcode init -- --template api --name service      # 用模板
+jcode init -- --output /tmp/x.yaml --force       # 指定输出
+```
+
+#### 验证
+- `jcode init -- --lang python --name test --output /tmp/x.yaml` → ✅ 生成 project.yaml
+- `jcode list-tools` → 显示 init
+- `jcode explain init` → 输出说明
+- ruff + mypy + ai-quality-gate 通过
+- tests/test_jcode_cli.py 13 passed + test_jcode_cli_round2.py 22 passed
+
 ## [2.13.3] - 2026-08-27
 
 ### 修补: Makefile vs Makefile.release target 重复定义警告

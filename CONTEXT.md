@@ -1,3 +1,19 @@
+## 更新记录: 2026-08-27 19:18:52
+
+### 任务
+Git 变更同步
+
+### 变更摘要
+- 变更文件 6 个 (+98 / -25 行)
+  - CHANGELOG.md
+  - CONTEXT.md
+  - docs/guides/multi-language-guide.md
+  - pyproject.toml
+  - tools/scripts/jcode_cli.py
+  - uv.lock
+
+---
+
 ## 更新记录: 2026-08-27 19:15:44
 
 ### 任务
@@ -763,19 +779,6 @@ Git 变更同步
 - 变更文件 3 个 (+393 / -15 行)
   - CONTEXT.md
   - tests/test_audit_trends_round.py
-  - tests/test_update_stats_round2.py
-
----
-
-## 更新记录: 2026-08-26 18:13:52
-
-### 任务
-Git 变更同步
-
-### 变更摘要
-- 变更文件 3 个 (+480 / -27 行)
-  - CONTEXT.md
-  - tests/test_arch_layer_round.py
   - tests/test_update_stats_round2.py
 
 ---

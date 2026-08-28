@@ -2,6 +2,26 @@
 
 All notable changes to the AI Developer Growth project.
 
+## [2.13.10] - 2026-08-28
+
+### 修补: ROADMAP P1-4 LSP server 0% 覆盖攻坚 + P1-4 关联修复
+
+`tools/lsp/server.py` 510 行原 0% 测试覆盖，是 ROADMAP P1-4
+"0% 模块测试攻坚"清单的显著欠缺点。两个根因：
+
+1. 缺测试文件 → 新增 `tests/test_lsp_server.py` 34 个测试覆盖
+   AdgLanguageServer 全部 9 个 `_handle_*` 协议方法 + 路由 + 缓存 + 边界
+2. `pyproject.toml [tool.coverage.run]` 显式 omit `tools/lsp/server.py`
+   + source 未含 `tools.lsp` → 移除 omit、加 source 入口
+
+#### 修复
+- `tests/test_lsp_server.py`：34 用例，13 类（路由/诊断/quickfix/codelens/hover/配置/符号/initialize/缓存/扩展表）
+- `pyproject.toml [tool.coverage.run]`:
+  - source 加 `tools.lsp` 入口
+  - omit 移除 `tools/lsp/server.py`（保留 `*/lsp_server.py` 模糊模式防误抓）
+- LSP server.py 覆盖率：**0% → 65%**（剩余 miss 是 stdio/TCP 传输层，I/O 包装跳过合理）
+- 全量：3567 测试通过，82.93% > 75% 阈值
+
 ## [2.13.9] - 2026-08-28
 
 ### 修补: ROADMAP P1-5 mypy 命令行级配置漂移修复

@@ -1,3 +1,50 @@
+## 更新记录: 2026-08-28 13:29:30
+
+### 任务
+Git 变更同步
+
+### 变更摘要
+- 变更文件 5 个 (+453 / -32 行)
+  - CHANGELOG.md
+  - CONTEXT.md
+  - pyproject.toml
+  - tests/test_lsp_server.py
+  - uv.lock
+
+---
+
+## 更新记录: 2026-08-28 13:27:18
+
+### 任务
+Git 变更同步
+
+### 变更摘要
+- 变更文件 6 个 (+470 / -33 行)
+  - .github/workflows/example-ci-template.yml
+  - CHANGELOG.md
+  - CONTEXT.md
+  - pyproject.toml
+  - tests/test_lsp_server.py
+  - uv.lock
+
+---
+
+## 更新记录: 2026-08-28 13:25:50
+
+### 任务
+Git 变更同步
+
+### 变更摘要
+- 变更文件 6 个 (+454 / -19 行)
+  - .github/workflows/example-ci-template.yml
+  - CHANGELOG.md
+  - CONTEXT.md
+  - pyproject.toml
+  - tests/test_lsp_server.py
+  - uv.lock
+
+---
+
 ## 更新记录: 2026-08-28 11:23:59
 
 ### 任务
@@ -814,49 +861,6 @@ Git 变更同步
   - CONTEXT.md
   - tests/test_hallucination_round2.py
   - tests/test_multi_llm_router_full.py
-
----
-
-## 更新记录: 2026-08-26 20:30:03
-
-### 任务
-Git 变更同步
-
-### 变更摘要
-- 变更文件 3 个 (+256 / -11 行)
-  - CONTEXT.md
-  - tests/test_ai_native_workflow.py
-  - tests/test_hallucination_round2.py
-
----
-
-## 更新记录: 2026-08-26 20:23:31
-
-### 任务
-Git 变更同步
-
-### 变更摘要
-- 变更文件 5 个 (+140 / -26 行)
-  - CHANGELOG.md
-  - CONTEXT.md
-  - pyproject.toml
-  - tests/test_ai_native_workflow.py
-  - uv.lock
-
----
-
-## 更新记录: 2026-08-26 20:03:08
-
-### 任务
-Git 变更同步
-
-### 变更摘要
-- 变更文件 5 个 (+309 / -26 行)
-  - CHANGELOG.md
-  - CONTEXT.md
-  - pyproject.toml
-  - tests/test_dashboard_round2.py
-  - uv.lock
 
 ---
 

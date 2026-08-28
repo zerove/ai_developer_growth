@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "ai-developer-growth"
-version = "2.13.9"
+version = "2.13.10"
 description = "Open-source knowledge base for developer growth in the AI era"
 readme = "README.md"
 license = {text = "MIT"}
@@ -60,8 +60,8 @@ target-version = "py310"
 exclude = ["examples/**"]
 
 [tool.coverage.run]
-source = ["tools.scripts"]
-omit = ["*/tests/*", "*/__pycache__/*", "*/lsp_server.py", "tools/lsp/server.py"]
+source = ["tools.scripts", "tools.lsp"]
+omit = ["*/tests/*", "*/__pycache__/*", "*/lsp_server.py"]
 branch = true
 
 [tool.coverage.report]

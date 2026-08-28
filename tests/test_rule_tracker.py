@@ -2,20 +2,16 @@
 
 from __future__ import annotations
 
+# Use argparse.Namespace for creating test args
+import argparse  # noqa: E402
 import json
-import sys
 from datetime import datetime, timezone
 from pathlib import Path
 from unittest import mock
 
 import pytest
 
-sys.path.insert(0, str(Path(__file__).parent.parent / "tools" / "scripts"))
-
-# Use argparse.Namespace for creating test args
-import argparse  # noqa: E402
-
-from rule_tracker import (
+from tools.scripts.rule_tracker import (
     _count_by_rule,
     _count_by_severity,
     _load_records,
@@ -36,7 +32,7 @@ def tracking_dir(tmp_path: Path) -> Path:
     """Create a temp data directory and patch _data_dir."""
     d = tmp_path / ".ai-rules-tracking"
     d.mkdir()
-    with mock.patch("rule_tracker._data_dir", return_value=d):
+    with mock.patch("tools.scripts.rule_tracker._data_dir", return_value=d):
         yield d
 
 
@@ -139,7 +135,7 @@ class TestCountByRule:
 
 class TestLoadRecords:
     def test_no_file(self, tmp_path: Path) -> None:
-        with mock.patch("rule_tracker._records_file", return_value=tmp_path / "nonexistent.jsonl"):
+        with mock.patch("tools.scripts.rule_tracker._records_file", return_value=tmp_path / "nonexistent.jsonl"):
             assert _load_records() == []
 
     def test_load_all(self, tracking_dir: Path) -> None:

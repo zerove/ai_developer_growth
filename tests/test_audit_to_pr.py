@@ -6,8 +6,7 @@ import unittest
 from io import StringIO
 from unittest.mock import MagicMock, patch
 
-sys.path.append(os.path.join(os.path.dirname(__file__), "..", "tools", "scripts"))
-from audit_to_pr import (
+from tools.scripts.audit_to_pr import (
     create_github_pr,
     format_audit_results_json,
     format_pr_report,
@@ -173,7 +172,7 @@ class TestAuditToPr(unittest.TestCase):
 class TestRunGovernanceAudit(unittest.TestCase):
     """Tests for run_governance_audit function."""
 
-    @patch("audit_to_pr.subprocess.run")
+    @patch("tools.scripts.audit_to_pr.subprocess.run")
     def test_run_governance_audit_success(self, mock_run):
         """Test successful audit run."""
         mock_run.return_value = MagicMock(
@@ -188,7 +187,7 @@ class TestRunGovernanceAudit(unittest.TestCase):
         self.assertEqual(result["returncode"], 0)
         self.assertIn("PASS", result["stdout"])
 
-    @patch("audit_to_pr.subprocess.run")
+    @patch("tools.scripts.audit_to_pr.subprocess.run")
     def test_run_governance_audit_failure(self, mock_run):
         """Test failed audit run."""
         mock_run.return_value = MagicMock(
@@ -202,7 +201,7 @@ class TestRunGovernanceAudit(unittest.TestCase):
         self.assertFalse(result["success"])
         self.assertEqual(result["returncode"], 1)
 
-    @patch("audit_to_pr.subprocess.run")
+    @patch("tools.scripts.audit_to_pr.subprocess.run")
     def test_run_governance_audit_timeout(self, mock_run):
         """Test audit timeout."""
         mock_run.side_effect = subprocess.TimeoutExpired(cmd="test", timeout=600)
@@ -213,7 +212,7 @@ class TestRunGovernanceAudit(unittest.TestCase):
         self.assertEqual(result["returncode"], -1)
         self.assertIn("timed out", result["stderr"])
 
-    @patch("audit_to_pr.subprocess.run")
+    @patch("tools.scripts.audit_to_pr.subprocess.run")
     def test_run_governance_audit_exception(self, mock_run):
         """Test audit exception handling."""
         mock_run.side_effect = Exception("test error")
@@ -357,7 +356,7 @@ class TestFormatPRReport(unittest.TestCase):
 class TestCreateGitHubPR(unittest.TestCase):
     """Tests for create_github_pr function."""
 
-    @patch("audit_to_pr.subprocess.run")
+    @patch("tools.scripts.audit_to_pr.subprocess.run")
     def test_create_pr_not_git_repo(self, mock_run):
         """Test PR creation when not in git repo."""
         mock_run.side_effect = subprocess.CalledProcessError(1, "git")
@@ -367,7 +366,7 @@ class TestCreateGitHubPR(unittest.TestCase):
         self.assertFalse(result["success"])
         self.assertIn("Not a git repository", result["error"])
 
-    @patch("audit_to_pr.subprocess.run")
+    @patch("tools.scripts.audit_to_pr.subprocess.run")
     def test_create_pr_no_gh_cli(self, mock_run):
         """Test PR creation when gh CLI not available."""
         # First call (git check) succeeds, second (gh --version) fails
@@ -385,9 +384,9 @@ class TestCreateGitHubPR(unittest.TestCase):
 class TestMainFunction(unittest.TestCase):
     """Tests for main function with different arguments."""
 
-    @patch("audit_to_pr.run_governance_audit")
-    @patch("audit_to_pr.parse_audit_output")
-    @patch("audit_to_pr.format_pr_report")
+    @patch("tools.scripts.audit_to_pr.run_governance_audit")
+    @patch("tools.scripts.audit_to_pr.parse_audit_output")
+    @patch("tools.scripts.audit_to_pr.format_pr_report")
     def test_main_run_audit(self, mock_format, mock_parse, mock_run):
         """Test main with --run-audit."""
         mock_run.return_value = {
@@ -412,9 +411,9 @@ class TestMainFunction(unittest.TestCase):
         self.assertEqual(result, 0)
         mock_run.assert_called_once_with(full=True)
 
-    @patch("audit_to_pr.run_governance_audit")
-    @patch("audit_to_pr.parse_audit_output")
-    @patch("audit_to_pr.format_pr_report")
+    @patch("tools.scripts.audit_to_pr.run_governance_audit")
+    @patch("tools.scripts.audit_to_pr.parse_audit_output")
+    @patch("tools.scripts.audit_to_pr.format_pr_report")
     def test_main_run_audit_failure(self, mock_format, mock_parse, mock_run):
         """Test main with --run-audit when audit fails."""
         mock_run.return_value = {
@@ -438,10 +437,10 @@ class TestMainFunction(unittest.TestCase):
 
         self.assertEqual(result, 1)
 
-    @patch("audit_to_pr.run_governance_audit")
-    @patch("audit_to_pr.parse_audit_output")
-    @patch("audit_to_pr.format_pr_report")
-    @patch("audit_to_pr.create_github_pr")
+    @patch("tools.scripts.audit_to_pr.run_governance_audit")
+    @patch("tools.scripts.audit_to_pr.parse_audit_output")
+    @patch("tools.scripts.audit_to_pr.format_pr_report")
+    @patch("tools.scripts.audit_to_pr.create_github_pr")
     def test_main_create_pr(self, mock_create_pr, mock_format, mock_parse, mock_run):
         """Test main with --create-pr."""
         mock_run.return_value = {
@@ -470,10 +469,10 @@ class TestMainFunction(unittest.TestCase):
         self.assertEqual(result, 0)
         mock_create_pr.assert_called_once()
 
-    @patch("audit_to_pr.run_governance_audit")
-    @patch("audit_to_pr.parse_audit_output")
-    @patch("audit_to_pr.format_pr_report")
-    @patch("audit_to_pr.create_github_pr")
+    @patch("tools.scripts.audit_to_pr.run_governance_audit")
+    @patch("tools.scripts.audit_to_pr.parse_audit_output")
+    @patch("tools.scripts.audit_to_pr.format_pr_report")
+    @patch("tools.scripts.audit_to_pr.create_github_pr")
     def test_main_create_pr_failure(self, mock_create_pr, mock_format, mock_parse, mock_run):
         """Test main with --create-pr when PR creation fails."""
         mock_run.return_value = {

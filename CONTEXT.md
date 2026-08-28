@@ -1,3 +1,21 @@
+## 更新记录: 2026-08-28 18:21:47
+
+### 任务
+Git 变更同步
+
+### 变更摘要
+- 变更文件 8 个 (+152 / -89 行)
+  - .github/workflows/release.yml
+  - CHANGELOG.md
+  - CONTEXT.md
+  - docs/governance/project-analysis-and-roadmap-2026-08.md
+  - pyproject.toml
+  - tests/test_audit_to_pr.py
+  - tests/test_rule_tracker.py
+  - uv.lock
+
+---
+
 ## 更新记录: 2026-08-28 16:47:39
 
 ### 任务
@@ -866,20 +884,6 @@ Git 变更同步
   - CHANGELOG.md
   - CONTEXT.md
   - pyproject.toml
-  - tools/scripts/jcode_ai_native_workflow.py
-
----
-
-## 更新记录: 2026-08-26 22:42:37
-
-### 任务
-Git 变更同步
-
-### 变更摘要
-- 变更文件 4 个 (+152 / -13 行)
-  - CONTEXT.md
-  - tests/test_app_config_full.py
-  - tools/scripts/app_config.py
   - tools/scripts/jcode_ai_native_workflow.py
 
 ---

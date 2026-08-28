@@ -2,6 +2,33 @@
 
 All notable changes to the AI Developer Growth project.
 
+## [2.13.14] - 2026-08-28
+
+### 修补: ROADMAP P1-4 第三轮（patch 路径 import 边界修复）
+
+两个测试文件用 `sys.path.append` + `from xxx import` 模式 + `@patch("xxx.")`，
+让 coverage 的 import hook 看不到代码被运行。改为标准 `from tools.scripts.xxx
+import` + `@patch("tools.scripts.xxx.")` 后 coverage 正确追踪：
+
+- `tests/test_audit_to_pr.py` (25 测试) — sed 替换 15+ 处 patch 路径
+- `tests/test_rule_tracker.py` (26 测试) — sed 替换 patch 路径
+
+#### 模块覆盖提升
+
+| 模块 | 之前 | 之后 |
+|---|---|---|
+| `audit_to_pr.py` | 0% | **80%** |
+| `rule_tracker.py` | 0% | **96%** |
+
+#### P1-4 真完成
+
+ROADMAP P1-4 验收："0% 模块数 ≤5；总体 ≥72%"。
+- 0% 模块数：4 → 0（除 pytest-xdist 合并的已知合并 bug，单跑均 ≥80%）
+- 全量覆盖率：83.12% → **85.00%**（独立验证 > 72% 阈值）
+- 7 模块从 0% 涨到高覆盖（lsp/server / metrics_telemetry /
+  ai_context_manager / adr_generator / audit_to_pr / rule_tracker /
+  rule_marketplace / validate_rule_tests）
+
 ## [2.13.13] - 2026-08-28
 
 ### 修补: ROADMAP P1-1 / P2-6 推进 + ROADMAP 状态同步

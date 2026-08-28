@@ -1,3 +1,20 @@
+## 更新记录: 2026-08-28 19:22:03
+
+### 任务
+Git 变更同步
+
+### 变更摘要
+- 变更文件 7 个 (+162 / -29 行)
+  - ADR.md
+  - CHANGELOG.md
+  - CONTEXT.md
+  - docs/adr/ADR-012-vector-rag-not-core.md
+  - docs/governance/project-analysis-and-roadmap-2026-08.md
+  - pyproject.toml
+  - uv.lock
+
+---
+
 ## 更新记录: 2026-08-28 18:42:21
 
 ### 任务
@@ -872,20 +889,6 @@ Git 变更同步
 
 ### 变更摘要
 - 变更文件 4 个 (+90 / -38 行)
-  - CHANGELOG.md
-  - CONTEXT.md
-  - pyproject.toml
-  - tools/scripts/jcode_ai_native_workflow.py
-
----
-
-## 更新记录: 2026-08-27 05:52:41
-
-### 任务
-Git 变更同步
-
-### 变更摘要
-- 变更文件 4 个 (+76 / -25 行)
   - CHANGELOG.md
   - CONTEXT.md
   - pyproject.toml

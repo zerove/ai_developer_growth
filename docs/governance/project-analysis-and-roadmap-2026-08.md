@@ -1,25 +1,27 @@
-# 项目全面分析与开发计划 (2026-08-25)
+# 项目全面分析与开发计划
 
-> 基于 2026-08-25 实测盘点（master = 68b6444，2641 测试通过）。
+> 本文档分两部分：顶部"现状快照"按 master 快照维护（最后实测 2026-08-28，
+> master = 2dc4e92，对应 v2.13.15）；下方"开发计划 P0/P1/P2 段"
+> 标记 ✅/🟡/⏳ 是事实核对结果，不是承诺。
 > 所有结论均有实测证据，标注来源。
 
 ## 一、现状快照
 
 | 维度 | 现状 | 证据 |
 |---|---|---|
-| 代码规模 | tools/ 41,029 行（154 文件）+ 子包 ~2,800 行；tests/ 31,033 行（118 文件） | `find + wc -l` |
-| 测试 | 2641 通过，全量耗时 ~4min（串行）/ CI 分片 | pytest |
-| 覆盖率 | 总体 69.1%，中位数 88.7%；≥60% 模块 135/153；**15 个模块 0%** | coverage.xml (2026-08-25 新鲜生成) |
-| Lint/类型 | ruff、ruff format、mypy strict 全绿 | release validate 本地预演 |
-| 语言规则 | 26 语言目录、756 条规则，schema 全部完整（severity/message 无缺失） | YAML 校验脚本 |
-| AST 解析器 | tree-sitter 8 语言：python/js/ts/java/go/rust/ruby/cpp；**18 语言纯正则路径** | ast_parser.py import 块 |
+| 代码规模 | tools/ 45,586 行（203 文件，含 tools/lsp/ 510 行）；tests/ 40,506 行（159 文件） | `find + wc -l`（2026-08-28） |
+| 测试 | 3575 通过，全量耗时 ~9min（xdist 并行）/ CI 分片 | pytest |
+| 覆盖率 | 总体 85.0%；≥60% 模块占绝大多数；**0 个模块 0%**（v2.13.10/11/14 推进 7 模块从 0% 涨到 80%~100%） | coverage.json（2026-08-28） |
+| Lint/类型 | ruff、ruff format、mypy 全绿；mypy 4 个调用源全部裸用 pyproject | ruff/mypy --version |
+| 语言规则 | 26 语言目录、756 条规则，schema 全部完整 | YAML 校验脚本 |
+| AST 解析器 | tree-sitter 11 语言：python/go/rust/java/typescript/csharp/kotlin/swift/cpp/php/ruby | registry.py |
 | 供应链解析 | 9 生态（requirements/pyproject/package.json/go.mod/Cargo/Gradle/Gemfile/composer/NuGet） | supply_chain.py |
 | CLI 命令面 | check/detect/list-rules/install-hooks/report/fix/rule/trend/notify/html-report/recommend/lsp/dashboard/marketplace/monorepo/bench/cicd/pattern-learner | parser.py add_parser |
 | Jcode 钩子 | pre_tool 门禁 + post_tool 异步 + turn_end 摘要 + hook-report 观察工具 | ~/bin/jcode-adg-* |
-| CI 工作流 | 18 个 workflow（含 6 个 reusable jobs） | .github/workflows/ |
-| 内容资产 | docs 270 篇 / case-studies 47 个 / examples 10 个 | find 统计 |
-| 性能基线 | pre_tool 单文件冷启动 0.38s；doctor 2.0s；454 文件扫描 5.1s | 实测计时 |
-| 发布 | v2.4.0 tag 就绪；GitHub Billing 阻塞 Actions（唯一外部遗留） | gh run |
+| CI 工作流 | 16 个 workflow（含 22 个 reusable jobs，集中在 .github/workflows/jobs/） | .github/workflows/ |
+| 内容资产 | docs 274 篇 / case-studies 48 个 / examples 10 个 | find 统计（2026-08-28） |
+| 性能基线 | pre_tool 单文件冷启动 0.38s；doctor 2.0s；454 文件扫描 5.1s | 实测计时（2026-08-25） |
+| 发布 | v2.13.15 tag 推完；Billing 仍阻塞部分 Actions | gh run |
 
 ## 二、发现的问题与风险
 
@@ -78,7 +80,7 @@
 | P2-3 | CONTEXT.md 污染修复 | ✅ 已完成：CONTEXT.md 头部仅含变更文件列表 (+115/-74 行) + 任务摘要，无 diff 原文 (+++ / --- / @@) 污染 | diff 文本不再进入 CONTEXT |
 | P2-4 | examples 空壳处置 | ✅ 已完成：ai-growth-vscode/slack 均含 README + pyproject + tests，非空壳 | 全部 examples 都有 README |
 | P2-5 | 向量 RAG 立项评估 | 若检索是核心场景则集成 chroma+embedding；否则从愿景文档移除 | 决策 + 文档 ✅（ADR-012：检索核心是 ai_native_mcp_server.py BM25+同义词+jieba，向量 RAG 仅 examples/ai-context-sync/ 参考；万级文档或跨语种需求出现时重新评估）|
-| P2-6 | CI 收敛为单一真源 | ci.yml 复用 jobs 成为唯一 lint/test 执行点，release/ci-cd 只调 jobs | grep 单点 🟡（release.yml 全部 lint/test/type-check/doctor-gate/pre-commit/governance-audit 改调 .github/workflows/jobs/*.yml，validate 只做 tag↔pyproject + CHANGELOG 一致性；ai-native-sdlc.yml 是手工 pipeline 不强制收敛）|
+| P2-6 | CI 收敛为单一真源 | ci.yml 复用 jobs 成为唯一 lint/test 执行点，release/ci-cd 只调 jobs | grep 单点 ✅（ci.yml + release.yml 均调 .github/workflows/jobs/；release.yml validate 改用 6 job 复用后只剩 2 步——tag↔pyproject 一致性 + CHANGELOG 段落检查；ai-native-sdlc.yml 是 workflow_dispatch 手工 pipeline，内联 pytest 是其连贯阶段一部分，保留；ROADMAP 描述的 "ci-cd.yml" 不存在，实际只有 ci.yml + release.yml）|
 
 ### N3 钩子首次真实调优 (2026-08-25)
 

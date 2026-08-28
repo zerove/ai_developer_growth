@@ -2,6 +2,33 @@
 
 All notable changes to the AI Developer Growth project.
 
+## [2.13.16] - 2026-08-28
+
+### 修补: ROADMAP 顶部快照对齐 v2.13.15 + P2-6 标完成
+
+`docs/governance/project-analysis-and-roadmap-2026-08.md` 顶部"现状快照"
+表原本来自 2026-08-25 盘点（master = 68b6444，2641 测试），到 v2.13.15
+已严重过时：
+
+| 维度 | 之前 (2026-08-25) | 之后 (2026-08-28) |
+|---|---|---|
+| 代码规模 | 41,029 行 / 154 文件 | **45,586 行 / 203 文件** |
+| 测试规模 | 31,033 行 / 118 文件 | **40,506 行 / 159 文件** |
+| 测试通过 | 2641 | **3575** |
+| 覆盖率 | 69.1% | **85.0%** |
+| 0% 模块 | 15 | **0** |
+| AST 解析器 | 8 语言（python/js/ts/java/go/rust/ruby/cpp） | **11 语言（含 csharp/kotlin/swift/cpp/php/ruby）** |
+| workflow | 18 个（含 6 reusable） | **16 个（含 22 reusable jobs）** |
+| 内容资产 | docs 270 / case-studies 47 | **docs 274 / case-studies 48** |
+| 发布 | v2.4.0 | **v2.13.15** |
+
+#### 修复
+- 顶部快照 13 行实测数据全部对齐 v2.13.15
+- 文档元信息"基于 2026-08-25 实测"改为"分两部分：快照按 master 维护
+  + 计划段标 ✅/🟡/⏳ 是事实核对"
+- P2-6 标 ✅（ci.yml + release.yml 均调 jobs；ai-native-sdlc.yml 是
+  workflow_dispatch 手工 pipeline 保留内联 pytest）
+
 ## [2.13.15] - 2026-08-28
 
 ### 修补: ROADMAP P2-5 向量 RAG 立项评估（决策 ADR-012）

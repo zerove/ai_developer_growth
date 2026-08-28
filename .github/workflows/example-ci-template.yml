@@ -49,7 +49,9 @@ jobs:
           key: mypy-${{ runner.os }}-${{ hashFiles('**/*.py') }}
           restore-keys: mypy-${{ runner.os }}-
       - name: Mypy (strict)
-        run: mypy . --ignore-missing-imports --strict
+        run: mypy .
+        # mypy 配置统一由 pyproject.toml [tool.mypy] 提供（strict, ignore_missing_imports 等）
+        # 不要在此处加 --ignore-missing-imports / --strict 等命令行级参数（避免配置漂移）
 
   # ──────────────────────────────────────────────────────
   # Tests (with coverage)

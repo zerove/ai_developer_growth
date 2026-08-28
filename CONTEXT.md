@@ -1,3 +1,18 @@
+## 更新记录: 2026-08-28 11:23:59
+
+### 任务
+Git 变更同步
+
+### 变更摘要
+- 变更文件 5 个 (+69 / -27 行)
+  - .github/workflows/example-ci-template.yml
+  - CHANGELOG.md
+  - CONTEXT.md
+  - pyproject.toml
+  - uv.lock
+
+---
+
 ## 更新记录: 2026-08-28 10:44:55
 
 ### 任务
@@ -837,21 +852,6 @@ Git 变更同步
 
 ### 变更摘要
 - 变更文件 5 个 (+309 / -26 行)
-  - CHANGELOG.md
-  - CONTEXT.md
-  - pyproject.toml
-  - tests/test_dashboard_round2.py
-  - uv.lock
-
----
-
-## 更新记录: 2026-08-26 19:54:46
-
-### 任务
-Git 变更同步
-
-### 变更摘要
-- 变更文件 5 个 (+294 / -14 行)
   - CHANGELOG.md
   - CONTEXT.md
   - pyproject.toml

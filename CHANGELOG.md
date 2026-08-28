@@ -2,6 +2,21 @@
 
 All notable changes to the AI Developer Growth project.
 
+## [2.13.9] - 2026-08-28
+
+### 修补: ROADMAP P1-5 mypy 命令行级配置漂移修复
+
+`.github/workflows/example-ci-template.yml` mypy 调用原本带
+`--ignore-missing-imports --strict` 命令行参数，与 `pyproject.toml`
+`[tool.mypy]` 已有的 `strict = true` + `ignore_missing_imports = true`
+重复，且违反"配置统一由 pyproject 提供"治理规则。
+
+#### 修复
+- 改为 `mypy .`，由 pyproject 接管
+- 加注释禁止后续在此处加 `--strict / --ignore-missing-imports`
+- 验证：3 个 mypy 调用（release / example-ci-template / type-check）
+  全部裸 `mypy <path>`，无命令行级配置漂移
+
 ## [2.13.8] - 2026-08-28
 
 ### 修补: ROADMAP P0/P2 实际状态核对

@@ -1,3 +1,38 @@
+## 更新记录: 2026-08-28 14:51:21
+
+### 任务
+Git 变更同步
+
+### 变更摘要
+- 变更文件 7 个 (+166 / -37 行)
+  - CHANGELOG.md
+  - CONTEXT.md
+  - pyproject.toml
+  - tests/test_adr_generator.py
+  - tests/test_ai_context_manager.py
+  - tests/test_metrics_telemetry.py
+  - uv.lock
+
+---
+
+## 更新记录: 2026-08-28 14:48:28
+
+### 任务
+Git 变更同步
+
+### 变更摘要
+- 变更文件 8 个 (+614 / -67 行)
+  - CHANGELOG.md
+  - CONTEXT.md
+  - pyproject.toml
+  - tests/test_adr_generator.py
+  - tests/test_ai_context_manager.py
+  - tests/test_lsp_server.py
+  - tests/test_metrics_telemetry.py
+  - uv.lock
+
+---
+
 ## 更新记录: 2026-08-28 13:29:30
 
 ### 任务
@@ -835,32 +870,6 @@ Git 变更同步
   - CONTEXT.md
   - tests/test_perf_benchmark_full.py
   - tests/test_smart_commit_full.py
-
----
-
-## 更新记录: 2026-08-26 20:35:36
-
-### 任务
-Git 变更同步
-
-### 变更摘要
-- 变更文件 3 个 (+129 / -12 行)
-  - CONTEXT.md
-  - tests/test_multi_llm_router_full.py
-  - tests/test_smart_commit_full.py
-
----
-
-## 更新记录: 2026-08-26 20:32:19
-
-### 任务
-Git 变更同步
-
-### 变更摘要
-- 变更文件 3 个 (+195 / -12 行)
-  - CONTEXT.md
-  - tests/test_hallucination_round2.py
-  - tests/test_multi_llm_router_full.py
 
 ---
 

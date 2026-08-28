@@ -1,6 +1,5 @@
 """Tests for ai_context_manager.py"""
 
-import importlib.util
 import os
 import shutil
 import sys
@@ -13,17 +12,13 @@ from unittest.mock import MagicMock, patch
 mock_openai = MagicMock()
 sys.modules["openai"] = mock_openai
 
-spec = importlib.util.spec_from_file_location(
-    "ai_context_manager",
-    os.path.join(os.path.dirname(__file__), "..", "tools", "scripts", "ai_context_manager.py"),
+from tools.scripts import ai_context_manager  # noqa: E402
+from tools.scripts.ai_context_manager import (  # noqa: E402
+    load_context,
+    main,
+    save_context,
+    update_context_with_llm,
 )
-ai_context_manager = importlib.util.module_from_spec(spec)
-spec.loader.exec_module(ai_context_manager)
-
-load_context = ai_context_manager.load_context
-save_context = ai_context_manager.save_context
-update_context_with_llm = ai_context_manager.update_context_with_llm
-main = ai_context_manager.main
 
 
 class TestLoadContext(unittest.TestCase):

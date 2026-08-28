@@ -2,6 +2,38 @@
 
 All notable changes to the AI Developer Growth project.
 
+## [2.13.11] - 2026-08-28
+
+### 修补: ROADMAP P1-4 0% 模块攻坚第二轮（3 模块从 0% 涨到高覆盖）
+
+通过两层修复让 3 个 0% 模块实际纳入 coverage 统计：
+
+#### 新增
+- `tests/test_metrics_telemetry.py` (98 行 / 8 用例)
+  - metrics_telemetry.py: **0% → 100%**
+
+#### 修复测试 import 模式（绕过 coverage 工具）
+测试文件用 `importlib.util.spec_from_file_location` 或 `sys.path.append`
+后用短模块名 import，让 coverage 的 import hook 看不到代码被运行。改为
+标准 `from tools.scripts.xxx import` 模式后 coverage 工具正确追踪：
+
+- `tests/test_ai_context_manager.py`:
+  - ai_context_manager.py: **0% → 97%**（13 测试）
+- `tests/test_adr_generator.py`:
+  - adr_generator.py: **0% → 86%**（12 测试）
+
+#### 验证
+- 全量 3575 测试通过（v2.13.10 是 3567，新增 8）
+- ruff clean
+- coverage 全量 82.93% > 75% 阈值
+
+#### 未修（已知 import 模式边界问题，需后续）
+- `tests/test_audit_to_pr.py` (25 测试) —— 内部大量 `@patch("audit_to_pr.xxx")`
+  需全部改写为 `tools.scripts.audit_to_pr.xxx`，风险大，留 P1-4 后续 batch
+- `tests/test_rule_tracker.py` (26 测试) —— 同上
+- `tools/scripts/rule_marketplace.py` —— 无测试文件
+- `tools/scripts/validate_rule_tests.py` —— JSON 旧数据 0%，单独跑 95%
+
 ## [2.13.10] - 2026-08-28
 
 ### 修补: ROADMAP P1-4 LSP server 0% 覆盖攻坚 + P1-4 关联修复

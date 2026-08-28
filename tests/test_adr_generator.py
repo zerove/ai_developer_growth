@@ -1,24 +1,24 @@
 """Tests for adr_generator.py"""
 
-import importlib.util
 import os
 import shutil
+import sys
 import tempfile
 import unittest
 from unittest.mock import MagicMock, patch
 
-spec = importlib.util.spec_from_file_location(
-    "adr_generator",
-    os.path.join(os.path.dirname(__file__), "..", "tools", "scripts", "adr_generator.py"),
-)
-adr_generator = importlib.util.module_from_spec(spec)
-spec.loader.exec_module(adr_generator)
+# Mock openai 等 LLM 客户端模块（在 import adr_generator 前）
+mock_openai = MagicMock()
+sys.modules["openai"] = mock_openai
 
-generate_from_llm = adr_generator.generate_from_llm
-generate_interactive = adr_generator.generate_interactive
-generate_from_llm_mode = adr_generator.generate_from_llm_mode
-save_adr = adr_generator.save_adr
-main = adr_generator.main
+from tools.scripts import adr_generator  # noqa: E402
+from tools.scripts.adr_generator import (  # noqa: E402
+    generate_from_llm,
+    generate_from_llm_mode,
+    generate_interactive,
+    main,
+    save_adr,
+)
 
 
 class TestGenerateFromLLM(unittest.TestCase):

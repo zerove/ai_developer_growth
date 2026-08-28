@@ -66,9 +66,9 @@
 |---|---|---|---|
 | P1-1 | 高频语言 AST 解析器 | csharp（tree-sitter-c-sharp）、kotlin（tree-sitter-kotlin）先行，swift 次之 | 各语言函数/类提取测试通过；PARSER_REGISTRY 达 10 |
 | P1-2 | auto_fix 合并 | adg_cli fix 作为入口，底层调度 AutoFixOrchestrator（Python 文件走 Ruff provider，其余走正则） | 同一输入两路径结果一致；删重复逻辑 |
-| P1-3 | subprocess 测试覆盖率化 | bootstrap 核心逻辑抽为可 import 函数，subprocess 仅留薄壳 e2e | bootstrap 覆盖率 >70% |
-| P1-4 | 0% 模块测试攻坚 | 按"用户可见优先"顺序：jcode_cli → rules_engine/feedback → sarif_exporter → 其余 | 0% 模块数 ≤5；总体 ≥72% |
-| P1-5 | mypy 配置统一 | 三处 workflow 统一引用 pyproject [tool.mypy] | grep 无命令行级配置漂移 |
+| P1-3 | subprocess 测试覆盖率化 | bootstrap 核心逻辑抽为可 import 函数，subprocess 仅留薄壳 e2e | bootstrap 覆盖率 >70% ✅（实测 76%，test_adg_bootstrap_unit.py 25 用例）|
+| P1-4 | 0% 模块测试攻坚 | 按"用户可见优先"顺序：jcode_cli → rules_engine/feedback → sarif_exporter → 其余 | 0% 模块数 ≤5；总体 ≥72% 🟡（v2.13.10/11 推进 4 模块：lsp/server 0%→65% / metrics_telemetry 0%→100% / ai_context_manager 0%→97% / adr_generator 0%→86%；仍存 2 个 patch 路径 import 边界 + 1 个无测试 rule_marketplace）|
+| P1-5 | mypy 配置统一 | 三处 workflow 统一引用 pyproject [tool.mypy] | grep 无命令行级配置漂移 ✅（v2.13.9 修复 example-ci-template.yml）|
 
 ### P2 — 长期健康（本月内）
 | # | 事项 | 动作 | 验收 |

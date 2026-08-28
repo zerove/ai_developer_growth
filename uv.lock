@@ -10,7 +10,7 @@ resolution-markers = [
 
 [[package]]
 name = "ai-developer-growth"
-version = "2.13.11"
+version = "2.13.12"
 source = { editable = "." }
 dependencies = [
     { name = "loguru" },

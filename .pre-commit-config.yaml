@@ -18,8 +18,10 @@ repos:
     hooks:
       - id: mypy
         additional_dependencies: [pyyaml, types-requests, types-pyyaml]
-        args: [--strict, --ignore-missing-imports, --config-file, mypy.ini, tools/scripts/]
+        args: [tools/scripts/]
         pass_filenames: false
+        # mypy 配置统一由 pyproject.toml [tool.mypy] 提供
+        # 不要在此处加 --strict / --ignore-missing-imports / --config-file（避免漂移）
 
   # ── Python: basic checks ─────────────────────────────────────────
   - repo: https://github.com/pre-commit/pre-commit-hooks

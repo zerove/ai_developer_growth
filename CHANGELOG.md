@@ -2,6 +2,38 @@
 
 All notable changes to the AI Developer Growth project.
 
+## [2.13.12] - 2026-08-28
+
+### 修补: ROADMAP P1-5 mypy 配置双源合一 + P1-3 标完成 + P1-4 进度更新
+
+v2.13.9 修了 `.github/workflows/example-ci-template.yml` 一处 mypy
+命令漂移，但遗漏两个真源：
+
+1. `.pre-commit-config.yaml` mypy hook 带
+   `--strict --ignore-missing-imports --config-file mypy.ini`
+2. `mypy.ini` 与 `pyproject.toml [tool.mypy]` 并存，双源不一致
+   （`warn_return_any` 冲突：pyproject=false / mypy.ini=true）
+
+#### 修复
+- `.pre-commit-config.yaml` mypy hook args 改为 `tools/scripts/`，加防漂移注释
+- `mypy.ini` 内容合并到 `pyproject.toml`：
+  - 新增 `disallow_incomplete_defs / show_error_codes`
+  - 移除 stale override `tree_sitter_languages`（包不存在）
+  - 保留 `pygls.*` 模块级 `ignore_missing_imports` override
+  - `warn_return_any` 以 pyproject 的 `false` 为准（single source of truth）
+- 删除 `mypy.ini`
+- 4 个 mypy 调用全部裸用 pyproject：2 个 .github/workflows + 1 个 pre-commit + 0 个 mypy.ini
+
+#### ROADMAP 同步
+- P1-3 标 ✅：bootstrap 实测 76% > 70% 目标
+- P1-4 标 🟡：v2.13.10/11 推进 4 模块（lsp/server 0%→65% / metrics_telemetry 0%→100% / ai_context_manager 0%→97% / adr_generator 0%→86%）
+- P1-5 标 ✅：v2.13.9 + v2.13.12 合并 mypy.ini 完成
+
+#### 验证
+- mypy tools/scripts/ → 190 文件 clean
+- pre-commit run mypy --all-files → Passed
+- ruff check → clean
+
 ## [2.13.11] - 2026-08-28
 
 ### 修补: ROADMAP P1-4 0% 模块攻坚第二轮（3 模块从 0% 涨到高覆盖）

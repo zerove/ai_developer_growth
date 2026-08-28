@@ -1,3 +1,63 @@
+## 更新记录: 2026-08-28 23:47:51
+
+### 任务
+Git 变更同步
+
+### 变更摘要
+- 变更文件 10 个 (+333 / -58 行)
+  - .adg/config.yml
+  - .gitignore
+  - CHANGELOG.md
+  - CONTEXT.md
+  - docs/adr/ADR-013-pytest-xdist-coverage-known-issue.md
+  - docs/adr/ADR.md
+  - docs/governance/project-analysis-and-roadmap-2026-08.md
+  - pyproject.toml
+  - tests/test_lsp_server.py
+  - uv.lock
+
+---
+
+## 更新记录: 2026-08-28 23:45:16
+
+### 任务
+Git 变更同步
+
+### 变更摘要
+- 变更文件 10 个 (+313 / -44 行)
+  - .adg/config.yml
+  - .gitignore
+  - CHANGELOG.md
+  - CONTEXT.md
+  - docs/adr/ADR-013-pytest-xdist-coverage-known-issue.md
+  - docs/adr/ADR.md
+  - docs/governance/project-analysis-and-roadmap-2026-08.md
+  - pyproject.toml
+  - tests/test_lsp_server.py
+  - uv.lock
+
+---
+
+## 更新记录: 2026-08-28 23:43:48
+
+### 任务
+Git 变更同步
+
+### 变更摘要
+- 变更文件 10 个 (+293 / -31 行)
+  - .adg/config.yml
+  - .gitignore
+  - CHANGELOG.md
+  - CONTEXT.md
+  - docs/adr/ADR-013-pytest-xdist-coverage-known-issue.md
+  - docs/adr/ADR.md
+  - docs/governance/project-analysis-and-roadmap-2026-08.md
+  - pyproject.toml
+  - tests/test_lsp_server.py
+  - uv.lock
+
+---
+
 ## 更新记录: 2026-08-28 19:22:03
 
 ### 任务
@@ -847,52 +907,6 @@ Git 变更同步
   - tests/test_jcode_cli.py
   - tools/scripts/jcode_cli.py
   - uv.lock
-
----
-
-## 更新记录: 2026-08-27 06:34:41
-
-### 任务
-Git 变更同步
-
-### 变更摘要
-- 变更文件 7 个 (+320 / -58 行)
-  - CHANGELOG.md
-  - CONTEXT.md
-  - Makefile
-  - pyproject.toml
-  - tests/test_jcode_cli.py
-  - tools/scripts/jcode_cli.py
-  - uv.lock
-
----
-
-## 更新记录: 2026-08-27 05:54:37
-
-### 任务
-Git 变更同步
-
-### 变更摘要
-- 变更文件 5 个 (+105 / -54 行)
-  - CHANGELOG.md
-  - CONTEXT.md
-  - pyproject.toml
-  - tools/scripts/jcode_ai_native_workflow.py
-  - uv.lock
-
----
-
-## 更新记录: 2026-08-27 05:53:50
-
-### 任务
-Git 变更同步
-
-### 变更摘要
-- 变更文件 4 个 (+90 / -38 行)
-  - CHANGELOG.md
-  - CONTEXT.md
-  - pyproject.toml
-  - tools/scripts/jcode_ai_native_workflow.py
 
 ---
 

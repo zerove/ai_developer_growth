@@ -2,6 +2,24 @@
 
 All notable changes to the AI Developer Growth project.
 
+## [2.13.17] - 2026-08-28
+
+### 修补: LSP server.py 测试补 65% → 76% + ADR-013 记录 xdist 覆盖率缺陷
+
+#### 改进
+- `tests/test_lsp_server.py` 新增 `TestReadMessage / TestWriteMessage / TestSendNotification` 3 个测试类，覆盖 stdio 传输层 read_message / write_message / send_notification
+- 用 `staticmethod(lambda)` 模式 mock stdin.readline/read 避免 `self` 参数绑定问题
+- 39/39 通过；`tools/lsp/server.py` 覆盖 65% → 76%
+- `.adg/config.yml` `project.version` 同步 2.2.0 → 2.13.17
+- `.gitignore` 增 `.coverage-data` / `.coverage_data` / `coverage.json` 忽略
+
+#### ADR
+- ADR-013 `pytest-xdist 覆盖率合并缺陷接受现状` 记录全量跑时
+  `rule_marketplace.py` + `validate_rule_tests.py` 显示 0% 是 xdist 3.8.0 +
+  pytest-cov 7.1.0 已知生态问题（5 轮 8 次实验均失败，单跑 99%/95% 但
+  全量 0%）；决策为不阻塞 ROADMAP P1-2 auto_fix 重构，留待 v2.15+ 升级
+  pytest-cov 8.x 或用 `pytest_collection_modifyitems` 强制 import
+
 ## [2.13.16] - 2026-08-28
 
 ### 修补: ROADMAP 顶部快照对齐 v2.13.15 + P2-6 标完成

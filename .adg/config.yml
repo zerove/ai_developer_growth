@@ -2,7 +2,13 @@ config_version: '1.0'
 project:
   name: ai_developer_growth
   description: AI Developer Growth - Governance Engine
-  version: 2.2.0
+  version: 2.13.17
+  # 注：此文件是 v2.13 之前的旧配置源；当前运行时主要从 pyproject.toml
+  # [tool.adg] 读取。多数字段（language/domains/architecture/frameworks/
+  # context/feedback/output/performance/ci/notifications/lsp/marketplace/
+  # skip_patterns/rules/project）实际不被运行时引用，仅作配置参考。
+  # 真正被 get_setting() 读取的字段：llm_provider / llm_model /
+  # openai_api_key / openai_api_base / exclude / jobs。
 language:
   auto_detect: true
   primary: python

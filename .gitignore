@@ -22,6 +22,9 @@ MagicMock/
 coverage.xml
 combined-coverage.xml
 coverage-artifacts/
+.coverage-data
+.coverage_data
+coverage.json
 
 # Tool cache
 .tool_matrix_cache.json

@@ -64,7 +64,7 @@
 ### P1 — 能力补强（1-2 周）
 | # | 事项 | 动作 | 验收 |
 |---|---|---|---|
-| P1-1 | 高频语言 AST 解析器 | csharp（tree-sitter-c-sharp）、kotlin（tree-sitter-kotlin）先行，swift 次之 | 各语言函数/类提取测试通过；PARSER_REGISTRY 达 10 |
+| P1-1 | 高频语言 AST 解析器 | csharp（tree-sitter-c-sharp）、kotlin（tree-sitter-kotlin）先行，swift 次之 | 各语言函数/类提取测试通过；PARSER_REGISTRY 达 10 ✅（PARSER_REGISTRY 11 语言：python/go/rust/java/typescript/csharp/kotlin/swift/cpp/php/ruby，test_parser_registry_e2e.py 39 用例全过）|
 | P1-2 | auto_fix 合并 | adg_cli fix 作为入口，底层调度 AutoFixOrchestrator（Python 文件走 Ruff provider，其余走正则） | 同一输入两路径结果一致；删重复逻辑 |
 | P1-3 | subprocess 测试覆盖率化 | bootstrap 核心逻辑抽为可 import 函数，subprocess 仅留薄壳 e2e | bootstrap 覆盖率 >70% ✅（实测 76%，test_adg_bootstrap_unit.py 25 用例）|
 | P1-4 | 0% 模块测试攻坚 | 按"用户可见优先"顺序：jcode_cli → rules_engine/feedback → sarif_exporter → 其余 | 0% 模块数 ≤5；总体 ≥72% 🟡（v2.13.10/11 推进 4 模块：lsp/server 0%→65% / metrics_telemetry 0%→100% / ai_context_manager 0%→97% / adr_generator 0%→86%；仍存 2 个 patch 路径 import 边界 + 1 个无测试 rule_marketplace）|
@@ -78,7 +78,7 @@
 | P2-3 | CONTEXT.md 污染修复 | ✅ 已完成：CONTEXT.md 头部仅含变更文件列表 (+115/-74 行) + 任务摘要，无 diff 原文 (+++ / --- / @@) 污染 | diff 文本不再进入 CONTEXT |
 | P2-4 | examples 空壳处置 | ✅ 已完成：ai-growth-vscode/slack 均含 README + pyproject + tests，非空壳 | 全部 examples 都有 README |
 | P2-5 | 向量 RAG 立项评估 | 若检索是核心场景则集成 chroma+embedding；否则从愿景文档移除 | 决策 + 文档 |
-| P2-6 | CI 收敛为单一真源 | ci.yml 复用 jobs 成为唯一 lint/test 执行点，release/ci-cd 只调 jobs | grep 单点 |
+| P2-6 | CI 收敛为单一真源 | ci.yml 复用 jobs 成为唯一 lint/test 执行点，release/ci-cd 只调 jobs | grep 单点 🟡（release.yml 全部 lint/test/type-check/doctor-gate/pre-commit/governance-audit 改调 .github/workflows/jobs/*.yml，validate 只做 tag↔pyproject + CHANGELOG 一致性；ai-native-sdlc.yml 是手工 pipeline 不强制收敛）|
 
 ### N3 钩子首次真实调优 (2026-08-25)
 

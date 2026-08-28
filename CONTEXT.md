@@ -1,3 +1,21 @@
+## 更新记录: 2026-08-28 16:47:39
+
+### 任务
+Git 变更同步
+
+### 变更摘要
+- 变更文件 8 个 (+145 / -78 行)
+  - .github/workflows/release.yml
+  - .pre-commit-config.yaml
+  - CHANGELOG.md
+  - CONTEXT.md
+  - docs/governance/project-analysis-and-roadmap-2026-08.md
+  - mypy.ini
+  - pyproject.toml
+  - uv.lock
+
+---
+
 ## 更新记录: 2026-08-28 15:19:54
 
 ### 任务
@@ -863,20 +881,6 @@ Git 变更同步
   - tests/test_app_config_full.py
   - tools/scripts/app_config.py
   - tools/scripts/jcode_ai_native_workflow.py
-
----
-
-## 更新记录: 2026-08-26 20:47:04
-
-### 任务
-Git 变更同步
-
-### 变更摘要
-- 变更文件 4 个 (+225 / -13 行)
-  - CONTEXT.md
-  - tests/test_app_config_full.py
-  - tests/test_perf_benchmark_full.py
-  - tools/scripts/app_config.py
 
 ---
 

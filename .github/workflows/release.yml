@@ -21,55 +21,55 @@ env:
 
 jobs:
   # ──────────────────────────────────────────────────────
-  # Pre-release validation
+  # Pre-release validation — 复用 .github/workflows/jobs/ 的可复用 workflow
+  # 实现 P2-6 CI 收敛：ci.yml 是唯一 lint/test/type-check 入口，
+  # release.yml validate 也只调 jobs，不内联 step
   # ──────────────────────────────────────────────────────
+  lint:
+    name: Lint (Reusable)
+    uses: ./.github/workflows/jobs/lint.yml
+    secrets: inherit
+
+  type-check:
+    name: Type Check (Reusable)
+    uses: ./.github/workflows/jobs/type-check.yml
+    secrets: inherit
+
+  test:
+    name: Tests (Reusable)
+    uses: ./.github/workflows/jobs/tests.yml
+    with:
+      python-version: "3.11"
+    secrets: inherit
+
+  doctor-gate:
+    name: Gate Doctor (Reusable)
+    uses: ./.github/workflows/jobs/doctor-gate.yml
+    secrets: inherit
+
+  pre-commit:
+    name: Pre-commit (Reusable)
+    uses: ./.github/workflows/jobs/pre-commit.yml
+    secrets: inherit
+
+  governance-audit:
+    name: Governance Audit (Reusable)
+    uses: ./.github/workflows/jobs/governance-audit.yml
+    with:
+      languages: "python,typescript,javascript,go,rust,java,cpp,csharp,ruby,php,swift,kotlin"
+      timeout-minutes: 20
+    secrets: inherit
+
   validate:
     name: Pre-release Validation
     runs-on: ubuntu-latest
     if: github.event_name == 'push' || github.event.inputs.dry_run == 'false'
+    needs: [lint, type-check, test, doctor-gate, pre-commit, governance-audit]
     steps:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-      - uses: actions/setup-python@v5
-        with:
-          python-version: ${{ env.PYTHON_VERSION }}
-          cache: pip
-      - name: Install dependencies
-        run: |
-          pip install ruff mypy pytest pytest-cov pyyaml pytest-xdist pytest-rerunfailures bandit pip-audit tree-sitter tree-sitter-python build twine
-      - name: Gate environment doctor
-        run: python tools/scripts/hooks_runner.py doctor
-      - name: Baseline structure validation
-        run: python tools/scripts/hooks_runner.py baseline validate
-      - name: Ruff check
-        run: ruff check .
-      - name: Ruff format check
-        run: ruff format --check .
-      - name: Mypy (strict)
-        run: mypy tools/scripts/
-      - name: Run tests with coverage
-        run: pytest tests/ -v -n auto --cov=tools --cov-report=xml --cov-report=term-missing --tb=short
-      - name: Coverage check
-        run: |
-          python -c "
-          import xml.etree.ElementTree as ET
-          tree = ET.parse('coverage.xml')
-          root = tree.getroot()
-          coverage = float(root.attrib.get('line-rate', 0)) * 100
-          if coverage < 60:
-              print(f'::error::Line coverage {coverage:.1f}% is below 85% threshold')
-              exit(1)
-          "
-      - name: ADG governance check
-        run: |
-          python -m tools.scripts.adg_cli check tools/scripts/ --lang python --severity error --json > adg-report.json
-          ERROR_COUNT=$(python -c "import json; print(json.load(open('adg-report.json'))['summary']['error'])")
-          if [ "$ERROR_COUNT" -gt 0 ]; then
-            echo "::error::ADG governance check found $ERROR_COUNT errors"
-            exit 1
-          fi
-      - name: Validate version consistency
+      - name: Version consistency check
         run: |
           TAG_VERSION=${GITHUB_REF_NAME#v}
           PY_VERSION=$(grep '^version = ' pyproject.toml | sed 's/version = "//' | sed 's/"//')
@@ -80,6 +80,7 @@ jobs:
           echo "Version consistent: $TAG_VERSION"
       - name: Check CHANGELOG
         run: |
+          TAG_VERSION=${GITHUB_REF_NAME#v}
           if ! grep -q "## \[$TAG_VERSION\]" CHANGELOG.md; then
             echo "::error::CHANGELOG.md missing entry for $TAG_VERSION"
             exit 1

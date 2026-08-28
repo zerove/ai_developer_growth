@@ -2,6 +2,41 @@
 
 All notable changes to the AI Developer Growth project.
 
+## [2.13.13] - 2026-08-28
+
+### 修补: ROADMAP P1-1 / P2-6 推进 + ROADMAP 状态同步
+
+三项 P 段推进：
+
+#### P1-1 高频语言 AST 解析器（实际已完成）
+PARSER_REGISTRY 已注册 11 个语言（python/go/rust/java/typescript/
+csharp/kotlin/swift/cpp/php/ruby），`tests/test_parser_registry_e2e.py`
+384 行 39 用例全过。新语言 e2e 测试覆盖 csharp/kotlin/swift/php/ruby/cpp
+5 个新解析器。标 ✅。
+
+#### P2-6 CI 收敛为单一真源（部分完成）
+`.github/workflows/release.yml` validate job 原本内联 ruff/mypy/pytest/
+adg-check 等 step（重复 ci.yml 的工作）。改为调 `.github/workflows/jobs/` 复用
+workflow：
+
+- `lint` → `jobs/lint.yml`
+- `type-check` → `jobs/type-check.yml`
+- `test` → `jobs/tests.yml`
+- `doctor-gate` → `jobs/doctor-gate.yml`
+- `pre-commit` → `jobs/pre-commit.yml`
+- `governance-audit` → `jobs/governance-audit.yml`
+
+validate 现在只做两件事：
+1. tag vs pyproject.toml version 一致性
+2. CHANGELOG.md 含当前 tag 段落
+
+`ai-native-sdlc.yml` 是手工 pipeline（workflow_dispatch），内联 pytest 是
+其管线一部分，不强制收敛。标 🟡（部分完成）。
+
+#### ROADMAP 同步
+- P1-1 标 ✅
+- P2-6 标 🟡
+
 ## [2.13.12] - 2026-08-28
 
 ### 修补: ROADMAP P1-5 mypy 配置双源合一 + P1-3 标完成 + P1-4 进度更新

@@ -2,6 +2,28 @@
 
 All notable changes to the AI Developer Growth project.
 
+## [2.13.15] - 2026-08-28
+
+### 修补: ROADMAP P2-5 向量 RAG 立项评估（决策 ADR-012）
+
+实测项目检索现状（2026-08-28）：
+- `tools/scripts/ai_native_mcp_server.py`：BM25+同义词+jieba 全文检索
+- `examples/ai-context-sync/`：BM25 + 向量双路参考实现
+- `case-studies/intelligent-customer-service.md`：RAG 仅是案例研究
+
+#### 决策（ADR-012）
+**不在本项目主检索链集成向量 RAG。**
+- 核心检索保持 BM25+同义词+jieba（零部署成本，无外部依赖）
+- `examples/ai-context-sync/` 保留向量 RAG 作为参考实现
+- 触发重新评估：万级文档、≥3 起召回率反馈、跨语种需求
+
+#### 附带修复
+- `ADR.md` 索引：原本只有格式描述无索引，补全 16 条 ADR 索引
+  + ADR-006 历史空号说明
+
+#### ROADMAP 同步
+- P2-5 标 ✅
+
 ## [2.13.14] - 2026-08-28
 
 ### 修补: ROADMAP P1-4 第三轮（patch 路径 import 边界修复）

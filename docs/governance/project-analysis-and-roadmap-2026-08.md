@@ -77,7 +77,7 @@
 | P2-2 | wikilink 断链清零 | ✅ 已完成：v2.13.6 修 32 处 + v2.13.7 修 58 处，docs/ 全子目录 `link_auditor` 扫描 "All links are valid." | link_auditor 全清 |
 | P2-3 | CONTEXT.md 污染修复 | ✅ 已完成：CONTEXT.md 头部仅含变更文件列表 (+115/-74 行) + 任务摘要，无 diff 原文 (+++ / --- / @@) 污染 | diff 文本不再进入 CONTEXT |
 | P2-4 | examples 空壳处置 | ✅ 已完成：ai-growth-vscode/slack 均含 README + pyproject + tests，非空壳 | 全部 examples 都有 README |
-| P2-5 | 向量 RAG 立项评估 | 若检索是核心场景则集成 chroma+embedding；否则从愿景文档移除 | 决策 + 文档 |
+| P2-5 | 向量 RAG 立项评估 | 若检索是核心场景则集成 chroma+embedding；否则从愿景文档移除 | 决策 + 文档 ✅（ADR-012：检索核心是 ai_native_mcp_server.py BM25+同义词+jieba，向量 RAG 仅 examples/ai-context-sync/ 参考；万级文档或跨语种需求出现时重新评估）|
 | P2-6 | CI 收敛为单一真源 | ci.yml 复用 jobs 成为唯一 lint/test 执行点，release/ci-cd 只调 jobs | grep 单点 🟡（release.yml 全部 lint/test/type-check/doctor-gate/pre-commit/governance-audit 改调 .github/workflows/jobs/*.yml，validate 只做 tag↔pyproject + CHANGELOG 一致性；ai-native-sdlc.yml 是手工 pipeline 不强制收敛）|
 
 ### N3 钩子首次真实调优 (2026-08-25)

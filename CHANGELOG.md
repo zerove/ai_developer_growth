@@ -2,6 +2,26 @@
 
 All notable changes to the AI Developer Growth project.
 
+## [2.13.8] - 2026-08-28
+
+### 修补: ROADMAP P0/P2 实际状态核对
+
+`docs/governance/project-analysis-and-roadmap-2026-08.md` 中 P0/P2 列项
+实际 6/10 已完成（事实核对比计划更新重要）：
+
+| # | 状态 | 实际证据 |
+|---|---|---|
+| P0-1 | ✅ | ROADMAP.md 行 30 已写"BM25+同义词（已实现）" |
+| P0-2 | ✅ | chat_integration/fix_engine 均有 test 引用 |
+| P0-3 | ✅ | adg_cli/format.py 80-145 实现 _format_sarif |
+| P0-4 | ⏳ | Billing 恢复后发布（代码层不可执行） |
+| P2-1 | ✅ | hooks_runner.py 720 < 800 行目标 |
+| P2-2 | ✅ | v2.13.6 (32) + v2.13.7 (58) = 90 处断链清零 |
+| P2-3 | ✅ | CONTEXT.md 仅含文件列表+摘要 |
+| P2-4 | ✅ | ai-growth-vscode/slack 均有 README+pyproject+tests |
+| P2-5 | ⏳ | 向量 RAG 立项评估 |
+| P2-6 | ⏳ | CI 收敛为单一真源 |
+
 ## [2.13.7] - 2026-08-27
 
 ### 修补: 第二轮 wikilink 修复——子目录级漏检补全

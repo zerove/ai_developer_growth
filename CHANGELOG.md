@@ -2,6 +2,44 @@
 
 All notable changes to the AI Developer Growth project.
 
+## [2.18.0] - 2026-08-29
+
+### 重要变更: V2.17.0 后续 P3 阶段治理收官（Phase 21）
+
+完成 v2.17.0 后续 P3 阶段 14 项重构任务，**P3 阶段 17 commits 全部完成**。所有目标热点函数 C 级降至 A/B 级，主函数均 ≤ 22 行。
+
+#### 重构
+
+**P3 阶段共 13 个热点函数拆分（C→A/B 级）**：
+
+- **ai_native_mcp_server.handle_request**: C=15 → A(5), 60 → 22 行
+- **quality_gate.compare_with_baseline**: C=14 → B(6), 130 → 52 行
+- **report_generator.generate_junit_xml**: C=14 → A(3), 50 → 18 行
+- **report_generator.write_report**: C=11 → A(2), 55 → 17 行
+- **report_generator.generate_html_report**: C=11 → A(2), 63 → 16 行
+- **exception_manager.check_expirations**: C=11 → A(3), 50 → 17 行
+- **rule_catalog.validate_rules**: C=11 → A(3), 53 → 22 行
+- **audit_to_pr.parse_audit_output**: C=11 → B(6), 50 → 35 行
+- **audit_to_pr.format_audit_results_json**: C=12 → A(3), 50 → 27 行
+- **check_metadata.check_metadata**: C=13 → A(3), 60 → 22 行
+- **analyze_case_quality.generate_report**: C=17 → A(2)
+- **analyze_case_quality._extract_table_rows**: C=13 → B(6), 30 → 20 行
+- **audit_trends.analyze**: C=11 → A(4), 45 → 20 行
+- **sync_issues._sync_card_to_issue**: C=11 → A(4), 63 → 20 行
+
+#### 治理
+
+- **基线零 Any 增量合规**: P3 阶段 2 次诚实标记存量（`5a8eb21` Any 增量 / `835a7dd` report_generator 3 处 Any 存量）
+- **pre-push vs pre-commit format 一致性**: `105be88` 修补 pre-push 重跑机制暴露的格式偏差
+- **baseline 同步**: `fbc1d20` (mcp_server 退出存量) / `5a8eb21` (Any 增量) / `835a7dd` (report_generator 增 2→3)
+
+#### 验证
+
+- **typecheck**: 192 source files clean
+- **quality-gate --full**: 192/192 pass, 0 failed, 0 issues
+- **pytest**: 15+ 测试套件全过 (case_quality 15/15, audit_trends 16/16, sync_issues 28/28, ai_native_mcp, report_generator, quality_gate, exception_manager, rule_catalog, audit_to_pr, check_metadata, analyze_case_quality, hooks_runner)
+- **pre-push 钩子**: 本地 CI 全部通过，真实允许推送（无 `--no-verify` 绕过）
+
 ## [2.15.0] - 2026-08-29
 
 ### 重要变更: V2.14.0 后续治理收尾（Phase 18）

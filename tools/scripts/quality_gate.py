@@ -449,14 +449,14 @@ class QualityGateEngine:
         gate_config: QualityGateConfig,
         baseline_comparison: dict[str, Any] | None,
     ) -> GateResult | None:
-        """Gate 1: 零新增错误. 关闭时返回 None."""
+        """Gate 1: 零新增错误. 关闭时返回 None.
+
+        V2.20 P4-2 拆分: 从 _filter_new_by_severity 抽取 list comprehension,
+        主函数仅负责开关检查 + GateResult 构造.
+        """
         if not gate_config.require_zero_new_errors:
             return None
-        new_errors = (
-            [i for i in baseline_comparison.get("new", []) if i.get("severity") == "error"]
-            if baseline_comparison
-            else []
-        )
+        new_errors = self._filter_new_by_severity(baseline_comparison, "error")
         return GateResult(
             gate_name=gate_name,
             passed=len(new_errors) == 0,
@@ -475,11 +475,7 @@ class QualityGateEngine:
         """Gate 2: 零新增警告. 关闭时返回 None."""
         if not gate_config.require_zero_new_warnings:
             return None
-        new_warnings = (
-            [i for i in baseline_comparison.get("new", []) if i.get("severity") == "warning"]
-            if baseline_comparison
-            else []
-        )
+        new_warnings = self._filter_new_by_severity(baseline_comparison, "warning")
         return GateResult(
             gate_name=gate_name,
             passed=len(new_warnings) == 0,
@@ -488,6 +484,24 @@ class QualityGateEngine:
             details={"new_warnings": new_warnings},
             severity=SeverityLevel.WARNING,
         )
+
+    def _filter_new_by_severity(
+        self,
+        baseline_comparison: dict[str, Any] | None,
+        severity: str,
+    ) -> list[dict[str, Any]]:
+        """从 baseline_comparison['new'] 过滤出指定 severity 的项.
+
+        Args:
+            baseline_comparison: 基线对比结果 (None 时返空 list)
+            severity: 严重性字符串 ('error' / 'warning')
+
+        Returns:
+            匹配项列表
+        """
+        if not baseline_comparison:
+            return []
+        return [i for i in baseline_comparison.get("new", []) if i.get("severity") == severity]
 
     def _gate_max_new_errors(
         self,

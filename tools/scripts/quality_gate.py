@@ -163,24 +163,12 @@ class BaselineManager:
         self.save_baseline(baseline)
         return baseline
 
-    def compare_with_baseline(
-        self,
-        current_results: list[CheckResult],
-        baseline: dict[str, Any] | None = None,
-    ) -> dict[str, Any]:
-        """对比当前结果与基线
+    def _init_comparison(self) -> dict[str, Any]:
+        """初始化 comparison dict 与 summary.
 
-        返回:
-        - new: 新增的违规
-        - fixed: 已修复的违规
-        - worsened: 严重性升级的违规
-        - improved: 严重性降级的违规
-        - unchanged: 未变化的违规
+        V2.18 P3-4 拆分: 从 compare_with_baseline (C=14) 抽出.
         """
-        baseline = baseline or self.load_baseline()
-        baseline_files: dict[str, dict[str, dict[str, Any]]] = baseline.get("files", {})
-
-        comparison: dict[str, Any] = {
+        return {
             "new": [],
             "fixed": [],
             "worsened": [],
@@ -196,13 +184,20 @@ class BaselineManager:
             },
         }
 
-        current_files: dict[str, dict[str, dict[str, Any]]] = {}
+    def _build_current_index(
+        self,
+        current_results: list[CheckResult],
+        comparison: dict[str, Any],
+    ) -> dict[str, dict[str, dict[str, Any]]]:
+        """构建当前结果的文件 → rule_key → issue 索引.
 
-        # 构建当前结果索引
+        V2.18 P3-4 拆分: 从 compare_with_baseline (C=14) 抽出.
+        返回索引, 同步累加 total_current 计数.
+        """
+        current_files: dict[str, dict[str, dict[str, Any]]] = {}
         for result in current_results:
             if result.file not in current_files:
                 current_files[result.file] = {}
-
             for issue in result.issues:
                 rule_key = f"{issue.rule_id}:{issue.line}:{issue.column}"
                 current_files[result.file][rule_key] = {
@@ -213,69 +208,61 @@ class BaselineManager:
                     "message": issue.message,
                 }
                 comparison["summary"]["total_current"] += 1
+        return current_files
 
-        # 统计基线总数
-        for file_issues in baseline_files.values():
-            comparison["summary"]["total_baseline"] += len(file_issues)
+    def _classify_severity_change(
+        self,
+        comparison: dict[str, Any],
+        file_path: str,
+        current_issue: dict[str, Any],
+        baseline_issue: dict[str, Any],
+    ) -> None:
+        """分类严重性变化: worsened / improved / unchanged.
 
-        # 对比
-        for file_path, file_issues in current_files.items():
-            baseline_file_issues = baseline_files.get(file_path, {})
+        V2.18 P3-4 拆分: 从 compare_with_baseline (C=14) 抽出.
+        写入 comparison 列表并累加对应 count.
+        """
+        severity_order = {"info": 0, "warning": 1, "error": 2}
+        current_sev = current_issue["severity"]
+        baseline_sev = baseline_issue["severity"]
+        current_rank = severity_order.get(current_sev, 0)
+        baseline_rank = severity_order.get(baseline_sev, 0)
 
-            for rule_key, current_issue in file_issues.items():
-                if rule_key in baseline_file_issues:
-                    baseline_issue = baseline_file_issues[rule_key]
-                    # 比较严重性
-                    current_sev = current_issue["severity"]
-                    baseline_sev = baseline_issue["severity"]
+        entry = {
+            "file": file_path,
+            "rule_id": current_issue["rule_id"],
+            "line": current_issue["line"],
+        }
 
-                    severity_order = {"info": 0, "warning": 1, "error": 2}
+        if current_rank > baseline_rank:
+            entry_with_sev = {
+                **entry,
+                "old_severity": baseline_sev,
+                "new_severity": current_sev,
+            }
+            comparison["worsened"].append(entry_with_sev)
+            comparison["summary"]["worsened_count"] += 1
+        elif current_rank < baseline_rank:
+            entry_with_sev = {
+                **entry,
+                "old_severity": baseline_sev,
+                "new_severity": current_sev,
+            }
+            comparison["improved"].append(entry_with_sev)
+            comparison["summary"]["improved_count"] += 1
+        else:
+            comparison["unchanged"].append({**entry, "severity": current_sev})
 
-                    if severity_order.get(current_sev, 0) > severity_order.get(baseline_sev, 0):
-                        comparison["worsened"].append(
-                            {
-                                "file": file_path,
-                                "rule_id": current_issue["rule_id"],
-                                "line": current_issue["line"],
-                                "old_severity": baseline_sev,
-                                "new_severity": current_sev,
-                            }
-                        )
-                        comparison["summary"]["worsened_count"] += 1
-                    elif severity_order.get(current_sev, 0) < severity_order.get(baseline_sev, 0):
-                        comparison["improved"].append(
-                            {
-                                "file": file_path,
-                                "rule_id": current_issue["rule_id"],
-                                "line": current_issue["line"],
-                                "old_severity": baseline_sev,
-                                "new_severity": current_sev,
-                            }
-                        )
-                        comparison["summary"]["improved_count"] += 1
-                    else:
-                        comparison["unchanged"].append(
-                            {
-                                "file": file_path,
-                                "rule_id": current_issue["rule_id"],
-                                "line": current_issue["line"],
-                                "severity": current_sev,
-                            }
-                        )
-                else:
-                    # 新增违规
-                    comparison["new"].append(
-                        {
-                            "file": file_path,
-                            "rule_id": current_issue["rule_id"],
-                            "line": current_issue["line"],
-                            "severity": current_issue["severity"],
-                            "message": current_issue["message"],
-                        }
-                    )
-                    comparison["summary"]["new_count"] += 1
+    def _find_fixed_issues(
+        self,
+        baseline_files: dict[str, dict[str, dict[str, Any]]],
+        current_files: dict[str, dict[str, dict[str, Any]]],
+        comparison: dict[str, Any],
+    ) -> None:
+        """查找已修复的违规: 在基线中但不在当前结果.
 
-        # 查找已修复的违规 (在基线中但不在当前结果中)
+        V2.18 P3-4 拆分: 从 compare_with_baseline (C=14) 抽出.
+        """
         for file_path, file_issues in baseline_files.items():
             current_file_issues = current_files.get(file_path, {})
             for rule_key, baseline_issue in file_issues.items():
@@ -289,6 +276,55 @@ class BaselineManager:
                         }
                     )
                     comparison["summary"]["fixed_count"] += 1
+
+    def compare_with_baseline(
+        self,
+        current_results: list[CheckResult],
+        baseline: dict[str, Any] | None = None,
+    ) -> dict[str, Any]:
+        """对比当前结果与基线 (orchestrator).
+
+        返回:
+        - new: 新增的违规
+        - fixed: 已修复的违规
+        - worsened: 严重性升级的违规
+        - improved: 严重性降级的违规
+        - unchanged: 未变化的违规
+
+        V2.18 P3-4 拆分: 从 C=14 / 130+ 行主函数拆出 4 个 helper.
+        主函数仅负责: 加载基线 → 初始化 → 构建索引 → 逐 file 对比 → 找 fixed.
+        """
+        baseline = baseline or self.load_baseline()
+        baseline_files: dict[str, dict[str, dict[str, Any]]] = baseline.get("files", {})
+
+        comparison = self._init_comparison()
+        current_files = self._build_current_index(current_results, comparison)
+
+        comparison["summary"]["total_baseline"] = sum(len(issues) for issues in baseline_files.values())
+
+        for file_path, file_issues in current_files.items():
+            baseline_file_issues = baseline_files.get(file_path, {})
+            for rule_key, current_issue in file_issues.items():
+                if rule_key in baseline_file_issues:
+                    self._classify_severity_change(
+                        comparison,
+                        file_path,
+                        current_issue,
+                        baseline_file_issues[rule_key],
+                    )
+                else:
+                    comparison["new"].append(
+                        {
+                            "file": file_path,
+                            "rule_id": current_issue["rule_id"],
+                            "line": current_issue["line"],
+                            "severity": current_issue["severity"],
+                            "message": current_issue["message"],
+                        }
+                    )
+                    comparison["summary"]["new_count"] += 1
+
+        self._find_fixed_issues(baseline_files, current_files, comparison)
 
         return comparison
 

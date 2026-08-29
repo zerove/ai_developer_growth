@@ -223,45 +223,75 @@ def install_pack(pack_id: str, project_dir: Path, dry_run: bool = False) -> list
     return installed
 
 
+def _validate_single_rule(
+    yml_name: str,
+    rule: dict[str, Any],
+    category: str,
+) -> tuple[int, list[str]]:
+    """校验单条 rule 的必填字段.
+
+    V2.18 P3-6 拆分: 从 validate_rules (C=11) 抽出.
+    返回 (rule_count, error_messages) - 即使校验失败, rule_count 仍 +1
+    (因为该 rule 存在, 只是字段不全).
+    """
+    errors: list[str] = []
+    if not rule.get("id"):
+        errors.append(f"{yml_name}: rule missing 'id'")
+    if not rule.get("pattern") and category in ["anti_patterns", "complexity"]:
+        errors.append(f"{yml_name}/{rule.get('id', '?')}: missing 'pattern'")
+    if not rule.get("message"):
+        errors.append(f"{yml_name}/{rule.get('id', '?')}: missing 'message'")
+    return 1, errors
+
+
+def _validate_yaml_file(yml: Path) -> tuple[int, int, list[str]]:
+    """校验单个 YAML 文件的所有 rules.
+
+    V2.18 P3-6 拆分: 从 validate_rules (C=11) 抽出.
+    返回 (total_rules, error_count, messages).
+    """
+    try:
+        with open(yml) as f:
+            data = yaml.safe_load(f)
+    except yaml.YAMLError as e:
+        return 0, 1, [f"{yml.name}: YAML parse error: {e}"]
+
+    if not data:
+        return 0, 1, [f"{yml.name}: empty or invalid YAML"]
+
+    total_rules = 0
+    errors = 0
+    messages: list[str] = []
+    for category in _CATEGORIES:
+        for rule in data.get(category, []):
+            count, rule_errors = _validate_single_rule(yml.name, rule, category)
+            total_rules += count
+            errors += len(rule_errors)
+            messages.extend(rule_errors)
+
+    return total_rules, errors, messages
+
+
 def validate_rules(rules_dir: Path) -> tuple[int, int, list[str]]:
-    """Validate all YAML rules in a directory.
+    """Validate all YAML rules in a directory (orchestrator).
+
+    V2.18 P3-6 拆分: 从 C=11 / 53 行主函数拆出 2 个 helper.
+    主函数仅负责: 目录检查 → 遍历 → 汇总.
 
     Returns (total_rules, error_count, error_messages).
     """
+    if not rules_dir.exists():
+        return 0, 0, [f"Directory not found: {rules_dir}"]
+
     total_rules = 0
     errors = 0
     messages: list[str] = []
 
-    if not rules_dir.exists():
-        return 0, 0, [f"Directory not found: {rules_dir}"]
-
     for yml in sorted(rules_dir.glob("*.yml")):
-        try:
-            with open(yml) as f:
-                data = yaml.safe_load(f)
-            if not data:
-                messages.append(f"{yml.name}: empty or invalid YAML")
-                errors += 1
-                continue
-
-            for category in _CATEGORIES:
-                for rule in data.get(category, []):
-                    if not rule.get("id"):
-                        messages.append(f"{yml.name}: rule missing 'id'")
-                        errors += 1
-                    if not rule.get("pattern") and category in [
-                        "anti_patterns",
-                        "complexity",
-                    ]:
-                        messages.append(f"{yml.name}/{rule.get('id', '?')}: missing 'pattern'")
-                        errors += 1
-                    if not rule.get("message"):
-                        messages.append(f"{yml.name}/{rule.get('id', '?')}: missing 'message'")
-                        errors += 1
-                    total_rules += 1
-        except yaml.YAMLError as e:
-            messages.append(f"{yml.name}: YAML parse error: {e}")
-            errors += 1
+        t, e, m = _validate_yaml_file(yml)
+        total_rules += t
+        errors += e
+        messages.extend(m)
 
     return total_rules, errors, messages
 

@@ -219,29 +219,67 @@ def _build_sarif_rules(results: list[Any]) -> dict[str, dict[str, Any]]:
     return rules
 
 
+def _map_severity_to_sarif_level(severity: str) -> str:
+    """将 severity 映射到 SARIF level (error/warning/note).
+
+    V2.19 P3-31 拆分: 从 _build_sarif_results (B=6) 抽出.
+    """
+    if severity == "error":
+        return "error"
+    if severity == "warning":
+        return "warning"
+    return "note"
+
+
+def _build_sarif_result_entry(
+    file_uri: str,
+    rule_id: str,
+    level: str,
+    message: str,
+    line: int,
+    column: int,
+) -> dict[str, Any]:
+    """构造单条 SARIF result entry.
+
+    V2.19 P3-31 拆分: 从 _build_sarif_results (B=6) 抽出.
+    """
+    return {
+        "ruleId": rule_id,
+        "level": level,
+        "message": {"text": message},
+        "locations": [
+            {
+                "physicalLocation": {
+                    "artifactLocation": {"uri": file_uri},
+                    "region": {
+                        "startLine": line,
+                        "startColumn": column or 1,
+                    },
+                }
+            }
+        ],
+    }
+
+
 def _build_sarif_results(results: list[Any]) -> list[dict[str, Any]]:
-    """Build SARIF result entries from validation results."""
+    """Build SARIF result entries from validation results (orchestrator).
+
+    V2.19 P3-31 拆分: 从 B=6 / 27 行函数拆出 2 个 helper.
+    主函数仅负责: 遍历 issues → 委托 2 helper → 收集.
+    """
     runs_results: list[dict[str, Any]] = []
     for result in results:
         for issue in result.issues:
-            level = "error" if issue.severity == "error" else "warning" if issue.severity == "warning" else "note"
+            level = _map_severity_to_sarif_level(issue.severity)
             runs_results.append(
-                {
-                    "ruleId": issue.rule_id,
-                    "level": level,
-                    "message": {"text": issue.message},
-                    "locations": [
-                        {
-                            "physicalLocation": {
-                                "artifactLocation": {"uri": result.file},
-                                "region": {
-                                    "startLine": issue.line,
-                                    "startColumn": getattr(issue, "column", 1) or 1,
-                                },
-                            }
-                        }
-                    ],
-                }
+                _build_sarif_result_entry(
+                    file_uri=result.file,
+                    rule_id=issue.rule_id,
+                    level=level,
+                    message=issue.message,
+                    line=issue.line,
+                    column=getattr(issue, "column", 1),
+                )
             )
     return runs_results
 

@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import re
 from pathlib import Path
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from tools.scripts._common import rules_dir, run_command
 from tools.scripts.rules_engine.logger import logger
@@ -16,6 +16,9 @@ from .models import CheckResult, Issue
 from .naming_checker import check_naming_conventions
 from .plugins import get_plugins_for_language
 from .rule_loader import load_rules_for_language
+
+if TYPE_CHECKING:
+    from .store import CheckStore
 
 # Worker 进程内共享的规则缓存（由 _worker_init 注入）
 _WORKER_RULES: dict[str, Any] = {}
@@ -470,7 +473,7 @@ def _discover_target_files(
     return files
 
 
-def _init_cache_store(use_cache: bool, db_path: str | Path) -> tuple[Any, str]:
+def _init_cache_store(use_cache: bool, db_path: str | Path) -> tuple[CheckStore | None, str]:
     """初始化增量缓存。
 
     ADR-014: 从 check_directory 拆出。失败时 store=None + rules_hash=""
@@ -533,7 +536,7 @@ def _check_with_cache(
     filepath: Path,
     lang: str,
     rules: dict[str, Any] | None,
-    store: Any,
+    store: CheckStore | None,
     rules_hash: str,
     semantic: bool,
     run_linters: bool,
@@ -583,7 +586,7 @@ def _check_with_cache(
 def _check_files_serial(
     files: list[Path],
     rules: dict[str, Any] | None,
-    store: Any,
+    store: CheckStore | None,
     rules_hash: str,
     semantic: bool,
     run_linters: bool,
@@ -608,7 +611,7 @@ def _check_files_serial(
 def _check_files_parallel(
     files: list[Path],
     rules: dict[str, Any] | None,
-    store: Any,
+    store: CheckStore | None,
     rules_hash: str,
     db_path: str | Path,
     use_cache: bool,

@@ -2,6 +2,52 @@
 
 All notable changes to the AI Developer Growth project.
 
+## [2.15.0] - 2026-08-29
+
+### 重要变更: V2.14.0 后续治理收尾（Phase 18）
+
+完成 v2.14.0 后续 7 项治理收尾任务 + 修订 1 项 ADR 误判 + P0-4 降级。
+
+#### 治理
+
+- **P0-4 Billing 降级**: GitHub Actions Billing 阻塞（非代码层约束），降级到 v3.0，Billing 恢复后 `gh run rerun` 即可完成。ROADMAP 显式标注。
+- **ADR-015 接受**: pytest-xdist race condition（v2.14.0 全量偶发 2 fail），work-around `pytest --lf` 复绿
+- **ADR-013 修订**: 原"xdist 覆盖率合并 bug"误判已纠正，实为测试集选择偏差。直接测 `test_rule_marketplace_v2.py` + `test_validate_rule_tests.py` 覆盖 98.9% / 95.1% ✅
+
+#### 重构
+
+- **ADR-014 check_directory 拆分**: C=48 → C=7, 209 → 48 行
+  - 拆为 6 个模块级 helper: `_load_directory_rules` / `_discover_target_files` / `_init_cache_store` / `_run_architecture_analysis` / `_check_with_cache` / `_check_files_serial` / `_check_files_parallel`
+  - 外部签名完全保留，9 个并行测试 + 18 个 store 集成测试全过
+  - 配套 `tests/test_adg_checker_refactor.py` 20 用例
+- **ast_parser.py 渐进拆**: 数据类（ASTNode/FunctionInfo/ClassInfo/ImportInfo/FileAST）抽到 `ast_nodes.py`
+  - ast_parser.py 1103 → 1021 行
+  - 通过 `__all__` 显式 re-export，零调用方迁移
+  - 19/19 ast_parser 测试 + 104 关联测试全过
+
+#### 测试强化
+
+- **cmd_recommend 覆盖 29.6% → 99%**: `tests/test_cmd_recommend.py` 14 用例覆盖 5 个函数（_build_new_rules / _load_existing_rules / _save_rules / _apply_recommendations / cmd_recommend）
+- **adg_cli 23 cmd 全冒烟**: `tests/test_adg_cli_smoke.py` 17 → 28 用例
+  - 新增 11 个未覆盖 cmd 的 `--help` smoke：bench / cicd / dashboard / fix / html-report / install-hooks / list-rules / lsp / monorepo / notify / pattern-learner
+- **link_efficiency_cases 测试**: `tests/test_link_efficiency_cases.py` 5 用例（脚本存在 / dry-run / min-score / 幂等性）
+
+#### 文档
+
+- **双向交叉引用自动化**: `tools/scripts/link_efficiency_cases.py`
+  - 解析 ai-*.md frontmatter tags + H1 关键词
+  - 与 case-studies/*.md 关键词匹配（alias 展开 + 字符串）
+  - 双向追加"相关案例" / "相关方法论"段
+  - `--dry-run` / `--min-score` / 幂等（已存在跳过）
+  - 实际补全: 10 个 ai-*.md + 5 个 case-studies / 20 处链接
+
+#### 验证
+
+- 全量核心测试: 86/86 pass
+- ruff + mypy: clean
+- ADR 索引: 增 ADR-014 / ADR-015，修订 ADR-013
+- ROADMAP Phase 18: 7/7 任务 ✅
+
 ## [2.14.0] - 2026-08-28
 
 ### 重要变更: P1-2 auto_fix 双路径重构（ROADMAP P1-2 完成）

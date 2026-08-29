@@ -321,20 +321,36 @@ class DependencyGraph:
         return results
 
     def _find_critical_path(self, target_id: str) -> list[str]:
-        """从根节点找到目标节点的最短路径"""
+        """从根节点找到目标节点的最短路径.
+
+        V2.20 P4-7 拆分: 抽 _bfs_to_target 收口 BFS 核心循环,
+        主函数仅负责 root 守卫 + 委托.
+        """
         if not self.root_package or self.root_package not in self.nodes:
             return []
+        root = self.root_package
+        assert root is not None  # narrow type for mypy
+        return self._bfs_to_target(root, target_id)
 
+    def _bfs_to_target(self, root: str, target_id: str) -> list[str]:
+        """BFS 寻找从 root 到 target 的最短路径.
+
+        Args:
+            root: 起始根节点 (调用前应已 non-None 检查)
+            target_id: 目标节点 ID
+
+        Returns:
+            路径节点列表 (含首尾), 未找到返 []
+        """
         from collections import deque
 
-        queue = deque([(self.root_package, [self.root_package])])
-        visited = {self.root_package}
+        queue: deque[tuple[str, list[str]]] = deque([(root, [root])])
+        visited = {root}
 
         while queue:
             current, path = queue.popleft()
             if current == target_id:
                 return path
-
             for neighbor in self.nodes[current].outgoing:
                 if neighbor not in visited:
                     visited.add(neighbor)

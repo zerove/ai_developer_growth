@@ -136,23 +136,55 @@ def analyze(records: list[dict[str, object]], top_n: int = 10) -> dict[str, obje
     }
 
 
+def _render_header(days: int | None) -> list[str]:
+    """渲染报告 header (标题 + 范围).
+
+    V2.19 P3-24 拆分: 从 render (B=8) 抽出.
+    """
+    return [
+        "=" * 50,
+        "知识库检索查询分析报告",
+        f"范围: 最近 {days} 天" if days else "范围: 全部",
+        "=" * 50,
+    ]
+
+
+def _render_query_list(
+    items: object,
+    title: str,
+) -> list[str]:
+    """渲染查询列表段 (TOP/零召回) 文本.
+
+    V2.19 P3-24 拆分: 从 render (B=8) 抽出.
+    items 应为 list[dict], 非 list 防御性跳过.
+    """
+    if not isinstance(items, list):
+        return []
+    lines = ["", f"── {title} ──"]
+    for item in items:
+        if isinstance(item, dict):
+            count = item.get("count", 0)
+            query = item.get("query", "")
+            lines.append(f"  {count:4d}  {query}")
+    return lines
+
+
 def render(report: dict[str, object], days: int | None) -> str:
-    """渲染为文本周报。"""
-    lines = ["=" * 50, "知识库检索查询分析报告", f"范围: 最近 {days} 天" if days else "范围: 全部", "=" * 50]
+    """渲染为文本周报 (orchestrator).
+
+    V2.19 P3-24 拆分: 从 B=8 / 20 行函数拆出 2 个 helper.
+    主函数仅负责: 拼装 header + summary + 2 段列表 + footer.
+    """
+    lines = _render_header(days)
     lines.append(f"总查询: {report['total']}  唯一查询: {report['unique']}  平均耗时: {report['avg_time_ms']}ms")
     lines.append(f"零召回: {report['zero_recall_count']} 次 ({report['zero_recall_rate']}%)")
-    top_queries = report.get("top_queries", [])
-    zero_queries = report.get("zero_queries", [])
-    if isinstance(top_queries, list):
-        lines.append("\n── TOP 查询 ──")
-        for item in top_queries:
-            if isinstance(item, dict):
-                lines.append(f"  {item.get('count', 0):4d}  {item.get('query', '')}")
-    if isinstance(zero_queries, list):
-        lines.append("\n── 零召回查询（建议补同义词/检查分词）──")
-        for item in zero_queries:
-            if isinstance(item, dict):
-                lines.append(f"  {item.get('count', 0):4d}  {item.get('query', '')}")
+    lines.extend(_render_query_list(report.get("top_queries", []), "TOP 查询"))
+    lines.extend(
+        _render_query_list(
+            report.get("zero_queries", []),
+            "零召回查询（建议补同义词/检查分词）",
+        )
+    )
     lines.append("=" * 50)
     return "\n".join(lines)
 

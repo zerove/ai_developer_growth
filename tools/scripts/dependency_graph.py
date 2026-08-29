@@ -263,16 +263,37 @@ class DependencyGraph:
         return result
 
     def detect_conflicts(self) -> list[DependencyConflict]:
-        """检测依赖版本冲突"""
-        # 按包名分组
-        by_name: dict[str, dict[str, list[str]]] = defaultdict(lambda: defaultdict(list))
+        """检测依赖版本冲突.
 
+        V2.20 P4-11 拆分: 抽 _group_by_name_and_version 收口分组 + _convert_groups_to_conflicts
+        收口冲突构造, 主函数 1 行委托.
+        """
+        by_name = self._group_by_name_and_version()
+        return self._convert_groups_to_conflicts(by_name)
+
+    def _group_by_name_and_version(self) -> dict[str, dict[str, list[str]]]:
+        """按包名+版本分组节点 ID (排除 root).
+
+        Returns:
+            {pkg_name: {version: [node_id, ...]}}
+        """
+        by_name: dict[str, dict[str, list[str]]] = defaultdict(lambda: defaultdict(list))
         for node_id, node in self.nodes.items():
             if node_id.startswith("ROOT:"):
                 continue
             by_name[node.name][node.version].append(node_id)
+        return by_name
 
-        conflicts = []
+    def _convert_groups_to_conflicts(self, by_name: dict[str, dict[str, list[str]]]) -> list[DependencyConflict]:
+        """将多版本分组转换为 DependencyConflict 列表.
+
+        Args:
+            by_name: {pkg_name: {version: [node_id, ...]}}
+
+        Returns:
+            冲突列表 (仅含多版本包)
+        """
+        conflicts: list[DependencyConflict] = []
         for pkg_name, versions in by_name.items():
             if len(versions) > 1:
                 conflicts.append(
@@ -282,7 +303,6 @@ class DependencyGraph:
                         severity="error" if len(versions) > 2 else "warning",
                     )
                 )
-
         return conflicts
 
     def get_transitive_dependencies(self, package_key: str) -> set[str]:

@@ -404,31 +404,33 @@ def _build_sync_parser() -> argparse.ArgumentParser:
     return parser
 
 
+def _print_json_result(result: object) -> None:
+    """以 JSON 格式打印同步子命令结果.
+
+    V2.19 P3-26 拆分: 从 _execute_sync_command (B=7) 抽出.
+    消除 6 个 elif 分支的 print(json.dumps(..., indent=2, ensure_ascii=False)) 重复.
+    """
+    print(json.dumps(result, indent=2, ensure_ascii=False))
+
+
 def _execute_sync_command(sync: GitHubProjectsSync, args: argparse.Namespace) -> None:
-    """执行同步子命令并打印 JSON 结果。"""
+    """执行同步子命令并打印 JSON 结果 (orchestrator).
+
+    V2.19 P3-26 拆分: 从 B=7 / 26 行函数拆出 _print_json_result 公共 helper.
+    6 个子命令统一调用模式, 委托公共打印.
+    """
     if args.command == "full-sync":
-        result = sync.full_sync(dry_run=args.dry_run)
-        print(json.dumps(result, indent=2, ensure_ascii=False))
-
+        _print_json_result(sync.full_sync(dry_run=args.dry_run))
     elif args.command == "sync-issue":
-        result = sync.sync_issue_to_project(args.issue)
-        print(json.dumps(result, indent=2, ensure_ascii=False))
-
+        _print_json_result(sync.sync_issue_to_project(args.issue))
     elif args.command == "sync-project":
-        project_result: list[dict[str, Any]] = sync.sync_project_to_issues()
-        print(json.dumps(project_result, indent=2, ensure_ascii=False))
-
+        _print_json_result(sync.sync_project_to_issues())
     elif args.command == "list-project":
-        issues = sync.list_project_issues()
-        print(json.dumps(issues, indent=2, ensure_ascii=False))
-
+        _print_json_result(sync.list_project_issues())
     elif args.command == "project-info":
-        info = sync.get_project_info()
-        print(json.dumps(info, indent=2, ensure_ascii=False))
-
+        _print_json_result(sync.get_project_info())
     elif args.command == "sync-issues":
-        result = sync.sync_specific_issues(args.issues)
-        print(json.dumps(result, indent=2, ensure_ascii=False))
+        _print_json_result(sync.sync_specific_issues(args.issues))
 
 
 def main() -> int:

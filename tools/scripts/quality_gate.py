@@ -370,21 +370,37 @@ class ExceptionManager:
         return False
 
     def get_active_exceptions(self, rule_id: str | None = None) -> list[ExceptionRule]:
-        """获取当前有效的例外"""
+        """获取当前有效的例外.
+
+        V2.20 P4-4 拆分: 从 _is_expired 抽取过期判断, 主函数仅负责规则过滤 + 列表构造.
+        """
         now = datetime.utcnow()
         active = []
         for exc in self.exceptions:
             if rule_id and exc.rule != rule_id:
                 continue
-            if exc.expires:
-                try:
-                    exp_date = datetime.fromisoformat(exc.expires)
-                    if exp_date < now:
-                        continue  # 已过期
-                except ValueError:
-                    pass
+            if self._is_expired(exc, now):
+                continue
             active.append(exc)
         return active
+
+    def _is_expired(self, exc: ExceptionRule, now: datetime) -> bool:
+        """判断例外是否已过期.
+
+        Args:
+            exc: 例外规则
+            now: 当前 UTC 时间
+
+        Returns:
+            True if exc.expires 存在且早于 now, 或 expires 解析失败 (按原行为放行)
+        """
+        if not exc.expires:
+            return False
+        try:
+            exp_date = datetime.fromisoformat(exc.expires)
+        except ValueError:
+            return False
+        return exp_date < now
 
     def is_excepted(self, file_path: str, rule_id: str, line: int | None = None) -> ExceptionRule | None:
         """检查文件/规则是否有例外"""

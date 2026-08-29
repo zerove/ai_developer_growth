@@ -214,35 +214,66 @@ def _print_json_report(stats: dict[str, Any]) -> None:
     )
 
 
-def _print_text_report(stats: dict[str, Any], args: argparse.Namespace) -> None:
-    """Print report in text format."""
+def _print_report_header(stats: dict[str, Any], days: int | None) -> None:
+    """打印报告 header (标题 + 区间 + 总数).
+
+    V2.19 P3-30 拆分: 从 _print_text_report (B=6) 抽出.
+    """
     print("Rule Effectiveness Report")
     print(f"{'=' * 50}")
     print(f"Period: {stats['records_count']} records")
-    if args.days:
-        print(f"  (last {args.days} days)")
+    if days:
+        print(f"  (last {days} days)")
     print(f"Total issues found: {stats['total_issues']}")
     print()
 
-    # Top rules
-    print("Top 10 Most-Triggered Rules:")
+
+def _print_top_rules(stats: dict[str, Any], top_n: int = 10) -> None:
+    """打印 Top N 规则 (按 count 降序, 含百分比).
+
+    V2.19 P3-30 拆分: 从 _print_text_report (B=6) 抽出.
+    """
+    print(f"Top {top_n} Most-Triggered Rules:")
     print(f"  {'Rule ID':<35} {'Count':<8} {'%'}")
     print(f"  {'-' * 55}")
-    for rule_id, count in sorted(stats["rule_counts"].items(), key=lambda x: -x[1])[:10]:
-        pct = (count / stats["total_issues"] * 100) if stats["total_issues"] else 0
+    total = stats["total_issues"] or 1  # 防 0 除
+    for rule_id, count in sorted(stats["rule_counts"].items(), key=lambda x: -x[1])[:top_n]:
+        pct = count / total * 100
         print(f"  {rule_id:<35} {count:<8} {pct:.1f}%")
     print()
 
-    # By language
+
+def _print_language_breakdown(stats: dict[str, Any]) -> None:
+    """打印按语言分组 (按 count 降序).
+
+    V2.19 P3-30 拆分: 从 _print_text_report (B=6) 抽出.
+    """
     print("Issues by Language:")
     for lang, count in sorted(stats["lang_counts"].items(), key=lambda x: -x[1]):
         print(f"  {lang:<15} {count}")
     print()
 
-    # By severity
+
+def _print_severity_breakdown(stats: dict[str, Any]) -> None:
+    """打印按严重度分组 (按 severity 名升序).
+
+    V2.19 P3-30 拆分: 从 _print_text_report (B=6) 抽出.
+    """
     print("By Severity:")
     for sev, count in sorted(stats["severity_counts"].items()):
         print(f"  {sev:<10} {count}")
+
+
+def _print_text_report(stats: dict[str, Any], args: argparse.Namespace) -> None:
+    """Print report in text format (orchestrator).
+
+    V2.19 P3-30 拆分: 从 B=6 / 30 行函数拆出 4 个 helper.
+    主函数仅负责: 拼装 4 段 (header / top / language / severity).
+    """
+    _print_report_header(stats, args.days)
+    _print_top_rules(stats)
+    _print_language_breakdown(stats)
+    _print_severity_breakdown(stats)
 
 
 def cmd_report(args: argparse.Namespace) -> None:

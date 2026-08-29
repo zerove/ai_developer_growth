@@ -21,6 +21,15 @@
       "structure:函数超过 50 行 (实际 59 行)": 1,
       "structure:函数超过 50 行 (实际 55 行)": 1
     },
+    "tools/scripts/rules/loader.py": {
+      "structure:函数超过 50 行 (实际 53 行)": 1
+    },
+    "tools/scripts/rules_engine/ast_fixer.py": {
+      "structure:函数超过 50 行 (实际 52 行)": 1
+    },
+    "tools/scripts/rules_engine/hallucination_detector.py": {
+      "structure:函数超过 50 行 (实际 56 行)": 1
+    },
     "tools/scripts/dependency_graph.py": {
       "structure:函数超过 50 行 (实际 54 行)": 1
     },
@@ -36,15 +45,6 @@
     },
     "tools/scripts/config/loader.py": {
       "structure:函数超过 50 行 (实际 61 行)": 1
-    },
-    "tools/scripts/rules_engine/ast_fixer.py": {
-      "structure:函数超过 50 行 (实际 52 行)": 1
-    },
-    "tools/scripts/rules_engine/hallucination_detector.py": {
-      "structure:函数超过 50 行 (实际 56 行)": 1
-    },
-    "tools/scripts/rules/loader.py": {
-      "structure:函数超过 50 行 (实际 53 行)": 1
     }
   }
 }

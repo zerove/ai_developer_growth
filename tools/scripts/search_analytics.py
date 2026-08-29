@@ -60,24 +60,46 @@ def load_records(path: Path, days: int | None) -> list[dict[str, object]]:
     return records
 
 
-def analyze(records: list[dict[str, object]], top_n: int = 10) -> dict[str, object]:
-    """核心聚合逻辑（独立函数便于测试）。"""
-    total = len(records)
-    zero_recall = [str(r["query"]) for r in records if r.get("total", 0) == 0]
-    queries = [str(r["query"]) for r in records]
+def _collect_query_times(records: list[dict[str, object]]) -> list[float]:
+    """收集每条记录的有效 time_ms (int/float 转 float).
+
+    V2.19 P3-22 拆分: 从 analyze (B=10) 抽出.
+    """
     times: list[float] = []
     for r in records:
         raw = r.get("time_ms", 0.0)
         if isinstance(raw, (int, float)):
             times.append(float(raw))
+    return times
+
+
+def _top_n_counts(items: list[str], top_n: int) -> list[dict[str, object]]:
+    """统计 items 出现次数并取 top_n, 返回 [{query, count}] 列表.
+
+    V2.19 P3-22 拆分: 从 analyze (B=10) 抽出.
+    """
+    return [{"query": q, "count": c} for q, c in Counter(items).most_common(top_n)]
+
+
+def analyze(records: list[dict[str, object]], top_n: int = 10) -> dict[str, object]:
+    """核心聚合逻辑 (orchestrator).
+
+    V2.19 P3-22 拆分: 从 B=10 / 22 行函数拆出 2 个 helper.
+    主函数仅负责: 基础计数 + 委托 2 helper + 装配 result dict.
+    """
+    total = len(records)
+    queries = [str(r["query"]) for r in records]
+    zero_recall = [str(r["query"]) for r in records if r.get("total", 0) == 0]
+    times = _collect_query_times(records)
+
     return {
         "total": total,
         "unique": len(set(queries)),
         "avg_time_ms": round(sum(times) / len(times), 2) if times else 0.0,
         "zero_recall_count": len(zero_recall),
         "zero_recall_rate": round(len(zero_recall) / total * 100, 1) if total else 0.0,
-        "top_queries": [{"query": q, "count": c} for q, c in Counter(queries).most_common(top_n)],
-        "zero_queries": [{"query": q, "count": c} for q, c in Counter(zero_recall).most_common(top_n)],
+        "top_queries": _top_n_counts(queries, top_n),
+        "zero_queries": _top_n_counts(zero_recall, top_n),
     }
 
 

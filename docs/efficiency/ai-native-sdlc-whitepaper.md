@@ -69,3 +69,17 @@ make slop-scan
 # 运行全套 AI-Native 门禁检查
 make check
 ```
+
+
+## 相关案例
+
+- **相关案例**: [autonomous-ai-native-sdlc-delivery](../case-studies/autonomous-ai-native-sdlc-delivery.md)
+
+- **相关案例**: [cross-platform-workflow-execution](../case-studies/cross-platform-workflow-execution.md)
+
+- **相关案例**: [full-integration-test](../case-studies/full-integration-test.md)
+
+- **相关案例**: [implement-robust-feature-with-full-dor-and-tdd-compliance](../case-studies/implement-robust-feature-with-full-dor-and-tdd-compliance.md)
+
+- **相关案例**: [jcode-ai-native-master-workflow-execution](../case-studies/jcode-ai-native-master-workflow-execution.md)
+

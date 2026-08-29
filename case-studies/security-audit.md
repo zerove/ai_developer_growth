@@ -284,3 +284,9 @@ IAST 在测试/预发环境运行，RASP 在生产环境防护，形成"测时�
 - [x] 关键洞察：7 条编号洞察，含具体数字/模式/代码片段/策略示例
 - [x] 代码/文档链接：提供仓库、PR 系列、提交记录、SARIF 制品库、复现命令、审计报告
 - [x] 人/AI 角色分离：协作过程明确记录人类做了什么、AI 做了什么
+
+
+## 相关方法论
+
+- **相关方法论**: [ai-security-development](../docs/efficiency/ai-security-development.md)
+

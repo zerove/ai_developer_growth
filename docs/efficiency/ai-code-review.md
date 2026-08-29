@@ -178,3 +178,9 @@ AI 审查清单:
 - [[docs/efficiency/anti-patterns|反模式]]
 - [[docs/efficiency/context-engineering|上下文工程]]
 - [[docs/efficiency/token-optimization|Token 优化]]
+
+
+## 相关案例
+
+- **相关案例**: [code-review](../case-studies/code-review.md)
+

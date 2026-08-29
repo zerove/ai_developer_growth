@@ -129,3 +129,9 @@ Lint/Typecheck/单测/契约测/集成测/安全/性能 七级门禁逐级拦截
 - [x] 关键洞察：5 条编号洞察，含具体数字/模式
 - [x] 代码/文档链接：提供核心实现文件路径
 - [x] 人/AI 角色分离：协作过程明确记录人类做了什么、AI 做了什么
+
+
+## 相关方法论
+
+- **相关方法论**: [ai-native-sdlc-whitepaper](../docs/efficiency/ai-native-sdlc-whitepaper.md)
+

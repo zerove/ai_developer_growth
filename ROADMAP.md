@@ -261,7 +261,7 @@
 | pytest-cov 8.x 试运行 | 解 ADR-013 (0.5d) | ✅ 已完成（ADR-013 误判已修订） |
 | ast_parser.py 拆分 | 1103 行→5 文件 (1d) | ✅ 渐进拆：数据层抽 ast_nodes.py (1103→1021) |
 | adg_cli 23 cmd smoke | 全子命令冒烟 (0.5d) | ✅ 已完成 (17→28, +11 cmd --help smoke) |
-| 效率文档↔案例双向链接 | 自动化补全 (0.2d) | 🚧 进行中 |
+| 效率文档↔案例双向链接 | 自动化补全 (0.2d) | ✅ 已完成 (link_efficiency_cases.py, 15 文件, 20 处链接) |
 
 ## 已接受现状 (ADR)
 

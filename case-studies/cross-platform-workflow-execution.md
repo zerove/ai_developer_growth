@@ -129,3 +129,9 @@ JCode 工作流配置文件统一定义，平台差异通过环境变量和条�
 - [x] 关键洞察：5 条编号洞察，含具体数字/模式
 - [x] 代码/文档链接：提供核心实现文件路径
 - [x] 人/AI 角色分离：协作过程明确记录人类做了什么、AI 做了什么
+
+
+## 相关方法论
+
+- **相关方法论**: [ai-native-sdlc-whitepaper](../docs/efficiency/ai-native-sdlc-whitepaper.md)
+

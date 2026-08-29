@@ -61,11 +61,16 @@ def _parse_timestamp(entry: dict[str, Any]) -> datetime | None:
         return None
 
 
-def analyze(entries: list[dict[str, Any]]) -> dict[str, Any]:
-    """统计与异常检测。"""
+def _build_event_counters(
+    entries: list[dict[str, Any]], now: datetime
+) -> tuple[Counter[str], dict[str, Counter[str]], Counter[str]]:
+    """构建 3 项 Counter: 总数 / 按天 / 最近 24h.
+
+    V2.18 P3-13 拆分: 从 analyze (C=11) 抽出.
+    返回 (type_counts, daily, last_24h).
+    """
     type_counts: Counter[str] = Counter()
     daily: dict[str, Counter[str]] = defaultdict(Counter)
-    now = datetime.now(timezone.utc)
     last_24h: Counter[str] = Counter()
 
     for entry in entries:
@@ -79,8 +84,19 @@ def analyze(entries: list[dict[str, Any]]) -> dict[str, Any]:
         if now - ts <= timedelta(hours=24):
             last_24h[etype] += 1
 
-    # 历史日均（按有记录的天数计算）
-    num_days = max(len(daily), 1)
+    return type_counts, dict(daily), last_24h
+
+
+def _detect_alerts(
+    type_counts: Counter[str],
+    last_24h: Counter[str],
+    num_days: int,
+) -> list[str]:
+    """检测 24h 异常波动.
+
+    V2.18 P3-13 拆分: 从 analyze (C=11) 抽出.
+    触发条件: 最近 24h 数 >= ALERT_MIN_COUNT 且 > 历史日均 * ALERT_MULTIPLIER.
+    """
     alerts: list[str] = []
     for etype, recent in last_24h.items():
         historical_daily = (type_counts[etype] - recent) / num_days
@@ -90,6 +106,20 @@ def analyze(entries: list[dict[str, Any]]) -> dict[str, Any]:
             alerts.append(f"{etype}: 最近24h {recent} 次（新出现的事件类型且超过下限 {ALERT_MIN_COUNT}）")
         elif recent > historical_daily * ALERT_MULTIPLIER:
             alerts.append(f"{etype}: 最近24h {recent} 次，历史日均 {historical_daily:.1f} 次（>{ALERT_MULTIPLIER}x）")
+    return alerts
+
+
+def analyze(entries: list[dict[str, Any]]) -> dict[str, Any]:
+    """统计与异常检测 (orchestrator).
+
+    V2.18 P3-13 拆分: 从 C=11 / 45 行主函数拆出 2 个 helper.
+    主函数仅负责: 加载数据 → 委托 counters/alerts → 汇总.
+    """
+    now = datetime.now(timezone.utc)
+    type_counts, daily, last_24h = _build_event_counters(entries, now)
+
+    num_days = max(len(daily), 1)
+    alerts = _detect_alerts(type_counts, last_24h, num_days)
 
     return {
         "total": len(entries),

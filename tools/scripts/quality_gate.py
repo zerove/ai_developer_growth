@@ -406,13 +406,163 @@ class QualityGateEngine:
         self.baseline_manager = BaselineManager(self.config.baseline)
         self.exception_manager = ExceptionManager(self.config)
 
+    def _gate_zero_new_errors(
+        self,
+        gate_name: str,
+        gate_config: QualityGateConfig,
+        baseline_comparison: dict[str, Any] | None,
+    ) -> GateResult | None:
+        """Gate 1: 零新增错误. 关闭时返回 None."""
+        if not gate_config.require_zero_new_errors:
+            return None
+        new_errors = (
+            [i for i in baseline_comparison.get("new", []) if i.get("severity") == "error"]
+            if baseline_comparison
+            else []
+        )
+        return GateResult(
+            gate_name=gate_name,
+            passed=len(new_errors) == 0,
+            rule_id="gate.zero-new-errors",
+            message=f"新增错误: {len(new_errors)} 个" if new_errors else "无新增错误",
+            details={"new_errors": new_errors},
+            severity=SeverityLevel.ERROR,
+        )
+
+    def _gate_zero_new_warnings(
+        self,
+        gate_name: str,
+        gate_config: QualityGateConfig,
+        baseline_comparison: dict[str, Any] | None,
+    ) -> GateResult | None:
+        """Gate 2: 零新增警告. 关闭时返回 None."""
+        if not gate_config.require_zero_new_warnings:
+            return None
+        new_warnings = (
+            [i for i in baseline_comparison.get("new", []) if i.get("severity") == "warning"]
+            if baseline_comparison
+            else []
+        )
+        return GateResult(
+            gate_name=gate_name,
+            passed=len(new_warnings) == 0,
+            rule_id="gate.zero-new-warnings",
+            message=f"新增警告: {len(new_warnings)} 个" if new_warnings else "无新增警告",
+            details={"new_warnings": new_warnings},
+            severity=SeverityLevel.WARNING,
+        )
+
+    def _gate_max_new_errors(
+        self,
+        gate_name: str,
+        gate_config: QualityGateConfig,
+        baseline_comparison: dict[str, Any] | None,
+    ) -> GateResult | None:
+        """Gate 3: 最大新增错误数. 关闭时返回 None."""
+        if gate_config.max_new_errors <= 0:
+            return None
+        new_errors = (
+            [i for i in baseline_comparison.get("new", []) if i.get("severity") == "error"]
+            if baseline_comparison
+            else []
+        )
+        return GateResult(
+            gate_name=gate_name,
+            passed=len(new_errors) <= gate_config.max_new_errors,
+            rule_id="gate.max-new-errors",
+            message=f"新增错误数 {len(new_errors)} <= {gate_config.max_new_errors}",
+            details={"count": len(new_errors), "limit": gate_config.max_new_errors},
+            severity=SeverityLevel.ERROR,
+        )
+
+    def _gate_max_new_warnings(
+        self,
+        gate_name: str,
+        gate_config: QualityGateConfig,
+        baseline_comparison: dict[str, Any] | None,
+    ) -> GateResult | None:
+        """Gate 4: 最大新增警告数. 关闭时返回 None."""
+        if gate_config.max_new_warnings <= 0:
+            return None
+        new_warnings = (
+            [i for i in baseline_comparison.get("new", []) if i.get("severity") == "warning"]
+            if baseline_comparison
+            else []
+        )
+        return GateResult(
+            gate_name=gate_name,
+            passed=len(new_warnings) <= gate_config.max_new_warnings,
+            rule_id="gate.max-new-warnings",
+            message=f"新增警告数 {len(new_warnings)} <= {gate_config.max_new_warnings}",
+            details={"count": len(new_warnings), "limit": gate_config.max_new_warnings},
+            severity=SeverityLevel.WARNING,
+        )
+
+    def _gate_min_coverage(
+        self,
+        gate_name: str,
+        gate_config: QualityGateConfig,
+    ) -> GateResult | None:
+        """Gate 5: 最小覆盖率. 当前未实现, 始终返回 placeholder."""
+        if gate_config.min_coverage_overall <= 0:
+            return None
+        # 覆盖率工具集成待实现, 暂时跳过
+        return GateResult(
+            gate_name=gate_name,
+            passed=True,
+            rule_id="gate.coverage-overall",
+            message="覆盖率检查待实现",
+            details={},
+            severity=SeverityLevel.WARNING,
+        )
+
+    def _gate_no_worsened(
+        self,
+        gate_name: str,
+        baseline_comparison: dict[str, Any] | None,
+    ) -> GateResult | None:
+        """Gate 6: 基线恶化检查. 关闭时返回 None."""
+        if not self.config.baseline.fail_on_worsened or not baseline_comparison:
+            return None
+        worsened = baseline_comparison.get("worsened", [])
+        return GateResult(
+            gate_name=gate_name,
+            passed=len(worsened) == 0,
+            rule_id="gate.no-worsened",
+            message=f"严重性恶化: {len(worsened)} 个" if worsened else "无恶化",
+            details={"worsened": worsened},
+            severity=SeverityLevel.ERROR,
+        )
+
+    def _gate_current_issues(
+        self,
+        gate_name: str,
+        filtered_results: list[CheckResult],
+    ) -> GateResult:
+        """Gate 7: 当前总违规数检查 (始终运行)."""
+        total_issues = sum(len(r.issues) for r in filtered_results)
+        error_count = sum(1 for r in filtered_results for i in r.issues if i.severity == Severity.ERROR)
+        warning_count = sum(1 for r in filtered_results for i in r.issues if i.severity == Severity.WARNING)
+        return GateResult(
+            gate_name=gate_name,
+            passed=error_count == 0,
+            rule_id="gate.current-errors",
+            message=f"当前错误: {error_count} 个, 警告: {warning_count} 个",
+            details={"errors": error_count, "warnings": warning_count, "total": total_issues},
+            severity=SeverityLevel.ERROR,
+        )
+
     def evaluate(
         self,
         results: list[CheckResult],
         gate_name: str = "default",
         baseline: dict[str, Any] | None = None,
     ) -> QualityGateReport:
-        """评估质量门禁"""
+        """评估质量门禁 (orchestrator).
+
+        V2.17 P2-2 拆分: 从 C=32 / 152 行主函数拆出 7 个 _gate_* helper.
+        主函数仅负责 orchestration: 应用例外 → 基线对比 → 7 规则评估 → 汇总.
+        """
         start = time.time()
 
         gate_config = self.config.quality_gates.get(gate_name, QualityGateConfig(name=gate_name))
@@ -426,124 +576,20 @@ class QualityGateEngine:
         if self.config.baseline.enabled:
             baseline_comparison = self.baseline_manager.compare_with_baseline(filtered_results, baseline)
 
-        # 评估各项规则
-        gate_results = []
-
-        # 1. 零新增错误
-        if gate_config.require_zero_new_errors:
-            new_errors = (
-                [i for i in baseline_comparison.get("new", []) if i.get("severity") == "error"]
-                if baseline_comparison
-                else []
-            )
-            gate_results.append(
-                GateResult(
-                    gate_name=gate_name,
-                    passed=len(new_errors) == 0,
-                    rule_id="gate.zero-new-errors",
-                    message=f"新增错误: {len(new_errors)} 个" if new_errors else "无新增错误",
-                    details={"new_errors": new_errors},
-                    severity=SeverityLevel.ERROR,
-                )
-            )
-
-        # 2. 零新增警告
-        if gate_config.require_zero_new_warnings:
-            new_warnings = (
-                [i for i in baseline_comparison.get("new", []) if i.get("severity") == "warning"]
-                if baseline_comparison
-                else []
-            )
-            gate_results.append(
-                GateResult(
-                    gate_name=gate_name,
-                    passed=len(new_warnings) == 0,
-                    rule_id="gate.zero-new-warnings",
-                    message=f"新增警告: {len(new_warnings)} 个" if new_warnings else "无新增警告",
-                    details={"new_warnings": new_warnings},
-                    severity=SeverityLevel.WARNING,
-                )
-            )
-
-        # 3. 最大新增错误数
-        if gate_config.max_new_errors > 0:
-            new_errors = (
-                [i for i in baseline_comparison.get("new", []) if i.get("severity") == "error"]
-                if baseline_comparison
-                else []
-            )
-            gate_results.append(
-                GateResult(
-                    gate_name=gate_name,
-                    passed=len(new_errors) <= gate_config.max_new_errors,
-                    rule_id="gate.max-new-errors",
-                    message=f"新增错误数 {len(new_errors)} <= {gate_config.max_new_errors}",
-                    details={"count": len(new_errors), "limit": gate_config.max_new_errors},
-                    severity=SeverityLevel.ERROR,
-                )
-            )
-
-        # 4. 最大新增警告数
-        if gate_config.max_new_warnings > 0:
-            new_warnings = (
-                [i for i in baseline_comparison.get("new", []) if i.get("severity") == "warning"]
-                if baseline_comparison
-                else []
-            )
-            gate_results.append(
-                GateResult(
-                    gate_name=gate_name,
-                    passed=len(new_warnings) <= gate_config.max_new_warnings,
-                    rule_id="gate.max-new-warnings",
-                    message=f"新增警告数 {len(new_warnings)} <= {gate_config.max_new_warnings}",
-                    details={"count": len(new_warnings), "limit": gate_config.max_new_warnings},
-                    severity=SeverityLevel.WARNING,
-                )
-            )
-
-        # 5. 覆盖率检查 (需要从结果中提取)
-        if gate_config.min_coverage_overall > 0:
-            # 这里需要集成覆盖率工具，暂时跳过
-            gate_results.append(
-                GateResult(
-                    gate_name=gate_name,
-                    passed=True,
-                    rule_id="gate.coverage-overall",
-                    message="覆盖率检查待实现",
-                    details={},
-                    severity=SeverityLevel.WARNING,
-                )
-            )
-
-        # 6. 基线恶化检查
-        if self.config.baseline.fail_on_worsened and baseline_comparison:
-            worsened = baseline_comparison.get("worsened", [])
-            gate_results.append(
-                GateResult(
-                    gate_name=gate_name,
-                    passed=len(worsened) == 0,
-                    rule_id="gate.no-worsened",
-                    message=f"严重性恶化: {len(worsened)} 个" if worsened else "无恶化",
-                    details={"worsened": worsened},
-                    severity=SeverityLevel.ERROR,
-                )
-            )
-
-        # 7. 当前总违规数检查
-        total_issues = sum(len(r.issues) for r in filtered_results)
-        error_count = sum(1 for r in filtered_results for i in r.issues if i.severity == Severity.ERROR)
-        warning_count = sum(1 for r in filtered_results for i in r.issues if i.severity == Severity.WARNING)
-
-        gate_results.append(
-            GateResult(
-                gate_name=gate_name,
-                passed=error_count == 0,
-                rule_id="gate.current-errors",
-                message=f"当前错误: {error_count} 个, 警告: {warning_count} 个",
-                details={"errors": error_count, "warnings": warning_count, "total": total_issues},
-                severity=SeverityLevel.ERROR,
-            )
-        )
+        # 评估 7 项规则
+        gate_results: list[GateResult] = []
+        for gate_fn in (
+            lambda: self._gate_zero_new_errors(gate_name, gate_config, baseline_comparison),
+            lambda: self._gate_zero_new_warnings(gate_name, gate_config, baseline_comparison),
+            lambda: self._gate_max_new_errors(gate_name, gate_config, baseline_comparison),
+            lambda: self._gate_max_new_warnings(gate_name, gate_config, baseline_comparison),
+            lambda: self._gate_min_coverage(gate_name, gate_config),
+            lambda: self._gate_no_worsened(gate_name, baseline_comparison),
+            lambda: self._gate_current_issues(gate_name, filtered_results),
+        ):
+            result = gate_fn()
+            if result is not None:
+                gate_results.append(result)
 
         # 汇总
         all_passed = all(r.passed for r in gate_results)

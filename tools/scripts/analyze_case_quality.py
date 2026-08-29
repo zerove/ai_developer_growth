@@ -206,22 +206,41 @@ class CaseStudyQualityAnalyzer:
 
         return min(max_score, score)
 
-    def _extract_table_rows(self, content: str) -> list[str]:
-        """Extract table data rows."""
-        lines = content.split("\n")
-        in_table = False
-        data_rows = []
+    def _is_table_header(self, line: str) -> bool:
+        """判断行是否为表格表头 (含 阶段/总计/指标/Metric/--- 关键字).
 
-        for line in lines:
-            if "|" in line and (
-                "阶段" in line or "总计" in line or "指标" in line or "Metric" in line or "---" in line
-            ):
+        V2.18 P3-12 拆分: 从 _extract_table_rows (C=13) 抽出.
+        """
+        if "|" not in line:
+            return False
+        return any(keyword in line for keyword in ("阶段", "总计", "指标", "Metric", "---"))
+
+    def _is_separator_row(self, line: str) -> bool:
+        """判断行是否为表格分隔行 (markdown 表格的 |---|).
+
+        V2.18 P3-12 拆分: 从 _extract_table_rows (C=13) 抽出.
+        """
+        return "---" in line
+
+    def _extract_table_rows(self, content: str) -> list[str]:
+        """Extract table data rows (orchestrator).
+
+        V2.18 P3-12 拆分: 从 C=13 / 30 行主函数拆出 2 个行分类 helper.
+        主函数仅负责: state machine (in_table) → 收集 data_rows.
+        """
+        data_rows: list[str] = []
+        in_table = False
+
+        for line in content.split("\n"):
+            if self._is_table_header(line):
                 in_table = True
-            if in_table and line.strip().startswith("|"):
-                if "---" not in line:  # Skip separator rows
-                    data_rows.append(line)
-            elif in_table and not line.strip().startswith("|"):
+            if not in_table:
+                continue
+            if not line.strip().startswith("|"):
                 break
+            if self._is_separator_row(line):
+                continue
+            data_rows.append(line)
 
         return data_rows
 

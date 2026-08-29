@@ -537,11 +537,32 @@ def _build_audit_to_pr_parser() -> argparse.ArgumentParser:
     return parser
 
 
+def _run_audit_workflow(args: argparse.Namespace) -> int:
+    """执行审计主流程: 跑审计 + 输出 + (可选) 创建 PR.
+
+    V2.19 P3-47 拆分: 从 main (B=6) 抽出.
+    返回 exit code.
+    """
+    audit_result, report = _run_audit_and_generate_report(full=not args.no_full)
+
+    # 输出到文件
+    _handle_output(report, args.output)
+
+    # 创建 PR
+    if args.create_pr:
+        return _handle_create_pr(report, args.title, args.base)
+
+    # 如果没有指定输出文件，打印到 stdout
+    _handle_stdout_output(report, args.output, args.create_pr)
+
+    return 0 if audit_result["success"] else 1
+
+
 def main() -> int:
     """CLI 入口 (orchestrator).
 
-    V2.19 P3-39 拆分: 从 B=6 / 35 行 main 拆出 _build_audit_to_pr_parser.
-    主函数仅负责: 解析参数 → 委托 stdin / audit+output / help 路径.
+    V2.19 P3-47 拆分: 从 B=6 main 拆出 _run_audit_workflow.
+    主函数仅负责: 解析参数 → 委托 stdin / 审计流程 / help 路径.
     """
     parser = _build_audit_to_pr_parser()
     args = parser.parse_args()
@@ -552,19 +573,7 @@ def main() -> int:
 
     # 运行审计
     if args.run_audit or args.create_pr:
-        audit_result, report = _run_audit_and_generate_report(full=not args.no_full)
-
-        # 输出到文件
-        _handle_output(report, args.output)
-
-        # 创建 PR
-        if args.create_pr:
-            return _handle_create_pr(report, args.title, args.base)
-
-        # 如果没有指定输出文件，打印到 stdout
-        _handle_stdout_output(report, args.output, args.create_pr)
-
-        return 0 if audit_result["success"] else 1
+        return _run_audit_workflow(args)
 
     # 无参数时显示帮助
     parser.print_help()

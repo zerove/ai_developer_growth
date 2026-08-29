@@ -511,19 +511,22 @@ def _execute_sync_command(sync: GitHubProjectsSync, args: argparse.Namespace) ->
         _print_json_result(result)
 
 
-def main() -> int:
-    parser = _build_sync_parser()
-    args = parser.parse_args()
+def _resolve_token(args: argparse.Namespace) -> str | None:
+    """解析 token: 优先 args.token, 其次 GITHUB_TOKEN 环境变量.
 
-    if not args.command:
-        parser.print_help()
-        return 1
+    V2.19 P3-50 拆分: 从 main (B=6) 抽出.
+    返回 None 表示无 token.
+    """
+    if args.token:
+        return str(args.token)
+    return os.getenv("GITHUB_TOKEN")
 
-    args.token or os.getenv("GITHUB_TOKEN")
-    if not args.token and not os.getenv("GITHUB_TOKEN"):
-        print("错误: 请提供 GitHub Token (--token 或 GITHUB_TOKEN 环境变量)")
-        return 1
 
+def _run_with_sync(args: argparse.Namespace) -> int:
+    """创建 sync 实例并执行子命令, 返 exit code.
+
+    V2.19 P3-50 拆分: 从 main (B=6) 抽出.
+    """
     try:
         sync = GitHubProjectsSync(args.token, args.repo, args.project)
         _execute_sync_command(sync, args)
@@ -531,6 +534,27 @@ def main() -> int:
     except Exception as e:
         print(f"错误: {e}")
         return 1
+
+
+def main() -> int:
+    """CLI 入口 (orchestrator).
+
+    V2.19 P3-50 拆分: 从 B=6 / 20 行 main 拆出 2 个 helper.
+    主函数仅负责: 解析参数 → 守卫命令存在 + token → 委托 run.
+    """
+    parser = _build_sync_parser()
+    args = parser.parse_args()
+
+    if not args.command:
+        parser.print_help()
+        return 1
+
+    token = _resolve_token(args)
+    if not token:
+        print("错误: 请提供 GitHub Token (--token 或 GITHUB_TOKEN 环境变量)")
+        return 1
+    args.token = token
+    return _run_with_sync(args)
 
 
 if __name__ == "__main__":

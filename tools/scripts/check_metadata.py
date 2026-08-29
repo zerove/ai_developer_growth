@@ -26,47 +26,73 @@ def extract_frontmatter(content: str) -> tuple[dict[str, str], str]:
     return {}, content
 
 
+def _check_required_fields(frontmatter: dict[str, str], is_adr: bool) -> list[str]:
+    """检查必填字段 (title/description/category/tags/difficulty).
+
+    V2.18 P3-9 拆分: 从 check_metadata (C=13) 抽出.
+    ADR 文档使用独立模板, 跳过 5 字段规范.
+    """
+    if is_adr:
+        return []
+    required_fields = ["title", "description", "category", "tags", "difficulty"]
+    return [f"Missing required field: {f}" for f in required_fields if f not in frontmatter]
+
+
+def _check_category(frontmatter: dict[str, str], file_path: Path) -> list[str]:
+    """检查 category 字段是否在合法值列表.
+
+    V2.18 P3-9 拆分: 从 check_metadata (C=13) 抽出.
+    案例研究是独立分类, 单独追加到合法值列表.
+    """
+    valid_categories = ["认知层", "学习层", "效率层", "工具层", "治理层"]
+    if "case-studies" in str(file_path):
+        valid_categories.append("案例研究")
+    if "category" in frontmatter and frontmatter["category"] not in valid_categories:
+        return [f"Invalid category: {frontmatter['category']}"]
+    return []
+
+
+def _check_difficulty(frontmatter: dict[str, str]) -> list[str]:
+    """检查 difficulty 字段是否在合法值列表.
+
+    V2.18 P3-9 拆分: 从 check_metadata (C=13) 抽出.
+    """
+    valid_difficulties = ["入门", "基础", "进阶", "高级", "专家"]
+    if "difficulty" in frontmatter and frontmatter["difficulty"] not in valid_difficulties:
+        return [f"Invalid difficulty: {frontmatter['difficulty']}"]
+    return []
+
+
+def _check_description_length(frontmatter: dict[str, str]) -> list[str]:
+    """检查 description 长度 (≤ 50 字符).
+
+    V2.18 P3-9 拆分: 从 check_metadata (C=13) 抽出.
+    """
+    if "description" in frontmatter and len(frontmatter["description"]) > 50:
+        return [f"Description too long: {len(frontmatter['description'])} chars"]
+    return []
+
+
 def check_metadata(file_path: Path) -> list[str]:
-    """检查单个文件的元数据"""
-    issues = []
+    """检查单个文件的元数据 (orchestrator).
+
+    V2.18 P3-9 拆分: 从 C=13 / 60 行主函数拆出 4 个 field checker helper.
+    主函数仅负责: 读文件 → 提取 frontmatter → 委托 4 个 checker → 汇总.
+    """
+    issues: list[str] = []
 
     try:
         content = file_path.read_text(encoding="utf-8")
-        frontmatter, body = extract_frontmatter(content)
-
-        # ADR 文档使用独立模板 (id/title/date/status)，不适用五字段规范
-        is_adr = "docs/adr" in str(file_path) and file_path.name != "ADR.md"
-
-        # 检查必填字段
-        if not is_adr:
-            required_fields = ["title", "description", "category", "tags", "difficulty"]
-            for field in required_fields:
-                if field not in frontmatter:
-                    issues.append(f"Missing required field: {field}")
-
-        # 检查分类
-        valid_categories = ["认知层", "学习层", "效率层", "工具层", "治理层"]
-        # 案例研究是独立文档类型 (GOVERNANCE.md 文档类型表)
-        if "case-studies" in str(file_path):
-            valid_categories.append("案例研究")
-
-        if "category" in frontmatter:
-            if frontmatter["category"] not in valid_categories:
-                issues.append(f"Invalid category: {frontmatter['category']}")
-
-        # 检查难度
-        valid_difficulties = ["入门", "基础", "进阶", "高级", "专家"]
-        if "difficulty" in frontmatter:
-            if frontmatter["difficulty"] not in valid_difficulties:
-                issues.append(f"Invalid difficulty: {frontmatter['difficulty']}")
-
-        # 检查描述长度
-        if "description" in frontmatter:
-            if len(frontmatter["description"]) > 50:
-                issues.append(f"Description too long: {len(frontmatter['description'])} chars")
-
     except Exception as e:
-        issues.append(f"Error reading file: {e}")
+        return [f"Error reading file: {e}"]
+
+    frontmatter, _ = extract_frontmatter(content)
+    is_adr = "docs/adr" in str(file_path) and file_path.name != "ADR.md"
+
+    issues.extend(_check_required_fields(frontmatter, is_adr))
+    issues.extend(_check_category(frontmatter, file_path))
+    issues.extend(_check_difficulty(frontmatter))
+    issues.extend(_check_description_length(frontmatter))
 
     return issues
 

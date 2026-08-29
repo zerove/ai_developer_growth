@@ -214,24 +214,46 @@ def _collect_files(args: argparse.Namespace) -> list[Path]:
     return [f for f in Path("tools/scripts").rglob("*.py") if "__pycache__" not in str(f)]
 
 
+def _print_issues(result: dict[str, Any]) -> None:
+    """打印 check_file 返回的 issues.
+
+    V2.19 P3-19 拆分: 从 _process_file (B=9) 抽出.
+    """
+    for issue in result["issues"]:
+        print(f"   {issue}")
+
+
+def _try_apply_fix(filepath: Path, args: argparse.Namespace, has_annotation: bool) -> int:
+    """尝试自动修复, 打印提示, 返回是否修复 (0/1).
+
+    V2.19 P3-19 拆分: 从 _process_file (B=9) 抽出.
+    """
+    if not args.fix or has_annotation:
+        return 0
+    if not fix_file(filepath, args.model):
+        return 0
+    print(f"   🔧 {filepath.name} - 已自动标注")
+    return 1
+
+
 def _process_file(filepath: Path, args: argparse.Namespace) -> tuple[str, int]:
-    """Process a single file, return (status, fix_applied)."""
+    """处理单文件, 返回 (status, fix_applied) (orchestrator).
+
+    V2.19 P3-19 拆分: 从 B=9 / 19 行函数拆出 2 个 helper.
+    主函数仅负责: check_file → 委托 print+fix → 决定 status.
+    """
     result = check_file(filepath)
+    passed = result["passed"]
+    has_annotation = result["has_annotation"]
 
-    if not result["passed"]:
-        for issue in result["issues"]:
-            print(f"   {issue}")
+    if not passed:
+        _print_issues(result)
+    fix_applied = _try_apply_fix(filepath, args, has_annotation)
 
-    fix_applied = 0
-    if args.fix and not result["has_annotation"]:
-        if fix_file(filepath, args.model):
-            print(f"   🔧 {filepath.name} - 已自动标注")
-            fix_applied = 1
-
-    if result["passed"]:
-        if args.strict and not result["has_annotation"]:
-            return ("warn", fix_applied)
+    if passed and not (args.strict and not has_annotation):
         return ("pass", fix_applied)
+    if passed:
+        return ("warn", fix_applied)
     return ("fail", fix_applied)
 
 

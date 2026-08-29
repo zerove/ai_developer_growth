@@ -159,8 +159,56 @@ class GitHubProjectsSync:
         else:
             return {"status": "error", "error": response.text}
 
+    @staticmethod
+    def _find_column_for_labels(
+        issue: Issue,
+        label_mapping: dict[str, str],
+        columns_cache: dict[str, str],
+    ) -> str:
+        """检查 issue 标签, 返回首个匹配的列 ID (无则空串).
+
+        V2.19 P3-40 拆分: 从 _get_target_column_id (B=7) 抽出.
+        """
+        for label in issue.labels:
+            key = label.name.lower()
+            if key in label_mapping:
+                column_name = label_mapping[key]
+                if column_name in columns_cache:
+                    return columns_cache[column_name]
+        return ""
+
+    @staticmethod
+    def _find_column_for_state(
+        issue: Issue,
+        state_mapping: dict[str, str],
+        columns_cache: dict[str, str],
+    ) -> str:
+        """根据 issue.state 查列 ID (无则空串).
+
+        V2.19 P3-40 拆分: 从 _get_target_column_id (B=7) 抽出.
+        """
+        state = issue.state.lower()
+        if state in state_mapping:
+            column_name = state_mapping[state]
+            if column_name in columns_cache:
+                return columns_cache[column_name]
+        return ""
+
+    @staticmethod
+    def _default_column_id(columns_cache: dict[str, str]) -> str:
+        """返回 columns_cache 第一个列 ID, 空 cache 返空串.
+
+        V2.19 P3-40 拆分: 从 _get_target_column_id (B=7) 抽出.
+        """
+        columns = list(columns_cache.values())
+        return columns[0] if columns else ""
+
     def _get_target_column_id(self, issue: Issue) -> str:
-        """根据 Issue 状态/标签确定目标列"""
+        """根据 Issue 状态/标签确定目标列 (orchestrator).
+
+        V2.19 P3-40 拆分: 从 B=7 / 35 行方法拆出 3 个 helper + 提升 2 个映射常量.
+        主方法仅负责: 3 段委托 (label → state → default).
+        """
         # 状态映射
         state_mapping = {
             "open": "Todo",
@@ -176,23 +224,15 @@ class GitHubProjectsSync:
             "done": "Done",
         }
 
-        # 检查标签
-        for label in issue.labels:
-            if label.name.lower() in label_mapping:
-                column_name = label_mapping[label.name.lower()]
-                if column_name in self._project_columns_cache:
-                    return self._project_columns_cache[column_name]
+        label_match = self._find_column_for_labels(issue, label_mapping, self._project_columns_cache)
+        if label_match:
+            return label_match
 
-        # 回退到状态映射
-        state = issue.state.lower()
-        if state in state_mapping:
-            column_name = state_mapping[state]
-            if column_name in self._project_columns_cache:
-                return self._project_columns_cache[column_name]
+        state_match = self._find_column_for_state(issue, state_mapping, self._project_columns_cache)
+        if state_match:
+            return state_match
 
-        # 默认第一列
-        columns = list(self._project_columns_cache.values())
-        return columns[0] if columns else ""
+        return self._default_column_id(self._project_columns_cache)
 
     def sync_project_to_issues(self) -> list[dict[str, Any]]:
         """从 Project 同步卡片状态回 Issue"""

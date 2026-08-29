@@ -38,24 +38,57 @@ def _parse_ts(ts: str) -> float | None:
     return None
 
 
+def _parse_line(line: str) -> dict[str, object] | None:
+    """解析单行 JSON, 失败或空行返回 None.
+
+    V2.19 P3-23 拆分: 从 load_records (B=9) 抽出.
+    """
+    line = line.strip()
+    if not line:
+        return None
+    try:
+        return json.loads(line)
+    except json.JSONDecodeError:
+        return None
+
+
+def _is_after_cutoff(rec: dict[str, object], cutoff: float | None) -> bool:
+    """检查 rec 是否应保留 (cutoff 过滤后).
+
+    V2.19 P3-23 拆分: 从 load_records (B=9) 抽出.
+    返回 True 表示保留:
+    - cutoff 为 None (不需过滤) → 保留
+    - ts 解析失败 (None) → 保守保留 (不过滤, 避免误删)
+    - ts >= cutoff → 保留
+    - ts < cutoff → 剔除
+    """
+    if cutoff is None:
+        return True
+    raw_ts = rec.get("ts", "")
+    if not isinstance(raw_ts, str):
+        return True
+    ts = _parse_ts(raw_ts)
+    if ts is None:
+        return True  # 无效 ts 保守保留
+    return ts >= cutoff
+
+
 def load_records(path: Path, days: int | None) -> list[dict[str, object]]:
-    """加载日志记录，按天数过滤。"""
+    """加载日志记录, 按天数过滤 (orchestrator).
+
+    V2.19 P3-23 拆分: 从 B=9 / 20 行函数拆出 2 个 helper.
+    主函数仅负责: 守卫文件存在 → 委托行解析 + cutoff 判定 → 收集.
+    """
     if not path.exists():
         return []
     cutoff = time.time() - days * 86400 if days else None
-    records = []
+    records: list[dict[str, object]] = []
     for line in path.read_text(encoding="utf-8").splitlines():
-        line = line.strip()
-        if not line:
+        rec = _parse_line(line)
+        if rec is None:
             continue
-        try:
-            rec = json.loads(line)
-        except json.JSONDecodeError:
+        if not _is_after_cutoff(rec, cutoff):
             continue
-        if cutoff is not None:
-            ts = _parse_ts(rec.get("ts", ""))
-            if ts is not None and ts < cutoff:
-                continue
         records.append(rec)
     return records
 

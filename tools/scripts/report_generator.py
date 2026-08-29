@@ -106,17 +106,27 @@ def generate_junit_xml(results: list[Any]) -> str:
     return "\n".join(lines)
 
 
-def _count_html_summary(results: list[Any]) -> dict[str, int]:
-    """汇总 HTML 报告所需 4 项计数.
+def _count_severity_totals(results: list[Any]) -> dict[str, int]:
+    """统计 results 中 errors / warnings / info 总数.
 
-    V2.18 P3-11 拆分: 从 generate_html_report (C=11) 抽出.
+    V2.19 P3-33 拆分: 从 _count_html_summary (B=6) 抽出.
     """
     return {
         "total_errors": sum(r.error_count for r in results),
         "total_warnings": sum(r.warning_count for r in results),
         "total_info": sum(r.info_count for r in results),
-        "passed_count": sum(1 for r in results if r.passed),
     }
+
+
+def _count_html_summary(results: list[Any]) -> dict[str, int]:
+    """汇总 HTML 报告所需 4 项计数 (orchestrator).
+
+    V2.19 P3-33 拆分: 从 B=6 / 10 行函数拆出 _count_severity_totals.
+    主函数仅负责: 委托 severity 计数 + 追加 passed_count.
+    """
+    summary = _count_severity_totals(results)
+    summary["passed_count"] = sum(1 for r in results if r.passed)
+    return summary
 
 
 def _build_result_row(result: Any) -> list[str]:

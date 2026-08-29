@@ -9,7 +9,7 @@
 from dataclasses import dataclass, field
 from enum import Enum
 from pathlib import Path
-from typing import Any
+from typing import Any, cast
 
 
 class Language(str, Enum):
@@ -1594,21 +1594,53 @@ class LanguageRegistry:
         all_langs = set(self._toolchains.keys()) | set(self._custom_toolchains.keys())
         return sorted(all_langs, key=lambda lang: lang.value)
 
+    def _has_typescript_dependency(self, data: dict[str, object]) -> bool:
+        """检查 devDependencies / dependencies 是否声明 typescript.
+
+        V2.18 P3-15 拆分: 从 _detect_from_package_json (B=9) 抽出.
+        """
+        deps: dict[str, object] = {}
+        for key in ("devDependencies", "dependencies"):
+            section = data.get(key, {})
+            if isinstance(section, dict):
+                deps.update(cast("dict[str, object]", section))
+        return "typescript" in deps
+
+    def _has_typescript_script(self, data: dict[str, object]) -> bool:
+        """检查 scripts 任意条目是否引用 .ts/.tsx 源.
+
+        V2.18 P3-15 拆分: 从 _detect_from_package_json (B=9) 抽出.
+        """
+        scripts_raw = data.get("scripts", {})
+        if not isinstance(scripts_raw, dict):
+            return False
+        return any(isinstance(p, str) and (p.endswith(".ts") or p.endswith(".tsx")) for p in scripts_raw.values())
+
+    def _has_typescript_sources(self, project_root: Path) -> bool:
+        """检查项目目录是否包含 .ts/.tsx 源文件.
+
+        V2.18 P3-15 拆分: 从 _detect_from_package_json (B=9) 抽出.
+        """
+        return any(project_root.rglob("*.ts")) or any(project_root.rglob("*.tsx"))
+
     def _detect_from_package_json(self, project_root: Path) -> Language:
-        """package.json 存在时判定 TS 或 JS。"""
+        """package.json 存在时判定 TS 或 JS (orchestrator).
+
+        V2.18 P3-15 拆分: 从 B(9) / 27 行方法拆出 3 个判定 helper.
+        主方法仅负责: 读取 JSON → 委托 3 判定 → 异常回退 JS.
+        """
+        import json
+
         pkg = project_root / "package.json"
         try:
-            import json
-
             data = json.loads(pkg.read_text())
-            if "typescript" in data.get("devDependencies", {}) or "typescript" in data.get("dependencies", {}):
+            if (
+                self._has_typescript_dependency(data)
+                or self._has_typescript_script(data)
+                or self._has_typescript_sources(project_root)
+            ):
                 return Language.TYPESCRIPT
-            if any(p.endswith(".ts") or p.endswith(".tsx") for p in data.get("scripts", {}).values()):
-                return Language.TYPESCRIPT
-            # 检查源文件
-            if any(project_root.rglob("*.ts")) or any(project_root.rglob("*.tsx")):
-                return Language.TYPESCRIPT
-        except Exception:  # noqa: empty-except
+        except Exception:  # noqa: BLE001
             # TS 探测失败时降级为 JS, 属预期回退路径
             pass
         return Language.JAVASCRIPT

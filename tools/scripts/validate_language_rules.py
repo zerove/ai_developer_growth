@@ -221,22 +221,26 @@ _DEFAULT_EXCLUDE_DIRS: list[str] = [
 ]
 
 
+def _is_supported_file(fp: Path, effective_exclude: list[str]) -> bool:
+    """判断 fp 是否为支持语言的文件 (文件 + 未排除 + 有语言).
+
+    V2.19 P3-46 拆分: 从 _get_supported_files (B=6) 抽出.
+    """
+    if not fp.is_file():
+        return False
+    if _is_excluded(fp, effective_exclude):
+        return False
+    return bool(detect_language_from_file(fp))
+
+
 def _get_supported_files(dirpath: Path, exclude: list[str]) -> list[Path]:
     """Get all supported files in a directory (orchestrator).
 
-    V2.19 P3-34 拆分: 从 B=7 / 20 行函数拆出 1 个 helper + 提升 1 个常量.
-    主函数仅负责: 应用默认 exclude → 遍历文件 → 委托排除 + 语言检测 → 收集.
+    V2.19 P3-46 拆分: 从 B=6 / 16 行函数拆出 _is_supported_file.
+    主函数仅负责: 应用默认 exclude → 遍历文件 → 委托单文件判定 → 收集.
     """
     effective_exclude = exclude or _DEFAULT_EXCLUDE_DIRS
-    files: list[Path] = []
-    for fp in sorted(dirpath.rglob("*")):
-        if not fp.is_file():
-            continue
-        if _is_excluded(fp, effective_exclude):
-            continue
-        if detect_language_from_file(fp):
-            files.append(fp)
-    return files
+    return [fp for fp in sorted(dirpath.rglob("*")) if _is_supported_file(fp, effective_exclude)]
 
 
 def _calc_cyclomatic_complexity(node: ast.AST) -> int:

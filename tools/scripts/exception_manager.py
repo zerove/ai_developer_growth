@@ -678,19 +678,39 @@ class EnhancedExceptionManager:
             self.gitops.sync_to_git(list(self._requests.values()))
 
     def generate_audit_report(self) -> dict[str, Any]:
-        """生成审计报告"""
+        """生成审计报告.
+
+        V2.20 P4-14 拆分: 抽 _build_status_breakdown 收口 by_status 统计,
+        _build_requests_summary 收口 requests + approval_history 列表.
+        主函数仅负责 metadata + 3 段委托.
+        """
         return {
             "generated_at": datetime.utcnow().isoformat(),
             "total_requests": len(self._requests),
-            "by_status": {
-                status.value: len([r for r in self._requests.values() if r.status == status])
-                for status in ExceptionStatus
-            },
-            "pending_review": len([r for r in self._requests.values() if r.status == ExceptionStatus.PENDING]),
+            "by_status": self._build_status_breakdown(),
+            "pending_review": self._count_pending(),
             "expiring_soon": len(self.expiration.get_pending_alerts()),
             "requests": [r.to_dict() for r in self._requests.values()],
             "approval_history": [r.to_dict() for r in self.approval._approval_records],
         }
+
+    def _build_status_breakdown(self) -> dict[str, int]:
+        """按 status 分组统计 request 数量.
+
+        Returns:
+            {status_value: count}
+        """
+        return {
+            status.value: sum(1 for r in self._requests.values() if r.status == status) for status in ExceptionStatus
+        }
+
+    def _count_pending(self) -> int:
+        """统计 PENDING 状态 request 数量.
+
+        Returns:
+            PENDING 状态计数
+        """
+        return sum(1 for r in self._requests.values() if r.status == ExceptionStatus.PENDING)
 
 
 def create_enhanced_manager(

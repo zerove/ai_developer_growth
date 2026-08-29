@@ -203,21 +203,36 @@ def _save_cache(cache_file: Path, cache: dict[str, str]) -> None:
         pass
 
 
+def _is_excluded(fp: Path, exclude: list[str]) -> bool:
+    """判断文件路径是否命中任一 exclude 段.
+
+    V2.19 P3-34 拆分: 从 _get_supported_files (B=7) 抽出.
+    """
+    return any(ex in fp.parts for ex in exclude)
+
+
+_DEFAULT_EXCLUDE_DIRS: list[str] = [
+    "node_modules",
+    "target",
+    "vendor",
+    ".git",
+    "__pycache__",
+    ".venv",
+]
+
+
 def _get_supported_files(dirpath: Path, exclude: list[str]) -> list[Path]:
-    """Get all supported files in a directory."""
-    exclude = exclude or [
-        "node_modules",
-        "target",
-        "vendor",
-        ".git",
-        "__pycache__",
-        ".venv",
-    ]
-    files = []
+    """Get all supported files in a directory (orchestrator).
+
+    V2.19 P3-34 拆分: 从 B=7 / 20 行函数拆出 1 个 helper + 提升 1 个常量.
+    主函数仅负责: 应用默认 exclude → 遍历文件 → 委托排除 + 语言检测 → 收集.
+    """
+    effective_exclude = exclude or _DEFAULT_EXCLUDE_DIRS
+    files: list[Path] = []
     for fp in sorted(dirpath.rglob("*")):
         if not fp.is_file():
             continue
-        if any(ex in fp.parts for ex in exclude):
+        if _is_excluded(fp, effective_exclude):
             continue
         if detect_language_from_file(fp):
             files.append(fp)

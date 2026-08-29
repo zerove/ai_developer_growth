@@ -395,3 +395,71 @@
 - 重审 `language_registry.py` (1850 行) 拆分
 - `report_generator.py` Any 存量（3 处）根治（需 rules.models 与 rules_engine.models 类型统一）
 - 检查 `ai_native_mcp_server.py` 中其他长函数
+
+## Phase 22: v2.19.0 P3 续拆收尾 (2026-08-29)
+
+按 Phase 21 P3 后续候选 (B 级剩余热点) 实施:
+
+| 任务 | 说明 | 状态 |
+|------|------|------|
+| P3-15 | 拆 `language_registry._detect_from_package_json` B=9→A(5) (0.3d) | ✅ 已完成 (3c315fe, 3 helper) |
+| P3-16 | 拆 `language_registry.validate_toolchain` B=7→B(6) (0.2d) | ✅ 已完成 (0d3dbf2, _check_single_tool) |
+| P3-17 | 拆 `check_ai_annotation.detect_ai_generated_functions` B=9→A(4) (0.3d) | ✅ 已完成 (1f70a19, 2 helper + 7 常量) |
+| P3-18 | 拆 `check_ai_annotation.check_strict_mode` B=9→A(5) (0.2d) | ✅ 已完成 (9339d06, 2 helper + 3 常量) |
+| P3-19 | 拆 `check_ai_annotation._process_file` B=9→B(6) (0.2d) | ✅ 已完成 (0601f0f, 2 helper) |
+| P3-20 | 拆 `check_ai_annotation._collect_files` B=8→A(3) (0.2d) | ✅ 已完成 (851924d, 2 helper) |
+| P3-21 | 拆 `check_ai_annotation.check_file` B=7→A(4) (0.3d) | ✅ 已完成 (df2aa97, 2 helper) |
+| P3-22 | 拆 `search_analytics.analyze` B=10→B(6) (0.2d) | ✅ 已完成 (df1bf44, 2 helper) |
+| P3-23 | 拆 `search_analytics.load_records` B=9→B(6) (0.2d) | ✅ 已完成 (c095a8e, 2 helper) |
+| P3-24 | 拆 `search_analytics.render` B=8→A(1) (0.2d) | ✅ 已完成 (3784e00, 2 helper) |
+| P3-25 | 拆 `analyze_tracking.suggest_synonym_groups` B=9→A(3) (0.2d) | ✅ 已完成 (af633a0, 2 helper) |
+| P3-26 | 拆 `sync_issues._execute_sync_command` B=7→B(7) (0.2d) | ✅ 已完成 (e44786f, _print_json_result) |
+| P3-27 | 拆 `audit_trends.main` B=9→B(6) (0.3d) | ✅ 已完成 (5c39aa6, 3 helper) |
+| P3-28 | 拆 `rule_tracker._load_records` B=8→B(6) (0.2d) | ✅ 已完成 (4af3cba, 2 helper) |
+| P3-29 | 拆 `rule_tracker._aggregate_records` B=6→A(2) (0.2d) | ✅ 已完成 (d7a6579, 2 helper) |
+| P3-30 | 拆 `rule_tracker._print_text_report` B=6→A(1) (0.3d) | ✅ 已完成 (ee17b1c, 4 helper) |
+| P3-31 | 拆 `report_generator._build_sarif_results` B=6→A(3) (0.2d) | ✅ 已完成 (896f2dd, 2 helper) |
+| P3-32 | 拆 `report_generator._build_json_content` B=6→A(2) (0.2d) | ✅ 已完成 (a305b9a, _build_json_summary) |
+| P3-33 | 拆 `report_generator._count_html_summary` B=6→A(3) (0.1d) | ✅ 已完成 (e906488, _count_severity_totals) |
+| P3-34 | 拆 `validate_language_rules._get_supported_files` B=7→B(6) (0.1d) | ✅ 已完成 (952bdec, 1 helper + 常量) |
+| P3-35 | 拆 `audit_to_pr._count_violations_by_severity` B=7→A(1) (0.1d) | ✅ 已完成 (4625838, _count_by_severity) |
+| P3-36 | 拆 `audit_to_pr.create_github_pr` B=6→A(5) (0.2d) | ✅ 已完成 (24b0902, 2 helper) |
+| P3-37 | 拆 `audit_to_pr.run_governance_audit` B=6→A(3) (0.3d) | ✅ 已完成 (c1809b6, 3 helper) |
+| P3-38 | 拆 `audit_to_pr.parse_audit_output` B=6→A(2) (0.2d) | ✅ 已完成 (19087c1, 1 helper + 常量) |
+| P3-39 | 拆 `audit_to_pr.main` B=6→B(6) (0.1d) | ✅ 已完成 (f007410, _build_audit_to_pr_parser) |
+| P3-40 | 拆 `sync_issues._get_target_column_id` B=7→A(3) (0.2d) | ✅ 已完成 (d17a9bb, 3 helper) |
+| P3-41 | 拆 `sync_issues.list_project_issues` B=7→A(3) (0.2d) | ✅ 已完成 (1adb966, 2 helper) |
+| P3-43 | 拆 `audit_trends.main` B=6→A(4) (0.2d) | ✅ 已完成 (d017360, 2 helper) |
+| P3-44 | 拆 `search_analytics.analyze` B=6→A(5) (0.1d) | ✅ 已完成 (8dc907b, 2 helper) |
+| P3-45 | 拆 `search_analytics.load_records` B=6→A(5) (0.1d) | ✅ 已完成 (df962df, _compute_cutoff) |
+| P3-46 | 拆 `validate_language_rules._get_supported_files` B=6→A(4) (0.1d) | ✅ 已完成 (a6a3929, _is_supported_file) |
+| P3-47 | 拆 `audit_to_pr.main` B=6→A(4) (0.1d) | ✅ 已完成 (eb44e16, _run_audit_workflow) |
+| P3-48 | 拆 `sync_issues._execute_sync_command` B=7→A(2) (0.2d) | ✅ 已完成 (37a0f15, _dispatch_sync_command) |
+| P3-49 | 拆 `check_ai_annotation._process_file` B=6→A(2) (0.1d) | ✅ 已完成 (ba521ab, _decide_status) |
+| P3-50 | 拆 `sync_issues.main` B=6→A(3) (0.1d) | ✅ 已完成 (ac5ecdc, 2 helper) |
+
+**P3 续拆 35 项完成, 总计 ~6.5d**, 全部热点函数 C→A/B 级, 主函数均 ≤ 25 行
+
+### Phase 22 关键经验 (v2.19.0 内发现)
+
+- **dict | str 双出口类型** (`check_file`): 用 `isinstance(content_or_error, dict)` 守卫, mypy strict 干净
+- **dispatch table 重构** (`_execute_sync_command`): 6 个 if/elif → 1 个 dispatch helper, 主函数 A(2)
+- **失效 ts 边界修复** (P3-28): `_load_records` 测试 `test_skips_missing_timestamp_with_days` 暴露原 except 路径, 拆 helper 后显式处理
+- **基线零 Any 增量合规**: P3-15 用 `dict[str, object] + isinstance + cast` 模式避免 `dict[str, Any]` 增量 (基线 0 存量)
+- **显式 None 守卫 vs 类型注解**: `_is_after_cutoff(rec, cutoff: float | None)` 内部 `isinstance` 守卫代替 `cast`, 类型注解灵活
+- **main 复杂度的本质限制**: `main` 函数天然带 argparse + 多路径分发, 最低 A(3) 是常见结果
+- **dispatcher B(7) 是有意的**: `_dispatch_sync_command` 6 个 if/elif 命令映射, 主函数 A(2) 委托, 模式清晰
+
+### P3 续拆验证
+
+- typecheck: **192 source files clean**
+- quality-gate --full: **192/192 pass, 0 failed, 0 issues**
+- pytest: **15+ 测试套件全过** (audit_trends 16/16, sync_issues 28/28, search_analytics 23/23, rule_tracker 50/50, check_ai_annotation 67/67, validate_language_rules 238/238, language_registry 34/34 等)
+- pre-push 钩子: **本地 CI 全部通过, 真实允许推送**（无 `--no-verify` 绕过）
+
+### P3 续拆后续候选 (v2.20.0 远期)
+
+- 重审 `quality_gate.py` (1850 行) 内方法 (_gate_current_issues B(8), ExceptionManager.get_active_exceptions B(7) 等)
+- 重审 `dependency_graph.py` (build_from_dependencies B(8), _find_critical_path B(7))
+- `report_generator.py` Any 存量（3 处）根治
+- `ai_native_mcp_server.py` 内部长函数审查

@@ -1,59 +1,43 @@
-# ADR-013: pytest-xdist 覆盖率合并缺陷接受现状
+# ADR-013 (修订): 覆盖率报告"假 0%" 现象
 
 ## 状态
-接受（2026-08-28）
+**Revised** (2026-08-29) — 原 ADR 误判根因，正确结论见下方
 
-## 背景
-ROADMAP P1-2 要求"auto_fix 双路径重构"前置条件之一是"CI 覆盖率门禁
-可信"。全量跑测试时（`python -m pytest tests/ -n auto --cov=tools.scripts
---cov=tools.lsp`）发现两个模块始终 0% 覆盖（`tools/scripts/rule_marketplace.py`
-132 stmts / `tools/scripts/validate_rule_tests.py` 105 stmts），但单跑同一测试
-文件时覆盖率为 99% / 95%。
+## 原 ADR (v2.13.17) 描述
+`rule_marketplace.py` + `validate_rule_tests.py` 在 `pytest --cov -n auto` 下显示 0%。
+归因为 pytest-xdist 3.8.0 + pytest-cov 7.1.0 静态分析 file 表 vs arc 数据丢失。
 
-## 调查与实验（2026-08-28，5 轮共 8 次全量跑）
+## 复验 (v2.15.0)
+直接跑对应测试：
+```bash
+pytest tests/test_rule_marketplace_v2.py tests/test_validate_rule_tests.py \
+  --cov=tools.scripts.rule_marketplace \
+  --cov=tools.scripts.validate_rule_tests \
+  --cov-report=json
+```
+结果：**98.9%** + **95.1%** ✅ 全部达标。
 
-| 方案 | 结果 |
-|------|------|
-| `--cov-append` | 仍 0% |
-| `[tool.coverage.run] parallel = true` + `sigterm` | 仍 0% |
-| `conftest.py` 加 `pytest_configure` 强制 `_cov.cov_controller.start()` | 无效（属性名错） |
-| `[tool.coverage.run] data_file = ".coverage_data/.coverage"` + parallel | 仍 0% |
-| `COVERAGE_FILE=.coverage-data` 环境变量 | 仍 0% |
-| `--cov-config=pyproject.toml` addopts | 仍 0% |
-| 去掉 `source` 字段改自动 discover | 仍 0% 且引入新 0%（lsp_server） |
-| `--maxschedchunk=1` 强制每测试分发 | 仍 0% |
-| `pytest -n 2` 单跑两文件（COVERAGE_FILE） | 99% / 95% ✓ |
+## 真实根因
+**不是 xdist/coverage bug**。是 `--cov` flag 范围 + 测试集选择问题：
 
-## 根因诊断
-- `.coverage` sqlite 表 `file` 含 189-191 个文件，`arc` 总计 32487-32833 条
-- 但 `rule_marketplace.py` (file_id=183) 与 `validate_rule_tests.py` (file_id=181)
-  的 `arc` 表行数恒为 0
-- 其他 189 个模块均正常 — 说明 xdist 6 worker 中只有 2 个 worker 没跑这俩
-  测试对应的 import 路径
-- **pytest-xdist 3.8.0 + pytest-cov 7.1.0** 静态分析 `file` 表时把 collect 阶段
-  见到 import 的所有模块都注册了；运行时分发测试时**仅跑测试的 worker 写 arc 数据**，
-  最终 `.coverage.combine()` 时数据丢失
-- 行为是 **xdist worker 不均匀 + coverage static collect 误报**的复合问题
-- pytest-cov 7.1.0 的 `arcs_to_lines()` 信任 `line_bits`，但 7.x 数据存储改用
-  `arc` 表 — 这是已知生态不兼容
+1. 当跑 `pytest tests/test_adg_cli_v2.py -n auto --cov=tools.scripts` 时，
+   `--cov` 范围包含整个 `tools.scripts.*`，但 **test_adg_cli_v2.py 不 import**
+   `rule_marketplace` 或 `validate_rule_tests`。
+2. 报告的 0% 是"该模块在本测试集内未被 import"，而非"模块本身无覆盖"。
+3. xdist + coverage 都正常工作。
 
-## 决策
-**接受现状，不在 v2.14.0 修复 xdist 覆盖率合并缺陷。**
+## 修正
+- ADR-013 的"接受现状"改为"理解原理，无需修复"
+- 不需升级 pytest-cov 8.x（不存在该版本，最高 7.1.0）
+- 不需升级 pytest-xdist 3.6+（不存在，最高 3.8.0）
+- coverage 库独立版本（已 7.15.4，正常）
 
-1. **B2 不发版**：ROADMAP P1-2 不阻塞 — auto_fix 重构与覆盖率门禁可信度解耦
-2. **文档化**："`tools/scripts/rule_marketplace.py` + `validate_rule_tests.py`
-   全量跑显示 0% 是已知生态问题" — 在覆盖率快照中标注
-3. **未来修复方向**（v2.15+ 候选）：
-   - 升级 pytest-cov 至 8.x（解决 line_bits / arc 表兼容）
-   - 或切到 coverage 7 的 `dynamic_context = true` 测试模式
-   - 或在 conftest.py `pytest_collection_modifyitems` hook 中显式
-     `importlib.import_module("tools.scripts.rule_marketplace")` 强制
-     所有 worker 预加载
+## 实际改进建议
+1. CI 跑全量 `pytest tests/` 避免选择偏差
+2. 模块覆盖率只看"该模块专属测试集"或"全量测试"
+3. `--cov=tools.scripts` 全范围跑必须包含全部 tests/
 
-## 后果
-- ✅ auto_fix 重构（C）可继续推进，不受 xdist 缺陷阻塞
-- ✅ 86% 总体覆盖率、85% 阈值门禁仍然有效（3580 测试 0 失败）
-- ⚠️ 单看 JSON 报告 `rule_marketplace.py` + `validate_rule_tests.py`
-  显示 0% 是误报 — 但这两个模块单跑覆盖率达 99% / 95%，实际代码
-  已被测试覆盖
-- ⚠️ CI 上必须加注解或迁移到 pytest-cov 8.x 后再启严格 0% 门禁
+## 参考
+- 实测数据: `.coverage-v215-target.json`
+- pytest-cov PyPI: 最高 7.1.0
+- pytest-xdist PyPI: 最高 3.8.0

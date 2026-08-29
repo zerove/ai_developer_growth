@@ -258,14 +258,14 @@
 | ADR-014 | `check_directory` 复杂度拆分 C=48→4 helper (0.5d) | ✅ 已完成 (b07bb5e) |
 | ADR-015 | pytest-xdist race condition 接受现状 | ✅ 已完成 |
 | cmd_recommend 测试 | 29.6%→80%+ (0.3d) | 🚧 进行中 |
-| pytest-cov 8.x 试运行 | 解 ADR-013 (0.5d) | 🚧 进行中 |
+| pytest-cov 8.x 试运行 | 解 ADR-013 (0.5d) | ✅ 已完成（ADR-013 误判已修订） |
 | ast_parser.py 拆分 | 1103 行→5 文件 (1d) | 🚧 进行中 |
 | adg_cli 23 cmd smoke | 全子命令冒烟 (0.5d) | 🚧 进行中 |
 | 效率文档↔案例双向链接 | 自动化补全 (0.2d) | 🚧 进行中 |
 
 ## 已接受现状 (ADR)
 
-- **ADR-013**: pytest-xdist 覆盖率合并缺陷 (`rule_marketplace.py` / `validate_rule_tests.py` 全量 0%) — 升级到 pytest-cov 8.x 候选
+- **ADR-013**: 覆盖率"假 0%" 实为测试集选择偏差（非 xdist bug），直接测 `test_rule_marketplace_v2.py` + `test_validate_rule_tests.py` 覆盖 98.9% / 95.1% ✅
 - **ADR-015**: pytest-xdist race condition (偶发 2 fail) — `pytest --lf` 复绿
 
 ---

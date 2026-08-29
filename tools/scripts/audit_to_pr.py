@@ -521,7 +521,11 @@ def _handle_stdout_output(report: str, output: Path | None, create_pr: bool) -> 
         print(report)
 
 
-def main() -> int:
+def _build_audit_to_pr_parser() -> argparse.ArgumentParser:
+    """构造 CLI 参数解析器.
+
+    V2.19 P3-39 拆分: 从 main (B=6) 抽出.
+    """
     parser = argparse.ArgumentParser(description="治理审计到 PR 报告生成器")
     parser.add_argument("--run-audit", action="store_true", help="运行完整治理审计")
     parser.add_argument("--create-pr", action="store_true", help="创建 GitHub PR (需配合 --run-audit)")
@@ -530,7 +534,16 @@ def main() -> int:
     parser.add_argument("--title", default="chore: governance audit report", help="PR 标题")
     parser.add_argument("--base", default="main", help="PR 基础分支")
     parser.add_argument("--no-full", action="store_true", help="运行快速审计 (不含 security/test)")
+    return parser
 
+
+def main() -> int:
+    """CLI 入口 (orchestrator).
+
+    V2.19 P3-39 拆分: 从 B=6 / 35 行 main 拆出 _build_audit_to_pr_parser.
+    主函数仅负责: 解析参数 → 委托 stdin / audit+output / help 路径.
+    """
+    parser = _build_audit_to_pr_parser()
     args = parser.parse_args()
 
     # 兼容旧版本：从 stdin 读取 JSON

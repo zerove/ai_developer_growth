@@ -41,6 +41,11 @@ _AI_GENERATED_INDICATORS: tuple[re.Pattern[str], ...] = (
 _FUNCTION_DEF_RE = re.compile(r"\s*def\s+(\w+)\s*\(")
 _FORWARD_WINDOW = 10  # 注释后多少行内查找函数定义
 
+# 严格模式下需要检查的核心目录 + 头部行数 + 非空阈值
+_STRICT_SCAN_HEADER_LINES = 30
+_STRICT_MIN_CONTENT_LEN = 100
+_STRICT_CORE_PREFIX = "tools/scripts"
+
 
 def has_ai_annotation(content: str) -> bool:
     """检查内容是否包含 AI 标注 (兼容旧测试: # [AI-GEN])"""
@@ -153,37 +158,51 @@ def fix_file(filepath: Path, model: str = "AI") -> bool:
         return False
 
 
-def check_strict_mode(filepath: Path) -> list[dict[str, Any]]:
-    """严格模式：检查所有非空 Python 文件是否有 AI 标注（可选策略）"""
-    issues: list[dict[str, Any]] = []
+def _has_strict_annotation(lines: list[str]) -> bool:
+    """扫描文件头部 30 行, 检查是否有 AI 标注 (任一 pattern).
 
+    V2.19 P3-18 拆分: 从 check_strict_mode (B=9) 抽出.
+    """
+    for line in lines[:_STRICT_SCAN_HEADER_LINES]:
+        if AI_GENERATED_PATTERN.match(line) or AI_ASSISTED_PATTERN.match(line) or AI_REVIEWED_PATTERN.match(line):
+            return True
+    return False
+
+
+def _build_missing_annotation_issue(filepath: Path) -> dict[str, Any]:
+    """构造"核心脚本缺少 AI 标注"建议项.
+
+    V2.19 P3-18 拆分: 从 check_strict_mode (B=9) 抽出.
+    """
+    return {
+        "file": str(filepath),
+        "issue": "核心脚本建议添加 AI 标注 (# ai-generated/ai-assisted/ai-reviewed)",
+        "severity": "info",
+    }
+
+
+def check_strict_mode(filepath: Path) -> list[dict[str, Any]]:
+    """严格模式：检查所有非空 Python 文件是否有 AI 标注（可选策略）.
+
+    V2.19 P3-18 拆分: 从 B=9 / 32 行函数拆出 2 个 helper.
+    主函数仅负责: 读取文件 → 路径守卫 → 委托扫描 → 条件追加 issue.
+    """
     try:
         content = filepath.read_text(encoding="utf-8")
     except (OSError, UnicodeDecodeError):
-        return issues
+        return []
 
     # 只检查项目核心代码（tools/scripts/ 下的文件）
-    if "tools/scripts" not in str(filepath):
-        return issues
+    if _STRICT_CORE_PREFIX not in str(filepath):
+        return []
 
-    lines = content.split("\n")
-    has_annotation = False
-    for line in lines[:30]:
-        if AI_GENERATED_PATTERN.match(line) or AI_ASSISTED_PATTERN.match(line) or AI_REVIEWED_PATTERN.match(line):
-            has_annotation = True
-            break
+    if _has_strict_annotation(content.split("\n")):
+        return []
 
     # 对于核心脚本，建议有标注（但不强制，仅警告）
-    if not has_annotation and len(content.strip()) > 100:
-        issues.append(
-            {
-                "file": str(filepath),
-                "issue": "核心脚本建议添加 AI 标注 (# ai-generated/ai-assisted/ai-reviewed)",
-                "severity": "info",
-            }
-        )
-
-    return issues
+    if len(content.strip()) <= _STRICT_MIN_CONTENT_LEN:
+        return []
+    return [_build_missing_annotation_issue(filepath)]
 
 
 def _collect_files(args: argparse.Namespace) -> list[Path]:

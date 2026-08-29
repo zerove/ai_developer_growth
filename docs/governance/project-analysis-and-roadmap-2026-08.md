@@ -1,7 +1,7 @@
 # 项目全面分析与开发计划
 
 > 本文档分两部分：顶部"现状快照"按 master 快照维护（最后实测 2026-08-28，
-> master = 2dc4e92，对应 v2.13.15）；下方"开发计划 P0/P1/P2 段"
+> master 计划 v2.14.0 + P1-2 ✅）；下方"开发计划 P0/P1/P2 段"
 > 标记 ✅/🟡/⏳ 是事实核对结果，不是承诺。
 > 所有结论均有实测证据，标注来源。
 
@@ -67,7 +67,7 @@
 | # | 事项 | 动作 | 验收 |
 |---|---|---|---|
 | P1-1 | 高频语言 AST 解析器 | csharp（tree-sitter-c-sharp）、kotlin（tree-sitter-kotlin）先行，swift 次之 | 各语言函数/类提取测试通过；PARSER_REGISTRY 达 10 ✅（PARSER_REGISTRY 11 语言：python/go/rust/java/typescript/csharp/kotlin/swift/cpp/php/ruby，test_parser_registry_e2e.py 39 用例全过）|
-| P1-2 | auto_fix 合并 | adg_cli fix 作为入口，底层调度 AutoFixOrchestrator（Python 文件走 Ruff provider，其余走正则） | 同一输入两路径结果一致；删重复逻辑 |
+| P1-2 | auto_fix 合并 | adg_cli fix 作为入口，底层调度 AutoFixOrchestrator（Python 文件走 Ruff provider，其余走正则） | ✅ 同一输入两路径结果一致；adg_cli fix 单入口 + dispatch（v2.14.0：RegexFixProvider.apply_rules + cmd_fix.py 按语言分派 Python→Ruff / 其他→Regex；tests/test_p1_2_auto_fix_dispatch.py 13 用例全过；JS/Go/Rust 实测自动修复）|
 | P1-3 | subprocess 测试覆盖率化 | bootstrap 核心逻辑抽为可 import 函数，subprocess 仅留薄壳 e2e | bootstrap 覆盖率 >70% ✅（实测 76%，test_adg_bootstrap_unit.py 25 用例）|
 | P1-4 | 0% 模块测试攻坚 | 按"用户可见优先"顺序：jcode_cli → rules_engine/feedback → sarif_exporter → 其余 | 0% 模块数 ≤5；总体 ≥72% ✅（v2.13.10/11/14 推进 7 模块：lsp/server 0%→65% / metrics_telemetry 0%→100% / ai_context_manager 0%→97% / adr_generator 0%→86% / audit_to_pr 0%→80% / rule_tracker 0%→96% / rule_marketplace 0%→99% / validate_rule_tests 0%→95%；全量覆盖率 85% > 72%）|
 | P1-5 | mypy 配置统一 | 三处 workflow 统一引用 pyproject [tool.mypy] | grep 无命令行级配置漂移 ✅（v2.13.9 修复 example-ci-template.yml）|

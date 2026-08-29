@@ -496,8 +496,16 @@ class FixProvider:
 class RegexFixProvider(FixProvider):
     """基于 fix_replacement 正则的通用修复提供者"""
 
-    def __init__(self, name: str, safety_level: FixSafetyLevel = FixSafetyLevel.SAFE):
+    def __init__(
+        self,
+        name: str,
+        safety_level: FixSafetyLevel = FixSafetyLevel.SAFE,
+        rules: dict[str, dict[str, Any]] | None = None,
+    ):
         super().__init__(name, safety_level)
+        # FIX_RULES: rule_id -> {pattern, replacement, language}
+        # P1-2 重构: 支持批量文件级 re.subn
+        self.rules: dict[str, dict[str, Any]] = rules or {}
 
     def generate_fixes(
         self,
@@ -539,6 +547,48 @@ class RegexFixProvider(FixProvider):
             logger.warning(f"Regex fix failed for {issue.rule_id}: {e}")
 
         return []
+
+    def apply_rules(self, file_path: str) -> list[FixAction]:
+        """P1-2 重构入口：对文件全文应用 self.rules 的 re.subn，返回 FixAction 列表。
+
+        与 generate_fixes 区别: generate_fixes 接受单 issue 单行；apply_rules
+        接受规则字典对全文批量替换（FIX_RULES 模式）。
+        """
+        import re
+
+        actions: list[FixAction] = []
+        try:
+            full_path = Path(file_path)
+            if not full_path.exists():
+                return []
+
+            content = full_path.read_text(encoding="utf-8")
+            for rule_id, info in self.rules.items():
+                pattern = info.get("pattern")
+                replacement = info.get("replacement")
+                if not pattern or replacement is None:
+                    continue
+                new_content, count = re.subn(pattern, replacement, content)
+                if count > 0 and new_content != content:
+                    actions.append(
+                        FixAction(
+                            rule_id=rule_id,
+                            file=file_path,
+                            line=1,
+                            column=1,
+                            original=content[:120] + "..." if len(content) > 120 else content,
+                            replacement=new_content[:120] + "..." if len(new_content) > 120 else new_content,
+                            safety_level=self.safety_level,
+                            description=f"Regex fix {rule_id} applied {count} times",
+                            confidence=0.9,
+                        )
+                    )
+                    content = new_content
+            if actions:
+                full_path.write_text(content, encoding="utf-8")
+        except Exception as e:  # noqa: BLE001
+            logger.warning(f"Regex apply_rules failed for {file_path}: {e}")
+        return actions
 
 
 class ToolBasedFixProvider(FixProvider):

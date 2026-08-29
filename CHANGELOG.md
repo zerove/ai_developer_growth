@@ -2,6 +2,37 @@
 
 All notable changes to the AI Developer Growth project.
 
+## [2.14.0] - 2026-08-28
+
+### 重要变更: P1-2 auto_fix 双路径重构（ROADMAP P1-2 完成）
+
+完成 ROADMAP P1-2：adg_cli fix 单入口，底层按语言 dispatch。
+
+#### 架构变更
+- `tools/scripts/auto_fix.py` `RegexFixProvider` 加 `rules` 构造参数 + `apply_rules(file_path)` 方法
+  - 支持文件级 re.subn 批量应用（FIX_RULES 模式）
+  - 与 `generate_fixes`（单 issue 单行）共存，双入口互不干扰
+- `tools/scripts/adg_cli/commands/cmd/cmd_fix.py` 重写 `_run_fix`：
+  - Python → `_run_ruff_directory`/`_run_ruff_file`（subprocess 跑 ruff --fix）
+  - 其他语言 → `RegexFixProvider.apply_rules`（FIX_RULES 的 re.subn）
+  - 单文件检测改用 `_detect_language_from_file`（按扩展名 dispatch，不再依赖目录级 `detect_language`）
+- `cmd_fix.py` 新增 `_run_orchestrator_directory` 走 RegexFixProvider 批量
+
+#### 测试
+- 新增 `tests/test_p1_2_auto_fix_dispatch.py`（13 用例覆盖）
+  - `TestRegexFixProviderApplyRules`（5）：JS 严格相等、Go println、Rust unwrap、空匹配、不存在文件、replacement=None 跳过
+  - `TestRunFixDispatch`（5）：Python/JS/Go 文件 dispatch、未知语言返回 0
+  - `TestRunOrchestratorDirectory`（2）：目录批量 + 语言过滤
+  - `TestRunRuffDirectory`（1）：Python 目录 ruff 路径
+- `tests/test_adg_cmd_integration.py` 66 用例全过（无破坏）
+- `test_auto_fix.py` + `test_auto_fix_orchestrator.py` 全过
+
+#### 验证
+- `adg_cli fix bad.js` 自动 `==` → `===`（2 处修复，fixed=2, files=1）
+- `adg_cli fix bad.go` 自动 `fmt.Println` → `log.Println`
+- `adg_cli fix bad.rs` 自动 `.unwrap()` → `.unwrap_or_default()`
+- 136/136 auto_fix 相关测试通过
+
 ## [2.13.17] - 2026-08-28
 
 ### 修补: LSP server.py 测试补 65% → 76% + ADR-013 记录 xdist 覆盖率缺陷

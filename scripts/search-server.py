@@ -235,6 +235,28 @@ def _parse_frontmatter(content, fallback_title):
     return title, category, tags, difficulty, content
 
 
+def _strip_link_aggregation_sections(content: str) -> str:
+    """移除 link_efficiency_cases 注入的"## 相关案例" / "## 相关方法论"段.
+
+    V2.16 P1-B 修复: 双向链接补全自动给 ai-*.md 加了 60+ 案例链接,
+    这些段会稀释搜索相关性. 索引时排除.
+    """
+    excluded_headers = ("## 相关案例", "## 相关方法论", "## 相关文档", "## 相关 ADR")
+    lines = content.split("\n")
+    out: list[str] = []
+    skip_until_next_h2 = False
+    for line in lines:
+        stripped = line.strip()
+        if stripped.startswith("## ") and not stripped.startswith("### "):
+            if any(stripped.startswith(h) for h in excluded_headers):
+                skip_until_next_h2 = True
+                continue
+            skip_until_next_h2 = False
+        if not skip_until_next_h2:
+            out.append(line)
+    return "\n".join(out)
+
+
 def load_documents():
     """从 docs 目录加载文档"""
     documents = []
@@ -250,6 +272,10 @@ def load_documents():
 
                     fallback_title = file.replace(".md", "").replace("-", " ").title()
                     title, category, tags, difficulty, content = _parse_frontmatter(content, fallback_title)
+
+                    # V2.16 P1-B 修复: 双向链接补全的"## 相关案例" / "## 相关方法论"
+                    # 段会膨胀 content, 干扰搜索排名. 排除这些段.
+                    content = _strip_link_aggregation_sections(content)
 
                     rel_path = os.path.relpath(filepath, docs_dir)
                     doc_id = rel_path.replace(".md", "").replace("/", "_")

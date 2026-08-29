@@ -131,7 +131,52 @@ def analyze(entries: list[dict[str, Any]]) -> dict[str, Any]:
     }
 
 
+def _render_json_report(
+    chain_ok: bool,
+    chain_desc: str,
+    report: dict[str, Any],
+) -> None:
+    """渲染 JSON 格式报告.
+
+    V2.19 P3-27 拆分: 从 main (B=9) 抽出.
+    """
+    print(
+        json.dumps(
+            {"chain_ok": chain_ok, "chain_desc": chain_desc, **report},
+            ensure_ascii=False,
+            indent=2,
+        )
+    )
+
+
+def _render_chain_status(chain_ok: bool, chain_desc: str) -> None:
+    """渲染链校验状态行.
+
+    V2.19 P3-27 拆分: 从 main (B=9) 抽出.
+    """
+    prefix = "✅ " if chain_ok else "❌ "
+    print(f"   链校验: {prefix}{chain_desc}")
+
+
+def _render_alerts(alerts: list[str]) -> None:
+    """渲染异常告警段 (含空态).
+
+    V2.19 P3-27 拆分: 从 main (B=9) 抽出.
+    """
+    if alerts:
+        print("   ⚠️  异常:")
+        for a in alerts:
+            print(f"     - {a}")
+    else:
+        print("   ✅ 无异常波动")
+
+
 def main() -> int:
+    """CLI 入口 (orchestrator).
+
+    V2.19 P3-27 拆分: 从 B=9 / 31 行 main 拆出 3 个 helper.
+    主函数仅负责: 参数解析 → 加载数据 → 委托渲染 (JSON / text 两条路径).
+    """
     parser = argparse.ArgumentParser(description="审计台账趋势分析")
     parser.add_argument("--json", action="store_true", help="输出 JSON 格式")
     parser.add_argument("--root", type=Path, default=None, help="项目根目录")
@@ -145,22 +190,17 @@ def main() -> int:
     report = analyze(entries)
 
     if args.json:
-        print(json.dumps({"chain_ok": chain_ok, "chain_desc": chain_desc, **report}, ensure_ascii=False, indent=2))
+        _render_json_report(chain_ok, chain_desc, report)
     else:
         print(f"📊 审计台账趋势 ({ledger_file})")
-        print(f"   链校验: {'✅ ' + chain_desc if chain_ok else '❌ ' + chain_desc}")
+        _render_chain_status(chain_ok, chain_desc)
         print(f"   总条目: {report['total']}（无时间戳旧条目 {report['undated_entries']} 条）")
         print("   按类型:")
         for etype, count in sorted(report["by_type"].items(), key=lambda kv: -kv[1]):
             print(f"     - {etype}: {count}")
         if report["last_24h"]:
             print(f"   最近24h: {report['last_24h']}")
-        if report["alerts"]:
-            print("   ⚠️  异常:")
-            for a in report["alerts"]:
-                print(f"     - {a}")
-        else:
-            print("   ✅ 无异常波动")
+        _render_alerts(report["alerts"])
 
     if not chain_ok:
         return 1

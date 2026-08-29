@@ -107,39 +107,49 @@ def detect_ai_generated_functions(content: str) -> list[dict[str, Any]]:
     return results
 
 
-def check_file(filepath: Path) -> dict[str, Any]:
-    """检查单个文件的 AI 标注"""
+def _read_file_or_error(filepath: Path) -> dict[str, Any] | str:
+    """读取文件, 失败时返回失败 dict, 成功时返回内容字符串.
+
+    V2.19 P3-21 拆分: 从 check_file (B=7) 抽出.
+    """
     try:
-        content = filepath.read_text(encoding="utf-8")
+        return filepath.read_text(encoding="utf-8")
     except FileNotFoundError:
         return {"passed": False, "issues": ["文件不存在"], "has_annotation": False}
     except OSError as e:
         return {"passed": False, "issues": [f"读取失败: {e}"], "has_annotation": False}
 
-    issues = []
+
+def _content_has_ai_marker(content: str) -> bool:
+    """检查内容是否包含 AI 生成标记 (复用 _AI_GENERATED_INDICATORS).
+
+    V2.19 P3-21 拆分: 从 check_file (B=7) 抽出.
+    复用 _line_has_ai_indicator 的判定.
+    """
+    return any(p.search(content) for p in _AI_GENERATED_INDICATORS)
+
+
+def check_file(filepath: Path) -> dict[str, Any]:
+    """检查单个文件的 AI 标注 (orchestrator).
+
+    V2.19 P3-21 拆分: 从 B=7 / 33 行函数拆出 2 个 helper.
+    主函数仅负责: 读文件 → 判定 has_marker/has_annotation → 构造 result.
+    """
+    content_or_error = _read_file_or_error(filepath)
+    if isinstance(content_or_error, dict):
+        return content_or_error
+    content = content_or_error
+
     has_annotation = has_ai_annotation(content)
+    has_marker = _content_has_ai_marker(content)
 
-    # 检查是否有 AI 生成标记但缺少标准标注
-    has_ai_marker = False
-    for pattern in [
-        r"# AI-generated",
-        r"# Generated with",
-        r"# AI assistant",
-        r"# This code is AI",
-        r"# This function was generated",
-    ]:
-        if re.search(pattern, content, re.IGNORECASE):
-            has_ai_marker = True
-            break
-
-    if has_ai_marker and not has_annotation:
-        issues.append("检测到 AI 生成标记但缺少标准 # [AI-GEN] 标注")
-
-    return {
-        "passed": len(issues) == 0,
-        "issues": issues,
-        "has_annotation": has_annotation,
-    }
+    if has_marker and not has_annotation:
+        return {
+            "passed": False,
+            "issues": ["检测到 AI 生成标记但缺少标准 # [AI-GEN] 标注"],
+            "has_annotation": False,
+        }
+    return {"passed": True, "issues": [], "has_annotation": has_annotation}
 
 
 def fix_file(filepath: Path, model: str = "AI") -> bool:

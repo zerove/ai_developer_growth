@@ -55,11 +55,95 @@ class AINativeMCPServer:
             self._search_index = create_enhanced_index(mod.load_documents())
         return self._search_index
 
-    def handle_request(self, req: dict[str, object]) -> dict[str, object]:
-        """处理单条 JSON-RPC 2.0 请求，返回带 id 的响应。
+    def _handle_initialize(self) -> dict[str, object]:
+        """JSON-RPC initialize 响应.
 
-        支持方法：initialize / tools/list / tools/call / ping；
-        同时兼容旧协议（裸 tool/arguments 字段）。
+        V2.18 P3-2 拆分: 从 handle_request (C=15) 抽出.
+        """
+        return {
+            "protocolVersion": "2024-11-05",
+            "capabilities": {"tools": {"listChanged": False}},
+            "serverInfo": {"name": "ai-native-sdlc", "version": "1.0.0"},
+        }
+
+    def _handle_tools_list(self) -> dict[str, object]:
+        """JSON-RPC tools/list 响应.
+
+        V2.18 P3-2 拆分: 从 handle_request (C=15) 抽出.
+        """
+        return {"tools": TOOL_REGISTRY}
+
+    def _handle_tools_call(self, params: dict[str, object]) -> dict[str, object]:
+        """JSON-RPC tools/call 响应.
+
+        V2.18 P3-2 拆分: 从 handle_request (C=15) 抽出.
+        """
+        raw_name = params.get("name")
+        name: str | None = raw_name if isinstance(raw_name, str) else None
+        args = params.get("arguments", {})
+        call_res = self.handle_tool_call(name, args if isinstance(args, dict) else {})
+        if call_res.get("status") == "success":
+            return {
+                "content": [{"type": "text", "text": json.dumps(call_res, ensure_ascii=False)}],
+                "isError": False,
+            }
+        return {
+            "content": [
+                {
+                    "type": "text",
+                    "text": str(call_res.get("message", "error")),
+                }
+            ],
+            "isError": True,
+        }
+
+    def _dispatch_rpc_method(
+        self,
+        method: str,
+        params: dict[str, object],
+        req_id: object,
+    ) -> dict[str, object] | None:
+        """JSON-RPC 2.0 method 分发.
+
+        V2.18 P3-2 拆分: 从 handle_request (C=15) 抽出.
+        返回 None = method 未识别 (调用方转为 -32601 错误).
+        """
+        if method == "initialize":
+            return {"jsonrpc": "2.0", "id": req_id, "result": self._handle_initialize()}
+        if method == "tools/list":
+            return {"jsonrpc": "2.0", "id": req_id, "result": self._handle_tools_list()}
+        if method == "ping":
+            return {"jsonrpc": "2.0", "id": req_id, "result": {}}
+        if method == "tools/call":
+            return {
+                "jsonrpc": "2.0",
+                "id": req_id,
+                "result": self._handle_tools_call(params),
+            }
+        return None
+
+    def _handle_legacy_request(
+        self,
+        req: dict[str, object],
+        params: dict[str, object],
+    ) -> dict[str, object]:
+        """旧协议 {tool, arguments} 裸字段兼容.
+
+        V2.18 P3-2 拆分: 从 handle_request (C=15) 抽出.
+        """
+        raw_tool = req.get("tool") or params.get("name")
+        tool: str | None = raw_tool if isinstance(raw_tool, str) else None
+        args = req.get("arguments") or params.get("arguments", {})
+        return self.handle_tool_call(tool, args if isinstance(args, dict) else {})
+
+    def handle_request(self, req: dict[str, object]) -> dict[str, object]:
+        """处理单条 JSON-RPC 2.0 请求 (orchestrator).
+
+        支持方法: initialize / tools/list / tools/call / ping;
+        同时兼容旧协议 (裸 tool/arguments 字段).
+
+        V2.18 P3-2 拆分: 从 C=15 / 60+ 行主函数拆出 5 个 helper.
+        主函数仅负责: 解析 → 分发 → 兜底.
         """
         req_id = req.get("id")
         method = req.get("method")
@@ -67,42 +151,12 @@ class AINativeMCPServer:
         params: dict[str, object] = raw_params if isinstance(raw_params, dict) else {}
 
         if "tool" not in req and isinstance(method, str):
-            # 标准 JSON-RPC 2.0 分支
-            result: dict[str, object]
-            if method == "initialize":
-                result = {
-                    "protocolVersion": "2024-11-05",
-                    "capabilities": {"tools": {"listChanged": False}},
-                    "serverInfo": {"name": "ai-native-sdlc", "version": "1.0.0"},
-                }
-            elif method == "tools/list":
-                result = {"tools": TOOL_REGISTRY}
-            elif method == "ping":
-                result = {}
-            elif method == "tools/call":
-                raw_name = params.get("name")
-                name: str | None = raw_name if isinstance(raw_name, str) else None
-                args = params.get("arguments", {})
-                call_res = self.handle_tool_call(name, args if isinstance(args, dict) else {})
-                if call_res.get("status") == "success":
-                    result = {
-                        "content": [{"type": "text", "text": json.dumps(call_res, ensure_ascii=False)}],
-                        "isError": False,
-                    }
-                else:
-                    result = {
-                        "content": [{"type": "text", "text": str(call_res.get("message", "error"))}],
-                        "isError": True,
-                    }
-            else:
-                return self._rpc_error(req_id, -32601, f"Method not found: {method}")
-            return {"jsonrpc": "2.0", "id": req_id, "result": result}
+            response = self._dispatch_rpc_method(method, params, req_id)
+            if response is not None:
+                return response
+            return self._rpc_error(req_id, -32601, f"Method not found: {method}")
 
-        # 旧协议兼容分支：{tool, arguments} 裸字段
-        raw_tool = req.get("tool") or params.get("name")
-        tool: str | None = raw_tool if isinstance(raw_tool, str) else None
-        args = req.get("arguments") or params.get("arguments", {})
-        return self.handle_tool_call(tool, args if isinstance(args, dict) else {})
+        return self._handle_legacy_request(req, params)
 
     @staticmethod
     def _rpc_error(req_id: object, code: int, message: str) -> dict[str, object]:

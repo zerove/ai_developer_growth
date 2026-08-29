@@ -10,7 +10,16 @@ updated: 2026-08-25
 # ADR-008: 生产级稳健工作流与防御性接口设计
 
 ## 状态
-Proposed
+
+**已通过** (2026-08-29)
+
+实施证据（v2.11+）：
+1. 数据/逻辑解耦 → `tools/scripts/rules_engine/ast_nodes.py` 纯 dataclass
+2. Protocol 接口 → v2.11 引入 typing.Protocol 替代 ABC
+3. 幂等修复 → `fix.py:_apply_fix` 检查 has_match 后写入
+4. loguru → `jcode_ai_native_workflow.py` 全 loguru 结构化日志
+
+详细理由见 ADR-016。
 
 ## 上下文
 在实施 AST 语义分析与自动修复流水线的过程中，项目反复遭遇因循环导入 (`ImportError`) 和接口漂移 (`AttributeError`) 导致的 CI 中断。为了提升 `jcode` 治理流水线的生产级稳健性，我们需要从“脚本驱动”进化为“契约驱动”。

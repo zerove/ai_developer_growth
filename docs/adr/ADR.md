@@ -18,15 +18,16 @@ updated: 2026-08-29
 
 | ID | 标题 | 状态 | 日期 |
 |----|------|------|------|
+| [[ADR-016-close-pending-adrs\|ADR-016]] | 关闭 4 个长期未决 ADR (005/007/008/011) | ✅ 已通过 | 2026-08 |
 | [[ADR-015-pytest-xdist-race-condition\|ADR-015]] | pytest-xdist race condition 接受现状 | ✅ 已通过 | 2026-08 |
 | [[ADR-013-pytest-xdist-coverage-known-issue\|ADR-013]] | 覆盖率报告"假 0%" 现象（误判根因已修订） | 🔄 修订 | 2026-08 |
 | [[ADR-012-vector-rag-not-core\|ADR-012]] | 向量 RAG 不作为 ai_developer_growth 检索核心 | ✅ 已通过 | 2026-08 |
-| [[ADR-011-phase18-ai-native-dialogue-community-cleanup\|ADR-011]] | Phase 18: P1 对话界面 + P2 社区案例清理 + AI-Native 生态完善 | 🔍 提议中 | 2026-08 |
+| [[ADR-011-phase18-ai-native-dialogue-community-cleanup\|ADR-011]] | Phase 18: P1 对话界面 + P2 社区案例清理 + AI-Native 生态完善 | 🚫 已拆分关闭 | 2026-08 |
 | [[ADR-010-community-growth-infrastructure\|ADR-010]] | P2 社区增长基础设施：自动化验证、激励体系、Issue 标准化 | ✅ 已通过 | 2026-08 |
 | [[009-ci-cd-optimization-security\|ADR-009]] | CI/CD 流水线优化与安全强化 | ✅ 已通过 | 2026-08 |
-| [[008-production-grade-workflow\|ADR-008]] | 生产级稳健工作流与防御性接口设计 | ⏳ 提议 | 2026-08 |
-| [[007-m4-ai-navigation-design\|ADR-007]] | M4 AI 导航系统设计 | 🔍 待评审 | 2026-07 |
-| [[005-ai-navigation-system\|ADR-005]] | AI 导航系统架构 | ⏳ 提议 | 2026-07 |
+| [[008-production-grade-workflow\|ADR-008]] | 生产级稳健工作流与防御性接口设计 | ✅ 已通过 | 2026-08 |
+| [[007-m4-ai-navigation-design\|ADR-007]] | M4 AI 导航系统设计 | 🚫 已废弃 | 2026-07 |
+| [[005-ai-navigation-system\|ADR-005]] | AI 导航系统架构 | 🚫 已废弃 | 2026-07 |
 | [[004-agent-collaboration-model\|ADR-004]] | 多 Agent 协作模型与编排模式 | ✅ 已通过 | 2026-07 |
 | [[003-quality-gate-system\|ADR-003]] | 四道质量门禁系统设计 | ✅ 已通过 | 2026-07 |
 | [[002-refactor-validate-language-rules\|ADR-002b]] | 重构 validate_language_rules.py 模块化 | ✅ 已通过 | 2026-07 |

@@ -106,34 +106,48 @@ def generate_junit_xml(results: list[Any]) -> str:
     return "\n".join(lines)
 
 
-def generate_html_report(results: list[Any]) -> str:
-    """Generate HTML report.
+def _count_html_summary(results: list[Any]) -> dict[str, int]:
+    """汇总 HTML 报告所需 4 项计数.
 
-    Args:
-        results: List of ValidationResult objects (duck-typed)
+    V2.18 P3-11 拆分: 从 generate_html_report (C=11) 抽出.
     """
-    total_errors = sum(r.error_count for r in results)
-    total_warnings = sum(r.warning_count for r in results)
-    total_info = sum(r.info_count for r in results)
-    passed_count = sum(1 for r in results if r.passed)
+    return {
+        "total_errors": sum(r.error_count for r in results),
+        "total_warnings": sum(r.warning_count for r in results),
+        "total_info": sum(r.info_count for r in results),
+        "passed_count": sum(1 for r in results if r.passed),
+    }
 
-    rows = []
-    for result in sorted(results, key=lambda r: (not r.passed, r.file)):
-        status_class = "pass" if result.passed else "fail"
-        rows.append(f"""      <tr class="{status_class}">
+
+def _build_result_row(result: Any) -> list[str]:
+    """构建单条 result 的 HTML 表格行 (含最多 3 条 detail).
+
+    V2.18 P3-11 拆分: 从 generate_html_report (C=11) 抽出.
+    """
+    status_class = "pass" if result.passed else "fail"
+    rows: list[str] = [
+        f"""      <tr class="{status_class}">
         <td>{_html_escape(result.file)}</td>
         <td>{result.language}</td>
         <td class="num">{result.error_count}</td>
         <td class="num">{result.warning_count}</td>
         <td class="num">{result.info_count}</td>
         <td>{"PASS" if result.passed else "FAIL"}</td>
-      </tr>""")
-        if not result.passed:
-            for issue in result.issues[:3]:
-                rows.append(f"""      <tr class="detail">
+      </tr>"""
+    ]
+    if not result.passed:
+        for issue in result.issues[:3]:
+            rows.append(f"""      <tr class="detail">
         <td colspan="6">[{issue.severity}] {issue.rule_id}: {_html_escape(issue.message)} (line {issue.line})</td>
       </tr>""")
+    return rows
 
+
+def _build_html_template(counts: dict[str, int], table_rows: list[str]) -> str:
+    """组装完整 HTML 文档 (含 CSS + summary + table).
+
+    V2.18 P3-11 拆分: 从 generate_html_report (C=11) 抽出.
+    """
     return f"""<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -159,17 +173,35 @@ def generate_html_report(results: list[Any]) -> str:
 <body>
   <h1>Language Rules Report</h1>
   <div class="summary">
-    <div class="card pass"><strong>{passed_count}</strong> files passed</div>
-    <div class="card error"><strong>{total_errors}</strong> errors</div>
-    <div class="card warn"><strong>{total_warnings}</strong> warnings</div>
-    <div class="card info"><strong>{total_info}</strong> info</div>
+    <div class="card pass"><strong>{counts["passed_count"]}</strong> files passed</div>
+    <div class="card error"><strong>{counts["total_errors"]}</strong> errors</div>
+    <div class="card warn"><strong>{counts["total_warnings"]}</strong> warnings</div>
+    <div class="card info"><strong>{counts["total_info"]}</strong> info</div>
   </div>
   <table>
     <tr><th>File</th><th>Language</th><th>Errors</th><th>Warnings</th><th>Info</th><th>Status</th></tr>
-{chr(10).join(rows)}
+{chr(10).join(table_rows)}
   </table>
 </body>
 </html>"""
+
+
+def generate_html_report(results: list[Any]) -> str:
+    """Generate HTML report (orchestrator).
+
+    Args:
+        results: List of ValidationResult objects (duck-typed)
+
+    V2.18 P3-11 拆分: 从 C=11 / 63 行主函数拆出 3 个 helper.
+    主函数仅负责: 排序 → 汇总 → 表格行 → HTML 模板.
+    """
+    counts = _count_html_summary(results)
+
+    table_rows: list[str] = []
+    for result in sorted(results, key=lambda r: (not r.passed, r.file)):
+        table_rows.extend(_build_result_row(result))
+
+    return _build_html_template(counts, table_rows)
 
 
 def _build_sarif_rules(results: list[Any]) -> dict[str, dict[str, Any]]:

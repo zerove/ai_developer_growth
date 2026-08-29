@@ -423,14 +423,14 @@ class CaseStudyQualityAnalyzer:
         elif metrics.cross_references > 70:
             metrics.strengths.append("Well integrated with knowledge base")
 
-    def generate_report(self, metrics_list: list[QualityMetrics]) -> dict[str, Any]:
-        """Generate comprehensive quality report."""
-        if not metrics_list:
-            return {"error": "No case studies analyzed"}
+    def _build_summary(
+        self,
+        metrics_list: list[QualityMetrics],
+    ) -> dict[str, Any]:
+        """构建 summary 段: 平均分 + 三档分类.
 
-        # Sort by overall score
-        sorted_metrics = sorted(metrics_list, key=lambda m: m.overall_score, reverse=True)
-
+        V2.18 P3-1 拆分: 从 generate_report (C=17) 抽出.
+        """
         avg_overall = sum(m.overall_score for m in metrics_list) / len(metrics_list)
         avg_authenticity = sum(m.authenticity_score for m in metrics_list) / len(metrics_list)
         avg_efficiency = sum(m.efficiency_credibility for m in metrics_list) / len(metrics_list)
@@ -438,46 +438,88 @@ class CaseStudyQualityAnalyzer:
         avg_completeness = sum(m.completeness for m in metrics_list) / len(metrics_list)
         avg_cross = sum(m.cross_references for m in metrics_list) / len(metrics_list)
 
-        # Categorize
         excellent = [m for m in metrics_list if m.overall_score >= 80]
         good = [m for m in metrics_list if 60 <= m.overall_score < 80]
         needs_improvement = [m for m in metrics_list if m.overall_score < 60]
 
         return {
-            "summary": {
-                "total_cases": len(metrics_list),
-                "average_scores": {
-                    "overall": round(avg_overall, 1),
-                    "authenticity": round(avg_authenticity, 1),
-                    "efficiency_credibility": round(avg_efficiency, 1),
-                    "insight_quality": round(avg_insight, 1),
-                    "completeness": round(avg_completeness, 1),
-                    "cross_references": round(avg_cross, 1),
-                },
-                "categories": {
-                    "excellent": len(excellent),
-                    "good": len(good),
-                    "needs_improvement": len(needs_improvement),
-                },
+            "total_cases": len(metrics_list),
+            "average_scores": {
+                "overall": round(avg_overall, 1),
+                "authenticity": round(avg_authenticity, 1),
+                "efficiency_credibility": round(avg_efficiency, 1),
+                "insight_quality": round(avg_insight, 1),
+                "completeness": round(avg_completeness, 1),
+                "cross_references": round(avg_cross, 1),
             },
-            "top_cases": [{"name": m.case_name, "score": round(m.overall_score, 1)} for m in sorted_metrics[:5]],
-            "bottom_cases": [{"name": m.case_name, "score": round(m.overall_score, 1)} for m in sorted_metrics[-5:]],
+            "categories": {
+                "excellent": len(excellent),
+                "good": len(good),
+                "needs_improvement": len(needs_improvement),
+            },
+        }
+
+    def _build_extremes(
+        self,
+        sorted_metrics: list[QualityMetrics],
+        count: int = 5,
+    ) -> "tuple[list[dict[str, Any]], list[dict[str, Any]]]":
+        """构建 top/bottom cases (按分数排序).
+
+        V2.18 P3-1 拆分: 从 generate_report (C=17) 抽出.
+        返回 (top_cases, bottom_cases) 元组.
+        """
+        case_summary = [
+            {"name": m.case_name, "score": round(m.overall_score, 1)}
+            for m in sorted_metrics
+        ]
+        return case_summary[:count], case_summary[-count:]
+
+    def _build_detailed(
+        self,
+        sorted_metrics: list[QualityMetrics],
+    ) -> list[dict[str, Any]]:
+        """构建 detailed 段: 每个 case 的完整指标.
+
+        V2.18 P3-1 拆分: 从 generate_report (C=17) 抽出.
+        """
+        return [
+            {
+                "case": m.case_name,
+                "overall": round(m.overall_score, 1),
+                "authenticity": round(m.authenticity_score, 1),
+                "efficiency": round(m.efficiency_credibility, 1),
+                "insight": round(m.insight_quality, 1),
+                "completeness": round(m.completeness, 1),
+                "cross_refs": round(m.cross_references, 1),
+                "issues": m.issues,
+                "strengths": m.strengths,
+            }
+            for m in sorted_metrics
+        ]
+
+    def generate_report(self, metrics_list: list[QualityMetrics]) -> dict[str, Any]:
+        """Generate comprehensive quality report (orchestrator).
+
+        V2.18 P3-1 拆分: 从 C=17 / 100+ 行主函数拆出 3 个 _build_* helper.
+        主函数仅负责: 排序 → 4 段构建 → 合并.
+        """
+        if not metrics_list:
+            return {"error": "No case studies analyzed"}
+
+        sorted_metrics = sorted(
+            metrics_list, key=lambda m: m.overall_score, reverse=True
+        )
+
+        top_cases, bottom_cases = self._build_extremes(sorted_metrics)
+
+        return {
+            "summary": self._build_summary(metrics_list),
+            "top_cases": top_cases,
+            "bottom_cases": bottom_cases,
             "common_issues": self._aggregate_issues(metrics_list),
             "common_strengths": self._aggregate_strengths(metrics_list),
-            "detailed": [
-                {
-                    "case": m.case_name,
-                    "overall": round(m.overall_score, 1),
-                    "authenticity": round(m.authenticity_score, 1),
-                    "efficiency": round(m.efficiency_credibility, 1),
-                    "insight": round(m.insight_quality, 1),
-                    "completeness": round(m.completeness, 1),
-                    "cross_refs": round(m.cross_references, 1),
-                    "issues": m.issues,
-                    "strengths": m.strengths,
-                }
-                for m in sorted_metrics
-            ],
+            "detailed": self._build_detailed(sorted_metrics),
         }
 
     def _aggregate_issues(self, metrics_list: list[QualityMetrics]) -> dict[str, int]:

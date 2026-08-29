@@ -269,11 +269,29 @@ def _try_apply_fix(filepath: Path, args: argparse.Namespace, has_annotation: boo
     return 1
 
 
+def _decide_status(
+    passed: bool,
+    has_annotation: bool,
+    strict: bool,
+    fix_applied: int,
+) -> tuple[str, int]:
+    """根据 passed / has_annotation / strict 决定 status.
+
+    V2.19 P3-49 拆分: 从 _process_file (B=6) 抽出.
+    规则: pass / warn (strict+无标注) / fail.
+    """
+    if passed and not (strict and not has_annotation):
+        return ("pass", fix_applied)
+    if passed:
+        return ("warn", fix_applied)
+    return ("fail", fix_applied)
+
+
 def _process_file(filepath: Path, args: argparse.Namespace) -> tuple[str, int]:
     """处理单文件, 返回 (status, fix_applied) (orchestrator).
 
-    V2.19 P3-19 拆分: 从 B=9 / 19 行函数拆出 2 个 helper.
-    主函数仅负责: check_file → 委托 print+fix → 决定 status.
+    V2.19 P3-49 拆分: 从 B=6 / 19 行函数拆出 _decide_status.
+    主函数仅负责: check_file → 委托 print+fix+decide → 汇总.
     """
     result = check_file(filepath)
     passed = result["passed"]
@@ -282,12 +300,7 @@ def _process_file(filepath: Path, args: argparse.Namespace) -> tuple[str, int]:
     if not passed:
         _print_issues(result)
     fix_applied = _try_apply_fix(filepath, args, has_annotation)
-
-    if passed and not (args.strict and not has_annotation):
-        return ("pass", fix_applied)
-    if passed:
-        return ("warn", fix_applied)
-    return ("fail", fix_applied)
+    return _decide_status(passed, has_annotation, args.strict, fix_applied)
 
 
 def _print_summary(passed: int, warned: int, failed: int) -> None:

@@ -62,33 +62,60 @@ def run_governance_audit(full: bool = True) -> dict[str, Any]:
         }
 
 
+def _parse_check_line(stripped: str) -> tuple[str, bool] | None:
+    """解析 ✅ PASS / ❌ FAIL 检查行.
+
+    V2.18 P3-7 拆分: 从 parse_audit_output (C=11) 抽出.
+    返回 (name, passed) 元组, 不匹配返回 None.
+    """
+    if ":" not in stripped:
+        return None
+    if "✅ PASS" not in stripped and "❌ FAIL" not in stripped:
+        return None
+    status, _, name = stripped.partition(":")
+    name = name.strip()
+    if not name:
+        return None
+    return name, "PASS" in status
+
+
+def _parse_failed_summary_line(line: str) -> list[str] | None:
+    """解析 'Failed checks: a, b, c' 行.
+
+    V2.18 P3-7 拆分: 从 parse_audit_output (C=11) 抽出.
+    返回失败检查名列表, 不匹配返回 None.
+    """
+    if "Failed checks:" not in line:
+        return None
+    return [c.strip() for c in line.replace("Failed checks:", "").split(",") if c.strip()]
+
+
 def parse_audit_output(output: str) -> dict[str, Any]:
-    """解析审计输出，提取关键信息。"""
-    checks = []
-    failed_checks = []
-    passed_checks = []
+    """解析审计输出, 提取关键信息 (orchestrator).
 
-    lines = output.split("\n")
+    V2.18 P3-7 拆分: 从 C=11 / 50 行主函数拆出 2 个 line parser helper.
+    主函数仅负责: 遍历行 → 分类 → 汇总.
+    """
+    checks: list[dict[str, Any]] = []
+    failed_checks: list[str] = []
+    passed_checks: list[str] = []
 
-    for line in lines:
-        # 检测章节标题
+    for line in output.split("\n"):
         if "————————————————————————————————————————" in line:
             continue
-        stripped = line.strip()
-        if ("✅ PASS" in stripped or "❌ FAIL" in stripped) and ":" in stripped:
-            # 解析检查结果
-            parts = stripped.split(":", 1)
-            if len(parts) >= 2:
-                status = parts[0].strip()
-                name = parts[1].strip()
-                if "PASS" in status:
-                    passed_checks.append(name)
-                else:
-                    failed_checks.append(name)
-                checks.append({"name": name, "passed": "PASS" in status})
 
-        if "Failed checks:" in line:
-            failed_checks = [c.strip() for c in line.replace("Failed checks:", "").split(",") if c.strip()]
+        check = _parse_check_line(line.strip())
+        if check is not None:
+            name, passed = check
+            if passed:
+                passed_checks.append(name)
+            else:
+                failed_checks.append(name)
+            checks.append({"name": name, "passed": passed})
+
+        failed_summary = _parse_failed_summary_line(line)
+        if failed_summary is not None:
+            failed_checks = failed_summary
 
     return {
         "total_checks": len(checks),

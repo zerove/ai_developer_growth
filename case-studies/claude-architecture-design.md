@@ -97,3 +97,9 @@ updated: 2026-08-12
 - [ ] 效率数据：包含 >=3 个维度的量化对比数据
 - [ ] 关键洞察：至少 3 条编号洞察，含具体数字/模式
 - [ ] 代码/文档链接：提供相关仓库、PR、文档链接
+
+
+## 相关方法论
+
+- **相关方法论**: [ai-architecture-design](../docs/efficiency/ai-architecture-design.md)
+

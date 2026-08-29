@@ -143,3 +143,13 @@ adg check ./rich --lang python --json
 - [x] 关键洞察：4 条编号洞察，含具体数字/模式
 - [x] 代码/文档链接：提供仓库、提交号、复现命令
 - [x] 人/AI 角色分离：协作过程明确记录人类做了什么、AI 做了什么
+
+
+## 相关方法论
+
+- **相关方法论**: [ai-testing-strategies](../docs/efficiency/ai-testing-strategies.md)
+
+- **相关方法论**: [ai-security-review](../docs/efficiency/ai-security-review.md)
+
+- **相关方法论**: [ai-code-performance](../docs/efficiency/ai-code-performance.md)
+

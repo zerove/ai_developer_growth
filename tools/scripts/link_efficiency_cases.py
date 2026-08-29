@@ -45,32 +45,53 @@ KEYWORD_ALIASES = {
     "documentation": ["doc", "documentation", "文档"],
     "deployment": ["deploy", "deployment", "部署", "cicd"],
     "refactor": ["refactor", "重构"],
-    "architecture": ["architecture", "架构", "design"],
+    "architecture": ["architecture", "架构", "design", "微服务", "microservice"],
     "rule": ["rule", "规则", "governance", "治理"],
+    "data": ["data", "数据", "pipeline", "etl"],
+    "api": ["api", "接口", "rest", "graphql"],
+    "database": ["database", "db", "数据库", "sql"],
+    "frontend": ["frontend", "前端", "web", "ui"],
+    "mobile": ["mobile", "移动", "移动端", "app"],
+    "devops": ["devops", "运维", "ci"],
+    "ml": ["ml", "machine-learning", "机器学习", "model", "ai模型"],
+    "agent": ["agent", "代理", "多agent", "multi-agent", "多-agent", "多 agent"],
+    "scraping": ["scraping", "爬虫", "抓取", "crawler"],
+    "service": ["service", "服务", "customer", "客服"],
 }
 
 
 def _extract_keywords(filepath: Path) -> set[str]:
-    """从 markdown 文件提取关键词 (frontmatter tags + 标题)。"""
+    """从 markdown 文件提取关键词 (frontmatter tags + 标题 + description)。
+
+    V2.16 改进: 增加 description 字段, 提升中文 case 与英文 ai 文档的匹配率。
+    """
     keywords: set[str] = set()
     try:
         content = filepath.read_text(encoding="utf-8")
     except Exception:
         return keywords
-    # frontmatter tags
+    # frontmatter tags + description
     fm_match = re.match(r"^---\n(.*?)\n---", content, re.DOTALL)
     if fm_match:
         fm = fm_match.group(1)
+        # tags: ['a', 'b']
         for tag in re.findall(r"tags:\s*\[([^\]]*)\]", fm):
             for t in re.split(r"[,\s]+", tag):
                 t = t.strip().strip("'\"")
                 if t:
                     keywords.add(t.lower())
+        # description: 中文长句, 按词切
+        desc_match = re.search(r"description:\s*[\"']?(.+?)[\"']?\s*$", fm, re.MULTILINE)
+        if desc_match:
+            for word in re.split(r"[\s,;:，。；：、\.\?!]+", desc_match.group(1)):
+                w = word.strip().lower()
+                if w and len(w) > 1:
+                    keywords.add(w)
     # H1 标题
     for h1 in re.findall(r"^#\s+(.+)$", content, re.MULTILINE):
-        for word in re.split(r"[\s,;:]+", h1):
+        for word in re.split(r"[\s,;:，。；：、\.\?!]+", h1):
             w = word.strip().lower()
-            if w and len(w) > 2:
+            if w and len(w) > 1:
                 keywords.add(w)
     return keywords
 

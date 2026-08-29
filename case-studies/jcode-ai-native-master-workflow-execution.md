@@ -133,5 +133,7 @@ date: "2026-08-12"
 
 ## 相关方法论
 
+- **相关方法论**: [ai-sdlc](../docs/efficiency/ai-sdlc.md)
+
 - **相关方法论**: [ai-native-sdlc-whitepaper](../docs/efficiency/ai-native-sdlc-whitepaper.md)
 

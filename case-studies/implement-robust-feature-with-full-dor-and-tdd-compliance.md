@@ -138,5 +138,19 @@ Test First 强制 AI 先定义预期行为再实现，配合类型检查，将�
 
 ## 相关方法论
 
+- **相关方法论**: [ai-nondeterministic-testing](../docs/efficiency/ai-nondeterministic-testing.md)
+
+- **相关方法论**: [ai-testing-strategies](../docs/efficiency/ai-testing-strategies.md)
+
+- **相关方法论**: [ai-sdlc](../docs/efficiency/ai-sdlc.md)
+
+- **相关方法论**: [ai-security-review](../docs/efficiency/ai-security-review.md)
+
+- **相关方法论**: [ai-code-generation-quality](../docs/efficiency/ai-code-generation-quality.md)
+
+- **相关方法论**: [ai-code-performance](../docs/efficiency/ai-code-performance.md)
+
+- **相关方法论**: [ai-test-generation](../docs/efficiency/ai-test-generation.md)
+
 - **相关方法论**: [ai-native-sdlc-whitepaper](../docs/efficiency/ai-native-sdlc-whitepaper.md)
 

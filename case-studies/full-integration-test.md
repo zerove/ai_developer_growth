@@ -133,5 +133,19 @@ Lint/Typecheck/单测/契约测/集成测/安全/性能 七级门禁逐级拦截
 
 ## 相关方法论
 
+- **相关方法论**: [ai-nondeterministic-testing](../docs/efficiency/ai-nondeterministic-testing.md)
+
+- **相关方法论**: [ai-testing-strategies](../docs/efficiency/ai-testing-strategies.md)
+
+- **相关方法论**: [ai-sdlc](../docs/efficiency/ai-sdlc.md)
+
+- **相关方法论**: [ai-security-review](../docs/efficiency/ai-security-review.md)
+
+- **相关方法论**: [ai-code-generation-quality](../docs/efficiency/ai-code-generation-quality.md)
+
+- **相关方法论**: [ai-code-performance](../docs/efficiency/ai-code-performance.md)
+
+- **相关方法论**: [ai-test-generation](../docs/efficiency/ai-test-generation.md)
+
 - **相关方法论**: [ai-native-sdlc-whitepaper](../docs/efficiency/ai-native-sdlc-whitepaper.md)
 

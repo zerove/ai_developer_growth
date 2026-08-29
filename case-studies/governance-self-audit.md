@@ -129,3 +129,35 @@ ai_developer_growth 项目构建了一套完整的 AI 治理框架（ai-dev-fram
 - [x] 关键洞察：4 条编号洞察，含具体数字/模式
 - [x] 代码/文档链接：提供核心实现文件路径和复现命令
 - [x] 人/AI 角色分离：协作过程明确记录人类做了什么、AI 做了什么
+
+
+## 相关方法论
+
+- **相关方法论**: [ai-model-selection](../docs/efficiency/ai-model-selection.md)
+
+- **相关方法论**: [ai-debugging-standards](../docs/efficiency/ai-debugging-standards.md)
+
+- **相关方法论**: [ai-hallucination-mitigation](../docs/efficiency/ai-hallucination-mitigation.md)
+
+- **相关方法论**: [ai-deployment-operations](../docs/efficiency/ai-deployment-operations.md)
+
+- **相关方法论**: [ai-code-licensing](../docs/efficiency/ai-code-licensing.md)
+
+- **相关方法论**: [ai-sdlc](../docs/efficiency/ai-sdlc.md)
+
+- **相关方法论**: [ai-developer-training](../docs/efficiency/ai-developer-training.md)
+
+- **相关方法论**: [ai-performance-benchmarks](../docs/efficiency/ai-performance-benchmarks.md)
+
+- **相关方法论**: [ai-context-window-management](../docs/efficiency/ai-context-window-management.md)
+
+- **相关方法论**: [ai-dev-toolchain](../docs/efficiency/ai-dev-toolchain.md)
+
+- **相关方法论**: [ai-code-review-checklist](../docs/efficiency/ai-code-review-checklist.md)
+
+- **相关方法论**: [ai-dev-environment](../docs/efficiency/ai-dev-environment.md)
+
+- **相关方法论**: [ai-version-control](../docs/efficiency/ai-version-control.md)
+
+- **相关方法论**: [ai-code-generation-quality](../docs/efficiency/ai-code-generation-quality.md)
+

@@ -127,3 +127,9 @@ FastAPI 是公认的高质量项目（测试覆盖率 96%），仍有 2 个可�
 - [x] 关键洞察：5 条编号洞察，含具体数字/模式
 - [x] 代码/文档链接：提供仓库、复现命令
 - [x] 人/AI 角色分离：协作过程明确记录人类做了什么、AI 做了什么
+
+
+## 相关方法论
+
+- **相关方法论**: [ai-developer-training](../docs/efficiency/ai-developer-training.md)
+

@@ -182,5 +182,67 @@ AI 审查清单:
 
 ## 相关案例
 
+- **相关案例**: [api-design-implementation](../case-studies/api-design-implementation.md)
+
+- **相关案例**: [legacy-system-refactoring](../case-studies/legacy-system-refactoring.md)
+
+- **相关案例**: [ml-model-deployment](../case-studies/ml-model-deployment.md)
+
+- **相关案例**: [microservice-architecture](../case-studies/microservice-architecture.md)
+
+- **相关案例**: [api-monitoring](../case-studies/api-monitoring.md)
+
+- **相关案例**: [aiops-automation](../case-studies/aiops-automation.md)
+
+- **相关案例**: [ai-native-coverage-governance](../case-studies/ai-native-coverage-governance.md)
+
+- **相关案例**: [realtime-data-processing](../case-studies/realtime-data-processing.md)
+
+- **相关案例**: [api-doc-generation](../case-studies/api-doc-generation.md)
+
+- **相关案例**: [production-debugging](../case-studies/production-debugging.md)
+
+- **相关案例**: [legacy-refactoring](../case-studies/legacy-refactoring.md)
+
+- **相关案例**: [code-review-system](../case-studies/code-review-system.md)
+
+- **相关案例**: [security-audit](../case-studies/security-audit.md)
+
+- **相关案例**: [technical-documentation](../case-studies/technical-documentation.md)
+
+- **相关案例**: [data-pipeline](../case-studies/data-pipeline.md)
+
+- **相关案例**: [automated-testing-platform](../case-studies/automated-testing-platform.md)
+
+- **相关案例**: [data-migration](../case-studies/data-migration.md)
+
+- **相关案例**: [ai-context-sync-development](../case-studies/ai-context-sync-development.md)
+
+- **相关案例**: [database-performance-optimization](../case-studies/database-performance-optimization.md)
+
+- **相关案例**: [mobile-app-development](../case-studies/mobile-app-development.md)
+
+- **相关案例**: [api-design](../case-studies/api-design.md)
+
+- **相关案例**: [ai-task-prioritizer](../case-studies/ai-task-prioritizer.md)
+
+- **相关案例**: [unit-testing](../case-studies/unit-testing.md)
+
+- **相关案例**: [devops-pipeline](../case-studies/devops-pipeline.md)
+
+- **相关案例**: [database-migration](../case-studies/database-migration.md)
+
+- **相关案例**: [adg-dogfooding-search-pipeline](../case-studies/adg-dogfooding-search-pipeline.md)
+
+- **相关案例**: [cli-tool-development](../case-studies/cli-tool-development.md)
+
+- **相关案例**: [web-scraping-tool](../case-studies/web-scraping-tool.md)
+
+- **相关案例**: [frontend-performance-optimization](../case-studies/frontend-performance-optimization.md)
+
+- **相关案例**: [intelligent-customer-service](../case-studies/intelligent-customer-service.md)
+
+- **相关案例**: [security-vulnerability-fix](../case-studies/security-vulnerability-fix.md)
+
 - **相关案例**: [code-review](../case-studies/code-review.md)
 

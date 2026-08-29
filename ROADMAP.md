@@ -255,7 +255,7 @@
 
 | 任务 | 说明 | 状态 |
 |------|------|------|
-| ADR-014 | `check_directory` 复杂度拆分 C=48→4 helper (0.5d) | 🚧 进行中 |
+| ADR-014 | `check_directory` 复杂度拆分 C=48→4 helper (0.5d) | ✅ 已完成 (b07bb5e) |
 | ADR-015 | pytest-xdist race condition 接受现状 | ✅ 已完成 |
 | cmd_recommend 测试 | 29.6%→80%+ (0.3d) | 🚧 进行中 |
 | pytest-cov 8.x 试运行 | 解 ADR-013 (0.5d) | 🚧 进行中 |

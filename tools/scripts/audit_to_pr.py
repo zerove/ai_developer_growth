@@ -340,16 +340,27 @@ def create_github_pr(title: str, body: str, base_branch: str = "main") -> dict[s
             pass
 
 
-def _count_violations_by_severity(violations: list[dict[str, Any]]) -> dict[str, int]:
-    """按严重性统计违规数.
+def _count_by_severity(
+    violations: list[dict[str, Any]],
+    severity: str,
+) -> int:
+    """统计 violations 中指定 severity 的数量.
 
-    V2.18 P3-8 拆分: 从 format_audit_results_json (C=12) 抽出.
+    V2.19 P3-35 拆分: 从 _count_violations_by_severity (B=7) 抽出.
+    """
+    return sum(1 for v in violations if v.get("severity") == severity)
+
+
+def _count_violations_by_severity(violations: list[dict[str, Any]]) -> dict[str, int]:
+    """按严重性统计违规数 (orchestrator).
+
+    V2.19 P3-35 拆分: 从 B=7 / 10 行函数拆出 _count_by_severity.
     返回 {"Critical": N, "Warning": N, "Info": N}.
     """
     return {
-        "Critical": sum(1 for v in violations if v.get("severity") == "Critical"),
-        "Warning": sum(1 for v in violations if v.get("severity") == "Warning"),
-        "Info": sum(1 for v in violations if v.get("severity") == "Info"),
+        "Critical": _count_by_severity(violations, "Critical"),
+        "Warning": _count_by_severity(violations, "Warning"),
+        "Info": _count_by_severity(violations, "Info"),
     }
 
 

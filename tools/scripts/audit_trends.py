@@ -171,16 +171,45 @@ def _render_alerts(alerts: list[str]) -> None:
         print("   ✅ 无异常波动")
 
 
-def main() -> int:
-    """CLI 入口 (orchestrator).
+def _render_text_report(
+    ledger_file: Path,
+    chain_ok: bool,
+    chain_desc: str,
+    report: dict[str, Any],
+) -> None:
+    """渲染 text 格式报告 (含 header + summary + by_type + last_24h + alerts).
 
-    V2.19 P3-27 拆分: 从 B=9 / 31 行 main 拆出 3 个 helper.
-    主函数仅负责: 参数解析 → 加载数据 → 委托渲染 (JSON / text 两条路径).
+    V2.19 P3-43 拆分: 从 main (B=6) 抽出.
+    """
+    print(f"📊 审计台账趋势 ({ledger_file})")
+    _render_chain_status(chain_ok, chain_desc)
+    print(f"   总条目: {report['total']}（无时间戳旧条目 {report['undated_entries']} 条）")
+    print("   按类型:")
+    for etype, count in sorted(report["by_type"].items(), key=lambda kv: -kv[1]):
+        print(f"     - {etype}: {count}")
+    if report["last_24h"]:
+        print(f"   最近24h: {report['last_24h']}")
+    _render_alerts(report["alerts"])
+
+
+def _build_main_parser() -> argparse.ArgumentParser:
+    """构造 CLI 参数解析器.
+
+    V2.19 P3-43 拆分: 从 main (B=6) 抽出.
     """
     parser = argparse.ArgumentParser(description="审计台账趋势分析")
     parser.add_argument("--json", action="store_true", help="输出 JSON 格式")
     parser.add_argument("--root", type=Path, default=None, help="项目根目录")
-    args = parser.parse_args()
+    return parser
+
+
+def main() -> int:
+    """CLI 入口 (orchestrator).
+
+    V2.19 P3-43 拆分: 从 B=6 / 37 行 main 拆出 2 个 helper.
+    主函数仅负责: 解析参数 → 加载数据 → 委托 JSON/text 渲染 → 返回 exit code.
+    """
+    args = _build_main_parser().parse_args()
 
     root = args.root or get_project_root()
     ledger_file = root / ".quality-trends" / "audit_ledger.jsonl"
@@ -192,15 +221,7 @@ def main() -> int:
     if args.json:
         _render_json_report(chain_ok, chain_desc, report)
     else:
-        print(f"📊 审计台账趋势 ({ledger_file})")
-        _render_chain_status(chain_ok, chain_desc)
-        print(f"   总条目: {report['total']}（无时间戳旧条目 {report['undated_entries']} 条）")
-        print("   按类型:")
-        for etype, count in sorted(report["by_type"].items(), key=lambda kv: -kv[1]):
-            print(f"     - {etype}: {count}")
-        if report["last_24h"]:
-            print(f"   最近24h: {report['last_24h']}")
-        _render_alerts(report["alerts"])
+        _render_text_report(ledger_file, chain_ok, chain_desc, report)
 
     if not chain_ok:
         return 1

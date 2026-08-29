@@ -8,8 +8,16 @@ from __future__ import annotations
 
 import json
 import sys
+from typing import TYPE_CHECKING
 
 from tools.scripts._common import get_project_root
+
+if TYPE_CHECKING:
+    from tools.scripts.search.tfidf_engine import Document, SearchResult
+else:
+    # runtime fallback (not used at runtime — only for import-time type resolution)
+    Document = object  # type: ignore[assignment,misc]
+    SearchResult = object  # type: ignore[assignment,misc]
 
 # 工具元数据注册表：新增工具时同步维护，供 list_tools 发现接口返回
 TOOL_REGISTRY: list[dict[str, object]] = [
@@ -177,28 +185,48 @@ class AINativeMCPServer:
         query = str(arguments.get("query", "")).strip()
         if not query:
             return {"status": "error", "message": "missing 'query' argument"}
-        try:
-            raw_limit = arguments.get("limit", 5)
-            limit = min(max(int(raw_limit), 1), 20) if isinstance(raw_limit, (int, str, float)) else 5
-        except (TypeError, ValueError):
-            limit = 5
+        limit = self._parse_search_limit(arguments.get("limit", 5))
         index = self._get_search_index()
         assert isinstance(index, EnhancedTFIDF)
         hits = index.search(query, top_k=limit)
         return {
             "status": "success",
             "total": len(hits),
-            "results": [
-                {
-                    "id": h.doc.id,
-                    "title": h.doc.title,
-                    "snippet": h.snippet[:200],
-                    "score": round(h.score, 4),
-                    "category": h.doc.category,
-                    "path": f"docs/{h.doc.id.replace('_', '/')}.md",
-                }
-                for h in hits
-            ],
+            "results": [self._format_search_hit(h) for h in hits],
+        }
+
+    def _parse_search_limit(self, raw_limit: object) -> int:
+        """解析搜索 limit 参数, 范围 [1, 20], 默认 5.
+
+        Args:
+            raw_limit: 原始参数 (int/str/float/其他)
+
+        Returns:
+            限制数 (1-20)
+        """
+        if not isinstance(raw_limit, (int, str, float)):
+            return 5
+        try:
+            return min(max(int(raw_limit), 1), 20)
+        except (TypeError, ValueError):
+            return 5
+
+    def _format_search_hit(self, hit: SearchResult) -> dict[str, object]:
+        """格式化单条搜索结果.
+
+        Args:
+            hit: SearchResult 对象 (含 doc/snippet/score)
+
+        Returns:
+            搜索结果 dict
+        """
+        return {
+            "id": hit.doc.id,
+            "title": hit.doc.title,
+            "snippet": hit.snippet[:200],
+            "score": round(hit.score, 4),
+            "category": hit.doc.category,
+            "path": f"docs/{hit.doc.id.replace('_', '/')}.md",
         }
 
     def _tool_architecture_guard(self, arguments: dict[str, object]) -> dict[str, object]:

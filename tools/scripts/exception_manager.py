@@ -425,32 +425,46 @@ class GitOpsSync:
             return False
 
     def sync_from_git(self) -> list[ExceptionRequest]:
-        """从 Git 仓库同步例外"""
+        """从 Git 仓库同步例外.
+
+        V2.20 P4-15 拆分: 抽 _load_git_yaml_exceptions 收口 yaml 读取 + 遍历,
+        _parse_git_exception 收口 status 转换 + from_dict + 强制 APPROVED.
+        主函数仅负责 try/except 包裹.
+        """
         try:
-            if not self.exceptions_file.exists():
-                return []
-
-            import yaml
-
-            with open(self.exceptions_file) as f:
-                data = yaml.safe_load(f)
-
-            if not data or "exceptions" not in data:
-                return []
-
-            requests = []
-            for exc_data in data["exceptions"]:
-                # Convert status string to enum if needed
-                if "status" in exc_data and isinstance(exc_data["status"], str):
-                    exc_data["status"] = ExceptionStatus(exc_data["status"])
-                req = ExceptionRequest.from_dict(exc_data)
-                req.status = ExceptionStatus.APPROVED  # Git 中的默认为已批准
-                requests.append(req)
-
-            return requests
+            return self._load_git_yaml_exceptions()
         except Exception as e:
             logger.error(f"GitOps sync from git failed: {e}")
             return []
+
+    def _load_git_yaml_exceptions(self) -> list[ExceptionRequest]:
+        """从 Git YAML 文件读取 exceptions, 解析为 Request 列表."""
+        if not self.exceptions_file.exists():
+            return []
+        import yaml
+
+        with open(self.exceptions_file) as f:
+            data = yaml.safe_load(f)
+
+        if not data or "exceptions" not in data:
+            return []
+
+        return [self._parse_git_exception(exc) for exc in data["exceptions"]]
+
+    def _parse_git_exception(self, exc_data: dict[str, object]) -> ExceptionRequest:
+        """解析单条 Git exception (status 转换 + 强制 APPROVED + from_dict).
+
+        Args:
+            exc_data: exception dict
+
+        Returns:
+            ExceptionRequest 对象 (status=APPROVED)
+        """
+        if "status" in exc_data and isinstance(exc_data["status"], str):
+            exc_data["status"] = ExceptionStatus(exc_data["status"])
+        req = ExceptionRequest.from_dict(exc_data)
+        req.status = ExceptionStatus.APPROVED  # Git 中的默认为已批准
+        return req
 
     def pull_latest(self) -> bool:
         """拉取最新代码"""

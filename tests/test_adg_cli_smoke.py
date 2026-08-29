@@ -146,3 +146,32 @@ class TestCliSmokeFast:
         """只读命令应在超时内完成（防卡死回归）。"""
         r = _run_cli(*args, timeout=60)
         assert r.returncode == 0, r.stderr.decode()[:300]
+
+
+@pytest.mark.parametrize(
+    "cmd",
+    [
+        "bench",
+        "cicd",
+        "dashboard",
+        "fix",
+        "html-report",
+        "install-hooks",
+        "list-rules",
+        "lsp",
+        "monorepo",
+        "notify",
+        "pattern-learner",
+    ],
+)
+def test_uncovered_cmd_help_ok(cmd: str) -> None:
+    """全 23 cmd 的 --help 不崩溃 (V2.15 补全 11 个 smoke 缺失 cmd)。
+
+    目的: 防止子命令注册/import 错误导致 argparse 阶段崩溃。
+    真实业务逻辑在各自 test_<cmd>.py 单测覆盖, 这里只做\"可执行性\"验证。
+    """
+    r = _run_cli(cmd, "--help", timeout=30)
+    assert r.returncode == 0, f"{cmd} --help 失败: {r.stderr.decode()[:300]}"
+    # --help 应输出 Usage 之类文本
+    out = r.stdout.decode()
+    assert "Usage" in out or "usage" in out or "options" in out or "Commands" in out

@@ -313,20 +313,29 @@ def generate_sarif(results: list[Any]) -> str:
     return json.dumps(sarif, indent=2, ensure_ascii=False)
 
 
-def _build_json_content(results: list[Any]) -> str:
-    """构建 JSON 报告内容 (含 results + summary).
+def _build_json_summary(results: list[Any]) -> dict[str, Any]:
+    """构造 JSON 报告 summary 段 (total/计数 + passed).
 
-    V2.18 P3-10 拆分: 从 write_report (C=11) 抽出.
+    V2.19 P3-32 拆分: 从 _build_json_content (B=6) 抽出.
+    """
+    return {
+        "total_files": len(results),
+        "total_errors": sum(r.error_count for r in results),
+        "total_warnings": sum(r.warning_count for r in results),
+        "total_info": sum(r.info_count for r in results),
+        "passed": all(r.passed for r in results),
+    }
+
+
+def _build_json_content(results: list[Any]) -> str:
+    """构建 JSON 报告内容 (含 results + summary) (orchestrator).
+
+    V2.19 P3-32 拆分: 从 B=6 / 16 行函数拆出 _build_json_summary.
+    主函数仅负责: 拼装 data dict → 委托 summary → json.dumps.
     """
     data = {
         "results": [r.to_dict() for r in results],
-        "summary": {
-            "total_files": len(results),
-            "total_errors": sum(r.error_count for r in results),
-            "total_warnings": sum(r.warning_count for r in results),
-            "total_info": sum(r.info_count for r in results),
-            "passed": all(r.passed for r in results),
-        },
+        "summary": _build_json_summary(results),
     }
     return json.dumps(data, indent=2, ensure_ascii=False)
 

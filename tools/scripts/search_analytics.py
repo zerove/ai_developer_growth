@@ -114,10 +114,28 @@ def _top_n_counts(items: list[str], top_n: int) -> list[dict[str, object]]:
     return [{"query": q, "count": c} for q, c in Counter(items).most_common(top_n)]
 
 
+def _count_unique_queries(queries: list[str]) -> int:
+    """统计唯一查询数 (集合大小).
+
+    V2.19 P3-44 拆分: 从 analyze (B=6) 抽出.
+    """
+    return len(set(queries))
+
+
+def _calc_zero_recall_rate(zero_count: int, total: int) -> float:
+    """计算零召回率 (%), 空记录返 0.0.
+
+    V2.19 P3-44 拆分: 从 analyze (B=6) 抽出.
+    """
+    if not total:
+        return 0.0
+    return round(zero_count / total * 100, 1)
+
+
 def analyze(records: list[dict[str, object]], top_n: int = 10) -> dict[str, object]:
     """核心聚合逻辑 (orchestrator).
 
-    V2.19 P3-22 拆分: 从 B=10 / 22 行函数拆出 2 个 helper.
+    V2.19 P3-44 拆分: 从 B=6 / 20 行函数拆出 2 个 helper.
     主函数仅负责: 基础计数 + 委托 2 helper + 装配 result dict.
     """
     total = len(records)
@@ -127,10 +145,10 @@ def analyze(records: list[dict[str, object]], top_n: int = 10) -> dict[str, obje
 
     return {
         "total": total,
-        "unique": len(set(queries)),
+        "unique": _count_unique_queries(queries),
         "avg_time_ms": round(sum(times) / len(times), 2) if times else 0.0,
         "zero_recall_count": len(zero_recall),
-        "zero_recall_rate": round(len(zero_recall) / total * 100, 1) if total else 0.0,
+        "zero_recall_rate": _calc_zero_recall_rate(len(zero_recall), total),
         "top_queries": _top_n_counts(queries, top_n),
         "zero_queries": _top_n_counts(zero_recall, top_n),
     }

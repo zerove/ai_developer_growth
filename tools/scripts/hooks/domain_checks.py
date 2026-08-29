@@ -197,34 +197,22 @@ def run_language_rules(path: Path, lang: str | None = None) -> tuple[bool, str]:
         return passed, output
 
 
-def run_quality_gate(
-    path: Path,
+def _determine_checks(
     *,
-    full: bool = False,
-    check_annotation: bool = False,
-    check_security: bool = False,
-    check_type: bool = False,
-    check_error: bool = False,
-    check_structure: bool = False,
-    check_patterns: bool = False,
-    format: str = "text",
-) -> tuple[bool, str]:
-    """Run AI Quality Gate checks.
+    full: bool,
+    check_annotation: bool,
+    check_security: bool,
+    check_type: bool,
+    check_error: bool,
+    check_structure: bool,
+    check_patterns: bool,
+) -> list[str]:
+    """根据参数决定要运行的检查列表。
 
-    Args:
-        path: File or directory to check.
-        full: Run all checks.
-        check_annotation: Check AI annotation patterns.
-        check_security: Check security patterns.
-        check_type: Check type safety.
-        check_error: Check error handling.
-        check_structure: Check code structure.
-        check_patterns: Run all anti-pattern checks.
-        format: Output format ('text' or 'json').
+    ADR-016 拆分: 从 run_quality_gate (C=41) 抽出。
     """
-    checks: list[str] = []
     if full or check_patterns:
-        checks = [
+        return [
             "annotation",
             "security",
             "type",
@@ -232,132 +220,99 @@ def run_quality_gate(
             "structure",
             "language_rules",
         ]
-    else:
-        if check_annotation:
-            checks.append("annotation")
-        if check_security:
-            checks.append("security")
-        if check_type:
-            checks.append("type")
-        if check_error:
-            checks.append("error")
-        if check_structure:
-            checks.append("structure")
-
+    checks: list[str] = []
+    if check_annotation:
+        checks.append("annotation")
+    if check_security:
+        checks.append("security")
+    if check_type:
+        checks.append("type")
+    if check_error:
+        checks.append("error")
+    if check_structure:
+        checks.append("structure")
     if not checks:
-        checks = ["annotation", "security", "type", "error"]
+        return ["annotation", "security", "type", "error"]
+    return checks
 
-    filtered_files = _collect_checkable_files(path)
-    if not filtered_files:
-        return True, "No files to check"
 
-    # Run checks on each file
-    all_results: list[tuple[Path, dict[str, Any]]] = []
-    for filepath in filtered_files:
-        lang = detect_language_from_file(filepath)
-        if not lang:
-            continue
-        # 测试代码允许 eval/exec/Any 等测试辅助模式：只做 AI 标注合规检查
-        file_checks = ["annotation"] if "tests" in filepath.parts else checks
-        result = check_file(filepath, file_checks)
-        all_results.append((filepath, result))
+def _apply_baseline_ratchet(
+    all_results: list[tuple[Path, dict[str, Any]]],
+    baseline_path: Path,
+) -> tuple[list[tuple[Path, dict[str, Any]]], int, str]:
+    """应用基线棘轮: 存量问题豁免，只拦截新增问题。
 
-    # 基线棘轮: 存量问题豁免，只拦截新增问题
-    # - 基线不存在: 记录现状作为起点，本次保持严格判定
-    #   （基线随仓库分发后，后续运行才开始豁免存量）
-    # - 有新增问题: 失败，基线保持不变
-    # - 无新增问题: 通过并用当前状态合并刷新基线（已修复的问题随之移出）
-    # 任何基线机制自身的异常都不应阻断门禁，此时退回无基线行为
-    # 基线默认放在项目根目录（基于模块位置定位，不受 cwd 影响），
-    # 测试可通过 JCODE_QUALITY_BASELINE 环境变量指向临时目录实现隔离
-    env_baseline = os.environ.get("JCODE_QUALITY_BASELINE")
-    baseline_path = Path(env_baseline) if env_baseline else get_project_root() / ".jcode" / "baseline.json"
-    original_results = list(all_results)
+    Returns:
+        - 过滤后的 results
+        - 豁免数量
+        - 备注信息
+
+    ADR-016 拆分: 从 run_quality_gate 抽出。
+    """
+    filtered_results: list[tuple[Path, dict[str, Any]]] = list(all_results)
     existing_baseline = _load_issue_baseline(baseline_path)
     baseline_exempt = 0
     baseline_note = ""
+    if existing_baseline is None:
+        _save_issue_baseline(baseline_path, all_results)
+        baseline_note = f"首次运行，已创建质量基线（本次按严格模式判定）: {baseline_path}"
+        return filtered_results, baseline_exempt, baseline_note
+    if not existing_baseline:
+        return filtered_results, baseline_exempt, baseline_note
+    for filepath, r in all_results:
+        base_counts = existing_baseline.get(str(filepath), {})
+        cur_counts: dict[str, int] = {}
+        kept_issues: list[dict[str, Any]] = []
+        for issue in r["issues"]:
+            key = _issue_key(issue)
+            cur_counts[key] = cur_counts.get(key, 0) + 1
+            if cur_counts[key] <= base_counts.get(key, 0):
+                baseline_exempt += 1
+                continue
+            kept_issues.append(issue)
+        new_r = {**r, "issues": kept_issues}
+        if kept_issues:
+            new_r["passed"] = False
+        elif not r["passed"] and r["issues"]:
+            new_r["passed"] = True
+        filtered_results[filtered_results.index((filepath, r))] = (filepath, new_r)
+    if baseline_exempt:
+        baseline_note = f"基线豁免存量问题 {baseline_exempt} 个"
+    return filtered_results, baseline_exempt, baseline_note
 
+
+def _refresh_baseline_if_clean(
+    original_results: list[tuple[Path, dict[str, Any]]],
+    baseline_path: Path,
+    existing_baseline: dict[str, Any] | None,
+    full: bool,
+) -> None:
+    """无新增问题时合并刷新基线 (棘轮只紧不松)。
+
+    ADR-016 拆分: 从 run_quality_gate 抽出。
+    """
+    if existing_baseline is None:
+        return
     try:
-        if existing_baseline is None:
-            _save_issue_baseline(baseline_path, all_results)
-            baseline_note = f"首次运行，已创建质量基线（本次按严格模式判定）: {baseline_path}"
-        elif existing_baseline:
-            filtered_results: list[tuple[Path, dict[str, Any]]] = []
-            for filepath, r in all_results:
-                base_counts = existing_baseline.get(str(filepath), {})
-                cur_counts: dict[str, int] = {}
-                kept_issues: list[dict[str, Any]] = []
-                for issue in r["issues"]:
-                    key = _issue_key(issue)
-                    cur_counts[key] = cur_counts.get(key, 0) + 1
-                    if cur_counts[key] <= base_counts.get(key, 0):
-                        baseline_exempt += 1
-                        continue
-                    kept_issues.append(issue)
-                new_r = {**r, "issues": kept_issues}
-                if kept_issues:
-                    new_r["passed"] = False
-                elif not r["passed"] and r["issues"]:
-                    new_r["passed"] = True
-                filtered_results.append((filepath, new_r))
-            all_results = filtered_results
-            if baseline_exempt:
-                baseline_note = f"基线豁免存量问题 {baseline_exempt} 个"
-    except Exception as e:  # noqa: BLE001 - 基线失败时退回严格模式
-        logger.warning("质量基线处理失败，退回无基线严格模式: %s", e)
-        all_results = original_results
-        baseline_note = ""
+        _merge_issue_baseline(baseline_path, original_results, existing_baseline)
+        if full:
+            pruned = prune_stale_baseline_entries(baseline_path)
+            if pruned:
+                logger.info("质量基线清理失效条目 %d 个", pruned)
+    except Exception as e:  # noqa: BLE001 - 刷新失败不影响本次结果
+        logger.warning("质量基线刷新失败: %s", e)
 
-    passed_count = sum(1 for _, r in all_results if r["passed"])
-    failed_count = len(all_results) - passed_count
-    total_issues = sum(len(r["issues"]) for _, r in all_results)
 
-    # 无新增问题时合并刷新基线，使已修复的存量问题移出基线（棘轮只紧不松）
-    if failed_count == 0 and existing_baseline:
-        try:
-            _merge_issue_baseline(baseline_path, original_results, existing_baseline)
-            if full:
-                # 全量运行覆盖了项目全部代码文件，
-                # 基线中残留的已删除文件条目可以安全清除
-                pruned = prune_stale_baseline_entries(baseline_path)
-                if pruned:
-                    logger.info("质量基线清理失效条目 %d 个", pruned)
-        except Exception as e:  # noqa: BLE001 - 刷新失败不影响本次结果
-            logger.warning("质量基线刷新失败: %s", e)
+def _record_run_history(
+    all_results: list[tuple[Path, dict[str, Any]]],
+    passed_count: int,
+    failed_count: int,
+    total_issues: int,
+) -> None:
+    """记录运行历史到 store, 失败不影响检查结果。
 
-    # Format output
-    if format == "json":
-        output = json.dumps(
-            {
-                "summary": {
-                    "passed": passed_count,
-                    "failed": failed_count,
-                    "total_files": len(all_results),
-                    "total_issues": total_issues,
-                    "baseline_exempt": baseline_exempt,
-                },
-                "results": [{"file": str(f), **r} for f, r in all_results],
-            },
-            indent=2,
-            ensure_ascii=False,
-        )
-    else:
-        lines = []
-        for filepath, result in all_results:
-            if result["passed"]:
-                lines.append(f"✅ {filepath}")
-            else:
-                lines.append(f"❌ {filepath} ({len(result['issues'])} issues)")
-                for issue in result["issues"][:5]:
-                    lines.append(f"   Line {issue['line']}: [{issue['type']}] {issue['message']}")
-                if len(result["issues"]) > 5:
-                    lines.append(f"   ... and {len(result['issues']) - 5} more")
-        lines.append(f"\nSummary: {passed_count} passed, {failed_count} failed, {total_issues} issues")
-        if baseline_note:
-            lines.append(f"ℹ️  {baseline_note}")
-        output = "\n".join(lines)
-
-    # 记录到统一存储（任务7：复用检查历史，供 dashboard/趋势分析使用）
+    ADR-016 拆分: 从 run_quality_gate 抽出。
+    """
     try:
         from tools.scripts.rules_engine.store import get_connection, record_run
 
@@ -378,6 +333,130 @@ def run_quality_gate(
     except Exception as e:  # 存储失败不影响检查结果
         logger.warning("记录质量检查历史失败: %s", e)
 
+
+def _format_output(
+    all_results: list[tuple[Path, dict[str, Any]]],
+    format: str,
+    baseline_exempt: int,
+    baseline_note: str,
+) -> str:
+    """格式化输出 (text 或 json)。
+
+    ADR-016 拆分: 从 run_quality_gate 抽出。
+    """
+    passed_count = sum(1 for _, r in all_results if r["passed"])
+    failed_count = len(all_results) - passed_count
+    total_issues = sum(len(r["issues"]) for _, r in all_results)
+    if format == "json":
+        return json.dumps(
+            {
+                "summary": {
+                    "passed": passed_count,
+                    "failed": failed_count,
+                    "total_files": len(all_results),
+                    "total_issues": total_issues,
+                    "baseline_exempt": baseline_exempt,
+                },
+                "results": [{"file": str(f), **r} for f, r in all_results],
+            },
+            indent=2,
+            ensure_ascii=False,
+        )
+    lines: list[str] = []
+    for filepath, result in all_results:
+        if result["passed"]:
+            lines.append(f"✅ {filepath}")
+        else:
+            lines.append(f"❌ {filepath} ({len(result['issues'])} issues)")
+            for issue in result["issues"][:5]:
+                lines.append(f"   Line {issue['line']}: [{issue['type']}] {issue['message']}")
+            if len(result["issues"]) > 5:
+                lines.append(f"   ... and {len(result['issues']) - 5} more")
+    lines.append(f"\nSummary: {passed_count} passed, {failed_count} failed, {total_issues} issues")
+    if baseline_note:
+        lines.append(f"ℹ️  {baseline_note}")
+    return "\n".join(lines)
+
+
+def _resolve_baseline_path() -> Path:
+    """解析基线文件路径 (env 覆盖或默认位置)。"""
+    env_baseline = os.environ.get("JCODE_QUALITY_BASELINE")
+    if env_baseline:
+        return Path(env_baseline)
+    return get_project_root() / ".jcode" / "baseline.json"
+
+
+def _run_checks_on_files(
+    files: list[Path],
+    checks: list[str],
+) -> list[tuple[Path, dict[str, Any]]]:
+    """对每个文件运行检查, 跳过无法识别语言的文件。
+
+    测试代码 (路径含 'tests') 只做 annotation 检查。
+
+    ADR-016 拆分: 从 run_quality_gate 抽出。
+    """
+    results: list[tuple[Path, dict[str, Any]]] = []
+    for filepath in files:
+        lang = detect_language_from_file(filepath)
+        if not lang:
+            continue
+        file_checks = ["annotation"] if "tests" in filepath.parts else checks
+        result = check_file(filepath, file_checks)
+        results.append((filepath, result))
+    return results
+
+
+def run_quality_gate(
+    path: Path,
+    *,
+    full: bool = False,
+    check_annotation: bool = False,
+    check_security: bool = False,
+    check_type: bool = False,
+    check_error: bool = False,
+    check_structure: bool = False,
+    check_patterns: bool = False,
+    format: str = "text",
+) -> tuple[bool, str]:
+    """Run AI Quality Gate checks (orchestrator).
+
+    ADR-016 拆分: 从 C=41 / 182 行主函数拆出 7 个 helper。
+    主函数仅负责编排, 行数 < 50。
+    """
+    checks = _determine_checks(
+        full=full,
+        check_annotation=check_annotation,
+        check_security=check_security,
+        check_type=check_type,
+        check_error=check_error,
+        check_structure=check_structure,
+        check_patterns=check_patterns,
+    )
+
+    filtered_files = _collect_checkable_files(path)
+    if not filtered_files:
+        return True, "No files to check"
+
+    all_results = _run_checks_on_files(filtered_files, checks)
+    if not all_results:
+        return True, "No files to check"
+
+    baseline_path = _resolve_baseline_path()
+    original_results = list(all_results)
+    existing_baseline = _load_issue_baseline(baseline_path)
+
+    all_results, baseline_exempt, baseline_note = _apply_baseline_ratchet(all_results, baseline_path)
+
+    passed_count = sum(1 for _, r in all_results if r["passed"])
+    failed_count = len(all_results) - passed_count
+    total_issues = sum(len(r["issues"]) for _, r in all_results)
+
+    if failed_count == 0:
+        _refresh_baseline_if_clean(original_results, baseline_path, existing_baseline, full)
+
+    output = _format_output(all_results, format, baseline_exempt, baseline_note)
+    _record_run_history(all_results, passed_count, failed_count, total_issues)
     return failed_count == 0, output
 
 

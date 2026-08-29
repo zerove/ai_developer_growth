@@ -111,32 +111,49 @@ def _parse_failed_summary_line(line: str) -> list[str] | None:
     return [c.strip() for c in line.replace("Failed checks:", "").split(",") if c.strip()]
 
 
+_AUDIT_SEPARATOR = "————————————————————————————————————————"
+
+
+def _process_audit_line(
+    line: str,
+    checks: list[dict[str, Any]],
+    failed_checks: list[str],
+    passed_checks: list[str],
+) -> None:
+    """处理单行 audit 输出, 累加到 3 个 list.
+
+    V2.19 P3-38 拆分: 从 parse_audit_output (B=6) 抽出.
+    跳过分隔行; 处理 check 行 + failed summary 行.
+    """
+    if _AUDIT_SEPARATOR in line:
+        return
+    check = _parse_check_line(line.strip())
+    if check is not None:
+        name, passed = check
+        if passed:
+            passed_checks.append(name)
+        else:
+            failed_checks.append(name)
+        checks.append({"name": name, "passed": passed})
+
+    failed_summary = _parse_failed_summary_line(line)
+    if failed_summary is not None:
+        failed_checks.clear()
+        failed_checks.extend(failed_summary)
+
+
 def parse_audit_output(output: str) -> dict[str, Any]:
     """解析审计输出, 提取关键信息 (orchestrator).
 
-    V2.18 P3-7 拆分: 从 C=11 / 50 行主函数拆出 2 个 line parser helper.
-    主函数仅负责: 遍历行 → 分类 → 汇总.
+    V2.19 P3-38 拆分: 从 B=6 / 35 行主函数拆出 _process_audit_line + 提升常量.
+    主函数仅负责: 初始化 3 list → 委托 _process_audit_line → 汇总.
     """
     checks: list[dict[str, Any]] = []
     failed_checks: list[str] = []
     passed_checks: list[str] = []
 
     for line in output.split("\n"):
-        if "————————————————————————————————————————" in line:
-            continue
-
-        check = _parse_check_line(line.strip())
-        if check is not None:
-            name, passed = check
-            if passed:
-                passed_checks.append(name)
-            else:
-                failed_checks.append(name)
-            checks.append({"name": name, "passed": passed})
-
-        failed_summary = _parse_failed_summary_line(line)
-        if failed_summary is not None:
-            failed_checks = failed_summary
+        _process_audit_line(line, checks, failed_checks, passed_checks)
 
     return {
         "total_checks": len(checks),

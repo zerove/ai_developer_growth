@@ -301,39 +301,48 @@ def _create_pr_with_body(title: str, body_file: str, base_branch: str, head_bran
     return {"success": False, "error": result.stderr}
 
 
+def _write_body_to_tempfile(body: str) -> str:
+    """将 PR body 写入临时文件, 返回文件路径.
+
+    V2.19 P3-36 拆分: 从 create_github_pr (B=6) 抽出.
+    """
+    import tempfile
+
+    with tempfile.NamedTemporaryFile(mode="w", suffix=".md", delete=False) as f:
+        f.write(body)
+        return f.name
+
+
+def _resolve_head_branch() -> str:
+    """解析要推送的分支: 当前分支 (非 main/master) 或新建临时分支.
+
+    V2.19 P3-36 拆分: 从 create_github_pr (B=6) 抽出.
+    """
+    head_branch = _get_current_branch()
+    if head_branch in ["main", "master"]:
+        head_branch = _create_temp_branch()
+    return head_branch
+
+
 def create_github_pr(title: str, body: str, base_branch: str = "main") -> dict[str, Any]:
-    """使用 GitHub CLI 创建 PR。"""
-    # 检查前置条件
+    """使用 GitHub CLI 创建 PR (orchestrator).
+
+    V2.19 P3-36 拆分: 从 B=6 / 36 行函数拆出 2 个 helper.
+    主函数仅负责: 前置检查 → 委托 2 helper + 推送 + 创建 → 清理.
+    """
     if error := _check_git_repo():
         return error
     if error := _check_gh_cli():
         return error
 
-    # 创建临时文件存储 PR body
-    import tempfile
-
-    with tempfile.NamedTemporaryFile(mode="w", suffix=".md", delete=False) as f:
-        f.write(body)
-        body_file = f.name
-
+    body_file = _write_body_to_tempfile(body)
     try:
-        # 获取当前分支
-        head_branch = _get_current_branch()
-
-        # 如果在 main/master 分支，创建临时分支
-        if head_branch in ["main", "master"]:
-            head_branch = _create_temp_branch()
-
-        # 推送分支
+        head_branch = _resolve_head_branch()
         _push_branch(head_branch)
-
-        # 创建 PR
         return _create_pr_with_body(title, body_file, base_branch, head_branch)
-
     except subprocess.CalledProcessError as e:
         return {"success": False, "error": str(e)}
     finally:
-        # 清理临时文件
         try:
             os.unlink(body_file)
         except Exception:  # noqa: BLE001 - ignore cleanup failures

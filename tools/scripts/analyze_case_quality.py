@@ -449,33 +449,50 @@ class CaseStudyQualityAnalyzer:
         """构建 summary 段: 平均分 + 三档分类.
 
         V2.18 P3-1 拆分: 从 generate_report (C=17) 抽出.
+        V2.20 P4-17 拆分: 抽 _compute_average_scores 收口 6 项均值,
+        _categorize_scores 收口三档分类.
         """
-        avg_overall = sum(m.overall_score for m in metrics_list) / len(metrics_list)
-        avg_authenticity = sum(m.authenticity_score for m in metrics_list) / len(metrics_list)
-        avg_efficiency = sum(m.efficiency_credibility for m in metrics_list) / len(metrics_list)
-        avg_insight = sum(m.insight_quality for m in metrics_list) / len(metrics_list)
-        avg_completeness = sum(m.completeness for m in metrics_list) / len(metrics_list)
-        avg_cross = sum(m.cross_references for m in metrics_list) / len(metrics_list)
-
-        excellent = [m for m in metrics_list if m.overall_score >= 80]
-        good = [m for m in metrics_list if 60 <= m.overall_score < 80]
-        needs_improvement = [m for m in metrics_list if m.overall_score < 60]
+        averages = self._compute_average_scores(metrics_list)
+        categories = self._categorize_scores(metrics_list)
 
         return {
             "total_cases": len(metrics_list),
-            "average_scores": {
-                "overall": round(avg_overall, 1),
-                "authenticity": round(avg_authenticity, 1),
-                "efficiency_credibility": round(avg_efficiency, 1),
-                "insight_quality": round(avg_insight, 1),
-                "completeness": round(avg_completeness, 1),
-                "cross_references": round(avg_cross, 1),
-            },
-            "categories": {
-                "excellent": len(excellent),
-                "good": len(good),
-                "needs_improvement": len(needs_improvement),
-            },
+            "average_scores": averages,
+            "categories": categories,
+        }
+
+    def _compute_average_scores(self, metrics_list: list[QualityMetrics]) -> dict[str, float]:
+        """计算 6 项平均分 (overall/authenticity/efficiency/insight/completeness/cross).
+
+        Args:
+            metrics_list: 案例指标列表
+
+        Returns:
+            {key: rounded_avg}
+        """
+        n = len(metrics_list)
+        return {
+            "overall": round(sum(m.overall_score for m in metrics_list) / n, 1),
+            "authenticity": round(sum(m.authenticity_score for m in metrics_list) / n, 1),
+            "efficiency_credibility": round(sum(m.efficiency_credibility for m in metrics_list) / n, 1),
+            "insight_quality": round(sum(m.insight_quality for m in metrics_list) / n, 1),
+            "completeness": round(sum(m.completeness for m in metrics_list) / n, 1),
+            "cross_references": round(sum(m.cross_references for m in metrics_list) / n, 1),
+        }
+
+    def _categorize_scores(self, metrics_list: list[QualityMetrics]) -> dict[str, int]:
+        """按 overall_score 分为三档 (excellent/good/needs_improvement).
+
+        Args:
+            metrics_list: 案例指标列表
+
+        Returns:
+            {category: count}
+        """
+        return {
+            "excellent": len([m for m in metrics_list if m.overall_score >= 80]),
+            "good": len([m for m in metrics_list if 60 <= m.overall_score < 80]),
+            "needs_improvement": len([m for m in metrics_list if m.overall_score < 60]),
         }
 
     def _build_extremes(

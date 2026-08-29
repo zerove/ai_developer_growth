@@ -22,48 +22,85 @@ def _html_escape(s: str) -> str:
     return s.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
 
 
-def generate_junit_xml(results: list[Any]) -> str:
-    """Generate JUnit XML report.
+def _count_summary_stats(results: list[Any]) -> tuple[int, int, int, int]:
+    """汇总 4 项基础统计.
 
-    Args:
-        results: List of ValidationResult objects (duck-typed)
+    V2.18 P3-3 拆分: 从 generate_junit_xml (C=14) 抽出.
+    返回 (total_errors, total_warnings, total_tests, failures).
     """
     total_errors = sum(r.error_count for r in results)
     total_warnings = sum(r.warning_count for r in results)
     total_tests = len(results)
     failures = sum(1 for r in results if not r.passed)
+    return total_errors, total_warnings, total_tests, failures
 
-    lines = [
+
+def _build_header_lines(
+    total_errors: int,
+    total_warnings: int,
+    total_tests: int,
+    failures: int,
+) -> list[str]:
+    """构建 JUnit XML 头部 (XML decl + testsuite 开标签).
+
+    V2.18 P3-3 拆分: 从 generate_junit_xml (C=14) 抽出.
+    """
+    return [
         '<?xml version="1.0" encoding="UTF-8"?>',
         f'<testsuite name="language-rules" tests="{total_tests}" '
         f'failures="{failures}" errors="{total_errors}" warnings="{total_warnings}">',
     ]
 
+
+def _build_failure_testcase(result: Any) -> list[str]:
+    """构建失败 case 的 XML 块 (含 failure 子标签).
+
+    V2.18 P3-3 拆分: 从 generate_junit_xml (C=14) 抽出.
+    包含首个 error severity issue, 后续 issue 截断.
+    """
+    testcase = f'  <testcase name="{_xml_escape(result.file)}" classname="{result.language}">'
+    lines = [testcase]
+    for issue in result.issues:
+        if issue.severity == "error":
+            lines.append(f'    <failure message="{_xml_escape(issue.message)}">')
+            lines.append(f"      {issue.rule_id}: {issue.message} (line {issue.line})")
+            lines.append("    </failure>")
+            lines.append("  </testcase>")
+            return lines
+    return [*lines, f"{testcase}</testcase>"]
+
+
+def _build_pass_testcase(result: Any) -> list[str]:
+    """构建通过 case 的 XML 块 (warning 作为 system-out).
+
+    V2.18 P3-3 拆分: 从 generate_junit_xml (C=14) 抽出.
+    无 warning 直接闭合, 有 warning 最多 5 条作为 system-out.
+    """
+    testcase = f'  <testcase name="{_xml_escape(result.file)}" classname="{result.language}">'
+    warns = [i for i in result.issues if i.severity == "warning"]
+    if not warns:
+        return [f"{testcase}</testcase>"]
+    lines = [testcase, "    <system-out>"]
+    for w in warns[:5]:
+        lines.append(f"      [{w.rule_id}] {w.message} (line {w.line})")
+    lines.extend(["    </system-out>", "  </testcase>"])
+    return lines
+
+
+def generate_junit_xml(results: list[Any]) -> str:
+    """Generate JUnit XML report (orchestrator).
+
+    V2.18 P3-3 拆分: 从 C=14 / 50 行主函数拆出 4 个 helper.
+    主函数仅负责: 统计 → 头部 → 逐 case 构建 → 闭合.
+    """
+    total_errors, total_warnings, total_tests, failures = _count_summary_stats(results)
+    lines = _build_header_lines(total_errors, total_warnings, total_tests, failures)
+
     for result in results:
-        testcase = f'  <testcase name="{_xml_escape(result.file)}" classname="{result.language}">'
-        if not result.passed:
-            for issue in result.issues:
-                if issue.severity == "error":
-                    lines.append(f"{testcase}")
-                    lines.append(f'    <failure message="{_xml_escape(issue.message)}">')
-                    lines.append(f"      {issue.rule_id}: {issue.message} (line {issue.line})")
-                    lines.append("    </failure>")
-                    lines.append("  </testcase>")
-                    break
-            else:
-                lines.append(f"{testcase}</testcase>")
+        if result.passed:
+            lines.extend(_build_pass_testcase(result))
         else:
-            # Report warnings as system-out
-            warns = [i for i in result.issues if i.severity == "warning"]
-            if warns:
-                lines.append(f"{testcase}")
-                lines.append("    <system-out>")
-                for w in warns[:5]:
-                    lines.append(f"      [{w.rule_id}] {w.message} (line {w.line})")
-                lines.append("    </system-out>")
-                lines.append("  </testcase>")
-            else:
-                lines.append(f"{testcase}</testcase>")
+            lines.extend(_build_failure_testcase(result))
 
     lines.append("</testsuite>")
     return "\n".join(lines)

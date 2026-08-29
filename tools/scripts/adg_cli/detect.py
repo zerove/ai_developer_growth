@@ -330,6 +330,68 @@ def _process_top_level_key(
     return current_rule, current_section
 
 
+def _handle_skip_patterns_line(
+    result: dict[str, Any],
+    stripped: str,
+) -> None:
+    """处理 skip_patterns section 的列表项.
+
+    V2.17 P2-4 拆分: 从 _process_section_content (D=21) 抽出.
+    """
+    if not stripped.startswith("- "):
+        return
+    pattern = stripped[2:].strip().strip("'\"")
+    if pattern:
+        result["skip_patterns"].append(pattern)
+
+
+def _handle_kv_section_line(
+    section_data: dict[str, str],
+    stripped: str,
+) -> None:
+    """处理 severity_overrides / framework_hints section 的 key: value 行.
+
+    V2.17 P2-4 拆分: 从 _process_section_content (D=21) 抽出.
+    跳过 list 项 (以 - 开头), 只处理 k: v.
+    """
+    if ":" not in stripped or stripped.startswith("-"):
+        return
+    key, _, val = stripped.partition(":")
+    key = key.strip()
+    val = val.strip().strip("'\"")
+    if key and val:
+        section_data[key] = val
+
+
+def _apply_rule_field(
+    current_rule: dict[str, Any],
+    stripped: str,
+) -> None:
+    """处理 rule 字段 (name/severity/.../ignore_case/multiline).
+
+    V2.17 P2-4 拆分: 从 _process_section_content (D=21) 抽出.
+    """
+    if ":" not in stripped:
+        return
+    key, _, val = stripped.partition(":")
+    key = key.strip()
+    val = val.strip().strip("'\"")
+    if key in (
+        "name",
+        "severity",
+        "category",
+        "pattern",
+        "message",
+        "fix_hint",
+        "fix_replacement",
+    ):
+        current_rule[key] = val
+    elif key == "ignore_case" and val == "true":
+        current_rule["ignore_case"] = True
+    elif key == "multiline" and val == "true":
+        current_rule["multiline"] = True
+
+
 def _process_section_content(
     line: str,
     stripped: str,
@@ -337,50 +399,19 @@ def _process_section_content(
     current_rule: dict[str, Any] | None,
     current_section: str | None,
 ) -> dict[str, Any] | None:
-    """Process content within a section."""
-    # Handle skip_patterns list items
-    if current_section == "skip_patterns" and stripped.startswith("- "):
-        pattern = stripped[2:].strip().strip("'\"")
-        if pattern:
-            result["skip_patterns"].append(pattern)
-        return current_rule
+    """Process content within a section (orchestrator).
 
-    # Handle severity_overrides key: value pairs
-    if current_section == "severity_overrides" and ":" in stripped and not stripped.startswith("-"):
-        key, _, val = stripped.partition(":")
-        key = key.strip()
-        val = val.strip().strip("'\"")
-        if key and val:
-            result["severity_overrides"][key] = val
-        return current_rule
-
-    # Handle framework_hints key: value pairs
-    if current_section == "framework_hints" and ":" in stripped and not stripped.startswith("-"):
-        key, _, val = stripped.partition(":")
-        key = key.strip()
-        val = val.strip().strip("'\"")
-        if key and val:
-            result["framework_hints"][key] = val
-        return current_rule
-
-    # Rule fields
-    if current_rule and ":" in stripped:
-        key, _, val = stripped.partition(":")
-        key = key.strip()
-        val = val.strip().strip("'\"")
-        if key in (
-            "name",
-            "severity",
-            "category",
-            "pattern",
-            "message",
-            "fix_hint",
-            "fix_replacement",
-        ):
-            current_rule[key] = val
-        elif key == "ignore_case" and val == "true":
-            current_rule["ignore_case"] = True
-        elif key == "multiline" and val == "true":
-            current_rule["multiline"] = True
+    V2.17 P2-4 拆分: 从 D=21 / 53 行主函数拆出 3 个 section handler.
+    主函数仅负责按 current_section 分发:
+    - skip_patterns → _handle_skip_patterns_line
+    - severity_overrides / framework_hints → _handle_kv_section_line
+    - rule 字段 → _apply_rule_field
+    """
+    if current_section == "skip_patterns":
+        _handle_skip_patterns_line(result, stripped)
+    elif current_section in ("severity_overrides", "framework_hints"):
+        _handle_kv_section_line(result[current_section], stripped)
+    elif current_rule is not None:
+        _apply_rule_field(current_rule, stripped)
 
     return current_rule

@@ -212,20 +212,25 @@ class GitHubProjectsSync:
 
         return results
 
-    def _sync_card_to_issue(self, issue: Issue, column_id: str, note: str | None = None) -> dict[str, Any]:
-        """将卡片状态同步回 Issue"""
-        note = note or ""
-        # 获取列名
-        column_name = ""
-        for name, cid in self._project_columns_cache.items():
+    @staticmethod
+    def _resolve_column_name(columns_cache: dict[str, str], column_id: str) -> str:
+        """由列 ID 反查列名.
+
+        V2.18 P3-14 拆分: 从 _sync_card_to_issue (C=11) 抽出.
+        返回空串表示找不到.
+        """
+        for name, cid in columns_cache.items():
             if cid == column_id:
-                column_name = name
-                break
+                return name
+        return ""
 
-        if not column_name:
-            return {"status": "unknown_column"}
+    @staticmethod
+    def _sync_label(issue: Issue, column_name: str) -> str | None:
+        """根据列名追加标签 (若未存在).
 
-        # 列名到标签/状态映射
+        V2.18 P3-14 拆分: 从 _sync_card_to_issue (C=11) 抽出.
+        返回变更描述或 None (无需变更).
+        """
         column_to_label = {
             "Ready": "ready",
             "In Progress": "in-progress",
@@ -233,31 +238,52 @@ class GitHubProjectsSync:
             "Blocked": "blocked",
             "Done": "done",
         }
+        if column_name not in column_to_label:
+            return None
+        label_name = column_to_label[column_name]
+        if any(label.name.lower() == label_name.lower() for label in issue.labels):
+            return None
+        issue.add_to_labels(label_name)
+        return f"added label: {label_name}"
 
+    @staticmethod
+    def _sync_state(issue: Issue, column_name: str) -> str | None:
+        """根据列名更新 issue 状态 (open/closed).
+
+        V2.18 P3-14 拆分: 从 _sync_card_to_issue (C=11) 抽出.
+        返回变更描述或 None (无需变更).
+        """
         column_to_state = {
             "Done": "closed",
             "Todo": "open",
             "Backlog": "open",
         }
+        if column_name not in column_to_state:
+            return None
+        target_state = column_to_state[column_name]
+        if issue.state == target_state:
+            return None
+        issue.edit(state=target_state)
+        return f"state changed to: {target_state}"
 
-        changes = []
+    def _sync_card_to_issue(self, issue: Issue, column_id: str, note: str | None = None) -> dict[str, Any]:
+        """将卡片状态同步回 Issue (orchestrator).
 
-        # 更新标签
-        if column_name in column_to_label:
-            label_name = column_to_label[column_name]
-            if not any(label.name.lower() == label_name.lower() for label in issue.labels):
-                issue.add_to_labels(label_name)
-                changes.append(f"added label: {label_name}")
+        V2.18 P3-14 拆分: 从 C=11 / 63 行方法拆出 3 个 helper.
+        主方法仅负责: 解析列名 → 委托 label/state → 汇总.
+        """
+        del note  # 暂未使用, 保留接口签名
+        column_name = self._resolve_column_name(self._project_columns_cache, column_id)
+        if not column_name:
+            return {"status": "unknown_column"}
 
-        # 更新状态
-        if column_name in column_to_state:
-            target_state = column_to_state[column_name]
-            if issue.state != target_state:
-                if target_state == "closed":
-                    issue.edit(state="closed")
-                else:
-                    issue.edit(state="open")
-                changes.append(f"state changed to: {target_state}")
+        changes: list[str] = []
+        label_change = self._sync_label(issue, column_name)
+        if label_change is not None:
+            changes.append(label_change)
+        state_change = self._sync_state(issue, column_name)
+        if state_change is not None:
+            changes.append(state_change)
 
         return {"status": "synced", "changes": changes}
 

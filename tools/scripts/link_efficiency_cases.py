@@ -98,7 +98,103 @@ def _has_link(content: str, target_name: str) -> bool:
     return target_name in content
 
 
+def _collect_ai_to_case_links(
+    ai_files: dict[Path, set[str]],
+    case_files: dict[Path, set[str]],
+    min_score: int,
+) -> list[tuple[Path, str, str]]:
+    """收集 ai-*.md → case-studies/*.md 链接 (相关案例)。
+
+    ADR-014: 从 main 拆出。返回 (file_to_modify, header, link_line) 列表。
+    """
+    changes: list[tuple[Path, str, str]] = []
+    for ai_path, ai_kws in ai_files.items():
+        for case_path, case_kws in case_files.items():
+            if _should_skip(case_path):
+                continue
+            score = _match_score(ai_kws, case_kws)
+            if score < min_score:
+                continue
+            case_name = case_path.stem
+            if _has_link(ai_path.read_text(encoding="utf-8", errors="ignore"), case_name):
+                continue
+            link_line = (
+                f"- **相关案例**: [{case_name}](../{case_path.relative_to(REPO_ROOT).as_posix()})"
+            )
+            changes.append((ai_path, "## 相关案例", link_line))
+    return changes
+
+
+def _collect_case_to_ai_links(
+    ai_files: dict[Path, set[str]],
+    case_files: dict[Path, set[str]],
+    min_score: int,
+) -> list[tuple[Path, str, str]]:
+    """收集 case-studies/*.md → ai-*.md 链接 (相关方法论)。
+
+    ADR-014: 从 main 拆出。
+    """
+    changes: list[tuple[Path, str, str]] = []
+    for case_path, case_kws in case_files.items():
+        if _should_skip(case_path):
+            continue
+        for ai_path, ai_kws in ai_files.items():
+            score = _match_score(ai_kws, case_kws)
+            if score < min_score:
+                continue
+            ai_name = ai_path.stem
+            if _has_link(case_path.read_text(encoding="utf-8", errors="ignore"), ai_name):
+                continue
+            link_line = (
+                f"- **相关方法论**: [{ai_name}](../{ai_path.relative_to(REPO_ROOT).as_posix()})"
+            )
+            changes.append((case_path, "## 相关方法论", link_line))
+    return changes
+
+
+def _should_skip(case_path: Path) -> bool:
+    """跳过模板/索引文件。"""
+    return case_path.stem.startswith("TEMPLATE") or case_path.stem == "README"
+
+
+def _print_plan(
+    changes: list[tuple[Path, str, str]],
+    ai_count: int,
+    case_count: int,
+) -> None:
+    """打印补全计划。"""
+    print(f"将补全 {len(changes)} 处交叉引用 ({ai_count} ai-docs × {case_count} cases):")
+    for f, _header, line in changes[:10]:
+        rel = f.relative_to(REPO_ROOT)
+        print(f"  + {rel}: {line[:80]}")
+    if len(changes) > 10:
+        print(f"  ... 还有 {len(changes) - 10} 条")
+
+
+def _apply_changes(changes: list[tuple[Path, str, str]]) -> int:
+    """应用链接补全: 按文件分组, 追加段 + 链接。"""
+    by_file: dict[Path, list[tuple[str, str]]] = {}
+    for f, header, line in changes:
+        by_file.setdefault(f, []).append((header, line))
+
+    modified = 0
+    for f, items in by_file.items():
+        content = f.read_text(encoding="utf-8")
+        for header, _ in items:
+            if header not in content:
+                content += f"\n\n{header}\n\n"
+        for header, line in items:
+            if line not in content:
+                content = content.replace(
+                    header, f"{header}\n\n{line}", 1
+                )
+        f.write_text(content, encoding="utf-8")
+        modified += 1
+    return modified
+
+
 def main() -> int:
+    """CLI 入口: 解析参数 + 调度。"""
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument(
         "--dry-run",
@@ -117,83 +213,23 @@ def main() -> int:
         print(f"❌ 目录不存在: {EFFICIENCY_DIR} 或 {CASE_STUDIES_DIR}")
         return 1
 
-    # 收集所有效率文档 + 案例的关键词
-    ai_files = {
-        f: _extract_keywords(f) for f in EFFICIENCY_DIR.glob("ai-*.md")
-    }
-    case_files = {
-        f: _extract_keywords(f) for f in CASE_STUDIES_DIR.glob("*.md")
-    }
+    ai_files = {f: _extract_keywords(f) for f in EFFICIENCY_DIR.glob("ai-*.md")}
+    case_files = {f: _extract_keywords(f) for f in CASE_STUDIES_DIR.glob("*.md")}
 
-    changes: list[tuple[Path, str, str]] = []  # (file, header, link_line)
-    for ai_path, ai_kws in ai_files.items():
-        for case_path, case_kws in case_files.items():
-            # 跳过模板/索引文件
-            if case_path.stem.startswith("TEMPLATE") or case_path.stem == "README":
-                continue
-            score = _match_score(ai_kws, case_kws)
-            if score < args.min_score:
-                continue
-            case_name = case_path.stem
-            if _has_link(ai_path.read_text(encoding="utf-8", errors="ignore"), case_name):
-                continue
-            link_line = (
-                f"- **相关案例**: [{case_name}](../{case_path.relative_to(REPO_ROOT).as_posix()})"
-            )
-            changes.append((ai_path, "## 相关案例", link_line))
-
-    for case_path, case_kws in case_files.items():
-        if case_path.stem.startswith("TEMPLATE") or case_path.stem == "README":
-            continue
-        for ai_path, ai_kws in ai_files.items():
-            score = _match_score(ai_kws, case_kws)
-            if score < args.min_score:
-                continue
-            ai_name = ai_path.stem
-            if _has_link(case_path.read_text(encoding="utf-8", errors="ignore"), ai_name):
-                continue
-            link_line = (
-                f"- **相关方法论**: [{ai_name}](../{ai_path.relative_to(REPO_ROOT).as_posix()})"
-            )
-            changes.append((case_path, "## 相关方法论", link_line))
+    changes = _collect_ai_to_case_links(ai_files, case_files, args.min_score)
+    changes.extend(_collect_case_to_ai_links(ai_files, case_files, args.min_score))
 
     if not changes:
         print("✅ 全部已交叉引用, 无需补全")
         return 0
 
-    print(f"将补全 {len(changes)} 处交叉引用 ({len(ai_files)} ai-docs × {len(case_files)} cases):")
-    for f, header, line in changes[:10]:
-        rel = f.relative_to(REPO_ROOT)
-        print(f"  + {rel}: {line[:80]}")
-    if len(changes) > 10:
-        print(f"  ... 还有 {len(changes) - 10} 条")
+    _print_plan(changes, len(ai_files), len(case_files))
 
     if args.dry_run:
         print("\n--dry-run 模式, 未修改文件")
         return 0
 
-    # 应用改动: 按文件分组, 追加段
-    by_file: dict[Path, list[tuple[str, str]]] = {}
-    for f, header, line in changes:
-        by_file.setdefault(f, []).append((header, line))
-
-    modified = 0
-    for f, items in by_file.items():
-        content = f.read_text(encoding="utf-8")
-        # 找末尾追加位置
-        for header, _ in items:
-            if header not in content:
-                # 插入新段
-                content += f"\n\n{header}\n\n"
-        # 在该段下追加链接
-        for header, line in items:
-            if line not in content:
-                content = content.replace(
-                    header, f"{header}\n\n{line}", 1
-                )
-        f.write_text(content, encoding="utf-8")
-        modified += 1
-
+    modified = _apply_changes(changes)
     print(f"\n✅ 修改 {modified} 个文件")
     return 0
 

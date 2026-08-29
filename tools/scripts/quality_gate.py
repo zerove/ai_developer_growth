@@ -14,6 +14,7 @@ from __future__ import annotations
 import json
 import logging
 import time
+from collections.abc import Callable
 from dataclasses import dataclass, field
 from datetime import datetime
 from pathlib import Path
@@ -578,7 +579,7 @@ class QualityGateEngine:
 
         # 评估 7 项规则
         gate_results: list[GateResult] = []
-        for gate_fn in (
+        gate_evaluators: list[Callable[[], GateResult | None]] = [
             lambda: self._gate_zero_new_errors(gate_name, gate_config, baseline_comparison),
             lambda: self._gate_zero_new_warnings(gate_name, gate_config, baseline_comparison),
             lambda: self._gate_max_new_errors(gate_name, gate_config, baseline_comparison),
@@ -586,7 +587,8 @@ class QualityGateEngine:
             lambda: self._gate_min_coverage(gate_name, gate_config),
             lambda: self._gate_no_worsened(gate_name, baseline_comparison),
             lambda: self._gate_current_issues(gate_name, filtered_results),
-        ):
+        ]
+        for gate_fn in gate_evaluators:
             result = gate_fn()
             if result is not None:
                 gate_results.append(result)

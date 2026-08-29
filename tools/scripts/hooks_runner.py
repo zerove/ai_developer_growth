@@ -35,6 +35,7 @@ import subprocess
 import sys
 from collections.abc import Callable
 from pathlib import Path
+from typing import Any
 
 # 阶段函数通过名称字符串运行时解析（_CHECK_PHASES / _resolve_phase_func），
 # 必须在模块命名空间中存在
@@ -550,7 +551,7 @@ def _handle_baseline_recompute(args: argparse.Namespace) -> int:
     return 0
 
 
-def _print_secret_text(result) -> None:
+def _print_secret_text(result: Any) -> None:
     """打印 secret 扫描 text 格式结果.
 
     V2.17 P2-3 拆分: 从 _handle_secret_scan (C=13) 抽出.
@@ -568,7 +569,7 @@ def _print_secret_text(result) -> None:
         print(f"Errors: {', '.join(result.errors)}")
 
 
-def _output_secret_result(result, args: argparse.Namespace) -> None:
+def _output_secret_result(result: Any, args: argparse.Namespace) -> None:
     """根据 format 输出 secret 扫描结果到 stdout.
 
     V2.17 P2-3 拆分: 从 _handle_secret_scan (C=13) 抽出.

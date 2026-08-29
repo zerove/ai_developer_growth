@@ -550,8 +550,44 @@ def _handle_baseline_recompute(args: argparse.Namespace) -> int:
     return 0
 
 
+def _print_secret_text(result) -> None:
+    """打印 secret 扫描 text 格式结果.
+
+    V2.17 P2-3 拆分: 从 _handle_secret_scan (C=13) 抽出.
+    """
+    if result.findings:
+        print(f"❌ Found {len(result.findings)} secret(s):")
+        for f in result.findings:
+            print(f"  [{f.severity.upper()}] {f.tool}:{f.rule_id} in {f.file}:{f.line}")
+            if f.secret:
+                print(f"    Secret: {f.secret[:50]}...")
+    else:
+        print("✅ No secrets found")
+    print(f"\nScanned in {result.scan_duration_ms}ms using {', '.join(result.tools_used)}")
+    if result.errors:
+        print(f"Errors: {', '.join(result.errors)}")
+
+
+def _output_secret_result(result, args: argparse.Namespace) -> None:
+    """根据 format 输出 secret 扫描结果到 stdout.
+
+    V2.17 P2-3 拆分: 从 _handle_secret_scan (C=13) 抽出.
+    """
+    if args.format == "text":
+        _print_secret_text(result)
+    elif args.format == "json" and not args.output:
+        print(result.to_json())
+    elif args.format == "sarif" and not args.output:
+        import json
+
+        print(json.dumps(result.to_sarif(), indent=2))
+
+
 def _handle_secret_scan(args: argparse.Namespace) -> int:
-    """Handle secret-scan command."""
+    """Handle secret-scan command (orchestrator).
+
+    V2.17 P2-3 拆分: 从 C=13 / 60 行拆出 2 个输出 helper.
+    """
     tools = None
     if args.tools:
         tools = [t.strip() for t in args.tools.split(",")]
@@ -566,26 +602,7 @@ def _handle_secret_scan(args: argparse.Namespace) -> int:
         output_file=args.output,
     )
 
-    # 打印结果
-    if args.format == "text":
-        if result.findings:
-            print(f"❌ Found {len(result.findings)} secret(s):")
-            for f in result.findings:
-                print(f"  [{f.severity.upper()}] {f.tool}:{f.rule_id} in {f.file}:{f.line}")
-                if f.secret:
-                    print(f"    Secret: {f.secret[:50]}...")
-        else:
-            print("✅ No secrets found")
-        print(f"\nScanned in {result.scan_duration_ms}ms using {', '.join(result.tools_used)}")
-        if result.errors:
-            print(f"Errors: {', '.join(result.errors)}")
-    elif args.format == "json" and not args.output:
-        print(result.to_json())
-    elif args.format == "sarif" and not args.output:
-        import json
-
-        print(json.dumps(result.to_sarif(), indent=2))
-
+    _output_secret_result(result, args)
     return 0 if len(result.findings) == 0 else 1
 
 

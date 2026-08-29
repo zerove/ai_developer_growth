@@ -115,7 +115,11 @@ class DependencyGraph:
     def build_from_dependencies(
         self, deps: list[Dependency], root_name: str = "project", root_version: str = "1.0.0"
     ) -> None:
-        """从依赖列表构建图 (用于无 SBOM 关系的情况)"""
+        """从依赖列表构建图 (用于无 SBOM 关系的情况).
+
+        V2.20 P4-6 拆分: 抽 _add_node_if_missing / _process_transitive_dependencies,
+        主函数仅负责 root + 遍历 deps.
+        """
         self.nodes.clear()
         self.edges.clear()
 
@@ -131,34 +135,45 @@ class DependencyGraph:
 
         # 添加所有依赖
         for dep in deps:
-            key = self._node_key(dep.name, dep.version, dep.ecosystem)
-            if key not in self.nodes:
-                self.nodes[key] = DependencyNode(
-                    name=dep.name,
-                    version=dep.version,
-                    ecosystem=dep.ecosystem,
-                    license=dep.license,
-                    is_direct=dep.is_direct,
-                    vulnerabilities=[v.id for v in dep.vulnerabilities],
-                )
-
+            key = self._add_node_if_missing(dep, dep.is_direct)
             # 根节点依赖所有直接依赖
             if dep.is_direct:
                 self._add_edge(root_key, key)
-
             # 处理传递依赖
-            for trans_dep in dep.dependencies:
-                trans_key = self._node_key(trans_dep.name, trans_dep.version, trans_dep.ecosystem)
-                if trans_key not in self.nodes:
-                    self.nodes[trans_key] = DependencyNode(
-                        name=trans_dep.name,
-                        version=trans_dep.version,
-                        ecosystem=trans_dep.ecosystem,
-                        license=trans_dep.license,
-                        is_direct=False,
-                        vulnerabilities=[v.id for v in trans_dep.vulnerabilities],
-                    )
-                self._add_edge(key, trans_key)
+            self._process_transitive_dependencies(dep, key)
+
+    def _add_node_if_missing(self, dep: Dependency, is_direct: bool) -> str:
+        """添加节点 (若不存在), 返回节点 key.
+
+        Args:
+            dep: 依赖对象
+            is_direct: 是否直接依赖
+
+        Returns:
+            节点 key
+        """
+        key = self._node_key(dep.name, dep.version, dep.ecosystem)
+        if key not in self.nodes:
+            self.nodes[key] = DependencyNode(
+                name=dep.name,
+                version=dep.version,
+                ecosystem=dep.ecosystem,
+                license=dep.license,
+                is_direct=is_direct,
+                vulnerabilities=[v.id for v in dep.vulnerabilities],
+            )
+        return key
+
+    def _process_transitive_dependencies(self, dep: Dependency, parent_key: str) -> None:
+        """处理 dep 的所有传递依赖, 添加节点 + 边.
+
+        Args:
+            dep: 父依赖对象
+            parent_key: 父节点 key
+        """
+        for trans_dep in dep.dependencies:
+            trans_key = self._add_node_if_missing(trans_dep, is_direct=False)
+            self._add_edge(parent_key, trans_key)
 
     def _node_key(self, name: str, version: str, ecosystem: str) -> str:
         return f"{ecosystem}:{name}:{version}"

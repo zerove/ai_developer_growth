@@ -340,8 +340,62 @@ def create_github_pr(title: str, body: str, base_branch: str = "main") -> dict[s
             pass
 
 
+def _count_violations_by_severity(violations: list[dict[str, Any]]) -> dict[str, int]:
+    """按严重性统计违规数.
+
+    V2.18 P3-8 拆分: 从 format_audit_results_json (C=12) 抽出.
+    返回 {"Critical": N, "Warning": N, "Info": N}.
+    """
+    return {
+        "Critical": sum(1 for v in violations if v.get("severity") == "Critical"),
+        "Warning": sum(1 for v in violations if v.get("severity") == "Warning"),
+        "Info": sum(1 for v in violations if v.get("severity") == "Info"),
+    }
+
+
+def _severity_icon(severity: str) -> str:
+    """严重性字符串 → emoji 图标.
+
+    V2.18 P3-8 拆分: 从 format_audit_results_json (C=12) 抽出.
+    """
+    return {"Critical": "🔴", "Warning": "🟡"}.get(severity, "🔵")
+
+
+def _build_violations_table(violations: list[dict[str, Any]]) -> list[str]:
+    """构建 markdown 表格行 (含表头).
+
+    V2.18 P3-8 拆分: 从 format_audit_results_json (C=12) 抽出.
+    """
+    lines = [
+        "### 📋 违规详情",
+        "| Severity | Rule ID | Message |",
+        "| :--- | :--- | :--- |",
+    ]
+    for v in violations:
+        sev = v.get("severity", "Unknown")
+        lines.append(f"| {_severity_icon(sev)} {sev} | `{v.get('rule_id', 'N/A')}` | {v.get('message', 'N/A')} |")
+    return lines
+
+
+def _build_report_footer() -> list[str]:
+    """构建报告尾部 (分隔线 + 解决指南).
+
+    V2.18 P3-8 拆分: 从 format_audit_results_json (C=12) 抽出.
+    """
+    return [
+        "\n---\n",
+        "**如何解决？**",
+        "1. **修复代码**: 使变更符合项目规范。",
+        "2. **覆盖规则**: 若为有意偏离，使用本地覆盖并提交至 `.ai-audit-history.json`。",
+    ]
+
+
 def format_audit_results_json(json_input: str) -> str:
-    """兼容旧版本：将 JSON 违规数据格式化为 PR 评论。"""
+    """兼容旧版本: 将 JSON 违规数据格式化为 PR 评论 (orchestrator).
+
+    V2.18 P3-8 拆分: 从 C=12 / 50 行主函数拆出 4 个 helper.
+    主函数仅负责: 解析 → 头部 → 表格 → 尾部.
+    """
     try:
         violations = json.loads(json_input)
     except json.JSONDecodeError:
@@ -350,32 +404,17 @@ def format_audit_results_json(json_input: str) -> str:
     if not violations:
         return "✨ **治理审计**: 未发现规范违规。做得好！"
 
-    critical_count = sum(1 for v in violations if v.get("severity") == "Critical")
-    warning_count = sum(1 for v in violations if v.get("severity") == "Warning")
-    info_count = sum(1 for v in violations if v.get("severity") == "Info")
-
+    counts = _count_violations_by_severity(violations)
     report = [
         "## ⚖️ 治理审计报告 (JSON 输入模式)",
         f"自动审计发现 **{len(violations)}** 个规范违规。",
-        f"- 🔴 **Critical**: {critical_count}",
-        f"- 🟡 **Warning**: {warning_count}",
-        f"- 🔵 **Info**: {info_count}",
+        f"- 🔴 **Critical**: {counts['Critical']}",
+        f"- 🟡 **Warning**: {counts['Warning']}",
+        f"- 🔵 **Info**: {counts['Info']}",
         "",
-        "### 📋 违规详情",
-        "| Severity | Rule ID | Message |",
-        "| :--- | :--- | :--- |",
     ]
-
-    for v in violations:
-        severity_icon = "🔴" if v.get("severity") == "Critical" else "🟡" if v.get("severity") == "Warning" else "🔵"
-        report.append(
-            f"| {severity_icon} {v.get('severity', 'Unknown')} | `{v.get('rule_id', 'N/A')}` | {v.get('message', 'N/A')} |"
-        )
-
-    report.append("\n---\n")
-    report.append("**如何解决？**")
-    report.append("1. **修复代码**: 使变更符合项目规范。")
-    report.append("2. **覆盖规则**: 若为有意偏离，使用本地覆盖并提交至 `.ai-audit-history.json`。")
+    report.extend(_build_violations_table(violations))
+    report.extend(_build_report_footer())
 
     return "\n".join(report)
 

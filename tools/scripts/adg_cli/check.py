@@ -220,19 +220,83 @@ def _is_test_file(fp: Path) -> bool:
     )
 
 
+def _build_exclude_patterns(args: argparse.Namespace) -> list[str]:
+    """从 CLI 参数构造排除 glob 列表.
+
+    V2.17 拆分: 从 _collect_check_files (C=31) 抽出.
+    """
+    patterns: list[str] = list(getattr(args, "exclude", []) or [])
+    if getattr(args, "exclude_tests", False):
+        patterns += ["tests/*", "**/tests/*", "test_*", "*_test.py", "conftest.py"]
+    return patterns
+
+
+def _collect_directory_files(target: Path, skip_patterns: list[str]) -> list[Path]:
+    """递归扫描目录, 应用 skip_patterns + SKIP_EXTENSIONS 过滤.
+
+    V2.17 拆分: 从 _collect_check_files (C=31) 抽出.
+    """
+    files: list[Path] = []
+    for fp in target.rglob("*"):
+        try:
+            rel_parts = fp.relative_to(target).parts
+        except ValueError:
+            rel_parts = fp.parts
+        if not fp.is_file():
+            continue
+        if any(is_skipped_dir(part) for part in rel_parts):
+            continue
+        if fp.suffix in SKIP_EXTENSIONS:
+            continue
+        if any(_match_pattern(fp, pat) for pat in skip_patterns):
+            continue
+        try:
+            rel = fp.relative_to(target)
+        except ValueError:
+            rel = fp
+        if any(_match_pattern(rel, pat) for pat in skip_patterns):
+            continue
+        if _detect_language_from_file(fp):
+            files.append(fp)
+    return files
+
+
+def _apply_exclude_filters(files: list[Path], args: argparse.Namespace, target: Path) -> list[Path]:
+    """应用 --exclude / --exclude-tests 过滤.
+
+    V2.17 拆分: 从 _collect_check_files (C=31) 抽出.
+    """
+    exclude_patterns = _build_exclude_patterns(args)
+    if not exclude_patterns:
+        return files
+    filtered: list[Path] = []
+    for fp in files:
+        try:
+            rel = fp.relative_to(target)
+        except ValueError:
+            rel = fp
+        if any(_match_pattern(fp, pat) or _match_pattern(rel, pat) for pat in exclude_patterns):
+            continue
+        if getattr(args, "exclude_tests", False) and _is_test_file(fp):
+            continue
+        filtered.append(fp)
+    removed = len(files) - len(filtered)
+    if removed:
+        print(f"Excluded {removed} file(s) by pattern.", file=sys.stderr)
+    return filtered
+
+
 def _collect_check_files(
     target: Path, args: argparse.Namespace, project_config: dict[str, Any]
 ) -> tuple[list[Path], dict[str, Any]]:
-    """Collect files to check and language detection info. Returns (files, detected)."""
-    files: list[Path] = []
+    """Collect files to check and language detection info. Returns (files, detected).
+
+    V2.17 拆分: 从 C=31 / 74 行主函数拆出 3 个 helper.
+    主函数仅负责根据 mode 分发, 行数 < 40.
+    """
     since = getattr(args, "since", None)
     staged = getattr(args, "staged", False)
     unstaged = getattr(args, "unstaged", False)
-
-    # CLI-level exclusion: --exclude glob + --exclude-tests convenience switch (V4 field validation finding)
-    exclude_patterns: list[str] = list(getattr(args, "exclude", []) or [])
-    if getattr(args, "exclude_tests", False):
-        exclude_patterns += ["tests/*", "**/tests/*", "test_*", "*_test.py", "conftest.py"]
 
     if since:
         files = _get_git_changed_files(since, cwd=target.parent)
@@ -254,45 +318,10 @@ def _collect_check_files(
         detected = detect_language(target.parent)
     else:
         skip_patterns = project_config.get("skip_patterns", [])
-        for fp in target.rglob("*"):
-            try:
-                rel_parts = fp.relative_to(target).parts
-            except ValueError:
-                rel_parts = fp.parts
-            if fp.is_file() and not any(is_skipped_dir(part) for part in rel_parts):
-                if fp.suffix not in SKIP_EXTENSIONS:
-                    if any(_match_pattern(fp, pat) for pat in skip_patterns):
-                        continue
-                    # Also match against path relative to scan target (skip_patterns
-                    # are written as repo-relative globs like "tests/*")
-                    try:
-                        rel = fp.relative_to(target)
-                    except ValueError:
-                        rel = fp
-                    if any(_match_pattern(rel, pat) for pat in skip_patterns):
-                        continue
-                    if _detect_language_from_file(fp):
-                        files.append(fp)
+        files = _collect_directory_files(target, skip_patterns)
         detected = detect_language(target)
 
-    # 统一应用 --exclude / --exclude-tests 过滤(对 git 变更路径同样生效)
-    if exclude_patterns:
-        filtered: list[Path] = []
-        for fp in files:
-            try:
-                rel = fp.relative_to(target)
-            except ValueError:
-                rel = fp
-            if any(_match_pattern(fp, pat) or _match_pattern(rel, pat) for pat in exclude_patterns):
-                continue
-            if getattr(args, "exclude_tests", False) and _is_test_file(fp):
-                continue
-            filtered.append(fp)
-        removed = len(files) - len(filtered)
-        if removed:
-            print(f"Excluded {removed} file(s) by pattern.", file=sys.stderr)
-        files = filtered
-
+    files = _apply_exclude_filters(files, args, target)
     return files, detected
 
 

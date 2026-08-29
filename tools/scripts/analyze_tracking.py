@@ -85,38 +85,53 @@ def analyze_reading_time(data: dict[str, Any], top_n: int = 10) -> dict[str, Any
     }
 
 
-def suggest_synonym_groups(searches: list[tuple[str, int]]) -> list[list[str]]:
-    """基于搜索查询建议同义词组
+def _build_word_to_queries(queries: list[str]) -> dict[str, set[str]]:
+    """建立 token (词根) → 共享该 token 的查询集合 索引.
 
-    策略: 将查询分词，按共享词根分组。
-    例如 "python tutorial" 和 "python guide" 共享 "python"，归为一组。
+    V2.19 P3-25 拆分: 从 suggest_synonym_groups (B=9) 抽出.
+    仅保留长度 > 2 的 token, 过滤助词/短词.
     """
-    if not searches:
-        return []
-
-    queries = [q for q, _ in searches]
-    # 按空格分词，建立词 -> 查询的映射
     word_to_queries: dict[str, set[str]] = {}
     for q in queries:
         tokens = set(q.lower().split())
         for token in tokens:
-            if len(token) > 2:  # 跳过太短的词
+            if len(token) > 2:
                 word_to_queries.setdefault(token, set()).add(q)
+    return word_to_queries
 
-    # 找到共享词根的查询组
+
+def _group_by_shared_word(
+    word_to_queries: dict[str, set[str]],
+) -> list[list[str]]:
+    """按共享 token 分组查询, 优先选 token 关联查询多的入组, 标记 visited 去重.
+
+    V2.19 P3-25 拆分: 从 suggest_synonym_groups (B=9) 抽出.
+    排序: 按 token 关联查询数倒序, 保证最大组优先.
+    """
     visited: set[str] = set()
     groups: list[list[str]] = []
-
-    for word, q_set in sorted(word_to_queries.items(), key=lambda x: -len(x[1])):
-        # 只取 2+ 查询共享的词
+    for _word, q_set in sorted(word_to_queries.items(), key=lambda x: -len(x[1])):
         if len(q_set) < 2:
             continue
         group = sorted(q_set - visited)
         if len(group) >= 2:
             groups.append(group)
             visited.update(group)
-
     return groups
+
+
+def suggest_synonym_groups(searches: list[tuple[str, int]]) -> list[list[str]]:
+    """基于搜索查询建议同义词组 (orchestrator).
+
+    V2.19 P3-25 拆分: 从 B=9 / 33 行函数拆出 2 个 helper.
+    策略: 将查询分词 → 按共享词根分组.
+    例如 "python tutorial" 和 "python guide" 共享 "python"，归为一组.
+    """
+    if not searches:
+        return []
+    queries = [q for q, _ in searches]
+    word_to_queries = _build_word_to_queries(queries)
+    return _group_by_shared_word(word_to_queries)
 
 
 def _print_search_analysis(searches: dict[str, Any], top_n: int) -> None:

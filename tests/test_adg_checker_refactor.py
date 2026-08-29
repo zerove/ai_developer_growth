@@ -245,9 +245,15 @@ class TestCheckFilesParallel:
             mock_executor.return_value = mock_ctx
 
             results = _check_files_parallel(
-                files=[], rules=None, store=None, rules_hash="",
-                db_path="dummy", use_cache=False, semantic=False,
-                run_linters=False, jobs=1,
+                files=[],
+                rules=None,
+                store=None,
+                rules_hash="",
+                db_path="dummy",
+                use_cache=False,
+                semantic=False,
+                run_linters=False,
+                jobs=1,
             )
         assert isinstance(results, list)
         assert results == []

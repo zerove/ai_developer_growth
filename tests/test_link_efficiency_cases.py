@@ -55,6 +55,7 @@ class TestLinkScript:
         assert r.returncode == 0
         # 接受两种合理输出
         import re
+
         if "将补全" in r.stdout:
             m = re.search(r"将补全 (\d+) 处", r.stdout)
             assert m is not None
@@ -76,6 +77,7 @@ class TestLinkScript:
         out1 = r1.stdout
         # 提取本次修改数
         import re
+
         m1 = re.search(r"修改 (\d+) 个文件", out1)
         first_count = int(m1.group(1)) if m1 else 0
         # 再跑一次

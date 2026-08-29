@@ -433,9 +433,7 @@ def _load_directory_rules(dirpath: Path, base_rules: dict[str, Any] | None) -> d
     return rules
 
 
-def _discover_target_files(
-    dirpath: Path, languages: list[str] | None
-) -> list[Path]:
+def _discover_target_files(dirpath: Path, languages: list[str] | None) -> list[Path]:
     """发现目录下所有可检查文件，按扩展名 + 排除目录 + 语言过滤。
 
     ADR-014: 从 check_directory 拆出。
@@ -632,9 +630,7 @@ def _check_files_parallel(
     cache_db: str | None = str(db_path) if use_cache and store is not None else None
     worker_rules_hash = rules_hash
     results: list[CheckResult] = []
-    with ProcessPoolExecutor(
-        max_workers=jobs, initializer=_worker_init, initargs=(warmup_rules,)
-    ) as executor:
+    with ProcessPoolExecutor(max_workers=jobs, initializer=_worker_init, initargs=(warmup_rules,)) as executor:
         worker_results: Iterator[CheckResult | None] = executor.map(
             _worker_check,
             pairs,
@@ -685,9 +681,7 @@ def check_directory(
     store, rules_hash = _init_cache_store(use_cache, db_path)
 
     if jobs <= 1 or len(files) <= 4:
-        checked, cache_degraded = _check_files_serial(
-            files, rules, store, rules_hash, semantic, run_linters
-        )
+        checked, cache_degraded = _check_files_serial(files, rules, store, rules_hash, semantic, run_linters)
     else:
         cache_degraded = 0
         checked = _check_files_parallel(

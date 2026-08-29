@@ -69,7 +69,6 @@ except ImportError:
     HAS_TREE_SITTER = False
 
 
-
 def _extract_decorators(node: _TreeNode, lines: list[str]) -> list[str]:
     """Extract decorator strings from a function node."""
     decorators: list[str] = []

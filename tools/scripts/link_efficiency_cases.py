@@ -118,9 +118,7 @@ def _collect_ai_to_case_links(
             case_name = case_path.stem
             if _has_link(ai_path.read_text(encoding="utf-8", errors="ignore"), case_name):
                 continue
-            link_line = (
-                f"- **相关案例**: [{case_name}](../{case_path.relative_to(REPO_ROOT).as_posix()})"
-            )
+            link_line = f"- **相关案例**: [{case_name}](../{case_path.relative_to(REPO_ROOT).as_posix()})"
             changes.append((ai_path, "## 相关案例", link_line))
     return changes
 
@@ -145,9 +143,7 @@ def _collect_case_to_ai_links(
             ai_name = ai_path.stem
             if _has_link(case_path.read_text(encoding="utf-8", errors="ignore"), ai_name):
                 continue
-            link_line = (
-                f"- **相关方法论**: [{ai_name}](../{ai_path.relative_to(REPO_ROOT).as_posix()})"
-            )
+            link_line = f"- **相关方法论**: [{ai_name}](../{ai_path.relative_to(REPO_ROOT).as_posix()})"
             changes.append((case_path, "## 相关方法论", link_line))
     return changes
 
@@ -185,9 +181,7 @@ def _apply_changes(changes: list[tuple[Path, str, str]]) -> int:
                 content += f"\n\n{header}\n\n"
         for header, line in items:
             if line not in content:
-                content = content.replace(
-                    header, f"{header}\n\n{line}", 1
-                )
+                content = content.replace(header, f"{header}\n\n{line}", 1)
         f.write_text(content, encoding="utf-8")
         modified += 1
     return modified

@@ -56,21 +56,15 @@ def sample_result(sample_recommendation: dict) -> dict:
 class TestBuildNewRules:
     """_build_new_rules: 从推荐构建新规则列表。"""
 
-    def test_adds_new_rule_when_id_not_in_existing(
-        self, sample_recommendation: dict
-    ) -> None:
+    def test_adds_new_rule_when_id_not_in_existing(self, sample_recommendation: dict) -> None:
         """rule_id 不在 existing_ids 中时新增。"""
-        result = _build_new_rules(
-            {"recommendations": [sample_recommendation]}, set()
-        )
+        result = _build_new_rules({"recommendations": [sample_recommendation]}, set())
         assert len(result) == 1
         assert result[0]["id"] == "py-eval-exec"
         assert result[0]["severity"] == "error"
         assert "Auto-generated" in result[0]["fix_hint"]
 
-    def test_skips_existing_rule(
-        self, sample_recommendation: dict
-    ) -> None:
+    def test_skips_existing_rule(self, sample_recommendation: dict) -> None:
         """rule_id 已存在时跳过。"""
         result = _build_new_rules(
             {"recommendations": [sample_recommendation]},
@@ -137,9 +131,7 @@ class TestSaveRules:
 class TestApplyRecommendations:
     """_apply_recommendations: 写推荐到 .adg/rules.yml。"""
 
-    def test_creates_adg_dir_and_rules_file(
-        self, tmp_path: Path, sample_result: dict
-    ) -> None:
+    def test_creates_adg_dir_and_rules_file(self, tmp_path: Path, sample_result: dict) -> None:
         """首次应用时创建 .adg/rules.yml。"""
         import yaml
 
@@ -150,9 +142,7 @@ class TestApplyRecommendations:
         loaded = yaml.safe_load(rules_file.read_text())
         assert len(loaded["anti_patterns"]) == 1
 
-    def test_no_new_rules_when_all_exist(
-        self, tmp_path: Path, sample_result: dict, capsys
-    ) -> None:
+    def test_no_new_rules_when_all_exist(self, tmp_path: Path, sample_result: dict, capsys) -> None:
         """所有推荐都已存在时不写文件。"""
         import yaml
 
@@ -160,26 +150,20 @@ class TestApplyRecommendations:
         adg_dir = tmp_path / ".adg"
         adg_dir.mkdir()
         rules_file = adg_dir / "rules.yml"
-        rules_file.write_text(
-            yaml.dump({"anti_patterns": [{"id": "py-eval-exec", "severity": "error"}]})
-        )
+        rules_file.write_text(yaml.dump({"anti_patterns": [{"id": "py-eval-exec", "severity": "error"}]}))
         result = _apply_recommendations(tmp_path, sample_result)
         assert result == 0
         captured = capsys.readouterr()
         assert "No new rules to apply" in captured.out
 
-    def test_appends_to_existing_rules(
-        self, tmp_path: Path, sample_result: dict
-    ) -> None:
+    def test_appends_to_existing_rules(self, tmp_path: Path, sample_result: dict) -> None:
         """追加新规则到已有 rules.yml。"""
         import yaml
 
         adg_dir = tmp_path / ".adg"
         adg_dir.mkdir()
         rules_file = adg_dir / "rules.yml"
-        rules_file.write_text(
-            yaml.dump({"anti_patterns": [{"id": "existing", "severity": "info"}]})
-        )
+        rules_file.write_text(yaml.dump({"anti_patterns": [{"id": "existing", "severity": "info"}]}))
         _apply_recommendations(tmp_path, sample_result)
         loaded = yaml.safe_load(rules_file.read_text())
         ids = {r["id"] for r in loaded["anti_patterns"]}
@@ -230,9 +214,7 @@ class TestCmdRecommend:
         # 不应是 JSON
         assert not captured.out.strip().startswith("{")
 
-    def test_apply_flag_creates_rules_file(
-        self, tmp_path: Path, sample_result: dict
-    ) -> None:
+    def test_apply_flag_creates_rules_file(self, tmp_path: Path, sample_result: dict) -> None:
         """--apply 标志自动写入 .adg/rules.yml。"""
         (tmp_path / "a.py").write_text("x = 1\n")
         args = argparse.Namespace(

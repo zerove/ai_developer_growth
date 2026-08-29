@@ -271,3 +271,33 @@
 ---
 
 *路线图是活的文档，随项目演进持续更新。*
+
+## Phase 19: v2.16.0 治理收尾 (2026-08-29)
+
+按 v2.16.0 优化建议 (Option A: P1 必修 5 项) 实施:
+
+| 任务 | 说明 | 状态 |
+|------|------|------|
+| P1-A | link_efficiency_cases 单元测试 0%→93% (0.3d) | ✅ 已完成 (2bdf3ac, 25 tests) |
+| P1-B | 双向链接 12%/33%→100%/89.6% (0.3d) | ✅ 已完成 (24f356a, 93 文件, 6780 行) |
+| P1-C | adg_cli/fix.py 边界测试 47.5%→96% (0.3d) | ✅ 已完成 (23f259b, 15 tests) |
+| P1-D | 关闭 4 个长期未决 ADR (0.2d) | ✅ 已完成 (1dd5c89, ADR-016) |
+| P1-E | 拆 run_quality_gate C=41→C(7) (0.5d) | ✅ 已完成 (8a38059, 7 helper) |
+
+**P1 全部 5 项完成, 总计 1.6d (估算 1.8d)**
+
+### 已知问题
+
+- `tests/test_search_recall.py::test_recall` 2 case 失败
+  - v2.15.0 已存在, 不阻塞 v2.16.0 发版
+  - 后续 P2 调整 tf-idf 索引
+
+### P2/P3 远期候选 (已接受)
+
+- 拆 `_collect_check_files` C=34
+- 拆 `evaluate` C=19
+- 优化大 dataclass
+- 重审 `language_registry.py` (1850 行)
+- `hooks_runner.py` 微拆
+- `examples/` CI 审计
+- `CONTEXT.md` 自动化优化

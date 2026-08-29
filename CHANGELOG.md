@@ -1004,3 +1004,46 @@ v2.13.0 后发现 `.jcode/scripts/` 下存在两个同名变体文件（仅命�
 | Example projects | 10 |
 | Commits | 21 |
 | GitHub Pages | Live |
+
+## [2.16.0] - 2026-08-29
+
+### 治理收尾: v2.15.0 后续 P1 全部 5 项完成
+
+按 v2.16.0 优化建议 (Option A: P1 必修 5 项) 实施 5 个 commits。
+
+#### 测试强化
+
+- **P1-A: link_efficiency_cases 单元测试 0% → 93%** (commit 2bdf3ac)
+  - `tests/test_link_efficiency_cases_unit.py` 25 用例
+  - 覆盖 8 个内部函数: `_extract_keywords` / `_match_score` / `_has_link` / `_should_skip` / `_collect_ai_to_case_links` / `_collect_case_to_ai_links` / `_apply_changes` / `_print_plan` / `main`
+  - monkeypatch 隔离 REPO_ROOT, 避免污染真实仓库
+- **P1-C: adg_cli/fix.py 边界测试 47.5% → 96%** (commit 23f259b)
+  - `tests/test_adg_cli_fix_unit.py` 15 用例
+  - 覆盖: 文件不存在 / UnicodeDecodeError / OSError 写入 / 跳过目录 / language 过滤 / 多文件批量
+
+#### 文档
+
+- **P1-B: 双向链接覆盖率 12% / 33% → 100% / 89.6%** (commit 24f356a)
+  - `link_efficiency_cases.py` 扩展 KEYWORD_ALIASES +12 组 (含 12 个中文 alias)
+  - `_extract_keywords` 增加 description 字段提取 + 中文分词
+  - 触发 93 文件, 新增 6780 行双向链接
+  - 5 个未引用 case: TEMPLATE-community (模板跳过) + 3 个垂直专题
+- **P1-D: ADR-016 关闭 4 个长期未决 ADR** (commit 1dd5c89)
+  - ADR-005 / 007 (AI 导航) → 已废弃 (被双向链接替代)
+  - ADR-008 (生产级工作流) → 已通过 (v2.11+ 已实施)
+  - ADR-011 (Phase 18) → 拆分关闭 (A 废弃 / B 部分完成 / C 7/11)
+  - ADR.md 索引 19 个 → 16 个活跃 ADR
+
+#### 重构
+
+- **P1-E: 拆 run_quality_gate C=41 → C(7) / 182 → 56 行** (commit 8a38059)
+  - 7 个 helper: `_determine_checks` / `_apply_baseline_ratchet` / `_refresh_baseline_if_clean` / `_record_run_history` / `_format_output` / `_resolve_baseline_path` / `_run_checks_on_files`
+  - 所有 helper < 50 行, 最大 C=11
+  - pytest 105/105 pass (test_domain_checks, test_quality_gate_*)
+
+### 已知问题
+
+- `tests/test_search_recall.py::test_recall[AI 开发生命周期]` 2 case 失败
+  - 原因: P1-B 双向链接补全后, `ai-native-sdlc-whitepaper` 文档变长, 关键词分散
+  - 状态: v2.15.0 已存在, 不阻塞 v2.16.0 发版
+  - 修复: 后续 P2 调整 tf-idf 索引或 BM25 权重

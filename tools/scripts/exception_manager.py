@@ -246,43 +246,80 @@ class ExpirationManager:
         self.auto_revoke = auto_revoke
         self._alerts: dict[str, ExpirationAlert] = {}
 
+    def _is_eligible_for_expiration_check(self, req: ExceptionRequest) -> bool:
+        """判断 req 是否可处理: 已批准 + 有 expires 字段.
+
+        V2.18 P3-5 拆分: 从 check_expirations (C=11) 抽出.
+        """
+        return req.status == ExceptionStatus.APPROVED and bool(req.expires)
+
+    def _collect_expiration_alerts(self, req: ExceptionRequest, now: datetime, alerts: list[ExpirationAlert]) -> None:
+        """收集 req 的过期告警, 按 alert_days 列表匹配.
+
+        V2.18 P3-5 拆分: 从 check_expirations (C=11) 抽出.
+        告警去重: 同一 req + alert_day 只触发一次 (self._alerts 索引).
+        """
+        expires = req.expires
+        if expires is None:
+            return
+        try:
+            exp_date = datetime.fromisoformat(expires)
+        except ValueError:
+            return
+        days_left = (exp_date - now).days
+
+        for alert_day in self.alert_days:
+            if days_left != alert_day:
+                continue
+            alert_id = f"{req.id}-{alert_day}d"
+            if alert_id in self._alerts:
+                continue
+            alert = ExpirationAlert(
+                request_id=req.id,
+                rule_id=req.rule_id,
+                paths=req.paths,
+                expires_at=expires,
+                days_until_expiry=days_left,
+                severity=req.requested_severity,
+            )
+            self._alerts[alert_id] = alert
+            alerts.append(alert)
+            self._send_alert(alert)
+
+    def _auto_revoke_if_expired(self, req: ExceptionRequest, now: datetime) -> None:
+        """若已过期且启用 auto_revoke, 撤销 req 状态.
+
+        V2.18 P3-5 拆分: 从 check_expirations (C=11) 抽出.
+        """
+        if not self.auto_revoke:
+            return
+        if not req.expires:
+            return
+        try:
+            exp_date = datetime.fromisoformat(req.expires)
+        except ValueError:
+            return
+        if (exp_date - now).days >= 0:
+            return
+        if req.status != ExceptionStatus.APPROVED:
+            return
+        req.status = ExceptionStatus.EXPIRED
+        self._notify_expired(req)
+
     def check_expirations(self, requests: list[ExceptionRequest]) -> list[ExpirationAlert]:
-        """检查即将到期的例外"""
+        """检查即将到期的例外 (orchestrator).
+
+        V2.18 P3-5 拆分: 从 C=11 / 50 行主函数拆出 3 个 helper.
+        主函数仅负责: 遍历 → 过滤 → 收集告警 → 自动撤销.
+        """
         now = datetime.utcnow()
-        alerts = []
+        alerts: list[ExpirationAlert] = []
 
         for req in requests:
-            if req.status != ExceptionStatus.APPROVED or not req.expires:
+            if not self._is_eligible_for_expiration_check(req):
                 continue
-
-            try:
-                exp_date = datetime.fromisoformat(req.expires)
-            except ValueError:
-                continue
-
-            days_left = (exp_date - now).days
-
-            # 检查是否需要告警
-            for alert_day in self.alert_days:
-                if days_left == alert_day:
-                    alert_id = f"{req.id}-{alert_day}d"
-                    if alert_id not in self._alerts:
-                        alert = ExpirationAlert(
-                            request_id=req.id,
-                            rule_id=req.rule_id,
-                            paths=req.paths,
-                            expires_at=req.expires,
-                            days_until_expiry=days_left,
-                            severity=req.requested_severity,
-                        )
-                        self._alerts[alert_id] = alert
-                        alerts.append(alert)
-                        self._send_alert(alert)
-
-            # 自动撤销过期例外
-            if self.auto_revoke and days_left < 0 and req.status == ExceptionStatus.APPROVED:
-                req.status = ExceptionStatus.EXPIRED
-                self._notify_expired(req)
+            self._collect_expiration_alerts(req, now, alerts)
+            self._auto_revoke_if_expired(req, now)
 
         return alerts
 

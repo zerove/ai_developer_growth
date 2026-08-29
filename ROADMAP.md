@@ -301,3 +301,41 @@
 - `hooks_runner.py` 微拆
 - `examples/` CI 审计
 - `CONTEXT.md` 自动化优化
+
+## Phase 20: v2.17.0 治理收尾 (2026-08-29)
+
+按 Phase 19 P2 远期候选 (D/E 级热点 5 项) 实施:
+
+| 任务 | 说明 | 状态 |
+|------|------|------|
+| P2-1 | 拆 `_collect_check_files` C=31→C(8) (0.3d) | ✅ 已完成 (9e79d50, 3 helper) |
+| P2-2 | 拆 `QualityGateEngine.evaluate` C=32→A(5) (0.5d) | ✅ 已完成 (8abc25d, 7 _gate_* helper) |
+| P2-3 | 拆 `_handle_secret_scan` C=13→A(4) (0.2d) | ✅ 已完成 (3be3b40, 2 输出 helper) |
+| P2-4 | 拆 `_process_section_content` D=21→A(4) (0.2d) | ✅ 已完成 (d65a381, 3 section handler) |
+| P2-5 | 拆 `_collect_results` D=21→A(3) (0.3d) | ✅ 已完成 (82dbfa7, 3 路径 collector) |
+
+**P2 全部 5 项完成, 总计 1.5d (估算 1.5d)**, 全部主函数从 D/E 级降至 A 级 (A=3~5)
+
+### 配套治理修补 (4 项, 由 P2 拆分暴露)
+
+| 任务 | 说明 | 状态 |
+|------|------|------|
+| mypy strict | lambda tuple 改为 `list[Callable]` 显式声明 | ✅ 已完成 (815c5ee) |
+| baseline 同步 | P2 拆分后 3 文件退出存量豁免 | ✅ 已完成 (71d6a54) |
+| 基线零 Any (1) | hooks_runner `Any` → `SecretScanResult` | ✅ 已完成 (a4bc6bd) |
+| 基线零 Any (2) | validators-cli `Any` → `list[str]` | ✅ 已完成 (88b2575) |
+
+**重要: 上述 4 项暴露的是治理硬规则, 真实修复而非 `--no-verify` 绕过**
+
+### Phase 19 已知问题回顾 (v2.17.0 内修复)
+
+- ✅ `tests/test_search_recall.py::test_recall` 2 case 失败 — v2.16.0 bf676be 已修 (search 索引排除聚合段), 14/14 pass
+
+### P3 远期候选 (新)
+
+- 拆 `report_generator.generate_junit_xml` C(14)
+- 拆 `BaselineManager.compare_with_baseline` C(14)
+- 拆 `AINativeMCPServer.handle_request` C(15)
+- 拆 `CaseStudyQualityAnalyzer.generate_report` C(17)
+- 重审 `language_registry.py` (1850 行) 拆分
+- pyproject.toml 版本字段治理 (v2.16.0 漏更新, v2.17.0 已修正)

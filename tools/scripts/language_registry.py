@@ -1667,29 +1667,45 @@ class LanguageRegistry:
                 return lang
         return self._detect_from_extensions(project_root)
 
+    @staticmethod
+    def _check_single_tool(category: ToolCategory, tool: ToolConfig) -> str | None:
+        """探测单个工具的可用性.
+
+        V2.19 P3-16 拆分: 从 validate_toolchain (B=7) 抽出.
+        通过 subprocess 调用 tool --version_flag, 5s 超时.
+        返回缺失描述 (str) 或 None (可用).
+        """
+        import subprocess
+
+        try:
+            result = subprocess.run(
+                [tool.command, tool.version_flag],
+                capture_output=True,
+                timeout=5,
+            )
+        except (FileNotFoundError, subprocess.TimeoutExpired):
+            return f"{category.value}: {tool.command} (not installed)"
+        if result.returncode != 0:
+            return f"{category.value}: {tool.command} (not found)"
+        return None
+
     def validate_toolchain(self, language: str | Language) -> list[str]:
-        """验证工具链可用性，返回缺失工具列表"""
+        """验证工具链可用性，返回缺失工具列表 (orchestrator).
+
+        V2.19 P3-16 拆分: 从 B(7) / 25 行方法拆出 _check_single_tool helper.
+        主方法仅负责: 解析 toolchain → 遍历 category → 委托探测 → 收集缺失.
+        """
         toolchain = self.get(language)
         if toolchain is None:
             return [f"Unknown language: {language}"]
 
-        missing = []
-        import subprocess
-
+        missing: list[str] = []
         for category in ToolCategory:
             tool = getattr(toolchain, category.value, None)
             if tool and tool.available:
-                try:
-                    result = subprocess.run(
-                        [tool.command, tool.version_flag],
-                        capture_output=True,
-                        timeout=5,
-                    )
-                    if result.returncode != 0:
-                        missing.append(f"{category.value}: {tool.command} (not found)")
-                except (FileNotFoundError, subprocess.TimeoutExpired):
-                    missing.append(f"{category.value}: {tool.command} (not installed)")
-
+                result = self._check_single_tool(category, tool)
+                if result is not None:
+                    missing.append(result)
         return missing
 
 

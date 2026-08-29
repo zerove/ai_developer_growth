@@ -76,22 +76,17 @@ class DependencyGraph:
         self.root_package: str | None = None
 
     def build_from_sbom(self, sbom: SBOM) -> None:
-        """从 SBOM 构建依赖图"""
+        """从 SBOM 构建依赖图.
+
+        V2.20 P4-9 拆分: 复用 _add_node_if_missing (P4-6 抽出) + _add_sbom_relationships,
+        主函数 3 段线性: clear → add nodes → add root → add relationships.
+        """
         self.nodes.clear()
         self.edges.clear()
 
         # 添加所有包作为节点
         for dep in sbom.packages:
-            key = self._node_key(dep.name, dep.version, dep.ecosystem)
-            if key not in self.nodes:
-                self.nodes[key] = DependencyNode(
-                    name=dep.name,
-                    version=dep.version,
-                    ecosystem=dep.ecosystem,
-                    license=dep.license,
-                    is_direct=dep.is_direct,
-                    vulnerabilities=[v.id for v in dep.vulnerabilities],
-                )
+            self._add_node_if_missing(dep, dep.is_direct)
 
         # 添加根节点
         root_key = f"ROOT:{sbom.name}:{sbom.version}"
@@ -104,12 +99,19 @@ class DependencyGraph:
         )
 
         # 解析关系
-        for rel in sbom.relationships:
-            from_id = rel.get("spdxElementId", "")
-            to_id = rel.get("relatedSpdxElement", "")
-            rel_type = rel.get("relationshipType", "")
+        self._add_sbom_relationships(sbom.relationships)
 
+    def _add_sbom_relationships(self, relationships: list[dict[str, str]]) -> None:
+        """解析 SBOM relationships, 添加 DEPENDS_ON 边.
+
+        Args:
+            relationships: SBOM relationships 列表
+        """
+        for rel in relationships:
+            rel_type = rel.get("relationshipType", "")
             if rel_type == "DEPENDS_ON":
+                from_id = rel.get("spdxElementId", "")
+                to_id = rel.get("relatedSpdxElement", "")
                 self._add_edge(from_id, to_id)
 
     def build_from_dependencies(

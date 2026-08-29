@@ -21,17 +21,53 @@ from pathlib import Path
 from typing import Any
 
 
-def run_governance_audit(full: bool = True) -> dict[str, Any]:
-    """运行治理审计并返回结构化结果。"""
+def _build_audit_cmd(full: bool) -> list[str]:
+    """构造 governance-audit 子进程命令.
+
+    V2.19 P3-37 拆分: 从 run_governance_audit (B=6) 抽出.
+    """
     cmd = [
         sys.executable,
         "tools/scripts/hooks_runner.py",
         "governance-audit",
         "--full" if full else "",
     ]
-    # 移除空字符串
-    cmd = [c for c in cmd if c]
+    return [c for c in cmd if c]
 
+
+def _format_audit_result(result: subprocess.CompletedProcess[str]) -> dict[str, Any]:
+    """格式化 audit subprocess 成功结果.
+
+    V2.19 P3-37 拆分: 从 run_governance_audit (B=6) 抽出.
+    """
+    return {
+        "success": result.returncode == 0,
+        "stdout": result.stdout,
+        "stderr": result.stderr,
+        "returncode": result.returncode,
+    }
+
+
+def _format_audit_error(stderr: str, returncode: int = -1) -> dict[str, Any]:
+    """格式化 audit subprocess 失败结果.
+
+    V2.19 P3-37 拆分: 从 run_governance_audit (B=6) 抽出.
+    """
+    return {
+        "success": False,
+        "stdout": "",
+        "stderr": stderr,
+        "returncode": returncode,
+    }
+
+
+def run_governance_audit(full: bool = True) -> dict[str, Any]:
+    """运行治理审计并返回结构化结果 (orchestrator).
+
+    V2.19 P3-37 拆分: 从 B=6 / 40 行函数拆出 3 个 helper.
+    主函数仅负责: 构造命令 → 委托 subprocess + 2 个 formatter → 收集.
+    """
+    cmd = _build_audit_cmd(full)
     try:
         result = subprocess.run(
             cmd,
@@ -40,26 +76,11 @@ def run_governance_audit(full: bool = True) -> dict[str, Any]:
             timeout=600,
             cwd=Path(__file__).resolve().parent.parent.parent,
         )
-        return {
-            "success": result.returncode == 0,
-            "stdout": result.stdout,
-            "stderr": result.stderr,
-            "returncode": result.returncode,
-        }
+        return _format_audit_result(result)
     except subprocess.TimeoutExpired:
-        return {
-            "success": False,
-            "stdout": "",
-            "stderr": "Audit timed out after 600 seconds",
-            "returncode": -1,
-        }
+        return _format_audit_error("Audit timed out after 600 seconds")
     except Exception as e:
-        return {
-            "success": False,
-            "stdout": "",
-            "stderr": str(e),
-            "returncode": -1,
-        }
+        return _format_audit_error(str(e))
 
 
 def _parse_check_line(stripped: str) -> tuple[str, bool] | None:

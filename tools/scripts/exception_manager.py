@@ -519,23 +519,45 @@ class EnhancedExceptionManager:
             self._sync_from_gitops()
 
     def _load_from_config(self) -> None:
-        """从配置文件加载例外"""
+        """从配置文件加载例外.
+
+        V2.20 P4-13 拆分: 抽 _load_yaml_exceptions 收口 yaml 读取 + 遍历,
+        _parse_exception_entry 收口 status 转换 + from_dict.
+        主函数仅负责 try/except 包裹.
+        """
         try:
-            if self.config_path.exists():
-                import yaml
-
-                with open(self.config_path) as f:
-                    data = yaml.safe_load(f)
-
-                if data and "exceptions" in data:
-                    for exc in data["exceptions"]:
-                        # Convert status string to enum if needed
-                        if "status" in exc and isinstance(exc["status"], str):
-                            exc["status"] = ExceptionStatus(exc["status"])
-                        req = ExceptionRequest.from_dict(exc)
-                        self._requests[req.id] = req
+            self._load_yaml_exceptions()
         except Exception as e:
             logger.warning(f"Failed to load exceptions from config: {e}")
+
+    def _load_yaml_exceptions(self) -> None:
+        """从 YAML 配置文件读取 exceptions 列表, 解析并存储."""
+        if not self.config_path.exists():
+            return
+        import yaml
+
+        with open(self.config_path) as f:
+            data = yaml.safe_load(f)
+
+        if not data or "exceptions" not in data:
+            return
+        for exc in data["exceptions"]:
+            req = self._parse_exception_entry(exc)
+            if req is not None:
+                self._requests[req.id] = req
+
+    def _parse_exception_entry(self, exc: dict[str, object]) -> ExceptionRequest | None:
+        """解析单条 exception entry (status 转换 + from_dict).
+
+        Args:
+            exc: exception dict
+
+        Returns:
+            ExceptionRequest 对象, 解析失败返 None
+        """
+        if "status" in exc and isinstance(exc["status"], str):
+            exc["status"] = ExceptionStatus(exc["status"])
+        return ExceptionRequest.from_dict(exc)
 
     def _sync_from_gitops(self) -> None:
         """从 GitOps 同步"""

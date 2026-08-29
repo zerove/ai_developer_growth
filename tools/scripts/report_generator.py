@@ -243,36 +243,68 @@ def generate_sarif(results: list[Any]) -> str:
     return json.dumps(sarif, indent=2, ensure_ascii=False)
 
 
+def _build_json_content(results: list[Any]) -> str:
+    """构建 JSON 报告内容 (含 results + summary).
+
+    V2.18 P3-10 拆分: 从 write_report (C=11) 抽出.
+    """
+    data = {
+        "results": [r.to_dict() for r in results],
+        "summary": {
+            "total_files": len(results),
+            "total_errors": sum(r.error_count for r in results),
+            "total_warnings": sum(r.warning_count for r in results),
+            "total_info": sum(r.info_count for r in results),
+            "passed": all(r.passed for r in results),
+        },
+    }
+    return json.dumps(data, indent=2, ensure_ascii=False)
+
+
+def _generate_report_content(results: list[Any], format: str) -> str | None:
+    """按 format 分发到对应生成器.
+
+    V2.18 P3-10 拆分: 从 write_report (C=11) 抽出.
+    返回 None = 未知 format.
+    """
+    if format == "json":
+        return _build_json_content(results)
+    if format == "junit":
+        return generate_junit_xml(results)
+    if format == "html":
+        return generate_html_report(results)
+    if format == "sarif":
+        return generate_sarif(results)
+    return None
+
+
+def _write_or_return(content: str, output: Path | None) -> str:
+    """写入文件或返回内容.
+
+    V2.18 P3-10 拆分: 从 write_report (C=11) 抽出.
+    有 output 时写入文件并 stderr 通知, 无时返回 content.
+    """
+    if output is None:
+        return content
+    output.write_text(content, encoding="utf-8")
+    print(f"Report written to {output}", file=sys.stderr)
+    return content
+
+
 def write_report(results: list[Any], format: str, output: Path | None = None) -> str | None:
-    """Write report in specified format. Returns content or writes to file.
+    """Write report in specified format (orchestrator).
+
+    Returns content or writes to file.
 
     Args:
         results: List of ValidationResult objects (duck-typed)
         format: Output format (json, junit, html, sarif)
         output: Optional file path to write to
-    """
-    if format == "json":
-        data = {
-            "results": [r.to_dict() for r in results],
-            "summary": {
-                "total_files": len(results),
-                "total_errors": sum(r.error_count for r in results),
-                "total_warnings": sum(r.warning_count for r in results),
-                "total_info": sum(r.info_count for r in results),
-                "passed": all(r.passed for r in results),
-            },
-        }
-        content = json.dumps(data, indent=2, ensure_ascii=False)
-    elif format == "junit":
-        content = generate_junit_xml(results)
-    elif format == "html":
-        content = generate_html_report(results)
-    elif format == "sarif":
-        content = generate_sarif(results)
-    else:
-        return None
 
-    if output:
-        output.write_text(content, encoding="utf-8")
-        print(f"Report written to {output}", file=sys.stderr)
-    return content
+    V2.18 P3-10 拆分: 从 C=11 / 55 行主函数拆出 3 个 helper.
+    主函数仅负责: 委托生成 → 委托写入.
+    """
+    content = _generate_report_content(results, format)
+    if content is None:
+        return None
+    return _write_or_return(content, output)

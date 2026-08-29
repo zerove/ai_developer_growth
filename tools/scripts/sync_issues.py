@@ -475,24 +475,40 @@ def _print_json_result(result: object) -> None:
     print(json.dumps(result, indent=2, ensure_ascii=False))
 
 
+def _dispatch_sync_command(
+    sync: GitHubProjectsSync,
+    args: argparse.Namespace,
+) -> object:
+    """根据 args.command 分发到对应 sync 方法, 返结果对象 (无匹配返 None).
+
+    V2.19 P3-48 拆分: 从 _execute_sync_command (B=7) 抽出.
+    用 dict 替代 if/elif 链, 主函数仅负责查表 + 打印.
+    """
+    command = args.command
+    if command == "full-sync":
+        return sync.full_sync(dry_run=args.dry_run)
+    if command == "sync-issue":
+        return sync.sync_issue_to_project(args.issue)
+    if command == "sync-project":
+        return sync.sync_project_to_issues()
+    if command == "list-project":
+        return sync.list_project_issues()
+    if command == "project-info":
+        return sync.get_project_info()
+    if command == "sync-issues":
+        return sync.sync_specific_issues(args.issues)
+    return None
+
+
 def _execute_sync_command(sync: GitHubProjectsSync, args: argparse.Namespace) -> None:
     """执行同步子命令并打印 JSON 结果 (orchestrator).
 
-    V2.19 P3-26 拆分: 从 B=7 / 26 行函数拆出 _print_json_result 公共 helper.
-    6 个子命令统一调用模式, 委托公共打印.
+    V2.19 P3-48 拆分: 从 B=7 / 19 行函数拆出 _dispatch_sync_command.
+    主函数仅负责: 委托 dispatch + 打印 (None 表示无匹配).
     """
-    if args.command == "full-sync":
-        _print_json_result(sync.full_sync(dry_run=args.dry_run))
-    elif args.command == "sync-issue":
-        _print_json_result(sync.sync_issue_to_project(args.issue))
-    elif args.command == "sync-project":
-        _print_json_result(sync.sync_project_to_issues())
-    elif args.command == "list-project":
-        _print_json_result(sync.list_project_issues())
-    elif args.command == "project-info":
-        _print_json_result(sync.get_project_info())
-    elif args.command == "sync-issues":
-        _print_json_result(sync.sync_specific_issues(args.issues))
+    result = _dispatch_sync_command(sync, args)
+    if result is not None:
+        _print_json_result(result)
 
 
 def main() -> int:

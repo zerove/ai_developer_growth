@@ -135,8 +135,49 @@ def _load_records(days: int | None = None) -> list[dict[str, Any]]:
     return records
 
 
+def _aggregate_record(
+    rec: dict[str, Any],
+    rule_counts: dict[str, int],
+    severity_counts: dict[str, int],
+    lang_counts: dict[str, int],
+) -> int:
+    """聚合单条记录到 3 个 dict 累加器, 返回 total_issues 增量.
+
+    V2.19 P3-29 拆分: 从 _aggregate_records (B=6) 抽出.
+    """
+    summary = rec.get("summary", {})
+    total = summary.get("total_issues", 0)
+
+    for rule_id, count in summary.get("by_rule", {}).items():
+        rule_counts[rule_id] += count
+    for sev, count in summary.get("by_severity", {}).items():
+        severity_counts[sev] += count
+
+    # lang_counts: 从 rule_id 前缀提取 (e.g. "py-E501" -> "py")
+    for rule_id, count in summary.get("by_rule", {}).items():
+        parts = rule_id.split("-")
+        if len(parts) >= 2:
+            lang_counts[parts[0]] += count
+
+    return int(total)
+
+
+def _build_trend_point(rec: dict[str, Any]) -> tuple[str, int]:
+    """构造 (date_str, total_issues) trend 点.
+
+    V2.19 P3-29 拆分: 从 _aggregate_records (B=6) 抽出.
+    date_str 取 timestamp 前 10 字符 (YYYY-MM-DD).
+    """
+    summary = rec.get("summary", {})
+    return rec["timestamp"][:10], int(summary.get("total_issues", 0))
+
+
 def _aggregate_records(records: list[dict[str, Any]]) -> dict[str, Any]:
-    """Aggregate statistics from records."""
+    """Aggregate statistics from records (orchestrator).
+
+    V2.19 P3-29 拆分: 从 B=6 / 33 行函数拆出 2 个 helper.
+    主函数仅负责: 初始化累加器 → 委托聚合 + trend → 装配 result.
+    """
     total_issues = 0
     rule_counts: dict[str, int] = defaultdict(int)
     severity_counts: dict[str, int] = defaultdict(int)
@@ -144,21 +185,8 @@ def _aggregate_records(records: list[dict[str, Any]]) -> dict[str, Any]:
     trend: list[tuple[str, int]] = []
 
     for rec in records:
-        summary = rec.get("summary", {})
-        total_issues += summary.get("total_issues", 0)
-
-        for rule_id, count in summary.get("by_rule", {}).items():
-            rule_counts[rule_id] += count
-        for sev, count in summary.get("by_severity", {}).items():
-            severity_counts[sev] += count
-
-        for rule_id in summary.get("by_rule", {}):
-            parts = rule_id.split("-")
-            if len(parts) >= 2:
-                lang_counts[parts[0]] += summary["by_rule"][rule_id]
-
-        date_str = rec["timestamp"][:10]
-        trend.append((date_str, summary.get("total_issues", 0)))
+        total_issues += _aggregate_record(rec, rule_counts, severity_counts, lang_counts)
+        trend.append(_build_trend_point(rec))
 
     return {
         "total_issues": total_issues,

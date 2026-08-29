@@ -469,10 +469,7 @@ class CaseStudyQualityAnalyzer:
         V2.18 P3-1 拆分: 从 generate_report (C=17) 抽出.
         返回 (top_cases, bottom_cases) 元组.
         """
-        case_summary = [
-            {"name": m.case_name, "score": round(m.overall_score, 1)}
-            for m in sorted_metrics
-        ]
+        case_summary = [{"name": m.case_name, "score": round(m.overall_score, 1)} for m in sorted_metrics]
         return case_summary[:count], case_summary[-count:]
 
     def _build_detailed(
@@ -507,9 +504,7 @@ class CaseStudyQualityAnalyzer:
         if not metrics_list:
             return {"error": "No case studies analyzed"}
 
-        sorted_metrics = sorted(
-            metrics_list, key=lambda m: m.overall_score, reverse=True
-        )
+        sorted_metrics = sorted(metrics_list, key=lambda m: m.overall_score, reverse=True)
 
         top_cases, bottom_cases = self._build_extremes(sorted_metrics)
 

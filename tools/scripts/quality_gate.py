@@ -576,10 +576,12 @@ class QualityGateEngine:
         gate_name: str,
         filtered_results: list[CheckResult],
     ) -> GateResult:
-        """Gate 7: 当前总违规数检查 (始终运行)."""
-        total_issues = sum(len(r.issues) for r in filtered_results)
-        error_count = sum(1 for r in filtered_results for i in r.issues if i.severity == Severity.ERROR)
-        warning_count = sum(1 for r in filtered_results for i in r.issues if i.severity == Severity.WARNING)
+        """Gate 7: 当前总违规数检查 (始终运行).
+
+        V2.20 P4-1 拆分: 从 _count_issue_severities 抽取三计数 (total/error/warning),
+        主函数仅负责 GateResult 构造.
+        """
+        total_issues, error_count, warning_count = self._count_issue_severities(filtered_results)
         return GateResult(
             gate_name=gate_name,
             passed=error_count == 0,
@@ -588,6 +590,20 @@ class QualityGateEngine:
             details={"errors": error_count, "warnings": warning_count, "total": total_issues},
             severity=SeverityLevel.ERROR,
         )
+
+    def _count_issue_severities(
+        self,
+        filtered_results: list[CheckResult],
+    ) -> tuple[int, int, int]:
+        """统计 filtered_results 中 total / error / warning 数量.
+
+        Returns:
+            (total_issues, error_count, warning_count)
+        """
+        total_issues = sum(len(r.issues) for r in filtered_results)
+        error_count = sum(1 for r in filtered_results for i in r.issues if i.severity == Severity.ERROR)
+        warning_count = sum(1 for r in filtered_results for i in r.issues if i.severity == Severity.WARNING)
+        return total_issues, error_count, warning_count
 
     def evaluate(
         self,

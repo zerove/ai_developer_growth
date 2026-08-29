@@ -46,6 +46,9 @@ _STRICT_SCAN_HEADER_LINES = 30
 _STRICT_MIN_CONTENT_LEN = 100
 _STRICT_CORE_PREFIX = "tools/scripts"
 
+# 默认扫描根目录
+_DEFAULT_SCAN_ROOT = "tools/scripts"
+
 
 def has_ai_annotation(content: str) -> bool:
     """检查内容是否包含 AI 标注 (兼容旧测试: # [AI-GEN])"""
@@ -205,13 +208,33 @@ def check_strict_mode(filepath: Path) -> list[dict[str, Any]]:
     return [_build_missing_annotation_issue(filepath)]
 
 
+def _scan_path(path: str | Path) -> list[Path]:
+    """递归扫描 path 下后缀在 TARGET_EXTENSIONS 内的文件.
+
+    V2.19 P3-20 拆分: 从 _collect_files (B=8) 抽出.
+    """
+    return [f for f in Path(path).rglob("*") if f.is_file() and f.suffix in TARGET_EXTENSIONS]
+
+
+def _scan_default_root() -> list[Path]:
+    """默认扫描 tools/scripts 下所有 .py (排除 __pycache__).
+
+    V2.19 P3-20 拆分: 从 _collect_files (B=8) 抽出.
+    """
+    return [f for f in Path(_DEFAULT_SCAN_ROOT).rglob("*.py") if "__pycache__" not in str(f)]
+
+
 def _collect_files(args: argparse.Namespace) -> list[Path]:
-    """Collect files to check based on args."""
+    """根据 args 收集待检查文件 (orchestrator).
+
+    V2.19 P3-20 拆分: 从 B=8 / 7 行函数拆出 2 个 helper.
+    3 路策略: --file (单文件) / --path (目录递归) / 默认 (tools/scripts 全部 .py).
+    """
     if args.file:
         return [args.file]
     if args.path:
-        return [f for f in Path(args.path).rglob("*") if f.is_file() and f.suffix in TARGET_EXTENSIONS]
-    return [f for f in Path("tools/scripts").rglob("*.py") if "__pycache__" not in str(f)]
+        return _scan_path(args.path)
+    return _scan_default_root()
 
 
 def _print_issues(result: dict[str, Any]) -> None:

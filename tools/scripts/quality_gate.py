@@ -293,6 +293,9 @@ class BaselineManager:
 
         V2.18 P3-4 拆分: 从 C=14 / 130+ 行主函数拆出 4 个 helper.
         主函数仅负责: 加载基线 → 初始化 → 构建索引 → 逐 file 对比 → 找 fixed.
+
+        V2.20 P4-5 拆分: 进一步抽 _classify_current_issue 收口 per-rule 判定,
+        减少嵌套 for/if.
         """
         baseline = baseline or self.load_baseline()
         baseline_files: dict[str, dict[str, dict[str, Any]]] = baseline.get("files", {})
@@ -305,28 +308,53 @@ class BaselineManager:
         for file_path, file_issues in current_files.items():
             baseline_file_issues = baseline_files.get(file_path, {})
             for rule_key, current_issue in file_issues.items():
-                if rule_key in baseline_file_issues:
-                    self._classify_severity_change(
-                        comparison,
-                        file_path,
-                        current_issue,
-                        baseline_file_issues[rule_key],
-                    )
-                else:
-                    comparison["new"].append(
-                        {
-                            "file": file_path,
-                            "rule_id": current_issue["rule_id"],
-                            "line": current_issue["line"],
-                            "severity": current_issue["severity"],
-                            "message": current_issue["message"],
-                        }
-                    )
-                    comparison["summary"]["new_count"] += 1
+                self._classify_current_issue(
+                    comparison,
+                    file_path,
+                    rule_key,
+                    current_issue,
+                    baseline_file_issues,
+                )
 
         self._find_fixed_issues(baseline_files, current_files, comparison)
 
         return comparison
+
+    def _classify_current_issue(
+        self,
+        comparison: dict[str, Any],
+        file_path: str,
+        rule_key: str,
+        current_issue: dict[str, Any],
+        baseline_file_issues: dict[str, dict[str, Any]],
+    ) -> None:
+        """对单个当前 issue 分类 (existing → severity change / new → append).
+
+        Args:
+            comparison: 总 comparison dict (in-place 修改)
+            file_path: 文件路径
+            rule_key: 规则键
+            current_issue: 当前 issue dict
+            baseline_file_issues: 基线 file issues dict
+        """
+        if rule_key in baseline_file_issues:
+            self._classify_severity_change(
+                comparison,
+                file_path,
+                current_issue,
+                baseline_file_issues[rule_key],
+            )
+            return
+        comparison["new"].append(
+            {
+                "file": file_path,
+                "rule_id": current_issue["rule_id"],
+                "line": current_issue["line"],
+                "severity": current_issue["severity"],
+                "message": current_issue["message"],
+            }
+        )
+        comparison["summary"]["new_count"] += 1
 
 
 class ExceptionManager:

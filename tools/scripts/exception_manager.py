@@ -651,19 +651,39 @@ class EnhancedExceptionManager:
         return self.expiration.check_expirations(list(self._requests.values()))
 
     def get_active_exceptions(self) -> list[ExceptionRequest]:
-        """获取当前有效的例外"""
-        active = []
+        """获取当前有效的例外.
+
+        V2.20 P4-16 拆分: 抽 _is_active_request 收口 APPROVED 守卫 + 过期检查,
+        主函数仅负责遍历 + 收集.
+        """
+        now = datetime.utcnow()
+        active: list[ExceptionRequest] = []
         for req in self._requests.values():
-            if req.status == ExceptionStatus.APPROVED:
-                if req.expires:
-                    try:
-                        if datetime.fromisoformat(req.expires) < datetime.utcnow():
-                            req.status = ExceptionStatus.EXPIRED
-                            continue
-                    except ValueError:
-                        pass
+            if self._is_active_request(req, now):
                 active.append(req)
         return active
+
+    def _is_active_request(self, req: ExceptionRequest, now: datetime) -> bool:
+        """判断 req 是否当前有效 (APPROVED + 未过期).
+
+        Args:
+            req: 例外请求
+            now: 当前 UTC 时间
+
+        Returns:
+            True if APPROVED 且未过期, 否则 False
+        """
+        if req.status != ExceptionStatus.APPROVED:
+            return False
+        if not req.expires:
+            return True
+        try:
+            if datetime.fromisoformat(req.expires) < now:
+                req.status = ExceptionStatus.EXPIRED
+                return False
+        except ValueError:
+            pass
+        return True
 
     def get_all_requests(self) -> list[ExceptionRequest]:
         return list(self._requests.values())

@@ -76,31 +76,62 @@ def _count_by_rule(results: list[Any]) -> dict[str, int]:
     return dict(counts)
 
 
+def _parse_record_line(line: str) -> dict[str, Any] | None:
+    """解析单行 JSON 记录, 失败或空行返回 None.
+
+    V2.19 P3-28 拆分: 从 _load_records (B=8) 抽出.
+    """
+    line = line.strip()
+    if not line:
+        return None
+    try:
+        return json.loads(line)
+    except (json.JSONDecodeError, KeyError):
+        return None
+
+
+def _is_within_window(record: dict[str, Any], cutoff: float | None) -> bool:
+    """检查 record 时间戳是否在 cutoff 之后.
+
+    V2.19 P3-28 拆分: 从 _load_records (B=8) 抽出.
+    返回 True 表示保留:
+    - cutoff 为 None (不需过滤) → 保留
+    - 缺 timestamp / ts 解析失败 / ts < cutoff → 剔除 (原 KeyError 行为)
+    - ts >= cutoff → 保留
+    """
+    if cutoff is None:
+        return True
+    raw_ts = record.get("timestamp", "")
+    if not isinstance(raw_ts, str):
+        return False  # 缺 timestamp 严格剔除 (匹配原 KeyError 行为)
+    try:
+        ts = datetime.fromisoformat(raw_ts).timestamp()
+    except ValueError:
+        return False
+    return ts >= cutoff
+
+
 def _load_records(days: int | None = None) -> list[dict[str, Any]]:
-    """Load records, optionally filtered by days."""
+    """Load records, optionally filtered by days (orchestrator).
+
+    V2.19 P3-28 拆分: 从 B=8 / 22 行函数拆出 2 个 helper.
+    主函数仅负责: 守卫文件存在 → 委托行解析 + 时间窗口判定 → 收集.
+    """
     if not _records_file().exists():
         return []
-
-    records = []
-    cutoff = None
+    cutoff: float | None = None
     if days:
         cutoff = datetime.now(timezone.utc).timestamp() - (days * 86400)
 
+    records: list[dict[str, Any]] = []
     with open(_records_file()) as f:
         for line in f:
-            line = line.strip()
-            if not line:
+            record = _parse_record_line(line)
+            if record is None:
                 continue
-            try:
-                record = json.loads(line)
-                if cutoff:
-                    ts = datetime.fromisoformat(record["timestamp"]).timestamp()
-                    if ts < cutoff:
-                        continue
-                records.append(record)
-            except (json.JSONDecodeError, KeyError):
+            if not _is_within_window(record, cutoff):
                 continue
-
+            records.append(record)
     return records
 
 

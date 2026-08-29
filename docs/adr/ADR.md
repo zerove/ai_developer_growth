@@ -5,7 +5,7 @@ category: 治理层
 tags: ['REST']
 difficulty: 基础
 reading_time: 10 分钟
-updated: 2026-08-28
+updated: 2026-08-29
 ---
 
 # 架构决策记录 (ADR) 索引
@@ -18,6 +18,7 @@ updated: 2026-08-28
 
 | ID | 标题 | 状态 | 日期 |
 |----|------|------|------|
+| [[ADR-015-pytest-xdist-race-condition\|ADR-015]] | pytest-xdist race condition 接受现状 | ✅ 已通过 | 2026-08 |
 | [[ADR-013-pytest-xdist-coverage-known-issue\|ADR-013]] | pytest-xdist 覆盖率合并缺陷接受现状 | ✅ 已通过 | 2026-08 |
 | [[ADR-012-vector-rag-not-core\|ADR-012]] | 向量 RAG 不作为 ai_developer_growth 检索核心 | ✅ 已通过 | 2026-08 |
 | [[ADR-011-phase18-ai-native-dialogue-community-cleanup\|ADR-011]] | Phase 18: P1 对话界面 + P2 社区案例清理 + AI-Native 生态完善 | 🔍 提议中 | 2026-08 |
@@ -78,4 +79,4 @@ updated: 2026-08-28
 
 ---
 
-*本索引随新增 ADR 时更新。最后更新: 2026-08-28*
+*本索引随新增 ADR 时更新。最后更新: 2026-08-29*

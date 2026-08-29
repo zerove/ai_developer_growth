@@ -245,6 +245,29 @@
 - [x] 发布 v2.9.x 系列并推送 tag
 - [ ] 社区里程碑
 
+### ⚠️ 阻塞项 (P0-4 Billing 降级)
+
+| # | 事项 | 状态 | 说明 |
+|---|---|---|---|
+| P0-4 | GitHub Actions Billing 恢复后正式发布 | ⏸️ **降级到 v3.0** | 非代码层约束；slsa-provenance 等 workflow 依赖 release.yml 首次跑通，账号 Billing 阻塞 Actions job 启动。Billing 恢复后 `gh run rerun` 即可完成 |
+
+## Phase 18: v2.15.0 治理收尾 (2026-08-29)
+
+| 任务 | 说明 | 状态 |
+|------|------|------|
+| ADR-014 | `check_directory` 复杂度拆分 C=48→4 helper (0.5d) | 🚧 进行中 |
+| ADR-015 | pytest-xdist race condition 接受现状 | ✅ 已完成 |
+| cmd_recommend 测试 | 29.6%→80%+ (0.3d) | 🚧 进行中 |
+| pytest-cov 8.x 试运行 | 解 ADR-013 (0.5d) | 🚧 进行中 |
+| ast_parser.py 拆分 | 1103 行→5 文件 (1d) | 🚧 进行中 |
+| adg_cli 23 cmd smoke | 全子命令冒烟 (0.5d) | 🚧 进行中 |
+| 效率文档↔案例双向链接 | 自动化补全 (0.2d) | 🚧 进行中 |
+
+## 已接受现状 (ADR)
+
+- **ADR-013**: pytest-xdist 覆盖率合并缺陷 (`rule_marketplace.py` / `validate_rule_tests.py` 全量 0%) — 升级到 pytest-cov 8.x 候选
+- **ADR-015**: pytest-xdist race condition (偶发 2 fail) — `pytest --lf` 复绿
+
 ---
 
 *路线图是活的文档，随项目演进持续更新。*

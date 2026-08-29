@@ -128,9 +128,7 @@ class TestCollectAiToCaseLinks:
     使用 monkeypatch 把 REPO_ROOT 指向 tmp_path，避免污染真实仓库。
     """
 
-    def test_generates_link_for_matching_keywords(
-        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
-    ) -> None:
+    def test_generates_link_for_matching_keywords(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
         """关键词匹配时生成链接。"""
         monkeypatch.setattr(link_mod, "REPO_ROOT", tmp_path)
         ai = tmp_path / "ai_test_a.md"
@@ -157,9 +155,7 @@ class TestCollectAiToCaseLinks:
         changes = link_mod._collect_ai_to_case_links(ai_files, case_files, min_score=1)
         assert changes == []
 
-    def test_below_min_score_filtered(
-        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
-    ) -> None:
+    def test_below_min_score_filtered(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
         """低于 min_score 的不生成。"""
         monkeypatch.setattr(link_mod, "REPO_ROOT", tmp_path)
         ai = tmp_path / "ai_b.md"
@@ -174,9 +170,7 @@ class TestCollectAiToCaseLinks:
 class TestCollectCaseToAiLinks:
     """_collect_case_to_ai_links: case-studies → ai-*.md 反向链接。"""
 
-    def test_generates_reverse_link(
-        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
-    ) -> None:
+    def test_generates_reverse_link(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
         """case → ai 链接生成。"""
         monkeypatch.setattr(link_mod, "REPO_ROOT", tmp_path)
         ai = tmp_path / "ai_rev.md"

@@ -25,7 +25,6 @@
       "structure:函数超过 50 行 (实际 54 行)": 1
     },
     "tools/scripts/analyze_case_quality.py": {
-      "structure:函数超过 50 行 (实际 57 行)": 1,
       "structure:函数超过 50 行 (实际 56 行)": 1
     },
     "tools/scripts/rule_registry.py": {

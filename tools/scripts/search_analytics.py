@@ -73,15 +73,25 @@ def _is_after_cutoff(rec: dict[str, object], cutoff: float | None) -> bool:
     return ts >= cutoff
 
 
+def _compute_cutoff(days: int | None) -> float | None:
+    """根据 days 计算 cutoff 时间戳 (None 表示不需过滤).
+
+    V2.19 P3-45 拆分: 从 load_records (B=6) 抽出.
+    """
+    if not days:
+        return None
+    return time.time() - days * 86400
+
+
 def load_records(path: Path, days: int | None) -> list[dict[str, object]]:
     """加载日志记录, 按天数过滤 (orchestrator).
 
-    V2.19 P3-23 拆分: 从 B=9 / 20 行函数拆出 2 个 helper.
-    主函数仅负责: 守卫文件存在 → 委托行解析 + cutoff 判定 → 收集.
+    V2.19 P3-45 拆分: 从 B=6 / 17 行函数拆出 _compute_cutoff.
+    主函数仅负责: 守卫文件存在 → 委托 cutoff 计算 → 委托行解析 + 判定 → 收集.
     """
     if not path.exists():
         return []
-    cutoff = time.time() - days * 86400 if days else None
+    cutoff = _compute_cutoff(days)
     records: list[dict[str, object]] = []
     for line in path.read_text(encoding="utf-8").splitlines():
         rec = _parse_line(line)

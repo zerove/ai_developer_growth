@@ -378,24 +378,46 @@ class GitHubProjectsSync:
             "columns_count": len(self._project_columns_cache),
         }
 
+    @staticmethod
+    def _extract_issue_number(card: object) -> int | None:
+        """从 card.content_url 提取 issue number, 不含 '/issues/' 返 None.
+
+        V2.19 P3-41 拆分: 从 list_project_issues (B=7) 抽出.
+        """
+        content_url = getattr(card, "content_url", None)
+        if not content_url or "/issues/" not in content_url:
+            return None
+        return int(content_url.split("/issues/")[-1])
+
+    @staticmethod
+    def _build_issue_summary(issue: Issue, card: object) -> dict[str, Any]:
+        """构造 issue summary dict (number/title/state/labels/assignees/column).
+
+        V2.19 P3-41 拆分: 从 list_project_issues (B=7) 抽出.
+        """
+        return {
+            "number": issue.number,
+            "title": issue.title,
+            "state": issue.state,
+            "labels": [label.name for label in issue.labels],
+            "assignees": [assignee.login for assignee in issue.assignees],
+            "column": (card.column_name if hasattr(card, "column_name") else "Unknown"),
+        }
+
     def list_project_issues(self) -> list[dict[str, Any]]:
-        """列出 Project 中的所有 Issue"""
+        """列出 Project 中的所有 Issue (orchestrator).
+
+        V2.19 P3-41 拆分: 从 B=7 / 20 行方法拆出 2 个 helper.
+        主方法仅负责: 委托 _extract_issue_number → 获取 issue → 委托 _build_issue_summary.
+        """
         cards = self._get_project_cards()
-        issues = []
+        issues: list[dict[str, Any]] = []
         for card in cards:
-            if card.content_url and "/issues/" in card.content_url:
-                issue_num = int(card.content_url.split("/issues/")[-1])
-                issue = self.repo.get_issue(issue_num)
-                issues.append(
-                    {
-                        "number": issue.number,
-                        "title": issue.title,
-                        "state": issue.state,
-                        "labels": [label.name for label in issue.labels],
-                        "assignees": [assignee.login for assignee in issue.assignees],
-                        "column": (card.column_name if hasattr(card, "column_name") else "Unknown"),
-                    }
-                )
+            issue_num = self._extract_issue_number(card)
+            if issue_num is None:
+                continue
+            issue = self.repo.get_issue(issue_num)
+            issues.append(self._build_issue_summary(issue, card))
         return issues
 
 

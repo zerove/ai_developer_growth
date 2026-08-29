@@ -113,24 +113,30 @@ def scan_directory(directory: Path) -> dict[str, list[str]]:
     return results
 
 
-def main() -> None:
-    """主函数"""
-    # 扫描 docs 目录
+def _scan_known_dirs() -> dict[str, list[str]]:
+    """扫描 docs/ + case-studies/ 目录, 合并结果.
+
+    V2.19 P3-42 拆分: 从 main (B=6) 抽出.
+    docs 目录必扫, case-studies 目录可选.
+    """
     docs_dir = Path("docs")
     if not docs_dir.exists():
-        print("Error: docs directory not found")
-        return
-
+        return {}
     print("Scanning docs directory...")
     results = scan_directory(docs_dir)
 
-    # 扫描 case-studies 目录
     case_studies_dir = Path("case-studies")
     if case_studies_dir.exists():
         case_results = scan_directory(case_studies_dir)
         results.update(case_results)
+    return results
 
-    # 输出结果
+
+def _print_metadata_results(results: dict[str, list[str]]) -> None:
+    """打印元数据检查结果 (含空态).
+
+    V2.19 P3-42 拆分: 从 main (B=6) 抽出.
+    """
     if results:
         print(f"\nFound {len(results)} files with metadata issues:\n")
         for file_path, issues in results.items():
@@ -140,6 +146,19 @@ def main() -> None:
             print()
     else:
         print("\n✅ All files have valid metadata!")
+
+
+def main() -> None:
+    """主函数 (orchestrator).
+
+    V2.19 P3-42 拆分: 从 B=6 / 28 行 main 拆出 2 个 helper.
+    主函数仅负责: 委托 scan + print.
+    """
+    if not Path("docs").exists():
+        print("Error: docs directory not found")
+        return
+    results = _scan_known_dirs()
+    _print_metadata_results(results)
 
 
 if __name__ == "__main__":

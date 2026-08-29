@@ -30,37 +30,71 @@ AI_GEN_PATTERN = re.compile(r"#\s*\[AI-GEN\]")
 # 需要检查的文件类型
 TARGET_EXTENSIONS = {".py", ".js", ".ts", ".jsx", ".tsx", ".rs", ".go", ".java", ".kt"}
 
+# AI 生成注释标识 (detect_ai_generated_functions 使用)
+_AI_GENERATED_INDICATORS: tuple[re.Pattern[str], ...] = (
+    re.compile(r"# AI-generated", re.IGNORECASE),
+    re.compile(r"# Generated with", re.IGNORECASE),
+    re.compile(r"# AI assistant", re.IGNORECASE),
+    re.compile(r"# This code is AI", re.IGNORECASE),
+    re.compile(r"# This function was generated", re.IGNORECASE),
+)
+_FUNCTION_DEF_RE = re.compile(r"\s*def\s+(\w+)\s*\(")
+_FORWARD_WINDOW = 10  # 注释后多少行内查找函数定义
+
 
 def has_ai_annotation(content: str) -> bool:
     """检查内容是否包含 AI 标注 (兼容旧测试: # [AI-GEN])"""
     return bool(AI_GEN_PATTERN.search(content))
 
 
-def detect_ai_generated_functions(content: str) -> list[dict[str, Any]]:
-    """检测可能由 AI 生成的函数 (兼容旧测试)"""
-    results: list[dict[str, Any]] = []
-    lines = content.split("\n")
+def _line_has_ai_indicator(line: str) -> bool:
+    """单行是否匹配任一 AI 生成指标 regex.
 
-    ai_indicators = [
-        r"# AI-generated",
-        r"# Generated with",
-        r"# AI assistant",
-        r"# This code is AI",
-        r"# This function was generated",
-    ]
+    V2.19 P3-17 拆分: 从 detect_ai_generated_functions (B=9) 抽出.
+    """
+    return any(p.search(line) for p in _AI_GENERATED_INDICATORS)
+
+
+def _collect_functions_in_window(
+    lines: list[str],
+    start: int,
+    reported_lines: set[int],
+) -> list[dict[str, Any]]:
+    """在注释行后续 _FORWARD_WINDOW 行内收集函数定义.
+
+    V2.19 P3-17 拆分: 从 detect_ai_generated_functions (B=9) 抽出.
+    """
+    results: list[dict[str, Any]] = []
+    upper = min(start + _FORWARD_WINDOW, len(lines))
+    for j in range(start, upper):
+        func_match = _FUNCTION_DEF_RE.match(lines[j])
+        if func_match is None:
+            continue
+        line_no = j + 1
+        if line_no in reported_lines:
+            continue
+        reported_lines.add(line_no)
+        results.append({"function": func_match.group(1), "line": line_no})
+    return results
+
+
+def detect_ai_generated_functions(content: str) -> list[dict[str, Any]]:
+    """检测可能由 AI 生成的函数 (orchestrator).
+
+    V2.19 P3-17 拆分: 从 B=9 / 25 行函数拆出 2 个 helper + 提升常量.
+    主函数仅负责: 遍历注释行 → 委托判定 + 窗口收集 → 去重.
+    """
+    lines = content.split("\n")
+    reported: set[int] = set()
+    results: list[dict[str, Any]] = []
 
     for i, line in enumerate(lines):
         # 仅检测注释行中的 AI 指标，避免命中字符串字面量
         if not line.lstrip().startswith("#"):
             continue
-        for pattern in ai_indicators:
-            if re.search(pattern, line, re.IGNORECASE):
-                # 标记后续窗口内的所有函数定义
-                for j in range(i + 1, min(i + 10, len(lines))):
-                    func_match = re.match(r"\s*def\s+(\w+)\s*\(", lines[j])
-                    if func_match and all(r["line"] != j + 1 for r in results):
-                        results.append({"function": func_match.group(1), "line": j + 1})
-                break
+        if not _line_has_ai_indicator(line):
+            continue
+        results.extend(_collect_functions_in_window(lines, i + 1, reported))
 
     return results
 

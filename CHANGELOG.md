@@ -1040,10 +1040,15 @@ v2.13.0 后发现 `.jcode/scripts/` 下存在两个同名变体文件（仅命�
   - 7 个 helper: `_determine_checks` / `_apply_baseline_ratchet` / `_refresh_baseline_if_clean` / `_record_run_history` / `_format_output` / `_resolve_baseline_path` / `_run_checks_on_files`
   - 所有 helper < 50 行, 最大 C=11
   - pytest 105/105 pass (test_domain_checks, test_quality_gate_*)
+- **P1-B 回归修复: search 索引排除聚合段** (commit bf676be)
+  - `scripts/search-server.py` 新增 `_strip_link_aggregation_sections`
+  - 索引时排除 '## 相关案例' / '## 相关方法论' / '## 相关文档' / '## 相关 ADR' 段
+  - 修复 test_search_recall 2 case 失败 (双向链接注入段稀释关键词)
+  - test_search_recall 14/14 pass, test_search*.py 45/45 pass
+- **V2.16.0 baseline 同步** (commit 0ad8157)
+  - 新增 8 个存量文件条目 (函数超 50 行历史遗留)
+  - 14 文件 / 17 存量问题
 
 ### 已知问题
 
-- `tests/test_search_recall.py::test_recall[AI 开发生命周期]` 2 case 失败
-  - 原因: P1-B 双向链接补全后, `ai-native-sdlc-whitepaper` 文档变长, 关键词分散
-  - 状态: v2.15.0 已存在, 不阻塞 v2.16.0 发版
-  - 修复: 后续 P2 调整 tf-idf 索引或 BM25 权重
+无 (test_search_recall P1-B 回归已修复)

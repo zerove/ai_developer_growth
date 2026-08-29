@@ -16,29 +16,32 @@ from __future__ import annotations
 import os
 import time
 import warnings
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from functools import lru_cache
 from pathlib import Path
-from typing import Any, ClassVar, Protocol, cast
+from typing import Any, ClassVar, cast
 
+# ADR-014 渐进拆: 数据类已抽到 ast_nodes.py,这里只 re-export
+from .ast_nodes import (
+    ASTNode,
+    ClassInfo,
+    FileAST,
+    FunctionInfo,
+    ImportInfo,
+    _TreeNode,
+    _TSTree,
+)
 
-# Tree-sitter AST node type - tree-sitter returns untyped nodes at runtime.
-# Protocol 提供最小静态接口，供 mypy 检查节点属性访问。
-class _TreeNode(Protocol):
-    """Minimal structural interface of a tree-sitter Node."""
-
-    type: str
-    children: list[_TreeNode]
-    parent: _TreeNode | None
-    text: bytes | str
-    start_point: tuple[int, int]
-    end_point: tuple[int, int]
-
-
-class _TSTree(Protocol):
-    """Minimal structural interface of a tree-sitter Tree."""
-
-    root_node: _TreeNode
+# 显式 re-export: parsers/ 子包等模块通过 ast_parser 间接 import 数据类
+__all__ = [
+    "ASTNode",
+    "ClassInfo",
+    "FileAST",
+    "FunctionInfo",
+    "ImportInfo",
+    "_TSTree",
+    "_TreeNode",
+]
 
 
 # Suppress tree-sitter deprecation warnings
@@ -65,79 +68,6 @@ try:
 except ImportError:
     HAS_TREE_SITTER = False
 
-
-@dataclass
-class ASTNode:
-    """Simplified AST node for cross-language analysis."""
-
-    type: str
-    name: str
-    line: int
-    col: int
-    end_line: int
-    end_col: int
-    children: list[ASTNode] = field(default_factory=list)
-    parent: ASTNode | None = None
-    metadata: dict[str, object] = field(default_factory=dict)
-
-
-@dataclass
-class FunctionInfo:
-    """Extracted function/method information."""
-
-    name: str
-    line: int
-    col: int
-    end_line: int
-    params: list[str]
-    decorators: list[str]
-    return_type: str | None
-    docstring: str | None
-    body_lines: int
-    complexity: int
-    is_async: bool = False
-    is_method: bool = False
-    class_name: str | None = None
-
-
-@dataclass
-class ClassInfo:
-    """Extracted class information."""
-
-    name: str
-    line: int
-    col: int
-    end_line: int
-    bases: list[str]
-    decorators: list[str]
-    docstring: str | None
-    methods: list[FunctionInfo]
-    body_lines: int
-
-
-@dataclass
-class ImportInfo:
-    """Extracted import information."""
-
-    module: str
-    names: list[str]
-    line: int
-    is_from: bool
-    level: int  # relative import level
-
-
-@dataclass
-class FileAST:
-    """Complete AST analysis of a file."""
-
-    language: str
-    functions: list[FunctionInfo]
-    classes: list[ClassInfo]
-    imports: list[ImportInfo]
-    global_variables: list[ASTNode]
-    error_nodes: list[ASTNode]
-    total_nodes: int
-    parse_time_ms: float
 
 
 def _extract_decorators(node: _TreeNode, lines: list[str]) -> list[str]:

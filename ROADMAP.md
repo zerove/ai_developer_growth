@@ -257,9 +257,9 @@
 |------|------|------|
 | ADR-014 | `check_directory` 复杂度拆分 C=48→4 helper (0.5d) | ✅ 已完成 (b07bb5e) |
 | ADR-015 | pytest-xdist race condition 接受现状 | ✅ 已完成 |
-| cmd_recommend 测试 | 29.6%→80%+ (0.3d) | 🚧 进行中 |
+| cmd_recommend 测试 | 29.6%→80%+ (0.3d) | ✅ 已完成 (4c4eb68, 14 tests → 99%) |
 | pytest-cov 8.x 试运行 | 解 ADR-013 (0.5d) | ✅ 已完成（ADR-013 误判已修订） |
-| ast_parser.py 拆分 | 1103 行→5 文件 (1d) | 🚧 进行中 |
+| ast_parser.py 拆分 | 1103 行→5 文件 (1d) | ✅ 渐进拆：数据层抽 ast_nodes.py (1103→1021) |
 | adg_cli 23 cmd smoke | 全子命令冒烟 (0.5d) | 🚧 进行中 |
 | 效率文档↔案例双向链接 | 自动化补全 (0.2d) | 🚧 进行中 |
 

@@ -301,7 +301,7 @@ def _validate_directory(
     language: str | None,
     custom_rules: dict[str, Any] | None,
     auto_detect: bool,
-    exclude: Any,
+    exclude: list[str],
     incremental: bool,
 ) -> list[ValidationResult] | None:
     """校验目录, 支持 incremental cache 与 auto-detect.

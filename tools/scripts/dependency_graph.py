@@ -429,21 +429,16 @@ class DependencyGraph:
         return build_tree(package_key, 0)
 
     def export_graphviz(self, output: Path | None = None) -> str:
-        """导出 Graphviz DOT 格式"""
+        """导出 Graphviz DOT 格式.
+
+        V2.20 P4-12 拆分: 抽 _render_graphviz_nodes + _render_graphviz_edges,
+        主函数 1 行委托 + 可选写入.
+        """
         lines = ["digraph dependencies {"]
         lines.append("  rankdir=LR;")
         lines.append("  node [shape=box, style=filled];")
-
-        for node_id, node in self.nodes.items():
-            color = "lightgreen" if node.is_direct else "lightblue"
-            if node.vulnerabilities:
-                color = "lightcoral"
-            label = f"{node.name}\\n{node.version}\\n({node.ecosystem})"
-            lines.append(f'  "{node_id}" [label="{label}", fillcolor="{color}"];')
-
-        for from_id, to_id in self.edges:
-            lines.append(f'  "{from_id}" -> "{to_id}";')
-
+        lines.extend(self._render_graphviz_nodes())
+        lines.extend(self._render_graphviz_edges())
         lines.append("}")
 
         dot_content = "\n".join(lines)
@@ -452,6 +447,29 @@ class DependencyGraph:
             output.write_text(dot_content)
 
         return dot_content
+
+    def _render_graphviz_nodes(self) -> list[str]:
+        """渲染 Graphviz 节点行 (含颜色 + label).
+
+        Returns:
+            DOT 节点行列表
+        """
+        lines: list[str] = []
+        for node_id, node in self.nodes.items():
+            color = "lightgreen" if node.is_direct else "lightblue"
+            if node.vulnerabilities:
+                color = "lightcoral"
+            label = f"{node.name}\\n{node.version}\\n({node.ecosystem})"
+            lines.append(f'  "{node_id}" [label="{label}", fillcolor="{color}"];')
+        return lines
+
+    def _render_graphviz_edges(self) -> list[str]:
+        """渲染 Graphviz 边行.
+
+        Returns:
+            DOT 边行列表
+        """
+        return [f'  "{from_id}" -> "{to_id}";' for from_id, to_id in self.edges]
 
     def export_mermaid(self, output: Path | None = None) -> str:
         """导出 Mermaid 图表格式"""

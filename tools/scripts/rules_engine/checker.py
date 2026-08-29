@@ -395,6 +395,261 @@ def _run_all_checkers(
     return issues
 
 
+def _load_directory_rules(dirpath: Path, base_rules: dict[str, Any] | None) -> dict[str, Any] | None:
+    """合并框架规则 + 域规则到 base_rules。
+
+    ADR-014: 从 check_directory 拆出。框架/域规则均 optional，失败回退
+    到 base_rules 不抛错。
+    """
+    rules = base_rules
+    framework = _detect_framework(dirpath)
+    if framework:
+        try:
+            fw_rules = load_rules_for_language(framework, rules_dir() / "frameworks" / framework)
+            if rules:
+                from .rule_loader import _merge_rules
+
+                rules = _merge_rules(rules, fw_rules)
+        except Exception:
+            _ = None  # framework rules optional
+
+    try:
+        from .rule_loader import load_domain_rules
+
+        domain_rules = load_domain_rules(dirpath)
+        if domain_rules.get("anti_patterns"):
+            if rules:
+                from .rule_loader import _merge_rules
+
+                rules = _merge_rules(rules, domain_rules)
+            else:
+                rules = domain_rules
+    except Exception:
+        _ = None  # domain rules optional
+
+    return rules
+
+
+def _discover_target_files(
+    dirpath: Path, languages: list[str] | None
+) -> list[Path]:
+    """发现目录下所有可检查文件，按扩展名 + 排除目录 + 语言过滤。
+
+    ADR-014: 从 check_directory 拆出。
+    """
+    exts = [
+        ".py",
+        ".js",
+        ".jsx",
+        ".ts",
+        ".tsx",
+        ".rs",
+        ".go",
+        ".java",
+        ".cs",
+        ".cpp",
+        ".cc",
+        ".cxx",
+        ".c",
+        ".h",
+        ".hpp",
+    ]
+    files: list[Path] = []
+    for ext in exts:
+        files.extend(dirpath.rglob(f"*{ext}"))
+
+    def _is_excluded(filepath: Path) -> bool:
+        parts = set(filepath.parts)
+        return bool(parts & DEFAULT_EXCLUDED_DIRS)
+
+    files = [f for f in files if not _is_excluded(f)]
+
+    if languages:
+        files = [f for f in files if _detect_language(f) in languages]
+
+    return files
+
+
+def _init_cache_store(use_cache: bool, db_path: str | Path) -> tuple[Any, str]:
+    """初始化增量缓存。
+
+    ADR-014: 从 check_directory 拆出。失败时 store=None + rules_hash=""
+    表示退化为完整检查。
+    """
+    store = None
+    rules_hash = ""
+    if use_cache:
+        try:
+            from .store import CheckStore, compute_rules_signature
+
+            store = CheckStore(db_path)
+            rules_hash = compute_rules_signature()
+        except Exception as exc:  # noqa: BLE001
+            store = None
+            logger.warning(
+                "增量缓存初始化失败，本次退化为完整检查: %s: %s",
+                type(exc).__name__,
+                exc,
+            )
+    return store, rules_hash
+
+
+def _run_architecture_analysis(dirpath: Path) -> list[CheckResult]:
+    """运行跨文件架构分析（依赖图 + 分层检查）。
+
+    ADR-014: 从 check_directory 拆出。arch 模块 ImportError 时返回空列表
+    （非阻塞），其他异常也吞掉。
+    """
+    results: list[CheckResult] = []
+    try:
+        from .arch import DependencyGraph, LayerChecker
+
+        arch_graph = DependencyGraph()
+        arch_issues = arch_graph.analyze_directory(dirpath)
+
+        layer_config_path = dirpath / ".adg" / "architecture.yml"
+        if layer_config_path.exists():
+            from .arch import LayerConfig
+
+            lc = LayerConfig.from_yaml(layer_config_path)
+            layer_checker = LayerChecker(lc)
+            arch_issues.extend(layer_checker.check_graph(arch_graph))
+
+        if arch_issues:
+            arch_result = CheckResult(
+                file=str(dirpath / ".architecture"),
+                issues=[i.to_issue("arch-" + i.category) for i in arch_issues],
+                language="architecture",
+            )
+            results.append(arch_result)
+    except ImportError:
+        _ = None  # arch module not available
+    except Exception:
+        _ = None  # arch checks optional
+    return results
+
+
+def _check_with_cache(
+    filepath: Path,
+    lang: str,
+    rules: dict[str, Any] | None,
+    store: Any,
+    rules_hash: str,
+    semantic: bool,
+    run_linters: bool,
+) -> tuple[CheckResult, bool]:
+    """单文件检查（带缓存），返回 (CheckResult, cache_degraded_increment)。
+
+    ADR-014: 从 check_directory 拆出 cache logic。store=None 时退化为完整检查。
+    """
+    cache_degraded = False
+    if store is not None:
+        try:
+            stat = filepath.stat()
+            cached = store.get_cached_result(str(filepath), stat.st_mtime, stat.st_size, rules_hash)
+            if cached is not None:
+                issues = [Issue(**i) for i in cached["issues"]]
+                return (
+                    CheckResult(file=str(filepath), issues=issues, language=cached["language"]),
+                    False,
+                )
+        except Exception as exc:  # noqa: BLE001
+            cache_degraded = True
+            logger.debug("缓存读取失败，回退完整检查 %s: %s", filepath, exc)
+    result = check_file(filepath, rules, lang, semantic=semantic, run_linters=run_linters)
+    if store is not None and not result.skipped:
+        try:
+            stat = filepath.stat()
+            store.set_cached_result(
+                str(filepath),
+                stat.st_mtime,
+                stat.st_size,
+                {
+                    "language": result.language,
+                    "passed": result.passed,
+                    "errors": result.error_count,
+                    "warnings": result.warning_count,
+                    "info": result.info_count,
+                    "issues": [i.to_dict() for i in result.issues],
+                },
+                rules_hash,
+            )
+        except Exception as exc:  # noqa: BLE001
+            cache_degraded = True
+            logger.debug("缓存写入失败（不影响检查结果）%s: %s", filepath, exc)
+    return result, cache_degraded
+
+
+def _check_files_serial(
+    files: list[Path],
+    rules: dict[str, Any] | None,
+    store: Any,
+    rules_hash: str,
+    semantic: bool,
+    run_linters: bool,
+) -> tuple[list[CheckResult], int]:
+    """串行检查（小集合 jobs<=1 或 files<=4）。
+
+    ADR-014: 从 check_directory 拆出。
+    """
+    results: list[CheckResult] = []
+    degraded = 0
+    for filepath in files:
+        result, was_degraded = _check_with_cache(
+            filepath, _detect_language(filepath), rules, store, rules_hash, semantic, run_linters
+        )
+        if was_degraded:
+            degraded += 1
+        if not result.skipped:
+            results.append(result)
+    return results, degraded
+
+
+def _check_files_parallel(
+    files: list[Path],
+    rules: dict[str, Any] | None,
+    store: Any,
+    rules_hash: str,
+    db_path: str | Path,
+    use_cache: bool,
+    semantic: bool,
+    run_linters: bool,
+    jobs: int,
+) -> list[CheckResult]:
+    """并行检查（ProcessPoolExecutor + worker 缓存）。
+
+    ADR-014: 从 check_directory 拆出。worker 进程各自独立 SQLite 连接，
+    WAL 模式下并发写安全。
+    """
+    from collections.abc import Iterator
+    from concurrent.futures import ProcessPoolExecutor
+
+    warmup_rules = rules or {}
+    pairs = [(fp, _detect_language(fp)) for fp in files]
+    cache_db: str | None = str(db_path) if use_cache and store is not None else None
+    worker_rules_hash = rules_hash
+    results: list[CheckResult] = []
+    with ProcessPoolExecutor(
+        max_workers=jobs, initializer=_worker_init, initargs=(warmup_rules,)
+    ) as executor:
+        worker_results: Iterator[CheckResult | None] = executor.map(
+            _worker_check,
+            pairs,
+            [semantic] * len(pairs),
+            [run_linters] * len(pairs),
+            [cache_db] * len(pairs),
+            [worker_rules_hash] * len(pairs),
+            chunksize=16,
+        )
+        for worker_result in worker_results:
+            try:
+                if worker_result is not None:
+                    results.append(worker_result)
+            except Exception:
+                _ = None  # skip failed check
+    return results
+
+
 def check_directory(
     dirpath: Path,
     rules: dict[str, Any] | None = None,
@@ -422,184 +677,23 @@ def check_directory(
     if not dirpath.exists() or not dirpath.is_dir():
         return results
 
-    # Detect framework and load framework-specific rules
-    framework = _detect_framework(dirpath)
-    if framework:
-        try:
-            fw_rules = load_rules_for_language(framework, rules_dir() / "frameworks" / framework)
-            if rules:
-                from .rule_loader import _merge_rules
-
-                rules = _merge_rules(rules, fw_rules)
-        except Exception:
-            _ = None  # framework rules optional
-
-    # Load domain rules from project config
-    try:
-        from .rule_loader import load_domain_rules
-
-        domain_rules = load_domain_rules(dirpath)
-        if domain_rules.get("anti_patterns"):
-            if rules:
-                from .rule_loader import _merge_rules
-
-                rules = _merge_rules(rules, domain_rules)
-            else:
-                rules = domain_rules
-    except Exception:
-        _ = None  # domain rules optional
-
-    # Collect files
-    exts = [
-        ".py",
-        ".js",
-        ".jsx",
-        ".ts",
-        ".tsx",
-        ".rs",
-        ".go",
-        ".java",
-        ".cs",
-        ".cpp",
-        ".cc",
-        ".cxx",
-        ".c",
-        ".h",
-        ".hpp",
-    ]
-    files: list[Path] = []
-    for ext in exts:
-        files.extend(dirpath.rglob(f"*{ext}"))
-
-    # Filter out ignored paths (path-segment match to avoid false hits like "dist" in names)
-
-    def _is_excluded(filepath: Path) -> bool:
-        parts = set(filepath.parts)
-        return bool(parts & DEFAULT_EXCLUDED_DIRS)
-
-    files = [f for f in files if not _is_excluded(f)]
-
-    # Filter by language
-    if languages:
-        files = [f for f in files if _detect_language(f) in languages]
-
-    # 增量缓存（任务7：复用检查历史；v2 键含规则签名，规则变化自动失效）
-    store = None
-    rules_hash = ""
-    cache_degraded = 0  # B: 静默降级可观测性计数
-    if use_cache:
-        try:
-            from .store import CheckStore, compute_rules_signature
-
-            store = CheckStore(db_path)
-            rules_hash = compute_rules_signature()
-        except Exception as exc:  # noqa: BLE001
-            store = None  # 缓存不可用时退化为完整检查
-            logger.warning("增量缓存初始化失败，本次退化为完整检查: %s: %s", type(exc).__name__, exc)
-
-    def _checked_result(filepath: Path, lang: str) -> CheckResult:
-        """执行检查（命中缓存则跳过），并更新统一存储。"""
-        nonlocal cache_degraded
-        if store is not None:
-            try:
-                stat = filepath.stat()
-                cached = store.get_cached_result(str(filepath), stat.st_mtime, stat.st_size, rules_hash)
-                if cached is not None:
-                    issues = [Issue(**i) for i in cached["issues"]]
-                    return CheckResult(file=str(filepath), issues=issues, language=cached["language"])
-            except Exception as exc:  # noqa: BLE001
-                cache_degraded += 1
-                logger.debug("缓存读取失败，回退完整检查 %s: %s", filepath, exc)
-        result = check_file(filepath, rules, lang, semantic=semantic, run_linters=run_linters)
-        if store is not None and not result.skipped:
-            try:
-                stat = filepath.stat()
-                store.set_cached_result(
-                    str(filepath),
-                    stat.st_mtime,
-                    stat.st_size,
-                    {
-                        "language": result.language,
-                        "passed": result.passed,
-                        "errors": result.error_count,
-                        "warnings": result.warning_count,
-                        "info": result.info_count,
-                        "issues": [i.to_dict() for i in result.issues],
-                    },
-                    rules_hash,
-                )
-            except Exception as exc:  # noqa: BLE001
-                cache_degraded += 1
-                logger.debug("缓存写入失败（不影响检查结果）%s: %s", filepath, exc)
-        return result
+    rules = _load_directory_rules(dirpath, rules)
+    files = _discover_target_files(dirpath, languages)
+    store, rules_hash = _init_cache_store(use_cache, db_path)
 
     if jobs <= 1 or len(files) <= 4:
-        # Serial execution for small sets
-        for filepath in files:
-            result = _checked_result(filepath, _detect_language(filepath))
-            if not result.skipped:
-                results.append(result)
+        checked, cache_degraded = _check_files_serial(
+            files, rules, store, rules_hash, semantic, run_linters
+        )
     else:
-        # Parallel execution with worker warm-up (shared rules, no re-load)
-        from collections.abc import Iterator
-        from concurrent.futures import ProcessPoolExecutor
+        cache_degraded = 0
+        checked = _check_files_parallel(
+            files, rules, store, rules_hash, db_path, use_cache, semantic, run_linters, jobs
+        )
 
-        # 预热规则：在主进程加载一次，随后通过 initializer 传递给 worker，
-        # 避免每个任务内部重复读取 YAML / 解析规则文件
-        warmup_rules = rules or {}
+    results.extend(checked)
+    results.extend(_run_architecture_analysis(dirpath))
 
-        pairs = [(fp, _detect_language(fp)) for fp in files]
-        # 增量缓存：worker 进程各自持有独立 SQLite 连接读写缓存，键含规则签名
-        # （历史 bug：并行分支完全不接 store，导致 --cache 模式缓存恒为空）
-        cache_db: str | None = str(db_path) if use_cache and store is not None else None
-        worker_rules_hash = rules_hash
-        with ProcessPoolExecutor(max_workers=jobs, initializer=_worker_init, initargs=(warmup_rules,)) as executor:
-            worker_results: Iterator[CheckResult | None] = executor.map(
-                _worker_check,
-                pairs,
-                [semantic] * len(pairs),
-                [run_linters] * len(pairs),
-                [cache_db] * len(pairs),
-                [worker_rules_hash] * len(pairs),
-                chunksize=16,
-            )
-            for worker_result in worker_results:
-                try:
-                    if worker_result is not None:
-                        results.append(worker_result)
-                except Exception:
-                    _ = None  # skip failed check
-
-    # Architecture analysis (cross-file)
-    try:
-        from .arch import DependencyGraph, LayerChecker
-
-        arch_graph = DependencyGraph()
-        arch_issues = arch_graph.analyze_directory(dirpath)
-
-        # Layer check only if we have a config
-        layer_config_path = dirpath / ".adg" / "architecture.yml"
-        if layer_config_path.exists():
-            from .arch import LayerConfig
-
-            lc = LayerConfig.from_yaml(layer_config_path)
-            layer_checker = LayerChecker(lc)
-            arch_issues.extend(layer_checker.check_graph(arch_graph))
-
-        # Convert architecture issues to CheckResult
-        if arch_issues:
-            arch_result = CheckResult(
-                file=str(dirpath / ".architecture"),
-                issues=[i.to_issue("arch-" + i.category) for i in arch_issues],
-                language="architecture",
-            )
-            results.append(arch_result)
-    except ImportError:
-        _ = None  # arch module not available
-    except Exception:
-        _ = None  # arch checks optional
-
-    # B: 降级可观测性 —— 缓存读写失败次数汇总，避免"看似工作实则未生效"
     if use_cache and cache_degraded:
         logger.warning("本次运行缓存降级 %d 次（读取/写入失败已回退完整检查）", cache_degraded)
 

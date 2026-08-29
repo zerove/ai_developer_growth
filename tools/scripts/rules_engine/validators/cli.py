@@ -242,69 +242,124 @@ Examples:
     return parser
 
 
+def _validate_changed_files(
+    changed_files: list[Path],
+    language: str | None,
+    custom_rules: dict[str, Any] | None,
+) -> list[ValidationResult]:
+    """校验 --changed-files 给出的文件列表.
+
+    V2.17 P2-5 拆分: 从 _collect_results (D=21) 抽出.
+    不存在文件跳过; 语言未指定则自动 detect.
+    """
+    results: list[ValidationResult] = []
+    for fp in changed_files:
+        if not fp.exists():
+            continue
+        lang = language or detect_language_from_file(fp)
+        if lang:
+            results.append(validate_file(fp, lang, custom_rules=custom_rules))
+    return results
+
+
+def _validate_single_file(
+    path: Path,
+    language: str | None,
+    custom_rules: dict[str, Any] | None,
+    incremental: bool,
+) -> list[ValidationResult] | None:
+    """校验单个文件, 支持 incremental cache.
+
+    V2.17 P2-5 拆分: 从 _collect_results (D=21) 抽出.
+    返回 None = 语言无法检测 (错误);
+    返回 [] = 文件未变 (incremental 命中);
+    返回 [result] = 正常校验结果.
+    """
+    if language is None:
+        language = detect_language_from_file(path)
+    if language is None:
+        print(
+            f"Error: Cannot detect language for {path}. Use --lang.",
+            file=sys.stderr,
+        )
+        return None
+
+    if incremental:
+        fh = _file_hash(path)
+        cache_file = path.parent / ".rule-cache"
+        cache = _load_cache(cache_file)
+        if cache.get(str(path)) == fh:
+            return []  # File unchanged
+        cache[str(path)] = fh
+        _save_cache(cache_file, cache)
+
+    return [validate_file(path, language, custom_rules=custom_rules)]
+
+
+def _validate_directory(
+    path: Path,
+    language: str | None,
+    custom_rules: dict[str, Any] | None,
+    auto_detect: bool,
+    exclude: Any,
+    incremental: bool,
+) -> list[ValidationResult] | None:
+    """校验目录, 支持 incremental cache 与 auto-detect.
+
+    V2.17 P2-5 拆分: 从 _collect_results (D=21) 抽出.
+    返回 None = 参数错误 (无 --lang 也无 --auto-detect).
+    """
+    if language is None and not auto_detect:
+        print("Error: Use --lang or --auto-detect for directories.", file=sys.stderr)
+        return None
+
+    results: list[ValidationResult] = []
+
+    if incremental:
+        cache_file = path / ".rule-cache"
+        cache = _load_cache(cache_file)
+        all_files = _get_supported_files(path, exclude)
+        changed = [f for f in all_files if _file_hash(f) != cache.get(str(f))]
+        for f in all_files:
+            cache[str(f)] = _file_hash(f)
+        _save_cache(cache_file, cache)
+        for fp in changed:
+            lang = language or detect_language_from_file(fp)
+            if lang:
+                results.append(validate_file(fp, lang, custom_rules=custom_rules))
+        if not results:
+            print("No changed files detected (incremental mode).")
+    else:
+        results = validate_directory(path, language, exclude, custom_rules=custom_rules)
+
+    return results
+
+
 def _collect_results(
     args: argparse.Namespace,
     language: str | None,
     custom_rules: dict[str, Any] | None,
 ) -> list[ValidationResult] | None:
-    """Collect validation results based on CLI arguments.
+    """Collect validation results based on CLI arguments (orchestrator).
 
-    Returns None on error (e.g. undetectable language), empty list if no files matched.
+    V2.17 P2-5 拆分: 从 D=21 / 80 行主函数拆出 3 个 collector.
+    主函数仅按 args 类型分发:
+    - changed_files → _validate_changed_files
+    - 单文件      → _validate_single_file
+    - 目录        → _validate_directory
     """
-    results: list[ValidationResult] = []
-
     if args.changed_files:
-        for fp in args.changed_files:
-            if not fp.exists():
-                continue
-            lang = language or detect_language_from_file(fp)
-            if lang:
-                results.append(validate_file(fp, lang, custom_rules=custom_rules))
-    elif args.path.is_file():
-        if language is None:
-            language = detect_language_from_file(args.path)
-        if language is None:
-            print(
-                f"Error: Cannot detect language for {args.path}. Use --lang.",
-                file=sys.stderr,
-            )
-            return None
-
-        # Incremental: skip unchanged files
-        if args.incremental:
-            fh = _file_hash(args.path)
-            cache_file = args.path.parent / ".rule-cache"
-            cache = _load_cache(cache_file)
-            if cache.get(str(args.path)) == fh:
-                return []  # File unchanged
-            cache[str(args.path)] = fh
-            _save_cache(cache_file, cache)
-
-        results = [validate_file(args.path, language, custom_rules=custom_rules)]
-    else:
-        if language is None and not args.auto_detect:
-            print("Error: Use --lang or --auto-detect for directories.", file=sys.stderr)
-            return None
-
-        # Incremental: skip unchanged files in directory
-        if args.incremental:
-            cache_file = args.path / ".rule-cache"
-            cache = _load_cache(cache_file)
-            all_files = _get_supported_files(args.path, args.exclude)
-            changed = [f for f in all_files if _file_hash(f) != cache.get(str(f))]
-            for f in all_files:
-                cache[str(f)] = _file_hash(f)
-            _save_cache(cache_file, cache)
-            for fp in changed:
-                lang = language or detect_language_from_file(fp)
-                if lang:
-                    results.append(validate_file(fp, lang, custom_rules=custom_rules))
-            if not results:
-                print("No changed files detected (incremental mode).")
-        else:
-            results = validate_directory(args.path, language, args.exclude, custom_rules=custom_rules)
-
-    return results
+        return _validate_changed_files(args.changed_files, language, custom_rules)
+    if args.path.is_file():
+        return _validate_single_file(args.path, language, custom_rules, args.incremental)
+    return _validate_directory(
+        args.path,
+        language,
+        custom_rules,
+        args.auto_detect,
+        args.exclude,
+        args.incremental,
+    )
 
 
 def _apply_auto_fix(results: list[ValidationResult], dry_run: bool) -> int:

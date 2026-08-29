@@ -187,7 +187,20 @@ class DependencyGraph:
             self.edges.append((from_id, to_id))
 
     def detect_circular_dependencies(self) -> list[CircularDependency]:
-        """检测循环依赖 (使用 Tarjan 算法)"""
+        """检测循环依赖 (使用 Tarjan 算法).
+
+        V2.20 P4-10 拆分: 抽 _run_tarjan_scc 收口 Tarjan 核心 + _convert_cycles_to_result
+        收口 CircularDependency 构造, 主函数 1 行委托.
+        """
+        cycles = self._run_tarjan_scc()
+        return self._convert_cycles_to_result(cycles)
+
+    def _run_tarjan_scc(self) -> list[list[str]]:
+        """Tarjan SCC 算法找出所有长度 > 1 的强连通分量.
+
+        Returns:
+            循环列表 (每个循环为节点 ID 列表)
+        """
         index = 0
         stack: list[str] = []
         on_stack: set[str] = set()
@@ -212,7 +225,7 @@ class DependencyGraph:
 
             if lowlinks[node_id] == indices[node_id]:
                 # 找到一个强连通分量
-                scc = []
+                scc: list[str] = []
                 while True:
                     w = stack.pop()
                     on_stack.remove(w)
@@ -226,10 +239,20 @@ class DependencyGraph:
             if node_id not in indices:
                 strongconnect(node_id)
 
-        # 转换为 CircularDependency 对象
-        result = []
+        return cycles
+
+    def _convert_cycles_to_result(self, cycles: list[list[str]]) -> list[CircularDependency]:
+        """将 SCC 循环转换为 CircularDependency 对象列表.
+
+        Args:
+            cycles: Tarjan 返回的循环列表
+
+        Returns:
+            CircularDependency 对象列表 (按 ecosystem 分类 + severity 标记)
+        """
+        result: list[CircularDependency] = []
         for cycle in cycles:
-            ecosystems = list(set(self.nodes[n].ecosystem for n in cycle))
+            ecosystems = list({self.nodes[n].ecosystem for n in cycle})
             result.append(
                 CircularDependency(
                     cycle=cycle,
@@ -237,7 +260,6 @@ class DependencyGraph:
                     severity="error" if len(cycle) <= 3 else "warning",
                 )
             )
-
         return result
 
     def detect_conflicts(self) -> list[DependencyConflict]:

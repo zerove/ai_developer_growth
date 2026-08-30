@@ -380,7 +380,26 @@ def _print_summary(
     failed: list[str],
     sbom_files: list[str],
 ) -> int:
-    """打印构建汇总; 有失败返回 1。"""
+    """打印构建汇总; 有失败返回 1。
+
+    V2.20 P4-31 拆分: 抽 _print_summary_header / _print_sbom_list / _print_signature_note
+    收口各段打印, 主函数仅判定 + 委托.
+    """
+    _print_summary_header(args, components, failed)
+    if failed:
+        return 1
+    _print_sbom_list(args, sbom_files)
+    _print_signature_note(args)
+    print("\n✅ 所有组件构建成功!")
+    return 0
+
+
+def _print_summary_header(
+    args: argparse.Namespace,
+    components: list[tuple[str, str]],
+    failed: list[str],
+) -> None:
+    """打印汇总头 (版本 + 成功/失败计数)."""
     print(f"\n{'=' * 60}")
     print("构建汇总")
     print(f"{'=' * 60}")
@@ -388,18 +407,22 @@ def _print_summary(
     print(f"成功: {len(components) - len(failed)}/{len(components)}")
     if failed:
         print(f"失败: {', '.join(failed)}")
-        return 1
 
-    if args.sbom and sbom_files:
-        print("\nSBOM 文件:")
-        for f in sbom_files:
-            print(f"  {f}")
 
-    if args.sign:
-        print("\n✅ 所有镜像已签名")
+def _print_sbom_list(args: argparse.Namespace, sbom_files: list[str]) -> None:
+    """打印 SBOM 文件列表 (仅当启用 SBOM 且有文件)."""
+    if not (args.sbom and sbom_files):
+        return
+    print("\nSBOM 文件:")
+    for f in sbom_files:
+        print(f"  {f}")
 
-    print("\n✅ 所有组件构建成功!")
-    return 0
+
+def _print_signature_note(args: argparse.Namespace) -> None:
+    """打印签名完成提示 (仅当启用签名)."""
+    if not args.sign:
+        return
+    print("\n✅ 所有镜像已签名")
 
 
 def main() -> int:

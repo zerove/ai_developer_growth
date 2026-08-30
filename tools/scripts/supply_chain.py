@@ -632,7 +632,11 @@ class SBOMGenerator:
             return tomllib.load(f)
 
     def _parse_cargo_toml(self, project_root: Path) -> list[Dependency]:
-        """解析 Cargo.toml 的直接依赖声明。"""
+        """解析 Cargo.toml 的直接依赖声明.
+
+        V2.20 P4-43 拆分: 抽 _extract_cargo_version 收口 spec 字符串/字典类型判断,
+        主函数仅 3 类 dep 遍历 + Dependency 构造.
+        """
         deps: list[Dependency] = []
         cargo_toml = project_root / "Cargo.toml"
         if not cargo_toml.exists():
@@ -641,16 +645,27 @@ class SBOMGenerator:
             data = self._load_toml(cargo_toml)
             for dep_type in ["dependencies", "dev-dependencies", "build-dependencies"]:
                 for name, spec in data.get(dep_type, {}).items():
-                    if isinstance(spec, str):
-                        version = spec
-                    elif isinstance(spec, dict):
-                        version = spec.get("version", "")
-                    else:
-                        version = ""
+                    version = self._extract_cargo_version(spec)
                     deps.append(Dependency(name=name, version=version, ecosystem="cargo", is_direct=True))
         except Exception as e:
             logger.warning(f"Failed to parse Cargo.toml: {e}")
         return deps
+
+    @staticmethod
+    def _extract_cargo_version(spec: object) -> str:
+        """从 Cargo.toml spec 提取版本字符串.
+
+        Args:
+            spec: TOML spec (str 直接为版本 / dict 含 version 键 / 其他空字符串)
+
+        Returns:
+            version 字符串
+        """
+        if isinstance(spec, str):
+            return spec
+        if isinstance(spec, dict):
+            return spec.get("version", "")
+        return ""
 
     def _parse_cargo_lock(self, project_root: Path) -> list[Dependency]:
         """解析 Cargo.lock 的全部传递依赖。"""

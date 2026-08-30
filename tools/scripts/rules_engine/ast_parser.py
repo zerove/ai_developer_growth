@@ -722,30 +722,11 @@ class ASTParser:
             self._walk_classes(child, language, lines, result)
 
     def _parse_python_class(self, node: _TreeNode, lines: list[str]) -> ClassInfo | None:
-        """Parse Python class definition."""
+        """Parse Python class definition (V2.21 P5-42 拆分: 抽 _parse_class_bases + _parse_class_methods + _parse_class_decorators)."""
         name = self._get_child_name(node, lines) or "<unknown>"
-        bases: list[str] = []
-        decorators: list[str] = []
-        methods: list[FunctionInfo] = []
-
-        for child in node.children:
-            if child.type == "argument_list":
-                for arg in child.children:
-                    bases.append(self._get_text(arg, lines))
-            elif child.type == "block":
-                for stmt in child.children:
-                    if stmt.type in (
-                        "function_definition",
-                        "async_function_definition",
-                    ):
-                        method = self._parse_python_function(stmt, lines, name)
-                        if method:
-                            methods.append(method)
-
-        if node.parent and node.parent.type == "decorated_definition":
-            for sibling in node.parent.children:
-                if sibling.type == "decorator":
-                    decorators.append(self._get_text(sibling, lines))
+        bases = self._parse_class_bases(node, lines)
+        decorators = self._parse_class_decorators(node, lines)
+        methods = self._parse_class_methods(node, lines)
 
         docstring = _extract_docstring_static(node, lines)
 
@@ -760,6 +741,75 @@ class ASTParser:
             methods=methods,
             body_lines=node.end_point[0] - node.start_point[0],
         )
+
+    def _parse_class_bases(self, node: _TreeNode, lines: list[str]) -> list[str]:
+        """提取 class 基类 (方法级 helper).
+
+        Args:
+            node: class 节点
+            lines: 源码行
+
+        Returns:
+            基类名列表
+        """
+        bases: list[str] = []
+        for child in node.children:
+            if child.type == "argument_list":
+                for arg in child.children:
+                    bases.append(self._get_text(arg, lines))
+        return bases
+
+    def _parse_class_methods(self, node: _TreeNode, lines: list[str]) -> list[FunctionInfo]:
+        """提取 class 方法 (方法级 helper).
+
+        Args:
+            node: class 节点
+            lines: 源码行
+
+        Returns:
+            FunctionInfo 列表
+        """
+        methods: list[FunctionInfo] = []
+        for child in node.children:
+            if child.type != "block":
+                continue
+            for stmt in child.children:
+                if stmt.type in ("function_definition", "async_function_definition"):
+                    method = self._parse_python_function(
+                        stmt, lines, class_name=self._get_class_name_for_method(node, lines)
+                    )
+                    if method:
+                        methods.append(method)
+        return methods
+
+    def _get_class_name_for_method(self, node: _TreeNode, lines: list[str]) -> str:
+        """获取 class 名称 (方法级 helper, 用于 _parse_python_function 父类名).
+
+        Args:
+            node: class 节点
+            lines: 源码行
+
+        Returns:
+            class 名称
+        """
+        return self._get_child_name(node, lines) or "<unknown>"
+
+    def _parse_class_decorators(self, node: _TreeNode, lines: list[str]) -> list[str]:
+        """提取 class 装饰器 (方法级 helper).
+
+        Args:
+            node: class 节点
+            lines: 源码行
+
+        Returns:
+            装饰器列表
+        """
+        decorators: list[str] = []
+        if node.parent and node.parent.type == "decorated_definition":
+            for sibling in node.parent.children:
+                if sibling.type == "decorator":
+                    decorators.append(self._get_text(sibling, lines))
+        return decorators
 
     def _parse_js_class(self, node: _TreeNode, lines: list[str]) -> ClassInfo | None:
         """Parse JS/TS class declaration."""

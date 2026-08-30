@@ -82,15 +82,33 @@ class CaseStudyQualityAnalyzer:
         return ""
 
     def analyze_all(self) -> list[QualityMetrics]:
-        """Analyze all case studies."""
-        results = []
+        """Analyze all case studies.
+
+        V2.20 P4-24 拆分: 抽 _should_skip_case 收口 3 守卫 (dir/md/隐藏/模板),
+        主函数仅遍历 + 委托.
+        """
+        results: list[QualityMetrics] = []
         for case_path in sorted(self.case_studies_dir.iterdir()):
-            if case_path.is_dir() or case_path.suffix == ".md":
-                if case_path.name.startswith(".") or case_path.name == "TEMPLATE-community.md":
-                    continue
-                metrics = self.analyze_case(case_path)
-                results.append(metrics)
+            if self._should_skip_case(case_path):
+                continue
+            metrics = self.analyze_case(case_path)
+            results.append(metrics)
         return results
+
+    def _should_skip_case(self, case_path: Path) -> bool:
+        """判断 case 路径是否应跳过 (非 case_study 或 隐藏文件/模板).
+
+        Args:
+            case_path: 案例路径
+
+        Returns:
+            True if 应跳过
+        """
+        if not (case_path.is_dir() or case_path.suffix == ".md"):
+            return True
+        if case_path.name.startswith("."):
+            return True
+        return case_path.name == "TEMPLATE-community.md"
 
     def analyze_case(self, case_path: Path) -> QualityMetrics:
         """Analyze a single case study."""

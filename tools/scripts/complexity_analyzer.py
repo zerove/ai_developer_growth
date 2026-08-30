@@ -369,19 +369,26 @@ def _check_cyclomatic_complexity(
 
 
 def calc_cyclomatic_complexity(node: ast.AST) -> int:
-    """Calculate cyclomatic complexity for an AST node."""
+    """Calculate cyclomatic complexity for an AST node (V2.21 P5-13 拆分: 抽 _count_cyclomatic_branches)."""
     complexity = 1
-
     for child in ast.walk(node):
-        if isinstance(child, ast.If | ast.While | ast.For | ast.AsyncFor):
-            complexity += 1
-        elif isinstance(child, ast.BoolOp):
-            complexity += len(child.values) - 1
-        elif isinstance(child, ast.ExceptHandler):
-            complexity += 1
-        elif isinstance(child, ast.With | ast.AsyncWith):
-            complexity += 1
-        elif isinstance(child, ast.Assert):
-            complexity += 1
-
+        complexity += _count_cyclomatic_branches(child)
     return complexity
+
+
+def _count_cyclomatic_branches(child: ast.AST) -> int:
+    """计算单个 AST 节点对圈复杂度的贡献 (模块级 helper, 数据驱动).
+
+    Args:
+        child: AST 节点
+
+    Returns:
+        圈复杂度增量 (0 或 1 或 N-1)
+    """
+    if isinstance(child, ast.If | ast.While | ast.For | ast.AsyncFor):
+        return 1
+    if isinstance(child, ast.BoolOp):
+        return len(child.values) - 1
+    if isinstance(child, ast.ExceptHandler | ast.With | ast.AsyncWith | ast.Assert):
+        return 1
+    return 0

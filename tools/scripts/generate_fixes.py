@@ -79,33 +79,58 @@ def generate_fixes(languages: list[str], dry_run: bool = False) -> list[dict[str
 
 
 def apply_fixes_to_yaml(fixes: list[dict[str, Any]], dry_run: bool = True) -> int:
-    """Apply generated fixes back to YAML files. Returns number of fixes applied."""
+    """Apply generated fixes back to YAML files (V2.21 P5-20 拆分: 抽 _group_fixes_by_file + _apply_fixes_to_file)."""
     if dry_run:
         return len(fixes)
 
+    by_file = _group_fixes_by_file(fixes)
     applied = 0
-    # Group by file
+    for filepath, file_fixes in by_file.items():
+        applied += _apply_fixes_to_file(filepath, file_fixes)
+    return applied
+
+
+def _group_fixes_by_file(fixes: list[dict[str, Any]]) -> dict[str, list[dict[str, Any]]]:
+    """按 file 字段分组 fixes (模块级 helper, 跳过 fix_replacement 为空的).
+
+    Args:
+        fixes: fix 字典列表
+
+    Returns:
+        {file_path: [fix, ...]} 分组字典
+    """
     by_file: dict[str, list[dict[str, Any]]] = {}
     for fix in fixes:
         if fix["fix_replacement"]:
             by_file.setdefault(fix["file"], []).append(fix)
+    return by_file
 
-    for filepath, file_fixes in by_file.items():
-        with open(filepath) as f:
-            data = yaml.safe_load(f)
-        if not data:
-            continue
 
-        for fix in file_fixes:
-            for category in ["anti_patterns", "naming_conventions", "complexity"]:
-                for rule in data.get(category, []):
-                    if rule["id"] == fix["id"] and not rule.get("fix_replacement"):
-                        rule["fix_replacement"] = fix["fix_replacement"]
-                        applied += 1
+def _apply_fixes_to_file(filepath: str, file_fixes: list[dict[str, Any]]) -> int:
+    """对单文件应用 fix 列表, 返回成功应用数 (模块级 helper).
 
-        with open(filepath, "w") as f:
-            yaml.dump(data, f, default_flow_style=False, allow_unicode=True, sort_keys=False)
+    Args:
+        filepath: YAML 文件路径
+        file_fixes: 该文件的 fix 列表
 
+    Returns:
+        应用的 fix 数量
+    """
+    with open(filepath) as f:
+        data = yaml.safe_load(f)
+    if not data:
+        return 0
+
+    applied = 0
+    for fix in file_fixes:
+        for category in ["anti_patterns", "naming_conventions", "complexity"]:
+            for rule in data.get(category, []):
+                if rule["id"] == fix["id"] and not rule.get("fix_replacement"):
+                    rule["fix_replacement"] = fix["fix_replacement"]
+                    applied += 1
+
+    with open(filepath, "w") as f:
+        yaml.dump(data, f, default_flow_style=False, allow_unicode=True, sort_keys=False)
     return applied
 
 

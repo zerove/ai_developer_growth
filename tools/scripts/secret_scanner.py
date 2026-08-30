@@ -253,58 +253,26 @@ class SecretScanner:
         scan_git_history: bool = True,
         scan_pr_diff: bool = False,
     ) -> SecretScanResult:
-        """执行扫描"""
+        """执行扫描
+
+        V2.21 P5-2 拆分: 抽 _run_tool 收口单 tool × scan_types 调度,
+        _deduplicate_findings 收口 4 元组去重 for,
+        主函数仅 scan_types 构造 + 调度 + 去重 + 组装.
+        """
         import time
 
         start = time.time()
 
-        all_findings = []
-        tools_used = []
-        errors = []
+        all_findings: list[SecretFinding] = []
+        tools_used: list[str] = []
+        errors: list[str] = []
 
-        scan_types = []
-        if scan_workspace:
-            scan_types.append("workspace")
-        if scan_git_history:
-            scan_types.append("git-history")
-        if scan_pr_diff:
-            scan_types.append("pr-diff")
+        scan_types = self._build_scan_types(scan_workspace, scan_git_history, scan_pr_diff)
 
         for tool in self.tools:
-            if tool == "gitleaks":
-                tools_used.append("gitleaks")
-                for st in scan_types:
-                    try:
-                        findings = self._run_gitleaks(path, st)
-                        all_findings.extend(findings)
-                    except Exception as e:
-                        errors.append(f"gitleaks {st}: {e}")
+            _run_tool(self, tool, path, scan_types, all_findings, tools_used, errors)
 
-            elif tool == "trufflehog":
-                tools_used.append("trufflehog")
-                for st in scan_types:
-                    try:
-                        findings = self._run_trufflehog(path, st)
-                        all_findings.extend(findings)
-                    except Exception as e:
-                        errors.append(f"trufflehog {st}: {e}")
-
-            elif tool == "detect-secrets":
-                tools_used.append("detect-secrets")
-                try:
-                    findings = self._run_detect_secrets(path, "workspace")
-                    all_findings.extend(findings)
-                except Exception as e:
-                    errors.append(f"detect-secrets: {e}")
-
-        # 去重 (同文件同行同规则)
-        seen = set()
-        unique_findings = []
-        for f in all_findings:
-            key = (f.tool, f.rule_id, f.file, f.line)
-            if key not in seen:
-                seen.add(key)
-                unique_findings.append(f)
+        unique_findings = _deduplicate_findings(all_findings)
 
         return SecretScanResult(
             findings=unique_findings,
@@ -313,6 +281,87 @@ class SecretScanner:
             tools_used=tools_used,
             errors=errors,
         )
+
+    def _build_scan_types(self, scan_workspace: bool, scan_git_history: bool, scan_pr_diff: bool) -> list[str]:
+        """构造 scan_types 列表 (实例级 helper).
+
+        Args:
+            scan_workspace: 是否扫描 workspace
+            scan_git_history: 是否扫描 git 历史
+            scan_pr_diff: 是否扫描 PR diff
+
+        Returns:
+            scan_types 列表
+        """
+        scan_types: list[str] = []
+        if scan_workspace:
+            scan_types.append("workspace")
+        if scan_git_history:
+            scan_types.append("git-history")
+        if scan_pr_diff:
+            scan_types.append("pr-diff")
+        return scan_types
+
+
+def _run_tool(
+    scanner: SecretScanner,
+    tool: str,
+    path: Path,
+    scan_types: list[str],
+    all_findings: list[SecretFinding],
+    tools_used: list[str],
+    errors: list[str],
+) -> None:
+    """执行单 tool 扫描 (模块级 helper, in-place 修改 3 列表).
+
+    Args:
+        scanner: SecretScanner 实例
+        tool: 工具名 (gitleaks/trufflehog/detect-secrets)
+        path: 扫描路径
+        scan_types: 扫描类型列表
+        all_findings: 累积 findings (in-place)
+        tools_used: 工具名累积 (in-place)
+        errors: 错误累积 (in-place)
+    """
+    tool_runners = {
+        "gitleaks": scanner._run_gitleaks,
+        "trufflehog": scanner._run_trufflehog,
+    }
+    if tool in tool_runners:
+        tools_used.append(tool)
+        runner = tool_runners[tool]
+        for st in scan_types:
+            try:
+                findings = runner(path, st)
+                all_findings.extend(findings)
+            except Exception as e:
+                errors.append(f"{tool} {st}: {e}")
+    elif tool == "detect-secrets":
+        tools_used.append(tool)
+        try:
+            findings = scanner._run_detect_secrets(path, "workspace")
+            all_findings.extend(findings)
+        except Exception as e:
+            errors.append(f"detect-secrets: {e}")
+
+
+def _deduplicate_findings(findings: list[SecretFinding]) -> list[SecretFinding]:
+    """按 (tool, rule_id, file, line) 4 元组去重 (模块级 helper).
+
+    Args:
+        findings: 候选 findings 列表
+
+    Returns:
+        去重后 findings 列表
+    """
+    seen: set[tuple[str, str, str, int]] = set()
+    unique: list[SecretFinding] = []
+    for f in findings:
+        key = (f.tool, f.rule_id, f.file, f.line)
+        if key not in seen:
+            seen.add(key)
+            unique.append(f)
+    return unique
 
 
 def scan_secrets(

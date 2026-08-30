@@ -120,52 +120,104 @@ class SecretScanner:
         self.entropy_threshold = entropy_threshold
 
     def _run_gitleaks(self, path: Path, scan_type: str) -> list[SecretFinding]:
-        """运行 gitleaks"""
-        findings = []
+        """运行 gitleaks
+
+        V2.21 P5-3 拆分: 抽 _build_gitleaks_cmd 收口 cmd 构造 (3 scan_type 守卫 + allowlist),
+        _parse_gitleaks_output 收口 stdout 解析 + 9 字段 SecretFinding 构造,
+        主函数仅 try/except + 委托.
+        """
+        cmd = self._build_gitleaks_cmd(path, scan_type)
+        findings: list[SecretFinding] = []
+        try:
+            result = subprocess.run(cmd, capture_output=True, text=True, timeout=300)
+            if result.stdout:
+                findings = self._parse_gitleaks_output(result.stdout)
+        except (subprocess.TimeoutExpired, FileNotFoundError) as e:
+            logger.warning(f"gitleaks failed: {e}")
+        return findings
+
+    def _build_gitleaks_cmd(self, path: Path, scan_type: str) -> list[str]:
+        """构造 gitleaks 命令行 (实例级 helper).
+
+        Args:
+            path: 扫描路径
+            scan_type: workspace/git-history/pr-diff
+
+        Returns:
+            完整 cmd 列表
+        """
         cmd = ["gitleaks", "detect", "--source", str(path), "--report-format", "json", "--verbose"]
 
         if scan_type == "workspace":
             cmd.extend(["--no-git"])
-        elif scan_type == "git-history":
-            pass  # 默认扫描历史
         elif scan_type == "pr-diff":
-            # gitleaks 支持 --staged 或 git diff
             cmd.extend(["--staged"])
+        # git-history: 默认扫描历史, 无额外参数
 
-        # 添加允许列表
         if self.allowlist:
+            allowlist_path = self._write_allowlist_file()
+            if allowlist_path is not None:
+                cmd.extend(["--config", allowlist_path])
+
+        return cmd
+
+    def _write_allowlist_file(self) -> str | None:
+        """写入 gitleaks allowlist 临时文件 (实例级 helper).
+
+        Returns:
+            临时文件路径 (None if 写入失败)
+        """
+        try:
             with tempfile.NamedTemporaryFile(mode="w", suffix=".toml", delete=False) as f:
                 f.write("[allowlist]\n")
                 for pattern in self.allowlist:
                     f.write(f'  paths = ["{pattern}"]\n')
-                allowlist_path = f.name
-            cmd.extend(["--config", allowlist_path])
+                return f.name
+        except OSError as e:
+            logger.warning(f"Failed to write allowlist file: {e}")
+            return None
 
+    def _parse_gitleaks_output(self, stdout: str) -> list[SecretFinding]:
+        """解析 gitleaks JSON 输出 (实例级 helper).
+
+        Args:
+            stdout: gitleaks 原始输出
+
+        Returns:
+            SecretFinding 列表
+        """
+        findings: list[SecretFinding] = []
         try:
-            result = subprocess.run(cmd, capture_output=True, text=True, timeout=300)
-            if result.stdout:
-                try:
-                    data = json.loads(result.stdout)
-                    for item in data:
-                        findings.append(
-                            SecretFinding(
-                                tool="gitleaks",
-                                rule_id=item.get("RuleID", "unknown"),
-                                file=item.get("File", ""),
-                                line=item.get("StartLine", 0),
-                                column=item.get("StartColumn"),
-                                secret=item.get("Secret", "")[:100],  # 截断
-                                entropy=item.get("Entropy"),
-                                commit=item.get("Commit"),
-                                severity="high" if item.get("Entropy", 0) > self.entropy_threshold else "medium",
-                            )
-                        )
-                except json.JSONDecodeError:
-                    logger.warning("gitleaks output not valid JSON")
-        except (subprocess.TimeoutExpired, FileNotFoundError) as e:
-            logger.warning(f"gitleaks failed: {e}")
+            data = json.loads(stdout)
+        except json.JSONDecodeError:
+            logger.warning("gitleaks output not valid JSON")
+            return findings
 
+        for item in data:
+            findings.append(self._build_gitleaks_finding(item))
         return findings
+
+    def _build_gitleaks_finding(self, item: dict[str, Any]) -> SecretFinding:
+        """从 gitleaks item 构造 SecretFinding (实例级 helper).
+
+        Args:
+            item: gitleaks JSON item
+
+        Returns:
+            SecretFinding 对象
+        """
+        entropy = item.get("Entropy", 0)
+        return SecretFinding(
+            tool="gitleaks",
+            rule_id=item.get("RuleID", "unknown"),
+            file=item.get("File", ""),
+            line=item.get("StartLine", 0),
+            column=item.get("StartColumn"),
+            secret=item.get("Secret", "")[:100],  # 截断
+            entropy=entropy,
+            commit=item.get("Commit"),
+            severity="high" if entropy > self.entropy_threshold else "medium",
+        )
 
     def _run_trufflehog(self, path: Path, scan_type: str) -> list[SecretFinding]:
         """运行 trufflehog"""

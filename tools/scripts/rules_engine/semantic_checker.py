@@ -284,47 +284,13 @@ class SemanticChecker:
 
         # Parse all files
         for filepath in source_files:
-            try:
-                ast_result = self.parser.parse_file(filepath)
-                if ast_result is not None:
-                    rel_path = str(filepath.relative_to(dirpath))
-                    file_asts[rel_path] = ast_result
-                    file_imports[rel_path] = ast_result.imports
-                    try:
-                        file_content[rel_path] = filepath.read_text(encoding="utf-8", errors="ignore")
-                    except OSError:
-                        pass
-
-                    # Build import graph
-                    for imp in ast_result.imports:
-                        if imp.module:
-                            self.import_graph.add_edge(rel_path, imp.module)
-
-                    # Check for parse errors
-                    for error_node in ast_result.error_nodes:
-                        parse_errors.append(
-                            SemanticIssue(
-                                rule_id="parse-error",
-                                severity="error",
-                                category="syntax",
-                                file=rel_path,
-                                line=error_node.line,
-                                message=f"Syntax error at line {error_node.line}: {error_node.name[:80]}",
-                                fix_hint="Fix syntax error",
-                            )
-                        )
-            except Exception as e:
-                parse_errors.append(
-                    SemanticIssue(
-                        rule_id="parse-failure",
-                        severity="error",
-                        category="syntax",
-                        file=str(filepath.relative_to(dirpath)),
-                        line=0,
-                        message=f"Failed to parse file: {e}",
-                        fix_hint="Check file encoding and syntax",
-                    )
-                )
+            new_issues, ast_result, rel_path, content = self._parse_single_file(filepath, dirpath)
+            parse_errors.extend(new_issues)
+            if ast_result is not None:
+                file_asts[rel_path] = ast_result
+                file_imports[rel_path] = ast_result.imports
+                if content is not None:
+                    file_content[rel_path] = content
 
         # Run semantic checks
         issues.extend(self._check_complexity(file_asts, dirpath))
@@ -336,20 +302,7 @@ class SemanticChecker:
             issues.extend(shadowed(file_imports))
 
         # Import cycles
-        cycles = self.import_graph.find_cycles()
-        for cycle in cycles:
-            issues.append(
-                SemanticIssue(
-                    rule_id="import-cycle",
-                    severity="warning",
-                    category="architecture",
-                    file=cycle[0] if cycle else "",
-                    line=0,
-                    message=f"Import cycle detected: {' -> '.join(cycle)}",
-                    fix_hint="Refactor to break the import cycle",
-                    context={"cycle": cycle},
-                )
-            )
+        self._emit_import_cycle_issues(issues)
 
         # Calculate metrics
         metrics = self._calculate_metrics(file_asts)
@@ -364,6 +317,83 @@ class SemanticChecker:
             analysis_time_ms=analysis_time,
             files_analyzed=len(file_asts),
         )
+
+    def _parse_single_file(
+        self, filepath: Path, dirpath: Path
+    ) -> tuple[list[SemanticIssue], FileAST | None, str, str | None]:
+        """解析单文件 (方法级 helper, 返回 parse_errors + ast + rel_path + content).
+
+        Args:
+            filepath: 文件路径
+            dirpath: 扫描根目录
+
+        Returns:
+            (parse_errors, ast_result, rel_path, content) 四元组
+        """
+        parse_errors: list[SemanticIssue] = []
+        try:
+            ast_result = self.parser.parse_file(filepath)
+        except Exception as e:
+            parse_errors.append(
+                SemanticIssue(
+                    rule_id="parse-failure",
+                    severity="error",
+                    category="syntax",
+                    file=str(filepath.relative_to(dirpath)),
+                    line=0,
+                    message=f"Failed to parse file: {e}",
+                    fix_hint="Check file encoding and syntax",
+                )
+            )
+            return parse_errors, None, "", None
+
+        if ast_result is None:
+            return parse_errors, None, "", None
+
+        rel_path = str(filepath.relative_to(dirpath))
+        for imp in ast_result.imports:
+            if imp.module:
+                self.import_graph.add_edge(rel_path, imp.module)
+
+        for error_node in ast_result.error_nodes:
+            parse_errors.append(
+                SemanticIssue(
+                    rule_id="parse-error",
+                    severity="error",
+                    category="syntax",
+                    file=rel_path,
+                    line=error_node.line,
+                    message=f"Syntax error at line {error_node.line}: {error_node.name[:80]}",
+                    fix_hint="Fix syntax error",
+                )
+            )
+
+        try:
+            content = filepath.read_text(encoding="utf-8", errors="ignore")
+        except OSError:
+            content = None
+        return parse_errors, ast_result, rel_path, content
+
+    def _emit_import_cycle_issues(self, issues: list[SemanticIssue]) -> None:
+        """检测 import 循环并 append 到 issues (方法级 helper, 内部修改 issues).
+
+        Args:
+            issues: 累积目标列表
+        """
+        cycles = self.import_graph.find_cycles()
+        for cycle in cycles:
+            issues.append(
+                SemanticIssue(
+                    rule_id="import-cycle",
+                    severity="warning",
+                    category="architecture",
+                    file=cycle[0] if cycle else "",
+                    line=0,
+                    message=f"Import cycle detected: {' -> '.join(cycle)}",
+                    fix_hint="Refactor to break the import cycle",
+                    context={"cycle": cycle},
+                )
+            )
 
     def _collect_source_files(self, dirpath: Path, languages: list[str] | None, max_files: int) -> list[Path]:
         """Collect source files from directory."""

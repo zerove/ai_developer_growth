@@ -453,7 +453,7 @@ class SemanticChecker:
         return issues
 
     def _calculate_metrics(self, file_asts: dict[str, FileAST]) -> ComplexityMetrics:
-        """Calculate aggregate complexity metrics."""
+        """Calculate aggregate complexity metrics (V2.21 P5-39 拆分: 抽 _accumulate_*_metrics + _compute_averages)."""
         metrics = ComplexityMetrics()
 
         total_func_length = 0
@@ -464,26 +464,67 @@ class SemanticChecker:
             metrics.total_classes += len(ast_result.classes)
             metrics.total_imports += len(ast_result.imports)
 
-            for func in ast_result.functions:
-                total_func_length += func.body_lines
-                total_complexity += func.complexity
-                if func.body_lines > metrics.max_function_length:
-                    metrics.max_function_length = func.body_lines
-                if func.complexity > metrics.max_complexity:
-                    metrics.max_complexity = func.complexity
-                if func.body_lines > 50:
-                    metrics.long_functions.append(f"{func.class_name}.{func.name}" if func.class_name else func.name)
-                if func.complexity > 10:
-                    metrics.complex_functions.append(f"{func.class_name}.{func.name}" if func.class_name else func.name)
-                if func.docstring is None and not func.name.startswith("_"):
-                    metrics.functions_without_docstring += 1
-
-            for cls in ast_result.classes:
-                if cls.docstring is None and not cls.name.startswith("_"):
-                    metrics.classes_without_docstring += 1
+            total_func_length, total_complexity = self._accumulate_function_metrics(
+                ast_result.functions, metrics, total_func_length, total_complexity
+            )
+            self._accumulate_class_metrics(ast_result.classes, metrics)
 
         if metrics.total_functions > 0:
-            metrics.avg_function_length = total_func_length / metrics.total_functions
-            metrics.avg_complexity = total_complexity / metrics.total_functions
+            self._compute_averages(metrics, total_func_length, total_complexity)
 
         return metrics
+
+    def _accumulate_function_metrics(
+        self,
+        functions: list[Any],
+        metrics: ComplexityMetrics,
+        total_func_length: int,
+        total_complexity: int,
+    ) -> tuple[int, int]:
+        """累加单文件所有函数的指标 (方法级 helper).
+
+        Args:
+            functions: function 列表
+            metrics: 累积目标 metrics
+            total_func_length: 累计函数行数
+            total_complexity: 累计圈复杂度
+
+        Returns:
+            (new_total_func_length, new_total_complexity) 元组
+        """
+        for func in functions:
+            total_func_length += func.body_lines
+            total_complexity += func.complexity
+            if func.body_lines > metrics.max_function_length:
+                metrics.max_function_length = func.body_lines
+            if func.complexity > metrics.max_complexity:
+                metrics.max_complexity = func.complexity
+            if func.body_lines > 50:
+                metrics.long_functions.append(f"{func.class_name}.{func.name}" if func.class_name else func.name)
+            if func.complexity > 10:
+                metrics.complex_functions.append(f"{func.class_name}.{func.name}" if func.class_name else func.name)
+            if func.docstring is None and not func.name.startswith("_"):
+                metrics.functions_without_docstring += 1
+        return total_func_length, total_complexity
+
+    def _accumulate_class_metrics(self, classes: list[Any], metrics: ComplexityMetrics) -> None:
+        """累加单文件所有 class 的指标 (方法级 helper, 内部修改 metrics).
+
+        Args:
+            classes: class 列表
+            metrics: 累积目标 metrics
+        """
+        for cls in classes:
+            if cls.docstring is None and not cls.name.startswith("_"):
+                metrics.classes_without_docstring += 1
+
+    def _compute_averages(self, metrics: ComplexityMetrics, total_func_length: int, total_complexity: int) -> None:
+        """计算 avg 函数长度 + 圈复杂度 (方法级 helper, 内部修改 metrics).
+
+        Args:
+            metrics: 累积目标 metrics
+            total_func_length: 累计函数行数
+            total_complexity: 累计圈复杂度
+        """
+        metrics.avg_function_length = total_func_length / metrics.total_functions
+        metrics.avg_complexity = total_complexity / metrics.total_functions

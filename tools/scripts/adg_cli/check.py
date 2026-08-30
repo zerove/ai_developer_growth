@@ -282,33 +282,68 @@ def _build_exclude_patterns(args: argparse.Namespace) -> list[str]:
 
 
 def _collect_directory_files(target: Path, skip_patterns: list[str]) -> list[Path]:
-    """递归扫描目录, 应用 skip_patterns + SKIP_EXTENSIONS 过滤.
+    """递归扫描目录 (V2.21 P5-34 拆分: 抽 _passes_skip_filters + _is_checkable_language_file).
 
+    应用 skip_patterns + SKIP_EXTENSIONS 过滤.
     V2.17 拆分: 从 _collect_check_files (C=31) 抽出.
     """
     files: list[Path] = []
     for fp in target.rglob("*"):
-        try:
-            rel_parts = fp.relative_to(target).parts
-        except ValueError:
-            rel_parts = fp.parts
         if not fp.is_file():
             continue
-        if any(is_skipped_dir(part) for part in rel_parts):
+        if not _passes_skip_filters(fp, target, skip_patterns):
             continue
-        if fp.suffix in SKIP_EXTENSIONS:
-            continue
-        if any(_match_pattern(fp, pat) for pat in skip_patterns):
-            continue
-        try:
-            rel = fp.relative_to(target)
-        except ValueError:
-            rel = fp
-        if any(_match_pattern(rel, pat) for pat in skip_patterns):
-            continue
-        if _detect_language_from_file(fp):
+        if _is_checkable_language_file(fp):
             files.append(fp)
     return files
+
+
+def _passes_skip_filters(fp: Path, target: Path, skip_patterns: list[str]) -> bool:
+    """检查文件是否通过所有 skip 过滤 (模块级 helper).
+
+    检查 4 层过滤:
+    1. is_skipped_dir (skip 目录)
+    2. SKIP_EXTENSIONS (跳过扩展名)
+    3. fp 自身 match skip_patterns
+    4. rel path match skip_patterns
+
+    Args:
+        fp: 文件路径
+        target: 扫描根目录
+        skip_patterns: glob 模式列表
+
+    Returns:
+        True 表示应保留
+    """
+    try:
+        rel_parts = fp.relative_to(target).parts
+    except ValueError:
+        rel_parts = fp.parts
+    if any(is_skipped_dir(part) for part in rel_parts):
+        return False
+    if fp.suffix in SKIP_EXTENSIONS:
+        return False
+    if any(_match_pattern(fp, pat) for pat in skip_patterns):
+        return False
+    try:
+        rel = fp.relative_to(target)
+    except ValueError:
+        rel = fp
+    if any(_match_pattern(rel, pat) for pat in skip_patterns):
+        return False
+    return True
+
+
+def _is_checkable_language_file(fp: Path) -> bool:
+    """判断文件是否在 ADG 支持的语言 (模块级 helper).
+
+    Args:
+        fp: 文件路径
+
+    Returns:
+        是否可检查的语言文件
+    """
+    return bool(_detect_language_from_file(fp))
 
 
 def _apply_exclude_filters(files: list[Path], args: argparse.Namespace, target: Path) -> list[Path]:

@@ -210,82 +210,137 @@ def _check_python_function(
     filepath: str,
     issues: list[Issue],
 ) -> None:
-    """Check a Python function node for quality issues."""
-    name = node.name
+    """Check a Python function node for quality issues.
 
-    # Check return type annotation
-    if node.returns is None and not name.startswith("_"):
-        issues.append(
-            Issue(
-                rule_id="py-ast-no-return-type",
-                severity="info",
-                category="type_safety",
-                file=filepath,
-                line=node.lineno,
-                message=f"Public function '{name}' lacks return type annotation",
-            )
+    V2.21 P5-6 拆分: 抽 _add_issue 收口 8 字段 Issue 构造模式,
+    5 个 _check_* helper 收口各类型检查 (return/param/length/args/complexity),
+    主函数仅委托.
+    """
+    _check_return_type(node, filepath, issues)
+    _check_param_types(node, filepath, issues)
+    _check_node_function_length(node, filepath, issues)
+    _check_argument_count(node, filepath, issues)
+    _check_cyclomatic_complexity(node, filepath, issues)
+
+
+def _add_issue(
+    issues: list[Issue],
+    rule_id: str,
+    severity: str,
+    category: str,
+    file: str,
+    line: int,
+    message: str,
+) -> None:
+    """添加 Issue 到列表 (模块级 helper).
+
+    Args:
+        issues: 累积列表
+        rule_id: 规则 ID
+        severity: 严重度
+        category: 类别
+        file: 文件路径
+        line: 行号
+        message: 错误消息
+    """
+    issues.append(
+        Issue(
+            rule_id=rule_id,
+            severity=severity,
+            category=category,
+            file=file,
+            line=line,
+            message=message,
+        )
+    )
+
+
+def _check_return_type(node: ast.FunctionDef | ast.AsyncFunctionDef, filepath: str, issues: list[Issue]) -> None:
+    """检查公共函数是否缺少返回类型注解 (模块级 helper)."""
+    if node.returns is not None or node.name.startswith("_"):
+        return
+    _add_issue(
+        issues,
+        rule_id="py-ast-no-return-type",
+        severity="info",
+        category="type_safety",
+        file=filepath,
+        line=node.lineno,
+        message=f"Public function '{node.name}' lacks return type annotation",
+    )
+
+
+def _check_param_types(node: ast.FunctionDef | ast.AsyncFunctionDef, filepath: str, issues: list[Issue]) -> None:
+    """检查参数是否缺少类型注解 (排除 self/cls, 模块级 helper)."""
+    for arg in node.args.args:
+        if arg.annotation is not None or arg.arg in ("self", "cls"):
+            continue
+        _add_issue(
+            issues,
+            rule_id="py-ast-no-param-type",
+            severity="info",
+            category="type_safety",
+            file=filepath,
+            line=node.lineno,
+            message=f"Parameter '{arg.arg}' of '{node.name}' lacks type annotation",
         )
 
-    # Check parameter type annotations
-    for arg in node.args.args:
-        if arg.annotation is None and arg.arg != "self" and arg.arg != "cls":
-            issues.append(
-                Issue(
-                    rule_id="py-ast-no-param-type",
-                    severity="info",
-                    category="type_safety",
-                    file=filepath,
-                    line=node.lineno,
-                    message=f"Parameter '{arg.arg}' of '{name}' lacks type annotation",
-                )
-            )
 
-    # Check function length
-    if hasattr(node, "end_lineno") and node.end_lineno:
-        length = node.end_lineno - node.lineno + 1
-        if length > 50:
-            issues.append(
-                Issue(
-                    rule_id="py-ast-function-length",
-                    severity="warning",
-                    category="readability",
-                    file=filepath,
-                    line=node.lineno,
-                    message=f"Function '{name}' is {length} lines (max 50)",
-                )
-            )
+def _check_node_function_length(
+    node: ast.FunctionDef | ast.AsyncFunctionDef, filepath: str, issues: list[Issue]
+) -> None:
+    """检查函数行数 (≤ 50, 模块级 helper)."""
+    if not (hasattr(node, "end_lineno") and node.end_lineno):
+        return
+    length = node.end_lineno - node.lineno + 1
+    if length <= 50:
+        return
+    _add_issue(
+        issues,
+        rule_id="py-ast-function-length",
+        severity="warning",
+        category="readability",
+        file=filepath,
+        line=node.lineno,
+        message=f"Function '{node.name}' is {length} lines (max 50)",
+    )
 
-    # Check argument count
+
+def _check_argument_count(node: ast.FunctionDef | ast.AsyncFunctionDef, filepath: str, issues: list[Issue]) -> None:
+    """检查参数个数 (≤ 7, 排除 self/cls, 模块级 helper)."""
     args = node.args
     total_args = len(args.args) + len(args.posonlyargs) + len(args.kwonlyargs)
-    # Subtract 'self' and 'cls'
     if args.args and args.args[0].arg in ("self", "cls"):
         total_args -= 1
-    if total_args > 7:
-        issues.append(
-            Issue(
-                rule_id="py-ast-function-args",
-                severity="warning",
-                category="readability",
-                file=filepath,
-                line=node.lineno,
-                message=f"Function '{name}' has {total_args} arguments (max 7)",
-            )
-        )
+    if total_args <= 7:
+        return
+    _add_issue(
+        issues,
+        rule_id="py-ast-function-args",
+        severity="warning",
+        category="readability",
+        file=filepath,
+        line=node.lineno,
+        message=f"Function '{node.name}' has {total_args} arguments (max 7)",
+    )
 
-    # Check cyclomatic complexity
+
+def _check_cyclomatic_complexity(
+    node: ast.FunctionDef | ast.AsyncFunctionDef, filepath: str, issues: list[Issue]
+) -> None:
+    """检查圈复杂度 (≤ 10, 模块级 helper)."""
     complexity = calc_cyclomatic_complexity(node)
-    if complexity >= 10:
-        issues.append(
-            Issue(
-                rule_id="py-ast-complexity",
-                severity="warning",
-                category="readability",
-                file=filepath,
-                line=node.lineno,
-                message=f"Function '{name}' has cyclomatic complexity {complexity} (max 10)",
-            )
-        )
+    if complexity < 10:
+        return
+    _add_issue(
+        issues,
+        rule_id="py-ast-complexity",
+        severity="warning",
+        category="readability",
+        file=filepath,
+        line=node.lineno,
+        message=f"Function '{node.name}' has cyclomatic complexity {complexity} (max 10)",
+    )
 
 
 def calc_cyclomatic_complexity(node: ast.AST) -> int:

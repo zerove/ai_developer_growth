@@ -861,15 +861,33 @@ class SupplyChainScanner:
         self.signature_verifier = SignatureVerifier()
 
     def scan_project(self, project_root: Path) -> ScanResult:
-        """扫描整个项目"""
-        # 1. 生成 SBOM / 解析依赖 (多语言支持)
-        sbom = self.sbom_generator.generate_from_project(project_root)
+        """扫描整个项目.
 
-        # 2. 扫描漏洞
+        V2.20 P4-37 拆分: 抽 _link_vulns_to_deps 收口漏洞关联,
+        _build_scan_summary 收口 summary 字段计算.
+        主函数仅 4 段线性: SBOM → vulns → license → summary.
+        """
+        sbom = self.sbom_generator.generate_from_project(project_root)
         all_deps = self._flatten_deps(sbom.packages)
         vulns = self.osv_scanner.scan_dependencies(all_deps)
+        self._link_vulns_to_deps(vulns, all_deps)
+        license_issues = self.license_checker.check_dependencies(all_deps)
 
-        # 将漏洞关联到依赖
+        return ScanResult(
+            project_path=str(project_root),
+            dependencies=all_deps,
+            vulnerabilities=vulns,
+            license_issues=license_issues,
+            summary=self._build_scan_summary(all_deps, vulns, license_issues),
+        )
+
+    def _link_vulns_to_deps(self, vulns: list[Vulnerability], all_deps: list[Dependency]) -> None:
+        """将漏洞关联到对应依赖对象 (in-place 修改).
+
+        Args:
+            vulns: 漏洞列表
+            all_deps: 依赖列表 (in-place 写 vulnerabilities)
+        """
         vuln_by_package: dict[str, list[Vulnerability]] = {}
         for v in vulns:
             vuln_by_package.setdefault(v.affected_package, []).append(v)
@@ -878,27 +896,32 @@ class SupplyChainScanner:
             if dep.name in vuln_by_package:
                 dep.vulnerabilities = vuln_by_package[dep.name]
 
-        # 3. 检查许可证
-        license_issues = self.license_checker.check_dependencies(all_deps)
+    def _build_scan_summary(
+        self,
+        all_deps: list[Dependency],
+        vulns: list[Vulnerability],
+        license_issues: list[str],
+    ) -> dict[str, int]:
+        """构建扫描汇总字段.
 
-        # 4. 汇总
-        result = ScanResult(
-            project_path=str(project_root),
-            dependencies=all_deps,
-            vulnerabilities=vulns,
-            license_issues=license_issues,
-            summary={
-                "total_dependencies": len(all_deps),
-                "direct_dependencies": sum(1 for d in all_deps if d.is_direct),
-                "vulnerabilities": len(vulns),
-                "critical": sum(1 for v in vulns if v.severity == Severity.CRITICAL),
-                "high": sum(1 for v in vulns if v.severity == Severity.HIGH),
-                "medium": sum(1 for v in vulns if v.severity == Severity.MEDIUM),
-                "low": sum(1 for v in vulns if v.severity == Severity.LOW),
-                "license_issues": len(license_issues),
-            },
-        )
-        return result
+        Args:
+            all_deps: 依赖列表
+            vulns: 漏洞列表
+            license_issues: 许可证问题列表
+
+        Returns:
+            summary dict (8 字段)
+        """
+        return {
+            "total_dependencies": len(all_deps),
+            "direct_dependencies": sum(1 for d in all_deps if d.is_direct),
+            "vulnerabilities": len(vulns),
+            "critical": sum(1 for v in vulns if v.severity == Severity.CRITICAL),
+            "high": sum(1 for v in vulns if v.severity == Severity.HIGH),
+            "medium": sum(1 for v in vulns if v.severity == Severity.MEDIUM),
+            "low": sum(1 for v in vulns if v.severity == Severity.LOW),
+            "license_issues": len(license_issues),
+        }
 
     def _flatten_deps(self, deps: list[Dependency]) -> list[Dependency]:
         """扁平化依赖树"""

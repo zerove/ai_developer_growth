@@ -214,30 +214,60 @@ def get_pack_source(pack_id: str) -> Path | None:
 
 
 def install_pack(pack_id: str, project_dir: Path, dry_run: bool = False) -> list[Path]:
-    """Install a rule pack to .ai-rules/. Returns list of installed file paths."""
+    """Install a rule pack to .ai-rules/. Returns list of installed file paths.
+
+    V2.20 P4-26 拆分: 抽 _install_pack_file / _install_pack_dir 收口 file/dir 模式,
+    主函数仅守卫 + 委托.
+    """
     info = BUILTIN_PACKS.get(pack_id)
     if not info:
         raise ValueError(f"Unknown pack: {pack_id}")
 
-    target_dir = project_dir / ".ai-rules"
-    src = framework_dir() / info["source"]
-
     if dry_run:
         return []
 
+    target_dir = project_dir / ".ai-rules"
     target_dir.mkdir(parents=True, exist_ok=True)
-    installed: list[Path] = []
+    src = framework_dir() / info["source"]
 
     if src.is_file():
-        dest = target_dir / src.name
-        shutil.copy2(src, dest)
-        installed.append(dest)
-    elif src.is_dir():
-        for yml in src.glob("*.yml"):
-            dest = target_dir / f"{pack_id}-{yml.name}"
-            shutil.copy2(yml, dest)
-            installed.append(dest)
+        return _install_pack_file(src, target_dir)
+    if src.is_dir():
+        return _install_pack_dir(src, target_dir, pack_id)
+    return []
 
+
+def _install_pack_file(src: Path, target_dir: Path) -> list[Path]:
+    """安装单文件 pack 到 target_dir.
+
+    Args:
+        src: 源文件
+        target_dir: 目标目录
+
+    Returns:
+        [dest_path]
+    """
+    dest = target_dir / src.name
+    shutil.copy2(src, dest)
+    return [dest]
+
+
+def _install_pack_dir(src: Path, target_dir: Path, pack_id: str) -> list[Path]:
+    """安装目录 pack 所有 .yml 到 target_dir (重命名加 pack_id 前缀).
+
+    Args:
+        src: 源目录
+        target_dir: 目标目录
+        pack_id: pack ID (用作文件名前缀)
+
+    Returns:
+        安装的 dest path 列表
+    """
+    installed: list[Path] = []
+    for yml in src.glob("*.yml"):
+        dest = target_dir / f"{pack_id}-{yml.name}"
+        shutil.copy2(yml, dest)
+        installed.append(dest)
     return installed
 
 

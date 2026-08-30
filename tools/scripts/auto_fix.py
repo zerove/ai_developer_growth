@@ -549,46 +549,71 @@ class RegexFixProvider(FixProvider):
         return []
 
     def apply_rules(self, file_path: str) -> list[FixAction]:
-        """P1-2 重构入口：对文件全文应用 self.rules 的 re.subn，返回 FixAction 列表。
+        """P1-2 重构入口 (V2.21 P5-16 拆分: 抽 _apply_single_rule + _write_if_changed).
 
-        与 generate_fixes 区别: generate_fixes 接受单 issue 单行；apply_rules
-        接受规则字典对全文批量替换（FIX_RULES 模式）。
+        对文件全文应用 self.rules 的 re.subn, 返回 FixAction 列表.
         """
         import re
 
-        actions: list[FixAction] = []
         try:
             full_path = Path(file_path)
             if not full_path.exists():
                 return []
 
             content = full_path.read_text(encoding="utf-8")
-            for rule_id, info in self.rules.items():
-                pattern = info.get("pattern")
-                replacement = info.get("replacement")
-                if not pattern or replacement is None:
-                    continue
-                new_content, count = re.subn(pattern, replacement, content)
-                if count > 0 and new_content != content:
-                    actions.append(
-                        FixAction(
-                            rule_id=rule_id,
-                            file=file_path,
-                            line=1,
-                            column=1,
-                            original=content[:120] + "..." if len(content) > 120 else content,
-                            replacement=new_content[:120] + "..." if len(new_content) > 120 else new_content,
-                            safety_level=self.safety_level,
-                            description=f"Regex fix {rule_id} applied {count} times",
-                            confidence=0.9,
-                        )
-                    )
-                    content = new_content
-            if actions:
-                full_path.write_text(content, encoding="utf-8")
+            actions, content = self._apply_all_rules(content, file_path)
+            self._write_if_changed(full_path, content, bool(actions))
         except Exception as e:  # noqa: BLE001
             logger.warning(f"Regex apply_rules failed for {file_path}: {e}")
+            return []
         return actions
+
+    def _apply_all_rules(self, content: str, file_path: str) -> tuple[list[FixAction], str]:
+        """遍历 self.rules, 对 content 应用每条 re.subn 规则.
+
+        Args:
+            content: 文件原始内容
+            file_path: 文件路径 (FixAction 记录用)
+
+        Returns:
+            (actions, new_content) 元组
+        """
+        import re
+
+        actions: list[FixAction] = []
+        for rule_id, info in self.rules.items():
+            pattern = info.get("pattern")
+            replacement = info.get("replacement")
+            if not pattern or replacement is None:
+                continue
+            new_content, count = re.subn(pattern, replacement, content)
+            if count > 0 and new_content != content:
+                actions.append(
+                    FixAction(
+                        rule_id=rule_id,
+                        file=file_path,
+                        line=1,
+                        column=1,
+                        original=content[:120] + "..." if len(content) > 120 else content,
+                        replacement=new_content[:120] + "..." if len(new_content) > 120 else new_content,
+                        safety_level=self.safety_level,
+                        description=f"Regex fix {rule_id} applied {count} times",
+                        confidence=0.9,
+                    )
+                )
+                content = new_content
+        return actions, content
+
+    def _write_if_changed(self, full_path: Path, content: str, changed: bool) -> None:
+        """如果有 fix action, 写回文件 (模块级 helper).
+
+        Args:
+            full_path: 文件完整路径
+            content: 替换后内容
+            changed: 是否有变化 (actions 非空)
+        """
+        if changed:
+            full_path.write_text(content, encoding="utf-8")
 
 
 class ToolBasedFixProvider(FixProvider):

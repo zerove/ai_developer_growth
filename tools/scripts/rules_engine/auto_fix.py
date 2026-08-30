@@ -373,7 +373,7 @@ def apply_fixes(
     dry_run: bool = False,
     fix_ids: list[str] | None = None,
 ) -> list[FixResult]:
-    """Apply auto-fixes to a file.
+    """Apply auto-fixes to a file (V2.21 P5-50 拆分: 抽 _apply_rule_to_content + _write_if_changed).
 
     Args:
         filepath: File to fix.
@@ -399,29 +399,53 @@ def apply_fixes(
     for rule_id, fix_config in FIX_PATTERNS[lang].items():
         if fix_ids and rule_id not in fix_ids:
             continue
+        content, new_results = _apply_rule_to_content(filepath, content, original_content, rule_id, fix_config)
+        results.extend(new_results)
 
-        pattern = fix_config["pattern"]
-        replacement = fix_config.get("replacement")
-        description = fix_config["description"]
+    _write_if_changed(filepath, content, original_content, dry_run)
+    return results
 
-        if replacement is None:
-            results.extend(_flag_only_fixes(filepath, content, rule_id, pattern, description))
-        else:
-            content, new_results = _apply_replacement(
-                filepath,
-                content,
-                original_content,
-                rule_id,
-                pattern,
-                replacement,
-                description,
-            )
-            results.extend(new_results)
 
+def _apply_rule_to_content(
+    filepath: Path,
+    content: str,
+    original_content: str,
+    rule_id: str,
+    fix_config: dict[str, Any],
+) -> tuple[str, list[FixResult]]:
+    """应用单条规则到 content, 返回新 content + results (模块级 helper).
+
+    Args:
+        filepath: 文件路径
+        content: 当前内容
+        original_content: 原始内容 (用于比较)
+        rule_id: 规则 ID
+        fix_config: 规则配置 (含 pattern/replacement/description)
+
+    Returns:
+        (new_content, new_results) 元组
+    """
+    pattern = fix_config["pattern"]
+    replacement = fix_config.get("replacement")
+    description = fix_config["description"]
+
+    if replacement is None:
+        new_results = _flag_only_fixes(filepath, content, rule_id, pattern, description)
+        return content, new_results
+    return _apply_replacement(filepath, content, original_content, rule_id, pattern, replacement, description)
+
+
+def _write_if_changed(filepath: Path, content: str, original_content: str, dry_run: bool) -> None:
+    """有变化且非 dry_run 时写回文件 (模块级 helper).
+
+    Args:
+        filepath: 文件路径
+        content: 替换后内容
+        original_content: 原始内容
+        dry_run: 是否仅模拟
+    """
     if not dry_run and content != original_content:
         filepath.write_text(content, encoding="utf-8")
-
-    return results
 
 
 def apply_fixes_to_directory(

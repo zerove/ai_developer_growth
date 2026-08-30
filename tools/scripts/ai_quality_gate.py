@@ -163,8 +163,6 @@ def check_security_patterns(filepath: Path) -> list[dict[str, Any]]:
     _is_valid_security_match 收口 match + string 守卫,
     主函数仅外层 for + 注释守卫 + 委托.
     """
-    import re
-
     issues: list[dict[str, Any]] = []
     content = filepath.read_text(encoding="utf-8")
     lines = content.split("\n")
@@ -244,8 +242,6 @@ def check_type_patterns(filepath: Path) -> list[dict[str, Any]]:
     V2.20 P4-58 拆分: 抽 _is_valid_type_issue 收口 search + import 守卫 + any 守卫,
     主函数仅嵌套 for + 委托 + issue 构造.
     """
-    import re
-
     issues: list[dict[str, Any]] = []
     content = filepath.read_text(encoding="utf-8")
     lines = content.split("\n")

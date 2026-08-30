@@ -237,11 +237,8 @@ class OSVScanner:
     def _extract_cvss_severity(self, severities: list[dict[str, Any]]) -> tuple[Severity, float | None, str | None]:
         """从 OSV severity 列表提取 CVSS_V3 分数并映射到 Severity 等级.
 
-        Args:
-            severities: OSV severity 列表
-
-        Returns:
-            (severity, cvss_score, cvss_vector)
+        V2.20 P4-46 拆分: 抽 _score_to_severity 收口 CVSS 分数到 Severity 等级映射,
+        主函数仅 for + 守卫 + break.
         """
         severity = Severity.NONE
         cvss_score: float | None = None
@@ -253,17 +250,28 @@ class OSVScanner:
             cvss_score = sev.get("score")
             cvss_vector = sev.get("vector")
             if cvss_score is not None:
-                if cvss_score >= 9.0:
-                    severity = Severity.CRITICAL
-                elif cvss_score >= 7.0:
-                    severity = Severity.HIGH
-                elif cvss_score >= 4.0:
-                    severity = Severity.MEDIUM
-                else:
-                    severity = Severity.LOW
+                severity = self._score_to_severity(cvss_score)
             break
 
         return severity, cvss_score, cvss_vector
+
+    @staticmethod
+    def _score_to_severity(score: float) -> Severity:
+        """CVSS_V3 分数映射到 Severity 等级 (模块级 helper).
+
+        Args:
+            score: CVSS 分数 (0.0-10.0)
+
+        Returns:
+            Severity 等级
+        """
+        if score >= 9.0:
+            return Severity.CRITICAL
+        if score >= 7.0:
+            return Severity.HIGH
+        if score >= 4.0:
+            return Severity.MEDIUM
+        return Severity.LOW
 
     def _extract_fixed_version(self, affected: list[dict[str, Any]]) -> str | None:
         """从 OSV affected 列表提取首个 fixed version.

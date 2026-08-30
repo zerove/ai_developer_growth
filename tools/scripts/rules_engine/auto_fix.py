@@ -478,15 +478,7 @@ def apply_fixes_to_directory(
 
 
 def format_fix_results(results: list[FixResult], *, format: str = "text") -> str:
-    """Format fix results for display.
-
-    Args:
-        results: List of FixResult.
-        format: 'text' or 'json'.
-
-    Returns:
-        Formatted string.
-    """
+    """Format fix results for display (V2.21 P5-49 拆分: 抽 _format_text + _summarize)."""
     if format == "json":
         import json
 
@@ -495,6 +487,20 @@ def format_fix_results(results: list[FixResult], *, format: str = "text") -> str
     if not results:
         return "No fixes applied."
 
+    lines = _format_text(results)
+    lines.append(_summarize(results))
+    return "\n".join(lines)
+
+
+def _format_text(results: list[FixResult]) -> list[str]:
+    """格式化文本输出 (按 file 分组, 模块级 helper).
+
+    Args:
+        results: FixResult 列表
+
+    Returns:
+        文本行列表
+    """
     lines: list[str] = []
     files = sorted(set(r.file for r in results))
     for filepath in files:
@@ -505,10 +511,19 @@ def format_fix_results(results: list[FixResult], *, format: str = "text") -> str
             lines.append(f"  {status} Line {r.line}: [{r.rule_id}] {r.description}")
             lines.append(f"     Original: {r.original[:80]}")
             lines.append(f"     Fixed:    {r.fixed[:80]}")
+    return lines
 
+
+def _summarize(results: list[FixResult]) -> str:
+    """汇总 fix 结果 (模块级 helper).
+
+    Args:
+        results: FixResult 列表
+
+    Returns:
+        汇总字符串
+    """
     total = len(results)
     auto_fixed = sum(1 for r in results if r.fixed != "[MANUAL FIX REQUIRED]")
     manual_needed = total - auto_fixed
-    lines.append(f"\nSummary: {total} issues found, {auto_fixed} auto-fixed, {manual_needed} manual fixes needed")
-
-    return "\n".join(lines)
+    return f"\nSummary: {total} issues found, {auto_fixed} auto-fixed, {manual_needed} manual fixes needed"

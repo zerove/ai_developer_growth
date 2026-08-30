@@ -76,44 +76,71 @@ class ArchitectureDriftGuard:
         return [lang for lang, _ in sorted(counts.items(), key=lambda kv: -kv[1])]
 
     def check_layering(self) -> list[str]:
-        """分层守卫：扫描项目中所有有规则覆盖的语言；无规则的语言记入 unsupported。"""
+        """分层守卫 (V2.21 P5-25 拆分: 抽 _is_in_skip_dir + _scan_language_for_violations).
+
+        扫描项目中所有有规则覆盖的语言; 无规则的语言记入 unsupported.
+        """
         self.violations = []
         self.unsupported_languages = []
         self.scanned_languages = []
 
         languages = self.detect_project_languages()
         if not languages:
-            # 纯文档/配置项目：无源码可查不算错误
+            # 纯文档/配置项目: 无源码可查不算错误
             return self.violations
 
         domain_markers = ("domain",)
+        skip_dirs = {".git", "node_modules", ".venv", "venv"}
         for lang in languages:
-            patterns = LAYERING_IMPORT_PATTERNS.get(lang)
-            if patterns is None:
-                self.unsupported_languages.append(lang)
-                continue
-            self.scanned_languages.append(lang)
-            exts = LANGUAGE_EXTENSIONS[lang]
-            for file_path in self.root_dir.rglob("*"):
-                if file_path.suffix.lower() not in exts:
-                    continue
-                if any(part in {".git", "node_modules", ".venv", "venv"} for part in file_path.parts):
-                    continue
-                if not any(m in file_path.parts for m in domain_markers):
-                    continue
-                try:
-                    content = file_path.read_text(encoding="utf-8")
-                except OSError:
-                    continue
-                for pat in patterns:
-                    if pat in content:
-                        rel = file_path.relative_to(self.root_dir)
-                        self.violations.append(
-                            f"Architecture Drift in {rel} [{lang}]: "
-                            f"Domain layer references infrastructure/web component ('{pat}')."
-                        )
-                        break
+            self._scan_language_for_violations(lang, domain_markers, skip_dirs)
         return self.violations
+
+    def _scan_language_for_violations(self, lang: str, domain_markers: tuple[str, ...], skip_dirs: set[str]) -> None:
+        """扫描单语言的分层违规 (方法级 helper, 内部 append self.violations).
+
+        Args:
+            lang: 语言
+            domain_markers: 域目录关键字 (含 domain 字符串)
+            skip_dirs: 跳过目录集合
+        """
+        patterns = LAYERING_IMPORT_PATTERNS.get(lang)
+        if patterns is None:
+            self.unsupported_languages.append(lang)
+            return
+        self.scanned_languages.append(lang)
+        exts = LANGUAGE_EXTENSIONS[lang]
+        for file_path in self.root_dir.rglob("*"):
+            if file_path.suffix.lower() not in exts:
+                continue
+            if any(part in skip_dirs for part in file_path.parts):
+                continue
+            if not any(m in file_path.parts for m in domain_markers):
+                continue
+            try:
+                content = file_path.read_text(encoding="utf-8")
+            except OSError:
+                continue
+            self._check_patterns_in_file(file_path, lang, patterns, content)
+
+    def _check_patterns_in_file(
+        self, file_path: Path, lang: str, patterns: tuple[str, ...] | list[str], content: str
+    ) -> None:
+        """检查单文件是否含任一违规 pattern (方法级 helper, 内部 append self.violations).
+
+        Args:
+            file_path: 文件路径
+            lang: 语言
+            patterns: 违规 pattern 列表
+            content: 文件内容
+        """
+        for pat in patterns:
+            if pat in content:
+                rel = file_path.relative_to(self.root_dir)
+                self.violations.append(
+                    f"Architecture Drift in {rel} [{lang}]: "
+                    f"Domain layer references infrastructure/web component ('{pat}')."
+                )
+                break
 
     def check_adr_references(self) -> list[str]:
         adr_dir = self.root_dir / "docs" / "adr"

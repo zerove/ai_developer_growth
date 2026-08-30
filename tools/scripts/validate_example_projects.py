@@ -18,35 +18,53 @@ MIN_PYTHON_FILES = 1
 
 
 def validate_example(example_dir: Path) -> list[str]:
-    """"""
-    issues = []
+    """验证 example 项目标准化.
 
-    # 检查必需文件
+        V2.21 P5-7 拆分: 抽 4 helper:
+    - _check_required_files/dirs: 必填文件/目录守卫
+    - _check_python_files: Python 文件数守卫
+    - _check_pyproject: pyproject.toml 必填字段守卫
+        主函数仅 4 委托.
+    """
+    issues: list[str] = []
+    _check_required_files(example_dir, issues)
+    _check_required_dirs(example_dir, issues)
+    _check_python_files(example_dir, issues)
+    _check_pyproject(example_dir, issues)
+    return issues
+
+
+def _check_required_files(example_dir: Path, issues: list[str]) -> None:
+    """检查必需文件存在性 (模块级 helper)."""
     for f in REQUIRED_FILES:
         if not (example_dir / f).exists():
             issues.append(f"缺少文件: {f}")
 
-    # 检查必需目录
+
+def _check_required_dirs(example_dir: Path, issues: list[str]) -> None:
+    """检查必需目录存在性 (模块级 helper)."""
     for d in REQUIRED_DIRS:
         if not (example_dir / d).is_dir():
             issues.append(f"缺少目录: {d}/")
 
-    # 检查 Python 源文件
-    py_files = list(example_dir.rglob("*.py"))
-    py_files = [f for f in py_files if "__pycache__" not in str(f)]
+
+def _check_python_files(example_dir: Path, issues: list[str]) -> None:
+    """检查 Python 源文件数 (≥ MIN_PYTHON_FILES, 排除 __pycache__, 模块级 helper)."""
+    py_files = [f for f in example_dir.rglob("*.py") if "__pycache__" not in str(f)]
     if len(py_files) < MIN_PYTHON_FILES:
         issues.append(f"Python 文件不足 (找到 {len(py_files)}, 至少需要 {MIN_PYTHON_FILES})")
 
-    # 检查 pyproject.toml 内容
-    pyproject = example_dir / "pyproject.toml"
-    if pyproject.exists():
-        content = pyproject.read_text()
-        if "name" not in content:
-            issues.append("pyproject.toml 缺少 name 字段")
-        if "version" not in content:
-            issues.append("pyproject.toml 缺少 version 字段")
 
-    return issues
+def _check_pyproject(example_dir: Path, issues: list[str]) -> None:
+    """检查 pyproject.toml 必填字段 (name/version, 模块级 helper)."""
+    pyproject = example_dir / "pyproject.toml"
+    if not pyproject.exists():
+        return
+    content = pyproject.read_text()
+    if "name" not in content:
+        issues.append("pyproject.toml 缺少 name 字段")
+    if "version" not in content:
+        issues.append("pyproject.toml 缺少 version 字段")
 
 
 def main() -> None:

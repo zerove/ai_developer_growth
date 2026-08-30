@@ -364,25 +364,34 @@ class LicenseChecker:
         self.policy = policy or {}
 
     def check_license(self, license_str: str | None) -> LicensePolicy:
-        """检查单个许可证"""
+        """检查单个许可证.
+
+        V2.20 P4-48 拆分: 抽 _classify_license 收口标准化后策略匹配 (4 档),
+        主函数仅 None 守卫 + 标准化 + 委托.
+        """
         if not license_str:
             return LicensePolicy.REVIEW
 
-        # 标准化许可证字符串
         license_str = license_str.strip()
+        return self._classify_license(license_str)
 
-        # 直接策略匹配
+    def _classify_license(self, license_str: str) -> LicensePolicy:
+        """根据 license_str 返回 LicensePolicy (模块级 helper).
+
+        Args:
+            license_str: 已标准化的 license 字符串
+
+        Returns:
+            LicensePolicy 等级
+        """
         if license_str in self.policy:
             return self.policy[license_str]
-
-        # 基于分类的默认策略
         if license_str in self.PERMISSIVE_LICENSES:
             return LicensePolicy.ALLOW
-        elif license_str in self.COPYLEFT_LICENSES:
+        if license_str in self.COPYLEFT_LICENSES:
             return LicensePolicy.REVIEW  # 需要人工评估
-        elif license_str in self.PROPRIETARY_LICENSES:
+        if license_str in self.PROPRIETARY_LICENSES:
             return LicensePolicy.DENY
-
         return LicensePolicy.REVIEW
 
     def check_dependencies(self, dependencies: list[Dependency]) -> list[str]:

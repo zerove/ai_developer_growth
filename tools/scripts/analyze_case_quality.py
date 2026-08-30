@@ -611,21 +611,35 @@ class CaseStudyQualityAnalyzer:
     def _compute_average_scores(self, metrics_list: list[QualityMetrics]) -> dict[str, float]:
         """计算 6 项平均分 (overall/authenticity/efficiency/insight/completeness/cross).
 
+        V2.20 P4-33 拆分: 抽 _avg_score 收口单指标均值计算, 6 项字段各调一次.
+
         Args:
             metrics_list: 案例指标列表
 
         Returns:
             {key: rounded_avg}
         """
-        n = len(metrics_list)
         return {
-            "overall": round(sum(m.overall_score for m in metrics_list) / n, 1),
-            "authenticity": round(sum(m.authenticity_score for m in metrics_list) / n, 1),
-            "efficiency_credibility": round(sum(m.efficiency_credibility for m in metrics_list) / n, 1),
-            "insight_quality": round(sum(m.insight_quality for m in metrics_list) / n, 1),
-            "completeness": round(sum(m.completeness for m in metrics_list) / n, 1),
-            "cross_references": round(sum(m.cross_references for m in metrics_list) / n, 1),
+            "overall": self._avg_score(metrics_list, "overall_score"),
+            "authenticity": self._avg_score(metrics_list, "authenticity_score"),
+            "efficiency_credibility": self._avg_score(metrics_list, "efficiency_credibility"),
+            "insight_quality": self._avg_score(metrics_list, "insight_quality"),
+            "completeness": self._avg_score(metrics_list, "completeness"),
+            "cross_references": self._avg_score(metrics_list, "cross_references"),
         }
+
+    def _avg_score(self, metrics_list: list[QualityMetrics], attr: str) -> float:
+        """计算 metrics_list 中指定属性的均值 (rounded to 1 decimal).
+
+        Args:
+            metrics_list: 案例指标列表
+            attr: QualityMetrics 属性名
+
+        Returns:
+            均值 (rounded)
+        """
+        n = len(metrics_list)
+        return round(sum(getattr(m, attr) for m in metrics_list) / n, 1)
 
     def _categorize_scores(self, metrics_list: list[QualityMetrics]) -> dict[str, int]:
         """按 overall_score 分为三档 (excellent/good/needs_improvement).

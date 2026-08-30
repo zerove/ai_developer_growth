@@ -482,22 +482,18 @@ def _dispatch_sync_command(
     """根据 args.command 分发到对应 sync 方法, 返结果对象 (无匹配返 None).
 
     V2.19 P3-48 拆分: 从 _execute_sync_command (B=7) 抽出.
-    用 dict 替代 if/elif 链, 主函数仅负责查表 + 打印.
+    V2.22 P6-1 字典化: 用 dict 替代 if/elif 链.
     """
-    command = args.command
-    if command == "full-sync":
-        return sync.full_sync(dry_run=args.dry_run)
-    if command == "sync-issue":
-        return sync.sync_issue_to_project(args.issue)
-    if command == "sync-project":
-        return sync.sync_project_to_issues()
-    if command == "list-project":
-        return sync.list_project_issues()
-    if command == "project-info":
-        return sync.get_project_info()
-    if command == "sync-issues":
-        return sync.sync_specific_issues(args.issues)
-    return None
+    command_handlers: dict[str, Any] = {
+        "full-sync": lambda: sync.full_sync(dry_run=args.dry_run),
+        "sync-issue": lambda: sync.sync_issue_to_project(args.issue),
+        "sync-project": lambda: sync.sync_project_to_issues(),
+        "list-project": lambda: sync.list_project_issues(),
+        "project-info": lambda: sync.get_project_info(),
+        "sync-issues": lambda: sync.sync_specific_issues(args.issues),
+    }
+    handler = command_handlers.get(args.command)
+    return handler() if handler is not None else None
 
 
 def _execute_sync_command(sync: GitHubProjectsSync, args: argparse.Namespace) -> None:

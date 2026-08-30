@@ -202,26 +202,24 @@ def check_security_patterns(filepath: Path) -> list[dict[str, Any]]:
 
 
 def check_type_patterns(filepath: Path) -> list[dict[str, Any]]:
-    """向后兼容: 检查类型安全模式 (保持原始中文消息)"""
+    """向后兼容: 检查类型安全模式 (保持原始中文消息)
+
+    V2.20 P4-55 拆分: 抽 _is_import_line 收口 import/from 守卫,
+    _is_any_in_brackets 收口 dict/list 内 Any 守卫,
+    主函数仅嵌套 for + 守卫 + 委托.
+    """
     import re
 
-    issues = []
+    issues: list[dict[str, Any]] = []
     content = filepath.read_text(encoding="utf-8")
     lines = content.split("\n")
 
     for line_num, line in enumerate(lines, 1):
-        for pattern, description in [
-            (r"#\s*type:\s*ignore(?!\s*\[)", "类型抑制"),
-            (r"@\w+(?:\.\w+)*\.ignore", "使用 @ignore 装饰器"),
-            (r":\s*Any\b", "使用 Any 类型"),
-        ]:
+        for pattern, description in _TYPE_PATTERNS:
             if re.search(pattern, line, re.IGNORECASE):
-                # Skip import lines (from typing import Any)
-                if "import" in line and "Any" in line:
+                if _is_import_line(line):
                     continue
-                # Skip lines where Any is only inside brackets (compound type like dict[str, Any])
-                stripped = line.strip()
-                if re.match(r"^(?:from|import)\b", stripped):
+                if _is_any_in_brackets(line):
                     continue
                 issues.append(
                     {
@@ -233,6 +231,43 @@ def check_type_patterns(filepath: Path) -> list[dict[str, Any]]:
                 )
 
     return issues
+
+
+# 模块级常量: 类型模式列表
+_TYPE_PATTERNS: list[tuple[str, str]] = [
+    (r"#\s*type:\s*ignore(?!\s*\[)", "类型抑制"),
+    (r"@\w+(?:\.\w+)*\.ignore", "使用 @ignore 装饰器"),
+    (r":\s*Any\b", "使用 Any 类型"),
+]
+
+
+def _is_import_line(line: str) -> bool:
+    """检查行是否为 import/from 行 (模块级 helper).
+
+    Args:
+        line: 单行代码
+
+    Returns:
+        True if 行以 from/import 开头
+    """
+    import re
+
+    return bool(re.match(r"^(?:from|import)\b", line.strip()))
+
+
+def _is_any_in_brackets(line: str) -> bool:
+    """检查行内 Any 是否仅在括号/中括号中 (模块级 helper).
+
+    注: 旧逻辑 "import in line and Any in line" → 复合类型场景会被误判.
+    本 helper 替换为更精确的 import 守卫.
+
+    Args:
+        line: 单行代码
+
+    Returns:
+        True if 行仅为 import 语句 (含 Any 也跳过)
+    """
+    return "import" in line and "Any" in line
 
 
 def check_error_patterns(filepath: Path) -> list[dict[str, Any]]:

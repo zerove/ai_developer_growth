@@ -67,7 +67,7 @@ def detect_language_from_file(filepath: Path) -> str | None:
 
 
 def check_anti_patterns(lines: list[str], rules: dict[str, Any], filepath: str) -> list[Issue]:
-    """Check code lines against regex anti-patterns."""
+    """Check code lines against regex anti-patterns (V2.21 P5-61 拆分: 抽 _is_rule_excluded + _check_pattern_against_lines)."""
     issues: list[Issue] = []
     if Path(filepath).name in {
         "rule_editor.py",
@@ -80,36 +80,62 @@ def check_anti_patterns(lines: list[str], rules: dict[str, Any], filepath: str) 
     filename = Path(filepath).name
 
     for pattern_def in anti_patterns:
-        # 显式禁用的规则跳过 (如已迁移到 AST 实现的 py-bare-raise)
-        if pattern_def.get("enabled") is False:
+        if _is_rule_excluded(pattern_def, filename, filepath):
             continue
-        # Skip rule if file is in exclude_files list
-        exclude_files = pattern_def.get("exclude_files", [])
-        if exclude_files and any(filename == ef or Path(filepath).match(ef) for ef in exclude_files):
+        issues.extend(_check_pattern_against_lines(lines, pattern_def, filepath))
+    return issues
+
+
+def _is_rule_excluded(pattern_def: dict[str, Any], filename: str, filepath: str) -> bool:
+    """检查 rule 是否被 enabled=False 或 exclude_files 排除 (模块级 helper).
+
+    Args:
+        pattern_def: pattern 定义
+        filename: 文件名
+        filepath: 完整文件路径
+
+    Returns:
+        True 表示应排除
+    """
+    if pattern_def.get("enabled") is False:
+        return True
+    exclude_files = pattern_def.get("exclude_files", [])
+    if exclude_files and any(filename == ef or Path(filepath).match(ef) for ef in exclude_files):
+        return True
+    return False
+
+
+def _check_pattern_against_lines(lines: list[str], pattern_def: dict[str, Any], filepath: str) -> list[Issue]:
+    """对单条 pattern 扫描所有行 (跳过注释, 模块级 helper).
+
+    Args:
+        lines: 源码行列表
+        pattern_def: pattern 定义
+        filepath: 文件路径
+
+    Returns:
+        Issue 列表
+    """
+    issues: list[Issue] = []
+    regex = re.compile(pattern_def["pattern"])
+    for line_num, line in enumerate(lines, 1):
+        stripped = line.strip()
+        if stripped.startswith("#") or stripped.startswith("//"):
             continue
-
-        regex = re.compile(pattern_def["pattern"])
-
-        for line_num, line in enumerate(lines, 1):
-            stripped = line.strip()
-            if stripped.startswith("#") or stripped.startswith("//"):
-                continue
-
-            match = regex.search(line)
-            if match:
-                issues.append(
-                    Issue(
-                        rule_id=pattern_def["id"],
-                        severity=pattern_def.get("severity", "warning"),
-                        category=pattern_def.get("category", "general"),
-                        file=filepath,
-                        line=line_num,
-                        column=match.start(),
-                        message=pattern_def.get("message", "Anti-pattern detected"),
-                        fix_hint=pattern_def.get("fix_hint", ""),
-                    )
+        match = regex.search(line)
+        if match:
+            issues.append(
+                Issue(
+                    rule_id=pattern_def["id"],
+                    severity=pattern_def.get("severity", "warning"),
+                    category=pattern_def.get("category", "general"),
+                    file=filepath,
+                    line=line_num,
+                    column=match.start(),
+                    message=pattern_def.get("message", "Anti-pattern detected"),
+                    fix_hint=pattern_def.get("fix_hint", ""),
                 )
-
+            )
     return issues
 
 

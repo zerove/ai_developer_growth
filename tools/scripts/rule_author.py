@@ -239,7 +239,7 @@ def _build_rule(rule_details: dict[str, str]) -> dict[str, Any]:
 
 
 def cmd_add_rule(args: argparse.Namespace) -> None:
-    """Add a new rule to a language's rule file."""
+    """Add a new rule to a language's rule file (V2.21 P5-11 拆分: 抽 _save_rule_file)."""
     lang = args.lang
     category = args.category
 
@@ -248,8 +248,7 @@ def cmd_add_rule(args: argparse.Namespace) -> None:
         print(f"Available: {', '.join(TEMPLATES.keys())}")
         return
 
-    lang_dir = _rules_dir() / "languages" / lang
-    rules_file = lang_dir / "rules.d" / "anti_patterns.yml"
+    rules_file = _rules_dir() / "languages" / lang / "rules.d" / "anti_patterns.yml"
 
     if not rules_file.exists():
         print(f"Rule file not found: {rules_file}")
@@ -278,6 +277,18 @@ def cmd_add_rule(args: argparse.Namespace) -> None:
         data[category] = []
     data[category].append(new_rule)
 
+    _save_rule_file(rules_file, data, rule_details, category)
+
+
+def _save_rule_file(rules_file: Path, data: dict[str, Any], rule_details: dict[str, Any], category: str) -> None:
+    """保存规则到 YAML 文件 + 打印成功消息 (模块级 helper).
+
+    Args:
+        rules_file: 规则 YAML 路径
+        data: 更新后 data 字典
+        rule_details: 规则详情
+        category: 规则类别
+    """
     with open(rules_file, "w") as f:
         yaml.dump(data, f, default_flow_style=False, allow_unicode=True, sort_keys=False)
 

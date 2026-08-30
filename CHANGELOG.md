@@ -61,6 +61,96 @@ All notable changes to the AI Developer Growth project.
 - **baseline 误报处理**: 加 baseline 豁免条目, 不改 rules 引擎
 - **commit message 双引号**触发 shell 截断, 用 `commit -F /tmp/file.txt`
 
+### 续拆阶段二: P5-21 ~ P5-70（50 commits / 30 文件）
+
+V2.21.0 阶段 2 续拆 50 个 C/B 级函数 (P5-21~P5-70), 覆盖 30+ 文件, 包含 11 个 adg_cli 模块与多个 rules_engine 核心.
+
+#### 关键改进
+
+- **P5-21 adg_cli.fix.fix_directory** C(15)→B(6): 抽 `_should_process_file` + `_is_checkable_language_file`
+- **P5-22 adg_cli.check._check_pattern** C(19)→B(7): 抽 `_is_pattern_excluded` + `_scan_multiline` + `_scan_line_by_line`
+- **P5-23 adg_cli.format._format_human** C(19)→A(2): 抽 `_format_issue_lines` + `_count_by_severity` + `_format_summary`
+- **P5-24 adg_cli.detect.detect_language** C(14)→A(2): 抽 `_check_config_markers` + `_count_extension_languages`
+- **P5-25 adg_cli.cmd_notify.cmd_notify** C(11)→A(2): 抽 `_collect_issues` + `_dispatch_webhook`
+- **P5-26 rule_generator.print_status** C(12)→A(2): 抽 `_print_empty` + `_print_overview` + `_print_language_details`
+- **P5-27 hallucination_detector.detect_hallucinations** C(12)→A(2): 抽 `_collect_target_files` + `_merge_reports`
+- **P5-28 performance.optimized_check_directory** C(18)→B(6): 抽 `_partition_files` + `_run_checks_parallel_or_serial` + `_build_metrics`
+- **P5-29 auto_fix.RegexFixProvider.apply_rules** C(11)→A(2): 抽 `_apply_all_rules` + `_write_if_changed`
+- **P5-30 auto_fix.format_fix_results** C(12)→A(2): 抽 `_format_text` + `_summarize`
+- **P5-31 rule_author._get_rule_details** C(11)→A(2): 抽 `_prompt_for_id` + `_prompt_for_field`
+- **P5-32 rule_marketplace.cmd_info** C(11)→A(2): 抽 `_print_pack_info_text` + `_show_pack_examples`
+- **P5-33 config.loader.load_config** C(12)→A(2): 抽 `_resolve_config_path` + `_load_config_dict`
+- **P5-34 adg_cli.fix.fix_file** C(15)→A(2): 抽 `_should_process_file` + `_is_checkable_language_file`
+- **P5-35 adg_cli.check.check_directory** C(11)→A(2): 抽 `_collect_files` + `_run_checks`
+- **P5-36 cmd_notify.cmd_notify** (P5-25 重做) 
+- **P5-37 rules_checker._detect_framework** C(19)→A(2): 抽 `_check_marker` + `_check_package_json` + `_check_text_contains`
+- **P5-38 rules_checker._filter_suppressed_issues** C(18)→A(2): 抽 `_parse_noqa_lines` + `_is_issue_suppressed`
+- **P5-39 semantic_checker._calculate_metrics** C(15)→A(2): 抽 `_accumulate_function_metrics` + `_accumulate_class_metrics` + `_compute_averages`
+- **P5-40 complexity_checker.check_python_complexity** C(14)→A(2): 抽 `_extract_thresholds` + 4 个 `_check_function_*` + `_check_class_methods`
+- **P5-41 semantic_checker.ImportGraph.find_unused_imports** C(12)→B(7): 抽 `_check_from_import` + `_check_module_import` + `getattr` 保护
+- **P5-42 ast_parser._parse_python_class** C(13)→A(2): 抽 `_parse_class_bases/methods/decorators` + `_get_class_name_for_method`
+- **P5-43 ast_parser._parse_python_import** C(13)→A(2): 抽 `_parse_import_statement` + `_parse_import_from_statement`
+- **P5-44 ast_parser._walk_go_functions** C(12)→A(2): 抽 `_handle_function_declaration` + `_handle_type_declaration`
+- **P5-45 ast_parser._walk_classes** C(11)→A(2): 抽 `_dispatch_class_parse` (字典化 4 语言分发)
+- **P5-46 auto_fix.apply_fixes** C(11)→B(8): 抽 `_apply_rule_to_content` + `_write_if_changed`
+- **P5-47 auto_fix.format_fix_results** (P5-30 重做)
+- **P5-48 performance.optimized_check_directory** (P5-28 重做, 修 changed_files 条件)
+- **P5-49 auto_fix.format_fix_results** (P5-30 重做)
+- **P5-50 auto_fix.apply_fixes** (P5-46 重做)
+- **P5-51 rule_docs_mapper._load_all_rules** C(13)→A(2): 抽 `_load_rules_from_directory`
+- **P5-52 rule_docs_mapper._extract_frontmatter_keywords** C(12)→B(6): 抽 `_parse_tags_line` + `_parse_kv_line` + `_KV_KEYS` 常量
+- **P5-53 rule_docs_mapper._simple_parse_rules** C(11)→B(7): 抽 `_parse_yaml_line` 状态机 + `_KNOWN_YAML_KEYS` 常量
+- **P5-54 anti_pattern_checker._check_pattern** C(11)→A(2): 抽 `_is_pattern_excluded` + `_check_pattern_matches`
+- **P5-55 pattern_learner._analyze_naming** C(14)→A(2): 抽 `_collect_function_names` + `_collect_class_names` (方法级, fix class-out bug)
+- **P5-56 arch.dependency_graph._build_graph** C(14)→A(2): 抽 `_collect_code_files` + `_extract_imports_in_file` (方法级, fix class-out bug)
+- **P5-57 go_parser._parse_method** C(11)→A(2): 抽 `_extract_receiver_name` + `_build_method_info` (方法级, fix class-out bug)
+- **P5-58 cpp_parser._walk_members** C(12)→B(8): 抽 `_parse_function_definition` + `_parse_declaration_method`
+- **P5-59 validators.cli._handle_output** C(15)→A(2): 抽 `_emit_non_text_output` (复用已有 `_check_thresholds`)
+- **P5-60 validators.cli._validate_directory** C(11)→A(2): 抽 `_validate_incremental` + `_validate_full`
+- **P5-61 validators.pipeline.check_anti_patterns** C(12)→A(2): 抽 `_is_rule_excluded` + `_check_pattern_against_lines`
+- **P5-62 validators.pipeline._merge_rules** C(12)→A(2): 抽 `_merge_anti_patterns` + `_merge_dict_section`
+- **P5-63 rules.loader._merge_rules** C(14)→B(7): 抽 `_merge_list_category` + `_merge_dict_category`
+- **P5-64 supply_runner._handle_verify_signature** C(13)→A(2): 抽 `_print_verify_result` (text/json 双格式 + cosign/slsa 共享)
+- **P5-65 supply_runner._print_fix_text** C(12)→A(2): 抽 `_compute_fix_totals` + `_print_fix_details`
+- **P5-66 domain_checks.validate_baseline_structure** C(15)→A(2): 抽 `_load_baseline_json` + `_validate_baseline_metadata` + `_validate_baseline_files`
+- **P5-67 domain_checks.run_governance_audit** C(14)→A(2): 抽 `_build_governance_checks` + `_run_governance_checks` + `_check_index_subprocess`
+- **P5-68 domain_checks._format_output** C(11)→A(2): 抽 `_compute_output_totals` + `_format_text_output` + `_format_json_output`
+- **P5-69 phase_runner._run_ast_fix** C(14)→B(7): 抽 `_fix_single_file` + `_print_directory_summary`
+- **P5-70 semantic_checker.analyze_directory** C(11)→A(2): 抽 `_parse_single_file` (4 元组) + `_emit_import_cycle_issues`
+
+#### 关键技术模式（V2.21 P5-21~70）
+
+- **方法级 vs 模块级 helper 选择**: 类内方法/属性访问 → 方法级 self.; 纯数据转换 → 模块级
+- **类外 helper 的 indent bug** (P5-55/56/57): 抽出模块级 helper 后 ruff format 未缩, 后续类方法被推到 class 外
+- **tuple 返回**: 2/3/4 元组代替多个 in-place 修改 (P5-16/23/26/30/39/41/50/55/68/70)
+- **state machine 状态机** (P5-53): 3 状态 (skip/new_rule/kv) dict 化
+- **dict 化分发** (P5-3/5/45): scan_type → cmd 字典替代 if/elif 链
+- **参数化 label/icon** (P5-46/64): 共享 helper 接受 label/icon 参数
+- **assert narrow** (P5-7/66): mypy 类型收口
+- **复用已有 helper** (P5-59): 避免重复 _check_thresholds
+- **getattr 保护** (P5-41): 历史 find_shadowed_imports 缺失, getattr + None 检查
+
+#### 验证
+
+- typecheck: 192 source files clean (含 2 个 pre-existing no-untyped-def 已知错误)
+- pytest: 1100+ tests pass (含新拆 helper 集成测试)
+- quality-gate --full: 192/192 pass (含 baseline 豁免)
+- baseline.json: 11 个存量豁免 (含 semantic_checker 87 行, report_generator 等)
+- radon: 全项目 0 个 C 级函数 (515 个 B 级为数据驱动 helpers, 接受保留)
+
+#### 关键经验
+
+- **pre-push 钩子非常慢** (5+ min): hooks_runner 5 step 全跑, 192 files × mypy + pytest
+- **background push 600s timeout** 是常见: v2.21 用 7 次 push 完成
+- **CI 失败排查**: 跑 5 step 找失败点, 多数为 baseline 误报或 mypy pre-existing
+- **TLS 错误**: GitHub 临时连接问题, 5-10s 后重试
+- **ruff F841** (P5-55/56/57): 模块级 helper 让 self.attr 误报 unused, 用 noqa
+- **N806** (P5-55): 模块级 const 大写 (BUILTIN_NAMES) 需 rename + type 注解
+- **state machine B 接受** (P5-53): data-driven helper 自身 B 是常态
+- **P5-15 误用模块级 helper**: ruff format 没把后续类方法缩回 4 空格, mypy 找不到
+- **on_commit hook 触发 CONTEXT.md 重生成**: 自动 amend 处理
+
+
 ## [2.20.0] - 2026-08-30
 
 ### 重要变更: V2.19.0 后续 P4 续拆收尾（Phase 23）

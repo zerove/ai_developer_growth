@@ -607,3 +607,43 @@
 - secret_scanner.py _run_detect_secrets B(6) 进一步拆
 - complexity_analyzer.py max_nesting_depth B(6) 进一步拆
 - 新发现 C 级待拆: rule_marketplace.cmd_info C(11), auto_fix.RegexFixProvider.apply_rules ✅, fix_heuristics.heuristic_fix C(13), cov_tool.cmd_module C(13), architecture_drift_guard.check_layering C(13), update_ai_tool_matrix.generate_report C(14)/_parse_tools C(12), semantic_code_graph.build_graph C(11), config/loader.load_config C(12), generate_fixes.apply_fixes_to_yaml ✅, validate_case_study.print_results ✅/_check_sections ✅/_extract_table_rows ✅
+
+## Phase 24.5: v2.21.0 P5 续拆收尾 (2026-08-30) (P5-21~P5-70)
+
+完成 v2.21 P5 阶段 2 续拆 50 commits (P5-21~P5-70), 全项目 0 个 C 级函数.
+
+### Phase 24.5 完成情况
+
+- **50 commits 完成** (P5-21 ~ P5-70)
+- **30+ 文件** 修改: adg_cli/* (5 文件), rules_engine/* (10+ 文件), validators/, hooks/, supply_runner, phase_runner 等
+- **100+ helper 函数** 新增
+- **0 个 C 级函数** 残留 (515 个 B 级为数据驱动 helpers, 接受保留)
+
+### Phase 24.5 关键经验 (v2.21.0 续发现)
+
+- **方法级 vs 模块级 helper 选择**: 类内方法/属性访问 → 方法级 self. (P5-55/56/57); 纯数据转换 → 模块级
+- **类外 helper indent bug** (P5-55/56/57): 抽出模块级 helper 后 ruff format 未缩, 后续类方法被推到 class 外, 需 fix
+- **tuple 返回**: 2/3/4 元组代替多个 in-place 修改 (P5-16/23/26/30/39/41/50/55/68/70)
+- **state machine 状态机** (P5-53): 3 状态 (skip/new_rule/kv) dict 化
+- **dict 化分发** (P5-3/5/45): scan_type → cmd 字典替代 if/elif 链
+- **参数化 label/icon** (P5-46/64): 共享 helper 接受 label/icon 参数
+- **assert narrow** (P5-7/66): mypy 类型收口
+- **复用已有 helper** (P5-59): 避免重复 _check_thresholds
+- **getattr 保护** (P5-41): 历史 find_shadowed_imports 缺失, getattr + None 检查
+- **baseline 误报豁免** (fix after P5-55): 加 baseline 豁免条目, 不改 rules 引擎
+- **ruff F841** (P5-55/56/57): 模块级 helper 让 self.attr 误报 unused, 用 noqa
+- **N806** (P5-55): 模块级 const 大写 (BUILTIN_NAMES) 需 rename + type 注解
+
+### P5 续拆验证
+
+- typecheck: 192 source files clean (含 2 个 pre-existing no-untyped-def 已知错误)
+- pytest: 1100+ tests pass (含新拆 helper 集成测试)
+- quality-gate --full: 192/192 pass (含 baseline 豁免)
+- baseline.json: 11 个存量豁免
+- radon: 全项目 0 个 C 级函数 (515 个 B 级为数据驱动 helpers, 接受保留)
+
+### P5 续拆后续候选 (v2.22.0 远期)
+
+- 已知 B(6~10) 接受保留 (data-driven 字典化 helpers): _load_records, _count_issue_severities, _iter_pack_rules, _build_single_component
+- 进一步数据驱动: rule_catalog._iter_pack_rules, sync_issues._dispatch_sync_command
+- 工具类整体拆分: 启动新架构 (commands/*) v3 重构

@@ -157,38 +157,26 @@ def _find_function_end(lines: list[str], start: int, indent: int) -> int:
 
 
 def check_security_patterns(filepath: Path) -> list[dict[str, Any]]:
-    """向后兼容: 检查安全模式 (保持原始中文消息)"""
+    """向后兼容: 检查安全模式 (保持原始中文消息)
+
+    V2.20 P4-57 拆分: 模块级常量 _SECURITY_PATTERNS 收口 10 模式元组,
+    _is_valid_security_match 收口 match + string 守卫,
+    主函数仅外层 for + 注释守卫 + 委托.
+    """
     import re
 
-    issues = []
+    issues: list[dict[str, Any]] = []
     content = filepath.read_text(encoding="utf-8")
     lines = content.split("\n")
 
     # 模式与描述用拼接构造，避免本文件含动态执行调用字面量被 ADG 自我引用误报
     ev, ex = "eval", "exec"
+    patterns = _build_security_patterns(ev, ex)
     for line_num, line in enumerate(lines, 1):
-        # 跳过注释
         if line.strip().startswith("#"):
             continue
-
-        # 检查各种安全模式
-        for pattern, description in [
-            (
-                r'(?:password|secret|api_key|token)\s*=\s*[\'"][^\'"]+[\'"]',
-                "疑似硬编码密钥",
-            ),
-            (rf"(?<!literal_){ev}\s*\(", f"使用 {ev}() - 安全风险"),
-            (rf"(?<!literal_){ex}\s*\(", f"使用 {ex}() - 安全风险"),
-            (r"verify\s*=\s*False", "禁用 SSL 验证"),
-            (r"hashlib\.md5\(", "使用 MD5 - 不安全的哈希"),
-            (r"hashlib\.sha1\(", "使用 SHA1 - 不安全的哈希"),
-            (r'f[\'"].*\bSELECT\b.*\{', "SQL 拼接 (f-string)"),
-            (r'f[\'"].*\bINSERT\b.*\{', "SQL 拼接 (f-string)"),
-            (r'f[\'"].*\bUPDATE\b\s+\w+.*\{', "SQL 拼接 (f-string)"),
-            (r'f[\'"].*\bDELETE\b.*\{', "SQL 拼接 (f-string)"),
-        ]:
-            match = re.search(pattern, line, re.IGNORECASE)
-            if match and not _is_in_string(line, match.start()):
+        for pattern, description in patterns:
+            if _is_valid_security_match(line, pattern):
                 issues.append(
                     {
                         "line": line_num,
@@ -199,6 +187,55 @@ def check_security_patterns(filepath: Path) -> list[dict[str, Any]]:
                 )
 
     return issues
+
+
+# 模块级常量: 硬编码密钥 + 哈希 + SQL 拼接模式 (不含 eval/exec, 由 _build_security_patterns 动态构造)
+_SECURITY_LITERAL_PATTERNS: list[tuple[str, str]] = [
+    (
+        r'(?:password|secret|api_key|token)\s*=\s*[\'"][^\'"]+[\'"]',
+        "疑似硬编码密钥",
+    ),
+    (r"verify\s*=\s*False", "禁用 SSL 验证"),
+    (r"hashlib\.md5\(", "使用 MD5 - 不安全的哈希"),
+    (r"hashlib\.sha1\(", "使用 SHA1 - 不安全的哈希"),
+    (r'f[\'"].*\bSELECT\b.*\{', "SQL 拼接 (f-string)"),
+    (r'f[\'"].*\bINSERT\b.*\{', "SQL 拼接 (f-string)"),
+    (r'f[\'"].*\bUPDATE\b\s+\w+.*\{', "SQL 拼接 (f-string)"),
+    (r'f[\'"].*\bDELETE\b.*\{', "SQL 拼接 (f-string)"),
+]
+
+
+def _build_security_patterns(ev: str, ex: str) -> list[tuple[str, str]]:
+    """构造完整安全模式列表 (含 eval/exec, 模块级 helper).
+
+    Args:
+        ev: eval 关键字 (避免自我引用误报)
+        ex: exec 关键字 (避免自我引用误报)
+
+    Returns:
+        10 个 (pattern, description) 元组
+    """
+    return [
+        (rf"(?<!literal_){ev}\s*\(", f"使用 {ev}() - 安全风险"),
+        (rf"(?<!literal_){ex}\s*\(", f"使用 {ex}() - 安全风险"),
+        *_SECURITY_LITERAL_PATTERNS,
+    ]
+
+
+def _is_valid_security_match(line: str, pattern: str) -> bool:
+    """检查 pattern 是否有效匹配 (非字符串内, 模块级 helper).
+
+    Args:
+        line: 单行代码
+        pattern: 正则 pattern
+
+    Returns:
+        True if 匹配且不在字符串字面量内
+    """
+    import re
+
+    match = re.search(pattern, line, re.IGNORECASE)
+    return bool(match and not _is_in_string(line, match.start()))
 
 
 def check_type_patterns(filepath: Path) -> list[dict[str, Any]]:

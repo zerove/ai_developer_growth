@@ -114,7 +114,7 @@ def cmd_diff(args: argparse.Namespace) -> int:
 
 
 def cmd_module(args: argparse.Namespace) -> int:
-    """单模块覆盖率详情 + 缺失行号。"""
+    """单模块覆盖率详情 (V2.21 P5-26 拆分: 抽 _print_module_summary + _print_missing_lines + _print_suggestion)."""
     cov_path = Path(args.coverage)
     module = args.module
     cov_data = _read_coverage_json(cov_path)
@@ -128,11 +128,42 @@ def cmd_module(args: argparse.Namespace) -> int:
         return 1
 
     file_data = cov_data["files"][target]
-    s = file_data.get("summary", {})
-    pct = s.get("percent_covered", 0.0)
-    miss = s.get("missing_lines", 0)
-    stmts = s.get("num_statements", 0)
+    pct, miss, stmts = _extract_module_summary(file_data)
 
+    _print_module_summary(module, target, pct, miss, stmts)
+    if miss > 0:
+        _print_missing_lines(cov_data, target)
+    _print_suggestion(module, target, pct)
+    return 0
+
+
+def _extract_module_summary(file_data: dict[str, Any]) -> tuple[float, int, int]:
+    """提取模块 summary (pct, miss, stmts) 三元组 (模块级 helper).
+
+    Args:
+        file_data: coverage files[target] 数据
+
+    Returns:
+        (percent_covered, missing_lines, num_statements) 三元组
+    """
+    s = file_data.get("summary", {})
+    return (
+        s.get("percent_covered", 0.0),
+        s.get("missing_lines", 0),
+        s.get("num_statements", 0),
+    )
+
+
+def _print_module_summary(module: str, target: str, pct: float, miss: int, stmts: int) -> None:
+    """打印模块 summary 表头 (模块级 helper).
+
+    Args:
+        module: 模块名 (dotted)
+        target: 相对路径
+        pct: 覆盖率
+        miss: missing lines
+        stmts: 总语句数
+    """
     print("═" * 60)
     print(f" Module: {module}  →  {target}")
     print("═" * 60)
@@ -140,24 +171,34 @@ def cmd_module(args: argparse.Namespace) -> int:
     print(f" Missing    : {miss}")
     print(f" Coverage   : {pct:.1f}%")
 
-    if miss > 0:
-        # 列出 missing_lines
-        for path_info in cov_data.get("files", {}).values():
-            if path_info.get("summary", {}).get("missing_lines", 0) > 0 and path_info.get("executed_lines"):
-                continue  # skip, need different path
-        # 直接 from summary
-        for f, d in cov_data.get("files", {}).items():
-            if f == target:
-                ml = d.get("missing_lines", [])
-                if ml:
-                    print(f"\n Missing lines (sample 30): {ml[:30]}{'...' if len(ml) > 30 else ''}")
-                break
 
-    # 补测试建议: 寻找函数定义但未在 executed 中
+def _print_missing_lines(cov_data: dict[str, Any], target: str) -> None:
+    """打印 missing lines 样本 (模块级 helper).
+
+    Args:
+        cov_data: 完整 coverage 数据
+        target: 目标文件相对路径
+    """
+    for f, d in cov_data.get("files", {}).items():
+        if f != target:
+            continue
+        ml = d.get("missing_lines", [])
+        if ml:
+            print(f"\n Missing lines (sample 30): {ml[:30]}{'...' if len(ml) > 30 else ''}")
+        break
+
+
+def _print_suggestion(module: str, target: str, pct: float) -> None:
+    """打印补测试建议 (模块级 helper).
+
+    Args:
+        module: 模块名
+        target: 相对路径
+        pct: 覆盖率
+    """
     py_file = Path(get_project_root()) / target
     if py_file.exists() and pct < 90.0:
         print(f"\n 💡 Suggestion: {module} < 90%. Add targeted tests in tests/test_{py_file.stem}_full.py")
-    return 0
 
 
 def cmd_gate(args: argparse.Namespace) -> int:

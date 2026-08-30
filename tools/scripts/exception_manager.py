@@ -323,21 +323,35 @@ class ExpirationManager:
         """若已过期且启用 auto_revoke, 撤销 req 状态.
 
         V2.18 P3-5 拆分: 从 check_expirations (C=11) 抽出.
+        V2.20 P4-28 拆分: 抽 _is_revokeable 收口 4 守卫 (auto_revoke/expires/已过期/APPROVED),
+        主函数仅守卫 + 副作用.
         """
-        if not self.auto_revoke:
-            return
-        if not req.expires:
-            return
-        try:
-            exp_date = datetime.fromisoformat(req.expires)
-        except ValueError:
-            return
-        if (exp_date - now).days >= 0:
-            return
-        if req.status != ExceptionStatus.APPROVED:
+        if not self._is_revokeable(req, now):
             return
         req.status = ExceptionStatus.EXPIRED
         self._notify_expired(req)
+
+    def _is_revokeable(self, req: ExceptionRequest, now: datetime) -> bool:
+        """判断 req 是否应被自动撤销 (auto_revoke 开启 + 已过期 + APPROVED).
+
+        Args:
+            req: 例外请求
+            now: 当前 UTC 时间
+
+        Returns:
+            True if 应撤销
+        """
+        if not self.auto_revoke:
+            return False
+        if not req.expires:
+            return False
+        try:
+            exp_date = datetime.fromisoformat(req.expires)
+        except ValueError:
+            return False
+        if (exp_date - now).days >= 0:
+            return False
+        return req.status == ExceptionStatus.APPROVED
 
     def check_expirations(self, requests: list[ExceptionRequest]) -> list[ExpirationAlert]:
         """检查即将到期的例外 (orchestrator).

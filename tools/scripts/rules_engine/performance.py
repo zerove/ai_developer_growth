@@ -221,28 +221,44 @@ class PerformanceOptimizer:
         incremental: bool = True,
         parallel: bool = True,
     ) -> list[dict[str, Any]]:
-        """Optimized directory checking with caching and parallelism.
-
-        Args:
-            dirpath: Directory to check.
-            languages: Filter to these languages.
-            incremental: Use cache for unchanged files.
-            parallel: Use parallel processing.
-
-        Returns:
-            List of check results.
-        """
+        """Optimized directory checking with caching and parallelism (V2.21 P5-48 拆分: 抽 _partition_files + _run_checks_parallel_or_serial + _build_metrics)."""
         start_time = time.monotonic()
 
-        # Collect files
         source_files = self._collect_files(dirpath, languages)
         total_files = len(source_files)
 
-        # Separate cached and uncached files
+        files_to_check, cached_results, cached_count = self._partition_files(source_files, incremental)
+
+        new_files = len(files_to_check)
+        results = self._run_checks_parallel_or_serial(files_to_check, parallel)
+
+        # Update cache
+        if self.cache:
+            for result in results:
+                if result is not None:
+                    self.cache.set(result["file"], result)
+            self.cache.save()
+
+        scan_time = (time.monotonic() - start_time) * 1000
+        all_results = cached_results + [r for r in results if r is not None]
+        self._metrics = self._build_metrics(total_files, cached_count, new_files, scan_time, parallel)
+        return all_results
+
+    def _partition_files(
+        self, source_files: list[Path], incremental: bool
+    ) -> tuple[list[tuple[str, str | None]], list[dict[str, Any]], int]:
+        """分离 cached 和 uncached 文件 (方法级 helper).
+
+        Args:
+            source_files: 待扫描文件列表
+            incremental: 是否使用 cache
+
+        Returns:
+            (files_to_check, cached_results, cached_count) 三元组
+        """
         files_to_check: list[tuple[str, str | None]] = []
         cached_results: list[dict[str, Any]] = []
         cached_count = 0
-
         if incremental and self.cache:
             for filepath in source_files:
                 str_path = str(filepath)
@@ -258,31 +274,49 @@ class PerformanceOptimizer:
                 str_path = str(filepath)
                 language = self._detect_language(filepath)
                 files_to_check.append((str_path, language))
+        return files_to_check, cached_results, cached_count
 
-        new_files = len(files_to_check)
+    def _run_checks_parallel_or_serial(
+        self, files_to_check: list[tuple[str, str | None]], parallel: bool
+    ) -> list[dict[str, Any] | None]:
+        """根据 parallel 和 new_files 数量分派 parallel or serial 检查 (方法级 helper).
 
-        # Run checks
-        if parallel and new_files > 4:
-            results = self._parallel_check(files_to_check)
-        else:
-            results = self._serial_check(files_to_check)
+        Args:
+            files_to_check: 待检查文件
+            parallel: 是否并行
 
-        # Update cache
-        if self.cache:
-            for result in results:
-                if result is not None:
-                    self.cache.set(result["file"], result)
-            self.cache.save()
+        Returns:
+            检查结果列表
+        """
+        if parallel and len(files_to_check) > 4:
+            return self._parallel_check(files_to_check)
+        return self._serial_check(files_to_check)
 
-        # Calculate metrics
-        scan_time = (time.monotonic() - start_time) * 1000
-        all_results = cached_results + [r for r in results if r is not None]
+    def _build_metrics(
+        self,
+        total_files: int,
+        cached_count: int,
+        new_files: int,
+        scan_time: float,
+        parallel: bool,
+    ) -> PerformanceMetrics:
+        """构造 PerformanceMetrics (方法级 helper).
 
-        self._metrics = PerformanceMetrics(
+        Args:
+            total_files: 总文件数
+            cached_count: 命中缓存数
+            new_files: 新文件数
+            scan_time: 扫描时间 ms
+            parallel: 是否并行
+
+        Returns:
+            PerformanceMetrics 实例
+        """
+        return PerformanceMetrics(
             total_files=total_files,
             cached_files=cached_count,
             new_files=new_files,
-            changed_files=new_files - cached_count if incremental else 0,
+            changed_files=new_files - cached_count if total_files > 0 else 0,
             scan_time_ms=scan_time,
             cache_hit_rate=cached_count / total_files if total_files > 0 else 0,
             files_per_second=total_files / (scan_time / 1000) if scan_time > 0 else 0,
@@ -290,8 +324,6 @@ class PerformanceOptimizer:
             parallel_workers=self.max_workers if parallel else 1,
             peak_memory_mb=self._get_memory_usage(),
         )
-
-        return all_results
 
     def _parallel_check(self, files: list[tuple[str, str | None]]) -> list[dict[str, Any] | None]:
         """Run checks in parallel using ProcessPoolExecutor."""

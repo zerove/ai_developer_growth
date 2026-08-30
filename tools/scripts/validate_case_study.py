@@ -158,36 +158,44 @@ class CaseStudyValidator:
         return self.results
 
     def _check_sections(self, content: str) -> None:
-        """Verify all required sections exist (supports alt headers)."""
+        """Verify all required sections exist (V2.21 P5-18 拆分: 抽 _has_legacy_section + _report_legacy_or_missing)."""
         for section_name, alt_headers in self.REQUIRED_SECTIONS_ALT.items():
-            found = False
-            for alt in alt_headers:
-                if alt in content:
-                    found = True
-                    break
-            if not found:
-                # Check legacy sections as fallback - but only for corresponding legacy section
-                legacy_found = False
-                # Find the corresponding legacy section name
-                for legacy_name, legacy_headers in self.LEGACY_SECTIONS.items():
-                    for legacy_alt in legacy_headers:
-                        if legacy_alt in content:
-                            legacy_found = True
-                            break
-                    if legacy_found:
-                        break
+            found = any(alt in content for alt in alt_headers)
+            if found:
+                continue
+            self._report_legacy_or_missing(content, section_name, alt_headers)
 
-                if legacy_found:
-                    if self.strict:
-                        self._add_error(
-                            f"Using legacy section format: {section_name} (consider updating to new format)"
-                        )
-                    else:
-                        self._add_warning(
-                            f"Using legacy section format: {section_name} (consider updating to new format)"
-                        )
-                else:
-                    self._add_error(f"Missing required section: {section_name} (tried: {', '.join(alt_headers)})")
+    def _has_legacy_section(self, content: str) -> bool:
+        """检查 LEGACY_SECTIONS 中是否任一 alt 在 content 中 (模块级 helper).
+
+        Args:
+            content: 文档内容
+
+        Returns:
+            是否存在 legacy section
+        """
+        for legacy_headers in self.LEGACY_SECTIONS.values():
+            for legacy_alt in legacy_headers:
+                if legacy_alt in content:
+                    return True
+        return False
+
+    def _report_legacy_or_missing(self, content: str, section_name: str, alt_headers: list[str]) -> None:
+        """根据 legacy 检测结果报告 error/warning (模块级 helper).
+
+        Args:
+            content: 文档内容
+            section_name: 当前必填 section 名
+            alt_headers: 候选 alt headers
+        """
+        if self._has_legacy_section(content):
+            msg = f"Using legacy section format: {section_name} (consider updating to new format)"
+            if self.strict:
+                self._add_error(msg)
+            else:
+                self._add_warning(msg)
+        else:
+            self._add_error(f"Missing required section: {section_name} (tried: {', '.join(alt_headers)})")
 
     def _check_tables(self, content: str) -> None:
         """Verify required tables exist."""

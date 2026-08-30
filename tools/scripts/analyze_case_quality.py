@@ -170,41 +170,55 @@ class CaseStudyQualityAnalyzer:
         return max(0, min(max_score, score))
 
     def _analyze_efficiency(self, content: str) -> float:
-        """Score efficiency data credibility."""
-        score = 0.0
-        max_score = 100.0
+        """Score efficiency data credibility.
 
-        # Find efficiency tables
+        V2.20 P4-21 拆分: 抽 _has_efficiency_table 收口 4 个 regex 模式匹配,
+        _score_table_rows 收口行验证 + 真实值检查.
+        主函数仅 3 段分数累加.
+        """
+        if not self._has_efficiency_table(content):
+            return 0.0
+
+        score = 30.0  # Has table
+        data_rows = self._extract_table_rows(content)
+        if data_rows:
+            score += 20.0
+            score += self._score_table_rows(data_rows)
+        return min(100.0, score)
+
+    def _has_efficiency_table(self, content: str) -> bool:
+        """检查 content 是否含效率对比表格 (中英文 4 种模式).
+
+        Args:
+            content: 案例内容
+
+        Returns:
+            True if 任一表格模式匹配
+        """
         table_patterns = [
             r"\|.*阶段.*\|.*传统.*\|.*AI.*\|.*提升.*\|",
             r"\|.*指标.*\|.*优化前.*\|.*优化后.*\|.*提升.*\|",
             r"\|.*指标.*\|.*使用 AI 前.*\|.*使用 AI 后.*\|.*提升.*\|",
             r"\|.*Metric.*\|.*Before.*\|.*After.*\|.*Boost.*\|",
         ]
+        return any(re.search(p, content) for p in table_patterns)
 
-        has_table = any(re.search(p, content) for p in table_patterns)
-        if not has_table:
+    def _score_table_rows(self, data_rows: list[str]) -> float:
+        """根据表格行数 + 真实值校验计算额外分数.
+
+        Args:
+            data_rows: 表格数据行列表
+
+        Returns:
+            0/20/30/50 (有效行 + 真实值) 累加
+        """
+        valid_rows = sum(1 for row in data_rows if self._validate_row_format(row))
+        if valid_rows == 0:
             return 0.0
-
-        score += 30  # Has table
-
-        # Extract and validate table rows
-        data_rows = self._extract_table_rows(content)
-        if data_rows:
-            score += 20
-            valid_rows = 0
-            for row in data_rows:
-                if self._validate_row_format(row):
-                    valid_rows += 1
-            if valid_rows > 0:
-                score += min(valid_rows * 10, 30)
-
-                # Check for realistic values
-                realistic = self._check_realistic_values(data_rows)
-                if realistic:
-                    score += 20
-
-        return min(max_score, score)
+        score = float(min(valid_rows * 10, 30))
+        if self._check_realistic_values(data_rows):
+            score += 20.0
+        return score
 
     def _is_table_header(self, line: str) -> bool:
         """判断行是否为表格表头 (含 阶段/总计/指标/Metric/--- 关键字).

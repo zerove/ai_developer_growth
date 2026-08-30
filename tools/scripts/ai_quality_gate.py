@@ -241,9 +241,8 @@ def _is_valid_security_match(line: str, pattern: str) -> bool:
 def check_type_patterns(filepath: Path) -> list[dict[str, Any]]:
     """向后兼容: 检查类型安全模式 (保持原始中文消息)
 
-    V2.20 P4-55 拆分: 抽 _is_import_line 收口 import/from 守卫,
-    _is_any_in_brackets 收口 dict/list 内 Any 守卫,
-    主函数仅嵌套 for + 守卫 + 委托.
+    V2.20 P4-58 拆分: 抽 _is_valid_type_issue 收口 search + import 守卫 + any 守卫,
+    主函数仅嵌套 for + 委托 + issue 构造.
     """
     import re
 
@@ -253,11 +252,7 @@ def check_type_patterns(filepath: Path) -> list[dict[str, Any]]:
 
     for line_num, line in enumerate(lines, 1):
         for pattern, description in _TYPE_PATTERNS:
-            if re.search(pattern, line, re.IGNORECASE):
-                if _is_import_line(line):
-                    continue
-                if _is_any_in_brackets(line):
-                    continue
+            if _is_valid_type_issue(line, pattern):
                 issues.append(
                     {
                         "line": line_num,
@@ -268,6 +263,27 @@ def check_type_patterns(filepath: Path) -> list[dict[str, Any]]:
                 )
 
     return issues
+
+
+def _is_valid_type_issue(line: str, pattern: str) -> bool:
+    """检查 pattern 匹配 + import/any 守卫 (模块级 helper).
+
+    Args:
+        line: 单行代码
+        pattern: 正则 pattern
+
+    Returns:
+        True if 匹配且非 import 行且非 any in brackets
+    """
+    import re
+
+    if not re.search(pattern, line, re.IGNORECASE):
+        return False
+    if _is_import_line(line):
+        return False
+    if _is_any_in_brackets(line):
+        return False
+    return True
 
 
 # 模块级常量: 类型模式列表

@@ -307,34 +307,45 @@ def _parse_args() -> argparse.Namespace:
 
 
 def _determine_checks(args: argparse.Namespace) -> list[str]:
-    """Determine which checks to run based on args."""
-    checks = []
-    if args.full or args.check_patterns:
-        checks = [
-            "annotation",
-            "security",
-            "type",
-            "error",
-            "structure",
-            "language_rules",
-        ]
-    else:
-        if args.check_annotation:
-            checks.append("annotation")
-        if args.check_security:
-            checks.append("security")
-        if args.check_type:
-            checks.append("type")
-        if args.check_error:
-            checks.append("error")
-        if args.check_structure:
-            checks.append("structure")
-        if args.check_language_rules:
-            checks.append("language_rules")
+    """Determine which checks to run based on args.
 
-    if not checks:
-        checks = ["annotation", "security", "type", "error"]
-    return checks
+    V2.20 P4-51 拆分: 抽 _append_if_flag 收口 flag → checks append,
+    主函数仅 full/else 分派 + 默认回退.
+    """
+    if args.full or args.check_patterns:
+        return _ALL_CHECKS
+    checks: list[str] = []
+    _append_if_flag(checks, "annotation", args.check_annotation)
+    _append_if_flag(checks, "security", args.check_security)
+    _append_if_flag(checks, "type", args.check_type)
+    _append_if_flag(checks, "error", args.check_error)
+    _append_if_flag(checks, "structure", args.check_structure)
+    _append_if_flag(checks, "language_rules", args.check_language_rules)
+    return checks or _DEFAULT_CHECKS
+
+
+# 模块级常量: 全套检查 + 默认检查
+_ALL_CHECKS = [
+    "annotation",
+    "security",
+    "type",
+    "error",
+    "structure",
+    "language_rules",
+]
+_DEFAULT_CHECKS = ["annotation", "security", "type", "error"]
+
+
+def _append_if_flag(checks: list[str], check_name: str, flag: bool) -> None:
+    """若 flag=True 则 append check_name (模块级 helper).
+
+    Args:
+        checks: 累积列表 (in-place)
+        check_name: 检查名
+        flag: 触发标志
+    """
+    if flag:
+        checks.append(check_name)
 
 
 def _collect_files(args: argparse.Namespace) -> list[Path]:

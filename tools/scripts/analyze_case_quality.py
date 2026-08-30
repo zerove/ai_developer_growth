@@ -514,21 +514,43 @@ class CaseStudyQualityAnalyzer:
     def _count_valid_wikilinks(self, wikilinks: list[str]) -> int:
         """统计指向真实存在文件的 wikilink 数.
 
+        V2.20 P4-36 拆分: 抽 _is_valid_wikilink_target 收口 wikilink 有效性判定,
+        _parse_wikilink_target 收口 alias 拆分.
+        主函数仅遍历 + 委托.
+
         Args:
             wikilinks: [[target]] 或 [[target|alias]] 列表
 
         Returns:
             有效 (文件存在) wikilink 数
         """
-        valid = 0
-        for link in wikilinks:
-            target = link.split("|")[0].strip() if "|" in link else link.strip()
-            if not target.startswith(("docs/", "case-studies/", "examples/")):
-                continue
-            target_path = Path(target)
-            if target_path.exists() or target_path.with_suffix(".md").exists():
-                valid += 1
-        return valid
+        return sum(1 for link in wikilinks if self._is_valid_wikilink_target(link))
+
+    def _is_valid_wikilink_target(self, link: str) -> bool:
+        """判断 wikilink 是否指向真实存在文件 (含 alias 拆分 + 路径前缀 + 存在性).
+
+        Args:
+            link: 单个 wikilink 字符串 (如 'docs/foo|alias')
+
+        Returns:
+            True if 有效 wikilink 目标
+        """
+        target = self._parse_wikilink_target(link)
+        if not target.startswith(("docs/", "case-studies/", "examples/")):
+            return False
+        target_path = Path(target)
+        return target_path.exists() or target_path.with_suffix(".md").exists()
+
+    def _parse_wikilink_target(self, link: str) -> str:
+        """解析 wikilink 字符串, 返回 target 部分 (无 alias).
+
+        Args:
+            link: wikilink 字符串
+
+        Returns:
+            target 路径 (无 |alias 后缀)
+        """
+        return link.split("|")[0].strip() if "|" in link else link.strip()
 
     def _generate_feedback(self, metrics: QualityMetrics, content: str) -> None:
         """Generate issues and strengths based on analysis.

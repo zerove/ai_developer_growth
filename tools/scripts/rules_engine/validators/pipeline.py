@@ -283,44 +283,65 @@ def _get_embedded_rules(language: str) -> dict[str, Any]:
 
 
 def _merge_rules(base: dict[str, Any], custom: dict[str, Any]) -> dict[str, Any]:
-    """Merge custom rules into base rules. Custom overrides by ID."""
+    """Merge custom rules into base rules (V2.21 P5-62 拆分: 抽 _merge_anti_patterns + _merge_dict_section)."""
     merged = dict(base)
 
-    base_patterns = merged.get("anti_patterns", [])
-    custom_patterns = custom.get("anti_patterns", [])
+    if custom.get("anti_patterns"):
+        merged["anti_patterns"] = _merge_anti_patterns(merged.get("anti_patterns", []), custom["anti_patterns"])
 
-    if custom_patterns:
-        base_ids = {p["id"] for p in base_patterns}
-        overridden = []
-        new_only = []
-        for cp in custom_patterns:
-            if cp.get("id") in base_ids:
-                overridden.append(cp)
-            else:
-                new_only.append(cp)
-
-        merged_patterns = []
-        for p in base_patterns:
-            match = next((cp for cp in overridden if cp["id"] == p["id"]), None)
-            if match:
-                if "severity_override" in match:
-                    p = dict(p)
-                    p["severity"] = match["severity_override"]
-                    merged_patterns.append(p)
-                else:
-                    merged_patterns.append(match)
-            else:
-                merged_patterns.append(p)
-        merged_patterns.extend(new_only)
-        merged["anti_patterns"] = merged_patterns
-
-    if custom.get("naming"):
-        merged.setdefault("naming", {}).update(custom["naming"])
-
-    if custom.get("thresholds"):
-        merged.setdefault("thresholds", {}).update(custom["thresholds"])
+    _merge_dict_section(merged, custom, "naming")
+    _merge_dict_section(merged, custom, "thresholds")
 
     return merged
+
+
+def _merge_anti_patterns(
+    base_patterns: list[dict[str, Any]], custom_patterns: list[dict[str, Any]]
+) -> list[dict[str, Any]]:
+    """合并 anti_patterns 列表 (custom 覆盖 by ID, 模块级 helper).
+
+    Args:
+        base_patterns: 基础 pattern 列表
+        custom_patterns: 自定义 pattern 列表
+
+    Returns:
+        合并后的 pattern 列表
+    """
+    base_ids = {p["id"] for p in base_patterns}
+    overridden = []
+    new_only = []
+    for cp in custom_patterns:
+        if cp.get("id") in base_ids:
+            overridden.append(cp)
+        else:
+            new_only.append(cp)
+
+    merged_patterns = []
+    for p in base_patterns:
+        match = next((cp for cp in overridden if cp["id"] == p["id"]), None)
+        if match:
+            if "severity_override" in match:
+                p = dict(p)
+                p["severity"] = match["severity_override"]
+                merged_patterns.append(p)
+            else:
+                merged_patterns.append(match)
+        else:
+            merged_patterns.append(p)
+    merged_patterns.extend(new_only)
+    return merged_patterns
+
+
+def _merge_dict_section(merged: dict[str, Any], custom: dict[str, Any], key: str) -> None:
+    """合并 dict 段 (naming/thresholds) (模块级 helper, 内部修改 merged).
+
+    Args:
+        merged: 累积目标
+        custom: 自定义 dict
+        key: 段名 (naming 或 thresholds)
+    """
+    if custom.get(key):
+        merged.setdefault(key, {}).update(custom[key])
 
 
 def validate_file(

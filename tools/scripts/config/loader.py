@@ -387,7 +387,7 @@ def _resolve_extends(config_dict: dict[str, Any], base_dir: Path) -> dict[str, A
 
 
 def load_config(config_path: Path | str | None = None) -> GovernanceConfig:
-    """加载配置 (主入口)
+    """加载配置 (V2.21 P5-33 拆分: 抽 _resolve_config_path + _load_config_dict).
 
     加载顺序 (后者覆盖前者):
     1. 默认值
@@ -398,16 +398,7 @@ def load_config(config_path: Path | str | None = None) -> GovernanceConfig:
     global _config_instance, _config_mtime, _config_path
 
     with _config_lock:
-        # 确定配置文件路径
-        if config_path:
-            target_path = Path(config_path)
-        else:
-            target_path = None
-            for p in DEFAULT_CONFIG_PATHS:
-                if p.exists():
-                    target_path = p
-                    break
-
+        target_path = _resolve_config_path(config_path)
         if target_path and target_path.exists():
             _config_path = target_path.resolve()
             mtime = _config_path.stat().st_mtime
@@ -416,25 +407,7 @@ def load_config(config_path: Path | str | None = None) -> GovernanceConfig:
             if _config_instance is not None and mtime == _config_mtime:
                 return _config_instance
 
-            # 加载配置
-            if target_path.suffix in (".yaml", ".yml"):
-                config_dict = _load_yaml_file(target_path)
-            elif target_path.suffix == ".toml":
-                config_dict = _load_toml_config(target_path)
-            elif target_path.suffix == ".cfg":
-                config_dict = _load_cfg_config(target_path)
-            else:
-                config_dict = {}
-
-            if config_dict:
-                # 解析继承链
-                config_dict = _resolve_extends(config_dict, target_path.parent)
-                # 转换为配置对象
-                _config_instance = _dict_to_config(config_dict)
-            else:
-                _config_instance = GovernanceConfig()
-
-            _config_mtime = mtime
+            _config_instance, _config_mtime = _build_config_instance(target_path, mtime)
         else:
             # 无配置文件，使用默认值
             _config_instance = GovernanceConfig()
@@ -443,8 +416,63 @@ def load_config(config_path: Path | str | None = None) -> GovernanceConfig:
 
         # 应用环境变量覆盖
         _config_instance = _apply_env_overrides(_config_instance)
-
         return _config_instance
+
+
+def _resolve_config_path(config_path: Path | str | None) -> Path | None:
+    """解析配置文件路径 (config_path or DEFAULT_CONFIG_PATHS 第一个存在, 模块级 helper).
+
+    Args:
+        config_path: 显式指定路径 (None 时走默认)
+
+    Returns:
+        解析后 Path, 不存在返回 None
+    """
+    if config_path:
+        return Path(config_path)
+    for p in DEFAULT_CONFIG_PATHS:
+        if p.exists():
+            return p
+    return None
+
+
+def _build_config_instance(target_path: Path, mtime: float) -> tuple[GovernanceConfig, float]:
+    """构造 GovernanceConfig + 更新 mtime (模块级 helper).
+
+    处理 yaml/toml/cfg 三种格式 + 继承链 + dict → config 转换.
+
+    Args:
+        target_path: 配置文件路径
+        mtime: 文件修改时间
+
+    Returns:
+        (config_instance, mtime) 元组
+    """
+    config_dict = _load_config_dict(target_path)
+    if config_dict:
+        config_dict = _resolve_extends(config_dict, target_path.parent)
+        instance = _dict_to_config(config_dict)
+    else:
+        instance = GovernanceConfig()
+    return instance, mtime
+
+
+def _load_config_dict(target_path: Path) -> dict[str, Any] | None:
+    """按后缀加载配置字典 (模块级 helper).
+
+    Args:
+        target_path: 配置文件路径
+
+    Returns:
+        配置字典, 未知后缀返回 {}
+    """
+    if target_path.suffix in (".yaml", ".yml"):
+        return _load_yaml_file(target_path)
+    if target_path.suffix == ".toml":
+        return _load_toml_config(target_path)
+    if target_path.suffix == ".cfg":
+        return _load_cfg_config(target_path)
+    return None
 
 
 def get_config() -> GovernanceConfig:

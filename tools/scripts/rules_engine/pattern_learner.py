@@ -103,7 +103,7 @@ class PatternLearner:
         return suggestions
 
     def _analyze_naming(self, files: list[Path]) -> dict[str, list[str]]:
-        """分析代码中的命名模式。"""
+        """Analyze naming patterns in code (V2.21 P5-55 拆分: 抽 _collect_function_names + _collect_class_names, 方法级 helper)."""
         patterns: dict[str, list[str]] = {}
         func_pattern = re.compile(r"def (\w+)|\bfn (\w+)|\bfunction (\w+)")
         cls_pattern = re.compile(r"class (\w+)")
@@ -114,21 +114,42 @@ class PatternLearner:
             except Exception:
                 continue
 
-            for match in func_pattern.finditer(content):
-                name = match.group(1) or match.group(2) or match.group(3)
-                if name.startswith("__") or name == "self":
-                    continue
-                if name[0].islower() and "_" in name:
-                    patterns.setdefault("snake_case", []).append(name)
-                elif name[0].islower() and name[0].isalpha():
-                    patterns.setdefault("camelCase", []).append(name)
-
-            for match in cls_pattern.finditer(content):
-                name = match.group(1)
-                if name[0].isupper():
-                    patterns.setdefault("PascalCase", []).append(name)
+            self._collect_function_names(content, func_pattern, patterns)
+            self._collect_class_names(content, cls_pattern, patterns)
 
         return patterns
+
+    def _collect_function_names(
+        self, content: str, func_pattern: re.Pattern[str], patterns: dict[str, list[str]]
+    ) -> None:
+        """从 content 提取 function 名 + 分类 (snake_case/camelCase, 方法级 helper).
+
+        Args:
+            content: 文件内容
+            func_pattern: 函数名正则
+            patterns: 累积目标字典
+        """
+        for match in func_pattern.finditer(content):
+            name = match.group(1) or match.group(2) or match.group(3)
+            if name.startswith("__") or name == "self":
+                continue
+            if name[0].islower() and "_" in name:
+                patterns.setdefault("snake_case", []).append(name)
+            elif name[0].islower() and name[0].isalpha():
+                patterns.setdefault("camelCase", []).append(name)
+
+    def _collect_class_names(self, content: str, cls_pattern: re.Pattern[str], patterns: dict[str, list[str]]) -> None:
+        """从 content 提取 class 名 (PascalCase, 方法级 helper).
+
+        Args:
+            content: 文件内容
+            cls_pattern: class 名正则
+            patterns: 累积目标字典
+        """
+        for match in cls_pattern.finditer(content):
+            name = match.group(1)
+            if name[0].isupper():
+                patterns.setdefault("PascalCase", []).append(name)
 
     def _learn_error_handling_style(self, project_path: Path) -> list[dict[str, Any]]:
         """分析错误处理风格。"""

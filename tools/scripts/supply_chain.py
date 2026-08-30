@@ -700,45 +700,69 @@ class SBOMGenerator:
         )
 
     def _parse_maven_deps(self, project_root: Path) -> list[Dependency]:
-        """解析 Maven 依赖 (pom.xml)"""
-        deps = []
+        """解析 Maven 依赖 (pom.xml).
 
-        # 尝试使用 maven-dependency-plugin 或解析 pom.xml
+        V2.20 P4-40 拆分: 抽 _extract_maven_dep 收口单 dep XML 解析,
+        _parse_pom_xml 收口 XML 加载 + 遍历, 主函数仅文件存在 + try/except.
+        """
+        deps: list[Dependency] = []
         pom_xml = project_root / "pom.xml"
-        if pom_xml.exists():
-            try:
-                import xml.etree.ElementTree as ET
-
-                tree = ET.parse(pom_xml)  # nosec B320 - parsing local trusted pom.xml
-                root = tree.getroot()
-
-                # Maven 命名空间
-                ns = {"m": "http://maven.apache.org/POM/4.0.0"}
-
-                # 解析 dependencies
-                for dep_elem in root.findall(".//m:dependency", ns):
-                    group_id = dep_elem.find("m:groupId", ns)
-                    artifact_id = dep_elem.find("m:artifactId", ns)
-                    version_elem = dep_elem.find("m:version", ns)
-                    scope_elem = dep_elem.find("m:scope", ns)
-
-                    if group_id is not None and artifact_id is not None:
-                        name = f"{group_id.text}:{artifact_id.text}"
-                        version = version_elem.text if version_elem is not None else ""
-                        scope = scope_elem.text if scope_elem is not None else "compile"
-                        is_direct = scope == "compile"
-
-                        dep = Dependency(
-                            name=name,
-                            version=version or "",
-                            ecosystem="maven",
-                            is_direct=is_direct,
-                        )
-                        deps.append(dep)
-            except Exception as e:
-                logger.warning(f"Failed to parse pom.xml: {e}")
-
+        if not pom_xml.exists():
+            return deps
+        try:
+            deps = self._parse_pom_xml(pom_xml)
+        except Exception as e:
+            logger.warning(f"Failed to parse pom.xml: {e}")
         return deps
+
+    def _parse_pom_xml(self, pom_xml: Path) -> list[Dependency]:
+        """解析 pom.xml 文件, 提取所有 dependencies.
+
+        Args:
+            pom_xml: pom.xml 路径
+
+        Returns:
+            dependency 列表
+        """
+        import xml.etree.ElementTree as ET
+
+        tree = ET.parse(pom_xml)  # nosec B320 - parsing local trusted pom.xml
+        root = tree.getroot()
+        ns = {"m": "http://maven.apache.org/POM/4.0.0"}
+
+        deps: list[Dependency] = []
+        for dep_elem in root.findall(".//m:dependency", ns):
+            dep = self._extract_maven_dep(dep_elem, ns)
+            if dep is not None:
+                deps.append(dep)
+        return deps
+
+    def _extract_maven_dep(self, dep_elem: object, ns: dict[str, str]) -> Dependency | None:
+        """从 XML dependency 元素提取 Dependency 对象.
+
+        Args:
+            dep_elem: XML dependency 元素
+            ns: Maven 命名空间
+
+        Returns:
+            Dependency 对象 (None if groupId/artifactId 缺失)
+        """
+        group_id = dep_elem.find("m:groupId", ns)  # type: ignore[attr-defined]
+        artifact_id = dep_elem.find("m:artifactId", ns)  # type: ignore[attr-defined]
+        version_elem = dep_elem.find("m:version", ns)  # type: ignore[attr-defined]
+        scope_elem = dep_elem.find("m:scope", ns)  # type: ignore[attr-defined]
+
+        if group_id is None or artifact_id is None:
+            return None
+
+        version = version_elem.text if version_elem is not None else ""
+        scope = scope_elem.text if scope_elem is not None else "compile"
+        return Dependency(
+            name=f"{group_id.text}:{artifact_id.text}",
+            version=version or "",
+            ecosystem="maven",
+            is_direct=scope == "compile",
+        )
 
     def _parse_gradle_deps(self, project_root: Path) -> list[Dependency]:
         """解析 Gradle 依赖 (build.gradle / build.gradle.kts)。"""

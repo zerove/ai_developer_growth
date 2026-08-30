@@ -276,14 +276,25 @@ class EnhancedTFIDF:
         }
 
     def suggest(self, prefix: str, top_k: int = 10) -> list[str]:
-        """Get search suggestions based on prefix."""
+        """Get search suggestions based on prefix (V2.21 P5-31 拆分: 抽 _suggest_from_documents + _suggest_from_vocabulary)."""
         prefix = prefix.lower().strip()
         if not prefix:
             return []
 
-        # 从文档标题、标签、内容中提取建议
-        suggestions = set()
+        suggestions = self._suggest_from_documents(prefix)
+        suggestions |= self._suggest_from_vocabulary(prefix)
+        return sorted(suggestions)[:top_k]
 
+    def _suggest_from_documents(self, prefix: str) -> set[str]:
+        """从 documents 提取建议: 标题词 + 标签 + 分类 (方法级 helper).
+
+        Args:
+            prefix: 小写 prefix
+
+        Returns:
+            建议集合
+        """
+        suggestions: set[str] = set()
         for doc in self.documents:
             # 标题建议
             title_words = self._tokenize(doc.title)
@@ -300,13 +311,22 @@ class EnhancedTFIDF:
             # 分类建议
             if doc.category and doc.category.lower().startswith(prefix):
                 suggestions.add(doc.category)
+        return suggestions
 
-        # 从词汇表中获取建议
+    def _suggest_from_vocabulary(self, prefix: str) -> set[str]:
+        """从 doc_freqs 词汇表提取建议 (方法级 helper).
+
+        Args:
+            prefix: 小写 prefix
+
+        Returns:
+            建议集合
+        """
+        suggestions: set[str] = set()
         for term in self.doc_freqs.keys():
             if term.startswith(prefix) and len(term) > 1:
                 suggestions.add(term)
-
-        return sorted(list(suggestions))[:top_k]
+        return suggestions
 
 
 def create_enhanced_index(documents: list[Document]) -> EnhancedTFIDF:

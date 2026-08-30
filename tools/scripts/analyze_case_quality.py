@@ -819,33 +819,25 @@ def main() -> int:
 
 
 def format_report(report: dict[str, Any]) -> str:
-    """Format report as human-readable text."""
-    lines = []
+    """Format report as human-readable text.
+
+    V2.20 P4-41 拆分: 抽 _format_score_table 收口 6 项均值渲染,
+    _format_case_list 收口 top/bottom cases 列表.
+    主函数仅 6 段 + 标题收尾.
+    """
+    lines: list[str] = []
     lines.append("=" * 70)
     lines.append("  📊 Case Study Quality Analysis Report")
     lines.append("=" * 70)
-
     summary = report["summary"]
     lines.append(f"\n📈 Summary ({summary['total_cases']} cases)")
-    lines.append(f"  Overall Average:        {summary['average_scores']['overall']}/100")
-    lines.append(f"  Authenticity:           {summary['average_scores']['authenticity']}/100")
-    lines.append(f"  Efficiency Credibility: {summary['average_scores']['efficiency_credibility']}/100")
-    lines.append(f"  Insight Quality:        {summary['average_scores']['insight_quality']}/100")
-    lines.append(f"  Completeness:           {summary['average_scores']['completeness']}/100")
-    lines.append(f"  Cross-References:       {summary['average_scores']['cross_references']}/100")
-
+    lines.extend(_format_score_table(summary["average_scores"]))
     lines.append("\n📊 Categories:")
     lines.append(f"  Excellent (≥80):        {summary['categories']['excellent']}")
     lines.append(f"  Good (60-79):           {summary['categories']['good']}")
     lines.append(f"  Needs Improvement (<60): {summary['categories']['needs_improvement']}")
-
-    lines.append("\n🏆 Top 5 Cases:")
-    for case in report["top_cases"]:
-        lines.append(f"  {case['score']:>5.1f}  {case['name']}")
-
-    lines.append("\n📉 Bottom 5 Cases:")
-    for case in report["bottom_cases"]:
-        lines.append(f"  {case['score']:>5.1f}  {case['name']}")
+    lines.extend(_format_case_list("🏆 Top 5 Cases:", report["top_cases"]))
+    lines.extend(_format_case_list("📉 Bottom 5 Cases:", report["bottom_cases"]))
 
     lines.append("\n⚠️  Common Issues:")
     for issue, count in list(report["common_issues"].items())[:10]:
@@ -872,6 +864,41 @@ def format_report(report: dict[str, Any]) -> str:
         )
 
     return "\n".join(lines)
+
+
+def _format_score_table(scores: dict[str, float]) -> list[str]:
+    """渲染 6 项均值分数表 (模块级 helper).
+
+    Args:
+        scores: average_scores 字典
+
+    Returns:
+        格式化的字符串列表
+    """
+    return [
+        f"  Overall Average:        {scores['overall']}/100",
+        f"  Authenticity:           {scores['authenticity']}/100",
+        f"  Efficiency Credibility: {scores['efficiency_credibility']}/100",
+        f"  Insight Quality:        {scores['insight_quality']}/100",
+        f"  Completeness:           {scores['completeness']}/100",
+        f"  Cross-References:       {scores['cross_references']}/100",
+    ]
+
+
+def _format_case_list(header: str, cases: list[dict[str, Any]]) -> list[str]:
+    """渲染 top/bottom cases 列表 (模块级 helper).
+
+    Args:
+        header: 段标题
+        cases: case 字典列表 (含 score/name 字段)
+
+    Returns:
+        格式化的字符串列表 (含 header + 各 case 行)
+    """
+    lines: list[str] = [header]
+    for case in cases:
+        lines.append(f"  {case['score']:>5.1f}  {case['name']}")
+    return lines
 
 
 if __name__ == "__main__":

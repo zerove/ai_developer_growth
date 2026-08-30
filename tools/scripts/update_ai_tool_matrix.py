@@ -74,6 +74,76 @@ class ModelInfo:
             self.use_cases = []
 
 
+_KNOWN_TOOLS: set[str] = {
+    "工具",
+    "---",
+    "jcode",
+    "opencode",
+    "Claude Code",
+    "Cursor Agent",
+    "GitHub Copilot CLI",
+    "VS Code",
+    "Cursor",
+    "Windsurf",
+    "Zed",
+    "Cline",
+    "v0.dev",
+    "Perplexity AI",
+    "AI-Context-Sync",
+}
+
+_IDE_TOOLS: set[str] = {"VS Code", "Cursor", "Windsurf", "Zed"}
+
+
+def _is_tool_section_header(line: str) -> bool:
+    """判断是否为工具段表头 (含 AI Coding Agent Harness / 编码代理框架, 模块级 helper).
+
+    Args:
+        line: 源码行
+
+    Returns:
+        是否为工具段表头
+    """
+    return "AI Coding Agent Harness" in line or "编码代理框架" in line
+
+
+def _is_known_tool(name: str) -> bool:
+    """判断 name 是否在已知工具集合 (模块级 helper).
+
+    Args:
+        name: 工具名
+
+    Returns:
+        是否已知
+    """
+    return name in _KNOWN_TOOLS
+
+
+def _build_tool_info(name: str, m: re.Match[str], line: str) -> ToolInfo:
+    """从 re.Match 构造 ToolInfo (模块级 helper).
+
+    Args:
+        name: 工具名
+        m: 正则 match
+        line: 完整源行 (用于 category 推断)
+
+    Returns:
+        ToolInfo 实例
+    """
+    core_feature = m.group(2).strip()
+    advantage = m.group(3).strip()
+    audience = m.group(5).strip()
+    category = "coding_agent" if "Agent" in line or "Agent" in name else ("ide" if name in _IDE_TOOLS else "utility")
+    return ToolInfo(
+        name=name,
+        category=category,
+        current_version="latest",
+        description=f"{core_feature}. {advantage}",
+        pricing=audience,
+        last_checked=datetime.now().isoformat(),
+    )
+
+
 class ToolMatrixUpdater:
     def __init__(self) -> None:
         self.tools: dict[str, ToolInfo] = {}
@@ -138,51 +208,22 @@ class ToolMatrixUpdater:
             )
 
     def _parse_tools(self) -> None:
-        """Parse tools table from markdown."""
+        """Parse tools table from markdown (V2.21 P5-28 拆分: 抽 _is_tool_section_header + _is_known_tool + _build_tool_info)."""
         tool_pattern = r"\|\s*(.+?)\s*\|\s*(.+?)\s*\|\s*(.+?)\s*\|\s*(.+?)\s*\|\s*(.+?)\s*\|"
         in_tools_section = False
         for line in self.matrix_content.split("\n"):
-            if "AI Coding Agent Harness" in line or "编码代理框架" in line:
+            if _is_tool_section_header(line):
                 in_tools_section = True
                 continue
-            if in_tools_section and line.startswith("|"):
-                m = re.match(tool_pattern, line)
-                if m and not m.group(1).startswith(" "):
-                    name = m.group(1).strip()
-                    if name in [
-                        "工具",
-                        "---",
-                        "jcode",
-                        "opencode",
-                        "Claude Code",
-                        "Cursor Agent",
-                        "GitHub Copilot CLI",
-                        "VS Code",
-                        "Cursor",
-                        "Windsurf",
-                        "Zed",
-                        "Cline",
-                        "v0.dev",
-                        "Perplexity AI",
-                        "AI-Context-Sync",
-                    ]:
-                        core_feature = m.group(2).strip()
-                        advantage = m.group(3).strip()
-                        _disadvantage = m.group(4).strip()
-                        audience = m.group(5).strip()
-
-                        self.tools[name] = ToolInfo(
-                            name=name,
-                            category=(
-                                "coding_agent"
-                                if "Agent" in line or "Agent" in name
-                                else ("ide" if name in ["VS Code", "Cursor", "Windsurf", "Zed"] else "utility")
-                            ),
-                            current_version="latest",
-                            description=f"{core_feature}. {advantage}",
-                            pricing=audience,
-                            last_checked=datetime.now().isoformat(),
-                        )
+            if not (in_tools_section and line.startswith("|")):
+                continue
+            m = re.match(tool_pattern, line)
+            if not m or m.group(1).startswith(" "):
+                continue
+            name = m.group(1).strip()
+            if not _is_known_tool(name):
+                continue
+            self.tools[name] = _build_tool_info(name, m, line)
 
     async def check_model_updates(self) -> list[str]:
         """Check for model updates from various sources."""

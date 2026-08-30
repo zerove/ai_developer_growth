@@ -11,7 +11,7 @@ _RESET = "\033[0m"
 
 
 def _format_human(issues: list[Issue], language: str, framework: str | None, files_checked: int) -> str:
-    """Format issues as human-readable output."""
+    """Format issues as human-readable output (V2.21 P5-23 拆分: 抽 _format_issue_lines + _count_by_severity + _format_summary)."""
     lines: list[str] = []
 
     fw_str = f" + {framework}" if framework else ""
@@ -19,7 +19,24 @@ def _format_human(issues: list[Issue], language: str, framework: str | None, fil
     lines.append(f"Rules loaded: {len(issues)} issues found")
     lines.append("")
 
-    # Group by file
+    lines.extend(_format_issue_lines(issues))
+
+    error_count, warning_count, info_count = _count_by_severity(issues)
+    lines.append("")
+    lines.append(_format_summary(error_count, warning_count, info_count, files_checked))
+    return "\n".join(lines)
+
+
+def _format_issue_lines(issues: list[Issue]) -> list[str]:
+    """按 file/line 排序, 格式化为 issue 行 (模块级 helper).
+
+    Args:
+        issues: issue 列表
+
+    Returns:
+        格式化后的字符串行列表
+    """
+    lines: list[str] = []
     by_file: dict[str, list[Issue]] = {}
     for issue in issues:
         by_file.setdefault(issue.file, []).append(issue)
@@ -31,13 +48,36 @@ def _format_human(issues: list[Issue], language: str, framework: str | None, fil
             lines.append(f"{loc}  {color}{issue.severity:7s}{_RESET}  {issue.rule_id:30s}  {issue.message}")
             if issue.fix_hint:
                 lines.append(f"{' ' * len(loc)}  {' ' * 7}  {' ' * 30}  → {issue.fix_hint}")
+    return lines
 
-    # Summary
+
+def _count_by_severity(issues: list[Issue]) -> tuple[int, int, int]:
+    """按 severity 计数 (模块级 helper, 类似 P4-50 _compute_result_counts).
+
+    Args:
+        issues: issue 列表
+
+    Returns:
+        (error, warning, info) 三元组
+    """
     error_count = sum(1 for i in issues if i.severity == "error")
     warning_count = sum(1 for i in issues if i.severity == "warning")
     info_count = sum(1 for i in issues if i.severity == "info")
+    return error_count, warning_count, info_count
 
-    lines.append("")
+
+def _format_summary(error_count: int, warning_count: int, info_count: int, files_checked: int) -> str:
+    """格式化汇总行 (模块级 helper).
+
+    Args:
+        error_count: error 数
+        warning_count: warning 数
+        info_count: info 数
+        files_checked: 已检查文件数
+
+    Returns:
+        汇总字符串
+    """
     parts = []
     if error_count:
         parts.append(f"\033[91m{error_count} error{'s' if error_count != 1 else ''}\033[0m")
@@ -47,11 +87,8 @@ def _format_human(issues: list[Issue], language: str, framework: str | None, fil
         parts.append(f"\033[96m{info_count} info\033[0m")
 
     if parts:
-        lines.append(f"{'  '.join(parts)} in {files_checked} file{'s' if files_checked != 1 else ''}")
-    else:
-        lines.append(f"\033[92m✓ All checks passed\033[0m ({files_checked} files)")
-
-    return "\n".join(lines)
+        return f"{'  '.join(parts)} in {files_checked} file{'s' if files_checked != 1 else ''}"
+    return f"\033[92m✓ All checks passed\033[0m ({files_checked} files)"
 
 
 def _format_json(issues: list[Issue], language: str, framework: str | None, files_checked: int) -> str:

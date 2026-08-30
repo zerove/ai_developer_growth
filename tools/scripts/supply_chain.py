@@ -1013,24 +1013,44 @@ class SupplyChainScanner:
     ) -> dict[str, int]:
         """构建扫描汇总字段.
 
-        Args:
-            all_deps: 依赖列表
-            vulns: 漏洞列表
-            license_issues: 许可证问题列表
-
-        Returns:
-            summary dict (8 字段)
+        V2.20 P4-45 拆分: 抽 _count_vulns_by_severity 收口 4 行 vuln 计数,
+        _count_direct_deps 收口 is_direct 计数, 主函数仅 dict 字面量构造.
         """
         return {
             "total_dependencies": len(all_deps),
-            "direct_dependencies": sum(1 for d in all_deps if d.is_direct),
+            "direct_dependencies": self._count_direct_deps(all_deps),
             "vulnerabilities": len(vulns),
-            "critical": sum(1 for v in vulns if v.severity == Severity.CRITICAL),
-            "high": sum(1 for v in vulns if v.severity == Severity.HIGH),
-            "medium": sum(1 for v in vulns if v.severity == Severity.MEDIUM),
-            "low": sum(1 for v in vulns if v.severity == Severity.LOW),
+            "critical": self._count_vulns_by_severity(vulns, Severity.CRITICAL),
+            "high": self._count_vulns_by_severity(vulns, Severity.HIGH),
+            "medium": self._count_vulns_by_severity(vulns, Severity.MEDIUM),
+            "low": self._count_vulns_by_severity(vulns, Severity.LOW),
             "license_issues": len(license_issues),
         }
+
+    @staticmethod
+    def _count_vulns_by_severity(vulns: list[Vulnerability], severity: Severity) -> int:
+        """按 severity 计数 vulns (模块级 helper).
+
+        Args:
+            vulns: 漏洞列表
+            severity: 严重等级
+
+        Returns:
+            该等级漏洞数
+        """
+        return sum(1 for v in vulns if v.severity == severity)
+
+    @staticmethod
+    def _count_direct_deps(deps: list[Dependency]) -> int:
+        """计数直接依赖 (模块级 helper).
+
+        Args:
+            deps: 依赖列表
+
+        Returns:
+            is_direct=True 数量
+        """
+        return sum(1 for d in deps if d.is_direct)
 
     def _flatten_deps(self, deps: list[Dependency]) -> list[Dependency]:
         """扁平化依赖树"""

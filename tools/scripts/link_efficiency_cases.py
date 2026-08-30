@@ -63,31 +63,60 @@ KEYWORD_ALIASES = {
 def _extract_keywords(filepath: Path) -> set[str]:
     """从 markdown 文件提取关键词 (frontmatter tags + 标题 + description)。
 
-    V2.16 改进: 增加 description 字段, 提升中文 case 与英文 ai 文档的匹配率。
+    V2.21 P5-8 拆分: 抽 _parse_frontmatter_keywords 收口 frontmatter 解析,
+    _parse_h1_keywords 收口 H1 标题解析,
+    主函数仅 try/except + 2 委托.
     """
     keywords: set[str] = set()
     try:
         content = filepath.read_text(encoding="utf-8")
     except Exception:
         return keywords
-    # frontmatter tags + description
+    keywords.update(_parse_frontmatter_keywords(content))
+    keywords.update(_parse_h1_keywords(content))
+    return keywords
+
+
+def _parse_frontmatter_keywords(content: str) -> set[str]:
+    """从 markdown frontmatter 提取 keywords (tags + description, 模块级 helper).
+
+    Args:
+        content: 完整 markdown 内容
+
+    Returns:
+        keyword 集合
+    """
+    keywords: set[str] = set()
     fm_match = re.match(r"^---\n(.*?)\n---", content, re.DOTALL)
-    if fm_match:
-        fm = fm_match.group(1)
-        # tags: ['a', 'b']
-        for tag in re.findall(r"tags:\s*\[([^\]]*)\]", fm):
-            for t in re.split(r"[,\s]+", tag):
-                t = t.strip().strip("'\"")
-                if t:
-                    keywords.add(t.lower())
-        # description: 中文长句, 按词切
-        desc_match = re.search(r"description:\s*[\"']?(.+?)[\"']?\s*$", fm, re.MULTILINE)
-        if desc_match:
-            for word in re.split(r"[\s,;:，。；：、\.\?!]+", desc_match.group(1)):
-                w = word.strip().lower()
-                if w and len(w) > 1:
-                    keywords.add(w)
-    # H1 标题
+    if not fm_match:
+        return keywords
+    fm = fm_match.group(1)
+    # tags: ['a', 'b']
+    for tag in re.findall(r"tags:\s*\[([^\]]*)\]", fm):
+        for t in re.split(r"[,\s]+", tag):
+            t = t.strip().strip("'\"")
+            if t:
+                keywords.add(t.lower())
+    # description: 中文长句, 按词切
+    desc_match = re.search(r"description:\s*[\"']?(.+?)[\"']?\s*$", fm, re.MULTILINE)
+    if desc_match:
+        for word in re.split(r"[\s,;:，。；：、\.\?!]+", desc_match.group(1)):
+            w = word.strip().lower()
+            if w and len(w) > 1:
+                keywords.add(w)
+    return keywords
+
+
+def _parse_h1_keywords(content: str) -> set[str]:
+    """从 markdown H1 标题提取 keywords (模块级 helper).
+
+    Args:
+        content: 完整 markdown 内容
+
+    Returns:
+        keyword 集合
+    """
+    keywords: set[str] = set()
     for h1 in re.findall(r"^#\s+(.+)$", content, re.MULTILINE):
         for word in re.split(r"[\s,;:，。；：、\.\?!]+", h1):
             w = word.strip().lower()

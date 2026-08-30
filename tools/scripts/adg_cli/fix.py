@@ -60,39 +60,66 @@ def fix_file(filepath: Path, rule_ids: list[str] | None = None) -> dict[str, Any
 
 
 def fix_directory(dirpath: Path, language: str | None = None) -> dict[str, Any]:
-    """Apply fixes to all code files in a directory."""
+    """Apply fixes to all code files in a directory (V2.21 P5-21 拆分: 抽 _should_process_file + _compute_applicable_rules)."""
     total_stats = {"fixed": 0, "skipped": 0, "errors": 0, "files": 0}
 
     for filepath in dirpath.rglob("*"):
         if not filepath.is_file():
             continue
-        try:
-            rel_parts = filepath.relative_to(dirpath).parts
-        except ValueError:
-            rel_parts = filepath.parts
-        if any(is_skipped_dir(part) for part in rel_parts):
-            continue
-        if filepath.suffix in SKIP_EXTENSIONS:
+        if not _should_process_file(filepath, dirpath, language):
             continue
 
-        # Filter by language if specified
-        if language:
-            file_lang = _detect_language_from_file(filepath)
-            if file_lang and file_lang != language:
-                continue
+        applicable_rules = _compute_applicable_rules(language)
+        if not applicable_rules:
+            continue
 
-        # Filter applicable rules by language
-        applicable_rules = {}
-        for rule_id, fix_info in FIX_RULES.items():
-            if language is None or fix_info.get("language") in (language, "common"):
-                applicable_rules[rule_id] = fix_info
-
-        if applicable_rules:
-            stats = fix_file(filepath, list(applicable_rules.keys()))
-            total_stats["fixed"] += stats["fixed"]
-            total_stats["skipped"] += stats["skipped"]
-            total_stats["errors"] += stats["errors"]
-            if stats["fixed"] > 0:
-                total_stats["files"] += 1
+        stats = fix_file(filepath, list(applicable_rules.keys()))
+        total_stats["fixed"] += stats["fixed"]
+        total_stats["skipped"] += stats["skipped"]
+        total_stats["errors"] += stats["errors"]
+        if stats["fixed"] > 0:
+            total_stats["files"] += 1
 
     return total_stats
+
+
+def _should_process_file(filepath: Path, dirpath: Path, language: str | None) -> bool:
+    """判断文件是否应处理 (跳过目录/扩展名/语言不匹配, 模块级 helper).
+
+    Args:
+        filepath: 文件路径
+        dirpath: 扫描根目录
+        language: 目标语言 (None 不过滤)
+
+    Returns:
+        True 表示应处理
+    """
+    try:
+        rel_parts = filepath.relative_to(dirpath).parts
+    except ValueError:
+        rel_parts = filepath.parts
+    if any(is_skipped_dir(part) for part in rel_parts):
+        return False
+    if filepath.suffix in SKIP_EXTENSIONS:
+        return False
+    if language:
+        file_lang = _detect_language_from_file(filepath)
+        if file_lang and file_lang != language:
+            return False
+    return True
+
+
+def _compute_applicable_rules(language: str | None) -> dict[str, Any]:
+    """按 language 过滤适用规则 (模块级 helper).
+
+    Args:
+        language: 目标语言 (None 不过滤)
+
+    Returns:
+        适用规则字典 {rule_id: fix_info}
+    """
+    applicable: dict[str, Any] = {}
+    for rule_id, fix_info in FIX_RULES.items():
+        if language is None or fix_info.get("language") in (language, "common"):
+            applicable[rule_id] = fix_info
+    return applicable

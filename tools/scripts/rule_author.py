@@ -116,24 +116,23 @@ def cmd_init(args: argparse.Namespace) -> None:
 
 
 def _get_rule_details(args: argparse.Namespace, lang: str) -> dict[str, str] | None:
-    """Get rule details from args or interactive input."""
-    rule_id = args.id
-    if not rule_id:
-        rule_id = input(f"Rule ID (e.g., {lang}-my-rule): ").strip()
-    if not rule_id:
-        print("Rule ID is required")
+    """Get rule details from args or interactive input.
+
+    V2.21 P5-4 拆分: 抽 _prompt_or_value 收口 args.X or input(prompt) 模式,
+    _prompt_required 收口必填字段 + None 返回 (rule_id/name/message),
+    主函数仅 3 段委托.
+    """
+    rule_id = _prompt_required(args.id, f"Rule ID (e.g., {lang}-my-rule): ", "Rule ID is required")
+    if rule_id is None:
         return None
 
-    name = args.name or input("Rule name: ").strip()
-    severity = args.severity or input(f"Severity ({'/'.join(SEVERITY_LEVELS)}): ").strip() or "warning"
-    message = args.message or input("Message: ").strip()
-
-    if not name or not message:
-        print("Name and message are required")
+    name, message = _prompt_required_pair(args.name, args.message, "Name and message are required")
+    if name is None or message is None:
         return None
 
-    pattern = args.pattern or input("Regex pattern (leave empty for non-pattern rules): ").strip()
-    fix_hint = args.fix_hint or input("Fix hint (optional): ").strip()
+    severity = _prompt_or_value(args.severity, f"Severity ({'/'.join(SEVERITY_LEVELS)}): ") or "warning"
+    pattern = _prompt_or_value(args.pattern, "Regex pattern (leave empty for non-pattern rules): ")
+    fix_hint = _prompt_or_value(args.fix_hint, "Fix hint (optional): ")
 
     return {
         "id": rule_id,
@@ -143,6 +142,60 @@ def _get_rule_details(args: argparse.Namespace, lang: str) -> dict[str, str] | N
         "pattern": pattern,
         "fix_hint": fix_hint,
     }
+
+
+def _prompt_or_value(arg_value: str | None, prompt: str) -> str:
+    """若 arg_value 非空则返回, 否则 input(prompt).strip() (模块级 helper).
+
+    Args:
+        arg_value: 命令行参数值 (可能为空)
+        prompt: input 提示文本
+
+    Returns:
+        优先 arg_value, 否则 input 去除首尾空白
+    """
+    if arg_value:
+        return arg_value
+    return input(prompt).strip()
+
+
+def _prompt_required(arg_value: str | None, prompt: str, error_msg: str) -> str | None:
+    """若 arg_value 为空则 input, 空字符串返回 None (模块级 helper).
+
+    Args:
+        arg_value: 命令行参数值
+        prompt: input 提示文本
+        error_msg: 必填为空时的错误消息
+
+    Returns:
+        值字符串, 若必填为空则 None
+    """
+    value = _prompt_or_value(arg_value, prompt)
+    if not value:
+        print(error_msg)
+        return None
+    return value
+
+
+def _prompt_required_pair(
+    name_arg: str | None, message_arg: str | None, error_msg: str
+) -> tuple[str | None, str | None]:
+    """批量获取 name + message 两个必填字段 (模块级 helper).
+
+    Args:
+        name_arg: name 命令行参数
+        message_arg: message 命令行参数
+        error_msg: 任一为空时的错误消息
+
+    Returns:
+        (name, message) 元组, 任一为空则都返回 None
+    """
+    name = _prompt_or_value(name_arg, "Rule name: ")
+    message = _prompt_or_value(message_arg, "Message: ")
+    if not name or not message:
+        print(error_msg)
+        return None, None
+    return name, message
 
 
 def _validate_pattern(pattern: str) -> bool:

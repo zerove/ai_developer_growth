@@ -16,7 +16,7 @@ from __future__ import annotations
 import os
 import sys
 from pathlib import Path
-from typing import Any, cast
+from typing import Any, TextIO, cast
 
 # ── 生成规则缓存目录 ──────────────────────────────────────
 
@@ -371,7 +371,7 @@ def print_status(language: str | None = None) -> None:
     _out.write(f"\n  Cache: {get_generated_rules_dir()}\n")
 
 
-def _print_empty(_out: Any) -> None:
+def _print_empty(_out: TextIO) -> None:
     """打印空状态 (无生成规则, 模块级 helper).
 
     Args:
@@ -382,7 +382,7 @@ def _print_empty(_out: Any) -> None:
     _out.write("   Use 'adg-dev generate-rules <language> [--file sample.ext]' to generate.\n")
 
 
-def _print_overview(gen_langs: list[str], _out: Any) -> None:
+def _print_overview(gen_langs: list[str], _out: TextIO) -> None:
     """打印所有生成语言总览 (模块级 helper).
 
     Args:
@@ -398,7 +398,7 @@ def _print_overview(gen_langs: list[str], _out: Any) -> None:
         _out.write(f"  {lang}: {len(rules)} rules ({errors}e/{warnings}w/{info}i)\n")
 
 
-def _print_language_details(language: str, _out: Any) -> None:
+def _print_language_details(language: str, _out: TextIO) -> None:
     """打印单语言规则详情 (含 icon, 模块级 helper).
 
     Args:

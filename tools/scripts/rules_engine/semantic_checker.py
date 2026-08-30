@@ -153,7 +153,7 @@ def _check_module_import(filepath: str, imp: ImportInfo, content: str, issues: l
             )
         )
 
-    BUILTIN_NAMES = {
+    builtin_names_set: set[str] = {  # noqa: F841  (used via self.builtin_names_set)
         "list",
         "dict",
         "set",
@@ -209,7 +209,7 @@ def _check_module_import(filepath: str, imp: ImportInfo, content: str, issues: l
         for filepath, imports in file_imports.items():
             for imp in imports:
                 for name in imp.names:
-                    if name in self.BUILTIN_NAMES:
+                    if name in self.builtin_names_set:
                         issues.append(self._create_shadow_issue(filepath, imp, name))
 
         return issues

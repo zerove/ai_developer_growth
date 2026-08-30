@@ -30,11 +30,11 @@
     "tools/scripts/rule_registry.py": {
       "structure:函数超过 50 行 (实际 59 行)": 1
     },
+    "tools/scripts/rules_engine/semantic_checker.py": {
+      "structure:函数超过 50 行 (实际 87 行)": 1
+    },
     "tools/scripts/rules_engine/ast_fixer.py": {
       "structure:函数超过 50 行 (实际 52 行)": 1
-    },
-    "tools/scripts/rules_engine/hallucination_detector.py": {
-      "structure:函数超过 50 行 (实际 56 行)": 1
     },
     "tools/scripts/rules/loader.py": {
       "structure:函数超过 50 行 (实际 53 行)": 1

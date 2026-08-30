@@ -107,38 +107,63 @@ def check_thresholds(lines: list[str], rules: dict[str, Any], filepath: str) -> 
 
 
 def extract_function_lines(lines: list[str], language: str) -> list[tuple[str, int, int]]:
-    """Extract function name, start line, end line."""
-    functions: list[tuple[str, int, int]] = []
-
+    """Extract function name, start line, end line (V2.21 P5-12 拆分: 抽 _extract_python_functions + _extract_regex_functions)."""
     if language == "python":
-        try:
-            tree = ast.parse("\n".join(lines))
-            for node in ast.walk(tree):
-                if isinstance(node, ast.FunctionDef | ast.AsyncFunctionDef):
-                    start = node.lineno
-                    end = getattr(node, "end_lineno", start + 50)
-                    functions.append((node.name, start, end))
-        except SyntaxError:
-            pass
+        return _extract_python_functions(lines)
+    if language in ("typescript", "ts", "rust", "go"):
+        return _extract_regex_functions(lines, language)
+    return []
 
-    elif language in ("typescript", "ts", "rust", "go"):
-        # Regex-based function detection for non-Python
-        patterns = {
-            "typescript": [
-                r"(?:export\s+)?(?:async\s+)?function\s+(\w+)",
-                r"(?:const|let)\s+(\w+)\s*=\s*(?:async\s+)?\(",
-            ],
-            "rust": [r"(?:pub\s+)?(?:async\s+)?fn\s+(\w+)"],
-            "go": [r"func\s+(?:\([^)]+\)\s+)?(\w+)"],
-        }
-        for pattern in patterns.get(language, []):
-            for match in re.finditer(pattern, "\n".join(lines)):
-                name = match.group(1)
-                start = "\n".join(lines[: match.start()]).count("\n") + 1
-                # Estimate end by finding next top-level definition
-                end = min(start + 50, len(lines))
-                functions.append((name, start, end))
 
+def _extract_python_functions(lines: list[str]) -> list[tuple[str, int, int]]:
+    """从 Python AST 提取函数名+行号范围 (模块级 helper).
+
+    Args:
+        lines: 源码行列表
+
+    Returns:
+        (name, start, end) 元组列表
+    """
+    functions: list[tuple[str, int, int]] = []
+    try:
+        tree = ast.parse("\n".join(lines))
+        for node in ast.walk(tree):
+            if isinstance(node, ast.FunctionDef | ast.AsyncFunctionDef):
+                start = node.lineno
+                end = getattr(node, "end_lineno", start + 50)
+                functions.append((node.name, start, end))
+    except SyntaxError:
+        pass
+    return functions
+
+
+def _extract_regex_functions(lines: list[str], language: str) -> list[tuple[str, int, int]]:
+    """用正则从非 Python 源码提取函数名+估算行号 (模块级 helper).
+
+    Args:
+        lines: 源码行列表
+        language: typescript/rust/go
+
+    Returns:
+        (name, start, end) 元组列表
+    """
+    patterns: dict[str, list[str]] = {
+        "typescript": [
+            r"(?:export\s+)?(?:async\s+)?function\s+(\w+)",
+            r"(?:const|let)\s+(\w+)\s*=\s*(?:async\s+)?\(",
+        ],
+        "rust": [r"(?:pub\s+)?(?:async\s+)?fn\s+(\w+)"],
+        "go": [r"func\s+(?:\([^)]+\)\s+)?(\w+)"],
+    }
+    functions: list[tuple[str, int, int]] = []
+    content = "\n".join(lines)
+    for pattern in patterns.get(language, []):
+        for match in re.finditer(pattern, content):
+            name = match.group(1)
+            start = "\n".join(lines[: match.start()]).count("\n") + 1
+            # Estimate end by finding next top-level definition
+            end = min(start + 50, len(lines))
+            functions.append((name, start, end))
     return functions
 
 

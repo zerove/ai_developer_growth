@@ -2,6 +2,65 @@
 
 All notable changes to the AI Developer Growth project.
 
+## [2.21.0] - 2026-08-30
+
+### 重要变更: V2.20.0 后续 P5 续拆（Phase 24）
+
+完成 v2.20.0 后续 P5 续拆阶段 20 项任务 (P5-1 ~ P5-20)，覆盖 12 个文件、20+ commits、新增 30+ helper 函数。本阶段核心是**新一批 C 级热点全面拆解**与**state machine 简化**。
+
+#### 关键改进
+
+- **P5-1 smart_commit.generate_commit_message** C(15)→A(2): 抽 `_detect_file_types` + `_select_commit_template` 5 档
+- **P5-2 secret_scanner.scan** C(15)→A(2): 抽 `_partition_findings_by_severity` + `_build_scan_summary`
+- **P5-3 secret_scanner._run_gitleaks** C(11)→A(2): 抽 `_build_gitleaks_cmd` + `_parse_gitleaks_finding`
+- **P5-4 rule_author._get_rule_details** C(11)→A(2): 抽 `_prompt_for_id` + `_prompt_for_field`
+- **P5-5 rule_author._validate_single_rule** C(11)→A(2): 抽 `_check_required_fields` + `_check_pattern` + `_check_test_cases`
+- **P5-6 complexity_analyzer._check_python_function** C(14)→A(2): 抽 6 个 `_check_*` helper + 守卫反转模式
+- **P5-7 validate_example_projects.validate_example** C(11)→A(2): 抽 4 个 `_check_*` helper
+- **P5-8 link_efficiency._extract_keywords** C(14)→B(9): 抽 `_parse_frontmatter_keywords` + `_parse_h1_keywords`
+- **P5-9 secret_scanner._run_trufflehog** B(9)→B(6): 抽 `_build_trufflehog_cmd` (字典化 4 档)
+- **P5-10 rule_author.cmd_validate** B(10)→B(6): 抽 `_load_rule_file` + `_summarize_validation`
+- **P5-11 rule_author.cmd_add_rule** B(9)→B(8): 抽 `_save_rule_file`
+- **P5-12 complexity_analyzer.extract_function_lines** B(8)→A(2): 抽 `_extract_python_functions` + `_extract_regex_functions`
+- **P5-13 complexity_analyzer.calc_cyclomatic_complexity** B(7)→A(2): 抽 `_count_cyclomatic_branches` (5 elif→1 helper)
+- **P5-14 validate_example_projects.main** B(8)→A(2): 抽 `_run_example_loop` + `_print_summary`
+- **P5-15 naming_analyzer.extract_identifiers** C(12)→A(2): 抽 `_resolve_pattern_key` + `_apply_name_filter`
+- **P5-16 auto_fix.RegexFixProvider.apply_rules** C(11)→A(2): 抽 `_apply_all_rules` + `_write_if_changed`
+- **P5-17 validate_case_study.print_results** C(14)→A(2): 抽 `_partition_by_severity` + `_print_severity_section`
+- **P5-18 validate_case_study._check_sections** C(11)→A(2): 抽 `_has_legacy_section` + `_report_legacy_or_missing`
+- **P5-19 validate_case_study._extract_table_rows** C(11)→B(8): 抽 `_is_table_header` + `_is_data_row` (state machine 接受 B)
+- **P5-20 generate_fixes.apply_fixes_to_yaml** C(11)→A(2): 抽 `_group_fixes_by_file` + `_apply_fixes_to_file`
+
+#### 关键技术模式（v2.21 续发现）
+
+- **数据驱动字典化** (P5-1/3/9): scan_type → cmd 字典替代 if/elif 链
+- **守卫反转模式** (P5-6/7/15/17/18/19): helper 内部 `if 正常: return` 反转守卫
+- **sentinel value 模式** (P5-10): data is None 替代两层 if+return
+- **tuple 同步返回** (P5-16): `(actions, content)` 同步返回避免可变状态丢失
+- **state machine helper 化** (P5-19): `_is_table_header` + `_is_data_row` 收口状态转换
+- **类名易错配** (P5-2 Finding→SecretFinding): 拆分前先 grep class 定义
+- **命名冲突处理** (P5-6 `_check_function_length` vs 新 AST 节点 helper): 改 `_check_node_function_length` 区分
+- **错误消息处理** (P5-16 fix): `apply_rules` 异常时 `return []` 在 try/except 内, 主函数正常 return
+- **baseline 误报豁免** (fix after P5-1): smart_commit 的 4 个 `any()` builtin 被 `:\s*Any\b` 误判, 加 baseline 豁免
+- **P5-16 fix import re unused** (fix after P5-16): helper 拆分后主函数 `import re` 变 unused, 删
+
+#### 验证
+
+- typecheck: 192+ source files clean
+- pytest: 1100+ tests pass (含新拆 helper 测试)
+- quality-gate --full: 192/192 pass (含 baseline 豁免后)
+- baseline.json: 13 个存量豁免
+
+#### 关键经验
+
+- **pre-push 钩子非常慢** (5+ min): hooks_runner 5 个 step 全跑, 192 files × mypy + pytest 慢
+- **background push 600s timeout 是常见**: 必须分批 (v2.20 用 6 次 push, v2.21 已 3 次 push)
+- **CI 失败排查**: 跑 5 个 step 找失败点, grep "❌" output_file 找具体失败步骤
+- **git index.lock 冲突**: cancel stuck bg task + `rm .git/index.lock` 后重试
+- **ruff F401 after helper split**: `import X` 变 unused, 删
+- **baseline 误报处理**: 加 baseline 豁免条目, 不改 rules 引擎
+- **commit message 双引号**触发 shell 截断, 用 `commit -F /tmp/file.txt`
+
 ## [2.20.0] - 2026-08-30
 
 ### 重要变更: V2.19.0 后续 P4 续拆收尾（Phase 23）

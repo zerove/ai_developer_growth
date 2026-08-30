@@ -561,3 +561,49 @@
 - 重审 `dependency_graph.py` (build_from_dependencies B(8), _find_critical_path B(7))
 - `report_generator.py` Any 存量（3 处）根治
 - `ai_native_mcp_server.py` 内部长函数审查
+
+## Phase 24: v2.21.0 P5 续拆收尾 (2026-08-30)
+
+完成 v2.20.0 后续 P5 续拆阶段 20 项任务 (P5-1 ~ P5-20)，覆盖 12 个文件、20+ commits。本阶段核心是**新一批 C 级热点全面拆解**与**state machine 简化**。
+
+### Phase 24 完成情况
+
+- **20 commits 完成** (P5-1 ~ P5-20)
+- **12 个文件** 修改: smart_commit, secret_scanner, rule_author, complexity_analyzer, validate_example_projects, link_efficiency, naming_analyzer, auto_fix, validate_case_study, generate_fixes, .jcode/baseline.json, auto_fix
+- **30+ helper 函数** 新增
+- **P5-19** state machine `_extract_table_rows` 接受 B(8) (state machine 拆 helper 后 B 是常态)
+
+### Phase 24 关键经验 (v2.21.0 内发现)
+
+- **数据驱动字典化** (P5-1/3/9): scan_type → cmd 字典替代 4 档 if/elif 链
+- **守卫反转模式** (P5-6/7/15/17/18/19): helper 内部 `if 正常: return` 反转守卫, 主函数更线性
+- **sentinel value 模式** (P5-10): data is None 替代两层 if+return (类似 P4-30 _SBOM_FAILURE)
+- **tuple 同步返回** (P5-16): `_apply_all_rules` 返回 (actions, content) 同步, 避免可变状态丢失
+- **state machine helper 化** (P5-19): `_is_table_header` + `_is_data_row` 收口状态转换, 状态变量保持
+- **类名易错配** (P5-2): Finding 实际是 SecretFinding, 拆分前先 grep class 定义 (类似 P4-37)
+- **命名冲突处理** (P5-6): 原文件已有 `_check_function_length(func_lines, ...)`, 新 AST 节点 helper 改 `_check_node_function_length` 区分
+- **错误消息处理** (P5-16 fix): `apply_rules` 异常时 `return []` 在 try/except 内, 主函数正常 return
+- **baseline 误报豁免** (fix after P5-1): smart_commit 的 4 个 `any()` builtin 被 `:\s*Any\b` 误判, 加 baseline 豁免
+- **P5-16 fix import re unused** (fix after P5-16): helper 拆分后主函数 `import re` 变 unused, 删
+- **pre-push 钩子非常慢** (5+ min): 192 files × mypy + pytest 慢, hooks_runner 5 个 step 全跑
+- **background push 600s timeout 是常见**: 必须分批 (v2.20 用 6 次 push, v2.21 已 3 次 push)
+- **CI 失败排查**: 跑 5 个 step 找失败点, grep "❌" output_file 找具体失败步骤
+- **git index.lock 冲突**: cancel stuck bg task + `rm .git/index.lock` 后重试
+- **P5 阶段共 20 commits, 涵盖 12 个文件**
+
+### P5 续拆验证
+
+- typecheck: 192+ source files clean
+- pytest: 1100+ tests pass (含新拆 helper 测试)
+- quality-gate --full: 192/192 pass (含 baseline 豁免后)
+- baseline.json: 13 个存量豁免
+- pre-push 钩子: **本地 CI 全部通过, 真实允许推送**（无 `--no-verify` 绕过）
+
+### P5 续拆后续候选 (v2.22.0 远期)
+
+- language_registry.py 整体拆分 (1850+ 行)
+- report_generator.py Any 存量根治
+- supply_chain.py 8 字段 summary 进一步拆分 (B(6) helpers 接受保留)
+- secret_scanner.py _run_detect_secrets B(6) 进一步拆
+- complexity_analyzer.py max_nesting_depth B(6) 进一步拆
+- 新发现 C 级待拆: rule_marketplace.cmd_info C(11), auto_fix.RegexFixProvider.apply_rules ✅, fix_heuristics.heuristic_fix C(13), cov_tool.cmd_module C(13), architecture_drift_guard.check_layering C(13), update_ai_tool_matrix.generate_report C(14)/_parse_tools C(12), semantic_code_graph.build_graph C(11), config/loader.load_config C(12), generate_fixes.apply_fixes_to_yaml ✅, validate_case_study.print_results ✅/_check_sections ✅/_extract_table_rows ✅

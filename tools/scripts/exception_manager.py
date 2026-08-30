@@ -257,34 +257,67 @@ class ExpirationManager:
         """收集 req 的过期告警, 按 alert_days 列表匹配.
 
         V2.18 P3-5 拆分: 从 check_expirations (C=11) 抽出.
+        V2.20 P4-27 拆分: 抽 _parse_expiry_date 收口 None + ValueError 守卫,
+        _emit_single_alert 收口告警构造 + 去重 + 发送.
         告警去重: 同一 req + alert_day 只触发一次 (self._alerts 索引).
         """
-        expires = req.expires
-        if expires is None:
-            return
-        try:
-            exp_date = datetime.fromisoformat(expires)
-        except ValueError:
+        exp_date = self._parse_expiry_date(req.expires)
+        if exp_date is None:
             return
         days_left = (exp_date - now).days
 
         for alert_day in self.alert_days:
-            if days_left != alert_day:
-                continue
-            alert_id = f"{req.id}-{alert_day}d"
-            if alert_id in self._alerts:
-                continue
-            alert = ExpirationAlert(
-                request_id=req.id,
-                rule_id=req.rule_id,
-                paths=req.paths,
-                expires_at=expires,
-                days_until_expiry=days_left,
-                severity=req.requested_severity,
-            )
-            self._alerts[alert_id] = alert
-            alerts.append(alert)
-            self._send_alert(alert)
+            self._emit_single_alert(req, alert_day, days_left, alerts)
+
+    def _parse_expiry_date(self, expires: str | None) -> datetime | None:
+        """解析 expires 字符串为 datetime, 失败返 None.
+
+        Args:
+            expires: ISO 格式日期字符串 (None 时直接返 None)
+
+        Returns:
+            datetime 对象或 None
+        """
+        if expires is None:
+            return None
+        try:
+            return datetime.fromisoformat(expires)
+        except ValueError:
+            return None
+
+    def _emit_single_alert(
+        self,
+        req: ExceptionRequest,
+        alert_day: int,
+        days_left: int,
+        alerts: list[ExpirationAlert],
+    ) -> None:
+        """为单个 alert_day 触发告警 (含去重 + 发送).
+
+        Args:
+            req: 例外请求
+            alert_day: 告警天数阈值
+            days_left: 距过期天数
+            alerts: 告警列表 (in-place append)
+        """
+        if days_left != alert_day:
+            return
+        alert_id = f"{req.id}-{alert_day}d"
+        if alert_id in self._alerts:
+            return
+        expires = req.expires
+        assert expires is not None  # narrow: caller (_collect) already checked
+        alert = ExpirationAlert(
+            request_id=req.id,
+            rule_id=req.rule_id,
+            paths=req.paths,
+            expires_at=expires,
+            days_until_expiry=days_left,
+            severity=req.requested_severity,
+        )
+        self._alerts[alert_id] = alert
+        alerts.append(alert)
+        self._send_alert(alert)
 
     def _auto_revoke_if_expired(self, req: ExceptionRequest, now: datetime) -> None:
         """若已过期且启用 auto_revoke, 撤销 req 状态.

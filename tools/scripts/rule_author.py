@@ -389,23 +389,14 @@ def _check_test_cases(category: str, rule: dict[str, Any]) -> int:
 
 
 def cmd_validate(args: argparse.Namespace) -> None:
-    """Validate a rule YAML file."""
+    """Validate a rule YAML file (V2.21 P5-10 拆分: 抽 _load_rule_file + _summarize_validation)."""
     filepath = Path(args.file)
-    if not filepath.exists():
-        print(f"File not found: {filepath}")
-        return
-
-    with open(filepath) as f:
-        data = yaml.safe_load(f)
-
-    if not data:
-        print(f"Invalid YAML: {filepath}")
+    data = _load_rule_file(filepath)
+    if data is None:
         return
 
     errors = 0
     warnings = 0
-
-    # Check required fields
     if "language" not in data:
         print("  ✗ Missing 'language' field")
         errors += 1
@@ -420,6 +411,39 @@ def cmd_validate(args: argparse.Namespace) -> None:
             errors += rule_errors
             warnings += rule_warnings
 
+    _summarize_validation(data, errors, warnings)
+
+
+def _load_rule_file(filepath: Path) -> dict[str, Any] | None:
+    """读取 + 校验 YAML 文件存在性 + 解析 (模块级 helper).
+
+    Args:
+        filepath: 规则 YAML 路径
+
+    Returns:
+        解析后的 data 字典, 文件不存在或 YAML 无效返回 None
+    """
+    if not filepath.exists():
+        print(f"File not found: {filepath}")
+        return None
+
+    with open(filepath) as f:
+        data = yaml.safe_load(f)
+
+    if not data:
+        print(f"Invalid YAML: {filepath}")
+        return None
+    return data
+
+
+def _summarize_validation(data: dict[str, Any], errors: int, warnings: int) -> None:
+    """汇总校验结果并打印 (模块级 helper).
+
+    Args:
+        data: 规则字典
+        errors: 错误计数
+        warnings: 警告计数
+    """
     if errors == 0 and warnings == 0:
         total_rules = sum(len(data.get(c, [])) for c in ["anti_patterns", "naming_conventions", "complexity"])
         print(f"  ✓ Valid ({total_rules} rules)")

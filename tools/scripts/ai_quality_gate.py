@@ -450,44 +450,77 @@ def _append_if_flag(checks: list[str], check_name: str, flag: bool) -> None:
 
 
 def _collect_files(args: argparse.Namespace) -> list[Path]:
-    """Collect files to check based on args."""
-    files_to_check = []
+    """Collect files to check based on args.
+
+    V2.20 P4-56 拆分: 抽 _collect_path_files 收口 args.path → rglob 扩展名遍历,
+    模块级常量 _FILE_EXTENSIONS 收口 25 扩展名字面量,
+    主函数仅 file/path/default 三路分派 + 过滤.
+    """
     if args.file:
         files_to_check = [args.file]
     elif args.path:
-        exts = [
-            "*.py",
-            "*.ts",
-            "*.tsx",
-            "*.js",
-            "*.jsx",
-            "*.rs",
-            "*.go",
-            "*.java",
-            "*.kt",
-            "*.cs",
-            "*.php",
-            "*.rb",
-            "*.cpp",
-            "*.swift",
-            "*.scala",
-            "*.ex",
-            "*.exs",
-            "*.lua",
-            "*.zig",
-            "*.r",
-            "*.R",
-            "*.clj",
-            "*.hs",
-            "*.dart",
-            "*.ps1",
-        ]
-        for ext in exts:
-            files_to_check.extend(args.path.rglob(ext))
+        files_to_check = _collect_path_files(args.path)
     else:
         files_to_check = list(Path("tools/scripts").rglob("*.py"))
 
-    return [f for f in files_to_check if "__pycache__" not in str(f) and ".git" not in str(f)]
+    return _filter_excluded(files_to_check)
+
+
+# 模块级常量: 支持的 25 种语言文件扩展名
+_FILE_EXTENSIONS = [
+    "*.py",
+    "*.ts",
+    "*.tsx",
+    "*.js",
+    "*.jsx",
+    "*.rs",
+    "*.go",
+    "*.java",
+    "*.kt",
+    "*.cs",
+    "*.php",
+    "*.rb",
+    "*.cpp",
+    "*.swift",
+    "*.scala",
+    "*.ex",
+    "*.exs",
+    "*.lua",
+    "*.zig",
+    "*.r",
+    "*.R",
+    "*.clj",
+    "*.hs",
+    "*.dart",
+    "*.ps1",
+]
+
+
+def _collect_path_files(path: Path) -> list[Path]:
+    """从 path 递归收集所有支持扩展名文件 (模块级 helper).
+
+    Args:
+        path: 搜索根目录
+
+    Returns:
+        匹配文件列表
+    """
+    files: list[Path] = []
+    for ext in _FILE_EXTENSIONS:
+        files.extend(path.rglob(ext))
+    return files
+
+
+def _filter_excluded(files: list[Path]) -> list[Path]:
+    """过滤 __pycache__/.git 目录 (模块级 helper).
+
+    Args:
+        files: 候选文件列表
+
+    Returns:
+        过滤后文件列表
+    """
+    return [f for f in files if "__pycache__" not in str(f) and ".git" not in str(f)]
 
 
 def _run_checks(args: argparse.Namespace, filtered_files: list[Path]) -> list[CheckResult]:

@@ -540,6 +540,41 @@ def run_governance_audit(
     """
     ga = _load_governance_auditor()
 
+    checks = _build_governance_checks(
+        ga,
+        full=full,
+        validate_docs=validate_docs,
+        check_ai_sdlc=check_ai_sdlc,
+        audit_hallucination=audit_hallucination,
+        check_index=check_index,
+    )
+
+    failed, output = _run_governance_checks(checks)
+    return len(failed) == 0, output
+
+
+def _build_governance_checks(
+    ga: Any,
+    *,
+    full: bool,
+    validate_docs: bool,
+    check_ai_sdlc: bool,
+    audit_hallucination: bool,
+    check_index: bool,
+) -> list[tuple[str, Callable[[], bool]]]:
+    """构造 governance 检查列表 (优先级: 显式选项 > full > 默认 6 项, 模块级 helper).
+
+    Args:
+        ga: governance_auditor 模块
+        full: 是否全量
+        validate_docs: 是否校验 governance docs
+        check_ai_sdlc: 是否校验 AI-SDLC
+        audit_hallucination: 是否审计幻觉
+        check_index: 是否校验索引
+
+    Returns:
+        [(name, func), ...] 列表
+    """
     checks: list[tuple[str, Callable[[], bool]]] = []
     if full or validate_docs:
         checks.append(("Governance Docs", ga.validate_governance_docs))
@@ -548,21 +583,7 @@ def run_governance_audit(
     if full or audit_hallucination:
         checks.append(("Hallucination Risk", ga.audit_hallucination_risks))
     if check_index:
-
-        def _check_index() -> bool:
-            result = subprocess.run(
-                [
-                    sys.executable,
-                    ".jcode/scripts/governance-docs-validator.py",
-                    "check-index",
-                ],
-                capture_output=True,
-                text=True,
-                timeout=60,
-            )
-            return result.returncode == 0
-
-        checks.append(("Index References", _check_index))
+        checks.append(("Index References", _check_index_subprocess))
     if full:
         checks = [
             ("Lint", ga.lint),
@@ -581,7 +602,20 @@ def run_governance_audit(
             ("Governance Docs", ga.validate_governance_docs),
             ("AI-SDLC Compliance", ga.check_ai_sdlc_compliance),
         ]
+    return checks
 
+
+def _run_governance_checks(
+    checks: list[tuple[str, Callable[[], bool]]],
+) -> tuple[list[str], str]:
+    """执行 governance 检查 + 收集结果 (模块级 helper).
+
+    Args:
+        checks: [(name, func), ...] 列表
+
+    Returns:
+        (failed_names, output) 元组
+    """
     failed: list[str] = []
     output_lines: list[str] = []
 
@@ -595,8 +629,26 @@ def run_governance_audit(
     output = "\n".join(output_lines)
     if failed:
         output += f"\n\nFailed checks: {', '.join(failed)}"
+    return failed, output
 
-    return len(failed) == 0, output
+
+def _check_index_subprocess() -> bool:
+    """运行 governance-docs-validator check-index 子命令 (模块级 helper).
+
+    Returns:
+        True 如果 returncode == 0
+    """
+    result = subprocess.run(
+        [
+            sys.executable,
+            ".jcode/scripts/governance-docs-validator.py",
+            "check-index",
+        ],
+        capture_output=True,
+        text=True,
+        timeout=60,
+    )
+    return result.returncode == 0
 
 
 def run_pr_review() -> tuple[bool, str]:

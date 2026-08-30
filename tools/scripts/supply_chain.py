@@ -649,40 +649,55 @@ class SBOMGenerator:
         return self._parse_cargo_toml(project_root) + self._parse_cargo_lock(project_root)
 
     def _parse_go_deps(self, project_root: Path) -> list[Dependency]:
-        """解析 Go 依赖 (go.mod + go.sum)"""
-        deps = []
+        """解析 Go 依赖 (go.mod + go.sum).
 
-        # 解析 go.mod
+        V2.20 P4-39 拆分: 抽 _parse_go_require_line 收口单行解析,
+        主函数仅 try/except 包裹 + state machine 遍历.
+        """
+        deps: list[Dependency] = []
         go_mod = project_root / "go.mod"
-        if go_mod.exists():
-            try:
-                content = go_mod.read_text()
-                in_require = False
-                for line in content.splitlines():
-                    line = line.strip()
-                    if line.startswith("require ("):
-                        in_require = True
-                        continue
-                    if in_require and line == ")":
-                        in_require = False
-                        continue
-                    if in_require or line.startswith("require "):
-                        # require github.com/pkg/name v1.2.3
-                        parts = line.replace("require ", "").split()
-                        if len(parts) >= 2:
-                            name = parts[0]
-                            version = parts[1]
-                            dep = Dependency(
-                                name=name,
-                                version=version,
-                                ecosystem="go",
-                                is_direct=True,
-                            )
-                            deps.append(dep)
-            except Exception as e:
-                logger.warning(f"Failed to parse go.mod: {e}")
-
+        if not go_mod.exists():
+            return deps
+        try:
+            content = go_mod.read_text()
+            in_require = False
+            for line in content.splitlines():
+                dep, in_require = self._parse_go_require_line(line.strip(), in_require)
+                if dep is not None:
+                    deps.append(dep)
+        except Exception as e:
+            logger.warning(f"Failed to parse go.mod: {e}")
         return deps
+
+    def _parse_go_require_line(self, line: str, in_require: bool) -> tuple[Dependency | None, bool]:
+        """解析单行 go.mod, 返回 (dep_or_None, new_in_require).
+
+        Args:
+            line: 已 strip 的行
+            in_require: 当前是否在 require () 块内
+
+        Returns:
+            (Dependency 或 None, 更新后的 in_require 状态)
+        """
+        if line.startswith("require ("):
+            return None, True
+        if in_require and line == ")":
+            return None, False
+        if not (in_require or line.startswith("require ")):
+            return None, in_require
+
+        parts = line.replace("require ", "").split()
+        if len(parts) < 2:
+            return None, in_require
+        return (
+            Dependency(
+                name=parts[0],
+                version=parts[1],
+                ecosystem="go",
+                is_direct=True,
+            ),
+            in_require,
+        )
 
     def _parse_maven_deps(self, project_root: Path) -> list[Dependency]:
         """解析 Maven 依赖 (pom.xml)"""

@@ -220,21 +220,11 @@ class SecretScanner:
         )
 
     def _run_trufflehog(self, path: Path, scan_type: str) -> list[SecretFinding]:
-        """运行 trufflehog"""
+        """运行 trufflehog (V2.21 P5-9 拆分: 抽 _build_trufflehog_cmd + _parse_trufflehog_finding)."""
         findings: list[SecretFinding] = []
-
-        if scan_type == "workspace":
-            cmd = ["trufflehog", "filesystem", "--directory", str(path), "--json", "--no-verification"]
-        elif scan_type == "git-history":
-            cmd = ["trufflehog", "git", "--repo", str(path), "--json", "--no-verification"]
-        elif scan_type == "pr-diff":
-            cmd = ["trufflehog", "git", "--repo", str(path), "--json", "--no-verification", "--since-commit", "HEAD~1"]
-        else:
+        cmd = self._build_trufflehog_cmd(path, scan_type)
+        if not cmd:
             return findings
-
-        if not self.verify_active:
-            cmd.append("--no-verification")
-
         try:
             result = subprocess.run(cmd, capture_output=True, text=True, timeout=300)
             for line in result.stdout.strip().split("\n"):
@@ -242,25 +232,67 @@ class SecretScanner:
                     continue
                 try:
                     item = json.loads(line)
-                    # trufflehog 输出结构
-                    findings.append(
-                        SecretFinding(
-                            tool="trufflehog",
-                            rule_id=item.get("DetectorType", "unknown"),
-                            file=item.get("SourceMetadata", {}).get("Data", {}).get("Filesystem", {}).get("file", ""),
-                            line=item.get("SourceMetadata", {}).get("Data", {}).get("Filesystem", {}).get("line", 0),
-                            secret=item.get("Raw", "")[:100],
-                            entropy=None,
-                            commit=item.get("SourceMetadata", {}).get("Data", {}).get("Git", {}).get("commit", ""),
-                            severity="high",
-                        )
-                    )
+                    findings.append(self._parse_trufflehog_finding(item))
                 except json.JSONDecodeError:
                     pass
         except (subprocess.TimeoutExpired, FileNotFoundError) as e:
             logger.warning(f"trufflehog failed: {e}")
 
         return findings
+
+    def _build_trufflehog_cmd(self, path: Path, scan_type: str) -> list[str] | None:
+        """构造 trufflehog 命令 (模块级 helper, 4 档 scan_type → cmd).
+
+        Args:
+            path: 扫描根路径
+            scan_type: workspace/git-history/pr-diff
+
+        Returns:
+            cmd 列表, 未知 scan_type 返回 None
+        """
+        cmd_map: dict[str, list[str]] = {
+            "workspace": ["trufflehog", "filesystem", "--directory", str(path), "--json", "--no-verification"],
+            "git-history": ["trufflehog", "git", "--repo", str(path), "--json", "--no-verification"],
+            "pr-diff": [
+                "trufflehog",
+                "git",
+                "--repo",
+                str(path),
+                "--json",
+                "--no-verification",
+                "--since-commit",
+                "HEAD~1",
+            ],
+        }
+        cmd = cmd_map.get(scan_type)
+        if cmd is None:
+            return None
+        if not self.verify_active:
+            cmd.append("--no-verification")
+        return cmd
+
+    def _parse_trufflehog_finding(self, item: dict[str, Any]) -> SecretFinding:
+        """解析单条 trufflehog JSON finding (trufflehog 输出结构 嵌套较深).
+
+        Args:
+            item: trufflehog JSON 字典
+
+        Returns:
+            SecretFinding 实例
+        """
+        sm = item.get("SourceMetadata", {}).get("Data", {})
+        fs = sm.get("Filesystem", {})
+        git = sm.get("Git", {})
+        return SecretFinding(
+            tool="trufflehog",
+            rule_id=item.get("DetectorType", "unknown"),
+            file=fs.get("file", ""),
+            line=fs.get("line", 0),
+            secret=item.get("Raw", "")[:100],
+            entropy=None,
+            commit=git.get("commit", ""),
+            severity="high",
+        )
 
     def _run_detect_secrets(self, path: Path, scan_type: str) -> list[SecretFinding]:
         """运行 detect-secrets (基线模式)"""

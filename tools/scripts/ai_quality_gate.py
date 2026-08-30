@@ -25,25 +25,41 @@ from tools.scripts.rules_engine import CheckResult, check_directory
 
 
 def _is_in_string(line: str, pos: int) -> bool:
-    """检查 pos 位置是否在字符串字面量内部"""
+    """检查 pos 位置是否在字符串字面量内部.
+
+    V2.20 P4-54 拆分: 抽 _process_string_char 收口单字符状态机更新,
+    主函数仅 while 循环.
+    """
     in_str = False
-    str_char = None
+    str_char: str | None = None
     i = 0
     while i < pos and i < len(line):
         ch = line[i]
-        if in_str:
-            if ch == "\\":
-                i += 2  # 跳过转义字符
-                continue
-            if ch == str_char:
-                in_str = False
-                str_char = None
-        else:
-            if ch in ('"', "'"):
-                in_str = True
-                str_char = ch
-        i += 1
+        in_str, str_char, i = _process_string_char(ch, in_str, str_char, i)
     return in_str
+
+
+def _process_string_char(ch: str, in_str: bool, str_char: str | None, i: int) -> tuple[bool, str | None, int]:
+    """处理单字符状态机更新 (模块级 helper).
+
+    Args:
+        ch: 当前字符
+        in_str: 当前是否在字符串内
+        str_char: 字符串边界字符 (\" or ')
+        i: 当前索引
+
+    Returns:
+        (new_in_str, new_str_char, new_i) 元组
+    """
+    if in_str:
+        if ch == "\\":
+            return in_str, str_char, i + 2  # 跳过转义字符
+        if ch == str_char:
+            return False, None, i + 1
+        return in_str, str_char, i + 1
+    if ch in ('"', "'"):
+        return True, ch, i + 1
+    return in_str, str_char, i + 1
 
 
 def check_annotation(filepath: Path) -> list[dict[str, Any]]:

@@ -34,6 +34,30 @@ class ValidationResult:
     line: int = 0
 
 
+def _is_table_header(line: str) -> bool:
+    """判断是否为表格 header 行 (含 阶段/总计/指标/Metric 关键字, 模块级 helper).
+
+    Args:
+        line: 单行文本
+
+    Returns:
+        是否为 header
+    """
+    return "|" in line and ("阶段" in line or "总计" in line or "指标" in line or "Metric" in line)
+
+
+def _is_data_row(line: str) -> bool:
+    """判断是否为表格数据行 (以 | 开头, 模块级 helper).
+
+    Args:
+        line: 单行文本
+
+    Returns:
+        是否为数据行
+    """
+    return line.strip().startswith("|")
+
+
 class CaseStudyValidator:
     """Validates case study structure and content quality."""
 
@@ -270,19 +294,18 @@ class CaseStudyValidator:
         return any(re.search(pattern, content) for pattern in table_patterns)
 
     def _extract_table_rows(self, content: str) -> list[str]:
-        """Extract table data rows from content."""
+        """Extract table data rows from content (V2.21 P5-19 拆分: 抽 _is_table_header + _is_data_row)."""
         lines = content.split("\n")
         in_table = False
         data_rows = []
-
         for line in lines:
-            if "|" in line and ("阶段" in line or "总计" in line or "指标" in line or "Metric" in line):
+            if not in_table and _is_table_header(line):
                 in_table = True
-            if in_table and line.strip().startswith("|"):
+                continue
+            if in_table and _is_data_row(line):
                 data_rows.append(line)
-            elif in_table and not line.strip().startswith("|"):
+            elif in_table and not _is_data_row(line):
                 break
-
         return data_rows
 
     def _validate_table_rows(self, data_rows: list[str]) -> None:

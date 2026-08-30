@@ -90,36 +90,84 @@ def _merge_issue_baseline(
 
 
 def validate_baseline_structure(baseline_path: Path) -> tuple[bool, str]:
-    """校验基线文件结构合法性（防误编辑/篡改导致棘轮静默失效）。
+    """校验基线文件结构合法性 (V2.21 P5-66 拆分: 抽 _load_baseline_json + _validate_baseline_metadata + _validate_baseline_files).
 
+    防误编辑/篡改导致棘轮静默失效.
     合法格式: {"version": int, "files": {相对路径: {"type:message": 正整数}}}
     """
-    if not baseline_path.exists():
-        return False, f"基线文件不存在: {baseline_path}"
-    try:
-        data = json.loads(baseline_path.read_text(encoding="utf-8"))
-    except (OSError, json.JSONDecodeError) as e:
-        return False, f"基线文件不是合法 JSON: {e}"
+    data, err = _load_baseline_json(baseline_path)
+    if err is not None:
+        return False, err
+    assert data is not None  # narrow type for mypy
 
-    if not isinstance(data, dict):
-        return False, "顶层必须是对象"
-    version = data.get("version")
-    if not isinstance(version, int):
-        return False, "缺少整数 version 字段"
-    files = data.get("files")
-    if not isinstance(files, dict):
-        return False, "缺少 files 对象"
+    err = _validate_baseline_metadata(data)
+    if err is not None:
+        return False, err
 
-    for filepath, counts in files.items():
-        if not isinstance(counts, dict) or not counts:
-            return False, f"文件条目必须是非空对象: {filepath}"
-        for key, count in counts.items():
-            if not isinstance(key, str) or ":" not in key:
-                return False, f"问题键必须是 'type:message' 格式: {key!r} ({filepath})"
-            if not isinstance(count, int) or count < 1:
-                return False, f"问题计数必须是正整数: {filepath} -> {key} = {count}"
+    err = _validate_baseline_files(data["files"])
+    if err is not None:
+        return False, err
+
+    files = data["files"]
     total = sum(sum(c.values()) for c in files.values())
     return True, f"基线合法: {len(files)} 个文件, {total} 个存量问题"
+
+
+def _load_baseline_json(baseline_path: Path) -> tuple[dict[str, Any] | None, str | None]:
+    """加载 + 解析 baseline JSON (模块级 helper).
+
+    Args:
+        baseline_path: 基线文件路径
+
+    Returns:
+        (data, None) 成功 或 (None, error_msg) 失败
+    """
+    if not baseline_path.exists():
+        return None, f"基线文件不存在: {baseline_path}"
+    try:
+        return json.loads(baseline_path.read_text(encoding="utf-8")), None
+    except (OSError, json.JSONDecodeError) as e:
+        return None, f"基线文件不是合法 JSON: {e}"
+
+
+def _validate_baseline_metadata(data: dict[str, Any]) -> str | None:
+    """校验 version + files 顶层元数据 (模块级 helper).
+
+    Args:
+        data: baseline dict
+
+    Returns:
+        None 合法, 错误消息字符串 否则
+    """
+    if not isinstance(data, dict):
+        return "顶层必须是对象"
+    version = data.get("version")
+    if not isinstance(version, int):
+        return "缺少整数 version 字段"
+    files = data.get("files")
+    if not isinstance(files, dict):
+        return "缺少 files 对象"
+    return None
+
+
+def _validate_baseline_files(files: dict[str, Any]) -> str | None:
+    """校验 files 内每个条目 (模块级 helper).
+
+    Args:
+        files: baseline['files'] dict
+
+    Returns:
+        None 合法, 错误消息字符串 否则
+    """
+    for filepath, counts in files.items():
+        if not isinstance(counts, dict) or not counts:
+            return f"文件条目必须是非空对象: {filepath}"
+        for key, count in counts.items():
+            if not isinstance(key, str) or ":" not in key:
+                return f"问题键必须是 'type:message' 格式: {key!r} ({filepath})"
+            if not isinstance(count, int) or count < 1:
+                return f"问题计数必须是正整数: {filepath} -> {key} = {count}"
+    return None
 
 
 def prune_stale_baseline_entries(baseline_path: Path) -> int:

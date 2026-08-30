@@ -592,17 +592,42 @@ class EnhancedExceptionManager:
             logger.warning(f"Failed to load exceptions from config: {e}")
 
     def _load_yaml_exceptions(self) -> None:
-        """从 YAML 配置文件读取 exceptions 列表, 解析并存储."""
-        if not self.config_path.exists():
+        """从 YAML 配置文件读取 exceptions 列表, 解析并存储.
+
+        V2.20 P4-32 拆分: 抽 _read_exceptions_yaml 收口 yaml 读取 + 守卫,
+        _import_exceptions_dict 收口遍历 + 存储.
+        主函数仅 2 段委托.
+        """
+        data = self._read_exceptions_yaml()
+        if data is None:
             return
+        entries = data.get("exceptions", [])
+        if isinstance(entries, list):
+            self._import_exceptions_dict(entries)
+
+    def _read_exceptions_yaml(self) -> dict[str, object] | None:
+        """读取 YAML 配置文件并解析为 dict (None if 文件不存在或解析失败).
+
+        Returns:
+            解析后的 dict 或 None
+        """
+        if not self.config_path.exists():
+            return None
         import yaml
 
         with open(self.config_path) as f:
             data = yaml.safe_load(f)
-
         if not data or "exceptions" not in data:
-            return
-        for exc in data["exceptions"]:
+            return None
+        return data
+
+    def _import_exceptions_dict(self, entries: list[dict[str, object]]) -> None:
+        """导入 exceptions 列表, 解析并存储到 self._requests.
+
+        Args:
+            entries: exception entry 列表
+        """
+        for exc in entries:
             req = self._parse_exception_entry(exc)
             if req is not None:
                 self._requests[req.id] = req

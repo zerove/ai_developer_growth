@@ -172,9 +172,31 @@ class OSVScanner:
         self.timeout = timeout
 
     def scan_dependencies(self, dependencies: list[Dependency]) -> list[Vulnerability]:
-        """批量扫描依赖漏洞"""
-        # 按生态系统分组
-        queries = []
+        """批量扫描依赖漏洞.
+
+        V2.20 P4-47 拆分: 抽 _build_osv_queries 收口依赖→OSV query 列表构造,
+        _query_osv_batch 收口 HTTP 请求 + JSON 解析 + 漏洞遍历,
+        主函数仅组装.
+        """
+        queries = self._build_osv_queries(dependencies)
+        if not queries:
+            return []
+        try:
+            return self._query_osv_batch(queries, dependencies)
+        except Exception as e:
+            logger.warning(f"OSV scan failed: {e}")
+            return []
+
+    def _build_osv_queries(self, dependencies: list[Dependency]) -> list[dict[str, Any]]:
+        """构造 OSV API 批量查询 payload.
+
+        Args:
+            dependencies: 依赖列表
+
+        Returns:
+            OSV query 列表
+        """
+        queries: list[dict[str, Any]] = []
         for dep in dependencies:
             ecosystem = self.ECOSYSTEM_MAP.get(dep.ecosystem.lower(), dep.ecosystem)
             queries.append(
@@ -183,31 +205,33 @@ class OSVScanner:
                     "version": dep.version,
                 }
             )
+        return queries
 
-        if not queries:
-            return []
+    def _query_osv_batch(self, queries: list[dict[str, Any]], dependencies: list[Dependency]) -> list[Vulnerability]:
+        """执行 OSV API 批量查询 + 解析响应.
 
-        # 批量查询 OSV API
-        try:
-            payload = json.dumps({"queries": queries}).encode()
-            req = urllib.request.Request(
-                self.OSV_API,
-                data=payload,
-                headers={"Content-Type": "application/json"},
-            )
-            with urllib.request.urlopen(req, timeout=self.timeout) as response:  # nosec B310
-                data = json.loads(response.read().decode())
+        Args:
+            queries: OSV query 列表
+            dependencies: 依赖列表 (与 queries 索引对齐)
 
-            vulns = []
-            for i, result in enumerate(data.get("results", [])):
-                dep = dependencies[i]
-                for vuln_data in result.get("vulns", []):
-                    vulns.append(self._parse_osv_vuln(vuln_data, dep))
-            return vulns
+        Returns:
+            Vulnerability 列表
+        """
+        payload = json.dumps({"queries": queries}).encode()
+        req = urllib.request.Request(
+            self.OSV_API,
+            data=payload,
+            headers={"Content-Type": "application/json"},
+        )
+        with urllib.request.urlopen(req, timeout=self.timeout) as response:  # nosec B310
+            data = json.loads(response.read().decode())
 
-        except Exception as e:
-            logger.warning(f"OSV scan failed: {e}")
-            return []
+        vulns: list[Vulnerability] = []
+        for i, result in enumerate(data.get("results", [])):
+            dep = dependencies[i]
+            for vuln_data in result.get("vulns", []):
+                vulns.append(self._parse_osv_vuln(vuln_data, dep))
+        return vulns
 
     def _parse_osv_vuln(self, data: dict[str, Any], dep: Dependency) -> Vulnerability:
         """解析单个 OSV 漏洞.

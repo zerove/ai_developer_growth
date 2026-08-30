@@ -276,31 +276,56 @@ _PATTERNS: dict[tuple[str, str], str] = {
 
 
 def extract_identifiers(line: str, kind: str, language: str) -> list[str]:
-    """Extract identifiers from a line based on the kind and language."""
-    # Normalize language aliases
-    lang_key = language
-
-    pattern_key = (lang_key, kind)
+    """Extract identifiers from a line (V2.21 P5-15 拆分: 抽 _resolve_pattern_key + _apply_name_filter)."""
+    pattern_key = _resolve_pattern_key(language, kind)
     if pattern_key not in _PATTERNS:
-        # Try aliases
-        aliases = {"ts": "typescript"}
-        alt = aliases.get(lang_key)
-        if alt:
-            pattern_key = (alt, kind)
+        return []
 
+    m = re.match(_PATTERNS[pattern_key], line)
+    if not m:
+        return []
+    name = m.group(1)
+    return _apply_name_filter(name, language, kind)
+
+
+def _resolve_pattern_key(language: str, kind: str) -> tuple[str, str]:
+    """解析 (lang, kind) 模式 key, 处理 ts → typescript 别名 (模块级 helper).
+
+    Args:
+        language: 语言标识
+        kind: 标识类型 (class/function/variable/...)
+
+    Returns:
+        解析后的 (lang_key, kind) 元组
+    """
+    pattern_key = (language, kind)
     if pattern_key in _PATTERNS:
-        m = re.match(_PATTERNS[pattern_key], line)
-        if m:
-            name = m.group(1)
-            # For elixir, take last component of dotted name
-            if lang_key == "elixir" and kind == "class":
-                name = name.split(".")[-1]
-            # For lua, take last component of dotted name
-            if lang_key == "lua" and kind == "function":
-                name = name.split(".")[-1]
-            # For java/csharp/cpp/javascript, exclude keywords
-            if lang_key in _KEYWORDS and kind == "function" and name in _KEYWORDS[lang_key]:
-                return []
-            return [name]
+        return pattern_key
+    aliases: dict[str, str] = {"ts": "typescript"}
+    alt = aliases.get(language)
+    if alt and (alt, kind) in _PATTERNS:
+        return (alt, kind)
+    return pattern_key
 
-    return []
+
+def _apply_name_filter(name: str, language: str, kind: str) -> list[str]:
+    """对识别出的 name 应用语言特定过滤 (模块级 helper).
+
+    Args:
+        name: 原始 name
+        language: 语言
+        kind: 标识类型
+
+    Returns:
+        [name] 或 []
+    """
+    # For elixir, take last component of dotted name
+    if language == "elixir" and kind == "class":
+        name = name.split(".")[-1]
+    # For lua, take last component of dotted name
+    if language == "lua" and kind == "function":
+        name = name.split(".")[-1]
+    # For java/csharp/cpp/javascript, exclude keywords
+    if language in _KEYWORDS and kind == "function" and name in _KEYWORDS[language]:
+        return []
+    return [name]

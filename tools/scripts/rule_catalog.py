@@ -121,47 +121,65 @@ def _search_common_rules(query: str) -> list[dict[str, Any]]:
 
 
 def _search_language_rules(query: str) -> list[dict[str, Any]]:
-    """Search language-specific rules."""
-    results: list[dict[str, Any]] = []
-    fw = framework_dir()
-    langs_dir = fw / "languages"
-    if langs_dir.exists():
-        for lang_dir in sorted(langs_dir.iterdir()):
-            if not lang_dir.is_dir():
-                continue
-            rules_dir = lang_dir / "rules.d"
-            if not rules_dir.exists():
-                continue
-            for yml in rules_dir.glob("*.yml"):
-                with open(yml) as f:
-                    data = yaml.safe_load(f) or {}
-                for category in _CATEGORIES:
-                    for rule in data.get(category, []):
-                        if matches(rule, query):
-                            results.append({"pack": lang_dir.name, "category": category, **rule})
-    return results
+    """Search language-specific rules.
+
+    V2.20 P4-25 拆分: 复用 _iter_pack_rules 统一遍历 languages 子目录.
+    """
+    return _iter_pack_rules("languages", query)
 
 
 def _search_framework_rules(query: str) -> list[dict[str, Any]]:
-    """Search framework-specific rules."""
+    """Search framework-specific rules.
+
+    V2.20 P4-25 拆分: 复用 _iter_pack_rules 统一遍历 frameworks 子目录.
+    """
+    return _iter_pack_rules("frameworks", query)
+
+
+def _iter_pack_rules(parent_subdir: str, query: str) -> list[dict[str, Any]]:
+    """遍历指定子目录下所有 pack 的 yml rules, 匹配 query.
+
+    Args:
+        parent_subdir: 父目录名 ('languages' / 'frameworks')
+        query: 搜索关键字 (lowercase substring)
+
+    Returns:
+        [{pack, category, **rule}, ...]
+    """
     results: list[dict[str, Any]] = []
     fw = framework_dir()
-    frameworks_dir = fw / "frameworks"
-    if frameworks_dir.exists():
-        for fw_dir in sorted(frameworks_dir.iterdir()):
-            if not fw_dir.is_dir():
-                continue
-            rules_dir = fw_dir / "rules.d"
-            if not rules_dir.exists():
-                continue
-            for yml in rules_dir.glob("*.yml"):
-                with open(yml) as f:
-                    data = yaml.safe_load(f) or {}
-                for category in _CATEGORIES:
-                    for rule in data.get(category, []):
-                        if matches(rule, query):
-                            results.append({"pack": fw_dir.name, "category": category, **rule})
+    parent_dir = fw / parent_subdir
+    if not parent_dir.exists():
+        return results
+    for pack_dir in sorted(parent_dir.iterdir()):
+        if not pack_dir.is_dir():
+            continue
+        rules_dir = pack_dir / "rules.d"
+        if not rules_dir.exists():
+            continue
+        for yml in rules_dir.glob("*.yml"):
+            data = _load_yaml_rules(yml)
+            for category in _CATEGORIES:
+                for rule in data.get(category, []):
+                    if matches(rule, query):
+                        results.append({"pack": pack_dir.name, "category": category, **rule})
     return results
+
+
+def _load_yaml_rules(yml: Path) -> dict[str, Any]:
+    """加载 yaml 规则文件, 失败返空 dict.
+
+    Args:
+        yml: yaml 路径
+
+    Returns:
+        解析后的 dict (or {})
+    """
+    try:
+        with open(yml) as f:
+            return yaml.safe_load(f) or {}
+    except (yaml.YAMLError, OSError):
+        return {}
 
 
 def search_rules(query: str) -> list[dict[str, Any]]:

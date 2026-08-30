@@ -304,35 +304,68 @@ def _validate_directory(
     exclude: list[str],
     incremental: bool,
 ) -> list[ValidationResult] | None:
-    """校验目录, 支持 incremental cache 与 auto-detect.
-
-    V2.17 P2-5 拆分: 从 _collect_results (D=21) 抽出.
-    返回 None = 参数错误 (无 --lang 也无 --auto-detect).
-    """
+    """校验目录, 支持 incremental cache 与 auto-detect (V2.21 P5-60 拆分: 抽 _validate_incremental + _validate_full)."""
     if language is None and not auto_detect:
         print("Error: Use --lang or --auto-detect for directories.", file=sys.stderr)
         return None
 
-    results: list[ValidationResult] = []
-
     if incremental:
-        cache_file = path / ".rule-cache"
-        cache = _load_cache(cache_file)
-        all_files = _get_supported_files(path, exclude)
-        changed = [f for f in all_files if _file_hash(f) != cache.get(str(f))]
-        for f in all_files:
-            cache[str(f)] = _file_hash(f)
-        _save_cache(cache_file, cache)
-        for fp in changed:
-            lang = language or detect_language_from_file(fp)
-            if lang:
-                results.append(validate_file(fp, lang, custom_rules=custom_rules))
-        if not results:
-            print("No changed files detected (incremental mode).")
-    else:
-        results = validate_directory(path, language, exclude, custom_rules=custom_rules)
+        return _validate_incremental(path, language, custom_rules, exclude)
+    return _validate_full(path, language, custom_rules, exclude)
 
+
+def _validate_incremental(
+    path: Path,
+    language: str | None,
+    custom_rules: dict[str, Any] | None,
+    exclude: list[str],
+) -> list[ValidationResult]:
+    """Incremental 模式校验: cache + 只查变化文件 (模块级 helper).
+
+    Args:
+        path: 目录路径
+        language: 显式语言 (None = 自动检测)
+        custom_rules: 自定义规则
+        exclude: 排除模式列表
+
+    Returns:
+        ValidationResult 列表
+    """
+    cache_file = path / ".rule-cache"
+    cache = _load_cache(cache_file)
+    all_files = _get_supported_files(path, exclude)
+    changed = [f for f in all_files if _file_hash(f) != cache.get(str(f))]
+    for f in all_files:
+        cache[str(f)] = _file_hash(f)
+    _save_cache(cache_file, cache)
+    results: list[ValidationResult] = []
+    for fp in changed:
+        lang = language or detect_language_from_file(fp)
+        if lang:
+            results.append(validate_file(fp, lang, custom_rules=custom_rules))
+    if not results:
+        print("No changed files detected (incremental mode).")
     return results
+
+
+def _validate_full(
+    path: Path,
+    language: str | None,
+    custom_rules: dict[str, Any] | None,
+    exclude: list[str],
+) -> list[ValidationResult]:
+    """全量模式校验: validate_directory (模块级 helper).
+
+    Args:
+        path: 目录路径
+        language: 显式语言
+        custom_rules: 自定义规则
+        exclude: 排除模式列表
+
+    Returns:
+        ValidationResult 列表
+    """
+    return validate_directory(path, language, exclude, custom_rules=custom_rules)
 
 
 def _collect_results(

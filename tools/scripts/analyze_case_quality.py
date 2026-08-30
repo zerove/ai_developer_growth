@@ -268,21 +268,44 @@ class CaseStudyQualityAnalyzer:
 
         V2.20 P4-18 拆分: 抽 _parse_row_metrics 收口 3 个 re.search + 数值提取,
         _validate_metric_consistency 收口比值校验.
-        主函数仅遍历 + 任意行通过即返 True.
+        V2.20 P4-23 拆分: 抽 _is_valid_total_row 收口行守卫 (>=4 列 + 总计),
+        主函数仅遍历 + 委托.
         """
         for row in data_rows:
-            cols = [c.strip() for c in row.split("|")[1:-1]]
-            if len(cols) < 4:
-                continue
-            stage = cols[0]
-            if "总计" not in stage:
-                continue
-            metrics = self._parse_row_metrics(cols[1], cols[2], cols[3])
+            metrics = self._extract_total_row_metrics(row)
             if metrics is None:
                 continue
             if self._validate_metric_consistency(*metrics):
                 return True
         return False
+
+    def _is_valid_total_row(self, row: str) -> bool:
+        """判断行是否为有效 '总计' 数据行 (>=4 列 + 含 '总计').
+
+        Args:
+            row: markdown 表格行
+
+        Returns:
+            True if 有效总计行
+        """
+        cols = [c.strip() for c in row.split("|")[1:-1]]
+        if len(cols) < 4:
+            return False
+        return "总计" in cols[0]
+
+    def _extract_total_row_metrics(self, row: str) -> tuple[float, float, float] | None:
+        """提取总计行的 3 个 metric (t_hours, a_hours, boost_val).
+
+        Args:
+            row: markdown 表格行
+
+        Returns:
+            (t_hours, a_hours, boost_val) 或 None (非总计行/解析失败)
+        """
+        if not self._is_valid_total_row(row):
+            return None
+        cols = [c.strip() for c in row.split("|")[1:-1]]
+        return self._parse_row_metrics(cols[1], cols[2], cols[3])
 
     def _parse_row_metrics(self, traditional: str, ai: str, boost: str) -> tuple[float, float, float] | None:
         """解析表格行 3 列 (traditional_hours, ai_hours, boost_factor).

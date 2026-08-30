@@ -54,18 +54,40 @@ class AuditAttestationLedger:
         return entry
 
     def generate_report(self) -> str:
-        """Generate a human-readable audit report."""
+        """Generate a human-readable audit report (V2.22 P6-4 拆分: 抽 _load_entries + _format_entry + _verify_chain_integrity)."""
         if not self.ledger_file.exists():
             return "📋 Audit Ledger: No entries recorded yet."
 
-        lines = self.ledger_file.read_text(encoding="utf-8").splitlines()
-        entries = [json.loads(line) for line in lines if line.strip()]
+        entries = _load_entries(self.ledger_file)
+        report = self._build_report_header(entries)
+        self._append_recent_entries(report, entries)
+        valid = _verify_chain_integrity(entries)
+        report.append(f"\n✅ Chain Integrity: {'VALID' if valid else 'BROKEN'}")
+        report.append("=" * 60)
+        return "\n".join(report)
 
+    def _build_report_header(self, entries: list[dict[str, Any]]) -> list[str]:
+        """构造报告 header (3 段 = 60/60 + Total + Ledger + Recent Entries, 方法级 helper).
+
+        Args:
+            entries: ledger entries 列表
+
+        Returns:
+            report 行列表 (header 部分)
+        """
         report = ["=" * 60, " 🔒 AUDIT ATTESTATION REPORT ", "=" * 60]
         report.append(f"\nTotal Entries: {len(entries)}")
         report.append(f"Ledger File: {self.ledger_file}")
         report.append("\n📜 Recent Entries:")
+        return report
 
+    def _append_recent_entries(self, report: list[str], entries: list[dict[str, Any]]) -> None:
+        """追加最近 10 条 entry (方法级 helper, 内部修改 report).
+
+        Args:
+            report: 累积目标行列表
+            entries: 全部 entries
+        """
         for entry in entries[-10:]:
             event_type = entry.get("event_type", "UNKNOWN")
             current_hash = entry.get("current_hash", "")[:16]
@@ -76,27 +98,45 @@ class AuditAttestationLedger:
                 for k, v in details.items():
                     report.append(f"    - {k}: {v}")
 
-        # Verify chain integrity
-        valid = True
-        prev_hash = "0" * 64
-        for entry in entries:
-            payload = {
-                "event_type": entry.get("event_type"),
-                "details": entry.get("details"),
-                "prev_hash": entry.get("prev_hash"),
-                "timestamp": entry.get("timestamp"),
-            }
-            serialized = json.dumps(payload, sort_keys=True)
-            current_hash = hashlib.sha256(serialized.encode("utf-8")).hexdigest()
-            if current_hash != entry.get("current_hash"):
-                valid = False
-                break
-            prev_hash = current_hash
 
-        report.append(f"\n✅ Chain Integrity: {'VALID' if valid else 'BROKEN'}")
-        report.append("=" * 60)
+def _load_entries(ledger_file: Path) -> list[dict[str, Any]]:
+    """从 ledger 文件加载所有 entry (模块级 helper).
 
-        return "\n".join(report)
+    Args:
+        ledger_file: ledger JSONL 文件
+
+    Returns:
+        entry 字典列表
+    """
+    lines = ledger_file.read_text(encoding="utf-8").splitlines()
+    return [json.loads(line) for line in lines if line.strip()]
+
+
+def _verify_chain_integrity(entries: list[dict[str, Any]]) -> bool:
+    """验证 ledger 链完整性 (模块级 helper).
+
+    Args:
+        entries: 全部 entries
+
+    Returns:
+        True 链有效, False 链断裂
+    """
+    valid = True
+    prev_hash = "0" * 64
+    for entry in entries:
+        payload = {
+            "event_type": entry.get("event_type"),
+            "details": entry.get("details"),
+            "prev_hash": entry.get("prev_hash"),
+            "timestamp": entry.get("timestamp"),
+        }
+        serialized = json.dumps(payload, sort_keys=True)
+        current_hash = hashlib.sha256(serialized.encode("utf-8")).hexdigest()
+        if current_hash != entry.get("current_hash"):
+            valid = False
+            break
+        prev_hash = current_hash
+    return valid
 
 
 if __name__ == "__main__":

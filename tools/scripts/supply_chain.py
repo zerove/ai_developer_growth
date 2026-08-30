@@ -210,35 +210,14 @@ class OSVScanner:
             return []
 
     def _parse_osv_vuln(self, data: dict[str, Any], dep: Dependency) -> Vulnerability:
-        # 解析严重性
-        severity = Severity.NONE
-        cvss_score = None
-        cvss_vector = None
+        """解析单个 OSV 漏洞.
 
-        for sev in data.get("severity", []):
-            if sev.get("type") == "CVSS_V3":
-                cvss_score = sev.get("score")
-                cvss_vector = sev.get("vector")
-                # 根据 CVSS 分数判断严重性
-                if cvss_score is not None:
-                    if cvss_score >= 9.0:
-                        severity = Severity.CRITICAL
-                    elif cvss_score >= 7.0:
-                        severity = Severity.HIGH
-                    elif cvss_score >= 4.0:
-                        severity = Severity.MEDIUM
-                    else:
-                        severity = Severity.LOW
-                break
-
-        # 修复版本
-        fixed_version = None
-        for affected in data.get("affected", []):
-            for r in affected.get("ranges", []):
-                for event in r.get("events", []):
-                    if "fixed" in event:
-                        fixed_version = event["fixed"]
-                        break
+        V2.20 P4-38 拆分: 抽 _extract_cvss_severity 收口 CVSS 解析 + 等级判定,
+        _extract_fixed_version 收口 3 层嵌套 fixed 提取.
+        主函数仅构造 Vulnerability 对象.
+        """
+        severity, cvss_score, cvss_vector = self._extract_cvss_severity(data.get("severity", []))
+        fixed_version = self._extract_fixed_version(data.get("affected", []))
 
         return Vulnerability(
             id=data.get("id", ""),
@@ -254,6 +233,53 @@ class OSVScanner:
             cvss_score=cvss_score,
             cvss_vector=cvss_vector,
         )
+
+    def _extract_cvss_severity(self, severities: list[dict[str, Any]]) -> tuple[Severity, float | None, str | None]:
+        """从 OSV severity 列表提取 CVSS_V3 分数并映射到 Severity 等级.
+
+        Args:
+            severities: OSV severity 列表
+
+        Returns:
+            (severity, cvss_score, cvss_vector)
+        """
+        severity = Severity.NONE
+        cvss_score: float | None = None
+        cvss_vector: str | None = None
+
+        for sev in severities:
+            if sev.get("type") != "CVSS_V3":
+                continue
+            cvss_score = sev.get("score")
+            cvss_vector = sev.get("vector")
+            if cvss_score is not None:
+                if cvss_score >= 9.0:
+                    severity = Severity.CRITICAL
+                elif cvss_score >= 7.0:
+                    severity = Severity.HIGH
+                elif cvss_score >= 4.0:
+                    severity = Severity.MEDIUM
+                else:
+                    severity = Severity.LOW
+            break
+
+        return severity, cvss_score, cvss_vector
+
+    def _extract_fixed_version(self, affected: list[dict[str, Any]]) -> str | None:
+        """从 OSV affected 列表提取首个 fixed version.
+
+        Args:
+            affected: OSV affected 列表
+
+        Returns:
+            fixed version 字符串 (None if 未找到)
+        """
+        for entry in affected:
+            for r in entry.get("ranges", []):
+                for event in r.get("events", []):
+                    if "fixed" in event:
+                        return event["fixed"]
+        return None
 
 
 class GHSASource:

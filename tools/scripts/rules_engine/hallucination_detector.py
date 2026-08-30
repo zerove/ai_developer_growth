@@ -385,7 +385,7 @@ def detect_hallucinations_in_file(filepath: Path) -> HallucinationReport:
 
 
 def detect_hallucinations(dirpath: Path, languages: list[str] | None = None) -> HallucinationReport:
-    """Scan a directory for hallucination patterns.
+    """Scan a directory for hallucination patterns (V2.21 P5-47 拆分: 抽 _collect_target_files + _merge_reports).
 
     Args:
         dirpath: Directory to scan.
@@ -396,6 +396,24 @@ def detect_hallucinations(dirpath: Path, languages: list[str] | None = None) -> 
     """
     combined = HallucinationReport(files_scanned=0, findings=[])
 
+    for filepath in _collect_target_files(dirpath):
+        report = detect_hallucinations_in_file(filepath)
+        combined.findings.extend(report.findings)
+        combined.files_scanned += report.files_scanned
+
+    _merge_reports(combined)
+    return combined
+
+
+def _collect_target_files(dirpath: Path) -> list[Path]:
+    """收集待扫描文件 (按扩展名, 跳过 ignore 目录, 上限 5000, 模块级 helper).
+
+    Args:
+        dirpath: 扫描根目录
+
+    Returns:
+        文件路径列表
+    """
     exts = {
         ".py",
         ".js",
@@ -423,21 +441,20 @@ def detect_hallucinations(dirpath: Path, languages: list[str] | None = None) -> 
     files: list[Path] = []
     for ext in exts:
         files.extend(dirpath.rglob(f"*{ext}"))
-
     files = [f for f in files if not any(d in f.parts for d in ignore_dirs)]
-    files = sorted(files)[:5000]  # Cap
+    return sorted(files)[:5000]  # Cap
 
-    for filepath in files:
-        report = detect_hallucinations_in_file(filepath)
-        combined.findings.extend(report.findings)
-        combined.files_scanned += report.files_scanned
 
+def _merge_reports(combined: HallucinationReport) -> None:
+    """汇总报告计数 (high/medium/low/total, 模块级 helper, 内部修改 combined).
+
+    Args:
+        combined: 合并目标报告
+    """
     combined.total_findings = len(combined.findings)
     combined.high_count = sum(1 for f in combined.findings if f.severity == "high")
     combined.medium_count = sum(1 for f in combined.findings if f.severity == "medium")
     combined.low_count = sum(1 for f in combined.findings if f.severity == "low")
-
-    return combined
 
 
 def format_hallucination_report(report: HallucinationReport) -> str:

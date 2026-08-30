@@ -78,32 +78,24 @@ def check_annotation(filepath: Path) -> list[dict[str, Any]]:
 
 
 def check_structure_patterns(filepath: Path) -> list[dict[str, Any]]:
-    """向后兼容: 检查代码结构问题 (行计数方式，避免正则回溯)"""
+    """向后兼容: 检查代码结构问题 (行计数方式，避免正则回溯)
+
+    V2.20 P4-52 拆分: 抽 _find_function_end 收口函数体行数扫描,
+    主函数仅函数定义守卫 + issue 构造.
+    """
     import re
 
-    issues = []
+    issues: list[dict[str, Any]] = []
     content = filepath.read_text(encoding="utf-8")
     lines = content.split("\n")
 
     i = 0
     while i < len(lines):
         line = lines[i]
-        # 检测函数定义
         if re.match(r"^\s*def\s+\w+", line):
             func_start = i
             indent = len(line) - len(line.lstrip())
-            # 计算函数体行数
-            j = i + 1
-            while j < len(lines):
-                stripped = lines[j].strip()
-                if stripped == "" or stripped.startswith("#"):
-                    j += 1
-                    continue
-                current_indent = len(lines[j]) - len(lines[j].lstrip())
-                if current_indent > indent:
-                    j += 1
-                else:
-                    break
+            j = _find_function_end(lines, i + 1, indent)
             func_lines = j - func_start
             if func_lines > 50:
                 issues.append(
@@ -119,6 +111,33 @@ def check_structure_patterns(filepath: Path) -> list[dict[str, Any]]:
             i += 1
 
     return issues
+
+
+def _find_function_end(lines: list[str], start: int, indent: int) -> int:
+    """扫描函数体结束行索引 (模块级 helper).
+
+    跳过空行 + 注释行, 找到首个缩进 <= indent 的非空行 (函数体结束).
+
+    Args:
+        lines: 全部行
+        start: 函数体起始行 (def 之后一行)
+        indent: 函数定义缩进
+
+    Returns:
+        函数体结束行索引 (含 def 起始行至此前)
+    """
+    j = start
+    while j < len(lines):
+        stripped = lines[j].strip()
+        if stripped == "" or stripped.startswith("#"):
+            j += 1
+            continue
+        current_indent = len(lines[j]) - len(lines[j].lstrip())
+        if current_indent > indent:
+            j += 1
+        else:
+            break
+    return j
 
 
 def check_security_patterns(filepath: Path) -> list[dict[str, Any]]:

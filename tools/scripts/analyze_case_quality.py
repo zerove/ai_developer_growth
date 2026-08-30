@@ -250,30 +250,60 @@ class CaseStudyQualityAnalyzer:
         return len(cols) >= 4
 
     def _check_realistic_values(self, data_rows: list[str]) -> bool:
-        """Check if efficiency values are realistic."""
+        """Check if efficiency values are realistic.
+
+        V2.20 P4-18 拆分: 抽 _parse_row_metrics 收口 3 个 re.search + 数值提取,
+        _validate_metric_consistency 收口比值校验.
+        主函数仅遍历 + 任意行通过即返 True.
+        """
         for row in data_rows:
             cols = [c.strip() for c in row.split("|")[1:-1]]
-            if len(cols) >= 4:
-                stage, traditional, ai, boost = cols[:4]
-                if "总计" in stage:
-                    try:
-                        # Parse hours
-                        t_match = re.search(r"([\d.]+)\s*小时", traditional)
-                        a_match = re.search(r"([\d.]+)\s*小时", ai)
-                        b_match = re.search(r"([\d.]+)x", boost)
-
-                        if t_match and a_match and b_match:
-                            t_hours = float(t_match.group(1))
-                            a_hours = float(a_match.group(1))
-                            boost_val = float(b_match.group(1))
-
-                            expected = t_hours / a_hours
-                            # Allow 50% tolerance for rounding
-                            if abs(expected - boost_val) < max(0.5, expected * 0.5):
-                                return True
-                    except (ValueError, ZeroDivisionError):
-                        pass
+            if len(cols) < 4:
+                continue
+            stage = cols[0]
+            if "总计" not in stage:
+                continue
+            metrics = self._parse_row_metrics(cols[1], cols[2], cols[3])
+            if metrics is None:
+                continue
+            if self._validate_metric_consistency(*metrics):
+                return True
         return False
+
+    def _parse_row_metrics(self, traditional: str, ai: str, boost: str) -> tuple[float, float, float] | None:
+        """解析表格行 3 列 (traditional_hours, ai_hours, boost_factor).
+
+        Args:
+            traditional: 传统耗时字符串
+            ai: AI 耗时字符串
+            boost: 提升倍数字符串 (如 "3.5x")
+
+        Returns:
+            (t_hours, a_hours, boost_val) 或 None (解析失败)
+        """
+        try:
+            t_match = re.search(r"([\d.]+)\s*小时", traditional)
+            a_match = re.search(r"([\d.]+)\s*小时", ai)
+            b_match = re.search(r"([\d.]+)x", boost)
+            if not (t_match and a_match and b_match):
+                return None
+            return float(t_match.group(1)), float(a_match.group(1)), float(b_match.group(1))
+        except (ValueError, ZeroDivisionError):
+            return None
+
+    def _validate_metric_consistency(self, t_hours: float, a_hours: float, boost_val: float) -> bool:
+        """校验 t_hours / a_hours 与 boost_val 偏差是否在容差内.
+
+        Args:
+            t_hours: 传统耗时
+            a_hours: AI 耗时
+            boost_val: 报告的提升倍数
+
+        Returns:
+            True if 偏差在 50% (或绝对 0.5) 容差内
+        """
+        expected = t_hours / a_hours
+        return abs(expected - boost_val) < max(0.5, expected * 0.5)
 
     def _analyze_insights(self, content: str) -> float:
         """Score insight quality and specificity."""

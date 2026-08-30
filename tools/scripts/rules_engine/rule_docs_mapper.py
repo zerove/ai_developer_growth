@@ -210,34 +210,59 @@ def _load_rules_from_yml(filepath: Path) -> list[dict[str, Any]]:
 
 
 def _simple_parse_rules(filepath: Path) -> list[dict[str, Any]]:
-    """Minimal YAML parser for anti_patterns.yml (no PyYAML needed)."""
+    """Minimal YAML parser for anti_patterns.yml (V2.21 P5-53 拆分: 抽 _parse_yaml_line + _save_current)."""
     rules: list[dict[str, Any]] = []
     current: dict[str, Any] | None = None
     for line in filepath.read_text(encoding="utf-8").splitlines():
-        stripped = line.strip()
-        if not stripped or stripped.startswith("#"):
+        action, new_current = _parse_yaml_line(line, current)
+        if action == "skip":
             continue
-        if stripped.startswith("- id:"):
+        if action == "new_rule":
             if current:
                 rules.append(current)
-            current = {"id": stripped.split(":", 1)[1].strip()}
+            current = new_current
             continue
-        if current and ":" in stripped and not stripped.startswith("-"):
-            key, _, val = stripped.partition(":")
-            key = key.strip()
-            val = val.strip().strip("'\"")
-            if key in (
-                "name",
-                "severity",
-                "category",
-                "pattern",
-                "message",
-                "fix_hint",
-            ):
-                current[key] = val
+        if action == "kv":
+            current = new_current
     if current:
         rules.append(current)
     return rules
+
+
+_KNOWN_YAML_KEYS = ("name", "severity", "category", "pattern", "message", "fix_hint")
+
+
+def _parse_yaml_line(line: str, current: dict[str, Any] | None) -> tuple[str, dict[str, Any] | None]:
+    """解析单行 YAML (返回 action + new_current, 模块级 helper).
+
+    Args:
+        line: YAML 行
+        current: 当前 rule 字典
+
+    Returns:
+        (action, new_state) 元组:
+        - ("skip", None) 表示跳过 (空行/注释)
+        - ("new_rule", new_current) 表示新 rule 开始
+        - ("kv", updated_current) 表示 key-value 更新
+        - ("skip", None) 表示未匹配
+    """
+    stripped = line.strip()
+    if not stripped or stripped.startswith("#"):
+        return "skip", None
+
+    if stripped.startswith("- id:"):
+        new_rule: dict[str, Any] = {"id": stripped.split(":", 1)[1].strip()}
+        return "new_rule", new_rule
+
+    if current is not None and ":" in stripped and not stripped.startswith("-"):
+        key, _, val = stripped.partition(":")
+        key = key.strip()
+        val = val.strip().strip("'\"")
+        if key in _KNOWN_YAML_KEYS:
+            current[key] = val
+        return "kv", current
+
+    return "skip", None
 
 
 def _scan_documents(docs_dir: Path, case_studies: bool) -> dict[str, list[str]]:

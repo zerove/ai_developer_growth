@@ -327,7 +327,7 @@ class ToolMatrixUpdater:
         return updates
 
     def generate_report(self) -> str:
-        """Generate a human-readable update report."""
+        """Generate a human-readable update report (V2.21 P5-27 拆分: 抽 _build_*_section)."""
         report = [
             "# AI Tool Matrix Update Report",
             f"\n**Generated**: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}",
@@ -335,42 +335,82 @@ class ToolMatrixUpdater:
             "\n---\n",
         ]
 
-        # Model updates
         model_updates = [m for m in self.models.values() if m.update_available]
-        if model_updates:
-            report.append("## 📦 Model Updates Available")
-            for m in model_updates:
-                report.append(f"- **{m.name}**: {m.current_version} → {m.latest_version}")
-        else:
-            report.append("## ✅ All Models Up to Date")
-
-        # Tool updates
         tool_updates = [t for t in self.tools.values() if t.update_available]
-        if tool_updates:
-            report.append("\n## 🔧 Tool Updates Available")
-            for t in tool_updates:
-                report.append(f"- **{t.name}**: {t.current_version} → {t.latest_version}")
-        else:
-            report.append("\n## ✅ All Tools Up to Date")
 
-        # CLI versions
-        report.append("\n## 💻 Installed CLI Versions")
+        report.extend(self._build_model_section(model_updates))
+        report.extend(self._build_tool_section(tool_updates))
+        report.extend(self._build_cli_versions())
+        report.extend(self._build_recommendations(model_updates, tool_updates))
+        report.append(f"\n---\n*Next check recommended: {(datetime.now() + timedelta(days=7)).strftime('%Y-%m-%d')}*")
+        return "\n".join(report)
+
+    def _build_model_section(self, model_updates: list[Any]) -> list[str]:
+        """生成 Model Updates 段 (方法级 helper).
+
+        Args:
+            model_updates: 有 update_available 的 model 列表
+
+        Returns:
+            报告行列表
+        """
+        if model_updates:
+            return [
+                "## 📦 Model Updates Available",
+                *[f"- **{m.name}**: {m.current_version} → {m.latest_version}" for m in model_updates],
+            ]
+        return ["## ✅ All Models Up to Date"]
+
+    def _build_tool_section(self, tool_updates: list[Any]) -> list[str]:
+        """生成 Tool Updates 段 (方法级 helper).
+
+        Args:
+            tool_updates: 有 update_available 的 tool 列表
+
+        Returns:
+            报告行列表
+        """
+        if tool_updates:
+            return [
+                "\n## 🔧 Tool Updates Available",
+                *[f"- **{t.name}**: {t.current_version} → {t.latest_version}" for t in tool_updates],
+            ]
+        return ["\n## ✅ All Tools Up to Date"]
+
+    def _build_cli_versions(self) -> list[str]:
+        """生成 CLI Versions 段 (方法级 helper).
+
+        Returns:
+            报告行列表
+        """
+        lines = ["\n## 💻 Installed CLI Versions"]
         for name, tool in self.tools.items():
             if tool.current_version and tool.current_version != "latest":
-                report.append(f"- {name}: {tool.current_version}")
+                lines.append(f"- {name}: {tool.current_version}")
+        return lines
 
-        # Recommendations
-        report.append("\n## 💡 Recommendations")
+    def _build_recommendations(self, model_updates: list[Any], tool_updates: list[Any]) -> list[str]:
+        """生成 Recommendations 段 (方法级 helper).
+
+        Args:
+            model_updates: 有 update 的 model 列表
+            tool_updates: 有 update 的 tool 列表
+
+        Returns:
+            报告行列表
+        """
+        lines = ["\n## 💡 Recommendations"]
         if model_updates or tool_updates:
-            report.append("1. Update the matrix file with new versions")
-            report.append("2. Run integration tests after updates")
-            report.append("3. Consider updating configuration files (.ai-sync.json, etc.)")
+            lines.extend(
+                [
+                    "1. Update the matrix file with new versions",
+                    "2. Run integration tests after updates",
+                    "3. Consider updating configuration files (.ai-sync.json, etc.)",
+                ]
+            )
         else:
-            report.append("No immediate updates required. Re-check in 1 week.")
-
-        report.append(f"\n---\n*Next check recommended: {(datetime.now() + timedelta(days=7)).strftime('%Y-%m-%d')}*")
-
-        return "\n".join(report)
+            lines.append("No immediate updates required. Re-check in 1 week.")
+        return lines
 
     def update_matrix(self) -> bool:
         """Update the markdown matrix with new versions."""

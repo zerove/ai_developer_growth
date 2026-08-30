@@ -772,7 +772,7 @@ class SBOMGenerator:
         return deps
 
     def _parse_go_require_line(self, line: str, in_require: bool) -> tuple[Dependency | None, bool]:
-        """解析单行 go.mod, 返回 (dep_or_None, new_in_require).
+        """解析单行 go.mod (V2.22 P6-3 拆分: 抽 _handle_require_block_marker + _build_go_dependency, 方法级 helper).
 
         Args:
             line: 已 strip 的行
@@ -781,13 +781,41 @@ class SBOMGenerator:
         Returns:
             (Dependency 或 None, 更新后的 in_require 状态)
         """
-        if line.startswith("require ("):
-            return None, True
-        if in_require and line == ")":
-            return None, False
+        new_in_require, is_block_marker = self._handle_require_block_marker(line, in_require)
+        if is_block_marker:
+            return None, new_in_require
         if not (in_require or line.startswith("require ")):
             return None, in_require
+        return self._build_go_dependency(line, in_require)
 
+    def _handle_require_block_marker(self, line: str, in_require: bool) -> tuple[bool, bool]:
+        """处理 require ( ... ) 块起止标记 (方法级 helper, 内部修改 self 状态).
+
+        Args:
+            line: 已 strip 的行
+            in_require: 当前是否在 require 块内
+
+        Returns:
+            (new_in_require, is_block_marker) 元组:
+            - new_in_require: 更新后的状态
+            - is_block_marker: True 表示 'require (' 或 ')' 块起止
+        """
+        if line.startswith("require ("):
+            return True, True
+        if in_require and line == ")":
+            return False, True
+        return in_require, False
+
+    def _build_go_dependency(self, line: str, in_require: bool) -> tuple[Dependency | None, bool]:
+        """从 go.mod 单行构造 Dependency (方法级 helper).
+
+        Args:
+            line: 已 strip 的行 (需以 'require ' 开头)
+            in_require: 当前是否在 require 块内
+
+        Returns:
+            (Dependency 或 None, in_require 状态)
+        """
         parts = line.replace("require ", "").split()
         if len(parts) < 2:
             return None, in_require

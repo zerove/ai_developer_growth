@@ -553,7 +553,6 @@ class RegexFixProvider(FixProvider):
 
         对文件全文应用 self.rules 的 re.subn, 返回 FixAction 列表.
         """
-        import re
 
         try:
             full_path = Path(file_path)

@@ -306,36 +306,72 @@ def _build_all_components(
     extra_tags: list[str],
     sbom_dir: Path,
 ) -> tuple[list[str], list[str]]:
-    """逐组件构建, 返回 (失败列表, SBOM 文件列表)。"""
+    """逐组件构建, 返回 (失败列表, SBOM 文件列表)。
+
+    V2.20 P4-30 拆分: 抽 _build_single_component 收口单组件构建 + SBOM + 签名,
+    主函数仅遍历 + 收集结果 (用 SBOM_FAILURE sentinel 区分失败).
+    """
     failed: list[str] = []
     sbom_files: list[str] = []
 
     for name, dockerfile in components:
-        success, err = build_image(
-            component=name,
-            dockerfile=dockerfile,
-            version=args.version,
-            platforms=args.platforms,
-            registry=args.registry,
-            push=args.push,
-            dry_run=args.dry_run,
-            extra_tags=extra_tags,
-        )
-        if not success:
+        sbom_file = _build_single_component(name, dockerfile, args, extra_tags, sbom_dir)
+        if sbom_file == _SBOM_FAILURE:
             failed.append(name)
-            continue
-
-        image_ref = f"{args.registry}/{PROJECT}/{name}:{args.version}"
-
-        if args.sbom and not args.dry_run:
-            ok, sbom_file = generate_sbom(image_ref, sbom_dir)
-            if ok:
-                sbom_files.append(sbom_file)
-
-        if args.sign and not args.dry_run and not sign_image(image_ref):
-            print(f"⚠️ {name} 签名失败")
+        elif sbom_file is not None:
+            sbom_files.append(sbom_file)
 
     return failed, sbom_files
+
+
+_SBOM_FAILURE = "__build_failure__"
+
+
+def _build_single_component(
+    name: str,
+    dockerfile: str,
+    args: argparse.Namespace,
+    extra_tags: list[str],
+    sbom_dir: Path,
+) -> str | None:
+    """构建单个组件 (含 SBOM + 签名).
+
+    Args:
+        name: 组件名
+        dockerfile: Dockerfile 路径
+        args: CLI 参数
+        extra_tags: 额外 tags
+        sbom_dir: SBOM 输出目录
+
+    Returns:
+        SBOM 文件路径 (None if 成功但不需要 SBOM),
+        或 _SBOM_FAILURE sentinel (构建失败)
+    """
+    success, err = build_image(
+        component=name,
+        dockerfile=dockerfile,
+        version=args.version,
+        platforms=args.platforms,
+        registry=args.registry,
+        push=args.push,
+        dry_run=args.dry_run,
+        extra_tags=extra_tags,
+    )
+    if not success:
+        return _SBOM_FAILURE
+
+    image_ref = f"{args.registry}/{PROJECT}/{name}:{args.version}"
+
+    sbom_file: str | None = None
+    if args.sbom and not args.dry_run:
+        ok, sbom_path = generate_sbom(image_ref, sbom_dir)
+        if ok:
+            sbom_file = sbom_path
+
+    if args.sign and not args.dry_run and not sign_image(image_ref):
+        print(f"⚠️ {name} 签名失败")
+
+    return sbom_file
 
 
 def _print_summary(

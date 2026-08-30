@@ -448,29 +448,63 @@ class CaseStudyQualityAnalyzer:
         return min(max_score, score)
 
     def _generate_feedback(self, metrics: QualityMetrics, content: str) -> None:
-        """Generate issues and strengths based on analysis."""
-        if metrics.authenticity_score < 50:
-            metrics.issues.append("Low authenticity - missing concrete evidence (links, commits, file paths)")
-        elif metrics.authenticity_score > 80:
-            metrics.strengths.append("High authenticity with concrete references")
+        """Generate issues and strengths based on analysis.
 
-        if metrics.efficiency_credibility < 50:
-            metrics.issues.append("Efficiency data lacks credibility - missing or unrealistic tables")
-        elif metrics.efficiency_credibility > 80:
-            metrics.strengths.append("Credible efficiency data with validated calculations")
-
-        if metrics.insight_quality < 50:
-            metrics.issues.append("Insights are vague or insufficient - need specific, actionable findings")
-        elif metrics.insight_quality > 80:
-            metrics.strengths.append("High-quality specific insights with code/tool references")
-
+        V2.20 P4-19 拆分: 抽 _add_threshold_feedback 收口阈值判定 + issue/strength 添加,
+        主函数 5 段委托, 每段 1 行.
+        """
+        self._add_threshold_feedback(
+            metrics,
+            metrics.authenticity_score,
+            low_issue="Low authenticity - missing concrete evidence (links, commits, file paths)",
+            high_strength="High authenticity with concrete references",
+        )
+        self._add_threshold_feedback(
+            metrics,
+            metrics.efficiency_credibility,
+            low_issue="Efficiency data lacks credibility - missing or unrealistic tables",
+            high_strength="Credible efficiency data with validated calculations",
+        )
+        self._add_threshold_feedback(
+            metrics,
+            metrics.insight_quality,
+            low_issue="Insights are vague or insufficient - need specific, actionable findings",
+            high_strength="High-quality specific insights with code/tool references",
+        )
         if metrics.completeness < 70:
             metrics.issues.append("Missing required sections")
+        self._add_threshold_feedback(
+            metrics,
+            metrics.cross_references,
+            low_issue="Poor cross-referencing - not linked in INDEX.md/MOC.md",
+            high_strength="Well integrated with knowledge base",
+            low_threshold=30,
+            high_threshold=70,
+        )
 
-        if metrics.cross_references < 30:
-            metrics.issues.append("Poor cross-referencing - not linked in INDEX.md/MOC.md")
-        elif metrics.cross_references > 70:
-            metrics.strengths.append("Well integrated with knowledge base")
+    def _add_threshold_feedback(
+        self,
+        metrics: QualityMetrics,
+        score: float,
+        low_issue: str,
+        high_strength: str,
+        low_threshold: int = 50,
+        high_threshold: int = 80,
+    ) -> None:
+        """根据分数阈值添加 issue (低) 或 strength (高) 反馈.
+
+        Args:
+            metrics: 指标对象 (in-place 修改)
+            score: 当前分数
+            low_issue: 分数 < low_threshold 时添加的 issue
+            high_strength: 分数 > high_threshold 时添加的 strength
+            low_threshold: 低分阈值 (默认 50)
+            high_threshold: 高分阈值 (默认 80)
+        """
+        if score < low_threshold:
+            metrics.issues.append(low_issue)
+        elif score > high_threshold:
+            metrics.strengths.append(high_strength)
 
     def _build_summary(
         self,

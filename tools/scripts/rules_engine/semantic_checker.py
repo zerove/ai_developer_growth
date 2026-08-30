@@ -88,44 +88,70 @@ class ImportGraph:
     def find_unused_imports(
         self, file_imports: dict[str, list[ImportInfo]], file_content: dict[str, str]
     ) -> list[SemanticIssue]:
-        """Find imports that are not used in the file."""
+        """Find imports that are not used in the file (V2.21 P5-41 拆分: 抽 _check_from_import + _check_module_import)."""
         issues: list[SemanticIssue] = []
 
         for filepath, imports in file_imports.items():
             content = file_content.get(filepath, "")
             for imp in imports:
                 if imp.is_from and imp.names:
-                    for name in imp.names:
-                        # Check if the imported name is used
-                        if name not in content or content.count(name) <= 1:
-                            issues.append(
-                                SemanticIssue(
-                                    rule_id="unused-import",
-                                    severity="warning",
-                                    category="code_quality",
-                                    file=filepath,
-                                    line=imp.line,
-                                    message=f"Unused import: {name} from {imp.module}",
-                                    fix_hint=f"Remove 'from {imp.module} import {name}'",
-                                )
-                            )
+                    _check_from_import(filepath, imp, content, issues)
                 elif not imp.is_from and imp.module:
-                    # Check if module name appears in content
-                    module_short = imp.module.split(".")[-1]
-                    if module_short not in content or content.count(module_short) <= 1:
-                        issues.append(
-                            SemanticIssue(
-                                rule_id="unused-import",
-                                severity="warning",
-                                category="code_quality",
-                                file=filepath,
-                                line=imp.line,
-                                message=f"Unused import: {imp.module}",
-                                fix_hint=f"Remove 'import {imp.module}'",
-                            )
-                        )
+                    _check_module_import(filepath, imp, content, issues)
 
         return issues
+
+
+def _check_from_import(filepath: str, imp: ImportInfo, content: str, issues: list[SemanticIssue]) -> None:
+    """检查 from X import Y 中 Y 是否使用 (模块级 helper).
+
+    Args:
+        filepath: 文件路径
+        imp: import 信息
+        content: 文件内容
+        issues: 追加目标 list
+    """
+    if not imp.names:
+        return
+    for name in imp.names:
+        if name not in content or content.count(name) <= 1:
+            issues.append(
+                SemanticIssue(
+                    rule_id="unused-import",
+                    severity="warning",
+                    category="code_quality",
+                    file=filepath,
+                    line=imp.line,
+                    message=f"Unused import: {name} from {imp.module}",
+                    fix_hint=f"Remove 'from {imp.module} import {name}'",
+                )
+            )
+
+
+def _check_module_import(filepath: str, imp: ImportInfo, content: str, issues: list[SemanticIssue]) -> None:
+    """检查 import X 中 X.short 是否使用 (模块级 helper).
+
+    Args:
+        filepath: 文件路径
+        imp: import 信息
+        content: 文件内容
+        issues: 追加目标 list
+    """
+    if not imp.module:
+        return
+    module_short = imp.module.split(".")[-1]
+    if module_short not in content or content.count(module_short) <= 1:
+        issues.append(
+            SemanticIssue(
+                rule_id="unused-import",
+                severity="warning",
+                category="code_quality",
+                file=filepath,
+                line=imp.line,
+                message=f"Unused import: {imp.module}",
+                fix_hint=f"Remove 'import {imp.module}'",
+            )
+        )
 
     BUILTIN_NAMES = {
         "list",
@@ -304,7 +330,10 @@ class SemanticChecker:
         issues.extend(self._check_complexity(file_asts, dirpath))
         issues.extend(self._check_missing_docstrings(file_asts, dirpath))
         issues.extend(self.import_graph.find_unused_imports(file_imports, file_content))
-        issues.extend(self.import_graph.find_shadowed_imports(file_imports))
+        # find_shadowed_imports 暂未实现, 跳过 (P5-41 注释: 历史调用, 等后续)
+        shadowed = getattr(self.import_graph, "find_shadowed_imports", None)
+        if shadowed is not None:
+            issues.extend(shadowed(file_imports))
 
         # Import cycles
         cycles = self.import_graph.find_cycles()

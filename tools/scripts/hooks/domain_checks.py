@@ -388,28 +388,49 @@ def _format_output(
     baseline_exempt: int,
     baseline_note: str,
 ) -> str:
-    """格式化输出 (text 或 json)。
+    """格式化输出 (V2.21 P5-68 拆分: 抽 _format_text_output + _format_json_output)."""
+    passed_count, failed_count, total_issues = _compute_output_totals(all_results)
+    if format == "json":
+        return _format_json_output(all_results, passed_count, failed_count, total_issues, baseline_exempt)
+    return _format_text_output(all_results, passed_count, failed_count, total_issues, baseline_note)
 
-    ADR-016 拆分: 从 run_quality_gate 抽出。
+
+def _compute_output_totals(
+    all_results: list[tuple[Path, dict[str, Any]]],
+) -> tuple[int, int, int]:
+    """计算 passed/failed/total_issues 三元组 (模块级 helper).
+
+    Args:
+        all_results: (Path, result_dict) 列表
+
+    Returns:
+        (passed_count, failed_count, total_issues) 三元组
     """
     passed_count = sum(1 for _, r in all_results if r["passed"])
     failed_count = len(all_results) - passed_count
     total_issues = sum(len(r["issues"]) for _, r in all_results)
-    if format == "json":
-        return json.dumps(
-            {
-                "summary": {
-                    "passed": passed_count,
-                    "failed": failed_count,
-                    "total_files": len(all_results),
-                    "total_issues": total_issues,
-                    "baseline_exempt": baseline_exempt,
-                },
-                "results": [{"file": str(f), **r} for f, r in all_results],
-            },
-            indent=2,
-            ensure_ascii=False,
-        )
+    return passed_count, failed_count, total_issues
+
+
+def _format_text_output(
+    all_results: list[tuple[Path, dict[str, Any]]],
+    passed_count: int,
+    failed_count: int,
+    total_issues: int,
+    baseline_note: str,
+) -> str:
+    """格式化为 text (✅/❌ emoji + issue 列表 + 汇总, 模块级 helper).
+
+    Args:
+        all_results: (Path, result_dict) 列表
+        passed_count: 通过数
+        failed_count: 失败数
+        total_issues: 问题总数
+        baseline_note: 基线说明 (可空)
+
+    Returns:
+        text 格式字符串
+    """
     lines: list[str] = []
     for filepath, result in all_results:
         if result["passed"]:
@@ -422,8 +443,43 @@ def _format_output(
                 lines.append(f"   ... and {len(result['issues']) - 5} more")
     lines.append(f"\nSummary: {passed_count} passed, {failed_count} failed, {total_issues} issues")
     if baseline_note:
-        lines.append(f"ℹ️  {baseline_note}")
+        lines.append(f"Baseline: {baseline_note}")
     return "\n".join(lines)
+
+
+def _format_json_output(
+    all_results: list[tuple[Path, dict[str, Any]]],
+    passed_count: int,
+    failed_count: int,
+    total_issues: int,
+    baseline_exempt: int,
+) -> str:
+    """格式化为 JSON (summary + results, 模块级 helper).
+
+    Args:
+        all_results: (Path, result_dict) 列表
+        passed_count: 通过数
+        failed_count: 失败数
+        total_issues: 问题总数
+        baseline_exempt: 基线豁免数
+
+    Returns:
+        JSON 字符串
+    """
+    return json.dumps(
+        {
+            "summary": {
+                "passed": passed_count,
+                "failed": failed_count,
+                "total_files": len(all_results),
+                "total_issues": total_issues,
+                "baseline_exempt": baseline_exempt,
+            },
+            "results": [{"file": str(f), **r} for f, r in all_results],
+        },
+        indent=2,
+        ensure_ascii=False,
+    )
 
 
 def _resolve_baseline_path() -> Path:

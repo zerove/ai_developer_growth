@@ -126,45 +126,21 @@ _MESSAGE_HEURISTICS: list[tuple[list[str], str | None, str | None]] = [
 
 
 def heuristic_fix(rule: dict[str, str]) -> dict[str, str]:
-    """Generate a fix using pattern matching heuristics.
-
-    Args:
-        rule: A rule dict with 'pattern', 'message', 'fix_hint' keys.
-
-    Returns:
-        Dict with 'fix_replacement', 'fix_message', 'source' keys.
-    """
+    """Generate a fix using pattern matching heuristics (V2.21 P5-29 拆分: 抽 3 个 _try_* helper)."""
     pattern = rule.get("pattern", "")
     message = rule.get("message", "")
     fix_hint = rule.get("fix_hint", "")
 
     # Try exact pattern match first
-    for key, fix_info in HEURISTIC_FIXES.items():
-        if key in pattern:
-            return {
-                "fix_replacement": fix_info["fix"],
-                "fix_message": fix_info["message"],
-                "source": "heuristic",
-            }
+    result = _try_pattern_match(pattern)
+    if result is not None:
+        return result
 
     # Try message-based heuristics (OR logic: at least one keyword matches)
     msg_lower = message.lower()
-    for keywords, fix, msg in _MESSAGE_HEURISTICS:
-        # Check exclude keywords first
-        exclude = False
-        match_found = False
-        for kw in keywords:
-            if kw.startswith("__exclude:"):
-                if kw[10:] in msg_lower:
-                    exclude = True
-            elif kw in msg_lower:
-                match_found = True
-        if match_found and not exclude:
-            return {
-                "fix_replacement": fix or "",
-                "fix_message": msg or "",
-                "source": "heuristic",
-            }
+    result = _try_message_heuristics(msg_lower)
+    if result is not None:
+        return result
 
     # Use fix_hint if available
     if fix_hint:
@@ -179,3 +155,49 @@ def heuristic_fix(rule: dict[str, str]) -> dict[str, str]:
         "fix_message": "Manual fix required",
         "source": "none",
     }
+
+
+def _try_pattern_match(pattern: str) -> dict[str, str] | None:
+    """尝试 HEURISTIC_FIXES 精确 pattern 匹配 (模块级 helper).
+
+    Args:
+        pattern: 规则 pattern 字符串
+
+    Returns:
+        fix dict, 无匹配返回 None
+    """
+    for key, fix_info in HEURISTIC_FIXES.items():
+        if key in pattern:
+            return {
+                "fix_replacement": fix_info["fix"],
+                "fix_message": fix_info["message"],
+                "source": "heuristic",
+            }
+    return None
+
+
+def _try_message_heuristics(msg_lower: str) -> dict[str, str] | None:
+    """尝试 _MESSAGE_HEURISTICS 关键字匹配 (含 __exclude: 排除, 模块级 helper).
+
+    Args:
+        msg_lower: 规则 message 小写形式
+
+    Returns:
+        fix dict, 无匹配返回 None
+    """
+    for keywords, fix, msg in _MESSAGE_HEURISTICS:
+        exclude = False
+        match_found = False
+        for kw in keywords:
+            if kw.startswith("__exclude:"):
+                if kw[10:] in msg_lower:
+                    exclude = True
+            elif kw in msg_lower:
+                match_found = True
+        if match_found and not exclude:
+            return {
+                "fix_replacement": fix or "",
+                "fix_message": msg or "",
+                "source": "heuristic",
+            }
+    return None

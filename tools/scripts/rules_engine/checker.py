@@ -154,42 +154,73 @@ FRAMEWORK_DETECTORS: dict[str, dict[str, list[str]]] = {
 
 
 def _detect_framework(dirpath: Path) -> str | None:
-    """Detect project framework from project files."""
+    """Detect project framework from project files (V2.21 P5-37 拆分: 抽 _check_marker)."""
     for fw_name, hints in FRAMEWORK_DETECTORS.items():
-        # Check for marker files
         for filename in hints["files"]:
             marker = dirpath / filename
-            if marker.exists():
-                # For package-based detection, verify dependency
-                if marker.name == "package.json":
-                    try:
-                        import json
-
-                        deps = {
-                            **json.loads(marker.read_text()).get("dependencies", {}),
-                            **json.loads(marker.read_text()).get("devDependencies", {}),
-                        }
-                        if any(pkg in deps for pkg in hints["packages"]):
-                            return fw_name
-                    except Exception:
-                        return fw_name  # best effort
-                elif marker.name == "Cargo.toml":
-                    content = marker.read_text()
-                    if any(pkg in content for pkg in hints["packages"]):
-                        return fw_name
-                elif marker.name == "requirements.txt":
-                    content = marker.read_text().lower()
-                    if any(pkg in content for pkg in hints["packages"]):
-                        return fw_name
-                elif marker.name == "pyproject.toml":
-                    content = marker.read_text().lower()
-                    if any(pkg in content for pkg in hints["packages"]):
-                        return fw_name
-                elif marker.name == "manage.py":
-                    return fw_name
-                elif marker.name in ("pom.xml", "build.gradle"):
-                    return fw_name  # best effort
+            if marker.exists() and _check_marker(marker, hints["packages"]):
+                return fw_name
     return None
+
+
+def _check_marker(marker: Path, packages: list[str]) -> bool:
+    """检查 marker 文件是否匹配 framework (按文件名分派, 模块级 helper).
+
+    Args:
+        marker: marker 文件路径
+        packages: 框架依赖包列表
+
+    Returns:
+        是否匹配
+    """
+    if marker.name == "package.json":
+        return _check_package_json(marker, packages)
+    if marker.name == "Cargo.toml":
+        return _check_text_contains(marker, packages)
+    if marker.name in ("requirements.txt", "pyproject.toml"):
+        return _check_text_contains(marker, packages, lower=True)
+    if marker.name == "manage.py":
+        return True
+    if marker.name in ("pom.xml", "build.gradle"):
+        return True  # best effort
+    return False
+
+
+def _check_package_json(marker: Path, packages: list[str]) -> bool:
+    """检查 package.json 依赖 (模块级 helper).
+
+    Args:
+        marker: package.json 路径
+        packages: 框架包列表
+
+    Returns:
+        是否任一包在 dependencies/devDependencies 中
+    """
+    import json
+
+    try:
+        data = json.loads(marker.read_text())
+    except Exception:
+        return True  # best effort
+    deps = {**data.get("dependencies", {}), **data.get("devDependencies", {})}
+    return any(pkg in deps for pkg in packages)
+
+
+def _check_text_contains(marker: Path, packages: list[str], lower: bool = False) -> bool:
+    """检查 marker 文件内容是否含任一 package (模块级 helper).
+
+    Args:
+        marker: 文件路径
+        packages: 包列表
+        lower: 是否 lowercase (requirements.txt/pyproject.toml)
+
+    Returns:
+        是否含任一包
+    """
+    content = marker.read_text()
+    if lower:
+        content = content.lower()
+    return any(pkg in content for pkg in packages)
 
 
 def check_file(

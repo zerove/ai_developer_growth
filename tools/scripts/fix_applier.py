@@ -77,13 +77,18 @@ def _create_fix_result(filepath: Path, issue: Issue, original_line: str, new_lin
 def _process_issues(
     lines: list[str], issues: list[Issue], filepath: Path, dry_run: bool
 ) -> tuple[list[FixResult], list[str], bool]:
-    """Process all issues against lines. Returns (fixes, modified_lines, modified)."""
+    """Process all issues against lines. Returns (fixes, modified_lines, modified).
+
+    V2.20 P4-59 拆分: 抽 _should_skip_issue 收口守卫 (无 fix / line 越界),
+    _apply_line_fix 收口 dry_run 守卫 + line 更新,
+    主函数仅 for + 委托.
+    """
     fixes: list[FixResult] = []
     modified_lines = lines[:]
     modified = False
 
     for issue in issues:
-        if not issue.fix_replacement or issue.line < 1 or issue.line > len(modified_lines):
+        if _should_skip_issue(issue, modified_lines):
             continue
 
         line_idx = issue.line - 1
@@ -100,6 +105,19 @@ def _process_issues(
             modified = True
 
     return fixes, modified_lines, modified
+
+
+def _should_skip_issue(issue: Issue, lines: list[str]) -> bool:
+    """判断 issue 是否应跳过 (无 fix_replacement 或 line 越界, 模块级 helper).
+
+    Args:
+        issue: 待处理 issue
+        lines: 当前行列表
+
+    Returns:
+        True if 应跳过
+    """
+    return bool(not issue.fix_replacement or issue.line < 1 or issue.line > len(lines))
 
 
 def apply_fixes(filepath: Path, issues: list[Any], dry_run: bool = False) -> list[Any]:

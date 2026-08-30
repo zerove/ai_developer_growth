@@ -320,34 +320,50 @@ class CaseStudyQualityAnalyzer:
         return abs(expected - boost_val) < max(0.5, expected * 0.5)
 
     def _analyze_insights(self, content: str) -> float:
-        """Score insight quality and specificity."""
+        """Score insight quality and specificity.
+
+        V2.20 P4-22 拆分: 抽 _count_specific_insights 收口 specific 检查,
+        _count_code_references 收口 code_refs regex.
+        主函数仅 3 段分数累加.
+        """
         score = 0.0
         max_score = 100.0
 
-        # Extract insights section
         insights_text = self._extract_insights_section(content)
         if not insights_text:
             return 0.0
-
         score += 20  # Has insights section
 
-        # Count numbered insights
         insights = self._extract_numbered_insights(insights_text)
-        if insights:
-            score += min(len(insights) * 10, 40)
+        if not insights:
+            return min(max_score, score)
 
-            # Check insight specificity
-            specific_count = 0
-            for insight in insights:
-                if self._is_specific_insight(insight):
-                    specific_count += 1
-            score += min(specific_count * 5, 25)
-
-            # Check for code/pattern references
-            code_refs = sum(1 for i in insights if re.search(r"(函数|类|模块|API|pattern|模式|pattern)", i))
-            score += min(code_refs * 5, 15)
-
+        score += min(len(insights) * 10, 40)
+        score += min(self._count_specific_insights(insights) * 5, 25)
+        score += min(self._count_code_references(insights) * 5, 15)
         return min(max_score, score)
+
+    def _count_specific_insights(self, insights: list[str]) -> int:
+        """统计具体洞察 (含具体细节) 数.
+
+        Args:
+            insights: 编号洞察列表
+
+        Returns:
+            满足 _is_specific_insight 的数量
+        """
+        return sum(1 for i in insights if self._is_specific_insight(i))
+
+    def _count_code_references(self, insights: list[str]) -> int:
+        """统计含代码/模式引用的洞察数.
+
+        Args:
+            insights: 编号洞察列表
+
+        Returns:
+            含 函数/类/模块/API/pattern/模式 关键字的数量
+        """
+        return sum(1 for i in insights if re.search(r"(函数|类|模块|API|pattern|模式|pattern)", i))
 
     def _extract_insights_section(self, content: str) -> str:
         """Extract insights section from content."""

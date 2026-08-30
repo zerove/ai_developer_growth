@@ -63,25 +63,54 @@ BUILTIN_MAPPINGS: dict[str, list[dict[str, str]]] = {
 
 
 def _extract_frontmatter_keywords(fm_text: str) -> list[str]:
-    """Extract keywords from frontmatter."""
+    """Extract keywords from frontmatter (V2.21 P5-52 拆分: 抽 _parse_tags_line + _parse_kv_line)."""
     keywords: list[str] = []
     for line in fm_text.split("\n"):
         if line.strip().startswith("tags:"):
-            tags_part = line[5:].strip()
-            if tags_part.startswith("["):
-                try:
-                    tags = json.loads(tags_part)
-                    keywords.extend(t if isinstance(t, str) else str(t) for t in tags)
-                except json.JSONDecodeError:
-                    pass
-            else:
-                keywords.extend(t.strip().strip('"').strip("'") for t in tags_part.split(",") if t.strip())
+            keywords.extend(_parse_tags_line(line))
         elif ":" in line and not line.strip().startswith("#"):
-            k, v = line.split(":", 1)
-            k = k.strip().lower()
-            if k in ("category", "topic", "domain", "language", "framework"):
-                keywords.append(v.strip().strip('"').strip("'"))
+            kw = _parse_kv_line(line)
+            if kw is not None:
+                keywords.append(kw)
     return keywords
+
+
+def _parse_tags_line(line: str) -> list[str]:
+    """解析 tags: 行 (支持 [JSON] 和逗号分隔, 模块级 helper).
+
+    Args:
+        line: 完整 tags 行
+
+    Returns:
+        tag 列表
+    """
+    tags_part = line[5:].strip()
+    if tags_part.startswith("["):
+        try:
+            tags = json.loads(tags_part)
+            return [t if isinstance(t, str) else str(t) for t in tags]
+        except json.JSONDecodeError:
+            return []
+    return [t.strip().strip('"').strip("'") for t in tags_part.split(",") if t.strip()]
+
+
+_KV_KEYS = ("category", "topic", "domain", "language", "framework")
+
+
+def _parse_kv_line(line: str) -> str | None:
+    """解析 key: value 行 (仅白名单 key, 模块级 helper).
+
+    Args:
+        line: 完整 key: value 行
+
+    Returns:
+        value 或 None (不在白名单)
+    """
+    k, v = line.split(":", 1)
+    k = k.strip().lower()
+    if k in _KV_KEYS:
+        return v.strip().strip('"').strip("'")
+    return None
 
 
 def _extract_title_keywords(content: str) -> list[str]:

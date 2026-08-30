@@ -732,27 +732,38 @@ class ASTParser:
         return classes
 
     def _walk_classes(self, node: _TreeNode, language: str, lines: list[str], result: list[ClassInfo]) -> None:
-        """Walk AST for class definitions."""
-        if language == "python" and node.type == "class_definition":
-            info = self._parse_python_class(node, lines)
-            if info:
-                result.append(info)
+        """Walk AST for class definitions (V2.21 P5-45 拆分: 抽 _dispatch_class_parse)."""
+        handled = self._dispatch_class_parse(node, language, lines, result)
+        if handled:
             return
-
-        if language in ("javascript", "typescript") and node.type == "class_declaration":
-            info = self._parse_js_class(node, lines)
-            if info:
-                result.append(info)
-            return
-
-        if language == "rust" and node.type == "impl_item":
-            info = self._parse_rust_impl(node, lines)
-            if info:
-                result.append(info)
-            return
-
         for child in node.children:
             self._walk_classes(child, language, lines, result)
+
+    def _dispatch_class_parse(self, node: _TreeNode, language: str, lines: list[str], result: list[ClassInfo]) -> bool:
+        """按 language 分派 class 解析 (模块级 helper).
+
+        Args:
+            node: AST 节点
+            language: 目标语言
+            lines: 源码行
+            result: 累积目标列表
+
+        Returns:
+            True 表示已处理 (找到匹配), False 表示未匹配需继续递归
+        """
+        handlers: dict[tuple[str, str], Any] = {
+            ("python", "class_definition"): lambda: self._parse_python_class(node, lines),
+            ("javascript", "class_declaration"): lambda: self._parse_js_class(node, lines),
+            ("typescript", "class_declaration"): lambda: self._parse_js_class(node, lines),
+            ("rust", "impl_item"): lambda: self._parse_rust_impl(node, lines),
+        }
+        info = handlers.get((language, node.type))
+        if info is None:
+            return False
+        parsed = info()
+        if parsed:
+            result.append(parsed)
+        return True
 
     def _parse_python_class(self, node: _TreeNode, lines: list[str]) -> ClassInfo | None:
         """Parse Python class definition (V2.21 P5-42 拆分: 抽 _parse_class_bases + _parse_class_methods + _parse_class_decorators)."""

@@ -419,33 +419,45 @@ class CaseStudyQualityAnalyzer:
         return min(100, base_score)
 
     def _analyze_cross_references(self, content: str, case_name: str) -> float:
-        """Score cross-references to INDEX.md and MOC.md."""
+        """Score cross-references to INDEX.md and MOC.md.
+
+        V2.20 P4-20 拆分: 抽 _count_valid_wikilinks 收口 wikilink 解析 + 存在性检查,
+        主函数仅 3 段分数累加.
+        """
         score = 0.0
         max_score = 100.0
 
-        # Check wikilinks to docs/
         wikilinks = re.findall(r"\[\[([^\]]+)\]\]", content)
-        valid_wikilinks = 0
-        for link in wikilinks:
-            target = link.split("|")[0].strip() if "|" in link else link.strip()
-            if target.startswith(("docs/", "case-studies/", "examples/")):
-                target_path = Path(target)
-                if target_path.exists() or target_path.with_suffix(".md").exists():
-                    valid_wikilinks += 1
-
         if wikilinks:
+            valid_wikilinks = self._count_valid_wikilinks(wikilinks)
             score += min(len(wikilinks) * 5, 30)
             score += min(valid_wikilinks * 10, 40)
 
-        # Check if case is listed in INDEX.md
         if case_name in self.index_content:
             score += 20
-
-        # Check if case is listed in MOC.md
         if case_name in self.moc_content:
             score += 10
 
         return min(max_score, score)
+
+    def _count_valid_wikilinks(self, wikilinks: list[str]) -> int:
+        """统计指向真实存在文件的 wikilink 数.
+
+        Args:
+            wikilinks: [[target]] 或 [[target|alias]] 列表
+
+        Returns:
+            有效 (文件存在) wikilink 数
+        """
+        valid = 0
+        for link in wikilinks:
+            target = link.split("|")[0].strip() if "|" in link else link.strip()
+            if not target.startswith(("docs/", "case-studies/", "examples/")):
+                continue
+            target_path = Path(target)
+            if target_path.exists() or target_path.with_suffix(".md").exists():
+                valid += 1
+        return valid
 
     def _generate_feedback(self, metrics: QualityMetrics, content: str) -> None:
         """Generate issues and strengths based on analysis.

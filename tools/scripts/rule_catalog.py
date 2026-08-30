@@ -8,7 +8,7 @@ from __future__ import annotations
 
 import shutil
 from pathlib import Path
-from typing import Any
+from typing import Any, Iterator
 
 import yaml
 
@@ -137,7 +137,7 @@ def _search_framework_rules(query: str) -> list[dict[str, Any]]:
 
 
 def _iter_pack_rules(parent_subdir: str, query: str) -> list[dict[str, Any]]:
-    """遍历指定子目录下所有 pack 的 yml rules, 匹配 query.
+    """遍历指定子目录下所有 pack 的 yml rules, 匹配 query (V2.22 P6-2 拆分: 抽 _iter_pack_dirs + _collect_pack_rules).
 
     Args:
         parent_subdir: 父目录名 ('languages' / 'frameworks')
@@ -147,22 +147,51 @@ def _iter_pack_rules(parent_subdir: str, query: str) -> list[dict[str, Any]]:
         [{pack, category, **rule}, ...]
     """
     results: list[dict[str, Any]] = []
+    for pack_dir in _iter_pack_dirs(parent_subdir):
+        results.extend(_collect_pack_rules(pack_dir, query))
+    return results
+
+
+def _iter_pack_dirs(parent_subdir: str) -> Iterator[Path]:
+    """遍历有效 pack 目录 (有 rules.d 子目录, 模块级 generator).
+
+    Args:
+        parent_subdir: 父目录名 ('languages' / 'frameworks')
+
+    Yields:
+        pack_dir 路径
+    """
     fw = framework_dir()
     parent_dir = fw / parent_subdir
     if not parent_dir.exists():
-        return results
+        return
     for pack_dir in sorted(parent_dir.iterdir()):
         if not pack_dir.is_dir():
             continue
         rules_dir = pack_dir / "rules.d"
         if not rules_dir.exists():
             continue
-        for yml in rules_dir.glob("*.yml"):
-            data = _load_yaml_rules(yml)
-            for category in _CATEGORIES:
-                for rule in data.get(category, []):
-                    if matches(rule, query):
-                        results.append({"pack": pack_dir.name, "category": category, **rule})
+        yield pack_dir
+
+
+def _collect_pack_rules(pack_dir: Path, query: str) -> list[dict[str, Any]]:
+    """单 pack 目录内所有 yml rules 收集 (模块级 helper).
+
+    Args:
+        pack_dir: pack 目录路径
+        query: 搜索关键字
+
+    Returns:
+        [{pack, category, **rule}, ...] 列表
+    """
+    results: list[dict[str, Any]] = []
+    rules_dir = pack_dir / "rules.d"
+    for yml in rules_dir.glob("*.yml"):
+        data = _load_yaml_rules(yml)
+        for category in _CATEGORIES:
+            for rule in data.get(category, []):
+                if matches(rule, query):
+                    results.append({"pack": pack_dir.name, "category": category, **rule})
     return results
 
 

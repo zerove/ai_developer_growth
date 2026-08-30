@@ -85,50 +85,100 @@ def check_file(filepath: Path, rules: dict[str, Any], severity_filter: str | Non
 
 
 def _check_pattern(filepath: Path, content: str, lines: list[str], pattern_def: dict[str, Any]) -> list[Issue]:
-    """Check a single pattern against file content."""
+    """Check a single pattern against file content (V2.21 P5-22 拆分: 抽 _is_pattern_excluded + _scan_multiline + _scan_line_by_line)."""
     issues: list[Issue] = []
     pattern = pattern_def.get("pattern", "")
     if not pattern:
         return issues
-
-    # Check exclude files (glob patterns against path or basename)
-    for exclude in pattern_def.get("exclude_files", []):
-        if _match_pattern(filepath, exclude):
-            return []
-
-    # Check exclude patterns
-    for exclude in pattern_def.get("exclude_patterns", []):
-        if re.search(exclude, content):
-            return []
-
-    # 行级排除（exclude_lines）：命中任一模式的行不报告，
-    # 用于过滤字符串字面量/文档中的误报（如 "in except: block"）
-    exclude_lines = pattern_def.get("exclude_lines", [])
+    if _is_pattern_excluded(filepath, content, pattern_def):
+        return []
 
     flags = re.IGNORECASE if pattern_def.get("ignore_case", False) else 0
     is_multiline = ("\n" in pattern or "\\n" in pattern) or pattern_def.get("multiline", False)
 
     if is_multiline:
-        try:
-            for match in re.finditer(pattern, content, flags | re.MULTILINE):
-                line_num = content[: match.start()].count("\n") + 1
-                issues.append(_make_issue(filepath, line_num, 0, pattern_def))
-        except re.error:
-            pass
+        _scan_multiline(filepath, content, pattern, flags, pattern_def, issues)
     else:
-        for line_num, line in enumerate(lines, 1):
-            stripped = line.strip()
-            if stripped.startswith("#") or stripped.startswith("//"):
-                continue
-            if any(re.search(ex_pat, line) for ex_pat in exclude_lines):
-                continue
-            try:
-                for match in re.finditer(pattern, line, flags):
-                    issues.append(_make_issue(filepath, line_num, match.start() + 1, pattern_def))
-            except re.error:
-                continue
-
+        _scan_line_by_line(filepath, lines, pattern, flags, pattern_def, issues)
     return issues
+
+
+def _is_pattern_excluded(filepath: Path, content: str, pattern_def: dict[str, Any]) -> bool:
+    """检查 pattern 是否被 exclude_files/exclude_patterns 排除 (模块级 helper).
+
+    Args:
+        filepath: 文件路径
+        content: 文件内容
+        pattern_def: pattern 定义
+
+    Returns:
+        True 表示已排除 (跳过匹配)
+    """
+    for exclude in pattern_def.get("exclude_files", []):
+        if _match_pattern(filepath, exclude):
+            return True
+    for exclude in pattern_def.get("exclude_patterns", []):
+        if re.search(exclude, content):
+            return True
+    return False
+
+
+def _scan_multiline(
+    filepath: Path,
+    content: str,
+    pattern: str,
+    flags: int,
+    pattern_def: dict[str, Any],
+    issues: list[Issue],
+) -> None:
+    """多行模式扫描 (模块级 helper, 追加 issue).
+
+    Args:
+        filepath: 文件路径
+        content: 完整内容
+        pattern: 正则 pattern
+        flags: re flags
+        pattern_def: pattern 定义
+        issues: 追加目标 list
+    """
+    try:
+        for match in re.finditer(pattern, content, flags | re.MULTILINE):
+            line_num = content[: match.start()].count("\n") + 1
+            issues.append(_make_issue(filepath, line_num, 0, pattern_def))
+    except re.error:
+        pass
+
+
+def _scan_line_by_line(
+    filepath: Path,
+    lines: list[str],
+    pattern: str,
+    flags: int,
+    pattern_def: dict[str, Any],
+    issues: list[Issue],
+) -> None:
+    """逐行扫描 (跳过注释 + exclude_lines, 模块级 helper).
+
+    Args:
+        filepath: 文件路径
+        lines: 源码行列表
+        pattern: 正则 pattern
+        flags: re flags
+        pattern_def: pattern 定义
+        issues: 追加目标 list
+    """
+    exclude_lines = pattern_def.get("exclude_lines", [])
+    for line_num, line in enumerate(lines, 1):
+        stripped = line.strip()
+        if stripped.startswith("#") or stripped.startswith("//"):
+            continue
+        if any(re.search(ex_pat, line) for ex_pat in exclude_lines):
+            continue
+        try:
+            for match in re.finditer(pattern, line, flags):
+                issues.append(_make_issue(filepath, line_num, match.start() + 1, pattern_def))
+        except re.error:
+            continue
 
 
 def check_directory(

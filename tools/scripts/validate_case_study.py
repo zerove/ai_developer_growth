@@ -499,32 +499,50 @@ class CaseStudyValidator:
 
 
 def print_results(results: list[ValidationResult], case_name: str = "") -> None:
-    """Pretty print validation results."""
+    """Pretty print validation results (V2.21 P5-17 拆分: 抽 _partition_by_severity + _print_severity_section)."""
     if case_name:
         print(f"\n{'=' * 60}")
         print(f"  📋 Validation: {case_name}")
         print(f"{'=' * 60}")
 
-    errors = [r for r in results if r.severity == Severity.ERROR]
-    warnings = [r for r in results if r.severity == Severity.WARNING]
-
+    errors, warnings = _partition_by_severity(results)
     if not errors and not warnings:
         print("  ✅ All checks passed!")
         return
 
-    if errors:
-        print(f"\n  ❌ {len(errors)} Error(s):")
-        for e in errors:
-            loc = f" ({e.file}:{e.line})" if e.file else ""
-            print(f"  {loc}  {e.message}")
-
-    if warnings:
-        print(f"\n  ⚠️  {len(warnings)} Warning(s):")
-        for w in warnings:
-            loc = f" ({w.file}:{w.line})" if w.file else ""
-            print(f"  {loc}  {w.message}")
-
+    _print_severity_section("❌", "Error(s)", errors)
+    _print_severity_section("⚠️ ", "Warning(s)", warnings)
     print()
+
+
+def _partition_by_severity(results: list[ValidationResult]) -> tuple[list[ValidationResult], list[ValidationResult]]:
+    """按严重度二分: errors / warnings (模块级 helper).
+
+    Args:
+        results: 校验结果列表
+
+    Returns:
+        (errors, warnings) 元组
+    """
+    errors = [r for r in results if r.severity == Severity.ERROR]
+    warnings = [r for r in results if r.severity == Severity.WARNING]
+    return errors, warnings
+
+
+def _print_severity_section(icon: str, label: str, items: list[ValidationResult]) -> None:
+    """打印单个严重度段 (模块级 helper).
+
+    Args:
+        icon: 段落图标 (❌ / ⚠️)
+        label: 段落标签 (Error(s) / Warning(s))
+        items: 该严重度的 result 列表
+    """
+    if not items:
+        return
+    print(f"\n  {icon} {len(items)} {label}:")
+    for item in items:
+        loc = f" ({item.file}:{item.line})" if item.file else ""
+        print(f"  {loc}  {item.message}")
 
 
 def _discover_case_studies(base: Path) -> list[Path]:

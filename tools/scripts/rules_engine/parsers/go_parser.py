@@ -67,18 +67,48 @@ class GoParser(BaseParser):
         )
 
     def _parse_method(self, node: _TreeNode, lines: list[str]) -> FunctionInfo:
+        """Parse Go method (V2.21 P5-57 拆分: 抽 _extract_receiver_name + _build_method_info, 方法级 helper)."""
         name_node = self._child_by_type(node, "field_identifier")
         receiver = self._child_by_type(node, "parameter_list")
-        receiver_name = ""
-        if receiver:
-            for child in receiver.children:
-                if child.type == "parameter_declaration":
-                    pointer = self._child_by_type(child, "pointer_type")
-                    target = pointer or child
-                    ident = self._find_first(target, "type_identifier")
-                    receiver_name = self._node_text(ident) if ident else ""
-                    break
+        receiver_name = self._extract_receiver_name(receiver) if receiver else ""
         params_node = [c for c in node.children if c.type == "parameter_list"]
+        return self._build_method_info(node, name_node, receiver_name, params_node)
+
+    def _extract_receiver_name(self, receiver: _TreeNode) -> str:
+        """从 receiver parameter_list 提取 receiver type 名称 (方法级 helper).
+
+        Args:
+            receiver: parameter_list 节点
+
+        Returns:
+            receiver 类型名 (无则空串)
+        """
+        for child in receiver.children:
+            if child.type == "parameter_declaration":
+                pointer = self._child_by_type(child, "pointer_type")
+                target = pointer or child
+                ident = self._find_first(target, "type_identifier")
+                return self._node_text(ident) if ident else ""
+        return ""
+
+    def _build_method_info(
+        self,
+        node: _TreeNode,
+        name_node: _TreeNode | None,
+        receiver_name: str,
+        params_node: list[_TreeNode],
+    ) -> FunctionInfo:
+        """构造 Go method FunctionInfo (方法级 helper).
+
+        Args:
+            node: method 节点
+            name_node: field_identifier 节点
+            receiver_name: receiver 类型名
+            params_node: 参数节点列表
+
+        Returns:
+            FunctionInfo 实例
+        """
         return FunctionInfo(
             name=f"{receiver_name}.{self._node_text(name_node)}" if name_node else "extracted_method",
             line=node.start_point[0],

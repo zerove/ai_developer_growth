@@ -593,26 +593,59 @@ class ASTParser:
         result: list[FunctionInfo],
         class_name: str | None,
     ) -> None:
-        """Walk Go AST for function definitions."""
+        """Walk Go AST for function definitions (V2.21 P5-44 拆分: 抽 _handle_function_declaration + _handle_type_declaration)."""
         if node.type == "function_declaration":
-            info = self._parse_go_function(node, lines, class_name)
-            if info:
-                result.append(info)
+            self._handle_function_declaration(node, lines, result, class_name)
             return
-
         if node.type == "type_declaration":
-            for child in node.children:
-                if child.type == "type_spec" and child.children:
-                    self._get_child_name(child, lines)
-                    for sub in child.children:
-                        if sub.type == "struct_type":
-                            for field_node in sub.children:
-                                if field_node.type == "field_declaration_list":
-                                    pass
+            self._handle_type_declaration(node, lines, class_name)
             return
-
         for child in node.children:
             self._walk_go_functions(child, lines, result, class_name)
+
+    def _handle_function_declaration(
+        self,
+        node: _TreeNode,
+        lines: list[str],
+        result: list[FunctionInfo],
+        class_name: str | None,
+    ) -> None:
+        """处理 function_declaration 节点 (方法级 helper, 内部 append result).
+
+        Args:
+            node: function_declaration 节点
+            lines: 源码行
+            result: 累积目标列表
+            class_name: 类名
+        """
+        info = self._parse_go_function(node, lines, class_name)
+        if info:
+            result.append(info)
+
+    def _handle_type_declaration(
+        self,
+        node: _TreeNode,
+        lines: list[str],
+        class_name: str | None,
+    ) -> None:
+        """处理 type_declaration 节点 (方法级 helper, 占位实现).
+
+        当前仅识别 struct_type, 暂不构建方法列表.
+        保留递归 + type_spec 遍历结构.
+
+        Args:
+            node: type_declaration 节点
+            lines: 源码行
+            class_name: 类名 (暂未使用, 占位)
+        """
+        for child in node.children:
+            if child.type == "type_spec" and child.children:
+                self._get_child_name(child, lines)
+                for sub in child.children:
+                    if sub.type == "struct_type":
+                        for field_node in sub.children:
+                            if field_node.type == "field_declaration_list":
+                                pass
 
     def _parse_go_function(self, node: _TreeNode, lines: list[str], class_name: str | None) -> FunctionInfo | None:
         """Parse a Go function node."""

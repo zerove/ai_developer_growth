@@ -54,7 +54,7 @@ FRAMEWORK_SIGNATURES: dict[str, list[str]] = {
 
 
 def detect_language(dirpath: Path) -> dict[str, Any]:
-    """Detect primary language and framework of a project."""
+    """Detect primary language and framework (V2.21 P5-24 拆分: 抽 _check_config_markers + _count_extension_languages)."""
     result: dict[str, Any] = {
         "language": "unknown",
         "framework": None,
@@ -62,18 +62,54 @@ def detect_language(dirpath: Path) -> dict[str, Any]:
     }
 
     # 1. Check config files
-    for config_file, lang in CONFIG_MARKERS.items():
-        if (dirpath / config_file).exists():
-            if config_file == "package.json":
-                lang = "typescript" if (dirpath / "tsconfig.json").exists() else "javascript"
-            result["language"] = lang or "unknown"
-            result["confidence"] = 0.9
-            result["framework"] = _detect_framework(dirpath, lang)
-            return result
+    config_result = _check_config_markers(dirpath)
+    if config_result is not None:
+        return config_result
 
     # 2. Count file extensions
-    # 注意：只对 target 内部的相对路径做 SKIP_DIRS 过滤，
-    # 避免用户把项目放在名为 tmp/dist 等目录下时整个项目被静默跳过。
+    counter = _count_extension_languages(dirpath)
+    if not counter:
+        return result
+
+    total = sum(counter.values())
+    primary, primary_count = counter.most_common(1)[0]
+    result["language"] = primary
+    result["confidence"] = round(primary_count / total, 2)
+    result["framework"] = _detect_framework(dirpath, primary)
+    return result
+
+
+def _check_config_markers(dirpath: Path) -> dict[str, Any] | None:
+    """检查 CONFIG_MARKERS 配置文件 (package.json 特殊处理 ts/js 区分, 模块级 helper).
+
+    Args:
+        dirpath: 扫描根目录
+
+    Returns:
+        result 字典, 无配置命中返回 None
+    """
+    for config_file, lang in CONFIG_MARKERS.items():
+        if not (dirpath / config_file).exists():
+            continue
+        if config_file == "package.json":
+            lang = "typescript" if (dirpath / "tsconfig.json").exists() else "javascript"
+        return {
+            "language": lang or "unknown",
+            "framework": _detect_framework(dirpath, lang),
+            "confidence": 0.9,
+        }
+    return None
+
+
+def _count_extension_languages(dirpath: Path) -> Counter[str]:
+    """按文件扩展名统计语言 (跳过 SKIP_DIRS, 模块级 helper).
+
+    Args:
+        dirpath: 扫描根目录
+
+    Returns:
+        Counter[language] = count
+    """
     counter: Counter[str] = Counter()
     count = 0
     for filepath in dirpath.rglob("*"):
@@ -91,16 +127,7 @@ def detect_language(dirpath: Path) -> dict[str, Any]:
         if suffix in EXTENSION_MAP:
             counter[EXTENSION_MAP[suffix]] += 1
             count += 1
-
-    if not counter:
-        return result
-
-    total = sum(counter.values())
-    primary, primary_count = counter.most_common(1)[0]
-    result["language"] = primary
-    result["confidence"] = round(primary_count / total, 2)
-    result["framework"] = _detect_framework(dirpath, primary)
-    return result
+    return counter
 
 
 def _detect_framework_from_package_json(dirpath: Path) -> str | None:

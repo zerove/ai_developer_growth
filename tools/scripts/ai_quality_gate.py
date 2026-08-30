@@ -258,7 +258,12 @@ def check_error_patterns(filepath: Path) -> list[dict[str, Any]]:
 
 
 def check_file(filepath: Path, checks: list[str]) -> dict[str, Any]:
-    """向后兼容: 检查单个文件"""
+    """向后兼容: 检查单个文件.
+
+    V2.20 P4-53 拆分: 抽 _run_check_dispatch 收口 5 类 check → extend 委托,
+    _build_file_not_found 收口文件不存在失败响应,
+    主函数仅 result 初始化 + 委托 + 注解检查.
+    """
     result: dict[str, Any] = {
         "file": str(filepath),
         "issues": [],
@@ -267,29 +272,9 @@ def check_file(filepath: Path, checks: list[str]) -> dict[str, Any]:
     }
 
     if not filepath.exists():
-        result["issues"].append(
-            {
-                "line": 0,
-                "type": "error",
-                "message": f"文件不存在: {filepath}",
-                "code": "",
-            }
-        )
-        result["passed"] = False
-        return result
+        return _build_file_not_found(filepath, result)
 
-    all_issues = []
-
-    if "annotation" in checks:
-        all_issues.extend(check_annotation(filepath))
-    if "security" in checks:
-        all_issues.extend(check_security_patterns(filepath))
-    if "type" in checks:
-        all_issues.extend(check_type_patterns(filepath))
-    if "error" in checks:
-        all_issues.extend(check_error_patterns(filepath))
-    if "structure" in checks:
-        all_issues.extend(check_structure_patterns(filepath))
+    all_issues = _run_check_dispatch(filepath, checks)
 
     # Check for AI annotation
     content = filepath.read_text(encoding="utf-8")
@@ -300,6 +285,52 @@ def check_file(filepath: Path, checks: list[str]) -> dict[str, Any]:
 
     result["issues"] = all_issues
     result["passed"] = len(all_issues) == 0
+    return result
+
+
+def _run_check_dispatch(filepath: Path, checks: list[str]) -> list[dict[str, Any]]:
+    """按 checks 列表分派 5 类 check 函数 (模块级 helper).
+
+    Args:
+        filepath: 文件路径
+        checks: 启用的 check 名称列表
+
+    Returns:
+        累积的所有 issues
+    """
+    all_issues: list[dict[str, Any]] = []
+    if "annotation" in checks:
+        all_issues.extend(check_annotation(filepath))
+    if "security" in checks:
+        all_issues.extend(check_security_patterns(filepath))
+    if "type" in checks:
+        all_issues.extend(check_type_patterns(filepath))
+    if "error" in checks:
+        all_issues.extend(check_error_patterns(filepath))
+    if "structure" in checks:
+        all_issues.extend(check_structure_patterns(filepath))
+    return all_issues
+
+
+def _build_file_not_found(filepath: Path, result: dict[str, Any]) -> dict[str, Any]:
+    """构造文件不存在时的失败响应 (模块级 helper).
+
+    Args:
+        filepath: 不存在的文件路径
+        result: 主函数初始化的 result dict
+
+    Returns:
+        包含错误 issue + passed=False 的 result
+    """
+    result["issues"].append(
+        {
+            "line": 0,
+            "type": "error",
+            "message": f"文件不存在: {filepath}",
+            "code": "",
+        }
+    )
+    result["passed"] = False
     return result
 
 

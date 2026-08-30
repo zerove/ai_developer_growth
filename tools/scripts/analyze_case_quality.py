@@ -644,6 +644,9 @@ class CaseStudyQualityAnalyzer:
     def _categorize_scores(self, metrics_list: list[QualityMetrics]) -> dict[str, int]:
         """按 overall_score 分为三档 (excellent/good/needs_improvement).
 
+        V2.20 P4-34 拆分: 抽 _count_at_or_above 收口分数阈值判定,
+        三档各调一次.
+
         Args:
             metrics_list: 案例指标列表
 
@@ -651,10 +654,34 @@ class CaseStudyQualityAnalyzer:
             {category: count}
         """
         return {
-            "excellent": len([m for m in metrics_list if m.overall_score >= 80]),
-            "good": len([m for m in metrics_list if 60 <= m.overall_score < 80]),
-            "needs_improvement": len([m for m in metrics_list if m.overall_score < 60]),
+            "excellent": self._count_at_or_above(metrics_list, 80),
+            "good": len(metrics_list) - self._count_at_or_above(metrics_list, 80) - self._count_below(metrics_list, 60),
+            "needs_improvement": self._count_below(metrics_list, 60),
         }
+
+    def _count_at_or_above(self, metrics_list: list[QualityMetrics], threshold: int) -> int:
+        """统计 overall_score >= threshold 的案例数.
+
+        Args:
+            metrics_list: 案例指标列表
+            threshold: 分数阈值
+
+        Returns:
+            达标数
+        """
+        return sum(1 for m in metrics_list if m.overall_score >= threshold)
+
+    def _count_below(self, metrics_list: list[QualityMetrics], threshold: int) -> int:
+        """统计 overall_score < threshold 的案例数.
+
+        Args:
+            metrics_list: 案例指标列表
+            threshold: 分数阈值
+
+        Returns:
+            未达标数
+        """
+        return sum(1 for m in metrics_list if m.overall_score < threshold)
 
     def _build_extremes(
         self,

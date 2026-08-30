@@ -455,28 +455,23 @@ def _handle_linters(args: argparse.Namespace, path: Path) -> None:
 
 
 def _handle_output(results: list[ValidationResult], args: argparse.Namespace) -> int | None:
-    """Handle output formats. Returns exit code if handled, None otherwise."""
+    """Handle output formats. Returns exit code if handled, None otherwise (V2.21 P5-59 拆分: 抽 _emit_non_text_output)."""
     if args.format != "text" or args.json_output:
-        from tools.scripts.report_generator import write_report
-
-        fmt = "json" if args.json_output else args.format
-        content = write_report(results, fmt, args.output)
-        if content and not args.output:
-            print(content)
-
-        # Check thresholds for non-text formats
-        if args.max_errors is not None:
-            total_errors = sum(r.error_count for r in results)
-            if total_errors > args.max_errors:
-                return 1
-        if args.max_warnings is not None:
-            total_warnings = sum(r.warning_count for r in results)
-            if total_warnings > args.max_warnings:
-                return 1
-        if args.fail_on_warnings and any(r.warning_count > 0 for r in results):
-            return 1
-        return 0
+        return _emit_non_text_output(results, args)
     return None
+
+
+def _emit_non_text_output(results: list[ValidationResult], args: argparse.Namespace) -> int:
+    """处理非 text 输出 (json/yaml/etc) + 检查 thresholds (V2.21 P5-59 拆分: 复用已有 _check_thresholds)."""
+    from tools.scripts.report_generator import write_report
+
+    fmt = "json" if args.json_output else args.format
+    content = write_report(results, fmt, args.output)
+    if content and not args.output:
+        print(content)
+
+    threshold_fail = _check_thresholds(results, args.max_errors, args.max_warnings, args.fail_on_warnings)
+    return threshold_fail if threshold_fail is not None else 0
 
 
 def _handle_text_output(results: list[ValidationResult], args: argparse.Namespace) -> int:

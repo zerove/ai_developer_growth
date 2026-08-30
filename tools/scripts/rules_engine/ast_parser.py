@@ -876,26 +876,48 @@ class ASTParser:
         return imports
 
     def _parse_python_import(self, node: _TreeNode) -> ImportInfo | None:
-        """解析 Python import 语句。"""
+        """解析 Python import 语句 (V2.21 P5-43 拆分: 抽 _parse_import_statement + _parse_import_from_statement)."""
         if node.type == "import_statement":
-            module = self._get_text(node.children[0]) if node.children else ""
-            dotted_names = [self._get_text(c, []) for c in node.children if c.type == "dotted_name"]
-            return ImportInfo(module=module, names=dotted_names, line=node.start_point[0] + 1, is_from=False, level=0)
+            return self._parse_import_statement(node)
         if node.type == "import_from_statement":
-            level = 0
-            module = ""
-            names: list[str] = []
-            for child in node.children:
-                if child.type == "relative_import":
-                    level = child.text.count(b".") if isinstance(child.text, bytes) else str(child.text).count(".")
-                elif child.type == "dotted_name":
-                    module = self._get_text(child, [])
-                elif child.type == "aliased_import":
-                    for sub in child.children:
-                        if sub.type == "identifier":
-                            names.append(self._get_text(sub, []))
-            return ImportInfo(module=module, names=names, line=node.start_point[0] + 1, is_from=True, level=level)
+            return self._parse_import_from_statement(node)
         return None
+
+    def _parse_import_statement(self, node: _TreeNode) -> ImportInfo:
+        """解析 import X (模块级 helper).
+
+        Args:
+            node: import_statement 节点
+
+        Returns:
+            ImportInfo 实例
+        """
+        module = self._get_text(node.children[0]) if node.children else ""
+        dotted_names = [self._get_text(c, []) for c in node.children if c.type == "dotted_name"]
+        return ImportInfo(module=module, names=dotted_names, line=node.start_point[0] + 1, is_from=False, level=0)
+
+    def _parse_import_from_statement(self, node: _TreeNode) -> ImportInfo:
+        """解析 from X import Y (含 relative_import level 解析, 模块级 helper).
+
+        Args:
+            node: import_from_statement 节点
+
+        Returns:
+            ImportInfo 实例
+        """
+        level = 0
+        module = ""
+        names: list[str] = []
+        for child in node.children:
+            if child.type == "relative_import":
+                level = child.text.count(b".") if isinstance(child.text, bytes) else str(child.text).count(".")
+            elif child.type == "dotted_name":
+                module = self._get_text(child, [])
+            elif child.type == "aliased_import":
+                for sub in child.children:
+                    if sub.type == "identifier":
+                        names.append(self._get_text(sub, []))
+        return ImportInfo(module=module, names=names, line=node.start_point[0] + 1, is_from=True, level=level)
 
     def _parse_js_import(self, node: _TreeNode) -> ImportInfo | None:
         """解析 JavaScript/TypeScript import 语句。"""

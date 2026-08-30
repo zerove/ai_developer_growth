@@ -565,18 +565,35 @@ class SBOMGenerator:
         return deps
 
     def _parse_requirements(self, path: Path) -> list[Dependency]:
-        deps = []
+        """解析 requirements.txt.
+
+        V2.20 P4-49 拆分: 抽 _parse_requirements_line 收口单行解析 (strip + 注释守卫 + dep_spec),
+        主函数仅 try/except + content 加载 + 遍历.
+        """
+        deps: list[Dependency] = []
         try:
             content = path.read_text()
             for line in content.splitlines():
-                line = line.strip()
-                if line and not line.startswith("#"):
-                    dep = self._parse_dep_spec(line)
-                    if dep:
-                        deps.append(dep)
+                dep = self._parse_requirements_line(line)
+                if dep:
+                    deps.append(dep)
         except Exception as e:
             logger.warning(f"Failed to parse requirements.txt: {e}")
         return deps
+
+    def _parse_requirements_line(self, line: str) -> Dependency | None:
+        """解析 requirements.txt 单行 (实例级 helper).
+
+        Args:
+            line: 单行文本
+
+        Returns:
+            Dependency 对象 (None if 空行/注释)
+        """
+        line = line.strip()
+        if not line or line.startswith("#"):
+            return None
+        return self._parse_dep_spec(line)
 
     def _parse_poetry_lock(self, path: Path) -> list[Dependency]:
         deps = []

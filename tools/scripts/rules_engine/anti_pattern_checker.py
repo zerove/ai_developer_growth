@@ -49,35 +49,64 @@ def check_anti_patterns(filepath: Path, language: str, rules: dict[str, Any] | N
 
 
 def _check_pattern(filepath: Path, content: str, lines: list[str], pattern_def: dict[str, Any]) -> list[Issue]:
-    """Check a single pattern against file content."""
+    """Check a single pattern against file content (V2.21 P5-54 拆分: 抽 _is_pattern_excluded + _check_pattern_matches)."""
     issues: list[Issue] = []
     pattern = pattern_def.get("pattern", "")
     if not pattern:
         return issues
+    if _is_pattern_excluded(filepath, content, pattern_def):
+        return issues
+    issues.extend(_check_pattern_matches(filepath, content, lines, pattern, pattern_def))
+    return issues
 
-    # Check exclude_files - skip rule if filename matches any excluded file
+
+def _is_pattern_excluded(filepath: Path, content: str, pattern_def: dict[str, Any]) -> bool:
+    """检查 pattern 是否被 exclude_files 或 exclude_patterns 排除 (模块级 helper).
+
+    Args:
+        filepath: 文件路径
+        content: 文件内容
+        pattern_def: pattern 定义
+
+    Returns:
+        True 表示应排除
+    """
     exclude_files = pattern_def.get("exclude_files", [])
     filename = filepath.name
     if any(filename == ef or filepath.match(ef) for ef in exclude_files):
-        return issues
-
-    # Check exclude patterns first - if any exclude pattern matches, skip this pattern
+        return True
     exclude_patterns = pattern_def.get("exclude_patterns", [])
     for exclude_pattern in exclude_patterns:
         if re.search(exclude_pattern, content):
-            return issues  # Skip this pattern entirely if exclude matches
+            return True
+    return False
 
+
+def _check_pattern_matches(
+    filepath: Path,
+    content: str,
+    lines: list[str],
+    pattern: str,
+    pattern_def: dict[str, Any],
+) -> list[Issue]:
+    """检查 pattern 匹配 (multiline or line, 模块级 helper).
+
+    Args:
+        filepath: 文件路径
+        content: 文件内容
+        lines: 源码行列表
+        pattern: 正则 pattern
+        pattern_def: pattern 定义
+
+    Returns:
+        Issue 列表
+    """
     flags = re.IGNORECASE if pattern_def.get("ignore_case", False) else 0
-    # Check if pattern is multi-line (contains \n or \\n)
     pattern_str = pattern_def.get("pattern", "")
     is_multiline = ("\n" in pattern_str or "\\n" in pattern_str) or pattern_def.get("multiline", False)
-
     if is_multiline:
-        issues.extend(_check_multiline_pattern(filepath, content, pattern, flags, pattern_def))
-    else:
-        issues.extend(_check_line_patterns(lines, pattern, flags, pattern_def, str(filepath)))
-
-    return issues
+        return _check_multiline_pattern(filepath, content, pattern, flags, pattern_def)
+    return _check_line_patterns(lines, pattern, flags, pattern_def, str(filepath))
 
 
 def _check_multiline_pattern(

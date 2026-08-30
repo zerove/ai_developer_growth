@@ -357,16 +357,38 @@ def validate_rules_yaml(content: str) -> list[str]:
 
 
 def print_status(language: str | None = None) -> None:
-    """打印生成规则的状态。"""
+    """打印生成规则的状态 (V2.21 P5-46 拆分: 抽 _print_empty + _print_overview + _print_language_details)."""
     gen_langs = list_generated_languages()
     _out = sys.stdout
 
     if not gen_langs:
-        _out.write("📭 No generated rules found.\n")
-        _out.write(f"   Cache directory: {get_generated_rules_dir()}\n")
-        _out.write("   Use 'adg-dev generate-rules <language> [--file sample.ext]' to generate.\n")
+        _print_empty(_out)
         return
 
+    _print_overview(gen_langs, _out)
+    if language:
+        _print_language_details(language, _out)
+    _out.write(f"\n  Cache: {get_generated_rules_dir()}\n")
+
+
+def _print_empty(_out: Any) -> None:
+    """打印空状态 (无生成规则, 模块级 helper).
+
+    Args:
+        _out: 输出流
+    """
+    _out.write("📭 No generated rules found.\n")
+    _out.write(f"   Cache directory: {get_generated_rules_dir()}\n")
+    _out.write("   Use 'adg-dev generate-rules <language> [--file sample.ext]' to generate.\n")
+
+
+def _print_overview(gen_langs: list[str], _out: Any) -> None:
+    """打印所有生成语言总览 (模块级 helper).
+
+    Args:
+        gen_langs: 已生成语言列表
+        _out: 输出流
+    """
     _out.write(f"📦 Generated rules ({len(gen_langs)} languages):\n")
     for lang in gen_langs:
         rules = load_generated_rules(lang)
@@ -375,17 +397,22 @@ def print_status(language: str | None = None) -> None:
         info = sum(1 for r in rules if r.get("severity") == "info")
         _out.write(f"  {lang}: {len(rules)} rules ({errors}e/{warnings}w/{info}i)\n")
 
-    if language:
-        rules = load_generated_rules(language)
-        if rules:
-            _out.write(f"\n  Details for '{language}':\n")
-            for r in rules:
-                icon = {"error": "🔴", "warning": "🟡", "info": "ℹ️"}.get(r.get("severity", ""), "•")
-                _out.write(f"    {icon} [{r.get('id', '')}] {r.get('message', '')}\n")
-        else:
-            _out.write(f"\n  No generated rules for '{language}'\n")
 
-    _out.write(f"\n  Cache: {get_generated_rules_dir()}\n")
+def _print_language_details(language: str, _out: Any) -> None:
+    """打印单语言规则详情 (含 icon, 模块级 helper).
+
+    Args:
+        language: 目标语言
+        _out: 输出流
+    """
+    rules = load_generated_rules(language)
+    if rules:
+        _out.write(f"\n  Details for '{language}':\n")
+        for r in rules:
+            icon = {"error": "🔴", "warning": "🟡", "info": "ℹ️"}.get(r.get("severity", ""), "•")
+            _out.write(f"    {icon} [{r.get('id', '')}] {r.get('message', '')}\n")
+    else:
+        _out.write(f"\n  No generated rules for '{language}'\n")
 
 
 if __name__ == "__main__":

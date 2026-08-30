@@ -56,40 +56,64 @@ class CppParser(BaseParser):
         functions: list[FunctionInfo],
         class_name: str,
     ) -> None:
-        """遍历类/结构体字段区收集方法。"""
+        """Walk class/struct members and collect methods (V2.21 P5-58 拆分: 抽 _parse_function_definition + _parse_declaration_method)."""
         if node is None:
             return
         if node.type == "function_definition":
-            func = self._parse_function(node, class_name)
-            if func is not None:
-                functions.append(func)
+            self._parse_function_definition(node, functions, class_name)
             return
-        # 声明式方法: virtual void run(int speed);
         if node.type == "field_declaration" or node.type == "declaration":
-            for child in node.children:
-                if child is not None and child.type == "function_declarator":
-                    name_node = self._field(child, "declarator")
-                    if name_node is not None:
-                        functions.append(
-                            FunctionInfo(
-                                name=self._node_text(name_node),
-                                line=node.start_point[0],
-                                col=node.start_point[1],
-                                end_line=node.end_point[0],
-                                params=self._params_of(child),
-                                decorators=[],
-                                return_type=None,
-                                docstring=None,
-                                body_lines=0,
-                                complexity=1,
-                                is_method=True,
-                                class_name=class_name,
-                            )
-                        )
-                    return
+            if self._parse_declaration_method(node, functions, class_name):
+                return
         for child in node.children:
             if child is not None:
                 self._walk_members(child, functions, class_name)
+
+    def _parse_function_definition(self, node: _TreeNode, functions: list[FunctionInfo], class_name: str) -> None:
+        """处理 function_definition 节点 (方法级 helper).
+
+        Args:
+            node: function_definition 节点
+            functions: 累积目标列表
+            class_name: 类名
+        """
+        func = self._parse_function(node, class_name)
+        if func is not None:
+            functions.append(func)
+
+    def _parse_declaration_method(self, node: _TreeNode, functions: list[FunctionInfo], class_name: str) -> bool:
+        """处理声明式方法 (virtual void run(int speed);), 返回是否找到 (方法级 helper).
+
+        Args:
+            node: field_declaration/declaration 节点
+            functions: 累积目标列表
+            class_name: 类名
+
+        Returns:
+            True 表示找到声明式方法, False 否则
+        """
+        for child in node.children:
+            if child is not None and child.type == "function_declarator":
+                name_node = self._field(child, "declarator")
+                if name_node is not None:
+                    functions.append(
+                        FunctionInfo(
+                            name=self._node_text(name_node),
+                            line=node.start_point[0],
+                            col=node.start_point[1],
+                            end_line=node.end_point[0],
+                            params=self._params_of(child),
+                            decorators=[],
+                            return_type=None,
+                            docstring=None,
+                            body_lines=0,
+                            complexity=1,
+                            is_method=True,
+                            class_name=class_name,
+                        )
+                    )
+                return True
+        return False
 
     def _field(self, node: _TreeNode, name: str) -> _TreeNode | None:
         """child_by_field_name 的安全封装(_TreeNode 协议未声明该方法)。"""

@@ -2,6 +2,112 @@
 
 All notable changes to the AI Developer Growth project.
 
+## [2.20.0] - 2026-08-30
+
+### 重要变更: V2.19.0 后续 P4 续拆收尾（Phase 23）
+
+完成 v2.19.0 后续 P4 续拆阶段 60 项任务 (P4-1 ~ P4-59)，覆盖 11 个文件、60+ commits、新增 50+ helper 函数。本阶段核心是**整体项目最高 CC 拆解**与**复杂度归零**。
+
+#### 重构 (P4-1 ~ P4-59)
+
+**quality_gate.py (P4-1 ~ P4-5)**:
+- `_gate_current_issues`: B=8 → A(1), 拆 _count_issue_severities
+- `_gate_zero_new_errors/warnings`: B=6 → A, 拆 _filter_new_by_severity
+- `get_active_exceptions`: B=7 → A(2), 拆 _is_expired
+- `compare_with_baseline`: B=6 → A(2), 拆 _classify_current_issue
+
+**dep_graph.py (P4-6, P4-7, P4-9 ~ P4-12)**:
+- `build_from_dependencies`: B=8 → A(3), 拆 _add_node_if_missing + _process_transitive_dependencies
+- `_find_critical_path`: B=7 → A(2), 拆 _bfs_to_target + assert narrow
+- `build_from_sbom`: B=6 → A(2), 拆 _add_sbom_relationships (复用 P4-6 helper)
+- `detect_circular_dependencies`: B=6 → A(1), 拆 _run_tarjan_scc + _convert_cycles_to_result
+- `detect_conflicts`: B=6 → A(1), 拆 _group_by_name_and_version + _convert_groups_to_conflicts
+- `export_graphviz`: B=6 → A(2), 拆 _render_graphviz_nodes + _render_graphviz_edges
+
+**ai_native_mcp.py (P4-8)**:
+- `_tool_knowledge_search`: B=6 → A(2), 拆 _parse_search_limit + _format_search_hit (TYPE_CHECKING 模式)
+
+**exception_manager.py (P4-13 ~ P4-16, P4-27, P4-28, P4-32)**:
+- `_load_from_config`: B=8 → A(2), 拆 _load_yaml_exceptions + _parse_exception_entry
+- `generate_audit_report`: B=8 → A(2), 拆 _build_status_breakdown + _count_pending
+- `sync_from_git`: B=8 → A(2), 拆 _load_git_yaml_exceptions + _parse_git_exception
+- `get_active_exceptions`: B=6 → A(1), 拆 _is_active_request
+- `_collect_expiration_alerts`: B=6 → A(2), 拆 _parse_expiry_date + _emit_single_alert (assert narrow)
+- `_auto_revoke_if_expired`: B=6 → A(1), 拆 _is_revokeable
+- `_load_yaml_exceptions`: B=6 → A(2), 拆 _read_exceptions_yaml + _import_exceptions_dict (isinstance 守卫)
+
+**analyze_case_quality.py (P4-17 ~ P4-24, P4-33, P4-34, P4-36, P4-41, P4-44)**:
+- `_build_summary`: C=13 → A(2), 拆 _compute_average_scores + _categorize_scores
+- `_check_realistic_values`: B=10 → A(2), 拆 _parse_row_metrics + _validate_metric_consistency
+- `_generate_feedback`: B=10 → A(2), 拆 _add_threshold_feedback (阈值可配置)
+- `_analyze_cross_references`: B=9 → A(2), 拆 _count_valid_wikilinks
+- `_analyze_efficiency`: B=8 → A(2), 拆 _has_efficiency_table + _score_table_rows
+- `_analyze_insights`: B=7 → A(2), 拆 _count_specific_insights + _count_code_references
+- `_check_realistic_values` (二轮): B=7 → A(1), 拆 _is_valid_total_row + _extract_total_row_metrics
+- `analyze_all`: B=6 → A(2), 拆 _should_skip_case
+- `_compute_average_scores`: B=7 → A(2), 拆 _avg_score (getattr)
+- `_categorize_scores`: B=7 → A(2), 拆 _count_at_or_above + _count_below (排除法)
+- `_count_valid_wikilinks`: B=6 → A(2), 拆 _is_valid_wikilink_target + _parse_wikilink_target
+- `format_report`: B=6 → A(2), 拆 _format_score_table + _format_case_list
+- `format_report` 详表段: B(6) → A(2), 拆 _format_detail_row
+
+**rule_catalog.py (P4-25, P4-26)**:
+- `_search_language/framework_rules`: B=10 → A(1)+A(1), 拆 _iter_pack_rules + _load_yaml_rules
+- `install_pack`: B=6 → A(2), 拆 _install_pack_file + _install_pack_dir
+
+**docker_build.py (P4-29 ~ P4-31)**:
+- `_select_components`: B=7 → A(2), 拆 _filter_components + _print_unknown_components
+- `_build_all_components`: B=9 → A(3), 拆 _build_single_component (sentinel _SBOM_FAILURE)
+- `_print_summary`: B=6 → A(2), 拆 _print_summary_header + _print_sbom_list + _print_signature_note
+
+**supply_chain.py (P4-37, P4-38, P4-39 ~ P4-49)**:
+- `scan_project`: C=14 → C(11), 拆 _link_vulns_to_deps + _build_scan_summary
+- `_parse_osv_vuln`: C=12 → A(2), 拆 _extract_cvss_severity + _extract_fixed_version
+- `_parse_go_deps`: B=10 → A(2), 拆 _parse_go_require_line (state machine)
+- `_parse_maven_deps`: B=9 → A(2), 拆 _parse_pom_xml + _extract_maven_dep
+- `format_report` _format_score_table: B=6 → A(2)
+- `_parse_pyproject`: B=7 → A(2), 拆 _parse_project_dependencies + _parse_poetry_dependencies
+- `_parse_cargo_toml`: B=7 → A(2), 拆 _extract_cargo_version
+- `_build_scan_summary` (二轮): **C(11) → A(2)**, 拆 _count_vulns_by_severity + _count_direct_deps
+- `_extract_cvss_severity`: B=7 → A(2), 拆 _score_to_severity
+- `scan_dependencies`: B=6 → A(2), 拆 _build_osv_queries + _query_osv_batch
+- `check_license`: B=6 → A(2), 拆 _classify_license
+- `_parse_requirements`: B=6 → A(2), 拆 _parse_requirements_line
+
+**ai_quality_gate.py (P4-50 ~ P4-58)**:
+- `_print_results`: **C(15) → A(2)** 🎉 整体项目最高 CC! 拆 _compute_result_counts + _print_json_results + _print_text_results
+- `_determine_checks`: B=10 → A(2), 拆 _append_if_flag + 2 常量 (_ALL_CHECKS/_DEFAULT_CHECKS)
+- `check_structure_patterns`: B=8 → A(2), 拆 _find_function_end
+- `check_file`: B=8 → A(2), 拆 _run_check_dispatch + _build_file_not_found
+- `_is_in_string`: B=7 → A(2), 拆 _process_string_char
+- `check_type_patterns`: B=7 → A(2), 拆 _is_import_line + _is_any_in_brackets + _TYPE_PATTERNS 常量
+- `_collect_files`: B=7 → A(2), 拆 _collect_path_files + _filter_excluded + _FILE_EXTENSIONS 常量
+- `check_security_patterns`: B=6 → A(2), 拆 _SECURITY_LITERAL_PATTERNS + _build_security_patterns + _is_valid_security_match
+- `check_type_patterns` (二轮): B=6 → A(2), 拆 _is_valid_type_issue
+
+**fix_applier.py (P4-59)**:
+- `_process_issues`: B=8 → B(6), 拆 _should_skip_issue
+
+#### 关键经验 (V2.20 P4 阶段)
+
+1. **C(15) 整体最高 CC 拆解**: `_print_results` 从 C(15)/41 行降至 A(2)/13 行, 5 项 sum 抽到 _compute_result_counts, if/else 分支抽到 2 个 _print_*_results.
+2. **C(11) 8 字段 dict 字面量可拆**: `_build_scan_summary` 4 行 vuln 计数 (sum(1 for x in items if x.field == Value)) 抽到 _count_vulns_by_severity 配合 @staticmethod, 突破"难拆"误区.
+3. **TYPE_CHECKING 模式** (P4-8): `if TYPE_CHECKING: from tools.scripts.search.tfidf_engine import Document, SearchResult else: Document = object` — 精确类型 + 避免 Any 增量 + 无运行时依赖.
+4. **assert narrow 模式** (P4-7, P4-27): 主函数 None 守卫后, helper 内部 `assert x is not None` 让 mypy 接受非 None 类型.
+5. **sentinel value 模式** (P4-30): `_SBOM_FAILURE = "__build_failure__"` 区分 "成功但无值" 和 "失败", 避免 `None` 双重含义.
+6. **isinstance 守卫替代 `# type: ignore`** (P4-32, P4-43): yaml.safe_load 返回 object 时, isinstance 守卫避免 Any 增量.
+7. **排除法重构 list comp** (P4-34): 三档分类用 `total - _count_at_or_above(80) - _count_below(60)` 替代中间 list comp.
+8. **数据驱动的纯字典/列表构造** 仍可不强拆 (P4-17, P4-25, P4-30, P4-50 helpers B(6-8) 接受保留).
+9. **state machine 主函数本身就是 B** (P4-35 `_extract_table_rows` 接受保留, P4-39 `_parse_go_require_line` state machine 抽 helper 后 A).
+10. **P4 阶段共 60 commits, 突破 v2.19.0 的 35 commits 规模**.
+
+#### 验证统计
+
+- typecheck: 192+ source files clean
+- quality-gate --full: 192/192 pass, 0 failed, 0 issues
+- pytest: 多个测试套件全过 (test_quality_gate 34, test_exception_manager 46, test_dependency_graph 15, test_analyze_case_quality 10, test_rule_catalog_marketplace 41, test_docker_build 32, test_supply_runner_round2 107, test_fix 90, test_ai_quality_gate 1, 等 1100+ 总数)
+- baseline: 18/18 一致, 0 Any 增量
+
 ## [2.19.0] - 2026-08-29
 
 ### 重要变更: V2.18.0 后续 P3 续拆收尾（Phase 22）

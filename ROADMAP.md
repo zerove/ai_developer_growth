@@ -457,6 +457,104 @@
 - pytest: **15+ 测试套件全过** (audit_trends 16/16, sync_issues 28/28, search_analytics 23/23, rule_tracker 50/50, check_ai_annotation 67/67, validate_language_rules 238/238, language_registry 34/34 等)
 - pre-push 钩子: **本地 CI 全部通过, 真实允许推送**（无 `--no-verify` 绕过）
 
+## Phase 23: v2.20.0 P4 续拆收尾 (2026-08-30)
+
+按 Phase 22 P3 后续候选 (B 级剩余热点) 实施 60 项 P4 任务, 覆盖 11 个文件:
+
+| 任务 | 说明 | 状态 |
+|------|------|------|
+| P4-1 | 拆 `quality_gate._gate_current_issues` B=8→A(1) (0.1d) | ✅ 已完成 (a874460, _count_issue_severities) |
+| P4-2/3 | 拆 `quality_gate._gate_zero_new_errors/warnings` B=6→A (0.1d) | ✅ 已完成 (b6c1124, _filter_new_by_severity) |
+| P4-4 | 拆 `quality_gate.get_active_exceptions` B=7→A(2) (0.1d) | ✅ 已完成 (68b3dbc, _is_expired) |
+| P4-5 | 拆 `quality_gate.compare_with_baseline` B=6→A(2) (0.1d) | ✅ 已完成 (e6e31c7, _classify_current_issue) |
+| P4-6 | 拆 `dep_graph.build_from_dependencies` B=8→A(3) (0.2d) | ✅ 已完成 (89f933a, 2 helper) |
+| P4-7 | 拆 `dep_graph._find_critical_path` B=7→A(2) (0.1d) | ✅ 已完成 (4e15380, _bfs_to_target + assert narrow) |
+| P4-8 | 拆 `ai_native_mcp._tool_knowledge_search` B=6→A(2) (0.1d) | ✅ 已完成 (75768ce, TYPE_CHECKING 模式) |
+| P4-9 | 拆 `dep_graph.build_from_sbom` B=6→A(2) (0.1d) | ✅ 已完成 (06ed55f, _add_sbom_relationships) |
+| P4-10 | 拆 `dep_graph.detect_circular_dependencies` B=6→A(1) (0.1d) | ✅ 已完成 (9c11631, 2 helper) |
+| P4-11 | 拆 `dep_graph.detect_conflicts` B=6→A(1) (0.1d) | ✅ 已完成 (a4816e2, 2 helper) |
+| P4-12 | 拆 `dep_graph.export_graphviz` B=6→A(2) (0.1d) | ✅ 已完成 (39d8b53, 2 helper) |
+| P4-13 | 拆 `exception_manager._load_from_config` B=8→A(2) (0.2d) | ✅ 已完成 (fcad8ea, 2 helper) |
+| P4-14 | 拆 `exception_manager.generate_audit_report` B=8→A(2) (0.1d) | ✅ 已完成 (24037e4, 2 helper) |
+| P4-15 | 拆 `exception_manager.sync_from_git` B=8→A(2) (0.2d) | ✅ 已完成 (44aed86, 2 helper) |
+| P4-16 | 拆 `exception_manager.get_active_exceptions` B=6→A(1) (0.1d) | ✅ 已完成 (5888675, _is_active_request) |
+| P4-17 | 拆 `analyze_case_quality._build_summary` C=13→A(2) (0.2d) | ✅ 已完成 (2ce4d60, 2 helper) |
+| P4-18 | 拆 `analyze_case_quality._check_realistic_values` B=10→A(2) (0.2d) | ✅ 已完成 (3ea14a0, 2 helper) |
+| P4-19 | 拆 `analyze_case_quality._generate_feedback` B=10→A(2) (0.1d) | ✅ 已完成 (438954a, _add_threshold_feedback) |
+| P4-20 | 拆 `analyze_case_quality._analyze_cross_references` B=9→A(2) (0.1d) | ✅ 已完成 (0520aaa, _count_valid_wikilinks) |
+| P4-21 | 拆 `analyze_case_quality._analyze_efficiency` B=8→A(2) (0.1d) | ✅ 已完成 (ef6c868, 2 helper) |
+| P4-22 | 拆 `analyze_case_quality._analyze_insights` B=7→A(2) (0.1d) | ✅ 已完成 (5203751, 2 helper) |
+| P4-23 | 拆 `analyze_case_quality._check_realistic_values` (二轮) B=7→A(1) (0.1d) | ✅ 已完成 (7ef4248, 2 helper) |
+| P4-24 | 拆 `analyze_case_quality.analyze_all` B=6→A(2) (0.1d) | ✅ 已完成 (2d384a7, _should_skip_case) |
+| P4-25 | 拆 `rule_catalog._search_language/framework_rules` B=10→A(1)+A(1) (0.2d) | ✅ 已完成 (2a2a46e, 2 helper) |
+| P4-26 | 拆 `rule_catalog.install_pack` B=6→A(2) (0.1d) | ✅ 已完成 (5ed29ec, 2 helper) |
+| P4-27 | 拆 `exception_manager._collect_expiration_alerts` B=6→A(2) (0.1d) | ✅ 已完成 (9c03da2, 2 helper + assert narrow) |
+| P4-28 | 拆 `exception_manager._auto_revoke_if_expired` B=6→A(1) (0.1d) | ✅ 已完成 (b248beb, _is_revokeable) |
+| P4-29 | 拆 `docker_build._select_components` B=7→A(2) (0.1d) | ✅ 已完成 (96f028c, 2 helper) |
+| P4-30 | 拆 `docker_build._build_all_components` B=9→A(3) (0.2d) | ✅ 已完成 (12f47b8, _build_single_component + sentinel) |
+| P4-31 | 拆 `docker_build._print_summary` B=6→A(2) (0.1d) | ✅ 已完成 (20ddb78, 3 helper) |
+| P4-32 | 拆 `exception_manager._load_yaml_exceptions` B=6→A(2) (0.1d) | ✅ 已完成 (80285b9, 2 helper + isinstance 守卫) |
+| P4-33 | 拆 `analyze_case_quality._compute_average_scores` B=7→A(2) (0.1d) | ✅ 已完成 (fc2ede4, _avg_score) |
+| P4-34 | 拆 `analyze_case_quality._categorize_scores` B=7→A(2) (0.1d) | ✅ 已完成 (77647ba, 排除法) |
+| P4-36 | 拆 `analyze_case_quality._count_valid_wikilinks` B=6→A(2) (0.1d) | ✅ 已完成 (be07a17, 2 helper) |
+| P4-37 | 拆 `supply_chain.scan_project` C=14→C(11) (0.2d) | ✅ 已完成 (303d25f, 2 helper) |
+| P4-38 | 拆 `supply_chain._parse_osv_vuln` C=12→A(2) (0.2d) | ✅ 已完成 (79193b2, 2 helper) |
+| P4-39 | 拆 `supply_chain._parse_go_deps` B=10→A(2) (0.1d) | ✅ 已完成 (7881418, _parse_go_require_line state machine) |
+| P4-40 | 拆 `supply_chain._parse_maven_deps` B=9→A(2) (0.2d) | ✅ 已完成 (7f1f250, 2 helper) |
+| P4-41 | 拆 `analyze_case_quality.format_report` B=6→A(2) (0.1d) | ✅ 已完成 (cc51856, 2 helper) |
+| P4-42 | 拆 `supply_chain._parse_pyproject` B=7→A(2) (0.1d) | ✅ 已完成 (34f7078, 2 helper) |
+| P4-43 | 拆 `supply_chain._parse_cargo_toml` B=7→A(2) (0.1d) | ✅ 已完成 (737ae73, _extract_cargo_version) |
+| P4-44 | 拆 `format_report` 详表段 B(6)→A(2) (0.1d) | ✅ 已完成 (887cb0d, _format_detail_row) |
+| P4-45 | 拆 `supply_chain._build_scan_summary` C(11)→A(2) (0.2d) | ✅ 已完成 (da238dd, 2 helper) |
+| P4-46 | 拆 `supply_chain._extract_cvss_severity` B=7→A(2) (0.1d) | ✅ 已完成 (3ba4ee9, _score_to_severity) |
+| P4-47 | 拆 `supply_chain.scan_dependencies` B=6→A(2) (0.1d) | ✅ 已完成 (d1cdfbd, 2 helper) |
+| P4-48 | 拆 `supply_chain.check_license` B=6→A(2) (0.1d) | ✅ 已完成 (9f2717f, _classify_license) |
+| P4-49 | 拆 `supply_chain._parse_requirements` B=6→A(2) (0.1d) | ✅ 已完成 (9e411e2, _parse_requirements_line) |
+| P4-50 | 拆 `ai_quality_gate._print_results` **C=15→A(2)** (0.2d) | ✅ 已完成 (b2f9937, 3 helper) 🎉 |
+| P4-51 | 拆 `ai_quality_gate._determine_checks` B=10→A(2) (0.1d) | ✅ 已完成 (bd019c3, _append_if_flag) |
+| P4-52 | 拆 `ai_quality_gate.check_structure_patterns` B=8→A(2) (0.1d) | ✅ 已完成 (2f8d229, _find_function_end) |
+| P4-53 | 拆 `ai_quality_gate.check_file` B=8→A(2) (0.2d) | ✅ 已完成 (0b09263, 2 helper) |
+| P4-54 | 拆 `ai_quality_gate._is_in_string` B=7→A(2) (0.1d) | ✅ 已完成 (3a85130, _process_string_char) |
+| P4-55 | 拆 `ai_quality_gate.check_type_patterns` B=7→A(2) (0.1d) | ✅ 已完成 (410365c, 2 helper + 常量) |
+| P4-56 | 拆 `ai_quality_gate._collect_files` B=7→A(2) (0.2d) | ✅ 已完成 (1f4ed98, 2 helper + 常量) |
+| P4-57 | 拆 `ai_quality_gate.check_security_patterns` B=6→A(2) (0.2d) | ✅ 已完成 (2c6f18a, 2 helper + 常量) |
+| P4-58 | 拆 `ai_quality_gate.check_type_patterns` (二轮) B=6→A(2) (0.1d) | ✅ 已完成 (a80a0a5, _is_valid_type_issue) |
+| P4-59 | 拆 `fix_applier._process_issues` B=8→B(6) (0.1d) | ✅ 已完成 (5af9395, _should_skip_issue) |
+
+**P4 续拆 59 项完成, 总计 ~6.0d**, 整体项目最高 CC `_print_results` C(15)→A(2) 拆解完成
+
+### Phase 23 关键经验 (v2.20.0 内发现)
+
+- **C(15) 整体最高 CC 拆解**: `_print_results` 41→13 行, 5 项 sum 抽到 _compute_result_counts, if/else 分支抽到 2 个 _print_*_results
+- **C(11) 8 字段 dict 字面量可拆**: 4 行 sum(1 for x in items if x.field == Value) 抽到 @staticmethod, 突破"难拆"误区
+- **TYPE_CHECKING 模式** (P4-8): `if TYPE_CHECKING: from X import Y else: Y = object` — 精确类型 + 避免 Any 增量 + 无运行时依赖
+- **assert narrow 模式** (P4-7, P4-27): 主函数 None 守卫后, helper 内部 `assert x is not None` 让 mypy 接受非 None 类型
+- **sentinel value 模式** (P4-30): `_SBOM_FAILURE = "__build_failure__"` 区分 "成功但无值" 和 "失败", 避免 `None` 双重含义
+- **isinstance 守卫替代 `# type: ignore`** (P4-32, P4-43): yaml.safe_load 返回 object 时, isinstance 守卫避免 Any 增量
+- **排除法重构 list comp** (P4-34): 三档分类用 `total - _count_at_or_above(80) - _count_below(60)` 替代中间 list comp
+- **数据驱动的纯字典/列表构造** 仍可不强拆 (P4-17, P4-25, P4-30, P4-50 helpers B(6-8) 接受保留)
+- **state machine 主函数本身就是 B** (P4-35 `_extract_table_rows` 接受保留, P4-39 `_parse_go_require_line` state machine 抽 helper 后 A)
+- **P4 阶段共 60 commits, 突破 v2.19.0 的 35 commits 规模**
+
+### P4 续拆验证
+
+- typecheck: **192+ source files clean**
+- quality-gate --full: **192/192 pass, 0 failed, 0 issues**
+- pytest: **1100+ 测试总数** (test_quality_gate 34, test_exception_manager 46, test_dependency_graph 15, test_analyze_case_quality 10, test_rule_catalog_marketplace 41, test_docker_build 32, test_supply_runner_round2 107, test_fix 90, test_ai_quality_gate 1 等)
+- pre-push 钩子: **本地 CI 全部通过, 真实允许推送**（无 `--no-verify` 绕过）
+
+### P4 续拆后续候选 (v2.21.0 远期)
+
+- 治理核心深层重构 (quality_gate.py _gate_current_issues 进一步分)
+- language_registry.py 整体拆分 (1850+ 行, validate_toolchain B(6) 等)
+- report_generator.py Any 存量根治
+- supply_chain.py 8 字段 summary 进一步拆分 (_build_scan_summary helpers B(6) 已可接受)
+- smart_commit.py generate_commit_message C(15) (新发现)
+- secret_scanner.py scan C(15)/_run_gitleaks C(11) (新发现)
+- rule_author.py _get_rule_details C(11)/_validate_single_rule C(11) (新发现)
+- complexity_analyzer.py _check_python_function C(14) (新发现)
+- validate_example_projects.py validate_example C(11) (新发现)
+
 ### P3 续拆后续候选 (v2.20.0 远期)
 
 - 重审 `quality_gate.py` (1850 行) 内方法 (_gate_current_issues B(8), ExceptionManager.get_active_exceptions B(7) 等)

@@ -548,42 +548,53 @@ def _handle_sbom(args: argparse.Namespace) -> int:
 
 
 def _handle_verify_signature(args: argparse.Namespace) -> int:
-    """Handle verify-signature command."""
+    """Handle verify-signature command (V2.21 P5-64 拆分: 抽 _print_verify_result)."""
     from tools.scripts.supply_chain import SignatureVerifier
 
     verifier = SignatureVerifier()
 
     if args.cosign:
         result = verifier.verify_cosign_signature(args.cosign, args.cosign_key)
-        if args.format == "text":
-            status = "✅ Verified" if result["verified"] else "❌ Failed"
-            print(f"Cosign verification: {status}")
-            print(f"Image: {args.cosign}")
-            if result.get("output"):
-                print(f"Output: {result['output']}")
-            if result.get("error"):
-                print(f"Error: {result['error']}")
-        elif args.format == "json":
-            import json
-
-            print(json.dumps(result, indent=2))
+        _print_verify_result("Cosign verification", args, result, image_or_package=args.cosign)
         return 0 if result["verified"] else 1
 
     if args.slsa:
         result = verifier.verify_slsa_provenance(args.slsa)
-        if args.format == "text":
-            status = "✅ Verified" if result["verified"] else "❌ Failed"
-            print(f"SLSA provenance verification: {status}")
-            print(f"Package: {args.slsa}")
-            print(f"Message: {result.get('message', '')}")
-        elif args.format == "json":
-            import json
-
-            print(json.dumps(result, indent=2))
+        _print_verify_result("SLSA provenance verification", args, result, image_or_package=args.slsa)
         return 0 if result["verified"] else 1
 
     print("Specify --cosign or --slsa")
     return 1
+
+
+def _print_verify_result(
+    label: str,
+    args: argparse.Namespace,
+    result: dict[str, Any],
+    image_or_package: str,
+) -> None:
+    """打印签名验证结果 (text/json 两种格式, 模块级 helper).
+
+    Args:
+        label: 标签 ("Cosign verification" 或 "SLSA provenance verification")
+        args: argparse Namespace (含 format)
+        result: 验证结果字典 (含 verified/output/error/message)
+        image_or_package: 镜像名 (cosign) 或包名 (slsa)
+    """
+    if args.format == "text":
+        status = "✅ Verified" if result["verified"] else "❌ Failed"
+        print(f"{label}: {status}")
+        print(f"Package: {image_or_package}")
+        if result.get("output"):
+            print(f"Output: {result['output']}")
+        if result.get("error"):
+            print(f"Error: {result['error']}")
+        if "message" in result:
+            print(f"Message: {result['message']}")
+    elif args.format == "json":
+        import json
+
+        print(json.dumps(result, indent=2))
 
 
 def _to_sarif_supply_chain(result: ScanResult) -> dict[str, Any]:

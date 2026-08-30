@@ -52,10 +52,8 @@ def _build_fix_orchestrator(args: argparse.Namespace) -> AutoFixOrchestrator:
 
 
 def _print_fix_text(fix_results: list[FixResult]) -> None:
-    """文本格式输出修复结果。"""
-    total_applied = sum(len(r.applied) for r in fix_results)
-    total_skipped = sum(len(r.skipped) for r in fix_results)
-    total_errors = sum(len(r.errors) for r in fix_results)
+    """文本格式输出修复结果 (V2.21 P5-65 拆分: 抽 _compute_fix_totals + _print_fix_details)."""
+    total_applied, total_skipped, total_errors = _compute_fix_totals(fix_results)
 
     print("\n🔧 Auto-fix 完成")
     print(f"  应用: {total_applied}")
@@ -63,20 +61,44 @@ def _print_fix_text(fix_results: list[FixResult]) -> None:
     print(f"  错误: {total_errors}")
 
     for result in fix_results:
-        if result.applied:
-            print(f"\n  📄 {result.file}:")
-            for action in result.applied:
-                print(f"    ✅ {action.rule_id} @ line {action.line}")
-            if result.diff:
-                print(f"    Diff:\n{result.diff[:200]}...")
+        _print_fix_details(result)
 
-        if result.skipped:
-            for action in result.skipped:
-                print(f"    ⏭️  {action.rule_id} @ line {action.line} (skipped)")
 
-        if result.errors:
-            for err in result.errors:
-                print(f"    ❌ {err}")
+def _compute_fix_totals(fix_results: list[FixResult]) -> tuple[int, int, int]:
+    """计算修复总数 (applied/skipped/errors 三元组, 模块级 helper).
+
+    Args:
+        fix_results: FixResult 列表
+
+    Returns:
+        (total_applied, total_skipped, total_errors) 三元组
+    """
+    total_applied = sum(len(r.applied) for r in fix_results)
+    total_skipped = sum(len(r.skipped) for r in fix_results)
+    total_errors = sum(len(r.errors) for r in fix_results)
+    return total_applied, total_skipped, total_errors
+
+
+def _print_fix_details(result: FixResult) -> None:
+    """打印单文件修复详情 (模块级 helper).
+
+    Args:
+        result: 单个 FixResult
+    """
+    if result.applied:
+        print(f"\n  📄 {result.file}:")
+        for action in result.applied:
+            print(f"    ✅ {action.rule_id} @ line {action.line}")
+        if result.diff:
+            print(f"    Diff:\n{result.diff[:200]}...")
+
+    if result.skipped:
+        for action in result.skipped:
+            print(f"    ⏭️  {action.rule_id} @ line {action.line} (skipped)")
+
+    if result.errors:
+        for err in result.errors:
+            print(f"    ❌ {err}")
 
 
 def _fix_result_dicts(fix_results: list[FixResult]) -> list[dict[str, object]]:

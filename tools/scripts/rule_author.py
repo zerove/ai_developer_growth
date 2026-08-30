@@ -289,37 +289,95 @@ def cmd_add_rule(args: argparse.Namespace) -> None:
 
 
 def _validate_single_rule(category: str, rule: dict[str, Any], rule_id: str) -> tuple[int, int]:
-    """Validate a single rule. Returns (errors, warnings)."""
-    errors = 0
-    warnings = 0
+    """Validate a single rule. Returns (errors, warnings).
 
+    V2.21 P5-5 拆分: 抽 _check_required_fields 收口 3 必填守卫 + severity 验证,
+    _check_pattern 收口 pattern 正则编译,
+    _check_test_cases 收口 test_cases 遍历 + 2 必填守卫,
+    主函数仅 type 守卫 + 委托.
+    """
     if not isinstance(rule, dict):
         print(f"  ✗ {category}: rule is not a dict")
         return 1, 0
 
-    # Required fields
+    errors = _check_required_fields(category, rule)
+    errors += _check_pattern(category, rule)
+    _, warnings = _check_name(category, rule)
+    errors += _check_test_cases(category, rule)
+
+    return errors, warnings
+
+
+def _check_required_fields(category: str, rule: dict[str, Any]) -> int:
+    """检查 id + severity 必填字段 (模块级 helper).
+
+    Args:
+        category: 类别名
+        rule: rule dict
+
+    Returns:
+        错误数
+    """
+    errors = 0
     if not rule.get("id"):
         print(f"  ✗ {category}: rule missing 'id'")
         errors += 1
-    if not rule.get("name"):
-        print(f"  ✗ {category}/{rule.get('id', '?')}: missing 'name'")
-        warnings += 1
     if not rule.get("severity"):
         print(f"  ✗ {category}/{rule.get('id', '?')}: missing 'severity'")
         errors += 1
     elif rule["severity"] not in SEVERITY_LEVELS:
         print(f"  ✗ {category}/{rule['id']}: invalid severity '{rule['severity']}'")
         errors += 1
+    return errors
 
-    # Validate pattern
-    if "pattern" in rule:
-        try:
-            re.compile(rule["pattern"])
-        except re.error as e:
-            print(f"  ✗ {category}/{rule['id']}: invalid regex: {e}")
-            errors += 1
 
-    # Validate test_cases
+def _check_name(category: str, rule: dict[str, Any]) -> tuple[int, int]:
+    """检查 name 必填字段 (warning, 模块级 helper).
+
+    Args:
+        category: 类别名
+        rule: rule dict
+
+    Returns:
+        (errors, warnings) 元组 (name 缺失只增加 warnings)
+    """
+    if not rule.get("name"):
+        print(f"  ✗ {category}/{rule.get('id', '?')}: missing 'name'")
+        return 0, 1
+    return 0, 0
+
+
+def _check_pattern(category: str, rule: dict[str, Any]) -> int:
+    """检查 pattern 正则编译 (模块级 helper).
+
+    Args:
+        category: 类别名
+        rule: rule dict
+
+    Returns:
+        错误数 (0 if 无 pattern 或 pattern 合法)
+    """
+    if "pattern" not in rule:
+        return 0
+    try:
+        re.compile(rule["pattern"])
+    except re.error as e:
+        print(f"  ✗ {category}/{rule['id']}: invalid regex: {e}")
+        return 1
+    return 0
+
+
+def _check_test_cases(category: str, rule: dict[str, Any]) -> int:
+    """遍历 test_cases 检查 code + should_match 必填 (模块级 helper).
+
+    Args:
+        category: 类别名
+        rule: rule dict
+
+    Returns:
+        错误数
+    """
+    errors = 0
     for i, tc in enumerate(rule.get("test_cases", [])):
         if "code" not in tc:
             print(f"  ✗ {category}/{rule['id']}/test[{i}]: missing 'code'")
@@ -327,8 +385,7 @@ def _validate_single_rule(category: str, rule: dict[str, Any], rule_id: str) -> 
         if "should_match" not in tc:
             print(f"  ✗ {category}/{rule['id']}/test[{i}]: missing 'should_match'")
             errors += 1
-
-    return errors, warnings
+    return errors
 
 
 def cmd_validate(args: argparse.Namespace) -> None:

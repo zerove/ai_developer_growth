@@ -209,15 +209,43 @@ def _parse_build_args() -> argparse.Namespace:
 
 
 def _select_components(args: argparse.Namespace) -> list[tuple[str, str]] | None:
-    """按 --components 过滤组件; 含未知组件时打印错误并返回 None。"""
+    """按 --components 过滤组件; 含未知组件时打印错误并返回 None。
+
+    V2.20 P4-29 拆分: 抽 _filter_components 收口过滤逻辑,
+    _print_unknown_components 收口错误打印.
+    """
     if not args.components:
         return list(COMPONENTS)
     selected = [c.strip() for c in args.components.split(",")]
-    components = [(name, df) for name, df in COMPONENTS if name in selected]
+    components = _filter_components(selected)
     if len(components) != len(selected):
-        print(f"❌ 未知组件: {set(selected) - {c[0] for c in COMPONENTS}}")
+        _print_unknown_components(selected, components)
         return None
     return components
+
+
+def _filter_components(selected: list[str]) -> list[tuple[str, str]]:
+    """过滤 COMPONENTS 保留 selected 中命名的项.
+
+    Args:
+        selected: 用户指定的组件名列表
+
+    Returns:
+        [(name, dockerfile), ...] 匹配项
+    """
+    return [(name, df) for name, df in COMPONENTS if name in selected]
+
+
+def _print_unknown_components(selected: list[str], matched: list[tuple[str, str]]) -> None:
+    """打印未匹配的组件名 (错误信息).
+
+    Args:
+        selected: 用户指定的组件名列表
+        matched: 实际匹配到的组件列表
+    """
+    known = {c[0] for c in COMPONENTS}
+    unknown = set(selected) - known
+    print(f"❌ 未知组件: {unknown}")
 
 
 def _collect_extra_tags(args: argparse.Namespace) -> list[str]:

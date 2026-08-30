@@ -70,7 +70,7 @@ def load_custom_rules(project_dir: Path) -> dict[str, Any]:
 
 
 def _merge_rules(base: dict[str, Any], custom: dict[str, Any]) -> dict[str, Any]:
-    """Merge custom rules into base rules.
+    """Merge custom rules into base rules (V2.21 P5-63 拆分: 抽 _merge_list_category + _merge_dict_category).
 
     Rules with matching IDs are overridden (only severity can be overridden
     via severity_override field). New rules are appended.
@@ -91,35 +91,59 @@ def _merge_rules(base: dict[str, Any], custom: dict[str, Any]) -> dict[str, Any]
             continue
 
         if isinstance(base_items, list) and isinstance(custom_items, list):
-            # List-based: merge by ID
-            base_map: dict[str, dict[str, Any]] = {}
-            for item in base_items:
-                if isinstance(item, dict) and "id" in item:
-                    base_map[item["id"]] = item
-
-            for rule in custom_items:
-                if not isinstance(rule, dict):
-                    continue
-                rule_id = rule.get("id", "")
-                if rule_id in base_map:
-                    if "severity_override" in rule:
-                        base_map[rule_id] = {
-                            **base_map[rule_id],
-                            "severity": rule["severity_override"],
-                        }
-                    else:
-                        base_map[rule_id].update(rule)
-                else:
-                    base_map[rule_id] = rule
-
-            result[category] = list(base_map.values())
+            result[category] = _merge_list_category(base_items, custom_items)
         elif isinstance(base_items, dict) and isinstance(custom_items, dict):
-            # Dict-based: merge keys
-            merged = dict(base_items)
-            merged.update(custom_items)
-            result[category] = merged
+            result[category] = _merge_dict_category(base_items, custom_items)
 
     return result
+
+
+def _merge_list_category(base_items: list[Any], custom_items: list[Any]) -> list[Any]:
+    """合并 list 类 (按 ID 覆盖 + new 追加, 模块级 helper).
+
+    Args:
+        base_items: 基础列表
+        custom_items: 自定义列表
+
+    Returns:
+        合并后的列表
+    """
+    base_map: dict[str, dict[str, Any]] = {}
+    for item in base_items:
+        if isinstance(item, dict) and "id" in item:
+            base_map[item["id"]] = item
+
+    for rule in custom_items:
+        if not isinstance(rule, dict):
+            continue
+        rule_id = rule.get("id", "")
+        if rule_id in base_map:
+            if "severity_override" in rule:
+                base_map[rule_id] = {
+                    **base_map[rule_id],
+                    "severity": rule["severity_override"],
+                }
+            else:
+                base_map[rule_id].update(rule)
+        else:
+            base_map[rule_id] = rule
+
+    return list(base_map.values())
+
+
+def _merge_dict_category(base_items: dict[str, Any], custom_items: dict[str, Any]) -> dict[str, Any]:
+    """合并 dict 类 (custom 覆盖 base, 模块级 helper).
+
+    Args:
+        base_items: 基础 dict
+        custom_items: 自定义 dict
+
+    Returns:
+        合并后的 dict
+    """
+    merged = dict(base_items)
+    merged.update(custom_items)
+    return merged
 
 
 def _load_common_rules(framework_dir: Path) -> dict[str, Any]:

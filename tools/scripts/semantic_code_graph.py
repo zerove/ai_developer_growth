@@ -40,6 +40,16 @@ class SemanticCodeGraph:
         self.nodes: dict[str, CodeNode] = {}
 
     def build_graph(self) -> None:
+        """构建代码图 (V2.21 P5-30 拆分: 抽 _build_name_index + _resolve_dependencies)."""
+        self._parse_all_files()
+        name_to_keys = self._build_name_index()
+        self._resolve_dependencies(name_to_keys)
+
+    def _parse_all_files(self) -> None:
+        """遍历所有 .py 文件, 解析 AST 构建初始 nodes (方法级 helper).
+
+        跳过 .venv/build/dist/.git/__pycache__ 目录.
+        """
         py_files = list(self.root_dir.glob("**/*.py"))
         for file_path in py_files:
             if any(part in {".venv", "build", "dist", ".git", "__pycache__"} for part in file_path.parts):
@@ -52,11 +62,23 @@ class SemanticCodeGraph:
             except Exception as e:
                 print(f"Warning: could not parse {file_path}: {e}")
 
-        # Build name->keys index for O(1) dependency resolution
+    def _build_name_index(self) -> dict[str, set[str]]:
+        """构建 name → keys 索引, O(1) 依赖解析 (方法级 helper).
+
+        Returns:
+            {node.name: {key1, key2, ...}} 索引
+        """
         name_to_keys: dict[str, set[str]] = {}
         for key, node in self.nodes.items():
             name_to_keys.setdefault(node.name, set()).add(key)
+        return name_to_keys
 
+    def _resolve_dependencies(self, name_to_keys: dict[str, set[str]]) -> None:
+        """用 name 索引解析依赖, 设置 dependents 集合 (方法级 helper, 内部修改 self.nodes).
+
+        Args:
+            name_to_keys: _build_name_index 返回的索引
+        """
         for key, node in self.nodes.items():
             for dep in node.dependencies:
                 # Direct name match

@@ -113,16 +113,33 @@ class DependencyGraph:
         return issues
 
     def _build_graph(self, dirpath: Path, languages: list[str]) -> None:
-        """Scan files and build import dependency graph."""
+        """Scan files and build import dependency graph (V2.21 P5-56 拆分: 抽 _collect_code_files + _extract_imports_in_file, 方法级 helper)."""
+        code_files = self._collect_code_files(dirpath, languages)
+
+        for filepath in code_files:
+            try:
+                content = filepath.read_text(encoding="utf-8", errors="replace")
+            except Exception:
+                continue
+
+            self._extract_imports_in_file(filepath, dirpath, content)
+
+    def _collect_code_files(self, dirpath: Path, languages: list[str]) -> list[Path]:
+        """收集指定语言的代码文件, 跳过 ignore 目录 (方法级 helper).
+
+        Args:
+            dirpath: 扫描根目录
+            languages: 目标语言列表
+
+        Returns:
+            文件路径列表
+        """
         exts: list[str] = []
         for lang in languages:
             exts.extend(LANGUAGE_EXTS.get(lang, []))
-
         code_files: list[Path] = []
         for ext in exts:
             code_files.extend(dirpath.rglob(f"*{ext}"))
-
-        # Filter ignored dirs
         ignore_dirs = {
             "__pycache__",
             ".git",
@@ -132,31 +149,30 @@ class DependencyGraph:
             "build",
             ".mypy_cache",
         }
-        code_files = [f for f in code_files if not any(d in f.parts for d in ignore_dirs)]
+        return [f for f in code_files if not any(d in f.parts for d in ignore_dirs)]
 
-        for filepath in code_files:
-            try:
-                content = filepath.read_text(encoding="utf-8", errors="replace")
-            except Exception:
-                continue
+    def _extract_imports_in_file(self, filepath: Path, dirpath: Path, content: str) -> None:
+        """从单文件提取 import, 内部更新 self._graph/_file_to_module/_module_to_files.
 
-            lang = self._detect_lang(filepath)
-            patterns = IMPORT_PATTERNS.get(lang, [])
-            if not patterns:
-                continue
+        Args:
+            filepath: 文件路径
+            dirpath: 扫描根目录
+            content: 文件内容
+        """
+        lang = self._detect_lang(filepath)
+        patterns = IMPORT_PATTERNS.get(lang, [])
+        if not patterns:
+            return
 
-            # Register file
-            rel = str(filepath.relative_to(dirpath))
-            self._file_to_module[rel] = rel
-            self._module_to_files[rel].append(rel)
+        rel = str(filepath.relative_to(dirpath))
+        self._file_to_module[rel] = rel
+        self._module_to_files[rel].append(rel)
 
-            # Find imports
-            for pattern in patterns:
-                for match in re.finditer(pattern, content):
-                    imported = match.group(1)
-                    # Only track local imports
-                    if imported.startswith(".") or "/" in imported or imported[0].islower():
-                        self._graph[rel].add(imported)
+        for pattern in patterns:
+            for match in re.finditer(pattern, content):
+                imported = match.group(1)
+                if imported.startswith(".") or "/" in imported or imported[0].islower():
+                    self._graph[rel].add(imported)
 
     def _find_cycles(self) -> list[DependencyIssue]:
         """Detect circular dependencies using DFS."""

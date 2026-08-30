@@ -398,46 +398,74 @@ def _run_checks(args: argparse.Namespace, filtered_files: list[Path]) -> list[Ch
 
 
 def _print_results(results: list[CheckResult], format_type: str) -> int:
-    """Print results and return exit code."""
-    passed = sum(1 for r in results if r.passed)
-    failed = sum(1 for r in results if not r.passed)
-    total_issues = sum(len(r.issues) for r in results)
-    total_errors = sum(r.error_count for r in results)
-    total_warnings = sum(r.warning_count for r in results)
+    """Print results and return exit code.
 
+    V2.20 P4-50 拆分: 抽 _compute_result_counts 收口 5 项 sum 统计,
+    _print_text_results 收口 text 格式渲染 (for + 守卫 + 截断),
+    主函数仅 json/text 分派.
+    """
+    counts = _compute_result_counts(results)
     if format_type == "json":
-        import json
-
-        output = {
-            "summary": {
-                "passed": passed,
-                "failed": failed,
-                "total_files": len(results),
-                "total_issues": total_issues,
-                "errors": total_errors,
-                "warnings": total_warnings,
-            },
-            "results": [r.to_dict() for r in results],
-        }
-        print(json.dumps(output, indent=2, ensure_ascii=False))
+        _print_json_results(results, counts)
     else:
-        for result in results:
-            if result.passed:
-                print(f"✅ {result.file}")
-            else:
-                print(f"❌ {result.file} ({len(result.issues)} issues)")
-                for issue in result.issues[:5]:
-                    print(f"   Line {issue.line}: [{issue.severity}] {issue.rule_id}: {issue.message}")
-                if len(result.issues) > 5:
-                    print(f"   ... and {len(result.issues) - 5} more")
+        _print_text_results(results, counts)
+    return 1 if counts["failed"] > 0 else 0
 
-        print("\n" + "=" * 60)
-        print(
-            f"  结果: {passed} 通过, {failed} 失败, {total_issues} 个问题 ({total_errors} errors, {total_warnings} warnings)"
-        )
-        print("=" * 60)
 
-    return 1 if failed > 0 else 0
+def _compute_result_counts(results: list[CheckResult]) -> dict[str, int]:
+    """统计 5 项 results 汇总 (模块级 helper).
+
+    Args:
+        results: CheckResult 列表
+
+    Returns:
+        {passed, failed, total_issues, total_errors, total_warnings} dict
+    """
+    return {
+        "passed": sum(1 for r in results if r.passed),
+        "failed": sum(1 for r in results if not r.passed),
+        "total_issues": sum(len(r.issues) for r in results),
+        "total_errors": sum(r.error_count for r in results),
+        "total_warnings": sum(r.warning_count for r in results),
+    }
+
+
+def _print_json_results(results: list[CheckResult], counts: dict[str, int]) -> None:
+    """打印 JSON 格式结果 (模块级 helper)."""
+    import json
+
+    output = {
+        "summary": {
+            "passed": counts["passed"],
+            "failed": counts["failed"],
+            "total_files": len(results),
+            "total_issues": counts["total_issues"],
+            "errors": counts["total_errors"],
+            "warnings": counts["total_warnings"],
+        },
+        "results": [r.to_dict() for r in results],
+    }
+    print(json.dumps(output, indent=2, ensure_ascii=False))
+
+
+def _print_text_results(results: list[CheckResult], counts: dict[str, int]) -> None:
+    """打印 text 格式结果 (模块级 helper)."""
+    for result in results:
+        if result.passed:
+            print(f"✅ {result.file}")
+        else:
+            print(f"❌ {result.file} ({len(result.issues)} issues)")
+            for issue in result.issues[:5]:
+                print(f"   Line {issue.line}: [{issue.severity}] {issue.rule_id}: {issue.message}")
+            if len(result.issues) > 5:
+                print(f"   ... and {len(result.issues) - 5} more")
+
+    print("\n" + "=" * 60)
+    print(
+        f"  结果: {counts['passed']} 通过, {counts['failed']} 失败, {counts['total_issues']} 个问题 "
+        f"({counts['total_errors']} errors, {counts['total_warnings']} warnings)"
+    )
+    print("=" * 60)
 
 
 def main() -> None:

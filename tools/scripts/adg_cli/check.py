@@ -187,7 +187,7 @@ def check_directory(
     severity_filter: str | None = None,
     jobs: int = 1,
 ) -> list[Issue]:
-    """Check all code files in a directory.
+    """Check all code files in a directory (V2.21 P5-35 拆分: 抽 _collect_files + _run_checks).
 
     Args:
         dirpath: Directory to check
@@ -195,7 +195,21 @@ def check_directory(
         severity_filter: Filter by severity level
         jobs: Number of parallel jobs (1 = sequential)
     """
-    # Collect files first
+    files_to_check = _collect_files(dirpath)
+    return _run_checks(files_to_check, rules, severity_filter, jobs)
+
+
+def _collect_files(dirpath: Path) -> list[Path]:
+    """递归收集目录中所有可检查的语言文件 (模块级 helper).
+
+    跳过 is_skipped_dir / SKIP_EXTENSIONS, 只保留 _detect_language_from_file 命中的文件.
+
+    Args:
+        dirpath: 扫描根目录
+
+    Returns:
+        文件路径列表
+    """
     files_to_check: list[Path] = []
     for filepath in dirpath.rglob("*"):
         if not filepath.is_file():
@@ -208,18 +222,29 @@ def check_directory(
             continue
         if filepath.suffix in SKIP_EXTENSIONS:
             continue
-        lang = _detect_language_from_file(filepath)
-        if lang:
+        if _detect_language_from_file(filepath):
             files_to_check.append(filepath)
+    return files_to_check
 
-    # Check files (parallel or sequential)
-    if jobs > 1 and len(files_to_check) > 1:
-        return _check_files_parallel(files_to_check, rules, severity_filter, jobs)
-    else:
-        all_issues: list[Issue] = []
-        for filepath in files_to_check:
-            all_issues.extend(check_file(filepath, rules, severity_filter))
-        return all_issues
+
+def _run_checks(files: list[Path], rules: dict[str, Any], severity_filter: str | None, jobs: int) -> list[Issue]:
+    """运行检查 (parallel or sequential, 模块级 helper).
+
+    Args:
+        files: 待检查文件列表
+        rules: 规则
+        severity_filter: 严重度过滤
+        jobs: 并行数 (1 = sequential)
+
+    Returns:
+        全部 issue 列表
+    """
+    if jobs > 1 and len(files) > 1:
+        return _check_files_parallel(files, rules, severity_filter, jobs)
+    all_issues: list[Issue] = []
+    for filepath in files:
+        all_issues.extend(check_file(filepath, rules, severity_filter))
+    return all_issues
 
 
 def _check_files_parallel(

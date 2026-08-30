@@ -853,15 +853,7 @@ def format_report(report: dict[str, Any]) -> str:
     lines.append(f"{'Case':<40} {'Overall':>7} {'Auth':>6} {'Eff':>6} {'Insight':>7} {'Complete':>8} {'X-Ref':>6}")
     lines.append("-" * 85)
     for detail in report["detailed"]:
-        lines.append(
-            f"{detail['case']:<40} "
-            f"{detail['overall']:>7.1f} "
-            f"{detail['authenticity']:>6.1f} "
-            f"{detail['efficiency']:>6.1f} "
-            f"{detail['insight']:>7.1f} "
-            f"{detail['completeness']:>8.1f} "
-            f"{detail['cross_refs']:>6.1f}"
-        )
+        lines.append(_format_detail_row(detail))
 
     return "\n".join(lines)
 
@@ -899,6 +891,26 @@ def _format_case_list(header: str, cases: list[dict[str, Any]]) -> list[str]:
     for case in cases:
         lines.append(f"  {case['score']:>5.1f}  {case['name']}")
     return lines
+
+
+def _format_detail_row(detail: dict[str, Any]) -> str:
+    """渲染单条 detail 行 (模块级 helper, 7 列固定列宽).
+
+    Args:
+        detail: detail 字典 (含 case/overall/authenticity/efficiency/insight/completeness/cross_refs)
+
+    Returns:
+        格式化单行字符串
+    """
+    return (
+        f"{detail['case']:<40} "
+        f"{detail['overall']:>7.1f} "
+        f"{detail['authenticity']:>6.1f} "
+        f"{detail['efficiency']:>6.1f} "
+        f"{detail['insight']:>7.1f} "
+        f"{detail['completeness']:>8.1f} "
+        f"{detail['cross_refs']:>6.1f}"
+    )
 
 
 if __name__ == "__main__":

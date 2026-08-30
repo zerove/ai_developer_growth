@@ -470,28 +470,57 @@ class SBOMGenerator:
         return deps
 
     def _parse_pyproject(self, path: Path) -> list[Dependency]:
-        deps = []
+        """解析 pyproject.toml 依赖 (project.dependencies + tool.poetry.dependencies).
+
+        V2.20 P4-42 拆分: 抽 _parse_project_dependencies + _parse_poetry_dependencies
+        收口两个 dep 块解析, 主函数仅 try/except + 调用.
+        """
+        deps: list[Dependency] = []
         try:
             import tomllib
 
             with open(path, "rb") as f:
                 data = tomllib.load(f)
-
-            # [project] dependencies
-            for dep_spec in data.get("project", {}).get("dependencies", []):
-                dep = self._parse_dep_spec(dep_spec)
-                if dep:
-                    deps.append(dep)
-
-            # [tool.poetry] dependencies
-            for name, spec in data.get("tool", {}).get("poetry", {}).get("dependencies", {}).items():
-                if name != "python":
-                    dep = self._parse_poetry_dep(name, spec)
-                    if dep:
-                        deps.append(dep)
+            deps.extend(self._parse_project_dependencies(data))
+            deps.extend(self._parse_poetry_dependencies(data))
         except Exception as e:
             logger.warning(f"Failed to parse pyproject.toml: {e}")
+        return deps
 
+    def _parse_project_dependencies(self, data: dict[str, object]) -> list[Dependency]:
+        """解析 [project] dependencies 块.
+
+        Args:
+            data: tomllib 解析后的字典
+
+        Returns:
+            dependency 列表
+        """
+        project = data.get("project", {})
+        deps: list[Dependency] = []
+        for dep_spec in project.get("dependencies", []):  # type: ignore[attr-defined]
+            dep = self._parse_dep_spec(dep_spec)
+            if dep:
+                deps.append(dep)
+        return deps
+
+    def _parse_poetry_dependencies(self, data: dict[str, object]) -> list[Dependency]:
+        """解析 [tool.poetry] dependencies 块 (排除 python).
+
+        Args:
+            data: tomllib 解析后的字典
+
+        Returns:
+            dependency 列表
+        """
+        poetry = data.get("tool", {}).get("poetry", {})  # type: ignore[attr-defined]
+        deps: list[Dependency] = []
+        for name, spec in poetry.get("dependencies", {}).items():
+            if name == "python":
+                continue
+            dep = self._parse_poetry_dep(name, spec)
+            if dep:
+                deps.append(dep)
         return deps
 
     def _parse_requirements(self, path: Path) -> list[Dependency]:

@@ -221,32 +221,36 @@ def _scan_documents(docs_dir: Path, case_studies: bool) -> dict[str, list[str]]:
 
 
 def _load_all_rules(rule_dir: Path | None) -> dict[str, dict[str, Any]]:
-    """Load all rules from language and framework directories."""
+    """Load all rules from language and framework directories (V2.21 P5-51 拆分: 抽 _load_rules_from_directory)."""
     all_rules: dict[str, dict[str, Any]] = {}
     rule_path = rule_dir or (PROJECT_ROOT / "ai-dev-framework" / "languages")
-
-    for lang_dir in sorted(rule_path.iterdir()) if rule_path.exists() else []:
-        if not lang_dir.is_dir():
-            continue
-        rules_file = lang_dir / "rules.d" / "anti_patterns.yml"
-        if rules_file.exists():
-            for rule in _load_rules_from_yml(rules_file):
-                rule_id = rule.get("id", "")
-                if rule_id:
-                    all_rules[rule_id] = rule
+    _load_rules_from_directory(rule_path, all_rules)
 
     # Also load framework rules
     framework_dir = PROJECT_ROOT / "ai-dev-framework" / "frameworks"
-    if framework_dir.exists():
-        for fw_dir in sorted(framework_dir.iterdir()):
-            rules_file = fw_dir / "rules.d" / "anti_patterns.yml"
-            if rules_file.exists():
-                for rule in _load_rules_from_yml(rules_file):
-                    rule_id = rule.get("id", "")
-                    if rule_id:
-                        all_rules[rule_id] = rule
-
+    _load_rules_from_directory(framework_dir, all_rules)
     return all_rules
+
+
+def _load_rules_from_directory(directory: Path, all_rules: dict[str, dict[str, Any]]) -> None:
+    """从单目录加载所有 anti_patterns.yml 规则 (模块级 helper, 内部修改 all_rules).
+
+    Args:
+        directory: 包含语言/框架子目录的根目录
+        all_rules: 累积目标字典
+    """
+    if not directory.exists():
+        return
+    for lang_dir in sorted(directory.iterdir()):
+        if not lang_dir.is_dir():
+            continue
+        rules_file = lang_dir / "rules.d" / "anti_patterns.yml"
+        if not rules_file.exists():
+            continue
+        for rule in _load_rules_from_yml(rules_file):
+            rule_id = rule.get("id", "")
+            if rule_id:
+                all_rules[rule_id] = rule
 
 
 def _match_rule_to_docs(

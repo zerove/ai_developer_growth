@@ -259,7 +259,7 @@ def _run_semantic_check(path: Path, lang: str | None, jobs: int) -> int:
 
 
 def _run_ast_fix(path: Path, dry_run: bool) -> int:
-    """Run AST-based auto-fix on files."""
+    """Run AST-based auto-fix on files (V2.21 P5-69 拆分: 抽 _fix_single_file + _print_directory_summary)."""
     from tools.scripts.rules_engine.ast_fixer import ASTFixer
 
     print("=" * 60)
@@ -269,25 +269,52 @@ def _run_ast_fix(path: Path, dry_run: bool) -> int:
     fixer = ASTFixer()
 
     if path.is_file():
-        report = fixer.fix_file(path, dry_run=dry_run)
-        if report is None:
-            print(f"  ⚠️  Cannot parse {path}, skipping")
-            return 0
-        print(fixer.format_fix_report(report))
-        return 0 if report.total_fixes == 0 else (0 if dry_run else 1)
+        return _fix_single_file(fixer, path, dry_run)
 
     # Directory: fix all Python files
     total_fixes = 0
     for filepath in sorted(path.rglob("*.py")):
         if any(d in filepath.parts for d in {"__pycache__", ".git", "node_modules", ".venv"}):
             continue
-        report = fixer.fix_file(filepath, dry_run=dry_run)
-        if report is None:
-            continue
-        if report.total_fixes > 0:
-            print(fixer.format_fix_report(report))
-            total_fixes += report.total_fixes
+        fixes = _fix_single_file(fixer, filepath, dry_run, verbose=True)
+        if fixes > 0:
+            total_fixes += fixes
 
+    _print_directory_summary(total_fixes, dry_run)
+    return 0
+
+
+def _fix_single_file(fixer: Any, filepath: Path, dry_run: bool, *, verbose: bool = False) -> int:
+    """单文件 AST 修复 (模块级 helper, 返回修复数 0/正数).
+
+    Args:
+        fixer: ASTFixer 实例
+        filepath: 文件路径
+        dry_run: 是否仅模拟
+        verbose: 是否打印详细报告 (默认 False)
+
+    Returns:
+        修复数 (0 = 无需修复或跳过)
+    """
+    report = fixer.fix_file(filepath, dry_run=dry_run)
+    if report is None:
+        if verbose:
+            print(f"  ⚠️  Cannot parse {filepath}, skipping")
+        return 0
+    if report.total_fixes == 0:
+        return 0
+    if verbose:
+        print(fixer.format_fix_report(report))
+    return report.total_fixes
+
+
+def _print_directory_summary(total_fixes: int, dry_run: bool) -> None:
+    """打印目录级修复汇总 (模块级 helper).
+
+    Args:
+        total_fixes: 总修复数
+        dry_run: 是否仅模拟
+    """
     print(f"\n{'=' * 60}")
     print(f"  Total fixes: {total_fixes}" + (" (dry run)" if dry_run else ""))
     if total_fixes == 0:
@@ -297,8 +324,6 @@ def _run_ast_fix(path: Path, dry_run: bool) -> int:
     else:
         print("  ✅ Fixes applied")
     print("=" * 60)
-
-    return 0
 
 
 def _run_hallucination_scan(path: Path, lang: str | None) -> int:

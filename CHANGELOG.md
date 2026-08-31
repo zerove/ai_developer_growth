@@ -2,6 +2,40 @@
 
 All notable changes to the AI Developer Growth project.
 
+## [2.22.0] - 2026-08-31
+
+### 重要变更: Phase 25 - 质量巩固 + 健康收口
+
+8 个 commit 完成 2026-08-31 的项目清理与质量门禁收紧。
+
+#### 关键改进
+
+- **Ruff 错误清零** - 修 2 个 lint 错误: F841 (`audit_attestation.py` 未使用变量 `prev_hash`) + UP035 (`rule_catalog.py` `Iterator` 改从 `collections.abc` 导入)
+- **Gitignore 漏洞修复** - 补 2 条规则: `.coverage-v*.json` (避免本地覆盖率变体入仓) + `tools/.quality-trends/audit_ledger.jsonl` (本地预提交门禁产物)
+- **陈旧 baseline 豁免清理** - `.jcode/baseline.json` 移除 `tools/scripts/rules/loader.py` 53 行豁免 (已不超 50 行)
+- **遗留分支清理** - 删除 `feat/ci-validation-test` + `test/diff-cover-test` (master 已领先 458+ commits, 已被吸收); 同步 `git remote prune origin`
+- **py-log-print 误报降级** - CLI 入口 (`jcode_cli` / `hooks_runner` / `phase_runner` / `supply_runner` / `misc_runner` 等) 面向用户的格式化输出 (含 emoji/缩进) 是有意为之, 在 `.adg/rules.yml` 集中降为 `info`
+  - 降级前: 1236 warnings (其中 1235 个 py-log-print + 1 个 common-empty-except-block)
+  - 降级后: 0 error, 7 warning (其他类), 19 info (py-log-print)
+- **common-empty-except-block 修复** - `validate_language_rules.py:202` 缓存写入空 except 改 debug 日志 (`log.debug("跳过缓存写入 %s: %s", ...)`), 避免 OSError 静默吞掉
+- **覆盖率门禁收紧** - `pyproject.toml` 的 `fail_under` 75 → 80, 当前 85.89% (3683 tests), 安全余量 5.89pp
+
+#### 文档同步
+
+- **ROADMAP 追加 Phase 25** - 含 11 项完成项 + 治理指标快照表 (测试 3683 / 覆盖率 85.89% / 门禁 80% / adg error 0)
+- **ADR-017 新增** - 记录 py-log-print 误报降级决策, 含 4 个备选方案对比
+- **CONTEXT 更新** - 记录 8 个 commit 的清理与收口过程
+
+#### 验证快照
+
+- ruff check: clean
+- pytest: 3683 passed in 630.21s
+- adg check (error 级): 0 issues / 192 files
+- 当前 master HEAD: 22f74a8
+- 工作区: clean
+
+---
+
 ## [2.21.0] - 2026-08-30
 
 ### 重要变更: V2.20.0 后续 P5 续拆（Phase 24）

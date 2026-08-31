@@ -74,3 +74,9 @@ severity_overrides:
   # 与 jcode_ai_native_workflow (本地 CLI 调用). 规则基于方法名/参数启发式
   # 误判率高, 暂按已知误报降为 info.
   py-no-input-validation: info
+  # py-pip-audit-missing: 24 个, CI 已启用 pip-audit, 本地工具无强制依赖
+  py-pip-audit-missing: info
+  # py-test-sleep: 2 个, 测试内 sleep 用于等待异步/限流, 合法用法
+  py-test-sleep: info
+  # common-debugger: 4 个, pdb 调试器调用, 出现在测试/异常路径非阻塞
+  common-debugger: info

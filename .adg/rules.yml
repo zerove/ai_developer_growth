@@ -80,3 +80,10 @@ severity_overrides:
   py-test-sleep: info
   # common-debugger: 4 个, pdb 调试器调用, 出现在测试/异常路径非阻塞
   common-debugger: info
+  # common-weak-hash (2) / common-unsafe-yaml-load (2) / common-http-url (1):
+  # 5 个 warning 全部位于 fix_heuristics.py / auto_fix.py / security_patterns.py
+  # / supply_chain.py, 是 adg 规则数据库的元数据 (字符串字面量 / regex pattern
+  # / XML namespace) 而非真实调用, 规则对元编程类代码误判率高, 降为 info.
+  common-weak-hash: info
+  common-unsafe-yaml-load: info
+  common-http-url: info

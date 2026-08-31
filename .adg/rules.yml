@@ -103,3 +103,12 @@ severity_overrides:
   # 接受 dataclass / ad-hoc 对象 (有 .file/.language/.error_count 等属性),
   # 引入 Protocol 抽象的 ROI 低于其复杂度, 暂按已知模式降为 info.
   common-type-any: info
+  # py-global-statement (5) + py-shared-mutable (4) = 9 个, 全部位于
+  # 单进程 CLI 工具的缓存/注册表 (config/loader.py 2 / rules_engine/checker.py
+  # worker initializer / plugins.py 1 / phase_runner.py 1 等). 这些场景:
+  # - 进程内 load-once/use-many, 竞态风险低
+  # - 已发版 + 3683 tests 通过, 重构引入的 bug 风险 > 保留的 global 风险
+  # - 改造需类化/依赖注入, ROI 低
+  # 暂按已知模式降为 info. Phase 27 可考虑选 1-2 个代表性位置做"示范改造".
+  py-global-statement: info
+  py-shared-mutable: info

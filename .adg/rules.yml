@@ -112,3 +112,7 @@ severity_overrides:
   # 暂按已知模式降为 info. Phase 27 可考虑选 1-2 个代表性位置做"示范改造".
   py-global-statement: info
   py-shared-mutable: info
+  # py-n-plus-one: 25 个, 暂不批量降级. 虽多为误报 (config 解析中循环枚举
+  # 转换), 但仍有少量可能真问题 (如 SQLite 循环查询). 留给 Phase 27 用
+  # profile 工具链逐个验证, 避免规则被"刷光"显得不真实.
+  # py-n-plus-one: info  # Phase 27 决定

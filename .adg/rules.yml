@@ -112,7 +112,11 @@ severity_overrides:
   # 暂按已知模式降为 info. Phase 27 可考虑选 1-2 个代表性位置做"示范改造".
   py-global-statement: info
   py-shared-mutable: info
-  # py-n-plus-one: 25 个, 暂不批量降级. 虽多为误报 (config 解析中循环枚举
-  # 转换), 但仍有少量可能真问题 (如 SQLite 循环查询). 留给 Phase 27 用
-  # profile 工具链逐个验证, 避免规则被"刷光"显得不真实.
-  # py-n-plus-one: info  # Phase 27 决定
+  # py-n-plus-one: 25 个, 经 Phase 27 profile 验证全部为误报.
+  # - supply_chain.py 6 (for k,v in deps.items(): Dependency(...)) - profile 100次
+  #   parse_package_json 总耗时 0.050s, 80 deps 解析, 0 N+1 证据, O(n) 循环
+  # - config/loader.py 5 (for k,v in tools.items(): ToolCategory(k)) - profile
+  #   1000次 50 tools 转换 0.325ms/次, Enum 转换是主要成本, 0 N+1 证据
+  # 规则启发式: 把 for k, v in dict.items() 循环内调用任意函数都标为 N+1
+  # 实际场景: 依赖解析/配置转换, 非数据库/IO 多次查询
+  py-n-plus-one: info

@@ -439,8 +439,11 @@ def _run_all_checkers(
         try:
             issues.extend(plugin.check(filepath, content, lines, lang, rules))
         except Exception:
-            # Plugin failed - continue with other checkers
-            pass
+            # Plugin failed - log at debug level so bugs are visible without
+            # breaking the pipeline (CLI 工具 best-effort 模式).
+            logger.debug(
+                "Plugin {} failed on {}: {}", plugin.__class__.__name__, filepath, exc_info=True
+            )
 
     # Run external linters
     if run_linters:

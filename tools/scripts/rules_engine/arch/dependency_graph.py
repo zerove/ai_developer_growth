@@ -119,7 +119,7 @@ class DependencyGraph:
         for filepath in code_files:
             try:
                 content = filepath.read_text(encoding="utf-8", errors="replace")
-            except Exception:
+            except OSError:
                 continue
 
             self._extract_imports_in_file(filepath, dirpath, content)

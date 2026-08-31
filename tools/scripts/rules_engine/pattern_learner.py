@@ -111,7 +111,7 @@ class PatternLearner:
         for filepath in files[:200]:  # 限制文件数
             try:
                 content = filepath.read_text(encoding="utf-8")
-            except Exception:
+            except OSError:
                 continue
 
             self._collect_function_names(content, func_pattern, patterns)
@@ -165,7 +165,7 @@ class PatternLearner:
                 try_count += content.count("except")
                 bare_except += len(re.findall(r"except\s*:", content))
                 specific_except += len(re.findall(r"except\s+\w+", content))
-            except Exception:
+            except OSError:
                 continue
 
         if try_count > 5:

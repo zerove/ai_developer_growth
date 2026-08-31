@@ -5,7 +5,6 @@ from __future__ import annotations
 from tools.scripts.adg_cli.commands.cmd._cmd_rule_create import _cmd_rule_create  # noqa: F401
 from tools.scripts.adg_cli.commands.cmd._cmd_rule_test import _cmd_rule_test  # noqa: F401
 from tools.scripts.adg_cli.commands.cmd._cmd_rule_validate import _cmd_rule_validate  # noqa: F401
-from tools.scripts.adg_cli.commands.cmd._shared import *  # noqa: F401,F403
 from tools.scripts.adg_cli.commands.cmd.cmd_bench import cmd_bench  # noqa: F401
 from tools.scripts.adg_cli.commands.cmd.cmd_check import cmd_check  # noqa: F401
 from tools.scripts.adg_cli.commands.cmd.cmd_cicd import cmd_cicd  # noqa: F401

@@ -87,3 +87,8 @@ severity_overrides:
   common-weak-hash: info
   common-unsafe-yaml-load: info
   common-http-url: info
+  # py-missing-type-hints: 6 个, 全部位于 web_base.py / ast_parser.py /
+  # plugins.py / semantic_rules.py 的 docstring Usage 块内的示例代码, 规则
+  # 不识别 docstring 上下文. docstring 示例本来就无需类型注解 (会被 Python 当
+  # 字符串忽略), 降为 info.
+  py-missing-type-hints: info

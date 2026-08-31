@@ -847,8 +847,8 @@ def _run_external_linters(filepath: Path, lang: str) -> list[Issue]:
         if output:
             issues.extend(_parse_linter_output(output, lang, str(filepath)))
     except Exception:
-        # Linter not available or failed - silently ignore
-        pass
+        # Linter 配置问题或进程失败: loguru debug 记录, 不影响主流程
+        logger.debug("Linter execution failed for {} ({})", filepath, lang, exc_info=True)
 
     return issues
 
@@ -891,8 +891,8 @@ def _parse_linter_output(output: str, lang: str, filepath: str) -> list[Issue]:
                         )
                     )
     except Exception:
-        # JSON parse failed - ignore
-        pass
+        # Linter 输出 JSON 解析失败: loguru debug 记录 (数据格式问题时排错)
+        logger.debug("Linter JSON parse failed for {}", filepath, exc_info=True)
 
     return issues
 

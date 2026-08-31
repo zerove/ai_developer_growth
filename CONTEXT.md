@@ -1,3 +1,42 @@
+## 更新记录: 2026-08-31 22:35:00
+
+### 任务
+Phase 28 收尾修复 + 空 except 治理 + 后续规划
+
+### 变更摘要
+- 修复 3 处问题
+  - **ADR.md 索引补齐** - 14 → 23 行, 新增 ADR-013~022 共 10 条
+  - **`.adg/rules.yml` 恢复** - 工作区丢失的 65 行 `severity_overrides` 段被 `git checkout HEAD --` 恢复
+  - **`py-ci-disabled-check` 降级为 info** - 4 个 warning → 0
+- 启动 Phase 28 P1: 空 except 治理
+  - 3 处 `except Exception` 收窄为 `except OSError`
+    - `rules_engine/arch/dependency_graph.py:122`
+    - `rules_engine/pattern_learner.py:115`
+    - `rules_engine/pattern_learner.py:169`
+  - 34 个剩余 `common-empty-except-block` 决策保留 info (详见 ADR-022)
+- 新增 ADR-022 记录 Phase 28 启动 + 治理原则
+- pyproject.toml `severity_overrides` 同步至 15 类 (新增 py-ci-disabled-check)
+- ROADMAP 标记 Phase 28 完成 + 新增 Phase 29 候选 (mypy strict / mutmut / py-file-leak)
+
+### 验证
+- ruff check: clean
+- pytest: 3683 passed in 441.76s (0:07:21)
+- adg check (error): 0 issues / 205 files
+- adg check (warning): **0 issues / 205 files** (从 4 → 0)
+- adg check (info): 5878 issues / 205 files
+
+### 当前状态
+- master HEAD: `ddc08af` (未变更, 工作区有 5 文件待提交)
+- 工作区: 3 files modified + 2 files added
+  - `ADR.md` (modified) - 索引补齐
+  - `ROADMAP.md` (modified) - Phase 28 完成
+  - `.adg/rules.yml` (modified) - 恢复 + py-ci-disabled-check
+  - `pyproject.toml` (modified) - severity_overrides 同步
+  - `docs/adr/ADR-022-...md` (new) - Phase 28 ADR
+- 待规划: Phase 29 方向 (mypy strict / mutmut / py-file-leak)
+
+---
+
 ## 更新记录: 2026-08-31 06:11:00
 
 ### 任务

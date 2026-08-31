@@ -28,6 +28,16 @@
 | ADR-010 | Community Growth Infrastructure | 接受 | [docs/adr/ADR-010-community-growth-infrastructure.md](docs/adr/ADR-010-community-growth-infrastructure.md) |
 | ADR-011 | Phase 18 AI-Native Dialogue & Community Cleanup | 接受 | [docs/adr/ADR-011-phase18-ai-native-dialogue-community-cleanup.md](docs/adr/ADR-011-phase18-ai-native-dialogue-community-cleanup.md) |
 | ADR-012 | 向量 RAG 不作为 ai_developer_growth 检索核心 | 接受 | [docs/adr/ADR-012-vector-rag-not-core.md](docs/adr/ADR-012-vector-rag-not-core.md) |
+| ADR-013 | 覆盖率报告"假 0%" 现象 (修订) | 修订 | [docs/adr/ADR-013-pytest-xdist-coverage-known-issue.md](docs/adr/ADR-013-pytest-xdist-coverage-known-issue.md) |
+| ADR-014 | 拆分 `check_directory` 复杂度炸弹 | 接受 | [docs/adr/ADR-014-checker-directory-complexity-refactor.md](docs/adr/ADR-014-checker-directory-complexity-refactor.md) |
+| ADR-015 | pytest-xdist race condition 接受现状 | 接受 | [docs/adr/ADR-015-pytest-xdist-race-condition.md](docs/adr/ADR-015-pytest-xdist-race-condition.md) |
+| ADR-016 | 关闭 4 个长期未决 ADR (005/007/008/011) | 接受 | [docs/adr/ADR-016-close-pending-adrs.md](docs/adr/ADR-016-close-pending-adrs.md) |
+| ADR-017 | py-log-print 误报降级为 info | 接受 | [docs/adr/ADR-017-py-log-print-downgrade.md](docs/adr/ADR-017-py-log-print-downgrade.md) |
+| ADR-018 | adg 规则批量降级总结 | 接受 | [docs/adr/ADR-018-adg-rules-batch-downgrade.md](docs/adr/ADR-018-adg-rules-batch-downgrade.md) |
+| ADR-019 | Phase 26 adg 误报再清理 + 剩余 39 真问题移交 | 接受 | [docs/adr/ADR-019-phase-26-typo-cleanup.md](docs/adr/ADR-019-phase-26-typo-cleanup.md) |
+| ADR-020 | Phase 26 收口与 Phase 27 移交 | 接受 | [docs/adr/ADR-020-phase-26-close-and-phase-27-handoff.md](docs/adr/ADR-020-phase-26-close-and-phase-27-handoff.md) |
+| ADR-021 | Phase 27 py-n-plus-one profile 验证结论 | 接受 | [docs/adr/ADR-021-py-n-plus-one-profile-verdict.md](docs/adr/ADR-021-py-n-plus-one-profile-verdict.md) |
+| ADR-022 | Phase 28 空 except 治理原则 + .adg/rules.yml 恢复 | 接受 | [docs/adr/ADR-022-phase-28-empty-except-and-rules-recovery.md](docs/adr/ADR-022-phase-28-empty-except-and-rules-recovery.md) |
 
 ---
 

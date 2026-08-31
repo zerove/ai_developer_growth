@@ -66,7 +66,39 @@
   - 策略: 重点审查 `except Exception` 宽捕获（11 处），其他 `OSError/JSONDecodeError/ImportError` 等窄捕获多为合理兜底
 - [ ] **mypy strict 增量启用** - pyproject 已 strict=True, 部分模块已 strict, 剩余模块增量启用
 - [ ] **mutmut 突变测试** - pyproject 已配, 需 `pip install mutmut` 后跑全量基线
-- [ ] **rule 同步工具** - 把 15 个降级规则的 `severity_overrides` 同步到 `pyproject.toml` 注释，方便跨项目复用
+- [x] **rule 同步工具** - 把 15 个降级规则的 `severity_overrides` 同步到 `pyproject.toml` 注释，方便跨项目复用
+
+---
+
+## 当前状态 (2026-08-31 23:10)
+
+### ✅ Phase 28: 收尾修复 + 空 except 收窄 (2026-08-31)
+- [x] **ADR.md 索引补齐** - 14 → 23 行，添加 ADR-013~021 + ADR-022 共 10 条
+- [x] **`.adg/rules.yml` 丢失恢复** - severity_overrides 段 65 行从工作区丢失已 git checkout 恢复
+- [x] **`py-ci-disabled-check` 降级为 info** - 4 个 CI 模板字符串中的 `continue-on-error: true`（有意设计）
+- [x] **3 处 `except Exception` 收窄为 `except OSError`**:
+  - `rules_engine/arch/dependency_graph.py:122`
+  - `rules_engine/pattern_learner.py:115`
+  - `rules_engine/pattern_learner.py:169`
+- [x] **新增 ADR-022** 记录 Phase 28 启动 + 治理原则
+- [x] **pyproject.toml 同步** severity_overrides 至 15 类
+
+### 治理指标 Phase 27→28 演进
+| 指标 | Phase 27 (v2.23.0) | **Phase 28** |
+|------|-------------------|--------------|
+| adg error | 0 | **0** |
+| adg warning | 0 | **0** |
+| ADR 索引行 | 14 | **23** |
+| .adg/rules.yml 降级 | 14 类 | **15 类** |
+| except Exception 宽捕获（未注释） | 2 | **0** |
+| ADR (累计) | 21 | **22** |
+
+### 🎯 Phase 29 候选 (后续)
+
+- [ ] **mypy strict 增量启用** - pyproject 已 strict=True, 剩余模块增量启用, 关闭 warn_unused_ignores 误报
+- [ ] **mutmut 突变测试基线** - pyproject 已配, 需 `pip install mutmut` 后跑全量基线, 找到测试盲区
+- [ ] **34 个 `common-empty-except-block` info 治理** - 探测代码窄捕获, 决策保留 info 但人工 code review 拦截新加宽捕获
+- [ ] **`py-file-leak` (15 个) 治理** - file handle 资源管理, 优先用 `with` 语句替代 open/close
 
 ---
 

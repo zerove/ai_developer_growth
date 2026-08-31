@@ -12,6 +12,33 @@
 
 ---
 
+## 当前状态 (2026-08-31)
+
+### ✅ Phase 25: 质量巩固 + 健康收口 (2026-08-31)
+- [x] **Ruff 错误清零** - 修 2 个: F841 (`audit_attestation.py` 未使用变量) + UP035 (`rule_catalog.py` collections.abc 导入)
+- [x] **Baseline 陈旧豁免清理** - `tools/scripts/rules/loader.py` 53 行豁免已不必要, 移除
+- [x] **Gitignore 漏洞修复** - 补 `.coverage-v*.json` 和 `tools/.quality-trends/audit_ledger.jsonl`
+- [x] **遗留分支清理** - `feat/ci-validation-test` / `test/diff-cover-test` (master 已领先 458+ commits, 已被吸收)
+- [x] **py-log-print 误报降级** - CLI 入口面向用户输出 (emoji/缩进) 是有意为之, 降为 info
+  - 降级前: 1236 warnings (含 1235 个 py-log-print)
+  - 降级后: 0 error, 7 warning (其他类), 19 info
+- [x] **common-empty-except-block 修复** - `validate_language_rules.py:202` 缓存写入空 except 改 debug 日志
+- [x] **覆盖率门禁收紧** - `fail_under` 75 → 80, 当前 85.89% (3683 tests)
+- [x] **测试套件** - 3683 passed (10.5 min) / 0 failed
+- [x] **adg 质量门禁** - error 级 0 issues / 192 files
+
+### 治理指标快照
+| 指标 | 数值 |
+|------|------|
+| 测试用例 | 3683 passed |
+| 覆盖率 | 85.89% |
+| 覆盖率门禁 | 80% (前: 75%) |
+| adg error | 0 |
+| Ruff | clean |
+| 总提交数 | 460 |
+
+---
+
 ## 当前状态 (2026-08-26)
 
 ### ✅ 已完成

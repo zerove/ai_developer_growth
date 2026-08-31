@@ -43,6 +43,9 @@ tools/.cache/
 .quality-trends/*
 !.quality-trends/.gitkeep
 
+# tools/.quality-trends/ 运行时 ledger (本地预提交门禁产物)
+tools/.quality-trends/*
+
 # Mutation testing workspace (regenerated on demand)
 mutants/
 setup.cfg

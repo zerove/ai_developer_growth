@@ -80,40 +80,90 @@ def _strip_code_blocks(content: str) -> str:
 
 
 def find_broken_links(directory: str) -> list[tuple[str, str]]:
-    """Scan directory for .md files, extract [[wikilinks]], report broken ones."""
+    """Scan directory for .md files, extract [[wikilinks]], report broken ones (V2.22 P6-5 拆分: 抽 _scan_markdown_links + _is_skippable_target)."""
     broken: list[tuple[str, str]] = []
-    # Support both | and \| as display text separators
     link_pattern = re.compile(r"\[\[([^\[\]]+?)(?:\\?\|[^\[\]]*)?\]\]")
     index = _build_index(directory)
 
-    # Skip template directories and files with template-like patterns
     skip_dirs = {".github/PULL_REQUEST_TEMPLATE"}
     placeholder_pattern = re.compile(r"^[\{\.\\/]+|[\{\.]{2,}")
 
     for root, _, files in os.walk(directory):
-        # Skip template directories
-        rel_root = os.path.relpath(root, directory)
-        if any(rel_root.startswith(skip) for skip in skip_dirs):
+        if _is_skipped_dir(root, directory, skip_dirs):
             continue
-
-        for file in files:
-            if not file.endswith(".md"):
-                continue
-            file_path = os.path.join(root, file)
-            with open(file_path) as f:
-                content = f.read()
-            # Strip code blocks to avoid false positives (e.g. TOML [[rules]])
-            cleaned = _strip_code_blocks(content)
-            for match in link_pattern.finditer(cleaned):
-                target_path = match.group(1).strip()
-                # Skip external links, anchors, and template placeholders
-                if target_path.startswith(("http://", "https://", "#")):
-                    continue
-                if placeholder_pattern.match(target_path):
-                    continue
-                if not _check_target(target_path, index, directory, root):
-                    broken.append((file_path, match.group(1)))
+        broken.extend(_scan_markdown_links(root, files, directory, link_pattern, placeholder_pattern, index))
     return broken
+
+
+def _is_skipped_dir(root: str, directory: str, skip_dirs: set[str]) -> bool:
+    """判断目录是否应跳过 (模板目录, 模块级 helper).
+
+    Args:
+        root: 当前遍历的根目录
+        directory: 扫描根目录
+        skip_dirs: 跳过的相对路径集合
+
+    Returns:
+        True 表示应跳过
+    """
+    rel_root = os.path.relpath(root, directory)
+    return any(rel_root.startswith(skip) for skip in skip_dirs)
+
+
+def _scan_markdown_links(
+    root: str,
+    files: list[str],
+    directory: str,
+    link_pattern: re.Pattern[str],
+    placeholder_pattern: re.Pattern[str],
+    index: dict[str, str],
+) -> list[tuple[str, str]]:
+    """扫描单目录下所有 .md 文件的 wikilink (模块级 helper).
+
+    Args:
+        root: 当前目录
+        files: 目录下文件列表
+        directory: 扫描根目录
+        link_pattern: wikilink 正则
+        placeholder_pattern: 占位符正则
+        index: 文件索引 (rel_path → abs_path)
+
+    Returns:
+        [(file_path, broken_link), ...] 列表
+    """
+    broken: list[tuple[str, str]] = []
+    for file in files:
+        if not file.endswith(".md"):
+            continue
+        file_path = os.path.join(root, file)
+        with open(file_path) as f:
+            content = f.read()
+        # Strip code blocks to avoid false positives (e.g. TOML [[rules]])
+        cleaned = _strip_code_blocks(content)
+        for match in link_pattern.finditer(cleaned):
+            target_path = match.group(1).strip()
+            if _is_skippable_target(target_path, placeholder_pattern):
+                continue
+            if not _check_target(target_path, index, directory, root):
+                broken.append((file_path, match.group(1)))
+    return broken
+
+
+def _is_skippable_target(target_path: str, placeholder_pattern: re.Pattern[str]) -> bool:
+    """判断 wikilink target 是否应跳过 (外部/锚点/占位符, 模块级 helper).
+
+    Args:
+        target_path: wikilink target 路径
+        placeholder_pattern: 占位符正则
+
+    Returns:
+        True 表示应跳过
+    """
+    if target_path.startswith(("http://", "https://", "#")):
+        return True
+    if placeholder_pattern.match(target_path):
+        return True
+    return False
 
 
 def find_broken_links_with_index(directory: str, index: dict[str, str]) -> list[tuple[str, str]]:

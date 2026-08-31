@@ -17,6 +17,8 @@ All notable changes to the AI Developer Growth project.
 - **py-log-print 误报降级** - CLI 入口 (`jcode_cli` / `hooks_runner` / `phase_runner` / `supply_runner` / `misc_runner` 等) 面向用户的格式化输出 (含 emoji/缩进) 是有意为之, 在 `.adg/rules.yml` 集中降为 `info`
   - 降级前: 1236 warnings (其中 1235 个 py-log-print + 1 个 common-empty-except-block)
   - 降级后: 0 error, 7 warning (其他类), 19 info (py-log-print)
+- **adg-cli load_project_config 向上递归** - 修复子目录扫描读不到根 `.adg/rules.yml` 的 bug, 让 `adg check tools/scripts` 自动读根目录的 `severity_overrides`
+  - py-log-print 实际生效后: 1235 → 165 warnings (CI 真实路径)
 - **common-empty-except-block 修复** - `validate_language_rules.py:202` 缓存写入空 except 改 debug 日志 (`log.debug("跳过缓存写入 %s: %s", ...)`), 避免 OSError 静默吞掉
 - **覆盖率门禁收紧** - `pyproject.toml` 的 `fail_under` 75 → 80, 当前 85.89% (3683 tests), 安全余量 5.89pp
 

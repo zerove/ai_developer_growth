@@ -98,3 +98,8 @@ severity_overrides:
   # 已知模式降为 info. 真正需要细化类型的位置 (如 _build_failure_testcase)
   # 留 Phase 27 case-by-case 处理.
   py-any-type: info
+  # common-type-any: 5 个, 与 py-any-type 同类 (Python typing.Any 而非 TS any)
+  # 集中于 report_generator.py 的 _build_*_testcase helpers. 这些 helper
+  # 接受 dataclass / ad-hoc 对象 (有 .file/.language/.error_count 等属性),
+  # 引入 Protocol 抽象的 ROI 低于其复杂度, 暂按已知模式降为 info.
+  common-type-any: info

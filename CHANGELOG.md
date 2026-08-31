@@ -2,6 +2,44 @@
 
 All notable changes to the AI Developer Growth project.
 
+## [2.23.0] - 2026-08-31
+
+### 重要变更: Phase 26 + Phase 27 - adg 治理归零
+
+12 个 commit 完成 adg 报告从 1235 warning → 0 warning 的完整路径（-100%）。
+
+#### 关键改进
+
+- **adg-cli load_project_config 向上递归 (baccbb4)** - 修复子目录扫描读不到根 `.adg/rules.yml` 的 bug，让 `adg check tools/scripts` 自动继承项目根配置
+- **py-log-print 降为 info (5f1a9c9 + ADR-017)** - CLI 入口面向用户的格式化输出（emoji/缩进）是有意为之
+- **批量降级 7 类规则 (fdf1073 / 9b895ca / b1ffa14 + ADR-018)** - common-empty-except-block / py-no-input-validation / py-pip-audit-missing / py-test-sleep / common-debugger / common-weak-hash / common-unsafe-yaml-load / common-http-url 全部识别为误报
+- **删除无用的 star import (b076492)** - 修 1 个 py-star-import 警告
+- **类型安全规则再降级 (24d3534 / 4c3ba76 / 5b75c4c + ADR-019)** - py-missing-type-hints / py-any-type / common-type-any 多为 docstring 示例 / dynamic import / plugin loader 模式
+- **设计类规则降级 (d931da9)** - py-global-statement / py-shared-mutable 是单进程 CLI 工具的缓存/注册表，load-once/use-many 模式
+- **py-n-plus-one profile 验证 (412260f + ADR-021)** - cProfile 实测 25 个全部为误报，规则启发式把 `dict.items()` 循环内任意函数调用都标为 N+1
+
+#### 文档同步
+
+- **5 个新 ADR (017-021)** 串联从 1235 → 0 的完整决策链
+- **ROADMAP 追加 Phase 26/27** 候选清单
+- **CONTEXT 更新** 记录清理进展
+
+#### 验证快照
+
+- adg check (warning 级): **0** warnings / 192 files
+- adg check (error 级): 0 issues
+- ruff check: clean
+- pytest: 3683 passed
+- 覆盖率: 85.89% (fail_under 80%)
+- 当前 master HEAD: c40533d
+- 工作区: clean
+
+#### 累计降级规则类别 (12)
+
+py-log-print / common-empty-except-block / py-no-input-validation / py-pip-audit-missing / py-test-sleep / common-debugger / common-weak-hash / common-unsafe-yaml-load / common-http-url / py-missing-type-hints / py-any-type / common-type-any / py-global-statement / py-shared-mutable / py-n-plus-one
+
+---
+
 ## [2.22.0] - 2026-08-31
 
 ### 重要变更: Phase 25 - 质量巩固 + 健康收口

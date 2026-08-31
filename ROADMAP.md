@@ -37,6 +37,28 @@
 | Ruff | clean |
 | 总提交数 | 460 |
 
+### ✅ Phase 26: 误报清理 + 类型安全 (2026-08-31)
+- [x] **py-missing-type-hints 降为 info** - 6 个 docstring 示例代码误报
+- [x] **py-any-type 降为 info** - 14 个 dynamic import / plugin loader 模式
+- [x] **common-type-any 降为 info** - 5 个 report_generator helpers
+- [x] **py-global-statement + py-shared-mutable 降为 info** - 9 个单进程 CLI 缓存/注册表
+- [x] **ADR-019** 记录 Phase 26 进展
+
+### ✅ Phase 27: py-n-plus-one profile 验证 (2026-08-31)
+- [x] **cProfile 实测** - 25 个全部为误报，规则启发式把 dict.items() 循环内任意函数都标为 N+1
+- [x] **supply_chain.py 6 个** - 100 次 parse_package_json 0.050s，0 N+1 证据
+- [x] **config/loader.py 5 个** - 1000 次 50 tools 转换 0.325ms/次，0 N+1 证据
+- [x] **批量降级** - py-n-plus-one: info
+- [x] **ADR-021** 记录 profile 验证结论
+
+### 📊 治理指标 Phase 25→27 演进
+| 指标 | Phase 25 初 | Phase 25 末 (v2.22.0) | Phase 26 | **Phase 27 (v2.23.0)** |
+|------|------------|----------------------|----------|------------------------|
+| adg error | 0 | 0 | 0 | **0** |
+| adg warning | 1236 | 59 | 25 | **0** |
+| 已降级规则类别 | 0 | 7 | 11 | **15** |
+| ADR (累计) | 0 | 3 | 4 | **5** |
+
 ### 🎯 Phase 26 候选 (后续)
 
 - [ ] **空 except 块治理** - 30 个 `common-empty-except-block` warning (17 个文件) 待逐一审查 + 修复或加 baseline

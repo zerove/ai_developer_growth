@@ -121,20 +121,11 @@ class CppParser(BaseParser):
         return getter(name) if callable(getter) else None
 
     def _parse_class(self, node: _TreeNode) -> ClassInfo | None:
+        """Parse C++ class/struct (V2.22 P6-8 拆分: 抽 _extract_class_bases, 方法级 helper)."""
         name_node = self._field(node, "name")
         if name_node is None:
             return None
-        bases: list[str] = []
-        base_list = next((c for c in node.children if c.type == "base_class_clause"), None)
-        if base_list is not None:
-            for child in base_list.children:
-                if child is None or child.type in (":", ",", "comment"):
-                    continue
-                if child.type == "access_specifier":
-                    # access_specifier 包住可见性关键字(public/private...), 其后兄弟才是类型
-                    continue
-                if child.type in ("type_identifier", "qualified_identifier", "namespace_identifier", "dependent_type"):
-                    bases.append(self._node_text(child))
+        bases = self._extract_class_bases(node)
         return ClassInfo(
             name=self._node_text(name_node),
             line=node.start_point[0],
@@ -146,6 +137,29 @@ class CppParser(BaseParser):
             methods=[],
             body_lines=node.end_point[0] - node.start_point[0],
         )
+
+    def _extract_class_bases(self, node: _TreeNode) -> list[str]:
+        """提取 C++ class/struct 基类列表 (方法级 helper).
+
+        Args:
+            node: class_specifier 节点
+
+        Returns:
+            基类名列表
+        """
+        bases: list[str] = []
+        base_list = next((c for c in node.children if c.type == "base_class_clause"), None)
+        if base_list is None:
+            return bases
+        for child in base_list.children:
+            if child is None or child.type in (":", ",", "comment"):
+                continue
+            if child.type == "access_specifier":
+                # access_specifier 包住可见性关键字(public/private...), 其后兄弟才是类型
+                continue
+            if child.type in ("type_identifier", "qualified_identifier", "namespace_identifier", "dependent_type"):
+                bases.append(self._node_text(child))
+        return bases
 
     def _parse_function(self, node: _TreeNode, class_name: str | None) -> FunctionInfo | None:
         declarator = self._field(node, "declarator")

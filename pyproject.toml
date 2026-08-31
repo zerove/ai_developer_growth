@@ -65,7 +65,7 @@ omit = ["*/tests/*", "*/__pycache__/*", "*/lsp_server.py"]
 branch = true
 
 [tool.coverage.report]
-fail_under = 75
+fail_under = 80
 exclude_lines = [
     "pragma: no cover",
     "def __repr__",

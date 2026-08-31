@@ -18,6 +18,7 @@ updated: 2026-08-29
 
 | ID | 标题 | 状态 | 日期 |
 |----|------|------|------|
+| [[ADR-018-adg-rules-batch-downgrade\|ADR-018]] | adg 规则批量降级总结 (7 类 → info) | ✅ 已通过 | 2026-08-31 |
 | [[ADR-017-py-log-print-downgrade\|ADR-017]] | py-log-print 误报降级为 info (CLI 入口面向用户输出) | ✅ 已通过 | 2026-08-31 |
 | [[ADR-016-close-pending-adrs\|ADR-016]] | 关闭 4 个长期未决 ADR (005/007/008/011) | ✅ 已通过 | 2026-08 |
 | [[ADR-015-pytest-xdist-race-condition\|ADR-015]] | pytest-xdist race condition 接受现状 | ✅ 已通过 | 2026-08 |

@@ -120,7 +120,10 @@ hub_threshold = 15
 
 # Context-aware severity
 context_aware = true
-severity_overrides = {test = "down-1", prototype = "down-2", legacy = "down-1", config = "down-2", demo = "down-2"}
+# role-based 降级 + 规则级降级
+# py-log-print → info: CLI 入口 (jcode_cli / hooks_runner / phase_runner / supply_runner / etc.) 面向用户输出
+#                 是有意的格式化输出 (含 emoji/缩进), 非内部日志
+severity_overrides = {test = "down-1", prototype = "down-2", legacy = "down-1", config = "down-2", demo = "down-2", "py-log-print" = "info"}
 
 # Skip patterns for test/demo files
 skip_patterns = [

@@ -46,6 +46,9 @@ rules:
     py-any-type: warning
     py-missing-all: info
     common-type-any: warning
+    # CLI 入口 (jcode_cli / hooks_runner / phase_runner / supply_runner) 面向用户的
+    # 格式化输出 (emoji/缩进) 是有意为之, 非内部日志, 降为 info
+    py-log-print: info
   custom_rules_file: .adg/rules.yml
 context:
   enabled: true

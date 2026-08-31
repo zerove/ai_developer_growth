@@ -57,3 +57,12 @@ custom_rules:
   severity: warning
 installed_packs:
 - security-essentials
+
+# ──────────────────────────────────────────────────────────
+# Severity overrides: project-wide rule降级
+# ──────────────────────────────────────────────────────────
+# py-log-print: CLI 入口 (jcode_cli / hooks_runner / phase_runner / supply_runner
+#   / rule_author / docker_build / etc.) 面向用户的格式化输出 (含 emoji/缩进)
+#   是有意为之, 非内部日志; 内部库仍保留 loguru 风格
+severity_overrides:
+  py-log-print: info

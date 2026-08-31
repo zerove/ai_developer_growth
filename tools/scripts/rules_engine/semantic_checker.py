@@ -153,67 +153,6 @@ def _check_module_import(filepath: str, imp: ImportInfo, content: str, issues: l
             )
         )
 
-    builtin_names_set: set[str] = {  # noqa: F841  (used via self.builtin_names_set)
-        "list",
-        "dict",
-        "set",
-        "tuple",
-        "str",
-        "int",
-        "float",
-        "bool",
-        "type",
-        "id",
-        "hash",
-        "input",
-        "map",
-        "filter",
-        "range",
-        "zip",
-        "open",
-        "print",
-        "format",
-        "len",
-        "abs",
-        "min",
-        "max",
-        "sum",
-        "all",
-        "any",
-        "sorted",
-        "reversed",
-        "enumerate",
-        "isinstance",
-        "issubclass",
-        "super",
-        "property",
-        "staticmethod",
-        "classmethod",
-    }
-
-    def _create_shadow_issue(self, filepath: str, imp: ImportInfo, name: str) -> SemanticIssue:
-        return SemanticIssue(
-            rule_id="shadowed-import",
-            severity="warning",
-            category="code_quality",
-            file=filepath,
-            line=imp.line,
-            message=f"Import '{name}' shadows Python built-in",
-            fix_hint=f"Rename import to avoid shadowing built-in '{name}'",
-        )
-
-    def find_shadowed_imports(self, file_imports: dict[str, list[ImportInfo]]) -> list[SemanticIssue]:
-        """Find imports that shadow built-in names."""
-        issues: list[SemanticIssue] = []
-
-        for filepath, imports in file_imports.items():
-            for imp in imports:
-                for name in imp.names:
-                    if name in self.builtin_names_set:
-                        issues.append(self._create_shadow_issue(filepath, imp, name))
-
-        return issues
-
 
 @dataclass
 class ComplexityMetrics:
@@ -296,11 +235,6 @@ class SemanticChecker:
         issues.extend(self._check_complexity(file_asts, dirpath))
         issues.extend(self._check_missing_docstrings(file_asts, dirpath))
         issues.extend(self.import_graph.find_unused_imports(file_imports, file_content))
-        # find_shadowed_imports 暂未实现, 跳过 (P5-41 注释: 历史调用, 等后续)
-        shadowed = getattr(self.import_graph, "find_shadowed_imports", None)
-        if shadowed is not None:
-            issues.extend(shadowed(file_imports))
-
         # Import cycles
         self._emit_import_cycle_issues(issues)
 

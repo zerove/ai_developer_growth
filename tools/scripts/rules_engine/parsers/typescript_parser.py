@@ -50,17 +50,9 @@ class TypeScriptParser(BaseParser):
         return text.decode("utf-8", errors="replace") if isinstance(text, bytes) else str(text)
 
     def _parse_class(self, node: _TreeNode, lines: list[str]) -> ClassInfo:
+        """Parse TS/JS class (V2.22 P6-9 拆分: 抽 _extract_ts_class_bases, 方法级 helper)."""
         name_node = self._find_first(node, "type_identifier") or self._find_first(node, "identifier")
-        heritage = self._child_by_type(node, "class_heritage")
-        bases = []
-        if heritage:
-            for clause in heritage.children:
-                if clause.type == "extends_clause":
-                    ident = self._find_first(clause, "identifier") or self._find_first(clause, "type_identifier")
-                    if ident:
-                        bases.append(self._node_text(ident))
-                elif clause.type == "implements_clause":
-                    bases.extend(self._node_text(t) for t in self._find_all(clause, "type_identifier"))
+        bases = self._extract_ts_class_bases(node)
         return ClassInfo(
             name=self._node_text(name_node) if name_node else "extracted_class",
             line=node.start_point[0],
@@ -72,6 +64,28 @@ class TypeScriptParser(BaseParser):
             methods=[],
             body_lines=node.end_point[0] - node.start_point[0],
         )
+
+    def _extract_ts_class_bases(self, node: _TreeNode) -> list[str]:
+        """提取 TS/JS class 基类 (extends + implements, 方法级 helper).
+
+        Args:
+            node: class 节点
+
+        Returns:
+            基类名列表
+        """
+        bases: list[str] = []
+        heritage = self._child_by_type(node, "class_heritage")
+        if heritage is None:
+            return bases
+        for clause in heritage.children:
+            if clause.type == "extends_clause":
+                ident = self._find_first(clause, "identifier") or self._find_first(clause, "type_identifier")
+                if ident:
+                    bases.append(self._node_text(ident))
+            elif clause.type == "implements_clause":
+                bases.extend(self._node_text(t) for t in self._find_all(clause, "type_identifier"))
+        return bases
 
     def _walk_class_body(self, node: _TreeNode, lines: list[str], functions: list[FunctionInfo]) -> None:
         body = self._child_by_type(node, "class_body")

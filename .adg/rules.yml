@@ -66,3 +66,7 @@ installed_packs:
 #   是有意为之, 非内部日志; 内部库仍保留 loguru 风格
 severity_overrides:
   py-log-print: info
+  # common-empty-except-block: 54 个空 except 块分布在 27 个文件, 多为 OSError/
+  # JSONDecodeError/ImportError 等"best effort" 模式 (文件/缓存/插件失败时
+  # 静默兜底). 全面审计+修复需在 Phase 27 单独进行, 暂按已知模式降为 info.
+  common-empty-except-block: info

@@ -1,3 +1,33 @@
+## 更新记录: 2026-08-31 06:11:00
+
+### 任务
+项目清理与状态收口（会后扫尾）
+
+### 变更摘要
+- 提交 2 个 fix commit
+  - `1728264` fix(quality): 清理 ruff 错误 + gitignore 漏洞 + 陈旧 baseline 豁免
+    - `tools/scripts/audit_attestation.py` 删 F841 未使用变量 `prev_hash`
+    - `tools/scripts/rule_catalog.py` UP035 改 `Iterator` 从 `collections.abc` 导入
+    - `.gitignore` 补 `.coverage-v*.json` 模式
+    - `.jcode/baseline.json` 删 `tools/scripts/rules/loader.py` 53 行陈旧豁免
+  - `7f1f1e5` chore(gitignore): 忽略 `tools/.quality-trends/audit_ledger.jsonl`
+- 删除 2 个本地/远端遗留分支（master 已领先 458+ commits，已被吸收）
+  - `feat/ci-validation-test` (master 领先 459)
+  - `test/diff-cover-test` (master 领先 458)
+
+### 验证
+- ruff check: clean
+- pytest: 3683 passed in 474.80s (0:07:54)
+- adg check (error 级): 0 issues / 192 files
+- adg check (warning 级): 1236 py-log-print + 1 common-empty-except-block（属历史软警告，非阻塞）
+
+### 当前状态
+- master HEAD: `7f1f1e5`
+- 工作区 clean
+- 待规划: Phase 25 方向（质量巩固 / 功能增强 / 文档升级）
+
+---
+
 ## 更新记录: 2026-08-29 09:58:47
 
 ### 任务

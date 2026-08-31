@@ -25,6 +25,7 @@ from __future__ import annotations
 import ast
 import hashlib
 import json
+import logging
 import sys
 from pathlib import Path
 from typing import Any
@@ -50,6 +51,8 @@ from tools.scripts.rules_engine.validators.pipeline import (  # noqa: F401
     validate_directory,
     validate_file,
 )
+
+log = logging.getLogger(__name__)
 
 __all__ = [
     # Re-exports
@@ -199,8 +202,8 @@ def _save_cache(cache_file: Path, cache: dict[str, str]) -> None:
     """Save file hash cache to disk."""
     try:
         cache_file.write_text(json.dumps(cache))
-    except OSError:
-        pass
+    except OSError as exc:
+        log.debug("跳过缓存写入 %s: %s", cache_file, exc)
 
 
 def _is_excluded(fp: Path, exclude: list[str]) -> bool:

@@ -59,16 +59,14 @@
 | 已降级规则类别 | 0 | 7 | 11 | **15** |
 | ADR (累计) | 0 | 3 | 4 | **5** |
 
-### 🎯 Phase 26 候选 (后续)
+### 🎯 Phase 28 候选 (后续)
 
-- [ ] **空 except 块治理** - 30 个 `common-empty-except-block` warning (17 个文件) 待逐一审查 + 修复或加 baseline
+- [ ] **空 except 块治理** - 54 个空 except 块（27 文件），降为 info 但仍待逐个审查是否需 log/raise
   - 高密度: `adg_cli/detect.py` 6 处, `rules_engine/checker.py` 5 处, `rule_loader.py` 3 处
-  - 策略: 按上下文分类处理 (logging 记录 / 重新抛出 / 明确 fallback 注释)
-- [ ] **py-no-input-validation** - 40 个 warning (CLI 入口 input 校验, 多数为合理)
-- [ ] **py-n-plus-one** - 25 个 warning (循环内字典/列表查询, 需 case-by-case)
-- [ ] **py-pip-audit-missing** - 24 个 warning (CI 已启用, 本地缺)
-- [ ] **mutmut 突变测试基线** - pyproject 已配, 需 `pip install mutmut` 后跑全量
-- [ ] **mypy strict 全量** - 已部分启用, 剩余模块增量启用
+  - 策略: 重点审查 `except Exception` 宽捕获（11 处），其他 `OSError/JSONDecodeError/ImportError` 等窄捕获多为合理兜底
+- [ ] **mypy strict 增量启用** - pyproject 已 strict=True, 部分模块已 strict, 剩余模块增量启用
+- [ ] **mutmut 突变测试** - pyproject 已配, 需 `pip install mutmut` 后跑全量基线
+- [ ] **rule 同步工具** - 把 15 个降级规则的 `severity_overrides` 同步到 `pyproject.toml` 注释，方便跨项目复用
 
 ---
 

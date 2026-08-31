@@ -70,3 +70,7 @@ severity_overrides:
   # JSONDecodeError/ImportError 等"best effort" 模式 (文件/缓存/插件失败时
   # 静默兜底). 全面审计+修复需在 Phase 27 单独进行, 暂按已知模式降为 info.
   common-empty-except-block: info
+  # py-no-input-validation: 40 个, 集中于 exception_manager (内部 helper)
+  # 与 jcode_ai_native_workflow (本地 CLI 调用). 规则基于方法名/参数启发式
+  # 误判率高, 暂按已知误报降为 info.
+  py-no-input-validation: info

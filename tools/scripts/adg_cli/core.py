@@ -329,17 +329,25 @@ def load_project_config(dirpath: Path | None = None) -> dict[str, Any]:
         except (OSError, yaml.YAMLError):
             pass  # global config optional
 
-    # Load project config (overrides global)
+    # Load project config (overrides global).
+    # 向上递归: 若 dirpath 本身没有 .adg/rules.yml, 则向父目录查找
+    # (这样 adg check tools/scripts 也能读到根目录的配置).
     if dirpath:
-        project_config_path = dirpath / ".adg" / "rules.yml"
-        if project_config_path.exists():
-            try:
-                project_config = _simple_yaml_parse(project_config_path)
-                if "anti_patterns" in project_config:
-                    project_config["custom_rules"] = project_config.pop("anti_patterns")
-                config = _merge_config(config, project_config)
-            except (OSError, yaml.YAMLError):
-                pass  # project config optional
+        search_path: Path | None = dirpath.resolve() if isinstance(dirpath, Path) else Path(dirpath).resolve()
+        visited: set[Path] = set()
+        while search_path and search_path not in visited:
+            visited.add(search_path)
+            project_config_path = search_path / ".adg" / "rules.yml"
+            if project_config_path.exists():
+                try:
+                    project_config = _simple_yaml_parse(project_config_path)
+                    if "anti_patterns" in project_config:
+                        project_config["custom_rules"] = project_config.pop("anti_patterns")
+                    config = _merge_config(config, project_config)
+                except (OSError, yaml.YAMLError):
+                    pass  # project config optional
+                break  # 找到最近的 .adg/rules.yml 后停止向上
+            search_path = search_path.parent
 
     return config
 

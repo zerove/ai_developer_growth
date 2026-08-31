@@ -63,7 +63,7 @@ SUPPORTED_LANGUAGES = [
 
 
 def detect_target_languages(target: Path) -> list[str]:
-    """按标记文件探测目标项目的语言组合。"""
+    """按标记文件探测目标项目的语言组合 (V2.22 P6-6 拆分: 抽 _detect_by_markers + _detect_by_extensions)."""
     markers: dict[str, list[str]] = {
         "python": ["pyproject.toml", "requirements.txt", "setup.py"],
         "go": ["go.mod"],
@@ -78,20 +78,48 @@ def detect_target_languages(target: Path) -> list[str]:
         "swift": ["Package.swift"],
         "cpp": ["CMakeLists.txt", "Makefile"],
     }
+    found = _detect_by_markers(target, markers)
+    found.extend(_detect_by_extensions(target, found))
+    return found or ["python"]
+
+
+def _detect_by_markers(target: Path, markers: dict[str, list[str]]) -> list[str]:
+    """按 marker 文件检测语言 (模块级 helper).
+
+    Args:
+        target: 项目根目录
+        markers: {lang: marker 文件列表}
+
+    Returns:
+        检测到的语言列表
+    """
     found: list[str] = []
     for lang, files in markers.items():
         if any((target / f).exists() for f in files):
             found.append(lang)
-    # 扩展名兜底探测
+    return found
+
+
+def _detect_by_extensions(target: Path, found: list[str]) -> list[str]:
+    """按文件扩展名兜底检测 (typescript/javascript/csharp, 模块级 helper).
+
+    Args:
+        target: 项目根目录
+        found: 已检测到的语言列表 (避免重复)
+
+    Returns:
+        新增的语言列表
+    """
     ext_map = {".ts": "typescript", ".tsx": "typescript", ".js": "javascript", ".cs": "csharp"}
+    new_found: list[str] = []
     for path in target.rglob("*"):
         if path.is_file() and path.suffix.lower() in ext_map:
             lang = ext_map[path.suffix.lower()]
-            if lang not in found:
-                found.append(lang)
-        if len(found) >= len(SUPPORTED_LANGUAGES):
+            if lang not in found and lang not in new_found:
+                new_found.append(lang)
+        if len(found) + len(new_found) >= len(SUPPORTED_LANGUAGES):
             break
-    return found or ["python"]
+    return new_found
 
 
 def copy_jcode_scripts(target: Path, minimal: bool) -> int:

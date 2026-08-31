@@ -61,7 +61,7 @@ SEVERITY_ORDER = {"error": 3, "warning": 2, "info": 1, "off": 0}
 
 
 def detect_file_role(filepath: Path, marker_overrides: dict[str, str] | None = None) -> str | None:
-    """检测文件角色。
+    """检测文件角色 (V2.22 P6-7 拆分: 抽 _match_pattern).
 
     Args:
         filepath: 文件路径。
@@ -78,18 +78,33 @@ def detect_file_role(filepath: Path, marker_overrides: dict[str, str] | None = N
     filename = filepath.name
 
     for pattern, role in markers.items():
-        if "*" in pattern:
-            # 简单 glob 匹配
-            parts = pattern.split("*")
-            if len(parts) == 2:
-                if rel_path_str.startswith(parts[0]) and rel_path_str.endswith(parts[1]):
-                    return role
-                if filename.startswith(parts[0]) and filename.endswith(parts[1]):
-                    return role
-        elif pattern in rel_path_str:
+        if _match_pattern(pattern, rel_path_str, filename):
             return role
 
     return None
+
+
+def _match_pattern(pattern: str, rel_path_str: str, filename: str) -> bool:
+    """单 pattern 匹配 (glob 简化 / substring, 模块级 helper).
+
+    Args:
+        pattern: marker pattern (含 * 或纯字符串)
+        rel_path_str: 相对路径字符串
+        filename: 文件名
+
+    Returns:
+        True 表示匹配
+    """
+    if "*" in pattern:
+        # 简单 glob 匹配
+        parts = pattern.split("*")
+        if len(parts) == 2:
+            if rel_path_str.startswith(parts[0]) and rel_path_str.endswith(parts[1]):
+                return True
+            if filename.startswith(parts[0]) and filename.endswith(parts[1]):
+                return True
+        return False
+    return pattern in rel_path_str
 
 
 def adjust_severity(original_severity: str, file_role: str | None) -> str:

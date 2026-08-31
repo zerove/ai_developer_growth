@@ -120,3 +120,8 @@ severity_overrides:
   # 规则启发式: 把 for k, v in dict.items() 循环内调用任意函数都标为 N+1
   # 实际场景: 依赖解析/配置转换, 非数据库/IO 多次查询
   py-n-plus-one: info
+  # py-ci-disabled-check: 4 个命中全部在 tools/cicd/__init__.py 的 GitHub Actions
+  #   YAML 模板字符串 (多行字面量) 中. "continue-on-error: true" 是有意设计:
+  #   让 governance check 失败不阻塞后续 SARIF 上传/趋势记录步骤, 模板文档
+  #   而非真实 CI 配置. 真实 CI 由 adg install-hooks 生成, 降为 info.
+  py-ci-disabled-check: info

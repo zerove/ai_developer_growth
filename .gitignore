@@ -26,6 +26,9 @@ coverage-artifacts/
 .coverage_data
 coverage.json
 
+# Local coverage variant files (avoid git noise)
+.coverage-v*.json
+
 # Tool cache
 .tool_matrix_cache.json
 tools/.cache/

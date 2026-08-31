@@ -122,7 +122,6 @@ def _verify_chain_integrity(entries: list[dict[str, Any]]) -> bool:
         True 链有效, False 链断裂
     """
     valid = True
-    prev_hash = "0" * 64
     for entry in entries:
         payload = {
             "event_type": entry.get("event_type"),
@@ -135,7 +134,6 @@ def _verify_chain_integrity(entries: list[dict[str, Any]]) -> bool:
         if current_hash != entry.get("current_hash"):
             valid = False
             break
-        prev_hash = current_hash
     return valid
 
 

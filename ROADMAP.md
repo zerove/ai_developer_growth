@@ -12,6 +12,33 @@
 
 ---
 
+## 当前状态 (2026-09-01)
+
+### ✅ Phase 30 收口 (2026-09-01)
+- [x] **`.adg/rules.yml` 完整性双层防护** (commit + merge)
+- [x] **`.jcode/hooks.json` fail-open 检测** (条件触发 on_commit)
+- [x] **`update-moc` 历史 bug 修复** (移除方案 A 落地)
+- [x] **mutmut 配置修正** (`source_paths` → `paths_to_mutate`)
+- [x] **`py-file-leak` 降级** + 修 1 真问题
+- [x] **`common-empty-except-block` 30 个全量分析** (7 宽 + 23 窄, ADR-022 验证)
+- [x] **mypy strict 全量**: 192 源文件 Success
+- [x] **pytest 全量**: 3683 passed in 318s
+- [x] **新增 ADR 22-26**: 治理完整决策链
+
+### 治理指标 Phase 30 收口
+| 指标 | Phase 28 收口 | **Phase 30 (本会话)** |
+|------|--------------|---------------------|
+| adg error | 0 | **0** |
+| adg warning | 0 | **0** |
+| ADR 累计 | 22 | **26** |
+| 降级规则累计 | 15 | **17** |
+| on_commit hooks | 4 | **6** |
+| on_merge hooks | 4 (含 fail-open) | **3 (干净)** |
+| 总提交数 | 460 | **509** |
+| CHANGELOG 版本 | v2.23.0 | **v2.23.3** |
+
+---
+
 ## 当前状态 (2026-08-31)
 
 ### ✅ Phase 25: 质量巩固 + 健康收口 (2026-08-31)

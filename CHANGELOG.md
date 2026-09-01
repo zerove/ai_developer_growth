@@ -2,6 +2,27 @@
 
 All notable changes to the AI Developer Growth project.
 
+## [2.23.3] - 2026-09-01
+
+### Phase 30 收口: hooks.json fail-open 检测 + on_commit 条件接入
+
+#### 关键改进
+
+- **新增 `tools/scripts/check_hooks_json_integrity.sh`** - 通过真跑 hooks_runner 发现 hook 命令参数不支持的情况 (类似 update-moc 历史 bug)
+- **`.jcode/hooks.json` on_commit 新增 `hooks-json-integrity-check`** - 条件触发 `files_contain('.jcode/hooks.json')`, 改 hooks.json 时自动验证 fail-open 风险
+- **设计权衡记录**: `--bogus-arg` 探针会把所有 argparse 脚本误判成 fail-open, 真跑 hooks_runner 更准确
+- **新增 ADR-026** 记录决策链 + 反向测试证据
+- on_commit 现 6 hooks (5 原有 + 1 新增)
+
+#### 验证快照
+
+- 干净状态: ✅ 6/6 hooks 通过
+- 反向测试: 注入 link_auditor.py --update-moc 类 hook 立即被捕获
+- on_commit 真触发: ✅ `hooks-json-integrity-check` 跑通 (17 秒, 仅 hooks.json 改动时跑)
+- on_merge: 3/3 通过 (来自 52b5c64)
+
+---
+
 ## [2.23.2] - 2026-09-01
 
 ### Phase 30 落地: on_merge 双层防护 + update-moc 历史 bug 修复

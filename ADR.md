@@ -41,6 +41,7 @@
 | ADR-023 | Phase 29 py-file-leak 误报识别 + 修 1 真问题 | 接受 | [docs/adr/ADR-023-phase-29-py-file-leak-misclassification.md](docs/adr/ADR-023-phase-29-py-file-leak-misclassification.md) |
 | ADR-024 | Phase 29 mutmut 配置修正 + 单文件 demo 基线 | 接受 | [docs/adr/ADR-024-phase-29-mutmut-baseline.md](docs/adr/ADR-024-phase-29-mutmut-baseline.md) |
 | ADR-025 | Phase 30 .adg/rules.yml 完整性 on_merge 双层防护 | 接受 | [docs/adr/ADR-025-phase-30-rules-yml-on-merge.md](docs/adr/ADR-025-phase-30-rules-yml-on-merge.md) |
+| ADR-026 | Phase 30 .jcode/hooks.json fail-open 检测脚本 | 接受 | [docs/adr/ADR-026-phase-30-hooks-json-integrity.md](docs/adr/ADR-026-phase-30-hooks-json-integrity.md) |
 
 ---
 

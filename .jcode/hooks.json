@@ -40,6 +40,15 @@
         "command": "bash tools/scripts/check_rules_yml_integrity.sh",
         "condition": "files_contain('.adg/rules.yml')",
         "enabled": true
+      },
+      {
+        "name": "hooks-json-integrity-check",
+        "skill": "governance-auditor",
+        "action": "check-hooks-json-integrity",
+        "description": "提交时验证 .jcode/hooks.json 无 fail-open hook (Phase 30)",
+        "command": "bash tools/scripts/check_hooks_json_integrity.sh",
+        "condition": "files_contain('.jcode/hooks.json')",
+        "enabled": true
       }
     ],
     "on_pr": [

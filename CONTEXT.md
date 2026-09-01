@@ -1,3 +1,29 @@
+## 更新记录: 2026-09-02 03:36:00
+
+### 任务
+Phase 30 收口: hooks.json fail-open 检测脚本 + ADR-026
+
+### 变更摘要
+- **新增 `tools/scripts/check_hooks_json_integrity.sh`** (1647 字节, +x)
+  - 通过真跑 hooks_runner 检测 hook 命令参数不支持
+  - 比 --bogus-arg 探针更准确(实测发现探针会把所有 argparse 脚本误判)
+- **`.jcode/hooks.json` on_commit 新增 `hooks-json-integrity-check`**
+  - 条件触发 `files_contain('.jcode/hooks.json')`
+  - 改 hooks.json 时自动验证 fail-open 风险
+- **正向触发验证**: on_commit 真跑 6/6 通过 (含新增)
+- **反向测试验证**: 注入 link_auditor.py --update-moc 类 hook 立即被脚本捕获
+- 新增 **ADR-026** 记录决策链
+- CHANGELOG v2.23.3 节点
+- on_commit 现 6 hooks
+
+### 当前状态
+- master HEAD: `52b5c64` (前置)
+- 工作区: clean
+- 累计: 26 ADR / 17 降级规则 / 0 error / 0 warning / 3683 tests
+- on_commit 6/6 ✅ / on_merge 3/3 ✅
+
+---
+
 ## 更新记录: 2026-09-02 03:05:00
 
 ### 任务

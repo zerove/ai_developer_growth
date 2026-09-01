@@ -2,6 +2,26 @@
 
 All notable changes to the AI Developer Growth project.
 
+## [2.23.2] - 2026-09-01
+
+### Phase 30 落地: on_merge 双层防护 + update-moc 历史 bug 修复
+
+#### 关键改进
+
+- **on_merge 双层防护**: `.jcode/hooks.json` 新增 `rules-yml-integrity-check-merge`, 与 `on_commit` 的 `rules-yml-integrity-check` 形成 commit + merge 双层防护
+- **移除 fail-open 的 `update-moc` hook** (方案 A): `link_auditor.py` 是只读审计器, 从未实现 `--update-moc` 参数。历史 bug 一直被 sync-tools / context-sync-merge / 规则完整性检查覆盖
+- **on_merge 正向验证**: 3 个 hook (sync-tools / context-sync-merge / rules-yml-integrity-check-merge) 全过
+- **新增 ADR-025** 记录 on_merge 双层防护 + update-moc bug + 方案 A 落地
+
+#### 验证快照
+
+- adg check (error): 0 issues / 192 files
+- adg check (warning): 0 issues / 192 files
+- on_merge 真触发: ✅ 3/3 通过
+- on_commit 真触发: ✅ 5/5 通过 (含新增完整性检查)
+
+---
+
 ## [2.23.1] - 2026-09-01
 
 ### Phase 28 收尾 + Phase 29 完整收口 + .adg/rules.yml 完整性门禁

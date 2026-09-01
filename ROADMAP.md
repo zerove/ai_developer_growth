@@ -114,12 +114,13 @@
 
 ### 🎯 Phase 31 候选 (后续, 本会话不实施)
 
-- [ ] **`update-moc` hook 修复** - knowledge-curator 调用 `link_auditor.py --update-moc` 但 link_auditor 不支持 (只读审计器, 不更新 MOC), 详见 ADR-025
-  - 方案 A: 移除 update-moc hook, MOC 由独立脚本维护
-  - 方案 B: 修 link_auditor.py 支持 `--update-moc` 参数
+- [x] **`update-moc` hook 修复** ✅ 已落地 (方案 A, 见 ADR-025 决策 4)
+  - 从 .jcode/hooks.json on_merge 移除 update-moc (一直 fail-open)
+  - MOC.md 由 docs/MOC.md 人工维护 (374 行)
+  - on_merge 现 3 个 hook 全正向验证通过
 - [ ] **mutmut CI 化**: weekly scheduled + on_pr 受影响文件 (ADR-024)
 - [ ] **CONTEXT.md 长期 50 条维护**: 接受 on_commit 自动收敛, 手工 commit 偶尔触发 (当前决策)
-- [ ] **`check_rules_yml_integrity.sh` 接入 on_merge**: ✅ 已落地 (commit: 见 ADR-025), 与 on_commit 双层防护
+- [x] **`check_rules_yml_integrity.sh` 接入 on_merge**: ✅ 已落地 (commit: 见 ADR-025), 与 on_commit 双层防护
 
 ---
 

@@ -127,13 +127,6 @@
     ],
     "on_merge": [
       {
-        "name": "update-moc",
-        "skill": "knowledge-curator",
-        "action": "update-moc",
-        "description": "合并后更新知识图谱",
-        "enabled": true
-      },
-      {
         "name": "sync-tools",
         "skill": "knowledge-curator",
         "action": "sync",

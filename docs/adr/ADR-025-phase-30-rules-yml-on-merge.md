@@ -64,4 +64,19 @@ ROADMAP Phase 30 候选 3: "`check_rules_yml_integrity.sh` 接入 on_merge, 与 
 - knowledge-curator 的 update_moc() 函数设计假设错误
 - 影响: on_merge 一直 fail-open, 但被 sync-tools / context-sync-merge / 规则完整性检查覆盖
 - 修复方向: 移除 update-moc hook (MOC 应有独立 update 脚本) 或修 link_auditor.py 支持 `--update-moc`
-- 建议: 进入 Phase 31 候选, 本会话不修 (范围外)
+
+### 决策 4 (追加): 移除 update-moc hook (方案 A 落地)
+
+ADR-025 提交后 (commit eb41676), 决定立刻实施方案 A:
+- 从 `.jcode/hooks.json` on_merge 块移除 `update-moc` hook
+- 原因: link_auditor.py 是只读审计器, 给它加 `--update-moc` 写功能违反单一职责
+- MOC.md 由 docs/MOC.md 人工维护 (374 行, 含 45 个案例索引)
+- on_merge 现在 3 个 hook (sync-tools / context-sync-merge / rules-yml-integrity-check-merge), 全部正向验证通过
+
+正向触发 on_merge 实测:
+```
+🔄 执行: sync-tools ✅ [通过]
+🔄 执行: context-sync-merge ✅ [通过]
+🔄 执行: rules-yml-integrity-check-merge ✅ [通过]
+✅ 所有 on_merge hooks 通过
+```

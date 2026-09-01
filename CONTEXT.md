@@ -1,3 +1,24 @@
+## 更新记录: 2026-09-01 21:07:30
+
+### 任务
+补强验证 + 端到端测试 + 反向门禁测试
+
+### 端到端验证证据 (实跑,非检查)
+- **pytest 42 个 validate_case_study 测试** ✅ 9.40s 全过 (验证 9959dc8 改动未破坏)
+- **hooks_runner on_commit 端到端** ✅ 真触发 `rules-yml-integrity-check` 并通过
+- **反向门禁测试** ✅ 删除 `common-empty-except-block` 关键规则后 hook 链退出码 1, 阻断提交; 恢复后通过
+- **反向脚本测试** ✅ 删除 `py-file-leak` 关键规则后 `check_rules_yml_integrity.sh` 立即报错
+- **mypy strict 抽查** ✅ `lsp_server.py` / `validate_case_study.py` / `exception_manager.py` 均 Success
+- **validate_case_study.py --all** ✅ 真实跑全量案例验证 (改动行触发), All checks passed
+- **pytest collect** ✅ 3683 tests collected (与历史快照一致)
+
+### 当前状态
+- master HEAD: `9959dc8` (Phase 29 P1)
+- 工作区: clean
+- 累计: 23 ADR / 17 降级规则 / 0 error / 0 warning
+
+---
+
 ## 更新记录: 2026-09-01 20:55:00
 
 ### 任务

@@ -13,9 +13,10 @@
 - **pytest collect** ✅ 3683 tests collected (与历史快照一致)
 
 ### 当前状态
-- master HEAD: `9959dc8` (Phase 29 P1)
+- master HEAD: `f1ed5e9` (补强验证证据)
 - 工作区: clean
 - 累计: 23 ADR / 17 降级规则 / 0 error / 0 warning
+- 真实验证 (二次复跑, 2026-09-01 21:09): pytest 42 passed in 3.58s, adg error/warning 0/0, check_rules_yml_integrity 18 规则完整
 
 ---
 

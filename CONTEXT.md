@@ -1,3 +1,51 @@
+## 更新记录: 2026-09-02 03:58:00
+
+### 任务
+Git 变更同步
+
+### 变更摘要
+- 变更文件 6 个 (+233 / -61 行)
+  - .jcode/hooks.json
+  - ADR.md
+  - CHANGELOG.md
+  - CONTEXT.md
+  - docs/adr/ADR-026-phase-30-hooks-json-integrity.md
+  - tools/scripts/check_hooks_json_integrity.sh
+
+---
+
+## 更新记录: 2026-09-02 03:57:50
+
+### 任务
+Git 变更同步
+
+### 变更摘要
+- 变更文件 6 个 (+217 / -46 行)
+  - .jcode/hooks.json
+  - ADR.md
+  - CHANGELOG.md
+  - CONTEXT.md
+  - docs/adr/ADR-026-phase-30-hooks-json-integrity.md
+  - tools/scripts/check_hooks_json_integrity.sh
+
+---
+
+## 更新记录: 2026-09-02 03:57:49
+
+### 任务
+Git 变更同步
+
+### 变更摘要
+- 变更文件 6 个 (+200 / -0 行)
+  - .jcode/hooks.json
+  - ADR.md
+  - CHANGELOG.md
+  - CONTEXT.md
+  - docs/adr/ADR-026-phase-30-hooks-json-integrity.md
+  - tools/scripts/check_hooks_json_integrity.sh
+
+---
+
 ## 更新记录: 2026-09-02 03:36:00
 
 ### 任务
@@ -974,84 +1022,4 @@ Git 变更同步
 
 ---
 
-## 更新记录: 2026-08-27 07:23:45
-
-### 任务
-Git 变更同步
-
-### 变更摘要
-- 变更文件 6 个 (+888 / -186 行)
-  - CONTEXT.md
-  - Makefile
-  - tests/test_cov_tool.py
-  - tests/test_jcode_cli.py
-  - tools/scripts/cov_tool.py
-  - tools/scripts/jcode_cli.py
-
----
-
-## 更新记录: 2026-08-27 07:22:22
-
-### 任务
-Git 变更同步
-
-### 变更摘要
-- 变更文件 6 个 (+872 / -174 行)
-  - CONTEXT.md
-  - Makefile
-  - tests/test_cov_tool.py
-  - tests/test_jcode_cli.py
-  - tools/scripts/cov_tool.py
-  - tools/scripts/jcode_cli.py
-
----
-
-## 更新记录: 2026-08-27 07:21:08
-
-### 任务
-Git 变更同步
-
-### 变更摘要
-- 变更文件 6 个 (+856 / -162 行)
-  - CONTEXT.md
-  - Makefile
-  - tests/test_cov_tool.py
-  - tests/test_jcode_cli.py
-  - tools/scripts/cov_tool.py
-  - tools/scripts/jcode_cli.py
-
----
-
-## 更新记录: 2026-08-27 07:19:58
-
-### 任务
-Git 变更同步
-
-### 变更摘要
-- 变更文件 6 个 (+840 / -149 行)
-  - CONTEXT.md
-  - Makefile
-  - tests/test_cov_tool.py
-  - tests/test_jcode_cli.py
-  - tools/scripts/cov_tool.py
-  - tools/scripts/jcode_cli.py
-
----
-
-## 更新记录: 2026-08-27 07:17:02
-
-### 任务
-Git 变更同步
-
-### 变更摘要
-- 变更文件 6 个 (+824 / -136 行)
-  - CONTEXT.md
-  - Makefile
-  - tests/test_cov_tool.py
-  - tests/test_jcode_cli.py
-  - tools/scripts/cov_tool.py
-  - tools/scripts/jcode_cli.py
-
----
-
-<!-- 滚动窗口: 已自动裁剪 7 条旧更新记录 -->
+<!-- 滚动窗口: 已自动裁剪 1 条旧更新记录 -->

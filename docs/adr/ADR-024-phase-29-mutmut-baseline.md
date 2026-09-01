@@ -52,6 +52,28 @@ mutmut 全量跑需要 30+ 分钟, 不适合 on_commit 触发。推荐:
 
 教训: mutmut 等"应用型"工具跑完后必须立刻 `git checkout HEAD -- <files>` 恢复, 不可留在工作区。
 
+### 决策 5 (补充): mutmut 同时生成 .bak 备份, 但 .gitignore 已覆盖
+
+mutmut 2.5.1 在修改原文件时同步创建 `<原文件>.bak` 备份 (例如 `checker.py.bak`)。这提供了**轻量恢复方案**:
+- 不用 `git checkout HEAD -- <file>`,直接 `mv <file>.bak <file>` 即可恢复
+- 但 .bak 文件本身是**磁盘残留**, 应在 mutmut 跑完 + 验证后**主动清理**
+- `.gitignore` 已有 `tools/scripts/rules_engine/*.bak` 模式 (历史配置), 不会误提交
+
+更新后的完整 cleanup 流程:
+```bash
+# 1. 跑 mutmut
+mutmut run --paths-to-mutate=...
+
+# 2. 恢复原文件 (二选一)
+git checkout HEAD -- tools/scripts/rules_engine/checker.py
+# 或
+mv tools/scripts/rules_engine/checker.py.bak tools/scripts/rules_engine/checker.py
+
+# 3. 清理 .bak + .mutmut-cache
+rm -f tools/scripts/rules_engine/*.bak
+rm -rf .mutmut-cache
+```
+
 ## 后果
 
 ### 正面

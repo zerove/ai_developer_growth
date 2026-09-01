@@ -1,3 +1,14 @@
+## 更新记录: 2026-09-01 22:14:31
+
+### 任务
+Git 变更同步
+
+### 变更摘要
+- 变更文件 1 个 (+28 / -0 行)
+  - CONTEXT.md
+
+---
+
 ## 更新记录: 2026-09-01 21:50:00
 
 ### 任务
@@ -994,120 +1005,4 @@ Git 变更同步
 
 ---
 
-## 更新记录: 2026-08-27 07:15:38
-
-### 任务
-Git 变更同步
-
-### 变更摘要
-- 变更文件 6 个 (+808 / -123 行)
-  - CONTEXT.md
-  - Makefile
-  - tests/test_cov_tool.py
-  - tests/test_jcode_cli.py
-  - tools/scripts/cov_tool.py
-  - tools/scripts/jcode_cli.py
-
----
-
-## 更新记录: 2026-08-27 07:14:50
-
-### 任务
-Git 变更同步
-
-### 变更摘要
-- 变更文件 6 个 (+792 / -110 行)
-  - CONTEXT.md
-  - Makefile
-  - tests/test_cov_tool.py
-  - tests/test_jcode_cli.py
-  - tools/scripts/cov_tool.py
-  - tools/scripts/jcode_cli.py
-
----
-
-## 更新记录: 2026-08-27 07:13:26
-
-### 任务
-Git 变更同步
-
-### 变更摘要
-- 变更文件 6 个 (+776 / -98 行)
-  - CONTEXT.md
-  - Makefile
-  - tests/test_cov_tool.py
-  - tests/test_jcode_cli.py
-  - tools/scripts/cov_tool.py
-  - tools/scripts/jcode_cli.py
-
----
-
-## 更新记录: 2026-08-27 06:47:54
-
-### 任务
-Git 变更同步
-
-### 变更摘要
-- 变更文件 7 个 (+444 / -141 行)
-  - CHANGELOG.md
-  - CONTEXT.md
-  - Makefile
-  - pyproject.toml
-  - tests/test_jcode_cli.py
-  - tools/scripts/jcode_cli.py
-  - uv.lock
-
----
-
-## 更新记录: 2026-08-27 06:47:01
-
-### 任务
-Git 变更同步
-
-### 变更摘要
-- 变更文件 7 个 (+427 / -126 行)
-  - CHANGELOG.md
-  - CONTEXT.md
-  - Makefile
-  - pyproject.toml
-  - tests/test_jcode_cli.py
-  - tools/scripts/jcode_cli.py
-  - uv.lock
-
----
-
-## 更新记录: 2026-08-27 06:43:08
-
-### 任务
-Git 变更同步
-
-### 变更摘要
-- 变更文件 7 个 (+410 / -112 行)
-  - CHANGELOG.md
-  - CONTEXT.md
-  - Makefile
-  - pyproject.toml
-  - tests/test_jcode_cli.py
-  - tools/scripts/jcode_cli.py
-  - uv.lock
-
----
-
-## 更新记录: 2026-08-27 06:39:40
-
-### 任务
-Git 变更同步
-
-### 变更摘要
-- 变更文件 7 个 (+371 / -98 行)
-  - CHANGELOG.md
-  - CONTEXT.md
-  - Makefile
-  - pyproject.toml
-  - tests/test_jcode_cli.py
-  - tools/scripts/jcode_cli.py
-  - uv.lock
-
----
-
-<!-- 滚动窗口: 已自动裁剪 1 条旧更新记录 -->
+<!-- 滚动窗口: 已自动裁剪 7 条旧更新记录 -->

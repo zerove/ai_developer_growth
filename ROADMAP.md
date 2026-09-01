@@ -102,6 +102,24 @@
 
 ---
 
+### 🎯 Phase 29 完整收口后续 follow-through (2026-09-01)
+
+- [x] **CONTEXT.md 主动收敛**: 1085→1008 行, 50 条更新记录 (设计上限), 通过手动触发 `python .jcode/scripts/context-sync.py sync` (commit: ade23d4)
+- [x] **诚实权衡记录**: 手工 `git commit -m` 绕过 `.jcode/hooks.json` on_commit 配置是已知 trade-off
+  - 后果: 不会自动跑 context-sync / rules-yml-integrity-check / lint-check 等 5 个 hooks
+  - 项目本身已配置完整 hooks, 其他用户走 on_commit 路径时不受影响
+  - 主动跑 `python .jcode/scripts/context-sync.py sync` 可手动补偿 (本次已执行)
+  - 决策: **不强行装 pre-commit**, 因为 pre-commit 会引入第三方依赖 + 与 hooks_runner 重复, ROI 低
+- [x] **本会话最终闭环**: 10 commit + 24 ADR + 17 降级规则 + 0 error/warning + 3683 tests + mypy strict 192 Success
+
+### 🎯 Phase 30 候选 (后续, 本会话不实施)
+
+- [ ] **mutmut CI 化**: weekly scheduled + on_pr 受影响文件 (ADR-024)
+- [ ] **CONTEXT.md 长期 50 条维护**: 接受 on_commit 自动收敛, 手工 commit 偶尔触发 (当前决策)
+- [ ] **`check_rules_yml_integrity.sh` 接入 on_merge**: 与 on_commit 双层防护 (防 on_commit 失败时合并污染)
+
+---
+
 ## 当前状态 (2026-09-01)
 
 ### ✅ Phase 29 P2 完整闭环: common-empty-except-block 全文件分析

@@ -2,6 +2,30 @@
 
 All notable changes to the AI Developer Growth project.
 
+## [2.23.1] - 2026-09-01
+
+### Phase 28 收尾 + .adg/rules.yml 完整性门禁
+
+#### 关键改进
+
+- **新增 `.adg/rules.yml` 完整性检查脚本** (`tools/scripts/check_rules_yml_integrity.sh`) - Phase 28 内两次发生 `severity_overrides` 段 (65 行) 工作区丢失事件, 此脚本作为前置门禁, 若 `rules.yml` 行数与 HEAD 版本不一致立即报错并提示 `git checkout HEAD -- .adg/rules.yml` 恢复
+- **ADR.md 索引补齐** - 14 → 23 行, 新增 ADR-013~022 共 10 条索引
+- **`py-ci-disabled-check` 降级为 info** - 4 个 GitHub Actions YAML 模板字符串中 `continue-on-error: true` 是有意设计 (治理失败不阻塞 SARIF 上传)
+- **3 处 `except Exception` 收窄为 `except OSError`**:
+  - `rules_engine/arch/dependency_graph.py:122`
+  - `rules_engine/pattern_learner.py:115`
+  - `rules_engine/pattern_learner.py:169`
+- **新增 ADR-022** 记录 Phase 28 启动 + 治理原则 + .adg/rules.yml 恢复事件
+
+#### 验证快照
+
+- adg check (error): 0 issues / 192 files
+- adg check (warning): **0 issues** / 192 files
+- adg check (info): 5681 issues / 192 files (含 py-file-leak 12 / common-empty-except-block 30)
+- ruff check: clean
+
+---
+
 ## [2.23.0] - 2026-08-31
 
 ### 重要变更: Phase 26 + Phase 27 - adg 治理归零

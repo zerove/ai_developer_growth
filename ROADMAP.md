@@ -98,7 +98,39 @@
 - [ ] **mypy strict 增量启用** - pyproject 已 strict=True, 剩余模块增量启用, 关闭 warn_unused_ignores 误报
 - [ ] **mutmut 突变测试基线** - pyproject 已配, 需 `pip install mutmut` 后跑全量基线, 找到测试盲区
 - [ ] **34 个 `common-empty-except-block` info 治理** - 探测代码窄捕获, 决策保留 info 但人工 code review 拦截新加宽捕获
-- [ ] **`py-file-leak` (15 个) 治理** - file handle 资源管理, 优先用 `with` 语句替代 open/close
+- [ ] **`py-file-leak` (12 个) 治理** - file handle 资源管理, 优先用 `with` 语句替代 open/close
+
+---
+
+## 当前状态 (2026-09-01)
+
+### ✅ Phase 28 收口 (2026-09-01)
+- [x] **`.adg/rules.yml` 完整性门禁脚本上线** - `tools/scripts/check_rules_yml_integrity.sh` 通过行数比对 HEAD, 不匹配立即报错并提示 `git checkout HEAD -- .adg/rules.yml` 恢复
+- [x] **CHANGELOG 补 v2.23.1 节点** 记录本次收口
+- [x] **Phase 28 工作区状态确认**:
+  - `tools/scripts/check_rules_yml_integrity.sh` (新文件, 1667 字节, +x)
+  - `CHANGELOG.md` (modified)
+
+### 治理指标 Phase 28 当前 (2026-09-01 实测)
+| 指标 | Phase 28 (2026-08-31) | **Phase 28 收口 (2026-09-01)** |
+|------|----------------------|-------------------------------|
+| adg error | 0 | **0** |
+| adg warning | 0 | **0** |
+| adg info | 5878 | **5681** (-197 来自新增 severity_overrides) |
+| py-file-leak (实测) | 15 (估计) | **12** (实测) |
+| common-empty-except-block (实测) | 34 (估计) | **30** (实测) |
+| Ruff | clean | **clean** |
+| 当前 HEAD | ddc08af | **2dc98da** |
+| CHANGELOG 版本 | v2.23.0 | **v2.23.1** |
+
+### 🎯 Phase 29 重新定义 (基于实测数据)
+
+- [ ] **`py-file-leak` 治理 (12 个实测)** - file handle 资源管理, 优先用 `with` 语句替代 open/close
+  - 高密度: `lsp_server.py` 3 处, `exception_manager.py` 3 处, `audit_attestation.py` / `app_config.py` / `cov_tool.py` / `jcode_cli.py` 各 1 处
+- [ ] **`common-empty-except-block` 收尾 (30 个实测)** - 探测代码窄捕获, 决策保留 info 但人工 code review 拦截新加宽捕获
+- [ ] **mypy strict 增量启用** - pyproject 已 strict=True, 剩余模块增量启用
+- [ ] **mutmut 突变测试基线** - pyproject 已配, 需 `pip install mutmut` 后跑全量基线
+- [ ] **hooks 集成 `check_rules_yml_integrity.sh`** - 把完整性检查接入 `on_commit` hook, 在 commit 前自动验证
 
 ---
 

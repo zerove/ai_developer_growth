@@ -1,3 +1,37 @@
+## 更新记录: 2026-09-01 20:34:00
+
+### 任务
+Phase 28 收口 + check_rules_yml_integrity.sh 提交 + Phase 29 规划
+
+### 变更摘要
+- **新增 `tools/scripts/check_rules_yml_integrity.sh`** (1667 字节, +x)
+  - 行数比对 HEAD vs 工作区 `.adg/rules.yml`
+  - 不匹配立即报错 + 提示 `git checkout HEAD -- .adg/rules.yml` 恢复
+  - 解决 Phase 28 内两次发生 `severity_overrides` 段 (65 行) 工作区丢失事件
+- **修复脚本可执行权限** - chmod +x
+- **CHANGELOG 补 v2.23.1 节点** - 记录本次 Phase 28 收口
+- **ROADMAP 增量**:
+  - 新增"Phase 28 收口 (2026-09-01)"块
+  - 基于实测数据修正 py-file-leak 15→12 / common-empty-except-block 34→30
+  - Phase 29 候选重新定义为 5 项 (含 hooks 集成 check_rules_yml_integrity.sh)
+
+### 验证
+- ruff check: clean
+- adg check (error): 0 issues / 192 files
+- adg check (warning): 0 issues / 192 files
+- adg check (info): 5681 issues / 192 files
+- check_rules_yml_integrity.sh: ✅ .adg/rules.yml 完整 (127 行)
+
+### 当前状态
+- master HEAD: `2dc98da` (未变更)
+- 工作区: 1 untracked + 2 modified
+  - `tools/scripts/check_rules_yml_integrity.sh` (new, +x)
+  - `CHANGELOG.md` (modified) - v2.23.1 节点
+  - `ROADMAP.md` (modified) - Phase 28 收口 + Phase 29 重新定义
+- 待规划: Phase 29 实施 (5 个候选)
+
+---
+
 ## 更新记录: 2026-08-31 22:35:00
 
 ### 任务

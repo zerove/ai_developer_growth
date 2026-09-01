@@ -104,6 +104,39 @@
 
 ## 当前状态 (2026-09-01)
 
+### ✅ Phase 29 P2 完整闭环: common-empty-except-block 全文件分析
+- [x] **30 个命中全量分析** (不再是抽样): 7 宽捕获 + 23 窄捕获
+- [x] **7 个宽捕获全部审查**: 均有合理 best-effort 模式 + 注释 + 内部降级
+  - `ast_parser.py:226` - tree-sitter 不可用静默跳过
+  - `checker.py:441` - 插件失败不影响主流程
+  - `checker.py:781/849/893` - 语义分析/linter/JSON 失败仅 debug 日志
+  - `plugins.py:216` - 失败插件跳过
+  - `semantic_rules.py:247` - 单条规则失败不阻断
+- [x] **决策保留 info**: ADR-022 验证正确, 人工 code review 拦截即可
+
+### ✅ Phase 29 完整收口 (2026-09-01)
+- [x] **pytest 全量回归**: 3683 passed in 318.08s ✅
+- [x] **hooks 正向触发**: rules-yml-integrity-check 真触发并阻断污染
+- [x] **mutmut 配置修正 + 单文件 demo**: ADR-024 + .gitignore 加 .mutmut-cache
+- [x] **mypy strict 全量**: 192 源文件 Success
+- [x] **新累计 ADR 23/24**: py-file-leak 误报识别 + mutmut 基线
+
+### 治理指标 Phase 29 完整收口
+| 指标 | Phase 28 收口 | **Phase 29 收口** |
+|------|--------------|-------------------|
+| adg error | 0 | **0** |
+| adg warning | 0 | **0** |
+| adg info | 5681 | **5680** |
+| pytest 全量 | (未跑) | **3683 passed in 318s** |
+| mypy strict | (未跑) | **192 源文件 Success** |
+| ADR 累计 | 22 | **24** |
+| 降级规则累计 | 15 | **17** |
+| mutmut | (broken) | **demo 跑通** |
+
+---
+
+## 当前状态 (2026-09-01)
+
 ### ✅ Phase 29 P1: py-file-leak 治理 + hooks 集成 (2026-09-01)
 - [x] **py-file-leak 12 个误报识别** - 11 个 with 块误报 + 1 个 urllib 误判, 仅 1 个真实问题 (`validate_case_study.py:685`)
 - [x] **修真实问题** - `open(filepath).read()` → `Path(filepath).read_text(encoding="utf-8")` (更规范)

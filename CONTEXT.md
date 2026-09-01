@@ -13,10 +13,11 @@
 - **pytest collect** ✅ 3683 tests collected (与历史快照一致)
 
 ### 当前状态
-- master HEAD: `f1ed5e9` (补强验证证据)
+- master HEAD: `632406a` (HEAD 校正 + 二次复跑)
 - 工作区: clean
 - 累计: 23 ADR / 17 降级规则 / 0 error / 0 warning
 - 真实验证 (二次复跑, 2026-09-01 21:09): pytest 42 passed in 3.58s, adg error/warning 0/0, check_rules_yml_integrity 18 规则完整
+- context-sync 实测: 人工撰写的"补强验证"块被正确识别为更新记录,不会被 hook 覆盖; 仅裁剪 > 50 条的旧记录 (设计如此, 非冲突)
 
 ---
 

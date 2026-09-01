@@ -125,3 +125,8 @@ severity_overrides:
   #   让 governance check 失败不阻塞后续 SARIF 上传/趋势记录步骤, 模板文档
   #   而非真实 CI 配置. 真实 CI 由 adg install-hooks 生成, 降为 info.
   py-ci-disabled-check: info
+  # py-file-leak: 12 个, 11 个为 with 块误报 (规则启发式把 with X.open() as Y:
+  #   也标记), 1 个为脚本场景 (validate_case_study.py:685 open(filepath).read()
+  #   已在 Phase 29 修). urllib.request.urlopen 也被误判. 规则对 with 上下文识别
+  #   弱, 降为 info.
+  py-file-leak: info

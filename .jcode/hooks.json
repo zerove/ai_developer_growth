@@ -31,6 +31,15 @@
         "action": "sync",
         "description": "提交时同步上下文 (CONTEXT.md/ADR.md)",
         "enabled": true
+      },
+      {
+        "name": "rules-yml-integrity-check",
+        "skill": "governance-auditor",
+        "action": "check-rules-yml-integrity",
+        "description": "提交时验证 .adg/rules.yml 行数与 HEAD 一致 (Phase 29)",
+        "command": "bash tools/scripts/check_rules_yml_integrity.sh",
+        "condition": "files_contain('.adg/rules.yml')",
+        "enabled": true
       }
     ],
     "on_pr": [

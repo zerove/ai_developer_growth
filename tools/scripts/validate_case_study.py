@@ -682,7 +682,7 @@ def _auth_check(changed_files_str: str) -> int:
     changed_files = [f for f in changed_files_str.split() if f and os.path.exists(f)]
     for filepath in changed_files:
         print(f"=== Checking authenticity: {filepath} ===")
-        content = open(filepath).read()
+        content = Path(filepath).read_text(encoding="utf-8")
         checks = [
             ("GitHub repo link", r"github\.com/[\w-]+/[\w-]+"),
             ("PR link", r"github\.com/[\w-]+/[\w-]+/pull/\d+"),

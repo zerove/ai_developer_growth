@@ -38,6 +38,7 @@
 | ADR-020 | Phase 26 收口与 Phase 27 移交 | 接受 | [docs/adr/ADR-020-phase-26-close-and-phase-27-handoff.md](docs/adr/ADR-020-phase-26-close-and-phase-27-handoff.md) |
 | ADR-021 | Phase 27 py-n-plus-one profile 验证结论 | 接受 | [docs/adr/ADR-021-py-n-plus-one-profile-verdict.md](docs/adr/ADR-021-py-n-plus-one-profile-verdict.md) |
 | ADR-022 | Phase 28 空 except 治理原则 + .adg/rules.yml 恢复 | 接受 | [docs/adr/ADR-022-phase-28-empty-except-and-rules-recovery.md](docs/adr/ADR-022-phase-28-empty-except-and-rules-recovery.md) |
+| ADR-023 | Phase 29 py-file-leak 误报识别 + 修 1 真问题 | 接受 | [docs/adr/ADR-023-phase-29-py-file-leak-misclassification.md](docs/adr/ADR-023-phase-29-py-file-leak-misclassification.md) |
 
 ---
 

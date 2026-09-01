@@ -104,33 +104,31 @@
 
 ## 当前状态 (2026-09-01)
 
-### ✅ Phase 28 收口 (2026-09-01)
-- [x] **`.adg/rules.yml` 完整性门禁脚本上线** - `tools/scripts/check_rules_yml_integrity.sh` 通过行数比对 HEAD, 不匹配立即报错并提示 `git checkout HEAD -- .adg/rules.yml` 恢复
-- [x] **CHANGELOG 补 v2.23.1 节点** 记录本次收口
-- [x] **Phase 28 工作区状态确认**:
-  - `tools/scripts/check_rules_yml_integrity.sh` (新文件, 1667 字节, +x)
-  - `CHANGELOG.md` (modified)
+### ✅ Phase 29 P1: py-file-leak 治理 + hooks 集成 (2026-09-01)
+- [x] **py-file-leak 12 个误报识别** - 11 个 with 块误报 + 1 个 urllib 误判, 仅 1 个真实问题 (`validate_case_study.py:685`)
+- [x] **修真实问题** - `open(filepath).read()` → `Path(filepath).read_text(encoding="utf-8")` (更规范)
+- [x] **`py-file-leak` 降级为 info** - `.adg/rules.yml` + `pyproject.toml` severity_overrides 同步
+- [x] **`check_rules_yml_integrity.sh` v1.1 升级** - 从"行数比对 HEAD"改为"关键规则 key 校验", 避免合法新增触发误报
+- [x] **hooks.json 集成 `rules-yml-integrity-check`** - on_commit 触发, 改 `.adg/rules.yml` 时自动校验
+- [x] **新增 ADR-023** 记录 Phase 29 py-file-leak 决策链
+- [x] **累计降级规则 16 → 17 类**
 
-### 治理指标 Phase 28 当前 (2026-09-01 实测)
-| 指标 | Phase 28 (2026-08-31) | **Phase 28 收口 (2026-09-01)** |
-|------|----------------------|-------------------------------|
+### 治理指标 Phase 28 → 29 演进
+| 指标 | Phase 28 收口 | **Phase 29 P1 (2026-09-01)** |
+|------|--------------|-----------------------------|
 | adg error | 0 | **0** |
 | adg warning | 0 | **0** |
-| adg info | 5878 | **5681** (-197 来自新增 severity_overrides) |
-| py-file-leak (实测) | 15 (估计) | **12** (实测) |
-| common-empty-except-block (实测) | 34 (估计) | **30** (实测) |
-| Ruff | clean | **clean** |
-| 当前 HEAD | ddc08af | **2dc98da** |
-| CHANGELOG 版本 | v2.23.0 | **v2.23.1** |
+| py-file-leak 命中 | 12 info | **11 info** (修 1 真问题 + 降级) |
+| adg info 总数 | 5681 | **5680** (-1) |
+| 降级规则累计 | 15 | **17** |
+| ADR 累计 | 22 | **23** |
+| hooks on_commit 项 | 4 | **5** |
 
-### 🎯 Phase 29 重新定义 (基于实测数据)
+### 🎯 Phase 29 剩余候选
 
-- [ ] **`py-file-leak` 治理 (12 个实测)** - file handle 资源管理, 优先用 `with` 语句替代 open/close
-  - 高密度: `lsp_server.py` 3 处, `exception_manager.py` 3 处, `audit_attestation.py` / `app_config.py` / `cov_tool.py` / `jcode_cli.py` 各 1 处
 - [ ] **`common-empty-except-block` 收尾 (30 个实测)** - 探测代码窄捕获, 决策保留 info 但人工 code review 拦截新加宽捕获
 - [ ] **mypy strict 增量启用** - pyproject 已 strict=True, 剩余模块增量启用
 - [ ] **mutmut 突变测试基线** - pyproject 已配, 需 `pip install mutmut` 后跑全量基线
-- [ ] **hooks 集成 `check_rules_yml_integrity.sh`** - 把完整性检查接入 `on_commit` hook, 在 commit 前自动验证
 
 ---
 

@@ -98,6 +98,7 @@ tools/scripts/rules_engine/*.bak
 *.db-wal
 *.db-shm
 debug_mutmut.py
+.mutmut-cache
 
 # 审计台账与运行时遥测（每轮操作自动追加，属本地运行状态而非源码）
 .quality-trends/audit_ledger.jsonl

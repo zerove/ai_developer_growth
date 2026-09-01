@@ -193,8 +193,7 @@ exclude = [
 ]
 
 [tool.mutmut]
-source_paths = ["tools/scripts/rules_engine"]
-pytest_add_cli_args_test_selection = ["tests"]
+paths_to_mutate = "tools/scripts/rules_engine"
 backup = false
 runner = "python -m pytest tests/ -x --tb=short -q"
 

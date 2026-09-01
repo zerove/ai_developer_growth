@@ -112,11 +112,14 @@
   - 决策: **不强行装 pre-commit**, 因为 pre-commit 会引入第三方依赖 + 与 hooks_runner 重复, ROI 低
 - [x] **本会话最终闭环**: 10 commit + 24 ADR + 17 降级规则 + 0 error/warning + 3683 tests + mypy strict 192 Success
 
-### 🎯 Phase 30 候选 (后续, 本会话不实施)
+### 🎯 Phase 31 候选 (后续, 本会话不实施)
 
+- [ ] **`update-moc` hook 修复** - knowledge-curator 调用 `link_auditor.py --update-moc` 但 link_auditor 不支持 (只读审计器, 不更新 MOC), 详见 ADR-025
+  - 方案 A: 移除 update-moc hook, MOC 由独立脚本维护
+  - 方案 B: 修 link_auditor.py 支持 `--update-moc` 参数
 - [ ] **mutmut CI 化**: weekly scheduled + on_pr 受影响文件 (ADR-024)
 - [ ] **CONTEXT.md 长期 50 条维护**: 接受 on_commit 自动收敛, 手工 commit 偶尔触发 (当前决策)
-- [ ] **`check_rules_yml_integrity.sh` 接入 on_merge**: 与 on_commit 双层防护 (防 on_commit 失败时合并污染)
+- [ ] **`check_rules_yml_integrity.sh` 接入 on_merge**: ✅ 已落地 (commit: 见 ADR-025), 与 on_commit 双层防护
 
 ---
 

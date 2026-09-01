@@ -146,6 +146,14 @@
         "action": "sync",
         "description": "合并后同步上下文",
         "enabled": true
+      },
+      {
+        "name": "rules-yml-integrity-check-merge",
+        "skill": "governance-auditor",
+        "action": "check-rules-yml-integrity",
+        "description": "合并后验证 .adg/rules.yml 完整性 (Phase 30, 与 on_commit 双层防护)",
+        "command": "bash tools/scripts/check_rules_yml_integrity.sh",
+        "enabled": true
       }
     ],
     "scheduled": [

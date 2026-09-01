@@ -1,3 +1,23 @@
+## 更新记录: 2026-09-02 03:05:00
+
+### 任务
+Phase 30 落地 + update-moc bug 发现
+
+### 变更摘要
+- **on_merge 新增 `rules-yml-integrity-check-merge` hook** (Phase 30 双层防护)
+- **正向触发验证**: `hooks_runner on_merge` 真触发新 hook 并通过 ✅
+- **额外发现**: `update-moc` hook 调用 `link_auditor.py --update-moc` 但 link_auditor 不支持该参数 — 历史 bug, 一直 fail-open
+- 新增 **ADR-025** 记录 on_merge 双层防护 + update-moc bug
+- ADR.md 索引补 ADR-025
+- ROADMAP Phase 31 候选新增 update-moc 修复
+
+### 当前状态
+- master HEAD: `98c5584` (前置)
+- 工作区: clean
+- 累计: 25 ADR / 17 降级规则 / 0 error / 0 warning / 3683 tests
+
+---
+
 ## 更新记录: 2026-09-01 22:14:31
 
 ### 任务

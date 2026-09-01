@@ -1,3 +1,37 @@
+## 更新记录: 2026-09-01 20:55:00
+
+### 任务
+Phase 29 P1 实施 - py-file-leak 治理 + 完整性脚本 v1.1 + hooks 集成
+
+### 变更摘要
+- **py-file-leak 12 个命中分析** - 11 个 with 块误报 + 1 个 urllib 误判, 仅 1 个真实问题 (`validate_case_study.py:685 open(filepath).read()`)
+- **修复 1 个真实问题** - `validate_case_study.py:685` 改为 `Path(filepath).read_text(encoding="utf-8")` (Pythonic 风格)
+- **`py-file-leak` 降级 info** - `.adg/rules.yml` + `pyproject.toml` 同步, 注释含分析理由
+- **`check_rules_yml_integrity.sh` v1.1 升级** - 从"行数比对"改为"17 类关键规则 key 校验", 避免合法新增触发误报 (本次会话即触发一次)
+- **`.jcode/hooks.json` 集成 `rules-yml-integrity-check`** - on_commit + 条件 `files_contain('.adg/rules.yml')`, 改规则文件时自动校验
+- **新增 ADR-023** 记录 Phase 29 py-file-leak 决策链 + 累计 17 类降级规则
+- **ROADMAP Phase 29 P1 完成** - 剩余 3 项候选 (common-empty-except-block 收尾/mypy strict/mutmut)
+
+### common-empty-except-block 抽样验证
+- 30 个分布在 26 个文件, ADR-022 已决策保留 info
+- 抽样 3 个: `exception_manager.py:756` (except ValueError: pass, ISO 格式容错) / `checker.py:441` (except Exception + debug 注释) / `context_status.py:36` (except OSError: pass, 容错读 pyproject)
+- 全部为合理 best-effort 模式, 无需进一步修复
+
+### 验证
+- ruff check: clean
+- adg check (error): 0 issues / 192 files
+- adg check (warning): 0 issues / 192 files
+- adg check (info): 5680 issues / 192 files (-1 来自修真实问题)
+- check_rules_yml_integrity.sh: ✅ 18 个降级规则完整
+- hooks.json JSON 合法性: OK
+
+### 当前状态
+- master HEAD: `9959dc8` (Phase 29 P1)
+- 工作区: clean
+- 累计: 23 ADR / 17 降级规则 / 0 error / 0 warning
+
+---
+
 ## 更新记录: 2026-09-01 20:34:00
 
 ### 任务

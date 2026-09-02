@@ -64,6 +64,38 @@ pyproject version 同步 CHANGELOG (2.23.0 → 2.23.3)
 
 ---
 
+## 更新记录: 2026-09-02 11:50:00
+
+### 任务
+按建议实施 P0/P1/P2 + Phase 30 双层防护首次主动拦截
+
+### 变更摘要
+- **P0 CONTEXT 维护文档** (docs/governance/context-maintenance.md): 50 条滚动窗口维护步骤
+- **P1 mutmut CI 化** (tools/scripts/mutmut_ci.sh):
+  - 三模式: 全量 / --changed-only / --files F1 F2
+  - 5 分钟超时, 主动清理 .bak + .mutmut-cache
+  - 接入 on_pr 条件触发 (Python 文件改动时跑)
+- **Phase 30 双层防护首次主动拦截** (ADR-027):
+  - session 内 .adg/rules.yml severity_overrides 段被覆写丢失
+  - check_rules_yml_integrity.sh 立即捕获 + 退出 1
+  - git checkout HEAD -- .adg/rules.yml 恢复成功
+  - 真实事件验证 ADR-025 设计有效
+- **P2 覆盖率实测**: 3683 passed in 18m18s, 86.67% (门禁 80%, +6.67%)
+  - 4 个 <80% 模块: regex_cache 78% / rule_loader 77% / semantic_checker 73% / semantic_rules 72%
+  - 标记为大工程待 Phase 31+ (未实施)
+- 新增 ADR-027
+- ROADMAP Phase 31 标记 mutmut CI 化 ✅ + 双层防护首次拦截 ✅
+- CHANGELOG v2.23.4 节点
+- pyproject version 2.23.3 → 2.23.4
+
+### 当前状态
+- master HEAD: `68de517` (前置, CONTEXT 文档提交)
+- 工作区: clean (除待提交)
+- 累计: 27 ADR / 17 降级规则 / 0 error / 0 warning / 3683 tests / 86.67% 覆盖率
+- on_commit 6/6 ✅ / on_merge 3/3 ✅ / on_pr 11 (含新 mutmut-changed)
+
+---
+
 ## 更新记录: 2026-09-02 03:36:00
 
 ### 任务

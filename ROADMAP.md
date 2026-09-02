@@ -145,9 +145,14 @@
   - 从 .jcode/hooks.json on_merge 移除 update-moc (一直 fail-open)
   - MOC.md 由 docs/MOC.md 人工维护 (374 行)
   - on_merge 现 3 个 hook 全正向验证通过
-- [ ] **mutmut CI 化**: weekly scheduled + on_pr 受影响文件 (ADR-024)
+- [ ] **mutmut CI 化**: ✅ 已落地 (commit: mutmut_ci.sh + hooks.json on_pr 接入, 2026-09-02)
+  - 工具: `bash tools/scripts/mutmut_ci.sh [--changed-only|--files ...]`
+  - 5 分钟超时, 主动清理 .bak + .mutmut-cache
+  - 接入 on_pr 条件触发 `files_contain('tools/scripts/**/*.py') || files_contain('examples/**/*.py')`
 - [ ] **CONTEXT.md 长期 50 条维护**: 接受 on_commit 自动收敛, 手工 commit 偶尔触发 (当前决策)
 - [x] **`check_rules_yml_integrity.sh` 接入 on_merge**: ✅ 已落地 (commit: 见 ADR-025), 与 on_commit 双层防护
+- [x] **Phase 30 双层防护首次主动拦截**: ✅ 真实事件 (ADR-027), session 内 .adg/rules.yml 被覆写后被脚本立即捕获
+- [ ] **覆盖率提升 (<80% 模块)**: 4 个 rules_engine 模块 (regex_cache 78% / rule_loader 77% / semantic_checker 73% / semantic_rules 72%), 大工程待 Phase 31+
 
 ---
 

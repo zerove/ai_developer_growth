@@ -132,6 +132,15 @@
         "description": "PR 时验证测试状态，失败给修正建议",
         "command": "python .jcode/scripts/self-correction-loop.py validate --target . --tests tests",
         "enabled": true
+      },
+      {
+        "name": "mutmut-changed",
+        "skill": "governance-auditor",
+        "action": "mutmut-changed",
+        "description": "PR 时对受影响 Python 文件跑 mutmut 突变测试 (Phase 30 CI 化)",
+        "command": "bash tools/scripts/mutmut_ci.sh --changed-only",
+        "condition": "files_contain('tools/scripts/**/*.py') || files_contain('examples/**/*.py')",
+        "enabled": true
       }
     ],
     "on_merge": [

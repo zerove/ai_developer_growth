@@ -2,6 +2,37 @@
 
 All notable changes to the AI Developer Growth project.
 
+## [2.23.4] - 2026-09-02
+
+### Phase 30 完整收口: mutmut CI 化 + 双层防护首次主动拦截
+
+#### 关键改进
+
+- **新增 `tools/scripts/mutmut_ci.sh`** - CI 友好的 mutmut 入口 (5 分钟超时, 自动清理 .bak)
+  - 模式: 全量 / `--changed-only` (git diff HEAD~1) / `--files F1 F2`
+  - 接入 `.jcode/hooks.json` on_pr (条件触发 tools/scripts/**/*.py 或 examples/**/*.py 改动)
+- **Phase 30 双层防护首次主动拦截** (ADR-027):
+  - session 内 .adg/rules.yml severity_overrides 段被覆盖丢失
+  - `bash tools/scripts/check_rules_yml_integrity.sh` 立即捕获并退出 1
+  - `git checkout HEAD -- .adg/rules.yml` 恢复成功
+  - 真实事件验证 ADR-025 设计有效
+- **新增 ADR-027** 记录首次拦截事件
+- **覆盖率实测** (2026-09-02): 3683 passed in 18m18s, 86.67% (门禁 80%, +6.67%)
+  - 4 个 <80% 模块: regex_cache 78% / rule_loader 77% / semantic_checker 73% / semantic_rules 72%
+- **CONTEXT 维护文档** (docs/governance/context-maintenance.md): 50 条滚动窗口的主动收敛步骤
+
+#### 验证快照
+
+- pytest: **3683 passed in 18m18s** ✅
+- mypy strict: 192 source files Success ✅
+- ruff: clean ✅
+- adg: error 0 / warning 0 ✅
+- check_rules_yml_integrity: 18 规则完整 ✅ (主动拦截验证)
+- check_hooks_json_integrity: ✅
+- mutmut_ci.sh --help: ✅
+
+---
+
 ## [2.23.3] - 2026-09-01
 
 ### Phase 30 收口: hooks.json fail-open 检测 + on_commit 条件接入

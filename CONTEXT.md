@@ -1,3 +1,27 @@
+## 更新记录: 2026-09-03 01:45:00
+
+### 任务
+Phase 32 子任务 2d yaml/merge 覆盖 + ADR-034
+
+### 变更摘要
+- **tests/test_rule_loader_yaml_merge.py** (333 行, 23 测试)
+  - _load_common_rules_cached (5 分支)
+  - _load_universal_rules_cached (4 分支)
+  - _try_load_yaml (3 分支)
+  - _merge_rules (6 分支)
+  - _merge_anti_patterns (5 分支)
+- **真实发现 (ADR-034)**: `_merge_anti_patterns(base, [])` 返回 base 本身
+  (共享引用, 低风险, 待 refactor)
+- 覆盖率: rule_loader.py 24% → **51%** (+27pp, 重大进展)
+- 测试套件: 3725 → **3748** (+23)
+
+### 当前状态
+- master HEAD: `a580fd9` (前置)
+- 工作区: clean
+- 累计: 34 ADR / 17 降级规则 / 3748 tests
+
+---
+
 ## 更新记录: 2026-09-03 00:50:00
 
 ### 任务

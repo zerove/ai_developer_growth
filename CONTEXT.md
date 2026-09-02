@@ -46,6 +46,24 @@ Git 变更同步
 
 ---
 
+## 更新记录: 2026-09-02 08:15:00
+
+### 任务
+pyproject version 同步 CHANGELOG (2.23.0 → 2.23.3)
+
+### 变更摘要
+- **pyproject.toml version 校正**: 2.23.0 → 2.23.3 (CHANGELOG 已发 3 个节点)
+- ROADMAP 治理指标 460 → 509 (前轮)
+- CHANGELOG v2.23.3 节点已对齐版本号
+
+### 当前状态
+- master HEAD: `fade523` (前置)
+- 工作区: clean (除 pyproject.toml)
+- 累计: 26 ADR / 17 降级规则 / 0 error / 0 warning / 3683 tests
+- pyproject version: 2.23.3 ✅ 与 CHANGELOG 对齐
+
+---
+
 ## 更新记录: 2026-09-02 03:36:00
 
 ### 任务

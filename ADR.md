@@ -46,6 +46,7 @@
 | ADR-028 | regex_cache iter_cached 修复 + 覆盖率补测 | 接受 | [docs/adr/ADR-028-regex-cache-test-and-bugfix.md](docs/adr/ADR-028-regex-cache-test-and-bugfix.md) |
 | ADR-029 | Phase 32 rule_loader.py 覆盖率补测规划 | 接受 | [docs/adr/ADR-029-phase-32-rule-loader-plan.md](docs/adr/ADR-029-phase-32-rule-loader-plan.md) |
 | ADR-030 | Phase 32 启动 - rule_loader 子任务分解 | 接受 | [docs/adr/ADR-030-phase-32-subtask-decomposition.md](docs/adr/ADR-030-phase-32-subtask-decomposition.md) |
+| ADR-031 | test_rule_loader_file_hash 权限测试 root 跳过 | 接受 | [docs/adr/ADR-031-test-permission-root-skip.md](docs/adr/ADR-031-test-permission-root-skip.md) |
 
 ---
 

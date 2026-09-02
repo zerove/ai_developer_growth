@@ -45,6 +45,7 @@
 | ADR-027 | Phase 30 双层防护主动拦截 .adg/rules.yml 污染 | 接受 | [docs/adr/ADR-027-phase-30-rules-yml-first-intercept.md](docs/adr/ADR-027-phase-30-rules-yml-first-intercept.md) |
 | ADR-028 | regex_cache iter_cached 修复 + 覆盖率补测 | 接受 | [docs/adr/ADR-028-regex-cache-test-and-bugfix.md](docs/adr/ADR-028-regex-cache-test-and-bugfix.md) |
 | ADR-029 | Phase 32 rule_loader.py 覆盖率补测规划 | 接受 | [docs/adr/ADR-029-phase-32-rule-loader-plan.md](docs/adr/ADR-029-phase-32-rule-loader-plan.md) |
+| ADR-030 | Phase 32 启动 - rule_loader 子任务分解 | 接受 | [docs/adr/ADR-030-phase-32-subtask-decomposition.md](docs/adr/ADR-030-phase-32-subtask-decomposition.md) |
 
 ---
 

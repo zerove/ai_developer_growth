@@ -118,11 +118,20 @@ def cache_stats() -> dict[str, int]:
     }
 
 
-def iter_cached() -> Iterator[tuple[str, int]]:
-    """迭代缓存中的 (pattern, flags) 键（供测试/诊断）。"""
+def iter_cached() -> Iterator[tuple[str, object]]:
+    """迭代缓存中的 (pattern, flags) 键（供测试/诊断）。
+
+    修复 (ADR-028): 当 flags=re.MULTILINE 等 RegexFlag 时, str(flags) 为
+    're.MULTILINE' 等非数字字符串, 旧版 int() 抛 ValueError. 改为兼容
+    str (失败则返回原值)。返回类型由 int 扩展为 int | str。
+    """
     for key in _COMPILED_CACHE:
         pattern, _, flags_str = key.rpartition(":")
-        yield pattern, int(flags_str)
+        try:
+            flags_value: int | str = int(flags_str)
+        except ValueError:
+            flags_value = flags_str
+        yield pattern, flags_value
 
 
 def scan_dangerous_patterns(patterns: list[str]) -> list[tuple[str, bool]]:

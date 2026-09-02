@@ -43,6 +43,7 @@
 | ADR-025 | Phase 30 .adg/rules.yml 完整性 on_merge 双层防护 | 接受 | [docs/adr/ADR-025-phase-30-rules-yml-on-merge.md](docs/adr/ADR-025-phase-30-rules-yml-on-merge.md) |
 | ADR-026 | Phase 30 .jcode/hooks.json fail-open 检测脚本 | 接受 | [docs/adr/ADR-026-phase-30-hooks-json-integrity.md](docs/adr/ADR-026-phase-30-hooks-json-integrity.md) |
 | ADR-027 | Phase 30 双层防护主动拦截 .adg/rules.yml 污染 | 接受 | [docs/adr/ADR-027-phase-30-rules-yml-first-intercept.md](docs/adr/ADR-027-phase-30-rules-yml-first-intercept.md) |
+| ADR-028 | regex_cache iter_cached 修复 + 覆盖率补测 | 接受 | [docs/adr/ADR-028-regex-cache-test-and-bugfix.md](docs/adr/ADR-028-regex-cache-test-and-bugfix.md) |
 
 ---
 

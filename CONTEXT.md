@@ -1,3 +1,23 @@
+## 更新记录: 2026-09-02 23:53:00
+
+### 任务
+Phase 32 子任务 2b disk_cache 覆盖 + ADR-032
+
+### 变更摘要
+- **tests/test_rule_loader_disk_cache.py** (129 行, 8 测试)
+  - _load_disk_cache 5 分支 (无文件/合法 JSON/JSONDecodeError/空文件/OSError)
+  - _save_disk_cache 3 分支 (mkdir+write/覆盖/OSError 兜底)
+- **ADR-032**: mock 设计决策 (monkeypatch 模块级常量)
+- 覆盖率: rule_loader.py 14% → **18%** (+4pp)
+- 测试套件: 3709 → **3717** (+8)
+
+### 当前状态
+- master HEAD: `a34cf5d` (前置)
+- 工作区: clean
+- 累计: 32 ADR / 17 降级规则 / 3717 tests
+
+---
+
 ## 更新记录: 2026-09-02 20:12:00
 
 ### 任务

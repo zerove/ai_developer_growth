@@ -1,3 +1,23 @@
+## 更新记录: 2026-09-03 00:50:00
+
+### 任务
+Phase 32 子任务 2c rules_hash 覆盖 + ADR-033
+
+### 变更摘要
+- **tests/test_rule_loader_rules_hash.py** (164 行, 8 测试)
+  - _rules_hash_cached 6 分支 (多文件/缺失/单文件/OSError/LRU hit/LRU miss)
+  - _rules_hash 2 分支 (默认 + 显式 framework_dir)
+- **ADR-033**: mock 设计 + **关键 Python 陷阱** (from X import Y 形成绑定, mock 模块属性而非导入路径)
+- 覆盖率: rule_loader.py 18% → **24%** (+6pp)
+- 测试套件: 3717 → **3725** (+8)
+
+### 当前状态
+- master HEAD: `0c30292` (前置)
+- 工作区: clean
+- 累计: 33 ADR / 17 降级规则 / 3725 tests
+
+---
+
 ## 更新记录: 2026-09-02 23:53:00
 
 ### 任务

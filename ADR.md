@@ -48,6 +48,7 @@
 | ADR-030 | Phase 32 启动 - rule_loader 子任务分解 | 接受 | [docs/adr/ADR-030-phase-32-subtask-decomposition.md](docs/adr/ADR-030-phase-32-subtask-decomposition.md) |
 | ADR-031 | test_rule_loader_file_hash 权限测试 root 跳过 | 接受 | [docs/adr/ADR-031-test-permission-root-skip.md](docs/adr/ADR-031-test-permission-root-skip.md) |
 | ADR-032 | Phase 32 子任务 2b disk_cache mock 设计 | 接受 | [docs/adr/ADR-032-disk-cache-mock-design.md](docs/adr/ADR-032-disk-cache-mock-design.md) |
+| ADR-033 | Phase 32 子任务 2c rules_hash mock 设计 | 接受 | [docs/adr/ADR-033-rules-hash-mock-design.md](docs/adr/ADR-033-rules-hash-mock-design.md) |
 
 ---
 

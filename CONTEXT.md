@@ -1,3 +1,24 @@
+## 更新记录: 2026-09-02 16:38:00
+
+### 任务
+后续开发规划 + ADR-029 Phase 32 规划
+
+### 变更摘要
+- **优化后计划**: Phase 32 (rule_loader) / Phase 33 (semantic_*) / Phase 34 (集成测试) / Phase 35 (例行维护)
+- **ADR-029**: Phase 32 rule_loader.py 覆盖率补测规划 (274 行, 4-6h 工作量, session 已饱和)
+  - 列未覆盖分支清单 + 推荐测试结构
+  - 预期: rule_loader 77% → 95%+, 总 86.67% → 88%+
+- **ROADMAP 更新**: regex_cache ✅ 标记完成 + rule_loader 标 Phase 32 起点
+- **主动停止**: 不在本会话实施 rule_loader (大工程风险高于价值)
+- CONTEXT 56 → 50 条
+
+### 当前状态
+- master HEAD: `8b66ffc` (前置)
+- 工作区: clean (除待提交)
+- 累计: 29 ADR / 17 降级规则 / 0 error / 0 warning / 3703 tests / regex_cache 100%
+
+---
+
 ## 更新记录: 2026-09-02 03:58:00
 
 ### 任务

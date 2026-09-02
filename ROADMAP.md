@@ -152,7 +152,10 @@
 - [ ] **CONTEXT.md 长期 50 条维护**: 接受 on_commit 自动收敛, 手工 commit 偶尔触发 (当前决策)
 - [x] **`check_rules_yml_integrity.sh` 接入 on_merge**: ✅ 已落地 (commit: 见 ADR-025), 与 on_commit 双层防护
 - [x] **Phase 30 双层防护首次主动拦截**: ✅ 真实事件 (ADR-027), session 内 .adg/rules.yml 被覆写后被脚本立即捕获
-- [ ] **覆盖率提升 (<80% 模块)**: 4 个 rules_engine 模块 (regex_cache 78% / rule_loader 77% / semantic_checker 73% / semantic_rules 72%), 大工程待 Phase 31+
+- [ ] **覆盖率提升 (<80% 模块)**: 4 个 rules_engine 模块 (regex_cache 78% / rule_loader 77% / semantic_checker 73% / semantic_rules 72%), 大工程
+  - [x] regex_cache 78% → **100%** (commit: f335133, ADR-028) + 修 iter_cached bug
+  - [ ] **rule_loader 77%** → Phase 32 起点 (ADR-029 规划中, 工作量 4-6h, 下次会话启动)
+  - [ ] semantic_checker 73% / semantic_rules 72% → Phase 33 (下周)
 
 ---
 

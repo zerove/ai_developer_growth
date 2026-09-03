@@ -36,6 +36,26 @@ Git 变更同步
 
 ---
 
+## 更新记录: 2026-09-03 15:11:00
+
+### 任务
+B 深度二次分析 + setup.cfg 配置冲突修复
+
+### 变更摘要
+- **真实发现 (ADR-037)**: setup.cfg 与 pyproject.toml mutmut 配置冲突
+  - `source_paths` (mutmut 1.x) vs `paths_to_mutate` (mutmut 2.x)
+  - setup.cfg runner 引用 2 个不存在的测试文件
+- 删除 setup.cfg, 单一 pyproject.toml 配置源
+- 实测 mutmut run 跑通 (demo)
+- 无 .bak 残留
+
+### 当前状态
+- master HEAD: `0715d29` (前置)
+- 工作区: clean
+- 累计: 37 ADR / 17 降级规则 / 3771 tests
+
+---
+
 ## 更新记录: 2026-09-03 10:40:00
 
 ### 任务

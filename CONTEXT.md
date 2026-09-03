@@ -1,3 +1,21 @@
+## 更新记录: 2026-09-03 08:34:00
+
+### 任务
+session 收尾: mypy 警告注释 + CONTEXT 收敛
+
+### 变更摘要
+- **pyproject.toml 注释** (3 行): 说明 pygls overrides 段的 mypy 警告来源
+ (pygls 是可选依赖, 未安装时 mypy 报 unused section, 但删了会引入 mypy 错误)
+- **CONTEXT 主动收敛**: 60+ → 50 条
+- 主动停止: session 拒绝"自动"启动 2e (避免延伸)
+
+### 当前状态
+- master HEAD: `39bd7ad` (前置)
+- 工作区: clean (除待提交)
+- 累计: 34 ADR / 17 降级规则 / 3748 tests / rule_loader.py 51% 覆盖
+
+---
+
 ## 更新记录: 2026-09-03 01:45:00
 
 ### 任务

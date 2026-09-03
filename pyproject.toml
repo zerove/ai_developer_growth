@@ -99,6 +99,9 @@ warn_unused_ignores = true
 show_error_codes = true
 
 # 模块级覆盖（合并自原 mypy.ini）
+# pygls 是 lsp_server.py 的可选依赖 (Requires: pip install lsprotocol pygls)
+# ignore_missing_imports 防止未安装时 mypy 检查失败
+# mypy 警告 "unused section(s)" 是因为 pygls 未安装, 不是配置错误
 [[tool.mypy.overrides]]
 module = ["pygls.*"]
 ignore_missing_imports = true

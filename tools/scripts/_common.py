@@ -28,6 +28,7 @@ Usage:
 
 from __future__ import annotations
 
+import argparse
 import hashlib
 import os
 import subprocess
@@ -83,6 +84,25 @@ def rules_dir() -> Path:
 def framework_dir() -> Path:
     """Alias for rules_dir (used by marketplace)."""
     return rules_dir()
+
+
+# ----------------------------------------------------------
+# Argument helpers
+# ----------------------------------------------------------
+
+
+def discover_languages(args: argparse.Namespace) -> list[str]:
+    """Discover languages to process based on args.
+
+    Public version of `_discover_languages` from validate_rule_tests.py +
+    generate_fixes.py. Both files used identical 5-line implementations.
+    """
+    if args.all:
+        langs_dir = rules_dir() / "languages"
+        return sorted(
+            d.name for d in langs_dir.iterdir() if d.is_dir() and (d / "rules.d").exists()
+        )
+    return [args.lang]
 
 
 # ----------------------------------------------------------

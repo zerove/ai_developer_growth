@@ -1,3 +1,64 @@
+## 更新记录: 2026-09-04 01:12:21
+
+### 任务
+Git 变更同步
+
+### 变更摘要
+- 变更文件 6 个 (+229 / -129 行)
+  - ADR.md
+  - CONTEXT.md
+  - docs/adr/ADR-038-optimization-scan.md
+  - tools/scripts/_common.py
+  - tools/scripts/generate_fixes.py
+  - tools/scripts/validate_rule_tests.py
+
+---
+
+## 更新记录: 2026-09-04 01:12:20
+
+### 任务
+Git 变更同步
+
+### 变更摘要
+- 变更文件 6 个 (+213 / -116 行)
+  - ADR.md
+  - CONTEXT.md
+  - docs/adr/ADR-038-optimization-scan.md
+  - tools/scripts/_common.py
+  - tools/scripts/generate_fixes.py
+  - tools/scripts/validate_rule_tests.py
+
+---
+
+## 更新记录: 2026-09-04 01:12:19
+
+### 任务
+Git 变更同步
+
+### 变更摘要
+- 变更文件 6 个 (+198 / -103 行)
+  - ADR.md
+  - CONTEXT.md
+  - docs/adr/ADR-038-optimization-scan.md
+  - tools/scripts/_common.py
+  - tools/scripts/generate_fixes.py
+  - tools/scripts/validate_rule_tests.py
+
+---
+
+## 更新记录: 2026-09-03 20:59:19
+
+### 任务
+Git 变更同步
+
+### 变更摘要
+- 变更文件 3 个 (+157 / -0 行)
+  - ADR.md
+  - CONTEXT.md
+  - docs/adr/ADR-038-optimization-scan.md
+
+---
+
 ## 更新记录: 2026-09-03 10:49:29
 
 ### 任务
@@ -33,6 +94,29 @@ Git 变更同步
   - tests/test_rule_loader_public_api.py
   - tests/test_rule_loader_yaml_merge.py
   - tools/scripts/rules_engine/rule_loader.py
+
+---
+
+## 更新记录: 2026-09-04 01:11:00
+
+### 任务
+Phase 33a-1 (semantic_checker 纯函数) + Phase 34 (_discover_languages 抽取)
+
+### 变更摘要
+- **Phase 33a-1**: tests/test_semantic_checker_pure.py (155 行, 12 测试)
+  - _check_from_import / _check_module_import / ImportGraph.add_edge 全覆盖
+  - 12/12 passed in 1.19s
+- **Phase 34**: 抽 _discover_languages → _common.py::discover_languages
+  - 2 处 100% 相同 → 1 个公共函数 + 2 个 back-compat shim
+  - ruff --fix 自动修排序
+- **测试套件**: 3703 → 3715 (+12 semantic_checker)
+- ADR-039 + ADR.md 索引更新
+- ADR 累计 40 条
+
+### 当前状态
+- master HEAD: `bdd3b83` (前置)
+- 工作区: 待提交
+- 累计: 40 ADR / 17 降级规则 / 3715 tests
 
 ---
 
@@ -959,143 +1043,6 @@ Git 变更同步
   - CONTEXT.md
   - pyproject.toml
   - uv.lock
-
----
-
-## 更新记录: 2026-08-28 10:44:55
-
-### 任务
-Git 变更同步
-
-### 变更摘要
-- 变更文件 5 个 (+62 / -37 行)
-  - CHANGELOG.md
-  - CONTEXT.md
-  - docs/governance/project-analysis-and-roadmap-2026-08.md
-  - pyproject.toml
-  - uv.lock
-
----
-
-## 更新记录: 2026-08-28 10:41:51
-
-### 任务
-Git 变更同步
-
-### 变更摘要
-- 变更文件 4 个 (+47 / -24 行)
-  - CHANGELOG.md
-  - CONTEXT.md
-  - docs/governance/project-analysis-and-roadmap-2026-08.md
-  - pyproject.toml
-
----
-
-## 更新记录: 2026-08-28 02:07:23
-
-### 任务
-Git 变更同步
-
-### 变更摘要
-- 变更文件 5 个 (+68 / -27 行)
-  - CHANGELOG.md
-  - CONTEXT.md
-  - docs/governance/project-analysis-and-roadmap-2026-08.md
-  - pyproject.toml
-  - uv.lock
-
----
-
-## 更新记录: 2026-08-27 22:21:31
-
-### 任务
-Git 变更同步
-
-### 变更摘要
-- 变更文件 38 个 (+115 / -74 行)
-  - CHANGELOG.md
-  - CONTEXT.md
-  - docs/agent-dev/agent-prompt-template.md
-  - docs/agent-dev/context-management.md
-  - docs/agent-dev/prompt-standards.md
-  - docs/agent-dev/quality-checklist.md
-  - docs/agent-dev/quality-gates.md
-  - docs/agent-dev/workflow-standards.md
-  - docs/efficiency/ai-code-performance.md
-  - docs/efficiency/ai-security-review.md
-  - docs/efficiency/anti-patterns.md
-  - docs/efficiency/api-design-guide.md
-  - docs/efficiency/auto-documentation.md
-  - docs/efficiency/automated-bug-fixing.md
-  - docs/efficiency/automated-bugfix.md
-  - docs/efficiency/ci-cd-workflow.md
-  - docs/efficiency/code-review-guide.md
-  - docs/efficiency/context-engineering.md
-  - docs/efficiency/debugging-workflow.md
-  - docs/efficiency/developer-community.md
-  - ... 等共 38 个文件
-
----
-
-## 更新记录: 2026-08-27 22:19:26
-
-### 任务
-Git 变更同步
-
-### 变更摘要
-- 变更文件 38 个 (+107 / -74 行)
-  - CHANGELOG.md
-  - CONTEXT.md
-  - docs/agent-dev/agent-prompt-template.md
-  - docs/agent-dev/context-management.md
-  - docs/agent-dev/prompt-standards.md
-  - docs/agent-dev/quality-checklist.md
-  - docs/agent-dev/quality-gates.md
-  - docs/agent-dev/workflow-standards.md
-  - docs/efficiency/ai-code-performance.md
-  - docs/efficiency/ai-security-review.md
-  - docs/efficiency/anti-patterns.md
-  - docs/efficiency/api-design-guide.md
-  - docs/efficiency/auto-documentation.md
-  - docs/efficiency/automated-bug-fixing.md
-  - docs/efficiency/automated-bugfix.md
-  - docs/efficiency/ci-cd-workflow.md
-  - docs/efficiency/code-review-guide.md
-  - docs/efficiency/context-engineering.md
-  - docs/efficiency/debugging-workflow.md
-  - docs/efficiency/developer-community.md
-  - ... 等共 38 个文件
-
----
-
-## 更新记录: 2026-08-27 21:29:59
-
-### 任务
-Git 变更同步
-
-### 变更摘要
-- 变更文件 21 个 (+87 / -52 行)
-  - CHANGELOG.md
-  - CONTEXT.md
-  - docs/efficiency/ai-code-generation-quality.md
-  - docs/efficiency/ai-code-licensing.md
-  - docs/efficiency/ai-code-review-checklist.md
-  - docs/efficiency/ai-context-window-management.md
-  - docs/efficiency/ai-debugging-standards.md
-  - docs/efficiency/ai-deployment-operations.md
-  - docs/efficiency/ai-dev-environment.md
-  - docs/efficiency/ai-dev-toolchain.md
-  - docs/efficiency/ai-developer-training.md
-  - docs/efficiency/ai-hallucination-mitigation.md
-  - docs/efficiency/ai-model-selection.md
-  - docs/efficiency/ai-nondeterministic-testing.md
-  - docs/efficiency/ai-performance-benchmarks.md
-  - docs/efficiency/ai-sdlc.md
-  - docs/efficiency/ai-version-control.md
-  - docs/efficiency/governance-framework.md
-  - docs/governance/project-analysis-and-roadmap-2026-08.md
-  - pyproject.toml
-  - ... 等共 21 个文件
 
 ---
 

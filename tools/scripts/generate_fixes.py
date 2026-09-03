@@ -19,7 +19,7 @@ from typing import Any
 
 import yaml
 
-from tools.scripts._common import handle_error
+from tools.scripts._common import discover_languages, handle_error
 from tools.scripts._common import rules_dir as _rules_dir
 from tools.scripts.fix_heuristics import (
     HEURISTIC_FIXES,  # noqa: F401 - re-export for tests
@@ -135,11 +135,8 @@ def _apply_fixes_to_file(filepath: str, file_fixes: list[dict[str, Any]]) -> int
 
 
 def _discover_languages(args: argparse.Namespace) -> list[str]:
-    """Discover languages to process based on args."""
-    if args.all:
-        langs_dir = _rules_dir() / "languages"
-        return sorted(d.name for d in langs_dir.iterdir() if d.is_dir() and (d / "rules.d").exists())
-    return [args.lang]
+    """Backwards-compat shim → discover_languages in _common (Phase 34 抽取)."""
+    return discover_languages(args)
 
 
 def _print_results(fixes: list[dict[str, Any]], args: argparse.Namespace) -> None:

@@ -25,7 +25,7 @@ from typing import Any
 
 import yaml
 
-from tools.scripts._common import handle_error
+from tools.scripts._common import discover_languages, handle_error
 from tools.scripts._common import rules_dir as _rules_dir
 
 
@@ -107,11 +107,8 @@ def validate_rule_tests(lang: str) -> tuple[int, int, list[str]]:
 
 
 def _discover_languages(args: argparse.Namespace) -> list[str]:
-    """Discover languages to test based on args."""
-    if args.all:
-        langs_dir = _rules_dir() / "languages"
-        return sorted(d.name for d in langs_dir.iterdir() if d.is_dir() and (d / "rules.d").exists())
-    return [args.lang]
+    """Backwards-compat shim → discover_languages in _common (Phase 34 抽取)."""
+    return discover_languages(args)
 
 
 def _run_language_validation(lang: str) -> tuple[int, int, list[str]]:

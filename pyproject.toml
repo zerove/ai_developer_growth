@@ -45,14 +45,8 @@ tools = [
 include = ["tools*"]
 exclude = ["tests*", "examples*", "docs*"]
 
-[tool.pytest.ini_options]
-testpaths = ["tests"]
-python_files = ["test_*.py"]
-python_classes = ["Test*"]
-python_functions = ["test_*"]
-
-# Example projects have their own test configurations in their respective pyproject.toml
-# Run tests from each example's directory: cd examples/<project> && python -m pytest tests/
+# pytest 配置统一在 pytest.ini 中维护, 此段保留为空以避免 setuptools 警告
+# (避免 pyproject + pytest.ini 重复导致 pytest WARNING "ignoring pytest config in pyproject.toml!")
 
 [tool.ruff]
 line-length = 120

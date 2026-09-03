@@ -1,3 +1,29 @@
+## 更新记录: 2026-09-03 08:43:00
+
+### 任务
+处理所有已规划但未实施的任务 (Phase 33 refactor + pytest.ini 简化 + Phase 32 子任务 2e)
+
+### 变更摘要
+- **Phase 33 refactor** (ADR-034): `_merge_anti_patterns(base, [])` 返回 `list(base)` 副本 (不共享引用)
+- **pytest.ini 简化**: 删除 pyproject.toml 重复 pytest 配置,消除 WARNING
+- **Phase 32 子任务 2e 公开 API 覆盖** (ADR-035):
+ - `load_rules` 6 测试 (cache hit/miss/disk cache/generated/etc)
+ - `load_custom_rules` 3 测试 (3 源合并)
+ - `load_rules_for_language` 2 测试 (别名)
+ - `load_domain_rules` 3 测试 (config + 加载 + 兜底)
+ - `_load_generated_rules` + `_load_common_rules` + `_load_universal_rules` 内部 helper
+- **覆盖率突破**: rule_loader.py 51% → **81.28%** (跨过 80% 门禁)
+- 测试套件: 3748 → **3771** (+23)
+- 修复 1 个真实低风险 bug (共享引用)
+
+### 当前状态
+- master HEAD: `a5145a4` (前置)
+- 工作区: clean (除待提交)
+- 累计: 35 ADR / 17 降级规则 / 3771 tests / **rule_loader.py 81.28%** / 总 86.67%
+- **Phase 32 完整收口** (5/5 子任务全部完成) ✅
+
+---
+
 ## 更新记录: 2026-09-03 08:34:00
 
 ### 任务

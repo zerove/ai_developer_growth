@@ -348,9 +348,13 @@ def _load_single_custom_file(rule_file: Path, custom: dict[str, Any]) -> None:
 def _merge_anti_patterns(
     base_patterns: list[dict[str, Any]], custom_patterns: list[dict[str, Any]]
 ) -> list[dict[str, Any]]:
-    """Merge anti-patterns: custom overrides by ID, then appends new ones."""
+    """Merge anti-patterns: custom overrides by ID, then appends new ones.
+
+    Returns a NEW list (不与 base_patterns 共享引用), 避免修改返回值时影响原 base.
+    详见 ADR-034 Phase 33 refactor.
+    """
     if not custom_patterns:
-        return base_patterns
+        return list(base_patterns)  # 返回副本而非 base_patterns 本身
 
     base_ids = {p["id"] for p in base_patterns}
     overridden = []

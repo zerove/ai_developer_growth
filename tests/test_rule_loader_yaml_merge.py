@@ -298,18 +298,21 @@ class TestMergeRules:
 class TestMergeAntiPatterns:
     """_merge_anti_patterns() ID 覆盖 + severity_override + 追加新。"""
 
-    def test_empty_custom_returns_base_equivalent(self) -> None:
-        """custom 是 [] → 返回等价于 base 的 list。
+    def test_empty_custom_returns_base_copy(self) -> None:
+        """custom 是 [] → 返回 base 的副本 (不共享引用)。
 
-        **真实发现 (ADR-034)**: `_merge_anti_patterns(base, [])` 返回
-        与 base **同一 list 对象** (Python `base + []` 对空 list 优化),
-        导致共享引用。修改 result 会影响 base, 是潜在风险但小。
+        Phase 33 refactor (ADR-034): 修复前 `_merge_anti_patterns(base, [])`
+        返回 base 本身 (共享引用, 修改 result 影响 base)。
+        修复后返回 base 副本。
         """
         base = [{"id": "a"}]
         result = _merge_anti_patterns(base, [])
         assert result == [{"id": "a"}]
-        # 验证: 实现返回 base 本身 (真实行为)
-        assert result is base
+        # 验证是副本 (新 list, 不共享引用)
+        assert result is not base
+        # 验证修改 result 不影响 base
+        result.append({"id": "z"})
+        assert base == [{"id": "a"}]
 
     def test_override_existing_id_full_replacement(self) -> None:
         """custom 含 base 已有的 id → 全替换。"""

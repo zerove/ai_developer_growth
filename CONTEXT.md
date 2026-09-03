@@ -1,3 +1,61 @@
+## 更新记录: 2026-09-03 10:49:29
+
+### 任务
+Git 变更同步
+
+### 变更摘要
+- 变更文件 9 个 (+495 / -273 行)
+  - ADR.md
+  - CHANGELOG.md
+  - CONTEXT.md
+  - ROADMAP.md
+  - docs/adr/ADR-035-public-api-actual-mapping.md
+  - pyproject.toml
+  - tests/test_rule_loader_public_api.py
+  - tests/test_rule_loader_yaml_merge.py
+  - tools/scripts/rules_engine/rule_loader.py
+
+---
+
+## 更新记录: 2026-09-03 10:49:28
+
+### 任务
+Git 变更同步
+
+### 变更摘要
+- 变更文件 9 个 (+475 / -22 行)
+  - ADR.md
+  - CHANGELOG.md
+  - CONTEXT.md
+  - ROADMAP.md
+  - docs/adr/ADR-035-public-api-actual-mapping.md
+  - pyproject.toml
+  - tests/test_rule_loader_public_api.py
+  - tests/test_rule_loader_yaml_merge.py
+  - tools/scripts/rules_engine/rule_loader.py
+
+---
+
+## 更新记录: 2026-09-03 10:40:00
+
+### 任务
+全面状态分析 + 文档同步 (CHANGELOG / pyproject / ROADMAP)
+
+### 变更摘要
+- **CHANGELOG v2.23.5**: Phase 32 完整收口节点 (5 子任务 + ADR-031~035)
+- **pyproject version**: 2.23.4 → **2.23.5** (与 CHANGELOG 对齐)
+- **ROADMAP**: Phase 32 标 ✅ 完成 (regex_cache 100% + rule_loader 81.28%)
+- **CONTEXT**: 63 → 50 条 (第七次主动收敛)
+- 剩余: semantic_checker / semantic_rules (标 Phase 33 下次会话)
+
+### 当前状态
+- master HEAD: `c06ae70` (前置)
+- 工作区: clean (除待提交)
+- 累计: 35 ADR / 17 降级规则 / 3771 tests / 86.67% 覆盖率
+- **Phase 32 完整收口** ✅
+
+---
+
 ## 更新记录: 2026-09-03 08:43:00
 
 ### 任务
@@ -996,302 +1054,6 @@ Git 变更同步
   - docs/governance/project-analysis-and-roadmap-2026-08.md
   - pyproject.toml
   - ... 等共 21 个文件
-
----
-
-## 更新记录: 2026-08-27 21:15:00
-
-### 任务
-Git 变更同步
-
-### 变更摘要
-- 变更文件 21 个 (+72 / -52 行)
-  - CHANGELOG.md
-  - CONTEXT.md
-  - docs/efficiency/ai-code-generation-quality.md
-  - docs/efficiency/ai-code-licensing.md
-  - docs/efficiency/ai-code-review-checklist.md
-  - docs/efficiency/ai-context-window-management.md
-  - docs/efficiency/ai-debugging-standards.md
-  - docs/efficiency/ai-deployment-operations.md
-  - docs/efficiency/ai-dev-environment.md
-  - docs/efficiency/ai-dev-toolchain.md
-  - docs/efficiency/ai-developer-training.md
-  - docs/efficiency/ai-hallucination-mitigation.md
-  - docs/efficiency/ai-model-selection.md
-  - docs/efficiency/ai-nondeterministic-testing.md
-  - docs/efficiency/ai-performance-benchmarks.md
-  - docs/efficiency/ai-sdlc.md
-  - docs/efficiency/ai-version-control.md
-  - docs/efficiency/governance-framework.md
-  - docs/governance/project-analysis-and-roadmap-2026-08.md
-  - pyproject.toml
-  - ... 等共 21 个文件
-
----
-
-## 更新记录: 2026-08-27 20:35:39
-
-### 任务
-Git 变更同步
-
-### 变更摘要
-- 变更文件 6 个 (+49 / -22 行)
-  - .gitignore
-  - .jcode/scripts/jcode-init.py
-  - CHANGELOG.md
-  - CONTEXT.md
-  - pyproject.toml
-  - uv.lock
-
----
-
-## 更新记录: 2026-08-27 20:33:16
-
-### 任务
-Git 变更同步
-
-### 变更摘要
-- 变更文件 6 个 (+68 / -22 行)
-  - .gitignore
-  - .jcode/scripts/jcode-init.py
-  - CHANGELOG.md
-  - CONTEXT.md
-  - pyproject.toml
-  - uv.lock
-
----
-
-## 更新记录: 2026-08-27 19:18:52
-
-### 任务
-Git 变更同步
-
-### 变更摘要
-- 变更文件 6 个 (+98 / -25 行)
-  - CHANGELOG.md
-  - CONTEXT.md
-  - docs/guides/multi-language-guide.md
-  - pyproject.toml
-  - tools/scripts/jcode_cli.py
-  - uv.lock
-
----
-
-## 更新记录: 2026-08-27 19:15:44
-
-### 任务
-Git 变更同步
-
-### 变更摘要
-- 变更文件 6 个 (+86 / -25 行)
-  - CHANGELOG.md
-  - CONTEXT.md
-  - docs/guides/multi-language-guide.md
-  - pyproject.toml
-  - tools/scripts/jcode_cli.py
-  - uv.lock
-
----
-
-## 更新记录: 2026-08-27 17:01:24
-
-### 任务
-Git 变更同步
-
-### 变更摘要
-- 变更文件 5 个 (+52 / -21 行)
-  - CHANGELOG.md
-  - CONTEXT.md
-  - Makefile.release
-  - pyproject.toml
-  - uv.lock
-
----
-
-## 更新记录: 2026-08-27 16:57:38
-
-### 任务
-Git 变更同步
-
-### 变更摘要
-- 变更文件 5 个 (+79 / -35 行)
-  - CHANGELOG.md
-  - CONTEXT.md
-  - Makefile.release
-  - pyproject.toml
-  - uv.lock
-
----
-
-## 更新记录: 2026-08-27 16:46:29
-
-### 任务
-Git 变更同步
-
-### 变更摘要
-- 变更文件 8 个 (+78 / -534 行)
-  - .jcode/scripts/multi_agent_orch.py
-  - AGENTS.md
-  - CHANGELOG.md
-  - CONTEXT.md
-  - docs/adr/003-sys-path-shadowing.md
-  - pyproject.toml
-  - tools/scripts/jcode_ai_native_workflow.py
-  - uv.lock
-
----
-
-## 更新记录: 2026-08-27 16:44:58
-
-### 任务
-Git 变更同步
-
-### 变更摘要
-- 变更文件 7 个 (+60 / -519 行)
-  - .jcode/scripts/multi_agent_orch.py
-  - AGENTS.md
-  - CHANGELOG.md
-  - CONTEXT.md
-  - docs/adr/003-sys-path-shadowing.md
-  - pyproject.toml
-  - tools/scripts/jcode_ai_native_workflow.py
-
----
-
-## 更新记录: 2026-08-27 16:42:54
-
-### 任务
-Git 变更同步
-
-### 变更摘要
-- 变更文件 9 个 (+77 / -532 行)
-  - .jcode/baseline.json
-  - .jcode/scripts/multi_agent_orch.py
-  - AGENTS.md
-  - CHANGELOG.md
-  - CONTEXT.md
-  - docs/adr/003-sys-path-shadowing.md
-  - pyproject.toml
-  - tools/scripts/jcode_ai_native_workflow.py
-  - uv.lock
-
----
-
-## 更新记录: 2026-08-27 14:14:11
-
-### 任务
-Git 变更同步
-
-### 变更摘要
-- 变更文件 5 个 (+53 / -16 行)
-  - .jcode/baseline.json
-  - CHANGELOG.md
-  - CONTEXT.md
-  - pyproject.toml
-  - uv.lock
-
----
-
-## 更新记录: 2026-08-27 13:59:48
-
-### 任务
-Git 变更同步
-
-### 变更摘要
-- 变更文件 9 个 (+788 / -860 行)
-  - .jcode/baseline.json
-  - .jcode/scripts/self-correction-loop.py
-  - .jcode/scripts/self_correction_loop.py
-  - AGENTS.md
-  - CHANGELOG.md
-  - CONTEXT.md
-  - agents/self-correction-loop.md
-  - pyproject.toml
-  - uv.lock
-
----
-
-## 更新记录: 2026-08-27 13:58:25
-
-### 任务
-Git 变更同步
-
-### 变更摘要
-- 变更文件 9 个 (+777 / -848 行)
-  - .jcode/baseline.json
-  - .jcode/scripts/self-correction-loop.py
-  - .jcode/scripts/self_correction_loop.py
-  - AGENTS.md
-  - CHANGELOG.md
-  - CONTEXT.md
-  - agents/self-correction-loop.md
-  - pyproject.toml
-  - uv.lock
-
----
-
-## 更新记录: 2026-08-27 13:57:09
-
-### 任务
-Git 变更同步
-
-### 变更摘要
-- 变更文件 7 个 (+759 / -835 行)
-  - .jcode/baseline.json
-  - .jcode/scripts/self-correction-loop.py
-  - .jcode/scripts/self_correction_loop.py
-  - AGENTS.md
-  - CHANGELOG.md
-  - agents/self-correction-loop.md
-  - pyproject.toml
-
----
-
-## 更新记录: 2026-08-27 11:10:47
-
-### 任务
-Git 变更同步
-
-### 变更摘要
-- 变更文件 34 个 (+2390 / -1214 行)
-  - CONTEXT.md
-  - Makefile
-  - docs/adr/003-sys-path-shadowing.md
-  - docs/adr/004-config-toml-resilience.md
-  - tests/test_adg_bootstrap_unit.py
-  - tests/test_adg_cmd_integration.py
-  - tests/test_context_status.py
-  - tests/test_cov_tool.py
-  - tools/scripts/adg_cli/commands/__init__.py
-  - tools/scripts/adg_cli/commands/cmd/__init__.py
-  - tools/scripts/adg_cli/commands/cmd/_cmd_rule_create.py
-  - tools/scripts/adg_cli/commands/cmd/_cmd_rule_test.py
-  - tools/scripts/adg_cli/commands/cmd/_cmd_rule_validate.py
-  - tools/scripts/adg_cli/commands/cmd/_shared.py
-  - tools/scripts/adg_cli/commands/cmd/cmd_bench.py
-  - tools/scripts/adg_cli/commands/cmd/cmd_check.py
-  - tools/scripts/adg_cli/commands/cmd/cmd_cicd.py
-  - tools/scripts/adg_cli/commands/cmd/cmd_dashboard.py
-  - tools/scripts/adg_cli/commands/cmd/cmd_detect.py
-  - tools/scripts/adg_cli/commands/cmd/cmd_fix.py
-  - ... 等共 34 个文件
-
----
-
-## 更新记录: 2026-08-27 07:26:13
-
-### 任务
-Git 变更同步
-
-### 变更摘要
-- 变更文件 6 个 (+904 / -200 行)
-  - CONTEXT.md
-  - Makefile
-  - tests/test_cov_tool.py
-  - tests/test_jcode_cli.py
-  - tools/scripts/cov_tool.py
-  - tools/scripts/jcode_cli.py
 
 ---
 

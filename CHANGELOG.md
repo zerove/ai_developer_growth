@@ -2,6 +2,43 @@
 
 All notable changes to the AI Developer Growth project.
 
+## [2.23.5] - 2026-09-03
+
+### Phase 32 完整收口: rule_loader.py 81.28% 覆盖率 (跨过 80% 门禁)
+
+#### 关键改进
+
+- **Phase 32 子任务 2a** (`_file_hash`): 6 测试 (commit: a34cf5d)
+- **Phase 32 子任务 2b** (`_disk_cache` + `_save_disk_cache`): 8 测试, monkeypatch 模块级常量 (commit: 0c30292)
+- **Phase 32 子任务 2c** (`_rules_hash_cached` + `_rules_hash`): 8 测试, LRU cache (commit: a580fd9)
+- **Phase 32 子任务 2d** (yaml 加载 + merge): 23 测试, 覆盖 5 函数 (commit: 39bd7ad)
+- **Phase 32 子任务 2e** (公开 API): 17 测试, 覆盖 load_rules/load_custom_rules/load_rules_for_language/load_domain_rules (commit: c06ae70)
+- **Phase 33 refactor**: 修复 `_merge_anti_patterns(base, [])` 共享引用 bug, 返回 list(base) 副本
+- **pytest.ini 简化**: 删除 pyproject.toml 重复 pytest 配置, 消除 pytest WARNING
+
+#### ADR 累计 (Phase 32)
+
+- ADR-031: 权限测试 root 跳过 (CAP_DAC_OVERRIDE)
+- ADR-032: disk_cache monkeypatch 设计
+- ADR-033: rules_hash mock 关键 Python 陷阱 (from X import Y 形成绑定)
+- ADR-034: yaml/merge 共享引用发现
+- ADR-035: 公开 API 实际函数名调研 (修正 ADR-030 错误假设)
+
+#### 验证快照
+
+- pytest: **3771 passed** ✅ (3748 → 3771, +23)
+- ruff: clean ✅
+- mypy strict: 192 source files Success ✅
+- adg: error 0 / warning 0 ✅
+- **rule_loader.py 覆盖率: 51% → 81.28%** ✅ (跨过 80% 门禁)
+- 总覆盖率: 86.67%
+
+#### Phase 32 完整收口
+
+rule_loader.py 5 个子任务全部完成 (2a/2b/2c/2d/2e), 覆盖率从初始 14% 提升至 81.28%。
+
+---
+
 ## [2.23.4] - 2026-09-02
 
 ### Phase 30 完整收口: mutmut CI 化 + 双层防护首次主动拦截

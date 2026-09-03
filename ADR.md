@@ -53,6 +53,7 @@
 | ADR-035 | Phase 32 子任务 2e 实际公开 API 调研 | 接受 | [docs/adr/ADR-035-public-api-actual-mapping.md](docs/adr/ADR-035-public-api-actual-mapping.md) |
 | ADR-036 | Phase 33 启动规划 - semantic_checker/semantic_rules | 接受 | [docs/adr/ADR-036-phase-33-planning.md](docs/adr/ADR-036-phase-33-planning.md) |
 | ADR-037 | setup.cfg 与 pyproject.toml mutmut 配置冲突修复 | 接受 | [docs/adr/ADR-037-setup-cfg-removal.md](docs/adr/ADR-037-setup-cfg-removal.md) |
+| ADR-038 | 项目可优化内容分析 (全面扫描) | 接受 | [docs/adr/ADR-038-optimization-scan.md](docs/adr/ADR-038-optimization-scan.md) |
 
 ---
 

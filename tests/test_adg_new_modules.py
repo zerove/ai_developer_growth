@@ -461,7 +461,12 @@ class TestNewCliCommands:
     def test_marketplace_install(self, workspace):
         from tools.scripts.adg_cli import cmd_marketplace
 
-        args = argparse.Namespace(marketplace_command="install", pack_id="security-essentials", lang=None)
+        args = argparse.Namespace(
+            marketplace_command="install",
+            pack_id="security-essentials",
+            lang=None,
+            path=str(workspace),  # 防止默认 "." 污染项目根 .adg/rules.yml
+        )
         result = cmd_marketplace(args)
         assert result == 0
 

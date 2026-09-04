@@ -270,6 +270,7 @@ class TestParseSingleFileBranches:
         f.write_text("def foo():\n    return 1\n")
 
         checker = SemanticChecker()
+
         # mock parser.parse_file 抛 ValueError
         def _raise(*args: Any, **kwargs: Any) -> None:
             raise ValueError("mock parse failure")
@@ -388,9 +389,7 @@ class TestCheckMissingDocstringsClass:
             classes=[_make_class(name="PublicClass", docstring=None)],
         )
         issues = checker._check_missing_docstrings({"f.py": ast}, Path("/tmp"))
-        assert any(
-            i.rule_id == "missing-docstring" and "PublicClass" in i.message for i in issues
-        )
+        assert any(i.rule_id == "missing-docstring" and "PublicClass" in i.message for i in issues)
 
     def test_private_class_no_docstring_no_issue(self) -> None:
         """private class 无 docstring → 不报。"""
@@ -457,9 +456,7 @@ class TestAnalyzeDirectoryIntegration:
         checker.import_graph.add_edge("a.py", "b.py")
         checker.import_graph.add_edge("b.py", "a.py")
         # mock find_cycles 返回已知环
-        monkeypatch.setattr(
-            checker.import_graph, "find_cycles", lambda: [["a.py", "b.py", "a.py"]]
-        )
+        monkeypatch.setattr(checker.import_graph, "find_cycles", lambda: [["a.py", "b.py", "a.py"]])
         result = checker.analyze_directory(tmp_path)
         rule_ids = [i.rule_id for i in result.issues]
         assert "import-cycle" in rule_ids

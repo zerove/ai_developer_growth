@@ -14,6 +14,8 @@ def cmd_marketplace(args: argparse.Namespace) -> int:
     )
 
     cmd = args.marketplace_command
+    # 从 args.path 推断项目目录 (与 cmd_recommend 一致)，默认 "." 避免修改意外路径
+    project_dir = getattr(args, "path", None) or "."
 
     if cmd == "list":
         packs = list_packs()
@@ -22,7 +24,7 @@ def cmd_marketplace(args: argparse.Namespace) -> int:
         packs = search_packs(args.query)
         print(format_packs_list(packs))
     elif cmd == "install":
-        result = install_pack(args.pack_id, language=args.lang)
+        result = install_pack(args.pack_id, project_dir=project_dir, language=args.lang)
         if result["success"]:
             print(f"✅ Installed pack: {result['pack']}")
             print(f"   Rules installed: {result['rules_installed']}")
@@ -31,7 +33,7 @@ def cmd_marketplace(args: argparse.Namespace) -> int:
             print(f"❌ Failed: {result['error']}")
             return 1
     elif cmd == "uninstall":
-        result = uninstall_pack(args.pack_id)
+        result = uninstall_pack(args.pack_id, project_dir=project_dir)
         if result["success"]:
             print(f"✅ Uninstalled pack: removed {result['removed']} rules")
         else:

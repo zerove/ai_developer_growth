@@ -55,6 +55,7 @@
 | ADR-037 | setup.cfg 与 pyproject.toml mutmut 配置冲突修复 | 接受 | [docs/adr/ADR-037-setup-cfg-removal.md](docs/adr/ADR-037-setup-cfg-removal.md) |
 | ADR-038 | 项目可优化内容分析 (全面扫描) | 接受 | [docs/adr/ADR-038-optimization-scan.md](docs/adr/ADR-038-optimization-scan.md) |
 | ADR-039 | Phase 33 子任务 33a-1 semantic_checker 纯函数覆盖 | 接受 | [docs/adr/ADR-039-phase-33a1-semantic-checker-pure.md](docs/adr/ADR-039-phase-33a1-semantic-checker-pure.md) |
+| ADR-041 | Phase 33 子任务 33a-3 semantic_checker 公开 API 集成补测 | 接受 | [docs/adr/ADR-041-phase-33a3-semantic-checker-public-api.md](docs/adr/ADR-041-phase-33a3-semantic-checker-public-api.md) |
 
 ---
 

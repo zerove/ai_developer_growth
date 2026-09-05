@@ -66,6 +66,7 @@ class TestSemanticRuleProtocol:
 
     def test_protocol_is_runtime_checkable(self) -> None:
         """SemanticRule 是 runtime_checkable Protocol。"""
+
         # runtime_checkable 通过 metaclass=ABCMeta + _is_protocol 标记
         # 验证 isinstance 检查可用
         class FakeRule:

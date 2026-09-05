@@ -928,7 +928,10 @@ class ASTParser:
         return None
 
     def _parse_import_statement(self, node: _TreeNode) -> ImportInfo:
-        """解析 import X (模块级 helper).
+        """解析 import X (含 aliased) (模块级 helper, Phase 33b-5 fix).
+
+        ADR-046: 原实现误取 children[0]='import' 关键字作 module.
+        现收集首个 dotted_name 或 aliased_import 原始名为 module, 后续为 names.
 
         Args:
             node: import_statement 节点
@@ -936,32 +939,86 @@ class ASTParser:
         Returns:
             ImportInfo 实例
         """
-        module = self._get_text(node.children[0]) if node.children else ""
-        dotted_names = [self._get_text(c, []) for c in node.children if c.type == "dotted_name"]
-        return ImportInfo(module=module, names=dotted_names, line=node.start_point[0] + 1, is_from=False, level=0)
-
-    def _parse_import_from_statement(self, node: _TreeNode) -> ImportInfo:
-        """解析 from X import Y (含 relative_import level 解析, 模块级 helper).
-
-        Args:
-            node: import_from_statement 节点
-
-        Returns:
-            ImportInfo 实例
-        """
-        level = 0
         module = ""
         names: list[str] = []
         for child in node.children:
+            if child.type == "dotted_name":
+                name = self._get_text(child, [])
+                if not module:
+                    module = name
+                else:
+                    names.append(name)
+            elif child.type == "aliased_import":
+                # aliased_import 'a as b' -> 首个 identifier/dotted_name 是原始名
+                # tree-sitter 中 'a' 是 dotted_name, 'b' 是 identifier
+                for sub in child.children:
+                    if sub.type in ("identifier", "dotted_name"):
+                        name = self._get_text(sub, [])
+                        if not module:
+                            module = name
+                        else:
+                            names.append(name)
+                        break
+        return ImportInfo(module=module, names=names, line=node.start_point[0] + 1, is_from=False, level=0)
+
+    def _parse_import_from_statement(self, node: _TreeNode) -> ImportInfo:
+        """解析 from X import Y (含 relative + aliased) (Phase 33b-5 fix, ADR-046).
+
+        委托 _extract_from_components 抽取 level/dotted_names/names/relative_seen,
+        再由 _assemble_from_import 组装为 ImportInfo.
+        """
+        level, dotted_names, names, relative_seen = self._extract_from_components(node)
+        return self._assemble_from_import(
+            dotted_names=dotted_names,
+            names=names,
+            relative_seen=relative_seen,
+            level=level,
+            line=node.start_point[0] + 1,
+        )
+
+    def _extract_from_components(
+        self, node: _TreeNode
+    ) -> tuple[int, list[str], list[str], bool]:
+        """从 from_statement 抽取 4 组件 (模块级 helper, ADR-046)."""
+        level = 0
+        dotted_names: list[str] = []
+        names: list[str] = []
+        relative_seen = False
+        for child in node.children:
             if child.type == "relative_import":
                 level = child.text.count(b".") if isinstance(child.text, bytes) else str(child.text).count(".")
+                relative_seen = True
             elif child.type == "dotted_name":
-                module = self._get_text(child, [])
+                dotted_names.append(self._get_text(child, []))
             elif child.type == "aliased_import":
                 for sub in child.children:
-                    if sub.type == "identifier":
+                    if sub.type in ("identifier", "dotted_name"):
                         names.append(self._get_text(sub, []))
-        return ImportInfo(module=module, names=names, line=node.start_point[0] + 1, is_from=True, level=level)
+                        break
+        return level, dotted_names, names, relative_seen
+
+    def _assemble_from_import(
+        self,
+        dotted_names: list[str],
+        names: list[str],
+        relative_seen: bool,
+        level: int,
+        line: int,
+    ) -> ImportInfo:
+        """组装 from_import ImportInfo (模块级 helper, ADR-046)."""
+        if not dotted_names:
+            return ImportInfo(module="", names=names, line=line, is_from=True, level=level)
+        if relative_seen:
+            # relative: dotted_names 全是 names (relative_import 自带 ..pkg)
+            return ImportInfo(module="", names=dotted_names + names, line=line, is_from=True, level=level)
+        # from X import Y[, Z]: dotted_names[0]=X, 后续=Y, Z
+        return ImportInfo(
+            module=dotted_names[0],
+            names=dotted_names[1:] + names,
+            line=line,
+            is_from=True,
+            level=level,
+        )
 
     def _parse_js_import(self, node: _TreeNode) -> ImportInfo | None:
         """解析 JavaScript/TypeScript import 语句。"""

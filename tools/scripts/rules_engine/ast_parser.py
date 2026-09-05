@@ -976,9 +976,7 @@ class ASTParser:
             line=node.start_point[0] + 1,
         )
 
-    def _extract_from_components(
-        self, node: _TreeNode
-    ) -> tuple[int, list[str], list[str], bool]:
+    def _extract_from_components(self, node: _TreeNode) -> tuple[int, list[str], list[str], bool]:
         """从 from_statement 抽取 4 组件 (模块级 helper, ADR-046)."""
         level = 0
         dotted_names: list[str] = []

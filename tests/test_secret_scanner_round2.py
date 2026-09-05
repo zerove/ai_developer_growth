@@ -194,3 +194,43 @@ class TestScanSecretsEntrypoint:
     def test_no_output_file_still_returns_result(self, tmp_path: Path) -> None:
         r = scan_secrets(tmp_path, tools=[], output_format="text")
         assert r.scanned_files == 0
+
+
+class TestScannedFilesCounter:
+    """scanned_files 字段 (ADR-047 fix): 应真实统计扫描文件数."""
+
+    def test_scanned_files_zero_when_no_tools(self, tmp_path: Path) -> None:
+        """空目录 + tools=[] → scanned_files=0 (无工具扫描)."""
+        r = scan_secrets(tmp_path, tools=[], output_format="text")
+        assert r.scanned_files == 0
+
+    def test_scanned_files_zero_when_scan_workspace_disabled(self, tmp_path: Path) -> None:
+        """scan_workspace=False → scanned_files=0 (仅统计 workspace 模式)."""
+        (tmp_path / "a.py").write_text("x = 1")
+        r = scan_secrets(tmp_path, tools=[], output_format="text", scan_workspace=False)
+        assert r.scanned_files == 0
+
+    def test_scanned_files_counts_real_files(self, tmp_path: Path) -> None:
+        """真实目录含 3 个文件 → scanned_files=3."""
+        (tmp_path / "a.py").write_text("x = 1")
+        (tmp_path / "b.py").write_text("y = 2")
+        (tmp_path / "sub").mkdir()
+        (tmp_path / "sub" / "c.py").write_text("z = 3")
+        r = scan_secrets(tmp_path, tools=[], output_format="text")
+        assert r.scanned_files == 3
+
+    def test_scanned_files_excludes_git_directory(self, tmp_path: Path) -> None:
+        """.git/ 子目录文件不计入 scanned_files."""
+        (tmp_path / "a.py").write_text("x = 1")
+        (tmp_path / ".git").mkdir()
+        (tmp_path / ".git" / "config").write_text("git config")
+        (tmp_path / ".git" / "HEAD").write_text("ref: refs/heads/main")
+        r = scan_secrets(tmp_path, tools=[], output_format="text")
+        assert r.scanned_files == 1  # 只计 a.py, 不计 .git/
+
+    def test_scanned_files_single_file(self, tmp_path: Path) -> None:
+        """path 是单文件 → scanned_files=1."""
+        f = tmp_path / "single.py"
+        f.write_text("x = 1")
+        r = scan_secrets(f, tools=[], output_format="text")
+        assert r.scanned_files == 1

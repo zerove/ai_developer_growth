@@ -357,10 +357,11 @@ class SecretScanner:
             _run_tool(self, tool, path, scan_types, all_findings, tools_used, errors)
 
         unique_findings = _deduplicate_findings(all_findings)
+        scanned_files = _count_scanned_files(path, scan_workspace)
 
         return SecretScanResult(
             findings=unique_findings,
-            scanned_files=0,  # TODO: 统计
+            scanned_files=scanned_files,
             scan_duration_ms=int((time.time() - start) * 1000),
             tools_used=tools_used,
             errors=errors,
@@ -385,6 +386,21 @@ class SecretScanner:
         if scan_pr_diff:
             scan_types.append("pr-diff")
         return scan_types
+
+
+def _count_scanned_files(path: Path, scan_workspace: bool) -> int:
+    """统计扫描文件数 (模块级 helper, Phase 33b-6 fix, ADR-047).
+
+    仅在 scan_workspace=True 时统计 (其他模式 git-history/pr-diff 涉及 git 状态).
+    path 是文件 → 1. path 是目录 → glob 计数 (排除 .git/子目录).
+    """
+    if not scan_workspace:
+        return 0
+    if path.is_file():
+        return 1
+    if path.is_dir():
+        return sum(1 for p in path.rglob("*") if p.is_file() and ".git" not in p.parts)
+    return 0
 
 
 def _run_tool(

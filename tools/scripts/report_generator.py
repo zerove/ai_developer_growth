@@ -27,11 +27,13 @@ def _count_summary_stats(results: list[Any]) -> tuple[int, int, int, int]:
 
     V2.18 P3-3 拆分: 从 generate_junit_xml (C=14) 抽出.
     返回 (total_errors, total_warnings, total_tests, failures).
+
+    Phase 33b-12 fix (ADR-052): failures 排除 skipped.
     """
     total_errors = sum(r.error_count for r in results)
     total_warnings = sum(r.warning_count for r in results)
     total_tests = len(results)
-    failures = sum(1 for r in results if not r.passed)
+    failures = sum(1 for r in results if not r.passed and not getattr(r, 'skipped', False))
     return total_errors, total_warnings, total_tests, failures
 
 
@@ -75,8 +77,13 @@ def _build_pass_testcase(result: Any) -> list[str]:
 
     V2.18 P3-3 拆分: 从 generate_junit_xml (C=14) 抽出.
     无 warning 直接闭合, 有 warning 最多 5 条作为 system-out.
+
+    Phase 33b-12 fix (ADR-052): skipped 文件用 <skipped/> 标记, 不算通过.
     """
     testcase = f'  <testcase name="{_xml_escape(result.file)}" classname="{result.language}">'
+    # Phase 33b-12 fix: skipped 文件用 JUnit <skipped/> 标记
+    if getattr(result, 'skipped', False):
+        return [f"{testcase}<skipped/></testcase>"]
     warns = [i for i in result.issues if i.severity == "warning"]
     if not warns:
         return [f"{testcase}</testcase>"]
@@ -123,9 +130,12 @@ def _count_html_summary(results: list[Any]) -> dict[str, int]:
 
     V2.19 P3-33 拆分: 从 B=6 / 10 行函数拆出 _count_severity_totals.
     主函数仅负责: 委托 severity 计数 + 追加 passed_count.
+
+    Phase 33b-12 fix (ADR-052): passed_count 排除 skipped (skipped 不算通过).
     """
     summary = _count_severity_totals(results)
-    summary["passed_count"] = sum(1 for r in results if r.passed)
+    summary["passed_count"] = sum(1 for r in results if r.passed and not getattr(r, 'skipped', False))
+    summary["skipped_count"] = sum(1 for r in results if getattr(r, 'skipped', False))
     return summary
 
 
@@ -275,7 +285,8 @@ def _build_sarif_results(results: list[Any]) -> list[dict[str, Any]]:
     """Build SARIF result entries from validation results (orchestrator).
 
     V2.19 P3-31 拆分: 从 B=6 / 27 行函数拆出 2 个 helper.
-    主函数仅负责: 遍历 issues → 委托 2 helper → 收集.
+    Phase 33b-12 fix (ADR-052): skipped 文件现在用 result.kind='notApplicable'
+    在 SARIF 中标记, 不再静默丢失.
     """
     runs_results: list[dict[str, Any]] = []
     for result in results:
@@ -290,6 +301,23 @@ def _build_sarif_results(results: list[Any]) -> list[dict[str, Any]]:
                     line=issue.line,
                     column=getattr(issue, "column", 1),
                 )
+            )
+        # Phase 33b-12 fix: skipped 文件在 SARIF 中用 notApplicable 标记
+        if getattr(result, 'skipped', False) and not result.issues:
+            runs_results.append(
+                {
+                    "ruleId": "file-skipped",
+                    "level": "none",
+                    "message": {"text": "File skipped (empty or unsupported)"},
+                    "locations": [
+                        {
+                            "physicalLocation": {
+                                "artifactLocation": {"uri": result.file},
+                            }
+                        }
+                    ],
+                    "properties": {"kind": "notApplicable"},
+                }
             )
     return runs_results
 
@@ -327,13 +355,16 @@ def _build_json_summary(results: list[Any]) -> dict[str, Any]:
     """构造 JSON 报告 summary 段 (total/计数 + passed).
 
     V2.19 P3-32 拆分: 从 _build_json_content (B=6) 抽出.
+
+    Phase 33b-12 fix (ADR-052): passed 排除 skipped (仅在所有非 skipped 都 passed 时为 True).
     """
+    non_skipped = [r for r in results if not getattr(r, 'skipped', False)]
     return {
         "total_files": len(results),
         "total_errors": sum(r.error_count for r in results),
         "total_warnings": sum(r.warning_count for r in results),
         "total_info": sum(r.info_count for r in results),
-        "passed": all(r.passed for r in results),
+        "passed": all(r.passed for r in non_skipped) if non_skipped else True,
     }
 
 

@@ -66,6 +66,7 @@
 | ADR-049 | Phase 33b-8 ast_parser 多语言 walk 与 complexity 迭代化扩展 | 接受 | [docs/adr/ADR-049-phase-33b8-ast-parser-multilang-iterative.md](docs/adr/ADR-049-phase-33b8-ast-parser-multilang-iterative.md) |
 | ADR-050 | Phase 33b-9 ast_parser monster.py 端到端契约验证 | 接受 | [docs/adr/ADR-050-phase-33b9-ast-parser-monster-e2e.md](docs/adr/ADR-050-phase-33b9-ast-parser-monster-e2e.md) |
 | ADR-051 | Phase 33b-10 ComplexityMetrics.total_lines 真实填充 | 接受 | [docs/adr/ADR-051-phase-33b10-total-lines-fix.md](docs/adr/ADR-051-phase-33b10-total-lines-fix.md) |
+| ADR-052 | Phase 33b-12 report_generator skipped 文件契约修复 | 接受 | [docs/adr/ADR-052-phase-33b12-skipped-report-fix.md](docs/adr/ADR-052-phase-33b12-skipped-report-fix.md) |
 
 ---
 

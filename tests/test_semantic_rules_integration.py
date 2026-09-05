@@ -173,11 +173,10 @@ class TestRunSemanticRulesEndToEnd:
     """run_semantic_rules() 与真实 FileAST 端到端 (Phase 33b-4)。"""
 
     def test_run_on_python_file_unused_import(self, tmp_path: Path) -> None:
-        """run_semantic_rules 在真实 Python AST 上检测 unused import (占位, 依赖 ast_parser bug).
+        """run_semantic_rules 在真实 Python AST 上检测 unused import (Phase 33b-5 fix verified).
 
-        已知限制 (ADR-041): ast_parser 将 'import X' 解析成 module='import' (而非 'X'),
-        导致 UnusedImportRule 的 imp.names 为空而跳过检测.
-        本测试仅验证 pipeline 不会崩溃, 真实检测逻辑待 ast_parser bug 修复后验证.
+        ADR-046 修复 ast_parser 的 import 解析 bug 后, UnusedImportRule 现能触发.
+        回归测试: from os import unused_path (未使用) 应报 semantic-unused-import.
         """
         from tools.scripts.rules_engine.ast_parser import get_parser
         from tools.scripts.rules_engine.semantic_rules import run_semantic_rules
@@ -189,10 +188,9 @@ class TestRunSemanticRulesEndToEnd:
         f.write_text("from os import unused_path\nx = 1\n")
         ast_result = parser.parse_file(f)
         assert ast_result is not None
-        # Pipeline 不崩
         issues = run_semantic_rules(ast_result, f, "python")
-        # 因 ast_parser bug, 不强求 unused-import 报出
-        assert isinstance(issues, list)
+        rule_ids = {i.rule_id for i in issues}
+        assert "semantic-unused-import" in rule_ids
 
     def test_run_on_python_file_missing_docstring(self, tmp_path: Path) -> None:
         """run_semantic_rules 在真实 Python AST 上检测 missing docstring."""

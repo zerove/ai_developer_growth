@@ -456,6 +456,7 @@ class SemanticChecker:
             metrics.total_functions += len(ast_result.functions)
             metrics.total_classes += len(ast_result.classes)
             metrics.total_imports += len(ast_result.imports)
+            metrics.total_lines += ast_result.total_lines  # Phase 33b-10 fix (ADR-051)
 
             total_func_length, total_complexity = self._accumulate_function_metrics(
                 ast_result.functions, metrics, total_func_length, total_complexity

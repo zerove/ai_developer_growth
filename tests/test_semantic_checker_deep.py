@@ -212,6 +212,8 @@ class TestSemanticCheckerDeep:
         )
         imp = ImportInfo(module="os", names=["path"], line=1, is_from=True, level=0)
         file_ast = _make_ast(functions=[f1, f2], imports=[imp])
+        # Phase 33b-10 fix: 显式设置 total_lines 验证累加 (默认 0 → 设置 100)
+        file_ast.total_lines = 100
         checker = SemanticChecker()
         metrics = checker._calculate_metrics({"test.py": file_ast})
         assert metrics.total_functions == 2
@@ -220,6 +222,7 @@ class TestSemanticCheckerDeep:
         assert metrics.max_complexity == 15
         assert metrics.long_functions == ["long_func"]
         assert metrics.complex_functions == ["long_func"]
+        assert metrics.total_lines == 100
 
     def test_calculate_metrics_empty(self):
         """_calculate_metrics on empty ASTs returns zeros."""

@@ -338,6 +338,7 @@ class ASTParser:
             error_nodes=self._find_error_nodes(tree.root_node),
             total_nodes=self._count_nodes(tree.root_node),
             parse_time_ms=parse_time,
+            total_lines=len(lines),  # Phase 33b-10 fix (ADR-051)
         )
 
     def extract_functions(self, tree: _TSTree, language: str, lines: list[str] | None = None) -> list[FunctionInfo]:

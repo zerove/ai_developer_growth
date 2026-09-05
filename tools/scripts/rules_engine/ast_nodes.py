@@ -101,6 +101,7 @@ class FileAST:
     error_nodes: list[ASTNode]
     total_nodes: int
     parse_time_ms: float
+    total_lines: int = 0  # Phase 33b-10 fix (ADR-051): 源码行数
 
 
 __all__ = [

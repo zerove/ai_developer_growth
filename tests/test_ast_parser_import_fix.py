@@ -138,11 +138,7 @@ class TestMultiImportFile:
 
     def test_mixed_imports(self, parser: ASTParser) -> None:
         """混合 import + from + relative."""
-        code = (
-            "import os\n"
-            "from typing import List\n"
-            "from . import x\n"
-        )
+        code = "import os\nfrom typing import List\nfrom . import x\n"
         imports = _parse_python(parser, code)
         assert len(imports) == 3
         # 第一个: import os

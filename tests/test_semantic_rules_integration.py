@@ -107,9 +107,7 @@ class TestRunSemanticChecksIntegration:
         issues = checker._run_semantic_checks(f, "python")
         assert issues == []
 
-    def test_runs_semantic_checks_returns_list(
-        self, python_file_with_issues: Path
-    ) -> None:
+    def test_runs_semantic_checks_returns_list(self, python_file_with_issues: Path) -> None:
         """_run_semantic_checks() 调用不崩, 返回 list (可能为空依赖 ast_parser bug).
 
         已知限制 (ADR-041): ast_parser 解析 import 语句错误, UnusedImportRule 未触发.
@@ -122,19 +120,12 @@ class TestRunSemanticChecksIntegration:
 class TestSemanticCheckerAnalyzeDirectoryIntegration:
     """semantic_checker.analyze_directory 端到端集成 (Phase 33b-4)。"""
 
-    def test_directory_pipeline_runs(
-        self, tmp_path: Path
-    ) -> None:
+    def test_directory_pipeline_runs(self, tmp_path: Path) -> None:
         """SemanticChecker.analyze_directory() 跑通, 返回 SemanticResult (issue 可能为空依赖 ast_parser bug)."""
         from tools.scripts.rules_engine.semantic_checker import SemanticChecker
 
         f = tmp_path / "m.py"
-        f.write_text(
-            "from os import unused_path\n"
-            "\n"
-            "def public_func_no_doc():\n"
-            "    return 1\n"
-        )
+        f.write_text("from os import unused_path\n\ndef public_func_no_doc():\n    return 1\n")
         checker = SemanticChecker()
         result = checker.analyze_directory(tmp_path)
         assert isinstance(result.files_analyzed, int)

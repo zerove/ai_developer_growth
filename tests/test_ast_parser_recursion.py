@@ -141,10 +141,7 @@ class TestMultilangDeepAST:
 
     def test_js_nested_class_50(self, parser: ASTParser, tmp_path: Path) -> None:
         """JS 50 层嵌套 class 不爆栈 (迭代化 _walk_js_functions 验证)."""
-        code = "\n".join(
-            f"{'    ' * i}class C{i} {{ {' ' * (i + 1)}x = 1; {'}'}"
-            for i in range(50)
-        )
+        code = "\n".join(f"{'    ' * i}class C{i} {{ {' ' * (i + 1)}x = 1; {'}'}" for i in range(50))
         f = _make_file(tmp_path, code, suffix=".js")
         result = parser.parse_file(f, language="javascript")
         assert result is not None

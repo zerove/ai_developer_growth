@@ -63,6 +63,7 @@
 | ADR-046 | Phase 33b-5 ast_parser import 解析 bug 修复 | 接受 | [docs/adr/ADR-046-phase-33b5-ast-parser-import-fix.md](docs/adr/ADR-046-phase-33b5-ast-parser-import-fix.md) |
 | ADR-047 | Phase 33b-6 secret_scanner scanned_files 字段修复 | 接受 | [docs/adr/ADR-047-phase-33b6-secret-scanner-scanned-files.md](docs/adr/ADR-047-phase-33b6-secret-scanner-scanned-files.md) |
 | ADR-048 | Phase 33b-7 ast_parser 深度 AST 安全 (消除 RecursionError) | 接受 | [docs/adr/ADR-048-phase-33b7-ast-parser-recursion-safety.md](docs/adr/ADR-048-phase-33b7-ast-parser-recursion-safety.md) |
+| ADR-049 | Phase 33b-8 ast_parser 多语言 walk 与 complexity 迭代化扩展 | 接受 | [docs/adr/ADR-049-phase-33b8-ast-parser-multilang-iterative.md](docs/adr/ADR-049-phase-33b8-ast-parser-multilang-iterative.md) |
 
 ---
 

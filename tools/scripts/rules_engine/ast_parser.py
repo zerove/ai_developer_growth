@@ -147,11 +147,16 @@ def _estimate_complexity_static(node: _TreeNode, lines: list[str]) -> int:
 
 
 def _count_branching_static(node: _TreeNode, types: set[str], counter: list[int]) -> None:
-    """Count branching nodes for complexity."""
-    if node.type in types:
-        counter[0] += 1
-    for child in node.children:
-        _count_branching_static(child, types, counter)
+    """Count branching nodes for complexity (Phase 33b-7 fix, ADR-048: 迭代化).
+
+    避免深度 binary_expression 或长 boolean_operation 链触发 RecursionError.
+    """
+    stack: list[_TreeNode] = [node]
+    while stack:
+        current = stack.pop()
+        if current.type in types:
+            counter[0] += 1
+        stack.extend(current.children)
 
 
 def _get_text_static(node: _TreeNode, lines: list[str]) -> str:
@@ -472,30 +477,37 @@ class ASTParser:
         result: list[FunctionInfo],
         class_name: str | None,
     ) -> None:
-        """Walk JS/TS AST for function definitions."""
+        """Walk JS/TS AST for function definitions (Phase 33b-7 fix, ADR-048: 迭代化).
+
+        栈元素: (node, class_name) - class 内部成员使用 inner class_name.
+        """
         func_types = {
             "function_declaration",
             "function",
             "arrow_function",
             "method_definition",
         }
-        if node.type in func_types:
-            info = self._parse_js_function(node, lines, class_name)
-            if info:
-                result.append(info)
-            return
+        stack: list[tuple[_TreeNode, str | None]] = [(node, class_name)]
+        while stack:
+            current, cur_class = stack.pop()
+            if current.type in func_types:
+                info = self._parse_js_function(current, lines, cur_class)
+                if info:
+                    result.append(info)
+                continue
 
-        # Also check class bodies
-        if node.type == "class_declaration":
-            class_name_inner = self._get_child_name(node, lines)
-            for child in node.children:
-                if child.type == "class_body":
-                    for member in child.children:
-                        self._walk_js_functions(member, lines, result, class_name_inner)
-            return
+            if current.type == "class_declaration":
+                class_name_inner = self._get_child_name(current, lines)
+                for child in current.children:
+                    if child.type == "class_body":
+                        # class_body 成员使用 inner class_name
+                        for member in child.children:
+                            stack.append((member, class_name_inner))
+                continue
 
-        for child in node.children:
-            self._walk_js_functions(child, lines, result, class_name)
+            # 默认: children 使用当前 class_name
+            for child in current.children:
+                stack.append((child, cur_class))
 
     def _parse_js_function(self, node: _TreeNode, lines: list[str], class_name: str | None) -> FunctionInfo | None:
         """Parse a JS/TS function node."""
@@ -543,23 +555,26 @@ class ASTParser:
         result: list[FunctionInfo],
         class_name: str | None,
     ) -> None:
-        """Walk Rust AST for function definitions."""
-        if node.type == "function_item":
-            info = self._parse_rust_function(node, lines, class_name)
-            if info:
-                result.append(info)
-            return
+        """Walk Rust AST for function definitions (Phase 33b-7 fix, ADR-048: 迭代化)."""
+        stack: list[tuple[_TreeNode, str | None]] = [(node, class_name)]
+        while stack:
+            current, cur_class = stack.pop()
+            if current.type == "function_item":
+                info = self._parse_rust_function(current, lines, cur_class)
+                if info:
+                    result.append(info)
+                continue
 
-        if node.type == "impl_item":
-            type_name = self._get_child_name(node, lines)
-            for child in node.children:
-                if child.type == "declaration_list":
-                    for member in child.children:
-                        self._walk_rust_functions(member, lines, result, type_name)
-            return
+            if current.type == "impl_item":
+                type_name = self._get_child_name(current, lines)
+                for child in current.children:
+                    if child.type == "declaration_list":
+                        for member in child.children:
+                            stack.append((member, type_name))
+                continue
 
-        for child in node.children:
-            self._walk_rust_functions(child, lines, result, class_name)
+            for child in current.children:
+                stack.append((child, cur_class))
 
     def _parse_rust_function(self, node: _TreeNode, lines: list[str], class_name: str | None) -> FunctionInfo | None:
         """Parse a Rust function node."""
@@ -600,15 +615,21 @@ class ASTParser:
         result: list[FunctionInfo],
         class_name: str | None,
     ) -> None:
-        """Walk Go AST for function definitions (V2.21 P5-44 拆分: 抽 _handle_function_declaration + _handle_type_declaration)."""
-        if node.type == "function_declaration":
-            self._handle_function_declaration(node, lines, result, class_name)
-            return
-        if node.type == "type_declaration":
-            self._handle_type_declaration(node, lines, class_name)
-            return
-        for child in node.children:
-            self._walk_go_functions(child, lines, result, class_name)
+        """Walk Go AST for function definitions (Phase 33b-7 fix, ADR-048: 迭代化).
+
+        V2.21 P5-44 拆分: 抽 _handle_function_declaration + _handle_type_declaration.
+        """
+        stack: list[tuple[_TreeNode, str | None]] = [(node, class_name)]
+        while stack:
+            current, cur_class = stack.pop()
+            if current.type == "function_declaration":
+                self._handle_function_declaration(current, lines, result, cur_class)
+                continue
+            if current.type == "type_declaration":
+                self._handle_type_declaration(current, lines, cur_class)
+                continue
+            for child in current.children:
+                stack.append((child, cur_class))
 
     def _handle_function_declaration(
         self,
@@ -694,35 +715,40 @@ class ASTParser:
         result: list[FunctionInfo],
         class_name: str | None,
     ) -> None:
-        """Generic function extraction - look for common patterns."""
+        """Generic function extraction (Phase 33b-7 fix, ADR-048: 迭代化).
+
+        Look for common patterns.
+        """
         func_patterns = {
             "function_definition",
             "function_item",
             "function_declaration",
             "method_definition",
         }
-        if node.type in func_patterns:
-            name = self._get_child_name(node, lines) or "<unknown>"
-            result.append(
-                FunctionInfo(
-                    name=name,
-                    line=node.start_point[0] + 1,
-                    col=node.start_point[1],
-                    end_line=node.end_point[0] + 1,
-                    params=[],
-                    decorators=[],
-                    return_type=None,
-                    docstring=None,
-                    body_lines=node.end_point[0] - node.start_point[0],
-                    complexity=1,
-                    is_method=class_name is not None,
-                    class_name=class_name,
+        stack: list[tuple[_TreeNode, str | None]] = [(node, class_name)]
+        while stack:
+            current, cur_class = stack.pop()
+            if current.type in func_patterns:
+                name = self._get_child_name(current, lines) or "<unknown>"
+                result.append(
+                    FunctionInfo(
+                        name=name,
+                        line=current.start_point[0] + 1,
+                        col=current.start_point[1],
+                        end_line=current.end_point[0] + 1,
+                        params=[],
+                        decorators=[],
+                        return_type=None,
+                        docstring=None,
+                        body_lines=current.end_point[0] - current.start_point[0],
+                        complexity=1,
+                        is_method=cur_class is not None,
+                        class_name=cur_class,
+                    )
                 )
-            )
-            return
-
-        for child in node.children:
-            self._walk_generic_functions(child, language, lines, result, class_name)
+                continue
+            for child in current.children:
+                stack.append((child, cur_class))
 
     # ─────────────────────────────────────────────────────────────
     # Class extraction

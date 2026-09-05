@@ -110,3 +110,68 @@ class TestExistingEdgeCases:
         f = _make_file(tmp_path, code)
         result = parser.parse_file(f, language="python")
         assert result is not None
+
+
+class TestMultilangDeepAST:
+    """多语言深度 AST 安全性 (Phase 33b-7 扩展).
+
+    覆盖 _walk_js_functions / _walk_rust_functions / _walk_go_functions / _walk_generic_functions.
+    """
+
+    def test_js_deep_arrow_chain(self, parser: ASTParser, tmp_path: Path) -> None:
+        """JS 深度链式表达式 (1+1+1+... * 500) 不爆栈."""
+        code = "const x = " + " + ".join("1" for _ in range(500)) + ";"
+        f = _make_file(tmp_path, code, suffix=".js")
+        result = parser.parse_file(f, language="javascript")
+        assert result is not None
+
+    def test_rust_deep_binary_chain(self, parser: ASTParser, tmp_path: Path) -> None:
+        """Rust 深度链式表达式 不爆栈."""
+        code = "fn main() { let x = " + " + ".join("1" for _ in range(500)) + "; }"
+        f = _make_file(tmp_path, code, suffix=".rs")
+        result = parser.parse_file(f, language="rust")
+        assert result is not None
+
+    def test_go_deep_binary_chain(self, parser: ASTParser, tmp_path: Path) -> None:
+        """Go 深度链式表达式 不爆栈."""
+        code = "package main\nfunc main() { x := " + " + ".join("1" for _ in range(500)) + " }"
+        f = _make_file(tmp_path, code, suffix=".go")
+        result = parser.parse_file(f, language="go")
+        assert result is not None
+
+    def test_js_nested_class_50(self, parser: ASTParser, tmp_path: Path) -> None:
+        """JS 50 层嵌套 class 不爆栈 (迭代化 _walk_js_functions 验证)."""
+        code = "\n".join(
+            f"{'    ' * i}class C{i} {{ {' ' * (i + 1)}x = 1; {'}'}"
+            for i in range(50)
+        )
+        f = _make_file(tmp_path, code, suffix=".js")
+        result = parser.parse_file(f, language="javascript")
+        assert result is not None
+
+
+class TestComplexityCalculationSafety:
+    """_count_branching_static / _estimate_complexity_static 深度安全 (Phase 33b-7)."""
+
+    def test_complexity_deep_boolean_chain(self, parser: ASTParser, tmp_path: Path) -> None:
+        """深度 boolean_operation 链 (a and b and c...) 不爆栈 + 不被计入复杂度.
+
+        boolean_operation 不在 branching_types 集合中 (设计选择),
+        所以无论链多深, complexity 应不变. 关键验证是不爆栈.
+        """
+        # 500 个 and 链
+        expr = " and ".join(f"a{i}" for i in range(500))
+        code = f"def f():\n    return {expr}\n"
+        f = _make_file(tmp_path, code)
+        # 关键: parse 不爆栈
+        result = parser.parse_file(f, language="python")
+        assert result is not None
+        # boolean_operation 不计入 branching, complexity=1
+        assert result.functions[0].complexity == 1
+
+    def test_complexity_deep_conditional(self, parser: ASTParser, tmp_path: Path) -> None:
+        """深度 conditional_expression 链 (a if b else c if d else e...) 不爆栈."""
+        code = "def f():\n    x = 1" + " if True else " * 500 + "2\n"
+        f = _make_file(tmp_path, code)
+        result = parser.parse_file(f, language="python")
+        assert result is not None

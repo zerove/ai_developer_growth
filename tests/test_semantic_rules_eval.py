@@ -147,9 +147,7 @@ class TestMissingDocstringRule:
         """公开函数无 docstring → 发 issue。"""
         rule = MissingDocstringRule()
         file_obj = SimpleNamespace(functions=[_make_func(name="public_func", docstring=None)])
-        issues = rule.check(rule, file_obj, tmp_path / "f.py") if False else rule.check(
-            file_obj, tmp_path / "f.py"
-        )
+        issues = rule.check(file_obj, tmp_path / "f.py")
         assert len(issues) == 1
         assert issues[0].rule_id == "semantic-missing-docstring"
         assert issues[0].severity == "info"
@@ -268,14 +266,13 @@ class TestRunSemanticRules:
         f = tmp_path / "f.py"
         f.write_text("from os import unused_path\n")
         # 仅运行 unused-import
-        issues = run_semantic_rules(
-            file_obj, f, language="python", enabled_rules={"unused-import"}
-        )
+        issues = run_semantic_rules(file_obj, f, language="python", enabled_rules={"unused-import"})
         rule_ids = {i.rule_id for i in issues}
         assert rule_ids == {"semantic-unused-import"}
 
     def test_rule_exception_does_not_break_pipeline(self, tmp_path: Path, monkeypatch) -> None:
         """单条规则抛异常 → 不阻断其他规则。"""
+
         # 让 MissingDocstringRule.check 抛异常
         def _raise(self, file, filepath):
             raise ValueError("boom")

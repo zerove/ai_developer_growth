@@ -30,8 +30,7 @@ if os.geteuid() == 0:
 
 ```python
 # 反例 (位运算陷阱)
-target.chmod(stat.S_IRWXU | stat.S_IRWXG | stat.S_IRWXO
-             & ~stat.S_IRUSR & ~stat.S_IRGRP & ~stat.S_IROTH)
+target.chmod(stat.S_IRWXU | stat.S_IRWXG | stat.S_IRWXO & ~stat.S_IRUSR & ~stat.S_IRGRP & ~stat.S_IROTH)
 # 实际结果: 0o773 (可写+可执行, 但仍可读)
 
 # 正例 (显式)

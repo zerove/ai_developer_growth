@@ -94,24 +94,18 @@ thresholds:
 class TestLoadCommonRulesCached:
     """_load_common_rules_cached() yaml 加载 + 兜底。"""
 
-    def test_missing_file_returns_empty(
-        self, tmp_path: Path
-    ) -> None:
+    def test_missing_file_returns_empty(self, tmp_path: Path) -> None:
         """common/security.yml 不存在 → {} (兜底)。"""
         result = _load_common_rules_cached(str(tmp_path))
         assert result == {}
 
-    def test_valid_yaml_returns_dict(
-        self, framework_with_common: Path
-    ) -> None:
+    def test_valid_yaml_returns_dict(self, framework_with_common: Path) -> None:
         """合法 YAML → dict。"""
         result = _load_common_rules_cached(str(framework_with_common))
         assert "security_rules" in result
         assert result["security_rules"][0]["id"] == "sec-001"
 
-    def test_invalid_yaml_returns_empty(
-        self, tmp_path: Path
-    ) -> None:
+    def test_invalid_yaml_returns_empty(self, tmp_path: Path) -> None:
         """YAML 语法错 → {} (兜底, 不抛异常)。"""
         common = tmp_path / "common"
         common.mkdir()
@@ -119,9 +113,7 @@ class TestLoadCommonRulesCached:
         result = _load_common_rules_cached(str(tmp_path))
         assert result == {}
 
-    def test_yaml_list_returns_empty(
-        self, tmp_path: Path
-    ) -> None:
+    def test_yaml_list_returns_empty(self, tmp_path: Path) -> None:
         """YAML 顶层是 list (非 dict) → {} (类型检查兜底)。"""
         common = tmp_path / "common"
         common.mkdir()
@@ -129,9 +121,7 @@ class TestLoadCommonRulesCached:
         result = _load_common_rules_cached(str(tmp_path))
         assert result == {}
 
-    def test_empty_yaml_returns_empty(
-        self, tmp_path: Path
-    ) -> None:
+    def test_empty_yaml_returns_empty(self, tmp_path: Path) -> None:
         """空文件 → {} (yaml.safe_load 返回 None, isinstance(dict) 失败)。"""
         common = tmp_path / "common"
         common.mkdir()
@@ -158,9 +148,7 @@ class TestLoadUniversalRulesCached:
             "naming": {},
         }
 
-    def test_universal_and_common_merged(
-        self, framework_with_both: Path
-    ) -> None:
+    def test_universal_and_common_merged(self, framework_with_both: Path) -> None:
         """universal + common 都存在 → 合并 (common 在 universal 之上)。"""
         result = _load_universal_rules_cached(str(framework_with_both))
         assert "anti_patterns" in result
@@ -170,9 +158,7 @@ class TestLoadUniversalRulesCached:
         # common.security_rules 顶层 key 不会出现在 result 中
         # (因为 _load_universal_rules_cached 不合并 security_rules)
 
-    def test_universal_invalid_yaml_ignored(
-        self, tmp_path: Path
-    ) -> None:
+    def test_universal_invalid_yaml_ignored(self, tmp_path: Path) -> None:
         """universal.yml 语法错 → 忽略, 用默认结构。"""
         common = tmp_path / "common"
         common.mkdir()
@@ -196,9 +182,7 @@ class TestTryLoadYaml:
         )
         assert result is None
 
-    def test_valid_yaml_loaded_with_common_merged(
-        self, framework_with_common: Path
-    ) -> None:
+    def test_valid_yaml_loaded_with_common_merged(self, framework_with_common: Path) -> None:
         """YAML 存在 + common 存在 → 两者合并。"""
         rule_path = framework_with_common / "rules.yml"
         rule_path.write_text(
@@ -217,9 +201,7 @@ anti_patterns:
         # security_rules 是顶层 key, _merge_anti_patterns 只合并 anti_patterns
         assert "lang-001" in ids
 
-    def test_yaml_non_dict_returns_default(
-        self, framework_with_common: Path
-    ) -> None:
+    def test_yaml_non_dict_returns_default(self, framework_with_common: Path) -> None:
         """YAML 是 list (非 dict) → {} (类型兜底), 然后 _merge_rules 加入 anti_patterns: []。
 
         实际行为: _try_load_yaml line 210 `result = data if isinstance(data, dict) else {}`,

@@ -99,9 +99,7 @@ def discover_languages(args: argparse.Namespace) -> list[str]:
     """
     if args.all:
         langs_dir = rules_dir() / "languages"
-        return sorted(
-            d.name for d in langs_dir.iterdir() if d.is_dir() and (d / "rules.d").exists()
-        )
+        return sorted(d.name for d in langs_dir.iterdir() if d.is_dir() and (d / "rules.d").exists())
     return [args.lang]
 
 

@@ -65,9 +65,7 @@ class TestLoadDiskCache:
         result = _load_disk_cache()
         assert result == {}
 
-    def test_os_error_on_read_returns_empty(
-        self, tmp_cache_path: Path, monkeypatch: pytest.MonkeyPatch
-    ) -> None:
+    def test_os_error_on_read_returns_empty(self, tmp_cache_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
         """read_text 抛 OSError → {} 兜底。
 
         通过 monkeypatch Path.read_text 抛 PermissionError 模拟。
@@ -89,9 +87,7 @@ class TestLoadDiskCache:
 class TestSaveDiskCache:
     """_save_disk_cache() 2 个分支: mkdir+write / OSError 兜底。"""
 
-    def test_save_creates_directory_and_writes(
-        self, tmp_cache_path: Path
-    ) -> None:
+    def test_save_creates_directory_and_writes(self, tmp_cache_path: Path) -> None:
         """目录不存在时自动创建, 然后写入 JSON。"""
         assert not tmp_cache_path.parent.exists()
         data = {"python": {"x": 1}}
@@ -99,9 +95,7 @@ class TestSaveDiskCache:
         assert tmp_cache_path.parent.exists()
         assert json.loads(tmp_cache_path.read_text()) == data
 
-    def test_save_overwrites_existing(
-        self, tmp_cache_path: Path
-    ) -> None:
+    def test_save_overwrites_existing(self, tmp_cache_path: Path) -> None:
         """已存在文件被覆盖。"""
         tmp_cache_path.parent.mkdir(parents=True, exist_ok=True)
         tmp_cache_path.write_text('{"old": true}')
@@ -109,9 +103,7 @@ class TestSaveDiskCache:
         _save_disk_cache(new_data)
         assert json.loads(tmp_cache_path.read_text()) == new_data
 
-    def test_save_os_error_silently_ignored(
-        self, tmp_cache_path: Path
-    ) -> None:
+    def test_save_os_error_silently_ignored(self, tmp_cache_path: Path) -> None:
         """OSError 兜底: write_text 抛 PermissionError → 静默忽略。
 
         mkdir + write 任何一步失败都被 except OSError 捕获。

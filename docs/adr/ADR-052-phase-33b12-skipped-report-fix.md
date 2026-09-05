@@ -30,14 +30,16 @@
 ### 决策 1: SARIF skipped 文件用 notApplicable 标记
 
 ```python
-if getattr(result, 'skipped', False) and not result.issues:
-    runs_results.append({
-        "ruleId": "file-skipped",
-        "level": "none",
-        "message": {"text": "File skipped (empty or unsupported)"},
-        "locations": [...],
-        "properties": {"kind": "notApplicable"},
-    })
+if getattr(result, "skipped", False) and not result.issues:
+    runs_results.append(
+        {
+            "ruleId": "file-skipped",
+            "level": "none",
+            "message": {"text": "File skipped (empty or unsupported)"},
+            "locations": [...],
+            "properties": {"kind": "notApplicable"},
+        }
+    )
 ```
 
 SARIF 标准: `kind: notApplicable` 表示该文件不适用, `level: none` 不算告警级别.
@@ -45,7 +47,7 @@ SARIF 标准: `kind: notApplicable` 表示该文件不适用, `level: none` 不�
 ### 决策 2: JUnit skipped 文件用 `<skipped/>` 标记
 
 ```python
-if getattr(result, 'skipped', False):
+if getattr(result, "skipped", False):
     return [f"{testcase}<skipped/></testcase>"]
 ```
 
@@ -54,9 +56,9 @@ JUnit 标准: `<skipped/>` 是 JUnit 4+ 的标准 skipped 标记.
 ### 决策 3: failures / passed_count 排除 skipped
 
 ```python
-failures = sum(1 for r in results if not r.passed and not getattr(r, 'skipped', False))
-summary["passed_count"] = sum(1 for r in results if r.passed and not getattr(r, 'skipped', False))
-summary["skipped_count"] = sum(1 for r in results if getattr(r, 'skipped', False))
+failures = sum(1 for r in results if not r.passed and not getattr(r, "skipped", False))
+summary["passed_count"] = sum(1 for r in results if r.passed and not getattr(r, "skipped", False))
+summary["skipped_count"] = sum(1 for r in results if getattr(r, "skipped", False))
 ```
 
 ### 决策 4: JSON summary passed 排除 skipped

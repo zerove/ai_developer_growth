@@ -26,12 +26,13 @@ updated: 2026-08-31
 
 ```python
 import cProfile, pstats
+
 prof = cProfile.Profile()
 prof.enable()
 for _ in range(N):  # N=100 或 1000
     target_function(input)
 prof.disable()
-pstats.Stats(prof).sort_stats('cumulative').print_stats(10)
+pstats.Stats(prof).sort_stats("cumulative").print_stats(10)
 ```
 
 ## 验证结果

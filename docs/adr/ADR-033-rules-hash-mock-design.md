@@ -18,10 +18,12 @@
 ```python
 # 反例: 看似正确但无效
 from tools.scripts import _common
+
 monkeypatch.setattr(_common, "rules_dir", lambda: tmp_path)  # ❌ 无效
 
 # 正例: 必须 mock rule_loader.rules_dir
 from tools.scripts.rules_engine import rule_loader
+
 monkeypatch.setattr(rule_loader, "rules_dir", lambda: tmp_path)  # ✅ 有效
 ```
 

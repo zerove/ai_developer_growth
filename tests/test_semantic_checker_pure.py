@@ -27,9 +27,7 @@ def make_import(
     level: int = 0,
 ) -> ImportInfo:
     """ImportInfo 工厂函数 (避免每个测试重复构造)。"""
-    return ImportInfo(
-        module=module, names=names or [], line=line, is_from=is_from, level=level
-    )
+    return ImportInfo(module=module, names=names or [], line=line, is_from=is_from, level=level)
 
 
 class TestCheckFromImport:

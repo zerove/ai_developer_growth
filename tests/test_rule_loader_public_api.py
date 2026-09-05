@@ -81,35 +81,27 @@ def tmp_disk_cache(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
 class TestLoadRules:
     """load_rules() 主入口 + 缓存。"""
 
-    def test_load_returns_dict_with_anti_patterns(
-        self, framework_with_languages: Path
-    ) -> None:
+    def test_load_returns_dict_with_anti_patterns(self, framework_with_languages: Path) -> None:
         """加载 python 规则 → 返回 dict 含 anti_patterns。"""
         result = load_rules("python", framework_with_languages)
         assert "anti_patterns" in result
         ids = [p["id"] for p in result["anti_patterns"]]
         assert "python-001" in ids
 
-    def test_load_missing_language_fallback(
-        self, framework_with_languages: Path
-    ) -> None:
+    def test_load_missing_language_fallback(self, framework_with_languages: Path) -> None:
         """未在 framework 的语言 → 走 fallback 策略 (通用 + 生成)。"""
         result = load_rules("nonsense", framework_with_languages)
         # 应有通用规则 (universal) - 因为 fallback
         assert "anti_patterns" in result or result == {}
 
-    def test_cache_hit_no_recomputation(
-        self, framework_with_languages: Path
-    ) -> None:
+    def test_cache_hit_no_recomputation(self, framework_with_languages: Path) -> None:
         """第二次 load_rules 同 (language, framework) 命中 LRU 缓存。"""
         first = load_rules("python", framework_with_languages)
         # 第二次: 应直接返回缓存
         second = load_rules("python", framework_with_languages)
         assert first is second  # 同一对象
 
-    def test_disk_cache_hit(
-        self, framework_with_languages: Path, tmp_disk_cache: Path
-    ) -> None:
+    def test_disk_cache_hit(self, framework_with_languages: Path, tmp_disk_cache: Path) -> None:
         """_RULE_CACHE 清空但 disk cache 有数据 → 命中 disk cache。"""
         # 第一次加载,写入 disk cache
         load_rules("python", framework_with_languages)
@@ -121,9 +113,7 @@ class TestLoadRules:
         result = load_rules("python", framework_with_languages)
         assert "anti_patterns" in result
 
-    def test_disk_cache_written_after_load(
-        self, framework_with_languages: Path, tmp_disk_cache: Path
-    ) -> None:
+    def test_disk_cache_written_after_load(self, framework_with_languages: Path, tmp_disk_cache: Path) -> None:
         """load_rules 后 disk cache 文件被创建。"""
         assert not tmp_disk_cache.exists()
         load_rules("python", framework_with_languages)
@@ -132,9 +122,7 @@ class TestLoadRules:
         data = json.loads(tmp_disk_cache.read_text())
         assert isinstance(data, dict)
 
-    def test_load_different_languages_separate_cache(
-        self, framework_with_languages: Path
-    ) -> None:
+    def test_load_different_languages_separate_cache(self, framework_with_languages: Path) -> None:
         """不同 language 各自独立缓存。"""
         py_rules = load_rules("python", framework_with_languages)
         rust_rules = load_rules("rust", framework_with_languages)
@@ -150,9 +138,7 @@ class TestLoadRules:
 class TestLoadCustomRules:
     """load_custom_rules() 3 源合并。"""
 
-    def test_no_custom_sources_returns_empty(
-        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
-    ) -> None:
+    def test_no_custom_sources_returns_empty(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
         """无任何 .yml 源 → 返回空默认结构。"""
         monkeypatch.setattr(Path, "home", lambda: tmp_path)
         result = load_custom_rules(tmp_path)
@@ -162,9 +148,7 @@ class TestLoadCustomRules:
             "thresholds": {},
         }
 
-    def test_project_adg_rules_loaded(
-        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
-    ) -> None:
+    def test_project_adg_rules_loaded(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
         """.adg/rules.yml 存在 → 加载。"""
         monkeypatch.setattr(Path, "home", lambda: tmp_path)
         adg = tmp_path / ".adg"
@@ -178,16 +162,12 @@ anti_patterns:
         result = load_custom_rules(tmp_path)
         assert any(p["id"] == "custom-001" for p in result["anti_patterns"])
 
-    def test_legacy_ai_rules_dir_loaded(
-        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
-    ) -> None:
+    def test_legacy_ai_rules_dir_loaded(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
         """.ai-rules/*.yml 目录加载。"""
         monkeypatch.setattr(Path, "home", lambda: tmp_path)
         ai_dir = tmp_path / ".ai-rules"
         ai_dir.mkdir()
-        (ai_dir / "rule1.yml").write_text(
-            "anti_patterns:\n  - id: legacy-001\n"
-        )
+        (ai_dir / "rule1.yml").write_text("anti_patterns:\n  - id: legacy-001\n")
         result = load_custom_rules(tmp_path)
         ids = [p["id"] for p in result["anti_patterns"]]
         assert "legacy-001" in ids
@@ -196,22 +176,16 @@ anti_patterns:
 class TestLoadRulesForLanguage:
     """load_rules_for_language() 别名 + 透传。"""
 
-    def test_delegates_to_load_rules(
-        self, framework_with_languages: Path
-    ) -> None:
+    def test_delegates_to_load_rules(self, framework_with_languages: Path) -> None:
         """load_rules_for_language 调用 load_rules (相同结果)。"""
         a = load_rules("python", framework_with_languages)
         b = load_rules_for_language("python", framework_with_languages)
         # 内容应相同 (可能不同对象, 因 cache 顺序)
         assert a == b
 
-    def test_default_framework_dir(
-        self, framework_with_languages: Path, monkeypatch: pytest.MonkeyPatch
-    ) -> None:
+    def test_default_framework_dir(self, framework_with_languages: Path, monkeypatch: pytest.MonkeyPatch) -> None:
         """framework_dir=None → 使用 rules_dir()。"""
-        monkeypatch.setattr(
-            rule_loader, "rules_dir", lambda: framework_with_languages
-        )
+        monkeypatch.setattr(rule_loader, "rules_dir", lambda: framework_with_languages)
         result = load_rules_for_language("python")
         assert "anti_patterns" in result
 
@@ -219,9 +193,7 @@ class TestLoadRulesForLanguage:
 class TestLoadGeneratedRulesInternal:
     """_load_generated_rules 内部 helper (ADR-035: 模块级缓存)。"""
 
-    def test_import_error_returns_empty(
-        self, monkeypatch: pytest.MonkeyPatch
-    ) -> None:
+    def test_import_error_returns_empty(self, monkeypatch: pytest.MonkeyPatch) -> None:
         """rule_generator 不可 import → [] (兜底)。"""
         # 删除 _GENERATED_RULES_CACHE 条目, 确保第一次调用
         _GENERATED_RULES_CACHE.clear()
@@ -247,9 +219,7 @@ class TestLoadCommonRulesInternal:
         self, framework_with_languages: Path, monkeypatch: pytest.MonkeyPatch
     ) -> None:
         """framework_dir=None → 使用 rules_dir() (ADR-033 陷阱延续)。"""
-        monkeypatch.setattr(
-            rule_loader, "rules_dir", lambda: framework_with_languages
-        )
+        monkeypatch.setattr(rule_loader, "rules_dir", lambda: framework_with_languages)
         result = rule_loader._load_common_rules()
         assert isinstance(result, dict)
 
@@ -257,9 +227,7 @@ class TestLoadCommonRulesInternal:
         self, framework_with_languages: Path, monkeypatch: pytest.MonkeyPatch
     ) -> None:
         """framework_dir=None → 使用 rules_dir()。"""
-        monkeypatch.setattr(
-            rule_loader, "rules_dir", lambda: framework_with_languages
-        )
+        monkeypatch.setattr(rule_loader, "rules_dir", lambda: framework_with_languages)
         result = rule_loader._load_universal_rules()
         assert isinstance(result, dict)
 
@@ -272,9 +240,7 @@ class TestLoadDomainRules:
         result = load_domain_rules(tmp_path)
         assert result == {"anti_patterns": []}
 
-    def test_domains_loaded_from_adg_config(
-        self, tmp_path: Path
-    ) -> None:
+    def test_domains_loaded_from_adg_config(self, tmp_path: Path) -> None:
         """.adg/config.yml 含 domains → 加载对应规则文件。"""
         # 创建 ai-dev-framework/domains/python.yml
         framework_dir = tmp_path / "framework"
@@ -297,9 +263,7 @@ anti_patterns:
         ids = [p["id"] for p in result["anti_patterns"]]
         assert "fintech-001" in ids
 
-    def test_invalid_domain_config_returns_empty(
-        self, tmp_path: Path
-    ) -> None:
+    def test_invalid_domain_config_returns_empty(self, tmp_path: Path) -> None:
         """config.yml 损坏 → 走兜底, 返回空 dict。"""
         adg = tmp_path / ".adg"
         adg.mkdir()

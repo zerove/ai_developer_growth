@@ -57,9 +57,7 @@ def _clear_lru_cache() -> None:
 class TestRulesHashCached:
     """_rules_hash_cached() 多文件 hash + LRU + 兜底。"""
 
-    def test_multi_file_hash_returns_sha256(
-        self, framework_with_rules: Path
-    ) -> None:
+    def test_multi_file_hash_returns_sha256(self, framework_with_rules: Path) -> None:
         """多个文件存在 → SHA-256 hex (空文件也至少64字符空 hash)。"""
         result = _rules_hash_cached("python", str(framework_with_rules))
         assert len(result) == 64
@@ -68,16 +66,12 @@ class TestRulesHashCached:
         expected = hashlib.sha256(expected_input).hexdigest()
         assert result == expected
 
-    def test_missing_files_return_zero_byte_hash(
-        self, tmp_path: Path
-    ) -> None:
+    def test_missing_files_return_zero_byte_hash(self, tmp_path: Path) -> None:
         """两个文件都不存在 → SHA-256(empty) (空 digest.hexdigest())。"""
         result = _rules_hash_cached("python", str(tmp_path))
         assert result == hashlib.sha256(b"").hexdigest()
 
-    def test_only_one_file_exists(
-        self, framework_with_rules: Path
-    ) -> None:
+    def test_only_one_file_exists(self, framework_with_rules: Path) -> None:
         """只有一个文件存在 → 仍能 hash (缺失文件跳过)。"""
         # 删除 common/security.yml
         (framework_with_rules / "common" / "security.yml").unlink()
@@ -87,9 +81,7 @@ class TestRulesHashCached:
         expected = hashlib.sha256(b"python_rules: v1\n\x00").hexdigest()
         assert result == expected
 
-    def test_os_error_returns_empty_string(
-        self, framework_with_rules: Path, monkeypatch: pytest.MonkeyPatch
-    ) -> None:
+    def test_os_error_returns_empty_string(self, framework_with_rules: Path, monkeypatch: pytest.MonkeyPatch) -> None:
         """read_bytes 抛 OSError → \"\" (兜底, 不抛异常)。"""
         if os.geteuid() == 0:
             pytest.skip("root 用户可绕过文件权限")
@@ -112,16 +104,12 @@ class TestRulesHashCached:
         cache_info = _rules_hash_cached.cache_info()
         assert cache_info.hits >= 1
 
-    def test_lru_cache_miss_different_args(
-        self, framework_with_rules: Path, tmp_path: Path
-    ) -> None:
+    def test_lru_cache_miss_different_args(self, framework_with_rules: Path, tmp_path: Path) -> None:
         """不同 (language, dir) 调用不命中缓存。"""
         # 创建另一个 framework dir
         other = tmp_path / "other_framework"
         (other / "languages" / "rust" / "rules.d").mkdir(parents=True)
-        (other / "languages" / "rust" / "rules.d" / "anti_patterns.yml").write_text(
-            "rust: 1\n"
-        )
+        (other / "languages" / "rust" / "rules.d" / "anti_patterns.yml").write_text("rust: 1\n")
         (other / "common").mkdir()
         (other / "common" / "security.yml").write_text("sec: 1\n")
 
@@ -137,9 +125,7 @@ class TestRulesHashCached:
 class TestRulesHash:
     """_rules_hash() 公开 API: 默认 framework_dir = rules_dir()。"""
 
-    def test_default_framework_dir(
-        self, framework_with_rules: Path, monkeypatch: pytest.MonkeyPatch
-    ) -> None:
+    def test_default_framework_dir(self, framework_with_rules: Path, monkeypatch: pytest.MonkeyPatch) -> None:
         """framework_dir=None → 使用 rules_dir() (项目默认目录)。
 
         注意: rule_loader 顶部 `from _common import rules_dir` 已绑定函数对象,
@@ -152,15 +138,11 @@ class TestRulesHash:
 
         result = _rules_hash("python")
         # 验证走的是 mock 的路径
-        expected = hashlib.sha256(
-            b"python_rules: v1\n\x00security_rules: v1\n\x00"
-        ).hexdigest()
+        expected = hashlib.sha256(b"python_rules: v1\n\x00security_rules: v1\n\x00").hexdigest()
         assert result == expected
 
     def test_explicit_framework_dir(self, framework_with_rules: Path) -> None:
         """传入 framework_dir → 使用传入路径 (不调 rules_dir())。"""
         result = _rules_hash("python", framework_with_rules)
-        expected = hashlib.sha256(
-            b"python_rules: v1\n\x00security_rules: v1\n\x00"
-        ).hexdigest()
+        expected = hashlib.sha256(b"python_rules: v1\n\x00security_rules: v1\n\x00").hexdigest()
         assert result == expected

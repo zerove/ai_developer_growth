@@ -403,18 +403,25 @@ class ASTParser:
         result: list[FunctionInfo],
         class_name: str | None,
     ) -> None:
-        """Walk Python AST for function definitions."""
-        func_types = {"function_definition", "async_function_definition"}
-        if node.type in func_types:
-            info = self._parse_python_function(node, lines, class_name)
-            if info:
-                result.append(info)
-            # Don't recurse into nested functions for class methods
-            return
+        """Walk Python AST for function definitions (Phase 33b-7 fix, ADR-048).
 
-        # Recurse into children
-        for child in node.children:
-            self._walk_python_functions(child, lines, result, class_name)
+        迭代化: 用栈替代纯递归, 避免深度 binary_expression (如 1+1+1+... * 1000)
+        触发 RecursionError. 语义保持: 先访问父节点, 后访问子节点.
+        """
+        func_types = {"function_definition", "async_function_definition"}
+        # 用列表作栈: [node_to_visit]
+        # 单元素 stack 比 deque 简单, 不需要 maxlen
+        stack: list[_TreeNode] = [node]
+        while stack:
+            current = stack.pop()
+            if current.type in func_types:
+                info = self._parse_python_function(current, lines, class_name)
+                if info:
+                    result.append(info)
+                # Don't recurse into nested functions for class methods
+                continue
+            # 追加 children 到栈. 使用 reversed 让遍历顺序与原 for 一致 (depth-first)
+            stack.extend(reversed(current.children))
 
     def _parse_python_function(self, node: _TreeNode, lines: list[str], class_name: str | None) -> FunctionInfo | None:
         """Parse a Python function definition node."""
@@ -732,12 +739,19 @@ class ASTParser:
         return classes
 
     def _walk_classes(self, node: _TreeNode, language: str, lines: list[str], result: list[ClassInfo]) -> None:
-        """Walk AST for class definitions (V2.21 P5-45 拆分: 抽 _dispatch_class_parse)."""
-        handled = self._dispatch_class_parse(node, language, lines, result)
-        if handled:
-            return
-        for child in node.children:
-            self._walk_classes(child, language, lines, result)
+        """Walk AST for class definitions (Phase 33b-7 fix, ADR-048).
+
+        V2.21 P5-45 拆分: 抽 _dispatch_class_parse.
+        迭代化 (33b-7): 用栈替代纯递归, 避免深度 binary_expression 触发 RecursionError.
+        """
+        stack: list[_TreeNode] = [node]
+        while stack:
+            current = stack.pop()
+            handled = self._dispatch_class_parse(current, language, lines, result)
+            if handled:
+                continue
+            # 追加 children 到栈 (reversed 保持原 depth-first 顺序)
+            stack.extend(reversed(current.children))
 
     def _dispatch_class_parse(self, node: _TreeNode, language: str, lines: list[str], result: list[ClassInfo]) -> bool:
         """按 language 分派 class 解析 (模块级 helper).
@@ -1031,23 +1045,31 @@ class ASTParser:
         return None  # import_clause 由父节点处理
 
     def _walk_imports(self, node: _TreeNode, language: str, result: list[ImportInfo]) -> None:
-        """Walk AST for import statements."""
-        if language == "python":
-            info = self._parse_python_import(node)
-            if info:
-                result.append(info)
-        elif language in ("javascript", "typescript"):
-            info = self._parse_js_import(node)
-            if info:
-                result.append(info)
+        """Walk AST for import statements (Phase 33b-7 fix, ADR-048).
 
-        for child in node.children:
-            if language == "python" and node.type in (
+        迭代化: 用栈替代纯递归, 避免深度 binary_expression 触发 RecursionError.
+        保持原 'already-parsed imports' 跳过逻辑 (不递归进入 import_statement 内部).
+        """
+        stack: list[_TreeNode] = [node]
+        while stack:
+            current = stack.pop()
+            if language == "python":
+                info = self._parse_python_import(current)
+                if info:
+                    result.append(info)
+            elif language in ("javascript", "typescript"):
+                info = self._parse_js_import(current)
+                if info:
+                    result.append(info)
+
+            # already-parsed imports 不递归进入内部
+            if language == "python" and current.type in (
                 "import_statement",
                 "import_from_statement",
             ):
-                continue  # don't recurse into already-parsed imports
-            self._walk_imports(child, language, result)
+                continue
+            # 追加 children 到栈
+            stack.extend(reversed(current.children))
 
     # ─────────────────────────────────────────────────────────────
     # Global variable extraction
@@ -1085,21 +1107,26 @@ class ASTParser:
     # ─────────────────────────────────────────────────────────────
 
     def _find_error_nodes(self, node: _TreeNode) -> list[ASTNode]:
-        """Find ERROR nodes in AST (syntax errors)."""
+        """Find ERROR nodes in AST (syntax errors).
+
+        Phase 33b-7 fix (ADR-048): 迭代化避免深度 binary_expression 触发 RecursionError.
+        """
         errors: list[ASTNode] = []
-        if node.type == "ERROR":
-            errors.append(
-                ASTNode(
-                    type="ERROR",
-                    name=str(node.text[:50]) if hasattr(node, "text") else "",
-                    line=node.start_point[0] + 1,
-                    col=node.start_point[1],
-                    end_line=node.end_point[0] + 1,
-                    end_col=node.end_point[1],
+        stack: list[_TreeNode] = [node]
+        while stack:
+            current = stack.pop()
+            if current.type == "ERROR":
+                errors.append(
+                    ASTNode(
+                        type="ERROR",
+                        name=str(current.text[:50]) if hasattr(current, "text") else "",
+                        line=current.start_point[0] + 1,
+                        col=current.start_point[1],
+                        end_line=current.end_point[0] + 1,
+                        end_col=current.end_point[1],
+                    )
                 )
-            )
-        for child in node.children:
-            errors.extend(self._find_error_nodes(child))
+            stack.extend(reversed(current.children))
         return errors
 
     # ─────────────────────────────────────────────────────────────
@@ -1118,10 +1145,13 @@ class ASTParser:
         return None
 
     def _count_nodes(self, node: _TreeNode) -> int:
-        """Count total nodes in AST."""
-        count = 1
-        for child in node.children:
-            count += self._count_nodes(child)
+        """Count total nodes in AST (Phase 33b-7 fix, ADR-048: 迭代化)."""
+        count = 0
+        stack: list[_TreeNode] = [node]
+        while stack:
+            current = stack.pop()
+            count += 1
+            stack.extend(current.children)
         return count
 
     def _detect_language(self, filepath: Path) -> str:

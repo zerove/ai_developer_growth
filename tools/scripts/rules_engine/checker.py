@@ -653,8 +653,8 @@ def _check_files_serial(
         )
         if was_degraded:
             degraded += 1
-        if not result.skipped:
-            results.append(result)
+        # Phase 33b-13 fix (ADR-053): 不再静默过滤 skipped 文件, 让 report_generator 输出 notApplicable
+        results.append(result)
     return results, degraded
 
 

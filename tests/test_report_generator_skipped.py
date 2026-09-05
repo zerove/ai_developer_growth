@@ -22,9 +22,7 @@ from tools.scripts.rules_engine.checker import check_file
 
 def _real_check_setup():
     """构造 3 个 CheckResult: pass / fail / skipped (空文件)."""
-    r_pass = check_file(
-        Path("tools/scripts/rules_engine/ast_parser.py"), semantic=True
-    )
+    r_pass = check_file(Path("tools/scripts/rules_engine/ast_parser.py"), semantic=True)
     with tempfile.NamedTemporaryFile(mode="wb", suffix=".py", delete=False) as f:
         f.write(b"import os\ndef broken(:\n    pass\n")
         bad_fname = f.name

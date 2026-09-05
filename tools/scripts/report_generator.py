@@ -33,7 +33,7 @@ def _count_summary_stats(results: list[Any]) -> tuple[int, int, int, int]:
     total_errors = sum(r.error_count for r in results)
     total_warnings = sum(r.warning_count for r in results)
     total_tests = len(results)
-    failures = sum(1 for r in results if not r.passed and not getattr(r, 'skipped', False))
+    failures = sum(1 for r in results if not r.passed and not getattr(r, "skipped", False))
     return total_errors, total_warnings, total_tests, failures
 
 
@@ -82,7 +82,7 @@ def _build_pass_testcase(result: Any) -> list[str]:
     """
     testcase = f'  <testcase name="{_xml_escape(result.file)}" classname="{result.language}">'
     # Phase 33b-12 fix: skipped 文件用 JUnit <skipped/> 标记
-    if getattr(result, 'skipped', False):
+    if getattr(result, "skipped", False):
         return [f"{testcase}<skipped/></testcase>"]
     warns = [i for i in result.issues if i.severity == "warning"]
     if not warns:
@@ -134,8 +134,8 @@ def _count_html_summary(results: list[Any]) -> dict[str, int]:
     Phase 33b-12 fix (ADR-052): passed_count 排除 skipped (skipped 不算通过).
     """
     summary = _count_severity_totals(results)
-    summary["passed_count"] = sum(1 for r in results if r.passed and not getattr(r, 'skipped', False))
-    summary["skipped_count"] = sum(1 for r in results if getattr(r, 'skipped', False))
+    summary["passed_count"] = sum(1 for r in results if r.passed and not getattr(r, "skipped", False))
+    summary["skipped_count"] = sum(1 for r in results if getattr(r, "skipped", False))
     return summary
 
 
@@ -303,7 +303,7 @@ def _build_sarif_results(results: list[Any]) -> list[dict[str, Any]]:
                 )
             )
         # Phase 33b-12 fix: skipped 文件在 SARIF 中用 notApplicable 标记
-        if getattr(result, 'skipped', False) and not result.issues:
+        if getattr(result, "skipped", False) and not result.issues:
             runs_results.append(
                 {
                     "ruleId": "file-skipped",
@@ -358,7 +358,7 @@ def _build_json_summary(results: list[Any]) -> dict[str, Any]:
 
     Phase 33b-12 fix (ADR-052): passed 排除 skipped (仅在所有非 skipped 都 passed 时为 True).
     """
-    non_skipped = [r for r in results if not getattr(r, 'skipped', False)]
+    non_skipped = [r for r in results if not getattr(r, "skipped", False)]
     return {
         "total_files": len(results),
         "total_errors": sum(r.error_count for r in results),

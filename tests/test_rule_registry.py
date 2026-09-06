@@ -12,7 +12,6 @@ import pytest
 import yaml
 
 from tools.scripts.rule_registry import (
-    _file_hash,
     _load_registry,
     _save_registry,
     cmd_info,
@@ -25,6 +24,7 @@ from tools.scripts.rule_registry import (
     init_registry,
     main,
 )
+from tools.scripts._common import file_hash as _file_hash
 
 
 @pytest.fixture()

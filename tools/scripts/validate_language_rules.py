@@ -23,7 +23,6 @@ Usage:
 from __future__ import annotations
 
 import ast
-import hashlib
 import json
 import logging
 import sys
@@ -176,15 +175,8 @@ def _merge_rules(base: dict[str, Any], custom: dict[str, Any]) -> dict[str, Any]
 # ──────────────────────────────────────────────────────────
 
 
-def _file_hash(filepath: Path) -> str:
-    """Calculate SHA-256 hash of file content. Returns empty string if file doesn't exist."""
-    if not filepath.exists():
-        return ""
-    try:
-        content = filepath.read_bytes()
-        return hashlib.sha256(content).hexdigest()
-    except OSError:
-        return ""
+# Private function re-exports
+# ──────────────────────────────────────────────────────────
 
 
 def _load_cache(cache_file: Path) -> dict[str, str]:

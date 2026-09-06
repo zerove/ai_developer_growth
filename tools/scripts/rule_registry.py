@@ -16,7 +16,6 @@ Usage:
 from __future__ import annotations
 
 import argparse
-import hashlib
 import json
 import shutil
 import sys
@@ -26,22 +25,14 @@ from typing import Any
 
 import yaml
 
+from tools.scripts._common import file_hash
+
 
 def handle_error(e: Exception, script: str = "", exit_code: int = 1) -> None:
     """统一错误处理器，使用中文格式。"""
     msg = f"错误: {e}" if not script else f"{script} 出错: {e}"
     print(msg, file=sys.stderr)
     sys.exit(exit_code)
-
-
-def _file_hash(filepath: Path) -> str:
-    """Compute SHA256 hash of file content (truncated to 16 chars for cache keys)."""
-    try:
-        h = hashlib.sha256()
-        h.update(filepath.read_bytes())
-        return h.hexdigest()[:16]
-    except (OSError, ValueError):
-        return ""
 
 
 def init_registry() -> None:
@@ -187,7 +178,7 @@ def cmd_publish(args: argparse.Namespace) -> None:
         "version": version,
         "source": str(source),
         "rule_count": rule_count,
-        "hash": _file_hash(dest),
+        "hash": file_hash(dest),
         "published": datetime.now(timezone.utc).isoformat(),
         "updated": datetime.now(timezone.utc).isoformat(),
         "description": args.description or f"Rule pack: {name}",
@@ -367,7 +358,6 @@ def main() -> int:
 
 # Backward compatibility exports for tests
 __all__ = [
-    "_file_hash",
     "_load_registry",
     "_save_registry",
     "cmd_info",

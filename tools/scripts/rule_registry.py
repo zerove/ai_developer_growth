@@ -25,14 +25,7 @@ from typing import Any
 
 import yaml
 
-from tools.scripts._common import file_hash
-
-
-def handle_error(e: Exception, script: str = "", exit_code: int = 1) -> None:
-    """统一错误处理器，使用中文格式。"""
-    msg = f"错误: {e}" if not script else f"{script} 出错: {e}"
-    print(msg, file=sys.stderr)
-    sys.exit(exit_code)
+from tools.scripts._common import file_hash, handle_error
 
 
 def init_registry() -> None:

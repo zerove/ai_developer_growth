@@ -111,6 +111,6 @@ def cli_main(main_fn: Callable[[], int], script_name: str = "") -> None:
         print("\nInterrupted.", file=sys.stderr)
         sys.exit(130)
     except SystemExit:
-        raise  # noqa: py-bare-raise
+        raise
     except Exception as e:
         handle_error(e, script=script_name or Path(sys.argv[0]).stem)

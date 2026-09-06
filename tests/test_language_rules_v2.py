@@ -16,7 +16,6 @@ from tools.scripts.validate_language_rules import (
     FixResult,
     Issue,
     ValidationResult,
-    _file_hash,
     _get_supported_files,
     _load_cache,
     _merge_rules,
@@ -31,6 +30,7 @@ from tools.scripts.validate_language_rules import (
     validate_file,
     write_report,
 )
+from tools.scripts._common import file_hash_full as _file_hash
 
 # ──────────────────────────────────────────────────────────
 # FixResult tests

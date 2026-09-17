@@ -11,6 +11,9 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
+from typing import Any
+
+import pytest
 
 from tools.scripts.config.models import (
     BaselineConfig,
@@ -187,7 +190,9 @@ class TestExceptionManager:
         assert by_file["keep.py"].issues[0].message == "msg"
 
 
-def make_engine(tmp_path: Path, gate_overrides: dict | None = None, baseline_enabled: bool = True) -> QualityGateEngine:
+def make_engine(
+    tmp_path: Path, gate_overrides: dict[str, Any] | None = None, baseline_enabled: bool = True
+) -> QualityGateEngine:
     from tools.scripts.config import get_config as _orig  # noqa: F401  仅示意
 
     gov = GovernanceConfig()
@@ -238,11 +243,34 @@ class TestQualityGateEngineEvaluate:
         worsened = [r for r in report.results if r.rule_id == "gate.no-worsened"]
         assert worsened[0].passed is False
 
-    def test_coverage_stub_passes(self, tmp_path: Path) -> None:
+    def test_coverage_meets_threshold_passes(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
         engine = make_engine(tmp_path, {"min_coverage_overall": 80.0})
+        monkeypatch.setattr(engine, "_read_coverage_percent", lambda: 85.5)
         report = engine.evaluate([], baseline={"files": {}})
         cov = [r for r in report.results if r.rule_id == "gate.coverage-overall"]
-        assert cov[0].passed is True and "待实现" in cov[0].message
+        assert cov[0].passed is True
+        assert "85.5" in cov[0].message
+
+    def test_coverage_below_threshold_fails(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+        engine = make_engine(tmp_path, {"min_coverage_overall": 80.0})
+        monkeypatch.setattr(engine, "_read_coverage_percent", lambda: 60.0)
+        report = engine.evaluate([], baseline={"files": {}})
+        cov = [r for r in report.results if r.rule_id == "gate.coverage-overall"]
+        assert cov[0].passed is False
+        assert report.overall_passed is False
+
+    def test_coverage_data_unavailable_fails(self, tmp_path: Path) -> None:
+        engine = make_engine(tmp_path, {"min_coverage_overall": 80.0})
+        engine._read_coverage_percent = lambda: None  # type: ignore[method-assign]  # noqa: SLF001
+        report = engine.evaluate([], baseline={"files": {}})
+        cov = [r for r in report.results if r.rule_id == "gate.coverage-overall"]
+        assert cov[0].passed is False
+        assert "不可用" in cov[0].message
+
+    def test_coverage_gate_disabled_by_default(self, tmp_path: Path) -> None:
+        engine = make_engine(tmp_path)
+        report = engine.evaluate([], baseline={"files": {}})
+        assert all(r.rule_id != "gate.coverage-overall" for r in report.results)
 
     def test_unknown_gate_uses_default_config(self, tmp_path: Path) -> None:
         engine = make_engine(tmp_path)

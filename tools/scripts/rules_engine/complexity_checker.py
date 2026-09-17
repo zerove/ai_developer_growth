@@ -199,13 +199,11 @@ def check_js_complexity(
     issues: list[Issue] = []
     thresholds = rules.get("thresholds", {})
     max_lines = thresholds.get("max_lines_per_function", 50)
-    _ = thresholds.get("max_nesting_depth", 4)  # max_nesting reserved for future use
 
     # Simple regex-based function detection for JS/TS
     func_pattern = re.compile(
         r"(?:function\s+(\w+)|(?:const|let|var)\s+(\w+)\s*=\s*(?:async\s*)?(?:function|\([^)]*\)\s*=>))"
     )
-    _ = re.compile(r"[{}()]")  # brace_pattern reserved for future use
 
     # This is a simplified check - for production use, consider using a proper parser
     current_func = None
@@ -214,8 +212,6 @@ def check_js_complexity(
     in_function = False
 
     for line_num, line in enumerate(lines, 1):
-        _ = line.strip()  # stripped reserved for future use
-
         # Detect function start
         if not in_function:
             match = func_pattern.search(line)

@@ -22,7 +22,7 @@ ADR-038 复盘指出 rules_engine 工具链存在**同构函数重复**（如 `_
 | `find_first` | go/php/typescript parser |
 | `find_first_at_depth` | rust/typescript parser |
 | `node_text` | 9 个 parser（统一变体2 None-safe node + 变体3 None-safe text） |
-| `merge_anti_patterns` | rule_loader / pipeline / cli |
+| `merge_anti_patterns` | rule_loader / pipeline（cli 经 pipeline 间接消费） |
 | `load_cache` / `save_cache` | rule_loader / cli / validate_language_rules / update_ai_tool_matrix |
 | `detect_language_from_file`（别名 = `detect_language`） | detect_language / pipeline |
 | `SeverityCountsMixin`（error/warning/info count 属性） | rules/models.py + rules_engine/models.py 3 个类 |

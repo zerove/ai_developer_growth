@@ -11,7 +11,9 @@ mock 网络(subprocess/urllib), 覆盖 47%→75%+:
 
 from __future__ import annotations
 
+import http.client
 import json
+import urllib.error
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 
@@ -308,10 +310,79 @@ class TestSignatureVerifier:
         with patch("tools.scripts.supply_chain.subprocess.run", return_value=bad):
             assert v.verify_cosign_signature("img")["verified"] is False
 
-    def test_pypi_and_slsa_stubs(self) -> None:
+    def test_pypi_package_verified_with_digests(self) -> None:
         v = SignatureVerifier()
-        assert v.verify_pypi_package("x", "1.0")["verified"] is False
-        assert v.verify_slsa_provenance(Path("p"))["verified"] is False
+        payload = {
+            "info": {"name": "requests", "version": "2.31.0"},
+            "urls": [{"filename": "requests-2.31.0-py3-none-any.whl", "digests": {"sha256": "abc"}}],
+        }
+
+        class FakeResp:
+            def read(self) -> bytes:
+                return json.dumps(payload).encode()
+
+            def __enter__(self) -> FakeResp:
+                return self
+
+            def __exit__(self, *a: object) -> None:
+                return None
+
+        with patch("urllib.request.urlopen", return_value=FakeResp()):
+            result = v.verify_pypi_package("requests", "2.31.0")
+        assert result["verified"] is True
+        assert result["name"] == "requests" and result["release_files"] == 1
+
+    def test_pypi_package_missing_fails(self) -> None:
+        v = SignatureVerifier()
+        hdrs = http.client.HTTPMessage()
+        with patch("urllib.request.urlopen", side_effect=urllib.error.HTTPError("u", 404, "nf", hdrs, None)):
+            result = v.verify_pypi_package("no-such-pkg-xyz", "1.0")
+        assert result["verified"] is False
+
+    def test_pypi_package_no_digests_fails(self) -> None:
+        v = SignatureVerifier()
+        payload = {"info": {"name": "x"}, "urls": [{"filename": "x.whl"}]}
+
+        class FakeResp:
+            def read(self) -> bytes:
+                return json.dumps(payload).encode()
+
+            def __enter__(self) -> FakeResp:
+                return self
+
+            def __exit__(self, *a: object) -> None:
+                return None
+
+        with patch("urllib.request.urlopen", return_value=FakeResp()):
+            result = v.verify_pypi_package("x", "1.0")
+        assert result["verified"] is False
+
+    def test_slsa_provenance_absent_fails(self, tmp_path: Path) -> None:
+        v = SignatureVerifier()
+        result = v.verify_slsa_provenance(tmp_path / "p")
+        assert result["verified"] is False
+
+    def test_slsa_provenance_detected(self, tmp_path: Path) -> None:
+        att = tmp_path / "pkg.tar.gz.attestation"
+        att.write_text(
+            json.dumps(
+                {
+                    "predicateType": "https://slsa.dev/provenance/v1",
+                    "subject": [{"name": "pkg.tar.gz", "digest": {"sha256": "abc"}}],
+                }
+            )
+        )
+        v = SignatureVerifier()
+        result = v.verify_slsa_provenance(tmp_path / "pkg.tar.gz")
+        assert result["verified"] is True
+        assert result["subject_name"] == "pkg.tar.gz"
+        assert result["subject_digest"]["sha256"] == "abc"
+
+    def test_slsa_provenance_invalid_json_ignored(self, tmp_path: Path) -> None:
+        (tmp_path / "pkg.attestation").write_text("not-json{")
+        v = SignatureVerifier()
+        result = v.verify_slsa_provenance(tmp_path / "pkg")
+        assert result["verified"] is False
 
 
 # ── 主入口 ──────────────────────────────────────────────────

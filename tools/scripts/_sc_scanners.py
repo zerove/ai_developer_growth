@@ -180,6 +180,26 @@ class OSVScanner:
         return None
 
 
+def _parse_ghsa_severity(raw: Any) -> Severity:
+    """将 GHSA severity 字符串映射为 Severity 枚举 (模块级 helper).
+
+    Args:
+        raw: GHSA API 返回的 severity 字段 (如 "high", "moderate", "low", "critical")
+
+    Returns:
+        Severity 枚举
+    """
+    normalized = str(raw).lower() if raw is not None else ""
+    mapping = {
+        "critical": Severity.CRITICAL,
+        "high": Severity.HIGH,
+        "moderate": Severity.MEDIUM,
+        "medium": Severity.MEDIUM,
+        "low": Severity.LOW,
+    }
+    return mapping.get(normalized, Severity.NONE)
+
+
 class GHSASource:
     """GHSA (GitHub Security Advisories) 数据源"""
 
@@ -187,10 +207,47 @@ class GHSASource:
         self.github_token = github_token
 
     def fetch_advisories(self, ecosystem: str, package: str) -> list[Vulnerability]:
-        """获取 GHSA 公告 (需要 GitHub API)"""
-        # 简化实现：实际需要调用 GitHub GraphQL API
-        # 这里返回空列表，实际使用时需集成 GitHub API
-        return []
+        """获取 GHSA 公告 (GitHub Security Advisories API).
+
+        Args:
+            ecosystem: 包生态 (如 pypi, npm)
+            package: 包名
+
+        Returns:
+            Vulnerability 列表, API 失败时返回空列表
+        """
+        url = f"https://api.github.com/advisories?ecosystem={ecosystem}&affects={package}"
+        req = urllib.request.Request(url, headers={"Accept": "application/vnd.github+json"})
+        if self.github_token:
+            req.add_header("Authorization", f"Bearer {self.github_token}")
+        try:
+            with urllib.request.urlopen(req, timeout=30) as resp:
+                advisories: list[dict[str, Any]] = json.loads(resp.read().decode())
+        except Exception as e:
+            logger.warning(f"GHSA fetch failed for {package}: {e}")
+            return []
+
+        vulns: list[Vulnerability] = []
+        for adv in advisories:
+            for affected in adv.get("vulnerabilities", []):
+                pkg_info = affected.get("package") or {}
+                vulns.append(
+                    Vulnerability(
+                        id=adv.get("ghsa_id", f"GHSA-{package}"),
+                        source="GHSA",
+                        summary=adv.get("summary", ""),
+                        severity=_parse_ghsa_severity(adv.get("severity")),
+                        affected_package=pkg_info.get("name", package),
+                        affected_version=affected.get("vulnerable_version_range", "*"),
+                        fixed_version=affected.get("patched_versions"),
+                        references=[r.get("url", "") for r in adv.get("references", []) if r.get("url")],
+                        published_at=adv.get("published_at"),
+                        modified_at=adv.get("updated_at"),
+                        cvss_score=adv.get("cvss", {}).get("score"),
+                        cvss_vector=adv.get("cvss", {}).get("vector_string"),
+                    )
+                )
+        return vulns
 
 
 class LicenseChecker:
@@ -280,9 +337,34 @@ class SignatureVerifier:
         pass
 
     def verify_pypi_package(self, name: str, version: str) -> dict[str, Any]:
-        """验证 PyPI 包签名 (需要 PyPI API)"""
-        # 简化实现
-        return {"verified": False, "message": "Not implemented"}
+        """验证 PyPI 包存在性 (PyPI JSON API).
+
+        Args:
+            name: 包名
+            version: 版本号
+
+        Returns:
+            {"verified": bool, "message": str, ...包元数据}
+        """
+        url = f"https://pypi.org/pypi/{name}/{version}/json"
+        try:
+            req = urllib.request.Request(url, headers={"Accept": "application/json"})
+            with urllib.request.urlopen(req, timeout=30) as resp:
+                data: dict[str, Any] = json.loads(resp.read().decode())
+        except Exception as e:
+            return {"verified": False, "message": str(e)}
+
+        info = data.get("info", {})
+        urls = data.get("urls", [])
+        has_digests = any(u.get("digests") for u in urls)
+        return {
+            "verified": bool(info.get("name")) and bool(urls) and has_digests,
+            "message": f"PyPI 包 {name}=={version} 存在",
+            "name": info.get("name"),
+            "version": info.get("version"),
+            "release_files": len(urls),
+            "has_digests": has_digests,
+        }
 
     def verify_cosign_signature(self, image: str, public_key: str | None = None) -> dict[str, Any]:
         """验证容器镜像签名"""
@@ -302,9 +384,46 @@ class SignatureVerifier:
             return {"verified": False, "message": str(e)}
 
     def verify_slsa_provenance(self, package_path: Path) -> dict[str, Any]:
-        """验证 SLSA provenance"""
-        # 简化实现
-        return {"verified": False, "message": "Not implemented"}
+        """验证 SLSA provenance (查找同目录 attestation/intoto 文件).
+
+        Args:
+            package_path: 待验证包/文件路径
+
+        Returns:
+            {"verified": bool, "message": str, ...}
+        """
+        if package_path.is_dir():
+            candidates = (
+                sorted(package_path.glob("*.attestation"))
+                + sorted(package_path.glob("*.intoto.jsonl"))
+                + sorted(package_path.glob("*.provenance"))
+            )
+        else:
+            candidates = (
+                sorted(package_path.parent.glob(f"{package_path.name}*.attestation"))
+                + sorted(package_path.parent.glob(f"{package_path.name}*.intoto.jsonl"))
+                + sorted(package_path.parent.glob(f"{package_path.name}*.provenance"))
+            )
+        if not candidates:
+            return {"verified": False, "message": "未找到 SLSA provenance 文件"}
+
+        for f in candidates:
+            try:
+                data: dict[str, Any] = json.loads(f.read_text())
+                predicate_type = data.get("predicateType", "")
+                if "slsa.dev/provenance" in predicate_type:
+                    subject = (data.get("subject") or [{}])[0]
+                    return {
+                        "verified": True,
+                        "message": f"检测到 SLSA provenance: {f.name}",
+                        "file": str(f),
+                        "predicate_type": predicate_type,
+                        "subject_name": subject.get("name"),
+                        "subject_digest": subject.get("digest"),
+                    }
+            except (json.JSONDecodeError, OSError):
+                continue
+        return {"verified": False, "message": "未找到有效 SLSA provenance"}
 
 
 class SupplyChainScanner:

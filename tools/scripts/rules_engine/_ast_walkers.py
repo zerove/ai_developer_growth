@@ -517,16 +517,14 @@ class _FunctionWalkers(_ImportWalkers):
     ) -> None:
         """Walk Go AST for function definitions (Phase 33b-7 fix, ADR-048: 迭代化).
 
-        V2.21 P5-44 拆分: 抽 _handle_function_declaration + _handle_type_declaration.
+        V2.21 P5-44 拆分: 抽 _handle_function_declaration.
+        type_declaration 由 _dispatch_class_parse 的 _parse_go_struct 处理 (类路径).
         """
         stack: list[tuple[_TreeNode, str | None]] = [(node, class_name)]
         while stack:
             current, cur_class = stack.pop()
             if current.type == "function_declaration":
                 self._handle_function_declaration(current, lines, result, cur_class)
-                continue
-            if current.type == "type_declaration":
-                self._handle_type_declaration(current, lines, cur_class)
                 continue
             for child in current.children:
                 stack.append((child, cur_class))
@@ -549,31 +547,6 @@ class _FunctionWalkers(_ImportWalkers):
         info = self._parse_go_function(node, lines, class_name)
         if info:
             result.append(info)
-
-    def _handle_type_declaration(
-        self,
-        node: _TreeNode,
-        lines: list[str],
-        class_name: str | None,
-    ) -> None:
-        """处理 type_declaration 节点 (方法级 helper, 占位实现).
-
-        当前仅识别 struct_type, 暂不构建方法列表.
-        保留递归 + type_spec 遍历结构.
-
-        Args:
-            node: type_declaration 节点
-            lines: 源码行
-            class_name: 类名 (暂未使用, 占位)
-        """
-        for child in node.children:
-            if child.type == "type_spec" and child.children:
-                self._get_child_name(child, lines)
-                for sub in child.children:
-                    if sub.type == "struct_type":
-                        for field_node in sub.children:
-                            if field_node.type == "field_declaration_list":
-                                pass
 
     def _parse_go_function(self, node: _TreeNode, lines: list[str], class_name: str | None) -> FunctionInfo | None:
         """Parse a Go function node."""
@@ -692,6 +665,7 @@ class _ClassWalkers(_FunctionWalkers):
             ("javascript", "class_declaration"): lambda: self._parse_js_class(node, lines),
             ("typescript", "class_declaration"): lambda: self._parse_js_class(node, lines),
             ("rust", "impl_item"): lambda: self._parse_rust_impl(node, lines),
+            ("go", "type_declaration"): lambda: self._parse_go_struct(node, lines),
         }
         info = handlers.get((language, node.type))
         if info is None:
@@ -842,5 +816,35 @@ class _ClassWalkers(_FunctionWalkers):
             decorators=[],
             docstring=None,
             methods=methods,
+            body_lines=node.end_point[0] - node.start_point[0],
+        )
+
+    def _parse_go_struct(self, node: _TreeNode, lines: list[str]) -> ClassInfo | None:
+        """Parse Go type_declaration containing a struct_type as a ClassInfo.
+
+        Go 无 class 关键字: struct 是类等价物. 结构:
+        type_declaration → type_spec → (type_identifier | struct_type).
+        方法为 method_declaration 节点, 不在 struct 内部, 因此不提取 methods
+        (方法关联由 _walk_go_functions 经 receiver 推导, 见 ADR-048 函数提取).
+        """
+        name = self._get_child_name(node, lines) or "<unknown>"
+        has_struct = False
+        for child in node.children:
+            if child.type == "type_spec":
+                for sub in child.children:
+                    if sub.type == "struct_type":
+                        has_struct = True
+
+        if not has_struct:
+            return None
+        return ClassInfo(
+            name=name,
+            line=node.start_point[0] + 1,
+            col=node.start_point[1],
+            end_line=node.end_point[0] + 1,
+            bases=[],
+            decorators=[],
+            docstring=None,
+            methods=[],
             body_lines=node.end_point[0] - node.start_point[0],
         )

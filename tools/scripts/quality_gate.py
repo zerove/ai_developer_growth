@@ -598,18 +598,70 @@ class QualityGateEngine:
         gate_name: str,
         gate_config: QualityGateConfig,
     ) -> GateResult | None:
-        """Gate 5: 最小覆盖率. 当前未实现, 始终返回 placeholder."""
+        """Gate 5: 最小覆盖率. 关闭时返回 None."""
         if gate_config.min_coverage_overall <= 0:
             return None
-        # 覆盖率工具集成待实现, 暂时跳过
+        coverage_pct = self._read_coverage_percent()
+        if coverage_pct is None:
+            return GateResult(
+                gate_name=gate_name,
+                passed=False,
+                rule_id="gate.coverage-overall",
+                message="覆盖率数据不可用 (coverage.xml / .coverage 缺失)",
+                details={},
+                severity=SeverityLevel.ERROR,
+            )
+        passed = coverage_pct >= gate_config.min_coverage_overall
         return GateResult(
             gate_name=gate_name,
-            passed=True,
+            passed=passed,
             rule_id="gate.coverage-overall",
-            message="覆盖率检查待实现",
-            details={},
-            severity=SeverityLevel.WARNING,
+            message=(
+                f"整体覆盖率 {coverage_pct:.1f}% {'满足' if passed else '低于'} {gate_config.min_coverage_overall}%"
+            ),
+            details={
+                "coverage_percent": coverage_pct,
+                "min_coverage_overall": gate_config.min_coverage_overall,
+            },
+            severity=SeverityLevel.ERROR if not passed else SeverityLevel.WARNING,
         )
+
+    def _read_coverage_percent(self) -> float | None:
+        """读取项目整体覆盖率百分比 (0-100), 不可用时返回 None.
+
+        优先解析 coverage.xml 的 line-rate 属性, 兜底读取 .coverage 数据文件
+        (coverage.py CoverageData). 两种来源均不可用时返回 None.
+        """
+        import xml.etree.ElementTree as ET
+
+        coverage_xml = Path("coverage.xml")
+        if coverage_xml.exists():
+            try:
+                root = ET.parse(coverage_xml).getroot()
+                line_rate = float(root.attrib.get("line-rate", ""))
+                return line_rate * 100.0
+            except (ValueError, ET.ParseError, OSError):
+                pass
+
+        dot_coverage = Path(".coverage")
+        if dot_coverage.exists():
+            try:
+                from coverage import Coverage
+
+                cov = Coverage(data_file=str(dot_coverage))
+                cov.load()
+                total_stmts = 0
+                total_missing = 0
+                for f in cov.get_data().measured_files():
+                    _, stmts, _, missing, _ = cov.analysis2(f)
+                    total_stmts += len(stmts)
+                    total_missing += len(missing)
+                if total_stmts == 0:
+                    return None
+                return (total_stmts - total_missing) / total_stmts * 100.0
+            except (ImportError, OSError, Exception):
+                return None
+        return None
 
     def _gate_no_worsened(
         self,

@@ -23,7 +23,7 @@ cc analyzer 将嵌套函数体计入外层函数（实例：`dependency_graph._r
 | 阶段 | 函数 | 拆出的模块级 helper |
 |---|---|---|
 | 36b | `fix_heuristics._try_message_heuristics` | 3 个 heuristic helper |
-| 36b | `jcode_cli._list_standalone_scripts` | `_classify_script` 等 |
+| 36b | `jcode_cli._list_standalone_scripts` | `_extract_first_docstring` 等 |
 | 36b | `update_ai_tool_matrix.update_matrix` | 映射/条目 helper |
 | 36b | `rules_engine/plugins.discover_plugins` | 插件发现 helper |
 | 36b | `adg_cli/check.py::check_file` | 结果组装 helper |

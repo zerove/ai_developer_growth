@@ -482,16 +482,59 @@ class ToolMatrixUpdater:
         return changed
 
     def _apply_model_update(self, content: str, model_name: str, model: ModelInfo) -> bool:
-        """应用单个模型的版本更新到 markdown (模块级 helper)."""
-        # Simplified update - real implementation would need more careful parsing
-        # In practice, would update version info in the table cells
-        # Placeholder: currently no actual content mutation
-        _ = rf"(\|\s*\*\*{re.escape(model_name)}\*\*\s*\|.+?\|.+?\|.+?\|)\s*\⭐+"
+        """应用单个模型的版本更新到 markdown (模块级 helper).
+
+        矩阵表体无版本列: 有可用更新时刷新矩阵元数据日期
+        (frontmatter `updated:` + 头部 `**更新日期**` 行), 使 `--update` 真正落盘.
+        无匹配元数据时返回 False, 不产生内容变更.
+
+        Args:
+            content: 当前矩阵内容
+            model_name: 模型名
+            model: 模型信息
+
+        Returns:
+            是否发生了内容变更
+        """
+        if not (model.update_available and model.latest_version):
+            return False
+        today = datetime.now().strftime("%Y-%m-%d")
+        new_content = re.sub(r"(?m)^updated:.*$", f"updated: {today}", content)
+        new_content = re.sub(
+            r"> \*\*更新日期\*\*: \d{4}-\d{2}-\d{2}",
+            f"> **更新日期**: {today}",
+            new_content,
+        )
+        if new_content != self.matrix_content:
+            self.matrix_content = new_content
+            return True
         return False
 
     def _apply_tool_update(self, content: str, tool_name: str, tool: ToolInfo) -> bool:
-        """应用单个工具的版本更新到 markdown (模块级 helper)."""
-        # Similar logic for tools
+        """应用单个工具的版本更新到 markdown (模块级 helper).
+
+        与模型一致: 有可用更新时刷新矩阵元数据日期.
+
+        Args:
+            content: 当前矩阵内容
+            tool_name: 工具名
+            tool: 工具信息
+
+        Returns:
+            是否发生了内容变更
+        """
+        if not (tool.update_available and tool.latest_version):
+            return False
+        today = datetime.now().strftime("%Y-%m-%d")
+        new_content = re.sub(r"(?m)^updated:.*$", f"updated: {today}", content)
+        new_content = re.sub(
+            r"> \*\*更新日期\*\*: \d{4}-\d{2}-\d{2}",
+            f"> **更新日期**: {today}",
+            new_content,
+        )
+        if new_content != self.matrix_content:
+            self.matrix_content = new_content
+            return True
         return False
 
 

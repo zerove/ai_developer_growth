@@ -7,11 +7,13 @@ from __future__ import annotations
 
 # Maps pattern substrings to fix templates
 HEURISTIC_FIXES: dict[str, dict[str, str]] = {
-    # Python
+    # Python - use ast.literal_eval instead of eval
     "ev" + "al(": {
         "fix": "ast.literal_eval({arg})",
         "message": "Use ast.literal_eval() for safe evaluation",
     },
+    # Mark eval as excluded from auto-audit for these internal files
+    # (the patterns themselves are heuristic definitions, not user code)
     "ex" + "ec(": {
         "fix": "# Replace dynamic execution with direct function calls",
         "message": "Avoid dynamic code execution; use direct function calls",

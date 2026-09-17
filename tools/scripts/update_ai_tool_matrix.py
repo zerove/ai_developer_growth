@@ -453,36 +453,46 @@ class ToolMatrixUpdater:
         if not self.models and not self.tools:
             return False
 
-        updated_content = self.matrix_content
-        changed = False
-
-        # Update model versions in markdown
-        for model_name, model in self.models.items():
-            if model.update_available and model.latest_version:
-                # Update version in table
-                _pattern = rf"(\|\s*\*\*{re.escape(model_name)}\*\*\s*\|.+?\|.+?\|.+?\|)\s*\⭐+"
-                # This is a simplified update - real implementation would need more careful parsing
-                _old_stars = "⭐" * 5  # placeholder
-                _new_stars = "⭐" * 5  # keep same rating
-                # In practice, would update version info in the table cells
-                pass
-
-        # Update tool versions
-        for tool_name, tool in self.tools.items():
-            if tool.update_available and tool.latest_version:
-                # Similar logic for tools
-                pass
+        changed = self._process_model_updates() or self._process_tool_updates()
 
         if changed:
-            # Create backup
             backup_path = MATRIX_PATH.with_suffix(".md.backup")
             backup_path.write_text(self.matrix_content, encoding="utf-8")
             logger.info(f"Backup created: {backup_path}")
 
-            MATRIX_PATH.write_text(updated_content, encoding="utf-8")
+            MATRIX_PATH.write_text(self.matrix_content, encoding="utf-8")
             logger.info(f"Matrix updated: {MATRIX_PATH}")
 
         return changed
+
+    def _process_model_updates(self) -> bool:
+        """处理所有模型更新, 返回是否有变更."""
+        changed = False
+        for model_name, model in self.models.items():
+            if model.update_available and model.latest_version:
+                changed = self._apply_model_update(self.matrix_content, model_name, model) or changed
+        return changed
+
+    def _process_tool_updates(self) -> bool:
+        """处理所有工具更新, 返回是否有变更."""
+        changed = False
+        for tool_name, tool in self.tools.items():
+            if tool.update_available and tool.latest_version:
+                changed = self._apply_tool_update(self.matrix_content, tool_name, tool) or changed
+        return changed
+
+    def _apply_model_update(self, content: str, model_name: str, model: ModelInfo) -> bool:
+        """应用单个模型的版本更新到 markdown (模块级 helper)."""
+        # Simplified update - real implementation would need more careful parsing
+        # In practice, would update version info in the table cells
+        # Placeholder: currently no actual content mutation
+        _ = rf"(\|\s*\*\*{re.escape(model_name)}\*\*\s*\|.+?\|.+?\|.+?\|)\s*\⭐+"
+        return False
+
+    def _apply_tool_update(self, content: str, tool_name: str, tool: ToolInfo) -> bool:
+        """应用单个工具的版本更新到 markdown (模块级 helper)."""
+        # Similar logic for tools
+        return False
 
 
 async def _parse_args() -> argparse.Namespace:

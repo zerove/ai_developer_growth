@@ -196,21 +196,25 @@ def _build_deltas(prev: QualitySnapshot, curr: QualitySnapshot) -> list[TrendDel
     return deltas
 
 
+def _metric_regression_message(delta: TrendDelta) -> str | None:
+    """回归指标对应的建议文案 (Phase 36c cc 拆分: 从 _generate_recommendations 抽出)."""
+    if delta.metric == "Errors" and delta.change > 0:
+        return f"Errors increased by {delta.change}. Investigate new error patterns."
+    if delta.metric == "Semantic Issues" and delta.change > 0:
+        return f"Semantic issues increased by {delta.change}. Check for new code without proper structure."
+    if delta.metric == "Hallucination Findings" and delta.change > 0:
+        return f"Hallucination patterns increased by {delta.change}. Review recent AI-generated code."
+    return None
+
+
 def _generate_recommendations(deltas: list[TrendDelta]) -> list[str]:
     """Generate recommendations from deltas."""
     recommendations: list[str] = []
     for delta in deltas:
         if delta.direction == "regressed":
-            if delta.metric == "Errors" and delta.change > 0:
-                recommendations.append(f"Errors increased by {delta.change}. Investigate new error patterns.")
-            elif delta.metric == "Semantic Issues" and delta.change > 0:
-                recommendations.append(
-                    f"Semantic issues increased by {delta.change}. Check for new code without proper structure."
-                )
-            elif delta.metric == "Hallucination Findings" and delta.change > 0:
-                recommendations.append(
-                    f"Hallucination patterns increased by {delta.change}. Review recent AI-generated code."
-                )
+            message = _metric_regression_message(delta)
+            if message:
+                recommendations.append(message)
 
     if not recommendations:
         recommendations.append("Quality metrics are stable or improving. Keep it up!")

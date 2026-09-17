@@ -98,6 +98,27 @@ def _print_pack_info_text(pack_id: str, info: dict[str, Any]) -> None:
     print(f"  Source:      {info['source']}")
 
 
+def _print_file_examples(src: Path) -> None:
+    """打印单文件 pack 的示例规则 (Phase 36c cc 拆分: 从 _show_pack_examples 抽出)."""
+    with open(src) as f:
+        data = yaml.safe_load(f) or {}
+    anti = data.get("anti_patterns", [])[:3]
+    if anti:
+        print("\n  Example rules:")
+        for rule in anti:
+            print(f"    - {rule['id']}: {rule.get('message', '')}")
+
+
+def _print_dir_examples(src: Path, info: dict[str, Any]) -> None:
+    """打印目录 pack 的规则统计 (Phase 36c cc 拆分: 从 _show_pack_examples 抽出)."""
+    print(f"\n  Source directory: {src}")
+    for yml in sorted(src.glob("*.yml")):
+        with open(yml) as f:
+            data = yaml.safe_load(f) or {}
+        count = sum(len(data.get(c, [])) for c in info["categories"])
+        print(f"    {yml.name}: {count} rules")
+
+
 def _show_pack_examples(info: dict[str, Any]) -> None:
     """显示 pack 示例规则 (单文件 or 目录, 模块级 helper).
 
@@ -106,20 +127,9 @@ def _show_pack_examples(info: dict[str, Any]) -> None:
     """
     src = _framework_dir() / info["source"]
     if src.is_file():
-        with open(src) as f:
-            data = yaml.safe_load(f) or {}
-        anti = data.get("anti_patterns", [])[:3]
-        if anti:
-            print("\n  Example rules:")
-            for rule in anti:
-                print(f"    - {rule['id']}: {rule.get('message', '')}")
+        _print_file_examples(src)
     elif src.is_dir():
-        print(f"\n  Source directory: {src}")
-        for yml in sorted(src.glob("*.yml")):
-            with open(yml) as f:
-                data = yaml.safe_load(f) or {}
-            count = sum(len(data.get(c, [])) for c in info["categories"])
-            print(f"    {yml.name}: {count} rules")
+        _print_dir_examples(src, info)
 
 
 def cmd_install(args: argparse.Namespace) -> None:

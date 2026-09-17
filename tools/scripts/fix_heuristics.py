@@ -186,18 +186,31 @@ def _try_message_heuristics(msg_lower: str) -> dict[str, str] | None:
         fix dict, 无匹配返回 None
     """
     for keywords, fix, msg in _MESSAGE_HEURISTICS:
-        exclude = False
-        match_found = False
-        for kw in keywords:
-            if kw.startswith("__exclude:"):
-                if kw[10:] in msg_lower:
-                    exclude = True
-            elif kw in msg_lower:
-                match_found = True
-        if match_found and not exclude:
+        if _keywords_match_with_exclude(keywords, msg_lower):
             return {
                 "fix_replacement": fix or "",
                 "fix_message": msg or "",
                 "source": "heuristic",
             }
     return None
+
+
+def _keywords_match_with_exclude(keywords: list[str], msg_lower: str) -> bool:
+    """检查关键字列表是否匹配 (排除优先, 模块级 helper).
+
+    Args:
+        keywords: 关键字列表, 含 __exclude: 前缀的排除词
+        msg_lower: 待匹配的小写 message
+
+    Returns:
+        True 若有匹配且未被排除
+    """
+    exclude = False
+    match_found = False
+    for kw in keywords:
+        if kw.startswith("__exclude:"):
+            if kw[10:] in msg_lower:
+                exclude = True
+        elif kw in msg_lower:
+            match_found = True
+    return match_found and not exclude

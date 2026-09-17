@@ -8,6 +8,7 @@ if TYPE_CHECKING:
 
 from tools.scripts.adg_cli.check import (
     _check_files_parallel,
+    _check_python_complexity,
     _collect_check_files,
     check_directory,
     check_file,
@@ -55,6 +56,7 @@ __all__ = [
     "Path",
     "Any",
     "_check_files_parallel",
+    "_check_python_complexity",
     "_collect_check_files",
     "check_directory",
     "check_file",
@@ -146,6 +148,23 @@ def _print_test_results(results: dict[str, Any]) -> None:
             print(f"  - {e}")
 
 
+def _parse_rule_file_simple(content: str) -> dict[str, Any]:
+    """无 yaml 时的极简解析 (Phase 36c cc 拆分: 从 _load_rules_from_file 抽出)."""
+    data: dict[str, Any] = {}
+    for line in content.split("\n"):
+        if "pattern:" in line:
+            data["pattern"] = line.split("pattern:")[1].strip().strip('"')
+        elif "message:" in line:
+            data["message"] = line.split("message:")[1].strip().strip('"')
+        elif "severity:" in line:
+            data["severity"] = line.split("severity:")[1].strip()
+        elif "category:" in line:
+            data["category"] = line.split("category:")[1].strip()
+        elif "id:" in line and not line.strip().startswith("#"):
+            data["id"] = line.split("id:")[1].strip()
+    return data
+
+
 def _load_rules_from_file(rule_file: Path) -> object:
     """Load rules from YAML file, fallback to simple parsing without yaml."""
     try:
@@ -154,20 +173,7 @@ def _load_rules_from_file(rule_file: Path) -> object:
         with open(rule_file) as f:
             return yaml.safe_load(f)
     except ImportError:
-        content = rule_file.read_text()
-        data: dict[str, Any] = {}
-        for line in content.split("\n"):
-            if "pattern:" in line:
-                data["pattern"] = line.split("pattern:")[1].strip().strip('"')
-            elif "message:" in line:
-                data["message"] = line.split("message:")[1].strip().strip('"')
-            elif "severity:" in line:
-                data["severity"] = line.split("severity:")[1].strip()
-            elif "category:" in line:
-                data["category"] = line.split("category:")[1].strip()
-            elif "id:" in line and not line.strip().startswith("#"):
-                data["id"] = line.split("id:")[1].strip()
-        return data
+        return _parse_rule_file_simple(rule_file.read_text())
 
 
 def _expand_rule_set(data: object) -> list[tuple[str, dict[str, Any]]]:

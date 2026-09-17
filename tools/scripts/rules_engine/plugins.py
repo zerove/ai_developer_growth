@@ -187,34 +187,38 @@ def discover_plugins(directory: Path) -> int:
     for py_file in sorted(directory.glob("*.py")):
         if py_file.name.startswith("_"):
             continue
-
-        try:
-            before = len(_registry)
-            spec = importlib.util.spec_from_file_location(
-                f"rules_engine_plugins.{py_file.stem}",
-                py_file,
-            )
-            if spec is None or spec.loader is None:
-                continue
-            module = importlib.util.module_from_spec(spec)
-            sys.modules[spec.name] = module
-            spec.loader.exec_module(module)
-
-            # Check for module-level plugin attribute
-            plugin = getattr(module, "plugin", None)
-            if isinstance(plugin, CheckerPlugin):
-                register_checker(plugin)
-
-            # Check for register() function
-            register_fn = getattr(module, "register", None)
-            if callable(register_fn):
-                register_fn()
-
-            # Count any plugins registered during module load
-            after = len(_registry)
-            count += after - before
-        except Exception:
-            # Skip plugins that fail to load
-            continue
+        count += _load_single_plugin(py_file)
 
     return count
+
+
+def _load_single_plugin(py_file: Path) -> int:
+    """加载单个插件文件, 返回新增插件数 (模块级 helper)."""
+    try:
+        before = len(_registry)
+        spec = importlib.util.spec_from_file_location(
+            f"rules_engine_plugins.{py_file.stem}",
+            py_file,
+        )
+        if spec is None or spec.loader is None:
+            return 0
+        module = importlib.util.module_from_spec(spec)
+        sys.modules[spec.name] = module
+        spec.loader.exec_module(module)
+
+        # Check for module-level plugin attribute
+        plugin = getattr(module, "plugin", None)
+        if isinstance(plugin, CheckerPlugin):
+            register_checker(plugin)
+
+        # Check for register() function
+        register_fn = getattr(module, "register", None)
+        if callable(register_fn):
+            register_fn()
+
+        # Count any plugins registered during module load
+        after = len(_registry)
+        return after - before
+    except Exception:
+        # Skip plugins that fail to load
+        return 0

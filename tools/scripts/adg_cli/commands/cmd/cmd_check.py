@@ -9,6 +9,7 @@ from ._shared import (
     Path,
     _attach_docs_to_issues,
     _check_files_parallel,
+    _check_python_complexity,
     _collect_check_files,
     _format_human,
     _format_json,
@@ -110,6 +111,20 @@ def _run_checks(files: list[Path], rules: dict[str, Any], severity: str, jobs: i
         return all_issues
 
 
+def _run_complexity_checks(files: list[Path], severity: str, max_cc: int) -> list[Issue]:
+    """Run cyclomatic complexity gate on Python files (--complexity)."""
+    all_issues: list[Issue] = []
+    for fp in files:
+        if fp.suffix != ".py":
+            continue
+        try:
+            content = fp.read_text(encoding="utf-8")
+        except (OSError, UnicodeDecodeError):
+            continue
+        all_issues.extend(_check_python_complexity(fp, content.split("\n"), severity, max_cc))
+    return all_issues
+
+
 def cmd_check(args: argparse.Namespace) -> int:
     """Check code against rules."""
     target = Path(args.path).resolve()
@@ -132,6 +147,11 @@ def cmd_check(args: argparse.Namespace) -> int:
     # Check files
     jobs = getattr(args, "jobs", 1)
     all_issues = _run_checks(files, rules, args.severity, jobs)
+
+    # Cyclomatic complexity gate (--complexity)
+    if getattr(args, "complexity", False):
+        max_cc = getattr(args, "max_cc", 10)
+        all_issues.extend(_run_complexity_checks(files, args.severity, max_cc))
 
     # Output
     _output_results(all_issues, language, framework, len(files), args)

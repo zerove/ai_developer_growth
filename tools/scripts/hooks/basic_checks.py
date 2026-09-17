@@ -139,6 +139,21 @@ def _changed_python_files(base: str) -> list[Path]:
         return []
 
 
+def _matches_module(test_file: Path, stem: str, module_path: str) -> bool:
+    """测试文件是否覆盖某模块 (同名约定或 import 反查, Phase 36c cc 拆分).
+
+    Returns:
+        True 表示该测试文件与变更模块相关
+    """
+    if test_file.name in (f"test_{stem}.py", f"test_{stem}_checks.py"):
+        return True
+    try:
+        head = test_file.read_text(encoding="utf-8", errors="replace")
+    except OSError:
+        return False
+    return module_path in head or f"from {module_path}" in head or f"import {stem}" in head
+
+
 def _tests_for_modules(changed: list[Path], tests_dir: Path = Path("tests")) -> list[Path]:
     """启发式映射: 变更模块 → 可能覆盖它的测试文件。
 
@@ -157,15 +172,7 @@ def _tests_for_modules(changed: list[Path], tests_dir: Path = Path("tests")) -> 
         stem = changed_file.stem
         module_path = str(changed_file.with_suffix("")).replace("/", ".").lstrip("./")
         for test_file in all_tests:
-            name_hit = test_file.name in (f"test_{stem}.py", f"test_{stem}_checks.py")
-            text_hit = False
-            if not name_hit:
-                try:
-                    head = test_file.read_text(encoding="utf-8", errors="replace")
-                    text_hit = module_path in head or f"from {module_path}" in head or f"import {stem}" in head
-                except OSError:
-                    pass
-            if name_hit or text_hit:
+            if _matches_module(test_file, stem, module_path):
                 selected.add(test_file)
     return sorted(selected)
 

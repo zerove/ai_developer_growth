@@ -284,6 +284,33 @@ def _determine_checks(
     return checks
 
 
+def _filter_file_against_baseline(
+    r: dict[str, Any],
+    base_counts: dict[str, int],
+) -> tuple[dict[str, Any], int]:
+    """单个文件的 issues 基线豁免过滤 (Phase 36c cc 拆分: 从 _apply_baseline_ratchet 抽出).
+
+    Returns:
+        (过滤后的新 result, 该文件豁免数量)
+    """
+    cur_counts: dict[str, int] = {}
+    kept_issues: list[dict[str, Any]] = []
+    exempt = 0
+    for issue in r["issues"]:
+        key = _issue_key(issue)
+        cur_counts[key] = cur_counts.get(key, 0) + 1
+        if cur_counts[key] <= base_counts.get(key, 0):
+            exempt += 1
+            continue
+        kept_issues.append(issue)
+    new_r = {**r, "issues": kept_issues}
+    if kept_issues:
+        new_r["passed"] = False
+    elif not r["passed"] and r["issues"]:
+        new_r["passed"] = True
+    return new_r, exempt
+
+
 def _apply_baseline_ratchet(
     all_results: list[tuple[Path, dict[str, Any]]],
     baseline_path: Path,
@@ -309,20 +336,8 @@ def _apply_baseline_ratchet(
         return filtered_results, baseline_exempt, baseline_note
     for filepath, r in all_results:
         base_counts = existing_baseline.get(str(filepath), {})
-        cur_counts: dict[str, int] = {}
-        kept_issues: list[dict[str, Any]] = []
-        for issue in r["issues"]:
-            key = _issue_key(issue)
-            cur_counts[key] = cur_counts.get(key, 0) + 1
-            if cur_counts[key] <= base_counts.get(key, 0):
-                baseline_exempt += 1
-                continue
-            kept_issues.append(issue)
-        new_r = {**r, "issues": kept_issues}
-        if kept_issues:
-            new_r["passed"] = False
-        elif not r["passed"] and r["issues"]:
-            new_r["passed"] = True
+        new_r, exempt = _filter_file_against_baseline(r, base_counts)
+        baseline_exempt += exempt
         filtered_results[filtered_results.index((filepath, r))] = (filepath, new_r)
     if baseline_exempt:
         baseline_note = f"基线豁免存量问题 {baseline_exempt} 个"
@@ -609,6 +624,40 @@ def run_governance_audit(
     return len(failed) == 0, output
 
 
+def _option_governance_checks(
+    ga: Any,
+    *,
+    full: bool,
+    validate_docs: bool,
+    check_ai_sdlc: bool,
+    audit_hallucination: bool,
+    check_index: bool,
+) -> list[tuple[str, Callable[[], bool]]]:
+    """按显式选项构造检查项 (Phase 36c cc 拆分: 从 _build_governance_checks 抽出)."""
+    checks: list[tuple[str, Callable[[], bool]]] = []
+    if full or validate_docs:
+        checks.append(("Governance Docs", ga.validate_governance_docs))
+    if full or check_ai_sdlc:
+        checks.append(("AI-SDLC Compliance", ga.check_ai_sdlc_compliance))
+    if full or audit_hallucination:
+        checks.append(("Hallucination Risk", ga.audit_hallucination_risks))
+    if check_index:
+        checks.append(("Index References", _check_index_subprocess))
+    return checks
+
+
+def _default_governance_checks(ga: Any) -> list[tuple[str, Callable[[], bool]]]:
+    """无显式选项时的默认 6 项检查 (Phase 36c cc 拆分: 从 _build_governance_checks 抽出)."""
+    return [
+        ("Lint", ga.lint),
+        ("Format", ga.format_check),
+        ("Type Check", ga.typecheck),
+        ("Test", ga.test),
+        ("Governance Docs", ga.validate_governance_docs),
+        ("AI-SDLC Compliance", ga.check_ai_sdlc_compliance),
+    ]
+
+
 def _build_governance_checks(
     ga: Any,
     *,
@@ -631,15 +680,14 @@ def _build_governance_checks(
     Returns:
         [(name, func), ...] 列表
     """
-    checks: list[tuple[str, Callable[[], bool]]] = []
-    if full or validate_docs:
-        checks.append(("Governance Docs", ga.validate_governance_docs))
-    if full or check_ai_sdlc:
-        checks.append(("AI-SDLC Compliance", ga.check_ai_sdlc_compliance))
-    if full or audit_hallucination:
-        checks.append(("Hallucination Risk", ga.audit_hallucination_risks))
-    if check_index:
-        checks.append(("Index References", _check_index_subprocess))
+    checks = _option_governance_checks(
+        ga,
+        full=full,
+        validate_docs=validate_docs,
+        check_ai_sdlc=check_ai_sdlc,
+        audit_hallucination=audit_hallucination,
+        check_index=check_index,
+    )
     if full:
         checks = [
             ("Lint", ga.lint),
@@ -650,14 +698,7 @@ def _build_governance_checks(
         ]
 
     if not checks:
-        checks = [
-            ("Lint", ga.lint),
-            ("Format", ga.format_check),
-            ("Type Check", ga.typecheck),
-            ("Test", ga.test),
-            ("Governance Docs", ga.validate_governance_docs),
-            ("AI-SDLC Compliance", ga.check_ai_sdlc_compliance),
-        ]
+        checks = _default_governance_checks(ga)
     return checks
 
 

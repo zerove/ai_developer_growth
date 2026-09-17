@@ -15,6 +15,20 @@ from tools.scripts.rules_engine.checker import check_directory
 from tools.scripts.rules_engine.models import Issue
 
 
+def _classify_function_name(name: str) -> str | None:
+    """将函数名分类为 snake_case / camelCase, 跳过 dunder 与 self。
+
+    Phase 36c cc 拆分: 从 PatternLearner._collect_function_names 抽出。
+    """
+    if name.startswith("__") or name == "self":
+        return None
+    if name[0].islower() and "_" in name:
+        return "snake_case"
+    if name[0].islower() and name[0].isalpha():
+        return "camelCase"
+    return None
+
+
 class PatternLearner:
     """Learns common issue patterns and team coding norms from a codebase."""
 
@@ -131,12 +145,9 @@ class PatternLearner:
         """
         for match in func_pattern.finditer(content):
             name = match.group(1) or match.group(2) or match.group(3)
-            if name.startswith("__") or name == "self":
-                continue
-            if name[0].islower() and "_" in name:
-                patterns.setdefault("snake_case", []).append(name)
-            elif name[0].islower() and name[0].isalpha():
-                patterns.setdefault("camelCase", []).append(name)
+            category = _classify_function_name(name)
+            if category is not None:
+                patterns.setdefault(category, []).append(name)
 
     def _collect_class_names(self, content: str, cls_pattern: re.Pattern[str], patterns: dict[str, list[str]]) -> None:
         """从 content 提取 class 名 (PascalCase, 方法级 helper).

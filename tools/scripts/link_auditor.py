@@ -166,6 +166,32 @@ def _is_skippable_target(target_path: str, placeholder_pattern: re.Pattern[str])
     return False
 
 
+def _scan_markdown_file(
+    file_path: str,
+    link_pattern: re.Pattern[str],
+    index: dict[str, str],
+    directory: str,
+    root: str,
+) -> list[tuple[str, str]]:
+    """扫描单个 md 文件的 broken wikilinks (Phase 36c cc 拆分).
+
+    Returns:
+        [(文件路径, 原始 wikilink target), ...]
+    """
+    broken: list[tuple[str, str]] = []
+    placeholder_pattern = re.compile(r"^[\{\.\\/]+|[\{\.]{2,}")
+    with open(file_path) as f:
+        content = f.read()
+    cleaned = _strip_code_blocks(content)
+    for match in link_pattern.finditer(cleaned):
+        target_path = match.group(1).strip()
+        if _is_skippable_target(target_path, placeholder_pattern):
+            continue
+        if not _check_target(target_path, index, directory, root):
+            broken.append((file_path, match.group(1)))
+    return broken
+
+
 def find_broken_links_with_index(directory: str, index: dict[str, str]) -> list[tuple[str, str]]:
     """Like find_broken_links, but accepts an externally-built index.
 
@@ -175,7 +201,6 @@ def find_broken_links_with_index(directory: str, index: dict[str, str]) -> list[
     broken: list[tuple[str, str]] = []
     link_pattern = re.compile(r"\[\[([^\[\]]+?)(?:\\?\|[^\[\]]*)?\]\]")
     skip_dirs = {".github/PULL_REQUEST_TEMPLATE"}
-    placeholder_pattern = re.compile(r"^[\{\.\\/]+|[\{\.]{2,}")
 
     for root, _, files in os.walk(directory):
         rel_root = os.path.relpath(root, directory)
@@ -186,17 +211,7 @@ def find_broken_links_with_index(directory: str, index: dict[str, str]) -> list[
             if not file.endswith(".md"):
                 continue
             file_path = os.path.join(root, file)
-            with open(file_path) as f:
-                content = f.read()
-            cleaned = _strip_code_blocks(content)
-            for match in link_pattern.finditer(cleaned):
-                target_path = match.group(1).strip()
-                if target_path.startswith(("http://", "https://", "#")):
-                    continue
-                if placeholder_pattern.match(target_path):
-                    continue
-                if not _check_target(target_path, index, directory, root):
-                    broken.append((file_path, match.group(1)))
+            broken.extend(_scan_markdown_file(file_path, link_pattern, index, directory, root))
     return broken
 
 

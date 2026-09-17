@@ -448,6 +448,30 @@ def _write_if_changed(filepath: Path, content: str, original_content: str, dry_r
         filepath.write_text(content, encoding="utf-8")
 
 
+def _resolve_file_lang(
+    filepath: Path,
+    extensions: set[str],
+    languages: list[str] | None,
+) -> str | None:
+    """目录扫描文件过滤 + 语言判定 (Phase 36c cc 拆分).
+
+    Returns:
+        可修复的语言名；文件应跳过时返回 None
+    """
+    if not filepath.is_file():
+        return None
+    if "__pycache__" in str(filepath) or ".git" in str(filepath) or "node_modules" in str(filepath):
+        return None
+    if filepath.suffix.lower() not in extensions:
+        return None
+    lang = detect_language(filepath)
+    if not lang:
+        return None
+    if languages and lang not in languages:
+        return None
+    return lang
+
+
 def apply_fixes_to_directory(
     dirpath: Path,
     *,
@@ -482,19 +506,9 @@ def apply_fixes_to_directory(
     all_results: list[FixResult] = []
 
     for filepath in dirpath.rglob("*"):
-        if not filepath.is_file():
+        lang = _resolve_file_lang(filepath, extensions, languages)
+        if lang is None:
             continue
-        if "__pycache__" in str(filepath) or ".git" in str(filepath) or "node_modules" in str(filepath):
-            continue
-        if filepath.suffix.lower() not in extensions:
-            continue
-
-        lang = detect_language(filepath)
-        if not lang:
-            continue
-        if languages and lang not in languages:
-            continue
-
         results = apply_fixes(filepath, language=lang, dry_run=dry_run, fix_ids=fix_ids)
         all_results.extend(results)
 

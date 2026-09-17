@@ -50,6 +50,17 @@ def _add_base_check_parser(sub: argparse._SubParsersAction[Any]) -> None:
         action="store_true",
         help="Shorthand for excluding common test paths (tests/, test_*.py, *_test.py, conftest.py)",
     )
+    check_p.add_argument(
+        "--complexity",
+        action="store_true",
+        help="Enforce cyclomatic complexity gate (cc >= threshold reported as error)",
+    )
+    check_p.add_argument(
+        "--max-cc",
+        type=int,
+        default=10,
+        help="Max cyclomatic complexity allowed (default: 10, requires --complexity)",
+    )
 
 
 def _add_detect_parser(sub: argparse._SubParsersAction[Any]) -> None:

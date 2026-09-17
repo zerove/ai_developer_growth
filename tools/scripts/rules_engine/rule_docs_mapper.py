@@ -160,35 +160,50 @@ def extract_keywords_from_docs(docs_dir: Path) -> dict[str, list[str]]:
     return doc_keywords
 
 
+_LANG_ALIASES = {
+    "py": "python",
+    "ts": "typescript",
+    "rs": "rust",
+    "js": "javascript",
+}
+
+
+def _id_part_keywords(parts: list[str]) -> list[str]:
+    """规则 ID 分词 + 语言别名扩展 (Phase 36c cc 拆分: 从 extract_keywords_from_rule 抽出)."""
+    out: list[str] = []
+    for p in parts:
+        out.append(p.lower())
+        if p.lower() in _LANG_ALIASES:
+            out.append(_LANG_ALIASES[p.lower()])
+    return out
+
+
+def _field_keywords(rule_data: dict[str, Any]) -> list[str]:
+    """从规则字段提取关键词 (Phase 36c cc 拆分: 从 extract_keywords_from_rule 抽出)."""
+    out: list[str] = []
+    for field in ("name", "message", "category", "fix_hint"):
+        val = rule_data.get(field, "")
+        if isinstance(val, str):
+            for w in re.findall(r"[a-zA-Z][a-zA-Z0-9_-]+", val):
+                if len(w) > 3:
+                    out.append(w.lower())
+        elif isinstance(val, list):
+            for item in val:
+                if isinstance(item, str):
+                    out.extend(re.findall(r"[a-zA-Z][a-zA-Z0-9_-]+", item.lower()))
+    return out
+
+
 def extract_keywords_from_rule(rule_id: str, rule_data: dict[str, Any]) -> list[str]:
     """从规则中提取关键词，用于匹配文档。"""
     keywords = []
 
     # 规则 ID: py-bare-except → ["py", "bare", "except", "python"]
     parts = rule_id.replace("-", " ").replace("_", " ").split()
-    for p in parts:
-        keywords.append(p.lower())
-        # 语言映射
-        lang_map = {
-            "py": "python",
-            "ts": "typescript",
-            "rs": "rust",
-            "js": "javascript",
-        }
-        if p.lower() in lang_map:
-            keywords.append(lang_map[p.lower()])
+    keywords.extend(_id_part_keywords(parts))
 
     # 规则字段
-    for field in ("name", "message", "category", "fix_hint"):
-        val = rule_data.get(field, "")
-        if isinstance(val, str):
-            for w in re.findall(r"[a-zA-Z][a-zA-Z0-9_-]+", val):
-                if len(w) > 3:
-                    keywords.append(w.lower())
-        elif isinstance(val, list):
-            for item in val:
-                if isinstance(item, str):
-                    keywords.extend(re.findall(r"[a-zA-Z][a-zA-Z0-9_-]+", item.lower()))
+    keywords.extend(_field_keywords(rule_data))
 
     return list(set(keywords))
 

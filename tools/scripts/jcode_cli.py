@@ -40,20 +40,24 @@ def _list_standalone_scripts(root: Path) -> list[tuple[str, str]]:
     for f in sorted((root / "tools" / "scripts").glob("*.py")):
         if f.name.startswith("_") or f.name == "__init__.py":
             continue
-        doc = ""
-        try:
-            with f.open(encoding="utf-8") as fh:
-                for i, line in enumerate(fh, 1):
-                    s = line.strip()
-                    if s.startswith('"""') or s.startswith("'''"):
-                        doc = s.strip("\"'").strip()
-                        break
-                    if i > 5:
-                        break
-        except OSError:
-            pass
+        doc = _extract_first_docstring(f)
         out.append((f"python -m tools.scripts.{f.stem}", doc or "(no docstring)"))
     return out
+
+
+def _extract_first_docstring(filepath: Path) -> str:
+    """Extract first docstring from a Python file (up to 5 lines)."""
+    try:
+        with filepath.open(encoding="utf-8") as fh:
+            for i, line in enumerate(fh, 1):
+                s = line.strip()
+                if s.startswith('"""') or s.startswith("'''"):
+                    return s.strip("\"'").strip()
+                if i > 5:
+                    break
+    except OSError:
+        pass
+    return ""
 
 
 def _list_skills(root: Path) -> list[tuple[str, str]]:

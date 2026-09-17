@@ -46,6 +46,17 @@ _config_mtime: float = 0.0
 _config_path: Path | None = None
 
 
+def _merge_lists(base: list[Any], override: list[Any]) -> list[Any]:
+    """列表合并: 去重保序 (Phase 36c cc 拆分: 从 _deep_merge 抽出)."""
+    seen = set()
+    merged = []
+    for item in base + override:
+        if item not in seen:
+            seen.add(item)
+            merged.append(item)
+    return merged
+
+
 def _deep_merge(base: dict[str, Any], override: dict[str, Any]) -> dict[str, Any]:
     """深度合并字典，override 覆盖 base"""
     result = base.copy()
@@ -53,14 +64,7 @@ def _deep_merge(base: dict[str, Any], override: dict[str, Any]) -> dict[str, Any
         if key in result and isinstance(result[key], dict) and isinstance(value, dict):
             result[key] = _deep_merge(result[key], value)
         elif key in result and isinstance(result[key], list) and isinstance(value, list):
-            # 列表合并：去重保序
-            seen = set()
-            merged = []
-            for item in result[key] + value:
-                if item not in seen:
-                    seen.add(item)
-                    merged.append(item)
-            result[key] = merged
+            result[key] = _merge_lists(result[key], value)
         else:
             result[key] = value
     return result

@@ -198,48 +198,13 @@ class DependencyGraph:
     def _run_tarjan_scc(self) -> list[list[str]]:
         """Tarjan SCC 算法找出所有长度 > 1 的强连通分量.
 
+        Note:
+            核心算法已抽到模块级 `_tarjan_scc` / `_strongconnect` 以降低圈复杂度.
+
         Returns:
             循环列表 (每个循环为节点 ID 列表)
         """
-        index = 0
-        stack: list[str] = []
-        on_stack: set[str] = set()
-        indices: dict[str, int] = {}
-        lowlinks: dict[str, int] = {}
-        cycles: list[list[str]] = []
-
-        def strongconnect(node_id: str) -> None:
-            nonlocal index
-            indices[node_id] = index
-            lowlinks[node_id] = index
-            index += 1
-            stack.append(node_id)
-            on_stack.add(node_id)
-
-            for neighbor in self.nodes[node_id].outgoing:
-                if neighbor not in indices:
-                    strongconnect(neighbor)
-                    lowlinks[node_id] = min(lowlinks[node_id], lowlinks[neighbor])
-                elif neighbor in on_stack:
-                    lowlinks[node_id] = min(lowlinks[node_id], indices[neighbor])
-
-            if lowlinks[node_id] == indices[node_id]:
-                # 找到一个强连通分量
-                scc: list[str] = []
-                while True:
-                    w = stack.pop()
-                    on_stack.remove(w)
-                    scc.append(w)
-                    if w == node_id:
-                        break
-                if len(scc) > 1:
-                    cycles.append(scc)
-
-        for node_id in self.nodes:
-            if node_id not in indices:
-                strongconnect(node_id)
-
-        return cycles
+        return _tarjan_scc(self.nodes)
 
     def _convert_cycles_to_result(self, cycles: list[list[str]]) -> list[CircularDependency]:
         """将 SCC 循环转换为 CircularDependency 对象列表.
@@ -515,6 +480,77 @@ class DependencyGraph:
             "root": self.root_package,
         }
         return json.dumps(data, indent=2)
+
+
+def _tarjan_scc(nodes: dict[str, DependencyNode]) -> list[list[str]]:
+    """模块级 Tarjan SCC 实现, 避免嵌套函数复杂度.
+
+    Args:
+        nodes: 依赖图节点字典
+
+    Returns:
+        长度 > 1 的 SCC 列表
+    """
+    index_bucket: list[int] = [0]
+    stack: list[str] = []
+    on_stack: set[str] = set()
+    indices: dict[str, int] = {}
+    lowlinks: dict[str, int] = {}
+    cycles: list[list[str]] = []
+
+    for node_id in nodes:
+        if node_id not in indices:
+            _strongconnect(node_id, nodes, indices, lowlinks, stack, on_stack, index_bucket, cycles)
+
+    return cycles
+
+
+def _strongconnect(
+    node_id: str,
+    nodes: dict[str, DependencyNode],
+    indices: dict[str, int],
+    lowlinks: dict[str, int],
+    stack: list[str],
+    on_stack: set[str],
+    index_bucket: list[int],
+    cycles: list[list[str]],
+) -> None:
+    """Tarjan 强连通分量搜索子过程 (模块级, 递归).
+
+    Args:
+        node_id: 当前节点
+        nodes: 依赖图节点字典
+        indices: 节点 -> 发现顺序
+        lowlinks: 节点 -> 可达最小发现顺序
+        stack: SCC 候选栈
+        on_stack: 栈内节点集合
+        index_bucket: 循环计数器 (list 包装以支持递归内修改)
+        cycles: 收集到的长度 > 1 的强连通分量
+    """
+    indices[node_id] = index_bucket[0]
+    lowlinks[node_id] = index_bucket[0]
+    index_bucket[0] += 1
+    stack.append(node_id)
+    on_stack.add(node_id)
+
+    for neighbor in nodes[node_id].outgoing:
+        if neighbor not in indices:
+            _strongconnect(neighbor, nodes, indices, lowlinks, stack, on_stack, index_bucket, cycles)
+            lowlinks[node_id] = min(lowlinks[node_id], lowlinks[neighbor])
+        elif neighbor in on_stack:
+            lowlinks[node_id] = min(lowlinks[node_id], indices[neighbor])
+
+    if lowlinks[node_id] == indices[node_id]:
+        # 找到一个强连通分量
+        scc: list[str] = []
+        while True:
+            w = stack.pop()
+            on_stack.remove(w)
+            scc.append(w)
+            if w == node_id:
+                break
+        if len(scc) > 1:
+            cycles.append(scc)
 
 
 def analyze_dependency_graph(

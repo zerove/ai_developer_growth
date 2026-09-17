@@ -51,6 +51,47 @@ def _check_ast_semantic(
     return result
 
 
+def _check_python_complexity(
+    filepath: Path,
+    lines: list[str],
+    severity_filter: str | None,
+    max_cc: int,
+) -> list[Issue]:
+    """圈复杂度门禁: cc >= max_cc 的函数报 error (adg check --complexity)."""
+    if filepath.suffix != ".py":
+        return []
+
+    import ast
+
+    from tools.scripts.complexity_analyzer import calc_cyclomatic_complexity
+
+    result: list[Issue] = []
+    try:
+        tree = ast.parse("\n".join(lines))
+    except SyntaxError:
+        return result
+
+    for node in ast.walk(tree):
+        if not isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
+            continue
+        complexity = calc_cyclomatic_complexity(node)
+        if complexity < max_cc:
+            continue
+        result.append(
+            Issue(
+                rule_id="py-ast-complexity",
+                severity="error",
+                category="readability",
+                file=str(filepath),
+                line=node.lineno,
+                column=getattr(node, "col_offset", 0) + 1,
+                message=f"Function '{node.name}' has cyclomatic complexity {complexity} (max {max_cc})",
+                fix_hint="Refactor into smaller functions",
+            )
+        )
+    return result
+
+
 def check_file(filepath: Path, rules: dict[str, Any], severity_filter: str | None = None) -> list[Issue]:
     """Check a single file against rules."""
     issues: list[Issue] = []
@@ -69,18 +110,28 @@ def check_file(filepath: Path, rules: dict[str, Any], severity_filter: str | Non
 
     lines = content.split("\n")
 
+    issues.extend(_check_anti_patterns(filepath, content, lines, rules, severity_filter))
+    issues.extend(_check_ast_semantic(filepath, lines, severity_filter))
+
+    return issues
+
+
+def _check_anti_patterns(
+    filepath: Path,
+    content: str,
+    lines: list[str],
+    rules: dict[str, Any],
+    severity_filter: str | None,
+) -> list[Issue]:
+    """对文件运行所有 anti-pattern 检查 (模块级 helper)."""
+    issues: list[Issue] = []
     for pattern_def in rules.get("anti_patterns", []):
-        # 显式禁用的规则跳过 (如已迁移到 AST 实现的 py-bare-raise)
         if pattern_def.get("enabled") is False:
             continue
         severity = pattern_def.get("severity", "warning")
         if severity_filter and _severity_rank(severity) > _severity_rank(severity_filter):
             continue
-
         issues.extend(_check_pattern(filepath, content, lines, pattern_def))
-
-    issues.extend(_check_ast_semantic(filepath, lines, severity_filter))
-
     return issues
 
 

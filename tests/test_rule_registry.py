@@ -11,6 +11,7 @@ from unittest.mock import MagicMock, patch
 import pytest
 import yaml
 
+from tools.scripts._common import file_hash as _file_hash
 from tools.scripts.rule_registry import (
     _load_registry,
     _save_registry,
@@ -24,7 +25,6 @@ from tools.scripts.rule_registry import (
     init_registry,
     main,
 )
-from tools.scripts._common import file_hash as _file_hash
 
 
 @pytest.fixture()

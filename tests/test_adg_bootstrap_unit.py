@@ -2,14 +2,11 @@
 
 from __future__ import annotations
 
-import sys
 from pathlib import Path
 
 import pytest
 
-# 通过包路径加载, 让 coverage 能跟踪到(配合 pyproject.toml 中 source = tools.scripts)
-sys.path.insert(0, str(Path(__file__).parent.parent.parent))
-import tools.scripts.adg_bootstrap as bootstrap  # noqa: E402
+from tools.scripts import adg_bootstrap as bootstrap
 
 
 class TestDetectTargetLanguages:

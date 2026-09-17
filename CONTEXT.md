@@ -1,3 +1,96 @@
+## 更新记录: 2026-09-17 20:15:13
+
+### 任务
+Git 变更同步
+
+### 变更摘要
+- 变更文件 22 个 (+635 / -204 行)
+  - .jcode/scripts/governance-auditor.py
+  - CHANGELOG.md
+  - CONTEXT.md
+  - ROADMAP.md
+  - docs/adr/ADR-054-phase-34-dedup-common.md
+  - docs/adr/ADR-056-phase-36-complexity-gate.md
+  - docs/adr/ADR.md
+  - pyproject.toml
+  - tests/conftest.py
+  - tests/test_adg_bootstrap_unit.py
+  - tests/test_check_directory_skipped.py
+  - tests/test_language_rules_v2.py
+  - tests/test_quality_gate_full.py
+  - tests/test_rule_registry.py
+  - tests/test_semantic_rules.py
+  - tests/test_supply_chain_round2.py
+  - tools/scripts/_sc_scanners.py
+  - tools/scripts/fix_heuristics.py
+  - tools/scripts/quality_gate.py
+  - tools/scripts/rules_engine/_ast_walkers.py
+  - ... 等共 22 个文件
+
+---
+
+## 更新记录: 2026-09-17 20:12:25
+
+### 任务
+Git 变更同步
+
+### 变更摘要
+- 变更文件 22 个 (+605 / -191 行)
+  - .jcode/scripts/governance-auditor.py
+  - CHANGELOG.md
+  - CONTEXT.md
+  - ROADMAP.md
+  - docs/adr/ADR-054-phase-34-dedup-common.md
+  - docs/adr/ADR-056-phase-36-complexity-gate.md
+  - docs/adr/ADR.md
+  - pyproject.toml
+  - tests/conftest.py
+  - tests/test_adg_bootstrap_unit.py
+  - tests/test_check_directory_skipped.py
+  - tests/test_language_rules_v2.py
+  - tests/test_quality_gate_full.py
+  - tests/test_rule_registry.py
+  - tests/test_semantic_rules.py
+  - tests/test_supply_chain_round2.py
+  - tools/scripts/_sc_scanners.py
+  - tools/scripts/fix_heuristics.py
+  - tools/scripts/quality_gate.py
+  - tools/scripts/rules_engine/_ast_walkers.py
+  - ... 等共 22 个文件
+
+---
+
+## 更新记录: 2026-09-17 20:12:25
+
+### 任务
+Git 变更同步
+
+### 变更摘要
+- 变更文件 22 个 (+573 / -146 行)
+  - .jcode/scripts/governance-auditor.py
+  - CHANGELOG.md
+  - CONTEXT.md
+  - ROADMAP.md
+  - docs/adr/ADR-054-phase-34-dedup-common.md
+  - docs/adr/ADR-056-phase-36-complexity-gate.md
+  - docs/adr/ADR.md
+  - pyproject.toml
+  - tests/conftest.py
+  - tests/test_adg_bootstrap_unit.py
+  - tests/test_check_directory_skipped.py
+  - tests/test_language_rules_v2.py
+  - tests/test_quality_gate_full.py
+  - tests/test_rule_registry.py
+  - tests/test_semantic_rules.py
+  - tests/test_supply_chain_round2.py
+  - tools/scripts/_sc_scanners.py
+  - tools/scripts/fix_heuristics.py
+  - tools/scripts/quality_gate.py
+  - tools/scripts/rules_engine/_ast_walkers.py
+  - ... 等共 22 个文件
+
+---
+
 ## 更新记录: 2026-09-17 12:00:00
 
 ### 任务
@@ -984,86 +1077,6 @@ Git 变更同步
   - tests/test_adr_generator.py
   - tests/test_ai_context_manager.py
   - tests/test_metrics_telemetry.py
-  - uv.lock
-
----
-
-## 更新记录: 2026-08-28 14:48:28
-
-### 任务
-Git 变更同步
-
-### 变更摘要
-- 变更文件 8 个 (+614 / -67 行)
-  - CHANGELOG.md
-  - CONTEXT.md
-  - pyproject.toml
-  - tests/test_adr_generator.py
-  - tests/test_ai_context_manager.py
-  - tests/test_lsp_server.py
-  - tests/test_metrics_telemetry.py
-  - uv.lock
-
----
-
-## 更新记录: 2026-08-28 13:29:30
-
-### 任务
-Git 变更同步
-
-### 变更摘要
-- 变更文件 5 个 (+453 / -32 行)
-  - CHANGELOG.md
-  - CONTEXT.md
-  - pyproject.toml
-  - tests/test_lsp_server.py
-  - uv.lock
-
----
-
-## 更新记录: 2026-08-28 13:27:18
-
-### 任务
-Git 变更同步
-
-### 变更摘要
-- 变更文件 6 个 (+470 / -33 行)
-  - .github/workflows/example-ci-template.yml
-  - CHANGELOG.md
-  - CONTEXT.md
-  - pyproject.toml
-  - tests/test_lsp_server.py
-  - uv.lock
-
----
-
-## 更新记录: 2026-08-28 13:25:50
-
-### 任务
-Git 变更同步
-
-### 变更摘要
-- 变更文件 6 个 (+454 / -19 行)
-  - .github/workflows/example-ci-template.yml
-  - CHANGELOG.md
-  - CONTEXT.md
-  - pyproject.toml
-  - tests/test_lsp_server.py
-  - uv.lock
-
----
-
-## 更新记录: 2026-08-28 11:23:59
-
-### 任务
-Git 变更同步
-
-### 变更摘要
-- 变更文件 5 个 (+69 / -27 行)
-  - .github/workflows/example-ci-template.yml
-  - CHANGELOG.md
-  - CONTEXT.md
-  - pyproject.toml
   - uv.lock
 
 ---

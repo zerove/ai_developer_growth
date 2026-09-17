@@ -25,9 +25,9 @@ import sys
 from collections.abc import Callable
 from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).resolve().parent.parent.parent / "tools" / "scripts"))
-from _common import get_project_root, print_check, print_section, run_command
-from language_registry import (
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent.parent))
+from tools.scripts._common import get_project_root, print_check, print_section, run_command
+from tools.scripts.language_registry import (
     EXTENSION_MAP,
     Language,
     ToolCategory,
@@ -143,7 +143,7 @@ def _parse_languages(lang_str: str) -> list[Language]:
             try:
                 languages.append(Language(part.lower()))
             except ValueError:
-                from language_registry import LANGUAGE_ALIASES
+                from tools.scripts.language_registry import LANGUAGE_ALIASES
 
                 if part.lower() in LANGUAGE_ALIASES:
                     languages.append(LANGUAGE_ALIASES[part.lower()])
@@ -168,8 +168,32 @@ def _detect_project_languages(project_root: Path) -> list[Language]:
         languages.append(main_lang)
 
     # 2. 扫描所有扩展名，统计语言分布
-    # 排除虚拟环境、依赖与构建产物目录，
-    # 避免把第三方库文件误判为项目语言（如 .venv 中 lxml 的 .h 头文件）
+    ext_counts = _count_language_extensions(project_root, _node_ecosystem_languages, has_package_json)
+
+    # 按文件数排序，仅纳入占比显著的语言：
+    # 示例脚本、编辑器扩展等附带文件不应触发全量工具链门禁
+    total = sum(ext_counts.values())
+    for lang in sorted(ext_counts, key=lambda k: ext_counts.get(k, 0), reverse=True)[:3]:
+        if lang in languages:
+            continue
+        count = ext_counts.get(lang, 0)
+        if count >= 50 or (total > 0 and count / total >= 0.2):
+            languages.append(lang)
+
+    return languages
+
+
+def _count_language_extensions(
+    project_root: Path,
+    node_ecosystem_languages: set[Language],
+    has_package_json: bool,
+) -> dict[Language, int]:
+    """扫描所有扩展名，统计语言分布。
+
+    排除虚拟环境、依赖与构建产物目录，
+    避免把第三方库文件误判为项目语言（如 .venv 中 lxml 的 .h 头文件）。
+    Node 生态语言在缺少 package.json 时跳过（无工程化标志）。
+    """
     _excluded_dirs = {
         ".venv",
         "venv",
@@ -187,23 +211,12 @@ def _detect_project_languages(project_root: Path) -> list[Language]:
     }
     ext_counts: dict[Language, int] = {}
     for ext, lang in EXTENSION_MAP.items():
-        if lang in _node_ecosystem_languages and not has_package_json:
+        if lang in node_ecosystem_languages and not has_package_json:
             continue
         count = sum(1 for p in project_root.rglob(f"*{ext}") if not (set(p.parts) & _excluded_dirs))
         if count > 0:
             ext_counts[lang] = ext_counts.get(lang, 0) + count
-
-    # 按文件数排序，仅纳入占比显著的语言：
-    # 示例脚本、编辑器扩展等附带文件不应触发全量工具链门禁
-    total = sum(ext_counts.values())
-    for lang in sorted(ext_counts, key=lambda k: ext_counts.get(k, 0), reverse=True)[:3]:
-        if lang in languages:
-            continue
-        count = ext_counts.get(lang, 0)
-        if count >= 50 or (total > 0 and count / total >= 0.2):
-            languages.append(lang)
-
-    return languages
+    return ext_counts
 
 
 def _run_tool_for_language(
@@ -424,42 +437,7 @@ def check_ai_sdlc_compliance() -> bool:
 def audit_hallucination_risks() -> bool:
     """审计幻觉风险"""
     print_section("幻觉风险审计")
-    risks: list[str] = []
-    root = get_project_root()
-
-    # 代码不安全模式
-    for py_file in (root / "tools" / "scripts").rglob("*.py"):
-        content = py_file.read_text(encoding="utf-8")
-        file_risks = _check_unsafe_patterns(content, UNSAFE_PATTERNS, py_file.name)
-        for risk in file_risks:
-            rel = py_file.relative_to(root)
-            risks.append(f"{rel}: {risk}")
-
-    # 文档绝对化声明
-    abs_patterns = [
-        (r"永远\s*100%", "永远100%"),
-        (r"绝对\s*100%", "绝对100%"),
-        (r"保证\s*100%", "保证100%"),
-        (r"从不\s*100%", "从不100%"),
-        (r"永远", "永远"),
-        (r"绝对(?!化)", "绝对"),
-        (r"从不", "从不"),
-    ]
-    for md_file in (root / "docs" / "efficiency").rglob("*.md"):
-        content = md_file.read_text(encoding="utf-8")
-        for line_num, line in enumerate(content.split("\n"), 1):
-            stripped = line.strip()
-            if (
-                stripped.startswith("#")
-                or stripped.startswith("```")
-                or stripped.startswith("|")
-                or stripped.startswith("←")
-            ):
-                continue
-            for pat, desc in abs_patterns:
-                if re.search(pat, line) and "例外" not in line and "除非" not in line:
-                    rel = md_file.relative_to(root)
-                    risks.append(f"{rel}:{line_num}: 绝对化声明 '{desc}'")
+    risks = _scan_unsafe_code_risks() + _scan_doc_absolute_claims()
 
     passed = len(risks) == 0
     print_check(f"幻觉风险 ({len(risks)} 个)", passed)
@@ -469,6 +447,63 @@ def audit_hallucination_risks() -> bool:
         if len(risks) > 20:
             print(f"  ... 还有 {len(risks) - 20} 个风险")
     return passed
+
+
+def _scan_unsafe_code_risks() -> list[str]:
+    """扫描 tools/scripts 下的不安全代码模式（排除工具定义文件）"""
+    risks: list[str] = []
+    root = get_project_root()
+    for py_file in (root / "tools" / "scripts").rglob("*.py"):
+        if py_file.name in _EXCLUDE_FROM_UNSAFE_AUDIT:
+            continue
+        content = py_file.read_text(encoding="utf-8")
+        file_risks = _check_unsafe_patterns(content, UNSAFE_PATTERNS, py_file.name)
+        for risk in file_risks:
+            rel = py_file.relative_to(root)
+            risks.append(f"{rel}: {risk}")
+    return risks
+
+
+def _scan_doc_absolute_claims() -> list[str]:
+    """扫描 docs/efficiency 下的文档绝对化声明"""
+    abs_patterns = [
+        (r"永远\s*100%", "永远100%"),
+        (r"绝对\s*100%", "绝对100%"),
+        (r"保证\s*100%", "保证100%"),
+        (r"从不\s*100%", "从不100%"),
+        (r"永远", "永远"),
+        (r"绝对(?!化)", "绝对"),
+        (r"从不", "从不"),
+    ]
+    risks: list[str] = []
+    root = get_project_root()
+    for md_file in (root / "docs" / "efficiency").rglob("*.md"):
+        content = md_file.read_text(encoding="utf-8")
+        for line_num, line in enumerate(content.split("\n"), 1):
+            if _is_doc_skippable_line(line):
+                continue
+            rel = md_file.relative_to(root)
+            risks.extend(
+                f"{rel}:{line_num}: 绝对化声明 '{desc}'" for desc in _match_doc_absolute_claims(line, abs_patterns)
+            )
+    return risks
+
+
+def _is_doc_skippable_line(line: str) -> bool:
+    """是否跳过标题/代码块/表格/箭头行"""
+    stripped = line.strip()
+    return (
+        stripped.startswith("#") or stripped.startswith("```") or stripped.startswith("|") or stripped.startswith("←")
+    )
+
+
+def _match_doc_absolute_claims(line: str, abs_patterns: list[tuple[str, str]]) -> list[str]:
+    """返回行内命中的绝对化声明描述（含例外/除非的声明不报告）"""
+    matches = []
+    for pat, desc in abs_patterns:
+        if re.search(pat, line) and "例外" not in line and "除非" not in line:
+            matches.append(desc)
+    return matches
 
 
 def ai_quality_gate() -> bool:
@@ -481,7 +516,8 @@ def ai_quality_gate() -> bool:
         return True  # 非阻断
     cmd = [
         sys.executable,
-        str(script),
+        "-m",
+        "tools.scripts.ai_quality_gate",
         "--check-annotation",
         "--check-security",
         "--check-patterns",
@@ -582,5 +618,14 @@ Actions:
         sys.exit(1)
 
 
+# Files to exclude from unsafe pattern audit (tool definition files, not user code)
+_EXCLUDE_FROM_UNSAFE_AUDIT = {
+    "auto_fix.py",
+    "fix_heuristics.py",
+    "generate_fixes.py",
+    "hallucination_detector.py",
+    "ide_rules_sync.py",
+    "security_patterns.py",
+}
 if __name__ == "__main__":
     main()

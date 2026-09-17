@@ -8,11 +8,17 @@ Contains project-wide fixtures and FutureWarning suppression for tree-sitter.
 - 测试不应依赖执行顺序
 """
 
+import sys
 import tempfile
 import warnings
 from pathlib import Path
 
 import pytest
+
+# 注入项目根到 sys.path:
+# 裸 `pytest` 可执行文件不会像 `python -m pytest` 那样自动把 cwd 加入 sys.path,
+# 导致依赖 `import tools` 的测试模块收集失败 (ModuleNotFoundError: No module named 'tools').
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 # Suppress tree-sitter deprecation warnings project-wide
 warnings.filterwarnings("ignore", category=FutureWarning, module="tree_sitter")

@@ -44,13 +44,9 @@ def test_check_directory_skipped_in_sarif_end_to_end() -> None:
         sarif = json.loads(generate_sarif(results))
         # 找到 notApplicable 标记
         not_applicable = [
-            r
-            for r in sarif["runs"][0]["results"]
-            if r.get("properties", {}).get("kind") == "notApplicable"
+            r for r in sarif["runs"][0]["results"] if r.get("properties", {}).get("kind") == "notApplicable"
         ]
-        assert len(not_applicable) == 1, (
-            f"应有 1 个 notApplicable 标记, 实际 {len(not_applicable)}"
-        )
+        assert len(not_applicable) == 1, f"应有 1 个 notApplicable 标记, 实际 {len(not_applicable)}"
         assert "empty.py" in not_applicable[0]["locations"][0]["physicalLocation"]["artifactLocation"]["uri"]
 
 

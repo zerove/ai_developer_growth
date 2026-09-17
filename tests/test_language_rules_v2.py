@@ -12,6 +12,7 @@ import yaml
 
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
+from tools.scripts._common import file_hash_full as _file_hash
 from tools.scripts.validate_language_rules import (
     FixResult,
     Issue,
@@ -30,7 +31,6 @@ from tools.scripts.validate_language_rules import (
     validate_file,
     write_report,
 )
-from tools.scripts._common import file_hash_full as _file_hash
 
 # ──────────────────────────────────────────────────────────
 # FixResult tests

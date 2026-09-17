@@ -9,12 +9,12 @@ import pytest
 
 from tools.scripts.rules_engine.models import Issue
 from tools.scripts.rules_engine.semantic_rules import (
+    _BUILTIN_SEMANTIC_RULES,
+    _SEMANTIC_RULES,
     HighComplexityRule,
     MissingDocstringRule,
     SemanticRule,
     UnusedImportRule,
-    _BUILTIN_SEMANTIC_RULES,
-    _SEMANTIC_RULES,
     clear_semantic_rules,
     get_semantic_rules,
     list_semantic_rules,
@@ -22,7 +22,6 @@ from tools.scripts.rules_engine.semantic_rules import (
     run_semantic_rules,
     unregister_semantic_rule,
 )
-
 
 # ─── Fixtures ────────────────────────────────────────────────────────────────
 
@@ -233,9 +232,7 @@ def test_unused_import_rule_detects_unused(
     assert issues[0].rule_id == "semantic-unused-import"
 
 
-def test_unused_import_rule_used_import(
-    mock_filepath: Path, tmp_path: Path
-) -> None:
+def test_unused_import_rule_used_import(mock_filepath: Path, tmp_path: Path) -> None:
     """测试已使用的导入不报告。"""
     imp = MagicMock()
     imp.is_from = True
@@ -266,9 +263,7 @@ def test_unused_import_rule_no_imports(mock_filepath: Path) -> None:
 # ─── Test MissingDocstringRule ───────────────────────────────────────────────
 
 
-def test_missing_docstring_rule_detects(
-    mock_ast_missing_docstring: MagicMock, mock_filepath: Path
-) -> None:
+def test_missing_docstring_rule_detects(mock_ast_missing_docstring: MagicMock, mock_filepath: Path) -> None:
     """测试检测缺少 docstring 的公开函数。"""
     rule = MissingDocstringRule()
     issues = rule.check(mock_ast_missing_docstring, mock_filepath)
@@ -278,9 +273,7 @@ def test_missing_docstring_rule_detects(
     assert issues[0].message == "Public function 'public_func' lacks a docstring"
 
 
-def test_missing_docstring_rule_skips_private(
-    mock_ast_missing_docstring: MagicMock, mock_filepath: Path
-) -> None:
+def test_missing_docstring_rule_skips_private(mock_ast_missing_docstring: MagicMock, mock_filepath: Path) -> None:
     """测试跳过私有函数。"""
     rule = MissingDocstringRule()
     issues = rule.check(mock_ast_missing_docstring, mock_filepath)
@@ -300,9 +293,7 @@ def test_missing_docstring_rule_no_functions(mock_filepath: Path) -> None:
 # ─── Test HighComplexityRule ─────────────────────────────────────────────────
 
 
-def test_high_complexity_rule_detects(
-    mock_ast_high_complexity: MagicMock, mock_filepath: Path
-) -> None:
+def test_high_complexity_rule_detects(mock_ast_high_complexity: MagicMock, mock_filepath: Path) -> None:
     """测试检测高复杂度函数。"""
     rule = HighComplexityRule()
     issues = rule.check(mock_ast_high_complexity, mock_filepath)
@@ -341,9 +332,7 @@ def test_high_complexity_rule_normal_complexity(mock_filepath: Path) -> None:
 # ─── Test run_semantic_rules ──────────────────────────────────────────────────
 
 
-def test_run_semantic_rules_all_rules(
-    mock_filepath: Path, tmp_path: Path
-) -> None:
+def test_run_semantic_rules_all_rules(mock_filepath: Path, tmp_path: Path) -> None:
     """测试运行所有匹配的语义规则。"""
     for rule in _BUILTIN_SEMANTIC_RULES:
         register_semantic_rule(rule)
@@ -373,9 +362,7 @@ def test_run_semantic_rules_all_rules(
     assert "missing-docstring" in categories
 
 
-def test_run_semantic_rules_filter_enabled(
-    mock_filepath: Path, tmp_path: Path
-) -> None:
+def test_run_semantic_rules_filter_enabled(mock_filepath: Path, tmp_path: Path) -> None:
     """测试仅运行指定规则。"""
     for rule in _BUILTIN_SEMANTIC_RULES:
         register_semantic_rule(rule)
@@ -391,9 +378,7 @@ def test_run_semantic_rules_filter_enabled(
     mock_filepath.write_text("from os import unused_name\n", encoding="utf-8")
 
     # 只启用 unused-import 规则
-    issues = run_semantic_rules(
-        mock, mock_filepath, "python", enabled_rules={"unused-import"}
-    )
+    issues = run_semantic_rules(mock, mock_filepath, "python", enabled_rules={"unused-import"})
 
     assert len(issues) == 1
     assert issues[0].category == "unused-import"

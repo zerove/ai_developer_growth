@@ -5,6 +5,8 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import Any
 
+from tools.scripts._common import SeverityCountsMixin
+
 
 @dataclass
 class Issue:
@@ -42,25 +44,13 @@ class Issue:
 
 
 @dataclass
-class ValidationResult:
+class ValidationResult(SeverityCountsMixin):
     """Aggregated validation results for a file."""
 
     file: str
     language: str
     issues: list[Issue] = field(default_factory=list)
     lines_checked: int = 0
-
-    @property
-    def error_count(self) -> int:
-        return sum(1 for i in self.issues if i.severity == "error")
-
-    @property
-    def warning_count(self) -> int:
-        return sum(1 for i in self.issues if i.severity == "warning")
-
-    @property
-    def info_count(self) -> int:
-        return sum(1 for i in self.issues if i.severity == "info")
 
     @property
     def passed(self) -> bool:
@@ -120,25 +110,13 @@ class HealthScore:
 
 
 @dataclass
-class CheckResult:
+class CheckResult(SeverityCountsMixin):
     """Result of checking a single file."""
 
     file: str
     issues: list[Issue] = field(default_factory=list)
     language: str = "unknown"
     skipped: bool = False
-
-    @property
-    def error_count(self) -> int:
-        return sum(1 for i in self.issues if i.severity == "error")
-
-    @property
-    def warning_count(self) -> int:
-        return sum(1 for i in self.issues if i.severity == "warning")
-
-    @property
-    def info_count(self) -> int:
-        return sum(1 for i in self.issues if i.severity == "info")
 
     @property
     def passed(self) -> bool:

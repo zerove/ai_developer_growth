@@ -9,7 +9,21 @@ from functools import lru_cache
 from pathlib import Path
 from typing import Any
 
-from tools.scripts._common import rules_dir
+from tools.scripts._common import (
+    file_hash_full as _file_hash,  # noqa: F401 - re-export for tests
+)
+from tools.scripts._common import (
+    load_cache as _load_cache,  # noqa: F401 - re-export for tests
+)
+from tools.scripts._common import (
+    merge_anti_patterns as _merge_anti_patterns,
+)
+from tools.scripts._common import (
+    rules_dir,
+)
+from tools.scripts._common import (
+    save_cache as _save_cache,  # noqa: F401 - re-export for tests
+)
 from tools.scripts.rules_engine.logger import logger
 
 # ── 生成规则自动发现 ───────────────────────────────────────
@@ -49,17 +63,6 @@ def _load_generated_rules(language: str) -> list[dict[str, Any]]:
 
 _RULE_CACHE: dict[str, dict[str, Any]] = {}
 _FILE_HASH_CACHE: dict[str, str] = {}
-
-
-def _file_hash(filepath: Path) -> str:
-    """Calculate SHA-256 hash of file content. Returns empty string if file doesn't exist."""
-    if not filepath.exists():
-        return ""
-    try:
-        content = filepath.read_bytes()
-        return hashlib.sha256(content).hexdigest()
-    except OSError:
-        return ""
 
 
 # Disk cache path
@@ -168,25 +171,6 @@ def _load_universal_rules(framework_dir: Path | None = None) -> dict[str, Any]:
     if framework_dir is None:
         framework_dir = rules_dir()
     return _load_universal_rules_cached(str(framework_dir))
-
-
-def _load_cache(cache_file: Path) -> dict[str, str]:
-    """Load file hash cache from disk."""
-    if cache_file.exists():
-        try:
-            result: dict[str, str] = json.loads(cache_file.read_text())
-            return result
-        except (json.JSONDecodeError, OSError):
-            pass
-    return {}
-
-
-def _save_cache(cache_file: Path, cache: dict[str, str]) -> None:
-    """Save file hash cache to disk."""
-    try:
-        cache_file.write_text(json.dumps(cache))
-    except OSError:
-        pass
 
 
 def _try_load_yaml(rule_path: Path, framework_dir: Path) -> dict[str, Any] | None:
@@ -343,42 +327,6 @@ def _load_single_custom_file(rule_file: Path, custom: dict[str, Any]) -> None:
 
     except Exception as e:
         print(f"Warning: Failed to load {rule_file}: {e}", file=sys.stderr)
-
-
-def _merge_anti_patterns(
-    base_patterns: list[dict[str, Any]], custom_patterns: list[dict[str, Any]]
-) -> list[dict[str, Any]]:
-    """Merge anti-patterns: custom overrides by ID, then appends new ones.
-
-    Returns a NEW list (不与 base_patterns 共享引用), 避免修改返回值时影响原 base.
-    详见 ADR-034 Phase 33 refactor.
-    """
-    if not custom_patterns:
-        return list(base_patterns)  # 返回副本而非 base_patterns 本身
-
-    base_ids = {p["id"] for p in base_patterns}
-    overridden = []
-    new_only = []
-    for cp in custom_patterns:
-        if cp.get("id") in base_ids:
-            overridden.append(cp)
-        else:
-            new_only.append(cp)
-
-    merged_patterns = []
-    for p in base_patterns:
-        match = next((cp for cp in overridden if cp["id"] == p["id"]), None)
-        if match:
-            if "severity_override" in match:
-                p = dict(p)
-                p["severity"] = match["severity_override"]
-                merged_patterns.append(p)
-            else:
-                merged_patterns.append(match)
-        else:
-            merged_patterns.append(p)
-    merged_patterns.extend(new_only)
-    return merged_patterns
 
 
 def _merge_rules(base: dict[str, Any], custom: dict[str, Any]) -> dict[str, Any]:

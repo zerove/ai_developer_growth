@@ -19,7 +19,7 @@ from collections import Counter
 from pathlib import Path
 from typing import Any
 
-from tools.scripts._common import EXCLUDE_DIRS, EXTENSION_MAP
+from tools.scripts._common import EXCLUDE_DIRS, EXTENSION_MAP, detect_language_from_file  # noqa: F401
 
 # Framework detection patterns
 FRAMEWORK_PATTERNS: dict[str, list[str]] = {
@@ -145,11 +145,6 @@ def count_extensions(project_dir: Path) -> dict[str, int]:
                 ext_counter[EXTENSION_MAP[suffix]] += 1
 
     return dict(ext_counter)
-
-
-def detect_language_from_file(filepath: Path) -> str | None:
-    """Detect language from file extension."""
-    return EXTENSION_MAP.get(filepath.suffix.lower())
 
 
 def detect_language(project_dir: Path) -> dict[str, Any]:

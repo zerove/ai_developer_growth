@@ -30,6 +30,7 @@ from __future__ import annotations
 
 import argparse
 import hashlib
+import json
 import os
 import subprocess
 import sys
@@ -181,6 +182,11 @@ def detect_language(filepath: Path) -> str | None:
     return EXTENSION_MAP.get(filepath.suffix.lower())
 
 
+# 别名: detect_language.py / validators/pipeline.py 中的 detect_language_from_file
+# 与 detect_language 逻辑完全一致 (Phase 34 统一)
+detect_language_from_file = detect_language
+
+
 # ----------------------------------------------------------
 # Command execution
 # ----------------------------------------------------------
@@ -301,3 +307,129 @@ SUPPORTED_EXTENSIONS = set(EXTENSION_MAP.keys())
 def filter_supported_files(files: list[Path]) -> list[Path]:
     """Filter to only files supported by the rules engine."""
     return [f for f in files if f.suffix.lower() in SUPPORTED_EXTENSIONS]
+
+
+# ----------------------------------------------------------
+# Tree node helpers (rules_engine parsers, Phase 34)
+# ----------------------------------------------------------
+
+
+def child_by_type(node: Any, node_type: str) -> Any | None:
+    """Return first direct child of the given type."""
+    for child in node.children:
+        if child.type == node_type:
+            return child
+    return None
+
+
+def find_first(node: Any, node_type: str) -> Any | None:
+    """Return first node of the given type via DFS (self inclusive)."""
+    if node.type == node_type:
+        return node
+    for child in node.children:
+        found = find_first(child, node_type)
+        if found:
+            return found
+    return None
+
+
+def find_first_at_depth(node: Any, node_type: str, max_depth: int) -> Any | None:
+    """Return first node of the given type via DFS, bounded by max_depth."""
+    if node.type == node_type:
+        return node
+    if max_depth <= 0:
+        return None
+    for child in node.children:
+        found = find_first_at_depth(child, node_type, max_depth - 1)
+        if found:
+            return found
+    return None
+
+
+def node_text(node: Any) -> str:
+    """Extract text from a tree-sitter node; None-safe ("" for None text/node)."""
+    if node is None or node.text is None:
+        return ""
+    text = node.text
+    return text.decode("utf-8", errors="replace") if isinstance(text, bytes) else str(text)
+
+
+# ----------------------------------------------------------
+# Anti-pattern merge (rule_loader / validators.pipeline, Phase 34)
+# ----------------------------------------------------------
+
+
+def merge_anti_patterns(
+    base_patterns: list[dict[str, Any]], custom_patterns: list[dict[str, Any]]
+) -> list[dict[str, Any]]:
+    """Merge custom anti-patterns over base ones by ID.
+
+    Custom patterns with an ID matching a base pattern override it
+    (via `severity_override` when present, else full replacement);
+    new IDs are appended. Returns a new list — the returned list never
+    aliases base_patterns (ADR-034 copy semantics).
+    """
+    if not custom_patterns:
+        return list(base_patterns)
+
+    base_ids = {p["id"] for p in base_patterns}
+    merged: list[dict[str, Any]] = []
+    for p in base_patterns:
+        match = next((cp for cp in custom_patterns if cp["id"] == p["id"]), None)
+        if match is None:
+            merged.append(p)
+        elif "severity_override" in match:
+            overridden = dict(p)
+            overridden["severity"] = match["severity_override"]
+            merged.append(overridden)
+        else:
+            merged.append(match)
+    merged.extend(cp for cp in custom_patterns if cp["id"] not in base_ids)
+    return merged
+
+
+# ----------------------------------------------------------
+# Cache helpers (rule_loader / validators.cli, Phase 34)
+# ----------------------------------------------------------
+
+
+def load_cache(cache_file: Path) -> dict[str, str]:
+    """Load a JSON dict cache from disk; empty dict on missing/corrupt file."""
+    if not cache_file.exists():
+        return {}
+    try:
+        result: dict[str, str] = json.loads(cache_file.read_text())
+        return result
+    except (json.JSONDecodeError, OSError):
+        return {}
+
+
+def save_cache(cache_file: Path, cache: dict[str, str]) -> None:
+    """Persist a JSON dict cache to disk."""
+    try:
+        cache_file.write_text(json.dumps(cache))
+    except OSError:
+        pass
+
+
+# ----------------------------------------------------------
+# Severity counting mixin (rules / rules_engine models, Phase 34)
+# ----------------------------------------------------------
+
+
+class SeverityCountsMixin:
+    """Provides error_count / warning_count / info_count from an issues list."""
+
+    issues: list[Any]
+
+    @property
+    def error_count(self) -> int:
+        return sum(1 for i in self.issues if i.severity == "error")
+
+    @property
+    def warning_count(self) -> int:
+        return sum(1 for i in self.issues if i.severity == "warning")
+
+    @property
+    def info_count(self) -> int:
+        return sum(1 for i in self.issues if i.severity == "info")

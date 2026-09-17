@@ -12,30 +12,19 @@ import sys
 from pathlib import Path
 from typing import Any
 
-from tools.scripts._common import file_hash_full as _file_hash
+from tools.scripts._common import (
+    file_hash_full as _file_hash,
+)
+from tools.scripts._common import (
+    load_cache as _load_cache,
+)
+from tools.scripts._common import (
+    save_cache as _save_cache,
+)
 
 from .health import calculate_health_score
 from .models import FixResult, ValidationResult
 from .pipeline import detect_language_from_file, validate_directory, validate_file
-
-
-def _load_cache(cache_file: Path) -> dict[str, str]:
-    """Load file hash cache from disk."""
-    if cache_file.exists():
-        try:
-            result: dict[str, str] = json.loads(cache_file.read_text())
-            return result
-        except (json.JSONDecodeError, OSError):
-            pass
-    return {}
-
-
-def _save_cache(cache_file: Path, cache: dict[str, str]) -> None:
-    """Save file hash cache to disk."""
-    try:
-        cache_file.write_text(json.dumps(cache))
-    except OSError:
-        pass
 
 
 def _get_supported_files(dirpath: Path, exclude: list[str]) -> list[Path]:

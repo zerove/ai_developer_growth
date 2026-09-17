@@ -134,11 +134,6 @@ def _apply_fixes_to_file(filepath: str, file_fixes: list[dict[str, Any]]) -> int
     return applied
 
 
-def _discover_languages(args: argparse.Namespace) -> list[str]:
-    """Backwards-compat shim → discover_languages in _common (Phase 34 抽取)."""
-    return discover_languages(args)
-
-
 def _print_results(fixes: list[dict[str, Any]], args: argparse.Namespace) -> None:
     """Print results based on output format."""
     total = len(fixes)
@@ -188,7 +183,7 @@ def main() -> int:
         if not args.all and not args.lang:
             parser.error("Must specify --lang or --all")
 
-        languages = _discover_languages(args)
+        languages = discover_languages(args)
         fixes = generate_fixes(languages, dry_run=args.dry_run)
 
         _print_results(fixes, args)

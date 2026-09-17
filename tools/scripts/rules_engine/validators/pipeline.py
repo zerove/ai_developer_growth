@@ -9,6 +9,11 @@ import re
 from pathlib import Path
 from typing import Any
 
+from tools.scripts._common import detect_language_from_file as detect_language_from_file
+from tools.scripts._common import (
+    merge_anti_patterns as _merge_anti_patterns,
+)
+
 from .models import Issue, ValidationResult
 
 # Rule cache
@@ -59,11 +64,6 @@ EXTENSION_MAP: dict[str, str] = {
     ".graphql": "graphql",
     ".gql": "graphql",
 }
-
-
-def detect_language_from_file(filepath: Path) -> str | None:
-    """Detect language from file extension."""
-    return EXTENSION_MAP.get(filepath.suffix.lower())
 
 
 def check_anti_patterns(lines: list[str], rules: dict[str, Any], filepath: str) -> list[Issue]:
@@ -293,43 +293,6 @@ def _merge_rules(base: dict[str, Any], custom: dict[str, Any]) -> dict[str, Any]
     _merge_dict_section(merged, custom, "thresholds")
 
     return merged
-
-
-def _merge_anti_patterns(
-    base_patterns: list[dict[str, Any]], custom_patterns: list[dict[str, Any]]
-) -> list[dict[str, Any]]:
-    """合并 anti_patterns 列表 (custom 覆盖 by ID, 模块级 helper).
-
-    Args:
-        base_patterns: 基础 pattern 列表
-        custom_patterns: 自定义 pattern 列表
-
-    Returns:
-        合并后的 pattern 列表
-    """
-    base_ids = {p["id"] for p in base_patterns}
-    overridden = []
-    new_only = []
-    for cp in custom_patterns:
-        if cp.get("id") in base_ids:
-            overridden.append(cp)
-        else:
-            new_only.append(cp)
-
-    merged_patterns = []
-    for p in base_patterns:
-        match = next((cp for cp in overridden if cp["id"] == p["id"]), None)
-        if match:
-            if "severity_override" in match:
-                p = dict(p)
-                p["severity"] = match["severity_override"]
-                merged_patterns.append(p)
-            else:
-                merged_patterns.append(match)
-        else:
-            merged_patterns.append(p)
-    merged_patterns.extend(new_only)
-    return merged_patterns
 
 
 def _merge_dict_section(merged: dict[str, Any], custom: dict[str, Any], key: str) -> None:

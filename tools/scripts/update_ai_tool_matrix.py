@@ -23,6 +23,8 @@ from enum import Enum
 from pathlib import Path
 from typing import Any
 
+from tools.scripts._common import load_cache, save_cache
+
 logging.basicConfig(level=logging.INFO, format="%(levelname)s: %(message)s")
 logger = logging.getLogger(__name__)
 
@@ -159,17 +161,10 @@ class ToolMatrixUpdater:
         return {}
 
     def _load_cache(self) -> dict[str, Any]:
-        if CACHE_PATH.exists():
-            try:
-                result: dict[str, Any] = json.loads(CACHE_PATH.read_text())
-                return result
-            except json.JSONDecodeError:
-                # 缓存损坏 (如并行写入交错) 时视为无缓存, 重新检查
-                return {}
-        return {}
+        return load_cache(CACHE_PATH)
 
     def _save_cache(self) -> None:
-        CACHE_PATH.write_text(json.dumps(self.cache, indent=2))
+        save_cache(CACHE_PATH, self.cache)
 
     def load_matrix(self) -> None:
         """Parse current matrix from markdown file."""

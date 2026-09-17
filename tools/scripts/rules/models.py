@@ -5,6 +5,8 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import Any
 
+from tools.scripts._common import SeverityCountsMixin
+
 
 @dataclass
 class Issue:
@@ -38,7 +40,7 @@ class Issue:
 
 
 @dataclass
-class ValidationResult:
+class ValidationResult(SeverityCountsMixin):
     """Validation result for a single file."""
 
     file: str
@@ -46,18 +48,6 @@ class ValidationResult:
     lines_checked: int = 0
     issues: list[Issue] = field(default_factory=list)
     cached: bool = False
-
-    @property
-    def error_count(self) -> int:
-        return sum(1 for i in self.issues if i.severity == "error")
-
-    @property
-    def warning_count(self) -> int:
-        return sum(1 for i in self.issues if i.severity == "warning")
-
-    @property
-    def info_count(self) -> int:
-        return sum(1 for i in self.issues if i.severity == "info")
 
     def to_dict(self) -> dict[str, Any]:
         return {

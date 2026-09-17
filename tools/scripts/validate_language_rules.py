@@ -23,11 +23,13 @@ Usage:
 from __future__ import annotations
 
 import ast
-import json
 import logging
 import sys
 from pathlib import Path
 from typing import Any
+
+from tools.scripts._common import load_cache as _load_cache  # noqa: F401
+from tools.scripts._common import save_cache as _save_cache  # noqa: F401
 
 # ──────────────────────────────────────────────────────────
 # Backward-compatible re-exports from validators package
@@ -177,25 +179,6 @@ def _merge_rules(base: dict[str, Any], custom: dict[str, Any]) -> dict[str, Any]
 
 # Private function re-exports
 # ──────────────────────────────────────────────────────────
-
-
-def _load_cache(cache_file: Path) -> dict[str, str]:
-    """Load file hash cache from disk."""
-    if cache_file.exists():
-        try:
-            result: dict[str, str] = json.loads(cache_file.read_text())
-            return result
-        except (json.JSONDecodeError, OSError):
-            pass
-    return {}
-
-
-def _save_cache(cache_file: Path, cache: dict[str, str]) -> None:
-    """Save file hash cache to disk."""
-    try:
-        cache_file.write_text(json.dumps(cache))
-    except OSError as exc:
-        log.debug("跳过缓存写入 %s: %s", cache_file, exc)
 
 
 def _is_excluded(fp: Path, exclude: list[str]) -> bool:

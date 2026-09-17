@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from tools.scripts._common import child_by_type, node_text
 from tools.scripts.rules_engine.ast_parser import ClassInfo, FunctionInfo, _TreeNode
 
 from .base import BaseParser
@@ -43,16 +44,10 @@ class KotlinParser(BaseParser):
             self._walk(child, lines, functions, classes)
 
     def _child_by_type(self, node: _TreeNode, node_type: str) -> _TreeNode | None:
-        for child in node.children:
-            if child.type == node_type:
-                return child
-        return None
+        return child_by_type(node, node_type)
 
     def _node_text(self, node: _TreeNode | None) -> str:
-        if node is None or node.text is None:
-            return ""
-        text = node.text
-        return text.decode("utf-8", errors="replace") if isinstance(text, bytes) else str(text)
+        return node_text(node)
 
     def _parse_class(self, node: _TreeNode, lines: list[str]) -> ClassInfo:
         name = self._node_text(self._child_by_type(node, "identifier"))

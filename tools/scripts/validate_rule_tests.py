@@ -106,11 +106,6 @@ def validate_rule_tests(lang: str) -> tuple[int, int, list[str]]:
     return passed, failed, errors
 
 
-def _discover_languages(args: argparse.Namespace) -> list[str]:
-    """Backwards-compat shim → discover_languages in _common (Phase 34 抽取)."""
-    return discover_languages(args)
-
-
 def _run_language_validation(lang: str) -> tuple[int, int, list[str]]:
     """Run validation for a single language."""
     return validate_rule_tests(lang)
@@ -171,7 +166,7 @@ def main() -> int:
         if not args.all and not args.lang:
             parser.error("Must specify --lang or --all")
 
-        languages = _discover_languages(args)
+        languages = discover_languages(args)
 
         total_passed = 0
         total_failed = 0

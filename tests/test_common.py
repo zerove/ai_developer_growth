@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from pathlib import Path
+from typing import Any
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -10,18 +11,27 @@ import pytest
 from tools.scripts._common import (
     EXTENSION_MAP,
     SUPPORTED_EXTENSIONS,
+    SeverityCountsMixin,
+    child_by_type,
     detect_language,
+    detect_language_from_file,
     file_hash,
     filter_supported_files,
+    find_first,
+    find_first_at_depth,
     framework_dir,
     get_project_root,
     handle_error,
+    load_cache,
     load_yaml,
+    merge_anti_patterns,
+    node_text,
     print_check,
     print_section,
     rules_dir,
     run_command,
     safe_import,
+    save_cache,
     save_yaml,
 )
 
@@ -221,3 +231,186 @@ class TestFilterSupportedFiles:
     def test_supported_extensions_is_set(self) -> None:
         assert isinstance(SUPPORTED_EXTENSIONS, set)
         assert ".py" in SUPPORTED_EXTENSIONS
+
+
+class _FakeNode:
+    """Duck-typed tree node mimicking tree-sitter _TreeNode."""
+
+    def __init__(self, type_name: str, text: Any = None, children: list[Any] | None = None) -> None:
+        self.type = type_name
+        self.text = text
+        self.children = children or []
+
+
+class _FakeIssue:
+    def __init__(self, severity: str) -> None:
+        self.severity = severity
+
+
+class TestChildByType:
+    def test_found_first_match(self) -> None:
+        node = _FakeNode("root", children=[_FakeNode("a"), _FakeNode("target"), _FakeNode("b")])
+        result = child_by_type(node, "target")
+        assert result is not None
+        assert result.type == "target"
+
+    def test_found_not_first(self) -> None:
+        node = _FakeNode("root", children=[_FakeNode("a"), _FakeNode("a"), _FakeNode("target")])
+        assert child_by_type(node, "target").type == "target"
+
+    def test_not_found(self) -> None:
+        node = _FakeNode("root", children=[_FakeNode("a"), _FakeNode("b")])
+        assert child_by_type(node, "nope") is None
+
+    def test_empty_children(self) -> None:
+        assert child_by_type(_FakeNode("root"), "x") is None
+
+
+class TestFindFirst:
+    def test_root_match(self) -> None:
+        node = _FakeNode("root")
+        assert find_first(node, "root") is node
+
+    def test_deep_match(self) -> None:
+        inner = _FakeNode("inner", children=[_FakeNode("needle")])
+        node = _FakeNode("root", children=[_FakeNode("a"), inner])
+        result = find_first(node, "needle")
+        assert result is not None
+        assert result.type == "needle"
+
+    def test_missing(self) -> None:
+        node = _FakeNode("root", children=[_FakeNode("a")])
+        assert find_first(node, "nope") is None
+
+    def test_leaf_no_children(self) -> None:
+        assert find_first(_FakeNode("leaf"), "nope") is None
+
+
+class TestFindFirstAtDepth:
+    def test_found_within_depth(self) -> None:
+        child = _FakeNode("leaf", children=[_FakeNode("needle")])
+        node = _FakeNode("root", children=[child])
+        assert find_first_at_depth(node, "needle", max_depth=2) is not None
+
+    def test_blocked_by_depth(self) -> None:
+        child = _FakeNode("leaf", children=[_FakeNode("needle")])
+        node = _FakeNode("root", children=[child])
+        assert find_first_at_depth(node, "needle", max_depth=1) is None
+
+    def test_root_match_ignores_depth(self) -> None:
+        assert find_first_at_depth(_FakeNode("root"), "root", max_depth=0) is not None
+
+
+class TestNodeText:
+    def test_str_text(self) -> None:
+        assert node_text(_FakeNode("n", text="hello")) == "hello"
+
+    def test_bytes_text(self) -> None:
+        assert node_text(_FakeNode("n", text=b"hello")) == "hello"
+
+    def test_bytes_invalid_utf8(self) -> None:
+        assert node_text(_FakeNode("n", text=b"\xff\xfehello")) == "\ufffd\ufffdhello"
+
+    def test_none_text(self) -> None:
+        assert node_text(_FakeNode("n", text=None)) == ""
+
+    def test_none_node(self) -> None:
+        assert node_text(None) == ""
+
+
+class TestMergeAntiPatterns:
+    def test_empty_custom_returns_copy(self) -> None:
+        base = [{"id": "a", "pattern": "x"}]
+        merged = merge_anti_patterns(base, [])
+        assert merged == base
+        assert merged is not base  # 副本语义 (ADR-034)
+
+    def test_severity_override_keeps_base_untouched(self) -> None:
+        base = [{"id": "a", "pattern": "x", "severity": "error"}]
+        custom = [{"id": "a", "pattern": "x", "severity_override": "info"}]
+        merged = merge_anti_patterns(base, custom)
+        assert merged[0]["severity"] == "info"
+        assert base[0]["severity"] == "error"  # 原 base 不被修改
+
+    def test_custom_replaces_by_id(self) -> None:
+        base = [{"id": "a", "pattern": "x", "severity": "error"}]
+        custom = [{"id": "a", "pattern": "y", "severity": "warning"}]
+        merged = merge_anti_patterns(base, custom)
+        assert merged[0]["pattern"] == "y"
+        assert merged[0]["severity"] == "warning"
+
+    def test_new_items_appended(self) -> None:
+        base = [{"id": "a", "pattern": "x"}]
+        custom = [{"id": "b", "pattern": "z"}]
+        merged = merge_anti_patterns(base, custom)
+        assert len(merged) == 2
+        assert merged[-1]["id"] == "b"
+
+    def test_preserves_non_overridden_base_items(self) -> None:
+        base = [{"id": "a", "pattern": "x"}, {"id": "c", "pattern": "w"}]
+        custom = [{"id": "b", "pattern": "z"}]
+        merged = merge_anti_patterns(base, custom)
+        assert [p["id"] for p in merged] == ["a", "c", "b"]
+
+
+class TestCacheHelpers:
+    def test_load_cache_missing(self, tmp_path: Path) -> None:
+        assert load_cache(tmp_path / "nope.json") == {}
+
+    def test_load_cache_valid(self, tmp_path: Path) -> None:
+        f = tmp_path / "cache.json"
+        f.write_text('{"a": "b"}')
+        assert load_cache(f) == {"a": "b"}
+
+    def test_load_cache_corrupted(self, tmp_path: Path) -> None:
+        f = tmp_path / "cache.json"
+        f.write_text("{invalid json")
+        assert load_cache(f) == {}
+
+    def test_save_and_load_roundtrip(self, tmp_path: Path) -> None:
+        f = tmp_path / "cache.json"
+        save_cache(f, {"k": "v"})
+        assert load_cache(f) == {"k": "v"}
+
+    def test_load_cache_empty_file(self, tmp_path: Path) -> None:
+        f = tmp_path / "cache.json"
+        f.write_text("")
+        assert load_cache(f) == {}
+
+
+class TestDetectLanguageAlias:
+    def test_alias_is_detect_language(self) -> None:
+        assert detect_language_from_file is detect_language
+
+    def test_alias_typescript(self) -> None:
+        assert detect_language_from_file(Path("test.ts")) == "typescript"
+
+    def test_alias_unknown(self) -> None:
+        assert detect_language_from_file(Path("x.xyz")) is None
+
+
+class TestSeverityCountsMixin:
+    def test_counts(self) -> None:
+        class Result(SeverityCountsMixin):
+            pass
+
+        r = Result()
+        r.issues = [
+            _FakeIssue("error"),
+            _FakeIssue("error"),
+            _FakeIssue("warning"),
+            _FakeIssue("info"),
+        ]
+        assert r.error_count == 2
+        assert r.warning_count == 1
+        assert r.info_count == 1
+
+    def test_no_issues(self) -> None:
+        class Result(SeverityCountsMixin):
+            pass
+
+        r = Result()
+        r.issues = []
+        assert r.error_count == 0
+        assert r.warning_count == 0
+        assert r.info_count == 0

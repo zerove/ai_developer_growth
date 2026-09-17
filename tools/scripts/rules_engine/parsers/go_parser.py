@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from tools.scripts._common import child_by_type, find_first, node_text
 from tools.scripts.rules_engine.ast_parser import ClassInfo, FunctionInfo, _TreeNode
 
 from .base import BaseParser
@@ -39,16 +40,10 @@ class GoParser(BaseParser):
                 self._walk(child, lines, functions, classes)
 
     def _child_by_type(self, node: _TreeNode, node_type: str) -> _TreeNode | None:
-        for child in node.children:
-            if child.type == node_type:
-                return child
-        return None
+        return child_by_type(node, node_type)
 
     def _node_text(self, node: _TreeNode) -> str:
-        text = node.text
-        if text is None:
-            return ""
-        return text.decode("utf-8", errors="replace") if isinstance(text, bytes) else str(text)
+        return node_text(node)
 
     def _parse_func(self, node: _TreeNode, lines: list[str]) -> FunctionInfo:
         name_node = self._child_by_type(node, "identifier")
@@ -149,10 +144,4 @@ class GoParser(BaseParser):
         return params
 
     def _find_first(self, node: _TreeNode, node_type: str) -> _TreeNode | None:
-        if node.type == node_type:
-            return node
-        for child in node.children:
-            found = self._find_first(child, node_type)
-            if found:
-                return found
-        return None
+        return find_first(node, node_type)

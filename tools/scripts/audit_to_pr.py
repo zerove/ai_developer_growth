@@ -336,7 +336,15 @@ def _create_pr_with_body(title: str, body_file: str, base_branch: str, head_bran
     result = subprocess.run(cmd, capture_output=True, text=True)
     if result.returncode == 0:
         return {"success": True, "pr_url": result.stdout.strip()}
-    return {"success": False, "error": result.stderr}
+    error = result.stderr.strip()
+    if "not permitted to create or approve pull requests" in error:
+        error = (
+            "GitHub Actions 无权创建 PR (createPullRequest 被禁止). "
+            "修复: 1) 在仓库 Settings → Actions → General → Workflow permissions 勾选 "
+            "'Allow GitHub Actions to create and approve pull requests'; "
+            "2) 或在仓库配置 GH_PAT secret (需 repo 权限的 PAT), 并在 workflow 中传入."
+        )
+    return {"success": False, "error": error}
 
 
 def _write_body_to_tempfile(body: str) -> str:

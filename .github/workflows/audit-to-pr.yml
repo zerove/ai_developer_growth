@@ -46,7 +46,7 @@ jobs:
       - name: Run Governance Audit & Create PR
         if: github.event.inputs.create_pr == 'true' || github.event.schedule != ''
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ secrets.GH_PAT || secrets.GITHUB_TOKEN }}
         run: |
           python tools/scripts/audit_to_pr.py --run-audit --create-pr --title "chore: weekly governance audit report"
 

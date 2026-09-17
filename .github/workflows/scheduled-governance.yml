@@ -31,10 +31,12 @@ jobs:
         with:
           python-version: ${{ env.PYTHON_VERSION }}
       - name: Install dependencies
-        run: pip install ruff mypy pytest pytest-cov pyyaml bandit
+        run: |
+          pip install -e ".[dev,tools]"
+          pip install ruff mypy pytest pytest-cov pyyaml bandit
 
       - name: Run full governance audit
-        run: python .jcode/scripts/governance-auditor.py full
+        run: python .jcode/scripts/governance-auditor.py full --lang python
 
       - name: Run AI Quality Gate
         run: python .jcode/scripts/governance-auditor.py ai-quality-gate
@@ -85,7 +87,9 @@ jobs:
         with:
           python-version: ${{ env.PYTHON_VERSION }}
       - name: Install dependencies
-        run: pip install ruff mypy pytest pytest-cov pyyaml bandit
+        run: |
+          pip install -e ".[dev,tools]"
+          pip install ruff mypy pytest pytest-cov pyyaml bandit
       - name: Prune quality_runs history (90d retention)
         run: python tools/scripts/hooks_runner.py db-maintain --retention-days 90 || true
       - name: Collect quality gate trend snapshot

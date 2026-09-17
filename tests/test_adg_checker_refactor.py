@@ -213,7 +213,11 @@ class TestCheckFilesSerial:
         assert degraded == 0
 
     def test_skips_skipped_results(self, tmp_path: Path) -> None:
-        """skipped=True 的 CheckResult 不加入 results。"""
+        """skipped=True 的 CheckResult 保留在 results 中 (ADR-053 契约)。
+
+        自 Phase 33b-13 起 serial 路径不再静默过滤 skipped 文件:
+        report_generator 依赖这些结果输出 SARIF kind=notApplicable / JUnit <skipped/>.
+        """
         f = tmp_path / "a.py"
         f.write_text("x = 1\n")
         # 模拟所有结果都 skipped
@@ -222,7 +226,9 @@ class TestCheckFilesSerial:
             return_value=(CheckResult(file=str(f), issues=[], language="python", skipped=True), False),
         ):
             results, _ = _check_files_serial([f], None, None, "", False, False)
-        assert results == []
+        # skipped 结果被保留, 不再被过滤
+        assert len(results) == 1
+        assert results[0].skipped is True
 
 
 class TestCheckFilesParallel:

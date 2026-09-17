@@ -25,6 +25,11 @@
 - write
 - edit
 - task_tool
+- glob
+- grep
+- lsp_diagnostics
+- git
+- webfetch
 
 ### 约束
 
@@ -34,3 +39,6 @@
 - Reviewer 必须输出明确 PASS/FAIL 判定
 - 最大迭代次数防止无限循环
 - 输出 JSON 格式便于自动化处理
+- **严禁**以 Coder 身份修改 Review 阶段的审查结论与判定记录
+- **禁止**在无需求描述或 PRD 缺失时直接进入 Architect 设计阶段
+- **不得**绕过迭代上限强制重试失败任务

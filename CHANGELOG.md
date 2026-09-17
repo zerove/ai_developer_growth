@@ -2,6 +2,35 @@
 
 All notable changes to the AI Developer Growth project.
 
+## [2.24.0] - 2026-09-17
+
+### Phase 36 完整收口: adg cc 门禁落地 + 18 个 ≥10cc 函数全量拆分
+
+#### 关键改进
+
+- **Phase 36a**: `adg check --complexity` cc 门禁能力 + test_adg_cc_gate 6 测试锁定
+- **Phase 36b (7 函数)**: fix_heuristics `_try_message_heuristics` / jcode_cli `_list_standalone_scripts` / update_ai_tool_matrix `update_matrix` / plugins `discover_plugins` / adg_cli `check_file` / checker `check_file` / dependency_graph `_run_tarjan_scc`（拆出模块级 `_tarjan_scc` + `_strongconnect`）
+- **Phase 36c (11 函数)**: _shared / config loader / basic_checks / domain_checks ×2 / link_auditor / rule_marketplace / auto_fix / pattern_learner / quality_trends / rule_docs_mapper 全部拆至模块级私有 helper（如 `_parse_rule_file_simple`、`_merge_lists`、`_filter_file_against_baseline`、`_scan_markdown_file` 等）
+- **cc 全量收敛**: `adg check tools/scripts --complexity` 18 → **0 errors**
+- **ADR-056**: cc 门禁落地决策记录（累计 56 ADR）
+
+#### 验证快照
+
+- pytest: **4006 passed** ✅（1 预存失败 `test_skips_skipped_results`，ADR-053 断言过期）
+- 相关模块 523 tests: _shared/loader 系 229 + basic/domain 84 + link/marketplace 82 + auto_fix/pattern 75 + trends/mapper 53 ✅
+- adg 套件 (bootstrap/checker_refactor): 60 passed ✅
+- ruff check / format: 本次改动文件全过 ✅
+- mypy strict: 10 个改动文件 0 issues ✅
+- adg check tools/scripts --complexity: **0 errors** ✅
+
+#### 累计 (Phase 33b → 36)
+
+- ADR: 39 → **56** (Phase 33b 系列 11 + Phase 34/35/36 各 1)
+- cc 门禁: 全目录 ≤10 收敛（18 个超限函数全量拆分）
+- 大文件: 6 个 >850 行 facade 拆分（Phase 35）
+
+---
+
 ## [2.23.5] - 2026-09-03
 
 ### Phase 32 完整收口: rule_loader.py 81.28% 覆盖率 (跨过 80% 门禁)

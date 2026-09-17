@@ -12,6 +12,31 @@
 
 ---
 
+## 当前状态 (2026-09-17)
+
+### ✅ Phase 34-36 收口: 工具链工业化重构完成 (2026-09-15 → 2026-09-17)
+
+- [x] **Phase 34** (ADR-054): 跨文件重复函数抽取至 `_common.py` (8 共享函数 + 1 mixin, 19 文件净删 240 行)
+- [x] **Phase 35** (ADR-055): 6 个 >850 行大文件 facade 拆分 (7026 → 1954 行, 16 子模块)
+- [x] **Phase 36a**: adg cc 门禁 `check --complexity` + test_adg_cc_gate 6 测试锁定
+- [x] **Phase 36b (7 函数)**: fix_heuristics / jcode_cli / update_ai_tool_matrix / plugins / adg_cli / checker / dependency_graph 拆分
+- [x] **Phase 36c (11 函数)**: _shared / loader / basic_checks / domain_checks×2 / link_auditor / rule_marketplace / auto_fix / pattern_learner / quality_trends / rule_docs_mapper 拆分
+- [x] **cc 全量收敛**: `adg check tools/scripts --complexity` 18 → **0 errors**
+- [x] **mypy strict**: 改动文件 0 issues
+- [x] **pytest 全量**: 4006 passed (1 预存失败 test_skips_skipped_results, ADR-053)
+
+### 治理指标 Phase 34-36 收口
+| 指标 | Phase 32 收口 | **Phase 34-36 (本会话)** |
+|------|--------------|------------------------|
+| adg error | 0 | **0** |
+| adg cc 超限函数 | 门禁未建 | **18 → 0** |
+| 大文件 (>850 行) | 6 | **0** (Phase 35 facade 拆分) |
+| ADR 累计 | 35 | **56** |
+| 测试量 | 3771 | **4006** |
+| CHANGELOG 版本 | v2.23.5 | **v2.24.0** |
+
+---
+
 ## 当前状态 (2026-09-01)
 
 ### ✅ Phase 30 收口 (2026-09-01)

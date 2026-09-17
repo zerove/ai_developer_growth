@@ -5,7 +5,7 @@ category: 治理层
 tags: ['REST']
 difficulty: 基础
 reading_time: 10 分钟
-updated: 2026-08-29
+updated: 2026-09-17
 ---
 
 # 架构决策记录 (ADR) 索引
@@ -18,6 +18,13 @@ updated: 2026-08-29
 
 | ID | 标题 | 状态 | 日期 |
 |----|------|------|------|
+| [[ADR-056-phase-36-complexity-gate\|ADR-056]] | Phase 36 cc 门禁落地 + 18 个 ≥10cc 函数全量拆分 | ✅ 已通过 | 2026-09-17 |
+| [[ADR-055-phase-35-file-split\|ADR-055]] | Phase 35 大文件 facade 拆分（6 文件 <850 行） | ✅ 已通过 | 2026-09-15 |
+| [[ADR-054-phase-34-dedup-common\|ADR-054]] | Phase 34 跨文件重复函数抽取至 _common.py | ✅ 已通过 | 2026-09-15 |
+| [[ADR-053-phase-33b13-check-directory-skipped\|ADR-053]] | Phase 33b-13 check_directory 不再静默过滤 skipped 文件 | ✅ 已通过 | 2026-09-05 |
+| [[ADR-052-phase-33b12-skipped-report-fix\|ADR-052]] | Phase 33b-12 report_generator skipped 文件契约修复 | ✅ 已通过 | 2026-09-05 |
+| [[ADR-051-phase-33b10-total-lines-fix\|ADR-051]] | Phase 33b-10 ComplexityMetrics.total_lines 真实填充 | ✅ 已通过 | 2026-09-05 |
+| [[ADR-050-phase-33b9-ast-parser-monster-e2e\|ADR-050]] | Phase 33b-9 ast_parser monster.py 端到端契约验证 | ✅ 已通过 | 2026-09-05 |
 | [[ADR-021-py-n-plus-one-profile-verdict\|ADR-021]] | Phase 27: 25 个 py-n-plus-one profile 验证全部为误报 | ✅ 已通过 | 2026-08-31 |
 | [[ADR-020-phase-26-close-and-phase-27-handoff\|ADR-020]] | Phase 26 收口 + Phase 27 移交 (adg warning 1235→25) | ✅ 已通过 | 2026-08-31 |
 | [[ADR-019-phase-26-typo-cleanup\|ADR-019]] | Phase 26: 再降级 2 类规则, 39 真问题移交 Phase 27 | ✅ 已通过 | 2026-08-31 |
@@ -85,4 +92,4 @@ updated: 2026-08-29
 
 ---
 
-*本索引随新增 ADR 时更新。最后更新: 2026-08-29*
+*本索引随新增 ADR 时更新。最后更新: 2026-09-17*

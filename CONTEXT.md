@@ -1,3 +1,25 @@
+## 更新记录: 2026-09-17 12:00:00
+
+### 任务
+Phase 36 收口 (cc 门禁落地 + 18 个 ≥10cc 函数拆分) + 文档同步
+
+### 变更摘要
+- **Phase 36a**: adg cc 门禁 `check --complexity` + test_adg_cc_gate (6 测试锁定)
+- **Phase 36b (7 函数)**: fix_heuristics / jcode_cli / update_ai_tool_matrix / plugins / adg_cli check_file / checker check_file / dependency_graph _run_tarjan_scc
+- **Phase 36c (11 函数)**: _shared / loader / basic_checks / domain_checks ×2 / link_auditor / rule_marketplace / auto_fix / pattern_learner / quality_trends / rule_docs_mapper 全部拆至模块级 helper
+- **adg check tools/scripts --complexity**: 18 → **0 errors**（全目录 cc≤10 收敛）
+- 全量 pytest: **4006 passed, 1 failed**（仅 test_skips_skipped_results 预存 / ADR-053）
+- 相关模块 523 tests + mypy strict + ruff 全过
+- ADR-056 新增（累计 56 条）+ ADR.md 索引同步 (050-056)
+
+### 当前状态
+- master HEAD: `d0ad2c5` (前置, Phase 34c-f/33b 已提交)
+- 工作区: 大量待提交改动（Phase 34-36 全部 + 文档）
+- 累计: 56 ADR / 4006 tests / tools/scripts cc 全目录 0 error
+- 待办: git commit 授权（用户确认后提交）
+
+---
+
 ## 更新记录: 2026-09-04 01:12:21
 
 ### 任务

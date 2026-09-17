@@ -5,6 +5,10 @@ on:
   # 避免在主仓库根目录执行针对示例项目结构的 lint/test 检查。
   workflow_dispatch:
 
+concurrency:
+  group: example-ci-template-${{ github.ref }}
+  cancel-in-progress: true
+
 env:
   PYTHON_VERSION: "3.11"
 

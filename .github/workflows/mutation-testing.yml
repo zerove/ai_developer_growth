@@ -10,6 +10,10 @@ permissions:
   actions: read
   checks: write
 
+concurrency:
+  group: mutation-testing-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   mutation-testing:
     name: Mutation Testing (mutmut)
@@ -48,18 +52,4 @@ jobs:
           path: mutation-report.txt
           retention-days: 30
 
-      - name: Comment mutation results on PR
-        if: github.event_name == 'pull_request'
-        uses: actions/github-script@v7
-        with:
-          script: |
-            const fs = require('fs');
-            const report = fs.readFileSync('mutation-report.txt', 'utf8');
-            const summary = report.split('\n').filter(l => l.includes('mutation') || l.includes('killed') || l.includes('survived') || l.includes('timeout') || l.includes('error')).join('\n');
-
-            await github.rest.issues.createComment({
-              issue_number: context.issue.number,
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              body: `## 🧬 Mutation Testing Results\n\`\`\`\n${summary}\n\`\`\``
-            });
+      

@@ -18,6 +18,10 @@ on:
           - weekly
           - monthly
 
+concurrency:
+  group: scheduled-governance-${{ github.ref }}
+  cancel-in-progress: true
+
 env:
   PYTHON_VERSION: "3.11"
 

@@ -6,6 +6,10 @@ on:
       - 'case-studies/**'
     types: [opened, synchronize, reopened, labeled]
 
+concurrency:
+  group: community-case-pr-${{ github.ref }}
+  cancel-in-progress: true
+
 env:
   PYTHON_VERSION: "3.11"
 

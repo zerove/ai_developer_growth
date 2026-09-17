@@ -10,6 +10,10 @@ permissions:
   contents: read
   pull-requests: write
 
+concurrency:
+  group: adg-quality-report-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   governance-check:
     runs-on: ubuntu-latest

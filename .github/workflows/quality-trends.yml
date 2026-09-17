@@ -9,6 +9,10 @@ on:
     types: [completed]
   workflow_dispatch:
 
+concurrency:
+  group: quality-trends-${{ github.ref }}
+  cancel-in-progress: true
+
 env:
   PYTHON_VERSION: "3.11"
 

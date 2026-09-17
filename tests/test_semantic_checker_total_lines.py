@@ -1,8 +1,8 @@
 """端到端 total_lines 契约验证 (Phase 33b-10 / ADR-051).
 
 在真实项目代码上验证 ComplexityMetrics.total_lines 真实可信 (不再是 0).
-- 工具: tools/scripts/rules_engine/ (56 个真实文件)
-- 工具根: tools/scripts/ (192 个真实文件)
+- 工具: tools/scripts/rules_engine/ (56+ 个真实文件)
+- 工具根: tools/scripts/ (208 个真实文件, Phase 35 拆分后)
 """
 
 from pathlib import Path
@@ -22,18 +22,18 @@ def test_total_lines_real_rules_engine() -> None:
 def test_total_lines_real_tools_scripts() -> None:
     """整个 tools/scripts/ 真实代码 total_lines > 0."""
     result = SemanticChecker().analyze_directory(Path("tools/scripts"))
-    assert result.files_analyzed == 192
+    assert result.files_analyzed == 208
     assert result.metrics.total_lines > 0
-    # 192 文件, 平均 ~150 行/文件, 期望 >= 10000
+    # 208 文件, 平均 ~150 行/文件, 期望 >= 10000
     assert result.metrics.total_lines >= 10000
 
 
 def test_total_lines_specific_file() -> None:
     """特定文件 total_lines 等于实际行数."""
-    # ast_parser.py 自己的行数
-    f = Path("tools/scripts/rules_engine/ast_parser.py")
+    # Phase 35 拆分后最大的数据模块 (ast_parser.py 已降为 275 行 facade)
+    f = Path("tools/scripts/_lang_data_a.py")
     expected_lines = len(f.read_text().splitlines())
-    assert expected_lines > 1000  # 确保是大文件
+    assert expected_lines > 500  # 确保是大文件
 
     # 构造含已知行数的临时文件
     test_file = Path("tools/scripts/rules_engine/_test_line_count.py")

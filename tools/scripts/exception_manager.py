@@ -15,90 +15,42 @@ import logging
 import subprocess
 import threading
 import uuid
-from dataclasses import asdict, dataclass, field
+from dataclasses import asdict
 from datetime import datetime
-from enum import Enum
 from pathlib import Path
 from typing import Any
 
+# 数据模型层已拆到 _exception_models.py, 这里显式 re-export 保持公开 API 与导入路径不变
+from ._exception_models import (
+    ApprovalAction as ApprovalAction,
+)
+from ._exception_models import (
+    ApprovalRecord as ApprovalRecord,
+)
+from ._exception_models import (
+    ExceptionRequest as ExceptionRequest,
+)
+from ._exception_models import (
+    ExceptionStatus as ExceptionStatus,
+)
+from ._exception_models import (
+    ExpirationAlert as ExpirationAlert,
+)
+
+__all__ = [
+    "ExceptionStatus",
+    "ApprovalAction",
+    "ExceptionRequest",
+    "ApprovalRecord",
+    "ExpirationAlert",
+    "ApprovalWorkflow",
+    "ExpirationManager",
+    "GitOpsSync",
+    "EnhancedExceptionManager",
+    "create_enhanced_manager",
+]
+
 logger = logging.getLogger(__name__)
-
-
-class ExceptionStatus(str, Enum):
-    """例外状态"""
-
-    PENDING = "pending"  # 待审批
-    APPROVED = "approved"  # 已批准
-    REJECTED = "rejected"  # 已拒绝
-    EXPIRED = "expired"  # 已过期
-    REVOKED = "revoked"  # 已撤销
-
-
-class ApprovalAction(str, Enum):
-    """审批动作"""
-
-    APPROVE = "approve"
-    REJECT = "reject"
-    REQUEST_CHANGES = "request_changes"
-
-
-@dataclass
-class ExceptionRequest:
-    """例外申请"""
-
-    id: str
-    rule_id: str
-    paths: list[str]
-    reason: str
-    severity: str  # 原始严重性
-    requested_severity: str  # 请求降级后的严重性
-    expires: str | None
-    created_by: str
-    created_at: str
-    status: ExceptionStatus = ExceptionStatus.PENDING
-    approved_by: str | None = None
-    approved_at: str | None = None
-    rejection_reason: str | None = None
-    reviewers: list[str] = field(default_factory=list)
-    metadata: dict[str, Any] = field(default_factory=dict)
-
-    def to_dict(self) -> dict[str, Any]:
-        return asdict(self)
-
-    @classmethod
-    def from_dict(cls, data: dict[str, Any]) -> ExceptionRequest:
-        # Convert status string to enum
-        if "status" in data and isinstance(data["status"], str):
-            data["status"] = ExceptionStatus(data["status"])
-        return cls(**data)
-
-
-@dataclass
-class ApprovalRecord:
-    """审批记录"""
-
-    request_id: str
-    action: ApprovalAction
-    reviewer: str
-    comment: str
-    timestamp: str = field(default_factory=lambda: datetime.utcnow().isoformat())
-
-    def to_dict(self) -> dict[str, Any]:
-        return asdict(self)
-
-
-@dataclass
-class ExpirationAlert:
-    """到期告警"""
-
-    request_id: str
-    rule_id: str
-    paths: list[str]
-    expires_at: str
-    days_until_expiry: int
-    severity: str
-    notified: bool = False
-    notified_at: str | None = None
 
 
 class ApprovalWorkflow:

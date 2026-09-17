@@ -2,13 +2,30 @@
 
 from __future__ import annotations
 
-import re
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
-from tools.scripts._common import rules_dir, run_command
+from tools.scripts._common import rules_dir
 from tools.scripts.rules_engine.logger import logger
 
+from ._checker_linters import _map_severity as _map_severity
+from ._checker_linters import _parse_linter_output as _parse_linter_output
+from ._checker_linters import _run_external_linters as _run_external_linters
+from ._checker_markers import DEFAULT_EXCLUDED_DIRS as DEFAULT_EXCLUDED_DIRS
+from ._checker_markers import FRAMEWORK_DETECTORS as FRAMEWORK_DETECTORS
+from ._checker_markers import _check_marker as _check_marker
+from ._checker_markers import _check_package_json as _check_package_json
+from ._checker_markers import _check_text_contains as _check_text_contains
+from ._checker_markers import _config_excluded_dirs as _config_excluded_dirs
+from ._checker_markers import _detect_framework as _detect_framework
+from ._checker_markers import _detect_language as _detect_language
+from ._checker_markers import _load_context_markers as _load_context_markers
+from ._checker_noqa import _filter_suppressed_issues as _filter_suppressed_issues
+from ._checker_noqa import _is_issue_suppressed as _is_issue_suppressed
+from ._checker_noqa import _load_ignored_rules as _load_ignored_rules
+from ._checker_noqa import _parse_noqa_lines as _parse_noqa_lines
+from ._checker_workers import _worker_check as _worker_check
+from ._checker_workers import _worker_init as _worker_init
 from .anti_pattern_checker import check_anti_patterns
 from .complexity_checker import check_js_complexity, check_python_complexity
 from .context import adjust_severity, detect_file_role
@@ -20,207 +37,13 @@ from .rule_loader import load_rules_for_language
 if TYPE_CHECKING:
     from .store import CheckStore
 
-# Worker 进程内共享的规则缓存（由 _worker_init 注入）
-_WORKER_RULES: dict[str, Any] = {}
-
-
-def _worker_init(shared_rules: dict[str, Any] | None) -> None:
-    """Worker 进程初始化：注入共享规则，避免每文件重复加载。
-
-    通过 ProcessPoolExecutor 的 initializer 调用，仅在 worker 进程中执行。
-    """
-    global _WORKER_RULES
-    _WORKER_RULES = shared_rules or {}
-
-
-def _worker_check(
-    pair: tuple[Path, str],
-    do_semantic: bool = False,
-    do_linters: bool = True,
-    cache_db: str | None = None,
-    rules_hash: str = "",
-) -> CheckResult | None:
-    """Worker 任务：使用预热规则执行单文件检查（模块级，可被 pickle）。
-
-    cache_db 非空时启用增量缓存写入（每个 worker 独立 SQLite 连接，
-    WAL 模式下多进程并发写安全）。rules_hash 为规则集签名，
-    规则/引擎变化时旧缓存键不匹配自然失效。
-    """
-    fp, lang = pair
-    store = None
-    if cache_db:
-        try:
-            from .store import CheckStore
-
-            store = CheckStore(cache_db)
-            stat = fp.stat()
-            cached = store.get_cached_result(str(fp), stat.st_mtime, stat.st_size, rules_hash)
-            if cached is not None:
-                issues = [Issue(**i) for i in cached["issues"]]
-                return CheckResult(file=str(fp), issues=issues, language=cached["language"])
-        except Exception as exc:  # noqa: BLE001
-            logger.debug("worker 缓存读取失败，回退完整检查 %s: %s", fp, exc)
-            store = None  # 缓存不可用时退化为完整检查
-    result = check_file(
-        fp,
-        _WORKER_RULES or None,
-        lang,
-        semantic=do_semantic,
-        run_linters=do_linters,
-    )
-    if result.skipped:
-        return None
-    if store is not None:
-        try:
-            stat = fp.stat()
-            store.set_cached_result(
-                str(fp),
-                stat.st_mtime,
-                stat.st_size,
-                {
-                    "language": result.language,
-                    "passed": result.passed,
-                    "errors": result.error_count,
-                    "warnings": result.warning_count,
-                    "info": result.info_count,
-                    "issues": [i.to_dict() for i in result.issues],
-                },
-                rules_hash,
-            )
-        except Exception as exc:  # noqa: BLE001
-            logger.debug("worker 缓存写入失败（不影响检查结果）: %s: %s", type(exc).__name__, exc)
-    return result
-
-
-# ── 框架检测 ──────────────────────────────────────────────
-
-
-def _config_excluded_dirs() -> set[str]:
-    """从 [tool.adg].exclude 合并额外的排除目录。"""
-    overrides: set[str] = {
-        ".git",
-        ".hg",
-        ".svn",
-        ".venv",
-        "venv",
-        "node_modules",
-        "__pycache__",
-        ".mypy_cache",
-        ".pytest_cache",
-        ".ruff_cache",
-        ".cache",
-        "build",
-        "dist",
-        ".opencode",
-        ".tox",
-        "htmlcov",
-        ".coverage",
-        "site-packages",
-        "MagicMock",
-    }
-    try:
-        from tools.scripts.app_config import get_setting
-
-        extra = get_setting("exclude", [])
-        if isinstance(extra, list):
-            overrides.update(str(item) for item in extra)
-    except Exception:
-        import logging
-
-        logging.getLogger(__name__).warning("Failed to load exclude config", exc_info=True)
-    return overrides
-
-
-# 目录遍历时排除的路径段（避免误扫构建产物、依赖、缓存）
-DEFAULT_EXCLUDED_DIRS: set[str] = _config_excluded_dirs()
-
-FRAMEWORK_DETECTORS: dict[str, dict[str, list[str]]] = {
-    "react": {"files": ["package.json"], "packages": ["react", "react-dom"]},
-    "vue": {"files": ["package.json"], "packages": ["vue"]},
-    "express": {"files": ["package.json"], "packages": ["express"]},
-    "nextjs": {"files": ["package.json", "next.config.js"], "packages": ["next"]},
-    "django": {"files": ["manage.py", "requirements.txt"], "packages": ["django"]},
-    "fastapi": {
-        "files": ["requirements.txt", "pyproject.toml"],
-        "packages": ["fastapi"],
-    },
-    "actix": {"files": ["Cargo.toml"], "packages": ["actix-web"]},
-    "spring": {"files": ["pom.xml", "build.gradle"], "packages": ["spring-context"]},
-    "spring-boot": {
-        "files": ["pom.xml", "build.gradle"],
-        "packages": ["spring-boot-starter"],
-    },
-}
-
-
-def _detect_framework(dirpath: Path) -> str | None:
-    """Detect project framework from project files (V2.21 P5-37 拆分: 抽 _check_marker)."""
-    for fw_name, hints in FRAMEWORK_DETECTORS.items():
-        for filename in hints["files"]:
-            marker = dirpath / filename
-            if marker.exists() and _check_marker(marker, hints["packages"]):
-                return fw_name
-    return None
-
-
-def _check_marker(marker: Path, packages: list[str]) -> bool:
-    """检查 marker 文件是否匹配 framework (按文件名分派, 模块级 helper).
-
-    Args:
-        marker: marker 文件路径
-        packages: 框架依赖包列表
-
-    Returns:
-        是否匹配
-    """
-    if marker.name == "package.json":
-        return _check_package_json(marker, packages)
-    if marker.name == "Cargo.toml":
-        return _check_text_contains(marker, packages)
-    if marker.name in ("requirements.txt", "pyproject.toml"):
-        return _check_text_contains(marker, packages, lower=True)
-    if marker.name == "manage.py":
-        return True
-    if marker.name in ("pom.xml", "build.gradle"):
-        return True  # best effort
-    return False
-
-
-def _check_package_json(marker: Path, packages: list[str]) -> bool:
-    """检查 package.json 依赖 (模块级 helper).
-
-    Args:
-        marker: package.json 路径
-        packages: 框架包列表
-
-    Returns:
-        是否任一包在 dependencies/devDependencies 中
-    """
-    import json
-
-    try:
-        data = json.loads(marker.read_text())
-    except Exception:
-        return True  # best effort
-    deps = {**data.get("dependencies", {}), **data.get("devDependencies", {})}
-    return any(pkg in deps for pkg in packages)
-
-
-def _check_text_contains(marker: Path, packages: list[str], lower: bool = False) -> bool:
-    """检查 marker 文件内容是否含任一 package (模块级 helper).
-
-    Args:
-        marker: 文件路径
-        packages: 包列表
-        lower: 是否 lowercase (requirements.txt/pyproject.toml)
-
-    Returns:
-        是否含任一包
-    """
-    content = marker.read_text()
-    if lower:
-        content = content.lower()
-    return any(pkg in content for pkg in packages)
+__all__ = [
+    "DEFAULT_EXCLUDED_DIRS",
+    "FRAMEWORK_DETECTORS",
+    "check_directory",
+    "check_file",
+    "load_rules_for_language",
+]
 
 
 def check_file(
@@ -240,49 +63,18 @@ def check_file(
         run_linters: Run external linters (ruff/eslint) per file. Disable for
             bulk scans where per-file subprocess spawns dominate runtime.
     """
-    if not filepath.exists():
-        return _file_not_found_result(filepath)
+    skip_result = _check_file_skip_conditions(filepath, language)
+    if skip_result:
+        return skip_result
 
-    if filepath.stat().st_size == 0:
-        return CheckResult(
-            file=str(filepath),
-            issues=[],
-            language=filepath.suffix.lower().lstrip("."),
-            skipped=True,
-        )
-
-    # Determine language
-    lang = language or _detect_language(filepath)
-    if lang == "unknown":
+    lang, rules, content, lines = _prepare_file_check(filepath, language, rules)
+    if lang is None or rules is None:
         return CheckResult(file=str(filepath), issues=[], language="unknown", skipped=True)
 
-    # Load rules if not provided
-    if rules is None:
-        rules = load_rules_for_language(lang)
-
-    # Read file
-    try:
-        content = filepath.read_text(encoding="utf-8")
-    except UnicodeDecodeError:
-        return CheckResult(file=str(filepath), issues=[], language=lang, skipped=True)
-
-    lines = content.splitlines()
-
-    # Run all checkers
     issues = _run_all_checkers(filepath, content, lines, lang, rules, run_linters=run_linters)
-
-    # 豁免过滤: 行级 noqa 注释 + 文件级 ignored-rules.toml
     issues = _filter_suppressed_issues(filepath, issues, lines)
+    issues = _apply_context_role(filepath, issues)
 
-    # G1: 上下文感知 — 检测文件角色并调整严重度
-    ctx_markers = _load_context_markers(filepath.parent)
-    file_role = detect_file_role(filepath, ctx_markers)
-    if file_role:
-        for issue in issues:
-            issue.context_role = file_role
-            issue.severity = adjust_severity(issue.severity, file_role)
-
-    # Optional: AST-based semantic analysis
     if semantic:
         issues.extend(_run_semantic_checks(filepath, lang))
 
@@ -293,96 +85,50 @@ def check_file(
     )
 
 
-def _filter_suppressed_issues(
-    filepath: Path,
-    issues: list[Issue],
-    lines: list[str],
-) -> list[Issue]:
-    """过滤被豁免的违规 (V2.21 P5-38 拆分: 抽 _parse_noqa_lines + _is_issue_suppressed).
+def _check_file_skip_conditions(filepath: Path, language: str | None) -> CheckResult | None:
+    """检查文件跳过条件, 返回 CheckResult 若应跳过, 否则 None."""
+    if not filepath.exists():
+        return _file_not_found_result(filepath)
 
-    支持两种机制:
-    1. 行级 noqa 注释: # noqa (全豁免) 或 # noqa: rule-id[,rule-id]
-    2. 文件级豁免: .jcode/ignored-rules.toml 的 [[ignored_files]] 段
-    """
-    if not issues:
-        return issues
-
-    noqa_by_line = _parse_noqa_lines(lines)
-    file_rules = _load_ignored_rules(filepath)
-
-    result: list[Issue] = []
-    for issue in issues:
-        if not _is_issue_suppressed(issue, noqa_by_line, file_rules):
-            result.append(issue)
-    return result
+    if filepath.stat().st_size == 0:
+        return CheckResult(
+            file=str(filepath),
+            issues=[],
+            language=filepath.suffix.lower().lstrip("."),
+            skipped=True,
+        )
+    return None
 
 
-def _parse_noqa_lines(lines: list[str]) -> dict[int, set[str] | None]:
-    """解析行级 noqa 注释 (模块级 helper).
+def _prepare_file_check(
+    filepath: Path, language: str | None, rules: dict[str, Any] | None
+) -> tuple[str | None, dict[str, Any] | None, str, list[str]]:
+    """准备检查所需的语言、规则、内容、行列表."""
+    lang = language or _detect_language(filepath)
+    if lang == "unknown":
+        return None, None, "", []
 
-    Args:
-        lines: 源码行列表
-
-    Returns:
-        {line_no: None | set(rule_ids)} 索引
-    """
-    noqa_by_line: dict[int, set[str] | None] = {}
-    for idx, line in enumerate(lines, start=1):
-        m = re.search(r"#\s*noqa(?::\s*([A-Za-z0-9_,\-]+))?", line)
-        if m:
-            rules_str = m.group(1)
-            noqa_by_line[idx] = None if not rules_str else {r.strip() for r in rules_str.split(",") if r.strip()}
-    return noqa_by_line
-
-
-def _is_issue_suppressed(issue: Issue, noqa_by_line: dict[int, set[str] | None], file_rules: set[str]) -> bool:
-    """判断 issue 是否被豁免 (行级 noqa + 文件级 ignored-rules, 模块级 helper).
-
-    检查违规行 + 前一行 (部分检测器把多行语句的违规归到语句尾/下一行).
-
-    Args:
-        issue: 单个 issue
-        noqa_by_line: 行级 noqa 索引
-        file_rules: 文件级豁免规则集
-
-    Returns:
-        是否被豁免
-    """
-    candidate_lines = (issue.line, issue.line - 1)
-    for ln in candidate_lines:
-        line_noqa = noqa_by_line.get(ln)
-        if line_noqa is None and ln in noqa_by_line:
-            return True  # 裸 noqa: 全豁免
-        if line_noqa and issue.rule_id in line_noqa:
-            return True
-    if file_rules and issue.rule_id in file_rules:
-        return True
-    return False
-
-
-def _load_ignored_rules(filepath: Path) -> set[str]:
-    """从 .jcode/ignored-rules.toml 加载针对该文件的规则豁免列表。"""
-    try:
-        import tomllib
-    except ImportError:
-        return set()
-
-    config_path = Path(".jcode/ignored-rules.toml")
-    if not config_path.exists():
-        return set()
+    if rules is None:
+        rules = load_rules_for_language(lang)
 
     try:
-        data = tomllib.loads(config_path.read_text(encoding="utf-8"))
-    except Exception:
-        return set()
+        content = filepath.read_text(encoding="utf-8")
+    except UnicodeDecodeError:
+        return lang, rules, "", []
 
-    path_str = str(filepath)
-    ignored: set[str] = set()
-    for entry in data.get("ignored_files", []):
-        pattern = str(entry.get("file", ""))
-        if pattern and pattern in path_str:
-            ignored.update(str(r) for r in entry.get("rules", []))
-    return ignored
+    lines = content.splitlines()
+    return lang, rules, content, lines
+
+
+def _apply_context_role(filepath: Path, issues: list[Issue]) -> list[Issue]:
+    """应用上下文角色调整严重度."""
+    ctx_markers = _load_context_markers(filepath.parent)
+    file_role = detect_file_role(filepath, ctx_markers)
+    if file_role:
+        for issue in issues:
+            issue.context_role = file_role
+            issue.severity = adjust_severity(issue.severity, file_role)
+    return issues
 
 
 def _file_not_found_result(filepath: Path) -> CheckResult:
@@ -781,128 +527,3 @@ def _run_semantic_checks(filepath: Path, lang: str) -> list[Issue]:
         pass
 
     return issues
-
-
-def _load_context_markers(dirpath: Path) -> dict[str, str]:
-    """Load user-defined context markers from .adg/config.yml."""
-    for search_dir in [
-        dirpath,
-        dirpath.parent,
-        dirpath.parents[2] if len(dirpath.parents) > 2 else None,
-    ]:
-        if search_dir is None:
-            continue
-        config_path = search_dir / ".adg" / "config.yml"
-        if config_path.exists():
-            try:
-                from .context import load_role_config
-
-                return load_role_config(config_path)
-            except Exception:
-                _ = None  # role config optional
-    return {}
-
-
-def _detect_language(filepath: Path) -> str:
-    """Detect language from file extension."""
-    ext = filepath.suffix.lower()
-    mapping = {
-        ".py": "python",
-        ".js": "javascript",
-        ".jsx": "javascript",
-        ".ts": "typescript",
-        ".tsx": "typescript",
-        ".rs": "rust",
-        ".go": "go",
-        ".java": "java",
-        ".cs": "csharp",
-        ".cpp": "cpp",
-        ".cc": "cpp",
-        ".cxx": "cpp",
-        ".c": "c",
-        ".h": "c",
-        ".hpp": "cpp",
-    }
-    return mapping.get(ext, "unknown")
-
-
-def _run_external_linters(filepath: Path, lang: str) -> list[Issue]:
-    """Run external linters and convert output to Issues."""
-    issues: list[Issue] = []
-
-    linters = {
-        "python": ["ruff", "check", "--output-format=json", str(filepath)],
-        "javascript": ["eslint", "--format=json", str(filepath)],
-        "typescript": ["eslint", "--format=json", str(filepath)],
-    }
-
-    cmd = linters.get(lang)
-    if not cmd:
-        return issues
-
-    try:
-        exit_code, output = run_command(cmd)
-        if output:
-            issues.extend(_parse_linter_output(output, lang, str(filepath)))
-    except Exception:
-        # Linter 配置问题或进程失败: loguru debug 记录, 不影响主流程
-        logger.debug("Linter execution failed for {} ({})", filepath, lang, exc_info=True)
-
-    return issues
-
-
-def _parse_linter_output(output: str, lang: str, filepath: str) -> list[Issue]:
-    """Parse linter JSON output to Issues."""
-    issues: list[Issue] = []
-    try:
-        import json
-
-        data = json.loads(output)
-
-        if lang == "python" and isinstance(data, list):
-            # Ruff JSON format
-            for item in data:
-                issues.append(
-                    Issue(
-                        rule_id=item.get("code", "ruff"),
-                        severity=_map_severity(item.get("level", "warning")),
-                        category="linter",
-                        file=filepath,
-                        line=item.get("location", {}).get("row", 1),
-                        column=item.get("location", {}).get("column", 1),
-                        message=item.get("message", ""),
-                    )
-                )
-        elif lang in ("javascript", "typescript") and isinstance(data, list):
-            # ESLint JSON format
-            for file_result in data:
-                for msg in file_result.get("messages", []):
-                    issues.append(
-                        Issue(
-                            rule_id=msg.get("ruleId", "eslint"),
-                            severity=_map_severity(msg.get("severity", 1)),
-                            category="linter",
-                            file=filepath,
-                            line=msg.get("line", 1),
-                            column=msg.get("column", 1),
-                            message=msg.get("message", ""),
-                        )
-                    )
-    except Exception:
-        # Linter 输出 JSON 解析失败: loguru debug 记录 (数据格式问题时排错)
-        logger.debug("Linter JSON parse failed for {}", filepath, exc_info=True)
-
-    return issues
-
-
-def _map_severity(level: str | int) -> str:
-    """Map various severity formats to standard levels."""
-    if isinstance(level, int):
-        return "error" if level == 2 else "warning"
-    level = level.lower()
-    if level in ("error", "critical", "fatal"):
-        return "error"
-    return "warning"
-
-
-# Test change

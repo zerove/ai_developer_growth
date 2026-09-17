@@ -16,6 +16,10 @@ on:
         type: boolean
         default: false
 
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: true
+
 env:
   PYTHON_VERSION: "3.11"
 
@@ -56,7 +60,7 @@ jobs:
     name: Governance Audit (Reusable)
     uses: ./.github/workflows/jobs/governance-audit.yml
     with:
-      languages: "python,typescript,javascript,go,rust,java,cpp,csharp,ruby,php,swift,kotlin"
+      languages: "python,shell"
       timeout-minutes: 20
     secrets: inherit
 

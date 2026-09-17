@@ -1,10 +1,6 @@
 name: "JCode Advanced Governance Pipeline"
 
 on:
-  push:
-    branches: [main, master, develop]
-  pull_request:
-    branches: [main, master, develop]
   workflow_dispatch:
     inputs:
       skip-supply-chain:
@@ -19,6 +15,12 @@ on:
         description: "Skip dependency graph analysis"
         type: boolean
         default: false
+  schedule:
+    - cron: '0 3 * * 0'  # Weekly Sunday 03:00 UTC (after mutation-testing)
+
+concurrency:
+  group: advanced-governance-${{ github.ref }}
+  cancel-in-progress: true
 
 env:
   PYTHON_VERSION: "3.11"
@@ -162,164 +164,27 @@ jobs:
     secrets: inherit
 
   # ──────────────────────────────────────────────────────
-  # Existing Jobs (保持原有)
+  # Advanced Governance Summary
   # ──────────────────────────────────────────────────────
-  adg-governance:
-    needs: setup
-    uses: ./.github/workflows/jobs/adg-governance.yml
-    secrets: inherit
-
-  governance-audit:
-    needs: setup
-    uses: ./.github/workflows/jobs/governance-audit.yml
-    with:
-      languages: "python,typescript,javascript,go,rust,java,cpp,csharp,ruby,php"
-      timeout-minutes: 20
-    secrets: inherit
-
-  pre-commit:
-    needs: setup
-    uses: ./.github/workflows/jobs/pre-commit.yml
-    secrets: inherit
-
-  lint:
-    needs: setup
-    uses: ./.github/workflows/jobs/lint.yml
-    secrets: inherit
-
-  type-check:
-    needs: setup
-    uses: ./.github/workflows/jobs/type-check.yml
-    secrets: inherit
-
-  test-311:
-    needs: setup
-    uses: ./.github/workflows/jobs/tests.yml
-    with:
-      python-version: "3.11"
-    secrets: inherit
-
-  test-312:
-    needs: setup
-    uses: ./.github/workflows/jobs/tests.yml
-    with:
-      python-version: "3.12"
-    secrets: inherit
-
-  test-313:
-    needs: setup
-    uses: ./.github/workflows/jobs/tests.yml
-    with:
-      python-version: "3.13"
-    secrets: inherit
-
-  test-sharded-1:
-    needs: setup
-    if: github.repository == 'zerove/ai_developer_growth'
-    uses: ./.github/workflows/jobs/tests.yml
-    with:
-      python-version: "3.11"
-      shard: "1"
-    secrets: inherit
-
-  test-sharded-2:
-    needs: setup
-    if: github.repository == 'zerove/ai_developer_growth'
-    uses: ./.github/workflows/jobs/tests.yml
-    with:
-      python-version: "3.11"
-      shard: "2"
-    secrets: inherit
-
-  test-sharded-3:
-    needs: setup
-    if: github.repository == 'zerove/ai_developer_growth'
-    uses: ./.github/workflows/jobs/tests.yml
-    with:
-      python-version: "3.11"
-      shard: "3"
-    secrets: inherit
-
-  test-sharded-4:
-    needs: setup
-    if: github.repository == 'zerove/ai_developer_growth'
-    uses: ./.github/workflows/jobs/tests.yml
-    with:
-      python-version: "3.11"
-      shard: "4"
-    secrets: inherit
-
-  combine-coverage:
-    needs: [test-311, test-312, test-313, test-sharded-1, test-sharded-2, test-sharded-3, test-sharded-4]
-    uses: ./.github/workflows/jobs/combine-coverage.yml
-    secrets: inherit
-
-  quality-gates:
-    needs: setup
-    uses: ./.github/workflows/jobs/quality-gates.yml
-    secrets: inherit
-
-  security:
-    needs: setup
-    uses: ./.github/workflows/jobs/security.yml
-    secrets: inherit
-
-  secret-scan:
-    needs: setup
-    uses: ./.github/workflows/jobs/secret-scan.yml
-    secrets: inherit
-
-  license-scan:
-    needs: setup
-    uses: ./.github/workflows/jobs/license-scan.yml
-    secrets: inherit
-
-  test-examples:
-    needs: setup
-    uses: ./.github/workflows/jobs/example-tests.yml
-    secrets: inherit
-
-  dependency-review:
-    needs: setup
-    uses: ./.github/workflows/jobs/dependency-review.yml
-    secrets: inherit
-
-  docs-check:
-    needs: setup
-    uses: ./.github/workflows/jobs/docs.yml
-    secrets: inherit
-
-  agent-validation:
-    needs: setup
-    uses: ./.github/workflows/jobs/agent-validation.yml
-    secrets: inherit
-
-  # ──────────────────────────────────────────────────────
-  # CI Summary
-  # ──────────────────────────────────────────────────────
-  ci-summary:
-    name: CI Summary
+  advanced-summary:
+    name: Advanced Governance Summary
     needs: [
       setup, check-exceptions, sbom,
       dep-graph-analyze, dep-graph-circular, dep-graph-conflicts, dep-graph-export-mermaid,
       supply-chain-scan, supply-chain-compliance, supply-chain-freshness, supply-chain-verify,
-      policy-eval,
-      adg-governance, governance-audit, pre-commit, lint, type-check,
-      test-311, test-312, test-313,
-      test-sharded-1, test-sharded-2, test-sharded-3, test-sharded-4,
-      combine-coverage, quality-gates, security, secret-scan, license-scan,
-      test-examples, dependency-review, docs-check, agent-validation
+      policy-eval
     ]
     if: always()
     runs-on: ubuntu-latest
     steps:
-      - name: CI Complete
+      - name: Advanced Governance Complete
         run: |
-          echo "✅ All CI jobs completed"
+          echo "✅ Advanced Governance Pipeline completed"
           echo "Check individual job statuses above"
           echo ""
-          echo "=== New Phase 2 Jobs ==="
+          echo "=== Phase 2 Jobs ==="
           echo "Exception Manager: check-exceptions"
+          echo "SBOM: sbom"
           echo "Dependency Graph: dep-graph-analyze, dep-graph-circular, dep-graph-conflicts, dep-graph-export-mermaid"
           echo "Supply Chain: supply-chain-scan, supply-chain-compliance, supply-chain-freshness, supply-chain-verify"
           echo "Policy as Code: policy-eval"

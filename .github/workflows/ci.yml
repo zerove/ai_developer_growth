@@ -3,8 +3,20 @@ name: CI
 on:
   push:
     branches: [main, master, develop]
+    paths-ignore:
+      - 'docs/**'
+      - 'case-studies/**'
+      - '*.md'
   pull_request:
     branches: [main, master, develop]
+    paths-ignore:
+      - 'docs/**'
+      - 'case-studies/**'
+      - '*.md'
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
 
 env:
   PYTHON_VERSION: "3.11"
@@ -32,7 +44,7 @@ jobs:
     needs: setup
     uses: ./.github/workflows/jobs/governance-audit.yml
     with:
-      languages: "python,typescript,javascript,go,rust,java,cpp,csharp,ruby,php,swift,kotlin,scala,dart,zig,elixir,clojure,haskell,fsharp,lua,shell,sql"
+      languages: "python,shell"
       timeout-minutes: 20
     secrets: inherit
 

@@ -31,6 +31,16 @@ jobs:
           cache-dependency-path: pyproject.toml
       - run: pip install pytest pytest-cov pyyaml pytest-xdist
       - run: pip install -e .
+      - name: Read coverage threshold from pyproject.toml
+        id: coverage-config
+        run: |
+          python -c "
+          import tomllib
+          with open('pyproject.toml', 'rb') as f:
+              data = tomllib.load(f)
+          fail_under = data.get('tool', {}).get('coverage', {}).get('report', {}).get('fail_under', 80)
+          print(f'fail_under={fail_under}')
+          " >> $GITHUB_OUTPUT
       - name: Restore coverage cache
         uses: actions/cache@v4
         with:
@@ -56,8 +66,9 @@ jobs:
           coverage = float(root.attrib.get('line-rate', 0)) * 100
           branch = float(root.attrib.get('branch-rate', 0)) * 100
           print(f'Line: {coverage:.1f}%, Branch: {branch:.1f}%')
-          if coverage < 85:
-              print(f'::error::Coverage {coverage:.1f}% < 85%')
+          threshold = ${{ steps.coverage-config.outputs.fail_under }}
+          if coverage < threshold:
+              print(f'::error::Coverage {coverage:.1f}% < {threshold}%')
               exit(1)
           "
       - name: Upload coverage

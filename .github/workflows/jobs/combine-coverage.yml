@@ -13,6 +13,16 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.11"
+      - name: Read coverage threshold from pyproject.toml
+        id: coverage-config
+        run: |
+          python -c "
+          import tomllib
+          with open('pyproject.toml', 'rb') as f:
+              data = tomllib.load(f)
+          fail_under = data.get('tool', {}).get('coverage', {}).get('report', {}).get('fail_under', 80)
+          print(f'fail_under={fail_under}')
+          " >> $GITHUB_OUTPUT
       - name: Download coverage data
         uses: actions/download-artifact@v4
         with:
@@ -31,7 +41,8 @@ jobs:
           c = float(root.attrib.get('line-rate', 0)) * 100
           b = float(root.attrib.get('branch-rate', 0)) * 100
           print(f'Combined: Line {c:.1f}%, Branch {b:.1f}%')
-          if c < 85: exit(1)
+          threshold = ${{ steps.coverage-config.outputs.fail_under }}
+          if c < threshold: exit(1)
           "
       - name: Upload combined
         uses: actions/upload-artifact@v4
@@ -45,7 +56,7 @@ jobs:
           pip install diff-cover
           BASE_BRANCH=${{ github.base_ref }}
           git fetch origin $BASE_BRANCH --depth=1
-          diff-cover combined-coverage.xml --compare-branch=origin/$BASE_BRANCH --fail-under=85 --html-report diff-cover-report.html || true
+          diff-cover combined-coverage.xml --compare-branch=origin/$BASE_BRANCH --fail-under=${{ steps.coverage-config.outputs.fail_under }} --html-report diff-cover-report.html || true
       - name: Upload Diff Cover Report
         if: github.event_name == 'pull_request' && always()
         uses: actions/upload-artifact@v4

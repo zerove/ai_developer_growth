@@ -1,3 +1,33 @@
+## 更新记录: 2026-09-18 00:16:18
+
+### 任务
+Git 变更同步
+
+### 变更摘要
+- 变更文件 20 个 (+144 / -216 行)
+  - .github/workflows/adg-governance.yml
+  - .github/workflows/adg-quality-report.yml
+  - .github/workflows/adg-scan.yml
+  - .github/workflows/advanced-governance.yml
+  - .github/workflows/ai-native-sdlc.yml
+  - .github/workflows/audit-to-pr.yml
+  - .github/workflows/ci.yml
+  - .github/workflows/community-case-pr.yml
+  - .github/workflows/example-ci-template.yml
+  - .github/workflows/jobs/combine-coverage.yml
+  - .github/workflows/jobs/lint.yml
+  - .github/workflows/jobs/setup.yml
+  - .github/workflows/jobs/tests.yml
+  - .github/workflows/language-rules.yml
+  - .github/workflows/mutation-testing.yml
+  - .github/workflows/quality-trends.yml
+  - .github/workflows/release.yml
+  - .github/workflows/scheduled-governance.yml
+  - .github/workflows/slsa-provenance.yml
+  - CONTEXT.md
+
+---
+
 ## 更新记录: 2026-09-17 21:00:12
 
 ### 任务
@@ -1054,26 +1084,6 @@ Git 变更同步
   - docs/governance/project-analysis-and-roadmap-2026-08.md
   - mypy.ini
   - pyproject.toml
-  - uv.lock
-
----
-
-## 更新记录: 2026-08-28 15:19:54
-
-### 任务
-Git 变更同步
-
-### 变更摘要
-- 变更文件 10 个 (+228 / -71 行)
-  - .pre-commit-config.yaml
-  - CHANGELOG.md
-  - CONTEXT.md
-  - docs/governance/project-analysis-and-roadmap-2026-08.md
-  - mypy.ini
-  - pyproject.toml
-  - tests/test_adr_generator.py
-  - tests/test_ai_context_manager.py
-  - tests/test_metrics_telemetry.py
   - uv.lock
 
 ---

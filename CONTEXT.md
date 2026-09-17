@@ -1,3 +1,17 @@
+## 更新记录: 2026-09-17 21:00:12
+
+### 任务
+Git 变更同步
+
+### 变更摘要
+- 变更文件 4 个 (+29 / -3 行)
+  - agents/context-sync.md
+  - agents/multi-agent-orch.md
+  - agents/self-correction-loop.md
+  - tests/test_adg_checker_refactor.py
+
+---
+
 ## 更新记录: 2026-09-17 20:15:13
 
 ### 任务
@@ -1056,23 +1070,6 @@ Git 变更同步
   - CONTEXT.md
   - docs/governance/project-analysis-and-roadmap-2026-08.md
   - mypy.ini
-  - pyproject.toml
-  - tests/test_adr_generator.py
-  - tests/test_ai_context_manager.py
-  - tests/test_metrics_telemetry.py
-  - uv.lock
-
----
-
-## 更新记录: 2026-08-28 14:51:21
-
-### 任务
-Git 变更同步
-
-### 变更摘要
-- 变更文件 7 个 (+166 / -37 行)
-  - CHANGELOG.md
-  - CONTEXT.md
   - pyproject.toml
   - tests/test_adr_generator.py
   - tests/test_ai_context_manager.py

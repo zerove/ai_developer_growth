@@ -84,6 +84,7 @@ strict = true
 ignore_missing_imports = true
 warn_return_any = false
 warn_unused_configs = true
+exclude = ["ai-dev-framework/build/", "examples/ai-context-sync"]
 disallow_untyped_defs = true
 disallow_incomplete_defs = true
 check_untyped_defs = true

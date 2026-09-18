@@ -7,6 +7,8 @@ from __future__ import annotations
 
 from pathlib import Path
 
+from tools.scripts.rules_engine.logger import logger
+
 # ── 内置角色定义 ──────────────────────────────
 # key: 角色名, value: (描述, 严重度调整值)
 # 调整值: +1=升一级 error→更严格, -1=降一级, -2=降两级
@@ -148,6 +150,6 @@ def load_role_config(config_path: Path) -> dict[str, str]:
             markers = data.get("context", {}).get("markers", {})
             if isinstance(markers, dict):
                 return markers
-    except FileNotFoundError:
-        _ = None  # log file optional
+    except FileNotFoundError as exc:
+        logger.debug("角色标记配置读取失败: %s", exc)
     return {}

@@ -13,7 +13,7 @@ from typing import Any
 
 import yaml
 
-from tools.scripts._common import framework_dir
+from tools.scripts._common import framework_dir, load_yaml
 
 # ──────────────────────────────────────────────────────────
 # Built-in pack definitions
@@ -113,8 +113,7 @@ def _search_common_rules(query: str) -> list[dict[str, Any]]:
     fw = framework_dir()
     common_file = fw / "common" / "security.yml"
     if common_file.exists():
-        with open(common_file) as f:
-            data = yaml.safe_load(f) or {}
+        data = load_yaml(common_file) or {}
         for rule in data.get("anti_patterns", []):
             if matches(rule, query):
                 results.append({"pack": "security", **rule})
@@ -205,11 +204,7 @@ def _load_yaml_rules(yml: Path) -> dict[str, Any]:
     Returns:
         解析后的 dict (or {})
     """
-    try:
-        with open(yml) as f:
-            return yaml.safe_load(f) or {}
-    except (yaml.YAMLError, OSError):
-        return {}
+    return load_yaml(yml) or {}
 
 
 def search_rules(query: str) -> list[dict[str, Any]]:
@@ -386,8 +381,7 @@ def export_rules(rules_dir: Path, output: Path) -> tuple[int, dict[str, Any]]:
     }
 
     for yml in sorted(rules_dir.glob("*.yml")):
-        with open(yml) as f:
-            data = yaml.safe_load(f) or {}
+        data = load_yaml(yml) or {}
         for category in combined:
             combined[category].extend(data.get(category, []))
 

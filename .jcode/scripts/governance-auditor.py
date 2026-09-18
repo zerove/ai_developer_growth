@@ -24,6 +24,7 @@ import subprocess
 import sys
 from collections.abc import Callable
 from pathlib import Path
+from typing import NamedTuple
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent.parent))
 from tools.scripts._common import get_project_root, print_check, print_section, run_command
@@ -36,31 +37,23 @@ from tools.scripts.language_registry import (
     list_supported_languages,
 )
 
-# ── 15 个治理层文档 ────────────────────────────────────────────────
-GOVERNANCE_DOCS = [
-    "docs/efficiency/ai-code-generation-quality.md",
-    "docs/efficiency/ai-model-selection.md",
-    "docs/efficiency/ai-sdlc.md",
-    "docs/efficiency/ai-code-review-checklist.md",
-    "docs/efficiency/ai-nondeterministic-testing.md",
-    "docs/efficiency/ai-hallucination-mitigation.md",
-    "docs/efficiency/ai-code-licensing.md",
-    "docs/efficiency/ai-dev-environment.md",
-    "docs/efficiency/ai-context-window-management.md",
-    "docs/efficiency/ai-performance-benchmarks.md",
-    "docs/efficiency/ai-debugging-standards.md",
-    "docs/efficiency/ai-version-control.md",
-    "docs/efficiency/ai-deployment-operations.md",
-    "docs/efficiency/ai-developer-training.md",
-    "docs/efficiency/ai-dev-toolchain.md",
-]
+# ── 治理层文档清单由 tools/scripts/_common.py 统一提供 (唯一真源) ──
 
-# ── 代码不安全模式 ────────────────────────────────────────────────
-UNSAFE_PATTERNS: list[tuple[str, str, list[str], str | None]] = [
-    (
-        r"eval\(",
-        "eval 调用 - 代码注入风险",
-        [
+
+class UnsafePattern(NamedTuple):
+    """不安全模式定义: 正则, 描述, 排除文件列表, 排除正则"""
+
+    pattern: str
+    desc: str
+    exclude_files: list[str]
+    exclude_pattern: str | None = None
+
+
+UNSAFE_PATTERNS: list[UnsafePattern] = [
+    UnsafePattern(
+        pattern=r"eval\(",
+        desc="eval 调用 - 代码注入风险",
+        exclude_files=[
             "auto_fix.py",
             "generate_fixes.py",
             "ai_quality_gate.py",
@@ -68,12 +61,11 @@ UNSAFE_PATTERNS: list[tuple[str, str, list[str], str | None]] = [
             "hallucination_detector.py",
             "fix_heuristics.py",
         ],
-        None,
     ),
-    (
-        r"exec\(",
-        "exec 调用 - 代码注入风险",
-        [
+    UnsafePattern(
+        pattern=r"exec\(",
+        desc="exec 调用 - 代码注入风险",
+        exclude_files=[
             "auto_fix.py",
             "generate_fixes.py",
             "ai_quality_gate.py",
@@ -81,56 +73,44 @@ UNSAFE_PATTERNS: list[tuple[str, str, list[str], str | None]] = [
             "hallucination_detector.py",
             "fix_heuristics.py",
         ],
-        None,
     ),
-    (
-        r"os\.system\(",
-        "os.system() - 应使用 subprocess",
-        [
+    UnsafePattern(
+        pattern=r"os\.system\(",
+        desc="os.system() - 应使用 subprocess",
+        exclude_files=[
             "generate_fixes.py",
             "hallucination_detector.py",
             "fix_heuristics.py",
             "auto_fix.py",
         ],
-        None,
     ),
-    (
-        r"pickle\.loads?\(",
-        "pickle - 反序列化风险",
-        ["generate_fixes.py", "hallucination_detector.py"],
-        None,
+    UnsafePattern(
+        pattern=r"pickle\.loads?\(",
+        desc="pickle - 反序列化风险",
+        exclude_files=["generate_fixes.py", "hallucination_detector.py"],
     ),
-    (
-        r"yaml\.load\((?!.*Loader)",
-        "yaml.load 不安全 - 应使用 safe_load",
-        [],
-        r"yaml\.load\((?!.*Loader)",
+    UnsafePattern(
+        pattern=r"yaml\.load\((?!.*Loader)",
+        desc="yaml.load 不安全 - 应使用 safe_load",
+        exclude_files=[],
+        exclude_pattern=r"yaml\.load\((?!.*Loader)",
     ),
 ]
 
 
-def _check_unsafe_patterns(
-    content: str, patterns: list[tuple[str, str, list[str], str | None]], filepath: str = ""
-) -> list[str]:
+def _check_unsafe_patterns(content: str, patterns: list[UnsafePattern], filepath: str = "") -> list[str]:
     """检查不安全模式，支持排除文件和排除模式"""
     risks = []
     filename = Path(filepath).name if filepath else ""
-    for pattern_item in patterns:
-        pattern = pattern_item[0]
-        desc = pattern_item[1]
-        exclude_files = pattern_item[2] if len(pattern_item) > 2 else []
-        exclude_pattern = pattern_item[3] if len(pattern_item) > 3 else None
-
-        # 如果文件名在排除列表中，跳过
-        if filename in exclude_files:
+    for item in patterns:
+        if filename in item.exclude_files:
             continue
 
-        # 如果有排除模式且匹配，跳过
-        if exclude_pattern and re.search(exclude_pattern, content):
+        if item.exclude_pattern and re.search(item.exclude_pattern, content):
             continue
 
-        if re.search(pattern, content):
-            risks.append(desc)
+        if re.search(item.pattern, content):
+            risks.append(item.desc)
     return risks
 
 
@@ -290,99 +270,36 @@ def _run_check_for_languages(
     return all_passed, "\n".join(outputs)
 
 
-def lint(lang: str | None = None) -> bool:
-    """运行 lint 检查 - 支持多语言"""
-    print_section("Lint 检查")
-    root = get_project_root()
+def _make_language_check(
+    name: str, section: str, category: ToolCategory, check_only: bool = False
+) -> Callable[[str | None], bool]:
+    """工厂化语言检查函数 (lint/format/typecheck/test/security 共用逻辑)。"""
 
-    if lang:
-        languages = _parse_languages(lang)
-    else:
-        languages = _detect_project_languages(root)
+    def run(lang: str | None = None) -> bool:
+        print_section(section)
+        root = get_project_root()
 
-    if not languages:
-        print("⚠️  未检测到支持的语言，默认使用 Python")
-        languages = [Language.PYTHON]
+        if lang:
+            languages = _parse_languages(lang)
+        else:
+            languages = _detect_project_languages(root)
 
-    passed, output = _run_check_for_languages(languages, ToolCategory.LINT, root, check_only=True)
-    print_check("lint", passed, output)
-    return passed
+        if not languages:
+            print("⚠️  未检测到支持的语言，默认使用 Python")
+            languages = [Language.PYTHON]
 
+        passed, output = _run_check_for_languages(languages, category, root, check_only=check_only)
+        print_check(name, passed, output)
+        return passed
 
-def format_check(lang: str | None = None) -> bool:
-    """运行 format 检查 - 支持多语言"""
-    print_section("Format 检查")
-    root = get_project_root()
-
-    if lang:
-        languages = _parse_languages(lang)
-    else:
-        languages = _detect_project_languages(root)
-
-    if not languages:
-        print("⚠️  未检测到支持的语言，默认使用 Python")
-        languages = [Language.PYTHON]
-
-    passed, output = _run_check_for_languages(languages, ToolCategory.FORMAT, root, check_only=True)
-    print_check("format", passed, output)
-    return passed
+    return run
 
 
-def typecheck(lang: str | None = None) -> bool:
-    """运行类型检查 - 支持多语言"""
-    print_section("类型检查")
-    root = get_project_root()
-
-    if lang:
-        languages = _parse_languages(lang)
-    else:
-        languages = _detect_project_languages(root)
-
-    if not languages:
-        print("⚠️  未检测到支持的语言，默认使用 Python")
-        languages = [Language.PYTHON]
-
-    passed, output = _run_check_for_languages(languages, ToolCategory.TYPECHECK, root)
-    print_check("typecheck", passed, output)
-    return passed
-
-
-def test(lang: str | None = None) -> bool:
-    """运行测试套件 - 支持多语言"""
-    print_section("测试套件")
-    root = get_project_root()
-
-    if lang:
-        languages = _parse_languages(lang)
-    else:
-        languages = _detect_project_languages(root)
-
-    if not languages:
-        print("⚠️  未检测到支持的语言，默认使用 Python")
-        languages = [Language.PYTHON]
-
-    passed, output = _run_check_for_languages(languages, ToolCategory.TEST, root)
-    print_check("test", passed, output)
-    return passed
-
-
-def security(lang: str | None = None) -> bool:
-    """运行安全扫描 - 支持多语言"""
-    print_section("安全扫描")
-    root = get_project_root()
-
-    if lang:
-        languages = _parse_languages(lang)
-    else:
-        languages = _detect_project_languages(root)
-
-    if not languages:
-        print("⚠️  未检测到支持的语言，默认使用 Python")
-        languages = [Language.PYTHON]
-
-    passed, output = _run_check_for_languages(languages, ToolCategory.SECURITY, root)
-    print_check("security", passed, output)
-    return passed
+lint = _make_language_check("lint", "Lint 检查", ToolCategory.LINT, check_only=True)
+format_check = _make_language_check("format", "Format 检查", ToolCategory.FORMAT, check_only=True)
+typecheck = _make_language_check("typecheck", "类型检查", ToolCategory.TYPECHECK)
+test = _make_language_check("test", "测试套件", ToolCategory.TEST)
+security = _make_language_check("security", "安全扫描", ToolCategory.SECURITY)
 
 
 def validate_governance_docs() -> bool:
@@ -529,8 +446,10 @@ def ai_quality_gate() -> bool:
 
 
 def full(lang: str | None = None) -> int:
-    """运行完整治理审计"""
-    print_section("🚀 完整治理审计 (v3.0 - 多语言)")
+    """运行完整治理审计 - 并行化执行无依赖检查"""
+    from concurrent.futures import ThreadPoolExecutor
+
+    print_section("🚀 完整治理审计 (v3.1 - 并行化)")
 
     if lang:
         languages = _parse_languages(lang)
@@ -555,9 +474,15 @@ def full(lang: str | None = None) -> int:
     ]
 
     failed: list[str] = []
-    for name, func in checks:
-        if not func():
-            failed.append(name)
+    with ThreadPoolExecutor(max_workers=min(len(checks), 4)) as executor:
+        name_to_future = {name: executor.submit(func) for name, func in checks}
+        for name, _ in checks:
+            future = name_to_future[name]
+            try:
+                if not future.result():
+                    failed.append(name)
+            except Exception as e:
+                failed.append(f"{name} (异常: {e})")
 
     print_section("审计结果")
     if failed:

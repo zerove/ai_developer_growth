@@ -192,11 +192,14 @@ detect_language_from_file = detect_language
 # ----------------------------------------------------------
 
 
-def run_command(cmd: list[str], cwd: Path | None = None) -> tuple[int, str]:
+def run_command(cmd: list[str], cwd: Path | None = None, timeout: float | None = None) -> tuple[int, str]:
     """Run command and return (exit_code, combined_output)."""
     if cwd is None:
         cwd = get_project_root()
-    result = subprocess.run(cmd, capture_output=True, text=True, cwd=cwd)
+    try:
+        result = subprocess.run(cmd, capture_output=True, text=True, cwd=cwd, timeout=timeout)
+    except subprocess.TimeoutExpired:
+        return 124, f"命令超时 ({timeout}s): {' '.join(cmd)}"
     return result.returncode, result.stdout + result.stderr
 
 
@@ -433,3 +436,27 @@ class SeverityCountsMixin:
     @property
     def info_count(self) -> int:
         return sum(1 for i in self.issues if i.severity == "info")
+
+
+# ----------------------------------------------------------
+# 治理层文档清单 (唯一真源)
+# ----------------------------------------------------------
+
+
+GOVERNANCE_DOCS: list[str] = [
+    "docs/efficiency/ai-code-generation-quality.md",
+    "docs/efficiency/ai-model-selection.md",
+    "docs/efficiency/ai-sdlc.md",
+    "docs/efficiency/ai-code-review-checklist.md",
+    "docs/efficiency/ai-nondeterministic-testing.md",
+    "docs/efficiency/ai-hallucination-mitigation.md",
+    "docs/efficiency/ai-code-licensing.md",
+    "docs/efficiency/ai-dev-environment.md",
+    "docs/efficiency/ai-context-window-management.md",
+    "docs/efficiency/ai-performance-benchmarks.md",
+    "docs/efficiency/ai-debugging-standards.md",
+    "docs/efficiency/ai-version-control.md",
+    "docs/efficiency/ai-deployment-operations.md",
+    "docs/efficiency/ai-developer-training.md",
+    "docs/efficiency/ai-dev-toolchain.md",
+]

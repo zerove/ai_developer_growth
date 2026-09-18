@@ -6,6 +6,7 @@ import re
 from typing import Any
 
 from .models import Issue
+from .regex_cache import get_compiled
 
 
 def check_naming_conventions(
@@ -30,7 +31,12 @@ def check_naming_conventions(
         if not pattern:
             continue
 
-        regex = re.compile(pattern)
+        # 性能优化: 约定模式为常量, 复用 regex_cache 进程级预编译缓存,
+        # 避免每文件重编译 (原先 per-file re.compile)。
+        try:
+            regex = get_compiled(pattern)
+        except re.error:
+            continue
 
         for line_num, line in enumerate(lines, 1):
             stripped = line.strip()

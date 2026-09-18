@@ -12,14 +12,30 @@ from .models import CheckResult, Issue
 # Worker 进程内共享的规则缓存（由 _worker_init 注入）
 _WORKER_RULES: dict[str, Any] = {}
 
+# Worker 进程内共享的缓存连接（由 _worker_init 打开一次并复用，
+# 避免原先每文件新建 CheckStore/SQLite 连接的开销）
+_WORKER_STORE: Any = None
 
-def _worker_init(shared_rules: dict[str, Any] | None) -> None:
-    """Worker 进程初始化：注入共享规则，避免每文件重复加载。
+
+def _worker_init(
+    shared_rules: dict[str, Any] | None,
+    cache_db: str | None = None,
+) -> None:
+    """Worker 进程初始化：注入共享规则 + 打开一次缓存连接。
 
     通过 ProcessPoolExecutor 的 initializer 调用，仅在 worker 进程中执行。
     """
-    global _WORKER_RULES
+    global _WORKER_RULES, _WORKER_STORE
     _WORKER_RULES = shared_rules or {}
+    _WORKER_STORE = None
+    if cache_db:
+        try:
+            from .store import CheckStore
+
+            _WORKER_STORE = CheckStore(cache_db)
+        except Exception as exc:  # noqa: BLE001
+            logger.debug("worker 缓存初始化失败，退化为完整检查: %s: %s", type(exc).__name__, exc)
+            _WORKER_STORE = None
 
 
 def _worker_check(
@@ -31,17 +47,14 @@ def _worker_check(
 ) -> CheckResult | None:
     """Worker 任务：使用预热规则执行单文件检查（模块级，可被 pickle）。
 
-    cache_db 非空时启用增量缓存写入（每个 worker 独立 SQLite 连接，
-    WAL 模式下多进程并发写安全）。rules_hash 为规则集签名，
+    cache_db 非空时启用增量缓存读写（WAL 模式下多进程并发写安全，
+    连接在 _worker_init 中打开一次并复用）。rules_hash 为规则集签名，
     规则/引擎变化时旧缓存键不匹配自然失效。
     """
     fp, lang = pair
-    store = None
-    if cache_db:
+    store = _WORKER_STORE if cache_db else None
+    if store is not None:
         try:
-            from .store import CheckStore
-
-            store = CheckStore(cache_db)
             stat = fp.stat()
             cached = store.get_cached_result(str(fp), stat.st_mtime, stat.st_size, rules_hash)
             if cached is not None:

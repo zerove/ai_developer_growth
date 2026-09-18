@@ -14,7 +14,7 @@ from __future__ import annotations
 import logging
 import subprocess
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import datetime, timezone
 from enum import Enum
 from pathlib import Path
 from typing import Any
@@ -76,7 +76,7 @@ class FixPlan:
     actions: list[FixAction] = field(default_factory=list)
     strategy: FixStrategy = FixStrategy.AUTO
     safety_level: FixSafetyLevel = FixSafetyLevel.SAFE
-    created_at: str = field(default_factory=lambda: datetime.utcnow().isoformat())
+    created_at: str = field(default_factory=lambda: datetime.now(timezone.utc).replace(tzinfo=None).isoformat())
     metadata: dict[str, Any] = field(default_factory=dict)
 
     def filter_by_safety(self, max_level: FixSafetyLevel) -> FixPlan:
@@ -365,7 +365,7 @@ class AutoFixOrchestrator:
 
         for rule_id, actions in grouped_by_rule.items():
             # 每个规则生成一个 PR 分支
-            branch_name = f"fix/{rule_id.lower().replace(':', '-')}-{datetime.utcnow().strftime('%Y%m%d-%H%M%S')}"
+            branch_name = f"fix/{rule_id.lower().replace(':', '-')}-{datetime.now(timezone.utc).replace(tzinfo=None).strftime('%Y%m%d-%H%M%S')}"
 
             # 这里应该调用 git 创建分支、应用修复、提交、推送
             # 简化版：只记录计划

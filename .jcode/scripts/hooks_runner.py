@@ -18,11 +18,12 @@ import shlex
 import subprocess
 import sys
 from pathlib import Path
+from typing import Any
 
 from _common import get_project_root, print_check, print_section
 
 
-def load_hooks_config() -> dict:
+def load_hooks_config() -> dict[str, Any]:
     """加载 hooks.json 配置"""
     config_path = get_project_root() / ".jcode" / "hooks.json"
     if not config_path.exists():
@@ -60,7 +61,7 @@ def files_match_condition(changed_files: list[str] | None, condition: str) -> bo
     return False
 
 
-def run_hook(hook: dict, changed_files: list[str] | None = None) -> bool:
+def run_hook(hook: dict[str, Any], changed_files: list[str] | None = None) -> bool:
     """执行单个 hook 并返回是否成功"""
     name = hook.get("name", "unknown")
     skill = hook.get("skill", "")

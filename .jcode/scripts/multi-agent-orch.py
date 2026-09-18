@@ -9,16 +9,17 @@ jcode Skill Runner - 多 Agent 编排器
 
 import sys
 from pathlib import Path
+from typing import Any
 
 ROOT = Path(__file__).resolve().parent.parent.parent
 EXAMPLE = ROOT / "examples" / "multi-agent-orch"
 
 
-def _load_orch():
+def _load_orch() -> Any:
     """从示例项目导入编排包（mock LLM 模式，无需 API key）。"""
     sys.path.insert(0, str(EXAMPLE))
     try:
-        from multi_agent_orch import demo  # type: ignore[import-not-found]
+        from multi_agent_orch import demo
     except ImportError as e:
         print(f"❌ 无法加载 multi_agent_orch: {e}")
         sys.exit(1)

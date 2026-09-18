@@ -16,7 +16,7 @@ import logging
 import time
 from collections.abc import Callable
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
@@ -55,7 +55,7 @@ class QualityGateReport:
     baseline_comparison: dict[str, Any] | None = None
     exceptions_applied: list[ExceptionRule] = field(default_factory=list)
     scan_duration_ms: int = 0
-    timestamp: str = field(default_factory=lambda: datetime.utcnow().isoformat())
+    timestamp: str = field(default_factory=lambda: datetime.now(timezone.utc).replace(tzinfo=None).isoformat())
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -142,7 +142,7 @@ class BaselineManager:
         """从检查结果更新基线"""
         baseline: dict[str, Any] = {
             "version": 1,
-            "updated_at": datetime.utcnow().isoformat(),
+            "updated_at": datetime.now(timezone.utc).replace(tzinfo=None).isoformat(),
             "files": {},
         }
 
@@ -384,7 +384,7 @@ class ExceptionManager:
             expires=expires,
             severity=severity,
             created_by=created_by,
-            created_at=datetime.utcnow().isoformat(),
+            created_at=datetime.now(timezone.utc).replace(tzinfo=None).isoformat(),
         )
         self.exceptions.append(exc)
         return exc
@@ -402,7 +402,7 @@ class ExceptionManager:
 
         V2.20 P4-4 拆分: 从 _is_expired 抽取过期判断, 主函数仅负责规则过滤 + 列表构造.
         """
-        now = datetime.utcnow()
+        now = datetime.now(timezone.utc).replace(tzinfo=None)
         active = []
         for exc in self.exceptions:
             if rule_id and exc.rule != rule_id:

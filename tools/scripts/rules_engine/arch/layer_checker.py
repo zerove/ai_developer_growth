@@ -13,6 +13,8 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from pathlib import Path
 
+from tools.scripts.rules_engine.logger import logger
+
 from ..models import Issue
 from .dependency_graph import DependencyGraph, DependencyIssue
 
@@ -48,8 +50,8 @@ class LayerConfig:
                     if name:
                         layers[name] = deps
                 return cls(layers=layers)
-        except Exception:
-            _ = None  # optional config
+        except Exception as exc:
+            logger.debug("架构配置解析失败，使用默认: %s", exc)
         return cls()
 
     @classmethod

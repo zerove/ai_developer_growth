@@ -8,7 +8,7 @@ ExpirationAlert) 从 exception_manager.py 拆出 (facade re-export 模式)。
 from __future__ import annotations
 
 from dataclasses import asdict, dataclass, field
-from datetime import datetime
+from datetime import datetime, timezone
 from enum import Enum
 from typing import Any
 
@@ -70,7 +70,7 @@ class ApprovalRecord:
     action: ApprovalAction
     reviewer: str
     comment: str
-    timestamp: str = field(default_factory=lambda: datetime.utcnow().isoformat())
+    timestamp: str = field(default_factory=lambda: datetime.now(timezone.utc).replace(tzinfo=None).isoformat())
 
     def to_dict(self) -> dict[str, Any]:
         return asdict(self)

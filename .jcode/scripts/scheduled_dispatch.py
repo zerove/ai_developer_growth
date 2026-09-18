@@ -15,6 +15,7 @@ import sys
 import time
 from pathlib import Path
 from time import struct_time
+from typing import Any
 
 ROOT = Path(__file__).resolve().parent.parent.parent
 CONFIG = ROOT / ".jcode" / "hooks.json"
@@ -57,7 +58,7 @@ def parse_cron(expr: str) -> tuple[set[int], set[int]]:
     return minutes, hours
 
 
-def is_due(hook: dict, now: struct_time | None = None, state: dict[str, float] | None = None) -> bool:
+def is_due(hook: dict[str, Any], now: struct_time | None = None, state: dict[str, float] | None = None) -> bool:
     """判断 hook 是否到期：启用中、时间匹配 cron 且距上次执行超过安全间隔。"""
     if not hook.get("enabled", True):
         return False

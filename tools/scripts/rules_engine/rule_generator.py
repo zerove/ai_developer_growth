@@ -18,6 +18,8 @@ import sys
 from pathlib import Path
 from typing import Any, TextIO, cast
 
+from tools.scripts.rules_engine.logger import logger
+
 # ── 生成规则缓存目录 ──────────────────────────────────────
 
 
@@ -251,8 +253,8 @@ def load_generated_rules(language: str) -> list[dict[str, Any]]:
         data = yaml.safe_load(rule_file.read_text())
         if data and isinstance(data, dict):
             return cast(list[dict[str, Any]], data.get("anti_patterns", []))
-    except Exception:
-        _ = None  # generated rules are optional; skip malformed files
+    except Exception as exc:
+        logger.debug("生成规则解析失败，跳过: %s", exc)
     return []
 
 

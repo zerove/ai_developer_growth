@@ -56,6 +56,17 @@ jcode + LLM 可以开发几乎所有编程语言。ai_developer_growth 如何支
 4. 规则缓存到 `~/.jcode/governance/languages/` 目录
 5. 下次相同语言自动使用缓存的规则
 
+### 多语言支持分级策略 (Language Support Tiers)
+
+为了平衡多语言覆盖广度与深度，项目将语言支持划分为三个明确的治理等级：
+
+- **Tier 1 (深度支持)**：Python, TypeScript / JavaScript
+  - **能力**：完整 AST 符号解析、类型检查（Mypy/TS）、死代码/未引用导入检测、复杂度指标计算、专用 AST 规则及外部 Linter (Ruff/ESLint/Bandit) 深度集成。
+- **Tier 2 (标准支持)**：Go, Rust, Java, C#, C++, PHP, Ruby, Kotlin, Swift 等 24+ 语言
+  - **能力**：规则引擎静态 YAML 规则匹配、命名规范检查、反模式扫描，以及原生 Linter (Clippy/Golangci-lint 等) 聚合。
+- **Tier 3 (动态扩展支持)**：其他任意新兴语言 (Mojo, Gleam, Roc 等)
+  - **能力**：通用规则层 (`universal.yml`) 兜底 + LLM 动态规则生成与缓存。
+
 ## 开发者体验
 
 ```bash

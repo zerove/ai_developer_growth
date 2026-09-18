@@ -107,3 +107,7 @@ debug_mutmut.py
 .quality-trends/telemetry.json
 logs/
 adg-report.html
+
+# 工具运行时生成产物（Machine-specific 基线 / 一次性报告，不入库）
+.perf_baseline.json
+case_quality_report.json

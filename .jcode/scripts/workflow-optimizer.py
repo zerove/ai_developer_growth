@@ -41,7 +41,7 @@ def analyze() -> int:
 
 
 def recommend() -> int:
-    "组合"
+    """推荐工具组合"""
     print_section("工具组合推荐")
     tool_matrix = get_project_root() / "docs" / "tools" / "ai-tool-matrix.md"
     if not tool_matrix.exists():

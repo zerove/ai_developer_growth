@@ -181,8 +181,8 @@ def _get_rule_for_line(line: str, lang: str) -> dict[str, Any] | None:
             pattern = rule.get("pattern", "")
             if pattern and re.search(str(pattern), line):
                 return rule
-    except Exception:
-        _ = None  # rule lookup failed
+    except Exception as exc:
+        logger.debug("规则查找失败: %s", exc)
     return None
 
 
@@ -268,8 +268,8 @@ def _setup_code_actions(server: LanguageServer) -> None:
                         line_text = lines[diag.range.start.line] if diag.range.start.line < len(lines) else ""
                         actions.append(_create_code_action(rule, diag, line_text, params.text_document.uri))
                         break
-            except (FileNotFoundError, PermissionError):
-                _ = None  # file access error
+            except (FileNotFoundError, PermissionError) as exc:
+                logger.debug("文件访问错误: %s", exc)
 
         return actions
 

@@ -16,7 +16,7 @@ import subprocess
 import threading
 import uuid
 from dataclasses import asdict
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
@@ -89,7 +89,7 @@ class ApprovalWorkflow:
             requested_severity=requested_severity,
             expires=expires,
             created_by=created_by,
-            created_at=datetime.utcnow().isoformat(),
+            created_at=datetime.now(timezone.utc).replace(tzinfo=None).isoformat(),
             reviewers=reviewers or [],
         )
         self._requests[req.id] = req
@@ -122,7 +122,7 @@ class ApprovalWorkflow:
         if action == ApprovalAction.APPROVE:
             req.status = ExceptionStatus.APPROVED
             req.approved_by = reviewer
-            req.approved_at = datetime.utcnow().isoformat()
+            req.approved_at = datetime.now(timezone.utc).replace(tzinfo=None).isoformat()
             self._notify_request_approved(req)
         elif action == ApprovalAction.REJECT:
             req.status = ExceptionStatus.REJECTED
@@ -311,7 +311,7 @@ class ExpirationManager:
         V2.18 P3-5 拆分: 从 C=11 / 50 行主函数拆出 3 个 helper.
         主函数仅负责: 遍历 → 过滤 → 收集告警 → 自动撤销.
         """
-        now = datetime.utcnow()
+        now = datetime.now(timezone.utc).replace(tzinfo=None)
         alerts: list[ExpirationAlert] = []
 
         for req in requests:
@@ -327,7 +327,7 @@ class ExpirationManager:
 
     def mark_alert_notified(self, alert: ExpirationAlert) -> None:
         alert.notified = True
-        alert.notified_at = datetime.utcnow().isoformat()
+        alert.notified_at = datetime.now(timezone.utc).replace(tzinfo=None).isoformat()
         self._send_alert(alert)  # 重发确认
 
     def _send_alert(self, alert: ExpirationAlert) -> None:
@@ -401,7 +401,7 @@ class GitOpsSync:
 
             data: dict[str, Any] = {
                 "version": 1,
-                "updated_at": datetime.utcnow().isoformat(),
+                "updated_at": datetime.now(timezone.utc).replace(tzinfo=None).isoformat(),
                 "exceptions": [
                     {**req.to_dict(), "status": req.status.value}
                     for req in requests
@@ -680,7 +680,7 @@ class EnhancedExceptionManager:
         V2.20 P4-16 拆分: 抽 _is_active_request 收口 APPROVED 守卫 + 过期检查,
         主函数仅负责遍历 + 收集.
         """
-        now = datetime.utcnow()
+        now = datetime.now(timezone.utc).replace(tzinfo=None)
         active: list[ExceptionRequest] = []
         for req in self._requests.values():
             if self._is_active_request(req, now):
@@ -722,7 +722,7 @@ class EnhancedExceptionManager:
 
             data = {
                 "version": 1,
-                "updated_at": datetime.utcnow().isoformat(),
+                "updated_at": datetime.now(timezone.utc).replace(tzinfo=None).isoformat(),
                 "exceptions": [{**req.to_dict(), "status": req.status.value} for req in self._requests.values()],
             }
             self.config_path.parent.mkdir(parents=True, exist_ok=True)
@@ -743,7 +743,7 @@ class EnhancedExceptionManager:
         主函数仅负责 metadata + 3 段委托.
         """
         return {
-            "generated_at": datetime.utcnow().isoformat(),
+            "generated_at": datetime.now(timezone.utc).replace(tzinfo=None).isoformat(),
             "total_requests": len(self._requests),
             "by_status": self._build_status_breakdown(),
             "pending_review": self._count_pending(),

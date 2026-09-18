@@ -13,30 +13,12 @@ import re
 import sys
 from pathlib import Path
 
-from _common import get_project_root, print_check, print_section
-
-GOVERNANCE_DOCS = [
-    "docs/efficiency/ai-code-generation-quality.md",
-    "docs/efficiency/ai-model-selection.md",
-    "docs/efficiency/ai-sdlc.md",
-    "docs/efficiency/ai-code-review-checklist.md",
-    "docs/efficiency/ai-nondeterministic-testing.md",
-    "docs/efficiency/ai-hallucination-mitigation.md",
-    "docs/efficiency/ai-code-licensing.md",
-    "docs/efficiency/ai-dev-environment.md",
-    "docs/efficiency/ai-context-window-management.md",
-    "docs/efficiency/ai-performance-benchmarks.md",
-    "docs/efficiency/ai-debugging-standards.md",
-    "docs/efficiency/ai-version-control.md",
-    "docs/efficiency/ai-deployment-operations.md",
-    "docs/efficiency/ai-developer-training.md",
-    "docs/efficiency/ai-dev-toolchain.md",
-]
+from _common import GOVERNANCE_DOCS, get_project_root, print_check, print_section
 
 REQUIRED_FIELDS = ["title", "description", "category", "tags", "difficulty"]
 
 
-def extract_frontmatter(content: str) -> tuple[dict, str]:
+def extract_frontmatter(content: str) -> tuple[dict[str, str], str]:
     """提取 YAML frontmatter"""
     if not content.startswith("---"):
         return {}, content

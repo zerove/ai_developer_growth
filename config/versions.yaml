@@ -1,0 +1,54 @@
+# 统一版本配置
+# 所有工具版本集中管理，避免 CI 与本地版本漂移
+
+# Python 工具链版本
+python:
+  ruff: "==0.15.17"
+  mypy: ">=1.0.0"
+  pytest: ">=7.0.0"
+  pytest_xdist: ">=3.0.0"
+  pytest_cov: ">=4.0.0"
+  bandit: ">=1.7.0"
+  black: ">=23.0.0"
+  isort: ">=5.12.0"
+  mutmut: ">=2.4.0,<3"
+  pyyaml: ">=6.0"
+  fastapi: ">=0.110.0"
+  uvicorn: ">=0.29.0"
+  jieba: ">=0.42.1"
+
+# Node.js 工具链版本
+node:
+  node_version: "20"
+  npm_version: "10"
+  eslint: ">=8.0.0"
+  prettier: ">=3.0.0"
+  typescript: ">=5.0.0"
+  vitest: ">=1.0.0"
+  vitest_coverage_v8: ">=1.0.0"
+
+# Go 工具链版本
+go:
+  go_version: "1.22"
+  golangci_lint: "latest"
+  gosec: "latest"
+
+# Rust 工具链版本
+rust:
+  rust_version: "stable"
+  rustfmt: "latest"
+  clippy: "latest"
+  cargo_audit: "latest"
+
+# GitHub Actions 版本
+github_actions:
+  checkout: "v4"
+  setup_python: "v5"
+  setup_node: "v4"
+  setup_go: "v5"
+  actions_cache: "v4"
+  upload_artifact: "v4"
+  download_artifact: "v4"
+  github_script: "v7"
+  codeql_action: "v3"
+  slsa_provenance: "v2"

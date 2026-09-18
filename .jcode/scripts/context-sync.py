@@ -5,10 +5,10 @@ jcode Skill Runner - 上下文同步
 将 examples/ai-context-sync 重构为 JCode 技能，集成到 hooks 流程中。
 
 用法:
-    python .jcode/scripts/context_sync.py sync --project-root .
-    python .jcode/scripts/context_sync.py validate --context-file CONTEXT.md --adr-file ADR.md
-    python .jcode/scripts/context_sync.py audit --spec-file SPEC.md
-    python .jcode/scripts/context_sync.py evolve
+    python .jcode/scripts/context-sync.py sync --project-root .
+    python .jcode/scripts/context-sync.py validate --context-file CONTEXT.md --adr-file ADR.md
+    python .jcode/scripts/context-sync.py audit --spec-file SPEC.md
+    python .jcode/scripts/context-sync.py evolve
 """
 
 import argparse
@@ -78,15 +78,10 @@ class SpecAuditor:
             violations.append("检测到可能的 SQL 拼接，建议使用参数化查询")
 
         # 检查未指定异常类型的异常捕获
-        pat_a = chr(101) + chr(120) + chr(99) + chr(112) + chr(116) + r"\s*:"
-        pat_b = chr(101) + chr(120) + chr(99) + chr(112) + chr(116) + r"\s+\w+"
+        pat_a = r"except\s*:"
+        pat_b = r"except\s+\w+"
         if re.search(pat_a, diff) and not re.search(pat_b, diff):
             violations.append("检测到未指定异常类型的捕获，建议指定具体异常类型")
-
-        # 检查类型注解
-        if re.search(r"def \w+\([^)]*\):", diff) and not re.search(r"def \w+\([^)]*\)\s*->", diff):
-            # 简单启发式：公共函数应有类型注解
-            pass
 
         return violations
 
@@ -213,14 +208,14 @@ class ContextSynthesizer:
 class GitAnalyzer:
     """Git 变更分析器"""
 
-    def get_changed_files(self, since: str = "HEAD~1") -> list[str]:
-        code, output = run_command(["git", "diff", "--name-only", since])
+    def get_changed_files(self, since: str = "HEAD~1", cwd: Path | None = None) -> list[str]:
+        code, output = run_command(["git", "diff", "--name-only", since], cwd=cwd)
         if code == 0:
             return [f.strip() for f in output.split("\n") if f.strip()]
         return []
 
-    def get_diff(self, since: str = "HEAD~1") -> str:
-        code, output = run_command(["git", "diff", since])
+    def get_diff(self, since: str = "HEAD~1", cwd: Path | None = None) -> str:
+        code, output = run_command(["git", "diff", since], cwd=cwd)
         if code == 0:
             return str(output)
         return ""
@@ -241,10 +236,10 @@ class TestRunner:
             test_file = f.name
 
         try:
-            code, stdout, stderr = run_command(
+            code, output = run_command(
                 [sys.executable, "-m", "pytest", test_file, "-v", "--tb=short"], timeout=self.timeout
             )
-            return TestResult(success=code == 0, output=stdout + stderr)
+            return TestResult(success=code == 0, output=output)
         finally:
             try:
                 os.unlink(test_file)
@@ -288,78 +283,6 @@ class SpecificationEvolution:
 
 
 # ============================================================================
-# Mock LLM Client (演示用)
-# ============================================================================
-
-
-class MockLLMClient:
-    def generate(self, prompt: str, system_prompt: str = "") -> str:
-        # 根据提示词类型返回模拟响应
-        if "design decomposition" in prompt or "子任务分解" in prompt:
-            return self._mock_design()
-        elif "Verification Test" in prompt or "验证测试" in prompt:
-            return self._mock_implementation()
-        elif "violations" in prompt or "违规" in prompt:
-            return self._mock_fix()
-        elif "synthesize" in prompt or "合成" in prompt:
-            return "# 更新后的上下文\n\n## 项目状态\n- 状态: 活跃开发中"
-        return "Mock response"
-
-    def _mock_design(self) -> str:
-        return """
-## 技术设计
-
-### 目标
-实现用户需求的功能模块
-
-### 架构变更
-新增核心模块，遵循现有架构模式
-
-### API 变更
-新增转换接口
-
-### 实施计划
-1. 创建核心转换类
-2. 实现单元测试
-3. 集成到主流程
-
-```json
-[
-  {
-    "id": "TASK-1",
-    "description": "实现核心转换逻辑",
-    "target_files": ["converter.py"],
-    "verification": {
-      "test_code": "import pytest\nfrom converter import convert\n\ndef test_convert():\n    assert convert(100, 'USD', 'CNY') > 0\n",
-      "expected": "转换结果应为正数"
-    },
-    "depends_on": []
-  }
-]
-```"""
-
-    def _mock_implementation(self) -> str:
-        return """[FILE: converter.py]
-def convert(amount: float, from_curr: str, to_curr: str) -> float:
-    \"\"\"货币转换\"\"\"
-    rates = {"USD_CNY": 7.2, "CNY_USD": 0.14}
-    key = f"{from_curr}_{to_curr}"
-    return amount * rates.get(key, 1.0)
-[END]"""
-
-    def _mock_fix(self) -> str:
-        return """[FILE: converter.py]
-def convert(amount: float, from_curr: str, to_curr: str) -> float:
-    \"\"\"货币转换\"\"\"
-    if amount < 0:
-        raise ValueError("金额不能为负数")
-    rates = {"USD_CNY": 7.2, "CNY_USD": 0.14}
-    key = f"{from_curr}_{to_curr}"
-    return amount * rates.get(key, 1.0)
-[END]"""
-
-
-# ============================================================================
 # Workflow Manager
 # ============================================================================
 
@@ -367,7 +290,6 @@ def convert(amount: float, from_curr: str, to_curr: str) -> float:
 class ContextSyncManager:
     def __init__(self, config: ContextConfig | None = None) -> None:
         self.config = config or ContextConfig()
-        self.llm_client = MockLLMClient()
         self.analyzer = GitAnalyzer()
         self.slicer = ContextSlicer()
         self.guard = ArchitectureGuard()
@@ -381,12 +303,11 @@ class ContextSyncManager:
         """同步上下文：分析 Git 变更 -> 更新 CONTEXT.md"""
         print_section("上下文同步")
 
-        os.chdir(project_root)
         root = Path(project_root).resolve()
         print_check(f"项目根目录: {root}", True)
 
         # 1. 获取最近变更
-        changed_files = self.analyzer.get_changed_files()
+        changed_files = self.analyzer.get_changed_files(cwd=root)
         print_check(f"变更文件数: {len(changed_files)}", True)
         for f in changed_files[:10]:
             print(f"  - {f}")
@@ -394,7 +315,7 @@ class ContextSyncManager:
             print(f"  ... 共 {len(changed_files)} 个文件")
 
         # 2. 获取 diff
-        diff = self.analyzer.get_diff()
+        diff = self.analyzer.get_diff(cwd=root)
         print_check(f"Diff 大小: {len(diff)} 字符", True)
 
         # 3. 读取当前 CONTEXT.md

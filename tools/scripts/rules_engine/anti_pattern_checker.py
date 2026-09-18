@@ -15,19 +15,30 @@ from .rule_loader import load_rules_for_language
 _MATCH_TIMEOUT_S = 0.1
 
 
-def check_anti_patterns(filepath: Path, language: str, rules: dict[str, Any] | None = None) -> list[Issue]:
-    """Check a file for anti-patterns using regex rules."""
+def check_anti_patterns(
+    filepath: Path,
+    language: str,
+    rules: dict[str, Any] | None = None,
+    content: str | None = None,
+    lines: list[str] | None = None,
+) -> list[Issue]:
+    """Check a file for anti-patterns using regex rules.
+
+    性能优化: 调用方（checker.check_file）已读取 content/lines 时
+    直接传入复用，避免对同一文件重复读盘。
+    """
     issues: list[Issue] = []
 
     if not filepath.exists():
         return issues
 
-    try:
-        content = filepath.read_text(encoding="utf-8")
-    except (OSError, UnicodeDecodeError):
-        return issues
+    if content is None:
+        try:
+            content = filepath.read_text(encoding="utf-8")
+        except (OSError, UnicodeDecodeError):
+            return issues
 
-    lines = content.split("\n")
+    lines = lines if lines is not None else content.split("\n")
 
     # Load rules for this language (includes cross-language security patterns)
     if rules is None:
@@ -167,16 +178,24 @@ def _check_line_patterns(
     except re.error:
         return issues
 
+    # 行级排除（exclude_lines）：命中任一模式的行不报告，
+    # 用于过滤字符串字面量/文档中的误报（如 "in except: block"）。
+    # 性能优化: 预编译一次（复用 regex_cache），避免逐行 re.search 重编译。
+    exclude_lines = pattern_def.get("exclude_lines", [])
+    compiled_excludes: list[re.Pattern[str]] = []
+    for ex_pat in exclude_lines:
+        try:
+            compiled_excludes.append(get_compiled(ex_pat))
+        except re.error:
+            continue
+
     for line_num, line in enumerate(lines, 1):
         # Skip comments for most patterns
         stripped = line.strip()
         if stripped.startswith("#") or stripped.startswith("//"):
             continue
 
-        # 行级排除（exclude_lines）：命中任一模式的行不报告，
-        # 用于过滤字符串字面量/文档中的误报（如 "in except: block"）
-        exclude_lines = pattern_def.get("exclude_lines", [])
-        if any(re.search(ex_pat, line) for ex_pat in exclude_lines):
+        if any(ce.search(line) for ce in compiled_excludes):
             continue
 
         for match in compiled.finditer(line):

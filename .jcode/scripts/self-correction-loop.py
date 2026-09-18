@@ -24,7 +24,7 @@ from dataclasses import dataclass, field
 from enum import Enum, auto
 from pathlib import Path
 from types import ModuleType
-from typing import ClassVar
+from typing import Any, ClassVar
 
 from _common import print_check, print_section
 
@@ -47,7 +47,7 @@ class Strategy(ABC):
         pass
 
     @classmethod
-    def register(cls, kind: StrategyKind) -> type["Strategy"]:
+    def register(cls, kind: StrategyKind) -> Callable[[type["Strategy"]], type["Strategy"]]:
         def decorator(subclass: type["Strategy"]) -> type["Strategy"]:
             cls._registry[kind] = subclass
             return subclass
@@ -123,7 +123,7 @@ def get_registry(
     enable_pattern: bool = True,
     enable_llm: bool = True,
     llm_model: str = "gpt-4-turbo-preview",
-    **llm_kwargs: object,
+    **llm_kwargs: Any,
 ) -> StrategyRegistry:
     chain: list[Strategy] = []
     if enable_retry:
@@ -558,6 +558,7 @@ class CorrectionLoop:
         try:
             passed, verify_output = self._apply_fix(self._target_file, fixed_code)
         except FixError as exc:
+            _write_code(self._target_file, original_code)
             return failure_result(
                 attempt=attempt,
                 strategy=strategy.name,
@@ -579,6 +580,7 @@ class CorrectionLoop:
                 test_output=verify_output,
                 duration_s=duration,
             )
+        _write_code(self._target_file, original_code)
         return failure_result(
             attempt=attempt,
             strategy=strategy.name,

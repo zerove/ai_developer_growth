@@ -162,8 +162,8 @@ def _run_all_checkers(
     """Run all checkers on file content."""
     issues: list[Issue] = []
 
-    # Anti-patterns
-    issues.extend(check_anti_patterns(filepath, lang, rules))
+    # Anti-patterns (传入已读的 content/lines, 避免对同一文件重复读盘)
+    issues.extend(check_anti_patterns(filepath, lang, rules, content=content, lines=lines))
 
     # Naming conventions
     issues.extend(check_naming_conventions(lines, rules, str(filepath), lang))
@@ -211,8 +211,8 @@ def _load_directory_rules(dirpath: Path, base_rules: dict[str, Any] | None) -> d
                 from .rule_loader import _merge_rules
 
                 rules = _merge_rules(rules, fw_rules)
-        except Exception:
-            _ = None  # framework rules optional
+        except Exception as exc:
+            logger.debug("框架规则加载失败 %s: %s", framework, exc)
 
     try:
         from .rule_loader import load_domain_rules
@@ -225,8 +225,8 @@ def _load_directory_rules(dirpath: Path, base_rules: dict[str, Any] | None) -> d
                 rules = _merge_rules(rules, domain_rules)
             else:
                 rules = domain_rules
-    except Exception:
-        _ = None  # domain rules optional
+    except Exception as exc:
+        logger.debug("域规则加载失败: %s", exc)
 
     return rules
 
@@ -236,7 +236,7 @@ def _discover_target_files(dirpath: Path, languages: list[str] | None) -> list[P
 
     ADR-014: 从 check_directory 拆出。
     """
-    exts = [
+    exts = {
         ".py",
         ".js",
         ".jsx",
@@ -252,16 +252,19 @@ def _discover_target_files(dirpath: Path, languages: list[str] | None) -> list[P
         ".c",
         ".h",
         ".hpp",
-    ]
+    }
+    # 性能优化: 原先对每个扩展名执行一次全树 rglob (O(15×n)),
+    # 现改为单次遍历 + suffix 过滤 + 排除目录遍历中剪枝 (O(n)),
+    # 同时消除每文件一次 set(filepath.parts) 分配。
     files: list[Path] = []
-    for ext in exts:
-        files.extend(dirpath.rglob(f"*{ext}"))
-
-    def _is_excluded(filepath: Path) -> bool:
-        parts = set(filepath.parts)
-        return bool(parts & DEFAULT_EXCLUDED_DIRS)
-
-    files = [f for f in files if not _is_excluded(f)]
+    for filepath in dirpath.rglob("*"):
+        if not filepath.is_file():
+            continue
+        if any(part in DEFAULT_EXCLUDED_DIRS for part in filepath.parts):
+            continue
+        if filepath.suffix.lower() not in exts:
+            continue
+        files.append(filepath)
 
     if languages:
         files = [f for f in files if _detect_language(f) in languages]
@@ -321,10 +324,10 @@ def _run_architecture_analysis(dirpath: Path) -> list[CheckResult]:
                 language="architecture",
             )
             results.append(arch_result)
-    except ImportError:
-        _ = None  # arch module not available
-    except Exception:
-        _ = None  # arch checks optional
+    except ImportError as exc:
+        logger.debug("arch 模块不可用: %s", exc)
+    except Exception as exc:
+        logger.debug("arch 检查失败: %s", exc)
     return results
 
 
@@ -428,7 +431,7 @@ def _check_files_parallel(
     cache_db: str | None = str(db_path) if use_cache and store is not None else None
     worker_rules_hash = rules_hash
     results: list[CheckResult] = []
-    with ProcessPoolExecutor(max_workers=jobs, initializer=_worker_init, initargs=(warmup_rules,)) as executor:
+    with ProcessPoolExecutor(max_workers=jobs, initializer=_worker_init, initargs=(warmup_rules, cache_db)) as executor:
         worker_results: Iterator[CheckResult | None] = executor.map(
             _worker_check,
             pairs,
@@ -442,8 +445,8 @@ def _check_files_parallel(
             try:
                 if worker_result is not None:
                     results.append(worker_result)
-            except Exception:
-                _ = None  # skip failed check
+            except Exception as exc:
+                logger.debug("worker 结果处理失败: %s", exc)
     return results
 
 

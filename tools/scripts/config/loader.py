@@ -20,6 +20,8 @@ from typing import Any
 
 import yaml
 
+from tools.scripts._common import load_yaml
+
 from .models import (
     DEFAULT_CONFIG_PATHS,
     BaselineConfig,
@@ -322,12 +324,11 @@ def _load_yaml_file(path: Path) -> dict[str, Any] | None:
     """加载单个 YAML 文件"""
     if not path.exists():
         return None
-    try:
-        with open(path, encoding="utf-8") as f:
-            return yaml.safe_load(f) or {}
-    except Exception as e:
-        print(f"⚠️  无法加载配置 {path}: {e}")
+    data = load_yaml(path)
+    if data is None:
+        print(f"⚠️  无法加载配置 {path}")
         return None
+    return data or {}
 
 
 def _load_toml_config(path: Path) -> dict[str, Any] | None:

@@ -20,7 +20,7 @@
 | AI 工具太多，不知如何选择 | 📊 工具矩阵对比 |
 | 不知道如何与 AI 协作 | 🔄 全周期工作流 |
 | 担心被 AI 取代 | 🧠 认知升级方法论 |
-| 缺少真实案例参考 | 📚 35+ 实践案例 |
+| 缺少真实案例参考 | 📚 48 个实践案例 |
 
 ---
 
@@ -52,7 +52,7 @@
 | 🧬 AI-Native 主管道 | 全生命周期研发自动化 | **12x** | [[case-studies/jcode-ai-native-master-workflow-execution]] |
 | 🏛️ 治理自审计 | 用自己的药医自己 | **-85 问题** | [[case-studies/governance-self-audit]] |
 
-**现状**: 43 个真实案例，覆盖不同规模和场景。目标是 35+，已超额完成。
+**现状**: 48 个真实案例，覆盖不同规模和场景。目标是 35+，已超额完成。
 
 ---
 
@@ -140,11 +140,11 @@ python ai-dev-framework/core/jcode_init.py your-project --language python
 
 | 指标 | 数量 |
 |------|------|
-| 📄 核心文档 | 268 篇 |
-| 📚 实践案例 | 47 个 |
+| 📄 核心文档 | 319 篇 |
+| 📚 实践案例 | 48 个 |
 | 🛠️ 代码示例 | 10 个 |
-| 📋 架构决策 | 13 条 |
-| 🧪 测试用例 | 2603 个 |
+| 📋 架构决策 | 59 条 |
+| 🧪 测试用例 | 4020 个 |
 | ✅ 测试覆盖率 | 64%+ |
 
 ---
@@ -153,25 +153,25 @@ python ai-dev-framework/core/jcode_init.py your-project --language python
 
 ```
 ai_developer_growth/
-├── docs/                    # 253 篇方法论文档
+├── docs/                    # 319 篇文档
 │   ├── mindset/            # 认知升级
 │   ├── learning/           # 学习方法
 │   ├── efficiency/         # 工程效率
 │   ├── tools/              # 工具选型
 │   └── adr/                # 架构决策
-├── case-studies/            # 43 个实践案例
+├── case-studies/            # 48 个实践案例
 ├── examples/                # 10 个代码示例
 ├── ai-dev-framework/        # 通用治理框架
-│   └── core/               # 可移植组件
+│   └── standards/          # 通用治理标准
 ├── tools/scripts/           # 自动化工具
 │   ├── hooks/              # 模块化 Hook 系统
 │   │   ├── basic_checks.py # lint/format/typecheck/test/security
 │   │   ├── domain_checks.py# language-rules/quality-gate/governance
-│   │   └── incremental.py  # diff/pre-commit 增量检查
+│   │   └── incremental_checks.py # diff/pre-commit 增量检查
 │   ├── rules_engine/       # 规则引擎 (26 语言)
 │   └── rule_catalog.py     # 规则包管理
 ├── agents/                  # Agent 定义
-├── tests/                   # 2500+ 个测试
+├── tests/                   # 4020 个测试
 ```
 
 ---
@@ -182,8 +182,8 @@ ai_developer_growth/
 
 - **GOVERNANCE.md** - 完整的治理标准
 - **4 道质量门禁** - 确保代码质量
-- **13 种语言规范** - Python, TypeScript, Rust, Go...
-- **11 种框架规范** - React, Vue, FastAPI, Spring Boot...
+- **26 种语言规范** - Python, TypeScript, Rust, Go...
+- **9 种框架规范** - React, Vue, FastAPI, Spring Boot...
 
 详见 [[docs/agent-dev/quality-gates|质量门禁]]。
 

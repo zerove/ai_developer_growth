@@ -4,6 +4,8 @@ from __future__ import annotations
 
 from pathlib import Path
 
+from tools.scripts.rules_engine.logger import logger
+
 
 def _config_excluded_dirs() -> set[str]:
     """从 [tool.adg].exclude 合并额外的排除目录。"""
@@ -148,8 +150,8 @@ def _load_context_markers(dirpath: Path) -> dict[str, str]:
                 from .context import load_role_config
 
                 return load_role_config(config_path)
-            except Exception:
-                _ = None  # role config optional
+            except Exception as exc:
+                logger.debug("角色配置加载失败: %s", exc)
     return {}
 
 

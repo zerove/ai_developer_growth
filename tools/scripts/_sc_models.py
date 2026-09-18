@@ -8,7 +8,7 @@ from __future__ import annotations
 
 import json
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import datetime, timezone
 from enum import Enum
 from typing import Any
 
@@ -71,7 +71,7 @@ class SBOM:
     spdx_version: str = "SPDX-2.3"
     name: str = ""
     version: str = ""
-    created_at: str = field(default_factory=lambda: datetime.utcnow().isoformat())
+    created_at: str = field(default_factory=lambda: datetime.now(timezone.utc).replace(tzinfo=None).isoformat())
     packages: list[Dependency] = field(default_factory=list)
     relationships: list[dict[str, str]] = field(default_factory=list)
 
@@ -123,7 +123,7 @@ class ScanResult:
     """扫描结果"""
 
     project_path: str
-    scanned_at: str = field(default_factory=lambda: datetime.utcnow().isoformat())
+    scanned_at: str = field(default_factory=lambda: datetime.now(timezone.utc).replace(tzinfo=None).isoformat())
     dependencies: list[Dependency] = field(default_factory=list)
     vulnerabilities: list[Vulnerability] = field(default_factory=list)
     license_issues: list[str] = field(default_factory=list)

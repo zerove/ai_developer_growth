@@ -27,7 +27,7 @@
 | `governance-docs-validator` | 治理文档验证器 | 验证治理层文档、索引引用、交叉引用 | ✅ 已定义 (v1.0) | `.jcode/skills/governance-docs-validator.md` |
 | `workflow-optimizer` | 工作流优化师 | 分析效率数据、优化 AI 协作工作流、推荐工具组合 | ✅ 已定义 | `agents/workflow-optimizer.md` |
 | `community-catalyst` | 社区催化剂 | 管理贡献流程、案例验证、贡献者激励 | ✅ 已定义 | `agents/community-catalyst.md` |
-| `context-sync` | 上下文同步 | 自动维护 CONTEXT.md、ADR.md、同步项目状态 | ✅ 已集成 (v1.0) | `agents/context-sync.md` / `.jcode/scripts/context_sync.py` |
+| `context-sync` | 上下文同步 | 自动维护 CONTEXT.md、ADR.md、同步项目状态 | ✅ 已集成 (v1.0) | `agents/context-sync.md` / `.jcode/scripts/context-sync.py` |
 | `multi-agent-orch` | 多 Agent 编排器 | 模拟团队开发：PM/Architect/Coder/Reviewer 协作 | ✅ 已集成 (v1.0) | `agents/multi-agent-orch.md` / `.jcode/scripts/multi-agent-orch.py` |
 | `self-correction-loop` | 自我修正循环 | AI 代码质量保证：验证→重试→修正闭环 | ✅ 已集成 (v1.0) | `agents/self-correction-loop.md` / `.jcode/scripts/self-correction-loop.py` |
 | `ai-task-prioritizer` | 任务优先级工具 | CLI 任务优先级排序，TDD + AI 驱动 | ✅ 已实现 | `examples/ai-task-prioritizer/prioritizer.py` |
@@ -98,11 +98,11 @@
 **职责**: 自动维护 CONTEXT.md、ADR.md、同步项目状态，架构决策防护，规范审计
 **作用域**: 全项目 Git 历史、CONTEXT.md、ADR.md、SPEC.md
 **核心指令**:
-- 运行 `python .jcode/scripts/context_sync.py sync --project-root .` 分析 Git 变更，自动更新 CONTEXT.md 和 ADR.md
-- 运行 `python .jcode/scripts/context_sync.py validate --context-file CONTEXT.md --adr-file ADR.md` 验证文档结构完整性
-- 运行 `python .jcode/scripts/context_sync.py audit --spec-file SPEC.md` 检查代码/文档规范合规（硬编码密钥、eval/exec、SQL注入、裸露except等）
+- 运行 `python .jcode/scripts/context-sync.py sync --project-root .` 分析 Git 变更，自动更新 CONTEXT.md 和 ADR.md
+- 运行 `python .jcode/scripts/context-sync.py validate --context-file CONTEXT.md --adr-file ADR.md` 验证文档结构完整性
+- 运行 `python .jcode/scripts/context-sync.py audit --spec-file SPEC.md` 检查代码/文档规范合规（硬编码密钥、eval/exec、SQL注入、裸露except等）
 - 架构防护：检查设计文档偏移（TODO/FIXME、过于简短、缺少子任务分解）
-- 演化分析：运行 `python .jcode/scripts/context_sync.py evolve` 检查规范演化机会
+- 演化分析：运行 `python .jcode/scripts/context-sync.py evolve` 检查规范演化机会
 **Hooks 集成**: on_commit (sync), on_merge (sync), on_pr (audit), scheduled (validate/audit)
 
 ### 7. multi-agent-orch (多 Agent 编排器 v1.0)
@@ -178,7 +178,7 @@ ai_developer_growth/
 │   │   ├── workflow-optimizer.py
 │   │   ├── community-catalyst.py
 │   │   ├── hooks_runner.py
-│   │   ├── context_sync.py            # NEW
+│   │   ├── context-sync.py            # NEW
 │   │   ├── multi-agent-orch.py        # NEW
 │   │   └── self-correction-loop.py    # NEW
 │   └── skills/                  # Skill 定义

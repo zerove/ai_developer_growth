@@ -3,11 +3,12 @@
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Any, TypeVar
+from typing import Any, TypeAlias, cast
 
 import yaml
 
-T = TypeVar("T")
+# YAML 配置值的合法类型集合（get 返回值的保守上界）
+ConfigValue: TypeAlias = dict[str, Any] | str | int | float | bool | list[Any] | None
 
 
 class ConfigLoader:
@@ -47,7 +48,7 @@ class ConfigLoader:
 
                 logging.getLogger(__name__).debug("配置加载失败 %s: %s", yaml_file.name, exc)
 
-    def get(self, config_name: str, key: str | None = None, default: T | None = None) -> dict[str, Any] | T:
+    def get(self, config_name: str, key: str | None = None, default: ConfigValue = None) -> ConfigValue:
         """获取配置值。
 
         Args:
@@ -63,7 +64,7 @@ class ConfigLoader:
             return config
 
         keys = key.split(".")
-        value: dict[str, Any] | str | int | float | bool | list[Any] | None = config
+        value: ConfigValue = config
         for k in keys:
             if isinstance(value, dict) and k in value:
                 value = value[k]
@@ -73,23 +74,23 @@ class ConfigLoader:
 
     def get_coverage_threshold(self) -> int:
         """获取覆盖率门禁阈值。"""
-        return self.get("thresholds", "coverage.fail_under", 80)
+        return cast(int, self.get("thresholds", "coverage.fail_under", 80))
 
     def get_complexity_threshold(self, language: str, metric: str) -> int | None:
         """获取复杂度阈值。"""
-        return self.get("thresholds", f"complexity.{language}.{metric}")
+        return cast(int | None, self.get("thresholds", f"complexity.{language}.{metric}"))
 
     def get_ruff_version(self) -> str:
         """获取 ruff 版本。"""
-        return self.get("versions", "python.ruff", "==0.15.17")
+        return cast(str, self.get("versions", "python.ruff", "==0.15.17"))
 
     def get_supported_languages(self) -> list[str]:
         """获取主要支持的语言列表。"""
-        return self.get("languages", "supported", [])
+        return cast(list[str], self.get("languages", "supported", []))
 
     def get_ci_matrix_languages(self, job: str) -> list[str]:
         """获取 CI 矩阵语言列表。"""
-        return self.get("languages", f"ci_matrix.{job}", [])
+        return cast(list[str], self.get("languages", f"ci_matrix.{job}", []))
 
 
 # 单例实例

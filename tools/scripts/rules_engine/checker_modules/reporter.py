@@ -10,11 +10,15 @@
 from __future__ import annotations
 
 from pathlib import Path
+from typing import TYPE_CHECKING, Any
 
 from tools.scripts.rules_engine.models import CheckResult, Issue
 
+if TYPE_CHECKING:
+    from xml.etree.ElementTree import Element
 
-def _append_sarif_result(sarif: dict, result: CheckResult, issue: Issue) -> None:
+
+def _append_sarif_result(sarif: dict[str, Any], result: CheckResult, issue: Issue) -> None:
     """向 SARIF runs 追加单条 issue 结果（供 generate_sarif_report 使用）。"""
     sarif["runs"][0]["results"].append(
         {
@@ -38,7 +42,7 @@ def _append_sarif_result(sarif: dict, result: CheckResult, issue: Issue) -> None
     )
 
 
-def _update_sarif_rule_map(rule_map: dict, issue: Issue) -> None:
+def _update_sarif_rule_map(rule_map: dict[str, Any], issue: Issue) -> None:
     """更新 SARIF rule 映射（供 generate_sarif_report 使用）。"""
     rule_id = issue.rule_id
     if rule_id not in rule_map:
@@ -63,7 +67,7 @@ def generate_sarif_report(results: list[CheckResult], output_path: Path | None =
     """
     import json
 
-    sarif: dict = {
+    sarif: dict[str, Any] = {
         "version": "2.1.0",
         "$schema": "https://schemastore.org/schemas/json/sarif-2.1.0.json",
         "runs": [
@@ -80,7 +84,7 @@ def generate_sarif_report(results: list[CheckResult], output_path: Path | None =
         ],
     }
 
-    rule_map = {}
+    rule_map: dict[str, Any] = {}
 
     for result in results:
         for issue in result.issues:
@@ -97,7 +101,7 @@ def generate_sarif_report(results: list[CheckResult], output_path: Path | None =
     return output
 
 
-def _append_junit_testcase(testsuite, result: CheckResult, issue: Issue) -> None:
+def _append_junit_testcase(testsuite: Element, result: CheckResult, issue: Issue) -> None:
     """向 JUnit testsuite 追加单条 testcase（供 generate_junit_report 使用）。"""
     from xml.etree.ElementTree import SubElement
 

@@ -2,8 +2,7 @@
 
 from __future__ import annotations
 
-from typing import Any
-
+from ..ast_nodes import ClassInfo, FunctionInfo, _TreeNode
 from .base import _ImportWalkers
 
 
@@ -12,13 +11,13 @@ class _GoFunctionWalkers(_ImportWalkers):
 
     def _walk_go_functions(
         self,
-        node: Any,
+        node: _TreeNode,
         lines: list[str],
-        result: list[Any],
+        result: list[FunctionInfo],
         class_name: str | None,
     ) -> None:
         """Walk Go AST for function definitions (迭代化)."""
-        stack: list[tuple[Any, str | None]] = [(node, class_name)]
+        stack: list[tuple[_TreeNode, str | None]] = [(node, class_name)]
         while stack:
             current, cur_class = stack.pop()
             if current.type == "function_declaration":
@@ -29,9 +28,9 @@ class _GoFunctionWalkers(_ImportWalkers):
 
     def _handle_function_declaration(
         self,
-        node: Any,
+        node: _TreeNode,
         lines: list[str],
-        result: list[Any],
+        result: list[FunctionInfo],
         class_name: str | None,
     ) -> None:
         """处理 function_declaration 节点."""
@@ -39,10 +38,8 @@ class _GoFunctionWalkers(_ImportWalkers):
         if info:
             result.append(info)
 
-    def _parse_go_function(self, node: Any, lines: list[str], class_name: str | None) -> Any | None:
+    def _parse_go_function(self, node: _TreeNode, lines: list[str], class_name: str | None) -> FunctionInfo | None:
         """Parse a Go function node."""
-        from ..ast_nodes import FunctionInfo
-
         name = self._get_child_name(node, lines) or "<unknown>"
         params: list[str] = []
 
@@ -73,10 +70,8 @@ class _GoFunctionWalkers(_ImportWalkers):
 class _GoClassWalkers(_ImportWalkers):
     """Go 类/Struct 提取私有方法."""
 
-    def _parse_go_struct(self, node: Any, lines: list[str]) -> Any | None:
+    def _parse_go_struct(self, node: _TreeNode, lines: list[str]) -> ClassInfo | None:
         """Parse Go type_declaration containing a struct_type as a ClassInfo."""
-        from ..ast_nodes import ClassInfo
-
         name = self._get_child_name(node, lines) or "<unknown>"
         has_struct = False
         for child in node.children:

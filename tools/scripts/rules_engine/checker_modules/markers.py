@@ -17,6 +17,8 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Any
 
+from tools.scripts.rules_engine.logger import logger
+
 
 def detect_language(filepath: Path) -> str:
     """Detect language from file extension."""
@@ -87,7 +89,7 @@ def detect_framework(dirpath: Path) -> str | None:
             if any("flask" in d for d in deps):
                 return "flask"
         except Exception:
-            pass
+            logger.debug("pyproject.toml 解析失败: %s", dirpath / "pyproject.toml")
         return "python"
     return None
 
@@ -102,7 +104,7 @@ def load_context_markers(dirpath: Path) -> dict[str, Any]:
 
             markers = yaml.safe_load(marker_file.read_text()) or {}
         except Exception:
-            pass
+            logger.debug("context markers 加载失败: %s", marker_file)
     return markers
 
 
@@ -181,7 +183,7 @@ def load_ignored_rules(filepath: Path) -> set[str]:
             for rule in rules_str.split(","):
                 ignored.add(rule.strip())
     except Exception:
-        pass
+        logger.debug("ignored_rules 加载失败: %s", filepath)
     return ignored
 
 
@@ -212,5 +214,5 @@ def load_ignored_rules_from_config(dirpath: Path) -> set[str]:
             data = yaml.safe_load(config_file.read_text()) or {}
             ignored.update(data.get("rules", []))
         except Exception:
-            pass
+            logger.debug("ignored_rules 配置加载失败: %s", config_file)
     return ignored

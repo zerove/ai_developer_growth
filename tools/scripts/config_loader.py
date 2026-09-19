@@ -3,9 +3,11 @@
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Any
+from typing import Any, TypeVar
 
 import yaml
+
+T = TypeVar("T")
 
 
 class ConfigLoader:
@@ -45,7 +47,7 @@ class ConfigLoader:
 
                 logging.getLogger(__name__).debug("配置加载失败 %s: %s", yaml_file.name, exc)
 
-    def get(self, config_name: str, key: str | None = None, default: Any = None) -> Any:
+    def get(self, config_name: str, key: str | None = None, default: T | None = None) -> dict[str, Any] | T:
         """获取配置值。
 
         Args:
@@ -56,12 +58,12 @@ class ConfigLoader:
         Returns:
             配置值或默认值
         """
-        config = self._configs.get(config_name, {})
+        config: dict[str, Any] = self._configs.get(config_name, {})
         if key is None:
             return config
 
         keys = key.split(".")
-        value = config
+        value: dict[str, Any] | str | int | float | bool | list[Any] | None = config
         for k in keys:
             if isinstance(value, dict) and k in value:
                 value = value[k]

@@ -2,8 +2,7 @@
 
 from __future__ import annotations
 
-from typing import Any
-
+from ..ast_nodes import FunctionInfo, _TreeNode
 from .base import _ImportWalkers
 
 
@@ -12,10 +11,10 @@ class _GenericFunctionWalkers(_ImportWalkers):
 
     def _walk_generic_functions(
         self,
-        node: Any,
+        node: _TreeNode,
         language: str,
         lines: list[str],
-        result: list[Any],
+        result: list[FunctionInfo],
         class_name: str | None,
     ) -> None:
         """Generic function extraction (迭代化)."""
@@ -25,12 +24,11 @@ class _GenericFunctionWalkers(_ImportWalkers):
             "function_declaration",
             "method_definition",
         }
-        stack: list[tuple[Any, str | None]] = [(node, class_name)]
+        stack: list[tuple[_TreeNode, str | None]] = [(node, class_name)]
         while stack:
             current, cur_class = stack.pop()
             if current.type in func_patterns:
                 name = self._get_child_name(current, lines) or "<unknown>"
-                from .ast_nodes import FunctionInfo
 
                 result.append(
                     FunctionInfo(

@@ -2,33 +2,32 @@
 
 from __future__ import annotations
 
-from typing import Any
-
 from .._ast_utils import (
     _estimate_complexity_static,
 )
+from ..ast_nodes import ClassInfo, FunctionInfo, _TreeNode
 from .base import _ImportWalkers
 
 
 class _PythonFunctionWalkers(_ImportWalkers):
     """Python 函数提取私有方法."""
 
-    def _extract_functions(self, node: Any, language: str, lines: list[str]) -> list[Any]:
+    def _extract_functions(self, node: _TreeNode, language: str, lines: list[str]) -> list[FunctionInfo]:
         """Extract functions from AST node."""
-        functions: list[Any] = []
+        functions: list[FunctionInfo] = []
         self._walk_python_functions(node, lines, functions, None)
         return functions
 
     def _walk_python_functions(
         self,
-        node: Any,
+        node: _TreeNode,
         lines: list[str],
-        result: list[Any],
+        result: list[FunctionInfo],
         class_name: str | None,
     ) -> None:
         """Walk Python AST for function definitions (迭代化)."""
         func_types = {"function_definition", "async_function_definition"}
-        stack: list[Any] = [node]
+        stack: list[_TreeNode] = [node]
         while stack:
             current = stack.pop()
             if current.type in func_types:
@@ -38,16 +37,15 @@ class _PythonFunctionWalkers(_ImportWalkers):
                 continue
             stack.extend(reversed(current.children))
 
-    def _parse_python_function(self, node: Any, lines: list[str], class_name: str | None) -> Any | None:
+    def _parse_python_function(self, node: _TreeNode, lines: list[str], class_name: str | None) -> FunctionInfo | None:
         """Parse a Python function definition node."""
-        from ._ast_utils import (
+        from .._ast_utils import (
             _calculate_body_lines,
             _extract_decorators,
             _extract_docstring_static,
             _extract_return_type,
             _parse_function_parameters,
         )
-        from .ast_nodes import FunctionInfo
 
         name_node = None
         params_node = None
@@ -89,10 +87,8 @@ class _PythonFunctionWalkers(_ImportWalkers):
 class _PythonClassWalkers(_PythonFunctionWalkers):
     """Python 类提取私有方法."""
 
-    def _parse_python_class(self, node: Any, lines: list[str]) -> Any | None:
+    def _parse_python_class(self, node: _TreeNode, lines: list[str]) -> ClassInfo | None:
         """Parse Python class definition."""
-        from ..ast_nodes import ClassInfo
-
         name = self._get_child_name(node, lines) or "<unknown>"
         bases = self._parse_class_bases(node, lines)
         decorators = self._parse_class_decorators(node, lines)
@@ -111,7 +107,7 @@ class _PythonClassWalkers(_PythonFunctionWalkers):
             body_lines=node.end_point[0] - node.start_point[0],
         )
 
-    def _parse_class_bases(self, node: Any, lines: list[str]) -> list[str]:
+    def _parse_class_bases(self, node: _TreeNode, lines: list[str]) -> list[str]:
         """提取 class 基类."""
         bases: list[str] = []
         for child in node.children:
@@ -120,10 +116,10 @@ class _PythonClassWalkers(_PythonFunctionWalkers):
                     bases.append(self._get_text(arg, lines))
         return bases
 
-    def _parse_class_methods(self, node: Any, lines: list[str]) -> list[Any]:
+    def _parse_class_methods(self, node: _TreeNode, lines: list[str]) -> list[FunctionInfo]:
         """提取 class 方法."""
 
-        methods: list[Any] = []
+        methods: list[FunctionInfo] = []
         for child in node.children:
             if child.type != "block":
                 continue
@@ -136,11 +132,11 @@ class _PythonClassWalkers(_PythonFunctionWalkers):
                         methods.append(method)
         return methods
 
-    def _get_class_name_for_method(self, node: Any, lines: list[str]) -> str:
+    def _get_class_name_for_method(self, node: _TreeNode, lines: list[str]) -> str:
         """获取 class 名称 (用于方法父类名)."""
         return self._get_child_name(node, lines) or "<unknown>"
 
-    def _parse_class_decorators(self, node: Any, lines: list[str]) -> list[str]:
+    def _parse_class_decorators(self, node: _TreeNode, lines: list[str]) -> list[str]:
         """提取 class 装饰器."""
         decorators: list[str] = []
         if node.parent and node.parent.type == "decorated_definition":
@@ -149,8 +145,8 @@ class _PythonClassWalkers(_PythonFunctionWalkers):
                     decorators.append(self._get_text(sibling, lines))
         return decorators
 
-    def _extract_docstring_static(self, node: Any, lines: list[str]) -> str | None:
+    def _extract_docstring_static(self, node: _TreeNode, lines: list[str]) -> str | None:
         """Extract docstring from node (delegates to _ast_utils)."""
-        from ._ast_utils import _extract_docstring_static
+        from .._ast_utils import _extract_docstring_static
 
         return _extract_docstring_static(node, lines)

@@ -2,8 +2,7 @@
 
 from __future__ import annotations
 
-from typing import Any
-
+from ..ast_nodes import ClassInfo, FunctionInfo, _TreeNode
 from .base import _ImportWalkers
 
 
@@ -12,9 +11,9 @@ class _JavaScriptFunctionWalkers(_ImportWalkers):
 
     def _walk_js_functions(
         self,
-        node: Any,
+        node: _TreeNode,
         lines: list[str],
-        result: list[Any],
+        result: list[FunctionInfo],
         class_name: str | None,
     ) -> None:
         """Walk JS/TS AST for function definitions (迭代化)."""
@@ -24,7 +23,7 @@ class _JavaScriptFunctionWalkers(_ImportWalkers):
             "arrow_function",
             "method_definition",
         }
-        stack: list[tuple[Any, str | None]] = [(node, class_name)]
+        stack: list[tuple[_TreeNode, str | None]] = [(node, class_name)]
         while stack:
             current, cur_class = stack.pop()
             if current.type in func_types:
@@ -44,10 +43,8 @@ class _JavaScriptFunctionWalkers(_ImportWalkers):
             for child in current.children:
                 stack.append((child, cur_class))
 
-    def _parse_js_function(self, node: Any, lines: list[str], class_name: str | None) -> Any | None:
+    def _parse_js_function(self, node: _TreeNode, lines: list[str], class_name: str | None) -> FunctionInfo | None:
         """Parse a JS/TS function node."""
-        from ..ast_nodes import FunctionInfo
-
         name = self._get_child_name(node, lines) or "<anonymous>"
         params: list[str] = []
 
@@ -85,13 +82,11 @@ class _JavaScriptFunctionWalkers(_ImportWalkers):
 class _JavaScriptClassWalkers(_JavaScriptFunctionWalkers):
     """JavaScript/TypeScript 类提取私有方法."""
 
-    def _parse_js_class(self, node: Any, lines: list[str]) -> Any | None:
+    def _parse_js_class(self, node: _TreeNode, lines: list[str]) -> ClassInfo | None:
         """Parse JS/TS class declaration."""
-        from ..ast_nodes import ClassInfo
-
         name = self._get_child_name(node, lines) or "<anonymous>"
         bases: list[str] = []
-        methods: list[Any] = []
+        methods: list[FunctionInfo] = []
 
         for child in node.children:
             if child.type == "class_heritage":

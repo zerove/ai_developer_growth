@@ -38,6 +38,11 @@ def _add_base_check_parser(sub: argparse._SubParsersAction[Any]) -> None:
         action="store_true",
         help="Include related documentation links in output",
     )
+    _add_check_filter_args(check_p)
+
+
+def _add_check_filter_args(check_p: argparse.ArgumentParser) -> None:
+    """Add filtering args to the 'check' subcommand parser (kept under 50 lines)."""
     check_p.add_argument(
         "--exclude",
         action="append",

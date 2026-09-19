@@ -3,18 +3,21 @@
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from tools.scripts.rules_engine.logger import logger
 
 from .models import CheckResult, Issue
+
+if TYPE_CHECKING:
+    from .store import CheckStore
 
 # Worker 进程内共享的规则缓存（由 _worker_init 注入）
 _WORKER_RULES: dict[str, Any] = {}
 
 # Worker 进程内共享的缓存连接（由 _worker_init 打开一次并复用，
 # 避免原先每文件新建 CheckStore/SQLite 连接的开销）
-_WORKER_STORE: Any = None
+_WORKER_STORE: CheckStore | None = None
 
 
 def _worker_init(

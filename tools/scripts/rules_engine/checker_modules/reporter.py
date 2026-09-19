@@ -10,10 +10,48 @@
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Any
+
+from tools.scripts.rules_engine.models import CheckResult, Issue
 
 
-def generate_sarif_report(results: list[Any], output_path: Path | None = None) -> str:
+def _append_sarif_result(sarif: dict, result: CheckResult, issue: Issue) -> None:
+    """向 SARIF runs 追加单条 issue 结果（供 generate_sarif_report 使用）。"""
+    sarif["runs"][0]["results"].append(
+        {
+            "ruleId": issue.rule_id,
+            "level": _severity_to_sarif_level(issue.severity),
+            "message": {"text": issue.message},
+            "locations": [
+                {
+                    "physicalLocation": {
+                        "artifactLocation": {"uri": issue.file},
+                        "region": {
+                            "startLine": issue.line,
+                            "startColumn": issue.column,
+                            "endLine": issue.line,
+                            "endColumn": issue.column + 1,
+                        },
+                    }
+                }
+            ],
+        }
+    )
+
+
+def _update_sarif_rule_map(rule_map: dict, issue: Issue) -> None:
+    """更新 SARIF rule 映射（供 generate_sarif_report 使用）。"""
+    rule_id = issue.rule_id
+    if rule_id not in rule_map:
+        rule_map[rule_id] = {
+            "id": rule_id,
+            "name": issue.category,
+            "shortDescription": {"text": issue.message},
+            "fullDescription": {"text": issue.message},
+            "defaultConfiguration": {"level": _severity_to_sarif_level(issue.severity)},
+        }
+
+
+def generate_sarif_report(results: list[CheckResult], output_path: Path | None = None) -> str:
     """生成 SARIF 格式报告。
 
     Args:
@@ -25,7 +63,7 @@ def generate_sarif_report(results: list[Any], output_path: Path | None = None) -
     """
     import json
 
-    sarif: dict[str, Any] = {
+    sarif: dict = {
         "version": "2.1.0",
         "$schema": "https://schemastore.org/schemas/json/sarif-2.1.0.json",
         "runs": [
@@ -46,36 +84,8 @@ def generate_sarif_report(results: list[Any], output_path: Path | None = None) -
 
     for result in results:
         for issue in result.issues:
-            rule_id = issue.rule_id
-            if rule_id not in rule_map:
-                rule_map[rule_id] = {
-                    "id": rule_id,
-                    "name": issue.category,
-                    "shortDescription": {"text": issue.message},
-                    "fullDescription": {"text": issue.message},
-                    "defaultConfiguration": {"level": _severity_to_sarif_level(issue.severity)},
-                }
-
-            sarif["runs"][0]["results"].append(
-                {
-                    "ruleId": rule_id,
-                    "level": _severity_to_sarif_level(issue.severity),
-                    "message": {"text": issue.message},
-                    "locations": [
-                        {
-                            "physicalLocation": {
-                                "artifactLocation": {"uri": issue.file},
-                                "region": {
-                                    "startLine": issue.line,
-                                    "startColumn": issue.column,
-                                    "endLine": issue.line,
-                                    "endColumn": issue.column + 1,
-                                },
-                            }
-                        }
-                    ],
-                }
-            )
+            _update_sarif_rule_map(rule_map, issue)
+            _append_sarif_result(sarif, result, issue)
 
     sarif["runs"][0]["tool"]["driver"]["rules"] = list(rule_map.values())
 
@@ -87,7 +97,29 @@ def generate_sarif_report(results: list[Any], output_path: Path | None = None) -
     return output
 
 
-def generate_junit_report(results: list[Any], output_path: Path | None = None) -> str:
+def _append_junit_testcase(testsuite, result: CheckResult, issue: Issue) -> None:
+    """向 JUnit testsuite 追加单条 testcase（供 generate_junit_report 使用）。"""
+    from xml.etree.ElementTree import SubElement
+
+    testcase = SubElement(
+        testsuite,
+        "testcase",
+        name=f"{result.file}:{issue.line}:{issue.rule_id}",
+        classname=issue.category,
+    )
+    if issue.severity == "error":
+        failure = SubElement(testcase, "failure", message=issue.message)
+        failure.text = f"{result.file}:{issue.line}:{issue.column} - {issue.message}"
+    elif issue.severity == "warning":
+        # JUnit 没有 warning，用 system-out
+        stdout = SubElement(testcase, "system-out")
+        stdout.text = f"WARNING: {result.file}:{issue.line}:{issue.column} - {issue.message}"
+    else:
+        stdout = SubElement(testcase, "system-out")
+        stdout.text = f"INFO: {result.file}:{issue.line}:{issue.column} - {issue.message}"
+
+
+def generate_junit_report(results: list[CheckResult], output_path: Path | None = None) -> str:
     """生成 JUnit XML 格式报告。
 
     Args:
@@ -118,22 +150,7 @@ def generate_junit_report(results: list[Any], output_path: Path | None = None) -
             continue
 
         for issue in result.issues:
-            testcase = SubElement(
-                testsuite,
-                "testcase",
-                name=f"{result.file}:{issue.line}:{issue.rule_id}",
-                classname=issue.category,
-            )
-            if issue.severity == "error":
-                failure = SubElement(testcase, "failure", message=issue.message)
-                failure.text = f"{result.file}:{issue.line}:{issue.column} - {issue.message}"
-            elif issue.severity == "warning":
-                # JUnit 没有 warning，用 system-out
-                stdout = SubElement(testcase, "system-out")
-                stdout.text = f"WARNING: {result.file}:{issue.line}:{issue.column} - {issue.message}"
-            else:
-                stdout = SubElement(testcase, "system-out")
-                stdout.text = f"INFO: {result.file}:{issue.line}:{issue.column} - {issue.message}"
+            _append_junit_testcase(testsuite, result, issue)
 
     rough = tostring(testsuites, "utf-8")
     reparsed = minidom.parseString(rough)
@@ -145,7 +162,32 @@ def generate_junit_report(results: list[Any], output_path: Path | None = None) -
     return output
 
 
-def generate_text_report(results: list[Any], output_path: Path | None = None) -> str:
+def _build_text_summary(results: list[CheckResult]) -> list[str]:
+    """生成文本报告摘要头部（供 generate_text_report 使用）。"""
+    lines = []
+    total_files = len(results)
+    total_issues = sum(len(r.issues) for r in results)
+    errors = sum(1 for r in results for i in r.issues if i.severity == "error")
+    warnings = sum(1 for r in results for i in r.issues if i.severity == "warning")
+    info = sum(1 for r in results for i in r.issues if i.severity == "info")
+    skipped = sum(1 for r in results if r.skipped)
+
+    lines.append(f"总文件数: {total_files}")
+    lines.append(f"总问题数: {total_issues} (错误: {errors}, 警告: {warnings}, 信息: {info})")
+    lines.append(f"跳过文件: {skipped}")
+    return lines
+
+
+def _format_text_issue(result: CheckResult, issue: Issue) -> str:
+    """格式化单条 issue 为文本行（供 generate_text_report 使用）。"""
+    severity_icon = {"error": "❌", "warning": "⚠️", "info": "ℹ️"}.get(issue.severity, "•")
+    return (
+        f"  {severity_icon} [{issue.severity.upper()}] {issue.rule_id} "
+        f"({result.file}:{issue.line}:{issue.column}) - {issue.message}"
+    )
+
+
+def generate_text_report(results: list[CheckResult], output_path: Path | None = None) -> str:
     """生成纯文本格式报告。
 
     Args:
@@ -161,16 +203,7 @@ def generate_text_report(results: list[Any], output_path: Path | None = None) ->
     lines.append("=" * 60)
     lines.append("")
 
-    total_files = len(results)
-    total_issues = sum(len(r.issues) for r in results)
-    errors = sum(1 for r in results for i in r.issues if i.severity == "error")
-    warnings = sum(1 for r in results for i in r.issues if i.severity == "warning")
-    info = sum(1 for r in results for i in r.issues if i.severity == "info")
-    skipped = sum(1 for r in results if r.skipped)
-
-    lines.append(f"总文件数: {total_files}")
-    lines.append(f"总问题数: {total_issues} (错误: {errors}, 警告: {warnings}, 信息: {info})")
-    lines.append(f"跳过文件: {skipped}")
+    lines.extend(_build_text_summary(results))
     lines.append("")
 
     for result in results:
@@ -184,11 +217,7 @@ def generate_text_report(results: list[Any], output_path: Path | None = None) ->
 
         lines.append(f"📄 {result.file} ({result.language}) - {len(result.issues)} 个问题")
         for issue in result.issues:
-            severity_icon = {"error": "❌", "warning": "⚠️", "info": "ℹ️"}.get(issue.severity, "•")
-            lines.append(
-                f"  {severity_icon} [{issue.severity.upper()}] {issue.rule_id} "
-                f"({result.file}:{issue.line}:{issue.column}) - {issue.message}"
-            )
+            lines.append(_format_text_issue(result, issue))
         lines.append("")
 
     output = "\n".join(lines)
@@ -199,7 +228,7 @@ def generate_text_report(results: list[Any], output_path: Path | None = None) ->
     return output
 
 
-def generate_json_report(results: list[Any], output_path: Path | None = None) -> str:
+def generate_json_report(results: list[CheckResult], output_path: Path | None = None) -> str:
     """生成 JSON 结构化报告。
 
     Args:

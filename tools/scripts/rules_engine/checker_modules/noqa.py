@@ -6,7 +6,8 @@
 from __future__ import annotations
 
 import re
-from typing import Any
+
+from tools.scripts.rules_engine.models import Issue
 
 
 def parse_noqa_lines(content: str) -> dict[int, set[str]]:
@@ -34,7 +35,7 @@ def parse_noqa_lines(content: str) -> dict[int, set[str]]:
     return result
 
 
-def filter_suppressed_issues(filepath: str, issues: list[Any], lines: list[str]) -> list[Any]:
+def filter_suppressed_issues(filepath: str, issues: list[Issue], lines: list[str]) -> list[Issue]:
     """过滤被 # noqa 抑制的问题。
 
     Args:
@@ -53,7 +54,7 @@ def filter_suppressed_issues(filepath: str, issues: list[Any], lines: list[str])
     if not noqa_map:
         return issues
 
-    filtered: list[Any] = []
+    filtered: list[Issue] = []
     for issue in issues:
         line_no = issue.line
         if line_no in noqa_map:
@@ -65,7 +66,7 @@ def filter_suppressed_issues(filepath: str, issues: list[Any], lines: list[str])
     return filtered
 
 
-def is_issue_suppressed(issue: Any, noqa_map: dict[int, set[str]]) -> bool:
+def is_issue_suppressed(issue: Issue, noqa_map: dict[int, set[str]]) -> bool:
     """判断单个问题是否被抑制。"""
     line_no = issue.line
     if line_no in noqa_map:
@@ -88,7 +89,7 @@ def _load_ignored_rules(content: str) -> set[str]:
     return ignored
 
 
-def filter_global_ignored(issues: list[Any], ignored_rules: set[str]) -> list[Any]:
+def filter_global_ignored(issues: list[Issue], ignored_rules: set[str]) -> list[Issue]:
     """过滤全局忽略规则。"""
     if not ignored_rules:
         return issues

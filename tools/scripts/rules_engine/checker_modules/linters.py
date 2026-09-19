@@ -11,6 +11,7 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Any
 
+from tools.scripts.rules_engine.logger import logger
 from tools.scripts.rules_engine.models import Issue
 
 
@@ -86,7 +87,7 @@ def run_ruff(filepath: Path) -> list[Any]:
                 )
     except Exception:
         # ruff 运行失败不阻断流程
-        pass
+        logger.debug("ruff 执行失败: %s", filepath)
 
     return issues
 
@@ -130,7 +131,7 @@ def run_eslint(filepath: Path) -> list[Any]:
                         )
                     )
     except Exception:
-        pass
+        logger.debug("eslint 执行失败: %s", filepath)
 
     return issues
 
@@ -173,7 +174,7 @@ def run_bandit(filepath: Path) -> list[Any]:
                     )
                 )
     except Exception:
-        pass
+        logger.debug("bandit 执行失败: %s", filepath)
 
     return issues
 
@@ -234,7 +235,7 @@ def run_clippy(filepath: Path) -> list[Any]:
                 except json.JSONDecodeError:
                     continue
     except Exception:
-        pass
+        logger.debug("clippy 执行失败: %s", filepath)
     return issues
 
 
@@ -267,5 +268,5 @@ def run_golangci(filepath: Path) -> list[Any]:
                     )
                 )
     except Exception:
-        pass
+        logger.debug("golangci-lint 执行失败: %s", filepath)
     return issues

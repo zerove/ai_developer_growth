@@ -8,7 +8,7 @@ import os
 import subprocess
 import sys
 from pathlib import Path
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, Protocol
 
 from tools.scripts._common import get_project_root
 from tools.scripts.ai_quality_gate import check_file
@@ -22,6 +22,22 @@ from tools.scripts.validate_language_rules import (
 
 if TYPE_CHECKING:
     from collections.abc import Callable
+
+
+class _GovernanceAuditor(Protocol):
+    """governance-auditor 模块的结构化接口（动态加载，避免裸 Any 注解）。
+
+    仅声明 domain_checks 实际调用的成员；governance-auditor.py 通过
+    spec.loader.exec_module 注入，运行时仍为动态模块。
+    """
+
+    def lint(self) -> bool: ...
+    def format_check(self) -> bool: ...
+    def typecheck(self) -> bool: ...
+    def test(self) -> bool: ...
+    def validate_governance_docs(self) -> bool: ...
+    def check_ai_sdlc_compliance(self) -> bool: ...
+    def audit_hallucination_risks(self) -> bool: ...
 
 
 def _issue_key(issue: dict[str, Any]) -> str:
@@ -625,7 +641,7 @@ def run_governance_audit(
 
 
 def _option_governance_checks(
-    ga: Any,
+    ga: _GovernanceAuditor,
     *,
     full: bool,
     validate_docs: bool,
@@ -646,7 +662,7 @@ def _option_governance_checks(
     return checks
 
 
-def _default_governance_checks(ga: Any) -> list[tuple[str, Callable[[], bool]]]:
+def _default_governance_checks(ga: _GovernanceAuditor) -> list[tuple[str, Callable[[], bool]]]:
     """无显式选项时的默认 6 项检查 (Phase 36c cc 拆分: 从 _build_governance_checks 抽出)."""
     return [
         ("Lint", ga.lint),
@@ -659,7 +675,7 @@ def _default_governance_checks(ga: Any) -> list[tuple[str, Callable[[], bool]]]:
 
 
 def _build_governance_checks(
-    ga: Any,
+    ga: _GovernanceAuditor,
     *,
     full: bool,
     validate_docs: bool,

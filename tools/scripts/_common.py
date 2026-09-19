@@ -35,7 +35,10 @@ import os
 import subprocess
 import sys
 from pathlib import Path
-from typing import Any
+from typing import TYPE_CHECKING, Any
+
+if TYPE_CHECKING:
+    from tools.scripts.rules_engine.ast_nodes import _TreeNode
 
 # ----------------------------------------------------------
 # Path helpers
@@ -317,7 +320,7 @@ def filter_supported_files(files: list[Path]) -> list[Path]:
 # ----------------------------------------------------------
 
 
-def child_by_type(node: Any, node_type: str) -> Any | None:
+def child_by_type(node: _TreeNode, node_type: str) -> _TreeNode | None:
     """Return first direct child of the given type."""
     for child in node.children:
         if child.type == node_type:
@@ -325,7 +328,7 @@ def child_by_type(node: Any, node_type: str) -> Any | None:
     return None
 
 
-def find_first(node: Any, node_type: str) -> Any | None:
+def find_first(node: _TreeNode, node_type: str) -> _TreeNode | None:
     """Return first node of the given type via DFS (self inclusive)."""
     if node.type == node_type:
         return node
@@ -336,7 +339,7 @@ def find_first(node: Any, node_type: str) -> Any | None:
     return None
 
 
-def find_first_at_depth(node: Any, node_type: str, max_depth: int) -> Any | None:
+def find_first_at_depth(node: _TreeNode, node_type: str, max_depth: int) -> _TreeNode | None:
     """Return first node of the given type via DFS, bounded by max_depth."""
     if node.type == node_type:
         return node
@@ -349,11 +352,13 @@ def find_first_at_depth(node: Any, node_type: str, max_depth: int) -> Any | None
     return None
 
 
-def node_text(node: Any) -> str:
+def node_text(node: _TreeNode | None) -> str:
     """Extract text from a tree-sitter node; None-safe ("" for None text/node)."""
-    if node is None or node.text is None:
+    if node is None:
         return ""
-    text = node.text
+    text: bytes | str | None = node.text
+    if text is None:
+        return ""
     return text.decode("utf-8", errors="replace") if isinstance(text, bytes) else str(text)
 
 

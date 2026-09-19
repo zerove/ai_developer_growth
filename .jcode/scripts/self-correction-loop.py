@@ -24,7 +24,7 @@ from dataclasses import dataclass, field
 from enum import Enum, auto
 from pathlib import Path
 from types import ModuleType
-from typing import Any, ClassVar
+from typing import ClassVar
 
 from _common import print_check, print_section
 
@@ -123,7 +123,7 @@ def get_registry(
     enable_pattern: bool = True,
     enable_llm: bool = True,
     llm_model: str = "gpt-4-turbo-preview",
-    **llm_kwargs: Any,
+    **llm_kwargs: object,
 ) -> StrategyRegistry:
     chain: list[Strategy] = []
     if enable_retry:

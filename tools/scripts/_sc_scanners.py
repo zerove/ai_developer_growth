@@ -180,7 +180,7 @@ class OSVScanner:
         return None
 
 
-def _parse_ghsa_severity(raw: Any) -> Severity:
+def _parse_ghsa_severity(raw: object | None) -> Severity:
     """将 GHSA severity 字符串映射为 Severity 枚举 (模块级 helper).
 
     Args:

@@ -1,39 +1,32 @@
-name: "Lint & Format Reusable"
-
 on:
-  workflow_call:
-
+  workflow_call: {}
+name: Lint & Format Reusable
+true:
+  workflow_call: null
 jobs:
   lint:
     name: Lint & Format
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
-        with:
-          python-version: "3.11"
-          cache: pip
-          cache-dependency-path: pyproject.toml
-      - name: Read ruff version from pyproject.toml
-        id: ruff-version
-        run: |
-          python -c "
-          import tomllib
-          import re
-          with open('pyproject.toml', 'rb') as f:
-              data = tomllib.load(f)
-          # Find ruff version in dev dependencies
-          dev_deps = data.get('project', {}).get('optional-dependencies', {}).get('dev', [])
-          ruff_version = '0.15.17'  # fallback
-          for dep in dev_deps:
-              if dep.startswith('ruff'):
-                  # Extract version specifier (==, >=, etc.)
-                  ruff_version = dep[4:]  # remove 'ruff'
-                  break
-          print(f'ruff_version={ruff_version}')
-          " >> $GITHUB_OUTPUT
-      - run: pip install ruff${{ steps.ruff-version.outputs.ruff_version }}
-      - name: Ruff check
-        run: ruff check .
-      - name: Ruff format check
-        run: ruff format --check .
+    - uses: actions/checkout@v4
+    - uses: actions/setup-python@v5
+      with:
+        python-version: '3.11'
+        cache: pip
+        cache-dependency-path: pyproject.toml
+    - name: Read ruff version from pyproject.toml
+      id: ruff-version
+      run: "python -c \"\nimport tomllib\nimport re\nwith open('pyproject.toml', 'rb')\
+        \ as f:\n    data = tomllib.load(f)\n# Find ruff version in dev dependencies\n\
+        dev_deps = data.get('project', {}).get('optional-dependencies', {}).get('dev',\
+        \ [])\nruff_version = '0.15.17'  # fallback\nfor dep in dev_deps:\n    if\
+        \ dep.startswith('ruff'):\n        # Extract version specifier (==, >=, etc.)\n\
+        \        ruff_version = dep[4:]  # remove 'ruff'\n        break\nprint(f'ruff_version={ruff_version}')\n\
+        \" >> $GITHUB_OUTPUT\n"
+    - run: pip install ruff${{ steps.ruff-version.outputs.ruff_version }}
+    - name: Ruff check
+      run: ruff check .
+    - name: Ruff format check
+      run: ruff format --check .
+'on':
+  workflow_call: {}

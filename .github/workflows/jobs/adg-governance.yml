@@ -1,21 +1,21 @@
-name: "ADG Governance Reusable"
-
 on:
+  workflow_call: {}
+name: ADG Governance Reusable
+true:
   workflow_call:
     inputs:
       target-path:
-        description: "Path to check"
+        description: Path to check
         type: string
-        default: "tools/scripts/"
+        default: tools/scripts/
       severity:
-        description: "Severity level"
+        description: Severity level
         type: string
-        default: "error"
+        default: error
     outputs:
       error-count:
-        description: "Number of errors found"
+        description: Number of errors found
         value: ${{ jobs.adg-governance.outputs.error-count }}
-
 jobs:
   adg-governance:
     name: ADG Governance
@@ -23,26 +23,25 @@ jobs:
     outputs:
       error-count: ${{ steps.check.outputs.error-count }}
     steps:
-      - uses: actions/checkout@v4
-      - name: Install deps
-        run: pip install -e .
-      - name: Detect language
-        run: python -m tools.scripts.adg_cli detect .
-      - name: Check anti-patterns
-        id: check
-        run: |
-          python -m tools.scripts.adg_cli check ${{ inputs.target-path }} --lang python --severity ${{ inputs.severity }} --json > adg-report.json
-          ERROR_COUNT=$(python -c "import json; print(json.load(open('adg-report.json'))['summary']['error'])")
-          echo "Errors: $ERROR_COUNT"
-          echo "error-count=$ERROR_COUNT" >> $GITHUB_OUTPUT
-          if [ "$ERROR_COUNT" -gt 0 ]; then
-            echo "::error::ADG governance found $ERROR_COUNT errors"
-            python -m tools.scripts.adg_cli check ${{ inputs.target-path }} --lang python --severity ${{ inputs.severity }}
-            exit 1
-          fi
-      - name: Upload ADG report
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: adg-governance-report
-          path: adg-report.json
+    - uses: actions/checkout@v4
+    - name: Install deps
+      run: pip install -e .
+    - name: Detect language
+      run: python -m tools.scripts.adg_cli detect .
+    - name: Check anti-patterns
+      id: check
+      run: "python -m tools.scripts.adg_cli check ${{ inputs.target-path }} --lang\
+        \ python --severity ${{ inputs.severity }} --json > adg-report.json\nERROR_COUNT=$(python\
+        \ -c \"import json; print(json.load(open('adg-report.json'))['summary']['error'])\"\
+        )\necho \"Errors: $ERROR_COUNT\"\necho \"error-count=$ERROR_COUNT\" >> $GITHUB_OUTPUT\n\
+        if [ \"$ERROR_COUNT\" -gt 0 ]; then\n  echo \"::error::ADG governance found\
+        \ $ERROR_COUNT errors\"\n  python -m tools.scripts.adg_cli check ${{ inputs.target-path\
+        \ }} --lang python --severity ${{ inputs.severity }}\n  exit 1\nfi\n"
+    - name: Upload ADG report
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: adg-governance-report
+        path: adg-report.json
+'on':
+  workflow_call: {}

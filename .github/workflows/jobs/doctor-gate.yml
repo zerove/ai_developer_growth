@@ -1,65 +1,72 @@
-name: "Doctor Gate Reusable"
-
 on:
-  workflow_call:
-
+  workflow_call: {}
+name: Doctor Gate Reusable
+true:
+  workflow_call: null
 jobs:
   doctor:
     name: Gate Environment Doctor
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, macos-latest, windows-latest]
+        os:
+        - ubuntu-latest
+        - macos-latest
+        - windows-latest
     runs-on: ${{ matrix.os }}
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
-        with:
-          python-version: "3.11"
-          cache: pip
-          cache-dependency-path: pyproject.toml
-      # 跨平台冒烟验证: 门禁工具链在三大 OS 上的可用性。
-      # 完整质量审计仍由 Linux 上的 governance-audit 承担，此处只做环境自检，
-      # 防止路径分隔符/超时行为等平台差异导致门禁在其他开发者机器上静默失效。
-      - name: Install gate toolchain
-        run: |
-          python -m pip install --upgrade pip
-          pip install ruff mypy pytest pytest-cov pytest-xdist pytest-rerunfailures bandit pip-audit pyyaml pre-commit
-      - name: Run hooks doctor (baseline check is Linux-only; baseline.json uses POSIX paths)
-        if: runner.os == 'Linux'
-        run: python tools/scripts/hooks_runner.py doctor
-      - name: Run hooks doctor (skip baseline on non-Linux due to path format)
-        if: runner.os != 'Linux'
-        run: python tools/scripts/hooks_runner.py doctor || echo "::warning::doctor reported issues on ${{ runner.os }}"
+    - uses: actions/checkout@v4
+    - uses: actions/setup-python@v5
+      with:
+        python-version: '3.11'
+        cache: pip
+        cache-dependency-path: pyproject.toml
+    - name: Install gate toolchain
+      run: 'python -m pip install --upgrade pip
 
+        pip install ruff mypy pytest pytest-cov pytest-xdist pytest-rerunfailures
+        bandit pip-audit pyyaml pre-commit
+
+        '
+    - name: Run hooks doctor (baseline check is Linux-only; baseline.json uses POSIX
+        paths)
+      if: runner.os == 'Linux'
+      run: python tools/scripts/hooks_runner.py doctor
+    - name: Run hooks doctor (skip baseline on non-Linux due to path format)
+      if: runner.os != 'Linux'
+      run: python tools/scripts/hooks_runner.py doctor || echo "::warning::doctor
+        reported issues on ${{ runner.os }}"
   baseline-guard:
     name: Baseline Anti-Tamper Check
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-      - uses: actions/setup-python@v5
-        with:
-          python-version: "3.11"
-          cache: pip
-          cache-dependency-path: pyproject.toml
-      - name: Install gate toolchain
-        run: |
-          python -m pip install --upgrade pip
-          pip install ruff mypy pytest pyyaml tree-sitter tree-sitter-python
-      - name: Validate baseline structure
-        run: python tools/scripts/hooks_runner.py baseline validate
-      - name: Recompute issues and compare with baseline
-        run: python tools/scripts/hooks_runner.py baseline recompute
+    - uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+    - uses: actions/setup-python@v5
+      with:
+        python-version: '3.11'
+        cache: pip
+        cache-dependency-path: pyproject.toml
+    - name: Install gate toolchain
+      run: 'python -m pip install --upgrade pip
 
+        pip install ruff mypy pytest pyyaml tree-sitter tree-sitter-python
+
+        '
+    - name: Validate baseline structure
+      run: python tools/scripts/hooks_runner.py baseline validate
+    - name: Recompute issues and compare with baseline
+      run: python tools/scripts/hooks_runner.py baseline recompute
   audit-trends:
     name: Audit Ledger Integrity & Trends
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
-        with:
-          python-version: "3.11"
-      - name: Verify ledger chain and trend alerts
-        run: python tools/scripts/audit_trends.py
+    - uses: actions/checkout@v4
+    - uses: actions/setup-python@v5
+      with:
+        python-version: '3.11'
+    - name: Verify ledger chain and trend alerts
+      run: python tools/scripts/audit_trends.py
+'on':
+  workflow_call: {}

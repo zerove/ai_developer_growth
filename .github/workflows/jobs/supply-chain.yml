@@ -1,136 +1,100 @@
-name: "Multi-language Supply Chain Reusable"
-
 on:
+  workflow_call: {}
+name: Multi-language Supply Chain Reusable
+true:
   workflow_call:
     inputs:
       action:
-        description: "Supply chain action to perform"
+        description: Supply chain action to perform
         type: string
         required: true
       project-path:
-        description: "Path to project root (auto-detects languages)"
+        description: Path to project root (auto-detects languages)
         type: string
         required: false
-        default: "."
+        default: .
       format:
-        description: "Output format (json, spdx, cyclonedx)"
+        description: Output format (json, spdx, cyclonedx)
         type: string
         required: false
-        default: "json"
+        default: json
       output:
-        description: "Output file path"
+        description: Output file path
         type: string
         required: false
       policy-file:
-        description: "Path to policy file for compliance check"
+        description: Path to policy file for compliance check
         type: string
         required: false
       severity:
-        description: "Minimum severity for vulnerability scan"
+        description: Minimum severity for vulnerability scan
         type: string
         required: false
-        default: "medium"
+        default: medium
       max-age-days:
-        description: "Maximum age in days for dependency freshness"
+        description: Maximum age in days for dependency freshness
         type: string
         required: false
-        default: "90"
-
+        default: '90'
 jobs:
   supply-chain:
     name: Multi-language Supply Chain
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-
-      - uses: actions/setup-python@v5
-        with:
-          python-version: "3.11"
-          cache: pip
-          cache-dependency-path: pyproject.toml
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: "20"
-          cache: npm
-
-      - name: Setup Go
-        uses: actions/setup-go@v5
-        with:
-          go-version: "1.22"
-
-      - name: Setup Rust
-        uses: actions-rust-lang/setup-rust@v1
-        with:
-          rust-version: "stable"
-
-      - name: Setup Java
-        uses: actions/setup-java@v4
-        with:
-          distribution: "temurin"
-          java-version: "21"
-          cache: maven
-
-      - name: Upgrade setuptools
-        run: pip install -U "setuptools>=83.0.0"
-
-      - name: Install JCode
-        run: pip install -e .
-
-      - name: Run Supply Chain Action
-        id: supply-chain
-        run: |
-          set -e
-          ACTION="${{ inputs.action }}"
-          PROJECT="${{ inputs.project-path }}"
-          FORMAT="${{ inputs.format }}"
-          OUTPUT="${{ inputs.output }}"
-
-          case "$ACTION" in
-            sbom)
-              python -m tools.scripts.hooks_runner supply-chain sbom \
-                --path "$PROJECT" \
-                --format "$FORMAT" \
-                ${OUTPUT:+--output "$OUTPUT"}
-              ;;
-            scan)
-              python -m tools.scripts.hooks_runner supply-chain scan \
-                --path "$PROJECT" \
-                --format "$FORMAT" \
-                ${OUTPUT:+--output "$OUTPUT"} \
-                ${policy-file:+--policy-file "${{ inputs.policy-file }}"}
-              ;;
-            compliance)
-              python -m tools.scripts.hooks_runner supply-chain compliance \
-                --path "$PROJECT" \
-                --policy-file "${{ inputs.policy-file }}" \
-                --format "$FORMAT" \
-                ${OUTPUT:+--output "$OUTPUT"}
-              ;;
-            freshness)
-              python -m tools.scripts.hooks_runner supply-chain freshness \
-                --path "$PROJECT" \
-                --max-age-days "${{ inputs.max-age-days }}" \
-                --format "$FORMAT" \
-                ${OUTPUT:+--output "$OUTPUT"}
-              ;;
-            verify)
-              python -m tools.scripts.hooks_runner supply-chain verify \
-                --path "$PROJECT" \
-                --format "$FORMAT" \
-                ${OUTPUT:+--output "$OUTPUT"}
-              ;;
-            *)
-              echo "Unknown action: $ACTION"
-              exit 1
-              ;;
-          esac
-
-      - name: Upload supply chain output
-        if: inputs.output != '' && always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: supply-chain-output
-          path: ${{ inputs.output }}
-          retention-days: 30
+    - uses: actions/checkout@v4
+    - uses: actions/setup-python@v5
+      with:
+        python-version: '3.11'
+        cache: pip
+        cache-dependency-path: pyproject.toml
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20'
+        cache: npm
+    - name: Setup Go
+      uses: actions/setup-go@v5
+      with:
+        go-version: '1.22'
+    - name: Setup Rust
+      uses: actions-rust-lang/setup-rust@v1
+      with:
+        rust-version: stable
+    - name: Setup Java
+      uses: actions/setup-java@v4
+      with:
+        distribution: temurin
+        java-version: '21'
+        cache: maven
+    - name: Upgrade setuptools
+      run: pip install -U "setuptools>=83.0.0"
+    - name: Install JCode
+      run: pip install -e .
+    - name: Run Supply Chain Action
+      id: supply-chain
+      run: "set -e\nACTION=\"${{ inputs.action }}\"\nPROJECT=\"${{ inputs.project-path\
+        \ }}\"\nFORMAT=\"${{ inputs.format }}\"\nOUTPUT=\"${{ inputs.output }}\"\n\
+        \ncase \"$ACTION\" in\n  sbom)\n    python -m tools.scripts.hooks_runner supply-chain\
+        \ sbom \\\n      --path \"$PROJECT\" \\\n      --format \"$FORMAT\" \\\n \
+        \     ${OUTPUT:+--output \"$OUTPUT\"}\n    ;;\n  scan)\n    python -m tools.scripts.hooks_runner\
+        \ supply-chain scan \\\n      --path \"$PROJECT\" \\\n      --format \"$FORMAT\"\
+        \ \\\n      ${OUTPUT:+--output \"$OUTPUT\"} \\\n      ${policy-file:+--policy-file\
+        \ \"${{ inputs.policy-file }}\"}\n    ;;\n  compliance)\n    python -m tools.scripts.hooks_runner\
+        \ supply-chain compliance \\\n      --path \"$PROJECT\" \\\n      --policy-file\
+        \ \"${{ inputs.policy-file }}\" \\\n      --format \"$FORMAT\" \\\n      ${OUTPUT:+--output\
+        \ \"$OUTPUT\"}\n    ;;\n  freshness)\n    python -m tools.scripts.hooks_runner\
+        \ supply-chain freshness \\\n      --path \"$PROJECT\" \\\n      --max-age-days\
+        \ \"${{ inputs.max-age-days }}\" \\\n      --format \"$FORMAT\" \\\n     \
+        \ ${OUTPUT:+--output \"$OUTPUT\"}\n    ;;\n  verify)\n    python -m tools.scripts.hooks_runner\
+        \ supply-chain verify \\\n      --path \"$PROJECT\" \\\n      --format \"\
+        $FORMAT\" \\\n      ${OUTPUT:+--output \"$OUTPUT\"}\n    ;;\n  *)\n    echo\
+        \ \"Unknown action: $ACTION\"\n    exit 1\n    ;;\nesac\n"
+    - name: Upload supply chain output
+      if: inputs.output != '' && always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: supply-chain-output
+        path: ${{ inputs.output }}
+        retention-days: 30
+'on':
+  workflow_call: {}

@@ -1,12 +1,14 @@
-name: "Agent Validation Reusable"
-
 on:
-  workflow_call:
-
+  workflow_call: {}
+name: Agent Validation Reusable
+true:
+  workflow_call: null
 jobs:
   agent-validation:
     name: Agent Validation
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - run: python tools/scripts/validate_agent_definition.py --path agents/
+    - uses: actions/checkout@v4
+    - run: python tools/scripts/validate_agent_definition.py --path agents/
+'on':
+  workflow_call: {}

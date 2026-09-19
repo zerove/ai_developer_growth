@@ -1,81 +1,75 @@
-name: "Tests Reusable"
-
 on:
+  workflow_call: {}
+name: Tests Reusable
+true:
   workflow_call:
     inputs:
       python-version:
-        description: "Python version"
+        description: Python version
         type: string
-        default: "3.11"
+        default: '3.11'
       shard:
-        description: "Shard number (1-4), empty for full test"
+        description: Shard number (1-4), empty for full test
         type: string
-        default: ""
+        default: ''
     outputs:
       coverage-file:
-        description: "Path to coverage file"
+        description: Path to coverage file
         value: ${{ jobs.test.outputs.coverage-file }}
-
 jobs:
   test:
-    name: Tests (Python ${{ inputs.python-version }})${{ inputs.shard != '' && format(' Shard {0}/4', inputs.shard) || '' }}
+    name: Tests (Python ${{ inputs.python-version }})${{ inputs.shard != '' && format('
+      Shard {0}/4', inputs.shard) || '' }}
     runs-on: ubuntu-latest
     outputs:
       coverage-file: ${{ steps.upload.outputs.coverage-path }}
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
-        with:
-          python-version: ${{ inputs.python-version }}
-          cache: pip
-          cache-dependency-path: pyproject.toml
-      - run: pip install pytest pytest-cov pyyaml pytest-xdist
-      - run: pip install -e .
-      - name: Read coverage threshold from pyproject.toml
-        id: coverage-config
-        run: |
-          python -c "
-          import tomllib
-          with open('pyproject.toml', 'rb') as f:
-              data = tomllib.load(f)
-          fail_under = data.get('tool', {}).get('coverage', {}).get('report', {}).get('fail_under', 80)
-          print(f'fail_under={fail_under}')
-          " >> $GITHUB_OUTPUT
-      - name: Restore coverage cache
-        uses: actions/cache@v4
-        with:
-          path: .coverage*
-          key: ${{ github.repository }}-coverage-${{ inputs.python-version }}-${{ github.sha }}-${{ inputs.shard }}
-          restore-keys: |
-            ${{ github.repository }}-coverage-${{ inputs.python-version }}-
-      - name: Run tests with coverage
-        run: |
-          if [ -n "${{ inputs.shard }}" ]; then
-            pip install pytest-split
-            pytest tests/ -v -n auto --cov=tools --cov-report=xml --cov-report=term-missing --tb=short --split=${{ inputs.shard }}/4 --group-by=duration
-          else
-            pytest tests/ -v -n auto --cov=tools --cov-report=xml --cov-report=term-missing --tb=short
-          fi
-      - name: Coverage check (only for non-sharded 3.11)
-        if: inputs.python-version == '3.11' && inputs.shard == ''
-        run: |
-          python -c "
-          import xml.etree.ElementTree as ET
-          tree = ET.parse('coverage.xml')
-          root = tree.getroot()
-          coverage = float(root.attrib.get('line-rate', 0)) * 100
-          branch = float(root.attrib.get('branch-rate', 0)) * 100
-          print(f'Line: {coverage:.1f}%, Branch: {branch:.1f}%')
-          threshold = ${{ steps.coverage-config.outputs.fail_under }}
-          if coverage < threshold:
-              print(f'::error::Coverage {coverage:.1f}% < {threshold}%')
-              exit(1)
-          "
-      - name: Upload coverage
-        id: upload
-        if: inputs.shard != '' || inputs.python-version == '3.11'
-        uses: actions/upload-artifact@v4
-        with:
-          name: coverage-data${{ inputs.shard != '' && format('-shard-{0}', inputs.shard) || '' }}
-          path: .coverage
-          retention-days: 7
+    - uses: actions/checkout@v4
+    - uses: actions/setup-python@v5
+      with:
+        python-version: ${{ inputs.python-version }}
+        cache: pip
+        cache-dependency-path: pyproject.toml
+    - run: pip install pytest pytest-cov pyyaml pytest-xdist
+    - run: pip install -e .
+    - name: Read coverage threshold from pyproject.toml
+      id: coverage-config
+      run: "python -c \"\nimport tomllib\nwith open('pyproject.toml', 'rb') as f:\n\
+        \    data = tomllib.load(f)\nfail_under = data.get('tool', {}).get('coverage',\
+        \ {}).get('report', {}).get('fail_under', 80)\nprint(f'fail_under={fail_under}')\n\
+        \" >> $GITHUB_OUTPUT\n"
+    - name: Restore coverage cache
+      uses: actions/cache@v4
+      with:
+        path: .coverage*
+        key: ${{ github.repository }}-coverage-${{ inputs.python-version }}-${{ github.sha
+          }}-${{ inputs.shard }}
+        restore-keys: '${{ github.repository }}-coverage-${{ inputs.python-version
+          }}-
+
+          '
+    - name: Run tests with coverage
+      run: "if [ -n \"${{ inputs.shard }}\" ]; then\n  pip install pytest-split\n\
+        \  pytest tests/ -v -n auto --cov=tools --cov-report=xml --cov-report=term-missing\
+        \ --tb=short --split=${{ inputs.shard }}/4 --group-by=duration\nelse\n  pytest\
+        \ tests/ -v -n auto --cov=tools --cov-report=xml --cov-report=term-missing\
+        \ --tb=short\nfi\n"
+    - name: Coverage check (only for non-sharded 3.11)
+      if: inputs.python-version == '3.11' && inputs.shard == ''
+      run: "python -c \"\nimport xml.etree.ElementTree as ET\ntree = ET.parse('coverage.xml')\n\
+        root = tree.getroot()\ncoverage = float(root.attrib.get('line-rate', 0)) *\
+        \ 100\nbranch = float(root.attrib.get('branch-rate', 0)) * 100\nprint(f'Line:\
+        \ {coverage:.1f}%, Branch: {branch:.1f}%')\nthreshold = ${{ steps.coverage-config.outputs.fail_under\
+        \ }}\nif coverage < threshold:\n    print(f'::error::Coverage {coverage:.1f}%\
+        \ < {threshold}%')\n    exit(1)\n\"\n"
+    - name: Upload coverage
+      id: upload
+      if: inputs.shard != '' || inputs.python-version == '3.11'
+      uses: actions/upload-artifact@v4
+      with:
+        name: coverage-data${{ inputs.shard != '' && format('-shard-{0}', inputs.shard)
+          || '' }}
+        path: .coverage
+        retention-days: 7
+'on':
+  workflow_call: {}

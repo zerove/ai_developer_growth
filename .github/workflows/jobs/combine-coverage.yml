@@ -1,66 +1,83 @@
-name: "Combine Coverage Reusable"
-
 on:
-  workflow_call:
-
+  workflow_call: {}
+name: Combine Coverage Reusable
+true:
+  workflow_call: null
 jobs:
   combine-coverage:
     name: Combine Coverage
     if: always() && github.repository == 'zerove/ai_developer_growth'
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
-        with:
-          python-version: "3.11"
-      - name: Read coverage threshold from pyproject.toml
-        id: coverage-config
-        run: |
-          python -c "
-          import tomllib
-          with open('pyproject.toml', 'rb') as f:
-              data = tomllib.load(f)
-          fail_under = data.get('tool', {}).get('coverage', {}).get('report', {}).get('fail_under', 80)
-          print(f'fail_under={fail_under}')
-          " >> $GITHUB_OUTPUT
-      - name: Download coverage data
-        uses: actions/download-artifact@v4
-        with:
-          pattern: coverage-data*
-          path: coverage-artifacts/
-          merge-multiple: false
-      - name: Combine
-        run: |
-          pip install coverage
-          coverage combine coverage-artifacts/**/.coverage
-          coverage xml -o combined-coverage.xml
-          python -c "
-          import xml.etree.ElementTree as ET
-          tree = ET.parse('combined-coverage.xml')
-          root = tree.getroot()
-          c = float(root.attrib.get('line-rate', 0)) * 100
-          b = float(root.attrib.get('branch-rate', 0)) * 100
-          print(f'Combined: Line {c:.1f}%, Branch {b:.1f}%')
-          threshold = ${{ steps.coverage-config.outputs.fail_under }}
-          if c < threshold: exit(1)
-          "
-      - name: Upload combined
-        uses: actions/upload-artifact@v4
-        with:
-          name: combined-coverage
-          path: combined-coverage.xml
-          retention-days: 30
-      - name: Diff Cover (PR only)
-        if: github.event_name == 'pull_request'
-        run: |
-          pip install diff-cover
-          BASE_BRANCH=${{ github.base_ref }}
-          git fetch origin $BASE_BRANCH --depth=1
-          diff-cover combined-coverage.xml --compare-branch=origin/$BASE_BRANCH --fail-under=${{ steps.coverage-config.outputs.fail_under }} --html-report diff-cover-report.html || true
-      - name: Upload Diff Cover Report
-        if: github.event_name == 'pull_request' && always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: diff-cover-report
-          path: diff-cover-report.html
-          retention-days: 7
+    - uses: actions/checkout@v4
+    - uses: actions/setup-python@v5
+      with:
+        python-version: '3.11'
+    - name: Read coverage threshold from pyproject.toml
+      id: coverage-config
+      run: "python -c \"\nimport tomllib\nwith open('pyproject.toml', 'rb') as f:\n\
+        \    data = tomllib.load(f)\nfail_under = data.get('tool', {}).get('coverage',\
+        \ {}).get('report', {}).get('fail_under', 80)\nprint(f'fail_under={fail_under}')\n\
+        \" >> $GITHUB_OUTPUT\n"
+    - name: Download coverage data
+      uses: actions/download-artifact@v4
+      with:
+        pattern: coverage-data*
+        path: coverage-artifacts/
+        merge-multiple: false
+    - name: Combine
+      run: 'pip install coverage
+
+        coverage combine coverage-artifacts/**/.coverage
+
+        coverage xml -o combined-coverage.xml
+
+        python -c "
+
+        import xml.etree.ElementTree as ET
+
+        tree = ET.parse(''combined-coverage.xml'')
+
+        root = tree.getroot()
+
+        c = float(root.attrib.get(''line-rate'', 0)) * 100
+
+        b = float(root.attrib.get(''branch-rate'', 0)) * 100
+
+        print(f''Combined: Line {c:.1f}%, Branch {b:.1f}%'')
+
+        threshold = ${{ steps.coverage-config.outputs.fail_under }}
+
+        if c < threshold: exit(1)
+
+        "
+
+        '
+    - name: Upload combined
+      uses: actions/upload-artifact@v4
+      with:
+        name: combined-coverage
+        path: combined-coverage.xml
+        retention-days: 30
+    - name: Diff Cover (PR only)
+      if: github.event_name == 'pull_request'
+      run: 'pip install diff-cover
+
+        BASE_BRANCH=${{ github.base_ref }}
+
+        git fetch origin $BASE_BRANCH --depth=1
+
+        diff-cover combined-coverage.xml --compare-branch=origin/$BASE_BRANCH --fail-under=${{
+        steps.coverage-config.outputs.fail_under }} --html-report diff-cover-report.html
+        || true
+
+        '
+    - name: Upload Diff Cover Report
+      if: github.event_name == 'pull_request' && always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: diff-cover-report
+        path: diff-cover-report.html
+        retention-days: 7
+'on':
+  workflow_call: {}

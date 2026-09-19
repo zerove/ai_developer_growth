@@ -1,134 +1,102 @@
-name: "Exception Manager Reusable"
-
 on:
+  workflow_call: {}
+name: Exception Manager Reusable
+true:
   workflow_call:
     inputs:
       action:
-        description: "Exception action to perform"
+        description: Exception action to perform
         type: string
         required: true
       request-id:
-        description: "Exception request ID"
+        description: Exception request ID
         type: string
         required: false
       rule-id:
-        description: "Rule ID for new exception"
+        description: Rule ID for new exception
         type: string
         required: false
       paths:
-        description: "Comma-separated paths for exception"
+        description: Comma-separated paths for exception
         type: string
         required: false
       reason:
-        description: "Reason for exception"
+        description: Reason for exception
         type: string
         required: false
       severity:
-        description: "Original severity"
+        description: Original severity
         type: string
         required: false
       requested-severity:
-        description: "Requested severity after exception"
+        description: Requested severity after exception
         type: string
         required: false
       expires:
-        description: "Expiration date (ISO format)"
+        description: Expiration date (ISO format)
         type: string
         required: false
       created-by:
-        description: "Requester"
+        description: Requester
         type: string
         required: false
       reviewer:
-        description: "Reviewer name"
+        description: Reviewer name
         type: string
         required: false
       comment:
-        description: "Approval/rejection comment"
+        description: Approval/rejection comment
         type: string
         required: false
       status:
-        description: "Filter by status"
+        description: Filter by status
         type: string
         required: false
-
 jobs:
   exception-manager:
     name: Exception Manager
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-
-      - uses: actions/setup-python@v5
-        with:
-          python-version: "3.11"
-          cache: pip
-          cache-dependency-path: pyproject.toml
-
-      - name: Upgrade setuptools
-        run: pip install -U "setuptools>=83.0.0"
-
-      - name: Install JCode
-        run: pip install -e .
-
-      - name: Run Exception Manager
-        id: exception
-        run: |
-          set -e
-          ACTION="${{ inputs.action }}"
-
-          case "$ACTION" in
-            request)
-              python -m tools.scripts.hooks_runner exception request \
-                --rule-id "${{ inputs.rule-id }}" \
-                --paths "${{ inputs.paths }}" \
-                --reason "${{ inputs.reason }}" \
-                --severity "${{ inputs.severity }}" \
-                --requested-severity "${{ inputs.requested-severity }}" \
-                --expires "${{ inputs.expires }}" \
-                --created-by "${{ inputs.created-by }}"
-              ;;
-            approve)
-              python -m tools.scripts.hooks_runner exception approve \
-                --request-id "${{ inputs.request-id }}" \
-                --reviewer "${{ inputs.reviewer }}" \
-                --comment "${{ inputs.comment }}"
-              ;;
-            reject)
-              python -m tools.scripts.hooks_runner exception reject \
-                --request-id "${{ inputs.request-id }}" \
-                --reviewer "${{ inputs.reviewer }}" \
-                --comment "${{ inputs.comment }}"
-              ;;
-            revoke)
-              python -m tools.scripts.hooks_runner exception revoke \
-                --request-id "${{ inputs.request-id }}"
-              ;;
-            list)
-              python -m tools.scripts.hooks_runner exception list \
-                --status "${{ inputs.status }}"
-              ;;
-            check-expirations)
-              python -m tools.scripts.hooks_runner exception check-expirations
-              ;;
-            audit)
-              python -m tools.scripts.hooks_runner exception audit
-              ;;
-            sync-gitops)
-              python -m tools.scripts.hooks_runner exception sync-gitops
-              ;;
-            *)
-              echo "Unknown action: $ACTION"
-              exit 1
-              ;;
-          esac
-
-      - name: Upload exception audit
-        if: inputs.action == 'audit' && always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: exception-audit
-          path: exception-audit.json
-          retention-days: 30
+    - uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+    - uses: actions/setup-python@v5
+      with:
+        python-version: '3.11'
+        cache: pip
+        cache-dependency-path: pyproject.toml
+    - name: Upgrade setuptools
+      run: pip install -U "setuptools>=83.0.0"
+    - name: Install JCode
+      run: pip install -e .
+    - name: Run Exception Manager
+      id: exception
+      run: "set -e\nACTION=\"${{ inputs.action }}\"\n\ncase \"$ACTION\" in\n  request)\n\
+        \    python -m tools.scripts.hooks_runner exception request \\\n      --rule-id\
+        \ \"${{ inputs.rule-id }}\" \\\n      --paths \"${{ inputs.paths }}\" \\\n\
+        \      --reason \"${{ inputs.reason }}\" \\\n      --severity \"${{ inputs.severity\
+        \ }}\" \\\n      --requested-severity \"${{ inputs.requested-severity }}\"\
+        \ \\\n      --expires \"${{ inputs.expires }}\" \\\n      --created-by \"\
+        ${{ inputs.created-by }}\"\n    ;;\n  approve)\n    python -m tools.scripts.hooks_runner\
+        \ exception approve \\\n      --request-id \"${{ inputs.request-id }}\" \\\
+        \n      --reviewer \"${{ inputs.reviewer }}\" \\\n      --comment \"${{ inputs.comment\
+        \ }}\"\n    ;;\n  reject)\n    python -m tools.scripts.hooks_runner exception\
+        \ reject \\\n      --request-id \"${{ inputs.request-id }}\" \\\n      --reviewer\
+        \ \"${{ inputs.reviewer }}\" \\\n      --comment \"${{ inputs.comment }}\"\
+        \n    ;;\n  revoke)\n    python -m tools.scripts.hooks_runner exception revoke\
+        \ \\\n      --request-id \"${{ inputs.request-id }}\"\n    ;;\n  list)\n \
+        \   python -m tools.scripts.hooks_runner exception list \\\n      --status\
+        \ \"${{ inputs.status }}\"\n    ;;\n  check-expirations)\n    python -m tools.scripts.hooks_runner\
+        \ exception check-expirations\n    ;;\n  audit)\n    python -m tools.scripts.hooks_runner\
+        \ exception audit\n    ;;\n  sync-gitops)\n    python -m tools.scripts.hooks_runner\
+        \ exception sync-gitops\n    ;;\n  *)\n    echo \"Unknown action: $ACTION\"\
+        \n    exit 1\n    ;;\nesac\n"
+    - name: Upload exception audit
+      if: inputs.action == 'audit' && always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: exception-audit
+        path: exception-audit.json
+        retention-days: 30
+'on':
+  workflow_call: {}

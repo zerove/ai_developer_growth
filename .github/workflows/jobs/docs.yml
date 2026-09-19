@@ -1,31 +1,29 @@
-name: "Docs Check Reusable"
-
 on:
-  workflow_call:
-
+  workflow_call: {}
+name: Docs Check Reusable
+true:
+  workflow_call: null
 jobs:
   docs-check:
     name: Docs Structure
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - run: |
-          for f in README.md INDEX.md GOVERNANCE.md CONTRIBUTING.md ROADMAP.md LICENSE SECURITY.md CODE_OF_CONDUCT.md; do
-            test -f "$f" || { echo "Missing: $f"; exit 1; }
-          done
-          for d in docs case-studies examples tools agents; do
-            test -d "$d" || { echo "Missing dir: $d"; exit 1; }
-          done
-
+    - uses: actions/checkout@v4
+    - run: "for f in README.md INDEX.md GOVERNANCE.md CONTRIBUTING.md ROADMAP.md LICENSE\
+        \ SECURITY.md CODE_OF_CONDUCT.md; do\n  test -f \"$f\" || { echo \"Missing:\
+        \ $f\"; exit 1; }\ndone\nfor d in docs case-studies examples tools agents;\
+        \ do\n  test -d \"$d\" || { echo \"Missing dir: $d\"; exit 1; }\ndone\n"
   docs-build:
     name: MkDocs Build
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
-        with:
-          python-version: "3.11"
-          cache: pip
-          cache-dependency-path: pyproject.toml
-      - run: pip install mkdocs-material mkdocstrings mkdocstrings-python
-      - run: mkdocs build --strict
+    - uses: actions/checkout@v4
+    - uses: actions/setup-python@v5
+      with:
+        python-version: '3.11'
+        cache: pip
+        cache-dependency-path: pyproject.toml
+    - run: pip install mkdocs-material mkdocstrings mkdocstrings-python
+    - run: mkdocs build --strict
+'on':
+  workflow_call: {}

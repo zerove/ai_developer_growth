@@ -1,21 +1,23 @@
-name: "SBOM Generation Reusable"
-
 on:
-  workflow_call:
-
+  workflow_call: {}
+name: SBOM Generation Reusable
+true:
+  workflow_call: null
 jobs:
   sbom:
     name: SBOM Generation
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
-        with:
-          python-version: "3.11"
-      - run: pip install cyclonedx-bom
-      - run: cyclonedx-py environment -o sbom.json
-      - uses: actions/upload-artifact@v4
-        with:
-          name: sbom
-          path: sbom.json
-          retention-days: 30
+    - uses: actions/checkout@v4
+    - uses: actions/setup-python@v5
+      with:
+        python-version: '3.11'
+    - run: pip install cyclonedx-bom
+    - run: cyclonedx-py environment -o sbom.json
+    - uses: actions/upload-artifact@v4
+      with:
+        name: sbom
+        path: sbom.json
+        retention-days: 30
+'on':
+  workflow_call: {}

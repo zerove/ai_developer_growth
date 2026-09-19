@@ -1,26 +1,30 @@
-name: "Type Check Reusable"
-
 on:
-  workflow_call:
-
+  workflow_call: {}
+name: Type Check Reusable
+true:
+  workflow_call: null
 jobs:
   type-check:
     name: Type Check
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
-        with:
-          python-version: "3.11"
-          cache: pip
-          cache-dependency-path: pyproject.toml
-      - run: pip install mypy
-      - name: Restore mypy cache
-        uses: actions/cache@v4
-        with:
-          path: .mypy_cache
-          key: ${{ github.repository }}-mypy-${{ hashFiles('tools/scripts/**/*.py') }}
-          restore-keys: |
-            ${{ github.repository }}-mypy-
-      - name: Mypy (strict)
-        run: mypy tools/scripts/
+    - uses: actions/checkout@v4
+    - uses: actions/setup-python@v5
+      with:
+        python-version: '3.11'
+        cache: pip
+        cache-dependency-path: pyproject.toml
+    - run: pip install mypy
+    - name: Restore mypy cache
+      uses: actions/cache@v4
+      with:
+        path: .mypy_cache
+        key: ${{ github.repository }}-mypy-${{ hashFiles('tools/scripts/**/*.py')
+          }}
+        restore-keys: '${{ github.repository }}-mypy-
+
+          '
+    - name: Mypy (strict)
+      run: mypy tools/scripts/
+'on':
+  workflow_call: {}

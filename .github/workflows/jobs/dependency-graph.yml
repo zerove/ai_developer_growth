@@ -1,112 +1,84 @@
-name: "Dependency Graph Analysis Reusable"
-
 on:
+  workflow_call: {}
+name: Dependency Graph Analysis Reusable
+true:
   workflow_call:
     inputs:
       action:
-        description: "Dependency graph action to perform"
+        description: Dependency graph action to perform
         type: string
         required: true
       sbom-path:
-        description: "Path to SBOM file (JSON/SPDX/CycloneDX)"
+        description: Path to SBOM file (JSON/SPDX/CycloneDX)
         type: string
         required: false
       package:
-        description: "Package name for impact analysis"
+        description: Package name for impact analysis
         type: string
         required: false
       new-version:
-        description: "New version for impact analysis"
+        description: New version for impact analysis
         type: string
         required: false
       format:
-        description: "Output format (json, dot, mermaid, tree)"
+        description: Output format (json, dot, mermaid, tree)
         type: string
         required: false
-        default: "json"
+        default: json
       output:
-        description: "Output file path"
+        description: Output file path
         type: string
         required: false
-
 jobs:
   dependency-graph:
     name: Dependency Graph Analysis
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+    - uses: actions/checkout@v4
+    - uses: actions/setup-python@v5
+      with:
+        python-version: '3.11'
+        cache: pip
+        cache-dependency-path: pyproject.toml
+    - name: Upgrade setuptools
+      run: pip install -U "setuptools>=83.0.0"
+    - name: Install JCode
+      run: pip install -e .
+    - name: Generate SBOM if not provided
+      if: inputs.sbom-path == ''
+      id: sbom
+      run: 'python -m tools.scripts.hooks_runner supply-chain sbom --output sbom.json
+        --format json
 
-      - uses: actions/setup-python@v5
-        with:
-          python-version: "3.11"
-          cache: pip
-          cache-dependency-path: pyproject.toml
+        echo "sbom-path=sbom.json" >> $GITHUB_OUTPUT
 
-      - name: Upgrade setuptools
-        run: pip install -U "setuptools>=83.0.0"
-
-      - name: Install JCode
-        run: pip install -e .
-
-      - name: Generate SBOM if not provided
-        if: inputs.sbom-path == ''
-        id: sbom
-        run: |
-          python -m tools.scripts.hooks_runner supply-chain sbom --output sbom.json --format json
-          echo "sbom-path=sbom.json" >> $GITHUB_OUTPUT
-
-      - name: Run Dependency Graph Analysis
-        id: dep-graph
-        run: |
-          set -e
-          ACTION="${{ inputs.action }}"
-          SBOM="${{ inputs.sbom-path != '' && inputs.sbom-path || steps.sbom.outputs.sbom-path }}"
-          FORMAT="${{ inputs.format }}"
-          OUTPUT="${{ inputs.output }}"
-
-          case "$ACTION" in
-            analyze)
-              python -m tools.scripts.hooks_runner dep-graph analyze \
-                --sbom "$SBOM" \
-                --format "$FORMAT" \
-                ${OUTPUT:+--output "$OUTPUT"}
-              ;;
-            circular)
-              python -m tools.scripts.hooks_runner dep-graph circular \
-                --sbom "$SBOM" \
-                --format "$FORMAT" \
-                ${OUTPUT:+--output "$OUTPUT"}
-              ;;
-            conflicts)
-              python -m tools.scripts.hooks_runner dep-graph conflicts \
-                --sbom "$SBOM" \
-                --format "$FORMAT" \
-                ${OUTPUT:+--output "$OUTPUT"}
-              ;;
-            impact)
-              python -m tools.scripts.hooks_runner dep-graph impact \
-                --sbom "$SBOM" \
-                --package "${{ inputs.package }}" \
-                --new-version "${{ inputs.new-version }}" \
-                --format "$FORMAT" \
-                ${OUTPUT:+--output "$OUTPUT"}
-              ;;
-            export)
-              python -m tools.scripts.hooks_runner dep-graph export \
-                --sbom "$SBOM" \
-                --format "$FORMAT" \
-                ${OUTPUT:+--output "$OUTPUT"}
-              ;;
-            *)
-              echo "Unknown action: $ACTION"
-              exit 1
-              ;;
-          esac
-
-      - name: Upload dependency graph results
-        if: inputs.output != '' && always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: dependency-graph-output
-          path: ${{ inputs.output }}
-          retention-days: 30
+        '
+    - name: Run Dependency Graph Analysis
+      id: dep-graph
+      run: "set -e\nACTION=\"${{ inputs.action }}\"\nSBOM=\"${{ inputs.sbom-path !=\
+        \ '' && inputs.sbom-path || steps.sbom.outputs.sbom-path }}\"\nFORMAT=\"${{\
+        \ inputs.format }}\"\nOUTPUT=\"${{ inputs.output }}\"\n\ncase \"$ACTION\"\
+        \ in\n  analyze)\n    python -m tools.scripts.hooks_runner dep-graph analyze\
+        \ \\\n      --sbom \"$SBOM\" \\\n      --format \"$FORMAT\" \\\n      ${OUTPUT:+--output\
+        \ \"$OUTPUT\"}\n    ;;\n  circular)\n    python -m tools.scripts.hooks_runner\
+        \ dep-graph circular \\\n      --sbom \"$SBOM\" \\\n      --format \"$FORMAT\"\
+        \ \\\n      ${OUTPUT:+--output \"$OUTPUT\"}\n    ;;\n  conflicts)\n    python\
+        \ -m tools.scripts.hooks_runner dep-graph conflicts \\\n      --sbom \"$SBOM\"\
+        \ \\\n      --format \"$FORMAT\" \\\n      ${OUTPUT:+--output \"$OUTPUT\"\
+        }\n    ;;\n  impact)\n    python -m tools.scripts.hooks_runner dep-graph impact\
+        \ \\\n      --sbom \"$SBOM\" \\\n      --package \"${{ inputs.package }}\"\
+        \ \\\n      --new-version \"${{ inputs.new-version }}\" \\\n      --format\
+        \ \"$FORMAT\" \\\n      ${OUTPUT:+--output \"$OUTPUT\"}\n    ;;\n  export)\n\
+        \    python -m tools.scripts.hooks_runner dep-graph export \\\n      --sbom\
+        \ \"$SBOM\" \\\n      --format \"$FORMAT\" \\\n      ${OUTPUT:+--output \"\
+        $OUTPUT\"}\n    ;;\n  *)\n    echo \"Unknown action: $ACTION\"\n    exit 1\n\
+        \    ;;\nesac\n"
+    - name: Upload dependency graph results
+      if: inputs.output != '' && always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: dependency-graph-output
+        path: ${{ inputs.output }}
+        retention-days: 30
+'on':
+  workflow_call: {}

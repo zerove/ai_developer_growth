@@ -1,15 +1,15 @@
-name: "Setup & Cache Reusable"
-
 on:
+  workflow_call: {}
+name: Setup & Cache Reusable
+true:
   workflow_call:
     outputs:
       python-version:
-        description: "Python version used"
+        description: Python version used
         value: ${{ jobs.setup.outputs.python-version }}
       cache-hit:
-        description: "Whether pip cache was hit"
+        description: Whether pip cache was hit
         value: ${{ jobs.setup.outputs.cache-hit }}
-
 jobs:
   setup:
     name: Setup & Cache
@@ -18,12 +18,13 @@ jobs:
       python-version: ${{ env.PYTHON_VERSION }}
       cache-hit: ${{ steps.cache.outputs.cache-hit }}
     steps:
-      - uses: actions/checkout@v4
-
-      - name: Setup Python
-        id: cache
-        uses: actions/setup-python@v5
-        with:
-          python-version: ${{ env.PYTHON_VERSION }}
-          cache: pip
-          cache-dependency-path: pyproject.toml
+    - uses: actions/checkout@v4
+    - name: Setup Python
+      id: cache
+      uses: actions/setup-python@v5
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
+        cache: pip
+        cache-dependency-path: pyproject.toml
+'on':
+  workflow_call: {}

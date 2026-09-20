@@ -52,6 +52,55 @@ markdown_extensions:
 
 nav:
   - Home: index.md
+  - Case Studies:
+      - Template Community: case-studies/TEMPLATE-community.md
+      - Adg Cross Project Scan: case-studies/adg-cross-project-scan.md
+      - Adg Dogfooding Search Pipeline: case-studies/adg-dogfooding-search-pipeline.md
+      - Adg Field Validation Requests Rich: case-studies/adg-field-validation-requests-rich.md
+      - Adg Scan Httpx: case-studies/adg-scan-httpx.md
+      - Ai Context Sync Development: case-studies/ai-context-sync-development.md
+      - Ai Native Coverage Governance: case-studies/ai-native-coverage-governance.md
+      - Ai Task Prioritizer: case-studies/ai-task-prioritizer.md
+      - Aiops Automation: case-studies/aiops-automation.md
+      - Api Design Implementation: case-studies/api-design-implementation.md
+      - Api Design: case-studies/api-design.md
+      - Api Doc Generation: case-studies/api-doc-generation.md
+      - Api Monitoring: case-studies/api-monitoring.md
+      - Ast Parser Precision Coverage: case-studies/ast-parser-precision-coverage.md
+      - Automated Testing Platform: case-studies/automated-testing-platform.md
+      - Autonomous Ai Native Sdlc Delivery: case-studies/autonomous-ai-native-sdlc-delivery.md
+      - Claude Architecture Design: case-studies/claude-architecture-design.md
+      - Cli Tool Development: case-studies/cli-tool-development.md
+      - Code Review System: case-studies/code-review-system.md
+      - Code Review: case-studies/code-review.md
+      - Copilot Test Generation: case-studies/copilot-test-generation.md
+      - Cross Platform Workflow Execution: case-studies/cross-platform-workflow-execution.md
+      - Cursor Refactoring: case-studies/cursor-refactoring.md
+      - Data Migration: case-studies/data-migration.md
+      - Data Pipeline: case-studies/data-pipeline.md
+      - Database Migration: case-studies/database-migration.md
+      - Database Performance Optimization: case-studies/database-performance-optimization.md
+      - Devops Pipeline: case-studies/devops-pipeline.md
+      - Frontend Performance Optimization: case-studies/frontend-performance-optimization.md
+      - Full Integration Test: case-studies/full-integration-test.md
+      - Governance Self Audit: case-studies/governance-self-audit.md
+      - Implement Robust Feature With Full Dor And Tdd Compliance: case-studies/implement-robust-feature-with-full-dor-and-tdd-compliance.md
+      - Intelligent Customer Service: case-studies/intelligent-customer-service.md
+      - Jcode Ai Native Master Workflow Execution: case-studies/jcode-ai-native-master-workflow-execution.md
+      - Legacy Refactoring: case-studies/legacy-refactoring.md
+      - Legacy System Refactoring: case-studies/legacy-system-refactoring.md
+      - Microservice Architecture: case-studies/microservice-architecture.md
+      - Ml Model Deployment: case-studies/ml-model-deployment.md
+      - Mobile App Development: case-studies/mobile-app-development.md
+      - Multi Agent Automation: case-studies/multi-agent-automation.md
+      - Multi Agent Collaboration: case-studies/multi-agent-collaboration.md
+      - Production Debugging: case-studies/production-debugging.md
+      - Realtime Data Processing: case-studies/realtime-data-processing.md
+      - Security Audit: case-studies/security-audit.md
+      - Security Vulnerability Fix: case-studies/security-vulnerability-fix.md
+      - Technical Documentation: case-studies/technical-documentation.md
+      - Unit Testing: case-studies/unit-testing.md
+      - Web Scraping Tool: case-studies/web-scraping-tool.md
   - Announcement: announcement.md
   - Language Rules:
     - Reference: governance/language-rules-reference.md

@@ -12,5 +12,5 @@ services:
       - .:/app
     environment:
       - PYTHONUNBUFFERED=1
-    command: ["python", "ai-dev-framework/core/jcode_ai_native_workflow.py"]
+    command: ["python", "-m", "tools.scripts.jcode_ai_native_workflow"]
     restart: unless-stopped

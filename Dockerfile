@@ -22,4 +22,4 @@ EXPOSE 8000 5000
 
 ENV PYTHONUNBUFFERED=1
 
-CMD ["python", "ai-dev-framework/core/jcode_ai_native_workflow.py"]
+CMD ["python", "-m", "tools.scripts.jcode_ai_native_workflow"]

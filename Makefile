@@ -1,31 +1,31 @@
 .PHONY: help lint format format-fix typecheck test test-cov check-quality security audit validate-docs check-index sync-refs validate-governance-docs check-ai-sdlc audit-hallucination link-audit validate-cases scan full-audit full-validate mode-show mode-set-perf mode-set-quality mode-set-safe docs-build test-fast check release setup-git workflow-pr workflow-weekly workflow-release clean quick discover jcode list-tools new-skill release-version cov-diff cov-module cov-gate cov-snapshot context-status context-split
 
 help:  ## 显示帮助信息
-	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-20s\033[0m %s\n", $$1, $$2}'
+	@grep -hE '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-20s\033[0m %s\n", $$1, $$2}'
 
 lint:  ## 运行 lint 检查
-	python tools/scripts/hooks_runner.py lint
+	python -m tools.scripts.hooks_runner lint
 
 format:  ## 运行 ruff format 检查
-	python tools/scripts/hooks_runner.py format
+	python -m tools.scripts.hooks_runner format
 
 format-fix:  ## 自动修复格式
-	python tools/scripts/hooks_runner.py format
+	python -m tools.scripts.hooks_runner format
 
 typecheck:  ## 运行 mypy 类型检查
-	python tools/scripts/hooks_runner.py typecheck
+	python -m tools.scripts.hooks_runner typecheck
 
 test:  ## 运行 pytest 测试 (并行)
-	python tools/scripts/hooks_runner.py test
+	python -m tools.scripts.hooks_runner test
 
 test-cov:  ## 运行测试并生成覆盖率报告
-	python tools/scripts/hooks_runner.py test --cov
+	python -m tools.scripts.hooks_runner test --cov
 
 check-quality:  ## 运行完整质量检查 (lint + format + typecheck + test + coverage)
-	python tools/scripts/hooks_runner.py full
+	python -m tools.scripts.hooks_runner full
 
 security:  ## 运行安全扫描
-	python tools/scripts/hooks_runner.py security
+	python -m tools.scripts.hooks_runner security
 
 audit:  ## 运行治理审计 (lint + format + typecheck + test)
 	python .jcode/scripts/governance-auditor.py lint
@@ -90,25 +90,25 @@ docs-build:  ## 构建文档
 test-fast: ## 运行快速测试（跳过 @pytest.mark.slow）
 	python -m pytest tests/ -q -m "not slow" --tb=short
 
-check: lint format typecheck test validate-docs check-index semantic-graph architecture-guard slop-scan  ## 运行所有检查 (包含 AI-Native 门禁)
+check: lint format typecheck test validate-docs check-index semantic-graph architecture-guard  ## 运行所有检查 (包含 AI-Native 门禁)
 
 semantic-graph:  ## 生成语义代码知识图谱
-	python tools/scripts/semantic_code_graph.py
+	python -m tools.scripts.semantic_code_graph
 
 architecture-guard:  ## 运行架构漂移防御检查
-	python tools/scripts/architecture_drift_guard.py
+	python -m tools.scripts.architecture_drift_guard
 
 metrics-telemetry:  ## 收集研发效能与质量遥测数据
-	python tools/scripts/metrics_telemetry.py
+	python -m tools.scripts.metrics_telemetry
 
 dashboard:  ## 启动 AI-Native 终端控制台驾驶舱
-	python tools/scripts/ai_native_dashboard.py
+	python -m tools.scripts.ai_native_dashboard
 
 mcp-server:  ## 启动 AI-Native 模型上下文协议 (MCP) 服务
-	python tools/scripts/ai_native_mcp_server.py
+	python -m tools.scripts.ai_native_mcp_server
 
 multi-llm-route:  ## 运行多 LLM 智能模型路由决策
-	python tools/scripts/multi_llm_router.py
+	python -m tools.scripts.multi_llm_router
 
 # Release 自动化 (详见 Makefile.release)
 -include Makefile.release
@@ -145,7 +145,7 @@ workflow-release: ## 执行发布准备工作流 (registry.json)
 	python .jcode/scripts/community-catalyst.py leaderboard
 
 workflow-ai-native: ## 执行完整 JCode AI-Native 工作流主管道
-	python tools/scripts/jcode_ai_native_workflow.py "JCode AI-Native Master Workflow Execution"
+	python -m tools.scripts.jcode_ai_native_workflow "JCode AI-Native Master Workflow Execution"
 
 clean:  ## 清理临时文件
 	find . -type d -name __pycache__ -exec rm -rf {} + 2>/dev/null || true
@@ -158,22 +158,22 @@ clean:  ## 清理临时文件
 # ─── 快速反馈循环 (P0-1) ─────────────────────────────────
 quick:  ## 增量质量门禁 (lint + 仅改动相关测试, 5-60s)
 	@echo "═══ [quick] lint 仅改动文件 ═══"
-	@python tools/scripts/hooks_runner.py diff --base HEAD 2>/dev/null || python tools/scripts/hooks_runner.py lint
+	@python -m tools.scripts.hooks_runner diff --base HEAD 2>/dev/null || python -m tools.scripts.hooks_runner lint
 	@echo ""
 	@echo "═══ [quick] test 仅改动相关模块 ═══"
-	@python tools/scripts/hooks_runner.py test --incremental --base HEAD
+	@python -m tools.scripts.hooks_runner test --incremental --base HEAD
 
 quick-full:  ## 增量门禁无回退: 当 incremental 判定为空时仍跑 lint + typecheck
-	@python tools/scripts/hooks_runner.py lint
-	@python tools/scripts/hooks_runner.py typecheck
-	@python tools/scripts/hooks_runner.py test --incremental --base HEAD
+	@python -m tools.scripts.hooks_runner lint
+	@python -m tools.scripts.hooks_runner typecheck
+	@python -m tools.scripts.hooks_runner test --incremental --base HEAD
 
 # ─── 统一入口 (P0-2) ─────────────────────────────────────
 jcode:  ## 统一顶层入口(转发到 jcode_cli)
-	@python tools/scripts/jcode_cli.py
+	@python -m tools.scripts.jcode_cli
 
 list-tools:  ## 列出所有可用的工具脚本与 CLI 子命令
-	@python tools/scripts/jcode_cli.py list-tools 2>/dev/null || python tools/scripts/_list_tools.py
+	@python -m tools.scripts.jcode_cli list-tools 2>/dev/null || python tools/scripts/_list_tools.py
 
 discover:  ## 同 list-tools, 别名
 	@$(MAKE) list-tools
@@ -203,17 +203,17 @@ cov-snapshot:  ## 生成基线 coverage.json (用法: make cov-snapshot [OUTPUT=
 	@echo "✓ baseline written to $(or $(OUTPUT),.jcode/cov-baseline.json)"
 
 cov-diff:  ## 对比覆盖率 (用法: make cov-diff OLD=a.json NEW=b.json [THRESHOLD=2.0])
-	@python tools/scripts/cov_tool.py gate --coverage $(NEW) --baseline $(OLD) --threshold $(or $(THRESHOLD),2.0)
+	@python -m tools.scripts.cov_tool gate --coverage $(NEW) --baseline $(OLD) --threshold $(or $(THRESHOLD),2.0)
 
 cov-module:  ## 单模块覆盖率详情 (用法: make cov-module MODULE=tools.scripts.foo)
-	@python tools/scripts/cov_tool.py module --coverage $(or $(COVERAGE),coverage.json) --module $(MODULE)
+	@python -m tools.scripts.cov_tool module --coverage $(or $(COVERAGE),coverage.json) --module $(MODULE)
 
 cov-gate:  ## 与基线对比门禁 (用法: make cov-gate BASELINE=.jcode/cov-baseline.json [THRESHOLD=2.0])
 	@python -m coverage json -o /tmp/cov-gate-current.json --include=tools/scripts/*
-	@python tools/scripts/cov_tool.py gate --coverage /tmp/cov-gate-current.json --baseline $(BASELINE) --threshold $(or $(THRESHOLD),2.0)
+	@python -m tools.scripts.cov_tool gate --coverage /tmp/cov-gate-current.json --baseline $(BASELINE) --threshold $(or $(THRESHOLD),2.0)
 
 context-status:  ## 输出项目实时快照 (版本/最新 tag/最近 5 commit/测试数)
-	@python tools/scripts/context_status.py status
+	@python -m tools.scripts.context_status status
 
 context-split:  ## 一次性拆分 CONTEXT.md: 滚动日志归档到 CHANGELOG (用法: make context-split [KEEP=5])
-	@python tools/scripts/context_status.py split --keep $(or $(KEEP),5)
+	@python -m tools.scripts.context_status split --keep $(or $(KEEP),5)

@@ -60,7 +60,7 @@ jobs:
     name: Governance Audit (Reusable)
     uses: ./.github/workflows/jobs/governance-audit.yml
     with:
-      languages: "python,shell"
+      languages: '["python","shell"]'
       timeout-minutes: 20
     secrets: inherit
 
@@ -171,7 +171,7 @@ jobs:
           fi
           cat release_notes.md
       - name: Create release
-        uses: softprops/action-gh-release@v1
+        uses: softprops/action-gh-release@v2
         with:
           files: dist/*
           body_path: release_notes.md

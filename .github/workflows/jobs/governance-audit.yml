@@ -3,9 +3,9 @@ on:
   workflow_call:
     inputs:
       languages:
-        description: Comma-separated languages to audit (python,typescript,go,rust)
+        description: JSON array of languages to audit, e.g. ["python","shell"]
         type: string
-        default: python
+        default: '["python"]'
       timeout-minutes:
         description: Timeout in minutes per language
         type: number
@@ -18,8 +18,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        language: ${{ fromJson(format('["{0}"]', replace(inputs.languages, ',', '","')))
-          }}
+        language: ${{ fromJson(inputs.languages) }}
     steps:
     - uses: actions/checkout@v4
     - uses: actions/setup-python@v5
@@ -42,11 +41,7 @@ jobs:
         cache: true
     - name: Setup Rust
       if: matrix.language == 'rust'
-      uses: actions-rs/toolchain@v1
-      with:
-        toolchain: stable
-        profile: minimal
-        override: true
+      uses: dtolnay/rust-toolchain@stable
     - name: Install Python deps
       run: pip install -e ".[dev,tools]"
       if: matrix.language == 'python'
@@ -98,7 +93,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - name: Check all languages passed
-      run: "for lang in ${{ inputs.languages }}; do\n  echo \"Checking $lang...\"\n\
+      run: "for lang in ${{ join(fromJson(inputs.languages), ' ') }}; do\n  echo \"Checking $lang...\"\n\
         \  # In practice, GitHub Actions sets job status via needs.<job>.result\n\
         done\n# If any language failed, this will fail\necho \"${{ needs.governance-audit.result\
         \ }}\" | grep -q failure && exit 1 || exit 0\n"

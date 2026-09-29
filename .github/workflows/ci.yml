@@ -44,7 +44,7 @@ jobs:
     needs: setup
     uses: ./.github/workflows/jobs/governance-audit.yml
     with:
-      languages: "python,shell"
+      languages: '["python","shell"]'
       timeout-minutes: 20
     secrets: inherit
 

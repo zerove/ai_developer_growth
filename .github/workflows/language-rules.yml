@@ -18,14 +18,14 @@ on:
     paths:
       - 'ai-dev-framework/languages/**/*.yml'
       - 'ai-dev-framework/frameworks/**/*.yml'
-
-concurrency:
-  group: language-rules-${{ github.ref }}
-  cancel-in-progress: true
       - 'ai-dev-framework/common/**/*.yml'
       - 'tools/scripts/validate_language_rules.py'
       - 'tools/scripts/ai_quality_gate.py'
       - '.ai-rules/**'
+
+concurrency:
+  group: language-rules-${{ github.ref }}
+  cancel-in-progress: true
 
 env:
   PYTHON_VERSION: "3.11"

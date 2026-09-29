@@ -10,17 +10,11 @@ on:
         description: Shard number (1-4), empty for full test
         type: string
         default: ''
-    outputs:
-      coverage-file:
-        description: Path to coverage file
-        value: ${{ jobs.test.outputs.coverage-file }}
 jobs:
   test:
     name: Tests (Python ${{ inputs.python-version }})${{ inputs.shard != '' && format('
       Shard {0}/4', inputs.shard) || '' }}
     runs-on: ubuntu-latest
-    outputs:
-      coverage-file: ${{ steps.upload.outputs.coverage-path }}
     steps:
     - uses: actions/checkout@v4
     - uses: actions/setup-python@v5

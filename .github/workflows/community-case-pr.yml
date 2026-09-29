@@ -112,11 +112,11 @@ jobs:
         run: pip install -e . pyyaml
 
       - name: Generate ADR for architectural decisions
+        env:
+          PR_TITLE: ${{ github.event.pull_request.title }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          PR_BODY: ${{ github.event.pull_request.body }}
         run: |
-          PR_TITLE="${{ github.event.pull_request.title }}"
-          PR_NUMBER="${{ github.event.pull_request.number }}"
-          PR_BODY="${{ github.event.pull_request.body }}"
-
           if echo "$PR_BODY" | grep -qiE "架构|架构决策|ADR|技术选型|重大变更"; then
             echo "检测到架构决策，生成 ADR..."
             python tools/scripts/adr_generator.py --pr "$PR_NUMBER" --title "$PR_TITLE" --brief "$PR_BODY" || true

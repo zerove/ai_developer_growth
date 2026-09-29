@@ -1,0 +1,200 @@
+---
+title: ADG 自举案例：用自身门禁修复知识检索管道（jieba 零召回事件）
+description: 本项目以自身为实验场的 dogfooding 记录——治理钩子链在 AI agent 开发中拦截真实缺陷并形成防退化闭环的完整过程
+category: 案例研究
+tags:
+    - dogfooding
+    - quality-gate
+    - search
+    - jieba
+    - ai-sdlc
+difficulty: 中级
+---
+
+# ADG 自举案例：用自身门禁修复知识检索管道
+
+## 背景与挑战
+
+AI Developer Growth（ADG）是 268 篇文档的 AI 开发方法论知识库，配套治理框架与
+AI-Native SDLC 自动化。项目宣称的核心价值是"质量门禁能拦住 AI 快速写码引入的缺陷"，
+但这一直是一个**未经验证的自我声明**。
+
+2026-08 的客观分析发现了三处硬伤，其中最典型的是：知识库检索服务 `search-server.py`
+引用的 `enhanced_tfidf` 模块只存在于示例项目里，服务器从未能启动，也没有任何测试。
+**知识库建好了，但取用管道是断的**——而所有既有门禁都没有发现这件事。
+
+挑战由此具体化：
+
+1. 门禁链能否在修复过程中持续拦截真实问题（而非只在 CI 里走过场）？
+2. 修复后的检索质量如何防止未来退化？
+3. 项目能否产出可复核的证据，证明方法论对自己有效？
+
+## AI 协作过程
+
+整个修复由 Jcode agent 在多轮会话中以自主推进模式完成，人类仅做方向确认。
+
+**阶段一：根因定位。** 端到端测试发现中文长查询全部零召回。逐层排查：
+服务进程 → 分词器实现 → 发现 `_tokenize` 在 jieba 缺失时静默回退整串正则匹配，
+中文查询永远无法命中词条。根因是环境依赖缺失 + 回退逻辑无告警。
+
+**阶段二：修复与依赖声明。** 安装 jieba 后 5 条真实长查询全部命中；同时修正
+`requirements.txt` 中"无其他运行依赖"的错误声明，补齐 fastapi/uvicorn/jieba。
+
+**阶段三：防退化固化。** 新增 `tests/test_search_recall.py`：14 条中文查询→期望
+命中文档的基准断言，其中一条专门断言"零召回即失败"。此后任何分词/评分改动若引发
+召回退化，测试会立刻失败。
+
+**阶段四：门禁反噬验证。** 后续提交过程中，钩子链真实拦下了多次缺陷：
+mypy 先后报出 `arg-type`、`attr-defined`、`call-overload` 三类类型错误；
+ruff format 与 import 排序各拦截一次；link_auditor 抓出了新文档里的两条 wikilink
+断链。每次都被如实记录、修复后重新提交——没有绕过或掩盖。
+
+## 效率对比数据
+
+| 维度 | 传统人工排查 | 本案例 AI 协作 | 备注 |
+|------|-------------|---------------|------|
+| 断裂管道发现 | 未发现（长期潜伏） | 客观分析一轮定位 | 门禁此前也未发现 |
+| 根因定位到修复 | 约 0.5-1 天 | 单次会话内约 10 分钟 | 含端到端复测 |
+| 防退化基准建设 | 通常不做 | 同会话内 14 条断言固化 | 复用成本低 |
+| 门禁拦截次数 | — | mypy×3 + ruff×2 + 断链×1 | 全部真实有效 |
+
+| 指标 | 数值 |
+|------|------|
+| 最终全量测试 | 2560 passed |
+| 召回基准 | 14/14 通过 |
+| 检索服务可用性 | systemd 常驻 + 健康检查 + 匿名查询日志 |
+
+## 关键洞察
+
+1. **静默回退是最危险的失败模式**。jieba 缺失时代码不崩溃、不告警，只是悄悄返回
+   空结果。对 AI 生成的代码，"能跑"与"正确"之间的鸿沟必须靠显式断言填补。
+2. **门禁的价值在被触发时才成立**。本案例中六次真实拦截证明钩子链不是摆设；
+   反过来，最初"检索管道断裂"恰恰暴露了门禁覆盖面之外仍有盲区——门禁需要持续审计补全。
+3. **修复必须伴随防复发机制**。只修 bug 不建基准，同类问题必然重演；14 条召回
+   基准的成本极低但把"隐性回归"变成了"显性测试失败"。
+4. **dogfooding 是方法论的最终检验**。项目用它教别人的东西解决自己的问题，
+   并留下可复核的过程数据，这比任何文档宣称都有说服力。
+
+## 适用场景
+
+- AI agent 高速迭代代码的项目，需要防止错误同速累积
+- 中文内容检索/分词场景，警惕依赖缺失导致的静默降级
+- 想验证自家治理流程是否真实有效的团队：选一个自举案例完整记录
+
+## 交付物清单
+
+- `tools/scripts/search/tfidf_engine.py` 共享检索引擎（含 jieba 分词）
+- `scripts/search-server.py` 检索服务（安全绑定/热重载/匿名查询日志）
+- `tests/test_search_recall.py` 14 条中文召回基准
+- `tests/test_enhanced_tfidf_shim.py` shim 一致性守卫
+- `deploy/systemd/search-server.service` 加固的服务单元
+- `docs/tools/search-server-and-mcp.md` 使用指南与排障表
+
+## 提交前检查
+
+- [x] 全量测试通过（2560 passed）
+- [x] pre-commit/pre-push 钩子链真实通过（含 mypy/ruff/bandit）
+- [x] 效率数据来自实际 git 历史与会话记录，非估算编造
+- [x] validate_case_study 格式校验通过
+
+
+## 相关方法论
+
+- **相关方法论**: [ai-native-sdlc-whitepaper](../efficiency/ai-native-sdlc-whitepaper.md)
+
+- **相关方法论**: [ai-debugging-efficiency](../efficiency/ai-debugging-efficiency.md)
+
+- **相关方法论**: [ai-nondeterministic-testing](../efficiency/ai-nondeterministic-testing.md)
+
+- **相关方法论**: [ai-documentation](../efficiency/ai-documentation.md)
+
+- **相关方法论**: [ai-data-engineering](../efficiency/ai-data-engineering.md)
+
+- **相关方法论**: [ai-testing-strategies](../efficiency/ai-testing-strategies.md)
+
+- **相关方法论**: [ai-blog-operations](../efficiency/ai-blog-operations.md)
+
+- **相关方法论**: [ai-model-selection](../efficiency/ai-model-selection.md)
+
+- **相关方法论**: [ai-security-development](../efficiency/ai-security-development.md)
+
+- **相关方法论**: [ai-debugging-standards](../efficiency/ai-debugging-standards.md)
+
+- **相关方法论**: [ai-hallucination-mitigation](../efficiency/ai-hallucination-mitigation.md)
+
+- **相关方法论**: [ai-refactoring](../efficiency/ai-refactoring.md)
+
+- **相关方法论**: [ai-requirement-analysis](../efficiency/ai-requirement-analysis.md)
+
+- **相关方法论**: [ai-deployment-operations](../efficiency/ai-deployment-operations.md)
+
+- **相关方法论**: [ai-machine-learning](../efficiency/ai-machine-learning.md)
+
+- **相关方法论**: [ai-open-source-management](../efficiency/ai-open-source-management.md)
+
+- **相关方法论**: [ai-code-licensing](../efficiency/ai-code-licensing.md)
+
+- **相关方法论**: [ai-project-management](../efficiency/ai-project-management.md)
+
+- **相关方法论**: [ai-technical-writing](../efficiency/ai-technical-writing.md)
+
+- **相关方法论**: [ai-code-review](../efficiency/ai-code-review.md)
+
+- **相关方法论**: [ai-learning-path](../efficiency/ai-learning-path.md)
+
+- **相关方法论**: [ai-interview-preparation](../efficiency/ai-interview-preparation.md)
+
+- **相关方法论**: [ai-developer-training](../efficiency/ai-developer-training.md)
+
+- **相关方法论**: [ai-devops](../efficiency/ai-devops.md)
+
+- **相关方法论**: [ai-code-analysis](../efficiency/ai-code-analysis.md)
+
+- **相关方法论**: [ai-performance-benchmarks](../efficiency/ai-performance-benchmarks.md)
+
+- **相关方法论**: [ai-coding-efficiency](../efficiency/ai-coding-efficiency.md)
+
+- **相关方法论**: [ai-security-review](../efficiency/ai-security-review.md)
+
+- **相关方法论**: [ai-team-collaboration](../efficiency/ai-team-collaboration.md)
+
+- **相关方法论**: [ai-context-window-management](../efficiency/ai-context-window-management.md)
+
+- **相关方法论**: [ai-dev-toolchain](../efficiency/ai-dev-toolchain.md)
+
+- **相关方法论**: [ai-frontend-development](../efficiency/ai-frontend-development.md)
+
+- **相关方法论**: [ai-code-review-checklist](../efficiency/ai-code-review-checklist.md)
+
+- **相关方法论**: [ai-tech-selection](../efficiency/ai-tech-selection.md)
+
+- **相关方法论**: [ai-dev-environment](../efficiency/ai-dev-environment.md)
+
+- **相关方法论**: [ai-api-design](../efficiency/ai-api-design.md)
+
+- **相关方法论**: [ai-version-control](../efficiency/ai-version-control.md)
+
+- **相关方法论**: [ai-performance-optimization](../efficiency/ai-performance-optimization.md)
+
+- **相关方法论**: [ai-architecture-design](../efficiency/ai-architecture-design.md)
+
+- **相关方法论**: [ai-mobile-development](../efficiency/ai-mobile-development.md)
+
+- **相关方法论**: [ai-test-coverage-methodology](../efficiency/ai-test-coverage-methodology.md)
+
+- **相关方法论**: [ai-code-generation-quality](../efficiency/ai-code-generation-quality.md)
+
+- **相关方法论**: [ai-code-performance](../efficiency/ai-code-performance.md)
+
+- **相关方法论**: [ai-database-design](../efficiency/ai-database-design.md)
+
+- **相关方法论**: [ai-code-migration](../efficiency/ai-code-migration.md)
+
+- **相关方法论**: [ai-backend-development](../efficiency/ai-backend-development.md)
+
+- **相关方法论**: [ai-open-source-contribution](../efficiency/ai-open-source-contribution.md)
+
+- **相关方法论**: [ai-test-generation](../efficiency/ai-test-generation.md)
+
+- **相关方法论**: [ai-technical-debt](../efficiency/ai-technical-debt.md)
+

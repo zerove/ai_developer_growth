@@ -11,7 +11,7 @@ updated: 2026-08-25
 
 > **⚠️ 本文已于 2026-08-25 归档，不再是活跃计划。**
 >
-> 项目当前唯一权威路线图为仓库根目录的 [`ROADMAP.md`](../../ROADMAP.md)。
+> 项目当前唯一权威路线图为仓库根目录的 [`ROADMAP.md`](https://github.com/zerove/ai_developer_growth/blob/master/ROADMAP.md)。
 > 本文档记录的是 ai-dev-framework（adg CLI）v1.x 阶段的独立开发计划，
 > 其中的框架规则补全、CI 模板等目标已在 v2.x 主线中完成或被取代。
 >

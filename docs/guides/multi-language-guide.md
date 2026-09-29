@@ -501,8 +501,8 @@ extensions:
 
 ## 相关文档
 
-- [GOVERNANCE.md](GOVERNANCE.md) - 治理标准
-- [AGENTS.md](AGENTS.md) - Agent 定义索引
-- [CONTRIBUTING.md](CONTRIBUTING.md) - 贡献指南
-- [tools/scripts/language_registry.py](tools/scripts/language_registry.py) - 注册表源码
-- [.jcode/project.yaml](.jcode/project.yaml) - 配置示例
+- [GOVERNANCE.md](https://github.com/zerove/ai_developer_growth/blob/master/GOVERNANCE.md) - 治理标准
+- [AGENTS.md](https://github.com/zerove/ai_developer_growth/blob/master/AGENTS.md) - Agent 定义索引
+- [CONTRIBUTING.md](https://github.com/zerove/ai_developer_growth/blob/master/CONTRIBUTING.md) - 贡献指南
+- [tools/scripts/language_registry.py](https://github.com/zerove/ai_developer_growth/blob/master/tools/scripts/language_registry.py) - 注册表源码
+- [.jcode/project.yaml](https://github.com/zerove/ai_developer_growth/blob/master/.jcode/project.yaml) - 配置示例

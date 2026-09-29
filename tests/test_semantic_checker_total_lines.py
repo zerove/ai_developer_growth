@@ -22,9 +22,9 @@ def test_total_lines_real_rules_engine() -> None:
 def test_total_lines_real_tools_scripts() -> None:
     """整个 tools/scripts/ 真实代码 total_lines > 0."""
     result = SemanticChecker().analyze_directory(Path("tools/scripts"))
-    assert result.files_analyzed == 224
+    assert result.files_analyzed == 217
     assert result.metrics.total_lines > 0
-    # 223 文件 (含 ast_walkers/checker_modules 拆分新增), 平均 ~150 行/文件, 期望 >= 10000
+    # 217 文件 (已移除未接线的 ast_walkers 死包 7 个), 期望 >= 10000
     assert result.metrics.total_lines >= 10000
 
 

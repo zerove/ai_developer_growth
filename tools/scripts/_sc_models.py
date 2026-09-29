@@ -9,11 +9,11 @@ from __future__ import annotations
 import json
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
-from enum import StrEnum
+from enum import Enum
 from typing import Any
 
 
-class Severity(StrEnum):
+class Severity(str, Enum):
     """漏洞严重性"""
 
     CRITICAL = "critical"
@@ -23,7 +23,7 @@ class Severity(StrEnum):
     NONE = "none"
 
 
-class LicensePolicy(StrEnum):
+class LicensePolicy(str, Enum):
     """许可证策略"""
 
     ALLOW = "allow"

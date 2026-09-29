@@ -7,12 +7,12 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from enum import StrEnum
+from enum import Enum
 from pathlib import Path
 from typing import Any
 
 
-class SeverityLevel(StrEnum):
+class SeverityLevel(str, Enum):
     """严重性级别"""
 
     ERROR = "error"
@@ -20,7 +20,7 @@ class SeverityLevel(StrEnum):
     INFO = "info"
 
 
-class ToolCategory(StrEnum):
+class ToolCategory(str, Enum):
     """工具类别"""
 
     LINT = "lint"

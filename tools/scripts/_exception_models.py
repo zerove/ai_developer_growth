@@ -9,11 +9,11 @@ from __future__ import annotations
 
 from dataclasses import asdict, dataclass, field
 from datetime import datetime, timezone
-from enum import StrEnum
+from enum import Enum
 from typing import Any
 
 
-class ExceptionStatus(StrEnum):
+class ExceptionStatus(str, Enum):
     """例外状态"""
 
     PENDING = "pending"  # 待审批
@@ -23,7 +23,7 @@ class ExceptionStatus(StrEnum):
     REVOKED = "revoked"  # 已撤销
 
 
-class ApprovalAction(StrEnum):
+class ApprovalAction(str, Enum):
     """审批动作"""
 
     APPROVE = "approve"

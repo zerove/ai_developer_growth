@@ -15,7 +15,7 @@ import logging
 import subprocess
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
-from enum import StrEnum
+from enum import Enum
 from pathlib import Path
 from typing import Any
 
@@ -24,7 +24,7 @@ from tools.scripts.rules_engine.models import CheckResult, Issue
 logger = logging.getLogger(__name__)
 
 
-class FixStrategy(StrEnum):
+class FixStrategy(str, Enum):
     """修复策略"""
 
     AUTO = "auto"  # 完全自动应用
@@ -33,7 +33,7 @@ class FixStrategy(StrEnum):
     BATCH_PR = "batch_pr"  # 生成批量 PR
 
 
-class FixSafetyLevel(StrEnum):
+class FixSafetyLevel(str, Enum):
     """修复安全级别"""
 
     SAFE = "safe"  # 无副作用: 格式化、导入排序、空行调整

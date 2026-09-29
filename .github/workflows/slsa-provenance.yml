@@ -1,4 +1,4 @@
-name: SLSA Provenance & Signing
+name: 'SLSA Provenance & Signing'
 
 on:
   release:
@@ -16,7 +16,7 @@ concurrency:
 
 jobs:
   build-and-sign:
-    name: Build, Sign & Generate Provenance
+    name: 'Build, Sign & Generate Provenance'
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository

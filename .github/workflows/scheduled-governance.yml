@@ -82,7 +82,7 @@ jobs:
         run: python -c "from tools.scripts.rules_engine.pattern_learner import run_pattern_learning; run_pattern_learning('.')" || true
 
   monthly-db-maintain:
-    name: Monthly DB Maintenance & Trend Collection
+    name: 'Monthly DB Maintenance & Trend Collection'
     runs-on: ubuntu-latest
     if: github.event.schedule == '0 10 1 * *' || github.event.inputs.audit_type == 'monthly'
     steps:

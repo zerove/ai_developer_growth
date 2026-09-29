@@ -26,9 +26,17 @@ from collections.abc import Callable
 from pathlib import Path
 from typing import NamedTuple
 
-sys.path.insert(0, str(Path(__file__).resolve().parent.parent.parent))
-from tools.scripts._common import get_project_root, print_check, print_section, run_command
-from tools.scripts.language_registry import (
+_PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
+if str(_PROJECT_ROOT) not in sys.path:
+    sys.path.insert(0, str(_PROJECT_ROOT))
+
+from tools.scripts._common import (  # noqa: E402
+    get_project_root,
+    print_check,
+    print_section,
+    run_command,
+)
+from tools.scripts.language_registry import (  # noqa: E402
     EXTENSION_MAP,
     Language,
     ToolCategory,

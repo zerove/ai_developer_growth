@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 import sys
+from datetime import datetime
 from pathlib import Path
 
 import pytest
@@ -84,6 +85,8 @@ class TestParseTs:
 
     def test_days_filter_uses_real_timestamps(self, tmp_path: Path) -> None:
         log = tmp_path / "q.jsonl"
-        log.write_text('{"ts":"2026-08-25T13:47:54+0800","query":"a","total":1,"time_ms":1}\n', encoding="utf-8")
+        # 必须是"现在": 固定日期会随时间推移滑出 days 窗口, 变成定时炸弹
+        now = datetime.now().astimezone().strftime("%Y%m%dT%H%M%S%z")
+        log.write_text(json.dumps({"ts": now, "query": "a", "total": 1, "time_ms": 1}) + "\n", encoding="utf-8")
         # days=30 应包含今天的记录；days=0（cutoff=现在）应过滤掉过去时间戳
         assert len(load_records(log, days=30)) == 1

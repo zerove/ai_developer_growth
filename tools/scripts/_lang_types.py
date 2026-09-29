@@ -4,11 +4,11 @@
 """
 
 from dataclasses import dataclass, field
-from enum import Enum
+from enum import StrEnum
 from typing import Any
 
 
-class Language(str, Enum):
+class Language(StrEnum):
     """支持的编程语言"""
 
     PYTHON = "python"
@@ -38,7 +38,7 @@ class Language(str, Enum):
     SQL = "sql"
 
 
-class ToolCategory(str, Enum):
+class ToolCategory(StrEnum):
     """工具类别"""
 
     FORMAT = "format"

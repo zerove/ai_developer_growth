@@ -1,7 +1,5 @@
-on:
-  workflow_call: {}
 name: Policy as Code (OPA/Rego) Reusable
-true:
+on:
   workflow_call:
     inputs:
       action:
@@ -122,5 +120,3 @@ jobs:
           \ | ${v.severity} |\\n`;\n}\n\ngithub.rest.issues.createComment({\n  issue_number:\
           \ context.issue.number,\n  owner: context.repo.owner,\n  repo: context.repo.repo,\n\
           \  body: body\n});\n"
-'on':
-  workflow_call: {}

@@ -1,7 +1,5 @@
-on:
-  workflow_call: {}
 name: ADG Governance Reusable
-true:
+on:
   workflow_call:
     inputs:
       target-path:
@@ -43,5 +41,3 @@ jobs:
       with:
         name: adg-governance-report
         path: adg-report.json
-'on':
-  workflow_call: {}

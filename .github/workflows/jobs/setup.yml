@@ -1,7 +1,5 @@
+name: 'Setup & Cache Reusable'
 on:
-  workflow_call: {}
-name: Setup & Cache Reusable
-true:
   workflow_call:
     outputs:
       python-version:
@@ -12,7 +10,7 @@ true:
         value: ${{ jobs.setup.outputs.cache-hit }}
 jobs:
   setup:
-    name: Setup & Cache
+    name: 'Setup & Cache'
     runs-on: ubuntu-latest
     outputs:
       python-version: ${{ env.PYTHON_VERSION }}
@@ -26,5 +24,3 @@ jobs:
         python-version: ${{ env.PYTHON_VERSION }}
         cache: pip
         cache-dependency-path: pyproject.toml
-'on':
-  workflow_call: {}

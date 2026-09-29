@@ -1,8 +1,6 @@
+name: Pre-commit Hooks Reusable
 on:
   workflow_call: {}
-name: Pre-commit Hooks Reusable
-true:
-  workflow_call: null
 jobs:
   pre-commit:
     name: Pre-commit Hooks
@@ -16,5 +14,3 @@ jobs:
         cache-dependency-path: pyproject.toml
     - run: pip install -e .
     - uses: pre-commit/action@v3.0.1
-'on':
-  workflow_call: {}

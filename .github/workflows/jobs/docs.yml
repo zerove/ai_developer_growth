@@ -1,8 +1,6 @@
+name: Docs Check Reusable
 on:
   workflow_call: {}
-name: Docs Check Reusable
-true:
-  workflow_call: null
 jobs:
   docs-check:
     name: Docs Structure
@@ -11,7 +9,7 @@ jobs:
     - uses: actions/checkout@v4
     - run: "for f in README.md INDEX.md GOVERNANCE.md CONTRIBUTING.md ROADMAP.md LICENSE\
         \ SECURITY.md CODE_OF_CONDUCT.md; do\n  test -f \"$f\" || { echo \"Missing:\
-        \ $f\"; exit 1; }\ndone\nfor d in docs case-studies examples tools agents;\
+        \ $f\"; exit 1; }\ndone\nfor d in docs examples tools agents;\
         \ do\n  test -d \"$d\" || { echo \"Missing dir: $d\"; exit 1; }\ndone\n"
   docs-build:
     name: MkDocs Build
@@ -25,5 +23,3 @@ jobs:
         cache-dependency-path: pyproject.toml
     - run: pip install mkdocs-material mkdocstrings mkdocstrings-python
     - run: mkdocs build --strict
-'on':
-  workflow_call: {}

@@ -1,8 +1,6 @@
+name: License Scan Reusable
 on:
   workflow_call: {}
-name: License Scan Reusable
-true:
-  workflow_call: null
 jobs:
   license-scan:
     name: License Scan
@@ -23,5 +21,3 @@ jobs:
         name: license-report
         path: licenses.json
         retention-days: 30
-'on':
-  workflow_call: {}

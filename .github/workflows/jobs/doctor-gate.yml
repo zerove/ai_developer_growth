@@ -1,8 +1,6 @@
+name: Doctor Gate Reusable
 on:
   workflow_call: {}
-name: Doctor Gate Reusable
-true:
-  workflow_call: null
 jobs:
   doctor:
     name: Gate Environment Doctor
@@ -59,7 +57,7 @@ jobs:
     - name: Recompute issues and compare with baseline
       run: python tools/scripts/hooks_runner.py baseline recompute
   audit-trends:
-    name: Audit Ledger Integrity & Trends
+    name: 'Audit Ledger Integrity & Trends'
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v4
@@ -68,5 +66,3 @@ jobs:
         python-version: '3.11'
     - name: Verify ledger chain and trend alerts
       run: python tools/scripts/audit_trends.py
-'on':
-  workflow_call: {}

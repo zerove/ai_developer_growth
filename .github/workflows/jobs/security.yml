@@ -1,8 +1,6 @@
+name: Security Scan Reusable
 on:
   workflow_call: {}
-name: Security Scan Reusable
-true:
-  workflow_call: null
 jobs:
   security:
     name: Security Scan
@@ -27,5 +25,3 @@ jobs:
       with:
         name: bandit-report
         path: bandit-report.json
-'on':
-  workflow_call: {}

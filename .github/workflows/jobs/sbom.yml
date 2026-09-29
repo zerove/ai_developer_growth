@@ -1,8 +1,6 @@
+name: SBOM Generation Reusable
 on:
   workflow_call: {}
-name: SBOM Generation Reusable
-true:
-  workflow_call: null
 jobs:
   sbom:
     name: SBOM Generation
@@ -19,5 +17,3 @@ jobs:
         name: sbom
         path: sbom.json
         retention-days: 30
-'on':
-  workflow_call: {}

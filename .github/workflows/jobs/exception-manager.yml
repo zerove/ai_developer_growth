@@ -1,7 +1,5 @@
-on:
-  workflow_call: {}
 name: Exception Manager Reusable
-true:
+on:
   workflow_call:
     inputs:
       action:
@@ -98,5 +96,3 @@ jobs:
         name: exception-audit
         path: exception-audit.json
         retention-days: 30
-'on':
-  workflow_call: {}

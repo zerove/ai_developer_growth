@@ -1,7 +1,5 @@
-on:
-  workflow_call: {}
 name: Quality Gates Reusable
-true:
+on:
   workflow_call:
     inputs:
       target-path:
@@ -40,5 +38,3 @@ jobs:
     - name: Enforcement check
       run: python tools/scripts/hooks_runner.py quality-gate --path ${{ inputs.target-path
         }} --check-annotation
-'on':
-  workflow_call: {}

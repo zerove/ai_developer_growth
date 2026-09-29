@@ -1,7 +1,5 @@
-on:
-  workflow_call: {}
 name: Multi-language Supply Chain Reusable
-true:
+on:
   workflow_call:
     inputs:
       action:
@@ -96,5 +94,3 @@ jobs:
         name: supply-chain-output
         path: ${{ inputs.output }}
         retention-days: 30
-'on':
-  workflow_call: {}

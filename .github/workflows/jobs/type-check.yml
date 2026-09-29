@@ -1,8 +1,6 @@
+name: Type Check Reusable
 on:
   workflow_call: {}
-name: Type Check Reusable
-true:
-  workflow_call: null
 jobs:
   type-check:
     name: Type Check
@@ -26,5 +24,3 @@ jobs:
           '
     - name: Mypy (strict)
       run: mypy tools/scripts/
-'on':
-  workflow_call: {}

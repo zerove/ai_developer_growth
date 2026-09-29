@@ -1,7 +1,5 @@
-on:
-  workflow_call: {}
 name: Dependency Graph Analysis Reusable
-true:
+on:
   workflow_call:
     inputs:
       action:
@@ -80,5 +78,3 @@ jobs:
         name: dependency-graph-output
         path: ${{ inputs.output }}
         retention-days: 30
-'on':
-  workflow_call: {}

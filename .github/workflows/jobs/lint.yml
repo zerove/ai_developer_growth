@@ -1,11 +1,9 @@
+name: 'Lint & Format Reusable'
 on:
   workflow_call: {}
-name: Lint & Format Reusable
-true:
-  workflow_call: null
 jobs:
   lint:
-    name: Lint & Format
+    name: 'Lint & Format'
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v4
@@ -28,5 +26,3 @@ jobs:
       run: ruff check .
     - name: Ruff format check
       run: ruff format --check .
-'on':
-  workflow_call: {}

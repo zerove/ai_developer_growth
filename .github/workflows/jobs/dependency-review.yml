@@ -1,7 +1,5 @@
-on:
-  workflow_call: {}
 name: Dependency Review Reusable
-true:
+on:
   workflow_call:
     inputs:
       fail-on-severity:
@@ -18,5 +16,3 @@ jobs:
     - uses: actions/dependency-review-action@v4
       with:
         fail-on-severity: ${{ inputs.fail-on-severity }}
-'on':
-  workflow_call: {}

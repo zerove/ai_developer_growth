@@ -1,7 +1,5 @@
-on:
-  workflow_call: {}
 name: Tests Reusable
-true:
+on:
   workflow_call:
     inputs:
       python-version:
@@ -71,5 +69,3 @@ jobs:
           || '' }}
         path: .coverage
         retention-days: 7
-'on':
-  workflow_call: {}

@@ -5,13 +5,11 @@ on:
     branches: [main, master, develop]
     paths-ignore:
       - 'docs/**'
-      - 'docs/case-studies/**'
       - '*.md'
   pull_request:
     branches: [main, master, develop]
     paths-ignore:
       - 'docs/**'
-      - 'docs/case-studies/**'
       - '*.md'
 
 concurrency:

@@ -15,15 +15,12 @@ import yaml
 _ADG_HOME = Path(os.environ.get("ADG_HOME", Path.home() / ".config" / "adg"))
 _RULES_PATH = _ADG_HOME / "rules"
 
-# Fallback: check if ai_developer_growth source is available
-_ADG_SOURCE = Path.home() / "dev" / "ai_developer_growth" / "ai-dev-framework"
-
 
 def _get_rules_path() -> Path:
     """Get the rules directory, preferring config, falling back to source.
 
     Candidate order: ADG_RULES_DIR env -> GITHUB_WORKSPACE/ai-dev-framework
-    -> script-relative/ai-dev-framework -> cwd/ai-dev-framework -> ~/.config/adg/rules -> ~/dev/... source.
+    -> script-relative/ai-dev-framework -> cwd/ai-dev-framework -> ~/.config/adg/rules.
     This makes the CLI work both locally and in CI checkouts.
     """
     env_rules = os.environ.get("ADG_RULES_DIR")
@@ -36,7 +33,7 @@ def _get_rules_path() -> Path:
     script_relative = Path(__file__).resolve().parent.parent.parent / "ai-dev-framework"
     candidates.append(script_relative)
     candidates.append(Path.cwd() / "ai-dev-framework")
-    candidates += [_RULES_PATH, _ADG_SOURCE]
+    candidates.append(_RULES_PATH)
 
     for p in candidates:
         if p.exists() and (p / "languages").exists():

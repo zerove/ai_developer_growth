@@ -24,7 +24,7 @@ from typing import Any, cast
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent.parent
 DOCS_DIR = PROJECT_ROOT / "docs"
-CASE_STUDIES_DIR = PROJECT_ROOT / "case-studies"
+CASE_STUDIES_DIR = PROJECT_ROOT / "docs" / "case-studies"
 MAPPING_CACHE = PROJECT_ROOT / ".jcode" / "rule-docs-mapping.json"
 
 # 规则 ID → docs 关键词映射

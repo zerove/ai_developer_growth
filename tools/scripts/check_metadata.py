@@ -125,7 +125,7 @@ def _scan_known_dirs() -> dict[str, list[str]]:
     print("Scanning docs directory...")
     results = scan_directory(docs_dir)
 
-    case_studies_dir = Path("case-studies")
+    case_studies_dir = Path("docs/case-studies")
     if case_studies_dir.exists():
         case_results = scan_directory(case_studies_dir)
         results.update(case_results)

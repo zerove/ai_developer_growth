@@ -77,7 +77,7 @@ def leaderboard() -> int:
 def stats() -> int:
     """查看社区统计"""
     print_section("社区统计")
-    case_dir = get_project_root() / "case-studies"
+    case_dir = get_project_root() / "docs" / "case-studies"
     if not case_dir.exists():
         print("❌ 未找到案例目录")
         return 1

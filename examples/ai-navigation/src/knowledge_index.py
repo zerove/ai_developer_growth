@@ -203,7 +203,7 @@ class IndexBuilder:
 
     def _index_case_studies(self, index: KnowledgeIndex) -> None:
         """Index case study documents."""
-        cases_dir = self.repo_root / "case-studies"
+        cases_dir = self.repo_root / "docs" / "case-studies"
         if not cases_dir.exists():
             return
 

@@ -16,7 +16,7 @@ from _common import get_project_root, print_section
 def analyze() -> int:
     """分析效率数据"""
     print_section("效率数据分析")
-    case_dir = get_project_root() / "case-studies"
+    case_dir = get_project_root() / "docs" / "case-studies"
     if not case_dir.exists():
         print("❌ 未找到案例目录")
         return 1
@@ -62,7 +62,9 @@ def report() -> int:
     root = get_project_root()
 
     stats = {
-        "cases": (len(list((root / "case-studies").glob("*.md"))) if (root / "case-studies").exists() else 0),
+        "cases": (
+            len(list((root / "docs" / "case-studies").glob("*.md"))) if (root / "docs" / "case-studies").exists() else 0
+        ),
         "docs": (len(list((root / "docs").rglob("*.md"))) if (root / "docs").exists() else 0),
         "examples": (
             len([d for d in (root / "examples").iterdir() if d.is_dir()]) if (root / "examples").exists() else 0

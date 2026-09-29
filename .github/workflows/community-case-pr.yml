@@ -3,7 +3,7 @@ name: Community Case Study PR
 on:
   pull_request:
     paths:
-      - 'case-studies/**'
+      - 'docs/case-studies/**'
     types: [opened, synchronize, reopened, labeled]
 
 concurrency:
@@ -33,7 +33,7 @@ jobs:
         id: changed
         uses: tj-actions/changed-files@v45
         with:
-          files: case-studies/**/*.md
+          files: docs/case-studies/**/*.md
 
       - name: Validate case study structure
         id: validate

@@ -5,7 +5,7 @@ jcode Skill Runner - 知识策展人
 用法:
     python .jcode/scripts/knowledge-curator.py scan
     python .jcode/scripts/knowledge-curator.py audit
-    python .jcode/scripts/knowledge-curator.py validate case-studies/new-case.md
+    python .jcode/scripts/knowledge-curator.py validate docs/case-studies/new-case.md
     python .jcode/scripts/knowledge-curator.py sync
     python .jcode/scripts/knowledge-curator.py update-moc
 """

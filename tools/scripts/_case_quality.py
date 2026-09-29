@@ -51,7 +51,7 @@ class CaseStudyQualityAnalyzer:
         r"(PR|commit|issue)\s*#?\d+",  # Specific references
     ]
 
-    def __init__(self, case_studies_dir: Path = Path("case-studies")):
+    def __init__(self, case_studies_dir: Path = Path("docs/case-studies")):
         self.case_studies_dir = case_studies_dir
         self.index_content = self._load_index()
         self.moc_content = self._load_moc()
@@ -525,7 +525,7 @@ class CaseStudyQualityAnalyzer:
             True if 有效 wikilink 目标
         """
         target = self._parse_wikilink_target(link)
-        if not target.startswith(("docs/", "case-studies/", "examples/")):
+        if not target.startswith(("docs/", "examples/")):
             return False
         target_path = Path(target)
         return target_path.exists() or target_path.with_suffix(".md").exists()

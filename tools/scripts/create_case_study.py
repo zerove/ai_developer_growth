@@ -9,7 +9,7 @@ from datetime import datetime
 from pathlib import Path
 
 
-def create_case_study_structure(name: str, base_dir: Path = Path("case-studies")) -> Path:
+def create_case_study_structure(name: str, base_dir: Path = Path("docs/case-studies")) -> Path:
     """创建案例研究标准目录结构"""
     case_dir = base_dir / name.lower().replace(" ", "-")
     case_dir.mkdir(parents=True, exist_ok=True)
@@ -179,7 +179,7 @@ def get_default_template() -> str:
 def main() -> None:
     parser = argparse.ArgumentParser(description="创建标准化案例研究目录结构")
     parser.add_argument("name", help="案例研究名称 (如: 'AI 驱动的 API 网关开发')")
-    parser.add_argument("--dir", default="case-studies", help="基础目录 (默认: case-studies)")
+    parser.add_argument("--dir", default="docs/case-studies", help="基础目录 (默认: case-studies)")
     args = parser.parse_args()
 
     base = Path(args.dir)

@@ -222,7 +222,7 @@ def check_all_links() -> bool:
     project_root = "."
     global_index = _build_index(project_root)
 
-    dirs_to_check = ["docs", ".", "case-studies", "examples"]
+    dirs_to_check = ["docs", ".", "examples"]
     all_broken = []
 
     for d in dirs_to_check:

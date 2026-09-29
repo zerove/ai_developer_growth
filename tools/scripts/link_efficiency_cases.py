@@ -24,13 +24,14 @@
 from __future__ import annotations
 
 import argparse
+import os
 import re
 import sys
 from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 EFFICIENCY_DIR = REPO_ROOT / "docs" / "efficiency"
-CASE_STUDIES_DIR = REPO_ROOT / "case-studies"
+CASE_STUDIES_DIR = REPO_ROOT / "docs" / "case-studies"
 
 # 关键词映射 (保守: 用词形变化做模糊匹配, 不依赖 embedding)
 KEYWORD_ALIASES = {
@@ -168,7 +169,9 @@ def _collect_ai_to_case_links(
             case_name = case_path.stem
             if _has_link(ai_path.read_text(encoding="utf-8", errors="ignore"), case_name):
                 continue
-            link_line = f"- **相关案例**: [{case_name}](../{case_path.relative_to(REPO_ROOT).as_posix()})"
+            link_line = (
+                f"- **相关案例**: [{case_name}]({os.path.relpath(case_path, EFFICIENCY_DIR).replace(os.sep, '/')})"
+            )
             changes.append((ai_path, "## 相关案例", link_line))
     return changes
 
@@ -193,7 +196,9 @@ def _collect_case_to_ai_links(
             ai_name = ai_path.stem
             if _has_link(case_path.read_text(encoding="utf-8", errors="ignore"), ai_name):
                 continue
-            link_line = f"- **相关方法论**: [{ai_name}](../{ai_path.relative_to(REPO_ROOT).as_posix()})"
+            link_line = (
+                f"- **相关方法论**: [{ai_name}]({os.path.relpath(ai_path, case_path.parent).replace(os.sep, '/')})"
+            )
             changes.append((case_path, "## 相关方法论", link_line))
     return changes
 

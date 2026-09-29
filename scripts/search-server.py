@@ -263,6 +263,10 @@ def load_documents():
     docs_dir = _ROOT and os.path.join(_ROOT, "docs")
 
     for root, dirs, files in os.walk(docs_dir):
+        # case-studies/ is excluded: it lives under docs/ for MkDocs, but was
+        # never part of the search corpus (pre-move it sat at repo root).
+        # Indexing it changes TF-IDF IDF values and shifts recall rankings.
+        dirs[:] = [d for d in dirs if d != "case-studies"]
         for file in files:
             if file.endswith(".md"):
                 filepath = os.path.join(root, file)

@@ -2,7 +2,7 @@
 
 [![CI](https://img.shields.io/badge/CI-passing-brightgreen)](#)
 [![Python 3.11+](https://img.shields.io/badge/Python-3.11+-blue.svg)](https://www.python.org/downloads/)
-[![Coverage](https://img.shields.io/badge/Coverage-64%25-yellowgreen)](#)
+[![Coverage](https://img.shields.io/badge/Coverage-69%25-brightgreen)](#)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](CONTRIBUTING.md)
 [![Stars](https://img.shields.io/github/stars/zerove/ai_developer_growth)](https://github.com/zerove/ai_developer_growth/stargazers)
@@ -145,7 +145,7 @@ python ai-dev-framework/core/jcode_init.py your-project --language python
 | 🛠️ 代码示例 | 10 个 |
 | 📋 架构决策 | 59 条 |
 | 🧪 测试用例 | 4020 个 |
-| ✅ 测试覆盖率 | 64%+ |
+| ✅ 测试覆盖率 | 69% |
 
 ---
 

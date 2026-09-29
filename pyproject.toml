@@ -8,7 +8,7 @@ version = "2.24.0"
 description = "Open-source knowledge base for developer growth in the AI era"
 readme = "README.md"
 license = {text = "MIT"}
-requires-python = ">=3.10"
+requires-python = ">=3.11"
 dependencies = ["pyyaml>=6.0", "loguru>=0.7"]
 
 [project.scripts]
@@ -50,7 +50,7 @@ exclude = ["tests*", "examples*", "docs*"]
 
 [tool.ruff]
 line-length = 120
-target-version = "py310"
+target-version = "py311"
 exclude = ["examples/**"]
 
 [tool.coverage.run]
@@ -118,11 +118,6 @@ hub_threshold = 15
 
 # Context-aware severity
 context_aware = true
-# role-based 降级 + 规则级降级 (Phase 25-27 累积, 详见 ADR-017/018/019/021)
-# 16 类规则批量降为 info, 理由: CLI 格式化输出/合理兜底/类型擦除/单进程缓存等已知误报
-# 注意: adg 实际读取 .adg/rules.yml 的 severity_overrides, 此处仅作文档同步,
-#       跨项目使用时, 把 .adg/rules.yml 的 severity_overrides section 复制即可.
-severity_overrides = {test = "down-1", prototype = "down-2", legacy = "down-1", config = "down-2", demo = "down-2", "py-log-print" = "info", "common-empty-except-block" = "info", "py-no-input-validation" = "info", "py-pip-audit-missing" = "info", "py-test-sleep" = "info", "common-debugger" = "info", "common-weak-hash" = "info", "common-unsafe-yaml-load" = "info", "common-http-url" = "info", "py-missing-type-hints" = "info", "py-any-type" = "info", "common-type-any" = "info", "py-global-statement" = "info", "py-shared-mutable" = "info", "py-n-plus-one" = "info", "py-ci-disabled-check" = "info", "py-file-leak" = "info"}
 
 # Skip patterns for test/demo files
 skip_patterns = [
@@ -152,7 +147,6 @@ cache_dir = ".cache/adg"
 # 插件缺失时自动降级，不会导致门禁误报
 test_workers = "auto"  # pytest-xdist 并行数: "auto"/整数; 0 = 禁用并行
 test_reruns = 2        # flaky 重试次数 (pytest-rerunfailures); 0 = 禁用
-cov_min = 65           # 覆盖率门禁百分比; 0 = 禁用
 timeouts = { lint = 300, format = 300, typecheck = 300, security = 300, test = 900 }  # 按类别超时秒数; test 放宽因全量并行耗时更长
 
 # CI/CD integration

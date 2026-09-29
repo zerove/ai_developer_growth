@@ -7,7 +7,7 @@ from io import BytesIO
 from typing import Any
 from unittest.mock import MagicMock, patch
 
-from tools.scripts.rules.web_base import RuleWebServer, run_server
+from tools.scripts.rules_loader.web_base import RuleWebServer, run_server
 
 
 def _make_handler(
@@ -180,7 +180,7 @@ class TestLogMessage:
 class TestRunServer:
     """Tests for run_server()."""
 
-    @patch("tools.scripts.rules.web_base.HTTPServer")
+    @patch("tools.scripts.rules_loader.web_base.HTTPServer")
     def test_starts_server(self, mock_server_cls: MagicMock) -> None:
         mock_server = MagicMock()
         mock_server_cls.return_value = mock_server
@@ -188,7 +188,7 @@ class TestRunServer:
         mock_server_cls.assert_called_once_with(("0.0.0.0", 9999), RuleWebServer)
         mock_server.serve_forever.assert_called_once()
 
-    @patch("tools.scripts.rules.web_base.HTTPServer")
+    @patch("tools.scripts.rules_loader.web_base.HTTPServer")
     def test_keyboard_interrupt_stops(self, mock_server_cls: MagicMock, capsys: Any) -> None:
         mock_server = MagicMock()
         mock_server.serve_forever.side_effect = KeyboardInterrupt

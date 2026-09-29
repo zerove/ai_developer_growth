@@ -6,7 +6,7 @@ from pathlib import Path
 
 import yaml
 
-from tools.scripts.rules.loader import (
+from tools.scripts.rules_loader.loader import (
     _get_embedded_rules,
     _load_common_rules,
     _load_raw_rules,

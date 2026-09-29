@@ -16,8 +16,8 @@ import sys
 from typing import Any
 
 from tools.scripts._common import rules_dir as _rules_dir
-from tools.scripts.rules.loader import load_rules
-from tools.scripts.rules.web_base import RuleWebServer, run_server
+from tools.scripts.rules_loader.loader import load_rules
+from tools.scripts.rules_loader.web_base import RuleWebServer, run_server
 
 __all__ = ["RuleWebServer", "run_server", "get_all_rules", "main"]
 

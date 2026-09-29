@@ -10,7 +10,7 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from tools.scripts.rules.cli import add_common_args, cli_main, output_results
+from tools.scripts.rules_loader.cli import add_common_args, cli_main, output_results
 
 
 class TestAddCommonArgs:
@@ -161,14 +161,14 @@ class TestCliMain:
             cli_main(main_fn)
         assert exc_info.value.code == 1
 
-    @patch("tools.scripts.rules.cli.handle_error")
+    @patch("tools.scripts.rules_loader.cli.handle_error")
     def test_exception_calls_handle_error(self, mock_handle: MagicMock) -> None:
         main_fn = MagicMock(side_effect=ValueError("boom"))
         cli_main(main_fn, script_name="test")
         mock_handle.assert_called_once()
         assert mock_handle.call_args[1]["script"] == "test"
 
-    @patch("tools.scripts.rules.cli.handle_error")
+    @patch("tools.scripts.rules_loader.cli.handle_error")
     def test_keyboard_interrupt(self, mock_handle: MagicMock, capsys: Any) -> None:
         main_fn = MagicMock(side_effect=KeyboardInterrupt)
         with pytest.raises(SystemExit) as exc_info:
@@ -176,7 +176,7 @@ class TestCliMain:
         assert exc_info.value.code == 130
         assert "Interrupted" in capsys.readouterr().err
 
-    @patch("tools.scripts.rules.cli.handle_error")
+    @patch("tools.scripts.rules_loader.cli.handle_error")
     def test_script_name_from_argv(self, mock_handle: MagicMock) -> None:
         main_fn = MagicMock(side_effect=RuntimeError("err"))
         with patch("sys.argv", ["/path/to/my_script.py"]):

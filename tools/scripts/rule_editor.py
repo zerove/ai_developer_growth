@@ -13,7 +13,7 @@ from __future__ import annotations
 import argparse
 import sys
 
-from tools.scripts.rules.web_base import RuleWebServer, run_server
+from tools.scripts.rules_loader.web_base import RuleWebServer, run_server
 
 HTML = """<!DOCTYPE html>
 <html lang="en">

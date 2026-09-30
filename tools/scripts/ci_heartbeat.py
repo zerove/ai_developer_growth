@@ -161,26 +161,21 @@ def _local_fallback() -> HealthVerdict:
     )
 
 
-def main(argv: list[str] | None = None) -> int:
-    parser = argparse.ArgumentParser(description="CI 存活心跳检测（必须在 CI 之外运行）")
-    parser.add_argument("--repo", default="", help="owner/name，默认从环境或 git remote 推导")
-    parser.add_argument("--workflow", default=DEFAULT_WORKFLOW, help=f"工作流文件（默认 {DEFAULT_WORKFLOW}）")
-    parser.add_argument("--stale-hours", type=int, default=STALE_HOURS, help="停滞判定小时数")
-    parser.add_argument("--json", action="store_true", help="输出 JSON，便于被其他工具消费")
-    args = parser.parse_args(argv)
-
+def _probe(args: argparse.Namespace) -> HealthVerdict:
+    """执行探测，把网络/鉴权异常统一收敛为 HealthVerdict。"""
     token = _token()
     if not token:
-        verdict = _local_fallback()
-    else:
-        try:
-            verdict = check_ci_health(args.repo or _repo_slug(), token, args.workflow, args.stale_hours)
-        except urllib.error.HTTPError as exc:
-            verdict = HealthVerdict(False, f"GitHub API 返回 {exc.code}", str(exc.reason))
-        except urllib.error.URLError as exc:
-            verdict = HealthVerdict(False, "无法连接 GitHub API", str(exc.reason))
+        return _local_fallback()
+    try:
+        return check_ci_health(args.repo or _repo_slug(), token, args.workflow, args.stale_hours)
+    except urllib.error.HTTPError as exc:
+        return HealthVerdict(False, f"GitHub API 返回 {exc.code}", str(exc.reason))
+    except urllib.error.URLError as exc:
+        return HealthVerdict(False, "无法连接 GitHub API", str(exc.reason))
 
-    if args.json:
+
+def _render(verdict: HealthVerdict, as_json: bool) -> None:
+    if as_json:
         print(
             json.dumps(
                 {
@@ -193,14 +188,25 @@ def main(argv: list[str] | None = None) -> int:
                 ensure_ascii=False,
             )
         )
-    else:
-        print_section("CI HEARTBEAT - 门禁存活检测")
-        print_check(verdict.reason, verdict.ok, verdict.detail)
-        if not verdict.ok:
-            print("")
-            print("  参考 ADR-057：检测器必须运行在 CI 之外，")
-            print("  因为配额耗尽时 CI 内的任何检测器都会一并死亡。")
+        return
+    print_section("CI HEARTBEAT - 门禁存活检测")
+    print_check(verdict.reason, verdict.ok, verdict.detail)
+    if not verdict.ok:
+        print("")
+        print("  参考 ADR-057：检测器必须运行在 CI 之外，")
+        print("  因为配额耗尽时 CI 内的任何检测器都会一并死亡。")
 
+
+def main(argv: list[str] | None = None) -> int:
+    parser = argparse.ArgumentParser(description="CI 存活心跳检测（必须在 CI 之外运行）")
+    parser.add_argument("--repo", default="", help="owner/name，默认从环境或 git remote 推导")
+    parser.add_argument("--workflow", default=DEFAULT_WORKFLOW, help=f"工作流文件（默认 {DEFAULT_WORKFLOW}）")
+    parser.add_argument("--stale-hours", type=int, default=STALE_HOURS, help="停滞判定小时数")
+    parser.add_argument("--json", action="store_true", help="输出 JSON，便于被其他工具消费")
+    args = parser.parse_args(argv)
+
+    verdict = _probe(args)
+    _render(verdict, args.json)
     return 0 if verdict.ok else 1
 
 

@@ -322,11 +322,14 @@ class TestInstallPrePushHook:
             os.chdir(old_cwd)
 
     def test_install_pre_push_hook_success(self, tmp_path: Path):
-        """Test successful installation."""
+        """安装成功时应复制受跟踪的完整门禁源。"""
         git_dir = tmp_path / ".git"
         git_dir.mkdir()
         hooks_dir = git_dir / "hooks"
         hooks_dir.mkdir()
+        src = tmp_path / ".jcode" / "hooks"
+        src.mkdir(parents=True)
+        (src / "pre-push").write_text("#!/bin/bash\necho full-gate\n", encoding="utf-8")
 
         old_cwd = os.getcwd()
         try:
@@ -336,9 +339,28 @@ class TestInstallPrePushHook:
             hook_file = hooks_dir / "pre-push"
             assert hook_file.exists()
             content = hook_file.read_text()
-            assert "ADG Governance pre-push hook" in content
+            assert "full-gate" in content
         finally:
             os.chdir(old_cwd)
+
+    def test_install_requires_tracked_source(self, tmp_path: Path):
+        """缺少受跟踪源文件时必须失败，不得回退到残缺 wrapper。"""
+        (tmp_path / ".git" / "hooks").mkdir(parents=True)
+        old_cwd = os.getcwd()
+        try:
+            os.chdir(tmp_path)
+            assert install_pre_push_hook() is False
+            assert not (tmp_path / ".git" / "hooks" / "pre-push").exists()
+        finally:
+            os.chdir(old_cwd)
+
+    def test_installed_hook_contains_full_chain(self):
+        """真实仓库的受跟踪源必须含全部核心门禁，防止门禁被静默削弱。"""
+        source = Path(__file__).resolve().parent.parent / ".jcode" / "hooks" / "pre-push"
+        assert source.exists(), "受跟踪的 pre-push 源缺失，其他克隆者将无门禁"
+        content = source.read_text(encoding="utf-8")
+        for step in ("lint", "typecheck", "test", "quality-gate", "baseline recompute"):
+            assert step in content, f"受跟踪的门禁源缺少 {step} 检查"
 
 
 if __name__ == "__main__":

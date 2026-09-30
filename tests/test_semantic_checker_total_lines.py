@@ -22,9 +22,9 @@ def test_total_lines_real_rules_engine() -> None:
 def test_total_lines_real_tools_scripts() -> None:
     """整个 tools/scripts/ 真实代码 total_lines > 0."""
     result = SemanticChecker().analyze_directory(Path("tools/scripts"))
-    assert result.files_analyzed == 217
+    assert result.files_analyzed == 218
     assert result.metrics.total_lines > 0
-    # 217 文件 (已移除未接线的 ast_walkers 死包 7 个), 期望 >= 10000
+    # 218 文件 (含 ci_heartbeat.py, 已移除未接线的 ast_walkers 死包 7 个), 期望 >= 10000
     assert result.metrics.total_lines >= 10000
 
 

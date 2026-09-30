@@ -461,6 +461,8 @@ def _handle_ci_heartbeat(args: argparse.Namespace) -> int:
         argv += ["--repo", args.repo]
     if args.json:
         argv.append("--json")
+    if args.alert:
+        argv.append("--alert")
     from tools.scripts.ci_heartbeat import main as heartbeat_main
 
     return heartbeat_main(argv)

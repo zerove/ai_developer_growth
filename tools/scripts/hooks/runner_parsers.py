@@ -74,6 +74,11 @@ def _add_doctor_baseline_parsers(subparsers: argparse._SubParsersAction[argparse
     heartbeat_parser.add_argument("--workflow", default="ci.yml", help="Workflow file to probe")
     heartbeat_parser.add_argument("--stale-hours", type=int, default=24, help="Stale threshold in hours")
     heartbeat_parser.add_argument("--json", action="store_true", help="JSON output")
+    heartbeat_parser.add_argument(
+        "--alert",
+        action="store_true",
+        help="On failure open/update a deduplicated Issue; close it on recovery",
+    )
 
     # 质量基线管理
     baseline_parser = subparsers.add_parser("baseline", help="Quality ratchet baseline management")

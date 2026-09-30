@@ -74,9 +74,21 @@ cd ai_developer_growth
 # 安装依赖
 pip install -r requirements-dev.txt
 
+# 安装 pre-push 门禁（强烈建议）
+make setup-git
+
 # 运行测试
 pytest
 ```
+
+> **⚠️ 关于 pre-push 门禁**
+>
+> `.git/` 不受版本控制，因此门禁**不会**随克隆自动出现。`make setup-git` 会把
+> 受跟踪的 `.jcode/hooks/pre-push` 安装到 `.git/hooks/pre-push`，之后每次推送
+> 都会执行 lint / typecheck / test / quality-gate / baseline 五项检查。
+>
+> 这是本项目最有价值的机制——它曾在本次维护中拦下 279 个仅靠测试与 lint
+> 无法发现的类型错误。详见 [ADR-057](docs/adr/ADR-057-ci-heartbeat-outside-ci.md)。
 
 ### 3. 集成到你的工具链
 

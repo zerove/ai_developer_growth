@@ -129,10 +129,12 @@ release: ## 完整发布流程 (版本递增 + CHANGELOG + Docker + 推送)
 	make docker-push VERSION=$$(python tools/scripts/release.py version) && \
 	echo "✅ 发布完成: v$$(python tools/scripts/release.py version)"
 
-setup-git: ## 配置 git 模板和钩子
+setup-git: ## 配置 git 模板并安装 pre-push 门禁
 	git config commit.template .gitmessage
+	@python -m tools.scripts.hooks_runner install-hooks --pre-push
 	@echo "✅ git 提交模板已配置 (.gitmessage)"
 	@echo "✅ 提交格式: type(scope): 中文描述"
+	@echo "✅ pre-push 门禁已安装 (来源 .jcode/hooks/pre-push)"
 
 workflow-pr: ## 执行 PR 审查工作流 (registry.json)
 	python .jcode/scripts/governance-auditor.py full

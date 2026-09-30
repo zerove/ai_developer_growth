@@ -450,6 +450,22 @@ def _handle_doctor(args: argparse.Namespace) -> int:
     return 0
 
 
+def _handle_ci_heartbeat(args: argparse.Namespace) -> int:
+    """探测远端 CI 是否真的执行过 job（ADR-057）。
+
+    与 doctor 的区别：doctor 检查本地工具链，ci-heartbeat 检查门禁本身
+    是否还活着。必须运行在 CI 之外——配额耗尽时 CI 内的检测器会一并死亡。
+    """
+    argv = ["--workflow", args.workflow, "--stale-hours", str(args.stale_hours)]
+    if args.repo:
+        argv += ["--repo", args.repo]
+    if args.json:
+        argv.append("--json")
+    from tools.scripts.ci_heartbeat import main as heartbeat_main
+
+    return heartbeat_main(argv)
+
+
 def _baseline_file_for(path: Path, explicit: Path | None) -> Path:
     """解析基线文件路径（显式参数优先，否则项目根目录默认值）。"""
     if explicit is not None:
@@ -661,6 +677,7 @@ def _build_handlers() -> dict[str, Callable[[argparse.Namespace], int]]:
     """构建命令处理器注册表（从 _dispatch 拆出以控制函数长度）。"""
     return {
         "doctor": _handle_doctor,
+        "ci-heartbeat": _handle_ci_heartbeat,
         "baseline": lambda a: (
             _handle_baseline_validate(a) if a.baseline_action == "validate" else _handle_baseline_recompute(a)
         ),

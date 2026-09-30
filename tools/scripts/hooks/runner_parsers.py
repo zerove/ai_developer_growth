@@ -65,6 +65,16 @@ def _add_doctor_baseline_parsers(subparsers: argparse._SubParsersAction[argparse
     )
     doctor_parser.add_argument("--path", type=Path, default=Path("."), help="Project root")
 
+    # CI 存活心跳（ADR-057）：检测门禁自身是否还活着，必须在 CI 之外运行
+    heartbeat_parser = subparsers.add_parser(
+        "ci-heartbeat",
+        help="Check whether remote CI actually ran jobs (must run outside CI, see ADR-057)",
+    )
+    heartbeat_parser.add_argument("--repo", default="", help="owner/name (default: from env or git remote)")
+    heartbeat_parser.add_argument("--workflow", default="ci.yml", help="Workflow file to probe")
+    heartbeat_parser.add_argument("--stale-hours", type=int, default=24, help="Stale threshold in hours")
+    heartbeat_parser.add_argument("--json", action="store_true", help="JSON output")
+
     # 质量基线管理
     baseline_parser = subparsers.add_parser("baseline", help="Quality ratchet baseline management")
     baseline_sub = baseline_parser.add_subparsers(dest="baseline_action", required=True)

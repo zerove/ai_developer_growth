@@ -90,6 +90,15 @@ docs-build:  ## 构建文档
 test-fast: ## 运行快速测试（跳过 @pytest.mark.slow）
 	python -m pytest tests/ -q -m "not slow" --tb=short
 
+doctor:  ## 诊断本地门禁环境（工具链/插件/基线是否就绪）
+	@python -m tools.scripts.hooks_runner doctor
+
+ci-heartbeat:  ## 检测远端 CI 是否真的跑过 job（必须本地运行，见 ADR-057）
+	@python -m tools.scripts.hooks_runner ci-heartbeat
+
+self-check: doctor ci-heartbeat  ## 自检：本地环境 + 远端门禁存活
+	@echo "✅ 自检完成（本地环境就绪 且 远端 CI 存活）"
+
 check: lint format typecheck test validate-docs check-index semantic-graph architecture-guard  ## 运行所有检查 (包含 AI-Native 门禁)
 
 semantic-graph:  ## 生成语义代码知识图谱

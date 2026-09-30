@@ -144,8 +144,31 @@ python ai-dev-framework/core/jcode_init.py your-project --language python
 | 📚 实践案例 | 48 个 |
 | 🛠️ 代码示例 | 10 个 |
 | 📋 架构决策 | 59 条 |
-| 🧪 测试用例 | 4020 个 |
+| 🧪 测试用例 | 4037 个 |
 | ✅ 测试覆盖率 | 69% |
+
+### 🔌 自检：门禁是否还活着
+
+门禁自己可能悄悄失效。本项目提供两个自检入口：
+
+```bash
+make doctor        # 本地门禁环境（工具链/插件/基线是否就绪）
+make ci-heartbeat  # 远端 CI 是否真的跑过 job
+make self-check    # 两者一起跑
+```
+
+`ci-heartbeat` 需要 `GITHUB_TOKEN`（`repo` 权限）：
+
+```bash
+GITHUB_TOKEN=<your_token> make ci-heartbeat
+```
+
+**为什么 `ci-heartbeat` 必须在本地跑，不能注册成 scheduled 工作流？**
+
+私有仓库的 Actions 消耗账户分钟配额。配额耗尽时 run 被立即拒绝：不分配 runner、
+不产生任何 job。本项目的 CI 曾在 2026-09-05 至 09-29 期间持续处于该状态达 23 天
+而无人察觉。跑在 CI 内的任何检测器都会与它要监测的门禁一起死亡，无法自检。
+详见 [ADR-057](docs/adr/ADR-057-ci-heartbeat-outside-ci.md)。
 
 ---
 

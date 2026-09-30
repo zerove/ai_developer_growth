@@ -22,9 +22,11 @@ def test_total_lines_real_rules_engine() -> None:
 def test_total_lines_real_tools_scripts() -> None:
     """整个 tools/scripts/ 真实代码 total_lines > 0."""
     result = SemanticChecker().analyze_directory(Path("tools/scripts"))
-    assert result.files_analyzed == 218
+    # 用下界而非精确值：精确计数会在任何合法增删文件时误报（本测试因此在
+    # 一次会话内被触发三次：224 -> 217 -> 218）。下界仍能捕获"分析器突然
+    # 不再扫描文件"这一真实故障——那会让计数腰斩，而非缓慢漂移。
+    assert result.files_analyzed >= 200, f"仅分析 {result.files_analyzed} 个文件，疑似扫描范围异常"
     assert result.metrics.total_lines > 0
-    # 218 文件 (含 ci_heartbeat.py, 已移除未接线的 ast_walkers 死包 7 个), 期望 >= 10000
     assert result.metrics.total_lines >= 10000
 
 

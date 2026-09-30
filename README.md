@@ -161,18 +161,28 @@ python ai-dev-framework/core/jcode_init.py your-project --language python
 
 ### 🔌 自检：门禁是否还活着
 
-门禁自己可能悄悄失效。本项目提供两个自检入口：
+门禁自己可能悄悄失效。本项目提供三个自检入口：
 
 ```bash
 make doctor        # 本地门禁环境（工具链/插件/基线是否就绪）
 make ci-heartbeat  # 远端 CI 是否真的跑过 job
-make self-check    # 两者一起跑
+make ci-alert      # 同上，额外以去重 Issue 方式开/更新告警、恢复时自动关闭
+make self-check    # doctor + ci-heartbeat
 ```
 
-`ci-heartbeat` 需要 `GITHUB_TOKEN`（`repo` 权限）：
+`ci-heartbeat` / `ci-alert` 需要 `GITHUB_TOKEN`（`repo` 权限）：
 
 ```bash
-GITHUB_TOKEN=<your_token> make ci-heartbeat
+GITHUB_TOKEN=<your_token> make ci-alert
+```
+
+`ci-alert` 的告警 Issue 用固定标题去重，同一时间只存在一条：失效时新建或更新，
+**恢复后自动关闭**。因此该 Issue 的存续即代表"当前失效"，无需人工清理。
+
+可接入系统 cron 做被动告警（注意：不能放进 CI，理由见下）：
+
+```cron
+0 9 * * * cd /path/to/repo && GITHUB_TOKEN=xxx make ci-alert
 ```
 
 **为什么 `ci-heartbeat` 必须在本地跑，不能注册成 scheduled 工作流？**

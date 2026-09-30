@@ -96,6 +96,9 @@ doctor:  ## 诊断本地门禁环境（工具链/插件/基线是否就绪）
 ci-heartbeat:  ## 检测远端 CI 是否真的跑过 job（必须本地运行，见 ADR-057）
 	@python -m tools.scripts.hooks_runner ci-heartbeat
 
+ci-alert:  ## 同 ci-heartbeat，额外以去重 Issue 方式开/更新告警、恢复时自动关闭
+	@python -m tools.scripts.hooks_runner ci-heartbeat --alert
+
 self-check: doctor ci-heartbeat  ## 自检：本地环境 + 远端门禁存活
 	@echo "✅ 自检完成（本地环境就绪 且 远端 CI 存活）"
 

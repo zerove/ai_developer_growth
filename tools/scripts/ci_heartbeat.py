@@ -98,6 +98,27 @@ def _token() -> str:
     return ""
 
 
+def _no_job_verdict(run_id: int, status: str, conclusion: str, created: str, updated: str) -> HealthVerdict:
+    return HealthVerdict(
+        False,
+        "CI 已失效：最近一次 run 产生 0 个 job",
+        f"run #{run_id} 状态 {status}/{conclusion}，时间戳跨度 {created} → {updated}。"
+        "若三者相同，说明 run 被立即拒绝（私有仓库配额耗尽或工作流无法解析）",
+        run_id,
+        created,
+    )
+
+
+def _stale_verdict(run_id: int, total: int, age_hours: float, stale_hours: int, created: str) -> HealthVerdict:
+    return HealthVerdict(
+        False,
+        f"CI 停滞：{age_hours:.0f} 小时没有新的 run（阈值 {stale_hours}h）",
+        f"最近 run #{run_id}，产出 {total} 个 job",
+        run_id,
+        created,
+    )
+
+
 def check_ci_health(repo: str, token: str, workflow: str, stale_hours: int) -> HealthVerdict:
     """查询最近一次 workflow run，判断门禁是否真的执行过。"""
     if not repo:
@@ -120,27 +141,14 @@ def check_ci_health(repo: str, token: str, workflow: str, stale_hours: int) -> H
 
     # 配额耗尽/工作流损坏：run 存在但没有任何 job 被调度
     if total == 0:
-        return HealthVerdict(
-            False,
-            "CI 已失效：最近一次 run 产生 0 个 job",
-            f"run #{run_id} 状态 {status}/{conclusion}，时间戳跨度 {created} → {updated}。"
-            "若三者相同，说明 run 被立即拒绝（私有仓库配额耗尽或工作流无法解析）",
-            run_id,
-            created,
-        )
+        return _no_job_verdict(run_id, status, conclusion, created, updated)
 
     # 有 job 但长时间没有新 run，视为停滞
-    newest = _parse_ts(items[0].get("created_at", ""))
-    if newest is not None:
+    newest = _parse_ts(latest.get("created_at", ""))
+    if newest is not None and status == "completed":
         age_hours = (datetime.now(timezone.utc) - newest).total_seconds() / 3600
-        if age_hours > stale_hours and status == "completed":
-            return HealthVerdict(
-                False,
-                f"CI 停滞：{age_hours:.0f} 小时没有新的 run（阈值 {stale_hours}h）",
-                f"最近 run #{run_id}，产出 {total} 个 job",
-                run_id,
-                created,
-            )
+        if age_hours > stale_hours:
+            return _stale_verdict(run_id, total, age_hours, stale_hours, created)
 
     return HealthVerdict(
         True,

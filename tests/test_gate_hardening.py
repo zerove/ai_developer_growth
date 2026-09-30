@@ -98,6 +98,32 @@ class TestPruneStaleEntries:
         assert "gone.py" not in data["files"]
 
 
+# ── doctor 必需/可选分级 ─────────────────────────────────
+
+
+class TestDoctorRequiredVsOptional:
+    """可选工具缺失不得使 doctor 失败。
+
+    pip-audit 在 security 门禁中是 `|| true` 可选降级，若 doctor 把它当必需，
+    健康机器也会返回非零——监控误报会让人开始忽略它，比不监控更糟。
+    """
+
+    def test_optional_tool_marked_optional(self) -> None:
+        from tools.scripts.hooks_runner import _doctor_check_toolchain
+
+        captured: list[tuple[bool, str, bool]] = []
+        _doctor_check_toolchain(captured)  # type: ignore[arg-type]
+        by_name = {desc.split()[1].rstrip(":"): req for _ok, desc, req in captured}
+        assert by_name.get("pip-audit") is False, "pip-audit 应为可选"
+        assert by_name.get("ruff") is True, "ruff 应为必需"
+
+    def test_optional_failure_excluded_from_required(self) -> None:
+        """失败判定必须尊重 required 标志，而非一律计入必需。"""
+        checks: list[tuple[bool, str, bool]] = [(False, "❌ 缺失的必需工具", True), (False, "⚠️ 缺失的可选工具", False)]
+        failed_required = [d for ok, d, req in checks if not ok and req]
+        assert failed_required == ["❌ 缺失的必需工具"], "可选工具失败不得计入必需项"
+
+
 # ── doctor pre-commit 检查 ────────────────────────────────
 
 

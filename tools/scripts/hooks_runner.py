@@ -357,18 +357,28 @@ def _check_tool_available(cmd: list[str], name: str, required: bool, hint: str =
     return ok or not required, desc, required
 
 
-def _doctor_check_toolchain(checks: list[tuple[bool, str]]) -> None:
-    """检查外部工具链可用性并打印结果（必需项缺失则门禁失败）。"""
+def _doctor_check_toolchain(checks: list[tuple[bool, str, bool]]) -> None:
+    """检查外部工具链可用性并打印结果（仅必需项缺失才使门禁失败）。
+
+    required 必须与实际门禁用法一致：security 检查中 pip-audit 是 `|| true`
+    可选降级，若在此标为必需会导致 doctor 在完全健康的机器上返回非零——
+    监控工具误报会使人开始忽略它，比不监控更糟。
+    """
     tools_to_check: list[tuple[list[str], str, bool, str]] = [
         (["ruff", "--version"], "ruff", True, "pip install ruff"),
         ([sys.executable, "-m", "mypy", "--version"], "mypy", True, "pip install mypy"),
         ([sys.executable, "-m", "pytest", "--version"], "pytest", True, "pip install pytest"),
         (["bandit", "--version"], "bandit", True, "pip install bandit"),
-        (["pip-audit", "--version"], "pip-audit", True, "pip install pip-audit"),
+        (
+            ["pip-audit", "--version"],
+            "pip-audit",
+            False,
+            "pip install pip-audit (可选，未安装时 security 门禁降级跳过)",
+        ),
     ]
     for cmd, name, required, hint in tools_to_check:
-        ok, desc, _ = _check_tool_available(cmd, name, required, hint)
-        checks.append((ok, desc))
+        ok, desc, req = _check_tool_available(cmd, name, required, hint)
+        checks.append((ok, desc, req))
         print(desc)
 
 
@@ -386,7 +396,7 @@ def _doctor_check_plugins() -> None:
             print(f"⚠️  {label} 未安装，将自动降级")
 
 
-def _doctor_check_hooks_json(root: Path, checks: list[tuple[bool, str]]) -> None:
+def _doctor_check_hooks_json(root: Path, checks: list[tuple[bool, str, bool]]) -> None:
     """检查 hooks.json 可解析性。"""
     hooks_json = root / ".jcode" / "hooks.json"
     try:
@@ -396,7 +406,7 @@ def _doctor_check_hooks_json(root: Path, checks: list[tuple[bool, str]]) -> None
     except Exception as e:  # noqa: BLE001 - 自检需要捕获全部异常并报告
         hooks_ok = False
         hooks_desc = f"❌ hooks.json 解析失败: {e}"
-    checks.append((hooks_ok, "hooks.json"))
+    checks.append((hooks_ok, "hooks.json", True))
     print(hooks_desc)
 
 
@@ -406,7 +416,7 @@ def _handle_doctor(args: argparse.Namespace) -> int:
     必需项缺失返回 1（CI 应失败），可选项缺失仅警告。
     """
     root = args.path
-    checks: list[tuple[bool, str]] = []
+    checks: list[tuple[bool, str, bool]] = []
 
     print("=" * 60)
     print("  HOOKS DOCTOR - 门禁环境自检")
@@ -414,12 +424,12 @@ def _handle_doctor(args: argparse.Namespace) -> int:
 
     # 1. git 仓库
     git_ok = (root / ".git").exists()
-    checks.append((git_ok, "git 仓库" if git_ok else "❌ 不是 git 仓库"))
+    checks.append((git_ok, "git 仓库" if git_ok else "❌ 不是 git 仓库", True))
     print(f"{'✅' if git_ok else '❌'} git 仓库: {root}")
 
     # 2. pre-commit 钩子健康
     pc_ok, pc_desc = _check_pre_commit_hook()
-    checks.append((pc_ok, "pre-commit 钩子"))
+    checks.append((pc_ok, "pre-commit 钩子", False))
     print(f"{'✅' if pc_ok else '❌'} {pc_desc}")
 
     # 3-4. 工具链与插件
@@ -431,13 +441,13 @@ def _handle_doctor(args: argparse.Namespace) -> int:
 
     baseline_file = root / ".jcode" / "baseline.json"
     bl_ok, bl_desc = validate_baseline_structure(baseline_file)
-    checks.append((bl_ok, "质量基线文件"))
+    checks.append((bl_ok, "质量基线文件", True))
     print(f"{'✅' if bl_ok else '❌'} 质量基线: {bl_desc}")
 
     # 6. hooks.json 可解析
     _doctor_check_hooks_json(root, checks)
 
-    failed_required = [d for ok, d in checks if not ok]
+    failed_required = [d for ok, d, req in checks if not ok and req]
     print("=" * 60)
     if failed_required:
         print(f"❌ DOCTOR: {len(failed_required)} 项必需检查未通过")

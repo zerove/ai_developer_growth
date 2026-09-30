@@ -220,31 +220,36 @@ def run_pre_push_check() -> int:
 
 
 def install_pre_push_hook() -> bool:
-    """Install this script as a git pre-push hook.
+    """Install the full pre-push gate from the tracked source into .git/hooks/.
+
+    The hook body lives in ``.jcode/hooks/pre-push`` (version-controlled)
+    because ``.git/`` is not distributed with the repository. Installing a
+    hand-written wrapper here would silently downgrade the gate to the
+    unpushed-commits check alone, losing lint/typecheck/test/quality-gate.
+
+    Both the source and the target are resolved against the current working
+    directory, so the function stays testable and installs into whichever
+    repository the developer is standing in.
 
     Returns:
         True if successful.
     """
-    hooks_dir = Path(".git") / "hooks"
+    repo_root = Path.cwd()
+    source = repo_root / ".jcode" / "hooks" / "pre-push"
+    if not source.exists():
+        print(f"Error: tracked hook source not found: {source}")
+        return False
+
+    hooks_dir = repo_root / ".git" / "hooks"
     if not hooks_dir.exists():
         print("Error: Not in a git repository (.git/hooks not found)")
         return False
 
-    hooks_dir.mkdir(parents=True, exist_ok=True)
     target = hooks_dir / "pre-push"
-
-    # Create wrapper script
-    script = f"""#!/bin/bash
-# ADG Governance pre-push hook
-# Auto-installed by: hooks_runner.py install-hooks --pre-push
-
-cd "{Path.cwd()}"
-python -m tools.scripts.hooks.pre_push
-exit $?
-"""
-    target.write_text(script)
+    target.write_text(source.read_text(encoding="utf-8"), encoding="utf-8")
     target.chmod(0o755)
     print(f"✅ Pre-push hook installed at {target}")
+    print(f"   (source: {source.relative_to(repo_root)})")
     return True
 
 

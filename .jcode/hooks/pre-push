@@ -1,0 +1,53 @@
+#!/bin/bash
+# 本地 CI pre-push 门禁（权威副本，安装到 .git/hooks/pre-push）
+#
+# 为什么需要它：.git/ 不受版本控制，若门禁只存在于本地，其他克隆者
+# 会在无感知的情况下失去全部 pre-push 保护。故源文件受跟踪，经
+# `hooks_runner.py install-hooks --pre-push` 安装。
+#
+# 组成:
+#   1. ADG unpushed commits 检查 (tools/scripts/hooks/pre_push.py)
+#   2. hooks_runner 核心门禁: lint/typecheck/test/quality-gate/baseline recompute
+#
+# 跳过方式: git push --no-verify (不推荐, 会留下未验证的推送)
+
+set -o pipefail
+
+ROOT="$(git rev-parse --show-toplevel)"
+cd "$ROOT" || exit 1
+
+# hooks 使用 `from tools.scripts.hooks... import ...`，需要仓库根可 import。
+export PYTHONPATH="$ROOT${PYTHONPATH:+:$PYTHONPATH}"
+
+fail=0
+
+echo "═══ [1/2] Unpushed commits 检查 ═══"
+python -m tools.scripts.hooks.pre_push || fail=1
+
+echo ""
+echo "═══ [2/2] 本地 CI 全量核心检查 ═══"
+
+echo "── lint ──"
+python -m tools.scripts.hooks_runner lint || fail=1
+
+echo "── typecheck ──"
+python -m tools.scripts.hooks_runner typecheck || fail=1
+
+echo "── test (xdist) ──"
+python -m tools.scripts.hooks_runner test || fail=1
+
+echo "── quality-gate --full ──"
+python -m tools.scripts.hooks_runner quality-gate --full || fail=1
+
+echo "── baseline recompute ──"
+python -m tools.scripts.hooks_runner baseline recompute || fail=1
+
+if [ "$fail" -ne 0 ]; then
+    echo ""
+    echo "❌ 本地 CI 失败, 推送被阻止。修复后重试, 或 git push --no-verify 绕过 (不推荐)。"
+    exit 1
+fi
+
+echo ""
+echo "✅ 本地 CI 全部通过, 允许推送。"
+exit 0

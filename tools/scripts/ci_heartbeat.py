@@ -32,8 +32,9 @@ DEFAULT_WORKFLOW = "ci.yml"
 # 超过该小时数没有成功跑出 job，视为停滞（配额耗尽通常持续数天）
 STALE_HOURS = 24
 HTTP_TIMEOUT = 15
-# 告警 Issue 用固定标题做去重锚点：同一时间只允许存在一条开放告警
-ALERT_TITLE = "CI 心跳: 门禁失效"
+# 告警 Issue 用「前缀 + 工作流名」做去重锚点：同一工作流同一时间只允许存在
+# 一条开放告警，且不同工作流互不覆盖（否则 A 恢复会误关 B 的告警）
+ALERT_TITLE_PREFIX = "CI 心跳: 门禁失效"
 
 
 @dataclass(frozen=True)
@@ -216,15 +217,20 @@ def _render(verdict: HealthVerdict, as_json: bool) -> None:
         print("  因为配额耗尽时 CI 内的任何检测器都会一并死亡。")
 
 
-def _find_alert_issue(repo: str, token: str) -> int | None:
-    """查找已存在的开放告警 Issue，返回其编号（按固定标题去重）。"""
-    query = urllib.parse.quote(f'repo:{repo} is:issue is:open in:title "{ALERT_TITLE}"')
+def _alert_title(workflow: str) -> str:
+    """按工作流生成唯一告警标题，使不同工作流的告警互不干扰。"""
+    return f"{ALERT_TITLE_PREFIX} ({workflow})"
+
+
+def _find_alert_issue(repo: str, token: str, workflow: str) -> int | None:
+    """查找该工作流已存在的开放告警 Issue，返回其编号。"""
+    query = urllib.parse.quote(f'repo:{repo} is:issue is:open in:title "{_alert_title(workflow)}"')
     result = _api_get(f"/search/issues?q={query}&per_page=1", token)
     items = result.get("items") or []
     return items[0]["number"] if items else None
 
 
-def _issue_body(verdict: HealthVerdict, recovered: bool) -> str:
+def _issue_body(verdict: HealthVerdict, workflow: str, recovered: bool) -> str:
     """构造告警 Issue 正文；带检测时间戳，便于判断是否为陈旧告警。"""
     stamp = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S UTC")
     state = "已恢复" if recovered else "仍失效"
@@ -232,6 +238,7 @@ def _issue_body(verdict: HealthVerdict, recovered: bool) -> str:
         "由 `make ci-alert` 自动维护，请勿手工关闭。",
         "",
         f"- 状态：**{state}**",
+        f"- 工作流：`{workflow}`",
         f"- 结论：{verdict.reason}",
         f"- 检测时间：{stamp}",
     ]
@@ -251,10 +258,10 @@ def _issue_body(verdict: HealthVerdict, recovered: bool) -> str:
     return "\n".join(lines)
 
 
-def _raise_alert(repo: str, token: str, verdict: HealthVerdict) -> str:
-    """失效时开或更新唯一告警 Issue，返回动作描述。"""
-    number = _find_alert_issue(repo, token)
-    body = _issue_body(verdict, recovered=False)
+def _raise_alert(repo: str, token: str, workflow: str, verdict: HealthVerdict) -> str:
+    """失效时开或更新该工作流的唯一告警 Issue，返回动作描述。"""
+    number = _find_alert_issue(repo, token, workflow)
+    body = _issue_body(verdict, workflow, recovered=False)
     if number is not None:
         _api_call("PATCH", f"/repos/{repo}/issues/{number}", token, {"body": body})
         return f"已更新告警 Issue #{number}"
@@ -262,29 +269,29 @@ def _raise_alert(repo: str, token: str, verdict: HealthVerdict) -> str:
         "POST",
         f"/repos/{repo}/issues",
         token,
-        {"title": ALERT_TITLE, "body": body, "labels": ["bug"]},
+        {"title": _alert_title(workflow), "body": body, "labels": ["bug"]},
     )
     return f"已创建告警 Issue #{created.get('number')}"
 
 
-def _clear_alert(repo: str, token: str, verdict: HealthVerdict) -> str:
-    """恢复时关闭告警 Issue；无开放告警则不动作。"""
-    number = _find_alert_issue(repo, token)
+def _clear_alert(repo: str, token: str, workflow: str, verdict: HealthVerdict) -> str:
+    """恢复时关闭该工作流的告警 Issue；无开放告警则不动作。"""
+    number = _find_alert_issue(repo, token, workflow)
     if number is None:
         return "无开放告警，无需关闭"
     _api_call(
         "PATCH",
         f"/repos/{repo}/issues/{number}",
         token,
-        {"state": "closed", "body": _issue_body(verdict, recovered=True)},
+        {"state": "closed", "body": _issue_body(verdict, workflow, recovered=True)},
     )
     return f"已关闭告警 Issue #{number}"
 
 
-def _run_alert(repo: str, token: str, verdict: HealthVerdict) -> str:
+def _run_alert(repo: str, token: str, workflow: str, verdict: HealthVerdict) -> str:
     if verdict.ok:
-        return _clear_alert(repo, token, verdict)
-    return _raise_alert(repo, token, verdict)
+        return _clear_alert(repo, token, workflow, verdict)
+    return _raise_alert(repo, token, workflow, verdict)
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -298,7 +305,7 @@ def main(argv: list[str] | None = None) -> int:
 
     verdict = _probe(args)
     if args.alert and _token():
-        action = _run_alert(args.repo or _repo_slug(), _token(), verdict)
+        action = _run_alert(args.repo or _repo_slug(), _token(), args.workflow, verdict)
         if not args.json:
             print(f"  告警动作: {action}")
     _render(verdict, args.json)

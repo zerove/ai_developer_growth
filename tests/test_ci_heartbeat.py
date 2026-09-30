@@ -12,8 +12,9 @@ from typing import Any
 import pytest
 
 from tools.scripts.ci_heartbeat import (
-    ALERT_TITLE,
+    ALERT_TITLE_PREFIX,
     HealthVerdict,
+    _alert_title,
     _clear_alert,
     _find_alert_issue,
     _issue_body,
@@ -28,6 +29,7 @@ from tools.scripts.ci_heartbeat import (
 )
 
 REPO = "zerove/ai_developer_growth"
+WF = "ci.yml"
 TOKEN = "dummy-token"
 
 NOW = "2026-09-29T13:55:27Z"
@@ -200,34 +202,42 @@ class TestAlert:
     def test_find_returns_none_when_no_issue(self, monkeypatch: pytest.MonkeyPatch) -> None:
         api = _AlertApi([])
         monkeypatch.setattr("tools.scripts.ci_heartbeat._api_call", api)
-        assert _find_alert_issue(REPO, TOKEN) is None
+        assert _find_alert_issue(REPO, TOKEN, WF) is None
 
     def test_find_returns_number(self, monkeypatch: pytest.MonkeyPatch) -> None:
         api = _AlertApi([{"number": 42}])
         monkeypatch.setattr("tools.scripts.ci_heartbeat._api_call", api)
-        assert _find_alert_issue(REPO, TOKEN) == 42
+        assert _find_alert_issue(REPO, TOKEN, WF) == 42
 
     def test_find_queries_open_issues_by_title(self, monkeypatch: pytest.MonkeyPatch) -> None:
         api = _AlertApi([])
         monkeypatch.setattr("tools.scripts.ci_heartbeat._api_call", api)
-        _find_alert_issue(REPO, TOKEN)
+        _find_alert_issue(REPO, TOKEN, WF)
         assert "search/issues" in api.paths()[0]
         assert "is%3Aopen" in api.paths()[0] or "is:open" in api.paths()[0]
+
+    def test_alert_title_is_scoped_per_workflow(self) -> None:
+        assert _alert_title("ci.yml") != _alert_title("release.yml")
+        assert _alert_title("ci.yml").startswith(ALERT_TITLE_PREFIX)
+
+    def test_issue_body_records_workflow(self) -> None:
+        body = _issue_body(self._verdict(False), "release.yml", recovered=False)
+        assert "release.yml" in body
 
     def test_raise_creates_issue_when_absent(self, monkeypatch: pytest.MonkeyPatch) -> None:
         api = _AlertApi([])
         monkeypatch.setattr("tools.scripts.ci_heartbeat._api_call", api)
-        msg = _raise_alert(REPO, TOKEN, self._verdict(False))
+        msg = _raise_alert(REPO, TOKEN, WF, self._verdict(False))
         assert "999" in msg
         posts = [c for c in api.calls if c[0] == "POST"]
         assert len(posts) == 1
         assert posts[0][2] is not None
-        assert posts[0][2]["title"] == ALERT_TITLE
+        assert posts[0][2]["title"] == _alert_title(WF)
 
     def test_raise_updates_existing_issue_instead_of_duplicating(self, monkeypatch: pytest.MonkeyPatch) -> None:
         api = _AlertApi([{"number": 42}])
         monkeypatch.setattr("tools.scripts.ci_heartbeat._api_call", api)
-        msg = _raise_alert(REPO, TOKEN, self._verdict(False))
+        msg = _raise_alert(REPO, TOKEN, WF, self._verdict(False))
         assert "42" in msg
         assert not [c for c in api.calls if c[0] == "POST"], "已有告警时不应新建，避免刷屏"
         assert any(c[0] == "PATCH" for c in api.calls)
@@ -235,7 +245,7 @@ class TestAlert:
     def test_clear_closes_open_issue(self, monkeypatch: pytest.MonkeyPatch) -> None:
         api = _AlertApi([{"number": 42}])
         monkeypatch.setattr("tools.scripts.ci_heartbeat._api_call", api)
-        msg = _clear_alert(REPO, TOKEN, self._verdict(True))
+        msg = _clear_alert(REPO, TOKEN, WF, self._verdict(True))
         assert "42" in msg
         patch_call = next(c for c in api.calls if c[0] == "PATCH")
         assert patch_call[2] is not None
@@ -244,29 +254,29 @@ class TestAlert:
     def test_clear_is_noop_without_issue(self, monkeypatch: pytest.MonkeyPatch) -> None:
         api = _AlertApi([])
         monkeypatch.setattr("tools.scripts.ci_heartbeat._api_call", api)
-        assert "无需关闭" in _clear_alert(REPO, TOKEN, self._verdict(True))
+        assert "无需关闭" in _clear_alert(REPO, TOKEN, WF, self._verdict(True))
         assert not [c for c in api.calls if c[0] == "PATCH"]
 
     def test_run_alert_dispatches_by_health(self, monkeypatch: pytest.MonkeyPatch) -> None:
         dead = _AlertApi([])
         monkeypatch.setattr("tools.scripts.ci_heartbeat._api_call", dead)
-        _run_alert(REPO, TOKEN, self._verdict(False))
+        _run_alert(REPO, TOKEN, WF, self._verdict(False))
         assert any(c[0] == "POST" for c in dead.calls)
 
         alive = _AlertApi([{"number": 7}])
         monkeypatch.setattr("tools.scripts.ci_heartbeat._api_call", alive)
-        _run_alert(REPO, TOKEN, self._verdict(True))
+        _run_alert(REPO, TOKEN, WF, self._verdict(True))
         assert any(c[0] == "PATCH" for c in alive.calls)
 
     def test_issue_body_contains_diagnosis(self) -> None:
-        body = _issue_body(self._verdict(False), recovered=False)
+        body = _issue_body(self._verdict(False), WF, recovered=False)
         assert "0 个 job" in body
         assert "settings/billing" in body
         assert "ADR-057" in body
         assert "仍失效" in body
 
     def test_issue_body_marks_recovery(self) -> None:
-        assert "已恢复" in _issue_body(self._verdict(True), recovered=True)
+        assert "已恢复" in _issue_body(self._verdict(True), WF, recovered=True)
 
     def test_alert_flag_triggers_alert(self, capsys: pytest.CaptureFixture[str], monkeypatch) -> None:
         monkeypatch.setenv("GITHUB_TOKEN", TOKEN)

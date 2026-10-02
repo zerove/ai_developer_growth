@@ -186,8 +186,27 @@ except ImportError:
 
 - AST 不可用时 `parse_file` 仍返回 `None` 而非抛异常，调用方的
   fail-open 面依然存在，本阶段只收窄了触发条件，未改返回契约
-- 全项目 mypy 有 2368 个既存错误（多为测试缺类型注解），
-  本次改动的 4 个文件已单独验证为 clean
+- mypy 分区口径（实测）：`tools/ .jcode/` 234 个文件 **clean**；
+  `tests/` 单独跑有 2330 个既存错误（多为测试函数缺类型注解）。
+  所以“mypy 全绿”目前**仅对非测试目录成立**，CI 的 `mypy .` 实际会红
+
+#### 方法论修正：变异测试必须确认变异真的生效了
+
+复核变异结果时发现：`git stash push -- <file>` 在工作树已干净时
+**静默不生效**（无内容可暂存，退出码仍为 0），于是"退回旧实现后跑测试"
+实际跑的仍是新实现 —— 会得出"变异后依然全绿"的错误结论。
+
+正确做法是绕开 git，从父提交直接取出旧版本：
+
+```bash
+git show 5f2bcf2^:tools/scripts/rules_engine/ast_parser.py > /tmp/ast_old.py
+cp /tmp/ast_old.py tools/scripts/rules_engine/ast_parser.py
+# 确认标记数已从 2 变 0，再跑测试
+```
+
+实测：真旧实现下 `3 failed / 2 passed`，核心用例
+`test_missing_languages_do_not_disable_python` 确实失败；
+新实现下 `5 passed`。**每次变异都要先确认变异已生效，再看结果。**
 
 ### Phase 37: 上下文资产完整性收口 (2026-10-02)
 

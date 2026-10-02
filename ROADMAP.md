@@ -76,8 +76,13 @@
     当前全量回归无需任何 `--ignore`：4531 passed / 0 failed
   - `parse_file` 在 AST 不可用时仍返回 `None` 而非抛异常，调用方
     fail-open 面依然存在（ADR-063 只收窄了触发条件）
-  - 全项目 mypy 2368 个既存错误（多为测试缺类型注解），
-    “mypy 全绿”目前仅对非测试目录成立
+  - mypy 分区口径（实测）：`tools/ .jcode/` 234 个文件 clean，
+    但 `tests/` 有 2330 个既存错误（多为测试函数缺类型注解）。
+    “mypy 全绿”仅对非测试目录成立，CI 的 `mypy .` 实际会红
+  - 变异测试方法论：`git stash push -- <file>` 在工作树已干净时
+    **静默不生效**，曾导致“变异后依然全绿”的错误结论。
+    应改用 `git show <commit>^:<path>` 直接取旧版本，并先确认
+    变异标记确实变了再看测试结果
 - **其余 skill 入口的 fail-open 审计**：~~`weekly-context-sync` 暴露的是
   `context-sync.py validate`，其余 skill（knowledge-curator / governance-auditor /
   workflow-optimizer / community-catalyst）需逐个核查"检查失败是否真的非 0 退出"~~

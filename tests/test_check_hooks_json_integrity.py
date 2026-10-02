@@ -15,6 +15,7 @@
 from __future__ import annotations
 
 import json
+import os
 import subprocess
 import sys
 import unittest
@@ -168,6 +169,58 @@ class SubcommandOptionTest(unittest.TestCase):
             result.returncode,
             0,
             f"含子命令选项的 hook 不应被误报:\n{result.stdout}{result.stderr}",
+        )
+
+
+class InterpreterConsistencyTest(unittest.TestCase):
+    """探测用的解释器必须与项目一致 (ADR-062 补记)。
+
+    本机 PATH 里的 python3 是 mise 装的 3.14, 而项目 venv 是 3.11。
+    若探测时用错解释器, 依赖 venv 包的脚本会因 ImportError 拿不到 --help,
+    参数校验就会被静默跳过 —— 又一次 fail-open, 且不报错。
+    """
+
+    def test_script_prefers_project_interpreter_over_path_python(self) -> None:
+        """脚本不得直接用 PATH 里的 python3 探测目标脚本。"""
+        text = SCRIPT.read_text(encoding="utf-8")
+        self.assertIn("PY=", text, "应先选定项目解释器")
+        self.assertNotIn(
+            "[sys.executable, target",
+            text,
+            "探测目标脚本时不应使用内嵌解释器 sys.executable",
+        )
+
+    def test_runs_under_system_python_only_fallback(self) -> None:
+        """强制回退到系统 python3 时仍能正确判定 (不崩溃、不误报)。"""
+        env = dict(os.environ)
+        env["PY"] = sys.executable
+        result = subprocess.run(
+            ["bash", str(SCRIPT)],
+            capture_output=True,
+            text=True,
+            cwd=REPO_ROOT,
+            timeout=300,
+            env=env,
+        )
+        self.assertEqual(
+            result.returncode,
+            0,
+            f"回退解释器下真实配置应通过:\n{result.stdout}{result.stderr}",
+        )
+
+    def test_runs_from_unrelated_cwd(self) -> None:
+        """从任意目录调用都应正常工作 (脚本需自行 cd 到仓库根)。"""
+        result = subprocess.run(
+            ["bash", str(SCRIPT)],
+            capture_output=True,
+            text=True,
+            cwd="/",
+            timeout=300,
+        )
+        self.assertEqual(
+            result.returncode,
+            0,
+            f"非仓库目录下应仍能通过:\n{result.stdout}{result.stderr}",
         )
 
 

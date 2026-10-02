@@ -63,6 +63,68 @@ AI 时代开发者成长知识库 + 治理框架（knowledge base + governance f
 
 ---
 
+## 更新记录: 2026-10-03 00:18:46
+
+### 任务
+Git 变更同步
+
+### 变更摘要
+- 变更文件 6 个 (+207 / -190 行)
+  - CONTEXT.md
+  - docs/adr/ADR-062-fail-open-detector-validates-executability.md
+  - docs/adr/ADR.md
+  - tests/test_check_hooks_json_integrity.py
+  - tools/scripts/check_hooks_json_integrity.sh
+  - uv.lock
+
+## 更新记录: 2026-10-03 00:13:53
+
+### 任务
+Git 变更同步
+
+### 变更摘要
+- 变更文件 5 个 (+106 / -399 行)
+  - .jcode/hooks.json
+  - CONTEXT.md
+  - docs/adr/ADR.md
+  - tools/scripts/check_hooks_json_integrity.sh
+  - uv.lock
+
+## 更新记录: 2026-10-03 00:13:53
+
+### 任务
+Git 变更同步
+
+### 变更摘要
+- 变更文件 5 个 (+93 / -384 行)
+  - .jcode/hooks.json
+  - CONTEXT.md
+  - docs/adr/ADR.md
+  - tools/scripts/check_hooks_json_integrity.sh
+  - uv.lock
+
+## 更新记录: 2026-10-03 00:13:04
+
+### 任务
+Git 变更同步
+
+### 变更摘要
+- 变更文件 4 个 (+36 / -139 行)
+  - .jcode/hooks.json
+  - CONTEXT.md
+  - docs/adr/ADR.md
+  - uv.lock
+
+## 更新记录: 2026-10-03 00:12:39
+
+### 任务
+Git 变更同步
+
+### 变更摘要
+- 变更文件 2 个 (+18 / -121 行)
+  - docs/adr/ADR.md
+  - uv.lock
+
 ## 更新记录: 2026-10-03 00:06:04
 
 ### 任务
@@ -942,93 +1004,6 @@ session 收尾: CONTEXT 收敛 + ADR-030 Phase 32 启动规划
 - master HEAD: `7cf38c1` (前置)
 - 工作区: clean
 - 累计: 29 ADR / 17 降级规则 / 3703 tests / 86.67% 覆盖率
-
----
-
-## 更新记录: 2026-09-02 16:38:00
-
-### 任务
-后续开发规划 + ADR-029 Phase 32 规划
-
-### 变更摘要
-- **优化后计划**: Phase 32 (rule_loader) / Phase 33 (semantic_*) / Phase 34 (集成测试) / Phase 35 (例行维护)
-- **ADR-029**: Phase 32 rule_loader.py 覆盖率补测规划 (274 行, 4-6h 工作量, session 已饱和)
-  - 列未覆盖分支清单 + 推荐测试结构
-  - 预期: rule_loader 77% → 95%+, 总 86.67% → 88%+
-- **ROADMAP 更新**: regex_cache ✅ 标记完成 + rule_loader 标 Phase 32 起点
-- **主动停止**: 不在本会话实施 rule_loader (大工程风险高于价值)
-- CONTEXT 56 → 50 条
-
-### 当前状态
-- master HEAD: `8b66ffc` (前置)
-- 工作区: clean (除待提交)
-- 累计: 29 ADR / 17 降级规则 / 0 error / 0 warning / 3703 tests / regex_cache 100%
-
----
-
-## 更新记录: 2026-09-02 03:58:00
-
-### 任务
-Git 变更同步
-
-### 变更摘要
-- 变更文件 6 个 (+233 / -61 行)
-  - .jcode/hooks.json
-  - ADR.md
-  - CHANGELOG.md
-  - CONTEXT.md
-  - docs/adr/ADR-026-phase-30-hooks-json-integrity.md
-  - tools/scripts/check_hooks_json_integrity.sh
-
----
-
-## 更新记录: 2026-09-02 03:57:50
-
-### 任务
-Git 变更同步
-
-### 变更摘要
-- 变更文件 6 个 (+217 / -46 行)
-  - .jcode/hooks.json
-  - ADR.md
-  - CHANGELOG.md
-  - CONTEXT.md
-  - docs/adr/ADR-026-phase-30-hooks-json-integrity.md
-  - tools/scripts/check_hooks_json_integrity.sh
-
----
-
-## 更新记录: 2026-09-02 03:57:49
-
-### 任务
-Git 变更同步
-
-### 变更摘要
-- 变更文件 6 个 (+200 / -0 行)
-  - .jcode/hooks.json
-  - ADR.md
-  - CHANGELOG.md
-  - CONTEXT.md
-  - docs/adr/ADR-026-phase-30-hooks-json-integrity.md
-  - tools/scripts/check_hooks_json_integrity.sh
-
----
-
-## 更新记录: 2026-09-02 08:15:00
-
-### 任务
-pyproject version 同步 CHANGELOG (2.23.0 → 2.23.3)
-
-### 变更摘要
-- **pyproject.toml version 校正**: 2.23.0 → 2.23.3 (CHANGELOG 已发 3 个节点)
-- ROADMAP 治理指标 460 → 509 (前轮)
-- CHANGELOG v2.23.3 节点已对齐版本号
-
-### 当前状态
-- master HEAD: `fade523` (前置)
-- 工作区: clean (除 pyproject.toml)
-- 累计: 26 ADR / 17 降级规则 / 0 error / 0 warning / 3683 tests
-- pyproject version: 2.23.3 ✅ 与 CHANGELOG 对齐
 
 ---
 

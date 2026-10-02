@@ -106,16 +106,75 @@ options:
 于是被判否、解析出**空集合** —— 参数校验整体静默失效（比显式报错更隐蔽）。
 正确顺序是先 `strip('[]')` 再判断前缀。
 
+### 补记：探测解释器必须与项目一致
+
+初版探测用 `sys.executable`，即**跑这个 shell 脚本的解释器**（系统 `python3`）。
+本机实测存在版本分叉：
+
+```
+$ python3 -V            # PATH 里的（mise 装的）
+Python 3.14.7
+$ uv run python -V      # 项目 venv
+Python 3.11.15
+```
+
+若目标脚本依赖 venv 里的第三方包，用系统解释器探测会因 `ImportError`
+拿不到 `--help`，于是 `supported` 为空 → **静默跳过参数校验**。
+这正是本 ADR 要消灭的那类 fail-open，却在修复过程中被重新引入。
+
+改为先选定项目解释器再探测：优先 `uv run python`，其次 `.venv/bin/python`，
+最后才回退到 `PATH` 里的 `python3`。可用环境变量 `PY` 覆盖（便于测试回退路径）。
+
+本机当前实测两种解释器探测结果一致（4 个脚本的 `--help` 均 rc=0），
+所以这个缺陷尚未实际发作 —— 但它是一个**尚未引爆的**同类问题，
+按“宁可漏检不可误伤”的对称原则也应修：宁可多花一次 `uv` 启动时间。
+
 ## 后果
 
-- 检测器从 11s 降到 0.66s（旧实现要真跑 `on_commit` / `on_merge` 两轮 hook）
+- 检测器从 11s 降到 0.77s（旧实现要真跑 `on_commit` / `on_merge` 两轮 hook）
 - 四类 fail-open 均可捕获，真实配置零误报
-- 回归测试 `tests/test_check_hooks_json_integrity.py`（9 个用例）用 canary 注入
-  真实故障，确保修复不被静默回退
+- 回归测试 `tests/test_check_hooks_json_integrity.py`（12 个用例）用 canary
+  注入真实故障，确保修复不被静默回退
 
 ## 验证
 
-变异测试（注入 canary 后确认退出码为 1）：
+### 真实接受路径（非自定义测试）
+
+单测只能证明函数行为，不能证明门禁真的会拦住提交。因此直接走真实链路：
+
+```
+$ uv run python .jcode/scripts/hooks_runner.py on_commit --files .jcode/hooks.json
+...
+❌ [失败] hooks-json-integrity-check
+  - on_commit/ZZZ-real-canary: skill 'knowledge-curator' 不支持 action 'no-such-action'
+❌ 1 个 hooks 失败
+退出码: 1        # 会阻断 git commit
+```
+
+### 与修复前版本的对照
+
+对同一 canary 分别跑两个版本（`b47a124` 为修复前）：
+
+| 版本 | 退出码 | 输出 |
+|------|--------|------|
+| 修复前（关键词匹配） | **0** | “✅ 全部 hook 命令参数识别正常” |
+| 修复后（可执行性校验） | 1 | 明确指出不支持的 action |
+
+即：**修复前的门禁对一个运行时确实失败的 hook 报绿灯**。
+这是本次改动价值的直接证据。
+
+### 环境无关性
+
+| 场景 | 结果 |
+|------|------|
+| 仓库根目录 | 通过 |
+| `/tmp` 下调用 | 通过（脚本自行 cd 到仓库根） |
+| `PY=python3` 强制回退系统解释器 | 通过 |
+| `PATH=/usr/bin:/bin`（无 uv） | 通过 |
+
+### 变异测试
+
+注入 canary 后确认退出码为 1：
 
 | 变异 | 退出码 | 结果 |
 |------|--------|------|
@@ -129,6 +188,7 @@ options:
 
 - 退回关键词匹配实现 → 2 个真实配置测试失败
 - 还原方括号 bug → `test_supported_long_options_parses_usage` 失败
+- 退回 `sys.executable` → `test_script_prefers_project_interpreter_over_path_python` 失败
 
 ## 已知局限
 
@@ -137,6 +197,8 @@ options:
 - `.sh` 脚本同理跳过参数校验。
 - action 校验依赖脚本里 `actions = {...}` / `action_map = {...}` 字面量的写法。
   若某 skill 改用其他方式注册 action，会被判为"无法判定"而跳过 —— 这是有意的保守行为。
+- 解释器一致性在本机当前未实际发作（两版本探测结果相同），
+  属于预防性修复而非已观测故障。
 
 ## 相关
 

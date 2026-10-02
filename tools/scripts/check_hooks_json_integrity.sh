@@ -33,12 +33,31 @@ if [ ! -f .jcode/hooks.json ]; then
     exit 1
 fi
 
-PROBLEMS=$(python3 - << 'PYEOF'
+# 探测目标脚本时用项目自己的解释器, 而不是 PATH 里的 python3。
+# 本机 python3 是 mise 装的 3.14, 而项目 venv 是 3.11 (pyproject requires-python
+# >=3.11)。若目标脚本依赖 venv 里的第三方包, 用系统解释器探测会因 ImportError
+# 拿不到 --help, 从而静默跳过参数校验 —— 又一次 fail-open。
+# 优先 uv run, 其次项目 .venv, 最后才回退到 PATH 里的 python3。
+if command -v uv >/dev/null 2>&1; then
+    PY="${PY:-uv run python}"
+elif [ -x .venv/bin/python ]; then
+    PY="${PY:-.venv/bin/python}"
+else
+    PY="${PY:-python3}"
+fi
+
+PROBLEMS=$(PY="$PY" python3 - << 'PYEOF'
 import json
+import os
 import re
+import shlex
 import subprocess
 import sys
 from pathlib import Path
+
+# 目标脚本用项目解释器跑 (见 shell 层的 PY 选定逻辑), 本体仍用系统 python3
+# —— 这里只做 JSON/文本解析, 不需要 venv 依赖。
+PY_CMD = shlex.split(os.environ.get("PY", "python3"))
 
 HOOKS_JSON = ".jcode/hooks.json"
 
@@ -115,7 +134,7 @@ def _script_options(target: str) -> set[str]:
     options: set[str] = set()
     try:
         top = subprocess.run(
-            [sys.executable, target, "--help"],
+            [*PY_CMD, target, "--help"],
             capture_output=True,
             text=True,
             timeout=120,
@@ -135,7 +154,7 @@ def _script_options(target: str) -> set[str]:
     for sub in subcommands:
         try:
             r = subprocess.run(
-                [sys.executable, target, sub, "--help"],
+                [*PY_CMD, target, sub, "--help"],
                 capture_output=True,
                 text=True,
                 timeout=120,

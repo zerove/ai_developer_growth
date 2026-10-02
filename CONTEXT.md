@@ -63,6 +63,91 @@ AI 时代开发者成长知识库 + 治理框架（knowledge base + governance f
 
 ---
 
+## 更新记录: 2026-10-03 01:07:27
+
+### 任务
+Git 变更同步
+
+### 变更摘要
+- 变更文件 11 个 (+727 / -370 行)
+  - .jcode/hooks.json
+  - CHANGELOG.md
+  - CONTEXT.md
+  - ROADMAP.md
+  - docs/adr/ADR-062-fail-open-detector-validates-executability.md
+  - docs/adr/ADR.md
+  - pyproject.toml
+  - tests/test_check_hooks_json_integrity.py
+  - tools/scripts/check_hooks_json_integrity.sh
+  - tools/scripts/rules_engine/ast_parser.py
+  - uv.lock
+
+## 更新记录: 2026-10-03 00:59:29
+
+### 任务
+Git 变更同步
+
+### 变更摘要
+- 变更文件 11 个 (+707 / -347 行)
+  - .jcode/hooks.json
+  - CHANGELOG.md
+  - CONTEXT.md
+  - ROADMAP.md
+  - docs/adr/ADR-062-fail-open-detector-validates-executability.md
+  - docs/adr/ADR.md
+  - pyproject.toml
+  - tests/test_check_hooks_json_integrity.py
+  - tools/scripts/check_hooks_json_integrity.sh
+  - tools/scripts/rules_engine/ast_parser.py
+  - uv.lock
+
+## 更新记录: 2026-10-03 00:44:43
+
+### 任务
+Git 变更同步
+
+### 变更摘要
+- 变更文件 9 个 (+367 / -285 行)
+  - .jcode/hooks.json
+  - CHANGELOG.md
+  - CONTEXT.md
+  - ROADMAP.md
+  - docs/adr/ADR-062-fail-open-detector-validates-executability.md
+  - docs/adr/ADR.md
+  - tests/test_check_hooks_json_integrity.py
+  - tools/scripts/check_hooks_json_integrity.sh
+  - uv.lock
+
+## 更新记录: 2026-10-03 00:27:01
+
+### 任务
+Git 变更同步
+
+### 变更摘要
+- 变更文件 7 个 (+299 / -261 行)
+  - .jcode/hooks.json
+  - CONTEXT.md
+  - docs/adr/ADR-062-fail-open-detector-validates-executability.md
+  - docs/adr/ADR.md
+  - tests/test_check_hooks_json_integrity.py
+  - tools/scripts/check_hooks_json_integrity.sh
+  - uv.lock
+
+## 更新记录: 2026-10-03 00:26:42
+
+### 任务
+Git 变更同步
+
+### 变更摘要
+- 变更文件 7 个 (+285 / -240 行)
+  - .jcode/hooks.json
+  - CONTEXT.md
+  - docs/adr/ADR-062-fail-open-detector-validates-executability.md
+  - docs/adr/ADR.md
+  - tests/test_check_hooks_json_integrity.py
+  - tools/scripts/check_hooks_json_integrity.sh
+  - uv.lock
+
 ## 更新记录: 2026-10-03 00:18:46
 
 ### 任务
@@ -900,110 +985,6 @@ B 深度二次分析 + setup.cfg 配置冲突修复
 - 工作区: clean (除待提交)
 - 累计: 35 ADR / 17 降级规则 / 3771 tests / **rule_loader.py 81.28%** / 总 86.67%
 - **Phase 32 完整收口** (5/5 子任务全部完成) ✅
-
----
-
-## 更新记录: 2026-09-03 08:34:00
-
-### 任务
-session 收尾: mypy 警告注释 + CONTEXT 收敛
-
-### 变更摘要
-- **pyproject.toml 注释** (3 行): 说明 pygls overrides 段的 mypy 警告来源
- (pygls 是可选依赖, 未安装时 mypy 报 unused section, 但删了会引入 mypy 错误)
-- **CONTEXT 主动收敛**: 60+ → 50 条
-- 主动停止: session 拒绝"自动"启动 2e (避免延伸)
-
-### 当前状态
-- master HEAD: `39bd7ad` (前置)
-- 工作区: clean (除待提交)
-- 累计: 34 ADR / 17 降级规则 / 3748 tests / rule_loader.py 51% 覆盖
-
----
-
-## 更新记录: 2026-09-03 01:45:00
-
-### 任务
-Phase 32 子任务 2d yaml/merge 覆盖 + ADR-034
-
-### 变更摘要
-- **tests/test_rule_loader_yaml_merge.py** (333 行, 23 测试)
-  - _load_common_rules_cached (5 分支)
-  - _load_universal_rules_cached (4 分支)
-  - _try_load_yaml (3 分支)
-  - _merge_rules (6 分支)
-  - _merge_anti_patterns (5 分支)
-- **真实发现 (ADR-034)**: `_merge_anti_patterns(base, [])` 返回 base 本身
-  (共享引用, 低风险, 待 refactor)
-- 覆盖率: rule_loader.py 24% → **51%** (+27pp, 重大进展)
-- 测试套件: 3725 → **3748** (+23)
-
-### 当前状态
-- master HEAD: `a580fd9` (前置)
-- 工作区: clean
-- 累计: 34 ADR / 17 降级规则 / 3748 tests
-
----
-
-## 更新记录: 2026-09-03 00:50:00
-
-### 任务
-Phase 32 子任务 2c rules_hash 覆盖 + ADR-033
-
-### 变更摘要
-- **tests/test_rule_loader_rules_hash.py** (164 行, 8 测试)
-  - _rules_hash_cached 6 分支 (多文件/缺失/单文件/OSError/LRU hit/LRU miss)
-  - _rules_hash 2 分支 (默认 + 显式 framework_dir)
-- **ADR-033**: mock 设计 + **关键 Python 陷阱** (from X import Y 形成绑定, mock 模块属性而非导入路径)
-- 覆盖率: rule_loader.py 18% → **24%** (+6pp)
-- 测试套件: 3717 → **3725** (+8)
-
-### 当前状态
-- master HEAD: `0c30292` (前置)
-- 工作区: clean
-- 累计: 33 ADR / 17 降级规则 / 3725 tests
-
----
-
-## 更新记录: 2026-09-02 23:53:00
-
-### 任务
-Phase 32 子任务 2b disk_cache 覆盖 + ADR-032
-
-### 变更摘要
-- **tests/test_rule_loader_disk_cache.py** (129 行, 8 测试)
-  - _load_disk_cache 5 分支 (无文件/合法 JSON/JSONDecodeError/空文件/OSError)
-  - _save_disk_cache 3 分支 (mkdir+write/覆盖/OSError 兜底)
-- **ADR-032**: mock 设计决策 (monkeypatch 模块级常量)
-- 覆盖率: rule_loader.py 14% → **18%** (+4pp)
-- 测试套件: 3709 → **3717** (+8)
-
-### 当前状态
-- master HEAD: `a34cf5d` (前置)
-- 工作区: clean
-- 累计: 32 ADR / 17 降级规则 / 3717 tests
-
----
-
-## 更新记录: 2026-09-02 20:12:00
-
-### 任务
-session 收尾: CONTEXT 收敛 + ADR-030 Phase 32 启动规划
-
-### 变更摘要
-- CONTEXT 57 → 50 条 (第五次主动收敛)
-- **ADR-030**: Phase 32 启动规划 (子任务分解, 不实施)
-  - 2a `_file_hash` (5 min)
-  - 2b `_disk_cache` 系列 (1h)
-  - 2c `_rules_hash_cached` (1h)
-  - 2d yaml 加载 (2h)
-  - 2e 公开 API + 缓存失效 (2h)
-- 主动停止: 本轮只做规划, 不实施任何测试
-
-### 当前状态
-- master HEAD: `7cf38c1` (前置)
-- 工作区: clean
-- 累计: 29 ADR / 17 降级规则 / 3703 tests / 86.67% 覆盖率
 
 ---
 

@@ -49,6 +49,15 @@
         "command": "bash tools/scripts/check_hooks_json_integrity.sh",
         "condition": "files_contain('.jcode/hooks.json')",
         "enabled": true
+      },
+      {
+        "name": "adr-index-check",
+        "skill": "governance-auditor",
+        "action": "check-adr-index",
+        "description": "提交时验证 ADR 索引与 docs/adr/*.md 一致 (Phase 38)",
+        "command": "python tools/scripts/generate_adr_index.py --check",
+        "condition": "files_contain('docs/adr/')",
+        "enabled": true
       }
     ],
     "on_pr": [

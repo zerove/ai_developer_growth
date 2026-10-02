@@ -68,6 +68,12 @@
 | ADR-051 | Phase 33b-10 ComplexityMetrics.total_lines 真实填充 | 接受 | [docs/adr/ADR-051-phase-33b10-total-lines-fix.md](docs/adr/ADR-051-phase-33b10-total-lines-fix.md) |
 | ADR-052 | Phase 33b-12 report_generator skipped 文件契约修复 | 接受 | [docs/adr/ADR-052-phase-33b12-skipped-report-fix.md](docs/adr/ADR-052-phase-33b12-skipped-report-fix.md) |
 | ADR-053 | Phase 33b-13 check_directory 不再静默过滤 skipped 文件 | 接受 | [docs/adr/ADR-053-phase-33b13-check-directory-skipped.md](docs/adr/ADR-053-phase-33b13-check-directory-skipped.md) |
+| ADR-054 | Phase 34 跨文件重复函数抽取至 _common.py | 接受 | [docs/adr/ADR-054-phase-34-dedup-common.md](docs/adr/ADR-054-phase-34-dedup-common.md) |
+| ADR-055 | Phase 35 大文件 facade 拆分（6 文件 <850 行） | 接受 | [docs/adr/ADR-055-phase-35-file-split.md](docs/adr/ADR-055-phase-35-file-split.md) |
+| ADR-056 | Phase 36 cc 门禁落地 + 18 个 ≥10cc 函数全量拆分 | 接受 | [docs/adr/ADR-056-phase-36-complexity-gate.md](docs/adr/ADR-056-phase-36-complexity-gate.md) |
+| ADR-057 | CI 静默失效根因确认 + 心跳检测器必须跑在 CI 之外 | 接受 | [docs/adr/ADR-057-ci-heartbeat-outside-ci.md](docs/adr/ADR-057-ci-heartbeat-outside-ci.md) |
+| ADR-058 | context-sync 双实现并存是刻意设计，不做合并 | 接受 | [docs/adr/ADR-058-context-sync-dual-implementation.md](docs/adr/ADR-058-context-sync-dual-implementation.md) |
+| ADR-059 | 安全模式两套实现并存是刻意设计，不做合并 | 接受 | [docs/adr/ADR-059-security-patterns-dual-implementation.md](docs/adr/ADR-059-security-patterns-dual-implementation.md) |
 
 ---
 

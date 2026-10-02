@@ -56,14 +56,29 @@
 - **substring 存在性校验 ≠ 结构校验**：被吞掉的恰好是含关键词的那段，全文搜索永远通过
 - **记录边界由下一个标记决定**：任何"前置拼接"的结构化文档都会把已有头部吞进新条目
 - **回归测试要做变异验证**：把修复回退成缺陷版，确认测试真的会红，否则只是装饰性断言
+- **检测器自己也要做变异测试**（Phase 38 新增）：一个只匹配单一错误关键词的检测器，
+  会漏掉它没见过的故障形态 —— 而它本身报"✅ 全部正常"
+- **解析 `--help` 的两个反直觉点**（ADR-062）：argparse 遇 `--help` 先退出不校验参数；
+  子命令选项不出现在顶层 usage。前者让探测法完全失效，后者会让可用 hook 被误杀
 
 ### 后续候选 (v2.26.0 远期)
 
 - **ADR 决策缺口巡检**：`ADR.md` 编号断层本次靠人工发现（040），应纳入 scheduled
   校验 —— 校验 `docs/adr/*.md` 与索引双向一致 + 编号连续性（006 等已记录空号除外）
-- **其余 skill 入口的 fail-open 审计**：`weekly-context-sync` 暴露的是
+  **规模已核实 (Phase 38)**：磁盘上共 53 个 ADR 文件，索引仅登记 28 个，
+  **缺口 35 个**（014、022-049、057-060 等），远大于此前估计的"单点断层"。
+  索引自称"汇总所有架构决策记录"，与实际不符。补全需逐条读取标题/状态/日期，
+  建议写成脚本自动生成而非手工维护，否则缺口会再次扩大
+- **其余 skill 入口的 fail-open 审计**：~~`weekly-context-sync` 暴露的是
   `context-sync.py validate`，其余 skill（knowledge-curator / governance-auditor /
-  workflow-optimizer / community-catalyst）需逐个核查"检查失败是否真的非 0 退出"
+  workflow-optimizer / community-catalyst）需逐个核查"检查失败是否真的非 0 退出"~~
+  **已完成 (Phase 38, ADR-062)**：四个入口 + `hooks_runner` + `run_command` 均核查完毕，
+  **未发现 fail-open** —— 退出码全部正确传递（`run_command` 超时返 124，四个 `main`
+  均为 `sys.exit(action())`）。但审计过程中发现 **fail-open 检测器自身**有缺陷并已修复：
+  `check_hooks_json_integrity.sh` 原只匹配 `unrecognized arguments` 单一关键词，
+  action 拼错 / 脚本不存在等三类 fail-open 全部漏检（变异测试已证明），
+  且内嵌 Python `except Exception: pass` 会在超时后静默失效。
+  现改为校验可执行性，11s → 0.66s，且补了 9 个 canary 回归测试
 - **覆盖率尾部提升**：`parsers/contract.py` / `parsers/base.py` / `python_parser_v3.py`
   等解析器模块仍在 86% 附近，门禁整体 87.82% 但尾部可继续收敛
 - **CONTEXT.md 头部维护成本**：头部改为人工维护后，需明确"谁在什么时机更新它"

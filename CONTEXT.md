@@ -63,6 +63,19 @@ AI 时代开发者成长知识库 + 治理框架（knowledge base + governance f
 
 ---
 
+## 更新记录: 2026-10-03 00:06:04
+
+### 任务
+Git 变更同步
+
+### 变更摘要
+- 变更文件 5 个 (+351 / -334 行)
+  - CONTEXT.md
+  - ROADMAP.md
+  - docs/adr/ADR.md
+  - tools/scripts/check_hooks_json_integrity.sh
+  - uv.lock
+
 ## 更新记录: 2026-10-02 23:54:36
 
 ### 任务
@@ -1016,24 +1029,6 @@ pyproject version 同步 CHANGELOG (2.23.0 → 2.23.3)
 - 工作区: clean (除 pyproject.toml)
 - 累计: 26 ADR / 17 降级规则 / 0 error / 0 warning / 3683 tests
 - pyproject version: 2.23.3 ✅ 与 CHANGELOG 对齐
-
----
-
-## 更新记录: 2026-09-02 15:43:00
-
-### 任务
-session 收尾: CONTEXT 收敛 + ROADMAP Phase 31 状态更新
-
-### 变更摘要
-- CONTEXT 54 → 50 条 (主动维护)
-- ROADMAP Phase 31 状态: ai-tool-matrix ✅ + 覆盖率(regex_cache 100%) ✅
-- 主动停止再加新特性 (session 已 27 commit + 28 ADR)
-- 剩余 3 个 <80% 模块 (rule_loader/semantic_checker/semantic_rules) 标 Phase 31+ 后续
-
-### 当前状态
-- master HEAD: `f335133` (前置)
-- 工作区: clean
-- 累计: 28 ADR / 17 降级规则 / 0 error / 0 warning / 3703 tests
 
 ---
 

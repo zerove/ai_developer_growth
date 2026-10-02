@@ -4,6 +4,70 @@ All notable changes to the AI Developer Growth project.
 
 ## [Unreleased]
 
+### Phase 38: fail-open 审计与检测器修复 (2026-10-02)
+
+Phase 37 遗留的"其余 skill 入口 fail-open 审计"已完成。结论与预期相反：
+**各入口本身都是干净的**，真正的缺陷在**审计工具本身**。
+
+#### 审计结论：未发现 skill 入口 fail-open
+
+逐个核查 `.jcode/scripts/` 下四个治理入口及其调用链：
+
+| 组件 | 退出码语义 | 结论 |
+|------|-----------|------|
+| `governance-docs-validator.py` | `sys.exit(actions[action]())` | 正确传递 |
+| `knowledge-curator.py` | `sys.exit(action_map[action]())` | 正确传递 |
+| `community-catalyst.py` | `sys.exit(action_map[action]())` | 正确传递 |
+| `context-sync.py` | Phase 37 已修复 | 正确传递 |
+| `hooks_runner.py` | 按 `returncode != 0` 判定 | 正确传递 |
+| `run_command()`（共享） | 超时返 124 而非 0 | 正确传递 |
+
+顺带确认 `knowledge-curator.py` 的 `update-moc` 已正确地显式返回 1
+（而非调用不存在的参数后静默失败），Phase 30 当时的修复仍在生效。
+
+#### 修复：fail-open 检测器自身的漏检 (ADR-062)
+
+`tools/scripts/check_hooks_json_integrity.sh` 原本只 grep
+`unrecognized arguments` 单一关键词，漏掉了三类 fail-open（已用 canary 变异测试
+证明，而非推测）：
+
+| 注入的故障 | 旧检测器 |
+|------------|---------|
+| 参数不被支持（`--update-moc`） | 捕获 |
+| skill 存在但 action 拼错 | **报 ✅ 漏检** |
+| command 指向的脚本不存在 | **报 ✅ 漏检** |
+| skill 脚本不存在 | **报 ✅ 漏检** |
+
+同时内嵌 Python 里的 `except Exception: pass` + 120s 超时会让脚本在
+子进程超时后静默通过 —— 已验证 `TimeoutExpired` 确实走的是那条静默路径。
+
+修复：改为校验 hook 的**可执行性**（脚本存在 / 参数在 `--help` 中声明 /
+action 在 `action_map` 中注册），超时改为显式报错。
+耗时从 11s 降至 0.66s（不再需要真跑两轮 hook）。
+
+实现中踩到两个反直觉的坑，均由测试暴露：
+
+- argparse 遇 `--help` 会先打印帮助并以 0 退出，**不校验其余参数** ——
+  所以 `<args> --help` 的探测法会把坏参数全部漏掉，比旧实现更差
+- 子命令选项**不出现在顶层 usage**，只看顶层会把可用的
+  `on_pr/self-correction` hook 误判为坏参数（假阳性比漏检更糟）
+
+另修复一个隐性问题：选项解析时先判前缀后剥方括号，导致 `[--check-all]`
+被判否、解析出空集，使参数校验整体静默失效。
+
+#### 测试
+
+- 新增 `tests/test_check_hooks_json_integrity.py`（9 用例）：4 类 canary 故障注入
+  + 真实配置零误报 + 子命令假阳性回归 + 2 个纯函数单测
+- 对测试本身做变异：退回旧实现 → 2 失败；还原方括号 bug → 1 失败，
+  确认这些断言不是装饰性的
+
+#### 顺带核实：ADR 索引缺口远大于此前估计
+
+`docs/adr/ADR.md` 自称"汇总所有架构决策记录"，但磁盘上 53 个 ADR 仅登记 28 个，
+**缺口 35 个**（014、022-049、057-060 等）。此前 ROADMAP 记为"单点断层(040)"是低估。
+本次仅补入 ADR-061 / ADR-062，其余记入 v2.26.0 候选并建议改为脚本自动生成索引。
+
 ### Phase 37: 上下文资产完整性收口 (2026-10-02)
 
 全面状态审计：代码门禁全绿（ruff / mypy clean，4495 passed，覆盖率 87.82%），

@@ -2,6 +2,53 @@
 
 All notable changes to the AI Developer Growth project.
 
+## [Unreleased]
+
+### Phase 37: 上下文资产完整性收口 (2026-10-02)
+
+全面状态审计：代码门禁全绿（ruff / mypy clean，4495 passed，覆盖率 87.82%），
+但发现**项目级上下文资产 CONTEXT.md 已退化为纯同步日志** —— 1142 行、首行即记录
+标题、50 条 `## 更新记录:`，人工维护的固定头部全部丢失。追溯提交 `2777766`
+（2026-08-23）定位到两个叠加缺陷。
+
+#### 修复
+
+- **context-sync 组装顺序根因**（P0）: `synthesize_context_update` 把新记录拼在
+  已有内容之前，导致"新记录 + 头部 + 历史记录"被 `_prune_update_entries` 整体
+  识别为单条记录（记录边界只由下一个 `## 更新记录:` 决定），头部随滚动窗口被
+  静默丢弃。实测窗口为 50 时第 51 次同步头部消失。
+  修复：新增 `_split_header_and_entries()` / `_render()`，组装顺序改为
+  `header → 新记录 → 历史记录`，抽出 `_ENTRY_PREFIX` 常量消除两处字面量漂移
+- **validate_context fail-open**（P0）: 子检查失败只打印不返回，退出码恒为 0，
+  `.jcode/hooks.json` 的 `weekly-context-sync`（每周一 11:00）形同虚设；且只做
+  全文 substring 校验，无法发现头部被吞（被吞的恰好是含关键词的段落）。
+  修复：改为头部区位置校验 + 新增两项结构检查 + 任一失败即返回 1 并列出失败项
+- **恢复 CONTEXT.md 固定头部**: 重建项目定位 / 状态表 / 核心目录 / 关键约束 /
+  决策记录 / 计划六段，数据取自本次实测
+- **ADR-040 追补**: Phase 33a-2 工作早已完成（`test_semantic_checker_private.py`
+  13 用例，ADR-041 明确交叉引用）但决策记录未落盘，`ADR.md` 索引长期存在
+  ADR-039 → ADR-041 编号断层
+- **ADR-061 新增**: 记录上述两个叠加缺陷的根因、决策与后果
+
+#### 测试
+
+新增 14 个用例（4 个头部契约 + 3 个切分渲染 + 7 个 validate），4495 passed。
+
+**变异测试验证**：把组装顺序注入回缺陷版本后，4 个头部测试全部失败；恢复后全绿
+—— 确认测试真能捕获该缺陷，而非装饰性断言。
+
+#### 影响面说明
+
+`validate_context` 从 fail-open 转为 fail-closed：历史上退化的 `CONTEXT.md` 会
+立即被判失败（本仓已在同批次修复）。使用该 skill 的其他仓库首次运行 `validate`
+可能转为非 0，属预期行为。
+
+#### 相关
+
+- ADR-061: CONTEXT.md 固定头部独立于滚动窗口 + 校验不得 fail-open
+- ADR-040: Phase 33a-2 semantic_checker 私有方法覆盖（追补）
+- ADR-058: context-sync 双实现并存是刻意设计，不做合并
+
 ## [2.24.0] - 2026-09-17
 
 ### Phase 36 完整收口: adg cc 门禁落地 + 18 个 ≥10cc 函数全量拆分

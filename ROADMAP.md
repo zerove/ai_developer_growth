@@ -12,6 +12,65 @@
 
 ---
 
+## 当前状态 (2026-10-02)
+
+### ✅ Phase 37: 上下文资产完整性收口 (2026-10-02)
+
+全面状态审计发现代码门禁健康（ruff / mypy clean，4481 passed，覆盖率 87.78%），
+但**项目级上下文资产 CONTEXT.md 已退化为纯同步日志**（1142 行、首行即记录标题、
+50 条 `## 更新记录:`、人工维护的头部全部丢失）。追溯提交 `2777766`（2026-08-23）定位
+到两个叠加缺陷。
+
+- [x] **P0-1 组装顺序根因**: `synthesize_context_update` 把新记录拼在头部之前，
+  "新记录 + 头部 + 历史"被裁剪逻辑整体识别为单条记录，头部随滚动窗口被静默丢弃
+  （窗口 50 → 第 51 次同步头部消失）。新增 `_split_header_and_entries()` /
+  `_render()`，组装顺序改为 `header → 新记录 → 历史`，抽出 `_ENTRY_PREFIX` 常量
+- [x] **P0-2 validate_context fail-open**: 子检查失败只打印不返回，退出码恒为 0，
+  `weekly-context-sync` hook（每周一 11:00）形同虚设；且只做全文 substring 校验，
+  无法发现头部被吞。改为头部区位置校验 + 真实退出码 + 失败项清单
+- [x] **P0-3 恢复固定头部**: 重建项目定位 / 状态表 / 核心目录 / 关键约束 / 决策 /
+  计划六段，数据取自本次实测（版本、测试数、覆盖率、ADR 数均已核对）
+- [x] **P1-1 回归测试**: 新增 14 个用例（4 个头部契约 + 3 个切分渲染 + 7 个 validate）。
+  **变异测试已验证**：注入缺陷 1 后 4 个头部测试全部失败，恢复后全绿
+- [x] **P1-2 ADR-040 追补**: Phase 33a-2 工作早已完成（`test_semantic_checker_private.py`
+  13 用例，ADR-041 明确交叉引用）但决策记录未落盘，`ADR.md` 索引长期有编号断层
+- [x] **P1-3 ADR-061 新增**: 记录本次两个叠加缺陷的根因与决策
+
+### 门禁全绿（本次实测）
+
+| 门禁 | 结果 |
+|---|---|
+| `ruff check` | All checks passed |
+| `ruff format --check` | 944 files already formatted |
+| `mypy strict` | Success: 233 source files |
+| `pytest` | 4495 passed（4481 + 新增 14） |
+| 覆盖率 | 87.82%（阈值 80%）；`context-sync.py` 89.0% |
+| `link_auditor` | All links are valid |
+| `governance-docs-validator validate` | 15 个治理文档通过 |
+| `governance-docs-validator check-index` | 索引完整性通过 |
+
+### 本次沉淀的经验
+
+- **静默失效要按"谁能发现"来审**：CONTEXT.md 头部丢失能存活 41 天、跨越 200+ 次提交，
+  根因不是没人看，而是**校验是 fail-open**（ADR-057 CI 心跳同源问题，已第三次出现）
+- **substring 存在性校验 ≠ 结构校验**：被吞掉的恰好是含关键词的那段，全文搜索永远通过
+- **记录边界由下一个标记决定**：任何"前置拼接"的结构化文档都会把已有头部吞进新条目
+- **回归测试要做变异验证**：把修复回退成缺陷版，确认测试真的会红，否则只是装饰性断言
+
+### 后续候选 (v2.26.0 远期)
+
+- **ADR 决策缺口巡检**：`ADR.md` 编号断层本次靠人工发现（040），应纳入 scheduled
+  校验 —— 校验 `docs/adr/*.md` 与索引双向一致 + 编号连续性（006 等已记录空号除外）
+- **其余 skill 入口的 fail-open 审计**：`weekly-context-sync` 暴露的是
+  `context-sync.py validate`，其余 skill（knowledge-curator / governance-auditor /
+  workflow-optimizer / community-catalyst）需逐个核查"检查失败是否真的非 0 退出"
+- **覆盖率尾部提升**：`parsers/contract.py` / `parsers/base.py` / `python_parser_v3.py`
+  等解析器模块仍在 86% 附近，门禁整体 87.78% 但尾部可继续收敛
+- **CONTEXT.md 头部维护成本**：头部改为人工维护后，需明确"谁在什么时机更新它"
+  （建议纳入 `make context-status` 或 commit hook 的显式提示）
+
+---
+
 ## 当前状态 (2026-09-17)
 
 ### ✅ Phase 34-36 收口: 工具链工业化重构完成 (2026-09-15 → 2026-09-17)

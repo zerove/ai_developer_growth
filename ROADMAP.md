@@ -65,9 +65,12 @@
   `context-sync.py validate`，其余 skill（knowledge-curator / governance-auditor /
   workflow-optimizer / community-catalyst）需逐个核查"检查失败是否真的非 0 退出"
 - **覆盖率尾部提升**：`parsers/contract.py` / `parsers/base.py` / `python_parser_v3.py`
-  等解析器模块仍在 86% 附近，门禁整体 87.78% 但尾部可继续收敛
+  等解析器模块仍在 86% 附近，门禁整体 87.82% 但尾部可继续收敛
 - **CONTEXT.md 头部维护成本**：头部改为人工维护后，需明确"谁在什么时机更新它"
   （建议纳入 `make context-status` 或 commit hook 的显式提示）
+- **记录边界围栏感知**（ADR-061 已知局限）：`_split_header_and_entries` 用行首前缀
+  匹配识别记录边界，若头部围栏代码块内出现以 `## 更新记录:` 开头的行会被误判为记录
+  起点。当前规避方式为"头部内不要这样写"，若将来确有需要再引入围栏状态机
 
 ---
 

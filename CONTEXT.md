@@ -1,3 +1,378 @@
+# 项目上下文
+
+> Agent 会话启动时的项目级上下文。**固定头部区**（本段与后续直到第一个 `## 更新记录:` 之前）
+> 由人工维护且不参与滚动窗口裁剪；下方 `## 更新记录:` 区由 `context-sync` 自动追加、按窗口裁剪。
+> 结构约束见 ADR-061。
+
+## 项目定位
+
+AI 时代开发者成长知识库 + 治理框架（knowledge base + governance framework）。
+核心原则**知识优先，工具为辅，案例验证** —— 见 [ROADMAP.md](ROADMAP.md) 愿景段落。
+
+- 领域术语以 [UBIQUITOUS_LANGUAGE.md](UBIQUITOUS_LANGUAGE.md) 为唯一口径
+- 治理标准以 [GOVERNANCE.md](GOVERNANCE.md) 为准（5 步闭环 + 4 道门禁）
+- Agent 定义索引见 [AGENTS.md](AGENTS.md)，工作流配置见 [.jcode/AGENTS.md](.jcode/AGENTS.md)
+
+## 项目状态
+
+| 项 | 值 |
+|---|---|
+| 版本 | v2.24.0（`pyproject.toml`） |
+| 语言 | Python 3.11+ 工具链 + Markdown 文档 |
+| 源码规模 | `tools/scripts` + `.jcode/scripts` 共 220 个 `.py` 文件 |
+| 测试规模 | 200 个测试文件，4495 passed |
+| 覆盖率 | 87.82%（门禁阈值 80%，`cov_min`） |
+| 类型检查 | mypy strict，233 source files clean |
+| 代码风格 | ruff check + ruff format（944 files formatted） |
+| ADR 累计 | 63 篇（`docs/adr/`；ADR-006 历史空号，ADR-040 为追补） |
+
+## 核心目录
+
+| 路径 | 职责 |
+|---|---|
+| `tools/scripts/` | 生产工具链（`adg` CLI、`jcode-cli`、rules_engine、hooks 等） |
+| `.jcode/scripts/` | Skill 入口脚本（hooks 调度入口，多数无 `sys.path` 依赖） |
+| `tests/` | 全部测试，按 `test_*.py` 收集 |
+| `docs/adr/` | 架构决策记录单篇文件，索引在 `ADR.md` |
+| `examples/` | 方法论参考实现（非生产代码，`ruff` 已排除） |
+
+## 关键约束
+
+- **门禁不可 fail-open**：任何校验失败必须让退出码非 0，否则在 hooks / CI 中形同虚设
+  （ADR-057 CI 心跳、ADR-061 context-sync 校验均为同类教训）
+- **CONTEXT.md 固定头部必须排在所有 `## 更新记录:` 之前**，否则滚动窗口裁剪会
+  把项目上下文一并丢弃（ADR-061）
+- **覆盖率门禁范围**：`tools/scripts` 与 `.jcode/scripts` 均在门禁内，`.jcode/scripts`
+  曾长期在门禁之外造成静默劣化区（见 `pyproject.toml` `[tool.adg] cov_min` 注释）
+- **ruff 版本锁定** 0.15.17：0.16+ 启用 2025 format style 会造成 CI 与本地结果不一致
+- **不命名为 `jcode` 的 console_script**：会遮蔽 Rust 版 jcode TUI
+
+## 决策记录
+
+决策全文见 [ADR.md](ADR.md) 索引与 `docs/adr/`。影响本文件的决策：
+
+- **ADR-061**: CONTEXT.md 固定头部独立于滚动窗口 + 校验不得 fail-open
+- **ADR-058**: context-sync 双实现并存是刻意设计，不做合并
+- **ADR-057**: CI 心跳检测必须跑在 CI 之外
+- **ADR-056**: cc（圈复杂度）门禁落地，全目录 ≤10
+
+## 计划
+
+后续开发计划以 [ROADMAP.md](ROADMAP.md) 顶部 `## 当前状态` 段落为准（按会话倒序，最新在最前）。
+变更历史以 [CHANGELOG.md](CHANGELOG.md) 为准。
+
+---
+
+## 更新记录: 2026-10-02 23:36:35
+
+### 任务
+Git 变更同步
+
+### 变更摘要
+- 变更文件 9 个 (+621 / -467 行)
+  - .jcode/scripts/context-sync.py
+  - ADR.md
+  - CONTEXT.md
+  - pyproject.toml
+  - requirements-dev.txt
+  - tests/test_context_sync_prune.py
+  - tests/test_coverage_gate_scope.py
+  - tests/test_jcode_context_sync.py
+  - uv.lock
+
+## 更新记录: 2026-10-02 23:32:27
+
+### 任务
+Git 变更同步
+
+### 变更摘要
+- 变更文件 8 个 (+544 / -434 行)
+  - .jcode/scripts/context-sync.py
+  - CONTEXT.md
+  - pyproject.toml
+  - requirements-dev.txt
+  - tests/test_context_sync_prune.py
+  - tests/test_coverage_gate_scope.py
+  - tests/test_jcode_context_sync.py
+  - uv.lock
+
+## 更新记录: 2026-10-02 23:32:07
+
+### 任务
+Git 变更同步
+
+### 变更摘要
+- 变更文件 8 个 (+521 / -401 行)
+  - .jcode/scripts/context-sync.py
+  - CONTEXT.md
+  - pyproject.toml
+  - requirements-dev.txt
+  - tests/test_context_sync_prune.py
+  - tests/test_coverage_gate_scope.py
+  - tests/test_jcode_context_sync.py
+  - uv.lock
+
+## 更新记录: 2026-10-02 23:31:45
+
+### 任务
+Git 变更同步
+
+### 变更摘要
+- 变更文件 8 个 (+505 / -364 行)
+  - .jcode/scripts/context-sync.py
+  - CONTEXT.md
+  - pyproject.toml
+  - requirements-dev.txt
+  - tests/test_context_sync_prune.py
+  - tests/test_coverage_gate_scope.py
+  - tests/test_jcode_context_sync.py
+  - uv.lock
+
+## 更新记录: 2026-10-02 23:28:21
+
+### 任务
+Git 变更同步
+
+### 变更摘要
+- 变更文件 6 个 (+342 / -312 行)
+  - .jcode/scripts/context-sync.py
+  - CONTEXT.md
+  - pyproject.toml
+  - requirements-dev.txt
+  - tests/test_coverage_gate_scope.py
+  - uv.lock
+
+---
+
+## 更新记录: 2026-10-02 23:10:06
+
+### 任务
+Git 变更同步
+
+### 变更摘要
+- 变更文件 5 个 (+269 / -269 行)
+  - CONTEXT.md
+  - pyproject.toml
+  - requirements-dev.txt
+  - tests/test_coverage_gate_scope.py
+  - uv.lock
+
+---
+
+## 更新记录: 2026-10-02 17:56:27
+
+### 任务
+Git 变更同步
+
+### 变更摘要
+- 变更文件 4 个 (+239 / -126 行)
+  - CONTEXT.md
+  - pyproject.toml
+  - requirements-dev.txt
+  - tests/test_coverage_gate_scope.py
+
+---
+
+## 更新记录: 2026-10-02 17:53:31
+
+### 任务
+Git 变更同步
+
+### 变更摘要
+- 变更文件 4 个 (+225 / -107 行)
+  - CONTEXT.md
+  - pyproject.toml
+  - requirements-dev.txt
+  - tests/test_coverage_gate_scope.py
+
+---
+
+## 更新记录: 2026-10-02 17:49:44
+
+### 任务
+Git 变更同步
+
+### 变更摘要
+- 变更文件 43 个 (+966 / -352 行)
+  - .jcode/hooks.json
+  - AGENTS.md
+  - CONTEXT.md
+  - README.md
+  - docs/architecture/rule-loading.md
+  - docs/case-studies/ai-context-sync-development.md
+  - docs/case-studies/ai-task-prioritizer.md
+  - docs/case-studies/api-design-implementation.md
+  - docs/case-studies/api-monitoring.md
+  - docs/case-studies/cli-tool-development.md
+  - docs/case-studies/data-pipeline.md
+  - docs/case-studies/database-migration.md
+  - docs/case-studies/web-scraping-tool.md
+  - examples/ai-context-sync/pyproject.toml
+  - examples/ai-navigation-web/pyproject.toml
+  - examples/ai-navigation/pyproject.toml
+  - examples/ai-navigation/src/enhanced_tfidf.py
+  - examples/self-correction-loop/src/runner.py
+  - examples/self-correction-loop/src/strategies/pattern.py
+  - examples/self-correction-loop/tests/conftest.py
+  - ... 等共 43 个文件
+
+---
+
+## 更新记录: 2026-10-02 17:46:02
+
+### 任务
+Git 变更同步
+
+### 变更摘要
+- 变更文件 43 个 (+935 / -333 行)
+  - .jcode/hooks.json
+  - AGENTS.md
+  - CONTEXT.md
+  - README.md
+  - docs/architecture/rule-loading.md
+  - docs/case-studies/ai-context-sync-development.md
+  - docs/case-studies/ai-task-prioritizer.md
+  - docs/case-studies/api-design-implementation.md
+  - docs/case-studies/api-monitoring.md
+  - docs/case-studies/cli-tool-development.md
+  - docs/case-studies/data-pipeline.md
+  - docs/case-studies/database-migration.md
+  - docs/case-studies/web-scraping-tool.md
+  - examples/ai-context-sync/pyproject.toml
+  - examples/ai-navigation-web/pyproject.toml
+  - examples/ai-navigation/pyproject.toml
+  - examples/ai-navigation/src/enhanced_tfidf.py
+  - examples/self-correction-loop/src/runner.py
+  - examples/self-correction-loop/src/strategies/pattern.py
+  - examples/self-correction-loop/tests/conftest.py
+  - ... 等共 43 个文件
+
+---
+
+## 更新记录: 2026-10-02 17:44:35
+
+### 任务
+Git 变更同步
+
+### 变更摘要
+- 变更文件 43 个 (+904 / -317 行)
+  - .jcode/hooks.json
+  - AGENTS.md
+  - CONTEXT.md
+  - README.md
+  - docs/architecture/rule-loading.md
+  - docs/case-studies/ai-context-sync-development.md
+  - docs/case-studies/ai-task-prioritizer.md
+  - docs/case-studies/api-design-implementation.md
+  - docs/case-studies/api-monitoring.md
+  - docs/case-studies/cli-tool-development.md
+  - docs/case-studies/data-pipeline.md
+  - docs/case-studies/database-migration.md
+  - docs/case-studies/web-scraping-tool.md
+  - examples/ai-context-sync/pyproject.toml
+  - examples/ai-navigation-web/pyproject.toml
+  - examples/ai-navigation/pyproject.toml
+  - examples/ai-navigation/src/enhanced_tfidf.py
+  - examples/self-correction-loop/src/runner.py
+  - examples/self-correction-loop/src/strategies/pattern.py
+  - examples/self-correction-loop/tests/conftest.py
+  - ... 等共 43 个文件
+
+---
+
+## 更新记录: 2026-10-02 17:42:32
+
+### 任务
+Git 变更同步
+
+### 变更摘要
+- 变更文件 42 个 (+839 / -299 行)
+  - .jcode/hooks.json
+  - AGENTS.md
+  - CONTEXT.md
+  - README.md
+  - docs/architecture/rule-loading.md
+  - docs/case-studies/ai-context-sync-development.md
+  - docs/case-studies/ai-task-prioritizer.md
+  - docs/case-studies/api-design-implementation.md
+  - docs/case-studies/api-monitoring.md
+  - docs/case-studies/cli-tool-development.md
+  - docs/case-studies/data-pipeline.md
+  - docs/case-studies/database-migration.md
+  - docs/case-studies/web-scraping-tool.md
+  - examples/ai-context-sync/pyproject.toml
+  - examples/ai-navigation-web/pyproject.toml
+  - examples/ai-navigation/pyproject.toml
+  - examples/ai-navigation/src/enhanced_tfidf.py
+  - examples/self-correction-loop/src/runner.py
+  - examples/self-correction-loop/src/strategies/pattern.py
+  - examples/self-correction-loop/tests/conftest.py
+  - ... 等共 42 个文件
+
+---
+
+## 更新记录: 2026-10-02 17:39:56
+
+### 任务
+Git 变更同步
+
+### 变更摘要
+- 变更文件 40 个 (+803 / -281 行)
+  - .jcode/hooks.json
+  - AGENTS.md
+  - CONTEXT.md
+  - README.md
+  - docs/architecture/rule-loading.md
+  - docs/case-studies/ai-context-sync-development.md
+  - docs/case-studies/ai-task-prioritizer.md
+  - docs/case-studies/api-design-implementation.md
+  - docs/case-studies/api-monitoring.md
+  - docs/case-studies/cli-tool-development.md
+  - docs/case-studies/data-pipeline.md
+  - docs/case-studies/database-migration.md
+  - docs/case-studies/web-scraping-tool.md
+  - examples/ai-context-sync/pyproject.toml
+  - examples/ai-navigation-web/pyproject.toml
+  - examples/ai-navigation/pyproject.toml
+  - examples/ai-navigation/src/enhanced_tfidf.py
+  - examples/self-correction-loop/src/runner.py
+  - examples/self-correction-loop/src/strategies/pattern.py
+  - examples/self-correction-loop/tests/conftest.py
+  - ... 等共 40 个文件
+
+---
+
+## 更新记录: 2026-10-02 17:25:17
+
+### 任务
+Git 变更同步
+
+### 变更摘要
+- 变更文件 39 个 (+772 / -264 行)
+  - .jcode/hooks.json
+  - AGENTS.md
+  - README.md
+  - docs/architecture/rule-loading.md
+  - docs/case-studies/ai-context-sync-development.md
+  - docs/case-studies/ai-task-prioritizer.md
+  - docs/case-studies/api-design-implementation.md
+  - docs/case-studies/api-monitoring.md
+  - docs/case-studies/cli-tool-development.md
+  - docs/case-studies/data-pipeline.md
+  - docs/case-studies/database-migration.md
+  - docs/case-studies/web-scraping-tool.md
+  - examples/ai-context-sync/pyproject.toml
+  - examples/ai-navigation-web/pyproject.toml
+  - examples/ai-navigation/pyproject.toml
+  - examples/ai-navigation/src/enhanced_tfidf.py
+  - examples/self-correction-loop/src/runner.py
+  - examples/self-correction-loop/src/strategies/pattern.py
+  - examples/self-correction-loop/tests/conftest.py
+  - examples/self-correction-loop/tests/test_main.py
+  - ... 等共 39 个文件
+
+---
+
 ## 更新记录: 2026-09-18 00:16:18
 
 ### 任务
@@ -747,344 +1122,6 @@ f1ed5e9 docs(context): 补强端到端验证证据 (实跑, 非检查)
 - 工作区: clean
 - 累计: 24 ADR / 17 降级规则 / 0 error / 0 warning / 3683 tests / 192 源文件 mypy strict Success
 - 工具链: ruff ✅ / adg ✅ / mypy strict ✅ / pytest ✅ / mutmut ✅ / hooks ✅
-
----
-
-## 更新记录: 2026-09-01 21:07:30
-
-### 任务
-补强验证 + 端到端测试 + 反向门禁测试
-
-### 端到端验证证据 (实跑,非检查)
-- **pytest 42 个 validate_case_study 测试** ✅ 9.40s 全过 (验证 9959dc8 改动未破坏)
-- **hooks_runner on_commit 端到端** ✅ 真触发 `rules-yml-integrity-check` 并通过
-- **反向门禁测试** ✅ 删除 `common-empty-except-block` 关键规则后 hook 链退出码 1, 阻断提交; 恢复后通过
-- **反向脚本测试** ✅ 删除 `py-file-leak` 关键规则后 `check_rules_yml_integrity.sh` 立即报错
-- **mypy strict 抽查** ✅ `lsp_server.py` / `validate_case_study.py` / `exception_manager.py` 均 Success
-- **validate_case_study.py --all** ✅ 真实跑全量案例验证 (改动行触发), All checks passed
-- **pytest collect** ✅ 3683 tests collected (与历史快照一致)
-
-### 当前状态
-- master HEAD: `632406a` (HEAD 校正 + 二次复跑)
-- 工作区: clean
-- 累计: 23 ADR / 17 降级规则 / 0 error / 0 warning
-- 真实验证 (二次复跑, 2026-09-01 21:09): pytest 42 passed in 3.58s, adg error/warning 0/0, check_rules_yml_integrity 18 规则完整
-- context-sync 实测: 人工撰写的"补强验证"块被正确识别为更新记录,不会被 hook 覆盖; 仅裁剪 > 50 条的旧记录 (设计如此, 非冲突)
-
----
-
-## 更新记录: 2026-09-01 20:55:00
-
-### 任务
-Phase 29 P1 实施 - py-file-leak 治理 + 完整性脚本 v1.1 + hooks 集成
-
-### 变更摘要
-- **py-file-leak 12 个命中分析** - 11 个 with 块误报 + 1 个 urllib 误判, 仅 1 个真实问题 (`validate_case_study.py:685 open(filepath).read()`)
-- **修复 1 个真实问题** - `validate_case_study.py:685` 改为 `Path(filepath).read_text(encoding="utf-8")` (Pythonic 风格)
-- **`py-file-leak` 降级 info** - `.adg/rules.yml` + `pyproject.toml` 同步, 注释含分析理由
-- **`check_rules_yml_integrity.sh` v1.1 升级** - 从"行数比对"改为"17 类关键规则 key 校验", 避免合法新增触发误报 (本次会话即触发一次)
-- **`.jcode/hooks.json` 集成 `rules-yml-integrity-check`** - on_commit + 条件 `files_contain('.adg/rules.yml')`, 改规则文件时自动校验
-- **新增 ADR-023** 记录 Phase 29 py-file-leak 决策链 + 累计 17 类降级规则
-- **ROADMAP Phase 29 P1 完成** - 剩余 3 项候选 (common-empty-except-block 收尾/mypy strict/mutmut)
-
-### common-empty-except-block 抽样验证
-- 30 个分布在 26 个文件, ADR-022 已决策保留 info
-- 抽样 3 个: `exception_manager.py:756` (except ValueError: pass, ISO 格式容错) / `checker.py:441` (except Exception + debug 注释) / `context_status.py:36` (except OSError: pass, 容错读 pyproject)
-- 全部为合理 best-effort 模式, 无需进一步修复
-
-### 验证
-- ruff check: clean
-- adg check (error): 0 issues / 192 files
-- adg check (warning): 0 issues / 192 files
-- adg check (info): 5680 issues / 192 files (-1 来自修真实问题)
-- check_rules_yml_integrity.sh: ✅ 18 个降级规则完整
-- hooks.json JSON 合法性: OK
-
-### 当前状态
-- master HEAD: `9959dc8` (Phase 29 P1)
-- 工作区: clean
-- 累计: 23 ADR / 17 降级规则 / 0 error / 0 warning
-
----
-
-## 更新记录: 2026-09-01 20:34:00
-
-### 任务
-Phase 28 收口 + check_rules_yml_integrity.sh 提交 + Phase 29 规划
-
-### 变更摘要
-- **新增 `tools/scripts/check_rules_yml_integrity.sh`** (1667 字节, +x)
-  - 行数比对 HEAD vs 工作区 `.adg/rules.yml`
-  - 不匹配立即报错 + 提示 `git checkout HEAD -- .adg/rules.yml` 恢复
-  - 解决 Phase 28 内两次发生 `severity_overrides` 段 (65 行) 工作区丢失事件
-- **修复脚本可执行权限** - chmod +x
-- **CHANGELOG 补 v2.23.1 节点** - 记录本次 Phase 28 收口
-- **ROADMAP 增量**:
-  - 新增"Phase 28 收口 (2026-09-01)"块
-  - 基于实测数据修正 py-file-leak 15→12 / common-empty-except-block 34→30
-  - Phase 29 候选重新定义为 5 项 (含 hooks 集成 check_rules_yml_integrity.sh)
-
-### 验证
-- ruff check: clean
-- adg check (error): 0 issues / 192 files
-- adg check (warning): 0 issues / 192 files
-- adg check (info): 5681 issues / 192 files
-- check_rules_yml_integrity.sh: ✅ .adg/rules.yml 完整 (127 行)
-
-### 当前状态
-- master HEAD: `2dc98da` (未变更)
-- 工作区: 1 untracked + 2 modified
-  - `tools/scripts/check_rules_yml_integrity.sh` (new, +x)
-  - `CHANGELOG.md` (modified) - v2.23.1 节点
-  - `ROADMAP.md` (modified) - Phase 28 收口 + Phase 29 重新定义
-- 待规划: Phase 29 实施 (5 个候选)
-
----
-
-## 更新记录: 2026-08-31 22:35:00
-
-### 任务
-Phase 28 收尾修复 + 空 except 治理 + 后续规划
-
-### 变更摘要
-- 修复 3 处问题
-  - **ADR.md 索引补齐** - 14 → 23 行, 新增 ADR-013~022 共 10 条
-  - **`.adg/rules.yml` 恢复** - 工作区丢失的 65 行 `severity_overrides` 段被 `git checkout HEAD --` 恢复
-  - **`py-ci-disabled-check` 降级为 info** - 4 个 warning → 0
-- 启动 Phase 28 P1: 空 except 治理
-  - 3 处 `except Exception` 收窄为 `except OSError`
-    - `rules_engine/arch/dependency_graph.py:122`
-    - `rules_engine/pattern_learner.py:115`
-    - `rules_engine/pattern_learner.py:169`
-  - 34 个剩余 `common-empty-except-block` 决策保留 info (详见 ADR-022)
-- 新增 ADR-022 记录 Phase 28 启动 + 治理原则
-- pyproject.toml `severity_overrides` 同步至 15 类 (新增 py-ci-disabled-check)
-- ROADMAP 标记 Phase 28 完成 + 新增 Phase 29 候选 (mypy strict / mutmut / py-file-leak)
-
-### 验证
-- ruff check: clean
-- pytest: 3683 passed in 441.76s (0:07:21)
-- adg check (error): 0 issues / 205 files
-- adg check (warning): **0 issues / 205 files** (从 4 → 0)
-- adg check (info): 5878 issues / 205 files
-
-### 当前状态
-- master HEAD: `ddc08af` (未变更, 工作区有 5 文件待提交)
-- 工作区: 3 files modified + 2 files added
-  - `ADR.md` (modified) - 索引补齐
-  - `ROADMAP.md` (modified) - Phase 28 完成
-  - `.adg/rules.yml` (modified) - 恢复 + py-ci-disabled-check
-  - `pyproject.toml` (modified) - severity_overrides 同步
-  - `docs/adr/ADR-022-...md` (new) - Phase 28 ADR
-- 待规划: Phase 29 方向 (mypy strict / mutmut / py-file-leak)
-
----
-
-## 更新记录: 2026-08-31 06:11:00
-
-### 任务
-项目清理与状态收口（会后扫尾）
-
-### 变更摘要
-- 提交 2 个 fix commit
-  - `1728264` fix(quality): 清理 ruff 错误 + gitignore 漏洞 + 陈旧 baseline 豁免
-    - `tools/scripts/audit_attestation.py` 删 F841 未使用变量 `prev_hash`
-    - `tools/scripts/rule_catalog.py` UP035 改 `Iterator` 从 `collections.abc` 导入
-    - `.gitignore` 补 `.coverage-v*.json` 模式
-    - `.jcode/baseline.json` 删 `tools/scripts/rules/loader.py` 53 行陈旧豁免
-  - `7f1f1e5` chore(gitignore): 忽略 `tools/.quality-trends/audit_ledger.jsonl`
-- 删除 2 个本地/远端遗留分支（master 已领先 458+ commits，已被吸收）
-  - `feat/ci-validation-test` (master 领先 459)
-  - `test/diff-cover-test` (master 领先 458)
-
-### 验证
-- ruff check: clean
-- pytest: 3683 passed in 474.80s (0:07:54)
-- adg check (error 级): 0 issues / 192 files
-- adg check (warning 级): 1236 py-log-print + 1 common-empty-except-block（属历史软警告，非阻塞）
-
-### 当前状态
-- master HEAD: `7f1f1e5`
-- 工作区 clean
-- 待规划: Phase 25 方向（质量巩固 / 功能增强 / 文档升级）
-
----
-
-## 更新记录: 2026-08-29 09:58:47
-
-### 任务
-Git 变更同步
-
-### 变更摘要
-- 变更文件 13 个 (+722 / -77 行)
-  - .adg/config.yml
-  - .gitignore
-  - CHANGELOG.md
-  - CONTEXT.md
-  - docs/adr/ADR-013-pytest-xdist-coverage-known-issue.md
-  - docs/adr/ADR.md
-  - docs/governance/project-analysis-and-roadmap-2026-08.md
-  - pyproject.toml
-  - tests/test_lsp_server.py
-  - tests/test_p1_2_auto_fix_dispatch.py
-  - tools/scripts/adg_cli/commands/cmd/cmd_fix.py
-  - tools/scripts/auto_fix.py
-  - uv.lock
-
----
-
-## 更新记录: 2026-08-29 09:03:10
-
-### 任务
-Git 变更同步
-
-### 变更摘要
-- 变更文件 13 个 (+699 / -61 行)
-  - .adg/config.yml
-  - .gitignore
-  - CHANGELOG.md
-  - CONTEXT.md
-  - docs/adr/ADR-013-pytest-xdist-coverage-known-issue.md
-  - docs/adr/ADR.md
-  - docs/governance/project-analysis-and-roadmap-2026-08.md
-  - pyproject.toml
-  - tests/test_lsp_server.py
-  - tests/test_p1_2_auto_fix_dispatch.py
-  - tools/scripts/adg_cli/commands/cmd/cmd_fix.py
-  - tools/scripts/auto_fix.py
-  - uv.lock
-
----
-
-## 更新记录: 2026-08-28 23:47:51
-
-### 任务
-Git 变更同步
-
-### 变更摘要
-- 变更文件 10 个 (+333 / -58 行)
-  - .adg/config.yml
-  - .gitignore
-  - CHANGELOG.md
-  - CONTEXT.md
-  - docs/adr/ADR-013-pytest-xdist-coverage-known-issue.md
-  - docs/adr/ADR.md
-  - docs/governance/project-analysis-and-roadmap-2026-08.md
-  - pyproject.toml
-  - tests/test_lsp_server.py
-  - uv.lock
-
----
-
-## 更新记录: 2026-08-28 23:45:16
-
-### 任务
-Git 变更同步
-
-### 变更摘要
-- 变更文件 10 个 (+313 / -44 行)
-  - .adg/config.yml
-  - .gitignore
-  - CHANGELOG.md
-  - CONTEXT.md
-  - docs/adr/ADR-013-pytest-xdist-coverage-known-issue.md
-  - docs/adr/ADR.md
-  - docs/governance/project-analysis-and-roadmap-2026-08.md
-  - pyproject.toml
-  - tests/test_lsp_server.py
-  - uv.lock
-
----
-
-## 更新记录: 2026-08-28 23:43:48
-
-### 任务
-Git 变更同步
-
-### 变更摘要
-- 变更文件 10 个 (+293 / -31 行)
-  - .adg/config.yml
-  - .gitignore
-  - CHANGELOG.md
-  - CONTEXT.md
-  - docs/adr/ADR-013-pytest-xdist-coverage-known-issue.md
-  - docs/adr/ADR.md
-  - docs/governance/project-analysis-and-roadmap-2026-08.md
-  - pyproject.toml
-  - tests/test_lsp_server.py
-  - uv.lock
-
----
-
-## 更新记录: 2026-08-28 19:22:03
-
-### 任务
-Git 变更同步
-
-### 变更摘要
-- 变更文件 7 个 (+162 / -29 行)
-  - ADR.md
-  - CHANGELOG.md
-  - CONTEXT.md
-  - docs/adr/ADR-012-vector-rag-not-core.md
-  - docs/governance/project-analysis-and-roadmap-2026-08.md
-  - pyproject.toml
-  - uv.lock
-
----
-
-## 更新记录: 2026-08-28 18:42:21
-
-### 任务
-Git 变更同步
-
-### 变更摘要
-- 变更文件 9 个 (+173 / -48 行)
-  - ADR.md
-  - CHANGELOG.md
-  - CONTEXT.md
-  - docs/adr/ADR-012-vector-rag-not-core.md
-  - docs/governance/project-analysis-and-roadmap-2026-08.md
-  - pyproject.toml
-  - tests/test_audit_to_pr.py
-  - tests/test_rule_tracker.py
-  - uv.lock
-
----
-
-## 更新记录: 2026-08-28 18:21:47
-
-### 任务
-Git 变更同步
-
-### 变更摘要
-- 变更文件 8 个 (+152 / -89 行)
-  - .github/workflows/release.yml
-  - CHANGELOG.md
-  - CONTEXT.md
-  - docs/governance/project-analysis-and-roadmap-2026-08.md
-  - pyproject.toml
-  - tests/test_audit_to_pr.py
-  - tests/test_rule_tracker.py
-  - uv.lock
-
----
-
-## 更新记录: 2026-08-28 16:47:39
-
-### 任务
-Git 变更同步
-
-### 变更摘要
-- 变更文件 8 个 (+145 / -78 行)
-  - .github/workflows/release.yml
-  - .pre-commit-config.yaml
-  - CHANGELOG.md
-  - CONTEXT.md
-  - docs/governance/project-analysis-and-roadmap-2026-08.md
-  - mypy.ini
-  - pyproject.toml
-  - uv.lock
 
 ---
 

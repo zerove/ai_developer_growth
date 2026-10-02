@@ -55,6 +55,7 @@
 | ADR-037 | setup.cfg 与 pyproject.toml mutmut 配置冲突修复 | 接受 | [docs/adr/ADR-037-setup-cfg-removal.md](docs/adr/ADR-037-setup-cfg-removal.md) |
 | ADR-038 | 项目可优化内容分析 (全面扫描) | 接受 | [docs/adr/ADR-038-optimization-scan.md](docs/adr/ADR-038-optimization-scan.md) |
 | ADR-039 | Phase 33 子任务 33a-1 semantic_checker 纯函数覆盖 | 接受 | [docs/adr/ADR-039-phase-33a1-semantic-checker-pure.md](docs/adr/ADR-039-phase-33a1-semantic-checker-pure.md) |
+| ADR-040 | Phase 33 子任务 33a-2 semantic_checker 私有方法覆盖 (2026-10-02 追补) | 接受 | [docs/adr/ADR-040-phase-33a2-semantic-checker-private.md](docs/adr/ADR-040-phase-33a2-semantic-checker-private.md) |
 | ADR-041 | Phase 33 子任务 33a-3 semantic_checker 公开 API 集成补测 | 接受 | [docs/adr/ADR-041-phase-33a3-semantic-checker-public-api.md](docs/adr/ADR-041-phase-33a3-semantic-checker-public-api.md) |
 | ADR-042 | Phase 33 子任务 33a-4 ASTParser LRU/snapshot 补测 | 接受 | [docs/adr/ADR-042-phase-33a4-ast-parser-lru-snapshot.md](docs/adr/ADR-042-phase-33a4-ast-parser-lru-snapshot.md) |
 | ADR-043 | Phase 33 子任务 33b-1 semantic_rules 纯函数覆盖 | 接受 | [docs/adr/ADR-043-phase-33b1-semantic-rules-pure.md](docs/adr/ADR-043-phase-33b1-semantic-rules-pure.md) |
@@ -75,7 +76,9 @@
 | ADR-058 | context-sync 双实现并存是刻意设计，不做合并 | 接受 | [docs/adr/ADR-058-context-sync-dual-implementation.md](docs/adr/ADR-058-context-sync-dual-implementation.md) |
 | ADR-059 | 安全模式两套实现并存是刻意设计，不做合并 | 接受 | [docs/adr/ADR-059-security-patterns-dual-implementation.md](docs/adr/ADR-059-security-patterns-dual-implementation.md) |
 | ADR-060 | adr_generator 必须能在非交互环境工作 | 接受 | [docs/adr/ADR-060-adr-generator-non-interactive.md](docs/adr/ADR-060-adr-generator-non-interactive.md) |
+| ADR-061 | CONTEXT.md 固定头部独立于滚动窗口 + 校验不得 fail-open | 接受 | [docs/adr/ADR-061-context-header-outside-rolling-window.md](docs/adr/ADR-061-context-header-outside-rolling-window.md) |
 
 ---
 
 注：ADR 编号 006 为历史空号（已删除但未复用）。
+注：ADR 编号 040 为 2026-10-02 追补（33a-2 工作已完成，决策记录当时未落盘）。

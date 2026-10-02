@@ -63,6 +63,81 @@ AI 时代开发者成长知识库 + 治理框架（knowledge base + governance f
 
 ---
 
+## 更新记录: 2026-10-02 23:54:36
+
+### 任务
+Git 变更同步
+
+### 变更摘要
+- 变更文件 3 个 (+98 / -271 行)
+  - .jcode/hooks.json
+  - CONTEXT.md
+  - uv.lock
+
+## 更新记录: 2026-10-02 23:54:12
+
+### 任务
+Git 变更同步
+
+### 变更摘要
+- 变更文件 3 个 (+87 / -253 行)
+  - .jcode/hooks.json
+  - CONTEXT.md
+  - uv.lock
+
+## 更新记录: 2026-10-02 23:54:11
+
+### 任务
+Git 变更同步
+
+### 变更摘要
+- 变更文件 3 个 (+76 / -237 行)
+  - .jcode/hooks.json
+  - CONTEXT.md
+  - uv.lock
+
+## 更新记录: 2026-10-02 23:53:54
+
+### 任务
+Git 变更同步
+
+### 变更摘要
+- 变更文件 3 个 (+66 / -206 行)
+  - .jcode/hooks.json
+  - CONTEXT.md
+  - uv.lock
+
+## 更新记录: 2026-10-02 23:53:54
+
+### 任务
+Git 变更同步
+
+### 变更摘要
+- 变更文件 3 个 (+55 / -181 行)
+  - .jcode/hooks.json
+  - CONTEXT.md
+  - uv.lock
+
+## 更新记录: 2026-10-02 23:53:27
+
+### 任务
+Git 变更同步
+
+### 变更摘要
+- 变更文件 2 个 (+37 / -158 行)
+  - CONTEXT.md
+  - uv.lock
+
+## 更新记录: 2026-10-02 23:53:27
+
+### 任务
+Git 变更同步
+
+### 变更摘要
+- 变更文件 2 个 (+27 / -148 行)
+  - CONTEXT.md
+  - uv.lock
+
 ## 更新记录: 2026-10-02 23:44:54
 
 ### 任务
@@ -959,152 +1034,6 @@ session 收尾: CONTEXT 收敛 + ROADMAP Phase 31 状态更新
 - master HEAD: `f335133` (前置)
 - 工作区: clean
 - 累计: 28 ADR / 17 降级规则 / 0 error / 0 warning / 3703 tests
-
----
-
-## 更新记录: 2026-09-02 15:43:00
-
-### 任务
-session 收尾: CONTEXT 收敛 + ROADMAP Phase 31 状态更新
-
-### 变更摘要
-- CONTEXT 主动收敛 (本轮 54 → 50)
-- ROADMAP Phase 31 状态: ai-tool-matrix ✅ + 覆盖率(regex_cache 100%) ✅
-- 主动停止再加新特性 (session 已 28 commit + 28 ADR)
-- 剩余 3 个 <80% 模块 (rule_loader/semantic_checker/semantic_rules) 标 Phase 31+ 后续
-
-### 当前状态
-- master HEAD: `f335133` (前置)
-- 工作区: clean
-- 累计: 28 ADR / 17 降级规则 / 0 error / 0 warning / 3703 tests / regex_cache 100%
-
----
-
-## 更新记录: 2026-09-02 14:19:00
-
-### 任务
-session 收尾: CONTEXT 收敛 + 健康确认
-
-### 变更摘要
-- CONTEXT 53 → 50 条 (实测文档步骤第二次)
-- session 主动判断:不再加新特性 (已 21 commit + 27 ADR)
-- 剩余 4 个 <80% 覆盖率模块 (Phase 31+ 大工程, 本会话不实施)
-- 健康检查全过: ruff / adg error / check_rules_yml / check_hooks_json
-
-### 当前状态
-- master HEAD: `ba9ff84` (前置)
-- 工作区: clean
-- 累计: 27 ADR / 17 降级规则 / 0 error / 0 warning / 3683 tests / 86.67% 覆盖率
-- session 已完整闭环, 主动停止再加新特性
-
----
-
-## 更新记录: 2026-09-02 13:23:00
-
-### 任务
-按文档步骤实测 CONTEXT 收敛 + 验证
-
-### 变更摘要
-- CONTEXT 52 → 50 条 (实测文档步骤)
-- 关键决策块 (11:50 / 08:15 / 03:36 / 03:05 / 21:50 等) 全部保留
-- CONTEXT.md 1029 行 (1075 → 1029, -46 行)
-
-### 当前状态
-- master HEAD: `32671b5` (前置)
-- 工作区: clean
-- 累计: 27 ADR / 17 降级规则 / 0 error / 0 warning / 3683 tests
-
----
-
-## 更新记录: 2026-09-02 11:50:00
-
-### 任务
-按建议实施 P0/P1/P2 + Phase 30 双层防护首次主动拦截
-
-### 变更摘要
-- **P0 CONTEXT 维护文档** (docs/governance/context-maintenance.md): 50 条滚动窗口维护步骤
-- **P1 mutmut CI 化** (tools/scripts/mutmut_ci.sh):
-  - 三模式: 全量 / --changed-only / --files F1 F2
-  - 5 分钟超时, 主动清理 .bak + .mutmut-cache
-  - 接入 on_pr 条件触发 (Python 文件改动时跑)
-- **Phase 30 双层防护首次主动拦截** (ADR-027):
-  - session 内 .adg/rules.yml severity_overrides 段被覆写丢失
-  - check_rules_yml_integrity.sh 立即捕获 + 退出 1
-  - git checkout HEAD -- .adg/rules.yml 恢复成功
-  - 真实事件验证 ADR-025 设计有效
-- **P2 覆盖率实测**: 3683 passed in 18m18s, 86.67% (门禁 80%, +6.67%)
-  - 4 个 <80% 模块: regex_cache 78% / rule_loader 77% / semantic_checker 73% / semantic_rules 72%
-  - 标记为大工程待 Phase 31+ (未实施)
-- 新增 ADR-027
-- ROADMAP Phase 31 标记 mutmut CI 化 ✅ + 双层防护首次拦截 ✅
-- CHANGELOG v2.23.4 节点
-- pyproject version 2.23.3 → 2.23.4
-
-### 当前状态
-- master HEAD: `68de517` (前置, CONTEXT 文档提交)
-- 工作区: clean (除待提交)
-- 累计: 27 ADR / 17 降级规则 / 0 error / 0 warning / 3683 tests / 86.67% 覆盖率
-- on_commit 6/6 ✅ / on_merge 3/3 ✅ / on_pr 11 (含新 mutmut-changed)
-
----
-
-## 更新记录: 2026-09-02 03:36:00
-
-### 任务
-Phase 30 收口: hooks.json fail-open 检测脚本 + ADR-026
-
-### 变更摘要
-- **新增 `tools/scripts/check_hooks_json_integrity.sh`** (1647 字节, +x)
-  - 通过真跑 hooks_runner 检测 hook 命令参数不支持
-  - 比 --bogus-arg 探针更准确(实测发现探针会把所有 argparse 脚本误判)
-- **`.jcode/hooks.json` on_commit 新增 `hooks-json-integrity-check`**
-  - 条件触发 `files_contain('.jcode/hooks.json')`
-  - 改 hooks.json 时自动验证 fail-open 风险
-- **正向触发验证**: on_commit 真跑 6/6 通过 (含新增)
-- **反向测试验证**: 注入 link_auditor.py --update-moc 类 hook 立即被脚本捕获
-- 新增 **ADR-026** 记录决策链
-- CHANGELOG v2.23.3 节点
-- on_commit 现 6 hooks
-
-### 当前状态
-- master HEAD: `52b5c64` (前置)
-- 工作区: clean
-- 累计: 26 ADR / 17 降级规则 / 0 error / 0 warning / 3683 tests
-- on_commit 6/6 ✅ / on_merge 3/3 ✅
-
----
-
-## 更新记录: 2026-09-02 03:05:00
-
-### 任务
-Phase 30 落地 + update-moc bug 修复 + on_merge 全验证通过
-
-### 变更摘要
-- **on_merge 新增 `rules-yml-integrity-check-merge` hook** (Phase 30 双层防护)
-- **正向触发验证**: `hooks_runner on_merge` 真触发新 hook 并通过 ✅
-- **移除 fail-open `update-moc` hook** (方案 A): link_auditor.py 是只读审计器,从未实现 `--update-moc`。方案 A 落地: 从 hooks.json 移除该 hook, MOC 人工维护
-- **on_merge 全验证**: 3 个 hook (sync-tools / context-sync-merge / rules-yml-integrity-check-merge) 全过 ✅
-- 新增 **ADR-025** 决策 4 记录方案 A 落地
-- ADR.md 索引补 ADR-025
-- ROADMAP Phase 31 标记 update-moc 已落地
-- CHANGELOG v2.23.2 节点
-
-### 当前状态
-- master HEAD: `eb41676` (前置)
-- 工作区: clean
-- 累计: 25 ADR / 17 降级规则 / 0 error / 0 warning / 3683 tests
-- on_merge 全过 ✅ / on_commit 5/5 ✅
-
----
-
-## 更新记录: 2026-09-01 22:14:31
-
-### 任务
-Git 变更同步
-
-### 变更摘要
-- 变更文件 1 个 (+28 / -0 行)
-  - CONTEXT.md
 
 ---
 

@@ -74,6 +74,7 @@
 | ADR-057 | CI 静默失效根因确认 + 心跳检测器必须跑在 CI 之外 | 接受 | [docs/adr/ADR-057-ci-heartbeat-outside-ci.md](docs/adr/ADR-057-ci-heartbeat-outside-ci.md) |
 | ADR-058 | context-sync 双实现并存是刻意设计，不做合并 | 接受 | [docs/adr/ADR-058-context-sync-dual-implementation.md](docs/adr/ADR-058-context-sync-dual-implementation.md) |
 | ADR-059 | 安全模式两套实现并存是刻意设计，不做合并 | 接受 | [docs/adr/ADR-059-security-patterns-dual-implementation.md](docs/adr/ADR-059-security-patterns-dual-implementation.md) |
+| ADR-060 | adr_generator 必须能在非交互环境工作 | 接受 | [docs/adr/ADR-060-adr-generator-non-interactive.md](docs/adr/ADR-060-adr-generator-non-interactive.md) |
 
 ---
 

@@ -12,7 +12,6 @@
 
 - `analyze` - 分析效率数据
 - `recommend` - 推荐工具组合
-- `optimize` - 优化工作流
 - `report` - 生成效率报告
 
 ## Examples
@@ -23,9 +22,6 @@
 
 # 推荐工具组合
 /workflow-optimizer recommend
-
-# 优化工作流
-/workflow-optimizer optimize
 
 # 生成效率报告
 /workflow-optimizer report

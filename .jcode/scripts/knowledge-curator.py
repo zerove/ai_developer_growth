@@ -56,13 +56,17 @@ def sync() -> int:
 
 
 def update_moc() -> int:
-    """更新知识图谱"""
+    """更新知识图谱
+
+    link_auditor.py 只支持 --check-all / --fail-on-broken / --internal-only，
+    没有 MOC 重写能力。此前这里调用 `link_auditor.py . --update-moc`，
+    必然因unrecognized arguments 失败 —— 属于"看起来在工作、实际永远失败"。
+    保留入口但明确报告未实现，避免再被当作可用能力。
+    """
     print_section("知识图谱更新")
-    code, output = run_command([sys.executable, "tools/scripts/link_auditor.py", ".", "--update-moc"])
-    print_check("MOC 更新", code == 0, output)
-    if code != 0:
-        print(output)
-    return code
+    print("⚠️  docs/MOC.md 自动更新尚未实现：link_auditor.py 不提供 MOC 重写能力。")
+    print("   可用替代：手动维护 docs/MOC.md，或运行 make link-audit 检查断链。")
+    return 1
 
 
 def main() -> None:

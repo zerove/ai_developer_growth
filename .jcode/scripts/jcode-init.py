@@ -9,6 +9,7 @@ JCode 项目初始化命令
 """
 
 import argparse
+import re
 import sys
 from datetime import datetime
 from pathlib import Path
@@ -304,34 +305,53 @@ def generate_config(args: argparse.Namespace) -> str:
     return dict_to_yaml(config)
 
 
+# YAML 标量起始处的指示符字符不会被当成文本：">" 折叠块、"*" 锚点、"&" 别名、
+# "!" 标签、"%" 指令、"@"/"`" 保留、"{}"/"[]" 流集合、"-"/"?" 序列与显式键。
+# 早前只对含 ":" / "${" / "#" 的值加引号，导致 version: >=3.11 解析即 ScannerError。
+_PLAIN_SAFE = re.compile(r"^[A-Za-z0-9_][A-Za-z0-9_.\-/ ]*$")
+_YAML_RESERVED = {"true", "false", "null", "yes", "no", "on", "off", "y", "n", "~"}
+
+
+def _needs_quoting(value: str) -> bool:
+    if value == "" or value != value.strip():
+        return True
+    if value.lower() in _YAML_RESERVED:
+        return True
+    if ": " in value or value.endswith(":") or " #" in value:
+        return True
+    return _PLAIN_SAFE.match(value) is None
+
+
+def _scalar(value: Any) -> str:
+    if isinstance(value, bool):
+        return "true" if value else "false"
+    if value is None:
+        return "null"
+    if isinstance(value, str):
+        if _needs_quoting(value):
+            return '"' + value.replace("\\", "\\\\").replace('"', '\\"') + '"'
+        return value
+    return str(value)
+
+
 def dict_to_yaml(data: dict[str, Any], indent: int = 0) -> str:
-    """将字典转换为 YAML 字符串（简单实现）"""
-    lines = []
+    """将字典转换为 YAML 字符串（手写发射器，标量一律经 _scalar 转义）"""
+    lines: list[str] = []
     prefix = "  " * indent
     for key, value in data.items():
         if isinstance(value, dict):
             lines.append(f"{prefix}{key}:")
             lines.append(dict_to_yaml(value, indent + 1))
         elif isinstance(value, list):
-            if value and isinstance(value[0], dict):
-                lines.append(f"{prefix}{key}:")
-                for item in value:
+            lines.append(f"{prefix}{key}:")
+            for item in value:
+                if isinstance(item, dict):
                     lines.append(f"{prefix}  -")
                     lines.append(dict_to_yaml(item, indent + 2))
-            else:
-                lines.append(f"{prefix}{key}: {value}")
-        elif isinstance(value, str):
-            # 需要引号的字符串
-            if ":" in value or value.startswith("${") or value.startswith("#"):
-                lines.append(f'{prefix}{key}: "{value}"')
-            else:
-                lines.append(f"{prefix}{key}: {value}")
-        elif isinstance(value, bool):
-            lines.append(f"{prefix}{key}: {str(value).lower()}")
-        elif value is None:
-            lines.append(f"{prefix}{key}: ")
+                else:
+                    lines.append(f"{prefix}  - {_scalar(item)}")
         else:
-            lines.append(f"{prefix}{key}: {value}")
+            lines.append(f"{prefix}{key}: {_scalar(value)}")
     return "\n".join(lines)
 
 

@@ -194,7 +194,19 @@ def main() -> None:
     changed_files = None
     if "--files" in sys.argv:
         idx = sys.argv.index("--files")
-        changed_files = sys.argv[idx + 1 :]
+        collected: list[str] = []
+        for arg in sys.argv[idx + 1 :]:
+            if arg.startswith("--"):
+                break
+            collected.append(arg)
+        # --files 后无值必须报错而非传空列表：files_match_condition 收到 []
+        # 会判定所有条件型 hook 不匹配，于是 10 个条件型 hook 全被静默跳过，
+        # 而本函数仍报告成功（fail-open）。此处显式失败以关闭该路径。
+        if not collected:
+            print("❌ --files 后必须跟至少一个文件路径")
+            print("   （空列表会导致全部条件型 hook 被跳过并误报成功）")
+            sys.exit(1)
+        changed_files = collected
 
     valid_events = ["on_commit", "on_pr", "on_merge", "scheduled"]
     if event not in valid_events:

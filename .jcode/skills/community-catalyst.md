@@ -11,11 +11,10 @@
 ### Actions
 
 - `triage` - 分流 Issues/PRs
-- `validate <file>` - 验证社区案例
-- `generate-adr <pr>` - 从 PR 生成 ADR
-- `update-roadmap` - 更新路线图进度
+- `validate` - 验证全部社区案例（等价 `validate_case_study.py --all`，不接收文件参数）
+- `generate-adr <pr>` - 从 PR 生成 ADR（兼容 `--pr <pr>` 写法）
 - `leaderboard` - 贡献者排行榜
-- `fix-stats` - 质量修复排行榜（含修复统计）
+- `stats` - 案例来源统计（内部 / 社区）
 
 ## Examples
 
@@ -23,17 +22,17 @@
 # 分流 Issues
 /community-catalyst triage
 
-# 验证社区案例
-/community-catalyst validate case-studies/community-case.md
+# 验证全部社区案例
+/community-catalyst validate
 
 # 从 PR 生成 ADR
 /community-catalyst generate-adr 123
 
-# 更新路线图
-/community-catalyst update-roadmap
-
 # 查看贡献者排行榜
 /community-catalyst leaderboard
+
+# 案例来源统计
+/community-catalyst stats
 ```
 
 ## Implementation

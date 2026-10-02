@@ -146,7 +146,9 @@ def sync_refs() -> int:
         content = path.read_text(encoding="utf-8")
         modified = False
 
-        if "GOVERNANCE.md" not in content:
+        # 守卫须匹配实际插入的 wikilink；早前检查 "GOVERNANCE.md"（带 .md）导致守卫恒真，
+        # 每次 CI 跑 sync-refs 都重复追加（实证：ai-sdlc.md 已有重复行）。
+        if "[[GOVERNANCE" not in content:
             if "相关文档" in content:
                 content = content.replace("相关文档", "相关文档\n- [[GOVERNANCE|通用治理标准]]")
                 modified = True

@@ -64,9 +64,104 @@ action 在 `action_map` 中注册），超时改为显式报错。
 
 #### 顺带核实：ADR 索引缺口远大于此前估计
 
-`docs/adr/ADR.md` 自称"汇总所有架构决策记录"，但磁盘上 53 个 ADR 仅登记 28 个，
-**缺口 35 个**（014、022-049、057-060 等）。此前 ROADMAP 记为"单点断层(040)"是低估。
-本次仅补入 ADR-061 / ADR-062，其余记入 v2.26.0 候选并建议改为脚本自动生成索引。
+`docs/adr/ADR.md` 自称"汇总所有架构决策记录"，但修复前索引表格实际只登记 **20** 个，
+磁盘上有 53 个，**真实缺口 33 个**。此前 ROADMAP / CHANGELOG 记的“登记 28 / 缺口 35”
+是 grep 把正文中的 ADR 引用误当成索引行，特此纠正。详见 v2.26.0。
+
+### Phase 38: ADR 索引自动生成与漂移门禁 (2026-10-02)
+
+#### 观测到的故障
+
+- 索引表格手工维护，磁盘 53 个 ADR 只登记 20 个，缺口 33 个
+- 手工表必然持续漂移：`f9563b7` 刚补的 ADR-061/062 之后新增 ADR-058~060 即再次漏登
+- 更严重的是**历史归档缺失**：ADR-001 ~ ADR-007 曾真实存在，在 `649a947`
+  （2026-07-28，提交标题为“全面优化 — 清理冗余”）中随文档整理被删除，且无替代记录。
+  ADR-003（四道质量门禁系统设计）内容仍有实质价值。已查明后写入索引顶部警示，
+  **未静默重编号**（重编号会伪造“从未有过这些决策”的历史）
+
+#### 修复
+
+- 新增 `tools/scripts/generate_adr_index.py`（Phase 38）：扫描 `docs/adr/ADR-*.md`，
+  提取编号/标题/状态/日期，按编号倒序生成表格，支持 `--check` / `--dry-run`
+- 解析兼容历史写法：`# ADR-013 (修订): …` 带修饰的标题、状态区块位于文末、
+  `**Revised**` 优先于正文中的“接受”
+- 缺失字段如实显示 `—` 而不编造：ADR-017~022 确实无 `## 状态` / `## 日期`
+  （已逐文件核实，非解析缺陷）
+- 接入 `on_commit` 门禁 `adr-index-check`，漂移即阻断提交
+
+#### 潜伏缺陷（预防性修复）
+
+- `Entry.wiki_link` 的 docstring 声称转义竖线，实际未转义。当前文件名均不含竖线，
+  故未发作；已修复为 `[[a\|b|ADR-001]]`
+
+#### 测试
+
+- 新增 `tests/test_generate_adr_index.py`（19 用例）：状态归一（含“修订优先于接受”）、
+  三种历史标题/区块位置、文件名双向对账、编号倒序与连续性、竖线转义、
+  `--check` 双向漂移（缺行 / 新增未登记）、幂等性、`--dry-run` 不写盘
+- 其中 3 个用例在编写时捕获了我自己的实现错误（`slug` 拼接规则搞错）
+  和 1 个真实源码缺陷（竖线未转义）
+
+#### 真实接受路径验证
+
+- `hooks_runner on_commit` 提交 `docs/adr/` 变更 → `adr-index-check` 通过
+- 人为删掉索引一行 → `adr-index-check` 失败 → `hooks_runner` **退出码 1**（提交被阻断）
+- 新增未登记 ADR → `--check` 退出 1
+- `link_auditor` 对新增的 34 条链接报 "All links are valid"
+
+### Phase 39: 修好 62 个“本来就在失败”的测试 (2026-10-02)
+
+做 Phase 38 时发现上一阶段记的“4507 passed / 全绿”与实际不符：
+全量回归实际是 **62 failed / 4325 passed**。先排除本次改动嫌疑
+（`git stash` 后在干净 HEAD 上同样失败），再逐层定位。
+
+#### 根因一：依赖从未声明（P0）
+
+`tree-sitter` + 12 个语言包、`httpx` **都不在 `pyproject.toml` 里**。
+全新环境装不上，语义检查与 dashboard 测试自然全红。
+修复：补入 `dev` extra。
+
+#### 根因二：全有全无式导入导致 fail-open（P0，本阶段真正缺陷）
+
+装上依赖后**仍然失败**。原因在 `ast_parser.py`：
+
+```python
+try:
+    import tree_sitter_c_sharp
+    import tree_sitter_cpp
+    # ... 共 12 个
+    HAS_TREE_SITTER = True
+except ImportError:
+    HAS_TREE_SITTER = False
+```
+
+缺**任意一个**语言包 → `HAS_TREE_SITTER=False` → `parse_file` 对
+**所有**语言返回 `None`。实测只装 `tree-sitter` + `tree_sitter-python`
+（最自然的选择）时 `ASTParser()._parsers == {}`，AST 检查整体静默失效，
+调用方拿到 `None` 也不报错。与 ADR-061/062 修的是同一类 fail-open 缺陷。
+
+修复（ADR-063）：
+
+- 改为按语言 `importlib.import_module` 惰性导入，缺失只影响该语言
+- 原先的 `except Exception: pass`（静默跳过）改为在 stderr 明确告警
+- 实测：屏蔽 11 个语言包后 python 解析仍正常，并列出缺失清单
+
+#### 测试
+
+- 新增 `tests/test_ast_parser_partial_install.py`（5 用例）
+- **变异测试暴露了测试自身的缺陷**：最初在导入 `ast_parser` *之后*才
+  屏蔽语言包，结果旧实现同样通过 —— 测不出真实缺陷。改为在子进程中、
+  导入**之前**屏蔽后，旧实现下 `test_missing_languages_do_not_disable_python` 才失败
+- 变异验证：新实现 5 passed / 退回旧实现 3 failed
+
+#### 遗留（未实施）
+
+- AST 不可用时 `parse_file` 仍返回 `None` 而非抛异常，调用方的
+  fail-open 面依然存在，本阶段只收窄了触发条件，未改返回契约
+- 6 个测试文件因缺 `hypothesis` / `PyGithub` 无法收集，已用 `--ignore` 跳过，
+  应补声明依赖或加 `importorskip`
+- 全项目 mypy 有 2368 个既存错误（多为测试缺类型注解），
+  本次改动的 4 个文件已单独验证为 clean
 
 ### Phase 37: 上下文资产完整性收口 (2026-10-02)
 

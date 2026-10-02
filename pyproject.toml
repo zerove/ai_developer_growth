@@ -36,6 +36,25 @@ dev = [
     "opentelemetry-sdk",
     "opentelemetry-exporter-otlp",
     "opentelemetry-instrumentation",
+    # AST 语义检查的硬依赖。此前完全未声明, 导致全新环境里
+    # HAS_TREE_SITTER=False、parse_file 恒返回 None, 一批语义检查测试
+    # 静默失败 (Phase 38 实测 62 个)。注意: ast_parser 的导入是
+    # 12 个语言包的全有全无式, 缺任何一个都会关掉全部语言的 AST 检查。
+    "tree-sitter",
+    "tree-sitter-python",
+    "tree-sitter-javascript",
+    "tree-sitter-typescript",
+    "tree-sitter-rust",
+    "tree-sitter-go",
+    "tree-sitter-java",
+    "tree-sitter-ruby",
+    "tree-sitter-cpp",
+    "tree-sitter-c-sharp",
+    "tree-sitter-kotlin",
+    "tree-sitter-php",
+    "tree-sitter-swift",
+    # starlette TestClient 需要, 否则 dashboard 测试无法运行
+    "httpx",
 ]
 tools = [
     "openai>=1.0.0",

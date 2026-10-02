@@ -13,6 +13,8 @@ Usage:
 
 from __future__ import annotations
 
+import importlib
+import sys
 import time
 import warnings
 from functools import lru_cache
@@ -57,24 +59,37 @@ warnings.filterwarnings("ignore", category=FutureWarning, module="tree_sitter")
 
 # Try to import tree-sitter and language packages (tree-sitter 0.26+ API)
 # Use individual language packages instead of tree_sitter_languages
+#
+# 按语言**逐个**导入, 而不是 12 个包写在同一个 try 里。
+# 旧的写法是全有全无: 只要缺任何一个语言包, 就 except ImportError ->
+# HAS_TREE_SITTER=False, 于是 parse_file 对**所有**语言恒返回 None,
+# AST 语义检查整体静默失效, 而调用方拿到 None 也不报错 (fail-open)。
+# 典型触发方式: 只装 tree-sitter + tree-sitter-python (本项目的实际做法)。
 try:
-    import tree_sitter_c_sharp
-    import tree_sitter_cpp
-    import tree_sitter_go
-    import tree_sitter_java
-    import tree_sitter_javascript
-    import tree_sitter_kotlin
-    import tree_sitter_php
-    import tree_sitter_python
-    import tree_sitter_ruby
-    import tree_sitter_rust
-    import tree_sitter_swift
-    import tree_sitter_typescript
     from tree_sitter import Language, Parser
 
     HAS_TREE_SITTER = True
 except ImportError:
+    Language = Any  # type: ignore[assignment,misc]
+    Parser = Any  # type: ignore[assignment,misc]
     HAS_TREE_SITTER = False
+
+# 语言名 -> (模块名, 取 language 对象的工厂)。缺失的语言会被单独跳过,
+# 只影响该语言, 不再连坐其他语言。
+_LANGUAGE_MODULES: dict[str, tuple[str, str]] = {
+    "python": ("tree_sitter_python", "language"),
+    "javascript": ("tree_sitter_javascript", "language"),
+    "typescript": ("tree_sitter_typescript", "language_typescript"),
+    "rust": ("tree_sitter_rust", "language"),
+    "go": ("tree_sitter_go", "language"),
+    "java": ("tree_sitter_java", "language"),
+    "ruby": ("tree_sitter_ruby", "language"),
+    "cpp": ("tree_sitter_cpp", "language"),
+    "csharp": ("tree_sitter_c_sharp", "language"),
+    "kotlin": ("tree_sitter_kotlin", "language"),
+    "php": ("tree_sitter_php", "language_php"),
+    "swift": ("tree_sitter_swift", "language"),
+}
 
 
 class ASTParser(_ClassWalkers, _FunctionWalkers, _ImportWalkers):
@@ -108,40 +123,33 @@ class ASTParser(_ClassWalkers, _FunctionWalkers, _ImportWalkers):
 
     @classmethod
     def _shared_parsers(cls) -> dict[str, Any]:
-        """Get (and lazily build) the class-level shared parser cache."""
+        """Get (and lazily build) the class-level shared parser cache.
+
+        每个语言独立导入: 缺 tree_sitter_go 只会让 go 不可用, 不再
+        连带 python/rust 等全部失效。不可用的语言在 stderr 上明确报告,
+        避免"AST 检查静默不工作"这类难以察觉的失效。
+        """
         if not cls._PARSER_CACHE_READY:
             if HAS_TREE_SITTER:
-                # Map language names to their language modules
-                lang_modules = {
-                    "python": tree_sitter_python,
-                    "javascript": tree_sitter_javascript,
-                    "typescript": tree_sitter_typescript,
-                    "rust": tree_sitter_rust,
-                    "go": tree_sitter_go,
-                    "java": tree_sitter_java,
-                    "ruby": tree_sitter_ruby,
-                    "cpp": tree_sitter_cpp,
-                    "csharp": tree_sitter_c_sharp,
-                    "kotlin": tree_sitter_kotlin,
-                    "php": tree_sitter_php,
-                    "swift": tree_sitter_swift,
-                }
+                missing: list[str] = []
                 for lang in cls.SUPPORTED_LANGUAGES:
-                    if lang in lang_modules:
-                        try:
-                            mod = lang_modules[lang]
-                            # Get the language function (handle TSX/TS variants)
-                            if lang == "typescript":
-                                lang_obj = Language(mod.language_typescript())
-                            elif lang == "php":
-                                lang_obj = Language(mod.language_php())
-                            else:
-                                lang_obj = Language(mod.language())
-                            parser = Parser(lang_obj)
-                            cls._PARSER_CACHE[lang] = parser
-                        except Exception:
-                            # tree-sitter parser not available for language - silently skip
-                            pass
+                    spec = _LANGUAGE_MODULES.get(lang)
+                    if spec is None:
+                        missing.append(lang)
+                        continue
+                    module_name, factory_name = spec
+                    try:
+                        mod = importlib.import_module(module_name)
+                        lang_obj = Language(getattr(mod, factory_name)())
+                        cls._PARSER_CACHE[lang] = Parser(lang_obj)
+                    except Exception as exc:  # noqa: BLE001
+                        # 单个语言不可用不应拖垮其他语言, 但必须留痕。
+                        missing.append(f"{lang}({type(exc).__name__})")
+                if missing:
+                    print(
+                        f"⚠️  以下语言的 tree-sitter 解析器不可用, AST 检查将跳过它们: {', '.join(missing)}",
+                        file=sys.stderr,
+                    )
             cls._PARSER_CACHE_READY = True
         return cls._PARSER_CACHE
 

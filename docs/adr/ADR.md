@@ -18,6 +18,8 @@ updated: 2026-09-17
 
 | ID | 标题 | 状态 | 日期 |
 |----|------|------|------|
+| [[ADR-062-fail-open-detector-validates-executability\|ADR-062]] | fail-open 检测器改为校验可执行性，而非匹配错误关键词 | ✅ 已接受 | 2026-10-02 |
+| [[ADR-061-context-header-outside-rolling-window\|ADR-061]] | CONTEXT.md 固定头部独立于滚动窗口，校验不得 fail-open | ✅ 已接受 | 2026-10-02 |
 | [[ADR-056-phase-36-complexity-gate\|ADR-056]] | Phase 36 cc 门禁落地 + 18 个 ≥10cc 函数全量拆分 | ✅ 已通过 | 2026-09-17 |
 | [[ADR-055-phase-35-file-split\|ADR-055]] | Phase 35 大文件 facade 拆分（6 文件 <850 行） | ✅ 已通过 | 2026-09-15 |
 | [[ADR-054-phase-34-dedup-common\|ADR-054]] | Phase 34 跨文件重复函数抽取至 _common.py | ✅ 已通过 | 2026-09-15 |

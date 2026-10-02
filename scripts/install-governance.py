@@ -185,10 +185,14 @@ def main() -> int:
         return 0 if install_global() else 1
 
     # Default: both
-    install_global()
+    # 两个返回值都必须参与判定：早前这里无条件 return 0，
+    # 导致 install_global() 失败（如 ~/.jcode 权限不足）时脚本仍以成功退出，
+    # 调用方（CI、setup 脚本）会误判安装成功。--path / --global-only
+    # 两个分支都正确传递了返回值，唯独默认分支丢弃。
+    ok_global = install_global()
     print()
-    init_project()
-    return 0
+    ok_project = init_project()
+    return 0 if (ok_global and ok_project) else 1
 
 
 if __name__ == "__main__":

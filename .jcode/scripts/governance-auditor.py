@@ -100,8 +100,12 @@ UNSAFE_PATTERNS: list[UnsafePattern] = [
     UnsafePattern(
         pattern=r"yaml\.load\((?!.*Loader)",
         desc="yaml.load 不安全 - 应使用 safe_load",
-        exclude_files=[],
-        exclude_pattern=r"yaml\.load\((?!.*Loader)",
+        # 早前这里同时设了 exclude_pattern=r"yaml\.load\((?!.*Loader)"，与 pattern
+        # 完全相同。_check_unsafe_patterns 先判 exclude 再判 pattern，两者相同
+        # 导致排除永远先命中并 continue —— 这条规则从此永不触发（死规则），
+        # 恰好掩盖了它本该检出的不安全反序列化。改为只靠 exclude_files 排除
+        # 规则定义文件里描述该模式的字符串字面量。
+        exclude_files=["generate_fixes.py", "hallucination_detector.py", "auto_fix.py"],
     ),
 ]
 
@@ -558,7 +562,6 @@ _EXCLUDE_FROM_UNSAFE_AUDIT = {
     "generate_fixes.py",
     "hallucination_detector.py",
     "ide_rules_sync.py",
-    "security_patterns.py",
 }
 if __name__ == "__main__":
     main()

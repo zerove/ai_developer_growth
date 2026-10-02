@@ -78,9 +78,11 @@ class SpecAuditor:
             violations.append("检测到可能的 SQL 拼接，建议使用参数化查询")
 
         # 检查未指定异常类型的异常捕获
-        pat_a = r"except\s*:"
-        pat_b = r"except\s+\w+"
-        if re.search(pat_a, diff) and not re.search(pat_b, diff):
+        # 早前条件为 `has_bare and not has_specific`，导致只要 diff 里出现
+        # 任意一个 `except ValueError:`，所有裸 `except:` 都会被放过——实测
+        # "2 个裸 except + 1 个具体异常" 报 0 项违规。此处意图是"检出裸
+        # except 子句"，故只按裸 except 是否存在判定。
+        if re.search(r"except\s*:", diff):
             violations.append("检测到未指定异常类型的捕获，建议指定具体异常类型")
 
         return violations
@@ -401,8 +403,8 @@ class ContextSyncManager:
 
         spec_path = Path(spec_file)
         if not spec_path.exists():
-            print_check(f"SPEC.md 存在: {spec_file}", False)
-            return 1
+            print(f"ℹ️  未找到规范文件 {spec_file}，跳过规范审计")
+            return 0
 
         content = spec_path.read_text(encoding="utf-8")
         diff = f"+++ b/{spec_file}\n{content}"

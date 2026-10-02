@@ -154,12 +154,38 @@ except ImportError:
   导入**之前**屏蔽后，旧实现下 `test_missing_languages_do_not_disable_python` 才失败
 - 变异验证：新实现 5 passed / 退回旧实现 3 failed
 
+#### 连带修复：4 组测试从未真正运行过
+
+初次全量回归时有 6 个文件无法被 pytest 收集。当时用 `--ignore` 跳过，
+但这掩盖了问题的严重性 —— **等于 4 组测试一直没在跑**。逐个定位后补齐：
+
+| 文件 | 缺失依赖 | 处理 |
+|------|---------|------|
+| test_dashboard_round2 / test_parser_registry_e2e | `httpx` | 装上后 **64 个测试恢复运行并通过** |
+| test_property_based / test_property_chaos | `hypothesis` | 补声明后恢复 |
+| test_chaos_runner | `kubernetes` | 补声明后恢复 |
+| test_sync_issues | `PyGithub`（测试内已 mock，但仍需可导入） | 补声明后恢复 |
+
+#### 全新环境验证：声明的依赖真的够用吗
+
+补完第一轮后，用 `uv venv` + `pip install -e ".[dev]"` 重建**全新环境**，
+从声明出发验证依赖是否完整 —— 这暴露出 `dev` extra 还缺 3 个：
+
+| 缺口 | 表现 |
+|------|------|
+| `fastapi` | `test_dashboard_round2.py` 收集报错（它直接 import `fastapi.testclient`，光装 `search` extra 不够） |
+| `starlette` | `pytest.ini` 的 `filterwarnings` 引用了 starlette 异常类，缺它报 "Failed to import filter module" |
+| `jieba` | `test_search_recall.py` **12 个用例失败** —— 中文分词缺失时检索静默退化为整串匹配，表现为“零召回” |
+
+补齐后全新环境 **4531 passed / 0 failed**。教训：`dev` extra 只装能收集
+一部分测试，并不能说明项目可测；以全新环境跑完整回归才算数。
+
+**当前全量回归无需任何 `--ignore`**：4531 passed / 0 failed。
+
 #### 遗留（未实施）
 
 - AST 不可用时 `parse_file` 仍返回 `None` 而非抛异常，调用方的
   fail-open 面依然存在，本阶段只收窄了触发条件，未改返回契约
-- 6 个测试文件因缺 `hypothesis` / `PyGithub` 无法收集，已用 `--ignore` 跳过，
-  应补声明依赖或加 `importorskip`
 - 全项目 mypy 有 2368 个既存错误（多为测试缺类型注解），
   本次改动的 4 个文件已单独验证为 clean
 

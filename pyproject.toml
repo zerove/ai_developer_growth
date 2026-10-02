@@ -55,6 +55,21 @@ dev = [
     "tree-sitter-swift",
     # starlette TestClient 需要, 否则 dashboard 测试无法运行
     "httpx",
+    # 以下三个是真实测试依赖: 6 个测试文件因缺它们而无法被 pytest 收集,
+    # 曾经长期靠 --ignore 跳过 (等于 4 组测试从未真正运行过)
+    "hypothesis",  # test_property_based / test_property_chaos
+    "PyGithub",  # test_sync_issues (测试内 mock 了 Github, 但仍需模块可导入)
+    "kubernetes",  # test_chaos_runner
+    # dashboard 测试需要 starlette TestClient, 且 pytest.ini 的
+    # filterwarnings 直接引用了 starlette 的异常类 —— 缺它会报
+    # "Failed to import filter module 'starlette'" 警告
+    "starlette",
+    # tests/test_dashboard_round2.py 直接 import fastapi.testclient,
+    # 光装 search extra 不足, dev 必须自带
+    "fastapi>=0.110",
+    # tests/test_search_recall.py 需要中文分词; 缺 jieba 时检索会静默
+    # 回退为整串匹配, 表现为"零召回"断言失败 (失败信息里会自报这一点)
+    "jieba>=0.42",
 ]
 tools = [
     "openai>=1.0.0",

@@ -27,8 +27,8 @@ class TestContributorDashboard:
 
     def _write_case_study(self, name: str, content: str):
         """Helper to write a case study file."""
-        cases_dir = self.repo_root / "case-studies"
-        cases_dir.mkdir(exist_ok=True)
+        cases_dir = self.repo_root / "docs" / "case-studies"
+        cases_dir.mkdir(parents=True, exist_ok=True)
         (cases_dir / f"{name}.md").write_text(content, encoding="utf-8")
 
     def _write_tool_matrix(self, content: str):

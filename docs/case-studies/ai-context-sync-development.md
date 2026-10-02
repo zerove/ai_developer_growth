@@ -78,7 +78,7 @@ updated: 2026-08-12
 
 **📂 导航**
 - [[../MOC|⬅️ 返回知识地图]]
-- **相关案例**: [[case-studies/ai-task-prioritizer|AI 任务优先级工具]]
+- **相关案例**: [[docs/case-studies/ai-task-prioritizer|AI 任务优先级工具]]
 - **相关文章**: [[../efficiency/full-cycle-workflow|全周期工作流]] | [[../learning/prompt-engineering|Prompt 工程]]
 
 ---

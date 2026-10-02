@@ -11,10 +11,16 @@ dependencies = [
     "requests>=2.31.0",
     "pyyaml>=6.0",
     "loguru>=0.7.0",
+    # vector_search.py 顶层硬导入，经 hybrid_search -> chat_interface -> src/__init__
+    # 传递依赖 numpy，缺失时整个包无法 import。
+    "numpy>=1.26.0",
 ]
 
 [project.optional-dependencies]
 dev = ["pytest>=7.0", "ruff>=0.1.0", "pytest-cov>=4.0"]
+# sentence_transformers 在 vector_search.py 内惰性加载且被 try 包裹，属可选能力。
+# 它会连带拉入 torch，故不进默认依赖。
+semantic = ["sentence-transformers>=2.7.0"]
 
 [tool.ruff]
 target-version = "py311"

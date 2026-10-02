@@ -10,14 +10,16 @@ from self_correct import apply_fix, get_ai_fix, main, run_tests
 
 
 class TestRunTests:
-    def test_returns_tuple(self) -> None:
+    @patch("self_correct.subprocess.run")
+    def test_returns_tuple(self, mock_run: MagicMock) -> None:
+        mock_run.return_value = MagicMock(returncode=1, stdout="boom", stderr="err")
         result = run_tests()
         assert isinstance(result, tuple)
         assert len(result) == 3
         returncode, stdout, stderr = result
-        assert isinstance(returncode, int)
-        assert isinstance(stdout, str)
-        assert isinstance(stderr, str)
+        assert returncode == 1
+        assert stdout == "boom"
+        assert stderr == "err"
 
 
 class TestGetAiFix:

@@ -132,13 +132,14 @@ class TestCmdRecord:
 class TestCmdReport:
     """Tests for cmd_report()."""
 
-    def test_no_records(self) -> None:
+    def test_no_records(self, capsys) -> None:
         with patch("tools.scripts.rule_tracker._load_records") as mock_load:
             mock_load.return_value = []
             args = argparse.Namespace(days=None, json=False)
             cmd_report(args)
+        assert "No records found" in capsys.readouterr().out
 
-    def test_report_with_records(self, tmp_path: Path) -> None:
+    def test_report_with_records(self, tmp_path: Path, capsys) -> None:
         records = [
             {
                 "timestamp": "2026-01-01T00:00:00+00:00",
@@ -154,8 +155,12 @@ class TestCmdReport:
             mock_load.return_value = records
             args = argparse.Namespace(days=None, json=False)
             cmd_report(args)
+        out = capsys.readouterr().out
+        assert "Rule Effectiveness Report" in out
+        assert "Total issues found: 10" in out
+        assert "py-bare-except" in out
 
-    def test_report_json_output(self) -> None:
+    def test_report_json_output(self, capsys) -> None:
         records = [
             {
                 "timestamp": "2026-01-01T00:00:00+00:00",
@@ -171,8 +176,12 @@ class TestCmdReport:
             mock_load.return_value = records
             args = argparse.Namespace(days=30, json=True)
             cmd_report(args)
+        import json as _j
 
-    def test_report_with_days(self) -> None:
+        data = _j.loads(capsys.readouterr().out)
+        assert data["total_issues"] == 5
+
+    def test_report_with_days(self, capsys) -> None:
         records = [
             {
                 "timestamp": "2026-01-01T00:00:00+00:00",
@@ -184,18 +193,20 @@ class TestCmdReport:
             mock_load.return_value = records
             args = argparse.Namespace(days=7, json=False)
             cmd_report(args)
+        assert "(last 7 days)" in capsys.readouterr().out
 
 
 class TestCmdExport:
     """Tests for cmd_export()."""
 
-    def test_export_no_records(self) -> None:
+    def test_export_no_records(self, capsys) -> None:
         with patch("tools.scripts.rule_tracker._load_records") as mock_load:
             mock_load.return_value = []
             args = argparse.Namespace(days=None)
             cmd_export(args)
+        assert "No records found." in capsys.readouterr().out
 
-    def test_export_with_records(self) -> None:
+    def test_export_with_records(self, capsys) -> None:
         records = [
             {
                 "timestamp": "2026-01-01T00:00:00+00:00",
@@ -208,12 +219,16 @@ class TestCmdExport:
             mock_load.return_value = records
             args = argparse.Namespace(days=None)
             cmd_export(args)
+        out = capsys.readouterr().out
+        lines = out.strip().splitlines()
+        assert lines[0] == "timestamp,project,total_files,total_issues,health_score"
+        assert lines[1].startswith("2026-01-01T00:00:00+00:00,test,1,3,80")
 
 
 class TestCmdPrune:
     """Tests for cmd_prune()."""
 
-    def test_prune_no_pruning_needed(self, tmp_path: Path) -> None:
+    def test_prune_no_pruning_needed(self, tmp_path: Path, capsys) -> None:
         records_file = tmp_path / "records.jsonl"
         records_file.write_text('{"x":1}\n')
         with patch("tools.scripts.rule_tracker._records_file") as mock_f:
@@ -222,8 +237,11 @@ class TestCmdPrune:
                 mock_load.return_value = [{"x": 1}]
                 args = argparse.Namespace(keep=100)
                 cmd_prune(args)
+        out = capsys.readouterr().out
+        assert "nothing to prune" in out
+        assert records_file.read_text() == '{"x":1}\n', "未裁剪时不应重写记录文件"
 
-    def test_prune_removes_old(self, tmp_path: Path) -> None:
+    def test_prune_removes_old(self, tmp_path: Path, capsys) -> None:
         records_file = tmp_path / "records.jsonl"
         with patch("tools.scripts.rule_tracker._records_file") as mock_f:
             mock_f.return_value = records_file
@@ -232,6 +250,10 @@ class TestCmdPrune:
                 mock_load.return_value = records
                 args = argparse.Namespace(keep=3)
                 cmd_prune(args)
+        assert "Pruned to 3 records" in capsys.readouterr().out
+        lines = records_file.read_text().strip().splitlines()
+        assert len(lines) == 3
+        assert lines[-1] == '{"i": 9}', "应保留最近的记录"
 
 
 class TestMain:

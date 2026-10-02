@@ -228,3 +228,18 @@ class TestLLMStrategy:
             s = LLMStrategy()
             result = s.fix("x = 1", "SomethingRandom")
             assert result is None
+
+
+class TestZeroDivisionGuardProducesValidCode:
+    """The guard skeleton must keep the original statement's indentation."""
+
+    def test_replacement_is_syntactically_valid(self) -> None:
+        from strategies.pattern import _BUILTIN_PATTERNS
+
+        pattern = next(p for p in _BUILTIN_PATTERNS if p.name == "zero-division-guard")
+        source = "def average(values):\n    return sum(values) / len(values)\n"
+        assert pattern.matches_error("ZeroDivisionError: division by zero")
+        fixed = pattern.apply(source)
+        assert fixed is not None
+        compile(fixed, "<fixed>", "exec")
+        assert "return sum(values) / len(values)" in fixed

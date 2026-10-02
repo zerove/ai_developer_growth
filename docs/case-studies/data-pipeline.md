@@ -246,7 +246,7 @@ data-pipeline/
 
 **📂 导航**
 - [[../MOC|⬅️ 返回知识地图]]
-- **相关案例**: [[case-studies/database-migration|数据库迁移]] | [[case-studies/web-scraping-tool|网页抓取]]
+- **相关案例**: [[docs/case-studies/database-migration|数据库迁移]] | [[docs/case-studies/web-scraping-tool|网页抓取]]
 - **相关方法**: [[../efficiency/full-cycle-workflow|全周期工作流]] | [[../database/sql|SQL 规范]]
 
 ---

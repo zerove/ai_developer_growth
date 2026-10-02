@@ -7,6 +7,7 @@
 from __future__ import annotations
 
 import json
+from datetime import datetime, timedelta, timezone
 from typing import Any
 
 import pytest
@@ -32,8 +33,15 @@ REPO = "zerove/ai_developer_growth"
 WF = "ci.yml"
 TOKEN = "dummy-token"
 
-NOW = "2026-09-29T13:55:27Z"
-OLD = "2026-08-01T00:00:00Z"
+
+def _iso(dt: datetime) -> str:
+    return dt.astimezone(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+
+
+# 必须相对当前时间计算：判定新鲜度的是 now - ran_at 的差值，写死绝对时间
+# 会让这套用例在时间跨过阈值后集体变红（曾经真实发生过）。
+NOW = _iso(datetime.now(timezone.utc) - timedelta(minutes=5))
+OLD = _iso(datetime.now(timezone.utc) - timedelta(days=60))
 
 
 def _run_payload(run_id: int = 1, created: str = NOW, updated: str = NOW) -> dict[str, Any]:

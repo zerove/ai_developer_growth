@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import argparse
+import re
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 
@@ -28,6 +29,19 @@ def fake_rules_dir(tmp_path: Path) -> Path:
     lang_dir = tmp_path / "ai-dev-framework" / "languages" / "testlang" / "rules.d"
     lang_dir.mkdir(parents=True)
     return lang_dir
+
+
+def _errors(out: str) -> bool:
+    """汇总行 `N errors, M warnings` 中 error 数 >= 1。"""
+    m = re.search(r"(\d+) errors?, (\d+) warnings?", out)
+    assert m is not None, f"no summary line: {out!r}"
+    return int(m.group(1)) >= 1
+
+
+def _warnings(out: str) -> bool:
+    m = re.search(r"(\d+) errors?, (\d+) warnings?", out)
+    assert m is not None, f"no summary line: {out!r}"
+    return int(m.group(2)) >= 1
 
 
 class TestTemplates:
@@ -63,12 +77,15 @@ class TestCmdInit:
         assert (tmp_path / "languages" / "testlang" / "rules.d" / "anti_patterns.yml").exists()
 
     @patch("tools.scripts.rule_author._rules_dir")
-    def test_init_existing_no_force(self, mock_rules_dir: MagicMock, tmp_path: Path) -> None:
+    def test_init_existing_no_force(self, mock_rules_dir: MagicMock, tmp_path: Path, capsys) -> None:
         lang_dir = tmp_path / "languages" / "testlang" / "rules.d"
         lang_dir.mkdir(parents=True)
         mock_rules_dir.return_value = tmp_path
         args = argparse.Namespace(lang="testlang", force=False)
         cmd_init(args)  # Should not raise
+        out = capsys.readouterr().out
+        assert "already exist" in out
+        assert not (lang_dir / "anti_patterns.yml").exists(), "force=False 且目录已存在时不应创建规则文件"
 
     @patch("tools.scripts.rule_author._rules_dir")
     def test_init_force_overwrites(self, mock_rules_dir: MagicMock, tmp_path: Path) -> None:
@@ -107,7 +124,7 @@ class TestCmdAddRule:
         assert data["anti_patterns"][0]["id"] == "tl-bare-except"
 
     @patch("tools.scripts.rule_author._rules_dir")
-    def test_add_rule_unknown_category(self, mock_rules_dir: MagicMock) -> None:
+    def test_add_rule_unknown_category(self, mock_rules_dir: MagicMock, capsys) -> None:
         mock_rules_dir.return_value = Path("/tmp")
         args = argparse.Namespace(
             lang="testlang",
@@ -120,9 +137,10 @@ class TestCmdAddRule:
             fix_hint="x",
         )
         cmd_add_rule(args)  # Should not raise
+        assert "Unknown category" in capsys.readouterr().out
 
     @patch("tools.scripts.rule_author._rules_dir")
-    def test_add_rule_no_file(self, mock_rules_dir: MagicMock, tmp_path: Path) -> None:
+    def test_add_rule_no_file(self, mock_rules_dir: MagicMock, tmp_path: Path, capsys) -> None:
         mock_rules_dir.return_value = tmp_path
         args = argparse.Namespace(
             lang="testlang",
@@ -135,9 +153,10 @@ class TestCmdAddRule:
             fix_hint="x",
         )
         cmd_add_rule(args)  # Should not raise, prints message
+        assert "Rule file not found" in capsys.readouterr().out
 
     @patch("tools.scripts.rule_author._rules_dir")
-    def test_add_rule_duplicate_id(self, mock_rules_dir: MagicMock, tmp_path: Path) -> None:
+    def test_add_rule_duplicate_id(self, mock_rules_dir: MagicMock, tmp_path: Path, capsys) -> None:
         rules_dir = tmp_path / "languages" / "testlang" / "rules.d"
         rules_dir.mkdir(parents=True)
         (rules_dir / "anti_patterns.yml").write_text(
@@ -155,9 +174,13 @@ class TestCmdAddRule:
             fix_hint="fix",
         )
         cmd_add_rule(args)  # Should print duplicate message
+        out = capsys.readouterr().out
+        assert "already exists" in out
+        rules = yaml.safe_load((rules_dir / "anti_patterns.yml").read_text())
+        assert [r["id"] for r in rules["anti_patterns"]] == ["dup"]
 
     @patch("tools.scripts.rule_author._rules_dir")
-    def test_add_rule_invalid_regex(self, mock_rules_dir: MagicMock, tmp_path: Path) -> None:
+    def test_add_rule_invalid_regex(self, mock_rules_dir: MagicMock, tmp_path: Path, capsys) -> None:
         rules_dir = tmp_path / "languages" / "testlang" / "rules.d"
         rules_dir.mkdir(parents=True)
         (rules_dir / "anti_patterns.yml").write_text("language: testlang\nanti_patterns: []\n")
@@ -173,10 +196,13 @@ class TestCmdAddRule:
             fix_hint="fix",
         )
         cmd_add_rule(args)  # Should print invalid regex message
+        assert "Invalid regex" in capsys.readouterr().out
+        rules = yaml.safe_load((rules_dir / "anti_patterns.yml").read_text())
+        assert rules["anti_patterns"] == []
 
     @patch("tools.scripts.rule_author._rules_dir")
     @patch("builtins.input", return_value="")
-    def test_add_rule_empty_id(self, mock_input: MagicMock, mock_rules_dir: MagicMock, tmp_path: Path) -> None:
+    def test_add_rule_empty_id(self, mock_input: MagicMock, mock_rules_dir: MagicMock, tmp_path: Path, capsys) -> None:
         rules_dir = tmp_path / "languages" / "testlang" / "rules.d"
         rules_dir.mkdir(parents=True)
         (rules_dir / "anti_patterns.yml").write_text("language: testlang\nanti_patterns: []\n")
@@ -192,11 +218,12 @@ class TestCmdAddRule:
             fix_hint="x",
         )
         cmd_add_rule(args)  # Should print "Rule ID is required"
+        assert "Rule ID is required" in capsys.readouterr().out
 
     @patch("tools.scripts.rule_author._rules_dir")
     @patch("builtins.input", side_effect=["", ""])
     def test_add_rule_empty_name_or_message(
-        self, mock_input: MagicMock, mock_rules_dir: MagicMock, tmp_path: Path
+        self, mock_input: MagicMock, mock_rules_dir: MagicMock, tmp_path: Path, capsys
     ) -> None:
         rules_dir = tmp_path / "languages" / "testlang" / "rules.d"
         rules_dir.mkdir(parents=True)
@@ -213,74 +240,90 @@ class TestCmdAddRule:
             fix_hint="fix",
         )
         cmd_add_rule(args)  # Should print "Name and message are required"
+        assert "required" in capsys.readouterr().out
 
 
 class TestCmdValidate:
-    def test_validate_valid_file(self, tmp_path: Path) -> None:
+    def test_validate_valid_file(self, tmp_path: Path, capsys) -> None:
         f = tmp_path / "valid.yml"
         f.write_text("language: python\nanti_patterns:\n- id: py-test\n  name: Test\n  severity: error\n")
         args = argparse.Namespace(file=str(f))
         cmd_validate(args)
+        assert "Valid" in capsys.readouterr().out
 
-    def test_validate_missing_language(self, tmp_path: Path) -> None:
+    def test_validate_missing_language(self, tmp_path: Path, capsys) -> None:
         f = tmp_path / "bad.yml"
         f.write_text("anti_patterns:\n- id: x\n  severity: error\n")
         args = argparse.Namespace(file=str(f))
         cmd_validate(args)  # Should print missing language
+        out = capsys.readouterr().out
+        assert "Missing 'language' field" in out
+        assert "1 errors" in out
 
-    def test_validate_nonexistent_file(self) -> None:
+    def test_validate_nonexistent_file(self, capsys) -> None:
         args = argparse.Namespace(file="/nonexistent/file.yml")
         cmd_validate(args)  # Should print "File not found"
+        assert "File not found" in capsys.readouterr().out
 
-    def test_validate_invalid_yaml(self, tmp_path: Path) -> None:
+    def test_validate_invalid_yaml(self, tmp_path: Path, capsys) -> None:
         f = tmp_path / "bad.yml"
         f.write_text("# just a comment\n")
         args = argparse.Namespace(file=str(f))
         cmd_validate(args)  # Parsed to None -> prints "Invalid YAML"
+        assert "Invalid YAML" in capsys.readouterr().out
 
-    def test_validate_rule_not_dict(self, tmp_path: Path) -> None:
+    def test_validate_rule_not_dict(self, tmp_path: Path, capsys) -> None:
         f = tmp_path / "bad.yml"
         f.write_text("language: python\nanti_patterns:\n- not_a_dict\n")
         args = argparse.Namespace(file=str(f))
         cmd_validate(args)
+        out = capsys.readouterr().out
+        assert "is not a dictionary" in out
+        assert "1 errors" in out
 
-    def test_validate_rule_missing_fields(self, tmp_path: Path) -> None:
+    def test_validate_rule_missing_fields(self, tmp_path: Path, capsys) -> None:
         f = tmp_path / "incomplete.yml"
         f.write_text("language: python\nanti_patterns:\n- id: x\n")
         args = argparse.Namespace(file=str(f))
         cmd_validate(args)  # Should print warnings for missing name/severity
+        assert _warnings(capsys.readouterr().out)
 
-    def test_validate_invalid_severity(self, tmp_path: Path) -> None:
+    def test_validate_invalid_severity(self, tmp_path: Path, capsys) -> None:
         f = tmp_path / "bad_sev.yml"
         f.write_text("language: python\nanti_patterns:\n- id: x\n  name: X\n  severity: critical\n")
         args = argparse.Namespace(file=str(f))
         cmd_validate(args)
+        assert _errors(capsys.readouterr().out)
 
-    def test_validate_invalid_regex(self, tmp_path: Path) -> None:
+    def test_validate_invalid_regex(self, tmp_path: Path, capsys) -> None:
         f = tmp_path / "bad_regex.yml"
         f.write_text("language: python\nanti_patterns:\n- id: x\n  name: X\n  severity: error\n  pattern: '[invalid'\n")
         args = argparse.Namespace(file=str(f))
         cmd_validate(args)
+        assert _errors(capsys.readouterr().out)
 
-    def test_validate_test_cases_missing_fields(self, tmp_path: Path) -> None:
+    def test_validate_test_cases_missing_fields(self, tmp_path: Path, capsys) -> None:
         f = tmp_path / "bad_tc.yml"
         f.write_text(
             "language: python\nanti_patterns:\n- id: x\n  name: X\n  severity: error\n  test_cases:\n  - code: 'test'\n"
         )
         args = argparse.Namespace(file=str(f))
         cmd_validate(args)
+        assert _errors(capsys.readouterr().out)
 
-    def test_validate_naming_conventions(self, tmp_path: Path) -> None:
+    def test_validate_naming_conventions(self, tmp_path: Path, capsys) -> None:
         f = tmp_path / "naming.yml"
         f.write_text("language: python\nnaming_conventions:\n- id: py-fn\n  name: Function name\n  severity: warning\n")
         args = argparse.Namespace(file=str(f))
         cmd_validate(args)
+        assert "Valid" in capsys.readouterr().out
 
-    def test_validate_complexity(self, tmp_path: Path) -> None:
+    def test_validate_complexity(self, tmp_path: Path, capsys) -> None:
         f = tmp_path / "complexity.yml"
         f.write_text("language: python\ncomplexity:\n- id: py-len\n  name: Too long\n  severity: warning\n")
         args = argparse.Namespace(file=str(f))
         cmd_validate(args)
+        assert "Valid" in capsys.readouterr().out
 
 
 class TestCmdScaffold:

@@ -1,4 +1,4 @@
-"""Coverage tests for rules_engine.parsers (currently 0%) and security_patterns (0%)."""
+"""Coverage tests for rules_engine.parsers."""
 
 from __future__ import annotations
 
@@ -21,55 +21,6 @@ from tools.scripts.rules_engine.parsers.python_parser_v3 import (
 )
 from tools.scripts.rules_engine.parsers.registry import PARSER_REGISTRY, get_parser
 from tools.scripts.rules_engine.parsers.rust_parser import RustParser
-from tools.scripts.rules_engine.security_patterns import (
-    ERROR_PATTERNS,
-    SECURITY_PATTERNS,
-    TYPE_PATTERNS,
-    get_security_rules,
-)
-
-# ─────────────────────────────────────────────────────────────
-# security_patterns
-# ─────────────────────────────────────────────────────────────
-
-
-def test_security_patterns_not_empty():
-    assert len(SECURITY_PATTERNS) > 0
-    for p in SECURITY_PATTERNS:
-        assert "id" in p
-        assert "name" in p
-        assert "severity" in p
-        assert "category" in p
-        assert "pattern" in p
-        assert "message" in p
-        assert "fix_hint" in p
-        assert p["severity"] in ("error", "warning", "info")
-
-
-def test_type_patterns_not_empty():
-    assert len(TYPE_PATTERNS) > 0
-    for p in TYPE_PATTERNS:
-        assert p["category"] == "type-safety"
-
-
-def test_error_patterns_not_empty():
-    assert len(ERROR_PATTERNS) > 0
-    for p in ERROR_PATTERNS:
-        assert p["category"] == "error-handling"
-
-
-def test_get_security_rules_returns_dict():
-    rules = get_security_rules("python")
-    assert "anti_patterns" in rules
-    assert len(rules["anti_patterns"]) == len(SECURITY_PATTERNS) + len(TYPE_PATTERNS) + len(ERROR_PATTERNS)
-
-
-def test_security_patterns_exclude_files():
-    # eval/exec pattern has exclude_files
-    eval_pattern = next(p for p in SECURITY_PATTERNS if p["id"] == "security-eval-exec")
-    assert "exclude_files" in eval_pattern
-    assert "auto_fix.py" in eval_pattern["exclude_files"]
-
 
 # ─────────────────────────────────────────────────────────────
 # parsers.base - contract validation

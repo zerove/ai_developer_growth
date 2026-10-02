@@ -54,7 +54,7 @@
 **核心指令**:
 - 执行 `ruff check` + `ruff format --check` 验证代码风格
 - 运行 `mypy` 类型检查（配置 `pyproject.toml`）
-- 执行 `pytest` 测试套件，要求覆盖率 ≥ 60%
+- 执行 `pytest` 测试套件，要求覆盖率 ≥ 80%（阈值配置在 `pyproject.toml` 的 `[tool.adg] cov_min`）
 - 运行 `tools/scripts/audit_to_pr.py` 生成审计报告并创建 PR
 - 检查 `GOVERNANCE.md` 质量门禁：无 `unwrap()`/`expect()`、无 `as any`
 - **v1.1 新增**: 验证15个治理层文档格式完整性

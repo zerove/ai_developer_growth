@@ -55,8 +55,9 @@ def test_adg_cli_detect():
     with patch.object(sys, "argv", ["adg_cli", "detect"]):
         try:
             adg_cli.main()
-        except SystemExit:
-            pass
+        except SystemExit as exc:
+            # 允许非零退出，但必须是有意的退出码而非崩溃
+            assert exc.code in (0, None), f"detect 以异常码退出: {exc.code}"
 
 
 def test_adg_cli_invalid_command():
@@ -67,9 +68,18 @@ def test_adg_cli_invalid_command():
 
 
 def test_adg_cli_main_entry_import():
-    """Test __main__ entry point can be imported."""
-    with patch("tools.scripts.adg_cli.__main__.main", MagicMock(return_value=0)):
-        pass
+    """__main__ entry point delegates to main()."""
+    with patch("tools.scripts.adg_cli.__main__.main", MagicMock(return_value=0)) as mock_main:
+        import tools.scripts.adg_cli.__main__ as entry
+
+        assert entry.main is mock_main or callable(entry.main)
+        # 原先这里只有 pass：patch 了却从不调用，测的是空气
+        with patch.object(sys, "argv", ["adg", "detect"]):
+            try:
+                entry.main()
+            except SystemExit as exc:
+                assert exc.code in (0, None)
+    mock_main.assert_called_once()
 
 
 # ─────────────────────────────────────────────────────────────

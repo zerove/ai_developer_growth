@@ -269,7 +269,7 @@ smart-scraper/
 
 **📂 导航**
 - [[../MOC|⬅️ 返回知识地图]]
-- **相关案例**: [[case-studies/data-pipeline|数据管道]] | [[case-studies/api-monitoring|API 监控]]
+- **相关案例**: [[docs/case-studies/data-pipeline|数据管道]] | [[docs/case-studies/api-monitoring|API 监控]]
 - **相关方法**: [[../efficiency/full-cycle-workflow|全周期工作流]] | [[../learning/prompt-engineering|Prompt 工程]]
 
 ---

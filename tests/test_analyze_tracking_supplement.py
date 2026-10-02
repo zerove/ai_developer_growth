@@ -207,11 +207,15 @@ class TestPrintReport(unittest.TestCase):
             "reading_time": {"/test": 60},
         }
         old_stdout = sys.stdout
-        sys.stdout = StringIO()
+        buf = StringIO()
+        sys.stdout = buf
         try:
             print_report(data, 5)
         finally:
             sys.stdout = old_stdout
+        out = buf.getvalue()
+        assert "搜索查询" in out and "页面访问" in out and "阅读时长" in out
+        assert "test" in out
 
     def test_print_report_empty_data(self):
         """Should handle empty data."""
@@ -222,11 +226,15 @@ class TestPrintReport(unittest.TestCase):
 
         data = {"searches": [], "pageviews": [], "reading_time": {}}
         old_stdout = sys.stdout
-        sys.stdout = StringIO()
+        buf = StringIO()
+        sys.stdout = buf
         try:
             print_report(data, 10)
         finally:
             sys.stdout = old_stdout
+        out = buf.getvalue()
+        assert "总搜索次数" in out
+        assert "总搜索次数: 0" in out, "空数据应如实报告 0，而不是崩溃"
 
     def test_print_report_with_synonyms(self):
         """Should print synonym suggestions."""
@@ -244,11 +252,15 @@ class TestPrintReport(unittest.TestCase):
             "reading_time": {},
         }
         old_stdout = sys.stdout
-        sys.stdout = StringIO()
+        buf = StringIO()
+        sys.stdout = buf
         try:
             print_report(data, 10)
         finally:
             sys.stdout = old_stdout
+        out = buf.getvalue()
+        assert "同义词组建议" in out
+        assert "python" in out
 
 
 class TestMainFunction(unittest.TestCase):
@@ -274,13 +286,17 @@ class TestMainFunction(unittest.TestCase):
         old_argv = sys.argv
         sys.argv = ["analyze_tracking.py", temp_path, "--top", "5"]
         old_stdout = sys.stdout
-        sys.stdout = StringIO()
+        buf = StringIO()
+        sys.stdout = buf
         try:
             main()
         finally:
             sys.stdout = old_stdout
             sys.argv = old_argv
             Path(temp_path).unlink(missing_ok=True)
+        out = buf.getvalue()
+        assert "搜索查询" in out, "未加 --export-synonyms 时应打印完整报告"
+        assert "test" in out
 
     def test_main_with_export_synonyms(self):
         """Should export synonyms as JSON."""
@@ -305,17 +321,20 @@ class TestMainFunction(unittest.TestCase):
         old_argv = sys.argv
         sys.argv = ["analyze_tracking.py", temp_path, "--export-synonyms"]
         old_stdout = sys.stdout
-        sys.stdout = StringIO()
+        buf = StringIO()
+        sys.stdout = buf
         try:
             main()
-            output = sys.stdout.getvalue()
-            # Should output valid JSON
-            if output.strip():
-                json.loads(output)
         finally:
             sys.stdout = old_stdout
             sys.argv = old_argv
             Path(temp_path).unlink(missing_ok=True)
+        # 原先是 `if output.strip(): json.loads(output)` —— 输出为空时断言被跳过，
+        # 静默通过。改为无条件校验。
+        output = buf.getvalue().strip()
+        assert output, "--export-synonyms 未产出任何输出"
+        groups = json.loads(output)
+        assert isinstance(groups, list)
 
     def test_main_nonexistent_file(self):
         """Should exit with error for nonexistent file."""

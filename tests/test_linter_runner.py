@@ -106,24 +106,33 @@ class TestRunRuff:
 
     @patch("tools.scripts.linter_runner.subprocess.run")
     def test_ruff_timeout(self, mock_run: MagicMock, tmp_path: Path) -> None:
-        """Ruff timeout is handled gracefully."""
+        """Ruff timeout 视为门禁失败（fail-closed）。"""
         mock_run.side_effect = subprocess.TimeoutExpired(cmd="ruff", timeout=60)
         issues = _run_ruff(tmp_path)
-        assert issues == []
+        assert len(issues) == 1
+        assert issues[0]["linter"] == "ruff"
+        assert issues[0]["rule_id"] == "ruff-unavailable"
+        assert issues[0]["severity"] == "error"
 
     @patch("tools.scripts.linter_runner.subprocess.run")
     def test_ruff_not_found(self, mock_run: MagicMock, tmp_path: Path) -> None:
-        """Ruff not found is handled gracefully."""
+        """Ruff not found 视为门禁失败（fail-closed）。"""
         mock_run.side_effect = FileNotFoundError
         issues = _run_ruff(tmp_path)
-        assert issues == []
+        assert len(issues) == 1
+        assert issues[0]["linter"] == "ruff"
+        assert issues[0]["rule_id"] == "ruff-unavailable"
+        assert issues[0]["severity"] == "error"
 
     @patch("tools.scripts.linter_runner.subprocess.run")
     def test_ruff_invalid_json(self, mock_run: MagicMock, tmp_path: Path) -> None:
-        """Ruff invalid JSON is handled gracefully."""
+        """Ruff invalid json 视为门禁失败（fail-closed）。"""
         mock_run.return_value = MagicMock(returncode=1, stdout="not json", stderr="")
         issues = _run_ruff(tmp_path)
-        assert issues == []
+        assert len(issues) == 1
+        assert issues[0]["linter"] == "ruff"
+        assert issues[0]["rule_id"] == "ruff-unavailable"
+        assert issues[0]["severity"] == "error"
 
 
 class TestRunMypy:
@@ -152,17 +161,23 @@ class TestRunMypy:
 
     @patch("tools.scripts.linter_runner.subprocess.run")
     def test_mypy_timeout(self, mock_run: MagicMock, tmp_path: Path) -> None:
-        """Mypy timeout handled gracefully."""
+        """Mypy timeout 视为门禁失败（fail-closed）。"""
         mock_run.side_effect = subprocess.TimeoutExpired(cmd="mypy", timeout=60)
         issues = _run_mypy(tmp_path)
-        assert issues == []
+        assert len(issues) == 1
+        assert issues[0]["linter"] == "mypy"
+        assert issues[0]["rule_id"] == "mypy-unavailable"
+        assert issues[0]["severity"] == "error"
 
     @patch("tools.scripts.linter_runner.subprocess.run")
     def test_mypy_not_found(self, mock_run: MagicMock, tmp_path: Path) -> None:
-        """Mypy not found handled gracefully."""
+        """Mypy not found 视为门禁失败（fail-closed）。"""
         mock_run.side_effect = FileNotFoundError
         issues = _run_mypy(tmp_path)
-        assert issues == []
+        assert len(issues) == 1
+        assert issues[0]["linter"] == "mypy"
+        assert issues[0]["rule_id"] == "mypy-unavailable"
+        assert issues[0]["severity"] == "error"
 
     @patch("tools.scripts.linter_runner.subprocess.run")
     def test_mypy_line_without_error(self, mock_run: MagicMock, tmp_path: Path) -> None:
@@ -217,17 +232,23 @@ class TestRunEslint:
 
     @patch("tools.scripts.linter_runner.subprocess.run")
     def test_eslint_timeout(self, mock_run: MagicMock, tmp_path: Path) -> None:
-        """Eslint timeout handled gracefully."""
+        """Eslint timeout 视为门禁失败（fail-closed）。"""
         mock_run.side_effect = subprocess.TimeoutExpired(cmd="eslint", timeout=60)
         issues = _run_eslint(tmp_path)
-        assert issues == []
+        assert len(issues) == 1
+        assert issues[0]["linter"] == "eslint"
+        assert issues[0]["rule_id"] == "eslint-unavailable"
+        assert issues[0]["severity"] == "error"
 
     @patch("tools.scripts.linter_runner.subprocess.run")
     def test_eslint_not_found(self, mock_run: MagicMock, tmp_path: Path) -> None:
-        """Eslint not found handled gracefully."""
+        """Eslint not found 视为门禁失败（fail-closed）。"""
         mock_run.side_effect = FileNotFoundError
         issues = _run_eslint(tmp_path)
-        assert issues == []
+        assert len(issues) == 1
+        assert issues[0]["linter"] == "eslint"
+        assert issues[0]["rule_id"] == "eslint-unavailable"
+        assert issues[0]["severity"] == "error"
 
 
 class TestRunGolangci:
@@ -262,17 +283,23 @@ class TestRunGolangci:
 
     @patch("tools.scripts.linter_runner.subprocess.run")
     def test_golangci_timeout(self, mock_run: MagicMock, tmp_path: Path) -> None:
-        """Golangci-lint timeout handled gracefully."""
+        """Golangci timeout 视为门禁失败（fail-closed）。"""
         mock_run.side_effect = subprocess.TimeoutExpired(cmd="golangci-lint", timeout=120)
         issues = _run_golangci(tmp_path)
-        assert issues == []
+        assert len(issues) == 1
+        assert issues[0]["linter"] == "golangci-lint"
+        assert issues[0]["rule_id"] == "golangci-lint-unavailable"
+        assert issues[0]["severity"] == "error"
 
     @patch("tools.scripts.linter_runner.subprocess.run")
     def test_golangci_not_found(self, mock_run: MagicMock, tmp_path: Path) -> None:
-        """Golangci-lint not found handled gracefully."""
+        """Golangci not found 视为门禁失败（fail-closed）。"""
         mock_run.side_effect = FileNotFoundError
         issues = _run_golangci(tmp_path)
-        assert issues == []
+        assert len(issues) == 1
+        assert issues[0]["linter"] == "golangci-lint"
+        assert issues[0]["rule_id"] == "golangci-lint-unavailable"
+        assert issues[0]["severity"] == "error"
 
     @patch("tools.scripts.linter_runner.subprocess.run")
     def test_golangci_no_issues_key(self, mock_run: MagicMock, tmp_path: Path) -> None:

@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 
@@ -120,14 +121,15 @@ class TestListPacks:
 class TestTracking:
     """Tests for record_results and get_tracking_report."""
 
-    def test_record_results(self) -> None:
+    def test_record_results(self, tmp_path: Path) -> None:
         engine = RuleEngine()
+        records = tmp_path / "test.jsonl"
         with (
             patch("tools.scripts.rule_tracker._records_file") as mock_f,
             patch("tools.scripts.rule_tracker._count_by_severity") as mock_sev,
             patch("tools.scripts.rule_tracker._count_by_rule") as mock_rule,
         ):
-            mock_f.return_value = Path("/tmp/test.jsonl")
+            mock_f.return_value = records
             mock_sev.return_value = {"error": 1}
             mock_rule.return_value = {"py-x": 1}
             results = {
@@ -135,6 +137,13 @@ class TestTracking:
                 "health_score": 80,
             }
             engine.record_results(results, project="test")
+        # 原先只调用不断言，且 mock 到硬编码 /tmp 路径（真实副作用）
+        assert records.exists(), "record_results 应写入记录文件"
+        rec = json.loads(records.read_text().strip())
+        assert rec["project"] == "test"
+        assert rec["health_score"] == 80
+        assert rec["summary"]["total_issues"] == 1
+        assert rec["summary"]["by_rule"] == {"py-x": 1}
 
     def test_get_tracking_report_empty(self) -> None:
         engine = RuleEngine()

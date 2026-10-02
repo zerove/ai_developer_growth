@@ -2,7 +2,7 @@
 
 [![CI](https://img.shields.io/badge/CI-passing-brightgreen)](#)
 [![Python 3.11+](https://img.shields.io/badge/Python-3.11+-blue.svg)](https://www.python.org/downloads/)
-[![Coverage](https://img.shields.io/badge/Coverage-69%25-brightgreen)](#)
+[![Coverage](https://img.shields.io/badge/Coverage-88%25-brightgreen)](#)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](CONTRIBUTING.md)
 [![Stars](https://img.shields.io/github/stars/zerove/ai_developer_growth)](https://github.com/zerove/ai_developer_growth/stargazers)
@@ -20,20 +20,33 @@
 | AI 工具太多，不知如何选择 | 📊 工具矩阵对比 |
 | 不知道如何与 AI 协作 | 🔄 全周期工作流 |
 | 担心被 AI 取代 | 🧠 认知升级方法论 |
-| 缺少真实案例参考 | 📚 48 个实践案例 |
+| 缺少真实案例参考 | 📚 47 个实践案例 |
 
 ---
 
 ## 📚 知识地图
 
+完整索引见 [docs/MOC.md](docs/MOC.md)（371 篇文档）。
+
 ### 🧠 认知升级
 理解 AI 时代的游戏规则。
+
+- [[docs/mindset/capability-model|能力模型]] · [[docs/mindset/ai-to-market-checklist|AI 到市场检查清单]] · [[docs/mindset/career-transformation|职业转型]]
 
 ### 📚 学习方法
 掌握 AI 时代的学习范式。
 
+- [[docs/learning/ai-learning-method|AI 学习法]] · [[docs/learning/ai-learning-path|学习路径]] · [[docs/learning/capability-levels|能力分级]]
+
 ### ⚡ 工程效率
 将认知转化为生产力。
+
+- [[docs/efficiency/README|效率层总览]] · [[docs/efficiency/full-cycle-workflow|全周期工作流]] · [[docs/efficiency/ai-architecture-design|AI 架构设计]]
+
+### 🛠️ 工具选型
+工具矩阵与选型依据。
+
+- [[docs/tools/ai-tool-matrix|AI 工具矩阵]]
 
 ---
 
@@ -43,16 +56,16 @@
 
 | 案例 | 场景 | 效率提升 | 链接 |
 |------|------|----------|------|
-| 🔥 Cursor 大规模重构 | 12 万行代码架构迁移 | **3x** | [[case-studies/cursor-refactoring]] |
-| 🧪 Copilot 测试生成 | 自动化测试补充 | **3.4x** | [[case-studies/copilot-test-generation]] |
-| 🏗️ Claude 架构设计 | 系统设计与评审 | **3.3x** | [[case-studies/claude-architecture-design]] |
-| 🤖 多 Agent 自动化 | 团队协作自动化 | **9.3x** | [[case-studies/multi-agent-automation]] |
-| 🛠️ AI 任务优先级 | 从 0 到 1 CLI 工具 | **8x** | [[case-studies/ai-task-prioritizer]] |
-| 🔄 AI-Context-Sync | 完整产品开发 | **12x** | [[case-studies/ai-context-sync-development]] |
-| 🧬 AI-Native 主管道 | 全生命周期研发自动化 | **12x** | [[case-studies/jcode-ai-native-master-workflow-execution]] |
-| 🏛️ 治理自审计 | 用自己的药医自己 | **-85 问题** | [[case-studies/governance-self-audit]] |
+| 🔥 Cursor 大规模重构 | 12 万行代码架构迁移 | **3x** | [[docs/case-studies/cursor-refactoring]] |
+| 🧪 Copilot 测试生成 | 自动化测试补充 | **3.4x** | [[docs/case-studies/copilot-test-generation]] |
+| 🏗️ Claude 架构设计 | 系统设计与评审 | **3.3x** | [[docs/case-studies/claude-architecture-design]] |
+| 🤖 多 Agent 自动化 | 团队协作自动化 | **9.3x** | [[docs/case-studies/multi-agent-automation]] |
+| 🛠️ AI 任务优先级 | 从 0 到 1 CLI 工具 | **8x** | [[docs/case-studies/ai-task-prioritizer]] |
+| 🔄 AI-Context-Sync | 完整产品开发 | **12x** | [[docs/case-studies/ai-context-sync-development]] |
+| 🧬 AI-Native 主管道 | 全生命周期研发自动化 | **12x** | [[docs/case-studies/jcode-ai-native-master-workflow-execution]] |
+| 🏛️ 治理自审计 | 用自己的药医自己 | **-85 问题** | [[docs/case-studies/governance-self-audit]] |
 
-**现状**: 48 个真实案例，覆盖不同规模和场景。目标是 35+，已超额完成。
+**现状**: 47 个真实案例（另含 1 个社区贡献模板），覆盖不同规模和场景。目标是 35+，已超额完成。
 
 ---
 
@@ -152,12 +165,12 @@ python ai-dev-framework/core/jcode_init.py your-project --language python
 
 | 指标 | 数量 |
 |------|------|
-| 📄 核心文档 | 319 篇 |
-| 📚 实践案例 | 48 个 |
+| 📄 核心文档 | 371 篇 |
+| 📚 实践案例 | 47 个 |
 | 🛠️ 代码示例 | 10 个 |
-| 📋 架构决策 | 59 条 |
-| 🧪 测试用例 | 4037 个 |
-| ✅ 测试覆盖率 | 69% |
+| 📋 架构决策 | 63 条 |
+| 🧪 测试用例 | 4391 个 |
+| ✅ 测试覆盖率 | 88% |
 
 ### 🔌 自检：门禁是否还活着
 
@@ -198,13 +211,13 @@ GITHUB_TOKEN=<your_token> make ci-alert
 
 ```
 ai_developer_growth/
-├── docs/                    # 319 篇文档
+├── docs/                    # 371 篇文档
 │   ├── mindset/            # 认知升级
 │   ├── learning/           # 学习方法
 │   ├── efficiency/         # 工程效率
 │   ├── tools/              # 工具选型
 │   └── adr/                # 架构决策
-├── case-studies/            # 48 个实践案例
+│   └── case-studies/        # 47 个实践案例（位于 docs/ 下以供 MkDocs 构建）
 ├── examples/                # 10 个代码示例
 ├── ai-dev-framework/        # 通用治理框架
 │   └── standards/          # 通用治理标准
@@ -216,7 +229,7 @@ ai_developer_growth/
 │   ├── rules_engine/       # 规则引擎 (26 语言)
 │   └── rule_catalog.py     # 规则包管理
 ├── agents/                  # Agent 定义
-├── tests/                   # 4020 个测试
+├── tests/                   # 4391 个测试
 ```
 
 ---

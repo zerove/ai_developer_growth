@@ -1,3 +1,5 @@
+import contextlib
+import io
 import subprocess
 import sys
 import tempfile
@@ -756,8 +758,10 @@ Legacy format.
         from tools.scripts.validate_case_study import print_results
 
         results = []
-        # Should print "All checks passed"
-        print_results(results, "test")
+        buf = io.StringIO()
+        with contextlib.redirect_stdout(buf):
+            print_results(results, "test")
+        assert "All checks passed" in buf.getvalue()
 
 
 if __name__ == "__main__":

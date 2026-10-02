@@ -15,6 +15,7 @@ from strategies.base import StrategyRegistry, get_registry
 def run_tests(
     test_dir: str = "tests",
     runner: str = "unittest",
+    timeout: int = 300,
 ) -> tuple[int, str, str]:
     """Execute the test suite and return ``(returncode, stdout, stderr)``."""
     if runner == "pytest":
@@ -22,13 +23,16 @@ def run_tests(
     else:
         cmd = [sys.executable, "-m", "unittest", "discover", test_dir]
 
-    result = subprocess.run(
-        cmd,
-        capture_output=True,
-        text=True,
-        timeout=30,
-        check=False,
-    )
+    try:
+        result = subprocess.run(
+            cmd,
+            capture_output=True,
+            text=True,
+            timeout=timeout,
+            check=False,
+        )
+    except subprocess.TimeoutExpired:
+        return 1, "", f"测试运行超时 (>{timeout}s)"
     return result.returncode, result.stdout, result.stderr
 
 
@@ -126,15 +130,22 @@ class CorrectionLoop:
             runner=self._runner,
         )
 
-    def _apply_fix(self, target_file: Path, fixed_code: str) -> tuple[bool, str]:
+    def _apply_fix(
+        self, target_file: Path, fixed_code: str, original_code: str
+    ) -> tuple[bool, str]:
         """Write *fixed_code* to *target_file* and re-run tests.
 
-        Returns ``(passed, combined_output)``.
+        Returns ``(passed, combined_output)``. The original content is
+        restored when the fix does not verify, so a failed attempt never
+        leaves a corrupted file behind.
         Raises :class:`FixError` if the file cannot be written.
         """
         _write_code(target_file, fixed_code)
         return_code, stdout, stderr = run_tests(self._test_dir, self._runner)
-        return return_code == 0, f"{stdout}\n{stderr}".strip()
+        if return_code == 0:
+            return True, f"{stdout}\n{stderr}".strip()
+        _write_code(target_file, original_code)
+        return False, f"{stdout}\n{stderr}".strip()
 
     def _attempt(self, attempt: int) -> CorrectionResult:
         t0 = time.monotonic()
@@ -161,7 +172,7 @@ class CorrectionLoop:
                 duration_s=time.monotonic() - t0,
             )
         try:
-            passed, verify_output = self._apply_fix(self._target_file, fixed_code)
+            passed, verify_output = self._apply_fix(self._target_file, fixed_code, original_code)
         except FixError as exc:
             return failure_result(
                 attempt=attempt,

@@ -108,7 +108,7 @@
 
 - [[MOC|返回知识地图]]
 - [[docs/efficiency/full-cycle-workflow|全周期工作流方法论]]
-- [[case-studies/ai-task-prioritizer|本案例完整记录]]
+- [[docs/case-studies/ai-task-prioritizer|本案例完整记录]]
 
 ---
 

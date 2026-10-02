@@ -15,8 +15,11 @@ requires-python = ">=3.10"
 dependencies = [
     "requests>=2.31.0",
     "unidiff>=0.7.0",
-    "typer[all]>=0.9.0",
-    "mcp>=1.0.0",
+    # typer 自 0.13 起不再提供 `all` extra，装它会告警并在后续版本报错。
+    "typer>=0.9.0",
+    # 必须 <2：mcp 2.x 移除了 mcp.server.fastmcp（改名 MCPServer），
+    # src/mcp_server.py 依赖旧路径。无上界会让每次新装都拿到破坏性版本。
+    "mcp>=1.0.0,<2.0.0",
     "fastmcp>=1.0.0",
     "watchdog>=4.0.0",
     "jinja2>=3.1.0",

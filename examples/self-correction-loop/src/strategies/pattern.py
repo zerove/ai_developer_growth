@@ -73,7 +73,7 @@ _BUILTIN_PATTERNS: list[Pattern] = [
         name="zero-division-guard",
         error_regex=r"ZeroDivisionError",
         code_pattern=r"(def\s+\w+\([^)]*\):)\s*\n(\s+)(.+)",
-        code_replacement=r"\1\n\2if True:  # guard\n\3",
+        code_replacement=r"\1\n\2if True:  # guard\n\2    \3",
         description="Insert a division-by-zero guard (skeleton – LLM refines)",
     ),
 ]

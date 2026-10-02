@@ -96,6 +96,7 @@ class TestContextStreamer:
 
         import tools.scripts.context_streamer as cs
 
+        called = []
         for name in dir(cs):
             if name.startswith("_"):
                 continue
@@ -108,11 +109,14 @@ class TestContextStreamer:
                     if p.default is inspect.Parameter.empty and p.kind in (p.POSITIONAL_ONLY, p.POSITIONAL_OR_KEYWORD)
                 ]
                 if not required:
+                    called.append(name)
                     try:
                         obj()
                     except Exception:  # noqa: BLE001 - 冒烟允许失败
                         pass
-                    break
+        # 原先循环体内有 break，只尝试第一个函数就退出；且吞掉异常后无任何断言。
+        assert called, "未找到可直接冒烟调用的公开函数"
+        assert len(set(called)) == len(called)
 
 
 class TestJcodeCli:

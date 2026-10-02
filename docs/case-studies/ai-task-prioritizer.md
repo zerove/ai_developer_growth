@@ -202,7 +202,7 @@ PRD 和设计文档成为代码的一部分，而不是束之高阁的文档。�
 
 **📂 导航**
 - [[../MOC|⬅️ 返回知识地图]]
-- **相关案例**: [[case-studies/ai-context-sync-development|AI-Context-Sync 开发]]
+- **相关案例**: [[docs/case-studies/ai-context-sync-development|AI-Context-Sync 开发]]
 - **相关文章**: [[../efficiency/full-cycle-workflow|全周期工作流]] | [[../learning/prompt-engineering|Prompt 工程]]
 
 ---

@@ -65,6 +65,7 @@
         "skill": "knowledge-curator",
         "action": "validate",
         "description": "PR 时验证案例格式",
+        "command": "python tools/scripts/validate_case_study.py --all --strict",
         "condition": "files_contain('case-studies/')",
         "enabled": true
       },
@@ -102,14 +103,6 @@
         "enabled": true
       },
       {
-        "name": "self-correction-loop",
-        "skill": "self-correction-loop",
-        "action": "validate",
-        "description": "PR 时对失败测试尝试自动修正",
-        "condition": "files_contain('tests/') && test_failed",
-        "enabled": true
-      },
-      {
         "name": "context-audit",
         "skill": "context-sync",
         "action": "audit",
@@ -120,8 +113,9 @@
       {
         "name": "multi-agent-design",
         "skill": "multi-agent-orch",
-        "action": "run",
+        "action": "fanout",
         "description": "PR 时对设计类需求运行多 Agent 编排",
+        "command": "python .jcode/scripts/multi-agent-orch.py fanout \"评审当前分支的设计变更\"",
         "condition": "files_contain('design/') || files_contain('spec/') || pr_label('design')",
         "enabled": true
       },
@@ -130,7 +124,7 @@
         "skill": "self-correction-loop",
         "action": "validate",
         "description": "PR 时验证测试状态，失败给修正建议",
-        "command": "python .jcode/scripts/self-correction-loop.py validate --target . --tests tests",
+        "command": "python .jcode/scripts/self-correction-loop.py validate --target . --tests tests --runner pytest --timeout 900",
         "enabled": true
       },
       {

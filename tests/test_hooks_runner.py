@@ -224,11 +224,12 @@ class TestRunGovernanceAudit(unittest.TestCase):
         # This tests the ImportError path
         mock_path.return_value.resolve.return_value.parent.parent.parent = Path("/nonexistent")
         # The function will raise ImportError due to missing module
-        # We just verify it doesn't crash silently
         try:
-            run_governance_audit(validate_docs=True)
+            ok, output = run_governance_audit(validate_docs=True)
         except (ImportError, FileNotFoundError):
-            pass  # Expected when governance-auditor.py doesn't exist at expected path
+            return  # 显式抛出也是可接受的失败路径
+        # 若它吞掉了异常，则绝不能把"加载失败"报告成通过
+        assert ok is False, f"加载失败时不得报告通过: {output}"
 
 
 class TestMainCLI(unittest.TestCase):

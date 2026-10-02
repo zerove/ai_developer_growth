@@ -21,15 +21,21 @@ def _ts(minute: int, hour: int) -> struct_time:
 
 class TestParseCron:
     def test_wildcard(self) -> None:
-        minutes, hours = sd.parse_cron("* * * * *")
+        minutes, hours, days, months, weekdays = sd.parse_cron("* * * * *")
         assert len(minutes) == 60 and len(hours) == 24
+        assert len(days) == 31 and len(months) == 12
+        # 星期 0 与 7 均表示周日，归一后应为 7 个取值
+        assert weekdays == set(range(7))
 
     def test_fixed(self) -> None:
-        minutes, hours = sd.parse_cron("0 9 * * 1")
+        minutes, hours, _days, _months, weekdays = sd.parse_cron("0 9 * * 1")
         assert minutes == {0} and hours == {9}
+        # 早前 parse_cron 只返回 2 个字段，日/月/周被 split 后从未求值，
+        # 导致本文件的 "0 9 * * 1"（每周一）实际每天触发。
+        assert weekdays == {1}, "cron 中 1 表示周一"
 
     def test_range_and_list(self) -> None:
-        minutes, hours = sd.parse_cron("0,30 9-11 * * *")
+        minutes, hours, *_ = sd.parse_cron("0,30 9-11 * * *")
         assert minutes == {0, 30} and hours == {9, 10, 11}
 
     def test_bad_expr_raises(self) -> None:

@@ -156,3 +156,41 @@ class TestCorrectionLoop:
         result = loop.run()
         assert result.is_success
         assert result.strategy == "first"
+
+
+class TestFailedFixRollback:
+    """A fix that does not verify must not be left in the target file."""
+
+    def _loop(self, tmp_path: Path, fixed: str) -> tuple[CorrectionLoop, Path]:
+        class _WritesGarbage(Strategy):
+            @property
+            def name(self) -> str:
+                return "garbage"
+
+            def fix(self, code: str, error_output: str, file_path: str | None = None) -> str:
+                return fixed
+
+        target = tmp_path / "code.py"
+        target.write_text("x = 1\n")
+        (tmp_path / "tests").mkdir()
+        loop = CorrectionLoop(
+            target_file=target,
+            test_dir=str(tmp_path / "tests"),
+            max_attempts=1,
+            registry=StrategyRegistry([_WritesGarbage()]),
+        )
+        return loop, target
+
+    @patch.object(_runner_mod, "run_tests", return_value=(1, "FAIL", ""))
+    def test_original_restored_when_fix_fails(self, _mock: MagicMock, tmp_path: Path) -> None:
+        loop, target = self._loop(tmp_path, "this is not python <<<\n")
+        result = loop.run()
+        assert not result.is_success
+        assert target.read_text() == "x = 1\n", "target left corrupted after failed fix"
+
+    @patch.object(_runner_mod, "run_tests", side_effect=[(1, "FAIL", ""), (0, "OK", "")])
+    def test_fix_kept_when_it_verifies(self, _mock: MagicMock, tmp_path: Path) -> None:
+        loop, target = self._loop(tmp_path, "x = 2\n")
+        result = loop.run()
+        assert result.is_success
+        assert target.read_text() == "x = 2\n"

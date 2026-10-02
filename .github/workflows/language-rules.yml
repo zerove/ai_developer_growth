@@ -114,13 +114,14 @@ jobs:
       - name: Install dependencies
         run: pip install -e . pyyaml
 
+      # 实测 0 error / 1529 warning 时 exit 0；原先 || true + continue-on-error
+      # 双重吞掉结果，等于没有门禁。warning 不影响退出码，只有 error 才会失败。
       - name: Run full validation
         id: validate
-        continue-on-error: true
         run: |
           python -m tools.scripts.validate_language_rules tools/scripts \
             --auto-detect --format json -o results.json \
-            --health-score > validate-output.txt 2>&1 || true
+            --health-score > validate-output.txt 2>&1
           python -m tools.scripts.validate_language_rules tools/scripts \
             --auto-detect --format sarif -o results.sarif \
             >/dev/null 2>&1 || true

@@ -12,6 +12,24 @@ from pathlib import Path
 from typing import Any
 
 
+def _unavailable(linter: str, dirpath: Path, reason: str) -> list[dict[str, Any]]:
+    """把「没能拿到可信结果」变成一条显式 error。
+
+    静默返回空列表会让超时/崩溃/输出损坏与「代码干净」无法区分，
+    门禁因此在工具故障时 fail-open。
+    """
+    return [
+        {
+            "linter": linter,
+            "rule_id": f"{linter}-unavailable",
+            "severity": "error",
+            "file": str(dirpath),
+            "line": 0,
+            "message": f"{linter} 未产出可信结果（{reason}），门禁按失败处理",
+        }
+    ]
+
+
 def run_linter_aggregation(
     dirpath: Path,
     linters: list[str] | None = None,
@@ -63,8 +81,12 @@ def _run_ruff(dirpath: Path) -> list[dict[str, Any]]:
                         "message": item.get("message", ""),
                     }
                 )
-    except (subprocess.TimeoutExpired, FileNotFoundError, json.JSONDecodeError):
-        pass
+    except subprocess.TimeoutExpired:
+        return _unavailable("ruff", dirpath, "超时")
+    except FileNotFoundError:
+        return _unavailable("ruff", dirpath, "未安装")
+    except json.JSONDecodeError:
+        return _unavailable("ruff", dirpath, "输出无法解析")
     return issues
 
 
@@ -102,8 +124,10 @@ def _run_mypy(dirpath: Path) -> list[dict[str, Any]]:
                             "message": msg,
                         }
                     )
-    except (subprocess.TimeoutExpired, FileNotFoundError):
-        pass
+    except subprocess.TimeoutExpired:
+        return _unavailable("mypy", dirpath, "超时")
+    except FileNotFoundError:
+        return _unavailable("mypy", dirpath, "未安装")
     return issues
 
 
@@ -131,8 +155,12 @@ def _run_eslint(dirpath: Path) -> list[dict[str, Any]]:
                             "message": msg.get("message", ""),
                         }
                     )
-    except (subprocess.TimeoutExpired, FileNotFoundError, json.JSONDecodeError):
-        pass
+    except subprocess.TimeoutExpired:
+        return _unavailable("eslint", dirpath, "超时")
+    except FileNotFoundError:
+        return _unavailable("eslint", dirpath, "未安装")
+    except json.JSONDecodeError:
+        return _unavailable("eslint", dirpath, "输出无法解析")
     return issues
 
 
@@ -159,6 +187,10 @@ def _run_golangci(dirpath: Path) -> list[dict[str, Any]]:
                         "message": issue.get("Text", ""),
                     }
                 )
-    except (subprocess.TimeoutExpired, FileNotFoundError, json.JSONDecodeError):
-        pass
+    except subprocess.TimeoutExpired:
+        return _unavailable("golangci-lint", dirpath, "超时")
+    except FileNotFoundError:
+        return _unavailable("golangci-lint", dirpath, "未安装")
+    except json.JSONDecodeError:
+        return _unavailable("golangci-lint", dirpath, "输出无法解析")
     return issues

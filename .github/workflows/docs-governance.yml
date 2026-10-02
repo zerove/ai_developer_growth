@@ -1,0 +1,64 @@
+name: Docs Governance
+
+# ci.yml 用 paths-ignore 排除了 docs/** 与 *.md，导致文档/案例/索引改动
+# 不触发任何门禁——本项目恰恰是靠文档传递方法论，漂移却是隐形的。
+#
+# 这里为文档改动单独开一条轻量流水线：只跑文档相关门禁，不烧 ci.yml 那 22 个
+# job 的配额（私有仓库 Actions 配额曾耗尽 23 天，见 ADR-057）。
+# 不使用 scheduled（同样会与被监测对象一起死亡），而是随 push/PR 触发。
+
+on:
+  push:
+    branches: [main, master, develop]
+    paths:
+      - '**/*.md'
+      - 'mkdocs.yml'
+      - 'templates/**'
+  pull_request:
+    branches: [main, master, develop]
+    paths:
+      - '**/*.md'
+      - 'mkdocs.yml'
+      - 'templates/**'
+
+concurrency:
+  group: docs-governance-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  docs-structure:
+    name: Docs Structure & MkDocs Build
+    uses: ./.github/workflows/jobs/docs.yml
+
+  docs-governance:
+    name: Docs Governance Gates
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: pip
+          cache-dependency-path: pyproject.toml
+
+      - name: Install dependencies
+        run: pip install -e .
+
+      # 以下门禁一律不得加 `|| true`：那正是 scheduled-governance 的失效模式
+      # ——失败被吞掉，作业显示绿色，问题永远不暴露。
+
+      - name: Governance docs format
+        run: python .jcode/scripts/governance-docs-validator.py validate
+
+      - name: Governance docs index references
+        run: python .jcode/scripts/governance-docs-validator.py check-index
+
+      - name: Broken links
+        run: python tools/scripts/link_auditor.py . --check-all
+
+      - name: Case study format
+        run: python tools/scripts/validate_case_study.py --all --strict
+
+      - name: Tool matrix consistency
+        run: python -m tools.scripts.update_ai_tool_matrix --check

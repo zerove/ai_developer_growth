@@ -389,8 +389,8 @@ def load_rules_for_language(language: str, framework_dir: Path | None = None) ->
     """Load rules for a language, merging with common security rules.
 
     Common rules come from common/security.yml (loaded by load_rules()).
-    This function no longer calls security_patterns.py separately —
-    all cross-language rules are consolidated in common/security.yml.
+    All cross-language rules are consolidated there; this module is the
+    single loader for them.
     """
     return load_rules(language, framework_dir)
 

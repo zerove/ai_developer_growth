@@ -187,7 +187,7 @@ jcode:  ## 统一顶层入口(转发到 jcode_cli)
 	@python -m tools.scripts.jcode_cli
 
 list-tools:  ## 列出所有可用的工具脚本与 CLI 子命令
-	@python -m tools.scripts.jcode_cli list-tools 2>/dev/null || python tools/scripts/_list_tools.py
+	@python -m tools.scripts.jcode_cli list-tools
 
 discover:  ## 同 list-tools, 别名
 	@$(MAKE) list-tools
@@ -205,7 +205,7 @@ release-version:  ## 一键发版: lint→test→cov→升版→CHANGELOG→tag�
 	@$(MAKE) Makefile.release version-bump VERSION=$(VERSION) 2>/dev/null || (sed -i "s/^version = \".*\"/version = \"$(VERSION)\"/" pyproject.toml && uv lock >/dev/null 2>&1)
 	@echo "✓ version bumped to $(VERSION)"
 	@git add pyproject.toml uv.lock 2>/dev/null || true
-	@git commit -m "chore(release): v$(VERSION)" --no-verify
+	@git commit -m "chore(release): v$(VERSION)"
 	@git tag -a v$(VERSION) -m "v$(VERSION)"
 	@git push origin master --tags
 	@git ls-remote origin refs/tags/v$(VERSION) | head -1

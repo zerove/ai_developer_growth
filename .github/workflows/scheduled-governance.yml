@@ -46,10 +46,12 @@ jobs:
         run: python .jcode/scripts/governance-auditor.py ai-quality-gate
 
       - name: Run link audit
-        run: python tools/scripts/link_auditor.py --check . || true
+        # --check 不是 link_auditor 的合法参数（合法的是 --check-all /
+        # --fail-on-broken），此前拼错后又被 || true 吞掉，等于静默失效。
+        run: python tools/scripts/link_auditor.py . --check-all
 
       - name: Run case validation
-        run: python tools/scripts/validate_case_study.py --all || true
+        run: python tools/scripts/validate_case_study.py --all
 
   weekly-scan:
     name: Weekly Knowledge Scan
@@ -61,9 +63,9 @@ jobs:
         with:
           python-version: ${{ env.PYTHON_VERSION }}
       - name: Scan case studies
-        run: python tools/scripts/validate_case_study.py --all || true
+        run: python tools/scripts/validate_case_study.py --all
       - name: Update tool matrix
-        run: python tools/scripts/update_ai_tool_matrix.py --check || true
+        run: python -m tools.scripts.update_ai_tool_matrix --check
 
   monthly-report:
     name: Monthly Efficiency Report
@@ -74,12 +76,17 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: ${{ env.PYTHON_VERSION }}
+      # 以下步骤是"尽力而为"的报告/采集类任务：失败不应让整条流水线变红，
+      # 但必须让失败可见 —— 用 continue-on-error 而非 `|| true`，
+      # 后者会让作业显示为全绿，把问题彻底掩盖。
       - name: Generate efficiency report
-        run: python .jcode/scripts/workflow-optimizer.py report || true
+        continue-on-error: true
+        run: python .jcode/scripts/workflow-optimizer.py report
       - name: Audit hallucination risks
-        run: python .jcode/scripts/governance-auditor.py audit-hallucination-risks || true
+        run: python .jcode/scripts/governance-auditor.py audit-hallucination-risks
       - name: Run pattern learner
-        run: python -c "from tools.scripts.rules_engine.pattern_learner import run_pattern_learning; run_pattern_learning('.')" || true
+        continue-on-error: true
+        run: python -c "from tools.scripts.rules_engine.pattern_learner import run_pattern_learning; run_pattern_learning('.')"
 
   monthly-db-maintain:
     name: 'Monthly DB Maintenance & Trend Collection'
@@ -95,6 +102,8 @@ jobs:
           pip install -e ".[dev,tools]"
           pip install ruff mypy pytest pytest-cov pyyaml bandit
       - name: Prune quality_runs history (90d retention)
-        run: python tools/scripts/hooks_runner.py db-maintain --retention-days 90 || true
+        continue-on-error: true
+        run: python -m tools.scripts.hooks_runner db-maintain --retention-days 90
       - name: Collect quality gate trend snapshot
-        run: python tools/scripts/update_stats.py --json || true
+        continue-on-error: true
+        run: python -m tools.scripts.update_stats --json

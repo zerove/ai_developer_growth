@@ -48,7 +48,7 @@ jobs:
       - name: ADG check code snippets
         id: adg-check
         run: |
-          python tools/scripts/validate_case_study.py --adg-scan "${{ steps.changed.outputs.all_changed_files }}" || true
+          python tools/scripts/validate_case_study.py --adg-scan "${{ steps.changed.outputs.all_changed_files }}"
 
       - name: Generate review summary
         if: always()
@@ -63,7 +63,7 @@ jobs:
       - name: Check authenticity markers
         if: steps.validate.outputs.passed == 'true'
         run: |
-          python tools/scripts/validate_case_study.py --auth-check "${{ steps.changed.outputs.all_changed_files }}" || true
+          python tools/scripts/validate_case_study.py --auth-check "${{ steps.changed.outputs.all_changed_files }}"
 
       - name: Generate contributor stats
         if: success()

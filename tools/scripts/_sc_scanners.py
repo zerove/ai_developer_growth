@@ -221,7 +221,8 @@ class GHSASource:
         if self.github_token:
             req.add_header("Authorization", f"Bearer {self.github_token}")
         try:
-            with urllib.request.urlopen(req, timeout=30) as resp:
+            # nosec B310 - scheme/host 是字面量 https://api.github.com，插值只落在 query
+            with urllib.request.urlopen(req, timeout=30) as resp:  # nosec B310
                 advisories: list[dict[str, Any]] = json.loads(resp.read().decode())
         except Exception as e:
             logger.warning(f"GHSA fetch failed for {package}: {e}")
@@ -349,7 +350,7 @@ class SignatureVerifier:
         url = f"https://pypi.org/pypi/{name}/{version}/json"
         try:
             req = urllib.request.Request(url, headers={"Accept": "application/json"})
-            with urllib.request.urlopen(req, timeout=30) as resp:
+            with urllib.request.urlopen(req, timeout=30) as resp:  # nosec B310 - host 字面量 https://pypi.org
                 data: dict[str, Any] = json.loads(resp.read().decode())
         except Exception as e:
             return {"verified": False, "message": str(e)}

@@ -31,10 +31,11 @@ jobs:
           LANG=$(adg detect tools/scripts --json | jq -r '.language')
           echo "language=$LANG" >> $GITHUB_OUTPUT
 
+      # 已验证该命令会真实报错（对故意写坏的文件 exit 1 / 3 errors），
+      # 当前 tools/scripts 在 warning 阈值下为 0 issue，因此可以恢复为真门禁。
       - name: Run ADG Check
         id: check
         run: adg check tools/scripts --lang ${{ steps.detect.outputs.language }} --severity warning --json > adg-report.json
-        continue-on-error: true
 
       - name: Generate SARIF
         id: sarif

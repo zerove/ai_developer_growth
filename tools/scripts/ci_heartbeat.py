@@ -70,7 +70,8 @@ def _api_call(method: str, path: str, token: str, payload: dict[str, Any] | None
             **({"Content-Type": "application/json"} if data else {}),
         },
     )
-    with urllib.request.urlopen(request, timeout=HTTP_TIMEOUT) as response:
+    # nosec B310 - API_ROOT 是模块常量 https://api.github.com，path 为内部拼接
+    with urllib.request.urlopen(request, timeout=HTTP_TIMEOUT) as response:  # nosec B310
         return json.loads(response.read().decode("utf-8"))
 
 

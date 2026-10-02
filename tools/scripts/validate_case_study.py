@@ -225,7 +225,7 @@ class CaseStudyValidator:
         """Verify required tables exist."""
         for table in self.REQUIRED_TABLES:
             if table not in content:
-                self._add_warning(
+                self._add_new_submission_warning(
                     f"Missing recommended table: {table} (required for new submissions)",
                     "README.md",
                 )
@@ -267,7 +267,7 @@ class CaseStudyValidator:
     def _check_efficiency_table(self, content: str) -> None:
         """Validate efficiency comparison table."""
         if not self._has_efficiency_table(content):
-            self._add_warning(
+            self._add_new_submission_warning(
                 "Missing efficiency comparison table with required columns (required for new submissions)",
                 "README.md",
             )
@@ -372,7 +372,7 @@ class CaseStudyValidator:
         """Validate key insights quality."""
         insights_text = self._extract_insights_section(content)
         if not insights_text:
-            self._add_warning("Missing insights section (required for new submissions)", "README.md")
+            self._add_new_submission_warning("Missing insights section (required for new submissions)", "README.md")
             return
 
         numbered = self._extract_numbered_insights(insights_text)
@@ -430,7 +430,7 @@ class CaseStudyValidator:
     def _check_applicability(self, content: str) -> None:
         """Check applicability scenarios are marked."""
         if "适用场景" not in content:
-            self._add_warning("Missing 适用场景 section (required for new submissions)", "README.md")
+            self._add_new_submission_warning("Missing 适用场景 section (required for new submissions)", "README.md")
             return
 
         # Check for checkboxes
@@ -443,7 +443,7 @@ class CaseStudyValidator:
     def _check_deliverables(self, content: str) -> None:
         """Check deliverables checklist."""
         if "交付物清单" not in content:
-            self._add_warning("Missing 交付物清单 section (required for new submissions)", "README.md")
+            self._add_new_submission_warning("Missing 交付物清单 section (required for new submissions)", "README.md")
             return
 
         required_deliverables = [
@@ -461,12 +461,12 @@ class CaseStudyValidator:
                 missing.append(d)
 
         if missing:
-            self._add_warning(f"Missing deliverable checkboxes: {', '.join(missing)}", "README.md")
+            self._add_new_submission_warning(f"Missing deliverable checkboxes: {', '.join(missing)}", "README.md")
 
     def _check_submission_checklist(self, content: str) -> None:
         """Check submission checklist."""
         if "提交前检查" not in content:
-            self._add_warning("Missing 提交前检查 section", "README.md")
+            self._add_new_submission_warning("Missing 提交前检查 section", "README.md")
 
         required_checks = [
             "标题格式",
@@ -482,7 +482,7 @@ class CaseStudyValidator:
                 missing.append(c)
 
         if missing:
-            self._add_warning(f"Submission checklist incomplete: {', '.join(missing)}", "README.md")
+            self._add_new_submission_warning(f"Submission checklist incomplete: {', '.join(missing)}", "README.md")
 
     def _check_format(self, lines: list[str]) -> None:
         """Check markdown formatting."""
@@ -524,6 +524,17 @@ class CaseStudyValidator:
 
     def _add_warning(self, msg: str, file: str = "", line: int = 0) -> None:
         if self.strict:
+            self._add_error(msg, file, line)
+        else:
+            self.results.append(ValidationResult(Severity.WARNING, msg, file, line))
+
+    def _add_new_submission_warning(self, msg: str, file: str = "", line: int = 0) -> None:
+        """报告"新提交要求"类问题。
+
+        这类要求只针对新提交的案例。存量案例早于该要求出台，批量校验不应
+        因为缺少新格式而失败，因此 legacy_mode 下不因 --strict 升级为 error。
+        """
+        if self.strict and not self.legacy_mode:
             self._add_error(msg, file, line)
         else:
             self.results.append(ValidationResult(Severity.WARNING, msg, file, line))
@@ -582,10 +593,15 @@ def _discover_case_studies(base: Path) -> list[Path]:
 
 
 def _validate_all_cases(case_items: list[Path], strict: bool) -> bool:
-    """Validate all case studies. Returns True if all passed."""
+    """Validate all case studies. Returns True if all passed.
+
+    legacy_mode=True: "新提交要求"类问题（效率对比表、交付物清单、提交前检查）
+    不因 --strict 升级为 error。存量案例早于该要求出台，批量扫描不应因缺少
+    新格式而失败；提交前校验请用 --path <案例> --strict。
+    """
     all_passed = True
     for case_item in case_items:
-        validator = CaseStudyValidator(strict=strict)
+        validator = CaseStudyValidator(strict=strict, legacy_mode=True)
         results = validator.validate(case_item)
         print_results(results, case_item.name)
 
@@ -699,23 +715,26 @@ def _auth_check(changed_files_str: str) -> int:
 def main() -> int:
     parser = argparse.ArgumentParser(description="Validate case study submissions")
     parser.add_argument("--path", type=str, help="Path to single case study directory")
-    parser.add_argument("--all", action="store_true", help="Validate all cases in case-studies/")
+    parser.add_argument("--all", action="store_true", help="Validate all cases in docs/case-studies/")
     parser.add_argument("--strict", action="store_true", help="Treat warnings as errors")
     parser.add_argument("--json", action="store_true", help="Output JSON format")
     parser.add_argument("--adg-scan", type=str, help="Scan code snippets in changed files")
     parser.add_argument("--auth-check", type=str, help="Check authenticity markers in changed files")
     args = parser.parse_args()
 
-    base = Path("case-studies")
+    base = Path("docs/case-studies")
 
     if args.adg_scan:
         return _adg_scan(args.adg_scan)
     elif args.auth_check:
         return _auth_check(args.auth_check)
     elif args.all:
+        if not base.is_dir():
+            print(f"No case studies directory found at {base}/")
+            return 1
         case_items = _discover_case_studies(base)
         if not case_items:
-            print("No case studies found in case-studies/")
+            print(f"No case studies found in {base}/")
             return 1
 
         all_passed = _validate_all_cases(case_items, args.strict)

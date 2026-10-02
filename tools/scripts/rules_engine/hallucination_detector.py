@@ -251,7 +251,6 @@ _IGNORE_FILES = {
     "auto_fix.py",
     "hallucination_detector.py",
     "anti_pattern_checker.py",
-    "security_patterns.py",
 }
 
 _IGNORE_DIRS = {"rules.d", "anti_patterns", ".git", "__pycache__", "node_modules"}

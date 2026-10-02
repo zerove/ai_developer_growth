@@ -15,8 +15,11 @@ jobs:
     - name: Upgrade setuptools
       run: pip install -U "setuptools>=83.0.0"
     - run: pip install bandit pip-audit
+    # -ll = 只在 medium 及以上severity 时失败。当前仓库有 171 条 low
+    # （多为 assert / subprocess 之类信息项），默认阈值会让门禁永远红；
+    # 真正的信号是 medium/high。原先 `|| true` 把结果整个丢掉，等于没有门禁。
     - name: Bandit scan
-      run: bandit -r tools/scripts/ -f json -o bandit-report.json || true
+      run: bandit -r tools/scripts/ -ll -f json -o bandit-report.json
     - name: Pip-audit
       run: pip-audit --desc
     - name: Upload bandit

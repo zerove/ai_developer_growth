@@ -21,9 +21,8 @@ jobs:
         python-version: '3.11'
         cache: pip
         cache-dependency-path: pyproject.toml
-    - run: pip install -e examples/${{ matrix.example }} pytest
+    - run: pip install -e "examples/${{ matrix.example }}[dev]" pytest
     - name: Run tests
-      continue-on-error: true
       run: cd examples/${{ matrix.example }} && python -m pytest tests/ -v --tb=short
     - name: Summary
       if: always()

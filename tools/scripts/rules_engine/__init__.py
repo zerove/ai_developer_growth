@@ -31,7 +31,6 @@ Architecture:
     - anti_pattern_checker.py: Regex-based anti-pattern detection
     - naming_checker.py: Naming convention validation
     - complexity_checker.py: AST-based complexity metrics (Python) + regex (JS/TS)
-    - security_patterns.py: Cross-language security/type/error patterns
     - checker.py: Main orchestrator with external linter integration
 """
 

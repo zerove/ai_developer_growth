@@ -150,9 +150,14 @@ repos:
     hooks:
       - id: jcode-on-commit
         name: JCode on_commit Hooks
-        entry: python .jcode/scripts/hooks_runner.py on_commit
+        # 必须传 filenames：hooks_runner 依赖 --files 判断 condition，
+        # 此前 pass_filenames: false 导致 changed_files=None，
+        # governance-docs-check / rules-yml-integrity-check /
+        # hooks-json-integrity-check 三个条件型 hook 每次提交都被静默跳过
+        # （其中 hooks-json-integrity-check 校验的就是 hooks.json 自身）。
+        entry: python .jcode/scripts/hooks_runner.py on_commit --files
         language: system
-        pass_filenames: false
+        pass_filenames: true
         always_run: true
 
 ci:

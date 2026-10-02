@@ -19,7 +19,7 @@ class ContributorDashboard:
 
     def analyze_case_studies(self) -> dict[str, Any]:
         """分析案例研究统计"""
-        cases_dir = self.repo_root / "case-studies"
+        cases_dir = self.repo_root / "docs" / "case-studies"
         if not cases_dir.exists():
             return {
                 "total": 0,

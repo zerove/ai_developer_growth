@@ -637,7 +637,8 @@ class QualityGateEngine:
         coverage_xml = Path("coverage.xml")
         if coverage_xml.exists():
             try:
-                root = ET.parse(coverage_xml).getroot()
+                # nosec B314 - coverage.xml 由本仓 coverage 工具本地生成，非外部输入
+                root = ET.parse(coverage_xml).getroot()  # nosec B314
                 line_rate = float(root.attrib.get("line-rate", ""))
                 return line_rate * 100.0
             except (ValueError, ET.ParseError, OSError):

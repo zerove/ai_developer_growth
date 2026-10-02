@@ -63,6 +63,53 @@ AI 时代开发者成长知识库 + 治理框架（knowledge base + governance f
 
 ---
 
+## 更新记录: 2026-10-03 01:49:27
+
+### 任务
+Git 变更同步
+
+### 变更摘要
+- 变更文件 5 个 (+1513 / -283 行)
+  - CHANGELOG.md
+  - CONTEXT.md
+  - ROADMAP.md
+  - pyproject.toml
+  - uv.lock
+
+## 更新记录: 2026-10-03 01:38:59
+
+### 任务
+Git 变更同步
+
+### 变更摘要
+- 变更文件 5 个 (+1495 / -264 行)
+  - CHANGELOG.md
+  - CONTEXT.md
+  - ROADMAP.md
+  - pyproject.toml
+  - uv.lock
+
+## 更新记录: 2026-10-03 01:25:30
+
+### 任务
+Git 变更同步
+
+### 变更摘要
+- 变更文件 3 个 (+1454 / -240 行)
+  - CONTEXT.md
+  - pyproject.toml
+  - uv.lock
+
+## 更新记录: 2026-10-03 01:14:16
+
+### 任务
+Git 变更同步
+
+### 变更摘要
+- 变更文件 2 个 (+354 / -220 行)
+  - CONTEXT.md
+  - uv.lock
+
 ## 更新记录: 2026-10-03 01:07:27
 
 ### 任务
@@ -897,94 +944,6 @@ Phase 33a-1 (semantic_checker 纯函数) + Phase 34 (_discover_languages 抽取)
 - master HEAD: `bdd3b83` (前置)
 - 工作区: 待提交
 - 累计: 40 ADR / 17 降级规则 / 3715 tests
-
----
-
-## 更新记录: 2026-09-03 19:08:00
-
-### 任务
-全面扫描项目可优化内容 (非"找 bug", 而"找优化点")
-
-### 变更摘要
-- **ADR-038 全面扫描报告**:
- - 4 个大文件 (>1k 行, 拆分候选): language_registry 1898 / supply_chain 1190 / ast_parser 1148
- - 7 个高 cc 函数 (≥10, 重构候选)
- - **72 组重复私有函数** (同名跨文件, 最高 ROI)
- - 8 个 TODO/FIXME 文件
- - 5680 info adg 误报
-- 4 个后续 Phase 规划 (Phase 34-38, 估时 5-9 天)
-- Phase 34 优先 (重复函数抽取)
-
-### 当前状态
-- master HEAD: `171b75c` (前置)
-- 工作区: clean
-- 累计: 38 ADR / 17 降级规则 / 3771 tests
-
----
-
-## 更新记录: 2026-09-03 15:11:00
-
-### 任务
-B 深度二次分析 + setup.cfg 配置冲突修复
-
-### 变更摘要
-- **真实发现 (ADR-037)**: setup.cfg 与 pyproject.toml mutmut 配置冲突
-  - `source_paths` (mutmut 1.x) vs `paths_to_mutate` (mutmut 2.x)
-  - setup.cfg runner 引用 2 个不存在的测试文件
-- 删除 setup.cfg, 单一 pyproject.toml 配置源
-- 实测 mutmut run 跑通 (demo)
-- 无 .bak 残留
-
-### 当前状态
-- master HEAD: `0715d29` (前置)
-- 工作区: clean
-- 累计: 37 ADR / 17 降级规则 / 3771 tests
-
----
-
-## 更新记录: 2026-09-03 10:40:00
-
-### 任务
-全面状态分析 + 文档同步 (CHANGELOG / pyproject / ROADMAP)
-
-### 变更摘要
-- **CHANGELOG v2.23.5**: Phase 32 完整收口节点 (5 子任务 + ADR-031~035)
-- **pyproject version**: 2.23.4 → **2.23.5** (与 CHANGELOG 对齐)
-- **ROADMAP**: Phase 32 标 ✅ 完成 (regex_cache 100% + rule_loader 81.28%)
-- **CONTEXT**: 63 → 50 条 (第七次主动收敛)
-- 剩余: semantic_checker / semantic_rules (标 Phase 33 下次会话)
-
-### 当前状态
-- master HEAD: `c06ae70` (前置)
-- 工作区: clean (除待提交)
-- 累计: 35 ADR / 17 降级规则 / 3771 tests / 86.67% 覆盖率
-- **Phase 32 完整收口** ✅
-
----
-
-## 更新记录: 2026-09-03 08:43:00
-
-### 任务
-处理所有已规划但未实施的任务 (Phase 33 refactor + pytest.ini 简化 + Phase 32 子任务 2e)
-
-### 变更摘要
-- **Phase 33 refactor** (ADR-034): `_merge_anti_patterns(base, [])` 返回 `list(base)` 副本 (不共享引用)
-- **pytest.ini 简化**: 删除 pyproject.toml 重复 pytest 配置,消除 WARNING
-- **Phase 32 子任务 2e 公开 API 覆盖** (ADR-035):
- - `load_rules` 6 测试 (cache hit/miss/disk cache/generated/etc)
- - `load_custom_rules` 3 测试 (3 源合并)
- - `load_rules_for_language` 2 测试 (别名)
- - `load_domain_rules` 3 测试 (config + 加载 + 兜底)
- - `_load_generated_rules` + `_load_common_rules` + `_load_universal_rules` 内部 helper
-- **覆盖率突破**: rule_loader.py 51% → **81.28%** (跨过 80% 门禁)
-- 测试套件: 3748 → **3771** (+23)
-- 修复 1 个真实低风险 bug (共享引用)
-
-### 当前状态
-- master HEAD: `a5145a4` (前置)
-- 工作区: clean (除待提交)
-- 累计: 35 ADR / 17 降级规则 / 3771 tests / **rule_loader.py 81.28%** / 总 86.67%
-- **Phase 32 完整收口** (5/5 子任务全部完成) ✅
 
 ---
 

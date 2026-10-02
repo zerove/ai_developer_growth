@@ -188,6 +188,9 @@ class TestRunTests:
         assert "pytest" in args
         assert "tests/" in args
         assert "--cov=tools/scripts" in args
+        # hook 入口脚本目录必须与 tools/ 一同纳入覆盖率门禁。
+        # 该目录曾完全在门禁之外，劣化不会触发任何报警。
+        assert "--cov=.jcode/scripts" in args
         assert "--tb=short" in args
 
 

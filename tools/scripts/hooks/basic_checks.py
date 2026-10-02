@@ -232,6 +232,7 @@ def run_tests() -> tuple[bool, str]:
         "tests/",
         "-v",
         "--cov=tools/scripts",
+        "--cov=.jcode/scripts",
         "--cov-report=term-missing",
         "--tb=short",
         "-p",

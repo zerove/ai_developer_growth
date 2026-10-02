@@ -15,7 +15,7 @@ dependencies = ["pyyaml>=6.0", "loguru>=0.7"]
 adg = "tools.scripts.adg_cli:main"
 # 注意：不要命名为 jcode —— 会遮蔽 Rust 版 jcode TUI（~/.local/bin/jcode）
 jcode-cli = "tools.scripts.jcode_cli:main"
-validate-language-rules = "tools.scripts.validators.cli:main"
+validate-language-rules = "tools.scripts.rules_engine.validators.cli:main"
 
 [project.optional-dependencies]
 search = [
@@ -59,6 +59,10 @@ omit = ["*/tests/*", "*/__pycache__/*", "*/lsp_server.py"]
 branch = true
 
 [tool.coverage.report]
+# 与 [tool.adg] cov_min 保持一致（hooks/basic_checks.py 会用 --cov-fail-under
+# 覆盖本值，因此真正生效的是 cov_min）。实测 --cov=tools/scripts --cov=.jcode/scripts
+# 约 87%（.jcode/scripts 为 hook 入口脚本，此前完全在门禁之外，现已纳入），
+# 阈值 80 留约 7 个百分点余量作为回归下限。
 fail_under = 80
 exclude_lines = [
     "pragma: no cover",
@@ -151,6 +155,10 @@ cache_dir = ".cache/adg"
 test_workers = "auto"  # pytest-xdist 并行数: "auto"/整数; 0 = 禁用并行
 test_reruns = 2        # flaky 重试次数 (pytest-rerunfailures); 0 = 禁用
 timeouts = { lint = 300, format = 300, typecheck = 300, security = 300, test = 900 }  # 按类别超时秒数; test 放宽因全量并行耗时更长
+
+# 覆盖率门禁（真正生效的值：basic_checks.run_tests 会把它作为 --cov-fail-under
+# 传给 pytest-cov，从而覆盖 [tool.coverage.report] 的 fail_under）
+cov_min = 80
 
 # CI/CD integration
 ci_mode = false  # Auto-detected in CI environments

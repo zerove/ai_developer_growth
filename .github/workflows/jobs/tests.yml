@@ -42,9 +42,9 @@ jobs:
           '
     - name: Run tests with coverage
       run: "if [ -n \"${{ inputs.shard }}\" ]; then\n  pip install pytest-split\n\
-        \  pytest tests/ -v -n auto --cov=tools --cov-report=xml --cov-report=term-missing\
+        \  pytest tests/ -v -n auto --cov=tools --cov=.jcode/scripts --cov-report=xml --cov-report=term-missing\
         \ --tb=short --split=${{ inputs.shard }}/4 --group-by=duration\nelse\n  pytest\
-        \ tests/ -v -n auto --cov=tools --cov-report=xml --cov-report=term-missing\
+        \ tests/ -v -n auto --cov=tools --cov=.jcode/scripts --cov-report=xml --cov-report=term-missing\
         \ --tb=short\nfi\n"
     - name: Coverage check (only for non-sharded 3.11)
       if: inputs.python-version == '3.11' && inputs.shard == ''

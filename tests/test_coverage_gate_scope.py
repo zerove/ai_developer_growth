@@ -138,3 +138,37 @@ class TestBothTreesExist:
     )
     def test_named_entry_script_exists(self, name: str) -> None:
         assert (ROOT / ".jcode" / "scripts" / name).exists(), f"{name} 缺失，--cov 路径失效"
+
+
+class TestGatePluginsDeclared:
+    """门禁依赖的 pytest 插件必须在开发依赖中声明。
+
+    test_reruns=2 此前因 pytest-rerunfailures 未被声明为依赖而完全失效：
+    basic_checks._plugin_available 返回 False → 命令里不加 --reruns →
+    注释宣称的"flaky 重试次数 2"从未生效，偶发测试直接挂门禁。
+    """
+
+    @pytest.mark.parametrize(
+        ("plugin", "dist"),
+        [
+            ("pytest_rerunfailures", "pytest-rerunfailures"),
+            ("pytest_cov", "pytest-cov"),
+            ("xdist", "pytest-xdist"),
+        ],
+    )
+    def test_plugin_is_declared_in_dev_deps(self, plugin: str, dist: str) -> None:
+        cfg = _config()
+        dev = cfg["project"]["optional-dependencies"]["dev"]
+        assert any(d.startswith(dist) for d in dev), f"{dist} 未在 dev 依赖中声明，{plugin} 不可用"
+
+    def test_reruns_setting_is_not_silently_ignored(self) -> None:
+        """test_reruns > 0 时，插件必须真的可用，否则配置形同虚设。"""
+        cfg = _config()
+        reruns = cfg["tool"]["adg"]["test_reruns"]
+        if reruns <= 0:
+            pytest.skip("已显式禁用重试")
+        import pytest_rerunfailures  # noqa: F401
+
+    def test_requirements_dev_also_declares_it(self) -> None:
+        text = (ROOT / "requirements-dev.txt").read_text(encoding="utf-8")
+        assert "pytest-rerunfailures" in text, "requirements-dev.txt 缺 pytest-rerunfailures"

@@ -218,6 +218,62 @@ class TestMainDispatch:
         assert self._run(cs, "audit-spec") == 2
 
 
+class TestValidateContext:
+    """ADR-061: validate_context 曾是 fail-open —— 子检查失败只打印不返回，
+    退出码恒为 0，使每周 scheduled 校验形同虚设；同时只做全文 substring 检查，
+    无法发现固定头部被滚动窗口吞噬（被吞的正是含这些词的段落）。
+    """
+
+    HEADER = (
+        "# 项目上下文\n\n"
+        "本文件记录 AI Developer Growth 的项目级上下文，供 agent 在会话开始时快速载入。\n\n"
+        "## 项目状态\n\n- 版本: v2.24.0\n- 语言: Python 工具 + Markdown 文档\n"
+        "- 测试: 4481 passed, 覆盖率 87.78%\n\n"
+        "## 决策记录\n\n- ADR-061: CONTEXT.md 固定头部必须独立于滚动窗口\n\n"
+        "## 计划\n\n- 后续开发计划见 ROADMAP.md 最新 Phase 段落。\n"
+    )
+
+    def _write(self, tmp_path: Path, ctx: str) -> tuple[str, str]:
+        (tmp_path / "CONTEXT.md").write_text(ctx, encoding="utf-8")
+        adr = tmp_path / "ADR.md"
+        # ADR.md 的两项检查分别是 "ADR" in content 与 ("状态" or "Status") in content
+        adr.write_text("# ADR 架构决策记录\n\n## 格式\n\n- 状态: 接受\n", encoding="utf-8")
+        return str(tmp_path / "CONTEXT.md"), str(adr)
+
+    def test_valid_context_passes(self, cs, tmp_path: Path) -> None:
+        ctx, adr = self._write(tmp_path, self.HEADER)
+        assert cs.validate_context(ctx, adr) == 0
+
+    def test_entries_only_is_rejected(self, cs, tmp_path: Path) -> None:
+        """退化为纯同步日志（有记录、无头部）必须失败。"""
+        ctx, adr = self._write(tmp_path, "## 更新记录: 2026-08-25 10:00:00\n\n### 任务\nx\n")
+        assert cs.validate_context(ctx, adr) == 1
+
+    def test_failures_propagate_to_exit_code(self, cs, tmp_path: Path, capsys) -> None:
+        """任一子检查失败 => 非 0 退出（fail-open 回归锁定）。"""
+        ctx, adr = self._write(tmp_path, "## 更新记录: 2026-08-25 10:00:00\n\n### 任务\nx\n")
+        assert cs.validate_context(ctx, adr) != 0
+        out = capsys.readouterr().out
+        assert "验证通过" not in out
+
+    def test_missing_context_file_fails(self, cs, tmp_path: Path) -> None:
+        assert cs.validate_context(str(tmp_path / "NOPE.md"), str(tmp_path / "ADR.md")) == 1
+
+    def test_missing_adr_fails(self, cs, tmp_path: Path) -> None:
+        ctx = tmp_path / "CONTEXT.md"
+        ctx.write_text(self.HEADER, encoding="utf-8")
+        assert cs.validate_context(str(ctx), str(tmp_path / "NOPE.md")) == 1
+
+    def test_header_before_entries_is_accepted(self, cs, tmp_path: Path) -> None:
+        ctx, adr = self._write(tmp_path, self.HEADER + "\n## 更新记录: 2026-08-25 10:00:00\n\n### 任务\nx\n")
+        assert cs.validate_context(ctx, adr) == 0
+
+    def test_keywords_only_in_entries_do_not_count(self, cs, tmp_path: Path) -> None:
+        """关键词出现在记录区而非头部区时不算数（位置校验，非全文搜索）。"""
+        ctx, adr = self._write(tmp_path, "## 更新记录: 2026-08-25 10:00:00\n\n### 任务\n含项目状态 决策 计划的正文\n")
+        assert cs.validate_context(ctx, adr) == 1
+
+
 class TestSpecAuditNonBlocking:
     def test_missing_spec_file_is_non_blocking(self, cs, tmp_path: Path, capsys) -> None:
         """缺 SPEC.md 时跳过而非失败（显式非阻断）。"""

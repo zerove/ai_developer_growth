@@ -22,6 +22,10 @@ from typing import Any
 
 from _common import print_check, print_section, run_command
 
+# CONTEXT.md 中每条同步记录的行首标记。头部识别与窗口裁剪共用同一常量，
+# 避免两处字面量漂移导致头部被误判成记录的一部分。
+_ENTRY_PREFIX = "## 更新记录:"
+
 # ============================================================================
 # Core Components (简化版，保留核心功能)
 # ============================================================================
@@ -144,27 +148,23 @@ class ContextSynthesizer:
     ) -> str:
         timestamp = __import__("datetime").datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
-        update = f"""
-## 更新记录: {timestamp}
+        entry = f"{_ENTRY_PREFIX} {timestamp}\n\n### 任务\n{task}\n\n### 变更摘要\n{self.summarize_diff(diff)}"
+        self.guard_no_diff_raw(entry)
 
-### 任务
-{task}
+        header, entries_text = self._split_header_and_entries(current_context)
 
-### 变更摘要
-{self.summarize_diff(diff)}
-
----
-
-{current_context}
-"""
-
-        self.guard_no_diff_raw(update)
+        # 组装顺序: 固定头部 -> 新记录 -> 历史记录。
+        # 头部必须排在所有 '## 更新记录:' 之前。若新记录排在最前，裁剪逻辑会把
+        # "新记录 + 头部 + 历史记录" 整段当成"新记录"的正文（记录边界只由下一个
+        # '## 更新记录:' 决定），头部因而落入滚动窗口，50 次同步后被静默丢弃 ——
+        # 2026-08-23 CONTEXT.md 项目概述/状态就是这样消失的（ADR-061）。
+        content = "\n\n".join(p for p in (header, entry, entries_text) if p)
 
         # 滚动窗口: 只保留最近 N 条更新记录，防止文件无限膨胀
         if max_update_entries > 0:
-            update = self._prune_update_entries(update, max_update_entries)
+            content = self._prune_update_entries(content, max_update_entries)
 
-        return update.strip()
+        return content.strip()
 
     @classmethod
     def guard_no_diff_raw(cls, content: str) -> None:
@@ -176,24 +176,47 @@ class ContextSynthesizer:
                 raise ValueError(f"CONTEXT.md 更新内容混入 diff 原文行: {line[:60]!r}")
 
     @staticmethod
+    def _split_header_and_entries(content: str) -> tuple[str, str]:
+        """把 CONTEXT.md 切成 (固定头部, 更新记录区)。
+
+        固定头部指首个 '## 更新记录:' 之前的内容（项目概述 / 状态 / 术语等），
+        它必须始终独立于滚动窗口存在，否则窗口裁剪会连同项目上下文一起丢弃。
+        """
+        lines = content.splitlines()
+        first = next((i for i, line in enumerate(lines) if line.startswith(_ENTRY_PREFIX)), None)
+        if first is None:
+            # 无任何更新记录: 整份都是固定头部
+            return content.strip(), ""
+        return "\n".join(lines[:first]).strip(), "\n".join(lines[first:]).strip()
+
+    @staticmethod
+    def _render(header: str, entries: list[str], pruned: int) -> str:
+        """按 [固定头部区, 更新记录区] 组装文档，保证头部永远排在记录之前。"""
+        chunks: list[str] = []
+        if header:
+            chunks.append(header)
+        if entries:
+            chunks.append("\n\n".join(entries))
+        result = "\n\n".join(chunks)
+        if not result:
+            result = ""
+        if pruned > 0:
+            result += f"\n\n<!-- 滚动窗口: 已自动裁剪 {pruned} 条旧更新记录 -->\n"
+        return result
+
+    @staticmethod
     def _prune_update_entries(content: str, max_entries: int) -> str:
         """按 '## 更新记录:' 标题切分，保留头部说明 + 最近 N 条记录。
 
-        首个更新记录之前的所有内容（项目概述等）视为固定头部原样保留。
+        首个更新记录之前的所有内容（项目概述等）视为固定头部原样保留，
+        且始终排在更新记录之前 —— 头部不参与窗口裁剪。
         """
-        lines = content.splitlines()
-        header_end = 0
-        for i, line in enumerate(lines):
-            if line.startswith("## 更新记录:"):
-                header_end = i
-                break
-        else:
+        header, entries_text = ContextSynthesizer._split_header_and_entries(content)
+        if not entries_text:
             return content  # 无更新记录, 原样返回
 
-        header = "\n".join(lines[:header_end]).rstrip("\n")
-
-        # 收集每条记录的起止行号
-        starts = [i for i in range(header_end, len(lines)) if lines[i].startswith("## 更新记录:")]
+        lines = entries_text.splitlines()
+        starts = [i for i, line in enumerate(lines) if line.startswith(_ENTRY_PREFIX)]
         entries = []
         for idx, start in enumerate(starts):
             end = starts[idx + 1] if idx + 1 < len(starts) else len(lines)
@@ -201,10 +224,7 @@ class ContextSynthesizer:
 
         kept = entries[:max_entries]
         pruned = len(entries) - len(kept)
-        result = header + ("\n\n" if header else "") + "\n\n".join(kept) + "\n"
-        if pruned > 0:
-            result += f"\n<!-- 滚动窗口: 已自动裁剪 {pruned} 条旧更新记录 -->\n"
-        return result
+        return ContextSynthesizer._render(header, kept, pruned)
 
 
 class GitAnalyzer:
@@ -360,38 +380,60 @@ class ContextSyncManager:
             print_check(f"已创建初始 ADR: {adr_file}", True)
 
     def validate_context(self, context_file: str, adr_file: str) -> int:
-        """验证 CONTEXT.md 和 ADR.md 格式"""
+        """验证 CONTEXT.md 和 ADR.md 格式。
+
+        返回非 0 表示校验失败。任一子检查失败都必须让整体失败 —— 此前失败只
+        打印不返回，退出码恒为 0，使该校验在 hooks / CI 中形同虚设（fail-open）。
+        """
         print_section("上下文验证")
 
         ctx_path = Path(context_file)
         adr_path = Path(adr_file)
+        failed: list[str] = []
+
+        def report(scope: str, name: str, passed: bool) -> None:
+            print_check(f"{scope} - {name}", passed)
+            if not passed:
+                failed.append(f"{scope} - {name}")
 
         # 验证 CONTEXT.md
         if ctx_path.exists():
             content = ctx_path.read_text(encoding="utf-8")
-            checks = [
-                ("包含项目状态", "项目状态" in content or "Project Status" in content),
-                ("包含决策记录", "决策" in content or "Decision" in content),
-                ("包含计划", "计划" in content or "Plan" in content),
+            # 头部区 = 首个 '## 更新记录:' 之前的内容。ADR-061: 头部曾被滚动窗口
+            # 静默吞噬，仅靠全文 substring 检查（"项目状态" in content）无法发现 ——
+            # 被吞掉的恰好就是含这些词的段落。必须做位置校验而非存在性校验。
+            header, entries_text = ContextSynthesizer._split_header_and_entries(content)
+            # 有更新记录却没有头部 = CONTEXT.md 已退化为纯同步日志（ADR-061 事故形态）
+            header_required = bool(entries_text.strip())
+            ctx_checks = [
+                ("包含项目状态", "项目状态" in header or "Project Status" in header),
+                ("包含决策记录", "决策" in header or "Decision" in header),
+                ("包含计划", "计划" in header or "Plan" in header),
+                ("固定头部非空", len(header.strip()) > 0 or not header_required),
+                ("以一级标题开头", header.lstrip().startswith("# ")),
                 ("非空", len(content.strip()) > 100),
             ]
-            for name, passed in checks:
-                print_check(f"CONTEXT.md - {name}", passed)
+            for name, passed in ctx_checks:
+                report("CONTEXT.md", name, passed)
         else:
-            print_check("CONTEXT.md 存在", False)
-            return 1
+            report("CONTEXT.md", "存在", False)
 
         # 验证 ADR.md
         if adr_path.exists():
             content = adr_path.read_text(encoding="utf-8")
-            checks = [
+            adr_checks = [
                 ("包含 ADR 标题", "ADR" in content),
                 ("包含决策格式", "状态" in content or "Status" in content),
             ]
-            for name, passed in checks:
-                print_check(f"ADR.md - {name}", passed)
+            for name, passed in adr_checks:
+                report("ADR.md", name, passed)
         else:
-            print_check("ADR.md 存在", False)
+            report("ADR.md", "存在", False)
+
+        if failed:
+            print_check(f"验证失败: {len(failed)} 项未通过", False)
+            for item in failed:
+                print(f"    - {item}")
             return 1
 
         print_check("验证通过", True)

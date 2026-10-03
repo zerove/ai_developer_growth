@@ -70,8 +70,12 @@ def clean_python_file(tmp_path: Path) -> Path:
 class TestRunSemanticChecksIntegration:
     """checker._run_semantic_checks() 与 semantic_rules 集成。"""
 
-    def test_returns_list_when_parser_unavailable(self, tmp_path: Path, monkeypatch) -> None:
-        """parser 不可用 → _run_semantic_checks 返回空 list 不抛.
+    def test_reports_degraded_when_parser_unavailable(self, tmp_path: Path, monkeypatch) -> None:
+        """parser 不可用 → 产出 semantic-degraded Issue, 不再静默返回空 list.
+
+        ADR-064 变更: 原断言为 ``issues == []``, 那正是 Phase 40 要根除的
+        fail-open —— 空列表让调用方无法区分"检查通过"与"检查根本没跑"。
+        实测旧实现下真实 hook 路径会因此打出 ``ALL CLEAN`` + exit 0。
 
         通过 monkeypatch ASTParser._available=False 模拟, 不改 HAS_TREE_SITTER
         (避免破坏 get_parser @lru_cache 单例).
@@ -90,11 +94,18 @@ class TestRunSemanticChecksIntegration:
         f = tmp_path / "f.py"
         f.write_text("x = 1\n")
         issues = checker._run_semantic_checks(f, "python")
-        assert issues == []
+        assert len(issues) == 1
+        assert issues[0].rule_id == "semantic-degraded"
+        assert issues[0].severity == "error"
+        assert "tree-sitter 未安装" in issues[0].message
         ast_parser.get_parser.cache_clear()  # 清理供后续测试
 
-    def test_returns_list_on_none_result(self, tmp_path: Path, monkeypatch) -> None:
-        """parser 解析返回 None → 返回空 list。"""
+    def test_reports_degraded_on_none_result(self, tmp_path: Path, monkeypatch) -> None:
+        """parser 解析返回 None → 产出 semantic-degraded, 且原因区别于依赖缺失.
+
+        ADR-064 要求区分降级原因: 语言解析器存在却解析失败, 应报"解析失败"
+        而非"未安装"。
+        """
         from tools.scripts.rules_engine import ast_parser
 
         def _parse_none(*args, **kwargs):
@@ -105,7 +116,9 @@ class TestRunSemanticChecksIntegration:
         f = tmp_path / "f.py"
         f.write_text("x = 1\n")
         issues = checker._run_semantic_checks(f, "python")
-        assert issues == []
+        assert len(issues) == 1
+        assert issues[0].rule_id == "semantic-degraded"
+        assert "未安装" not in issues[0].message
 
     def test_runs_semantic_checks_returns_list(self, python_file_with_issues: Path) -> None:
         """_run_semantic_checks() 调用不崩, 返回 list (可能为空依赖 ast_parser bug).

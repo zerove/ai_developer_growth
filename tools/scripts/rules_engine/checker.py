@@ -504,6 +504,12 @@ def _run_semantic_checks(filepath: Path, lang: str) -> list[Issue]:
     Uses tree-sitter for accurate syntax tree analysis instead of regex.
     通过语义规则插件系统执行检查（见 semantic_rules.py），
     新增规则只需注册 SemanticRule，无需修改本模块。
+
+    降级可见性（ADR-064）：tree-sitter 不可用时**不得静默返回空列表**。
+    旧实现直接 `return issues`（空），调用方无法区分"检查通过"与
+    "检查根本没跑" —— 实测缺失时 SemanticChecker 报 0 个问题，
+    而依赖齐全时报 54 个，输出看起来像"代码完美"。现在统一产生一条
+    ``semantic-degraded`` error Issue（严重度理由见 _degraded_issue）。
     """
     issues: list[Issue] = []
 
@@ -513,20 +519,51 @@ def _run_semantic_checks(filepath: Path, lang: str) -> list[Issue]:
 
         parser = get_parser()
         if not parser.available:
-            return issues
+            return [_degraded_issue(filepath, "tree-sitter 未安装")]
 
-        ast_result = parser.parse_file(filepath)
+        ast_result = parser.parse_file(filepath, lang)
         if ast_result is None:
-            return issues
+            # 区分两种 None：解析器缺失 vs 真正解析失败
+            if lang not in parser._parsers:
+                return [_degraded_issue(filepath, f"tree-sitter 的 {lang} 解析器不可用")]
+            return [_degraded_issue(filepath, f"{lang} 文件解析失败")]
 
         # 运行所有匹配语言的语义规则插件
         issues.extend(run_semantic_rules(ast_result, filepath, lang))
 
-    except ImportError:
-        # tree-sitter not available - silently skip
-        pass
-    except Exception:
-        # Semantic analysis failed - don't break the check pipeline
-        pass
+    except ImportError as exc:
+        return [_degraded_issue(filepath, f"语义检查依赖缺失: {exc}")]
+    except Exception as exc:  # noqa: BLE001
+        # 不中断检查管道，但必须留痕（原先 `pass` 会完全静默）
+        return [_degraded_issue(filepath, f"语义分析异常: {type(exc).__name__}: {exc}")]
 
     return issues
+
+
+def _degraded_issue(filepath: Path, reason: str) -> Issue:
+    """语义检查降级时产生的可见 Issue。
+
+    ADR-064: 严重度取 ``error`` 而非 info/warning。实测
+    ``CheckResult.passed`` 只看 ``error_count``（models.py:57），实测
+    info 与 warning 都会被 report_generator / quality_gate 渲染成
+    "PASS ✅" —— 等于把"检查根本没跑"重新伪装成绿灯，正是本 ADR
+    要根除的假绿灯。
+
+    取 error 不会误伤常规门禁：全仓仅 ``phase_runner._run_semantic_check``
+    以 ``semantic=True`` 调用检查器，且 ``.jcode/hooks.json`` 无任何 hook
+    触发 semantic-check（已核验 on_commit/on_pr/on_merge/scheduled）。
+    即"显式要求语义检查却没跑成"才会触发 error，属于名副其实的错误。
+    """
+    return Issue(
+        rule_id="semantic-degraded",
+        severity="error",
+        category="infrastructure",
+        file=str(filepath),
+        line=0,
+        message=f"AST 语义检查未执行: {reason}（本文件的语义规则未被检查）",
+        fix_hint="安装可选依赖后重试: uv pip install 'tree-sitter' 'tree-sitter-<lang>'",
+        explanation=(
+            "语义检查依赖 tree-sitter。缺失时不会报错，但相关规则"
+            "（未使用导入、缺 docstring、复杂度等）实际上一条都没跑。"
+        ),
+    )

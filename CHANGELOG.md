@@ -253,6 +253,89 @@ cp /tmp/ast_old.py tools/scripts/rules_engine/ast_parser.py
 - ADR-040: Phase 33a-2 semantic_checker 私有方法覆盖（追补）
 - ADR-058: context-sync 双实现并存是刻意设计，不做合并
 
+### Phase 40: AST 语义检查降级不再静默 (2026-10-03)
+
+收口 Phase 39 明确留下的遗留：AST 不可用时 `parse_file` 恒返回 `None`，
+调用方 fail-open 面依然存在（ADR-064）。
+
+#### 已观测故障（非预防性修复）
+
+`checker._run_semantic_checks` 原实现在 tree-sitter 不可用时一律
+`return issues`（空列表），异常分支更是 `except: pass`。调用方拿到空列表，
+**无法区分"检查通过"与"检查根本没跑"**：屏蔽 tree-sitter 后
+`SemanticChecker` 报 `files_analyzed=0, issues=0`，而依赖齐全时同一目录
+报 54 个问题 —— 输出形态一致，看起来像"代码完美"。
+
+修复后在同一目录实测（`tools/scripts/rules_engine`，60 个文件）：
+
+| 场景 | issue 总数 | 其中 `semantic-degraded` | 真实 hook 退出码 |
+| --- | --- | --- | --- |
+| 依赖齐全 | 1238 | **0** | 1（另有既存 regex 问题） |
+| tree-sitter 全部屏蔽 | 1257 | **60**（每个文件一条） | 1 |
+
+账目自洽：1197 regex + 41 AST = 1238；1197 + 60 降级 = 1257。
+
+旧实现下真实 hook 路径对**零规则命中**的文件打出 `EXITCODE: 0` —— 假绿灯，
+由子进程实测捕获，非理论推断。
+
+#### 关键决策：降级 Issue 必须是 error
+
+第一版修复定为 `info`，理由是"不阻断构建"。**实测证明这是错的**：
+`CheckResult.passed` 只看 `error_count`（`models.py:57`），
+因此 info 与 warning 都会被 `report_generator` / `quality_gate`
+渲染成 `PASS ✅` —— 等于换个地方复现同一个假绿灯。
+
+| severity | `passed` | 报告渲染 |
+| --- | --- | --- |
+| `info` | `True` | PASS ✅ |
+| `warning` | `True` | PASS ✅ |
+| `error` | `False` | FAIL ❌ |
+
+取 `error` 不误伤常规门禁，已核验两个前提：全仓仅
+`phase_runner._run_semantic_check` 以 `semantic=True` 调用检查器；
+`.jcode/hooks.json` 四类 hook 均未触发 semantic-check。
+
+#### 修复内容
+
+- `_run_semantic_checks` 不再静默返回空列表，区分 5 类降级原因
+  （整体缺失 / 语言解析器缺失 / 解析失败 / 依赖缺失 / 分析异常）
+- 新增 `_degraded_issue()`，规则 ID `semantic-degraded`，category `infrastructure`
+- 禁止 `except: pass`：异常分支同样留痕
+
+#### 验证
+
+- 新增 `tests/test_semantic_degraded_visibility.py`（8 用例），
+  全部在子进程中、于导入检查器**之前**屏蔽包
+- 健康路径无回归：1238 issues / **0** 条降级
+- 降级路径可见：60 个文件全部报出，`passed=False`，hook 退出码 1
+- 变异验证（`git show HEAD:` 取真实旧实现，非手写模拟）：
+  旧实现 **6 failed / 2 passed**，新实现 **8 passed**
+
+#### 方法论：变异测试抓到了我自己的无效断言
+
+`test_hook_path_exits_nonzero_when_degraded` 初版用含 `def` 的探针文件，
+该文件必然命中 `py-missing-all` 规则，**无论是否降级都 exit 1**，
+断言形同虚设。变异测试下该用例"失败"却是因为另一条断言，
+掩盖了退出码断言从未生效的事实。改为 `X = 1`（零命中）后才真正隔离变量：
+健康环境 exit 0，降级环境 exit 1。
+
+首次测量也犯过错：`check_directory` 返回 `list[CheckResult]` 而非 issue 列表，
+误当 issue 列表导致 `getattr(rule_id)` 恒空、错误得出"降级不可见"。
+纠正后账目自洽：1197 regex + 41 AST = 1238；1197 + 60 降级 = 1257。
+
+#### 遗留（未实施，已实测确认）
+
+- `ast_fixer` 同源缺陷：实测 `hooks_runner ast-fix` 在健康与降级两种环境下
+  **均 exit 0 且零输出**，修复者无法分辨。留作独立后续项
+- `SemanticChecker` 同类问题，但实测仅在模块 docstring 中被示例引用，
+  无生产消费方，优先级低于 `ast_fixer`
+- `phase_runner` 对不存在的路径输出 `✅ ALL CLEAN` 且 exit 0（另一个假绿灯）
+
+#### 相关
+
+- ADR-064: 语义检查降级必须可见，禁止 fail-open
+- ADR-063: tree-sitter 导入必须按语言粒度容错（本阶段收口其遗留项）
+
 ## [2.24.0] - 2026-09-17
 
 ### Phase 36 完整收口: adg cc 门禁落地 + 18 个 ≥10cc 函数全量拆分

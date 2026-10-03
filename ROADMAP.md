@@ -74,8 +74,19 @@
     (`uv venv` + `-e ".[dev]"`) 验证，又找出 `dev` extra 缺
     `fastapi` / `starlette` / `jieba`，一并补齐。
     当前全量回归无需任何 `--ignore`：4531 passed / 0 failed
-  - `parse_file` 在 AST 不可用时仍返回 `None` 而非抛异常，调用方
-    fail-open 面依然存在（ADR-063 只收窄了触发条件）
+  - ~~`parse_file` 在 AST 不可用时仍返回 `None` 而非抛异常，调用方
+    fail-open 面依然存在~~ → **已修 (Phase 40, ADR-064)**：
+    `_run_semantic_checks` 不再静默返回空列表，改为产出 `semantic-degraded`
+    Issue 并区分 5 类降级原因。实测旧实现下真实 hook 路径对零规则命中的文件
+    打出 `EXITCODE: 0`（假绿灯），修复后为 `EXITCODE: 1` 且 60 个文件全部可见。
+    **严重度必须是 `error`**：实测 `CheckResult.passed` 只看 `error_count`，
+    info 与 warning 都会被报告层渲染成 `PASS ✅`，等于换个地方复现同一假绿灯
+  - **同源缺陷，`ast_fixer` 尚未修复**（Phase 40 实测确认）：
+    `hooks_runner ast-fix` 在健康与降级两种环境下**均 exit 0 且零输出**，
+    修复者完全无法分辨。`SemanticChecker` 同类问题，但实测仅在模块
+    docstring 中被示例引用、无生产消费方，优先级低于 `ast_fixer`
+  - **`phase_runner` 对不存在的路径输出 `✅ ALL CLEAN` 且 exit 0**
+    （Phase 40 顺带实测发现的另一个假绿灯）
   - mypy 分区口径（实测）：`tools/ .jcode/` 234 个文件 clean，
     但 `tests/` 有 2330 个既存错误（多为测试函数缺类型注解）。
     “mypy 全绿”仅对非测试目录成立，CI 的 `mypy .` 实际会红

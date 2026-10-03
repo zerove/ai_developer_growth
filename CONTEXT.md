@@ -63,6 +63,77 @@ AI 时代开发者成长知识库 + 治理框架（knowledge base + governance f
 
 ---
 
+## 更新记录: 2026-10-03 11:17:12
+
+### 任务
+Git 变更同步
+
+### 变更摘要
+- 变更文件 7 个 (+1631 / -237 行)
+  - CHANGELOG.md
+  - CONTEXT.md
+  - ROADMAP.md
+  - docs/adr/ADR.md
+  - tests/test_semantic_rules_integration.py
+  - tools/scripts/rules_engine/checker.py
+  - uv.lock
+
+## 更新记录: 2026-10-03 11:12:55
+
+### 任务
+Git 变更同步
+
+### 变更摘要
+- 变更文件 7 个 (+1616 / -222 行)
+  - CHANGELOG.md
+  - CONTEXT.md
+  - ROADMAP.md
+  - docs/adr/ADR.md
+  - tests/test_semantic_rules_integration.py
+  - tools/scripts/rules_engine/checker.py
+  - uv.lock
+
+## 更新记录: 2026-10-03 11:03:44
+
+### 任务
+Git 变更同步
+
+### 变更摘要
+- 变更文件 7 个 (+1601 / -207 行)
+  - CHANGELOG.md
+  - CONTEXT.md
+  - ROADMAP.md
+  - docs/adr/ADR.md
+  - tests/test_semantic_rules_integration.py
+  - tools/scripts/rules_engine/checker.py
+  - uv.lock
+
+## 更新记录: 2026-10-03 10:55:02
+
+### 任务
+Git 变更同步
+
+### 变更摘要
+- 变更文件 6 个 (+1568 / -189 行)
+  - CHANGELOG.md
+  - CONTEXT.md
+  - ROADMAP.md
+  - docs/adr/ADR.md
+  - tools/scripts/rules_engine/checker.py
+  - uv.lock
+
+## 更新记录: 2026-10-03 02:16:00
+
+### 任务
+Git 变更同步
+
+### 变更摘要
+- 变更文件 4 个 (+1413 / -160 行)
+  - CHANGELOG.md
+  - CONTEXT.md
+  - ROADMAP.md
+  - uv.lock
+
 ## 更新记录: 2026-10-03 02:06:26
 
 ### 任务
@@ -847,86 +918,6 @@ Phase 36 收口 (cc 门禁落地 + 18 个 ≥10cc 函数拆分) + 文档同步
 - 工作区: 大量待提交改动（Phase 34-36 全部 + 文档）
 - 累计: 56 ADR / 4006 tests / tools/scripts cc 全目录 0 error
 - 待办: git commit 授权（用户确认后提交）
-
----
-
-## 更新记录: 2026-09-04 01:12:21
-
-### 任务
-Git 变更同步
-
-### 变更摘要
-- 变更文件 6 个 (+229 / -129 行)
-  - ADR.md
-  - CONTEXT.md
-  - docs/adr/ADR-038-optimization-scan.md
-  - tools/scripts/_common.py
-  - tools/scripts/generate_fixes.py
-  - tools/scripts/validate_rule_tests.py
-
----
-
-## 更新记录: 2026-09-04 01:12:20
-
-### 任务
-Git 变更同步
-
-### 变更摘要
-- 变更文件 6 个 (+213 / -116 行)
-  - ADR.md
-  - CONTEXT.md
-  - docs/adr/ADR-038-optimization-scan.md
-  - tools/scripts/_common.py
-  - tools/scripts/generate_fixes.py
-  - tools/scripts/validate_rule_tests.py
-
----
-
-## 更新记录: 2026-09-04 01:12:19
-
-### 任务
-Git 变更同步
-
-### 变更摘要
-- 变更文件 6 个 (+198 / -103 行)
-  - ADR.md
-  - CONTEXT.md
-  - docs/adr/ADR-038-optimization-scan.md
-  - tools/scripts/_common.py
-  - tools/scripts/generate_fixes.py
-  - tools/scripts/validate_rule_tests.py
-
----
-
-## 更新记录: 2026-09-03 20:59:19
-
-### 任务
-Git 变更同步
-
-### 变更摘要
-- 变更文件 3 个 (+157 / -0 行)
-  - ADR.md
-  - CONTEXT.md
-  - docs/adr/ADR-038-optimization-scan.md
-
----
-
-## 更新记录: 2026-09-03 10:49:29
-
-### 任务
-Git 变更同步
-
-### 变更摘要
-- 变更文件 9 个 (+495 / -273 行)
-  - ADR.md
-  - CHANGELOG.md
-  - CONTEXT.md
-  - ROADMAP.md
-  - docs/adr/ADR-035-public-api-actual-mapping.md
-  - pyproject.toml
-  - tests/test_rule_loader_public_api.py
-  - tests/test_rule_loader_yaml_merge.py
-  - tools/scripts/rules_engine/rule_loader.py
 
 ---
 

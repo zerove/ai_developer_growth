@@ -12,7 +12,7 @@ import time
 from collections.abc import Callable
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
-from typing import Any, cast
+from typing import Any, NamedTuple, cast
 
 from tools.scripts.hooks.tool_runner import (
     _detect_project_languages,
@@ -284,23 +284,61 @@ def _run_ast_fix(path: Path, dry_run: bool) -> int:
         # ADR-066: 单文件路径此前 verbose 默认 False, 即便真的改了文件也只
         # 打印标题, 用户无从得知改了什么。这里改为始终打印明细 ——
         # 单文件是用户显式指定的操作, 没有"批量扫描需安静"的场景。
-        return _fix_single_file(fixer, path, dry_run, verbose=True)
+        # ADR-068: 单文件路径也要区分发现数与实际应用数, 否则在只有
+        # report-only 规则时会对用户谎称已修复。退出码沿用 docs/api/cli.md
+        # 既有的"auto-safe 修复数"约定 —— 该约定不随 dry_run 变化,
+        # 实测旧实现按发现数返回, 会让"一个都没改"也返回非零。
+        result = _fix_single_file(fixer, path, dry_run, verbose=True)
+        _print_directory_summary(result.found, result.auto_safe, result.applied, dry_run)
+        return result.auto_safe
 
     # Directory: fix all Python files
-    total_fixes = 0
+    total_found = 0
+    total_auto_safe = 0
+    total_applied = 0
     for filepath in sorted(path.rglob("*.py")):
         if any(d in filepath.parts for d in {"__pycache__", ".git", "node_modules", ".venv"}):
             continue
-        fixes = _fix_single_file(fixer, filepath, dry_run, verbose=True)
-        if fixes > 0:
-            total_fixes += fixes
+        result = _fix_single_file(fixer, filepath, dry_run, verbose=True)
+        total_found += result.found
+        total_auto_safe += result.auto_safe
+        total_applied += result.applied
 
-    _print_directory_summary(total_fixes, dry_run)
+    _print_directory_summary(total_found, total_auto_safe, total_applied, dry_run)
     return 0
 
 
-def _fix_single_file(fixer: Any, filepath: Path, dry_run: bool, *, verbose: bool = False) -> int:
-    """单文件 AST 修复 (模块级 helper, 返回修复数 0/正数).
+class FileFixResult(NamedTuple):
+    """单文件修复的三个计数 (ADR-068).
+
+    三者**可以互不相等**, 必须分开对待:
+
+    - ``found``: 检出的可修复项总数
+    - ``auto_safe``: 其中标记为可自动应用的项数 —— 这是
+      ``docs/api/cli.md`` 约定的退出码语义, 且与 dry_run 无关
+      (dry-run 下"将会应用多少"才是用户关心的数)
+    - ``applied``: 实际改写了文本的项数。dry_run 时恒为 0;
+      非 dry-run 时也可能小于 ``auto_safe`` (如 _apply_fix 因行号
+      越界原样返回, 见 ADR-066)
+
+    此前 CLI 只向上传递 ``found``, 却拿它打印 "✅ Fixes applied"
+    并作为退出码 —— 三种含义被压缩成一个数, 是 ADR-068 的根因。
+    """
+
+    found: int
+    auto_safe: int
+    applied: int
+
+
+def _fix_single_file(fixer: Any, filepath: Path, dry_run: bool, *, verbose: bool = False) -> FileFixResult:
+    """单文件 AST 修复 (模块级 helper, 返回 FileFixResult).
+
+    ADR-068: 此前返回单个 ``total_fixes``（**发现数**）, 而
+    ``_print_directory_summary`` 依此打印 "✅ Fixes applied"。
+    发现数与应用数在存在 report-only 规则时可以不同 —— 例如自
+    ADR-067 起 ``fix-empty-except`` 只报告不应用, 实测 CLI 打印
+    "Total fixes: 1 / ✅ Fixes applied" 而磁盘内容**毫无变化**。
+    这与 ADR-064/065/066/067 同源: 报告状态与真实状态脱节。
 
     Args:
         fixer: ASTFixer 实例
@@ -309,35 +347,51 @@ def _fix_single_file(fixer: Any, filepath: Path, dry_run: bool, *, verbose: bool
         verbose: 是否打印详细报告 (默认 False)
 
     Returns:
-        修复数 (0 = 无需修复或跳过)
+        FileFixResult。解析失败或无可修复项时三项均为 0。
     """
     report = fixer.fix_file(filepath, dry_run=dry_run)
     if report is None:
         if verbose:
             print(f"  ⚠️  Cannot parse {filepath}, skipping")
-        return 0
+        return FileFixResult(0, 0, 0)
     if report.total_fixes == 0:
-        return 0
+        return FileFixResult(0, 0, 0)
     if verbose:
         print(fixer.format_fix_report(report))
-    return report.total_fixes
+    return FileFixResult(report.total_fixes, report.auto_safe_fixes, report.applied_fixes)
 
 
-def _print_directory_summary(total_fixes: int, dry_run: bool) -> None:
+def _print_directory_summary(total_found: int, total_auto_safe: int, total_applied: int, dry_run: bool) -> None:
     """打印目录级修复汇总 (模块级 helper).
 
+    ADR-068: 同时呈现"发现 / 可自动应用 / 已实际应用"三个数, 并按
+    **实际应用数** 而非发现数选择结论行 —— 发现得多但一个都没应用时
+    打印 "✅ Fixes applied" 是**假绿灯**。
+
     Args:
-        total_fixes: 总修复数
+        total_found: 发现的可修复项总数
+        total_auto_safe: 其中标记为可自动应用的项数
+        total_applied: 实际写入磁盘的修复总数 (dry_run 时恒为 0)
         dry_run: 是否仅模拟
     """
     print(f"\n{'=' * 60}")
-    print(f"  Total fixes: {total_fixes}" + (" (dry run)" if dry_run else ""))
-    if total_fixes == 0:
-        print("  ✅ No fixes needed")
-    elif dry_run:
-        print("  ℹ️  Run without --dry-run to apply")
+    print(f"  Total fixes found: {total_found} ({total_auto_safe} auto-safe)")
+    print(f"  Fixes applied: {total_applied}" + (" (dry run)" if dry_run else ""))
+    if dry_run:
+        if total_found == 0:
+            print("  ✅ No fixes needed")
+        else:
+            print("  ℹ️  Run without --dry-run to apply")
+    elif total_applied == 0:
+        # 发现 > 0 但应用 == 0: 全部是 report-only 规则 (ADR-067),
+        # 此时既不能说"已修复", 也不该说"无需修复"。
+        if total_found == 0:
+            print("  ✅ No fixes needed")
+        else:
+            print(f"  ℹ️  {total_found} review-only fix(es) reported, none applied automatically")
+            print("      (auto_safe=False —— 需人工确认, 见 ADR-067)")
     else:
-        print("  ✅ Fixes applied")
+        print(f"  ✅ Fixes applied: {total_applied}/{total_found}")
     print("=" * 60)
 
 

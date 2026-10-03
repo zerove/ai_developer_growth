@@ -108,8 +108,19 @@ Behavior notes:
   that fix, `ASTFixer.fix_file` computed the fixed content but never wrote it
   back, so the command reported `✅ Fixes applied` while leaving every file
   untouched. Always pass `--dry-run` first if you want to inspect changes.
-- The exit code equals the number of auto-safe fixes on a single file, and
-  `0` on a directory. It is not a pass/fail signal.
+- The summary reports **three separate counts** (ADR-068), which are not
+  always equal:
+  - `Total fixes found: N (M auto-safe)` — how many issues were detected
+  - `Fixes applied: K` — how many actually rewrote file content (`0` under
+    `--dry-run`)
+  - The conclusion line is chosen from `K`, not from `N`. When `N > 0` but
+    `K == 0` the output says `review-only fix(es) reported, none applied
+    automatically` rather than claiming success — rules marked
+    `auto_safe=False` are reported for human review only (ADR-067).
+- The exit code equals the number of **auto-safe** fixes on a single file, and
+  `0` on a directory. It is not a pass/fail signal, and it deliberately does
+  *not* change under `--dry-run` (the dry-run count is "would-be-applied",
+  not "applied").
 - If a file cannot be parsed, or writing it back fails, that file is skipped
   with a warning. Check the output rather than assuming coverage.
 

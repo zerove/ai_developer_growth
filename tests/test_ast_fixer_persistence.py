@@ -86,19 +86,26 @@ class TestFixFileWritesToDisk:
         assert target.read_text(encoding="utf-8") == report.fixed_content
 
     def test_applied_fixes_reflects_reality(self, tmp_path: Path) -> None:
-        """applied_fixes 必须与 total_fixes 一致, 不能只报"发现"不报"生效".
+        """applied_fixes 必须与 auto_safe_fixes 一致, 不能只报"发现"不报"生效".
 
         total_fixes 统计的是"发现的可修复项", applied_fixes 统计的是
-        "真正改变了文本的项"。修复落盘后两者应当相同。
+        "真正改变了文本的项"。两者**本就可以不等**:
+        - 非 auto_safe 的项只报告不应用 (ADR-067 降级 fix-empty-except 后,
+          本探针的 2 项中有 1 项是 fix-empty-except, 故 2 != 1)
+        - _apply_fix 在行号越界时会原样返回内容
+
+        因此正确的不变量是 applied_fixes == auto_safe_fixes, 且
+        applied_fixes <= total_fixes。
         """
         target = _write(tmp_path / "bare.py", BARE_EXCEPT_SRC)
 
         report = ASTFixer().fix_file(target, dry_run=False)
 
         assert report is not None
-        assert report.applied_fixes == report.total_fixes, (
-            f"applied_fixes={report.applied_fixes} 与 total_fixes={report.total_fixes} 不一致"
+        assert report.applied_fixes == report.auto_safe_fixes, (
+            f"applied_fixes={report.applied_fixes} 与 auto_safe_fixes={report.auto_safe_fixes} 不一致"
         )
+        assert report.applied_fixes <= report.total_fixes, "实际生效数不应超过发现数"
 
 
 class TestDryRunNeverWrites:
@@ -128,14 +135,22 @@ class TestIdempotentAndClean:
     """对照组: 幂等性与干净文件不被误改."""
 
     def test_rerun_on_fixed_file_finds_nothing(self, tmp_path: Path) -> None:
-        """已修复的文件再跑不应重复报告修复."""
+        """已修复的文件再跑不应重复应用修复.
+
+        断言口径是 ``applied_fixes == 0`` 而非 ``total_fixes == 0``:
+        ``fix-empty-except`` 自 ADR-067 起是 report-only (auto_safe=False),
+        它会发现 ``except:`` 已被改成 ``except Exception:`` 之后的 ``pass``
+        并继续建议插入 TODO。这是有意为之 —— 降级只影响"是否自动应用",
+        不影响"是否被发现"。若断言 total_fixes, 就等于要求把非 auto_safe
+        的发现也一并隐藏, 那与分级原则相反。
+        """
         target = _write(tmp_path / "bare.py", BARE_EXCEPT_SRC)
         ASTFixer().fix_file(target, dry_run=False)
 
         second = ASTFixer().fix_file(target, dry_run=False)
 
         assert second is not None
-        assert second.total_fixes == 0, "对已修复文件仍报告修复 —— 不幂等"
+        assert second.applied_fixes == 0, "对已修复文件仍重复应用修复 —— 不幂等"
 
     def test_clean_file_untouched(self, tmp_path: Path) -> None:
         """无缺陷文件不被改写."""
@@ -183,4 +198,9 @@ class TestSingleFileCliIsObservable:
         proc = _run_cli("ast-fix", target, extra=["--dry-run"])
 
         assert target.read_text(encoding="utf-8") == BARE_EXCEPT_SRC, "dry-run 端到端修改了文件"
-        assert proc.returncode == 2, f"dry-run 应以修复数作为退出码, 实际 {proc.returncode}"
+        # ADR-068 修正: 退出码按 docs/api/cli.md 的 "auto-safe 修复数"
+        # 约定, 本 fixture 实测 2 项发现 / 1 项 auto-safe —— 旧断言
+        # 写死 2 (发现数), 恰好等于改对了却仍"看起来正确"。
+        # 关键: dry-run 下磁盘未变, 因此退出码绝不能来自 applied。
+        assert proc.returncode == 1, f"退出码应为 auto-safe 修复数, 实际 {proc.returncode}"
+        assert "Fixes applied: 0" in proc.stdout, "dry-run 不得报告已应用"

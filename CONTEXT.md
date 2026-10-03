@@ -63,6 +63,40 @@ AI 时代开发者成长知识库 + 治理框架（knowledge base + governance f
 
 ---
 
+## 更新记录: 2026-10-03 11:33:36
+
+### 任务
+Git 变更同步
+
+### 变更摘要
+- 变更文件 9 个 (+2055 / -229 行)
+  - CHANGELOG.md
+  - CONTEXT.md
+  - ROADMAP.md
+  - docs/adr/ADR-064-semantic-degradation-must-be-visible.md
+  - docs/adr/ADR.md
+  - tests/test_semantic_degraded_visibility.py
+  - tests/test_semantic_rules_integration.py
+  - tools/scripts/rules_engine/checker.py
+  - uv.lock
+
+## 更新记录: 2026-10-03 11:29:55
+
+### 任务
+Git 变更同步
+
+### 变更摘要
+- 变更文件 9 个 (+2038 / -208 行)
+  - CHANGELOG.md
+  - CONTEXT.md
+  - ROADMAP.md
+  - docs/adr/ADR-064-semantic-degradation-must-be-visible.md
+  - docs/adr/ADR.md
+  - tests/test_semantic_degraded_visibility.py
+  - tests/test_semantic_rules_integration.py
+  - tools/scripts/rules_engine/checker.py
+  - uv.lock
+
 ## 更新记录: 2026-10-03 11:17:12
 
 ### 任务
@@ -865,59 +899,6 @@ Git 变更同步
   - tools/scripts/quality_gate.py
   - tools/scripts/rules_engine/_ast_walkers.py
   - ... 等共 22 个文件
-
----
-
-## 更新记录: 2026-09-17 20:12:25
-
-### 任务
-Git 变更同步
-
-### 变更摘要
-- 变更文件 22 个 (+573 / -146 行)
-  - .jcode/scripts/governance-auditor.py
-  - CHANGELOG.md
-  - CONTEXT.md
-  - ROADMAP.md
-  - docs/adr/ADR-054-phase-34-dedup-common.md
-  - docs/adr/ADR-056-phase-36-complexity-gate.md
-  - docs/adr/ADR.md
-  - pyproject.toml
-  - tests/conftest.py
-  - tests/test_adg_bootstrap_unit.py
-  - tests/test_check_directory_skipped.py
-  - tests/test_language_rules_v2.py
-  - tests/test_quality_gate_full.py
-  - tests/test_rule_registry.py
-  - tests/test_semantic_rules.py
-  - tests/test_supply_chain_round2.py
-  - tools/scripts/_sc_scanners.py
-  - tools/scripts/fix_heuristics.py
-  - tools/scripts/quality_gate.py
-  - tools/scripts/rules_engine/_ast_walkers.py
-  - ... 等共 22 个文件
-
----
-
-## 更新记录: 2026-09-17 12:00:00
-
-### 任务
-Phase 36 收口 (cc 门禁落地 + 18 个 ≥10cc 函数拆分) + 文档同步
-
-### 变更摘要
-- **Phase 36a**: adg cc 门禁 `check --complexity` + test_adg_cc_gate (6 测试锁定)
-- **Phase 36b (7 函数)**: fix_heuristics / jcode_cli / update_ai_tool_matrix / plugins / adg_cli check_file / checker check_file / dependency_graph _run_tarjan_scc
-- **Phase 36c (11 函数)**: _shared / loader / basic_checks / domain_checks ×2 / link_auditor / rule_marketplace / auto_fix / pattern_learner / quality_trends / rule_docs_mapper 全部拆至模块级 helper
-- **adg check tools/scripts --complexity**: 18 → **0 errors**（全目录 cc≤10 收敛）
-- 全量 pytest: **4006 passed, 1 failed**（仅 test_skips_skipped_results 预存 / ADR-053）
-- 相关模块 523 tests + mypy strict + ruff 全过
-- ADR-056 新增（累计 56 条）+ ADR.md 索引同步 (050-056)
-
-### 当前状态
-- master HEAD: `d0ad2c5` (前置, Phase 34c-f/33b 已提交)
-- 工作区: 大量待提交改动（Phase 34-36 全部 + 文档）
-- 累计: 56 ADR / 4006 tests / tools/scripts cc 全目录 0 error
-- 待办: git commit 授权（用户确认后提交）
 
 ---
 

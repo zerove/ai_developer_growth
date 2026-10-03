@@ -94,6 +94,9 @@
     **静默不生效**，曾导致“变异后依然全绿”的错误结论。
     应改用 `git show <commit>^:<path>` 直接取旧版本，并先确认
     变异标记确实变了再看测试结果
+    **同类陷阱已第二次出现 (Phase 40)**：修复提交后 `git show HEAD:<path>`
+    取回的就是修复版，变异同样静默无效、测试全"通过"。
+    正确基线必须是**修复提交的父提交**，而非 HEAD
 - **其余 skill 入口的 fail-open 审计**：~~`weekly-context-sync` 暴露的是
   `context-sync.py validate`，其余 skill（knowledge-curator / governance-auditor /
   workflow-optimizer / community-catalyst）需逐个核查"检查失败是否真的非 0 退出"~~

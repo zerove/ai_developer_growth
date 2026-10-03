@@ -524,7 +524,8 @@ def _run_semantic_checks(filepath: Path, lang: str) -> list[Issue]:
         ast_result = parser.parse_file(filepath, lang)
         if ast_result is None:
             # 区分两种 None：解析器缺失 vs 真正解析失败
-            if lang not in parser._parsers:
+            # 用公开属性 supported_languages()，不碰私有 _parsers
+            if lang not in parser.supported_languages():
                 return [_degraded_issue(filepath, f"tree-sitter 的 {lang} 解析器不可用")]
             return [_degraded_issue(filepath, f"{lang} 文件解析失败")]
 

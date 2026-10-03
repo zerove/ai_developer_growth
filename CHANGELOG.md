@@ -301,15 +301,29 @@ cp /tmp/ast_old.py tools/scripts/rules_engine/ast_parser.py
   （整体缺失 / 语言解析器缺失 / 解析失败 / 依赖缺失 / 分析异常）
 - 新增 `_degraded_issue()`，规则 ID `semantic-degraded`，category `infrastructure`
 - 禁止 `except: pass`：异常分支同样留痕
+- 用公开属性 `parser.supported_languages()` 而非私有 `_parsers` 判定解析器缺失
 
 #### 验证
 
-- 新增 `tests/test_semantic_degraded_visibility.py`（8 用例），
+- 新增 `tests/test_semantic_degraded_visibility.py`（9 用例），
   全部在子进程中、于导入检查器**之前**屏蔽包
+- 5 类降级原因**逐一有测试覆盖**。其中泛化 `except Exception` 分支
+  原先零覆盖（`grep '语义分析异常'` 仅命中实现本身），本阶段补上 ——
+  首次写该用例时用了不存在的 `x.py`，`parse_file` 先返回 `None`，
+  根本没触达目标分支，改用临时目录中的真实文件后才真正覆盖
 - 健康路径无回归：1238 issues / **0** 条降级
 - 降级路径可见：60 个文件全部报出，`passed=False`，hook 退出码 1
-- 变异验证（`git show HEAD:` 取真实旧实现，非手写模拟）：
-  旧实现 **6 failed / 2 passed**，新实现 **8 passed**
+- 变异验证（`git show c9329db^:` 取真实旧实现，非手写模拟）：
+  旧实现 **7 failed / 2 passed**，新实现 **9 passed**
+
+#### 方法论：变异基线会随提交而失效
+
+已提交修复后，`git show HEAD:checker.py` 取回的**就是修复版**，
+变异静默无效、9 个用例全部"通过"，差点得出"测试无效"的错误结论。
+正确基线是修复提交的父提交 `c9329db^:`。
+教训：变异验证必须**先确认变异标记真的变了**（本例 grep `semantic-degraded`
+计数应为 0），再看测试结果 —— 与 Phase 39 记录的
+`git stash push -- <file>` 静默失效是同一类陷阱。
 
 #### 方法论：变异测试抓到了我自己的无效断言
 

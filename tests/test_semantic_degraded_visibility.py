@@ -140,6 +140,38 @@ class DegradedVisibilityTest(unittest.TestCase):
         self.assertIn("DEGRADED: True", out)
         self.assertIn("COUNT: 1", out)
 
+    def test_unexpected_exception_is_reported(self) -> None:
+        """语义规则自身抛异常时必须留痕。
+
+        覆盖 ``except Exception`` 分支 —— 该分支原先是 ``except: pass``,
+        是"检查没跑成却什么都不说"的最后一道口子。此前无任何测试覆盖
+        (grep '语义分析异常' 仅命中实现本身), Phase 40 补上。
+        """
+        script = textwrap.dedent(
+            """
+            import pathlib, tempfile
+            import tools.scripts.rules_engine.checker as ck
+
+            def _boom(*args, **kwargs):
+                raise RuntimeError("规则内部炸了")
+
+            import tools.scripts.rules_engine.semantic_rules as sr
+            sr.run_semantic_rules = _boom
+            with tempfile.TemporaryDirectory() as d:
+                f = pathlib.Path(d) / "probe.py"
+                f.write_text("x = 1\\n")
+                out = ck._run_semantic_checks(f, "python")
+            print("COUNT:", len(out))
+            for i in out:
+                if i.rule_id == "semantic-degraded":
+                    print("MSG:", i.message)
+            """
+        )
+        out = _run_probe([], script)
+        self.assertIn("COUNT: 1", out, "语义规则抛异常时未产生降级 Issue")
+        self.assertIn("语义分析异常", out, "异常类型未写入降级原因")
+        self.assertIn("规则内部炸了", out, "原始异常信息未保留")
+
 
 class HealthyPathTest(unittest.TestCase):
     """依赖齐全时不得产生任何降级 Issue (防回归)。"""

@@ -103,6 +103,16 @@ Options:
 - `--path PATH` - Path to fix (default: current directory)
 - `--dry-run` - Preview fixes without applying
 
+Behavior notes:
+- **Without `--dry-run`, files are actually rewritten** (ADR-066). Before
+  that fix, `ASTFixer.fix_file` computed the fixed content but never wrote it
+  back, so the command reported `✅ Fixes applied` while leaving every file
+  untouched. Always pass `--dry-run` first if you want to inspect changes.
+- The exit code equals the number of auto-safe fixes on a single file, and
+  `0` on a directory. It is not a pass/fail signal.
+- If a file cannot be parsed, or writing it back fails, that file is skipped
+  with a warning. Check the output rather than assuming coverage.
+
 ### AI Hallucination Pattern Scan
 
 ```bash

@@ -203,9 +203,15 @@ class TestApplyFixesToDirectory:
     def test_fixes_python_files(self):
         with tempfile.TemporaryDirectory() as tmpdir:
             p = Path(tmpdir)
-            (p / "a.py").write_text("except:\n    pass\n")
-            (p / "b.py").write_text("except:\n    pass\n")
-            (p / "c.txt").write_text("except:\n    pass\n")
+            # ADR-072: 夹具此前写成顶层的 ``except:``, 那**本身就不是
+            # 合法 Python** (except 必须跟在 try 之后)。旧实现无条件
+            # 写盘, 所以该用例一直是绿的 —— 它实际在验证"把非法文件
+            # 改成另一份非法文件"。加了写盘前语法自检后, 夹具必须先是
+            # 合法代码, 否则断言的是兜底而非修复能力。
+            body = "try:\n    pass\nexcept:\n    pass\n"
+            (p / "a.py").write_text(body)
+            (p / "b.py").write_text(body)
+            (p / "c.txt").write_text(body)
 
             results = apply_fixes_to_directory(p, dry_run=False, languages=["python"])
             assert len(results) >= 2

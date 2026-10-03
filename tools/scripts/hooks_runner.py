@@ -253,12 +253,21 @@ def _handle_language_rules(args: argparse.Namespace) -> int:
 
     if getattr(args, "fix", False):
         from tools.scripts.rules_engine.auto_fix import (
+            FAILED_WRITE_RULE_IDS,
             apply_fixes_to_directory,
             format_fix_results,
         )
 
         fix_results = apply_fixes_to_directory(args.path, dry_run=False)
         print(format_fix_results(fix_results))
+        # ADR-072: 存在"拒绝写盘/写盘失败"的结果时必须非零退出。
+        # 注意**不能**把普通的 MANUAL FIX REQUIRED 也算进来 ——
+        # flag-only 规则(如 py-star-import)本就以 MANUAL FIX REQUIRED
+        # 为正常产物, 那是"建议人工处理", 不是"工具没做成"。
+        # 语法拒绝与写盘失败不同: 工具声称要修, 结果把磁盘留在
+        # 原地或写坏了, 属于未完成的工作。
+        if any(r.rule_id in FAILED_WRITE_RULE_IDS for r in fix_results):
+            return 1
         return 0
     if getattr(args, "cache", False):
         # 增量缓存模式：复用统一存储中的检查历史（mtime+size 未变则跳过）

@@ -12,6 +12,41 @@ from typing import Any
 
 from .models import FixResult
 
+# ADR-072: 表示"工具没能完成写盘"的结果 ID。CLI 用它决定退出码,
+# 故必须定义在**生产方**, 由消费方 import —— 两边各写一个字面量
+# 就等于留了一处会悄悄漂移的重复。
+#
+# 刻意**不含** flag-only 规则的 MANUAL FIX REQUIRED: 那是"建议人工
+# 处理"的正常产物, 把退出码一并弄成非零会让既有 CI 长期红。
+FAILED_WRITE_RULE_IDS: frozenset[str] = frozenset({"syntax-check-rejected", "write-failed"})
+
+
+def _verify_syntax(content: str, language: str | None) -> tuple[bool, bool, str | None]:
+    """校验修复结果是否仍可解析 (ADR-072).
+
+    直接复用 ``ASTFixer._verify_syntax`` —— 本模块与
+    ``ast_fixer`` 是两条独立的写盘路径, 但"修复结果能否解析"这个
+    判据完全相同, 没有理由各写一份(各写一份就意味着将来会各自漂移)。
+
+    实测依据 (真实 CLI, 无需注入任何缺陷): ``py-os-system`` 的
+    pattern ``os\\.system\\(([^)]+)\\]`` 捕获组遇嵌套括号即在第一个
+    ``)`` 处截断, 于是
+
+        os.system(get_cmd())  ->  subprocess.run(get_cmd(, shell=True, check=True))
+
+    ``language-rules --fix`` 会打印 "1 auto-fixed"、退出 0, 并把
+    无法解析的文件留在磁盘上 —— 比 ADR-070 那处更糟, 因为它的汇总
+    明确声称修复成功。
+
+    Returns:
+        ``(checked, violation, error)``, 语义同 ADR-070。
+    """
+    from .ast_fixer import ASTFixer
+
+    lang = language if language else "python"
+    return ASTFixer()._verify_syntax(content, lang)
+
+
 # Fix patterns organized by language
 FIX_PATTERNS: dict[str, dict[str, dict[str, Any]]] = {
     "python": {
@@ -402,7 +437,12 @@ def apply_fixes(
         content, new_results = _apply_rule_to_content(filepath, content, original_content, rule_id, fix_config)
         results.extend(new_results)
 
-    _write_if_changed(filepath, content, original_content, dry_run)
+    # ADR-072: 写盘可能被语法自检拒绝。此时**丢弃**此前累积的
+    # auto-fix 结果, 只保留那条如实说明的拒绝记录 —— 否则汇总会
+    # 继续打印 "N auto-fixed", 而磁盘上一个字节都没改。
+    rejected = _write_if_changed(filepath, content, original_content, dry_run)
+    if rejected:
+        return rejected
     return results
 
 
@@ -435,17 +475,61 @@ def _apply_rule_to_content(
     return _apply_replacement(filepath, content, original_content, rule_id, pattern, replacement, description)
 
 
-def _write_if_changed(filepath: Path, content: str, original_content: str, dry_run: bool) -> None:
-    """有变化且非 dry_run 时写回文件 (模块级 helper).
+def _write_if_changed(filepath: Path, content: str, original_content: str, dry_run: bool) -> list[FixResult]:
+    """有变化且非 dry_run 时写回文件, 但写前必须通过语法自检 (ADR-072).
 
     Args:
         filepath: 文件路径
         content: 替换后内容
         original_content: 原始内容
         dry_run: 是否仅模拟
+
+    Returns:
+        被拒绝写盘时应告知调用方的结果 (正常写盘时为空列表)。
+
+    ADR-072: 此前无任何校验直接 ``write_text``。实测
+    ``py-os-system`` 这类 ``[^)]+`` 捕获组遇嵌套括号即截断, 把
+    ``os.system(get_cmd())`` 改成无法解析的
+    ``subprocess.run(get_cmd(, shell=True, check=True))``, 而 CLI 仍
+    打印 "1 auto-fixed" 并退出 0 —— 声称成功、磁盘已坏。
+
+    拒绝写盘时把该规则的结果**替换**为一条如实说明的 FixResult:
+    保留原 results 会让汇总继续报 "auto-fixed", 那正是要消灭的假绿灯。
     """
-    if not dry_run and content != original_content:
+    if dry_run or content == original_content:
+        return []
+
+    checked, violation, error = _verify_syntax(content, detect_language(filepath))
+    if checked and violation:
+        return [
+            FixResult(
+                file=str(filepath),
+                rule_id="syntax-check-rejected",
+                line=0,
+                original="",
+                # 必须用 MANUAL FIX REQUIRED 哨兵: _summarize 与
+                # _format_text 都以该字符串判定"是否已自动修复"。若
+                # 留空字符串, 汇总会把它算进 "N auto-fixed" —— 正是
+                # 本 ADR 要消灭的那句假绿灯。
+                fixed="[MANUAL FIX REQUIRED]",
+                description=f"拒绝写盘: 修复结果无法解析 (ADR-072): {error}",
+            )
+        ]
+
+    try:
         filepath.write_text(content, encoding="utf-8")
+    except OSError:
+        return [
+            FixResult(
+                file=str(filepath),
+                rule_id="write-failed",
+                line=0,
+                original="",
+                fixed="[MANUAL FIX REQUIRED]",
+                description="写盘失败, 文件保持原样",
+            )
+        ]
+    return []
 
 
 def _resolve_file_lang(

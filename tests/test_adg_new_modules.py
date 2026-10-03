@@ -289,6 +289,39 @@ class TestFixEngine:
         result = engine.fix_file("/nonexistent/file.py")
         assert result["success"] is False
 
+    def test_fix_file_rejects_syntax_breaking_result(self, tmp_path):
+        """ADR-072: 正则改坏语法时必须拒绝写盘且如实回报失败.
+
+        ``fixes.yml`` 的 ``os\\.system\\(([^)]+)\\)`` 遇嵌套括号即在
+        第一个 ``)`` 处截断, 这是规则自带的缺陷, 无需注入。
+        """
+        from tools.fix_engine import FixEngine
+
+        src = "import os\ncmd = os.system(get_cmd())\n"
+        f = tmp_path / "broken.py"
+        f.write_text(src)
+
+        result = FixEngine().fix_file(f, "python")
+
+        assert result["success"] is False, "改坏语法却报告成功"
+        assert result["fixes_applied"] == 0
+        assert result.get("syntax_violation") is True
+        assert "拒绝写盘" in result["error"]
+        assert f.read_text() == src, "磁盘被改坏了"
+
+    def test_fix_file_control_healthy_still_fixed(self, tmp_path):
+        """对照组: 合法样本照常修复 —— 兜底不得变成永不修复."""
+        from tools.fix_engine import FixEngine
+
+        f = tmp_path / "ok.py"
+        f.write_text("import os\ncmd = os.system('ls')\n")
+
+        result = FixEngine().fix_file(f, "python")
+
+        assert result["success"] is True
+        assert result["fixes_applied"] >= 1
+        assert "subprocess.run" in f.read_text()
+
     def test_fix_directory(self, tmp_path):
         from tools.fix_engine import FixEngine
 

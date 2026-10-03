@@ -63,6 +63,61 @@ AI 时代开发者成长知识库 + 治理框架（knowledge base + governance f
 
 ---
 
+## 更新记录: 2026-10-03 20:34:04
+
+### 任务
+Git 变更同步
+
+### 变更摘要
+- 变更文件 11 个 (+431 / -68 行)
+  - CONTEXT.md
+  - docs/adr/ADR-071-directory-exit-code-on-rejection.md
+  - docs/adr/ADR.md
+  - docs/api/cli.md
+  - tests/test_adg_new_modules.py
+  - tests/test_ast_fixer_write_verification.py
+  - tests/test_auto_fix.py
+  - tools/fix_engine/__init__.py
+  - tools/scripts/hooks/phase_runner.py
+  - tools/scripts/hooks_runner.py
+  - tools/scripts/rules_engine/auto_fix.py
+
+## 更新记录: 2026-10-03 20:30:56
+
+### 任务
+Git 变更同步
+
+### 变更摘要
+- 变更文件 11 个 (+412 / -53 行)
+  - CONTEXT.md
+  - docs/adr/ADR-071-directory-exit-code-on-rejection.md
+  - docs/adr/ADR.md
+  - docs/api/cli.md
+  - tests/test_adg_new_modules.py
+  - tests/test_ast_fixer_write_verification.py
+  - tests/test_auto_fix.py
+  - tools/fix_engine/__init__.py
+  - tools/scripts/hooks/phase_runner.py
+  - tools/scripts/hooks_runner.py
+  - tools/scripts/rules_engine/auto_fix.py
+
+## 更新记录: 2026-10-03 20:21:44
+
+### 任务
+Git 变更同步
+
+### 变更摘要
+- 变更文件 9 个 (+335 / -39 行)
+  - CONTEXT.md
+  - docs/adr/ADR-071-directory-exit-code-on-rejection.md
+  - docs/adr/ADR.md
+  - docs/api/cli.md
+  - tests/test_ast_fixer_write_verification.py
+  - tests/test_auto_fix.py
+  - tools/scripts/hooks/phase_runner.py
+  - tools/scripts/hooks_runner.py
+  - tools/scripts/rules_engine/auto_fix.py
+
 ## 更新记录: 2026-10-03 19:58:30
 
 ### 任务
@@ -809,50 +864,6 @@ Git 变更同步
   - CHANGELOG.md
   - CONTEXT.md
   - ROADMAP.md
-  - docs/adr/ADR-062-fail-open-detector-validates-executability.md
-  - docs/adr/ADR.md
-  - tests/test_check_hooks_json_integrity.py
-  - tools/scripts/check_hooks_json_integrity.sh
-  - uv.lock
-
-## 更新记录: 2026-10-03 00:27:01
-
-### 任务
-Git 变更同步
-
-### 变更摘要
-- 变更文件 7 个 (+299 / -261 行)
-  - .jcode/hooks.json
-  - CONTEXT.md
-  - docs/adr/ADR-062-fail-open-detector-validates-executability.md
-  - docs/adr/ADR.md
-  - tests/test_check_hooks_json_integrity.py
-  - tools/scripts/check_hooks_json_integrity.sh
-  - uv.lock
-
-## 更新记录: 2026-10-03 00:26:42
-
-### 任务
-Git 变更同步
-
-### 变更摘要
-- 变更文件 7 个 (+285 / -240 行)
-  - .jcode/hooks.json
-  - CONTEXT.md
-  - docs/adr/ADR-062-fail-open-detector-validates-executability.md
-  - docs/adr/ADR.md
-  - tests/test_check_hooks_json_integrity.py
-  - tools/scripts/check_hooks_json_integrity.sh
-  - uv.lock
-
-## 更新记录: 2026-10-03 00:18:46
-
-### 任务
-Git 变更同步
-
-### 变更摘要
-- 变更文件 6 个 (+207 / -190 行)
-  - CONTEXT.md
   - docs/adr/ADR-062-fail-open-detector-validates-executability.md
   - docs/adr/ADR.md
   - tests/test_check_hooks_json_integrity.py

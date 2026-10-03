@@ -154,6 +154,32 @@ class FixEngine:
         content = path.read_text(encoding="utf-8", errors="ignore")
         fixed_content, applied = self.fix_content(content, language, rule_ids, dry_run)
 
+        # ADR-072: 写盘前必须通过语法自检。本模块与 ast_fixer /
+        # auto_fix 是三条独立的写盘路径, 但都源自同一类正则改写手法,
+        # 因而需要同一道兜底。实测 fixes.yml 的 ``[^)]+`` 捕获组遇嵌套
+        # 括号即截断, 会把 ``os.system(get_cmd())`` 改成无法解析的
+        # ``subprocess.run(get_cmd(, shell=True, check=True))``。
+        #
+        # 本路径当前**无生产调用方**(仅测试使用), 但它读的是与
+        # auto_fix 同源的 fixes.yml, 接入生产即会复现 ADR-072 的形态,
+        # 故一并补上, 避免留一个已知的假绿灯入口。
+        if not dry_run and applied and fixed_content != content:
+            from tools.scripts.rules_engine.ast_fixer import ASTFixer
+
+            checked, violation, error = ASTFixer()._verify_syntax(fixed_content, language)
+            if checked and violation:
+                # 如实回报"什么都没改成", 且不得声称已修复。
+                return {
+                    "success": False,
+                    "error": f"拒绝写盘: 修复结果无法解析 (ADR-072): {error}",
+                    "file": str(path),
+                    "language": language,
+                    "fixes_applied": 0,
+                    "fixes": [],
+                    "syntax_violation": True,
+                    "dry_run": dry_run,
+                }
+
         if not dry_run and applied:
             path.write_text(fixed_content, encoding="utf-8")
 

@@ -281,7 +281,7 @@ cp /tmp/ast_old.py tools/scripts/rules_engine/ast_parser.py
 #### 关键决策：降级 Issue 必须是 error
 
 第一版修复定为 `info`，理由是"不阻断构建"。**实测证明这是错的**：
-`CheckResult.passed` 只看 `error_count`（`models.py:57`），
+`CheckResult.passed` 只看 `error_count`（`models.py:121`），
 因此 info 与 warning 都会被 `report_generator` / `quality_gate`
 渲染成 `PASS ✅` —— 等于换个地方复现同一个假绿灯。
 
@@ -339,11 +339,26 @@ cp /tmp/ast_old.py tools/scripts/rules_engine/ast_parser.py
 
 #### 遗留（未实施，已实测确认）
 
-- `ast_fixer` 同源缺陷：实测 `hooks_runner ast-fix` 在健康与降级两种环境下
-  **均 exit 0 且零输出**，修复者无法分辨。留作独立后续项
+- `ast_fixer` 同源缺陷，范围比初版记录**窄**。复核后用含 `bare except:`
+  的探针（`fix_file` 实测产出 `total_fixes=2`）重测：
+  - 目录路径：健康 `Total fixes: 2` + 详细报告；
+    降级 `⚠️ Cannot parse ..., skipping`，`exit=0` —— **有提示，可分辨**
+  - 单文件路径：两环境均无输出 —— `_fix_single_file` 的 `verbose`
+    默认 `False`，`report is None` 时不打印。**静默只发生在此路径**
+  - 两种环境 `exit` 都是 0
 - `SemanticChecker` 同类问题，但实测仅在模块 docstring 中被示例引用，
   无生产消费方，优先级低于 `ast_fixer`
 - `phase_runner` 对不存在的路径输出 `✅ ALL CLEAN` 且 exit 0（另一个假绿灯）
+
+#### 复核纠正：ast-fix 的初版结论不成立
+
+初版称 `ast-fix` "两环境 exit 0 且零输出，修复者无法分辨"，该结论**错误** ——
+当时探针文件不含任何**可修复缺陷**，健康环境本就无输出，与降级静默无法区分。
+变量根本没被隔离。这与本阶段先后犯过的三次同源错误一致：
+`check_directory` 返回值口径搞错、测试用例用不含 `def` 的文件、
+探针给函数内 `from`-import 的局部名字赋值。
+教训：**验证"降级是否可见"时，健康环境的对照必须有真实工作量**，
+否则"什么都没做"和"做了但没报"长得一模一样。
 
 #### 相关
 

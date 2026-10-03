@@ -10,7 +10,7 @@
 
 关键设计(实测得出, 见 ADR-064):
     严重度必须是 ``error``。因为 ``CheckResult.passed`` 只看
-    ``error_count``(models.py:57), info 与 warning 都会被
+    ``error_count``(models.py:121), info 与 warning 都会被
     report_generator / quality_gate 渲染成 "PASS ✅", 等于把降级重新
     伪装成绿灯。
 

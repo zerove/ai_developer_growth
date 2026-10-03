@@ -545,7 +545,7 @@ def _degraded_issue(filepath: Path, reason: str) -> Issue:
     """语义检查降级时产生的可见 Issue。
 
     ADR-064: 严重度取 ``error`` 而非 info/warning。实测
-    ``CheckResult.passed`` 只看 ``error_count``（models.py:57），实测
+    ``CheckResult.passed`` 只看 ``error_count``（models.py:121），实测
     info 与 warning 都会被 report_generator / quality_gate 渲染成
     "PASS ✅" —— 等于把"检查根本没跑"重新伪装成绿灯，正是本 ADR
     要根除的假绿灯。

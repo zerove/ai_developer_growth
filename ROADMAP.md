@@ -81,10 +81,16 @@
     打出 `EXITCODE: 0`（假绿灯），修复后为 `EXITCODE: 1` 且 60 个文件全部可见。
     **严重度必须是 `error`**：实测 `CheckResult.passed` 只看 `error_count`，
     info 与 warning 都会被报告层渲染成 `PASS ✅`，等于换个地方复现同一假绿灯
-  - **同源缺陷，`ast_fixer` 尚未修复**（Phase 40 实测确认）：
-    `hooks_runner ast-fix` 在健康与降级两种环境下**均 exit 0 且零输出**，
-    修复者完全无法分辨。`SemanticChecker` 同类问题，但实测仅在模块
-    docstring 中被示例引用、无生产消费方，优先级低于 `ast_fixer`
+  - **同源缺陷，`ast_fixer` 尚未修复**（Phase 40 复核后修正范围）：
+    实测 `hooks_runner ast-fix` 的**目录路径有提示**（健康 `Total fixes: 2`，
+    降级 `⚠️ Cannot parse ..., skipping`），可分辨；
+    **静默只发生在单文件路径** —— `_fix_single_file` 的 `verbose` 默认
+    `False`，`report is None` 时不打印任何内容。两种环境 `exit` 都是 0。
+    `SemanticChecker` 同类问题，但实测仅在模块 docstring 中被示例引用、
+    无生产消费方，优先级低于 `ast_fixer`
+    **方法论**：Phase 40 初版结论"`ast-fix` 两环境零输出、无法分辨"**错误**，
+    原因是探针文件不含任何可修复缺陷，健康环境本就无输出 ——
+    变量没被隔离。验证"降级是否可见"时，健康环境对照必须有真实工作量
   - **`phase_runner` 对不存在的路径输出 `✅ ALL CLEAN` 且 exit 0**
     （Phase 40 顺带实测发现的另一个假绿灯）
   - mypy 分区口径（实测）：`tools/ .jcode/` 234 个文件 clean，

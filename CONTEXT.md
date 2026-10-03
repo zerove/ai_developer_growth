@@ -63,6 +63,20 @@ AI 时代开发者成长知识库 + 治理框架（knowledge base + governance f
 
 ---
 
+## 更新记录: 2026-10-03 11:50:35
+
+### 任务
+Git 变更同步
+
+### 变更摘要
+- 变更文件 6 个 (+1435 / -129 行)
+  - CHANGELOG.md
+  - ROADMAP.md
+  - docs/adr/ADR-064-semantic-degradation-must-be-visible.md
+  - tests/test_semantic_degraded_visibility.py
+  - tools/scripts/rules_engine/checker.py
+  - uv.lock
+
 ## 更新记录: 2026-10-03 11:33:36
 
 ### 任务
@@ -847,37 +861,6 @@ Git 变更同步
 
 ### 变更摘要
 - 变更文件 22 个 (+635 / -204 行)
-  - .jcode/scripts/governance-auditor.py
-  - CHANGELOG.md
-  - CONTEXT.md
-  - ROADMAP.md
-  - docs/adr/ADR-054-phase-34-dedup-common.md
-  - docs/adr/ADR-056-phase-36-complexity-gate.md
-  - docs/adr/ADR.md
-  - pyproject.toml
-  - tests/conftest.py
-  - tests/test_adg_bootstrap_unit.py
-  - tests/test_check_directory_skipped.py
-  - tests/test_language_rules_v2.py
-  - tests/test_quality_gate_full.py
-  - tests/test_rule_registry.py
-  - tests/test_semantic_rules.py
-  - tests/test_supply_chain_round2.py
-  - tools/scripts/_sc_scanners.py
-  - tools/scripts/fix_heuristics.py
-  - tools/scripts/quality_gate.py
-  - tools/scripts/rules_engine/_ast_walkers.py
-  - ... 等共 22 个文件
-
----
-
-## 更新记录: 2026-09-17 20:12:25
-
-### 任务
-Git 变更同步
-
-### 变更摘要
-- 变更文件 22 个 (+605 / -191 行)
   - .jcode/scripts/governance-auditor.py
   - CHANGELOG.md
   - CONTEXT.md

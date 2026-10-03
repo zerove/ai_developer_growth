@@ -53,7 +53,8 @@ except Exception:
 
 第一版修复把降级 Issue 定为 `severity="info"`，理由是"info 不阻断构建"。
 实测证明这是错的 —— `CheckResult.passed` 只看 `error_count`
-（`models.py:57`）：
+（`tools/scripts/rules_engine/models.py:121`，`CheckResult` 类体起于 112 行；
+`ValidationResult.passed` 在 57 行，是另一个类，本处引用的是前者）：
 
 | severity | `passed` | report_generator 渲染 |
 | --- | --- | --- |
@@ -102,11 +103,27 @@ except Exception:
   导致 `getattr(rule_id)` 恒为空、错误地得出"降级不可见"的结论。
   正确口径：基线 1238 issues / 0 降级，降级后 1257 / 60 降级
   （1197 regex + 41 AST = 1238；1197 + 60 = 1257，账目自洽）。
-- **未修复的同源缺陷**：`ast_fixer` 存在同类问题。实测
-  `hooks_runner ast-fix` 在健康与降级两种环境下**均 exit 0 且零输出**，
-  修复者完全无法分辨。本 ADR 未涵盖，留作独立后续项。
+- **未修复的同源缺陷**：`ast_fixer` 的缺陷范围比初版记录**窄**。复核后实测
+  （探针文件含 `bare except:`，`fix_file` 确实产出 `total_fixes=2`）：
+
+  | 调用方式 | 健康环境 | 降级环境 |
+  | --- | --- | --- |
+  | 目录（`verbose=True`） | `Total fixes: 2` + 详细报告 | `⚠️ Cannot parse ..., skipping`，`exit=0` |
+  | 单文件（`verbose=False`） | 无输出 | 无输出 |
+
+  即目录路径**有**"无法解析"提示，与"无需修复"措辞不同，尚可分辨；
+  真正的静默只发生在**单文件**路径 —— `_fix_single_file` 的
+  `verbose` 默认 `False`，`report is None` 时不打印任何东西。
+  且两种环境 `exit` 都是 0。留作独立后续项。
   `SemanticChecker` 亦然，但实测其仅在模块 docstring 中被示例引用，
   无生产消费方，优先级低于 `ast_fixer`。
+
+- **本轮复核纠正的一处误判**：初版记录称 `ast-fix` "两环境 exit 0
+  且零输出"，该结论**不成立** —— 当时探针文件不含任何可修复缺陷，
+  健康环境本就无输出，与降级静默无法区分。等价于用"没有 `def` 的文件"
+  犯过的同类错误（见验证方式一节）。正确探针须含
+  `bare except:` / 未用变量 / 空函数等**可修复项**，
+  否则变量根本没被隔离。
 
 ## 相关 ADR
 

@@ -12,6 +12,7 @@ Usage:
 
 from __future__ import annotations
 
+import ast as python_ast
 import re
 import time
 from dataclasses import dataclass
@@ -49,8 +50,20 @@ class FixReport:
     auto_safe_fixes: int
     # ADR-066: 实际改变了内容的修复数。与 total_fixes 区分开, 因为
     # total_fixes 统计的是"发现的可修复项", 不保证每一项都真正改动了文本
-    # (例如 _apply_fix 因行号越界而原样返回)。dry_run 时恒为 0。
+    # (例如 _apply_fix 因行号越界而原样返回 —— 该守卫**存在**, 但 Phase 45
+    #  全仓 209 文件实测 0 次触发, 属未观测路径)。dry_run 时恒为 0。
+    #  已实测的 applied < auto_safe 成因: ADR-067 的 report-only 规则,
+    #  以及 ADR-070 的语法自检拒绝写盘。
     applied_fixes: int = 0
+    # ADR-070: 修复后内容的语法自检结论, 三态:
+    #   True  —— 自检跑了且**失败**, 已拒绝写盘
+    #   False —— 自检跑了且通过 (Python 走 ast.parse, 其余走 tree-sitter)
+    #   None  —— **自检没跑**(dry_run / 内容无变化 / 校验器不可用)
+    # 三态而非两态是必要的: 若"通过"与"没检查"都记 False, 调用方
+    # 无法区分"已验证安全"与"根本不知道", 兜底就成了不可观测的。
+    syntax_violation: bool | None = None
+    # 自检失败的原因 (例如 "IndentationError: ..."), 供 CLI 直接透出。
+    syntax_error: str | None = None
 
 
 class ASTFixer:
@@ -117,6 +130,28 @@ class ASTFixer:
         # 却从不落盘, CLI 仍打印 "✅ Fixes applied" 且 exit=total_fixes,
         # 用户以为代码已改而实际未改 —— 属"声称已修复"的假成功。
         # 仅在内容实际变化时写入, 避免无谓的 mtime 变动。
+        #
+        # ADR-070: 写盘前必须做语法自检。ADR-069 实测证明逐条规则修补
+        # 会漏 —— 本规则的守卫能挡住它, 但这依赖"守卫覆盖了所有产生
+        # 非法代码的路径"这一假设, 而该假设在 tree-sitter 静默接受非法
+        # Python 时无法验证。故在写盘这一层加一道与规则无关的兜底:
+        # 修复结果只要无法解析, 就整体回退、不写一个字节。
+        syntax_violation: bool | None = None
+        syntax_error: str | None = None
+        if not dry_run and fixed_content != content:
+            checked, violation, error = self._verify_syntax(fixed_content, language)
+            # 三态: True=跑了且失败 / False=跑了且通过 / None=跑不了
+            # (校验器不可用)。`checked` 与 `violation` 必须分开返回 ——
+            # 只靠 `violation is False` 无法区分"已验证安全"与"不知道"。
+            syntax_violation = True if violation else (False if checked else None)
+            syntax_error = error
+            if violation:
+                # 拒绝写盘: 报告仍如实返回发现的修复数, 但 applied_fixes
+                # 必须归 0 —— 否则又是"报告成功、磁盘未改"的假绿灯。
+                fixed_content = content
+                applied_count = 0
+                syntax_violation = True
+                syntax_error = error
         if not dry_run and fixed_content != content:
             try:
                 filepath.write_text(fixed_content, encoding="utf-8")
@@ -135,7 +170,46 @@ class ASTFixer:
             total_fixes=len(fixes),
             auto_safe_fixes=sum(1 for f in fixes if f.auto_safe),
             applied_fixes=applied_count,
+            syntax_violation=syntax_violation,
+            syntax_error=syntax_error,
         )
+
+    def _verify_syntax(self, content: str, language: str) -> tuple[bool, bool, str | None]:
+        """校验修复后的内容是否仍可解析 (ADR-070 写盘兜底).
+
+        Returns:
+            ``(checked, violation, error)``:
+            - ``checked``: 校验器是否可用并真的跑了。
+            - ``violation``: 自检跑了且**失败**。
+            - ``error``: 失败原因, 供 CLI 透出。
+
+            ``checked=False`` 表示**无法判断**(语言不支持 / 解析器缺失)。
+            此时不得谎报"检查通过", 调用方据此把
+            ``FixReport.syntax_violation`` 记为 ``None`` 而非 ``False``。
+
+        Python 走 ``ast.parse``, 其余语言走 tree-sitter 的
+        ``root_node.has_error``。
+
+        两条路径的灵敏度差异是实测结论, 不能想当然 (ADR-070):
+        ``ast.parse`` 拒绝 ``def f(): ...`` 后跟一行多缩进的 ``pass``
+        (IndentationError), 而 tree-sitter 对同一份代码
+        ``has_error=False`` —— 它**看不见** ADR-069 那类破坏。
+        因此 Python 必须用 ``ast.parse``, 用 tree-sitter 检查
+        Python 等于没检查。
+        """
+        if language == "python":
+            try:
+                python_ast.parse(content)
+            except SyntaxError as exc:
+                return True, True, f"{type(exc).__name__}: {exc}"
+            return True, False, None
+
+        tree = self.parser.parse(content, language)
+        if tree is None:
+            return False, False, None
+        if tree.root_node.has_error:
+            return True, True, "tree-sitter reported a syntax error"
+        return True, False, None
 
     def fix_content(
         self,

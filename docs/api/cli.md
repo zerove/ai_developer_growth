@@ -121,6 +121,14 @@ Behavior notes:
   `0` on a directory. It is not a pass/fail signal, and it deliberately does
   *not* change under `--dry-run` (the dry-run count is "would-be-applied",
   not "applied").
+- Before writing, every rewritten file is **syntax-checked** (ADR-070). If the
+  fixed content does not parse, the write is refused entirely: the file keeps
+  its original bytes, `Fixes applied` counts `0` for it, and the output names
+  the specific error (`IndentationError: ...`). The summary line
+  `❌ Syntax check failed` takes priority over `✅ Fixes applied`, so a run in
+  which some files succeed and some are rejected still reports failure.
+  Python is checked with `ast.parse`; other languages use tree-sitter, which is
+  less sensitive to indentation-level problems — see ADR-070.
 - If a file cannot be parsed, or writing it back fails, that file is skipped
   with a warning. Check the output rather than assuming coverage.
 

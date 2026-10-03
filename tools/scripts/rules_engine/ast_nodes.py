@@ -21,6 +21,11 @@ class _TreeNode(Protocol):
     text: bytes | str
     start_point: tuple[int, int]
     end_point: tuple[int, int]
+    # tree-sitter Node 的真实属性。ADR-070 用它做非 Python 语言的
+    # 写盘前语法校验。注意它**只覆盖 tree-sitter 自己的 error 节点**:
+    # 实测它对 Python 的 IndentationError 返回 False (看不见),
+    # 故 ast_fixer 对 Python 另走 ast.parse。
+    has_error: bool
 
 
 class _TSTree(Protocol):

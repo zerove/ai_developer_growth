@@ -92,10 +92,14 @@ class TestFixFileWritesToDisk:
         "真正改变了文本的项"。两者**本就可以不等**:
         - 非 auto_safe 的项只报告不应用 (ADR-067 降级 fix-empty-except 后,
           本探针的 2 项中有 1 项是 fix-empty-except, 故 2 != 1)
-        - _apply_fix 在行号越界时会原样返回内容
+        - 修复结果无法解析而被拒绝写盘 (ADR-070)
 
         因此正确的不变量是 applied_fixes == auto_safe_fixes, 且
         applied_fixes <= total_fixes。
+
+        注意: ``_apply_fix`` 行号越界也会让 applied 偏小, 但那是
+        **未观测路径** —— Phase 45 全仓 209 文件实测 0 次触发, 故
+        未列入本探针的成因。
         """
         target = _write(tmp_path / "bare.py", BARE_EXCEPT_SRC)
 

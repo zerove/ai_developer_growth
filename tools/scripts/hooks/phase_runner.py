@@ -289,13 +289,15 @@ def _run_ast_fix(path: Path, dry_run: bool) -> int:
         # 既有的"auto-safe 修复数"约定 —— 该约定不随 dry_run 变化,
         # 实测旧实现按发现数返回, 会让"一个都没改"也返回非零。
         result = _fix_single_file(fixer, path, dry_run, verbose=True)
-        _print_directory_summary(result.found, result.auto_safe, result.applied, dry_run)
+        violations = 1 if result.syntax_violation else 0
+        _print_directory_summary(result.found, result.auto_safe, result.applied, dry_run, violations)
         return result.auto_safe
 
     # Directory: fix all Python files
     total_found = 0
     total_auto_safe = 0
     total_applied = 0
+    syntax_violations = 0
     for filepath in sorted(path.rglob("*.py")):
         if any(d in filepath.parts for d in {"__pycache__", ".git", "node_modules", ".venv"}):
             continue
@@ -303,23 +305,31 @@ def _run_ast_fix(path: Path, dry_run: bool) -> int:
         total_found += result.found
         total_auto_safe += result.auto_safe
         total_applied += result.applied
+        if result.syntax_violation:
+            syntax_violations += 1
 
-    _print_directory_summary(total_found, total_auto_safe, total_applied, dry_run)
+    _print_directory_summary(total_found, total_auto_safe, total_applied, dry_run, syntax_violations)
     return 0
 
 
 class FileFixResult(NamedTuple):
-    """单文件修复的三个计数 (ADR-068).
+    """单文件修复的三个计数 (ADR-068) 与语法自检结论 (ADR-070).
 
-    三者**可以互不相等**, 必须分开对待:
+    三个计数**可以互不相等**, 必须分开对待:
 
     - ``found``: 检出的可修复项总数
     - ``auto_safe``: 其中标记为可自动应用的项数 —— 这是
       ``docs/api/cli.md`` 约定的退出码语义, 且与 dry_run 无关
       (dry-run 下"将会应用多少"才是用户关心的数)
     - ``applied``: 实际改写了文本的项数。dry_run 时恒为 0;
-      非 dry-run 时也可能小于 ``auto_safe`` (如 _apply_fix 因行号
-      越界原样返回, 见 ADR-066)
+      非 dry-run 时也可能小于 ``auto_safe`` —— 已实测的成因:
+      report-only 规则 (ADR-067)、修复结果无法解析被拒写盘 (ADR-070)。
+      ``_apply_fix`` 行号越界是**未观测路径** (Phase 45 全仓实测 0 次)
+
+    ``syntax_violation`` 为 True 表示修复结果**无法解析、已拒绝写盘**
+    (ADR-070)。此时 ``applied`` 必为 0, 而 ``auto_safe`` 仍可能 > 0 ——
+    二者不等正是要告诉用户"本该自动修的没修成", 汇总必须显式呈现,
+    否则又会退回"报告成功、磁盘未改"的假绿灯。
 
     此前 CLI 只向上传递 ``found``, 却拿它打印 "✅ Fixes applied"
     并作为退出码 —— 三种含义被压缩成一个数, 是 ADR-068 的根因。
@@ -328,6 +338,8 @@ class FileFixResult(NamedTuple):
     found: int
     auto_safe: int
     applied: int
+    syntax_violation: bool = False
+    syntax_error: str | None = None
 
 
 def _fix_single_file(fixer: Any, filepath: Path, dry_run: bool, *, verbose: bool = False) -> FileFixResult:
@@ -358,30 +370,61 @@ def _fix_single_file(fixer: Any, filepath: Path, dry_run: bool, *, verbose: bool
         return FileFixResult(0, 0, 0)
     if verbose:
         print(fixer.format_fix_report(report))
-    return FileFixResult(report.total_fixes, report.auto_safe_fixes, report.applied_fixes)
+    if report.syntax_violation:
+        # ADR-070: 自检拦下了会破坏语法的修复。必须在明细里立刻说明,
+        # 否则用户只会看到一串 [AUTO] 标记, 以为已经改好。
+        print("  ❌ 拒绝写盘: 修复结果无法解析 (ADR-070)")
+        print(f"      {report.syntax_error}")
+        print("      文件保持原样, 请人工处理后重试")
+    return FileFixResult(
+        report.total_fixes,
+        report.auto_safe_fixes,
+        report.applied_fixes,
+        bool(report.syntax_violation),
+        report.syntax_error,
+    )
 
 
-def _print_directory_summary(total_found: int, total_auto_safe: int, total_applied: int, dry_run: bool) -> None:
+def _print_directory_summary(
+    total_found: int,
+    total_auto_safe: int,
+    total_applied: int,
+    dry_run: bool,
+    syntax_violations: int = 0,
+) -> None:
     """打印目录级修复汇总 (模块级 helper).
 
     ADR-068: 同时呈现"发现 / 可自动应用 / 已实际应用"三个数, 并按
     **实际应用数** 而非发现数选择结论行 —— 发现得多但一个都没应用时
     打印 "✅ Fixes applied" 是**假绿灯**。
 
+    ADR-070: 新增 ``syntax_violations``。它是**失败**而非中性信息:
+    修复结果无法解析、被拒绝写盘, 是本应自动完成的修复没做成,
+    与 ``review-only`` (等人来看) 性质不同, 必须用独立结论行,
+    不能混进 review-only 那一句里轻描淡写。
+
     Args:
         total_found: 发现的可修复项总数
         total_auto_safe: 其中标记为可自动应用的项数
         total_applied: 实际写入磁盘的修复总数 (dry_run 时恒为 0)
         dry_run: 是否仅模拟
+        syntax_violations: 因修复结果无法解析而被拒绝写盘的文件数
     """
     print(f"\n{'=' * 60}")
     print(f"  Total fixes found: {total_found} ({total_auto_safe} auto-safe)")
     print(f"  Fixes applied: {total_applied}" + (" (dry run)" if dry_run else ""))
+    if syntax_violations:
+        print(f"  ❌ {syntax_violations} file(s) rejected: fixes would break syntax (ADR-070)")
+        print("      Files left unchanged. Fix the reported syntax error manually.")
     if dry_run:
         if total_found == 0:
             print("  ✅ No fixes needed")
         else:
             print("  ℹ️  Run without --dry-run to apply")
+    elif syntax_violations:
+        # 必须优先于 applied>0 的分支: 部分文件被拒、部分成功时,
+        # 只报成功同样是假绿灯 (总体上确有未完成的修复)。
+        print("  ❌ Syntax check failed — see messages above")
     elif total_applied == 0:
         # 发现 > 0 但应用 == 0: 全部是 report-only 规则 (ADR-067),
         # 此时既不能说"已修复", 也不该说"无需修复"。

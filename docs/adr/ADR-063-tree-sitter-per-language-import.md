@@ -27,8 +27,10 @@ Phase 38 做 ADR 索引自动生成时跑全量回归，发现 **62 个测试失
 try:
     import tree_sitter_c_sharp
     import tree_sitter_cpp
+
     # ... 共 12 个
     from tree_sitter import Language, Parser
+
     HAS_TREE_SITTER = True
 except ImportError:
     HAS_TREE_SITTER = False

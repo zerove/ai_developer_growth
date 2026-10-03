@@ -48,13 +48,18 @@ BLOCKED = {blocked!r}
 
 
 class _BlockingFinder:
-    """在模块被导入前拦截指定包, 模拟环境里未安装。"""
+    """在模块被导入前拦截指定包, 模拟环境里未安装。
 
-    def find_module(self, name, path=None):
-        return self if name in BLOCKED else None
+    必须实现 PEP 451 的 find_spec: Python 3.12 起导入系统不再回退到
+    find_module/load_module, 只写这两个方法的 finder 会被完全忽略,
+    屏蔽静默失效 -> 测试变成"永远通过"的假绿灯 (实测 2 项失败)。
+    抛 ImportError 而非返回 None, 才能真正模拟"未安装"。
+    """
 
-    def load_module(self, name):
-        raise ImportError("simulated missing package: " + name)
+    def find_spec(self, name, path=None, target=None):
+        if name in BLOCKED:
+            raise ImportError("simulated missing package: " + name)
+        return None
 
 
 sys.meta_path.insert(0, _BlockingFinder())

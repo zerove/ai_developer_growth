@@ -25,18 +25,18 @@ Phase 40 处理这条遗留。实测确认缺陷真实存在，且比预想更�
 ```python
 parser = get_parser()
 if not parser.available:
-    return issues          # issues == []，静默
+    return issues  # issues == []，静默
 
 ast_result = parser.parse_file(filepath)
 if ast_result is None:
-    return issues          # 静默
+    return issues  # 静默
 
 try:
     ...
 except ImportError:
-    pass                   # 静默
+    pass  # 静默
 except Exception:
-    pass                   # 静默
+    pass  # 静默
 ```
 
 调用方拿到空列表，**无法区分"检查通过"与"检查根本没跑"**。

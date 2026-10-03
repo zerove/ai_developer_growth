@@ -129,6 +129,7 @@ action 在 `action_map` 中注册），超时改为显式报错。
 try:
     import tree_sitter_c_sharp
     import tree_sitter_cpp
+
     # ... 共 12 个
     HAS_TREE_SITTER = True
 except ImportError:
@@ -529,6 +530,94 @@ CLI 报告成功，磁盘内容**不再能被解析**。这是前五处假绿灯
 `fix-bare-except` 用整行锚定正则，安全；`fix-empty-except` 与
 `fix-unused-var` 均为 report-only 不落盘；`fix-unused-var` 的
 子串计数只会多算不会少算，故只会漏报不会误报。四条均无法破坏代码。
+
+#### 写盘前语法自检兜底（ADR-070）
+
+ADR-069 遗留的建议已实施：`fix_file` 在**写盘这一层**加一道与具体规则
+无关的兜底——修复结果只要无法解析就整体回退，一个字节都不写。
+ADR-069 证明逐条规则修补容易漏（我差点就漏掉 `fix-unused-var` 的核查），
+守卫的有效性依赖"覆盖了所有产生非法代码的路径"这一无法独立验证的假设。
+
+**否决的方案：用现成的 tree-sitter 自检**。项目已有 tree-sitter
+多语言解析器，最自然的做法是直接复用。实测否决：
+
+```python
+tree_sitter.parse(broken, "python").root_node.has_error  # False
+ast.parse(broken)  # IndentationError
+```
+
+tree-sitter 对 ADR-069 那份被破坏的代码 `has_error=False`，
+它**看不见** `IndentationError`。我进一步比对两种判定在本仓库
+全部 681 个 Python 文件上的一致性：**0 处分歧**——两种方式在正常代码上
+完全一致，恰恰在关键样本上不一致。只看一致性统计会得出"tree-sitter 够用"
+的错误结论。故 Python 必须走 `ast.parse`，其余语言才用 tree-sitter。
+
+**测试逼出的真实设计缺陷**：我最初把 `syntax_violation` 设计成两态
+（`True` / `False`），断言写成 `is False` 后立刻失败（实得 `None`）。
+这暴露了语义混淆——"检查通过"与"根本没检查"都记作 `False` 时，
+调用方无法区分"已验证安全"与"不知道"，兜底本身变成不可观测的。
+改为三态：`True`=跑了且失败 / `False`=跑了且通过 / `None`=没跑。
+
+**CLI 报告**：明细里给出具体语法错误（`IndentationError: unexpected
+indent`），汇总里给出被拒文件数，且 `❌ Syntax check failed` 的优先级
+**高于** `✅ Fixes applied`——部分文件成功、部分被拒时仍须报失败。
+
+新增 `tests/test_ast_fixer_write_verification.py`，12 个用例。
+真实 CLI 验证靠 `sitecustomize` 注入把 `fix-empty-function` 换回
+ADR-069 之前的实现：ADR-069 已修，破坏路径在正常子进程中**不可达**，
+初版 CLI 用例因此报了假失败（没测到兜底，只测到守卫还在）。
+
+三处变异，逐处确认生效：
+
+| 变异 | 实测 |
+| --- | --- |
+| A：`ast.parse` 自检被短路 | **7 failed**，CLI 退化回 `✅ Fixes applied: 1/1`，磁盘真实被破坏 |
+| B：汇总不再优先报语法失败 | **2 failed**，输出退化为 `✅ Fixes applied: 1/3`（部分成功却报绿） |
+| C：单文件明细提示被删 | 首轮 **12 passed** → 补断言后 **1 failed** |
+
+**变异 C 是本轮最重要的一课**：删掉明细里的错误提示后测试**全绿**，
+因为断言只检查汇总行。但汇总写的是 "see messages above"，而 "above"
+里根本没有那条消息——汇总在指向虚空。补断言后变异 C 才变红。
+这是三次变异里唯一一次"通过数不降反升"，也正是只看 failed 数会漏掉的情形。
+
+**对 ADR-068 的勘误**：初稿把 `_apply_fix` 行号越界列为
+`applied < auto_safe` 的成因。Phase 45 全仓 209 文件实测该路径
+**0 次触发**——守卫存在但从未被走到，故应标注为**未观测路径**
+而非已发生事实。已在 ADR-068 正文、`FixReport` 注释、
+`FileFixResult` docstring 与相关测试 docstring 中同步降级。
+
+**遗留限制**（未实施，非遗漏）：非 Python 语言走 tree-sitter，
+对缩进类问题不敏感，该路径未经真实破坏样本验证；
+`tools/fix_engine/FixEngine.fix_file` 是另一条独立写盘路径，未加兜底。
+
+#### 测试自身的失效伪装成通过（Phase 46 收口发现）
+
+ADR-070 收口跑全量门禁时出现 **6 项失败**，与本次改动无关：在
+`84ce30a` 的干净检出上同样失败。归因后发现这是**更隐蔽的一类假绿灯**
+——不是代码报绿，而是**测试的防护根本没生效，却一直在贡献绿灯**。
+
+根因：`test_ast_parser_partial_install.py` 与
+`test_semantic_degraded_visibility.py` 里的 `_BlockingFinder`
+只实现了 `find_module` / `load_module`。这两个方法属于 Python 3.12
+**已移除**的旧导入协议，导入系统不再回退到它们，于是该 finder
+被完全忽略、被屏蔽的包照常导入成功。两个文件因此失去对
+Phase 38「全有全无导入」缺陷的回归保护。
+
+```python
+# 修复前: 屏蔽从未生效, 探针照样拿到 tree_sitter_go
+sys.meta_path.insert(0, _BlockingFinder())  # 需要 find_spec 才有效
+```
+
+改为实现 PEP 451 的 `find_spec`（命中时抛 `ImportError` 以真正
+模拟"未安装"）后，14 个用例全绿。
+
+**通过不等于防护有效**——因此对 `ast_parser._shared_parsers`
+注入 Phase 38 之前的全有全无行为做变异，确认 **2 failed**，且
+`ImportError` 明确指向注入行（若屏蔽器再次失效，`missing` 会为空，
+`raise` 根本不会触发）。还原源文件后 14 项重新全绿。
+
+同一判据也回查了 ADR-070 自身的 12 个用例（此前已做 A/B/C 三处
+变异），结论一致。
 
 #### 同源假绿灯已修复：`phase_runner` 路径不存在（ADR-065）
 

@@ -63,6 +63,68 @@ AI 时代开发者成长知识库 + 治理框架（knowledge base + governance f
 
 ---
 
+## 更新记录: 2026-10-03 17:15:08
+
+### 任务
+Git 变更同步
+
+### 变更摘要
+- 变更文件 14 个 (+369 / -71 行)
+  - CHANGELOG.md
+  - CONTEXT.md
+  - ROADMAP.md
+  - docs/adr/ADR-063-tree-sitter-per-language-import.md
+  - docs/adr/ADR-064-semantic-degradation-must-be-visible.md
+  - docs/adr/ADR-068-ast-fix-must-separate-found-from-applied.md
+  - docs/adr/ADR.md
+  - docs/api/cli.md
+  - tests/test_ast_fixer_persistence.py
+  - tests/test_ast_parser_partial_install.py
+  - tests/test_semantic_degraded_visibility.py
+  - tools/scripts/hooks/phase_runner.py
+  - tools/scripts/rules_engine/ast_fixer.py
+  - tools/scripts/rules_engine/ast_nodes.py
+
+## 更新记录: 2026-10-03 17:09:06
+
+### 任务
+Git 变更同步
+
+### 变更摘要
+- 变更文件 12 个 (+313 / -52 行)
+  - CHANGELOG.md
+  - CONTEXT.md
+  - ROADMAP.md
+  - docs/adr/ADR-068-ast-fix-must-separate-found-from-applied.md
+  - docs/adr/ADR.md
+  - docs/api/cli.md
+  - tests/test_ast_fixer_persistence.py
+  - tests/test_ast_parser_partial_install.py
+  - tests/test_semantic_degraded_visibility.py
+  - tools/scripts/hooks/phase_runner.py
+  - tools/scripts/rules_engine/ast_fixer.py
+  - tools/scripts/rules_engine/ast_nodes.py
+
+## 更新记录: 2026-10-03 16:59:27
+
+### 任务
+Git 变更同步
+
+### 变更摘要
+- 变更文件 12 个 (+293 / -38 行)
+  - CHANGELOG.md
+  - CONTEXT.md
+  - ROADMAP.md
+  - docs/adr/ADR-068-ast-fix-must-separate-found-from-applied.md
+  - docs/adr/ADR.md
+  - docs/api/cli.md
+  - tests/test_ast_fixer_persistence.py
+  - tests/test_ast_parser_partial_install.py
+  - tests/test_semantic_degraded_visibility.py
+  - tools/scripts/hooks/phase_runner.py
+  - tools/scripts/rules_engine/ast_fixer.py
+  - tools/scripts/rules_engine/ast_nodes.py
+
 ## 更新记录: 2026-10-03 14:28:59
 
 ### 任务
@@ -719,52 +781,5 @@ Git 变更同步
   - tests/test_coverage_gate_scope.py
   - tests/test_jcode_context_sync.py
   - uv.lock
-
-## 更新记录: 2026-10-02 23:31:45
-
-### 任务
-Git 变更同步
-
-### 变更摘要
-- 变更文件 8 个 (+505 / -364 行)
-  - .jcode/scripts/context-sync.py
-  - CONTEXT.md
-  - pyproject.toml
-  - requirements-dev.txt
-  - tests/test_context_sync_prune.py
-  - tests/test_coverage_gate_scope.py
-  - tests/test_jcode_context_sync.py
-  - uv.lock
-
-## 更新记录: 2026-10-02 23:28:21
-
-### 任务
-Git 变更同步
-
-### 变更摘要
-- 变更文件 6 个 (+342 / -312 行)
-  - .jcode/scripts/context-sync.py
-  - CONTEXT.md
-  - pyproject.toml
-  - requirements-dev.txt
-  - tests/test_coverage_gate_scope.py
-  - uv.lock
-
----
-
-## 更新记录: 2026-10-02 23:10:06
-
-### 任务
-Git 变更同步
-
-### 变更摘要
-- 变更文件 5 个 (+269 / -269 行)
-  - CONTEXT.md
-  - pyproject.toml
-  - requirements-dev.txt
-  - tests/test_coverage_gate_scope.py
-  - uv.lock
-
----
 
 <!-- 滚动窗口: 已自动裁剪 1 条旧更新记录 -->

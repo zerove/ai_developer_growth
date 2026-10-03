@@ -21,6 +21,14 @@ import sys
 import unittest
 from pathlib import Path
 
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from conftest import (  # noqa: E402
+    acquire_repo_mutation_lock as _acquire_repo_mutation_lock,
+)
+from conftest import (
+    acquire_repo_read_lock,
+)
+
 REPO_ROOT = Path(__file__).resolve().parent.parent
 SCRIPT = REPO_ROOT / "tools" / "scripts" / "check_hooks_json_integrity.sh"
 HOOKS_JSON = REPO_ROOT / ".jcode" / "hooks.json"
@@ -30,6 +38,18 @@ class FailOpenDetectorTest(unittest.TestCase):
     """注入 canary 验证检测器的三类判定能力。"""
 
     def setUp(self) -> None:
+        # 跨进程互斥: 本类会真改仓库里的 .jcode/hooks.json。pytest-xdist 下
+        # 多 worker 并行时彼此看不到对方的 addCleanup, 实测 -n 8 下 9 failed
+        # 且 ZZZ-canary 残留在受控配置里。锁必须按"每个用例"获取 ——
+        # 按类获取会让同类的用例仍可并行, 而它们互相改的是同一个文件。
+        #
+        # 用例写法是 unittest.TestCase, 无法注入 pytest fixture,
+        # 故在此直接进入上下文管理器, 并由 addCleanup 退出
+        # (失败路径也保证释放)。
+        lock_cm = _acquire_repo_mutation_lock()
+        lock_cm.__enter__()
+        self.addCleanup(lock_cm.__exit__, None, None, None)
+
         self._backup = HOOKS_JSON.read_text(encoding="utf-8")
         self.addCleanup(self._restore)
 
@@ -131,7 +151,17 @@ class SubcommandOptionTest(unittest.TestCase):
     `self-correction-loop.py` 顶层 usage 只暴露 {run,validate}, 而
     --target/--tests 属于 validate 子命令。若只看顶层 --help, 这个完全
     可用的 hook 会被门禁拦下 —— 那比漏检更糟。
+
+    跨进程共享读锁: 本类只**读**真实 hooks.json, 但同文件正被
+    ``FailOpenDetectorTest`` 真改写。共享锁让多个读者并行, 同时被
+    写者的独占锁挡住 —— 否则会在写者持有 canary 的窗口里读到临时
+    内容而误报失败 (实测 ``-n 8`` 会出现)。
     """
+
+    def setUp(self) -> None:
+        self.read_lock = acquire_repo_read_lock()
+        self.read_lock.__enter__()
+        self.addCleanup(self.read_lock.__exit__, None, None, None)
 
     def test_subcommand_options_are_accepted(self) -> None:
         result = subprocess.run(
@@ -178,7 +208,15 @@ class InterpreterConsistencyTest(unittest.TestCase):
     本机 PATH 里的 python3 是 mise 装的 3.14, 而项目 venv 是 3.11。
     若探测时用错解释器, 依赖 venv 包的脚本会因 ImportError 拿不到 --help,
     参数校验就会被静默跳过 —— 又一次 fail-open, 且不报错。
+
+    跨进程共享读锁: ``test_runs_from_unrelated_cwd`` 会跑真实探测脚本
+    读受控 hooks.json, 需与 ``FailOpenDetectorTest`` 的独占写锁互斥。
     """
+
+    def setUp(self) -> None:
+        self.read_lock = acquire_repo_read_lock()
+        self.read_lock.__enter__()
+        self.addCleanup(self.read_lock.__exit__, None, None, None)
 
     def test_script_prefers_project_interpreter_over_path_python(self) -> None:
         """脚本不得直接用 PATH 里的 python3 探测目标脚本。"""

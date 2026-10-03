@@ -265,9 +265,16 @@ Proc
         assert len(results) == 2
         assert all(isinstance(m, QualityMetrics) for m in results)
 
-    def test_cross_reference_checking(self):
+    def test_cross_reference_checking(self, tmp_path, monkeypatch):
         """Test cross-reference checking with INDEX.md and MOC.md."""
-        # Create INDEX.md and MOC.md
+        # 被测代码按**相对路径**找 INDEX.md / MOC.md, 因此必须切到临时
+        # 目录。此前直接写仓库根再用 unlink 清理, 有两个问题:
+        #   1. pytest-xdist 下多 worker 同时在仓库根建/删同名文件, 互踩;
+        #   2. 一旦仓库根将来真的出现受控的 INDEX.md, 这个 unlink 会
+        #      **删掉真实文件** —— 用例失败就把工作区搞坏。
+        # 故切 cwd 到 tmp_path: 被测代码的相对路径语义不变, 但不再
+        # 触碰工作区, 也就无需互斥锁。
+        monkeypatch.chdir(tmp_path)
         index_content = """# INDEX
 
 - [case-with-ref](case-studies/case-with-ref.md)
@@ -279,8 +286,7 @@ Proc
         Path("INDEX.md").write_text(index_content, encoding="utf-8")
         Path("MOC.md").write_text(moc_content, encoding="utf-8")
 
-        try:
-            content = """# Case With Ref
+        content = """# Case With Ref
 
 ## 背景与挑战
 See [[docs/architecture.md]] for details.
@@ -305,15 +311,11 @@ Process.
 ## 提交前检查
 - [x] 标题格式
 """
-            case_path = self.create_test_case("case-with-ref.md", content)
-            metrics = self.analyzer.analyze_case(case_path)
+        case_path = self.create_test_case("case-with-ref.md", content)
+        metrics = self.analyzer.analyze_case(case_path)
 
-            # Should have cross-reference points
-            assert metrics.cross_references > 0
-        finally:
-            # Cleanup
-            Path("INDEX.md").unlink(missing_ok=True)
-            Path("MOC.md").unlink(missing_ok=True)
+        # Should have cross-reference points
+        assert metrics.cross_references > 0
 
 
 class TestFormatReport:

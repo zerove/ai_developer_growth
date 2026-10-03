@@ -25,6 +25,7 @@ updated: 2026-09-17
 
 | ID | 标题 | 状态 | 日期 |
 |----|------|------|------|
+| [[ADR-073-test-isolation-cross-process-locks|ADR-073]] | 测试改写受控仓库文件必须跨进程互斥，且优先做到不碰工作区 | ✅ 已接受 | 2026-10-03 |
 | [[ADR-072-auto-fix-verify-syntax-before-write|ADR-072]] | auto-fix 写盘前必须校验语法，且拒绝时不得声称已修复 | ✅ 已接受 | 2026-10-03 |
 | [[ADR-071-directory-exit-code-on-rejection|ADR-071]] | 目录模式存在文件被拒时必须以非零退出 | ✅ 已接受 | 2026-10-03 |
 | [[ADR-070-verify-syntax-before-writing|ADR-070]] | 写盘前必须校验修复结果的语法 | ✅ 已接受 | 2026-10-03 |

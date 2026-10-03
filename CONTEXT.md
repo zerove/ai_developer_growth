@@ -51,10 +51,23 @@ AI 时代开发者成长知识库 + 治理框架（knowledge base + governance f
 
 决策全文见 [ADR.md](ADR.md) 索引与 `docs/adr/`。影响本文件的决策：
 
+- **ADR-073**: 测试改写受控仓库文件必须跨进程互斥（写者独占/读者共享），且优先做到不碰工作区
+- **ADR-072**: auto-fix 三条写盘路径补语法兜底，拒绝时不得声称已修复
+- **ADR-071**: ast-fix 目录模式有文件被拒时必须非零退出
 - **ADR-061**: CONTEXT.md 固定头部独立于滚动窗口 + 校验不得 fail-open
 - **ADR-058**: context-sync 双实现并存是刻意设计，不做合并
 - **ADR-057**: CI 心跳检测必须跑在 CI 之外
 - **ADR-056**: cc（圈复杂度）门禁落地，全目录 ≤10
+
+### 未关闭的存量缺陷
+
+- **`optimized_check_directory` 在高负载下静默丢结果**：
+  `tools/scripts/rules_engine/performance.py:328` 的 `_parallel_check` 在
+  xdist `-n 8` 全量跑时用 `future.result(timeout=30)`，超时后把该文件
+  记为 `None` 并从结果里剔除 —— **不报错、不计数、调用方无从察觉**，
+  与本项目"门禁不得 fail-open"的既定约束冲突。实测约 5 次全量 `-n 8`
+  出现 1 次 `test_optimized_check_directory_parallel` 失败，单独跑该文件
+  恒绿（负载相关，非逻辑错误）。本轮为隔离 ADR-073 范围未处理。
 
 ## 计划
 
@@ -62,6 +75,112 @@ AI 时代开发者成长知识库 + 治理框架（knowledge base + governance f
 变更历史以 [CHANGELOG.md](CHANGELOG.md) 为准。
 
 ---
+
+## 更新记录: 2026-10-03 21:16:29
+
+### 任务
+Git 变更同步
+
+### 变更摘要
+- 变更文件 13 个 (+838 / -129 行)
+  - CONTEXT.md
+  - docs/adr/ADR-072-auto-fix-verify-syntax-before-write.md
+  - docs/adr/ADR.md
+  - tests/conftest.py
+  - tests/test_adg_new_modules.py
+  - tests/test_analyze_case_quality.py
+  - tests/test_auto_fix.py
+  - tests/test_auto_fix_write_verification.py
+  - tests/test_check_hooks_json_integrity.py
+  - tests/test_generate_adr_index.py
+  - tools/fix_engine/__init__.py
+  - tools/scripts/hooks_runner.py
+  - tools/scripts/rules_engine/auto_fix.py
+
+## 更新记录: 2026-10-03 21:13:02
+
+### 任务
+Git 变更同步
+
+### 变更摘要
+- 变更文件 13 个 (+817 / -119 行)
+  - CONTEXT.md
+  - docs/adr/ADR-072-auto-fix-verify-syntax-before-write.md
+  - docs/adr/ADR.md
+  - tests/conftest.py
+  - tests/test_adg_new_modules.py
+  - tests/test_analyze_case_quality.py
+  - tests/test_auto_fix.py
+  - tests/test_auto_fix_write_verification.py
+  - tests/test_check_hooks_json_integrity.py
+  - tests/test_generate_adr_index.py
+  - tools/fix_engine/__init__.py
+  - tools/scripts/hooks_runner.py
+  - tools/scripts/rules_engine/auto_fix.py
+
+## 更新记录: 2026-10-03 21:03:13
+
+### 任务
+Git 变更同步
+
+### 变更摘要
+- 变更文件 13 个 (+796 / -100 行)
+  - CONTEXT.md
+  - docs/adr/ADR-072-auto-fix-verify-syntax-before-write.md
+  - docs/adr/ADR.md
+  - tests/conftest.py
+  - tests/test_adg_new_modules.py
+  - tests/test_analyze_case_quality.py
+  - tests/test_auto_fix.py
+  - tests/test_auto_fix_write_verification.py
+  - tests/test_check_hooks_json_integrity.py
+  - tests/test_generate_adr_index.py
+  - tools/fix_engine/__init__.py
+  - tools/scripts/hooks_runner.py
+  - tools/scripts/rules_engine/auto_fix.py
+
+## 更新记录: 2026-10-03 20:56:49
+
+### 任务
+Git 变更同步
+
+### 变更摘要
+- 变更文件 14 个 (+780 / -82 行)
+  - .jcode/hooks.json
+  - CONTEXT.md
+  - docs/adr/ADR-072-auto-fix-verify-syntax-before-write.md
+  - docs/adr/ADR.md
+  - tests/conftest.py
+  - tests/test_adg_new_modules.py
+  - tests/test_analyze_case_quality.py
+  - tests/test_auto_fix.py
+  - tests/test_auto_fix_write_verification.py
+  - tests/test_check_hooks_json_integrity.py
+  - tests/test_generate_adr_index.py
+  - tools/fix_engine/__init__.py
+  - tools/scripts/hooks_runner.py
+  - tools/scripts/rules_engine/auto_fix.py
+
+## 更新记录: 2026-10-03 20:52:43
+
+### 任务
+Git 变更同步
+
+### 变更摘要
+- 变更文件 13 个 (+752 / -64 行)
+  - CONTEXT.md
+  - docs/adr/ADR-072-auto-fix-verify-syntax-before-write.md
+  - docs/adr/ADR.md
+  - tests/conftest.py
+  - tests/test_adg_new_modules.py
+  - tests/test_analyze_case_quality.py
+  - tests/test_auto_fix.py
+  - tests/test_auto_fix_write_verification.py
+  - tests/test_check_hooks_json_integrity.py
+  - tests/test_generate_adr_index.py
+  - tools/fix_engine/__init__.py
+  - tools/scripts/hooks_runner.py
+  - tools/scripts/rules_engine/auto_fix.py
 
 ## 更新记录: 2026-10-03 20:34:04
 
@@ -792,82 +911,6 @@ Git 变更同步
   - CONTEXT.md
   - ROADMAP.md
   - pyproject.toml
-  - uv.lock
-
-## 更新记录: 2026-10-03 01:25:30
-
-### 任务
-Git 变更同步
-
-### 变更摘要
-- 变更文件 3 个 (+1454 / -240 行)
-  - CONTEXT.md
-  - pyproject.toml
-  - uv.lock
-
-## 更新记录: 2026-10-03 01:14:16
-
-### 任务
-Git 变更同步
-
-### 变更摘要
-- 变更文件 2 个 (+354 / -220 行)
-  - CONTEXT.md
-  - uv.lock
-
-## 更新记录: 2026-10-03 01:07:27
-
-### 任务
-Git 变更同步
-
-### 变更摘要
-- 变更文件 11 个 (+727 / -370 行)
-  - .jcode/hooks.json
-  - CHANGELOG.md
-  - CONTEXT.md
-  - ROADMAP.md
-  - docs/adr/ADR-062-fail-open-detector-validates-executability.md
-  - docs/adr/ADR.md
-  - pyproject.toml
-  - tests/test_check_hooks_json_integrity.py
-  - tools/scripts/check_hooks_json_integrity.sh
-  - tools/scripts/rules_engine/ast_parser.py
-  - uv.lock
-
-## 更新记录: 2026-10-03 00:59:29
-
-### 任务
-Git 变更同步
-
-### 变更摘要
-- 变更文件 11 个 (+707 / -347 行)
-  - .jcode/hooks.json
-  - CHANGELOG.md
-  - CONTEXT.md
-  - ROADMAP.md
-  - docs/adr/ADR-062-fail-open-detector-validates-executability.md
-  - docs/adr/ADR.md
-  - pyproject.toml
-  - tests/test_check_hooks_json_integrity.py
-  - tools/scripts/check_hooks_json_integrity.sh
-  - tools/scripts/rules_engine/ast_parser.py
-  - uv.lock
-
-## 更新记录: 2026-10-03 00:44:43
-
-### 任务
-Git 变更同步
-
-### 变更摘要
-- 变更文件 9 个 (+367 / -285 行)
-  - .jcode/hooks.json
-  - CHANGELOG.md
-  - CONTEXT.md
-  - ROADMAP.md
-  - docs/adr/ADR-062-fail-open-detector-validates-executability.md
-  - docs/adr/ADR.md
-  - tests/test_check_hooks_json_integrity.py
-  - tools/scripts/check_hooks_json_integrity.sh
   - uv.lock
 
 <!-- 滚动窗口: 已自动裁剪 1 条旧更新记录 -->

@@ -17,6 +17,9 @@ import unittest
 from pathlib import Path
 from typing import Any
 
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from conftest import acquire_repo_mutation_lock as _acquire_repo_mutation_lock  # noqa: E402
+
 REPO_ROOT = Path(__file__).resolve().parent.parent
 SCRIPT = REPO_ROOT / "tools" / "scripts" / "generate_adr_index.py"
 ADR_DIR = REPO_ROOT / "docs" / "adr"
@@ -151,6 +154,15 @@ class IndexCompletenessTest(unittest.TestCase):
 
 class CliBehaviorTest(unittest.TestCase):
     """CLI 的实际行为 —— 通过子进程跑真实路径。"""
+
+    def setUp(self) -> None:
+        # 跨进程互斥: 本类会真改仓库里的 docs/adr/ADR.md(被测脚本按
+        # 仓库相对路径定位索引, 无法注入临时路径)。pytest-xdist 下
+        # 多 worker 并行时彼此看不到对方的 addCleanup, 实测 -n 8 下
+        # 会互踩并留下 canary。按用例取锁, 失败路径也保证释放。
+        lock_cm = _acquire_repo_mutation_lock()
+        lock_cm.__enter__()
+        self.addCleanup(lock_cm.__exit__, None, None, None)
 
     @staticmethod
     def _run(*args: str) -> subprocess.CompletedProcess[str]:

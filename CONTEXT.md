@@ -63,6 +63,27 @@ AI 时代开发者成长知识库 + 治理框架（knowledge base + governance f
 
 ---
 
+## 更新记录: 2026-10-03 13:55:51
+
+### 任务
+Git 变更同步
+
+### 变更摘要
+- 变更文件 3 个 (+23 / -34 行)
+  - CONTEXT.md
+  - docs/adr/ADR.md
+  - tests/test_ast_fixer_full.py
+
+## 更新记录: 2026-10-03 13:44:50
+
+### 任务
+Git 变更同步
+
+### 变更摘要
+- 变更文件 2 个 (+13 / -4 行)
+  - docs/adr/ADR.md
+  - tests/test_ast_fixer_full.py
+
 ## 更新记录: 2026-10-03 13:24:45
 
 ### 任务
@@ -746,68 +767,6 @@ Git 变更同步
   - pyproject.toml
   - requirements-dev.txt
   - tests/test_coverage_gate_scope.py
-
----
-
-## 更新记录: 2026-10-02 17:49:44
-
-### 任务
-Git 变更同步
-
-### 变更摘要
-- 变更文件 43 个 (+966 / -352 行)
-  - .jcode/hooks.json
-  - AGENTS.md
-  - CONTEXT.md
-  - README.md
-  - docs/architecture/rule-loading.md
-  - docs/case-studies/ai-context-sync-development.md
-  - docs/case-studies/ai-task-prioritizer.md
-  - docs/case-studies/api-design-implementation.md
-  - docs/case-studies/api-monitoring.md
-  - docs/case-studies/cli-tool-development.md
-  - docs/case-studies/data-pipeline.md
-  - docs/case-studies/database-migration.md
-  - docs/case-studies/web-scraping-tool.md
-  - examples/ai-context-sync/pyproject.toml
-  - examples/ai-navigation-web/pyproject.toml
-  - examples/ai-navigation/pyproject.toml
-  - examples/ai-navigation/src/enhanced_tfidf.py
-  - examples/self-correction-loop/src/runner.py
-  - examples/self-correction-loop/src/strategies/pattern.py
-  - examples/self-correction-loop/tests/conftest.py
-  - ... 等共 43 个文件
-
----
-
-## 更新记录: 2026-10-02 17:46:02
-
-### 任务
-Git 变更同步
-
-### 变更摘要
-- 变更文件 43 个 (+935 / -333 行)
-  - .jcode/hooks.json
-  - AGENTS.md
-  - CONTEXT.md
-  - README.md
-  - docs/architecture/rule-loading.md
-  - docs/case-studies/ai-context-sync-development.md
-  - docs/case-studies/ai-task-prioritizer.md
-  - docs/case-studies/api-design-implementation.md
-  - docs/case-studies/api-monitoring.md
-  - docs/case-studies/cli-tool-development.md
-  - docs/case-studies/data-pipeline.md
-  - docs/case-studies/database-migration.md
-  - docs/case-studies/web-scraping-tool.md
-  - examples/ai-context-sync/pyproject.toml
-  - examples/ai-navigation-web/pyproject.toml
-  - examples/ai-navigation/pyproject.toml
-  - examples/ai-navigation/src/enhanced_tfidf.py
-  - examples/self-correction-loop/src/runner.py
-  - examples/self-correction-loop/src/strategies/pattern.py
-  - examples/self-correction-loop/tests/conftest.py
-  - ... 等共 43 个文件
 
 ---
 

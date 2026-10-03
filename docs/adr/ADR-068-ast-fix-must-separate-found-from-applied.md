@@ -1,8 +1,17 @@
 # ADR-068: ast-fix 报告必须区分"发现"与"已应用"
 
-- 状态: ✅ 已接受
-- 日期: 2026-10-03
-- 影响组件: `tools/scripts/hooks/phase_runner.py`, `docs/api/cli.md`
+## 状态
+
+接受
+
+## 日期
+
+2026-10-03
+
+## 影响组件
+
+- `tools/scripts/hooks/phase_runner.py`
+- `docs/api/cli.md`
 
 ## 背景
 

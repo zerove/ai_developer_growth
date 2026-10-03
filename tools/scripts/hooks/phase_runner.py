@@ -309,6 +309,16 @@ def _run_ast_fix(path: Path, dry_run: bool) -> int:
             syntax_violations += 1
 
     _print_directory_summary(total_found, total_auto_safe, total_applied, dry_run, syntax_violations)
+    # ADR-071: 目录路径此前无条件 return 0 —— 哪怕 _print_directory_summary
+    # 已经打印了 "❌ Syntax check failed", 进程退出码仍是 0, CI 照样判绿。
+    # 输出报失败而退出码报成功, 二者自相矛盾, 且**失败的那一个信号恰好
+    # 是脚本唯一真正读的那一个**。单文件路径已按 ADR-070 修正过
+    # (violations 参与返回值), 目录路径当时漏掉了同一处。
+    # 单文件路径的退出码是"auto_safe 项数"这一既有约定, 与通过/失败无关;
+    # 目录路径返回 0 本就只表示"扫完了", 因此叠加"有被拒文件则非零"
+    # 不破坏任何既有约定, 只是把它从"总是 0"改成"有失败才是 0"。
+    if syntax_violations:
+        return 1
     return 0
 
 

@@ -63,6 +63,36 @@ AI 时代开发者成长知识库 + 治理框架（knowledge base + governance f
 
 ---
 
+## 更新记录: 2026-10-03 19:58:30
+
+### 任务
+Git 变更同步
+
+### 变更摘要
+- 变更文件 7 个 (+201 / -55 行)
+  - CHANGELOG.md
+  - CONTEXT.md
+  - ROADMAP.md
+  - docs/adr/ADR.md
+  - docs/api/cli.md
+  - tests/test_ast_fixer_write_verification.py
+  - tools/scripts/hooks/phase_runner.py
+
+## 更新记录: 2026-10-03 19:51:41
+
+### 任务
+Git 变更同步
+
+### 变更摘要
+- 变更文件 7 个 (+186 / -42 行)
+  - CHANGELOG.md
+  - CONTEXT.md
+  - ROADMAP.md
+  - docs/adr/ADR.md
+  - docs/api/cli.md
+  - tests/test_ast_fixer_write_verification.py
+  - tools/scripts/hooks/phase_runner.py
+
 ## 更新记录: 2026-10-03 19:34:54
 
 ### 任务
@@ -826,32 +856,6 @@ Git 变更同步
   - docs/adr/ADR-062-fail-open-detector-validates-executability.md
   - docs/adr/ADR.md
   - tests/test_check_hooks_json_integrity.py
-  - tools/scripts/check_hooks_json_integrity.sh
-  - uv.lock
-
-## 更新记录: 2026-10-03 00:13:53
-
-### 任务
-Git 变更同步
-
-### 变更摘要
-- 变更文件 5 个 (+106 / -399 行)
-  - .jcode/hooks.json
-  - CONTEXT.md
-  - docs/adr/ADR.md
-  - tools/scripts/check_hooks_json_integrity.sh
-  - uv.lock
-
-## 更新记录: 2026-10-03 00:13:53
-
-### 任务
-Git 变更同步
-
-### 变更摘要
-- 变更文件 5 个 (+93 / -384 行)
-  - .jcode/hooks.json
-  - CONTEXT.md
-  - docs/adr/ADR.md
   - tools/scripts/check_hooks_json_integrity.sh
   - uv.lock
 

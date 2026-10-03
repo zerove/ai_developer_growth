@@ -25,6 +25,7 @@ updated: 2026-09-17
 
 | ID | 标题 | 状态 | 日期 |
 |----|------|------|------|
+| [[ADR-071-directory-exit-code-on-rejection|ADR-071]] | 目录模式存在文件被拒时必须以非零退出 | ✅ 已接受 | 2026-10-03 |
 | [[ADR-070-verify-syntax-before-writing|ADR-070]] | 写盘前必须校验修复结果的语法 | ✅ 已接受 | 2026-10-03 |
 | [[ADR-069-auto-fix-must-not-break-syntax|ADR-069]] | 自动修复不得产出无法解析的代码 | ✅ 已接受 | 2026-10-03 |
 | [[ADR-068-ast-fix-must-separate-found-from-applied|ADR-068]] | ast-fix 报告必须区分"发现"与"已应用" | ✅ 已接受 | 2026-10-03 |

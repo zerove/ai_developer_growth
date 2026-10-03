@@ -138,7 +138,7 @@ ADR-064 是"检查没跑却报通过"，ADR-065 是"检查了 0 个却报通过"
   "无法解析"处理并提示，不会误报成功。
 - dry-run 行为不变，仍不触碰文件。
 
-## 落盘修复暴露的新风险（未处理，需决策）
+## 落盘修复暴露的新风险（已由 ADR-067 处理）
 
 修复前 `fix_file` 从不写盘，因此下列问题**从未有机会显现**。
 写回生效后，它们变得可达：
@@ -151,7 +151,7 @@ ADR-064 是"检查没跑却报通过"，ADR-065 是"检查了 0 个却报通过"
 pass  →  pass  # TODO: Handle this exception
 ```
 
-该规则在 `_fix_bare_except_pass` 中被标为 `auto_safe=True`，
+该规则原在 `_fix_bare_except_pass` 中被标为 `auto_safe=True`，
 但插入 `# TODO` 注释并非"安全修复"——它降低代码质量而非提升，
 且 204 处批量注入会污染整个代码库。
 
@@ -159,11 +159,13 @@ pass  →  pass  # TODO: Handle this exception
 置信度 0.95）是真正的语义安全改写。把二者同标 `auto_safe=True`
 混淆了"语法安全"与"质量有益"。
 
-**本 ADR 未处理此项**：修改规则默认值会改变工具行为，
-超出"让报告与磁盘一致"的范围，且 204 处批量改写属于
-需要用户确认的改动。已记录为待决策项。
+**处理结果**：已由
+[ADR-067](ADR-067-auto-safe-means-semantically-safe.md) 解决——
+降级为 `auto_safe=False`，实测真实代码库 auto-safe 修复
+从 204 降到 2，25 处 `fix-empty-except` 仍被报告供人工决定。
 
 ## 相关 ADR
 
+- ADR-067：auto_safe 只授予语义安全的改写（处理本 ADR 的遗留风险）
 - ADR-065：路径不存在必须显式失败（同源系列的另一类假绿灯）
 - ADR-064：语义检查降级必须可见

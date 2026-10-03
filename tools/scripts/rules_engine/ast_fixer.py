@@ -220,14 +220,22 @@ class ASTFixer:
                     fixes.append(
                         FixResult(
                             rule_id="fix-empty-except",
-                            description="Add logging for silenced exception",
+                            description="Flag silenced exception with a TODO comment",
                             file=str(filepath),
                             line=i + 1,
                             column=0,
                             original="pass",
                             replacement="pass  # TODO: Handle this exception",
                             confidence=0.8,
-                            auto_safe=True,
+                            # ADR-067: 原为 auto_safe=True, 但本规则插入的是
+                            # # TODO 注释而非真正处理异常 —— 它标记问题而非修复
+                            # 问题, 降低代码质量。ADR-066 让 fix_file 真正写盘
+                            # 后, 实测 --path tools/scripts --dry-run 有 204 处
+                            # auto-safe 修复且抽样全为本规则, 批量注入会污染代码库。
+                            # 对比 fix-bare-except (except: -> except Exception:)
+                            # 是真正的语义安全改写。二者同标 auto_safe 混淆了
+                            # "语法安全"与"质量有益"。降级后仍会被报告, 需人工决定。
+                            auto_safe=False,
                         )
                     )
 

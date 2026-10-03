@@ -63,6 +63,17 @@ AI 时代开发者成长知识库 + 治理框架（knowledge base + governance f
 
 ---
 
+## 更新记录: 2026-10-03 14:06:01
+
+### 任务
+Git 变更同步
+
+### 变更摘要
+- 变更文件 3 个 (+34 / -64 行)
+  - CONTEXT.md
+  - docs/adr/ADR-068-ast-fix-must-separate-found-from-applied.md
+  - docs/adr/ADR.md
+
 ## 更新记录: 2026-10-03 13:55:51
 
 ### 任务
@@ -749,20 +760,6 @@ Git 变更同步
 
 ### 变更摘要
 - 变更文件 4 个 (+239 / -126 行)
-  - CONTEXT.md
-  - pyproject.toml
-  - requirements-dev.txt
-  - tests/test_coverage_gate_scope.py
-
----
-
-## 更新记录: 2026-10-02 17:53:31
-
-### 任务
-Git 变更同步
-
-### 变更摘要
-- 变更文件 4 个 (+225 / -107 行)
   - CONTEXT.md
   - pyproject.toml
   - requirements-dev.txt

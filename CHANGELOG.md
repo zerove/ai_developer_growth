@@ -688,6 +688,46 @@ returncode=127
 **两种不同成因**——前者已修（工作区状态依赖），后者是环境抖动。
 不分清就会把环境问题当成回归，反复改坏代码。
 
+#### 测试隔离缺陷：三个用例并行下改写受版本控制的仓库文件
+
+排查偶发失败时发现另一类问题。**串行与并行结果不一致**：
+
+```text
+tests/test_check_hooks_json_integrity.py
+tests/test_generate_adr_index.py
+tests/test_analyze_case_quality.py
+
+串行:   41 passed
+-n 8:   5 / 8 / 10 failed（三次跑，三种数量）
+```
+
+根因是这些用例**直接改写仓库内的受版本控制文件**，多个 worker 互相踩：
+
+| 文件 | 被改写内容 | 恢复方式 |
+| --- | --- | --- |
+| `.jcode/hooks.json` | 追加 `ZZZ-canary` 假 hook | `addCleanup` |
+| `docs/adr/ADR.md` | 删行 / 加 canary 行 | `addCleanup` |
+| `INDEX.md`、`MOC.md`（cwd 相对） | 写索引文件 | `try/finally` |
+
+`addCleanup` 本身可靠，但**并行 worker 之间没有互斥**：A 的 cleanup
+会用自己备份的旧内容覆盖 B 刚注入的内容，或把 canary 留在文件里。
+
+实测后果不止是断言失败——跑完 `-n 8` 后 `git status` 出现
+`M .jcode/hooks.json`，三个 `ZZZ-canary` 块**留在受版本控制的配置文件里**。
+若此时提交，就会把 canary 写进真实 hooks 配置。
+
+**本次未改这三个文件**：它们与 ADR-070 及本批修复无关，属存量缺陷；
+且修复方式（改为向 tmp 目录注入、或加 xdist group 串行化）需要逐个
+核对各用例的断言意图，不宜顺手改。已据实记录为待办。
+
+验证本批改动**未引入**该问题：`test_rule_docs_mapper_round2.py`
+与 `test_rule_docs_mapper.py` 在 `-n 8` 下 31 项全绿。
+
+**并行度边界（实测，勿越界引用）**：全量在 `-n 4` 下 4588 passed 且
+`git status` 除文档外无改动；提高到 `-n 8` 时上述三个文件的用例会开始
+互相干扰。也就是说"全量绿且不污染仓库"这个结论**只在 `-n 4` 下成立**，
+本仓库当前的测试隔离尚不足以支撑 `-n 8`。
+
 #### 同源假绿灯已修复：`phase_runner` 路径不存在（ADR-065）
 
 原遗留记录只提到 `semantic-check`。按同一模式排查后确认**范围更广**，

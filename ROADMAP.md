@@ -92,6 +92,34 @@
     已修复：非 dry-run 写回 + `OSError` 返回 `None` +
     `FixReport.applied_fixes` 自证生效数 + 单文件 `verbose=True`。
     变异验证：移除写回并恢复 verbose=False 后 **5 failed / 5 passed**
+  - **`fix-empty-except` 被误标 auto_safe（Phase 43 已修复，ADR-067）**
+    ADR-066 让写盘生效后立即显现：`--path tools/scripts --dry-run`
+    实测 **204 处 auto-safe 修复且抽样全为该规则**，替换内容是
+    `pass -> pass  # TODO: Handle this exception`。它只**标记**问题
+    而非**修复**，204 处批量注入会污染代码库。
+    审计全部 5 条规则后仅它误标，已降级为 `auto_safe=False`
+    并修正 description（原写 "Add logging"，实际只插 TODO）。
+    实测 auto-safe **204 → 2**，25 处仍被报告供人工决定。
+    **双向变异验证**：还原 True / 过度降级 `fix-bare-except`
+    两处变异实测 **8 failed / 9 passed**，两个方向都有用例守住
+  - **ast-fix 谎报"已应用"（Phase 44 已修复，ADR-068）**
+    Phase 43 降级后用真实 CLI 复验立刻暴露：CLI 打印
+    `Total fixes: 1 / ✅ Fixes applied` 而磁盘**一个字节都没变**。
+    根因：`_fix_single_file` 只返回**一个**整数（发现数），
+    汇总却拿它当"已应用数"。ADR-066 引入 `applied_fixes` 正是为了
+    区分二者，但**只改了 `FixReport`，没改 CLI 报告层**；
+    Phase 43 的 report-only 规则让这三个数**第一次真的不相等**，
+    于是缺陷显形。
+    已引入 `FileFixResult(NamedTuple)` 承载 found/auto_safe/applied，
+    结论行按 **applied** 选择；三数在输出中全部可见。
+    三处变异实测 **3 failed / 2 passed**、**1 failed / 4 passed**、
+    **3 failed / 14 passed**
+  - **过程教训（二次）**：
+    - **变异验证出现过假阴性**：第 2 处变异被第 1 处掩盖，
+      探针根本没走到被改的分支。必须逐处单独确认生效
+    - **改退出码时自造回归又改回契约**：首版按"applied"返回，
+      查出 `docs/api/cli.md` 契约是 auto-safe 计数后回退。
+      顺带发现旧断言写死的 `2` 是发现数，量纲与被测量不符
   - **方法论**：Phase 40 初版结论"`ast-fix` 两环境零输出、无法分辨"**错误**，
     原因是探针文件不含任何可修复缺陷，健康环境本就无输出 ——
     变量没被隔离。验证"降级是否可见"时，健康环境对照必须有真实工作量

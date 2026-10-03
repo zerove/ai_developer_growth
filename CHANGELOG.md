@@ -373,7 +373,8 @@ fixes 明细: rule='fix-empty-except' line=9 auto_safe=True
 3. 单文件路径 `verbose` 显式设为 `True`，打印修复明细
 
 实测：非 dry-run 落盘且 `磁盘 == fixed_content`；dry-run 不动文件
-且 `applied_fixes=0`；对已修复文件再跑 `total_fixes=0`（幂等）。
+且 `applied_fixes=0`；对已修复文件再跑 `applied_fixes=0`（幂等，
+口径见下方 ADR-067 的说明修正）。
 变异验证（移除写回 + 恢复 verbose=False，先确认变异生效）
 实测 **5 failed / 5 passed**，失败的 5 个全部对应两个缺陷。
 
@@ -386,6 +387,95 @@ ADR-065「检查了 0 个却报通过」、ADR-066「**声称已修改却没修�
 单文件路径根本不经过它——断言写错了对象，不是实现有问题。
 与 Phase 40"给函数内 `from`-import 的局部名字赋值"同源：
 **没读代码就猜某个字符串出现在哪条路径上。**
+
+#### auto_safe 分级纠正（ADR-067）
+
+ADR-066 让 `fix_file` 真正写盘后，此前不可达的 `auto_safe`
+标记问题立即显现：实测 `ast-fix --path tools/scripts --dry-run`
+有 **204 处 auto-safe 修复**，抽样查看**全部**是 `fix-empty-except`，
+其替换内容为 `pass  ->  pass  # TODO: Handle this exception`。
+
+审计 `ast_fixer.py` 全部 5 条规则，只有它被误标：
+
+| rule_id | 改写内容 | auto_safe | 判定 |
+| --- | --- | --- | --- |
+| `fix-bare-except` | `except:` → `except Exception:` | True | 正确 |
+| `fix-empty-except` | `pass` → `pass  # TODO: ...` | ~~True~~ → **False** | **降级** |
+| `fix-unused-var` | `x` → `_x` | False | 本就需审查 |
+| `fix-empty-function` | 插入 `pass` | True | 正确 |
+| `suggest-refactor` | 空替换（纯建议） | False | 本就不是改写 |
+
+分级原则：`auto_safe=True` 只授予"语义等价且质量提升"的改写，
+不授予"仅仅是把问题标出来"的建议。同时修正 `description`：
+原为 `"Add logging for silenced exception"`，但它实际插入
+`# TODO` 注释，**根本没有加日志**。
+
+实测（真实代码库 `tools/scripts`）：auto-safe 修复 **204 → 2**，
+25 处 `fix-empty-except` 仍被报告供人工决定——降级只影响
+"是否自动应用"，不影响"是否被发现"。
+
+**双向变异验证**：只验证"降级生效"不够，过度纠正同样是缺陷。
+两处变异（`fix-empty-except` 还原 True / `fix-bare-except` 降级 False）
+先确认均已生效，实测 **8 failed / 9 passed**，两方向都有用例守住。
+
+**顺带修正两个源自 ADR-066 的过时断言**：降级后
+`test_ast_fixer_persistence.py` 出现 2 个失败，检查发现是断言写错：
+- `applied_fixes == total_fixes` → 改为 `== auto_safe_fixes`。
+  ADR-066 引入 `applied_fixes` 的**初衷**就是让两数可以不等，
+  当时的测试却断言必须相等，自相矛盾
+- `total_fixes == 0`（幂等）→ 改为 `applied_fixes == 0`。
+  幂等要保证的是"不重复**应用**"，而非"不重复**发现**"
+
+两个修正同指一件事：**"发现"与"应用"是两个不同的量**，
+断言必须分别对准。
+
+#### ast-fix 谎报"已应用"（ADR-068）
+
+ADR-067 降级后用真实 CLI 复验，**立刻撞上另一处假绿灯**：
+
+```
+$ hooks_runner.py ast-fix --path <含 except-pass 的目录>
+      Total fixes: 1
+      ✅ Fixes applied
+$ cat 探针文件          # 一个字节都没变
+```
+
+根因：`_fix_single_file` 只返回**一个**整数 `report.total_fixes`
+（**发现数**），汇总却拿它打印"已应用"。ADR-066 引入
+`applied_fixes` 就是为了区分二者，但**只改了 `FixReport`，
+没改 CLI 报告层**。ADR-067 引入 report-only 规则，
+让这三个数**第一次真的不相等**，缺陷因此显形。
+
+修复：引入 `FileFixResult(NamedTuple)` 承载 `found` / `auto_safe` /
+`applied` 三个计数，结论行按 **`applied`** 而非 `found` 选择。
+
+实测（真实 CLI 逐例比对磁盘）：
+
+| 场景 | found | auto_safe | applied | 磁盘 | 退出码 |
+| --- | --- | --- | --- | --- | --- |
+| 仅 report-only（目录） | 1 | 0 | 0 | 未变 | 0 |
+| 仅 report-only（单文件） | 1 | 0 | 0 | 未变 | 0 |
+| 混合 auto-safe + report-only | 2 | 1 | 1 | 仅 auto-safe 那个被改 | 0 |
+| dry-run | 2 | 1 | 0 | 未变 | 1 |
+| 健康代码库 | 0 | 0 | 0 | 未变 | 0 |
+
+**一次自造回归**：首版我把单文件退出码从 `auto_safe` 改成
+`applied`（想让它反映真实改动），结果
+`test_cli_dry_run_does_not_change_file` 失败。复查
+`docs/api/cli.md` 才发现契约明文是"退出码 = auto-safe 修复数"，
+**必须**回退。顺带查明该断言写死的 `2` 是**发现数**，
+而它测的是退出码——量纲都不对。若当初它写成 `> 0`，
+这次契约修正将无任何测试阻挡。新测试因此对"三数恰好相等"的
+fixture 也**分开断言**，不让数字巧合互相掩盖。
+
+**变异验证的假阴性**：第 2 处变异（抹掉 review-only 分支）
+首轮显示 3 failed，看似生效，实则**被第 1 处变异掩盖**——
+探针走的是 `applied=1` 分支，根本没触达被改的那条分支。
+还原第 1 处后复测，才确认真正生效（1 failed / 4 passed）。
+每处变异都必须单独确认生效，不能借别人的输出。
+
+三处变异实测：**3 failed / 2 passed**、**1 failed / 4 passed**、
+**3 failed / 14 passed**。
 
 #### 同源假绿灯已修复：`phase_runner` 路径不存在（ADR-065）
 

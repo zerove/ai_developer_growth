@@ -359,13 +359,16 @@ def _match_rule_to_docs(
 
 def build_mapping(
     rule_dir: Path | None = None,
-    docs_dir: Path = DOCS_DIR,
+    docs_dir: Path | None = None,
     case_studies: bool = True,
 ) -> dict[str, list[dict[str, str]]]:
     """
     构建完整的规则→文档映射。
     对每条规则，通过关键词匹配找出最相关的 1-3 篇文档。
     """
+    # 同 rebuild_mapping: 调用时再取 DOCS_DIR, 否则 monkeypatch 无效。
+    if docs_dir is None:
+        docs_dir = DOCS_DIR
     # 1. 扫描文档关键词
     doc_keywords = _scan_documents(docs_dir, case_studies)
 
@@ -384,9 +387,16 @@ def build_mapping(
 
 def rebuild_mapping(
     rule_dir: Path | None = None,
-    output_path: Path = MAPPING_CACHE,
+    output_path: Path | None = None,
 ) -> dict[str, list[dict[str, str]]]:
     """重建映射索引并写入缓存。"""
+    # 默认值在**调用时**解析, 而不是在定义/导入时绑定成常量。
+    # 写成 `output_path: Path = MAPPING_CACHE` 会在导入那一刻把当时的
+    # 路径固化成默认参数, 之后 monkeypatch 模块属性 MAPPING_CACHE
+    # 也不会生效 —— 测试于是读到仓库真实文件, 变成依赖工作区状态的
+    # 随机失败 (实测: 该用例在基线上偶发红)。
+    if output_path is None:
+        output_path = MAPPING_CACHE
     print("Building rule-docs mapping...")
     mapping = build_mapping(rule_dir=rule_dir)
 
@@ -399,8 +409,12 @@ def rebuild_mapping(
     return mapping
 
 
-def query_mapping(rule_id: str, mapping_path: Path = MAPPING_CACHE) -> list[dict[str, str]]:
+def query_mapping(rule_id: str, mapping_path: Path | None = None) -> list[dict[str, str]]:
     """查询单条规则的关联文档。"""
+    # 同 rebuild_mapping: 必须在调用时读 MAPPING_CACHE, 否则
+    # monkeypatch 无法替换它 (见上方说明)。
+    if mapping_path is None:
+        mapping_path = MAPPING_CACHE
     if not mapping_path.exists():
         print("Mapping not found. Run with --rebuild first.")
         return []

@@ -160,6 +160,27 @@ class TestBuildAndQuery:
         assert rdm.query_mapping("any", mapping_path=missing) == []
         assert "rebuild first" in capsys.readouterr().out
 
+    def test_default_args_resolve_mapping_cache_at_call_time(
+        self, workspace: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """省略 mapping_path/output_path 时必须在**调用时**读 MAPPING_CACHE。
+
+        若写成 `mapping_path: Path = MAPPING_CACHE`, 默认值会在**导入时**
+        被固化成仓库真实路径, 于是 monkeypatch 模块属性完全无效 ——
+        测试悄悄去读工作区的 `.jcode/rule-docs-mapping.json`(一个未跟踪
+        的生成物), 变成依赖工作区状态的随机失败。
+        同一个陷阱已在本文件 `_scan_documents` 上出现过一次, 那里是用
+        `_patch_scan` 绕过去的; 这里把默认参数绑定本身修掉, 并锁住该行为。
+        """
+        _patch_scan(monkeypatch, workspace)
+        cache = rdm.MAPPING_CACHE
+        assert cache == workspace / ".jcode" / "rule-docs-mapping.json", "夹具未把缓存指向 tmp_path"
+        # 仓库真实缓存可能不存在、也可能缺该规则, 两者都不应影响这里。
+        rdm.query_mapping("py-bare-except")
+        rdm.rebuild_mapping()
+        assert cache.exists(), "rebuild_mapping 未写入 monkeypatch 后的缓存路径"
+        assert "py-bare-except" in json.loads(cache.read_text(encoding="utf-8"))
+
 
 class TestMain:
     def _patch_build(self, monkeypatch: pytest.MonkeyPatch, workspace: Path) -> None:

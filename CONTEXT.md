@@ -63,6 +63,207 @@ AI 时代开发者成长知识库 + 治理框架（knowledge base + governance f
 
 ---
 
+## 更新记录: 2026-10-03 19:02:46
+
+### 任务
+Git 变更同步
+
+### 变更摘要
+- 变更文件 10 个 (+560 / -197 行)
+  - CHANGELOG.md
+  - CONTEXT.md
+  - ROADMAP.md
+  - docs/adr/ADR-063-tree-sitter-per-language-import.md
+  - docs/adr/ADR-064-semantic-degradation-must-be-visible.md
+  - docs/adr/ADR-070-verify-syntax-before-writing.md
+  - tests/test_ast_parser_partial_install.py
+  - tests/test_rule_docs_mapper_round2.py
+  - tests/test_semantic_degraded_visibility.py
+  - tools/scripts/rules_engine/rule_docs_mapper.py
+
+## 更新记录: 2026-10-03 18:57:41
+
+### 任务
+Git 变更同步
+
+### 变更摘要
+- 变更文件 10 个 (+542 / -186 行)
+  - CHANGELOG.md
+  - CONTEXT.md
+  - ROADMAP.md
+  - docs/adr/ADR-063-tree-sitter-per-language-import.md
+  - docs/adr/ADR-064-semantic-degradation-must-be-visible.md
+  - docs/adr/ADR-070-verify-syntax-before-writing.md
+  - tests/test_ast_parser_partial_install.py
+  - tests/test_rule_docs_mapper_round2.py
+  - tests/test_semantic_degraded_visibility.py
+  - tools/scripts/rules_engine/rule_docs_mapper.py
+
+## 更新记录: 2026-10-03 18:12:07
+
+### 任务
+Git 变更同步
+
+### 变更摘要
+- 变更文件 11 个 (+500 / -176 行)
+  - .jcode/hooks.json
+  - CHANGELOG.md
+  - CONTEXT.md
+  - ROADMAP.md
+  - docs/adr/ADR-063-tree-sitter-per-language-import.md
+  - docs/adr/ADR-064-semantic-degradation-must-be-visible.md
+  - docs/adr/ADR-070-verify-syntax-before-writing.md
+  - tests/test_ast_parser_partial_install.py
+  - tests/test_rule_docs_mapper_round2.py
+  - tests/test_semantic_degraded_visibility.py
+  - tools/scripts/rules_engine/rule_docs_mapper.py
+
+## 更新记录: 2026-10-03 18:06:46
+
+### 任务
+Git 变更同步
+
+### 变更摘要
+- 变更文件 11 个 (+482 / -165 行)
+  - .jcode/hooks.json
+  - CHANGELOG.md
+  - CONTEXT.md
+  - ROADMAP.md
+  - docs/adr/ADR-063-tree-sitter-per-language-import.md
+  - docs/adr/ADR-064-semantic-degradation-must-be-visible.md
+  - docs/adr/ADR-070-verify-syntax-before-writing.md
+  - tests/test_ast_parser_partial_install.py
+  - tests/test_rule_docs_mapper_round2.py
+  - tests/test_semantic_degraded_visibility.py
+  - tools/scripts/rules_engine/rule_docs_mapper.py
+
+## 更新记录: 2026-10-03 18:00:42
+
+### 任务
+Git 变更同步
+
+### 变更摘要
+- 变更文件 11 个 (+463 / -154 行)
+  - .jcode/hooks.json
+  - CHANGELOG.md
+  - CONTEXT.md
+  - ROADMAP.md
+  - docs/adr/ADR-063-tree-sitter-per-language-import.md
+  - docs/adr/ADR-064-semantic-degradation-must-be-visible.md
+  - docs/adr/ADR-070-verify-syntax-before-writing.md
+  - tests/test_ast_parser_partial_install.py
+  - tests/test_rule_docs_mapper_round2.py
+  - tests/test_semantic_degraded_visibility.py
+  - tools/scripts/rules_engine/rule_docs_mapper.py
+
+## 更新记录: 2026-10-03 17:52:57
+
+### 任务
+Git 变更同步
+
+### 变更摘要
+- 变更文件 11 个 (+443 / -144 行)
+  - .jcode/hooks.json
+  - CHANGELOG.md
+  - CONTEXT.md
+  - ROADMAP.md
+  - docs/adr/ADR-063-tree-sitter-per-language-import.md
+  - docs/adr/ADR-064-semantic-degradation-must-be-visible.md
+  - docs/adr/ADR-070-verify-syntax-before-writing.md
+  - tests/test_ast_parser_partial_install.py
+  - tests/test_rule_docs_mapper_round2.py
+  - tests/test_semantic_degraded_visibility.py
+  - tools/scripts/rules_engine/rule_docs_mapper.py
+
+## 更新记录: 2026-10-03 17:49:21
+
+### 任务
+Git 变更同步
+
+### 变更摘要
+- 变更文件 10 个 (+418 / -133 行)
+  - CHANGELOG.md
+  - CONTEXT.md
+  - ROADMAP.md
+  - docs/adr/ADR-063-tree-sitter-per-language-import.md
+  - docs/adr/ADR-064-semantic-degradation-must-be-visible.md
+  - docs/adr/ADR-070-verify-syntax-before-writing.md
+  - tests/test_ast_parser_partial_install.py
+  - tests/test_rule_docs_mapper_round2.py
+  - tests/test_semantic_degraded_visibility.py
+  - tools/scripts/rules_engine/rule_docs_mapper.py
+
+## 更新记录: 2026-10-03 17:46:12
+
+### 任务
+Git 变更同步
+
+### 变更摘要
+- 变更文件 10 个 (+400 / -122 行)
+  - CHANGELOG.md
+  - CONTEXT.md
+  - ROADMAP.md
+  - docs/adr/ADR-063-tree-sitter-per-language-import.md
+  - docs/adr/ADR-064-semantic-degradation-must-be-visible.md
+  - docs/adr/ADR-070-verify-syntax-before-writing.md
+  - tests/test_ast_parser_partial_install.py
+  - tests/test_rule_docs_mapper_round2.py
+  - tests/test_semantic_degraded_visibility.py
+  - tools/scripts/rules_engine/rule_docs_mapper.py
+
+## 更新记录: 2026-10-03 17:42:37
+
+### 任务
+Git 变更同步
+
+### 变更摘要
+- 变更文件 11 个 (+388 / -106 行)
+  - .jcode/hooks.json
+  - CHANGELOG.md
+  - CONTEXT.md
+  - ROADMAP.md
+  - docs/adr/ADR-063-tree-sitter-per-language-import.md
+  - docs/adr/ADR-064-semantic-degradation-must-be-visible.md
+  - docs/adr/ADR-070-verify-syntax-before-writing.md
+  - tests/test_ast_parser_partial_install.py
+  - tests/test_rule_docs_mapper_round2.py
+  - tests/test_semantic_degraded_visibility.py
+  - tools/scripts/rules_engine/rule_docs_mapper.py
+
+## 更新记录: 2026-10-03 17:38:32
+
+### 任务
+Git 变更同步
+
+### 变更摘要
+- 变更文件 10 个 (+363 / -89 行)
+  - CHANGELOG.md
+  - CONTEXT.md
+  - ROADMAP.md
+  - docs/adr/ADR-063-tree-sitter-per-language-import.md
+  - docs/adr/ADR-064-semantic-degradation-must-be-visible.md
+  - docs/adr/ADR-070-verify-syntax-before-writing.md
+  - tests/test_ast_parser_partial_install.py
+  - tests/test_rule_docs_mapper_round2.py
+  - tests/test_semantic_degraded_visibility.py
+  - tools/scripts/rules_engine/rule_docs_mapper.py
+
+## 更新记录: 2026-10-03 17:16:30
+
+### 任务
+Git 变更同步
+
+### 变更摘要
+- 变更文件 8 个 (+231 / -64 行)
+  - .jcode/hooks.json
+  - CHANGELOG.md
+  - CONTEXT.md
+  - ROADMAP.md
+  - docs/adr/ADR-063-tree-sitter-per-language-import.md
+  - docs/adr/ADR-064-semantic-degradation-must-be-visible.md
+  - tests/test_ast_parser_partial_install.py
+  - tests/test_semantic_degraded_visibility.py
+
 ## 更新记录: 2026-10-03 17:15:08
 
 ### 任务
@@ -645,141 +846,6 @@ Git 变更同步
   - ROADMAP.md
   - docs/adr/ADR.md
   - tools/scripts/check_hooks_json_integrity.sh
-  - uv.lock
-
-## 更新记录: 2026-10-02 23:54:36
-
-### 任务
-Git 变更同步
-
-### 变更摘要
-- 变更文件 3 个 (+98 / -271 行)
-  - .jcode/hooks.json
-  - CONTEXT.md
-  - uv.lock
-
-## 更新记录: 2026-10-02 23:54:12
-
-### 任务
-Git 变更同步
-
-### 变更摘要
-- 变更文件 3 个 (+87 / -253 行)
-  - .jcode/hooks.json
-  - CONTEXT.md
-  - uv.lock
-
-## 更新记录: 2026-10-02 23:54:11
-
-### 任务
-Git 变更同步
-
-### 变更摘要
-- 变更文件 3 个 (+76 / -237 行)
-  - .jcode/hooks.json
-  - CONTEXT.md
-  - uv.lock
-
-## 更新记录: 2026-10-02 23:53:54
-
-### 任务
-Git 变更同步
-
-### 变更摘要
-- 变更文件 3 个 (+66 / -206 行)
-  - .jcode/hooks.json
-  - CONTEXT.md
-  - uv.lock
-
-## 更新记录: 2026-10-02 23:53:54
-
-### 任务
-Git 变更同步
-
-### 变更摘要
-- 变更文件 3 个 (+55 / -181 行)
-  - .jcode/hooks.json
-  - CONTEXT.md
-  - uv.lock
-
-## 更新记录: 2026-10-02 23:53:27
-
-### 任务
-Git 变更同步
-
-### 变更摘要
-- 变更文件 2 个 (+37 / -158 行)
-  - CONTEXT.md
-  - uv.lock
-
-## 更新记录: 2026-10-02 23:53:27
-
-### 任务
-Git 变更同步
-
-### 变更摘要
-- 变更文件 2 个 (+27 / -148 行)
-  - CONTEXT.md
-  - uv.lock
-
-## 更新记录: 2026-10-02 23:44:54
-
-### 任务
-Git 变更同步
-
-### 变更摘要
-- 变更文件 3 个 (+122 / -121 行)
-  - CHANGELOG.md
-  - ROADMAP.md
-  - uv.lock
-
-## 更新记录: 2026-10-02 23:36:35
-
-### 任务
-Git 变更同步
-
-### 变更摘要
-- 变更文件 9 个 (+621 / -467 行)
-  - .jcode/scripts/context-sync.py
-  - ADR.md
-  - CONTEXT.md
-  - pyproject.toml
-  - requirements-dev.txt
-  - tests/test_context_sync_prune.py
-  - tests/test_coverage_gate_scope.py
-  - tests/test_jcode_context_sync.py
-  - uv.lock
-
-## 更新记录: 2026-10-02 23:32:27
-
-### 任务
-Git 变更同步
-
-### 变更摘要
-- 变更文件 8 个 (+544 / -434 行)
-  - .jcode/scripts/context-sync.py
-  - CONTEXT.md
-  - pyproject.toml
-  - requirements-dev.txt
-  - tests/test_context_sync_prune.py
-  - tests/test_coverage_gate_scope.py
-  - tests/test_jcode_context_sync.py
-  - uv.lock
-
-## 更新记录: 2026-10-02 23:32:07
-
-### 任务
-Git 变更同步
-
-### 变更摘要
-- 变更文件 8 个 (+521 / -401 行)
-  - .jcode/scripts/context-sync.py
-  - CONTEXT.md
-  - pyproject.toml
-  - requirements-dev.txt
-  - tests/test_context_sync_prune.py
-  - tests/test_coverage_gate_scope.py
-  - tests/test_jcode_context_sync.py
   - uv.lock
 
 <!-- 滚动窗口: 已自动裁剪 1 条旧更新记录 -->

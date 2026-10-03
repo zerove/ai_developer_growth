@@ -590,11 +590,11 @@ ADR-069 之前的实现：ADR-069 已修，破坏路径在正常子进程中**�
 对缩进类问题不敏感，该路径未经真实破坏样本验证；
 `tools/fix_engine/FixEngine.fix_file` 是另一条独立写盘路径，未加兜底。
 
-#### 测试自身的失效伪装成通过（Phase 46 收口发现）
+#### 测试自身的失效：不是贡献绿灯，而是持续报错（Phase 46 收口发现）
 
 ADR-070 收口跑全量门禁时出现 **6 项失败**，与本次改动无关：在
-`84ce30a` 的干净检出上同样失败。归因后发现这是**更隐蔽的一类假绿灯**
-——不是代码报绿，而是**测试的防护根本没生效，却一直在贡献绿灯**。
+`84ce30a` 的干净检出上同样失败。归因后发现失效的**不是代码，而是测试
+防护本身**。
 
 根因：`test_ast_parser_partial_install.py` 与
 `test_semantic_degraded_visibility.py` 里的 `_BlockingFinder`
@@ -614,10 +614,79 @@ sys.meta_path.insert(0, _BlockingFinder())  # 需要 find_spec 才有效
 **通过不等于防护有效**——因此对 `ast_parser._shared_parsers`
 注入 Phase 38 之前的全有全无行为做变异，确认 **2 failed**，且
 `ImportError` 明确指向注入行（若屏蔽器再次失效，`missing` 会为空，
-`raise` 根本不会触发）。还原源文件后 14 项重新全绿。
+`raise` 根本不会触发）。还原源文件后 14 项重新全绿。同一判据也回查了
+ADR-070 自身的 12 个用例（此前已做 A/B/C 三处变异），结论一致。
 
-同一判据也回查了 ADR-070 自身的 12 个用例（此前已做 A/B/C 三处
-变异），结论一致。
+#### 勘误：上一阶段的「4575」不是通过数，也不含这 6 项
+
+本节曾被我写成"4575 掺了这 6 项失效防护"。**该归因错误**，据实更正：
+
+| 提交 | 全量实测 |
+| --- | --- |
+| `84ce30a`（Phase 45 末） | **7 failed**, 4568 passed |
+| 本阶段修复后 | **4587 passed** |
+
+4575 是**收集到的用例数**（`--collect-only`），不是通过数；且它恰好等于
+`4587 − 12`（本阶段新增的 12 个用例）。两阶段数字**算术自洽**，其间
+不存在"6 项防护失效"的差额。
+
+那 6 项在 `84ce30a` 上本来就是**红的**：`find_spec` 失效后屏蔽不发生，
+用例期望的报错信息不会出现，属失败而非静默通过。
+
+被我真正漏掉的是**第 7 项**——`test_rule_docs_mapper_round2.py::TestMain::
+test_main_query_hit`，**偶发**失败：第一次全量跑未复现被我略过，
+第二次在基线上才抓出来。见下一节。
+
+#### 偶发绿：`query_mapping` 默认参数在导入期绑定
+
+`rule_docs_mapper` 把模块级常量 `MAPPING_CACHE` 直接写成默认参数：
+
+```python
+def query_mapping(rule_id: str, mapping_path: Path = MAPPING_CACHE) -> ...
+```
+
+默认值在**导入时**被固化成仓库真实路径，之后
+`monkeypatch.setattr(rdm, "MAPPING_CACHE", tmp_path)` 完全无效。
+测试于是悄悄去读工作区的 `.jcode/rule-docs-mapping.json`——一个
+**未被 git 跟踪的生成物**。它当前恰好含 `py-bare-except`，于是用例
+通过；一旦该文件被重建、缺失或换机克隆，结果就翻转。
+
+实证：把真实缓存置为 `{}` 后该用例稳定失败（`assert (1 == 0)`）。
+
+改为在**调用时**解析（`mapping_path: Path | None = None` + 体内兜底）。
+同文件另有 `rebuild_mapping(output_path=...)` 与
+`build_mapping(docs_dir=...)` 同样绑定，一并修复。AST 扫描全仓
+（`tools/`、`.jcode/`、`examples/`）确认此类绑定**已清零**。
+
+新增回归用例 `test_default_args_resolve_mapping_cache_at_call_time`。
+变异验证：退回导入期绑定 → 该用例 **1 failed**，且日志显示
+`Mapping saved: <仓库真实路径>`，**测试把缓存写进了真实仓库**——
+这正是原缺陷的直接证据。还原后 18 项全绿。
+
+同一陷阱在本文件 `_scan_documents` 上已出现过一次，当时的解法是
+加 `_patch_scan` 绕过；现在改为从根上消除该写法。
+
+#### 偶发失败的归因：环境资源，非逻辑缺陷
+
+`test_adg_cc_gate.py::TestCheckComplexityGate::test_custom_max_cc_threshold`
+在 `-n 8` 全量跑下**偶发**失败（连续 6 遍里抓到 1 次）。实测错误为：
+
+```text
+error while loading shared libraries: libpthread.so.0: failed to map segment
+returncode=127
+```
+
+该用例要起真实子进程跑 `adg_cli`，8 路并行再叠加每个 worker 内的
+子进程，偶发触发内存映射失败。**串行连跑 10 次全绿**，高并发全量跑
+则时现时无。
+
+判为**环境资源限制**，不是代码缺陷，**未改代码**。测试逻辑本身正确
+——它断言的是 exit code 与输出文本，与内存状况无关。
+
+留此记录的原因：本次调查中它一度被误当成"`rule_docs_mapper` 修复
+不彻底"的证据（同一批次里两次失败数不同：1 和 2）。实际情况是
+**两种不同成因**——前者已修（工作区状态依赖），后者是环境抖动。
+不分清就会把环境问题当成回归，反复改坏代码。
 
 #### 同源假绿灯已修复：`phase_runner` 路径不存在（ADR-065）
 

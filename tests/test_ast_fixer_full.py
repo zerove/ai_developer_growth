@@ -29,10 +29,16 @@ class TestBareExcept:
         assert any(f.rule_id == "fix-bare-except" for f in fixes)
 
     def test_except_pass_gets_comment(self, fixer: ASTFixer) -> None:
+        """fix-empty-except 仍被发现, 但不再自动应用 (ADR-067).
+
+        该规则只插入 ``# TODO`` 注释, 标记问题而非修复问题。
+        ADR-067 起它是 ``auto_safe=False``, 故 ``fix_content``
+        不会把它写进 ``fixed`` —— 但**仍会报告**, 这是降级而非隐藏。
+        """
         code = "try:\n    f()\nexcept Exception:\n    pass\n"
         fixed, fixes = fixer.fix_content(code, "python")
         assert any(f.rule_id == "fix-empty-except" for f in fixes)
-        assert "# TODO: Handle this exception" in fixed
+        assert "# TODO: Handle this exception" not in fixed
 
     def test_clean_code_no_fixes(self, fixer: ASTFixer) -> None:
         fixed, fixes = fixer.fix_content("x = 1\n", "python")
@@ -74,8 +80,11 @@ class TestFixFileFlow:
         src.write_text("try:\n    f()\nexcept Exception:\n    pass\n")
         report = fixer.fix_file(src, dry_run=False)
         assert report is not None
-        # fix_file 只生成 fixed_content, 写回由调用方负责
-        assert "# TODO" in report.fixed_content
+        # ADR-066 起 fix_file 自己写回文件（此前只生成 fixed_content）。
+        # 本例只有 fix-empty-except 一项，且自 ADR-067 起是 report-only,
+        # 因此磁盘上不应出现 # TODO —— 但该修复仍会被报告。
+        assert "# TODO" not in report.fixed_content
+        assert any(f.rule_id == "fix-empty-except" for f in report.fixes)
 
     def test_unreadable_file_returns_none(self, tmp_path: Path, fixer: ASTFixer) -> None:
         assert fixer.fix_file(tmp_path / "nope.py") is None

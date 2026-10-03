@@ -63,6 +63,58 @@ AI 时代开发者成长知识库 + 治理框架（knowledge base + governance f
 
 ---
 
+## 更新记录: 2026-10-03 12:25:19
+
+### 任务
+Git 变更同步
+
+### 变更摘要
+- 变更文件 10 个 (+1518 / -209 行)
+  - CHANGELOG.md
+  - CONTEXT.md
+  - ROADMAP.md
+  - docs/adr/ADR-064-semantic-degradation-must-be-visible.md
+  - docs/adr/ADR.md
+  - tests/test_phase2_5_integration.py
+  - tests/test_semantic_degraded_visibility.py
+  - tools/scripts/hooks/phase_runner.py
+  - tools/scripts/rules_engine/checker.py
+  - uv.lock
+
+## 更新记录: 2026-10-03 12:17:07
+
+### 任务
+Git 变更同步
+
+### 变更摘要
+- 变更文件 9 个 (+1494 / -192 行)
+  - CHANGELOG.md
+  - CONTEXT.md
+  - ROADMAP.md
+  - docs/adr/ADR-064-semantic-degradation-must-be-visible.md
+  - docs/adr/ADR.md
+  - tests/test_semantic_degraded_visibility.py
+  - tools/scripts/hooks/phase_runner.py
+  - tools/scripts/rules_engine/checker.py
+  - uv.lock
+
+## 更新记录: 2026-10-03 12:07:13
+
+### 任务
+Git 变更同步
+
+### 变更摘要
+- 变更文件 9 个 (+1477 / -162 行)
+  - CHANGELOG.md
+  - CONTEXT.md
+  - ROADMAP.md
+  - docs/adr/ADR-064-semantic-degradation-must-be-visible.md
+  - docs/adr/ADR.md
+  - tests/test_semantic_degraded_visibility.py
+  - tools/scripts/hooks/phase_runner.py
+  - tools/scripts/rules_engine/checker.py
+  - uv.lock
+
 ## 更新记录: 2026-10-03 11:50:35
 
 ### 任务
@@ -807,81 +859,6 @@ Git 变更同步
   - examples/self-correction-loop/tests/conftest.py
   - examples/self-correction-loop/tests/test_main.py
   - ... 等共 39 个文件
-
----
-
-## 更新记录: 2026-09-18 00:16:18
-
-### 任务
-Git 变更同步
-
-### 变更摘要
-- 变更文件 20 个 (+144 / -216 行)
-  - .github/workflows/adg-governance.yml
-  - .github/workflows/adg-quality-report.yml
-  - .github/workflows/adg-scan.yml
-  - .github/workflows/advanced-governance.yml
-  - .github/workflows/ai-native-sdlc.yml
-  - .github/workflows/audit-to-pr.yml
-  - .github/workflows/ci.yml
-  - .github/workflows/community-case-pr.yml
-  - .github/workflows/example-ci-template.yml
-  - .github/workflows/jobs/combine-coverage.yml
-  - .github/workflows/jobs/lint.yml
-  - .github/workflows/jobs/setup.yml
-  - .github/workflows/jobs/tests.yml
-  - .github/workflows/language-rules.yml
-  - .github/workflows/mutation-testing.yml
-  - .github/workflows/quality-trends.yml
-  - .github/workflows/release.yml
-  - .github/workflows/scheduled-governance.yml
-  - .github/workflows/slsa-provenance.yml
-  - CONTEXT.md
-
----
-
-## 更新记录: 2026-09-17 21:00:12
-
-### 任务
-Git 变更同步
-
-### 变更摘要
-- 变更文件 4 个 (+29 / -3 行)
-  - agents/context-sync.md
-  - agents/multi-agent-orch.md
-  - agents/self-correction-loop.md
-  - tests/test_adg_checker_refactor.py
-
----
-
-## 更新记录: 2026-09-17 20:15:13
-
-### 任务
-Git 变更同步
-
-### 变更摘要
-- 变更文件 22 个 (+635 / -204 行)
-  - .jcode/scripts/governance-auditor.py
-  - CHANGELOG.md
-  - CONTEXT.md
-  - ROADMAP.md
-  - docs/adr/ADR-054-phase-34-dedup-common.md
-  - docs/adr/ADR-056-phase-36-complexity-gate.md
-  - docs/adr/ADR.md
-  - pyproject.toml
-  - tests/conftest.py
-  - tests/test_adg_bootstrap_unit.py
-  - tests/test_check_directory_skipped.py
-  - tests/test_language_rules_v2.py
-  - tests/test_quality_gate_full.py
-  - tests/test_rule_registry.py
-  - tests/test_semantic_rules.py
-  - tests/test_supply_chain_round2.py
-  - tools/scripts/_sc_scanners.py
-  - tools/scripts/fix_heuristics.py
-  - tools/scripts/quality_gate.py
-  - tools/scripts/rules_engine/_ast_walkers.py
-  - ... 等共 22 个文件
 
 ---
 

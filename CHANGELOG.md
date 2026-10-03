@@ -348,7 +348,30 @@ cp /tmp/ast_old.py tools/scripts/rules_engine/ast_parser.py
   - 两种环境 `exit` 都是 0
 - `SemanticChecker` 同类问题，但实测仅在模块 docstring 中被示例引用，
   无生产消费方，优先级低于 `ast_fixer`
-- `phase_runner` 对不存在的路径输出 `✅ ALL CLEAN` 且 exit 0（另一个假绿灯）
+
+#### 同源假绿灯已修复：`phase_runner` 路径不存在（ADR-065）
+
+原遗留记录只提到 `semantic-check`。按同一模式排查后确认**范围更广**，
+共三个 phase 函数同源：
+
+| phase 函数 | 下游调用 | 空集合被渲染成 |
+| --- | --- | --- |
+| `_run_semantic_check` | `check_directory` | `✅ ALL CLEAN` |
+| `_run_ast_fix` | `path.rglob("*.py")` | `✅ No fixes needed` |
+| `_run_hallucination_scan` | `detect_hallucinations` | `✅ No hallucination patterns detected` |
+
+三者在路径不存在时全部 exit 0。问题不是"漏检文件"，而是
+**"检查了 0 个文件"与"检查通过"不可分辨**。
+`hallucination-scan` 为本轮新发现，不在原记录中。
+
+修复：三个函数在使用 `path` 前统一 `if not path.exists()` 则
+打印 `❌ 路径不存在` 并 `return 1`。修复后三者均 exit 1；
+真实路径未误伤（`tools/scripts/hooks` 扫描 11 文件报 694 真实问题、
+干净探针 exit 0）。
+
+新增 `tests/test_phase_runner_missing_path.py`，6 个用例。
+变异验证（删除三处校验）实测 **3 failed / 3 passed** ——
+失败的正是缺陷检测用例，通过的正是对照组用例。
 
 #### 复核纠正：ast-fix 的初版结论不成立
 

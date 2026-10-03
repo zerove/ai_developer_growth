@@ -230,6 +230,12 @@ def _run_semantic_check(path: Path, lang: str | None, jobs: int) -> int:
     print("  SEMANTIC CHECK (tree-sitter AST)")
     print("=" * 60)
 
+    # ADR-065: 路径不存在时必须显式失败, 不能让 check_directory 返回空列表
+    # 后打印 "ALL CLEAN" —— 那是"检查了 0 个文件"的假绿灯, 与"检查通过"不可分辨。
+    if not path.exists():
+        print(f"❌ 路径不存在: {path}")
+        return 1
+
     if path.is_file():
         result = check_file(path, semantic=True)
         from tools.scripts.hooks_runner import _print_check_result
@@ -267,6 +273,12 @@ def _run_ast_fix(path: Path, dry_run: bool) -> int:
     print("=" * 60)
 
     fixer = ASTFixer()
+
+    # ADR-065: 同 _run_semantic_check —— 路径不存在时 rglob 匹配 0 个文件,
+    # 汇总会打印 "No fixes needed", 与"确实没有可修复项"不可分辨。
+    if not path.exists():
+        print(f"❌ 路径不存在: {path}")
+        return 1
 
     if path.is_file():
         return _fix_single_file(fixer, path, dry_run)
@@ -337,6 +349,12 @@ def _run_hallucination_scan(path: Path, lang: str | None) -> int:
     print("=" * 60)
     print("  AI HALLUCINATION PATTERN SCAN")
     print("=" * 60)
+
+    # ADR-065: 同 _run_semantic_check —— 路径不存在时 detect_hallucinations
+    # 扫 0 个文件, 报告渲染成 "No hallucination patterns detected", 不可分辨。
+    if not path.exists():
+        print(f"❌ 路径不存在: {path}")
+        return 1
 
     if path.is_file():
         report = detect_hallucinations_in_file(path)

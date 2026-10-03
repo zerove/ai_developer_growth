@@ -25,6 +25,7 @@ updated: 2026-09-17
 
 | ID | 标题 | 状态 | 日期 |
 |----|------|------|------|
+| [[ADR-065-missing-path-must-fail|ADR-065]] | 路径不存在必须显式失败，禁止空集合假绿灯 | ✅ 已接受 | 2026-10-03 |
 | [[ADR-064-semantic-degradation-must-be-visible|ADR-064]] | 语义检查降级必须可见，禁止 fail-open | ✅ 已接受 | 2026-10-03 |
 | [[ADR-063-tree-sitter-per-language-import|ADR-063]] | tree-sitter 导入必须按语言粒度容错 | ✅ 已接受 | 2026-10-02 |
 | [[ADR-062-fail-open-detector-validates-executability|ADR-062]] | fail-open 检测器必须校验"可执行性"，而非匹配错误关键词 | ✅ 已接受 | 2026-10-02 |

@@ -105,18 +105,21 @@ class TestHooksRunnerCommands:
 
         parser = _build_parser()
         args = parser.parse_args(["semantic-check", "--path", "/nonexistent"])
-        # Should not crash, returns 0 for empty/nonexistent path
+        # 不崩溃 —— 这仍是本用例的原始意图。
+        # 但退出码必须非 0：路径不存在时 check_directory 返回空列表，
+        # 旧实现据此打印 "ALL CLEAN" 并 exit 0，那是"检查了 0 个文件"
+        # 与"检查通过"不可分辨的假绿灯。ADR-065 已将其改为 exit 1。
         result = _dispatch(args)
-        assert result == 0  # Empty path = 0 files = 0 issues = pass
+        assert result != 0
 
     def test_ast_fix_dispatch(self):
         from tools.scripts.hooks_runner import _build_parser, _dispatch
 
         parser = _build_parser()
         args = parser.parse_args(["ast-fix", "--path", "/nonexistent", "--dry-run"])
+        # 同上：不崩溃，但路径不存在必须显式失败而非"无需修复"。
         result = _dispatch(args)
-        # Non-existent path returns 0 (no fixes needed)
-        assert result == 0
+        assert result != 0
 
 
 class TestCheckerIntegration:

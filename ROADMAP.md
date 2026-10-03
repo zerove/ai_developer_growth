@@ -91,8 +91,15 @@
     **方法论**：Phase 40 初版结论"`ast-fix` 两环境零输出、无法分辨"**错误**，
     原因是探针文件不含任何可修复缺陷，健康环境本就无输出 ——
     变量没被隔离。验证"降级是否可见"时，健康环境对照必须有真实工作量
-  - **`phase_runner` 对不存在的路径输出 `✅ ALL CLEAN` 且 exit 0**
-    （Phase 40 顺带实测发现的另一个假绿灯）
+  - **`phase_runner` 路径不存在假绿灯（Phase 41 已修复，ADR-065）**
+    原记录只提 `semantic-check`，实测发现**三个 phase 函数同源**：
+    `_run_semantic_check` → `✅ ALL CLEAN`、
+    `_run_ast_fix` → `✅ No fixes needed`、
+    `_run_hallucination_scan` → `✅ No hallucination patterns detected`
+    （第三项为本轮新发现），路径不存在时**三者均 exit 0**。
+    已统一加 `if not path.exists()` → `❌ 路径不存在` + `return 1`。
+    变异验证：删除三处校验后 `3 failed / 3 passed`，
+    失败的恰是缺陷用例、通过的恰是对照组用例
   - mypy 分区口径（实测）：`tools/ .jcode/` 234 个文件 clean，
     但 `tests/` 有 2330 个既存错误（多为测试函数缺类型注解）。
     “mypy 全绿”仅对非测试目录成立，CI 的 `mypy .` 实际会红

@@ -294,37 +294,69 @@ class ASTFixer:
         return fixes
 
     def _fix_empty_functions(self, content: str, ast_result: FileAST, filepath: Path) -> list[FixResult]:
-        """Add 'pass' to empty function bodies."""
+        """Add 'pass' to functions whose body is genuinely absent.
+
+        ADR-069: 原实现只看 def 的**下一行**是否为空, 从不检查 def 行
+        自身是否已带 ``: ...`` 这类同行体。实测 ``def f(self) -> bool: ...``
+        被判定为"空函数", 修复后变成::
+
+            def f(self) -> bool: ...
+                pass
+
+        该文件**无法再被解析** (IndentationError), 而 CLI 同时打印
+        ``✅ Fixes applied: 1/1`` —— "报告成功却破坏代码"。
+
+        ``body_lines <= 1`` 涵盖两种本质不同的情形:
+        - 体与 def 同行 (``...`` 等): **已有体**, 不可插入
+        - 体在下一行且内容为空: **确实无体**, 需要插入
+
+        判据用 ``end_line``: 同行体时 AST 的 ``end_lineno`` 等于
+        ``lineno``; 体确实缺失时 ``end_lineno`` 更大（指向空行）。
+        这比按文本找冒号可靠 —— ``def f(self, x: int = 3):`` 的
+        首个冒号属于参数注解, 文本猜测极易出错。
+
+        实测可达性: Python 不允许空函数体, 因此"确实无体"的输入
+        在解析阶段就会失败、根本进不到本规则。基线态全仓扫描
+        ``tools/scripts`` 的 209 个文件, ``fix-empty-function``
+        **仅有 2 处触发, 且两处都是同行 ``...`` 体** —— 也就是说
+        本规则在真实代码库里的唯一实际效果就是**破坏合法代码**。
+        修复后触发数归 0, 这是预期结果而非回归。若将来出现真正
+        的空体 (如解析器缺陷或非 Python 语言支持), 本规则需重新验证。
+        """
         fixes: list[FixResult] = []
         lines = content.splitlines()
 
         for func in ast_result.functions:
-            if func.body_lines <= 1:
-                # Check if function body is just 'pass'
-                func_line_idx = func.line - 1
-                if 0 <= func_line_idx < len(lines):
-                    func_line = lines[func_line_idx]
-                    # Check for empty body (function def followed by nothing or just a newline)
-                    if func_line_idx + 1 < len(lines):
-                        next_line = lines[func_line_idx + 1].strip()
-                        if not next_line or next_line == "":
-                            if m := re.match(r"^(\s*)", func_line):
-                                indent = m.group(1)
-                            else:
-                                indent = ""
-                            fixes.append(
-                                FixResult(
-                                    rule_id="fix-empty-function",
-                                    description=f"Add 'pass' to empty function '{func.name}'",
-                                    file=str(filepath),
-                                    line=func.line + 1,
-                                    column=0,
-                                    original="",
-                                    replacement=f"{indent}    pass",
-                                    confidence=0.9,
-                                    auto_safe=True,
-                                )
-                            )
+            if func.body_lines > 1:
+                continue
+            # ADR-069: end_line == line 说明函数体与 def 同行 (``: ...``),
+            # 此时已有体, 插入 pass 会直接破坏语法。
+            if func.end_line <= func.line:
+                continue
+            func_line_idx = func.line - 1
+            if not (0 <= func_line_idx < len(lines)):
+                continue
+            func_line = lines[func_line_idx]
+            if func_line_idx + 1 < len(lines):
+                next_line = lines[func_line_idx + 1].strip()
+                if not next_line:
+                    if m := re.match(r"^(\s*)", func_line):
+                        indent = m.group(1)
+                    else:
+                        indent = ""
+                    fixes.append(
+                        FixResult(
+                            rule_id="fix-empty-function",
+                            description=f"Add 'pass' to empty function '{func.name}'",
+                            file=str(filepath),
+                            line=func.line + 1,
+                            column=0,
+                            original="",
+                            replacement=f"{indent}    pass",
+                            confidence=0.9,
+                            auto_safe=True,
+                        )
+                    )
 
         return fixes
 

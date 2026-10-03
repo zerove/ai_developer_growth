@@ -477,6 +477,59 @@ fixture 也**分开断言**，不让数字巧合互相掩盖。
 三处变异实测：**3 failed / 2 passed**、**1 failed / 4 passed**、
 **3 failed / 14 passed**。
 
+#### ast-fix 破坏代码语法（ADR-069）
+
+为核实 ADR-067 收敛后剩下的 2 处 auto-safe 修复是否安全，我用
+`fix_file(dry_run=False)` 扫了全仓 209 个文件——**探针自己把两个文件改坏了**：
+
+```
+ tools/scripts/hooks/domain_checks.py | 1 +
+ tools/scripts/rules_engine/parsers/contract.py | 1 +
+```
+
+单独复现后后果明确：
+
+```
+$ hooks_runner.py ast-fix --path <Protocol 探针>
+      Total fixes found: 1 (1 auto-safe)
+      ✅ Fixes applied: 1/1
+$ cat p.py
+class P(Protocol):
+    def audit(self) -> bool: ...
+        pass
+$ python -c "import ast; ast.parse(...)"
+IndentationError: unexpected indent
+```
+
+CLI 报告成功，磁盘内容**不再能被解析**。这是前五处假绿灯
+（064~068 都是"报告与真实状态脱节"）之外更严重的一档：
+**报告成功却实际破坏了代码**。
+
+根因：`_fix_empty_functions` 的判据是"def 的**下一行**是否为空"，
+从不看 def 行自身是否已带 `: ...`。`body_lines <= 1` 同时涵盖
+"已有体"和"确实无体"两种本质不同的情形。
+
+修复用 `FunctionInfo.end_line` 判定同行体。**没有用文本找冒号**——
+`def f(self, x: int = 3):` 的首个冒号属于参数注解，
+`partition(":")` 实测会误判为有体。
+
+**过度纠正方向的意外发现**：我把守卫改成恒真（永不修复），
+5 个测试**全部通过**——说明没有测试守住"真正空体仍被修复"。
+追查后确认这不是测试缺口而是**该分支不可达**：Python 不允许空函数体，
+而基线态全仓扫描显示 `fix-empty-function` **仅 2 处触发，
+且两处都是同行 `...` 体**。也就是说这条规则在真实代码库里的
+**唯一实际效果就是破坏合法代码**，修复后触发数归 0 属预期。
+
+**又一次变异验证假阴性**：首轮移除守卫后只报 2 failed，我以为生效，
+但 CLI 实际输出 `✅ No fixes needed`——探针输入少了**尾随空行**，
+解析器根本不把该函数纳入待修复集合，`found=0` 自然不触发。
+补上尾随空行后 5 个测试全红。**触发条件比"同行体"更窄**。
+
+顺带实测其余 4 条规则（修正了我初稿里未经验证的风险表述）：
+`fix-bare-except` 用整行锚定正则，安全；`fix-empty-except` 与
+`fix-unused-var` 均为 report-only 不落盘；`fix-unused-var` 的
+子串计数只会多算不会少算，故只会漏报不会误报。四条均无法破坏代码。
+
 #### 同源假绿灯已修复：`phase_runner` 路径不存在（ADR-065）
 
 原遗留记录只提到 `semantic-check`。按同一模式排查后确认**范围更广**，

@@ -47,6 +47,10 @@ class FixReport:
     fix_time_ms: float
     total_fixes: int
     auto_safe_fixes: int
+    # ADR-066: 实际改变了内容的修复数。与 total_fixes 区分开, 因为
+    # total_fixes 统计的是"发现的可修复项", 不保证每一项都真正改动了文本
+    # (例如 _apply_fix 因行号越界而原样返回)。dry_run 时恒为 0。
+    applied_fixes: int = 0
 
 
 class ASTFixer:
@@ -100,10 +104,25 @@ class ASTFixer:
 
         # Apply fixes
         fixed_content = content
+        applied_count = 0
         if not dry_run:
             for fix in fixes:
                 if fix.auto_safe:
-                    fixed_content = self._apply_fix(fixed_content, fix)
+                    new_content = self._apply_fix(fixed_content, fix)
+                    if new_content != fixed_content:
+                        applied_count += 1
+                    fixed_content = new_content
+
+        # ADR-066: 必须把 fixed_content 写回文件。原实现只算出 fixed_content
+        # 却从不落盘, CLI 仍打印 "✅ Fixes applied" 且 exit=total_fixes,
+        # 用户以为代码已改而实际未改 —— 属"声称已修复"的假成功。
+        # 仅在内容实际变化时写入, 避免无谓的 mtime 变动。
+        if not dry_run and fixed_content != content:
+            try:
+                filepath.write_text(fixed_content, encoding="utf-8")
+            except OSError:
+                # 写回失败必须让调用方知道, 不能静默返回"已修复"报告。
+                return None
 
         fix_time = (time.monotonic() - start) * 1000
 
@@ -115,6 +134,7 @@ class ASTFixer:
             fix_time_ms=fix_time,
             total_fixes=len(fixes),
             auto_safe_fixes=sum(1 for f in fixes if f.auto_safe),
+            applied_fixes=applied_count,
         )
 
     def fix_content(

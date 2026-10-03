@@ -81,14 +81,18 @@
     打出 `EXITCODE: 0`（假绿灯），修复后为 `EXITCODE: 1` 且 60 个文件全部可见。
     **严重度必须是 `error`**：实测 `CheckResult.passed` 只看 `error_count`，
     info 与 warning 都会被报告层渲染成 `PASS ✅`，等于换个地方复现同一假绿灯
-  - **同源缺陷，`ast_fixer` 尚未修复**（Phase 40 复核后修正范围）：
-    实测 `hooks_runner ast-fix` 的**目录路径有提示**（健康 `Total fixes: 2`，
-    降级 `⚠️ Cannot parse ..., skipping`），可分辨；
-    **静默只发生在单文件路径** —— `_fix_single_file` 的 `verbose` 默认
-    `False`，`report is None` 时不打印任何内容。两种环境 `exit` 都是 0。
-    `SemanticChecker` 同类问题，但实测仅在模块 docstring 中被示例引用、
-    无生产消费方，优先级低于 `ast_fixer`
-    **方法论**：Phase 40 初版结论"`ast-fix` 两环境零输出、无法分辨"**错误**，
+  - **`ast_fixer` 声称已修复却从未落盘（Phase 42 已修复，ADR-066）**
+    Phase 40 记为"范围较窄的输出缺失"，Phase 42 复核时发现
+    **严重得多**：`fix_file` 算出 `fixed_content` 后从不写回文件。
+    实测非 dry-run 运行后裸 `except` 计数 `1 -> 1`（未变），
+    而 CLI 打印 `✅ Fixes applied` 且 `exit=2`（退出码即 `total_fixes`）。
+    **报告与磁盘状态完全脱节** —— 本项目第三类假绿灯
+    （064 检查没跑却报通过 / 065 检查了 0 个却报通过 /
+    066 声称已修改却没修改）
+    已修复：非 dry-run 写回 + `OSError` 返回 `None` +
+    `FixReport.applied_fixes` 自证生效数 + 单文件 `verbose=True`。
+    变异验证：移除写回并恢复 verbose=False 后 **5 failed / 5 passed**
+  - **方法论**：Phase 40 初版结论"`ast-fix` 两环境零输出、无法分辨"**错误**，
     原因是探针文件不含任何可修复缺陷，健康环境本就无输出 ——
     变量没被隔离。验证"降级是否可见"时，健康环境对照必须有真实工作量
   - **`phase_runner` 路径不存在假绿灯（Phase 41 已修复，ADR-065）**

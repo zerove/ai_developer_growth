@@ -339,15 +339,53 @@ cp /tmp/ast_old.py tools/scripts/rules_engine/ast_parser.py
 
 #### 遗留（未实施，已实测确认）
 
-- `ast_fixer` 同源缺陷，范围比初版记录**窄**。复核后用含 `bare except:`
-  的探针（`fix_file` 实测产出 `total_fixes=2`）重测：
-  - 目录路径：健康 `Total fixes: 2` + 详细报告；
-    降级 `⚠️ Cannot parse ..., skipping`，`exit=0` —— **有提示，可分辨**
-  - 单文件路径：两环境均无输出 —— `_fix_single_file` 的 `verbose`
-    默认 `False`，`report is None` 时不打印。**静默只发生在此路径**
-  - 两种环境 `exit` 都是 0
-- `SemanticChecker` 同类问题，但实测仅在模块 docstring 中被示例引用，
+- `SemanticChecker` 同类降级问题，但实测仅在模块 docstring 中被示例引用，
   无生产消费方，优先级低于 `ast_fixer`
+
+#### 更严重的一处：`ast_fixer` 声称已修复却从未落盘（ADR-066）
+
+Phase 42 复核 `ast_fixer` 时发现的**第三类假绿灯**，
+严重程度远超原记录的"输出缺失"：
+
+```plain
+fix_file 返回: FixReport
+total_fixes = 2
+fixes 明细: rule='fix-empty-except' line=9 auto_safe=True
+            rule='fix-bare-except'  line=8 auto_safe=True
+文件是否被修改: False
+裸 except 修复前后计数: 1 -> 1
+```
+
+非 dry-run 运行后裸 `except` 仍在磁盘上，但 CLI 打印
+`✅ Fixes applied` 且 `exit=2`（退出码即 `total_fixes`）。
+**报告与磁盘状态完全脱节。**
+
+根因：`fix_file` 算出 `fixed_content` 后**从不写回 `filepath`**，
+只把它塞进返回值。`_apply_fix` 本身正确
+（`fixed_content` 内裸 `except` 计数为 0），缺的只是一次写回。
+
+修复：
+1. 非 dry-run 且内容确有变化时写回文件；`OSError` 时返回 `None`，
+   不静默返回"已修复"报告
+2. `FixReport` 新增 `applied_fixes`，区分"发现的可修复项"与
+   "真正改变了文本的项"——`total_fixes` 不足以自证，
+   因为 `_apply_fix` 行号越界时会原样返回
+3. 单文件路径 `verbose` 显式设为 `True`，打印修复明细
+
+实测：非 dry-run 落盘且 `磁盘 == fixed_content`；dry-run 不动文件
+且 `applied_fixes=0`；对已修复文件再跑 `total_fixes=0`（幂等）。
+变异验证（移除写回 + 恢复 verbose=False，先确认变异生效）
+实测 **5 failed / 5 passed**，失败的 5 个全部对应两个缺陷。
+
+**三类假绿灯对比**：ADR-064「检查没跑却报通过」、
+ADR-065「检查了 0 个却报通过」、ADR-066「**声称已修改却没修改**」——
+同属"报告状态与真实状态脱节"。
+
+**测量教训**：新测试首版断言单文件输出含 `✅ Fixes applied`，
+2 个用例失败。排查发现该字符串只在 `_print_directory_summary` 里，
+单文件路径根本不经过它——断言写错了对象，不是实现有问题。
+与 Phase 40"给函数内 `from`-import 的局部名字赋值"同源：
+**没读代码就猜某个字符串出现在哪条路径上。**
 
 #### 同源假绿灯已修复：`phase_runner` 路径不存在（ADR-065）
 

@@ -281,7 +281,10 @@ def _run_ast_fix(path: Path, dry_run: bool) -> int:
         return 1
 
     if path.is_file():
-        return _fix_single_file(fixer, path, dry_run)
+        # ADR-066: 单文件路径此前 verbose 默认 False, 即便真的改了文件也只
+        # 打印标题, 用户无从得知改了什么。这里改为始终打印明细 ——
+        # 单文件是用户显式指定的操作, 没有"批量扫描需安静"的场景。
+        return _fix_single_file(fixer, path, dry_run, verbose=True)
 
     # Directory: fix all Python files
     total_fixes = 0

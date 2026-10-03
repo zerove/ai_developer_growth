@@ -103,20 +103,37 @@ except Exception:
   导致 `getattr(rule_id)` 恒为空、错误地得出"降级不可见"的结论。
   正确口径：基线 1238 issues / 0 降级，降级后 1257 / 60 降级
   （1197 regex + 41 AST = 1238；1197 + 60 = 1257，账目自洽）。
-- **未修复的同源缺陷**：`ast_fixer` 的缺陷范围比初版记录**窄**。复核后实测
-  （探针文件含 `bare except:`，`fix_file` 确实产出 `total_fixes=2`）：
+- **未修复的同源缺陷**：`ast_fixer` 的缺陷范围比初版记录**窄**，
+  但 Phase 42 的实测又把它改判为**更严重的一类**。四种组合实测：
 
   | 调用方式 | 健康环境 | 降级环境 |
   | --- | --- | --- |
-  | 目录（`verbose=True`） | `Total fixes: 2` + 详细报告 | `⚠️ Cannot parse ..., skipping`，`exit=0` |
-  | 单文件（`verbose=False`） | 无输出 | 无输出 |
+  | 目录（`verbose=True`） | `Total fixes: 2` + 明细 | `⚠️ Cannot parse ..., skipping`，`exit=0` |
+  | 单文件（`verbose=False`） | 仅标题，`exit=2` | 仅标题，`exit=0` |
 
-  即目录路径**有**"无法解析"提示，与"无需修复"措辞不同，尚可分辨；
-  真正的静默只发生在**单文件**路径 —— `_fix_single_file` 的
-  `verbose` 默认 `False`，`report is None` 时不打印任何东西。
-  且两种环境 `exit` 都是 0。留作独立后续项。
-  `SemanticChecker` 亦然，但实测其仅在模块 docstring 中被示例引用，
-  无生产消费方，优先级低于 `ast_fixer`。
+  两处需要纠正本 ADR 初版复核的表述：
+
+  1. **"两种环境 exit 都是 0"错误**。单文件路径把 `total_fixes`
+     直接当返回码，健康环境有修复时 `exit=2`，降级时 `exit=0`。
+     即降级确实**丢失了退出码信号**，但健康路径没有。
+  2. 更关键的是，`exit=2` 所代表的"修复"**从未落盘**。
+     `ASTFixer.fix_file`（`ast_fixer.py:102-106`）算出 `fixed_content`
+     后**从不写回文件**，实测裸 `except` 在非 dry-run 运行后依然存在：
+
+     ```
+     fix_file 返回: FixReport
+     total_fixes = 2
+     fixes 明细: rule='fix-empty-except' line=9 auto_safe=True
+                 rule='fix-bare-except'  line=8 auto_safe=True
+     文件是否被修改: False
+     裸 except 修复前后计数: 1 -> 1
+     ```
+
+     `_apply_fix` 本身正确（`fixed_content` 内裸 `except` 计数为 0），
+     缺的只是一次写回。这比"输出缺失"严重得多：CLI 报
+     `✅ Fixes applied` 且 `exit=2`，用户会认为代码已改，实际未改。
+     详见 ADR-066。`SemanticChecker` 亦有同源问题，但实测仅在模块
+     docstring 中被示例引用，无生产消费方，优先级低于 `ast_fixer`。
 
 - **本轮复核纠正的一处误判**：初版记录称 `ast-fix` "两环境 exit 0
   且零输出"，该结论**不成立** —— 当时探针文件不含任何可修复缺陷，

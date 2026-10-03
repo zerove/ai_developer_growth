@@ -63,6 +63,63 @@ AI 时代开发者成长知识库 + 治理框架（knowledge base + governance f
 
 ---
 
+## 更新记录: 2026-10-03 13:07:36
+
+### 任务
+Git 变更同步
+
+### 变更摘要
+- 变更文件 11 个 (+1869 / -284 行)
+  - CHANGELOG.md
+  - CONTEXT.md
+  - ROADMAP.md
+  - docs/adr/ADR-064-semantic-degradation-must-be-visible.md
+  - docs/adr/ADR-065-missing-path-must-fail.md
+  - docs/adr/ADR.md
+  - tests/test_phase2_5_integration.py
+  - tests/test_phase_runner_missing_path.py
+  - tools/scripts/hooks/phase_runner.py
+  - tools/scripts/rules_engine/ast_fixer.py
+  - uv.lock
+
+## 更新记录: 2026-10-03 12:57:07
+
+### 任务
+Git 变更同步
+
+### 变更摘要
+- 变更文件 11 个 (+1850 / -254 行)
+  - CHANGELOG.md
+  - CONTEXT.md
+  - ROADMAP.md
+  - docs/adr/ADR-064-semantic-degradation-must-be-visible.md
+  - docs/adr/ADR-065-missing-path-must-fail.md
+  - docs/adr/ADR.md
+  - tests/test_phase2_5_integration.py
+  - tests/test_phase_runner_missing_path.py
+  - tools/scripts/hooks/phase_runner.py
+  - tools/scripts/rules_engine/ast_fixer.py
+  - uv.lock
+
+## 更新记录: 2026-10-03 12:44:12
+
+### 任务
+Git 变更同步
+
+### 变更摘要
+- 变更文件 11 个 (+1831 / -224 行)
+  - CHANGELOG.md
+  - CONTEXT.md
+  - ROADMAP.md
+  - docs/adr/ADR-064-semantic-degradation-must-be-visible.md
+  - docs/adr/ADR-065-missing-path-must-fail.md
+  - docs/adr/ADR.md
+  - tests/test_phase2_5_integration.py
+  - tests/test_phase_runner_missing_path.py
+  - tools/scripts/hooks/phase_runner.py
+  - tools/scripts/rules_engine/ast_fixer.py
+  - uv.lock
+
 ## 更新记录: 2026-10-03 12:25:19
 
 ### 任务
@@ -766,99 +823,6 @@ Git 变更同步
   - examples/self-correction-loop/src/strategies/pattern.py
   - examples/self-correction-loop/tests/conftest.py
   - ... 等共 43 个文件
-
----
-
-## 更新记录: 2026-10-02 17:42:32
-
-### 任务
-Git 变更同步
-
-### 变更摘要
-- 变更文件 42 个 (+839 / -299 行)
-  - .jcode/hooks.json
-  - AGENTS.md
-  - CONTEXT.md
-  - README.md
-  - docs/architecture/rule-loading.md
-  - docs/case-studies/ai-context-sync-development.md
-  - docs/case-studies/ai-task-prioritizer.md
-  - docs/case-studies/api-design-implementation.md
-  - docs/case-studies/api-monitoring.md
-  - docs/case-studies/cli-tool-development.md
-  - docs/case-studies/data-pipeline.md
-  - docs/case-studies/database-migration.md
-  - docs/case-studies/web-scraping-tool.md
-  - examples/ai-context-sync/pyproject.toml
-  - examples/ai-navigation-web/pyproject.toml
-  - examples/ai-navigation/pyproject.toml
-  - examples/ai-navigation/src/enhanced_tfidf.py
-  - examples/self-correction-loop/src/runner.py
-  - examples/self-correction-loop/src/strategies/pattern.py
-  - examples/self-correction-loop/tests/conftest.py
-  - ... 等共 42 个文件
-
----
-
-## 更新记录: 2026-10-02 17:39:56
-
-### 任务
-Git 变更同步
-
-### 变更摘要
-- 变更文件 40 个 (+803 / -281 行)
-  - .jcode/hooks.json
-  - AGENTS.md
-  - CONTEXT.md
-  - README.md
-  - docs/architecture/rule-loading.md
-  - docs/case-studies/ai-context-sync-development.md
-  - docs/case-studies/ai-task-prioritizer.md
-  - docs/case-studies/api-design-implementation.md
-  - docs/case-studies/api-monitoring.md
-  - docs/case-studies/cli-tool-development.md
-  - docs/case-studies/data-pipeline.md
-  - docs/case-studies/database-migration.md
-  - docs/case-studies/web-scraping-tool.md
-  - examples/ai-context-sync/pyproject.toml
-  - examples/ai-navigation-web/pyproject.toml
-  - examples/ai-navigation/pyproject.toml
-  - examples/ai-navigation/src/enhanced_tfidf.py
-  - examples/self-correction-loop/src/runner.py
-  - examples/self-correction-loop/src/strategies/pattern.py
-  - examples/self-correction-loop/tests/conftest.py
-  - ... 等共 40 个文件
-
----
-
-## 更新记录: 2026-10-02 17:25:17
-
-### 任务
-Git 变更同步
-
-### 变更摘要
-- 变更文件 39 个 (+772 / -264 行)
-  - .jcode/hooks.json
-  - AGENTS.md
-  - README.md
-  - docs/architecture/rule-loading.md
-  - docs/case-studies/ai-context-sync-development.md
-  - docs/case-studies/ai-task-prioritizer.md
-  - docs/case-studies/api-design-implementation.md
-  - docs/case-studies/api-monitoring.md
-  - docs/case-studies/cli-tool-development.md
-  - docs/case-studies/data-pipeline.md
-  - docs/case-studies/database-migration.md
-  - docs/case-studies/web-scraping-tool.md
-  - examples/ai-context-sync/pyproject.toml
-  - examples/ai-navigation-web/pyproject.toml
-  - examples/ai-navigation/pyproject.toml
-  - examples/ai-navigation/src/enhanced_tfidf.py
-  - examples/self-correction-loop/src/runner.py
-  - examples/self-correction-loop/src/strategies/pattern.py
-  - examples/self-correction-loop/tests/conftest.py
-  - examples/self-correction-loop/tests/test_main.py
-  - ... 等共 39 个文件
 
 ---
 

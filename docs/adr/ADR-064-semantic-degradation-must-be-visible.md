@@ -141,3 +141,27 @@ except Exception:
 9 个用例全部"通过"，差点得出"测试无效"的错误结论。正确基线是修复提交的
 父提交 `c9329db^:`。**必须先确认变异标记真的变了再看测试结果** ——
 与 ADR-063 阶段记录的 `git stash push -- <file>` 静默失效是同一类陷阱。
+
+## 需求 → 检查 逐条追踪
+
+下表跑在**已提交结果**（`d507a51`）上，每项均为可观测输出，非静态检查。
+
+| 需求 | 观测结果 |
+| --- | --- |
+| R1 AST 不可用时降级可见 | `degraded条数: 1`，`severity: error` |
+| R2a 整体缺失可区分 | 报"未安装": `True` |
+| R2b 解析器缺失可区分 | 报"解析器不可用": `True`，未误报"未安装": `True` |
+| R2c 分析异常可区分 | 条数 1，报"语义分析异常": `True`，**保留原异常** `True` |
+| R3a 不产生假绿灯（`passed`） | `passed: False`，`error_count: 1` |
+| R3b 不产生假绿灯（HTML 报告） | 渲染 PASS: `False`，渲染 FAIL: `True` |
+| R4 健康路径无回归 | 61 文件 / 1238 issues / **降级 0 条** |
+| R5 真实 hook CLI（健康） | `exit=0`，`semantic-degraded=0` |
+| R5 真实 hook CLI（降级） | `exit=1`，`semantic-degraded=1` |
+
+R5 的降级环境经独立确认：`HAS_TREE_SITTER=False` 是由 `sitecustomize`
+探针**模拟**出来的，而非宿主环境本就缺依赖 —— 否则健康/降级对比无意义。
+
+R2c 采集过程中出现过一次**探针自身的缺陷**：初版试图给
+`ck.run_semantic_rules` 赋值，但该名字是函数内 `from` 导入的局部绑定，
+赋值不生效、探针返回空列表。改为改写 `semantic_rules` 模块属性后正常。
+与本 ADR 记录的测试用例首版用不存在文件同理：**探针写错会伪装成"功能缺失"**。

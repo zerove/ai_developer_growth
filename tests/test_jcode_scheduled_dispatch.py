@@ -91,7 +91,12 @@ class TestParseCron:
 
     def test_hooks_json_schedules_all_parse(self, sd) -> None:
         """仓库真实配置必须全部可解析。"""
-        hooks = json.loads((ROOT / ".jcode" / "hooks.json").read_text(encoding="utf-8"))["hooks"]["scheduled"]
+        # 跨进程共享读锁 (ADR-073): 只**读**受控 .jcode/hooks.json, 但同文件
+        # 正被 test_check_hooks_json_integrity.FailOpenDetectorTest 真改写。
+        # 无锁时会在写者持有 canary 的窗口里读到半截 JSON。
+        with acquire_repo_read_lock():
+            raw = (ROOT / ".jcode" / "hooks.json").read_text(encoding="utf-8")
+        hooks = json.loads(raw)["hooks"]["scheduled"]
         assert hooks, "hooks.json 无 scheduled 触发器"
         for h in hooks:
             sd.parse_cron(h["schedule"])  # 不抛异常即通过

@@ -108,12 +108,48 @@ AI 时代开发者成长知识库 + 治理框架（knowledge base + governance f
   后才捕获）。子进程握手必须走**文件标记**，用管道 `readline()`
   会在 pytest 捕获输出时死锁。
 
+- **受控文件读锁已加静态守卫 `test_controlled_file_reads_are_locked.py`**：
+  此前靠人肉 grep 补锁**实际漏了 2 处**
+  （`test_jcode_scheduled_dispatch::test_hooks_json_schedules_all_parse`
+  与 `test_jcode_skill_entries::test_hooks_json_command_is_accepted`），
+  其中第一处正是全量跑时报告过失败的用例。现静态扫描所有测试文件，
+  读取 `.jcode/hooks.json` / `docs/adr/ADR.md` 而未处于锁作用域内
+  即变红。
+
+  豁免必须写进 `FILE_EXEMPT` 并附理由，不允许静默跳过；临时目录
+  下的副本（`tmp_path` / `workdir` / `go_project`）不算违规。
+
+  **该守卫自身也曾空转**：首版只检查 `read_text()` 调用节点的子树，
+  而路径常量在 `BinOp` 兄弟节点里，判定恒为 None，421 项全绿却是
+  完全无效的检查。变异测试才暴露。教训已写入 ADR-073。
+
 ## 计划
 
 后续开发计划以 [ROADMAP.md](ROADMAP.md) 顶部 `## 当前状态` 段落为准（按会话倒序，最新在最前）。
 变更历史以 [CHANGELOG.md](CHANGELOG.md) 为准。
 
 ---
+
+## 更新记录: 2026-10-04 14:34:56
+
+### 任务
+Git 变更同步
+
+### 变更摘要
+- 变更文件 13 个 (+1030 / -187 行)
+  - CONTEXT.md
+  - docs/adr/ADR-073-test-isolation-cross-process-locks.md
+  - docs/adr/ADR-074-worker-failure-must-be-observable.md
+  - docs/adr/ADR.md
+  - tests/conftest.py
+  - tests/test_governance_docs_validator.py
+  - tests/test_jcode_hooks_runner.py
+  - tests/test_jcode_scheduled_dispatch.py
+  - tests/test_jcode_skill_entries.py
+  - tests/test_link_auditor_supplement.py
+  - tests/test_performance_extended.py
+  - tests/test_repo_lock_semantics.py
+  - tools/scripts/rules_engine/performance.py
 
 ## 更新记录: 2026-10-04 14:13:09
 
@@ -969,23 +1005,6 @@ Git 变更同步
   - ROADMAP.md
   - docs/adr/ADR-064-semantic-degradation-must-be-visible.md
   - tests/test_semantic_degraded_visibility.py
-  - tools/scripts/rules_engine/checker.py
-  - uv.lock
-
-## 更新记录: 2026-10-03 11:33:36
-
-### 任务
-Git 变更同步
-
-### 变更摘要
-- 变更文件 9 个 (+2055 / -229 行)
-  - CHANGELOG.md
-  - CONTEXT.md
-  - ROADMAP.md
-  - docs/adr/ADR-064-semantic-degradation-must-be-visible.md
-  - docs/adr/ADR.md
-  - tests/test_semantic_degraded_visibility.py
-  - tests/test_semantic_rules_integration.py
   - tools/scripts/rules_engine/checker.py
   - uv.lock
 

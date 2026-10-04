@@ -202,3 +202,47 @@ worker A 的 `tearDown` 会删掉 worker B 正在用的目录。实测 `-n 8`
 >    必须让一个读者**持续持锁**再探第二个。
 > 3. 子进程用管道 `readline()` 做握手，在 pytest 捕获输出时
 >    死锁（2 分钟挂起）。改用**文件标记**握手。
+
+## 补漏：静态守卫 `test_controlled_file_reads_are_locked.py`
+
+上面给 3 个文件补读锁后，我在后续扫描中**又发现两处漏网**：
+
+- `test_jcode_scheduled_dispatch.py::test_hooks_json_schedules_all_parse`
+  —— 同文件内两个用例读同一份 `hooks.json`，我只改了其中一个，
+  而漏掉的那个**正是全量跑时报告过失败的**；
+- `test_jcode_skill_entries.py::test_hooks_json_command_is_accepted`
+  —— 写法的读受控配置，grep 上一轮漏掉。
+
+两处都已补锁。但真正的教训是：**靠人肉 grep 守不住**。往文件里
+新增一个用例不会触发任何既有检查，漏锁会静默重新长回来。
+
+故新增守卫 `tests/test_controlled_file_reads_are_locked.py`：静态
+扫描每个测试文件，找出所有读取受控文件（`.jcode/hooks.json`、
+`docs/adr/ADR.md`）的语句，断言它们处在
+`acquire_repo_read_lock()` / `acquire_repo_mutation_lock()` 作用域内。
+违规时给出文件与行号，并提示在 `FILE_EXEMPT` 写明理由（禁止静默跳过）。
+
+| 变异 | 结果 |
+|------|------|
+| 回退 `test_hooks_json_schedules_all_parse` 的读锁 | 精确报出该文件 `:97`，`1 failed` |
+| 新增一个未加锁读 `hooks.json` 的用例 | 精确报出 `:219`，`1 failed` |
+| 还原 | `421 passed` |
+
+判定口径（避免误报，均已逐个人工核对）：
+
+- **临时目录副本不算**：`tmp_path` / `workdir` / `go_project` 等
+  路径下的 `hooks.json` 是副本，不与受控文件竞争，无需加锁。
+  首版守卫曾把 `test_adg_bootstrap.py`、`test_install_governance.py`
+  误报为违规，已按此口径排除。
+- **自锁封装与外锁封装都算合规**：前者函数体自己加锁（如
+  `_read_real_hooks_json`），后者由调用点在锁内使用。
+- 另有"定义了封装却无带锁调用点"的假合规检查，防的是写了
+  正确的封装却不使用它。
+
+> 踩坑：首版 `_controlled_name` 只检查 `read_text(...)` **调用节点
+> 自身**的子树，而真实写法是
+> `json.loads((ROOT / ".jcode" / "hooks.json").read_text())` —— 路径
+> 字符串在 `BinOp` **兄弟节点**里，不在调用节点子树内，导致判定恒为
+> `None`，守卫 421 项**全绿却完全空转**。变异测试才暴露了这点。
+> 修法：先向上取承载该调用的最内层 `ast.stmt`，再看整条语句。
+> 教训：**一个从不失败的检查比没有检查更危险**，必须用变异证明它会红。

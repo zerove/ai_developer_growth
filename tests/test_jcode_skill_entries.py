@@ -17,6 +17,9 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from conftest import acquire_repo_read_lock  # noqa: E402
+
 _SCRIPTS = Path(__file__).resolve().parent.parent / ".jcode" / "scripts"
 
 
@@ -186,7 +189,10 @@ class TestHookCommandSmoke:
     """hooks.json 里指向 multi-agent-orch 的实际命令行必须可解析。"""
 
     def test_hooks_json_command_is_accepted(self) -> None:
-        cfg = (Path(__file__).resolve().parent.parent / ".jcode" / "hooks.json").read_text(encoding="utf-8")
+        # 跨进程共享读锁 (ADR-073): 只**读**受控 .jcode/hooks.json, 但同文件
+        # 正被 test_check_hooks_json_integrity.FailOpenDetectorTest 真改写。
+        with acquire_repo_read_lock():
+            cfg = (Path(__file__).resolve().parent.parent / ".jcode" / "hooks.json").read_text(encoding="utf-8")
         import json
 
         hooks = json.loads(cfg)["hooks"]["on_pr"]

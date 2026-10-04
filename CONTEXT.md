@@ -107,10 +107,41 @@ AI 时代开发者成长知识库 + 治理框架（knowledge base + governance f
 
   穷举结论（`_collect_files` + 两条检查路径）：
   - `_collect_files` 按扩展名 `rglob` 后去重排序，逻辑无并发依赖；
-    唯一风险是 10000 文件上限，但该用例只有 10 个文件；
+    唯一风险是 10000 文件上限，但该用例只有 10 个文件。
+    **实测**：该用例确实走到 `_parallel_check` 且传入 10 个文件，
+    收集数与磁盘一致（已用 spy 探针验证，非源码推断）。
   - 缓存分区 (`_partition_files`) 在 `cache_enabled=False` 下不生效；
   - “结果变少”只剩两条分支：worker 返回 None、worker 抛异常。
-    **两条现均已留痕。**
+    **两条现均已留痕（ADR-074/076）。**
+
+  **第六轮（2026-10-04）：静态穷举已做尽，除“外部环境”外全部证伪。**
+  上一轮把“结果变少”归到两条 worker 分支，但没查那两条分支的**触发源**。
+  本轮把 worker 内 `except (AttributeError, OSError)` 的每个可能来源
+  逐条实测证伪：
+
+  | 候选触发源 | 结论 | 依据 |
+  |---|---|---|
+  | fork 后惰性 `import checker` 触发 `AttributeError` | **证伪** | `checker` 在导入 `performance` 时即进 `sys.modules`（经包 `__init__`）；即使显式弹出后重导入也**不报错**，仍得 10 条 |
+  | 外部 linter（ruff）子进程失败 | **证伪** | `run_linters=True` 确实执行，但 `_run_external_linters` 内部 `except Exception` 已全部捕获，不穿透到 worker |
+  | 生成规则 `~/.config/adg/rules/generated/` 读取 | **证伪** | `load_generated_rules` 内部 `except Exception` 已包住，且 `rule_file.exists()` 先行短路 |
+  | 共享用户配置被删/重建 → `FileNotFoundError`（`OSError` 子类） | **证伪** | 同上，内部 `except` 已包住 |
+  | fd 耗尽（`EMFILE`） | **证伪** | `RLIMIT_NOFILE` soft=8192；fork 后 fd 不泄漏（5→5） |
+
+  至此，“结果变少”在**代码内部**已无未审计分支。
+
+  **同时纠正一处不严谨的旧结论**：`RLIMIT_NOFILE` 默认 8192 很高，
+  但原用例断言是 `>= 8/10`（容忍丢 2 个），也就是说当时观测到的失败
+  **至多是 7 条**。“结果变少”幅度小，与“单文件读取失败”而非
+  “进程池整体崩溃”更相符；后者会一次性丢掉整批（10 条全失）。
+
+  **当前状态（诚实边界）**：
+  - 已**确定性复现并验证**的缺陷修复：**2 个**（ADR-074、ADR-076）；
+  - 原始偶发失败的**触发条件：仍未定位**；
+  - 但“结果变少”在代码内已**穷举至只剩外部环境**一个类别，
+    且该类别现已**可观测**：下次再发生，`failed_files` 会直接给出
+    文件名与原因，不再需要猜测。
+  - 若要进一步定位，**前提是能复现**，而这一点目前不具备。
+    继续压测只是消耗，不再做。
 
   排查时已把该用例的断言改为自动取证（失败时输出 `collected` 与
   `failed_files`），并用临时改阈值验证该消息确实会触发。若再发生，
@@ -176,6 +207,19 @@ AI 时代开发者成长知识库 + 治理框架（knowledge base + governance f
 变更历史以 [CHANGELOG.md](CHANGELOG.md) 为准。
 
 ---
+
+## 更新记录: 2026-10-04 18:05:57
+
+### 任务
+Git 变更同步
+
+### 变更摘要
+- 变更文件 5 个 (+366 / -72 行)
+  - CONTEXT.md
+  - docs/adr/ADR-076-parallel-worker-none-observable.md
+  - docs/adr/ADR.md
+  - tests/test_performance_worker_none_observable.py
+  - tools/scripts/rules_engine/performance.py
 
 ## 更新记录: 2026-10-04 17:53:31
 
@@ -1028,25 +1072,6 @@ Git 变更同步
 
 ### 变更摘要
 - 变更文件 10 个 (+400 / -122 行)
-  - CHANGELOG.md
-  - CONTEXT.md
-  - ROADMAP.md
-  - docs/adr/ADR-063-tree-sitter-per-language-import.md
-  - docs/adr/ADR-064-semantic-degradation-must-be-visible.md
-  - docs/adr/ADR-070-verify-syntax-before-writing.md
-  - tests/test_ast_parser_partial_install.py
-  - tests/test_rule_docs_mapper_round2.py
-  - tests/test_semantic_degraded_visibility.py
-  - tools/scripts/rules_engine/rule_docs_mapper.py
-
-## 更新记录: 2026-10-03 17:42:37
-
-### 任务
-Git 变更同步
-
-### 变更摘要
-- 变更文件 11 个 (+388 / -106 行)
-  - .jcode/hooks.json
   - CHANGELOG.md
   - CONTEXT.md
   - ROADMAP.md

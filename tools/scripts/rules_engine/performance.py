@@ -172,7 +172,22 @@ class FileCache:
 
     @staticmethod
     def _check_file_worker(args: tuple[str, str | None]) -> dict[str, Any] | None:
-        """Worker function for parallel file checking."""
+        """Worker function for parallel file checking.
+
+        注意: 下面 ``except (AttributeError, OSError) -> None`` 是一个
+        **fail-open** 分支 (失败被吐成 None, 父进程只会把它剔除)。自
+        ADR-074/076 起, 父进程两条路径都会把这种 None 记入
+        ``failed_files``, 因此本分支**不再是静默的**。
+
+        保留它的理由: ``return None`` 是既有返回契约的一部分, 上层
+        ``optimized_check_directory`` 依赖 ``None`` 过滤。彻底删掉会
+        改变行为而非修复问题。
+
+        已逐条证伪的触发源 (勿重复排查, 详见 CONTEXT.md):
+        fork 后惰性 import 触发 AttributeError、外部 ruff 子进程失败、
+        生成规则目录读取、共享配置被删导致的 FileNotFoundError、
+        fd 耗尽 (EMFILE) —— 五项实测均无法让本分支触发。
+        """
         filepath, language = args
         try:
             from pathlib import Path

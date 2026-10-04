@@ -190,6 +190,22 @@ AI 时代开发者成长知识库 + 治理框架（knowledge base + governance f
 
 ---
 
+## 更新记录: 2026-10-04 17:42:32
+
+### 任务
+Git 变更同步
+
+### 变更摘要
+- 变更文件 8 个 (+960 / -247 行)
+  - CONTEXT.md
+  - docs/adr/ADR-075-rules-disk-cache-cross-process-lock.md
+  - docs/adr/ADR.md
+  - tests/conftest.py
+  - tests/test_performance_extended.py
+  - tests/test_pipeline_checker_ruleloader.py
+  - tests/test_rule_loader_cache_concurrency.py
+  - tools/scripts/rules_engine/rule_loader.py
+
 ## 更新记录: 2026-10-04 17:29:22
 
 ### 任务
@@ -1059,21 +1075,5 @@ Git 变更同步
   - tests/test_rule_docs_mapper_round2.py
   - tests/test_semantic_degraded_visibility.py
   - tools/scripts/rules_engine/rule_docs_mapper.py
-
-## 更新记录: 2026-10-03 17:16:30
-
-### 任务
-Git 变更同步
-
-### 变更摘要
-- 变更文件 8 个 (+231 / -64 行)
-  - .jcode/hooks.json
-  - CHANGELOG.md
-  - CONTEXT.md
-  - ROADMAP.md
-  - docs/adr/ADR-063-tree-sitter-per-language-import.md
-  - docs/adr/ADR-064-semantic-degradation-must-be-visible.md
-  - tests/test_ast_parser_partial_install.py
-  - tests/test_semantic_degraded_visibility.py
 
 <!-- 滚动窗口: 已自动裁剪 1 条旧更新记录 -->

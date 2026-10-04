@@ -87,10 +87,9 @@ def _disk_cache_lock(*, shared: bool) -> Iterator[None]:
     """对规则磁盘缓存做跨进程互斥 (ADR-075).
 
     为何需要: 缓存的读写是**读-改-写**序列, 天然会丢更新。
-    实测 (本轮复现): 两个并发写者各自「读出旧字典 → 加上自己的 key →
-    整体覆盖写回」, 后写者会把前写者的 key 静默抹掉 —— 60 次并发循环
-    里丢了 53 次。pytest-xdist 下多个 worker 是独立进程, 都会走
-    ``load_rules_with_cache``, 故这不是理论风险。
+    实测 (6 个真实子进程并发): 去掉事务锁后每轮只剩 1 个 key, 丢 5/6;
+    加锁后 5 轮均零丢失。pytest-xdist 下多个 worker 是独立进程, 都会走
+    ``load_rules``, 故这不是理论风险。
 
     为何锁文件放在缓存目录**之外**: 缓存目录本身会被整体清理, 锁文件
     若放在里面, 清理后锁文件消失, 另一进程正持有的 fd 仍有效但新进程
@@ -98,8 +97,16 @@ def _disk_cache_lock(*, shared: bool) -> Iterator[None]:
 
     为何 ``shared=True`` 用 ``LOCK_SH``: 多个读者之间无冲突, 不该把
     缓存退化成全局串行; 而写者持 ``LOCK_EX``, 共享锁天然被它挡住。
+
+    为何锁路径按缓存目录派生而非固定一个名字: 锁的作用域必须与它保护的
+    数据一致。``ADG_RULES_CACHE_DIR`` 允许不同调用方指向不同缓存文件,
+    此时它们本不该互相阻塞 —— 固定锁名会把不相关的缓存退化成全局串行
+    (pytest 里每个测试都有自己的 tmp 缓存目录, 固定锁会让它们白白排队)。
+    故用缓存目录路径的 sha1 前缀派生, 既保证“同一份缓存 → 同一把锁”
+    (互斥成立), 又保证“不同缓存 → 不同锁”(互不干扰)。
     """
-    lock_path = Path(tempfile.gettempdir()) / "adg-rules-disk-cache.lock"
+    digest = hashlib.sha1(str(_DISK_CACHE_DIR.resolve()).encode()).hexdigest()[:12]
+    lock_path = Path(tempfile.gettempdir()) / f"adg-rules-disk-cache-{digest}.lock"
     lock_path.touch(exist_ok=True)
     with lock_path.open("r+") as handle:
         fcntl.flock(handle.fileno(), fcntl.LOCK_SH if shared else fcntl.LOCK_EX)

@@ -164,6 +164,30 @@ ADR-070 的兜底写在 `ast_fixer` 内部，没有覆盖到这条路径。当�
 `fixes.yml` 里的坏正则本身**未改**——那是行为变更，需另行评估
 `SEC001`/`SEC002` 等规则的替换语义，不能夹在兜底修复里悄悄改。
 
+### 复核补记（Phase 收口）
+
+初版验证只经 `tests/test_adg_new_modules.py` 间接触及 `FixEngine`，
+**从未直接调用并观察返回字典与磁盘字节**——那属于间接证据。
+新增 `tests/test_fix_engine_write_verification.py` 直接调用并打印实况：
+
+| 样本 | 观察值 |
+| --- | --- |
+| ADR-072 记录的缺陷样本 | `success=False`、`syntax_violation=True`、`fixes_applied=0`，磁盘 md5 `80c6a37c8992` → `80c6a37c8992`（逐字节不变） |
+| 合法样本（对照） | `success=True`、`fixes_applied=1`，磁盘 `a8ff44f1a640` → `5956eac524dd`，修复后仍可 `compile` |
+| 无可修复项样本 | `syntax_violation` 键**根本不出现**，证明兜底未无条件介入 |
+| `dry_run=True` | 磁盘不变，且不报语法违规 |
+
+变异（把 `if checked and violation` 短路为 `if False`）→ `1 failed`，
+失败输出直接重现 ADR-072 记录的原始损坏形态：
+
+```
+磁盘 md5 80c6a37c8992 -> b759f683945d
+磁盘内容='import subprocess\n\nimport os\ncmd = subprocess.run(f"ls {d(, shell=True, check=True)}")\n'
+```
+
+三个对照组在变异下**保持绿**，说明它们确实在测兜底开关而非侥幸通过。
+还原后 `4 passed`。
+
 ## 相关
 
 - ADR-070：写盘前必须校验修复结果的语法

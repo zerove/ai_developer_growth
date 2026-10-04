@@ -123,12 +123,42 @@ AI 时代开发者成长知识库 + 治理框架（knowledge base + governance f
   而路径常量在 `BinOp` 兄弟节点里，判定恒为 None，421 项全绿却是
   完全无效的检查。变异测试才暴露。教训已写入 ADR-073。
 
+- **ADR-071 / ADR-072 的验证曾长期停留在"测试绿"而非"观察到行为"**：
+  自动审查指出这两个目标的反馈环从未闭合。本轮补做了真实观察：
+  - ADR-071 变异回退 `phase_runner.py` 目录分支的 `return 1` →
+    **2 failed**，断言直接落在子进程 `returncode` 上；
+  - ADR-072 变异把拒绝项的 `fixed` 留空 → **2 failed**，实测汇总
+    退化回 `1 auto-fixed, 0 manual fixes needed`（正是本 ADR 要消灭的
+    假绿灯）；变异退出码判定 → **1 failed**；
+  - `FixEngine` 此前只被间接触及，现新增
+    `tests/test_fix_engine_write_verification.py` **直接调用并观察**：
+    缺陷样本磁盘 md5 `80c6a37c8992` → `80c6a37c8992`（逐字节不变），
+    变异后直接重现 ADR-072 记录的损坏形态。
+
+  教训：**测试通过不等于需求被满足**。若一个目标声称"已修好"，
+  却说不清"移除修复后哪条检查会红、红的是不是它真正要保证的那件事"，
+  那就是没验证过。变异是唯一能区分"检查有效"与"检查空转"的手段。
+
 ## 计划
 
 后续开发计划以 [ROADMAP.md](ROADMAP.md) 顶部 `## 当前状态` 段落为准（按会话倒序，最新在最前）。
 变更历史以 [CHANGELOG.md](CHANGELOG.md) 为准。
 
 ---
+
+## 更新记录: 2026-10-04 14:53:20
+
+### 任务
+Git 变更同步
+
+### 变更摘要
+- 变更文件 6 个 (+415 / -19 行)
+  - CONTEXT.md
+  - docs/adr/ADR-072-auto-fix-verify-syntax-before-write.md
+  - docs/adr/ADR-073-test-isolation-cross-process-locks.md
+  - tests/test_controlled_file_reads_are_locked.py
+  - tests/test_jcode_scheduled_dispatch.py
+  - tests/test_jcode_skill_entries.py
 
 ## 更新记录: 2026-10-04 14:34:56
 
@@ -991,20 +1021,6 @@ Git 变更同步
   - docs/adr/ADR.md
   - tests/test_semantic_degraded_visibility.py
   - tools/scripts/hooks/phase_runner.py
-  - tools/scripts/rules_engine/checker.py
-  - uv.lock
-
-## 更新记录: 2026-10-03 11:50:35
-
-### 任务
-Git 变更同步
-
-### 变更摘要
-- 变更文件 6 个 (+1435 / -129 行)
-  - CHANGELOG.md
-  - ROADMAP.md
-  - docs/adr/ADR-064-semantic-degradation-must-be-visible.md
-  - tests/test_semantic_degraded_visibility.py
   - tools/scripts/rules_engine/checker.py
   - uv.lock
 

@@ -157,6 +157,8 @@ class TestValidatorsCliFixFlagIsDead:
 
     这组用例的作用是**记录当前真实行为**, 而不是主张它应该这样。
     修复它属于 CLI 行为变更（从"永不写盘"变成"按 --fix 写盘"）,
+    且还需同时让规则集携带 ``fix_replacement``（见
+    ``test_second_layer_blocks_writes_even_if_wired``）,
     与 ADR-072 的写盘兜底是不同范围的事, 需单独评估。
 
     若将来有人修了这个参数, 本组用例会红 —— 那是**预期的**:
@@ -196,6 +198,31 @@ class TestValidatorsCliFixFlagIsDead:
             check=False,
         )
         assert "--fix" in proc.stdout, "--fix 已从 --help 中消失, ADR-072 记录需更新"
+
+    def test_second_layer_blocks_writes_even_if_wired(self) -> None:
+        """第二层遮蔽: 实际加载的规则集不带 fix_replacement, 接上参数也不写盘。
+
+        这是比 `args.fix` 更深的一层 —— 即使把参数接上, 只要规则数据里
+        没有 `fix_replacement`, ``apply_fixes`` 就会合理地返回 0 条。
+        记录这一点是为了避免"接上 --fix 就完事"的错误预期。
+        """
+        repo = Path(__file__).resolve().parent.parent
+        # validators/pipeline.py 只在规则定义含该字段时才填 issue.fix_replacement
+        pipeline = (repo / "tools/scripts/rules_engine/validators/pipeline.py").read_text(encoding="utf-8")
+        assert 'if "fix_replacement" in rule_def' in pipeline, (
+            "pipeline.py 不再按 fix_replacement 填充 issue, ADR-072 的第二层分析需重做"
+        )
+
+        # 全仓仅 security.yml 带该字段 —— 实际加载的规则集不含它
+        yml_with_fix = [
+            p.relative_to(repo).as_posix()
+            for p in repo.rglob("*.yml")
+            if "fix_replacement" in p.read_text(encoding="utf-8", errors="ignore") and "node_modules" not in p.parts
+        ]
+        assert all("security.yml" in path for path in yml_with_fix), (
+            f"新增了带 fix_replacement 的规则文件: {yml_with_fix}。请复核 --fix 是否已变得可达, 并同步更新 ADR-072。"
+        )
+        assert yml_with_fix, "没有任何规则文件带 fix_replacement —— 若属实请确认 ADR-072 描述仍准确"
 
 
 if __name__ == "__main__":  # pragma: no cover

@@ -206,9 +206,9 @@ ADR-070 的兜底写在 `ast_fixer` 内部，没有覆盖到这条路径。当�
 本次实测为 `87a2c3cd24f5` —— 差异源于 `fix_file` 的默认参数组合
 （本次显式传 `language="python"`）。属记录陈旧，非行为异常。
 
-### 附带发现：`--fix` 是一个**死参数**（未修，仅记录）
+### 附带发现：`--fix` 是**死参数**，且被两层更深的原因遮蔽（未修，仅记录）
 
-`validators/cli.py` 里 `args.fix` 的引用数为 **0**：
+第一层：`validators/cli.py` 里 `args.fix` 的引用数为 **0**：
 
 ```
 $ grep -c "args\.fix" tools/scripts/rules_engine/validators/cli.py
@@ -217,23 +217,63 @@ $ grep -n "args\.dry_run" tools/scripts/rules_engine/validators/cli.py
 527:    fix_exit = _handle_auto_fix(results, args.dry_run)
 ```
 
-即 `--fix` 被 argparse 解析、被 `--help` 列为正式选项，却从未被读取；
-第 527 行传的是 `args.dry_run`。实测三种调用方式行为完全相同：
+即 `--fix` 被 argparse 解析、被 `--help` 列为正式选项，却从未被读取。
+`git log -S` 显示 `--fix` 与该行**同属一个压缩提交** `f1d01d5`，
+且 `args.fix` 从未被引用过 —— 这是**出生即死**，不是回归。
 
-| 调用 | 退出码 | 文件被改 |
+第二层（遮蔽了第一层）：即使把它接上，也**依然不会写盘**。实测
+（`validate_language_rules.py <dir> --lang python --fix`）：
+
+| 调用 | 退出码 | 文件被改 | 输出 |
+| --- | --- | --- | --- |
+| `--fix` | 1 | 否 | 无 Fixed/Would fix 行 |
+| `--fix --dry-run` | 1 | 否 | 同上 |
+| `--dry-run` | 1 | 否 | 同上 |
+| 无参数 | 1 | 否 | 同上 |
+
+即便临时接上 `args.dry_run or not args.fix`，四行结果**逐字相同**。
+
+根因：`_apply_auto_fix` 只对带 ``fix_replacement`` 的 issue 调
+`apply_fixes`，而 `validators/pipeline.py:347` 只在
+``rule_def["fix_replacement"]`` 存在时才赋值。全仓 yml 中**仅
+`ai-dev-framework/common/security.yml` 带该字段**；而该 CLI 对目录调用时
+走 `_load_custom_rules` → `load_custom_rules(project_dir)`，实际加载的是
+**`.ai-rules/`** 下的规则集，其中无一条带 `fix_replacement` ——
+故 `apply_fixes` 合理地返回 0 条。CLI 确实**找到了**问题（输出里有
+`py-bare-except` 等），只是没有可应用的替换串。
+
+结论：修 `--fix` 需要**同时**解决两件事 —— 接上参数，且让规则集携带
+`fix_replacement`。后者涉及规则语义（`SEC001` 等规则的替换文本该是
+什么），ADR-072 末尾已明确把“改正则本身”列为需另行评估的事项。
+
+**未修的理由**：这是**双重行为变更**（CLI 语义 + 规则数据），风险面
+远大于 ADR-072 的写盘兜底；且当前行为是“只报告不写盘”，属保守失败，
+不造成代码损坏。此处仅如实记录，并加回归用例锁死当前事实，避免下一个人
+依据陈旧注释去验证一条**双重不可达**的写盘路径。
+
+回归用例：`tests/test_write_path_fallback_contracts.py::
+TestValidatorsCliFixFlagIsDead`。实测变异（每次恰 1 条转红，健康对照不受
+影响）：
+
+| 变异 | 预期 | 实测 |
 | --- | --- | --- |
-| `--fix` | 1 | 否 |
-| `--fix --dry-run` | 1 | 否 |
-| 无参数 | 1 | 否 |
+| 给 `.ai-rules/orph.yml` 加 `fix_replacement` | 第二层断言转红 | 1 failed / 9 passed ✓ |
+| 把 pipeline 守卫 `if "fix_replacement" in rule_def` 改写 | 第一条断言转红 | 1 failed / 9 passed ✓ |
 
-后果：该 CLI 永远不会真正写盘（等价于永远 dry-run），因此
-`syntax-check-rejected` 在这条路径上**不会被触发** —— 兜底存在但当前
-不可达。同时 `--fix` 给用户“会改文件”的错误预期。
+（此处也有个自我更正：最初我用 `security.yml` 做的变异是**无效变异** ——
+它本就在断言的白名单内，测试理应全绿。“变异后全绿”不等于“测试没作用”，
+关键要问**变的是不是断言真正覆盖的东西**。）
 
-**未修的理由**：改这个行为会变更 CLI 的实际语义（从“永不写盘”变成
-“按 `--fix` 写盘”），属于行为变更而非缺陷兜底，与 ADR-072 的范围不同，
-应单独评估并配对应的人工确认。此处仅如实记录，避免下一个人把
-`fix_applier` 当成生产可达路径去验证写盘行为。
+### 附带发现：早期一版结论本身也是错的（自我更正）
+
+本节初稿实测时**漏了** `--lang`，CLI 在参数校验阶段就
+`Error: Use --lang or --auto-detect for directories.` 退出 1，于是我
+误记为“该 CLI 等价于永远 dry-run”。补上 `--lang python` 后才看到
+它**确实找到了问题**，只是没有可应用的替换串。前一结论作废，
+以本节上表为准。
+
+这条本身就是本轮方法学的注脚：**观测被参数校验挡住时，容易把
+“没走到那段代码”误判成“那段代码的行为”**。
 
 ## 关于 `FixEngine`
 

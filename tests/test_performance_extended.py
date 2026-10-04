@@ -71,7 +71,18 @@ class TestPerformanceOptimizerExtended:
             assert len(results) > 0
 
     def test_optimized_check_directory_parallel(self):
-        """Optimized check runs in parallel for larger file sets."""
+        """Optimized check runs in parallel for larger file sets.
+
+        失败时会把实况写进断言消息, 而非只留一个 ``assert 8 <= 7``。
+        起因: 该用例曾在全量 ``-n 8`` 下偶发失败 (约 9 次里 1 次, 单独跑
+        恒绿), 但触发条件始终未能定位 —— 排查记录见 CONTEXT.md
+        「未关闭的存量缺陷」。既然复现不了, 就让**下一次发生时自动留下
+        证据**, 而不是靠下一轮重新猜测。
+
+        ``failed_files`` 是关键: ADR-074 起 worker 失败不再静默消失,
+        若结果少于 10, 这里能直接区分三种情形 ——
+        worker 抛异常 / worker 返回 None / 文件压根没被收集到。
+        """
         with tempfile.TemporaryDirectory() as tmp:
             tmp_path = Path(tmp)
             for i in range(10):
@@ -79,7 +90,16 @@ class TestPerformanceOptimizerExtended:
 
             opt = PerformanceOptimizer(max_workers=4, cache_enabled=False)
             results = opt.optimized_check_directory(tmp_path)
-            assert len(results) >= 8  # at least 8 of 10 processed
+
+            collected = sorted(p.name for p in tmp_path.glob("*.py"))
+            assert len(results) >= 8, (
+                f"只拿到 {len(results)}/10 个结果。\n"
+                f"  收集到的文件 ({len(collected)}): {collected}\n"
+                f"  failed_files ({len(opt.failed_files)}): {opt.failed_files}\n"
+                f"  若 collected=10 且 failed_files 为空, 则失败发生在 worker "
+                f"返回 None 但未被计入 failed_files 的分支, 属新缺陷。\n"
+                f"  若 collected<10, 则问题在 _collect_files 而非并行检查。"
+            )
 
     def test_optimized_check_with_cache_enabled(self):
         """Optimized check works with cache enabled."""

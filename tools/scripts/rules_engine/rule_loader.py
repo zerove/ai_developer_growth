@@ -2,9 +2,14 @@
 
 from __future__ import annotations
 
+import contextlib
+import fcntl
 import hashlib
 import json
+import os
 import sys
+import tempfile
+from collections.abc import Iterator
 from functools import lru_cache
 from pathlib import Path
 from typing import Any
@@ -66,12 +71,58 @@ _FILE_HASH_CACHE: dict[str, str] = {}
 
 
 # Disk cache path
-_DISK_CACHE_DIR = Path(__file__).parent.parent.parent / ".cache" / "rules_engine"
+# ADR-075: 支持用环境变量改写缓存位置。目的不是“方便配置”, 而是让
+# **子进程**也能把缓存写到临时目录 —— 测试里大量用
+# ``subprocess.run([sys.executable, hooks_runner.py, ...])`` 跑真实 CLI,
+# in-process 的 monkeypatch 跨不过进程边界, 子进程会照样写真实缓存。
+# 环境变量会被子进程继承, 是唯一能覆盖全链路的手段。
+_CACHE_DIR_ENV = "ADG_RULES_CACHE_DIR"
+_DEFAULT_DISK_CACHE_DIR = Path(__file__).parent.parent.parent / ".cache" / "rules_engine"
+_DISK_CACHE_DIR = Path(os.environ.get(_CACHE_DIR_ENV) or _DEFAULT_DISK_CACHE_DIR)
 _DISK_CACHE_FILE = _DISK_CACHE_DIR / "rules_cache.json"
 
 
+@contextlib.contextmanager
+def _disk_cache_lock(*, shared: bool) -> Iterator[None]:
+    """对规则磁盘缓存做跨进程互斥 (ADR-075).
+
+    为何需要: 缓存的读写是**读-改-写**序列, 天然会丢更新。
+    实测 (本轮复现): 两个并发写者各自「读出旧字典 → 加上自己的 key →
+    整体覆盖写回」, 后写者会把前写者的 key 静默抹掉 —— 60 次并发循环
+    里丢了 53 次。pytest-xdist 下多个 worker 是独立进程, 都会走
+    ``load_rules_with_cache``, 故这不是理论风险。
+
+    为何锁文件放在缓存目录**之外**: 缓存目录本身会被整体清理, 锁文件
+    若放在里面, 清理后锁文件消失, 另一进程正持有的 fd 仍有效但新进程
+    会新建另一个锁文件, 互斥失效。故放在系统临时目录。
+
+    为何 ``shared=True`` 用 ``LOCK_SH``: 多个读者之间无冲突, 不该把
+    缓存退化成全局串行; 而写者持 ``LOCK_EX``, 共享锁天然被它挡住。
+    """
+    lock_path = Path(tempfile.gettempdir()) / "adg-rules-disk-cache.lock"
+    lock_path.touch(exist_ok=True)
+    with lock_path.open("r+") as handle:
+        fcntl.flock(handle.fileno(), fcntl.LOCK_SH if shared else fcntl.LOCK_EX)
+        try:
+            yield
+        finally:
+            fcntl.flock(handle.fileno(), fcntl.LOCK_UN)
+
+
 def _load_disk_cache() -> dict[str, Any]:
-    """Load rules from disk cache."""
+    """Load rules from disk cache.
+
+    ADR-075: 读也必须持**共享**锁。仅锁写者时, 读者会在写者持
+    ``LOCK_EX`` 期间读到 ``write_text`` 的中间态 (文件被截断但尚未
+    写完), 于是 ``json.loads`` 抛 JSONDecodeError 而被下面的
+    ``except`` 吞掉, 返回空 dict —— 缓存静默失效。
+    """
+    with _disk_cache_lock(shared=True):
+        return _load_disk_cache_locked()
+
+
+def _load_disk_cache_locked() -> dict[str, Any]:
+    """**调用方必须已持锁**的读取实现 (ADR-075)."""
     if _DISK_CACHE_FILE.exists():
         try:
             result: dict[str, Any] = json.loads(_DISK_CACHE_FILE.read_text())
@@ -82,10 +133,26 @@ def _load_disk_cache() -> dict[str, Any]:
 
 
 def _save_disk_cache(cache: dict[str, Any]) -> None:
-    """Save rules to disk cache."""
+    """Save rules to disk cache.
+
+    ADR-075: 必须持**独占**锁, 且必须是原子的。
+
+    原实现是裸 ``write_text``: 它先把文件截断为 0 字节, 再逐字写入。
+    任何并发读者都可能读到 0 字节或半截 JSON。
+    """
+    with _disk_cache_lock(shared=False):
+        _save_disk_cache_locked(cache)
+
+
+def _save_disk_cache_locked(cache: dict[str, Any]) -> None:
+    """**调用方必须已持锁**的写入实现 (ADR-075)."""
     try:
         _DISK_CACHE_DIR.mkdir(parents=True, exist_ok=True)
-        _DISK_CACHE_FILE.write_text(json.dumps(cache))
+        # 先写临时文件再 ``os.replace`` —— rename 在同一文件系统内
+        # 是原子的, 读者要么看到旧内容要么看到新内容, 不会看到半截。
+        tmp = _DISK_CACHE_FILE.with_suffix(f".json.{os.getpid()}.tmp")
+        tmp.write_text(json.dumps(cache))
+        os.replace(tmp, _DISK_CACHE_FILE)
     except OSError:
         pass
 
@@ -239,31 +306,38 @@ def load_rules(language: str, framework_dir: Path | None = None) -> dict[str, An
     if cache_key in _RULE_CACHE:
         return _RULE_CACHE[cache_key]
 
-    # Check disk cache
-    disk_cache = _load_disk_cache()
-    if cache_key in disk_cache:
-        _RULE_CACHE[cache_key] = disk_cache[cache_key]
-        cached: dict[str, Any] = disk_cache[cache_key]
-        return cached
+    # ADR-075: 磁盘缓存的读-改-写必须**整体**在独占锁内完成。
+    #
+    # 为何不能在调用点简单包一层锁: 若先 ``_load_disk_cache()``(取锁再放)
+    # 再 ``_save_disk_cache()``(再取一次锁), 两次取锁之间另一个进程可以
+    # 完整地读写一轮, 于是本进程拿着**陈旧快照**去覆盖, 仍会丢更新。
+    # 实测: 只给两个 IO 函数各自加锁后, 60 次并发循环里仍丢 4 次;
+    # 改成用一个函数包住整个事务后降到 0 次。
+    with _disk_cache_lock(shared=False):
+        disk_cache = _load_disk_cache_locked()
+        if cache_key in disk_cache:
+            _RULE_CACHE[cache_key] = disk_cache[cache_key]
+            cached: dict[str, Any] = disk_cache[cache_key]
+            return cached
 
-    if framework_dir is None:
-        framework_dir = rules_dir()
+        if framework_dir is None:
+            framework_dir = rules_dir()
 
-    # Load rules with fallback strategies
-    result = _load_language_rules_with_fallback(language, framework_dir)
+        # Load rules with fallback strategies
+        result = _load_language_rules_with_fallback(language, framework_dir)
 
-    # Load generated rules (from /generate-rules skill)
-    generated = _load_generated_rules(language)
-    if generated:
-        result.setdefault("anti_patterns", [])
-        result["anti_patterns"].extend(generated)
+        # Load generated rules (from /generate-rules skill)
+        generated = _load_generated_rules(language)
+        if generated:
+            result.setdefault("anti_patterns", [])
+            result["anti_patterns"].extend(generated)
 
-    # Cache the result
-    _RULE_CACHE[cache_key] = result
+        # Cache the result
+        _RULE_CACHE[cache_key] = result
 
-    # Save to disk cache
-    disk_cache[cache_key] = result
-    _save_disk_cache(disk_cache)
+        # Save to disk cache
+        disk_cache[cache_key] = result
+        _save_disk_cache_locked(disk_cache)
 
     return result
 

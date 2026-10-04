@@ -37,6 +37,64 @@ def _isolate_quality_baseline(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
     monkeypatch.setenv("JCODE_QUALITY_BASELINE", str(tmp_path / ".jcode" / "baseline.json"))
 
 
+@pytest.fixture(autouse=True)
+def _isolate_rule_disk_cache(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    """把规则磁盘缓存隔离到 tmp_path, 不让测试写真实缓存文件 (ADR-075)。
+
+    ``rule_loader`` 的 ``_DISK_CACHE_DIR`` / ``_DISK_CACHE_FILE`` 是模块级
+    硬编码路径, 指向仓库内的
+    ``tools/.cache/rules_engine/rules_cache.json``。任何调``load_rules()``
+    的测试 (哪怕只传一个不存在的语言名) 都会把一条规则写进去。
+
+    实测: 清空该文件后跑一次全量 ``-n 8``, 文件里会多出 7 个 key, 前缀为
+    ``nonexistent`` / ``nonsense`` / ``test`` / ``python`` / ``rust`` —— 全是
+    测试遗留垃圾。
+
+    危害有两个层面:
+    1. **交叉污染**: ``-n 8`` 下多个 worker 往同一文件写, 彼此覆盖, 曾
+       实际导致 ``TestDiskCache::test_save_and_load`` 偶发失败
+       (见 ADR-075);
+    2. **污染开发者本机缓存**: 下次真实跑 ``adg check`` 会命中这些用
+       ``framework_dir=tmp_path`` 生成的、仅对临时目录成立的规则缓存键。
+
+    故在**所有**测试上自动重定向到 ``tmp_path``。单个测试文件里已写的
+    ``tmp_cache_path`` / ``tmp_disk_cache`` fixture 优先级更高 (它们在
+    测试自身作用域内 monkeypatch 同一个属性), 行为不变。
+
+    为何要同时处理 ``rules_engine.*`` 别名: 有 10 个测试文件把
+    ``tools/scripts`` 插入 ``sys.path`` 后用
+    ``from rules_engine.rule_loader import ...`` 导入。这会生成一个与
+    ``tools.scripts.rules_engine.rule_loader`` **不同的模块对象**
+    (各自独立的 ``_DISK_CACHE_FILE`` 属性)。只 monkeypatch 后者时,
+    ``tests/test_rule_loader.py`` 等文件会照样写真实缓存 —— 实测全量跑完
+    真实缓存里多出 ``test`` / ``nonexistent`` / ``python`` 四个 key。
+    故两个模块对象都要重定向。
+    """
+    import sys
+
+    from tools.scripts.rules_engine import rule_loader
+
+    cache_dir = tmp_path / "rules_disk_cache"
+    cache_file = cache_dir / "rules_cache.json"
+
+    # 关键: 环境变量会被**子进程**继承。仓库里有大量用
+    # ``subprocess.run([sys.executable, hooks_runner.py, ...])`` 跑真实 CLI
+    # 的测试, in-process 的 monkeypatch 跨不过进程边界 —— 实测
+    # tests/test_phase_runner_missing_path.py 与
+    # tests/test_semantic_degraded_visibility.py 正是靠这条路径写真实缓存。
+    # 只设 monkeypatch 的话, 子进程仍会往仓库里写。
+    monkeypatch.setenv(rule_loader._CACHE_DIR_ENV, str(cache_dir))
+
+    targets = [rule_loader]
+    alias = sys.modules.get("rules_engine.rule_loader")
+    if alias is not None and alias is not rule_loader:
+        targets.append(alias)
+
+    for module in targets:
+        monkeypatch.setattr(module, "_DISK_CACHE_DIR", cache_dir)
+        monkeypatch.setattr(module, "_DISK_CACHE_FILE", cache_file)
+
+
 # 跨进程互斥锁文件名。放系统临时目录, 避免在仓库里留下未跟踪文件
 # 污染 git status —— 本仓库的收口流程会以 git status 作为门禁之一。
 REPO_MUTATION_LOCK = "adg-repo-mutation.lock"

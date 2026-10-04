@@ -59,6 +59,7 @@ AI 时代开发者成长知识库 + 治理框架（knowledge base + governance f
 
 决策全文见 [ADR.md](ADR.md) 索引与 `docs/adr/`。影响本文件的决策：
 
+- **ADR-075**: 规则磁盘缓存必须跨进程加锁 + 原子写，且缓存路径可用 `ADG_RULES_CACHE_DIR` 隔离
 - **ADR-074**: worker 失败不得静默丢结果，必须留下可追溯痕迹（`failed_files`）
 - **ADR-073**: 测试改写受控仓库文件必须跨进程互斥（写者独占/读者共享），且优先做到不碰工作区
 - **ADR-072**: auto-fix 三条写盘路径补语法兜底，拒绝时不得声称已修复
@@ -84,6 +85,49 @@ AI 时代开发者成长知识库 + 治理框架（knowledge base + governance f
     future，该 timeout 是死代码，已用 `result(timeout=0.001)` 证伪；
   - worker 内部 `_check_file_worker` 的 `except (AttributeError, OSError)`
     触发 —— 干净基线与高负载探针下均未出现 `None` 返回。
+
+  **2026-10-04 第三轮排查：仍未复现，但已缩小到具体分支。**
+  本轮按“复刻真实触发环境”而非猜环境的思路做了三组压力测试，
+  全部**未复现**（阴性结果同样有价值，记录在此避免重复走弯路）：
+
+  | 尝试 | 规模 | 结果 |
+  |------|------|------|
+  | 干净基线直接观察 worker 返回 | 1 轮 | 10 条全非 None，`failed_files` 为空 |
+  | 高负载下反复跑目标用例 | 12 轮（每轮先 `-n 8` 造负载） | 12/12 通过 |
+  | 复刻 xdist 内再 fork（`-n 8` + worker 内开进程池） | 10 轮 | 10/10 通过 |
+
+  据此可**排除**的：单纯负载、单纯 fork 嵌套均不足以触发。
+  代码层面已确认的事实：并行路径确实被走到（`len(files) > 4` 才会
+  走 `_parallel_check`，本用例 10 个文件必然满足）；结果少只可能来自
+  `_collect_files` 漏收、worker 返回 `None`、或 worker 抛异常三条分支，
+  而 ADR-074 起后两条都会写入 `failed_files`。
+
+  由此得出唯一可执行的改进：该用例原先只留一句 `assert 8 <= 7`，
+  **没有任何现场信息**。现已把断言消息改成自动取证 —— 失败时直接
+  打印 `collected` 文件数与 `failed_files` 内容，可一眼区分上述三条
+  分支。已用临时改阈值验证该消息确实会触发（输出含文件列表与
+  `failed_files (0): {}`），否则“加了取证”也只是自我安慰。
+
+  结论保持不变：**触发条件未定位**，不得声称 ADR-074 解决了它。
+  若再发生，请直接读新的断言消息，不要从头猜。
+
+  **2026-10-04 第四轮排查：已排除与规则缓存竞态的关系。**
+  本轮因全量测试撞出 `TestDiskCache::test_save_and_load` 的真实失败，
+  顺带查了规则磁盘缓存的跨进程竞态（已修，见 ADR-075）。先确认二者
+  是否同源，**结论：不是**。理由基于代码路径而非推测：
+
+  修复前的 `_load_disk_cache` 遇到损坏 JSON 时走 `except` 返回空 dict，
+  这只会让 `load_rules` 缓存 **miss**（重新从规则文件加载），**不会**
+  抛异常。而结果变少只有三条分支——`_collect_files` 漏收、worker 返回
+  `None`、worker 抛异常——缓存 miss 不在其中任何一条。
+
+  另做了第四组阴性压测：
+
+  | 尝试 | 规模 | 结果 |
+  |------|------|------|
+  | 先 `-n 4` 造并发负载、再跑目标用例 | 20 轮 | 20/20 通过 |
+
+  累计四轮、约 50 次触发尝试全部未复现。触发条件**仍未定位**。
 
   另注：`rules_engine/performance.py` 文档自述**无生产调用方**
   （仅 `perf_benchmark.py` 与测试引用），影响面限于基准与测试。
@@ -145,6 +189,234 @@ AI 时代开发者成长知识库 + 治理框架（knowledge base + governance f
 变更历史以 [CHANGELOG.md](CHANGELOG.md) 为准。
 
 ---
+
+## 更新记录: 2026-10-04 17:29:22
+
+### 任务
+Git 变更同步
+
+### 变更摘要
+- 变更文件 10 个 (+689 / -265 行)
+  - CONTEXT.md
+  - docs/adr/ADR-072-auto-fix-verify-syntax-before-write.md
+  - docs/adr/ADR.md
+  - tests/conftest.py
+  - tests/test_fix_applier_write_verification.py
+  - tests/test_language_rules_v2.py
+  - tests/test_performance_extended.py
+  - tests/test_pipeline_checker_ruleloader.py
+  - tools/scripts/fix_applier.py
+  - tools/scripts/rules_engine/rule_loader.py
+
+## 更新记录: 2026-10-04 17:21:37
+
+### 任务
+Git 变更同步
+
+### 变更摘要
+- 变更文件 10 个 (+655 / -244 行)
+  - CONTEXT.md
+  - docs/adr/ADR-072-auto-fix-verify-syntax-before-write.md
+  - docs/adr/ADR.md
+  - tests/conftest.py
+  - tests/test_fix_applier_write_verification.py
+  - tests/test_language_rules_v2.py
+  - tests/test_performance_extended.py
+  - tests/test_pipeline_checker_ruleloader.py
+  - tools/scripts/fix_applier.py
+  - tools/scripts/rules_engine/rule_loader.py
+
+## 更新记录: 2026-10-04 17:17:09
+
+### 任务
+Git 变更同步
+
+### 变更摘要
+- 变更文件 10 个 (+637 / -225 行)
+  - CONTEXT.md
+  - docs/adr/ADR-072-auto-fix-verify-syntax-before-write.md
+  - docs/adr/ADR.md
+  - tests/conftest.py
+  - tests/test_fix_applier_write_verification.py
+  - tests/test_language_rules_v2.py
+  - tests/test_performance_extended.py
+  - tests/test_pipeline_checker_ruleloader.py
+  - tools/scripts/fix_applier.py
+  - tools/scripts/rules_engine/rule_loader.py
+
+## 更新记录: 2026-10-04 17:11:53
+
+### 任务
+Git 变更同步
+
+### 变更摘要
+- 变更文件 11 个 (+626 / -211 行)
+  - .jcode/hooks.json
+  - CONTEXT.md
+  - docs/adr/ADR-072-auto-fix-verify-syntax-before-write.md
+  - docs/adr/ADR.md
+  - tests/conftest.py
+  - tests/test_fix_applier_write_verification.py
+  - tests/test_language_rules_v2.py
+  - tests/test_performance_extended.py
+  - tests/test_pipeline_checker_ruleloader.py
+  - tools/scripts/fix_applier.py
+  - tools/scripts/rules_engine/rule_loader.py
+
+## 更新记录: 2026-10-04 17:08:08
+
+### 任务
+Git 变更同步
+
+### 变更摘要
+- 变更文件 10 个 (+580 / -199 行)
+  - CONTEXT.md
+  - docs/adr/ADR-072-auto-fix-verify-syntax-before-write.md
+  - docs/adr/ADR.md
+  - tests/conftest.py
+  - tests/test_fix_applier_write_verification.py
+  - tests/test_language_rules_v2.py
+  - tests/test_performance_extended.py
+  - tests/test_pipeline_checker_ruleloader.py
+  - tools/scripts/fix_applier.py
+  - tools/scripts/rules_engine/rule_loader.py
+
+## 更新记录: 2026-10-04 17:04:39
+
+### 任务
+Git 变更同步
+
+### 变更摘要
+- 变更文件 10 个 (+562 / -188 行)
+  - CONTEXT.md
+  - docs/adr/ADR-072-auto-fix-verify-syntax-before-write.md
+  - docs/adr/ADR.md
+  - tests/conftest.py
+  - tests/test_fix_applier_write_verification.py
+  - tests/test_language_rules_v2.py
+  - tests/test_performance_extended.py
+  - tests/test_pipeline_checker_ruleloader.py
+  - tools/scripts/fix_applier.py
+  - tools/scripts/rules_engine/rule_loader.py
+
+## 更新记录: 2026-10-04 16:59:24
+
+### 任务
+Git 变更同步
+
+### 变更摘要
+- 变更文件 11 个 (+551 / -179 行)
+  - .jcode/hooks.json
+  - CONTEXT.md
+  - docs/adr/ADR-072-auto-fix-verify-syntax-before-write.md
+  - docs/adr/ADR.md
+  - tests/conftest.py
+  - tests/test_fix_applier_write_verification.py
+  - tests/test_language_rules_v2.py
+  - tests/test_performance_extended.py
+  - tests/test_pipeline_checker_ruleloader.py
+  - tools/scripts/fix_applier.py
+  - tools/scripts/rules_engine/rule_loader.py
+
+## 更新记录: 2026-10-04 16:46:33
+
+### 任务
+Git 变更同步
+
+### 变更摘要
+- 变更文件 10 个 (+525 / -162 行)
+  - CONTEXT.md
+  - docs/adr/ADR-072-auto-fix-verify-syntax-before-write.md
+  - docs/adr/ADR.md
+  - tests/conftest.py
+  - tests/test_fix_applier_write_verification.py
+  - tests/test_language_rules_v2.py
+  - tests/test_performance_extended.py
+  - tests/test_pipeline_checker_ruleloader.py
+  - tools/scripts/fix_applier.py
+  - tools/scripts/rules_engine/rule_loader.py
+
+## 更新记录: 2026-10-04 16:26:31
+
+### 任务
+Git 变更同步
+
+### 变更摘要
+- 变更文件 10 个 (+507 / -143 行)
+  - CONTEXT.md
+  - docs/adr/ADR-072-auto-fix-verify-syntax-before-write.md
+  - docs/adr/ADR.md
+  - tests/conftest.py
+  - tests/test_fix_applier_write_verification.py
+  - tests/test_language_rules_v2.py
+  - tests/test_performance_extended.py
+  - tests/test_pipeline_checker_ruleloader.py
+  - tools/scripts/fix_applier.py
+  - tools/scripts/rules_engine/rule_loader.py
+
+## 更新记录: 2026-10-04 16:23:26
+
+### 任务
+Git 变更同步
+
+### 变更摘要
+- 变更文件 9 个 (+460 / -124 行)
+  - CONTEXT.md
+  - docs/adr/ADR-072-auto-fix-verify-syntax-before-write.md
+  - docs/adr/ADR.md
+  - tests/test_fix_applier_write_verification.py
+  - tests/test_language_rules_v2.py
+  - tests/test_performance_extended.py
+  - tests/test_pipeline_checker_ruleloader.py
+  - tools/scripts/fix_applier.py
+  - tools/scripts/rules_engine/rule_loader.py
+
+## 更新记录: 2026-10-04 16:19:00
+
+### 任务
+Git 变更同步
+
+### 变更摘要
+- 变更文件 9 个 (+443 / -105 行)
+  - CONTEXT.md
+  - docs/adr/ADR-072-auto-fix-verify-syntax-before-write.md
+  - docs/adr/ADR.md
+  - tests/test_fix_applier_write_verification.py
+  - tests/test_language_rules_v2.py
+  - tests/test_performance_extended.py
+  - tests/test_pipeline_checker_ruleloader.py
+  - tools/scripts/fix_applier.py
+  - tools/scripts/rules_engine/rule_loader.py
+
+## 更新记录: 2026-10-04 16:15:38
+
+### 任务
+Git 变更同步
+
+### 变更摘要
+- 变更文件 8 个 (+426 / -87 行)
+  - CONTEXT.md
+  - docs/adr/ADR-072-auto-fix-verify-syntax-before-write.md
+  - tests/test_fix_applier_write_verification.py
+  - tests/test_language_rules_v2.py
+  - tests/test_performance_extended.py
+  - tests/test_pipeline_checker_ruleloader.py
+  - tools/scripts/fix_applier.py
+  - tools/scripts/rules_engine/rule_loader.py
+
+## 更新记录: 2026-10-04 15:43:16
+
+### 任务
+Git 变更同步
+
+### 变更摘要
+- 变更文件 6 个 (+282 / -42 行)
+  - CONTEXT.md
+  - docs/adr/ADR-072-auto-fix-verify-syntax-before-write.md
+  - tests/test_fix_applier_write_verification.py
+  - tests/test_language_rules_v2.py
+  - tests/test_performance_extended.py
+  - tools/scripts/fix_applier.py
 
 ## 更新记录: 2026-10-04 15:08:40
 
@@ -803,221 +1075,5 @@ Git 变更同步
   - docs/adr/ADR-064-semantic-degradation-must-be-visible.md
   - tests/test_ast_parser_partial_install.py
   - tests/test_semantic_degraded_visibility.py
-
-## 更新记录: 2026-10-03 17:15:08
-
-### 任务
-Git 变更同步
-
-### 变更摘要
-- 变更文件 14 个 (+369 / -71 行)
-  - CHANGELOG.md
-  - CONTEXT.md
-  - ROADMAP.md
-  - docs/adr/ADR-063-tree-sitter-per-language-import.md
-  - docs/adr/ADR-064-semantic-degradation-must-be-visible.md
-  - docs/adr/ADR-068-ast-fix-must-separate-found-from-applied.md
-  - docs/adr/ADR.md
-  - docs/api/cli.md
-  - tests/test_ast_fixer_persistence.py
-  - tests/test_ast_parser_partial_install.py
-  - tests/test_semantic_degraded_visibility.py
-  - tools/scripts/hooks/phase_runner.py
-  - tools/scripts/rules_engine/ast_fixer.py
-  - tools/scripts/rules_engine/ast_nodes.py
-
-## 更新记录: 2026-10-03 17:09:06
-
-### 任务
-Git 变更同步
-
-### 变更摘要
-- 变更文件 12 个 (+313 / -52 行)
-  - CHANGELOG.md
-  - CONTEXT.md
-  - ROADMAP.md
-  - docs/adr/ADR-068-ast-fix-must-separate-found-from-applied.md
-  - docs/adr/ADR.md
-  - docs/api/cli.md
-  - tests/test_ast_fixer_persistence.py
-  - tests/test_ast_parser_partial_install.py
-  - tests/test_semantic_degraded_visibility.py
-  - tools/scripts/hooks/phase_runner.py
-  - tools/scripts/rules_engine/ast_fixer.py
-  - tools/scripts/rules_engine/ast_nodes.py
-
-## 更新记录: 2026-10-03 16:59:27
-
-### 任务
-Git 变更同步
-
-### 变更摘要
-- 变更文件 12 个 (+293 / -38 行)
-  - CHANGELOG.md
-  - CONTEXT.md
-  - ROADMAP.md
-  - docs/adr/ADR-068-ast-fix-must-separate-found-from-applied.md
-  - docs/adr/ADR.md
-  - docs/api/cli.md
-  - tests/test_ast_fixer_persistence.py
-  - tests/test_ast_parser_partial_install.py
-  - tests/test_semantic_degraded_visibility.py
-  - tools/scripts/hooks/phase_runner.py
-  - tools/scripts/rules_engine/ast_fixer.py
-  - tools/scripts/rules_engine/ast_nodes.py
-
-## 更新记录: 2026-10-03 14:28:59
-
-### 任务
-Git 变更同步
-
-### 变更摘要
-- 变更文件 6 个 (+422 / -30 行)
-  - CHANGELOG.md
-  - ROADMAP.md
-  - docs/adr/ADR-069-auto-fix-must-not-break-syntax.md
-  - docs/adr/ADR.md
-  - tests/test_ast_fixer_inline_body_safety.py
-  - tools/scripts/rules_engine/ast_fixer.py
-
-## 更新记录: 2026-10-03 14:06:01
-
-### 任务
-Git 变更同步
-
-### 变更摘要
-- 变更文件 3 个 (+34 / -64 行)
-  - CONTEXT.md
-  - docs/adr/ADR-068-ast-fix-must-separate-found-from-applied.md
-  - docs/adr/ADR.md
-
-## 更新记录: 2026-10-03 13:55:51
-
-### 任务
-Git 变更同步
-
-### 变更摘要
-- 变更文件 3 个 (+23 / -34 行)
-  - CONTEXT.md
-  - docs/adr/ADR.md
-  - tests/test_ast_fixer_full.py
-
-## 更新记录: 2026-10-03 13:44:50
-
-### 任务
-Git 变更同步
-
-### 变更摘要
-- 变更文件 2 个 (+13 / -4 行)
-  - docs/adr/ADR.md
-  - tests/test_ast_fixer_full.py
-
-## 更新记录: 2026-10-03 13:24:45
-
-### 任务
-Git 变更同步
-
-### 变更摘要
-- 变更文件 8 个 (+1482 / -125 行)
-  - CHANGELOG.md
-  - ROADMAP.md
-  - docs/adr/ADR-066-ast-fixer-must-persist-fixes.md
-  - docs/adr/ADR.md
-  - docs/api/cli.md
-  - tests/test_ast_fixer_persistence.py
-  - tools/scripts/rules_engine/ast_fixer.py
-  - uv.lock
-
-## 更新记录: 2026-10-03 13:07:36
-
-### 任务
-Git 变更同步
-
-### 变更摘要
-- 变更文件 11 个 (+1869 / -284 行)
-  - CHANGELOG.md
-  - CONTEXT.md
-  - ROADMAP.md
-  - docs/adr/ADR-064-semantic-degradation-must-be-visible.md
-  - docs/adr/ADR-065-missing-path-must-fail.md
-  - docs/adr/ADR.md
-  - tests/test_phase2_5_integration.py
-  - tests/test_phase_runner_missing_path.py
-  - tools/scripts/hooks/phase_runner.py
-  - tools/scripts/rules_engine/ast_fixer.py
-  - uv.lock
-
-## 更新记录: 2026-10-03 12:57:07
-
-### 任务
-Git 变更同步
-
-### 变更摘要
-- 变更文件 11 个 (+1850 / -254 行)
-  - CHANGELOG.md
-  - CONTEXT.md
-  - ROADMAP.md
-  - docs/adr/ADR-064-semantic-degradation-must-be-visible.md
-  - docs/adr/ADR-065-missing-path-must-fail.md
-  - docs/adr/ADR.md
-  - tests/test_phase2_5_integration.py
-  - tests/test_phase_runner_missing_path.py
-  - tools/scripts/hooks/phase_runner.py
-  - tools/scripts/rules_engine/ast_fixer.py
-  - uv.lock
-
-## 更新记录: 2026-10-03 12:44:12
-
-### 任务
-Git 变更同步
-
-### 变更摘要
-- 变更文件 11 个 (+1831 / -224 行)
-  - CHANGELOG.md
-  - CONTEXT.md
-  - ROADMAP.md
-  - docs/adr/ADR-064-semantic-degradation-must-be-visible.md
-  - docs/adr/ADR-065-missing-path-must-fail.md
-  - docs/adr/ADR.md
-  - tests/test_phase2_5_integration.py
-  - tests/test_phase_runner_missing_path.py
-  - tools/scripts/hooks/phase_runner.py
-  - tools/scripts/rules_engine/ast_fixer.py
-  - uv.lock
-
-## 更新记录: 2026-10-03 12:25:19
-
-### 任务
-Git 变更同步
-
-### 变更摘要
-- 变更文件 10 个 (+1518 / -209 行)
-  - CHANGELOG.md
-  - CONTEXT.md
-  - ROADMAP.md
-  - docs/adr/ADR-064-semantic-degradation-must-be-visible.md
-  - docs/adr/ADR.md
-  - tests/test_phase2_5_integration.py
-  - tests/test_semantic_degraded_visibility.py
-  - tools/scripts/hooks/phase_runner.py
-  - tools/scripts/rules_engine/checker.py
-  - uv.lock
-
-## 更新记录: 2026-10-03 12:17:07
-
-### 任务
-Git 变更同步
-
-### 变更摘要
-- 变更文件 9 个 (+1494 / -192 行)
-  - CHANGELOG.md
-  - CONTEXT.md
-  - ROADMAP.md
-  - docs/adr/ADR-064-semantic-degradation-must-be-visible.md
-  - docs/adr/ADR.md
-  - tests/test_semantic_degraded_visibility.py
-  - tools/scripts/hooks/phase_runner.py
-  - tools/scripts/rules_engine/checker.py
-  - uv.lock
 
 <!-- 滚动窗口: 已自动裁剪 1 条旧更新记录 -->

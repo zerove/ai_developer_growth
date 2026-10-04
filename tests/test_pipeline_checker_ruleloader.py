@@ -6,6 +6,8 @@ import json
 from pathlib import Path
 from unittest.mock import patch
 
+import pytest
+
 from tools.scripts.rules_engine.checker import (
     _detect_language as checker_detect_language,
 )
@@ -617,6 +619,21 @@ class TestFileHash:
 
 
 class TestDiskCache:
+    # ADR-075: 本类原先直写**真实的** ``tools/.cache/rules_engine/
+    # rules_cache.json`` (模块级硬编码路径), 而 ``test_rule_loader_disk_cache``
+    # 已正确 monkeypatch 到 tmp_path。两者在 ``-n 8`` 下并发时互相覆盖,
+    # 实测导致 ``test_save_and_load`` 偶发失败:
+    #   AssertionError: assert 'python:abc' in {}
+    # 即缓存被别的 worker 写成了不含本用例 key 的内容 —— 与被测代码无关的
+    # 纯粹交叉污染。故此处也重定向到 tmp_path, 不碰工作区。
+    @pytest.fixture(autouse=True)
+    def _redirect_cache(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+        from tools.scripts.rules_engine import rule_loader as rl
+
+        cache_file = tmp_path / "rules_cache.json"
+        monkeypatch.setattr(rl, "_DISK_CACHE_DIR", tmp_path)
+        monkeypatch.setattr(rl, "_DISK_CACHE_FILE", cache_file)
+
     def test_save_and_load(self) -> None:
         from tools.scripts.rules_engine import rule_loader as rl
 

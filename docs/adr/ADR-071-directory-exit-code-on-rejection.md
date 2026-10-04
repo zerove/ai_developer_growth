@@ -82,6 +82,37 @@ ADR-070 修好了"写盘前校验语法"，并在**输出**层面锁死了失败
 （`test_directory_exit_code_nonzero_when_file_rejected`、
 `..._on_partial_success`），两个对照组用例保持绿。
 
+## 需求 → 检查映射（收口复核重测）
+
+自动审查指出: 本 ADR 的验证此前只跑过 pytest 汇总, 属**间接证据**,
+未走用户/CI 实际调用的路径。已新增
+`tests/test_write_path_exit_code_acceptance.py`, 全部经 ``subprocess``
+调真实 CLI, 逐条需求重测:
+
+| 显式需求 | 对应用例（真实 CLI） | 实测退出码 | 实测磁盘 |
+| --- | --- | --- | --- |
+| 目录被拒 → 退出 1 | `test_rejected_file_makes_directory_exit_nonzero` | 1 | md5 `f26877ad31d9`→`f26877ad31d9` 不变 |
+| 部分成功部分被拒 → 退出 1 | `test_partial_success_still_exits_nonzero` | 1 | 被拒者不变; 成功者已改且可 `compile` |
+| 目录无被拒 → 仍退出 0（对照组） | `test_healthy_directory_still_exits_zero` | 0 | 无变化 |
+| 合法修复仍生效（对照组） | `test_legitimate_fix_still_applies` | 0 | `b74c0c89761c`→`a59aa5e226ce` |
+| 单文件路径（对照, 退出码=auto_safe 项数） | `test_single_file_exit_and_disk_unchanged` | 1 | md5 不变 |
+
+变异验证（经 pytest 路径, 非探针脚本）:
+- 回退本 ADR 那三行 → **恰好 2 条目录用例转红**，6 条对照组全绿;
+- 短路 ADR-072 写盘兜底 → 本组 5 条全绿（彼此独立，互不串扰）。
+
+### 为何必须注入缺陷
+
+实测 6 类真实样本（裸 except、空函数、类方法、字符串内 except 等），
+**没有一类能触发拒绝分支** —— 逐条规则已逐个修好，该分支用真实输入已
+不可达。不注入则本组断言全部空转（实测：先前一版用 `def f(): pass`
+作输入，CLI 报告 0 fixes，5 条断言误判为"通过/失败"的混合态）。
+
+注入的是**缺陷实现**而非判定结果：`sitecustomize` 把
+`_fix_empty_functions` 换成 ADR-069 之前的版本，修复结果**真的是**非法
+Python，随后观测 CLI 如何反应。与伪造 `report.syntax_violation` 字段有
+本质区别。
+
 ## 后果
 
 - `ast-fix --path <目录>` 在有文件被拒时会真正阻断 CI/pre-commit。

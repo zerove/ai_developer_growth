@@ -149,6 +149,31 @@ ADR-070 的兜底写在 `ast_fixer` 内部，没有覆盖到这条路径。当�
 - 依赖该子命令返回 0 的流程，在发生语法拒绝时会转为非零——这正是
   本 ADR 的意图。
 
+## 需求 → 检查映射（收口复核重测）
+
+自动审查指出: 本 ADR 的验证此前只跑过 pytest 汇总, 属**间接证据**。
+已新增 `tests/test_write_path_exit_code_acceptance.py`, 全部经
+``subprocess`` 调真实 CLI (``hooks_runner.py language-rules --path ... --fix``),
+逐条需求重测。**缺陷来自规则本身, 无需任何注入**:
+
+| 显式需求 | 对应用例 | 实测退出码 | 实测磁盘 |
+| --- | --- | --- | --- |
+| 写盘前校验语法, 不通过则整体回退 | `test_bad_regex_rule_refuses_write_and_exits_nonzero` | 1 | md5 `80c6a37c8992`→`80c6a37c8992` 不变 |
+| 拒绝时不声称已修复 | 同上 | 1 | 汇总 `0 auto-fixed, 1 manual fixes needed`（而非 `1 auto-fixed`） |
+| 退出码只对 FAILED_WRITE_RULE_IDS 非零 | 同上 | 1 | `[syntax-check-rejected]` + `[MANUAL FIX REQUIRED]` |
+| flag-only 规则**不得**弄红退出码（对照组） | `test_flag_only_rule_does_not_redden_exit_code` | 0 | md5 `b779c4bd8945` 不变 |
+| 合法修复仍生效（对照组） | `test_valid_fix_still_applies` | 0 | md5 `b692c606aad9`→`cfbd246b85cb`, 可 `compile` |
+
+变异验证（经 pytest 路径）: 短路 `_write_if_changed` 的兜底 → **恰好 1 条**
+坏正则用例转红（磁盘确实被改坏、汇总退回 `1 auto-fixed`、退出码变 0），
+另 7 条（含全部对照组）保持绿。回退 ADR-071 那三行 → 本组 3 条全绿，
+证明两组变异互不串扰。
+
+注：本组的 `FixEngine` 与 `fix_applier` 两处（无生产调用方）仍由
+`test_fix_engine_write_verification.py` / `test_fix_applier_write_verification.py`
+直接调用验证返回值与磁盘字节 —— 它们不是 CLI 子命令, 没有可走的
+"真实公开接口", 直接调用即其真实入口。
+
 ## 关于 `FixEngine`
 
 本 ADR 起初把 `FixEngine` 记作遗留项，理由是它无生产调用方。

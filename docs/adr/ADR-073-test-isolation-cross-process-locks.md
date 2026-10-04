@@ -98,6 +98,42 @@ worker 进程同时改同一文件"完全无效。`flock` 作用于文件本身�
 - 受控文件不再残留 canary；
 - 新增约定可复用到后续所有"硬编码仓库路径"的测试。
 
+### 后续补记（同源问题的第二、三批实例）
+
+ADR 提交后继续全量跑，又暴露两处**同源**问题，均已按本 ADR 的
+约定修复，故在此补记，避免后来者重复踩坑。
+
+**实例 4：`test_link_auditor_supplement.py` 用固定相对名当工作目录**
+
+三个类分别写死 `test_check_all` / `test_build_index` /
+`test_check_edge`，都在**当前工作目录**下创建、`tearDown` 里
+`shutil.rmtree`。pytest-xdist 下多个 worker 共享同一 cwd，于是
+worker A 的 `tearDown` 会删掉 worker B 正在用的目录。实测 `-n 8`
+下偶发 `FileNotFoundError: 'test_check_all'`，而失败落点是
+`TestCheckAllLinks::test_check_all_handles_missing_dirs`，与真实原因
+毫无关系。
+
+改为每个用例用 `tempfile.TemporaryDirectory()`（唯一绝对路径）。
+变异验证：换回固定相对名后 4 次运行分别 10/12/11/17 failed；
+改回唯一临时目录后连跑 8 次全部 `69 passed`。
+
+同一文件另有一处：`test_directory_mode_still_works` 在仓库根建
+`.tmp_link_test` 并在 `finally` 里 `rmdir`。被测 CLI 接受路径参数，
+改为 `tmp_path` 即可，完全不必写工作区。
+
+**实例 5：`os.getcwd()` 作为还原点本身不可靠**
+
+`TestCheckAllLinks.setUp` 原先记 `os.getcwd()` 供 `tearDown` 还原。
+但若同 worker 的前一个用例把进程 cwd 留在一个**已被删除**的目录里
+（`TemporaryDirectory.cleanup()` 会删掉当前工作目录），那么
+`os.getcwd()` 自身就抛 `FileNotFoundError` —— `setUp` 第一行即失败。
+
+实测确认：`os.chdir(tmp)` 后 `os.rmdir(tmp)`，再调 `os.getcwd()`
+直接抛 `FileNotFoundError`。故还原点改用稳定的仓库根常量。
+
+> 该实例只在实例 4 修好后才暴露出来 —— 目录名唯一化消除了互踩，
+> cwd 泄漏才不再被掩盖。**一次只修一层，下一层才会显形。**
+
 ### 代价
 
 - 被测代码拒绝路径注入时，相关用例被串行化。这是**正确**的代价：
@@ -117,3 +153,52 @@ worker 进程同时改同一文件"完全无效。`flock` 作用于文件本身�
 
 健康代码对照：三组测试的其余用例在变异下保持绿，证明失败来自
 共享锁这一处，而非测试整体被破坏。
+
+## 后续加固：读者补齐 + 锁机制的确定性测试
+
+首轮落地后仍有一批用例**只读**真实 `.jcode/hooks.json`（跑真实
+脚本校验分发契约），它们与 `FailOpenDetectorTest` 并发时可能读到
+写者窗口内的中间态，已全部接入 `acquire_repo_read_lock()`：
+
+- `tests/test_jcode_hooks_runner.py`：抽出 `_read_real_hooks_json()`
+  统一加锁读取，避免后续新增用例漏锁；
+- `tests/test_jcode_scheduled_dispatch.py`：
+  `test_real_config_dispatch_is_parseable`；
+- `tests/test_governance_docs_validator.py`：
+  `test_hooks_json_actions_are_supported`。
+
+### 证据强度：必须诚实标注的一处局限
+
+对上述读锁做变异验证时，**移除读锁后全量 `-n 8` 仍 4608 全绿**，
+未能复现失败。原因是竞态窗口只存在于 `Path.write_text()` 的
+截断重写阶段（微秒级），现有调度下采样概率极低。
+
+因此：
+
+- **不能**声称这些读锁"修好了"某次已复现的故障 —— 它们属于
+  **预防性加固**：机制正确、代价极低，但缺少"移除即变红"的
+  端到端证据。
+- 为补上这层证据，新增 `tests/test_repo_lock_semantics.py`，
+  **直接测 `conftest` 里真实的 `acquire_repo_*` 函数**（而非内联
+  裸 `fcntl`），用子进程持锁一个确定时长来断言等待时长，不依赖
+  运气。为此 `conftest._lock_path()` 支持 `ADG_TEST_LOCK_PATH`
+  覆盖，使测试可指向 `tmp_path` 而不争用生产全局锁。
+
+变异验证结果（全部被捕获）：
+
+| 变异 | 结果 |
+|------|------|
+| `acquire_repo_read_lock` 退化为 no-op | `2 failed` |
+| 读锁误用 `LOCK_EX`（应共享） | `1 failed` |
+| `acquire_repo_mutation_lock` 退化为 no-op | `3 failed` |
+| 锁路径写错（落进工作区） | `1 failed` |
+| 全部还原 | `5 passed` |
+
+> 踩过的坑，保留以免重犯：
+> 1. 初版只测内联 `fcntl`，不测 conftest 真函数 —— "函数体改成
+>    no-op"这种变异测不出来，等于白测。
+> 2. 用"并发起 N 个短进程"验证共享锁不互斥 —— 短进程几乎不会
+>    真正重叠，即便退化成独占也测不出来（变异 B 曾因此漏网）。
+>    必须让一个读者**持续持锁**再探第二个。
+> 3. 子进程用管道 `readline()` 做握手，在 pytest 捕获输出时
+>    死锁（2 分钟挂起）。改用**文件标记**握手。

@@ -20,6 +20,9 @@ from unittest.mock import patch
 
 import pytest
 
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from conftest import acquire_repo_read_lock  # noqa: E402
+
 _SCRIPTS = Path(__file__).resolve().parent.parent / ".jcode" / "scripts"
 
 
@@ -303,7 +306,11 @@ class TestHookWiring:
     def test_hooks_json_actions_are_supported(self, gdv) -> None:
         import json
 
-        cfg = json.loads((Path(__file__).resolve().parent.parent / ".jcode" / "hooks.json").read_text(encoding="utf-8"))
+        # 跳进程共享读锁 (ADR-073): 受控 hooks.json 正被其他用例真改写,
+        # 无锁时会读到半截 JSON。统一走加锁助手。
+        with acquire_repo_read_lock():
+            raw = (Path(__file__).resolve().parent.parent / ".jcode" / "hooks.json").read_text(encoding="utf-8")
+        cfg = json.loads(raw)
         supported = {"validate", "check-index", "sync-refs", "full"}
         for event, hooks in cfg["hooks"].items():
             for h in hooks:

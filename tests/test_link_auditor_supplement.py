@@ -1,9 +1,9 @@
 """Supplementary tests for link_auditor.py to improve coverage from 55% to 80%+."""
 
 import os
-import shutil
 import tempfile
 import unittest
+from pathlib import Path
 
 from tools.scripts.link_auditor import (
     _build_index,
@@ -12,6 +12,10 @@ from tools.scripts.link_auditor import (
     check_all_links,
     find_broken_links_with_index,
 )
+
+# 稳定的 cwd 锚点: 用作 os.chdir 的还原目标, 避免依赖可能已失效的
+# os.getcwd() (见 TestCheckAllLinks.setUp 注释)。
+REPO_ROOT = Path(__file__).resolve().parents[1]
 
 
 class TestFindBrokenLinksWithIndex(unittest.TestCase):
@@ -129,14 +133,24 @@ class TestCheckAllLinks(unittest.TestCase):
     """Test check_all_links function."""
 
     def setUp(self):
-        self.original_dir = os.getcwd()
-        self.test_dir = "test_check_all"
+        # 每个用例用**唯一绝对路径**, 而非仓库根下的固定相对名。
+        # 原先三个类都用 "test_check_all" / "test_build_index" /
+        # "test_check_edge" 这类固定相对名, pytest-xdist 下多个 worker
+        # 共享同一 cwd, 会互相创建/删除对方的目录 —— 实测 `-n 8` 下偶发
+        # FileNotFoundError: 'test_check_all', 且失败点与真实原因无关。
+        # 另: 还原点不用 os.getcwd(), 因为前一个用例可能把进程 cwd 留在
+        # 已被删除的目录里, 此时 os.getcwd() 自身就抛 FileNotFoundError。
+        self._tmp = tempfile.TemporaryDirectory()
+        self.test_dir = self._tmp.name
+        self.original_dir = str(REPO_ROOT)
         os.makedirs(self.test_dir, exist_ok=True)
 
     def tearDown(self):
-        os.chdir(self.original_dir)
-        if os.path.exists(self.test_dir):
-            shutil.rmtree(self.test_dir)
+        try:
+            os.chdir(self.original_dir)
+        except (OSError, FileNotFoundError):
+            os.chdir(str(REPO_ROOT))
+        self._tmp.cleanup()
 
     def test_check_all_returns_true_when_no_broken(self):
         """Should return True when no broken links found."""
@@ -189,12 +203,13 @@ class TestBuildIndex(unittest.TestCase):
     """Test _build_index function edge cases."""
 
     def setUp(self):
-        self.test_dir = "test_build_index"
+        # 唯一绝对路径, 避免 xdist 多 worker 互相删同名目录 (见 TestCheckAllLinks)
+        self._tmp = tempfile.TemporaryDirectory()
+        self.test_dir = self._tmp.name
         os.makedirs(self.test_dir, exist_ok=True)
 
     def tearDown(self):
-        if os.path.exists(self.test_dir):
-            shutil.rmtree(self.test_dir)
+        self._tmp.cleanup()
 
     def test_index_contains_basename(self):
         """Index should contain basename without extension."""
@@ -239,12 +254,13 @@ class TestCheckTargetEdgeCases(unittest.TestCase):
     """Test _check_target edge cases."""
 
     def setUp(self):
-        self.test_dir = "test_check_edge"
+        # 唯一绝对路径, 避免 xdist 多 worker 互相删同名目录 (见 TestCheckAllLinks)
+        self._tmp = tempfile.TemporaryDirectory()
+        self.test_dir = self._tmp.name
         os.makedirs(self.test_dir, exist_ok=True)
 
     def tearDown(self):
-        if os.path.exists(self.test_dir):
-            shutil.rmtree(self.test_dir)
+        self._tmp.cleanup()
 
     def test_check_target_nonexistent_returns_false(self):
         """Target that doesn't exist should return False."""
@@ -340,28 +356,30 @@ class TestDefaultCheckAll:
         )
         assert r.returncode == 0
 
-    def test_directory_mode_still_works(self) -> None:
+    def test_directory_mode_still_works(self, tmp_path) -> None:
         import subprocess
         import sys
         from pathlib import Path
 
         root = Path(__file__).resolve().parents[1]
-        tmp = root / ".tmp_link_test"
-        tmp.mkdir(exist_ok=True)
+        # 用 tmp_path 而非仓库根的 .tmp_link_test (ADR-073 同类问题):
+        # 被测 CLI 接受路径参数, 无需写工作区。原先在仓库根建目录并在
+        # finally 里 rmdir, pytest-xdist 下另一个 worker 正在扫描仓库根时
+        # 会遇到目录被删 —— 实测 `-n 8` 下表现为毫不相干的
+        # test_hooks_runner::test_main_full_command 报
+        # FileNotFoundError: '.tmp_link_test'。
+        tmp = tmp_path / "link_test"
+        tmp.mkdir()
         (tmp / "a.md").write_text("[[missing-target-xyz]]\n")
-        try:
-            r = subprocess.run(
-                [sys.executable, "tools/scripts/link_auditor.py", str(tmp)],
-                cwd=root,
-                capture_output=True,
-                text=True,
-                timeout=60,
-            )
-            assert r.returncode == 1
-            assert "missing-target-xyz" in r.stdout
-        finally:
-            (tmp / "a.md").unlink()
-            tmp.rmdir()
+        r = subprocess.run(
+            [sys.executable, "tools/scripts/link_auditor.py", str(tmp)],
+            cwd=root,
+            capture_output=True,
+            text=True,
+            timeout=60,
+        )
+        assert r.returncode == 1
+        assert "missing-target-xyz" in r.stdout
 
     def test_code_block_wikilink_ignored(self) -> None:
         import sys

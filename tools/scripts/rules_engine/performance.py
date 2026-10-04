@@ -196,6 +196,9 @@ class PerformanceOptimizer:
     def __init__(self, max_workers: int | None = None, cache_enabled: bool = True) -> None:
         self.max_workers = max_workers or min(os.cpu_count() or 4, 8)
         self.cache = FileCache() if cache_enabled else None
+        # worker 失败记录: filepath -> 原因。用于识别"静默没检查到"的文件,
+        # 避免与"检查通过"混淆 (ADR-074)。
+        self.failed_files: dict[str, str] = {}
         self._metrics = PerformanceMetrics(
             total_files=0,
             cached_files=0,
@@ -223,6 +226,9 @@ class PerformanceOptimizer:
     ) -> list[dict[str, Any]]:
         """Optimized directory checking with caching and parallelism (V2.21 P5-48 拆分: 抽 _partition_files + _run_checks_parallel_or_serial + _build_metrics)."""
         start_time = time.monotonic()
+
+        # 每次扫描前清空, 避免上一轮的失败记录污染本轮判定。
+        self.failed_files = {}
 
         source_files = self._collect_files(dirpath, languages)
         total_files = len(source_files)
@@ -326,16 +332,25 @@ class PerformanceOptimizer:
         )
 
     def _parallel_check(self, files: list[tuple[str, str | None]]) -> list[dict[str, Any] | None]:
-        """Run checks in parallel using ProcessPoolExecutor."""
+        """Run checks in parallel using ProcessPoolExecutor.
+
+        worker 失败时**不静默丢弃**: 保留 None 占位 (维持既有返回契约,
+        ``optimized_check_directory`` 仍会过滤), 但同时把失败原因记入
+        ``self.failed_files``, 使调用方能区分"检查通过"与"没检查到"。
+        """
         results: list[dict[str, Any] | None] = []
 
         with ProcessPoolExecutor(max_workers=self.max_workers) as executor:
             future_to_file = {executor.submit(FileCache._check_file_worker, f): f[0] for f in files}
             for future in as_completed(future_to_file):
+                filepath = future_to_file[future]
                 try:
-                    result = future.result(timeout=30)
+                    result = future.result()
                     results.append(result)
-                except (TimeoutError, Exception):
+                except Exception as exc:  # noqa: BLE001 — 必须捕获, 否则整批丢失
+                    # 关键: 不再把失败伪装成 None 后无声消失。None 占位仍在,
+                    # 但失败原因与文件路径被记录, 调用方可据此判定 fail-open。
+                    self.failed_files[filepath] = f"{type(exc).__name__}: {exc}"
                     results.append(None)
 
         return results
@@ -345,6 +360,10 @@ class PerformanceOptimizer:
         results: list[dict[str, Any] | None] = []
         for filepath, language in files:
             result = FileCache._check_file_worker((filepath, language))
+            if result is None:
+                # worker 内部已吞掉 AttributeError/OSError (见 _check_file_worker),
+                # 这里补记, 否则串行路径与并行路径一样会静默少结果。
+                self.failed_files[filepath] = "worker returned None (check_file raised or file unreadable)"
             results.append(result)
         return results
 

@@ -43,6 +43,10 @@ REPO_MUTATION_LOCK = "adg-repo-mutation.lock"
 
 
 def _lock_path() -> Path:
+    # 允许测试/子进程把锁指向独立路径, 避免自身用例争用生产全局锁。
+    override = os.environ.get("ADG_TEST_LOCK_PATH")
+    if override:
+        return Path(override)
     return Path(tempfile.gettempdir()) / REPO_MUTATION_LOCK
 
 

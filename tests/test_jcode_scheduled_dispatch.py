@@ -24,6 +24,9 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from conftest import acquire_repo_read_lock  # noqa: E402
+
 ROOT = Path(__file__).resolve().parent.parent
 _SCRIPTS = ROOT / ".jcode" / "scripts"
 
@@ -229,8 +232,14 @@ class TestDispatch:
         run.assert_not_called()
 
     def test_real_config_dispatch_is_parseable(self, sd) -> None:
-        """真实 hooks.json 的每条 scheduled 都必须能被 parse_cron 接受。"""
-        hooks = json.loads((ROOT / ".jcode" / "hooks.json").read_text(encoding="utf-8"))["hooks"]["scheduled"]
+        """真实 hooks.json 的每条 scheduled 都必须能被 parse_cron 接受."""
+        # 跨进程共享读锁 (ADR-073): 本用例只**读**受控的 .jcode/hooks.json,
+        # 但同文件正被 test_check_hooks_json_integrity.FailOpenDetectorTest
+        # 真改写。无锁时会在写者持有 canary 的窗口里读到半截 JSON, 报
+        # json.decoder.JSONDecodeError —— 实测 `-n 8` 下偶发。
+        with acquire_repo_read_lock():
+            raw = (ROOT / ".jcode" / "hooks.json").read_text(encoding="utf-8")
+        hooks = json.loads(raw)["hooks"]["scheduled"]
         for h in hooks:
             assert set(h) >= {"name", "schedule", "skill", "action"}, f"缺少必要字段: {h}"
             sd.parse_cron(h["schedule"])

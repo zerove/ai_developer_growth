@@ -23,7 +23,23 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from conftest import acquire_repo_read_lock  # noqa: E402
+
 _SCRIPTS = Path(__file__).resolve().parent.parent / ".jcode" / "scripts"
+
+
+def _read_real_hooks_json() -> dict:
+    """在跨进程共享读锁下读取**真实**受控的 .jcode/hooks.json。
+
+    必须走这个助手而非直接 read_text: 该文件正被
+    test_check_hooks_json_integrity.FailOpenDetectorTest 真改写, 无锁时
+    会在写者持有 canary 的窗口里读到半截 JSON 而报 JSONDecodeError
+    (ADR-073, 实测 -n 8 下偶发)。
+    """
+    with acquire_repo_read_lock():
+        raw = (_SCRIPTS.parent / "hooks.json").read_text(encoding="utf-8")
+    return json.loads(raw)
 
 
 def _load(alias: str):
@@ -338,10 +354,15 @@ class TestMainFilesParsing:
 
 
 class TestRealConfigConsistency:
-    """用真实 hooks.json 校验分发契约，防止配置与引擎漂移。"""
+    """用真实 hooks.json 校验分发契约，防止配置与引擎漂移。
+
+    跨进程共享读锁 (ADR-073): 本类只**读**受控的 .jcode/hooks.json,
+    但同文件正被 test_check_hooks_json_integrity.FailOpenDetectorTest 真改写。
+    无锁时会在写者持有 canary 的窗口里读到半截 JSON 而报 JSONDecodeError。
+    """
 
     def test_all_condition_forms_are_parseable(self, hr) -> None:
-        config = json.loads((_SCRIPTS.parent / "hooks.json").read_text(encoding="utf-8"))
+        config = _read_real_hooks_json()
         for event, hooks in config["hooks"].items():
             for hook in hooks:
                 cond = hook.get("condition", "")
@@ -350,13 +371,13 @@ class TestRealConfigConsistency:
                 assert "files_contain('" in cond, f"{event}/{hook['name']} 条件无法解析: {cond}"
 
     def test_every_hook_has_name(self, hr) -> None:
-        config = json.loads((_SCRIPTS.parent / "hooks.json").read_text(encoding="utf-8"))
+        config = _read_real_hooks_json()
         for event, hooks in config["hooks"].items():
             for hook in hooks:
                 assert "name" in hook, f"{event} 存在无 name 的 hook"
 
     def test_every_hook_has_skill_or_command(self, hr) -> None:
-        config = json.loads((_SCRIPTS.parent / "hooks.json").read_text(encoding="utf-8"))
+        config = _read_real_hooks_json()
         for event, hooks in config["hooks"].items():
             for hook in hooks:
                 assert hook.get("command") or hook.get("skill"), (
@@ -364,7 +385,7 @@ class TestRealConfigConsistency:
                 )
 
     def test_referenced_skill_scripts_exist(self, hr) -> None:
-        config = json.loads((_SCRIPTS.parent / "hooks.json").read_text(encoding="utf-8"))
+        config = _read_real_hooks_json()
         missing = []
         for hooks in config["hooks"].values():
             for hook in hooks:

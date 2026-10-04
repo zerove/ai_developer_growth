@@ -46,11 +46,20 @@ AI 时代开发者成长知识库 + 治理框架（knowledge base + governance f
   曾长期在门禁之外造成静默劣化区（见 `pyproject.toml` `[tool.adg] cov_min` 注释）
 - **ruff 版本锁定** 0.15.17：0.16+ 启用 2025 format style 会造成 CI 与本地结果不一致
 - **不命名为 `jcode` 的 console_script**：会遮蔽 Rust 版 jcode TUI
+- **跑测试与门禁必须用 `.venv/bin/python`（3.11），不可用 `python`**：
+  `.mise.toml` 写 `python = "3.12"`，故 shell 里的 `python` 解析到 mise 的
+  3.12，而项目 venv 是 3.11。`sys.path[0]` 语义在两版间有差异 ——
+  3.12 下 `python tools/scripts/hooks_runner.py ...` 因 `sys.path[0]` 是
+  脚本所在目录而 `ModuleNotFoundError: No module named 'tools'`。
+  该失败会波及**所有以子进程方式调 `hooks_runner.py` 的测试**
+  （实测 `-n 8` 下 29 failed，约 7 个测试文件），且与被测代码是否正确
+  无关。同一命令 3.11 返回 0、3.12 返回 1，可据此快速判别。
 
 ## 决策记录
 
 决策全文见 [ADR.md](ADR.md) 索引与 `docs/adr/`。影响本文件的决策：
 
+- **ADR-074**: worker 失败不得静默丢结果，必须留下可追溯痕迹（`failed_files`）
 - **ADR-073**: 测试改写受控仓库文件必须跨进程互斥（写者独占/读者共享），且优先做到不碰工作区
 - **ADR-072**: auto-fix 三条写盘路径补语法兜底，拒绝时不得声称已修复
 - **ADR-071**: ast-fix 目录模式有文件被拒时必须非零退出
@@ -61,13 +70,43 @@ AI 时代开发者成长知识库 + 治理框架（knowledge base + governance f
 
 ### 未关闭的存量缺陷
 
-- **`optimized_check_directory` 在高负载下静默丢结果**：
-  `tools/scripts/rules_engine/performance.py:328` 的 `_parallel_check` 在
-  xdist `-n 8` 全量跑时用 `future.result(timeout=30)`，超时后把该文件
-  记为 `None` 并从结果里剔除 —— **不报错、不计数、调用方无从察觉**，
-  与本项目"门禁不得 fail-open"的既定约束冲突。实测约 5 次全量 `-n 8`
-  出现 1 次 `test_optimized_check_directory_parallel` 失败，单独跑该文件
-  恒绿（负载相关，非逻辑错误）。本轮为隔离 ADR-073 范围未处理。
+- **`test_optimized_check_directory_parallel` 偶发失败的触发条件未定位**：
+  ADR-074 已修掉该路径上**已确定性复现**的静默丢结果缺陷（worker 抛
+  异常时不再无声消失，改记入 `failed_files`），但最初触发的那次偶发
+  失败**未能复现、原因未查明**：约 9 次全量 `-n 8` 中出现 1 次，
+  单独跑该文件恒绿，修复后连续 7 次全量 `-n 8` 均通过。
+
+  不能断言 ADR-074 解决了它 —— 两者可能无关。若再次出现，应优先
+  抓取失败时的完整 traceback 与 `failed_files` 内容，而非重新猜测。
+
+  排查时已排除的两个假设（勿重复走弯路）：
+  - `future.result(timeout=30)` 超时 —— `as_completed()` 只产出已完成
+    future，该 timeout 是死代码，已用 `result(timeout=0.001)` 证伪；
+  - worker 内部 `_check_file_worker` 的 `except (AttributeError, OSError)`
+    触发 —— 干净基线与高负载探针下均未出现 `None` 返回。
+
+  另注：`rules_engine/performance.py` 文档自述**无生产调用方**
+  （仅 `perf_benchmark.py` 与测试引用），影响面限于基准与测试。
+
+- **ADR-073 中"读者共享锁"的证据强度弱于写者独占锁**：对
+  `acquire_repo_read_lock` 做变异验证时，**移除读锁后全量 `-n 8`
+  仍 4608 全绿**，无法复现失败。竞态窗口只存在于
+  `Path.write_text()` 截断重写阶段（微秒级），采样概率极低。
+
+  故这批读锁属**预防性加固**，不得表述为"已修复某次复现故障"。
+  其正确性改由 `tests/test_repo_lock_semantics.py` 直接验证
+  conftest 真实函数保证（4 项变异全部被捕获：读锁 no-op 2 failed /
+  读锁误用 LOCK_EX 1 failed / 写锁 no-op 3 failed / 锁路径落工作区
+  1 failed）。
+
+  若后续真想复现该竞态，应直接构造"持锁写者 + 并发读者"的确定性
+  场景，不要再靠重复跑全量碰运气。
+
+- **`test_repo_lock_semantics.py` 不可用"并发起 N 个短进程"验证
+  共享锁不互斥**：短进程几乎不会真正重叠，即便实现退化成独占锁
+  也测不出来（该变异曾因此漏网，改为"一个读者持续持锁、另一个探测"
+  后才捕获）。子进程握手必须走**文件标记**，用管道 `readline()`
+  会在 pytest 捕获输出时死锁。
 
 ## 计划
 
@@ -75,6 +114,182 @@ AI 时代开发者成长知识库 + 治理框架（knowledge base + governance f
 变更历史以 [CHANGELOG.md](CHANGELOG.md) 为准。
 
 ---
+
+## 更新记录: 2026-10-04 14:13:09
+
+### 任务
+Git 变更同步
+
+### 变更摘要
+- 变更文件 13 个 (+973 / -250 行)
+  - CONTEXT.md
+  - docs/adr/ADR-073-test-isolation-cross-process-locks.md
+  - docs/adr/ADR.md
+  - tests/conftest.py
+  - tests/test_analyze_case_quality.py
+  - tests/test_check_hooks_json_integrity.py
+  - tests/test_generate_adr_index.py
+  - tests/test_governance_docs_validator.py
+  - tests/test_jcode_hooks_runner.py
+  - tests/test_jcode_scheduled_dispatch.py
+  - tests/test_link_auditor_supplement.py
+  - tests/test_performance_extended.py
+  - tools/scripts/rules_engine/performance.py
+
+## 更新记录: 2026-10-04 13:06:40
+
+### 任务
+Git 变更同步
+
+### 变更摘要
+- 变更文件 13 个 (+871 / -233 行)
+  - CONTEXT.md
+  - docs/adr/ADR-073-test-isolation-cross-process-locks.md
+  - docs/adr/ADR.md
+  - tests/conftest.py
+  - tests/test_analyze_case_quality.py
+  - tests/test_check_hooks_json_integrity.py
+  - tests/test_generate_adr_index.py
+  - tests/test_governance_docs_validator.py
+  - tests/test_jcode_hooks_runner.py
+  - tests/test_jcode_scheduled_dispatch.py
+  - tests/test_link_auditor_supplement.py
+  - tests/test_performance_extended.py
+  - tools/scripts/rules_engine/performance.py
+
+## 更新记录: 2026-10-04 12:54:37
+
+### 任务
+Git 变更同步
+
+### 变更摘要
+- 变更文件 11 个 (+804 / -197 行)
+  - .jcode/hooks.json
+  - CONTEXT.md
+  - docs/adr/ADR-073-test-isolation-cross-process-locks.md
+  - docs/adr/ADR.md
+  - tests/conftest.py
+  - tests/test_analyze_case_quality.py
+  - tests/test_check_hooks_json_integrity.py
+  - tests/test_generate_adr_index.py
+  - tests/test_link_auditor_supplement.py
+  - tests/test_performance_extended.py
+  - tools/scripts/rules_engine/performance.py
+
+## 更新记录: 2026-10-04 12:47:19
+
+### 任务
+Git 变更同步
+
+### 变更摘要
+- 变更文件 10 个 (+779 / -181 行)
+  - CONTEXT.md
+  - docs/adr/ADR-073-test-isolation-cross-process-locks.md
+  - docs/adr/ADR.md
+  - tests/conftest.py
+  - tests/test_analyze_case_quality.py
+  - tests/test_check_hooks_json_integrity.py
+  - tests/test_generate_adr_index.py
+  - tests/test_link_auditor_supplement.py
+  - tests/test_performance_extended.py
+  - tools/scripts/rules_engine/performance.py
+
+## 更新记录: 2026-10-04 12:25:12
+
+### 任务
+Git 变更同步
+
+### 变更摘要
+- 变更文件 10 个 (+704 / -156 行)
+  - .jcode/hooks.json
+  - CONTEXT.md
+  - docs/adr/ADR-073-test-isolation-cross-process-locks.md
+  - docs/adr/ADR.md
+  - tests/conftest.py
+  - tests/test_analyze_case_quality.py
+  - tests/test_check_hooks_json_integrity.py
+  - tests/test_generate_adr_index.py
+  - tests/test_performance_extended.py
+  - tools/scripts/rules_engine/performance.py
+
+## 更新记录: 2026-10-04 12:10:46
+
+### 任务
+Git 变更同步
+
+### 变更摘要
+- 变更文件 9 个 (+672 / -143 行)
+  - CONTEXT.md
+  - docs/adr/ADR-073-test-isolation-cross-process-locks.md
+  - docs/adr/ADR.md
+  - tests/conftest.py
+  - tests/test_analyze_case_quality.py
+  - tests/test_check_hooks_json_integrity.py
+  - tests/test_generate_adr_index.py
+  - tests/test_performance_extended.py
+  - tools/scripts/rules_engine/performance.py
+
+## 更新记录: 2026-10-04 11:59:50
+
+### 任务
+Git 变更同步
+
+### 变更摘要
+- 变更文件 9 个 (+655 / -131 行)
+  - CONTEXT.md
+  - docs/adr/ADR-073-test-isolation-cross-process-locks.md
+  - docs/adr/ADR.md
+  - tests/conftest.py
+  - tests/test_analyze_case_quality.py
+  - tests/test_check_hooks_json_integrity.py
+  - tests/test_generate_adr_index.py
+  - tests/test_performance_extended.py
+  - tools/scripts/rules_engine/performance.py
+
+## 更新记录: 2026-10-03 22:18:24
+
+### 任务
+Git 变更同步
+
+### 变更摘要
+- 变更文件 7 个 (+448 / -115 行)
+  - CONTEXT.md
+  - docs/adr/ADR-073-test-isolation-cross-process-locks.md
+  - docs/adr/ADR.md
+  - tests/conftest.py
+  - tests/test_analyze_case_quality.py
+  - tests/test_check_hooks_json_integrity.py
+  - tests/test_generate_adr_index.py
+
+## 更新记录: 2026-10-03 22:12:50
+
+### 任务
+Git 变更同步
+
+### 变更摘要
+- 变更文件 7 个 (+433 / -102 行)
+  - CONTEXT.md
+  - docs/adr/ADR-073-test-isolation-cross-process-locks.md
+  - docs/adr/ADR.md
+  - tests/conftest.py
+  - tests/test_analyze_case_quality.py
+  - tests/test_check_hooks_json_integrity.py
+  - tests/test_generate_adr_index.py
+
+## 更新记录: 2026-10-03 22:10:38
+
+### 任务
+Git 变更同步
+
+### 变更摘要
+- 变更文件 7 个 (+418 / -89 行)
+  - CONTEXT.md
+  - docs/adr/ADR-073-test-isolation-cross-process-locks.md
+  - docs/adr/ADR.md
+  - tests/conftest.py
+  - tests/test_analyze_case_quality.py
+  - tests/test_check_hooks_json_integrity.py
+  - tests/test_generate_adr_index.py
 
 ## 更新记录: 2026-10-03 21:16:29
 
@@ -772,145 +987,6 @@ Git 变更同步
   - tests/test_semantic_degraded_visibility.py
   - tests/test_semantic_rules_integration.py
   - tools/scripts/rules_engine/checker.py
-  - uv.lock
-
-## 更新记录: 2026-10-03 11:29:55
-
-### 任务
-Git 变更同步
-
-### 变更摘要
-- 变更文件 9 个 (+2038 / -208 行)
-  - CHANGELOG.md
-  - CONTEXT.md
-  - ROADMAP.md
-  - docs/adr/ADR-064-semantic-degradation-must-be-visible.md
-  - docs/adr/ADR.md
-  - tests/test_semantic_degraded_visibility.py
-  - tests/test_semantic_rules_integration.py
-  - tools/scripts/rules_engine/checker.py
-  - uv.lock
-
-## 更新记录: 2026-10-03 11:17:12
-
-### 任务
-Git 变更同步
-
-### 变更摘要
-- 变更文件 7 个 (+1631 / -237 行)
-  - CHANGELOG.md
-  - CONTEXT.md
-  - ROADMAP.md
-  - docs/adr/ADR.md
-  - tests/test_semantic_rules_integration.py
-  - tools/scripts/rules_engine/checker.py
-  - uv.lock
-
-## 更新记录: 2026-10-03 11:12:55
-
-### 任务
-Git 变更同步
-
-### 变更摘要
-- 变更文件 7 个 (+1616 / -222 行)
-  - CHANGELOG.md
-  - CONTEXT.md
-  - ROADMAP.md
-  - docs/adr/ADR.md
-  - tests/test_semantic_rules_integration.py
-  - tools/scripts/rules_engine/checker.py
-  - uv.lock
-
-## 更新记录: 2026-10-03 11:03:44
-
-### 任务
-Git 变更同步
-
-### 变更摘要
-- 变更文件 7 个 (+1601 / -207 行)
-  - CHANGELOG.md
-  - CONTEXT.md
-  - ROADMAP.md
-  - docs/adr/ADR.md
-  - tests/test_semantic_rules_integration.py
-  - tools/scripts/rules_engine/checker.py
-  - uv.lock
-
-## 更新记录: 2026-10-03 10:55:02
-
-### 任务
-Git 变更同步
-
-### 变更摘要
-- 变更文件 6 个 (+1568 / -189 行)
-  - CHANGELOG.md
-  - CONTEXT.md
-  - ROADMAP.md
-  - docs/adr/ADR.md
-  - tools/scripts/rules_engine/checker.py
-  - uv.lock
-
-## 更新记录: 2026-10-03 02:16:00
-
-### 任务
-Git 变更同步
-
-### 变更摘要
-- 变更文件 4 个 (+1413 / -160 行)
-  - CHANGELOG.md
-  - CONTEXT.md
-  - ROADMAP.md
-  - uv.lock
-
-## 更新记录: 2026-10-03 02:06:26
-
-### 任务
-Git 变更同步
-
-### 变更摘要
-- 变更文件 4 个 (+1448 / -226 行)
-  - CHANGELOG.md
-  - CONTEXT.md
-  - ROADMAP.md
-  - uv.lock
-
-## 更新记录: 2026-10-03 02:01:33
-
-### 任务
-Git 变更同步
-
-### 变更摘要
-- 变更文件 5 个 (+1413 / -205 行)
-  - CHANGELOG.md
-  - CONTEXT.md
-  - ROADMAP.md
-  - docs/adr/ADR.md
-  - uv.lock
-
-## 更新记录: 2026-10-03 01:49:27
-
-### 任务
-Git 变更同步
-
-### 变更摘要
-- 变更文件 5 个 (+1513 / -283 行)
-  - CHANGELOG.md
-  - CONTEXT.md
-  - ROADMAP.md
-  - pyproject.toml
-  - uv.lock
-
-## 更新记录: 2026-10-03 01:38:59
-
-### 任务
-Git 变更同步
-
-### 变更摘要
-- 变更文件 5 个 (+1495 / -264 行)
-  - CHANGELOG.md
-  - CONTEXT.md
-  - ROADMAP.md
-  - pyproject.toml
   - uv.lock
 
 <!-- 滚动窗口: 已自动裁剪 1 条旧更新记录 -->

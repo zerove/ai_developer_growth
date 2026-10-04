@@ -135,9 +135,11 @@ def apply_fixes(filepath: Path, issues: list[Any], dry_run: bool = False) -> lis
         磁盘: x = 1 / y = (2  -> SyntaxError: '(' was never closed
         返回: 1 个 FixResult (即**声称修复成功**)
 
-    本路径当前**无生产调用方**(仅测试使用), 但 ADR-072 已就 FixEngine
-    明确否决过“无调用方所以可以不修”这一理由: 留一个已知会写坏代码的
-    入口而不修, 代价(一次静默的代码损坏)远大于改动本身。
+    本路径当前**有生产调用方**: ``tools/scripts/rules_engine/validators/cli.py``
+    的 ``_apply_auto_fix`` (CLI ``validate_language_rules.py --fix``), 以及
+    ``tools/scripts/validate_language_rules.py`` 的同名包装。
+    早先版本记为"无生产调用方"是**错的**, 已于收口复核更正 —— 见下方
+    「收口复核更正」。
 
     Args:
         filepath: File to fix

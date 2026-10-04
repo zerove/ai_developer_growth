@@ -208,6 +208,19 @@ AI 时代开发者成长知识库 + 治理框架（knowledge base + governance f
 
 ---
 
+## 更新记录: 2026-10-04 18:26:24
+
+### 任务
+Git 变更同步
+
+### 变更摘要
+- 变更文件 5 个 (+390 / -24 行)
+  - CONTEXT.md
+  - docs/adr/ADR-071-directory-exit-code-on-rejection.md
+  - docs/adr/ADR-072-auto-fix-verify-syntax-before-write.md
+  - tests/test_write_path_exit_code_acceptance.py
+  - tools/scripts/fix_applier.py
+
 ## 更新记录: 2026-10-04 18:16:27
 
 ### 任务
@@ -1048,24 +1061,6 @@ Git 变更同步
 ### 变更摘要
 - 变更文件 11 个 (+443 / -144 行)
   - .jcode/hooks.json
-  - CHANGELOG.md
-  - CONTEXT.md
-  - ROADMAP.md
-  - docs/adr/ADR-063-tree-sitter-per-language-import.md
-  - docs/adr/ADR-064-semantic-degradation-must-be-visible.md
-  - docs/adr/ADR-070-verify-syntax-before-writing.md
-  - tests/test_ast_parser_partial_install.py
-  - tests/test_rule_docs_mapper_round2.py
-  - tests/test_semantic_degraded_visibility.py
-  - tools/scripts/rules_engine/rule_docs_mapper.py
-
-## 更新记录: 2026-10-03 17:49:21
-
-### 任务
-Git 变更同步
-
-### 变更摘要
-- 变更文件 10 个 (+418 / -133 行)
   - CHANGELOG.md
   - CONTEXT.md
   - ROADMAP.md

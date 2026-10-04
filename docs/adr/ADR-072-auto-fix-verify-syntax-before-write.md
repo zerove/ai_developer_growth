@@ -169,10 +169,71 @@ ADR-070 的兜底写在 `ast_fixer` 内部，没有覆盖到这条路径。当�
 另 7 条（含全部对照组）保持绿。回退 ADR-071 那三行 → 本组 3 条全绿，
 证明两组变异互不串扰。
 
-注：本组的 `FixEngine` 与 `fix_applier` 两处（无生产调用方）仍由
+注：本组的 `FixEngine` 与 `fix_applier` 两处仍由
 `test_fix_engine_write_verification.py` / `test_fix_applier_write_verification.py`
-直接调用验证返回值与磁盘字节 —— 它们不是 CLI 子命令, 没有可走的
-"真实公开接口", 直接调用即其真实入口。
+直接调用验证返回值与磁盘字节。
+
+### 收口复核更正：两处先前记为“无生产调用方”，其中一处是错的
+
+自动审查追问这两处的验证是否走过真实路径。重测时发现 ADR 与源码注释
+都有一处**事实错误**：
+
+| 位置 | 先前记录 | 实测 |
+| --- | --- | --- |
+| `FixEngine` | 无生产调用方 | **属实**（全仓除 `tools/fix_engine/` 外零引用） |
+| `fix_applier` | 无生产调用方 | **错误** —— 有两个生产调用方 |
+
+`fix_applier.apply_fixes` 的真实调用方：
+
+- `tools/scripts/rules_engine/validators/cli.py::_apply_auto_fix`
+  → CLI `validate_language_rules.py --fix`（`--fix` 是 `--help` 里
+  明确列出的正式 flag）；
+- `tools/scripts/validate_language_rules.py::apply_fixes`（同名包装）。
+
+已在 `fix_applier.py` 的 docstring 中更正该错误陈述。
+
+重测观测到的**两处行为**（直接调用，真实磁盘字节）：
+
+| 场景 | 返回 | 磁盘 |
+| --- | --- | --- |
+| `FixEngine` 缺陷样本 | `success=False`、`syntax_violation=True`、`fixes_applied=0` | md5 `80c6a37c8992` 不变 |
+| `FixEngine` 合法对照 | `success=True`、`fixes_applied=1` | `b692c606aad9`→`87a2c3cd24f5`，可解析 |
+| `fix_applier` 字面量坏替换 | `[syntax-check-rejected]` + `[MANUAL FIX REQUIRED]` | md5 `26149c8ef04a` 不变 |
+| `fix_applier` 字面量合法对照 | `[probe]`，`subprocess.run('ls')` | `b692c606aad9`→`9697baea9bdc`，可解析 |
+| `fix_applier` sed 风格对照 | `[probe]`，`value = 2` | 已改，可解析 |
+
+注意 ADR 早先记录的 `FixEngine` 合法对照 md5 尾号是 `5956eac524dd`，
+本次实测为 `87a2c3cd24f5` —— 差异源于 `fix_file` 的默认参数组合
+（本次显式传 `language="python"`）。属记录陈旧，非行为异常。
+
+### 附带发现：`--fix` 是一个**死参数**（未修，仅记录）
+
+`validators/cli.py` 里 `args.fix` 的引用数为 **0**：
+
+```
+$ grep -c "args\.fix" tools/scripts/rules_engine/validators/cli.py
+0
+$ grep -n "args\.dry_run" tools/scripts/rules_engine/validators/cli.py
+527:    fix_exit = _handle_auto_fix(results, args.dry_run)
+```
+
+即 `--fix` 被 argparse 解析、被 `--help` 列为正式选项，却从未被读取；
+第 527 行传的是 `args.dry_run`。实测三种调用方式行为完全相同：
+
+| 调用 | 退出码 | 文件被改 |
+| --- | --- | --- |
+| `--fix` | 1 | 否 |
+| `--fix --dry-run` | 1 | 否 |
+| 无参数 | 1 | 否 |
+
+后果：该 CLI 永远不会真正写盘（等价于永远 dry-run），因此
+`syntax-check-rejected` 在这条路径上**不会被触发** —— 兜底存在但当前
+不可达。同时 `--fix` 给用户“会改文件”的错误预期。
+
+**未修的理由**：改这个行为会变更 CLI 的实际语义（从“永不写盘”变成
+“按 `--fix` 写盘”），属于行为变更而非缺陷兜底，与 ADR-072 的范围不同，
+应单独评估并配对应的人工确认。此处仅如实记录，避免下一个人把
+`fix_applier` 当成生产可达路径去验证写盘行为。
 
 ## 关于 `FixEngine`
 
@@ -230,9 +291,13 @@ ADR-070 的兜底写在 `ast_fixer` 内部，没有覆盖到这条路径。当�
 | 缩进失效 | `if True:` → `if Trueif True:` | `SyntaxError: invalid syntax` | 1 个 FixResult |
 | 健康对照 | `os.system('ls')` → `subprocess.run(...)` | 仍可解析 | 1 个 FixResult |
 
-同 ADR-072 对 `FixEngine` 的处理：它**无生产调用方**（仅
-`tests/test_report_and_fix.py` 等测试使用），但那个理由已被明确否决过，
-故同批补上。修法复用 `auto_fix._verify_syntax`，不另写一份。
+同 ADR-072 对 `FixEngine` 的处理：它**无生产调用方**（实测：全仓除
+`build/lib/` 构建产物与 28 处测试引用外零引用），但那个理由已被明确
+否决过，故同批补上。修法复用 `auto_fix._verify_syntax`，不另写一份。
+
+> **收口复核更正**：本节初稿把 `fix_applier` 也记为“无生产调用方”，
+> 那是**错的** —— 它有两个生产调用方，详见上方「收口复核更正」。
+> `FixEngine` 的“无调用方”判断经本轮实测**仍然属实**。
 
 新增 `tests/test_fix_applier_write_verification.py`，含两条替换分支
 （字面量与 sed 风格）的对照组，防止只测了一半：

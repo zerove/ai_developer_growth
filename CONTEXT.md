@@ -59,6 +59,7 @@ AI 时代开发者成长知识库 + 治理框架（knowledge base + governance f
 
 决策全文见 [ADR.md](ADR.md) 索引与 `docs/adr/`。影响本文件的决策：
 
+- **ADR-076**: worker 返回 None 与抛异常同等不可见，并行路径必须一并留痕
 - **ADR-075**: 规则磁盘缓存必须跨进程加锁 + 原子写，且缓存路径可用 `ADG_RULES_CACHE_DIR` 隔离
 - **ADR-074**: worker 失败不得静默丢结果，必须留下可追溯痕迹（`failed_files`）
 - **ADR-073**: 测试改写受控仓库文件必须跨进程互斥（写者独占/读者共享），且优先做到不碰工作区
@@ -71,63 +72,49 @@ AI 时代开发者成长知识库 + 治理框架（knowledge base + governance f
 
 ### 未关闭的存量缺陷
 
-- **`test_optimized_check_directory_parallel` 偶发失败的触发条件未定位**：
-  ADR-074 已修掉该路径上**已确定性复现**的静默丢结果缺陷（worker 抛
-  异常时不再无声消失，改记入 `failed_files`），但最初触发的那次偶发
-  失败**未能复现、原因未查明**：约 9 次全量 `-n 8` 中出现 1 次，
-  单独跑该文件恒绿，修复后连续 7 次全量 `-n 8` 均通过。
+- **`test_optimized_check_directory_parallel` 偶发失败的触发条件仍未定位**：
+  已修掉两条该路径上**已确定性复现**的静默 fail-open 缺陷 ——
 
-  不能断言 ADR-074 解决了它 —— 两者可能无关。若再次出现，应优先
-  抓取失败时的完整 traceback 与 `failed_files` 内容，而非重新猜测。
+  - ADR-074：worker **抛异常**时不再无声消失，改记入 `failed_files`；
+  - ADR-076：worker **返回 None**（`_check_file_worker` 内部把
+    `AttributeError`/`OSError` 吞掉后的形态，此前并行路径**完全不记**）
+    同样记入 `failed_files`，与串行路径对齐。故障注入实测：
 
-  排查时已排除的两个假设（勿重复走弯路）：
+    ```
+    [并行] 结果数=4, failed_files=[]          ← 修复前, 无任何线索
+    [串行] 结果数=4, failed_files=['f2.py','f4.py']
+    ```
+
+  但最初触发的那次偶发失败**未能复现、原因仍未查明**。四轮排查、约 50
+  次触发尝试全部阴性（详见下方记录）。
+
+  **不能断言 ADR-074/076 解决了它** —— 两条缺陷的表现与该用例现象
+  *一致*，但没有证据表明真实运行中 worker 会真的返回 None。唯一确定
+  的改变是：若再发生，`failed_files` 会直接给出文件名与原因。
+
+  排查时已排除的假设（勿重复走弯路）：
   - `future.result(timeout=30)` 超时 —— `as_completed()` 只产出已完成
     future，该 timeout 是死代码，已用 `result(timeout=0.001)` 证伪；
   - worker 内部 `_check_file_worker` 的 `except (AttributeError, OSError)`
-    触发 —— 干净基线与高负载探针下均未出现 `None` 返回。
+    在**干净基线与高负载下**触发 —— 两者均未出现 `None` 返回；
+  - 与规则磁盘缓存竞态（ADR-075）同源 —— 已排除：缓存损坏只会导致
+    缓存 miss（重新加载规则），不抛异常，不在“结果变少”的三条分支里。
 
-  **2026-10-04 第三轮排查：仍未复现，但已缩小到具体分支。**
-  本轮按“复刻真实触发环境”而非猜环境的思路做了三组压力测试，
-  全部**未复现**（阴性结果同样有价值，记录在此避免重复走弯路）：
+  **方法论教训（2026-10-04 第五轮）**：前四轮全是「压力测试找复现」，
+  累计约 50 次尝试全阴性，边际收益已趋零，却一直没能定位。第五轮改为
+  **穷举代码分支做静态分析**，反而一次就找到了真实缺陷（ADR-076）。
+  当“反复重现”连续失败时，该换的是**提问方式**，不是压力大小。
 
-  | 尝试 | 规模 | 结果 |
-  |------|------|------|
-  | 干净基线直接观察 worker 返回 | 1 轮 | 10 条全非 None，`failed_files` 为空 |
-  | 高负载下反复跑目标用例 | 12 轮（每轮先 `-n 8` 造负载） | 12/12 通过 |
-  | 复刻 xdist 内再 fork（`-n 8` + worker 内开进程池） | 10 轮 | 10/10 通过 |
+  穷举结论（`_collect_files` + 两条检查路径）：
+  - `_collect_files` 按扩展名 `rglob` 后去重排序，逻辑无并发依赖；
+    唯一风险是 10000 文件上限，但该用例只有 10 个文件；
+  - 缓存分区 (`_partition_files`) 在 `cache_enabled=False` 下不生效；
+  - “结果变少”只剩两条分支：worker 返回 None、worker 抛异常。
+    **两条现均已留痕。**
 
-  据此可**排除**的：单纯负载、单纯 fork 嵌套均不足以触发。
-  代码层面已确认的事实：并行路径确实被走到（`len(files) > 4` 才会
-  走 `_parallel_check`，本用例 10 个文件必然满足）；结果少只可能来自
-  `_collect_files` 漏收、worker 返回 `None`、或 worker 抛异常三条分支，
-  而 ADR-074 起后两条都会写入 `failed_files`。
-
-  由此得出唯一可执行的改进：该用例原先只留一句 `assert 8 <= 7`，
-  **没有任何现场信息**。现已把断言消息改成自动取证 —— 失败时直接
-  打印 `collected` 文件数与 `failed_files` 内容，可一眼区分上述三条
-  分支。已用临时改阈值验证该消息确实会触发（输出含文件列表与
-  `failed_files (0): {}`），否则“加了取证”也只是自我安慰。
-
-  结论保持不变：**触发条件未定位**，不得声称 ADR-074 解决了它。
-  若再发生，请直接读新的断言消息，不要从头猜。
-
-  **2026-10-04 第四轮排查：已排除与规则缓存竞态的关系。**
-  本轮因全量测试撞出 `TestDiskCache::test_save_and_load` 的真实失败，
-  顺带查了规则磁盘缓存的跨进程竞态（已修，见 ADR-075）。先确认二者
-  是否同源，**结论：不是**。理由基于代码路径而非推测：
-
-  修复前的 `_load_disk_cache` 遇到损坏 JSON 时走 `except` 返回空 dict，
-  这只会让 `load_rules` 缓存 **miss**（重新从规则文件加载），**不会**
-  抛异常。而结果变少只有三条分支——`_collect_files` 漏收、worker 返回
-  `None`、worker 抛异常——缓存 miss 不在其中任何一条。
-
-  另做了第四组阴性压测：
-
-  | 尝试 | 规模 | 结果 |
-  |------|------|------|
-  | 先 `-n 4` 造并发负载、再跑目标用例 | 20 轮 | 20/20 通过 |
-
-  累计四轮、约 50 次触发尝试全部未复现。触发条件**仍未定位**。
+  排查时已把该用例的断言改为自动取证（失败时输出 `collected` 与
+  `failed_files`），并用临时改阈值验证该消息确实会触发。若再发生，
+  请直接读新的断言消息，不要从头猜。
 
   另注：`rules_engine/performance.py` 文档自述**无生产调用方**
   （仅 `perf_benchmark.py` 与测试引用），影响面限于基准与测试。
@@ -189,6 +176,19 @@ AI 时代开发者成长知识库 + 治理框架（knowledge base + governance f
 变更历史以 [CHANGELOG.md](CHANGELOG.md) 为准。
 
 ---
+
+## 更新记录: 2026-10-04 17:53:31
+
+### 任务
+Git 变更同步
+
+### 变更摘要
+- 变更文件 5 个 (+126 / -85 行)
+  - CONTEXT.md
+  - docs/adr/ADR-075-rules-disk-cache-cross-process-lock.md
+  - docs/adr/ADR.md
+  - tools/scripts/rules_engine/performance.py
+  - tools/scripts/rules_engine/rule_loader.py
 
 ## 更新记录: 2026-10-04 17:42:32
 
@@ -1047,24 +1047,6 @@ Git 变更同步
 ### 变更摘要
 - 变更文件 11 个 (+388 / -106 行)
   - .jcode/hooks.json
-  - CHANGELOG.md
-  - CONTEXT.md
-  - ROADMAP.md
-  - docs/adr/ADR-063-tree-sitter-per-language-import.md
-  - docs/adr/ADR-064-semantic-degradation-must-be-visible.md
-  - docs/adr/ADR-070-verify-syntax-before-writing.md
-  - tests/test_ast_parser_partial_install.py
-  - tests/test_rule_docs_mapper_round2.py
-  - tests/test_semantic_degraded_visibility.py
-  - tools/scripts/rules_engine/rule_docs_mapper.py
-
-## 更新记录: 2026-10-03 17:38:32
-
-### 任务
-Git 变更同步
-
-### 变更摘要
-- 变更文件 10 个 (+363 / -89 行)
   - CHANGELOG.md
   - CONTEXT.md
   - ROADMAP.md

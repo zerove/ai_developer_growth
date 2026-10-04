@@ -337,6 +337,14 @@ class PerformanceOptimizer:
         worker 失败时**不静默丢弃**: 保留 None 占位 (维持既有返回契约,
         ``optimized_check_directory`` 仍会过滤), 但同时把失败原因记入
         ``self.failed_files``, 使调用方能区分"检查通过"与"没检查到"。
+
+        ADR-076: 必须覆盖 worker **正常返回 None** 的情形。原先只处理了
+        "抛异常" 分支, 而 ``_check_file_worker`` 内部会把
+        ``AttributeError`` / ``OSError`` 吞掉后返回 None —— 那是更常见的
+        失败形态, 却是静默的。实测对比:
+            并行: 结果数 4, failed_files 为空   ← 无任何线索
+            串行: 结果数 4, failed_files 有记录
+        即 ADR-074 只修了一半, 与串行路径行为不一致。
         """
         results: list[dict[str, Any] | None] = []
 
@@ -346,12 +354,19 @@ class PerformanceOptimizer:
                 filepath = future_to_file[future]
                 try:
                     result = future.result()
-                    results.append(result)
                 except Exception as exc:  # noqa: BLE001 — 必须捕获, 否则整批丢失
                     # 关键: 不再把失败伪装成 None 后无声消失。None 占位仍在,
                     # 但失败原因与文件路径被记录, 调用方可据此判定 fail-open。
                     self.failed_files[filepath] = f"{type(exc).__name__}: {exc}"
                     results.append(None)
+                    continue
+
+                # ADR-076: 返回 None 与抛异常同样是"没检查到", 同样要留痕。
+                # 否则该文件被上层静默剔除, 而 failed_files 空着 —— 调用方
+                # 只看到结果数变少, 无从判断是漏收还是失败。
+                if result is None:
+                    self.failed_files[filepath] = "worker returned None (check_file raised or file unreadable)"
+                results.append(result)
 
         return results
 

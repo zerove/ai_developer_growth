@@ -123,6 +123,22 @@ def _should_skip_issue(issue: Issue, lines: list[str]) -> bool:
 def apply_fixes(filepath: Path, issues: list[Any], dry_run: bool = False) -> list[Any]:
     """Apply auto-fixes to a file based on issues with fix_replacement.
 
+    ADR-072: 写盘前必须通过语法自检。本模块是仓库里**第四条**独立的
+    代码改写写盘路径 (前三条: ``ast_fixer`` / ``auto_fix`` / ``FixEngine``),
+    与它们同源于“正则或字符串改写代码”这一手法, 因而需要同一道兜底。
+
+    实测 (本轮取证, 非推断): ``_apply_literal_replacement`` 取
+    ``message`` 最后一个冒号后的文本做替换, 一旦 ``fix_replacement``
+    本身是坏的就会把文件改坏, 而本函数仍如实报告“已修复”:
+
+        输入: x = 1 / y = 2   替换 "2" -> "(2"
+        磁盘: x = 1 / y = (2  -> SyntaxError: '(' was never closed
+        返回: 1 个 FixResult (即**声称修复成功**)
+
+    本路径当前**无生产调用方**(仅测试使用), 但 ADR-072 已就 FixEngine
+    明确否决过“无调用方所以可以不修”这一理由: 留一个已知会写坏代码的
+    入口而不修, 代价(一次静默的代码损坏)远大于改动本身。
+
     Args:
         filepath: File to fix
         issues: Issues to fix (only those with fix_replacement set)
@@ -139,6 +155,29 @@ def apply_fixes(filepath: Path, issues: list[Any], dry_run: bool = False) -> lis
     fixes, modified_lines, modified = _process_issues(lines, issues, filepath, dry_run)
 
     if modified and not dry_run:
-        filepath.write_text("".join(modified_lines), encoding="utf-8")
+        candidate = "".join(modified_lines)
+        # 自检实现复用 auto_fix._verify_syntax, 不另写一份 —— 与 ADR-072
+        # 对 auto_fix 的约束一致。Python 走 ast.parse 而非 tree-sitter:
+        # tree-sitter 看不见 IndentationError, 等于没检查 (见 ADR-070)。
+        from tools.scripts.rules_engine.auto_fix import _verify_syntax, detect_language
+
+        checked, violation, error = _verify_syntax(candidate, detect_language(filepath))
+        if checked and violation:
+            # 一个字节都不写, 且如实回报“什么都没改成”。
+            return [
+                FixResult(
+                    file=str(filepath),
+                    rule_id="syntax-check-rejected",
+                    line=0,
+                    original="",
+                    # 必须用 MANUAL FIX REQUIRED 哨兵: 汇总层以该字符串
+                    # 判定“是否已自动修复”, 留空会被计入 auto-fixed,
+                    # 正是 ADR-072 要消灭的那句假绿灯。
+                    fixed="[MANUAL FIX REQUIRED]",
+                    description=f"拒绝写盘: 修复结果无法解析 (ADR-072): {error}",
+                )
+            ]
+
+        filepath.write_text(candidate, encoding="utf-8")
 
     return fixes

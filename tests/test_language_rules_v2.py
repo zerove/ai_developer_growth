@@ -72,45 +72,40 @@ class TestFixResult:
 
 
 class TestAutoFix:
-    def test_apply_fixes_dry_run(self, tmp_path: Path) -> None:
-        test_file = tmp_path / "test.py"
-        test_file.write_text("except:\n    pass\n")
+    # ADR-072: 夹具原为顶格裸 ``except:``, **本身就不是合法 Python**
+    # (except 必须跟在 try 之后)。旧实现无条件写盘, 该用例一直是绿的,
+    # 实际在验证“把一份非法文件改成另一份非法文件”。加上写盘兜底后它
+    # 转红, 这正是兜底生效的证据 —— 故修夹具, 而非放宽兜底去迁就非法输入。
+    VALID_BARE_EXCEPT = "try:\n    pass\nexcept:\n    pass\n"
 
-        issues = [
+    def _bare_except_issue(self, test_file: Path) -> list:  # noqa: ANN205
+        return [
             Issue(
                 rule_id="py-bare-except",
                 severity="error",
                 category="error_handling",
                 file=str(test_file),
-                line=1,
+                line=3,
                 message="Avoid bare except",
                 fix_replacement="s/except:/except Exception:/",
             )
         ]
 
-        fixes = apply_fixes(test_file, issues, dry_run=True)
+    def test_apply_fixes_dry_run(self, tmp_path: Path) -> None:
+        test_file = tmp_path / "test.py"
+        test_file.write_text(self.VALID_BARE_EXCEPT)
+
+        fixes = apply_fixes(test_file, self._bare_except_issue(test_file), dry_run=True)
         assert len(fixes) == 1
         assert fixes[0].fixed == "except Exception:"
         # File should NOT be modified in dry run
-        assert test_file.read_text() == "except:\n    pass\n"
+        assert test_file.read_text() == self.VALID_BARE_EXCEPT
 
     def test_apply_fixes_real(self, tmp_path: Path) -> None:
         test_file = tmp_path / "test.py"
-        test_file.write_text("except:\n    pass\n")
+        test_file.write_text(self.VALID_BARE_EXCEPT)
 
-        issues = [
-            Issue(
-                rule_id="py-bare-except",
-                severity="error",
-                category="error_handling",
-                file=str(test_file),
-                line=1,
-                message="Avoid bare except",
-                fix_replacement="s/except:/except Exception:/",
-            )
-        ]
-
-        fixes = apply_fixes(test_file, issues, dry_run=False)
+        fixes = apply_fixes(test_file, self._bare_except_issue(test_file), dry_run=False)
         assert len(fixes) == 1
         # File SHOULD be modified
         assert "except Exception:" in test_file.read_text()

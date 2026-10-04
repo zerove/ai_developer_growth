@@ -188,6 +188,53 @@ ADR-070 的兜底写在 `ast_fixer` 内部，没有覆盖到这条路径。当�
 三个对照组在变异下**保持绿**，说明它们确实在测兜底开关而非侥幸通过。
 还原后 `4 passed`。
 
+## 第四条写盘路径：`fix_applier.apply_fixes`
+
+收口复核时按 ADR-072 的根因（“正则改写代码这一手法缺少与规则无关的
+写盘兜底”）重新扫了全仓写盘点，发现 `tools/scripts/fix_applier.py`
+的 `apply_fixes` 是**完全没加兜底**的第四条路径，且**能真实写坏代码**。
+
+取证（实测，非推断）：`_apply_literal_replacement` 取 `issue.message`
+最后一个冒号后的文本做替换，`fix_replacement` 本身坏掉时直接把文件改坏，
+而函数仍返回 1 个 `FixResult`——即**声称修复成功**：
+
+| 样本 | 输入 → 磁盘 | 解析 | 返回 |
+| --- | --- | --- | --- |
+| 未闭合括号 | `y = 2` → `y = (2` | `SyntaxError: '(' was never closed` | 1 个 FixResult |
+| 函数头失效 | `def f():` → `def f(def f():` | `SyntaxError: invalid syntax` | 1 个 FixResult |
+| 缩进失效 | `if True:` → `if Trueif True:` | `SyntaxError: invalid syntax` | 1 个 FixResult |
+| 健康对照 | `os.system('ls')` → `subprocess.run(...)` | 仍可解析 | 1 个 FixResult |
+
+同 ADR-072 对 `FixEngine` 的处理：它**无生产调用方**（仅
+`tests/test_report_and_fix.py` 等测试使用），但那个理由已被明确否决过，
+故同批补上。修法复用 `auto_fix._verify_syntax`，不另写一份。
+
+新增 `tests/test_fix_applier_write_verification.py`，含两条替换分支
+（字面量与 sed 风格）的对照组，防止只测了一半：
+
+| 场景 | 观察值 |
+| --- | --- |
+| 缺陷样本 | 返回 `syntax-check-rejected` + `[MANUAL FIX REQUIRED]`，磁盘 md5 `26149c8ef04a` → `26149c8ef04a`（逐字节不变） |
+| 合法样本（对照） | 返回 `rule_id=probe`，磁盘 `44263951f17c` → `92a21a095da8`，修复后仍可 `compile` |
+| sed 分支（对照） | 磁盘 `1a3342c47fa5` → `f4b6a872ee56`，仍可 `compile` |
+| `dry_run` | 磁盘不变且不报拒绝 |
+
+变异（短路 `if checked and violation`）→ `1 failed`，输出直接重现损坏
+形态（磁盘 `26149c8ef04a` → `461b6f8e0562`，返回 `probe` / `y = (2`），
+三个对照组保持绿。还原后 `4 passed`。
+
+### 附带修正：又一处一直在验证假象的存量夹具
+
+`tests/test_language_rules_v2.py::TestAutoFix` 的两个用例用顶格裸
+`except:` 作夹具——**这本身就不是合法 Python**。旧实现无条件写盘，
+它们一直是绿的，实际在验证“把一份非法文件改成另一份非法文件”。加上
+兜底后转红，这正是兜底生效的证据。已把夹具改为合法的 `try/except`
+结构，而非放宽兜底去迁就非法输入。
+
+这已是**第三处**同型存量夹具（另两处见本 ADR「附带修正」与 ADR-072
+初版记录），说明“用非法输入当夹具 + 无条件写盘”是一个反复出现的
+模式，而非孤立事故。
+
 ## 相关
 
 - ADR-070：写盘前必须校验修复结果的语法

@@ -286,7 +286,7 @@ def _init_cache_store(use_cache: bool, db_path: str | Path) -> tuple[CheckStore 
 
             store = CheckStore(db_path)
             rules_hash = compute_rules_signature()
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:  # noqa: BLE001 - 缓存库不可用属可降级故障，本次退化为完整检查
             store = None
             logger.warning(
                 "增量缓存初始化失败，本次退化为完整检查: %s: %s",
@@ -355,7 +355,7 @@ def _check_with_cache(
                     CheckResult(file=str(filepath), issues=issues, language=cached["language"]),
                     False,
                 )
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:  # noqa: BLE001 - 缓存条目损坏时重算，不影响检查结论
             cache_degraded = True
             logger.debug("缓存读取失败，回退完整检查 %s: %s", filepath, exc)
     result = check_file(filepath, rules, lang, semantic=semantic, run_linters=run_linters)
@@ -376,7 +376,7 @@ def _check_with_cache(
                 },
                 rules_hash,
             )
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:  # noqa: BLE001 - 缓存写入失败仅丢性能，检查结论已得出
             cache_degraded = True
             logger.debug("缓存写入失败（不影响检查结果）%s: %s", filepath, exc)
     return result, cache_degraded
@@ -534,7 +534,7 @@ def _run_semantic_checks(filepath: Path, lang: str) -> list[Issue]:
 
     except ImportError as exc:
         return [_degraded_issue(filepath, f"语义检查依赖缺失: {exc}")]
-    except Exception as exc:  # noqa: BLE001
+    except Exception as exc:  # noqa: BLE001 - 语义插件异常不中断管道，但降级为可见 Issue
         # 不中断检查管道，但必须留痕（原先 `pass` 会完全静默）
         return [_degraded_issue(filepath, f"语义分析异常: {type(exc).__name__}: {exc}")]
 

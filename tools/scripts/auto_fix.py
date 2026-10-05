@@ -562,7 +562,7 @@ class RegexFixProvider(FixProvider):
             content = full_path.read_text(encoding="utf-8")
             actions, content = self._apply_all_rules(content, file_path)
             self._write_if_changed(full_path, content, bool(actions))
-        except Exception as e:  # noqa: BLE001
+        except Exception as e:  # noqa: BLE001 - 单文件正则修复失败不能中断整批，交由调用方看空结果
             logger.warning(f"Regex apply_rules failed for {file_path}: {e}")
             return []
         return actions

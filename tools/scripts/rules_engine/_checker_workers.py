@@ -36,7 +36,7 @@ def _worker_init(
             from .store import CheckStore
 
             _WORKER_STORE = CheckStore(cache_db)
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:  # noqa: BLE001 - 缓存初始化失败属可降级故障，退化为完整检查
             logger.debug("worker 缓存初始化失败，退化为完整检查: %s: %s", type(exc).__name__, exc)
             _WORKER_STORE = None
 
@@ -63,7 +63,7 @@ def _worker_check(
             if cached is not None:
                 issues = [Issue(**i) for i in cached["issues"]]
                 return CheckResult(file=str(fp), issues=issues, language=cached["language"])
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:  # noqa: BLE001 - 缓存损坏/并发冲突均可降级，重读完整结果即可
             logger.debug("worker 缓存读取失败，回退完整检查 %s: %s", fp, exc)
             store = None  # 缓存不可用时退化为完整检查
     from .checker import check_file
@@ -94,6 +94,6 @@ def _worker_check(
                 },
                 rules_hash,
             )
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:  # noqa: BLE001 - 缓存写入失败不影响检查结果，仅丢性能
             logger.debug("worker 缓存写入失败（不影响检查结果）: %s: %s", type(exc).__name__, exc)
     return result

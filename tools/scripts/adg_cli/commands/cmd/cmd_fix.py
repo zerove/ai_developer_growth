@@ -173,7 +173,7 @@ def _orchestrate_target(
             )
             # exit-zero 即使有 fix 也返回 0
             applied = 1 if proc.returncode in (0, 1) else 0
-        except Exception:  # noqa: BLE001
+        except Exception:  # noqa: BLE001 - ruff 子进程不可用属环境降级，计入 applied=0 而非抛出
             applied = 0
         return {"fixed": applied, "skipped": 0, "errors": 0, "files": 1 if applied else 0}
 
@@ -202,7 +202,7 @@ def _run_ruff_directory(target: Path) -> dict[str, Any]:
                 if m:
                     fixed = int(m.group(1))
         return {"fixed": fixed, "skipped": 0, "errors": 0, "files": 1 if fixed else 0}
-    except Exception:  # noqa: BLE001
+    except Exception:  # noqa: BLE001 - ruff 目录修复失败须报 errors，不能谎称成功
         return {"fixed": 0, "skipped": 0, "errors": 1, "files": 0}
 
 

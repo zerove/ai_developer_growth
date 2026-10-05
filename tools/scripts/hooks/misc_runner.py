@@ -338,7 +338,7 @@ def _handle_db_maintain(args: argparse.Namespace) -> int:
     retention = int(getattr(args, "retention_days", 90))
     try:
         store = CheckStore(db_path)
-    except Exception as exc:  # noqa: BLE001
+    except Exception as exc:  # noqa: BLE001 - 存储打不开属用户可见故障，必须报错并返回非零
         print(f"❌ 无法打开统一存储 {db_path}: {exc}")
         return 1
 
@@ -358,7 +358,7 @@ def _close_store_quietly(store: object) -> None:
     if callable(close):
         try:
             close()
-        except Exception:  # noqa: BLE001
+        except Exception:  # noqa: BLE001 - 关闭连接失败属收尾清理，不得掩盖主流程返回值
             pass
 
 

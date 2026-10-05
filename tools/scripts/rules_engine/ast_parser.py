@@ -142,8 +142,8 @@ class ASTParser(_ClassWalkers, _FunctionWalkers, _ImportWalkers):
                         mod = importlib.import_module(module_name)
                         lang_obj = Language(getattr(mod, factory_name)())
                         cls._PARSER_CACHE[lang] = Parser(lang_obj)
-                    except Exception as exc:  # noqa: BLE001
-                        # 单个语言不可用不应拖垮其他语言, 但必须留痕。
+                    except Exception as exc:  # noqa: BLE001 - 单语言解析器不可用不应拖垮其他语言
+                        # 必须留痕：不能静默跳过，否则用户以为该语言已被检查。
                         missing.append(f"{lang}({type(exc).__name__})")
                 if missing:
                     print(

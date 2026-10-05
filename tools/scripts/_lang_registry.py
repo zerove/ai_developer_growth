@@ -148,8 +148,7 @@ class LanguageRegistry:
                 or self._has_typescript_sources(project_root)
             ):
                 return Language.TYPESCRIPT
-        except Exception:  # noqa: BLE001
-            # TS 探测失败时降级为 JS, 属预期回退路径
+        except Exception:  # noqa: BLE001 - TS 探测失败时降级为 JS，属预期回退路径
             pass
         return Language.JAVASCRIPT
 

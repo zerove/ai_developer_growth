@@ -12,6 +12,75 @@
 
 ---
 
+## 当前状态 (2026-10-05)
+
+### ✅ 全面复盘：门禁健康，发现并修复 ADR-072 遗留回归（ADR-077）
+
+未提交改动审阅时发现：**ADR-072 自己新加的三个端到端用例全部通过，
+但真缺陷依然存在** —— 它们只断言磁盘有无被改写，而回归的表征是
+**输出被吞**。
+
+- [x] **P0（第七类假绿灯）**：`--fix` gating 把"不写盘"与"提前退出"
+  两个语义复用同一个 `dry_run` 布尔，导致 `results` 为空时
+  `--json` / `--health-score` 输出被整段吞掉，**而退出码仍为 0**。
+  实测修复前 `--incremental --json` 输出 45 字符（仅
+  "No changed files detected"），修复后 195 字符（完整 JSON）；
+  带不带 `--fix` 的输出现在**逐字节一致**。详见 ADR-077
+- [x] **P0-2 修复方式**：移除 `_apply_auto_fix` 的 `return -1`
+  历史早退信号；`_handle_auto_fix` 恒返回 `None`。auto-fix 阶段
+  只负责“修不修”，不再越权决定“要不要继续”。**`--fix` gating
+  本身不动** —— 它是对的，问题在被复用的参数上
+- [x] **P1-3 回归测试**：新增 `TestNoFixFlagMustNotSkipOutputStages`
+  4 个用例（3 项真实子进程 + 1 项返回值契约）。变异验证：
+  还原完整缺陷形态 **4 failed / 16 passed**，健康对照不受影响
+- [x] **P1-4 清理**：删除遗留临时探针 `tests/test_zzz_probe_nested.py`
+- [x] **P1-5 交叉引用**：ADR-072 原地加警告块指向 ADR-077，避免
+  下一个人把 gating 当成完整修复
+
+### 本轮沉淀的方法论
+
+- **加固一条几乎不可达的分支，会引爆该分支上的旧债**。ADR-072 让
+  “不传 `--fix` 也必须走 `dry_run`”，于是那条 `return -1` 从
+  “几乎不可达”变成**必然触发**。审阅改动时必须问：**这条新路径
+  经过哪些既有分支？**
+- **“一个布尔承载多个语义”是隐蔽的债**。看函数名与参数名完全
+  看不出 `dry_run` 还控制着流程走向，只有顺着返回值一直读到
+  `main` 的 `if ... return` 才会显形
+- **变异时的一次假阴性**：首次注入变异用了锚点脚本而非 `edit`，
+  锚点匹配 0 次导致变异**根本没写入**，测试“全绿”。与 ADR-072
+  记录的 `git stash` 静默失效同源 —— **必须先确认变异标记真的
+  出现在源码里**，再看测试结果
+- **变异 A/B 的敏感度差异值得记录**：只把 `return 0` 改回 `return -1`
+  时只有 1 项转红（只有返回值契约那条抓得住），还原完整缺陷形态后
+  3 项端到端断言全部转红。即**端到端断言需要完整的缺陷形态才能驱动
+  到目标分支**，只变异一半会高估自己的检查强度
+
+### 门禁实测（本会话）
+
+| 门禁 | 结果 |
+|---|---|
+| `ruff check` | All checks passed |
+| `ruff format --check` | 472 files already formatted |
+| `mypy strict`（`tools .jcode`） | Success: 234 source files |
+| `link_auditor` | All links are valid |
+| `governance-docs-validator validate` | 15 个治理文档通过 |
+| `governance-docs-validator check-index` | 索引完整性通过 |
+| `generate_adr_index --check` | ADR 索引已是最新（68 条） |
+| `pytest -n 8` | **5089 passed**（784s） |
+| 覆盖率门禁（`cov_min=80`） | **87.49%** reached，22647 语句，5089 passed（883s） |
+
+### 后续候选
+
+- **CI 的 mypy 口径**：实测 `mypy tools .jcode` 为 234 files clean，
+  但 `mypy .` 会因 `tests/` 与 `examples/ai-task-prioritizer` 报错。
+  应确认 CI 实际跑的是哪个口径，避免“本地绿、CI 红”或反之
+- **`test_optimized_check_directory_parallel` 偶发失败**：七轮排查后
+  仍未能定位触发条件，但 `failed_files` 已能自动留痕（ADR-074/076）。
+  该项**保持现状**，不再投入压测
+- **覆盖率尾部**：见下方 Phase 37 遗留项
+
+---
+
 ## 当前状态 (2026-10-02)
 
 ### ✅ Phase 37: 上下文资产完整性收口 (2026-10-02)

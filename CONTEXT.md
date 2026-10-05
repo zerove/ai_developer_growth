@@ -19,12 +19,12 @@ AI 时代开发者成长知识库 + 治理框架（knowledge base + governance f
 |---|---|
 | 版本 | v2.24.0（`pyproject.toml`） |
 | 语言 | Python 3.11+ 工具链 + Markdown 文档 |
-| 源码规模 | `tools/scripts` + `.jcode/scripts` 共 220 个 `.py` 文件 |
-| 测试规模 | 200 个测试文件，4495 passed |
-| 覆盖率 | 87.82%（门禁阈值 80%，`cov_min`） |
-| 类型检查 | mypy strict，233 source files clean |
-| 代码风格 | ruff check + ruff format（944 files formatted） |
-| ADR 累计 | 63 篇（`docs/adr/`；ADR-006 历史空号，ADR-040 为追补） |
+| 源码规模 | `tools/scripts` + `.jcode/scripts` 共 221 个 `.py` 文件 |
+| 测试规模 | 218 个测试文件，5089 passed（2026-10-05 实测，`-n 8` 耗时 13:04） |
+| 覆盖率 | **87.49%**（阈值 80%；2026-10-05 实测，22647 语句） |
+| 类型检查 | mypy strict，**234 source files** clean（口径：`mypy tools .jcode`） |
+| 代码风格 | ruff check + ruff format（472 files formatted） |
+| ADR 累计 | 81 篇（`docs/adr/`；ADR-006 历史空号，ADR-040 为追补） |
 
 ## 核心目录
 
@@ -59,6 +59,7 @@ AI 时代开发者成长知识库 + 治理框架（knowledge base + governance f
 
 决策全文见 [ADR.md](ADR.md) 索引与 `docs/adr/`。影响本文件的决策：
 
+- **ADR-077**: "不写盘"与"提前退出"不得复用同一个布尔；`--fix` 缺失不得吞掉输出
 - **ADR-076**: worker 返回 None 与抛异常同等不可见，并行路径必须一并留痕
 - **ADR-075**: 规则磁盘缓存必须跨进程加锁 + 原子写，且缓存路径可用 `ADG_RULES_CACHE_DIR` 隔离
 - **ADR-074**: worker 失败不得静默丢结果，必须留下可追溯痕迹（`failed_files`）
@@ -143,6 +144,28 @@ AI 时代开发者成长知识库 + 治理框架（knowledge base + governance f
   - 若要进一步定位，**前提是能复现**，而这一点目前不具备。
     继续压测只是消耗，不再做。
 
+  **第七轮（2026-10-04）：仍未能复现，改用“降低复现成本”的思路。**
+  前六轮都在“如何触发”上用力，本轮换问法：**能不能让下一次发生自动
+  落地证据？** 已有做法（`failed_files`）依赖异常真的被捕获，但若失败
+  发生在**捕获不到的地方**（如 worker 进程被外部杀死、结果被上层提前
+  截断），依旧无迹可寻。
+
+  本轮实测（非推断）：
+  - 25 轮串行重复：`0/25` 出现 &lt;10；
+  - `-n 8` 下嵌套并行 12 轮：`0/12` 出现 &lt;10；
+  - `check_file` 对**已删除文件**返回 `skipped=True` + 1 条 issue，
+    而**不是**抛异常 —— 即“文件消失”场景不会走 worker 的
+    `except (AttributeError, OSError)`，这条常被怀疑的路径也因此证伪；
+  - `cache_enabled=False` 时 `_partition_files` 不生效，
+    且 `self.cache` 为 `None`，故 `optimized_check_directory` 里
+    `self.cache.set(result["file"], ...)` 的潜在 `KeyError`
+    **在本用例下不可能触发**（该分支仅在缓存开启时执行）。
+
+  **结论：原始 flake 仍未定位。** 七轮下来，“代码内部无未审计分支”
+  这个结论依然成立，且新增排除两条。但复现前提不具备这一点没有变，
+  本轮同样**不能**声称已解决。
+  能确定改变的只有一条：**一旦发生，证据会自动落地。**
+
   排查时已把该用例的断言改为自动取证（失败时输出 `collected` 与
   `failed_files`），并用临时改阈值验证该消息确实会触发。若再发生，
   请直接读新的断言消息，不要从头猜。
@@ -185,6 +208,20 @@ AI 时代开发者成长知识库 + 治理框架（knowledge base + governance f
   而路径常量在 `BinOp` 兄弟节点里，判定恒为 None，421 项全绿却是
   完全无效的检查。变异测试才暴露。教训已写入 ADR-073。
 
+- **中途 `kill` 掉 pytest 会把 canary 留在受控文件里（ADR-073 同源）**：
+  本轮复盘时手动取消了一次跑满 20 分钟的全量 pytest，随后
+  `.jcode/hooks.json` 里留下了 `ZZZ-canary` 条目。`addCleanup` 在正常结束与
+  失败时都可靠，**但 SIGTERM / 进程组被杀时不会执行**。
+
+  实测单独跑 `test_check_hooks_json_integrity.py`（12 passed）后文件
+  保持干净，证明写入方与还原方本身没问题 —— 缺失的只是"被强杀"这一路。
+  因此：**跑全量前不要在测试运行中改工作区源码**（会让基线失效），
+  若确实必须中止，事后要 `git diff` 确认受控文件（`.jcode/hooks.json`、
+  `docs/adr/ADR.md`、`INDEX.md`/`MOC.md`）未被改写。
+
+  这条与「并行下多个 worker 互踩」是**不同成因**：那次是 worker 之间
+  无互斥，这次是清理逻辑压根没跑。排查时不要混为一谈。
+
 - **ADR-071 / ADR-072 的验证曾长期停留在"测试绿"而非"观察到行为"**：
   自动审查指出这两个目标的反馈环从未闭合。本轮补做了真实观察：
   - ADR-071 变异回退 `phase_runner.py` 目录分支的 `return 1` →
@@ -201,12 +238,160 @@ AI 时代开发者成长知识库 + 治理框架（knowledge base + governance f
   却说不清"移除修复后哪条检查会红、红的是不是它真正要保证的那件事"，
   那就是没验证过。变异是唯一能区分"检查有效"与"检查空转"的手段。
 
+- **加固一条几乎不可达的分支，会引爆该分支上的旧债（ADR-077）**：
+  ADR-072 把 `--fix` 接成真开关后，“不传 `--fix` 也必须走 `dry_run`”，
+  于是 `_apply_auto_fix` 里那个历史遗留的 `return -1` 早退信号从
+  “几乎不可达”变成**必然触发** —— 只要 `results` 为空，`--json` /
+  `--health-score` 输出就被整段吞掉，而**退出码仍是 0**。
+  复盘方法论（两条，均可复用）：
+
+  - **审阅改动时必须问“这条新路径经过了哪些既有分支”**。加固本身
+    不会错，但被加固所激活的旧假设会错。
+  - **“一个布尔承载多个语义”是隐蔽的债**：看函数名与参数名完全看不出
+    `dry_run` 还控制着“要不要跳过后续输出”，只有顺着返回值往下读到
+    `main` 的 `if ... return` 才会显形。
+
+  另注：ADR-072 自己新加的三个 `TestFixFlagEndToEnd` 用例**全部通过**
+  时该缺陷依然存在 —— 它们只断言磁盘有无被改写，而回归的表征是**输出
+  被吞**。即**断言必须落在用户可见的行为上**，只盯被改动的那个字节
+  会漏掉整类缺陷。
+
 ## 计划
 
 后续开发计划以 [ROADMAP.md](ROADMAP.md) 顶部 `## 当前状态` 段落为准（按会话倒序，最新在最前）。
 变更历史以 [CHANGELOG.md](CHANGELOG.md) 为准。
 
 ---
+
+## 更新记录: 2026-10-05 13:24:27
+
+### 任务
+Git 变更同步
+
+### 变更摘要
+- 变更文件 15 个 (+802 / -174 行)
+  - CHANGELOG.md
+  - CONTEXT.md
+  - ROADMAP.md
+  - docs/adr/ADR-072-auto-fix-verify-syntax-before-write.md
+  - docs/adr/ADR.md
+  - tests/test_write_path_fallback_contracts.py
+  - tools/scripts/_lang_registry.py
+  - tools/scripts/adg_cli/commands/cmd/cmd_fix.py
+  - tools/scripts/auto_fix.py
+  - tools/scripts/fix_applier.py
+  - tools/scripts/hooks/misc_runner.py
+  - tools/scripts/rules_engine/_checker_workers.py
+  - tools/scripts/rules_engine/ast_parser.py
+  - tools/scripts/rules_engine/checker.py
+  - tools/scripts/rules_engine/validators/cli.py
+
+## 更新记录: 2026-10-05 12:43:20
+
+### 任务
+Git 变更同步
+
+### 变更摘要
+- 变更文件 16 个 (+772 / -157 行)
+  - .jcode/hooks.json
+  - CHANGELOG.md
+  - CONTEXT.md
+  - ROADMAP.md
+  - docs/adr/ADR-072-auto-fix-verify-syntax-before-write.md
+  - docs/adr/ADR.md
+  - tests/test_write_path_fallback_contracts.py
+  - tools/scripts/_lang_registry.py
+  - tools/scripts/adg_cli/commands/cmd/cmd_fix.py
+  - tools/scripts/auto_fix.py
+  - tools/scripts/fix_applier.py
+  - tools/scripts/hooks/misc_runner.py
+  - tools/scripts/rules_engine/_checker_workers.py
+  - tools/scripts/rules_engine/ast_parser.py
+  - tools/scripts/rules_engine/checker.py
+  - tools/scripts/rules_engine/validators/cli.py
+
+## 更新记录: 2026-10-05 12:29:02
+
+### 任务
+Git 变更同步
+
+### 变更摘要
+- 变更文件 13 个 (+605 / -133 行)
+  - .jcode/hooks.json
+  - CONTEXT.md
+  - docs/adr/ADR-072-auto-fix-verify-syntax-before-write.md
+  - tests/test_write_path_fallback_contracts.py
+  - tools/scripts/_lang_registry.py
+  - tools/scripts/adg_cli/commands/cmd/cmd_fix.py
+  - tools/scripts/auto_fix.py
+  - tools/scripts/fix_applier.py
+  - tools/scripts/hooks/misc_runner.py
+  - tools/scripts/rules_engine/_checker_workers.py
+  - tools/scripts/rules_engine/ast_parser.py
+  - tools/scripts/rules_engine/checker.py
+  - tools/scripts/rules_engine/validators/cli.py
+
+## 更新记录: 2026-10-05 12:11:38
+
+### 任务
+Git 变更同步
+
+### 变更摘要
+- 变更文件 12 个 (+431 / -107 行)
+  - CONTEXT.md
+  - docs/adr/ADR-072-auto-fix-verify-syntax-before-write.md
+  - tests/test_write_path_fallback_contracts.py
+  - tools/scripts/_lang_registry.py
+  - tools/scripts/adg_cli/commands/cmd/cmd_fix.py
+  - tools/scripts/auto_fix.py
+  - tools/scripts/fix_applier.py
+  - tools/scripts/hooks/misc_runner.py
+  - tools/scripts/rules_engine/_checker_workers.py
+  - tools/scripts/rules_engine/ast_parser.py
+  - tools/scripts/rules_engine/checker.py
+  - tools/scripts/rules_engine/validators/cli.py
+
+## 更新记录: 2026-10-05 00:23:26
+
+### 任务
+Git 变更同步
+
+### 变更摘要
+- 变更文件 13 个 (+388 / -320 行)
+  - .jcode/hooks.json
+  - CONTEXT.md
+  - docs/adr/ADR-072-auto-fix-verify-syntax-before-write.md
+  - tests/test_write_path_fallback_contracts.py
+  - tools/scripts/_lang_registry.py
+  - tools/scripts/adg_cli/commands/cmd/cmd_fix.py
+  - tools/scripts/auto_fix.py
+  - tools/scripts/fix_applier.py
+  - tools/scripts/hooks/misc_runner.py
+  - tools/scripts/rules_engine/_checker_workers.py
+  - tools/scripts/rules_engine/ast_parser.py
+  - tools/scripts/rules_engine/checker.py
+  - tools/scripts/rules_engine/validators/cli.py
+
+## 更新记录: 2026-10-05 00:12:56
+
+### 任务
+Git 变更同步
+
+### 变更摘要
+- 变更文件 13 个 (+306 / -70 行)
+  - .jcode/hooks.json
+  - CONTEXT.md
+  - docs/adr/ADR-072-auto-fix-verify-syntax-before-write.md
+  - tests/test_write_path_fallback_contracts.py
+  - tools/scripts/_lang_registry.py
+  - tools/scripts/adg_cli/commands/cmd/cmd_fix.py
+  - tools/scripts/auto_fix.py
+  - tools/scripts/fix_applier.py
+  - tools/scripts/hooks/misc_runner.py
+  - tools/scripts/rules_engine/_checker_workers.py
+  - tools/scripts/rules_engine/ast_parser.py
+  - tools/scripts/rules_engine/checker.py
+  - tools/scripts/rules_engine/validators/cli.py
 
 ## 更新记录: 2026-10-04 18:38:14
 
@@ -956,113 +1141,6 @@ Git 变更同步
   - ROADMAP.md
   - docs/adr/ADR-070-verify-syntax-before-writing.md
   - tests/test_rule_docs_mapper_round2.py
-  - tools/scripts/rules_engine/rule_docs_mapper.py
-
-## 更新记录: 2026-10-03 19:07:06
-
-### 任务
-Git 变更同步
-
-### 变更摘要
-- 变更文件 6 个 (+365 / -155 行)
-  - CHANGELOG.md
-  - CONTEXT.md
-  - ROADMAP.md
-  - docs/adr/ADR-070-verify-syntax-before-writing.md
-  - tests/test_rule_docs_mapper_round2.py
-  - tools/scripts/rules_engine/rule_docs_mapper.py
-
-## 更新记录: 2026-10-03 19:02:46
-
-### 任务
-Git 变更同步
-
-### 变更摘要
-- 变更文件 10 个 (+560 / -197 行)
-  - CHANGELOG.md
-  - CONTEXT.md
-  - ROADMAP.md
-  - docs/adr/ADR-063-tree-sitter-per-language-import.md
-  - docs/adr/ADR-064-semantic-degradation-must-be-visible.md
-  - docs/adr/ADR-070-verify-syntax-before-writing.md
-  - tests/test_ast_parser_partial_install.py
-  - tests/test_rule_docs_mapper_round2.py
-  - tests/test_semantic_degraded_visibility.py
-  - tools/scripts/rules_engine/rule_docs_mapper.py
-
-## 更新记录: 2026-10-03 18:57:41
-
-### 任务
-Git 变更同步
-
-### 变更摘要
-- 变更文件 10 个 (+542 / -186 行)
-  - CHANGELOG.md
-  - CONTEXT.md
-  - ROADMAP.md
-  - docs/adr/ADR-063-tree-sitter-per-language-import.md
-  - docs/adr/ADR-064-semantic-degradation-must-be-visible.md
-  - docs/adr/ADR-070-verify-syntax-before-writing.md
-  - tests/test_ast_parser_partial_install.py
-  - tests/test_rule_docs_mapper_round2.py
-  - tests/test_semantic_degraded_visibility.py
-  - tools/scripts/rules_engine/rule_docs_mapper.py
-
-## 更新记录: 2026-10-03 18:12:07
-
-### 任务
-Git 变更同步
-
-### 变更摘要
-- 变更文件 11 个 (+500 / -176 行)
-  - .jcode/hooks.json
-  - CHANGELOG.md
-  - CONTEXT.md
-  - ROADMAP.md
-  - docs/adr/ADR-063-tree-sitter-per-language-import.md
-  - docs/adr/ADR-064-semantic-degradation-must-be-visible.md
-  - docs/adr/ADR-070-verify-syntax-before-writing.md
-  - tests/test_ast_parser_partial_install.py
-  - tests/test_rule_docs_mapper_round2.py
-  - tests/test_semantic_degraded_visibility.py
-  - tools/scripts/rules_engine/rule_docs_mapper.py
-
-## 更新记录: 2026-10-03 18:06:46
-
-### 任务
-Git 变更同步
-
-### 变更摘要
-- 变更文件 11 个 (+482 / -165 行)
-  - .jcode/hooks.json
-  - CHANGELOG.md
-  - CONTEXT.md
-  - ROADMAP.md
-  - docs/adr/ADR-063-tree-sitter-per-language-import.md
-  - docs/adr/ADR-064-semantic-degradation-must-be-visible.md
-  - docs/adr/ADR-070-verify-syntax-before-writing.md
-  - tests/test_ast_parser_partial_install.py
-  - tests/test_rule_docs_mapper_round2.py
-  - tests/test_semantic_degraded_visibility.py
-  - tools/scripts/rules_engine/rule_docs_mapper.py
-
-## 更新记录: 2026-10-03 18:00:42
-
-### 任务
-Git 变更同步
-
-### 变更摘要
-- 变更文件 11 个 (+463 / -154 行)
-  - .jcode/hooks.json
-  - CHANGELOG.md
-  - CONTEXT.md
-  - ROADMAP.md
-  - docs/adr/ADR-063-tree-sitter-per-language-import.md
-  - docs/adr/ADR-064-semantic-degradation-must-be-visible.md
-  - docs/adr/ADR-070-verify-syntax-before-writing.md
-  - tests/test_ast_parser_partial_install.py
-  - tests/test_rule_docs_mapper_round2.py
-  - tests/test_semantic_degraded_visibility.py
   - tools/scripts/rules_engine/rule_docs_mapper.py
 
 <!-- 滚动窗口: 已自动裁剪 1 条旧更新记录 -->

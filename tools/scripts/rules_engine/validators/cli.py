@@ -199,7 +199,11 @@ Examples:
         default=None,
         help="Max allowed warnings (exit 1 if exceeded)",
     )
-    parser.add_argument("--fix", action="store_true", help="Apply auto-fixes")
+    parser.add_argument(
+        "--fix",
+        action="store_true",
+        help="Apply auto-fixes (writes to disk; combine with --dry-run to preview)",
+    )
     parser.add_argument(
         "--dry-run",
         action="store_true",
@@ -208,7 +212,10 @@ Examples:
     parser.add_argument(
         "--custom-rules",
         type=Path,
-        help="Directory with custom .yml rules (default: .ai-rules/)",
+        help=(
+            "Project dir containing .ai-rules/*.yml "
+            "(note: point at the dir that *contains* .ai-rules, not at .ai-rules itself)"
+        ),
     )
     parser.add_argument("--health-score", action="store_true", help="Show project health score")
     parser.add_argument(
@@ -385,7 +392,13 @@ def _collect_results(
 
 
 def _apply_auto_fix(results: list[ValidationResult], dry_run: bool) -> int:
-    """Apply auto-fixes. Returns 0 on success, 1 if dry-run with no results."""
+    """Apply auto-fixes. Returns 0 on success, 1 if dry-run with no results.
+
+    ``dry_run`` 的语义**只是"不要写盘"**，不得夹带"提前退出"的副作用。
+    该函数过去把两个无关语义耦合在同一个参数上（见 ``_handle_auto_fix``
+    的历史 ``return -1`` 早退信号），导致调用方一旦为"禁止写盘"而把
+    ``dry_run`` 置 True，就会连带激活"跳过后续输出阶段"。
+    """
     from tools.scripts.fix_applier import apply_fixes
 
     all_fixes: list[FixResult] = []
@@ -403,7 +416,18 @@ def _apply_auto_fix(results: list[ValidationResult], dry_run: bool) -> int:
             print(f"    + {fix.fixed}")
 
     if dry_run and not results:
-        return -1  # Signal: return early
+        # 注意: 此处的 -1 只是一个**历史遗留的"提前退出"信号**, 不是
+        # "无结果"的表达。它让 _handle_auto_fix 返回 0, 而 main 把
+        # "非 None" 一律当作"该退出了" —— 于是**任何** dry_run 且无结果的
+        # 调用都会吞掉后面的 json / health-score / 文本输出。
+        #
+        # 该信号与本次修复的 gating 直接冲突: 不传 --fix 也必须走 dry_run,
+        # 若保留它, "不写盘"就会意外变成 "提前退出"。
+        #
+        # 无结果时无需修任何东西, 也无需提前退出 —— 返回 0 交回控制权,
+        # 让 main 继续走输出阶段。保留 -1 的唯一历史价值是"没有可看的文件
+        # 就别刷屏", 但那属于输出策略, 不该由 auto-fix 阶段越权决定。
+        return 0
     return 0
 
 
@@ -445,10 +469,17 @@ def _load_custom_rules(args: argparse.Namespace, path: Path) -> Any:
 
 
 def _handle_auto_fix(results: list[ValidationResult], dry_run: bool) -> int | None:
-    """Handle auto-fix logic. Returns exit code to indicate exit, None to continue."""
-    fix_result = _apply_auto_fix(results, dry_run=dry_run)
-    if fix_result == -1:
-        return 0
+    """Apply auto-fixes; returns an exit code only when the stage owns the exit.
+
+    ``dry_run=True`` 仅表示"不写盘", 不得跳过后续输出阶段（ADR-073 配套修复）。
+
+    历史形态是 ``_apply_auto_fix`` 返回 ``-1`` 表示"提前退出", 本层把它翻成
+    ``0`` 并让 ``main`` 立即 return。ADR-072 的 gating 让**不传 ``--fix`` 也
+    必须走 dry_run**, 于是该信号被大面积误触发 —— ``results`` 为空时
+    ``--json`` / ``--health-score`` 输出被整段吞掉。现已移除该信号:
+    auto-fix 阶段只负责"修或不修", 不再越权决定"要不要继续往下走"。
+    """
+    _apply_auto_fix(results, dry_run=dry_run)
     return None
 
 
@@ -524,7 +555,15 @@ def main() -> int:
         return 1
 
     # Auto-fix
-    fix_exit = _handle_auto_fix(results, args.dry_run)
+    #
+    # ADR-072 配套修复：``--fix`` 此前被解析、被 ``--help`` 文档化，却从未
+    # 被读取（``args.fix`` 引用数为 0），而 ``_handle_auto_fix`` 是**无条件**
+    # 调用的。也就是说"不写盘"并不来自任何设计，而只是恰好没有可应用的
+    # ``fix_replacement`` —— 一旦有人给规则加上该字段，CLI 就会在用户
+    # **没有传 --fix** 的情况下静默改写代码。
+    #
+    # 现改为显式 gating：只有传了 ``--fix`` 才尝试写盘；``--dry-run`` 优先。
+    fix_exit = _handle_auto_fix(results, args.dry_run or not args.fix)
     if fix_exit is not None:
         return fix_exit
 

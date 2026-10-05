@@ -39,8 +39,24 @@ def _parse_regex_replacement(replacement: str, original_line: str) -> str | None
 
 
 def _apply_literal_replacement(original_line: str, replacement: str, message: str) -> str:
-    """Apply literal string replacement."""
+    """Apply literal string replacement.
+
+    ADR-072 配套修复：原实现直接 ``original_line.replace(match_text, ...)``，
+    而 ``match_text`` 取自 ``message`` 最后一个冒号之后的文本。若 ``message``
+    **不含冒号**，``match_text`` 就是空字符串，而 ``str.replace("", x)`` 会把
+    ``x`` 插到**行首** —— 静默改坏一行仍然合法的代码。
+
+        实测：original='x = "TODO"', message='probe marker'（无冒号）
+              -> 'DONEx = "TODO"'   # 语义已变，语法却仍然合法，ADR-072 的
+                                    # ast.parse 自检抓不到
+
+    这是"写盘前语法自检"无法覆盖的一类损坏：语法合法但语义已错。故在此
+    显式拒绝空 ``match_text``，交由调用方按"无可应用修复"处理。
+    """
     match_text = message.split(":")[-1].strip() if ":" in message else ""
+    if not match_text:
+        # 无法从 message 推断出待替换文本 —— 宁可不改，也不在行首凭空插入。
+        return original_line
     return original_line.replace(match_text, replacement, 1)
 
 

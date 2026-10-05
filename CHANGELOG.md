@@ -4,6 +4,47 @@ All notable changes to the AI Developer Growth project.
 
 ## [Unreleased]
 
+### 全面复盘：修复 `--fix` gating 引入的输出丢失回归 (2026-10-05, ADR-077)
+
+审阅未提交改动时发现：ADR-072 自己新加的三个端到端用例**全部通过**，
+但真缺陷依然存在 —— 它们只断言磁盘有无被改写，而回归的表征是**输出被吞**。
+
+#### 缺陷：第七类"假绿灯"
+
+`--fix` gating（`args.dry_run or not args.fix`）本身正确，但它复用的
+`dry_run` 参数早已被污染 —— `_apply_auto_fix` 末尾有历史遗留的
+`return -1` 早退信号，使同一枚比特还额外控制着"要不要跳过后续输出阶段"。
+
+ADR-072 之前该路径几乎不可达；之后"不传 `--fix` 也必须走 dry_run"，
+于是只要 `results` 为空，`--json` / `--health-score` 输出被整段吞掉，
+**而退出码仍为 0**。任何以退出码为准的门禁都会判定通过。
+
+实测（`--incremental` 且文件未变化）：
+
+| 调用 | 修复前 | 修复后 |
+|---|---|---|
+| `--incremental --json`（不传 `--fix`） | 45 字符（JSON 被吞） | 195 字符（完整 JSON） |
+| `--incremental --json --fix` | 195 字符 | 195 字符 |
+
+#### 修复
+
+移除 `_apply_auto_fix` 的 `return -1` 信号；`_handle_auto_fix` 恒返回
+`None`。auto-fix 阶段只负责"修不修"，不再越权决定"要不要继续"。
+`--fix` gating 本身不动 —— 它是对的，问题在被复用的参数上。
+
+#### 验证
+
+新增 `TestNoFixFlagMustNotSkipOutputStages`（4 个用例：3 项真实子进程
++ 1 项返回值契约）。变异验证：还原完整缺陷形态 **4 failed / 16 passed**，
+健康对照不受影响。
+
+#### 其他
+
+- 删除遗留临时探针 `tests/test_zzz_probe_nested.py`
+- ADR-072 原地加警告块指向 ADR-077
+- CONTEXT.md 项目状态表用实测数据校正（测试数 4495→5089、覆盖率
+  87.82%→87.49%、mypy 233→234、ruff 944→472、ADR 63→81）
+
 ### Phase 38: fail-open 审计与检测器修复 (2026-10-02)
 
 Phase 37 遗留的"其余 skill 入口 fail-open 审计"已完成。结论与预期相反：

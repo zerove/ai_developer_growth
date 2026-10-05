@@ -206,7 +206,11 @@ ADR-070 的兜底写在 `ast_fixer` 内部，没有覆盖到这条路径。当�
 本次实测为 `87a2c3cd24f5` —— 差异源于 `fix_file` 的默认参数组合
 （本次显式传 `language="python"`）。属记录陈旧，非行为异常。
 
-### 附带发现：`--fix` 是**死参数**，且被两层更深的原因遮蔽（未修，仅记录）
+### 附带发现：`--fix` 死参数 —— **已修**（原为“未修，仅记录”）
+
+> 本节结论已于 2026-10-04 推翻并修复。原记录把“当前不写盘”当作稳定行为，
+> 实际上它**并非任何设计的产物**，而是两层巧合叠加的结果。保留下方实测过程
+> 作为“为什么当时看起来没问题”的证据。
 
 第一层：`validators/cli.py` 里 `args.fix` 的引用数为 **0**：
 
@@ -246,14 +250,95 @@ $ grep -n "args\.dry_run" tools/scripts/rules_engine/validators/cli.py
 `fix_replacement`。后者涉及规则语义（`SEC001` 等规则的替换文本该是
 什么），ADR-072 末尾已明确把“改正则本身”列为需另行评估的事项。
 
-**未修的理由**：这是**双重行为变更**（CLI 语义 + 规则数据），风险面
-远大于 ADR-072 的写盘兜底；且当前行为是“只报告不写盘”，属保守失败，
-不造成代码损坏。此处仅如实记录，并加回归用例锁死当前事实，避免下一个人
-依据陈旧注释去验证一条**双重不可达**的写盘路径。
+**未修的理由**（**已作废**，原文保留如下）：
 
-回归用例：`tests/test_write_path_fallback_contracts.py::
-TestValidatorsCliFixFlagIsDead`。实测变异（每次恰 1 条转红，健康对照不受
-影响）：
+> 这是**双重行为变更**（CLI 语义 + 规则数据），风险面
+> 远大于 ADR-072 的写盘兜底；且当前行为是“只报告不写盘”，属保守失败，
+> 不造成代码损坏。此处仅如实记录，并加回归用例锁死当前事实，避免下一个人
+> 依据陈旧注释去验证一条**双重不可达**的写盘路径。
+
+**推翻理由**：上述判断建立在一个错误前提上 —— “当前不写盘”。实际上
+`_handle_auto_fix` 是**无条件调用**的：
+
+```python
+fix_exit = _handle_auto_fix(results, args.dry_run)   # 与 args.fix 无关
+```
+
+也就是说，**只要有人给任意一条规则加上 `fix_replacement`，CLI 就会在用户
+没有传 `--fix` 的情况下静默改写代码**。“不写盘”不是防护，是**巧合**。
+在错误前提上做“暂不修复”的风险评估，结论自然也是错的。
+
+### 本次修复（三项）
+
+**1. `--fix` 死参数 → 显式 gating**
+
+```python
+fix_exit = _handle_auto_fix(results, args.dry_run or not args.fix)
+```
+
+语义从“无论如何都尝试修”改为“**只有传了 `--fix` 才写盘**”，
+`--dry-run` 优先。实测三态（自定义规则携带 `fix_replacement`）：
+
+| 调用 | 文件 | 退出码 | 输出 |
+| --- | --- | --- | --- |
+| 无 `--fix` | 未变 | 1 | 检出 `probe-rule`，无 Fixed 行 |
+| `--fix --dry-run` | 未变 | 1 | `Would fix 1 issue(s)` |
+| `--fix` | **已改** | 0 | `Fixed 1 issue(s)`，结果仍可 `ast.parse` |
+
+**2. 附带发现并修复：`message` 无冒号时在行首凭空插入**
+
+`_apply_literal_replacement` 取 `message.split(":")[-1]` 作为待替换文本。
+若 `message` **不含冒号**，该值为空串，而 `str.replace("", x)` 会把 `x`
+插入**行首**：
+
+```
+original='x = "TODO"', message='probe marker'（无冒号）
+        -> 'DONEx = "TODO"'      # 语法合法，语义已错
+```
+
+这是**ADR-072 的语法自检抓不到的一类损坏** —— `ast.parse` 不报错。
+已加守卫：`match_text` 为空则原样返回，不改。
+
+**3. 附带修正：`--custom-rules` 帮助文本错误**
+
+原文本写“Directory with custom .yml rules”，但 `load_custom_rules` 实际读的是
+`<传入目录>/.ai-rules/*.yml`。即传入 `.ai-rules` **自身**会静默加载到 0 条规则
+（实测：帮助文本照做 → `anti_patterns: 0`，0 issue，假绿）。已改为明确说明。
+
+回归用例：`tests/test_write_path_fallback_contracts.py`
+（`TestFixFlagEndToEnd` 真实子进程三态 + `TestLiteralReplacementEmptyMatchText`）。
+实测变异（每次转红，健康对照不受影响）：
+
+| 变异 | 实测 |
+| --- | --- |
+| 还原 `--fix` 死参数（gating → `args.dry_run`） | 2 failed / 11 passed ✓ |
+| 删掉空 `match_text` 守卫 | 2 failed / 14 passed ✓ |
+
+> 注：第一轮变异时第二条曾“全部通过”——因为那时还没写回归用例。
+> 即**修复先于测试**会留下无防护窗口，后来补上用例重跑才拦住。
+
+**生产环境仍不会自动改代码**：仓库自带规则集（`.ai-rules/`）中无一条携带
+`fix_replacement`，需有人显式补上才会真正启用自动修复。
+
+> ### ⚠️ 2026-10-05 补充：上述 gating 修复引入过一个连带回归（已修，见 ADR-077）
+>
+> `args.dry_run or not args.fix` 这行 gating **本身是正确的**，但它复用的
+> `dry_run` 参数早已被污染：`_apply_auto_fix` 末尾有一个历史遗留的
+> `return -1` "提前退出"信号，使同一枚比特还额外控制着"要不要跳过后续
+> 输出阶段"。ADR-072 之前该路径几乎不可达（不传 `--dry-run` 时恒为
+> `False`）；ADR-072 之后，**不传 `--fix` 也必须走 dry_run**，于是只要
+> `results` 为空，`--json` / `--health-score` 输出就会被整段吞掉而退出码
+> 仍为 0。
+>
+> **本 ADR 的三个 `TestFixFlagEndToEnd` 用例全部通过时该缺陷依然存在**
+> —— 它们只断言磁盘有无被改写，而回归的表征是**输出被吞**。
+> 完整根因、实测与修复见 [ADR-077](ADR-077-dry-run-must-not-mean-early-exit.md)。
+>
+> 教训：让一条原本不可达的分支变得可达时，该分支上残留的历史假设会
+> 立即变成缺陷。
+
+仍保留的静态用例 `TestValidatorsCliFixFlagIsDead::test_second_layer_blocks_writes_even_if_wired`
+用于盯住上述事实。实测变异（每次恰 1 条转红，健康对照不受影响）：
 
 | 变异 | 预期 | 实测 |
 | --- | --- | --- |

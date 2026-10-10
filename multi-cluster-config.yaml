@@ -198,8 +198,11 @@ disasterRecovery:
     runbooks:
       - name: full-failover
         path: runbooks/dr-full-failover.md
-      - name: partial-failover
-        path: runbooks/dr-partial-failover.md
+      # TODO(2026-10-10): partial-failover runbook 从未提交（git log --diff-filter=D
+      # 无删除记录），原 path 指向不存在的文件造成断链。先移除该条目；待
+      # runbooks/dr-partial-failover.md 真正编写后再恢复。
+      # - name: partial-failover
+      #   path: runbooks/dr-partial-failover.md
   testing:
     enabled: true
     schedule: "0 2 * * 0"  # 每周日凌晨 2 点

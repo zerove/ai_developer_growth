@@ -25,6 +25,8 @@ updated: 2026-09-17
 
 | ID | 标题 | 状态 | 日期 |
 |----|------|------|------|
+| [[ADR-079-scripts-must-bootstrap-repo-root|ADR-079]] | 可直接执行的脚本必须自行引导仓库根到 sys.path | ✅ 已接受 | 2026-10-10 |
+| [[ADR-078-check-failure-must-be-error-issue|ADR-078]] | worker 崩溃必须变成 error 级 Issue，不得静默剔除文件 | ✅ 已接受 | 2026-10-05 |
 | [[ADR-077-dry-run-must-not-mean-early-exit|ADR-077]] | "不写盘"与"提前退出"是两个语义，不得复用同一个布尔 | ✅ 已接受 | 2026-10-05 |
 | [[ADR-076-parallel-worker-none-observable|ADR-076]] | worker 返回 None 与抛异常同等不可见，并行路径必须一并留痕 | ✅ 已接受 | 2026-10-04 |
 | [[ADR-075-rules-disk-cache-cross-process-lock|ADR-075]] | 规则磁盘缓存必须跨进程加锁并原子写 | ✅ 已接受 | 2026-10-04 |

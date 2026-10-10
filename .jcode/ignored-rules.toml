@@ -1,3 +1,2 @@
-[[ignored_files]]
-file = "scripts/mkdocs-search-plugin.py"
-rules = [ "security-eval", "error-bare-catch",]
+# 该文件原用于排除已删除的 scripts/mkdocs-search-plugin.py（从未注册的
+# mkdocs 插件）。文件删除后排除项失效，如无其他忽略文件可删除本文件。

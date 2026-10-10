@@ -42,15 +42,51 @@
   `.mimocode/`、`.ai-sync-cache/` 四项缺口（此前 `examples/ai-context-sync/MagicMock/`
   这类测试污染反复出现）
 
-### ⚠️ 本轮遗留（已定位，未修）
+### ✅ 续：16 个失败的根因更正 + 36 个脚本批量自举（ADR-079 补记）
 
-- **同类 `sys.path` 缺陷仍在 15 个脚本**（ADR-079「遗留限制」段有完整清单）。
-  其中 `validate_language_rules.py` 已被测试以脚本路径调用，导致
-  `test_write_path_fallback_contracts.py` 等 **16 个测试失败** ——
-  这组锁的是 ADR-071/ADR-077 的写盘路径契约，同样是假绿灯。
-  已在纯净 HEAD 上复现确认与本轮改动无关
-- **建议二选一**：批量套用 ADR-079 的引导；或让门禁只走 `python -m`，
-  彻底消除"可被直接执行"这个隐式契约（后者更治本）
+上一条列的"15 个脚本 / 16 个测试失败"在次日追查后发现**两处都记错了**。
+本节记录更正过程，避免下一个人重复走弯路。
+
+- [x] **P0 根因一分为二**：16 个失败中只有 **7 个**是脚本未自举；
+  另外 **9 个**是 `sitecustomize` 注入失效 —— 注入由解释器在**启动阶段**
+  执行，早于任何用户模块导入，仓库根尚不在 `sys.path`，于是注入里的
+  `from tools.scripts...` 抛 `ModuleNotFoundError`，而该异常被
+  `try/except Exception` 吞掉。后果是**缺陷没装上，CLI 走正常路径，
+  测试却以产品缺陷的面貌变红**，与真实回归无法区分。
+  修法：注入自行引导仓库根 + **不再吞异常**（注入失败即启动失败）。
+  实测 9 failed → 24 passed
+- [x] **P0-2 缺陷面远大于估计**：初版"15 个"来自逐个 `--help` 探测，
+  **系统性低估** —— 只探测能进 `argparse` 的脚本，漏掉在此之前就崩的
+  （`ai_context_manager.py` 先崩在缺 `openai` 依赖上，grep 抓不到）。
+  按"含顶层 `tools.*` 包绝对导入"重统计：**38 个命中，36 个未自举**
+- [x] **P0-3 批量自举 36 个脚本**：`import pathlib` / `import sys` 后取属性，
+  无别名。别名无论下划线（N813）还是 CamelCase（N812）都会撞 ruff 命名检查。
+  E402 补标 121 处 → 收敛到 9 处（多行续行 import，由 ruff 定位后手工标注）
+- [x] **P0-4 漏判陷阱**：`jcode_ai_native_workflow.py` 把 `sys.path.insert`
+  放在包导入**之后**。以"文件里有没有 `sys.path.insert`"判定会误判为已自举，
+  实测漏判 —— **引导必须在首个包导入之前**
+- [x] **P1 新增守卫** `tests/test_script_bootstrap_contract.py`：
+  判据取"能启动"（真实起子进程）而非源码匹配。变异验证通过 ——
+  移除任一脚本引导后对应用例立即变红
+- [x] **P1-2 验证**：全量 **5110 passed / 0 failed**，
+  `ruff check` + `format` 全绿，`mypy` 209 文件无问题
+
+### ⚠️ 仍未修（已定位）
+
+- **`fix_metadata.py:173` 用相对路径 `"docs"` + `os.walk` 遍历真实仓库并
+  直接写盘**，`add_navigation.py:98` 同理。跑全量回归会污染 70+ 个文档的
+  frontmatter —— 实测两次（71 / 77 个文件），已各自还原但根因未除。
+  这是"反复还原"而非"不再发生"的原因。建议给这两个脚本加
+  `--dry-run` 默认或强制路径参数
+- **无 `argparse` 的脚本无自动守卫**：`perf_benchmark.py` 收到 `--help`
+  会直接跑完整基准（实测 >100s），兜底用例只能跳过
+- **`.cursorrules` / `.windsurfrules` 写入路径未查明**：测试传的是
+  `tmp_path`（干净），但实测在回归期间于仓库根生成，成因未确证，
+  暂以 `.gitignore` 防护
+- **建议**：门禁统一走 `python -m`，消除"可被直接执行"这个隐式契约。
+  本轮选批量自举是因为文档已大量承诺脚本路径用法 —— 26 种语言的
+  `ai-dev-framework/*/rules.md` 都写着 `python tools/scripts/X.py ...`，
+  改调用方需同步改这些文档
 
 ---
 

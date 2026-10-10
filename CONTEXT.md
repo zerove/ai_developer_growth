@@ -418,11 +418,30 @@ Git 变更同步
   这类测试污染反复出现）。
 
 ### 验证
-- 全量 `pytest`：5087 passed / 16 failed，16 个失败全部为上述 `sys.path`
-  存量缺陷的连带（`validate_language_rules.py` 同类问题），非本次引入 ——
-  已在纯净 HEAD 上复现确认。
+- 全量 `pytest`：5087 passed / 16 failed。**此处的归因后来被证明是错的** ——
+  见下方「2026-10-11 更正」。
 - `ruff check` / `ruff format --check` / `mypy` 对改动文件全通过。
 - `hooks_runner doctor` 全部必需检查通过；ADR 索引 `--check` 69 条一致。
+
+### ⚠️ 更正（2026-10-11）
+
+上一节写"16 个失败全部为 `validate_language_rules.py` 同类问题"，**该归因
+只对 7 个成立**。追查 stderr 后确认真实情况是**两个独立根因**：
+
+| 组 | 数量 | 根因 |
+|---|---|---|
+| A | 9 | `sitecustomize` 注入失效 —— 注入在启动期执行，仓库根不在 `sys.path`，异常被 `try/except` 吞掉，**缺陷没装上而测试以产品缺陷面貌变红** |
+| B | 7 | 脚本未自举（`validate_language_rules.py` 等） |
+
+同样，"同类缺陷 15 个脚本"也**严重低估**：`--help` 探测只覆盖能进
+`argparse` 的脚本。按"含顶层 `tools.*` 包绝对导入"重统计，
+`tools/scripts/` 下 38 个命中、**36 个未自举**。
+
+两个错误同源：**探测方法有系统性盲区，且未对"探测失败"本身做过变异验证**。
+现已新增 `tests/test_script_bootstrap_contract.py` 守卫，
+判据取"能启动"而非源码/grep，并做过变异验证（移除引导即变红）。
+
+修复后：全量 **5110 passed / 0 failed**，`ruff` + `mypy` 全绿。
 
 ---
 

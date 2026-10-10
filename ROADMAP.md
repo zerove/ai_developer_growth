@@ -12,7 +12,49 @@
 
 ---
 
-## 当前状态 (2026-10-05)
+## 当前状态 (2026-10-10)
+
+### ✅ 全面清理无用文件 + 修掉门禁上的第八类假绿灯（ADR-079）
+
+以"零引用 + 无动态加载 + 无测试覆盖 + 无入口"四条同时成立为死代码判据
+做全仓库筛查，4 个 agent 并行 + 独立复核。
+
+- [x] **P0（假绿灯）**：`tools/scripts/hooks_runner.py` 以脚本路径执行即
+  `ModuleNotFoundError: No module named 'tools'`。而 `.pre-commit-config.yaml:121`
+  恰好就是用脚本路径调它 —— 门禁里跑的是坏的那条路径。
+  ADR-068「CLI 不得谎报 Fixes applied」的 7 个回归测试因此**整组失效**。
+  补仓库根到 `sys.path` 后 7 个测试转绿，详见 ADR-079
+- [x] **P0-2 死代码证伪 4 项**：`fix_metadata.py`、`hooks/runner_parsers.py`、
+  `rule_engine.py`（是 Facade 而非重复实现）、`standards/API_DESIGN.md`
+  均有硬引用或被 `diagnose.sh` 校验，**一个都不能删**。
+  `parsers/` 下 12 个语言 parser 经 `registry.py` 注册表加载且有测试覆盖
+- [x] **P1 删除确认的死代码 2 个**：`scripts/mkdocs-search-plugin.py`
+  （从未在 `mkdocs.yml` 注册，文件名含连字符无法作为模块加载，产物零消费）、
+  `examples/ai-context-sync/post-commit-hook.sh`（零引用 + `products/` 路径失效）
+- [x] **P1-2 消除 ADR 索引双数据源**：根 `ADR.md` 手工表自 ADR-061 停更，
+  累积缺失 17 条；`docs/adr/ADR.md` 由 `generate_adr_index.py` 自动生成
+  并由 pre-commit 校验。根 `ADR.md` 改为指针
+- [x] **P1-3 断链**：`multi-cluster-config.yaml` 指向从未提交的
+  `runbooks/dr-partial-failover.md`，已注释留 TODO
+- [x] **P1-4 清理产物释放约 190MB**：`.ruff_cache` 104M、`.mypy_cache` 41M、
+  `site/` 32M、`.hypothesis` 4.9M、`build/` 2.4M、报告与覆盖率产物若干
+- [x] **P1-5 堵住污染源头**：`.gitignore` 补 `.hypothesis/`、`node_modules/`、
+  `.mimocode/`、`.ai-sync-cache/` 四项缺口（此前 `examples/ai-context-sync/MagicMock/`
+  这类测试污染反复出现）
+
+### ⚠️ 本轮遗留（已定位，未修）
+
+- **同类 `sys.path` 缺陷仍在 15 个脚本**（ADR-079「遗留限制」段有完整清单）。
+  其中 `validate_language_rules.py` 已被测试以脚本路径调用，导致
+  `test_write_path_fallback_contracts.py` 等 **16 个测试失败** ——
+  这组锁的是 ADR-071/ADR-077 的写盘路径契约，同样是假绿灯。
+  已在纯净 HEAD 上复现确认与本轮改动无关
+- **建议二选一**：批量套用 ADR-079 的引导；或让门禁只走 `python -m`，
+  彻底消除"可被直接执行"这个隐式契约（后者更治本）
+
+---
+
+## 历史状态 (2026-10-05)
 
 ### ✅ 全面复盘：门禁健康，发现并修复 ADR-072 遗留回归（ADR-077）
 
@@ -60,24 +102,35 @@
 | 门禁 | 结果 |
 |---|---|
 | `ruff check` | All checks passed |
-| `ruff format --check` | 472 files already formatted |
-| `mypy strict`（`tools .jcode`） | Success: 234 source files |
+| `ruff format --check` | 473 files already formatted |
+| `mypy strict`（`tools .jcode`） | Success: 234 source files（**本地口径**；CI 只跑 `tools/scripts/`） |
+| `mypy tools/scripts/adg_cli`（CI 口径） | Success: 37 source files |
 | `link_auditor` | All links are valid |
 | `governance-docs-validator validate` | 15 个治理文档通过 |
 | `governance-docs-validator check-index` | 索引完整性通过 |
-| `generate_adr_index --check` | ADR 索引已是最新（68 条） |
-| `pytest -n 8` | **5089 passed**（784s） |
-| 覆盖率门禁（`cov_min=80`） | **87.49%** reached，22647 语句，5089 passed（883s） |
+| `generate_adr_index --check` | ADR 索引已是最新（69 条） |
+| `pytest -n 8` | **5103 passed**（270s） |
+| 覆盖率（**CI 口径** `--cov=tools --cov=.jcode/scripts`） | **86.96%** reached，23615 语句 |
+| 覆盖率（子目录口径 `--cov=tools/scripts`） | 87.49% reached，22647 语句（**与上行范围不同，不可直接比较**） |
 
 ### 后续候选
 
-- **CI 的 mypy 口径**：实测 `mypy tools .jcode` 为 234 files clean，
-  但 `mypy .` 会因 `tests/` 与 `examples/ai-task-prioritizer` 报错。
-  应确认 CI 实际跑的是哪个口径，避免“本地绿、CI 红”或反之
+- **`test_check_with_jobs_parallel` 偶发失败仍未定位**：一次观察到 1 failed /
+  5088 passed，单跑通过、并行下连跑 10 次全绿、后续全量 5103 passed
+  也未复现。追查过程中发现的 `_check_files_parallel` fail-open 缺陷
+  已修（ADR-078），但**无证据表明它是该 flake 的成因**，两者不应
+  混为一谈。该项**保持现状**，不再投入压测
+- **CI 的 mypy 口径比本地窄**：`jobs/type-check.yml` 只跑
+  `mypy tools/scripts/`，**不含 `.jcode/`**。即 `.jcode/scripts` 的
+  类型错误目前 CI 抓不到。建议拓宽口径（先记录风险，不在本轮改）
+- **覆盖率阈值有两条独立路径**：CI 读 `[tool.coverage.report].fail_under`，
+  hooks 读 `[tool.adg] cov_min`。当前都是 80，但**改一个不影响另一个**，
+  存在“以为改了其实没改”的风险
 - **`test_optimized_check_directory_parallel` 偶发失败**：七轮排查后
   仍未能定位触发条件，但 `failed_files` 已能自动留痕（ADR-074/076）。
   该项**保持现状**，不再投入压测
-- **覆盖率尾部**：见下方 Phase 37 遗留项
+- **覆盖率尾部**：`validate_case_study.py` 82%、`sync_issues.py` 87%
+  等仍在低位；见下方 Phase 37 遗留项
 
 ---
 

@@ -20,11 +20,11 @@ AI 时代开发者成长知识库 + 治理框架（knowledge base + governance f
 | 版本 | v2.24.0（`pyproject.toml`） |
 | 语言 | Python 3.11+ 工具链 + Markdown 文档 |
 | 源码规模 | `tools/scripts` + `.jcode/scripts` 共 221 个 `.py` 文件 |
-| 测试规模 | 218 个测试文件，5089 passed（2026-10-05 实测，`-n 8` 耗时 13:04） |
-| 覆盖率 | **87.49%**（阈值 80%；2026-10-05 实测，22647 语句） |
-| 类型检查 | mypy strict，**234 source files** clean（口径：`mypy tools .jcode`） |
-| 代码风格 | ruff check + ruff format（472 files formatted） |
-| ADR 累计 | 81 篇（`docs/adr/`；ADR-006 历史空号，ADR-040 为追补） |
+| 测试规模 | 219 个测试文件，**5103 passed**（2026-10-05 实测，`-n 8` 耗时 270s） |
+| 覆盖率 | **86.96%**（阈值 80%；2026-10-05 按 **CI 口径** `--cov=tools --cov=.jcode/scripts` 实测，23615 语句） |
+| 类型检查 | mypy strict，**234 source files** clean（口径：`mypy tools .jcode`；**CI 实际只跑 `mypy tools/scripts/`**，见下方待修项） |
+| 代码风格 | ruff check + ruff format（473 files formatted） |
+| ADR 累计 | 69 篇（`docs/adr/`；索引同为 69 条。ADR-001~007 于 `649a947` 归档缺失，ADR-006 为空号，ADR-040 为追补） |
 
 ## 核心目录
 
@@ -44,6 +44,21 @@ AI 时代开发者成长知识库 + 治理框架（knowledge base + governance f
   把项目上下文一并丢弃（ADR-061）
 - **覆盖率门禁范围**：`tools/scripts` 与 `.jcode/scripts` 均在门禁内，`.jcode/scripts`
   曾长期在门禁之外造成静默劣化区（见 `pyproject.toml` `[tool.adg] cov_min` 注释）
+- **覆盖率口径与阈值来源有两条路径，勿混为一谈**（2026-10-05 实测）：
+  - **CI**（`.github/workflows/jobs/tests.yml`）跑
+    `pytest tests/ --cov=tools --cov=.jcode/scripts`，并从
+    `pyproject.toml` 的 **`[tool.coverage.report].fail_under`** 读阈值；
+  - **hooks / 本地**（`hooks/basic_checks.py`）把 **`[tool.adg] cov_min`**
+    作为 `--cov-fail-under` 传给 pytest-cov。
+  两者当前都是 80，但**改其中一个不会影响另一个**。另注意 `--cov=tools`
+  （包根，含 `tools/scripts`）与 `--cov=tools/scripts`（子目录）统计范围
+  不同，数字不可直接比较 —— 实测前者 86.96%、后者 87.49%。
+- **CI 的 mypy 口径比本地窄**：`jobs/type-check.yml` 只跑 `mypy tools/scripts/`，
+  **不含 `.jcode/`**。即 `.jcode/scripts` 的类型错误目前 CI 抓不到
+  （实测 `mypy tools .jcode` 为 234 files clean，但那是本地口径）。
+  `example-ci-template.yml` 里的 `mypy .` 是**模板示例**，不是真实门禁，
+  按它去理解 CI 会得出错误结论（`mypy .` 会因 `tests/` 与
+  `examples/ai-task-prioritizer` 报错）。
 - **ruff 版本锁定** 0.15.17：0.16+ 启用 2025 format style 会造成 CI 与本地结果不一致
 - **不命名为 `jcode` 的 console_script**：会遮蔽 Rust 版 jcode TUI
 - **跑测试与门禁必须用 `.venv/bin/python`（3.11），不可用 `python`**：
@@ -256,12 +271,273 @@ AI 时代开发者成长知识库 + 治理框架（knowledge base + governance f
   被吞**。即**断言必须落在用户可见的行为上**，只盯被改动的那个字节
   会漏掉整类缺陷。
 
+- **`_check_files_parallel` 吞异常（ADR-074 同类第三处）已于 2026-10-05 修复**：
+  旧实现在 worker 抛异常时只 `print` 警告、不记入任何结构，使崩溃文件
+  从结果中彻底消失，调用方无法区分“该文件干净”与“没检查到”——
+  `adg check` 因此对**实际未检查**的文件返回 0（fail-open）。
+
+  探针实测（修复前，fork 继承 patch 模块级 `check_file`）：
+
+  ```
+  并行(jobs=2) issue 数=1  退出码=1   <- 退出码 1 来自 clean.py 自身，与崩溃无关
+  串行(jobs=1) issue 数=0  直接抛出 RuntimeError
+  ```
+
+  即**并行与串行对同一输入给出不同结果，且两者都不正确**。注意并行那行
+  的退出码 1 具有欺骗性：若夹具里正常文件不报 error，并行会返回 0。
+
+  修法：新增 `_make_check_error_issue`，把“检查失败”升格为
+  `check-error` **error** 级 Issue；并行与串行**两条路径**都走它。
+  选择 `error` 而非 `warning` 是刻意的——CI 依据退出码判成败。
+  详见 [ADR-078](docs/adr/ADR-078-check-failure-must-be-error-issue.md)。
+
+  **注意区分**：该 flake（`test_check_with_jobs_parallel`）至今**未能复现**
+  （单跑通过、并行下连跑 10 次全绿、本次全量 5103 passed 也未复现），
+  故**只能断言代码结构有缺陷，不能断言它就是该 flake 的成因**。
+
 ## 计划
 
 后续开发计划以 [ROADMAP.md](ROADMAP.md) 顶部 `## 当前状态` 段落为准（按会话倒序，最新在最前）。
 变更历史以 [CHANGELOG.md](CHANGELOG.md) 为准。
 
 ---
+
+## 更新记录: 2026-10-10 21:41:16
+
+### 任务
+Git 变更同步
+
+### 变更摘要
+- 变更文件 19 个 (+1296 / -547 行)
+  - .gitignore
+  - .jcode/ignored-rules.toml
+  - ADR.md
+  - CHANGELOG.md
+  - CONTEXT.md
+  - ROADMAP.md
+  - docs/adr/ADR-072-auto-fix-verify-syntax-before-write.md
+  - docs/adr/ADR-077-dry-run-must-not-mean-early-exit.md
+  - docs/adr/ADR.md
+  - examples/ai-context-sync/post-commit-hook.sh
+  - multi-cluster-config.yaml
+  - scripts/mkdocs-search-plugin.py
+  - tests/test_write_path_fallback_contracts.py
+  - tools/scripts/adg_cli/check.py
+  - tools/scripts/adg_cli/commands/cmd/_shared.py
+  - tools/scripts/adg_cli/commands/cmd/cmd_check.py
+  - tools/scripts/fix_applier.py
+  - tools/scripts/hooks_runner.py
+  - tools/scripts/rules_engine/validators/cli.py
+
+## 更新记录: 2026-10-10 21:37:35
+
+### 任务
+Git 变更同步
+
+### 变更摘要
+- 变更文件 19 个 (+1270 / -527 行)
+  - .gitignore
+  - .jcode/ignored-rules.toml
+  - ADR.md
+  - CHANGELOG.md
+  - CONTEXT.md
+  - ROADMAP.md
+  - docs/adr/ADR-072-auto-fix-verify-syntax-before-write.md
+  - docs/adr/ADR-077-dry-run-must-not-mean-early-exit.md
+  - docs/adr/ADR.md
+  - examples/ai-context-sync/post-commit-hook.sh
+  - multi-cluster-config.yaml
+  - scripts/mkdocs-search-plugin.py
+  - tests/test_write_path_fallback_contracts.py
+  - tools/scripts/adg_cli/check.py
+  - tools/scripts/adg_cli/commands/cmd/_shared.py
+  - tools/scripts/adg_cli/commands/cmd/cmd_check.py
+  - tools/scripts/fix_applier.py
+  - tools/scripts/hooks_runner.py
+  - tools/scripts/rules_engine/validators/cli.py
+
+## 更新记录: 2026-10-10 21:28:13
+
+### 任务
+Git 变更同步
+
+### 变更摘要
+- 变更文件 19 个 (+1200 / -488 行)
+  - .gitignore
+  - .jcode/ignored-rules.toml
+  - ADR.md
+  - CHANGELOG.md
+  - CONTEXT.md
+  - ROADMAP.md
+  - docs/adr/ADR-072-auto-fix-verify-syntax-before-write.md
+  - docs/adr/ADR-077-dry-run-must-not-mean-early-exit.md
+  - docs/adr/ADR.md
+  - examples/ai-context-sync/post-commit-hook.sh
+  - multi-cluster-config.yaml
+  - scripts/mkdocs-search-plugin.py
+  - tests/test_write_path_fallback_contracts.py
+  - tools/scripts/adg_cli/check.py
+  - tools/scripts/adg_cli/commands/cmd/_shared.py
+  - tools/scripts/adg_cli/commands/cmd/cmd_check.py
+  - tools/scripts/fix_applier.py
+  - tools/scripts/hooks_runner.py
+  - tools/scripts/rules_engine/validators/cli.py
+
+## 更新记录: 2026-10-10 21:20:00
+
+### 任务
+全面分析项目，清理无用文件（含存量缺陷修复）
+
+### 关键结论
+- **死代码判定推翻 4 项初判**：`fix_metadata.py`、`hooks/runner_parsers.py`、
+  `rule_engine.py`（是 Facade 非重复实现）、`standards/API_DESIGN.md` 均有硬引用或
+  被 `diagnose.sh` 校验，**不得删除**。`parsers/` 下 12 个语言 parser 经
+  `parsers/registry.py:16-28` 注册表加载且有测试覆盖，全部存活。
+- **确认可删 2 个**：`scripts/mkdocs-search-plugin.py`（从未在 `mkdocs.yml`
+  注册，文件名含连字符无法作为模块加载，产物零消费）、
+  `examples/ai-context-sync/post-commit-hook.sh`（零引用 + `products/` 路径失效）。
+- **双 ADR 索引漂移**：根 `ADR.md` 手工表自 ADR-061 后停更，累积缺失 17 条；
+  `docs/adr/ADR.md` 由 `generate_adr_index.py` 自动生成并由 pre-commit 校验。
+  已将根 `ADR.md` 改为指针，消除手工表这个必然漂移的数据源。
+
+### 修复的存量缺陷
+- **`hooks_runner.py` 直接执行即崩溃**：文件以 `from tools.scripts...` 绝对导入
+  开头，但 `python tools/scripts/hooks_runner.py` 时 `sys.path[0]` 是
+  `tools/scripts/`，仓库根不在其中 → `ModuleNotFoundError: No module named 'tools'`。
+  补仓库根到 `sys.path`（沿用 `.jcode/scripts/_common.py:17-19` 既有做法）。
+  修复后 `tests/test_ast_fix_cli_applied_reporting.py` 7 个测试由红转绿。
+  **同类缺陷仍存在于 15 个脚本**（直接执行即失败），未在本次一并修复。
+- **断链**：`multi-cluster-config.yaml` 指向从未提交的
+  `runbooks/dr-partial-failover.md`，已注释并留 TODO。
+
+### 清理
+- 删除缓存/构建产物/报告/备份/测试污染，释放约 190MB
+  （`.mypy_cache` 41M、`.ruff_cache` 104M、`site/` 32M、`.hypothesis` 4.9M 等）。
+- 补 `.gitignore` 缺口：`.hypothesis/`、`node_modules/`、`.mimocode/`、
+  `.ai-sync-cache/`（此前未被忽略，导致 `examples/ai-context-sync/MagicMock/`
+  这类测试污染反复出现）。
+
+### 验证
+- 全量 `pytest`：5087 passed / 16 failed，16 个失败全部为上述 `sys.path`
+  存量缺陷的连带（`validate_language_rules.py` 同类问题），非本次引入 ——
+  已在纯净 HEAD 上复现确认。
+- `ruff check` / `ruff format --check` / `mypy` 对改动文件全通过。
+- `hooks_runner doctor` 全部必需检查通过；ADR 索引 `--check` 69 条一致。
+
+---
+
+## 更新记录: 2026-10-10 20:58:58
+
+### 任务
+Git 变更同步
+
+### 变更摘要
+- 变更文件 28 个 (+1220 / -481 行)
+  - .gitignore
+  - .jcode/ignored-rules.toml
+  - ADR.md
+  - CHANGELOG.md
+  - CONTEXT.md
+  - ROADMAP.md
+  - docs/adr/ADR-072-auto-fix-verify-syntax-before-write.md
+  - docs/adr/ADR-077-dry-run-must-not-mean-early-exit.md
+  - docs/adr/ADR.md
+  - docs/case-studies/ai-native-coverage-governance.md
+  - docs/case-studies/ast-parser-precision-coverage.md
+  - docs/efficiency/ai-native-sdlc-whitepaper.md
+  - docs/efficiency/ai-test-coverage-methodology.md
+  - docs/efficiency/quick-start-ai-native.md
+  - docs/governance/context-maintenance.md
+  - docs/governance/project-analysis-and-roadmap-2026-08.md
+  - docs/integration/adg-bootstrap-integration.md
+  - docs/integration/jcode-hooks-integration.md
+  - examples/ai-context-sync/post-commit-hook.sh
+  - multi-cluster-config.yaml
+  - ... 等共 28 个文件
+
+## 更新记录: 2026-10-10 20:40:31
+
+### 任务
+Git 变更同步
+
+### 变更摘要
+- 变更文件 19 个 (+1100 / -456 行)
+  - .gitignore
+  - .jcode/ignored-rules.toml
+  - ADR.md
+  - CHANGELOG.md
+  - CONTEXT.md
+  - ROADMAP.md
+  - docs/adr/ADR-072-auto-fix-verify-syntax-before-write.md
+  - docs/adr/ADR-077-dry-run-must-not-mean-early-exit.md
+  - docs/adr/ADR.md
+  - examples/ai-context-sync/post-commit-hook.sh
+  - multi-cluster-config.yaml
+  - scripts/mkdocs-search-plugin.py
+  - tests/test_write_path_fallback_contracts.py
+  - tools/scripts/adg_cli/check.py
+  - tools/scripts/adg_cli/commands/cmd/_shared.py
+  - tools/scripts/adg_cli/commands/cmd/cmd_check.py
+  - tools/scripts/fix_applier.py
+  - tools/scripts/hooks_runner.py
+  - tools/scripts/rules_engine/validators/cli.py
+
+## 更新记录: 2026-10-05 14:38:08
+
+### 任务
+Git 变更同步
+
+### 变更摘要
+- 变更文件 12 个 (+1009 / -187 行)
+  - CHANGELOG.md
+  - CONTEXT.md
+  - ROADMAP.md
+  - docs/adr/ADR-072-auto-fix-verify-syntax-before-write.md
+  - docs/adr/ADR-077-dry-run-must-not-mean-early-exit.md
+  - docs/adr/ADR.md
+  - tests/test_write_path_fallback_contracts.py
+  - tools/scripts/adg_cli/check.py
+  - tools/scripts/adg_cli/commands/cmd/_shared.py
+  - tools/scripts/adg_cli/commands/cmd/cmd_check.py
+  - tools/scripts/fix_applier.py
+  - tools/scripts/rules_engine/validators/cli.py
+
+## 更新记录: 2026-10-05 14:31:48
+
+### 任务
+Git 变更同步
+
+### 变更摘要
+- 变更文件 12 个 (+993 / -173 行)
+  - CHANGELOG.md
+  - CONTEXT.md
+  - ROADMAP.md
+  - docs/adr/ADR-072-auto-fix-verify-syntax-before-write.md
+  - docs/adr/ADR-077-dry-run-must-not-mean-early-exit.md
+  - docs/adr/ADR.md
+  - tests/test_write_path_fallback_contracts.py
+  - tools/scripts/adg_cli/check.py
+  - tools/scripts/adg_cli/commands/cmd/_shared.py
+  - tools/scripts/adg_cli/commands/cmd/cmd_check.py
+  - tools/scripts/fix_applier.py
+  - tools/scripts/rules_engine/validators/cli.py
+
+## 更新记录: 2026-10-05 13:47:33
+
+### 任务
+Git 变更同步
+
+### 变更摘要
+- 变更文件 9 个 (+870 / -150 行)
+  - CHANGELOG.md
+  - CONTEXT.md
+  - ROADMAP.md
+  - docs/adr/ADR-072-auto-fix-verify-syntax-before-write.md
+  - docs/adr/ADR-077-dry-run-must-not-mean-early-exit.md
+  - docs/adr/ADR.md
+  - tests/test_write_path_fallback_contracts.py
+  - tools/scripts/fix_applier.py
+  - tools/scripts/rules_engine/validators/cli.py
 
 ## 更新记录: 2026-10-05 13:24:27
 
@@ -986,161 +1262,5 @@ Git 变更同步
   - tools/fix_engine/__init__.py
   - tools/scripts/hooks_runner.py
   - tools/scripts/rules_engine/auto_fix.py
-
-## 更新记录: 2026-10-03 20:56:49
-
-### 任务
-Git 变更同步
-
-### 变更摘要
-- 变更文件 14 个 (+780 / -82 行)
-  - .jcode/hooks.json
-  - CONTEXT.md
-  - docs/adr/ADR-072-auto-fix-verify-syntax-before-write.md
-  - docs/adr/ADR.md
-  - tests/conftest.py
-  - tests/test_adg_new_modules.py
-  - tests/test_analyze_case_quality.py
-  - tests/test_auto_fix.py
-  - tests/test_auto_fix_write_verification.py
-  - tests/test_check_hooks_json_integrity.py
-  - tests/test_generate_adr_index.py
-  - tools/fix_engine/__init__.py
-  - tools/scripts/hooks_runner.py
-  - tools/scripts/rules_engine/auto_fix.py
-
-## 更新记录: 2026-10-03 20:52:43
-
-### 任务
-Git 变更同步
-
-### 变更摘要
-- 变更文件 13 个 (+752 / -64 行)
-  - CONTEXT.md
-  - docs/adr/ADR-072-auto-fix-verify-syntax-before-write.md
-  - docs/adr/ADR.md
-  - tests/conftest.py
-  - tests/test_adg_new_modules.py
-  - tests/test_analyze_case_quality.py
-  - tests/test_auto_fix.py
-  - tests/test_auto_fix_write_verification.py
-  - tests/test_check_hooks_json_integrity.py
-  - tests/test_generate_adr_index.py
-  - tools/fix_engine/__init__.py
-  - tools/scripts/hooks_runner.py
-  - tools/scripts/rules_engine/auto_fix.py
-
-## 更新记录: 2026-10-03 20:34:04
-
-### 任务
-Git 变更同步
-
-### 变更摘要
-- 变更文件 11 个 (+431 / -68 行)
-  - CONTEXT.md
-  - docs/adr/ADR-071-directory-exit-code-on-rejection.md
-  - docs/adr/ADR.md
-  - docs/api/cli.md
-  - tests/test_adg_new_modules.py
-  - tests/test_ast_fixer_write_verification.py
-  - tests/test_auto_fix.py
-  - tools/fix_engine/__init__.py
-  - tools/scripts/hooks/phase_runner.py
-  - tools/scripts/hooks_runner.py
-  - tools/scripts/rules_engine/auto_fix.py
-
-## 更新记录: 2026-10-03 20:30:56
-
-### 任务
-Git 变更同步
-
-### 变更摘要
-- 变更文件 11 个 (+412 / -53 行)
-  - CONTEXT.md
-  - docs/adr/ADR-071-directory-exit-code-on-rejection.md
-  - docs/adr/ADR.md
-  - docs/api/cli.md
-  - tests/test_adg_new_modules.py
-  - tests/test_ast_fixer_write_verification.py
-  - tests/test_auto_fix.py
-  - tools/fix_engine/__init__.py
-  - tools/scripts/hooks/phase_runner.py
-  - tools/scripts/hooks_runner.py
-  - tools/scripts/rules_engine/auto_fix.py
-
-## 更新记录: 2026-10-03 20:21:44
-
-### 任务
-Git 变更同步
-
-### 变更摘要
-- 变更文件 9 个 (+335 / -39 行)
-  - CONTEXT.md
-  - docs/adr/ADR-071-directory-exit-code-on-rejection.md
-  - docs/adr/ADR.md
-  - docs/api/cli.md
-  - tests/test_ast_fixer_write_verification.py
-  - tests/test_auto_fix.py
-  - tools/scripts/hooks/phase_runner.py
-  - tools/scripts/hooks_runner.py
-  - tools/scripts/rules_engine/auto_fix.py
-
-## 更新记录: 2026-10-03 19:58:30
-
-### 任务
-Git 变更同步
-
-### 变更摘要
-- 变更文件 7 个 (+201 / -55 行)
-  - CHANGELOG.md
-  - CONTEXT.md
-  - ROADMAP.md
-  - docs/adr/ADR.md
-  - docs/api/cli.md
-  - tests/test_ast_fixer_write_verification.py
-  - tools/scripts/hooks/phase_runner.py
-
-## 更新记录: 2026-10-03 19:51:41
-
-### 任务
-Git 变更同步
-
-### 变更摘要
-- 变更文件 7 个 (+186 / -42 行)
-  - CHANGELOG.md
-  - CONTEXT.md
-  - ROADMAP.md
-  - docs/adr/ADR.md
-  - docs/api/cli.md
-  - tests/test_ast_fixer_write_verification.py
-  - tools/scripts/hooks/phase_runner.py
-
-## 更新记录: 2026-10-03 19:34:54
-
-### 任务
-Git 变更同步
-
-### 变更摘要
-- 变更文件 6 个 (+442 / -178 行)
-  - CHANGELOG.md
-  - CONTEXT.md
-  - ROADMAP.md
-  - docs/adr/ADR-070-verify-syntax-before-writing.md
-  - tests/test_rule_docs_mapper_round2.py
-  - tools/scripts/rules_engine/rule_docs_mapper.py
-
-## 更新记录: 2026-10-03 19:23:03
-
-### 任务
-Git 变更同步
-
-### 变更摘要
-- 变更文件 6 个 (+415 / -168 行)
-  - CHANGELOG.md
-  - CONTEXT.md
-  - ROADMAP.md
-  - docs/adr/ADR-070-verify-syntax-before-writing.md
-  - tests/test_rule_docs_mapper_round2.py
-  - tools/scripts/rules_engine/rule_docs_mapper.py
 
 <!-- 滚动窗口: 已自动裁剪 1 条旧更新记录 -->

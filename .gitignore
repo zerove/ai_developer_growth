@@ -121,3 +121,10 @@ adg-report.html
 # 工具运行时生成产物（Machine-specific 基线 / 一次性报告，不入库）
 .perf_baseline.json
 case_quality_report.json
+
+# ide_rules_sync.py 的产物。测试传的是 tmp_path（干净），但实测在跑全量
+# 回归期间于仓库根生成了这两个文件 —— 写入路径未查明，疑似
+# get_project_root() 在并发/stash 造成的目录结构瞬变下解析异常。
+# 它们是模板产物而非配置，随 generate_ide_rules 重新生成即可。
+.cursorrules
+.windsurfrules

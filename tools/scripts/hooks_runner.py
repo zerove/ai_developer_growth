@@ -36,37 +36,46 @@ import sys
 from collections.abc import Callable
 from pathlib import Path
 
+# 本文件既支持 `python -m tools.scripts.hooks_runner`（包上下文，仓库根已在
+# sys.path 上），也支持 `python tools/scripts/hooks_runner.py` 直接执行。后者
+# sys.path[0] 是 tools/scripts/，仓库根不在其中，下面的 `tools.*` 绝对导入
+# 会全部失败（ModuleNotFoundError: No module named 'tools'）。补上仓库根，
+# 与 .jcode/scripts/_common.py:17-19 的既有做法一致。
+_REPO_ROOT = Path(__file__).resolve().parent.parent.parent
+if str(_REPO_ROOT) not in sys.path:
+    sys.path.insert(0, str(_REPO_ROOT))
+
 # 阶段函数通过名称字符串运行时解析（_CHECK_PHASES / _resolve_phase_func），
 # 必须在模块命名空间中存在
-from tools.scripts.hooks.basic_checks import (  # noqa: F401
+from tools.scripts.hooks.basic_checks import (  # noqa: E402,F401
     run_format_check as _orig_run_format_check,
 )
-from tools.scripts.hooks.basic_checks import (
+from tools.scripts.hooks.basic_checks import (  # noqa: E402,F401
     run_lint as _orig_run_lint,
 )
-from tools.scripts.hooks.basic_checks import (
+from tools.scripts.hooks.basic_checks import (  # noqa: E402,F401
     run_security as _orig_run_security,
 )
-from tools.scripts.hooks.basic_checks import (
+from tools.scripts.hooks.basic_checks import (  # noqa: E402,F401
     run_tests as _orig_run_tests,
 )
-from tools.scripts.hooks.basic_checks import (
+from tools.scripts.hooks.basic_checks import (  # noqa: E402,F401
     run_typecheck as _orig_run_typecheck,
 )
-from tools.scripts.hooks.domain_checks import (  # noqa: F401
+from tools.scripts.hooks.domain_checks import (  # noqa: E402,F401
     run_arch_graph,
     run_governance_audit,
     run_language_rules,
     run_pr_review,
     run_quality_gate,
 )
-from tools.scripts.hooks.incremental_checks import (  # noqa: F401
+from tools.scripts.hooks.incremental_checks import (  # noqa: E402,F401
     get_changed_files,
     get_staged_files,
     run_diff_checks,
     run_pre_commit_checks,
 )
-from tools.scripts.hooks.misc_runner import (  # noqa: F401 - 拆分后转发
+from tools.scripts.hooks.misc_runner import (  # noqa: E402,F401 - 拆分后转发
     _close_store_quietly,
     _dep_graph_analyze,
     _dep_graph_build,
@@ -88,7 +97,7 @@ from tools.scripts.hooks.misc_runner import (  # noqa: F401 - 拆分后转发
     _handle_learn,
     _make_exception_manager,
 )
-from tools.scripts.hooks.phase_runner import (  # noqa: F401 - 拆分后转发
+from tools.scripts.hooks.phase_runner import (  # noqa: E402,F401 - 拆分后转发
     _print_results_in_order,
     _resolve_order,
     _resolve_phase_func,
@@ -107,7 +116,7 @@ from tools.scripts.hooks.phase_runner import (  # noqa: F401 - 拆分后转发
     _run_test_phase,
     _run_typecheck_phase,
 )
-from tools.scripts.hooks.runner_parsers import (  # noqa: F401 - 拆分后转发
+from tools.scripts.hooks.runner_parsers import (  # noqa: E402,F401 - 拆分后转发
     _add_analysis_parsers,
     _add_core_gate_parsers,
     _add_dep_graph_parsers,
@@ -119,7 +128,7 @@ from tools.scripts.hooks.runner_parsers import (  # noqa: F401 - 拆分后转发
     _add_workflow_parsers,
     _build_parser,
 )
-from tools.scripts.hooks.supply_runner import (  # noqa: F401 - 拆分后转发, 保持命令入口
+from tools.scripts.hooks.supply_runner import (  # noqa: E402,F401 - 拆分后转发, 保持命令入口
     _build_fix_orchestrator,
     _check_dependency_freshness,
     _collect_check_results,
@@ -151,7 +160,7 @@ from tools.scripts.hooks.supply_runner import (  # noqa: F401 - 拆分后转发,
     _to_spdx_tagvalue,
     _verify_packages,
 )
-from tools.scripts.hooks.tool_runner import (  # noqa: F401 - 拆分后转发
+from tools.scripts.hooks.tool_runner import (  # noqa: E402,F401 - 拆分后转发
     _build_tool_command,
     _count_language_files,
     _detect_project_languages,
@@ -170,12 +179,12 @@ from tools.scripts.hooks.tool_runner import (  # noqa: F401 - 拆分后转发
     _timeout_for_category,
     _tool_available,
 )
-from tools.scripts.language_registry import (
+from tools.scripts.language_registry import (  # noqa: E402
     Language,
 )
-from tools.scripts.quality_gate import run_quality_gate as run_quality_gate_new
-from tools.scripts.rules_engine.models import CheckResult
-from tools.scripts.secret_scanner import SecretScanResult, scan_secrets
+from tools.scripts.quality_gate import run_quality_gate as run_quality_gate_new  # noqa: E402
+from tools.scripts.rules_engine.models import CheckResult  # noqa: E402
+from tools.scripts.secret_scanner import SecretScanResult, scan_secrets  # noqa: E402
 
 logger = logging.getLogger(__name__)
 

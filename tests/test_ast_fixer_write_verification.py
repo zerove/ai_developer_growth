@@ -84,8 +84,35 @@ def _run_hook(command: str, path: Path, *, extra: list[str] | None = None) -> su
 # 注入方式是 sitecustomize (只 patch 目标方法, 不改 ast_fixer.py 源文件)
 # —— Phase 45 曾因探针直接改真实文件而损坏两个仓库文件, 故此处及
 # ``_force_broken_result`` 一律拒绝改写源码。
+#
+# ADR-079 补注: sitecustomize 由解释器在**启动阶段**执行, 早于任何用户
+# 模块导入, 此时 sys.path[0] 是 hooks_runner.py 所在目录而非仓库根, 直接
+# `from tools.scripts...` 会 ModuleNotFoundError。此前该异常被下面的
+# `except Exception` 吞掉, 只打印一行告警 —— 缺陷其实没装上, CLI 走的是
+# 完全正常的路径, 于是本组 6 个用例以"产品缺陷"的面貌变红, 与真实回归
+# 无法区分。故此处必须 (a) 自行引导仓库根, (b) 注入失败即硬失败。
 _INJECT_SITECUSTOMIZE = '''
-from pathlib import Path
+import os
+import sys
+
+
+def _bootstrap():
+    """把仓库根放进 sys.path —— sitecustomize 运行在启动期, 拿不到它。
+
+    判据用"cwd 下存在 tools/scripts/"而非从 __file__ 上溯: sitecustomize 的
+    __file__ 指向临时注入目录, 从它上溯毫无意义; 而 cwd 是测试明确设置的
+    REPO_ROOT。不满足则说明调用方式变了 —— 必须报错, 不能悄悄退化成
+    "注入没装上"。
+    """
+    root = os.getcwd()
+    if not os.path.isdir(os.path.join(root, "tools", "scripts")):
+        raise RuntimeError("定位仓库根失败: cwd=%s 下找不到 tools/scripts/" % root)
+    if root not in sys.path:
+        sys.path.insert(0, root)
+
+
+_bootstrap()
+
 import re
 
 
@@ -115,11 +142,10 @@ def _install():
     ASTFixer._fix_empty_functions = buggy
 
 
-try:
-    _install()
-except Exception as exc:  # noqa: BLE001
-    import sys
-    print(f"[sitecustomize] 注入失败: {exc}", file=sys.stderr)
+# ADR-079: 不再吞掉异常。注入失败意味着"缺陷没装上", 后续断言必然以
+# 产品缺陷的假象失败 —— 那比直接报错更难排查。此处让启动期直接失败,
+# 使红灯指向真正的原因。
+_install()
 '''
 
 

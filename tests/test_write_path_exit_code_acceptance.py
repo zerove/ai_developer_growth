@@ -56,6 +56,25 @@ VALID_FIX_SRC = "import os\nos.system('ls')\n"
 
 # ADR-069 之前的 buggy _fix_empty_functions: 不检查 def 行是否已有同行体。
 _INJECT_SITECUSTOMIZE = """
+import os
+import sys
+
+
+def _bootstrap():
+    # ADR-079: sitecustomize 由解释器在**启动阶段**执行, 早于任何用户模块
+    # 导入, 此时 sys.path[0] 是 hooks_runner.py 所在目录而非仓库根。
+    # 少了这段引导, 下面的 `from tools.scripts...` 抛 ModuleNotFoundError,
+    # 缺陷没被装上, CLI 走正常路径 → 0 fixes / 退出 0, 用例以"产品缺陷"
+    # 的假象变红(与 test_ast_fixer_write_verification.py 同型)。
+    root = os.getcwd()
+    if not os.path.isdir(os.path.join(root, "tools", "scripts")):
+        raise RuntimeError("定位仓库根失败: cwd=%s 下找不到 tools/scripts/" % root)
+    if root not in sys.path:
+        sys.path.insert(0, root)
+
+
+_bootstrap()
+
 import re
 
 

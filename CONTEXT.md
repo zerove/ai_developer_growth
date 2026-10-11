@@ -302,6 +302,141 @@ AI 时代开发者成长知识库 + 治理框架（knowledge base + governance f
 
 ---
 
+## 更新记录: 2026-10-11 23:59:35
+
+### 任务
+Git 变更同步
+
+### 变更摘要
+- 变更文件 6 个 (+360 / -183 行)
+  - CONTEXT.md
+  - tests/test_repo_lock_semantics.py
+  - tests/test_script_import_contract.py
+  - tools/scripts/adg_cli/check.py
+  - tools/scripts/adg_cli/commands/cmd/_shared.py
+  - tools/scripts/adg_cli/commands/cmd/cmd_check.py
+
+## 更新记录: 2026-10-11 13:29:14
+
+### 任务
+Git 变更同步
+
+### 变更摘要
+- 变更文件 6 个 (+346 / -169 行)
+  - CONTEXT.md
+  - tests/test_repo_lock_semantics.py
+  - tests/test_script_import_contract.py
+  - tools/scripts/adg_cli/check.py
+  - tools/scripts/adg_cli/commands/cmd/_shared.py
+  - tools/scripts/adg_cli/commands/cmd/cmd_check.py
+
+## 更新记录: 2026-10-11 09:06:33
+
+### 任务
+Git 变更同步
+
+### 变更摘要
+- 变更文件 5 个 (+286 / -144 行)
+  - CONTEXT.md
+  - tests/test_script_import_contract.py
+  - tools/scripts/adg_cli/check.py
+  - tools/scripts/adg_cli/commands/cmd/_shared.py
+  - tools/scripts/adg_cli/commands/cmd/cmd_check.py
+
+## 更新记录: 2026-10-11 08:58:24
+
+### 任务
+Git 变更同步
+
+### 变更摘要
+- 变更文件 6 个 (+279 / -124 行)
+  - .jcode/hooks.json
+  - CONTEXT.md
+  - tests/test_script_import_contract.py
+  - tools/scripts/adg_cli/check.py
+  - tools/scripts/adg_cli/commands/cmd/_shared.py
+  - tools/scripts/adg_cli/commands/cmd/cmd_check.py
+
+## 更新记录: 2026-10-11 08:54:25
+
+### 任务
+Git 变更同步
+
+### 变更摘要
+- 变更文件 5 个 (+259 / -102 行)
+  - CONTEXT.md
+  - tests/test_script_import_contract.py
+  - tools/scripts/adg_cli/check.py
+  - tools/scripts/adg_cli/commands/cmd/_shared.py
+  - tools/scripts/adg_cli/commands/cmd/cmd_check.py
+
+## 更新记录: 2026-10-11 08:50:32
+
+### 任务
+Git 变更同步
+
+### 变更摘要
+- 变更文件 6 个 (+253 / -84 行)
+  - .jcode/hooks.json
+  - CONTEXT.md
+  - tests/test_script_import_contract.py
+  - tools/scripts/adg_cli/check.py
+  - tools/scripts/adg_cli/commands/cmd/_shared.py
+  - tools/scripts/adg_cli/commands/cmd/cmd_check.py
+
+## 更新记录: 2026-10-11 08:47:22
+
+### 任务
+Git 变更同步
+
+### 变更摘要
+- 变更文件 5 个 (+232 / -65 行)
+  - CONTEXT.md
+  - tests/test_script_import_contract.py
+  - tools/scripts/adg_cli/check.py
+  - tools/scripts/adg_cli/commands/cmd/_shared.py
+  - tools/scripts/adg_cli/commands/cmd/cmd_check.py
+
+## 更新记录: 2026-10-11 08:43:07
+
+### 任务
+Git 变更同步
+
+### 变更摘要
+- 变更文件 6 个 (+226 / -48 行)
+  - .jcode/hooks.json
+  - CONTEXT.md
+  - tests/test_script_import_contract.py
+  - tools/scripts/adg_cli/check.py
+  - tools/scripts/adg_cli/commands/cmd/_shared.py
+  - tools/scripts/adg_cli/commands/cmd/cmd_check.py
+
+## 更新记录: 2026-10-11 08:39:37
+
+### 任务
+Git 变更同步
+
+### 变更摘要
+- 变更文件 5 个 (+205 / -30 行)
+  - CONTEXT.md
+  - tests/test_script_import_contract.py
+  - tools/scripts/adg_cli/check.py
+  - tools/scripts/adg_cli/commands/cmd/_shared.py
+  - tools/scripts/adg_cli/commands/cmd/cmd_check.py
+
+## 更新记录: 2026-10-11 08:36:35
+
+### 任务
+Git 变更同步
+
+### 变更摘要
+- 变更文件 5 个 (+192 / -13 行)
+  - CONTEXT.md
+  - tests/test_script_import_contract.py
+  - tools/scripts/adg_cli/check.py
+  - tools/scripts/adg_cli/commands/cmd/_shared.py
+  - tools/scripts/adg_cli/commands/cmd/cmd_check.py
+
 ## 更新记录: 2026-10-11 08:29:55
 
 ### 任务
@@ -532,10 +667,34 @@ Git 变更同步
 全量（`-n 8`）下均 **5 passed**。全量两次跑（150.93s / 179.99s）
 共 5110 passed，该文件未再失败。
 
-这 2 个失败的机制现已清楚：该文件用**子进程 + 文件锁 + 1.5s 保持
-窗口**测锁语义，靠真实等待时长断言。早期并发跑破坏了 ADR 索引，
-而 `tests/conftest.py` 的仓库锁正是为拦这种互踩而设 —— 失败是锁在
-**正确工作**，不是缺陷。当前 5110 全绿即锁语义已被验证。
+这 2 个失败的机制**已确诊并已修复**。此前写的"不是 CPU 饥饿"是**错的**，
+负载恰恰是触发因素，只是通过"拖慢子进程启动"而非"拖慢锁"起作用。
+
+**根因**：`blocked` 计时从探针进程内 `t0` 起算，而持锁窗口从持锁者
+写 `ready` 起算。两者之间隔着父进程起子进程 + 探针 `import conftest`
+的**全部开销**。无竞争时该开销约 0.2s，满载 `-n 8` 下可达 1s+，
+持锁窗口在探针真正阻塞前就被烧掉，`blocked` 随之低于 `HOLD/2`。
+实测满载下 `blocked` 低至 0.0s（读者完全没被挡的表象），而锁本身正确：
+用独立进程打印 `_lock_path()` 确认两进程锁文件一致，且第二进程确实被挡。
+
+**修复**（`tests/test_repo_lock_semantics.py`）：探针在 `flock` **之前**
+落 `probe.go` 标记，持锁者等该标记出现后才起算窗口 —— 把计时起点对齐到
+"探针即将阻塞"那一刻。两处配套细节缺一不可：
+- 标记名固定为 `probe.go`，**不按 kind 区分**。持锁者只知道在等"某个"
+  探针；若两边按 kind 取名（持 write 等 `ready-write.go` 而探针是 read
+  落 `ready-read.go`），持锁者会空等到 60s 超时。
+- `_start_holder` 必须先 `unlink` 该标记。基线探针（无竞争那次）在同目录
+  写过 `probe.go`，持锁者一进来就看到 -> 窗口从基线时刻起算。满载下
+  基线早到数百毫秒，`blocked` 掉到 0.747s（阈值 0.75s）—— **假失败**。
+
+**验证**：
+- 修复前满载 8/8 全失败（16s/轮）；修复后满载 8/8 全通过（14s/轮）
+- 无负载 `blocked` 中位 1.510s，0/15 低于阈值
+- 变异仍被捕获：去掉 `LOCK_EX` -> 两个互斥用例红；`LOCK_SH`→`LOCK_EX`
+  -> `test_shared_readers_do_not_serialise_each_other` 红
+- 该文件从 70s 降到 8.6s（不再空等超时）
+
+原频率：约 2/9 次全量复现（`-n 8`）。
 
 **2. "回归污染 71 / 77 个文档"的记录是错的** —— 已撤回。
 `inotifywait` 实测监视 `docs/` 跑全量，只拿到 9 条写入事件，
@@ -1111,184 +1270,5 @@ Git 变更同步
   - tests/test_language_rules_v2.py
   - tests/test_performance_extended.py
   - tools/scripts/fix_applier.py
-
-## 更新记录: 2026-10-04 15:08:40
-
-### 任务
-Git 变更同步
-
-### 变更摘要
-- 变更文件 5 个 (+256 / -37 行)
-  - CONTEXT.md
-  - docs/adr/ADR-072-auto-fix-verify-syntax-before-write.md
-  - tests/test_fix_engine_write_verification.py
-  - tests/test_language_rules_v2.py
-  - tools/scripts/fix_applier.py
-
-## 更新记录: 2026-10-04 14:53:20
-
-### 任务
-Git 变更同步
-
-### 变更摘要
-- 变更文件 6 个 (+415 / -19 行)
-  - CONTEXT.md
-  - docs/adr/ADR-072-auto-fix-verify-syntax-before-write.md
-  - docs/adr/ADR-073-test-isolation-cross-process-locks.md
-  - tests/test_controlled_file_reads_are_locked.py
-  - tests/test_jcode_scheduled_dispatch.py
-  - tests/test_jcode_skill_entries.py
-
-## 更新记录: 2026-10-04 14:34:56
-
-### 任务
-Git 变更同步
-
-### 变更摘要
-- 变更文件 13 个 (+1030 / -187 行)
-  - CONTEXT.md
-  - docs/adr/ADR-073-test-isolation-cross-process-locks.md
-  - docs/adr/ADR-074-worker-failure-must-be-observable.md
-  - docs/adr/ADR.md
-  - tests/conftest.py
-  - tests/test_governance_docs_validator.py
-  - tests/test_jcode_hooks_runner.py
-  - tests/test_jcode_scheduled_dispatch.py
-  - tests/test_jcode_skill_entries.py
-  - tests/test_link_auditor_supplement.py
-  - tests/test_performance_extended.py
-  - tests/test_repo_lock_semantics.py
-  - tools/scripts/rules_engine/performance.py
-
-## 更新记录: 2026-10-04 14:13:09
-
-### 任务
-Git 变更同步
-
-### 变更摘要
-- 变更文件 13 个 (+973 / -250 行)
-  - CONTEXT.md
-  - docs/adr/ADR-073-test-isolation-cross-process-locks.md
-  - docs/adr/ADR.md
-  - tests/conftest.py
-  - tests/test_analyze_case_quality.py
-  - tests/test_check_hooks_json_integrity.py
-  - tests/test_generate_adr_index.py
-  - tests/test_governance_docs_validator.py
-  - tests/test_jcode_hooks_runner.py
-  - tests/test_jcode_scheduled_dispatch.py
-  - tests/test_link_auditor_supplement.py
-  - tests/test_performance_extended.py
-  - tools/scripts/rules_engine/performance.py
-
-## 更新记录: 2026-10-04 13:06:40
-
-### 任务
-Git 变更同步
-
-### 变更摘要
-- 变更文件 13 个 (+871 / -233 行)
-  - CONTEXT.md
-  - docs/adr/ADR-073-test-isolation-cross-process-locks.md
-  - docs/adr/ADR.md
-  - tests/conftest.py
-  - tests/test_analyze_case_quality.py
-  - tests/test_check_hooks_json_integrity.py
-  - tests/test_generate_adr_index.py
-  - tests/test_governance_docs_validator.py
-  - tests/test_jcode_hooks_runner.py
-  - tests/test_jcode_scheduled_dispatch.py
-  - tests/test_link_auditor_supplement.py
-  - tests/test_performance_extended.py
-  - tools/scripts/rules_engine/performance.py
-
-## 更新记录: 2026-10-04 12:54:37
-
-### 任务
-Git 变更同步
-
-### 变更摘要
-- 变更文件 11 个 (+804 / -197 行)
-  - .jcode/hooks.json
-  - CONTEXT.md
-  - docs/adr/ADR-073-test-isolation-cross-process-locks.md
-  - docs/adr/ADR.md
-  - tests/conftest.py
-  - tests/test_analyze_case_quality.py
-  - tests/test_check_hooks_json_integrity.py
-  - tests/test_generate_adr_index.py
-  - tests/test_link_auditor_supplement.py
-  - tests/test_performance_extended.py
-  - tools/scripts/rules_engine/performance.py
-
-## 更新记录: 2026-10-04 12:47:19
-
-### 任务
-Git 变更同步
-
-### 变更摘要
-- 变更文件 10 个 (+779 / -181 行)
-  - CONTEXT.md
-  - docs/adr/ADR-073-test-isolation-cross-process-locks.md
-  - docs/adr/ADR.md
-  - tests/conftest.py
-  - tests/test_analyze_case_quality.py
-  - tests/test_check_hooks_json_integrity.py
-  - tests/test_generate_adr_index.py
-  - tests/test_link_auditor_supplement.py
-  - tests/test_performance_extended.py
-  - tools/scripts/rules_engine/performance.py
-
-## 更新记录: 2026-10-04 12:25:12
-
-### 任务
-Git 变更同步
-
-### 变更摘要
-- 变更文件 10 个 (+704 / -156 行)
-  - .jcode/hooks.json
-  - CONTEXT.md
-  - docs/adr/ADR-073-test-isolation-cross-process-locks.md
-  - docs/adr/ADR.md
-  - tests/conftest.py
-  - tests/test_analyze_case_quality.py
-  - tests/test_check_hooks_json_integrity.py
-  - tests/test_generate_adr_index.py
-  - tests/test_performance_extended.py
-  - tools/scripts/rules_engine/performance.py
-
-## 更新记录: 2026-10-04 12:10:46
-
-### 任务
-Git 变更同步
-
-### 变更摘要
-- 变更文件 9 个 (+672 / -143 行)
-  - CONTEXT.md
-  - docs/adr/ADR-073-test-isolation-cross-process-locks.md
-  - docs/adr/ADR.md
-  - tests/conftest.py
-  - tests/test_analyze_case_quality.py
-  - tests/test_check_hooks_json_integrity.py
-  - tests/test_generate_adr_index.py
-  - tests/test_performance_extended.py
-  - tools/scripts/rules_engine/performance.py
-
-## 更新记录: 2026-10-04 11:59:50
-
-### 任务
-Git 变更同步
-
-### 变更摘要
-- 变更文件 9 个 (+655 / -131 行)
-  - CONTEXT.md
-  - docs/adr/ADR-073-test-isolation-cross-process-locks.md
-  - docs/adr/ADR.md
-  - tests/conftest.py
-  - tests/test_analyze_case_quality.py
-  - tests/test_check_hooks_json_integrity.py
-  - tests/test_generate_adr_index.py
-  - tests/test_performance_extended.py
-  - tools/scripts/rules_engine/performance.py
 
 <!-- 滚动窗口: 已自动裁剪 1 条旧更新记录 -->

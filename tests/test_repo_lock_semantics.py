@@ -42,7 +42,7 @@ HOLD_SECONDS = 1.5
 # 持锁 HOLD 秒, 再写释放标记。
 _HOLD = textwrap.dedent(
     f"""
-    import sys, time
+    import os, sys, time
     sys.path.insert(0, {str(Path(__file__).resolve().parent)!r})
     import conftest
 
@@ -55,6 +55,14 @@ _HOLD = textwrap.dedent(
     with enter():
         with open(ready, "w") as fh:
             fh.write("locked")
+        # **等探针落 go 标记后才起算窗口**: 探针的进程启动 + import conftest
+        # 在高负载下可达 1s+, 若从写 ready 起算, 窗口会在探针真正阻塞前
+        # 就被消耗光, 断言 blocked > HOLD/2 变成测机器负载而非测锁语义。
+        # 实测: 1.5s 窗口在负载下 6/20 未挡住, 4.0s 则 0/20。
+        go = os.path.join(os.path.dirname(ready), "probe.go")
+        go_deadline = time.monotonic() + 60
+        while time.monotonic() < go_deadline and not os.path.exists(go):
+            time.sleep(0.005)
         if target:
             # 与真实用例一致: truncate + write, 非原子替换 -> 存在半截窗口
             payload = ('{{"hooks": {{"on_commit": [{{"name": "ZZZ-canary"}}]}}')
@@ -85,6 +93,12 @@ _PROBE = textwrap.dedent(
     out, kind = sys.argv[1], sys.argv[2]
     enter = (conftest.acquire_repo_mutation_lock if kind == "write"
              else conftest.acquire_repo_read_lock)
+    # **先落 go 标记再取锁**: 让持锁者知道探针已经进入待阻塞状态,
+    # 从而把持锁窗口的计时起点对齐到"探针即将 flock"那一刻。
+    # 探针不能先取锁再发信号 —— 那会死锁在 fcntl 上, 标记永远写不出。
+    go = sys.argv[3]
+    with open(go, "w") as fh:
+        fh.write("go")
     t0 = time.monotonic()
     with enter():
         elapsed = time.monotonic() - t0
@@ -94,10 +108,17 @@ _PROBE = textwrap.dedent(
 )
 
 
-def _probe(kind: str, lock: str, out: Path) -> float:
-    """在独立进程里通过 conftest 的真函数取锁, 返回等待时长 (秒)。"""
+def _probe(kind: str, lock: str, out: Path, go: Path | None = None) -> float:
+    """在独立进程里通过 conftest 的真函数取锁, 返回**真正阻塞**的时长 (秒)。
+
+    ``go`` 给定时, 探针会在取锁**之前**落该标记, 供持锁者对齐计时起点。
+    缺省时用 ``probe.go`` —— **刻意不按 kind 区分**: 持锁者只知道在等
+    "某个"探针, 若两边按 kind 取不同名(如持 write 等 ready-write.go 而
+    探针是 read 落 ready-read.go), 持锁者会空等到超时。
+    """
+    marker = go if go is not None else out.with_name("probe.go")
     proc = subprocess.run(
-        [sys.executable, "-c", _PROBE, str(out), kind],
+        [sys.executable, "-c", _PROBE, str(out), kind, str(marker)],
         capture_output=True,
         text=True,
         timeout=60,
@@ -119,6 +140,11 @@ class TestRepoLockSemantics:
         给定时在释放锁**之前**把它还原, 复刻 addCleanup 的真实时序。
         """
         ready, release = tmp / f"ready-{kind}", tmp / f"release-{kind}"
+        # **必须先删 go 标记**: 基线探针(无竞争那次)在同目录写过 probe.go,
+        # 持锁者一进来就看到它 -> 窗口从"基线探针时刻"起算, 而非从真正
+        # 探针到达起算。满载下基线探针早到数百毫秒, 窗口被提前烧掉,
+        # 实测 blocked 掉到 0.747s(阈值 0.75s) -> 假失败。
+        (tmp / "probe.go").unlink(missing_ok=True)
         args = [sys.executable, "-c", _HOLD, str(ready), str(release), kind]
         if target is not None:
             args.append(str(target))
@@ -203,6 +229,9 @@ class TestRepoLockSemantics:
                 import json, sys
                 sys.path.insert(0, {str(Path(__file__).resolve().parent)!r})
                 import conftest
+                # 取锁前落 go 标记, 供持锁者对齐窗口起点(见 _HOLD 注释)
+                with open({str(tmp_path / "probe.go")!r}, "w") as fh:
+                    fh.write("go")
                 with conftest.acquire_repo_read_lock():
                     with open({str(target)!r}, encoding="utf-8") as fh:
                         data = json.load(fh)

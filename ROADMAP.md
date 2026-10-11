@@ -71,18 +71,37 @@
 - [x] **P1-2 验证**：全量 **5110 passed / 0 failed**，
   `ruff check` + `format` 全绿，`mypy` 209 文件无问题
 
-### ⚠️ 仍未修（已定位）
+### ✅ 污染归因已查清（inotify 实测，非静态推测）
 
-- **`fix_metadata.py:173` 用相对路径 `"docs"` + `os.walk` 遍历真实仓库并
-  直接写盘**，`add_navigation.py:98` 同理。跑全量回归会污染 70+ 个文档的
-  frontmatter —— 实测两次（71 / 77 个文件），已各自还原但根因未除。
-  这是"反复还原"而非"不再发生"的原因。建议给这两个脚本加
-  `--dry-run` 默认或强制路径参数
+用 `inotifywait` 监视 `docs/` 跑全量回归，拿到 9 条真实写入事件，
+**污染源确证**：
+
+- 写入**全部集中在 `docs/adr/`**（`ADR.md` 索引 + `ADR-063-canary-tmp.md`），
+  其余 390 个文档**零写入**（md5 指纹前后一致）
+- 来源是 `tests/test_generate_adr_index.py:207` —— 该测试**有意**在真实
+  `docs/adr/` 创建 canary 并改索引，因为被测脚本按仓库相对路径定位，
+  无法注入临时路径
+- **污染是瞬时且能自愈的**：该类 `setUp` 用 `_acquire_repo_mutation_lock()`
+  取仓库锁串行化，`addCleanup` 还原索引并 `canary.unlink()`。
+  跑完后 `git diff docs/adr/ADR.md` 为空、无 canary 残留
+
+**此前"71 / 77 个文档被污染"的记录是错的**：那是在回归**进行中**取的
+Git 快照，只看到 `docs/adr/` 的中间态，被误当成全量污染。
+`fix_metadata.py:173` / `add_navigation.py:98` 的相对路径写盘**不是**
+本次污染源（二者测试均用 `tmp_path` 隔离，48 / 19 用例通过且零写入）。
+
+唯一真实风险是**中途 `kill` pytest 会留下 canary**，与 CONTEXT.md:226
+记录的 ADR-073 同源，属既有已知风险，非本轮引入。
+
+### ⚠️ 仍未修
+
 - **无 `argparse` 的脚本无自动守卫**：`perf_benchmark.py` 收到 `--help`
-  会直接跑完整基准（实测 >100s），兜底用例只能跳过
-- **`.cursorrules` / `.windsurfrules` 写入路径未查明**：测试传的是
-  `tmp_path`（干净），但实测在回归期间于仓库根生成，成因未确证，
-  暂以 `.gitignore` 防护
+  会直接跑完整基准（实测 >100s），兜底用例只能跳过。可改为 import-only
+  守卫（`python -c "import tools.scripts.X"`）覆盖这批脚本
+- **`.cursorrules` / `.windsurfrules`**：唯一调用方 `test_ide_rules_sync.py`
+  传 `tmp_path`，是隔离的。二者出现在仓库根是**手工执行**
+  `tools/scripts/ide_rules_sync.py`（`__main__` 路径用真实根）的残留，
+  非测试产物。已删并加 `.gitignore` 防护
 - **建议**：门禁统一走 `python -m`，消除"可被直接执行"这个隐式契约。
   本轮选批量自举是因为文档已大量承诺脚本路径用法 —— 26 种语言的
   `ai-dev-framework/*/rules.md` 都写着 `python tools/scripts/X.py ...`，

@@ -302,6 +302,85 @@ AI 时代开发者成长知识库 + 治理框架（knowledge base + governance f
 
 ---
 
+## 更新记录: 2026-10-11 08:29:55
+
+### 任务
+Git 变更同步
+
+### 变更摘要
+- 变更文件 5 个 (+242 / -114 行)
+  - CONTEXT.md
+  - ROADMAP.md
+  - tools/scripts/adg_cli/check.py
+  - tools/scripts/adg_cli/commands/cmd/_shared.py
+  - tools/scripts/adg_cli/commands/cmd/cmd_check.py
+
+## 更新记录: 2026-10-11 08:26:16
+
+### 任务
+Git 变更同步
+
+### 变更摘要
+- 变更文件 5 个 (+229 / -99 行)
+  - CONTEXT.md
+  - ROADMAP.md
+  - tools/scripts/adg_cli/check.py
+  - tools/scripts/adg_cli/commands/cmd/_shared.py
+  - tools/scripts/adg_cli/commands/cmd/cmd_check.py
+
+## 更新记录: 2026-10-11 08:22:43
+
+### 任务
+Git 变更同步
+
+### 变更摘要
+- 变更文件 5 个 (+216 / -84 行)
+  - CONTEXT.md
+  - ROADMAP.md
+  - tools/scripts/adg_cli/check.py
+  - tools/scripts/adg_cli/commands/cmd/_shared.py
+  - tools/scripts/adg_cli/commands/cmd/cmd_check.py
+
+## 更新记录: 2026-10-11 08:18:53
+
+### 任务
+Git 变更同步
+
+### 变更摘要
+- 变更文件 5 个 (+203 / -63 行)
+  - CONTEXT.md
+  - ROADMAP.md
+  - tools/scripts/adg_cli/check.py
+  - tools/scripts/adg_cli/commands/cmd/_shared.py
+  - tools/scripts/adg_cli/commands/cmd/cmd_check.py
+
+## 更新记录: 2026-10-11 08:13:16
+
+### 任务
+Git 变更同步
+
+### 变更摘要
+- 变更文件 6 个 (+140 / -43 行)
+  - .jcode/hooks.json
+  - CONTEXT.md
+  - ROADMAP.md
+  - tools/scripts/adg_cli/check.py
+  - tools/scripts/adg_cli/commands/cmd/_shared.py
+  - tools/scripts/adg_cli/commands/cmd/cmd_check.py
+
+## 更新记录: 2026-10-11 08:06:07
+
+### 任务
+Git 变更同步
+
+### 变更摘要
+- 变更文件 5 个 (+119 / -21 行)
+  - CONTEXT.md
+  - ROADMAP.md
+  - tools/scripts/adg_cli/check.py
+  - tools/scripts/adg_cli/commands/cmd/_shared.py
+  - tools/scripts/adg_cli/commands/cmd/cmd_check.py
+
 ## 更新记录: 2026-10-10 21:41:16
 
 ### 任务
@@ -442,6 +521,44 @@ Git 变更同步
 判据取"能启动"而非源码/grep，并做过变异验证（移除引导即变红）。
 
 修复后：全量 **5110 passed / 0 failed**，`ruff` + `mypy` 全绿。
+
+### ⚠️ 二次更正（2026-10-11）：`repo_lock_semantics` 与文档污染
+
+上一节之后又留下两处未验证结论，现一并撤回：
+
+**1. `tests/test_repo_lock_semantics.py` 的 2 个失败曾被标为"存量问题"**
+—— **该标注无效，已撤回**。当时未在纯净 HEAD 上验证就下结论。
+实测：纯净 HEAD worktree 中该文件 **5 passed**；当前工作区单跑与
+全量（`-n 8`）下均 **5 passed**。全量两次跑（150.93s / 179.99s）
+共 5110 passed，该文件未再失败。
+
+这 2 个失败的机制现已清楚：该文件用**子进程 + 文件锁 + 1.5s 保持
+窗口**测锁语义，靠真实等待时长断言。早期并发跑破坏了 ADR 索引，
+而 `tests/conftest.py` 的仓库锁正是为拦这种互踩而设 —— 失败是锁在
+**正确工作**，不是缺陷。当前 5110 全绿即锁语义已被验证。
+
+**2. "回归污染 71 / 77 个文档"的记录是错的** —— 已撤回。
+`inotifywait` 实测监视 `docs/` 跑全量，只拿到 9 条写入事件，
+**全部在 `docs/adr/`**（ADR 索引 + canary），其余 390 个文档 md5
+前后完全一致。来源是 `tests/test_generate_adr_index.py:207`
+**有意**创建 canary（被测脚本按仓库相对路径定位，无法注入临时路径），
+该类已用 `_acquire_repo_mutation_lock()` 串行化并 `addCleanup` 还原。
+跑完 `git diff docs/adr/ADR.md` 为空、无 canary 残留。
+
+此前观察到的"大量文件被改"是**回归进行中**取的 Git 快照 —— 正好
+撞上 canary 存在的窗口，把 `docs/adr/` 的中间态误读成全量污染。
+`fix_metadata.py:173` / `add_navigation.py:98` 的相对路径写盘被证伪
+（二者测试均用 `tmp_path`，48 / 19 用例通过且零写入）。
+
+**方法论教训**：前一次更正靠读 stderr 推理，有效；这次两次错误都源于
+**在错误时机观察文件系统状态**并据此归因。污染类问题必须用
+`inotify` 事件流或前后指纹差分定位，不能靠运行中/结束后的
+`git status` 快照猜。
+
+**`.cursorrules` / `.windsurfrules`** 同理更正：唯一调用方
+`test_ide_rules_sync.py` 传 `tmp_path`，测试是隔离的。二者出现在
+仓库根是**手工执行** `tools/scripts/ide_rules_sync.py`（`__main__`
+路径用 `get_project_root()`）的残留，非测试产物。已删并加 `.gitignore`。
 
 ---
 
@@ -1173,113 +1290,5 @@ Git 变更同步
   - tests/test_generate_adr_index.py
   - tests/test_performance_extended.py
   - tools/scripts/rules_engine/performance.py
-
-## 更新记录: 2026-10-03 22:18:24
-
-### 任务
-Git 变更同步
-
-### 变更摘要
-- 变更文件 7 个 (+448 / -115 行)
-  - CONTEXT.md
-  - docs/adr/ADR-073-test-isolation-cross-process-locks.md
-  - docs/adr/ADR.md
-  - tests/conftest.py
-  - tests/test_analyze_case_quality.py
-  - tests/test_check_hooks_json_integrity.py
-  - tests/test_generate_adr_index.py
-
-## 更新记录: 2026-10-03 22:12:50
-
-### 任务
-Git 变更同步
-
-### 变更摘要
-- 变更文件 7 个 (+433 / -102 行)
-  - CONTEXT.md
-  - docs/adr/ADR-073-test-isolation-cross-process-locks.md
-  - docs/adr/ADR.md
-  - tests/conftest.py
-  - tests/test_analyze_case_quality.py
-  - tests/test_check_hooks_json_integrity.py
-  - tests/test_generate_adr_index.py
-
-## 更新记录: 2026-10-03 22:10:38
-
-### 任务
-Git 变更同步
-
-### 变更摘要
-- 变更文件 7 个 (+418 / -89 行)
-  - CONTEXT.md
-  - docs/adr/ADR-073-test-isolation-cross-process-locks.md
-  - docs/adr/ADR.md
-  - tests/conftest.py
-  - tests/test_analyze_case_quality.py
-  - tests/test_check_hooks_json_integrity.py
-  - tests/test_generate_adr_index.py
-
-## 更新记录: 2026-10-03 21:16:29
-
-### 任务
-Git 变更同步
-
-### 变更摘要
-- 变更文件 13 个 (+838 / -129 行)
-  - CONTEXT.md
-  - docs/adr/ADR-072-auto-fix-verify-syntax-before-write.md
-  - docs/adr/ADR.md
-  - tests/conftest.py
-  - tests/test_adg_new_modules.py
-  - tests/test_analyze_case_quality.py
-  - tests/test_auto_fix.py
-  - tests/test_auto_fix_write_verification.py
-  - tests/test_check_hooks_json_integrity.py
-  - tests/test_generate_adr_index.py
-  - tools/fix_engine/__init__.py
-  - tools/scripts/hooks_runner.py
-  - tools/scripts/rules_engine/auto_fix.py
-
-## 更新记录: 2026-10-03 21:13:02
-
-### 任务
-Git 变更同步
-
-### 变更摘要
-- 变更文件 13 个 (+817 / -119 行)
-  - CONTEXT.md
-  - docs/adr/ADR-072-auto-fix-verify-syntax-before-write.md
-  - docs/adr/ADR.md
-  - tests/conftest.py
-  - tests/test_adg_new_modules.py
-  - tests/test_analyze_case_quality.py
-  - tests/test_auto_fix.py
-  - tests/test_auto_fix_write_verification.py
-  - tests/test_check_hooks_json_integrity.py
-  - tests/test_generate_adr_index.py
-  - tools/fix_engine/__init__.py
-  - tools/scripts/hooks_runner.py
-  - tools/scripts/rules_engine/auto_fix.py
-
-## 更新记录: 2026-10-03 21:03:13
-
-### 任务
-Git 变更同步
-
-### 变更摘要
-- 变更文件 13 个 (+796 / -100 行)
-  - CONTEXT.md
-  - docs/adr/ADR-072-auto-fix-verify-syntax-before-write.md
-  - docs/adr/ADR.md
-  - tests/conftest.py
-  - tests/test_adg_new_modules.py
-  - tests/test_analyze_case_quality.py
-  - tests/test_auto_fix.py
-  - tests/test_auto_fix_write_verification.py
-  - tests/test_check_hooks_json_integrity.py
-  - tests/test_generate_adr_index.py
-  - tools/fix_engine/__init__.py
-  - tools/scripts/hooks_runner.py
-  - tools/scripts/rules_engine/auto_fix.py
 
 <!-- 滚动窗口: 已自动裁剪 1 条旧更新记录 -->

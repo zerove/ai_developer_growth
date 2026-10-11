@@ -288,20 +288,48 @@ def _run_checks(files: list[Path], rules: dict[str, Any], severity_filter: str |
         jobs: 并行数 (1 = sequential)
 
     Returns:
-        全部 issue 列表
+        全部 issue 列表。**单个文件检查失败也算 issue**（`check-error`），
+        以保证并行与串行对同一输入给出相同的退出码（ADR-078）。
     """
     if jobs > 1 and len(files) > 1:
         return _check_files_parallel(files, rules, severity_filter, jobs)
     all_issues: list[Issue] = []
     for filepath in files:
-        all_issues.extend(check_file(filepath, rules, severity_filter))
+        try:
+            all_issues.extend(check_file(filepath, rules, severity_filter))
+        except Exception as exc:  # noqa: BLE001 - 崩溃必须留痕, 不得静默跳过
+            all_issues.append(_make_check_error_issue(filepath, exc))
     return all_issues
+
+
+def _make_check_error_issue(filepath: Path, exc: BaseException) -> Issue:
+    """把“文件检查失败”本身变成一条 error 级 Issue (ADR-078).
+
+    不这样做的话：worker 崩溃的文件会被静默剔除，调用方拿到的 issue
+    列表与“该文件干净”**无法区分**，于是 `adg check` 对一个实际未检查的
+    文件返回退出码 0（fail-open）。把崩溃升格为 error 后，退出码必然
+    非零，且崩溃文件在输出里可见。
+    """
+    return Issue(
+        rule_id="check-error",
+        severity="error",
+        category="infrastructure",
+        file=str(filepath),
+        line=1,
+        column=1,
+        message=f"检查失败，该文件未被检查: {type(exc).__name__}: {exc}",
+        fix_hint="检查该文件是否可读、是否被其他进程占用，或用 --jobs 1 重试",
+    )
 
 
 def _check_files_parallel(
     files: list[Path], rules: dict[str, Any], severity_filter: str | None, jobs: int
 ) -> list[Issue]:
-    """Check files in parallel using ProcessPoolExecutor."""
+    """Check files in parallel using ProcessPoolExecutor.
+
+    worker 抛异常时**不静默剔除**该文件，而是生成一条 `check-error`
+    error 级 Issue（ADR-078），确保调用方能区分“干净”与“没检查到”。
+    """
     import os
     from concurrent.futures import ProcessPoolExecutor, as_completed
 
@@ -319,13 +347,18 @@ def _check_files_parallel(
 
         # Collect results as they complete
         for future in as_completed(future_to_file):
+            filepath = future_to_file[future]
             try:
                 issues = future.result()
                 all_issues.extend(issues)
-            except Exception as e:
-                # Log error but continue processing
-                filepath = future_to_file[future]
-                print(f"Warning: Error checking {filepath}: {e}", file=sys.stderr)
+            except Exception as exc:  # noqa: BLE001 - 崩溃必须留痕, 不得静默剔除
+                # ADR-078: 旧实现只 print 警告, 使崩溃文件从结果中消失,
+                # 导致该文件被漏检且退出码仍为 0。改为升格为 error Issue。
+                all_issues.append(_make_check_error_issue(filepath, exc))
+                print(
+                    f"Warning: Error checking {filepath}: {exc}",
+                    file=sys.stderr,
+                )
 
     return all_issues
 

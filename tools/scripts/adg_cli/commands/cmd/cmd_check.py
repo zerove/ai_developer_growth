@@ -14,6 +14,7 @@ from ._shared import (
     _format_human,
     _format_json,
     _format_sarif,
+    _make_check_error_issue,
     _record_trend,
     _send_dingtalk_notification,
     _send_slack_notification,
@@ -101,13 +102,20 @@ def _prepare_check_config(
 
 
 def _run_checks(files: list[Path], rules: dict[str, Any], severity: str, jobs: int) -> list[Issue]:
-    """Run checks on files, either parallel or sequential."""
+    """Run checks on files, either parallel or sequential.
+
+    单个文件检查失败会变成 `check-error` error 级 Issue（ADR-078），
+    保证并行与串行对同一输入给出相同的退出码。
+    """
     if jobs > 1 and len(files) > 1:
         return _check_files_parallel(files, rules, severity, jobs)
     else:
         all_issues: list[Issue] = []
         for fp in files:
-            all_issues.extend(check_file(fp, rules, severity))
+            try:
+                all_issues.extend(check_file(fp, rules, severity))
+            except Exception as exc:  # noqa: BLE001 - 崩溃必须留痕, 不得静默跳过
+                all_issues.append(_make_check_error_issue(fp, exc))
         return all_issues
 
 

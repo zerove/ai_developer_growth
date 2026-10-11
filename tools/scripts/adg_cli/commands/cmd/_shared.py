@@ -10,6 +10,7 @@ from tools.scripts.adg_cli.check import (
     _check_files_parallel,
     _check_python_complexity,
     _collect_check_files,
+    _make_check_error_issue,
     check_directory,
     check_file,
 )
@@ -58,6 +59,7 @@ __all__ = [
     "_check_files_parallel",
     "_check_python_complexity",
     "_collect_check_files",
+    "_make_check_error_issue",
     "check_directory",
     "check_file",
     "_DEFAULT_PRE_COMMIT_HOOK",

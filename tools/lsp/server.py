@@ -420,6 +420,8 @@ def run_stdio_server() -> None:
     logger.info("ADG LSP Server starting (stdio mode)")
 
     while True:
+        method: str | None = None
+        msg_id: int | None = None
         try:
             method, params, msg_id = read_message()
             logger.debug(f"Request: {method}")

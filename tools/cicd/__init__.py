@@ -32,7 +32,7 @@ jobs:
           python-version: "3.11"
 
       - name: Install ADG
-        run: pip install adg-governance
+        run: pip install ai-developer-growth
 
       - name: Detect Language
         id: detect
@@ -95,7 +95,7 @@ jobs:
           python-version: "3.11"
 
       - name: Install ADG
-        run: pip install adg-governance
+        run: pip install ai-developer-growth
 
       - name: Check ${{ matrix.language }}
         run: adg check . --lang ${{ matrix.language }} --severity warning --sarif > results-${{ matrix.language }}.sarif
@@ -122,7 +122,7 @@ adg-governance:
   stage: test
   image: python:3.11
   before_script:
-    - pip install adg-governance
+    - pip install ai-developer-growth
   script:
     - adg detect . --json > detect.json
     - LANG=$(cat detect.json | python -c "import sys,json; print(json.load(sys.stdin)['language'])")
@@ -145,7 +145,7 @@ adg-governance:
 # Jenkins Pipeline
 # ─────────────────────────────────────────────────────────────
 
-JENKINS_PIPELINE = "pipeline {\n    agent any\n\n    stages {\n        stage('ADG Governance') {\n            steps {\n                sh '''\n                    pip install adg-governance\n                    adg detect . --json > detect.json\n                    LANG=$(python -c \"import json; print(json.load(open('detect.json'))['language'])\")\n                    adg check . --lang $LANG --severity warning --json > adg-report.json\n                    adg check . --lang $LANG --sarif > results.sarif\n                '''\n            }\n            post {\n                always {\n                    archiveArtifacts artifacts: 'adg-report.json, results.sarif'\n                }\n            }\n        }\n    }\n}"
+JENKINS_PIPELINE = "pipeline {\n    agent any\n\n    stages {\n        stage('ADG Governance') {\n            steps {\n                sh '''\n                    pip install ai-developer-growth\n                    adg detect . --json > detect.json\n                    LANG=$(python -c \"import json; print(json.load(open('detect.json'))['language'])\")\n                    adg check . --lang $LANG --severity warning --json > adg-report.json\n                    adg check . --lang $LANG --sarif > results.sarif\n                '''\n            }\n            post {\n                always {\n                    archiveArtifacts artifacts: 'adg-report.json, results.sarif'\n                }\n            }\n        }\n    }\n}"
 
 
 # ─────────────────────────────────────────────────────────────
@@ -162,7 +162,7 @@ services:
     working_dir: /workspace
     command: >
       sh -c "
-        pip install adg-governance &&
+        pip install ai-developer-growth &&
         adg detect . --json > /workspace/adg-detect.json &&
         adg check . --severity warning --json > /workspace/adg-report.json &&
         adg report . --json > /workspace/adg-gate.json

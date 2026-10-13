@@ -162,7 +162,11 @@ def generate_html_report(
             issues,
             key=lambda i: {"error": 0, "warning": 1, "info": 2}.get(i.severity, 3),
         ):
-            badge_class = f"badge-{issue.severity[0]}" if issue.severity in ("error", "warning") else "badge-info"
+            # CSS 类名为 badge-error / badge-warn / badge-info, 而 severity 取值是
+            # error / warning / info —— 直接拼接会得到不存在的 badge-warning。
+            # 原实现取 severity[0] 得到 badge-e / badge-w, 三者皆无匹配, 徽章
+            # 静默退化为无背景文本。
+            badge_class = f"badge-{'warn' if issue.severity == 'warning' else issue.severity}"
             html += f'            <tr><td><span class="badge {badge_class}">{issue.severity.upper()}</span></td>'
             html += f"<td><code>{issue.rule_id}</code></td>"
             html += f"<td>{Path(issue.file).name}</td>"

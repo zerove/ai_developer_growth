@@ -75,8 +75,11 @@ class TestWorkerSkippedHandling:
         cw._worker_init({}, str(db))
         cw._worker_check((empty, "python"), do_linters=False, cache_db=str(db), rules_hash="h")
         assert cw._WORKER_STORE is not None
-        rows = cw._WORKER_STORE.get_all_results() if hasattr(cw._WORKER_STORE, "get_all_results") else None
-        assert not rows, "skipped 结果不应写入增量缓存"
+        # 用真实存在的 API 取回缓存清单。此前这里调的是 CheckStore 并不提供的
+        # get_all_results, 又用 hasattr 兜成 None, 于是 assert not rows 恒真 ——
+        # 测试无论实现对错都通过, 属于假阳性防护。
+        cached = {e["file_path"] for e in cw._WORKER_STORE.get_cached_files()}
+        assert str(empty) not in cached
 
     def test_non_skipped_file_returns_issues(self, tmp_path: Path) -> None:
         src = _write(tmp_path / "s.py", "import os\nos.system('ls')\n")

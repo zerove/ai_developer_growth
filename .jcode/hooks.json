@@ -22,8 +22,8 @@
         "name": "ai-quality-gate",
         "skill": "governance-auditor",
         "action": "ai-quality-gate",
-        "description": "提交时运行 AI 代码质量门禁",
-        "enabled": true
+        "description": "提交时运行 AI 代码质量门禁（已去重）: pre-commit 的 quality-gate 以 --check-annotation --check-security --check-patterns --check-type --check-error --check-structure 覆盖本 hook 的全部检查项且扫描范围相同, 避免每次提交对同一批文件跑两遍规则引擎",
+        "enabled": false
       },
       {
         "name": "context-sync",

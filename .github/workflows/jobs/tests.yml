@@ -15,6 +15,10 @@ jobs:
     name: Tests (Python ${{ inputs.python-version }})${{ inputs.shard != '' && format('
       Shard {0}/4', inputs.shard) || '' }}
     runs-on: ubuntu-latest
+    # 不依赖 pytest-timeout 插件的兜底: 插件缺失时 timeout 配置会被静默忽略,
+    # 而没有 job 级上限的挂死测试会一直占用 runner 直到 GitHub 的 360 分钟
+    # 默认值。测试在 -n auto 下约 3-5 分钟, 30 分钟留足余量。
+    timeout-minutes: 30
     steps:
     - uses: actions/checkout@v4
     - uses: actions/setup-python@v5

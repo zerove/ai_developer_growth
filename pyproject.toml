@@ -57,6 +57,9 @@ dev = [
     "httpx",
     # 以下三个是真实测试依赖: 6 个测试文件因缺它们而无法被 pytest 收集,
     # 曾经长期靠 --ignore 跳过 (等于 4 组测试从未真正运行过)
+    # pytest-timeout: pytest.ini 依赖它设置单测试超时上限。插件缺失时 pytest
+    # 会因未知 ini 选项而报错, 故与 timeout/timeout_method 一起声明。
+    "pytest-timeout>=2.1.0",
     "hypothesis",  # test_property_based / test_property_chaos
     "PyGithub",  # test_sync_issues (测试内 mock 了 Github, 但仍需模块可导入)
     "kubernetes",  # test_chaos_runner

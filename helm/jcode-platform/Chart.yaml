@@ -3,7 +3,7 @@ name: jcode-platform
 description: JCode AI-Native SDLC Platform - Helm Chart
 type: application
 version: 2.0.0
-appVersion: "2.0.0"
+appVersion: "2.24.0"  # 与 pyproject.toml [project].version 一致
 keywords:
   - ai
   - sdlc

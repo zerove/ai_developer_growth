@@ -2,7 +2,7 @@
 
 [![CI](https://img.shields.io/badge/CI-passing-brightgreen)](#)
 [![Python 3.11+](https://img.shields.io/badge/Python-3.11+-blue.svg)](https://www.python.org/downloads/)
-[![Coverage](https://img.shields.io/badge/Coverage-88%25-brightgreen)](#)
+[![Coverage](https://img.shields.io/badge/Coverage-87%25-brightgreen)](#)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](CONTRIBUTING.md)
 [![Stars](https://img.shields.io/github/stars/zerove/ai_developer_growth)](https://github.com/zerove/ai_developer_growth/stargazers)
@@ -20,13 +20,13 @@
 | AI 工具太多，不知如何选择 | 📊 工具矩阵对比 |
 | 不知道如何与 AI 协作 | 🔄 全周期工作流 |
 | 担心被 AI 取代 | 🧠 认知升级方法论 |
-| 缺少真实案例参考 | 📚 47 个实践案例 |
+| 缺少真实案例参考 | 📚 48 个实践案例 |
 
 ---
 
 ## 📚 知识地图
 
-完整索引见 [docs/MOC.md](docs/MOC.md)（371 篇文档）。
+完整索引见 [docs/MOC.md](docs/MOC.md)（391 篇文档）。
 
 ### 🧠 认知升级
 理解 AI 时代的游戏规则。
@@ -65,7 +65,7 @@
 | 🧬 AI-Native 主管道 | 全生命周期研发自动化 | **12x** | [[docs/case-studies/jcode-ai-native-master-workflow-execution]] |
 | 🏛️ 治理自审计 | 用自己的药医自己 | **-85 问题** | [[docs/case-studies/governance-self-audit]] |
 
-**现状**: 47 个真实案例（另含 1 个社区贡献模板），覆盖不同规模和场景。目标是 35+，已超额完成。
+**现状**: 48 个真实案例（另含 1 个社区贡献模板），覆盖不同规模和场景。目标是 35+，已超额完成。
 
 ---
 
@@ -165,12 +165,12 @@ python ai-dev-framework/core/jcode_init.py your-project --language python
 
 | 指标 | 数量 |
 |------|------|
-| 📄 核心文档 | 371 篇 |
-| 📚 实践案例 | 47 个 |
+| 📄 核心文档 | 391 篇 |
+| 📚 实践案例 | 48 个 |
 | 🛠️ 代码示例 | 10 个 |
-| 📋 架构决策 | 63 条 |
-| 🧪 测试用例 | 4391 个 |
-| ✅ 测试覆盖率 | 88% |
+| 📋 架构决策 | 70 条 |
+| 🧪 测试用例 | 5113 个 |
+| ✅ 测试覆盖率 | 87% |
 
 ### 🔌 自检：门禁是否还活着
 
@@ -211,13 +211,13 @@ GITHUB_TOKEN=<your_token> make ci-alert
 
 ```
 ai_developer_growth/
-├── docs/                    # 371 篇文档
+├── docs/                    # 391 篇文档
 │   ├── mindset/            # 认知升级
 │   ├── learning/           # 学习方法
 │   ├── efficiency/         # 工程效率
 │   ├── tools/              # 工具选型
 │   └── adr/                # 架构决策
-│   └── case-studies/        # 47 个实践案例（位于 docs/ 下以供 MkDocs 构建）
+│   └── case-studies/        # 48 个实践案例（位于 docs/ 下以供 MkDocs 构建）
 ├── examples/                # 10 个代码示例
 ├── ai-dev-framework/        # 通用治理框架
 │   └── standards/          # 通用治理标准
@@ -229,7 +229,7 @@ ai_developer_growth/
 │   ├── rules_engine/       # 规则引擎 (26 语言)
 │   └── rule_catalog.py     # 规则包管理
 ├── agents/                  # Agent 定义
-├── tests/                   # 4391 个测试
+├── tests/                   # 5113 个测试
 ```
 
 ---

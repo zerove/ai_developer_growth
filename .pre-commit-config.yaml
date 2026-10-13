@@ -18,8 +18,10 @@ repos:
     hooks:
       - id: mypy
         additional_dependencies: [pyyaml, types-requests, types-pyyaml]
-        args: [tools/scripts/]
-        pass_filenames: false
+        # 增量检查: 只跑本次暂存的文件。原为 args=[tools/scripts/] +
+        # pass_filenames=false, 每次提交都全量检查 209 个文件, 实测 18.13s,
+        # 占整个提交门禁的一半以上。全量类型检查由 pre-push
+        # (hooks_runner typecheck) 与 CI type-check job 兜底, 语义不变。
         # mypy 配置统一由 pyproject.toml [tool.mypy] 提供
         # 不要在此处加 --strict / --ignore-missing-imports / --config-file（避免漂移）
 
@@ -72,7 +74,7 @@ repos:
     hooks:
       - id: quality-gate
         name: AI Quality Gate
-        entry: python tools/scripts/hooks_runner.py quality-gate --path tools/scripts --check-annotation --check-security --check-type --check-error --check-structure
+        entry: python tools/scripts/hooks_runner.py quality-gate --path tools/scripts --check-annotation --check-security --check-patterns --check-type --check-error --check-structure
         language: system
         pass_filenames: false
         always_run: true

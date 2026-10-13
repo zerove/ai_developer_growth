@@ -280,9 +280,8 @@ class TestPerfBenchmark:
         result = benchmark_rules_engine(iterations=1)
         assert isinstance(result, dict)
 
-    @patch("tools.scripts.perf_benchmark.PerformanceOptimizer")
     @patch("tools.scripts.perf_benchmark.check_directory")
-    def test_benchmark_rules_engine_parallel(self, mock_check, mock_opt) -> None:
+    def test_benchmark_rules_engine_parallel(self, mock_check) -> None:
         from tools.scripts.perf_benchmark import benchmark_rules_engine_parallel
 
         mock_check.return_value = []

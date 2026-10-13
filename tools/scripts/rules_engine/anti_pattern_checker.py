@@ -50,16 +50,23 @@ def check_anti_patterns(
     lang_patterns = rules.get("anti_patterns", [])
     all_patterns.extend(lang_patterns)
 
+    # 逐行注释过滤与 pattern 无关, 在此一次算好供全部 pattern 复用。
+    # 原实现在 _check_line_patterns 内对每个 pattern 重复 strip()+startswith(),
+    # 实测 59 pattern × 225 行 = 每文件 1.3 万次冗余字符串分配。
+    scannable = [(line_num, line) for line_num, line in enumerate(lines, 1) if not line.strip().startswith(("#", "//"))]
+
     # Check each pattern
     for pattern_def in all_patterns:
         if pattern_def.get("enabled") is False:
             continue
-        issues.extend(_check_pattern(filepath, content, lines, pattern_def))
+        issues.extend(_check_pattern(filepath, content, scannable, pattern_def))
 
     return issues
 
 
-def _check_pattern(filepath: Path, content: str, lines: list[str], pattern_def: dict[str, Any]) -> list[Issue]:
+def _check_pattern(
+    filepath: Path, content: str, scannable: list[tuple[int, str]], pattern_def: dict[str, Any]
+) -> list[Issue]:
     """Check a single pattern against file content (V2.21 P5-54 拆分: 抽 _is_pattern_excluded + _check_pattern_matches)."""
     issues: list[Issue] = []
     pattern = pattern_def.get("pattern", "")
@@ -67,7 +74,7 @@ def _check_pattern(filepath: Path, content: str, lines: list[str], pattern_def: 
         return issues
     if _is_pattern_excluded(filepath, content, pattern_def):
         return issues
-    issues.extend(_check_pattern_matches(filepath, content, lines, pattern, pattern_def))
+    issues.extend(_check_pattern_matches(filepath, content, scannable, pattern, pattern_def))
     return issues
 
 
@@ -96,7 +103,7 @@ def _is_pattern_excluded(filepath: Path, content: str, pattern_def: dict[str, An
 def _check_pattern_matches(
     filepath: Path,
     content: str,
-    lines: list[str],
+    scannable: list[tuple[int, str]],
     pattern: str,
     pattern_def: dict[str, Any],
 ) -> list[Issue]:
@@ -105,7 +112,7 @@ def _check_pattern_matches(
     Args:
         filepath: 文件路径
         content: 文件内容
-        lines: 源码行列表
+        scannable: (行号, 行文本) 列表, 已剔除纯注释行
         pattern: 正则 pattern
         pattern_def: pattern 定义
 
@@ -117,7 +124,7 @@ def _check_pattern_matches(
     is_multiline = ("\n" in pattern_str or "\\n" in pattern_str) or pattern_def.get("multiline", False)
     if is_multiline:
         return _check_multiline_pattern(filepath, content, pattern, flags, pattern_def)
-    return _check_line_patterns(lines, pattern, flags, pattern_def, str(filepath))
+    return _check_line_patterns(scannable, pattern, flags, pattern_def, str(filepath))
 
 
 def _check_multiline_pattern(
@@ -157,13 +164,13 @@ def _check_multiline_pattern(
 
 
 def _check_line_patterns(
-    lines: list[str],
+    scannable: list[tuple[int, str]],
     pattern: str,
     flags: int,
     pattern_def: dict[str, Any],
     filepath: str,
 ) -> list[Issue]:
-    """Check pattern against each line.
+    """Check pattern against each scannable line.
 
     安全保护：危险正则结构（嵌套量词等）直接跳过，避免灾难性回溯。
     """
@@ -189,13 +196,11 @@ def _check_line_patterns(
         except re.error:
             continue
 
-    for line_num, line in enumerate(lines, 1):
-        # Skip comments for most patterns
-        stripped = line.strip()
-        if stripped.startswith("#") or stripped.startswith("//"):
-            continue
-
-        if any(ce.search(line) for ce in compiled_excludes):
+    # 绝大多数 pattern 没有 exclude_lines（实测 59 个里 58 个为空）。不建
+    # any() 的关键: 空列表时 any(生成器) 仍要新建一个生成器对象并调用 any(),
+    # 225 行 × 58 pattern × 每文件 = 1.3 万次纯空转, 全仓实测 72 万次。
+    for line_num, line in scannable:
+        if compiled_excludes and any(ce.search(line) for ce in compiled_excludes):
             continue
 
         for match in compiled.finditer(line):

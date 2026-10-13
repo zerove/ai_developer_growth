@@ -12,7 +12,7 @@ from tools.scripts.perf_benchmark import benchmark_rules_engine_parallel, main
 class TestParallelBenchmark:
     def test_returns_metrics(self) -> None:
         res = benchmark_rules_engine_parallel(iterations=1)
-        assert res["module"] == "rules_engine.performance.parallel"
+        assert res["module"] == "rules_engine.checker.parallel"
         assert res["iterations"] == 1
         assert res["stdev_sec"] == 0  # 单次迭代无标准差
         assert len(res["times_sec"]) == 1
@@ -46,7 +46,7 @@ class TestMainPipeline:
         out = capsys.readouterr().out
         assert code == 0
         assert "SUMMARY" in out
-        assert "[3/3] rules_engine.performance.parallel" in out
+        assert "[3/3] rules_engine.checker (parallel + cache)" in out
         assert baseline_file.exists() is False  # 未真正写入(打桩)
         _ = json, baseline_file
 
@@ -79,6 +79,6 @@ class TestExistingBenchmarksReal:
         (tmp_path / "clean.py").write_text("value = 1\n", encoding="utf-8")
         monkeypatch.chdir(tmp_path)
         res = perf_benchmark.benchmark_rules_engine(iterations=1)
-        assert res["module"] == "rules_engine.checker"
+        assert res["module"] == "rules_engine.checker.serial"
         assert "file_count" in res
         assert "Iteration 1" in capsys.readouterr().out

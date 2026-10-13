@@ -5,6 +5,7 @@
 
 from __future__ import annotations
 
+from functools import lru_cache
 from pathlib import Path
 
 from tools.scripts.rules_engine.logger import logger
@@ -137,19 +138,41 @@ def adjust_severity(original_severity: str, file_role: str | None) -> str:
     return adjusted
 
 
+@lru_cache(maxsize=16)
+def _load_role_config_cached(path_str: str, mtime_ns: int) -> dict[str, str]:
+    """解析 .adg/config.yml 的 context.markers（按 mtime 缓存）。
+
+    mtime_ns 参与缓存键：配置文件被改写后自动失效，避免 LSP/dashboard 这类
+    长驻进程读到过期结果。path_str/mtime_ns 只作缓存键，不参与逻辑判断。
+    """
+    import yaml
+
+    config_path = Path(path_str)
+    try:
+        data = yaml.safe_load(config_path.read_text())
+    except (OSError, yaml.YAMLError) as exc:
+        logger.debug("角色标记配置读取失败: %s", exc)
+        return {}
+    if not isinstance(data, dict):
+        # 空文件或纯标量 YAML: safe_load 返回 None/str, 不是 dict
+        return {}
+    context = data.get("context")
+    markers = context.get("markers") if isinstance(context, dict) else None
+    return markers if isinstance(markers, dict) else {}
+
+
 def load_role_config(config_path: Path) -> dict[str, str]:
     """从配置文件加载角色映射。
 
     配置文件格式: .adg/config.yml 中的 context.markers 字段。
+
+    结果按 (路径, mtime) 缓存: 一次目录扫描里所有文件命中同一份配置，
+    避免逐文件重复 yaml.safe_load（实测 60 文件重复解析 37 次）。
+    返回副本，防止调用方就地修改污染缓存。
     """
     try:
-        import yaml
-
-        if config_path.exists():
-            data = yaml.safe_load(config_path.read_text())
-            markers = data.get("context", {}).get("markers", {})
-            if isinstance(markers, dict):
-                return markers
-    except FileNotFoundError as exc:
-        logger.debug("角色标记配置读取失败: %s", exc)
-    return {}
+        mtime_ns = config_path.stat().st_mtime_ns
+    except OSError as exc:
+        logger.debug("角色标记配置不存在: %s", exc)
+        return {}
+    return dict(_load_role_config_cached(str(config_path), mtime_ns))

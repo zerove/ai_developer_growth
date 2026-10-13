@@ -26,7 +26,7 @@ jobs:
         python-version: ${{ inputs.python-version }}
         cache: pip
         cache-dependency-path: pyproject.toml
-    - run: pip install pytest pytest-cov pyyaml pytest-xdist
+    - run: pip install pytest pytest-cov pyyaml pytest-xdist pytest-rerunfailures
     - run: pip install -e .
     - name: Read coverage threshold from pyproject.toml
       id: coverage-config
@@ -45,11 +45,15 @@ jobs:
 
           '
     - name: Run tests with coverage
+      # --reruns 2 与 pyproject [tool.adg] test_reruns 保持一致。此前 CI 未安装
+      # pytest-rerunfailures 也未传 --reruns, 该配置只在本地 hooks_runner 生效:
+      # 本地会重试偶发失败而 CI 不会, 导致同一份代码本地绿、CI 随机红。
+      # 插件缺失时 pytest 会因未知参数直接报错, 故与安装步骤成对修改。
       run: "if [ -n \"${{ inputs.shard }}\" ]; then\n  pip install pytest-split\n\
         \  pytest tests/ -v -n auto --cov=tools --cov=.jcode/scripts --cov-report=xml --cov-report=term-missing\
-        \ --tb=short --split=${{ inputs.shard }}/4 --group-by=duration\nelse\n  pytest\
-        \ tests/ -v -n auto --cov=tools --cov=.jcode/scripts --cov-report=xml --cov-report=term-missing\
-        \ --tb=short\nfi\n"
+        \ --tb=short --reruns 2 --reruns-delay 1 --split=${{ inputs.shard }}/4 --group-by=duration\nelse\n\
+        \  pytest tests/ -v -n auto --cov=tools --cov=.jcode/scripts --cov-report=xml --cov-report=term-missing\
+        \ --tb=short --reruns 2 --reruns-delay 1\nfi\n"
     - name: Coverage check (only for non-sharded 3.11)
       if: inputs.python-version == '3.11' && inputs.shard == ''
       run: "python -c \"\nimport xml.etree.ElementTree as ET\ntree = ET.parse('coverage.xml')\n\

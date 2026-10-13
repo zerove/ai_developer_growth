@@ -114,9 +114,12 @@ class TestLoadRules:
         assert "anti_patterns" in result
 
     def test_load_missing_lang_returns_embedded(self, tmp_path: Path) -> None:
+        # 缺失语言不应抛异常, 而应回退到通用质量规则。
+        # 断言结构而非具体来源: 委托给 rules_engine 后, 回退路径由引擎决定
+        # (带 framework_dir 时返回 universal 规则, 不含 language 键)。
         result = load_rules("nonexistent", framework_dir=tmp_path)
-        assert result["language"] == "nonexistent"
         assert "anti_patterns" in result
+        assert "naming" in result
 
     def test_load_with_common_rules(self, tmp_path: Path) -> None:
         lang_dir = tmp_path / "languages" / "python" / "rules.d"

@@ -7,34 +7,39 @@
     "timezone:Asia/Shanghai"
   ],
   "labels": ["dependencies", "automated"],
-  "reviewers": ["maintainer1", "maintainer2"],
-  "assignees": ["maintainer1"],
   "commitMessagePrefix": "deps",
   "commitMessagePrefixDevelopment": "deps-dev",
   "commitMessageAction": "Update",
   "commitMessageTopic": "{{depName}}",
-  "commitMessageExtra": "{{#if isSingleVersion}}{{#if isUpdateTypeVersion}}{{else}} ({{
-  }
-  "rangeStrategy": "auto",
-  "rangeStrategy": "replace",
+  "commitMessageExtra": "Renovated via Renovate Bot",
+  "semanticCommits": "enabled",
+  "semanticCommitType": "chore",
+  "semanticCommitScope": "deps",
   "versioning": "semver",
-  "lockFileMaintenance": {
-    "enabled": true,
-    "automerge": true
-  },
+  "rangeStrategy": "replace",
   "prCreation": "not-pending",
-  "automerge": false,
+  "automerge": true,
   "automergeType": "pr",
   "platformAutomerge": true,
   "platformAutomergeOptions": {
     "mergeMethod": "squash"
   },
-  "baseBranches": ["main"],
-  "ignoreDeps": [
-    "*"
-  ],
+  "rebaseStalePrs": true,
+  "rebaseWhen": "conflicted",
+  "separateMajorMinor": false,
+  "separateMultipleMajor": false,
   "ignoreUnstable": true,
   "minimumReleaseAge": "3 days",
+  "pinDigests": true,
+  "schedule": [
+    "after 2am on monday",
+    "before 6am on friday"
+  ],
+  "timezone": "Asia/Shanghai",
+  "lockFileMaintenance": {
+    "enabled": true,
+    "automerge": true
+  },
   "major": {
     "enabled": false
   },
@@ -46,39 +51,20 @@
     "enabled": true,
     "automerge": true
   },
-  "pinDigests": true,
-  "rangeStrategy": "bump",
-  "rebaseStalePrs": true,
-  "rebaseWhen": "conflicted",
-  "separateMajorMinor": false,
-  "schedule": [
-    "after 2am on monday",
-    "before 6am on friday"
-  ],
-  "timezone": "Asia/Shanghai",
-  "separateMultipleMajor": false,
-  "semanticCommits": "enabled",
-  "semanticCommitType": "chore",
-  "semanticCommitScope": "deps",
-  "labels": ["dependencies", "automated"],
-  "reviewers": ["maintainer1", "maintainer2"],
-  "assignees": ["maintainer1"],
-  "commitMessageTopic": "{{depName}}",
-  "commitMessageAction": "Update",
-  "commitMessageExtra": "Renovated via Renovate Bot",
-  "rangeStrategy": "replace",
-  "versioning": "semver",
-  "lockFileMaintenance": {
+  "vulnerabilityAlerts": {
     "enabled": true,
-    "automerge": true
+    "labels": ["security", "vulnerability"]
   },
-  "prCreation": "not-pending",
-  "automerge": true,
-  "automergeType": "pr",
-  "platformAutomerge": true,
-  "platformAutomergeOptions": {
-    "mergeMethod": "squash"
-  },
+  "ignorePaths": [
+    "**/node_modules/**",
+    "**/vendor/**",
+    "**/.venv/**",
+    "**/.git/**",
+    "**/__pycache__/**",
+    "**/dist/**",
+    "**/build/**",
+    "*.lock"
+  ],
   "packageRules": [
     {
       "description": "Group Python dev tools",
@@ -99,7 +85,7 @@
       "labels": ["python", "data"]
     },
     {
-      "description": "Group Python security",
+      "description": "Group Python security packages",
       "matchPackageNames": ["cryptography*", "pyjwt*", "bcrypt*", "passlib*"],
       "groupName": "python-security",
       "labels": ["python", "security"]
@@ -117,17 +103,6 @@
       "labels": ["docker", "base-image"]
     },
     {
-      "description": "Automerging patch/minor updates",
-      "matchUpdateTypes": ["patch", "minor"],
-      "automerge": true,
-      "automergeType": "pr"
-    },
-    {
-      "description": "Major updates require manual review",
-      "matchUpdateTypes": ["major"],
-      "automerge": false
-    },
-    {
       "description": "Pin git dependencies",
       "matchDatasources": ["git"],
       "pinDigests": true
@@ -136,44 +111,6 @@
       "description": "Pin Docker digests",
       "matchDatasources": ["docker"],
       "pinDigests": true
-    }
-  ],
-  "vulnerabilityAlerts": {
-    "enabled": true,
-    "labels": ["security", "vulnerability"]
-  },
-  "ignorePaths": [
-    "**/node_modules/**",
-    "**/vendor/**",
-    "**/.venv/**",
-    "**/.git/**",
-    "**/__pycache__/**",
-    "**/dist/**",
-    "**/build/**",
-    "*.lock"
-  ],
-  "packageRules": [
-    {
-      "description": "Group Python packages by category",
-      "matchManagers": ["pip"],
-      "groupName": "python-{{matchPackageNames}}",
-      "labels": ["python"]
-    },
-    {
-      "description": "Group npm packages by category",
-      "matchManagers": ["npm"],
-      "groupName": "node-{{matchPackageNames}}",
-      "labels": ["nodejs"]
-    },
-    {
-      "description": "Auto-merge patch and minor updates",
-      "matchUpdateTypes": ["patch", "minor"],
-      "automerge": true
-    },
-    {
-      "description": "Require manual review for major updates",
-      "matchUpdateTypes": ["major"],
-      "automerge": false
     }
   ]
 }

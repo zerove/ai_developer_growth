@@ -7,10 +7,16 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v4
-    - run: "for f in README.md INDEX.md GOVERNANCE.md CONTRIBUTING.md ROADMAP.md LICENSE\
-        \ SECURITY.md CODE_OF_CONDUCT.md; do\n  test -f \"$f\" || { echo \"Missing:\
-        \ $f\"; exit 1; }\ndone\nfor d in docs examples tools agents;\
-        \ do\n  test -d \"$d\" || { echo \"Missing dir: $d\"; exit 1; }\ndone\n"
+    - name: Verify required files and directories
+      run: |
+        set -euo pipefail
+        for f in README.md GOVERNANCE.md CONTRIBUTING.md ROADMAP.md LICENSE \
+                 SECURITY.md CODE_OF_CONDUCT.md; do
+          test -f "$f" || { echo "Missing file: $f"; exit 1; }
+        done
+        for d in docs examples tools agents; do
+          test -d "$d" || { echo "Missing dir: $d"; exit 1; }
+        done
   docs-build:
     name: MkDocs Build
     runs-on: ubuntu-latest

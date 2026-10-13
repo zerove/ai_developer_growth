@@ -76,7 +76,10 @@ def _worker_check(
         run_linters=do_linters,
     )
     if result.skipped:
-        return None
+        # 必须回传 skipped 结果而非 None: 并行收集端会过滤 None, 返回 None
+        # 等于让该文件从报告中彻底消失, 而串行路径按 ADR-053 保留它并输出
+        # notApplicable —— 两路径会产出不同的报告。提前 return 同时跳过缓存写入。
+        return result
     if store is not None:
         try:
             stat = fp.stat()

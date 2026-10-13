@@ -12,8 +12,6 @@ from typing import Any
 
 import yaml
 
-from tools.scripts._common import rules_dir as _rules_dir  # noqa: I001
-
 # ──────────────────────────────────────────────────────────
 # Cached rule loading (#7 lazy loading)
 # ──────────────────────────────────────────────────────────
@@ -33,22 +31,14 @@ def _load_raw_rules(rule_path_str: str) -> dict[str, Any]:
 def load_rules(language: str, framework_dir: Path | None = None) -> dict[str, Any]:
     """Load rules for a language, merging with common rules.
 
-    Results are cached via functools.lru_cache on the raw YAML load.
-    Common security rules are automatically merged.
+    委托给 rules_engine.rule_loader: 本模块曾是它的无缓存分叉, 已产生行为分歧 ——
+    原实现在语言缺少 languages/<lang>/rules.d/anti_patterns.yml 时提前返回
+    embedded 规则并跳过 common 规则合并, 导致 C 语言拿到 0 条通用规则
+    (引擎侧为 28 条)。引擎的 fallback 路径同样会合并 common 规则。
     """
-    base_dir = framework_dir or _rules_dir()
-    rules_path = base_dir / "languages" / language / "rules.d" / "anti_patterns.yml"
+    from tools.scripts.rules_engine.rule_loader import load_rules as _engine_load_rules
 
-    rules = _load_raw_rules(str(rules_path))
-    if not rules:
-        return _get_embedded_rules(language)
-
-    # Merge common security rules
-    common = _load_common_rules(base_dir)
-    if common:
-        rules = _merge_rules(rules, common)
-
-    return rules
+    return _engine_load_rules(language, framework_dir)
 
 
 def load_custom_rules(project_dir: Path) -> dict[str, Any]:

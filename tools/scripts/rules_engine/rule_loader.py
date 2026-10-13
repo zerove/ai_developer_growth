@@ -105,7 +105,10 @@ def _disk_cache_lock(*, shared: bool) -> Iterator[None]:
     故用缓存目录路径的 sha1 前缀派生, 既保证“同一份缓存 → 同一把锁”
     (互斥成立), 又保证“不同缓存 → 不同锁”(互不干扰)。
     """
-    digest = hashlib.sha1(str(_DISK_CACHE_DIR.resolve()).encode()).hexdigest()[:12]
+    # sha256 而非 sha1: 此前用 sha1 既被 bandit (B324) 拦截, 也被 ADG 自身的
+    # "使用 SHA1" 规则拦截 —— usedforsecurity=False 只能消前者, 消不掉后者。
+    # 此处仅把缓存目录路径派生成锁文件短名, 无安全用途, 换 sha256 无额外成本。
+    digest = hashlib.sha256(str(_DISK_CACHE_DIR.resolve()).encode()).hexdigest()[:12]
     lock_path = Path(tempfile.gettempdir()) / f"adg-rules-disk-cache-{digest}.lock"
     lock_path.touch(exist_ok=True)
     with lock_path.open("r+") as handle:

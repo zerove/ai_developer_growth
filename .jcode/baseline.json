@@ -1,22 +1,25 @@
 {
   "version": 1,
   "files": {
+    ".jcode/scripts/context-sync.py": {
+      "structure:函数超过 50 行 (实际 60 行)": 1
+    },
+    ".jcode/scripts/jcode-init.py": {
+      "structure:函数超过 50 行 (实际 113 行)": 1,
+      "type:使用 Any 类型": 1
+    },
+    ".jcode/scripts/self-correction-loop.py": {
+      "type:使用 Any 类型": 2
+    },
     "scripts/team-radar-collect.py": {
       "structure:函数超过 50 行 (实际 63 行)": 1,
       "structure:函数超过 50 行 (实际 83 行)": 1
     },
-    "tools/multiproject/__init__.py": {
-      "structure:函数超过 50 行 (实际 69 行)": 1
-    },
     "tools/lsp/server.py": {
       "structure:函数超过 50 行 (实际 58 行)": 1
     },
-    ".jcode/scripts/jcode-init.py": {
-      "structure:函数超过 50 行 (实际 110 行)": 1
-    },
-    ".jcode/scripts/self-correction-loop.py": {
-      "structure:函数超过 50 行 (实际 61 行)": 1,
-      "structure:函数超过 50 行 (实际 55 行)": 1
+    "tools/multiproject/__init__.py": {
+      "structure:函数超过 50 行 (实际 69 行)": 1
     },
     "tools/scripts/report_generator.py": {
       "type:使用 Any 类型": 3

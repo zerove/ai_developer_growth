@@ -92,7 +92,7 @@ target-version = "py311"
 exclude = ["examples/**"]
 
 [tool.coverage.run]
-source = ["tools.scripts", "tools.lsp"]
+source = ["tools", "tools.lsp"]
 omit = ["*/tests/*", "*/__pycache__/*", "*/lsp_server.py"]
 branch = true
 

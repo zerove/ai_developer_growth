@@ -187,7 +187,7 @@ class TestRunTests:
         assert "-m" in args
         assert "pytest" in args
         assert "tests/" in args
-        assert "--cov=tools/scripts" in args
+        assert "--cov=tools" in args, "本地门禁口径应与 CI 一致(--cov=tools), 见 basic_checks.run_tests"
         # hook 入口脚本目录必须与 tools/ 一同纳入覆盖率门禁。
         # 该目录曾完全在门禁之外，劣化不会触发任何报警。
         assert "--cov=.jcode/scripts" in args

@@ -231,7 +231,12 @@ def run_tests() -> tuple[bool, str]:
         "pytest",
         "tests/",
         "-v",
-        "--cov=tools/scripts",
+        # 与 CI (jobs/tests.yml) 同一口径: --cov=tools。此前本地用
+        # --cov=tools/scripts, 把 tools/ 下 9 个子包 (dashboard/report/
+        # marketplace/cicd/fix_engine/multiproject/chat_integration/
+        # ai_recommender/benchmarks, 约 2540 LOC) 排除在度量之外, 本地看到的
+        # 覆盖率因此偏高。实测纳入后总覆盖率 87.15%, 仍高于 80% 门禁。
+        "--cov=tools",
         "--cov=.jcode/scripts",
         "--cov-report=term-missing",
         "--tb=short",

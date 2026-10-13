@@ -27,9 +27,11 @@ ROOT = Path(__file__).resolve().parent.parent
 GATE_BUILDER = ROOT / "tools" / "scripts" / "hooks" / "basic_checks.py"
 CI_TESTS = ROOT / ".github" / "workflows" / "jobs" / "tests.yml"
 
-REQUIRED_TREES = ("--cov=tools/scripts", "--cov=.jcode/scripts")
-# CI 用更宽的 --cov=tools（已包含 tools/scripts），两个执行点口径不同，
-# 但都必须覆盖 .jcode/scripts —— hook 入口脚本历史上正是从这里掉的。
+REQUIRED_TREES = ("--cov=tools", "--cov=.jcode/scripts")
+# 本地与 CI 已统一为 --cov=tools。此前本地用 --cov=tools/scripts, 把
+# tools/ 下 9 个子包排除在度量外, 本地看到的覆盖率因此偏高; CI 虽测全,
+# 但开发者日常先看本地门禁, 那 4 个子包缺陷正是在这层差异下溜过去的。
+# .jcode/scripts 仍须显式声明 —— hook 入口脚本历史上正是从这里掉的。
 REQUIRED_CI_FLAGS = ("--cov=tools", "--cov=.jcode/scripts")
 MIN_STANDARD = 80
 MEASURED_WITH_BOTH = 86.0

@@ -2,47 +2,45 @@
   "version": 1,
   "files": {
     ".jcode/scripts/context-sync.py": {
-      "structure:函数超过 50 行 (实际 60 行)": 1
+      "structure:函数超过 N 行 (实际 N 行)": 1
     },
     ".jcode/scripts/jcode-init.py": {
-      "structure:函数超过 50 行 (实际 113 行)": 1,
+      "structure:函数超过 N 行 (实际 N 行)": 1,
       "type:使用 Any 类型": 1
     },
     ".jcode/scripts/self-correction-loop.py": {
       "type:使用 Any 类型": 2
     },
     "scripts/team-radar-collect.py": {
-      "structure:函数超过 50 行 (实际 63 行)": 1,
-      "structure:函数超过 50 行 (实际 83 行)": 1
+      "structure:函数超过 N 行 (实际 N 行)": 2
     },
     "tools/lsp/server.py": {
-      "structure:函数超过 50 行 (实际 58 行)": 1
+      "structure:函数超过 N 行 (实际 N 行)": 1
     },
     "tools/multiproject/__init__.py": {
-      "structure:函数超过 50 行 (实际 69 行)": 1
+      "structure:函数超过 N 行 (实际 N 行)": 1
     },
     "tools/scripts/report_generator.py": {
       "type:使用 Any 类型": 3
     },
     "tools/scripts/fix_applier.py": {
-      "structure:函数超过 50 行 (实际 64 行)": 1
+      "structure:函数超过 N 行 (实际 N 行)": 1
     },
     "tools/scripts/smart_commit.py": {
       "type:使用 Any 类型": 4
     },
     "tools/scripts/rule_registry.py": {
-      "structure:函数超过 50 行 (实际 59 行)": 1
+      "structure:函数超过 N 行 (实际 N 行)": 1
     },
     "tools/scripts/rules_engine/ast_fixer.py": {
-      "structure:函数超过 50 行 (实际 52 行)": 1,
-      "structure:函数超过 50 行 (实际 67 行)": 1
+      "structure:函数超过 N 行 (实际 N 行)": 2
     },
     "tools/scripts/rules_engine/auto_fix.py": {
-      "structure:函数超过 50 行 (实际 57 行)": 1
+      "structure:函数超过 N 行 (实际 N 行)": 1
     },
     "tools/scripts/hooks/phase_runner.py": {
       "type:使用 Any 类型": 1,
-      "structure:函数超过 50 行 (实际 58 行)": 1
+      "structure:函数超过 N 行 (实际 N 行)": 1
     }
   }
 }

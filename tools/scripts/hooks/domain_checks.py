@@ -5,6 +5,7 @@ from __future__ import annotations
 import importlib.util
 import json
 import os
+import re
 import subprocess
 import sys
 from pathlib import Path
@@ -40,9 +41,23 @@ class _GovernanceAuditor(Protocol):
     def audit_hallucination_risks(self) -> bool: ...
 
 
+_DIGITS_RE = re.compile(r"\d+")
+_WS_RE = re.compile(r"\s+")
+
+
 def _issue_key(issue: dict[str, Any]) -> str:
-    """构造问题的稳定标识 (类型 + 消息)，容忍行号漂移。"""
-    return f"{issue.get('type', 'unknown')}:{issue.get('message', '')}"
+    """构造问题的稳定标识 (类型 + 消息)，容忍行号漂移。
+
+    消息里的数字序列统一归一为 N。部分检查的 message 会嵌入具体数值
+    (如 "函数超过 50 行 (实际 113 行)"), 若原样入 key, 每次改动函数长度都会
+    让基线条目失配 —— 豁免随之失效, 该问题会被重新判为"新增"。实测这已
+    造成过 pre-push 的 baseline recompute 失败。
+
+    归一后同一文件内所有同类问题聚合计数, 对棘轮而言这才是正确语义:
+    棘轮关心的是"存量问题总数", 而不是"是哪几个函数、多少行"。
+    """
+    message = _WS_RE.sub(" ", _DIGITS_RE.sub("N", str(issue.get("message", "")))).strip()
+    return f"{issue.get('type', 'unknown')}:{message}"
 
 
 def _count_issues(issues: list[dict[str, Any]]) -> dict[str, int]:

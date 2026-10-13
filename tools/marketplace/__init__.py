@@ -82,12 +82,17 @@ def install_pack(
     # Load existing config
     config_file = adg_dir / "rules.yml"
     existing_rules: list[dict[str, Any]] = []
+    existing_config: dict[str, Any] = {}
     if config_file.exists():
         try:
             content = config_file.read_text()
             if "custom_rules:" in content:
                 data = yaml.safe_load(content)
-                existing_rules = data.get("custom_rules", [])
+                if isinstance(data, dict):
+                    # 整份配置都要留着: 原实现只取 custom_rules 后整体重写,
+                    # 会把 severity_overrides 等本工具不管理的键一并抹掉。
+                    existing_config = data
+                    existing_rules = data.get("custom_rules", [])
         except Exception:
             # 规则配置损坏时忽略，从零构建
             pass
@@ -103,10 +108,15 @@ def install_pack(
                     new_rules.append(rule_with_lang)
                     existing_rules.append(rule_with_lang)
 
-    # Write back
+    # Write back: 保留原有全部键, 只更新自己管理的两个。installed_packs 追加
+    # 而非覆盖, 否则每装一个包都会抹掉此前安装记录。
+    installed = list(existing_config.get("installed_packs", []))
+    if pack_id not in installed:
+        installed.append(pack_id)
     config = {
+        **existing_config,
         "custom_rules": existing_rules,
-        "installed_packs": [pack_id],
+        "installed_packs": installed,
     }
     config_file.write_text(yaml.dump(config, default_flow_style=False))
 

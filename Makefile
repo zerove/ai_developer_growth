@@ -10,16 +10,17 @@ format:  ## 运行 ruff format 检查
 	python -m tools.scripts.hooks_runner format
 
 format-fix:  ## 自动修复格式
-	python -m tools.scripts.hooks_runner format
+	python -m tools.scripts.hooks_runner format --fix
 
 typecheck:  ## 运行 mypy 类型检查
 	python -m tools.scripts.hooks_runner typecheck
 
-test:  ## 运行 pytest 测试 (并行)
+test:  ## 运行 pytest 测试 (并行, 始终产出覆盖率报告)
 	python -m tools.scripts.hooks_runner test
 
-test-cov:  ## 运行测试并生成覆盖率报告
-	python -m tools.scripts.hooks_runner test --cov
+test-cov:  ## 同test —— 覆盖率已始终启用, 保留此名仅为向后兼容
+	@echo "注意: 覆盖率已始终启用 (--cov=tools --cov=.jcode/scripts), test-cov 等价于 test"
+	@$(MAKE) --no-print-directory test
 
 check-quality:  ## 运行完整质量检查 (lint + format + typecheck + test + coverage)
 	python -m tools.scripts.hooks_runner full

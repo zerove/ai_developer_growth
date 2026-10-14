@@ -92,16 +92,18 @@ target-version = "py311"
 exclude = ["examples/**"]
 
 [tool.coverage.run]
-source = ["tools", "tools.lsp"]
+# 与本地 (hooks/basic_checks.py) 及 CI (jobs/tests.yml) 实际传入的 --cov 口径一致。
+# 此前此处写的是 ["tools", "tools.lsp"] —— tools.lsp 是 tools 的子集, 冗余;
+# 而真正被两个调用方度量、却未在此声明的 .jcode/scripts 反而缺席, 导致
+# `coverage report` 的 source 与门禁口径不一致。
+source = ["tools", ".jcode/scripts"]
 omit = ["*/tests/*", "*/__pycache__/*", "*/lsp_server.py"]
 branch = true
 
 [tool.coverage.report]
-# 与 [tool.adg] cov_min 保持一致（hooks/basic_checks.py 会用 --cov-fail-under
-# 覆盖本值，因此真正生效的是 cov_min）。实测 --cov=tools/scripts --cov=.jcode/scripts
-# 约 87%（.jcode/scripts 为 hook 入口脚本，此前完全在门禁之外，现已纳入），
-# 阈值 80 留约 7 个百分点余量作为回归下限。
-fail_under = 80
+# 覆盖率阈值的唯一来源是 [tool.adg] cov_min: 本地由 hooks/basic_checks.py 以
+# --cov-fail-under 传入, CI 由 jobs/tests.yml 读取同一键做 XML 校验。
+# 此处曾重复写一份 fail_under, 两者可各自漂移且无人察觉, 故不再重复声明。
 exclude_lines = [
     "pragma: no cover",
     "def __repr__",

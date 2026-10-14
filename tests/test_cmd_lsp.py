@@ -29,9 +29,7 @@ def servers():
     会 sock.accept() 一直阻塞, 于是逻辑回归表现为 300s 挂起而非断言失败 ——
     CI 上是一笔实打实的浪费, 且报错完全指不到改动点。
     """
-    with patch("tools.lsp.server.run_stdio_server") as stdio, patch(
-        "tools.lsp.server.run_tcp_server"
-    ) as tcp:
+    with patch("tools.lsp.server.run_stdio_server") as stdio, patch("tools.lsp.server.run_tcp_server") as tcp:
         yield stdio, tcp
 
 

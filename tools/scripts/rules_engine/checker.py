@@ -2,12 +2,14 @@
 
 from __future__ import annotations
 
+import os
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
 from tools.scripts._common import rules_dir
 from tools.scripts.rules_engine.logger import logger
 
+from ._checker_linters import _batched_linters as _batched_linters
 from ._checker_linters import _map_severity as _map_severity
 from ._checker_linters import _parse_linter_output as _parse_linter_output
 from ._checker_linters import _run_external_linters as _run_external_linters
@@ -253,18 +255,14 @@ def _discover_target_files(dirpath: Path, languages: list[str] | None) -> list[P
         ".h",
         ".hpp",
     }
-    # 性能优化: 原先对每个扩展名执行一次全树 rglob (O(15×n)),
-    # 现改为单次遍历 + suffix 过滤 + 排除目录遍历中剪枝 (O(n)),
-    # 同时消除每文件一次 set(filepath.parts) 分配。
+    # 性能: 遍历中就地剪枝排除目录 —— rglob("*") 不剪枝，会把 .venv/.git/node_modules
+    # 一并枚举（仓库根实测 22755 路径，0.82s）。旧注释曾误称此处已剪枝。
     files: list[Path] = []
-    for filepath in dirpath.rglob("*"):
-        if not filepath.is_file():
-            continue
-        if any(part in DEFAULT_EXCLUDED_DIRS for part in filepath.parts):
-            continue
-        if filepath.suffix.lower() not in exts:
-            continue
-        files.append(filepath)
+    excluded = DEFAULT_EXCLUDED_DIRS
+    for root, dirs, filenames in os.walk(dirpath):
+        dirs[:] = [d for d in dirs if d not in excluded]
+        root_path = Path(root)
+        files.extend(p for p in (root_path / name for name in filenames) if p.suffix.lower() in exts)
 
     if languages:
         files = [f for f in files if _detect_language(f) in languages]
@@ -339,6 +337,7 @@ def _check_with_cache(
     rules_hash: str,
     semantic: bool,
     run_linters: bool,
+    commit: bool = True,
 ) -> tuple[CheckResult, bool]:
     """单文件检查（带缓存），返回 (CheckResult, cache_degraded_increment)。
 
@@ -366,20 +365,26 @@ def _check_with_cache(
                 str(filepath),
                 stat.st_mtime,
                 stat.st_size,
-                {
-                    "language": result.language,
-                    "passed": result.passed,
-                    "errors": result.error_count,
-                    "warnings": result.warning_count,
-                    "info": result.info_count,
-                    "issues": [i.to_dict() for i in result.issues],
-                },
+                _result_payload(result),
                 rules_hash,
+                commit=commit,
             )
         except Exception as exc:  # noqa: BLE001 - 缓存写入失败仅丢性能，检查结论已得出
             cache_degraded = True
             logger.debug("缓存写入失败（不影响检查结果）%s: %s", filepath, exc)
     return result, cache_degraded
+
+
+def _result_payload(result: CheckResult) -> dict[str, Any]:
+    """CheckResult →缓存表行负载。"""
+    return {
+        "language": result.language,
+        "passed": result.passed,
+        "errors": result.error_count,
+        "warnings": result.warning_count,
+        "info": result.info_count,
+        "issues": [i.to_dict() for i in result.issues],
+    }
 
 
 def _check_files_serial(
@@ -396,14 +401,24 @@ def _check_files_serial(
     """
     results: list[CheckResult] = []
     degraded = 0
-    for filepath in files:
-        result, was_degraded = _check_with_cache(
-            filepath, _detect_language(filepath), rules, store, rules_hash, semantic, run_linters
-        )
-        if was_degraded:
-            degraded += 1
-        # Phase 33b-13 fix (ADR-053): 不再静默过滤 skipped 文件, 让 report_generator 输出 notApplicable
-        results.append(result)
+    with _batched_linters(files, run_linters):
+        for filepath in files:
+            result, was_degraded = _check_with_cache(
+                filepath,
+                _detect_language(filepath),
+                rules,
+                store,
+                rules_hash,
+                semantic,
+                run_linters,
+                commit=False,
+            )
+            if was_degraded:
+                degraded += 1
+            # Phase 33b-13 fix (ADR-053): 不再静默过滤 skipped 文件, 让 report_generator 输出 notApplicable
+            results.append(result)
+        if store is not None:
+            store.commit()
     return results, degraded
 
 
@@ -431,7 +446,12 @@ def _check_files_parallel(
     cache_db: str | None = str(db_path) if use_cache and store is not None else None
     worker_rules_hash = rules_hash
     results: list[CheckResult] = []
-    with ProcessPoolExecutor(max_workers=jobs, initializer=_worker_init, initargs=(warmup_rules, cache_db)) as executor:
+    # 合并进同一个 with: prime 必须发生在进程池创建之前 (worker 经 fork 继承该表,
+    # 子进程内不再 spawn)。非 fork 启动方式下 worker 拿不到表, 自动回退逐文件 spawn。
+    with (
+        _batched_linters(files, run_linters),
+        ProcessPoolExecutor(max_workers=jobs, initializer=_worker_init, initargs=(warmup_rules, cache_db)) as executor,
+    ):
         worker_results: Iterator[CheckResult | None] = executor.map(
             _worker_check,
             pairs,

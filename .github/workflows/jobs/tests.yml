@@ -30,10 +30,12 @@ jobs:
     - run: pip install -e .
     - name: Read coverage threshold from pyproject.toml
       id: coverage-config
+      # cov_min 是覆盖率的唯一来源: 本地 hooks/basic_checks.py 以
+      # --cov-fail-under 读同一键。此前本步骤读 [tool.coverage.report].fail_under,
+      # 与 cov_min 是两份可各自漂移的副本。
       run: "python -c \"\nimport tomllib\nwith open('pyproject.toml', 'rb') as f:\n\
-        \    data = tomllib.load(f)\nfail_under = data.get('tool', {}).get('coverage',\
-        \ {}).get('report', {}).get('fail_under', 80)\nprint(f'fail_under={fail_under}')\n\
-        \" >> $GITHUB_OUTPUT\n"
+        \    data = tomllib.load(f)\nthreshold = data.get('tool', {}).get('adg',\
+        \ {}).get('cov_min', 80)\nprint(f'fail_under={threshold}')\n        \" >> $GITHUB_OUTPUT\n"
     - name: Restore coverage cache
       uses: actions/cache@v4
       with:

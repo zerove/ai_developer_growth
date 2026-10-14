@@ -2,7 +2,7 @@
 
 [![CI](https://img.shields.io/badge/CI-passing-brightgreen)](#)
 [![Python 3.11+](https://img.shields.io/badge/Python-3.11+-blue.svg)](https://www.python.org/downloads/)
-[![Coverage](https://img.shields.io/badge/Coverage-87%25-brightgreen)](#)
+[![Coverage](https://img.shields.io/badge/Coverage-86%25-brightgreen)](#)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](CONTRIBUTING.md)
 [![Stars](https://img.shields.io/github/stars/zerove/ai_developer_growth)](https://github.com/zerove/ai_developer_growth/stargazers)
@@ -169,7 +169,7 @@ python ai-dev-framework/core/jcode_init.py your-project --language python
 | 📚 实践案例 | 48 个 |
 | 🛠️ 代码示例 | 10 个 |
 | 📋 架构决策 | 70 条 |
-| 🧪 测试用例 | 5113 个 |
+| 🧪 测试用例 | `make test` |
 | ✅ 测试覆盖率 | 87% |
 
 ### 🔌 自检：门禁是否还活着
@@ -229,7 +229,7 @@ ai_developer_growth/
 │   ├── rules_engine/       # 规则引擎 (26 语言)
 │   └── rule_catalog.py     # 规则包管理
 ├── agents/                  # Agent 定义
-├── tests/                   # 5113 个测试
+├── tests/                   # 单元/契约测试
 ```
 
 ---
@@ -240,7 +240,7 @@ ai_developer_growth/
 
 - **GOVERNANCE.md** - 完整的治理标准
 - **4 道质量门禁** - 确保代码质量
-- **26 种语言规范** - Python, TypeScript, Rust, Go...
+- **多语言规范** - 规则引擎当前内置 25 种语言 (Python, TypeScript, Rust, Go...)
 - **9 种框架规范** - React, Vue, FastAPI, Spring Boot...
 
 详见 [[docs/agent-dev/quality-gates|质量门禁]]。

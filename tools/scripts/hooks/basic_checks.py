@@ -95,14 +95,18 @@ def _run_subprocess(
         return False, f"{description}: timed out after {timeout}s"
 
 
-def run_lint() -> tuple[bool, str]:
-    """Run ruff lint check."""
-    return _run_subprocess(["ruff", "check", "."], timeout=120, description="Lint")
+def run_lint(fix: bool = False) -> tuple[bool, str]:
+    """Run ruff lint check;fix=True 时原地改写。"""
+    cmd = ["ruff", "check", "."]
+    if fix:
+        cmd.append("--fix")
+    return _run_subprocess(cmd, timeout=120, description="Lint")
 
 
-def run_format_check() -> tuple[bool, str]:
-    """Run ruff format check."""
-    return _run_subprocess(["ruff", "format", "--check", "."], timeout=120, description="Format")
+def run_format_check(fix: bool = False) -> tuple[bool, str]:
+    """Run ruff format check;fix=True 时原地改写 (不是校验, 是应用)。"""
+    cmd = ["ruff", "format", "." if fix else "--check", "."]
+    return _run_subprocess(cmd, timeout=120, description="Format")
 
 
 def run_typecheck() -> tuple[bool, str]:

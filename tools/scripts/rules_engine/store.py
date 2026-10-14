@@ -293,8 +293,14 @@ class CheckStore:
         size: int,
         result: dict[str, Any],
         rules_hash: str = "",
+        commit: bool = True,
     ) -> None:
-        """写入/更新某文件的缓存结果（键含规则签名）。"""
+        """写入/更新某文件的缓存结果（键含规则签名）。
+
+        commit=False 时只留在事务里, 由调用方批量提交 —— 逐文件 commit 会触发
+        一次fsync, N 个文件即N 次。项目自测 (perf_benchmark.py) 记录过冷缓存下
+        启用缓存反而比不启用慢 6.5 倍 (21.5s vs 3.3s), 逐文件 fsync 是主因之一。
+        """
         issues = result.get("issues", [])
         self.conn.execute(
             """INSERT OR REPLACE INTO check_cache
@@ -315,6 +321,11 @@ class CheckStore:
                 _now_iso(),
             ),
         )
+        if commit:
+            self.conn.commit()
+
+    def commit(self) -> None:
+        """提交当前事务中累积的所有写入。"""
         self.conn.commit()
 
     def get_cached_files(self) -> list[dict[str, Any]]:

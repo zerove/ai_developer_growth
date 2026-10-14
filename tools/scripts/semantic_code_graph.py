@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import ast
 import json
+import os
 
 # ADR-079: 既支持 `python -m tools.scripts.<name>`, 也支持
 # `python tools/scripts/<name>.py` 直接执行 —— 后者 sys.path[0] 是脚本所在
@@ -64,17 +65,24 @@ class SemanticCodeGraph:
 
         跳过 .venv/build/dist/.git/__pycache__ 目录.
         """
-        py_files = list(self.root_dir.glob("**/*.py"))
-        for file_path in py_files:
-            if any(part in {".venv", "build", "dist", ".git", "__pycache__"} for part in file_path.parts):
-                continue
-            try:
-                content = file_path.read_text(encoding="utf-8")
-                tree = ast.parse(content, filename=str(file_path))
-                rel_path = str(file_path.relative_to(self.root_dir))
-                self._parse_ast(tree, rel_path)
-            except Exception as e:
-                print(f"Warning: could not parse {file_path}: {e}")
+        skip = {".venv", "build", "dist", ".git", "__pycache__"}
+        # os.walk + 就地剪枝: glob("**/*.py") 仍会枚举被排除目录下的全部 .py
+        # root 必须 resolve: os.walk 产出的 root 不带 "./" 前缀, 直接 relative_to
+        # 未归一化的 self.root_dir (如 Path(".")) 会抛 ValueError。
+        walk_root = self.root_dir.resolve()
+        for root, dirs, filenames in os.walk(walk_root):
+            dirs[:] = [d for d in dirs if d not in skip]
+            for name in filenames:
+                if not name.endswith(".py"):
+                    continue
+                file_path = Path(root) / name
+                try:
+                    content = file_path.read_text(encoding="utf-8")
+                    tree = ast.parse(content, filename=str(file_path))
+                    rel_path = str(file_path.relative_to(walk_root))
+                    self._parse_ast(tree, rel_path)
+                except Exception as e:
+                    print(f"Warning: could not parse {file_path}: {e}")
 
     def _build_name_index(self) -> dict[str, set[str]]:
         """构建 name → keys 索引, O(1) 依赖解析 (方法级 helper).

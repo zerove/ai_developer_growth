@@ -193,14 +193,14 @@ logger = logging.getLogger(__name__)
 # that delegate to the original implementations
 
 
-def run_lint() -> tuple[bool, str]:
+def run_lint(fix: bool = False) -> tuple[bool, str]:
     """Backward compatibility alias for run_lint."""
-    return _orig_run_lint()
+    return _orig_run_lint(fix)
 
 
-def run_format_check() -> tuple[bool, str]:
+def run_format_check(fix: bool = False) -> tuple[bool, str]:
     """Backward compatibility alias for run_format_check."""
-    return _orig_run_format_check()
+    return _orig_run_format_check(fix)
 
 
 def run_typecheck() -> tuple[bool, str]:
@@ -757,6 +757,8 @@ def _dispatch(args: argparse.Namespace) -> int:
 
     if cmd in _SIMPLE_COMMANDS:
         func = globals()[_SIMPLE_COMMANDS[cmd]]
+        if cmd in ("lint", "format") and getattr(args, "fix", False):
+            return _run_simple(lambda: func(fix=True))
         return _run_simple(func)
 
     # 多语言版本命令（显式指定 --lang 时使用）

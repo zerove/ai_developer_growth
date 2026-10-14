@@ -91,7 +91,10 @@ class TestLocalGateScope:
     def test_project_standard_not_lowered(self) -> None:
         cfg = _config()
         assert cfg["tool"]["adg"]["cov_min"] >= MIN_STANDARD
-        assert cfg["tool"]["coverage"]["report"]["fail_under"] >= MIN_STANDARD
+        # cov_min 是唯一来源: 本地由 --cov-fail-under 读它, CI 的 coverage-config
+        # 步骤读同一键。曾在此重复断言 [tool.coverage.report].fail_under, 但两份
+        # 副本可各自漂移, 故已删除后者。
+        assert "fail_under" not in cfg["tool"]["coverage"]["report"], "覆盖率阈值只应在 [tool.adg].cov_min 定义一处"
 
     def test_threshold_has_headroom_over_measured(self) -> None:
         """实测合并约 86%；阈值须留余量，又不得高到无法达成。"""

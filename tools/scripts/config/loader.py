@@ -14,7 +14,7 @@ from __future__ import annotations
 import os
 import threading
 from collections.abc import Callable
-from dataclasses import asdict, is_dataclass
+from dataclasses import asdict, fields, is_dataclass
 from pathlib import Path
 from typing import Any
 
@@ -276,7 +276,12 @@ def _convert_language_config(d: dict[str, Any]) -> LanguageConfig:
 def _convert_exception_rule(d: dict[str, Any]) -> ExceptionRule:
     if "severity" in d and isinstance(d["severity"], str):
         d["severity"] = SeverityLevel(d["severity"])
-    return ExceptionRule(**d)
+    # 只传 ExceptionRule 真正声明的字段: .jcode/governance.yaml 与
+    # exceptions.yaml 的条目里带有 metadata 键, 直接 **d 展开会让整个配置
+    # 加载抛 TypeError —— 一个多余字段就能让配置整体不可用。忽略未知键同时
+    # 让 YAML 向前兼容。
+    known = {f.name for f in fields(ExceptionRule)}
+    return ExceptionRule(**{k: v for k, v in d.items() if k in known})
 
 
 def _convert_parallel_config(d: dict[str, Any]) -> ParallelConfig:

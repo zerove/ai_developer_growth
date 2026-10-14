@@ -35,11 +35,15 @@ jobs:
         with:
           files: docs/case-studies/**/*.md
 
+      # 文件名来自 PR, 可含 $(...) 等 shell 元字符。${{ }} 在 shell 之前做文本替换,
+      # 因此直接插入 run: 等于让文件名成为脚本代码。必须经env 传入。
       - name: Validate case study structure
         id: validate
+        env:
+          CHANGED_FILES: ${{ steps.changed.outputs.all_changed_files }}
         run: |
           PASSED=true
-          for file in ${{ steps.changed.outputs.all_changed_files }}; do
+          for file in $CHANGED_FILES; do
             echo "=== Validating: $file ==="
             python tools/scripts/validate_case_study.py --path "$file" --strict || PASSED=false
           done
@@ -47,8 +51,11 @@ jobs:
 
       - name: ADG check code snippets
         id: adg-check
+        env:
+          CHANGED_FILES: ${{ steps.changed.outputs.all_changed_files }}
         run: |
-          python tools/scripts/validate_case_study.py --adg-scan "${{ steps.changed.outputs.all_changed_files }}"
+          # shellcheck disable=SC2086 # 需按空白分词成多个路径参数
+          python tools/scripts/validate_case_study.py --adg-scan $CHANGED_FILES
 
       - name: Generate review summary
         if: always()

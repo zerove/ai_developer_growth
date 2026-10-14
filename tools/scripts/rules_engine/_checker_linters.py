@@ -108,7 +108,7 @@ def _parse_linter_output(output: str, lang: str, filepath: str) -> list[Issue]:
                 issues.append(
                     Issue(
                         rule_id=item.get("code", "ruff"),
-                        severity=_map_severity(item.get("level", "warning")),
+                        severity=_map_severity(item.get("severity", "warning")),
                         category="linter",
                         # 批量调用时每条自带 filename; 单文件调用时回退到入参。
                         file=item.get("filename") or filepath,
@@ -126,7 +126,10 @@ def _parse_linter_output(output: str, lang: str, filepath: str) -> list[Issue]:
                             rule_id=msg.get("ruleId", "eslint"),
                             severity=_map_severity(msg.get("severity", 1)),
                             category="linter",
-                            file=filepath,
+                            # ESLint 的 JSON 顶层是数组, 每个元素自带 filePath。
+                            # 批量化时入参 filepath 为空串, 若不在此回退则全部 issue
+                            # 会被归到 CWD 而无法与待查文件匹配, 导致结果被丢弃。
+                            file=file_result.get("filePath") or filepath,
                             line=msg.get("line", 1),
                             column=msg.get("column", 1),
                             message=msg.get("message", ""),

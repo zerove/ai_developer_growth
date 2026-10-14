@@ -70,7 +70,7 @@ def check_file(
         return skip_result
 
     lang, rules, content, lines = _prepare_file_check(filepath, language, rules)
-    if lang is None or rules is None:
+    if lang is None or rules is None or content is None or lines is None:
         return CheckResult(file=str(filepath), issues=[], language="unknown", skipped=True)
 
     issues = _run_all_checkers(filepath, content, lines, lang, rules, run_linters=run_linters)
@@ -104,8 +104,11 @@ def _check_file_skip_conditions(filepath: Path, language: str | None) -> CheckRe
 
 def _prepare_file_check(
     filepath: Path, language: str | None, rules: dict[str, Any] | None
-) -> tuple[str | None, dict[str, Any] | None, str, list[str]]:
-    """准备检查所需的语言、规则、内容、行列表."""
+) -> tuple[str | None, dict[str, Any] | None, str | None, list[str] | None]:
+    """准备检查所需的语言、规则、内容、行列表.
+
+    content/lines 为 None 表示文件无法安全解析 (非UTF-8), 调用方须按 skipped 处理。
+    """
     lang = language or _detect_language(filepath)
     if lang == "unknown":
         return None, None, "", []
@@ -114,9 +117,13 @@ def _prepare_file_check(
         rules = load_rules_for_language(lang)
 
     try:
-        content = filepath.read_text(encoding="utf-8")
+        # utf-8-sig 而非 utf-8: 后者不剥离 BOM, 导致文件首行的 ^ 锚点规则全部失效。
+        content = filepath.read_text(encoding="utf-8-sig")
     except UnicodeDecodeError:
-        return lang, rules, "", []
+        # 非UTF-8 文件返回空内容后, check_file 会以 0 问题判定为 passed=True ——
+        # 即"无法读取"被呈现为"检查通过"。改为显式跳过, 使其不进入通过/失败统计。
+        logger.warning(f"跳过非 UTF-8 文件 (无法安全解析): {filepath}")
+        return lang, rules, None, None
 
     lines = content.splitlines()
     return lang, rules, content, lines
@@ -344,10 +351,14 @@ def _check_with_cache(
     ADR-014: 从 check_directory 拆出 cache logic。store=None 时退化为完整检查。
     """
     cache_degraded = False
+    # semantic / run_linters 会改变结果却不在 store 的键里 (键仅 file+mtime+size+rules_hash),
+    # 导致 run_linters=False 跑出的无 linter 结果会被后续 run_linters=True 复用并静默丢失
+    # 全部 linter 问题。两者并入签名, 无需改表结构。
+    cache_signature = f"{rules_hash}:s{int(semantic)}:l{int(run_linters)}"
     if store is not None:
         try:
             stat = filepath.stat()
-            cached = store.get_cached_result(str(filepath), stat.st_mtime, stat.st_size, rules_hash)
+            cached = store.get_cached_result(str(filepath), stat.st_mtime, stat.st_size, cache_signature)
             if cached is not None:
                 issues = [Issue(**i) for i in cached["issues"]]
                 return (
@@ -366,7 +377,7 @@ def _check_with_cache(
                 stat.st_mtime,
                 stat.st_size,
                 _result_payload(result),
-                rules_hash,
+                cache_signature,
                 commit=commit,
             )
         except Exception as exc:  # noqa: BLE001 - 缓存写入失败仅丢性能，检查结论已得出

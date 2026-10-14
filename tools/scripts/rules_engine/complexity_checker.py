@@ -96,7 +96,9 @@ def _check_function_params(
         max_params: 最大参数数阈值
         issues: 追加目标 list
     """
-    num_params = len(node.args.args) + len(node.args.kwonlyargs)
+    # posonlyargs (位置限定参数) 也是形参, 漏计会让
+    # `def f(a, b, c, d, e, /, g, h)` 被算成 2 个参数而非 7 个。
+    num_params = len(node.args.posonlyargs) + len(node.args.args) + len(node.args.kwonlyargs)
     if node.args.vararg:
         num_params += 1
     if node.args.kwarg:

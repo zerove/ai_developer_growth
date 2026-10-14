@@ -1,6 +1,6 @@
 # 晋升评估表 - 基于能力雷达模型
 
-> 基于 [AI 时代开发者能力雷达模型](../mindset/capability-model.md) 的晋升评估标准化表单
+> 基于 [AI 时代开发者能力雷达模型](../docs/mindset/capability-model.md) 的晋升评估标准化表单
 
 ---
 

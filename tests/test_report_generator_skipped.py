@@ -67,21 +67,19 @@ def test_skipped_excluded_from_failures() -> None:
 
     results, _ = _real_check_setup()
     total_errors, total_warnings, total_tests, failures = _count_summary_stats(results)
-    # 3 个结果, 但 r_pass (skipped=False) passed, r_fail passed (因为只有 info),
-    # r_skip skipped=True. failures 应 = 0 (没有非 skipped 失败)
-    # r_fail.passed = True (只有 info, error_count=0)
-    # r_pass.passed = True
+    # r_fail 含 invalid-syntax (ruff E999) → severity=error, 故 passed=False, failures=1。
+    # 此前该 issue 被误降级为 warning, 使语法错误文件也 passed=True; 此断言随之修正。
     # r_skip.skipped = True → 不算 passed 也不算 fail
     assert total_tests == 3
-    assert failures == 0, f"failures 应 = 0, 实际 {failures}"
+    assert failures == 1, f"failures 应 = 1 (r_fail 含 error 级语法错误), 实际 {failures}"
 
 
 def test_skipped_excluded_from_passed_count() -> None:
     """HTML passed_count 排除 skipped."""
     results, _ = _real_check_setup()
     summary = _build_json_summary(results)
-    # passed = 所有非 skipped 都 passed → True (r_pass + r_fail 都 passed)
-    assert summary["passed"] is True
+    # r_fail 含 error 级 invalid-syntax → passed=False → 整体 passed=False
+    assert summary["passed"] is False
 
 
 def test_skipped_count_in_html_summary() -> None:
@@ -92,7 +90,7 @@ def test_skipped_count_in_html_summary() -> None:
     summary = _count_html_summary(results)
     assert "skipped_count" in summary
     assert summary["skipped_count"] == 1
-    assert summary["passed_count"] == 2  # r_pass + r_fail (无 skipped)
+    assert summary["passed_count"] == 1  # 仅 r_pass; r_fail 含 error, r_skip skipped
 
 
 def test_html_report_no_crash_with_skipped() -> None:

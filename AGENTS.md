@@ -193,7 +193,6 @@ ai_developer_growth/
 │       ├── anti_pattern_checker.py
 │       ├── naming_checker.py
 │       ├── complexity_checker.py
-│       ├── security_patterns.py
 │       └── checker.py
 ├── examples/                    # 参考实现
 │   ├── ai-context-sync/

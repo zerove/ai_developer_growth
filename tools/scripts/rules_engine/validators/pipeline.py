@@ -14,6 +14,7 @@ from tools.scripts._common import (
     merge_anti_patterns as _merge_anti_patterns,
 )
 
+from ..regex_cache import get_dangerous
 from .models import Issue, ValidationResult
 
 # Rule cache
@@ -117,6 +118,11 @@ def _check_pattern_against_lines(lines: list[str], pattern_def: dict[str, Any], 
         Issue 列表
     """
     issues: list[Issue] = []
+    # 自定义规则的 pattern 来自仓库内的 .adg/rules.yml / .ai-rules/*.yml, 在 PR 场景下
+    # 由外部贡献者控制。未经灾难性回溯检测直接编译, 可被 (a|aa)+$ 之类模式挂死
+    # (ReDoS)。anti_pattern_checker 走的是带 get_dangerous 防护的路径, 此处原先不是。
+    if get_dangerous(pattern_def["pattern"]):
+        return issues
     regex = re.compile(pattern_def["pattern"])
     for line_num, line in enumerate(lines, 1):
         stripped = line.strip()

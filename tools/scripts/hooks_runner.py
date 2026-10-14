@@ -649,7 +649,14 @@ def _handle_secret_scan(args: argparse.Namespace) -> int:
     )
 
     _output_secret_result(result, args)
-    return 0 if len(result.findings) == 0 else 1
+    if result.findings:
+        return 1
+    # 工具缺失时扫描返回 0 条findings。若不区分, "没扫到" 会被当成 "干净",
+    # 即扫描器静默失效反而让门禁通过 (fail-open)。
+    if not result.tools_used:
+        print(f"❌ 无任何密钥扫描工具可用, 扫描结果不可信: {', '.join(result.errors) or '未知原因'}")
+        return 1
+    return 0
 
 
 def _handle_quality_gate_new(args: argparse.Namespace) -> int:
@@ -674,14 +681,15 @@ def _handle_quality_gate_new(args: argparse.Namespace) -> int:
                 baseline = json.load(f)
 
     # 运行质量门禁
-    run_quality_gate_new(
+    report = run_quality_gate_new(
         results,
         gate_name=args.gate,
         baseline=baseline,
         output_format=args.format,
         output_file=args.output,
     )
-    return 0
+    # 必须传播门禁结论: 此前无条件 return 0, 使该命令永远不会失败。
+    return 0 if report.overall_passed else 1
 
 
 # 基础检查命令 → 可 mock 别名函数名（测试通过 globals() patch 这些名字）

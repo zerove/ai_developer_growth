@@ -62,5 +62,5 @@ python -m pytest tests/ -v
 
 ## 相关文档
 
-- [TDD 方法论](../../docs/learning/tdd.md)
+- [TDD 方法论](../../docs/learning/test-driven-development.md)
 - [AI 驱动学习法](../../docs/learning/ai-learning-method.md)

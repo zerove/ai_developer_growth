@@ -36,11 +36,14 @@ YAML 规则文件
 - 加载: `rule_loader.load_rules()` → 内存缓存 + 磁盘缓存
 - 合并: 语言规则 + 框架规则 + 通用安全规则（全部来自 YAML）
 
-### `security_patterns.py` 的状态
+### `security_patterns.py` 已删除
 
-`tools/scripts/rules_engine/security_patterns.py` **已废弃，不在加载路径上**。
-`rule_loader.load_rules_for_language()` 不再调用它（见该函数 docstring）。
-文件仅作为历史参考保留，其 `get_security_rules()` 不参与任何规则合并。
+`tools/scripts/rules_engine/security_patterns.py` **已被删除**（提交 `d439821`，
+决策记录见 [ADR-059](../adr/ADR-059-security-patterns-dual-implementation.md)）。
+
+该文件与 `rule_loader.py` 中的 `security_patterns` 字典构成同一概念的两份并行实现
+（Python dict vs YAML），且冲突的规则 ID 命名从未被任何生产路径加载。删除前状态是
+"零生产引用"，并非"仍在但不在加载路径上"。
 
 新增跨语言安全规则请改 `ai-dev-framework/common/security.yml`。
 

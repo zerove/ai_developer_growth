@@ -43,7 +43,9 @@ def _parse_noqa_lines(lines: list[str]) -> dict[int, set[str] | None]:
     """
     noqa_by_line: dict[int, set[str] | None] = {}
     for idx, line in enumerate(lines, start=1):
-        m = re.search(r"#\s*noqa(?::\s*([A-Za-z0-9_,\-]+))?", line)
+        # \b 是必需的: 否则 `# noqas are bad` 这类普通注释因 `noqa` 只是前缀而被
+        # 当成裸 noqa, 导致整行问题被错误抑制。
+        m = re.search(r"#\s*noqa\b(?::\s*([A-Za-z0-9_,\-]+))?", line)
         if m:
             rules_str = m.group(1)
             noqa_by_line[idx] = None if not rules_str else {r.strip() for r in rules_str.split(",") if r.strip()}

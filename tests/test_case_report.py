@@ -194,3 +194,35 @@ class TestMainCli:
         inst.analyze_case.assert_called_once()
         inst.analyze_all.assert_not_called()
         capsys.readouterr()
+
+
+class TestDetailRowLayout:
+    """精确比对整行布局 —— 只断言"值出现过"抓不住列宽回归。"""
+
+    def _expected(self, d: dict) -> str:
+        return (
+            f"{d['case']:<40} "
+            f"{d['overall']:>7.1f} "
+            f"{d['authenticity']:>6.1f} "
+            f"{d['efficiency']:>6.1f} "
+            f"{d['insight']:>7.1f} "
+            f"{d['completeness']:>8.1f} "
+            f"{d['cross_refs']:>6.1f}"
+        )
+
+    def test_row_matches_exact_layout(self) -> None:
+        d = _detail()
+        assert _format_detail_row(d) == self._expected(d)
+
+    def test_case_column_left_aligned_width_40(self) -> None:
+        row = _format_detail_row(_detail(case="a.md"))
+        assert row[0:40] == "a.md".ljust(40)
+        assert row[40] == " "
+
+    def test_column_offsets_are_fixed(self) -> None:
+        """各列右边界固定: 41+7 / 49+6 / 56+6 / 63+7 / 71+8 / 80+6"""
+        row = _format_detail_row(_detail())
+        starts = [41, 49, 56, 63, 71, 80]
+        ends = [48, 55, 62, 70, 79, 86]
+        for s, e in zip(starts, ends, strict=True):
+            assert row[s - 1 : e].strip() != "", f"列区间 [{s},{e}) 为空: {row!r}"

@@ -455,7 +455,9 @@ def _check_files_parallel(
     warmup_rules = rules or {}
     pairs = [(fp, _detect_language(fp)) for fp in files]
     cache_db: str | None = str(db_path) if use_cache and store is not None else None
-    worker_rules_hash = rules_hash
+    # 与串行路径 _check_with_cache 保持一致: 缓存键必须包含 semantic / run_linters,
+    # 否则 jobs>1 + use_cache=True 时仍会复用另一组标志跑出的结果。
+    worker_rules_hash = f"{rules_hash}:s{int(semantic)}:l{int(run_linters)}"
     results: list[CheckResult] = []
     # 合并进同一个 with: prime 必须发生在进程池创建之前 (worker 经 fork 继承该表,
     # 子进程内不再 spawn)。非 fork 启动方式下 worker 拿不到表, 自动回退逐文件 spawn。

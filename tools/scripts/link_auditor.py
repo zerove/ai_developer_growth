@@ -85,7 +85,9 @@ def find_broken_links(directory: str) -> list[tuple[str, str]]:
     link_pattern = re.compile(r"\[\[([^\[\]]+?)(?:\\?\|[^\[\]]*)?\]\]")
     index = _build_index(directory)
 
-    skip_dirs = {".github/PULL_REQUEST_TEMPLATE"}
+    # .opencode 是未跟踪的 agent 运行状态目录 (含 node_modules 与会话日志),
+    # 其中的 [[...]] 是日志内容而非文档链接, 扫描它只会让门禁恒红。
+    skip_dirs = {".github/PULL_REQUEST_TEMPLATE", ".opencode"}
     placeholder_pattern = re.compile(r"^[\{\.\\/]+|[\{\.]{2,}")
 
     for root, _, files in os.walk(directory):
@@ -200,7 +202,9 @@ def find_broken_links_with_index(directory: str, index: dict[str, str]) -> list[
     """
     broken: list[tuple[str, str]] = []
     link_pattern = re.compile(r"\[\[([^\[\]]+?)(?:\\?\|[^\[\]]*)?\]\]")
-    skip_dirs = {".github/PULL_REQUEST_TEMPLATE"}
+    # .opencode 是未跟踪的 agent 运行状态目录 (含 node_modules 与会话日志),
+    # 其中的 [[...]] 是日志内容而非文档链接, 扫描它只会让门禁恒红。
+    skip_dirs = {".github/PULL_REQUEST_TEMPLATE", ".opencode"}
 
     for root, _, files in os.walk(directory):
         rel_root = os.path.relpath(root, directory)

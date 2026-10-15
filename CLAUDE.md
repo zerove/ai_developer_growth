@@ -1,7 +1,7 @@
 # CLAUDE.md - AI Developer Growth Project
 
 ## 项目概览
-这是一个开源知识库，专注于 AI 时代开发者成长方法论。包含 391 篇文档、48 个真实案例研究、10 个代码示例、70 条 ADR 决策记录，以及 4 个核心治理 Agent。新增 15
+这是一个开源知识库，专注于 AI 时代开发者成长方法论。包含 391 篇文档、48 个真实案例研究、10 个代码示例、70 条 ADR 决策记录，以及 7 个核心治理 Agent。新增 15
 
 ## 核心结构
 ```
@@ -37,7 +37,7 @@ ai_developer_growth/
 4. **community-catalyst** - 社区催化剂：贡献流程管理、案例验证、激励机制
 
 ## jcode Skills (已注册)
-本项目已注册 4 个 jcode skills，可通过斜杠命令调用：
+本项目已注册 15 个 jcode skills，可通过斜杠命令调用：
 
 | Skill | 命令 | 用途 |
 |-------|------|------|
@@ -86,7 +86,7 @@ python tools/scripts/contributor_dashboard.py --format markdown
 ## 质量门禁 (GOVERNANCE.md)
 - ✅ Ruff lint + format 通过
 - ✅ MyPy 类型检查通过
-- ✅ Pytest 覆盖率 ≥ 70%
+- ✅ Pytest 覆盖率 ≥ 80%（[tool.adg] cov_min，唯一来源）
 - ✅ 无 `unwrap()`/`expect()`/`as any`
 - ✅ 链接审计通过
 - ✅ 案例研究格式验证通过

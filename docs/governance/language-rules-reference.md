@@ -41,7 +41,7 @@ Complete reference for all code quality rules across 26 languages and 5 framewor
 | MATLAB | 8 | 4 | 3 | 1 |
 | GraphQL | 8 | 4 | 3 | 1 |
 
-**Total: 262 rules across 26 languages**
+**Total: 756 rules across 25 languages**
 
 ## Frameworks
 

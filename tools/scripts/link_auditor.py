@@ -112,6 +112,10 @@ def _is_skipped_dir(root: str, directory: str, skip_dirs: set[str]) -> bool:
     return any(rel_root.startswith(skip) for skip in skip_dirs)
 
 
+# 捕获 [text](target)但排除图片 ![alt](img)。
+_MD_LINK_PATTERN = re.compile(r"(?<!!)\[[^\]\n]*\]\(([^)\s]+)(?:\s+\"[^\"]*\")?\)")
+
+
 def _scan_markdown_links(
     root: str,
     files: list[str],
@@ -145,6 +149,12 @@ def _scan_markdown_links(
         for match in link_pattern.finditer(cleaned):
             target_path = match.group(1).strip()
             if _is_skippable_target(target_path, placeholder_pattern):
+                continue
+            if not _check_target(target_path, index, directory, root):
+                broken.append((file_path, match.group(1)))
+        for match in _MD_LINK_PATTERN.finditer(cleaned):
+            target_path = match.group(1).strip()
+            if not target_path or target_path.startswith(("http://", "https://", "mailto:", "#")):
                 continue
             if not _check_target(target_path, index, directory, root):
                 broken.append((file_path, match.group(1)))
@@ -188,6 +198,14 @@ def _scan_markdown_file(
     for match in link_pattern.finditer(cleaned):
         target_path = match.group(1).strip()
         if _is_skippable_target(target_path, placeholder_pattern):
+            continue
+        if not _check_target(target_path, index, directory, root):
+            broken.append((file_path, match.group(1)))
+    for match in _MD_LINK_PATTERN.finditer(cleaned):
+        target_path = match.group(1).strip()
+        # 不用 wikilink 的占位符启发式: 其 ^[\{\.\\/]+ 会把 ../x.md 这类合法
+        # 相对路径误判为占位符而跳过。只过滤外链与纯锚点。
+        if not target_path or target_path.startswith(("http://", "https://", "mailto:", "#")):
             continue
         if not _check_target(target_path, index, directory, root):
             broken.append((file_path, match.group(1)))

@@ -128,3 +128,7 @@ case_quality_report.json
 # 它们是模板产物而非配置，随 generate_ide_rules 重新生成即可。
 .cursorrules
 .windsurfrules
+
+# helm dependency build 的下载产物 (Chart.lock 已锁定精确版本 + 远程仓库,
+# `helm dep build` 可完整重建; 仓库内无任何代码/脚本/CI 引用这些文件)
+helm/jcode-platform/charts/*.tgz

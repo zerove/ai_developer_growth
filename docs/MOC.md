@@ -13,6 +13,33 @@ updated: 2026-07-21
 > 以成长维度组织的知识网络，帮助开发者在 AI 时代实现指数级成长。
 > **优化状态**: 已精简冗余内容，补充实际代码示例，以代码质量和工作效率为导向。
 
+## 🗂️ 层索引导航
+
+各知识层的完整索引。**从本页进入** —— 索引若无人引用即失去导航意义
+（`link_auditor` 只校验链接能否解析，不校验文件能否被抵达）。
+
+| 层 | 索引 | 内容 |
+|---|---|---|
+| 🧠 认知层 | [[docs/mindset/README\|认知层总览]] | 能力模型、职业转型、市场化思维 |
+| 📚 学习层 | [[docs/learning/README\|学习层总览]] | 学习法、路径设计、能力分级 |
+| ⚡ 效率层 | [[docs/efficiency/README\|效率层总览]] | 全周期工作流、架构设计、度量 |
+| 🛠️ 工具层 | [[docs/tools/README\|工具层总览]] | 工具矩阵、选型依据 |
+| 🏛️ 治理层 | [[docs/governance/README\|治理层总览]] | 质量门禁、agent 开发规范 |
+| 🏗️ 架构层 | [[docs/architecture/README\|架构总览]] | 架构模式、设计决策 |
+| 🧪 测试层 | [[docs/testing/README\|测试总览]] | 测试策略、工作流规范 |
+| 🔌 集成层 | [[docs/integration/README\|集成总览]] | 第三方服务集成指南 |
+| 🗄️ 数据库层 | [[docs/database/README\|数据库总览]] | SQL / NoSQL 规范 |
+| 🌐 API 层 | [[docs/api/README\|API 总览]] | REST / GraphQL / gRPC 设计 |
+| 🔒 安全层 | [[docs/security/README\|安全总览]] | 认证授权、OWASP |
+| 🚢 DevOps 层 | [[docs/devops/README\|DevOps 总览]] | CI/CD、容器、部署 |
+| 🎯 专精层 | [[docs/specialization/README\|专精总览]] | 技术栈纵向专精路径 |
+| 📖 专题层 | [[docs/articles/README\|专题总览]] | 专题文章 |
+| 🧭 指南层 | [[docs/guides/README\|指南总览]] | 实操指南 |
+| 💾 缓存层 | [[docs/caching/README\|缓存总览]] | Redis、CDN |
+| 📨 消息队列层 | [[docs/message-queue/README\|消息队列总览]] | Kafka、RabbitMQ |
+| 📈 监控层 | [[docs/monitoring/README\|监控总览]] | Prometheus、日志、可观测性 |
+| 📐 语言规范库 | [[docs/specs/README\|语言规范库]] | 各语言开发规范总入口 |
+
 ---
 
 ## 🧠 认知层 (Mindset)
@@ -194,63 +221,63 @@ updated: 2026-07-21
 
 | 案例 | 场景 | 效率提升 | 核心洞察 |
 |------|------|----------|----------|
-| [../case-studies/ai-task-prioritizer.md\|任务优先级工具]] | CLI 工具开发 | 8x | TDD + AI = 极致效率 |
-| [../case-studies/ai-context-sync-development.md\|AI-Context-Sync]] | 完整产品开发 | 12x | 结构化 Prompt 是关键 |
-| [../case-studies/cli-tool-development.md\|CLI 工具开发]] | 命令行工具 | 4x | AI 加速样板代码生成 |
-| [../case-studies/web-scraping-tool.md\|网页抓取工具]] | 数据采集 | 4x | 智能识别减少手动配置 |
-| [../case-studies/data-pipeline.md\|数据处理管道]] | ETL 流程 | 4x | 插件化架构提高可扩展性 |
-| [../case-studies/api-monitoring.md\|API 监控系统]] | 运维监控 | 4.5x | 配置驱动减少代码修改 |
-| [../case-studies/database-migration.md\|数据库迁移]] | 数据库管理 | 4.4x | 自动化分析减少人工错误 |
-| [../case-studies/legacy-refactoring.md\|遗留系统重构]] | 代码现代化 | 5x | 渐进式重构降低风险 |
-| [../case-studies/production-debugging.md\|生产环境调试]] | 问题排查 | 6x | AI 辅助快速定位根因 |
-| [../case-studies/api-design-implementation.md\|API 设计实现]] | 后端开发 | 5x | 契约先行保证接口质量 |
-| [../case-studies/multi-agent-collaboration.md\|多 Agent 协作]] | 模拟团队开发 | 5x | 角色分工 + 迭代 |
-| [../case-studies/adg-scan-httpx.md\|ADG 扫描 httpx]] | 治理工具验证 | 5x | 72% 问题降幅，exclude_patterns 关键 |
-| [../case-studies/adg-field-validation-requests-rich.md\|ADG 实战验证 requests/rich]] | 治理工具验证 | 6x | error 噪声 22→0，exclude_lines 行级排除 |
-| [../case-studies/adg-cross-project-scan.md\|ADG 跨项目扫描]] | 规则引擎验证 | 4x | 多项目一致性检查 |
-| [../case-studies/governance-self-audit.md\|治理自我审计]] | 质量门禁自检 | 4x | 用自己的工具审计自己 |
-| [../case-studies/ai-native-coverage-governance.md\|AI-Native 覆盖治理]] | 覆盖率治理 | 4x | 自动化覆盖率门禁 |
-| [../case-studies/ast-parser-precision-coverage.md\|AST 解析器精度]] | 代码分析工具 | 3x | 增量解析提升性能 |
-| [../case-studies/autonomous-ai-native-sdlc-delivery.md\|自主 AI-Native SDLC]] | 全生命周期自动化 | 6x | 11 支柱集成 |
-| [../case-studies/full-integration-test.md\|全集成测试]] | 端到端验证 | 4x | 模拟真实流水线 |
-| [../case-studies/implement-robust-feature-with-full-dor-and-tdd-compliance.md\|DoR+TDD 完整实现]] | 特性开发 | 5x | DoR 门禁保证质量 |
-| [../case-studies/jcode-ai-native-master-workflow-execution.md\|JCode 主管道执行]] | 工作流执行 | 4x | 11 支柱编排 |
-| [../case-studies/cross-platform-workflow-execution.md\|跨平台工作流执行]] | 多平台 CI/CD | 3x | 统一执行接口 |
-| [../case-studies/multi-agent-automation.md\|多 Agent 自动化]] | 智能体协作 | 4x | 红蓝对抗验证 |
-| [../case-studies/copilot-test-generation.md\|Copilot 测试生成]] | 测试自动化 | 3x | LLM 生成高覆盖测试 |
-| [../case-studies/api-doc-generation.md\|API 文档生成]] | 文档自动化 | 4x | 契约驱动文档 |
-| [../case-studies/automated-testing-platform.md\|自动化测试平台]] | 测试平台 | 4x | 插件化扩展 |
-| [../case-studies/code-review-system.md\|代码审查系统]] | 审查自动化 | 3x | AI 辅助审查 |
-| [../case-studies/realtime-data-processing.md\|实时数据处理]] | 流处理 | 4x | 窗口聚合优化 |
-| [../case-studies/claude-architecture-design.md\|Claude 架构设计]] | 架构设计 | 4x | AI 辅助架构决策 |
-| [../case-studies/cursor-refactoring.md\|Cursor 重构]] | IDE 重构 | 3x | 智能重构建议 |
-| [../case-studies/aiops-automation.md\|AIOps 自动化]] | 运维自动化 | 4x | 异常检测自动化 |
-| [../case-studies/api-design.md\|API 设计]] | API 设计 | 3x | 契约优先 |
-| [../case-studies/code-review.md\|代码审查]] | 人工审查 | 3x | 检查清单标准化 |
-| [../case-studies/database-performance-optimization.md\|数据库性能优化]] | SQL 优化 | 4x | 索引与查询重写 |
-| [../case-studies/frontend-performance-optimization.md\|前端性能优化]] | Web 性能 | 3x | 打包与加载优化 |
-| [../case-studies/legacy-system-refactoring.md\|遗留系统重构]] | 系统现代化 | 4x | 绞杀者模式 |
-| [../case-studies/security-vulnerability-fix.md\|安全漏洞修复]] | 安全修复 | 3x | 自动化扫描修复 |
-| [../case-studies/technical-documentation.md\|技术文档]] | 文档编写 | 待补充 | 待补充 |
-| [../case-studies/unit-testing.md\|单元测试]] | 测试编写 | 待补充 | 待补充 |
-| [../case-studies/data-migration.md\|数据迁移]] | 数据迁移 | 3x | 增量同步验证 |
-| [../case-studies/devops-pipeline.md\|DevOps 流水线]] | CI/CD | 4x | 流水线即代码 |
-| [../case-studies/intelligent-customer-service.md\|智能客服]] | NLP 应用 | 4x | RAG + 微调 |
-| [../case-studies/ml-model-deployment.md\|ML 模型部署]] | MLOps | 4x | 模型版本管理 |
-| [../case-studies/microservice-architecture.md\|微服务架构]] | 架构设计 | 4x | 服务拆分治理 |
-| [../case-studies/mobile-app-development.md\|移动应用开发]] | App 开发 | 3x | 跨平台复用 |
-| [../case-studies/security-audit.md\|安全审计]] | 安全合规 | 3x | 自动化合规检查 |
+| [[case-studies/ai-task-prioritizer.md\|任务优先级工具]] | CLI 工具开发 | 8x | TDD + AI = 极致效率 |
+| [[case-studies/ai-context-sync-development.md\|AI-Context-Sync]] | 完整产品开发 | 12x | 结构化 Prompt 是关键 |
+| [[case-studies/cli-tool-development.md\|CLI 工具开发]] | 命令行工具 | 4x | AI 加速样板代码生成 |
+| [[case-studies/web-scraping-tool.md\|网页抓取工具]] | 数据采集 | 4x | 智能识别减少手动配置 |
+| [[case-studies/data-pipeline.md\|数据处理管道]] | ETL 流程 | 4x | 插件化架构提高可扩展性 |
+| [[case-studies/api-monitoring.md\|API 监控系统]] | 运维监控 | 4.5x | 配置驱动减少代码修改 |
+| [[case-studies/database-migration.md\|数据库迁移]] | 数据库管理 | 4.4x | 自动化分析减少人工错误 |
+| [[case-studies/legacy-refactoring.md\|遗留系统重构]] | 代码现代化 | 5x | 渐进式重构降低风险 |
+| [[case-studies/production-debugging.md\|生产环境调试]] | 问题排查 | 6x | AI 辅助快速定位根因 |
+| [[case-studies/api-design-implementation.md\|API 设计实现]] | 后端开发 | 5x | 契约先行保证接口质量 |
+| [[case-studies/multi-agent-collaboration.md\|多 Agent 协作]] | 模拟团队开发 | 5x | 角色分工 + 迭代 |
+| [[case-studies/adg-scan-httpx.md\|ADG 扫描 httpx]] | 治理工具验证 | 5x | 72% 问题降幅，exclude_patterns 关键 |
+| [[case-studies/adg-field-validation-requests-rich.md\|ADG 实战验证 requests/rich]] | 治理工具验证 | 6x | error 噪声 22→0，exclude_lines 行级排除 |
+| [[case-studies/adg-cross-project-scan.md\|ADG 跨项目扫描]] | 规则引擎验证 | 4x | 多项目一致性检查 |
+| [[case-studies/governance-self-audit.md\|治理自我审计]] | 质量门禁自检 | 4x | 用自己的工具审计自己 |
+| [[case-studies/ai-native-coverage-governance.md\|AI-Native 覆盖治理]] | 覆盖率治理 | 4x | 自动化覆盖率门禁 |
+| [[case-studies/ast-parser-precision-coverage.md\|AST 解析器精度]] | 代码分析工具 | 3x | 增量解析提升性能 |
+| [[case-studies/autonomous-ai-native-sdlc-delivery.md\|自主 AI-Native SDLC]] | 全生命周期自动化 | 6x | 11 支柱集成 |
+| [[case-studies/full-integration-test.md\|全集成测试]] | 端到端验证 | 4x | 模拟真实流水线 |
+| [[case-studies/implement-robust-feature-with-full-dor-and-tdd-compliance.md\|DoR+TDD 完整实现]] | 特性开发 | 5x | DoR 门禁保证质量 |
+| [[case-studies/jcode-ai-native-master-workflow-execution.md\|JCode 主管道执行]] | 工作流执行 | 4x | 11 支柱编排 |
+| [[case-studies/cross-platform-workflow-execution.md\|跨平台工作流执行]] | 多平台 CI/CD | 3x | 统一执行接口 |
+| [[case-studies/multi-agent-automation.md\|多 Agent 自动化]] | 智能体协作 | 4x | 红蓝对抗验证 |
+| [[case-studies/copilot-test-generation.md\|Copilot 测试生成]] | 测试自动化 | 3x | LLM 生成高覆盖测试 |
+| [[case-studies/api-doc-generation.md\|API 文档生成]] | 文档自动化 | 4x | 契约驱动文档 |
+| [[case-studies/automated-testing-platform.md\|自动化测试平台]] | 测试平台 | 4x | 插件化扩展 |
+| [[case-studies/code-review-system.md\|代码审查系统]] | 审查自动化 | 3x | AI 辅助审查 |
+| [[case-studies/realtime-data-processing.md\|实时数据处理]] | 流处理 | 4x | 窗口聚合优化 |
+| [[case-studies/claude-architecture-design.md\|Claude 架构设计]] | 架构设计 | 4x | AI 辅助架构决策 |
+| [[case-studies/cursor-refactoring.md\|Cursor 重构]] | IDE 重构 | 3x | 智能重构建议 |
+| [[case-studies/aiops-automation.md\|AIOps 自动化]] | 运维自动化 | 4x | 异常检测自动化 |
+| [[case-studies/api-design.md\|API 设计]] | API 设计 | 3x | 契约优先 |
+| [[case-studies/code-review.md\|代码审查]] | 人工审查 | 3x | 检查清单标准化 |
+| [[case-studies/database-performance-optimization.md\|数据库性能优化]] | SQL 优化 | 4x | 索引与查询重写 |
+| [[case-studies/frontend-performance-optimization.md\|前端性能优化]] | Web 性能 | 3x | 打包与加载优化 |
+| [[case-studies/legacy-system-refactoring.md\|遗留系统重构]] | 系统现代化 | 4x | 绞杀者模式 |
+| [[case-studies/security-vulnerability-fix.md\|安全漏洞修复]] | 安全修复 | 3x | 自动化扫描修复 |
+| [[case-studies/technical-documentation.md\|技术文档]] | 文档编写 | 待补充 | 待补充 |
+| [[case-studies/unit-testing.md\|单元测试]] | 测试编写 | 待补充 | 待补充 |
+| [[case-studies/data-migration.md\|数据迁移]] | 数据迁移 | 3x | 增量同步验证 |
+| [[case-studies/devops-pipeline.md\|DevOps 流水线]] | CI/CD | 4x | 流水线即代码 |
+| [[case-studies/intelligent-customer-service.md\|智能客服]] | NLP 应用 | 4x | RAG + 微调 |
+| [[case-studies/ml-model-deployment.md\|ML 模型部署]] | MLOps | 4x | 模型版本管理 |
+| [[case-studies/microservice-architecture.md\|微服务架构]] | 架构设计 | 4x | 服务拆分治理 |
+| [[case-studies/mobile-app-development.md\|移动应用开发]] | App 开发 | 3x | 跨平台复用 |
+| [[case-studies/security-audit.md\|安全审计]] | 安全合规 | 3x | 自动化合规检查 |
 
 ### 代码示例
 | 示例 | 核心机制 | 学习价值 |
 |------|----------|----------|
-| [../examples/self-correction-loop/README.md\|自我修正循环]] | AI 代码质量保证 | 验证→重试模式 |
-| [../examples/multi-agent-orch/README.md\|多 Agent 协作]] | 模拟团队开发 | 角色分工 + 迭代 |
+| [[../examples/self-correction-loop/README.md\|自我修正循环]] | AI 代码质量保证 | 验证→重试模式 |
+| [[../examples/multi-agent-orch/README.md\|多 Agent 协作]] | 模拟团队开发 | 角色分工 + 迭代 |
 
 ### 参考实现
 | 项目 | 定位 | 价值 |
 |------|------|------|
-| [../examples/ai-context-sync/README.md\|AI-Context-Sync]] | 知识验证工具 | 方法论的实践检验 |
+| [[../examples/ai-context-sync/README.md\|AI-Context-Sync]] | 知识验证工具 | 方法论的实践检验 |
 
 ---
 
@@ -341,15 +368,33 @@ ai-learning-method → automated-bug-fixing → full-cycle-workflow → ide-best
 
 ## 📊 知识覆盖率
 
-| 维度 | 文档数 | 状态 |
-|------|--------|------|
-| 认知层 | 7 | ✅ 完整 |
-| 学习层 | 3 | ✅ 完整 |
-| 效率层 | 18 | ✅ 完整 |
-| 工具层 | 2 | ✅ 完整 |
-| 案例库 | 45 | ✅ 超额完成 |
-| 代码示例 | 2 | ✅ 基础 |
-| 学习路径 | 7 | ✅ 完整 |
+| 维度 | 层内存量 | 有入链 | 缺口 | 状态 |
+|------|---------|--------|------|------|
+| 认知层 (docs/mindset) | 19 | 19 | 0 | ✅ 完整 |
+| 学习层 (docs/learning) | 16 | 16 | 0 | ✅ 完整 |
+| 效率层 (docs/efficiency) | 77 | 75 | 2 | ⚠️ 待归类 |
+| 工具层 (docs/tools) | 20 | 20 | 0 | ✅ 完整 |
+| 案例库 (docs/case-studies) | 48 | 47 | 1 | ⚠️ 模板 |
+| 治理层 (docs/governance) | 33 | 33 | 0 | ✅ 完整 |
+| 集成层 (docs/integration) | 10 | 10 | 0 | ✅ 完整 |
+| 代码示例 | 10 | — | — | ✅ 基础 |
+
+> **口径说明**：数字逐层实测；"有入链"指该文档被仓库内任意 `.md` 以 `[[wikilink]]`
+> 或相对链接引用，解析遵循 Obsidian 语义（文件相对 → vault 相对 → 同名回退）。层内存量
+> 含各层新建的 `README.md` 索引。此前本表只统计 MOC 内表格行数并一律标注"✅ 完整"，
+> 掩盖了各层大量未入库文档的事实。
+>
+> 本轮为 14 个知识层补建了 `README.md` 索引（覆盖 69 篇），缺口由 101 降至 4。
+> 「有入链」= 存量 − 缺口；各层 `README.md` 已接入本页「层索引导航」，因此计入有入链。
+> 剩余项均**不宜**直接编入知识索引：
+>
+> - **12 篇旧编号 ADR**（`001-` ~ `009-`）：`ADR-003` / `ADR-004` 各 2 篇且无区分
+>   后缀，`generate_adr_index.py` 只 glob `ADR-*.md`，编号规则定前并入会产出重号条目。
+> - **13 篇时效产物**：`reports/`(8)、`plans/`(1)、`releases/`(1)、根级
+>   `ROADMAP.md`/`NEXT_STEPS.md`/`announcement.md` —— 归档或发布说明，非知识文档。
+> - **4 篇待归类**：`efficiency/developer-community.md`、`efficiency/knowledge-productization.md`
+>   不契合效率层现有 5 个分类；`specs/metadata-spec.md` 是文档元数据规范，而 `specs/`
+>   是语言规范库；`case-studies/TEMPLATE-community.md` 是模板非内容。
 
 ---
 
@@ -367,7 +412,7 @@ ai-learning-method → automated-bug-fixing → full-cycle-workflow → ide-best
 
 欢迎贡献案例、工具推荐、方法论改进。
 
-详见 [../CONTRIBUTING.md|贡献指南]]。
+详见 [[../CONTRIBUTING.md|贡献指南]]。
 
 ---
 

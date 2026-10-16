@@ -36,6 +36,7 @@ updated: 2026-07-21
 
 - [[docs/monitoring/prometheus-grafana|Prometheus + Grafana]] — 指标采集、告警规则、仪表盘设计、Exporter
 - [[docs/monitoring/logging|集中化日志]] — ELK Stack、Loki、结构化日志
+- [[docs/monitoring/ai-audit-live|AI-Native 实时审计看板]] — 实时展示 AI-Native 审计结果
 
 ---
 

@@ -151,7 +151,7 @@ def _load_role_config_cached(path_str: str, mtime_ns: int) -> dict[str, str]:
     try:
         data = yaml.safe_load(config_path.read_text())
     except (OSError, yaml.YAMLError) as exc:
-        logger.debug("角色标记配置读取失败: %s", exc)
+        logger.debug(f"角色标记配置读取失败: {exc}")
         return {}
     if not isinstance(data, dict):
         # 空文件或纯标量 YAML: safe_load 返回 None/str, 不是 dict
@@ -173,6 +173,6 @@ def load_role_config(config_path: Path) -> dict[str, str]:
     try:
         mtime_ns = config_path.stat().st_mtime_ns
     except OSError as exc:
-        logger.debug("角色标记配置不存在: %s", exc)
+        logger.debug(f"角色标记配置不存在: {exc}")
         return {}
     return dict(_load_role_config_cached(str(config_path), mtime_ns))

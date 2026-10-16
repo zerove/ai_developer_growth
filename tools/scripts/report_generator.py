@@ -22,6 +22,17 @@ def _html_escape(s: str) -> str:
     return s.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
 
 
+def _gate_results(results: list[Any]) -> list[Any]:
+    """返回必须参与通过/失败判定的结果。
+
+    ADR-052 让 skipped 整体豁免门禁, 但豁免的前提是"该文件无需检查"。
+    一个**携带 error 的 skipped 结果**含义相反: 它表示该文件根本没被检查
+    (文件不存在 / 无法解码)。把它算作 passed 即 fail-open, 与 ADR-074/076/078
+    同一族缺陷。故豁免以"零 error"为条件。
+    """
+    return [r for r in results if not getattr(r, "skipped", False) or r.error_count]
+
+
 def _count_summary_stats(results: list[Any]) -> tuple[int, int, int, int]:
     """汇总 4 项基础统计.
 
@@ -29,11 +40,12 @@ def _count_summary_stats(results: list[Any]) -> tuple[int, int, int, int]:
     返回 (total_errors, total_warnings, total_tests, failures).
 
     Phase 33b-12 fix (ADR-052): failures 排除 skipped.
+    收窄: 排除的是"零 error 的 skipped", 携带 error 的 skipped 仍计为失败。
     """
     total_errors = sum(r.error_count for r in results)
     total_warnings = sum(r.warning_count for r in results)
     total_tests = len(results)
-    failures = sum(1 for r in results if not r.passed and not getattr(r, "skipped", False))
+    failures = sum(1 for r in _gate_results(results) if not r.passed)
     return total_errors, total_warnings, total_tests, failures
 
 
@@ -357,14 +369,15 @@ def _build_json_summary(results: list[Any]) -> dict[str, Any]:
     V2.19 P3-32 拆分: 从 _build_json_content (B=6) 抽出.
 
     Phase 33b-12 fix (ADR-052): passed 排除 skipped (仅在所有非 skipped 都 passed 时为 True).
+    收窄: 排除的是"零 error 的 skipped"; 携带 error 的 skipped 参与判定。
     """
-    non_skipped = [r for r in results if not getattr(r, "skipped", False)]
+    gated = _gate_results(results)
     return {
         "total_files": len(results),
         "total_errors": sum(r.error_count for r in results),
         "total_warnings": sum(r.warning_count for r in results),
         "total_info": sum(r.info_count for r in results),
-        "passed": all(r.passed for r in non_skipped) if non_skipped else True,
+        "passed": all(r.passed for r in gated) if gated else True,
     }
 
 

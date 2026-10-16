@@ -69,9 +69,14 @@ def check_file(
     if skip_result:
         return skip_result
 
-    lang, rules, content, lines = _prepare_file_check(filepath, language, rules)
+    lang, rules, content, lines, skip_issues = _prepare_file_check(filepath, language, rules)
     if lang is None or rules is None or content is None or lines is None:
-        return CheckResult(file=str(filepath), issues=[], language="unknown", skipped=True)
+        return CheckResult(
+            file=str(filepath),
+            issues=skip_issues,
+            language=lang or "unknown",
+            skipped=True,
+        )
 
     issues = _run_all_checkers(filepath, content, lines, lang, rules, run_linters=run_linters)
     issues = _filter_suppressed_issues(filepath, issues, lines)
@@ -104,14 +109,18 @@ def _check_file_skip_conditions(filepath: Path, language: str | None) -> CheckRe
 
 def _prepare_file_check(
     filepath: Path, language: str | None, rules: dict[str, Any] | None
-) -> tuple[str | None, dict[str, Any] | None, str | None, list[str] | None]:
-    """准备检查所需的语言、规则、内容、行列表.
+) -> tuple[str | None, dict[str, Any] | None, str | None, list[str] | None, list[Issue]]:
+    """准备检查所需的语言、规则、内容、行列表, 以及"跳过原因"对应的 issue.
 
     content/lines 为 None 表示文件无法安全解析 (非UTF-8), 调用方须按 skipped 处理。
+
+    第 5 个通道承载跳过本身的可见记录。skipped 若不携带任何 issue, 门禁无法区分
+    "该文件无需检查" 与 "该文件检查失败" —— 后者被呈现为 passed 即 fail-open,
+    与 ADR-074/076/078 同一族缺陷。
     """
     lang = language or _detect_language(filepath)
     if lang == "unknown":
-        return None, None, "", []
+        return None, None, "", [], []
 
     if rules is None:
         rules = load_rules_for_language(lang)
@@ -119,14 +128,14 @@ def _prepare_file_check(
     try:
         # utf-8-sig 而非 utf-8: 后者不剥离 BOM, 导致文件首行的 ^ 锚点规则全部失效。
         content = filepath.read_text(encoding="utf-8-sig")
-    except UnicodeDecodeError:
-        # 非UTF-8 文件返回空内容后, check_file 会以 0 问题判定为 passed=True ——
-        # 即"无法读取"被呈现为"检查通过"。改为显式跳过, 使其不进入通过/失败统计。
+    except UnicodeDecodeError as exc:
+        # 该文件属于受支持语言, 却读不出来 —— 语义上它是"检查失败"而非"无需检查"。
+        # 必须留痕, 否则 check_file 返回 skipped=True 且零 issue, 门禁无从察觉。
         logger.warning(f"跳过非 UTF-8 文件 (无法安全解析): {filepath}")
-        return lang, rules, None, None
+        return lang, rules, None, None, [_undecodable_file_issue(filepath, exc)]
 
     lines = content.splitlines()
-    return lang, rules, content, lines
+    return lang, rules, content, lines, []
 
 
 def _apply_context_role(filepath: Path, issues: list[Issue]) -> list[Issue]:
@@ -138,6 +147,20 @@ def _apply_context_role(filepath: Path, issues: list[Issue]) -> list[Issue]:
             issue.context_role = file_role
             issue.severity = adjust_severity(issue.severity, file_role)
     return issues
+
+
+def _undecodable_file_issue(filepath: Path, exc: UnicodeDecodeError) -> Issue:
+    """Create the Issue recorded when a supported-language file cannot be decoded."""
+    return Issue(
+        file=str(filepath),
+        line=0,
+        column=0,
+        severity="error",
+        category="io",
+        rule_id="file-decode-error",
+        message=f"File could not be decoded as UTF-8, so it was not checked: {exc}",
+        fix_hint="Re-save the file as UTF-8, or exclude it from the checked paths",
+    )
 
 
 def _file_not_found_result(filepath: Path) -> CheckResult:
@@ -221,7 +244,7 @@ def _load_directory_rules(dirpath: Path, base_rules: dict[str, Any] | None) -> d
 
                 rules = _merge_rules(rules, fw_rules)
         except Exception as exc:
-            logger.debug("框架规则加载失败 %s: %s", framework, exc)
+            logger.debug(f"框架规则加载失败 {framework}: {exc}")
 
     try:
         from .rule_loader import load_domain_rules
@@ -235,7 +258,7 @@ def _load_directory_rules(dirpath: Path, base_rules: dict[str, Any] | None) -> d
             else:
                 rules = domain_rules
     except Exception as exc:
-        logger.debug("域规则加载失败: %s", exc)
+        logger.debug(f"域规则加载失败: {exc}")
 
     return rules
 
@@ -293,11 +316,7 @@ def _init_cache_store(use_cache: bool, db_path: str | Path) -> tuple[CheckStore 
             rules_hash = compute_rules_signature()
         except Exception as exc:  # noqa: BLE001 - 缓存库不可用属可降级故障，本次退化为完整检查
             store = None
-            logger.warning(
-                "增量缓存初始化失败，本次退化为完整检查: %s: %s",
-                type(exc).__name__,
-                exc,
-            )
+            logger.warning(f"增量缓存初始化失败，本次退化为完整检查: {type(exc).__name__}: {exc}")
     return store, rules_hash
 
 
@@ -330,9 +349,9 @@ def _run_architecture_analysis(dirpath: Path) -> list[CheckResult]:
             )
             results.append(arch_result)
     except ImportError as exc:
-        logger.debug("arch 模块不可用: %s", exc)
+        logger.debug(f"arch 模块不可用: {exc}")
     except Exception as exc:
-        logger.debug("arch 检查失败: %s", exc)
+        logger.debug(f"arch 检查失败: {exc}")
     return results
 
 
@@ -367,7 +386,7 @@ def _check_with_cache(
                 )
         except Exception as exc:  # noqa: BLE001 - 缓存条目损坏时重算，不影响检查结论
             cache_degraded = True
-            logger.debug("缓存读取失败，回退完整检查 %s: %s", filepath, exc)
+            logger.debug(f"缓存读取失败，回退完整检查 {filepath}: {exc}")
     result = check_file(filepath, rules, lang, semantic=semantic, run_linters=run_linters)
     if store is not None and not result.skipped:
         try:
@@ -382,7 +401,7 @@ def _check_with_cache(
             )
         except Exception as exc:  # noqa: BLE001 - 缓存写入失败仅丢性能，检查结论已得出
             cache_degraded = True
-            logger.debug("缓存写入失败（不影响检查结果）%s: %s", filepath, exc)
+            logger.debug(f"缓存写入失败（不影响检查结果）{filepath}: {exc}")
     return result, cache_degraded
 
 
@@ -479,7 +498,7 @@ def _check_files_parallel(
                 if worker_result is not None:
                     results.append(worker_result)
             except Exception as exc:
-                logger.debug("worker 结果处理失败: %s", exc)
+                logger.debug(f"worker 结果处理失败: {exc}")
     return results
 
 
@@ -526,7 +545,7 @@ def check_directory(
     results.extend(_run_architecture_analysis(dirpath))
 
     if use_cache and cache_degraded:
-        logger.warning("本次运行缓存降级 %d 次（读取/写入失败已回退完整检查）", cache_degraded)
+        logger.warning(f"本次运行缓存降级 {cache_degraded} 次（读取/写入失败已回退完整检查）")
 
     return results
 

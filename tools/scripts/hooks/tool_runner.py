@@ -49,7 +49,7 @@ def _timeout_for_category(category: object) -> int:
         if isinstance(timeouts, dict) and key in timeouts:
             return int(str(timeouts[key]))
     except Exception as e:  # noqa: BLE001 - 配置缺失时使用默认超时
-        logger.debug("读取超时配置失败，使用默认 %ss: %s", default, e)
+        logger.debug(f"读取超时配置失败，使用默认 {default}s: {e}")
     return default
 
 

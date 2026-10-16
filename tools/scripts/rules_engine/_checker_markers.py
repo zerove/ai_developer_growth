@@ -151,7 +151,7 @@ def _load_context_markers(dirpath: Path) -> dict[str, str]:
 
                 return load_role_config(config_path)
             except Exception as exc:
-                logger.debug("角色配置加载失败: %s", exc)
+                logger.debug(f"角色配置加载失败: {exc}")
     return {}
 
 

@@ -51,7 +51,7 @@ class LayerConfig:
                         layers[name] = deps
                 return cls(layers=layers)
         except Exception as exc:
-            logger.debug("架构配置解析失败，使用默认: %s", exc)
+            logger.debug(f"架构配置解析失败，使用默认: {exc}")
         return cls()
 
     @classmethod

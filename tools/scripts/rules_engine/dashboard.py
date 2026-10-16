@@ -418,7 +418,7 @@ def _add_ci_routes(app: FastAPI, ci_data_dir: str | None) -> None:
                 data = json.loads(summary_file.read_text())
                 return data if isinstance(data, dict) else None
             except Exception as exc:
-                logger.debug("CI summary 解析失败: %s", exc)
+                logger.debug(f"CI summary 解析失败: {exc}")
         return None
 
 

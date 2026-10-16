@@ -392,9 +392,9 @@ def _refresh_baseline_if_clean(
         if full:
             pruned = prune_stale_baseline_entries(baseline_path)
             if pruned:
-                logger.info("质量基线清理失效条目 %d 个", pruned)
+                logger.info(f"质量基线清理失效条目 {pruned} 个")
     except Exception as e:  # noqa: BLE001 - 刷新失败不影响本次结果
-        logger.warning("质量基线刷新失败: %s", e)
+        logger.warning(f"质量基线刷新失败: {e}")
 
 
 def _record_run_history(
@@ -425,7 +425,7 @@ def _record_run_history(
             },
         )
     except Exception as e:  # 存储失败不影响检查结果
-        logger.warning("记录质量检查历史失败: %s", e)
+        logger.warning(f"记录质量检查历史失败: {e}")
 
 
 def _format_output(

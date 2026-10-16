@@ -254,7 +254,7 @@ def load_generated_rules(language: str) -> list[dict[str, Any]]:
         if data and isinstance(data, dict):
             return cast(list[dict[str, Any]], data.get("anti_patterns", []))
     except Exception as exc:
-        logger.debug("生成规则解析失败，跳过: %s", exc)
+        logger.debug(f"生成规则解析失败，跳过: {exc}")
     return []
 
 

@@ -34,6 +34,7 @@ if str(_REPO_ROOT) not in sys.path:
 
 
 from tools.scripts.rules_engine.models import CheckResult, Issue  # noqa: E402
+from tools.scripts.rules_engine.regex_cache import guard_pattern  # noqa: E402
 
 logger = logging.getLogger(__name__)
 
@@ -542,6 +543,12 @@ class RegexFixProvider(FixProvider):
                 # 简单的正则替换
                 import re
 
+                # rule_id 与 fix_replacement 均来自规则配置 (PR 场景由外部贡献者
+                # 控制), 而 original_line 是被修复的源码行 —— 三者都不可信。
+                # 且此处结果会**写回文件**, 挂死代价高于只读检查。
+                if guard_pattern(issue.rule_id, "auto_fix/rule_id"):
+                    return []
+
                 fixed_line = re.sub(issue.rule_id.replace(":", r"\:"), issue.fix_replacement, original_line)
                 if fixed_line != original_line:
                     return [
@@ -598,6 +605,8 @@ class RegexFixProvider(FixProvider):
             pattern = info.get("pattern")
             replacement = info.get("replacement")
             if not pattern or replacement is None:
+                continue
+            if guard_pattern(pattern, f"auto_fix/apply_rules/{rule_id}"):
                 continue
             new_content, count = re.subn(pattern, replacement, content)
             if count > 0 and new_content != content:

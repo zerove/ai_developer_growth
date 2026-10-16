@@ -21,6 +21,7 @@ from pathlib import Path
 from typing import Any, cast
 
 from tools.scripts.rules_engine.logger import logger
+from tools.scripts.rules_engine.regex_cache import guard_pattern
 
 try:
     from pygls.lsp.server import LanguageServer
@@ -60,6 +61,10 @@ def _text_to_range(text: str, pattern: str, line_offset: int = 0) -> Range | Non
     """Find pattern in text and return LSP Range."""
     if not HAS_PYGLS:
         return None
+    # pattern 来自 anti_patterns 规则 (PR 场景可被贡献者控制), 未守卫直接匹配
+    # 可被 (a|aa)+$ 之类结构挂死编辑器进程
+    if guard_pattern(pattern, "lsp/_text_to_range"):
+        return None
     for match in re.finditer(pattern, text, re.MULTILINE):
         start_line = text[: match.start()].count("\n") + line_offset
         start_col = match.start() - text.rfind("\n", 0, match.start()) - 1
@@ -95,6 +100,8 @@ def _check_document(content: str, language: str) -> list[Diagnostic]:
     for rule in anti_patterns:
         pattern = rule.get("pattern", "")
         if not pattern:
+            continue
+        if guard_pattern(pattern, "lsp/_check_document"):
             continue
         try:
             for match in re.finditer(pattern, content, re.MULTILINE):
@@ -179,10 +186,12 @@ def _get_rule_for_line(line: str, lang: str) -> dict[str, Any] | None:
             if not isinstance(rule, dict):
                 continue
             pattern = rule.get("pattern", "")
-            if pattern and re.search(str(pattern), line):
+            if not pattern or guard_pattern(pattern, "lsp/_get_rule_for_line"):
+                continue
+            if re.search(str(pattern), line):
                 return rule
     except Exception as exc:
-        logger.debug("规则查找失败: %s", exc)
+        logger.debug(f"规则查找失败: {exc}")
     return None
 
 
@@ -269,7 +278,7 @@ def _setup_code_actions(server: LanguageServer) -> None:
                         actions.append(_create_code_action(rule, diag, line_text, params.text_document.uri))
                         break
             except (FileNotFoundError, PermissionError) as exc:
-                logger.debug("文件访问错误: %s", exc)
+                logger.debug(f"文件访问错误: {exc}")
 
         return actions
 

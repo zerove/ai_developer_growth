@@ -15,6 +15,8 @@ from typing import Any
 
 import yaml
 
+from tools.scripts.rules_engine.regex_cache import guard_pattern
+
 # ─────────────────────────────────────────────────────────────
 # Custom Fix Patterns (loaded from YAML)
 # ─────────────────────────────────────────────────────────────
@@ -72,6 +74,11 @@ class FixEngine:
             import_needed = fix_info.get("import_needed")
 
             if not pattern:
+                continue
+
+            # pattern 来自 fixes.yml (PR 场景由外部贡献者控制), 而被匹配的
+            # fixed 是源码内容 —— finditer/sub 均可能触发灾难性回溯。
+            if guard_pattern(pattern, "fix_engine"):
                 continue
 
             # Check if pattern matches

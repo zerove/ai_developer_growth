@@ -19,6 +19,7 @@ from tools.scripts.adg_cli.git import (
     _get_staged_files,
     _get_unstaged_files,
 )
+from tools.scripts.rules_engine.regex_cache import guard_pattern
 
 
 def _check_ast_semantic(
@@ -169,6 +170,8 @@ def _is_pattern_excluded(filepath: Path, content: str, pattern_def: dict[str, An
         if _match_pattern(filepath, exclude):
             return True
     for exclude in pattern_def.get("exclude_patterns", []):
+        if guard_pattern(exclude, "exclude_patterns"):
+            continue
         if re.search(exclude, content):
             return True
     return False
@@ -193,6 +196,8 @@ def _scan_multiline(
         issues: 追加目标 list
     """
     try:
+        if guard_pattern(pattern, "main/multiline"):
+            return
         for match in re.finditer(pattern, content, flags | re.MULTILINE):
             line_num = content[: match.start()].count("\n") + 1
             issues.append(_make_issue(filepath, line_num, 0, pattern_def))
@@ -219,11 +224,14 @@ def _scan_line_by_line(
         issues: 追加目标 list
     """
     exclude_lines = pattern_def.get("exclude_lines", [])
+    guarded_excludes = [p for p in exclude_lines if not guard_pattern(p, "exclude_lines")]
+    if guard_pattern(pattern, "main/line"):
+        return
     for line_num, line in enumerate(lines, 1):
         stripped = line.strip()
         if stripped.startswith("#") or stripped.startswith("//"):
             continue
-        if any(re.search(ex_pat, line) for ex_pat in exclude_lines):
+        if any(re.search(ex_pat, line) for ex_pat in guarded_excludes):
             continue
         try:
             for match in re.finditer(pattern, line, flags):

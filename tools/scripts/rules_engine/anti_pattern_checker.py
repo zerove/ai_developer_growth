@@ -7,7 +7,7 @@ from pathlib import Path
 from typing import Any
 
 from .models import Issue
-from .regex_cache import get_compiled, get_dangerous
+from .regex_cache import get_compiled, guard_pattern
 from .rule_loader import load_rules_for_language
 
 # 匹配超时保护：单文件单模式匹配的最长耗时（秒）
@@ -95,6 +95,8 @@ def _is_pattern_excluded(filepath: Path, content: str, pattern_def: dict[str, An
         return True
     exclude_patterns = pattern_def.get("exclude_patterns", [])
     for exclude_pattern in exclude_patterns:
+        if guard_pattern(exclude_pattern, "exclude_patterns"):
+            continue
         if re.search(exclude_pattern, content):
             return True
     return False
@@ -136,8 +138,8 @@ def _check_multiline_pattern(
     """
     issues: list[Issue] = []
 
-    # 安全保护：可能灾难性回溯的危险模式直接跳过
-    if get_dangerous(pattern):
+    # 安全保护：可能灾难性回溯的危险模式直接跳过 (跳过会留痕)
+    if guard_pattern(pattern, "anti_pattern"):
         return issues
 
     try:
@@ -176,8 +178,8 @@ def _check_line_patterns(
     """
     issues: list[Issue] = []
 
-    # 安全保护：可能灾难性回溯的危险模式直接跳过
-    if get_dangerous(pattern):
+    # 安全保护：可能灾难性回溯的危险模式直接跳过 (跳过会留痕)
+    if guard_pattern(pattern, "anti_pattern"):
         return issues
 
     try:
@@ -191,6 +193,8 @@ def _check_line_patterns(
     exclude_lines = pattern_def.get("exclude_lines", [])
     compiled_excludes: list[re.Pattern[str]] = []
     for ex_pat in exclude_lines:
+        if guard_pattern(ex_pat, "exclude_lines"):
+            continue
         try:
             compiled_excludes.append(get_compiled(ex_pat))
         except re.error:

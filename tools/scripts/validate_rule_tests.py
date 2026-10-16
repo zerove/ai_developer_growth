@@ -40,6 +40,7 @@ if str(_REPO_ROOT) not in sys.path:
 
 from tools.scripts._common import discover_languages, handle_error  # noqa: E402
 from tools.scripts._common import rules_dir as _rules_dir  # noqa: E402
+from tools.scripts.rules_engine.regex_cache import guard_pattern  # noqa: E402
 
 
 def _load_rules_with_tests(lang: str) -> list[dict[str, Any]]:
@@ -94,6 +95,14 @@ def validate_rule_tests(lang: str) -> tuple[int, int, list[str]]:
 
         if not pattern:
             errors.append(f"[{category}] {rule_id}: no pattern to test")
+            continue
+
+        # pattern 来自 rules_dir 下的规则 yml, 而 code 来自同一份 yml 的
+        # test_cases —— 两者在 PR 场景都由外部贡献者控制。实测 `(x|xx)+$` 配
+        # 34 字符的 code 需 ~9s, 40 字符即挂死本工具。
+        if guard_pattern(pattern, f"validate_rule_tests/{rule_id}"):
+            errors.append(f"[{category}] {rule_id}: pattern 疑似灾难性回溯, 已跳过其用例")
+            failed += 1
             continue
 
         try:

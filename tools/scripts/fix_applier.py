@@ -23,6 +23,7 @@ if str(_REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(_REPO_ROOT))
 
 
+from tools.scripts.rules_engine.regex_cache import guard_pattern  # noqa: E402
 from tools.scripts.rules_engine.validators.models import FixResult, Issue  # noqa: E402
 
 
@@ -44,6 +45,11 @@ def _parse_regex_replacement(replacement: str, original_line: str) -> str | None
     new_text = parts[2]
     flags = parts[3] if len(parts) > 3 else ""
     re_flags = re.IGNORECASE if "i" in flags else 0
+
+    # pattern 来自 issue.fix_replacement (规则配置), 而 original_line 是被检查的
+    # 源码行 —— 两者在 PR 场景都由外部贡献者控制, 直接 re.sub 可被 (a|aa)+$ 挂死。
+    if guard_pattern(pattern, "fix_applier"):
+        return None
 
     try:
         return re.sub(pattern, new_text, original_line, flags=re_flags)

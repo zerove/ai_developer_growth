@@ -30,6 +30,67 @@ from tools.scripts._common import (
     save_cache as _save_cache,  # noqa: F401 - re-export for tests
 )
 from tools.scripts.rules_engine.logger import logger
+from tools.scripts.rules_engine.regex_cache import guard_pattern
+
+# ── 规则 pattern 的 ReDoS 闸门 ─────────────────────────────
+#
+# 为什么在**载入点**而不是每个调用点各守一次:
+# 全仓有 60+ 处 ``re.search/finditer/sub`` 的 pattern 来自规则配置, 而规则配置的
+# 作者是**规则文件的提交者** —— 在本项目即外部 PR 贡献者。逐点接线必然漏, 且漏点
+# 不可见(审计报告曾因两个同名文件混淆而漏掉 tools/scripts/auto_fix.py, 连续两轮
+# 未被发现)。在载入点拦一次, 下游全部调用点自动免疫。
+#
+# 为什么可安全地默认关闭: 已发行的 924 条规则 pattern 逐条静态分析, 命中 0 条 ——
+# 即本闸门对现有行为是**可证明的 no-op**, 只对未来提交进来的规则生效。
+# 失败策略是"丢弃该规则并告警", 绝不抛异常: 配置问题不应让检查器整体挂掉
+# (这正是 ADR-078 那类 fail-open 的反面 —— 此处是 fail-closed 于单条规则)。
+
+_DANGEROUS_PATTERN_LOGGED: set[str] = set()
+
+
+def _pattern_is_dangerous(pattern: object, origin: str) -> bool:
+    """pattern 呈可疑回溯结构时返回 True; origin 仅用于去重告警。"""
+    if not isinstance(pattern, str) or not pattern:
+        return False
+    if not guard_pattern(pattern, origin):
+        return False
+    if origin not in _DANGEROUS_PATTERN_LOGGED:
+        _DANGEROUS_PATTERN_LOGGED.add(origin)
+        logger.warning(f"丢弃疑似灾难性回溯的规则 pattern: {origin}")
+    return True
+
+
+def _drop_dangerous_patterns(rules: dict[str, Any]) -> dict[str, Any]:
+    """**就地删除**危险规则并返回同一对象。
+
+    必须真删而不是打标记: 下游是 `re.search(item["pattern"], ...)` 逐条执行,
+    仅打标记的话危险 pattern 照常被执行, 闸门形同虚设。
+    """
+    anti_patterns = rules.get("anti_patterns")
+    if isinstance(anti_patterns, list):
+        kept: list[Any] = []
+        for item in anti_patterns:
+            if not isinstance(item, dict):
+                kept.append(item)
+                continue
+            rule_id = item.get("id", "?")
+            if _pattern_is_dangerous(item.get("pattern"), f"anti_patterns#{rule_id}") or (
+                _pattern_is_dangerous(item.get("exclude_pattern"), f"anti_patterns#{rule_id}#exclude")
+            ):
+                continue
+            kept.append(item)
+        rules["anti_patterns"] = kept
+
+    naming = rules.get("naming")
+    if isinstance(naming, dict):
+        for lang, kinds in list(naming.items()):
+            if not isinstance(kinds, dict):
+                continue
+            for kind, spec in list(kinds.items()):
+                if isinstance(spec, dict) and _pattern_is_dangerous(spec.get("pattern"), f"naming#{lang}.{kind}"):
+                    del kinds[kind]
+    return rules
+
 
 # ── 生成规则自动发现 ───────────────────────────────────────
 
@@ -342,6 +403,8 @@ def load_rules(language: str, framework_dir: Path | None = None) -> dict[str, An
             result.setdefault("anti_patterns", [])
             result["anti_patterns"].extend(generated)
 
+        _drop_dangerous_patterns(result)
+
         # Cache the result
         _RULE_CACHE[cache_key] = result
 
@@ -380,7 +443,9 @@ def load_custom_rules(project_dir: Path) -> dict[str, Any]:
         for rule_file in sorted(ai_rules_dir.glob("*.yml")):
             _load_single_custom_file(rule_file, custom)
 
-    return custom
+    # .adg/rules.yml 与 .ai-rules/*.yml 都**在仓库内**, 作者即 PR 贡献者,
+    # 与 load_rules 同一信任边界
+    return _drop_dangerous_patterns(custom)
 
 
 def _load_single_custom_file(rule_file: Path, custom: dict[str, Any]) -> None:

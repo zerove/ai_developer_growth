@@ -12,6 +12,7 @@ from __future__ import annotations
 import re
 from typing import Any
 
+from .rules_engine.regex_cache import guard_pattern
 from .validate_language_rules import Issue
 
 
@@ -20,6 +21,10 @@ def _check_filename(filepath: str, language: str, naming: dict[str, Any]) -> lis
     issues: list[Issue] = []
     file_rule = naming.get("file", {})
     if file_rule and "pattern" in file_rule:
+        # naming 规则来自规则配置 (PR 场景可被贡献者控制), 未守卫的 pattern
+        # 可用 (a|aa)+$ 之类结构挂死检查进程
+        if guard_pattern(file_rule["pattern"], "naming/file"):
+            return issues
         filename = filepath.rsplit("/", 1)[-1] if "/" in filepath else filepath
         if not re.match(file_rule["pattern"], filename):
             issues.append(
@@ -42,6 +47,9 @@ def _check_identifier_kind(
     issues: list[Issue] = []
 
     if not kind_rule or "pattern" not in kind_rule:
+        return issues
+
+    if guard_pattern(kind_rule["pattern"], f"naming/{kind}"):
         return issues
 
     regex = re.compile(kind_rule["pattern"])

@@ -17,6 +17,7 @@ from tools.scripts.adg_cli import (
     detect_language,
     load_rules_for_language,
 )
+from tools.scripts.rules_engine.regex_cache import guard_pattern
 
 # ─────────────────────────────────────────────────────────────
 # Pattern-based rule recommendations (loaded from YAML)
@@ -69,6 +70,10 @@ def analyze_code_patterns(
 
     for line_num, line in enumerate(content.splitlines(), 1):
         for pattern_def in patterns:
+            # pattern 来自规则 YAML, line 是被分析的源码 —— 两者在 PR 场景
+            # 都由外部贡献者控制, 直接 re.search 可被 (a|aa)+$ 挂死。
+            if guard_pattern(pattern_def["pattern"], "ai_recommender"):
+                continue
             if re.search(pattern_def["pattern"], line):
                 recommendations.append(
                     {

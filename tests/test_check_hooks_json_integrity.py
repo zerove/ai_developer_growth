@@ -18,6 +18,7 @@ import json
 import os
 import subprocess
 import sys
+import tempfile
 import unittest
 from pathlib import Path
 
@@ -285,29 +286,46 @@ class HelpersTest(unittest.TestCase):
         exec(compile(body, "<extracted>", "exec"), namespace)  # noqa: S102
         return namespace
 
-    def test_supported_long_options_parses_usage(self) -> None:
+    def test_static_options_parses_add_argument(self) -> None:
+        """从源码里的 add_argument 声明取长选项 (不再解析 --help 文本)。"""
         ns = self._load_helpers()
-        parse = ns["_supported_long_options"]
+        parse = ns["_static_script_options"]
         assert callable(parse)
-        text = (
-            "usage: link_auditor.py [-h] [--check-all] [--fail-on-broken]\n"
-            "options:\n"
-            "  -h, --help  show help\n"
-            "  --check-all  Check all\n"
-        )
-        opts = parse(text)
+        with tempfile.TemporaryDirectory() as td:
+            script = Path(td) / "link_auditor.py"
+            script.write_text(
+                "import argparse\n"
+                "p = argparse.ArgumentParser()\n"
+                'p.add_argument("--check-all", action="store_true")\n'
+                'p.add_argument("--fail-on-broken")\n'
+                'p.add_argument("-h", "--help")\n',
+                encoding="utf-8",
+            )
+            opts = parse(str(script))
         assert isinstance(opts, set)
         self.assertIn("--check-all", opts)
         self.assertIn("--fail-on-broken", opts)
         self.assertIn("--help", opts)
-        self.assertNotIn("[-h]", opts)
 
-    def test_supported_long_options_ignores_prose(self) -> None:
-        """非 argparse 输出不该被解析出选项。"""
+    def test_static_options_ignores_non_argparse_source(self) -> None:
+        """无 add_argument 的源码不该被解析出选项。
+
+        旧实现从 --help 文本里正则抓选项, 故必须防御 help 里出现的散文性文字;
+        改用 AST 后只认 add_argument 调用, 该风险从结构上消失, 此处锁住新行为。
+        """
         ns = self._load_helpers()
-        parse = ns["_supported_long_options"]
+        parse = ns["_static_script_options"]
         assert callable(parse)
-        self.assertEqual(parse("hello world"), set())
+        with tempfile.TemporaryDirectory() as td:
+            script = Path(td) / "prose.py"
+            script.write_text(
+                "import sys\n"
+                "# 文档字符串里提到 --check-all 与 --fail-on-broken 也不算声明\n"
+                'print("hello --check-all world")\n'
+                "sys.exit(0)\n",
+                encoding="utf-8",
+            )
+            self.assertEqual(parse(str(script)), set())
 
 
 if __name__ == "__main__":

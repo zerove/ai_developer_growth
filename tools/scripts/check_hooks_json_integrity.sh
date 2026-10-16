@@ -47,17 +47,12 @@ else
 fi
 
 PROBLEMS=$(PY="$PY" python3 - << 'PYEOF'
+import ast
 import json
-import os
-import re
 import shlex
-import subprocess
 import sys
+from collections.abc import Iterator
 from pathlib import Path
-
-# 目标脚本用项目解释器跑 (见 shell 层的 PY 选定逻辑), 本体仍用系统 python3
-# —— 这里只做 JSON/文本解析, 不需要 venv 依赖。
-PY_CMD = shlex.split(os.environ.get("PY", "python3"))
 
 HOOKS_JSON = ".jcode/hooks.json"
 
@@ -105,65 +100,56 @@ def _declared_actions(skill: str) -> set[str] | None:
     return actions or None
 
 
-def _supported_long_options(help_text: str) -> set[str]:
-    """从 --help 输出里抽出脚本支持的长选项。
+def _iter_arg_calls(tree: ast.AST) -> Iterator[ast.Call]:
+    for node in ast.walk(tree):
+        if isinstance(node, ast.Call):
+            yield node
 
-    argparse 的 usage 行用方括号包裹可选参数, 例如:
-        usage: link_auditor.py [-h] [--check-all] [--fail-on-broken] [directory]
-    所以必须先剥掉方括号再判断是否为长选项 —— 直接 startswith("--")
-    会把整条 "[--check-all]" 判否, 结果解析出空集合, 参数校验形同虚设。
+
+def _static_script_options(target: str) -> set[str]:
+    """静态解析脚本源码, 收集它声明的长选项与子命令。
+
+    **不执行目标脚本。** 旧实现用 `python <target> --help` 探测参数, 等于让
+    校验器执行待校验代码: `.jcode/hooks.json` 的 command 字段可被贡献者控制,
+    于是"检查配置"这一动作本身变成任意代码执行 (RCE)。实测在目标脚本顶层写
+    一行落盘副作用, 跑一次校验器即被触发。
+
+    取"全文件所有 add_argument 长选项的并集"而非逐子命令精确归属:
+    本检查的目的是抓拼写错误 (如 `--update-moc`), 并集仍能抓住这类,
+    且避免了精确归属的漏判 —— 该检查的历史教训正是**假阳性**曾差点拦下可用 hook。
     """
     options: set[str] = set()
-    for token in help_text.split():
-        opt = token.strip("[]").split("=", 1)[0].rstrip(",;)")
-        if not opt.startswith("--") or opt == "--":
+    subcommands: set[str] = set()
+    try:
+        source = Path(target).read_text(encoding="utf-8", errors="replace")
+        tree = ast.parse(source)
+    except (OSError, SyntaxError, ValueError):
+        return options
+
+    for call in _iter_arg_calls(tree):
+        func = call.func
+        name = func.attr if isinstance(func, ast.Attribute) else getattr(func, "id", "")
+        if name not in ("add_argument", "add_parser", "add_subparsers"):
             continue
-        # 形如 --foo=VALUE 时只取 --foo
-        options.add(opt)
+        for arg in call.args:
+            # 仅取字面量字符串, 跳过变量与拼接表达式
+            if isinstance(arg, ast.Constant) and isinstance(arg.value, str):
+                if name == "add_parser":
+                    subcommands.add(arg.value)
+                elif arg.value.startswith("--"):
+                    options.add(arg.value.split("=", 1)[0])
+    options |= {f"--{sub}" for sub in subcommands}
     return options
 
 
 def _script_options(target: str) -> set[str]:
-    """收集脚本在顶层与各子命令下支持的全部长选项。
+    """收集脚本在顶层与各子命令下声明的全部长选项。
 
-    必须包含子命令: argparse 的子命令选项不会出现在顶层 --help 里。
-    例: self-correction-loop.py 顶层 usage 只有 {run,validate},
-    而 --target / --tests 属于 validate 子命令。只看顶层会把它误判为
-    "不支持的参数" —— 这个假阳性曾差点让一个可用 hook 被门禁拦下。
+    含子命令: argparse 的子命令选项不出现在顶层 usage 里, 而 hook 常以
+    `self-correction-loop.py validate --target X` 的形式调用子命令。
+    静态解析下二者一并收集, 语义等价于旧的"顶层 + 逐子命令"并集。
     """
-    options: set[str] = set()
-    try:
-        top = subprocess.run(
-            [*PY_CMD, target, "--help"],
-            capture_output=True,
-            text=True,
-            timeout=120,
-        )
-    except (subprocess.TimeoutExpired, OSError):
-        return options
-
-    text = top.stdout + top.stderr
-    options |= _supported_long_options(text)
-
-    # 从 usage 的 {a,b,c} 位置参数里枚举子命令
-    subcommands: list[str] = []
-    match = re.search(r"\{([a-zA-Z0-9_,\-]+)\}", text)
-    if match:
-        subcommands = [s for s in match.group(1).split(",") if s]
-
-    for sub in subcommands:
-        try:
-            r = subprocess.run(
-                [*PY_CMD, target, sub, "--help"],
-                capture_output=True,
-                text=True,
-                timeout=120,
-            )
-        except (subprocess.TimeoutExpired, OSError):
-            continue
-        options |= _supported_long_options(r.stdout + r.stderr)
-
-    return options
+    return _static_script_options(target)
 
 
 def _command_problem(hook: dict) -> str | None:
@@ -172,12 +158,24 @@ def _command_problem(hook: dict) -> str | None:
     if not command:
         return None
 
-    # 抽取目标脚本 (取第一个 .py / .sh 结尾的参数)
-    target = None
-    for token in command.split():
-        if token.endswith((".py", ".sh")):
-            target = token
-            break
+    try:
+        tokens = shlex.split(command)
+    except ValueError:
+        tokens = command.split()
+
+    # `sh -c '<内联命令>'`: 命令主体藏在一段字符串里, 无法静态确认它指向哪个脚本。
+    # 旧实现按空白切分后取首个 .py/.sh 结尾 token, 内联命令必然不匹配 ->
+    # target is None -> 直接放行, 任意命令都能借 bash -c 绕过本检查。
+    # 本仓现有 hook 一律是 `bash <脚本>.sh` 形式, 无一使用 -c, 故此处不产生假阳性。
+    if "-c" in tokens:
+        idx = tokens.index("-c")
+        inline = tokens[idx + 1] if idx + 1 < len(tokens) else ""
+        return (
+            f"{hook.get('name', '?')}: command 使用 shell -c 内联命令, 无法静态校验 "
+            f"-> {inline[:80]} (改为直接调用脚本路径)"
+        )
+
+    target = next((t for t in tokens if t.endswith((".py", ".sh"))), None)
     if target is None:
         return None
 
@@ -200,7 +198,7 @@ def _command_problem(hook: dict) -> str | None:
         # 注意: 这会让"参数校验"整体失效, 但不会误报 —— 宁可漏检不可误伤。
         return None
 
-    parts = command.split()
+    parts = tokens
     script_idx = parts.index(target)
     used = parts[script_idx + 1 :]
 

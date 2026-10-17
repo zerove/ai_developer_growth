@@ -107,6 +107,53 @@ def commit_boundary() -> tuple[set[str], set[str]]:
     return committed, staged
 
 
+def _committed_resolve(src: str, target: str, files: set[str], stems: set[str]) -> bool:
+    """已提交树内的链接解析。
+
+    刻意不复用上面的 `_resolve`: 它只做文件相对, 因此对 `docs/MOC.md` 里的
+    vault 相对链接 `docs/mindset/README` 会解析成 `docs/docs/mindset/README.md` ——
+    该缺陷此前不可见, 因为当时唯一被检查的 staged 文件位于仓库根 (`CONTEXT.md`),
+    `Path(src).parts[:-1]` 为空, 双前缀不会显现。已提交树检查覆盖子目录文件后
+    立即暴露。
+
+    另需处理指向**非 markdown** 文件的链接(如 `README.md -> LICENSE`): 只补
+    `.md` 会把真实存在的文件误判为断链。
+    """
+    t = target.split("#")[0].strip()
+    if not t:
+        return True
+
+    src_dir = Path(src).parts[:-1]
+
+    def norm(parts: tuple[str, ...]) -> str:
+        stack: list[str] = []
+        for seg in parts:
+            if seg == "..":
+                if stack:
+                    stack.pop()
+            elif seg not in (".", ""):
+                stack.append(seg)
+        return "/".join(stack)
+
+    def with_ext(base: str) -> list[str]:
+        return [base] if base.endswith(".md") else [base + ".md", base]
+
+    candidates: list[str] = []
+    p = Path(t)
+    if p.is_absolute():
+        candidates += with_ext(norm(p.parts))
+    else:
+        candidates += with_ext(norm(tuple([*src_dir, *p.parts])))  # 1) 文件相对
+        candidates += with_ext(norm(p.parts))  # 2) vault 相对 (仓库根)
+        # 3) 本仓约定 docs/ 为 vault 根: docs/efficiency/*.md 里的
+        #    `efficiency/xxx` 指的是 docs/efficiency/xxx, 非仓库根下的
+        #    efficiency/xxx。与 link_auditor.py 的口径保持一致。
+        candidates += with_ext(norm(tuple(["docs", *p.parts])))
+    if any(c in files for c in candidates):
+        return True
+    return "/" not in t and Path(t).stem in stems
+
+
 class TestStagedFilesHaveNoDanglingLinks:
     def test_all_staged_links_resolve_within_commit(self, commit_boundary: tuple[set[str], set[str]]) -> None:
         committed, staged = commit_boundary
@@ -172,3 +219,62 @@ class TestStagedFilesHaveNoDanglingLinks:
             }
         )
         assert not missing, f"ADR 索引引用了不存在的条目: {missing}"
+
+
+class TestCommittedTreeHasNoDanglingLinks:
+    """已提交树内部不得存在断链。
+
+    `TestStagedFilesHaveNoDanglingLinks` 只看 staged 文件, 而干净 clone 中
+    staged 为空, 按设计 skip —— 因此"引用已在仓库里、但被引用的文件从未提交"
+    这类缺陷对它完全不可见。
+
+    实测: ADR.md / docs/adr/ADR.md / CONTEXT.md / ROADMAP.md 四处引用
+    ADR-078, 而该文件从未入库, 干净 clone 中必然出现 4 处死链。靠人工 clone
+    才发现, 说明这个盲区需要机械覆盖。
+
+    必须读**已提交内容**而非工作树: 工作树里该文件存在(只是没提交), 读工作树
+    会误判为通过 —— 那正是本用例要防的失效模式。故用 `git archive HEAD` 把
+    已提交的 md 取出到临时目录再扫描。
+    """
+
+    @staticmethod
+    def _committed_tree(tmp: Path) -> Path:
+        proc = subprocess.run(
+            ["git", "archive", "HEAD"],
+            cwd=REPO_ROOT,
+            capture_output=True,
+            timeout=300,
+        )
+        if proc.returncode != 0:
+            pytest.skip("非 git 仓库或 git archive 不可用")
+        subprocess.run(["tar", "-x", "-C", str(tmp)], input=proc.stdout, capture_output=True, check=True)
+        return tmp
+
+    def test_committed_tree_has_no_dangling_links(self, tmp_path: Path) -> None:
+        root = self._committed_tree(tmp_path)
+        # 解析集含**全部**已提交文件: 链接可能指向 LICENSE、图片等非 md 资源,
+        # 只把 md 放进解析集会把它们误判为断链
+        files = {p.relative_to(root).as_posix() for p in root.rglob("*") if p.is_file()}
+        assert len(files) > 100, f"只取出 {len(files)} 个文件, 采样异常, 本用例失去意义"
+        stems = {Path(f).stem for f in files}
+        md_files = {f for f in files if f.endswith(".md")}
+
+        dangling: list[str] = []
+        for rel in sorted(md_files):
+            text = (root / rel).read_text(encoding="utf-8", errors="replace").replace("\\|", "|")
+            text = re.sub(r"```.*?```", "", text, flags=re.DOTALL)
+            text = re.sub(r"`[^`\n]*`", "", text)
+            for pattern in (WIKILINK, MDLINK):
+                for m in pattern.finditer(text):
+                    target = m.group(1).split("|")[0].split("#")[0].strip()
+                    if not target or target.startswith(("http://", "https://", "mailto:")):
+                        continue
+                    if not _committed_resolve(rel, target, files, stems):
+                        dangling.append(f"{rel} -> {target}")
+
+        assert not dangling, (
+            "已提交树中存在断链 —— 干净 clone 中即为死链:\n  "
+            + "\n  ".join(dangling[:20])
+            + (f"\n  ... 共 {len(dangling)} 处" if len(dangling) > 20 else "")
+            + "\n请提交被引用的文件, 或修正该引用。"
+        )

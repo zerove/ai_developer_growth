@@ -10,7 +10,7 @@ import pytest
 import runner as _runner_mod
 from strategies.base import Strategy, StrategyKind, StrategyRegistry, get_registry
 from strategies.llm import LLMStrategy, _mock_fix
-from strategies.pattern import Pattern, PatternStrategy
+from strategies.pattern import _BUILTIN_PATTERNS, Pattern, PatternStrategy
 from strategies.retry import RetryStrategy
 
 # ── Strategy base / registry ────────────────────────────────────────────────
@@ -234,8 +234,6 @@ class TestZeroDivisionGuardProducesValidCode:
     """The guard skeleton must keep the original statement's indentation."""
 
     def test_replacement_is_syntactically_valid(self) -> None:
-        from strategies.pattern import _BUILTIN_PATTERNS
-
         pattern = next(p for p in _BUILTIN_PATTERNS if p.name == "zero-division-guard")
         source = "def average(values):\n    return sum(values) / len(values)\n"
         assert pattern.matches_error("ZeroDivisionError: division by zero")

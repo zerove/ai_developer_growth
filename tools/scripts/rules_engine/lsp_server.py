@@ -77,6 +77,38 @@ def _text_to_range(text: str, pattern: str, line_offset: int = 0) -> Range | Non
     return None
 
 
+def _diagnostics_for_rule(content: str, rule: dict[str, Any]) -> list[Diagnostic]:
+    """单条规则命中的 diagnostics。pattern 非法或疑似灾难性回溯时返回空。"""
+    pattern = rule.get("pattern", "")
+    if not pattern:
+        return []
+    if guard_pattern(pattern, "lsp/_check_document"):
+        return []
+    try:
+        found = []
+        for match in re.finditer(pattern, content, re.MULTILINE):
+            start_line = content[: match.start()].count("\n")
+            start_col = match.start() - (content.rfind("\n", 0, match.start()) + 1)
+            end_line = content[: match.end()].count("\n")
+            end_col = match.end() - (content.rfind("\n", 0, match.end()) + 1)
+            found.append(
+                Diagnostic(
+                    range=Range(
+                        start=Position(line=start_line, character=max(0, start_col)),
+                        end=Position(line=end_line, character=max(0, end_col)),
+                    ),
+                    message=rule.get("message", "Code quality issue"),
+                    severity=_map_severity(rule.get("severity", "warning")),
+                    source="adg-governance",
+                    code=rule.get("id", ""),
+                    code_description={"href": ""} if rule.get("fix_hint") else None,
+                )
+            )
+    except re.error:
+        return []
+    return found
+
+
 def _check_document(content: str, language: str) -> list[Diagnostic]:
     """Check a document against language rules and return diagnostics."""
     if not HAS_PYGLS:
@@ -98,33 +130,7 @@ def _check_document(content: str, language: str) -> list[Diagnostic]:
     anti_patterns = rules.get("anti_patterns", [])
 
     for rule in anti_patterns:
-        pattern = rule.get("pattern", "")
-        if not pattern:
-            continue
-        if guard_pattern(pattern, "lsp/_check_document"):
-            continue
-        try:
-            for match in re.finditer(pattern, content, re.MULTILINE):
-                start_line = content[: match.start()].count("\n")
-                start_col = match.start() - (content.rfind("\n", 0, match.start()) + 1)
-                end_line = content[: match.end()].count("\n")
-                end_col = match.end() - (content.rfind("\n", 0, match.end()) + 1)
-
-                diag = Diagnostic(
-                    range=Range(
-                        start=Position(line=start_line, character=max(0, start_col)),
-                        end=Position(line=end_line, character=max(0, end_col)),
-                    ),
-                    message=rule.get("message", "Code quality issue"),
-                    severity=_map_severity(rule.get("severity", "warning")),
-                    source="adg-governance",
-                    code=rule.get("id", ""),
-                    code_description={"href": ""} if rule.get("fix_hint") else None,
-                )
-                diagnostics.append(diag)
-        except re.error:
-            # Invalid regex pattern
-            pass
+        diagnostics.extend(_diagnostics_for_rule(content, rule))
 
     return diagnostics
 

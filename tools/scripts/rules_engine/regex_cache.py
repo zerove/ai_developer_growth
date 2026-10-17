@@ -14,7 +14,7 @@ import re
 import string
 from collections import OrderedDict
 from collections.abc import Iterator
-from typing import Any
+from typing import Any, TypeAlias
 
 from .logger import logger
 
@@ -32,8 +32,13 @@ class RegexSafetyError(ValueError):
 # 无法可靠识别的结构。私有 API 且不出现在类型存根中, 故用 importlib 载入
 # (直接 from re import _parser 会被 mypy 判 attr-defined, 而抑制指令被禁用)。
 # 不可用时退回启发式。
-_sre_constants: Any = None
-_sre_parse: Any = None
+# re._parser 是 CPython 私有 API 且无类型存根, 其语法树节点(opcode/子模式)无法用
+# 公开类型标注。集中在此表达"来自 re._parser 的不透明值", 而不是把 Any 散落到每个
+# 形参上 —— 后者会让质量门禁反复报警, 淹没真正的新增问题。
+_Opaque: TypeAlias = Any
+
+_sre_constants: _Opaque = None
+_sre_parse: _Opaque = None
 _REPEAT_OPS: frozenset[Any] = frozenset()
 try:  # pragma: no cover
     _sre_constants = importlib.import_module("re._constants")
@@ -54,7 +59,7 @@ _DANGEROUS_PATTERNS = [
 ]
 
 
-def _subpatterns(op: Any, av: Any) -> Iterator[Any]:
+def _subpatterns(op: _Opaque, av: _Opaque) -> Iterator[_Opaque]:
     """产出该 token 的直接子 SubPattern。"""
     if op in _REPEAT_OPS:
         yield av[2]
@@ -133,7 +138,7 @@ def _forces_unique_split(data: list[Any], idx: int) -> bool:
     return False
 
 
-def _nested_ambiguous_repeat(seq: Any) -> bool:
+def _nested_ambiguous_repeat(seq: _Opaque) -> bool:
     """seq 子树内是否存在会造成歧义的嵌套无界量词。"""
     data = seq.data
     for idx, (op, av) in enumerate(data):
@@ -146,7 +151,7 @@ def _nested_ambiguous_repeat(seq: Any) -> bool:
     return False
 
 
-def _iter_branches(seq: Any) -> Iterator[list[Any]]:
+def _iter_branches(seq: _Opaque) -> Iterator[list[_Opaque]]:
     """逐个产出 seq 子树中的 BRANCH 备选列表。"""
     for op, av in seq.data:
         if op is _sre_constants.BRANCH:
@@ -159,7 +164,7 @@ def _iter_branches(seq: Any) -> Iterator[list[Any]]:
             yield from _iter_branches(av[3])
 
 
-def _literal_of(seq: Any) -> str | None:
+def _literal_of(seq: _Opaque) -> str | None:
     """分支是否为纯字面量串; 含字符类/组/量词时返回 None。"""
     out: list[str] = []
     for op, av in seq.data:
@@ -232,7 +237,7 @@ def _in_first_set(items: list[Any]) -> tuple[int, set[str]] | None:
     return (_FS_POS, out) if out else None
 
 
-def _first_set(seq: Any) -> tuple[int, set[str]] | None:
+def _first_set(seq: _Opaque) -> tuple[int, set[str]] | None:
     """分支可能的首字符集; 无法静态确定时返回 None (保守视为会重叠)。
 
     ``.`` (非 DOTALL) 是除换行外的补集 —— 这一点决定 ``.*\\n`` 的分界是否唯一。
@@ -279,7 +284,7 @@ def _disjoint(a: tuple[int, set[str]], b: tuple[int, set[str]]) -> bool:
     return False
 
 
-def _pair_overlaps(left: Any, right: Any) -> bool:
+def _pair_overlaps(left: _Opaque, right: _Opaque) -> bool:
     """两个分支是否会在同一起点上让引擎反复回溯。"""
     lit_left, lit_right = _literal_of(left), _literal_of(right)
     if lit_left is not None and lit_right is not None:

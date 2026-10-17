@@ -73,6 +73,26 @@ def _load_rules_with_tests(lang: str) -> list[dict[str, Any]]:
     return rules
 
 
+def _run_test_cases(
+    compiled: re.Pattern[str], rule: dict[str, Any], rule_id: str, category: str
+) -> tuple[int, int, list[str]]:
+    """跑单条规则的 test_cases, 返回 (通过, 失败, 错误信息)。"""
+    passed = failed = 0
+    errors: list[str] = []
+    for i, tc in enumerate(rule["test_cases"]):
+        code = tc["code"]
+        should_match = tc.get("should_match", True)
+        did_match = bool(compiled.search(code))
+        if did_match == should_match:
+            passed += 1
+        else:
+            failed += 1
+            expected = "match" if should_match else "no match"
+            actual = "matched" if did_match else "no match"
+            errors.append(f"[{category}] {rule_id} case {i + 1}: expected {expected}, got {actual} on: {code!r}")
+    return passed, failed, errors
+
+
 def validate_rule_tests(lang: str) -> tuple[int, int, list[str]]:
     """Validate all rule test cases for a language.
 
@@ -112,18 +132,10 @@ def validate_rule_tests(lang: str) -> tuple[int, int, list[str]]:
             failed += 1
             continue
 
-        for i, tc in enumerate(rule["test_cases"]):
-            code = tc["code"]
-            should_match = tc.get("should_match", True)
-            did_match = bool(compiled.search(code))
-
-            if did_match == should_match:
-                passed += 1
-            else:
-                failed += 1
-                expected = "match" if should_match else "no match"
-                actual = "matched" if did_match else "no match"
-                errors.append(f"[{category}] {rule_id} case {i + 1}: expected {expected}, got {actual} on: {code!r}")
+        p, f, msgs = _run_test_cases(compiled, rule, rule_id, category)
+        passed += p
+        failed += f
+        errors.extend(msgs)
 
     return passed, failed, errors
 

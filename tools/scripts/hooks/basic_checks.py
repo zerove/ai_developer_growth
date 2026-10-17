@@ -260,7 +260,11 @@ def run_tests() -> tuple[bool, str]:
     if cov_min > 0:
         cmd += ["--cov-fail-under", str(cov_min)]
 
-    return _run_subprocess(cmd, timeout=900, description="Tests")
+    # 超时用于**兜住挂死**, 不是性能指标。此前固定 900s, 但健康状态下实测全量
+    # 需要 902s(空闲) ~ 1277s(有负载), 于是该守卫会随机报失败 —— 一个在代码
+    # 正常时误报的守卫比没有守卫更糟, 它会训练人用 --no-verify 绕过。
+    # 取 1800s: 约为观测上限的 1.4 倍, 既留出余量又仍能兜住真正的挂死。
+    return _run_subprocess(cmd, timeout=1800, description="Tests")
 
 
 def _run_builtin_secret_scan() -> tuple[bool, str]:

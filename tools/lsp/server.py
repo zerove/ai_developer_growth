@@ -413,6 +413,27 @@ def send_notification(method: str, params: dict[str, Any]) -> None:
 # ─────────────────────────────────────────────────────────────
 
 
+_DOC_CHANGE_METHODS = (
+    "textDocument/didOpen",
+    "textDocument/didChange",
+    "textDocument/didSave",
+)
+
+
+def _publish_diagnostics(server: AdgLanguageServer, params: dict[str, Any]) -> None:
+    """文档变更后主动推送一次诊断 —— 客户端不会自己请求。"""
+    if not isinstance(params, dict) or params.get("method") not in _DOC_CHANGE_METHODS:
+        return
+    uri = params.get("textDocument", {}).get("uri", "")
+    if not uri:
+        return
+    diagnostics = server._handle_diagnostic({"textDocument": {"uri": uri}})
+    send_notification(
+        "textDocument/publishDiagnostics",
+        {"uri": uri, "diagnostics": diagnostics},
+    )
+
+
 def run_stdio_server() -> None:
     """Run the LSP server over stdio."""
     server = AdgLanguageServer()
@@ -435,21 +456,7 @@ def run_stdio_server() -> None:
                 write_message(response)
 
             # Send diagnostics after document changes
-            if method in (
-                "textDocument/didOpen",
-                "textDocument/didChange",
-                "textDocument/didSave",
-            ):
-                uri = params.get("textDocument", {}).get("uri", "")
-                if uri:
-                    diagnostics = server._handle_diagnostic({"textDocument": {"uri": uri}})
-                    send_notification(
-                        "textDocument/publishDiagnostics",
-                        {
-                            "uri": uri,
-                            "diagnostics": diagnostics,
-                        },
-                    )
+            _publish_diagnostics(server, params if isinstance(params, dict) else {})
 
         except EOFError:
             break

@@ -16,6 +16,8 @@ import re
 from dataclasses import dataclass, field
 from pathlib import Path
 
+from ai_dev_framework.redos import is_dangerous
+
 
 @dataclass
 class ScanIssue:
@@ -40,6 +42,9 @@ class ScanResult:
     issues: list[ScanIssue] = field(default_factory=list)
     passed: bool = True
     error: str | None = None
+    # 非致命提示(如规则因 ReDoS 风险被跳过)。与 error 分开: 跳过一条规则不应
+    # 让扫描失败, 但也不该悄无声息。
+    warnings: list[str] = field(default_factory=list)
 
 
 # ── 语言检测 ──────────────────────────────────
@@ -257,6 +262,22 @@ def scan_file(filepath: str | Path) -> ScanResult:
         if not pattern_str or pattern_str == "None":
             continue
 
+        # ReDoS 闸门: 规则文件在下游仓库中是 PR 可控面, 而本函数会拿其中的
+        # 正则去匹配**任意长度的源码文件**。命中疑似灾难性回溯的 pattern 时
+        # 跳过该规则并记 warning —— 不静默丢弃, 否则又是一次 fail-open。
+        if is_dangerous(pattern_str):
+            result.warnings.append(
+                f"Rule '{rule.get('id', 'unknown')}': skipped, pattern is a suspected catastrophic-backtracking regex"
+            )
+            continue
+        dangerous_excludes = [ep for ep in (rule.get("exclude_patterns") or []) if is_dangerous(ep)]
+        if dangerous_excludes:
+            result.warnings.append(
+                f"Rule '{rule.get('id', 'unknown')}': "
+                f"{len(dangerous_excludes)} exclude_pattern(s) skipped as "
+                "suspected catastrophic-backtracking regex"
+            )
+
         # 检查 exclude_files
         if rule.get("exclude_files") and _should_exclude(p, rule["exclude_files"]):
             continue
@@ -266,6 +287,8 @@ def scan_file(filepath: str | Path) -> ScanResult:
         if exclude_pats:
             skip_rule = False
             for ep in exclude_pats:
+                if is_dangerous(ep):
+                    continue
                 try:
                     if re.search(ep, content):
                         skip_rule = True

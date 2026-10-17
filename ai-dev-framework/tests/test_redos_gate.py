@@ -1,0 +1,163 @@
+"""ai_dev_framework 的 ReDoS 闸门回归测试。
+
+对应缺陷: `scan.py` 会拿规则文件里的正则去匹配任意长度的源码, 而规则文件在
+下游仓库中是 **PR 可控面**。恶意规则如 `(x|xx)+$` 会让扫描在 CI 上指数级挂死。
+
+`ai-dev-framework` 以 `pip install` 分发, 不能依赖主仓的 regex_cache, 故自带
+`redos.py` (由脚本从主仓原样提取)。本测试同时锁定两件事:
+
+1. 提取无损 —— 与主仓判定在真实规则语料上零分歧
+2. 闸门有效 —— 危险规则被跳过且**留痕**, 不静默丢弃 (否则又是一次 fail-open)
+"""
+
+from __future__ import annotations
+
+import sys
+import tempfile
+import time
+from pathlib import Path
+
+import pytest
+
+SRC = Path(__file__).resolve().parent.parent / "src"
+if str(SRC) not in sys.path:
+    sys.path.insert(0, str(SRC))
+
+from ai_dev_framework.redos import is_dangerous  # noqa: E402
+
+DANGEROUS = [
+    r"(x|xx)+$",
+    r"(a|aa)+$",
+    r"(a+)+$",
+    r"(a*)*$",
+    r"(\d+|\w)+",
+    r"(a|a)*",
+    r"(a|aa)*b",
+]
+
+SAFE = [
+    r"\b\w+\b",
+    r"^[a-z][a-z0-9_]*\.rs$",
+    r"(foo|bar)+",
+    r"^\s*$",
+    r"(GET|POST|PUT)",
+    r"[0-9]{3}-[0-9]{4}",
+    r"\d{4}-\d{2}-\d{2}",
+    r"(?:abc)+",
+    r"(.*a){10}",
+]
+
+
+class TestDetector:
+    @pytest.mark.parametrize("pattern", DANGEROUS)
+    def test_flags_catastrophic(self, pattern: str) -> None:
+        assert is_dangerous(pattern) is True, f"漏判: {pattern}"
+
+    @pytest.mark.parametrize("pattern", SAFE)
+    def test_does_not_flag_safe(self, pattern: str) -> None:
+        assert is_dangerous(pattern) is False, f"误判: {pattern}"
+
+    def test_never_raises_on_junk(self) -> None:
+        for junk in ["(", "[a-", "*", "\\", "(?P<n>a)(?P<n>b)", ""]:
+            assert isinstance(is_dangerous(junk), bool)
+
+    def test_matches_parent_repo_analyzer(self) -> None:
+        """提取无损: 两份实现对真实规则语料的判定必须完全一致。
+
+        任何分歧都意味着同步已失效 —— 此时应以主仓为准重新生成本包文件。
+        """
+        yaml = pytest.importorskip("yaml")
+        repo_root = Path(__file__).resolve().parents[2]
+        sys.path.insert(0, str(repo_root))
+        try:
+            from tools.scripts.rules_engine.regex_cache import _is_dangerous as parent
+        except ImportError:
+            pytest.skip("主仓 regex_cache 不可达 (分发场景)")
+
+        patterns: set[str] = set()
+
+        def walk(node: object) -> None:
+            if isinstance(node, dict):
+                for k, v in node.items():
+                    if k in ("pattern", "exclude_pattern") and isinstance(v, str):
+                        patterns.add(v)
+                    else:
+                        walk(v)
+            elif isinstance(node, list):
+                for v in node:
+                    walk(v)
+
+        for yml in repo_root.rglob("*.y*ml"):
+            if any(s in yml.parts for s in {".git", "node_modules", ".venv"}):
+                continue
+            try:
+                walk(yaml.safe_load(yml.read_text(encoding="utf-8")))
+            except Exception:
+                continue
+
+        assert len(patterns) > 100, "语料采样异常, 本用例失去意义"
+        drift = [p for p in patterns if parent(p) is not is_dangerous(p)]
+        assert not drift, (
+            f"与主仓判定分歧 {len(drift)} 条, 同步已失效: {drift[:5]}。应重新从主仓 regex_cache.py 提取本文件。"
+        )
+
+
+class TestScannerGate:
+    """端到端: 恶意**项目规则**不得让扫描挂死, 且跳过必须留痕。"""
+
+    def _scan_with_project_rule(self, pattern: str) -> tuple[float, object]:
+        from ai_dev_framework import scan as scan_mod
+
+        tmp = Path(tempfile.mkdtemp())
+        rules_dir = tmp / "python" / "rules.d"
+        rules_dir.mkdir(parents=True)
+        (rules_dir / "anti_patterns.yml").write_text(
+            f"anti_patterns:\n  - id: evil\n    pattern: '{pattern}'\n    message: pwn\n    severity: warning\n",
+            encoding="utf-8",
+        )
+        original = scan_mod._PROJECT_LANGUAGES
+        scan_mod._PROJECT_LANGUAGES = tmp
+        try:
+            target = tmp / "a.py"
+            target.write_text("x = '" + "x" * 40 + "'\n", encoding="utf-8")
+            start = time.perf_counter()
+            result = scan_mod.scan_file(target)
+            return time.perf_counter() - start, result
+        finally:
+            scan_mod._PROJECT_LANGUAGES = original
+
+    def test_malicious_rule_is_skipped_and_logged(self) -> None:
+        elapsed, result = self._scan_with_project_rule(r"(x|xx)+$")
+
+        assert elapsed < 2.0, f"疑似灾难性回溯未阻断: {elapsed:.1f}s"
+        assert "evil" not in [i.rule_id for i in result.issues], "危险规则未被跳过"
+        assert any("evil" in w for w in result.warnings), "跳过后未留痕 —— 静默丢弃规则同样是 fail-open"
+
+    def test_safe_project_rule_still_runs(self) -> None:
+        """反向约束: 闸门不得把正常规则一起拦掉。"""
+        from ai_dev_framework import scan as scan_mod
+
+        tmp = Path(tempfile.mkdtemp())
+        rules_dir = tmp / "python" / "rules.d"
+        rules_dir.mkdir(parents=True)
+        (rules_dir / "anti_patterns.yml").write_text(
+            "anti_patterns:\n"
+            r"  - id: todo\n    pattern: '\bTODO\b'"
+            "\n"
+            "    message: m\n    severity: warning\n",
+            encoding="utf-8",
+        )
+        original = scan_mod._PROJECT_LANGUAGES
+        scan_mod._PROJECT_LANGUAGES = tmp
+        try:
+            target = tmp / "a.py"
+            # 不能用纯注释行: scan.py 会跳过整行只有注释的内容
+            target.write_text("x = 1  # TODO: fix\n", encoding="utf-8")
+            result = scan_mod.scan_file(target)
+        finally:
+            scan_mod._PROJECT_LANGUAGES = original
+
+        # 不断言该规则一定命中(它会与内置 common-todo 同义, 断言易碎);
+        # 要断言的是闸门**没有把它当危险规则跳过** —— 那才是"误伤"。
+        assert not any("todo" in w for w in result.warnings), f"正常规则被 ReDoS 闸门误伤: {result.warnings}"
+        assert result.issues, "扫描未产出任何结果, 用例失去意义"

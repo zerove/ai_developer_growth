@@ -82,8 +82,8 @@
         "name": "link-audit",
         "skill": "knowledge-curator",
         "action": "audit",
-        "description": "PR 时检查文档断链",
-        "condition": "files_contain('docs/') || files_contain('*.md')",
+        "description": "PR 时检查 docs/efficiency/ 及 docs/MOC.md 相关文档断链",
+        "condition": "files_contain('docs/') || files_contain('case-studies/')",
         "enabled": true
       },
       {
@@ -115,8 +115,8 @@
         "name": "context-audit",
         "skill": "context-sync",
         "action": "audit",
-        "description": "PR 时审计规范合规性",
-        "condition": "files_contain('tools/') || files_contain('examples/')",
+        "description": "PR 时审计 tools/scripts/ 下 Python 文件规范合规",
+        "condition": "files_contain('tools/scripts/') || files_contain('examples/scripts/')",
         "enabled": true
       },
       {
@@ -165,8 +165,9 @@
         "name": "rules-yml-integrity-check-merge",
         "skill": "governance-auditor",
         "action": "check-rules-yml-integrity",
-        "description": "合并后验证 .adg/rules.yml 完整性 (Phase 30, 与 on_commit 双层防护)",
+        "description": "合并后验证 .adg/rules.yml 完整性（仅当有实际文件变更时触发）",
         "command": "bash tools/scripts/check_rules_yml_integrity.sh",
+        "condition": "files_contain('.adg/rules.yml')",
         "enabled": true
       }
     ],
@@ -184,7 +185,7 @@
         "skill": "knowledge-curator",
         "action": "scan",
         "description": "每周案例扫描",
-        "schedule": "0 10 * * 1",
+        "schedule": "0 14 * * 3",
         "enabled": true
       },
       {

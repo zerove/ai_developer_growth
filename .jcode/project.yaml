@@ -1,0 +1,300 @@
+# JCode 项目通用配置
+#
+# 这是项目级配置文件，定义了语言、工具链、路径、阈值、Hooks 等
+# 所有 JCode 技能读取此配置，实现跨语言、跨项目复用
+#
+# 用法：
+#   jcode init                    # 交互式生成
+#   jcode init --lang python      # 预设语言生成
+#   jcode init --template web     # 预设模板生成
+
+# ============================================================================
+# 基础项目信息
+# ============================================================================
+project:
+  name: "ai-developer-growth"      # 项目名称（与 pyproject.toml 一致）
+  description: "面向 AI 时代开发者成长的开源知识库，包含 Agent 定义、治理规范、工作流工具与实践案例"
+  version: "2.24.0"                # 与 pyproject.toml [project].version 一致（pyproject 为唯一权威源）
+  repository: ""                   # Git 仓库 URL（待填写）
+  license: "MIT"                   # 许可证
+
+# ============================================================================
+# 语言配置 (核心：决定工具链)
+# ============================================================================
+language:
+  primary: "python"                # 主语言：python
+  secondary: []                    # 次要语言列表（本项目仅用 Python）
+  version: ">=3.11"                # 语言版本要求
+  runtime: "cpython"               # 运行时环境
+
+# ============================================================================
+# 目录结构
+# ============================================================================
+paths:
+  root: "."                        # 项目根目录
+  src: "tools/scripts"             # 源代码目录（实际脚本位于 tools/scripts）
+  tests: "tests"                   # 测试目录
+  docs: "docs"                     # 文档目录
+  config: ".jcode"                 # 配置目录
+  scripts: "tools/scripts"         # 脚本目录
+  examples: "examples"             # 示例目录
+  benchmarks: "benchmarks"         # 基准测试目录
+  fixtures: "fixtures"             # 测试数据目录
+  generated: "generated"           # 生成代码目录
+  build: "build"                   # 构建输出目录
+  dist: "dist"                     # 分发目录
+  coverage: "coverage"             # 覆盖率报告目录
+  reports: "reports"               # 报告目录
+  logs: "logs"                     # 日志目录
+  temp: "tmp"                      # 临时目录
+
+# ============================================================================
+# 工具链配置 (Python，与已安装工具版本对齐)
+# ============================================================================
+tools:
+  # 代码风格/格式化
+  format:
+    command: "ruff format"
+    args: []
+    check_args: ["--check"]
+    
+  # 静态分析/Lint
+  lint:
+    command: "ruff check"
+    args: []
+    fix_args: ["--fix"]
+    
+  # 类型检查
+  typecheck:
+    command: "mypy"
+    args: []
+    
+  # 测试
+  test:
+    command: "pytest"
+    args: ["-v"]
+    coverage_args: ["--cov", "--cov-report=term-missing", "--cov-report=xml"]
+    timeout: 120                   # 单测超时(秒)
+    
+  # 安全扫描
+  security:
+    command: "python tools/scripts/secret_scanner.py"
+    args: []
+    
+  # 依赖检查
+  deps:
+    command: "pip audit"
+    args: []
+    
+  # 文档生成
+  docs:
+    command: ""
+    args: []
+    
+  # 代码生成/脚手架
+  generate:
+    command: ""
+    args: []
+
+# ============================================================================
+# 质量阈值 (与 pyproject/dev 依赖及治理标准对齐)
+# ============================================================================
+thresholds:
+  # 测试覆盖率（治理要求 ≥80%）
+  coverage:
+    overall: 80                    # 整体覆盖率 %
+    per_file: 50                   # 单文件最低覆盖率 %
+    critical_paths: 80             # 关键路径覆盖率 %
+    
+  # 代码复杂度
+  complexity:
+    cyclomatic: 10                 # 圈复杂度阈值
+    cognitive: 15                  # 认知复杂度阈值
+    nesting: 4                     # 最大嵌套深度
+    function_length: 50            # 最大函数行数
+    class_length: 300              # 最大类行数
+    file_length: 300               # 最大文件行数（与 jcode-prompt-constraints.md 一致）
+    
+  # 命名规范
+  naming:
+    style: "snake_case"            # Python 风格
+    max_length: 64                 # 最大标识符长度
+    
+  # 文档覆盖率
+  documentation:
+    public_api: 80                 # 公共 API 文档覆盖率 %
+    internal: 40                   # 内部代码文档覆盖率 %
+    
+  # 安全
+  security:
+    max_high: 0                    # 高危漏洞容忍度（零容忍）
+    max_medium: 5                  # 中危漏洞容忍度
+    max_low: 20                    # 低危漏洞容忍度
+    
+  # 性能
+  performance:
+    max_build_time: 300            # 最大构建时间(秒)
+    max_test_time: 180             # 最大测试时间(秒)
+    bundle_size_limit: ""          # 打包体积限制 (如 "500kb")
+
+# ============================================================================
+# Hooks 配置 (开关层，具体规则统一由 .jcode/hooks.json 定义)
+# ============================================================================
+hooks:
+  # 提交前（具体命令与条件见 .jcode/hooks.json）
+  on_commit:
+    - name: "format-check"
+      skill: "format"
+      action: "check"
+      enabled: true
+    - name: "lint-check"
+      skill: "lint"
+      action: "check"
+      enabled: true
+    - name: "typecheck"
+      skill: "typecheck"
+      action: "check"
+      enabled: true
+    - name: "security-scan"
+      skill: "security"
+      action: "scan"
+      enabled: true
+      
+  # PR 时
+  on_pr:
+    - name: "full-test"
+      skill: "test"
+      action: "run"
+      enabled: true
+    - name: "coverage-check"
+      skill: "test"
+      action: "coverage"
+      enabled: true
+    - name: "quality-gate"
+      skill: "governance"
+      action: "gate"
+      enabled: true
+    - name: "docs-check"
+      skill: "docs"
+      action: "validate"
+      enabled: true
+      
+  # 合并后
+  on_merge:
+    - name: "update-docs"
+      skill: "docs"
+      action: "generate"
+      enabled: true
+    - name: "release-check"
+      skill: "release"
+      action: "validate"
+      enabled: false
+      
+  # 定时任务（具体 cron 见 .jcode/hooks.json，此处仅做开关控制）
+  scheduled:
+    - name: "weekly-audit"
+      skill: "governance"
+      action: "full"
+      schedule: "0 9 * * 1"
+      enabled: true
+    - name: "weekly-scan"
+      skill: "knowledge-curator"
+      action: "scan"
+      schedule: "0 14 * * 3"
+      enabled: true
+    - name: "monthly-deps"
+      skill: "deps"
+      action: "audit"
+      schedule: "0 9 1 * *"
+      enabled: true
+
+# ============================================================================
+# Agent 定义 (项目级扩展)
+# ============================================================================
+agents:
+  # 启用的核心 Agent
+  enabled:
+    - "governance-auditor"
+    - "context-sync"
+    - "self-correction-loop"
+    - "multi-agent-orch"
+    
+  # 项目自定义 Agent
+  custom: []
+  
+  # Agent 协作配置
+  collaboration:
+    max_parallel: 4                # 最大并行 Agent 数
+    timeout: 300                   # 单 Agent 超时(秒)
+    retry: 2                       # 失败重试次数
+
+# ============================================================================
+# CI/CD 集成
+# ============================================================================
+ci:
+  provider: "github"               # github | gitlab | bitbucket | azure | jenkins | circleci | travis | drone | woodpecker | gitea | forgejo
+  
+  # 环境变量
+  env:
+    - "PYTHONPATH=tools/scripts"
+    
+  # 缓存策略
+  cache:
+    - "~/.cache/pip"
+    - "~/.cache/ruff"
+    - "~/.cache/mypy"
+    
+  # 矩阵构建
+  matrix:
+    python: ["3.11", "3.12", "3.13"]
+    os: ["ubuntu-latest", "macos-latest", "windows-latest"]
+    
+  # 部署
+  deploy:
+    enabled: false
+    environments: ["staging", "production"]
+    approval_required: true
+
+# ============================================================================
+# 通知配置
+# ============================================================================
+notifications:
+  # 通知渠道
+  channels:
+    - type: "slack"
+      webhook: "${SLACK_WEBHOOK}"
+      events: ["build_failed", "deploy_failed", "security_alert"]
+    - type: "email"
+      recipients: ["team@example.com"]
+      events: ["build_failed", "release"]
+    - type: "webhook"
+      url: "${WEBHOOK_URL}"
+      events: ["*"]
+      
+  # 通知模板
+  templates:
+    build_failed: "🔴 构建失败: {{project}} #{{build_number}} - {{commit_message}}"
+    deploy_success: "🟢 部署成功: {{project}} v{{version}} -> {{environment}}"
+
+# ============================================================================
+# 扩展配置 (插件系统预留)
+# ============================================================================
+extensions:
+  # 自定义规则包
+  rule_packs: []
+  
+  # 自定义技能
+  skills: []
+  
+  # 集成插件
+  plugins: []
+
+# ============================================================================
+# 元数据 (自动维护)
+# ============================================================================
+_metadata:
+  jcode_version: "1.0.0"
+  config_version: "1.0"
+  created_at: ""
+  updated_at: "2026-10-18"
+  schema_url: "https://jcode.dev/schema/project.json"

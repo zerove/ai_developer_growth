@@ -87,7 +87,8 @@ bandit-report.json
 !.jcode/hooks.json
 !.jcode/registry.json
 !.jcode/scripts/
-!.jcode/mode_decision.conf
+!.jcode/project.yaml
+!.jcode/config.yml
 # 质量门禁棘轮基线: 需随仓库分发，CI 才能豁免存量问题
 !.jcode/baseline.json
 !.jcode/USAGE.md
@@ -116,6 +117,7 @@ debug_mutmut.py
 .quality-trends/swarm_execution.json
 .quality-trends/telemetry.json
 logs/
+.adg-hook.log
 adg-report.html
 
 # 工具运行时生成产物（Machine-specific 基线 / 一次性报告，不入库）

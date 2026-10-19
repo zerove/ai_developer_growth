@@ -5,7 +5,7 @@ on:
       examples:
         description: JSON array of example dirs to test, e.g. ["ai-context-sync"]
         type: string
-        default: '["ai-context-sync","multi-agent-orch","self-correction-loop","ai-task-prioritizer","capability-radar","prompt-optimizer","ai-navigation","ai-navigation-web","ai-growth-slack","ai-growth-vscode"]'
+        default: '["ai-context-sync","multi-agent-orch","self-correction-loop","ai-task-prioritizer","capability-radar","prompt-optimizer","ai-navigation","ai-navigation-web",]'
 jobs:
   test-examples:
     name: Example Tests (${{ matrix.example }})

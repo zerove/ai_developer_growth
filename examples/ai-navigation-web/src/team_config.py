@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 from dataclasses import asdict, dataclass, field
+from datetime import UTC, datetime
 from pathlib import Path
 
 
@@ -38,7 +39,7 @@ class TeamManager:
             team_id=team_id,
             name=name,
             description=description,
-            created_at=__import__("datetime").datetime.now().isoformat(),
+            created_at=datetime.now(UTC).isoformat(),
         )
         self._save(config)
         return config

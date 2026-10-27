@@ -180,6 +180,11 @@ class TestGetEmbeddedRules:
         assert "anti_patterns" in result
         assert len(result["anti_patterns"]) == 2
 
+    def test_rust_prefix(self) -> None:
+        result = _get_embedded_rules("rust")
+        ids = {r["id"] for r in result["anti_patterns"]}
+        assert ids == {"rs-eval-exec", "rs-hardcoded-secret"}
+
 
 class TestValidateFile:
     """Tests for validate_file()."""

@@ -10,6 +10,7 @@ import pytest
 
 from tools.scripts._common import (
     EXTENSION_MAP,
+    RULE_ID_PREFIXES,
     SUPPORTED_EXTENSIONS,
     SeverityCountsMixin,
     child_by_type,
@@ -28,6 +29,7 @@ from tools.scripts._common import (
     node_text,
     print_check,
     print_section,
+    rule_id_prefix,
     rules_dir,
     run_command,
     safe_import,
@@ -73,6 +75,50 @@ class TestDetectLanguage:
         for ext in EXTENSION_MAP:
             result = detect_language(Path(f"file{ext}"))
             assert result is not None, f"Extension {ext} returned None"
+
+
+class TestRuleIdPrefix:
+    @pytest.mark.parametrize(
+        ("language", "expected"),
+        [
+            ("python", "py"),
+            ("rust", "rs"),
+            ("java", "java"),
+            ("javascript", "js"),
+            ("ruby", "ruby"),
+            ("typescript", "ts"),
+            ("kotlin", "kt"),
+            ("csharp", "cs"),
+            ("cpp", "cpp"),
+            ("powershell", "ps"),
+        ],
+    )
+    def test_supported_languages(self, language: str, expected: str) -> None:
+        assert rule_id_prefix(language) == expected
+
+    def test_unknown_falls_back_to_first_two(self) -> None:
+        assert rule_id_prefix("brainfuck") == "br"
+
+    def test_normalizes_case_and_whitespace(self) -> None:
+        assert rule_id_prefix(" Rust ") == "rs"
+
+    def test_mapping_matches_framework_yaml(self) -> None:
+        languages_dir = rules_dir() / "languages"
+        mismatched: list[str] = []
+        for language, prefix in RULE_ID_PREFIXES.items():
+            rules_path = languages_dir / language / "rules.d"
+            if not rules_path.is_dir():
+                continue
+            rule_ids: list[str] = []
+            for rule_file in sorted(rules_path.glob("*.yml")):
+                data = load_yaml(rule_file) or {}
+                for rule in data.get("anti_patterns", []):
+                    rule_id = rule.get("id") if isinstance(rule, dict) else None
+                    if isinstance(rule_id, str):
+                        rule_ids.append(rule_id)
+            if rule_ids and not any(rule_id.startswith(f"{prefix}-") for rule_id in rule_ids):
+                mismatched.append(f"{language}:{prefix}")
+        assert not mismatched
 
 
 class TestRunCommand:

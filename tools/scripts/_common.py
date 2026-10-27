@@ -191,6 +191,49 @@ def detect_language(filepath: Path) -> str | None:
 detect_language_from_file = detect_language
 
 
+# Canonical rule-ID prefixes used by ai-dev-framework/languages/*/rules.d.
+# Keep this aligned with the YAML IDs; language[:2] is not reliable
+# (rust -> ru, java/javascript -> ja, ruby -> ru, typescript -> ty).
+RULE_ID_PREFIXES: dict[str, str] = {
+    "assembly": "asm",
+    "clojure": "clj",
+    "cpp": "cpp",
+    "csharp": "cs",
+    "dart": "dt",
+    "elixir": "ex",
+    "fortran": "for",
+    "go": "go",
+    "graphql": "gql",
+    "haskell": "hs",
+    "java": "java",
+    "javascript": "js",
+    "kotlin": "kt",
+    "lua": "lua",
+    "matlab": "mcl",
+    "perl": "pl",
+    "php": "php",
+    "powershell": "ps",
+    "python": "py",
+    "r": "r",
+    "ruby": "ruby",
+    "rust": "rs",
+    "scala": "sc",
+    "swift": "sw",
+    "typescript": "ts",
+    "zig": "zig",
+}
+
+
+def rule_id_prefix(language: str) -> str:
+    """Return the canonical rule-ID prefix for a language.
+
+    Unknown languages fall back to their first two characters, preserving the
+    previous best-effort behavior for callers outside the supported set.
+    """
+    normalized = language.strip().lower()
+    return RULE_ID_PREFIXES.get(normalized, normalized[:2])
+
+
 # ----------------------------------------------------------
 # Command execution
 # ----------------------------------------------------------

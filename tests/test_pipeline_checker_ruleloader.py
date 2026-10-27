@@ -172,10 +172,20 @@ class TestGetEmbeddedRules:
         assert "py-eval-exec" in ids
         assert "py-hardcoded-secret" in ids
 
-    def test_rust_embedded(self) -> None:
-        rules = _get_embedded_rules("rust")
+    @pytest.mark.parametrize(
+        ("language", "prefix"),
+        [
+            ("rust", "rs"),
+            ("java", "java"),
+            ("javascript", "js"),
+            ("ruby", "ruby"),
+            ("typescript", "ts"),
+        ],
+    )
+    def test_embedded_prefix_matches_yaml(self, language: str, prefix: str) -> None:
+        rules = _get_embedded_rules(language)
         ids = {r["id"] for r in rules["anti_patterns"]}
-        assert "ru-eval-exec" in ids
+        assert ids == {f"{prefix}-eval-exec", f"{prefix}-hardcoded-secret"}
 
     def test_empty_lang(self) -> None:
         rules = _get_embedded_rules("")

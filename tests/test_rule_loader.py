@@ -241,7 +241,7 @@ class TestGetEmbeddedRules:
 
     def test_different_language_prefix(self) -> None:
         rules = _get_embedded_rules("rust")
-        assert rules["anti_patterns"][0]["id"].startswith("ru-")
+        assert rules["anti_patterns"][0]["id"].startswith("rs-")
 
 
 # ──────────────────────────────────────────────────────────

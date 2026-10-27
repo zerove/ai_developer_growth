@@ -25,6 +25,7 @@ updated: 2026-09-17
 
 | ID | 标题 | 状态 | 日期 |
 |----|------|------|------|
+| [[ADR-080-canonical-rule-id-prefix|ADR-080]] | 规则 ID 前缀必须来自共享规范映射，不得由语言名截断推导 | ✅ 已接受 | 2026-10-28 |
 | [[ADR-079-scripts-must-bootstrap-repo-root|ADR-079]] | 可直接执行的脚本必须自行引导仓库根到 sys.path | ✅ 已接受 | 2026-10-10 |
 | [[ADR-078-check-failure-must-be-error-issue|ADR-078]] | worker 崩溃必须变成 error 级 Issue，不得静默剔除文件 | ✅ 已接受 | 2026-10-05 |
 | [[ADR-077-dry-run-must-not-mean-early-exit|ADR-077]] | "不写盘"与"提前退出"是两个语义，不得复用同一个布尔 | ✅ 已接受 | 2026-10-05 |

@@ -24,6 +24,9 @@ from tools.scripts._common import (
     merge_anti_patterns as _merge_anti_patterns,
 )
 from tools.scripts._common import (
+    rule_id_prefix as _rule_id_prefix,
+)
+from tools.scripts._common import (
     rules_dir,
 )
 from tools.scripts._common import (
@@ -532,7 +535,7 @@ def _get_embedded_rules(language: str) -> dict[str, Any]:
     """Fallback embedded rules when YAML files are unavailable."""
     common_anti_patterns: list[dict[str, Any]] = [
         {
-            "id": f"{language[:2]}-eval-exec",
+            "id": f"{_rule_id_prefix(language)}-eval-exec",
             "name": "Use of eval/exec",
             "severity": "error",
             "category": "security",
@@ -541,7 +544,7 @@ def _get_embedded_rules(language: str) -> dict[str, Any]:
             "fix_hint": "Find a safer alternative",
         },
         {
-            "id": f"{language[:2]}-hardcoded-secret",
+            "id": f"{_rule_id_prefix(language)}-hardcoded-secret",
             "name": "Hardcoded secret",
             "severity": "error",
             "category": "security",

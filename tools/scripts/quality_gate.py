@@ -13,15 +13,6 @@ from __future__ import annotations
 
 import json
 import logging
-
-# ADR-079: 既支持 `python -m tools.scripts.<name>`, 也支持
-# `python tools/scripts/<name>.py` 直接执行 —— 后者 sys.path[0] 是脚本所在
-# 目录, 仓库根不在其中, 下面的 `tools.*` 绝对导入会全崩。
-# 须自带 import: 部分脚本在插入点前没有 sys/pathlib, 复用会 NameError。
-# 用模块名而非别名: 别名无论 CamelCase(N812) 还是下划线(N813) 都会触发
-# ruff 命名检查, 而直接 import 后取属性既合规又无歧义。
-import pathlib
-import sys
 import time
 from collections.abc import Callable
 from dataclasses import dataclass, field
@@ -29,9 +20,12 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
-_REPO_ROOT = pathlib.Path(__file__).resolve().parent.parent.parent
-if str(_REPO_ROOT) not in sys.path:
-    sys.path.insert(0, str(_REPO_ROOT))
+# ADR-079: 统一路径引导 —— `python -m tools.scripts.X`（包上下文）与
+# `python tools/scripts/X.py`（path[0]=tools/scripts）均由 _bootstrap 幂等补齐仓库根。
+try:  # python -m tools.scripts.X (根已在 path)
+    from tools.scripts import _bootstrap
+except ModuleNotFoundError:  # python tools/scripts/X.py (path[0]=tools/scripts)
+    import _bootstrap  # type: ignore[no-redef]  # noqa: F401
 
 
 from tools.scripts.config import (  # noqa: E402
@@ -236,6 +230,10 @@ class BaselineManager:
         V2.18 P3-4 拆分: 从 compare_with_baseline (C=14) 抽出.
         写入 comparison 列表并累加对应 count.
         """
+        # 双 schema 防御: 棘轮基线 (schema B) 的条目是 int 计数而非 dict,
+        # 下标访问会 TypeError; 非 dict 条目直接跳过, 不产生虚假 delta。
+        if not isinstance(baseline_issue, dict):
+            return
         severity_order = {"info": 0, "warning": 1, "error": 2}
         current_sev = current_issue["severity"]
         baseline_sev = baseline_issue["severity"]
@@ -280,6 +278,10 @@ class BaselineManager:
         for file_path, file_issues in baseline_files.items():
             current_file_issues = current_files.get(file_path, {})
             for rule_key, baseline_issue in file_issues.items():
+                # 双 schema 防御: schema B (int 计数) 条目无 rule_id/line/severity,
+                # 下标访问会 TypeError; 非 dict 条目跳过, 不虚构 "已修复" delta。
+                if not isinstance(baseline_issue, dict):
+                    continue
                 if rule_key not in current_file_issues:
                     comparison["fixed"].append(
                         {

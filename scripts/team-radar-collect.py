@@ -13,6 +13,7 @@ import json
 import sys
 from datetime import datetime
 from pathlib import Path
+from typing import Any
 
 # 五个能力维度
 DIMENSIONS = [
@@ -40,7 +41,7 @@ LEVEL_LABELS = {
 }
 
 
-def load_radar_file(file_path: Path) -> dict:
+def load_radar_file(file_path: Path) -> dict[str, Any] | None:
     """加载单个雷达数据文件"""
     try:
         with open(file_path, encoding="utf-8") as f:
@@ -50,9 +51,9 @@ def load_radar_file(file_path: Path) -> dict:
         return None
 
 
-def collect_radar_data(input_dir: Path) -> dict[str, dict]:
+def collect_radar_data(input_dir: Path) -> dict[str, dict[str, Any]]:
     """收集目录下所有雷达数据"""
-    results = {}
+    results: dict[str, dict[str, Any]] = {}
 
     # 查找所有 radar-report-*.json 文件
     for json_file in input_dir.glob("radar-report-*.json"):
@@ -67,12 +68,12 @@ def collect_radar_data(input_dir: Path) -> dict[str, dict]:
     return results
 
 
-def aggregate_team_radar(individual_results: dict[str, dict]) -> dict:
+def aggregate_team_radar(individual_results: dict[str, dict[str, Any]]) -> dict[str, Any]:
     """聚合团队雷达 (匿名平均)"""
     if not individual_results:
         return {}
 
-    aggregated = {}
+    aggregated: dict[str, Any] = {}
 
     for dim in DIMENSIONS:
         scores = []
@@ -101,13 +102,13 @@ def aggregate_team_radar(individual_results: dict[str, dict]) -> dict:
     return aggregated
 
 
-def find_weakest_strongest(team_radar: dict) -> tuple:
+def find_weakest_strongest(team_radar: dict[str, Any]) -> tuple[str | None, str | None]:
     """找出最弱和最强维度"""
     if not team_radar:
         return None, None
 
     # 过滤掉非维度键
-    dim_data = {k: v for k, v in team_radar.items() if "average" in v}
+    dim_data = {k: v for k, v in team_radar.items() if isinstance(v, dict) and "average" in v}
     if not dim_data:
         return None, None
 
@@ -117,7 +118,7 @@ def find_weakest_strongest(team_radar: dict) -> tuple:
     return weakest[0], strongest[0]
 
 
-def generate_team_report(team_radar: dict, team_name: str, output_dir: Path) -> Path:
+def generate_team_report(team_radar: dict[str, Any], team_name: str, output_dir: Path) -> Path:
     """生成团队雷达 Markdown 报告"""
     weakest, strongest = find_weakest_strongest(team_radar)
 
@@ -180,7 +181,7 @@ def generate_team_report(team_radar: dict, team_name: str, output_dir: Path) -> 
     return report_file
 
 
-def main():
+def main() -> int:
     parser = argparse.ArgumentParser(description="团队能力雷达收集与报告生成")
     parser.add_argument("team_name", nargs="?", default="team", help="团队名称")
     parser.add_argument(

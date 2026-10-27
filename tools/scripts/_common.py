@@ -34,6 +34,7 @@ import json
 import os
 import subprocess
 import sys
+from collections.abc import Callable
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
@@ -315,6 +316,29 @@ def filter_supported_files(files: list[Path]) -> list[Path]:
     return [f for f in files if f.suffix.lower() in SUPPORTED_EXTENSIONS]
 
 
+def walk_files(root: Path, *, skip_dir: Callable[[str], bool] | None = None) -> list[Path]:
+    """递归枚举 root 下的文件，并在遍历时就地剪枝跳过目录。
+
+    Path.rglob 无法剪枝：进入 .venv/.git/node_modules 后才逐条过滤，仓库根
+    实测会多枚举两万余条路径。os.walk 的 dirnames 原地切片可在进入前剪掉，
+    这是 adg_cli / rules_engine / ai_quality_gate 三处文件发现的唯一实现。
+
+    Args:
+        root: 扫描根目录
+        skip_dir: 目录名判定函数，返回 True 则不进入该目录
+
+    Returns:
+        文件路径列表（不含目录），顺序与 os.walk 一致，未排序。
+    """
+    files: list[Path] = []
+    for dirpath, dirnames, filenames in os.walk(root):
+        if skip_dir is not None:
+            dirnames[:] = [name for name in dirnames if not skip_dir(name)]
+        dirpath_obj = Path(dirpath)
+        files.extend(dirpath_obj / name for name in filenames)
+    return files
+
+
 # ----------------------------------------------------------
 # Tree node helpers (rules_engine parsers, Phase 34)
 # ----------------------------------------------------------
@@ -394,6 +418,18 @@ def merge_anti_patterns(
             merged.append(match)
     merged.extend(cp for cp in custom_patterns if cp["id"] not in base_ids)
     return merged
+
+
+def superseded_rule_ids(patterns: list[dict[str, Any]]) -> set[str]:
+    """Collect rule IDs declared as superseded by the given patterns."""
+    superseded: set[str] = set()
+    for pattern in patterns:
+        value = pattern.get("supersedes", [])
+        if isinstance(value, str):
+            superseded.add(value)
+        else:
+            superseded.update(item for item in value if isinstance(item, str))
+    return superseded
 
 
 # ----------------------------------------------------------

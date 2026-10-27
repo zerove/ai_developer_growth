@@ -8,8 +8,20 @@ from __future__ import annotations
 
 import json
 import sys
+from collections.abc import Sequence
 from pathlib import Path
 from typing import Any
+
+from tools.scripts.rules_engine.models import CheckResult, ValidationResult
+
+# 报告输入项: pipeline 产出 ValidationResult, checker.check_directory 产出 CheckResult。
+# 两者共享渲染所需接口: file/language/issues/passed/error_count/warning_count/to_dict。
+ReportItem = ValidationResult | CheckResult
+
+
+def _is_skipped(result: ReportItem) -> bool:
+    """判断结果是否为"跳过检查的文件" (仅 CheckResult 携带 skipped 标记)."""
+    return isinstance(result, CheckResult) and result.skipped
 
 
 def _xml_escape(s: str) -> str:
@@ -22,7 +34,7 @@ def _html_escape(s: str) -> str:
     return s.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
 
 
-def _gate_results(results: list[Any]) -> list[Any]:
+def _gate_results(results: Sequence[ReportItem]) -> Sequence[ReportItem]:
     """返回必须参与通过/失败判定的结果。
 
     ADR-052 让 skipped 整体豁免门禁, 但豁免的前提是"该文件无需检查"。
@@ -30,10 +42,10 @@ def _gate_results(results: list[Any]) -> list[Any]:
     (文件不存在 / 无法解码)。把它算作 passed 即 fail-open, 与 ADR-074/076/078
     同一族缺陷。故豁免以"零 error"为条件。
     """
-    return [r for r in results if not getattr(r, "skipped", False) or r.error_count]
+    return [r for r in results if not _is_skipped(r) or r.error_count]
 
 
-def _count_summary_stats(results: list[Any]) -> tuple[int, int, int, int]:
+def _count_summary_stats(results: Sequence[ReportItem]) -> tuple[int, int, int, int]:
     """汇总 4 项基础统计.
 
     V2.18 P3-3 拆分: 从 generate_junit_xml (C=14) 抽出.
@@ -66,7 +78,7 @@ def _build_header_lines(
     ]
 
 
-def _build_failure_testcase(result: Any) -> list[str]:
+def _build_failure_testcase(result: ReportItem) -> list[str]:
     """构建失败 case 的 XML 块 (含 failure 子标签).
 
     V2.18 P3-3 拆分: 从 generate_junit_xml (C=14) 抽出.
@@ -84,7 +96,7 @@ def _build_failure_testcase(result: Any) -> list[str]:
     return [*lines, f"{testcase}</testcase>"]
 
 
-def _build_pass_testcase(result: Any) -> list[str]:
+def _build_pass_testcase(result: ReportItem) -> list[str]:
     """构建通过 case 的 XML 块 (warning 作为 system-out).
 
     V2.18 P3-3 拆分: 从 generate_junit_xml (C=14) 抽出.
@@ -94,7 +106,7 @@ def _build_pass_testcase(result: Any) -> list[str]:
     """
     testcase = f'  <testcase name="{_xml_escape(result.file)}" classname="{result.language}">'
     # Phase 33b-12 fix: skipped 文件用 JUnit <skipped/> 标记
-    if getattr(result, "skipped", False):
+    if _is_skipped(result):
         return [f"{testcase}<skipped/></testcase>"]
     warns = [i for i in result.issues if i.severity == "warning"]
     if not warns:
@@ -106,7 +118,7 @@ def _build_pass_testcase(result: Any) -> list[str]:
     return lines
 
 
-def generate_junit_xml(results: list[Any]) -> str:
+def generate_junit_xml(results: Sequence[ReportItem]) -> str:
     """Generate JUnit XML report (orchestrator).
 
     V2.18 P3-3 拆分: 从 C=14 / 50 行主函数拆出 4 个 helper.
@@ -125,7 +137,7 @@ def generate_junit_xml(results: list[Any]) -> str:
     return "\n".join(lines)
 
 
-def _count_severity_totals(results: list[Any]) -> dict[str, int]:
+def _count_severity_totals(results: Sequence[ReportItem]) -> dict[str, int]:
     """统计 results 中 errors / warnings / info 总数.
 
     V2.19 P3-33 拆分: 从 _count_html_summary (B=6) 抽出.
@@ -137,7 +149,7 @@ def _count_severity_totals(results: list[Any]) -> dict[str, int]:
     }
 
 
-def _count_html_summary(results: list[Any]) -> dict[str, int]:
+def _count_html_summary(results: Sequence[ReportItem]) -> dict[str, int]:
     """汇总 HTML 报告所需 4 项计数 (orchestrator).
 
     V2.19 P3-33 拆分: 从 B=6 / 10 行函数拆出 _count_severity_totals.
@@ -146,12 +158,12 @@ def _count_html_summary(results: list[Any]) -> dict[str, int]:
     Phase 33b-12 fix (ADR-052): passed_count 排除 skipped (skipped 不算通过).
     """
     summary = _count_severity_totals(results)
-    summary["passed_count"] = sum(1 for r in results if r.passed and not getattr(r, "skipped", False))
-    summary["skipped_count"] = sum(1 for r in results if getattr(r, "skipped", False))
+    summary["passed_count"] = sum(1 for r in results if r.passed and not _is_skipped(r))
+    summary["skipped_count"] = sum(1 for r in results if _is_skipped(r))
     return summary
 
 
-def _build_result_row(result: Any) -> list[str]:
+def _build_result_row(result: ReportItem) -> list[str]:
     """构建单条 result 的 HTML 表格行 (含最多 3 条 detail).
 
     V2.18 P3-11 拆分: 从 generate_html_report (C=11) 抽出.
@@ -218,11 +230,11 @@ def _build_html_template(counts: dict[str, int], table_rows: list[str]) -> str:
 </html>"""
 
 
-def generate_html_report(results: list[Any]) -> str:
+def generate_html_report(results: Sequence[ReportItem]) -> str:
     """Generate HTML report (orchestrator).
 
     Args:
-        results: List of ValidationResult objects (duck-typed)
+        results: ValidationResult / CheckResult 对象序列
 
     V2.18 P3-11 拆分: 从 C=11 / 63 行主函数拆出 3 个 helper.
     主函数仅负责: 排序 → 汇总 → 表格行 → HTML 模板.
@@ -236,7 +248,7 @@ def generate_html_report(results: list[Any]) -> str:
     return _build_html_template(counts, table_rows)
 
 
-def _build_sarif_rules(results: list[Any]) -> dict[str, dict[str, Any]]:
+def _build_sarif_rules(results: Sequence[ReportItem]) -> dict[str, dict[str, Any]]:
     """Build SARIF rule definitions from results."""
     rules: dict[str, dict[str, Any]] = {}
     for result in results:
@@ -293,7 +305,7 @@ def _build_sarif_result_entry(
     }
 
 
-def _build_sarif_results(results: list[Any]) -> list[dict[str, Any]]:
+def _build_sarif_results(results: Sequence[ReportItem]) -> list[dict[str, Any]]:
     """Build SARIF result entries from validation results (orchestrator).
 
     V2.19 P3-31 拆分: 从 B=6 / 27 行函数拆出 2 个 helper.
@@ -311,11 +323,11 @@ def _build_sarif_results(results: list[Any]) -> list[dict[str, Any]]:
                     level=level,
                     message=issue.message,
                     line=issue.line,
-                    column=getattr(issue, "column", 1),
+                    column=issue.column,
                 )
             )
         # Phase 33b-12 fix: skipped 文件在 SARIF 中用 notApplicable 标记
-        if getattr(result, "skipped", False) and not result.issues:
+        if _is_skipped(result) and not result.issues:
             runs_results.append(
                 {
                     "ruleId": "file-skipped",
@@ -334,11 +346,11 @@ def _build_sarif_results(results: list[Any]) -> list[dict[str, Any]]:
     return runs_results
 
 
-def generate_sarif(results: list[Any]) -> str:
+def generate_sarif(results: Sequence[ReportItem]) -> str:
     """Generate SARIF 2.1.0 report for GitHub Code Scanning.
 
     Args:
-        results: List of ValidationResult objects (duck-typed)
+        results: ValidationResult / CheckResult 对象序列
     """
     rules = _build_sarif_rules(results)
     runs_results = _build_sarif_results(results)
@@ -363,7 +375,7 @@ def generate_sarif(results: list[Any]) -> str:
     return json.dumps(sarif, indent=2, ensure_ascii=False)
 
 
-def _build_json_summary(results: list[Any]) -> dict[str, Any]:
+def _build_json_summary(results: Sequence[ReportItem]) -> dict[str, Any]:
     """构造 JSON 报告 summary 段 (total/计数 + passed).
 
     V2.19 P3-32 拆分: 从 _build_json_content (B=6) 抽出.
@@ -381,7 +393,7 @@ def _build_json_summary(results: list[Any]) -> dict[str, Any]:
     }
 
 
-def _build_json_content(results: list[Any]) -> str:
+def _build_json_content(results: Sequence[ReportItem]) -> str:
     """构建 JSON 报告内容 (含 results + summary) (orchestrator).
 
     V2.19 P3-32 拆分: 从 B=6 / 16 行函数拆出 _build_json_summary.
@@ -394,7 +406,7 @@ def _build_json_content(results: list[Any]) -> str:
     return json.dumps(data, indent=2, ensure_ascii=False)
 
 
-def _generate_report_content(results: list[Any], format: str) -> str | None:
+def _generate_report_content(results: Sequence[ReportItem], format: str) -> str | None:
     """按 format 分发到对应生成器.
 
     V2.18 P3-10 拆分: 从 write_report (C=11) 抽出.
@@ -424,13 +436,13 @@ def _write_or_return(content: str, output: Path | None) -> str:
     return content
 
 
-def write_report(results: list[Any], format: str, output: Path | None = None) -> str | None:
+def write_report(results: Sequence[ReportItem], format: str, output: Path | None = None) -> str | None:
     """Write report in specified format (orchestrator).
 
     Returns content or writes to file.
 
     Args:
-        results: List of ValidationResult objects (duck-typed)
+        results: ValidationResult / CheckResult 对象序列
         format: Output format (json, junit, html, sarif)
         output: Optional file path to write to
 

@@ -14,6 +14,7 @@ import json
 import re
 import sys
 from collections import Counter
+from datetime import datetime
 from pathlib import Path
 from typing import Any
 
@@ -208,7 +209,7 @@ def _build_rules(
         "language": language,
         "config_version": "1.0",
         "source": "auto-generated",
-        "generated_at": __import__("datetime").datetime.now().isoformat(),
+        "generated_at": datetime.now().isoformat(),
         "anti_patterns": [],
     }
 

@@ -29,6 +29,9 @@ from tools.scripts._common import (
 from tools.scripts._common import (
     save_cache as _save_cache,  # noqa: F401 - re-export for tests
 )
+from tools.scripts._common import (
+    superseded_rule_ids as _superseded_rule_ids,
+)
 from tools.scripts.rules_engine.logger import logger
 from tools.scripts.rules_engine.regex_cache import guard_pattern
 
@@ -268,6 +271,19 @@ def _load_common_rules_cached(framework_dir_str: str) -> dict[str, Any]:
         return {}
 
 
+def _merge_common_rules(base: dict[str, Any], common: dict[str, Any]) -> dict[str, Any]:
+    """Merge common rules into base, dropping rules the base supersedes."""
+    base_patterns = base.get("anti_patterns", [])
+    superseded = _superseded_rule_ids(base_patterns)
+    if not superseded:
+        return _merge_rules(base, common)
+    filtered = dict(common)
+    filtered["anti_patterns"] = [
+        pattern for pattern in common.get("anti_patterns", []) if pattern.get("id") not in superseded
+    ]
+    return _merge_rules(base, filtered)
+
+
 @lru_cache(maxsize=4)
 def _load_universal_rules_cached(framework_dir_str: str) -> dict[str, Any]:
     """Load universal quality rules (cached by framework dir)."""
@@ -286,7 +302,7 @@ def _load_universal_rules_cached(framework_dir_str: str) -> dict[str, Any]:
             pass  # universal rules optional
     common = _load_common_rules_cached(framework_dir_str)
     if common:
-        result = _merge_rules(result, common)
+        result = _merge_common_rules(result, common)
     return result
 
 
@@ -334,7 +350,7 @@ def _try_load_yaml(rule_path: Path, framework_dir: Path) -> dict[str, Any] | Non
     # Load common cross-language rules
     common = _load_common_rules(framework_dir)
     if common:
-        result = _merge_rules(result, common)
+        result = _merge_common_rules(result, common)
 
     # Load generated rules (from /generate-rules skill)
     # Note: language detection would be needed here, but we don't have it
@@ -359,7 +375,7 @@ def _load_language_rules_with_fallback(language: str, framework_dir: Path) -> di
         result = {"anti_patterns": generated}
         common = _load_common_rules(framework_dir)
         if common:
-            result = _merge_rules(result, common)
+            result = _merge_common_rules(result, common)
         return result
 
     logger.info(
@@ -462,8 +478,11 @@ def _load_single_custom_file(rule_file: Path, custom: dict[str, Any]) -> None:
         if not isinstance(data, dict):
             return
 
-        # Merge anti_patterns (override by ID)
-        new_patterns = data.get("anti_patterns", [])
+        # Merge rules (override by ID): custom_rules 为 canonical key,
+        # anti_patterns 为 legacy 别名, 两者同时存在时按顺序合并
+        legacy = list(data.get("anti_patterns") or [])
+        canonical = list(data.get("custom_rules") or [])
+        new_patterns = legacy + canonical
         custom["anti_patterns"].extend(new_patterns)
 
         # Merge naming rules

@@ -31,9 +31,23 @@ anti_patterns:
   name: Silent exception swallowing
   severity: error
   category: error_handling
-  pattern: except.*:\s*pass\s*$
+  pattern: except.*:\s*pass\b
   message: Never silently swallow exceptions
   fix_hint: Add logging or re-raise the exception
+  # common 版本分别匹配 "except:" 与 "except Exception:"；
+  # Python 侧统一覆盖两种形式。
+  supersedes:
+  - common-bare-except-pass
+  - common-except-exception-pass
+  test_cases:
+  - code: 'except: pass'
+    should_match: true
+  - code: 'except Exception: pass'
+    should_match: true
+  - code: 'except: pass  # noqa'
+    should_match: true
+  - code: 'except: raise'
+    should_match: false
 - id: py-bare-except-string
   name: String exception
   severity: error
@@ -48,6 +62,9 @@ anti_patterns:
   pattern: :\s*Any\b|->\s*Any\b
   message: Avoid Any type - use specific types
   fix_hint: Replace Any with a concrete type
+  # common-type-any 只匹配 ": Any"；Python 侧还覆盖 "-> Any"。
+  supersedes:
+  - common-type-any
 - id: py-union-none
   name: Optional should use X | None
   severity: info
@@ -76,6 +93,10 @@ anti_patterns:
   - anti_patterns.yml
   message: eval/exec are security risks
   fix_hint: Use ast.literal_eval() for data
+  # common-eval-exec 是跨语言版本；Python 侧保留更精确的规则，
+  # 由 loader 跳过 common 版本，避免同一行重复报告。
+  supersedes:
+  - common-eval-exec
   test_cases:
   - code: eval(user_input)
     should_match: true
@@ -87,12 +108,24 @@ anti_patterns:
   name: Hardcoded secret
   severity: error
   category: security
-  pattern: (?:password|secret|api_key|token)\s*=\s*["'][^"']+["']
+  pattern: (?:password|secret|api_key|token|api_secret|access_key|private_key)\s*[=:]\s*["'][^"']{4,}["']
+  exclude_patterns:
+  - "://"
+  - "http"
+  - "\\/api\\/"
   message: Hardcoded secrets are a security vulnerability
   fix_hint: Use environment variables or a secrets manager
+  # common-hardcoded-secret 的 Python 命中面由本规则覆盖；
+  # exclude_patterns 避免把 URL 当密钥。
+  supersedes:
+  - common-hardcoded-secret
   test_cases:
   - code: password = "hunter2"
     should_match: true
+  - code: 'password: "hunter2"'
+    should_match: true
+  - code: password = "abc"
+    should_match: false
   - code: api_key = "sk-12345"
     should_match: true
   - code: os.environ["password"]
@@ -110,9 +143,20 @@ anti_patterns:
   name: SQL injection via string formatting
   severity: error
   category: security
-  pattern: (?:execute|cursor\.execute)\s*\(.*(?:f["']|\.format\(|%\s)
+  pattern: 'f["''][^"'']*\b(?:SELECT|INSERT|UPDATE|DELETE)\b.*\{|(?:execute|cursor\.execute)\s*\(.*(?:f["'']|\.format\(|%\s)'
   message: String formatting in SQL enables SQL injection
   fix_hint: Use parameterized queries
+  # common-sql-injection 只覆盖 f-string；本规则同时覆盖 execute 的
+  # f-string、.format 与 % 拼接。
+  supersedes:
+  - common-sql-injection
+  test_cases:
+  - code: 'cursor.execute(f"SELECT * FROM users WHERE id = {uid}")'
+    should_match: true
+  - code: 'query = f"SELECT * FROM users WHERE id = {uid}"'
+    should_match: true
+  - code: 'query = "SELECT * FROM users WHERE id = ?"'
+    should_match: false
 - id: py-star-import
   name: Wildcard import
   severity: warning

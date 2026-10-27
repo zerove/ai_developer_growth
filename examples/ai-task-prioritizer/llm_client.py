@@ -1,11 +1,12 @@
 import os
+from typing import Any
 
 
 class LLMClient:
-    def __init__(self, api_key=None):
+    def __init__(self, api_key: str | None = None) -> None:
         self.api_key = api_key or os.getenv("LLM_API_KEY")
 
-    def get_scores(self, tasks: list[str]) -> list[dict]:
+    def get_scores(self, tasks: list[str]) -> list[dict[str, Any]]:
         if not self.api_key:
             raise ValueError("LLM_API_KEY environment variable is not set.")
 

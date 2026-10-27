@@ -1,25 +1,69 @@
-"""adg_cli/commands/ package facade."""
+"""adg_cli commands package facade (lazy).
+
+18 个子命令模块此前在包导入时全部急切加载, 导致 `adg --help` 冷启动
+需要编译/执行所有命令实现 (含 lsp/dashboard/pattern-learner 等重依赖)。
+改为 PEP 562 模块级 __getattr__ 后, 只有真正被分发的子命令才会被导入,
+同时保持 `from tools.scripts.adg_cli.commands import cmd_check` 的兼容性。
+"""
 
 from __future__ import annotations
 
-from tools.scripts.adg_cli.commands.cmd._cmd_rule_create import _cmd_rule_create  # noqa: F401
-from tools.scripts.adg_cli.commands.cmd._cmd_rule_test import _cmd_rule_test  # noqa: F401
-from tools.scripts.adg_cli.commands.cmd._cmd_rule_validate import _cmd_rule_validate  # noqa: F401
-from tools.scripts.adg_cli.commands.cmd.cmd_bench import cmd_bench  # noqa: F401
-from tools.scripts.adg_cli.commands.cmd.cmd_check import cmd_check  # noqa: F401
-from tools.scripts.adg_cli.commands.cmd.cmd_cicd import cmd_cicd  # noqa: F401
-from tools.scripts.adg_cli.commands.cmd.cmd_dashboard import cmd_dashboard  # noqa: F401
-from tools.scripts.adg_cli.commands.cmd.cmd_detect import cmd_detect  # noqa: F401
-from tools.scripts.adg_cli.commands.cmd.cmd_fix import cmd_fix  # noqa: F401
-from tools.scripts.adg_cli.commands.cmd.cmd_html_report import cmd_html_report  # noqa: F401
-from tools.scripts.adg_cli.commands.cmd.cmd_install_hooks import cmd_install_hooks  # noqa: F401
-from tools.scripts.adg_cli.commands.cmd.cmd_list_rules import cmd_list_rules  # noqa: F401
-from tools.scripts.adg_cli.commands.cmd.cmd_lsp import cmd_lsp  # noqa: F401
-from tools.scripts.adg_cli.commands.cmd.cmd_marketplace import cmd_marketplace  # noqa: F401
-from tools.scripts.adg_cli.commands.cmd.cmd_monorepo import cmd_monorepo  # noqa: F401
-from tools.scripts.adg_cli.commands.cmd.cmd_notify import cmd_notify  # noqa: F401
-from tools.scripts.adg_cli.commands.cmd.cmd_pattern_learner import cmd_pattern_learner  # noqa: F401
-from tools.scripts.adg_cli.commands.cmd.cmd_recommend import cmd_recommend  # noqa: F401
-from tools.scripts.adg_cli.commands.cmd.cmd_report import cmd_report  # noqa: F401
-from tools.scripts.adg_cli.commands.cmd.cmd_rule import cmd_rule  # noqa: F401
-from tools.scripts.adg_cli.commands.cmd.cmd_trend import cmd_trend  # noqa: F401
+import importlib
+from typing import Any
+
+_LAZY: dict[str, tuple[str, str]] = {
+    "_cmd_rule_create": (
+        "tools.scripts.adg_cli.commands.cmd._cmd_rule_create",
+        "_cmd_rule_create",
+    ),
+    "_cmd_rule_test": (
+        "tools.scripts.adg_cli.commands.cmd._cmd_rule_test",
+        "_cmd_rule_test",
+    ),
+    "_cmd_rule_validate": (
+        "tools.scripts.adg_cli.commands.cmd._cmd_rule_validate",
+        "_cmd_rule_validate",
+    ),
+}
+for _command in (
+    "bench",
+    "check",
+    "cicd",
+    "dashboard",
+    "detect",
+    "fix",
+    "html_report",
+    "install_hooks",
+    "list_rules",
+    "lsp",
+    "marketplace",
+    "monorepo",
+    "notify",
+    "pattern_learner",
+    "recommend",
+    "report",
+    "rule",
+    "trend",
+):
+    _LAZY[f"cmd_{_command}"] = (
+        f"tools.scripts.adg_cli.commands.cmd.cmd_{_command}",
+        f"cmd_{_command}",
+    )
+
+
+def __getattr__(name: str) -> Any:
+    """Resolve command callables on first access (PEP 562)."""
+    try:
+        module_name, attribute = _LAZY[name]
+    except KeyError:
+        raise AttributeError(f"module {__name__!r} has no attribute {name!r}") from None
+    value = getattr(importlib.import_module(module_name), attribute)
+    globals()[name] = value
+    return value
+
+
+def __dir__() -> list[str]:
+    return sorted(__all__)
+
+
+__all__ = sorted(_LAZY)

@@ -117,7 +117,10 @@ class BaselineConfig:
     """基线配置"""
 
     enabled: bool = True
-    path: str = ".jcode/baseline.json"
+    # 双 schema 路径分离: 此文件存 quality-gate 的 issue 详情 (schema A,
+    # files 值为 dict); 棘轮计数基线 (schema B, files 值为 int) 仍使用
+    # .jcode/baseline.json。两者曾共用同一路径导致交叉读取崩溃, 故默认路径分开。
+    path: str = ".jcode/quality-gate-baseline.json"
     auto_update: bool = False
     update_on_success: bool = True
     # 基线比较选项

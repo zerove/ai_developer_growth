@@ -8,7 +8,6 @@
 效果:
     - 安装后任何项目可通过 /governance 使用 26 种语言规则
     - 自动配置 pre-commit 钩子
-    - 设置 mode_decision.conf
 """
 
 from __future__ import annotations
@@ -49,11 +48,6 @@ PYTHONPATH="$SCRIPT_DIR/ai-dev-framework/tools:$PYTHONPATH" python3 -m tools.scr
     adg_wrapper.chmod(0o755)
     print(f"  ✅ adg CLI → {adg_wrapper}")
 
-    # 创建 mode_decision.conf
-    mode_conf = JCODE_GOVERNANCE / "mode_decision.conf"
-    mode_conf.write_text("mode=quality\ngovernance_level=high\naudit_enabled=true\n")
-    print(f"  ✅ mode_decision.conf → {mode_conf}")
-
     # 建议加入 PATH
     print("\n💡 将以下内容加入你的 shell 配置 (~/.bashrc / ~/.zshrc):")
     print('    export PATH="$HOME/.jcode/governance:$PATH"')
@@ -91,11 +85,6 @@ commit_messages:
     - chore
 """)
         print("  ✅ .jcode/config.yml")
-
-    # mode_decision.conf
-    mode_conf = jcode_dir / "mode_decision.conf"
-    mode_conf.write_text("mode=quality\ngovernance_level=high\naudit_enabled=true\n")
-    print("  ✅ .jcode/mode_decision.conf")
 
     # .jcode/hooks.json
     hooks_json = jcode_dir / "hooks.json"

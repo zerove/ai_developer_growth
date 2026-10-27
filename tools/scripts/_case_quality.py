@@ -5,6 +5,17 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
 
+from tools.scripts._case_study_common import (
+    extract_insights_section,
+    extract_numbered_insights,
+    extract_table_rows,
+    has_efficiency_table,
+    is_separator_row,
+    is_table_header,
+    parse_efficiency_values,
+)
+from tools.scripts._paths import REPO_ROOT
+
 
 @dataclass
 class QualityMetrics:
@@ -51,21 +62,21 @@ class CaseStudyQualityAnalyzer:
         r"(PR|commit|issue)\s*#?\d+",  # Specific references
     ]
 
-    def __init__(self, case_studies_dir: Path = Path("docs/case-studies")):
-        self.case_studies_dir = case_studies_dir
+    def __init__(self, case_studies_dir: Path | None = None):
+        self.case_studies_dir = case_studies_dir or REPO_ROOT / "docs" / "case-studies"
         self.index_content = self._load_index()
         self.moc_content = self._load_moc()
 
     def _load_index(self) -> str:
         """Load INDEX.md for cross-reference checking."""
-        index_path = Path("INDEX.md")
+        index_path = REPO_ROOT / "INDEX.md"
         if index_path.exists():
             return index_path.read_text(encoding="utf-8")
         return ""
 
     def _load_moc(self) -> str:
         """Load MOC.md for cross-reference checking."""
-        moc_path = Path("docs/MOC.md")
+        moc_path = REPO_ROOT / "docs" / "MOC.md"
         if moc_path.exists():
             return moc_path.read_text(encoding="utf-8")
         return ""
@@ -202,13 +213,7 @@ class CaseStudyQualityAnalyzer:
         Returns:
             True if 任一表格模式匹配
         """
-        table_patterns = [
-            r"\|.*阶段.*\|.*传统.*\|.*AI.*\|.*提升.*\|",
-            r"\|.*指标.*\|.*优化前.*\|.*优化后.*\|.*提升.*\|",
-            r"\|.*指标.*\|.*使用 AI 前.*\|.*使用 AI 后.*\|.*提升.*\|",
-            r"\|.*Metric.*\|.*Before.*\|.*After.*\|.*Boost.*\|",
-        ]
-        return any(re.search(p, content) for p in table_patterns)
+        return has_efficiency_table(content, require_boost_column=True)
 
     def _score_table_rows(self, data_rows: list[str]) -> float:
         """根据表格行数 + 真实值校验计算额外分数.
@@ -228,42 +233,21 @@ class CaseStudyQualityAnalyzer:
         return score
 
     def _is_table_header(self, line: str) -> bool:
-        """判断行是否为表格表头 (含 阶段/总计/指标/Metric/--- 关键字).
-
-        V2.18 P3-12 拆分: 从 _extract_table_rows (C=13) 抽出.
-        """
-        if "|" not in line:
-            return False
-        return any(keyword in line for keyword in ("阶段", "总计", "指标", "Metric", "---"))
+        """判断行是否为表格表头 (含 阶段/总计/指标/Metric/--- 关键字)."""
+        return is_table_header(line, include_separator=True)
 
     def _is_separator_row(self, line: str) -> bool:
-        """判断行是否为表格分隔行 (markdown 表格的 |---|).
-
-        V2.18 P3-12 拆分: 从 _extract_table_rows (C=13) 抽出.
-        """
-        return "---" in line
+        """判断行是否为表格分隔行 (markdown 表格的 |---|)."""
+        return is_separator_row(line)
 
     def _extract_table_rows(self, content: str) -> list[str]:
-        """Extract table data rows (orchestrator).
-
-        V2.18 P3-12 拆分: 从 C=13 / 30 行主函数拆出 2 个行分类 helper.
-        主函数仅负责: state machine (in_table) → 收集 data_rows.
-        """
-        data_rows: list[str] = []
-        in_table = False
-
-        for line in content.split("\n"):
-            if self._is_table_header(line):
-                in_table = True
-            if not in_table:
-                continue
-            if not line.strip().startswith("|"):
-                break
-            if self._is_separator_row(line):
-                continue
-            data_rows.append(line)
-
-        return data_rows
+        """Extract table data rows (orchestrator)."""
+        return extract_table_rows(
+            content,
+            include_header=True,
+            skip_separators=True,
+            separator_starts_table=True,
+        )
 
     def _validate_row_format(self, row: str) -> bool:
         """Validate table row has expected columns."""
@@ -326,12 +310,7 @@ class CaseStudyQualityAnalyzer:
             (t_hours, a_hours, boost_val) 或 None (解析失败)
         """
         try:
-            t_match = re.search(r"([\d.]+)\s*小时", traditional)
-            a_match = re.search(r"([\d.]+)\s*小时", ai)
-            b_match = re.search(r"([\d.]+)x", boost)
-            if not (t_match and a_match and b_match):
-                return None
-            return float(t_match.group(1)), float(a_match.group(1)), float(b_match.group(1))
+            return parse_efficiency_values(traditional, ai, boost, support_minutes=False)
         except (ValueError, ZeroDivisionError):
             return None
 
@@ -397,43 +376,11 @@ class CaseStudyQualityAnalyzer:
 
     def _extract_insights_section(self, content: str) -> str:
         """Extract insights section from content."""
-        insight_headers = [
-            "## 关键洞察",
-            "## 💡 关键洞察",
-            "## 洞察",
-            "## 关键技术决策",
-            "## 关键洞察与反思",
-            "## 关键洞察与总结",
-        ]
-
-        for header in insight_headers:
-            parts = content.split(header)
-            if len(parts) >= 2:
-                # Get content until next major section
-                next_section = re.split(r"\n## ", parts[1])[0]
-                return next_section
-        return ""
+        return extract_insights_section(content, stop_at_next_section=True)
 
     def _extract_numbered_insights(self, insights_text: str) -> list[str]:
         """Extract numbered insights."""
-        # Format 1: "1. **洞察 1** : ..."
-        numbered = re.findall(r"^\d+\.\s+\*\*(洞察\s*\d+)?\*?\*\s*:?\s*(.+)$", insights_text, re.MULTILINE)
-        if numbered:
-            return [item[-1] for item in numbered]
-
-        # Format 2: "1. ..."
-        numbered = re.findall(r"^\d+\.\s+(.+)$", insights_text, re.MULTILINE)
-        if numbered:
-            return numbered
-
-        # Format 3: bullet points
-        numbered = re.findall(r"^[-*]\s+(.+)$", insights_text, re.MULTILINE)
-        if numbered:
-            return numbered
-
-        # Format 4: sub-headers
-        numbered = re.findall(r"^###\s+\d+\.\s+(.+)$", insights_text, re.MULTILINE)
-        return numbered
+        return extract_numbered_insights(insights_text)
 
     def _is_specific_insight(self, insight: str) -> bool:
         """Check if insight is specific (has numbers, code refs, etc.)."""

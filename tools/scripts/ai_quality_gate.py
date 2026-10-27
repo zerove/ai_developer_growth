@@ -13,23 +13,19 @@ AI 代码质量门禁脚本 - 重构版
 """
 
 import argparse
-
-# ADR-079: 既支持 `python -m tools.scripts.<name>`, 也支持
-# `python tools/scripts/<name>.py` 直接执行 —— 后者 sys.path[0] 是脚本所在
-# 目录, 仓库根不在其中, 下面的 `tools.*` 绝对导入会全崩。
-# 须自带 import: 部分脚本在插入点前没有 sys/pathlib, 复用会 NameError。
-# 用模块名而非别名: 别名无论 CamelCase(N812) 还是下划线(N813) 都会触发
-# ruff 命名检查, 而直接 import 后取属性既合规又无歧义。
-import pathlib
 import sys
 from pathlib import Path
 from typing import Any
 
-_REPO_ROOT = pathlib.Path(__file__).resolve().parent.parent.parent
-if str(_REPO_ROOT) not in sys.path:
-    sys.path.insert(0, str(_REPO_ROOT))
+# ADR-079: 统一路径引导 —— `python -m tools.scripts.X`（包上下文）与
+# `python tools/scripts/X.py`（path[0]=tools/scripts）均由 _bootstrap 幂等补齐仓库根。
+try:  # python -m tools.scripts.X (根已在 path)
+    from tools.scripts import _bootstrap
+except ModuleNotFoundError:  # python tools/scripts/X.py (path[0]=tools/scripts)
+    import _bootstrap  # type: ignore[no-redef]  # noqa: F401
 
 
+from tools.scripts._common import walk_files  # noqa: E402
 from tools.scripts.rules_engine import CheckResult, check_directory  # noqa: E402
 
 # ──────────────────────────────────────────────────────────
@@ -523,7 +519,7 @@ def _collect_files(args: argparse.Namespace) -> list[Path]:
     elif args.path:
         files_to_check = _collect_path_files(args.path)
     else:
-        files_to_check = list(Path("tools/scripts").rglob("*.py"))
+        files_to_check = _collect_path_files(Path("tools/scripts"), {"py"})
 
     return _filter_excluded(files_to_check)
 
@@ -557,20 +553,26 @@ _FILE_EXTENSIONS = [
     "*.ps1",
 ]
 
+# _FILE_EXTENSIONS 的 suffix 形式（保留 .R/.r 大小写差异，Linux 下是不同文件）
+_SUPPORTED_SUFFIXES = {ext[1:] for ext in _FILE_EXTENSIONS}
 
-def _collect_path_files(path: Path) -> list[Path]:
-    """从 path 递归收集所有支持扩展名文件 (模块级 helper).
+
+def _collect_path_files(path: Path, suffixes: set[str] | None = None) -> list[Path]:
+    """从 path 递归收集支持扩展名的文件，遍历时剪枝缓存目录.
 
     Args:
         path: 搜索根目录
+        suffixes: 覆盖默认后缀集合（不含点），默认使用 _SUPPORTED_SUFFIXES
 
     Returns:
         匹配文件列表
     """
-    files: list[Path] = []
-    for ext in _FILE_EXTENSIONS:
-        files.extend(path.rglob(ext))
-    return files
+    allowed = _SUPPORTED_SUFFIXES if suffixes is None else suffixes
+    return [
+        candidate
+        for candidate in walk_files(path, skip_dir=lambda name: name in {"__pycache__", ".git"})
+        if candidate.suffix in allowed
+    ]
 
 
 def _filter_excluded(files: list[Path]) -> list[Path]:

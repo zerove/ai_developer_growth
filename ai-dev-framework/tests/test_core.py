@@ -7,7 +7,8 @@ from pathlib import Path
 
 import pytest
 
-sys.path.insert(0, str(Path(__file__).parent.parent))
+# src 布局: 包在 ../src 下 (原先指向包根, 只因本地 editable 安装才侥幸通过)
+sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
 
 from ai_dev_framework.hook_system import Hook, HookConfig, create_default_config
 from ai_dev_framework.project_config import JcodeConfig, ProjectConfig, init_project

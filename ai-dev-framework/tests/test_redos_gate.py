@@ -61,6 +61,21 @@ class TestDetector:
         for junk in ["(", "[a-", "*", "\\", "(?P<n>a)(?P<n>b)", ""]:
             assert isinstance(is_dangerous(junk), bool)
 
+    def test_repeat_ops_initialized_when_parser_available(self) -> None:
+        """fail-open 守护: _sre_parse 可用时 _REPEAT_OPS 必须非空且等于期望值。
+
+        初始化块历史上曾重复一份, 且第二份前置 `_REPEAT_OPS = frozenset()`
+        重置 —— 清理时若只删 try/except 留下重置, 静态分析会恒判"不危险"
+        而闸门形同虚设 (fail-open)。本用例锁定唯一初始化序列的正确性。
+        """
+        from ai_dev_framework import redos
+
+        if redos._sre_parse is None:
+            pytest.skip("解析器不可用 (本机 re 结构差异)")
+        assert redos._REPEAT_OPS, "_REPEAT_OPS 被重置为空 —— ReDoS 分析器已失明 (fail-open)"
+        expected = frozenset({redos._sre_constants.MAX_REPEAT, redos._sre_constants.MIN_REPEAT})
+        assert redos._REPEAT_OPS == expected
+
     def test_matches_parent_repo_analyzer(self) -> None:
         """提取无损: 两份实现对真实规则语料的判定必须完全一致。
 

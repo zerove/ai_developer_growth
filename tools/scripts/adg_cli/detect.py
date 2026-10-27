@@ -281,8 +281,16 @@ def _load_yaml(path: Path) -> dict[str, Any]:
         return {}
 
 
+# 规则型 section: 这两类 key 下的 `- key: value` 列表项是一条条规则
+_RULE_SECTIONS = ("anti_patterns", "custom_rules")
+
+
 def _simple_yaml_parse(path: Path) -> dict[str, Any]:
-    """Minimal YAML parser for anti_patterns.yml and config files (no PyYAML needed)."""
+    """Minimal YAML parser for anti_patterns.yml and config files (no PyYAML needed).
+
+    支持 `.adg/rules.yml` 的 canonical key `custom_rules` (legacy 别名
+    `anti_patterns` 同样保留), 与 PyYAML 解析结果结构对齐。
+    """
     content = path.read_text(encoding="utf-8")
     result: dict[str, Any] = {"anti_patterns": []}
     current_rule: dict[str, Any] | None = None
@@ -291,11 +299,25 @@ def _simple_yaml_parse(path: Path) -> dict[str, Any]:
     for line in content.splitlines():
         current_rule, current_section = _process_line(line, result, current_rule, current_section)
 
-    # Append last rule if any
-    if current_rule:
-        result["anti_patterns"].append(current_rule)
+    # Append last rule if any (按所属 section 收尾, 防止串到 anti_patterns)
+    if current_rule is not None:
+        if current_section in _RULE_SECTIONS:
+            result[current_section].append(current_rule)
+        current_rule = None
 
     return result
+
+
+def _finalize_rule(
+    result: dict[str, Any],
+    current_rule: dict[str, Any] | None,
+    current_section: str | None,
+) -> None:
+    """把待收尾的规则落盘到所属 section (中文: 跨 section 前必须调用)."""
+    if current_rule is None:
+        return
+    if current_section in _RULE_SECTIONS:
+        result[current_section].append(current_rule)
 
 
 def _process_line(
@@ -309,16 +331,36 @@ def _process_line(
     if not stripped or stripped.startswith("#"):
         return current_rule, current_section
 
-    # Anti-pattern list item (check BEFORE top-level keys)
-    if stripped.startswith("- id:"):
-        if current_rule:
-            result["anti_patterns"].append(current_rule)
-        current_rule = {"id": stripped.split(":", 1)[1].strip()}
-        current_section = None
+    # 列表项 (check BEFORE top-level keys): "- key: value" 在规则 section 内
+    # 开启一条新规则 —— 首字段不限于 id (`.adg/rules.yml` 以 `- category:` 开头)
+    if stripped.startswith("- "):
+        item_body = stripped[2:].strip()
+        if current_section in _RULE_SECTIONS:
+            if ":" in item_body:
+                if current_rule is not None:
+                    result[current_section].append(current_rule)
+                current_rule = {}
+                _apply_rule_field(current_rule, item_body)
+            # 裸标量列表项 (无 key: value) 无法构成规则, 忽略
+            return current_rule, current_section
+        if current_section == "installed_packs":
+            # installed_packs 是标量列表 (如 `- security-essentials`),
+            # 必须在规则 section 之外, 否则会被误捕获为规则字段
+            if item_body:
+                result.setdefault("installed_packs", []).append(item_body.strip("'\""))
+            return current_rule, current_section
+        if current_section == "skip_patterns":
+            _handle_skip_patterns_line(result, stripped)
+        # 其他/未知 section 下的列表项: 不跨 section 捕获, 直接忽略
         return current_rule, current_section
 
     # Top-level keys (only lines NOT starting with space and NOT starting with -)
     if not line.startswith(" ") and not line.startswith("-") and ":" in stripped:
+        # 任何顶层 key (含未知 key, 例如 installed_packs:) 都先收尾当前规则并
+        # 重置 section, 防止后续列表项被误并入上一个 section
+        if current_rule is not None:
+            _finalize_rule(result, current_rule, current_section)
+            current_rule = None
         current_rule, current_section = _process_top_level_key(line, stripped, result, current_rule, current_section)
         return current_rule, current_section
 
@@ -339,6 +381,9 @@ def _process_top_level_key(
     key = key.strip()
     val = val.strip().strip("'\"")
 
+    # 默认重置 section: 未知顶层 key 之后的 `- item` 行不属于上一个 section
+    current_section = None
+
     if key == "language":
         result["language"] = val
     elif key == "version":
@@ -352,8 +397,13 @@ def _process_top_level_key(
     elif key == "framework_hints":
         current_section = "framework_hints"
         result["framework_hints"] = {}
-    elif key == "anti_patterns":
-        current_section = "anti_patterns"
+    elif key in _RULE_SECTIONS:
+        # custom_rules 为 canonical key, anti_patterns 为 legacy 别名
+        current_section = key
+        result.setdefault(key, [])
+    elif key == "installed_packs":
+        current_section = "installed_packs"
+        result.setdefault(key, [])
     return current_rule, current_section
 
 
@@ -404,7 +454,9 @@ def _apply_rule_field(
     key = key.strip()
     val = val.strip().strip("'\"")
     if key in (
+        "id",
         "name",
+        "language",
         "severity",
         "category",
         "pattern",

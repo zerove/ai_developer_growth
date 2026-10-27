@@ -5,11 +5,12 @@ from __future__ import annotations
 import json
 import os
 import sys
-from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
 import yaml
+
+from tools.scripts.rules_engine.models import Issue as _CanonicalIssue
 
 # ── Configuration ──
 _ADG_HOME = Path(os.environ.get("ADG_HOME", Path.home() / ".config" / "adg"))
@@ -127,34 +128,39 @@ SKIP_EXTENSIONS = {
 }
 
 
-@dataclass
-class Issue:
-    """Represents a single code quality issue."""
+class Issue(_CanonicalIssue):
+    """Represents a single code quality issue (CLI adapter).
 
-    rule_id: str
-    severity: str
-    category: str
-    file: str
-    line: int
-    column: int
-    message: str
-    fix_hint: str
-    related_docs: list[dict[str, str]] | None = None
+    字段语义、``to_dict()`` 与 ``rules_engine.models.Issue`` 完全一致，
+    仅保留 CLI 历史位置参数顺序 ``(…, line, column, message, fix_hint)``。
+    规范模型的位置顺序是 ``(…, line, message, fix_hint, explanation,
+    context_role, column)``，两者混用会静默错位，因此这里显式重排一次，
+    其余行为全部继承，避免两套 Issue 模型继续漂移。新代码建议用关键字参数。
+    """
 
-    def to_dict(self) -> dict[str, Any]:
-        d = {
-            "rule_id": self.rule_id,
-            "severity": self.severity,
-            "category": self.category,
-            "file": self.file,
-            "line": self.line,
-            "column": self.column,
-            "message": self.message,
-            "fix_hint": self.fix_hint,
-        }
-        if self.related_docs:
-            d["related_docs"] = self.related_docs
-        return d
+    def __init__(
+        self,
+        rule_id: str,
+        severity: str,
+        category: str,
+        file: str,
+        line: int,
+        column: int = 0,
+        message: str = "",
+        fix_hint: str = "",
+        related_docs: list[dict[str, str]] | None = None,
+    ) -> None:
+        super().__init__(
+            rule_id=rule_id,
+            severity=severity,
+            category=category,
+            file=file,
+            line=line,
+            message=message,
+            fix_hint=fix_hint,
+            column=column,
+            related_docs=[] if related_docs is None else related_docs,
+        )
 
 
 # ── Knowledge Base Docs Lookup ─────────────────────────────
@@ -305,8 +311,11 @@ def load_project_config(dirpath: Path | None = None) -> dict[str, Any]:
     2. ~/.config/adg/rules.yml as global config
 
     Returns merged configuration with project overriding global.
+
+    解析走 `_load_yaml` (PyYAML 优先, ImportError 时回退 `_simple_yaml_parse`),
+    保证有/无 PyYAML 两种环境都能正确加载 `custom_rules`。
     """
-    from tools.scripts.adg_cli.detect import _simple_yaml_parse
+    from tools.scripts.adg_cli.detect import _load_yaml
 
     config: dict[str, Any] = {
         "custom_rules": [],
@@ -319,7 +328,7 @@ def load_project_config(dirpath: Path | None = None) -> dict[str, Any]:
     global_config_path = Path.home() / ".config" / "adg" / "rules.yml"
     if global_config_path.exists():
         try:
-            global_config = _simple_yaml_parse(global_config_path)
+            global_config = _normalize_custom_rules_keys(_load_yaml(global_config_path))
             config = _merge_config(config, global_config)
         except (OSError, yaml.YAMLError):
             pass  # global config optional
@@ -335,9 +344,7 @@ def load_project_config(dirpath: Path | None = None) -> dict[str, Any]:
             project_config_path = search_path / ".adg" / "rules.yml"
             if project_config_path.exists():
                 try:
-                    project_config = _simple_yaml_parse(project_config_path)
-                    if "anti_patterns" in project_config:
-                        project_config["custom_rules"] = project_config.pop("anti_patterns")
+                    project_config = _normalize_custom_rules_keys(_load_yaml(project_config_path))
                     config = _merge_config(config, project_config)
                 except (OSError, yaml.YAMLError):
                     pass  # project config optional
@@ -345,6 +352,20 @@ def load_project_config(dirpath: Path | None = None) -> dict[str, Any]:
             search_path = search_path.parent
 
     return config
+
+
+def _normalize_custom_rules_keys(parsed: dict[str, Any]) -> dict[str, Any]:
+    """把 legacy `anti_patterns` key 归一化并入 canonical `custom_rules`.
+
+    关键: 不得整体覆盖 —— 文件若同时含两个 key, 旧实现
+    (`project_config["custom_rules"] = project_config.pop("anti_patterns")`)
+    会用 legacy 列表把已加载的 custom_rules 清空。
+    """
+    result = dict(parsed)
+    legacy = result.pop("anti_patterns", None)
+    if legacy:
+        result["custom_rules"] = list(result.get("custom_rules") or []) + list(legacy)
+    return result
 
 
 def _merge_config(base: dict[str, Any], override: dict[str, Any]) -> dict[str, Any]:

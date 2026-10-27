@@ -32,14 +32,10 @@ try:  # pragma: no cover
 except ImportError:
     pass
 
-_REPEAT_OPS: frozenset[Any] = frozenset()
-
-try:  # pragma: no cover
-    _sre_constants = importlib.import_module("re._constants")
-    _sre_parse = importlib.import_module("re._parser")
-    _REPEAT_OPS = frozenset({_sre_constants.MAX_REPEAT, _sre_constants.MIN_REPEAT})
-except ImportError:
-    pass
+# 注意: 此处只允许存在**一份**初始化序列。历史版本曾重复一段
+# `try/except` 且前置 `_REPEAT_OPS = frozenset()` 重置 —— 一旦有人按
+# "清理重复代码"删掉前半段, 分析器会在 _REPEAT_OPS 恒空下静默失明
+# (fail-open)。回归守护见 tests/test_redos_gate.py。
 
 _DANGEROUS_PATTERNS = [
     re.compile(r"\[[^\]]*\]\s*[+*]\s*[+*]"),  # [a-z]*+ 字符类双量词

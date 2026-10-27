@@ -16,7 +16,7 @@ def _format_human(issues: list[Issue], language: str, framework: str | None, fil
 
     fw_str = f" + {framework}" if framework else ""
     lines.append(f"Language: {language}{fw_str} (auto-detected)")
-    lines.append(f"Rules loaded: {len(issues)} issues found")
+    lines.append(f"Issues found: {len(issues)}")
     lines.append("")
 
     lines.extend(_format_issue_lines(issues))

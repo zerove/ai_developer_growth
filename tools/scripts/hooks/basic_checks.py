@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import os
 import subprocess
 import sys
 from pathlib import Path
@@ -112,7 +113,7 @@ def run_format_check(fix: bool = False) -> tuple[bool, str]:
 def run_typecheck() -> tuple[bool, str]:
     """Run mypy type check."""
     return _run_subprocess(
-        [sys.executable, "-m", "mypy", "tools/scripts/", "--ignore-missing-imports"],
+        [sys.executable, "-m", "mypy", "tools/scripts/", "ai-dev-framework/src", "--ignore-missing-imports"],
         timeout=120,
         description="Type check",
     )
@@ -127,8 +128,12 @@ def _plugin_available(module: str) -> bool:
         return False
 
 
-def _changed_python_files(base: str) -> list[Path]:
-    """获取相对 base ref 变更的 Python 文件。"""
+def _changed_files(base: str) -> tuple[list[Path], bool]:
+    """获取相对 base ref 变更的所有文件。
+
+    Returns:
+        (文件列表, 是否成功获取)。成功时 ok=True（空列表表示无变更）；失败时 ok=False。
+    """
     try:
         result = subprocess.run(
             ["git", "diff", "--name-only", "--diff-filter=ACMR", base],
@@ -137,10 +142,22 @@ def _changed_python_files(base: str) -> list[Path]:
             timeout=30,
         )
         if result.returncode != 0:
-            return []
-        return [Path(line) for line in result.stdout.splitlines() if line.endswith(".py")]
+            return [], False
+        return [Path(line) for line in result.stdout.splitlines() if line], True
     except (subprocess.TimeoutExpired, OSError):
-        return []
+        return [], False
+
+
+def _changed_python_files(base: str) -> tuple[list[Path], bool]:
+    """获取相对 base ref 变更的 Python 文件。
+
+    Returns:
+        (Python 文件列表, 是否成功获取)
+    """
+    files, ok = _changed_files(base)
+    if not ok:
+        return [], False
+    return [p for p in files if p.suffix == ".py"], True
 
 
 def _matches_module(test_file: Path, stem: str, module_path: str) -> bool:
@@ -186,7 +203,21 @@ def run_tests_incremental(base: str = "HEAD") -> tuple[bool, str]:
 
     无法确定受影响范围时回退全量，保证不漏检。
     """
-    changed = _changed_python_files(base)
+    # 检查 base 是否可解析（fail-closed）
+    try:
+        subprocess.run(
+            ["git", "rev-parse", "--verify", base],
+            capture_output=True,
+            text=True,
+            timeout=5,
+            check=True,
+        )
+    except Exception:
+        return run_tests()
+
+    changed, ok = _changed_python_files(base)
+    if not ok:
+        return run_tests()
     if not changed:
         return True, "No changed Python files; incremental test skipped"
 
@@ -201,11 +232,12 @@ def run_tests_incremental(base: str = "HEAD") -> tuple[bool, str]:
     workers = _setting("test_workers", "auto")
     if workers and str(workers) not in ("0", "None") and _plugin_available("xdist"):
         cmd += ["-n", str(workers)]
-    reruns = int(str(_setting("test_reruns", 2)))
+    reruns = _get_test_reruns(2)
     if reruns > 0 and _plugin_available("pytest_rerunfailures"):
         cmd += ["--reruns", str(reruns), "--reruns-delay", "1"]
 
-    passed, output = _run_subprocess(cmd, timeout=300, description="Incremental tests")
+    timeout = _get_timeout("test_incremental", 300)
+    passed, output = _run_subprocess(cmd, timeout=timeout, description="Incremental tests")
     summary = f"Incremental scope: {len(targets)} test file(s) for {len(changed)} changed file(s)\n{output}"
     return passed, summary
 
@@ -218,6 +250,37 @@ def _setting(key: str, default: object) -> object:
         return get_setting(key, default)
     except Exception:
         return default
+
+
+def _get_test_reruns(default: int = 2) -> int:
+    """获取测试重试次数：环境变量 ADG_TEST_RERUNS 优先于配置。"""
+    env_val = os.environ.get("ADG_TEST_RERUNS")
+    if env_val is not None:
+        try:
+            v = int(env_val.strip())
+            if v >= 0:
+                return v
+        except ValueError:
+            pass
+    try:
+        v = int(str(_setting("test_reruns", default)))
+        return v if v >= 0 else default
+    except Exception:
+        return default
+
+
+def _get_timeout(name: str, default: int) -> int:
+    """从配置读取超时（[tool.adg] timeouts.{name}），失败时返回默认值。"""
+    try:
+        timeouts = _setting("timeouts", {})
+        if isinstance(timeouts, dict) and name in timeouts:
+            try:
+                return int(timeouts[name])
+            except (ValueError, TypeError):
+                pass
+    except Exception:
+        pass
+    return default
 
 
 def run_tests() -> tuple[bool, str]:
@@ -252,7 +315,7 @@ def run_tests() -> tuple[bool, str]:
     if workers and str(workers) not in ("0", "None") and _plugin_available("xdist"):
         cmd += ["-n", str(workers)]
 
-    reruns = int(str(_setting("test_reruns", 2)))
+    reruns = _get_test_reruns(2)
     if reruns > 0 and _plugin_available("pytest_rerunfailures"):
         cmd += ["--reruns", str(reruns), "--reruns-delay", "1"]
 
@@ -264,7 +327,8 @@ def run_tests() -> tuple[bool, str]:
     # 需要 902s(空闲) ~ 1277s(有负载), 于是该守卫会随机报失败 —— 一个在代码
     # 正常时误报的守卫比没有守卫更糟, 它会训练人用 --no-verify 绕过。
     # 取 1800s: 约为观测上限的 1.4 倍, 既留出余量又仍能兜住真正的挂死。
-    return _run_subprocess(cmd, timeout=1800, description="Tests")
+    timeout = _get_timeout("test", 1800)
+    return _run_subprocess(cmd, timeout=timeout, description="Tests")
 
 
 def _run_builtin_secret_scan() -> tuple[bool, str]:

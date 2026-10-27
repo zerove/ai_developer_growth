@@ -52,11 +52,24 @@ def load_custom_rules(project_dir: Path) -> dict[str, Any]:
         try:
             data = _load_raw_rules(str(yml_file))
             if data:
+                data = _normalize_rules_keys(data)
                 merged = _merge_rules(merged, data)
         except Exception as e:
             print(f"Warning: Failed to load {yml_file}: {e}", file=sys.stderr)
 
     return merged
+
+
+def _normalize_rules_keys(data: dict[str, Any]) -> dict[str, Any]:
+    """归一化规则 key: custom_rules (canonical) 并入 anti_patterns (legacy 别名).
+
+    _merge_rules 只认 anti_patterns key; 与 rule_loader.load_custom_rules /
+    adg_cli load_project_config 的双 key 接受语义保持一致。
+    """
+    canonical = data.get("custom_rules")
+    if not canonical:
+        return data
+    return {**data, "anti_patterns": list(data.get("anti_patterns") or []) + list(canonical)}
 
 
 def _merge_rules(base: dict[str, Any], custom: dict[str, Any]) -> dict[str, Any]:

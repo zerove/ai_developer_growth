@@ -2,11 +2,10 @@
 
 from __future__ import annotations
 
-import os
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
-from tools.scripts._common import rules_dir
+from tools.scripts._common import rules_dir, walk_files
 from tools.scripts.rules_engine.logger import logger
 
 from ._checker_linters import _batched_linters as _batched_linters
@@ -286,13 +285,12 @@ def _discover_target_files(dirpath: Path, languages: list[str] | None) -> list[P
         ".hpp",
     }
     # 性能: 遍历中就地剪枝排除目录 —— rglob("*") 不剪枝，会把 .venv/.git/node_modules
-    # 一并枚举（仓库根实测 22755 路径，0.82s）。旧注释曾误称此处已剪枝。
-    files: list[Path] = []
-    excluded = DEFAULT_EXCLUDED_DIRS
-    for root, dirs, filenames in os.walk(dirpath):
-        dirs[:] = [d for d in dirs if d not in excluded]
-        root_path = Path(root)
-        files.extend(p for p in (root_path / name for name in filenames) if p.suffix.lower() in exts)
+    # 一并枚举（仓库根实测 22755 路径，0.82s）。共享 _common.walk_files 统一实现。
+    files = [
+        path
+        for path in walk_files(dirpath, skip_dir=lambda name: name in DEFAULT_EXCLUDED_DIRS)
+        if path.suffix.lower() in exts
+    ]
 
     if languages:
         files = [f for f in files if _detect_language(f) in languages]

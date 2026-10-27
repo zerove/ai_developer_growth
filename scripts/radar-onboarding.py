@@ -13,11 +13,11 @@ from pathlib import Path
 RADAR_SRC = Path(__file__).parent.parent / "examples" / "capability-radar" / "src"
 sys.path.insert(0, str(RADAR_SRC))
 
-from assessment import AssessmentEngine  # noqa: E402
+from assessment import AssessmentEngine, print_result  # noqa: E402
 from capability_model import Dimension, Level  # noqa: E402
 
 
-def print_welcome():
+def print_welcome() -> None:
     """打印欢迎横幅"""
     print("=" * 60)
     print("  🎯 欢迎使用 AI 时代开发者能力雷达 - Onboarding 引导")
@@ -36,7 +36,7 @@ def print_welcome():
     print()
 
 
-def run_interactive():
+def run_interactive() -> None:
     """运行交互式评估"""
     print_welcome()
 
@@ -44,8 +44,6 @@ def run_interactive():
     result = engine.run_interactive()
 
     # 打印结果
-    from assessment import print_result
-
     print_result(result)
 
     # 询问是否导出
@@ -62,7 +60,7 @@ def run_interactive():
         print("✅ 报告已导出")
 
 
-def run_demo():
+def run_demo() -> None:
     """运行演示模式"""
     print_welcome()
     print("🎮 演示模式：使用预设 L2 答案快速跑通流程")
@@ -71,8 +69,6 @@ def run_demo():
     engine = AssessmentEngine()
 
     # 使用预设的 L2 答案
-    from capability_model import Dimension, Level
-
     for dim in Dimension:
         for q_id, _, _ in engine.QUESTIONS[dim]:
             engine.answers.append(
@@ -85,15 +81,13 @@ def run_demo():
             )
 
     result = engine.calculate_result()
-    from assessment import print_result
-
     print_result(result)
 
     print("\n✅ 演示完成！现在你可以运行交互式评估：")
     print("   python -m src.cli")
 
 
-def run_batch(input_file: str, output_md: str = None, output_json: str = None):
+def run_batch(input_file: str, output_md: str | None = None, output_json: str | None = None) -> None:
     """批量导入评估"""
     print(f"📥 从 {input_file} 导入答案...")
 
@@ -122,12 +116,10 @@ def run_batch(input_file: str, output_md: str = None, output_json: str = None):
         print(f"✅ JSON 报告已保存: {output_json}")
 
     if not output_md and not output_json:
-        from assessment import print_result
-
         print_result(result)
 
 
-def main():
+def main() -> None:
     import argparse
 
     parser = argparse.ArgumentParser(description="能力雷达 Onboarding 引导脚本")

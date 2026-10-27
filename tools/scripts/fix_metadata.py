@@ -5,6 +5,13 @@ import os
 import re
 from pathlib import Path
 
+try:  # python -m tools.scripts.fix_metadata (根已在 path)
+    from tools.scripts import _bootstrap
+except ModuleNotFoundError:  # python tools/scripts/fix_metadata.py (path[0]=tools/scripts)
+    import _bootstrap  # type: ignore[no-redef]  # noqa: F401
+
+from tools.scripts._paths import resolve_repo_path, split_frontmatter  # noqa: E402
+
 # 目录到分类的映射
 DIR_CATEGORY_MAP = {
     "docs/mindset": ("心态层", ["AI思维", "工程师文化"]),
@@ -144,33 +151,20 @@ def process_file(filepath: str) -> bool:
     with open(filepath, encoding="utf-8") as f:
         content = f.read()
 
-    # 如果已经有完整的元数据，跳过
-    if content.startswith("---"):
-        parts = content.split("---", 2)
-        if len(parts) >= 3:
-            frontmatter = parts[1]
-            required_fields = ["title", "description", "category", "tags", "difficulty"]
-            if all(field + ":" in frontmatter for field in required_fields):
-                return False
+    frontmatter, body = split_frontmatter(content)
+    required_fields = ["title", "description", "category", "tags", "difficulty"]
+    if frontmatter and all(field in frontmatter for field in required_fields):
+        return False
 
-    # 如果没有元数据，添加
-    if not content.startswith("---"):
-        metadata = generate_metadata(filepath)
-        new_content = metadata + content
-    else:
-        # 如果有但不完整，替换
-        parts = content.split("---", 2)
-        metadata = generate_metadata(filepath)
-        new_content = metadata + parts[2] if len(parts) >= 3 else metadata + content
-
+    metadata = generate_metadata(filepath)
     with open(filepath, "w", encoding="utf-8") as f:
-        f.write(new_content)
+        f.write(metadata + body)
 
     return True
 
 
 def main() -> None:
-    docs_dir = "docs"
+    docs_dir = str(resolve_repo_path("docs"))
     fixed_count = 0
 
     for root, dirs, files in os.walk(docs_dir):

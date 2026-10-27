@@ -23,6 +23,8 @@ classifiers = [
     "Topic :: Software Development :: Quality Assurance",
 ]
 requires-python = ">=3.10"
+# pyyaml: scan 子命令延迟加载 (scan._load_yaml_rules), 是运行时硬依赖
+dependencies = ["pyyaml>=6.0"]
 
 [project.urls]
 Homepage = "https://github.com/zerove/ai_developer_growth"

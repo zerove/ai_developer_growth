@@ -17,6 +17,7 @@ import json
 import subprocess
 import sys
 from pathlib import Path
+from typing import Any
 
 
 class LanguageRulesLSP:
@@ -25,7 +26,7 @@ class LanguageRulesLSP:
     def __init__(self) -> None:
         self.project_dir: Path | None = None
 
-    def handle_message(self, message: dict) -> dict | None:
+    def handle_message(self, message: dict[str, Any]) -> dict[str, Any] | None:
         """Handle an LSP message and return response if needed."""
         method = message.get("method", "")
         msg_id = message.get("id")
@@ -49,7 +50,7 @@ class LanguageRulesLSP:
             sys.exit(0)
         return None
 
-    def _handle_initialize(self, msg_id: int | None, message: dict) -> dict:
+    def _handle_initialize(self, msg_id: int | None, message: dict[str, Any]) -> dict[str, Any]:
         params = message.get("params", {})
         root_uri = params.get("rootUri", "")
         if root_uri and root_uri.startswith("file://"):
@@ -69,19 +70,19 @@ class LanguageRulesLSP:
             },
         }
 
-    def _handle_did_open(self, message: dict) -> None:
+    def _handle_did_open(self, message: dict[str, Any]) -> None:
         uri = message.get("params", {}).get("textDocument", {}).get("uri", "")
         self._publish_diagnostics_for_uri(uri)
 
-    def _handle_did_save(self, message: dict) -> None:
+    def _handle_did_save(self, message: dict[str, Any]) -> None:
         uri = message.get("params", {}).get("textDocument", {}).get("uri", "")
         self._publish_diagnostics_for_uri(uri)
 
-    def _handle_did_change(self, message: dict) -> None:
+    def _handle_did_change(self, message: dict[str, Any]) -> None:
         uri = message.get("params", {}).get("textDocument", {}).get("uri", "")
         self._publish_diagnostics_for_uri(uri)
 
-    def _run_adg_check(self, filepath: Path) -> dict:
+    def _run_adg_check(self, filepath: Path) -> dict[str, Any]:
         """Run `adg check --json` on the given file."""
         try:
             result = subprocess.run(
@@ -120,8 +121,8 @@ class LanguageRulesLSP:
             }
         )
 
-    def _result_to_diagnostics(self, issues: list[dict]) -> list[dict]:
-        diagnostics = []
+    def _result_to_diagnostics(self, issues: list[dict[str, Any]]) -> list[dict[str, Any]]:
+        diagnostics: list[dict[str, Any]] = []
         for issue in issues:
             severity = {"error": 1, "warning": 2}.get(issue.get("severity", "info"), 3)
 
@@ -152,13 +153,13 @@ class LanguageRulesLSP:
 
         return diagnostics
 
-    def _send_message(self, message: dict) -> None:
+    def _send_message(self, message: dict[str, Any]) -> None:
         content = json.dumps(message)
         header = f"Content-Length: {len(content)}\r\n\r\n"
         sys.stdout.write(header + content)
         sys.stdout.flush()
 
-    def read_message(self) -> dict | None:
+    def read_message(self) -> dict[str, Any] | None:
         content_length = 0
         while True:
             line = sys.stdin.readline()
@@ -199,10 +200,14 @@ def main() -> None:
 
         class LSPHandler(socketserver.StreamRequestHandler):
             def handle(self) -> None:
-                server._send_message = lambda msg: self.wfile.write(
-                    (f"Content-Length: {len(json.dumps(msg))}\r\n\r\n{json.dumps(msg)}").encode()
-                )
-                server.read_message = lambda: json.loads(self.rfile.readline().decode().strip())
+                def send_message(msg: dict[str, Any]) -> None:
+                    self.wfile.write((f"Content-Length: {len(json.dumps(msg))}\r\n\r\n{json.dumps(msg)}").encode())
+
+                def read_message() -> dict[str, Any]:
+                    return json.loads(self.rfile.readline().decode().strip())
+
+                server._send_message = send_message  # type: ignore[assignment]
+                server.read_message = read_message  # type: ignore[method-assign]
                 server.run()
 
         with socketserver.TCPServer(("localhost", args.port), LSPHandler) as httpd:

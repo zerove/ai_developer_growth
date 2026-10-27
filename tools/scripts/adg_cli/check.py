@@ -6,6 +6,7 @@ import sys
 from pathlib import Path
 from typing import Any
 
+from tools.scripts._common import walk_files
 from tools.scripts.adg_cli.core import (
     SKIP_EXTENSIONS,
     Issue,
@@ -270,14 +271,10 @@ def _collect_files(dirpath: Path) -> list[Path]:
         文件路径列表
     """
     files_to_check: list[Path] = []
-    for filepath in dirpath.rglob("*"):
+    for filepath in walk_files(dirpath, skip_dir=is_skipped_dir):
         if not filepath.is_file():
             continue
-        try:
-            rel_parts = filepath.relative_to(dirpath).parts
-        except ValueError:
-            rel_parts = filepath.parts
-        if any(is_skipped_dir(part) for part in rel_parts):
+        if is_skipped_dir(filepath.name):
             continue
         if filepath.suffix in SKIP_EXTENSIONS:
             continue
@@ -405,7 +402,7 @@ def _collect_directory_files(target: Path, skip_patterns: list[str]) -> list[Pat
     V2.17 拆分: 从 _collect_check_files (C=31) 抽出.
     """
     files: list[Path] = []
-    for fp in target.rglob("*"):
+    for fp in walk_files(target, skip_dir=is_skipped_dir):
         if not fp.is_file():
             continue
         if not _passes_skip_filters(fp, target, skip_patterns):

@@ -15,6 +15,7 @@ import re
 from dataclasses import dataclass, field
 from datetime import datetime
 from pathlib import Path
+from typing import Any
 
 
 @dataclass
@@ -23,7 +24,7 @@ class SDLCStage:
 
     name: str
     passed: bool
-    checks: list[dict] = field(default_factory=list)
+    checks: list[dict[str, Any]] = field(default_factory=list)
     score: float = 0.0
     suggestions: list[str] = field(default_factory=list)
 
@@ -38,7 +39,7 @@ class SDLCAuditResult:
     overall_score: float = 0.0
     passed: bool = False
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         if not self.timestamp:
             self.timestamp = datetime.now().isoformat()
         if self.stages:

@@ -29,156 +29,180 @@
 from __future__ import annotations
 
 import argparse
+import importlib
 import json
 import logging
 import subprocess
 import sys
 from collections.abc import Callable
 from pathlib import Path
+from typing import Any
 
-# 本文件既支持 `python -m tools.scripts.hooks_runner`（包上下文，仓库根已在
-# sys.path 上），也支持 `python tools/scripts/hooks_runner.py` 直接执行。后者
-# sys.path[0] 是 tools/scripts/，仓库根不在其中，下面的 `tools.*` 绝对导入
-# 会全部失败（ModuleNotFoundError: No module named 'tools'）。补上仓库根，
-# 与 .jcode/scripts/_common.py:17-19 的既有做法一致。
-_REPO_ROOT = Path(__file__).resolve().parent.parent.parent
-if str(_REPO_ROOT) not in sys.path:
-    sys.path.insert(0, str(_REPO_ROOT))
+# ADR-079: 统一路径引导 —— `python -m tools.scripts.X`（包上下文）与
+# `python tools/scripts/X.py`（path[0]=tools/scripts）均由 _bootstrap 幂等补齐仓库根。
+try:  # python -m tools.scripts.X (根已在 path)
+    from tools.scripts import _bootstrap
+except ModuleNotFoundError:  # python tools/scripts/X.py (path[0]=tools/scripts)
+    import _bootstrap  # type: ignore[no-redef]  # noqa: F401
 
-# 阶段函数通过名称字符串运行时解析（_CHECK_PHASES / _resolve_phase_func），
-# 必须在模块命名空间中存在
-from tools.scripts.hooks.basic_checks import (  # noqa: E402,F401
-    run_format_check as _orig_run_format_check,
+
+_FORWARDED_GROUPS: dict[str, tuple[str, ...]] = {
+    "tools.scripts.hooks.basic_checks": (
+        "run_format_check",
+        "run_lint",
+        "run_security",
+        "run_tests",
+        "run_typecheck",
+    ),
+    "tools.scripts.hooks.domain_checks": (
+        "run_arch_graph",
+        "run_governance_audit",
+        "run_language_rules",
+        "run_pr_review",
+        "run_quality_gate",
+    ),
+    "tools.scripts.hooks.incremental_checks": (
+        "get_changed_files",
+        "get_staged_files",
+        "run_diff_checks",
+        "run_pre_commit_checks",
+    ),
+    "tools.scripts.hooks.misc_runner": (
+        "_close_store_quietly",
+        "_dep_graph_analyze",
+        "_dep_graph_build",
+        "_dep_graph_circular",
+        "_dep_graph_conflicts",
+        "_dep_graph_impact",
+        "_emit_or_write",
+        "_exception_check_expirations",
+        "_exception_list",
+        "_exception_request",
+        "_exception_review",
+        "_exception_sync_gitops",
+        "_handle_dashboard",
+        "_handle_db_maintain",
+        "_handle_dep_graph",
+        "_handle_docs_validate",
+        "_handle_exception",
+        "_handle_install_hooks",
+        "_handle_learn",
+        "_make_exception_manager",
+    ),
+    "tools.scripts.hooks.phase_runner": (
+        "_print_results_in_order",
+        "_resolve_order",
+        "_resolve_phase_func",
+        "_run_ast_fix",
+        "_run_format_phase",
+        "_run_full",
+        "_run_governance_audit_full",
+        "_run_hallucination_scan",
+        "_run_lint_phase",
+        "_run_parallel_checks",
+        "_run_phase",
+        "_run_quality_gate_full",
+        "_run_security_phase",
+        "_run_semantic_check",
+        "_run_sequential_phases",
+        "_run_test_phase",
+        "_run_typecheck_phase",
+    ),
+    "tools.scripts.hooks.runner_parsers": (
+        "_add_analysis_parsers",
+        "_add_core_gate_parsers",
+        "_add_dep_graph_parsers",
+        "_add_doctor_baseline_parsers",
+        "_add_exception_dep_parsers",
+        "_add_extended_scan_parsers",
+        "_add_security_parsers",
+        "_add_signature_sbom_parsers",
+        "_add_workflow_parsers",
+        "_build_parser",
+    ),
+    "tools.scripts.hooks.supply_runner": (
+        "_build_fix_orchestrator",
+        "_check_dependency_freshness",
+        "_collect_check_results",
+        "_fix_result_dicts",
+        "_handle_auto_fix",
+        "_handle_sbom",
+        "_handle_supply_chain",
+        "_handle_supply_chain_compliance",
+        "_handle_supply_chain_freshness",
+        "_handle_supply_chain_sbom",
+        "_handle_supply_chain_scan",
+        "_handle_supply_chain_verify",
+        "_handle_verify_signature",
+        "_load_license_policy",
+        "_output_compliance",
+        "_output_scan_result",
+        "_print_compliance_text",
+        "_print_fix_text",
+        "_print_freshness_text",
+        "_print_scan_text",
+        "_print_verify_text",
+        "_run_compliance_checks",
+        "_scan_has_failing_vulns",
+        "_scan_severity_threshold",
+        "_scan_vulnerability_dicts",
+        "_severity_to_sarif_level",
+        "_to_cyclonedx",
+        "_to_sarif_supply_chain",
+        "_to_spdx_tagvalue",
+        "_verify_packages",
+    ),
+    "tools.scripts.hooks.tool_runner": (
+        "_build_tool_command",
+        "_count_language_files",
+        "_detect_project_languages",
+        "_excluded_scan_dirs",
+        "_execute_tool",
+        "_get_jobs_setting",
+        "_parse_languages",
+        "_run_basic_check_for_languages",
+        "_run_format_multi",
+        "_run_lint_multi",
+        "_run_security_multi",
+        "_run_simple",
+        "_run_test_multi",
+        "_run_tool_for_language",
+        "_run_typecheck_multi",
+        "_timeout_for_category",
+        "_tool_available",
+    ),
+}
+
+_FORWARDED: dict[str, tuple[str, str]] = {
+    name: (module_name, name) for module_name, names in _FORWARDED_GROUPS.items() for name in names
+}
+_FORWARDED.update(
+    {
+        "_orig_run_format_check": ("tools.scripts.hooks.basic_checks", "run_format_check"),
+        "_orig_run_lint": ("tools.scripts.hooks.basic_checks", "run_lint"),
+        "_orig_run_security": ("tools.scripts.hooks.basic_checks", "run_security"),
+        "_orig_run_tests": ("tools.scripts.hooks.basic_checks", "run_tests"),
+        "_orig_run_typecheck": ("tools.scripts.hooks.basic_checks", "run_typecheck"),
+    }
 )
-from tools.scripts.hooks.basic_checks import (  # noqa: E402,F401
-    run_lint as _orig_run_lint,
-)
-from tools.scripts.hooks.basic_checks import (  # noqa: E402,F401
-    run_security as _orig_run_security,
-)
-from tools.scripts.hooks.basic_checks import (  # noqa: E402,F401
-    run_tests as _orig_run_tests,
-)
-from tools.scripts.hooks.basic_checks import (  # noqa: E402,F401
-    run_typecheck as _orig_run_typecheck,
-)
-from tools.scripts.hooks.domain_checks import (  # noqa: E402,F401
-    run_arch_graph,
-    run_governance_audit,
-    run_language_rules,
-    run_pr_review,
-    run_quality_gate,
-)
-from tools.scripts.hooks.incremental_checks import (  # noqa: E402,F401
-    get_changed_files,
-    get_staged_files,
-    run_diff_checks,
-    run_pre_commit_checks,
-)
-from tools.scripts.hooks.misc_runner import (  # noqa: E402,F401 - 拆分后转发
-    _close_store_quietly,
-    _dep_graph_analyze,
-    _dep_graph_build,
-    _dep_graph_circular,
-    _dep_graph_conflicts,
-    _dep_graph_impact,
-    _emit_or_write,
-    _exception_check_expirations,
-    _exception_list,
-    _exception_request,
-    _exception_review,
-    _exception_sync_gitops,
-    _handle_dashboard,
-    _handle_db_maintain,
-    _handle_dep_graph,
-    _handle_docs_validate,
-    _handle_exception,
-    _handle_install_hooks,
-    _handle_learn,
-    _make_exception_manager,
-)
-from tools.scripts.hooks.phase_runner import (  # noqa: E402,F401 - 拆分后转发
-    _print_results_in_order,
-    _resolve_order,
-    _resolve_phase_func,
-    _run_ast_fix,
-    _run_format_phase,
-    _run_full,
-    _run_governance_audit_full,
-    _run_hallucination_scan,
-    _run_lint_phase,
-    _run_parallel_checks,
-    _run_phase,
-    _run_quality_gate_full,
-    _run_security_phase,
-    _run_semantic_check,
-    _run_sequential_phases,
-    _run_test_phase,
-    _run_typecheck_phase,
-)
-from tools.scripts.hooks.runner_parsers import (  # noqa: E402,F401 - 拆分后转发
-    _add_analysis_parsers,
-    _add_core_gate_parsers,
-    _add_dep_graph_parsers,
-    _add_doctor_baseline_parsers,
-    _add_exception_dep_parsers,
-    _add_extended_scan_parsers,
-    _add_security_parsers,
-    _add_signature_sbom_parsers,
-    _add_workflow_parsers,
-    _build_parser,
-)
-from tools.scripts.hooks.supply_runner import (  # noqa: E402,F401 - 拆分后转发, 保持命令入口
-    _build_fix_orchestrator,
-    _check_dependency_freshness,
-    _collect_check_results,
-    _fix_result_dicts,
-    _handle_auto_fix,
-    _handle_sbom,
-    _handle_supply_chain,
-    _handle_supply_chain_compliance,
-    _handle_supply_chain_freshness,
-    _handle_supply_chain_sbom,
-    _handle_supply_chain_scan,
-    _handle_supply_chain_verify,
-    _handle_verify_signature,
-    _load_license_policy,
-    _output_compliance,
-    _output_scan_result,
-    _print_compliance_text,
-    _print_fix_text,
-    _print_freshness_text,
-    _print_scan_text,
-    _print_verify_text,
-    _run_compliance_checks,
-    _scan_has_failing_vulns,
-    _scan_severity_threshold,
-    _scan_vulnerability_dicts,
-    _severity_to_sarif_level,
-    _to_cyclonedx,
-    _to_sarif_supply_chain,
-    _to_spdx_tagvalue,
-    _verify_packages,
-)
-from tools.scripts.hooks.tool_runner import (  # noqa: E402,F401 - 拆分后转发
-    _build_tool_command,
-    _count_language_files,
-    _detect_project_languages,
-    _excluded_scan_dirs,
-    _execute_tool,
-    _get_jobs_setting,
-    _parse_languages,
-    _run_basic_check_for_languages,
-    _run_format_multi,
-    _run_lint_multi,
-    _run_security_multi,
-    _run_simple,
-    _run_test_multi,
-    _run_tool_for_language,
-    _run_typecheck_multi,
-    _timeout_for_category,
-    _tool_available,
-)
+
+
+def __getattr__(name: str) -> Any:
+    """按需解析历史转发符号（PEP 562）。"""
+    try:
+        module_name, attribute = _FORWARDED[name]
+    except KeyError:
+        raise AttributeError(f"module {__name__!r} has no attribute {name!r}") from None
+    value = getattr(importlib.import_module(module_name), attribute)
+    globals()[name] = value
+    return value
+
+
+def _resolve(name: str) -> Any:
+    """经本模块解析符号，保留 monkeypatch 语义。"""
+    return getattr(sys.modules[__name__], name)
+
+
 from tools.scripts.language_registry import (  # noqa: E402
     Language,
 )
@@ -195,27 +219,32 @@ logger = logging.getLogger(__name__)
 
 def run_lint(fix: bool = False) -> tuple[bool, str]:
     """Backward compatibility alias for run_lint."""
-    return _orig_run_lint(fix)
+    result: tuple[bool, str] = _resolve("_orig_run_lint")(fix)
+    return result
 
 
 def run_format_check(fix: bool = False) -> tuple[bool, str]:
     """Backward compatibility alias for run_format_check."""
-    return _orig_run_format_check(fix)
+    result: tuple[bool, str] = _resolve("_orig_run_format_check")(fix)
+    return result
 
 
 def run_typecheck() -> tuple[bool, str]:
     """Backward compatibility alias for run_typecheck."""
-    return _orig_run_typecheck()
+    result: tuple[bool, str] = _resolve("_orig_run_typecheck")()
+    return result
 
 
 def run_tests() -> tuple[bool, str]:
     """Backward compatibility alias for run_tests."""
-    return _orig_run_tests()
+    result: tuple[bool, str] = _resolve("_orig_run_tests")()
+    return result
 
 
 def run_security() -> tuple[bool, str]:
     """Backward compatibility alias for run_security."""
-    return _orig_run_security()
+    result: tuple[bool, str] = _resolve("_orig_run_security")()
+    return result
 
     # 新增: Supply Chain Security
 
@@ -291,13 +320,13 @@ def _handle_language_rules(args: argparse.Namespace) -> int:
         lines = [f"{r.file}: {'PASS' if r.passed else 'FAIL'} ({len(r.issues)} issues)" for r in results]
         print("\n".join(lines) if lines else "No files to check")
         return 0 if passed else 1
-    return _run_simple(run_language_rules(args.path, args.lang))
+    return _resolve("_run_simple")(_resolve("run_language_rules")(args.path, args.lang))
 
 
 def _handle_quality_gate(args: argparse.Namespace) -> int:
     """Handle quality-gate command."""
-    return _run_simple(
-        run_quality_gate(
+    return _resolve("_run_simple")(
+        _resolve("run_quality_gate")(
             args.path,
             full=args.full,
             check_annotation=args.check_annotation,
@@ -313,8 +342,8 @@ def _handle_quality_gate(args: argparse.Namespace) -> int:
 
 def _handle_governance_audit(args: argparse.Namespace) -> int:
     """Handle governance-audit command."""
-    return _run_simple(
-        run_governance_audit(
+    return _resolve("_run_simple")(
+        _resolve("run_governance_audit")(
             full=args.full,
             validate_docs=args.validate_docs,
             check_ai_sdlc=args.check_ai_sdlc,
@@ -703,11 +732,11 @@ _SIMPLE_COMMANDS = {
 
 # 多语言版本命令（显式指定 --lang 时使用）
 _MULTI_COMMANDS = {
-    "lint": _run_lint_multi,
-    "format": _run_format_multi,
-    "typecheck": _run_typecheck_multi,
-    "test": _run_test_multi,
-    "security": _run_security_multi,
+    "lint": "_run_lint_multi",
+    "format": "_run_format_multi",
+    "typecheck": "_run_typecheck_multi",
+    "test": "_run_test_multi",
+    "security": "_run_security_multi",
 }
 
 
@@ -724,32 +753,32 @@ def _build_handlers() -> dict[str, Callable[[argparse.Namespace], int]]:
         "quality-gate-new": _handle_quality_gate_new,
         "governance-audit": _handle_governance_audit,
         "secret-scan": _handle_secret_scan,
-        "auto-fix": _handle_auto_fix,
-        "supply-chain": _handle_supply_chain,
-        "sbom": _handle_sbom,
-        "verify-signature": _handle_verify_signature,
-        "diff": lambda a: _run_simple(run_diff_checks(a.base)),
-        "pre-commit": lambda a: _run_simple(run_pre_commit_checks()),
-        "pr-review": lambda a: _run_simple(run_pr_review()),
-        "arch-graph": lambda a: _run_simple(run_arch_graph()),
-        "semantic-check": lambda a: _run_semantic_check(
+        "auto-fix": _resolve("_handle_auto_fix"),
+        "supply-chain": _resolve("_handle_supply_chain"),
+        "sbom": _resolve("_handle_sbom"),
+        "verify-signature": _resolve("_handle_verify_signature"),
+        "diff": lambda a: _resolve("_run_simple")(_resolve("run_diff_checks")(a.base)),
+        "pre-commit": lambda a: _resolve("_run_simple")(_resolve("run_pre_commit_checks")()),
+        "pr-review": lambda a: _resolve("_run_simple")(_resolve("run_pr_review")()),
+        "arch-graph": lambda a: _resolve("_run_simple")(_resolve("run_arch_graph")()),
+        "semantic-check": lambda a: _resolve("_run_semantic_check")(
             a.path,
             getattr(a, "lang", None),
-            getattr(a, "jobs", None) or _get_jobs_setting(),
+            getattr(a, "jobs", None) or _resolve("_get_jobs_setting")(),
         ),
-        "ast-fix": lambda a: _run_ast_fix(a.path, getattr(a, "dry_run", False)),
-        "hallucination-scan": lambda a: _run_hallucination_scan(
+        "ast-fix": lambda a: _resolve("_run_ast_fix")(a.path, getattr(a, "dry_run", False)),
+        "hallucination-scan": lambda a: _resolve("_run_hallucination_scan")(
             getattr(a, "path", Path(".")),
             getattr(a, "lang", None),
         ),
-        "install-hooks": _handle_install_hooks,
-        "learn": _handle_learn,
-        "dashboard": _handle_dashboard,
-        "db-maintain": _handle_db_maintain,
-        "docs-validate": _handle_docs_validate,
-        "exception": _handle_exception,
-        "dep-graph": _handle_dep_graph,
-        "full": lambda a: _run_full(a),
+        "install-hooks": _resolve("_handle_install_hooks"),
+        "learn": _resolve("_handle_learn"),
+        "dashboard": _resolve("_handle_dashboard"),
+        "db-maintain": _resolve("_handle_db_maintain"),
+        "docs-validate": _resolve("_handle_docs_validate"),
+        "exception": _resolve("_handle_exception"),
+        "dep-graph": _resolve("_handle_dep_graph"),
+        "full": lambda a: _resolve("_run_full")(a),
     }
 
 
@@ -761,20 +790,20 @@ def _dispatch(args: argparse.Namespace) -> int:
     if cmd == "test" and getattr(args, "incremental", False) and not getattr(args, "lang", None):
         from tools.scripts.hooks.basic_checks import run_tests_incremental
 
-        return _run_simple(lambda: run_tests_incremental(args.base))
+        return _resolve("_run_simple")(lambda: run_tests_incremental(args.base))
 
     if cmd in _SIMPLE_COMMANDS:
-        func = globals()[_SIMPLE_COMMANDS[cmd]]
+        func = _resolve(_SIMPLE_COMMANDS[cmd])
         if cmd in ("lint", "format") and getattr(args, "fix", False):
-            return _run_simple(lambda: func(fix=True))
-        return _run_simple(func)
+            return _resolve("_run_simple")(lambda: func(fix=True))
+        return _resolve("_run_simple")(func)
 
     # 多语言版本命令（显式指定 --lang 时使用）
     multi_commands = _MULTI_COMMANDS
 
     # 如果显式指定了 --lang，使用多语言版本
     if cmd in multi_commands and getattr(args, "lang", None):
-        return _run_simple(multi_commands[cmd](args))
+        return _resolve("_run_simple")(_resolve(multi_commands[cmd])(args))
 
     handler = _build_handlers().get(cmd)
     if handler:
@@ -785,7 +814,7 @@ def _dispatch(args: argparse.Namespace) -> int:
 
 
 def main() -> int:
-    parser = _build_parser()
+    parser = _resolve("_build_parser")()
     args = parser.parse_args()
     return _dispatch(args)
 

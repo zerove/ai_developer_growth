@@ -6,6 +6,7 @@ Jcode Init - 项目初始化命令
 """
 
 from pathlib import Path
+from typing import Any
 
 from ai_dev_framework.hook_system import create_default_config
 from ai_dev_framework.project_config import JcodeConfig, init_project
@@ -20,7 +21,7 @@ def init_jcode(
     force: bool = False,
     ci_type: str = "none",
     no_hooks: bool = False,
-) -> dict:
+) -> dict[str, Any]:
     """
     初始化 jcode 配置
 

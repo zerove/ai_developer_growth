@@ -6,11 +6,12 @@ plus additional models specific to validate_language_rules.py.
 
 from __future__ import annotations
 
-from dataclasses import dataclass
-from typing import Any
-
 # Re-export from rules_engine for backward compatibility
-from tools.scripts.rules_engine.models import Issue, ValidationResult  # noqa: F401
+from tools.scripts.rules_engine.models import (  # noqa: F401
+    FixResult,
+    Issue,
+    ValidationResult,
+)
 
 __all__ = [
     "Issue",
@@ -32,25 +33,3 @@ class RuleLoadError(ValidationError):
 
 class ValidationExecutionError(ValidationError):
     """Raised when running validation pipeline fails."""
-
-
-@dataclass
-class FixResult:
-    """Result of an auto-fix operation."""
-
-    file: str
-    rule_id: str
-    line: int
-    original: str
-    fixed: str
-    description: str
-
-    def to_dict(self) -> dict[str, Any]:
-        return {
-            "file": self.file,
-            "rule_id": self.rule_id,
-            "line": self.line,
-            "original": self.original,
-            "fixed": self.fixed,
-            "description": self.description,
-        }

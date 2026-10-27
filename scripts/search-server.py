@@ -9,10 +9,12 @@ import os
 import sys
 import time
 from pathlib import Path
+from typing import Any
 
-from fastapi import FastAPI, HTTPException, Query
+from fastapi import FastAPI, HTTPException, Query, Request, Response
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
+from starlette.middleware.base import RequestResponseEndpoint
 
 # 确保项目根目录在导入路径上（支持从任意工作目录启动）
 _ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -31,7 +33,7 @@ class SearchResponse(BaseModel):
 
     query: str
     total: int
-    results: list[dict]
+    results: list[dict[str, Any]]
     time_ms: float
 
 
@@ -50,7 +52,7 @@ app = FastAPI(
 
 
 @app.middleware("http")
-async def observe_requests(request, call_next):
+async def observe_requests(request: Request, call_next: RequestResponseEndpoint) -> Response:
     """轻量可观测性：慢请求（>500ms）打警告日志，含耗时与路径。"""
     start = time.time()
     response = await call_next(request)
@@ -73,7 +75,7 @@ app.add_middleware(
 # 全局索引
 search_index: EnhancedTFIDF | None = None
 # 索引元数据（构建时间/耗时），供 /api/health 观测
-index_meta: dict = {"built_at": None, "build_ms": None}
+index_meta: dict[str, Any] = {"built_at": None, "build_ms": None}
 
 # 匿名查询日志：只记查询行为，不记 IP/UA 等个人数据（消费侧证据链）
 _SOURCE_DOCS_ENABLED = os.environ.get("SEARCH_INDEX_SOURCE_DOCS", "1") == "1"
@@ -103,7 +105,7 @@ def log_query_anonymous(query: str, total: int, top_score: float, time_ms: float
         pass  # 日志写入失败静默降级，不阻塞主流程
 
 
-def build_index() -> tuple[EnhancedTFIDF, dict]:
+def build_index() -> tuple[EnhancedTFIDF, dict[str, Any]]:
     """构建索引并返回（索引，元数据）。供启动与热重载复用。"""
     start = time.time()
     documents = load_documents()
@@ -119,7 +121,7 @@ def build_index() -> tuple[EnhancedTFIDF, dict]:
 
 
 # 源码注释/docstring 的提取规则：按语言分组的行注释与块注释前缀
-CODE_DOC_PATTERNS = {
+CODE_DOC_PATTERNS: dict[str, tuple[str, ...]] = {
     ".py": ('"""', "'''", "#"),
     ".go": ("//",),
     ".rs": ("///", "//"),
@@ -139,9 +141,9 @@ CODE_DOC_PATTERNS = {
 }
 
 
-def _extract_doc_lines(lines, prefixes):
+def _extract_doc_lines(lines: list[str], prefixes: tuple[str, ...]) -> list[str]:
     """从文件行中提取并清洗注释文本。"""
-    doc_lines = []
+    doc_lines: list[str] = []
     for line in lines:
         stripped = line.strip()
         if any(stripped.startswith(pfx) for pfx in prefixes):
@@ -153,20 +155,18 @@ def _extract_doc_lines(lines, prefixes):
     return [ln for ln in doc_lines if len(ln) >= 10 and any(c.isalpha() for c in ln)]
 
 
-def _is_skipped(rel_parts, skip_dirs):
+def _is_skipped(rel_parts: tuple[str, ...], skip_dirs: set[str]) -> bool:
     """判断路径的任一父目录是否命中跳过名单。"""
     return any(part in skip_dirs for part in rel_parts)
 
 
-def extract_source_docs(source_dir, max_files=2000):
+def extract_source_docs(source_dir: Path, max_files: int = 2000) -> list[Document]:
     """扫描源码文件中的 docstring/注释块，作为知识文档加入索引。
 
     让代码里的知识（函数说明、架构注释）也能被检索到，
     覆盖 Python/Go/Rust/Java/TS/Ruby/Kotlin/C# 等语言。
     """
-    from tools.scripts.search.tfidf_engine import Document
-
-    documents = []
+    documents: list[Document] = []
     scanned = 0
     skip_dirs = {".git", "node_modules", ".venv", "venv", "__pycache__", "dist", "build", "target"}
     for path in source_dir.rglob("*"):
@@ -205,11 +205,11 @@ def extract_source_docs(source_dir, max_files=2000):
     return documents
 
 
-def _parse_frontmatter(content, fallback_title):
+def _parse_frontmatter(content: str, fallback_title: str) -> tuple[str, str, list[str], str, str]:
     """解析 markdown frontmatter，返回 (标题, 分类, 标签, 难度, 正文)。"""
     title = fallback_title
     category = ""
-    tags = []
+    tags: list[str] = []
     difficulty = "初级"
 
     if not content.startswith("---"):
@@ -257,9 +257,9 @@ def _strip_link_aggregation_sections(content: str) -> str:
     return "\n".join(out)
 
 
-def load_documents():
+def load_documents() -> list[Document]:
     """从 docs 目录加载文档"""
-    documents = []
+    documents: list[Document] = []
     docs_dir = _ROOT and os.path.join(_ROOT, "docs")
 
     for root, dirs, files in os.walk(docs_dir):
@@ -301,7 +301,7 @@ def load_documents():
 
 
 @app.on_event("startup")
-async def startup_event():
+async def startup_event() -> None:
     """启动时初始化搜索索引"""
     global search_index, index_meta
     print("Loading documents...")
@@ -314,10 +314,8 @@ async def search(
     q: str = Query(..., description="搜索查询", min_length=1, max_length=200),
     limit: int = Query(10, description="返回结果数", ge=1, le=50),
     category: str | None = Query(None, description="分类过滤"),
-):
+) -> SearchResponse:
     """执行搜索"""
-    import time
-
     start = time.time()
 
     if not search_index:
@@ -329,7 +327,7 @@ async def search(
     if category:
         results = [r for r in results if r.doc.category == category]
 
-    formatted_results = []
+    formatted_results: list[dict[str, Any]] = []
     for r in results:
         formatted_results.append(
             {
@@ -364,17 +362,17 @@ async def search(
 async def suggestions(
     q: str = Query(..., description="部分查询", min_length=1, max_length=50),
     limit: int = Query(5, description="建议数量", ge=1, le=20),
-):
+) -> list[SearchSuggestion]:
     """获取搜索建议"""
     if not search_index:
         raise HTTPException(status_code=503, detail="Search index not ready")
 
     suggestions = search_index.suggest(q, top_k=limit)
-    return [{"term": s, "count": 1} for s in suggestions]
+    return [SearchSuggestion(term=s, count=1) for s in suggestions]
 
 
 @app.get("/api/stats")
-async def stats():
+async def stats() -> dict[str, float | int]:
     """获取索引统计"""
     if not search_index:
         raise HTTPException(status_code=503, detail="Search index not ready")
@@ -382,20 +380,21 @@ async def stats():
 
 
 @app.get("/api/categories")
-async def categories():
+async def categories() -> list[str]:
     """获取所有分类"""
     if not search_index:
         raise HTTPException(status_code=503, detail="Search index not ready")
 
-    cats = set()
-    for doc in search_index.documents.values():
+    cats: set[str] = set()
+    # documents 是 list[Document]（非映射），此前误用 .values() 会抛 AttributeError
+    for doc in search_index.documents:
         if doc.category:
             cats.add(doc.category)
-    return sorted(list(cats))
+    return sorted(cats)
 
 
 @app.get("/api/health")
-async def health():
+async def health() -> dict[str, Any]:
     """健康检查"""
     return {
         "status": "ok",
@@ -407,7 +406,7 @@ async def health():
 
 
 @app.post("/api/reload")
-async def reload_index():
+async def reload_index() -> dict[str, Any]:
     """热重载：docs 内容变更后重建索引，无需重启服务。
 
     构建失败时保留旧索引继续服务（fail-safe）。

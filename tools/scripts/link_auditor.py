@@ -237,6 +237,31 @@ def find_broken_links_with_index(directory: str, index: dict[str, str]) -> list[
     return broken
 
 
+def find_moc_unreferenced_indexes(directory: str = ".", moc_path: str = "docs/MOC.md") -> list[str]:
+    """返回 docs/MOC.md 未直接引用的层索引 (docs/<层>/README.md)."""
+    docs_dir = os.path.join(directory, "docs")
+    moc_file = os.path.join(directory, moc_path)
+    if not os.path.isfile(moc_file):
+        return []
+
+    with open(moc_file, encoding="utf-8") as f:
+        moc_text = f.read().replace("\\|", "|")
+
+    try:
+        layers = sorted(os.listdir(docs_dir))
+    except OSError:
+        return []
+
+    orphans: list[str] = []
+    for layer in layers:
+        if not os.path.isfile(os.path.join(docs_dir, layer, "README.md")):
+            continue
+        # MOC 以 [[docs/<层>/README|标题]] 或相对路径引用
+        if f"docs/{layer}/README" not in moc_text and f"{layer}/README" not in moc_text:
+            orphans.append(f"docs/{layer}/README.md")
+    return orphans
+
+
 def check_all_links() -> bool:
     """Check all markdown files in the project for broken links."""
     # Build a single global index from the project root so cross-directory
@@ -253,14 +278,23 @@ def check_all_links() -> bool:
             for file, link in broken:
                 all_broken.append((file, link))
 
+    success = True
     if all_broken:
         print("Broken links found:")
         for file, link in all_broken:
             print(f"  {file}: [[{link}]]")
-        return False
+        success = False
     else:
         print("All links are valid.")
-        return True
+
+    orphans = find_moc_unreferenced_indexes(project_root)
+    if orphans:
+        print("Unreachable layer indexes (not referenced by docs/MOC.md):")
+        for rel in orphans:
+            print(f"  {rel}")
+        success = False
+
+    return success
 
 
 if __name__ == "__main__":

@@ -3,27 +3,21 @@
 检查文档元数据完整性
 """
 
+import argparse
+import sys
 from pathlib import Path
+
+try:  # python -m tools.scripts.check_metadata (根已在 path)
+    from tools.scripts import _bootstrap
+except ModuleNotFoundError:  # python tools/scripts/check_metadata.py (path[0]=tools/scripts)
+    import _bootstrap  # type: ignore[no-redef]  # noqa: F401
+
+from tools.scripts._paths import resolve_repo_path, split_frontmatter  # noqa: E402
 
 
 def extract_frontmatter(content: str) -> tuple[dict[str, str], str]:
-    """提取 YAML frontmatter"""
-    if content.startswith("---"):
-        end_idx = content.find("---", 3)
-        if end_idx != -1:
-            frontmatter_str = content[3:end_idx].strip()
-            body = content[end_idx + 3 :].strip()
-
-            # 简单解析 YAML
-            frontmatter = {}
-            for line in frontmatter_str.split("\n"):
-                if ":" in line:
-                    key, value = line.split(":", 1)
-                    frontmatter[key.strip()] = value.strip()
-
-            return frontmatter, body
-
-    return {}, content
+    """提取 YAML frontmatter (委托 _paths.split_frontmatter)."""
+    return split_frontmatter(content)
 
 
 def _check_required_fields(frontmatter: dict[str, str], is_adr: bool) -> list[str]:
@@ -113,19 +107,24 @@ def scan_directory(directory: Path) -> dict[str, list[str]]:
     return results
 
 
-def _scan_known_dirs() -> dict[str, list[str]]:
+def _docs_dir(base: Path | None = None) -> Path:
+    """返回 docs 目录；base 为 None 时使用仓库根."""
+    return base / "docs" if base is not None else resolve_repo_path("docs")
+
+
+def _scan_known_dirs(base: Path | None = None) -> dict[str, list[str]]:
     """扫描 docs/ + case-studies/ 目录, 合并结果.
 
     V2.19 P3-42 拆分: 从 main (B=6) 抽出.
     docs 目录必扫, case-studies 目录可选.
     """
-    docs_dir = Path("docs")
+    docs_dir = _docs_dir(base)
     if not docs_dir.exists():
         return {}
     print("Scanning docs directory...")
     results = scan_directory(docs_dir)
 
-    case_studies_dir = Path("docs/case-studies")
+    case_studies_dir = docs_dir / "case-studies"
     if case_studies_dir.exists():
         case_results = scan_directory(case_studies_dir)
         results.update(case_results)
@@ -148,18 +147,23 @@ def _print_metadata_results(results: dict[str, list[str]]) -> None:
         print("\n✅ All files have valid metadata!")
 
 
-def main() -> None:
+def main(argv: list[str] | None = None) -> None:
     """主函数 (orchestrator).
 
     V2.19 P3-42 拆分: 从 B=6 / 28 行 main 拆出 2 个 helper.
-    主函数仅负责: 委托 scan + print.
+    主函数仅负责: 解析 --base、委托 scan + print.
     """
-    if not Path("docs").exists():
+    parser = argparse.ArgumentParser(description="检查文档元数据完整性")
+    parser.add_argument("--base", type=Path, default=None, help="仓库根目录（默认自动定位）")
+    args = parser.parse_args([] if argv is None else argv)
+    base = args.base.resolve() if args.base is not None else None
+
+    if not _docs_dir(base).exists():
         print("Error: docs directory not found")
         return
-    results = _scan_known_dirs()
+    results = _scan_known_dirs(base)
     _print_metadata_results(results)
 
 
 if __name__ == "__main__":
-    main()
+    main(sys.argv[1:])

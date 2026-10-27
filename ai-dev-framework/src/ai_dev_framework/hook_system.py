@@ -7,6 +7,7 @@ Jcode Hooks - 通用钩子系统
 import json
 from collections.abc import Callable
 from dataclasses import dataclass, field
+from typing import Any
 
 
 @dataclass
@@ -212,14 +213,14 @@ class HookExecutor:
 
     def __init__(self, config: HookConfig):
         self.config = config
-        self.executors: dict[str, Callable] = {}
+        self.executors: dict[str, Callable[..., Any]] = {}
 
-    def register_executor(self, agent: str, action: str, executor: Callable) -> None:
+    def register_executor(self, agent: str, action: str, executor: Callable[..., Any]) -> None:
         """注册执行器"""
         key = f"{agent}:{action}"
         self.executors[key] = executor
 
-    def execute(self, event: str, context: dict | None = None) -> list[dict]:
+    def execute(self, event: str, context: dict[str, Any] | None = None) -> list[dict[str, Any]]:
         """
         执行指定事件的钩子
 
@@ -230,7 +231,7 @@ class HookExecutor:
         Returns:
             执行结果列表
         """
-        results = []
+        results: list[dict[str, Any]] = []
         hooks = self.config.get_enabled_hooks(event)
 
         for hook in hooks:
@@ -269,7 +270,7 @@ class HookExecutor:
 
         return results
 
-    def _check_condition(self, condition: str, context: dict | None) -> bool:
+    def _check_condition(self, condition: str, context: dict[str, Any] | None) -> bool:
         """检查条件"""
         if "files_contain(" in condition:
             start = condition.find("(") + 1

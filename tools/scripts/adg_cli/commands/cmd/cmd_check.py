@@ -47,6 +47,12 @@ def _handle_post_check_actions(all_issues: list[Issue], target: Path, language: 
             _send_dingtalk_notification(webhook_url, all_issues, language, project_name)
 
 
+# severity_overrides 的禁用值 (大小写不敏感): 命中即 enabled=False。
+# 语义契约: 禁用必须走 enabled, 而非把 severity 设成未知值 ——
+# 未知 severity 在 _severity_rank 中只映射为 rank-3, 规则仍会执行与展示。
+_RULE_DISABLE_VALUES = {"off", "ignore", "disabled"}
+
+
 def _load_and_merge_rules(language: str, framework: str | None, project_config: dict[str, Any]) -> dict[str, Any]:
     """Load rules and merge with framework and custom rules."""
     rules = load_rules_for_language(language)
@@ -54,16 +60,31 @@ def _load_and_merge_rules(language: str, framework: str | None, project_config: 
         fw_rules = load_framework_rules(framework)
         rules["anti_patterns"].extend(fw_rules.get("anti_patterns", []))
 
-    # Add custom rules from project config
+    # 自定义规则 language 字段语义 (契约):
+    #   无 language / 空 → 适用所有语言; 有值 → 必须与当前扫描语言一致
+    # (否则 sec-101..103 等 javascript 规则会误报 Python 文件)
     custom_rules = project_config.get("custom_rules", [])
-    if custom_rules:
-        rules["anti_patterns"].extend(custom_rules)
+    for rule in custom_rules:
+        if not isinstance(rule, dict):
+            continue
+        rule_lang = str(rule.get("language") or "").strip().lower()
+        if rule_lang and rule_lang != language.strip().lower():
+            continue
+        rules["anti_patterns"].append(rule)
 
-    # Apply severity overrides
+    # severity_overrides: 普通值改 severity; 禁用值置 enabled=False (check.py 跳过)
     severity_overrides = project_config.get("severity_overrides", {})
     for rule in rules["anti_patterns"]:
-        if rule["id"] in severity_overrides:
-            rule["severity"] = severity_overrides[rule["id"]]
+        override = severity_overrides.get(rule.get("id"))
+        if override is None:
+            continue
+        # YAML 1.1 把裸 off/on/yes/no 解析成 bool: PyYAML 路径下
+        # `severity_overrides: {x: off}` 到达此处是 False 而非字符串 "off",
+        # 必须同时按 False 处理, 否则 else 分支会把 severity 设成 bool
+        if override is False or (isinstance(override, str) and override.strip().lower() in _RULE_DISABLE_VALUES):
+            rule["enabled"] = False
+        else:
+            rule["severity"] = override
 
     return rules
 

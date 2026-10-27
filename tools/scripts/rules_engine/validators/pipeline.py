@@ -13,6 +13,9 @@ from tools.scripts._common import detect_language_from_file as detect_language_f
 from tools.scripts._common import (
     merge_anti_patterns as _merge_anti_patterns,
 )
+from tools.scripts._common import (
+    superseded_rule_ids as _superseded_rule_ids,
+)
 
 from ..regex_cache import guard_pattern
 from .models import Issue, ValidationResult
@@ -124,9 +127,14 @@ def _check_pattern_against_lines(lines: list[str], pattern_def: dict[str, Any], 
     if guard_pattern(pattern_def["pattern"], "validators/pipeline"):
         return issues
     regex = re.compile(pattern_def["pattern"])
+    exclude_patterns = [pattern for pattern in pattern_def.get("exclude_patterns", []) if isinstance(pattern, str)]
     for line_num, line in enumerate(lines, 1):
         stripped = line.strip()
         if stripped.startswith("#") or stripped.startswith("//"):
+            continue
+        if any(
+            not guard_pattern(exclude, "exclude_patterns") and re.search(exclude, line) for exclude in exclude_patterns
+        ):
             continue
         match = regex.search(line)
         if match:
@@ -185,7 +193,7 @@ def load_rules(language: str, framework_dir: Path | None = None) -> dict[str, An
     # Load common cross-language rules
     common = _load_common_rules(framework_dir)
     if common:
-        result = _merge_rules(result, common)
+        result = _merge_common_rules(result, common)
 
     # Cache the result
     _RULE_CACHE[cache_key] = result
@@ -193,7 +201,7 @@ def load_rules(language: str, framework_dir: Path | None = None) -> dict[str, An
 
 
 def _rules_hash(language: str, framework_dir: Path | None = None) -> str:
-    """Hash of rule file for cache invalidation."""
+    """Hash language rules plus common security rules for cache invalidation."""
     import hashlib
 
     if framework_dir is None:
@@ -201,8 +209,13 @@ def _rules_hash(language: str, framework_dir: Path | None = None) -> str:
     rule_path = framework_dir / "languages" / language / "rules.d" / "anti_patterns.yml"
     if not rule_path.exists():
         return ""
+    common_path = framework_dir / "common" / "security.yml"
     try:
-        return hashlib.sha256(rule_path.read_bytes()).hexdigest()
+        digest = hashlib.sha256(rule_path.read_bytes())
+        digest.update(b"\x00")
+        if common_path.exists():
+            digest.update(common_path.read_bytes())
+        return digest.hexdigest()
     except OSError:
         return ""
 
@@ -246,8 +259,11 @@ def load_custom_rules(project_dir: Path) -> dict[str, Any]:
             if not isinstance(data, dict):
                 continue
 
-            new_patterns = data.get("anti_patterns", [])
-            custom["anti_patterns"].extend(new_patterns)
+            # 与 rule_loader/_normalize_rules_keys 一致: custom_rules (canonical)
+            # 与 anti_patterns (legacy) 双 key 接受, 同时存在时按序合并
+            legacy = list(data.get("anti_patterns") or [])
+            canonical = list(data.get("custom_rules") or [])
+            custom["anti_patterns"].extend(legacy + canonical)
 
             if "naming" in data:
                 custom["naming"].update(data["naming"])
@@ -286,6 +302,19 @@ def _get_embedded_rules(language: str) -> dict[str, Any]:
         },
     ]
     return {"anti_patterns": common_anti_patterns, "thresholds": {}, "naming": {}}
+
+
+def _merge_common_rules(base: dict[str, Any], common: dict[str, Any]) -> dict[str, Any]:
+    """Merge common rules into base, dropping rules the base supersedes."""
+    base_patterns = base.get("anti_patterns", [])
+    superseded = _superseded_rule_ids(base_patterns)
+    if not superseded:
+        return _merge_rules(base, common)
+    filtered = dict(common)
+    filtered["anti_patterns"] = [
+        pattern for pattern in common.get("anti_patterns", []) if pattern.get("id") not in superseded
+    ]
+    return _merge_rules(base, filtered)
 
 
 def _merge_rules(base: dict[str, Any], custom: dict[str, Any]) -> dict[str, Any]:

@@ -80,7 +80,10 @@ def _load_issue_baseline(baseline_path: Path) -> dict[str, dict[str, int]] | Non
     result: dict[str, dict[str, int]] = {}
     for fpath, issues in data.get("files", {}).items():
         if isinstance(issues, dict):
-            result[fpath] = {str(k): int(v) for k, v in issues.items()}
+            # 双 schema 防御: quality-gate 基线 (schema A) 在同路径下存 dict 条目,
+            # int(v) 遇 dict 会 TypeError 崩掉棘轮入口 (:359); 非 int/dict 以外的
+            # 兼容旧格式仍走 int(v), dict 值一律跳过, 视为无基线。
+            result[fpath] = {str(k): int(v) for k, v in issues.items() if not isinstance(v, dict)}
     return result
 
 

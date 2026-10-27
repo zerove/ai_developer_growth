@@ -9,17 +9,14 @@ Integrates real capabilities into a single JCode workflow pipeline:
 
 from __future__ import annotations
 
-# ADR-079: 仓库根须先于包绝对导入进入 sys.path。原文件把 sys.path.insert
-# 放在 `from tools.scripts._common` **之后**, 于是以脚本路径执行时
-# `sys.path[0]` 是 tools/scripts/ 而非仓库根, 该行直接 ModuleNotFoundError。
-# 顺序错了就不是引导 —— 后续的 insert 再多也救不回已经抛出的异常。
-import pathlib
 import sys
 from typing import TYPE_CHECKING
 
-_REPO_ROOT = pathlib.Path(__file__).resolve().parent.parent.parent
-if str(_REPO_ROOT) not in sys.path:
-    sys.path.insert(0, str(_REPO_ROOT))
+# ADR-079: 仓库根须先于包绝对导入进入 sys.path, 由 _bootstrap 统一幂等补齐。
+try:  # python -m tools.scripts.X (根已在 path)
+    from tools.scripts import _bootstrap
+except ModuleNotFoundError:  # python tools/scripts/X.py (path[0]=tools/scripts)
+    import _bootstrap  # type: ignore[no-redef]  # noqa: F401
 
 from tools.scripts._common import get_project_root  # noqa: E402
 

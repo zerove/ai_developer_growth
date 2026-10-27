@@ -7,6 +7,7 @@ Jcode Config - 参数化配置系统
 import json
 from dataclasses import dataclass, field
 from pathlib import Path
+from typing import Any
 
 
 @dataclass
@@ -48,7 +49,7 @@ class JcodeConfig:
 
     project: ProjectConfig
     agents: list[AgentConfig] = field(default_factory=list)
-    hooks: dict = field(default_factory=dict)
+    hooks: dict[str, Any] = field(default_factory=dict)
 
     @classmethod
     def load(cls, config_path: str) -> "JcodeConfig":
@@ -83,7 +84,7 @@ class JcodeConfig:
         return cls._from_dict(data)
 
     @classmethod
-    def _from_dict(cls, data: dict) -> "JcodeConfig":
+    def _from_dict(cls, data: dict[str, Any]) -> "JcodeConfig":
         """从字典创建配置"""
         project_data = data.get("project", {})
         project = ProjectConfig(
@@ -121,7 +122,7 @@ class JcodeConfig:
         )
 
     @classmethod
-    def _parse_yaml_simple(cls, path: Path) -> dict:
+    def _parse_yaml_simple(cls, path: Path) -> dict[str, Any]:
         """简单 YAML 解析（无 PyYAML 依赖）"""
         data = {}
         with open(path) as f:
@@ -163,7 +164,7 @@ class JcodeConfig:
         else:
             raise ValueError(f"Unsupported config format: {path.suffix}")
 
-    def to_dict(self) -> dict:
+    def to_dict(self) -> dict[str, Any]:
         """转换为字典"""
         return {
             "project": {

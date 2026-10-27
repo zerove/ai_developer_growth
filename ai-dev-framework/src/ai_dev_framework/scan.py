@@ -15,6 +15,7 @@ import os
 import re
 from dataclasses import dataclass, field
 from pathlib import Path
+from typing import Any
 
 from ai_dev_framework.redos import is_dangerous
 
@@ -115,7 +116,7 @@ _script_dir = Path(__file__).resolve().parent.parent.parent
 _PROJECT_LANGUAGES = _script_dir / "languages"
 
 
-def _load_project_rules(lang: str) -> list[dict]:
+def _load_project_rules(lang: str) -> list[dict[str, Any]]:
     """加载项目本地规则覆盖（按 rule ID 覆盖用户级规则）"""
     project_path = _PROJECT_LANGUAGES / lang / "rules.d" / "anti_patterns.yml"
     if project_path.exists():
@@ -123,9 +124,9 @@ def _load_project_rules(lang: str) -> list[dict]:
     return []
 
 
-def _merge_rules_with_overlay(base: list[dict], overlay: list[dict]) -> list[dict]:
+def _merge_rules_with_overlay(base: list[dict[str, Any]], overlay: list[dict[str, Any]]) -> list[dict[str, Any]]:
     """合并规则列表：overlay 中同 ID 的规则替换 base 中的"""
-    result: list[dict] = []
+    result: list[dict[str, Any]] = []
     overlay_ids: set[str] = set()
 
     for r in overlay:
@@ -153,7 +154,7 @@ def _merge_rules_with_overlay(base: list[dict], overlay: list[dict]) -> list[dic
     return result
 
 
-def _load_yaml_rules(path: Path) -> list[dict]:
+def _load_yaml_rules(path: Path) -> list[dict[str, Any]]:
     """加载 YAML 规则文件，返回 anti_patterns 列表"""
     import yaml
 
@@ -167,9 +168,26 @@ def _load_yaml_rules(path: Path) -> list[dict]:
         return []
 
 
-def _load_rules_for_language(lang: str) -> list[dict]:
+def _superseded_rule_ids(rules: list[dict[str, Any]]) -> set[str]:
+    superseded: set[str] = set()
+    for rule in rules:
+        value = rule.get("supersedes", [])
+        if isinstance(value, str):
+            superseded.add(value)
+        else:
+            superseded.update(item for item in value if isinstance(item, str))
+    return superseded
+
+
+def _without_superseded(rules: list[dict[str, Any]], superseded: set[str]) -> list[dict[str, Any]]:
+    if not superseded:
+        return rules
+    return [rule for rule in rules if rule.get("id") not in superseded]
+
+
+def _load_rules_for_language(lang: str) -> list[dict[str, Any]]:
     """加载指定语言的规则 + 通用规则 + 生成规则 + 项目覆盖"""
-    rules: list[dict] = []
+    rules: list[dict[str, Any]] = []
 
     # 1. 语言特有规则
     lang_path = _RULES_HOME / "rules" / "languages" / lang / "rules.d" / "anti_patterns.yml"
@@ -184,14 +202,16 @@ def _load_rules_for_language(lang: str) -> list[dict]:
             rules.extend(generated_rules)
 
     # 3. 通用安全规则 (跨语言)
+    superseded = _superseded_rule_ids(rules)
     security_path = _RULES_HOME / "rules" / "common" / "security.yml"
     if security_path.exists():
-        rules.extend(_load_yaml_rules(security_path))
+        rules.extend(_without_superseded(_load_yaml_rules(security_path), superseded))
 
     # 4. 通用质量规则 (跨语言)
+    superseded = _superseded_rule_ids(rules)
     universal_path = _RULES_HOME / "rules" / "common" / "universal.yml"
     if universal_path.exists():
-        rules.extend(_load_yaml_rules(universal_path))
+        rules.extend(_without_superseded(_load_yaml_rules(universal_path), superseded))
 
     # 5. 项目本地覆盖规则 (按 rule ID 覆盖以上规则)
     project_rules = _load_project_rules(lang)

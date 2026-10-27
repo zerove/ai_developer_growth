@@ -19,6 +19,20 @@ from dataclasses import dataclass
 from enum import Enum
 from pathlib import Path
 
+try:  # python -m tools.scripts.validate_case_study (根已在 path)
+    from tools.scripts import _bootstrap
+except ModuleNotFoundError:  # python tools/scripts/validate_case_study.py (path[0]=tools/scripts)
+    import _bootstrap  # type: ignore[no-redef]  # noqa: F401
+
+from tools.scripts._case_study_common import (  # noqa: E402
+    extract_insights_section,
+    extract_numbered_insights,
+    extract_table_rows,
+    has_efficiency_table,
+    parse_efficiency_values,
+)
+from tools.scripts._paths import resolve_repo_path  # noqa: E402
+
 
 class Severity(Enum):
     ERROR = "ERROR"
@@ -32,30 +46,6 @@ class ValidationResult:
     message: str
     file: str = ""
     line: int = 0
-
-
-def _is_table_header(line: str) -> bool:
-    """判断是否为表格 header 行 (含 阶段/总计/指标/Metric 关键字, 模块级 helper).
-
-    Args:
-        line: 单行文本
-
-    Returns:
-        是否为 header
-    """
-    return "|" in line and ("阶段" in line or "总计" in line or "指标" in line or "Metric" in line)
-
-
-def _is_data_row(line: str) -> bool:
-    """判断是否为表格数据行 (以 | 开头, 模块级 helper).
-
-    Args:
-        line: 单行文本
-
-    Returns:
-        是否为数据行
-    """
-    return line.strip().startswith("|")
 
 
 class CaseStudyValidator:
@@ -282,31 +272,11 @@ class CaseStudyValidator:
 
     def _has_efficiency_table(self, content: str) -> bool:
         """Check if content has an efficiency table."""
-        table_patterns = [
-            r"\|.*阶段.*\|.*传统.*\|.*AI.*\|.*提升.*\|",
-            r"\|.*指标.*\|.*优化前.*\|.*优化后.*\|.*提升.*\|",
-            r"\|.*指标.*\|.*使用 AI 前.*\|.*使用 AI 后.*\|.*提升.*\|",
-            r"\|.*Metric.*\|.*Before.*\|.*After.*\|.*Boost.*\|",
-            r"\|.*阶段.*\|.*传统.*\|.*AI.*\|",
-            r"\|.*指标.*\|.*优化前.*\|.*优化后.*\|",
-            r"\|.*Metric.*\|.*Before.*\|.*After.*\|",
-        ]
-        return any(re.search(pattern, content) for pattern in table_patterns)
+        return has_efficiency_table(content)
 
     def _extract_table_rows(self, content: str) -> list[str]:
-        """Extract table data rows from content (V2.21 P5-19 拆分: 抽 _is_table_header + _is_data_row)."""
-        lines = content.split("\n")
-        in_table = False
-        data_rows = []
-        for line in lines:
-            if not in_table and _is_table_header(line):
-                in_table = True
-                continue
-            if in_table and _is_data_row(line):
-                data_rows.append(line)
-            elif in_table and not _is_data_row(line):
-                break
-        return data_rows
+        """Extract table data rows from content."""
+        return extract_table_rows(content)
 
     def _validate_table_rows(self, data_rows: list[str]) -> None:
         """Validate table data rows."""
@@ -334,23 +304,7 @@ class CaseStudyValidator:
 
     def _parse_efficiency_values(self, traditional: str, ai: str, boost: str) -> tuple[float, float, float] | None:
         """Parse efficiency values from table cells."""
-        t_match = re.search(r"([\d.]+)\s*小时", traditional)
-        a_match_hours = re.search(r"([\d.]+)\s*小时", ai)
-        a_match_minutes = re.search(r"([\d.]+)\s*分钟", ai)
-        b_match = re.search(r"([\d.]+)x", boost)
-
-        if not (t_match and b_match and (a_match_hours or a_match_minutes)):
-            return None
-
-        t_hours = float(t_match.group(1))
-        if a_match_hours:
-            a_hours = float(a_match_hours.group(1))
-        else:
-            assert a_match_minutes is not None
-            a_hours = float(a_match_minutes.group(1)) / 60
-        boost_val = float(b_match.group(1))
-
-        return (t_hours, a_hours, boost_val)
+        return parse_efficiency_values(traditional, ai, boost)
 
     def _check_boost_accuracy(
         self,
@@ -386,35 +340,11 @@ class CaseStudyValidator:
 
     def _extract_insights_section(self, content: str) -> str:
         """Extract insights section from content."""
-        insight_headers = [
-            "## 关键洞察",
-            "## 💡 关键洞察",
-            "## 洞察",
-            "## 关键技术决策",
-            "## 关键洞察与反思",
-            "## 关键洞察与总结",
-        ]
-
-        for header in insight_headers:
-            parts = content.split(header)
-            if len(parts) >= 2:
-                return parts[1]
-        return ""
+        return extract_insights_section(content)
 
     def _extract_numbered_insights(self, insights_text: str) -> list[str]:
         """Extract numbered insights from text."""
-        # Format 1: "1. **洞察 1** : ..."
-        numbered = re.findall(r"^\d+\.\s+\*\*(洞察\s*\d+)?\*?\*\s*:?\s*(.+)$", insights_text, re.MULTILINE)
-        if not numbered:
-            # Format 2: "1. ..."
-            numbered = re.findall(r"^\d+\.\s+(.+)$", insights_text, re.MULTILINE)
-        if not numbered:
-            # Format 3: bullet points
-            numbered = re.findall(r"^[-*]\s+(.+)$", insights_text, re.MULTILINE)
-        if not numbered:
-            # Format 4: sub-headers
-            numbered = re.findall(r"^###\s+\d+\.\s+(.+)$", insights_text, re.MULTILINE)
-        return numbered
+        return extract_numbered_insights(insights_text)
 
     def _check_insights_specificity(self, insights_text: str) -> None:
         """Check insights for specificity."""
@@ -513,7 +443,7 @@ class CaseStudyValidator:
                 target = link.strip()
 
             if target.startswith("docs/") or target.startswith("case-studies/") or target.startswith("examples/"):
-                target_path = Path.cwd() / target
+                target_path = resolve_repo_path(target)
                 if not target_path.exists():
                     # Try with .md extension
                     if not (target_path.with_suffix(".md")).exists():
@@ -716,13 +646,14 @@ def main() -> int:
     parser = argparse.ArgumentParser(description="Validate case study submissions")
     parser.add_argument("--path", type=str, help="Path to single case study directory")
     parser.add_argument("--all", action="store_true", help="Validate all cases in docs/case-studies/")
+    parser.add_argument("--base", type=str, help="Base directory for --all (default: <repo>/docs/case-studies)")
     parser.add_argument("--strict", action="store_true", help="Treat warnings as errors")
     parser.add_argument("--json", action="store_true", help="Output JSON format")
     parser.add_argument("--adg-scan", type=str, help="Scan code snippets in changed files")
     parser.add_argument("--auth-check", type=str, help="Check authenticity markers in changed files")
     args = parser.parse_args()
 
-    base = Path("docs/case-studies")
+    base = resolve_repo_path(args.base) if args.base else resolve_repo_path("docs/case-studies")
 
     if args.adg_scan:
         return _adg_scan(args.adg_scan)

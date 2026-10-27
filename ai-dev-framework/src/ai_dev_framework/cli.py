@@ -20,13 +20,13 @@ from ai_dev_framework.sync import sync_project_workflows
 def main() -> None:
     """CLI 主入口"""
     parser = argparse.ArgumentParser(
-        prog="adg",
+        prog="adg-dev",
         description="AI Developer Governance — 项目治理工具",
     )
     parser.add_argument(
         "--version",
         action="version",
-        version=f"adg {__version__}",
+        version=f"adg-dev {__version__}",
     )
 
     sub = parser.add_subparsers(dest="command", help="可用命令")
@@ -197,12 +197,21 @@ def main() -> None:
 
     elif args.command == "dashboard":
         if args.dashboard_type == "contributor":
-            from tools.scripts.contributor_dashboard import ContributorDashboard  # type: ignore[import-untyped]
+            # 懒加载: tools.* 仅存在于主仓, 独立安装的包需要友好报错而非栈回溯
+            try:
+                from tools.scripts.contributor_dashboard import ContributorDashboard
+            except ImportError:
+                print("❌ 该子命令需要完整仓库上下文 (未找到 tools 包), 请在主仓 ai_developer_growth 内运行")
+                sys.exit(1)
 
             db = ContributorDashboard(Path(args.path))
             print(db.generate_dashboard(output_format=args.format))
         elif args.dashboard_type == "trend":
-            from tools.scripts.rules_engine.quality_trends import QualityTracker  # type: ignore[import-untyped]
+            try:
+                from tools.scripts.rules_engine.quality_trends import QualityTracker
+            except ImportError:
+                print("❌ 该子命令需要完整仓库上下文 (未找到 tools 包), 请在主仓 ai_developer_growth 内运行")
+                sys.exit(1)
 
             tracker = QualityTracker()
             if args.sparkline:
@@ -220,12 +229,16 @@ def main() -> None:
             sys.exit(1)
 
     elif args.command == "generate-rules":
-        from tools.scripts.rules_engine.rule_generator import (  # type: ignore[import-untyped]
-            KNOWN_LANGUAGES,
-            list_generated_languages,
-            load_generated_rules,
-            print_status,
-        )
+        try:
+            from tools.scripts.rules_engine.rule_generator import (
+                KNOWN_LANGUAGES,
+                list_generated_languages,
+                load_generated_rules,
+                print_status,
+            )
+        except ImportError:
+            print("❌ 该子命令需要完整仓库上下文 (未找到 tools 包), 请在主仓 ai_developer_growth 内运行")
+            sys.exit(1)
 
         if args.list:
             langs = list_generated_languages()

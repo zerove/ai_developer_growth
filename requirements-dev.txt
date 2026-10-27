@@ -15,3 +15,4 @@ mypy>=1.0.0
 # 锁定 ruff 版本：0.16+ 启用了新的 2025 format style，会导致 CI 与本地格式化结果不一致
 ruff==0.15.17
 pyyaml>=6.0
+pytest-timeout==2.3.1

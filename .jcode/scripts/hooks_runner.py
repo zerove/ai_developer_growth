@@ -98,9 +98,7 @@ def _term_matches(func_name: str, arg: str, changed_files: list[str]) -> bool:
             return any(arg in changed for changed in changed_files)
         glob_re = _glob_to_regex(arg)
         anchored = "/" in arg
-        return any(
-            glob_re.match(changed if anchored else changed.rsplit("/", 1)[-1]) for changed in changed_files
-        )
+        return any(glob_re.match(changed if anchored else changed.rsplit("/", 1)[-1]) for changed in changed_files)
     labels_env = os.environ.get("JCODE_PR_LABELS", "")
     if not labels_env:
         return False

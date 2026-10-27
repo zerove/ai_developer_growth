@@ -302,6 +302,35 @@ AI 时代开发者成长知识库 + 治理框架（knowledge base + governance f
 
 ---
 
+## 更新记录: 2026-10-27 23:43:29
+
+### 任务
+Git 变更同步
+
+### 变更摘要
+- 变更文件 75 个 (+8207 / -6576 行)
+  - .github/workflows/advanced-governance.yml
+  - .github/workflows/ci.yml
+  - .github/workflows/jobs/combine-coverage.yml
+  - .github/workflows/jobs/governance-audit.yml
+  - .github/workflows/jobs/setup.yml
+  - .github/workflows/jobs/tests.yml
+  - .github/workflows/jobs/type-check.yml
+  - pyproject.toml
+  - pytest.ini
+  - tests/_case_study_validator_base.py
+  - tests/test_adg_cli_v2.py
+  - tests/test_adg_cli_v2_commands.py
+  - tests/test_adg_cli_v2_e2e.py
+  - tests/test_adg_cli_v2_format.py
+  - tests/test_adg_cli_v2_main.py
+  - tests/test_adg_cmd_integration.py
+  - tests/test_adg_cmd_integration_commands.py
+  - tests/test_adg_coverage_extra.py
+  - tests/test_adg_coverage_extra_ops.py
+  - tests/test_adg_new_modules.py
+  - ... 等共 75 个文件
+
 ## 更新记录: 2026-10-27 23:28:24
 
 ### 任务
@@ -417,34 +446,5 @@ Git 变更同步
   - .jcode/scripts/knowledge-curator.py
   - .jcode/skills/governance-auditor.md
   - ... 等共 154 个文件
-
-## 更新记录: 2026-10-27 05:58:16
-
-### 任务
-Git 变更同步
-
-### 变更摘要
-- 变更文件 151 个 (+2223 / -9325 行)
-  - .adg/config.yml
-  - .adg/rules.yml
-  - .adg/rules.yml.example
-  - .github/workflows/advanced-governance.yml
-  - .github/workflows/ci.yml
-  - .github/workflows/jobs/combine-coverage.yml
-  - .github/workflows/jobs/governance-audit.yml
-  - .github/workflows/jobs/setup.yml
-  - .github/workflows/jobs/tests.yml
-  - .github/workflows/jobs/type-check.yml
-  - .jcode/PROJECT.md
-  - .jcode/hooks/pre-push
-  - .jcode/mode_decision.conf
-  - .jcode/project.yaml
-  - .jcode/registry.json
-  - .jcode/scripts/context-sync.py
-  - .jcode/scripts/governance-auditor.py
-  - .jcode/scripts/hooks_runner.py
-  - .jcode/scripts/knowledge-curator.py
-  - .jcode/skills/governance-auditor.md
-  - ... 等共 151 个文件
 
 <!-- 滚动窗口: 已自动裁剪 1 条旧更新记录 -->

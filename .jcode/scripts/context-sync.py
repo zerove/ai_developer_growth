@@ -17,6 +17,7 @@ import re
 import sys
 from collections.abc import Callable
 from dataclasses import dataclass
+from datetime import datetime
 from pathlib import Path
 from typing import Any
 
@@ -40,9 +41,9 @@ class ContextConfig:
     max_retries: int = 3
     executor_max_workers: int = 4
     # CONTEXT.md 滚动窗口: 保留最近 N 条更新记录（0 = 不限制）。
-    # 背景: 更新记录只追加不裁剪，实测膨胀至 6300+ 行/220KB，
-    # 持续稀释 AI 上下文质量（改进建议 6）
-    max_update_entries: int = 50
+    # 背景: 50 条实测 1507 行，同步日志占 80%，持续稀释 AI 上下文质量；
+    # 5 条足以保留近期变更，更早记录在 git log / ADR 中可查。
+    max_update_entries: int = 5
 
 
 class ContextSlicer:
@@ -143,10 +144,8 @@ class ContextSynthesizer:
             summary_lines.append(f"  - ... 等共 {len(files)} 个文件")
         return "\n".join(summary_lines)
 
-    def synthesize_context_update(
-        self, diff: str, task: str, current_context: str, max_update_entries: int = 50
-    ) -> str:
-        timestamp = __import__("datetime").datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    def synthesize_context_update(self, diff: str, task: str, current_context: str, max_update_entries: int = 5) -> str:
+        timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
         entry = f"{_ENTRY_PREFIX} {timestamp}\n\n### 任务\n{task}\n\n### 变更摘要\n{self.summarize_diff(diff)}"
         self.guard_no_diff_raw(entry)

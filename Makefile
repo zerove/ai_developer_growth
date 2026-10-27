@@ -1,4 +1,4 @@
-.PHONY: help lint format format-fix typecheck test test-cov check-quality security audit validate-docs check-index sync-refs validate-governance-docs check-ai-sdlc audit-hallucination link-audit validate-cases scan full-audit full-validate mode-show mode-set-perf mode-set-quality mode-set-safe docs-build test-fast check release setup-git workflow-pr workflow-weekly workflow-release clean quick discover jcode list-tools new-skill release-version cov-diff cov-module cov-gate cov-snapshot context-status context-split
+.PHONY: help lint format format-fix typecheck test test-cov check-quality security audit validate-docs check-index sync-refs validate-governance-docs check-ai-sdlc audit-hallucination link-audit validate-cases scan full-audit full-validate docs-build test-fast check release setup-git workflow-pr workflow-weekly workflow-release clean quick discover jcode list-tools new-skill release-version cov-diff cov-module cov-gate cov-snapshot context-status context-split
 
 help:  ## 显示帮助信息
 	@grep -hE '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-20s\033[0m %s\n", $$1, $$2}'
@@ -67,21 +67,6 @@ full-audit:  ## 运行完整审计 (所有检查)
 full-validate:  ## 运行
 	python .jcode/scripts/governance-docs-validator.py full
 
-mode-show:  ## 查看当前模式
-	@echo "=== 当前模式 ===" && cat .jcode/mode_decision.conf
-
-mode-set-perf:  ## 切换到性能模式 (跳过 heavy 检查)
-	@printf "mode=perf\ngovernance_level=medium\naudit_enabled=false\n" > .jcode/mode_decision.conf
-	@echo "✅ 切换到 perf 模式"
-
-mode-set-quality:  ## 切换到质量模式 (默认)
-	@printf "mode=quality\ngovernance_level=high\naudit_enabled=true\n" > .jcode/mode_decision.conf
-	@echo "✅ 切换到 quality 模式"
-
-mode-set-safe:  ## 切换到安全模式 (最严格)
-	@printf "mode=safe\ngovernance_level=high\naudit_enabled=true\n" > .jcode/mode_decision.conf
-	@echo "✅ 切换到 safe 模式"
-
 docs-serve:  ## 启动 mkdocs 本地服务器
 	mkdocs serve
 
@@ -149,7 +134,6 @@ workflow-weekly: ## 执行每周维护工作流 (registry.json)
 	python .jcode/scripts/governance-auditor.py full
 	python .jcode/scripts/knowledge-curator.py scan
 	python .jcode/scripts/knowledge-curator.py audit
-	python .jcode/scripts/knowledge-curator.py update-moc
 	python .jcode/scripts/workflow-optimizer.py report
 
 workflow-release: ## 执行发布准备工作流 (registry.json)

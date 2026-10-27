@@ -14,10 +14,11 @@ jcode Hooks 执行引擎
 """
 
 import json
+import os
+import re
 import shlex
 import subprocess
 import sys
-from pathlib import Path
 from typing import Any
 
 from _common import get_project_root, print_check, print_section
@@ -33,31 +34,140 @@ def load_hooks_config() -> dict[str, Any]:
         return json.load(f)
 
 
+def _glob_to_regex(pattern: str) -> re.Pattern[str]:
+    """将 glob 模式转换为正则表达式（支持 **、*、?）。
+
+    规则：
+    - pattern 含 '/' -> 全路径匹配（anchored）
+    - pattern 不含 '/' -> 仅匹配 basename（fnmatch 语义）
+    """
+    if "/" in pattern:
+        # 全路径匹配
+        regex_parts: list[str] = []
+        i = 0
+        n = len(pattern)
+        while i < n:
+            ch = pattern[i]
+            if ch == "*":
+                if i + 1 < n and pattern[i + 1] == "*":
+                    # **
+                    if i + 2 < n and pattern[i + 2] == "/":
+                        regex_parts.append(r"(?:[^/]+/)*")
+                        i += 3
+                        continue
+                    else:
+                        regex_parts.append(r".*")
+                        i += 2
+                        continue
+                else:
+                    regex_parts.append(r"[^/]*")
+                    i += 1
+                    continue
+            elif ch == "?":
+                regex_parts.append(r"[^/]")
+                i += 1
+                continue
+            elif ch in ".^$+{}[]|()\\":  # 转义元字符
+                regex_parts.append("\\" + ch)
+                i += 1
+                continue
+            else:
+                regex_parts.append(ch)
+                i += 1
+                continue
+        return re.compile("^" + "".join(regex_parts) + "$")
+    else:
+        # 仅匹配 basename
+        regex_parts2: list[str] = []
+        i = 0
+        n = len(pattern)
+        while i < n:
+            ch = pattern[i]
+            if ch == "*":
+                regex_parts2.append(r".*")
+                i += 1
+                continue
+            elif ch == "?":
+                regex_parts2.append(r".")
+                i += 1
+                continue
+            elif ch in ".^$+{}[]|()\\":  # 转义元字符
+                regex_parts2.append("\\" + ch)
+                i += 1
+                continue
+            else:
+                regex_parts2.append(ch)
+                i += 1
+                continue
+        return re.compile("^" + "".join(regex_parts2) + "$")
+
+
 def files_match_condition(changed_files: list[str] | None, condition: str) -> bool:
-    """检查变更文件是否满足触发条件"""
-    if not condition:
+    """检查变更文件是否满足触发条件
+
+    支持的条件语法：
+    - 空条件或空白 -> True
+    - 以 || 分隔的 term 列表：term1 || term2 || ...
+    - 每个 term 格式：func('arg')，支持：
+      - files_contain(arg): glob 匹配（含 *）或子串匹配（不含 *）
+      - pr_label(label): 从环境变量 JCODE_PR_LABELS（逗号分隔）匹配精确标签
+    - 解析失败的 term -> False（fail-closed）
+    - 条件非空但无可识别 term -> False（fail-closed）
+    - 无 changed_files 且条件包含 files_contain 或 pr_label -> False
+    """
+    if not condition or not condition.strip():
         return True
 
-    # 解析简单条件: files_contain('pattern')
-    import re
+    # 分割 ||，保留 term 内容
+    terms = [t.strip() for t in condition.split("||")]
 
-    matches = re.findall(r"files_contain\('([^']+)'\)", condition)
-    if not matches:
-        return True
+    # 解析所有 term
+    parsed_terms: list[tuple[str, str]] = []  # (func, arg)
+    term_re = re.compile(r"(\w+)\('([^']*)'\)")
+    for t in terms:
+        if not t:
+            continue
+        m = term_re.fullmatch(t)
+        if not m:
+            print(f"⚠️  无法解析条件 term: {t}", file=sys.stderr)
+            return False
+        func_name, arg = m.group(1), m.group(2)
+        if func_name not in ("files_contain", "pr_label"):
+            print(f"⚠️  未知条件函数: {func_name}", file=sys.stderr)
+            return False
+        parsed_terms.append((func_name, arg))
+
+    if not parsed_terms:
+        return False
 
     if not changed_files:
         return False
 
-    for pattern in matches:
-        # 支持 glob 模式
-        if "*" in pattern:
-            for f in changed_files:
-                if Path(f).match(pattern):
-                    return True
-        else:
-            for f in changed_files:
-                if pattern in f:
-                    return True
+    # 评估 OR
+    for func_name, arg in parsed_terms:
+        if func_name == "files_contain":
+            pattern = arg
+            if "*" in pattern:
+                glob_re = _glob_to_regex(pattern)
+                # 无 '/' 的模式（如 *.py）按 basename 匹配（fnmatch 语义）；
+                # 含 '/' 的模式对完整路径做锚定匹配
+                anchored = "/" in pattern
+                for f in changed_files:
+                    target = f if anchored else f.rsplit("/", 1)[-1]
+                    if glob_re.match(target):
+                        return True
+            else:
+                for f in changed_files:
+                    if pattern in f:
+                        return True
+        elif func_name == "pr_label":
+            labels_env = os.environ.get("JCODE_PR_LABELS", "")
+            if not labels_env:
+                continue  # term 为 False
+            # 逗号分隔，去除空格
+            labels = [lbl.strip() for lbl in labels_env.split(",")]
+            if arg in labels:
+                return True
     return False
 
 
@@ -101,32 +211,8 @@ def run_hook(hook: dict[str, Any], changed_files: list[str] | None = None) -> bo
         return passed
 
 
-EVENT_MODE_MAP = {
-    "on_commit": "quality",
-    "on_pr": "safe",
-    "on_merge": "quality",
-    "scheduled": "quality",
-}
-
-CONFIG_PATH = Path(__file__).parent.parent / "mode_decision.conf"
-
-
-def _set_mode(mode: str) -> None:
-    """写入 mode_decision.conf 自动切换模式。"""
-    try:
-        content = f"mode={mode}\ngovernance_level={'high' if mode in ('quality', 'safe') else 'medium'}\naudit_enabled={'true' if mode != 'perf' else 'false'}\n"
-        CONFIG_PATH.write_text(content)
-        print(f"  🔄 模式: {mode} (governance_level={'high' if mode in ('quality', 'safe') else 'medium'})")
-    except OSError:
-        pass  # 非阻断
-
-
 def run_event_hooks(event: str, changed_files: list[str] | None = None) -> int:
     """运行事件的 hooks 并返回失败数量"""
-    # 事件驱动模式切换
-    if event in EVENT_MODE_MAP:
-        _set_mode(EVENT_MODE_MAP[event])
-
     config = load_hooks_config()
     hooks = config.get("hooks", {}).get(event, [])
 

@@ -2,7 +2,8 @@
 """
 jcode Skill Runner - 治理审计员 (v3.0 - 多语言支持)
 
-重构版: 使用 language_registry 实现多语言工具链支持
+重构版: 语言工具执行/语言检测委托 tools/scripts/hooks/tool_runner.py 单源实现
+（超时由 [tool.adg].timeouts 配置驱动），本脚本仅保留治理层独有检查。
 所有子检查返回 bool 而非直接 sys.exit，由 main() 统一处理退出码。
 
 用法:
@@ -36,12 +37,11 @@ from tools.scripts._common import (  # noqa: E402
     print_section,
     run_command,
 )
+from tools.scripts.hooks import tool_runner  # noqa: E402
 from tools.scripts.language_registry import (  # noqa: E402
-    EXTENSION_MAP,
     Language,
     ToolCategory,
     detect_language,
-    get_tool,
     list_supported_languages,
 )
 
@@ -127,25 +127,16 @@ def _check_unsafe_patterns(content: str, patterns: list[UnsafePattern], filepath
 
 
 def _parse_languages(lang_str: str) -> list[Language]:
-    """解析逗号分隔的语言字符串"""
-    languages = []
-    for part in lang_str.split(","):
-        part = part.strip()
-        if part:
-            try:
-                languages.append(Language(part.lower()))
-            except ValueError:
-                from tools.scripts.language_registry import LANGUAGE_ALIASES
-
-                if part.lower() in LANGUAGE_ALIASES:
-                    languages.append(LANGUAGE_ALIASES[part.lower()])
-                else:
-                    print(f"  ⚠️  未知语言: {part}，跳过")
-    return languages
+    """解析逗号分隔的语言字符串（委托 tool_runner 单源实现）。"""
+    return tool_runner._parse_languages(lang_str)
 
 
 def _detect_project_languages(project_root: Path) -> list[Language]:
-    """检测项目中使用的所有语言"""
+    """检测项目中使用的所有语言。
+
+    扫描/计数委托 tool_runner._count_language_files（单源），
+    本函数仅保留 GA 特有的 top-3 截断。
+    """
     languages: list[Language] = []
 
     # Node 生态语言需要 package.json 作为工程化标志；
@@ -159,11 +150,10 @@ def _detect_project_languages(project_root: Path) -> list[Language]:
     if main_lang and not (main_lang in _node_ecosystem_languages and not has_package_json):
         languages.append(main_lang)
 
-    # 2. 扫描所有扩展名，统计语言分布
-    ext_counts = _count_language_extensions(project_root, _node_ecosystem_languages, has_package_json)
+    # 2. 扫描所有扩展名，统计语言分布（单源在 tool_runner）
+    ext_counts = tool_runner._count_language_files(project_root)
 
-    # 按文件数排序，仅纳入占比显著的语言：
-    # 示例脚本、编辑器扩展等附带文件不应触发全量工具链门禁
+    # 按文件数排序，仅纳入占比显著的语言（保留 top-3 截断）
     total = sum(ext_counts.values())
     for lang in sorted(ext_counts, key=lambda k: ext_counts.get(k, 0), reverse=True)[:3]:
         if lang in languages:
@@ -175,93 +165,18 @@ def _detect_project_languages(project_root: Path) -> list[Language]:
     return languages
 
 
-def _count_language_extensions(
-    project_root: Path,
-    node_ecosystem_languages: set[Language],
-    has_package_json: bool,
-) -> dict[Language, int]:
-    """扫描所有扩展名，统计语言分布。
-
-    排除虚拟环境、依赖与构建产物目录，
-    避免把第三方库文件误判为项目语言（如 .venv 中 lxml 的 .h 头文件）。
-    Node 生态语言在缺少 package.json 时跳过（无工程化标志）。
-    """
-    _excluded_dirs = {
-        ".venv",
-        "venv",
-        "node_modules",
-        ".git",
-        ".mypy_cache",
-        ".pytest_cache",
-        ".ruff_cache",
-        "__pycache__",
-        "site-packages",
-        "dist",
-        "build",
-        "target",
-        "site",
-    }
-    ext_counts: dict[Language, int] = {}
-    for ext, lang in EXTENSION_MAP.items():
-        if lang in node_ecosystem_languages and not has_package_json:
-            continue
-        count = sum(1 for p in project_root.rglob(f"*{ext}") if not (set(p.parts) & _excluded_dirs))
-        if count > 0:
-            ext_counts[lang] = ext_counts.get(lang, 0) + count
-    return ext_counts
-
-
 def _run_tool_for_language(
     language: Language,
     category: ToolCategory,
     project_root: Path,
     check_only: bool = False,
 ) -> tuple[bool, str]:
-    """使用语言工具链运行特定类别工具"""
-    tool = get_tool(language, category)
-    if tool is None:
-        return False, f"  ⚠️  {language.value}: {category.value} 工具未配置"
+    """运行单语言工具（委托 tool_runner 单源实现）。
 
-    # 检查工具是否可用
-    try:
-        result = subprocess.run(
-            [tool.command, tool.version_flag],
-            capture_output=True,
-            timeout=5,
-        )
-        if result.returncode != 0:
-            return False, f"  ❌ {language.value}: {tool.command} 不可用 ({tool.install_hint})"
-    except (FileNotFoundError, subprocess.TimeoutExpired):
-        return False, f"  ❌ {language.value}: {tool.command} 未安装 ({tool.install_hint})"
-
-    # 构建命令
-    cmd = [tool.command]
-    if check_only and tool.check_args:
-        cmd.extend(tool.check_args)
-    else:
-        cmd.extend(tool.args)
-
-    print(f"  🔧 {language.value}: 运行 {category.value} ({' '.join(cmd)})")
-
-    try:
-        proc_result: subprocess.CompletedProcess[str] = subprocess.run(
-            cmd,
-            cwd=project_root,
-            capture_output=True,
-            text=True,
-            timeout=600,
-        )
-        output = proc_result.stdout
-        if proc_result.stderr:
-            output += "\n" + proc_result.stderr
-
-        passed = proc_result.returncode == 0
-        status = "✅" if passed else "❌"
-        return passed, f"  {status} {language.value}: {category.value} {'通过' if passed else '失败'}\n{output}"
-    except subprocess.TimeoutExpired:
-        return False, f"  ❌ {language.value}: {category.value} 超时 (600s)"
-    except Exception as e:
-        return False, f"  ❌ {language.value}: {category.value} 错误 - {e}"
+    超时由 tool_runner._timeout_for_category 按 [tool.adg].timeouts 配置驱动，
+    不再硬编码 600s。保留模块级函数以便测试 monkeypatch 补丁点。
+    """
+    return tool_runner._run_tool_for_language(language, category, project_root, check_only=check_only)
 
 
 def _run_check_for_languages(
@@ -270,7 +185,7 @@ def _run_check_for_languages(
     project_root: Path,
     check_only: bool = False,
 ) -> tuple[bool, str]:
-    """为多个语言运行检查"""
+    """为多个语言运行检查（调用模块级 _run_tool_for_language，保留补丁点）。"""
     all_passed = True
     outputs = []
 

@@ -12,7 +12,9 @@
 language: python  # auto-detect or specify
 config_version: '1.0'
 
-anti_patterns:
+# custom_rules 为规范键 (marketplace 安装规则包时写入此键);
+# anti_patterns 作为历史别名被所有读取路径继续接受 (二者等价)。
+custom_rules:
   # Add project-specific rules
   - id: my-no-print
     name: No print statements

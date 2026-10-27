@@ -302,973 +302,149 @@ AI 时代开发者成长知识库 + 治理框架（knowledge base + governance f
 
 ---
 
-## 更新记录: 2026-10-11 23:59:35
+## 更新记录: 2026-10-27 23:28:24
 
 ### 任务
 Git 变更同步
 
 ### 变更摘要
-- 变更文件 6 个 (+360 / -183 行)
-  - CONTEXT.md
-  - tests/test_repo_lock_semantics.py
-  - tests/test_script_import_contract.py
-  - tools/scripts/adg_cli/check.py
-  - tools/scripts/adg_cli/commands/cmd/_shared.py
-  - tools/scripts/adg_cli/commands/cmd/cmd_check.py
+- 变更文件 160 个 (+2666 / -9482 行)
+  - .adg/config.yml
+  - .adg/rules.yml
+  - .adg/rules.yml.example
+  - .github/workflows/advanced-governance.yml
+  - .github/workflows/ci.yml
+  - .github/workflows/jobs/combine-coverage.yml
+  - .github/workflows/jobs/governance-audit.yml
+  - .github/workflows/jobs/setup.yml
+  - .github/workflows/jobs/tests.yml
+  - .github/workflows/jobs/type-check.yml
+  - .jcode/PROJECT.md
+  - .jcode/hooks/pre-push
+  - .jcode/mode_decision.conf
+  - .jcode/project.yaml
+  - .jcode/registry.json
+  - .jcode/scripts/context-sync.py
+  - .jcode/scripts/governance-auditor.py
+  - .jcode/scripts/hooks_runner.py
+  - .jcode/scripts/knowledge-curator.py
+  - .jcode/skills/governance-auditor.md
+  - ... 等共 160 个文件
 
-## 更新记录: 2026-10-11 13:29:14
-
-### 任务
-Git 变更同步
-
-### 变更摘要
-- 变更文件 6 个 (+346 / -169 行)
-  - CONTEXT.md
-  - tests/test_repo_lock_semantics.py
-  - tests/test_script_import_contract.py
-  - tools/scripts/adg_cli/check.py
-  - tools/scripts/adg_cli/commands/cmd/_shared.py
-  - tools/scripts/adg_cli/commands/cmd/cmd_check.py
-
-## 更新记录: 2026-10-11 09:06:33
-
-### 任务
-Git 变更同步
-
-### 变更摘要
-- 变更文件 5 个 (+286 / -144 行)
-  - CONTEXT.md
-  - tests/test_script_import_contract.py
-  - tools/scripts/adg_cli/check.py
-  - tools/scripts/adg_cli/commands/cmd/_shared.py
-  - tools/scripts/adg_cli/commands/cmd/cmd_check.py
-
-## 更新记录: 2026-10-11 08:58:24
+## 更新记录: 2026-10-27 22:57:12
 
 ### 任务
 Git 变更同步
 
 ### 变更摘要
-- 变更文件 6 个 (+279 / -124 行)
-  - .jcode/hooks.json
-  - CONTEXT.md
-  - tests/test_script_import_contract.py
-  - tools/scripts/adg_cli/check.py
-  - tools/scripts/adg_cli/commands/cmd/_shared.py
-  - tools/scripts/adg_cli/commands/cmd/cmd_check.py
+- 变更文件 154 个 (+2355 / -9330 行)
+  - .adg/config.yml
+  - .adg/rules.yml
+  - .adg/rules.yml.example
+  - .github/workflows/advanced-governance.yml
+  - .github/workflows/ci.yml
+  - .github/workflows/jobs/combine-coverage.yml
+  - .github/workflows/jobs/governance-audit.yml
+  - .github/workflows/jobs/setup.yml
+  - .github/workflows/jobs/tests.yml
+  - .github/workflows/jobs/type-check.yml
+  - .jcode/PROJECT.md
+  - .jcode/hooks/pre-push
+  - .jcode/mode_decision.conf
+  - .jcode/project.yaml
+  - .jcode/registry.json
+  - .jcode/scripts/context-sync.py
+  - .jcode/scripts/governance-auditor.py
+  - .jcode/scripts/hooks_runner.py
+  - .jcode/scripts/knowledge-curator.py
+  - .jcode/skills/governance-auditor.md
+  - ... 等共 154 个文件
 
-## 更新记录: 2026-10-11 08:54:25
-
-### 任务
-Git 变更同步
-
-### 变更摘要
-- 变更文件 5 个 (+259 / -102 行)
-  - CONTEXT.md
-  - tests/test_script_import_contract.py
-  - tools/scripts/adg_cli/check.py
-  - tools/scripts/adg_cli/commands/cmd/_shared.py
-  - tools/scripts/adg_cli/commands/cmd/cmd_check.py
-
-## 更新记录: 2026-10-11 08:50:32
-
-### 任务
-Git 变更同步
-
-### 变更摘要
-- 变更文件 6 个 (+253 / -84 行)
-  - .jcode/hooks.json
-  - CONTEXT.md
-  - tests/test_script_import_contract.py
-  - tools/scripts/adg_cli/check.py
-  - tools/scripts/adg_cli/commands/cmd/_shared.py
-  - tools/scripts/adg_cli/commands/cmd/cmd_check.py
-
-## 更新记录: 2026-10-11 08:47:22
+## 更新记录: 2026-10-27 06:14:15
 
 ### 任务
 Git 变更同步
 
 ### 变更摘要
-- 变更文件 5 个 (+232 / -65 行)
-  - CONTEXT.md
-  - tests/test_script_import_contract.py
-  - tools/scripts/adg_cli/check.py
-  - tools/scripts/adg_cli/commands/cmd/_shared.py
-  - tools/scripts/adg_cli/commands/cmd/cmd_check.py
+- 变更文件 154 个 (+2355 / -9330 行)
+  - .adg/config.yml
+  - .adg/rules.yml
+  - .adg/rules.yml.example
+  - .github/workflows/advanced-governance.yml
+  - .github/workflows/ci.yml
+  - .github/workflows/jobs/combine-coverage.yml
+  - .github/workflows/jobs/governance-audit.yml
+  - .github/workflows/jobs/setup.yml
+  - .github/workflows/jobs/tests.yml
+  - .github/workflows/jobs/type-check.yml
+  - .jcode/PROJECT.md
+  - .jcode/hooks/pre-push
+  - .jcode/mode_decision.conf
+  - .jcode/project.yaml
+  - .jcode/registry.json
+  - .jcode/scripts/context-sync.py
+  - .jcode/scripts/governance-auditor.py
+  - .jcode/scripts/hooks_runner.py
+  - .jcode/scripts/knowledge-curator.py
+  - .jcode/skills/governance-auditor.md
+  - ... 等共 154 个文件
 
-## 更新记录: 2026-10-11 08:43:07
-
-### 任务
-Git 变更同步
-
-### 变更摘要
-- 变更文件 6 个 (+226 / -48 行)
-  - .jcode/hooks.json
-  - CONTEXT.md
-  - tests/test_script_import_contract.py
-  - tools/scripts/adg_cli/check.py
-  - tools/scripts/adg_cli/commands/cmd/_shared.py
-  - tools/scripts/adg_cli/commands/cmd/cmd_check.py
-
-## 更新记录: 2026-10-11 08:39:37
-
-### 任务
-Git 变更同步
-
-### 变更摘要
-- 变更文件 5 个 (+205 / -30 行)
-  - CONTEXT.md
-  - tests/test_script_import_contract.py
-  - tools/scripts/adg_cli/check.py
-  - tools/scripts/adg_cli/commands/cmd/_shared.py
-  - tools/scripts/adg_cli/commands/cmd/cmd_check.py
-
-## 更新记录: 2026-10-11 08:36:35
+## 更新记录: 2026-10-27 06:06:33
 
 ### 任务
 Git 变更同步
 
 ### 变更摘要
-- 变更文件 5 个 (+192 / -13 行)
-  - CONTEXT.md
-  - tests/test_script_import_contract.py
-  - tools/scripts/adg_cli/check.py
-  - tools/scripts/adg_cli/commands/cmd/_shared.py
-  - tools/scripts/adg_cli/commands/cmd/cmd_check.py
+- 变更文件 154 个 (+2294 / -9327 行)
+  - .adg/config.yml
+  - .adg/rules.yml
+  - .adg/rules.yml.example
+  - .github/workflows/advanced-governance.yml
+  - .github/workflows/ci.yml
+  - .github/workflows/jobs/combine-coverage.yml
+  - .github/workflows/jobs/governance-audit.yml
+  - .github/workflows/jobs/setup.yml
+  - .github/workflows/jobs/tests.yml
+  - .github/workflows/jobs/type-check.yml
+  - .jcode/PROJECT.md
+  - .jcode/hooks/pre-push
+  - .jcode/mode_decision.conf
+  - .jcode/project.yaml
+  - .jcode/registry.json
+  - .jcode/scripts/context-sync.py
+  - .jcode/scripts/governance-auditor.py
+  - .jcode/scripts/hooks_runner.py
+  - .jcode/scripts/knowledge-curator.py
+  - .jcode/skills/governance-auditor.md
+  - ... 等共 154 个文件
 
-## 更新记录: 2026-10-11 08:29:55
-
-### 任务
-Git 变更同步
-
-### 变更摘要
-- 变更文件 5 个 (+242 / -114 行)
-  - CONTEXT.md
-  - ROADMAP.md
-  - tools/scripts/adg_cli/check.py
-  - tools/scripts/adg_cli/commands/cmd/_shared.py
-  - tools/scripts/adg_cli/commands/cmd/cmd_check.py
-
-## 更新记录: 2026-10-11 08:26:16
-
-### 任务
-Git 变更同步
-
-### 变更摘要
-- 变更文件 5 个 (+229 / -99 行)
-  - CONTEXT.md
-  - ROADMAP.md
-  - tools/scripts/adg_cli/check.py
-  - tools/scripts/adg_cli/commands/cmd/_shared.py
-  - tools/scripts/adg_cli/commands/cmd/cmd_check.py
-
-## 更新记录: 2026-10-11 08:22:43
+## 更新记录: 2026-10-27 05:58:16
 
 ### 任务
 Git 变更同步
 
 ### 变更摘要
-- 变更文件 5 个 (+216 / -84 行)
-  - CONTEXT.md
-  - ROADMAP.md
-  - tools/scripts/adg_cli/check.py
-  - tools/scripts/adg_cli/commands/cmd/_shared.py
-  - tools/scripts/adg_cli/commands/cmd/cmd_check.py
-
-## 更新记录: 2026-10-11 08:18:53
-
-### 任务
-Git 变更同步
-
-### 变更摘要
-- 变更文件 5 个 (+203 / -63 行)
-  - CONTEXT.md
-  - ROADMAP.md
-  - tools/scripts/adg_cli/check.py
-  - tools/scripts/adg_cli/commands/cmd/_shared.py
-  - tools/scripts/adg_cli/commands/cmd/cmd_check.py
-
-## 更新记录: 2026-10-11 08:13:16
-
-### 任务
-Git 变更同步
-
-### 变更摘要
-- 变更文件 6 个 (+140 / -43 行)
-  - .jcode/hooks.json
-  - CONTEXT.md
-  - ROADMAP.md
-  - tools/scripts/adg_cli/check.py
-  - tools/scripts/adg_cli/commands/cmd/_shared.py
-  - tools/scripts/adg_cli/commands/cmd/cmd_check.py
-
-## 更新记录: 2026-10-11 08:06:07
-
-### 任务
-Git 变更同步
-
-### 变更摘要
-- 变更文件 5 个 (+119 / -21 行)
-  - CONTEXT.md
-  - ROADMAP.md
-  - tools/scripts/adg_cli/check.py
-  - tools/scripts/adg_cli/commands/cmd/_shared.py
-  - tools/scripts/adg_cli/commands/cmd/cmd_check.py
-
-## 更新记录: 2026-10-10 21:41:16
-
-### 任务
-Git 变更同步
-
-### 变更摘要
-- 变更文件 19 个 (+1296 / -547 行)
-  - .gitignore
-  - .jcode/ignored-rules.toml
-  - ADR.md
-  - CHANGELOG.md
-  - CONTEXT.md
-  - ROADMAP.md
-  - docs/adr/ADR-072-auto-fix-verify-syntax-before-write.md
-  - docs/adr/ADR-077-dry-run-must-not-mean-early-exit.md
-  - docs/adr/ADR.md
-  - examples/ai-context-sync/post-commit-hook.sh
-  - multi-cluster-config.yaml
-  - scripts/mkdocs-search-plugin.py
-  - tests/test_write_path_fallback_contracts.py
-  - tools/scripts/adg_cli/check.py
-  - tools/scripts/adg_cli/commands/cmd/_shared.py
-  - tools/scripts/adg_cli/commands/cmd/cmd_check.py
-  - tools/scripts/fix_applier.py
-  - tools/scripts/hooks_runner.py
-  - tools/scripts/rules_engine/validators/cli.py
-
-## 更新记录: 2026-10-10 21:37:35
-
-### 任务
-Git 变更同步
-
-### 变更摘要
-- 变更文件 19 个 (+1270 / -527 行)
-  - .gitignore
-  - .jcode/ignored-rules.toml
-  - ADR.md
-  - CHANGELOG.md
-  - CONTEXT.md
-  - ROADMAP.md
-  - docs/adr/ADR-072-auto-fix-verify-syntax-before-write.md
-  - docs/adr/ADR-077-dry-run-must-not-mean-early-exit.md
-  - docs/adr/ADR.md
-  - examples/ai-context-sync/post-commit-hook.sh
-  - multi-cluster-config.yaml
-  - scripts/mkdocs-search-plugin.py
-  - tests/test_write_path_fallback_contracts.py
-  - tools/scripts/adg_cli/check.py
-  - tools/scripts/adg_cli/commands/cmd/_shared.py
-  - tools/scripts/adg_cli/commands/cmd/cmd_check.py
-  - tools/scripts/fix_applier.py
-  - tools/scripts/hooks_runner.py
-  - tools/scripts/rules_engine/validators/cli.py
-
-## 更新记录: 2026-10-10 21:28:13
-
-### 任务
-Git 变更同步
-
-### 变更摘要
-- 变更文件 19 个 (+1200 / -488 行)
-  - .gitignore
-  - .jcode/ignored-rules.toml
-  - ADR.md
-  - CHANGELOG.md
-  - CONTEXT.md
-  - ROADMAP.md
-  - docs/adr/ADR-072-auto-fix-verify-syntax-before-write.md
-  - docs/adr/ADR-077-dry-run-must-not-mean-early-exit.md
-  - docs/adr/ADR.md
-  - examples/ai-context-sync/post-commit-hook.sh
-  - multi-cluster-config.yaml
-  - scripts/mkdocs-search-plugin.py
-  - tests/test_write_path_fallback_contracts.py
-  - tools/scripts/adg_cli/check.py
-  - tools/scripts/adg_cli/commands/cmd/_shared.py
-  - tools/scripts/adg_cli/commands/cmd/cmd_check.py
-  - tools/scripts/fix_applier.py
-  - tools/scripts/hooks_runner.py
-  - tools/scripts/rules_engine/validators/cli.py
-
-## 更新记录: 2026-10-10 21:20:00
-
-### 任务
-全面分析项目，清理无用文件（含存量缺陷修复）
-
-### 关键结论
-- **死代码判定推翻 4 项初判**：`fix_metadata.py`、`hooks/runner_parsers.py`、
-  `rule_engine.py`（是 Facade 非重复实现）、`standards/API_DESIGN.md` 均有硬引用或
-  被 `diagnose.sh` 校验，**不得删除**。`parsers/` 下 12 个语言 parser 经
-  `parsers/registry.py:16-28` 注册表加载且有测试覆盖，全部存活。
-- **确认可删 2 个**：`scripts/mkdocs-search-plugin.py`（从未在 `mkdocs.yml`
-  注册，文件名含连字符无法作为模块加载，产物零消费）、
-  `examples/ai-context-sync/post-commit-hook.sh`（零引用 + `products/` 路径失效）。
-- **双 ADR 索引漂移**：根 `ADR.md` 手工表自 ADR-061 后停更，累积缺失 17 条；
-  `docs/adr/ADR.md` 由 `generate_adr_index.py` 自动生成并由 pre-commit 校验。
-  已将根 `ADR.md` 改为指针，消除手工表这个必然漂移的数据源。
-
-### 修复的存量缺陷
-- **`hooks_runner.py` 直接执行即崩溃**：文件以 `from tools.scripts...` 绝对导入
-  开头，但 `python tools/scripts/hooks_runner.py` 时 `sys.path[0]` 是
-  `tools/scripts/`，仓库根不在其中 → `ModuleNotFoundError: No module named 'tools'`。
-  补仓库根到 `sys.path`（沿用 `.jcode/scripts/_common.py:17-19` 既有做法）。
-  修复后 `tests/test_ast_fix_cli_applied_reporting.py` 7 个测试由红转绿。
-  **同类缺陷仍存在于 15 个脚本**（直接执行即失败），未在本次一并修复。
-- **断链**：`multi-cluster-config.yaml` 指向从未提交的
-  `runbooks/dr-partial-failover.md`，已注释并留 TODO。
-
-### 清理
-- 删除缓存/构建产物/报告/备份/测试污染，释放约 190MB
-  （`.mypy_cache` 41M、`.ruff_cache` 104M、`site/` 32M、`.hypothesis` 4.9M 等）。
-- 补 `.gitignore` 缺口：`.hypothesis/`、`node_modules/`、`.mimocode/`、
-  `.ai-sync-cache/`（此前未被忽略，导致 `examples/ai-context-sync/MagicMock/`
-  这类测试污染反复出现）。
-
-### 验证
-- 全量 `pytest`：5087 passed / 16 failed。**此处的归因后来被证明是错的** ——
-  见下方「2026-10-11 更正」。
-- `ruff check` / `ruff format --check` / `mypy` 对改动文件全通过。
-- `hooks_runner doctor` 全部必需检查通过；ADR 索引 `--check` 69 条一致。
-
-### ⚠️ 更正（2026-10-11）
-
-上一节写"16 个失败全部为 `validate_language_rules.py` 同类问题"，**该归因
-只对 7 个成立**。追查 stderr 后确认真实情况是**两个独立根因**：
-
-| 组 | 数量 | 根因 |
-|---|---|---|
-| A | 9 | `sitecustomize` 注入失效 —— 注入在启动期执行，仓库根不在 `sys.path`，异常被 `try/except` 吞掉，**缺陷没装上而测试以产品缺陷面貌变红** |
-| B | 7 | 脚本未自举（`validate_language_rules.py` 等） |
-
-同样，"同类缺陷 15 个脚本"也**严重低估**：`--help` 探测只覆盖能进
-`argparse` 的脚本。按"含顶层 `tools.*` 包绝对导入"重统计，
-`tools/scripts/` 下 38 个命中、**36 个未自举**。
-
-两个错误同源：**探测方法有系统性盲区，且未对"探测失败"本身做过变异验证**。
-现已新增 `tests/test_script_bootstrap_contract.py` 守卫，
-判据取"能启动"而非源码/grep，并做过变异验证（移除引导即变红）。
-
-修复后：全量 **5110 passed / 0 failed**，`ruff` + `mypy` 全绿。
-
-### ⚠️ 二次更正（2026-10-11）：`repo_lock_semantics` 与文档污染
-
-上一节之后又留下两处未验证结论，现一并撤回：
-
-**1. `tests/test_repo_lock_semantics.py` 的 2 个失败曾被标为"存量问题"**
-—— **该标注无效，已撤回**。当时未在纯净 HEAD 上验证就下结论。
-实测：纯净 HEAD worktree 中该文件 **5 passed**；当前工作区单跑与
-全量（`-n 8`）下均 **5 passed**。全量两次跑（150.93s / 179.99s）
-共 5110 passed，该文件未再失败。
-
-这 2 个失败的机制**已确诊并已修复**。此前写的"不是 CPU 饥饿"是**错的**，
-负载恰恰是触发因素，只是通过"拖慢子进程启动"而非"拖慢锁"起作用。
-
-**根因**：`blocked` 计时从探针进程内 `t0` 起算，而持锁窗口从持锁者
-写 `ready` 起算。两者之间隔着父进程起子进程 + 探针 `import conftest`
-的**全部开销**。无竞争时该开销约 0.2s，满载 `-n 8` 下可达 1s+，
-持锁窗口在探针真正阻塞前就被烧掉，`blocked` 随之低于 `HOLD/2`。
-实测满载下 `blocked` 低至 0.0s（读者完全没被挡的表象），而锁本身正确：
-用独立进程打印 `_lock_path()` 确认两进程锁文件一致，且第二进程确实被挡。
-
-**修复**（`tests/test_repo_lock_semantics.py`）：探针在 `flock` **之前**
-落 `probe.go` 标记，持锁者等该标记出现后才起算窗口 —— 把计时起点对齐到
-"探针即将阻塞"那一刻。两处配套细节缺一不可：
-- 标记名固定为 `probe.go`，**不按 kind 区分**。持锁者只知道在等"某个"
-  探针；若两边按 kind 取名（持 write 等 `ready-write.go` 而探针是 read
-  落 `ready-read.go`），持锁者会空等到 60s 超时。
-- `_start_holder` 必须先 `unlink` 该标记。基线探针（无竞争那次）在同目录
-  写过 `probe.go`，持锁者一进来就看到 -> 窗口从基线时刻起算。满载下
-  基线早到数百毫秒，`blocked` 掉到 0.747s（阈值 0.75s）—— **假失败**。
-
-**验证**：
-- 修复前满载 8/8 全失败（16s/轮）；修复后满载 8/8 全通过（14s/轮）
-- 无负载 `blocked` 中位 1.510s，0/15 低于阈值
-- 变异仍被捕获：去掉 `LOCK_EX` -> 两个互斥用例红；`LOCK_SH`→`LOCK_EX`
-  -> `test_shared_readers_do_not_serialise_each_other` 红
-- 该文件从 70s 降到 8.6s（不再空等超时）
-
-原频率：约 2/9 次全量复现（`-n 8`）。
-
-**2. "回归污染 71 / 77 个文档"的记录是错的** —— 已撤回。
-`inotifywait` 实测监视 `docs/` 跑全量，只拿到 9 条写入事件，
-**全部在 `docs/adr/`**（ADR 索引 + canary），其余 390 个文档 md5
-前后完全一致。来源是 `tests/test_generate_adr_index.py:207`
-**有意**创建 canary（被测脚本按仓库相对路径定位，无法注入临时路径），
-该类已用 `_acquire_repo_mutation_lock()` 串行化并 `addCleanup` 还原。
-跑完 `git diff docs/adr/ADR.md` 为空、无 canary 残留。
-
-此前观察到的"大量文件被改"是**回归进行中**取的 Git 快照 —— 正好
-撞上 canary 存在的窗口，把 `docs/adr/` 的中间态误读成全量污染。
-`fix_metadata.py:173` / `add_navigation.py:98` 的相对路径写盘被证伪
-（二者测试均用 `tmp_path`，48 / 19 用例通过且零写入）。
-
-**方法论教训**：前一次更正靠读 stderr 推理，有效；这次两次错误都源于
-**在错误时机观察文件系统状态**并据此归因。污染类问题必须用
-`inotify` 事件流或前后指纹差分定位，不能靠运行中/结束后的
-`git status` 快照猜。
-
-**`.cursorrules` / `.windsurfrules`** 同理更正：唯一调用方
-`test_ide_rules_sync.py` 传 `tmp_path`，测试是隔离的。二者出现在
-仓库根是**手工执行** `tools/scripts/ide_rules_sync.py`（`__main__`
-路径用 `get_project_root()`）的残留，非测试产物。已删并加 `.gitignore`。
-
----
-
-## 更新记录: 2026-10-10 20:58:58
-
-### 任务
-Git 变更同步
-
-### 变更摘要
-- 变更文件 28 个 (+1220 / -481 行)
-  - .gitignore
-  - .jcode/ignored-rules.toml
-  - ADR.md
-  - CHANGELOG.md
-  - CONTEXT.md
-  - ROADMAP.md
-  - docs/adr/ADR-072-auto-fix-verify-syntax-before-write.md
-  - docs/adr/ADR-077-dry-run-must-not-mean-early-exit.md
-  - docs/adr/ADR.md
-  - docs/case-studies/ai-native-coverage-governance.md
-  - docs/case-studies/ast-parser-precision-coverage.md
-  - docs/efficiency/ai-native-sdlc-whitepaper.md
-  - docs/efficiency/ai-test-coverage-methodology.md
-  - docs/efficiency/quick-start-ai-native.md
-  - docs/governance/context-maintenance.md
-  - docs/governance/project-analysis-and-roadmap-2026-08.md
-  - docs/integration/adg-bootstrap-integration.md
-  - docs/integration/jcode-hooks-integration.md
-  - examples/ai-context-sync/post-commit-hook.sh
-  - multi-cluster-config.yaml
-  - ... 等共 28 个文件
-
-## 更新记录: 2026-10-10 20:40:31
-
-### 任务
-Git 变更同步
-
-### 变更摘要
-- 变更文件 19 个 (+1100 / -456 行)
-  - .gitignore
-  - .jcode/ignored-rules.toml
-  - ADR.md
-  - CHANGELOG.md
-  - CONTEXT.md
-  - ROADMAP.md
-  - docs/adr/ADR-072-auto-fix-verify-syntax-before-write.md
-  - docs/adr/ADR-077-dry-run-must-not-mean-early-exit.md
-  - docs/adr/ADR.md
-  - examples/ai-context-sync/post-commit-hook.sh
-  - multi-cluster-config.yaml
-  - scripts/mkdocs-search-plugin.py
-  - tests/test_write_path_fallback_contracts.py
-  - tools/scripts/adg_cli/check.py
-  - tools/scripts/adg_cli/commands/cmd/_shared.py
-  - tools/scripts/adg_cli/commands/cmd/cmd_check.py
-  - tools/scripts/fix_applier.py
-  - tools/scripts/hooks_runner.py
-  - tools/scripts/rules_engine/validators/cli.py
-
-## 更新记录: 2026-10-05 14:38:08
-
-### 任务
-Git 变更同步
-
-### 变更摘要
-- 变更文件 12 个 (+1009 / -187 行)
-  - CHANGELOG.md
-  - CONTEXT.md
-  - ROADMAP.md
-  - docs/adr/ADR-072-auto-fix-verify-syntax-before-write.md
-  - docs/adr/ADR-077-dry-run-must-not-mean-early-exit.md
-  - docs/adr/ADR.md
-  - tests/test_write_path_fallback_contracts.py
-  - tools/scripts/adg_cli/check.py
-  - tools/scripts/adg_cli/commands/cmd/_shared.py
-  - tools/scripts/adg_cli/commands/cmd/cmd_check.py
-  - tools/scripts/fix_applier.py
-  - tools/scripts/rules_engine/validators/cli.py
-
-## 更新记录: 2026-10-05 14:31:48
-
-### 任务
-Git 变更同步
-
-### 变更摘要
-- 变更文件 12 个 (+993 / -173 行)
-  - CHANGELOG.md
-  - CONTEXT.md
-  - ROADMAP.md
-  - docs/adr/ADR-072-auto-fix-verify-syntax-before-write.md
-  - docs/adr/ADR-077-dry-run-must-not-mean-early-exit.md
-  - docs/adr/ADR.md
-  - tests/test_write_path_fallback_contracts.py
-  - tools/scripts/adg_cli/check.py
-  - tools/scripts/adg_cli/commands/cmd/_shared.py
-  - tools/scripts/adg_cli/commands/cmd/cmd_check.py
-  - tools/scripts/fix_applier.py
-  - tools/scripts/rules_engine/validators/cli.py
-
-## 更新记录: 2026-10-05 13:47:33
-
-### 任务
-Git 变更同步
-
-### 变更摘要
-- 变更文件 9 个 (+870 / -150 行)
-  - CHANGELOG.md
-  - CONTEXT.md
-  - ROADMAP.md
-  - docs/adr/ADR-072-auto-fix-verify-syntax-before-write.md
-  - docs/adr/ADR-077-dry-run-must-not-mean-early-exit.md
-  - docs/adr/ADR.md
-  - tests/test_write_path_fallback_contracts.py
-  - tools/scripts/fix_applier.py
-  - tools/scripts/rules_engine/validators/cli.py
-
-## 更新记录: 2026-10-05 13:24:27
-
-### 任务
-Git 变更同步
-
-### 变更摘要
-- 变更文件 15 个 (+802 / -174 行)
-  - CHANGELOG.md
-  - CONTEXT.md
-  - ROADMAP.md
-  - docs/adr/ADR-072-auto-fix-verify-syntax-before-write.md
-  - docs/adr/ADR.md
-  - tests/test_write_path_fallback_contracts.py
-  - tools/scripts/_lang_registry.py
-  - tools/scripts/adg_cli/commands/cmd/cmd_fix.py
-  - tools/scripts/auto_fix.py
-  - tools/scripts/fix_applier.py
-  - tools/scripts/hooks/misc_runner.py
-  - tools/scripts/rules_engine/_checker_workers.py
-  - tools/scripts/rules_engine/ast_parser.py
-  - tools/scripts/rules_engine/checker.py
-  - tools/scripts/rules_engine/validators/cli.py
-
-## 更新记录: 2026-10-05 12:43:20
-
-### 任务
-Git 变更同步
-
-### 变更摘要
-- 变更文件 16 个 (+772 / -157 行)
-  - .jcode/hooks.json
-  - CHANGELOG.md
-  - CONTEXT.md
-  - ROADMAP.md
-  - docs/adr/ADR-072-auto-fix-verify-syntax-before-write.md
-  - docs/adr/ADR.md
-  - tests/test_write_path_fallback_contracts.py
-  - tools/scripts/_lang_registry.py
-  - tools/scripts/adg_cli/commands/cmd/cmd_fix.py
-  - tools/scripts/auto_fix.py
-  - tools/scripts/fix_applier.py
-  - tools/scripts/hooks/misc_runner.py
-  - tools/scripts/rules_engine/_checker_workers.py
-  - tools/scripts/rules_engine/ast_parser.py
-  - tools/scripts/rules_engine/checker.py
-  - tools/scripts/rules_engine/validators/cli.py
-
-## 更新记录: 2026-10-05 12:29:02
-
-### 任务
-Git 变更同步
-
-### 变更摘要
-- 变更文件 13 个 (+605 / -133 行)
-  - .jcode/hooks.json
-  - CONTEXT.md
-  - docs/adr/ADR-072-auto-fix-verify-syntax-before-write.md
-  - tests/test_write_path_fallback_contracts.py
-  - tools/scripts/_lang_registry.py
-  - tools/scripts/adg_cli/commands/cmd/cmd_fix.py
-  - tools/scripts/auto_fix.py
-  - tools/scripts/fix_applier.py
-  - tools/scripts/hooks/misc_runner.py
-  - tools/scripts/rules_engine/_checker_workers.py
-  - tools/scripts/rules_engine/ast_parser.py
-  - tools/scripts/rules_engine/checker.py
-  - tools/scripts/rules_engine/validators/cli.py
-
-## 更新记录: 2026-10-05 12:11:38
-
-### 任务
-Git 变更同步
-
-### 变更摘要
-- 变更文件 12 个 (+431 / -107 行)
-  - CONTEXT.md
-  - docs/adr/ADR-072-auto-fix-verify-syntax-before-write.md
-  - tests/test_write_path_fallback_contracts.py
-  - tools/scripts/_lang_registry.py
-  - tools/scripts/adg_cli/commands/cmd/cmd_fix.py
-  - tools/scripts/auto_fix.py
-  - tools/scripts/fix_applier.py
-  - tools/scripts/hooks/misc_runner.py
-  - tools/scripts/rules_engine/_checker_workers.py
-  - tools/scripts/rules_engine/ast_parser.py
-  - tools/scripts/rules_engine/checker.py
-  - tools/scripts/rules_engine/validators/cli.py
-
-## 更新记录: 2026-10-05 00:23:26
-
-### 任务
-Git 变更同步
-
-### 变更摘要
-- 变更文件 13 个 (+388 / -320 行)
-  - .jcode/hooks.json
-  - CONTEXT.md
-  - docs/adr/ADR-072-auto-fix-verify-syntax-before-write.md
-  - tests/test_write_path_fallback_contracts.py
-  - tools/scripts/_lang_registry.py
-  - tools/scripts/adg_cli/commands/cmd/cmd_fix.py
-  - tools/scripts/auto_fix.py
-  - tools/scripts/fix_applier.py
-  - tools/scripts/hooks/misc_runner.py
-  - tools/scripts/rules_engine/_checker_workers.py
-  - tools/scripts/rules_engine/ast_parser.py
-  - tools/scripts/rules_engine/checker.py
-  - tools/scripts/rules_engine/validators/cli.py
-
-## 更新记录: 2026-10-05 00:12:56
-
-### 任务
-Git 变更同步
-
-### 变更摘要
-- 变更文件 13 个 (+306 / -70 行)
-  - .jcode/hooks.json
-  - CONTEXT.md
-  - docs/adr/ADR-072-auto-fix-verify-syntax-before-write.md
-  - tests/test_write_path_fallback_contracts.py
-  - tools/scripts/_lang_registry.py
-  - tools/scripts/adg_cli/commands/cmd/cmd_fix.py
-  - tools/scripts/auto_fix.py
-  - tools/scripts/fix_applier.py
-  - tools/scripts/hooks/misc_runner.py
-  - tools/scripts/rules_engine/_checker_workers.py
-  - tools/scripts/rules_engine/ast_parser.py
-  - tools/scripts/rules_engine/checker.py
-  - tools/scripts/rules_engine/validators/cli.py
-
-## 更新记录: 2026-10-04 18:38:14
-
-### 任务
-Git 变更同步
-
-### 变更摘要
-- 变更文件 4 个 (+358 / -27 行)
-  - CONTEXT.md
-  - docs/adr/ADR-072-auto-fix-verify-syntax-before-write.md
-  - tests/test_write_path_fallback_contracts.py
-  - tools/scripts/fix_applier.py
-
-## 更新记录: 2026-10-04 18:26:24
-
-### 任务
-Git 变更同步
-
-### 变更摘要
-- 变更文件 5 个 (+390 / -24 行)
-  - CONTEXT.md
-  - docs/adr/ADR-071-directory-exit-code-on-rejection.md
-  - docs/adr/ADR-072-auto-fix-verify-syntax-before-write.md
-  - tests/test_write_path_exit_code_acceptance.py
-  - tools/scripts/fix_applier.py
-
-## 更新记录: 2026-10-04 18:16:27
-
-### 任务
-Git 变更同步
-
-### 变更摘要
-- 变更文件 4 个 (+118 / -22 行)
-  - CONTEXT.md
-  - docs/adr/ADR-071-directory-exit-code-on-rejection.md
-  - docs/adr/ADR-072-auto-fix-verify-syntax-before-write.md
-  - tools/scripts/rules_engine/performance.py
-
-## 更新记录: 2026-10-04 18:05:57
-
-### 任务
-Git 变更同步
-
-### 变更摘要
-- 变更文件 5 个 (+366 / -72 行)
-  - CONTEXT.md
-  - docs/adr/ADR-076-parallel-worker-none-observable.md
-  - docs/adr/ADR.md
-  - tests/test_performance_worker_none_observable.py
-  - tools/scripts/rules_engine/performance.py
-
-## 更新记录: 2026-10-04 17:53:31
-
-### 任务
-Git 变更同步
-
-### 变更摘要
-- 变更文件 5 个 (+126 / -85 行)
-  - CONTEXT.md
-  - docs/adr/ADR-075-rules-disk-cache-cross-process-lock.md
-  - docs/adr/ADR.md
-  - tools/scripts/rules_engine/performance.py
-  - tools/scripts/rules_engine/rule_loader.py
-
-## 更新记录: 2026-10-04 17:42:32
-
-### 任务
-Git 变更同步
-
-### 变更摘要
-- 变更文件 8 个 (+960 / -247 行)
-  - CONTEXT.md
-  - docs/adr/ADR-075-rules-disk-cache-cross-process-lock.md
-  - docs/adr/ADR.md
-  - tests/conftest.py
-  - tests/test_performance_extended.py
-  - tests/test_pipeline_checker_ruleloader.py
-  - tests/test_rule_loader_cache_concurrency.py
-  - tools/scripts/rules_engine/rule_loader.py
-
-## 更新记录: 2026-10-04 17:29:22
-
-### 任务
-Git 变更同步
-
-### 变更摘要
-- 变更文件 10 个 (+689 / -265 行)
-  - CONTEXT.md
-  - docs/adr/ADR-072-auto-fix-verify-syntax-before-write.md
-  - docs/adr/ADR.md
-  - tests/conftest.py
-  - tests/test_fix_applier_write_verification.py
-  - tests/test_language_rules_v2.py
-  - tests/test_performance_extended.py
-  - tests/test_pipeline_checker_ruleloader.py
-  - tools/scripts/fix_applier.py
-  - tools/scripts/rules_engine/rule_loader.py
-
-## 更新记录: 2026-10-04 17:21:37
-
-### 任务
-Git 变更同步
-
-### 变更摘要
-- 变更文件 10 个 (+655 / -244 行)
-  - CONTEXT.md
-  - docs/adr/ADR-072-auto-fix-verify-syntax-before-write.md
-  - docs/adr/ADR.md
-  - tests/conftest.py
-  - tests/test_fix_applier_write_verification.py
-  - tests/test_language_rules_v2.py
-  - tests/test_performance_extended.py
-  - tests/test_pipeline_checker_ruleloader.py
-  - tools/scripts/fix_applier.py
-  - tools/scripts/rules_engine/rule_loader.py
-
-## 更新记录: 2026-10-04 17:17:09
-
-### 任务
-Git 变更同步
-
-### 变更摘要
-- 变更文件 10 个 (+637 / -225 行)
-  - CONTEXT.md
-  - docs/adr/ADR-072-auto-fix-verify-syntax-before-write.md
-  - docs/adr/ADR.md
-  - tests/conftest.py
-  - tests/test_fix_applier_write_verification.py
-  - tests/test_language_rules_v2.py
-  - tests/test_performance_extended.py
-  - tests/test_pipeline_checker_ruleloader.py
-  - tools/scripts/fix_applier.py
-  - tools/scripts/rules_engine/rule_loader.py
-
-## 更新记录: 2026-10-04 17:11:53
-
-### 任务
-Git 变更同步
-
-### 变更摘要
-- 变更文件 11 个 (+626 / -211 行)
-  - .jcode/hooks.json
-  - CONTEXT.md
-  - docs/adr/ADR-072-auto-fix-verify-syntax-before-write.md
-  - docs/adr/ADR.md
-  - tests/conftest.py
-  - tests/test_fix_applier_write_verification.py
-  - tests/test_language_rules_v2.py
-  - tests/test_performance_extended.py
-  - tests/test_pipeline_checker_ruleloader.py
-  - tools/scripts/fix_applier.py
-  - tools/scripts/rules_engine/rule_loader.py
-
-## 更新记录: 2026-10-04 17:08:08
-
-### 任务
-Git 变更同步
-
-### 变更摘要
-- 变更文件 10 个 (+580 / -199 行)
-  - CONTEXT.md
-  - docs/adr/ADR-072-auto-fix-verify-syntax-before-write.md
-  - docs/adr/ADR.md
-  - tests/conftest.py
-  - tests/test_fix_applier_write_verification.py
-  - tests/test_language_rules_v2.py
-  - tests/test_performance_extended.py
-  - tests/test_pipeline_checker_ruleloader.py
-  - tools/scripts/fix_applier.py
-  - tools/scripts/rules_engine/rule_loader.py
-
-## 更新记录: 2026-10-04 17:04:39
-
-### 任务
-Git 变更同步
-
-### 变更摘要
-- 变更文件 10 个 (+562 / -188 行)
-  - CONTEXT.md
-  - docs/adr/ADR-072-auto-fix-verify-syntax-before-write.md
-  - docs/adr/ADR.md
-  - tests/conftest.py
-  - tests/test_fix_applier_write_verification.py
-  - tests/test_language_rules_v2.py
-  - tests/test_performance_extended.py
-  - tests/test_pipeline_checker_ruleloader.py
-  - tools/scripts/fix_applier.py
-  - tools/scripts/rules_engine/rule_loader.py
-
-## 更新记录: 2026-10-04 16:59:24
-
-### 任务
-Git 变更同步
-
-### 变更摘要
-- 变更文件 11 个 (+551 / -179 行)
-  - .jcode/hooks.json
-  - CONTEXT.md
-  - docs/adr/ADR-072-auto-fix-verify-syntax-before-write.md
-  - docs/adr/ADR.md
-  - tests/conftest.py
-  - tests/test_fix_applier_write_verification.py
-  - tests/test_language_rules_v2.py
-  - tests/test_performance_extended.py
-  - tests/test_pipeline_checker_ruleloader.py
-  - tools/scripts/fix_applier.py
-  - tools/scripts/rules_engine/rule_loader.py
-
-## 更新记录: 2026-10-04 16:46:33
-
-### 任务
-Git 变更同步
-
-### 变更摘要
-- 变更文件 10 个 (+525 / -162 行)
-  - CONTEXT.md
-  - docs/adr/ADR-072-auto-fix-verify-syntax-before-write.md
-  - docs/adr/ADR.md
-  - tests/conftest.py
-  - tests/test_fix_applier_write_verification.py
-  - tests/test_language_rules_v2.py
-  - tests/test_performance_extended.py
-  - tests/test_pipeline_checker_ruleloader.py
-  - tools/scripts/fix_applier.py
-  - tools/scripts/rules_engine/rule_loader.py
-
-## 更新记录: 2026-10-04 16:26:31
-
-### 任务
-Git 变更同步
-
-### 变更摘要
-- 变更文件 10 个 (+507 / -143 行)
-  - CONTEXT.md
-  - docs/adr/ADR-072-auto-fix-verify-syntax-before-write.md
-  - docs/adr/ADR.md
-  - tests/conftest.py
-  - tests/test_fix_applier_write_verification.py
-  - tests/test_language_rules_v2.py
-  - tests/test_performance_extended.py
-  - tests/test_pipeline_checker_ruleloader.py
-  - tools/scripts/fix_applier.py
-  - tools/scripts/rules_engine/rule_loader.py
-
-## 更新记录: 2026-10-04 16:23:26
-
-### 任务
-Git 变更同步
-
-### 变更摘要
-- 变更文件 9 个 (+460 / -124 行)
-  - CONTEXT.md
-  - docs/adr/ADR-072-auto-fix-verify-syntax-before-write.md
-  - docs/adr/ADR.md
-  - tests/test_fix_applier_write_verification.py
-  - tests/test_language_rules_v2.py
-  - tests/test_performance_extended.py
-  - tests/test_pipeline_checker_ruleloader.py
-  - tools/scripts/fix_applier.py
-  - tools/scripts/rules_engine/rule_loader.py
-
-## 更新记录: 2026-10-04 16:19:00
-
-### 任务
-Git 变更同步
-
-### 变更摘要
-- 变更文件 9 个 (+443 / -105 行)
-  - CONTEXT.md
-  - docs/adr/ADR-072-auto-fix-verify-syntax-before-write.md
-  - docs/adr/ADR.md
-  - tests/test_fix_applier_write_verification.py
-  - tests/test_language_rules_v2.py
-  - tests/test_performance_extended.py
-  - tests/test_pipeline_checker_ruleloader.py
-  - tools/scripts/fix_applier.py
-  - tools/scripts/rules_engine/rule_loader.py
-
-## 更新记录: 2026-10-04 16:15:38
-
-### 任务
-Git 变更同步
-
-### 变更摘要
-- 变更文件 8 个 (+426 / -87 行)
-  - CONTEXT.md
-  - docs/adr/ADR-072-auto-fix-verify-syntax-before-write.md
-  - tests/test_fix_applier_write_verification.py
-  - tests/test_language_rules_v2.py
-  - tests/test_performance_extended.py
-  - tests/test_pipeline_checker_ruleloader.py
-  - tools/scripts/fix_applier.py
-  - tools/scripts/rules_engine/rule_loader.py
-
-## 更新记录: 2026-10-04 15:43:16
-
-### 任务
-Git 变更同步
-
-### 变更摘要
-- 变更文件 6 个 (+282 / -42 行)
-  - CONTEXT.md
-  - docs/adr/ADR-072-auto-fix-verify-syntax-before-write.md
-  - tests/test_fix_applier_write_verification.py
-  - tests/test_language_rules_v2.py
-  - tests/test_performance_extended.py
-  - tools/scripts/fix_applier.py
+- 变更文件 151 个 (+2223 / -9325 行)
+  - .adg/config.yml
+  - .adg/rules.yml
+  - .adg/rules.yml.example
+  - .github/workflows/advanced-governance.yml
+  - .github/workflows/ci.yml
+  - .github/workflows/jobs/combine-coverage.yml
+  - .github/workflows/jobs/governance-audit.yml
+  - .github/workflows/jobs/setup.yml
+  - .github/workflows/jobs/tests.yml
+  - .github/workflows/jobs/type-check.yml
+  - .jcode/PROJECT.md
+  - .jcode/hooks/pre-push
+  - .jcode/mode_decision.conf
+  - .jcode/project.yaml
+  - .jcode/registry.json
+  - .jcode/scripts/context-sync.py
+  - .jcode/scripts/governance-auditor.py
+  - .jcode/scripts/hooks_runner.py
+  - .jcode/scripts/knowledge-curator.py
+  - .jcode/skills/governance-auditor.md
+  - ... 等共 151 个文件
 
 <!-- 滚动窗口: 已自动裁剪 1 条旧更新记录 -->

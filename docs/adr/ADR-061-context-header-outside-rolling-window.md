@@ -103,6 +103,19 @@ return 0  # 恒为 0
 收益不匹配。**规避方式**：头部内不要在围栏代码块中书写以 `## 更新记录:` 开头的行。
 已记入 ROADMAP v2.26.0 候选，若将来确有需要再引入围栏感知切分。
 
+## 修订记录
+
+### 2026-10-25: 默认窗口 50 → 5
+
+ADR-061 修复头部丢失后，窗口上限仍为 50。实测 `CONTEXT.md` 1507 行，其中固定
+头部 304 行，同步日志占 80%；单条记录约 24 行，50 条即约 1200 行重复的
+“Git 变更同步”。默认窗口收敛为 5 条（`ContextConfig.max_update_entries` 与
+`synthesize_context_update` 的默认参数），当前文件已按新窗口裁剪。
+
+窗口语义不变：固定头部始终独立于窗口，最近 N 条保留，更早记录在 `git log`
+中可查。关键决策仍应迁移到 ADR（永久保留）。运维流程见
+[docs/governance/context-maintenance.md](../governance/context-maintenance.md)。
+
 ## 相关
 
 - ADR-058: context-sync 双实现并存是刻意设计，不做合并（本次只修 `.jcode/scripts/` 那套）

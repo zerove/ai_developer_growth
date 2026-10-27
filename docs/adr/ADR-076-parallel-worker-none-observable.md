@@ -27,7 +27,7 @@ ADR-074 只修掉了「worker 抛异常」这一条分支的静默丢结果。�
 ```python
 try:
     result = future.result()
-    results.append(result)          # ← result 为 None 也走这里, 无任何记录
+    results.append(result)  # ← result 为 None 也走这里, 无任何记录
 except Exception as exc:
     self.failed_files[filepath] = ...
     results.append(None)
@@ -40,7 +40,7 @@ try:
     result = check_file(...)
     return {...}
 except (AttributeError, OSError):
-    return None                      # ← 失败被吞成 None
+    return None  # ← 失败被吞成 None
 ```
 
 即：worker **抛异常** 会留痕，worker **返回 None**（更常见的失败形态）

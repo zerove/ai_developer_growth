@@ -4,7 +4,9 @@ custom_rules:
   id: sec-001
   language: python
   message: Dangerous function call detected
-  pattern: \b\w+\s*\([^)]*\)
+  # 收窄: 旧模式 \b\w+\s*\([^)]*\) 命中任意函数调用 (全仓数千处).
+  # 仅保留真正的动态代码执行入口; 有意不含 compile (re.compile 等安全用法误报)
+  pattern: (?<![\w."'])(?:eval|exec|__import__)\s*\(
   severity: error
 - category: security
   fix_hint: Use subprocess.run() with shell=False
@@ -18,21 +20,24 @@ custom_rules:
   id: sec-003
   language: python
   message: pickle deserialization can be exploited
-  pattern: import\s+pickle
+  # \b 防止命中 pickled / pickleball 等标识符
+  pattern: import\s+pickle\b
   severity: warning
 - category: security
   fix_hint: Use yaml.safe_load()
   id: sec-004
   language: python
   message: yaml.load() without Loader is unsafe
-  pattern: yaml\.load\s*\([^)]*\)
+  # 负向前瞻: 显式传 Loader= 的安全用法不再命中
+  pattern: yaml\.load\s*\((?![^)\n]*Loader)
   severity: warning
 - category: security
   fix_hint: Use subprocess.run()
   id: sec-005
   language: python
   message: subprocess.call() should use shell=False
-  pattern: subprocess\.call\s*\(
+  # 负向前瞻: 已显式传 shell= 的调用不再命中 (显式 True 是真实 FP, False 是安全用法)
+  pattern: subprocess\.call\s*\((?![^)\n]*shell\s*=)
   severity: info
 - category: security
   fix_hint: Avoid dynamic code execution
@@ -65,7 +70,17 @@ installed_packs:
 #   / rule_author / docker_build / etc.) 面向用户的格式化输出 (含 emoji/缩进)
 #   是有意为之, 非内部日志; 内部库仍保留 loguru 风格
 severity_overrides:
+  # py-log-print 保留 info (integrity 脚本 CRITICAL_RULES 依赖此精确行);
+  # 打印类降噪由 py-print-statement: off 承担, 二者规则不同不重复计数
   py-log-print: info
+  # py-missing-all: 13748 个 (BEFORE 基线), 规则匹配 __all__ 缺失, 但
+  # 项目大量模块用隐式导出, 全量补齐无 ROI. 真正需要导出契约的模块
+  # 已由测试覆盖. off = 彻底禁用 (新机制), 非仅降级
+  py-missing-all: off
+  # py-print-statement: 1724 个, 与 py-log-print 基本一一重复 (同一 print 调用
+  # 被两条规则各报一次, 差值 14 来自 py-print-statement 的 exclude_files).
+  # py-log-print 保留 (message/fix_hint 更精确 + integrity 依赖), 本条 off
+  py-print-statement: off
   # common-empty-except-block: 54 个空 except 块分布在 27 个文件, 多为 OSError/
   # JSONDecodeError/ImportError 等"best effort" 模式 (文件/缓存/插件失败时
   # 静默兜底). 全面审计+修复需在 Phase 27 单独进行, 暂按已知模式降为 info.

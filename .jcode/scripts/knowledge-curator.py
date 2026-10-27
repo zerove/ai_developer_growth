@@ -7,7 +7,7 @@ jcode Skill Runner - 知识策展人
     python .jcode/scripts/knowledge-curator.py audit
     python .jcode/scripts/knowledge-curator.py validate docs/case-studies/new-case.md
     python .jcode/scripts/knowledge-curator.py sync
-    python .jcode/scripts/knowledge-curator.py update-moc
+    python .jcode/scripts/knowledge-curator.py update-moc  # 尚未实现
 """
 
 import sys
@@ -56,23 +56,19 @@ def sync() -> int:
 
 
 def update_moc() -> int:
-    """更新知识图谱
+    """更新知识图谱（尚未实现）.
 
-    link_auditor.py 只支持 --check-all / --fail-on-broken / --internal-only，
-    没有 MOC 重写能力。此前这里调用 `link_auditor.py . --update-moc`，
-    必然因unrecognized arguments 失败 —— 属于"看起来在工作、实际永远失败"。
-    保留入口但明确报告未实现，避免再被当作可用能力。
+    历史实现调用 `link_auditor.py --update-moc`（该参数不存在），必然失败。
+    保留显式非零退出，避免调用方误以为能力可用。
     """
-    print_section("知识图谱更新")
-    print("⚠️  docs/MOC.md 自动更新尚未实现：link_auditor.py 不提供 MOC 重写能力。")
-    print("   可用替代：手动维护 docs/MOC.md，或运行 make link-audit 检查断链。")
+    print("❌ update-moc 尚未实现：MOC 更新需要独立脚本")
     return 1
 
 
 def main() -> None:
     if len(sys.argv) < 2:
         print("用法: knowledge-curator.py <action> [args]")
-        print("Actions: scan, audit, validate <file>, sync, update-moc")
+        print("Actions: scan, audit, validate <file>, sync, update-moc（尚未实现）")
         sys.exit(1)
 
     action = sys.argv[1]

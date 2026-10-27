@@ -74,7 +74,7 @@ tools:
     command: "pytest"
     args: ["-v"]
     coverage_args: ["--cov", "--cov-report=term-missing", "--cov-report=xml"]
-    timeout: 120                   # 单测超时(秒)
+    timeout: 300                   # 单测超时(秒), 与 pytest.ini timeout 对齐
     
   # 安全扫描
   security:
@@ -97,39 +97,14 @@ tools:
     args: []
 
 # ============================================================================
-# 质量阈值 (与 pyproject/dev 依赖及治理标准对齐)
+# 质量阈值
 # ============================================================================
-thresholds:
-  # 测试覆盖率（治理要求 ≥80%）
-  coverage:
-    overall: 80                    # 整体覆盖率 %
-    per_file: 50                   # 单文件最低覆盖率 %
-    critical_paths: 80             # 关键路径覆盖率 %
-    
-  # 代码复杂度
-  complexity:
-    cyclomatic: 10                 # 圈复杂度阈值
-    cognitive: 15                  # 认知复杂度阈值
-    nesting: 4                     # 最大嵌套深度
-    function_length: 50            # 最大函数行数
-    class_length: 300              # 最大类行数
-    file_length: 300               # 最大文件行数（与 jcode-prompt-constraints.md 一致）
-    
-  # 命名规范
-  naming:
-    style: "snake_case"            # Python 风格
-    max_length: 64                 # 最大标识符长度
-    
-  # 文档覆盖率
-  documentation:
-    public_api: 80                 # 公共 API 文档覆盖率 %
-    internal: 40                   # 内部代码文档覆盖率 %
-    
-  # 安全
-  security:
-    max_high: 0                    # 高危漏洞容忍度（零容忍）
-    max_medium: 5                  # 中危漏洞容忍度
-    max_low: 20                    # 低危漏洞容忍度
+# 本项目的阈值唯一权威源是 pyproject.toml，本文件不再保留副本（副本无人消费
+# 且会与门禁实际读取值漂移）：
+#   - 覆盖率: [tool.adg] cov_min（hooks 与 CI 都读这一个键）
+#   - 复杂度: ADR-056（全目录 ≤10），由 adg check --complexity 执行
+#   - 单测超时: pytest.ini timeout
+# 新项目脚手架（.jcode/scripts/jcode-init.py）生成的 thresholds 仅作初始建议。
     
   # 性能
   performance:

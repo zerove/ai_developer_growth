@@ -22,25 +22,27 @@ export PYTHONPATH="$ROOT${PYTHONPATH:+:$PYTHONPATH}"
 fail=0
 
 echo "═══ [1/2] Unpushed commits 检查 ═══"
-python -m tools.scripts.hooks.pre_push || fail=1
+if [ -x "$ROOT/.venv/bin/python" ]; then PYTHON="$ROOT/.venv/bin/python"; else PYTHON="python"; fi
+$PYTHON -m tools.scripts.hooks.pre_push || fail=1
 
 echo ""
 echo "═══ [2/2] 本地 CI 全量核心检查 ═══"
 
 echo "── lint ──"
-python -m tools.scripts.hooks_runner lint || fail=1
+$PYTHON -m tools.scripts.hooks_runner lint || fail=1
 
 echo "── typecheck ──"
-python -m tools.scripts.hooks_runner typecheck || fail=1
+$PYTHON -m tools.scripts.hooks_runner typecheck || fail=1
 
 echo "── test (xdist) ──"
-python -m tools.scripts.hooks_runner test || fail=1
+export ADG_TEST_RERUNS=1
+$PYTHON -m tools.scripts.hooks_runner test --incremental --base "@{upstream}" || fail=1
 
 echo "── quality-gate --full ──"
-python -m tools.scripts.hooks_runner quality-gate --full || fail=1
+$PYTHON -m tools.scripts.hooks_runner quality-gate --full || fail=1
 
 echo "── baseline recompute ──"
-python -m tools.scripts.hooks_runner baseline recompute || fail=1
+$PYTHON -m tools.scripts.hooks_runner baseline recompute || fail=1
 
 if [ "$fail" -ne 0 ]; then
     echo ""

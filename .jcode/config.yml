@@ -1,0 +1,44 @@
+# Jcode 项目配置
+#
+
+# 默认语言：中文
+language: zh-CN
+
+# 全局规则
+rules:
+  # 优先使用中文沟通
+  - id: prefer-chinese
+    description: "非必要不使用英文交流"
+    scope: communication
+    pattern: "当用户使用中文时，所有回复、注释、文档、提交信息均使用中文。仅在代码标识符、API名称、技术术语等必须使用英文的场景下使用英文。"
+    priority: high
+
+# 代码注释规则
+code_comments:
+  language: zh-CN
+  style: "注释使用中文，变量名和函数名保持英文"
+
+# 提交信息规则
+commit_messages:
+  language: zh-CN
+  format: "type(中文描述)"
+  types:
+    - feat
+    - fix
+    - refactor
+    - docs
+    - test
+    - chore
+  examples:
+    feat: "feat: 添加自动修复引擎"
+    fix: "fix: 修复 Django YAML 语法错误"
+    refactor: "refactor: 重构 LSP 服务器类型注解"
+
+# 文档规则
+documentation:
+  language: zh-CN
+  sections:
+    - title
+    - description
+    - usage
+    - examples

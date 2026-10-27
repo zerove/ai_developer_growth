@@ -35,7 +35,7 @@ fix_exit = _handle_auto_fix(results, args.dry_run or not args.fix)
 
 ```python
 if dry_run and not results:
-    return -1          # Signal: return early
+    return -1  # Signal: return early
 return 0
 ```
 
@@ -44,7 +44,7 @@ return 0
 ```python
 fix_result = _apply_auto_fix(results, dry_run=dry_run)
 if fix_result == -1:
-    return 0           # main 在此直接 return
+    return 0  # main 在此直接 return
 ```
 
 问题在于 `dry_run` 原本只被用来表示"**别写盘**"，而这个 `return -1`

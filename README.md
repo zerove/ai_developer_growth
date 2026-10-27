@@ -126,7 +126,7 @@ EOF
 
 ```bash
 # 初始化项目
-python ai-dev-framework/core/jcode_init.py your-project --language python
+python ai-dev-framework/src/ai_dev_framework/jcode_init.py your-project --language python
 ```
 
 ---

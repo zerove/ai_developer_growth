@@ -1,59 +1,44 @@
-config_version: '1.0'
-project:
-  name: ai_developer_growth
-  description: AI Developer Growth - Governance Engine
-  version: 2.24.0  # 与 pyproject.toml [project].version 保持一致（pyproject 为唯一权威源）
-  # 注：此文件是 v2.13 之前的旧配置源；当前运行时主要从 pyproject.toml
-  # [tool.adg] 读取。多数字段（language/domains/architecture/frameworks/
-  # context/feedback/output/performance/ci/notifications/lsp/marketplace/
-  # skip_patterns/rules/project）实际不被运行时引用，仅作配置参考。
-  # 真正被 get_setting() 读取的字段：llm_provider / llm_model /
-  # openai_api_key / openai_api_base / exclude / jobs。
-language:
-  auto_detect: true
-  primary: python
-  include:
-  - python
-  - javascript
-  - typescript
-  - yaml
-  exclude:
-  - vendor
-  - node_modules
-  - .git
-  - __pycache__
-  - .cache
-  - dist
-  - build
+# .adg/config.yml — 薄覆盖层（thin override）
+#
+# 职责边界（唯一权威源）:
+# - pyproject.toml [tool.adg] 是基础配置的唯一权威源（jobs / timeouts / exclude /
+#   llm_provider / llm_model / openai_* 等 get_setting 消费键全部只在 pyproject）。
+# - 本文件只保留被运行时"直接读取"的键（勿再往这里搬 pyproject 已有的值）:
+#   1. skip_patterns   — tools/scripts/hooks/pre_push.py:42-46 直读。
+#                        本文件是 skip_patterns 的唯一权威源；pyproject 中曾有的
+#                        5 条历史副本无任何消费者，已随本次整合删除（并集未缩减，
+#                        全部 9 条仍在本文件生效）。
+#   2. domains         — tools/scripts/rules_engine/rule_loader.py:553,563 直读
+#                        （按需加载 ai-dev-framework/domains/{domain}.yml 领域规则）。
+#   3. context.markers — tools/scripts/rules_engine/context.py:159-161 直读
+#                        （文件路径模式 → 角色映射，按 mtime 缓存）。
+# - 已删除的历史死配置块（值均只在 pyproject 携带、无任何运行时读取方）:
+#   project / language / architecture / frameworks / rules(severity_overrides +
+#   custom_rules_file) / context.enabled+role_markers_file+role_severity /
+#   feedback / output(sarif_file→pyproject 为 sarif_output) /
+#   performance / ci(ci.mode→pyproject 为 ci_mode) / notifications / lsp /
+#   marketplace / config_version。
+# - 注意: app_config.get_settings() 仍会把本文件顶层键整体覆盖到 pyproject 之上
+#   （同名顶层键 YAML 优先；env ADG_* 最高）。除非确实要覆盖 pyproject 值，
+#   否则勿在此添加与 get_setting 消费键同名的顶层键。
+
+skip_patterns:
+- '**/test_*.py'
+- '**/*_test.py'
+- '**/tests/**/*.py'
+- '**/demo*.py'
+- '**/*_demo.py'
+- '**/demo-adg-workflow.py'
+- 'examples/ai-growth-vscode/src/*.ts'
+- 'examples/ai-growth-vscode/out/**'
+- 'examples/ai-growth-slack/**'
+
 domains:
 - finance
 - hipaa
 - gaming
-architecture:
-  config_file: .adg/architecture.yml
-  enabled: true
-frameworks:
-  auto_detect: true
-  enabled:
-  - fastapi
-  - django
-  - express
-  - react
-  - vue
-  - nextjs
-rules:
-  severity_overrides:
-    py-any-type: warning
-    py-missing-all: info
-    common-type-any: warning
-    # CLI 入口 (jcode_cli / hooks_runner / phase_runner / supply_runner) 面向用户的
-    # 格式化输出 (emoji/缩进) 是有意为之, 非内部日志, 降为 info
-    py-log-print: info
-  custom_rules_file: .adg/rules.yml
+
 context:
-  enabled: true
-  role_markers_file: .adg/role_markers.yml
-  role_severity: {}
   markers:
     tests/: test
     test/: test
@@ -74,46 +59,3 @@ context:
     Dockerfile: config
     legacy/: legacy
     deprecated/: legacy
-feedback:
-  enabled: true
-  db_path: ~/.cache/adg/feedback.json
-  fp_downgrade_threshold: 0.6
-  fp_min_reports: 5
-output:
-  default_format: human
-  sarif_file: adg-results.sarif
-  include_fix_hints: true
-  include_explanations: true
-performance:
-  jobs: 4
-  cache_enabled: true
-  cache_dir: .cache/adg
-  incremental: true
-ci:
-  mode: auto
-  fail_on_error: true
-  fail_on_warning: false
-  trend_enabled: true
-  trend_db: ~/.cache/adg/trend.db
-notifications:
-  webhook: ''
-  on_new_errors: true
-  on_trend_regression: true
-lsp:
-  enabled: true
-  port: 0
-marketplace:
-  enabled: true
-  rules_index: ~/.jcode/governance/rules_index.json
-  auto_sync: true
-  sync_interval_hours: 24
-skip_patterns:
-- '**/test_*.py'
-- '**/*_test.py'
-- '**/tests/**/*.py'
-- '**/demo*.py'
-- '**/*_demo.py'
-- '**/demo-adg-workflow.py'
-- 'examples/ai-growth-vscode/src/*.ts'
-- 'examples/ai-growth-vscode/out/**'
-- 'examples/ai-growth-slack/**'

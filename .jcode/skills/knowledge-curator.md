@@ -14,7 +14,10 @@
 - `audit` - 检查文档断链
 - `validate <file>` - 验证新提交案例
 - `sync` - 同步工具矩阵
-- `update-moc` - 更新知识图谱
+- `update-moc` - 更新知识图谱（尚未实现，返回非零）
+
+> `update-moc` 当前是显式失败占位：历史实现调用 `link_auditor.py --update-moc`
+> （该参数不存在）。MOC 更新需要独立脚本，完成前不纳入自动化工作流。
 
 ## Examples
 
@@ -31,7 +34,7 @@
 # 同步工具矩阵
 /knowledge-curator sync
 
-# 更新知识图谱
+# 更新知识图谱（尚未实现）
 /knowledge-curator update-moc
 ```
 

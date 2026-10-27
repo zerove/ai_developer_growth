@@ -55,6 +55,31 @@ YAML 规则文件
 3. `.ai-rules/*.yml`（旧版目录级）
 4. YAML 语言规则（框架内置，含 `common/security.yml`）
 
+### 语言规则替代 common 规则
+
+语言规则可用 `supersedes` 声明替代 `common/security.yml` 中的规则：
+
+```yaml
+- id: py-eval-exec
+  supersedes:
+  - common-eval-exec
+```
+
+加载时 `rule_loader` 会跳过被替代的 common 规则，避免同一 pattern 在同一行
+重复报告；未声明 `supersedes` 的 common 规则仍正常合并。`ai-dev-framework`
+的 `scan.py` 使用同一语义，保证两套扫描入口结果一致。
+
+### 规则 ID 命名与碰撞检查
+
+- 规则 ID 全局唯一，语言前缀必须无歧义：Java 使用 `java-*`，JavaScript 使用
+  `js-*`，Ruby 使用 `rb-*`，Rust 使用 `rs-*`（旧的 `ja-*` / `ru-*` 前缀已退役）。
+- `tests/test_rule_supersedes_validation.py` 校验 `supersedes` 的类型、目标存在性、
+  自引用与循环。
+- `python tools/scripts/check_rule_collisions.py` 检查重复 ID 和未声明的跨源
+  pattern 重叠；`tests/test_rule_collisions.py` 在 CI 中执行同一检查。
+- `supersedes` 只影响 common 合并，不会删除用户自定义规则；语言规则的 pattern
+  必须是 common 规则的超集，否则会丢失覆盖。
+
 ## 设计说明
 
 - 规则来源收敛为单一 YAML 体系，避免同一规则在 Python 与 YAML 两处各维护一份

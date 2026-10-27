@@ -62,7 +62,7 @@ ai_developer_growth/
 # 代码质量检查
 ruff check .
 ruff format --check .
-mypy tools/scripts/ --ignore-missing-imports
+mypy tools/scripts/ ai-dev-framework/src --ignore-missing-imports
 
 # 测试
 pytest tests/ -v

@@ -64,7 +64,7 @@ This skill runs the following commands:
 
 1. `ruff check .` - 代码风格检查
 2. `ruff format --check .` - 格式检查
-3. `mypy tools/scripts/ --ignore-missing-imports` - 类型检查
+3. `mypy tools/scripts/ ai-dev-framework/src --ignore-missing-imports` - 类型检查
 4. `python -m pytest tests/ -v --cov=tools/scripts` - 测试套件
 5. `bandit -r tools/scripts/` - 安全扫描
 6. 验证15个治理层文档的 frontmatter、

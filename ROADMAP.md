@@ -599,7 +599,7 @@ Git 快照，只看到 `docs/adr/` 的中间态，被误当成全量污染。
   - 工具: `bash tools/scripts/mutmut_ci.sh [--changed-only|--files ...]`
   - 5 分钟超时, 主动清理 .bak + .mutmut-cache
   - 接入 on_pr 条件触发 `files_contain('tools/scripts/**/*.py') || files_contain('examples/**/*.py')`
-- [ ] **CONTEXT.md 长期 50 条维护**: 接受 on_commit 自动收敛, 手工 commit 偶尔触发 (当前决策)
+- [ ] **CONTEXT.md 长期 5 条维护**: 接受 on_commit 自动收敛, 手工 commit 偶尔触发 (当前决策; 2026-10-25 由 50 收敛到 5)
 - [x] **`check_rules_yml_integrity.sh` 接入 on_merge**: ✅ 已落地 (commit: 见 ADR-025), 与 on_commit 双层防护
 - [x] **Phase 30 双层防护首次主动拦截**: ✅ 真实事件 (ADR-027), session 内 .adg/rules.yml 被覆写后被脚本立即捕获
 - [x] **覆盖率提升 (<80% 模块)**: 4 个 rules_engine 模块 (regex_cache 78% / rule_loader 77% / semantic_checker 73% / semantic_rules 72%)

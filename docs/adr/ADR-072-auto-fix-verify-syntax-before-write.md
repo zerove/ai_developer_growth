@@ -261,7 +261,7 @@ $ grep -n "args\.dry_run" tools/scripts/rules_engine/validators/cli.py
 `_handle_auto_fix` 是**无条件调用**的：
 
 ```python
-fix_exit = _handle_auto_fix(results, args.dry_run)   # 与 args.fix 无关
+fix_exit = _handle_auto_fix(results, args.dry_run)  # 与 args.fix 无关
 ```
 
 也就是说，**只要有人给任意一条规则加上 `fix_replacement`，CLI 就会在用户

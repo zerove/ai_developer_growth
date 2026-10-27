@@ -50,10 +50,10 @@ tools/.cache/rules_engine/rules_cache.json
 跨进程保护：
 
 ```python
-disk_cache = _load_disk_cache()   # 读
+disk_cache = _load_disk_cache()  # 读
 ...
 disk_cache[cache_key] = result
-_save_disk_cache(disk_cache)      # 整体覆盖写
+_save_disk_cache(disk_cache)  # 整体覆盖写
 ```
 
 ### 症状 A：丢更新

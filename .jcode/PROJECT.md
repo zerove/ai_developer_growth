@@ -64,7 +64,7 @@ python .jcode/scripts/governance-auditor.py audit-hallucination-risks
 # 直接命令
 ruff check .
 ruff format --check .
-mypy tools/scripts/ --ignore-missing-imports
+mypy tools/scripts/ ai-dev-framework/src --ignore-missing-imports
 python -m pytest tests/ -v --cov=tools/scripts
 
 # 工具脚本

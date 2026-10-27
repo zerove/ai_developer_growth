@@ -105,3 +105,66 @@ tools/scripts/rule_marketplace.py
 
 **建议后续**：要么批量套用本 ADR 的引导，要么让门禁只走 `python -m`
 一种形式。后者更彻底 —— 消除"可被直接执行"这个隐式契约。
+
+## 补记（2026-10-18）：批量自举完成与根因更正
+
+上文「建议后续」的两个选项之间选定了**选项一（批量套用引导）**，并已执行完毕。
+追查过程发现上文两处判断失准 —— 缺陷面、被影响测试的根因都记错了，一并更正。
+
+**更正一：缺陷面远大于「15 个」—— 38 个命中、36 个未自举。**
+
+「15 个」来自逐个 `--help` 探测，**系统性低估**：该方法只能探到能进入
+`argparse` 的脚本，在此之前就崩的探不到 —— `ai_context_manager.py` 先崩在缺
+`openai` 依赖上，`--help` 与源码 `grep` 双路都会漏掉它。按「含顶层 `tools.*`
+包绝对导入」重统计：38 个命中，36 个未自举 —— 已批量补齐。
+
+**更正二：16 个测试失败的根因一分为二。**
+
+上文把 16 个失败全部归因于「脚本未自举」，实际只有 7 个是；另外 9 个是
+`sitecustomize` 注入失效 —— 注入由解释器在**启动阶段**执行，早于任何用户模块
+导入，仓库根尚不在 `sys.path`，注入里的 `from tools.scripts...` 抛
+`ModuleNotFoundError`，而该异常被 `try/except Exception` 吞掉：缺陷没装上、
+CLI 走正常路径、测试却以产品缺陷的面貌变红，与真实回归无法区分。
+修法：注入自行引导仓库根 + **不再吞异常**（注入失败即启动失败）。
+实测 9 failed → 24 passed。
+
+**批量自举与统一引导。**
+
+36 个脚本补上引导（用 `import pathlib` / `import sys` 后取属性、无别名 ——
+下划线别名 N813、CamelCase 别名 N812 都会撞 ruff 命名检查），随后全部统一收敛
+到共享模块 `tools/scripts/_bootstrap.py`（9 行、`import` 即生效、幂等；内部即
+上文「决策」的三行语义）。每个脚本顶部三行，两种执行路径等价：
+
+```python
+# ADR-079: 统一路径引导 —— `python -m tools.scripts.X`（包上下文）与
+# `python tools/scripts/X.py`（path[0]=tools/scripts）均由 _bootstrap 幂等补齐仓库根。
+try:  # python -m tools.scripts.X (根已在 path)
+    from tools.scripts import _bootstrap
+except ModuleNotFoundError:  # python tools/scripts/X.py (path[0]=tools/scripts)
+    import _bootstrap  # type: ignore[no-redef]  # noqa: F401
+```
+
+受影响的 `tools.*` 导入补挂 `# noqa: E402` —— 保留「引导先于导入」的刻意顺序。
+**漏判陷阱**：`jcode_ai_native_workflow.py` 曾把 `sys.path.insert` 放在包导入
+**之后** —— 以「源码里有没有 `sys.path.insert`」判定会误判为已自举；
+引导必须在首个包导入之前。
+
+**回归守卫。**
+
+新增 `tests/test_script_bootstrap_contract.py`：判据取「能启动」（真实起子进程、
+以脚本路径跑 `--help`，要求退出码 0）而非源码匹配，避免两类假象 —— 源码里有
+引导但探测方法写错会误报 OK；脚本先崩于缺依赖会被漏检。变异验证：移除任一
+脚本的引导后对应用例立即变红。已知缺口：无 `argparse` 的脚本
+（`perf_benchmark.py` 收到 `--help` 会直接跑完整基准，实测 >100s）无法用该判据
+覆盖，暂靠人工维护。
+
+**例外。**
+
+`ai_context_manager.py` 不列入守卫清单：其 `tools` 导入在函数级（延迟加载），
+且缺 `openai` 依赖无法冒烟，保留现状。
+
+**收口验证。**
+
+全量 5110 passed / 0 failed；`ruff check` + `format` 全绿；`mypy` 209 文件无问题。
+至此选项一执行完毕，选项二（门禁只走 `python -m`）不再需要 —— 文档
+（26 种语言的 `ai-dev-framework/*/rules.md`）已大量承诺脚本路径用法。

@@ -2,7 +2,7 @@
 
 > **AI Agent 开发治理框架** — 适用于任何项目的 AI Agent 开发治理标准。
 
-`pip install ai-dev-framework`
+`pip install ai-dev-framework`（安装后提供的命令是 `adg-dev`）
 
 ---
 
@@ -10,10 +10,10 @@
 
 ```bash
 # 初始化项目治理配置
-adg init my-project
+adg-dev init my-project
 
 # 检查治理状态
-adg check
+adg-dev check
 ```
 
 ## 功能
@@ -36,7 +36,7 @@ AI 辅助开发正在改变软件工程，但带来了新挑战：
 
 | 场景 | 说明 |
 |------|------|
-| 新项目初始化 | `adg init` 一键生成治理配置 |
+| 新项目初始化 | `adg-dev init` 一键生成治理配置 |
 | 现有项目接入 | 复制 `GOVERNANCE.md` 并根据语言调整 |
 | 团队标准化 | 统一 AI Agent 行为规范 |
 | CI/CD 集成 | 钩子系统自动触发质量检查 |

@@ -14,34 +14,63 @@ Complete reference for all code quality rules across 26 languages and 5 framewor
 
 | Language | Rules | Error | Warning | Info |
 |----------|-------|-------|---------|------|
-| Python | 21 | 12 | 6 | 3 |
-| TypeScript | 17 | 9 | 5 | 3 |
-| Java | 17 | 10 | 5 | 2 |
-| Go | 16 | 8 | 6 | 2 |
-| Rust | 15 | 7 | 5 | 3 |
-| C++ | 8 | 4 | 3 | 1 |
-| C# | 8 | 4 | 3 | 1 |
-| JavaScript | 8 | 4 | 3 | 1 |
-| Kotlin | 8 | 4 | 3 | 1 |
-| Swift | 8 | 4 | 3 | 1 |
-| Scala | 8 | 4 | 3 | 1 |
-| Ruby | 8 | 4 | 3 | 1 |
-| PHP | 8 | 4 | 3 | 1 |
-| Dart | 8 | 4 | 3 | 1 |
-| Elixir | 8 | 4 | 3 | 1 |
-| Lua | 8 | 4 | 3 | 1 |
-| Haskell | 8 | 4 | 3 | 1 |
-| Clojure | 8 | 4 | 3 | 1 |
-| R | 8 | 4 | 3 | 1 |
-| Perl | 8 | 4 | 3 | 1 |
-| PowerShell | 8 | 4 | 3 | 1 |
-| Zig | 8 | 4 | 3 | 1 |
-| Assembly | 8 | 4 | 3 | 1 |
-| Fortran | 8 | 4 | 3 | 1 |
-| MATLAB | 8 | 4 | 3 | 1 |
-| GraphQL | 8 | 4 | 3 | 1 |
+| Python | 41 | 16 | 19 | 6 |
+| TypeScript | 29 | 11 | 13 | 5 |
+| Java | 37 | 15 | 18 | 4 |
+| Go | 36 | 13 | 20 | 3 |
+| Rust | 34 | 13 | 17 | 4 |
+| C++ | 33 | 13 | 16 | 4 |
+| C# | 33 | 14 | 15 | 4 |
+| JavaScript | 41 | 18 | 19 | 4 |
+| Kotlin | 33 | 13 | 18 | 2 |
+| Swift | 17 | 7 | 8 | 2 |
+| Scala | 33 | 11 | 15 | 7 |
+| Ruby | 32 | 15 | 14 | 3 |
+| PHP | 34 | 14 | 18 | 2 |
+| Dart | 25 | 8 | 12 | 5 |
+| Elixir | 25 | 7 | 11 | 7 |
+| Lua | 28 | 9 | 14 | 5 |
+| Haskell | 20 | 8 | 8 | 4 |
+| Clojure | 20 | 5 | 8 | 7 |
+| R | 27 | 9 | 11 | 7 |
+| Perl | 28 | 13 | 13 | 2 |
+| PowerShell | 28 | 10 | 13 | 5 |
+| Zig | 28 | 9 | 13 | 6 |
+| Assembly | 28 | 12 | 14 | 2 |
+| Fortran | 19 | 8 | 7 | 4 |
+| MATLAB | 27 | 10 | 14 | 3 |
+| GraphQL | 19 | 6 | 10 | 3 |
 
-**Total: 756 rules across 25 languages**
+**Total: 755 language rules + 18 common rules = 773 rules**
+
+> 规则数量由 YAML 规则文件生成；完整规则以 `ai-dev-framework/languages/*/rules.d/anti_patterns.yml`
+> 和 `ai-dev-framework/common/security.yml` 为准。其他语言表保留常用规则摘要。
+
+## Rule ID Prefixes and Supersedes
+
+规则 ID 全局唯一，语言前缀必须无歧义：Java 使用 `java-*`，JavaScript 使用 `js-*`，
+Ruby 使用 `rb-*`，Rust 使用 `rs-*`。旧的 `ja-*` / `ru-*` 前缀已退役（2026-10-27），
+项目级 `.adg/rules.yml` 覆盖请改用新 ID。
+
+语言规则可用 `supersedes` 声明替代 `common/security.yml` 中的规则：
+
+```yaml
+- id: py-eval-exec
+  supersedes:
+  - common-eval-exec
+```
+
+加载器会丢弃被替代的 common 规则，但**不会**丢弃用户自定义规则。语言规则的
+pattern 必须是 common 规则的超集，否则会丢失覆盖。当前 Python 侧使用该机制的规则包括
+`py-eval-exec`、`py-hardcoded-secret`、`py-any-type`、`py-bare-except-pass` 和
+`py-sql-string-format`。
+
+校验命令：
+
+```bash
+python tools/scripts/check_rule_collisions.py
+pytest tests/test_rule_supersedes_validation.py
+```
 
 ## Frameworks
 
@@ -57,42 +86,72 @@ Complete reference for all code quality rules across 26 languages and 5 framewor
 
 | ID | Severity | Pattern | Message |
 |----|----------|---------|---------|
-| common-hardcoded-secret | error | `(?:password\|secret\|api_key\|token)\s*=\s*["'][^"']+["']` | Hardcoded secrets are a security risk |
-| common-eval | error | `\beval\s*\(` | eval() allows arbitrary code execution |
-| common-exec | error | `\bexec\s*\(` | exec() allows arbitrary code execution |
-| common-sql-injection | error | String concat in SQL queries | Use parameterized queries |
-| common-shell-injection | error | `os\.system\s*\(` | Use subprocess with shell=False |
-| common-crypto-md5 | warning | `md5\s*\(` | MD5 is cryptographically weak |
-| common-crypto-sha1 | warning | `sha1\s*\(` | SHA-1 is cryptographically weak |
-| common-todo | info | `TODO\|FIXME` | Address before merging |
+| common-hardcoded-secret | error | `(?:password\|secret\|api_key\|token\|api_secret\|access_key\|private_key)\s*[=:]\s*["'][^"']{4,}["']` | Hardcoded secrets are a critical security vulnerability |
+| common-eval-exec | error | `\beval\s*\(\|\bexec\s*\(\|\bFunction\s*\(` | Dynamic code execution is a security risk (code injection) |
+| common-sql-injection | error | `f["'].*\b(SELECT\|INSERT\|UPDATE\|DELETE)\b.*\{` | SQL injection via f-string concatenation |
+| common-unsafe-yaml-load | warning | `yaml\.load\((?!.*Loader)` | yaml.load() is unsafe - use yaml.safe_load() |
+| common-pickle-load | error | `pickle\.loads?\(` | pickle deserialization is a security risk |
+| common-ssl-verify-false | error | `verify\s*=\s*False` | SSL verification disabled - security risk |
+| common-weak-hash | warning | `\bmd5\s*\(\|\bsha1\s*\(\|MD5\.\|SHA1\.\|hashlib\.md5\|hashlib\.sha1` | MD5 and SHA1 are cryptographically weak |
+| common-http-url | warning | `http://[\w.-]+(?:/\|\s)` | Use HTTPS instead of HTTP for security |
+| common-debugger | warning | `\bdebugger\b\|\bbreakpoint\s*\(\|\bpdb\.set_trace\s*\(\|\bimport\s+pdb\b` | Debugger statements should not be in production code |
+| common-console-log | info | `console\.log\s*\(\|print\s*\(.*debug\|System\.out\.print\|puts\s+debug` | Debug output should be removed before production |
+| common-todo | info | `#.*(?:TODO\|FIXME\|HACK\|XXX\|TEMP)` | Unresolved TODO/FIXME comment found |
+| common-type-ignore | warning | `#\s*type:\s*ignore(?!\s*\[)` | Bare type ignore comment suppresses type checking; use specific error codes like |
+| common-type-any | warning | `:\s*Any\b` | Use of Any type bypasses type checking |
+| common-type-ignore-decorator | warning | `@\w+(?:\.\w+)*\.ignore` | Ignore decorator suppresses type checking |
+| common-bare-except-pass | warning | `except\s*:\s*pass` | Bare except with pass swallows all exceptions |
+| common-except-exception-pass | warning | `except\s+(?:Exception\|BaseException)\s*:\s*pass` | Catching broad exception and passing swallows errors |
+| common-empty-except-block | warning | `except\s+(?:\w+(?:\s*,\s*\w+)*)?\s*:\s*\n\s*(?:pass\|#.*)?(?=\n\|$)` | Empty except block swallows errors silently |
+| common-empty-catch | warning | `(?:catch\|except\|rescue)\s*(?:\([^)]+\))?\s*[:{]\s*(?:end\|[}\)])\s*$` | Empty catch block silently swallows errors |
 
-## Python Rules (21 rules)
+## Python Rules (41 rules)
 
 ### Anti-patterns
 
 | ID | Severity | Pattern | Message |
 |----|----------|---------|---------|
-| py-bare-except | error | `except\s*:` | Avoid bare except |
-| py-bare-except-pass | error | `except.*:\s*pass\s*$` | Never silently swallow exceptions |
-| py-bare-except-string | error | `except\s+["']` | Use exception classes |
-| py-any-type | warning | `:\s*Any\b` | Avoid Any type |
-| py-union-none | info | `Optional\[X\]` | Use X \| None |
-| py-mutable-default | error | `def.*=\s*(\[\]\|\{)` | Mutable default args shared |
-| py-eval-exec | error | `\beval\s*\(\|exec\s*\(` | Security risk |
-| py-hardcoded-secret | error | Password/secret patterns | Hardcoded secrets |
-| py-shell-true | warning | `shell=True` | Shell injection risk |
-| py-sql-string-format | error | SQL + f-string/format | SQL injection risk |
-| py-pickle-untrusted | warning | `pickle\.loads` | Unsafe deserialization |
-| py-assert-production | warning | `assert\s+` | Assert removed with -O |
-| py-print-statement | info | `print\(` | Use logging module |
-| py-global-import | warning | `from.*import \*` | Wildcard imports |
-| py-mutable-attribute | warning | `self\.\w+\s*=\s*\[\]` | Shared mutable state |
-| py-lambda-assignment | info | `lambda\s*=\|=\s*lambda` | Use def |
-| py-complex-comprehension | info | Nested comprehensions | Simplify |
-| py-redefined-unused | warning | Variable redefinition | Unused variable |
-| py-shadowing-builtin | warning | Shadowing builtins | Use different name |
-| py-todo | info | `TODO\|FIXME` | Address before merge |
-| py-fixme | info | `FIXME` | Fix before merge |
+| py-bare-except | error | `except\s*:` | Avoid bare except: use specific exception types |
+| py-bare-except-pass | error | `except.*:\s*pass\b` | Never silently swallow exceptions |
+| py-bare-except-string | error | `except\s+["']` | Do not use string exceptions - use exception classes |
+| py-any-type | warning | `:\s*Any\b\|->\s*Any\b` | Avoid Any type - use specific types |
+| py-union-none | info | `Optional\[` | In Python 3.10+, prefer X \| None over Optional[X] |
+| py-mutable-default | error | `def\s+\w+\s*\(.*=\s*(\[\]\|\{\|set\()` | Mutable default arguments are shared across calls |
+| py-eval-exec | error | `\beval\s*\(\|\bexec\s*\(` | eval/exec are security risks |
+| py-hardcoded-secret | error | `(?:password\|secret\|api_key\|token\|api_secret\|access_key\|private_key)\s*[=:]\s*["'][^"']{4,}["']` | Hardcoded secrets are a security vulnerability |
+| py-shell-true | warning | `subprocess\.\w+\(.*shell\s*=\s*True` | shell=True enables shell injection attacks |
+| py-sql-string-format | error | `f["'][^"']*\b(?:SELECT\|INSERT\|UPDATE\|DELETE)\b.*\{\|(?:execute\|cursor\.execute)\s*\(.*(?:f["']\|\.format\(\|%\s)` | String formatting in SQL enables SQL injection |
+| py-star-import | warning | `from\s+\S+\s+import\s+\*` | Wildcard imports pollute the namespace |
+| py-global-statement | warning | `^\s*global\s+` | Global statements make code hard to test |
+| py-print-statement | info | `^\s*print\s*\(` | Use logging module instead of print() |
+| py-test-sleep | warning | `time\.sleep\(` | Sleep in tests makes them slow and flaky |
+| py-missing-type-hints | warning | `def\s+[a-z]\w+\s*\([^)]*\)\s*:` | Public functions should have type annotations for parameters and return value |
+| py-bare-raise | error | `^\s*raise\s*$` | Bare raise without arguments only works inside an except handler' |
+| py-mutable-class-attr | warning | `class\s+\w+.*:\s*\n\s+\w+\s*=\s*(\[\]\|\{\|set\()` | Mutable class attributes are shared across all instances' |
+| py-nested-import | info | `^\s+(?:from\s+\S+\s+)?import\s+\S+` | Import statements should be at the top of the file' |
+| py-star-unpacking | info | `^\s*\w+,\s*\*\w+\s*=\s*\w+` | Star unpacking can obscure the structure of data' |
+| py-complex-comprehension | warning | `\[.*for\s+.*in\s+.*\s+if\s+.*\s+if\s+.*\s+if\s+.*\]` | Comprehensions with >3 conditions are hard to read' |
+| py-missing-all | info | `^(?!.*__all__)\s*(?:class\|def\|from)\s+\w+` | Public modules should define __all__ to control the public API' |
+| py-log-sensitive | error | `log(?:ger)?\.(?:info\|debug\|warn\|error)\s*\(.*(?:password\|secret\|token\|credential\|api_key)` | Never log sensitive data (passwords, tokens, secrets) |
+| py-log-print | warning | `^\s*print\s*\(` | Use structured logging instead of print statements in production |
+| py-file-leak | info | `(?<!\bwith\s)(?:open\|fopen)\s*\([^)]*\)\s*(?!.*\b(with\|using\|close\|finally\|defer)\b)` | File handles must be closed properly to avoid resource leaks |
+| py-connection-leak | error | `\b(?:connect\|new connection\|getConnection)\s*\([^)]*\)\s*(?!.*\b(with\|using\|close\|finally\|defer)\b)` | Database/network connections must be released after use |
+| py-missing-await | error | `(?:async\s+def\|async\s+fn)\s+\w+\s*\([^)]*\)\s*\{?\s*$` | Async function called without await may cause race conditions |
+| py-shared-mutable | warning | `(?:global\|static\|thread_local)\s+\w+(?:\s*=\s*[^;]*)?\s*[;]?$` | Shared mutable state without synchronization can cause race conditions |
+| py-large-alloc-loop | warning | `(?:for\|while\|loop)\s*\([^)]*\)\s*\{?\s*[^}]*\b(?:append\|push\|concat\|new\s+(?:Array\|List\|StringBuilder))\b` | Repeated allocations inside loops impact performance |
+| py-n-plus-one | warning | `(?:for\|while\|loop\|each\|map)\s*[^)]*\)?\s*\{?[^}]*\b(?:query\|find\|get\|fetch\|load)\b[^}]*\}` | Query inside a loop may cause N+1 performance problem |
+| py-cors-allow-all | error | `(?:Access-Control-Allow-Origin\|origins?)\s*[=:]\s*["\']?\*["\']?` | Wildcard CORS exposes API to any origin |
+| py-no-input-validation | warning | `(?:@\w+Mapping\|def\s+\w+\([^)]*request\|route\|endpoint\|api_view)` | API endpoints should validate all input parameters |
+| py-hardcoded-origin | warning | `(?:allowed_origins\|trusted_origins\|ALLOWED_HOSTS)\s*[=:]\s*\["\'\]https?://` | Hardcoded origins in config should be environment variables |
+| py-exception-leak | warning | `(?:print\|log\|logger)\s*\(.*e(?:rror)?\.(?:message\|to_String\|getMessage)\s*\)` | Exception messages may leak internal implementation details |
+| py-hardcoded-secret-in-ci | error | `(?:GITHUB_TOKEN\|API_KEY\|SECRET\|PASSWORD)\s*[=:]\s*[\"'][^\"']+[\"']` | CI/CD secrets should use GitHub Secrets or vault, not hardcoded strings |
+| py-ci-disabled-check | warning | `continue-on-error:\s*true` | CI checks with continue-on-error silently ignore failures |
+| py-docker-image-latest | warning | `FROM\s+\S+:\s*latest\b` | Using :latest tag makes builds non-reproducible |
+| py-docker-exposed-port | warning | `EXPOSE\s+\d+` | Exposed ports should have corresponding healthcheck |
+| py-iac-hardcoded-secret | error | `(?:password\|secret_key\|access_key)\s*[=:]\s*[\"'][^\"']+[\"']` | Infrastructure secrets should use vault or secret store |
+| py-iac-admin-exposed | error | `(?:adminer\|phpmyadmin\|pgadmin\|kibana)\s*:` | Admin tools should not be publicly accessible |
+| py-docker-root-user | error | `FROM\s+\S+\s*(?:AS\s+\w+)?\s*\n(?!.*USER\s)` | Running containers as root is a security risk |
+| py-pip-audit-missing | warning | `pip install\b(?!.*pip-audit\|.*safety)` | Package installation without vulnerability scanning |
 
 ## TypeScript Rules (17 rules)
 

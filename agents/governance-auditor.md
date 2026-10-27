@@ -4,10 +4,10 @@
 
 ### 指令
 
-1. **执行代码风格检查**: 运行 `ruff check tools/ tests/ examples/` + `ruff format --check tools/ tests/ examples/` 验证代码风格，输出错误数量，失败时阻止合并
-2. **执行类型检查**: 运行 `mypy --config-file pyproject.toml tools/ examples/ai-context-sync/src/` 类型检查，要求无错误（ignore_missing_imports=true 仅用于第三方库）
-3. **执行测试套件**: 运行 `pytest tests/ -v --timeout=30` + `cd examples/ai-context-sync && pytest tests/ -v --timeout=30` 要求覆盖率 ≥ 70%，输出覆盖率报告
-4. **安全扫描**: 运行 `pip-audit` 或 `safety check` 依赖安全扫描，运行 `bandit -r tools/ examples/ai-context-sync/src/` 静态安全分析
+1. **执行代码风格检查**: 运行 `ruff check .` + `ruff format --check .`（仓库根执行，配置 `pyproject.toml [tool.ruff]`）验证代码风格，输出错误数量，失败时阻止合并；统一门禁入口 `python -m tools.scripts.hooks_runner <lint|format|typecheck|test|security>`
+2. **执行类型检查**: 运行 `python -m mypy tools/scripts/ ai-dev-framework/src --ignore-missing-imports` 类型检查，要求无错误（配置 `pyproject.toml [tool.mypy]`；ignore_missing_imports 仅用于第三方库）
+3. **执行测试套件**: 运行 `python -m pytest tests/ -v --cov=tools --cov=.jcode/scripts --cov-report=term-missing --cov-fail-under=80`，覆盖率阈值唯一来源 `[tool.adg] cov_min = 80`（与 CI 同口径）；单测试超时 300 秒（`pytest.ini`），全量回归 `pytest` 按 testpaths 另含 `ai-dev-framework/tests`
+4. **安全扫描**: 运行 `bandit -r tools/scripts/ -ll` 静态安全分析与 `pip-audit` 依赖安全扫描，另有内置 secret 扫描（gitleaks/trufflehog 缺失时自动回退）
 5. **治理合规检查**: 运行 `tools/scripts/audit_to_pr.py` 生成审计报告并创建 PR，检查 `GOVERNANCE.md` 质量门禁：无 `unwrap()`/`expect()`、无 `as any`/`@ts-ignore`、错误处理完整
 6. **语言特定规则检查**: 运行 `python tools/scripts/validate_language_rules.py <path> --auto-detect --json` 验证 26 种语言的反模式、命名规范和阈值，检查项包括：
    - 反模式检测（错误处理、安全、类型安全、代码质量）

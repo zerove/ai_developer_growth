@@ -100,18 +100,12 @@ class TestInstallGlobal:
         base = ig.JCODE_GOVERNANCE
         assert (base / "ai-dev-framework").is_dir()
         assert (base / "adg").is_file()
-        assert (base / "mode_decision.conf").is_file()
 
     def test_adg_wrapper_is_executable(self, ig) -> None:
         ig.install_global()
         import os
 
         assert os.access(ig.JCODE_GOVERNANCE / "adg", os.X_OK), "adg 包装脚本应可执行"
-
-    def test_mode_conf_content(self, ig) -> None:
-        ig.install_global()
-        text = (ig.JCODE_GOVERNANCE / "mode_decision.conf").read_text(encoding="utf-8")
-        assert "mode=quality" in text
 
     def test_reinstall_replaces_existing_tree(self, ig) -> None:
         """重装是净替换：自带旧文件应被清除。"""

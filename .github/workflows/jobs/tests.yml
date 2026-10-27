@@ -6,18 +6,12 @@ on:
         description: Python version
         type: string
         default: '3.11'
-      shard:
-        description: Shard number (1-4), empty for full test
-        type: string
-        default: ''
 jobs:
   test:
-    name: Tests (Python ${{ inputs.python-version }})${{ inputs.shard != '' && format('
-      Shard {0}/4', inputs.shard) || '' }}
+    name: Tests (Python ${{ inputs.python-version }})
     runs-on: ubuntu-latest
-    # 不依赖 pytest-timeout 插件的兜底: 插件缺失时 timeout 配置会被静默忽略,
-    # 而没有 job 级上限的挂死测试会一直占用 runner 直到 GitHub 的 360 分钟
-    # 默认值。测试在 -n auto 下约 3-5 分钟, 30 分钟留足余量。
+    # pytest-timeout 插件已在 requirements-dev.txt 声明并在 CI 安装，单测试超时由插件强制约束；
+    # job 级 timeout-minutes 仍作为兜底。测试在 -n auto 下约 3-5 分钟，30 分钟留足余量。
     timeout-minutes: 30
     steps:
     - uses: actions/checkout@v4
@@ -26,50 +20,70 @@ jobs:
         python-version: ${{ inputs.python-version }}
         cache: pip
         cache-dependency-path: pyproject.toml
-    - run: pip install pytest pytest-cov pyyaml pytest-xdist pytest-rerunfailures
+    - run: pip install pytest pytest-cov pyyaml pytest-xdist pytest-rerunfailures pytest-timeout
     - run: pip install -e .
     - name: Read coverage threshold from pyproject.toml
       id: coverage-config
       # cov_min 是覆盖率的唯一来源: 本地 hooks/basic_checks.py 以
       # --cov-fail-under 读同一键。此前本步骤读 [tool.coverage.report].fail_under,
       # 与 cov_min 是两份可各自漂移的副本。
-      run: "python -c \"\nimport tomllib\nwith open('pyproject.toml', 'rb') as f:\n\
-        \    data = tomllib.load(f)\nthreshold = data.get('tool', {}).get('adg',\
-        \ {}).get('cov_min', 80)\nprint(f'fail_under={threshold}')\n        \" >> $GITHUB_OUTPUT\n"
+      run: |
+        python - <<'PY' >> "$GITHUB_OUTPUT"
+        import tomllib
+
+        with open("pyproject.toml", "rb") as f:
+            cfg = tomllib.load(f)
+
+        adg = cfg.get("tool", {}).get("adg", {})
+        print(f"fail_under={adg.get('cov_min', 80)}")
+        print(f"branch_fail_under={adg.get('branch_cov_min', 75)}")
+        PY
     - name: Restore coverage cache
       uses: actions/cache@v4
       with:
         path: .coverage*
-        key: ${{ github.repository }}-coverage-${{ inputs.python-version }}-${{ github.sha
-          }}-${{ inputs.shard }}
-        restore-keys: '${{ github.repository }}-coverage-${{ inputs.python-version
-          }}-
-
-          '
+        key: ${{ github.repository }}-coverage-${{ inputs.python-version }}-${{ github.sha }}
+        restore-keys: '${{ github.repository }}-coverage-${{ inputs.python-version }}-'
     - name: Run tests with coverage
       # --reruns 2 与 pyproject [tool.adg] test_reruns 保持一致。此前 CI 未安装
       # pytest-rerunfailures 也未传 --reruns, 该配置只在本地 hooks_runner 生效:
       # 本地会重试偶发失败而 CI 不会, 导致同一份代码本地绿、CI 随机红。
       # 插件缺失时 pytest 会因未知参数直接报错, 故与安装步骤成对修改。
-      run: "if [ -n \"${{ inputs.shard }}\" ]; then\n  pip install pytest-split\n\
-        \  pytest tests/ -v -n auto --cov=tools --cov=.jcode/scripts --cov-report=xml --cov-report=term-missing\
-        \ --tb=short --reruns 2 --reruns-delay 1 --split=${{ inputs.shard }}/4 --group-by=duration\nelse\n\
-        \  pytest tests/ -v -n auto --cov=tools --cov=.jcode/scripts --cov-report=xml --cov-report=term-missing\
-        \ --tb=short --reruns 2 --reruns-delay 1\nfi\n"
-    - name: Coverage check (only for non-sharded 3.11)
-      if: inputs.python-version == '3.11' && inputs.shard == ''
-      run: "python -c \"\nimport xml.etree.ElementTree as ET\ntree = ET.parse('coverage.xml')\n\
-        root = tree.getroot()\ncoverage = float(root.attrib.get('line-rate', 0)) *\
-        \ 100\nbranch = float(root.attrib.get('branch-rate', 0)) * 100\nprint(f'Line:\
-        \ {coverage:.1f}%, Branch: {branch:.1f}%')\nthreshold = ${{ steps.coverage-config.outputs.fail_under\
-        \ }}\nif coverage < threshold:\n    print(f'::error::Coverage {coverage:.1f}%\
-        \ < {threshold}%')\n    exit(1)\n\"\n"
+      run: pytest tests/ -v -n auto --cov=tools --cov=.jcode/scripts --cov-report=xml --cov-report=term-missing --tb=short --reruns 2 --reruns-delay 1
+    - name: Run ai-dev-framework tests
+      # pytest.ini 的 testpaths 声明了这个目录, 但 CI 之前只跑 `pytest tests/`,
+      # 导致 24 个用例(含 redos/feedback 双实现 parity)从未执行。此步显式运行,
+      # 与主仓测试分开, 避免影响覆盖率口径。
+      run: pytest ai-dev-framework/tests/ -v --tb=short
+    - name: Coverage check (only for Python 3.11)
+      if: inputs.python-version == '3.11'
+      run: |
+        python - <<'PY'
+        import xml.etree.ElementTree as ET
+
+        root = ET.parse("coverage.xml").getroot()
+        line_rate = float(root.attrib.get("line-rate", 0)) * 100
+        branch_rate = float(root.attrib.get("branch-rate", 0)) * 100
+        line_min = float("${{ steps.coverage-config.outputs.fail_under }}")
+        branch_min = float("${{ steps.coverage-config.outputs.branch_fail_under }}")
+        print(
+            f"Line: {line_rate:.1f}% (min {line_min:.1f}%), "
+            f"Branch: {branch_rate:.1f}% (min {branch_min:.1f}%)"
+        )
+        failed = False
+        if line_rate < line_min:
+            print(f"::error::Line coverage {line_rate:.1f}% < {line_min:.1f}%")
+            failed = True
+        if branch_rate < branch_min:
+            print(f"::error::Branch coverage {branch_rate:.1f}% < {branch_min:.1f}%")
+            failed = True
+        raise SystemExit(1 if failed else 0)
+        PY
     - name: Upload coverage
       id: upload
-      if: inputs.shard != '' || inputs.python-version == '3.11'
+      if: inputs.python-version == '3.11'
       uses: actions/upload-artifact@v4
       with:
-        name: coverage-data${{ inputs.shard != '' && format('-shard-{0}', inputs.shard)
-          || '' }}
+        name: coverage-data
         path: .coverage
         retention-days: 7

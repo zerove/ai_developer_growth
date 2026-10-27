@@ -16,22 +16,11 @@ concurrency:
   group: ci-${{ github.ref }}
   cancel-in-progress: true
 
-env:
-  PYTHON_VERSION: "3.11"
-
 jobs:
-  # ──────────────────────────────────────────────────────
-  # 基础设置 - 复用于所有下游 job
-  # ──────────────────────────────────────────────────────
-  setup:
-    uses: ./.github/workflows/jobs/setup.yml
-    secrets: inherit
-
   # ──────────────────────────────────────────────────────
   # ADG Governance Check
   # ──────────────────────────────────────────────────────
   adg-governance:
-    needs: setup
     uses: ./.github/workflows/jobs/adg-governance.yml
     secrets: inherit
 
@@ -39,7 +28,6 @@ jobs:
   # Governance Audit (完整审计：lint + typecheck + test + security + governance-docs + AI-SDLC + AI质量门禁)
   # ──────────────────────────────────────────────────────
   governance-audit:
-    needs: setup
     uses: ./.github/workflows/jobs/governance-audit.yml
     with:
       languages: '["python","shell"]'
@@ -50,7 +38,6 @@ jobs:
   # Pre-commit
   # ──────────────────────────────────────────────────────
   pre-commit:
-    needs: setup
     uses: ./.github/workflows/jobs/pre-commit.yml
     secrets: inherit
 
@@ -58,7 +45,6 @@ jobs:
   # Gate Doctor (跨平台环境自检 + 基线防篡改 + 台账完整性)
   # ──────────────────────────────────────────────────────
   doctor-gate:
-    needs: setup
     uses: ./.github/workflows/jobs/doctor-gate.yml
     secrets: inherit
 
@@ -66,12 +52,10 @@ jobs:
   # Lint & Type Check (并行)
   # ──────────────────────────────────────────────────────
   lint:
-    needs: setup
     uses: ./.github/workflows/jobs/lint.yml
     secrets: inherit
 
   type-check:
-    needs: setup
     uses: ./.github/workflows/jobs/type-check.yml
     secrets: inherit
 
@@ -79,70 +63,28 @@ jobs:
   # Tests - 矩阵并行
   # ──────────────────────────────────────────────────────
   test-311:
-    needs: setup
     uses: ./.github/workflows/jobs/tests.yml
     with:
       python-version: "3.11"
     secrets: inherit
 
   test-312:
-    needs: setup
     uses: ./.github/workflows/jobs/tests.yml
     with:
       python-version: "3.12"
     secrets: inherit
 
   test-313:
-    needs: setup
     uses: ./.github/workflows/jobs/tests.yml
     with:
       python-version: "3.13"
     secrets: inherit
 
   # ──────────────────────────────────────────────────────
-  # Test Sharding (仅主仓库)
-  # ──────────────────────────────────────────────────────
-  test-sharded-1:
-    needs: setup
-    if: github.repository == 'zerove/ai_developer_growth'
-    uses: ./.github/workflows/jobs/tests.yml
-    with:
-      python-version: "3.11"
-      shard: "1"
-    secrets: inherit
-
-  test-sharded-2:
-    needs: setup
-    if: github.repository == 'zerove/ai_developer_growth'
-    uses: ./.github/workflows/jobs/tests.yml
-    with:
-      python-version: "3.11"
-      shard: "2"
-    secrets: inherit
-
-  test-sharded-3:
-    needs: setup
-    if: github.repository == 'zerove/ai_developer_growth'
-    uses: ./.github/workflows/jobs/tests.yml
-    with:
-      python-version: "3.11"
-      shard: "3"
-    secrets: inherit
-
-  test-sharded-4:
-    needs: setup
-    if: github.repository == 'zerove/ai_developer_growth'
-    uses: ./.github/workflows/jobs/tests.yml
-    with:
-      python-version: "3.11"
-      shard: "4"
-    secrets: inherit
-
-  # ──────────────────────────────────────────────────────
   # Combine Coverage
   # ──────────────────────────────────────────────────────
   combine-coverage:
-    needs: [test-311, test-312, test-313, test-sharded-1, test-sharded-2, test-sharded-3, test-sharded-4]
+    needs: [test-311, test-312, test-313]
     uses: ./.github/workflows/jobs/combine-coverage.yml
     secrets: inherit
 
@@ -150,7 +92,6 @@ jobs:
   # Quality Gates
   # ──────────────────────────────────────────────────────
   quality-gates:
-    needs: setup
     uses: ./.github/workflows/jobs/quality-gates.yml
     secrets: inherit
 
@@ -158,22 +99,18 @@ jobs:
   # Security
   # ──────────────────────────────────────────────────────
   security:
-    needs: setup
     uses: ./.github/workflows/jobs/security.yml
     secrets: inherit
 
   secret-scan:
-    needs: setup
     uses: ./.github/workflows/jobs/secret-scan.yml
     secrets: inherit
 
   sbom:
-    needs: setup
     uses: ./.github/workflows/jobs/sbom.yml
     secrets: inherit
 
   license-scan:
-    needs: setup
     uses: ./.github/workflows/jobs/license-scan.yml
     secrets: inherit
 
@@ -181,7 +118,6 @@ jobs:
   # Example Tests (并行矩阵)
   # ──────────────────────────────────────────────────────
   test-examples:
-    needs: setup
     uses: ./.github/workflows/jobs/example-tests.yml
     secrets: inherit
 
@@ -189,7 +125,6 @@ jobs:
   # Dependency Review
   # ──────────────────────────────────────────────────────
   dependency-review:
-    needs: setup
     uses: ./.github/workflows/jobs/dependency-review.yml
     secrets: inherit
 
@@ -197,7 +132,6 @@ jobs:
   # Docs
   # ──────────────────────────────────────────────────────
   docs-check:
-    needs: setup
     uses: ./.github/workflows/jobs/docs.yml
     secrets: inherit
 
@@ -205,7 +139,6 @@ jobs:
   # Agent Validation
   # ──────────────────────────────────────────────────────
   agent-validation:
-    needs: setup
     uses: ./.github/workflows/jobs/agent-validation.yml
     secrets: inherit
 
@@ -214,7 +147,7 @@ jobs:
   # ──────────────────────────────────────────────────────
   ci-summary:
     name: CI Summary
-    needs: [adg-governance, governance-audit, pre-commit, lint, type-check, test-311, test-312, test-313, test-sharded-1, test-sharded-2, test-sharded-3, test-sharded-4, combine-coverage, quality-gates, security, secret-scan, sbom, license-scan, test-examples, dependency-review, docs-check, agent-validation]
+    needs: [adg-governance, governance-audit, pre-commit, lint, type-check, test-311, test-312, test-313, combine-coverage, quality-gates, security, secret-scan, sbom, license-scan, test-examples, dependency-review, docs-check, agent-validation]
     if: always()
     runs-on: ubuntu-latest
     steps:

@@ -131,7 +131,13 @@ strict = true
 ignore_missing_imports = true
 warn_return_any = false
 warn_unused_configs = true
-exclude = ["ai-dev-framework/build/", "examples/ai-context-sync"]
+# examples/ 下每个示例都是独立 pip 包, 自带 pyproject.toml 与独立的
+# ruff/mypy/pytest 配置, 目录名带连字符不合 Python 包命名, 且多个示例都
+# 以 src/ 作包根 —— 根项目统一检查时必然出现 "not a valid Python package
+# name" 与 "Duplicate module named src"。根 ruff 已 exclude examples/**,
+# 此处保持同一口径; CI 的 type-check 作业同样只查 tools/scripts 与
+# ai-dev-framework/src, 三者一致。
+exclude = ["ai-dev-framework/build/", "examples/"]
 disallow_untyped_defs = true
 disallow_incomplete_defs = true
 check_untyped_defs = true
@@ -166,14 +172,8 @@ hub_threshold = 15
 # Context-aware severity
 context_aware = true
 
-# Skip patterns for test/demo files
-skip_patterns = [
-    "**/test_*.py",
-    "**/*_test.py",
-    "**/tests/**/*.py",
-    "**/demo*.py",
-    "**/*_demo.py",
-]
+# Skip patterns: 唯一权威源在 .adg/config.yml（pre_push.py 直读；此处历史副本
+# 无任何消费者，已于配置整合中删除——该副本是 config.yml 列表的真子集，删除不缩减有效跳过范围）
 
 # Feedback system
 feedback_enabled = true
@@ -196,11 +196,13 @@ test_workers = "auto"  # pytest-xdist 并行数: "auto"/整数; 0 = 禁用并行
 # flaky 重试次数；依赖 pytest-rerunfailures，插件缺失时 basic_checks 会静默降级
 # 为不加 --reruns（该配置此前因插件未声明依赖而完全未生效）
 test_reruns = 2        # 0 = 禁用
-timeouts = { lint = 300, format = 300, typecheck = 300, security = 300, test = 900 }  # 按类别超时秒数; test 放宽因全量并行耗时更长
+timeouts = { lint = 300, format = 300, typecheck = 300, security = 300, test = 1800, test_incremental = 300 }  # 按类别超时秒数; test 放宽因全量并行耗时更长
 
 # 覆盖率门禁（真正生效的值：basic_checks.run_tests 会把它作为 --cov-fail-under
 # 传给 pytest-cov，从而覆盖 [tool.coverage.report] 的 fail_under）
 cov_min = 80
+# 分支覆盖率门禁：CI 两处读取同一键；基线约 81.2%，阈值保留余量。
+branch_cov_min = 75
 
 # CI/CD integration
 ci_mode = false  # Auto-detected in CI environments

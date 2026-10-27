@@ -33,6 +33,7 @@ from tools.scripts._common import (
     safe_import,
     save_cache,
     save_yaml,
+    superseded_rule_ids,
 )
 
 
@@ -351,6 +352,22 @@ class TestMergeAntiPatterns:
         custom = [{"id": "b", "pattern": "z"}]
         merged = merge_anti_patterns(base, custom)
         assert [p["id"] for p in merged] == ["a", "c", "b"]
+
+
+class TestSupersededRuleIds:
+    def test_empty(self) -> None:
+        assert superseded_rule_ids([]) == set()
+
+    def test_string_value(self) -> None:
+        assert superseded_rule_ids([{"supersedes": "common-a"}]) == {"common-a"}
+
+    def test_list_value_ignores_non_strings(self) -> None:
+        rules = [{"supersedes": ["common-a", "common-b", 1, None]}]
+        assert superseded_rule_ids(rules) == {"common-a", "common-b"}
+
+    def test_multiple_rules(self) -> None:
+        rules = [{"supersedes": ["common-a"]}, {"supersedes": "common-b"}, {}]
+        assert superseded_rule_ids(rules) == {"common-a", "common-b"}
 
 
 class TestCacheHelpers:

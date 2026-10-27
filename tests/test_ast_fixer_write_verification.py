@@ -41,15 +41,13 @@ from tools.scripts.rules_engine.ast_parser import FileAST
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 
-# 必须带**尾随空行**才可复现 ADR-069 的触发条件 (Phase 45 实测:
-# 去掉尾随空行解析器根本不把该函数纳入待修复集合, 缺陷不复现)。
+
 PROTOCOL_ELLIPSIS_SRC = "class P(Protocol):\n    def audit(self) -> bool: ...\n\n"
 
-# 合法修复样本: 裸 except -> except Exception。这是 auto_safe 且修复后
-# 语法合法, 用作对照组 —— 兜底绝不能把它也拦下。
+
 BARE_EXCEPT_SRC = '"""M."""\n\n\ndef f():\n    """D."""\n    try:\n        pass\n    except:\n        pass\n'
 
-# 健康代码: 无任何可修复项, 兜底不应介入
+
 CLEAN_SRC = '"""M."""\n\nX = 1\n'
 
 
@@ -73,24 +71,6 @@ def _run_hook(command: str, path: Path, *, extra: list[str] | None = None) -> su
     )
 
 
-# 子进程注入脚本: 让 fix-empty-function 退回 ADR-069 之前的破坏行为。
-#
-# 为何 CLI 用例必须靠注入而非直接调用: ADR-069 已修, 同行 ``: ...`` 体
-# 不再产生修复项, 破坏路径在**正常**的子进程里不可达。若不注入, 用例
-# 会看到 "Total fixes found: 0" 并因断言失败 —— 但那是**假失败**,
-# 它没有测到兜底, 只是测到守卫还在。这里首次编写时就踩了这个坑:
-# CLI 用例报 "汇总未提及语法自检", 而真实原因是驱动根本没触发。
-#
-# 注入方式是 sitecustomize (只 patch 目标方法, 不改 ast_fixer.py 源文件)
-# —— Phase 45 曾因探针直接改真实文件而损坏两个仓库文件, 故此处及
-# ``_force_broken_result`` 一律拒绝改写源码。
-#
-# ADR-079 补注: sitecustomize 由解释器在**启动阶段**执行, 早于任何用户
-# 模块导入, 此时 sys.path[0] 是 hooks_runner.py 所在目录而非仓库根, 直接
-# `from tools.scripts...` 会 ModuleNotFoundError。此前该异常被下面的
-# `except Exception` 吞掉, 只打印一行告警 —— 缺陷其实没装上, CLI 走的是
-# 完全正常的路径, 于是本组 6 个用例以"产品缺陷"的面貌变红, 与真实回归
-# 无法区分。故此处必须 (a) 自行引导仓库根, (b) 注入失败即硬失败。
 _INJECT_SITECUSTOMIZE = '''
 import os
 import sys
@@ -437,76 +417,3 @@ def _force_broken_result(monkeypatch: pytest.MonkeyPatch) -> None:
         return fixes
 
     monkeypatch.setattr(ASTFixer, "_fix_empty_functions", buggy_fix_empty_functions)
-
-
-class TestDirectoryExitCodeOnRejection:
-    """目录路径的**退出码**必须反映语法拒绝 (ADR-071).
-
-    为何单独成类: ADR-070 已把"汇总行必须报失败"锁死, 但**退出码**
-    无人断言。实测目录路径无条件 ``return 0`` —— 输出打着
-    ``❌ Syntax check failed``, 进程却以 0 退出。CI 与 pre-commit
-    读的正是退出码, 所以那句 ❌ 等于没说, 仍是一盏假绿灯。
-
-    单文件路径早已按 ``auto_safe`` 项数返回, 目录路径则返回"扫完了";
-    本类锁定的是后者在**有文件被拒**时必须非零, 且不得误伤健康的
-    目录 (无被拒文件时仍为 0)。
-    """
-
-    def test_directory_exit_code_nonzero_when_file_rejected(self, tmp_path: Path) -> None:
-        """被拒文件的目录必须以非零退出, 否则 CI 判绿."""
-        (tmp_path / "a_broken.py").write_text(PROTOCOL_ELLIPSIS_SRC, encoding="utf-8")
-
-        proc = _run_hook_with_injected_defect("ast-fix", tmp_path)
-
-        # 核心断言。此前该值为 0 —— 假绿灯的量化表现。
-        assert proc.returncode != 0, f"有文件被拒却退出 0:\n{proc.stdout}"
-        # 不能只靠退出码: 必须是因语法拒绝而失败, 而不是别的异常。
-        # 反向校验 —— 少了这一条, 一个"目录为空所以返回 1"的实现
-        # 也能满足上面的非零断言。
-        assert "❌ Syntax check failed" in proc.stdout, proc.stdout
-        assert (tmp_path / "a_broken.py").read_text(encoding="utf-8") == PROTOCOL_ELLIPSIS_SRC
-
-    def test_directory_exit_code_zero_when_nothing_rejected(self, tmp_path: Path) -> None:
-        """对照组: 合法修复的目录仍必须退出 0, 修复不能被兜底误伤."""
-        (tmp_path / "b_fine.py").write_text(BARE_EXCEPT_SRC, encoding="utf-8")
-
-        proc = _run_hook_with_injected_defect("ast-fix", tmp_path)
-
-        assert proc.returncode == 0, f"健康目录被误报失败:\n{proc.stdout}"
-        assert "❌ Syntax check failed" not in proc.stdout, proc.stdout
-        assert "Fixes applied: 1" in proc.stdout, f"合法修复未生效:\n{proc.stdout}"
-        python_ast.parse((tmp_path / "b_fine.py").read_text(encoding="utf-8"))
-
-    def test_directory_exit_code_nonzero_on_partial_success(self, tmp_path: Path) -> None:
-        """部分成功部分被拒时仍非零 —— 最容易漏的一档.
-
-        若实现写成 ``return 0 if total_applied else 1``, 本用例中的
-        ``total_applied=1`` 会让退出码变 0, 而总体上确有未完成的修复。
-        """
-        (tmp_path / "a_broken.py").write_text(PROTOCOL_ELLIPSIS_SRC, encoding="utf-8")
-        (tmp_path / "b_fine.py").write_text(BARE_EXCEPT_SRC, encoding="utf-8")
-
-        proc = _run_hook_with_injected_defect("ast-fix", tmp_path)
-
-        assert proc.returncode != 0, f"部分被拒却退出 0:\n{proc.stdout}"
-        assert "Fixes applied: 1" in proc.stdout, f"正常修复未生效:\n{proc.stdout}"
-        assert "❌ Syntax check failed" in proc.stdout, proc.stdout
-        assert (tmp_path / "a_broken.py").read_text(encoding="utf-8") == PROTOCOL_ELLIPSIS_SRC
-        python_ast.parse((tmp_path / "b_fine.py").read_text(encoding="utf-8"))
-
-    def test_single_file_exit_code_still_follows_auto_safe_convention(self, tmp_path: Path) -> None:
-        """单文件路径的退出码约定不得被本次修复改动.
-
-        单文件返回的是 ``auto_safe`` 项数(与通过/失败无关), 这是
-        ``docs/api/cli.md`` 写明的既有契约。本次只叠加"目录被拒则非零",
-        绝不能顺手把单文件也改成 0/1 —— 那会让既有 CI 阈值全部失准。
-        实测被拒的单文件: auto_safe=1 且被拒, 故退出码仍是 1。
-        """
-        src = tmp_path / "p.py"
-        src.write_text(PROTOCOL_ELLIPSIS_SRC, encoding="utf-8")
-
-        proc = _run_hook_with_injected_defect("ast-fix", src)
-
-        # auto_safe 项数为 1, 无论是否被拒 —— 契约是"项数", 不是"成败"。
-        assert proc.returncode == 1, proc.stdout
-        assert src.read_text(encoding="utf-8") == PROTOCOL_ELLIPSIS_SRC

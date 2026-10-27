@@ -183,7 +183,8 @@ class TestIncrementalTestSelection:
 
     @patch("tools.scripts.hooks.basic_checks._changed_python_files")
     def test_no_changes_skips(self, mock_changed: MagicMock) -> None:
-        mock_changed.return_value = []
+        # 新 API: _changed_python_files 返回 (files, ok)，空集+成功 → 跳过
+        mock_changed.return_value = ([], True)
         passed, output = run_tests_incremental()
         assert passed
         assert "skipped" in output
@@ -191,7 +192,7 @@ class TestIncrementalTestSelection:
     @patch("tools.scripts.hooks.basic_checks.run_tests_incremental")
     @patch("tools.scripts.hooks.basic_checks._changed_python_files")
     def test_runs_selected_targets(self, mock_changed: MagicMock, mock_inc: MagicMock, tmp_path: Path) -> None:
-        mock_changed.return_value = [Path("tools/scripts/foo.py")]
+        mock_changed.return_value = ([Path("tools/scripts/foo.py")], True)
         # 真实执行路径走 subprocess，这里只验证映射非空时的命令构造分支
         with patch.object(
             __import__("tools.scripts.hooks.basic_checks", fromlist=["_run_subprocess"]),

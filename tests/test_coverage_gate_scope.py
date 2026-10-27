@@ -6,8 +6,7 @@ on_commit / on_pr / on_merge / scheduled hook 入口的 `.jcode/scripts`
 
 两个执行点都必须同时测量两棵树：
 - 本地 / pre-push：tools/scripts/hooks/basic_checks.py 构造 pytest 命令
-- CI：.github/workflows/jobs/tests.yml 的两处 pytest 调用
-  （分片与非分片各一处，漏掉任一处都会让 CI 与本地口径不一致）
+- CI：.github/workflows/jobs/tests.yml 的 pytest 调用
 
 实测两树合并约 86%，高于项目标准 80，因此按 80 把关而非降低阈值。
 """
@@ -26,6 +25,7 @@ import yaml
 ROOT = Path(__file__).resolve().parent.parent
 GATE_BUILDER = ROOT / "tools" / "scripts" / "hooks" / "basic_checks.py"
 CI_TESTS = ROOT / ".github" / "workflows" / "jobs" / "tests.yml"
+COMBINE_COVERAGE = ROOT / ".github" / "workflows" / "jobs" / "combine-coverage.yml"
 
 REQUIRED_TREES = ("--cov=tools", "--cov=.jcode/scripts")
 # 本地与 CI 已统一为 --cov=tools。此前本地用 --cov=tools/scripts, 把
@@ -35,6 +35,8 @@ REQUIRED_TREES = ("--cov=tools", "--cov=.jcode/scripts")
 REQUIRED_CI_FLAGS = ("--cov=tools", "--cov=.jcode/scripts")
 MIN_STANDARD = 80
 MEASURED_WITH_BOTH = 86.0
+BRANCH_MIN_STANDARD = 75
+MEASURED_BRANCH = 81.2
 
 
 def _config() -> dict:
@@ -63,8 +65,7 @@ def _ci_coverage_invocations() -> list[str]:
     `.github/ci-templates/` 是给**其他项目**用的模板，测的是它们自己的
     `--cov=src`，不适用本仓库口径，纳入扫描会误报。
 
-    该文件的两个调用（分片/非分片）位于同一个 shell if/else 的折叠标量里，
-    且被 YAML 换行续行拆开，因此按 `--cov=` 出现次数切分而非按 pytest 前缀。
+    调用可能被 YAML 折行拆开，因此按 `--cov=` 出现次数切分而非按 pytest 前缀。
     """
     text = CI_TESTS.read_text(encoding="utf-8")
     flags = re.findall(r"--cov=[A-Za-z0-9_./-]+", text)
@@ -112,9 +113,9 @@ class TestCiGateScope:
         offenders = [c for c in _ci_coverage_invocations() if flag not in c]
         assert not offenders, f"以下 CI 覆盖率调用缺少 {flag}: {offenders}"
 
-    def test_both_sharded_and_plain_invocations_exist(self) -> None:
-        """分片与非分片各一处；只改一处会让 CI 与本端口径不一致。"""
-        assert len(_ci_coverage_invocations()) == 2
+    def test_single_full_invocation_exists(self) -> None:
+        """分片已移除；只保留一次全量调用，避免 CI 重复跑同一套测试。"""
+        assert len(_ci_coverage_invocations()) == 1
 
     def test_ci_reads_threshold_from_pyproject(self) -> None:
         text = CI_TESTS.read_text(encoding="utf-8")
@@ -128,6 +129,36 @@ class TestCiGateScope:
         data = yaml.safe_load(CI_TESTS.read_text(encoding="utf-8"))
         steps = data["jobs"]["test"]["steps"]
         assert any("coverage" in str(s.get("name", "")).lower() for s in steps), "缺少覆盖率校验步骤"
+
+
+class TestBranchCoverageGate:
+    def test_branch_measurement_enabled(self) -> None:
+        cfg = _config()
+        assert cfg["tool"]["coverage"]["run"]["branch"] is True
+
+    def test_branch_threshold_configured(self) -> None:
+        cfg = _config()
+        branch_min = cfg["tool"]["adg"]["branch_cov_min"]
+        assert branch_min >= BRANCH_MIN_STANDARD
+        assert branch_min <= MEASURED_BRANCH, "分支阈值高于实测值，门禁必然失败"
+
+    def test_ci_reads_and_enforces_branch_threshold(self) -> None:
+        text = CI_TESTS.read_text(encoding="utf-8")
+        assert "branch_cov_min" in text
+        assert "branch_fail_under" in text
+        assert "branch-rate" in text
+        assert "Branch coverage" in text
+
+    def test_combine_reads_and_enforces_branch_threshold(self) -> None:
+        text = COMBINE_COVERAGE.read_text(encoding="utf-8")
+        assert "branch_cov_min" in text
+        assert "branch_fail_under" in text
+        assert "branch-rate" in text
+        assert "Combined branch coverage" in text
+
+    def test_combine_workflow_yaml_parses(self) -> None:
+        data = yaml.safe_load(COMBINE_COVERAGE.read_text(encoding="utf-8"))
+        assert "jobs" in data and "combine-coverage" in data["jobs"]
 
 
 class TestBothTreesExist:

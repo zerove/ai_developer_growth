@@ -22,22 +22,11 @@ concurrency:
   group: advanced-governance-${{ github.ref }}
   cancel-in-progress: true
 
-env:
-  PYTHON_VERSION: "3.11"
-
 jobs:
-  # ──────────────────────────────────────────────────────
-  # Setup - 复用于所有下游 job
-  # ──────────────────────────────────────────────────────
-  setup:
-    uses: ./.github/workflows/jobs/setup.yml
-    secrets: inherit
-
   # ──────────────────────────────────────────────────────
   # Exception Manager - Check for expired exceptions
   # ──────────────────────────────────────────────────────
   check-exceptions:
-    needs: setup
     uses: ./.github/workflows/jobs/exception-manager.yml
     with:
       action: "check-expirations"
@@ -47,7 +36,6 @@ jobs:
   # SBOM Generation (供后续 job 使用)
   # ──────────────────────────────────────────────────────
   sbom:
-    needs: setup
     uses: ./.github/workflows/jobs/supply-chain.yml
     with:
       action: "sbom"
@@ -60,7 +48,7 @@ jobs:
   # ──────────────────────────────────────────────────────
   dep-graph-analyze:
     if: github.event.inputs.skip-dependency-graph != 'true'
-    needs: [setup, sbom]
+    needs: sbom
     uses: ./.github/workflows/jobs/dependency-graph.yml
     with:
       action: "analyze"
@@ -71,7 +59,7 @@ jobs:
 
   dep-graph-circular:
     if: github.event.inputs.skip-dependency-graph != 'true'
-    needs: [setup, sbom]
+    needs: sbom
     uses: ./.github/workflows/jobs/dependency-graph.yml
     with:
       action: "circular"
@@ -82,7 +70,7 @@ jobs:
 
   dep-graph-conflicts:
     if: github.event.inputs.skip-dependency-graph != 'true'
-    needs: [setup, sbom]
+    needs: sbom
     uses: ./.github/workflows/jobs/dependency-graph.yml
     with:
       action: "conflicts"
@@ -93,7 +81,7 @@ jobs:
 
   dep-graph-export-mermaid:
     if: github.event.inputs.skip-dependency-graph != 'true'
-    needs: [setup, sbom]
+    needs: sbom
     uses: ./.github/workflows/jobs/dependency-graph.yml
     with:
       action: "export"
@@ -107,7 +95,6 @@ jobs:
   # ──────────────────────────────────────────────────────
   supply-chain-scan:
     if: github.event.inputs.skip-supply-chain != 'true'
-    needs: setup
     uses: ./.github/workflows/jobs/supply-chain.yml
     with:
       action: "scan"
@@ -117,7 +104,6 @@ jobs:
 
   supply-chain-compliance:
     if: github.event.inputs.skip-supply-chain != 'true'
-    needs: setup
     uses: ./.github/workflows/jobs/supply-chain.yml
     with:
       action: "compliance"
@@ -128,7 +114,6 @@ jobs:
 
   supply-chain-freshness:
     if: github.event.inputs.skip-supply-chain != 'true'
-    needs: setup
     uses: ./.github/workflows/jobs/supply-chain.yml
     with:
       action: "freshness"
@@ -139,7 +124,6 @@ jobs:
 
   supply-chain-verify:
     if: github.event.inputs.skip-supply-chain != 'true'
-    needs: setup
     uses: ./.github/workflows/jobs/supply-chain.yml
     with:
       action: "verify"
@@ -152,7 +136,7 @@ jobs:
   # ──────────────────────────────────────────────────────
   policy-eval:
     if: github.event.inputs.skip-policy != 'true'
-    needs: [setup, sbom, dep-graph-analyze, supply-chain-scan, check-exceptions]
+    needs: [sbom, dep-graph-analyze, supply-chain-scan, check-exceptions]
     uses: ./.github/workflows/jobs/policy-as-code.yml
     with:
       action: "eval"
@@ -169,7 +153,7 @@ jobs:
   advanced-summary:
     name: Advanced Governance Summary
     needs: [
-      setup, check-exceptions, sbom,
+      check-exceptions, sbom,
       dep-graph-analyze, dep-graph-circular, dep-graph-conflicts, dep-graph-export-mermaid,
       supply-chain-scan, supply-chain-compliance, supply-chain-freshness, supply-chain-verify,
       policy-eval

@@ -55,8 +55,8 @@ class TestContextConfig:
         assert cfg.spec_file == "SPEC.md"
 
     def test_update_window_is_bounded(self, cs) -> None:
-        """更新记录只追加不裁剪会膨胀到 6300+ 行，故必须有滚动窗口上限。"""
-        assert cs.ContextConfig().max_update_entries == 50
+        """更新记录只追加不裁剪会膨胀到 1500+ 行，滚动窗口应收敛到 5 条。"""
+        assert cs.ContextConfig().max_update_entries == 5
 
     def test_timeouts_positive(self, cs) -> None:
         cfg = cs.ContextConfig()

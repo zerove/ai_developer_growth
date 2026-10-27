@@ -13,10 +13,17 @@ jobs:
         python-version: '3.11'
     - name: Read coverage threshold from pyproject.toml
       id: coverage-config
-      run: "python -c \"\nimport tomllib\nwith open('pyproject.toml', 'rb') as f:\n\
-        \    data = tomllib.load(f)\nfail_under = data.get('tool', {}).get('coverage',\
-        \ {}).get('report', {}).get('fail_under', 80)\nprint(f'fail_under={fail_under}')\n\
-        \" >> $GITHUB_OUTPUT\n"
+      run: |
+        python - <<'PY' >> "$GITHUB_OUTPUT"
+        import tomllib
+
+        with open("pyproject.toml", "rb") as f:
+            cfg = tomllib.load(f)
+
+        adg = cfg.get("tool", {}).get("adg", {})
+        print(f"fail_under={adg.get('cov_min', 80)}")
+        print(f"branch_fail_under={adg.get('branch_cov_min', 75)}")
+        PY
     - name: Download coverage data
       uses: actions/download-artifact@v4
       with:
@@ -24,52 +31,44 @@ jobs:
         path: coverage-artifacts/
         merge-multiple: false
     - name: Combine
-      run: 'pip install coverage
-
+      run: |
+        pip install coverage
         coverage combine coverage-artifacts/**/.coverage
-
         coverage xml -o combined-coverage.xml
-
-        python -c "
-
+        python - <<'PY'
         import xml.etree.ElementTree as ET
 
-        tree = ET.parse(''combined-coverage.xml'')
-
-        root = tree.getroot()
-
-        c = float(root.attrib.get(''line-rate'', 0)) * 100
-
-        b = float(root.attrib.get(''branch-rate'', 0)) * 100
-
-        print(f''Combined: Line {c:.1f}%, Branch {b:.1f}%'')
-
-        threshold = ${{ steps.coverage-config.outputs.fail_under }}
-
-        if c < threshold: exit(1)
-
-        "
-
-        '
+        root = ET.parse("combined-coverage.xml").getroot()
+        line_rate = float(root.attrib.get("line-rate", 0)) * 100
+        branch_rate = float(root.attrib.get("branch-rate", 0)) * 100
+        line_min = float("${{ steps.coverage-config.outputs.fail_under }}")
+        branch_min = float("${{ steps.coverage-config.outputs.branch_fail_under }}")
+        print(
+            f"Combined: Line {line_rate:.1f}% (min {line_min:.1f}%), "
+            f"Branch {branch_rate:.1f}% (min {branch_min:.1f}%)"
+        )
+        failed = False
+        if line_rate < line_min:
+            print(f"::error::Combined line coverage {line_rate:.1f}% < {line_min:.1f}%")
+            failed = True
+        if branch_rate < branch_min:
+            print(f"::error::Combined branch coverage {branch_rate:.1f}% < {branch_min:.1f}%")
+            failed = True
+        raise SystemExit(1 if failed else 0)
+        PY
     - name: Upload combined
       uses: actions/upload-artifact@v4
       with:
         name: combined-coverage
         path: combined-coverage.xml
         retention-days: 30
-    - name: Diff Cover (PR only)
+    - name: Diff Cover report (PR only, non-blocking)
       if: github.event_name == 'pull_request'
-      run: 'pip install diff-cover
-
+      run: |
+        pip install diff-cover
         BASE_BRANCH=${{ github.base_ref }}
-
         git fetch origin $BASE_BRANCH --depth=1
-
-        diff-cover combined-coverage.xml --compare-branch=origin/$BASE_BRANCH --fail-under=${{
-        steps.coverage-config.outputs.fail_under }} --html-report diff-cover-report.html
-        || true
-
-        '
+        diff-cover combined-coverage.xml --compare-branch=origin/$BASE_BRANCH --fail-under=${{ steps.coverage-config.outputs.fail_under }} --html-report diff-cover-report.html || true
     - name: Upload Diff Cover Report
       if: github.event_name == 'pull_request' && always()
       uses: actions/upload-artifact@v4

@@ -26,6 +26,7 @@ from tools.scripts.rules_engine.rule_loader import (
     _load_common_rules_cached,
     _load_universal_rules_cached,
     _merge_anti_patterns,
+    _merge_common_rules,
     _merge_rules,
     _try_load_yaml,
 )
@@ -312,6 +313,20 @@ class TestMergeAntiPatterns:
         result = _merge_anti_patterns(base, custom)
         assert result[0]["severity"] == "error"
         assert result[0]["msg"] == "保留"
+
+    def test_merge_common_rules_drops_superseded(self) -> None:
+        """语言规则声明 supersedes 时，common 中的同 ID 规则被跳过。"""
+        base = {"anti_patterns": [{"id": "lang-eval", "supersedes": ["common-eval"]}]}
+        common = {"anti_patterns": [{"id": "common-eval"}, {"id": "common-other"}]}
+        result = _merge_common_rules(base, common)
+        assert [p["id"] for p in result["anti_patterns"]] == ["lang-eval", "common-other"]
+
+    def test_supersedes_does_not_drop_custom_rule(self) -> None:
+        """supersedes 只作用于 common 合并，用户自定义规则仍可覆盖。"""
+        base = [{"id": "lang-eval", "supersedes": ["common-eval"]}]
+        custom = [{"id": "common-eval", "severity": "warning"}]
+        result = _merge_anti_patterns(base, custom)
+        assert [p["id"] for p in result] == ["lang-eval", "common-eval"]
 
     def test_new_patterns_appended(self) -> None:
         """custom 新 id (base 无) → 追加到末尾。"""

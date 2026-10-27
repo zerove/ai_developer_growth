@@ -82,8 +82,6 @@ jobs:
         name: governance-audit-report-${{ matrix.language }}
         path: 'bandit-report.json
 
-          .jcode/mode_decision.conf
-
           '
         retention-days: 7
   governance-audit-summary:

@@ -1,26 +1,20 @@
 name: 'Setup & Cache Reusable'
 on:
   workflow_call:
-    outputs:
+    inputs:
       python-version:
         description: Python version used
-        value: ${{ jobs.setup.outputs.python-version }}
-      cache-hit:
-        description: Whether pip cache was hit
-        value: ${{ jobs.setup.outputs.cache-hit }}
+        type: string
+        default: '3.11'
 jobs:
   setup:
     name: 'Setup & Cache'
     runs-on: ubuntu-latest
-    outputs:
-      python-version: ${{ env.PYTHON_VERSION }}
-      cache-hit: ${{ steps.cache.outputs.cache-hit }}
     steps:
     - uses: actions/checkout@v4
     - name: Setup Python
-      id: cache
       uses: actions/setup-python@v5
       with:
-        python-version: ${{ env.PYTHON_VERSION }}
+        python-version: ${{ inputs.python-version }}
         cache: pip
         cache-dependency-path: pyproject.toml

@@ -9,7 +9,6 @@ on_commit / on_pr / on_merge / scheduled hook 的分发，坏了门禁会静默�
 
 隔离要求（每个测试都必须遵守）:
 - get_project_root -> tmp_path：避免读写真实仓库 hooks.json
-- hr.CONFIG_PATH   -> tmp_path：mode_decision.conf 是 git 跟踪文件
 - subprocess.run   -> 打桩：run_event_hooks 会真实执行 `git add`
 """
 
@@ -17,6 +16,7 @@ from __future__ import annotations
 
 import importlib.util
 import json
+import re
 import sys
 from pathlib import Path
 from unittest.mock import MagicMock, patch
@@ -62,7 +62,6 @@ def isolated(hr, tmp_path: Path):
     """把所有副作用面重定向到 tmp_path，并禁止真实子进程。"""
     with (
         patch.object(hr, "get_project_root", return_value=tmp_path),
-        patch.object(hr, "CONFIG_PATH", tmp_path / "mode_decision.conf"),
         patch.object(hr.subprocess, "run") as run,
     ):
         run.return_value = MagicMock(returncode=0, stdout="", stderr="")
@@ -87,8 +86,8 @@ class TestFilesMatchCondition:
         assert hr.files_match_condition(None, "") is True
 
     def test_unparseable_condition_defaults_to_match(self, hr) -> None:
-        """无法解析的条件必须放行，不能静默拦住门禁。"""
-        assert hr.files_match_condition(["a.py"], "some_unknown('x')") is True
+        """契约变更（既定方案）：无法解析的条件不再放行。"""
+        assert hr.files_match_condition(["a.py"], "some_unknown('x')") is False
 
     @pytest.mark.parametrize(
         ("files", "expected"),
@@ -106,6 +105,48 @@ class TestFilesMatchCondition:
         cond = "files_contain('*.py')"
         assert hr.files_match_condition(["a/b.py"], cond) is True
         assert hr.files_match_condition(["a/b.md"], cond) is False
+
+    def test_doublestar_glob_matches_direct_children(self, hr) -> None:
+        """** 必须能匹配零段路径——否则 tools/scripts/**/*.py 漏掉直接子文件。"""
+        cond = "files_contain('tools/scripts/**/*.py')"
+        assert hr.files_match_condition(["tools/scripts/foo.py"], cond) is True
+        assert hr.files_match_condition(["tools/scripts/hooks/x.py"], cond) is True
+
+    def test_doublestar_glob_examples(self, hr) -> None:
+        cond = "files_contain('examples/**/*.py')"
+        assert hr.files_match_condition(["examples/a.py"], cond) is True
+        assert hr.files_match_condition(["examples/scripts/b.py"], cond) is True
+
+    def test_doublestar_glob_non_matching_sibling(self, hr) -> None:
+        cond = "files_contain('tools/scripts/**/*.py')"
+        assert hr.files_match_condition(["tools/other/foo.py"], cond) is False
+        assert hr.files_match_condition(["tools/scripts/foo.txt"], cond) is False
+
+    def test_pr_label_from_env(self, hr, monkeypatch) -> None:
+        """JCODE_PR_LABELS 设置且标签命中 -> term True。"""
+        monkeypatch.setenv("JCODE_PR_LABELS", "design, bug")
+        assert hr.files_match_condition(["a.py"], "pr_label('design')") is True
+
+    def test_pr_label_missing_env_is_false(self, hr, monkeypatch) -> None:
+        """环境变量缺失 -> pr_label term 为 False（fail-closed）。"""
+        monkeypatch.delenv("JCODE_PR_LABELS", raising=False)
+        assert hr.files_match_condition(["a.py"], "pr_label('design')") is False
+
+    def test_pr_label_mixed_condition_files_miss_label_set(self, hr, monkeypatch) -> None:
+        """files 未命中但 label 命中 -> 整体 True（OR 语义）。"""
+        monkeypatch.setenv("JCODE_PR_LABELS", "design")
+        assert hr.files_match_condition(["a.py"], "files_contain('docs/') || pr_label('design')") is True
+
+    def test_pr_label_mixed_condition_files_miss_label_unset(self, hr, monkeypatch) -> None:
+        monkeypatch.delenv("JCODE_PR_LABELS", raising=False)
+        assert hr.files_match_condition(["a.py"], "files_contain('docs/') || pr_label('design')") is False
+
+    def test_pr_label_mixed_condition_files_hit_regardless_of_env(self, hr, monkeypatch) -> None:
+        """files 命中 -> True，与 label 环境无关。"""
+        monkeypatch.delenv("JCODE_PR_LABELS", raising=False)
+        assert hr.files_match_condition(["docs/x.md"], "files_contain('docs/') || pr_label('design')") is True
+        monkeypatch.setenv("JCODE_PR_LABELS", "design")
+        assert hr.files_match_condition(["docs/x.md"], "files_contain('docs/') || pr_label('design')") is True
 
     def test_multiple_patterns_are_or(self, hr) -> None:
         cond = "files_contain('.adg/rules.yml') || files_contain('.jcode/hooks.json')"
@@ -160,43 +201,6 @@ class TestRunHook:
         script.write_text("print('x')", encoding="utf-8")
         hr.run_hook({"name": "h", "skill": "demo", "action": "scan"}, None)
         assert run.call_args[0][0][-1] == "scan"
-
-
-# ── _set_mode ───────────────────────────────────────────────────────
-
-
-class TestSetMode:
-    @pytest.mark.parametrize("event", ["on_commit", "on_pr", "on_merge", "scheduled"])
-    def test_known_events_enable_high_governance(self, isolated, event: str) -> None:
-        hr, _ = isolated
-        hr._set_mode(hr.EVENT_MODE_MAP[event])
-        text = hr.CONFIG_PATH.read_text(encoding="utf-8")
-        assert "governance_level=high" in text
-        assert "audit_enabled=true" in text
-
-    def test_unknown_event_does_not_write(self, isolated) -> None:
-        hr, _ = isolated
-        assert "on_unknown" not in hr.EVENT_MODE_MAP
-        assert not hr.CONFIG_PATH.exists()
-
-    def test_write_failure_is_non_blocking(self, hr, tmp_path: Path) -> None:
-        """OSError 必须被吞掉：模式切换是辅助功能，不得阻断门禁。
-
-        PosixPath 实例属性只读，无法 patch write_text；改为把 CONFIG_PATH
-        指向"文件之下的路径"，写入时抛 NotADirectoryError（OSError 子类）。
-        """
-        blocker = tmp_path / "not-a-dir"
-        blocker.write_text("x", encoding="utf-8")
-        with (
-            patch.object(hr, "get_project_root", return_value=tmp_path),
-            patch.object(hr, "CONFIG_PATH", blocker / "mode.conf"),
-        ):
-            hr._set_mode("quality")
-
-    def test_writes_into_tmp_not_repo(self, isolated) -> None:
-        hr, _ = isolated
-        hr._set_mode("quality")
-        assert str(hr.CONFIG_PATH).startswith(str(hr.get_project_root()))
 
 
 # ── run_event_hooks ─────────────────────────────────────────────────
@@ -363,12 +367,22 @@ class TestRealConfigConsistency:
 
     def test_all_condition_forms_are_parseable(self, hr) -> None:
         config = _read_real_hooks_json()
+        term_re = re.compile(r"(\w+)\('([^']*)'\)")
         for event, hooks in config["hooks"].items():
             for hook in hooks:
                 cond = hook.get("condition", "")
                 if not cond:
                     continue
-                assert "files_contain('" in cond, f"{event}/{hook['name']} 条件无法解析: {cond}"
+                terms = [t.strip() for t in cond.split("||")]
+                for t in terms:
+                    if not t:
+                        continue
+                    m = term_re.fullmatch(t)
+                    assert m is not None, f"{event}/{hook['name']} 条件无法解析: {cond}"
+                    func_name = m.group(1)
+                    assert func_name in ("files_contain", "pr_label"), (
+                        f"{event}/{hook['name']} 未知条件函数: {func_name} in {cond}"
+                    )
 
     def test_every_hook_has_name(self, hr) -> None:
         config = _read_real_hooks_json()

@@ -354,16 +354,9 @@ class TestCheckMetadataCLI:
         assert "Scanning" in out or "All files" in out
 
     def test_main_with_no_docs_dir(self, capsys, tmp_path):
-        """docs 目录不存在时"""
-        original_cwd = Path.cwd()
-        try:
-            import os
+        """显式 base 下 docs 目录不存在时"""
+        from tools.scripts.check_metadata import main
 
-            os.chdir(tmp_path)
-            from tools.scripts.check_metadata import main
-
-            main()
-            out = capsys.readouterr().out
-            assert "Error" in out
-        finally:
-            os.chdir(original_cwd)
+        main(["--base", str(tmp_path)])
+        out = capsys.readouterr().out
+        assert "Error" in out

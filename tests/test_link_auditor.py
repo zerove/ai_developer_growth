@@ -9,6 +9,7 @@ from tools.scripts.link_auditor import (
     _check_target,
     _strip_code_blocks,
     find_broken_links,
+    find_moc_unreferenced_indexes,
 )
 
 
@@ -258,6 +259,46 @@ class TestMain(unittest.TestCase):
         )
         self.assertEqual(result.returncode, 1)
         self.assertIn("Broken links found", result.stdout)
+
+
+class TestMocReachability(unittest.TestCase):
+    """层索引必须被 docs/MOC.md 直接引用, 否则读者无法从 MOC 抵达."""
+
+    def setUp(self):
+        self._tmp = tempfile.TemporaryDirectory()
+        self.test_dir = self._tmp.name
+
+    def tearDown(self):
+        self._tmp.cleanup()
+
+    def _write(self, rel: str, content: str) -> None:
+        path = os.path.join(self.test_dir, rel)
+        os.makedirs(os.path.dirname(path), exist_ok=True)
+        with open(path, "w", encoding="utf-8") as f:
+            f.write(content)
+
+    def test_missing_moc_returns_empty(self):
+        """没有 MOC 的目录不参与该检查."""
+        self.assertEqual(find_moc_unreferenced_indexes(self.test_dir), [])
+
+    def test_referenced_index_not_reported(self):
+        """被 MOC 引用的层索引不应报告."""
+        self._write("docs/efficiency/README.md", "# Efficiency")
+        self._write("docs/MOC.md", "- [[docs/efficiency/README|效率层]]")
+        self.assertEqual(find_moc_unreferenced_indexes(self.test_dir), [])
+
+    def test_orphan_index_reported(self):
+        """未被 MOC 引用的层索引应报告."""
+        self._write("docs/efficiency/README.md", "# Efficiency")
+        self._write("docs/tools/README.md", "# Tools")
+        self._write("docs/MOC.md", "[[docs/efficiency/README|效率层]]")
+        self.assertEqual(find_moc_unreferenced_indexes(self.test_dir), ["docs/tools/README.md"])
+
+    def test_escaped_pipe_in_moc_is_normalized(self):
+        """MOC 表格内的转义竖线不应影响引用匹配."""
+        self._write("docs/efficiency/README.md", "# Efficiency")
+        self._write("docs/MOC.md", "| [[docs/efficiency/README\\|效率层]] |")
+        self.assertEqual(find_moc_unreferenced_indexes(self.test_dir), [])
 
 
 if __name__ == "__main__":

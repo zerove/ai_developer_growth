@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import logging
 import os
 import subprocess
 import sys
@@ -9,6 +10,8 @@ from pathlib import Path
 from typing import TYPE_CHECKING
 
 from tools.scripts.secret_scanner import scan_secrets
+
+logger = logging.getLogger(__name__)
 
 if TYPE_CHECKING:
     from collections.abc import Callable
@@ -277,9 +280,9 @@ def _get_timeout(name: str, default: int) -> int:
             try:
                 return int(timeouts[name])
             except (ValueError, TypeError):
-                pass
+                return default
     except Exception:
-        pass
+        logger.debug("读取超时配置 %s 失败", name, exc_info=True)
     return default
 
 

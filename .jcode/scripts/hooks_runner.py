@@ -34,76 +34,81 @@ def load_hooks_config() -> dict[str, Any]:
         return json.load(f)
 
 
-def _glob_to_regex(pattern: str) -> re.Pattern[str]:
-    """将 glob 模式转换为正则表达式（支持 **、*、?）。
+def _translate_glob(pattern: str, *, path_mode: bool) -> str:
+    """把 glob 模式转换为正则源码。"""
+    parts: list[str] = []
+    i = 0
+    while i < len(pattern):
+        ch = pattern[i]
+        if ch == "*":
+            if path_mode and pattern.startswith("**/", i):
+                parts.append(r"(?:[^/]+/)*")
+                i += 3
+            elif path_mode and pattern.startswith("**", i):
+                parts.append(r".*")
+                i += 2
+            else:
+                parts.append(r"[^/]*" if path_mode else r".*")
+                i += 1
+        elif ch == "?":
+            parts.append(r"[^/]" if path_mode else ".")
+            i += 1
+        elif ch in ".^$+{}[]|()\\":
+            parts.append("\\" + ch)
+            i += 1
+        else:
+            parts.append(ch)
+            i += 1
+    return "".join(parts)
 
-    规则：
-    - pattern 含 '/' -> 全路径匹配（anchored）
-    - pattern 不含 '/' -> 仅匹配 basename（fnmatch 语义）
-    """
-    if "/" in pattern:
-        # 全路径匹配
-        regex_parts: list[str] = []
-        i = 0
-        n = len(pattern)
-        while i < n:
-            ch = pattern[i]
-            if ch == "*":
-                if i + 1 < n and pattern[i + 1] == "*":
-                    # **
-                    if i + 2 < n and pattern[i + 2] == "/":
-                        regex_parts.append(r"(?:[^/]+/)*")
-                        i += 3
-                        continue
-                    else:
-                        regex_parts.append(r".*")
-                        i += 2
-                        continue
-                else:
-                    regex_parts.append(r"[^/]*")
-                    i += 1
-                    continue
-            elif ch == "?":
-                regex_parts.append(r"[^/]")
-                i += 1
-                continue
-            elif ch in ".^$+{}[]|()\\":  # 转义元字符
-                regex_parts.append("\\" + ch)
-                i += 1
-                continue
-            else:
-                regex_parts.append(ch)
-                i += 1
-                continue
-        return re.compile("^" + "".join(regex_parts) + "$")
-    else:
-        # 仅匹配 basename
-        regex_parts2: list[str] = []
-        i = 0
-        n = len(pattern)
-        while i < n:
-            ch = pattern[i]
-            if ch == "*":
-                regex_parts2.append(r".*")
-                i += 1
-                continue
-            elif ch == "?":
-                regex_parts2.append(r".")
-                i += 1
-                continue
-            elif ch in ".^$+{}[]|()\\":  # 转义元字符
-                regex_parts2.append("\\" + ch)
-                i += 1
-                continue
-            else:
-                regex_parts2.append(ch)
-                i += 1
-                continue
-        return re.compile("^" + "".join(regex_parts2) + "$")
+
+def _glob_to_regex(pattern: str) -> re.Pattern[str]:
+    """将 glob 模式转换为正则表达式（支持 **、*、?）。"""
+    path_mode = "/" in pattern
+    return re.compile("^" + _translate_glob(pattern, path_mode=path_mode) + "$")
+
+
+_TERM_RE = re.compile(r"(\w+)\('([^']*)'\)")
+_ALLOWED_TERMS = frozenset({"files_contain", "pr_label"})
+
+
+def _parse_condition_terms(condition: str) -> list[tuple[str, str]] | None:
+    """解析 OR term；语法错误返回 None（fail-closed）。"""
+    parsed: list[tuple[str, str]] = []
+    for raw in condition.split("||"):
+        term = raw.strip()
+        if not term:
+            continue
+        match = _TERM_RE.fullmatch(term)
+        if not match:
+            print(f"⚠️  无法解析条件 term: {term}", file=sys.stderr)
+            return None
+        func_name, arg = match.group(1), match.group(2)
+        if func_name not in _ALLOWED_TERMS:
+            print(f"⚠️  未知条件函数: {func_name}", file=sys.stderr)
+            return None
+        parsed.append((func_name, arg))
+    return parsed
+
+
+def _term_matches(func_name: str, arg: str, changed_files: list[str]) -> bool:
+    """评估单个已解析 term。"""
+    if func_name == "files_contain":
+        if "*" not in arg:
+            return any(arg in changed for changed in changed_files)
+        glob_re = _glob_to_regex(arg)
+        anchored = "/" in arg
+        return any(
+            glob_re.match(changed if anchored else changed.rsplit("/", 1)[-1]) for changed in changed_files
+        )
+    labels_env = os.environ.get("JCODE_PR_LABELS", "")
+    if not labels_env:
+        return False
+    return arg in {label.strip() for label in labels_env.split(",")}
 
 
 def files_match_condition(changed_files: list[str] | None, condition: str) -> bool:
-    """检查变更文件是否满足触发条件
+    """检查变更文件是否满足触发条件。
 
     支持的条件语法：
     - 空条件或空白 -> True
@@ -117,58 +122,10 @@ def files_match_condition(changed_files: list[str] | None, condition: str) -> bo
     """
     if not condition or not condition.strip():
         return True
-
-    # 分割 ||，保留 term 内容
-    terms = [t.strip() for t in condition.split("||")]
-
-    # 解析所有 term
-    parsed_terms: list[tuple[str, str]] = []  # (func, arg)
-    term_re = re.compile(r"(\w+)\('([^']*)'\)")
-    for t in terms:
-        if not t:
-            continue
-        m = term_re.fullmatch(t)
-        if not m:
-            print(f"⚠️  无法解析条件 term: {t}", file=sys.stderr)
-            return False
-        func_name, arg = m.group(1), m.group(2)
-        if func_name not in ("files_contain", "pr_label"):
-            print(f"⚠️  未知条件函数: {func_name}", file=sys.stderr)
-            return False
-        parsed_terms.append((func_name, arg))
-
-    if not parsed_terms:
+    parsed_terms = _parse_condition_terms(condition)
+    if not parsed_terms or not changed_files:
         return False
-
-    if not changed_files:
-        return False
-
-    # 评估 OR
-    for func_name, arg in parsed_terms:
-        if func_name == "files_contain":
-            pattern = arg
-            if "*" in pattern:
-                glob_re = _glob_to_regex(pattern)
-                # 无 '/' 的模式（如 *.py）按 basename 匹配（fnmatch 语义）；
-                # 含 '/' 的模式对完整路径做锚定匹配
-                anchored = "/" in pattern
-                for f in changed_files:
-                    target = f if anchored else f.rsplit("/", 1)[-1]
-                    if glob_re.match(target):
-                        return True
-            else:
-                for f in changed_files:
-                    if pattern in f:
-                        return True
-        elif func_name == "pr_label":
-            labels_env = os.environ.get("JCODE_PR_LABELS", "")
-            if not labels_env:
-                continue  # term 为 False
-            # 逗号分隔，去除空格
-            labels = [lbl.strip() for lbl in labels_env.split(",")]
-            if arg in labels:
-                return True
-    return False
+    return any(_term_matches(func_name, arg, changed_files) for func_name, arg in parsed_terms)
 
 
 def run_hook(hook: dict[str, Any], changed_files: list[str] | None = None) -> bool:

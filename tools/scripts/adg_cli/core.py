@@ -303,6 +303,21 @@ def _make_issue(filepath: Path, line: int, column: int, pattern_def: dict[str, A
     )
 
 
+def _find_project_config_path(dirpath: Path | None) -> Path | None:
+    """从 dirpath 向上查找最近的 .adg/rules.yml。"""
+    if not dirpath:
+        return None
+    search_path = dirpath.resolve() if isinstance(dirpath, Path) else Path(dirpath).resolve()
+    visited: set[Path] = set()
+    while search_path and search_path not in visited:
+        visited.add(search_path)
+        candidate = search_path / ".adg" / "rules.yml"
+        if candidate.exists():
+            return candidate
+        search_path = search_path.parent
+    return None
+
+
 def load_project_config(dirpath: Path | None = None) -> dict[str, Any]:
     """Load project-level ADG configuration.
 
@@ -334,22 +349,13 @@ def load_project_config(dirpath: Path | None = None) -> dict[str, Any]:
             pass  # global config optional
 
     # Load project config (overrides global).
-    # 向上递归: 若 dirpath 本身没有 .adg/rules.yml, 则向父目录查找
-    # (这样 adg check tools/scripts 也能读到根目录的配置).
-    if dirpath:
-        search_path: Path | None = dirpath.resolve() if isinstance(dirpath, Path) else Path(dirpath).resolve()
-        visited: set[Path] = set()
-        while search_path and search_path not in visited:
-            visited.add(search_path)
-            project_config_path = search_path / ".adg" / "rules.yml"
-            if project_config_path.exists():
-                try:
-                    project_config = _normalize_custom_rules_keys(_load_yaml(project_config_path))
-                    config = _merge_config(config, project_config)
-                except (OSError, yaml.YAMLError):
-                    pass  # project config optional
-                break  # 找到最近的 .adg/rules.yml 后停止向上
-            search_path = search_path.parent
+    project_config_path = _find_project_config_path(dirpath)
+    if project_config_path:
+        try:
+            project_config = _normalize_custom_rules_keys(_load_yaml(project_config_path))
+            config = _merge_config(config, project_config)
+        except (OSError, yaml.YAMLError):
+            pass  # project config optional
 
     return config
 

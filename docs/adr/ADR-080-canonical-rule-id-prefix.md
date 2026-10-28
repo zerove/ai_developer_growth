@@ -13,10 +13,13 @@
 - `tools/scripts/_common.py`
 - `tools/scripts/rules_engine/rule_loader.py`
 - `tools/scripts/rules_engine/validators/pipeline.py`
+- `tools/scripts/complexity_analyzer.py`
+- `tools/scripts/naming_analyzer.py`
 - `tests/test_common.py`
 - `tests/test_pipeline_checker_ruleloader.py`
 - `tests/test_rule_loader.py`
 - `tests/test_validators_pipeline.py`
+- `tests/test_rule_id_prefix_call_sites.py`
 
 ## 背景
 
@@ -42,11 +45,16 @@ ID 一旦分叉，`supersedes`、规则抑制、auto-fix 映射和问题追溯�
 `tests/test_pipeline_checker_ruleloader.py` 原本还断言了 `ru-eval-exec`，
 把错误行为锁成了预期。
 
+同样的截断还存在于 `complexity_analyzer.py` 和 `naming_analyzer.py`：
+threshold/naming 规则 ID 也由 `language[:2]` 生成，Rust 得到 `ru-threshold-*`，
+Java/JavaScript 得到 `ja-naming-*`，TypeScript 得到 `ty-threshold-*`。
+
 ## 决策
 
 在 `tools/scripts/_common.py` 增加唯一的规范前缀表 `RULE_ID_PREFIXES`
-和查询函数 `rule_id_prefix(language)`。两个 `_get_embedded_rules()` 实现
-都改用该函数，不再自行截断语言名。
+和查询函数 `rule_id_prefix(language)`。两个 `_get_embedded_rules()` 实现，
+以及 `complexity_analyzer.py`、`naming_analyzer.py`，都改用该函数，
+不再自行截断语言名。
 
 支持的 26 种语言以 `ai-dev-framework/languages/*/rules.d` 的实际前缀为准；
 未知语言保留“取前两个字符”的 best-effort 行为，避免扩大变更范围。
@@ -56,7 +64,7 @@ ID 一旦分叉，`supersedes`、规则抑制、auto-fix 映射和问题追溯�
 
 ### 正面
 
-- YAML 可用与 fallback 两条路径生成相同的规则 ID。
+- YAML、fallback、threshold 和 naming 路径生成相同的规则 ID。
 - 前缀规则只有一个来源，修复了 `ru-`、`ja-`、`ty-` 这类隐性分叉。
 - 测试不再把错误 ID 锁成契约，新增语言时能发现映射漂移。
 

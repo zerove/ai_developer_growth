@@ -12,6 +12,7 @@ from __future__ import annotations
 import re
 from typing import Any
 
+from ._common import rule_id_prefix as _rule_id_prefix
 from .rules_engine.regex_cache import guard_pattern
 from .validate_language_rules import Issue
 
@@ -29,7 +30,7 @@ def _check_filename(filepath: str, language: str, naming: dict[str, Any]) -> lis
         if not re.match(file_rule["pattern"], filename):
             issues.append(
                 Issue(
-                    rule_id=f"{language[:2]}-naming-file",
+                    rule_id=f"{_rule_id_prefix(language)}-naming-file",
                     severity="warning",
                     category="naming",
                     file=filepath,
@@ -68,7 +69,7 @@ def _check_identifier_kind(
             if not regex.match(ident):
                 issues.append(
                     Issue(
-                        rule_id=f"{language[:2]}-naming-{kind}",
+                        rule_id=f"{_rule_id_prefix(language)}-naming-{kind}",
                         severity="info",
                         category="naming",
                         file=filepath,

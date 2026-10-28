@@ -9,6 +9,7 @@ import ast
 import re
 from typing import Any
 
+from ._common import rule_id_prefix as _rule_id_prefix
 from .validate_language_rules import Issue
 
 
@@ -19,7 +20,7 @@ def _check_line_length(lines: list[str], filepath: str, language: str, max_line:
         if len(line.rstrip()) > max_line:
             issues.append(
                 Issue(
-                    rule_id=f"{language[:2]}-threshold-line-length",
+                    rule_id=f"{_rule_id_prefix(language)}-threshold-line-length",
                     severity="info",
                     category="readability",
                     file=filepath,
@@ -36,7 +37,7 @@ def _check_file_length(lines: list[str], filepath: str, language: str, max_file:
     if len(lines) > max_file:
         issues.append(
             Issue(
-                rule_id=f"{language[:2]}-threshold-file-length",
+                rule_id=f"{_rule_id_prefix(language)}-threshold-file-length",
                 severity="warning",
                 category="readability",
                 file=filepath,
@@ -62,7 +63,7 @@ def _check_function_length(
         if length > max_func:
             issues.append(
                 Issue(
-                    rule_id=f"{language[:2]}-threshold-func-length",
+                    rule_id=f"{_rule_id_prefix(language)}-threshold-func-length",
                     severity="warning",
                     category="readability",
                     file=filepath,
@@ -75,7 +76,7 @@ def _check_function_length(
         if depth > max_nest:
             issues.append(
                 Issue(
-                    rule_id=f"{language[:2]}-threshold-nesting",
+                    rule_id=f"{_rule_id_prefix(language)}-threshold-nesting",
                     severity="warning",
                     category="readability",
                     file=filepath,

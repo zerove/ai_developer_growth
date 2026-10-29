@@ -15,9 +15,25 @@
 - `tools/scripts/rules_engine/validators/pipeline.py`
 - `tools/scripts/complexity_analyzer.py`
 - `tools/scripts/naming_analyzer.py`
+- `ai-dev-framework/languages/assembly/rules.d/anti_patterns.yml`
+- `ai-dev-framework/languages/clojure/rules.d/anti_patterns.yml`
+- `ai-dev-framework/languages/cpp/rules.d/anti_patterns.yml`
+- `ai-dev-framework/languages/dart/rules.d/anti_patterns.yml`
+- `ai-dev-framework/languages/elixir/rules.d/anti_patterns.yml`
+- `ai-dev-framework/languages/fortran/rules.d/anti_patterns.yml`
+- `ai-dev-framework/languages/graphql/rules.d/anti_patterns.yml`
+- `ai-dev-framework/languages/haskell/rules.d/anti_patterns.yml`
+- `ai-dev-framework/languages/kotlin/rules.d/anti_patterns.yml`
+- `ai-dev-framework/languages/lua/rules.d/anti_patterns.yml`
+- `ai-dev-framework/languages/matlab/rules.d/anti_patterns.yml`
+- `ai-dev-framework/languages/perl/rules.d/anti_patterns.yml`
+- `ai-dev-framework/languages/php/rules.d/anti_patterns.yml`
+- `ai-dev-framework/languages/powershell/rules.d/anti_patterns.yml`
 - `ai-dev-framework/languages/ruby/rules.d/anti_patterns.yml`
 - `ai-dev-framework/languages/typescript/rules.d/anti_patterns.yml`
+- `ai-dev-framework/languages/zig/rules.d/anti_patterns.yml`
 - `tests/test_common.py`
+- `tests/test_language_rules_languages_batch_c.py`
 - `tests/test_pipeline_checker_ruleloader.py`
 - `tests/test_rule_loader.py`
 - `tests/test_validators_pipeline.py`
@@ -26,13 +42,24 @@
 
 ## 背景
 
-规则治理硬化时，以下五个已标准化语言的规则 ID 已统一到规范前缀：
+截至 2026-10-28，以下五个语言的规则 ID 已统一到规范前缀：
 
 - Rust 使用 `rs-`
 - Java 使用 `java-`
 - JavaScript 使用 `js-`
 - Ruby 使用 `rb-`
 - TypeScript 使用 `ts-`
+
+2026-10-29 完成 Batch A：Clojure、Dart、Elixir、Haskell 的 YAML ID 分别迁移到
+`clj-`、`dt-`、`ex-`、`hs-`，退役 `cl-` / `da-` / `el-` / `ha-` 前缀。
+
+2026-10-29 完成 Batch B：C++、Kotlin、Lua、PHP、PowerShell、Zig 的 YAML ID
+分别迁移到 `cpp-`、`kt-`、`lua-`、`php-`、`ps-`、`zig-`，退役 `cp-` / `ko-` /
+`lu-` / `ph-` / `po-` / `zi-` 前缀。
+
+2026-10-29 完成 Batch C：Assembly、Fortran、GraphQL、MATLAB、Perl 的 YAML ID
+分别迁移到 `asm-`、`for-`、`gql-`、`mcl-`、`pl-`，退役 `as-` / `fo-` /
+`gr-` / `ma-` / `pe-` 前缀。
 
 但 `_get_embedded_rules()` 的两个实现仍用 `language[:2]` 生成 fallback ID，
 于是同一个语言在 YAML 可用与不可用时得到不同 ID：
@@ -59,11 +86,12 @@ Java/JavaScript 得到 `ja-naming-*`，TypeScript 得到 `ty-threshold-*`。
 以及 `complexity_analyzer.py`、`naming_analyzer.py`，都改用该函数，
 不再自行截断语言名。
 
-`RULE_ID_PREFIXES` 覆盖 26 个语言的候选前缀；其中 Java、JavaScript、Ruby、
-Rust、TypeScript 的全部 YAML ID 已严格校验，其他语言仍保留 first-two
-best-effort，待后续单独迁移。未知语言保留“取前两个字符”的兼容行为。
-测试同时覆盖代表性语言、标准化语言的完整前缀守卫，以及“映射表与 YAML 实际 ID
-一致”的漂移检查。
+`RULE_ID_PREFIXES` 覆盖 26 个语言的候选前缀；全部 26 个语言的 YAML ID 已严格
+校验。Batch C 完成后，Assembly、Fortran、GraphQL、MATLAB、Perl 使用 `asm-`、
+`for-`、`gql-`、`mcl-`、`pl-`；C#、Go、Python、R、Scala、Swift 等原本
+first-two 已对齐的语言也纳入 strict 守卫。未知语言保留“取前两个字符”的兼容
+行为。测试同时覆盖代表性语言、标准化语言的完整前缀守卫，以及“映射表与 YAML
+实际 ID 一致”的漂移检查。
 
 ## 后果
 
@@ -77,3 +105,17 @@ best-effort，待后续单独迁移。未知语言保留“取前两个字符”
 
 - 新增语言时必须同步更新 `RULE_ID_PREFIXES`，否则漂移测试会失败。
 - 未知语言仍使用截断前缀，属于兼容性兜底，不是完整支持。
+
+## 修订记录
+
+- 2026-10-29: Batch A 完成 Clojure (`clj-`)、Dart (`dt-`)、Elixir (`ex-`)、
+  Haskell (`hs-`) 的规则 ID 迁移；退役 `cl-` / `da-` / `el-` / `ha-` 前缀，
+  标准化语言从 5 个扩展到 9 个。
+- 2026-10-29: Batch B 完成 C++ (`cpp-`)、Kotlin (`kt-`)、Lua (`lua-`)、
+  PHP (`php-`)、PowerShell (`ps-`)、Zig (`zig-`) 的规则 ID 迁移；退役
+  `cp-` / `ko-` / `lu-` / `ph-` / `po-` / `zi-` 前缀，标准化语言从 9 个扩展到
+  15 个。
+- 2026-10-29: Batch C 完成 Assembly (`asm-`)、Fortran (`for-`)、GraphQL (`gql-`)、
+  MATLAB (`mcl-`)、Perl (`pl-`) 的规则 ID 迁移；退役 `as-` / `fo-` / `gr-` /
+  `ma-` / `pe-` 前缀，并将 C#、Go、Python、R、Scala、Swift 纳入 strict 守卫，
+  标准化语言从 15 个扩展到 26 个。

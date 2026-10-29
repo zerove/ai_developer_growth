@@ -71,10 +71,16 @@ YAML 规则文件
 
 ### 规则 ID 命名与碰撞检查
 
-- 规则 ID 全局唯一，语言前缀必须无歧义：Java 使用 `java-*`，JavaScript 使用
-  `js-*`，Ruby 使用 `rb-*`，Rust 使用 `rs-*`，TypeScript 使用 `ts-*`。旧的
-  `ja-*` / `ru-*` / `ruby-*` / `ty-*` 前缀已退役（2026-10-29），项目级
-  `.adg/rules.yml` 覆盖请改用新 ID。前缀统一由 `rule_id_prefix()` 生成，决策见
+- 规则 ID 全局唯一，语言前缀必须无歧义。26/26 个语言已严格标准化，前缀统一由
+  `rule_id_prefix()` 生成：Java/JavaScript/Ruby/Rust/TypeScript 使用
+  `java-`/`js-`/`rb-`/`rs-`/`ts-`，Clojure/C++/Dart/Elixir/Haskell/Kotlin/Lua/
+  PHP/PowerShell/Zig/Assembly/Fortran/GraphQL/MATLAB/Perl 使用
+  `clj-`/`cpp-`/`dt-`/`ex-`/`hs-`/`kt-`/`lua-`/`php-`/`ps-`/`zig-`/`asm-`/
+  `for-`/`gql-`/`mcl-`/`pl-`，C#/Go/Python/R/Scala/Swift 使用
+  `cs-`/`go-`/`py-`/`r-`/`sc-`/`sw-`。旧的 `ja-*` / `ru-*` / `ruby-*` /
+  `ty-*` / `cl-*` / `da-*` / `el-*` / `ha-*` / `cp-*` / `ko-*` / `lu-*` /
+  `ph-*` / `po-*` / `zi-*` / `as-*` / `fo-*` / `gr-*` / `ma-*` / `pe-*`
+  前缀已退役（2026-10-29），项目级 `.adg/rules.yml` 覆盖请改用新 ID。决策见
   [ADR-080](../adr/ADR-080-canonical-rule-id-prefix.md)。
 - `tests/test_rule_supersedes_validation.py` 校验 `supersedes` 的类型、目标存在性、
   自引用与循环。

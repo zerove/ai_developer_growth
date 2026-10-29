@@ -78,11 +78,10 @@ class TestDetectLanguage:
 
 
 STANDARDIZED_PREFIXES = {
-    "java": "java",
-    "javascript": "js",
-    "ruby": "rb",
-    "rust": "rs",
-    "typescript": "ts",
+    language: rule_id_prefix(language)
+    for language in (
+        "assembly clojure cpp csharp dart elixir fortran go graphql haskell java javascript kotlin lua matlab perl php powershell python r ruby rust scala swift typescript zig"
+    ).split()
 }
 
 

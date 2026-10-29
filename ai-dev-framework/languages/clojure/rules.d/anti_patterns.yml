@@ -58,84 +58,84 @@ anti_patterns:
   pattern: \(defonce\s+
   message: defonce hides initialization - prefer explicit state
   fix_hint: Use def with proper initialization or atoms
-- id: cl-hardcoded-config
+- id: clj-hardcoded-config
   name: Hardcoded configuration
   severity: warning
   category: config
   pattern: (?:url|endpoint|host|port)\s*[=:]\s*["']https?://
   message: Use configuration for URLs/endpoints
   fix_hint: Move to config file
-- id: cl-todo
+- id: clj-todo
   name: Unresolved TODO
   severity: info
   category: code_quality
   pattern: TODO|FIXME|HACK|XXX
   message: Unresolved TODO/FIXME comments
   fix_hint: Create a ticket or resolve
-- id: cl-deep-nesting
+- id: clj-deep-nesting
   name: Deep nesting
   severity: warning
   category: complexity
   pattern: '    (?:if|for|while|case).*\n(?:        (?:if|for|while|case).*\n){2,}'
   message: Deep nesting reduces readability
   fix_hint: Extract helper functions
-- id: cl-long-line
+- id: clj-long-line
   name: Long line
   severity: info
   category: code_quality
   pattern: ^.{121,}$
   message: Lines >120 chars
   fix_hint: Break at logical boundaries
-- id: cl-unsafe-input
+- id: clj-unsafe-input
   name: Unvalidated input
   severity: error
   category: security
   pattern: (?:read|gets?|input)\s*\(
   message: User input must be validated
   fix_hint: Add input validation
-- id: cl-log-sensitive
+- id: clj-log-sensitive
   name: Logging sensitive data
   severity: error
   category: security
   pattern: log(?:ger)?\.(?:info|debug|warn|error)\s*\(.*(?:password|secret|token|credential|api_key)
   message: Never log sensitive data (passwords, tokens, secrets)
   fix_hint: Use log filtering or redact sensitive fields
-- id: cl-log-print
+- id: clj-log-print
   name: Using print for logging
   severity: warning
   category: logging
   pattern: ^\s*print\s*\(
   message: Use structured logging instead of print statements in production
   fix_hint: Use logging framework (loguru, structlog, etc.)
-- id: cl-file-leak
+- id: clj-file-leak
   name: Unclosed file handle
   severity: error
   category: resource_management
   pattern: (?:open|fopen)\s*\([^)]*\)\s*(?!.*\b(with|using|close|finally|defer)\b)
   message: File handles must be closed properly to avoid resource leaks
   fix_hint: Use with/using/defer block or ensure close() in finally
-- id: cl-connection-leak
+- id: clj-connection-leak
   name: Unclosed connection
   severity: error
   category: resource_management
   pattern: \b(?:connect|new connection|getConnection)\s*\([^)]*\)\s*(?!.*\b(with|using|close|finally|defer)\b)
   message: Database/network connections must be released after use
   fix_hint: Use connection pool or ensure close() in finally
-- id: cl-shared-mutable
+- id: clj-shared-mutable
   name: Shared mutable state without sync
   severity: warning
   category: concurrency
   pattern: (?:global|static|thread_local)\s+\w+(?:\s*=\s*[^;]*)?\s*[;]?$
   message: Shared mutable state without synchronization can cause race conditions
   fix_hint: Use mutex/lock/atomic or thread-local storage
-- id: cl-large-alloc-loop
+- id: clj-large-alloc-loop
   name: Large allocation in loop
   severity: warning
   category: performance
   pattern: (?:for|while|loop)\s*\([^)]*\)\s*\{?\s*[^}]*\b(?:append|push|concat|new\s+(?:Array|List|StringBuilder))\b
   message: Repeated allocations inside loops impact performance
   fix_hint: Pre-allocate or use builder pattern outside the loop
-- id: cl-exception-leak
+- id: clj-exception-leak
   name: Exception message leaks internal info
   severity: warning
   category: security

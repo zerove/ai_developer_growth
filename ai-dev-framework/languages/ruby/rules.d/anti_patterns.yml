@@ -2,7 +2,7 @@ language: ruby
 version: '>=3.1'
 config_version: '1.0'
 anti_patterns:
-- id: ruby-eval
+- id: rb-eval
   name: eval() usage
   severity: error
   category: security
@@ -16,70 +16,70 @@ anti_patterns:
   pattern: \.send\s*\(
   message: send() can call any method - use public_send() for safer dispatch
   fix_hint: Use public_send() which only calls public methods
-- id: ruby-sql-injection
+- id: rb-sql-injection
   name: SQL injection via string interpolation
   severity: error
   category: security
   pattern: (?:execute|find_by_sql|where)\s*\(.*(?:#{|\.format|%\()
   message: String interpolation in SQL enables injection
   fix_hint: 'Use parameterized queries: where("name = ?", name)'
-- id: ruby-puts
+- id: rb-puts
   name: puts/print in production
   severity: info
   category: code_quality
   pattern: \b(puts|print|p\s+\w+|pp\s+\w+)\s*\(
   message: Use proper logging instead of puts/print
   fix_hint: Use Rails.logger or a logging gem
-- id: ruby-rescue-all
+- id: rb-rescue-all
   name: Rescue all exceptions
   severity: error
   category: error_handling
   pattern: rescue\s*=>|rescue\s+Exception\b|rescue\s*$|rescue\s+
   message: Rescuing all exceptions hides specific errors
   fix_hint: 'Rescue specific exceptions: rescue ActiveRecord::RecordNotFound'
-- id: ruby-empty-rescue
+- id: rb-empty-rescue
   name: Empty rescue block
   severity: error
   category: error_handling
   pattern: rescue[^:]*:\s*$
   message: Empty rescue blocks silently swallow errors
   fix_hint: Log the error or re-raise it
-- id: ruby-freeze-string
+- id: rb-freeze-string
   name: Mutable string literal
   severity: warning
   category: performance
   pattern: '"([^"]*|''[^'']*)(?!\.freeze)"'
   message: String literals are mutable in Ruby < 3.0
   fix_hint: 'Add .freeze or use # frozen_string_literal: true'
-- id: ruby-global-var
+- id: rb-global-var
   name: Global variable usage
   severity: warning
   category: code_quality
   pattern: \$\w+\s*=
   message: Global variables make code hard to test
   fix_hint: Use constants, class variables, or dependency injection
-- id: ruby-magic-number
+- id: rb-magic-number
   name: Magic number
   severity: info
   category: code_quality
   pattern: (?:if|while|unless)\s+.*(?:==?|>=?|<=?)\s*\d{2,}
   message: Magic numbers should be named constants
   fix_hint: Define MAX_RETRIES = 3
-- id: ruby-nested-tenary
+- id: rb-nested-tenary
   name: Nested ternary (inline if)
   severity: warning
   category: code_quality
   pattern: \?\s*\S+\s*:\s*\S+\s*\?
   message: Nested ternaries are hard to read
   fix_hint: Use if/else or case/when for complex logic
-- id: ruby-no-frozen-literal
+- id: rb-no-frozen-literal
   name: Missing frozen string literal comment
   severity: info
   category: performance
   pattern: ^(?!# frozen_string_literal)
   message: 'Add # frozen_string_literal: true for performance'
   fix_hint: '# frozen_string_literal: true at top of file'
-- id: ruby-rails-sql-injection
+- id: rb-rails-sql-injection
   name: Rails SQL injection via where
   severity: error
   category: security

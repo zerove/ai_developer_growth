@@ -178,7 +178,7 @@ class TestGetEmbeddedRules:
             ("rust", "rs"),
             ("java", "java"),
             ("javascript", "js"),
-            ("ruby", "ruby"),
+            ("ruby", "rb"),
             ("typescript", "ts"),
         ],
     )

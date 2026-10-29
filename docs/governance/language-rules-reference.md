@@ -49,8 +49,9 @@ Complete reference for all code quality rules across 26 languages and 5 framewor
 ## Rule ID Prefixes and Supersedes
 
 规则 ID 全局唯一，语言前缀必须无歧义：Java 使用 `java-*`，JavaScript 使用 `js-*`，
-Ruby 使用 `rb-*`，Rust 使用 `rs-*`。旧的 `ja-*` / `ru-*` 前缀已退役（2026-10-27），
-项目级 `.adg/rules.yml` 覆盖请改用新 ID。
+Ruby 使用 `rb-*`，Rust 使用 `rs-*`，TypeScript 使用 `ts-*`。旧的 `ja-*` / `ru-*` /
+`ruby-*` / `ty-*` 前缀已退役（2026-10-29），项目级 `.adg/rules.yml` 覆盖请改用新 ID。
+决策与影响范围见 [ADR-080](../adr/ADR-080-canonical-rule-id-prefix.md)。
 
 语言规则可用 `supersedes` 声明替代 `common/security.yml` 中的规则：
 

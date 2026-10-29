@@ -72,7 +72,10 @@ YAML 规则文件
 ### 规则 ID 命名与碰撞检查
 
 - 规则 ID 全局唯一，语言前缀必须无歧义：Java 使用 `java-*`，JavaScript 使用
-  `js-*`，Ruby 使用 `rb-*`，Rust 使用 `rs-*`（旧的 `ja-*` / `ru-*` 前缀已退役）。
+  `js-*`，Ruby 使用 `rb-*`，Rust 使用 `rs-*`，TypeScript 使用 `ts-*`。旧的
+  `ja-*` / `ru-*` / `ruby-*` / `ty-*` 前缀已退役（2026-10-29），项目级
+  `.adg/rules.yml` 覆盖请改用新 ID。前缀统一由 `rule_id_prefix()` 生成，决策见
+  [ADR-080](../adr/ADR-080-canonical-rule-id-prefix.md)。
 - `tests/test_rule_supersedes_validation.py` 校验 `supersedes` 的类型、目标存在性、
   自引用与循环。
 - `python tools/scripts/check_rule_collisions.py` 检查重复 ID 和未声明的跨源

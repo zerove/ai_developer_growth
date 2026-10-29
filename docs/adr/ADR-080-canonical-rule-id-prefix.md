@@ -15,20 +15,23 @@
 - `tools/scripts/rules_engine/validators/pipeline.py`
 - `tools/scripts/complexity_analyzer.py`
 - `tools/scripts/naming_analyzer.py`
+- `ai-dev-framework/languages/ruby/rules.d/anti_patterns.yml`
+- `ai-dev-framework/languages/typescript/rules.d/anti_patterns.yml`
 - `tests/test_common.py`
 - `tests/test_pipeline_checker_ruleloader.py`
 - `tests/test_rule_loader.py`
 - `tests/test_validators_pipeline.py`
 - `tests/test_rule_id_prefix_call_sites.py`
+- `tests/test_language_rules_languages_dynamic.py`
 
 ## 背景
 
-规则治理硬化时，`ai-dev-framework/languages/*/rules.d` 的规则 ID 已统一到规范前缀：
+规则治理硬化时，以下五个已标准化语言的规则 ID 已统一到规范前缀：
 
 - Rust 使用 `rs-`
 - Java 使用 `java-`
 - JavaScript 使用 `js-`
-- Ruby 使用 `ruby-`
+- Ruby 使用 `rb-`
 - TypeScript 使用 `ts-`
 
 但 `_get_embedded_rules()` 的两个实现仍用 `language[:2]` 生成 fallback ID，
@@ -37,7 +40,7 @@
 - Rust: YAML `rs-eval-exec`，fallback `ru-eval-exec`
 - Java: YAML `java-eval-runtime`，fallback `ja-eval-exec`
 - JavaScript: YAML `js-eval`，fallback `ja-eval-exec`
-- Ruby: YAML `ruby-eval`，fallback `ru-eval-exec`
+- Ruby: YAML `rb-eval`，fallback `rb-eval-exec`
 - TypeScript: YAML `ts-eval`，fallback `ty-eval-exec`
 
 fallback 不是死代码：规则目录缺失、安装不完整或测试隔离时都会走到这里。
@@ -56,9 +59,11 @@ Java/JavaScript 得到 `ja-naming-*`，TypeScript 得到 `ty-threshold-*`。
 以及 `complexity_analyzer.py`、`naming_analyzer.py`，都改用该函数，
 不再自行截断语言名。
 
-支持的 26 种语言以 `ai-dev-framework/languages/*/rules.d` 的实际前缀为准；
-未知语言保留“取前两个字符”的 best-effort 行为，避免扩大变更范围。
-测试同时覆盖代表性语言和“映射表与 YAML 实际 ID 一致”的漂移守卫。
+`RULE_ID_PREFIXES` 覆盖 26 个语言的候选前缀；其中 Java、JavaScript、Ruby、
+Rust、TypeScript 的全部 YAML ID 已严格校验，其他语言仍保留 first-two
+best-effort，待后续单独迁移。未知语言保留“取前两个字符”的兼容行为。
+测试同时覆盖代表性语言、标准化语言的完整前缀守卫，以及“映射表与 YAML 实际 ID
+一致”的漂移检查。
 
 ## 后果
 

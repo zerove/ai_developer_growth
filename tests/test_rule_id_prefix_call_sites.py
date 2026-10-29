@@ -1,5 +1,8 @@
 from __future__ import annotations
 
+import re
+from pathlib import Path
+
 import pytest
 
 from tools.scripts.complexity_analyzer import (
@@ -8,12 +11,17 @@ from tools.scripts.complexity_analyzer import (
     _check_line_length,
 )
 from tools.scripts.naming_analyzer import _check_filename, _check_identifier_kind
+from tools.scripts.validate_language_rules import (
+    check_naming_conventions,
+    check_thresholds,
+    load_rules,
+)
 
 CASES = [
     ("rust", "rs"),
     ("java", "java"),
     ("javascript", "js"),
-    ("ruby", "ruby"),
+    ("ruby", "rb"),
     ("typescript", "ts"),
 ]
 
@@ -46,3 +54,27 @@ def test_naming_identifier_rule_id_uses_canonical_prefix() -> None:
     )
 
     assert [issue.rule_id for issue in issues] == ["rs-naming-function"]
+
+
+@pytest.mark.parametrize(("language", "prefix"), CASES)
+def test_public_checks_use_canonical_prefix(language: str, prefix: str) -> None:
+    rules = load_rules(language)
+    naming_ids = {issue.rule_id for issue in check_naming_conventions(["BadName"], rules, "test.txt")}
+    threshold_ids = {issue.rule_id for issue in check_thresholds(["x" * 130], rules, "test.txt")}
+
+    assert f"{prefix}-naming-file" in naming_ids
+    assert f"{prefix}-threshold-line-length" in threshold_ids
+
+
+def test_rule_sources_do_not_truncate_language_names() -> None:
+    repo_root = Path(__file__).resolve().parents[1]
+    source_root = repo_root / "tools" / "scripts"
+    truncation = re.compile(r"\b(?:language|lang)\s*\[\s*:\s*2\s*\]")
+    violations: list[str] = []
+    for path in sorted(source_root.rglob("*.py")):
+        for line_number, line in enumerate(path.read_text(encoding="utf-8").splitlines(), 1):
+            if line.lstrip().startswith("#"):
+                continue
+            if truncation.search(line):
+                violations.append(f"{path.relative_to(repo_root)}:{line_number}: {line.strip()}")
+    assert not violations, "\n".join(violations)

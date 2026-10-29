@@ -215,7 +215,7 @@ RULE_ID_PREFIXES: dict[str, str] = {
     "powershell": "ps",
     "python": "py",
     "r": "r",
-    "ruby": "ruby",
+    "ruby": "rb",
     "rust": "rs",
     "scala": "sc",
     "swift": "sw",

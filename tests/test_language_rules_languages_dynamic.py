@@ -27,8 +27,8 @@ class TestRubyRules(unittest.TestCase):
         try:
             result = validate_file(filepath, "ruby")
             ids = [i.rule_id for i in result.issues]
-            # rescue nil is a bare rescue pattern - check for ruby-rescue-all
-            self.assertIn("ruby-rescue-all", ids)
+            # rescue nil is a bare rescue pattern - check for rb-rescue-all
+            self.assertIn("rb-rescue-all", ids)
         finally:
             filepath.unlink()
 
@@ -40,7 +40,7 @@ class TestRubyRules(unittest.TestCase):
         try:
             result = validate_file(filepath, "ruby")
             ids = [i.rule_id for i in result.issues]
-            self.assertIn("ruby-rescue-all", ids)
+            self.assertIn("rb-rescue-all", ids)
         finally:
             filepath.unlink()
 
@@ -52,7 +52,7 @@ class TestRubyRules(unittest.TestCase):
         try:
             result = validate_file(filepath, "ruby")
             ids = [i.rule_id for i in result.issues]
-            self.assertIn("ruby-eval", ids)
+            self.assertIn("rb-eval", ids)
         finally:
             filepath.unlink()
 

@@ -77,6 +77,29 @@ class TestDetectLanguage:
             assert result is not None, f"Extension {ext} returned None"
 
 
+STANDARDIZED_PREFIXES = {
+    "java": "java",
+    "javascript": "js",
+    "ruby": "rb",
+    "rust": "rs",
+    "typescript": "ts",
+}
+
+
+def _language_rule_ids(language: str) -> list[str]:
+    rules_path = rules_dir() / "languages" / language / "rules.d"
+    if not rules_path.is_dir():
+        return []
+    rule_ids: list[str] = []
+    for rule_file in sorted(rules_path.glob("*.yml")):
+        data = load_yaml(rule_file) or {}
+        for rule in data.get("anti_patterns", []):
+            rule_id = rule.get("id") if isinstance(rule, dict) else None
+            if isinstance(rule_id, str):
+                rule_ids.append(rule_id)
+    return rule_ids
+
+
 class TestRuleIdPrefix:
     @pytest.mark.parametrize(
         ("language", "expected"),
@@ -85,7 +108,7 @@ class TestRuleIdPrefix:
             ("rust", "rs"),
             ("java", "java"),
             ("javascript", "js"),
-            ("ruby", "ruby"),
+            ("ruby", "rb"),
             ("typescript", "ts"),
             ("kotlin", "kt"),
             ("csharp", "cs"),
@@ -103,22 +126,19 @@ class TestRuleIdPrefix:
         assert rule_id_prefix(" Rust ") == "rs"
 
     def test_mapping_matches_framework_yaml(self) -> None:
-        languages_dir = rules_dir() / "languages"
         mismatched: list[str] = []
         for language, prefix in RULE_ID_PREFIXES.items():
-            rules_path = languages_dir / language / "rules.d"
-            if not rules_path.is_dir():
-                continue
-            rule_ids: list[str] = []
-            for rule_file in sorted(rules_path.glob("*.yml")):
-                data = load_yaml(rule_file) or {}
-                for rule in data.get("anti_patterns", []):
-                    rule_id = rule.get("id") if isinstance(rule, dict) else None
-                    if isinstance(rule_id, str):
-                        rule_ids.append(rule_id)
+            rule_ids = _language_rule_ids(language)
             if rule_ids and not any(rule_id.startswith(f"{prefix}-") for rule_id in rule_ids):
                 mismatched.append(f"{language}:{prefix}")
         assert not mismatched
+
+    @pytest.mark.parametrize(("language", "prefix"), STANDARDIZED_PREFIXES.items())
+    def test_standardized_languages_have_only_canonical_prefixes(self, language: str, prefix: str) -> None:
+        rule_ids = _language_rule_ids(language)
+        assert rule_ids, f"{language} has no YAML rules"
+        invalid = [rule_id for rule_id in rule_ids if not rule_id.startswith(f"{prefix}-")]
+        assert not invalid, f"{language} has non-{prefix}- IDs: {invalid}"
 
 
 class TestRunCommand:

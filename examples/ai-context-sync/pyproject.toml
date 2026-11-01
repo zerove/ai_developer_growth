@@ -19,7 +19,7 @@ dependencies = [
     "typer>=0.9.0",
     # 必须 <2：mcp 2.x 移除了 mcp.server.fastmcp（改名 MCPServer），
     # src/mcp_server.py 依赖旧路径。无上界会让每次新装都拿到破坏性版本。
-    "mcp>=1.0.0,<2.0.0",
+    "mcp>=1.0.0,<3.0.0",
     "fastmcp>=1.0.0",
     "watchdog>=4.0.0",
     "jinja2>=3.1.0",

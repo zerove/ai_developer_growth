@@ -20,6 +20,7 @@ from tools.scripts.adg_cli.git import (
     _get_staged_files,
     _get_unstaged_files,
 )
+from tools.scripts.app_config import get_setting
 from tools.scripts.rules_engine.regex_cache import guard_pattern
 
 
@@ -245,7 +246,7 @@ def check_directory(
     dirpath: Path,
     rules: dict[str, Any],
     severity_filter: str | None = None,
-    jobs: int = 1,
+    jobs: int | None = None,
 ) -> list[Issue]:
     """Check all code files in a directory (V2.21 P5-35 拆分: 抽 _collect_files + _run_checks).
 
@@ -253,10 +254,11 @@ def check_directory(
         dirpath: Directory to check
         rules: Rules to apply
         severity_filter: Filter by severity level
-        jobs: Number of parallel jobs (1 = sequential)
+        jobs: Number of parallel jobs (None/<=0 = use configured default from [tool.adg] jobs, default 4)
     """
     files_to_check = _collect_files(dirpath)
-    return _run_checks(files_to_check, rules, severity_filter, jobs)
+    effective_jobs = jobs if jobs and jobs > 0 else int(get_setting("jobs", default=4) or 4)
+    return _run_checks(files_to_check, rules, severity_filter, effective_jobs)
 
 
 def _collect_files(dirpath: Path) -> list[Path]:

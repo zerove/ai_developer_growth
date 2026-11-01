@@ -17,7 +17,7 @@ def _add_base_check_parser(sub: argparse._SubParsersAction[Any]) -> None:
     )
     check_p.add_argument("--json", action="store_true", help="Output as JSON")
     check_p.add_argument("--sarif", action="store_true", help="Output as SARIF (GitHub Code Scanning)")
-    check_p.add_argument("-j", "--jobs", type=int, default=1, help="Number of parallel jobs (default: 1)")
+    check_p.add_argument("-j", "--jobs", type=int, default=None, help="Number of parallel jobs (default: from [tool.adg] jobs config, default 4)")
     check_p.add_argument(
         "--since",
         type=str,

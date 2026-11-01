@@ -1,0 +1,306 @@
+=== 04:45:43 [edit] /home/zeron/dev/ai_developer_growth/pyproject.toml ===
+Language: python + fastapi (auto-detected)
+Rules loaded: 0 issues found
+
+
+[92m✓ All checks passed[0m (1 files)
+=== 04:52:41 [edit] /home/zeron/dev/ai_developer_growth/scripts/search-server.py ===
+Language: python (auto-detected)
+Rules loaded: 0 issues found
+
+
+[92m✓ All checks passed[0m (1 files)
+=== 04:52:44 [edit] /home/zeron/dev/ai_developer_growth/scripts/search-server.py ===
+Language: python (auto-detected)
+Rules loaded: 0 issues found
+
+
+[92m✓ All checks passed[0m (1 files)
+=== 04:52:49 [edit] /home/zeron/dev/ai_developer_growth/scripts/search-server.py ===
+Language: python (auto-detected)
+Rules loaded: 0 issues found
+
+
+[92m✓ All checks passed[0m (1 files)
+=== 05:00:20 [edit] /home/zeron/dev/ai_developer_growth/scripts/search-server.py ===
+Language: python (auto-detected)
+Rules loaded: 0 issues found
+
+
+[92m✓ All checks passed[0m (1 files)
+=== 05:00:24 [edit] /home/zeron/dev/ai_developer_growth/scripts/search-server.py ===
+Language: python (auto-detected)
+Rules loaded: 0 issues found
+
+
+[92m✓ All checks passed[0m (1 files)
+=== 05:01:27 [edit] /home/zeron/dev/ai_developer_growth/scripts/search-server.py ===
+Language: python (auto-detected)
+Rules loaded: 0 issues found
+
+
+[92m✓ All checks passed[0m (1 files)
+=== 05:01:30 [edit] /home/zeron/dev/ai_developer_growth/scripts/search-server.py ===
+Language: python (auto-detected)
+Rules loaded: 0 issues found
+
+
+[92m✓ All checks passed[0m (1 files)
+=== 05:01:35 [edit] /home/zeron/dev/ai_developer_growth/scripts/search-server.py ===
+Language: python (auto-detected)
+Rules loaded: 0 issues found
+
+
+[92m✓ All checks passed[0m (1 files)
+=== 05:01:39 [edit] /home/zeron/dev/ai_developer_growth/scripts/search-server.py ===
+Language: python (auto-detected)
+Rules loaded: 0 issues found
+
+
+[92m✓ All checks passed[0m (1 files)
+=== 05:01:44 [edit] /home/zeron/dev/ai_developer_growth/scripts/search-server.py ===
+Language: python (auto-detected)
+Rules loaded: 0 issues found
+
+
+[92m✓ All checks passed[0m (1 files)
+=== 05:01:51 [edit] /home/zeron/dev/ai_developer_growth/scripts/search-server.py ===
+Language: python (auto-detected)
+Rules loaded: 0 issues found
+
+
+[92m✓ All checks passed[0m (1 files)
+=== 05:02:06 [edit] /home/zeron/dev/ai_developer_growth/scripts/search-server.py ===
+Language: python (auto-detected)
+Rules loaded: 0 issues found
+
+
+[92m✓ All checks passed[0m (1 files)
+=== 05:02:12 [edit] /home/zeron/dev/ai_developer_growth/scripts/search-server.py ===
+Language: python (auto-detected)
+Rules loaded: 0 issues found
+
+
+[92m✓ All checks passed[0m (1 files)
+=== 05:02:17 [edit] /home/zeron/dev/ai_developer_growth/scripts/search-server.py ===
+Language: python (auto-detected)
+Rules loaded: 0 issues found
+
+
+[92m✓ All checks passed[0m (1 files)
+=== 05:02:22 [edit] /home/zeron/dev/ai_developer_growth/scripts/search-server.py ===
+Language: python (auto-detected)
+Rules loaded: 0 issues found
+
+
+[92m✓ All checks passed[0m (1 files)
+=== 05:02:28 [edit] /home/zeron/dev/ai_developer_growth/scripts/search-server.py ===
+Language: python (auto-detected)
+Rules loaded: 0 issues found
+
+
+[92m✓ All checks passed[0m (1 files)
+=== 05:16:16 [edit] /home/zeron/dev/ai_developer_growth/scripts/search-server.py ===
+Language: python (auto-detected)
+Rules loaded: 0 issues found
+
+
+[92m✓ All checks passed[0m (1 files)
+=== 10:12:27 [edit] /home/zeron/dev/ai_developer_growth/scripts/radar-onboarding.py ===
+Language: python (auto-detected)
+Rules loaded: 0 issues found
+
+
+[92m✓ All checks passed[0m (1 files)
+=== 17:43:33 [edit] /home/zeron/dev/ai_developer_growth/scripts/radar-onboarding.py ===
+Language: python (auto-detected)
+Rules loaded: 0 issues found
+
+
+[92m✓ All checks passed[0m (1 files)
+=== 17:55:34 [edit] /home/zeron/dev/ai_developer_growth/scripts/team-radar-collect.py ===
+Language: python (auto-detected)
+Rules loaded: 0 issues found
+
+
+[92m✓ All checks passed[0m (1 files)
+=== 17:55:42 [edit] /home/zeron/dev/ai_developer_growth/scripts/team-radar-collect.py ===
+Language: python (auto-detected)
+Rules loaded: 0 issues found
+
+
+[92m✓ All checks passed[0m (1 files)
+=== 17:56:27 [edit] /home/zeron/dev/ai_developer_growth/extensions/ai-language-rules/lsp_server.py ===
+Language: python (auto-detected)
+Rules loaded: 0 issues found
+
+
+[92m✓ All checks passed[0m (1 files)
+=== 17:56:38 [edit] /home/zeron/dev/ai_developer_growth/extensions/ai-language-rules/lsp_server.py ===
+Language: python (auto-detected)
+Rules loaded: 0 issues found
+
+
+[92m✓ All checks passed[0m (1 files)
+=== 17:56:48 [edit] /home/zeron/dev/ai_developer_growth/extensions/ai-language-rules/lsp_server.py ===
+Language: python (auto-detected)
+Rules loaded: 0 issues found
+
+
+[92m✓ All checks passed[0m (1 files)
+=== 17:57:52 [edit] /home/zeron/dev/ai_developer_growth/extensions/ai-language-rules/lsp_server.py ===
+Language: python (auto-detected)
+Rules loaded: 0 issues found
+
+
+[92m✓ All checks passed[0m (1 files)
+=== 17:58:01 [edit] /home/zeron/dev/ai_developer_growth/extensions/ai-language-rules/lsp_server.py ===
+Language: python (auto-detected)
+Rules loaded: 0 issues found
+
+
+[92m✓ All checks passed[0m (1 files)
+=== 17:58:22 [edit] /home/zeron/dev/ai_developer_growth/extensions/ai-language-rules/lsp_server.py ===
+Language: python (auto-detected)
+Rules loaded: 0 issues found
+
+
+[92m✓ All checks passed[0m (1 files)
+=== 17:58:34 [edit] /home/zeron/dev/ai_developer_growth/extensions/ai-language-rules/lsp_server.py ===
+Language: python (auto-detected)
+Rules loaded: 0 issues found
+
+
+[92m✓ All checks passed[0m (1 files)
+=== 17:58:56 [edit] /home/zeron/dev/ai_developer_growth/extensions/ai-language-rules/lsp_server.py ===
+Language: python (auto-detected)
+Rules loaded: 0 issues found
+
+
+[92m✓ All checks passed[0m (1 files)
+=== 17:59:30 [edit] /home/zeron/dev/ai_developer_growth/examples/ai-task-prioritizer/prioritizer.py ===
+Language: python (auto-detected)
+Rules loaded: 0 issues found
+
+
+[92m✓ All checks passed[0m (1 files)
+=== 17:59:56 [edit] /home/zeron/dev/ai_developer_growth/examples/ai-task-prioritizer/llm_client.py ===
+Language: python (auto-detected)
+Rules loaded: 0 issues found
+
+
+[92m✓ All checks passed[0m (1 files)
+=== 18:00:15 [edit] /home/zeron/dev/ai_developer_growth/examples/ai-task-prioritizer/main.py ===
+Language: python (auto-detected)
+Rules loaded: 0 issues found
+
+
+[92m✓ All checks passed[0m (1 files)
+=== 06:51:27 [write] /home/zeron/dev/ai_developer_growth/docs/analysis/四维度深度分析.md ===
+    )
+  File "/home/zeron/dev/ai_developer_growth/tools/scripts/adg_cli/check.py", line 10, in <module>
+    from tools.scripts.adg_cli.core import (
+    ...<5 lines>...
+    )
+  File "/home/zeron/dev/ai_developer_growth/tools/scripts/adg_cli/core.py", line 11, in <module>
+    import yaml
+ModuleNotFoundError: No module named 'yaml'
+=== 08:33:17 [edit] /home/zeron/dev/ai_developer_growth/tools/scripts/rules_engine/checker.py ===
+    from tools.scripts.rules_engine.models import Issue as _CanonicalIssue
+  File "/home/zeron/dev/ai_developer_growth/tools/scripts/rules_engine/__init__.py", line 38, in <module>
+    from .checker import check_directory, check_file
+  File "/home/zeron/dev/ai_developer_growth/tools/scripts/rules_engine/checker.py", line 9, in <module>
+    from tools.scripts.rules_engine.logger import logger
+  File "/home/zeron/dev/ai_developer_growth/tools/scripts/rules_engine/logger.py", line 3, in <module>
+    from loguru import logger
+ModuleNotFoundError: No module named 'loguru'
+=== 08:34:10 [edit] /home/zeron/dev/ai_developer_growth/tools/scripts/rules_engine/checker.py ===
+    from tools.scripts.rules_engine.models import Issue as _CanonicalIssue
+  File "/home/zeron/dev/ai_developer_growth/tools/scripts/rules_engine/__init__.py", line 38, in <module>
+    from .checker import check_directory, check_file
+  File "/home/zeron/dev/ai_developer_growth/tools/scripts/rules_engine/checker.py", line 9, in <module>
+    from tools.scripts.rules_engine.logger import logger
+  File "/home/zeron/dev/ai_developer_growth/tools/scripts/rules_engine/logger.py", line 3, in <module>
+    from loguru import logger
+ModuleNotFoundError: No module named 'loguru'
+=== 08:34:33 [edit] /home/zeron/dev/ai_developer_growth/tools/scripts/rules_engine/checker.py ===
+    from tools.scripts.rules_engine.models import Issue as _CanonicalIssue
+  File "/home/zeron/dev/ai_developer_growth/tools/scripts/rules_engine/__init__.py", line 38, in <module>
+    from .checker import check_directory, check_file
+  File "/home/zeron/dev/ai_developer_growth/tools/scripts/rules_engine/checker.py", line 9, in <module>
+    from tools.scripts.rules_engine.logger import logger
+  File "/home/zeron/dev/ai_developer_growth/tools/scripts/rules_engine/logger.py", line 3, in <module>
+    from loguru import logger
+ModuleNotFoundError: No module named 'loguru'
+=== 08:36:00 [edit] /home/zeron/dev/ai_developer_growth/tools/scripts/adg_cli/check.py ===
+    from tools.scripts.rules_engine.models import Issue as _CanonicalIssue
+  File "/home/zeron/dev/ai_developer_growth/tools/scripts/rules_engine/__init__.py", line 38, in <module>
+    from .checker import check_directory, check_file
+  File "/home/zeron/dev/ai_developer_growth/tools/scripts/rules_engine/checker.py", line 9, in <module>
+    from tools.scripts.rules_engine.logger import logger
+  File "/home/zeron/dev/ai_developer_growth/tools/scripts/rules_engine/logger.py", line 3, in <module>
+    from loguru import logger
+ModuleNotFoundError: No module named 'loguru'
+=== 08:36:05 [edit] /home/zeron/dev/ai_developer_growth/tools/scripts/adg_cli/parser.py ===
+    from tools.scripts.rules_engine.models import Issue as _CanonicalIssue
+  File "/home/zeron/dev/ai_developer_growth/tools/scripts/rules_engine/__init__.py", line 38, in <module>
+    from .checker import check_directory, check_file
+  File "/home/zeron/dev/ai_developer_growth/tools/scripts/rules_engine/checker.py", line 9, in <module>
+    from tools.scripts.rules_engine.logger import logger
+  File "/home/zeron/dev/ai_developer_growth/tools/scripts/rules_engine/logger.py", line 3, in <module>
+    from loguru import logger
+ModuleNotFoundError: No module named 'loguru'
+=== 00:08:38 [write] scripts/optimization/code_quality_fixes.py ===
+    from tools.scripts.rules_engine.models import Issue as _CanonicalIssue
+  File "/home/zeron/dev/ai_developer_growth/tools/scripts/rules_engine/__init__.py", line 38, in <module>
+    from .checker import check_directory, check_file
+  File "/home/zeron/dev/ai_developer_growth/tools/scripts/rules_engine/checker.py", line 9, in <module>
+    from tools.scripts.rules_engine.logger import logger
+  File "/home/zeron/dev/ai_developer_growth/tools/scripts/rules_engine/logger.py", line 3, in <module>
+    from loguru import logger
+ModuleNotFoundError: No module named 'loguru'
+=== 00:09:05 [write] scripts/optimization/performance_optimizer.py ===
+    from tools.scripts.rules_engine.models import Issue as _CanonicalIssue
+  File "/home/zeron/dev/ai_developer_growth/tools/scripts/rules_engine/__init__.py", line 38, in <module>
+    from .checker import check_directory, check_file
+  File "/home/zeron/dev/ai_developer_growth/tools/scripts/rules_engine/checker.py", line 9, in <module>
+    from tools.scripts.rules_engine.logger import logger
+  File "/home/zeron/dev/ai_developer_growth/tools/scripts/rules_engine/logger.py", line 3, in <module>
+    from loguru import logger
+ModuleNotFoundError: No module named 'loguru'
+=== 00:11:28 [write] scripts/optimization/IMPLEMENTATION_SUMMARY.md ===
+    from tools.scripts.rules_engine.models import Issue as _CanonicalIssue
+  File "/home/zeron/dev/ai_developer_growth/tools/scripts/rules_engine/__init__.py", line 38, in <module>
+    from .checker import check_directory, check_file
+  File "/home/zeron/dev/ai_developer_growth/tools/scripts/rules_engine/checker.py", line 9, in <module>
+    from tools.scripts.rules_engine.logger import logger
+  File "/home/zeron/dev/ai_developer_growth/tools/scripts/rules_engine/logger.py", line 3, in <module>
+    from loguru import logger
+ModuleNotFoundError: No module named 'loguru'
+=== 00:11:53 [write] scripts/optimization/README.md ===
+    from tools.scripts.rules_engine.models import Issue as _CanonicalIssue
+  File "/home/zeron/dev/ai_developer_growth/tools/scripts/rules_engine/__init__.py", line 38, in <module>
+    from .checker import check_directory, check_file
+  File "/home/zeron/dev/ai_developer_growth/tools/scripts/rules_engine/checker.py", line 9, in <module>
+    from tools.scripts.rules_engine.logger import logger
+  File "/home/zeron/dev/ai_developer_growth/tools/scripts/rules_engine/logger.py", line 3, in <module>
+    from loguru import logger
+ModuleNotFoundError: No module named 'loguru'
+=== 00:31:44 [edit] /home/zeron/dev/ai_developer_growth/scripts/optimization/monitoring_system.py ===
+    from tools.scripts.rules_engine.models import Issue as _CanonicalIssue
+  File "/home/zeron/dev/ai_developer_growth/tools/scripts/rules_engine/__init__.py", line 38, in <module>
+    from .checker import check_directory, check_file
+  File "/home/zeron/dev/ai_developer_growth/tools/scripts/rules_engine/checker.py", line 9, in <module>
+    from tools.scripts.rules_engine.logger import logger
+  File "/home/zeron/dev/ai_developer_growth/tools/scripts/rules_engine/logger.py", line 3, in <module>
+    from loguru import logger
+ModuleNotFoundError: No module named 'loguru'
+=== 00:54:25 [edit] /home/zeron/dev/ai_developer_growth/scripts/optimization/monitoring_system.py ===
+    from tools.scripts.rules_engine.models import Issue as _CanonicalIssue
+  File "/home/zeron/dev/ai_developer_growth/tools/scripts/rules_engine/__init__.py", line 38, in <module>
+    from .checker import check_directory, check_file
+  File "/home/zeron/dev/ai_developer_growth/tools/scripts/rules_engine/checker.py", line 9, in <module>
+    from tools.scripts.rules_engine.logger import logger
+  File "/home/zeron/dev/ai_developer_growth/tools/scripts/rules_engine/logger.py", line 3, in <module>
+    from loguru import logger
+ModuleNotFoundError: No module named 'loguru'

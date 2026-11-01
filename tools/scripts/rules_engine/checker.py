@@ -7,6 +7,7 @@ from typing import TYPE_CHECKING, Any
 
 from tools.scripts._common import rules_dir, walk_files
 from tools.scripts.rules_engine.logger import logger
+from tools.scripts.app_config import get_setting
 
 from ._checker_linters import _batched_linters as _batched_linters
 from ._checker_linters import _map_severity as _map_severity
@@ -504,7 +505,7 @@ def check_directory(
     dirpath: Path,
     rules: dict[str, Any] | None = None,
     languages: list[str] | None = None,
-    jobs: int = 1,
+    jobs: int | None = None,
     semantic: bool = False,
     run_linters: bool = True,
     use_cache: bool = False,
@@ -516,7 +517,7 @@ def check_directory(
         dirpath: Directory to check.
         rules: Rules dict. Auto-loaded if None.
         languages: Filter to these languages only.
-        jobs: Number of parallel workers (1 = serial).
+        jobs: Number of parallel workers (None/<=0 = use configured default from [tool.adg] jobs, default 4).
         semantic: Enable AST-based semantic analysis.
         run_linters: Run external linters (ruff/eslint) per file.
         use_cache: 启用增量缓存（mtime+size 未变则复用上次结果）。
@@ -531,12 +532,17 @@ def check_directory(
     files = _discover_target_files(dirpath, languages)
     store, rules_hash = _init_cache_store(use_cache, db_path)
 
-    if jobs <= 1 or len(files) <= 4:
+    # P-01: jobs 未显式指定时回退到 [tool.adg] jobs 配置（默认 4），
+    # 避免 CLI 默认 jobs=1 导致目录级检查始终串行。
+    effective_jobs = jobs if jobs and jobs > 0 else int(get_setting("jobs", default=4) or 4)
+    effective_jobs = max(1, effective_jobs)
+
+    if len(files) <= 4 or effective_jobs <= 1:
         checked, cache_degraded = _check_files_serial(files, rules, store, rules_hash, semantic, run_linters)
     else:
         cache_degraded = 0
         checked = _check_files_parallel(
-            files, rules, store, rules_hash, db_path, use_cache, semantic, run_linters, jobs
+            files, rules, store, rules_hash, db_path, use_cache, semantic, run_linters, effective_jobs
         )
 
     results.extend(checked)

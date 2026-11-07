@@ -259,22 +259,38 @@ def _collect_checkable_files(path: Path) -> list[Path]:
     return [f for f in files_to_check if not _SKIP_DIR_PARTS.intersection(f.parts)]
 
 
-def run_language_rules(path: Path, lang: str | None = None) -> tuple[bool, str]:
+def run_language_rules(path: Path, lang: str | None = None, output_format: str = "text") -> tuple[bool, str]:
     """Run language-specific rules validation.
 
     Args:
         path: File or directory to validate.
         lang: Language override (auto-detected if None).
+        output_format: text|json（json 时输出包含 meta 的结构化结果）
     """
     if path.is_file():
         language = lang or detect_language_from_file(path)
         if not language:
             return False, f"Cannot detect language for {path}"
         result = validate_file(path, language)
+        if output_format == "json":
+            data = result.to_dict() if hasattr(result, "to_dict") else {"passed": result.passed}
+            data["meta"] = {"files_checked": 1, "mode": "file", "format": "json"}
+            return result.passed, json.dumps(data, indent=2, ensure_ascii=False)
         return result.passed, str(result.to_dict())
     else:
         results = validate_directory(path)
         passed = all(r.passed for r in results)
+        total_issues = sum(len(r.issues) for r in results)
+        if output_format == "json":
+            payload = {
+                "passed": passed,
+                "path": str(path),
+                "files_checked": len(results),
+                "total_issues": total_issues,
+                "results": [{"file": r.file, "passed": r.passed, "issues": len(r.issues)} for r in results],
+                "meta": {"files_checked": len(results), "total_issues": total_issues, "mode": "directory"},
+            }
+            return passed, json.dumps(payload, indent=2, ensure_ascii=False)
         output = "\n".join(f"{r.file}: {'PASS' if r.passed else 'FAIL'} ({len(r.issues)} issues)" for r in results)
         return passed, output
 

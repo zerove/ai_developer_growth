@@ -317,10 +317,29 @@ def _handle_language_rules(args: argparse.Namespace) -> int:
         db_path = getattr(args, "db", None) or str(get_path("trend_db", Path("adg_quality.db")))
         results = check_directory(args.path, jobs=jobs, use_cache=True, db_path=db_path)
         passed = all(r.passed for r in results)
-        lines = [f"{r.file}: {'PASS' if r.passed else 'FAIL'} ({len(r.issues)} issues)" for r in results]
-        print("\n".join(lines) if lines else "No files to check")
+        if getattr(args, "format", "text") == "json":
+            print(
+                json.dumps(
+                    {
+                        "passed": passed,
+                        "path": str(args.path),
+                        "files_checked": len(results),
+                        "results": [
+                            {"file": r.file, "passed": r.passed, "issues": len(r.issues)} for r in results
+                        ],
+                        "meta": {"files_checked": len(results), "cache": True, "db_path": db_path},
+                    },
+                    indent=2,
+                    ensure_ascii=False,
+                )
+            )
+        else:
+            lines = [f"{r.file}: {'PASS' if r.passed else 'FAIL'} ({len(r.issues)} issues)" for r in results]
+            print("\n".join(lines) if lines else "No files to check")
         return 0 if passed else 1
-    return _resolve("_run_simple")(_resolve("run_language_rules")(args.path, args.lang))
+    return _resolve("_run_simple")(
+        _resolve("run_language_rules")(args.path, args.lang, getattr(args, "format", "text"))
+    )
 
 
 def _handle_quality_gate(args: argparse.Namespace) -> int:

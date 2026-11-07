@@ -101,7 +101,14 @@ def _output_results(
     if sarif:
         print(_format_sarif(all_issues, language, framework))
     elif args.json:
-        print(_format_json(all_issues, language, framework, files_count))
+        check_errors = sum(1 for i in all_issues if getattr(i, "rule_id", "") in ("check-error", "file-check-error"))
+        meta = {
+            "files_checked": files_count,
+            "jobs": int(getattr(args, "jobs", None) or 1),
+            "check_errors": check_errors,
+            "failed_files": check_errors,  # ADR-078: check-error 表示文件检查失败/未可信检查
+        }
+        print(_format_json(all_issues, language, framework, files_count, meta=meta))
     else:
         print(_format_human(all_issues, language, framework, files_count))
 
@@ -174,7 +181,7 @@ def cmd_check(args: argparse.Namespace) -> int:
     rules = _load_and_merge_rules(language, framework, project_config)
 
     # Check files
-    jobs = getattr(args, "jobs", 1)
+    jobs = int(getattr(args, "jobs", None) or 1)
     all_issues = _run_checks(files, rules, args.severity, jobs)
 
     # Cyclomatic complexity gate (--complexity)

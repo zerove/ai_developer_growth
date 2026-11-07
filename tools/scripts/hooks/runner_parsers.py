@@ -145,6 +145,7 @@ def _add_core_gate_parsers(subparsers: argparse._SubParsersAction[argparse.Argum
     lr_parser.add_argument("--fix", action="store_true", help="Apply auto-fixes to fixable issues")
     lr_parser.add_argument("--cache", action="store_true", help="启用增量缓存（复用检查历史）")
     lr_parser.add_argument("--db", help="统一存储数据库路径（默认 [tool.adg].trend_db)")
+    lr_parser.add_argument("--format", choices=["text", "json"], default="text", help="输出格式")
 
     qg_parser = subparsers.add_parser("quality-gate", help="Run AI Quality Gate checks")
     qg_parser.add_argument("--path", type=Path, default=Path("tools/scripts"), help="Path to check")

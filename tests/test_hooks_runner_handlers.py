@@ -116,7 +116,7 @@ class TestHandleLanguageRules:
         ) as mocked:
             code = hooks_runner._handle_language_rules(_args(path="src", lang="python"))
         assert code == 0
-        mocked.assert_called_once_with("src", "python")
+        mocked.assert_called_once_with("src", "python", "text")
         assert "rules ok" in capsys.readouterr().out
 
 

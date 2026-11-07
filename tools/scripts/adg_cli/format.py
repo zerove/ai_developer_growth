@@ -91,27 +91,32 @@ def _format_summary(error_count: int, warning_count: int, info_count: int, files
     return f"\033[92m✓ All checks passed\033[0m ({files_checked} files)"
 
 
-def _format_json(issues: list[Issue], language: str, framework: str | None, files_checked: int) -> str:
-    """Format issues as JSON output."""
+def _format_json(
+    issues: list[Issue],
+    language: str,
+    framework: str | None,
+    files_checked: int,
+    meta: dict[str, Any] | None = None,
+) -> str:
+    """Format issues as JSON output (meta 为可选可观测字段，向后兼容)。"""
     error_count = sum(1 for i in issues if i.severity == "error")
     warning_count = sum(1 for i in issues if i.severity == "warning")
     info_count = sum(1 for i in issues if i.severity == "info")
 
-    return json.dumps(
-        {
-            "language": language,
-            "framework": framework,
-            "files_checked": files_checked,
-            "issues": [i.to_dict() for i in issues],
-            "summary": {
-                "error": error_count,
-                "warning": warning_count,
-                "info": info_count,
-            },
+    payload: dict[str, Any] = {
+        "language": language,
+        "framework": framework,
+        "files_checked": files_checked,
+        "issues": [i.to_dict() for i in issues],
+        "summary": {
+            "error": error_count,
+            "warning": warning_count,
+            "info": info_count,
         },
-        indent=2,
-        ensure_ascii=False,
-    )
+    }
+    if meta:
+        payload["meta"] = meta
+    return json.dumps(payload, indent=2, ensure_ascii=False)
 
 
 def _build_sarif_rules(issues: list[Issue], language: str) -> dict[str, dict[str, Any]]:

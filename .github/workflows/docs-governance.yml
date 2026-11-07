@@ -28,7 +28,7 @@ concurrency:
 jobs:
   docs-structure:
     name: Docs Structure & MkDocs Build
-    uses: ./.github/workflows/jobs/docs.yml
+    uses: ./.github/workflows/jobs-docs.yml
 
   docs-governance:
     name: Docs Governance Gates

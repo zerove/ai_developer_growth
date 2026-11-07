@@ -25,14 +25,14 @@ jobs:
   # ADG Governance Check
   # ──────────────────────────────────────────────────────
   adg-governance:
-    uses: ./.github/workflows/jobs/adg-governance.yml
+    uses: ./.github/workflows/jobs-adg-governance.yml
     secrets: inherit
 
   # ──────────────────────────────────────────────────────
   # Governance Audit (完整审计：lint + typecheck + test + security + governance-docs + AI-SDLC + AI质量门禁)
   # ──────────────────────────────────────────────────────
   governance-audit:
-    uses: ./.github/workflows/jobs/governance-audit.yml
+    uses: ./.github/workflows/jobs-governance-audit.yml
     with:
       languages: '["python","shell"]'
       timeout-minutes: 20
@@ -42,25 +42,25 @@ jobs:
   # Pre-commit
   # ──────────────────────────────────────────────────────
   pre-commit:
-    uses: ./.github/workflows/jobs/pre-commit.yml
+    uses: ./.github/workflows/jobs-pre-commit.yml
     secrets: inherit
 
   # ──────────────────────────────────────────────────────
   # Gate Doctor (跨平台环境自检 + 基线防篡改 + 台账完整性)
   # ──────────────────────────────────────────────────────
   doctor-gate:
-    uses: ./.github/workflows/jobs/doctor-gate.yml
+    uses: ./.github/workflows/jobs-doctor-gate.yml
     secrets: inherit
 
   # ──────────────────────────────────────────────────────
   # Lint & Type Check (并行)
   # ──────────────────────────────────────────────────────
   lint:
-    uses: ./.github/workflows/jobs/lint.yml
+    uses: ./.github/workflows/jobs-lint.yml
     secrets: inherit
 
   type-check:
-    uses: ./.github/workflows/jobs/type-check.yml
+    uses: ./.github/workflows/jobs-type-check.yml
     secrets: inherit
 
   # ──────────────────────────────────────────────────────
@@ -68,21 +68,21 @@ jobs:
   # ──────────────────────────────────────────────────────
   # PR fast: 仅 3.11；push/schedule/dispatch: 全矩阵
   test-311:
-    uses: ./.github/workflows/jobs/tests.yml
+    uses: ./.github/workflows/jobs-tests.yml
     with:
       python-version: "3.11"
     secrets: inherit
 
   test-312:
     if: github.event_name != 'pull_request'
-    uses: ./.github/workflows/jobs/tests.yml
+    uses: ./.github/workflows/jobs-tests.yml
     with:
       python-version: "3.12"
     secrets: inherit
 
   test-313:
     if: github.event_name != 'pull_request'
-    uses: ./.github/workflows/jobs/tests.yml
+    uses: ./.github/workflows/jobs-tests.yml
     with:
       python-version: "3.13"
     secrets: inherit
@@ -93,61 +93,61 @@ jobs:
   combine-coverage:
     if: github.event_name != 'pull_request'
     needs: [test-311, test-312, test-313]
-    uses: ./.github/workflows/jobs/combine-coverage.yml
+    uses: ./.github/workflows/jobs-combine-coverage.yml
     secrets: inherit
 
   # ──────────────────────────────────────────────────────
   # Quality Gates
   # ──────────────────────────────────────────────────────
   quality-gates:
-    uses: ./.github/workflows/jobs/quality-gates.yml
+    uses: ./.github/workflows/jobs-quality-gates.yml
     secrets: inherit
 
   # ──────────────────────────────────────────────────────
   # Security
   # ──────────────────────────────────────────────────────
   security:
-    uses: ./.github/workflows/jobs/security.yml
+    uses: ./.github/workflows/jobs-security.yml
     secrets: inherit
 
   secret-scan:
-    uses: ./.github/workflows/jobs/secret-scan.yml
+    uses: ./.github/workflows/jobs-secret-scan.yml
     secrets: inherit
 
   sbom:
-    uses: ./.github/workflows/jobs/sbom.yml
+    uses: ./.github/workflows/jobs-sbom.yml
     secrets: inherit
 
   license-scan:
-    uses: ./.github/workflows/jobs/license-scan.yml
+    uses: ./.github/workflows/jobs-license-scan.yml
     secrets: inherit
 
   # ──────────────────────────────────────────────────────
   # Example Tests (并行矩阵)
   # ──────────────────────────────────────────────────────
   test-examples:
-    uses: ./.github/workflows/jobs/example-tests.yml
+    uses: ./.github/workflows/jobs-example-tests.yml
     secrets: inherit
 
   # ──────────────────────────────────────────────────────
   # Dependency Review
   # ──────────────────────────────────────────────────────
   dependency-review:
-    uses: ./.github/workflows/jobs/dependency-review.yml
+    uses: ./.github/workflows/jobs-dependency-review.yml
     secrets: inherit
 
   # ──────────────────────────────────────────────────────
   # Docs
   # ──────────────────────────────────────────────────────
   docs-check:
-    uses: ./.github/workflows/jobs/docs.yml
+    uses: ./.github/workflows/jobs-docs.yml
     secrets: inherit
 
   # ──────────────────────────────────────────────────────
   # Agent Validation
   # ──────────────────────────────────────────────────────
   agent-validation:
-    uses: ./.github/workflows/jobs/agent-validation.yml
+    uses: ./.github/workflows/jobs-agent-validation.yml
     secrets: inherit
 
   # ──────────────────────────────────────────────────────

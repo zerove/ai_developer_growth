@@ -27,7 +27,7 @@ jobs:
   # Exception Manager - Check for expired exceptions
   # ──────────────────────────────────────────────────────
   check-exceptions:
-    uses: ./.github/workflows/jobs/exception-manager.yml
+    uses: ./.github/workflows/jobs-exception-manager.yml
     with:
       action: "check-expirations"
     secrets: inherit
@@ -36,7 +36,7 @@ jobs:
   # SBOM Generation (供后续 job 使用)
   # ──────────────────────────────────────────────────────
   sbom:
-    uses: ./.github/workflows/jobs/supply-chain.yml
+    uses: ./.github/workflows/jobs-supply-chain.yml
     with:
       action: "sbom"
       format: "json"
@@ -49,7 +49,7 @@ jobs:
   dep-graph-analyze:
     if: github.event.inputs.skip-dependency-graph != 'true'
     needs: sbom
-    uses: ./.github/workflows/jobs/dependency-graph.yml
+    uses: ./.github/workflows/jobs-dependency-graph.yml
     with:
       action: "analyze"
       sbom-path: "sbom.json"
@@ -60,7 +60,7 @@ jobs:
   dep-graph-circular:
     if: github.event.inputs.skip-dependency-graph != 'true'
     needs: sbom
-    uses: ./.github/workflows/jobs/dependency-graph.yml
+    uses: ./.github/workflows/jobs-dependency-graph.yml
     with:
       action: "circular"
       sbom-path: "sbom.json"
@@ -71,7 +71,7 @@ jobs:
   dep-graph-conflicts:
     if: github.event.inputs.skip-dependency-graph != 'true'
     needs: sbom
-    uses: ./.github/workflows/jobs/dependency-graph.yml
+    uses: ./.github/workflows/jobs-dependency-graph.yml
     with:
       action: "conflicts"
       sbom-path: "sbom.json"
@@ -82,7 +82,7 @@ jobs:
   dep-graph-export-mermaid:
     if: github.event.inputs.skip-dependency-graph != 'true'
     needs: sbom
-    uses: ./.github/workflows/jobs/dependency-graph.yml
+    uses: ./.github/workflows/jobs-dependency-graph.yml
     with:
       action: "export"
       sbom-path: "sbom.json"
@@ -95,7 +95,7 @@ jobs:
   # ──────────────────────────────────────────────────────
   supply-chain-scan:
     if: github.event.inputs.skip-supply-chain != 'true'
-    uses: ./.github/workflows/jobs/supply-chain.yml
+    uses: ./.github/workflows/jobs-supply-chain.yml
     with:
       action: "scan"
       format: "json"
@@ -104,7 +104,7 @@ jobs:
 
   supply-chain-compliance:
     if: github.event.inputs.skip-supply-chain != 'true'
-    uses: ./.github/workflows/jobs/supply-chain.yml
+    uses: ./.github/workflows/jobs-supply-chain.yml
     with:
       action: "compliance"
       format: "json"
@@ -114,7 +114,7 @@ jobs:
 
   supply-chain-freshness:
     if: github.event.inputs.skip-supply-chain != 'true'
-    uses: ./.github/workflows/jobs/supply-chain.yml
+    uses: ./.github/workflows/jobs-supply-chain.yml
     with:
       action: "freshness"
       max-age-days: "90"
@@ -124,7 +124,7 @@ jobs:
 
   supply-chain-verify:
     if: github.event.inputs.skip-supply-chain != 'true'
-    uses: ./.github/workflows/jobs/supply-chain.yml
+    uses: ./.github/workflows/jobs-supply-chain.yml
     with:
       action: "verify"
       format: "json"
@@ -137,7 +137,7 @@ jobs:
   policy-eval:
     if: github.event.inputs.skip-policy != 'true'
     needs: [sbom, dep-graph-analyze, supply-chain-scan, check-exceptions]
-    uses: ./.github/workflows/jobs/policy-as-code.yml
+    uses: ./.github/workflows/jobs-policy-as-code.yml
     with:
       action: "eval"
       policy-dir: ".jcode/policies"

@@ -25,40 +25,40 @@ env:
 
 jobs:
   # ──────────────────────────────────────────────────────
-  # Pre-release validation — 复用 .github/workflows/jobs/ 的可复用 workflow
+  # Pre-release validation — 复用 .github/workflows/jobs-*.yml 可复用 workflow
   # 实现 P2-6 CI 收敛：ci.yml 是唯一 lint/test/type-check 入口，
   # release.yml validate 也只调 jobs，不内联 step
   # ──────────────────────────────────────────────────────
   lint:
     name: Lint (Reusable)
-    uses: ./.github/workflows/jobs/lint.yml
+    uses: ./.github/workflows/jobs-lint.yml
     secrets: inherit
 
   type-check:
     name: Type Check (Reusable)
-    uses: ./.github/workflows/jobs/type-check.yml
+    uses: ./.github/workflows/jobs-type-check.yml
     secrets: inherit
 
   test:
     name: Tests (Reusable)
-    uses: ./.github/workflows/jobs/tests.yml
+    uses: ./.github/workflows/jobs-tests.yml
     with:
       python-version: "3.11"
     secrets: inherit
 
   doctor-gate:
     name: Gate Doctor (Reusable)
-    uses: ./.github/workflows/jobs/doctor-gate.yml
+    uses: ./.github/workflows/jobs-doctor-gate.yml
     secrets: inherit
 
   pre-commit:
     name: Pre-commit (Reusable)
-    uses: ./.github/workflows/jobs/pre-commit.yml
+    uses: ./.github/workflows/jobs-pre-commit.yml
     secrets: inherit
 
   governance-audit:
     name: Governance Audit (Reusable)
-    uses: ./.github/workflows/jobs/governance-audit.yml
+    uses: ./.github/workflows/jobs-governance-audit.yml
     with:
       languages: '["python","shell"]'
       timeout-minutes: 20

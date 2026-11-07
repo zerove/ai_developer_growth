@@ -160,6 +160,18 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: CI Complete
+        env:
+          NEEDS_JSON: ${{ toJSON(needs) }}
         run: |
-          echo "✅ All CI jobs completed"
-          echo "Check individual job statuses above"
+          echo "✅ CI 汇总（skipped 在 PR fast 分层下可能为预期）"
+          echo "$NEEDS_JSON" | python3 -c "
+          import json,sys
+          needs=json.load(sys.stdin)
+          failed=[k for k,v in needs.items() if v.get('result')=='failure']
+          cancelled=[k for k,v in needs.items() if v.get('result')=='cancelled']
+          for k,v in sorted(needs.items()):
+            print(f\"{v.get('result','?'):>10}  {k}\")
+          if failed or cancelled:
+            print('::error::CI has failed/cancelled jobs: '+', '.join(failed+cancelled))
+            raise SystemExit(1)
+          "

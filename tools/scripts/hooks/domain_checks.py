@@ -273,7 +273,7 @@ def run_language_rules(path: Path, lang: str | None = None, output_format: str =
             return False, f"Cannot detect language for {path}"
         result = validate_file(path, language)
         if output_format == "json":
-            data = result.to_dict() if hasattr(result, "to_dict") else {"passed": result.passed}
+            data: dict[str, Any] = result.to_dict() if hasattr(result, "to_dict") else {"passed": result.passed}
             data["meta"] = {"files_checked": 1, "mode": "file", "format": "json"}
             return result.passed, json.dumps(data, indent=2, ensure_ascii=False)
         return result.passed, str(result.to_dict())

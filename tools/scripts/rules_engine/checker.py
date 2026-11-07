@@ -363,12 +363,14 @@ def _check_with_cache(
     semantic: bool,
     run_linters: bool,
     commit: bool = True,
-) -> tuple[CheckResult, bool]:
-    """单文件检查（带缓存），返回 (CheckResult, cache_degraded_increment)。
+) -> tuple[CheckResult, bool, bool | None]:
+    """单文件检查（带缓存），返回 (CheckResult, cache_degraded, cache_hit)。
 
+    cache_hit: True 命中缓存，False 未命中/未使用缓存路径，None 缓存未启用。
     ADR-014: 从 check_directory 拆出 cache logic。store=None 时退化为完整检查。
     """
     cache_degraded = False
+    cache_enabled = store is not None
     # semantic / run_linters 会改变结果却不在 store 的键里 (键仅 file+mtime+size+rules_hash),
     # 导致 run_linters=False 跑出的无 linter 结果会被后续 run_linters=True 复用并静默丢失
     # 全部 linter 问题。两者并入签名, 无需改表结构。
@@ -382,6 +384,7 @@ def _check_with_cache(
                 return (
                     CheckResult(file=str(filepath), issues=issues, language=cached["language"]),
                     False,
+                    True,
                 )
         except Exception as exc:  # noqa: BLE001 - 缓存条目损坏时重算，不影响检查结论
             cache_degraded = True
@@ -401,7 +404,7 @@ def _check_with_cache(
         except Exception as exc:  # noqa: BLE001 - 缓存写入失败仅丢性能，检查结论已得出
             cache_degraded = True
             logger.debug(f"缓存写入失败（不影响检查结果）{filepath}: {exc}")
-    return result, cache_degraded
+    return result, cache_degraded, (False if cache_enabled else None)
 
 
 def _result_payload(result: CheckResult) -> dict[str, Any]:
@@ -423,16 +426,19 @@ def _check_files_serial(
     rules_hash: str,
     semantic: bool,
     run_linters: bool,
-) -> tuple[list[CheckResult], int]:
+) -> tuple[list[CheckResult], int, dict[str, int | None]]:
     """串行检查（小集合 jobs<=1 或 files<=4）。
 
+    返回 (results, cache_degraded, cache_stats)。
     ADR-014: 从 check_directory 拆出。
     """
     results: list[CheckResult] = []
     degraded = 0
+    hits = 0
+    misses = 0
     with _batched_linters(files, run_linters):
         for filepath in files:
-            result, was_degraded = _check_with_cache(
+            result, was_degraded, cache_hit = _check_with_cache(
                 filepath,
                 _detect_language(filepath),
                 rules,
@@ -444,11 +450,15 @@ def _check_files_serial(
             )
             if was_degraded:
                 degraded += 1
+            if cache_hit is True:
+                hits += 1
+            elif cache_hit is False:
+                misses += 1
             # Phase 33b-13 fix (ADR-053): 不再静默过滤 skipped 文件, 让 report_generator 输出 notApplicable
             results.append(result)
         if store is not None:
             store.commit()
-    return results, degraded
+    return results, degraded, {"cache_hits": hits, "cache_misses": misses}
 
 
 def _check_files_parallel(
@@ -510,6 +520,7 @@ def check_directory(
     run_linters: bool = True,
     use_cache: bool = False,
     db_path: str | Path = "adg_quality.db",
+    stats: dict[str, Any] | None = None,
 ) -> list[CheckResult]:
     """Check all files in a directory.
 
@@ -522,10 +533,25 @@ def check_directory(
         run_linters: Run external linters (ruff/eslint) per file.
         use_cache: 启用增量缓存（mtime+size 未变则复用上次结果）。
         db_path: 统一存储数据库路径（use_cache=True 时使用）。
+        stats: 可选出参，填充可观测统计（files_checked/use_cache/cache_* 等）；并行路径 hit/miss 为 null。
     """
     results: list[CheckResult] = []
 
     if not dirpath.exists() or not dirpath.is_dir():
+        if stats is not None:
+            stats.clear()
+            stats.update(
+                {
+                    "files_checked": 0,
+                    "use_cache": bool(use_cache),
+                    "cache_initialized": False,
+                    "cache_degraded": None,
+                    "cache_hits": None,
+                    "cache_misses": None,
+                    "parallel": False,
+                    "jobs": 0,
+                }
+            )
         return results
 
     rules = _load_directory_rules(dirpath, rules)
@@ -537,19 +563,49 @@ def check_directory(
     effective_jobs = jobs if jobs and jobs > 0 else int(str(get_setting("jobs", default=4) or 4))
     effective_jobs = max(1, effective_jobs)
 
+    cache_stats: dict[str, int | None] = {"cache_hits": None, "cache_misses": None}
+    parallel = False
     if len(files) <= 4 or effective_jobs <= 1:
-        checked, cache_degraded = _check_files_serial(files, rules, store, rules_hash, semantic, run_linters)
+        checked, cache_degraded, cache_stats = _check_files_serial(
+            files, rules, store, rules_hash, semantic, run_linters
+        )
     else:
-        cache_degraded = 0
+        parallel = True
+        cache_degraded = 0 if use_cache else 0
         checked = _check_files_parallel(
             files, rules, store, rules_hash, db_path, use_cache, semantic, run_linters, effective_jobs
         )
+        # 并行 worker 独立缓存，主进程无法精确统计 hit/miss；保持 unknown(null)，不臆造 0。
+        cache_stats = {"cache_hits": None, "cache_misses": None}
 
     results.extend(checked)
     results.extend(_run_architecture_analysis(dirpath))
 
     if use_cache and cache_degraded:
         logger.warning(f"本次运行缓存降级 {cache_degraded} 次（读取/写入失败已回退完整检查）")
+
+    if stats is not None:
+        hits = cache_stats.get("cache_hits")
+        misses = cache_stats.get("cache_misses")
+        cache_degraded_out: int | None = cache_degraded
+        # 缓存未启用或并行路径无法精确统计时返回 null，不臆造 0
+        if not use_cache or parallel:
+            hits = None
+            misses = None
+            cache_degraded_out = None
+        stats.clear()
+        stats.update(
+            {
+                "files_checked": len(files),
+                "use_cache": bool(use_cache),
+                "cache_initialized": store is not None,
+                "cache_degraded": cache_degraded_out,
+                "cache_hits": hits,
+                "cache_misses": misses,
+                "parallel": parallel,
+                "jobs": effective_jobs,
+            }
+        )
 
     return results
 

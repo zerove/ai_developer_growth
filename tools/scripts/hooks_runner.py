@@ -315,9 +315,21 @@ def _handle_language_rules(args: argparse.Namespace) -> int:
         # 注意必须走 get_path（展开 ~），get_setting 返回字面量 "~/.cache/..." 会导致
         # sqlite3.connect 无法建库，缓存静默失效（历史 bug：check_cache 恒 0 行）
         db_path = getattr(args, "db", None) or str(get_path("trend_db", Path("adg_quality.db")))
-        results = check_directory(args.path, jobs=jobs, use_cache=True, db_path=db_path)
+        stats: dict[str, Any] = {}
+        results = check_directory(args.path, jobs=jobs, use_cache=True, db_path=db_path, stats=stats)
         passed = all(r.passed for r in results)
         if getattr(args, "format", "text") == "json":
+            meta: dict[str, Any] = {
+                "files_checked": int(stats.get("files_checked", len(results))),
+                "cache": True,
+                "cache_initialized": bool(stats.get("cache_initialized", False)),
+                "cache_degraded": stats.get("cache_degraded"),
+                "cache_hits": stats.get("cache_hits"),
+                "cache_misses": stats.get("cache_misses"),
+                "parallel": bool(stats.get("parallel", False)),
+                "jobs": int(stats.get("jobs", jobs)),
+                "db_path": db_path,
+            }
             print(
                 json.dumps(
                     {
@@ -325,7 +337,7 @@ def _handle_language_rules(args: argparse.Namespace) -> int:
                         "path": str(args.path),
                         "files_checked": len(results),
                         "results": [{"file": r.file, "passed": r.passed, "issues": len(r.issues)} for r in results],
-                        "meta": {"files_checked": len(results), "cache": True, "db_path": db_path},
+                        "meta": meta,
                     },
                     indent=2,
                     ensure_ascii=False,

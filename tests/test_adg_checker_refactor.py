@@ -23,6 +23,7 @@ from tools.scripts.rules_engine.checker import (
     _init_cache_store,
     _load_directory_rules,
     _run_architecture_analysis,
+    check_directory,
 )
 from tools.scripts.rules_engine.models import CheckResult
 
@@ -154,12 +155,13 @@ class TestCheckWithCache:
     """_check_with_cache: 单文件检查（带缓存）。"""
 
     def test_returns_full_check_when_no_store(self, tmp_path: Path) -> None:
-        """store=None 时执行完整检查，返回 (result, False)。"""
+        """store=None 时执行完整检查，返回 (result, False, None)。"""
         f = tmp_path / "a.py"
         f.write_text("x = 1\n")
-        result, was_degraded = _check_with_cache(f, "python", None, None, "", False, False)
+        result, was_degraded, cache_hit = _check_with_cache(f, "python", None, None, "", False, False)
         assert isinstance(result, CheckResult)
         assert was_degraded is False
+        assert cache_hit is None
 
     def test_returns_cached_when_hit(self, tmp_path: Path) -> None:
         """缓存命中时跳过 check_file，返回缓存内容。"""
@@ -181,20 +183,22 @@ class TestCheckWithCache:
             "issues": cached_issues,
             "language": "python",
         }
-        result, was_degraded = _check_with_cache(f, "python", None, mock_store, "hash", False, False)
+        result, was_degraded, cache_hit = _check_with_cache(f, "python", None, mock_store, "hash", False, False)
         assert result.language == "python"
         assert len(result.issues) == 1
         assert result.issues[0].rule_id == "test-rule"
         assert was_degraded is False
+        assert cache_hit is True
 
     def test_records_cache_degradation_on_read_error(self, tmp_path: Path) -> None:
-        """缓存读取异常时返回 (result, True) 表示降级。"""
+        """缓存读取异常时返回 (result, True, False) 表示降级且未命中。"""
         f = tmp_path / "a.py"
         f.write_text("x = 1\n")
         mock_store = MagicMock()
         mock_store.get_cached_result.side_effect = OSError("read fail")
-        result, was_degraded = _check_with_cache(f, "python", None, mock_store, "hash", False, False)
+        result, was_degraded, cache_hit = _check_with_cache(f, "python", None, mock_store, "hash", False, False)
         assert was_degraded is True
+        assert cache_hit is False
         assert isinstance(result, CheckResult)
 
 
@@ -202,15 +206,17 @@ class TestCheckFilesSerial:
     """_check_files_serial: 串行检查。"""
 
     def test_returns_results_for_multiple_files(self, tmp_path: Path) -> None:
-        """多个文件全部检查，返回 results + degraded count。"""
+        """多个文件全部检查，返回 results + degraded count + cache_stats。"""
         files = []
         for i in range(3):
             f = tmp_path / f"f{i}.py"
             f.write_text(f"x{i} = {i}\n")
             files.append(f)
-        results, degraded = _check_files_serial(files, None, None, "", False, False)
+        results, degraded, cache_stats = _check_files_serial(files, None, None, "", False, False)
         assert len(results) == 3
         assert degraded == 0
+        assert cache_stats["cache_hits"] == 0
+        assert cache_stats["cache_misses"] == 0
 
     def test_skips_skipped_results(self, tmp_path: Path) -> None:
         """skipped=True 的 CheckResult 保留在 results 中 (ADR-053 契约)。
@@ -223,9 +229,9 @@ class TestCheckFilesSerial:
         # 模拟所有结果都 skipped
         with patch(
             "tools.scripts.rules_engine.checker._check_with_cache",
-            return_value=(CheckResult(file=str(f), issues=[], language="python", skipped=True), False),
+            return_value=(CheckResult(file=str(f), issues=[], language="python", skipped=True), False, False),
         ):
-            results, _ = _check_files_serial([f], None, None, "", False, False)
+            results, _, _ = _check_files_serial([f], None, None, "", False, False)
         # skipped 结果被保留, 不再被过滤
         assert len(results) == 1
         assert results[0].skipped is True
@@ -263,3 +269,41 @@ class TestCheckFilesParallel:
             )
         assert isinstance(results, list)
         assert results == []
+
+class TestCheckDirectoryStats:
+    """check_directory(stats=...) 可观测契约（非破坏性出参）。"""
+
+    def test_stats_populated_for_serial(self, tmp_path: Path) -> None:
+        (tmp_path / "a.py").write_text("x = 1\n")
+        stats: dict[str, object] = {}
+        results = check_directory(tmp_path, languages=["python"], jobs=1, run_linters=False, stats=stats)
+        assert isinstance(results, list)
+        assert stats["files_checked"] == 1
+        assert stats["use_cache"] is False
+        assert stats["cache_hits"] is None
+        assert stats["cache_misses"] is None
+        assert stats["parallel"] is False
+
+    def test_stats_with_cache_serial_hits_misses(self, tmp_path: Path) -> None:
+        (tmp_path / "a.py").write_text("x = 1\n")
+        db = tmp_path / "trend.db"
+        stats1: dict[str, object] = {}
+        check_directory(
+            tmp_path, languages=["python"], jobs=1, run_linters=False, use_cache=True, db_path=str(db), stats=stats1
+        )
+        assert stats1["cache_initialized"] is True
+        assert stats1["cache_hits"] == 0
+        assert stats1["cache_misses"] == 1
+        stats2: dict[str, object] = {}
+        check_directory(
+            tmp_path, languages=["python"], jobs=1, run_linters=False, use_cache=True, db_path=str(db), stats=stats2
+        )
+        assert stats2["cache_hits"] == 1
+        assert stats2["cache_misses"] == 0
+        assert stats2["cache_degraded"] == 0
+
+    def test_stats_missing_dir(self, tmp_path: Path) -> None:
+        stats: dict[str, object] = {}
+        results = check_directory(tmp_path / "nope", stats=stats)
+        assert results == []
+        assert stats["files_checked"] == 0

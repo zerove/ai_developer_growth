@@ -34,7 +34,7 @@ class MetricsCollector:
         """收集系统指标"""
         cpu_percent = psutil.cpu_percent(interval=0.1)
         memory = psutil.virtual_memory()
-        disk = psutil.disk_usage('.')
+        disk = psutil.disk_usage(".")
 
         # 获取进程指标
         process = psutil.Process()
@@ -52,7 +52,7 @@ class MetricsCollector:
             "process_memory_rss_mb": round(process_memory.rss / (1024 * 1024), 2),
             "process_memory_vms_mb": round(process_memory.vms / (1024 * 1024), 2),
             "process_cpu_percent": process.cpu_percent(),
-            "process_num_threads": process.num_threads()
+            "process_num_threads": process.num_threads(),
         }
 
     def collect_code_metrics(self) -> dict[str, Any]:
@@ -64,19 +64,19 @@ class MetricsCollector:
             "total_lines": 0,
             "total_size_kb": 0,
             "largest_file_kb": 0,
-            "cache_hit_rate": 0.0
+            "cache_hit_rate": 0.0,
         }
 
         # 遍历项目中的Python文件
         for py_file in Path(".").rglob("*.py"):
             # 跳过隐藏目录和虚拟环境
-            if any(part.startswith('.') and part not in ['.', '..'] for part in py_file.parts):
+            if any(part.startswith(".") and part not in [".", ".."] for part in py_file.parts):
                 continue
-            if '.venv' in str(py_file) or '__pycache__' in str(py_file):
+            if ".venv" in str(py_file) or "__pycache__" in str(py_file):
                 continue
 
             try:
-                content = py_file.read_text(encoding='utf-8')
+                content = py_file.read_text(encoding="utf-8")
                 lines = len(content.splitlines())
                 size_kb = len(content) / 1024
 
@@ -90,8 +90,9 @@ class MetricsCollector:
 
         return code_metrics
 
-    def collect_performance_metrics(self, operation_name: str, duration: float,
-                                  items_processed: int = 1) -> dict[str, Any]:
+    def collect_performance_metrics(
+        self, operation_name: str, duration: float, items_processed: int = 1
+    ) -> dict[str, Any]:
         """收集性能指标"""
         return {
             "timestamp": datetime.now().isoformat(),
@@ -99,7 +100,7 @@ class MetricsCollector:
             "duration_seconds": duration,
             "items_processed": items_processed,
             "items_per_second": items_processed / duration if duration > 0 else 0,
-            "memory_usage_mb": psutil.Process().memory_info().rss / (1024 * 1024)
+            "memory_usage_mb": psutil.Process().memory_info().rss / (1024 * 1024),
         }
 
     def save_metrics(self, metrics: dict[str, Any], category: str):
@@ -107,7 +108,7 @@ class MetricsCollector:
         filename = f"{category}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
         filepath = self.data_dir / filename
 
-        with open(filepath, 'w', encoding='utf-8') as f:
+        with open(filepath, "w", encoding="utf-8") as f:
             json.dump(metrics, f, indent=2, ensure_ascii=False)
 
         # 清理旧数据
@@ -161,20 +162,18 @@ class RuntimeMonitor:
                 code_metrics = self.collector.collect_code_metrics()
 
                 # 合并指标
-                combined_metrics = {
-                    "timestamp": datetime.now().isoformat(),
-                    **system_metrics,
-                    **code_metrics
-                }
+                combined_metrics = {"timestamp": datetime.now().isoformat(), **system_metrics, **code_metrics}
 
                 # 保存和记录
                 self.collector.save_metrics(combined_metrics, "system")
                 self.history.append(combined_metrics)
 
                 # 打印摘要
-                print(f"📊 监控 {datetime.now().strftime('%H:%M:%S')}: "
-                      f"CPU {system_metrics['cpu_percent']:.1f}%, "
-                      f"内存 {system_metrics['memory_percent']:.1f}%")
+                print(
+                    f"📊 监控 {datetime.now().strftime('%H:%M:%S')}: "
+                    f"CPU {system_metrics['cpu_percent']:.1f}%, "
+                    f"内存 {system_metrics['memory_percent']:.1f}%"
+                )
 
                 time.sleep(self.monitor_interval)
 
@@ -189,7 +188,7 @@ class RuntimeMonitor:
 
         for data_point in self.history:
             try:
-                timestamp = datetime.fromisoformat(data_point['timestamp'])
+                timestamp = datetime.fromisoformat(data_point["timestamp"])
                 if timestamp >= cutoff_time:
                     recent_data.append(data_point)
             except Exception:
@@ -209,12 +208,7 @@ class TrendAnalyzer:
         _ = hours  # 保留参数语义，避免未使用告警
 
         # 简单实现 - 可以扩展
-        trends = {
-            "cpu_trend": "stable",
-            "memory_trend": "stable",
-            "performance_trend": "stable",
-            "recommendations": []
-        }
+        trends = {"cpu_trend": "stable", "memory_trend": "stable", "performance_trend": "stable", "recommendations": []}
 
         # 可以在这里实现复杂的趋势分析
         # 目前返回简单的结构
@@ -232,17 +226,17 @@ class TrendAnalyzer:
         _ = metrics_history[-1]
 
         # 检查CPU使用率
-        cpu_avg = sum(m.get('cpu_percent', 0) for m in metrics_history[-10:]) / min(10, len(metrics_history))
+        cpu_avg = sum(m.get("cpu_percent", 0) for m in metrics_history[-10:]) / min(10, len(metrics_history))
         if cpu_avg > 80:
             recommendations.append(f"🔧 考虑优化代码以降低CPU使用率 - 当前平均: {cpu_avg:.1f}%")
 
         # 检查内存使用率
-        memory_avg = sum(m.get('memory_percent', 0) for m in metrics_history[-10:]) / min(10, len(metrics_history))
+        memory_avg = sum(m.get("memory_percent", 0) for m in metrics_history[-10:]) / min(10, len(metrics_history))
         if memory_avg > 85:
             recommendations.append(f"💾 建议增加内存使用优化 - 当前平均: {memory_avg:.1f}%")
 
         # 检查磁盘使用率
-        disk_avg = sum(m.get('disk_percent', 0) for m in metrics_history[-10:]) / min(10, len(metrics_history))
+        disk_avg = sum(m.get("disk_percent", 0) for m in metrics_history[-10:]) / min(10, len(metrics_history))
         if disk_avg > 90:
             recommendations.append(f"📁 磁盘空间即将耗尽 - 当前使用率: {disk_avg:.1f}%")
 
@@ -380,7 +374,7 @@ class MetricsVisualizer:
     def save_dashboard(self, output_file: str = "dashboard.html"):
         """保存仪表板到文件"""
         dashboard_path = Path(output_file)
-        dashboard_path.write_text(self.generate_dashboard(), encoding='utf-8')
+        dashboard_path.write_text(self.generate_dashboard(), encoding="utf-8")
         print(f"✅ 仪表板已保存到: {output_file}")
 
 
@@ -392,13 +386,12 @@ class MonitoringSystem:
 
         # 初始化组件
         self.metrics_collector = MetricsCollector(
-            data_dir=self.config.get('data_dir', '.data/adg'),
-            retention_days=self.config.get('retention_days', 90)
+            data_dir=self.config.get("data_dir", ".data/adg"), retention_days=self.config.get("retention_days", 90)
         )
 
         self.runtime_monitor = RuntimeMonitor(self.metrics_collector)
-        self.trend_analyzer = TrendAnalyzer(self.config.get('data_dir', '.data/adg'))
-        self.visualizer = MetricsVisualizer(self.config.get('data_dir', '.data/adg'))
+        self.trend_analyzer = TrendAnalyzer(self.config.get("data_dir", ".data/adg"))
+        self.visualizer = MetricsVisualizer(self.config.get("data_dir", ".data/adg"))
 
         # 当前状态
         self.is_monitoring = False
@@ -411,12 +404,12 @@ class MonitoringSystem:
             "monitor_interval": 60,
             "collect_code_metrics": True,
             "collect_system_metrics": True,
-            "generate_recommendations": True
+            "generate_recommendations": True,
         }
 
         if self.config_file.exists():
             try:
-                with open(self.config_file, encoding='utf-8') as f:
+                with open(self.config_file, encoding="utf-8") as f:
                     config = json.load(f)
                 default_config.update(config)
             except Exception as e:
@@ -429,7 +422,7 @@ class MonitoringSystem:
         print("🚀 启动持续改进和监控系统...")
 
         # 创建必要的目录
-        Path(self.config['data_dir']).mkdir(parents=True, exist_ok=True)
+        Path(self.config["data_dir"]).mkdir(parents=True, exist_ok=True)
 
         # 收集一次初始数据
         print("📊 收集初始数据...")
@@ -481,12 +474,12 @@ class MonitoringSystem:
             "recommendations": recommendations,
             "dashboard_file": "adg_monitoring_dashboard.html",
             "last_monitoring": self.is_monitoring,
-            "config": self.config
+            "config": self.config,
         }
 
         # 保存报告
         report_file = Path(f"adg_report_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json")
-        with open(report_file, 'w', encoding='utf-8') as f:
+        with open(report_file, "w", encoding="utf-8") as f:
             json.dump(report, f, indent=2, ensure_ascii=False)
 
         print(f"✅ 报告已保存到: {report_file}")
@@ -496,8 +489,7 @@ class MonitoringSystem:
 def main():
     """主函数 - 运行完整的监控系统"""
     parser = argparse.ArgumentParser(description="持续改进和监控系统")
-    parser.add_argument("--command", choices=["start", "stop", "report", "dashboard"],
-                       default="start", help="执行命令")
+    parser.add_argument("--command", choices=["start", "stop", "report", "dashboard"], default="start", help="执行命令")
     parser.add_argument("--config", help="配置文件路径")
 
     args = parser.parse_args()

@@ -49,7 +49,7 @@ jobs:
       # pytest-rerunfailures 也未传 --reruns, 该配置只在本地 hooks_runner 生效:
       # 本地会重试偶发失败而 CI 不会, 导致同一份代码本地绿、CI 随机红。
       # 插件缺失时 pytest 会因未知参数直接报错, 故与安装步骤成对修改。
-      run: pytest tests/ -v -n auto --cov=tools --cov=.jcode/scripts --cov-report=xml --cov-report=term-missing --tb=short --reruns 2 --reruns-delay 1
+      run: pytest tests/ -v -n auto --cov=tools --cov=.jcode/scripts --cov-report=xml --cov-report=term-missing --junitxml=junit-${{ inputs.python-version }}.xml --tb=short --reruns 2 --reruns-delay 1
     - name: Run ai-dev-framework tests
       # pytest.ini 的 testpaths 声明了这个目录, 但 CI 之前只跑 `pytest tests/`,
       # 导致 24 个用例(含 redos/feedback 双实现 parity)从未执行。此步显式运行,
@@ -79,6 +79,14 @@ jobs:
             failed = True
         raise SystemExit(1 if failed else 0)
         PY
+    - name: Upload test report (on failure, for flake/parallel diagnosis)
+      if: failure()
+      uses: actions/upload-artifact@v4
+      with:
+        name: junit-${{ inputs.python-version }}
+        path: junit-${{ inputs.python-version }}.xml
+        retention-days: 7
+        if-no-files-found: ignore
     - name: Upload coverage
       id: upload
       if: inputs.python-version == '3.11'

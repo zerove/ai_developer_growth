@@ -436,11 +436,12 @@ def _format_output(
     format: str,
     baseline_exempt: int,
     baseline_note: str,
+    meta: dict[str, Any] | None = None,
 ) -> str:
     """格式化输出 (V2.21 P5-68 拆分: 抽 _format_text_output + _format_json_output)."""
     passed_count, failed_count, total_issues = _compute_output_totals(all_results)
     if format == "json":
-        return _format_json_output(all_results, passed_count, failed_count, total_issues, baseline_exempt)
+        return _format_json_output(all_results, passed_count, failed_count, total_issues, baseline_exempt, meta=meta)
     return _format_text_output(all_results, passed_count, failed_count, total_issues, baseline_note)
 
 
@@ -502,33 +503,26 @@ def _format_json_output(
     failed_count: int,
     total_issues: int,
     baseline_exempt: int,
+    meta: dict[str, Any] | None = None,
 ) -> str:
-    """格式化为 JSON (summary + results, 模块级 helper).
+    """格式化为 JSON (summary + results + 可选 meta, 模块级 helper).
 
     Args:
-        all_results: (Path, result_dict) 列表
-        passed_count: 通过数
-        failed_count: 失败数
-        total_issues: 问题总数
-        baseline_exempt: 基线豁免数
-
-    Returns:
-        JSON 字符串
+        meta: 可选诊断元数据（如 cache/degraded/failed_files），向后兼容追加。
     """
-    return json.dumps(
-        {
-            "summary": {
-                "passed": passed_count,
-                "failed": failed_count,
-                "total_files": len(all_results),
-                "total_issues": total_issues,
-                "baseline_exempt": baseline_exempt,
-            },
-            "results": [{"file": str(f), **r} for f, r in all_results],
+    payload: dict[str, Any] = {
+        "summary": {
+            "passed": passed_count,
+            "failed": failed_count,
+            "total_files": len(all_results),
+            "total_issues": total_issues,
+            "baseline_exempt": baseline_exempt,
         },
-        indent=2,
-        ensure_ascii=False,
-    )
+        "results": [{"file": str(f), **r} for f, r in all_results],
+    }
+    if meta:
+        payload["meta"] = meta
+    return json.dumps(payload, indent=2, ensure_ascii=False)
 
 
 def _resolve_baseline_path() -> Path:

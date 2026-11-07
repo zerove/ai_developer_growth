@@ -11,9 +11,13 @@ on:
     paths-ignore:
       - 'docs/**'
       - '*.md'
+  schedule:
+    # nightly full: 覆盖全矩阵与完整门禁（UTC 02:00）
+    - cron: '0 2 * * *'
+  workflow_dispatch:
 
 concurrency:
-  group: ci-${{ github.ref }}
+  group: ci-${{ github.event_name }}-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
@@ -62,6 +66,7 @@ jobs:
   # ──────────────────────────────────────────────────────
   # Tests - 矩阵并行
   # ──────────────────────────────────────────────────────
+  # PR fast: 仅 3.11；push/schedule/dispatch: 全矩阵
   test-311:
     uses: ./.github/workflows/jobs/tests.yml
     with:
@@ -69,12 +74,14 @@ jobs:
     secrets: inherit
 
   test-312:
+    if: github.event_name != 'pull_request'
     uses: ./.github/workflows/jobs/tests.yml
     with:
       python-version: "3.12"
     secrets: inherit
 
   test-313:
+    if: github.event_name != 'pull_request'
     uses: ./.github/workflows/jobs/tests.yml
     with:
       python-version: "3.13"
@@ -84,6 +91,7 @@ jobs:
   # Combine Coverage
   # ──────────────────────────────────────────────────────
   combine-coverage:
+    if: github.event_name != 'pull_request'
     needs: [test-311, test-312, test-313]
     uses: ./.github/workflows/jobs/combine-coverage.yml
     secrets: inherit

@@ -232,6 +232,22 @@ class PerformanceOptimizer:
         """Get the last scan's performance metrics."""
         return self._metrics
 
+    def diagnostics(self) -> dict[str, Any]:
+        """返回 JSON 可序列化诊断信息（Phase 2.3/3 可观测性）。"""
+        m = self._metrics
+        return {
+            "cache": {
+                "enabled": self.cache is not None,
+                "cached_files": m.cached_files,
+                "cache_hit_rate": m.cache_hit_rate,
+                "new_files": m.new_files,
+            },
+            "failed_files": dict(self.failed_files),
+            "failed_count": len(self.failed_files),
+            "total_files": m.total_files,
+            "scan_time_ms": m.scan_time_ms,
+        }
+
     def optimized_check_directory(
         self,
         dirpath: Path,

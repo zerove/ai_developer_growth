@@ -23,23 +23,19 @@ search = [
     "uvicorn>=0.29",
     "jieba>=0.42",
 ]
-dev = [
+# Phase 3: 分层 extras（CI 可按 job 最小安装；`dev` 保持向后兼容全量）
+dev-core = [
     "pytest>=7.0.0",
     "pytest-xdist>=3.0.0",
     "pytest-cov>=4.0.0",
     "pytest-rerunfailures>=14.0",
+    "pytest-timeout>=2.1.0",
     "ruff==0.15.17",
     "mypy>=1.0.0",
     "pyyaml>=6.0",
-    "mutmut>=2.4.0,<3",
-    "opentelemetry-api",
-    "opentelemetry-sdk",
-    "opentelemetry-exporter-otlp",
-    "opentelemetry-instrumentation",
-    # AST 语义检查的硬依赖。此前完全未声明, 导致全新环境里
-    # HAS_TREE_SITTER=False、parse_file 恒返回 None, 一批语义检查测试
-    # 静默失败 (Phase 38 实测 62 个)。注意: ast_parser 的导入是
-    # 12 个语言包的全有全无式, 缺任何一个都会关掉全部语言的 AST 检查。
+]
+dev-semantic = [
+    # AST 语义检查硬依赖（ast_parser 对 12 个语言包全有全无式导入）
     "tree-sitter",
     "tree-sitter-python",
     "tree-sitter-javascript",
@@ -53,25 +49,57 @@ dev = [
     "tree-sitter-kotlin",
     "tree-sitter-php",
     "tree-sitter-swift",
-    # starlette TestClient 需要, 否则 dashboard 测试无法运行
+]
+dev-integration = [
+    "hypothesis",  # property/chaos tests
+    "PyGithub",  # sync_issues (mocked but import required)
+    "kubernetes",  # chaos runner tests
     "httpx",
-    # 以下三个是真实测试依赖: 6 个测试文件因缺它们而无法被 pytest 收集,
-    # 曾经长期靠 --ignore 跳过 (等于 4 组测试从未真正运行过)
-    # pytest-timeout: pytest.ini 依赖它设置单测试超时上限。插件缺失时 pytest
-    # 会因未知 ini 选项而报错, 故与 timeout/timeout_method 一起声明。
-    "pytest-timeout>=2.1.0",
-    "hypothesis",  # test_property_based / test_property_chaos
-    "PyGithub",  # test_sync_issues (测试内 mock 了 Github, 但仍需模块可导入)
-    "kubernetes",  # test_chaos_runner
-    # dashboard 测试需要 starlette TestClient, 且 pytest.ini 的
-    # filterwarnings 直接引用了 starlette 的异常类 —— 缺它会报
-    # "Failed to import filter module 'starlette'" 警告
     "starlette",
-    # tests/test_dashboard_round2.py 直接 import fastapi.testclient,
-    # 光装 search extra 不足, dev 必须自带
     "fastapi>=0.110",
-    # tests/test_search_recall.py 需要中文分词; 缺 jieba 时检索会静默
-    # 回退为整串匹配, 表现为"零召回"断言失败 (失败信息里会自报这一点)
+    "jieba>=0.42",
+]
+dev-observability = [
+    "mutmut>=2.4.0,<3",
+    "opentelemetry-api",
+    "opentelemetry-sdk",
+    "opentelemetry-exporter-otlp",
+    "opentelemetry-instrumentation",
+]
+# 向后兼容：保持 `dev` 为完整依赖列表（lint.yml 等会直接解析该列表）
+dev = [
+    "pytest>=7.0.0",
+    "pytest-xdist>=3.0.0",
+    "pytest-cov>=4.0.0",
+    "pytest-rerunfailures>=14.0",
+    "pytest-timeout>=2.1.0",
+    "ruff==0.15.17",
+    "mypy>=1.0.0",
+    "pyyaml>=6.0",
+    "mutmut>=2.4.0,<3",
+    "opentelemetry-api",
+    "opentelemetry-sdk",
+    "opentelemetry-exporter-otlp",
+    "opentelemetry-instrumentation",
+    "tree-sitter",
+    "tree-sitter-python",
+    "tree-sitter-javascript",
+    "tree-sitter-typescript",
+    "tree-sitter-rust",
+    "tree-sitter-go",
+    "tree-sitter-java",
+    "tree-sitter-ruby",
+    "tree-sitter-cpp",
+    "tree-sitter-c-sharp",
+    "tree-sitter-kotlin",
+    "tree-sitter-php",
+    "tree-sitter-swift",
+    "httpx",
+    "hypothesis",
+    "PyGithub",
+    "kubernetes",
+    "starlette",
+    "fastapi>=0.110",
     "jieba>=0.42",
 ]
 tools = [

@@ -270,6 +270,7 @@ class TestCheckFilesParallel:
         assert isinstance(results, list)
         assert results == []
 
+
 class TestCheckDirectoryStats:
     """check_directory(stats=...) 可观测契约（非破坏性出参）。"""
 

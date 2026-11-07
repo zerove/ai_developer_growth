@@ -324,9 +324,7 @@ def _handle_language_rules(args: argparse.Namespace) -> int:
                         "passed": passed,
                         "path": str(args.path),
                         "files_checked": len(results),
-                        "results": [
-                            {"file": r.file, "passed": r.passed, "issues": len(r.issues)} for r in results
-                        ],
+                        "results": [{"file": r.file, "passed": r.passed, "issues": len(r.issues)} for r in results],
                         "meta": {"files_checked": len(results), "cache": True, "db_path": db_path},
                     },
                     indent=2,

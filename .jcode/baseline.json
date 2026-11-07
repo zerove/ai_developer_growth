@@ -24,7 +24,7 @@
       "structure:函数超过 N 行 (实际 N 行)": 1
     },
     "scripts/optimization/performance_optimizer.py": {
-      "structure:函数超过 N 行 (实际 N 行)": 3
+      "structure:函数超过 N 行 (实际 N 行)": 2
     },
     "tools/scripts/fix_applier.py": {
       "structure:函数超过 N 行 (实际 N 行)": 1

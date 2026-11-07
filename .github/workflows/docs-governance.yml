@@ -8,6 +8,7 @@ name: Docs Governance
 # 不使用 scheduled（同样会与被监测对象一起死亡），而是随 push/PR 触发。
 
 on:
+  workflow_dispatch:
   push:
     branches: [main, master, develop]
     paths:

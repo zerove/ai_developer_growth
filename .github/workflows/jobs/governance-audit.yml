@@ -90,8 +90,13 @@ jobs:
     if: always()
     runs-on: ubuntu-latest
     steps:
-    - name: Check all languages passed
-      run: "for lang in ${{ join(fromJson(inputs.languages), ' ') }}; do\n  echo \"Checking $lang...\"\n\
-        \  # In practice, GitHub Actions sets job status via needs.<job>.result\n\
-        done\n# If any language failed, this will fail\necho \"${{ needs.governance-audit.result\
-        \ }}\" | grep -q failure && exit 1 || exit 0\n"
+      - name: Check all languages passed
+        env:
+          RESULT: ${{ needs.governance-audit.result }}
+        run: |
+          echo "governance-audit result: $RESULT"
+          if [ "$RESULT" = "failure" ] || [ "$RESULT" = "cancelled" ]; then
+            echo "::error::governance-audit did not succeed: $RESULT"
+            exit 1
+          fi
+          echo "✅ governance-audit summary OK ($RESULT)"

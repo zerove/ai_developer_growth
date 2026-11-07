@@ -23,7 +23,7 @@ class TestMainCLI:
         f = tmp_path / "test.py"
         f.write_text("x = 1\n")
         with patch("sys.argv", ["adg", "check", str(f), "--lang", "python"]):
-            with patch("tools.scripts.adg_cli.rules.load_rules_for_language") as mock:
+            with patch("tools.scripts.adg_cli.commands.cmd.cmd_check.load_rules_for_language") as mock:
                 mock.return_value = {"anti_patterns": []}
                 result = main()
         assert result == 0
@@ -49,7 +49,7 @@ class TestMainCLI:
         f = tmp_path / "test.py"
         f.write_text("x = 1\n")
         with patch("sys.argv", ["adg", "check", str(f), "--lang", "python", "--json"]):
-            with patch("tools.scripts.adg_cli.rules.load_rules_for_language") as mock:
+            with patch("tools.scripts.adg_cli.commands.cmd.cmd_check.load_rules_for_language") as mock:
                 mock.return_value = {"anti_patterns": []}
                 result = main()
         assert result == 0
@@ -67,7 +67,7 @@ class TestMainCLI:
             "sys.argv",
             ["adg", "check", str(f), "--lang", "python", "--severity", "error"],
         ):
-            with patch("tools.scripts.adg_cli.rules.load_rules_for_language") as mock:
+            with patch("tools.scripts.adg_cli.commands.cmd.cmd_check.load_rules_for_language") as mock:
                 mock.return_value = load_rules_for_language("python")
                 result = main()
         assert result == 1
@@ -77,7 +77,7 @@ class TestMainCLI:
         f = tmp_path / "test.py"
         f.write_text("x = 1\n")
         with patch("sys.argv", ["adg", "report", str(f), "--lang", "python"]):
-            with patch("tools.scripts.adg_cli.rules.load_rules_for_language") as mock:
+            with patch("tools.scripts.adg_cli.commands.cmd.cmd_report.load_rules_for_language") as mock:
                 mock.return_value = {"anti_patterns": []}
                 result = main()
         assert result == 0
@@ -87,7 +87,7 @@ class TestMainCLI:
         f = tmp_path / "test.py"
         f.write_text("try:\n    pass\nexcept:\n    pass\n")
         with patch("sys.argv", ["adg", "report", str(f), "--lang", "python"]):
-            with patch("tools.scripts.adg_cli.rules.load_rules_for_language") as mock:
+            with patch("tools.scripts.adg_cli.commands.cmd.cmd_report.load_rules_for_language") as mock:
                 mock.return_value = load_rules_for_language("python")
                 result = main()
         assert result == 1
@@ -97,7 +97,7 @@ class TestMainCLI:
         f = tmp_path / "test.py"
         f.write_text("x = 1\n")
         with patch("sys.argv", ["adg", "report", str(f), "--lang", "python", "--json"]):
-            with patch("tools.scripts.adg_cli.rules.load_rules_for_language") as mock:
+            with patch("tools.scripts.adg_cli.commands.cmd.cmd_report.load_rules_for_language") as mock:
                 mock.return_value = {"anti_patterns": []}
                 result = main()
         assert result == 0
@@ -110,7 +110,7 @@ class TestMainCLI:
             "sys.argv",
             ["adg", "report", str(f), "--lang", "python", "--error-threshold", "10"],
         ):
-            with patch("tools.scripts.adg_cli.rules.load_rules_for_language") as mock:
+            with patch("tools.scripts.adg_cli.commands.cmd.cmd_report.load_rules_for_language") as mock:
                 mock.return_value = load_rules_for_language("python")
                 result = main()
         assert result == 0  # Should pass with high threshold
@@ -227,7 +227,7 @@ class TestMainCLI:
         skipped_file.write_text("try:\n    pass\nexcept:\n    pass\n")
 
         with patch("sys.argv", ["adg", "check", str(tmp_path), "--lang", "python"]):
-            with patch("tools.scripts.adg_cli.rules.load_rules_for_language") as mock:
+            with patch("tools.scripts.adg_cli.commands.cmd.cmd_check.load_rules_for_language") as mock:
                 mock.return_value = load_rules_for_language("python")
                 result = main()
         # Only app.py should be checked, app.test.py should be skipped

@@ -22,7 +22,7 @@ class TestCmdCheck:
         f = tmp_path / "bad.py"
         f.write_text("try:\n    pass\nexcept:\n    pass\n")
         args = argparse.Namespace(path=str(f), lang="python", severity=None, json=False)
-        with patch("tools.scripts.adg_cli.rules.load_rules_for_language") as mock:
+        with patch("tools.scripts.adg_cli.commands.cmd.cmd_check.load_rules_for_language") as mock:
             mock.return_value = load_rules_for_language("python")
             result = cmd_check(args)
         assert result == 1  # errors found
@@ -31,7 +31,7 @@ class TestCmdCheck:
         f = tmp_path / "good.py"
         f.write_text("x = 1\n")
         args = argparse.Namespace(path=str(f), lang="python", severity=None, json=False)
-        with patch("tools.scripts.adg_cli.rules.load_rules_for_language") as mock:
+        with patch("tools.scripts.adg_cli.commands.cmd.cmd_check.load_rules_for_language") as mock:
             mock.return_value = {"anti_patterns": []}
             result = cmd_check(args)
         assert result == 0
@@ -39,7 +39,7 @@ class TestCmdCheck:
     def test_check_directory(self, tmp_path: Path) -> None:
         (tmp_path / "a.py").write_text("x = 1\n")
         args = argparse.Namespace(path=str(tmp_path), lang="python", severity=None, json=False)
-        with patch("tools.scripts.adg_cli.rules.load_rules_for_language") as mock:
+        with patch("tools.scripts.adg_cli.commands.cmd.cmd_check.load_rules_for_language") as mock:
             mock.return_value = {"anti_patterns": []}
             result = cmd_check(args)
         assert result == 0
@@ -48,7 +48,7 @@ class TestCmdCheck:
         f = tmp_path / "test.py"
         f.write_text("x = 1\n")
         args = argparse.Namespace(path=str(f), lang="python", severity=None, json=True)
-        with patch("tools.scripts.adg_cli.rules.load_rules_for_language") as mock:
+        with patch("tools.scripts.adg_cli.commands.cmd.cmd_check.load_rules_for_language") as mock:
             mock.return_value = {"anti_patterns": []}
             result = cmd_check(args)
         assert result == 0
@@ -66,8 +66,8 @@ class TestCmdCheck:
         (tmp_path / "requirements.txt").write_text("Django==4.2\n")
         args = argparse.Namespace(path=str(f), lang="python", severity=None, json=False)
         with (
-            patch("tools.scripts.adg_cli.rules.load_rules_for_language") as mock_lang,
-            patch("tools.scripts.adg_cli.rules.load_framework_rules") as mock_fw,
+            patch("tools.scripts.adg_cli.commands.cmd.cmd_check.load_rules_for_language") as mock_lang,
+            patch("tools.scripts.adg_cli.commands.cmd.cmd_check.load_framework_rules") as mock_fw,
             patch("tools.scripts.adg_cli.detect.detect_language") as mock_det,
         ):
             mock_lang.return_value = {"anti_patterns": []}

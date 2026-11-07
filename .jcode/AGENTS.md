@@ -45,19 +45,20 @@
 - `print_check()` - 格式化输出检查结果
 - `get_project_root()` - 获取项目根目录
 
-### Hooks 执行引擎
+### Hooks 执行引擎（两类 runner，职责不同）
 
-`.jcode/scripts/hooks_runner.py` 读取 `hooks.json` 配置并执行:
+- **门禁 CLI**：`tools/scripts/hooks_runner.py`（或 `python -m tools.scripts.hooks_runner`）—— 执行 lint/format/typecheck/test/security、quality-gate、doctor、ci-heartbeat、baseline 等开发/CI 门禁命令；由 Makefile、pre-push、CI 调用。
+- **JCode 事件调度**：`.jcode/scripts/hooks_runner.py` —— 读取 `.jcode/hooks.json`，按 `on_commit/on_pr/on_merge/scheduled` 触发 skill actions；由 JCode/hooks 集成调用。
 
 ```bash
-# 列出所有 hooks
+# JCode 事件调度示例
 python .jcode/scripts/hooks_runner.py list
-
-# 按事件执行
 python .jcode/scripts/hooks_runner.py on_commit --files file1.py file2.md
 python .jcode/scripts/hooks_runner.py on_pr
-python .jcode/scripts/hooks_runner.py on_merge
-python .jcode/scripts/hooks_runner.py scheduled
+
+# 门禁 CLI 示例
+.venv/bin/python -m tools.scripts.hooks_runner doctor
+.venv/bin/python -m tools.scripts.hooks_runner typecheck
 ```
 
 ---

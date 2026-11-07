@@ -90,13 +90,13 @@ jobs:
     if: always()
     runs-on: ubuntu-latest
     steps:
-      - name: Check all languages passed
-        env:
-          RESULT: ${{ needs.governance-audit.result }}
-        run: |
-          echo "governance-audit result: $RESULT"
-          if [ "$RESULT" = "failure" ] || [ "$RESULT" = "cancelled" ]; then
-            echo "::error::governance-audit did not succeed: $RESULT"
-            exit 1
-          fi
-          echo "✅ governance-audit summary OK ($RESULT)"
+    - name: Check all languages passed
+      env:
+        RESULT: ${{ needs.governance-audit.result }}
+      run: |
+        echo "governance-audit result: $RESULT"
+        if [ "$RESULT" = "failure" ] || [ "$RESULT" = "cancelled" ]; then
+          echo "::error::governance-audit did not succeed: $RESULT"
+          exit 1
+        fi
+        echo "✅ governance-audit summary OK ($RESULT)"

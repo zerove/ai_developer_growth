@@ -24,7 +24,7 @@ AI 时代开发者成长知识库 + 治理框架（knowledge base + governance f
 | 覆盖率 | **86.96%**（阈值 80%；2026-10-05 按 **CI 口径** `--cov=tools --cov=.jcode/scripts` 实测，23615 语句） |
 | 类型检查 | mypy strict，**234 source files** clean（口径：`mypy tools .jcode`；**CI 实际只跑 `mypy tools/scripts/`**，见下方待修项） |
 | 代码风格 | ruff check + ruff format（473 files formatted） |
-| ADR 累计 | 69 篇（`docs/adr/`；索引同为 69 条。ADR-001~007 于 `649a947` 归档缺失，ADR-006 为空号，ADR-040 为追补） |
+| ADR 累计 | 71 篇（`docs/adr/ADR-*.md`；ADR-001~007 于 `649a947` 归档缺失，ADR-006 为空号，ADR-040 为追补） |
 
 ## 核心目录
 
@@ -44,21 +44,8 @@ AI 时代开发者成长知识库 + 治理框架（knowledge base + governance f
   把项目上下文一并丢弃（ADR-061）
 - **覆盖率门禁范围**：`tools/scripts` 与 `.jcode/scripts` 均在门禁内，`.jcode/scripts`
   曾长期在门禁之外造成静默劣化区（见 `pyproject.toml` `[tool.adg] cov_min` 注释）
-- **覆盖率口径与阈值来源有两条路径，勿混为一谈**（2026-10-05 实测）：
-  - **CI**（`.github/workflows/jobs/tests.yml`）跑
-    `pytest tests/ --cov=tools --cov=.jcode/scripts`，并从
-    `pyproject.toml` 的 **`[tool.coverage.report].fail_under`** 读阈值；
-  - **hooks / 本地**（`hooks/basic_checks.py`）把 **`[tool.adg] cov_min`**
-    作为 `--cov-fail-under` 传给 pytest-cov。
-  两者当前都是 80，但**改其中一个不会影响另一个**。另注意 `--cov=tools`
-  （包根，含 `tools/scripts`）与 `--cov=tools/scripts`（子目录）统计范围
-  不同，数字不可直接比较 —— 实测前者 86.96%、后者 87.49%。
-- **CI 的 mypy 口径比本地窄**：`jobs/type-check.yml` 只跑 `mypy tools/scripts/`，
-  **不含 `.jcode/`**。即 `.jcode/scripts` 的类型错误目前 CI 抓不到
-  （实测 `mypy tools .jcode` 为 234 files clean，但那是本地口径）。
-  `example-ci-template.yml` 里的 `mypy .` 是**模板示例**，不是真实门禁，
-  按它去理解 CI 会得出错误结论（`mypy .` 会因 `tests/` 与
-  `examples/ai-task-prioritizer` 报错）。
+- **覆盖率口径与阈值已统一**：CI（`.github/workflows/jobs/tests.yml`）与 hooks/本地（`hooks/basic_checks.py`）均使用 `pytest --cov=tools --cov=.jcode/scripts`，阈值统一读取 `[tool.adg] cov_min` / `branch_cov_min`（`[tool.coverage.report]` 不再声明 `fail_under`，避免双源漂移）。注意 `--cov=tools`（包根，含 `tools/scripts`）与 `--cov=tools/scripts`（子目录）统计范围不同，数字不可直接比较。
+- **mypy 口径已对齐**：CI（`jobs/type-check.yml`）与 `hooks/basic_checks.run_typecheck` 均执行 `mypy tools .jcode ai-dev-framework/src`（遵循 `pyproject.toml` 配置）。`example-ci-template.yml` 里的 `mypy .` 是**模板示例**，不是真实门禁，按它去理解 CI 会得出错误结论。
 - **ruff 版本锁定** 0.15.17：0.16+ 启用 2025 format style 会造成 CI 与本地结果不一致
 - **不命名为 `jcode` 的 console_script**：会遮蔽 Rust 版 jcode TUI
 - **跑测试与门禁必须用 `.venv/bin/python`（3.11），不可用 `python`**：
@@ -302,149 +289,114 @@ AI 时代开发者成长知识库 + 治理框架（knowledge base + governance f
 
 ---
 
-## 更新记录: 2026-10-27 23:43:29
+## 更新记录: 2026-11-06 07:44:31
 
 ### 任务
 Git 变更同步
 
 ### 变更摘要
-- 变更文件 75 个 (+8207 / -6576 行)
-  - .github/workflows/advanced-governance.yml
-  - .github/workflows/ci.yml
-  - .github/workflows/jobs/combine-coverage.yml
-  - .github/workflows/jobs/governance-audit.yml
-  - .github/workflows/jobs/setup.yml
-  - .github/workflows/jobs/tests.yml
-  - .github/workflows/jobs/type-check.yml
-  - pyproject.toml
-  - pytest.ini
-  - tests/_case_study_validator_base.py
-  - tests/test_adg_cli_v2.py
-  - tests/test_adg_cli_v2_commands.py
-  - tests/test_adg_cli_v2_e2e.py
-  - tests/test_adg_cli_v2_format.py
-  - tests/test_adg_cli_v2_main.py
-  - tests/test_adg_cmd_integration.py
-  - tests/test_adg_cmd_integration_commands.py
-  - tests/test_adg_coverage_extra.py
-  - tests/test_adg_coverage_extra_ops.py
-  - tests/test_adg_new_modules.py
-  - ... 等共 75 个文件
+- 变更文件 14 个 (+2623 / -131 行)
+  - .adg-hook.backup.log
+  - .jcode/hooks.json
+  - CONTEXT.md
+  - adg_monitoring_dashboard.html
+  - diff --git "a/docs/analysis/\345\233\233\347\273\264\345\272\246\346\267\261\345\272\246\345\210\206\346\236\220.md" "b/docs/analysis/\345\233\233\347\273\264\345\272\246\346\267\261\345\272\246\345\210\206\346\236\220.md"
+  - scripts/optimization/IMPLEMENTATION_SUMMARY.md
+  - scripts/optimization/README.md
+  - scripts/optimization/code_quality_fixes.py
+  - scripts/optimization/monitoring_system.py
+  - scripts/optimization/performance_optimizer.py
+  - tools/scripts/adg_cli/check.py
+  - tools/scripts/adg_cli/parser.py
+  - tools/scripts/chaos_experiment_runner.py
+  - tools/scripts/rules_engine/checker.py
 
-## 更新记录: 2026-10-27 23:28:24
+## 更新记录: 2026-11-06 07:35:49
 
 ### 任务
 Git 变更同步
 
 ### 变更摘要
-- 变更文件 160 个 (+2666 / -9482 行)
-  - .adg/config.yml
-  - .adg/rules.yml
-  - .adg/rules.yml.example
-  - .github/workflows/advanced-governance.yml
-  - .github/workflows/ci.yml
-  - .github/workflows/jobs/combine-coverage.yml
-  - .github/workflows/jobs/governance-audit.yml
-  - .github/workflows/jobs/setup.yml
-  - .github/workflows/jobs/tests.yml
-  - .github/workflows/jobs/type-check.yml
-  - .jcode/PROJECT.md
-  - .jcode/hooks/pre-push
-  - .jcode/mode_decision.conf
-  - .jcode/project.yaml
-  - .jcode/registry.json
-  - .jcode/scripts/context-sync.py
-  - .jcode/scripts/governance-auditor.py
-  - .jcode/scripts/hooks_runner.py
-  - .jcode/scripts/knowledge-curator.py
-  - .jcode/skills/governance-auditor.md
-  - ... 等共 160 个文件
+- 变更文件 14 个 (+2623 / -124 行)
+  - .adg-hook.backup.log
+  - .jcode/hooks.json
+  - CONTEXT.md
+  - adg_monitoring_dashboard.html
+  - diff --git "a/docs/analysis/\345\233\233\347\273\264\345\272\246\346\267\261\345\272\246\345\210\206\346\236\220.md" "b/docs/analysis/\345\233\233\347\273\264\345\272\246\346\267\261\345\272\246\345\210\206\346\236\220.md"
+  - scripts/optimization/IMPLEMENTATION_SUMMARY.md
+  - scripts/optimization/README.md
+  - scripts/optimization/code_quality_fixes.py
+  - scripts/optimization/monitoring_system.py
+  - scripts/optimization/performance_optimizer.py
+  - tools/scripts/adg_cli/check.py
+  - tools/scripts/adg_cli/parser.py
+  - tools/scripts/chaos_experiment_runner.py
+  - tools/scripts/rules_engine/checker.py
 
-## 更新记录: 2026-10-27 22:57:12
+## 更新记录: 2026-11-06 07:20:14
 
 ### 任务
 Git 变更同步
 
 ### 变更摘要
-- 变更文件 154 个 (+2355 / -9330 行)
-  - .adg/config.yml
-  - .adg/rules.yml
-  - .adg/rules.yml.example
-  - .github/workflows/advanced-governance.yml
-  - .github/workflows/ci.yml
-  - .github/workflows/jobs/combine-coverage.yml
-  - .github/workflows/jobs/governance-audit.yml
-  - .github/workflows/jobs/setup.yml
-  - .github/workflows/jobs/tests.yml
-  - .github/workflows/jobs/type-check.yml
-  - .jcode/PROJECT.md
-  - .jcode/hooks/pre-push
-  - .jcode/mode_decision.conf
-  - .jcode/project.yaml
-  - .jcode/registry.json
-  - .jcode/scripts/context-sync.py
-  - .jcode/scripts/governance-auditor.py
-  - .jcode/scripts/hooks_runner.py
-  - .jcode/scripts/knowledge-curator.py
-  - .jcode/skills/governance-auditor.md
-  - ... 等共 154 个文件
+- 变更文件 14 个 (+2585 / -73 行)
+  - .adg-hook.backup.log
+  - .jcode/hooks.json
+  - CONTEXT.md
+  - adg_monitoring_dashboard.html
+  - diff --git "a/docs/analysis/\345\233\233\347\273\264\345\272\246\346\267\261\345\272\246\345\210\206\346\236\220.md" "b/docs/analysis/\345\233\233\347\273\264\345\272\246\346\267\261\345\272\246\345\210\206\346\236\220.md"
+  - scripts/optimization/IMPLEMENTATION_SUMMARY.md
+  - scripts/optimization/README.md
+  - scripts/optimization/code_quality_fixes.py
+  - scripts/optimization/monitoring_system.py
+  - scripts/optimization/performance_optimizer.py
+  - tools/scripts/adg_cli/check.py
+  - tools/scripts/adg_cli/parser.py
+  - tools/scripts/chaos_experiment_runner.py
+  - tools/scripts/rules_engine/checker.py
 
-## 更新记录: 2026-10-27 06:14:15
+## 更新记录: 2026-11-06 07:20:14
 
 ### 任务
 Git 变更同步
 
 ### 变更摘要
-- 变更文件 154 个 (+2355 / -9330 行)
-  - .adg/config.yml
-  - .adg/rules.yml
-  - .adg/rules.yml.example
-  - .github/workflows/advanced-governance.yml
-  - .github/workflows/ci.yml
-  - .github/workflows/jobs/combine-coverage.yml
-  - .github/workflows/jobs/governance-audit.yml
-  - .github/workflows/jobs/setup.yml
-  - .github/workflows/jobs/tests.yml
-  - .github/workflows/jobs/type-check.yml
-  - .jcode/PROJECT.md
-  - .jcode/hooks/pre-push
-  - .jcode/mode_decision.conf
-  - .jcode/project.yaml
-  - .jcode/registry.json
-  - .jcode/scripts/context-sync.py
-  - .jcode/scripts/governance-auditor.py
-  - .jcode/scripts/hooks_runner.py
-  - .jcode/scripts/knowledge-curator.py
-  - .jcode/skills/governance-auditor.md
-  - ... 等共 154 个文件
+- 变更文件 14 个 (+2563 / -44 行)
+  - .adg-hook.backup.log
+  - .jcode/hooks.json
+  - CONTEXT.md
+  - adg_monitoring_dashboard.html
+  - diff --git "a/docs/analysis/\345\233\233\347\273\264\345\272\246\346\267\261\345\272\246\345\210\206\346\236\220.md" "b/docs/analysis/\345\233\233\347\273\264\345\272\246\346\267\261\345\272\246\345\210\206\346\236\220.md"
+  - scripts/optimization/IMPLEMENTATION_SUMMARY.md
+  - scripts/optimization/README.md
+  - scripts/optimization/code_quality_fixes.py
+  - scripts/optimization/monitoring_system.py
+  - scripts/optimization/performance_optimizer.py
+  - tools/scripts/adg_cli/check.py
+  - tools/scripts/adg_cli/parser.py
+  - tools/scripts/chaos_experiment_runner.py
+  - tools/scripts/rules_engine/checker.py
 
-## 更新记录: 2026-10-27 06:06:33
+## 更新记录: 2026-11-06 07:20:14
 
 ### 任务
 Git 变更同步
 
 ### 变更摘要
-- 变更文件 154 个 (+2294 / -9327 行)
-  - .adg/config.yml
-  - .adg/rules.yml
-  - .adg/rules.yml.example
-  - .github/workflows/advanced-governance.yml
-  - .github/workflows/ci.yml
-  - .github/workflows/jobs/combine-coverage.yml
-  - .github/workflows/jobs/governance-audit.yml
-  - .github/workflows/jobs/setup.yml
-  - .github/workflows/jobs/tests.yml
-  - .github/workflows/jobs/type-check.yml
-  - .jcode/PROJECT.md
-  - .jcode/hooks/pre-push
-  - .jcode/mode_decision.conf
-  - .jcode/project.yaml
-  - .jcode/registry.json
-  - .jcode/scripts/context-sync.py
-  - .jcode/scripts/governance-auditor.py
-  - .jcode/scripts/hooks_runner.py
-  - .jcode/scripts/knowledge-curator.py
-  - .jcode/skills/governance-auditor.md
-  - ... 等共 154 个文件
+- 变更文件 14 个 (+2563 / -44 行)
+  - .adg-hook.backup.log
+  - .jcode/hooks.json
+  - CONTEXT.md
+  - adg_monitoring_dashboard.html
+  - diff --git "a/docs/analysis/\345\233\233\347\273\264\345\272\246\346\267\261\345\272\246\345\210\206\346\236\220.md" "b/docs/analysis/\345\233\233\347\273\264\345\272\246\346\267\261\345\272\246\345\210\206\346\236\220.md"
+  - scripts/optimization/IMPLEMENTATION_SUMMARY.md
+  - scripts/optimization/README.md
+  - scripts/optimization/code_quality_fixes.py
+  - scripts/optimization/monitoring_system.py
+  - scripts/optimization/performance_optimizer.py
+  - tools/scripts/adg_cli/check.py
+  - tools/scripts/adg_cli/parser.py
+  - tools/scripts/chaos_experiment_runner.py
+  - tools/scripts/rules_engine/checker.py
 
 <!-- 滚动窗口: 已自动裁剪 1 条旧更新记录 -->

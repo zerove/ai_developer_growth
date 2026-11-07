@@ -168,7 +168,7 @@ python ai-dev-framework/src/ai_dev_framework/jcode_init.py your-project --langua
 | 📄 核心文档 | 391 篇 |
 | 📚 实践案例 | 48 个 |
 | 🛠️ 代码示例 | 10 个 |
-| 📋 架构决策 | 70 条 |
+| 📋 架构决策 | 71 条 |
 | 🧪 测试用例 | `make test` |
 | ✅ 测试覆盖率 | 87% |
 

@@ -25,6 +25,8 @@ from typing import Any
 
 import yaml
 from kubernetes import client, config
+
+# ApiException 在 kubernetes.client.rest 中，但 mypy 可能找不到类型存根
 from kubernetes.client.rest import ApiException
 
 # 实验名称 -> Chaos Mesh CRD 复数资源名
@@ -385,12 +387,12 @@ class ChaosExperimentRunner:
             try:
                 pods = self.core_api.list_namespaced_pod("staging")
                 for pod in pods.items:
-                    if pod.status.phase != "Running":
+                    if pod.status is not None and pod.status.phase != "Running":
                         affected_pods.append(
                             {
-                                "name": pod.metadata.name,
+                                "name": pod.metadata.name if pod.metadata else "unknown",
                                 "phase": pod.status.phase,
-                                "reason": pod.status.reason,
+                                "reason": pod.status.reason if pod.status.reason else "unknown",
                             }
                         )
             except Exception as e:

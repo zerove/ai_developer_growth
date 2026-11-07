@@ -156,18 +156,23 @@ class TestRunTypecheck:
     @patch("tools.scripts.hooks.basic_checks._run_subprocess")
     @patch("tools.scripts.hooks.basic_checks.sys.executable", "python")
     def test_run_typecheck(self, mock_run):
-        """Test run_typecheck calls correct command."""
+        """Test run_typecheck calls correct command (与 CI/pyproject 口径对齐)."""
         mock_run.return_value = (True, "typecheck output")
         passed, output = run_typecheck()
         assert passed is True
         assert output == "typecheck output"
         mock_run.assert_called_once()
         args = mock_run.call_args[0][0]
+        kwargs = mock_run.call_args[1]
         assert args[0] == "python"
         assert "-m" in args
         assert "mypy" in args
-        assert "tools/scripts/" in args
-        assert "--ignore-missing-imports" in args
+        # 统一口径：tools 全包 + .jcode + ai-dev-framework/src
+        assert "tools" in args
+        assert ".jcode" in args
+        assert "ai-dev-framework/src" in args
+        assert "tools/scripts/" not in args
+        assert kwargs["timeout"] == 180
 
 
 class TestRunTests:

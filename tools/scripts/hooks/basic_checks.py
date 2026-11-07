@@ -114,10 +114,10 @@ def run_format_check(fix: bool = False) -> tuple[bool, str]:
 
 
 def run_typecheck() -> tuple[bool, str]:
-    """Run mypy type check."""
+    """Run mypy type check（与 CI/pyproject 口径对齐）。"""
     return _run_subprocess(
-        [sys.executable, "-m", "mypy", "tools/scripts/", "ai-dev-framework/src", "--ignore-missing-imports"],
-        timeout=120,
+        [sys.executable, "-m", "mypy", "tools", ".jcode", "ai-dev-framework/src"],
+        timeout=180,
         description="Type check",
     )
 

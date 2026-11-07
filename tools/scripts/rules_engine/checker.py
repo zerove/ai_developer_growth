@@ -6,8 +6,8 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
 from tools.scripts._common import rules_dir, walk_files
-from tools.scripts.rules_engine.logger import logger
 from tools.scripts.app_config import get_setting
+from tools.scripts.rules_engine.logger import logger
 
 from ._checker_linters import _batched_linters as _batched_linters
 from ._checker_linters import _map_severity as _map_severity
@@ -534,7 +534,7 @@ def check_directory(
 
     # P-01: jobs 未显式指定时回退到 [tool.adg] jobs 配置（默认 4），
     # 避免 CLI 默认 jobs=1 导致目录级检查始终串行。
-    effective_jobs = jobs if jobs and jobs > 0 else int(get_setting("jobs", default=4) or 4)
+    effective_jobs = jobs if jobs and jobs > 0 else int(str(get_setting("jobs", default=4) or 4))
     effective_jobs = max(1, effective_jobs)
 
     if len(files) <= 4 or effective_jobs <= 1:

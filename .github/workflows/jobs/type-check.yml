@@ -17,10 +17,9 @@ jobs:
       uses: actions/cache@v4
       with:
         path: .mypy_cache
-        key: ${{ github.repository }}-mypy-${{ hashFiles('tools/scripts/**/*.py',
-          'ai-dev-framework/src/**/*.py') }}
-        restore-keys: '${{ github.repository }}-mypy-
-
-          '
+        key: ${{ github.repository }}-mypy-${{ hashFiles('tools/**/*.py', '.jcode/scripts/**/*.py', 'ai-dev-framework/src/**/*.py', 'pyproject.toml') }}
+        restore-keys: |
+          ${{ github.repository }}-mypy-
     - name: Mypy (strict)
-      run: mypy tools/scripts/ ai-dev-framework/src
+      # 与本地/pyproject 口径对齐：覆盖 tools 全包 + .jcode/scripts + ai-dev-framework/src
+      run: mypy tools .jcode ai-dev-framework/src

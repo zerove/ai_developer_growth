@@ -257,7 +257,7 @@ def check_directory(
         jobs: Number of parallel jobs (None/<=0 = use configured default from [tool.adg] jobs, default 4)
     """
     files_to_check = _collect_files(dirpath)
-    effective_jobs = jobs if jobs and jobs > 0 else int(get_setting("jobs", default=4) or 4)
+    effective_jobs = jobs if jobs and jobs > 0 else int(str(get_setting("jobs", default=4) or 4))
     return _run_checks(files_to_check, rules, severity_filter, effective_jobs)
 
 

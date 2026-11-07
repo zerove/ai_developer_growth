@@ -285,68 +285,56 @@ def _print_check_result(result: CheckResult) -> None:
             print(f"  {severity_icon} {result.file}:{issue.line} [{issue.rule_id}] {issue.message}")
 
 
+def _language_rules_fix(args: argparse.Namespace) -> int:
+    from tools.scripts.rules_engine.auto_fix import FAILED_WRITE_RULE_IDS, apply_fixes_to_directory, format_fix_results
+
+    fix_results = apply_fixes_to_directory(args.path, dry_run=False)
+    print(format_fix_results(fix_results))
+    # ADR-072: 写盘失败/拒绝写盘必须非零退出；MANUAL FIX REQUIRED 是正常产物。
+    return 1 if any(r.rule_id in FAILED_WRITE_RULE_IDS for r in fix_results) else 0
+
+
+def _language_rules_cache(args: argparse.Namespace) -> int:
+    from tools.scripts.app_config import get_path, get_setting
+    from tools.scripts.rules_engine.checker import check_directory
+
+    jobs: int = int(str(getattr(args, "jobs", None) or get_setting("jobs", 4)))
+    db_path = getattr(args, "db", None) or str(get_path("trend_db", Path("adg_quality.db")))
+    stats: dict[str, Any] = {}
+    results = check_directory(args.path, jobs=jobs, use_cache=True, db_path=db_path, stats=stats)
+    passed = all(r.passed for r in results)
+    if getattr(args, "format", "text") == "json":
+        meta: dict[str, Any] = {
+            "files_checked": int(stats.get("files_checked", len(results))),
+            "cache": True,
+            "cache_initialized": bool(stats.get("cache_initialized", False)),
+            "cache_degraded": stats.get("cache_degraded"),
+            "cache_hits": stats.get("cache_hits"),
+            "cache_misses": stats.get("cache_misses"),
+            "parallel": bool(stats.get("parallel", False)),
+            "jobs": int(stats.get("jobs", jobs)),
+            "db_path": db_path,
+        }
+        payload = {
+            "passed": passed,
+            "path": str(args.path),
+            "files_checked": len(results),
+            "results": [{"file": r.file, "passed": r.passed, "issues": len(r.issues)} for r in results],
+            "meta": meta,
+        }
+        print(json.dumps(payload, indent=2, ensure_ascii=False))
+    else:
+        lines = [f"{r.file}: {'PASS' if r.passed else 'FAIL'} ({len(r.issues)} issues)" for r in results]
+        print("\n".join(lines) if lines else "No files to check")
+    return 0 if passed else 1
+
+
 def _handle_language_rules(args: argparse.Namespace) -> int:
     """Handle language-rules command."""
-    from tools.scripts.app_config import get_path, get_setting
-
     if getattr(args, "fix", False):
-        from tools.scripts.rules_engine.auto_fix import (
-            FAILED_WRITE_RULE_IDS,
-            apply_fixes_to_directory,
-            format_fix_results,
-        )
-
-        fix_results = apply_fixes_to_directory(args.path, dry_run=False)
-        print(format_fix_results(fix_results))
-        # ADR-072: 存在"拒绝写盘/写盘失败"的结果时必须非零退出。
-        # 注意**不能**把普通的 MANUAL FIX REQUIRED 也算进来 ——
-        # flag-only 规则(如 py-star-import)本就以 MANUAL FIX REQUIRED
-        # 为正常产物, 那是"建议人工处理", 不是"工具没做成"。
-        # 语法拒绝与写盘失败不同: 工具声称要修, 结果把磁盘留在
-        # 原地或写坏了, 属于未完成的工作。
-        if any(r.rule_id in FAILED_WRITE_RULE_IDS for r in fix_results):
-            return 1
-        return 0
+        return _language_rules_fix(args)
     if getattr(args, "cache", False):
-        # 增量缓存模式：复用统一存储中的检查历史（mtime+size 未变则跳过）
-        from tools.scripts.rules_engine.checker import check_directory
-
-        jobs: int = int(str(getattr(args, "jobs", None) or get_setting("jobs", 4)))
-        # 注意必须走 get_path（展开 ~），get_setting 返回字面量 "~/.cache/..." 会导致
-        # sqlite3.connect 无法建库，缓存静默失效（历史 bug：check_cache 恒 0 行）
-        db_path = getattr(args, "db", None) or str(get_path("trend_db", Path("adg_quality.db")))
-        stats: dict[str, Any] = {}
-        results = check_directory(args.path, jobs=jobs, use_cache=True, db_path=db_path, stats=stats)
-        passed = all(r.passed for r in results)
-        if getattr(args, "format", "text") == "json":
-            meta: dict[str, Any] = {
-                "files_checked": int(stats.get("files_checked", len(results))),
-                "cache": True,
-                "cache_initialized": bool(stats.get("cache_initialized", False)),
-                "cache_degraded": stats.get("cache_degraded"),
-                "cache_hits": stats.get("cache_hits"),
-                "cache_misses": stats.get("cache_misses"),
-                "parallel": bool(stats.get("parallel", False)),
-                "jobs": int(stats.get("jobs", jobs)),
-                "db_path": db_path,
-            }
-            print(
-                json.dumps(
-                    {
-                        "passed": passed,
-                        "path": str(args.path),
-                        "files_checked": len(results),
-                        "results": [{"file": r.file, "passed": r.passed, "issues": len(r.issues)} for r in results],
-                        "meta": meta,
-                    },
-                    indent=2,
-                    ensure_ascii=False,
-                )
-            )
-        else:
-            lines = [f"{r.file}: {'PASS' if r.passed else 'FAIL'} ({len(r.issues)} issues)" for r in results]
-            print("\n".join(lines) if lines else "No files to check")
-        return 0 if passed else 1
+        return _language_rules_cache(args)
     return _resolve("_run_simple")(
         _resolve("run_language_rules")(args.path, args.lang, getattr(args, "format", "text"))
     )

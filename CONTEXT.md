@@ -20,7 +20,7 @@ AI 时代开发者成长知识库 + 治理框架（knowledge base + governance f
 | 版本 | v2.24.0（`pyproject.toml`） |
 | 语言 | Python 3.11+ 工具链 + Markdown 文档 |
 | 源码规模 | `tools/scripts` + `.jcode/scripts` 共 221 个 `.py` 文件 |
-| 测试规模 | **5612 collected**；本地全量（2026-11-08，`.venv`/Python 3.11，`--cov=tools --cov=.jcode/scripts -q -n auto`）**5565 passed, 2 skipped，TOTAL 87%**；pre-push 本地 CI 通过 |
+| 测试规模 | **5621 collected**；本地全量（2026-11-08，`.venv`/Python 3.11，`--cov=tools --cov=.jcode/scripts -q -n auto`）**5618 passed, 2 skipped, 1 failed**（`test_adg_bootstrap.py::test_minimal_mode` 为顺序相关 flake，单跑通过），TOTAL 87%**；pre-push 本地 CI 通过 |
 | 覆盖率 | CI/门禁统一口径 `--cov=tools --cov=.jcode/scripts`，阈值来自 `[tool.adg].cov_min/branch_cov_min`；最近全量实测 **87%**（2026-11-08） |
 | 类型检查 | mypy **246 source files** clean（`mypy tools .jcode ai-dev-framework/src`，遵循 `pyproject.toml`）；CI `jobs-type-check.yml` 同口径 |
 | 代码风格 | ruff check + ruff format（`ruff==0.15.17` 锁定；`make check-all`/CI/门禁统一） |
@@ -289,6 +289,30 @@ AI 时代开发者成长知识库 + 治理框架（knowledge base + governance f
 
 ---
 
+## 更新记录: 2026-11-08 19:01:59
+
+### 任务
+Git 变更同步
+
+### 变更摘要
+- 变更文件 5 个 (+29 / -31 行)
+  - CONTEXT.md
+  - README.md
+  - tests/test_coverage_gate_scope.py
+  - tests/test_update_stats_round2.py
+  - tools/scripts/update_stats.py
+
+## 更新记录: 2026-11-08 18:25:21
+
+### 任务
+Git 变更同步
+
+### 变更摘要
+- 变更文件 3 个 (+15 / -6 行)
+  - README.md
+  - tests/test_update_stats_round2.py
+  - tools/scripts/update_stats.py
+
 ## 更新记录: 2026-11-06 07:44:31
 
 ### 任务
@@ -340,50 +364,6 @@ Git 变更同步
 
 ### 变更摘要
 - 变更文件 14 个 (+2585 / -73 行)
-  - .adg-hook.backup.log
-  - .jcode/hooks.json
-  - CONTEXT.md
-  - adg_monitoring_dashboard.html
-  - diff --git "a/docs/analysis/\345\233\233\347\273\264\345\272\246\346\267\261\345\272\246\345\210\206\346\236\220.md" "b/docs/analysis/\345\233\233\347\273\264\345\272\246\346\267\261\345\272\246\345\210\206\346\236\220.md"
-  - scripts/optimization/IMPLEMENTATION_SUMMARY.md
-  - scripts/optimization/README.md
-  - scripts/optimization/code_quality_fixes.py
-  - scripts/optimization/monitoring_system.py
-  - scripts/optimization/performance_optimizer.py
-  - tools/scripts/adg_cli/check.py
-  - tools/scripts/adg_cli/parser.py
-  - tools/scripts/chaos_experiment_runner.py
-  - tools/scripts/rules_engine/checker.py
-
-## 更新记录: 2026-11-06 07:20:14
-
-### 任务
-Git 变更同步
-
-### 变更摘要
-- 变更文件 14 个 (+2563 / -44 行)
-  - .adg-hook.backup.log
-  - .jcode/hooks.json
-  - CONTEXT.md
-  - adg_monitoring_dashboard.html
-  - diff --git "a/docs/analysis/\345\233\233\347\273\264\345\272\246\346\267\261\345\272\246\345\210\206\346\236\220.md" "b/docs/analysis/\345\233\233\347\273\264\345\272\246\346\267\261\345\272\246\345\210\206\346\236\220.md"
-  - scripts/optimization/IMPLEMENTATION_SUMMARY.md
-  - scripts/optimization/README.md
-  - scripts/optimization/code_quality_fixes.py
-  - scripts/optimization/monitoring_system.py
-  - scripts/optimization/performance_optimizer.py
-  - tools/scripts/adg_cli/check.py
-  - tools/scripts/adg_cli/parser.py
-  - tools/scripts/chaos_experiment_runner.py
-  - tools/scripts/rules_engine/checker.py
-
-## 更新记录: 2026-11-06 07:20:14
-
-### 任务
-Git 变更同步
-
-### 变更摘要
-- 变更文件 14 个 (+2563 / -44 行)
   - .adg-hook.backup.log
   - .jcode/hooks.json
   - CONTEXT.md

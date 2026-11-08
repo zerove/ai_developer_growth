@@ -26,7 +26,7 @@
 
 ## 📚 知识地图
 
-完整索引见 [docs/MOC.md](docs/MOC.md)（408 篇文档）。
+完整索引见 [docs/MOC.md](docs/MOC.md)（409 篇文档）。
 
 ### 🧠 认知升级
 理解 AI 时代的游戏规则。
@@ -165,11 +165,11 @@ python ai-dev-framework/src/ai_dev_framework/jcode_init.py your-project --langua
 
 | 指标 | 数量 |
 |------|------|
-| 📄 核心文档 | 408 篇 |
+| 📄 核心文档 | 409 篇 |
 | 📚 实践案例 | 48 个 |
 | 🛠️ 代码示例 | 10 个 |
 | 📋 架构决策 | 71 条 |
-| 🧪 测试用例 | 5572 个（`pytest --collect-only`） |
+| 🧪 测试用例 | 5579 个（`pytest --collect-only`） |
 | ✅ 测试覆盖率 | 87% |
 
 ### 🔌 自检：门禁是否还活着
@@ -211,7 +211,7 @@ GITHUB_TOKEN=<your_token> make ci-alert
 
 ```
 ai_developer_growth/
-├── docs/                    # 408 篇文档
+├── docs/                    # 409 篇文档
 │   ├── mindset/            # 认知升级
 │   ├── learning/           # 学习方法
 │   ├── efficiency/         # 工程效率

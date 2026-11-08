@@ -1,4 +1,4 @@
-.PHONY: help lint format format-fix typecheck test test-cov check-quality security audit validate-docs check-index sync-refs validate-governance-docs check-ai-sdlc audit-hallucination link-audit validate-cases scan full-audit full-validate docs-build test-fast check release setup-git workflow-pr workflow-weekly workflow-release clean quick discover jcode list-tools new-skill release-version cov-diff cov-module cov-gate cov-snapshot context-status context-split
+.PHONY: help lint format format-fix typecheck test test-cov check-quality security audit validate-docs check-index sync-refs validate-governance-docs check-ai-sdlc audit-hallucination link-audit validate-cases scan full-audit full-validate docs-build test-fast check release setup-git workflow-pr workflow-weekly workflow-release clean quick discover jcode list-tools new-skill release-version cov-diff cov-module cov-gate cov-snapshot context-status context-split stats stats-check
 
 help:  ## 显示帮助信息
 	@grep -hE '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-20s\033[0m %s\n", $$1, $$2}'

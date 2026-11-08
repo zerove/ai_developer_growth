@@ -9,7 +9,7 @@
 |---|---|---|---|
 | 入口 | `tools/scripts/rules_engine/checker.py` | `tools/scripts/adg_cli/check.py` | `tools/scripts/hooks/domain_checks.py`（默认）/ `hooks_runner._language_rules_cache`（`--cache`） |
 | 返回 | `list[CheckResult]`（文件级结果 + issues） | `list[Issue]`（扁平 issues） | text / JSON 字符串（`passed`, `results`） |
-| 规则加载 | `rules=None` 时自动加载 | 调用方传入 `rules` | 校验 language rules 资产 |
+| 规则加载 | `rules=None` 时自动加载 | 调用方传入 `rules`；`load_rules_for_language` 合并 common 安全规则并遵守 `supersedes` | 校验 language rules 资产 |
 | 语言过滤 | `languages=[...]` | 由 `_detect_language_from_file` 决定 | `--lang` 参数 |
 | 统计出参 | `stats=dict`（files_checked/parallel/cache_*） | 无 stats；JSON `meta.cache_*` 为 `null` | JSON `meta`（`--cache` 分支） |
 | 缓存 | `use_cache=True`（SQLite/`CheckStore`，串/并行真实统计） | 当前无 rules_engine cache 聚合 | `--cache` 分支使用 `rules_engine.checker.check_directory` |
@@ -23,11 +23,13 @@
 
 - 两个实现都检查 `a.py`、`b.py`（不检查 `c.js`/`d.txt`）。
 - 两个实现都产出核心规则：`py-eval-exec`、`py-print-statement`、`py-log-print`。
-- **已知差异**：`adg_cli.check` 额外产出 `common-eval-exec`（其规则集包含通用规则），
-  因此同一输入下 issue 总数可能不同（当前 fixture：CLI 4 vs rules_engine 3）。
+- 两个实现的 issue 集合一致（当前 fixture：3 vs 3）。
+- **已收敛差异**：`adg_cli.rules.load_rules_for_language` 现与 `rules_engine._merge_common_rules`
+  一样遵守语言规则的 `supersedes`，因此 `common-eval-exec` 不再与 `py-eval-exec` 重复上报；
+  未被 supersede 的通用规则（如 JavaScript 的 `common-eval-exec`）仍保留。
 
-> 结论：**文件覆盖/核心规则可对齐，规则集合与统计出参尚不一致**。
-> 在未统一前，下游不应假设两个入口的 issue 数严格相等。
+> 结论：**文件覆盖、核心规则、issue 集合已对齐；统计出参（cache/stats）仍不一致**。
+> 下游仍不应依赖两个入口的 stats 结构，但可依赖当前规则集下 issue 集合一致。
 
 ## 收敛建议（渐进）
 

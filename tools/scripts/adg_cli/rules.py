@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from typing import Any
 
+from tools.scripts._common import superseded_rule_ids
 from tools.scripts.adg_cli.core import _get_rules_path
 from tools.scripts.adg_cli.detect import _load_yaml
 
@@ -22,8 +23,14 @@ def load_rules_for_language(language: str) -> dict[str, Any]:
         security_rules = _load_yaml(security_file)
 
     # Merge: language-specific + security
-    all_patterns = lang_rules.get("anti_patterns", []) + security_rules.get("anti_patterns", [])
-    return {"anti_patterns": all_patterns, "language": language}
+    # 与 rules_engine._merge_common_rules 对齐: 语言规则声明 supersedes 的通用规则不再重复上报,
+    # 避免同一问题同时以 py-*/common-* 两个 rule_id 出现。
+    lang_patterns = lang_rules.get("anti_patterns", [])
+    superseded = superseded_rule_ids(lang_patterns)
+    security_patterns = [
+        pattern for pattern in security_rules.get("anti_patterns", []) if pattern.get("id") not in superseded
+    ]
+    return {"anti_patterns": lang_patterns + security_patterns, "language": language}
 
 
 def load_framework_rules(framework: str) -> dict[str, Any]:

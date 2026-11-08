@@ -56,3 +56,19 @@ def test_core_python_rules_present_in_both(tmp_path: Path) -> None:
     for rule_id in ("py-eval-exec", "py-print-statement", "py-log-print"):
         assert rule_id in engine_rules
         assert rule_id in cli_rules, f"adg_cli 缺少核心规则 {rule_id}"
+
+
+def test_superseded_common_rules_not_duplicated(tmp_path: Path) -> None:
+    """语言规则 supersedes 的 common 规则不应在 adg_cli 路径重复上报。"""
+    rules = load_rules_for_language("python")
+    assert "common-eval-exec" not in {r["id"] for r in rules["anti_patterns"]}
+
+    issues = cli_check_directory(_fixture(tmp_path), rules=rules, jobs=1)
+    eval_ids = [i.rule_id for i in issues if i.rule_id in {"py-eval-exec", "common-eval-exec"}]
+    assert eval_ids == ["py-eval-exec"]
+
+
+def test_common_rule_kept_when_not_superseded() -> None:
+    """未被语言规则 supersede 的通用规则仍需保留（避免过度过滤）。"""
+    rules = load_rules_for_language("javascript")
+    assert "common-eval-exec" in {r["id"] for r in rules["anti_patterns"]}

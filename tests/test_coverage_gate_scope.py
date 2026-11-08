@@ -6,7 +6,7 @@ on_commit / on_pr / on_merge / scheduled hook 入口的 `.jcode/scripts`
 
 两个执行点都必须同时测量两棵树：
 - 本地 / pre-push：tools/scripts/hooks/basic_checks.py 构造 pytest 命令
-- CI：.github/workflows/jobs/tests.yml 的 pytest 调用
+- CI：.github/workflows/jobs-tests.yml 的 pytest 调用
 
 实测两树合并约 86%，高于项目标准 80，因此按 80 把关而非降低阈值。
 """
@@ -24,8 +24,8 @@ import yaml
 
 ROOT = Path(__file__).resolve().parent.parent
 GATE_BUILDER = ROOT / "tools" / "scripts" / "hooks" / "basic_checks.py"
-CI_TESTS = ROOT / ".github" / "workflows" / "jobs" / "tests.yml"
-COMBINE_COVERAGE = ROOT / ".github" / "workflows" / "jobs" / "combine-coverage.yml"
+CI_TESTS = ROOT / ".github" / "workflows" / "jobs-tests.yml"
+COMBINE_COVERAGE = ROOT / ".github" / "workflows" / "jobs-combine-coverage.yml"
 
 REQUIRED_TREES = ("--cov=tools", "--cov=.jcode/scripts")
 # 本地与 CI 已统一为 --cov=tools。此前本地用 --cov=tools/scripts, 把
@@ -59,7 +59,7 @@ def _built_pytest_args() -> list[str]:
 
 
 def _ci_coverage_invocations() -> list[str]:
-    """权威 CI 门禁（jobs/tests.yml）里的 pytest --cov 调用。
+    """权威 CI 门禁（jobs-tests.yml）里的 pytest --cov 调用。
 
     只扫这一个文件：`.github/workflows/example-ci-template.yml` 与
     `.github/ci-templates/` 是给**其他项目**用的模板，测的是它们自己的

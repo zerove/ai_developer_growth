@@ -46,6 +46,14 @@ jobs:
       - name: Install dependencies
         run: pip install -e .
 
+      - name: Install stats checker deps
+        # update_stats --check 需要 pytest 统计收集（dev-core 包含 pytest 及插件）
+        run: pip install -e ".[dev-core]"
+
+      - name: Stats drift check (README vs update_stats)
+        # P2.6: README 统计表与 update_stats 实际计数漂移即失败，不放行
+        run: python tools/scripts/update_stats.py --check
+
       # 以下门禁一律不得加 `|| true`：那正是 scheduled-governance 的失效模式
       # ——失败被吞掉，作业显示绿色，问题永远不暴露。
 

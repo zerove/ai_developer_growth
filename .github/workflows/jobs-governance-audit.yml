@@ -43,7 +43,10 @@ jobs:
       if: matrix.language == 'rust'
       uses: dtolnay/rust-toolchain@stable
     - name: Install Python deps
-      run: pip install -e ".[dev,tools]"
+      # 最小化安装：governance-auditor(Python) 委托 ruff/mypy/pytest 等由 tool_runner 执行，dev-core 覆盖；
+      # bandit 单独安装。避免拉入 dev 全量(tree-sitter/otel/hypothesis/k8s 等)导致 CI 过重。
+      # 若后续审计依赖语义/集成能力，按需补充 dev-semantic/dev-integration 并验证 collect/audit 不降。
+      run: pip install -e ".[dev-core]"
       if: matrix.language == 'python'
     - name: Install bandit
       run: pip install bandit

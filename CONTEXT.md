@@ -20,10 +20,10 @@ AI 时代开发者成长知识库 + 治理框架（knowledge base + governance f
 | 版本 | v2.24.0（`pyproject.toml`） |
 | 语言 | Python 3.11+ 工具链 + Markdown 文档 |
 | 源码规模 | `tools/scripts` + `.jcode/scripts` 共 221 个 `.py` 文件 |
-| 测试规模 | 219 个测试文件，**5103 passed**（2026-10-05 实测，`-n 8` 耗时 270s） |
-| 覆盖率 | **86.96%**（阈值 80%；2026-10-05 按 **CI 口径** `--cov=tools --cov=.jcode/scripts` 实测，23615 语句） |
-| 类型检查 | mypy strict，**234 source files** clean（口径：`mypy tools .jcode`；**CI 实际只跑 `mypy tools/scripts/`**，见下方待修项） |
-| 代码风格 | ruff check + ruff format（473 files formatted） |
+| 测试规模 | **5612 collected**；本地全量（2026-11-08，`.venv`/Python 3.11，`--cov=tools --cov=.jcode/scripts -q -n auto`）**5565 passed, 2 skipped，TOTAL 87%**；pre-push 本地 CI 通过 |
+| 覆盖率 | CI/门禁统一口径 `--cov=tools --cov=.jcode/scripts`，阈值来自 `[tool.adg].cov_min/branch_cov_min`；最近全量实测 **87%**（2026-11-08） |
+| 类型检查 | mypy **246 source files** clean（`mypy tools .jcode ai-dev-framework/src`，遵循 `pyproject.toml`）；CI `jobs-type-check.yml` 同口径 |
+| 代码风格 | ruff check + ruff format（`ruff==0.15.17` 锁定；`make check-all`/CI/门禁统一） |
 | ADR 累计 | 71 篇（`docs/adr/ADR-*.md`；ADR-001~007 于 `649a947` 归档缺失，ADR-006 为空号，ADR-040 为追补） |
 
 ## 核心目录

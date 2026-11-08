@@ -216,3 +216,9 @@ context-status:  ## 输出项目实时快照 (版本/最新 tag/最近 5 commit/
 
 context-split:  ## 一次性拆分 CONTEXT.md: 滚动日志归档到 CHANGELOG (用法: make context-split [KEEP=5])
 	@python -m tools.scripts.context_status split --keep $(or $(KEEP),5)
+
+stats:  ## 输出项目统计 JSON (docs/cases/ADRs/tests/gate; 用法: make stats [SKIP_GATE=1])
+	@python tools/scripts/update_stats.py --json $(if $(SKIP_GATE),--skip-quality-gate,)
+
+stats-check:  ## 检查 README/统计漂移，非自动提交 (用法: make stats-check [SKIP_GATE=1])
+	@python tools/scripts/update_stats.py --check $(if $(SKIP_GATE),--skip-quality-gate,)

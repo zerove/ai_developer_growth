@@ -109,7 +109,9 @@ class TestHandleLanguageRules:
         assert code in (0, 1)
         assert "PASS" in out or "FAIL" in out or "No files" in out
 
-    def test_cache_mode_json_meta_contract(self, tmp_path: Path, capsys: pytest.CaptureFixture[str], monkeypatch) -> None:
+    def test_cache_mode_json_meta_contract(
+        self, tmp_path: Path, capsys: pytest.CaptureFixture[str], monkeypatch
+    ) -> None:
         """language-rules --cache --format json 输出 meta.cache_*；null=未启用/未知，非 0。"""
         monkeypatch.setattr("tools.scripts.app_config.get_path", lambda key, default: tmp_path / "trend.db")
         monkeypatch.setattr("tools.scripts.app_config.get_setting", lambda key, default=None: 1)

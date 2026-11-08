@@ -54,16 +54,20 @@ def count_docs(root: Path) -> int:
 
 
 def count_cases(root: Path) -> int:
-    """case-studies/ 下案例文档数。"""
-    return len(list((root / "case-studies").glob("*.md")))
+    """实践案例文档数（优先 docs/case-studies，兼容顶层 case-studies）。"""
+    candidates = [root / "docs" / "case-studies", root / "case-studies"]
+    for d in candidates:
+        if d.exists():
+            return len(list(d.rglob("*.md")))
+    return 0
 
 
 def count_adrs(root: Path) -> int:
-    """docs/adr/ 下架构决策记录数。"""
+    """docs/adr/ 下 ADR 记录数（ADR-*.md）。"""
     adr_dir = root / "docs" / "adr"
     if not adr_dir.exists():
         return 0
-    return len([p for p in adr_dir.glob("*.md") if p.name != "index.md" and not p.name.startswith("template")])
+    return len(list(adr_dir.glob("ADR-*.md")))
 
 
 def count_tests(root: Path) -> int:

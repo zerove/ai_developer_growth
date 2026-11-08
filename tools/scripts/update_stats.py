@@ -71,9 +71,9 @@ def count_adrs(root: Path) -> int:
 
 
 def count_tests(root: Path) -> int:
-    """pytest 收集的测试用例数 (权威口径)。"""
+    """pytest 收集的测试用例数 (权威口径: 遵循 pytest.ini testpaths)。"""
     result = subprocess.run(
-        [sys.executable, "-m", "pytest", "tests/", "--collect-only", "-q", "-p", "no:cacheprovider"],
+        [sys.executable, "-m", "pytest", "--collect-only", "-q", "-p", "no:cacheprovider"],
         cwd=root,
         capture_output=True,
         text=True,

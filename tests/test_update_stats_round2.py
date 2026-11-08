@@ -54,6 +54,15 @@ class TestCounters:
         with patch("subprocess.run", return_value=proc):
             assert count_tests(tmp_path) == 3275
 
+    def test_count_tests_uses_configured_testpaths(self, tmp_path: Path) -> None:
+        """不得硬编码 tests/：pytest.ini 的 testpaths 才是权威口径。"""
+        proc = MagicMock(returncode=0)
+        proc.stdout = "5612 tests collected"
+        with patch("subprocess.run", return_value=proc) as run:
+            assert count_tests(tmp_path) == 5612
+        cmd = run.call_args.args[0]
+        assert not any("tests" in str(part) for part in cmd)
+
     def test_count_tests_unparseable_raises(self, tmp_path: Path) -> None:
         proc = MagicMock(returncode=1)
         proc.stdout = "no tests ran"

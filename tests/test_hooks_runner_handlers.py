@@ -101,12 +101,30 @@ class TestHandleLanguageRules:
             "tools.scripts.app_config.get_path",
             lambda key, default: tmp_path / "trend.db",
         )
+        monkeypatch.setattr("tools.scripts.app_config.get_setting", lambda key, default=None: 1)
         f = tmp_path / "clean_sample.py"
         f.write_text('"""Mod."""\n\n\ndef ok() -> int:\n    """Doc."""\n    return 1\n')
         code = hooks_runner._handle_language_rules(_args(path=Path(tmp_path), cache=True))
         out = capsys.readouterr().out
         assert code in (0, 1)
         assert "PASS" in out or "FAIL" in out or "No files" in out
+
+    def test_cache_mode_json_meta_contract(self, tmp_path: Path, capsys: pytest.CaptureFixture[str], monkeypatch) -> None:
+        """language-rules --cache --format json 输出 meta.cache_*；null=未启用/未知，非 0。"""
+        monkeypatch.setattr("tools.scripts.app_config.get_path", lambda key, default: tmp_path / "trend.db")
+        monkeypatch.setattr("tools.scripts.app_config.get_setting", lambda key, default=None: 1)
+        (tmp_path / "a.py").write_text("x = 1\n")
+        code = hooks_runner._handle_language_rules(_args(path=Path(tmp_path), cache=True, format="json"))
+        out = capsys.readouterr().out
+        data = __import__("json").loads(out)
+        assert code in (0, 1)
+        assert "meta" in data
+        meta = data["meta"]
+        assert meta["cache"] is True
+        assert "cache_hits" in meta and "cache_misses" in meta and "cache_degraded" in meta
+        # 启用缓存且串行可统计：应为 int（非 null）；具体值取决于缓存状态，至少类型正确
+        assert isinstance(meta["cache_hits"], int) and isinstance(meta["cache_misses"], int)
+        assert meta["cache_hits"] + meta["cache_misses"] >= 0
 
     def test_default_delegates_to_run_language_rules(self, capsys: pytest.CaptureFixture[str]) -> None:
         with patch.object(

@@ -5,8 +5,11 @@
 from __future__ import annotations
 
 import argparse
+import json
 from pathlib import Path
 from unittest.mock import patch
+
+import pytest
 
 from tools.scripts.adg_cli import (
     cmd_check,
@@ -44,14 +47,21 @@ class TestCmdCheck:
             result = cmd_check(args)
         assert result == 0
 
-    def test_check_json_output(self, tmp_path: Path) -> None:
+    def test_check_json_output(self, tmp_path: Path, capsys: pytest.CaptureFixture[str]) -> None:
         f = tmp_path / "test.py"
         f.write_text("x = 1\n")
-        args = argparse.Namespace(path=str(f), lang="python", severity=None, json=True)
+        args = argparse.Namespace(path=str(f), lang="python", severity=None, json=True, format="json")
         with patch("tools.scripts.adg_cli.commands.cmd.cmd_check.load_rules_for_language") as mock:
             mock.return_value = {"anti_patterns": []}
             result = cmd_check(args)
         assert result == 0
+        out = capsys.readouterr().out
+        data = json.loads(out)
+        meta = data.get("meta", {})
+        # adg check 路径当前无 rules_engine cache 聚合；契约：未知时显式 null，不臆造 0
+        assert meta.get("cache_hits") is None
+        assert meta.get("cache_misses") is None
+        assert meta.get("cache_degraded") is None
 
     def test_check_unknown_language(self, tmp_path: Path) -> None:
         f = tmp_path / "test.xyz"

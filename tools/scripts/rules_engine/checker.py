@@ -471,8 +471,11 @@ def _check_files_parallel(
     semantic: bool,
     run_linters: bool,
     jobs: int,
-) -> list[CheckResult]:
+) -> tuple[list[CheckResult], int, dict[str, int | None]]:
     """并行检查（ProcessPoolExecutor + worker 缓存）。
+
+    返回 (results, cache_degraded, cache_stats)，与 _check_files_serial 对齐。
+    cache_stats: cache_hits/cache_misses；未启用缓存时返回 0/0（无缓存操作）。
 
     ADR-014: 从 check_directory 拆出。worker 进程各自独立 SQLite 连接，
     WAL 模式下并发写安全。
@@ -487,13 +490,17 @@ def _check_files_parallel(
     # 否则 jobs>1 + use_cache=True 时仍会复用另一组标志跑出的结果。
     worker_rules_hash = f"{rules_hash}:s{int(semantic)}:l{int(run_linters)}"
     results: list[CheckResult] = []
+    degraded = 0
+    hits = 0
+    misses = 0
+    cache_enabled = cache_db is not None
     # 合并进同一个 with: prime 必须发生在进程池创建之前 (worker 经 fork 继承该表,
     # 子进程内不再 spawn)。非 fork 启动方式下 worker 拿不到表, 自动回退逐文件 spawn。
     with (
         _batched_linters(files, run_linters),
         ProcessPoolExecutor(max_workers=jobs, initializer=_worker_init, initargs=(warmup_rules, cache_db)) as executor,
     ):
-        worker_results: Iterator[CheckResult | None] = executor.map(
+        worker_results: Iterator[tuple[CheckResult | None, int, bool | None]] = executor.map(
             _worker_check,
             pairs,
             [semantic] * len(pairs),
@@ -504,11 +511,23 @@ def _check_files_parallel(
         )
         for worker_result in worker_results:
             try:
-                if worker_result is not None:
-                    results.append(worker_result)
+                if worker_result is None:
+                    # 向后兼容：异常/旧协议意外返回 None
+                    degraded += 1
+                    misses += 1 if cache_enabled else 0
+                    continue
+                result, was_degraded, cache_hit = worker_result
+                degraded += int(was_degraded or 0)
+                if result is not None:
+                    results.append(result)
+                if cache_hit is True:
+                    hits += 1
+                elif cache_hit is False:
+                    misses += 1
             except Exception as exc:
                 logger.debug(f"worker 结果处理失败: {exc}")
-    return results
+                degraded += 1
+    return results, degraded, {"cache_hits": hits, "cache_misses": misses}
 
 
 def check_directory(
@@ -533,7 +552,7 @@ def check_directory(
         run_linters: Run external linters (ruff/eslint) per file.
         use_cache: 启用增量缓存（mtime+size 未变则复用上次结果）。
         db_path: 统一存储数据库路径（use_cache=True 时使用）。
-        stats: 可选出参，填充可观测统计（files_checked/use_cache/cache_* 等）；并行路径 hit/miss 为 null。
+        stats: 可选出参，填充可观测统计（files_checked/use_cache/cache_* 等）；未启用缓存时 cache 计数为 null。
     """
     results: list[CheckResult] = []
 
@@ -571,12 +590,9 @@ def check_directory(
         )
     else:
         parallel = True
-        cache_degraded = 0 if use_cache else 0
-        checked = _check_files_parallel(
+        checked, cache_degraded, cache_stats = _check_files_parallel(
             files, rules, store, rules_hash, db_path, use_cache, semantic, run_linters, effective_jobs
         )
-        # 并行 worker 独立缓存，主进程无法精确统计 hit/miss；保持 unknown(null)，不臆造 0。
-        cache_stats = {"cache_hits": None, "cache_misses": None}
 
     results.extend(checked)
     results.extend(_run_architecture_analysis(dirpath))
@@ -588,8 +604,8 @@ def check_directory(
         hits = cache_stats.get("cache_hits")
         misses = cache_stats.get("cache_misses")
         cache_degraded_out: int | None = cache_degraded
-        # 缓存未启用或并行路径无法精确统计时返回 null，不臆造 0
-        if not use_cache or parallel:
+        # 缓存未启用时返回 null，不臆造 0；并行/串行在启用缓存时返回 worker 聚合的真实计数
+        if not use_cache:
             hits = None
             misses = None
             cache_degraded_out = None

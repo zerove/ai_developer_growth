@@ -64,9 +64,10 @@ class TestWorkerSkippedHandling:
 
     def test_skipped_file_returns_result_not_none(self, tmp_path: Path) -> None:
         empty = _write(tmp_path / "empty.py", "")
-        result = cw._worker_check((empty, "python"), do_linters=False)
+        result, _degraded, cache_hit = cw._worker_check((empty, "python"), do_linters=False)
         assert result is not None, "skipped 文件被丢成 None, 会导致并行报告少文件"
         assert isinstance(result, CheckResult)
+        assert cache_hit is None  # 未启用缓存
 
     def test_returned_skipped_result_is_not_cached(self, tmp_path: Path) -> None:
         """skipped 走提前 return, 不写缓存 —— 避免把"跳过"固化进增量缓存。"""
@@ -83,9 +84,10 @@ class TestWorkerSkippedHandling:
 
     def test_non_skipped_file_returns_issues(self, tmp_path: Path) -> None:
         src = _write(tmp_path / "s.py", "import os\nos.system('ls')\n")
-        result = cw._worker_check((src, "python"), do_linters=False)
+        result, _degraded, cache_hit = cw._worker_check((src, "python"), do_linters=False)
         assert result is not None
         assert result.language == "python"
+        assert cache_hit is None
 
 
 class TestSerialParallelParity:

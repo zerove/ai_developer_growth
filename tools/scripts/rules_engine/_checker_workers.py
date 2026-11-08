@@ -47,24 +47,34 @@ def _worker_check(
     do_linters: bool = True,
     cache_db: str | None = None,
     rules_hash: str = "",
-) -> CheckResult | None:
+) -> tuple[CheckResult | None, int, bool | None]:
     """Worker 任务：使用预热规则执行单文件检查（模块级，可被 pickle）。
+
+    返回 (result, cache_degraded, cache_hit)：
+    - cache_hit: True 命中缓存；False 启用了缓存但未命中；None 未启用缓存。
+    - cache_degraded: 缓存读/写/初始化异常次数（1 表示发生过降级）。
 
     cache_db 非空时启用增量缓存读写（WAL 模式下多进程并发写安全，
     连接在 _worker_init 中打开一次并复用）。rules_hash 为规则集签名，
     规则/引擎变化时旧缓存键不匹配自然失效。
     """
     fp, lang = pair
-    store = _WORKER_STORE if cache_db else None
+    cache_requested = cache_db is not None
+    store = _WORKER_STORE if cache_requested else None
+    degraded = 0
+    if cache_requested and store is None:
+        # _worker_init 中缓存初始化失败，已降级为无缓存完整检查
+        degraded = 1
     if store is not None:
         try:
             stat = fp.stat()
             cached = store.get_cached_result(str(fp), stat.st_mtime, stat.st_size, rules_hash)
             if cached is not None:
                 issues = [Issue(**i) for i in cached["issues"]]
-                return CheckResult(file=str(fp), issues=issues, language=cached["language"])
+                return CheckResult(file=str(fp), issues=issues, language=cached["language"]), degraded, True
         except Exception as exc:  # noqa: BLE001 - 缓存损坏/并发冲突均可降级，重读完整结果即可
             logger.debug(f"worker 缓存读取失败，回退完整检查 {fp}: {exc}")
+            degraded = 1
             store = None  # 缓存不可用时退化为完整检查
     from .checker import check_file
 
@@ -79,7 +89,7 @@ def _worker_check(
         # 必须回传 skipped 结果而非 None: 并行收集端会过滤 None, 返回 None
         # 等于让该文件从报告中彻底消失, 而串行路径按 ADR-053 保留它并输出
         # notApplicable —— 两路径会产出不同的报告。提前 return 同时跳过缓存写入。
-        return result
+        return result, degraded, (False if cache_requested else None)
     if store is not None:
         try:
             stat = fp.stat()
@@ -99,4 +109,5 @@ def _worker_check(
             )
         except Exception as exc:  # noqa: BLE001 - 缓存写入失败不影响检查结果，仅丢性能
             logger.debug(f"worker 缓存写入失败（不影响检查结果）: {type(exc).__name__}: {exc}")
-    return result
+            degraded = 1
+    return result, degraded, (False if cache_requested else None)

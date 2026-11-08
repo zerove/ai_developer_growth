@@ -252,11 +252,11 @@ class TestCheckFilesParallel:
             mock_ctx = MagicMock()
             mock_ctx.__enter__ = MagicMock(return_value=mock_ctx)
             mock_ctx.__exit__ = MagicMock(return_value=False)
-            # executor.map 返回一个可迭代对象
+            # executor.map 返回一个可迭代对象（兼容旧协议：裸 None）
             mock_ctx.map = MagicMock(return_value=iter([None, None]))
             mock_executor.return_value = mock_ctx
 
-            results = _check_files_parallel(
+            results, degraded, cache_stats = _check_files_parallel(
                 files=[],
                 rules=None,
                 store=None,
@@ -269,6 +269,9 @@ class TestCheckFilesParallel:
             )
         assert isinstance(results, list)
         assert results == []
+        assert cache_stats["cache_hits"] == 0
+        assert cache_stats["cache_misses"] == 0
+        assert degraded >= 0
 
 
 class TestCheckDirectoryStats:
@@ -308,3 +311,25 @@ class TestCheckDirectoryStats:
         results = check_directory(tmp_path / "nope", stats=stats)
         assert results == []
         assert stats["files_checked"] == 0
+
+    def test_stats_with_cache_parallel_hits_misses(self, tmp_path: Path) -> None:
+        """并行路径启用缓存时回传真实 hit/miss（worker 聚合协议）。"""
+        for i in range(6):
+            (tmp_path / f"m{i}.py").write_text(f"x{i} = {i}\n")
+        db = tmp_path / "trend.db"
+        stats1: dict[str, object] = {}
+        check_directory(
+            tmp_path, languages=["python"], jobs=4, run_linters=False, use_cache=True, db_path=str(db), stats=stats1
+        )
+        assert stats1["parallel"] is True
+        assert stats1["cache_initialized"] is True
+        assert stats1["cache_hits"] == 0
+        assert stats1["cache_misses"] == 6
+        stats2: dict[str, object] = {}
+        check_directory(
+            tmp_path, languages=["python"], jobs=4, run_linters=False, use_cache=True, db_path=str(db), stats=stats2
+        )
+        assert stats2["parallel"] is True
+        assert stats2["cache_hits"] == 6
+        assert stats2["cache_misses"] == 0
+        assert stats2["cache_degraded"] == 0

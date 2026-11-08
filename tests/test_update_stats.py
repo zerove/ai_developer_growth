@@ -36,7 +36,7 @@ class TestCounters:
     def test_count_adrs_excludes_index(self, tmp_path: Path) -> None:
         adr = tmp_path / "docs" / "adr"
         adr.mkdir(parents=True)
-        (adr / "001-decision.md").write_text("# ADR", encoding="utf-8")
+        (adr / "ADR-001-decision.md").write_text("# ADR", encoding="utf-8")
         (adr / "index.md").write_text("# index", encoding="utf-8")
         (adr / "template.md").write_text("# template", encoding="utf-8")
         assert count_adrs(tmp_path) == 1

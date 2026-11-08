@@ -210,7 +210,8 @@ def main() -> int:
     stats = collect_all(root)
 
     if args.as_json:
-        gate = collect_quality_gate(root)
+        # --skip-quality-gate 必须对 JSON 模式同样生效（否则 help 语义失真、CI 变慢）
+        gate = None if args.skip_quality_gate else collect_quality_gate(root)
         merged: dict[str, int | float] = {**stats, **(gate or {})}
         print(json.dumps(merged, indent=2, ensure_ascii=False))
         return 0

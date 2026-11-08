@@ -208,6 +208,24 @@ class TestRecordTrendAndMain:
         out = capsys.readouterr().out
         assert code == 0 and json.loads(out)["cases"] == 3
 
+    def test_main_json_mode_skip_quality_gate(
+        self, fake_root: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+    ) -> None:
+        """--json --skip-quality-gate 不得采集质量门禁，也不得臆造 gate_* 数值。"""
+        monkeypatch.setattr("sys.argv", ["update_stats.py", "--json", "--skip-quality-gate"])
+        monkeypatch.setattr("tools.scripts.update_stats.get_project_root", lambda: fake_root)
+        proc = MagicMock(returncode=0)
+        proc.stdout = "5 tests collected"
+        with (
+            patch("subprocess.run", return_value=proc),
+            patch("tools.scripts.update_stats.collect_quality_gate") as gate,
+        ):
+            code = main()
+        gate.assert_not_called()
+        data = json.loads(capsys.readouterr().out)
+        assert code == 0 and data["cases"] == 3
+        assert "gate_failed" not in data and "gate_pass_rate" not in data
+
     def test_main_sync_mode_records_trend(
         self, fake_root: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
     ) -> None:

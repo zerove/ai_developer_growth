@@ -185,10 +185,16 @@ def _tests_for_modules(changed: list[Path], tests_dir: Path = Path("tests")) -> 
     1. 变更文件本身在 tests/ 下 → 直接收入
     2. 同名约定: tools/scripts/foo.py → tests/test_foo.py / tests/foo/test_*.py
     3. import 反查: 测试文件文本中出现该模块路径或模块名
+
+    仅处理主仓库 tests/ 子树内的变更；`examples/` 下属于独立示例项目，
+    其测试由对应示例的 CI（jobs-example-tests）自行执行，本仓库增量门禁不
+    做范围映射（含其 tests/ 夹名，避免误把示例测试打进根 venv）。
     """
     selected: set[Path] = set()
     all_tests = list(tests_dir.rglob("test_*.py"))
     for changed_file in changed:
+        if "examples" in changed_file.parts:
+            continue
         parts = changed_file.parts
         if "tests" in parts:
             selected.add(changed_file)

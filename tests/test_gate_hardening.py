@@ -181,6 +181,18 @@ class TestIncrementalTestSelection:
         targets = _tests_for_modules([changed], tests_dir=tests_dir)
         assert [t.name for t in targets] == ["test_direct.py"]
 
+    def test_example_tests_out_of_scope(self, tmp_path: Path) -> None:
+        """examples/ 独立示例的 tests/ 变更不进入主仓库增量映射。
+
+        回归：此前借助 `"tests" in parts` 判定，把
+        `examples/ai-navigation/tests/test_behavior_tracker.py` 误纳入主仓库
+        增量测试，在缺少 numpy 的根 venv 下因 CollectionError 拉垮 pre-push。
+        """
+        targets = _tests_for_modules(
+            [Path("examples/ai-navigation/tests/test_behavior_tracker.py")], tests_dir=tmp_path
+        )
+        assert targets == []
+
     @patch("tools.scripts.hooks.basic_checks._changed_python_files")
     def test_no_changes_skips(self, mock_changed: MagicMock) -> None:
         # 新 API: _changed_python_files 返回 (files, ok)，空集+成功 → 跳过

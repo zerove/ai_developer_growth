@@ -135,9 +135,12 @@ class TestScannerGate:
         try:
             target = tmp / "a.py"
             target.write_text("x = '" + "x" * 40 + "'\n", encoding="utf-8")
-            start = time.perf_counter()
+            # 用 process_time 而非 perf_counter：全量 `-n auto` 并发下墙钟时间
+            # 会被 CPU 争抢放大（实测安全规则被拖到 6.0s 而误报），而灾难性
+            # 回溯消耗的是真实 CPU，阈值语义不受影响。
+            start = time.process_time()
             result = scan_mod.scan_file(target)
-            return time.perf_counter() - start, result
+            return time.process_time() - start, result
         finally:
             scan_mod._PROJECT_LANGUAGES = original
 

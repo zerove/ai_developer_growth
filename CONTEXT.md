@@ -20,8 +20,8 @@ AI 时代开发者成长知识库 + 治理框架（knowledge base + governance f
 | 版本 | v2.24.0（`pyproject.toml`） |
 | 语言 | Python 3.11+ 工具链 + Markdown 文档 |
 | 源码规模 | `tools/scripts` + `.jcode/scripts` 共 221 个 `.py` 文件 |
-| 测试规模 | **5621 collected**；本地全量（2026-11-08，`.venv`/Python 3.11，`--cov=tools --cov=.jcode/scripts -q -n auto`）**5618 passed, 2 skipped, 1 failed**（`test_adg_bootstrap.py::test_minimal_mode` 为顺序相关 flake，单跑通过），TOTAL 87%**；pre-push 本地 CI 通过 |
-| 覆盖率 | CI/门禁统一口径 `--cov=tools --cov=.jcode/scripts`，阈值来自 `[tool.adg].cov_min/branch_cov_min`；最近全量实测 **87%**（2026-11-08） |
+| 测试规模 | **5637 collected**（`pytest --collect-only`，含 `ai-dev-framework/tests`）；本地全量（2026-11-09，`.venv`/Python 3.11，`--cov=tools --cov=.jcode/scripts -q -n auto`）**5635 passed, 2 skipped**，TOTAL 87%；pre-push 本地 CI 通过 |
+| 覆盖率 | CI/门禁统一口径 `--cov=tools --cov=.jcode/scripts`，阈值来自 `[tool.adg].cov_min/branch_cov_min`；最近全量实测 **87%**（2026-11-09） |
 | 类型检查 | mypy **246 source files** clean（`mypy tools .jcode ai-dev-framework/src`，遵循 `pyproject.toml`）；CI `jobs-type-check.yml` 同口径 |
 | 代码风格 | ruff check + ruff format（`ruff==0.15.17` 锁定；`make check-all`/CI/门禁统一） |
 | ADR 累计 | 71 篇（`docs/adr/ADR-*.md`；ADR-001~007 于 `649a947` 归档缺失，ADR-006 为空号，ADR-040 为追补） |
@@ -47,6 +47,9 @@ AI 时代开发者成长知识库 + 治理框架（knowledge base + governance f
 - **覆盖率口径与阈值已统一**：CI（`.github/workflows/jobs/tests.yml`）与 hooks/本地（`hooks/basic_checks.py`）均使用 `pytest --cov=tools --cov=.jcode/scripts`，阈值统一读取 `[tool.adg] cov_min` / `branch_cov_min`（`[tool.coverage.report]` 不再声明 `fail_under`，避免双源漂移）。注意 `--cov=tools`（包根，含 `tools/scripts`）与 `--cov=tools/scripts`（子目录）统计范围不同，数字不可直接比较。
 - **mypy 口径已对齐**：CI（`jobs/type-check.yml`）与 `hooks/basic_checks.run_typecheck` 均执行 `mypy tools .jcode ai-dev-framework/src`（遵循 `pyproject.toml` 配置）。`example-ci-template.yml` 里的 `mypy .` 是**模板示例**，不是真实门禁，按它去理解 CI 会得出错误结论。
 - **ruff 版本锁定** 0.15.17：0.16+ 启用 2025 format style 会造成 CI 与本地结果不一致
+- **`adg check` 默认并行度**：显式 `--jobs N` > `[tool.adg].jobs`（默认 4）；
+  JSON `meta.jobs` 必须与实际执行一致。配置非法（非数字 / <=0）回退 4，
+  不阻断检查（P-01，2026-11-09）
 - **不命名为 `jcode` 的 console_script**：会遮蔽 Rust 版 jcode TUI
 - **跑测试与门禁必须用 `.venv/bin/python`（3.11），不可用 `python`**：
   `.mise.toml` 写 `python = "3.12"`，故 shell 里的 `python` 解析到 mise 的
@@ -289,6 +292,33 @@ AI 时代开发者成长知识库 + 治理框架（knowledge base + governance f
 
 ---
 
+## 更新记录: 2026-11-09 13:28:55
+
+### 任务
+Git 变更同步
+
+### 变更摘要
+- 变更文件 6 个 (+68 / -69 行)
+  - CONTEXT.md
+  - README.md
+  - ai-dev-framework/tests/test_redos_gate.py
+  - docs/agent-dev/check-engine-contract-matrix.md
+  - diff --git "a/docs/analysis/\345\233\233\347\273\264\345\272\246\346\267\261\345\272\246\345\210\206\346\236\220.md" "b/docs/analysis/\345\233\233\347\273\264\345\272\246\346\267\261\345\272\246\345\210\206\346\236\220.md"
+  - tools/scripts/adg_cli/commands/cmd/cmd_check.py
+
+## 更新记录: 2026-11-09 13:06:45
+
+### 任务
+Git 变更同步
+
+### 变更摘要
+- 变更文件 5 个 (+58 / -53 行)
+  - CONTEXT.md
+  - README.md
+  - docs/agent-dev/check-engine-contract-matrix.md
+  - diff --git "a/docs/analysis/\345\233\233\347\273\264\345\272\246\346\267\261\345\272\246\345\210\206\346\236\220.md" "b/docs/analysis/\345\233\233\347\273\264\345\272\246\346\267\261\345\272\246\345\210\206\346\236\220.md"
+  - tools/scripts/adg_cli/commands/cmd/cmd_check.py
+
 ## 更新记录: 2026-11-08 20:06:33
 
 ### 任务
@@ -319,38 +349,5 @@ Git 变更同步
   - tests/test_coverage_gate_scope.py
   - tests/test_update_stats_round2.py
   - tools/scripts/update_stats.py
-
-## 更新记录: 2026-11-08 18:25:21
-
-### 任务
-Git 变更同步
-
-### 变更摘要
-- 变更文件 3 个 (+15 / -6 行)
-  - README.md
-  - tests/test_update_stats_round2.py
-  - tools/scripts/update_stats.py
-
-## 更新记录: 2026-11-06 07:44:31
-
-### 任务
-Git 变更同步
-
-### 变更摘要
-- 变更文件 14 个 (+2623 / -131 行)
-  - .adg-hook.backup.log
-  - .jcode/hooks.json
-  - CONTEXT.md
-  - adg_monitoring_dashboard.html
-  - diff --git "a/docs/analysis/\345\233\233\347\273\264\345\272\246\346\267\261\345\272\246\345\210\206\346\236\220.md" "b/docs/analysis/\345\233\233\347\273\264\345\272\246\346\267\261\345\272\246\345\210\206\346\236\220.md"
-  - scripts/optimization/IMPLEMENTATION_SUMMARY.md
-  - scripts/optimization/README.md
-  - scripts/optimization/code_quality_fixes.py
-  - scripts/optimization/monitoring_system.py
-  - scripts/optimization/performance_optimizer.py
-  - tools/scripts/adg_cli/check.py
-  - tools/scripts/adg_cli/parser.py
-  - tools/scripts/chaos_experiment_runner.py
-  - tools/scripts/rules_engine/checker.py
 
 <!-- 滚动窗口: 已自动裁剪 1 条旧更新记录 -->

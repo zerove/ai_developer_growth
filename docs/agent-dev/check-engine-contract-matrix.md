@@ -13,7 +13,7 @@
 | 语言过滤 | `languages=[...]` | 由 `_detect_language_from_file` 决定 | `--lang` 参数 |
 | 统计出参 | `stats=dict`（files_checked/parallel/cache_*） | 无 stats；JSON `meta.cache_*` 为 `null` | JSON `meta`（`--cache` 分支） |
 | 缓存 | `use_cache=True`（SQLite/`CheckStore`，串/并行真实统计） | 当前无 rules_engine cache 聚合 | `--cache` 分支使用 `rules_engine.checker.check_directory` |
-| 并行 | `jobs>` + 文件数 >4 时走进程池 | `jobs>` + 文件数 >1 时并行 | 由 `--cache` 分支/配置决定 |
+| 并行 | 文件数 >4 且 `jobs>1` 时走进程池；jobs 缺省取 `[tool.adg].jobs`（默认 4） | 文件数 >1 且 `jobs>1` 时并行；jobs 缺省取 `[tool.adg].jobs`（默认 4，P-01 2026-11-09） | 由 `--cache` 分支/配置决定 |
 | 崩坏处理 | worker 异常/None 留痕（`failed_files`/degraded） | `check-error` Issue，fail-closed（ADR-078） | 由底层检查决定 |
 | 语义/外部 linter | `semantic`/`run_linters` 开关 | 规则驱动；另有 AST/复杂度辅助检查 | 由 rules_engine 校验路径决定 |
 

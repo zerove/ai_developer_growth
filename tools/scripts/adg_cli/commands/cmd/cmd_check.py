@@ -3,6 +3,8 @@ from __future__ import annotations
 import argparse
 import sys
 
+from tools.scripts.app_config import get_setting
+
 from ._shared import (
     Any,
     Issue,
@@ -23,6 +25,31 @@ from ._shared import (
     load_project_config,
     load_rules_for_language,
 )
+
+_DEFAULT_JOBS = 4
+
+
+def _resolve_jobs(args: argparse.Namespace) -> int:
+    """解析并行度：显式 --jobs > [tool.adg].jobs > 4。
+
+    - 显式 `--jobs N`（N > 0）优先，用户指定即生效；
+    - 未指定或 <=0 时读 `[tool.adg].jobs`（`app_config.get_setting`）；
+    - 配置非法（非数字、<=0）回退默认 4，不让脏配置阻断检查。
+    """
+    explicit = getattr(args, "jobs", None)
+    if explicit is not None:
+        try:
+            parsed_explicit = int(explicit)
+        except (TypeError, ValueError):
+            parsed_explicit = 0
+        if parsed_explicit > 0:
+            return parsed_explicit
+
+    try:
+        configured = int(str(get_setting("jobs", default=_DEFAULT_JOBS)).strip())
+    except (TypeError, ValueError):
+        return _DEFAULT_JOBS
+    return configured if configured > 0 else _DEFAULT_JOBS
 
 
 def _handle_post_check_actions(all_issues: list[Issue], target: Path, language: str, args: argparse.Namespace) -> None:
@@ -94,6 +121,7 @@ def _output_results(
     language: str,
     framework: str | None,
     files_count: int,
+    jobs: int,
     args: argparse.Namespace,
 ) -> None:
     """Output check results in requested format."""
@@ -104,7 +132,7 @@ def _output_results(
         check_errors = sum(1 for i in all_issues if getattr(i, "rule_id", "") in ("check-error", "file-check-error"))
         meta = {
             "files_checked": files_count,
-            "jobs": int(getattr(args, "jobs", None) or 1),
+            "jobs": jobs,
             "check_errors": check_errors,
             "failed_files": check_errors,  # ADR-078: check-error 表示文件检查失败/未可信检查
             # adg check 使用 adg_cli.check 路径（非 rules_engine checker cache）；未知时显式 null，不臆造 0
@@ -184,8 +212,8 @@ def cmd_check(args: argparse.Namespace) -> int:
     # Load rules
     rules = _load_and_merge_rules(language, framework, project_config)
 
-    # Check files
-    jobs = int(getattr(args, "jobs", None) or 1)
+    # Check files（P-01: 默认按 [tool.adg].jobs 并行，而非硬编码串行）
+    jobs = _resolve_jobs(args)
     all_issues = _run_checks(files, rules, args.severity, jobs)
 
     # Cyclomatic complexity gate (--complexity)
@@ -194,7 +222,7 @@ def cmd_check(args: argparse.Namespace) -> int:
         all_issues.extend(_run_complexity_checks(files, args.severity, max_cc))
 
     # Output
-    _output_results(all_issues, language, framework, len(files), args)
+    _output_results(all_issues, language, framework, len(files), jobs, args)
 
     # Handle post-check actions
     _handle_post_check_actions(all_issues, target, language, args)

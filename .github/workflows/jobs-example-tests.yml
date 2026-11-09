@@ -5,7 +5,7 @@ on:
       examples:
         description: JSON array of example dirs to test, e.g. ["ai-context-sync"]
         type: string
-        default: '["ai-context-sync","multi-agent-orch","self-correction-loop","ai-task-prioritizer","capability-radar","prompt-optimizer","ai-navigation","ai-navigation-web",]'
+        default: '["ai-context-sync","multi-agent-orch","self-correction-loop","ai-task-prioritizer","capability-radar","prompt-optimizer","ai-navigation","ai-navigation-web"]'
 jobs:
   test-examples:
     name: Example Tests (${{ matrix.example }})
@@ -21,9 +21,11 @@ jobs:
         python-version: '3.11'
         cache: pip
         cache-dependency-path: pyproject.toml
-    - run: pip install -e "examples/${{ matrix.example }}[dev]" pytest
+    - run: pip install -e "examples/${{ matrix.example }}[dev]" pytest pytest-cov
     - name: Run tests
-      run: cd examples/${{ matrix.example }} && python -m pytest tests/ -v --tb=short
+      # `--cov` 无参数时读取各示例 pyproject 的 [tool.coverage.run].source，
+      # fail_under 由 [tool.coverage.report] 提供 —— 阈值不再只是摆设。
+      run: cd examples/${{ matrix.example }} && python -m pytest tests/ -v --tb=short --cov --cov-report=term-missing
     - name: Summary
       if: always()
       run: 'echo "| ${{ matrix.example }} | $(cd examples/${{ matrix.example }} &&

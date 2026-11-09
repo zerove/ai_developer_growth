@@ -178,6 +178,9 @@ class BehaviorTracker:
 
         # Normalize
         max_score = max(interests.values()) if interests else 1.0
+        if max_score <= 0:
+            # 全零信号（如 duration=0 且无反馈）没有可用权重，返回空而不是除零
+            return {}
         return {k: v / max_score for k, v in interests.items()}
 
     def get_popular_documents(self, top_k: int = 10) -> list[dict]:

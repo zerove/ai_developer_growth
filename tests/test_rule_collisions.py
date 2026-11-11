@@ -34,6 +34,7 @@ def test_real_rules_have_no_collisions() -> None:
     report = build_report()
     assert report["duplicate_ids"] == {}
     assert report["unresolved_pattern_overlaps"] == []
+    assert report.get("invalid_ids", []) == []
 
 
 def test_detects_duplicate_rule_id(tmp_path: Path) -> None:
@@ -87,3 +88,20 @@ def test_main_returns_zero_for_clean_tree(tmp_path: Path) -> None:
     )
 
     assert main(["--root", str(tmp_path)]) == 0
+
+
+def test_detects_invalid_rule_ids(tmp_path: Path) -> None:
+    _write_rules(
+        tmp_path / "languages" / "python" / "rules.d" / "anti_patterns.yml",
+        [
+            _language_rule("py-ok", "ok"),
+            {"id": "", "pattern": "x", "message": "m", "severity": "error"},
+            {"id": "bad id", "pattern": "y", "message": "m", "severity": "error"},
+            {"pattern": "z", "message": "m", "severity": "error"},
+        ],
+    )
+
+    report = build_report(tmp_path)
+    reasons = [item["reason"] for item in report["invalid_ids"]]
+    assert reasons == ["missing-or-empty-id", "whitespace-in-id", "missing-or-empty-id"]
+    assert main(["--root", str(tmp_path)]) == 1

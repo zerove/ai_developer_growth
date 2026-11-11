@@ -150,10 +150,13 @@ def _output_results(
             "jobs": jobs,
             "check_errors": check_errors,
             "failed_files": check_errors,  # ADR-078: check-error 表示文件检查失败/未可信检查
-            # adg check 使用 adg_cli.check 路径（非 rules_engine checker cache）；未知时显式 null，不臆造 0
+            # adg check 使用 adg_cli.check 路径（非 rules_engine checker cache）；无缓存能力时显式标记
+            "cache_supported": False,
+            "cache_engine": None,
             "cache_degraded": None,
             "cache_hits": None,
             "cache_misses": None,
+            "cache_hit_rate": None,
         }
         print(_format_json(all_issues, language, framework, files_count, meta=meta))
     else:

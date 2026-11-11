@@ -325,7 +325,7 @@ def scan_file(filepath: str | Path) -> ScanResult:
             if is_multiline:
                 for match in re.finditer(pattern_str, content, flags | re.MULTILINE):
                     line_num = content[: match.start()].count("\n") + 1
-                    col = match.start() - content.rfind("\n", 0, match.start()) - 1
+                    col = match.start() - content.rfind("\n", 0, match.start())
                     result.issues.append(
                         ScanIssue(
                             file=str(p),

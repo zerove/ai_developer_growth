@@ -52,7 +52,7 @@ def check_naming_conventions(
                         category="naming",
                         file=filepath,
                         line=line_num,
-                        column=match.start(),
+                        column=match.start() + 1,
                         message=message,
                         fix_hint=fix_hint,
                     )

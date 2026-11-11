@@ -10,7 +10,13 @@ from tools.scripts._common import SeverityCountsMixin
 
 @dataclass
 class Issue:
-    """A single validation issue."""
+    """A single validation issue.
+
+    列号契约（D-03）: ``column`` 是 **1-based** 的列号 —— 1 表示行首第一个
+    字符, ``match.start() + 1`` 即命中起始列; ``0`` 表示"列未知"（不是行首）。
+    与 ruff / tree-sitter（``col_offset + 1``）/ SARIF（``startColumn`` 为 1-based）
+    一致, 因此直接写入 SARIF 与 JSON 报告时无需再换算。
+    """
 
     rule_id: str
     severity: str  # error, warning, info
@@ -21,7 +27,7 @@ class Issue:
     fix_hint: str = ""
     explanation: str = ""  # G2: 为什么这是问题 + 学习引导
     context_role: str = ""  # G1: 检测到的文件角色
-    column: int = 0
+    column: int = 0  # 1-based 列号；0 = 未知
     fix_replacement: str = ""  # Auto-fix: regex replacement pattern
     related_docs: list[dict[str, str]] = field(default_factory=list)  # Knowledge base links
 

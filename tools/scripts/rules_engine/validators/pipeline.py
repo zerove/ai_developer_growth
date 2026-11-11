@@ -148,7 +148,7 @@ def _check_pattern_against_lines(lines: list[str], pattern_def: dict[str, Any], 
                     category=pattern_def.get("category", "general"),
                     file=filepath,
                     line=line_num,
-                    column=match.start(),
+                    column=match.start() + 1,
                     message=pattern_def.get("message", "Anti-pattern detected"),
                     fix_hint=pattern_def.get("fix_hint", ""),
                 )

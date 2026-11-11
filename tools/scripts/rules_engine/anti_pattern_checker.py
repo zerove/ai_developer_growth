@@ -156,6 +156,7 @@ def _check_multiline_pattern(
                 category=pattern_def.get("category", "anti-pattern"),
                 file=str(filepath),
                 line=line_num,
+                # 1-based 列号: match.start() - 行首换行符下标 = 命中在行内的 1-based 列
                 column=match.start() - content.rfind("\n", 0, match.start()),
                 message=pattern_def.get("message", "Anti-pattern detected"),
                 fix_hint=pattern_def.get("fix_hint", ""),

@@ -241,3 +241,28 @@ class TestRuleLoaderIngestGate:
         out = _drop_dangerous_patterns(rules)
         ids = [r.get("id") for r in out["anti_patterns"] if isinstance(r, dict)]
         assert ids == ["ok-id"]
+
+    def test_invalid_regex_patterns_are_dropped(self) -> None:
+        """不可编译的正则应被丢弃（pattern）或剥离（exclude_pattern/naming）。"""
+        from tools.scripts.rules_engine.rule_loader import _drop_dangerous_patterns
+
+        rules = {
+            "anti_patterns": [
+                {"id": "bad-pattern", "pattern": "(", "message": "x"},
+                {"id": "bad-exclude", "pattern": "TODO", "exclude_pattern": "[", "message": "x"},
+                {"id": "ok-rule", "pattern": "TODO", "message": "x"},
+            ],
+            "naming": {
+                "python": {
+                    "bad": {"pattern": "("},
+                    "good": {"pattern": r"^[a-z_]+$"},
+                }
+            },
+        }
+        out = _drop_dangerous_patterns(rules)
+        ids = [r.get("id") for r in out["anti_patterns"] if isinstance(r, dict)]
+        assert ids == ["bad-exclude", "ok-rule"]
+        bad_exclude = next(r for r in out["anti_patterns"] if r.get("id") == "bad-exclude")
+        assert "exclude_pattern" not in bad_exclude
+        assert "bad" not in out["naming"]["python"]
+        assert "good" in out["naming"]["python"]

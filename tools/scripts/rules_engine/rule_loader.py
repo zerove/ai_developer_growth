@@ -55,7 +55,7 @@ _DANGEROUS_PATTERN_LOGGED: set[str] = set()
 
 
 def _pattern_is_dangerous(pattern: object, origin: str) -> bool:
-    """pattern 呈可疑回溯结构时返回 True; origin 仅用于去重告警。"""
+    """pattern 呈疑似回溯结构时返回 True; origin 仅用于去重告警。"""
     if not isinstance(pattern, str) or not pattern:
         return False
     if not guard_pattern(pattern, origin):
@@ -64,6 +64,20 @@ def _pattern_is_dangerous(pattern: object, origin: str) -> bool:
         _DANGEROUS_PATTERN_LOGGED.add(origin)
         logger.warning(f"丢弃疑似灾难性回溯的规则 pattern: {origin}")
     return True
+
+
+def _pattern_is_invalid(pattern: object, origin: str) -> bool:
+    """pattern 为字符串但无法编译时返回 True。"""
+    if not isinstance(pattern, str):
+        return False
+    try:
+        import re
+
+        re.compile(pattern)
+    except re.error:
+        logger.warning(f"丢弃无效正则的规则 pattern: {origin}")
+        return True
+    return False
 
 
 def _has_invalid_rule_id(item: dict[str, Any]) -> bool:
@@ -96,11 +110,20 @@ def _drop_dangerous_patterns(rules: dict[str, Any]) -> dict[str, Any]:
             if _has_invalid_rule_id(item):
                 continue
             rule_id = item.get("id", "?")
-            if _pattern_is_dangerous(item.get("pattern"), f"anti_patterns#{rule_id}") or (
-                _pattern_is_dangerous(item.get("exclude_pattern"), f"anti_patterns#{rule_id}#exclude")
+            pattern = item.get("pattern")
+            if _pattern_is_dangerous(pattern, f"anti_patterns#{rule_id}") or _pattern_is_invalid(
+                pattern, f"anti_patterns#{rule_id}"
             ):
                 continue
-            kept.append(item)
+            exclude_pattern = item.get("exclude_pattern")
+            normalized_item = item
+            if isinstance(exclude_pattern, str):
+                if _pattern_is_dangerous(exclude_pattern, f"anti_patterns#{rule_id}#exclude") or _pattern_is_invalid(
+                    exclude_pattern, f"anti_patterns#{rule_id}#exclude"
+                ):
+                    normalized_item = {**item}
+                    normalized_item.pop("exclude_pattern", None)
+            kept.append(normalized_item)
         rules["anti_patterns"] = kept
 
     naming = rules.get("naming")
@@ -109,7 +132,11 @@ def _drop_dangerous_patterns(rules: dict[str, Any]) -> dict[str, Any]:
             if not isinstance(kinds, dict):
                 continue
             for kind, spec in list(kinds.items()):
-                if isinstance(spec, dict) and _pattern_is_dangerous(spec.get("pattern"), f"naming#{lang}.{kind}"):
+                if not isinstance(spec, dict):
+                    continue
+                origin = f"naming#{lang}.{kind}"
+                spec_pattern = spec.get("pattern")
+                if _pattern_is_dangerous(spec_pattern, origin) or _pattern_is_invalid(spec_pattern, origin):
                     del kinds[kind]
     return rules
 

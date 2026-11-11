@@ -92,6 +92,8 @@ class TestJsonMetaJobs:
         assert executed["jobs"] == 3, "配置值未传入实际执行路径"
         data = json.loads(capsys.readouterr().out)
         assert data["meta"]["jobs"] == 3, "JSON meta 未反映实际并行度"
+        assert data["meta"]["cache_supported"] is False
+        assert data["meta"]["cache_reason"] == "adg_cli_path_no_rules_engine_cache"
 
     def test_explicit_jobs_reflected_in_meta(
         self, tmp_path: Path, capsys: pytest.CaptureFixture[str], monkeypatch: pytest.MonkeyPatch

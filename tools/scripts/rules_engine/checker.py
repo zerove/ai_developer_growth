@@ -47,6 +47,29 @@ __all__ = [
     "load_rules_for_language",
 ]
 
+# ── 缓存可观测性词汇表（cache/stats 对齐第一阶段）────────────
+#
+# 目的: 让 rules_engine / hooks --cache / adg check 三条路径对"缓存状态"
+# 使用同一套键名与语义, 下游只依赖词汇表即可解读, 不必逐路径猜字段。
+#
+# 契约:
+#   cache_supported : 该执行路径是否具备缓存能力
+#   cache_engine    : 缓存实现标识（无能力时为 None）
+#   cache_reason    : 缓存不可用/未启用时的原因；可用且已启用时为 None
+#   cache_hit_rate  : hits/(hits+misses)；计数不可知时为 None（不臆造 0）
+CACHE_ENGINE_ID = "rules_engine_check_store"
+CACHE_REASON_DISABLED = "cache_disabled"
+
+
+def _cache_hit_rate(hits: int | None, misses: int | None) -> float | None:
+    """缓存命中率；计数不可知或无缓存操作时返回 None（不臆造 0）。"""
+    if hits is None or misses is None:
+        return None
+    total = hits + misses
+    if total <= 0:
+        return None
+    return hits / total
+
 
 def check_file(
     filepath: Path,
@@ -563,10 +586,14 @@ def check_directory(
                 {
                     "files_checked": 0,
                     "use_cache": bool(use_cache),
+                    "cache_supported": True,
+                    "cache_engine": CACHE_ENGINE_ID,
+                    "cache_reason": None if use_cache else CACHE_REASON_DISABLED,
                     "cache_initialized": False,
                     "cache_degraded": None,
                     "cache_hits": None,
                     "cache_misses": None,
+                    "cache_hit_rate": None,
                     "parallel": False,
                     "jobs": 0,
                 }
@@ -614,10 +641,14 @@ def check_directory(
             {
                 "files_checked": len(files),
                 "use_cache": bool(use_cache),
+                "cache_supported": True,
+                "cache_engine": CACHE_ENGINE_ID,
+                "cache_reason": None if use_cache else CACHE_REASON_DISABLED,
                 "cache_initialized": store is not None,
                 "cache_degraded": cache_degraded_out,
                 "cache_hits": hits,
                 "cache_misses": misses,
+                "cache_hit_rate": _cache_hit_rate(hits, misses),
                 "parallel": parallel,
                 "jobs": effective_jobs,
             }

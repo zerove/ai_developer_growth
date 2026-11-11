@@ -32,9 +32,31 @@
 > `adg check` 已显式暴露 `cache_supported=false`、`cache_reason` 与空 `cache_*`（可观测性），但不提供 rules_engine 级缓存统计；
 > 下游仍不应依赖两个入口的 stats 结构，但可依赖当前规则集下 issue 集合一致。
 
+## 缓存可观测性词汇表（2026-11-12 对齐第一阶段）
+
+三条路径对"缓存状态"使用同一套键名与语义，下游只依赖词汇表即可解读：
+
+| 键 | 语义 | `rules_engine.checker` | `hooks --cache` | `adg check --json` |
+|---|---|---|---|---|
+| `use_cache` | 本次运行是否启用缓存 | `bool` | `bool` | `false` |
+| `cache_supported` | 该路径是否具备缓存能力 | `true` | `true` | `false` |
+| `cache_engine` | 缓存实现标识 | `rules_engine_check_store` | 同左 | `null` |
+| `cache_initialized` | 缓存存储是否就绪 | `bool` | `bool` | `false` |
+| `cache_reason` | 不可用/未启用原因；可用且已启用时 `null` | `null` / `cache_disabled` | 同左 | `adg_cli_path_no_rules_engine_cache` |
+| `cache_hits` / `cache_misses` | 真实命中/缺失计数 | 启用时为整数 | 同左 | `null` |
+| `cache_degraded` | 缓存降级次数 | 启用时为整数 | 同左 | `null` |
+| `cache_hit_rate` | `hits/(hits+misses)` | 启用时为 `float` | 同左 | `null` |
+
+**不臆造 0**：计数不可知（缓存未启用、目录不存在、无缓存操作）一律 `null`。
+0 会被下游读成"缓存全未命中"，与"没有缓存"是两种不同事实。
+
+> 契约由 `tests/test_cache_observability_contract.py` 锁定（键存在性 + 语义）。
+
 ## 收敛建议（渐进）
 
 1. 保持本矩阵随行为变化更新；新增差异先记录再修复。
 2. 为共享不变量补契约测试（文件覆盖、核心规则、崩坏留痕、exit 语义）。
 3. 若要让 `adg check` 复用 rules_engine：优先把 `adg_cli.check` 的通用规则/AST/复杂度能力
    上移为引擎可选模块，CLI 仅保留参数/输出/兼容层；分阶段迁移并以本矩阵+测试守护。
+4. 缓存能力的**执行路径**统一（而非仅字段统一）留待第二阶段：需先决定
+   `adg check` 是否引入 `CheckStore`，该决策会改变 CLI 行为与磁盘产物，须单独立项。

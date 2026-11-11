@@ -233,8 +233,10 @@ def _output_results(
             "check_errors": check_errors,
             "failed_files": check_errors,  # ADR-078: check-error 表示文件检查失败/未可信检查
             # adg check 使用 adg_cli.check 路径（非 rules_engine checker cache）；无缓存能力时显式标记
+            "use_cache": False,
             "cache_supported": False,
             "cache_engine": None,
+            "cache_initialized": False,
             "cache_degraded": None,
             "cache_hits": None,
             "cache_misses": None,

@@ -13,8 +13,8 @@ import re
 from typing import Any
 
 from ._common import rule_id_prefix as _rule_id_prefix
+from .rules_engine.models import Issue
 from .rules_engine.regex_cache import guard_pattern
-from .validate_language_rules import Issue
 
 
 def _check_filename(filepath: str, language: str, naming: dict[str, Any]) -> list[Issue]:

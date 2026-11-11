@@ -7,6 +7,7 @@ from typing import TYPE_CHECKING, Any
 
 from tools.scripts.rules_engine.logger import logger
 
+from ._checker_file import check_file
 from .models import CheckResult, Issue
 
 if TYPE_CHECKING:
@@ -76,7 +77,6 @@ def _worker_check(
             logger.debug(f"worker 缓存读取失败，回退完整检查 {fp}: {exc}")
             degraded = 1
             store = None  # 缓存不可用时退化为完整检查
-    from .checker import check_file
 
     result = check_file(
         fp,

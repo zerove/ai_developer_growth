@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from abc import ABC, abstractmethod
 
-from tools.scripts.rules_engine.ast_parser import ClassInfo, FunctionInfo, _TreeNode
+from tools.scripts.rules_engine.ast_nodes import ClassInfo, FunctionInfo, _TreeNode
 
 
 class BaseParser(ABC):

@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from ..ast_parser import ClassInfo, FunctionInfo, _TreeNode
+from ..ast_nodes import ClassInfo, FunctionInfo, _TreeNode
 from .base import BaseParser
 
 

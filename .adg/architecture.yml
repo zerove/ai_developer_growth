@@ -127,25 +127,11 @@ cycle_detection:
   # 已登记的存量循环（逐条附原因，保持可见而非隐藏）。
   # 豁免判定: 环中**每个**模块都能被同一条豁免的某个模式匹配才算豁免，
   # 避免"沾边即豁免"；支持 glob。新增循环不在此列 → 直接报错。
-  exemptions:
-    - modules:
-        - "tools/scripts/rules_engine/ast_parser.py"
-        - "tools/scripts/rules_engine/_ast_walkers.py"
-        - "tools/scripts/rules_engine/parsers/*.py"
-      reason: "AST 节点类型定义与 walker/各语言 parser 互相依赖，待拆分节点类型模块（2026-11-12 登记）"
-    - modules:
-        - "tools/scripts/rules_engine/checker.py"
-        - "tools/scripts/rules_engine/_checker_workers.py"
-      reason: "worker 需要 checker 的检查入口，checker 需要 worker 执行器，待拆出共享执行层（2026-11-12 登记）"
-    - modules:
-        - "tools/scripts/validate_language_rules.py"
-        - "tools/scripts/complexity_analyzer.py"
-        - "tools/scripts/naming_analyzer.py"
-      reason: "分析器反向引用校验入口的公共类型，待抽出共享模型层（2026-11-12 登记）"
-    - modules:
-        - "tools/scripts/adg_cli/core.py"
-        - "tools/scripts/adg_cli/detect.py"
-      reason: "detect 复用 core 的 Issue 模型，core 复用 detect 的语言识别，待上移共享层（2026-11-12 登记）"
+  #
+  # 2026-11-12: 存量循环已全部拆除（AST 节点类型下沉、单文件检查下沉、
+  # 路径常量下沉、Issue 改从规范模型导入），故当前为空 —— 新增循环请修代码，
+  # 不要登记豁免。
+  exemptions: []
 
 # Hub detection
 hub_detection:

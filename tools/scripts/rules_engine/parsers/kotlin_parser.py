@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from tools.scripts._common import child_by_type, node_text
-from tools.scripts.rules_engine.ast_parser import ClassInfo, FunctionInfo, _TreeNode
+from tools.scripts.rules_engine.ast_nodes import ClassInfo, FunctionInfo, _TreeNode
 
 from .base import BaseParser
 

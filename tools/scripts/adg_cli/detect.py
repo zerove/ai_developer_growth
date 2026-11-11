@@ -8,7 +8,7 @@ from pathlib import Path
 from typing import Any
 
 from tools.scripts._common import EXTENSION_MAP
-from tools.scripts.adg_cli.core import (
+from tools.scripts.adg_cli._paths import (
     MAX_FILES,
     is_skipped_dir,
 )

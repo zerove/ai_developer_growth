@@ -10,7 +10,10 @@ import re
 from typing import Any
 
 from ._common import rule_id_prefix as _rule_id_prefix
-from .validate_language_rules import Issue
+
+# Issue 取规范模型 (rules_engine.models), 不从 validate_language_rules 导入:
+# 后者会导入本模块 (function-level), 从那里取 Issue 会形成循环依赖。
+from .rules_engine.models import Issue
 
 
 def _check_line_length(lines: list[str], filepath: str, language: str, max_line: int) -> list[Issue]:

@@ -1,6 +1,6 @@
 from typing import Protocol, runtime_checkable
 
-from tools.scripts.rules_engine.ast_parser import ClassInfo, FunctionInfo
+from tools.scripts.rules_engine.ast_nodes import ClassInfo, FunctionInfo
 
 
 @runtime_checkable

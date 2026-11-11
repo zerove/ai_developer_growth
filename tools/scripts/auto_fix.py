@@ -12,6 +12,7 @@ Auto-fix 编排器
 from __future__ import annotations
 
 import logging
+import re
 import subprocess
 import sys
 from dataclasses import dataclass, field
@@ -517,6 +518,85 @@ class RegexFixProvider(FixProvider):
         # P1-2 重构: 支持批量文件级 re.subn
         self.rules: dict[str, dict[str, Any]] = rules or {}
 
+    # ── I-01 契约收敛 ─────────────────────────────────────────
+    #
+    # 历史行为把 ``issue.rule_id`` 当正则用 —— rule_id 是**标识符**而非 pattern,
+    # 于是"检测用的正则"与"修复用的正则"根本不是一回事, 修复可能落到行内
+    # 与问题无关的位置 (旧实现还会把整行所有匹配一并改写)。
+    #
+    # 收敛后的契约:
+    #   1. pattern 优先取注册规则自身的 pattern (与文件级 apply_rules 同源);
+    #   2. 规则 pattern 按 ``issue.column`` 精确锚定到上报的那一处命中;
+    #   3. 只替换这一处匹配 —— 不再对整行所有匹配做替换;
+    #   4. 零长匹配不替换 (替换空区间等于在行首凭空插入内容)。
+    #
+    # 向后兼容: 未注册该 rule_id 时回退到"rule_id 当 pattern"的历史行为,
+    # 且回退路径不做列锚定 (rule_id 与上报列之间没有可验证的对应关系)。
+
+    def _resolve_pattern(self, rule_id: str) -> tuple[str, bool]:
+        """解析定位待修复片段所用的正则 pattern。
+
+        Returns:
+            (pattern, 是否来自注册规则)。来自注册规则时 pattern 是规则检测
+            所用的那个正则, 可与 issue.column 对齐; 否则为历史回退路径。
+        """
+        info = self.rules.get(rule_id)
+        if isinstance(info, dict):
+            pattern = info.get("pattern")
+            if isinstance(pattern, str) and pattern:
+                return pattern, True
+        return rule_id.replace(":", r"\:"), False
+
+    @staticmethod
+    def _select_match(compiled: re.Pattern[str], line: str, column: int) -> re.Match[str] | None:
+        """选出待替换的匹配。
+
+        - ``column > 0``（规则检测给出的 1-based 命中列）→ 只接受恰好命中该列
+          的匹配, 保证"替换的就是上报的那一处"; 找不到则放弃修复。
+        - ``column <= 0``（列信息不可用）→ 取第一个匹配。
+        - 零长匹配一律跳过: 替换空区间等于凭空插入内容。
+        """
+        if column > 0:
+            for candidate in compiled.finditer(line):
+                if candidate.start() + 1 == column and candidate.end() > candidate.start():
+                    return candidate
+            return None
+        first = compiled.search(line)
+        if first is None or first.end() == first.start():
+            return None
+        return first
+
+    def _resolve_match(self, issue: Issue, line: str) -> re.Match[str] | None:
+        """解析 pattern 并选出待替换的匹配; pattern 不可信或无效时返回 None。"""
+        pattern, from_rule = self._resolve_pattern(issue.rule_id)
+
+        # pattern 与 fix_replacement 均来自规则配置 (PR 场景由外部贡献者控制),
+        # 而 line 是被修复的源码行 —— 三者都不可信。且此处结果会**写回文件**,
+        # 挂死代价高于只读检查。
+        context = f"auto_fix/rule_pattern#{issue.rule_id}" if from_rule else "auto_fix/rule_id"
+        if guard_pattern(pattern, context):
+            return None
+        try:
+            compiled = re.compile(pattern)
+        except re.error:
+            logger.warning(f"Regex fix failed for {issue.rule_id}: invalid regex pattern")
+            return None
+        return self._select_match(compiled, line, issue.column if from_rule else 0)
+
+    def _build_action(self, issue: Issue, file_path: str, original_line: str, fixed_line: str) -> FixAction:
+        """构造本次修复对应的 FixAction。"""
+        return FixAction(
+            rule_id=issue.rule_id,
+            file=file_path,
+            line=issue.line,
+            column=issue.column,
+            original=original_line.rstrip("\n\r"),
+            replacement=fixed_line.rstrip("\n\r"),
+            safety_level=self.safety_level,
+            description=issue.fix_hint or f"Auto-fix for {issue.rule_id}",
+            confidence=0.8,
+        )
+
     def generate_fixes(
         self,
         issue: Issue,
@@ -533,36 +613,23 @@ class RegexFixProvider(FixProvider):
                 return []
 
             lines = full_path.read_text().splitlines(keepends=True)
-            if 0 < issue.line <= len(lines):
-                original_line = lines[issue.line - 1]
-                # 简单的正则替换
-                import re
+            if not (0 < issue.line <= len(lines)):
+                return []
+            original_line = lines[issue.line - 1]
 
-                # rule_id 与 fix_replacement 均来自规则配置 (PR 场景由外部贡献者
-                # 控制), 而 original_line 是被修复的源码行 —— 三者都不可信。
-                # 且此处结果会**写回文件**, 挂死代价高于只读检查。
-                pattern = issue.rule_id.replace(":", r"\:")
-                if guard_pattern(pattern, "auto_fix/rule_id"):
-                    return []
-                try:
-                    fixed_line = re.sub(pattern, issue.fix_replacement, original_line)
-                except re.error:
-                    logger.warning(f"Regex fix failed for {issue.rule_id}: invalid regex pattern")
-                    return []
-                if fixed_line != original_line:
-                    return [
-                        FixAction(
-                            rule_id=issue.rule_id,
-                            file=file_path,
-                            line=issue.line,
-                            column=issue.column,
-                            original=original_line.rstrip("\n\r"),
-                            replacement=fixed_line.rstrip("\n\r"),
-                            safety_level=self.safety_level,
-                            description=issue.fix_hint or f"Auto-fix for {issue.rule_id}",
-                            confidence=0.8,
-                        )
-                    ]
+            match = self._resolve_match(issue, original_line)
+            if match is None:
+                return []
+            try:
+                replacement_text = match.expand(issue.fix_replacement)
+            except re.error:
+                logger.warning(f"Regex fix failed for {issue.rule_id}: invalid replacement template")
+                return []
+
+            fixed_line = original_line[: match.start()] + replacement_text + original_line[match.end() :]
+            if fixed_line == original_line:
+                return []
+            return [self._build_action(issue, file_path, original_line, fixed_line)]
         except Exception as e:
             logger.warning(f"Regex fix failed for {issue.rule_id}: {e}")
 

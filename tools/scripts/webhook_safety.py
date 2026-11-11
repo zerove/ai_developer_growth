@@ -17,7 +17,7 @@ _METADATA_HOSTS = {
 _LOCAL_HOSTS = {"localhost", "localhost.localdomain"}
 
 
-def _is_disallowed_ip(ip: ipaddress._BaseAddress) -> bool:
+def _is_disallowed_ip(ip: ipaddress.IPv4Address | ipaddress.IPv6Address) -> bool:
     return bool(
         ip.is_private or ip.is_loopback or ip.is_link_local or ip.is_multicast or ip.is_reserved or ip.is_unspecified
     )

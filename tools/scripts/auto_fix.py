@@ -541,10 +541,14 @@ class RegexFixProvider(FixProvider):
                 # rule_id 与 fix_replacement 均来自规则配置 (PR 场景由外部贡献者
                 # 控制), 而 original_line 是被修复的源码行 —— 三者都不可信。
                 # 且此处结果会**写回文件**, 挂死代价高于只读检查。
-                if guard_pattern(issue.rule_id, "auto_fix/rule_id"):
+                pattern = issue.rule_id.replace(":", r"\:")
+                if guard_pattern(pattern, "auto_fix/rule_id"):
                     return []
-
-                fixed_line = re.sub(issue.rule_id.replace(":", r"\:"), issue.fix_replacement, original_line)
+                try:
+                    fixed_line = re.sub(pattern, issue.fix_replacement, original_line)
+                except re.error:
+                    logger.warning(f"Regex fix failed for {issue.rule_id}: invalid regex pattern")
+                    return []
                 if fixed_line != original_line:
                     return [
                         FixAction(

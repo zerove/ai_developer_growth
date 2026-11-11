@@ -233,6 +233,23 @@ class TestLanguageFilter:
         bad_exclude = next(r for r in rules["anti_patterns"] if r.get("id") == "bad-exclude")
         assert "exclude_pattern" not in bad_exclude
 
+    def test_invalid_custom_rule_ids_are_skipped(self) -> None:
+        config = {
+            "custom_rules": [
+                {"id": "", "pattern": "TODO", "message": "x", "severity": "warning"},
+                {"id": "bad id", "pattern": "TODO", "message": "x", "severity": "warning"},
+                {"id": "ok-id", "pattern": "TODO", "message": "x", "severity": "warning"},
+                {"pattern": "TODO", "message": "no id", "severity": "warning"},
+            ],
+            "severity_overrides": {},
+        }
+        rules = _load_and_merge_rules("python", None, config)
+        ids = {r.get("id") for r in rules["anti_patterns"]}
+        assert "ok-id" in ids
+        assert "" not in ids
+        assert "bad id" not in ids
+        assert None not in ids
+
 
 class TestOffDisablesRule:
     def _os_system_config(self, overrides: dict[str, str]) -> dict[str, Any]:

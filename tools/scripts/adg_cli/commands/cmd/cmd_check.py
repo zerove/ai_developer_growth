@@ -6,7 +6,6 @@ import sys
 from tools.scripts.app_config import get_setting
 
 from ._shared import (
-    Any,
     Issue,
     Path,
     _attach_docs_to_issues,
@@ -82,41 +81,46 @@ def _handle_post_check_actions(all_issues: list[Issue], target: Path, language: 
 _RULE_DISABLE_VALUES = {"off", "ignore", "disabled"}
 
 
-def _load_and_merge_rules(language: str, framework: str | None, project_config: dict[str, Any]) -> dict[str, Any]:
-    """Load rules and merge with framework and custom rules."""
-    rules = load_rules_for_language(language)
-    if framework:
-        fw_rules = load_framework_rules(framework)
-        rules["anti_patterns"].extend(fw_rules.get("anti_patterns", []))
+def _normalize_custom_rule(rule: object, language: str) -> dict[str, object] | None:
+    """校验并净化单条 custom rule；无效或不适用时返回 None。"""
+    if not isinstance(rule, dict):
+        return None
+    raw_id = rule.get("id")
+    rule_id = raw_id.strip() if isinstance(raw_id, str) else ""
+    if not rule_id or any(ch.isspace() for ch in rule_id):
+        print(
+            f"Warning: Skipping custom rule with invalid id ({raw_id!r}); id must be non-empty without whitespace",
+            file=sys.stderr,
+        )
+        return None
+    rule_lang = str(rule.get("language") or "").strip().lower()
+    if rule_lang and rule_lang != language.strip().lower():
+        return None
+    # ReDoS/危险 pattern 防护：与 rule_loader._drop_dangerous_patterns 同策略
+    from tools.scripts.rules_engine.regex_cache import guard_pattern
 
-    # 自定义规则 language 字段语义 (契约):
-    #   无 language / 空 → 适用所有语言; 有值 → 必须与当前扫描语言一致
-    # (否则 sec-101..103 等 javascript 规则会误报 Python 文件)
-    custom_rules = project_config.get("custom_rules", [])
-    for rule in custom_rules:
+    pattern = rule.get("pattern")
+    exclude_pattern = rule.get("exclude_pattern")
+    if isinstance(pattern, str) and guard_pattern(pattern, f"adg_cli/custom_rules#{rule_id}"):
+        return None
+    normalized: dict[str, object] = rule
+    if isinstance(exclude_pattern, str) and guard_pattern(exclude_pattern, f"adg_cli/custom_rules#{rule_id}#exclude"):
+        normalized = {**rule}
+        normalized.pop("exclude_pattern", None)
+    return normalized
+
+
+def _apply_severity_overrides(rules: dict[str, object], project_config: dict[str, object]) -> None:
+    """severity_overrides: 普通值改 severity; 禁用值置 enabled=False。"""
+    severity_overrides = project_config.get("severity_overrides", {})
+    if not isinstance(severity_overrides, dict):
+        return
+    anti_patterns = rules.get("anti_patterns", [])
+    if not isinstance(anti_patterns, list):
+        return
+    for rule in anti_patterns:
         if not isinstance(rule, dict):
             continue
-        rule_lang = str(rule.get("language") or "").strip().lower()
-        if rule_lang and rule_lang != language.strip().lower():
-            continue
-        # ReDoS/危险 pattern 防护：与 rule_loader._drop_dangerous_patterns 同策略
-        from tools.scripts.rules_engine.regex_cache import guard_pattern
-
-        pattern = rule.get("pattern")
-        exclude_pattern = rule.get("exclude_pattern")
-        rule_id = str(rule.get("id") or "?")
-        if isinstance(pattern, str) and guard_pattern(pattern, f"adg_cli/custom_rules#{rule_id}"):
-            continue
-        if isinstance(exclude_pattern, str) and guard_pattern(
-            exclude_pattern, f"adg_cli/custom_rules#{rule_id}#exclude"
-        ):
-            rule = {**rule}
-            rule.pop("exclude_pattern", None)
-        rules["anti_patterns"].append(rule)
-
-    # severity_overrides: 普通值改 severity; 禁用值置 enabled=False (check.py 跳过)
-    severity_overrides = project_config.get("severity_overrides", {})
-    for rule in rules["anti_patterns"]:
         override = severity_overrides.get(rule.get("id"))
         if override is None:
             continue
@@ -128,6 +132,28 @@ def _load_and_merge_rules(language: str, framework: str | None, project_config: 
         else:
             rule["severity"] = override
 
+
+def _load_and_merge_rules(language: str, framework: str | None, project_config: dict[str, object]) -> dict[str, object]:
+    """Load rules and merge with framework and custom rules."""
+    rules: dict[str, object] = load_rules_for_language(language)
+    if framework:
+        fw_rules = load_framework_rules(framework)
+        anti_patterns = rules.get("anti_patterns")
+        if isinstance(anti_patterns, list):
+            anti_patterns.extend(fw_rules.get("anti_patterns", []))
+
+    # 自定义规则 language 字段语义 (契约):
+    #   无 language / 空 → 适用所有语言; 有值 → 必须与当前扫描语言一致
+    custom_rules = project_config.get("custom_rules", [])
+    if isinstance(custom_rules, list):
+        anti_patterns = rules.get("anti_patterns")
+        if isinstance(anti_patterns, list):
+            for rule in custom_rules:
+                normalized = _normalize_custom_rule(rule, language)
+                if normalized is not None:
+                    anti_patterns.append(normalized)
+
+    _apply_severity_overrides(rules, project_config)
     return rules
 
 
@@ -164,7 +190,7 @@ def _output_results(
 
 
 def _prepare_check_config(
-    target: Path, args: argparse.Namespace, project_config: dict[str, Any]
+    target: Path, args: argparse.Namespace, project_config: dict[str, object]
 ) -> tuple[str, str | None, list[Path]]:
     """Prepare configuration for check command."""
     files, detected = _collect_check_files(target, args, project_config)
@@ -174,12 +200,14 @@ def _prepare_check_config(
 
     # Use framework hint from config if not detected
     if not framework:
-        framework = project_config.get("framework_hints", {}).get(language)
+        hints = project_config.get("framework_hints", {})
+        if isinstance(hints, dict):
+            framework = hints.get(language)
 
     return language, framework, files
 
 
-def _run_checks(files: list[Path], rules: dict[str, Any], severity: str, jobs: int) -> list[Issue]:
+def _run_checks(files: list[Path], rules: dict[str, object], severity: str, jobs: int) -> list[Issue]:
     """Run checks on files, either parallel or sequential.
 
     单个文件检查失败会变成 `check-error` error 级 Issue（ADR-078），

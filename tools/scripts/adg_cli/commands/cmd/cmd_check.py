@@ -183,6 +183,7 @@ def _output_results(
             "cache_hits": None,
             "cache_misses": None,
             "cache_hit_rate": None,
+            "cache_reason": "adg_cli_path_no_rules_engine_cache",
         }
         print(_format_json(all_issues, language, framework, files_count, meta=meta))
     else:

@@ -11,7 +11,7 @@
 | 返回 | `list[CheckResult]`（文件级结果 + issues） | `list[Issue]`（扁平 issues） | text / JSON 字符串（`passed`, `results`） |
 | 规则加载 | `rules=None` 时自动加载 | 调用方传入 `rules`；`load_rules_for_language` 合并 common 安全规则并遵守 `supersedes` | 校验 language rules 资产 |
 | 语言过滤 | `languages=[...]` | 由 `_detect_language_from_file` 决定 | `--lang` 参数 |
-| 统计出参 | `stats=dict`（files_checked/parallel/cache_*） | 无 rules_engine stats；JSON `meta` 显式标记 `cache_supported=false` 且 `cache_*`/`cache_hit_rate` 为 `null` | JSON `meta`（`--cache` 分支） |
+| 统计出参 | `stats=dict`（files_checked/parallel/cache_*） | 无 rules_engine stats；JSON `meta` 显式标记 `cache_supported=false`、`cache_reason` 且 `cache_*`/`cache_hit_rate` 为 `null` | JSON `meta`（`--cache` 分支） |
 | 缓存 | `use_cache=True`（SQLite/`CheckStore`，串/并行真实统计） | 当前无 rules_engine cache 聚合（不臆造命中/缺失） | `--cache` 分支使用 `rules_engine.checker.check_directory` |
 | 并行 | 文件数 >4 且 `jobs>1` 时走进程池；jobs 缺省取 `[tool.adg].jobs`（默认 4） | 文件数 >1 且 `jobs>1` 时并行；jobs 缺省取 `[tool.adg].jobs`（默认 4，P-01 2026-11-09） | 由 `--cache` 分支/配置决定 |
 | 崩坏处理 | worker 异常/None 留痕（`failed_files`/degraded） | `check-error` Issue，fail-closed（ADR-078） | 由底层检查决定 |
@@ -29,7 +29,7 @@
   未被 supersede 的通用规则（如 JavaScript 的 `common-eval-exec`）仍保留。
 
 > 结论：**文件覆盖、核心规则、issue 集合已对齐；统计/缓存出参与执行路径仍不一致**。
-> `adg check` 已显式暴露 `cache_supported=false` 与空 `cache_*`（可观测性），但不提供 rules_engine 级缓存统计；
+> `adg check` 已显式暴露 `cache_supported=false`、`cache_reason` 与空 `cache_*`（可观测性），但不提供 rules_engine 级缓存统计；
 > 下游仍不应依赖两个入口的 stats 结构，但可依赖当前规则集下 issue 集合一致。
 
 ## 收敛建议（渐进）

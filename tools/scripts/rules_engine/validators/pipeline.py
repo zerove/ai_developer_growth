@@ -20,6 +20,7 @@ from tools.scripts._common import (
     superseded_rule_ids as _superseded_rule_ids,
 )
 
+from ..ast_semantic import run_ast_semantic_rules
 from ..regex_cache import guard_pattern
 from .models import Issue, ValidationResult
 
@@ -406,9 +407,8 @@ def validate_file(
         result.issues.extend(check_python_ast(str(filepath), lines))
 
         # AST 语义检查: bare-raise 的 except 块判定 (正则无法表达)
-        from tools.scripts.rules_engine.ast_semantic import check_python_bare_raise
-
-        result.issues.extend(check_python_bare_raise(str(filepath), lines))
+        # D-01: 统一入口 (与 rules_engine/checker.py、adg_cli/check.py 共用)
+        result.issues.extend(run_ast_semantic_rules(str(filepath), lines, language))
 
     # 5. 豁免过滤: 行级 noqa + 文件级 ignored-rules.toml (与 checker.check_file 同源)
     from tools.scripts.rules_engine.checker import _filter_suppressed_issues

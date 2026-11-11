@@ -29,6 +29,7 @@ from ._checker_noqa import _parse_noqa_lines as _parse_noqa_lines
 from ._checker_workers import _worker_check as _worker_check
 from ._checker_workers import _worker_init as _worker_init
 from .anti_pattern_checker import check_anti_patterns
+from .ast_semantic import run_ast_semantic_rules
 from .complexity_checker import check_js_complexity, check_python_complexity
 from .context import adjust_severity, detect_file_role
 from .models import CheckResult, Issue
@@ -230,10 +231,9 @@ def _run_all_checkers(
         issues.extend(check_js_complexity(lines, rules, str(filepath)))
 
     # AST 语义检查: 正则无法表达的规则 (bare-raise 的 except 块判定)
-    if lang == "python":
-        from .ast_semantic import check_python_bare_raise
-
-        issues.extend(check_python_bare_raise(str(filepath), lines))
+    # D-01: 统一入口 —— 新增 AST 语义规则只需在 ast_semantic 注册一次,
+    # 三条检查路径 (engine / adg_cli / validators) 自动生效。
+    issues.extend(run_ast_semantic_rules(str(filepath), lines, lang))
 
     # Run registered plugins
     for plugin in get_plugins_for_language(lang):

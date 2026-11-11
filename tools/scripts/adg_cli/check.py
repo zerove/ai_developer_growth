@@ -33,10 +33,10 @@ def _check_ast_semantic(
     if filepath.suffix != ".py":
         return []
 
-    from tools.scripts.rules_engine.ast_semantic import check_python_bare_raise
+    from tools.scripts.rules_engine.ast_semantic import run_ast_semantic_rules
 
     result: list[Issue] = []
-    for ast_issue in check_python_bare_raise(str(filepath), lines):
+    for ast_issue in run_ast_semantic_rules(str(filepath), lines, "python"):
         if severity_filter and _severity_rank(ast_issue.severity) > _severity_rank(severity_filter):
             continue
         result.append(

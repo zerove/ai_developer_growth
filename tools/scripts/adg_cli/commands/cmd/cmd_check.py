@@ -72,6 +72,8 @@ def _handle_post_check_actions(all_issues: list[Issue], target: Path, language: 
         elif notify_url.startswith("dingtalk://"):
             webhook_url = notify_url.replace("dingtalk://", "https://oapi.dingtalk.com/robot/send?access_token=")
             _send_dingtalk_notification(webhook_url, all_issues, language, project_name)
+        else:
+            print("Warning: Unsupported --notify scheme; use slack:// or dingtalk://", file=sys.stderr)
 
 
 # severity_overrides 的禁用值 (大小写不敏感): 命中即 enabled=False。

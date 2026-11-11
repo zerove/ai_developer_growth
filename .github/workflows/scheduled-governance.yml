@@ -50,6 +50,10 @@ jobs:
         # --fail-on-broken），此前拼错后又被 || true 吞掉，等于静默失效。
         run: python tools/scripts/link_auditor.py . --check-all
 
+      - name: Run doc code refs check
+        # D-02: 正文中仓库代码路径引用必须真实存在
+        run: python tools/scripts/check_doc_code_refs.py
+
       - name: Run case validation
         run: python tools/scripts/validate_case_study.py --all
 

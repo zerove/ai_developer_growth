@@ -66,6 +66,10 @@ jobs:
       - name: Broken links
         run: python tools/scripts/link_auditor.py . --check-all
 
+      - name: Doc code refs
+        # D-02: 正文中仓库代码路径引用必须真实存在（不只校验 markdown 链接可达）
+        run: python tools/scripts/check_doc_code_refs.py
+
       - name: Case study format
         run: python tools/scripts/validate_case_study.py --all --strict
 

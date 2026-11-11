@@ -258,13 +258,14 @@ Modes:
 - Interactive: Manual field-by-field input
 - LLM: Auto-generate from title + brief description
 
-## cicd_dashboard.py - CI/CD Dashboard
+## adg cicd - CI/CD 配置生成
 
 ```bash
-python tools/scripts/cicd_dashboard.py --db cicd_metrics.db
+adg cicd --output ./
 ```
 
-Starts a web dashboard for CI/CD metrics visualization.
+生成 CI/CD 配置文件（GitHub Actions 等）。旧文档里的 `cicd_dashboard.py`
+脚本并不存在（见 `docs/analysis/四维度深度分析.md` 的 D-02 治理记录）。
 
 ## Quick Reference Card
 
@@ -278,4 +279,4 @@ Starts a web dashboard for CI/CD metrics visualization.
 | `update_ai_tool_matrix.py` | Sync tool matrix from cases | (no args) |
 | `link_auditor.py` | Check/fix broken links | `--path`, `--fix` |
 | `adr_generator.py` | Create ADR documents | Interactive/LLM |
-| `cicd_dashboard.py` | CI/CD metrics dashboard | `--db` |
+| `adg cicd` | 生成 CI/CD 配置 | `--output` |

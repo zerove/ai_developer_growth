@@ -58,7 +58,7 @@ context-sync `_prune_update_entries()` 算法:
 
 - `git commit -m` 绕过 on_commit hook → context-sync 不会自动跑
 - 解决: 主动跑或接受 trade-off
-- 不装 pre-commit 原因: 与 `.jcode/hooks_runner.py` 重复 + 引入第三方依赖（详见 ADR-025/026）
+- 不装 pre-commit 原因: 与 `tools/scripts/hooks_runner.py` 重复 + 引入第三方依赖（详见 ADR-025/026）
 - 超过 5 条后会被裁剪，关键决策应迁移到 ADR（永久保留）
 
 ## 相关 ADR

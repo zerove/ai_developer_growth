@@ -292,6 +292,35 @@ AI 时代开发者成长知识库 + 治理框架（knowledge base + governance f
 
 ---
 
+## 更新记录: 2026-11-12 07:31:25
+
+### 任务
+Git 变更同步
+
+### 变更摘要
+- 变更文件 30 个 (+472 / -392 行)
+  - .adg/architecture.yml
+  - .github/workflows/docs-governance.yml
+  - .github/workflows/scheduled-governance.yml
+  - CONTEXT.md
+  - diff --git "a/docs/analysis/\345\233\233\347\273\264\345\272\246\346\267\261\345\272\246\345\210\206\346\236\220.md" "b/docs/analysis/\345\233\233\347\273\264\345\272\246\346\267\261\345\272\246\345\210\206\346\236\220.md"
+  - docs/api/cli.md
+  - docs/api/rules-engine.md
+  - docs/governance/context-maintenance.md
+  - docs/specs/metadata-spec.md
+  - tools/scripts/adg_cli/_paths.py
+  - tools/scripts/adg_cli/core.py
+  - tools/scripts/adg_cli/detect.py
+  - tools/scripts/complexity_analyzer.py
+  - tools/scripts/naming_analyzer.py
+  - tools/scripts/rules_engine/_checker_file.py
+  - tools/scripts/rules_engine/_checker_workers.py
+  - tools/scripts/rules_engine/checker.py
+  - tools/scripts/rules_engine/parsers/base.py
+  - tools/scripts/rules_engine/parsers/contract.py
+  - tools/scripts/rules_engine/parsers/cpp_parser.py
+  - ... 等共 30 个文件
+
 ## 更新记录: 2026-11-12 07:12:25
 
 ### 任务
@@ -363,19 +392,6 @@ Git 变更同步
   - CONTEXT.md
   - README.md
   - ai-dev-framework/tests/test_redos_gate.py
-  - docs/agent-dev/check-engine-contract-matrix.md
-  - diff --git "a/docs/analysis/\345\233\233\347\273\264\345\272\246\346\267\261\345\272\246\345\210\206\346\236\220.md" "b/docs/analysis/\345\233\233\347\273\264\345\272\246\346\267\261\345\272\246\345\210\206\346\236\220.md"
-  - tools/scripts/adg_cli/commands/cmd/cmd_check.py
-
-## 更新记录: 2026-11-09 13:06:45
-
-### 任务
-Git 变更同步
-
-### 变更摘要
-- 变更文件 5 个 (+58 / -53 行)
-  - CONTEXT.md
-  - README.md
   - docs/agent-dev/check-engine-contract-matrix.md
   - diff --git "a/docs/analysis/\345\233\233\347\273\264\345\272\246\346\267\261\345\272\246\345\210\206\346\236\220.md" "b/docs/analysis/\345\233\233\347\273\264\345\272\246\346\267\261\345\272\246\345\210\206\346\236\220.md"
   - tools/scripts/adg_cli/commands/cmd/cmd_check.py

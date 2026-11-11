@@ -177,11 +177,8 @@ author: Jcode
 # 检查所有文档是否有元数据
 python tools/scripts/check_metadata.py
 
-# 检查元数据格式
-python tools/scripts/validate_metadata.py
-
-# 生成元数据报告
-python tools/scripts/metadata_report.py
+# 批量补全缺失的元数据
+python tools/scripts/fix_metadata.py
 ```
 
 ---

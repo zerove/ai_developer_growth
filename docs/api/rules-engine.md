@@ -199,7 +199,7 @@ Rules are defined in YAML files under `tools/scripts/rules/`:
 ## Example: Custom Rule
 
 ```yaml
-# tools/scripts/rules/custom.yaml
+# .adg/rules.yml
 rules:
   - id: no-print-statements
     pattern: "print\\("

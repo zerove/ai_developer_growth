@@ -31,10 +31,11 @@ def _language_rule(rule_id: str, pattern: str, supersedes: list[str] | None = No
 
 
 def test_real_rules_have_no_collisions() -> None:
-    report = build_report()
+    report = build_report(strict=True)
     assert report["duplicate_ids"] == {}
     assert report["unresolved_pattern_overlaps"] == []
     assert report.get("invalid_ids", []) == []
+    assert report.get("prefix_violations", []) == []
 
 
 def test_detects_duplicate_rule_id(tmp_path: Path) -> None:
@@ -105,3 +106,25 @@ def test_detects_invalid_rule_ids(tmp_path: Path) -> None:
     reasons = [item["reason"] for item in report["invalid_ids"]]
     assert reasons == ["missing-or-empty-id", "whitespace-in-id", "missing-or-empty-id"]
     assert main(["--root", str(tmp_path)]) == 1
+
+
+def test_strict_detects_prefix_violations(tmp_path: Path) -> None:
+    _write_rules(
+        tmp_path / "languages" / "python" / "rules.d" / "anti_patterns.yml",
+        [_language_rule("bad-prefix", "x")],
+    )
+
+    report = build_report(tmp_path, strict=False)
+    assert report.get("prefix_violations", []) == []
+
+    strict_report = build_report(tmp_path, strict=True)
+    assert strict_report["prefix_violations"] == [
+        {
+            "source": "python",
+            "file": str(tmp_path / "languages" / "python" / "rules.d" / "anti_patterns.yml"),
+            "rule_id": "bad-prefix",
+            "expected_prefix": "py-",
+        }
+    ]
+    assert main(["--root", str(tmp_path), "--strict"]) == 1
+    assert main(["--root", str(tmp_path)]) == 0

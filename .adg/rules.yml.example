@@ -14,6 +14,11 @@ config_version: '1.0'
 
 # custom_rules 为规范键 (marketplace 安装规则包时写入此键);
 # anti_patterns 作为历史别名被所有读取路径继续接受 (二者等价)。
+#
+# 规则 ID 约定（推荐）：
+# - 使用稳定、可读的 ASCII 标识符，避免空白字符
+# - 推荐小写命名：如 sec-001 / py-no-print / my-rule:subrule
+# - 兼容历史项目规则；如需严格校验可设置 ADG_STRICT_CUSTOM_RULE_IDS=1（adg check）
 custom_rules:
   # Add project-specific rules
   - id: my-no-print

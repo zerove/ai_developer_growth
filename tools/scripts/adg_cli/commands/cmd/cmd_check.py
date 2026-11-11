@@ -79,13 +79,17 @@ def _handle_post_check_actions(all_issues: list[Issue], target: Path, language: 
 # 语义契约: 禁用必须走 enabled, 而非把 severity 设成未知值 ——
 # 未知 severity 在 _severity_rank 中只映射为 rank-3, 规则仍会执行与展示。
 _RULE_DISABLE_VALUES = {"off", "ignore", "disabled"}
+_CUSTOM_RULE_ID_RECOMMENDED_RE = __import__("re").compile(r"[a-z0-9]+(?:[-_:.][a-z0-9]+)*")
 
 
-def _normalize_custom_rule(rule: object, language: str) -> dict[str, object] | None:
-    """校验并净化单条 custom rule；无效或不适用时返回 None。"""
-    if not isinstance(rule, dict):
-        return None
-    raw_id = rule.get("id")
+def _strict_custom_rule_ids_enabled() -> bool:
+    import os
+
+    value = os.getenv("ADG_STRICT_CUSTOM_RULE_IDS", "").strip().lower()
+    return value in {"1", "true", "yes", "on", "strict"}
+
+
+def _validate_custom_rule_id(raw_id: object) -> str | None:
     rule_id = raw_id.strip() if isinstance(raw_id, str) else ""
     if not rule_id or any(ch.isspace() for ch in rule_id):
         print(
@@ -93,9 +97,17 @@ def _normalize_custom_rule(rule: object, language: str) -> dict[str, object] | N
             file=sys.stderr,
         )
         return None
-    rule_lang = str(rule.get("language") or "").strip().lower()
-    if rule_lang and rule_lang != language.strip().lower():
+    if _strict_custom_rule_ids_enabled() and not _CUSTOM_RULE_ID_RECOMMENDED_RE.fullmatch(rule_id):
+        print(
+            "Warning: Skipping custom rule with non-conforming id "
+            f"({raw_id!r}); strict mode requires lowercase ids like 'sec-001' or 'my-rule:id'",
+            file=sys.stderr,
+        )
         return None
+    return rule_id
+
+
+def _sanitize_custom_rule_patterns(rule: dict[str, object], rule_id: str) -> dict[str, object] | None:
     # ReDoS/危险 pattern 防护：与 rule_loader._drop_dangerous_patterns 同策略
     import re
 
@@ -109,23 +121,33 @@ def _normalize_custom_rule(rule: object, language: str) -> dict[str, object] | N
         try:
             re.compile(pattern)
         except re.error:
-            print(
-                f"Warning: Skipping custom rule {rule_id!r} with invalid regex pattern",
-                file=sys.stderr,
-            )
+            print(f"Warning: Skipping custom rule {rule_id!r} with invalid regex pattern", file=sys.stderr)
             return None
     normalized: dict[str, object] = rule
     if isinstance(exclude_pattern, str):
-        if guard_pattern(exclude_pattern, f"adg_cli/custom_rules#{rule_id}#exclude"):
-            normalized = {**rule}
-            normalized.pop("exclude_pattern", None)
-        else:
+        drop_exclude = guard_pattern(exclude_pattern, f"adg_cli/custom_rules#{rule_id}#exclude")
+        if not drop_exclude:
             try:
                 re.compile(exclude_pattern)
             except re.error:
-                normalized = {**rule}
-                normalized.pop("exclude_pattern", None)
+                drop_exclude = True
+        if drop_exclude:
+            normalized = {**rule}
+            normalized.pop("exclude_pattern", None)
     return normalized
+
+
+def _normalize_custom_rule(rule: object, language: str) -> dict[str, object] | None:
+    """校验并净化单条 custom rule；无效或不适用时返回 None。"""
+    if not isinstance(rule, dict):
+        return None
+    rule_id = _validate_custom_rule_id(rule.get("id"))
+    if rule_id is None:
+        return None
+    rule_lang = str(rule.get("language") or "").strip().lower()
+    if rule_lang and rule_lang != language.strip().lower():
+        return None
+    return _sanitize_custom_rule_patterns(rule, rule_id)
 
 
 def _apply_severity_overrides(rules: dict[str, object], project_config: dict[str, object]) -> None:

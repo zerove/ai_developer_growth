@@ -267,6 +267,26 @@ class TestLanguageFilter:
         bad_exclude = next(r for r in rules["anti_patterns"] if r.get("id") == "bad-exclude-pattern")
         assert "exclude_pattern" not in bad_exclude
 
+    def test_strict_custom_rule_ids_are_optional(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        config = {
+            "custom_rules": [
+                {"id": "sec-001", "pattern": "TODO", "message": "ok", "severity": "warning"},
+                {"id": "My.Bad", "pattern": "TODO", "message": "bad", "severity": "warning"},
+            ],
+            "severity_overrides": {},
+        }
+        monkeypatch.delenv("ADG_STRICT_CUSTOM_RULE_IDS", raising=False)
+        rules = _load_and_merge_rules("python", None, config)
+        ids = {r.get("id") for r in rules["anti_patterns"]}
+        assert "sec-001" in ids
+        assert "My.Bad" in ids
+
+        monkeypatch.setenv("ADG_STRICT_CUSTOM_RULE_IDS", "1")
+        strict_rules = _load_and_merge_rules("python", None, config)
+        strict_ids = {r.get("id") for r in strict_rules["anti_patterns"]}
+        assert "sec-001" in strict_ids
+        assert "My.Bad" not in strict_ids
+
 
 class TestOffDisablesRule:
     def _os_system_config(self, overrides: dict[str, str]) -> dict[str, Any]:

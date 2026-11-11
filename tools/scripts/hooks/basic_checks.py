@@ -9,6 +9,7 @@ import sys
 from pathlib import Path
 from typing import TYPE_CHECKING
 
+from tools.scripts._common import ruff_command
 from tools.scripts.secret_scanner import scan_secrets
 
 logger = logging.getLogger(__name__)
@@ -101,15 +102,13 @@ def _run_subprocess(
 
 def run_lint(fix: bool = False) -> tuple[bool, str]:
     """Run ruff lint check;fix=True 时原地改写。"""
-    cmd = ["ruff", "check", "."]
-    if fix:
-        cmd.append("--fix")
+    cmd = ruff_command("check", "--fix", ".") if fix else ruff_command("check", ".")
     return _run_subprocess(cmd, timeout=120, description="Lint")
 
 
 def run_format_check(fix: bool = False) -> tuple[bool, str]:
     """Run ruff format check;fix=True 时原地改写 (不是校验, 是应用)。"""
-    cmd = ["ruff", "format", "." if fix else "--check", "."]
+    cmd = ruff_command("format", "." if fix else "--check", ".")
     return _run_subprocess(cmd, timeout=120, description="Format")
 
 
@@ -400,14 +399,14 @@ def run_lint_files(paths: list[str]) -> tuple[bool, str]:
     """Run ruff lint on specific files."""
     if not paths:
         return True, "No Python files to lint"
-    return _run_subprocess(["ruff", "check", *paths], timeout=60, description="Lint")
+    return _run_subprocess(ruff_command("check", *paths), timeout=60, description="Lint")
 
 
 def run_format_files(paths: list[str]) -> tuple[bool, str]:
     """Run ruff format check on specific files."""
     if not paths:
         return True, "No Python files to format-check"
-    return _run_subprocess(["ruff", "format", "--check", *paths], timeout=60, description="Format")
+    return _run_subprocess(ruff_command("format", "--check", *paths), timeout=60, description="Format")
 
 
 # Registry of all basic check functions for discovery

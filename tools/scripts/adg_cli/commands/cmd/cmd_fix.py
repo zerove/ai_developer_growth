@@ -165,8 +165,10 @@ def _orchestrate_target(
         import subprocess
 
         try:
+            from tools.scripts._common import ruff_command
+
             proc = subprocess.run(
-                ["ruff", "check", "--fix", "--exit-zero", str(target)],
+                ruff_command("check", "--fix", "--exit-zero", str(target)),
                 capture_output=True,
                 text=True,
                 timeout=60,
@@ -186,8 +188,10 @@ def _run_ruff_directory(target: Path) -> dict[str, Any]:
     import subprocess
 
     try:
+        from tools.scripts._common import ruff_command
+
         proc = subprocess.run(
-            ["ruff", "check", "--fix", "--exit-zero", str(target)],
+            ruff_command("check", "--fix", "--exit-zero", str(target)),
             capture_output=True,
             text=True,
             timeout=300,
@@ -291,8 +295,10 @@ def _smart_scan_ruff_issues(files: list[Path]) -> tuple[list[CheckResultLike], i
     scan_errors = 0
     for f in files:
         try:
+            from tools.scripts._common import ruff_command
+
             proc = subprocess.run(
-                ["ruff", "check", "--output-format=concise", str(f)],
+                ruff_command("check", "--output-format=concise", str(f)),
                 capture_output=True,
                 text=True,
                 timeout=60,

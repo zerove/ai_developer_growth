@@ -13,6 +13,7 @@ from __future__ import annotations
 
 import logging
 import subprocess
+import sys
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from enum import Enum
@@ -705,7 +706,7 @@ class RuffFixProvider(ToolBasedFixProvider):
     """Ruff 修复提供者 (格式化、导入排序、安全重构)"""
 
     def __init__(self) -> None:
-        super().__init__("ruff", FixSafetyLevel.SAFE, ["ruff", "check", "--fix"])
+        super().__init__("ruff", FixSafetyLevel.SAFE, [sys.executable, "-m", "ruff", "check", "--fix"])
 
     def generate_fixes(
         self,

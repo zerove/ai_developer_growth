@@ -127,7 +127,7 @@ class TestRunLint:
         assert passed is True
         assert output == "lint output"
         mock_run.assert_called_once_with(
-            ["ruff", "check", "."],
+            __import__("sys").executable and [__import__("sys").executable, "-m", "ruff", "check", "."],
             timeout=120,
             description="Lint",
         )
@@ -144,7 +144,7 @@ class TestRunFormatCheck:
         assert passed is True
         assert output == "format output"
         mock_run.assert_called_once_with(
-            ["ruff", "format", "--check", "."],
+            [__import__("sys").executable, "-m", "ruff", "format", "--check", "."],
             timeout=120,
             description="Format",
         )
@@ -249,7 +249,7 @@ class TestRunLintFiles:
         passed, output = run_lint_files(paths)
         assert passed is True
         mock_run.assert_called_once_with(
-            ["ruff", "check", "src/file1.py", "src/file2.py"],
+            [__import__("sys").executable, "-m", "ruff", "check", "src/file1.py", "src/file2.py"],
             timeout=60,
             description="Lint",
         )
@@ -274,7 +274,7 @@ class TestRunFormatFiles:
         passed, output = run_format_files(paths)
         assert passed is True
         mock_run.assert_called_once_with(
-            ["ruff", "format", "--check", "src/file1.py", "src/file2.py"],
+            [__import__("sys").executable, "-m", "ruff", "format", "--check", "src/file1.py", "src/file2.py"],
             timeout=60,
             description="Format",
         )

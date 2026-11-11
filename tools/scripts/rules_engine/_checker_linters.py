@@ -6,14 +6,14 @@ from collections.abc import Iterator, Sequence
 from contextlib import contextmanager
 from pathlib import Path
 
-from tools.scripts._common import run_command
+from tools.scripts._common import ruff_command, run_command
 from tools.scripts.rules_engine.logger import logger
 
 from ._checker_markers import _detect_language
 from .models import Issue
 
 _LINTER_ARGS = {
-    "python": ["ruff", "check", "--output-format=json"],
+    "python": ruff_command("check", "--output-format=json"),
     "javascript": ["eslint", "--format=json"],
     "typescript": ["eslint", "--format=json"],
 }

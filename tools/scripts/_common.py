@@ -46,6 +46,16 @@ if TYPE_CHECKING:
 # ----------------------------------------------------------
 
 
+def ruff_command(*args: str) -> list[str]:
+    """以项目解释器前台调用 ruff（`python -m ruff ...`).
+
+    本地门禁必须走 `.venv/bin/python`（3.11，ruff==0.15.17 锁定），
+    裸 `ruff` 会走 PATH 解析——可能命中 mise 安装的 0.16.x，导致 lint/format
+    与 CI（已锁定 0.15.17）结果漂移。
+    """
+    return [sys.executable, "-m", "ruff", *args]
+
+
 def get_project_root() -> Path:
     """Get project root directory (works from tools/scripts/ or .jcode/scripts/)."""
     return Path(__file__).parent.parent.parent

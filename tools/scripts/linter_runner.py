@@ -11,6 +11,8 @@ import subprocess
 from pathlib import Path
 from typing import Any
 
+from tools.scripts._common import ruff_command
+
 
 def _unavailable(linter: str, dirpath: Path, reason: str) -> list[dict[str, Any]]:
     """把「没能拿到可信结果」变成一条显式 error。
@@ -63,7 +65,7 @@ def _run_ruff(dirpath: Path) -> list[dict[str, Any]]:
     issues: list[dict[str, Any]] = []
     try:
         result = subprocess.run(
-            ["ruff", "check", "--output-format=json", str(dirpath)],
+            ruff_command("check", "--output-format=json", str(dirpath)),
             capture_output=True,
             text=True,
             timeout=60,

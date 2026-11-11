@@ -9,6 +9,7 @@ from __future__ import annotations
 import argparse
 import logging
 import subprocess
+import sys
 from collections.abc import Callable
 from pathlib import Path
 
@@ -132,7 +133,9 @@ def _tool_available(language: Language, tool: ToolConfig) -> str | None:
     """检查工具是否可用, 返回错误消息或 None。"""
     try:
         version_result: subprocess.CompletedProcess[str] = subprocess.run(
-            [tool.command, tool.version_flag],
+            [sys.executable, "-m", "ruff", "--version"]
+            if tool.command == "ruff"
+            else [tool.command, tool.version_flag],
             capture_output=True,
             text=True,
             timeout=5,
@@ -146,7 +149,8 @@ def _tool_available(language: Language, tool: ToolConfig) -> str | None:
 
 def _build_tool_command(tool: ToolConfig, fix: bool, check_only: bool) -> list[str]:
     """按 fix/check_only 模式构建工具命令行。"""
-    cmd = [tool.command]
+    # ruff 统一走 `python -m ruff`（项目 venv 解释器），避免 PATH 解析到 mise 的 0.16
+    cmd: list[str] = [sys.executable, "-m", "ruff"] if tool.command == "ruff" else [tool.command]
     if fix and tool.fix_args:
         cmd.extend(tool.fix_args)
     elif check_only and tool.check_args:

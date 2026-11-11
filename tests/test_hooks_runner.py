@@ -54,7 +54,7 @@ class TestRunLint(unittest.TestCase):
         self.assertIn("All checks passed", output)
         mock_run.assert_called_once()
         args = mock_run.call_args[0][0]
-        self.assertEqual(args[0], "ruff")
+        self.assertIn("ruff", args)
         self.assertIn("check", args)
 
     @patch("tools.scripts.hooks.basic_checks.subprocess.run")

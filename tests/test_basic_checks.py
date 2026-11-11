@@ -97,7 +97,9 @@ class TestRunLint:
         passed, _ = run_lint()
         assert passed is True
         args = mock_sub.call_args
-        assert args[0][0] == ["ruff", "check", "."]
+        cmd = args[0][0]
+        assert cmd[-2:] == ["check", "."] or (cmd[-1] == "." and "check" in cmd)
+        assert "-m" in cmd and "ruff" in cmd
 
     @patch("tools.scripts.hooks.basic_checks._run_subprocess")
     def test_run_format_check(self, mock_sub: MagicMock) -> None:

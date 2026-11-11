@@ -89,7 +89,7 @@
 # 从硬编码配置迁移到环境变量
 config = {
     "api_key": "secret123",  # ❌ 不安全
-    "webhook_secret": "webhook456"  # ❌ 不安全
+    "webhook_secret": "webhook456",  # ❌ 不安全
 }
 
 # 迁移后:

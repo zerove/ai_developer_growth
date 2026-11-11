@@ -429,7 +429,7 @@ def _doctor_check_toolchain(checks: list[tuple[bool, str, bool]]) -> None:
     监控工具误报会使人开始忽略它，比不监控更糟。
     """
     tools_to_check: list[tuple[list[str], str, bool, str]] = [
-        (["ruff", "--version"], "ruff", True, "pip install ruff"),
+        ([sys.executable, "-m", "ruff", "--version"], "ruff", True, "pip install ruff"),
         ([sys.executable, "-m", "mypy", "--version"], "mypy", True, "pip install mypy"),
         ([sys.executable, "-m", "pytest", "--version"], "pytest", True, "pip install pytest"),
         (["bandit", "--version"], "bandit", True, "pip install bandit"),

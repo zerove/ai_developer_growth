@@ -224,3 +224,20 @@ class TestRuleLoaderIngestGate:
             "naming": {"python": "not-a-dict"},
         }
         assert _drop_dangerous_patterns(weird) is weird
+
+    def test_invalid_rule_ids_are_dropped(self) -> None:
+        """无效规则 ID（缺失/空/空白/含空白）应在载入净化阶段丢弃。"""
+        from tools.scripts.rules_engine.rule_loader import _drop_dangerous_patterns
+
+        rules = {
+            "anti_patterns": [
+                {"id": "", "pattern": "TODO", "message": "x"},
+                {"id": "   ", "pattern": "TODO", "message": "x"},
+                {"id": "bad id", "pattern": "TODO", "message": "x"},
+                {"pattern": "TODO", "message": "x"},
+                {"id": "ok-id", "pattern": "TODO", "message": "x"},
+            ]
+        }
+        out = _drop_dangerous_patterns(rules)
+        ids = [r.get("id") for r in out["anti_patterns"] if isinstance(r, dict)]
+        assert ids == ["ok-id"]

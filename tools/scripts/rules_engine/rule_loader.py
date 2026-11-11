@@ -66,8 +66,22 @@ def _pattern_is_dangerous(pattern: object, origin: str) -> bool:
     return True
 
 
+def _has_invalid_rule_id(item: dict[str, Any]) -> bool:
+    """规则 ID 缺失/为空/含空白时视为无效。"""
+    raw_id = item.get("id")
+    if not isinstance(raw_id, str):
+        rule_id = str(raw_id) if raw_id is not None else ""
+        valid = bool(rule_id.strip()) and not any(ch.isspace() for ch in rule_id)
+    else:
+        valid = bool(raw_id.strip()) and not any(ch.isspace() for ch in raw_id)
+    if valid:
+        return False
+    logger.warning(f"丢弃无效规则 ID 的 custom rule: id={raw_id!r}")
+    return True
+
+
 def _drop_dangerous_patterns(rules: dict[str, Any]) -> dict[str, Any]:
-    """**就地删除**危险规则并返回同一对象。
+    """**就地删除**危险/无效规则并返回同一对象。
 
     必须真删而不是打标记: 下游是 `re.search(item["pattern"], ...)` 逐条执行,
     仅打标记的话危险 pattern 照常被执行, 闸门形同虚设。
@@ -78,6 +92,8 @@ def _drop_dangerous_patterns(rules: dict[str, Any]) -> dict[str, Any]:
         for item in anti_patterns:
             if not isinstance(item, dict):
                 kept.append(item)
+                continue
+            if _has_invalid_rule_id(item):
                 continue
             rule_id = item.get("id", "?")
             if _pattern_is_dangerous(item.get("pattern"), f"anti_patterns#{rule_id}") or (

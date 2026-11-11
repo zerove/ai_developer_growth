@@ -24,7 +24,7 @@
 
 默认仅校验“非空且不含空白”。如需更严格的命名治理，可启用严格模式：
 
-- **环境变量**：`ADG_STRICT_CUSTOM_RULE_IDS=1`（支持 `1|true|yes|on|strict`）
+- **环境变量**：`ADG_STRICT_CUSTOM_RULE_IDS=1`（支持 `1|true|yes|on|strict`，对 `adg check` 与共享规则加载/净化路径生效）
 - **项目配置**（`adg check` 路径）：在 `.adg/rules.yml` 顶层设置 `strict_custom_rule_ids: true`
 
 严格模式行为（当前实现）：

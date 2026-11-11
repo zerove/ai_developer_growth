@@ -7,6 +7,7 @@ import fcntl
 import hashlib
 import json
 import os
+import re
 import sys
 import tempfile
 from collections.abc import Iterator
@@ -80,18 +81,31 @@ def _pattern_is_invalid(pattern: object, origin: str) -> bool:
     return False
 
 
+_CUSTOM_RULE_ID_RECOMMENDED_RE = re.compile(r"[a-z0-9]+(?:[-_:.][a-z0-9]+)*")
+
+
+def _strict_custom_rule_ids_enabled() -> bool:
+    value = os.getenv("ADG_STRICT_CUSTOM_RULE_IDS", "").strip().lower()
+    return value in {"1", "true", "yes", "on", "strict"}
+
+
 def _has_invalid_rule_id(item: dict[str, Any]) -> bool:
-    """规则 ID 缺失/为空/含空白时视为无效。"""
+    """规则 ID 缺失/为空/含空白时视为无效；严格模式下不符合推荐格式也视为无效。"""
     raw_id = item.get("id")
     if not isinstance(raw_id, str):
         rule_id = str(raw_id) if raw_id is not None else ""
         valid = bool(rule_id.strip()) and not any(ch.isspace() for ch in rule_id)
+        normalized_id = rule_id.strip()
     else:
-        valid = bool(raw_id.strip()) and not any(ch.isspace() for ch in raw_id)
-    if valid:
-        return False
-    logger.warning(f"丢弃无效规则 ID 的 custom rule: id={raw_id!r}")
-    return True
+        normalized_id = raw_id.strip()
+        valid = bool(normalized_id) and not any(ch.isspace() for ch in raw_id)
+    if not valid:
+        logger.warning(f"丢弃无效规则 ID 的 custom rule: id={raw_id!r}")
+        return True
+    if _strict_custom_rule_ids_enabled() and not _CUSTOM_RULE_ID_RECOMMENDED_RE.fullmatch(normalized_id):
+        logger.warning(f"丢弃不符合严格命名约定的 custom rule: id={raw_id!r}")
+        return True
+    return False
 
 
 def _drop_dangerous_patterns(rules: dict[str, Any]) -> dict[str, Any]:

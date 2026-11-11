@@ -279,6 +279,13 @@ def load_custom_rules(project_dir: Path) -> dict[str, Any]:
 
             print(f"Warning: Failed to load {rule_file}: {e}", file=_sys.stderr)
 
+    # 与 rules_engine.rule_loader 一致：加载后丢弃危险/灾难性回溯 pattern
+    try:
+        from tools.scripts.rules_engine.rule_loader import _drop_dangerous_patterns
+
+        _drop_dangerous_patterns(custom)
+    except Exception:
+        pass
     return custom
 
 

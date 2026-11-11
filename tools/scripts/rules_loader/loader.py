@@ -57,6 +57,13 @@ def load_custom_rules(project_dir: Path) -> dict[str, Any]:
         except Exception as e:
             print(f"Warning: Failed to load {yml_file}: {e}", file=sys.stderr)
 
+    if merged:
+        try:
+            from tools.scripts.rules_engine.rule_loader import _drop_dangerous_patterns
+
+            _drop_dangerous_patterns(merged)
+        except Exception:
+            pass
     return merged
 
 

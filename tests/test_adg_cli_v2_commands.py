@@ -115,6 +115,36 @@ class TestCmdDetect:
             result = cmd_detect(args)
         assert result == 0
 
+    def test_check_unsupported_notify_warns(self, tmp_path: Path, capsys: pytest.CaptureFixture[str]) -> None:
+        f = tmp_path / "test.py"
+        f.write_text("x = 1\n")
+        args = argparse.Namespace(
+            path=str(f),
+            lang="python",
+            severity=None,
+            json=True,
+            format="json",
+            notify="foo://bar",
+            project=".",
+            trend=False,
+            with_docs=False,
+            complexity=False,
+            exclude=None,
+            exclude_tests=False,
+            since=None,
+            staged=False,
+            unstaged=False,
+            framework=None,
+            jobs=1,
+            sarif=False,
+        )
+        with patch("tools.scripts.adg_cli.commands.cmd.cmd_check.load_rules_for_language") as mock:
+            mock.return_value = {"anti_patterns": []}
+            result = cmd_check(args)
+        assert result == 0
+        captured = capsys.readouterr()
+        assert "Unsupported --notify scheme" in captured.err
+
 
 class TestCmdListRules:
     def test_list_python_rules(self) -> None:

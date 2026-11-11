@@ -266,3 +266,27 @@ class TestRuleLoaderIngestGate:
         assert "exclude_pattern" not in bad_exclude
         assert "bad" not in out["naming"]["python"]
         assert "good" in out["naming"]["python"]
+
+    def test_strict_custom_rule_ids_are_optional_in_shared_loader(self, monkeypatch: Any) -> None:
+        """共享规则净化路径在 env 严格模式下可选过滤不合规 ID。"""
+        from tools.scripts.rules_engine.rule_loader import _drop_dangerous_patterns
+
+        rules = {
+            "anti_patterns": [
+                {"id": "sec-001", "pattern": "TODO", "message": "x"},
+                {"id": "My.Bad", "pattern": "TODO", "message": "x"},
+            ]
+        }
+        monkeypatch.delenv("ADG_STRICT_CUSTOM_RULE_IDS", raising=False)
+        out = _drop_dangerous_patterns(rules)
+        assert [r.get("id") for r in out["anti_patterns"]] == ["sec-001", "My.Bad"]
+
+        rules2 = {
+            "anti_patterns": [
+                {"id": "sec-001", "pattern": "TODO", "message": "x"},
+                {"id": "My.Bad", "pattern": "TODO", "message": "x"},
+            ]
+        }
+        monkeypatch.setenv("ADG_STRICT_CUSTOM_RULE_IDS", "1")
+        out2 = _drop_dangerous_patterns(rules2)
+        assert [r.get("id") for r in out2["anti_patterns"]] == ["sec-001"]

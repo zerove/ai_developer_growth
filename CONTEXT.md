@@ -292,6 +292,27 @@ AI 时代开发者成长知识库 + 治理框架（knowledge base + governance f
 
 ---
 
+## 更新记录: 2026-11-11 13:46:56
+
+### 任务
+Git 变更同步
+
+### 变更摘要
+- 变更文件 13 个 (+58 / -36 行)
+  - CONTEXT.md
+  - scripts/optimization/IMPLEMENTATION_SUMMARY.md
+  - tests/test_basic_checks.py
+  - tests/test_basic_checks_full.py
+  - tests/test_hooks_runner.py
+  - tools/scripts/_common.py
+  - tools/scripts/adg_cli/commands/cmd/cmd_fix.py
+  - tools/scripts/auto_fix.py
+  - tools/scripts/hooks/basic_checks.py
+  - tools/scripts/hooks/tool_runner.py
+  - tools/scripts/hooks_runner.py
+  - tools/scripts/linter_runner.py
+  - tools/scripts/rules_engine/_checker_linters.py
+
 ## 更新记录: 2026-11-10 03:04:11
 
 ### 任务
@@ -337,15 +358,6 @@ Git 变更同步
 
 ### 变更摘要
 - 变更文件 1 个 (+18 / -51 行)
-  - CONTEXT.md
-
-## 更新记录: 2026-11-08 20:02:15
-
-### 任务
-Git 变更同步
-
-### 变更摘要
-- 变更文件 1 个 (+17 / -37 行)
   - CONTEXT.md
 
 <!-- 滚动窗口: 已自动裁剪 1 条旧更新记录 -->

@@ -9,6 +9,7 @@
 from __future__ import annotations
 
 import importlib
+from collections.abc import Callable
 from typing import Any
 
 _LAZY: dict[str, tuple[str, str]] = {
@@ -62,8 +63,19 @@ def __getattr__(name: str) -> Any:
     return value
 
 
+def get_command_handler(command: str) -> Callable[..., Any]:
+    """按子命令名解析 handler（'html-report' → cmd_html_report 函数）。
+
+    `adg` CLI 的 dispatch 唯一入口：所有子命令统一经由此函数取 handler，
+    禁止在 dispatch 处散落各自的子命令字符串解析逻辑。
+    """
+    normalized = command.replace("-", "_")
+    module_name, attribute = _LAZY[f"cmd_{normalized}"]
+    return getattr(importlib.import_module(module_name), attribute)
+
+
 def __dir__() -> list[str]:
     return sorted(__all__)
 
 
-__all__ = sorted(_LAZY)
+__all__ = sorted([*list(_LAZY), "get_command_handler"])

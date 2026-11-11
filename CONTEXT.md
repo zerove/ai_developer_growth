@@ -292,6 +292,27 @@ AI 时代开发者成长知识库 + 治理框架（knowledge base + governance f
 
 ---
 
+## 更新记录: 2026-11-12 07:51:18
+
+### 任务
+Git 变更同步
+
+### 变更摘要
+- 变更文件 13 个 (+412 / -59 行)
+  - .github/workflows/docs-governance.yml
+  - .github/workflows/scheduled-governance.yml
+  - CONTEXT.md
+  - diff --git "a/docs/analysis/\345\233\233\347\273\264\345\272\246\346\267\261\345\272\246\345\210\206\346\236\220.md" "b/docs/analysis/\345\233\233\347\273\264\345\272\246\346\267\261\345\272\246\345\210\206\346\236\220.md"
+  - docs/api/cli.md
+  - docs/api/rules-engine.md
+  - docs/governance/context-maintenance.md
+  - docs/specs/metadata-spec.md
+  - tests/test_check_doc_code_refs.py
+  - tools/scripts/adg_cli/__init__.py
+  - tools/scripts/adg_cli/commands/__init__.py
+  - tools/scripts/adg_cli/parser.py
+  - tools/scripts/check_doc_code_refs.py
+
 ## 更新记录: 2026-11-12 07:31:25
 
 ### 任务
@@ -381,19 +402,5 @@ Git 变更同步
   - README.md
   - tests/test_gate_hardening.py
   - tools/scripts/hooks/basic_checks.py
-
-## 更新记录: 2026-11-09 13:28:55
-
-### 任务
-Git 变更同步
-
-### 变更摘要
-- 变更文件 6 个 (+68 / -69 行)
-  - CONTEXT.md
-  - README.md
-  - ai-dev-framework/tests/test_redos_gate.py
-  - docs/agent-dev/check-engine-contract-matrix.md
-  - diff --git "a/docs/analysis/\345\233\233\347\273\264\345\272\246\346\267\261\345\272\246\345\210\206\346\236\220.md" "b/docs/analysis/\345\233\233\347\273\264\345\272\246\346\267\261\345\272\246\345\210\206\346\236\220.md"
-  - tools/scripts/adg_cli/commands/cmd/cmd_check.py
 
 <!-- 滚动窗口: 已自动裁剪 1 条旧更新记录 -->

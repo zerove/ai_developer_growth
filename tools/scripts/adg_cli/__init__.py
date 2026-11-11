@@ -127,9 +127,9 @@ def main() -> int:
     if not args.command:
         parser.print_help()
         return 0
-    attribute = f"cmd_{args.command.replace('-', '_')}"
-    module_name = f"tools.scripts.adg_cli.commands.cmd.cmd_{args.command.replace('-', '_')}"
-    command = getattr(importlib.import_module(module_name), attribute)
+    from tools.scripts.adg_cli.commands import get_command_handler
+
+    command = get_command_handler(args.command)
     return int(command(args))
 
 

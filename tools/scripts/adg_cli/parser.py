@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import argparse
+from collections.abc import Callable
 from typing import Any
 
 
@@ -260,17 +261,31 @@ def _add_pattern_learner_parser(sub: argparse._SubParsersAction[Any]) -> None:
     )
 
 
-def _add_new_commands(sub: argparse._SubParsersAction[Any]) -> None:
-    """Add new commands: HTML report, recommend, dashboard, marketplace, monorepo, bench, cicd, pattern-learner."""
-    _add_html_report_parser(sub)
-    _add_recommend_parser(sub)
-    _add_lsp_parser(sub)
-    _add_dashboard_parser(sub)
-    _add_marketplace_parser(sub)
-    _add_monorepo_parser(sub)
-    _add_bench_parser(sub)
-    _add_cicd_parser(sub)
-    _add_pattern_learner_parser(sub)
+_CommandSpec = tuple[str, Callable[..., None]]
+
+
+# 子命令注册表：新增子命令只需在此登记（builder 签名固定），
+# `_build_parser` 据此统一装配，避免核心命令与新增命令散落在装配逻辑本体中。
+_COMMAND_BUILDERS: tuple[_CommandSpec, ...] = (
+    ("check", _add_base_check_parser),
+    ("detect", _add_detect_parser),
+    ("list-rules", _add_list_rules_parser),
+    ("install-hooks", _add_install_hooks_parser),
+    ("report", _add_report_parser),
+    ("fix", _add_fix_parser),
+    ("rule", _add_rule_parser),
+    ("trend", _add_trend_parser),
+    ("notify", _add_notify_parser),
+    ("html-report", _add_html_report_parser),
+    ("recommend", _add_recommend_parser),
+    ("lsp", _add_lsp_parser),
+    ("dashboard", _add_dashboard_parser),
+    ("marketplace", _add_marketplace_parser),
+    ("monorepo", _add_monorepo_parser),
+    ("bench", _add_bench_parser),
+    ("cicd", _add_cicd_parser),
+    ("pattern-learner", _add_pattern_learner_parser),
+)
 
 
 def _build_parser() -> argparse.ArgumentParser:
@@ -282,18 +297,7 @@ def _build_parser() -> argparse.ArgumentParser:
     )
     sub = parser.add_subparsers(dest="command")
 
-    # Core commands
-    _add_base_check_parser(sub)
-    _add_detect_parser(sub)
-    _add_list_rules_parser(sub)
-    _add_install_hooks_parser(sub)
-    _add_report_parser(sub)
-    _add_fix_parser(sub)
-    _add_rule_parser(sub)
-    _add_trend_parser(sub)
-    _add_notify_parser(sub)
-
-    # New commands
-    _add_new_commands(sub)
+    for command, builder in _COMMAND_BUILDERS:
+        builder(sub)
 
     return parser

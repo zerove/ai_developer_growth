@@ -155,9 +155,11 @@ class TestDependencyGraphBuild:
         issues = graph.analyze_directory(tmp_path, languages=["python"])
         assert issues == []
         assert graph.module_count >= 1
-        deps = graph._graph.get(str(pkg.relative_to(tmp_path) / "order.py") if False else "services/order.py", set())
-        # 小写开头的导入被追踪为本地依赖
-        assert any("billing" in d or "repo" in d for d in deps)
+        deps = graph._graph.get("services/order.py", set())
+        # 只保留能解析到树内模块的依赖: repositories 解析到其 __init__.py;
+        # services.billing 在树内不存在 (外部/未实现) → 不建边
+        assert "repositories/__init__.py" in deps
+        assert not any("billing" in d for d in deps)
 
     def test_stdlib_import_not_tracked(self, tmp_path: Path) -> None:
         (tmp_path / "app.py").write_text("import os\nimport sys\n", encoding="utf-8")
@@ -171,10 +173,12 @@ class TestDependencyGraphBuild:
         src = tmp_path / "src"
         src.mkdir()
         (src / "main.ts").write_text('import { helper } from "./helper";\n', encoding="utf-8")
+        (src / "helper.ts").write_text("export const helper = 1;\n", encoding="utf-8")
         graph = DependencyGraph()
         graph.analyze_directory(tmp_path, languages=["typescript"])
         deps = graph._graph.get("src/main.ts", set())
-        assert "./helper" in deps
+        # 相对 import 必须解析到树内真实文件 (旧实现原样保留 "./helper", 边指向不存在的节点)
+        assert "src/helper.ts" in deps
 
     def test_cycle_detection_direct_graph(self) -> None:
         # 真实建图时 import 名与文件节点 key(相对路径)不一致, cycle 实际不可达;

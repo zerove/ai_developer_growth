@@ -9,7 +9,7 @@ import typer
 
 from ...core import AIContextSync
 from ...logger import logger
-from .. import cli_error_handler
+from .._base import cli_error_handler
 
 app = typer.Typer()
 

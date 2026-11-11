@@ -6,7 +6,7 @@ import typer
 
 from ...core import AIContextSync
 from ...watcher import WatchManager
-from .. import cli_error_handler
+from .._base import cli_error_handler
 
 
 def _validate_file_path(path: str) -> bool:

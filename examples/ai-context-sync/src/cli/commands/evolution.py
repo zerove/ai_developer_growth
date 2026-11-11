@@ -3,7 +3,7 @@
 import typer
 
 from ...core import AIContextSync
-from .. import cli_error_handler
+from .._base import cli_error_handler
 
 
 @cli_error_handler

@@ -8,34 +8,19 @@ Commands are organized into separate modules under cli/commands/:
 - monitoring.py: watch, apply_fix commands
 - tools.py: scaffold, init, override, onboard, install_hook, report commands
 - flow.py: flow command
-"""
 
-import functools
-from typing import Any
+共享的 app 实例与错误处理装饰器放在 ``cli/_base.py``: 本模块要导入命令模块
+完成注册, 命令模块又要用错误处理装饰器, 若装饰器留在本模块就成环
+(``cli/__init__.py → cli/commands/*.py → cli/__init__.py``)。
+"""
 
 import typer
 
-from ..exceptions import AISyncError
-from ..logger import logger
+from ._base import cli_error_handler
 
 app = typer.Typer(help="AI-Context-Sync: Automate project context maintenance.")
 
-
-def cli_error_handler(func: Any) -> Any:
-    @functools.wraps(func)
-    def wrapper(*args: Any, **kwargs: Any) -> Any:
-        try:
-            return func(*args, **kwargs)
-        except typer.Exit:
-            raise  # 合法重抛 typer.Exit（透传退出信号）
-        except AISyncError as e:
-            logger.error(f"❌ {e}")
-            raise typer.Exit(code=1)
-        except Exception as e:
-            logger.exception(f"Unexpected error in {func.__name__}: {e}")
-            raise typer.Exit(code=1)
-
-    return wrapper
+__all__ = ["app", "cli_error_handler"]
 
 
 # Import command functions from modules (each module exports raw functions)

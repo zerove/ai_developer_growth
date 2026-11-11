@@ -97,16 +97,34 @@ def _normalize_custom_rule(rule: object, language: str) -> dict[str, object] | N
     if rule_lang and rule_lang != language.strip().lower():
         return None
     # ReDoS/危险 pattern 防护：与 rule_loader._drop_dangerous_patterns 同策略
+    import re
+
     from tools.scripts.rules_engine.regex_cache import guard_pattern
 
     pattern = rule.get("pattern")
     exclude_pattern = rule.get("exclude_pattern")
-    if isinstance(pattern, str) and guard_pattern(pattern, f"adg_cli/custom_rules#{rule_id}"):
-        return None
+    if isinstance(pattern, str):
+        if guard_pattern(pattern, f"adg_cli/custom_rules#{rule_id}"):
+            return None
+        try:
+            re.compile(pattern)
+        except re.error:
+            print(
+                f"Warning: Skipping custom rule {rule_id!r} with invalid regex pattern",
+                file=sys.stderr,
+            )
+            return None
     normalized: dict[str, object] = rule
-    if isinstance(exclude_pattern, str) and guard_pattern(exclude_pattern, f"adg_cli/custom_rules#{rule_id}#exclude"):
-        normalized = {**rule}
-        normalized.pop("exclude_pattern", None)
+    if isinstance(exclude_pattern, str):
+        if guard_pattern(exclude_pattern, f"adg_cli/custom_rules#{rule_id}#exclude"):
+            normalized = {**rule}
+            normalized.pop("exclude_pattern", None)
+        else:
+            try:
+                re.compile(exclude_pattern)
+            except re.error:
+                normalized = {**rule}
+                normalized.pop("exclude_pattern", None)
     return normalized
 
 

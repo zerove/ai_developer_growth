@@ -239,16 +239,36 @@ def _load_common_rules(framework_dir: Path) -> dict[str, Any]:
         return {}
 
 
+def _merge_custom_rule_file(rule_file: Path, custom: dict[str, Any]) -> None:
+    """Load and merge a single .ai-rules/*.yml file into custom rules dict."""
+    try:
+        import yaml
+
+        with open(rule_file) as f:
+            data = yaml.safe_load(f)
+        if not isinstance(data, dict):
+            return
+        # custom_rules (canonical) 与 anti_patterns (legacy) 同时接受并合并
+        custom["anti_patterns"].extend(list(data.get("anti_patterns") or []) + list(data.get("custom_rules") or []))
+        if "naming" in data:
+            custom["naming"].update(data["naming"])
+        if "thresholds" in data:
+            custom["thresholds"].update(data["thresholds"])
+    except Exception as e:
+        import sys as _sys
+
+        print(f"Warning: Failed to load {rule_file}: {e}", file=_sys.stderr)
+
+
 def load_custom_rules(project_dir: Path) -> dict[str, Any]:
     """Load custom rules from .ai-rules/*.yml in the project directory."""
     custom: dict[str, Any] = {"anti_patterns": [], "naming": {}, "thresholds": {}}
     rules_dir = project_dir / ".ai-rules"
-
     if not rules_dir.is_dir():
         return custom
 
     try:
-        import yaml
+        import yaml  # noqa: F401 - availability probe
     except ImportError:
         import sys as _sys
 
@@ -256,30 +276,8 @@ def load_custom_rules(project_dir: Path) -> dict[str, Any]:
         return custom
 
     for rule_file in sorted(rules_dir.glob("*.yml")):
-        try:
-            with open(rule_file) as f:
-                data = yaml.safe_load(f)
-            if not isinstance(data, dict):
-                continue
+        _merge_custom_rule_file(rule_file, custom)
 
-            # 与 rule_loader/_normalize_rules_keys 一致: custom_rules (canonical)
-            # 与 anti_patterns (legacy) 双 key 接受, 同时存在时按序合并
-            legacy = list(data.get("anti_patterns") or [])
-            canonical = list(data.get("custom_rules") or [])
-            custom["anti_patterns"].extend(legacy + canonical)
-
-            if "naming" in data:
-                custom["naming"].update(data["naming"])
-
-            if "thresholds" in data:
-                custom["thresholds"].update(data["thresholds"])
-
-        except Exception as e:
-            import sys as _sys
-
-            print(f"Warning: Failed to load {rule_file}: {e}", file=_sys.stderr)
-
-    # 与 rules_engine.rule_loader 一致：加载后丢弃危险/灾难性回溯 pattern
     try:
         from tools.scripts.rules_engine.rule_loader import _drop_dangerous_patterns
 

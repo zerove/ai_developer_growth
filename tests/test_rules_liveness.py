@@ -287,6 +287,13 @@ class TestLanguageFilter:
         assert "sec-001" in strict_ids
         assert "My.Bad" not in strict_ids
 
+        monkeypatch.delenv("ADG_STRICT_CUSTOM_RULE_IDS", raising=False)
+        cfg_strict = {**config, "strict_custom_rule_ids": True}
+        cfg_strict_rules = _load_and_merge_rules("python", None, cfg_strict)
+        cfg_strict_ids = {r.get("id") for r in cfg_strict_rules["anti_patterns"]}
+        assert "sec-001" in cfg_strict_ids
+        assert "My.Bad" not in cfg_strict_ids
+
 
 class TestOffDisablesRule:
     def _os_system_config(self, overrides: dict[str, str]) -> dict[str, Any]:

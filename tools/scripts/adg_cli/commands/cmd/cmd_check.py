@@ -82,14 +82,27 @@ _RULE_DISABLE_VALUES = {"off", "ignore", "disabled"}
 _CUSTOM_RULE_ID_RECOMMENDED_RE = __import__("re").compile(r"[a-z0-9]+(?:[-_:.][a-z0-9]+)*")
 
 
-def _strict_custom_rule_ids_enabled() -> bool:
+def _is_truthy_flag(value: object) -> bool:
+    if isinstance(value, bool):
+        return value
+    if isinstance(value, (int, float)):
+        return value == 1
+    if isinstance(value, str):
+        return value.strip().lower() in {"1", "true", "yes", "on", "strict"}
+    return False
+
+
+def _strict_custom_rule_ids_enabled(project_config: dict[str, object] | None = None) -> bool:
     import os
 
-    value = os.getenv("ADG_STRICT_CUSTOM_RULE_IDS", "").strip().lower()
-    return value in {"1", "true", "yes", "on", "strict"}
+    if _is_truthy_flag(os.getenv("ADG_STRICT_CUSTOM_RULE_IDS", "")):
+        return True
+    if isinstance(project_config, dict):
+        return _is_truthy_flag(project_config.get("strict_custom_rule_ids"))
+    return False
 
 
-def _validate_custom_rule_id(raw_id: object) -> str | None:
+def _validate_custom_rule_id(raw_id: object, *, strict: bool = False) -> str | None:
     rule_id = raw_id.strip() if isinstance(raw_id, str) else ""
     if not rule_id or any(ch.isspace() for ch in rule_id):
         print(
@@ -97,7 +110,7 @@ def _validate_custom_rule_id(raw_id: object) -> str | None:
             file=sys.stderr,
         )
         return None
-    if _strict_custom_rule_ids_enabled() and not _CUSTOM_RULE_ID_RECOMMENDED_RE.fullmatch(rule_id):
+    if strict and not _CUSTOM_RULE_ID_RECOMMENDED_RE.fullmatch(rule_id):
         print(
             "Warning: Skipping custom rule with non-conforming id "
             f"({raw_id!r}); strict mode requires lowercase ids like 'sec-001' or 'my-rule:id'",
@@ -137,11 +150,13 @@ def _sanitize_custom_rule_patterns(rule: dict[str, object], rule_id: str) -> dic
     return normalized
 
 
-def _normalize_custom_rule(rule: object, language: str) -> dict[str, object] | None:
+def _normalize_custom_rule(
+    rule: object, language: str, *, strict_custom_rule_ids: bool = False
+) -> dict[str, object] | None:
     """校验并净化单条 custom rule；无效或不适用时返回 None。"""
     if not isinstance(rule, dict):
         return None
-    rule_id = _validate_custom_rule_id(rule.get("id"))
+    rule_id = _validate_custom_rule_id(rule.get("id"), strict=strict_custom_rule_ids)
     if rule_id is None:
         return None
     rule_lang = str(rule.get("language") or "").strip().lower()
@@ -188,8 +203,9 @@ def _load_and_merge_rules(language: str, framework: str | None, project_config: 
     if isinstance(custom_rules, list):
         anti_patterns = rules.get("anti_patterns")
         if isinstance(anti_patterns, list):
+            strict_custom_rule_ids = _strict_custom_rule_ids_enabled(project_config)
             for rule in custom_rules:
-                normalized = _normalize_custom_rule(rule, language)
+                normalized = _normalize_custom_rule(rule, language, strict_custom_rule_ids=strict_custom_rule_ids)
                 if normalized is not None:
                     anti_patterns.append(normalized)
 

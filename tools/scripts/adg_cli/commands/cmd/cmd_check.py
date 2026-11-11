@@ -97,6 +97,19 @@ def _load_and_merge_rules(language: str, framework: str | None, project_config: 
         rule_lang = str(rule.get("language") or "").strip().lower()
         if rule_lang and rule_lang != language.strip().lower():
             continue
+        # ReDoS/危险 pattern 防护：与 rule_loader._drop_dangerous_patterns 同策略
+        from tools.scripts.rules_engine.regex_cache import guard_pattern
+
+        pattern = rule.get("pattern")
+        exclude_pattern = rule.get("exclude_pattern")
+        rule_id = str(rule.get("id") or "?")
+        if isinstance(pattern, str) and guard_pattern(pattern, f"adg_cli/custom_rules#{rule_id}"):
+            continue
+        if isinstance(exclude_pattern, str) and guard_pattern(
+            exclude_pattern, f"adg_cli/custom_rules#{rule_id}#exclude"
+        ):
+            rule = {**rule}
+            rule.pop("exclude_pattern", None)
         rules["anti_patterns"].append(rule)
 
     # severity_overrides: 普通值改 severity; 禁用值置 enabled=False (check.py 跳过)

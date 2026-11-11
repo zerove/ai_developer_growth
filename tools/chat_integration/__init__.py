@@ -34,6 +34,10 @@ class BaseNotifier:
     def _post(self, payload: dict[str, Any]) -> bool:
         """Post payload to webhook."""
         try:
+            from tools.scripts.webhook_safety import is_safe_webhook_url
+
+            if not is_safe_webhook_url(self.webhook_url):
+                return False
             data = json.dumps(payload).encode("utf-8")
             req = Request(
                 self.webhook_url,

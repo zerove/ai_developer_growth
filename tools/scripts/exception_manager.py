@@ -166,6 +166,11 @@ class ApprovalWorkflow:
         webhook_url = self.notification_webhook
         if not webhook_url:
             return
+        from tools.scripts.webhook_safety import is_safe_webhook_url
+
+        if not is_safe_webhook_url(webhook_url):
+            logger.warning(f"Webhook notification blocked (unsafe URL): {webhook_url}")
+            return
 
         def _send() -> None:
             try:
@@ -332,6 +337,11 @@ class ExpirationManager:
 
     def _send_alert(self, alert: ExpirationAlert) -> None:
         if self.notification_webhook:
+            from tools.scripts.webhook_safety import is_safe_webhook_url
+
+            if not is_safe_webhook_url(self.notification_webhook):
+                logger.warning(f"Expiration alert webhook blocked (unsafe URL): {self.notification_webhook}")
+                return
             try:
                 import urllib.request
 
@@ -352,6 +362,11 @@ class ExpirationManager:
 
     def _notify_expired(self, req: ExceptionRequest) -> None:
         if self.notification_webhook:
+            from tools.scripts.webhook_safety import is_safe_webhook_url
+
+            if not is_safe_webhook_url(self.notification_webhook):
+                logger.warning(f"Expiration notification blocked (unsafe URL): {self.notification_webhook}")
+                return
             try:
                 import urllib.request
 

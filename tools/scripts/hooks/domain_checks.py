@@ -70,13 +70,39 @@ def _count_issues(issues: list[dict[str, Any]]) -> dict[str, int]:
 
 
 def _is_ci_env() -> bool:
-    """是否运行在 CI 环境（GitHub Actions 等会设置 CI=true）。
-
-    CI 里**不改写仓库内被跟踪的文件**（基线/CONTEXT/ADR 索引）:
-    检查钩子改写文件会被 pre-commit 判为 "files were modified by this hook",
-    变成与代码质量无关的假失败; 更新这些文件由显式命令负责。
-    """
+    """是否运行在 CI 环境（GitHub Actions 等会设置 CI=true）。"""
     return os.environ.get("CI", "").strip().lower() in {"1", "true", "yes"}
+
+
+def _is_git_tracked(path: Path) -> bool:
+    """路径是否被 git 跟踪；非仓库/目录不存在/无 git 时返回 False。"""
+    parent = path.parent
+    if not parent.exists():
+        return False
+    try:
+        result = subprocess.run(
+            ["git", "-C", str(parent), "ls-files", "--error-unmatch", "--", path.name],
+            capture_output=True,
+            text=True,
+            timeout=10,
+        )
+    except (OSError, subprocess.SubprocessError):
+        return False
+    return result.returncode == 0
+
+
+def _should_skip_baseline_write(baseline_path: Path) -> bool:
+    """是否应跳过基线写入。
+
+    判据是「CI 且该基线被 git 跟踪」而非「处于 CI」：
+    - CI 中改写**被跟踪**的基线会被 pre-commit 判为 "files were modified by
+      this hook" → 与代码质量无关的假失败，故跳过（基线由显式
+      `baseline recompute` 维护）；
+    - 测试/临时目录里的基线未被跟踪，必须照常创建 —— 棘轮语义本身就是
+      "首次运行创建基线"，在 CI 里跑单测同样要遵守。
+    即：**只约束"改仓库文件"这一副作用，不改变检查语义**。
+    """
+    return _is_ci_env() and _is_git_tracked(baseline_path)
 
 
 def _load_issue_baseline(baseline_path: Path) -> dict[str, dict[str, int]] | None:
@@ -389,10 +415,10 @@ def _apply_baseline_ratchet(
     baseline_exempt = 0
     baseline_note = ""
     if existing_baseline is None:
-        if _is_ci_env():
-            # CI 里不写基线: 门禁是**检查**, 改写被跟踪的基线文件会让
-            # pre-commit 报 "files were modified by this hook" → 作业假失败。
-            baseline_note = f"CI 模式：跳过创建质量基线（{baseline_path}），基线由本地 baseline recompute 维护"
+        if _should_skip_baseline_write(baseline_path):
+            # CI 里不改写被跟踪的基线: 门禁是**检查**, 改写会让 pre-commit
+            # 报 "files were modified by this hook" → 作业假失败。
+            baseline_note = f"CI 模式：跳过创建质量基线（{baseline_path}），基线由 baseline recompute 维护"
             return filtered_results, baseline_exempt, baseline_note
         _save_issue_baseline(baseline_path, all_results)
         baseline_note = f"首次运行，已创建质量基线（本次按严格模式判定）: {baseline_path}"
@@ -421,8 +447,8 @@ def _refresh_baseline_if_clean(
     """
     if existing_baseline is None:
         return
-    if _is_ci_env():
-        # 同上: CI 只校验, 不刷新基线（刷新是显式的 baseline recompute 职责）。
+    if _should_skip_baseline_write(baseline_path):
+        # 同上: CI 只校验被跟踪的基线, 不刷新（刷新是 baseline recompute 职责）。
         logger.info("CI 模式：跳过质量基线刷新（基线由 baseline recompute 显式维护）")
         return
     try:

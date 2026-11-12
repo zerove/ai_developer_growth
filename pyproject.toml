@@ -166,15 +166,6 @@ warn_unused_configs = true
 # 此处保持同一口径; CI 的 type-check 作业同样只查 tools/scripts 与
 # ai-dev-framework/src, 三者一致。
 exclude = ["ai-dev-framework/build/", "examples/"]
-
-# kubernetes 客户端不带类型存根, 且 API 表面随版本漂移 → strict 模式下的
-# attr-defined / no-untyped-call 属于第三方噪声, 不是本项目缺陷。
-# 用**配置级** override 而非行内 type: ignore: 行内 ignore 是否"被用到"
-# 取决于装的是哪个 kubernetes 版本, 换版本就变成 unused-ignore 报错
-# （同一类"依赖环境的类型抑制"问题, 见 ast_parser 的 TYPE_CHECKING 处理）。
-[[tool.mypy.overrides]]
-module = "tools.scripts.chaos_experiment_runner"
-disable_error_code = ["attr-defined", "no-untyped-call"]
 disallow_untyped_defs = true
 disallow_incomplete_defs = true
 check_untyped_defs = true

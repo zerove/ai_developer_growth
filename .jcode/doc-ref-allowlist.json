@@ -1,0 +1,10 @@
+{
+  "version": 1,
+  "note": "文档中提及的、已确认失效的仓库路径（需写明原因，便于复核）",
+  "allowlist": [
+    {
+      "path": "tools/scripts/rules_engine/security_patterns.py",
+      "reason": "该重复实现已在 ADR-059 落地时删除；docs/api/rules-engine.md 仅在正文中历史性提及（说明删除原因），不是可点击引用"
+    }
+  ]
+}

@@ -91,6 +91,8 @@ bandit-report.json
 !.jcode/config.yml
 # 质量门禁棘轮基线: 需随仓库分发，CI 才能豁免存量问题
 !.jcode/baseline.json
+# 文档代码路径引用的豁免清单: 需随仓库分发，CI 才能识别"历史性提及"的失效路径
+!.jcode/doc-ref-allowlist.json
 !.jcode/USAGE.md
 !.jcode/exceptions.yaml
 !.jcode/ignored-rules.toml

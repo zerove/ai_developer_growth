@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# mypy: disable-error-code="attr-defined,no-untyped-call"
 """
 Chaos Mesh 月度演练自动化脚本
 

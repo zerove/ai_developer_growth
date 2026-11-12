@@ -258,6 +258,22 @@ Modes:
 - Interactive: Manual field-by-field input
 - LLM: Auto-generate from title + brief description
 
+## mkdocs_incremental.py - 文档增量构建
+
+```bash
+python tools/scripts/mkdocs_incremental.py            # 构建（输入未变且 site/ 已存在则跳过）
+python tools/scripts/mkdocs_incremental.py --force    # 强制重建
+python tools/scripts/mkdocs_incremental.py --check    # 只判断是否需要重建
+```
+
+按**内容指纹**（`docs/**/*.md` + `mkdocs.yml` + `templates/` + mkdocstrings 指令引用的
+源码模块）判断文档是否需要重建：未变且 `site/` 已存在则跳过整构建，否则调
+`mkdocs build --strict` 全量重建（正确性优先）。
+
+> MkDocs 无"跳过未变更页面"的官方钩子：页面级缓存会让 material search 索引到
+> 空内容（站内搜索失效），mkdocstrings 也必须真实导入源码。故只做整构建级别的
+> 增量。详见 `docs/analysis/四维度深度分析.md` 的 P-03 行。
+
 ## adg check --cache - 增量缓存
 
 ```bash

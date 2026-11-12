@@ -292,6 +292,58 @@ AI 时代开发者成长知识库 + 治理框架（knowledge base + governance f
 
 ---
 
+## 更新记录: 2026-11-12 15:08:04
+
+### 任务
+Git 变更同步
+
+### 变更摘要
+- 变更文件 18 个 (+844 / -107 行)
+  - CONTEXT.md
+  - Makefile
+  - docs/adr/ADR-057-ci-heartbeat-outside-ci.md
+  - docs/adr/ADR-082-adg-check-uses-checkstore-cache.md
+  - docs/adr/ADR.md
+  - docs/agent-dev/check-engine-contract-matrix.md
+  - diff --git "a/docs/analysis/\345\233\233\347\273\264\345\272\246\346\267\261\345\272\246\345\210\206\346\236\220.md" "b/docs/analysis/\345\233\233\347\273\264\345\272\246\346\267\261\345\272\246\345\210\206\346\236\220.md"
+  - docs/api/cli.md
+  - tests/test_adg_check_cache.py
+  - tests/test_adg_jobs_resolution.py
+  - tests/test_cache_observability_contract.py
+  - tests/test_ci_heartbeat.py
+  - tools/scripts/adg_cli/_cache.py
+  - tools/scripts/adg_cli/check.py
+  - tools/scripts/adg_cli/commands/cmd/cmd_check.py
+  - tools/scripts/adg_cli/parser.py
+  - tools/scripts/ci_heartbeat.py
+  - tools/scripts/rules_engine/store.py
+
+## 更新记录: 2026-11-12 14:59:13
+
+### 任务
+Git 变更同步
+
+### 变更摘要
+- 变更文件 18 个 (+818 / -78 行)
+  - CONTEXT.md
+  - Makefile
+  - docs/adr/ADR-057-ci-heartbeat-outside-ci.md
+  - docs/adr/ADR-082-adg-check-uses-checkstore-cache.md
+  - docs/adr/ADR.md
+  - docs/agent-dev/check-engine-contract-matrix.md
+  - diff --git "a/docs/analysis/\345\233\233\347\273\264\345\272\246\346\267\261\345\272\246\345\210\206\346\236\220.md" "b/docs/analysis/\345\233\233\347\273\264\345\272\246\346\267\261\345\272\246\345\210\206\346\236\220.md"
+  - docs/api/cli.md
+  - tests/test_adg_check_cache.py
+  - tests/test_adg_jobs_resolution.py
+  - tests/test_cache_observability_contract.py
+  - tests/test_ci_heartbeat.py
+  - tools/scripts/adg_cli/_cache.py
+  - tools/scripts/adg_cli/check.py
+  - tools/scripts/adg_cli/commands/cmd/cmd_check.py
+  - tools/scripts/adg_cli/parser.py
+  - tools/scripts/ci_heartbeat.py
+  - tools/scripts/rules_engine/store.py
+
 ## 更新记录: 2026-11-12 13:15:53
 
 ### 任务
@@ -334,55 +386,5 @@ Git 变更同步
   - tools/scripts/adg_cli/__init__.py
   - tools/scripts/adg_cli/commands/__init__.py
   - tools/scripts/adg_cli/parser.py
-
-## 更新记录: 2026-11-12 07:51:18
-
-### 任务
-Git 变更同步
-
-### 变更摘要
-- 变更文件 13 个 (+412 / -59 行)
-  - .github/workflows/docs-governance.yml
-  - .github/workflows/scheduled-governance.yml
-  - CONTEXT.md
-  - diff --git "a/docs/analysis/\345\233\233\347\273\264\345\272\246\346\267\261\345\272\246\345\210\206\346\236\220.md" "b/docs/analysis/\345\233\233\347\273\264\345\272\246\346\267\261\345\272\246\345\210\206\346\236\220.md"
-  - docs/api/cli.md
-  - docs/api/rules-engine.md
-  - docs/governance/context-maintenance.md
-  - docs/specs/metadata-spec.md
-  - tests/test_check_doc_code_refs.py
-  - tools/scripts/adg_cli/__init__.py
-  - tools/scripts/adg_cli/commands/__init__.py
-  - tools/scripts/adg_cli/parser.py
-  - tools/scripts/check_doc_code_refs.py
-
-## 更新记录: 2026-11-12 07:31:25
-
-### 任务
-Git 变更同步
-
-### 变更摘要
-- 变更文件 30 个 (+472 / -392 行)
-  - .adg/architecture.yml
-  - .github/workflows/docs-governance.yml
-  - .github/workflows/scheduled-governance.yml
-  - CONTEXT.md
-  - diff --git "a/docs/analysis/\345\233\233\347\273\264\345\272\246\346\267\261\345\272\246\345\210\206\346\236\220.md" "b/docs/analysis/\345\233\233\347\273\264\345\272\246\346\267\261\345\272\246\345\210\206\346\236\220.md"
-  - docs/api/cli.md
-  - docs/api/rules-engine.md
-  - docs/governance/context-maintenance.md
-  - docs/specs/metadata-spec.md
-  - tools/scripts/adg_cli/_paths.py
-  - tools/scripts/adg_cli/core.py
-  - tools/scripts/adg_cli/detect.py
-  - tools/scripts/complexity_analyzer.py
-  - tools/scripts/naming_analyzer.py
-  - tools/scripts/rules_engine/_checker_file.py
-  - tools/scripts/rules_engine/_checker_workers.py
-  - tools/scripts/rules_engine/checker.py
-  - tools/scripts/rules_engine/parsers/base.py
-  - tools/scripts/rules_engine/parsers/contract.py
-  - tools/scripts/rules_engine/parsers/cpp_parser.py
-  - ... 等共 30 个文件
 
 <!-- 滚动窗口: 已自动裁剪 1 条旧更新记录 -->

@@ -1,4 +1,4 @@
-.PHONY: help lint format format-fix typecheck test test-cov check-quality security audit validate-docs check-index sync-refs validate-governance-docs check-ai-sdlc audit-hallucination link-audit validate-cases scan full-audit full-validate docs-build test-fast check release setup-git workflow-pr workflow-weekly workflow-release clean quick discover jcode list-tools new-skill release-version cov-diff cov-module cov-gate cov-snapshot context-status context-split stats stats-check
+.PHONY: help lint format format-fix typecheck test test-cov docs-build-force check-quality security audit validate-docs check-index sync-refs validate-governance-docs check-ai-sdlc audit-hallucination link-audit validate-cases scan full-audit full-validate docs-build test-fast check release setup-git workflow-pr workflow-weekly workflow-release clean quick discover jcode list-tools new-skill release-version cov-diff cov-module cov-gate cov-snapshot context-status context-split stats stats-check
 
 help:  ## 显示帮助信息
 	@grep -hE '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-20s\033[0m %s\n", $$1, $$2}'
@@ -70,8 +70,11 @@ full-validate:  ## 运行
 docs-serve:  ## 启动 mkdocs 本地服务器
 	mkdocs serve
 
-docs-build:  ## 构建文档
-	mkdocs build --strict
+docs-build:  ## 构建文档（内容指纹未变且 site/ 已存在时跳过重建，见 tools/scripts/mkdocs_incremental.py）
+	python tools/scripts/mkdocs_incremental.py --build-command "mkdocs build --strict"
+
+docs-build-force:  ## 强制重建文档（忽略内容指纹）
+	python tools/scripts/mkdocs_incremental.py --force --build-command "mkdocs build --strict"
 
 test-fast: ## 运行快速测试（跳过 @pytest.mark.slow）
 	python -m pytest tests/ -q -m "not slow" --tb=short

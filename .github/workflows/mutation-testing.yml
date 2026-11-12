@@ -33,16 +33,18 @@ jobs:
 
       - name: Install dependencies
         run: |
-          pip install -e .[dev]
-          pip install mutmut>=2.4.0,<3
+          pip install -e ".[dev]"
+          pip install "mutmut>=2.4.0,<3"
 
       - name: Run mutation testing
         run: |
-          mutmut run --paths-to-mutate tools/scripts/rules_engine --runner "python -m pytest tests/ -x --tb=short -q" --max-runtime=1800
+          # `--max-runtime` 是 mutmut 3.x 的选项, 2.x 没有 → 必须去掉.
+          # 超时用 shell 的 `timeout`(超时返回码 124)处理, job 级 timeout-minutes: 120 兜底.
+          timeout 1500 mutmut run --paths-to-mutate tools/scripts/rules_engine --runner "python -m pytest tests/ -x --tb=short -q" --no-progress
 
       - name: Generate mutation report
         run: |
-          mutmut results --show-all > mutation-report.txt
+          mutmut results > mutation-report.txt
           cat mutation-report.txt
 
       - name: Upload mutation report

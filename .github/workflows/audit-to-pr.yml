@@ -41,7 +41,11 @@ jobs:
 
       - name: Install dependencies
         run: |
-          pip install -e .
+          # 必须装齐测试相关 extras: 本步骤跑的是 **完整** pytest 套件
+          # (`audit_to_pr -> governance-audit -> pytest`), base deps 只有
+          # pyyaml/loguru → 5 个测试模块在 collection 阶段即 ModuleNotFoundError
+          # → 整轮审计失败(exit 1)。与 jobs-governance-audit.yml 口径对齐。
+          pip install -e ".[dev-core,dev-semantic,search,dev-integration]"
           pip install ruff mypy pytest pytest-cov pyyaml bandit pip-audit
 
       - name: Configure Git

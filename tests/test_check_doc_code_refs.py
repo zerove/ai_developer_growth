@@ -11,6 +11,25 @@ from tools.scripts.check_doc_code_refs import (
 )
 
 
+class TestRepoAllowlist:
+    """仓库自带的豁免清单必须结构合法（否则失效引用会被静默放过或误报）。"""
+
+    def test_repo_allowlist_is_valid(self) -> None:
+        """`.jcode/doc-ref-allowlist.json` 存在且每条都有 path + reason。"""
+        repo_allowlist = Path(__file__).resolve().parents[1] / ".jcode" / "doc-ref-allowlist.json"
+        assert repo_allowlist.is_file(), f"缺少豁免清单: {repo_allowlist}"
+
+        data = json.loads(repo_allowlist.read_text(encoding="utf-8"))
+        entries = data.get("allowlist")
+        assert isinstance(entries, list) and entries, "豁免清单不能为空"
+
+        for entry in entries:
+            assert isinstance(entry.get("path"), str) and entry["path"].strip()
+            assert isinstance(entry.get("reason"), str) and entry["reason"].strip(), (
+                f"豁免项缺少原因: {entry.get('path')}"
+            )
+
+
 class TestCheckDocCodeRefs(unittest.TestCase):
     """D-02: 文档中仓库代码路径引用的存在性校验。"""
 

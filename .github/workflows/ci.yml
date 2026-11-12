@@ -8,9 +8,10 @@ on:
       - '*.md'
   pull_request:
     branches: [main, master, develop]
-    paths-ignore:
-      - 'docs/**'
-      - '*.md'
+    # 刻意不设 paths-ignore: 分支保护把 "CI Summary" 设为必需检查, 而 paths
+    # 过滤会让纯文档 PR 根本不触发本工作流 → 该检查永远等不到结果, PR 卡死
+    # 在 "Expected — Waiting for status to be reported"。push 侧保留过滤,
+    # 避免文档合并后重复跑一遍完整矩阵。
   schedule:
     # nightly full: 覆盖全矩阵与完整门禁（UTC 02:00）
     - cron: '0 2 * * *'

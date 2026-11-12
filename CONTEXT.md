@@ -1,3 +1,25 @@
+## 更新记录: 2026-11-13 06:39:55
+
+### 任务
+Git 变更同步
+
+### 变更摘要
+- 变更文件 3 个 (+259 / -0 行)
+  - .gitignore
+  - .jcode/policies/governance.rego
+  - .jcode/policies/supply-chain-policy.yaml
+
+## 更新记录: 2026-11-13 06:39:55
+
+### 任务
+Git 变更同步
+
+### 变更摘要
+- 变更文件 3 个 (+259 / -0 行)
+  - .gitignore
+  - .jcode/policies/governance.rego
+  - .jcode/policies/supply-chain-policy.yaml
+
 ## 更新记录: 2026-11-12 18:09:47
 
 ### 任务
@@ -68,37 +90,5 @@ Git 变更同步
   - ai-dev-framework/languages/r/check.sh
   - ai-dev-framework/languages/scala/check.sh
   - ... 等共 32 个文件
-
-## 更新记录: 2026-11-12 17:01:45
-
-### 任务
-Git 变更同步
-
-### 变更摘要
-- 变更文件 10 个 (+83 / -45 行)
-  - .github/workflows/docs-governance.yml
-  - .github/workflows/jobs-doctor-gate.yml
-  - .github/workflows/jobs-governance-audit.yml
-  - .github/workflows/jobs-pre-commit.yml
-  - .github/workflows/jobs-tests.yml
-  - .jcode/scripts/context-sync.py
-  - CONTEXT.md
-  - pyproject.toml
-  - tools/scripts/_lang_data_b.py
-  - tools/scripts/rules_engine/rule_loader.py
-
-## 更新记录: 2026-11-12 16:47:05
-
-### 任务
-Git 变更同步
-
-### 变更摘要
-- 变更文件 6 个 (+39 / -8 行)
-  - .github/workflows/jobs-governance-audit.yml
-  - .github/workflows/jobs-pre-commit.yml
-  - .github/workflows/jobs-tests.yml
-  - .jcode/scripts/context-sync.py
-  - README.md
-  - tools/scripts/rules_engine/rule_loader.py
 
 <!-- 滚动窗口: 已自动裁剪 1 条旧更新记录 -->

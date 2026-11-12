@@ -89,7 +89,6 @@ jobs:
         with:
           distribution: "temurin"
           java-version: "21"
-          cache: maven
 
       - name: Upgrade setuptools
         run: pip install -U "setuptools>=83.0.0"

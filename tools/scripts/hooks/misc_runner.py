@@ -6,6 +6,7 @@
 from __future__ import annotations
 
 import argparse
+import datetime
 import json
 import logging
 import subprocess
@@ -115,11 +116,36 @@ def _exception_list(manager: EnhancedExceptionManager, args: argparse.Namespace)
     return 0
 
 
+def _to_rfc3339(value: str | None) -> str:
+    """把到期时间归一化为 RFC3339 (UTC)。
+
+    例外清单里的到期时间常写成 "2026-08-24" 或 "2026-08-24T09:00:00"（无时区），
+    而 OPA 的 `time.parse_rfc3339_ns` 只接受带时区偏移的 RFC3339 —— 解析失败
+    时规则体未定义，例外到期规则会**永远不触发**（静默失效）。这里统一补成 UTC。
+
+    Args:
+        value: 原始到期时间文本
+
+    Returns:
+        RFC3339 时间串; 空值返回空串, 无法解析时原样返回
+    """
+    if not value:
+        return ""
+    text = value.strip()
+    try:
+        parsed = datetime.datetime.fromisoformat(text.replace("Z", "+00:00"))
+    except ValueError:
+        return text
+    if parsed.tzinfo is None:
+        parsed = parsed.replace(tzinfo=datetime.timezone.utc)
+    return parsed.astimezone(datetime.timezone.utc).isoformat().replace("+00:00", "Z")
+
+
 def _write_exception_list_json(requests: list[Any], output_path: Path | None) -> None:
     """把例外申请写成 JSON (Policy as Code 的输入)。
 
     字段名同时给出 rego 策略期望的别名 (expires_at / cve_id), 避免策略侧
-    因为字段名对不上而永远匹配不到例外。
+    因为字段名对不上而永远匹配不到例外; 到期时间统一归一化为 RFC3339。
     """
     import json
 
@@ -127,7 +153,7 @@ def _write_exception_list_json(requests: list[Any], output_path: Path | None) ->
     for req in requests:
         item = dict(req.to_dict())
         item["status"] = req.status.value
-        item["expires_at"] = req.expires or ""
+        item["expires_at"] = _to_rfc3339(req.expires)
         item["cve_id"] = req.rule_id
         payload.append(item)
     text = json.dumps(payload, indent=2, ensure_ascii=False, default=str)

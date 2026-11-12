@@ -337,14 +337,37 @@ def save_yaml(filepath: Path, data: dict[str, Any]) -> None:
 # ----------------------------------------------------------
 
 
+#: 失败输出最多打印的行数；超长输出按「头 + 尾」截断。
+_MAX_FAILURE_LINES = 40
+#: 截断时保留的头部行数（通常是命令/环境信息）。
+_FAILURE_HEAD_LINES = 10
+
+
 def print_check(name: str, passed: bool, output: str = "") -> None:
-    """输出检查结果，使用中文格式。"""
+    """输出检查结果，使用中文格式。
+
+    失败输出按「头 10 行 + 尾 30 行」截断, 而不是只取前 20 行:
+    pytest/mypy 这类工具的关键信息(**失败用例名、汇总行、崩溃栈**)都在末尾,
+    只截头部会把真正原因整段丢掉 —— 在 CI 日志里表现为"只看到测试开始,
+    看不到为什么失败", 排查时只能盲猜。
+    """
     label = "通过" if passed else "失败"
     icon = "✅" if passed else "❌"
     print(f"{icon} [{label}] {name}")
-    if output and not passed:
-        for line in output.strip().split("\n")[:20]:
+    if not output or passed:
+        return
+    lines = output.strip().split("\n")
+    if len(lines) <= _MAX_FAILURE_LINES:
+        for line in lines:
             print(f"  {line}")
+        return
+    tail_lines = _MAX_FAILURE_LINES - _FAILURE_HEAD_LINES
+    omitted = len(lines) - _FAILURE_HEAD_LINES - tail_lines
+    for line in lines[:_FAILURE_HEAD_LINES]:
+        print(f"  {line}")
+    print(f"  ... 省略 {omitted} 行（共 {len(lines)} 行），末尾关键信息如下 ...")
+    for line in lines[-tail_lines:]:
+        print(f"  {line}")
 
 
 def print_section(title: str) -> None:

@@ -131,6 +131,41 @@ class TestCiGateScope:
         assert any("coverage" in str(s.get("name", "")).lower() for s in steps), "缺少覆盖率校验步骤"
 
 
+class TestCoverageArtifactHandoff:
+    """覆盖率数据必须真的从 test 作业传到 combine 作业。
+
+    历史失效形态: upload-artifact v4 默认跳过隐藏文件, 而 `.coverage` 正是
+    隐藏文件 → 上传步骤显示**成功**但零文件; combine 作业随后在另一个 job
+    里报 "Couldn't combine from non-existent path"。根因与症状隔了两层,
+    表现为"测试全绿却挂了个看不懂的覆盖率作业"。
+    """
+
+    def _coverage_upload_step(self) -> dict:
+        data = yaml.safe_load(CI_TESTS.read_text(encoding="utf-8"))
+        steps = data["jobs"]["test"]["steps"]
+        uploads = [s for s in steps if str(s.get("uses", "")).startswith("actions/upload-artifact")]
+        coverage_uploads = [s for s in uploads if "coverage" in str(s.get("name", "")).lower()]
+        assert len(coverage_uploads) == 1, f"应有且仅有一个覆盖率上传步骤: {coverage_uploads}"
+        return coverage_uploads[0]
+
+    def test_hidden_coverage_file_is_included(self) -> None:
+        step = self._coverage_upload_step()
+        assert step["with"].get("include-hidden-files") is True, (
+            ".coverage 是隐藏文件, upload-artifact 默认跳过 → 必须显式 include-hidden-files"
+        )
+
+    def test_missing_coverage_fails_loudly(self) -> None:
+        step = self._coverage_upload_step()
+        assert step["with"].get("if-no-files-found") == "error", "覆盖率数据缺失必须当场失败, 不能静默上传空集"
+
+    def test_combine_does_not_use_globstar_pattern(self) -> None:
+        text = COMBINE_COVERAGE.read_text(encoding="utf-8")
+        assert "coverage combine coverage-artifacts/**/.coverage" not in text, (
+            "bash 未开启 globstar 时 `**` 等价于 `*`, 该路径会静默失配"
+        )
+        assert "未下载到任何覆盖率数据" in text, "combine 缺少数据时必须显式报错"
+
+
 class TestBranchCoverageGate:
     def test_branch_measurement_enabled(self) -> None:
         cfg = _config()

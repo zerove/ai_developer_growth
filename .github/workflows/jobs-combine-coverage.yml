@@ -33,7 +33,17 @@ jobs:
     - name: Combine
       run: |
         pip install coverage
-        coverage combine coverage-artifacts/**/.coverage
+        # 显式收集数据文件: 不依赖 shell 的 globstar 行为(`**` 在未开启
+        # globstar 时只等价于 `*`), 也不让 coverage 在路径不存在时给出
+        # 含糊的 "Couldn't combine from non-existent path"。
+        mapfile -t data_files < <(find coverage-artifacts -type f -name '.coverage*')
+        if [ "${#data_files[@]}" -eq 0 ]; then
+          echo "::error::未下载到任何覆盖率数据 —— coverage-data* artifact 为空, 上传环节的缺陷不应在此处被掩盖"
+          exit 1
+        fi
+        printf '待合并 %d 个数据文件:\n' "${#data_files[@]}"
+        printf '  %s\n' "${data_files[@]}"
+        coverage combine "${data_files[@]}"
         coverage xml -o combined-coverage.xml
         python - <<'PY'
         import xml.etree.ElementTree as ET

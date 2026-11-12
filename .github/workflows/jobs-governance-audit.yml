@@ -21,6 +21,12 @@ jobs:
         language: ${{ fromJson(inputs.languages) }}
     steps:
     - uses: actions/checkout@v4
+      with:
+        # 完整历史: 审计作业会跑**完整** pytest 套件, 其中
+        # tests/test_release.py::test_get_git_log_real_repo 断言 git log 条数 > 5,
+        # 浅克隆只有 1 个提交 → 必失败; 打 tag 的用例同理需要既有 refs。
+        # 与 jobs-tests.yml 保持同一前置条件, 避免"同一个套件两套环境"。
+        fetch-depth: 0
     - uses: actions/setup-python@v5
       with:
         python-version: '3.11'
@@ -87,18 +93,21 @@ jobs:
         '
     - name: Run governance audit
       id: audit
-      run: 'python .jcode/scripts/governance-auditor.py full --lang ${{ matrix.language
-        }}
-
-        '
+      # 完整输出落盘并作为 artifact 上传: print_check 会截断控制台输出,
+      # 而这里的失败往往要看**末尾**(pytest 汇总/崩溃栈)才能定位;
+      # 没有 artifact 时只能靠猜。pipefail 保证审计失败不会被 tee 吞掉。
+      run: |
+        set -o pipefail
+        python .jcode/scripts/governance-auditor.py full --lang ${{ matrix.language }} 2>&1 \
+          | tee "governance-audit-${{ matrix.language }}.log"
     - name: Upload audit artifacts
       if: always()
       uses: actions/upload-artifact@v4
       with:
         name: governance-audit-report-${{ matrix.language }}
-        path: 'bandit-report.json
-
-          '
+        path: |
+          bandit-report.json
+          governance-audit-${{ matrix.language }}.log
         retention-days: 7
   governance-audit-summary:
     name: Governance Audit Summary

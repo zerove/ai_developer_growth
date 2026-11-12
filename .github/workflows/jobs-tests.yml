@@ -98,5 +98,12 @@ jobs:
       uses: actions/upload-artifact@v4
       with:
         name: coverage-data
-        path: .coverage
+        # `.coverage` 是隐藏文件: upload-artifact v4 默认跳过以 `.` 开头的文件,
+        # 此前这里是「步骤绿色但零文件上传」—— combine-coverage 拿不到数据后
+        # 在**另一个作业**里报 "Couldn't combine from non-existent path",
+        # 真正的缺陷被掩盖在两层之外。故必须显式 include-hidden-files,
+        # 且缺数据时当场失败(if-no-files-found: error), 不再静默上传空集。
+        path: .coverage*
+        include-hidden-files: true
+        if-no-files-found: error
         retention-days: 7

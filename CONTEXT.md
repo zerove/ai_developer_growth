@@ -292,6 +292,24 @@ AI 时代开发者成长知识库 + 治理框架（knowledge base + governance f
 
 ---
 
+## 更新记录: 2026-11-12 13:15:53
+
+### 任务
+Git 变更同步
+
+### 变更摘要
+- 变更文件 10 个 (+223 / -43 行)
+  - docs/adr/ADR.md
+  - docs/agent-dev/check-engine-contract-matrix.md
+  - diff --git "a/docs/analysis/\345\233\233\347\273\264\345\272\246\346\267\261\345\272\246\345\210\206\346\236\220.md" "b/docs/analysis/\345\233\233\347\273\264\345\272\246\346\267\261\345\272\246\345\210\206\346\236\220.md"
+  - docs/api/cli.md
+  - tests/test_adg_jobs_resolution.py
+  - tests/test_cache_observability_contract.py
+  - tools/scripts/adg_cli/check.py
+  - tools/scripts/adg_cli/commands/cmd/cmd_check.py
+  - tools/scripts/adg_cli/parser.py
+  - tools/scripts/rules_engine/store.py
+
 ## 更新记录: 2026-11-12 09:49:32
 
 ### 任务
@@ -366,34 +384,5 @@ Git 变更同步
   - tools/scripts/rules_engine/parsers/contract.py
   - tools/scripts/rules_engine/parsers/cpp_parser.py
   - ... 等共 30 个文件
-
-## 更新记录: 2026-11-12 07:12:25
-
-### 任务
-Git 变更同步
-
-### 变更摘要
-- 变更文件 33 个 (+594 / -400 行)
-  - .adg/architecture.yml
-  - diff --git "a/docs/analysis/\345\233\233\347\273\264\345\272\246\346\267\261\345\272\246\345\210\206\346\236\220.md" "b/docs/analysis/\345\233\233\347\273\264\345\272\246\346\267\261\345\272\246\345\210\206\346\236\220.md"
-  - examples/ai-context-sync/src/cli/__init__.py
-  - examples/ai-context-sync/src/cli/_base.py
-  - examples/ai-context-sync/src/cli/commands/analysis.py
-  - examples/ai-context-sync/src/cli/commands/audit.py
-  - examples/ai-context-sync/src/cli/commands/evolution.py
-  - examples/ai-context-sync/src/cli/commands/flow.py
-  - examples/ai-context-sync/src/cli/commands/monitoring.py
-  - examples/ai-context-sync/src/cli/commands/sync_guard.py
-  - examples/ai-context-sync/src/cli/commands/tools.py
-  - tests/test_arch_layer_round.py
-  - tests/test_dependency_graph_resolution.py
-  - tools/scripts/adg_cli/core.py
-  - tools/scripts/adg_cli/detect.py
-  - tools/scripts/complexity_analyzer.py
-  - tools/scripts/naming_analyzer.py
-  - tools/scripts/rules_engine/_checker_workers.py
-  - tools/scripts/rules_engine/arch/dependency_graph.py
-  - tools/scripts/rules_engine/checker.py
-  - ... 等共 33 个文件
 
 <!-- 滚动窗口: 已自动裁剪 1 条旧更新记录 -->

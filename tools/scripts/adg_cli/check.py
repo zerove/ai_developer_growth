@@ -7,6 +7,11 @@ from pathlib import Path
 from typing import Any
 
 from tools.scripts._common import walk_files
+from tools.scripts.adg_cli._cache import (
+    FileCheckCache,
+    init_worker_cache,
+    worker_cache,
+)
 from tools.scripts.adg_cli.core import (
     SKIP_EXTENSIONS,
     Issue,
@@ -329,8 +334,27 @@ def _make_check_error_issue(filepath: Path, exc: BaseException) -> Issue:
     )
 
 
+def _check_file_cached_worker(
+    filepath: Path, rules: dict[str, Any], severity_filter: str | None
+) -> tuple[list[Issue], bool, int]:
+    """worker 侧带缓存的单文件检查（模块级函数，可被 pickle）。
+
+    返回 `(issues, cache_hit, degraded)`；未启用缓存时 cache_hit 恒为 False。
+    """
+    cache = worker_cache()
+    if cache is None:
+        return check_file(filepath, rules, severity_filter), False, 0
+    before = cache.degraded
+    issues, cache_hit = cache.check_file(filepath, rules, severity_filter, check_file)
+    return issues, cache_hit, cache.degraded - before
+
+
 def _check_files_parallel(
-    files: list[Path], rules: dict[str, Any], severity_filter: str | None, jobs: int
+    files: list[Path],
+    rules: dict[str, Any],
+    severity_filter: str | None,
+    jobs: int,
+    cache: FileCheckCache | None = None,
 ) -> list[Issue]:
     """Check files in parallel using ProcessPoolExecutor.
 
@@ -348,15 +372,30 @@ def _check_files_parallel(
     # Limit jobs to CPU count or file count
     max_workers = min(jobs, len(files), os.cpu_count() or 4)
 
-    with ProcessPoolExecutor(max_workers=max_workers) as executor:
+    cache_db = cache.db_path if cache is not None else None
+    cache_signature = cache.signature if cache is not None else ""
+
+    with ProcessPoolExecutor(
+        max_workers=max_workers,
+        initializer=init_worker_cache,
+        initargs=(cache_db, cache_signature),
+    ) as executor:
         # Submit all files for checking
-        future_to_file = {executor.submit(check_file, filepath, rules, severity_filter): filepath for filepath in files}
+        future_to_file = {
+            executor.submit(_check_file_cached_worker, filepath, rules, severity_filter): filepath for filepath in files
+        }
 
         # Collect results as they complete
         for future in as_completed(future_to_file):
             filepath = future_to_file[future]
             try:
-                issues = future.result()
+                issues, cache_hit, degraded = future.result()
+                if cache is not None:
+                    if cache_hit:
+                        cache.hits += 1
+                    else:
+                        cache.misses += 1
+                    cache.degraded += degraded
                 all_issues.extend(issues)
             except Exception as exc:  # noqa: BLE001 - 崩溃必须留痕, 不得静默剔除
                 # ADR-078: 旧实现只 print 警告, 使崩溃文件从结果中消失,

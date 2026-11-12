@@ -45,6 +45,11 @@ def _add_base_check_parser(sub: argparse._SubParsersAction[Any]) -> None:
         action="store_true",
         help="Include related documentation links in output",
     )
+    check_p.add_argument(
+        "--cache",
+        action="store_true",
+        help="Enable incremental cache (reuses unchanged files' results via rules_engine CheckStore)",
+    )
     _add_check_filter_args(check_p)
 
 

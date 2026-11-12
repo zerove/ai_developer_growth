@@ -11,8 +11,8 @@
 | 返回 | `list[CheckResult]`（文件级结果 + issues） | `list[Issue]`（扁平 issues） | text / JSON 字符串（`passed`, `results`） |
 | 规则加载 | `rules=None` 时自动加载 | 调用方传入 `rules`；`load_rules_for_language` 合并 common 安全规则并遵守 `supersedes` | 校验 language rules 资产 |
 | 语言过滤 | `languages=[...]` | 由 `_detect_language_from_file` 决定 | `--lang` 参数 |
-| 统计出参 | `stats=dict`（files_checked/parallel/cache_*） | 无 rules_engine stats；JSON `meta` 显式标记 `cache_supported=false`、`cache_reason` 且 `cache_*`/`cache_hit_rate` 为 `null` | JSON `meta`（`--cache` 分支） |
-| 缓存 | `use_cache=True`（SQLite/`CheckStore`，串/并行真实统计） | 当前无 rules_engine cache 聚合（不臆造命中/缺失） | `--cache` 分支使用 `rules_engine.checker.check_directory` |
+| 统计出参 | `stats=dict`（files_checked/parallel/cache_*） | 无 rules_engine stats；JSON `meta` 用同一套缓存词汇表（ADR-082：`cache_supported`/`cache_engine`/`cache_reason`/`cache_*`/`cache_hit_rate`） | JSON `meta`（`--cache` 分支） |
+| 缓存 | `use_cache=True`（SQLite/`CheckStore`，串/并行真实统计） | **ADR-082（2026-11-12）**：`--cache` 启用时复用同一 `CheckStore`（同表 `check_cache`），串/并行均上报真实命中/缺失；默认关闭 | `--cache` 分支使用 `rules_engine.checker.check_directory` |
 | 并行 | 文件数 >4 且 `jobs>1` 时走进程池；jobs 缺省取 `[tool.adg].jobs`（默认 4） | 文件数 >1 且 `jobs>1` 时并行；jobs 缺省取 `[tool.adg].jobs`（默认 4，P-01 2026-11-09） | 由 `--cache` 分支/配置决定 |
 | 崩坏处理 | worker 异常/None 留痕（`failed_files`/degraded） | `check-error` Issue，fail-closed（ADR-078） | 由底层检查决定 |
 | 语义/外部 linter | `semantic`/`run_linters` 开关 | 规则驱动；另有 AST/复杂度辅助检查 | 由 rules_engine 校验路径决定 |
@@ -29,7 +29,9 @@
   未被 supersede 的通用规则（如 JavaScript 的 `common-eval-exec`）仍保留。
 
 > 结论：**文件覆盖、核心规则、issue 集合已对齐；统计/缓存出参与执行路径仍不一致**。
-> `adg check` 已显式暴露 `cache_supported=false`、`cache_reason` 与空 `cache_*`（可观测性），但不提供 rules_engine 级缓存统计；
+> `adg check` 的缓存能力已在 **ADR-082（2026-11-12）** 落地：`--cache` 复用同一 `CheckStore`，
+> 串/并行均上报真实命中/缺失，缓存键含生效规则签名（规则或 severity 档位变化即失效）；
+> 默认不启用（不产生磁盘产物）。
 > 下游仍不应依赖两个入口的 stats 结构，但可依赖当前规则集下 issue 集合一致。
 
 ## 缓存可观测性词汇表（2026-11-12 对齐第一阶段）
@@ -39,13 +41,13 @@
 | 键 | 语义 | `rules_engine.checker` | `hooks --cache` | `adg check --json` |
 |---|---|---|---|---|
 | `use_cache` | 本次运行是否启用缓存 | `bool` | `bool` | `false` |
-| `cache_supported` | 该路径是否具备缓存能力 | `true` | `true` | `false` |
-| `cache_engine` | 缓存实现标识 | `rules_engine_check_store` | 同左 | `null` |
+| `cache_supported` | 该路径是否具备缓存能力 | `true` | `true` | `true`（ADR-082） |
+| `cache_engine` | 缓存实现标识 | `rules_engine_check_store` | 同左 | 同左（ADR-082） |
 | `cache_initialized` | 缓存存储是否就绪 | `bool` | `bool` | `false` |
-| `cache_reason` | 不可用/未启用原因；可用且已启用时 `null` | `null` / `cache_disabled` | 同左 | `adg_cli_path_no_rules_engine_cache` |
-| `cache_hits` / `cache_misses` | 真实命中/缺失计数 | 启用时为整数 | 同左 | `null` |
-| `cache_degraded` | 缓存降级次数 | 启用时为整数 | 同左 | `null` |
-| `cache_hit_rate` | `hits/(hits+misses)` | 启用时为 `float` | 同左 | `null` |
+| `cache_reason` | 不可用/未启用原因；可用且已启用时 `null` | `null` / `cache_disabled` | 同左 | `null` / `cache_disabled` / `cache_init_failed`（ADR-082） |
+| `cache_hits` / `cache_misses` | 真实命中/缺失计数 | 启用时为整数 | 同左 | 启用时为整数（未启用仍为 `null`） |
+| `cache_degraded` | 缓存降级次数 | 启用时为整数 | 同左 | 启用时为整数（未启用仍为 `null`） |
+| `cache_hit_rate` | `hits/(hits+misses)` | 启用时为 `float` | 同左 | 启用时为 `float`（未启用仍为 `null`） |
 
 **不臆造 0**：计数不可知（缓存未启用、目录不存在、无缓存操作）一律 `null`。
 0 会被下游读成"缓存全未命中"，与"没有缓存"是两种不同事实。
@@ -58,5 +60,5 @@
 2. 为共享不变量补契约测试（文件覆盖、核心规则、崩坏留痕、exit 语义）。
 3. 若要让 `adg check` 复用 rules_engine：优先把 `adg_cli.check` 的通用规则/AST/复杂度能力
    上移为引擎可选模块，CLI 仅保留参数/输出/兼容层；分阶段迁移并以本矩阵+测试守护。
-4. 缓存能力的**执行路径**统一（而非仅字段统一）留待第二阶段：需先决定
-   `adg check` 是否引入 `CheckStore`，该决策会改变 CLI 行为与磁盘产物，须单独立项。
+4. 缓存能力的**执行路径**统一：**已落地（ADR-082，2026-11-12）** —— `adg check --cache`
+   复用同一 `CheckStore`，默认关闭；键含生效规则签名，串/并行一致。

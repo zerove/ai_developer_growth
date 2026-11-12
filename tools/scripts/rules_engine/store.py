@@ -186,11 +186,14 @@ class CheckStore:
         self.conn = get_connection(self.db_path)
 
     def close(self) -> None:
-        """关闭数据库连接。"""
-        try:
-            self.conn.close()
-        except sqlite3.Error:
-            pass
+        """关闭数据库连接。
+
+        同时从连接注册表移除: `get_connection` 按路径缓存连接, 若把已关闭的
+        连接留在注册表里, 下一次同路径 `CheckStore(...)` 会拿到**已关闭**的连接,
+        后续所有读写抛 "Cannot operate on a closed database" —— 表现为缓存
+        静默失效（每次都退化成完整检查）甚至更糟的错误噪声。
+        """
+        close_connection(self.db_path)
 
     # ── 检查运行 ──────────────────────────────────────────────
 

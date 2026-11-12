@@ -25,6 +25,7 @@ updated: 2026-09-17
 
 | ID | 标题 | 状态 | 日期 |
 |----|------|------|------|
+| [[ADR-082-adg-check-uses-checkstore-cache|ADR-082]] | adg check 引入 CheckStore 文件级增量缓存 | ✅ 已接受 | 2026-11-12 |
 | [[ADR-081-auto-fix-must-only-change-reported-occurrence|ADR-081]] | 自动修复必须只改上报的那一处命中 | ✅ 已接受 | 2026-11-12 |
 | [[ADR-080-canonical-rule-id-prefix|ADR-080]] | 规则 ID 前缀必须来自共享规范映射，不得由语言名截断推导 | ✅ 已接受 | 2026-10-28 |
 | [[ADR-079-scripts-must-bootstrap-repo-root|ADR-079]] | 可直接执行的脚本必须自行引导仓库根到 sys.path | ✅ 已接受 | 2026-10-10 |

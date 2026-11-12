@@ -3,6 +3,14 @@ from __future__ import annotations
 import argparse
 import sys
 
+from tools.scripts.adg_cli._cache import (
+    CACHE_ENGINE_ID,
+    CACHE_REASON_DISABLED,
+    CACHE_REASON_INIT_FAILED,
+    FileCheckCache,
+    effective_rules_signature,
+    hit_rate,
+)
 from tools.scripts.app_config import get_setting
 
 from ._shared import (
@@ -213,6 +221,66 @@ def _load_and_merge_rules(language: str, framework: str | None, project_config: 
     return rules
 
 
+def _resolve_cache_db_path(target: Path) -> Path:
+    """缓存库路径：`[tool.adg].cache_db` > `<项目目录>/.adg/adg_check_cache.db`。"""
+    configured = get_setting("cache_db", "")
+    if isinstance(configured, str) and configured.strip():
+        candidate = Path(configured.strip()).expanduser()
+        return candidate if candidate.is_absolute() else Path.cwd() / candidate
+    root = target if target.is_dir() else target.parent
+    return root / ".adg" / "adg_check_cache.db"
+
+
+def _build_cache(
+    args: argparse.Namespace, rules: dict[str, object], severity: str | None, target: Path
+) -> tuple[FileCheckCache | None, str | None]:
+    """按 `--cache` 构建文件级缓存；返回 (缓存实例, 失败原因)。
+
+    默认关闭（不产生磁盘产物）；用户显式开启但存储不可用时给出显式原因，
+    而不是静默退化成"没有缓存"。
+    """
+    if not getattr(args, "cache", False):
+        return None, None
+    db_path = _resolve_cache_db_path(target)
+    try:
+        db_path.parent.mkdir(parents=True, exist_ok=True)
+        signature = effective_rules_signature(rules, severity)
+        return FileCheckCache(db_path, signature), None
+    except Exception as exc:  # noqa: BLE001 - 缓存不可用属可降级故障
+        print(f"Warning: cache init failed, running without cache: {exc}", file=sys.stderr)
+        return None, CACHE_REASON_INIT_FAILED
+
+
+def _cache_meta(cache: FileCheckCache | None, failure_reason: str | None = None) -> dict[str, object]:
+    """缓存状态 meta（与 rules_engine / hooks 同一套词汇表）。
+
+    计数不可知一律 `None`（不臆造 0）；`cache_reason` 说明未启用/不可用的原因。
+    """
+    if cache is None:
+        return {
+            "use_cache": False,
+            "cache_supported": True,
+            "cache_engine": CACHE_ENGINE_ID,
+            "cache_initialized": False,
+            "cache_degraded": None,
+            "cache_hits": None,
+            "cache_misses": None,
+            "cache_hit_rate": None,
+            "cache_reason": failure_reason or CACHE_REASON_DISABLED,
+        }
+    return {
+        "use_cache": True,
+        "cache_supported": True,
+        "cache_engine": CACHE_ENGINE_ID,
+        "cache_initialized": True,
+        "cache_degraded": cache.degraded,
+        "cache_hits": cache.hits,
+        "cache_misses": cache.misses,
+        "cache_hit_rate": hit_rate(cache.hits, cache.misses),
+        "cache_reason": None,
+    }
+
+
 def _output_results(
     all_issues: list[Issue],
     language: str,
@@ -220,6 +288,7 @@ def _output_results(
     files_count: int,
     jobs: int,
     args: argparse.Namespace,
+    cache_meta: dict[str, object] | None = None,
 ) -> None:
     """Output check results in requested format."""
     sarif = getattr(args, "sarif", False)
@@ -233,15 +302,7 @@ def _output_results(
             "check_errors": check_errors,
             "failed_files": check_errors,  # ADR-078: check-error 表示文件检查失败/未可信检查
             # adg check 使用 adg_cli.check 路径（非 rules_engine checker cache）；无缓存能力时显式标记
-            "use_cache": False,
-            "cache_supported": False,
-            "cache_engine": None,
-            "cache_initialized": False,
-            "cache_degraded": None,
-            "cache_hits": None,
-            "cache_misses": None,
-            "cache_hit_rate": None,
-            "cache_reason": "adg_cli_path_no_rules_engine_cache",
+            **(cache_meta if cache_meta is not None else _cache_meta(None)),
         }
         print(_format_json(all_issues, language, framework, files_count, meta=meta))
     else:
@@ -266,19 +327,29 @@ def _prepare_check_config(
     return language, framework, files
 
 
-def _run_checks(files: list[Path], rules: dict[str, object], severity: str, jobs: int) -> list[Issue]:
+def _run_checks(
+    files: list[Path],
+    rules: dict[str, object],
+    severity: str,
+    jobs: int,
+    cache: FileCheckCache | None = None,
+) -> list[Issue]:
     """Run checks on files, either parallel or sequential.
 
     单个文件检查失败会变成 `check-error` error 级 Issue（ADR-078），
     保证并行与串行对同一输入给出相同的退出码。
     """
     if jobs > 1 and len(files) > 1:
-        return _check_files_parallel(files, rules, severity, jobs)
+        return _check_files_parallel(files, rules, severity, jobs, cache=cache)
     else:
         all_issues: list[Issue] = []
         for fp in files:
             try:
-                all_issues.extend(check_file(fp, rules, severity))
+                if cache is not None:
+                    issues, _cache_hit = cache.check_file(fp, rules, severity, check_file)
+                else:
+                    issues = check_file(fp, rules, severity)
+                all_issues.extend(issues)
             except Exception as exc:  # noqa: BLE001 - 崩溃必须留痕, 不得静默跳过
                 all_issues.append(_make_check_error_issue(fp, exc))
         return all_issues
@@ -319,7 +390,14 @@ def cmd_check(args: argparse.Namespace) -> int:
 
     # Check files（P-01: 默认按 [tool.adg].jobs 并行，而非硬编码串行）
     jobs = _resolve_jobs(args)
-    all_issues = _run_checks(files, rules, args.severity, jobs)
+
+    # 增量缓存（ADR-082）：默认关闭；显式 --cache 时复用 CheckStore 缓存结果
+    cache, cache_failure = _build_cache(args, rules, args.severity, target)
+    try:
+        all_issues = _run_checks(files, rules, args.severity, jobs, cache=cache)
+    finally:
+        if cache is not None:
+            cache.close()
 
     # Cyclomatic complexity gate (--complexity)
     if getattr(args, "complexity", False):
@@ -327,7 +405,7 @@ def cmd_check(args: argparse.Namespace) -> int:
         all_issues.extend(_run_complexity_checks(files, args.severity, max_cc))
 
     # Output
-    _output_results(all_issues, language, framework, len(files), jobs, args)
+    _output_results(all_issues, language, framework, len(files), jobs, args, _cache_meta(cache, cache_failure))
 
     # Handle post-check actions
     _handle_post_check_actions(all_issues, target, language, args)

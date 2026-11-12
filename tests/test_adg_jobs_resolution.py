@@ -79,7 +79,9 @@ class TestJsonMetaJobs:
 
         executed: dict[str, int] = {}
 
-        def fake_run_checks(files: list[Path], rules: dict, severity: str | None, jobs: int) -> list:
+        def fake_run_checks(
+            files: list[Path], rules: dict, severity: str | None, jobs: int, cache: object = None
+        ) -> list:
             executed["jobs"] = jobs
             return []
 
@@ -92,8 +94,10 @@ class TestJsonMetaJobs:
         assert executed["jobs"] == 3, "配置值未传入实际执行路径"
         data = json.loads(capsys.readouterr().out)
         assert data["meta"]["jobs"] == 3, "JSON meta 未反映实际并行度"
-        assert data["meta"]["cache_supported"] is False
-        assert data["meta"]["cache_reason"] == "adg_cli_path_no_rules_engine_cache"
+        # ADR-082: adg check 已具备缓存能力（--cache 开关），未启用时显式给出原因
+        assert data["meta"]["cache_supported"] is True
+        assert data["meta"]["cache_engine"] == "rules_engine_check_store"
+        assert data["meta"]["cache_reason"] == "cache_disabled"
 
     def test_explicit_jobs_reflected_in_meta(
         self, tmp_path: Path, capsys: pytest.CaptureFixture[str], monkeypatch: pytest.MonkeyPatch

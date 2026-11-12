@@ -258,6 +258,21 @@ Modes:
 - Interactive: Manual field-by-field input
 - LLM: Auto-generate from title + brief description
 
+## adg check --cache - 增量缓存
+
+```bash
+adg check . --cache --json
+```
+
+复用未改动文件的检查结果（缓存实现与 `rules_engine` 同一 `CheckStore`），
+JSON `meta` 上报真实命中/缺失：`cache_hits` / `cache_misses` / `cache_hit_rate` /
+`cache_degraded`，未启用时这些计数为 `null`（不臆造 0）。
+
+- 默认**不启用**缓存（不产生磁盘产物）；显式 `--cache` 才开启。
+- 缓存键含生效规则签名：规则内容或 `--severity` 档位变化即失效重查。
+- 缓存库路径：`[tool.adg].cache_db` > `<项目目录>/.adg/adg_check_cache.db`。
+- 详见 `docs/adr/ADR-082-adg-check-uses-checkstore-cache.md`。
+
 ## adg cicd - CI/CD 配置生成
 
 ```bash

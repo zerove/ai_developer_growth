@@ -119,9 +119,9 @@ class TestRulesEngineCacheStats:
 
 
 class TestAdgCheckCacheMeta:
-    """adg check 路径：显式声明不具备缓存能力，且不臆造统计。"""
+    """adg check 路径（ADR-082）：能力已具备，未启用时显式给出原因且不臆造统计。"""
 
-    def test_adg_check_meta_marks_cache_unsupported(self, tmp_path: Path, capsys: Any) -> None:
+    def test_adg_check_meta_marks_cache_disabled(self, tmp_path: Path, capsys: Any) -> None:
         import argparse
 
         from tools.scripts.adg_cli.commands.cmd import cmd_check as cc
@@ -133,10 +133,42 @@ class TestAdgCheckCacheMeta:
         meta = json.loads(capsys.readouterr().out)["meta"]
 
         assert meta["use_cache"] is False
-        assert meta["cache_supported"] is False
-        assert meta["cache_engine"] is None
+        assert meta["cache_supported"] is True
+        assert meta["cache_engine"] == "rules_engine_check_store"
         assert meta["cache_initialized"] is False
-        assert meta["cache_reason"] == "adg_cli_path_no_rules_engine_cache"
+        assert meta["cache_reason"] == "cache_disabled"
         assert meta["cache_hits"] is None
         assert meta["cache_misses"] is None
         assert meta["cache_hit_rate"] is None
+
+    def test_adg_check_meta_reports_real_counts_when_cache_enabled(self, tmp_path: Path, capsys: Any) -> None:
+        """`--cache` 启用时上报真实命中/缺失计数（不是臆造的 0）。"""
+        import argparse
+
+        from tools.scripts.adg_cli.commands.cmd import cmd_check as cc
+
+        target = tmp_path / "a.py"
+        target.write_text("x = 1\n", encoding="utf-8")
+        args = argparse.Namespace(
+            path=str(target),
+            lang="python",
+            severity=None,
+            json=True,
+            format="json",
+            cache=True,
+            jobs=1,
+            framework=None,
+            sarif=False,
+        )
+        cc.cmd_check(args)
+        meta = json.loads(capsys.readouterr().out)["meta"]
+
+        assert meta["use_cache"] is True
+        assert meta["cache_supported"] is True
+        assert meta["cache_engine"] == "rules_engine_check_store"
+        assert meta["cache_initialized"] is True
+        assert meta["cache_reason"] is None
+        assert meta["cache_hits"] is not None
+        assert meta["cache_misses"] is not None
+        rate = meta["cache_hit_rate"]
+        assert rate is None or 0.0 <= rate <= 1.0

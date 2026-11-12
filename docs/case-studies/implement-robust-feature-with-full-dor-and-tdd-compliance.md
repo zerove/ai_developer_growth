@@ -153,4 +153,3 @@ Test First 强制 AI 先定义预期行为再实现，配合类型检查，将�
 - **相关方法论**: [ai-test-generation](../efficiency/ai-test-generation.md)
 
 - **相关方法论**: [ai-native-sdlc-whitepaper](../efficiency/ai-native-sdlc-whitepaper.md)
-

@@ -102,4 +102,3 @@ updated: 2026-08-12
 ## 相关方法论
 
 - **相关方法论**: [ai-architecture-design](../efficiency/ai-architecture-design.md)
-

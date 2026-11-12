@@ -51,5 +51,3 @@ jobs:
           name: mutation-report
           path: mutation-report.txt
           retention-days: 30
-
-      

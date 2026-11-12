@@ -397,4 +397,3 @@ Prometheus 告警规则已包含：指标、阈值、标签、摘要。AI 转换
 - **相关方法论**: [ai-technical-debt](../efficiency/ai-technical-debt.md)
 
 - **相关方法论**: [ai-documentation](../efficiency/ai-documentation.md)
-

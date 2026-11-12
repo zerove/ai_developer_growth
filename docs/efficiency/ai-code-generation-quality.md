@@ -297,4 +297,3 @@ def process_payment(amount: Decimal, user_id: str) -> PaymentResult:
 - **相关案例**: [intelligent-customer-service](../case-studies/intelligent-customer-service.md)
 
 - **相关案例**: [security-vulnerability-fix](../case-studies/security-vulnerability-fix.md)
-

@@ -19,27 +19,27 @@ ADR-029 列出 rule_loader.py 覆盖率补测的整体规划 (4-6h, 274 行)。�
     - 纯函数, 文件存在 → sha256 hex
     - 文件不存在 → ""
     - OSError (权限拒绝) → ""
-    
+
 2b `_load_disk_cache` + `_save_disk_cache` (~1h, ~15 行测试)
     - 文件存在 + 正常 JSON
     - JSONDecodeError → {}
     - OSError → {}
     - mkdir + write
     - 写失败 → 静默忽略
-    
+
 2c `_rules_hash_cached` + `_rules_hash` (~1h, ~20 行测试)
     - 多文件 hash (mock 真实 yml)
     - 文件不存在 (跳过)
     - OSError → ""
     - LRU cache (同 (lang, dir) 二次调用)
     - 默认 framework_dir (rules_dir())
-    
+
 2d yaml 加载系列 (~2h, ~30 行测试)
     - `_load_common_rules_cached`: yaml.safe_load 成功 + 失败 + 非 dict 返回
     - `_load_universal_rules_cached`: 合并 common + universal
     - `_try_load_yaml`: ImportError + yaml.safe_load 失败
     - merge_rules: 多种合并路径
-    
+
 2e 公开 API + 缓存失效 (~2h, ~25 行测试)
     - `load_language_rules`: cache hit + miss
     - `load_combined_rules`

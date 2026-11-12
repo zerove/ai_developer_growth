@@ -129,4 +129,3 @@ PM/架构/开发/审查并行推进，整体交付效率大幅提升。编码阶
 - **相关方法论**: [ai-sdlc](../efficiency/ai-sdlc.md)
 
 - **相关方法论**: [ai-native-sdlc-whitepaper](../efficiency/ai-native-sdlc-whitepaper.md)
-

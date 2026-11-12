@@ -1131,7 +1131,7 @@ V2.21.0 阶段 2 续拆 50 个 C/B 级函数 (P5-21~P5-70), 覆盖 30+ 文件, �
 - **P5-33 config.loader.load_config** C(12)→A(2): 抽 `_resolve_config_path` + `_load_config_dict`
 - **P5-34 adg_cli.fix.fix_file** C(15)→A(2): 抽 `_should_process_file` + `_is_checkable_language_file`
 - **P5-35 adg_cli.check.check_directory** C(11)→A(2): 抽 `_collect_files` + `_run_checks`
-- **P5-36 cmd_notify.cmd_notify** (P5-25 重做) 
+- **P5-36 cmd_notify.cmd_notify** (P5-25 重做)
 - **P5-37 rules_checker._detect_framework** C(19)→A(2): 抽 `_check_marker` + `_check_package_json` + `_check_text_contains`
 - **P5-38 rules_checker._filter_suppressed_issues** C(18)→A(2): 抽 `_parse_noqa_lines` + `_is_issue_suppressed`
 - **P5-39 semantic_checker._calculate_metrics** C(15)→A(2): 抽 `_accumulate_function_metrics` + `_accumulate_class_metrics` + `_compute_averages`
@@ -1314,7 +1314,7 @@ V2.21.0 阶段 2 续拆 50 个 C/B 级函数 (P5-21~P5-70), 覆盖 30+ 文件, �
 
 #### 重构 (P3-15 ~ P3-50)
 
-**language_registry.py (P3-15 ~ P3-16)**: 
+**language_registry.py (P3-15 ~ P3-16)**:
 - `_detect_from_package_json`: B=9 → A(5), 拆 3 个判定 helper (dep/script/sources)
 - `validate_toolchain`: B=7 → B(6), 拆 _check_single_tool (subprocess 探测)
 

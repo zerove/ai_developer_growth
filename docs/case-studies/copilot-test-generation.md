@@ -102,4 +102,3 @@ updated: 2026-08-12
 - **相关方法论**: [ai-open-source-management](../efficiency/ai-open-source-management.md)
 
 - **相关方法论**: [ai-coding-efficiency](../efficiency/ai-coding-efficiency.md)
-

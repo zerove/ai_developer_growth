@@ -152,4 +152,3 @@ adg check ./rich --lang python --json
 - **相关方法论**: [ai-security-review](../efficiency/ai-security-review.md)
 
 - **相关方法论**: [ai-code-performance](../efficiency/ai-code-performance.md)
-

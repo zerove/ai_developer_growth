@@ -148,4 +148,3 @@ Lint/Typecheck/单测/契约测/集成测/安全/性能 七级门禁逐级拦截
 - **相关方法论**: [ai-test-generation](../efficiency/ai-test-generation.md)
 
 - **相关方法论**: [ai-native-sdlc-whitepaper](../efficiency/ai-native-sdlc-whitepaper.md)
-

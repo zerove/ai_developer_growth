@@ -136,4 +136,3 @@ JCode 工作流配置文件统一定义，平台差异通过环境变量和条�
 - **相关方法论**: [ai-sdlc](../efficiency/ai-sdlc.md)
 
 - **相关方法论**: [ai-native-sdlc-whitepaper](../efficiency/ai-native-sdlc-whitepaper.md)
-

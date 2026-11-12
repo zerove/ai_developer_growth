@@ -371,4 +371,3 @@ AI 可以生成"在执行前备份"的代码，但"什么操作算危险"的判�
 - **相关方法论**: [ai-test-generation](../efficiency/ai-test-generation.md)
 
 - **相关方法论**: [ai-technical-debt](../efficiency/ai-technical-debt.md)
-

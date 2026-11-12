@@ -132,4 +132,3 @@ FastAPI 是公认的高质量项目（测试覆盖率 96%），仍有 2 个可�
 ## 相关方法论
 
 - **相关方法论**: [ai-developer-training](../efficiency/ai-developer-training.md)
-

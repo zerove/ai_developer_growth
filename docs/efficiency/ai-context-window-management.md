@@ -255,4 +255,3 @@ prompt = f"修改这个函数:\n{function_code}\n\n调用者:\n{callers}\n\n测�
 - **相关案例**: [intelligent-customer-service](../case-studies/intelligent-customer-service.md)
 
 - **相关案例**: [security-vulnerability-fix](../case-studies/security-vulnerability-fix.md)
-

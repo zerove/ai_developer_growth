@@ -191,4 +191,3 @@ AI 协作 = 沟通 + 协调 + 知识共享 + 冲突解决
 - **相关案例**: [intelligent-customer-service](../case-studies/intelligent-customer-service.md)
 
 - **相关案例**: [security-vulnerability-fix](../case-studies/security-vulnerability-fix.md)
-

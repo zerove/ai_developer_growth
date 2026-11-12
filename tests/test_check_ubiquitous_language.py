@@ -12,6 +12,9 @@ from tools.scripts.check_ubiquitous_language import (
     main,
 )
 
+# 仓库根动态推导: 此前硬编码开发机绝对路径 → CI/其他克隆者必然失败
+_REPO_ROOT = Path(__file__).resolve().parents[1]
+
 
 class TestCheckUbiquitousLanguage(unittest.TestCase):
     def setUp(self):
@@ -112,7 +115,7 @@ class TestCheckUbiquitousLanguage(unittest.TestCase):
         proc = subprocess.run(
             [
                 sys.executable,
-                "/home/zeron/dev/ai_developer_growth/tools/scripts/check_ubiquitous_language.py",
+                str(_REPO_ROOT / "tools" / "scripts" / "check_ubiquitous_language.py"),
             ],
             capture_output=True,
             text=True,

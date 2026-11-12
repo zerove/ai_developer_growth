@@ -2,8 +2,12 @@
 
 import subprocess
 import sys
+from pathlib import Path
 
 from tools.scripts.context_status import cmd_status
+
+# 仓库根动态推导: 此前硬编码开发机绝对路径 → CI/其他克隆者必然 FileNotFoundError
+_REPO_ROOT = Path(__file__).resolve().parents[1]
 
 
 def test_cmd_status_returns_zero() -> None:
@@ -12,7 +16,7 @@ def test_cmd_status_returns_zero() -> None:
         [sys.executable, "-m", "tools.scripts.context_status", "status"],
         capture_output=True,
         text=True,
-        cwd="/home/zeron/dev/ai_developer_growth",
+        cwd=str(_REPO_ROOT),
     )
     assert res.returncode == 0
     out = res.stdout

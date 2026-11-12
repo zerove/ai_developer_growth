@@ -55,6 +55,15 @@ jobs:
     - name: Install bandit
       run: pip install bandit
       if: matrix.language == 'python'
+    - name: Install shell toolchain
+      # shell 审计需要 shellcheck + shfmt: 工具缺失时检查会显式失败(exit 127),
+      # 不会静默跳过。shfmt 走 Go 安装(runner 自带 Go)。
+      if: matrix.language == 'shell'
+      run: |
+        sudo apt-get update -qq
+        sudo apt-get install -y -qq shellcheck
+        go install mvdan.cc/sh/v3/cmd/shfmt@latest
+        echo "$(go env GOPATH)/bin" >> "$GITHUB_PATH"
     - name: Install TypeScript deps
       if: matrix.language == 'typescript'
       run: 'npm ci 2>/dev/null || npm install

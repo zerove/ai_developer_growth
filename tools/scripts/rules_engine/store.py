@@ -166,7 +166,16 @@ def init_db(db_path: str = "") -> sqlite3.Connection:
     Schema 与 dashboard 的 quality_runs 兼容（保留原表），并新增
     check_cache / trend_snapshots 表用于增量检查与趋势存储。
     """
-    conn = sqlite3.connect(db_path or _default_db_path(), check_same_thread=False)
+    resolved = db_path or _default_db_path()
+    if not db_path:
+        # **默认路径**才自动建父目录: 默认落在 ~/.cache/adg/trend.db,
+        # CI/新机器上该目录可能不存在 → sqlite 报 "unable to open database file"。
+        # 显式传入的路径不建目录: "路径不可用" 应当被如实报错(db-maintain 的
+        # "无法打开统一存储" 语义依赖这一点), 而不是被悄悄创建。
+        parent = Path(resolved).expanduser().parent
+        if str(parent) not in ("", "."):
+            parent.mkdir(parents=True, exist_ok=True)
+    conn = sqlite3.connect(resolved, check_same_thread=False)
     conn.row_factory = sqlite3.Row
     conn.execute("PRAGMA journal_mode=WAL")
     _migrate_schema(conn)

@@ -75,7 +75,7 @@ case "$MODE" in
             exit 0
         fi
         # mutmut 不接受多文件, 取首个或合并
-        TARGETS=(--paths-to-mutate=$(echo "$CHANGED" | head -1))
+        TARGETS=("--paths-to-mutate=$(echo "$CHANGED" | head -1)")
         echo "🔄 增量模式: 跑首个变更文件 (mutmut 单文件限制)"
         echo "   文件: $(echo "$CHANGED" | head -1)"
         ;;

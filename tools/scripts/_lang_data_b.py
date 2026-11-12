@@ -436,6 +436,20 @@ _SHELL_FILES = (
     r"-not -path './.git/*' -not -path './.venv/*' -not -path './node_modules/*' -print0"
 )
 
+
+def _shell_cmd(tool: str, tail: str) -> str:
+    """构造 shell 工具调用：先确认工具存在, 再对脚本文件列表执行。
+
+    工具缺失时**显式失败**（exit 127 + 明确提示）, 不让 xargs 抛出
+    "No such file or directory" 这种难以定位的错误。
+    """
+    return (
+        f"command -v {tool} >/dev/null 2>&1 || "
+        f'{{ echo "{tool} 未安装, 跳过 shell 检查"; exit 127; }}; '
+        f"{_SHELL_FILES} | xargs -0 -r {tail}"
+    )
+
+
 SHELL_TOOLCHAIN = LanguageToolchain(
     language=Language.SHELL,
     version=">=5.0",
@@ -450,20 +464,20 @@ SHELL_TOOLCHAIN = LanguageToolchain(
     default_thresholds={"coverage_overall": 50, "naming_style": "snake_case"},
     format=ToolConfig(
         command="bash",
-        args=["-c", f"{_SHELL_FILES} | xargs -0 -r shfmt -d"],
-        fix_args=["-c", f"{_SHELL_FILES} | xargs -0 -r shfmt -w"],
+        args=["-c", _shell_cmd("shfmt", "shfmt -d")],
+        fix_args=["-c", _shell_cmd("shfmt", "shfmt -w")],
         config_file=".shfmtrc",
         install_hint="go install mvdan.cc/sh/v3/cmd/shfmt@latest",
     ),
     lint=ToolConfig(
         command="bash",
-        args=["-c", f"{_SHELL_FILES} | xargs -0 -r shellcheck -x -S warning"],
+        args=["-c", _shell_cmd("shellcheck", "shellcheck -x -S warning")],
         config_file=".shellcheckrc",
         install_hint="apt install shellcheck",
     ),
     typecheck=ToolConfig(
         command="bash",
-        args=["-c", f"{_SHELL_FILES} | xargs -0 -r -n 1 bash -n"],
+        args=["-c", _shell_cmd("bash", "bash -n")],
         install_hint="apt install bash",
     ),
     test=ToolConfig(
@@ -477,7 +491,7 @@ SHELL_TOOLCHAIN = LanguageToolchain(
     ),
     security=ToolConfig(
         command="bash",
-        args=["-c", f"{_SHELL_FILES} | xargs -0 -r shellcheck -x -S error"],
+        args=["-c", _shell_cmd("shellcheck", "shellcheck -x -S error")],
         config_file=".shellcheckrc",
     ),
     build=ToolConfig(

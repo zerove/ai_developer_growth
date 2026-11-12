@@ -2,8 +2,12 @@
 
 import subprocess
 import sys
+from pathlib import Path
 
 import pytest
+
+# 仓库根动态推导: 此前硬编码开发机绝对路径 → CI/其他克隆者必然 FileNotFoundError
+_REPO_ROOT = Path(__file__).resolve().parents[1]
 
 
 class TestJCodeCLI:
@@ -15,7 +19,7 @@ class TestJCodeCLI:
             [sys.executable, "-m", "tools.scripts.jcode_cli", "--help"],
             capture_output=True,
             text=True,
-            cwd="/home/zeron/dev/ai_developer_growth",
+            cwd=str(_REPO_ROOT),
         )
         assert result.returncode == 0
         assert "JCode AI-Native SDLC Command Line Interface" in result.stdout
@@ -28,7 +32,7 @@ class TestJCodeCLI:
             [sys.executable, "-m", "tools.scripts.jcode_cli", "case-quality"],
             capture_output=True,
             text=True,
-            cwd="/home/zeron/dev/ai_developer_growth",
+            cwd=str(_REPO_ROOT),
         )
         assert result.returncode == 0
         assert "Case Study Quality Analysis Report" in result.stdout
@@ -50,7 +54,7 @@ class TestJCodeCLI:
             ],
             capture_output=True,
             text=True,
-            cwd="/home/zeron/dev/ai_developer_growth",
+            cwd=str(_REPO_ROOT),
         )
         assert result.returncode == 0
         assert "adg-scan-httpx" in result.stdout
@@ -69,7 +73,7 @@ class TestJCodeCLI:
             ],
             capture_output=True,
             text=True,
-            cwd="/home/zeron/dev/ai_developer_growth",
+            cwd=str(_REPO_ROOT),
         )
         assert result.returncode == 0
         assert "Passed: True" in result.stdout
@@ -88,7 +92,7 @@ class TestJCodeCLI:
             ],
             capture_output=True,
             text=True,
-            cwd="/home/zeron/dev/ai_developer_growth",
+            cwd=str(_REPO_ROOT),
         )
         # May have issues, but should not crash
         assert "AI Quality Gate Results" in result.stdout
@@ -99,7 +103,7 @@ class TestJCodeCLI:
             [sys.executable, "-m", "tools.scripts.jcode_cli", "ai-pr-review"],
             capture_output=True,
             text=True,
-            cwd="/home/zeron/dev/ai_developer_growth",
+            cwd=str(_REPO_ROOT),
         )
         # Should not crash
         assert (
@@ -114,7 +118,7 @@ class TestJCodeCLI:
             [sys.executable, "-m", "tools.scripts.jcode_cli", "metrics-telemetry"],
             capture_output=True,
             text=True,
-            cwd="/home/zeron/dev/ai_developer_growth",
+            cwd=str(_REPO_ROOT),
         )
         assert result.returncode == 0
         assert "Collected metrics" in result.stdout
@@ -132,7 +136,7 @@ class TestJCodeCLI:
             ],
             capture_output=True,
             text=True,
-            cwd="/home/zeron/dev/ai_developer_growth",
+            cwd=str(_REPO_ROOT),
         )
         assert result.returncode == 0
         assert "audit" in result.stdout.lower() or "trace" in result.stdout.lower()
@@ -143,7 +147,7 @@ class TestJCodeCLI:
             [sys.executable, "-m", "tools.scripts.jcode_cli", "list-tools"],
             capture_output=True,
             text=True,
-            cwd="/home/zeron/dev/ai_developer_growth",
+            cwd=str(_REPO_ROOT),
         )
         assert result.returncode == 0
         assert "JCode Discover" in result.stdout
@@ -157,7 +161,7 @@ class TestJCodeCLI:
             [sys.executable, "-m", "tools.scripts.jcode_cli", "list-tools", "--category", "cli"],
             capture_output=True,
             text=True,
-            cwd="/home/zeron/dev/ai_developer_growth",
+            cwd=str(_REPO_ROOT),
         )
         assert result.returncode == 0
         assert "ai-native-workflow" in result.stdout
@@ -169,7 +173,7 @@ class TestJCodeCLI:
             [sys.executable, "-m", "tools.scripts.jcode_cli", "explain", "ai-native-workflow"],
             capture_output=True,
             text=True,
-            cwd="/home/zeron/dev/ai_developer_growth",
+            cwd=str(_REPO_ROOT),
         )
         assert result.returncode == 0
         assert "📖 jcode ai-native-workflow" in result.stdout
@@ -181,7 +185,7 @@ class TestJCodeCLI:
             [sys.executable, "-m", "tools.scripts.jcode_cli", "explain", "quick"],
             capture_output=True,
             text=True,
-            cwd="/home/zeron/dev/ai_developer_growth",
+            cwd=str(_REPO_ROOT),
         )
         assert result.returncode == 0
         assert "📖 make quick" in result.stdout
@@ -193,7 +197,7 @@ class TestJCodeCLI:
             [sys.executable, "-m", "tools.scripts.jcode_cli", "explain", "no-such-cmd"],
             capture_output=True,
             text=True,
-            cwd="/home/zeron/dev/ai_developer_growth",
+            cwd=str(_REPO_ROOT),
         )
         assert result.returncode == 1
         assert "list-tools" in result.stdout

@@ -490,6 +490,19 @@ def main() -> int:
 
     args = parser.parse_args()
 
+    # 先判参数、再构造 runner: 构造 runner 会连 kube 配置, 在没有 kube 配置的
+    # 环境(CI/新机器)里, 仅仅"没带参数"就应该打印提示并返回 1, 不该抛
+    # ConfigException —— 参数校验不该依赖外部集群可用性。
+    if args.schedule:
+        print(f"定时任务模式: {args.schedule}")
+        # 这里可以集成 cron 或 Kubernetes CronJob
+        print("建议使用 Kubernetes CronJob 部署定时任务")
+        return 0
+
+    if not (args.experiment or args.all_experiments):
+        print("请指定 --experiment 或 --all-experiments")
+        return 1
+
     runner = ChaosExperimentRunner(
         namespace=args.namespace,
         dry_run=args.dry_run,
@@ -502,15 +515,6 @@ def main() -> int:
     elif args.all_experiments:
         result = runner.run_scheduled_experiments()
         print(json.dumps(result, indent=2, ensure_ascii=False))
-
-    elif args.schedule:
-        print(f"定时任务模式: {args.schedule}")
-        # 这里可以集成 cron 或 Kubernetes CronJob
-        print("建议使用 Kubernetes CronJob 部署定时任务")
-
-    else:
-        print("请指定 --experiment 或 --all-experiments")
-        return 1
 
     return 0
 

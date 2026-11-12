@@ -6,6 +6,9 @@ import tempfile
 import unittest
 from pathlib import Path
 
+# 仓库根动态推导: 此前硬编码开发机绝对路径 → CI/其他克隆者必然失败
+_REPO_ROOT = Path(__file__).resolve().parents[1]
+
 
 class TestValidateCaseStudyMain(unittest.TestCase):
     """Test CLI main function via subprocess."""
@@ -27,7 +30,7 @@ class TestValidateCaseStudyMain(unittest.TestCase):
         return subprocess.run(
             [
                 sys.executable,
-                "/home/zeron/dev/ai_developer_growth/tools/scripts/validate_case_study.py",
+                str(_REPO_ROOT / "tools" / "scripts" / "validate_case_study.py"),
                 *args,
             ],
             capture_output=True,

@@ -20,8 +20,10 @@ jobs:
         python-version: ${{ inputs.python-version }}
         cache: pip
         cache-dependency-path: pyproject.toml
-    - run: pip install pytest pytest-cov pyyaml pytest-xdist pytest-rerunfailures pytest-timeout
-    - run: pip install -e .
+    # 必须装齐测试所需的 extras: AST 语义检查(tree-sitter)、dashboard(fastapi)、
+    # chaos/kubernetes、property(hypothesis) 都要对应依赖, 否则相关测试在
+    # collection 阶段 ImportError → 整轮 pytest 失败(而非跳过)。
+    - run: pip install -e ".[dev-core,dev-semantic,search,dev-integration]"
     - name: Read coverage threshold from pyproject.toml
       id: coverage-config
       # cov_min 是覆盖率的唯一来源: 本地 hooks/basic_checks.py 以

@@ -327,6 +327,15 @@ class ContextSyncManager:
         root = Path(project_root).resolve()
         print_check(f"项目根目录: {root}", True)
 
+        # CI 模式: **不改写仓库文件**。
+        # 同步产物带生成时间戳, 每次内容都不同 → CI 里"是否已同步"无法判定;
+        # 而 pre-commit 的 jcode-on-commit 钩子在 CI 中改写文件会被判为
+        # "files were modified by this hook" → 永久性假失败。
+        # 同步是**开发者本地**提交钩子的职责, CI 只校验不改写。
+        if os.environ.get("CI", "").strip().lower() in {"1", "true", "yes"}:
+            print_check("CI 模式: 跳过 CONTEXT.md/ADR.md 改写（同步由本地提交钩子负责）", True)
+            return 0
+
         # 1. 获取最近变更
         changed_files = self.analyzer.get_changed_files(cwd=root)
         print_check(f"变更文件数: {len(changed_files)}", True)

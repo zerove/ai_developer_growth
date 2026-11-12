@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import contextlib
-import fcntl
 import hashlib
 import json
 import os
@@ -38,6 +37,17 @@ from tools.scripts._common import (
 )
 from tools.scripts.rules_engine.logger import logger
 from tools.scripts.rules_engine.regex_cache import guard_pattern
+
+# fcntl 仅 Unix 提供; Windows 上没有该模块 —— 此前无条件 import 会让
+# Windows 的门禁作业在 import 阶段直接 ModuleNotFoundError。
+# 用平台判断而非 try/except: mypy 对两种写法给出的结论不同
+# (try/except 下 fcntl 退化为 Any, 随之而来的 type: ignore 会变成
+# "未使用" 而报错), 平台判断则让类型在任何环境下都一致。
+_HAS_FCNTL = sys.platform != "win32"
+if _HAS_FCNTL:
+    import fcntl
+else:  # pragma: no cover - Windows 路径
+    fcntl = None  # type: ignore[assignment]
 
 # ── 规则 pattern 的 ReDoS 闸门 ─────────────────────────────
 #
@@ -236,6 +246,9 @@ def _disk_cache_lock(*, shared: bool) -> Iterator[None]:
     lock_path = Path(tempfile.gettempdir()) / f"adg-rules-disk-cache-{digest}.lock"
     lock_path.touch(exist_ok=True)
     with lock_path.open("r+") as handle:
+        if not _HAS_FCNTL:  # Windows 无 fcntl → 退化为无锁（单进程语义）
+            yield
+            return
         fcntl.flock(handle.fileno(), fcntl.LOCK_SH if shared else fcntl.LOCK_EX)
         try:
             yield

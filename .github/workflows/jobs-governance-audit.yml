@@ -48,7 +48,10 @@ jobs:
       # 若后续审计依赖语义/集成能力，按需补充 dev-semantic/dev-integration 并验证 collect/audit 不降。
       # 注意: 不能按 matrix.language == 'python' 条件安装 —— 审计器本身是 Python
       # 脚本(shell/go/rust 审计同样由它执行), 缺 loguru 会直接 ModuleNotFoundError。
-      run: pip install -e ".[dev-core]"
+      # 审计作业会跑**完整** pytest 套件, 因此测试所需的可选依赖同样要装
+      # (AST 语义 tree-sitter / dashboard fastapi / chaos kubernetes /
+      #  property hypothesis), 否则 collection ImportError 会让审计失败。
+      run: pip install -e ".[dev-core,dev-semantic,search,dev-integration]"
     - name: Install bandit
       run: pip install bandit
       if: matrix.language == 'python'

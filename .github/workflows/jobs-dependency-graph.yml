@@ -42,35 +42,79 @@ jobs:
       run: pip install -U "setuptools>=83.0.0"
     - name: Install JCode
       run: pip install -e .
-    - name: Generate SBOM if not provided
-      if: inputs.sbom-path == ''
+    # SBOM 必须在本作业内生成: 上游 sbom 作业的产物不会被自动带进本作业,
+    # 而 dep-graph 的 CLI 契约是消费 --sbom 指定的文件 (不指定则扫描项目)。
+    - name: Generate SBOM
       id: sbom
-      run: 'python -m tools.scripts.hooks_runner supply-chain sbom --output sbom.json
-        --format json
-
-        echo "sbom-path=sbom.json" >> $GITHUB_OUTPUT
-
-        '
+      shell: bash
+      run: |
+        set -eo pipefail
+        SBOM_PATH="${{ inputs.sbom-path }}"
+        if [[ -z "$SBOM_PATH" ]]; then
+          SBOM_PATH="sbom.json"
+        fi
+        python -m tools.scripts.hooks_runner supply-chain sbom \
+          --path . \
+          --format json \
+          --output "$SBOM_PATH"
+        echo "sbom-path=$SBOM_PATH" >> $GITHUB_OUTPUT
     - name: Run Dependency Graph Analysis
       id: dep-graph
-      run: "set -e\nACTION=\"${{ inputs.action }}\"\nSBOM=\"${{ inputs.sbom-path !=\
-        \ '' && inputs.sbom-path || steps.sbom.outputs.sbom-path }}\"\nFORMAT=\"${{\
-        \ inputs.format }}\"\nOUTPUT=\"${{ inputs.output }}\"\n\ncase \"$ACTION\"\
-        \ in\n  analyze)\n    python -m tools.scripts.hooks_runner dep-graph analyze\
-        \ \\\n      --sbom \"$SBOM\" \\\n      --format \"$FORMAT\" \\\n      ${OUTPUT:+--output\
-        \ \"$OUTPUT\"}\n    ;;\n  circular)\n    python -m tools.scripts.hooks_runner\
-        \ dep-graph circular \\\n      --sbom \"$SBOM\" \\\n      --format \"$FORMAT\"\
-        \ \\\n      ${OUTPUT:+--output \"$OUTPUT\"}\n    ;;\n  conflicts)\n    python\
-        \ -m tools.scripts.hooks_runner dep-graph conflicts \\\n      --sbom \"$SBOM\"\
-        \ \\\n      --format \"$FORMAT\" \\\n      ${OUTPUT:+--output \"$OUTPUT\"\
-        }\n    ;;\n  impact)\n    python -m tools.scripts.hooks_runner dep-graph impact\
-        \ \\\n      --sbom \"$SBOM\" \\\n      --package \"${{ inputs.package }}\"\
-        \ \\\n      --new-version \"${{ inputs.new-version }}\" \\\n      --format\
-        \ \"$FORMAT\" \\\n      ${OUTPUT:+--output \"$OUTPUT\"}\n    ;;\n  export)\n\
-        \    python -m tools.scripts.hooks_runner dep-graph export \\\n      --sbom\
-        \ \"$SBOM\" \\\n      --format \"$FORMAT\" \\\n      ${OUTPUT:+--output \"\
-        $OUTPUT\"}\n    ;;\n  *)\n    echo \"Unknown action: $ACTION\"\n    exit 1\n\
-        \    ;;\nesac\n"
+      shell: bash
+      run: |
+        set -eo pipefail
+        ACTION="${{ inputs.action }}"
+        SBOM="${{ steps.sbom.outputs.sbom-path }}"
+        FORMAT="${{ inputs.format }}"
+        OUTPUT="${{ inputs.output }}"
+
+        output_args=()
+        if [[ -n "$OUTPUT" ]]; then
+          output_args=(--output "$OUTPUT")
+        fi
+
+        case "$ACTION" in
+          analyze)
+            python -m tools.scripts.hooks_runner dep-graph analyze \
+              --sbom "$SBOM" \
+              --format "$FORMAT" \
+              "${output_args[@]}"
+            ;;
+          circular)
+            python -m tools.scripts.hooks_runner dep-graph circular \
+              --sbom "$SBOM" \
+              --format "$FORMAT" \
+              "${output_args[@]}"
+            ;;
+          conflicts)
+            python -m tools.scripts.hooks_runner dep-graph conflicts \
+              --sbom "$SBOM" \
+              --format "$FORMAT" \
+              "${output_args[@]}"
+            ;;
+          impact)
+            python -m tools.scripts.hooks_runner dep-graph impact \
+              --sbom "$SBOM" \
+              --package "${{ inputs.package }}" \
+              --new-version "${{ inputs.new-version }}" \
+              "${output_args[@]}"
+            ;;
+          export)
+            # export 只支持 mermaid / graphviz; 通用默认 (json) 归一到 mermaid
+            export_format="$FORMAT"
+            if [[ "$export_format" == "json" ]]; then
+              export_format="mermaid"
+            fi
+            python -m tools.scripts.hooks_runner dep-graph export \
+              --sbom "$SBOM" \
+              --format "$export_format" \
+              "${output_args[@]}"
+            ;;
+          *)
+            echo "Unknown action: $ACTION"
+            exit 1
+            ;;
+        esac
     - name: Upload dependency graph results
       if: inputs.output != '' && always()
       uses: actions/upload-artifact@v4

@@ -302,12 +302,21 @@ class LicenseChecker:
     def _classify_license(self, license_str: str) -> LicensePolicy:
         """根据 license_str 返回 LicensePolicy (模块级 helper).
 
+        支持 PEP 639 复合表达式: "A OR B" 表示可选其一 (任一被允许即合规),
+        "A AND B" 表示两者同时适用 (任一被禁即不合规)。
+
         Args:
             license_str: 已标准化的 license 字符串
 
         Returns:
             LicensePolicy 等级
         """
+        if " OR " in license_str:
+            alternatives = [self._classify_license(part) for part in license_str.split(" OR ")]
+            return self._combine_policies(alternatives, require_all=False)
+        if " AND " in license_str:
+            alternatives = [self._classify_license(part) for part in license_str.split(" AND ")]
+            return self._combine_policies(alternatives, require_all=True)
         if license_str in self.policy:
             return self.policy[license_str]
         if license_str in self.PERMISSIVE_LICENSES:
@@ -318,17 +327,73 @@ class LicenseChecker:
             return LicensePolicy.DENY
         return LicensePolicy.REVIEW
 
-    def check_dependencies(self, dependencies: list[Dependency]) -> list[str]:
-        """检查依赖许可证合规"""
-        issues = []
+    @staticmethod
+    def _combine_policies(policies: list[LicensePolicy], require_all: bool) -> LicensePolicy:
+        """合并复合许可证表达式的策略。
+
+        Args:
+            policies: 各分支的策略
+            require_all: True 表示 "AND" (全部适用), False 表示 "OR" (可选其一)
+
+        Returns:
+            合并后的 LicensePolicy
+        """
+        if require_all:
+            if LicensePolicy.DENY in policies:
+                return LicensePolicy.DENY
+            if all(policy == LicensePolicy.ALLOW for policy in policies):
+                return LicensePolicy.ALLOW
+            return LicensePolicy.REVIEW
+        if LicensePolicy.ALLOW in policies:
+            return LicensePolicy.ALLOW
+        if LicensePolicy.REVIEW in policies:
+            return LicensePolicy.REVIEW
+        return LicensePolicy.DENY
+
+    def evaluate_dependencies(self, dependencies: list[Dependency]) -> tuple[list[str], list[str]]:
+        """按策略评估依赖许可证, 返回 (阻断项, 待复核项)。
+
+        Args:
+            dependencies: 依赖列表 (会就地写入 dep.license_policy)
+
+        Returns:
+            (denied, review): denied 是明确禁止的许可证 (阻断合规),
+            review 是未知许可证 / copyleft 等需要人工复核的项 (不阻断)
+        """
+        denied: list[str] = []
+        review: list[str] = []
         for dep in dependencies:
             policy = self.check_license(dep.license)
             dep.license_policy = policy
             if policy == LicensePolicy.DENY:
-                issues.append(f"DENIED license: {dep.name}@{dep.version} ({dep.license})")
+                denied.append(f"DENIED license: {dep.name}@{dep.version} ({dep.license})")
             elif policy == LicensePolicy.REVIEW:
-                issues.append(f"REVIEW needed: {dep.name}@{dep.version} ({dep.license})")
-        return issues
+                review.append(f"REVIEW needed: {dep.name}@{dep.version} ({dep.license})")
+        return denied, review
+
+    def check_dependencies(self, dependencies: list[Dependency]) -> list[str]:
+        """检查依赖许可证合规 (只返回阻断项: 明确禁止的许可证)。
+
+        Args:
+            dependencies: 依赖列表
+
+        Returns:
+            阻断项列表 (空列表表示没有禁用许可证)
+        """
+        denied, _ = self.evaluate_dependencies(dependencies)
+        return denied
+
+    def collect_review_items(self, dependencies: list[Dependency]) -> list[str]:
+        """收集待人工复核的许可证项 (未知许可证 / copyleft)。
+
+        Args:
+            dependencies: 依赖列表
+
+        Returns:
+            待复核项列表
+        """
+        _, review = self.evaluate_dependencies(dependencies)
+        return review
 
 
 class SignatureVerifier:
@@ -451,14 +516,15 @@ class SupplyChainScanner:
         all_deps = self._flatten_deps(sbom.packages)
         vulns = self.osv_scanner.scan_dependencies(all_deps)
         self._link_vulns_to_deps(vulns, all_deps)
-        license_issues = self.license_checker.check_dependencies(all_deps)
+        license_issues, license_review = self.license_checker.evaluate_dependencies(all_deps)
 
         return ScanResult(
             project_path=str(project_root),
             dependencies=all_deps,
             vulnerabilities=vulns,
             license_issues=license_issues,
-            summary=self._build_scan_summary(all_deps, vulns, license_issues),
+            license_review=license_review,
+            summary=self._build_scan_summary(all_deps, vulns, license_issues, license_review),
         )
 
     def _link_vulns_to_deps(self, vulns: list[Vulnerability], all_deps: list[Dependency]) -> None:
@@ -481,6 +547,7 @@ class SupplyChainScanner:
         all_deps: list[Dependency],
         vulns: list[Vulnerability],
         license_issues: list[str],
+        license_review: list[str] | None = None,
     ) -> dict[str, int]:
         """构建扫描汇总字段.
 
@@ -496,6 +563,7 @@ class SupplyChainScanner:
             "medium": self._count_vulns_by_severity(vulns, Severity.MEDIUM),
             "low": self._count_vulns_by_severity(vulns, Severity.LOW),
             "license_issues": len(license_issues),
+            "license_review": len(license_review or []),
         }
 
     @staticmethod

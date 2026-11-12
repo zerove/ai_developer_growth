@@ -15,11 +15,16 @@ from tools.scripts.auto_fix import AutoFixOrchestrator, FixResult, FixSafetyLeve
 from tools.scripts.rules_engine.models import CheckResult
 from tools.scripts.supply_chain import (
     SBOM,
+    Dependency,
     LicensePolicy,
     ScanResult,
     Severity,
+    SignatureVerifier,
     SupplyChainScanner,
     Vulnerability,
+)
+from tools.scripts.supply_chain import (
+    PyPIMetadataClient as PyPIMetadataClient,
 )
 
 logger = logging.getLogger(__name__)
@@ -167,11 +172,19 @@ def _handle_supply_chain_scan(args: argparse.Namespace) -> int:
         print(f"Path not found: {project_root}")
         return 1
 
-    scanner = SupplyChainScanner()
+    policy_file = getattr(args, "policy_file", None)
+    # 传入策略文件时, 许可证策略必须真正生效: 补齐许可证后, 命中禁用
+    # 许可证即视为违规 (与漏洞阈值同级阻断)。
+    policy = _load_license_policy(policy_file) if policy_file else None
+    scanner = SupplyChainScanner(license_policy=policy)
     result = scanner.scan_project(project_root)
 
     _, fail_level = _scan_severity_threshold(args)
     should_fail = _scan_has_failing_vulns(result.vulnerabilities, fail_level)
+
+    if policy_file:
+        _resolve_licenses(scanner, result, PyPIMetadataClient())
+        should_fail = should_fail or bool(result.license_issues)
 
     _output_scan_result(args, project_root, result)
 
@@ -231,6 +244,7 @@ def _print_scan_text(project_root: Path, result: ScanResult) -> None:
     print(f"    Medium:   {result.summary['medium']}")
     print(f"    Low:      {result.summary['low']}")
     print(f"  许可证问题: {result.summary['license_issues']}")
+    print(f"  待复核许可证: {result.summary.get('license_review', 0)}")
 
     if result.vulnerabilities:
         print("\n📋 漏洞详情:")
@@ -243,6 +257,11 @@ def _print_scan_text(project_root: Path, result: ScanResult) -> None:
     if result.license_issues:
         print("\n⚖️  许可证问题:")
         for issue in result.license_issues:
+            print(f"  {issue}")
+
+    if result.license_review:
+        print("\n🔍 待复核许可证:")
+        for issue in result.license_review:
             print(f"  {issue}")
 
 
@@ -260,6 +279,7 @@ def _output_scan_result(args: argparse.Namespace, project_root: Path, result: Sc
             "summary": result.summary,
             "vulnerabilities": vuln_dicts,
             "license_issues": result.license_issues,
+            "license_review": result.license_review,
         }
         args.output.write_text(json.dumps(output_data, indent=2, ensure_ascii=False))
         print(f"Results written to {args.output}")
@@ -270,6 +290,7 @@ def _output_scan_result(args: argparse.Namespace, project_root: Path, result: Sc
             "summary": result.summary,
             "vulnerabilities": vuln_dicts,
             "license_issues": result.license_issues,
+            "license_review": result.license_review,
         }
         print(json.dumps(payload, indent=2, ensure_ascii=False))
     elif args.format == "sarif":
@@ -330,8 +351,27 @@ def _load_license_policy(policy_file: Path | None) -> dict[str, LicensePolicy] |
     return license_policy
 
 
+def _resolve_licenses(scanner: SupplyChainScanner, result: ScanResult, client: PyPIMetadataClient) -> None:
+    """补齐依赖许可证并重算许可证策略。
+
+    清单文件 (pyproject/requirements) 不声明依赖自身的许可证, 扫描结果里的
+    license 恒为 None → 全部落进"待复核"分支, 合规检查失去判别力。这里从
+    PyPI 元数据补齐许可证, 再按策略重算 (禁用许可证 → 阻断项)。
+    """
+    for dep in result.dependencies:
+        if dep.license or dep.ecosystem != "pypi":
+            continue
+        dep.license = client.license_of(dep.name)
+    result.license_issues, result.license_review = scanner.license_checker.evaluate_dependencies(result.dependencies)
+
+
 def _run_compliance_checks(project_root: Path, result: ScanResult) -> dict[str, Any]:
-    """执行合规检查: 许可证问题与漏洞阈值。"""
+    """执行合规检查: 许可证问题与漏洞阈值。
+
+    阻断项 (passed=False): 明确禁止的许可证 + critical/high 漏洞。
+    告警项: 待人工复核的许可证 (未知 / copyleft) + medium 漏洞 ——
+    未知许可证不等于违规, 阻断会让任何未声明许可证的项目恒红。
+    """
     compliance: dict[str, Any] = {
         "project": str(project_root),
         "scanned_at": result.scanned_at,
@@ -344,6 +384,9 @@ def _run_compliance_checks(project_root: Path, result: ScanResult) -> dict[str, 
     for issue in result.license_issues:
         compliance["violations"].append({"type": "license", "message": issue, "severity": "high"})
         compliance["passed"] = False
+
+    for issue in result.license_review:
+        compliance["warnings"].append({"type": "license", "message": issue, "severity": "medium"})
 
     for vuln in result.vulnerabilities:
         message = f"{vuln.id}: {vuln.affected_package}@{vuln.affected_version} - {vuln.summary}"
@@ -396,10 +439,12 @@ def _handle_supply_chain_compliance(args: argparse.Namespace) -> int:
         print(f"Path not found: {project_root}")
         return 1
 
-    _load_license_policy(args.policy_file)
-    scanner = SupplyChainScanner()
+    # 策略文件必须真正生效: 允许/禁止清单要参与许可证判定, 否则白名单形同虚设。
+    policy = _load_license_policy(args.policy_file)
+    scanner = SupplyChainScanner(license_policy=policy)
     result = scanner.scan_project(project_root)
 
+    _resolve_licenses(scanner, result, PyPIMetadataClient())
     compliance = _run_compliance_checks(project_root, result)
     _output_compliance(args, project_root, compliance)
 
@@ -469,13 +514,14 @@ def _handle_supply_chain_freshness(args: argparse.Namespace) -> int:
     return 0
 
 
-def _verify_packages(project_root: Path) -> dict[str, Any]:
+def _verify_packages(project_root: Path, client: PyPIMetadataClient | None = None) -> dict[str, Any]:
     """逐依赖执行签名验证并汇总结果。"""
     import datetime
 
     scanner = SupplyChainScanner()
     sbom = scanner.sbom_generator.generate_from_project(project_root)
     all_deps = scanner._flatten_deps(sbom.packages)
+    client = client or PyPIMetadataClient()
 
     result: dict[str, Any] = {
         "project": str(project_root),
@@ -483,6 +529,8 @@ def _verify_packages(project_root: Path) -> dict[str, Any]:
         "total_packages": len(all_deps),
         "verified": [],
         "unverified": [],
+        # 元数据不可达 (网络/超时) 的依赖: 无法判定, 与"包不存在"分开统计
+        "unverifiable": [],
         "failed": [],
     }
 
@@ -492,15 +540,59 @@ def _verify_packages(project_root: Path) -> dict[str, Any]:
                 {"name": dep.name, "version": dep.version, "reason": f"No verifier for {dep.ecosystem}"}
             )
             continue
-        vres = scanner.signature_verifier.verify_pypi_package(dep.name, dep.version)
-        if vres.get("verified"):
-            result["verified"].append({"name": dep.name, "version": dep.version, "details": vres})
-        else:
-            result["unverified"].append(
-                {"name": dep.name, "version": dep.version, "reason": vres.get("error", "No verification data")}
-            )
+        _verify_one_dependency(dep, scanner.signature_verifier, client, result)
 
     return result
+
+
+def _verify_one_dependency(
+    dep: Dependency,
+    verifier: SignatureVerifier,
+    client: PyPIMetadataClient,
+    result: dict[str, Any],
+) -> None:
+    """校验单个 PyPI 依赖是否存在满足其声明约束的发布版本 (就地写入 result)。
+
+    先按精确版本校验; 清单里的 ">=0.23" 只是下界 (PyPI 上真实版本是 0.23.0),
+    精确版本查不到时再按约束符解析实际发布版本。
+
+    Args:
+        dep: 依赖项 (含 name / version / specifier)
+        verifier: 签名验证器 (精确版本存在性)
+        client: PyPI 元数据客户端
+        result: 汇总结果 (原地更新)
+    """
+    exact = verifier.verify_pypi_package(dep.name, dep.version)
+    if exact.get("verified"):
+        result["verified"].append({"name": dep.name, "version": dep.version, "details": exact})
+        return
+
+    resolved = client.resolve_version(dep.name, dep.version, dep.specifier)
+    if resolved is not None:
+        result["verified"].append(
+            {
+                "name": dep.name,
+                "version": dep.version,
+                "details": {
+                    "verified": True,
+                    "message": f"PyPI 包 {dep.name} 存在, 声明约束匹配发布版本 {resolved}",
+                    "name": dep.name,
+                    "declared_version": dep.version,
+                    "resolved_version": resolved,
+                    "release_files": len(client.release_versions(dep.name)),
+                },
+            }
+        )
+        return
+
+    if client.metadata(dep.name) is None and not client.package_missing(dep.name):
+        result["unverifiable"].append({"name": dep.name, "version": dep.version, "reason": "PyPI metadata unreachable"})
+        return
+
+    reason = exact.get("error") or "No verification data"
+    if client.package_missing(dep.name):
+        reason = "Package not found on PyPI"
+    result["unverified"].append({"name": dep.name, "version": dep.version, "reason": reason})
 
 
 def _print_verify_text(project_root: Path, report: dict[str, Any]) -> None:
@@ -517,6 +609,13 @@ def _print_verify_text(project_root: Path, report: dict[str, Any]) -> None:
             print(f"  {u['name']}@{u['version']}: {u['reason']}")
         if len(report["unverified"]) > 10:
             print(f"  ... and {len(report['unverified']) - 10} more")
+
+    if report.get("unverifiable"):
+        print("\n🌐 Unverifiable packages (PyPI 元数据不可达):")
+        for u in report["unverifiable"][:10]:
+            print(f"  {u['name']}@{u['version']}: {u['reason']}")
+        if len(report["unverifiable"]) > 10:
+            print(f"  ... and {len(report['unverifiable']) - 10} more")
 
 
 def _handle_supply_chain_verify(args: argparse.Namespace) -> int:
@@ -537,8 +636,14 @@ def _handle_supply_chain_verify(args: argparse.Namespace) -> int:
         args.output.write_text(json.dumps(report, indent=2, ensure_ascii=False))
         print(f"Verification report written to {args.output}")
 
-    # 存在未验证包时返回非零 (严格模式)
-    return 0 if not report["unverified"] else 1
+    # 存在未验证包时返回非零 (严格模式)。
+    # 元数据不可达 (网络抖动) 不直接阻断, 但若一个包都没能校验成功, 说明
+    # 校验本身失效 (而不是依赖有问题), 同样阻断 —— 避免"查不到即放行"。
+    if report["unverified"]:
+        return 1
+    if report["unverifiable"] and not report["verified"]:
+        return 1
+    return 0
 
 
 def _handle_sbom(args: argparse.Namespace) -> int:

@@ -154,6 +154,36 @@ class TestFreshnessHandler:
         assert "project" in data
 
 
+def _missing_client() -> MagicMock:
+    """假客户端: 包在 PyPI 上不存在 (HTTP 404)。"""
+    client = MagicMock()
+    client.metadata.return_value = None
+    client.package_missing.return_value = True
+    client.resolve_version.return_value = None
+    client.release_versions.return_value = []
+    return client
+
+
+def _unreachable_client() -> MagicMock:
+    """假客户端: PyPI 元数据不可达 (网络故障)。"""
+    client = MagicMock()
+    client.metadata.return_value = None
+    client.package_missing.return_value = False
+    client.resolve_version.return_value = None
+    client.release_versions.return_value = []
+    return client
+
+
+def _range_client() -> MagicMock:
+    """假客户端: 包存在, 但声明版本只是下界。"""
+    client = MagicMock()
+    client.metadata.return_value = {"info": {}}
+    client.package_missing.return_value = False
+    client.resolve_version.return_value = "0.23.0"
+    client.release_versions.return_value = ["0.23.0"]
+    return client
+
+
 class TestVerifyPackages:
     """_verify_packages 汇总逻辑。"""
 
@@ -181,24 +211,49 @@ class TestVerifyPackages:
         scanner.signature_verifier.verify_pypi_package.return_value = {"verified": False, "error": "no sig"}
 
         with patch.object(sr, "SupplyChainScanner", return_value=scanner):
-            report = sr._verify_packages(tmp_path)
+            report = sr._verify_packages(tmp_path, client=_missing_client())
 
         assert report["verified"] == []
-        assert report["unverified"][0]["reason"] == "no sig"
+        assert report["unverified"][0]["reason"] == "Package not found on PyPI"
 
     def test_verify_missing_reason_defaults(self, tmp_path: Path) -> None:
         dep = make_dep("mystery")
         scanner = MagicMock()
-        scanner.sbml_placeholder = None  # noqa: F841  防误用属性
-        del scanner.sbml_placeholder
         scanner.sbom_generator.generate_from_project.return_value = make_sbom([dep])
         scanner._flatten_deps.return_value = [dep]
         scanner.signature_verifier.verify_pypi_package.return_value = {"verified": False}
 
         with patch.object(sr, "SupplyChainScanner", return_value=scanner):
-            report = sr._verify_packages(tmp_path)
+            report = sr._verify_packages(tmp_path, client=_missing_client())
 
-        assert report["unverified"][0]["reason"] == "No verification data"
+        assert report["unverified"][0]["reason"] == "Package not found on PyPI"
+
+    def test_metadata_unreachable_is_not_unverified(self, tmp_path: Path) -> None:
+        """元数据不可达属"无法判定", 不能与"包不存在"混为一谈。"""
+        dep = make_dep("flaky-pkg")
+        scanner = MagicMock()
+        scanner.sbom_generator.generate_from_project.return_value = make_sbom([dep])
+        scanner._flatten_deps.return_value = [dep]
+        scanner.signature_verifier.verify_pypi_package.return_value = {"verified": False}
+
+        with patch.object(sr, "SupplyChainScanner", return_value=scanner):
+            report = sr._verify_packages(tmp_path, client=_unreachable_client())
+
+        assert report["unverified"] == []
+        assert report["unverifiable"][0]["reason"] == "PyPI metadata unreachable"
+
+    def test_range_constraint_resolves_real_release(self, tmp_path: Path) -> None:
+        """清单里的 ">=0.23" 只是下界, 必须解析到真实发布版本才算通过。"""
+        dep = Dependency(name="range-pkg", version="0.23", ecosystem="pypi", specifier=">=")
+        scanner = MagicMock()
+        scanner.sbom_generator.generate_from_project.return_value = make_sbom([dep])
+        scanner._flatten_deps.return_value = [dep]
+        scanner.signature_verifier.verify_pypi_package.return_value = {"verified": False}
+
+        with patch.object(sr, "SupplyChainScanner", return_value=scanner):
+            report = sr._verify_packages(tmp_path, client=_range_client())
+
+        assert report["verified"][0]["details"]["resolved_version"] == "0.23.0"
 
 
 class TestHandleSupplyChainVerify:
@@ -231,6 +286,7 @@ def _verify_report(*, unverified: list[dict[str, str]]) -> dict[str, object]:
         "total_packages": 1 + len(unverified),
         "verified": [],
         "unverified": unverified,
+        "unverifiable": [],
         "failed": [],
     }
 

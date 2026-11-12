@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import json
 import logging
+import re
 from pathlib import Path
 from typing import Any
 
@@ -598,16 +599,38 @@ class SBOMGenerator:
         return deps
 
     def _parse_dep_spec(self, spec: str) -> Dependency | None:
-        """解析依赖规格"""
-        # 简化解析: package>=1.0, package==1.0, package~=1.0
-        import re
+        """解析依赖规格 (包名 + 版本约束)。
 
+        额外保留版本约束符 (">=" / "==" 等): 清单里的 ">=0.23" 只是下界,
+        不是可安装版本 (PyPI 上真实版本是 0.23.0), 存在性校验必须区分
+        "下界约束" 与 "精确锁定"。
+        """
+        # 简化解析: package>=1.0, package==1.0, package~=1.0
         match = re.match(r"^([A-Za-z0-9_.-]+)([=<>!~]+.*)?$", spec.strip())
         if match:
             name = match.group(1)
-            version = match.group(2).lstrip("=<>~!") if match.group(2) else ""
-            return Dependency(name=name, version=version, ecosystem="pypi")
+            constraint = match.group(2) or ""
+            version = constraint.lstrip("=<>~!") if constraint else ""
+            return Dependency(
+                name=name,
+                version=version,
+                ecosystem="pypi",
+                specifier=self._extract_specifier(constraint),
+            )
         return None
+
+    @staticmethod
+    def _extract_specifier(constraint: str) -> str | None:
+        """从约束文本里取出比较符 (如 ">=6.0" → ">=")。
+
+        Args:
+            constraint: 约束文本 (可能为空)
+
+        Returns:
+            比较符; 无比较符时返回 None
+        """
+        match = re.match(r"^(==|>=|<=|~=|!=|>|<)", constraint)
+        return match.group(1) if match else None
 
     def _parse_poetry_dep(self, name: str, spec: str | dict[str, Any]) -> Dependency | None:
         if isinstance(spec, str):

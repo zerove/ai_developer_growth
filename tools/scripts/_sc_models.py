@@ -61,6 +61,10 @@ class Dependency:
     vulnerabilities: list[Vulnerability] = field(default_factory=list)
     is_direct: bool = True
     dependencies: list[Dependency] = field(default_factory=list)  # 传递依赖
+    # 清单文件里的版本约束符 (">=" / "==" 等)。version 只是约束的下界文本,
+    # 不等于可安装版本 (如 ">=0.23" 的 version 是 "0.23", PyPI 上是 0.23.0),
+    # 存在性校验必须结合约束符判断。
+    specifier: str | None = None
 
 
 @dataclass
@@ -77,6 +81,68 @@ class SBOM:
 
     def to_json(self) -> str:
         return json.dumps(self.to_dict(), indent=2, ensure_ascii=False)
+
+    @classmethod
+    def from_dict(cls, data: dict[str, Any]) -> SBOM:
+        """从字典还原 SBOM (与 to_dict 对称).
+
+        供 `dep-graph --sbom <file>` 使用: 流水线里 SBOM 由上游作业生成,
+        下游作业直接消费, 不必再扫一遍项目.
+
+        Args:
+            data: SBOM 字典 (SBOM.to_dict 的输出)
+
+        Returns:
+            还原后的 SBOM 对象
+        """
+        sbom = cls(
+            spec_version=data.get("specVersion", "1.5"),
+            spdx_version=data.get("spdxVersion", "SPDX-2.3"),
+            name=data.get("name", ""),
+            version=data.get("version", ""),
+        )
+        created_at = data.get("createdAt")
+        if created_at:
+            sbom.created_at = created_at
+        sbom.packages = [cls._dep_from_dict(item) for item in data.get("packages", [])]
+        sbom.relationships = list(data.get("relationships", []))
+        return sbom
+
+    @classmethod
+    def _dep_from_dict(cls, data: dict[str, Any]) -> Dependency:
+        """从字典还原依赖项 (含传递依赖)."""
+        return Dependency(
+            name=data.get("name", ""),
+            version=data.get("version", ""),
+            ecosystem=data.get("ecosystem", "pypi"),
+            license=data.get("license"),
+            is_direct=data.get("isDirect", True),
+            vulnerabilities=[cls._vuln_from_dict(item) for item in data.get("vulnerabilities", []) if item],
+            dependencies=[cls._dep_from_dict(item) for item in data.get("dependencies", [])],
+        )
+
+    @staticmethod
+    def _vuln_from_dict(data: dict[str, Any]) -> Vulnerability:
+        """从字典还原漏洞项 (SBOM 用 camelCase 字段名)."""
+        severity = data.get("severity") or Severity.NONE.value
+        try:
+            severity_value = Severity(severity)
+        except ValueError:
+            severity_value = Severity.NONE
+        return Vulnerability(
+            id=data.get("id", ""),
+            source=data.get("source", ""),
+            summary=data.get("summary", ""),
+            severity=severity_value,
+            affected_package=data.get("affectedPackage", ""),
+            affected_version=data.get("affectedVersion", ""),
+            fixed_version=data.get("fixedVersion"),
+            references=list(data.get("references", [])),
+            published_at=data.get("publishedAt"),
+            modified_at=data.get("modifiedAt"),
+            cvss_score=data.get("cvssScore"),
+            cvss_vector=data.get("cvssVector"),
+        )
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -127,6 +193,9 @@ class ScanResult:
     dependencies: list[Dependency] = field(default_factory=list)
     vulnerabilities: list[Vulnerability] = field(default_factory=list)
     license_issues: list[str] = field(default_factory=list)
+    # 待人工复核的许可证项 (未知许可证 / copyleft 等非阻断项)。
+    # 与 license_issues (阻断项: 明确禁止的许可证) 分开存放。
+    license_review: list[str] = field(default_factory=list)
     summary: dict[str, int] = field(default_factory=dict)
 
     @property

@@ -53,6 +53,9 @@ jobs:
       uses: actions/setup-go@v5
       with:
         go-version: '1.22'
+        # 本仓库没有 Go 模块 (go.mod/go.sum), setup-go v5 默认开启缓存会去找
+        # go.sum 并报 "Dependencies file is not found" —— 显式关掉。
+        cache: false
     - name: Setup Rust
       uses: dtolnay/rust-toolchain@stable
       with:
@@ -68,23 +71,67 @@ jobs:
       run: pip install -e .
     - name: Run Supply Chain Action
       id: supply-chain
-      run: "set -e\nACTION=\"${{ inputs.action }}\"\nPROJECT=\"${{ inputs.project-path\
-        \ }}\"\nFORMAT=\"${{ inputs.format }}\"\nOUTPUT=\"${{ inputs.output }}\"\n\
-        \ncase \"$ACTION\" in\n  sbom)\n    python -m tools.scripts.hooks_runner supply-chain\
-        \ sbom \\\n      --path \"$PROJECT\" \\\n      --format \"$FORMAT\" \\\n \
-        \     ${OUTPUT:+--output \"$OUTPUT\"}\n    ;;\n  scan)\n    python -m tools.scripts.hooks_runner\
-        \ supply-chain scan \\\n      --path \"$PROJECT\" \\\n      --format \"$FORMAT\"\
-        \ \\\n      ${OUTPUT:+--output \"$OUTPUT\"} \\\n      ${policy-file:+--policy-file\
-        \ \"${{ inputs.policy-file }}\"}\n    ;;\n  compliance)\n    python -m tools.scripts.hooks_runner\
-        \ supply-chain compliance \\\n      --path \"$PROJECT\" \\\n      --policy-file\
-        \ \"${{ inputs.policy-file }}\" \\\n      --format \"$FORMAT\" \\\n      ${OUTPUT:+--output\
-        \ \"$OUTPUT\"}\n    ;;\n  freshness)\n    python -m tools.scripts.hooks_runner\
-        \ supply-chain freshness \\\n      --path \"$PROJECT\" \\\n      --max-age-days\
-        \ \"${{ inputs.max-age-days }}\" \\\n      --format \"$FORMAT\" \\\n     \
-        \ ${OUTPUT:+--output \"$OUTPUT\"}\n    ;;\n  verify)\n    python -m tools.scripts.hooks_runner\
-        \ supply-chain verify \\\n      --path \"$PROJECT\" \\\n      --format \"\
-        $FORMAT\" \\\n      ${OUTPUT:+--output \"$OUTPUT\"}\n    ;;\n  *)\n    echo\
-        \ \"Unknown action: $ACTION\"\n    exit 1\n    ;;\nesac\n"
+      shell: bash
+      run: |
+        set -eo pipefail
+        ACTION="${{ inputs.action }}"
+        PROJECT="${{ inputs.project-path }}"
+        FORMAT="${{ inputs.format }}"
+        OUTPUT="${{ inputs.output }}"
+        POLICY_FILE="${{ inputs.policy-file }}"
+
+        # 参数用数组拼装: 之前写成 `${policy-file:+--policy-file "..."}` 是错的 ——
+        # bash 参数展开只认合法变量名, "policy-file" 带连字符会被解析成 `${policy`
+        # 加字面量 "file:+--policy-file ..."，最终把 "file:+--policy-file" 当成 CLI
+        # 参数传进去 → argparse 报 "unrecognized arguments"。
+        output_args=()
+        if [[ -n "$OUTPUT" ]]; then
+          output_args=(--output "$OUTPUT")
+        fi
+        policy_args=()
+        if [[ -n "$POLICY_FILE" ]]; then
+          policy_args=(--policy-file "$POLICY_FILE")
+        fi
+
+        case "$ACTION" in
+          sbom)
+            python -m tools.scripts.hooks_runner supply-chain sbom \
+              --path "$PROJECT" \
+              --format "$FORMAT" \
+              "${output_args[@]}"
+            ;;
+          scan)
+            python -m tools.scripts.hooks_runner supply-chain scan \
+              --path "$PROJECT" \
+              --format "$FORMAT" \
+              "${output_args[@]}" \
+              "${policy_args[@]}"
+            ;;
+          compliance)
+            python -m tools.scripts.hooks_runner supply-chain compliance \
+              --path "$PROJECT" \
+              --format "$FORMAT" \
+              "${output_args[@]}" \
+              "${policy_args[@]}"
+            ;;
+          freshness)
+            python -m tools.scripts.hooks_runner supply-chain freshness \
+              --path "$PROJECT" \
+              --max-age-days "${{ inputs.max-age-days }}" \
+              --format "$FORMAT" \
+              "${output_args[@]}"
+            ;;
+          verify)
+            python -m tools.scripts.hooks_runner supply-chain verify \
+              --path "$PROJECT" \
+              --format "$FORMAT" \
+              "${output_args[@]}"
+            ;;
+          *)
+            echo "Unknown action: $ACTION"
+            exit 1
+            ;;
+        esac
     - name: Upload supply chain output
       if: inputs.output != '' && always()
       uses: actions/upload-artifact@v4

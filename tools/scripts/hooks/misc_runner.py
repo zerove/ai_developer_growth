@@ -11,6 +11,7 @@ import logging
 import subprocess
 import sys
 from pathlib import Path
+from typing import Any
 
 from tools.scripts.dependency_graph import (
     CircularDependency,
@@ -23,7 +24,7 @@ from tools.scripts.exception_manager import (
     ExceptionStatus,
     create_enhanced_manager,
 )
-from tools.scripts.supply_chain import SupplyChainScanner
+from tools.scripts.supply_chain import SBOM, SupplyChainScanner
 
 logger = logging.getLogger(__name__)
 
@@ -92,6 +93,10 @@ def _exception_list(manager: EnhancedExceptionManager, args: argparse.Namespace)
     status_filter = ExceptionStatus(args.status) if args.status else None
     requests = manager.approval.list_requests(status_filter)
 
+    if getattr(args, "format", "text") == "json":
+        _write_exception_list_json(requests, getattr(args, "output", None))
+        return 0
+
     if not requests:
         print("No exception requests found")
         return 0
@@ -108,6 +113,29 @@ def _exception_list(manager: EnhancedExceptionManager, args: argparse.Namespace)
         if req.expires:
             print(f"    Expires: {req.expires}")
     return 0
+
+
+def _write_exception_list_json(requests: list[Any], output_path: Path | None) -> None:
+    """把例外申请写成 JSON (Policy as Code 的输入)。
+
+    字段名同时给出 rego 策略期望的别名 (expires_at / cve_id), 避免策略侧
+    因为字段名对不上而永远匹配不到例外。
+    """
+    import json
+
+    payload: list[dict[str, Any]] = []
+    for req in requests:
+        item = dict(req.to_dict())
+        item["status"] = req.status.value
+        item["expires_at"] = req.expires or ""
+        item["cve_id"] = req.rule_id
+        payload.append(item)
+    text = json.dumps(payload, indent=2, ensure_ascii=False, default=str)
+    if output_path:
+        output_path.write_text(text, encoding="utf-8")
+        print(f"Exception list written to {output_path}")
+    else:
+        print(text)
 
 
 def _exception_check_expirations(manager: EnhancedExceptionManager) -> int:
@@ -173,11 +201,43 @@ def _emit_or_write(output: str, output_path: Path | None, label: str) -> None:
         print(output)
 
 
-def _dep_graph_build(project_root: Path) -> DependencyGraph:
-    """生成 SBOM 并构建依赖图。"""
+def _dep_graph_build(project_root: Path, sbom_path: Path | None = None) -> DependencyGraph:
+    """生成 SBOM 并构建依赖图。
+
+    Args:
+        project_root: 项目根目录
+        sbom_path: SBOM 文件路径; 给定则直接消费该文件, 否则扫描项目生成
+
+    Returns:
+        构建好的依赖图
+    """
+    if sbom_path is not None:
+        sbom = _load_sbom_file(sbom_path)
+        if sbom is None:
+            raise ValueError(f"无法读取 SBOM 文件: {sbom_path}")
+        return analyze_dependency_graph(project_root, sbom)
     scanner = SupplyChainScanner()
     sbom = scanner.generate_sbom(project_root)
     return analyze_dependency_graph(project_root, sbom)
+
+
+def _load_sbom_file(sbom_path: Path) -> SBOM | None:
+    """读取 SBOM JSON 文件。
+
+    Args:
+        sbom_path: SBOM 文件路径
+
+    Returns:
+        解析出的 SBOM; 文件缺失或格式错误时返回 None
+    """
+    import json
+
+    try:
+        data = json.loads(sbom_path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError) as exc:
+        print(f"无法读取 SBOM 文件 {sbom_path}: {exc}")
+        return None
+    return SBOM.from_dict(data)
 
 
 def _dep_graph_analyze(graph: DependencyGraph, args: argparse.Namespace) -> int:
@@ -273,6 +333,17 @@ def _dep_graph_impact(graph: DependencyGraph, args: argparse.Namespace) -> int:
     return 0
 
 
+def _dep_graph_export(graph: DependencyGraph, args: argparse.Namespace) -> int:
+    """处理 dep-graph export 子命令 (mermaid / graphviz)。"""
+
+    if args.format == "graphviz":
+        output = graph.export_graphviz(args.output)
+    else:
+        output = graph.export_mermaid(args.output)
+    _emit_or_write(output, args.output, "Dependency graph")
+    return 0
+
+
 def _handle_dep_graph(args: argparse.Namespace) -> int:
     """Handle dep-graph command."""
     project_root = args.path
@@ -280,7 +351,11 @@ def _handle_dep_graph(args: argparse.Namespace) -> int:
         print(f"Path not found: {project_root}")
         return 1
 
-    graph = _dep_graph_build(project_root)
+    try:
+        graph = _dep_graph_build(project_root, getattr(args, "sbom", None))
+    except ValueError as exc:
+        print(str(exc))
+        return 1
     action = args.dep_graph_action
 
     handlers = {
@@ -288,6 +363,7 @@ def _handle_dep_graph(args: argparse.Namespace) -> int:
         "circular": _dep_graph_circular,
         "conflicts": _dep_graph_conflicts,
         "impact": _dep_graph_impact,
+        "export": _dep_graph_export,
     }
     handler = handlers.get(action)
     if handler is None:

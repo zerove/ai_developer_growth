@@ -32,6 +32,7 @@ from ._sc_models import (
 from ._sc_models import (
     Vulnerability as Vulnerability,
 )
+from ._sc_pypi import PyPIMetadataClient as PyPIMetadataClient
 from ._sc_sbom import SBOMGenerator as SBOMGenerator
 from ._sc_scanners import (
     GHSASource as GHSASource,
@@ -62,6 +63,7 @@ __all__ = [
     "SBOMGenerator",
     "SignatureVerifier",
     "SupplyChainScanner",
+    "PyPIMetadataClient",
     "run_supply_chain_scan",
     "generate_sbom",
 ]

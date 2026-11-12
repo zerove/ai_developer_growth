@@ -202,7 +202,13 @@ def _add_exception_dep_parsers(subparsers: argparse._SubParsersAction[argparse.A
     # 新增: Exception Manager (例外管理)
     em_parser = subparsers.add_parser("exception", help="Manage quality gate exceptions")
     em_subparsers = em_parser.add_subparsers(dest="exception_action", required=True)
+    _add_exception_action_parsers(em_subparsers)
 
+
+def _add_exception_action_parsers(
+    em_subparsers: argparse._SubParsersAction[argparse.ArgumentParser],
+) -> None:
+    """例外管理的各子命令参数。"""
     # exception request
     em_req = em_subparsers.add_parser("request", help="Request an exception")
     em_req.add_argument("--rule-id", required=True, help="Rule ID to except")
@@ -235,6 +241,8 @@ def _add_exception_dep_parsers(subparsers: argparse._SubParsersAction[argparse.A
     em_list.add_argument(
         "--status", choices=["pending", "approved", "rejected", "expired", "revoked"], help="Filter by status"
     )
+    em_list.add_argument("--format", choices=["text", "json"], default="text", help="Output format")
+    em_list.add_argument("--output", type=Path, help="Write JSON output to this file")
 
     # exception check-expirations
     em_subparsers.add_parser("check-expirations", help="Check for expiring exceptions")
@@ -254,6 +262,7 @@ def _add_dep_graph_parsers(subparsers: argparse._SubParsersAction[argparse.Argum
     # dep-graph analyze
     dg_analyze = dg_subparsers.add_parser("analyze", help="Analyze project dependencies")
     dg_analyze.add_argument("--path", type=Path, default=Path("."), help="Project root path")
+    dg_analyze.add_argument("--sbom", type=Path, help="SBOM 文件 (JSON); 不指定时按 --path 扫描项目")
     dg_analyze.add_argument("--output", type=Path, help="Output file (JSON/Graphviz/Mermaid)")
     dg_analyze.add_argument(
         "--format", choices=["json", "graphviz", "mermaid", "tree"], default="tree", help="Output format"
@@ -263,19 +272,32 @@ def _add_dep_graph_parsers(subparsers: argparse._SubParsersAction[argparse.Argum
     # dep-graph circular
     dg_circular = dg_subparsers.add_parser("circular", help="Detect circular dependencies")
     dg_circular.add_argument("--path", type=Path, default=Path("."), help="Project root path")
+    dg_circular.add_argument("--sbom", type=Path, help="SBOM 文件 (JSON)")
     dg_circular.add_argument("--output", type=Path, help="Output file (JSON)")
+    dg_circular.add_argument("--format", choices=["json"], default="json", help="Output format (仅 JSON)")
 
     # dep-graph conflicts
     dg_conflicts = dg_subparsers.add_parser("conflicts", help="Detect version conflicts")
     dg_conflicts.add_argument("--path", type=Path, default=Path("."), help="Project root path")
+    dg_conflicts.add_argument("--sbom", type=Path, help="SBOM 文件 (JSON)")
     dg_conflicts.add_argument("--output", type=Path, help="Output file (JSON)")
+    dg_conflicts.add_argument("--format", choices=["json"], default="json", help="Output format (仅 JSON)")
 
     # dep-graph impact
     dg_impact = dg_subparsers.add_parser("impact", help="Analyze impact of package change")
     dg_impact.add_argument("--path", type=Path, default=Path("."), help="Project root path")
+    dg_impact.add_argument("--sbom", type=Path, help="SBOM 文件 (JSON)")
     dg_impact.add_argument("--package", required=True, help="Package name to analyze")
     dg_impact.add_argument("--version", help="Specific version (optional)")
+    dg_impact.add_argument("--new-version", dest="version", help="--version 的别名 (沿用流水线里的输入名)")
     dg_impact.add_argument("--output", type=Path, help="Output file (JSON)")
+
+    # dep-graph export
+    dg_export = dg_subparsers.add_parser("export", help="Export dependency graph (mermaid/graphviz)")
+    dg_export.add_argument("--path", type=Path, default=Path("."), help="Project root path")
+    dg_export.add_argument("--sbom", type=Path, help="SBOM 文件 (JSON)")
+    dg_export.add_argument("--format", choices=["mermaid", "graphviz"], default="mermaid", help="Export format")
+    dg_export.add_argument("--output", type=Path, help="Output file")
 
 
 def _add_security_parsers(subparsers: argparse._SubParsersAction[argparse.ArgumentParser]) -> None:
@@ -291,6 +313,7 @@ def _add_security_parsers(subparsers: argparse._SubParsersAction[argparse.Argume
     sc_scan.add_argument(
         "--fail-on", choices=["critical", "high", "medium", "low"], default="high", help="Fail on severity level"
     )
+    sc_scan.add_argument("--policy-file", type=Path, help="Path to license policy file (applies license rules)")
 
     # supply-chain sbom
     sc_sbom = sc_subparsers.add_parser("sbom", help="Generate SBOM (Software Bill of Materials)")

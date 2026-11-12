@@ -1,0 +1,140 @@
+# JCode Supply Chain Policy Configuration
+# Used by: python -m tools.scripts.hooks_runner supply-chain compliance --policy-file .jcode/policies/supply-chain-policy.yaml
+
+# ──────────────────────────────────────────────────────
+# Allowed Licenses
+# ──────────────────────────────────────────────────────
+allowed_licenses:
+  - MIT
+  - Apache-2.0
+  - BSD-2-Clause
+  - BSD-3-Clause
+  - ISC
+  - Python-2.0
+  - MPL-2.0
+  - LGPL-2.1
+  - LGPL-3.0
+
+# ──────────────────────────────────────────────────────
+# Disallowed Licenses (will fail compliance)
+# ──────────────────────────────────────────────────────
+disallowed_licenses:
+  - GPL-2.0
+  - GPL-3.0
+  - AGPL-3.0
+  - SSPL-1.0
+  - Commons-Clause-1.0
+  - Elastic-2.0
+  - MongoDB-2.0
+
+# ──────────────────────────────────────────────────────
+# Vulnerability Severity Thresholds
+# ──────────────────────────────────────────────────────
+# Fail the build if vulnerabilities of this severity or higher are found
+# (unless an approved exception exists)
+vulnerability_thresholds:
+  critical: fail
+  high: fail
+  medium: warn
+  low: info
+
+# ──────────────────────────────────────────────────────
+# Dependency Freshness
+# ──────────────────────────────────────────────────────
+# Maximum age in days before a dependency is considered stale
+max_dependency_age_days: 365
+# Warn if dependency is older than this (days)
+warn_dependency_age_days: 180
+
+# ──────────────────────────────────────────────────────
+# Allowed Ecosystems
+# ──────────────────────────────────────────────────────
+allowed_ecosystems:
+  - pypi
+  - npm
+  - cargo
+  - go
+  - maven
+  - nuget
+  - rubygems
+  - composer
+  - pub
+  - hex
+
+# ──────────────────────────────────────────────────────
+# SBOM Standards
+# ──────────────────────────────────────────────────────
+# Required SBOM fields for compliance
+required_sbom_fields:
+  - name
+  - version
+  - ecosystem
+  - purl
+  - license
+
+# ──────────────────────────────────────────────────────
+# SLSA Requirements
+# ──────────────────────────────────────────────────────
+slsa:
+  minimum_level: 1
+  required_levels:
+    - build
+    - provenance
+  verify_signatures: false  # Set to true when SLSA verification is fully implemented
+
+# ──────────────────────────────────────────────────────
+# Package Pinning
+# ──────────────────────────────────────────────────────
+# Require pinned versions (no ranges like ^1.0.0, ~1.0.0, etc.)
+require_pinned_versions: true
+# Allow unpinned versions for these packages (e.g., internal tools)
+allow_unpinned:
+  - "*dev*"
+  - "*alpha*"
+  - "*beta*"
+  - "*rc*"
+
+# ──────────────────────────────────────────────────────
+# Trusted Sources
+# ──────────────────────────────────────────────────────
+# Only allow dependencies from these registries
+trusted_registries:
+  - "https://pypi.org"
+  - "https://registry.npmjs.org"
+  - "https://crates.io"
+  - "https://proxy.golang.org"
+  - "https://repo1.maven.org/maven2"
+  - "https://pkgs.dev.azure.com"
+  - "https://npm.pkg.github.com"
+  - "https://maven.pkg.github.com"
+
+# ──────────────────────────────────────────────────────
+# Exceptions
+# ──────────────────────────────────────────────────────
+# Packages that are exempt from certain checks
+# Format: package_name@version or package_name (all versions)
+exceptions:
+  # Example: allow GPL for specific package
+  # - package: "linux-firmware"
+  #   reason: "Required for hardware support"
+  #   checks: ["license"]
+
+# ──────────────────────────────────────────────────────
+# Deprecated Package Handling
+# ──────────────────────────────────────────────────────
+deprecated_handling:
+  action: warn  # warn, fail, or ignore
+  # Allow specific deprecated packages
+  allowed_deprecated:
+    - "old-package@1.0.0"
+
+# ──────────────────────────────────────────────────────
+# Transitive Dependency Analysis
+# ──────────────────────────────────────────────────────
+transitive_analysis:
+  enabled: true
+  max_depth: 10
+  # Ignore transitive deps from these packages
+  ignore_from:
+    - "build-tools"
+    - "test-frameworks"

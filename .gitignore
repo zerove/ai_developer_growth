@@ -96,6 +96,10 @@ bandit-report.json
 !.jcode/USAGE.md
 !.jcode/exceptions.yaml
 !.jcode/ignored-rules.toml
+# 治理策略: 许可证策略 (supply-chain 合规门禁) 与 OPA/Rego 策略
+# (Policy as Code 作业) 都按仓库内路径读取, 漏掉跟踪 → CI 里文件不存在,
+# 门禁要么直接失败, 要么静默失去判别力。
+!.jcode/policies/
 
 # OpenCode (internal state)
 .opencode/

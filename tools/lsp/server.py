@@ -19,6 +19,7 @@ Features:
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import logging
 import sys
@@ -33,6 +34,12 @@ from tools.scripts.adg_cli import (
 )
 
 logger = logging.getLogger("adg-lsp")
+
+
+def _content_hash(path: Path) -> str:
+    """计算文件内容哈希（SHA-256），用于诊断缓存失效判定。"""
+    return hashlib.sha256(path.read_bytes()).hexdigest()
+
 
 # Supported file extensions
 SUPPORTED_EXTENSIONS: dict[str, str] = {
@@ -80,6 +87,9 @@ class AdgLanguageServer:
             "exclude_patterns": ["node_modules", ".git", "target", "__pycache__"],
         }
         self._request_id: int = 0
+        # 增量诊断缓存: uri -> (content_hash, diagnostics)。内容变化即失效，
+        # 命中时直接返回缓存结果，避免 didChange 后重复跑整文件检查。
+        self._diagnostic_cache: dict[str, tuple[str, list[dict[str, Any]]]] = {}
 
     def handle_request(self, method: str, params: dict[str, Any]) -> Any:
         """Route incoming LSP requests."""
@@ -141,6 +151,7 @@ class AdgLanguageServer:
         text_doc = params.get("textDocument", {})
         uri = text_doc.get("uri", "")
         self.documents[uri] = text_doc.get("text", "")
+        self._diagnostic_cache.pop(uri, None)
 
     def _handle_did_change(self, params: dict[str, Any]) -> None:
         """Handle textDocument/didChange."""
@@ -148,15 +159,19 @@ class AdgLanguageServer:
         content_changes = params.get("contentChanges", [])
         if content_changes:
             self.documents[uri] = content_changes[-1].get("text", "")
+        self._diagnostic_cache.pop(uri, None)
 
     def _handle_did_save(self, params: dict[str, Any]) -> None:
         """Handle textDocument/didSave."""
-        pass  # Diagnostics are requested by client
+        # 保存后内容可能变化（磁盘为准），失效该文档的诊断缓存
+        uri = params.get("textDocument", {}).get("uri", "")
+        self._diagnostic_cache.pop(uri, None)
 
     def _handle_did_close(self, params: dict[str, Any]) -> None:
         """Handle textDocument/didClose."""
         uri = params.get("textDocument", {}).get("uri", "")
         self.documents.pop(uri, None)
+        self._diagnostic_cache.pop(uri, None)
 
     def _handle_diagnostic(self, params: dict[str, Any]) -> list[dict[str, Any]]:
         """Handle textDocument/diagnostic - return diagnostics for a document."""
@@ -178,6 +193,12 @@ class AdgLanguageServer:
 
         # Get rules
         rules = self._get_rules(language)
+
+        # 增量诊断缓存：key 为文档 URI，命中则直接返回缓存结果（内容 hash 校验）
+        content_hash = _content_hash(file_path)
+        cached = self._diagnostic_cache.get(uri)
+        if cached is not None and cached[0] == content_hash:
+            return cached[1]
 
         # Check file
         severity_filter = self.config.get("severity_filter", "warning")
@@ -214,6 +235,7 @@ class AdgLanguageServer:
                 }
             )
 
+        self._diagnostic_cache[uri] = (content_hash, diagnostics)
         return diagnostics
 
     def _handle_code_action(self, params: dict[str, Any]) -> list[dict[str, Any]]:

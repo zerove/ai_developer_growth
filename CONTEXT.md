@@ -292,6 +292,20 @@ AI 时代开发者成长知识库 + 治理框架（knowledge base + governance f
 
 ---
 
+## 更新记录: 2026-11-12 08:04:33
+
+### 任务
+Git 变更同步
+
+### 变更摘要
+- 变更文件 6 个 (+163 / -43 行)
+  - CONTEXT.md
+  - tests/test_adg_cli_parser_factory.py
+  - tools/lsp/server.py
+  - tools/scripts/adg_cli/__init__.py
+  - tools/scripts/adg_cli/commands/__init__.py
+  - tools/scripts/adg_cli/parser.py
+
 ## 更新记录: 2026-11-12 07:51:18
 
 ### 任务
@@ -391,16 +405,5 @@ Git 变更同步
   - tools/scripts/hooks_runner.py
   - tools/scripts/linter_runner.py
   - tools/scripts/rules_engine/_checker_linters.py
-
-## 更新记录: 2026-11-10 03:04:11
-
-### 任务
-Git 变更同步
-
-### 变更摘要
-- 变更文件 3 个 (+19 / -1 行)
-  - README.md
-  - tests/test_gate_hardening.py
-  - tools/scripts/hooks/basic_checks.py
 
 <!-- 滚动窗口: 已自动裁剪 1 条旧更新记录 -->

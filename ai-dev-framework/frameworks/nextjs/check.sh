@@ -6,7 +6,7 @@ set -e
 echo "🔍 检查 Nextjs 项目..."
 
 # 1. 检查代码风格
-if command -v ruff &> /dev/null; then
+if command -v ruff &>/dev/null; then
     ruff check . || echo "⚠️  Lint 有警告"
     echo "✅ 代码检查通过"
 else

@@ -7,8 +7,8 @@ echo "🔍 检查 Python 项目..."
 
 # 1. Ruff Lint 检查
 echo "=== Ruff Lint 检查 ==="
-if command -v ruff &> /dev/null; then
-    ruff check . --output-format=json > /tmp/ruff-result.json 2>&1
+if command -v ruff &>/dev/null; then
+    ruff check . --output-format=json >/tmp/ruff-result.json 2>&1
     RUFF_ERRORS=$(python3 -c "import json; data=json.load(open('/tmp/ruff-result.json')); print(len(data))")
     if [ "$RUFF_ERRORS" -gt 0 ]; then
         echo "❌ Ruff 检查失败: $RUFF_ERRORS 个错误"
@@ -22,7 +22,7 @@ fi
 
 # 2. 测试检查
 echo "=== 测试检查 ==="
-if command -v pytest &> /dev/null; then
+if command -v pytest &>/dev/null; then
     if pytest tests/ -q --tb=short; then
         echo "✅ 测试通过"
     else
@@ -35,7 +35,7 @@ fi
 
 # 3. 类型检查 (可选)
 echo "=== 类型检查 ==="
-if command -v mypy &> /dev/null; then
+if command -v mypy &>/dev/null; then
     if mypy . --ignore-missing-imports; then
         echo "✅ 类型检查通过"
     else

@@ -7,7 +7,7 @@ echo "🔍 检查 Rust 项目..."
 
 # 1. Clippy 检查
 echo "=== Clippy 检查 ==="
-if command -v cargo &> /dev/null; then
+if command -v cargo &>/dev/null; then
     if cargo clippy -- -D warnings; then
         echo "✅ Clippy 检查通过"
     else
@@ -20,7 +20,7 @@ fi
 
 # 2. 测试检查
 echo "=== 测试检查 ==="
-if command -v cargo &> /dev/null; then
+if command -v cargo &>/dev/null; then
     if cargo test; then
         echo "✅ 测试通过"
     else
@@ -33,7 +33,7 @@ fi
 
 # 3. 格式检查
 echo "=== 格式检查 ==="
-if command -v cargo &> /dev/null; then
+if command -v cargo &>/dev/null; then
     if cargo fmt -- --check; then
         echo "✅ 格式检查通过"
     else
@@ -45,7 +45,7 @@ fi
 
 # 4. 安全检查
 echo "=== 安全检查 ==="
-if command -v cargo-audit &> /dev/null; then
+if command -v cargo-audit &>/dev/null; then
     if cargo audit; then
         echo "✅ 安全检查通过"
     else

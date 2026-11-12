@@ -13,22 +13,22 @@ DRY_RUN=false
 # 解析参数
 while [[ $# -gt 0 ]]; do
     case $1 in
-        --namespace)
-            NAMESPACE="$2"
-            shift 2
-            ;;
-        --version)
-            VERSION="$2"
-            shift 2
-            ;;
-        --dry-run)
-            DRY_RUN=true
-            shift
-            ;;
-        *)
-            echo "未知参数: $1"
-            exit 1
-            ;;
+    --namespace)
+        NAMESPACE="$2"
+        shift 2
+        ;;
+    --version)
+        VERSION="$2"
+        shift 2
+        ;;
+    --dry-run)
+        DRY_RUN=true
+        shift
+        ;;
+    *)
+        echo "未知参数: $1"
+        exit 1
+        ;;
     esac
 done
 
@@ -41,19 +41,19 @@ echo "试运行: $DRY_RUN"
 echo "========================================="
 
 # 检查 kubectl
-if ! command -v kubectl &> /dev/null; then
+if ! command -v kubectl &>/dev/null; then
     echo "错误: kubectl 未安装"
     exit 1
 fi
 
 # 检查 helm
-if ! command -v helm &> /dev/null; then
+if ! command -v helm &>/dev/null; then
     echo "错误: helm 未安装"
     exit 1
 fi
 
 # 检查集群连接
-if ! kubectl cluster-info &> /dev/null; then
+if ! kubectl cluster-info &>/dev/null; then
     echo "错误: 无法连接到 Kubernetes 集群"
     exit 1
 fi
@@ -61,7 +61,7 @@ fi
 echo "✓ 前置检查通过"
 
 # 创建命名空间
-if ! kubectl get namespace argocd &> /dev/null; then
+if ! kubectl get namespace argocd &>/dev/null; then
     echo "创建命名空间: argocd"
     if [[ "$DRY_RUN" == "false" ]]; then
         kubectl create namespace argocd
@@ -117,7 +117,7 @@ kubectl wait --for=condition=available deployment/argocd-repo-server -n argocd -
 kubectl wait --for=condition=available deployment/argocd-application-controller -n argocd --timeout=300s
 
 # 安装 ArgoCD CLI
-if ! command -v argocd &> /dev/null; then
+if ! command -v argocd &>/dev/null; then
     echo "安装 ArgoCD CLI..."
     curl -sSL -o /usr/local/bin/argocd https://github.com/argoproj/argo-cd/releases/download/v2.12.7/argocd-linux-amd64
     chmod +x /usr/local/bin/argocd

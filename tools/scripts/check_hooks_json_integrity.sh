@@ -46,7 +46,8 @@ else
     PY="${PY:-python3}"
 fi
 
-PROBLEMS=$(PY="$PY" python3 - << 'PYEOF'
+PROBLEMS=$(
+    PY="$PY" python3 - <<'PYEOF'
 import ast
 import json
 import shlex

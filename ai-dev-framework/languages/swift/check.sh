@@ -7,7 +7,7 @@ echo "🔍 检查 Swift 项目..."
 
 # 1. SwiftLint 检查
 echo "=== SwiftLint 检查 ==="
-if command -v swiftlint &> /dev/null; then
+if command -v swiftlint &>/dev/null; then
     if swiftlint; then
         echo "✅ SwiftLint 检查通过"
     else
@@ -20,14 +20,14 @@ fi
 
 # 2. 测试检查
 echo "=== 测试检查 ==="
-if command -v xcodebuild &> /dev/null; then
+if command -v xcodebuild &>/dev/null; then
     if xcodebuild test -scheme App -destination 'platform=iOS Simulator,name=iPhone 15' -quiet; then
         echo "✅ 测试通过"
     else
         echo "❌ 测试失败"
         exit 1
     fi
-elif command -v swift &> /dev/null; then
+elif command -v swift &>/dev/null; then
     if swift test; then
         echo "✅ 测试通过"
     else
@@ -40,7 +40,7 @@ fi
 
 # 3. 格式检查
 echo "=== 格式检查 ==="
-if command -v swift-format &> /dev/null; then
+if command -v swift-format &>/dev/null; then
     if swift-format lint .; then
         echo "✅ 格式检查通过"
     else

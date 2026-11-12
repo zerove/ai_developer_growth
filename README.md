@@ -169,7 +169,7 @@ python ai-dev-framework/src/ai_dev_framework/jcode_init.py your-project --langua
 | 📚 实践案例 | 48 个 |
 | 🛠️ 代码示例 | 10 个 |
 | 📋 架构决策 | 73 条 |
-| 🧪 测试用例 | 5810 个（`pytest --collect-only`） |
+| 🧪 测试用例 | 5811 个（`pytest --collect-only`） |
 | ✅ 测试覆盖率 | 87% |
 
 ### 🔌 自检：门禁是否还活着

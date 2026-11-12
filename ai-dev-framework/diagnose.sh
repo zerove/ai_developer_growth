@@ -9,7 +9,10 @@ NC='\033[0m'
 
 pass() { echo -e "  ${GREEN}✅ PASS${NC} $1"; }
 warn() { echo -e "  ${YELLOW}⚠️  WARN${NC} $1"; }
-fail() { echo -e "  ${RED}❌ FAIL${NC} $1"; errors=$((errors + 1)); }
+fail() {
+    echo -e "  ${RED}❌ FAIL${NC} $1"
+    errors=$((errors + 1))
+}
 
 errors=0
 base_dir="$(cd "$(dirname "$0")" && pwd)"

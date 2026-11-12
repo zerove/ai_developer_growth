@@ -151,31 +151,34 @@ class TestScannerGate:
         assert "evil" not in [i.rule_id for i in result.issues], "危险规则未被跳过"
         assert any("evil" in w for w in result.warnings), "跳过后未留痕 —— 静默丢弃规则同样是 fail-open"
 
-    def test_safe_project_rule_still_runs(self) -> None:
+    def test_safe_project_rule_still_runs(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
         """反向约束: 闸门不得把正常规则一起拦掉。"""
         from ai_dev_framework import scan as scan_mod
 
-        tmp = Path(tempfile.mkdtemp())
+        # ADG_HOME 指向空目录: 隔离用户级内置规则。
+        # 否则在装过 `adg bootstrap` 的机器上, 断言会被内置 common-todo 命中
+        # 而"假通过"——项目规则本身是否生效完全没被验证; 反过来在干净的
+        # CI 机器上没有内置规则, 就退化成"扫描零结果"。
+        monkeypatch.setattr(scan_mod, "_RULES_HOME", tmp_path / "adg-home")
+
+        tmp = tmp_path / "proj"
         rules_dir = tmp / "python" / "rules.d"
         rules_dir.mkdir(parents=True)
+        # 注意不能用 r"..." 包住 \n: 原始字符串里的 \n 是**两个字符**,
+        # 写出来的 YAML 会是一整行(含字面量反斜杠 n) → 解析失败 → 规则为空,
+        # 测试于是变成"断言空结果里有 issue", 必失败。
         (rules_dir / "anti_patterns.yml").write_text(
-            "anti_patterns:\n"
-            r"  - id: todo\n    pattern: '\bTODO\b'"
-            "\n"
-            "    message: m\n    severity: warning\n",
+            "anti_patterns:\n  - id: todo\n    pattern: '\\bTODO\\b'\n    message: m\n    severity: warning\n",
             encoding="utf-8",
         )
-        original = scan_mod._PROJECT_LANGUAGES
-        scan_mod._PROJECT_LANGUAGES = tmp
-        try:
-            target = tmp / "a.py"
-            # 不能用纯注释行: scan.py 会跳过整行只有注释的内容
-            target.write_text("x = 1  # TODO: fix\n", encoding="utf-8")
-            result = scan_mod.scan_file(target)
-        finally:
-            scan_mod._PROJECT_LANGUAGES = original
+        monkeypatch.setattr(scan_mod, "_PROJECT_LANGUAGES", tmp)
 
-        # 不断言该规则一定命中(它会与内置 common-todo 同义, 断言易碎);
-        # 要断言的是闸门**没有把它当危险规则跳过** —— 那才是"误伤"。
+        target = tmp / "a.py"
+        # 不能用纯注释行: scan.py 会跳过整行只有注释的内容
+        target.write_text("x = 1  # TODO: fix\n", encoding="utf-8")
+        result = scan_mod.scan_file(target)
+
+        # 闸门**没有**把它当危险规则跳过 —— 那才是"误伤"。
         assert not any("todo" in w for w in result.warnings), f"正常规则被 ReDoS 闸门误伤: {result.warnings}"
-        assert result.issues, "扫描未产出任何结果, 用例失去意义"
+        # 命中必须来自项目规则本身(内置规则已隔离), 才算真正验证了"没误伤"。
+        assert [i.rule_id for i in result.issues] == ["todo"], f"项目规则未生效: {result.issues}"

@@ -7,7 +7,7 @@ echo "🔍 检查 Ruby 项目..."
 
 # 1. RuboCop 检查
 echo "=== RuboCop 检查 ==="
-if command -v rubocop &> /dev/null; then
+if command -v rubocop &>/dev/null; then
     if rubocop; then
         echo "✅ RuboCop 检查通过"
     else
@@ -20,14 +20,14 @@ fi
 
 # 2. 测试检查
 echo "=== 测试检查 ==="
-if command -v rspec &> /dev/null; then
+if command -v rspec &>/dev/null; then
     if rspec; then
         echo "✅ 测试通过"
     else
         echo "❌ 测试失败"
         exit 1
     fi
-elif command -v bundle &> /dev/null; then
+elif command -v bundle &>/dev/null; then
     if bundle exec rspec; then
         echo "✅ 测试通过"
     else
@@ -40,7 +40,7 @@ fi
 
 # 3. 安全检查
 echo "=== 安全检查 ==="
-if command -v bundle-audit &> /dev/null; then
+if command -v bundle-audit &>/dev/null; then
     if bundle-audit check --update; then
         echo "✅ 安全检查通过"
     else

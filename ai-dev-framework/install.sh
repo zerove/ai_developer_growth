@@ -62,7 +62,7 @@ mkdir -p "$PROJECT_DIR/.ai-framework/languages/$LANGUAGE"
 cp -r "$FRAMEWORK_DIR/languages/$LANGUAGE/"* "$PROJECT_DIR/.ai-framework/languages/$LANGUAGE/" 2>/dev/null || true
 
 # 创建质量门禁脚本
-cat > "$PROJECT_DIR/.ai-framework/scripts/check.sh" << 'EOF'
+cat >"$PROJECT_DIR/.ai-framework/scripts/check.sh" <<'EOF'
 #!/bin/bash
 # 质量门禁检查脚本
 
@@ -101,7 +101,7 @@ EOF
 chmod +x "$PROJECT_DIR/.ai-framework/scripts/check.sh"
 
 # 创建语言检测脚本
-cat > "$PROJECT_DIR/.ai-framework/scripts/detect-language.sh" << 'EOF'
+cat >"$PROJECT_DIR/.ai-framework/scripts/detect-language.sh" <<'EOF'
 #!/bin/bash
 # 语言检测脚本
 
@@ -122,7 +122,7 @@ EOF
 chmod +x "$PROJECT_DIR/.ai-framework/scripts/detect-language.sh"
 
 # 创建上下文更新脚本
-cat > "$PROJECT_DIR/.ai-framework/scripts/update-context.sh" << 'EOF'
+cat >"$PROJECT_DIR/.ai-framework/scripts/update-context.sh" <<'EOF'
 #!/bin/bash
 # 上下文更新脚本
 
@@ -146,7 +146,7 @@ EOF
 chmod +x "$PROJECT_DIR/.ai-framework/scripts/update-context.sh"
 
 # 创建 CLAUDE.md
-cat > "$PROJECT_DIR/CLAUDE.md" << 'EOF'
+cat >"$PROJECT_DIR/CLAUDE.md" <<'EOF'
 # 项目规范
 
 本项目遵循 ai-dev-framework 治理标准。
@@ -169,7 +169,7 @@ cat > "$PROJECT_DIR/CLAUDE.md" << 'EOF'
 EOF
 
 # 创建 AGENTS.md
-cat > "$PROJECT_DIR/AGENTS.md" << 'EOF'
+cat >"$PROJECT_DIR/AGENTS.md" <<'EOF'
 # Agent 定义索引
 
 本项目中的所有 agent 定义。
@@ -180,7 +180,7 @@ cat > "$PROJECT_DIR/AGENTS.md" << 'EOF'
 EOF
 
 # 创建 CONTEXT.md
-cat > "$PROJECT_DIR/CONTEXT.md" << 'EOF'
+cat >"$PROJECT_DIR/CONTEXT.md" <<'EOF'
 # 项目上下文
 
 ## 项目状态

@@ -100,8 +100,8 @@ INVALID_OVERRIDES=$(awk '/^severity_overrides:/{flag=1; next} /^[^[:space:]#]/{f
     val="${line#*:}"
     val="${val// /}"
     case "$val" in
-        info|warning|error|off|ignore|disabled) ;;
-        *) printf '%s\n' "$line" ;;
+    info | warning | error | off | ignore | disabled) ;;
+    *) printf '%s\n' "$line" ;;
     esac
 done)
 

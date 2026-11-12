@@ -10,14 +10,14 @@ LABELS_FILE=".github/labels.json"
 echo "Setting up labels for $REPO..."
 
 # Check if gh CLI is available
-if ! command -v gh &> /dev/null; then
+if ! command -v gh &>/dev/null; then
     echo "Error: GitHub CLI (gh) is not installed."
     echo "Install it from: https://cli.github.com/"
     exit 1
 fi
 
 # Check if authenticated
-if ! gh auth status &> /dev/null; then
+if ! gh auth status &>/dev/null; then
     echo "Error: Not authenticated with GitHub CLI."
     echo "Run: gh auth login"
     exit 1

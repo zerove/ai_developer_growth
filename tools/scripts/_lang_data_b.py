@@ -445,7 +445,7 @@ def _shell_cmd(tool: str, tail: str) -> str:
     """
     return (
         f"command -v {tool} >/dev/null 2>&1 || "
-        f'{{ echo "{tool} 未安装, 跳过 shell 检查"; exit 127; }}; '
+        f'{{ echo "{tool} 未安装, shell 检查无法执行 (安装后重试)"; exit 127; }}; '
         f"{_SHELL_FILES} | xargs -0 -r {tail}"
     )
 

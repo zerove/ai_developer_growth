@@ -7,7 +7,7 @@ echo "🔍 检查 Go 项目..."
 
 # 1. Lint 检查
 echo "=== Lint 检查 ==="
-if command -v golangci-lint &> /dev/null; then
+if command -v golangci-lint &>/dev/null; then
     if golangci-lint run; then
         echo "✅ Lint 检查通过"
     else
@@ -20,7 +20,7 @@ fi
 
 # 2. 测试检查
 echo "=== 测试检查 ==="
-if command -v go &> /dev/null; then
+if command -v go &>/dev/null; then
     if go test ./...; then
         echo "✅ 测试通过"
     else
@@ -33,7 +33,7 @@ fi
 
 # 3. 格式检查
 echo "=== 格式检查 ==="
-if command -v go &> /dev/null; then
+if command -v go &>/dev/null; then
     if gofmt -l . | grep -q .; then
         echo "⚠️  格式检查有警告"
         gofmt -l .
@@ -46,7 +46,7 @@ fi
 
 # 4. 安全检查
 echo "=== 安全检查 ==="
-if command -v govulncheck &> /dev/null; then
+if command -v govulncheck &>/dev/null; then
     if govulncheck ./...; then
         echo "✅ 安全检查通过"
     else

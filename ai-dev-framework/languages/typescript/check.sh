@@ -7,7 +7,7 @@ echo "🔍 检查 TypeScript 项目..."
 
 # 1. Lint 检查
 echo "=== Lint 检查 ==="
-if command -v eslint &> /dev/null; then
+if command -v eslint &>/dev/null; then
     if eslint . --ext .ts,.tsx; then
         echo "✅ Lint 检查通过"
     else
@@ -20,7 +20,7 @@ fi
 
 # 2. 类型检查
 echo "=== 类型检查 ==="
-if command -v tsc &> /dev/null; then
+if command -v tsc &>/dev/null; then
     if tsc --noEmit; then
         echo "✅ 类型检查通过"
     else
@@ -33,14 +33,14 @@ fi
 
 # 3. 测试检查
 echo "=== 测试检查 ==="
-if command -v jest &> /dev/null; then
+if command -v jest &>/dev/null; then
     if jest --passWithNoTests; then
         echo "✅ 测试通过"
     else
         echo "❌ 测试失败"
         exit 1
     fi
-elif command -v vitest &> /dev/null; then
+elif command -v vitest &>/dev/null; then
     if vitest run; then
         echo "✅ 测试通过"
     else
@@ -53,7 +53,7 @@ fi
 
 # 4. 安全检查
 echo "=== 安全检查 ==="
-if command -v npm &> /dev/null; then
+if command -v npm &>/dev/null; then
     if npm audit --audit-level=high; then
         echo "✅ 安全检查通过"
     else

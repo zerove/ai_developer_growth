@@ -10,6 +10,11 @@ workflow run 是否真正执行过 job。
 失效判据（不依赖 GitHub 的错误文案，文案无法区分配额拒绝与语法错误）：
 - total_count == 0            run 存在但从未调度 job
 - updated_at == created_at    零执行时间
+- 所有 job 的 steps 为空      job 被创建但**一步都没执行**（run 在调度阶段被拒绝）
+
+最后一条是 2026-11-12 实测到的失效形态：run 会创建出几十个 job，但每个 job 的
+`steps` 都是空数组、耗时 1~2 秒、结论 failure —— 配额耗尽时 GitHub 在**分配
+runner 之前**就拒绝了 run。只看 job 数量会误报"CI 正常"（假绿灯）。
 """
 
 from __future__ import annotations
@@ -130,6 +135,18 @@ def _no_job_verdict(run_id: int, status: str, conclusion: str, created: str, upd
     )
 
 
+def _no_steps_verdict(run_id: int, status: str, conclusion: str, total: int, created: str) -> HealthVerdict:
+    """job 被创建但一步都没执行 → 门禁实际未运行（假绿灯，必须判失效）。"""
+    return HealthVerdict(
+        False,
+        f"CI 已失效：{total} 个 job 一个步骤都没执行",
+        f"run #{run_id} 状态 {status}/{conclusion}：job 被创建但 steps 为空，"
+        "说明 run 在调度阶段即被拒绝（私有仓库 Actions 配额耗尽），门禁实际未运行",
+        run_id,
+        created,
+    )
+
+
 def _stale_verdict(run_id: int, total: int, age_hours: float, stale_hours: int, created: str) -> HealthVerdict:
     return HealthVerdict(
         False,
@@ -163,6 +180,13 @@ def check_ci_health(repo: str, token: str, workflow: str, stale_hours: int) -> H
     # 配额耗尽/工作流损坏：run 存在但没有任何 job 被调度
     if total == 0:
         return _no_job_verdict(run_id, status, conclusion, created, updated)
+
+    # 配额耗尽的另一形态：job 被创建但 steps 全空（run 在分配 runner 前被拒绝）。
+    # 只看 job 数量会把这种"全绿假象"判成 CI 正常 —— 必须看 job 是否真的跑过步骤。
+    job_items = jobs.get("jobs")
+    if isinstance(job_items, list) and job_items:
+        if all(not (job.get("steps") or []) for job in job_items):
+            return _no_steps_verdict(run_id, status, conclusion, len(job_items), created)
 
     # 有 job 但长时间没有新 run，视为停滞
     newest = _parse_ts(latest.get("created_at", ""))

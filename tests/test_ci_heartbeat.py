@@ -55,15 +55,19 @@ def _run_payload(run_id: int = 1, created: str = NOW, updated: str = NOW) -> dic
 
 
 class _FakeApi:
-    def __init__(self, runs: list[dict[str, Any]], jobs_total: int) -> None:
+    def __init__(self, runs: list[dict[str, Any]], jobs_total: int, jobs: list[dict[str, Any]] | None = None) -> None:
         self.runs = runs
         self.jobs_total = jobs_total
+        self.jobs = jobs
         self.paths: list[str] = []
 
     def __call__(self, path: str, token: str) -> dict[str, Any]:
         self.paths.append(path)
         if path.endswith("/jobs"):
-            return {"total_count": self.jobs_total}
+            payload: dict[str, Any] = {"total_count": self.jobs_total}
+            if self.jobs is not None:
+                payload["jobs"] = self.jobs
+            return payload
         return {"workflow_runs": self.runs}
 
 
@@ -91,6 +95,33 @@ class TestCheckCiHealth:
         verdict = check_ci_health(REPO, TOKEN, "ci.yml", 24)
         assert verdict.ok is True
         assert "7" in verdict.reason
+
+    def test_jobs_without_steps_is_dead(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        """配额耗尽的另一形态：job 被创建但一步都没执行 → 必须判失效（假绿灯）。"""
+        api = _FakeApi(
+            [_run_payload()],
+            jobs_total=2,
+            jobs=[
+                {"name": "lint", "conclusion": "failure", "steps": []},
+                {"name": "test", "conclusion": "failure", "steps": []},
+            ],
+        )
+        monkeypatch.setattr("tools.scripts.ci_heartbeat._api_get", api)
+        verdict = check_ci_health(REPO, TOKEN, "ci.yml", 24)
+        assert verdict.ok is False
+        assert "步骤" in verdict.reason
+        assert "2 个 job" in verdict.reason
+
+    def test_jobs_with_steps_is_healthy(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        """job 真的跑过步骤 → 门禁存活（即使本次 run 因代码问题失败）。"""
+        api = _FakeApi(
+            [_run_payload()],
+            jobs_total=1,
+            jobs=[{"name": "lint", "conclusion": "failure", "steps": [{"name": "run", "conclusion": "failure"}]}],
+        )
+        monkeypatch.setattr("tools.scripts.ci_heartbeat._api_get", api)
+        verdict = check_ci_health(REPO, TOKEN, "ci.yml", 24)
+        assert verdict.ok is True
 
     def test_no_runs_is_dead(self, monkeypatch: pytest.MonkeyPatch) -> None:
         """工作流从未触发过：通常意味着触发条件配错，同样是静默失效。"""

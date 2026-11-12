@@ -68,6 +68,20 @@ GitHub 对配额拒绝与工作流语法错误给出相同文案（`workflow fil
 - 补齐了治理项目最关键的缺口：机制可以自我质疑其有效性
 - 告警通道本身**不受心跳保护**——若 GitHub API 不可用则无法告警，故仍需保留主动查询手段
 
+## 修订记录
+
+- 2026-11-12: 实测到配额耗尽的**第二种失效形态**并修正检测器。
+  此前只判据 `total_count == 0`（run 完全没调度 job）。当天实测：run 会创建出
+  **30~35 个 job**，但每个 job 的 `steps` 都是空数组、耗时 1~2 秒、结论 failure ——
+  GitHub 在**分配 runner 之前**就拒绝了 run。只看 job 数量的旧检测器因此报
+  "✅ CI 正常：最近一次 run 产出 35 个 job"，即**假绿灯**：门禁实际一次都没跑。
+  现新增判据"所有 job 的 steps 为空 → 判失效"，并补两条契约测试
+  （steps 全空 = 失效；steps 非空 = 存活，即使本次 run 因代码问题失败）。
+  同日复核：分支保护 API 返回 `403 Upgrade to GitHub Pro or make this repository
+  public to enable this feature.` —— 这是**仓库可见性/套餐限制**（private 仓库的
+  分支保护需 GitHub Pro），不是 token 权限问题；在升级套餐或改为 public 之前，
+  "required checks" 无法通过 API 配置，属**外部阻塞**，不再重复尝试。
+
 ## 相关
 
 - `tools/scripts/ci_heartbeat.py` — 实现

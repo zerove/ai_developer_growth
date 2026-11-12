@@ -315,3 +315,71 @@ class TestFactoryAndConvenience:
         )
         outcomes = run_auto_fix([result], project, strategy=FixStrategy.AUTO, safety_level=FixSafetyLevel.LOW_RISK)
         assert isinstance(outcomes, list)
+
+
+# ── 批量修复（P-04: autoflake batch）────────────────────────
+
+
+class TestAutoFlakeBatch:
+    def test_autoflake_batch_single_subprocess_for_multiple_files(self, tmp_path: Path) -> None:
+        """一次 apply_fixes_batch 调用对多个文件只 spawn 一次 subprocess。"""
+        (tmp_path / "a.py").write_text("import os\n")
+        (tmp_path / "b.py").write_text("import sys\n")
+        provider = AutoFlakeFixProvider()
+        ok = MagicMock(returncode=0, stdout="", stderr="")
+        with patch("tools.scripts.auto_fix.subprocess.run", return_value=ok) as run_mock:
+            results = provider.apply_fixes_batch(["a.py", "b.py"], tmp_path)
+        assert len(results) == 2
+        run_mock.assert_called_once()
+        cmd = run_mock.call_args.args[0]
+        assert str(tmp_path / "a.py") in cmd
+        assert str(tmp_path / "b.py") in cmd
+
+    def test_autoflake_batch_missing_file(self, tmp_path: Path) -> None:
+        """批量路径含不存在文件 → 逐个报错，不崩溃。"""
+        provider = AutoFlakeFixProvider()
+        results = provider.apply_fixes_batch(["ghost.py"], tmp_path)
+        assert any("not found" in e.lower() for e in results[0].errors)
+
+    def test_autoflake_batch_failure_restores(self, tmp_path: Path) -> None:
+        """批量工具失败 → 全部回滚，不抛异常。"""
+        (tmp_path / "a.py").write_text("import os\n")
+        provider = AutoFlakeFixProvider()
+        fail = MagicMock(returncode=1, stdout="", stderr="fatal error occurred")
+        with patch("tools.scripts.auto_fix.subprocess.run", return_value=fail):
+            results = provider.apply_fixes_batch(["a.py"], tmp_path)
+        assert results[0].errors
+        assert (tmp_path / "a.py").read_text() == "import os\n"
+
+    def test_orchestrator_batches_autoflake_actions(self, tmp_path: Path) -> None:
+        """编排器对支持批量的 provider（autoflake）按文件合并执行。"""
+        (tmp_path / "a.py").write_text("import os\n")
+        (tmp_path / "b.py").write_text("import sys\n")
+        orch = AutoFixOrchestrator()
+        orch.register_provider(AutoFlakeFixProvider())
+        actions = [
+            FixAction(
+                rule_id="F401",
+                file="a.py",
+                line=1,
+                column=1,
+                original="",
+                replacement="",
+                safety_level=FixSafetyLevel.LOW_RISK,
+            ),
+            FixAction(
+                rule_id="F401",
+                file="b.py",
+                line=1,
+                column=1,
+                original="",
+                replacement="",
+                safety_level=FixSafetyLevel.LOW_RISK,
+            ),
+        ]
+        plan = FixPlan(actions=actions, strategy=FixStrategy.AUTO, safety_level=FixSafetyLevel.LOW_RISK)
+        ok = MagicMock(returncode=0, stdout="", stderr="")
+        with patch("tools.scripts.auto_fix.subprocess.run", return_value=ok) as run_mock:
+            results = orch.execute_plan(plan, tmp_path)
+        assert len(results) == 2
+        run_mock.assert_called_once()

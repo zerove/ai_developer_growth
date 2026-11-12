@@ -325,11 +325,23 @@ class AutoFixOrchestrator:
         return FixResult(file=file_path, applied=applied, skipped=skipped, errors=errors, diff=diff)
 
     def _execute_auto(self, plan: FixPlan, project_root: Path) -> list[FixResult]:
-        """自动执行修复 - 按 provider 分组执行"""
-        results = [
-            self._process_single_file(file_path, actions, project_root)
-            for file_path, actions in plan.group_by_file().items()
-        ]
+        """自动执行修复 - 按 provider 分组执行（工具类 provider 支持批量时一次处理）。"""
+        results: list[FixResult] = []
+        batch_jobs: dict[FixProvider, list[str]] = {}
+        batch_order: list[FixProvider] = []
+
+        for file_path, actions in plan.group_by_file().items():
+            provider = self._find_provider_for_action(actions[0]) if actions else None
+            if isinstance(provider, ToolBasedFixProvider) and provider.supports_batch:
+                if provider not in batch_jobs:
+                    batch_jobs[provider] = []
+                    batch_order.append(provider)
+                batch_jobs[provider].append(file_path)
+            else:
+                results.append(self._process_single_file(file_path, actions, project_root))
+
+        for provider in batch_order:
+            results.extend(provider.apply_fixes_batch(batch_jobs[provider], project_root))
 
         # 运行测试
         if self.run_tests_after and results:
@@ -491,6 +503,10 @@ class FixProvider:
             skipped=skipped,
             diff=diff,
         )
+
+    def apply_fixes_batch(self, file_paths: list[str], project_root: Path) -> list[FixResult]:
+        """批量应用修复 (默认实现：退化为逐文件走 apply_fixes)。"""
+        return [self.apply_fixes(file_path, [], project_root) for file_path in file_paths]
 
     def _generate_diff(self, original: str, modified: str, file_name: str) -> str:
         import difflib
@@ -707,6 +723,8 @@ class RegexFixProvider(FixProvider):
 class ToolBasedFixProvider(FixProvider):
     """基于外部工具的修复提供者 (ruff, isort, autoflake 等)"""
 
+    supports_batch: bool = False  # 是否支持一次批量调用外部工具
+
     def __init__(self, name: str, safety_level: FixSafetyLevel, tool_command: list[str]):
         super().__init__(name, safety_level)
         self.use_external_tool = True
@@ -738,6 +756,22 @@ class ToolBasedFixProvider(FixProvider):
         import subprocess
 
         cmd = self.tool_command + [str(full_path)]
+        try:
+            result = subprocess.run(cmd, capture_output=True, text=True, timeout=60)
+        except subprocess.TimeoutExpired:
+            return False, "Tool timed out"
+        except Exception as e:  # noqa: BLE001 - 工具异常统一转为错误消息
+            return False, f"Tool error: {e}"
+
+        if result.returncode != 0 and "error" in result.stderr.lower():
+            return False, f"Tool failed: {result.stderr}"
+        return True, ""
+
+    def _run_tool_batch(self, full_paths: list[Path]) -> tuple[bool, str]:
+        """批量运行外部工具; 一次 subprocess 调用处理多个文件; 返回 (是否成功, 错误消息)。"""
+        import subprocess
+
+        cmd = self.tool_command + [str(p) for p in full_paths]
         try:
             result = subprocess.run(cmd, capture_output=True, text=True, timeout=60)
         except subprocess.TimeoutExpired:
@@ -840,6 +874,7 @@ class AutoFlakeFixProvider(ToolBasedFixProvider):
         super().__init__(
             "autoflake", FixSafetyLevel.LOW_RISK, ["autoflake", "--remove-all-unused-imports", "--in-place"]
         )
+        self.supports_batch = True
 
     def generate_fixes(
         self,
@@ -862,6 +897,38 @@ class AutoFlakeFixProvider(ToolBasedFixProvider):
                 )
             ]
         return []
+
+    def apply_fixes_batch(self, file_paths: list[str], project_root: Path) -> list[FixResult]:
+        """批量运行 autoflake 修复多个文件（单次 subprocess 调用）。"""
+        results: list[FixResult] = []
+        targets: list[tuple[str, Path, Path]] = []
+        missing: list[str] = []
+
+        for file_path in file_paths:
+            full_path = project_root / file_path
+            if not full_path.exists():
+                missing.append(file_path)
+                continue
+            backup_path = full_path.with_suffix(full_path.suffix + ".bak")
+            backup_path.write_text(full_path.read_text())
+            targets.append((file_path, full_path, backup_path))
+
+        if targets:
+            ok, error = self._run_tool_batch([p for _, p, _ in targets])
+            if not ok:
+                # 失败：全部回滚
+                for _, full_path, backup_path in targets:
+                    full_path.write_text(backup_path.read_text())
+                results.extend(FixResult(file=fp, applied=[], skipped=[], errors=[error]) for fp, _, _ in targets)
+            else:
+                for file_path, full_path, backup_path in targets:
+                    original_content = backup_path.read_text()
+                    new_content = full_path.read_text()
+                    diff = self._generate_diff(original_content, new_content, file_path)
+                    results.append(FixResult(file=file_path, applied=[], skipped=[], errors=[], diff=diff))
+
+        results.extend(FixResult(file=fp, errors=[f"File not found: {fp}"]) for fp in missing)
+        return results
 
 
 def create_default_orchestrator() -> AutoFixOrchestrator:

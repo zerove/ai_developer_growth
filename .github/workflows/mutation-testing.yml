@@ -18,7 +18,7 @@ jobs:
   mutation-testing:
     name: Mutation Testing (mutmut)
     runs-on: ubuntu-latest
-    timeout-minutes: 120
+    timeout-minutes: 90
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -34,18 +34,42 @@ jobs:
       - name: Install dependencies
         run: |
           pip install -e ".[dev]"
+          # 必须加引号: bash 会把未加引号的 `>=2.4.0,<3` 当成重定向
           pip install "mutmut>=2.4.0,<3"
+
+      # mutmut 2.x 把变异状态缓存进 SQLite (.mutmut-cache): 主进程与变异 worker
+      # 进程并发写同一个库文件, 默认 journal 模式下必然 "database is locked",
+      # 作业会在检查阶段直接崩溃 (表现为大量 mutant 未测试 + 进程挂死)。
+      # 先用 WAL 模式建库, 读写不再互相阻塞。
+      - name: Prepare mutmut cache database
+        run: |
+          python -c "import sqlite3; con = sqlite3.connect('.mutmut-cache'); con.execute('PRAGMA journal_mode=WAL'); con.close()"
 
       - name: Run mutation testing
         run: |
-          # `--max-runtime` 是 mutmut 3.x 的选项, 2.x 没有 → 必须去掉.
-          # 超时用 shell 的 `timeout`(超时返回码 124)处理, job 级 timeout-minutes: 120 兜底.
-          timeout 1500 mutmut run --paths-to-mutate tools/scripts/rules_engine --runner "python -m pytest tests/ -x --tb=short -q" --no-progress
+          # 变异范围限定在有专属测试的小模块: 每个 mutant 都要重跑一次测试,
+          # 对整个 rules_engine 做变异测试是数小时的量级, 夜间作业必然超时。
+          # --CI: 存活变异体不阻断作业 (结论写进报告 artifact), 致命错误仍失败。
+          # 超时用 shell 的 `timeout`(超时返回码 124)处理, job 级 timeout-minutes 兜底。
+          timeout 2400 mutmut run \
+            --paths-to-mutate tools/scripts/_sc_pypi.py \
+            --runner "python -m pytest tests/test_supply_chain_compliance_policy.py -x -q -p no:cacheprovider" \
+            --CI \
+            --no-progress
 
       - name: Generate mutation report
         run: |
           mutmut results > mutation-report.txt
           cat mutation-report.txt
+
+      # 变异存活体本身不阻断夜间作业 (--CI), 但"跑完就算过"是假绿:
+      # 这里用击杀率阈值兜底 —— 击杀率掉下去说明测试对被测代码失去判别力。
+      - name: Check mutation score
+        run: |
+          python -m tools.scripts.mutation_score \
+            --cache .mutmut-cache \
+            --min-rate 0.6 \
+            --report mutation-report.txt
 
       - name: Upload mutation report
         uses: actions/upload-artifact@v4

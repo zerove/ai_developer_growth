@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import contextlib
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
@@ -344,10 +345,13 @@ def _check_files_parallel(
 
     # 合并进同一个 with: prime 必须发生在进程池创建之前 (worker 经 fork 继承该表,
     # 子进程内不再 spawn)。非 fork 启动方式下 worker 拿不到表, 自动回退逐文件 spawn。
-    with (
-        _batched_linters(files, run_linters),
-        ProcessPoolExecutor(max_workers=jobs, initializer=_worker_init, initargs=(warmup_rules, cache_db)) as executor,
-    ):
+    # 这里用 ExitStack 而不是括号化 with (PEP 3.10+): parso 0.8.7 (mutmut 2.x 的
+    # 依赖) 无法解析 `with (a, b as c):`, 变异测试会在解析阶段直接失败。
+    with contextlib.ExitStack() as stack:
+        stack.enter_context(_batched_linters(files, run_linters))
+        executor = stack.enter_context(
+            ProcessPoolExecutor(max_workers=jobs, initializer=_worker_init, initargs=(warmup_rules, cache_db))
+        )
         worker_results: Iterator[tuple[CheckResult | None, int, bool | None]] = executor.map(
             _worker_check,
             pairs,

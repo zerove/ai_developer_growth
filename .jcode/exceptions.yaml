@@ -14,7 +14,7 @@ exceptions:
   reviewers: []
   rule_id: R002
   severity: warning
-  status: approved
+  status: expired
 - approved_at: '2026-08-23T08:05:11.669810'
   approved_by: admin-user
   created_at: '2026-08-23T08:05:01.158098'
@@ -30,7 +30,7 @@ exceptions:
   reviewers: []
   rule_id: R003
   severity: error
-  status: approved
+  status: expired
 - approved_at: '2026-08-23T11:32:07.928288'
   approved_by: admin
   created_at: '2026-08-23T11:32:00.646345'

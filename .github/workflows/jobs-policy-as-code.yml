@@ -57,38 +57,78 @@ jobs:
       run: pip install -e .
     - name: Install OPA Python SDK
       run: pip install opa-wasm
+    # 说明: 之前这些步骤写成 YAML 双引号单行 + `\$VAR` 转义, bash 收到的是字面量
+    # `$POLICY_DIR` (反斜杠转义掉了变量展开) → 策略目录检查必然失败, 作业必红。
+    # 改用块脚本, 变量按 shell 语义正常展开。
     - name: Generate input data if not provided
       if: inputs.input-data == ''
       id: generate-input
-      run: "python -m tools.scripts.hooks_runner supply-chain sbom --output opa-input.json\
-        \ --format json\npython -m tools.scripts.hooks_runner dep-graph analyze --sbom\
-        \ opa-input.json --output opa-deps.json --format json\npython -m tools.scripts.hooks_runner\
-        \ exception list --format json --output opa-exceptions.json\n\n# Combine all\
-        \ data\npython -c \"\nimport json\nwith open('opa-input.json') as f: sbom\
-        \ = json.load(f)\nwith open('opa-deps.json') as f: deps = json.load(f)\nwith\
-        \ open('opa-exceptions.json') as f: exc = json.load(f)\n\ncombined = {\n \
-        \ 'sbom': sbom,\n  'dependencies': deps,\n  'exceptions': exc,\n  'repository':\
-        \ '${{ github.repository }}',\n  'branch': '${{ github.ref_name }}',\n  'commit':\
-        \ '${{ github.sha }}',\n  'actor': '${{ github.actor }}'\n}\nwith open('opa-combined-input.json',\
-        \ 'w') as f:\n  json.dump(combined, f, indent=2)\n\"\necho \"input-data=opa-combined-input.json\"\
-        \ >> $GITHUB_OUTPUT\n"
+      shell: bash
+      run: |
+        set -eo pipefail
+        python -m tools.scripts.hooks_runner supply-chain sbom --output opa-input.json --format json
+        python -m tools.scripts.hooks_runner dep-graph analyze --sbom opa-input.json --output opa-deps.json --format json
+        python -m tools.scripts.hooks_runner exception list --format json --output opa-exceptions.json
+
+        python - <<'PY'
+        import json
+
+        with open("opa-input.json") as f:
+            sbom = json.load(f)
+        with open("opa-deps.json") as f:
+            deps = json.load(f)
+        with open("opa-exceptions.json") as f:
+            exceptions = json.load(f)
+
+        combined = {
+            "sbom": sbom,
+            "dependencies": deps,
+            "exceptions": exceptions,
+            "repository": "${{ github.repository }}",
+            "branch": "${{ github.ref_name }}",
+            "commit": "${{ github.sha }}",
+            "actor": "${{ github.actor }}",
+        }
+        with open("opa-combined-input.json", "w") as f:
+            json.dump(combined, f, indent=2)
+        PY
+
+        echo "input-data=opa-combined-input.json" >> $GITHUB_OUTPUT
     - name: Download policy bundles
       if: inputs.bundles != ''
-      run: "IFS=',' read -ra BUNDLES <<< \"${{ inputs.bundles }}\"\nfor bundle in\
-        \ \"\\${BUNDLES[@]}\"; do\n  echo \"Downloading bundle: \\$bundle\"\n  opa\
-        \ download --bundle \"\\$bundle\" -o \"bundle_\\${RANDOM}.tar.gz\"\ndone\n"
+      shell: bash
+      run: |
+        set -eo pipefail
+        IFS=',' read -ra BUNDLES <<< "${{ inputs.bundles }}"
+        for bundle in "${BUNDLES[@]}"; do
+          echo "Downloading bundle: $bundle"
+          opa download --bundle "$bundle" -o "bundle_${RANDOM}.tar.gz"
+        done
     - name: Evaluate Policies
       id: policy-eval
-      run: "set -e\nPOLICY_DIR=\"${{ inputs.policy-dir }}\"\nINPUT=\"${{ inputs.input-data\
-        \ != '' && inputs.input-data || steps.generate-input.outputs.input-data }}\"\
-        \nFORMAT=\"${{ inputs.output-format }}\"\n\nif [ ! -d \"\\$POLICY_DIR\" ];\
-        \ then\n  echo \"Policy directory \\$POLICY_DIR does not exist\"\n  exit 1\n\
-        fi\n\n# Run OPA eval\nopa eval \\\n  --data \"\\$POLICY_DIR\" \\\n  --input\
-        \ \"\\$INPUT\" \\\n  --format \"\\$FORMAT\" \\\n  \"data.jcode.governance\"\
-        \ > policy-results.json\n\n# Check for violations\nVIOLATIONS=$(cat policy-results.json\
-        \ | jq -r '.result[0].expressions[0].value.violations // [] | length')\necho\
-        \ \"Violations found: \\$VIOLATIONS\"\necho \"violations=\\$VIOLATIONS\" >>\
-        \ \\$GITHUB_OUTPUT\n"
+      shell: bash
+      run: |
+        set -eo pipefail
+        POLICY_DIR="${{ inputs.policy-dir }}"
+        INPUT="${{ inputs.input-data != '' && inputs.input-data || steps.generate-input.outputs.input-data }}"
+        FORMAT="${{ inputs.output-format }}"
+
+        if [ ! -d "$POLICY_DIR" ]; then
+          echo "Policy directory $POLICY_DIR does not exist"
+          exit 1
+        fi
+
+        # Run OPA eval
+        opa eval \
+          --data "$POLICY_DIR" \
+          --input "$INPUT" \
+          --format "$FORMAT" \
+          "data.jcode.governance" > policy-results.json
+
+        # Check for violations
+        VIOLATIONS=$(jq -r '.result[0].expressions[0].value.violations // [] | length' policy-results.json)
+        echo "Violations found: $VIOLATIONS"
+        echo "violations=$VIOLATIONS" >> $GITHUB_OUTPUT
     - name: Upload policy results
       if: always()
       uses: actions/upload-artifact@v4
@@ -97,26 +137,31 @@ jobs:
         path: policy-results.json
         retention-days: 30
     - name: Fail on violations
-      if: inputs.fail-on-violation == 'true' && steps.policy-eval.outputs.violations
-        != '0'
-      run: 'echo "❌ Policy violations detected:"
-
-        cat policy-results.json | jq -r ''.result[0].expressions[0].value.violations[]
-        | "\(.rule): \(.message) [\(.severity)]"''
-
+      if: inputs.fail-on-violation == 'true' && steps.policy-eval.outputs.violations != '0'
+      shell: bash
+      run: |
+        echo "❌ Policy violations detected:"
+        jq -r '.result[0].expressions[0].value.violations[] | "\(.rule): \(.message) [\(.severity)]"' policy-results.json
         exit 1
-
-        '
     - name: Comment on PR with violations
-      if: github.event_name == 'pull_request' && steps.policy-eval.outputs.violations
-        != '0'
+      if: github.event_name == 'pull_request' && steps.policy-eval.outputs.violations != '0'
       uses: actions/github-script@v7
       with:
-        script: "const fs = require('fs');\nconst results = JSON.parse(fs.readFileSync('policy-results.json',\
-          \ 'utf8'));\nconst violations = results.result[0].expressions[0].value.violations\
-          \ || [];\n\nlet body = '## ⚠️ Policy Violations Detected\\n\\n';\nbody +=\
-          \ '| Rule | Message | Severity |\\n';\nbody += '|------|---------|----------|\\\
-          n';\nfor (const v of violations) {\n  body += `| ${v.rule} | ${v.message}\
-          \ | ${v.severity} |\\n`;\n}\n\ngithub.rest.issues.createComment({\n  issue_number:\
-          \ context.issue.number,\n  owner: context.repo.owner,\n  repo: context.repo.repo,\n\
-          \  body: body\n});\n"
+        script: |
+          const fs = require('fs');
+          const results = JSON.parse(fs.readFileSync('policy-results.json', 'utf8'));
+          const violations = results.result[0].expressions[0].value.violations || [];
+
+          let body = '## ⚠️ Policy Violations Detected\n\n';
+          body += '| Rule | Message | Severity |\n';
+          body += '|------|---------|----------|\n';
+          for (const v of violations) {
+            body += `| ${v.rule} | ${v.message} | ${v.severity} |\n`;
+          }
+
+          github.rest.issues.createComment({
+            issue_number: context.issue.number,
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            body: body
+          });

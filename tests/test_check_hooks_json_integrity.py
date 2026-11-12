@@ -16,6 +16,7 @@ from __future__ import annotations
 
 import json
 import os
+import re
 import subprocess
 import sys
 import tempfile
@@ -270,8 +271,12 @@ class HelpersTest(unittest.TestCase):
     def _load_helpers() -> dict[str, object]:
         """从 shell 脚本里抽出内嵌 Python 并执行, 拿到其命名空间。"""
         text = SCRIPT.read_text(encoding="utf-8")
-        start = text.index("python3 - << 'PYEOF'")
-        start = text.index("\n", start) + 1
+        # heredoc 标记的空白由格式化器决定（shfmt 会把 `<< 'PYEOF'` 规范成
+        # `<<'PYEOF'`），按正则匹配而非固定字面量，避免"格式化脚本 → 测试挂"。
+        match = re.search(r"python3 - <<\s*'PYEOF'", text)
+        if match is None:
+            raise AssertionError("未找到内嵌 Python 的 heredoc 起始标记")
+        start = text.index("\n", match.end()) + 1
         end = text.index("PYEOF", start)
         body = text[start:end]
         # 去掉遍历 hooks.json 的尾部, 只保留函数定义

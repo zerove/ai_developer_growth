@@ -23,7 +23,7 @@ tree-sitter-php>=0.23
 tree-sitter-cpp>=0.23
 tree-sitter-c-sharp>=0.23
 tree-sitter-kotlin>=0.23
-tree-sitter-swift>=0.23
+tree-sitter-swift>=0.7
 
 # 核心运行时依赖是 stdlib + pyyaml + loguru; tree-sitter 系列是 AST 语义检查的
 # 多语言可选增强 (缺失时 ast_parser 会退化为纯正则检查, 见 pyproject.toml 注释)。

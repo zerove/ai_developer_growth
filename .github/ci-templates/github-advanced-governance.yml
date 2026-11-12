@@ -145,7 +145,7 @@ jobs:
       # Policy as Code (OPA/Rego)
       # ──────────────────────────────────────────────────────
       - name: Setup OPA
-        uses: open-policy-agent/setup-opa@v3
+        uses: open-policy-agent/setup-opa@v2
 
       - name: Evaluate Policies
         run: |

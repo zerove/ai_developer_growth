@@ -41,7 +41,7 @@ jobs:
     steps:
     - uses: actions/checkout@v4
     - name: Setup OPA
-      uses: open-policy-agent/setup-opa@v3
+      uses: open-policy-agent/setup-opa@v2
       with:
         version: latest
         download-url: https://openpolicyagent.org/downloads

@@ -12,6 +12,10 @@ jobs:
         - macos-latest
         - windows-latest
     runs-on: ${{ matrix.os }}
+    env:
+      # Windows runner 的默认编码是 cp1252(codec 'charmap'), 打印中文/emoji
+      # 会抛 UnicodeEncodeError → 门禁脚本直接崩。统一用 UTF-8 输出。
+      PYTHONIOENCODING: utf-8
     steps:
     - uses: actions/checkout@v4
     - uses: actions/setup-python@v5

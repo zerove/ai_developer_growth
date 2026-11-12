@@ -43,12 +43,12 @@ jobs:
           cache: pip
           cache-dependency-path: pyproject.toml
 
+      # 依赖集必须与其他作业一致: update_stats 的"测试用例数"来自
+      # `pytest --collect-only`, 而缺少可选依赖的测试模块会被整模块跳过 →
+      # 收集数随环境变化 → README 统计在不同作业里对不上（CI 报漂移）。
+      # 这里装齐测试相关 extras, 使统计口径与仓库标准环境一致。
       - name: Install dependencies
-        run: pip install -e .
-
-      - name: Install stats checker deps
-        # update_stats --check 需要 pytest 统计收集（dev-core 包含 pytest 及插件）
-        run: pip install -e ".[dev-core]"
+        run: pip install -e ".[dev-core,dev-semantic,search,dev-integration]"
 
       - name: Stats drift check (README vs update_stats)
         # P2.6: README 统计表与 update_stats 实际计数漂移即失败，不放行

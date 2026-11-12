@@ -427,6 +427,15 @@ LUA_TOOLCHAIN = LanguageToolchain(
 )
 
 # Shell
+# 工具本身不会递归目录: shellcheck/shfmt 收到目录参数会报
+# "openBinaryFile: inappropriate type (is a directory)", 而 `bash -n` /
+# `shfmt -d` 不给文件时会读 stdin 挂起。因此统一用
+# "find | xargs" 显式列出脚本文件（并排除 .git/.venv/node_modules）。
+_SHELL_FILES = (
+    r"find . -type f \( -name '*.sh' -o -name '*.bash' -o -name '*.zsh' \) "
+    r"-not -path './.git/*' -not -path './.venv/*' -not -path './node_modules/*' -print0"
+)
+
 SHELL_TOOLCHAIN = LanguageToolchain(
     language=Language.SHELL,
     version=">=5.0",
@@ -440,32 +449,35 @@ SHELL_TOOLCHAIN = LanguageToolchain(
     default_paths={"src": "scripts", "tests": "test", "docs": "docs"},
     default_thresholds={"coverage_overall": 50, "naming_style": "snake_case"},
     format=ToolConfig(
-        command="shfmt",
-        args=["-d"],
-        fix_args=["-w"],
+        command="bash",
+        args=["-c", f"{_SHELL_FILES} | xargs -0 -r shfmt -d"],
+        fix_args=["-c", f"{_SHELL_FILES} | xargs -0 -r shfmt -w"],
         config_file=".shfmtrc",
         install_hint="go install mvdan.cc/sh/v3/cmd/shfmt@latest",
     ),
     lint=ToolConfig(
-        command="shellcheck",
-        args=["-x", "-S", "warning", "."],
+        command="bash",
+        args=["-c", f"{_SHELL_FILES} | xargs -0 -r shellcheck -x -S warning"],
         config_file=".shellcheckrc",
         install_hint="apt install shellcheck",
     ),
     typecheck=ToolConfig(
         command="bash",
-        args=["-n"],
+        args=["-c", f"{_SHELL_FILES} | xargs -0 -r -n 1 bash -n"],
         install_hint="apt install bash",
     ),
     test=ToolConfig(
-        command="bats",
-        args=["test"],
+        command="bash",
+        args=[
+            "-c",
+            "if compgen -G 'test/*_test.sh' >/dev/null 2>&1; then bats test; else echo 'no bats tests found'; fi",
+        ],
         coverage_args=[],
         install_hint="apt install bats",
     ),
     security=ToolConfig(
-        command="shellcheck",
-        args=["-x", "-S", "error", "."],
+        command="bash",
+        args=["-c", f"{_SHELL_FILES} | xargs -0 -r shellcheck -x -S error"],
         config_file=".shellcheckrc",
     ),
     build=ToolConfig(

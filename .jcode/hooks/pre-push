@@ -8,6 +8,10 @@
 # 组成:
 #   1. ADG unpushed commits 检查 (tools/scripts/hooks/pre_push.py)
 #   2. hooks_runner 核心门禁: lint/typecheck/test/quality-gate/baseline recompute
+#   3. CI 心跳探测 (hooks_runner ci-heartbeat): 远端门禁是否真的跑过
+#
+# 第 3 步**只告警不阻断**: 远端 CI 因账户配额/套餐限制失效时, 推送仍应放行
+# (否则开发者会被外部条件锁死), 但必须让他知道"远端绿灯不可信"(ADR-057)。
 #
 # 跳过方式: git push --no-verify (不推荐, 会留下未验证的推送)
 
@@ -21,12 +25,12 @@ export PYTHONPATH="$ROOT${PYTHONPATH:+:$PYTHONPATH}"
 
 fail=0
 
-echo "═══ [1/2] Unpushed commits 检查 ═══"
+echo "═══ [1/3] Unpushed commits 检查 ═══"
 if [ -x "$ROOT/.venv/bin/python" ]; then PYTHON="$ROOT/.venv/bin/python"; else PYTHON="python"; fi
 $PYTHON -m tools.scripts.hooks.pre_push || fail=1
 
 echo ""
-echo "═══ [2/2] 本地 CI 全量核心检查 ═══"
+echo "═══ [2/3] 本地 CI 全量核心检查 ═══"
 
 echo "── lint ──"
 $PYTHON -m tools.scripts.hooks_runner lint || fail=1
@@ -43,6 +47,18 @@ $PYTHON -m tools.scripts.hooks_runner quality-gate --full || fail=1
 
 echo "── baseline recompute ──"
 $PYTHON -m tools.scripts.hooks_runner baseline recompute || fail=1
+
+echo ""
+echo "═══ [3/3] CI 心跳探测（远端门禁存活，仅告警） ═══"
+if [ -n "${GITHUB_TOKEN:-}${GH_TOKEN:-}" ]; then
+    if ! $PYTHON -m tools.scripts.hooks_runner ci-heartbeat; then
+        echo ""
+        echo "⚠️  远端 CI 当前不可用（门禁未真正执行）。推送仍被允许，"
+        echo "    但请勿把远端绿灯当作质量证据（详见 ADR-057）。"
+    fi
+else
+    echo "ℹ️  未配置 GITHUB_TOKEN/GH_TOKEN，跳过远端 CI 心跳探测。"
+fi
 
 if [ "$fail" -ne 0 ]; then
     echo ""

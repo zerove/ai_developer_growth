@@ -292,6 +292,21 @@ AI 时代开发者成长知识库 + 治理框架（knowledge base + governance f
 
 ---
 
+## 更新记录: 2026-11-12 15:23:29
+
+### 任务
+Git 变更同步
+
+### 变更摘要
+- 变更文件 7 个 (+575 / -56 行)
+  - .jcode/hooks/pre-push
+  - CONTEXT.md
+  - Makefile
+  - diff --git "a/docs/analysis/\345\233\233\347\273\264\345\272\246\346\267\261\345\272\246\345\210\206\346\236\220.md" "b/docs/analysis/\345\233\233\347\273\264\345\272\246\346\267\261\345\272\246\345\210\206\346\236\220.md"
+  - docs/api/cli.md
+  - tests/test_mkdocs_incremental.py
+  - tools/scripts/mkdocs_incremental.py
+
 ## 更新记录: 2026-11-12 15:08:04
 
 ### 任务
@@ -372,19 +387,5 @@ Git 变更同步
   - diff --git "a/docs/analysis/\345\233\233\347\273\264\345\272\246\346\267\261\345\272\246\345\210\206\346\236\220.md" "b/docs/analysis/\345\233\233\347\273\264\345\272\246\346\267\261\345\272\246\345\210\206\346\236\220.md"
   - tests/test_auto_fix_orchestrator.py
   - tools/scripts/auto_fix.py
-
-## 更新记录: 2026-11-12 08:04:33
-
-### 任务
-Git 变更同步
-
-### 变更摘要
-- 变更文件 6 个 (+163 / -43 行)
-  - CONTEXT.md
-  - tests/test_adg_cli_parser_factory.py
-  - tools/lsp/server.py
-  - tools/scripts/adg_cli/__init__.py
-  - tools/scripts/adg_cli/commands/__init__.py
-  - tools/scripts/adg_cli/parser.py
 
 <!-- 滚动窗口: 已自动裁剪 1 条旧更新记录 -->

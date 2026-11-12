@@ -258,6 +258,24 @@ Modes:
 - Interactive: Manual field-by-field input
 - LLM: Auto-generate from title + brief description
 
+## local_ci_mirror.py - 本地等价 CI
+
+```bash
+python tools/scripts/local_ci_mirror.py                 # 跑全部本地等价门禁
+python tools/scripts/local_ci_mirror.py --list          # 列出清单
+python tools/scripts/local_ci_mirror.py --only lint test # 只跑指定门禁
+make ci-local                                          # 同上（Makefile 入口）
+```
+
+私有仓库的 GitHub Actions 消耗账户分钟配额，配额耗尽时 run 被立即拒绝
+（job 被创建但 `steps` 全空），远端门禁**一次都没真正执行**（见 ADR-057）。
+本脚本把远端 job 映射到本地可执行命令，逐项给出 PASS / FAIL / SKIP + 耗时：
+
+- FAIL → 退出码非 0（与 CI 一致，阻断）；
+- SKIP → **显式报告**（缺工具等），不静默放过；`--strict-skips` 可视为失败。
+
+> 远端门禁存活探测请用 `hooks_runner ci-heartbeat`（pre-push 已接入，仅告警）。
+
 ## mkdocs_incremental.py - 文档增量构建
 
 ```bash

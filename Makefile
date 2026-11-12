@@ -1,4 +1,4 @@
-.PHONY: help lint format format-fix typecheck test test-cov docs-build-force check-quality security audit validate-docs check-index sync-refs validate-governance-docs check-ai-sdlc audit-hallucination link-audit validate-cases scan full-audit full-validate docs-build test-fast check release setup-git workflow-pr workflow-weekly workflow-release clean quick discover jcode list-tools new-skill release-version cov-diff cov-module cov-gate cov-snapshot context-status context-split stats stats-check
+.PHONY: help lint format format-fix typecheck test test-cov docs-build-force ci-local ci-local-fast check-quality security audit validate-docs check-index sync-refs validate-governance-docs check-ai-sdlc audit-hallucination link-audit validate-cases scan full-audit full-validate docs-build test-fast check release setup-git workflow-pr workflow-weekly workflow-release clean quick discover jcode list-tools new-skill release-version cov-diff cov-module cov-gate cov-snapshot context-status context-split stats stats-check
 
 help:  ## 显示帮助信息
 	@grep -hE '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-20s\033[0m %s\n", $$1, $$2}'
@@ -89,6 +89,12 @@ ci-alert:  ## 同 ci-heartbeat，额外以去重 Issue 方式开/更新告警、
 	@python -m tools.scripts.hooks_runner ci-heartbeat --alert
 
 self-check: doctor ci-heartbeat  ## 自检：本地环境 + 远端门禁存活
+
+ci-local:  ## 本地等价 CI（远端 Actions 因配额失效时的兜底，见 ADR-057）
+	@python tools/scripts/local_ci_mirror.py
+
+ci-local-fast:  ## 本地等价 CI（测试走增量模式）
+	@python tools/scripts/local_ci_mirror.py --incremental
 	@echo "✅ 自检完成（本地环境就绪 且 远端 CI 存活）"
 
 check: lint format typecheck test validate-docs check-index semantic-graph architecture-guard  ## 运行所有检查 (包含 AI-Native 门禁)

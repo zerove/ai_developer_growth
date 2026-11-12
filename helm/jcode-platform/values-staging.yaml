@@ -30,6 +30,14 @@ api:
   autoscaling:
     minReplicas: 1
     maxReplicas: 3
+  ingress:
+    enabled: true
+    hosts:
+      - host: api-staging.jcode.example.com
+        paths:
+          - path: /
+            pathType: Prefix
+
 
 orchestrator:
   replicaCount: 1
@@ -63,6 +71,13 @@ semantic:
 
 chaos:
   enabled: true  # Staging 启用混沌工程
+  chaosMesh:
+    controllerManager:
+      resources:
+        limits:
+          cpu: "200m"
+          memory: "256Mi"
+
 
 monitoring:
   prometheus:
@@ -74,6 +89,11 @@ monitoring:
             resources:
               requests:
                 storage: 20Gi
+  grafana:
+    ingress:
+      enabled: true
+      hosts:
+        - grafana-staging.jcode.example.com
 
 loki:
   loki:
@@ -84,15 +104,6 @@ tempo:
   tempo:
     persistence:
       size: 10Gi
-
-chaos:
-  enabled: true
-  chaosMesh:
-    controllerManager:
-      resources:
-        limits:
-          cpu: "200m"
-          memory: "256Mi"
 
 ingress:
   annotations:
@@ -106,19 +117,3 @@ ingress:
 # ──────────────────────────────────────────────────────────
 # Staging 域名配置
 # ──────────────────────────────────────────────────────────
-
-api:
-  ingress:
-    enabled: true
-    hosts:
-      - host: api-staging.jcode.example.com
-        paths:
-          - path: /
-            pathType: Prefix
-
-monitoring:
-  grafana:
-    ingress:
-      enabled: true
-      hosts:
-        - grafana-staging.jcode.example.com

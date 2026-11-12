@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import argparse
+import re
 import sys
 
 from tools.scripts.adg_cli._cache import (
@@ -87,7 +88,7 @@ def _handle_post_check_actions(all_issues: list[Issue], target: Path, language: 
 # 语义契约: 禁用必须走 enabled, 而非把 severity 设成未知值 ——
 # 未知 severity 在 _severity_rank 中只映射为 rank-3, 规则仍会执行与展示。
 _RULE_DISABLE_VALUES = {"off", "ignore", "disabled"}
-_CUSTOM_RULE_ID_RECOMMENDED_RE = __import__("re").compile(r"[a-z0-9]+(?:[-_:.][a-z0-9]+)*")
+_CUSTOM_RULE_ID_RECOMMENDED_RE = re.compile(r"[a-z0-9]+(?:[-_:.][a-z0-9]+)*")
 
 
 def _is_truthy_flag(value: object) -> bool:

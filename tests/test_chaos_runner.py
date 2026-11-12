@@ -19,7 +19,11 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from tools.scripts.chaos_experiment_runner import (
+# kubernetes 属于 dev-integration extra（CI 的最小安装不含它）——
+# 缺失时**跳过**整个模块, 而不是让 collection 报 ImportError 导致整轮测试失败。
+pytest.importorskip("kubernetes", reason="chaos runner 测试需要 kubernetes（dev-integration extra）")
+
+from tools.scripts.chaos_experiment_runner import (  # noqa: E402
     EXPERIMENT_CONFIGS,
     EXPERIMENT_PLURAL_MAP,
     ChaosExperimentRunner,

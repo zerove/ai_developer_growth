@@ -77,12 +77,21 @@ The Rules Engine is a modular, language-agnostic code quality validation system 
 
 ### Security Patterns
 
-::: tools.scripts.rules_engine.security_patterns
+安全规则有**两层防线**（见 `docs/adr/ADR-059-security-patterns-dual-implementation.md`）：
+
+- **规则层（权威源）**：`ai-dev-framework/common/security.yml` —— 由规则引擎加载的
+  `common-*` 安全规则；
+- **扫描层**：`tools/scripts/ai_quality_gate.py` 的手写正则实现 —— 供
+  `on_commit` / `scheduled` 两处 hook 使用。
+
+> 原 `tools/scripts/rules_engine/security_patterns.py`（与 YAML 权威源 ID 命名冲突、
+> 生产零引用的重复实现）已在 ADR-059 落地时删除，本节曾残留指向它的 mkdocstrings
+> 指令，导致 `mkdocs build --strict` 直接失败（文档引用了已不存在的模块）。
+
+::: tools.scripts.ai_quality_gate
     options:
       show_source: false
       members:
-        - get_security_rules
-        - SecurityPatternChecker
         - check_security_patterns
 
 ### Auto Fix

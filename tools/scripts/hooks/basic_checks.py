@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import importlib.util
 import logging
 import os
 import subprocess
@@ -124,9 +125,9 @@ def run_typecheck() -> tuple[bool, str]:
 def _plugin_available(module: str) -> bool:
     """检测 pytest 插件是否可导入（不可用时优雅降级为串行/无重试）。"""
     try:
-        __import__(module)
-        return True
-    except ImportError:
+        # find_spec 只查存在性, 不执行模块顶层代码 (也不触发 sec-001 规则)。
+        return importlib.util.find_spec(module) is not None
+    except (ImportError, ValueError):
         return False
 
 

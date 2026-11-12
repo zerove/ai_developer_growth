@@ -14,6 +14,15 @@ custom_rules:
   language: python
   message: os.system() is vulnerable to command injection
   pattern: \bos\.system\s*\(
+  # 这三个文件**定义** os.system 相关规则/修复, 正文里必然出现 "os.system(" 字面量
+  # (规则 message、fix 描述、docstring), 属自匹配而非真实调用 —— 逐个排除,
+  # 其余文件里的 os.system 调用仍然照常报错。
+  # 排除项按 glob 匹配（fnmatch 语义, 作用于文件的完整路径或文件名）,
+  # 故写成 "*/相对路径" 以同时适配绝对路径与仓库相对路径。
+  exclude_files:
+    - "*/tools/scripts/fix_heuristics.py"
+    - "*/tools/scripts/rules_engine/hallucination_detector.py"
+    - "*/tools/scripts/rules_engine/auto_fix.py"
   severity: error
 - category: security
   fix_hint: Use json or messagepack for serialization

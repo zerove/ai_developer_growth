@@ -17,6 +17,16 @@ repos:
     rev: v2.1.0
     hooks:
       - id: mypy
+        # files 而非 exclude: 把 hook 的检查范围**对齐 CI type-check**
+        # （mypy tools .jcode ai-dev-framework/src）。
+        # 原因: mypy 配置里的 exclude 只对"目录递归"生效, 对 pre-commit 显式
+        # 传入的文件无效 —— 于是
+        #   1) examples/ai-context-sync/tests/test_core.py 与
+        #      ai-dev-framework/tests/test_core.py 同名 → mypy 报
+        #      "Duplicate module named test_core" 并以 exit 2 失败;
+        #   2) tests/ 与 scripts/ 从未被任何门禁类型检查, 但 strict 模式下会
+        #      报出数千条无注解测试函数的错误 —— 反而把提交门禁变成噪声。
+        files: ^(tools/|\.jcode/scripts/|ai-dev-framework/src/)
         additional_dependencies: [pyyaml, types-requests, types-pyyaml]
         # 增量检查: 只跑本次暂存的文件。原为 args=[tools/scripts/] +
         # pass_filenames=false, 每次提交都全量检查 209 个文件, 实测 18.13s,
@@ -32,7 +42,14 @@ repos:
       - id: trailing-whitespace
       - id: end-of-file-fixer
       - id: check-yaml
-        exclude: '\.github/ISSUE_TEMPLATE/.*\.yml$'
+        # 排除三类文件（其余 YAML 必须能被单文档解析且无重复键）:
+        #   1) GitHub Issue 模板（含 YAML 保留字占位）;
+        #   2) Helm 模板 —— Go 模板 ({{- ... }}) 不是可直接解析的 YAML;
+        #   3) 多文档 k8s/ArgoCD 清单（--- 分隔）—— check-yaml 只接受单文档。
+        # 注意: Helm 的 values*.yaml **不在**排除范围内 —— 它们此前藏了重复
+        # 顶层键（api: 写了两遍, 后者覆盖前者 → 生产副本数/资源被静默丢弃）,
+        # 由本钩子的重复键检测发现并已修复。
+        exclude: '(\.github/ISSUE_TEMPLATE/.*\.yml$|^helm/.*/templates/.*\.ya?ml$|^argocd/.*\.ya?ml$|^multi-cluster-.*\.ya?ml$)'
       - id: check-toml
       - id: check-json
       - id: check-merge-conflict

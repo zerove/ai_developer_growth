@@ -19,7 +19,7 @@ import time
 import warnings
 from functools import lru_cache
 from pathlib import Path
-from typing import Any, ClassVar, cast
+from typing import TYPE_CHECKING, Any, ClassVar, cast
 
 from ._ast_utils import _file_ast_cache_get as _file_ast_cache_get
 from ._ast_utils import _file_ast_cache_set as _file_ast_cache_set
@@ -65,14 +65,22 @@ warnings.filterwarnings("ignore", category=FutureWarning, module="tree_sitter")
 # HAS_TREE_SITTER=False, 于是 parse_file 对**所有**语言恒返回 None,
 # AST 语义检查整体静默失效, 而调用方拿到 None 也不报错 (fail-open)。
 # 典型触发方式: 只装 tree-sitter + tree-sitter-python (本项目的实际做法)。
-try:
+# 用 TYPE_CHECKING 分支给 mypy 看真实类型, 运行时分支单独处理缺失依赖。
+# 为什么不用 `# type: ignore[assignment,misc]`: 该 ignore 是否"被用到"取决于
+# mypy 能否解析到 tree_sitter —— 装了依赖时用到(mypy 报"赋值给类型"), 没装时
+# 用不到(符号退化为 Any, 赋值合法)。于是同一份代码在本地与 CI 给出**相反**的
+# unused-ignore 报错, 属于典型的"依赖环境的类型抑制"。
+HAS_TREE_SITTER: bool = False
+if TYPE_CHECKING:  # pragma: no cover - 仅类型检查路径
     from tree_sitter import Language, Parser
+else:
+    try:
+        from tree_sitter import Language, Parser
 
-    HAS_TREE_SITTER = True
-except ImportError:
-    Language = Any  # type: ignore[assignment,misc]
-    Parser = Any  # type: ignore[assignment,misc]
-    HAS_TREE_SITTER = False
+        HAS_TREE_SITTER = True
+    except ImportError:
+        # 占位: 运行时由 HAS_TREE_SITTER 守卫, 不会被调用
+        Language = Parser = None
 
 # 语言名 -> (模块名, 取 language 对象的工厂)。缺失的语言会被单独跳过,
 # 只影响该语言, 不再连坐其他语言。

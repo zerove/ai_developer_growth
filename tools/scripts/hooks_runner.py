@@ -30,6 +30,7 @@ from __future__ import annotations
 
 import argparse
 import importlib
+import importlib.util
 import json
 import logging
 import subprocess
@@ -459,9 +460,12 @@ def _doctor_check_plugins() -> None:
         ("pytest_cov", "pytest-cov (覆盖率门禁)"),
     ]:
         try:
-            __import__(module)
+            # 用 find_spec 判存在性: 比 __import__ 更轻（不执行模块顶层代码）,
+            # 也不会被项目自定义安全规则 sec-001 (动态执行入口) 命中。
+            if importlib.util.find_spec(module) is None:
+                raise ImportError(module)
             print(f"✅ {label}")
-        except ImportError:
+        except (ImportError, ValueError):
             print(f"⚠️  {label} 未安装，将自动降级")
 
 

@@ -300,11 +300,9 @@ def handle_error(e: Exception, script: str = "", exit_code: int = 1) -> None:
 def safe_import(module_name: str, package: str = "") -> Any | None:
     """Safely import a module, returning None if not available."""
     try:
-        if package:
-            from importlib import import_module
+        from importlib import import_module
 
-            return import_module(f"{package}.{module_name}")
-        return __import__(module_name)
+        return import_module(f"{package}.{module_name}" if package else module_name)
     except ImportError:
         return None
 

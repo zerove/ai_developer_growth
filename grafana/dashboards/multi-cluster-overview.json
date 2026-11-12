@@ -169,9 +169,7 @@
     "refresh": "30s",
     "schemaVersion": 38,
     "version": 1,
-    "links": [],
-    "timezone": "Asia/Shanghai",
-    "tags": ["multi-cluster", "overview"]
+    "links": []
   },
   "meta": {
     "created": "2024-01-20T00:00:00Z",

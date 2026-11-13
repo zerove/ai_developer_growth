@@ -484,7 +484,7 @@ def _handle_docs_validate(args: argparse.Namespace) -> int:
     result = subprocess.run(
         [
             sys.executable,
-            str(Path(__file__).resolve().parent.parent.parent / ".jcode" / "scripts" / "governance-docs-validator.py"),
+            str(Path(__file__).resolve().parents[3] / ".jcode" / "scripts" / "governance-docs-validator.py"),
             action,
         ],
         capture_output=True,

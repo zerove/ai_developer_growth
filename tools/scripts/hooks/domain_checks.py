@@ -672,7 +672,7 @@ def _load_governance_auditor() -> Any:
     """Dynamically load the governance auditor module."""
     spec = importlib.util.spec_from_file_location(
         "governance_auditor",
-        Path(__file__).resolve().parent.parent.parent.parent / ".jcode" / "scripts" / "governance-auditor.py",
+        Path(__file__).resolve().parents[3] / ".jcode" / "scripts" / "governance-auditor.py",
     )
     if spec is None or spec.loader is None:
         raise ImportError("Failed to load governance_auditor module")
@@ -824,10 +824,11 @@ def _check_index_subprocess() -> bool:
     Returns:
         True 如果 returncode == 0
     """
+    validator = Path(__file__).resolve().parents[3] / ".jcode" / "scripts" / "governance-docs-validator.py"
     result = subprocess.run(
         [
             sys.executable,
-            ".jcode/scripts/governance-docs-validator.py",
+            str(validator),
             "check-index",
         ],
         capture_output=True,

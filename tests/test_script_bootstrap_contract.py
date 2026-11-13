@@ -55,9 +55,11 @@ BOOTSTRAP_REQUIRED = [
     "generate_fixes.py",
 ]
 
-# 刻意**不**列入清单的脚本（守卫用 `--help` 判定，以下脚本无法用该判据）:
-# - jcode_ai_native_workflow.py：无 argparse/`--help` 快速退出路径，同理由兜底
-#   测试按能力覆盖（当前兜底跳过无 argparse 脚本，属已知覆盖缺口）。
+# 刻意**不**列入清单的脚本（两层守卫负责覆盖，无需逐个登记）:
+# - BOOTSTRAP_REQUIRED：可直接以脚本路径跑 `--help` 的入口（pre-commit/CI 调用方证据）;
+# - 其余含 `tools.*` 包绝对导入的脚本：主守卫只对"带 argparse"跑 `--help`,对"无 argparse"
+#   由 import-only 兜底（runpy.run_path run_name != "__main__"）补测 —— 见
+#   test_pkg_importing_scripts_without_argparse_bootstrap_on_import。
 
 
 def _run_as_script(name: str) -> subprocess.CompletedProcess[str]:
@@ -101,8 +103,9 @@ def test_every_pkg_importing_script_bootstraps() -> None:
 
     跳过无 argparse 的脚本: 判据靠 `--help` 快速退出, 而 perf_benchmark.py
     这类脚本收到 `--help` 会直接跑完整基准(实测 >100s 超时), 会把守卫拖死。
-    **这是一处已知覆盖缺口**: 这类脚本的自举目前无自动化守卫, 靠人工维护。
-    要补齐需另写"按 import 成功判定"的守卫, 但那会与本文件重复。
+    此时由 import-only 兜底 (`test_pkg_importing_scripts_without_argparse_bootstrap_on_import`)
+    补测 —— 本守卫负责"带 argparse"的 `--help` 路径, 兜底负责"无 argparse"的
+    模块顶层自举路径, 缺一不可，不留手动维护口径。
     """
     unbootstrapped = []
 

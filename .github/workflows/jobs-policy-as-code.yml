@@ -137,38 +137,58 @@ jobs:
         INPUT="${{ inputs.input-data != '' && inputs.input-data || steps.generate-input.outputs.input-data }}"
         POLICY_DIR="${{ inputs.policy-dir }}"
 
-        echo "## Policy 评估摘要"
+        POLICY_COUNT="0"
         if [ -d "$POLICY_DIR" ]; then
-          echo "- 已加载策略文件数: $(find "$POLICY_DIR" -type f -name '*.rego' | wc -l)"
-        else
-          echo "- 已加载策略文件数: 0 (目录不存在)"
+          POLICY_COUNT="$(find "$POLICY_DIR" -type f -name '*.rego' | wc -l | tr -d ' ')"
         fi
 
+        EXC_COUNT="n/a"
+        REVIEW_COUNT="n/a"
         if [ -f "$INPUT" ]; then
-          EXC_COUNT=$(jq -r '(.exceptions // []) | length' "$INPUT" 2>/dev/null || echo "n/a")
-          echo "- 输入例外条数: $EXC_COUNT"
-        else
-          echo "- 输入例外条数: n/a (未找到输入文件)"
+          EXC_COUNT="$(jq -r '(.exceptions // []) | length' "$INPUT" 2>/dev/null || echo "n/a")"
+          # license_review: 许可证待复核(元数据不可得/无法归一化), 需人工盘点而非静默忽略
+          REVIEW_COUNT="$(jq -r '[.. | objects | select(.review == "license_review" or .license == "REVIEW")] | length' "$INPUT" 2>/dev/null || echo "n/a")"
         fi
 
+        VIOLATIONS="n/a"
         if [ -f policy-results.json ]; then
-          echo "- 违规总数: $(jq -r '.result[0].expressions[0].value.violations // [] | length' policy-results.json)"
+          VIOLATIONS="$(jq -r '.result[0].expressions[0].value.violations // [] | length' policy-results.json 2>/dev/null || echo "n/a")"
+        fi
+
+        {
+          echo "## Policy 评估摘要"
+          echo "- 已加载策略文件数: $POLICY_COUNT"
+          echo "- 输入例外条数: $EXC_COUNT"
+          echo "- 许可证待复核(license_review/REVIEW)计数: $REVIEW_COUNT"
+          echo "- 违规总数: $VIOLATIONS"
           echo "- 按规则命中计数:"
-          jq -r '
-            .result[0].expressions[0].value.violations // [] as $v
-            | ["no-critical-vulns","license-compliance","dependency-freshness","exception-expiration","exception-expiring-soon"] as $known
-            | ($v | group_by(.rule) | map({(.[0].rule): length}) | add // {}) as $hits
-            | $known[] as $r | "  - \($r): \($hits[$r] // 0)"
-          ' policy-results.json 2>/dev/null || echo "  - (无法解析 policy-results.json)"
-        else
-          echo "- 违规总数: n/a (未生成 policy-results.json)"
+          if [ -f policy-results.json ]; then
+            jq -r '
+              .result[0].expressions[0].value.violations // [] as $v
+              | ["no-critical-vulns","license-compliance","dependency-freshness","exception-expiration","exception-expiring-soon"] as $known
+              | ($v | group_by(.rule) | map({(.[0].rule): length}) | add // {}) as $hits
+              | $known[] as $r | "  - \($r): \($hits[$r] // 0)"
+            ' policy-results.json 2>/dev/null || echo "  - (无法解析 policy-results.json)"
+          else
+            echo "  - n/a (未生成 policy-results.json)"
+          fi
+        } | tee /tmp/opencode/policy-summary.md
+
+        if [ -n "${GITHUB_STEP_SUMMARY:-}" ]; then
+          cat /tmp/opencode/policy-summary.md >> "$GITHUB_STEP_SUMMARY"
         fi
     - name: Upload policy results
       if: always()
       uses: actions/upload-artifact@v4
       with:
         name: policy-evaluation-results
-        path: policy-results.json
+        path: |
+          policy-results.json
+          opa-combined-input.json
+          opa-input.json
+          opa-deps.json
+          opa-exceptions.json
+        if-no-files-found: ignore
         retention-days: 30
     - name: Fail on violations
       if: inputs.fail-on-violation == 'true' && steps.policy-eval.outputs.violations != '0'

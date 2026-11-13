@@ -300,12 +300,18 @@ def _add_dep_graph_parsers(subparsers: argparse._SubParsersAction[argparse.Argum
     dg_export.add_argument("--output", type=Path, help="Output file")
 
 
-def _add_security_parsers(subparsers: argparse._SubParsersAction[argparse.ArgumentParser]) -> None:
-    """安全类命令: semantic-check/ast-fix/hallucination-scan/secret-scan/auto-fix/supply-chain/sbom/verify-signature"""
-    sc_parser = subparsers.add_parser("supply-chain", help="Multi-language supply chain security")
-    sc_subparsers = sc_parser.add_subparsers(dest="sc_action", required=True)
+def _add_review_ledger_args(parser: argparse.ArgumentParser) -> None:
+    """为 supply-chain 子命令添加复核台账参数。"""
+    parser.add_argument("--review-ledger", type=Path, help="Write license review ledger JSON for periodic tracking")
+    parser.add_argument(
+        "--review-ledger-baseline",
+        type=Path,
+        help="Compare current license review ledger against a baseline ledger JSON",
+    )
 
-    # supply-chain scan
+
+def _add_supply_chain_subparsers(sc_subparsers: argparse._SubParsersAction[argparse.ArgumentParser]) -> None:
+    """注册 supply-chain 子命令 (scan/sbom/compliance/freshness/verify)。"""
     sc_scan = sc_subparsers.add_parser("scan", help="Scan supply chain for vulnerabilities")
     sc_scan.add_argument("--path", type=Path, default=Path("."), help="Project root path")
     sc_scan.add_argument("--format", choices=["text", "json", "sarif"], default="text", help="Output format")
@@ -314,36 +320,37 @@ def _add_security_parsers(subparsers: argparse._SubParsersAction[argparse.Argume
         "--fail-on", choices=["critical", "high", "medium", "low"], default="high", help="Fail on severity level"
     )
     sc_scan.add_argument("--policy-file", type=Path, help="Path to license policy file (applies license rules)")
-    sc_scan.add_argument("--review-ledger", type=Path, help="Write license review ledger JSON for periodic tracking")
+    _add_review_ledger_args(sc_scan)
 
-    # supply-chain sbom
     sc_sbom = sc_subparsers.add_parser("sbom", help="Generate SBOM (Software Bill of Materials)")
     sc_sbom.add_argument("--path", type=Path, default=Path("."), help="Project root path")
     sc_sbom.add_argument("--output", type=Path, help="Output file path (default: stdout)")
     sc_sbom.add_argument("--format", choices=["json", "spdx", "cyclonedx"], default="json", help="Output format")
 
-    # supply-chain compliance
     sc_compliance = sc_subparsers.add_parser("compliance", help="Check supply chain compliance against policy")
     sc_compliance.add_argument("--path", type=Path, default=Path("."), help="Project root path")
     sc_compliance.add_argument("--policy-file", type=Path, help="Path to policy file")
     sc_compliance.add_argument("--format", choices=["text", "json"], default="text", help="Output format")
     sc_compliance.add_argument("--output", type=Path, help="Output file path")
-    sc_compliance.add_argument(
-        "--review-ledger", type=Path, help="Write license review ledger JSON for periodic tracking"
-    )
+    _add_review_ledger_args(sc_compliance)
 
-    # supply-chain freshness
     sc_freshness = sc_subparsers.add_parser("freshness", help="Check dependency freshness")
     sc_freshness.add_argument("--path", type=Path, default=Path("."), help="Project root path")
     sc_freshness.add_argument("--max-age-days", type=int, default=90, help="Maximum age in days")
     sc_freshness.add_argument("--format", choices=["text", "json"], default="text", help="Output format")
     sc_freshness.add_argument("--output", type=Path, help="Output file path")
 
-    # supply-chain verify
     sc_verify = sc_subparsers.add_parser("verify", help="Verify supply chain integrity (SLSA provenance)")
     sc_verify.add_argument("--path", type=Path, default=Path("."), help="Project root path")
     sc_verify.add_argument("--format", choices=["text", "json"], default="text", help="Output format")
     sc_verify.add_argument("--output", type=Path, help="Output file path")
+
+
+def _add_security_parsers(subparsers: argparse._SubParsersAction[argparse.ArgumentParser]) -> None:
+    """安全类命令: semantic-check/ast-fix/hallucination-scan/secret-scan/auto-fix/supply-chain/sbom/verify-signature"""
+    sc_parser = subparsers.add_parser("supply-chain", help="Multi-language supply chain security")
+    sc_subparsers = sc_parser.add_subparsers(dest="sc_action", required=True)
+    _add_supply_chain_subparsers(sc_subparsers)
 
 
 def _add_signature_sbom_parsers(subparsers: argparse._SubParsersAction[argparse.ArgumentParser]) -> None:

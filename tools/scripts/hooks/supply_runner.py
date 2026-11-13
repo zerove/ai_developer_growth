@@ -186,8 +186,11 @@ def _handle_supply_chain_scan(args: argparse.Namespace) -> int:
         _resolve_licenses(scanner, result, PyPIMetadataClient())
         should_fail = should_fail or bool(result.license_issues)
 
+    diff = _compute_review_ledger_diff(args, result.summary)
     _output_scan_result(args, project_root, result)
-    _write_review_ledger(args, project_root, result.scanned_at, result.summary)
+    if diff is not None and args.format == "text":
+        _print_review_ledger_diff(diff)
+    _write_review_ledger(args, project_root, result.scanned_at, result.summary, diff)
 
     return 1 if should_fail else 0
 
@@ -484,12 +487,101 @@ def _print_compliance_text(project_root: Path, compliance: dict[str, Any]) -> No
             print(f"  [{str(w['severity']).upper()}] {w['message']}")
 
 
-def _build_review_ledger(project_root: Path, scanned_at: str, summary: dict[str, object]) -> dict[str, object]:
+def _ledger_item_key(item: dict[str, object]) -> tuple[str, str, str]:
+    """复核台账项稳定键 (ecosystem, name, version)。"""
+    return (
+        str(item.get("ecosystem", "")),
+        str(item.get("name", "")),
+        str(item.get("version", "")),
+    )
+
+
+def _load_review_ledger_baseline(path: Path) -> list[dict[str, object]]:
+    """加载基线台账 JSON 并返回 items 列表。"""
+    data = json.loads(path.read_text(encoding="utf-8"))
+    if isinstance(data, dict) and isinstance(data.get("items"), list):
+        return [it for it in data["items"] if isinstance(it, dict)]
+    if isinstance(data, list):
+        return [it for it in data if isinstance(it, dict)]
+    raise ValueError("invalid ledger format: expected object with items list")
+
+
+def _diff_review_ledger(
+    current_items: list[dict[str, object]], baseline_items: list[dict[str, object]], baseline_path: Path
+) -> dict[str, object]:
+    """对比当前台账与基线, 返回新增/移除/变更/未变统计。"""
+    cur = {_ledger_item_key(it): it for it in current_items}
+    base = {_ledger_item_key(it): it for it in baseline_items}
+    added_keys = sorted(set(cur) - set(base))
+    removed_keys = sorted(set(base) - set(cur))
+    common_keys = sorted(set(cur) & set(base))
+
+    def _sig(it: dict[str, object]) -> tuple[str, str, str, str]:
+        return (
+            str(it.get("cause", "")),
+            str(it.get("license", "")),
+            str(it.get("policy", "")),
+            str(it.get("message", "")),
+        )
+
+    changed = []
+    unchanged = 0
+    for key in common_keys:
+        if _sig(cur[key]) != _sig(base[key]):
+            changed.append({"key": key, "from": base[key], "to": cur[key]})
+        else:
+            unchanged += 1
+
+    return {
+        "baseline_path": str(baseline_path),
+        "added": [cur[k] for k in added_keys],
+        "removed": [base[k] for k in removed_keys],
+        "changed": changed,
+        "unchanged": unchanged,
+        "summary": {
+            "added": len(added_keys),
+            "removed": len(removed_keys),
+            "changed": len(changed),
+            "unchanged": unchanged,
+        },
+    }
+
+
+def _print_review_ledger_diff(diff: dict[str, object]) -> None:
+    """文本输出复核台账差异摘要。"""
+    raw_summary = diff.get("summary")
+    s: dict[str, object] = raw_summary if isinstance(raw_summary, dict) else {}
+    print(
+        "  License review ledger diff: "
+        f"+{s.get('added', 0)} -{s.get('removed', 0)} ~{s.get('changed', 0)} ={s.get('unchanged', 0)}"
+    )
+    baseline_path = diff.get("baseline_path")
+    if baseline_path:
+        print(f"    baseline: {baseline_path}")
+
+
+def _compute_review_ledger_diff(args: argparse.Namespace, summary: dict[str, object]) -> dict[str, object] | None:
+    """按需计算复核台账差异并写回 summary。"""
+    baseline_path = getattr(args, "review_ledger_baseline", None)
+    if not baseline_path:
+        return None
+    items = summary.get("license_review_items", [])
+    if not isinstance(items, list):
+        items = []
+    baseline_items = _load_review_ledger_baseline(baseline_path)
+    diff = _diff_review_ledger([it for it in items if isinstance(it, dict)], baseline_items, baseline_path)
+    summary["license_review_diff"] = diff
+    return diff
+
+
+def _build_review_ledger(
+    project_root: Path, scanned_at: str, summary: dict[str, object], diff: dict[str, object] | None = None
+) -> dict[str, object]:
     """构建 license review 复核台账 (机器可读, 便于周期盘点与对比)。"""
     items = summary.get("license_review_items", [])
     if not isinstance(items, list):
         items = []
-    return {
+    ledger: dict[str, object] = {
         "project": str(project_root),
         "scanned_at": scanned_at,
         "summary": {
@@ -500,25 +592,39 @@ def _build_review_ledger(project_root: Path, scanned_at: str, summary: dict[str,
         },
         "items": items,
     }
+    if diff is not None:
+        ledger["diff"] = diff
+    return ledger
 
 
 def _write_review_ledger(
-    args: argparse.Namespace, project_root: Path, scanned_at: str, summary: dict[str, object]
+    args: argparse.Namespace,
+    project_root: Path,
+    scanned_at: str,
+    summary: dict[str, object],
+    diff: dict[str, object] | None = None,
 ) -> None:
     """按需写出 license review 复核台账 JSON。"""
     ledger_path = getattr(args, "review_ledger", None)
     if not ledger_path:
         return
-    ledger = _build_review_ledger(project_root, scanned_at, summary)
+    ledger = _build_review_ledger(project_root, scanned_at, summary, diff)
     ledger_path.write_text(json.dumps(ledger, indent=2, ensure_ascii=False))
     print(f"License review ledger written to {ledger_path}")
 
 
-def _output_compliance(args: argparse.Namespace, project_root: Path, compliance: dict[str, Any]) -> None:
+def _output_compliance(
+    args: argparse.Namespace,
+    project_root: Path,
+    compliance: dict[str, Any],
+    diff: dict[str, object] | None = None,
+) -> None:
     """按 --format 输出合规报告。"""
 
     if args.format == "text":
         _print_compliance_text(project_root, compliance)
+        if diff is not None:
+            _print_review_ledger_diff(diff)
     elif args.format == "json":
         print(json.dumps(compliance, indent=2, ensure_ascii=False))
 
@@ -526,7 +632,7 @@ def _output_compliance(args: argparse.Namespace, project_root: Path, compliance:
         args.output.write_text(json.dumps(compliance, indent=2, ensure_ascii=False))
         print(f"Compliance report written to {args.output}")
 
-    _write_review_ledger(args, project_root, str(compliance.get("scanned_at", "")), compliance.get("summary", {}))
+    _write_review_ledger(args, project_root, str(compliance.get("scanned_at", "")), compliance.get("summary", {}), diff)
 
 
 def _handle_supply_chain_compliance(args: argparse.Namespace) -> int:
@@ -543,7 +649,10 @@ def _handle_supply_chain_compliance(args: argparse.Namespace) -> int:
 
     _resolve_licenses(scanner, result, PyPIMetadataClient())
     compliance = _run_compliance_checks(project_root, result)
-    _output_compliance(args, project_root, compliance)
+    diff = _compute_review_ledger_diff(args, result.summary)
+    if diff is not None:
+        compliance["license_review_diff"] = diff
+    _output_compliance(args, project_root, compliance, diff)
 
     return 0 if compliance["passed"] else 1
 

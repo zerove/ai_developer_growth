@@ -195,3 +195,120 @@ class TestLicenseReviewAttribution:
         data = json.loads(out.read_text(encoding="utf-8"))
         assert data["summary"]["license_review"] == 2
         assert isinstance(data["items"], list)
+
+    def test_diff_review_ledger_detects_added_removed_changed(self, tmp_path: Path) -> None:
+        """ledger diff 应识别新增/移除/变更项 (按 ecosystem,name,version 键)。"""
+        baseline = [
+            {
+                "ecosystem": "pypi",
+                "name": "a",
+                "version": "1",
+                "license": None,
+                "cause": "unreachable",
+                "policy": "review",
+                "message": "m1",
+            },
+            {
+                "ecosystem": "pypi",
+                "name": "b",
+                "version": "1",
+                "license": "GPL-3.0",
+                "cause": "policy_review",
+                "policy": "review",
+                "message": "m2",
+            },
+            {
+                "ecosystem": "pypi",
+                "name": "c",
+                "version": "1",
+                "license": None,
+                "cause": "unknown_license",
+                "policy": "review",
+                "message": "m3",
+            },
+        ]
+        current = [
+            {
+                "ecosystem": "pypi",
+                "name": "b",
+                "version": "1",
+                "license": "GPL-3.0",
+                "cause": "unknown_license",
+                "policy": "review",
+                "message": "m2b",
+            },
+            {
+                "ecosystem": "pypi",
+                "name": "c",
+                "version": "1",
+                "license": None,
+                "cause": "unknown_license",
+                "policy": "review",
+                "message": "m3",
+            },
+            {
+                "ecosystem": "pypi",
+                "name": "d",
+                "version": "2",
+                "license": None,
+                "cause": "unreachable",
+                "policy": "review",
+                "message": "m4",
+            },
+        ]
+        diff = sr._diff_review_ledger(current, baseline, tmp_path / "base.json")
+        assert diff["summary"] == {"added": 1, "removed": 1, "changed": 1, "unchanged": 1}
+        assert [it["name"] for it in diff["added"]] == ["d"]
+        assert [it["name"] for it in diff["removed"]] == ["a"]
+        assert diff["changed"][0]["from"]["name"] == "b"
+
+    def test_compute_review_ledger_diff_reads_baseline_file(self, tmp_path: Path) -> None:
+        """--review-ledger-baseline 应加载基线并将 diff 写入 summary。"""
+        baseline = {
+            "items": [
+                {
+                    "ecosystem": "pypi",
+                    "name": "gone",
+                    "version": "1.0.0",
+                    "license": None,
+                    "cause": "unknown_license",
+                    "policy": "review",
+                    "message": "m",
+                }
+            ]
+        }
+        baseline_path = tmp_path / "baseline.json"
+        baseline_path.write_text(json.dumps(baseline), encoding="utf-8")
+        summary = _summary_with_attribution()
+        summary["license_review_items"] = [
+            {
+                "ecosystem": "pypi",
+                "name": "new",
+                "version": "1.0.0",
+                "license": None,
+                "cause": "unreachable",
+                "policy": "review",
+                "message": "m",
+            }
+        ]
+        args = SimpleNamespace(review_ledger=None, review_ledger_baseline=baseline_path)
+        diff = sr._compute_review_ledger_diff(args, summary)
+        assert diff is not None
+        assert diff["summary"]["added"] == 1
+        assert diff["summary"]["removed"] == 1
+        assert summary["license_review_diff"]["summary"]["unchanged"] == 0
+
+    def test_write_review_ledger_includes_diff(self, tmp_path: Path) -> None:
+        """ledger JSON 在提供基线时应包含 diff 段。"""
+        out = tmp_path / "ledger.json"
+        args = SimpleNamespace(review_ledger=out)
+        summary = _summary_with_attribution()
+        diff = {
+            "summary": {"added": 1, "removed": 0, "changed": 0, "unchanged": 0},
+            "added": [],
+            "removed": [],
+            "changed": [],
+        }
+        sr._write_review_ledger(args, tmp_path, "2026-11-13T00:00:00", summary, diff)
+        data = json.loads(out.read_text(encoding="utf-8"))
+        assert data["diff"]["summary"]["added"] == 1

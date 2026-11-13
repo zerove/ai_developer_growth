@@ -187,6 +187,7 @@ def _handle_supply_chain_scan(args: argparse.Namespace) -> int:
         should_fail = should_fail or bool(result.license_issues)
 
     _output_scan_result(args, project_root, result)
+    _write_review_ledger(args, project_root, result.scanned_at, result.summary)
 
     return 1 if should_fail else 0
 
@@ -483,6 +484,36 @@ def _print_compliance_text(project_root: Path, compliance: dict[str, Any]) -> No
             print(f"  [{str(w['severity']).upper()}] {w['message']}")
 
 
+def _build_review_ledger(project_root: Path, scanned_at: str, summary: dict[str, object]) -> dict[str, object]:
+    """构建 license review 复核台账 (机器可读, 便于周期盘点与对比)。"""
+    items = summary.get("license_review_items", [])
+    if not isinstance(items, list):
+        items = []
+    return {
+        "project": str(project_root),
+        "scanned_at": scanned_at,
+        "summary": {
+            "license_review": summary.get("license_review", 0),
+            "license_review_unreachable": summary.get("license_review_unreachable", 0),
+            "license_review_unknown": summary.get("license_review_unknown", 0),
+            "total_items": len(items),
+        },
+        "items": items,
+    }
+
+
+def _write_review_ledger(
+    args: argparse.Namespace, project_root: Path, scanned_at: str, summary: dict[str, object]
+) -> None:
+    """按需写出 license review 复核台账 JSON。"""
+    ledger_path = getattr(args, "review_ledger", None)
+    if not ledger_path:
+        return
+    ledger = _build_review_ledger(project_root, scanned_at, summary)
+    ledger_path.write_text(json.dumps(ledger, indent=2, ensure_ascii=False))
+    print(f"License review ledger written to {ledger_path}")
+
+
 def _output_compliance(args: argparse.Namespace, project_root: Path, compliance: dict[str, Any]) -> None:
     """按 --format 输出合规报告。"""
 
@@ -494,6 +525,8 @@ def _output_compliance(args: argparse.Namespace, project_root: Path, compliance:
     if args.output:
         args.output.write_text(json.dumps(compliance, indent=2, ensure_ascii=False))
         print(f"Compliance report written to {args.output}")
+
+    _write_review_ledger(args, project_root, str(compliance.get("scanned_at", "")), compliance.get("summary", {}))
 
 
 def _handle_supply_chain_compliance(args: argparse.Namespace) -> int:

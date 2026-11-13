@@ -162,3 +162,42 @@ class TestLicenseReviewAttribution:
         items = compliance["summary"]["license_review_items"]
         assert len(items) == 1
         assert items[0]["cause"] == "unreachable"
+
+    def test_write_review_ledger_outputs_json(self, tmp_path: Path) -> None:
+        """--review-ledger 应输出可用于周期盘点的台账 JSON。"""
+        import json
+
+        from types import SimpleNamespace
+
+        out = tmp_path / "license-review-ledger.json"
+        args = SimpleNamespace(review_ledger=out)
+        summary = _summary_with_attribution()
+        summary["license_review_items"] = [
+            {"name": "flaky-pkg", "version": "1.0.0", "ecosystem": "pypi", "license": None, "cause": "unreachable"}
+        ]
+        sr._write_review_ledger(args, tmp_path, "2026-11-13T00:00:00", summary)
+
+        data = json.loads(out.read_text(encoding="utf-8"))
+        assert data["project"] == str(tmp_path)
+        assert data["scanned_at"] == "2026-11-13T00:00:00"
+        assert data["summary"]["license_review"] == 2
+        assert data["summary"]["total_items"] == 1
+        assert data["items"][0]["name"] == "flaky-pkg"
+
+    def test_output_compliance_writes_ledger(self, tmp_path: Path) -> None:
+        """compliance 输出路径应同时落盘复核台账。"""
+        import json
+
+        from types import SimpleNamespace
+
+        out = tmp_path / "ledger.json"
+        compliance = sr._run_compliance_checks(
+            tmp_path, ScanResult(project_path=str(tmp_path), summary=_summary_with_attribution())
+        )
+        compliance["scanned_at"] = "2026-11-13T00:00:00"
+        args = SimpleNamespace(format="text", output=None, review_ledger=out)
+        sr._output_compliance(args, tmp_path, compliance)
+
+        data = json.loads(out.read_text(encoding="utf-8"))
+        assert data["summary"]["license_review"] == 2
+        assert isinstance(data["items"], list)

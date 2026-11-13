@@ -314,6 +314,7 @@ def _add_security_parsers(subparsers: argparse._SubParsersAction[argparse.Argume
         "--fail-on", choices=["critical", "high", "medium", "low"], default="high", help="Fail on severity level"
     )
     sc_scan.add_argument("--policy-file", type=Path, help="Path to license policy file (applies license rules)")
+    sc_scan.add_argument("--review-ledger", type=Path, help="Write license review ledger JSON for periodic tracking")
 
     # supply-chain sbom
     sc_sbom = sc_subparsers.add_parser("sbom", help="Generate SBOM (Software Bill of Materials)")
@@ -327,6 +328,9 @@ def _add_security_parsers(subparsers: argparse._SubParsersAction[argparse.Argume
     sc_compliance.add_argument("--policy-file", type=Path, help="Path to policy file")
     sc_compliance.add_argument("--format", choices=["text", "json"], default="text", help="Output format")
     sc_compliance.add_argument("--output", type=Path, help="Output file path")
+    sc_compliance.add_argument(
+        "--review-ledger", type=Path, help="Write license review ledger JSON for periodic tracking"
+    )
 
     # supply-chain freshness
     sc_freshness = sc_subparsers.add_parser("freshness", help="Check dependency freshness")

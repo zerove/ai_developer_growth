@@ -253,4 +253,4 @@ const name = user.name;
 ---
 
 *本规则适用于 TypeScript 项目的 AI Agent 开发。*
-*验证工具: `python tools/scripts/validate_language_rules.py <path> --lang typescript`*
+*验证工具: `python -m tools.scripts.validate_language_rules <path> --lang typescript`*

@@ -105,7 +105,7 @@ printf '%s\n%s\n%s\n' \
   '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{}}' \
   '{"jsonrpc":"2.0","id":2,"method":"tools/list"}' \
   '{"jsonrpc":"2.0","id":3,"method":"tools/call","params":{"name":"run_architecture_guard","arguments":{}}}' \
-  | python tools/scripts/ai_native_mcp_server.py
+  | python -m tools.scripts.ai_native_mcp_server
 ```
 
 支持方法：

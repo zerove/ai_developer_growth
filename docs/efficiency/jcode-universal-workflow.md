@@ -57,7 +57,7 @@ description: 面向 AI-Native 研发全生命周期的通用工作流规范，�
 - **操作**：
   - 运行统一钩子运行器：
     ```bash
-    python tools/scripts/hooks_runner.py quality-gate --path . --check-annotation --check-security --check-type --check-error
+    python -m tools.scripts.hooks_runner quality-gate --path . --check-annotation --check-security --check-type --check-error
     ```
   - 运行 ADG 语言规则检查：
     ```bash
@@ -69,11 +69,11 @@ description: 面向 AI-Native 研发全生命周期的通用工作流规范，�
 - **操作**：
   - 运行 AI-PR 评审代理检查变更：
     ```bash
-    python tools/scripts/ai_pr_reviewer.py
+    python -m tools.scripts.ai_pr_reviewer
     ```
   - 使用智能 Commit 生成器提交代码：
     ```bash
-    python tools/scripts/smart_commit.py
+    python -m tools.scripts.smart_commit
     ```
 
 ### 阶段 6：经验沉淀与记忆向量化 (Knowledge & Memory)
@@ -81,7 +81,7 @@ description: 面向 AI-Native 研发全生命周期的通用工作流规范，�
 - **操作**：
   - 运行会话记忆向量化器更新本地知识库索引：
     ```bash
-    python tools/scripts/session_memory_vectorizer.py --dir docs --index .jcode/memory/memory_index.json
+    python -m tools.scripts.session_memory_vectorizer --dir docs --index .jcode/memory/memory_index.json
     ```
 
 ---

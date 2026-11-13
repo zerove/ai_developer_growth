@@ -78,4 +78,4 @@ try { x() } catch (e) { log(e); throw }
 
 ---
 
-*验证: `python tools/scripts/validate_language_rules.py --lang lua`*
+*验证: `python -m tools.scripts.validate_language_rules --lang lua`*

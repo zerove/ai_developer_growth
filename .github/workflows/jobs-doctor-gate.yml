@@ -37,10 +37,10 @@ jobs:
     - name: Run hooks doctor (baseline check is Linux-only; baseline.json uses POSIX
         paths)
       if: runner.os == 'Linux'
-      run: python tools/scripts/hooks_runner.py doctor
+      run: python -m tools.scripts.hooks_runner doctor
     - name: Run hooks doctor (skip baseline on non-Linux due to path format)
       if: runner.os != 'Linux'
-      run: python tools/scripts/hooks_runner.py doctor || echo "::warning::doctor
+      run: python -m tools.scripts.hooks_runner doctor || echo "::warning::doctor
         reported issues on ${{ runner.os }}"
   baseline-guard:
     name: Baseline Anti-Tamper Check
@@ -64,9 +64,9 @@ jobs:
 
         '
     - name: Validate baseline structure
-      run: python tools/scripts/hooks_runner.py baseline validate
+      run: python -m tools.scripts.hooks_runner baseline validate
     - name: Recompute issues and compare with baseline
-      run: python tools/scripts/hooks_runner.py baseline recompute
+      run: python -m tools.scripts.hooks_runner baseline recompute
   audit-trends:
     name: 'Audit Ledger Integrity & Trends'
     runs-on: ubuntu-latest
@@ -76,4 +76,4 @@ jobs:
       with:
         python-version: '3.11'
     - name: Verify ledger chain and trend alerts
-      run: python tools/scripts/audit_trends.py
+      run: python -m tools.scripts.audit_trends

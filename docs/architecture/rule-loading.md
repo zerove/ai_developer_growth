@@ -84,7 +84,7 @@ YAML 规则文件
   [ADR-080](../adr/ADR-080-canonical-rule-id-prefix.md)。
 - `tests/test_rule_supersedes_validation.py` 校验 `supersedes` 的类型、目标存在性、
   自引用与循环。
-- `python tools/scripts/check_rule_collisions.py` 检查重复 ID 和未声明的跨源
+- `python -m tools.scripts.check_rule_collisions` 检查重复 ID 和未声明的跨源
   pattern 重叠；`tests/test_rule_collisions.py` 在 CI 中执行同一检查。
 - `supersedes` 只影响 common 合并，不会删除用户自定义规则；语言规则的 pattern
   必须是 common 规则的超集，否则会丢失覆盖。

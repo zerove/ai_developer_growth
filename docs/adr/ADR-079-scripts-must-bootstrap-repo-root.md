@@ -17,7 +17,7 @@
 ## 背景
 
 清理无用文件时对 `tools/scripts/hooks_runner.py` 做删除候选筛查，
-`python tools/scripts/hooks_runner.py --help` 直接崩：
+`python -m tools.scripts.hooks_runner --help` 直接崩：
 
 ```
 ModuleNotFoundError: No module named 'tools'
@@ -30,7 +30,7 @@ ModuleNotFoundError: No module named 'tools'
 该文件用**包绝对导入**（`from tools.scripts...`）开头，但
 `pre-commit` 钩子与多个测试都以**脚本路径**方式调用它：
 
-- `.pre-commit-config.yaml:121` `entry: python tools/scripts/hooks_runner.py ...`
+- `.pre-commit-config.yaml:121` `entry: python -m tools.scripts.hooks_runner ...`
 - `tests/test_ast_fix_cli_applied_reporting.py:43` 子进程跑真实 CLI
 
 以脚本路径执行时 `sys.path[0]` 是 `tools/scripts/`（脚本所在目录），
@@ -72,7 +72,7 @@ if str(_REPO_ROOT) not in sys.path:
 - `tests/test_ast_fix_cli_applied_reporting.py` 7 个测试由红转绿。
   该组测试锁的正是 ADR-068「CLI 不得谎报 Fixes applied」的回归，
   此前因导入崩溃而**整组失效** —— 门禁上的假绿灯。
-- `python tools/scripts/hooks_runner.py` 与 `python -m` 两种写法等价，
+- `python -m tools.scripts.hooks_runner` 与 `python -m` 两种写法等价，
   消除"只有一种能用"的隐式约束。
 
 ### 负面 / 代价
@@ -137,10 +137,10 @@ CLI 走正常路径、测试却以产品缺陷的面貌变红，与真实回归�
 
 ```python
 # ADR-079: 统一路径引导 —— `python -m tools.scripts.X`（包上下文）与
-# `python tools/scripts/X.py`（path[0]=tools/scripts）均由 _bootstrap 幂等补齐仓库根。
+# `python -m tools.scripts.X`（path[0]=tools/scripts）均由 _bootstrap 幂等补齐仓库根。
 try:  # python -m tools.scripts.X (根已在 path)
     from tools.scripts import _bootstrap
-except ModuleNotFoundError:  # python tools/scripts/X.py (path[0]=tools/scripts)
+except ModuleNotFoundError:  # python -m tools.scripts.X (path[0]=tools/scripts)
     import _bootstrap  # type: ignore[no-redef]  # noqa: F401
 ```
 

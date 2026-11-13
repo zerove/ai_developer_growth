@@ -51,14 +51,14 @@ jobs:
       - name: Run link audit
         # --check 不是 link_auditor 的合法参数（合法的是 --check-all /
         # --fail-on-broken），此前拼错后又被 || true 吞掉，等于静默失效。
-        run: python tools/scripts/link_auditor.py . --check-all
+        run: python -m tools.scripts.link_auditor . --check-all
 
       - name: Run doc code refs check
         # D-02: 正文中仓库代码路径引用必须真实存在
-        run: python tools/scripts/check_doc_code_refs.py
+        run: python -m tools.scripts.check_doc_code_refs
 
       - name: Run case validation
-        run: python tools/scripts/validate_case_study.py --all
+        run: python -m tools.scripts.validate_case_study --all
 
   weekly-scan:
     name: Weekly Knowledge Scan
@@ -70,7 +70,7 @@ jobs:
         with:
           python-version: ${{ env.PYTHON_VERSION }}
       - name: Scan case studies
-        run: python tools/scripts/validate_case_study.py --all
+        run: python -m tools.scripts.validate_case_study --all
       - name: Update tool matrix
         run: python -m tools.scripts.update_ai_tool_matrix --check
 

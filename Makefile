@@ -53,10 +53,10 @@ audit-hallucination:  ## 审计幻觉风险
 	python .jcode/scripts/governance-auditor.py audit-hallucination-risks
 
 link-audit:  ## 检查文档断链
-	python tools/scripts/link_auditor.py . --check-all
+	python -m tools.scripts.link_auditor . --check-all
 
 validate-cases:  ## 验证案例格式
-	python tools/scripts/validate_case_study.py --all --strict
+	python -m tools.scripts.validate_case_study --all --strict
 
 scan:  ## 扫描案例格式完整性
 	python .jcode/scripts/knowledge-curator.py scan
@@ -71,10 +71,10 @@ docs-serve:  ## 启动 mkdocs 本地服务器
 	mkdocs serve
 
 docs-build:  ## 构建文档（内容指纹未变且 site/ 已存在时跳过重建，见 tools/scripts/mkdocs_incremental.py）
-	python tools/scripts/mkdocs_incremental.py --build-command "mkdocs build --strict"
+	python -m tools.scripts.mkdocs_incremental --build-command "mkdocs build --strict"
 
 docs-build-force:  ## 强制重建文档（忽略内容指纹）
-	python tools/scripts/mkdocs_incremental.py --force --build-command "mkdocs build --strict"
+	python -m tools.scripts.mkdocs_incremental --force --build-command "mkdocs build --strict"
 
 test-fast: ## 运行快速测试（跳过 @pytest.mark.slow）
 	python -m pytest tests/ -q -m "not slow" --tb=short
@@ -91,10 +91,10 @@ ci-alert:  ## 同 ci-heartbeat，额外以去重 Issue 方式开/更新告警、
 self-check: doctor ci-heartbeat  ## 自检：本地环境 + 远端门禁存活
 
 ci-local:  ## 本地等价 CI（远端 Actions 因配额失效时的兜底，见 ADR-057）
-	@python tools/scripts/local_ci_mirror.py
+	@python -m tools.scripts.local_ci_mirror
 
 ci-local-fast:  ## 本地等价 CI（测试走增量模式）
-	@python tools/scripts/local_ci_mirror.py --incremental
+	@python -m tools.scripts.local_ci_mirror --incremental
 	@echo "✅ 自检完成（本地环境就绪 且 远端 CI 存活）"
 
 check: lint format typecheck test validate-docs check-index semantic-graph architecture-guard  ## 运行所有检查 (包含 AI-Native 门禁)
@@ -124,8 +124,8 @@ release: ## 完整发布流程 (版本递增 + CHANGELOG + Docker + 推送)
 	@read -p "版本类型 (major/minor/patch) [patch]: " type; \
 	type=$${type:-patch}; \
 	make bump-$$type && \
-	make docker-push VERSION=$$(python tools/scripts/release.py version) && \
-	echo "✅ 发布完成: v$$(python tools/scripts/release.py version)"
+	make docker-push VERSION=$$(python -m tools.scripts.release version) && \
+	echo "✅ 发布完成: v$$(python -m tools.scripts.release version)"
 
 setup-git: ## 配置 git 模板并安装 pre-push 门禁
 	git config commit.template .gitmessage
@@ -227,7 +227,7 @@ context-split:  ## 一次性拆分 CONTEXT.md: 滚动日志归档到 CHANGELOG (
 	@python -m tools.scripts.context_status split --keep $(or $(KEEP),5)
 
 stats:  ## 输出项目统计 JSON (docs/cases/ADRs/tests/gate; 用法: make stats [SKIP_GATE=1])
-	@python tools/scripts/update_stats.py --json $(if $(SKIP_GATE),--skip-quality-gate,)
+	@python -m tools.scripts.update_stats --json $(if $(SKIP_GATE),--skip-quality-gate,)
 
 stats-check:  ## 检查 README/统计漂移，非自动提交 (用法: make stats-check [SKIP_GATE=1])
-	@python tools/scripts/update_stats.py --check $(if $(SKIP_GATE),--skip-quality-gate,)
+	@python -m tools.scripts.update_stats --check $(if $(SKIP_GATE),--skip-quality-gate,)

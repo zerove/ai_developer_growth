@@ -73,7 +73,7 @@ hook 一直失败，却长期被其他 hook 的成功掩盖。
 根本不校验其余参数。实测：
 
 ```
-$ python tools/scripts/link_auditor.py . --update-moc --help
+$ python -m tools.scripts.link_auditor . --update-moc --help
 options:
   -h, --help  ...
   --check-all  ...

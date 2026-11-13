@@ -123,10 +123,10 @@ mypy tools/scripts/your_module.py
 **快速开始**:
 ```bash
 # 初始化新语言规则目录
-python tools/scripts/rule_author.py init --lang mylang
+python -m tools.scripts.rule_author init --lang mylang
 
 # 添加反模式规则
-python tools/scripts/rule_author.py add-rule --lang mylang \
+python -m tools.scripts.rule_author add-rule --lang mylang \
   --category anti_patterns \
   --id mylang-bare-except \
   --name "Bare except" \
@@ -135,11 +135,11 @@ python tools/scripts/rule_author.py add-rule --lang mylang \
   --message "Avoid bare except"
 
 # 验证规则
-python tools/scripts/rule_author.py validate \
+python -m tools.scripts.rule_author validate \
   --file ai-dev-framework/languages/mylang/rules.d/anti_patterns.yml
 
 # 测试规则正则
-python tools/scripts/validate_rule_tests.py --lang mylang
+python -m tools.scripts.validate_rule_tests --lang mylang
 ```
 
 **规则 YAML 格式**:
@@ -164,10 +164,10 @@ anti_patterns:
 
 **提交流程**:
 1. Fork 本仓库
-2. 运行 `python tools/scripts/rule_author.py init --lang yourlang`
+2. 运行 `python -m tools.scripts.rule_author init --lang yourlang`
 3. 添加规则到 `ai-dev-framework/languages/yourlang/rules.d/anti_patterns.yml`
 4. 添加测试用例 (test_cases)
-5. 运行 `python tools/scripts/validate_rule_tests.py --lang yourlang` 验证
+5. 运行 `python -m tools.scripts.validate_rule_tests --lang yourlang` 验证
 6. 运行 `python -m pytest tests/test_validate_language_rules.py -v` 确保不破坏现有测试
 7. 提交 PR
 

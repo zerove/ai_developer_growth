@@ -58,12 +58,12 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GH_PAT || secrets.GITHUB_TOKEN }}
         run: |
-          python tools/scripts/audit_to_pr.py --run-audit --create-pr --title "chore: weekly governance audit report"
+          python -m tools.scripts.audit_to_pr --run-audit --create-pr --title "chore: weekly governance audit report"
 
       - name: Run Quick Audit (without PR)
         if: github.event.inputs.create_pr == 'false'
         run: |
-          python tools/scripts/audit_to_pr.py --run-audit --no-full --output governance-report.md
+          python -m tools.scripts.audit_to_pr --run-audit --no-full --output governance-report.md
 
       - name: Upload Audit Report
         if: always()

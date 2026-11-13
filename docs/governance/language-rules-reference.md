@@ -76,7 +76,7 @@ pattern 必须是 common 规则的超集，否则会丢失覆盖。当前 Python
 校验命令：
 
 ```bash
-python tools/scripts/check_rule_collisions.py
+python -m tools.scripts.check_rule_collisions
 pytest tests/test_rule_supersedes_validation.py
 ```
 
@@ -189,40 +189,40 @@ pytest tests/test_rule_supersedes_validation.py
 
 ```bash
 # Validate all files in current directory
-python tools/scripts/validate_language_rules.py --all
+python -m tools.scripts.validate_language_rules --all
 
 # Validate specific language
-python tools/scripts/validate_language_rules.py --lang python
+python -m tools.scripts.validate_language_rules --lang python
 
 # Auto-fix mode
-python tools/scripts/validate_language_rules.py --all --fix
+python -m tools.scripts.validate_language_rules --all --fix
 
 # Dry-run auto-fix
-python tools/scripts/validate_language_rules.py --all --fix --dry-run
+python -m tools.scripts.validate_language_rules --all --fix --dry-run
 
 # Custom rules
-python tools/scripts/validate_language_rules.py --all --custom-rules .ai-rules/
+python -m tools.scripts.validate_language_rules --all --custom-rules .ai-rules/
 
 # HTML report
-python tools/scripts/validate_language_rules.py --all --format html -o report.html
+python -m tools.scripts.validate_language_rules --all --format html -o report.html
 
 # SARIF output for GitHub Code Scanning
-python tools/scripts/validate_language_rules.py --all --format sarif -o results.sarif
+python -m tools.scripts.validate_language_rules --all --format sarif -o results.sarif
 
 # JUnit XML for CI
-python tools/scripts/validate_language_rules.py --all --format junit -o results.xml
+python -m tools.scripts.validate_language_rules --all --format junit -o results.xml
 
 # Threshold enforcement
-python tools/scripts/validate_language_rules.py --all --max-errors 0 --max-warnings 10
+python -m tools.scripts.validate_language_rules --all --max-errors 0 --max-warnings 10
 
 # Incremental validation (cached)
-python tools/scripts/validate_language_rules.py --all --incremental
+python -m tools.scripts.validate_language_rules --all --incremental
 
 # Specific files only
-python tools/scripts/validate_language_rules.py --lang python --changed-files main.py,utils.py
+python -m tools.scripts.validate_language_rules --lang python --changed-files main.py,utils.py
 
 # Health score
-python tools/scripts/validate_language_rules.py --all --format json  # includes health_score
+python -m tools.scripts.validate_language_rules --all --format json  # includes health_score
 ```
 
 ## Rule Test Framework
@@ -231,10 +231,10 @@ Validate rule regex patterns against test cases:
 
 ```bash
 # Test specific language
-python tools/scripts/validate_rule_tests.py --lang python
+python -m tools.scripts.validate_rule_tests --lang python
 
 # Test all languages
-python tools/scripts/validate_rule_tests.py --all
+python -m tools.scripts.validate_rule_tests --all
 ```
 
 Add `test_cases` to any rule in YAML:
@@ -256,13 +256,13 @@ Generate `fix_replacement` for rules that don't have one:
 
 ```bash
 # Preview fixes
-python tools/scripts/generate_fixes.py --all --dry-run
+python -m tools.scripts.generate_fixes --all --dry-run
 
 # Generate for specific language
-python tools/scripts/generate_fixes.py --lang python -o fixes.json
+python -m tools.scripts.generate_fixes --lang python -o fixes.json
 
 # Apply fixes to YAML files
-python tools/scripts/generate_fixes.py --lang python --apply
+python -m tools.scripts.generate_fixes --lang python --apply
 ```
 
 ## Rule Marketplace
@@ -271,19 +271,19 @@ Discover, install, and manage rule packs:
 
 ```bash
 # List available packs
-python tools/scripts/rule_marketplace.py list
+python -m tools.scripts.rule_marketplace list
 
 # Search rules
-python tools/scripts/rule_marketplace.py search sql
+python -m tools.scripts.rule_marketplace search sql
 
 # Install a pack
-python tools/scripts/rule_marketplace.py install security --project-dir /path/to/project
+python -m tools.scripts.rule_marketplace install security --project-dir /path/to/project
 
 # Validate installed rules
-python tools/scripts/rule_marketplace.py validate --project-dir /path/to/project
+python -m tools.scripts.rule_marketplace validate --project-dir /path/to/project
 
 # Export rules as shareable pack
-python tools/scripts/rule_marketplace.py export --output my-pack.yml
+python -m tools.scripts.rule_marketplace export --output my-pack.yml
 ```
 
 ### Available Packs
@@ -352,7 +352,7 @@ The health score (0-100) is calculated as:
 SARIF (Static Analysis Results Interchange Format) output for GitHub Code Scanning:
 
 ```bash
-python tools/scripts/validate_language_rules.py --all --format sarif -o results.sarif
+python -m tools.scripts.validate_language_rules --all --format sarif -o results.sarif
 ```
 
 The SARIF file can be uploaded to GitHub for inline PR annotations:

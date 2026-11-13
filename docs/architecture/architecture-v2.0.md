@@ -377,7 +377,7 @@ budgets:
 # .github/workflows/perf-budget.yml
 - name: Performance Budget Check
   run: |
-    python tools/scripts/perf_benchmark.py --compare-baseline
+    python -m tools.scripts.perf_benchmark --compare-baseline
     # 如果任意指标回归 > 10% 则失败
 ```
 

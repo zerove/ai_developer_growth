@@ -21,4 +21,4 @@
 - 使用框架内置安全机制
 - 保持分层架构
 
-*验证: `python tools/scripts/validate_language_rules.py --lang python --framework spring`*
+*验证: `python -m tools.scripts.validate_language_rules --lang python --framework spring`*

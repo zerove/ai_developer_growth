@@ -175,10 +175,10 @@ author: Jcode
 
 ```bash
 # 检查所有文档是否有元数据
-python tools/scripts/check_metadata.py
+python -m tools.scripts.check_metadata
 
 # 批量补全缺失的元数据
-python tools/scripts/fix_metadata.py
+python -m tools.scripts.fix_metadata
 ```
 
 ---

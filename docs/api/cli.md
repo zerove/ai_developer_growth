@@ -202,8 +202,8 @@ Options:
 ## validate_case_study.py - Case Study Validator
 
 ```bash
-python tools/scripts/validate_case_study.py --path case-studies/
-python tools/scripts/validate_case_study.py --path case-studies/my-case.md
+python -m tools.scripts.validate_case_study --path case-studies/
+python -m tools.scripts.validate_case_study --path case-studies/my-case.md
 ```
 
 Options:
@@ -212,8 +212,8 @@ Options:
 ## validate_agent_definition.py - Agent Definition Validator
 
 ```bash
-python tools/scripts/validate_agent_definition.py --path agents/
-python tools/scripts/validate_agent_definition.py --path agents/knowledge-curator.md
+python -m tools.scripts.validate_agent_definition --path agents/
+python -m tools.scripts.validate_agent_definition --path agents/knowledge-curator.md
 ```
 
 Options:
@@ -222,7 +222,7 @@ Options:
 ## validate_example_projects.py - Example Project Validator
 
 ```bash
-python tools/scripts/validate_example_projects.py
+python -m tools.scripts.validate_example_projects
 ```
 
 Validates all example projects under `examples/` have proper structure.
@@ -230,7 +230,7 @@ Validates all example projects under `examples/` have proper structure.
 ## update_ai_tool_matrix.py - AI Tool Matrix Updater
 
 ```bash
-python tools/scripts/update_ai_tool_matrix.py
+python -m tools.scripts.update_ai_tool_matrix
 ```
 
 Updates `docs/tools/ai-tool-matrix.md` from case studies.
@@ -238,8 +238,8 @@ Updates `docs/tools/ai-tool-matrix.md` from case studies.
 ## link_auditor.py - Link Auditor
 
 ```bash
-python tools/scripts/link_auditor.py --path docs/
-python tools/scripts/link_auditor.py --path docs/ --fix
+python -m tools.scripts.link_auditor --path docs/
+python -m tools.scripts.link_auditor --path docs/ --fix
 ```
 
 Options:
@@ -249,7 +249,7 @@ Options:
 ## adr_generator.py - ADR Generator
 
 ```bash
-python tools/scripts/adr_generator.py
+python -m tools.scripts.adr_generator
 # Interactive mode (default)
 # Or LLM mode with LLM_PROVIDER and LLM_MODEL env vars
 ```
@@ -261,9 +261,9 @@ Modes:
 ## local_ci_mirror.py - 本地等价 CI
 
 ```bash
-python tools/scripts/local_ci_mirror.py                 # 跑全部本地等价门禁
-python tools/scripts/local_ci_mirror.py --list          # 列出清单
-python tools/scripts/local_ci_mirror.py --only lint test # 只跑指定门禁
+python -m tools.scripts.local_ci_mirror                 # 跑全部本地等价门禁
+python -m tools.scripts.local_ci_mirror --list          # 列出清单
+python -m tools.scripts.local_ci_mirror --only lint test # 只跑指定门禁
 make ci-local                                          # 同上（Makefile 入口）
 ```
 
@@ -279,9 +279,9 @@ make ci-local                                          # 同上（Makefile 入�
 ## mkdocs_incremental.py - 文档增量构建
 
 ```bash
-python tools/scripts/mkdocs_incremental.py            # 构建（输入未变且 site/ 已存在则跳过）
-python tools/scripts/mkdocs_incremental.py --force    # 强制重建
-python tools/scripts/mkdocs_incremental.py --check    # 只判断是否需要重建
+python -m tools.scripts.mkdocs_incremental            # 构建（输入未变且 site/ 已存在则跳过）
+python -m tools.scripts.mkdocs_incremental --force    # 强制重建
+python -m tools.scripts.mkdocs_incremental --check    # 只判断是否需要重建
 ```
 
 按**内容指纹**（`docs/**/*.md` + `mkdocs.yml` + `templates/` + mkdocstrings 指令引用的

@@ -56,7 +56,7 @@
         "skill": "governance-auditor",
         "action": "check-adr-index",
         "description": "提交时验证 ADR 索引与 docs/adr/*.md 一致 (Phase 38)",
-        "command": "python tools/scripts/generate_adr_index.py --check",
+        "command": "python -m tools.scripts.generate_adr_index --check",
         "condition": "files_contain('docs/adr/')",
         "enabled": true
       }
@@ -75,7 +75,7 @@
         "skill": "knowledge-curator",
         "action": "validate",
         "description": "PR 时验证案例格式",
-        "command": "python tools/scripts/validate_case_study.py --all --strict",
+        "command": "python -m tools.scripts.validate_case_study --all --strict",
         "condition": "files_contain('case-studies/')",
         "enabled": true
       },
@@ -100,7 +100,7 @@
         "skill": "governance-auditor",
         "action": "validate-agent-definition",
         "description": "PR 时验证 Agent 定义格式",
-        "command": "python tools/scripts/validate_agent_definition.py --path agents",
+        "command": "python -m tools.scripts.validate_agent_definition --path agents",
         "condition": "files_contain('agents/')",
         "enabled": true
       },
@@ -109,7 +109,7 @@
         "skill": "governance-auditor",
         "action": "check-ai-annotation",
         "description": "PR 时检查 AI 代码标注",
-        "command": "python tools/scripts/check_ai_annotation.py --strict",
+        "command": "python -m tools.scripts.check_ai_annotation --strict",
         "enabled": true
       },
       {

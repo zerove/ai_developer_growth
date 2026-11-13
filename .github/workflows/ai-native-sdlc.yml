@@ -33,13 +33,13 @@ jobs:
         run: python -m pytest tests/ -q
 
       - name: Build Semantic Code Knowledge Graph
-        run: python tools/scripts/jcode_cross_platform_runner.py semantic-graph
+        run: python -m tools.scripts.jcode_cross_platform_runner semantic-graph
 
       - name: Run Architecture Drift Guard
-        run: python tools/scripts/jcode_cross_platform_runner.py architecture-guard
+        run: python -m tools.scripts.jcode_cross_platform_runner architecture-guard
 
       - name: Collect Metrics Telemetry
-        run: python tools/scripts/jcode_cross_platform_runner.py metrics-telemetry
+        run: python -m tools.scripts.jcode_cross_platform_runner metrics-telemetry
 
       - name: Run Master AI-Native Workflow Pipeline
-        run: python tools/scripts/jcode_cross_platform_runner.py workflow-ai-native
+        run: python -m tools.scripts.jcode_cross_platform_runner workflow-ai-native

@@ -17,17 +17,17 @@ difficulty: 入门
 ### 1. 环境初始化（零摩擦向导）
 在任意项目中执行初始化向导，自动配置 `.jcode/rules/`、生成 MCP 服务配置并构建语义代码知识图谱：
 ```bash
-python tools/scripts/jcode_setup_wizard.py
+python -m tools.scripts.jcode_setup_wizard
 ```
 
 ### 2. 一键运行全套 AI-Native 主流水线
 通过主控流水线脚本或跨平台任务运行器，一键执行从意图验证、架构检查、蜂群实现、污点扫描到加密审计的全流程：
 ```bash
 # 方式 A：直接运行主管道
-python tools/scripts/jcode_ai_native_workflow.py "实现用户认证与 JWT 鉴权功能"
+python -m tools.scripts.jcode_ai_native_workflow "实现用户认证与 JWT 鉴权功能"
 
 # 方式 B：使用跨平台任务运行器
-python tools/scripts/jcode_cross_platform_runner.py workflow-ai-native
+python -m tools.scripts.jcode_cross_platform_runner workflow-ai-native
 ```
 
 ---
@@ -38,14 +38,14 @@ python tools/scripts/jcode_cross_platform_runner.py workflow-ai-native
 
 | 命令 | 说明 |
 |------|------|
-| `python tools/scripts/jcode_cross_platform_runner.py check` | 运行专项单元测试 (`test_ai_native_sdlc.py`) |
-| `python tools/scripts/jcode_cross_platform_runner.py semantic-graph` | 生成/更新语义代码知识图谱 (`.semantic_graph.json`) |
-| `python tools/scripts/jcode_cross_platform_runner.py architecture-guard` | 运行架构漂移防御检查 |
-| `python tools/scripts/jcode_cross_platform_runner.py slop-scan` | 扫描 AI 代码异味与幻觉风险 |
-| `python tools/scripts/jcode_cross_platform_runner.py metrics-telemetry` | 收集研发效能与质量遥测数据 |
-| `python tools/scripts/jcode_cross_platform_runner.py swarm-run` | 运行自主智能体蜂群与自举演进闭环 |
-| `python tools/scripts/jcode_cross_platform_runner.py dashboard` | 启动 AI-Native 终端驾驶舱 |
-| `python tools/scripts/jcode_cross_platform_runner.py self-evolve` | 运行自适应规则与 Prompt 进化引擎 |
+| `python -m tools.scripts.jcode_cross_platform_runner check` | 运行专项单元测试 (`test_ai_native_sdlc.py`) |
+| `python -m tools.scripts.jcode_cross_platform_runner semantic-graph` | 生成/更新语义代码知识图谱 (`.semantic_graph.json`) |
+| `python -m tools.scripts.jcode_cross_platform_runner architecture-guard` | 运行架构漂移防御检查 |
+| `python -m tools.scripts.jcode_cross_platform_runner slop-scan` | 扫描 AI 代码异味与幻觉风险 |
+| `python -m tools.scripts.jcode_cross_platform_runner metrics-telemetry` | 收集研发效能与质量遥测数据 |
+| `python -m tools.scripts.jcode_cross_platform_runner swarm-run` | 运行自主智能体蜂群与自举演进闭环 |
+| `python -m tools.scripts.jcode_cross_platform_runner dashboard` | 启动 AI-Native 终端驾驶舱 |
+| `python -m tools.scripts.jcode_cross_platform_runner self-evolve` | 运行自适应规则与 Prompt 进化引擎 |
 
 ---
 

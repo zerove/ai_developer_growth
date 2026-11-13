@@ -19,22 +19,22 @@ jobs:
         cache-dependency-path: pyproject.toml
     - run: pip install -e .
     - name: Link audit
-      run: python tools/scripts/hooks_runner.py quality-gate --path . --check-annotation
+      run: python -m tools.scripts.hooks_runner quality-gate --path . --check-annotation
         --check-security --check-type --check-error
     - name: Case study validation
-      run: python tools/scripts/validate_case_study.py --all
+      run: python -m tools.scripts.validate_case_study --all
     - name: Governance docs validation
-      run: python tools/scripts/hooks_runner.py governance-audit --validate-docs
+      run: python -m tools.scripts.hooks_runner governance-audit --validate-docs
     - name: AI-SDLC compliance
-      run: python tools/scripts/hooks_runner.py governance-audit --check-ai-sdlc
+      run: python -m tools.scripts.hooks_runner governance-audit --check-ai-sdlc
     - name: Hallucination risk audit
-      run: python tools/scripts/hooks_runner.py governance-audit --audit-hallucination
+      run: python -m tools.scripts.hooks_runner governance-audit --audit-hallucination
         || true
     - name: Language rules check
-      run: python tools/scripts/hooks_runner.py language-rules --path ${{ inputs.target-path
+      run: python -m tools.scripts.hooks_runner language-rules --path ${{ inputs.target-path
         }}
     - name: Agent validation
-      run: python tools/scripts/validate_agent_definition.py --path agents/
+      run: python -m tools.scripts.validate_agent_definition --path agents/
     - name: Enforcement check
-      run: python tools/scripts/hooks_runner.py quality-gate --path ${{ inputs.target-path
+      run: python -m tools.scripts.hooks_runner quality-gate --path ${{ inputs.target-path
         }} --check-annotation

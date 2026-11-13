@@ -16,41 +16,41 @@ updated: 2026-08-25
 
 ```bash
 # ── 环境自检 ──────────────────────────────────────────────
-python tools/scripts/hooks_runner.py doctor
+python -m tools.scripts.hooks_runner doctor
 # 校验: git 仓库 / pre-commit 钩子健康(检测指向不存在 Python 的损坏钩子)
 #       / ruff+mypy+pytest+bandit+pip-audit 可用性 / pytest 插件
 #       / 基线文件结构 / hooks.json 可解析
 # 必需项缺失退出码 1(CI 应失败)；插件缺失仅 ⚠️ 降级警告
 
 # ── 基线棘轮管理 ──────────────────────────────────────────
-python tools/scripts/hooks_runner.py baseline validate   # 结构校验(快速)
-python tools/scripts/hooks_runner.py baseline recompute  # 重算对比(CI 防篡改)
+python -m tools.scripts.hooks_runner baseline validate   # 结构校验(快速)
+python -m tools.scripts.hooks_runner baseline recompute  # 重算对比(CI 防篡改)
 # recompute 规则:
 #   实际 > 基线 → 新增存量未入基线 → 失败(正常开发中会被棘轮拦截, 此处兜底)
 #   基线 > 实际 → 基线过松 → 失败(防止人为放宽)
 # 修复方式: 本地运行 quality-gate --full 刷新基线后提交
 
 # ── 测试加速 ──────────────────────────────────────────────
-python tools/scripts/hooks_runner.py test --incremental            # 只跑受变更影响的测试
-python tools/scripts/hooks_runner.py test --incremental --base main # 指定基线分支
+python -m tools.scripts.hooks_runner test --incremental            # 只跑受变更影响的测试
+python -m tools.scripts.hooks_runner test --incremental --base main # 指定基线分支
 # 选择策略: tests/ 下文件直接收入; 同名约定(test_<stem>.py);
 #           import 反查(测试文本含模块路径)。无法确定范围时保守提示回退全量
 
 # ── 台账分析 ──────────────────────────────────────────────
-python tools/scripts/audit_trends.py          # hash 链校验 + 类型统计 + 24h 异常告警
-python tools/scripts/audit_trends.py --json   # JSON 输出(供 CI/看板消费)
+python -m tools.scripts.audit_trends          # hash 链校验 + 类型统计 + 24h 异常告警
+python -m tools.scripts.audit_trends --json   # JSON 输出(供 CI/看板消费)
 
 # ── 运行历史维护 ──────────────────────────────────────────
-python tools/scripts/hooks_runner.py db-maintain                     # 裁剪 90 天前的 quality_runs
-python tools/scripts/hooks_runner.py db-maintain --retention-days 30 # 自定义保留窗口
+python -m tools.scripts.hooks_runner db-maintain                     # 裁剪 90 天前的 quality_runs
+python -m tools.scripts.hooks_runner db-maintain --retention-days 30 # 自定义保留窗口
 # 行为: ISO 时间窗裁剪 quality_runs 及关联 file_results/rule_violations,
 #       checkpoint + VACUUM 回收空间; 全部在保留期内时 noop(幂等)
 # 接入: scheduled-governance.yml 每月 cron 自动执行
 
 # ── 统计趋势采集 ──────────────────────────────────────────
-python tools/scripts/update_stats.py --json            # 采集统计并输出 JSON
-python tools/scripts/update_stats.py --check           # CI 模式: 漂移检测, 不一致退出码 1
-python tools/scripts/update_stats.py --skip-quality-gate  # 快速模式: 跳过门禁采集
+python -m tools.scripts.update_stats --json            # 采集统计并输出 JSON
+python -m tools.scripts.update_stats --check           # CI 模式: 漂移检测, 不一致退出码 1
+python -m tools.scripts.update_stats --skip-quality-gate  # 快速模式: 跳过门禁采集
 # 默认会调 quality-gate --full --format json 提取 gate_failed/gate_issues/
 # gate_baseline_exempt/gate_pass_rate 四指标写入 .quality-trends/stats_history.jsonl;
 # 门禁失败值本身也是趋势数据, 不算采集失败

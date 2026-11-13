@@ -8,13 +8,13 @@
 
 ```bash
 # 自动探测目标语言
-python tools/scripts/adg_bootstrap.py /path/to/your-project
+python -m tools.scripts.adg_bootstrap /path/to/your-project
 
 # 显式指定语言组合
-python tools/scripts/adg_bootstrap.py /path/to/your-project --langs go,typescript
+python -m tools.scripts.adg_bootstrap /path/to/your-project --langs go,typescript
 
 # 最小安装（仅核心脚本 + 公共规则）
-python tools/scripts/adg_bootstrap.py /path/to/your-project --minimal
+python -m tools.scripts.adg_bootstrap /path/to/your-project --minimal
 ```
 
 ## 移植产物清单

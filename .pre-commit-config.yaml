@@ -91,7 +91,7 @@ repos:
     hooks:
       - id: quality-gate
         name: AI Quality Gate
-        entry: python tools/scripts/hooks_runner.py quality-gate --path tools/scripts --check-annotation --check-security --check-patterns --check-type --check-error --check-structure
+        entry: python -m tools.scripts.hooks_runner quality-gate --path tools/scripts --check-annotation --check-security --check-patterns --check-type --check-error --check-structure
         language: system
         pass_filenames: false
         always_run: true
@@ -101,7 +101,7 @@ repos:
     hooks:
       - id: governance-audit
         name: Governance Audit
-        entry: python tools/scripts/hooks_runner.py governance-audit --validate-docs --check-ai-sdlc --audit-hallucination
+        entry: python -m tools.scripts.hooks_runner governance-audit --validate-docs --check-ai-sdlc --audit-hallucination
         language: system
         pass_filenames: false
         always_run: true
@@ -139,7 +139,7 @@ repos:
     hooks:
       - id: validate-adr-index
         name: Validate ADR Index
-        entry: python tools/scripts/hooks_runner.py governance-audit --check-index
+        entry: python -m tools.scripts.hooks_runner governance-audit --check-index
         language: system
         pass_filenames: false
         always_run: true
@@ -149,7 +149,7 @@ repos:
     hooks:
       - id: validate-examples
         name: Validate Example Projects
-        entry: python tools/scripts/validate_example_projects.py
+        entry: python -m tools.scripts.validate_example_projects
         language: system
         pass_filenames: false
         always_run: true
@@ -159,7 +159,7 @@ repos:
     hooks:
       - id: validate-case-studies
         name: Validate Case Studies
-        entry: python tools/scripts/validate_case_study.py --all
+        entry: python -m tools.scripts.validate_case_study --all
         language: system
         pass_filenames: false
         always_run: true

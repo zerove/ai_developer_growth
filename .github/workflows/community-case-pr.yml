@@ -45,7 +45,7 @@ jobs:
           PASSED=true
           for file in $CHANGED_FILES; do
             echo "=== Validating: $file ==="
-            python tools/scripts/validate_case_study.py --path "$file" --strict || PASSED=false
+            python -m tools.scripts.validate_case_study --path "$file" --strict || PASSED=false
           done
           echo "passed=$PASSED" >> $GITHUB_OUTPUT
 
@@ -55,7 +55,7 @@ jobs:
           CHANGED_FILES: ${{ steps.changed.outputs.all_changed_files }}
         run: |
           # shellcheck disable=SC2086 # 需按空白分词成多个路径参数
-          python tools/scripts/validate_case_study.py --adg-scan $CHANGED_FILES
+          python -m tools.scripts.validate_case_study --adg-scan $CHANGED_FILES
 
       - name: Generate review summary
         if: always()
@@ -70,13 +70,13 @@ jobs:
       - name: Check authenticity markers
         if: steps.validate.outputs.passed == 'true'
         run: |
-          python tools/scripts/validate_case_study.py --auth-check "${{ steps.changed.outputs.all_changed_files }}"
+          python -m tools.scripts.validate_case_study --auth-check "${{ steps.changed.outputs.all_changed_files }}"
 
       - name: Generate contributor stats
         if: success()
         run: |
           echo "## 👤 Contributor Stats" >> $GITHUB_STEP_SUMMARY
-          python tools/scripts/contributor_dashboard.py --format markdown 2>/dev/null | head -50 >> $GITHUB_STEP_SUMMARY || true
+          python -m tools.scripts.contributor_dashboard --format markdown 2>/dev/null | head -50 >> $GITHUB_STEP_SUMMARY || true
 
       - name: Add community label
         uses: actions/github-script@v7
@@ -126,7 +126,7 @@ jobs:
         run: |
           if echo "$PR_BODY" | grep -qiE "架构|架构决策|ADR|技术选型|重大变更"; then
             echo "检测到架构决策，生成 ADR..."
-            python tools/scripts/adr_generator.py --pr "$PR_NUMBER" --title "$PR_TITLE" --brief "$PR_BODY" || true
+            python -m tools.scripts.adr_generator --pr "$PR_NUMBER" --title "$PR_TITLE" --brief "$PR_BODY" || true
           else
             echo "无架构决策，跳过 ADR 生成"
           fi
@@ -144,8 +144,8 @@ jobs:
 
       - name: Update INDEX.md and MOC
         run: |
-          python tools/scripts/link_auditor.py --update-moc || true
-          python tools/scripts/update_ai_tool_matrix.py || true
+          python -m tools.scripts.link_auditor --update-moc || true
+          python -m tools.scripts.update_ai_tool_matrix || true
 
       - name: Commit index updates
         run: |

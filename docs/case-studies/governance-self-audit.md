@@ -104,7 +104,7 @@ ai_developer_growth 项目构建了一套完整的 AI 治理框架（ai-dev-fram
 - [x] **GitHub 仓库**: https://github.com/zerove/ai_developer_growth
 - [x] **相关 PR**: https://github.com/zerove/ai_developer_growth/pull/XXX
 - [x] **提交记录**: https://github.com/zerove/ai_developer_growth/commit/XXX
-- [x] **复现命令**: `python tools/scripts/hooks_runner.py quality-gate --path tools/scripts/`
+- [x] **复现命令**: `python -m tools.scripts.hooks_runner quality-gate --path tools/scripts/`
 
 ---
 

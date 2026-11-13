@@ -118,3 +118,47 @@ class TestLicenseReviewAttribution:
         sr._print_compliance_text(tmp_path, compliance)
         out = capsys.readouterr().out
         assert "待复核许可证" not in out
+
+    def test_ledger_items_capture_cause_and_fields(self) -> None:
+        """复核台账项应逐条带出依赖标识、许可证与成因 (机器可读盘点)。"""
+        from tools.scripts.supply_chain import LicensePolicy
+
+        deps = [
+            make_dep("flaky-pkg"),
+            make_dep("gone-pkg"),
+            make_dep("copyleft-pkg", license_="GPL-3.0"),
+            make_dep("mit-pkg", license_="MIT"),  # ALLOW, 不入台账
+        ]
+        # simulate post-evaluation state
+        deps[0].license_policy = LicensePolicy.REVIEW
+        deps[1].license_policy = LicensePolicy.REVIEW
+        deps[2].license_policy = LicensePolicy.REVIEW
+        deps[3].license_policy = LicensePolicy.ALLOW
+        result = ScanResult(project_path="/tmp/p", dependencies=deps, summary={})
+        sr._attribute_license_review(result, _mixed_client())
+
+        items = result.summary["license_review_items"]
+        assert isinstance(items, list) and len(items) == 3
+        by_name = {it["name"]: it for it in items}
+        assert by_name["flaky-pkg"]["cause"] == "unreachable"
+        assert by_name["gone-pkg"]["cause"] == "unknown_license"
+        assert by_name["copyleft-pkg"]["cause"] == "policy_review"
+        for name in ("flaky-pkg", "gone-pkg", "copyleft-pkg"):
+            it = by_name[name]
+            assert it["ecosystem"] == "pypi"
+            assert it["policy"] == "review"
+            assert "REVIEW needed:" in str(it["message"])
+            assert it["version"] == "1.0.0"
+
+    def test_compliance_summary_includes_ledger_items(self, tmp_path: Path) -> None:
+        """compliance 输出应透出 license_review_items (随 summary 供周期盘点)。"""
+        from tools.scripts.supply_chain import LicensePolicy
+
+        dep = make_dep("flaky-pkg")
+        dep.license_policy = LicensePolicy.REVIEW
+        result = ScanResult(project_path=str(tmp_path), dependencies=[dep], summary={})
+        sr._attribute_license_review(result, _mixed_client())
+        compliance = sr._run_compliance_checks(tmp_path, result)
+        items = compliance["summary"]["license_review_items"]
+        assert len(items) == 1
+        assert items[0]["cause"] == "unreachable"

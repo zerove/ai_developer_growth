@@ -548,7 +548,7 @@ class SupplyChainScanner:
         vulns: list[Vulnerability],
         license_issues: list[str],
         license_review: list[str] | None = None,
-    ) -> dict[str, int]:
+    ) -> dict[str, object]:
         """构建扫描汇总字段.
 
         V2.20 P4-45 拆分: 抽 _count_vulns_by_severity 收口 4 行 vuln 计数,

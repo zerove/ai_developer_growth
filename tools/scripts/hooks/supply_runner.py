@@ -372,27 +372,51 @@ def _resolve_licenses(scanner: SupplyChainScanner, result: ScanResult, client: P
 
 
 def _attribute_license_review(result: ScanResult, client: PyPIMetadataClient) -> None:
-    """按成因归因许可证待复核项, 写入摘要显式统计 (盘点可观测性)。
+    """按成因归因许可证待复核项, 写入摘要显式统计与复核台账 (盘点可观测性)。
 
     license_review 混合三种成因: copyleft (已知许可证需人工评估)、PyPI 元数据
     不可达 (网络抖动, 重试可能消失)、许可证确实未声明/未知 (PyPI 可达但拿不到,
     或包不存在)。摘要只显式区分后两者 (许可证仍为 None 的部分), 归因依据与
     _verify_one_dependency 相同的判别式: metadata 为 None 且非 404 → 不可达。
 
+    同时生成 `license_review_items` 台账条目 (机器可读): 每条包含依赖标识、
+    许可证原值、策略与成因, 便于周期盘点与复核跟进 (JSON/--output 随 summary
+    透出, 不改变既有 license_review 字符串列表的兼容语义)。
+
     Args:
         result: 扫描结果 (原地更新 summary)
         client: PyPI 元数据客户端 (进程内缓存, 元数据查询已预热)
     """
     unreachable = unknown = 0
+    items: list[dict[str, object]] = []
     for dep in result.dependencies:
-        if dep.license or dep.ecosystem != "pypi":
+        if dep.license_policy != LicensePolicy.REVIEW:
             continue
-        if client.metadata(dep.name) is None and not client.package_missing(dep.name):
-            unreachable += 1
+        if not dep.license and dep.ecosystem == "pypi":
+            if client.metadata(dep.name) is None and not client.package_missing(dep.name):
+                cause = "unreachable"
+                unreachable += 1
+            else:
+                cause = "unknown_license"
+                unknown += 1
+        elif not dep.license:
+            cause = "unknown_license"
         else:
-            unknown += 1
+            cause = "policy_review"
+        items.append(
+            {
+                "name": dep.name,
+                "version": dep.version,
+                "ecosystem": dep.ecosystem,
+                "license": dep.license,
+                "policy": dep.license_policy.value,
+                "cause": cause,
+                "message": f"REVIEW needed: {dep.name}@{dep.version} ({dep.license})",
+            }
+        )
     result.summary["license_review_unreachable"] = unreachable
     result.summary["license_review_unknown"] = unknown
+    result.summary["license_review_items"] = items
 
 
 def _run_compliance_checks(project_root: Path, result: ScanResult) -> dict[str, Any]:

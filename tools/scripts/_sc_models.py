@@ -196,7 +196,7 @@ class ScanResult:
     # 待人工复核的许可证项 (未知许可证 / copyleft 等非阻断项)。
     # 与 license_issues (阻断项: 明确禁止的许可证) 分开存放。
     license_review: list[str] = field(default_factory=list)
-    summary: dict[str, int] = field(default_factory=dict)
+    summary: dict[str, object] = field(default_factory=dict)
 
     @property
     def critical_count(self) -> int:

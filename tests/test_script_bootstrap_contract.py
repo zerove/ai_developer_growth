@@ -62,14 +62,14 @@ BOOTSTRAP_REQUIRED = [
 #   test_pkg_importing_scripts_without_argparse_bootstrap_on_import。
 
 
-def _run_as_script(name: str) -> subprocess.CompletedProcess[str]:
+def _run_as_script(name: str, scripts_dir: Path = SCRIPTS_DIR) -> subprocess.CompletedProcess[str]:
     """以脚本路径执行 `--help` —— 判据是能启动, 不是 help 文本内容。
 
     刻意不传 PYTHONPATH: 子进程环境必须与 pre-commit / CI 一致, 那里
     仓库根来自 cwd 而非 PYTHONPATH, 多给会让守卫在门禁之外才变红。
     """
     return subprocess.run(  # noqa: S603
-        [sys.executable, str(SCRIPTS_DIR / name), "--help"],
+        [sys.executable, str(scripts_dir / name), "--help"],
         capture_output=True,
         text=True,
         cwd=REPO_ROOT,
@@ -174,3 +174,37 @@ def test_pkg_importing_scripts_without_argparse_bootstrap_on_import() -> None:
         ):
             failures.append(f"{name}: {proc.stderr.strip().splitlines()[-1:]}")
     assert not failures, "以下无 argparse 且含 tools.* 导入的脚本无法以脚本路径完成顶层自举:\n" + "\n".join(failures)
+
+
+def test_jcode_scripts_with_pkg_import_bootstrap_on_path() -> None:
+    """兜底(`.jcode/scripts` 范围): 该目录下的含 `tools.*` 包绝对导入脚本, 同样必须能以脚本路径启动。
+
+    与 tools/scripts 守卫同款判据 (ADR-079), 本轮 runner 修复后
+    `tools/scripts/hooks/{misc,domain}_runner.py` 会以脚本路径子进程执行
+    `.jcode/scripts/{governance-auditor,governance-docs-validator}.py`, 故
+    将 `.jcode/scripts` 纳入"包导入即须自举"范围做守卫, 防止同类路径漂移复发。
+
+    跳过无 argparse 的脚本(由 `--help` 判据不可用者) —— `.jcode/scripts` 当前
+    无 pkg 导入且无 argparse 的全量覆盖交由上层能力补齐, 本守卫只看必要条件。
+    """
+    unbootstrapped = []
+
+    for candidate in sorted((REPO_ROOT / ".jcode" / "scripts").glob("*.py")):
+        name = candidate.name
+        if name.startswith("_") or name in set(BOOTSTRAP_REQUIRED):
+            continue
+        try:
+            src = candidate.read_text(encoding="utf-8")
+        except (OSError, UnicodeDecodeError):
+            continue
+        if not _has_pkg_import(src) or "argparse" not in src:
+            continue
+        proc = _run_as_script(candidate.name, scripts_dir=candidate.parent)
+        if proc.returncode != 0 or "No module named" in proc.stderr:
+            detail = proc.stderr.strip().splitlines()[-1:]
+            unbootstrapped.append(f"{candidate.parent.name}/{name}: {detail}")
+
+    assert not unbootstrapped, (
+        "以下 .jcode/scripts 脚本含 tools.* 包绝对导入却无法以脚本路径启动(ADR-079 要求自举):\n"
+        + "\n".join(unbootstrapped)
+    )

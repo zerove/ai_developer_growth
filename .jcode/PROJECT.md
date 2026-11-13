@@ -68,9 +68,9 @@ mypy tools/scripts/ ai-dev-framework/src --ignore-missing-imports
 python -m pytest tests/ -v --cov=tools/scripts
 
 # 工具脚本
-python tools/scripts/link_auditor.py .
-python tools/scripts/validate_case_study.py --all
-python tools/scripts/audit_to_pr.py --check-all
+python -m tools.scripts.link_auditor .
+python -m tools.scripts.validate_case_study --all
+python -m tools.scripts.audit_to_pr --check-all
 ```
 
 ## Project Structure

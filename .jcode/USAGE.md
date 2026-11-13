@@ -21,10 +21,10 @@
 
 ```bash
 # 验证所有 Agent 定义
-python tools/scripts/validate_agent_definition.py --path agents
+python -m tools.scripts.validate_agent_definition --path agents
 
 # 验证单个文件
-python tools/scripts/validate_agent_definition.py --file agents/knowledge-curator.md
+python -m tools.scripts.validate_agent_definition --file agents/knowledge-curator.md
 ```
 
 检查项:
@@ -39,13 +39,13 @@ python tools/scripts/validate_agent_definition.py --file agents/knowledge-curato
 
 ```bash
 # 检查所有 Python 文件
-python tools/scripts/check_ai_annotation.py
+python -m tools.scripts.check_ai_annotation
 
 # 检查指定目录
-python tools/scripts/check_ai_annotation.py --path tools/scripts
+python -m tools.scripts.check_ai_annotation --path tools/scripts
 
 # 自动添加标注
-python tools/scripts/check_ai_annotation.py --fix --model "Claude-4"
+python -m tools.scripts.check_ai_annotation --fix --model "Claude-4"
 ```
 
 ### ai_quality_gate.py
@@ -54,16 +54,16 @@ python tools/scripts/check_ai_annotation.py --fix --model "Claude-4"
 
 ```bash
 # 运行所有检查
-python tools/scripts/ai_quality_gate.py --full
+python -m tools.scripts.ai_quality_gate --full
 
 # 只检查标注
-python tools/scripts/ai_quality_gate.py --check-annotation
+python -m tools.scripts.ai_quality_gate --check-annotation
 
 # 只检查安全模式
-python tools/scripts/ai_quality_gate.py --check-security
+python -m tools.scripts.ai_quality_gate --check-security
 
 # 只检查反模式
-python tools/scripts/ai_quality_gate.py --check-patterns
+python -m tools.scripts.ai_quality_gate --check-patterns
 ```
 
 检查项:
@@ -254,15 +254,15 @@ python .jcode/scripts/governance-docs-validator.py sync-refs
 ### 添加 Agent 定义
 ```bash
 # 创建 Agent 定义后
-python tools/scripts/validate_agent_definition.py --path agents
-python tools/scripts/check_ai_annotation.py --path tools/scripts
+python -m tools.scripts.validate_agent_definition --path agents
+python -m tools.scripts.check_ai_annotation --path tools/scripts
 ```
 
 ### 发布前检查
 ```bash
 python .jcode/scripts/governance-auditor.py full
 python .jcode/scripts/governance-docs-validator.py full
-python tools/scripts/ai_quality_gate.py --full
+python -m tools.scripts.ai_quality_gate --full
 python .jcode/scripts/workflow-optimizer.py report
 ```
 

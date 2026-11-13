@@ -16,5 +16,5 @@ When invoked, this skill executes the complete JCode AI-Native SDLC workflow pip
 
 **Command execution**:
 ```bash
-python tools/scripts/jcode_cross_platform_runner.py workflow-ai-native
+python -m tools.scripts.jcode_cross_platform_runner workflow-ai-native
 ```

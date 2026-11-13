@@ -11,23 +11,23 @@
       "actions": {
         "scan": {
           "description": "扫描所有案例格式完整性",
-          "command": "python tools/scripts/validate_case_study.py --all --strict",
+          "command": "python -m tools.scripts.validate_case_study --all --strict",
           "output": "markdown"
         },
         "audit": {
           "description": "检查文档断链",
-          "command": "python tools/scripts/link_auditor.py . --check-all",
+          "command": "python -m tools.scripts.link_auditor . --check-all",
           "output": "markdown"
         },
         "validate": {
           "description": "验证新提交案例",
-          "command": "python tools/scripts/validate_case_study.py --path {file}",
+          "command": "python -m tools.scripts.validate_case_study --path {file}",
           "args": ["file"],
           "output": "markdown"
         },
         "sync": {
           "description": "同步工具矩阵",
-          "command": "python tools/scripts/update_ai_tool_matrix.py",
+          "command": "python -m tools.scripts.update_ai_tool_matrix",
           "output": "markdown"
         },
         "update-moc": {
@@ -122,7 +122,7 @@
         },
         "recommend": {
           "description": "推荐工具组合",
-          "command": "python tools/scripts/update_ai_tool_matrix.py --recommend",
+          "command": "python -m tools.scripts.update_ai_tool_matrix --recommend",
           "output": "markdown"
         },
         "optimize": {
@@ -155,13 +155,13 @@
         },
         "validate": {
           "description": "验证社区案例",
-          "command": "python tools/scripts/validate_case_study.py --path {file}",
+          "command": "python -m tools.scripts.validate_case_study --path {file}",
           "args": ["file"],
           "output": "markdown"
         },
         "generate-adr": {
           "description": "从 PR 生成 ADR",
-          "command": "python tools/scripts/adr_generator.py --pr {pr_number}",
+          "command": "python -m tools.scripts.adr_generator --pr {pr_number}",
           "args": ["pr_number"],
           "output": "markdown"
         },

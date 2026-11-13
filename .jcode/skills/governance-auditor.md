@@ -70,9 +70,9 @@ This skill runs the following commands:
 6. 验证15个治理层文档的 frontmatter、
 7. 检查 CI/CD、pre-commit 配置完整性
 8. 扫描代码中的不安全模式和文档中的绝对化声明
-9. `python tools/scripts/validate_agent_definition.py` - 验证 Agent 定义格式
-10. `python tools/scripts/check_ai_annotation.py` - 检查 AI 代码标注
-11. `python tools/scripts/ai_quality_gate.py --full` - AI 代码质量门禁
+9. `python -m tools.scripts.validate_agent_definition` - 验证 Agent 定义格式
+10. `python -m tools.scripts.check_ai_annotation` - 检查 AI 代码标注
+11. `python -m tools.scripts.ai_quality_gate --full` - AI 代码质量门禁
 12. `adg-dev audit sdlc --path <project>` - AI-SDLC 5 阶段合规审计（需求→设计→编码→测试→部署）
 
 ## Enforcement Scripts

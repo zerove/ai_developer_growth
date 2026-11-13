@@ -78,7 +78,7 @@ tools:
 
   # 安全扫描
   security:
-    command: "python tools/scripts/secret_scanner.py"
+    command: "python -m tools.scripts.secret_scanner"
     args: []
 
   # 依赖检查

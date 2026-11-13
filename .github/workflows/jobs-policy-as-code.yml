@@ -172,10 +172,10 @@ jobs:
           else
             echo "  - n/a (未生成 policy-results.json)"
           fi
-        } | tee /tmp/opencode/policy-summary.md
+        } | tee policy-summary.md
 
         if [ -n "${GITHUB_STEP_SUMMARY:-}" ]; then
-          cat /tmp/opencode/policy-summary.md >> "$GITHUB_STEP_SUMMARY"
+          cat policy-summary.md >> "$GITHUB_STEP_SUMMARY"
         fi
     - name: Upload policy results
       if: always()

@@ -16,6 +16,7 @@ from __future__ import annotations
 
 import json
 import logging
+import time
 import urllib.error
 import urllib.request
 from typing import Any
@@ -180,20 +181,31 @@ class PyPIMetadataClient:
         return name in self._missing
 
     def _fetch(self, name: str) -> dict[str, Any] | None:
-        """执行一次 PyPI JSON 查询。"""
+        """执行 PyPI JSON 查询（对瞬时网络错误做有限重试）。"""
         url = PYPI_JSON_URL.format(name=name)
         request = urllib.request.Request(url, headers={"Accept": "application/json"})
-        try:
-            with urllib.request.urlopen(request, timeout=self.timeout) as response:  # nosec B310 - 固定 https 主机
-                return json.loads(response.read().decode())
-        except urllib.error.HTTPError as exc:
-            if exc.code == 404:
-                self._missing.add(name)
-            logger.warning("PyPI metadata lookup failed for %s: %s", name, exc)
-            return None
-        except Exception as exc:  # noqa: BLE001 - 元数据缺失不应中断扫描
-            logger.warning("PyPI metadata lookup failed for %s: %s", name, exc)
-            return None
+        attempts = 3
+        for attempt in range(1, attempts + 1):
+            try:
+                with urllib.request.urlopen(request, timeout=self.timeout) as response:  # nosec B310 - 固定 https 主机
+                    return json.loads(response.read().decode())
+            except urllib.error.HTTPError as exc:
+                if exc.code == 404:
+                    self._missing.add(name)
+                    logger.warning("PyPI metadata lookup failed for %s: %s", name, exc)
+                    return None
+                if exc.code >= 500 and attempt < attempts:
+                    time.sleep(0.5 * attempt)
+                    continue
+                logger.warning("PyPI metadata lookup failed for %s: %s", name, exc)
+                return None
+            except Exception as exc:  # noqa: BLE001 - 元数据缺失不应中断扫描
+                if attempt < attempts:
+                    time.sleep(0.5 * attempt)
+                    continue
+                logger.warning("PyPI metadata lookup failed for %s: %s", name, exc)
+                return None
+        return None
 
     def license_of(self, name: str) -> str | None:
         """解析包的许可证 (SPDX 标识符或 PEP 639 表达式)。

@@ -5,9 +5,9 @@ Uses heuristic-based generation when no LLM API key is available.
 Optionally uses OpenAI/Claude API if OPENAI_API_KEY or ANTHROPIC_API_KEY is set.
 
 Usage:
-    python tools/scripts/generate_fixes.py --all --dry-run
-    python tools/scripts/generate_fixes.py --lang python -o fixes.json
-    python tools/scripts/generate_fixes.py --lang typescript --apply
+    python -m tools.scripts.generate_fixes --all --dry-run
+    python -m tools.scripts.generate_fixes --lang python -o fixes.json
+    python -m tools.scripts.generate_fixes --lang typescript --apply
 """
 
 from __future__ import annotations

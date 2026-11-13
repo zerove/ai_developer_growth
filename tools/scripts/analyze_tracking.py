@@ -8,9 +8,9 @@
 - 用户行为模式
 
 用法:
-    python tools/scripts/analyze_tracking.py <tracking.json>
-    python tools/scripts/analyze_tracking.py <tracking.json> --top 20
-    python tools/scripts/analyze_tracking.py <tracking.json> --export-synonyms
+    python -m tools.scripts.analyze_tracking <tracking.json>
+    python -m tools.scripts.analyze_tracking <tracking.json> --top 20
+    python -m tools.scripts.analyze_tracking <tracking.json> --export-synonyms
 """
 
 import argparse

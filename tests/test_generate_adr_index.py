@@ -200,7 +200,7 @@ class CliBehaviorTest(unittest.TestCase):
 
         result = self._run("--check")
         self.assertEqual(result.returncode, 1, "索引缺行时 --check 应退出 1")
-        self.assertIn("generate_adr_index.py", result.stdout + result.stderr)
+        self.assertIn("python -m tools.scripts.generate_adr_index", result.stdout + result.stderr)
 
     def test_check_detects_unindexed_new_adr(self) -> None:
         """新增 ADR 但未更新索引时 --check 必须失败。"""

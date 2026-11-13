@@ -4,9 +4,9 @@
 Launches a local web server that displays rules in an interactive UI.
 
 Usage:
-    python tools/scripts/rule_visualize.py
-    python tools/scripts/rule_visualize.py --port 8080
-    python tools/scripts/rule_visualize.py --lang python
+    python -m tools.scripts.rule_visualize
+    python -m tools.scripts.rule_visualize --port 8080
+    python -m tools.scripts.rule_visualize --lang python
 """
 
 from __future__ import annotations

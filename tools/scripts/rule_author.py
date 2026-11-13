@@ -4,11 +4,11 @@
 Creates properly structured YAML rule files with validation.
 
 Usage:
-    python tools/scripts/rule_author.py init --lang mylang
-    python tools/scripts/rule_author.py add-rule --lang python --category anti_patterns
-    python tools/scripts/rule_author.py validate --file my-rules.yml
-    python tools/scripts/rule_author.py scaffold --lang python
-    python tools/scripts/rule_author.py template --category anti_patterns
+    python -m tools.scripts.rule_author init --lang mylang
+    python -m tools.scripts.rule_author add-rule --lang python --category anti_patterns
+    python -m tools.scripts.rule_author validate --file my-rules.yml
+    python -m tools.scripts.rule_author scaffold --lang python
+    python -m tools.scripts.rule_author template --category anti_patterns
 """
 
 from __future__ import annotations

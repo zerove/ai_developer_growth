@@ -6,7 +6,7 @@ AI 代码标注检查器
 符合 GOVERNANCE.md 关于 AI 代码标注的要求。
 
 用法:
-    python tools/scripts/check_ai_annotation.py [--strict] [--path PATH]
+    python -m tools.scripts.check_ai_annotation [--strict] [--path PATH]
 
 标注格式:
     # ai-generated: <model> <date> <purpose>

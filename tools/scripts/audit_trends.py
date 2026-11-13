@@ -6,8 +6,8 @@
 3. 异常检测: 最近 24h 事件量显著高于历史水平时告警
 
 用法:
-    python tools/scripts/audit_trends.py            # 文本报告
-    python tools/scripts/audit_trends.py --json     # JSON 输出（供 CI/看板消费）
+    python -m tools.scripts.audit_trends            # 文本报告
+    python -m tools.scripts.audit_trends --json     # JSON 输出（供 CI/看板消费）
 """
 
 from __future__ import annotations

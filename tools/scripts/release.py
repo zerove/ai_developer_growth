@@ -10,9 +10,9 @@ JCode Platform - Release Automation Script
 - 集成: Docker 构建、SBOM、Cosign 签名 (后续脚本)
 
 用法:
-    python tools/scripts/release.py --version v2.0.0 --changelog
-    python tools/scripts/release.py --bump patch --dry-run
-    python tools/scripts/release.py --version v2.0.0 --push
+    python -m tools.scripts.release --version v2.0.0 --changelog
+    python -m tools.scripts.release --bump patch --dry-run
+    python -m tools.scripts.release --version v2.0.0 --push
 """
 
 from __future__ import annotations

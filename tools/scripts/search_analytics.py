@@ -8,9 +8,9 @@
 - 平均耗时
 
 用法：
-    python tools/scripts/search_analytics.py                 # 全量汇总
-    python tools/scripts/search_analytics.py --days 7        # 最近 7 天
-    python tools/scripts/search_analytics.py --zero-only     # 只看零召回
+    python -m tools.scripts.search_analytics                 # 全量汇总
+    python -m tools.scripts.search_analytics --days 7        # 最近 7 天
+    python -m tools.scripts.search_analytics --zero-only     # 只看零召回
 """
 
 from __future__ import annotations

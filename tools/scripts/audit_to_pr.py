@@ -3,10 +3,10 @@
 治理审计到 PR 报告生成器
 
 用法:
-    python tools/scripts/audit_to_pr.py --run-audit           # 运行审计并生成报告
-    python tools/scripts/audit_to_pr.py --create-pr           # 创建 PR (需配合 --run-audit)
-    python tools/scripts/audit_to_pr.py --output report.md    # 输出到文件
-    echo '{"violations":[]}' | python tools/scripts/audit_to_pr.py --stdin  # 从 stdin 读取
+    python -m tools.scripts.audit_to_pr --run-audit           # 运行审计并生成报告
+    python -m tools.scripts.audit_to_pr --create-pr           # 创建 PR (需配合 --run-audit)
+    python -m tools.scripts.audit_to_pr --output report.md    # 输出到文件
+    echo '{"violations":[]}' | python -m tools.scripts.audit_to_pr --stdin  # 从 stdin 读取
 """
 
 from __future__ import annotations

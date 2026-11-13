@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Performance regression benchmarks for core modules.
 
-Run with: python tools/scripts/perf_benchmark.py
+Run with: python -m tools.scripts.perf_benchmark
 Outputs JSON baseline to .perf_baseline.json
 """
 

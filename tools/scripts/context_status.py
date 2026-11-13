@@ -124,7 +124,7 @@ def cmd_split(args: argparse.Namespace) -> int:
         "# CONTEXT.md — 项目核心状态(自动滚动日志已拆分)\n\n"
         "> 本文件保留项目级核心信息(技术栈/治理/项目目标)。\n"
         "> 历史滚动日志见 CHANGELOG.md 与 git log。\n"
-        "> 实时快照: `python tools/scripts/context_status.py status`\n\n"
+        "> 实时快照: `python -m tools.scripts.context_status status`\n\n"
         "## 项目核心\n\n"
         "**项目**: AI Developer Growth(ADG) — 开源 AI 时代开发者成长知识库。\n\n"
         "**治理工具链**: ruff + mypy + pytest (3493+ tests) + ADG 自研 hooks。\n\n"

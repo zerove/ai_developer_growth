@@ -4,10 +4,10 @@
 Only validates files that have changed since last commit or a specified ref.
 
 Usage:
-    python tools/scripts/validate_language_rules.py --all --incremental
-    python tools/scripts/validate_language_rules.py --all --git-diff HEAD~1
-    python tools/scripts/validate_language_rules.py --all --git-diff main
-    python tools/scripts/validate_language_rules.py --lang python --git-diff HEAD
+    python -m tools.scripts.validate_language_rules --all --incremental
+    python -m tools.scripts.validate_language_rules --all --git-diff HEAD~1
+    python -m tools.scripts.validate_language_rules --all --git-diff main
+    python -m tools.scripts.validate_language_rules --lang python --git-diff HEAD
 """
 
 from __future__ import annotations

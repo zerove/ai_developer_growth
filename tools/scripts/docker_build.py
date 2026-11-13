@@ -9,8 +9,8 @@ JCode Platform - Docker Build & Push Script
 - 推送到容器镜像仓库
 
 用法:
-    python tools/scripts/docker_build.py --version v2.0.0 --push
-    python tools/scripts/docker_build.py --version v2.0.0 --platform linux/amd64,linux/arm64 --dry-run
+    python -m tools.scripts.docker_build --version v2.0.0 --push
+    python -m tools.scripts.docker_build --version v2.0.0 --platform linux/amd64,linux/arm64 --dry-run
 """
 
 from __future__ import annotations

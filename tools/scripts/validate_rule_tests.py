@@ -12,8 +12,8 @@ Each YAML rule can include test_cases:
             should_match: false
 
 Usage:
-    python tools/scripts/validate_rule_tests.py --all
-    python tools/scripts/validate_rule_tests.py --lang python
+    python -m tools.scripts.validate_rule_tests --all
+    python -m tools.scripts.validate_rule_tests --lang python
 """
 
 from __future__ import annotations

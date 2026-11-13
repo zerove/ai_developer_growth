@@ -4,12 +4,12 @@
 Records validation results and provides analytics.
 
 Usage:
-    python tools/scripts/rule_tracker.py record --file results.json
-    python tools/scripts/rule_tracker.py report
-    python tools/scripts/rule_tracker.py report --lang python
-    python tools/scripts/rule_tracker.py report --days 30
-    python tools/scripts/rule_tracker.py export --format csv
-    python tools/scripts/rule_tracker.py prune --keep 100
+    python -m tools.scripts.rule_tracker record --file results.json
+    python -m tools.scripts.rule_tracker report
+    python -m tools.scripts.rule_tracker report --lang python
+    python -m tools.scripts.rule_tracker report --days 30
+    python -m tools.scripts.rule_tracker export --format csv
+    python -m tools.scripts.rule_tracker prune --keep 100
 """
 
 from __future__ import annotations

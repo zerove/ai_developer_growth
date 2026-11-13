@@ -7,7 +7,7 @@
 - 钩子相关修复提交数（含 "ruff format"/"mypy"/"格式化" 关键词）
 - 月度提交分布
 
-用法: python tools/scripts/dev_metrics.py [--since 2026-01-01]
+用法: python -m tools.scripts.dev_metrics [--since 2026-01-01]
 """
 
 from __future__ import annotations

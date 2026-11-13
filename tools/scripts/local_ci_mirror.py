@@ -17,13 +17,13 @@ PASS / FAIL / SKIP + 耗时，并汇总退出码：
 
 ## 用法
 
-    python tools/scripts/local_ci_mirror.py                 # 跑全部本地等价门禁
-    python tools/scripts/local_ci_mirror.py --list          # 列出门禁清单
-    python tools/scripts/local_ci_mirror.py --only lint test # 只跑指定门禁
-    python tools/scripts/local_ci_mirror.py --skip test      # 跳过指定门禁
-    python tools/scripts/local_ci_mirror.py --incremental    # 测试走增量模式
-    python tools/scripts/local_ci_mirror.py --json           # 机器可读输出
-    python tools/scripts/local_ci_mirror.py --strict-skips    # SKIP 也算失败
+    python -m tools.scripts.local_ci_mirror                 # 跑全部本地等价门禁
+    python -m tools.scripts.local_ci_mirror --list          # 列出门禁清单
+    python -m tools.scripts.local_ci_mirror --only lint test # 只跑指定门禁
+    python -m tools.scripts.local_ci_mirror --skip test      # 跳过指定门禁
+    python -m tools.scripts.local_ci_mirror --incremental    # 测试走增量模式
+    python -m tools.scripts.local_ci_mirror --json           # 机器可读输出
+    python -m tools.scripts.local_ci_mirror --strict-skips    # SKIP 也算失败
 
 退出码: 0 全部通过（或仅 SKIP 且未开 --strict-skips）/ 1 存在失败。
 """

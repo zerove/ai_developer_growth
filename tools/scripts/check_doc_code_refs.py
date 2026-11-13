@@ -20,10 +20,10 @@
 
 ## 用法
 
-    python tools/scripts/check_doc_code_refs.py                 # 文本报告
-    python tools/scripts/check_doc_code_refs.py --json          # JSON 输出
-    python tools/scripts/check_doc_code_refs.py --path docs/api  # 自定义范围
-    python tools/scripts/check_doc_code_refs.py --warn-only      # 只报告不失败
+    python -m tools.scripts.check_doc_code_refs                 # 文本报告
+    python -m tools.scripts.check_doc_code_refs --json          # JSON 输出
+    python -m tools.scripts.check_doc_code_refs --path docs/api  # 自定义范围
+    python -m tools.scripts.check_doc_code_refs --warn-only      # 只报告不失败
 
 退出码: 0 无问题 / 1 发现失效引用（或 JSON 模式下有 findings）
 """

@@ -9,9 +9,9 @@
 日期, 按 ID 倒序重排, 替换 ADR.md 中标记区间的表格。
 
 用法:
-    python tools/scripts/generate_adr_index.py            # 写入 (默认)
-    python tools/scripts/generate_adr_index.py --check    # 只校验, 有差异退出 1
-    python tools/scripts/generate_adr_index.py --dry-run  # 打印将写入的内容
+    python -m tools.scripts.generate_adr_index            # 写入 (默认)
+    python -m tools.scripts.generate_adr_index --check    # 只校验, 有差异退出 1
+    python -m tools.scripts.generate_adr_index --dry-run  # 打印将写入的内容
 
 退出码: 0 一致 / 1 --check 下发现差异 / 2 读取失败
 """
@@ -215,7 +215,7 @@ def main() -> int:
 
     if args.check:
         print(
-            f"❌ ADR 索引与 {len(entries)} 个 ADR 文件不一致, 请运行: python tools/scripts/generate_adr_index.py",
+            f"❌ ADR 索引与 {len(entries)} 个 ADR 文件不一致, 请运行: python -m tools.scripts.generate_adr_index",
             file=sys.stderr,
         )
         return 1

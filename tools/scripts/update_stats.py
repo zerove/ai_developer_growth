@@ -12,10 +12,10 @@
   问题数/基线豁免/通过率进入趋势历史，与其它指标同源同频)
 
 用法:
-    python tools/scripts/update_stats.py            # 同步 README 并记录趋势
-    python tools/scripts/update_stats.py --check    # 仅检查不一致 (CI 模式, 有漂移时退出码 1)
-    python tools/scripts/update_stats.py --json     # JSON 输出统计结果
-    python tools/scripts/update_stats.py --skip-quality-gate  # 跳过门禁采集 (快速模式)
+    python -m tools.scripts.update_stats            # 同步 README 并记录趋势
+    python -m tools.scripts.update_stats --check    # 仅检查不一致 (CI 模式, 有漂移时退出码 1)
+    python -m tools.scripts.update_stats --json     # JSON 输出统计结果
+    python -m tools.scripts.update_stats --skip-quality-gate  # 跳过门禁采集 (快速模式)
 """
 
 from __future__ import annotations
@@ -224,7 +224,7 @@ def main() -> int:
             print("❌ README 统计与实际不一致:")
             for d in drift:
                 print(f"   - {d}")
-            print("修复: 本地运行 python tools/scripts/update_stats.py 后提交")
+            print("修复: 本地运行 python -m tools.scripts.update_stats 后提交")
             return 1
         print("✅ README 统计与实际一致")
         return 0

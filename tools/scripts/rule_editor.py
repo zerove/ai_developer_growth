@@ -4,8 +4,8 @@
 Provides a web-based editor for creating and testing rules in real-time.
 
 Usage:
-    python tools/scripts/rule_editor.py
-    python tools/scripts/rule_editor.py --port 8081
+    python -m tools.scripts.rule_editor
+    python -m tools.scripts.rule_editor --port 8081
 """
 
 from __future__ import annotations

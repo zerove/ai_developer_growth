@@ -28,10 +28,10 @@ templates + mkdocstrings 引用的源码模块）判断"文档输入是否变化
 
 ## 用法
 
-    python tools/scripts/mkdocs_incremental.py            # 构建（未变则跳过）
-    python tools/scripts/mkdocs_incremental.py --force    # 强制重建
-    python tools/scripts/mkdocs_incremental.py --check    # 只判断是否需要重建
-    python tools/scripts/mkdocs_incremental.py --json     # 机器可读输出
+    python -m tools.scripts.mkdocs_incremental            # 构建（未变则跳过）
+    python -m tools.scripts.mkdocs_incremental --force    # 强制重建
+    python -m tools.scripts.mkdocs_incremental --check    # 只判断是否需要重建
+    python -m tools.scripts.mkdocs_incremental --json     # 机器可读输出
 
 退出码: 0 构建成功/无需构建（`--check` 且无需重建）/ 1 构建失败或（`--check` 且）需要重建。
 """

@@ -4,13 +4,13 @@
 Manages a local registry of rule packs that can be shared across projects.
 
 Usage:
-    python tools/scripts/rule_registry.py init
-    python tools/scripts/rule_registry.py list
-    python tools/scripts/rule_registry.py publish my-rules.yml --name my-pack
-    python tools/scripts/rule_registry.py install my-pack
-    python tools/scripts/rule_registry.py search security
-    python tools/scripts/rule_registry.py info my-pack
-    python tools/scripts/rule_registry.py remove my-pack
+    python -m tools.scripts.rule_registry init
+    python -m tools.scripts.rule_registry list
+    python -m tools.scripts.rule_registry publish my-rules.yml --name my-pack
+    python -m tools.scripts.rule_registry install my-pack
+    python -m tools.scripts.rule_registry search security
+    python -m tools.scripts.rule_registry info my-pack
+    python -m tools.scripts.rule_registry remove my-pack
 """
 
 from __future__ import annotations

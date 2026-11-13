@@ -4,12 +4,12 @@
 Delegates core logic to rule_catalog.py. This file is the CLI entry point.
 
 Usage:
-    python tools/scripts/rule_marketplace.py list
-    python tools/scripts/rule_marketplace.py search sql
-    python tools/scripts/rule_marketplace.py info security
-    python tools/scripts/rule_marketplace.py install security --project-dir /path/to/project
-    python tools/scripts/rule_marketplace.py validate
-    python tools/scripts/rule_marketplace.py export --output my-pack.yml
+    python -m tools.scripts.rule_marketplace list
+    python -m tools.scripts.rule_marketplace search sql
+    python -m tools.scripts.rule_marketplace info security
+    python -m tools.scripts.rule_marketplace install security --project-dir /path/to/project
+    python -m tools.scripts.rule_marketplace validate
+    python -m tools.scripts.rule_marketplace export --output my-pack.yml
 """
 
 from __future__ import annotations

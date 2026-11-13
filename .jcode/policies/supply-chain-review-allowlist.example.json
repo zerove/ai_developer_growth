@@ -1,0 +1,14 @@
+{
+  "accepted": [
+    {
+      "ecosystem": "pypi",
+      "name": "example-package",
+      "version": "1.2.3",
+      "cause": "policy_review",
+      "license": "GPL-3.0",
+      "reason": "内部工具场景已评估并豁免",
+      "approved_by": "legal@example",
+      "approved_at": "2026-11-13"
+    }
+  ]
+}

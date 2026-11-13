@@ -1,0 +1,25 @@
+# License Review 处置/状态流转模板（周期盘点用）
+# 用法示例:
+#   python -m tools.scripts.hooks_runner supply-chain compliance \
+#     --path . --policy-file .jcode/policies/supply-chain-policy.yaml \
+#     --review-dispositions .jcode/policies/supply-chain-review-dispositions.yaml \
+#     --review-ledger artifacts/supply-chain/license-review-ledger.json \
+#     --review-checklist artifacts/supply-chain/license-review-checklist.md
+#
+# 约定:
+# - key: (ecosystem,name,version) 唯一定位待复核项
+# - status: pending | in_progress | waived | accepted | resolved
+# - owner: 必填（待复核项 SLA 约束）；due_at: 建议填写 YYYY-MM-DD
+# - disposition/note/ticket 用于可审计处置记录
+
+dispositions:
+  - ecosystem: pypi
+    name: example-package
+    version: "1.2.3"
+    status: in_progress
+    disposition: "确认上游许可证并评估合规风险"
+    owner: "secops@example"
+    due_at: "2026-12-31"
+    ticket: "SEC-1234"
+    note: "等待法务确认"
+    updated_at: "2026-11-13"

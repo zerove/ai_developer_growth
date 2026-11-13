@@ -739,26 +739,76 @@ def _load_review_dispositions(path: Path | None) -> dict[tuple[str, str, str], d
     return index
 
 
+def _is_due_overdue(due_at: object, now_date: str) -> bool:
+    """best-effort 判断 due_at 是否逾期 (仅比较日期前缀 YYYY-MM-DD)。"""
+    if not due_at:
+        return False
+    text = str(due_at).strip()
+    if len(text) < 10:
+        return False
+    try:
+        return text[:10] < now_date[:10]
+    except Exception:
+        return False
+
+
+def _review_sla_flags(item: dict[str, object], now_date: str) -> list[str]:
+    """计算待复核项 SLA/owner 约束提示。"""
+    status = str(item.get("review_status", "pending"))
+    if status in {"accepted", "resolved", "waived"}:
+        return []
+    flags: list[str] = []
+    if not item.get("owner"):
+        flags.append("owner_missing")
+    due_at = item.get("due_at")
+    if not due_at:
+        flags.append("sla_missing")
+    elif _is_due_overdue(due_at, now_date):
+        flags.append("sla_overdue")
+    return flags
+
+
+_REVIEW_DISPOSITION_FIELDS = ("disposition", "owner", "note", "updated_at", "due_at", "ticket")
+
+
+def _apply_disposition_fields(item: dict[str, object], rec: dict[str, object]) -> None:
+    """将处置记录字段写入台账项。"""
+    for field in _REVIEW_DISPOSITION_FIELDS:
+        if field in rec and rec.get(field) is not None:
+            item[field] = rec[field]
+
+
+def _bump_summary_count(counts: dict[str, int], key: str) -> None:
+    counts[key] = counts.get(key, 0) + 1
+
+
 def _merge_review_dispositions(args: argparse.Namespace, summary: dict[str, object]) -> None:
-    """将处置/状态记录合并到 license_review_items, 生成状态摘要。"""
+    """将处置/状态记录合并到 license_review_items, 生成状态/SLA 摘要。"""
+    import datetime
+
+    now_date = datetime.datetime.now(tz=datetime.timezone.utc).date().isoformat()
     items_raw = summary.get("license_review_items", [])
     items = [it for it in items_raw if isinstance(it, dict)] if isinstance(items_raw, list) else []
     dispositions = _load_review_dispositions(getattr(args, "review_dispositions", None))
     merged: list[dict[str, object]] = []
     status_counts: dict[str, int] = {}
     cause_counts: dict[str, int] = {}
+    sla_counts: dict[str, int] = {}
     for raw in items:
         item = dict(raw)
         rec = dispositions.get(_ledger_item_key(item), {})
-        status = str(rec.get("status") or item.get("status") or ("accepted" if item.get("accepted") else "pending"))
-        item["review_status"] = status
-        for field in ("disposition", "owner", "note", "updated_at", "due_at", "ticket"):
-            if field in rec and rec.get(field) is not None:
-                item[field] = rec[field]
+        item["review_status"] = str(
+            rec.get("status") or item.get("status") or ("accepted" if item.get("accepted") else "pending")
+        )
+        _apply_disposition_fields(item, rec)
+        for flag in _review_sla_flags(item, now_date):
+            item.setdefault("sla_flags", [])
+            if isinstance(item["sla_flags"], list):
+                item["sla_flags"].append(flag)
+            _bump_summary_count(sla_counts, flag)
         merged.append(item)
-        status_counts[status] = status_counts.get(status, 0) + 1
-        cause = str(item.get("cause", "unknown"))
-        cause_counts[cause] = cause_counts.get(cause, 0) + 1
+        _bump_summary_count(status_counts, str(item["review_status"]))
+        _bump_summary_count(cause_counts, str(item.get("cause", "unknown")))
 
     accepted_raw = summary.get("license_review_accepted_items", [])
     accepted_items = [it for it in accepted_raw if isinstance(it, dict)] if isinstance(accepted_raw, list) else []
@@ -766,16 +816,15 @@ def _merge_review_dispositions(args: argparse.Namespace, summary: dict[str, obje
         item = dict(raw)
         rec = dispositions.get(_ledger_item_key(item), {})
         item["review_status"] = str(rec.get("status") or "accepted")
-        for field in ("disposition", "owner", "note", "updated_at", "due_at", "ticket"):
-            if field in rec and rec.get(field) is not None:
-                item[field] = rec[field]
-        status_counts[item["review_status"]] = status_counts.get(item["review_status"], 0) + 1
-        cause = str(item.get("cause", "unknown"))
-        cause_counts[cause] = cause_counts.get(cause, 0) + 1
+        _apply_disposition_fields(item, rec)
+        _bump_summary_count(status_counts, str(item["review_status"]))
+        _bump_summary_count(cause_counts, str(item.get("cause", "unknown")))
 
     summary["license_review_items"] = merged
     summary["license_review_status_summary"] = status_counts
     summary["license_review_cause_summary"] = cause_counts
+    if sla_counts:
+        summary["license_review_sla_summary"] = sla_counts
     if dispositions:
         summary["license_review_dispositions_applied"] = len(dispositions)
 
@@ -783,13 +832,15 @@ def _merge_review_dispositions(args: argparse.Namespace, summary: dict[str, obje
 def _build_review_checklist(
     project_root: Path, scanned_at: str, summary: dict[str, object], diff: dict[str, object] | None = None
 ) -> str:
-    """生成周期盘点清单 (Markdown), 聚焦待复核项与处置状态。"""
+    """生成周期盘点清单 (Markdown), 聚焦待复核项与处置状态/SLA。"""
     items_raw = summary.get("license_review_items", [])
     items = [it for it in items_raw if isinstance(it, dict)] if isinstance(items_raw, list) else []
     accepted_raw = summary.get("license_review_accepted_items", [])
     accepted = [it for it in accepted_raw if isinstance(it, dict)] if isinstance(accepted_raw, list) else []
     status_summary = summary.get("license_review_status_summary", {})
     status_summary = status_summary if isinstance(status_summary, dict) else {}
+    sla_summary = summary.get("license_review_sla_summary", {})
+    sla_summary = sla_summary if isinstance(sla_summary, dict) else {}
     lines = [
         "# License Review Checklist",
         "",
@@ -808,6 +859,10 @@ def _build_review_checklist(
             lines.append(f"| {status} | {count} |")
     else:
         lines.append("| pending | 0 |")
+    if sla_summary:
+        lines.extend(["", "## SLA / Owner Constraints", "", "| Flag | Count |", "| --- | ---: |"])
+        for flag, count in sorted(sla_summary.items()):
+            lines.append(f"| {flag} | {count} |")
     lines.extend(["", "## Pending Items", ""])
     if items:
         for it in items:
@@ -820,6 +875,12 @@ def _build_review_checklist(
             mark = "x" if status in {"accepted", "resolved", "waived"} else " "
             lines.append(f"- [{mark}] **{name}** — status: `{status}`, cause: `{cause}`, license: `{lic}`")
             lines.append(f"  - disposition: {disposition}; owner: {owner}")
+            due_at = it.get("due_at")
+            if due_at:
+                lines.append(f"  - due_at: {due_at}")
+            flags = it.get("sla_flags")
+            if isinstance(flags, list) and flags:
+                lines.append(f"  - sla_flags: {', '.join(str(f) for f in flags)}")
             note = it.get("note")
             if note:
                 lines.append(f"  - note: {note}")
@@ -862,6 +923,9 @@ def _build_review_ledger(
     status_summary = summary.get("license_review_status_summary")
     if isinstance(status_summary, dict) and status_summary:
         ledger_summary["status"] = status_summary
+    sla_summary = summary.get("license_review_sla_summary")
+    if isinstance(sla_summary, dict) and sla_summary:
+        ledger_summary["sla"] = sla_summary
     ledger: dict[str, object] = {
         "project": str(project_root),
         "scanned_at": scanned_at,

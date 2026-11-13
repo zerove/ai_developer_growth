@@ -1,0 +1,128 @@
+name: Supply Chain License Review
+
+on:
+  schedule:
+    # Weekly audit: Mon 03:20 UTC
+    - cron: '20 3 * * 1'
+  workflow_dispatch:
+    inputs:
+      fail-on-review-new:
+        description: 'Fail when new license review items appear vs baseline (requires baseline file)'
+        type: boolean
+        required: false
+        default: false
+
+permissions:
+  contents: read
+
+concurrency:
+  group: supply-chain-review-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  license-review:
+    name: License Review Audit
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: pip
+          cache-dependency-path: pyproject.toml
+
+      - name: Upgrade setuptools
+        run: pip install -U "setuptools>=83.0.0"
+
+      - name: Install JCode
+        run: pip install -e .
+
+      - name: Run periodic license review (ledger + checklist)
+        id: review
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p artifacts/supply-chain
+          POLICY=".jcode/policies/supply-chain-policy.yaml"
+          DISPOSITIONS=".jcode/policies/supply-chain-review-dispositions.yaml"
+          ALLOWLIST=".jcode/policies/supply-chain-review-allowlist.json"
+          BASELINE="artifacts/supply-chain/license-review-ledger.baseline.json"
+
+          args=(
+            supply-chain compliance
+            --path .
+            --format json
+            --output artifacts/supply-chain/license-review-compliance.json
+            --review-ledger artifacts/supply-chain/license-review-ledger.json
+            --review-checklist artifacts/supply-chain/license-review-checklist.md
+          )
+          if [[ -f "$POLICY" ]]; then
+            args+=(--policy-file "$POLICY")
+          fi
+          if [[ -f "$DISPOSITIONS" ]]; then
+            args+=(--review-dispositions "$DISPOSITIONS")
+          fi
+          if [[ -f "$ALLOWLIST" ]]; then
+            args+=(--review-allowlist "$ALLOWLIST")
+          fi
+          if [[ -f "$BASELINE" ]]; then
+            args+=(--review-ledger-baseline "$BASELINE")
+            if [[ "${{ inputs.fail-on-review-new || false }}" == "true" ]]; then
+              args+=(--fail-on-review-new)
+            fi
+          fi
+
+          set +e
+          python -m tools.scripts.hooks_runner "${args[@]}"
+          rc=$?
+          set -e
+          echo "exit_code=$rc" >> "$GITHUB_OUTPUT"
+          exit 0
+
+      - name: Publish review summary
+        if: always()
+        shell: bash
+        run: |
+          set -euo pipefail
+          LEDGER="artifacts/supply-chain/license-review-ledger.json"
+          CHECKLIST="artifacts/supply-chain/license-review-checklist.md"
+          {
+            echo "## Supply Chain License Review"
+            echo "- exit_code: ${{ steps.review.outputs.exit_code }}"
+            if [[ -f "$LEDGER" ]]; then
+              python - <<'PY'
+          import json
+          from pathlib import Path
+          data = json.loads(Path("artifacts/supply-chain/license-review-ledger.json").read_text(encoding="utf-8"))
+          s = data.get("summary", {})
+          print(f"- pending license_review: {s.get('license_review', 0)}")
+          print(f"- total_items: {s.get('total_items', 0)}")
+          print(f"- accepted: {s.get('license_review_accepted', 0)}")
+          status = s.get("status") or {}
+          if status:
+              print("- status: " + ", ".join(f"{k}={v}" for k, v in sorted(status.items())))
+          sla = s.get("sla") or {}
+          if sla:
+              print("- sla: " + ", ".join(f"{k}={v}" for k, v in sorted(sla.items())))
+          diff = (data.get("diff") or {}).get("summary") or {}
+          if diff:
+              print(f"- diff: +{diff.get('added',0)} -{diff.get('removed',0)} ~{diff.get('changed',0)} ={diff.get('unchanged',0)}")
+          PY
+            else
+              echo "- ledger: not generated"
+            fi
+            if [[ -f "$CHECKLIST" ]]; then
+              echo "- checklist: artifacts/supply-chain/license-review-checklist.md (artifact)"
+            fi
+            echo "- audit artifacts uploaded for periodic tracking"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload review artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: supply-chain-license-review
+          path: artifacts/supply-chain/
+          if-no-files-found: warn
+          retention-days: 90

@@ -154,3 +154,68 @@ class TestLicenseReviewDispositionFlow:
         assert "owner: legal" in text
         assert "## Baseline Diff" in text
         assert "added: 1" in text
+
+    def test_sla_owner_constraints_reported_in_summary_and_checklist(self, tmp_path: Path) -> None:
+        """待复核项缺少 owner/due_at 或逾期时应输出 SLA 约束并体现在清单中。"""
+        checklist = tmp_path / "checklist.md"
+        ledger = tmp_path / "ledger.json"
+        disp = tmp_path / "disp.json"
+        disp.write_text(
+            json.dumps(
+                {
+                    "dispositions": [
+                        {
+                            "ecosystem": "pypi",
+                            "name": "overdue-pkg",
+                            "version": "1.0.0",
+                            "status": "in_progress",
+                            "owner": "secops",
+                            "due_at": "2000-01-01",
+                            "disposition": "tracking",
+                        }
+                    ]
+                }
+            ),
+            encoding="utf-8",
+        )
+        args = SimpleNamespace(review_checklist=checklist, review_ledger=ledger, review_dispositions=disp)
+        summary = {
+            "license_review": 2,
+            "license_review_items": [
+                {
+                    "ecosystem": "pypi",
+                    "name": "pending-pkg",
+                    "version": "1.0.0",
+                    "license": None,
+                    "cause": "unknown_license",
+                    "policy": "review",
+                    "message": "REVIEW needed: pending-pkg@1.0.0 (None)",
+                },
+                {
+                    "ecosystem": "pypi",
+                    "name": "overdue-pkg",
+                    "version": "1.0.0",
+                    "license": "GPL-3.0",
+                    "cause": "policy_review",
+                    "policy": "review",
+                    "message": "REVIEW needed: overdue-pkg@1.0.0 (GPL-3.0)",
+                },
+            ],
+        }
+        sr._finalize_review_outputs(args, tmp_path, "2026-11-13T00:00:00", summary)
+
+        sla = summary.get("license_review_sla_summary", {})
+        assert sla.get("owner_missing") == 1
+        assert sla.get("sla_missing") == 1
+        assert sla.get("sla_overdue") == 1
+        pending = next(it for it in summary["license_review_items"] if it["name"] == "pending-pkg")
+        assert "owner_missing" in pending.get("sla_flags", [])
+        assert "sla_missing" in pending.get("sla_flags", [])
+
+        text = checklist.read_text(encoding="utf-8")
+        assert "## SLA / Owner Constraints" in text
+        assert "| owner_missing | 1 |" in text
+        assert "| sla_overdue | 1 |" in text
+        assert "sla_flags:" in text
+        data = json.loads(ledger.read_text(encoding="utf-8"))
+        assert data["summary"]["sla"]["sla_overdue"] == 1

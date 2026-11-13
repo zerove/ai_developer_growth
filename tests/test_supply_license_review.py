@@ -10,7 +10,9 @@
 
 from __future__ import annotations
 
+import json
 from pathlib import Path
+from types import SimpleNamespace
 from unittest.mock import MagicMock
 
 import pytest
@@ -165,10 +167,6 @@ class TestLicenseReviewAttribution:
 
     def test_write_review_ledger_outputs_json(self, tmp_path: Path) -> None:
         """--review-ledger 应输出可用于周期盘点的台账 JSON。"""
-        import json
-
-        from types import SimpleNamespace
-
         out = tmp_path / "license-review-ledger.json"
         args = SimpleNamespace(review_ledger=out)
         summary = _summary_with_attribution()
@@ -186,10 +184,6 @@ class TestLicenseReviewAttribution:
 
     def test_output_compliance_writes_ledger(self, tmp_path: Path) -> None:
         """compliance 输出路径应同时落盘复核台账。"""
-        import json
-
-        from types import SimpleNamespace
-
         out = tmp_path / "ledger.json"
         compliance = sr._run_compliance_checks(
             tmp_path, ScanResult(project_path=str(tmp_path), summary=_summary_with_attribution())

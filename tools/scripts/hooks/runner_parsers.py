@@ -318,6 +318,16 @@ def _add_review_ledger_args(parser: argparse.ArgumentParser) -> None:
         type=Path,
         help="Path to accepted license review allowlist (JSON/YAML) to exclude known items from review/ratchet",
     )
+    parser.add_argument(
+        "--review-dispositions",
+        type=Path,
+        help="Path to license review disposition/status records (JSON/YAML) merged into ledger/checklist",
+    )
+    parser.add_argument(
+        "--review-checklist",
+        type=Path,
+        help="Write periodic license review checklist (Markdown) with status/disposition summary",
+    )
 
 
 def _add_supply_chain_subparsers(sc_subparsers: argparse._SubParsersAction[argparse.ArgumentParser]) -> None:

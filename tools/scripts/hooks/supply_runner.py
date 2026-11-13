@@ -192,10 +192,10 @@ def _handle_supply_chain_scan(args: argparse.Namespace) -> int:
     if review_new:
         should_fail = True
         print(f"❌ License review ratchet: {review_new} new review item(s) vs baseline")
+    _finalize_review_outputs(args, project_root, result.scanned_at, result.summary, diff)
     _output_scan_result(args, project_root, result)
     if diff is not None and args.format == "text":
         _print_review_ledger_diff(diff)
-    _write_review_ledger(args, project_root, result.scanned_at, result.summary, diff)
 
     return 1 if should_fail else 0
 
@@ -708,24 +708,169 @@ def _review_new_failures(diff: dict[str, object] | None) -> int:
         return 0
 
 
+def _load_review_dispositions(path: Path | None) -> dict[tuple[str, str, str], dict[str, object]]:
+    """加载复核处置/状态记录, 按 (ecosystem,name,version) 建索引。"""
+    if not path or not path.exists():
+        return {}
+    raw = path.read_text(encoding="utf-8")
+    data: object
+    if path.suffix.lower() in {".yaml", ".yml"}:
+        import yaml
+
+        data = yaml.safe_load(raw)
+    else:
+        data = json.loads(raw)
+    if isinstance(data, dict):
+        records = data.get("dispositions", data.get("items", []))
+    elif isinstance(data, list):
+        records = data
+    else:
+        records = []
+    index: dict[tuple[str, str, str], dict[str, object]] = {}
+    if not isinstance(records, list):
+        return index
+    for rec in records:
+        if not isinstance(rec, dict):
+            continue
+        key = _ledger_item_key(rec)
+        if key == ("", "", ""):
+            continue
+        index[key] = rec
+    return index
+
+
+def _merge_review_dispositions(args: argparse.Namespace, summary: dict[str, object]) -> None:
+    """将处置/状态记录合并到 license_review_items, 生成状态摘要。"""
+    items_raw = summary.get("license_review_items", [])
+    items = [it for it in items_raw if isinstance(it, dict)] if isinstance(items_raw, list) else []
+    dispositions = _load_review_dispositions(getattr(args, "review_dispositions", None))
+    merged: list[dict[str, object]] = []
+    status_counts: dict[str, int] = {}
+    cause_counts: dict[str, int] = {}
+    for raw in items:
+        item = dict(raw)
+        rec = dispositions.get(_ledger_item_key(item), {})
+        status = str(rec.get("status") or item.get("status") or ("accepted" if item.get("accepted") else "pending"))
+        item["review_status"] = status
+        for field in ("disposition", "owner", "note", "updated_at", "due_at", "ticket"):
+            if field in rec and rec.get(field) is not None:
+                item[field] = rec[field]
+        merged.append(item)
+        status_counts[status] = status_counts.get(status, 0) + 1
+        cause = str(item.get("cause", "unknown"))
+        cause_counts[cause] = cause_counts.get(cause, 0) + 1
+
+    accepted_raw = summary.get("license_review_accepted_items", [])
+    accepted_items = [it for it in accepted_raw if isinstance(it, dict)] if isinstance(accepted_raw, list) else []
+    for raw in accepted_items:
+        item = dict(raw)
+        rec = dispositions.get(_ledger_item_key(item), {})
+        item["review_status"] = str(rec.get("status") or "accepted")
+        for field in ("disposition", "owner", "note", "updated_at", "due_at", "ticket"):
+            if field in rec and rec.get(field) is not None:
+                item[field] = rec[field]
+        status_counts[item["review_status"]] = status_counts.get(item["review_status"], 0) + 1
+        cause = str(item.get("cause", "unknown"))
+        cause_counts[cause] = cause_counts.get(cause, 0) + 1
+
+    summary["license_review_items"] = merged
+    summary["license_review_status_summary"] = status_counts
+    summary["license_review_cause_summary"] = cause_counts
+    if dispositions:
+        summary["license_review_dispositions_applied"] = len(dispositions)
+
+
+def _build_review_checklist(
+    project_root: Path, scanned_at: str, summary: dict[str, object], diff: dict[str, object] | None = None
+) -> str:
+    """生成周期盘点清单 (Markdown), 聚焦待复核项与处置状态。"""
+    items_raw = summary.get("license_review_items", [])
+    items = [it for it in items_raw if isinstance(it, dict)] if isinstance(items_raw, list) else []
+    accepted_raw = summary.get("license_review_accepted_items", [])
+    accepted = [it for it in accepted_raw if isinstance(it, dict)] if isinstance(accepted_raw, list) else []
+    status_summary = summary.get("license_review_status_summary", {})
+    status_summary = status_summary if isinstance(status_summary, dict) else {}
+    lines = [
+        "# License Review Checklist",
+        "",
+        f"- Project: `{project_root}`",
+        f"- Scanned at: `{scanned_at}`",
+        f"- Pending review items: **{len(items)}**",
+        f"- Accepted/allowlisted: **{len(accepted)}**",
+        "",
+        "## Status Summary",
+        "",
+        "| Status | Count |",
+        "| --- | ---: |",
+    ]
+    if status_summary:
+        for status, count in sorted(status_summary.items()):
+            lines.append(f"| {status} | {count} |")
+    else:
+        lines.append("| pending | 0 |")
+    lines.extend(["", "## Pending Items", ""])
+    if items:
+        for it in items:
+            status = it.get("review_status", "pending")
+            name = f"{it.get('ecosystem', '?')}:{it.get('name', '?')}@{it.get('version', '?')}"
+            cause = it.get("cause", "unknown")
+            lic = it.get("license")
+            owner = it.get("owner") or "unassigned"
+            disposition = it.get("disposition") or "needs review"
+            mark = "x" if status in {"accepted", "resolved", "waived"} else " "
+            lines.append(f"- [{mark}] **{name}** — status: `{status}`, cause: `{cause}`, license: `{lic}`")
+            lines.append(f"  - disposition: {disposition}; owner: {owner}")
+            note = it.get("note")
+            if note:
+                lines.append(f"  - note: {note}")
+            ticket = it.get("ticket")
+            if ticket:
+                lines.append(f"  - ticket: {ticket}")
+    else:
+        lines.append("- [x] No pending license review items.")
+    if diff and isinstance(diff.get("summary"), dict):
+        ds = diff["summary"]
+        ds_map: dict[str, object] = ds if isinstance(ds, dict) else {}
+        lines.extend(
+            [
+                "",
+                "## Baseline Diff",
+                "",
+                f"- added: {ds_map.get('added', 0)}, removed: {ds_map.get('removed', 0)}, "
+                f"changed: {ds_map.get('changed', 0)}, unchanged: {ds_map.get('unchanged', 0)}",
+            ]
+        )
+    lines.append("")
+    return "\n".join(lines)
+
+
 def _build_review_ledger(
     project_root: Path, scanned_at: str, summary: dict[str, object], diff: dict[str, object] | None = None
 ) -> dict[str, object]:
     """构建 license review 复核台账 (机器可读, 便于周期盘点与对比)。"""
     items = summary.get("license_review_items", [])
-    if not isinstance(items, list):
-        items = []
+    items = items if isinstance(items, list) else []
+    ledger_summary: dict[str, object] = {
+        "license_review": summary.get("license_review", 0),
+        "license_review_unreachable": summary.get("license_review_unreachable", 0),
+        "license_review_unknown": summary.get("license_review_unknown", 0),
+        "total_items": len(items),
+    }
+    accepted = summary.get("license_review_accepted", 0)
+    if accepted:
+        ledger_summary["license_review_accepted"] = accepted
+    status_summary = summary.get("license_review_status_summary")
+    if isinstance(status_summary, dict) and status_summary:
+        ledger_summary["status"] = status_summary
     ledger: dict[str, object] = {
         "project": str(project_root),
         "scanned_at": scanned_at,
-        "summary": {
-            "license_review": summary.get("license_review", 0),
-            "license_review_unreachable": summary.get("license_review_unreachable", 0),
-            "license_review_unknown": summary.get("license_review_unknown", 0),
-            "total_items": len(items),
-        },
+        "summary": ledger_summary,
         "items": items,
     }
+    accepted_items = summary.get("license_review_accepted_items")
+    if isinstance(accepted_items, list) and accepted_items:
+        ledger["accepted_items"] = accepted_items
     if diff is not None:
         ledger["diff"] = diff
     return ledger
@@ -738,13 +883,48 @@ def _write_review_ledger(
     summary: dict[str, object],
     diff: dict[str, object] | None = None,
 ) -> None:
-    """按需写出 license review 复核台账 JSON。"""
+    """按需写出 license review 复核台账 JSON (兼容旧调用)。"""
+    _merge_review_dispositions(args, summary)
     ledger_path = getattr(args, "review_ledger", None)
     if not ledger_path:
         return
     ledger = _build_review_ledger(project_root, scanned_at, summary, diff)
     ledger_path.write_text(json.dumps(ledger, indent=2, ensure_ascii=False))
     print(f"License review ledger written to {ledger_path}")
+
+
+def _write_review_checklist(
+    args: argparse.Namespace,
+    project_root: Path,
+    scanned_at: str,
+    summary: dict[str, object],
+    diff: dict[str, object] | None = None,
+) -> None:
+    """按需写出 license review 周期盘点清单 (Markdown)。"""
+    checklist_path = getattr(args, "review_checklist", None)
+    if not checklist_path:
+        return
+    checklist = _build_review_checklist(project_root, scanned_at, summary, diff)
+    checklist_path.write_text(checklist, encoding="utf-8")
+    print(f"License review checklist written to {checklist_path}")
+
+
+def _finalize_review_outputs(
+    args: argparse.Namespace,
+    project_root: Path,
+    scanned_at: str,
+    summary: dict[str, object],
+    diff: dict[str, object] | None = None,
+) -> dict[str, object]:
+    """合并处置状态并写出复核台账/盘点清单。"""
+    _merge_review_dispositions(args, summary)
+    ledger_path = getattr(args, "review_ledger", None)
+    if ledger_path:
+        ledger = _build_review_ledger(project_root, scanned_at, summary, diff)
+        ledger_path.write_text(json.dumps(ledger, indent=2, ensure_ascii=False))
+        print(f"License review ledger written to {ledger_path}")
+    _write_review_checklist(args, project_root, scanned_at, summary, diff)
+    return summary
 
 
 def _output_compliance(
@@ -762,11 +942,12 @@ def _output_compliance(
     elif args.format == "json":
         print(json.dumps(compliance, indent=2, ensure_ascii=False))
 
+    _finalize_review_outputs(
+        args, project_root, str(compliance.get("scanned_at", "")), compliance.get("summary", {}), diff
+    )
     if args.output:
         args.output.write_text(json.dumps(compliance, indent=2, ensure_ascii=False))
         print(f"Compliance report written to {args.output}")
-
-    _write_review_ledger(args, project_root, str(compliance.get("scanned_at", "")), compliance.get("summary", {}), diff)
 
 
 def _handle_supply_chain_compliance(args: argparse.Namespace) -> int:
@@ -797,6 +978,9 @@ def _handle_supply_chain_compliance(args: argparse.Namespace) -> int:
                 "severity": "high",
             }
         )
+    _finalize_review_outputs(
+        args, project_root, str(compliance.get("scanned_at", "")), compliance.get("summary", {}), diff
+    )
     _output_compliance(args, project_root, compliance, diff)
 
     return 0 if compliance["passed"] else 1

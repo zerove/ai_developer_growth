@@ -312,3 +312,106 @@ class TestLicenseReviewAttribution:
         sr._write_review_ledger(args, tmp_path, "2026-11-13T00:00:00", summary, diff)
         data = json.loads(out.read_text(encoding="utf-8"))
         assert data["diff"]["summary"]["added"] == 1
+
+    def test_review_new_failures_counts_added(self) -> None:
+        """ratchet 仅统计新增项 (added)。"""
+        assert sr._review_new_failures(None) == 0
+        assert sr._review_new_failures({"summary": {"added": 2, "removed": 1, "changed": 3}}) == 2
+        assert sr._review_new_failures({"summary": {}}) == 0
+
+    def test_scan_fail_on_review_new_blocks_added(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+        """scan + --fail-on-review-new: 基线出现新增待复核项时必须失败。"""
+        import argparse
+
+        args = argparse.Namespace(
+            path=tmp_path,
+            fail_on="high",
+            format="text",
+            output=None,
+            policy_file=None,
+            review_ledger=None,
+            review_ledger_baseline=tmp_path / "base.json",
+            fail_on_review_new=True,
+        )
+        result = ScanResult(project_path=str(tmp_path), summary=_summary_with_attribution())
+        scanner = MagicMock()
+        scanner.scan_project.return_value = result
+        monkeypatch.setattr(sr, "SupplyChainScanner", lambda **_: scanner)
+        monkeypatch.setattr(sr, "_output_scan_result", lambda *a, **k: None)
+        monkeypatch.setattr(sr, "_write_review_ledger", lambda *a, **k: None)
+        monkeypatch.setattr(
+            sr,
+            "_compute_review_ledger_diff",
+            lambda a, s: {"summary": {"added": 1, "removed": 0, "changed": 0, "unchanged": 0}},
+        )
+        assert sr._handle_supply_chain_scan(args) == 1
+
+    def test_scan_fail_on_review_new_passes_without_added(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """scan ratchet: 无新增项时不应因该策略失败。"""
+        import argparse
+
+        args = argparse.Namespace(
+            path=tmp_path,
+            fail_on="high",
+            format="text",
+            output=None,
+            policy_file=None,
+            review_ledger=None,
+            review_ledger_baseline=tmp_path / "base.json",
+            fail_on_review_new=True,
+        )
+        result = ScanResult(project_path=str(tmp_path), summary=_summary_with_attribution())
+        scanner = MagicMock()
+        scanner.scan_project.return_value = result
+        monkeypatch.setattr(sr, "SupplyChainScanner", lambda **_: scanner)
+        monkeypatch.setattr(sr, "_output_scan_result", lambda *a, **k: None)
+        monkeypatch.setattr(sr, "_write_review_ledger", lambda *a, **k: None)
+        monkeypatch.setattr(
+            sr,
+            "_compute_review_ledger_diff",
+            lambda a, s: {"summary": {"added": 0, "removed": 1, "changed": 0, "unchanged": 1}},
+        )
+        assert sr._handle_supply_chain_scan(args) == 0
+
+    def test_compliance_fail_on_review_new_adds_violation(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """compliance + --fail-on-review-new: 新增待复核项应记为违规并失败。"""
+        import argparse
+
+        args = argparse.Namespace(
+            path=tmp_path,
+            policy_file=None,
+            format="text",
+            output=None,
+            review_ledger=None,
+            review_ledger_baseline=tmp_path / "base.json",
+            fail_on_review_new=True,
+        )
+        result = ScanResult(project_path=str(tmp_path), summary=_summary_with_attribution())
+        scanner = MagicMock()
+        scanner.scan_project.return_value = result
+        monkeypatch.setattr(sr, "SupplyChainScanner", lambda **_: scanner)
+        monkeypatch.setattr(sr, "_load_license_policy", lambda _: None)
+        monkeypatch.setattr(sr, "_resolve_licenses", lambda *a, **k: None)
+        monkeypatch.setattr(sr, "_output_compliance", lambda *a, **k: None)
+        monkeypatch.setattr(
+            sr,
+            "_compute_review_ledger_diff",
+            lambda a, s: {"summary": {"added": 2, "removed": 0, "changed": 0, "unchanged": 0}},
+        )
+        # capture compliance via output hook
+        captured = {}
+
+        def _cap(args_, root, comp, diff=None):
+            captured["comp"] = comp
+
+        monkeypatch.setattr(sr, "_output_compliance", _cap)
+        assert sr._handle_supply_chain_compliance(args) == 1
+        assert captured["comp"]["passed"] is False
+        assert any(
+            v["type"] == "license_review" and "New license review items" in v["message"]
+            for v in captured["comp"]["violations"]
+        )

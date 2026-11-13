@@ -187,6 +187,10 @@ def _handle_supply_chain_scan(args: argparse.Namespace) -> int:
         should_fail = should_fail or bool(result.license_issues)
 
     diff = _compute_review_ledger_diff(args, result.summary)
+    review_new = _review_new_failures(diff) if getattr(args, "fail_on_review_new", False) else 0
+    if review_new:
+        should_fail = True
+        print(f"❌ License review ratchet: {review_new} new review item(s) vs baseline")
     _output_scan_result(args, project_root, result)
     if diff is not None and args.format == "text":
         _print_review_ledger_diff(diff)
@@ -574,6 +578,19 @@ def _compute_review_ledger_diff(args: argparse.Namespace, summary: dict[str, obj
     return diff
 
 
+def _review_new_failures(diff: dict[str, object] | None) -> int:
+    """返回基线对比中新增的待复核项数量 (用于 ratchet)。"""
+    if not diff:
+        return 0
+    summary = diff.get("summary")
+    if not isinstance(summary, dict):
+        return 0
+    try:
+        return int(summary.get("added", 0) or 0)
+    except (TypeError, ValueError):
+        return 0
+
+
 def _build_review_ledger(
     project_root: Path, scanned_at: str, summary: dict[str, object], diff: dict[str, object] | None = None
 ) -> dict[str, object]:
@@ -652,6 +669,16 @@ def _handle_supply_chain_compliance(args: argparse.Namespace) -> int:
     diff = _compute_review_ledger_diff(args, result.summary)
     if diff is not None:
         compliance["license_review_diff"] = diff
+    review_new = _review_new_failures(diff) if getattr(args, "fail_on_review_new", False) else 0
+    if review_new:
+        compliance["passed"] = False
+        compliance["violations"].append(
+            {
+                "type": "license_review",
+                "message": f"New license review items vs baseline: {review_new}",
+                "severity": "high",
+            }
+        )
     _output_compliance(args, project_root, compliance, diff)
 
     return 0 if compliance["passed"] else 1

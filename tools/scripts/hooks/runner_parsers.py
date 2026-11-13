@@ -308,6 +308,11 @@ def _add_review_ledger_args(parser: argparse.ArgumentParser) -> None:
         type=Path,
         help="Compare current license review ledger against a baseline ledger JSON",
     )
+    parser.add_argument(
+        "--fail-on-review-new",
+        action="store_true",
+        help="Fail when baseline diff reports newly added license review items (requires --review-ledger-baseline)",
+    )
 
 
 def _add_supply_chain_subparsers(sc_subparsers: argparse._SubParsersAction[argparse.ArgumentParser]) -> None:

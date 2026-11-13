@@ -415,3 +415,73 @@ class TestLicenseReviewAttribution:
             v["type"] == "license_review" and "New license review items" in v["message"]
             for v in captured["comp"]["violations"]
         )
+
+    def test_apply_review_allowlist_excludes_accepted_items(self, tmp_path: Path) -> None:
+        """已知可接受项应从待复核集合/计数中移除, 并记录 accepted。"""
+        import json
+
+        allow = tmp_path / "allow.json"
+        allow.write_text(
+            json.dumps(
+                {"accepted": [{"ecosystem": "pypi", "name": "flaky-pkg", "version": "1.0.0", "cause": "unreachable"}]}
+            ),
+            encoding="utf-8",
+        )
+        deps = [make_dep("flaky-pkg"), make_dep("gone-pkg")]
+        for d in deps:
+            d.license_policy = sr.LicensePolicy.REVIEW
+        result = ScanResult(
+            project_path=str(tmp_path),
+            dependencies=deps,
+            license_review=[
+                "REVIEW needed: flaky-pkg@1.0.0 (None)",
+                "REVIEW needed: gone-pkg@1.0.0 (None)",
+            ],
+            summary={},
+        )
+        sr._attribute_license_review(result, _mixed_client())
+        args = SimpleNamespace(review_allowlist=allow)
+        sr._apply_review_allowlist(args, result)
+        assert result.summary["license_review"] == 1
+        assert result.summary["license_review_accepted"] == 1
+        names = [it["name"] for it in result.summary["license_review_items"]]
+        assert names == ["gone-pkg"]
+        assert result.summary["license_review_unreachable"] == 0
+        assert result.summary["license_review_unknown"] == 1
+        assert result.license_review == ["REVIEW needed: gone-pkg@1.0.0 (None)"]
+
+    def test_allowlist_suppresses_ratchet_for_accepted_new_item(self, tmp_path: Path) -> None:
+        """豁免项不应计入当前台账, 因而不触发新增项 ratchet。"""
+        import json
+
+        baseline = tmp_path / "base.json"
+        baseline.write_text(json.dumps({"items": []}), encoding="utf-8")
+        allow = tmp_path / "allow.json"
+        allow.write_text(
+            json.dumps({"accepted": [{"ecosystem": "pypi", "name": "new-pkg", "version": "1.0.0"}]}),
+            encoding="utf-8",
+        )
+        summary = {
+            "license_review": 1,
+            "license_review_unreachable": 1,
+            "license_review_unknown": 0,
+            "license_review_items": [
+                {
+                    "ecosystem": "pypi",
+                    "name": "new-pkg",
+                    "version": "1.0.0",
+                    "license": None,
+                    "cause": "unreachable",
+                    "policy": "review",
+                    "message": "REVIEW needed: new-pkg@1.0.0 (None)",
+                }
+            ],
+        }
+        result = ScanResult(
+            project_path=str(tmp_path), license_review=["REVIEW needed: new-pkg@1.0.0 (None)"], summary=summary
+        )
+        args = SimpleNamespace(review_allowlist=allow, review_ledger_baseline=baseline, fail_on_review_new=True)
+        sr._apply_review_allowlist(args, result)
+        diff = sr._compute_review_ledger_diff(args, result.summary)
+        assert sr._review_new_failures(diff) == 0
+        assert result.summary["license_review"] == 0

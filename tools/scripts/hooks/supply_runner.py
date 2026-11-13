@@ -185,6 +185,7 @@ def _handle_supply_chain_scan(args: argparse.Namespace) -> int:
     if policy_file:
         _resolve_licenses(scanner, result, PyPIMetadataClient())
         should_fail = should_fail or bool(result.license_issues)
+    _apply_review_allowlist(args, result)
 
     diff = _compute_review_ledger_diff(args, result.summary)
     review_new = _review_new_failures(diff) if getattr(args, "fail_on_review_new", False) else 0
@@ -345,6 +346,122 @@ def _handle_supply_chain_sbom(args: argparse.Namespace) -> int:
             print(json.dumps(cyclonedx, indent=2))
 
     return 0
+
+
+def _load_review_allowlist(path: Path | None) -> list[dict[str, object]]:
+    """加载 license review 豁免清单 (已知可接受项)。"""
+    if not path or not path.exists():
+        return []
+    raw = path.read_text(encoding="utf-8")
+    data: object
+    if path.suffix.lower() in {".yaml", ".yml"}:
+        import yaml
+
+        data = yaml.safe_load(raw)
+    else:
+        data = json.loads(raw)
+    if isinstance(data, dict):
+        if isinstance(data.get("accepted"), list):
+            items = data["accepted"]
+        elif isinstance(data.get("items"), list):
+            items = data["items"]
+        else:
+            items = []
+    elif isinstance(data, list):
+        items = data
+    else:
+        items = []
+    return [it for it in items if isinstance(it, dict)]
+
+
+def _review_item_matches_allow(entry: dict[str, object], item: dict[str, object]) -> bool:
+    """豁免项匹配: 仅比较 allowlist 中显式声明的键。"""
+    for key in ("ecosystem", "name", "version", "cause", "license"):
+        if key in entry and entry.get(key) is not None:
+            if str(entry.get(key)) != str(item.get(key)):
+                return False
+    return bool(entry)
+
+
+def _synthesize_review_items(result: ScanResult) -> list[dict[str, object]]:
+    """无富归因时从依赖状态合成基础 license review 台账项。"""
+    synthesized: list[dict[str, object]] = []
+    for dep in result.dependencies:
+        if dep.license_policy != LicensePolicy.REVIEW:
+            continue
+        cause = "policy_review" if dep.license else "unknown_license"
+        synthesized.append(
+            {
+                "name": dep.name,
+                "version": dep.version,
+                "ecosystem": dep.ecosystem,
+                "license": dep.license,
+                "policy": dep.license_policy.value,
+                "cause": cause,
+                "message": f"REVIEW needed: {dep.name}@{dep.version} ({dep.license})",
+            }
+        )
+    return synthesized
+
+
+def _partition_review_items(
+    items: list[dict[str, object]], entries: list[dict[str, object]]
+) -> tuple[list[dict[str, object]], list[dict[str, object]]]:
+    """按豁免清单拆分待复核项为 (保留, 已接受)。"""
+    kept: list[dict[str, object]] = []
+    accepted: list[dict[str, object]] = []
+    for raw in items:
+        if not isinstance(raw, dict):
+            continue
+        if any(_review_item_matches_allow(e, raw) for e in entries):
+            acc = dict(raw)
+            acc["accepted"] = True
+            accepted.append(acc)
+        else:
+            kept.append(raw)
+    return kept, accepted
+
+
+def _filter_review_messages(messages: list[str], accepted: list[dict[str, object]]) -> list[str]:
+    """同步过滤 license_review 字符串列表。"""
+    if not accepted:
+        return list(messages)
+    filtered: list[str] = []
+    for msg in messages:
+        drop = False
+        for acc in accepted:
+            if str(acc.get("message", "")) == msg:
+                drop = True
+                break
+            token = f"{acc.get('name', '')}@{acc.get('version', '')}"
+            if token and token in msg:
+                drop = True
+                break
+        if not drop:
+            filtered.append(msg)
+    return filtered
+
+
+def _apply_review_allowlist(args: argparse.Namespace, result: ScanResult) -> None:
+    """应用 license review 豁免清单, 从待复核集合中移除已知可接受项。"""
+    entries = _load_review_allowlist(getattr(args, "review_allowlist", None))
+    if not entries:
+        return
+    items = result.summary.get("license_review_items", [])
+    items = items if isinstance(items, list) else []
+    if not items and result.license_review:
+        items = _synthesize_review_items(result)
+    kept, accepted = _partition_review_items([it for it in items if isinstance(it, dict)], entries)
+    result.license_review = _filter_review_messages(result.license_review, accepted)
+    unreachable = sum(1 for it in kept if str(it.get("cause")) == "unreachable")
+    unknown = sum(1 for it in kept if str(it.get("cause")) == "unknown_license")
+    result.summary["license_review_items"] = kept
+    result.summary["license_review"] = len(result.license_review)
+    result.summary["license_review_unreachable"] = unreachable
+    result.summary["license_review_unknown"] = unknown
+    result.summary["license_review_accepted"] = len(accepted)
+    if accepted:
+        result.summary["license_review_accepted_items"] = accepted
 
 
 def _load_license_policy(policy_file: Path | None) -> dict[str, LicensePolicy] | None:
@@ -665,6 +782,7 @@ def _handle_supply_chain_compliance(args: argparse.Namespace) -> int:
     result = scanner.scan_project(project_root)
 
     _resolve_licenses(scanner, result, PyPIMetadataClient())
+    _apply_review_allowlist(args, result)
     compliance = _run_compliance_checks(project_root, result)
     diff = _compute_review_ledger_diff(args, result.summary)
     if diff is not None:

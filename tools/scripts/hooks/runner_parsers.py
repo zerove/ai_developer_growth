@@ -313,6 +313,11 @@ def _add_review_ledger_args(parser: argparse.ArgumentParser) -> None:
         action="store_true",
         help="Fail when baseline diff reports newly added license review items (requires --review-ledger-baseline)",
     )
+    parser.add_argument(
+        "--review-allowlist",
+        type=Path,
+        help="Path to accepted license review allowlist (JSON/YAML) to exclude known items from review/ratchet",
+    )
 
 
 def _add_supply_chain_subparsers(sc_subparsers: argparse._SubParsersAction[argparse.ArgumentParser]) -> None:

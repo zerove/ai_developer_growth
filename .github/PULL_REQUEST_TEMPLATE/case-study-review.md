@@ -60,7 +60,7 @@ assignees: ""
 
 ```bash
 # 1. 验证链接有效性
-python tools/scripts/link_auditor.py case-studies/<case-name>/
+python -m tools.scripts.link_auditor case-studies/<case-name>/
 
 # 2. 验证效率数据一致性
 # 人工检查表格计算
@@ -69,7 +69,7 @@ python tools/scripts/link_auditor.py case-studies/<case-name>/
 cd case-studies/<case-name>/ && python -m pytest tests/ -v
 
 # 3. 验证链接
-python tools/scripts/link_auditor.py case-studies/<case-name>/README.md
+python -m tools.scripts.link_auditor case-studies/<case-name>/README.md
 ```
 
 ---

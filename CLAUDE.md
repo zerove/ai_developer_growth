@@ -68,19 +68,19 @@ mypy tools/scripts/ ai-dev-framework/src --ignore-missing-imports
 pytest tests/ -v
 
 # 链接审计
-python tools/scripts/link_auditor.py .
+python -m tools.scripts.link_auditor .
 
 # 案例验证
-python tools/scripts/validate_case_study.py --all
+python -m tools.scripts.validate_case_study --all
 
 # 治理审计
-python tools/scripts/audit_to_pr.py --check-all
+python -m tools.scripts.audit_to_pr --check-all
 
 # 工具矩阵更新
-python tools/scripts/update_ai_tool_matrix.py --check
+python -m tools.scripts.update_ai_tool_matrix --check
 
 # 贡献者仪表板
-python tools/scripts/contributor_dashboard.py --format markdown
+python -m tools.scripts.contributor_dashboard --format markdown
 ```
 
 ## 质量门禁 (GOVERNANCE.md)

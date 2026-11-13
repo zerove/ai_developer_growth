@@ -36,7 +36,7 @@ Closes #<issue_number>
 
 - [ ] **内容准确性**: 信息经验证，引用可靠来源
 - [ ] **术语一致性**: 与 UBIQUITOUS_LANGUAGE.md 对齐
-- [ ] **链接有效性**: 运行 `python tools/scripts/link_auditor.py docs/<category>/<filename>.md` 通过
+- [ ] **链接有效性**: 运行 `python -m tools.scripts.link_auditor docs/<category>/<filename>.md` 通过
 - [ ] **格式规范**: 标题层级、表格对齐、代码块标注语言
 - [ ] **案例支撑**: 新增内容有真实案例或权威来源支撑
 - [ ] **学习路径**: 如影响学习路径，已同步更新 MOC.md/INDEX.md
@@ -47,13 +47,13 @@ Closes #<issue_number>
 
 ```bash
 # 1. 链接检查
-python tools/scripts/link_auditor.py docs/<category>/<filename>.md
+python -m tools.scripts.link_auditor docs/<category>/<filename>.md
 
 # 2. 术语一致性检查
-python tools/scripts/check_ubiquitous_language.py
+python -m tools.scripts.check_ubiquitous_language
 
 # 3. 文档结构检查
-python tools/scripts/validate_case_study.py --path docs/<category>/<filename>.md
+python -m tools.scripts.validate_case_study --path docs/<category>/<filename>.md
 ```
 
 ---

@@ -144,7 +144,7 @@ python -c "import yaml; yaml.safe_load(open('path/to/anti_patterns.yml'))"
 adg scan path/to/test/file.<ext>
 
 # 验证文档格式（如果适用）
-python tools/scripts/validate_language_rules.py
+python -m tools.scripts.validate_language_rules
 ```
 
 ---

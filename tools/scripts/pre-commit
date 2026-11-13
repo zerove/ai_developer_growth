@@ -7,4 +7,4 @@
 set -e
 
 echo "Running pre-commit checks..."
-python tools/scripts/hooks_runner.py pre-commit
+python -m tools.scripts.hooks_runner pre-commit

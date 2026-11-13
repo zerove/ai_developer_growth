@@ -2,7 +2,7 @@
 
 # 必须安装项目自身（可编辑模式），否则 `tools` 不在 sys.path 上。
 # 影响面：所有按路径调用的入口（pre-commit 的 3 个 hooks_runner 钩子、
-# scripts/local_ci.sh、registry.json、以及文档里给出的 `python tools/scripts/xxx.py`
+# scripts/local_ci.sh、registry.json、以及文档里给出的 `python -m tools.scripts.xxx`
 # 写法）会以 ModuleNotFoundError: No module named 'tools' 失败；
 # pyproject 的 console_scripts（adg / jcode-cli / validate-language-rules）
 # 也只有在安装后才存在。

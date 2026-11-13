@@ -4,7 +4,7 @@
 >
 > 该索引由 `tools/scripts/generate_adr_index.py` 从 `docs/adr/ADR-*.md`
 > 自动生成，提交时由 pre-commit 钩子 `validate-adr-index` 校验一致性
-> （`python tools/scripts/generate_adr_index.py --check`）。
+> （`python -m tools.scripts.generate_adr_index --check`）。
 >
 > 本文件此前手工维护了一份重复的索引表，并自 2026-10-02（ADR-061）后
 > 再未更新，累积缺失 ADR-062 至 ADR-078 共 17 条记录。手工表必然持续

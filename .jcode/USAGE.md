@@ -277,5 +277,5 @@ python .jcode/scripts/workflow-optimizer.py report
 3. **依赖缺失**: 运行 `pip install -r requirements.txt`
 4. **Lint 错误**: 运行 `ruff check --fix .` 自动修复
 5. **格式错误**: 运行 `ruff format .` 自动格式化
-6python tools/scripts/check_ai_annotation.py --fix`
-7**: 检查命名是否符合 kebab-case 规范
+6. **AI 注解缺失**: 运行 `python -m tools.scripts.check_ai_annotation --fix`
+7. **命名规范**: 检查命名是否符合 kebab-case 规范

@@ -134,3 +134,40 @@ def _has_pkg_import(src: str) -> bool:
     刻意只看行首 —— 缩进的 import 位于函数/条件块内, 不参与启动期解析。
     """
     return any(line.startswith(("from tools.", "from tools ", "import tools.")) for line in src.splitlines())
+
+
+def test_pkg_importing_scripts_without_argparse_bootstrap_on_import() -> None:
+    """兜底(无 CLI 快速路径): 无 argparse 但含 `tools.*` 包导入的脚本也必须可自举。
+
+    判据: 以脚本路径做 import-only 执行（`run_name != "__main__"`），不触发
+    `if __name__ == "__main__"` 主逻辑，但会执行模块顶层代码与包导入。
+    若缺少仓库根自举，会直接报 `No module named 'tools'`。
+    """
+    failures = []
+    for candidate in sorted(SCRIPTS_DIR.glob("*.py")):
+        name = candidate.name
+        if name.startswith("_") or name in set(BOOTSTRAP_REQUIRED):
+            continue
+        try:
+            src = candidate.read_text(encoding="utf-8")
+        except (OSError, UnicodeDecodeError):
+            continue
+        if not _has_pkg_import(src) or "argparse" in src:
+            continue
+        proc = subprocess.run(  # noqa: S603
+            [
+                sys.executable,
+                "-c",
+                (f"import runpy,sys; runpy.run_path({str(candidate)!r}, run_name='__bootstrap_check__')"),
+            ],
+            capture_output=True,
+            text=True,
+            cwd=REPO_ROOT,
+            timeout=60,
+            check=False,
+        )
+        if "No module named 'tools'" in (proc.stderr + proc.stdout) or (
+            proc.returncode != 0 and "ModuleNotFoundError" in proc.stderr and "tools" in proc.stderr
+        ):
+            failures.append(f"{name}: {proc.stderr.strip().splitlines()[-1:]}")
+    assert not failures, "以下无 argparse 且含 tools.* 导入的脚本无法以脚本路径完成顶层自举:\n" + "\n".join(failures)

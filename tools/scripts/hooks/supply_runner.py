@@ -245,6 +245,11 @@ def _print_scan_text(project_root: Path, result: ScanResult) -> None:
     print(f"    Low:      {result.summary['low']}")
     print(f"  许可证问题: {result.summary['license_issues']}")
     print(f"  待复核许可证: {result.summary.get('license_review', 0)}")
+    unreachable = result.summary.get("license_review_unreachable", 0)
+    unknown = result.summary.get("license_review_unknown", 0)
+    if unreachable or unknown:
+        print(f"    其中 PyPI 元数据不可达: {unreachable}")
+        print(f"    许可证未声明/未知: {unknown}")
 
     if result.vulnerabilities:
         print("\n📋 漏洞详情:")
@@ -363,6 +368,31 @@ def _resolve_licenses(scanner: SupplyChainScanner, result: ScanResult, client: P
             continue
         dep.license = client.license_of(dep.name)
     result.license_issues, result.license_review = scanner.license_checker.evaluate_dependencies(result.dependencies)
+    _attribute_license_review(result, client)
+
+
+def _attribute_license_review(result: ScanResult, client: PyPIMetadataClient) -> None:
+    """按成因归因许可证待复核项, 写入摘要显式统计 (盘点可观测性)。
+
+    license_review 混合三种成因: copyleft (已知许可证需人工评估)、PyPI 元数据
+    不可达 (网络抖动, 重试可能消失)、许可证确实未声明/未知 (PyPI 可达但拿不到,
+    或包不存在)。摘要只显式区分后两者 (许可证仍为 None 的部分), 归因依据与
+    _verify_one_dependency 相同的判别式: metadata 为 None 且非 404 → 不可达。
+
+    Args:
+        result: 扫描结果 (原地更新 summary)
+        client: PyPI 元数据客户端 (进程内缓存, 元数据查询已预热)
+    """
+    unreachable = unknown = 0
+    for dep in result.dependencies:
+        if dep.license or dep.ecosystem != "pypi":
+            continue
+        if client.metadata(dep.name) is None and not client.package_missing(dep.name):
+            unreachable += 1
+        else:
+            unknown += 1
+    result.summary["license_review_unreachable"] = unreachable
+    result.summary["license_review_unknown"] = unknown
 
 
 def _run_compliance_checks(project_root: Path, result: ScanResult) -> dict[str, Any]:
@@ -407,6 +437,16 @@ def _print_compliance_text(project_root: Path, compliance: dict[str, Any]) -> No
     print(f"  Status: {'✅ PASSED' if compliance['passed'] else '❌ FAILED'}")
     print(f"  Violations: {len(compliance['violations'])}")
     print(f"  Warnings: {len(compliance['warnings'])}")
+
+    summary = compliance.get("summary", {})
+    review = summary.get("license_review", 0)
+    if review:
+        print(f"  待复核许可证 (license_review): {review}")
+        unreachable = summary.get("license_review_unreachable", 0)
+        unknown = summary.get("license_review_unknown", 0)
+        if unreachable or unknown:
+            print(f"    其中 PyPI 元数据不可达: {unreachable}")
+            print(f"    许可证未声明/未知: {unknown}")
 
     if compliance["violations"]:
         print("\n❌ Violations:")

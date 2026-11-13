@@ -52,7 +52,7 @@ jobs:
 
       - name: Stats drift check (README vs update_stats)
         # P2.6: README 统计表与 update_stats 实际计数漂移即失败，不放行
-        run: python tools/scripts/update_stats.py --check
+        run: python -m tools.scripts.update_stats --check
 
       # 以下门禁一律不得加 `|| true`：那正是 scheduled-governance 的失效模式
       # ——失败被吞掉，作业显示绿色，问题永远不暴露。
@@ -63,15 +63,18 @@ jobs:
       - name: Governance docs index references
         run: python .jcode/scripts/governance-docs-validator.py check-index
 
+      - name: Context docs validation (CONTEXT.md/ADR.md)
+        run: python .jcode/scripts/context-sync.py validate --context-file CONTEXT.md --adr-file ADR.md
+
       - name: Broken links
-        run: python tools/scripts/link_auditor.py . --check-all
+        run: python -m tools.scripts.link_auditor . --check-all
 
       - name: Doc code refs
         # D-02: 正文中仓库代码路径引用必须真实存在（不只校验 markdown 链接可达）
-        run: python tools/scripts/check_doc_code_refs.py
+        run: python -m tools.scripts.check_doc_code_refs
 
       - name: Case study format
-        run: python tools/scripts/validate_case_study.py --all --strict
+        run: python -m tools.scripts.validate_case_study --all --strict
 
       - name: Tool matrix consistency
         run: python -m tools.scripts.update_ai_tool_matrix --check

@@ -161,6 +161,15 @@ jobs:
           echo "- 输入例外条数: $EXC_COUNT"
           echo "- 许可证待复核(license_review/REVIEW)计数: $REVIEW_COUNT"
           echo "- 违规总数: $VIOLATIONS"
+          if [ "$POLICY_COUNT" = "0" ]; then
+            echo "- ⚠️ 未加载任何策略文件：请确认 policy-dir 与仓库跟踪状态（规则可能未生效）"
+          fi
+          if [ "$VIOLATIONS" = "0" ]; then
+            echo "- 提示: 0 违规不等同于规则已生效，请结合策略文件数与各规则命中分布判断"
+          fi
+          if [ "$EXC_COUNT" = "0" ]; then
+            echo "- 提示: 输入例外为 0（无豁免）；如预期存在豁免请检查 exception list 来源"
+          fi
           echo "- 按规则命中计数:"
           if [ -f policy-results.json ]; then
             jq -r '

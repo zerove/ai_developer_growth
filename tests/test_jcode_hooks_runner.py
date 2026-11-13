@@ -242,18 +242,35 @@ class TestRunEventHooks:
         hr.run_event_hooks("on_merge", None)
         assert _git_calls(run) == [], f"非 on_commit 事件不应触发 git: {_git_calls(run)}"
 
-    def test_auto_stage_runs_git_add_on_commit(self, isolated, tmp_path: Path) -> None:
+    def test_auto_stage_runs_git_add_for_baseline_on_commit(self, isolated, tmp_path: Path) -> None:
+        """提交钩子不得自动暂存 CONTEXT.md/ADR.md，但应暂存被钩子合法更新的 baseline。"""
         hr, run = isolated
-        (tmp_path / "CONTEXT.md").write_text("x", encoding="utf-8")
+        baseline = tmp_path / ".jcode" / "baseline.json"
+        baseline.parent.mkdir(parents=True, exist_ok=True)
+        baseline.write_text("{}", encoding="utf-8")
         run.side_effect = [
-            MagicMock(returncode=0, stdout="", stderr=""),
-            MagicMock(returncode=1, stdout="", stderr=""),
-            MagicMock(returncode=1, stdout="", stderr=""),
-            MagicMock(returncode=0, stdout="", stderr=""),
+            MagicMock(returncode=0, stdout="", stderr=""),  # hook command
+            MagicMock(returncode=1, stdout="", stderr=""),  # git diff --quiet baseline (modified)
+            MagicMock(returncode=0, stdout="", stderr=""),  # git add baseline
         ]
         _write_config(hr.get_project_root(), {"on_commit": [{"name": "a", "command": "x"}]})
         hr.run_event_hooks("on_commit", None)
-        assert any(c[:2] == ["git", "add"] for c in _git_calls(run)), _git_calls(run)
+        git_calls = _git_calls(run)
+        assert any(c[:2] == ["git", "add"] for c in git_calls), git_calls
+        add_calls = [c for c in git_calls if c[:2] == ["git", "add"]]
+        staged = " ".join(" ".join(c) for c in add_calls)
+        assert ".jcode/baseline.json" in staged
+        assert "CONTEXT.md" not in staged and "ADR.md" not in staged
+
+    def test_no_auto_stage_for_context_docs_on_commit(self, isolated, tmp_path: Path) -> None:
+        """CONTEXT.md/ADR.md 由显式同步维护，提交钩子不应静默暂存其改动。"""
+        hr, run = isolated
+        (tmp_path / "CONTEXT.md").write_text("x", encoding="utf-8")
+        (tmp_path / "ADR.md").write_text("x", encoding="utf-8")
+        run.side_effect = [MagicMock(returncode=0, stdout="", stderr="")]
+        _write_config(hr.get_project_root(), {"on_commit": [{"name": "a", "command": "x"}]})
+        hr.run_event_hooks("on_commit", None)
+        assert _git_calls(run) == [], f"CONTEXT/ADR 不应触发 git 暂存: {_git_calls(run)}"
 
 
 # ── load_hooks_config ───────────────────────────────────────────────

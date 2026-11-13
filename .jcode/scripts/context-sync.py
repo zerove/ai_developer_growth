@@ -320,23 +320,21 @@ class ContextSyncManager:
         self.tester = TestRunner(timeout=self.config.test_timeout)
         self.evolution = SpecificationEvolution()
 
-    def sync_context(self, project_root: str = ".") -> int:
-        """同步上下文：分析 Git 变更 -> 更新 CONTEXT.md"""
-        print_section("上下文同步")
+    def sync_context(self, project_root: str = ".", *, check_only: bool = False) -> int:
+        """同步上下文：分析 Git 变更 -> 更新 CONTEXT.md。
 
+        Args:
+            project_root: 项目根目录。
+            check_only: 仅分析/校验，不改写 CONTEXT.md/ADR.md（提交钩子等无副作用场景）。
+
+        Returns:
+            退出码，0 表示成功。
+        """
+        print_section("上下文同步")
         root = Path(project_root).resolve()
         print_check(f"项目根目录: {root}", True)
+        no_write = self._report_sync_mode(check_only)
 
-        # CI 模式: **不改写仓库文件**。
-        # 同步产物带生成时间戳, 每次内容都不同 → CI 里"是否已同步"无法判定;
-        # 而 pre-commit 的 jcode-on-commit 钩子在 CI 中改写文件会被判为
-        # "files were modified by this hook" → 永久性假失败。
-        # 同步是**开发者本地**提交钩子的职责, CI 只校验不改写。
-        if os.environ.get("CI", "").strip().lower() in {"1", "true", "yes"}:
-            print_check("CI 模式: 跳过 CONTEXT.md/ADR.md 改写（同步由本地提交钩子负责）", True)
-            return 0
-
-        # 1. 获取最近变更
         changed_files = self.analyzer.get_changed_files(cwd=root)
         print_check(f"变更文件数: {len(changed_files)}", True)
         for f in changed_files[:10]:
@@ -344,29 +342,36 @@ class ContextSyncManager:
         if len(changed_files) > 10:
             print(f"  ... 共 {len(changed_files)} 个文件")
 
-        # 2. 获取 diff
         diff = self.analyzer.get_diff(cwd=root)
         print_check(f"Diff 大小: {len(diff)} 字符", True)
 
-        # 3. 读取当前 CONTEXT.md
         context_file = root / self.config.context_file
         current_context = context_file.read_text(encoding="utf-8") if context_file.exists() else ""
-
-        # 4. 合成更新（内嵌输出守卫: 摘要仅结构化信息，不含 diff 原文）
         updated_context = self.synthesizer.synthesize_context_update(
             diff, "Git 变更同步", current_context, max_update_entries=self.config.max_update_entries
         )
 
-        # 5. 写入 (diff 内容可能携带尾随空格, 统一清除避免与
-        #    pre-commit trailing-whitespace 钩子形成修改循环)
+        if no_write:
+            print_check(f"CONTEXT.md 将更新: {'是' if updated_context != current_context else '否'}（未写入）", True)
+            adr_file = root / self.config.adr_file
+            print_check(f"ADR.md 将创建初始文件: {'是' if not adr_file.exists() else '否'}（未写入）", True)
+            return 0
+
         cleaned = "\n".join(line.rstrip() for line in updated_context.splitlines())
         context_file.write_text(cleaned if cleaned.endswith("\n") else cleaned + "\n", encoding="utf-8")
         print_check(f"已更新: {context_file}", True)
-
-        # 6. 同步 ADR（如果有架构决策）
         self._sync_adr(root, diff)
-
         return 0
+
+    @staticmethod
+    def _report_sync_mode(check_only: bool) -> bool:
+        """输出同步模式并返回是否禁止写入。CI/检查模式均不改写仓库文件。"""
+        ci_mode = os.environ.get("CI", "").strip().lower() in {"1", "true", "yes"}
+        if ci_mode:
+            print_check("CI 模式: 跳过 CONTEXT.md/ADR.md 改写（同步由显式命令负责）", True)
+        elif check_only:
+            print_check("检查模式: 仅分析不同步，不改写 CONTEXT.md/ADR.md", True)
+        return check_only or ci_mode
 
     def _sync_adr(self, root: Path, diff: str) -> None:
         adr_file = root / self.config.adr_file
@@ -486,10 +491,10 @@ class ContextSyncManager:
 # ============================================================================
 
 
-def sync_context(project_root: str, context_file: str, adr_file: str) -> int:
+def sync_context(project_root: str, context_file: str, adr_file: str, *, check_only: bool = False) -> int:
     config = ContextConfig(context_file=context_file, adr_file=adr_file)
     manager = ContextSyncManager(config)
-    return manager.sync_context(project_root)
+    return manager.sync_context(project_root, check_only=check_only)
 
 
 def validate_context(context_file: str, adr_file: str) -> int:
@@ -519,6 +524,11 @@ def main() -> None:
     sync_parser.add_argument("--project-root", default=".", help="项目根目录 (默认: .)")
     sync_parser.add_argument("--context-file", default="CONTEXT.md", help="上下文文件 (默认: CONTEXT.md)")
     sync_parser.add_argument("--adr-file", default="ADR.md", help="ADR 文件 (默认: ADR.md)")
+    sync_parser.add_argument(
+        "--check",
+        action="store_true",
+        help="仅分析不写入文件（提交钩子/CI 等无副作用场景）",
+    )
 
     # validate 子命令
     validate_parser = subparsers.add_parser("validate", help="验证 CONTEXT.md 和 ADR.md 格式")
@@ -535,7 +545,7 @@ def main() -> None:
     args = parser.parse_args()
 
     if args.command == "sync":
-        sys.exit(sync_context(args.project_root, args.context_file, args.adr_file))
+        sys.exit(sync_context(args.project_root, args.context_file, args.adr_file, check_only=args.check))
     elif args.command == "validate":
         sys.exit(validate_context(args.context_file, args.adr_file))
     elif args.command == "audit":

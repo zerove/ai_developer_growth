@@ -184,11 +184,11 @@ def run_event_hooks(event: str, changed_files: list[str] | None = None) -> int:
         if not run_hook(hook, changed_files):
             failed += 1
 
-    # 钩子 (context-sync) 会更新自动维护的文档, 其内容含时间戳,
-    # 每次运行必然产生新差异; 若不回填暂存区, pre-commit 会因
-    # "files were modified by this hook" 无限失败。此处自动 stage。
+    # 提交钩子不得静默改写被跟踪的治理文档（CONTEXT.md/ADR.md）；如需同步请显式运行
+    # `python .jcode/scripts/context-sync.py sync --project-root .`。
+    # 质量门禁基线文件若被本地钩子合法更新，仍自动暂存以避免 pre-commit 循环失败。
     repo_root = get_project_root()
-    auto_stage = [f for f in ("CONTEXT.md", "ADR.md", ".jcode/baseline.json") if (repo_root / f).exists()]
+    auto_stage = [f for f in (".jcode/baseline.json",) if (repo_root / f).exists()]
     if auto_stage and event == "on_commit":
         result = subprocess.run(
             ["git", "diff", "--quiet", "--"] + auto_stage,

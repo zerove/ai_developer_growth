@@ -29,7 +29,8 @@
         "name": "context-sync",
         "skill": "context-sync",
         "action": "sync",
-        "description": "提交时同步上下文 (CONTEXT.md/ADR.md)",
+        "description": "提交时校验上下文同步状态（不改写 CONTEXT.md/ADR.md，显式同步请运行 sync 命令）",
+        "command": "python .jcode/scripts/context-sync.py sync --check --project-root .",
         "enabled": true
       },
       {

@@ -7,6 +7,7 @@ Outputs JSON baseline to .perf_baseline.json
 
 from __future__ import annotations
 
+import argparse
 import json
 import statistics
 import sys
@@ -108,43 +109,53 @@ def benchmark_rules_engine_parallel(iterations: int = 3) -> dict[str, Any]:
     }
 
 
-def main() -> int:
+def _run_all_benchmarks() -> list[dict[str, Any]]:
+    """执行全部基准并打印摘要，返回结果列表。"""
     print("=" * 60)
     print("  Performance Regression Benchmarks")
     print("=" * 60)
-
-    results = []
-
+    results: list[dict[str, Any]] = []
     print("\n[1/3] semantic_code_graph.build_graph()")
     results.append(benchmark_semantic_code_graph())
-
     print("\n[2/3] rules_engine.checker (serial, no cache)")
     results.append(benchmark_rules_engine())
-
     print("\n[3/3] rules_engine.checker (parallel + cache)")
     results.append(benchmark_rules_engine_parallel())
-
-    # Save baseline
-    baseline = {
-        "timestamp": time.strftime("%Y-%m-%d %H:%M:%S"),
-        "results": results,
-    }
-
-    baseline_path = Path(".perf_baseline.json")
-    baseline_path.write_text(json.dumps(baseline, indent=2))
-    print(f"\n✅ Baseline saved to {baseline_path}")
-
-    # Print summary
     print("\n" + "=" * 60)
     print("  SUMMARY")
     print("=" * 60)
     for r in results:
         print(f"  {r['module']}: {r['mean_sec']:.3f}s ± {r['stdev_sec']:.3f}s")
+    return results
 
+
+def main(argv: list[str] | None = None) -> int:
+    """运行性能回归基准并落盘基线。
+
+    Args:
+        argv: 命令行参数；为 None 时按空参数处理（便于测试/库调用）。
+            命令行入口传入 `sys.argv[1:]` 以支持 `--help` 快速退出。
+
+    Returns:
+        退出码，0 表示成功。
+    """
+    parser = argparse.ArgumentParser(description="运行核心模块性能回归基准并输出 .perf_baseline.json")
+    parser.add_argument(
+        "command",
+        nargs="?",
+        choices=["run"],
+        default="run",
+        help="执行基准（默认: run）",
+    )
+    parser.parse_args([] if argv is None else argv)
+
+    results = _run_all_benchmarks()
+    baseline = {"timestamp": time.strftime("%Y-%m-%d %H:%M:%S"), "results": results}
+    baseline_path = Path(".perf_baseline.json")
+    baseline_path.write_text(json.dumps(baseline, indent=2))
+    print(f"\n✅ Baseline saved to {baseline_path}")
     return 0
 
 
 if __name__ == "__main__":
-    import sys
-
-    sys.exit(main())
+    sys.exit(main(sys.argv[1:]))

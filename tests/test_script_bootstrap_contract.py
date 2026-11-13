@@ -55,11 +55,9 @@ BOOTSTRAP_REQUIRED = [
     "generate_fixes.py",
 ]
 
-# 刻意**不**列入清单的脚本（守卫用 `--help` 判定, 以下两类无法用该判据）:
-# - perf_benchmark.py：无 argparse, `--help` 会直接跑完整基准(实测 >100s 超时)。
-#   它确实需要自举, 但应由兜底测试 test_every_pkg_importing_script_bootstraps
-#   以"退出码 + stderr"覆盖, 而不是塞进这份依赖 `--help` 的清单。
-# - jcode_ai_native_workflow.py：同样无 `--help`, 同理由兜底测试覆盖。
+# 刻意**不**列入清单的脚本（守卫用 `--help` 判定，以下脚本无法用该判据）:
+# - jcode_ai_native_workflow.py：无 argparse/`--help` 快速退出路径，同理由兜底
+#   测试按能力覆盖（当前兜底跳过无 argparse 脚本，属已知覆盖缺口）。
 
 
 def _run_as_script(name: str) -> subprocess.CompletedProcess[str]:

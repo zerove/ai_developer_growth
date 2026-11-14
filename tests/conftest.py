@@ -13,6 +13,7 @@ Contains project-wide fixtures and FutureWarning suppression for tree-sitter.
 
 import contextlib
 import fcntl
+import multiprocessing
 import os
 import sys
 import tempfile
@@ -29,6 +30,17 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 # Suppress tree-sitter deprecation warnings project-wide
 warnings.filterwarnings("ignore", category=FutureWarning, module="tree_sitter")
+
+# Python 3.14 起 Linux 默认 start method 从 fork 改为 forkserver, forkserver
+# 子进程不继承父进程 monkeypatch, 导致依赖 fork 语义的并行等价性契约测试
+# (ADR-078 的 check_error 留痕 / worker-None 可观测) mock 失效: worker 拿到
+# 未被 patch 的真实 check_file, 并行/串行结果不再等价。显式固定为 fork,
+# 与 CI (Python 3.11) 的默认行为保持一致。
+try:
+    multiprocessing.set_start_method("fork", force=True)
+except RuntimeError:
+    # conftest 导入早于任何进程创建, 兜底防 "context already set"
+    pass
 
 
 @pytest.fixture(autouse=True)

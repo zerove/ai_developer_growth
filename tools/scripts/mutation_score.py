@@ -22,20 +22,32 @@ STATUS_SKIPPED = "skipped"
 TESTED_STATUSES = (STATUS_KILLED, STATUS_SURVIVED, STATUS_TIMEOUT)
 
 
-def read_status_counts(cache_path: Path) -> dict[str, int]:
+def read_status_counts(cache_path: Path, paths: tuple[str, ...] = ()) -> dict[str, int]:
     """读取 mutmut 缓存库里的变异体状态计数。
 
     Args:
         cache_path: mutmut 缓存库路径
+        paths: 只统计这些源文件的变异体 (空元组 = 全部)
 
     Returns:
         状态 → 数量; 缓存不存在或结构不符时返回空字典
     """
     if not cache_path.exists():
         return {}
+    query = "SELECT status, COUNT(*) FROM Mutant GROUP BY status"
+    params: tuple[str, ...] = ()
+    if paths:
+        query = (
+            "SELECT m.status, COUNT(*) FROM Mutant m "
+            "JOIN Line l ON l.id = m.line "
+            "JOIN SourceFile sf ON sf.id = l.sourcefile "
+            f"WHERE sf.filename IN ({', '.join('?' for _ in paths)}) "
+            "GROUP BY m.status"
+        )
+        params = paths
     connection = sqlite3.connect(str(cache_path))  # 连接在 finally 中释放
     try:
-        rows = connection.execute("SELECT status, COUNT(*) FROM Mutant GROUP BY status").fetchall()
+        rows = connection.execute(query, params).fetchall()
     except sqlite3.Error:
         return {}
     finally:
@@ -58,12 +70,13 @@ def kill_rate(counts: dict[str, int]) -> float:
     return counts.get(STATUS_KILLED, 0) / tested
 
 
-def format_summary(counts: dict[str, int], rate: float) -> str:
+def format_summary(counts: dict[str, int], rate: float, paths: tuple[str, ...] = ()) -> str:
     """把统计结果格式化成报告文本。
 
     Args:
         counts: 状态计数
         rate: 击杀率
+        paths: 计分范围 (空元组 = 全部源文件)
 
     Returns:
         多行文本
@@ -73,10 +86,11 @@ def format_summary(counts: dict[str, int], rate: float) -> str:
     timed_out = counts.get(STATUS_TIMEOUT, 0)
     suspicious = counts.get(STATUS_SUSPICIOUS, 0)
     skipped = counts.get(STATUS_SKIPPED, 0)
-    return "\n".join(
+    lines = ["", "=== 变异测试得分 ==="]
+    if paths:
+        lines.append(f"范围: {', '.join(paths)}")
+    lines.extend(
         [
-            "",
-            "=== 变异测试得分 ===",
             f"击杀 (ok_killed):        {killed}",
             f"存活 (bad_survived):     {survived}",
             f"超时 (bad_timeout):      {timed_out}",
@@ -85,6 +99,7 @@ def format_summary(counts: dict[str, int], rate: float) -> str:
             f"击杀率: {rate:.1%}",
         ]
     )
+    return "\n".join(lines)
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -99,12 +114,23 @@ def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description="统计 mutmut 变异击杀率并按阈值判定")
     parser.add_argument("--cache", type=Path, default=Path(".mutmut-cache"), help="mutmut 缓存库路径")
     parser.add_argument("--min-rate", type=float, default=0.6, help="最低击杀率 (0~1)")
+    parser.add_argument(
+        "--paths",
+        nargs="*",
+        default=[],
+        help="只统计指定源文件的变异体 (与 --paths-to-mutate 传同一字面量; 默认全部)",
+    )
     parser.add_argument("--report", type=Path, help="把统计结果追加到这个报告文件")
     args = parser.parse_args(argv)
 
-    counts = read_status_counts(args.cache)
+    scope = tuple(args.paths)
+    counts = read_status_counts(args.cache, scope)
+    if not counts and scope and args.cache.exists():
+        # 缓存在但目标没有已测变异体: 门禁必须失败, 防止"跑完就算过"的假绿
+        print(f"❌ 指定路径没有已测变异体: {', '.join(scope)}")
+        return 1
     rate = kill_rate(counts)
-    summary = format_summary(counts, rate)
+    summary = format_summary(counts, rate, scope)
     print(summary)
 
     if args.report:

@@ -18,7 +18,7 @@ jobs:
   mutation-testing:
     name: Mutation Testing (mutmut)
     runs-on: ubuntu-latest
-    timeout-minutes: 90
+    timeout-minutes: 120
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -57,23 +57,58 @@ jobs:
             --CI \
             --no-progress
 
+      # 扩面 2: license_review 复核流核心路径 (supply_runner)。
+      # runner 限定为该路径的专属契约测试 (归因/台账/diff/ratchet/allowlist/处置流转),
+      # 与上方 pypi 目标共用同一个 WAL 缓存库 (mutmut 按源文件区分, 互不串扰)。
+      - name: Run mutation testing (supply_runner)
+        run: |
+          timeout 3000 mutmut run \
+            --paths-to-mutate tools/scripts/hooks/supply_runner.py \
+            --runner "python -m pytest tests/test_supply_license_review.py tests/test_supply_license_review_flow.py tests/test_supply_runner_round2.py tests/test_supply_chain_compliance_policy.py -x -q -p no:cacheprovider" \
+            --CI \
+            --no-progress
+
       - name: Generate mutation report
         run: |
           mutmut results > mutation-report.txt
           cat mutation-report.txt
 
+      - name: Generate supply runner mutation report
+        run: |
+          # results 只列出未击杀变异体; 按目标文件过滤, 避免混入 pypi 目标结论。
+          # grep 无匹配 (全部击杀) 时报告为空, 由得分门禁按缓存计数兜底判定。
+          mutmut results | grep "supply_runner" > mutation-supply-report.txt || true
+          cat mutation-supply-report.txt
+
       # 变异存活体本身不阻断夜间作业 (--CI), 但"跑完就算过"是假绿:
       # 这里用击杀率阈值兜底 —— 击杀率掉下去说明测试对被测代码失去判别力。
+      # --paths: 只统计对应目标的变异体, 两个目标共用缓存时不能混合计分。
       - name: Check mutation score
         run: |
           python -m tools.scripts.mutation_score \
             --cache .mutmut-cache \
+            --paths tools/scripts/_sc_pypi.py \
             --min-rate 0.6 \
             --report mutation-report.txt
+
+      - name: Check mutation score (supply_runner)
+        run: |
+          python -m tools.scripts.mutation_score \
+            --cache .mutmut-cache \
+            --paths tools/scripts/hooks/supply_runner.py \
+            --min-rate 0.5 \
+            --report mutation-supply-report.txt
 
       - name: Upload mutation report
         uses: actions/upload-artifact@v4
         with:
           name: mutation-report
           path: mutation-report.txt
+          retention-days: 30
+
+      - name: Upload supply runner mutation report
+        uses: actions/upload-artifact@v4
+        with:
+          name: mutation-supply-report
+          path: mutation-supply-report.txt
           retention-days: 30

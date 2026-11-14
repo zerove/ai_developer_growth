@@ -87,3 +87,41 @@ def test_workflow_has_timeout_guard() -> None:
     job = data["jobs"]["mutation-testing"]
     assert job.get("timeout-minutes"), "作业缺少超时兜底"
     assert "timeout " in _script("Run mutation testing"), "缺少 shell 级超时"
+
+
+def test_supply_runner_run_is_scoped_to_dedicated_tests() -> None:
+    """supply_runner 变异必须限定范围并用该路径的专属契约测试做 runner。"""
+    script = _script("Run mutation testing (supply_runner)")
+    assert "--paths-to-mutate tools/scripts/hooks/supply_runner.py" in script
+    assert "--max-runtime" not in script, "mutmut 2.x 不支持 --max-runtime"
+    for test_file in (
+        "tests/test_supply_license_review.py",
+        "tests/test_supply_license_review_flow.py",
+        "tests/test_supply_runner_round2.py",
+        "tests/test_supply_chain_compliance_policy.py",
+    ):
+        assert test_file in script, f"runner 缺少专属测试: {test_file}"
+    assert "timeout " in script, "supply_runner 变异缺少 shell 级超时"
+
+
+def test_score_gates_are_per_target() -> None:
+    """两个目标的得分门禁必须按源文件过滤, 共用缓存时不能混合计分。"""
+    pypi = _script("Check mutation score")
+    assert "mutation_score" in pypi
+    assert "--min-rate" in pypi
+    assert "--paths tools/scripts/_sc_pypi.py" in pypi
+    supply = _script("Check mutation score (supply_runner)")
+    assert "mutation_score" in supply
+    assert "--paths tools/scripts/hooks/supply_runner.py" in supply
+    assert "--min-rate" in supply
+
+
+def test_supply_runner_report_is_uploaded() -> None:
+    """supply_runner 的未击杀变异体必须进独立报告 (artifact)。"""
+    report = _script("Generate supply runner mutation report")
+    assert "mutmut results" in report
+    assert "--show-all" not in report, "mutmut 2.x 的 results 没有 --show-all"
+    assert "mutation-supply-report.txt" in report
+    upload = [s for s in _steps() if s.get("name") == "Upload supply runner mutation report"]
+    assert upload, "缺少 supply_runner 变异报告上传步骤"
+    assert upload[0]["with"]["path"] == "mutation-supply-report.txt"

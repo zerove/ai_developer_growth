@@ -31,6 +31,50 @@ def _make_cache(path: Path, rows: list[tuple[str, int]]) -> Path:
     return path
 
 
+def _make_scoped_cache(path: Path, files: dict[str, list[tuple[str, int]]]) -> Path:
+    """构建带 SourceFile/Line 关联的 mutmut 缓存库。
+
+    Args:
+        path: 缓存库路径
+        files: 源文件名 → [(status, count), ...]
+
+    Returns:
+        缓存库路径
+    """
+    connection = sqlite3.connect(str(path))
+    connection.execute(
+        'CREATE TABLE "SourceFile" ('
+        '"id" INTEGER PRIMARY KEY AUTOINCREMENT, "filename" TEXT NOT NULL, "hash" TEXT NOT NULL)'
+    )
+    connection.execute(
+        'CREATE TABLE "Line" ('
+        '"id" INTEGER PRIMARY KEY AUTOINCREMENT, '
+        '"sourcefile" INTEGER NOT NULL REFERENCES "SourceFile" ("id") ON DELETE CASCADE, '
+        '"line" TEXT NOT NULL, "line_number" INTEGER NOT NULL)'
+    )
+    connection.execute(
+        'CREATE TABLE "Mutant" ('
+        '"id" INTEGER PRIMARY KEY AUTOINCREMENT, '
+        '"line" INTEGER NOT NULL REFERENCES "Line" ("id") ON DELETE CASCADE, '
+        '"index" INTEGER NOT NULL, "tested_against_hash" TEXT NOT NULL, "status" TEXT NOT NULL)'
+    )
+    for filename, rows in files.items():
+        cursor = connection.execute("INSERT INTO SourceFile (filename, hash) VALUES (?, ?)", (filename, "h"))
+        sourcefile_id = int(cursor.lastrowid)
+        for status, count in rows:
+            for _ in range(count):
+                line_cursor = connection.execute(
+                    "INSERT INTO Line (sourcefile, line, line_number) VALUES (?, ?, ?)", (sourcefile_id, "x = 1", 1)
+                )
+                connection.execute(
+                    "INSERT INTO Mutant (line, \"index\", tested_against_hash, status) VALUES (?, 0, '', ?)",
+                    (line_cursor.lastrowid, status),
+                )
+    connection.commit()
+    connection.close()
+    return path
+
+
 class TestReadStatusCounts:
     def test_missing_cache_returns_empty(self, tmp_path: Path) -> None:
         assert read_status_counts(tmp_path / "nope.cache") == {}
@@ -68,6 +112,49 @@ class TestKillRate:
 
     def test_timeout_counts_as_tested(self) -> None:
         assert kill_rate({STATUS_KILLED: 1, STATUS_TIMEOUT: 1}) == 0.5
+
+
+class TestReadStatusCountsPaths:
+    """--paths 按源文件过滤计分 (多目标共用缓存时按目标门禁)。"""
+
+    def test_filter_by_source_file(self, tmp_path: Path) -> None:
+        cache = _make_scoped_cache(
+            tmp_path / "cache",
+            {
+                "tools/scripts/_sc_pypi.py": [(STATUS_KILLED, 2)],
+                "tools/scripts/hooks/supply_runner.py": [(STATUS_SURVIVED, 3)],
+            },
+        )
+        assert read_status_counts(cache, ("tools/scripts/_sc_pypi.py",)) == {STATUS_KILLED: 2}
+        assert read_status_counts(cache, ("tools/scripts/hooks/supply_runner.py",)) == {STATUS_SURVIVED: 3}
+        assert read_status_counts(cache) == {STATUS_KILLED: 2, STATUS_SURVIVED: 3}
+
+    def test_unknown_path_returns_empty(self, tmp_path: Path) -> None:
+        cache = _make_scoped_cache(tmp_path / "cache", {"a.py": [(STATUS_KILLED, 1)]})
+        assert read_status_counts(cache, ("b.py",)) == {}
+
+
+class TestMainPathScope:
+    """main 的 --paths 语义: 范围内无已测变异体必须失败。"""
+
+    def test_empty_scope_fails(self, tmp_path: Path) -> None:
+        cache = _make_scoped_cache(tmp_path / "cache", {"a.py": [(STATUS_KILLED, 4)]})
+        assert main(["--cache", str(cache), "--paths", "b.py"]) == 1
+
+    def test_scoped_rate_passes(self, tmp_path: Path) -> None:
+        cache = _make_scoped_cache(
+            tmp_path / "cache",
+            {"a.py": [(STATUS_SURVIVED, 1)], "b.py": [(STATUS_KILLED, 3)]},
+        )
+        assert main(["--cache", str(cache), "--paths", "b.py", "--min-rate", "0.6"]) == 0
+
+    def test_scoped_rate_fails(self, tmp_path: Path) -> None:
+        cache = _make_scoped_cache(tmp_path / "cache", {"b.py": [(STATUS_SURVIVED, 3), (STATUS_KILLED, 2)]})
+        assert main(["--cache", str(cache), "--paths", "b.py", "--min-rate", "0.6"]) == 1
+
+    def test_summary_includes_scope(self) -> None:
+        text = format_summary({STATUS_KILLED: 3}, 1.0, ("b.py",))
+        assert "范围: b.py" in text
 
 
 class TestMain:

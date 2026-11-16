@@ -114,7 +114,7 @@ jobs:
       - name: Install dependencies
         run: pip install -e . pyyaml
 
-      # 实测 0 error / 1529 warning 时 exit 0；原先 || true + continue-on-error
+      # 实测 0 error / 1696 warning 时 exit 0；原先 || true + continue-on-error
       # 双重吞掉结果，等于没有门禁。warning 不影响退出码，只有 error 才会失败。
       - name: Run full validation
         id: validate

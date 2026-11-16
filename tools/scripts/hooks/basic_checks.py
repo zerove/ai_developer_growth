@@ -380,12 +380,16 @@ def run_security() -> tuple[bool, str]:
     )
     results.append(("bandit", bandit_passed, bandit_out))
 
-    # pip-audit
+    # pip-audit: `|| true` 可选降级（与 doctor 声明及 test_gate_hardening 约定一致；
+    # 缺失时跳过而非失败。CI 安装 pip-audit，故不影响远端判别力。）
     audit_passed, audit_out = _run_subprocess(
         ["pip-audit", "--desc", "--timeout", "30"],
         timeout=120,
         description="pip-audit",
     )
+    if not audit_passed and "command not found" in audit_out:
+        audit_passed = True
+        audit_out += "\n(pip-audit 未安装，按 || true 降级跳过)"
     results.append(("pip-audit", audit_passed, audit_out))
 
     # 内置 secret 扫描

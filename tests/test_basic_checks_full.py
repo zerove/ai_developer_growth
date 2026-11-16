@@ -237,6 +237,18 @@ class TestRunSecurity:
         assert passed is False
         assert "audit failed" in output
 
+    @patch("tools.scripts.hooks.basic_checks._run_subprocess")
+    def test_run_security_audit_missing_degrades(self, mock_run):
+        """pip-audit 未安装时按 || true 降级跳过，security 门禁不因此失败。"""
+        mock_run.side_effect = [
+            (True, "bandit output"),
+            (False, "pip-audit: command not found: pip-audit"),
+        ]
+        passed, output = run_security()
+        assert passed is True
+        assert "降级跳过" in output
+        assert mock_run.call_count == 2
+
 
 class TestRunLintFiles:
     """Tests for run_lint_files function."""

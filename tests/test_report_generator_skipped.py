@@ -11,13 +11,27 @@ import json
 import tempfile
 from pathlib import Path
 
+import pytest
+
 from tools.scripts.report_generator import (
     _build_json_summary,
     generate_html_report,
     generate_junit_xml,
     generate_sarif,
 )
+from tools.scripts.rules_engine import context as _context
 from tools.scripts.rules_engine.checker import check_file
+
+
+@pytest.fixture(autouse=True)
+def _neutralize_file_roles(monkeypatch: pytest.MonkeyPatch) -> None:
+    """清空角色标记, 使本文件的临时文件不受 ambient TMPDIR 影响。
+
+    NamedTemporaryFile 落在含角色标记的目录时 (如 JCODE_SCRATCH_DIR=~/.jcode/scratch
+    命中 scratch/→prototype, -2 级), check_file 会把 invalid-syntax 的 error 降为
+    info, 使 failures 计数失真 (本测试断言 error 级语法错误计为 1 次 failure)。
+    """
+    monkeypatch.setattr(_context, "DEFAULT_MARKERS", {})
 
 
 def _real_check_setup():

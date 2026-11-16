@@ -47,7 +47,7 @@ Closes #
 
 ## 检查清单
 
-- [ ] 我已经阅读了 [CONTRIBUTING.md](CONTRIBUTING.md)
+- [ ] 我已经阅读了 [CONTRIBUTING.md](../CONTRIBUTING.md)
 - [ ] 我的更改遵循了项目的代码风格
 - [ ] 我已经添加了必要的文档
 - [ ] 我已经添加了测试用例（如适用）

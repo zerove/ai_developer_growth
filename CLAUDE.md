@@ -1,7 +1,7 @@
 # CLAUDE.md - AI Developer Growth Project
 
 ## 项目概览
-这是一个开源知识库，专注于 AI 时代开发者成长方法论。包含 391 篇文档、48 个真实案例研究、10 个代码示例、70 条 ADR 决策记录，以及 7 个核心治理 Agent。新增 15
+这是一个开源知识库，专注于 AI 时代开发者成长方法论。包含 412 篇文档、48 个实践案例、8 个代码示例、73 条 ADR 决策记录，以及 7 个核心治理 Agent。新增 15 个 jcode skills。
 
 ## 核心结构
 ```
@@ -10,16 +10,15 @@ ai_developer_growth/
 ├── GOVERNANCE.md          # 治理标准
 ├── CONTRIBUTING.md        # 贡献指南
 ├── ROADMAP.md             # 路线图
-├── INDEX.md               # 文档索引
 ├── UBIQUITOUS_LANGUAGE.md # 领域术语表
-├── agents/                # 4 个核心 Agent 定义
-├── case-studies/          # 48 个真实案例研究
-├── docs/                  # 391 篇文档
+├── agents/                # 7 个 Agent 定义
+├── docs/                  # 412 篇文档
+│   ├── case-studies/     # 48 个实践案例（MkDocs 构建）
 │   ├── efficiency/        # 效率相关
 │   ├── learning/          # 学习相关
 │   ├── tools/             # 工具相关
 │   └── ...
-├── examples/              # 10 个代码示例（可运行）
+├── examples/              # 8 个代码示例（可运行）
 │   ├── ai-context-sync/   # 上下文同步工具
 │   ├── multi-agent-orch/  # 多 Agent 编排
 │   ├── self-correction-loop/ # 自我修正循环
@@ -35,6 +34,10 @@ ai_developer_growth/
 2. **governance-auditor** - 治理审计员：代码质量、安全、治理合规自动化审计
 3. **workflow-optimizer** - 工作流优化师：效率数据分析、工作流优化、工具推荐
 4. **community-catalyst** - 社区催化剂：贡献流程管理、案例验证、激励机制
+5. **governance-docs-validator** - 治理文档验证器：治理层文档格式与索引校验
+6. **context-sync** - 上下文同步：CONTEXT.md/ADR.md 自动维护
+7. **multi-agent-orch** - 多 Agent 编排器：PM/Architect/Coder/Reviewer 协作
+（另有 self-correction-loop 自我修正循环，详见 AGENTS.md 索引）
 
 ## jcode Skills (已注册)
 本项目已注册 15 个 jcode skills，可通过斜杠命令调用：
@@ -49,7 +52,7 @@ ai_developer_growth/
 配置文件位于 `.jcode/` 目录：
 - `.jcode/PROJECT.md` - 项目配置
 - `.jcode/SWARM.md` - 多 Agent 协作配置
-- `.jcode/scripts/` - 4 个可执行脚本
+- `.jcode/scripts/` - 12 个可执行脚本
 
 ## 已实现参考 Agent (examples/)
 - **context-sync** - 自动维护 CONTEXT.md、ADR.md、项目状态同步

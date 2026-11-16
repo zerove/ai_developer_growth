@@ -65,7 +65,7 @@
 | 🧬 AI-Native 主管道 | 全生命周期研发自动化 | **12x** | [[docs/case-studies/jcode-ai-native-master-workflow-execution]] |
 | 🏛️ 治理自审计 | 用自己的药医自己 | **-85 问题** | [[docs/case-studies/governance-self-audit]] |
 
-**现状**: 48 个真实案例（另含 1 个社区贡献模板），覆盖不同规模和场景。目标是 35+，已超额完成。
+**现状**: 47 个真实案例（另含 1 个社区贡献模板，共 48 篇），覆盖不同规模和场景。目标是 35+，已超额完成。
 
 ---
 
@@ -169,7 +169,7 @@ python ai-dev-framework/src/ai_dev_framework/jcode_init.py your-project --langua
 | 📚 实践案例 | 48 个 |
 | 🛠️ 代码示例 | 10 个 |
 | 📋 架构决策 | 73 条 |
-| 🧪 测试用例 | 5965 个（`pytest --collect-only`） |
+| 🧪 测试用例 | 5974 个（`pytest --collect-only`） |
 | ✅ 测试覆盖率 | 87% |
 
 ### 🔌 自检：门禁是否还活着
@@ -211,14 +211,14 @@ GITHUB_TOKEN=<your_token> make ci-alert
 
 ```
 ai_developer_growth/
-├── docs/                    # 409 篇文档
+├── docs/                    # 412 篇文档
 │   ├── mindset/            # 认知升级
 │   ├── learning/           # 学习方法
 │   ├── efficiency/         # 工程效率
 │   ├── tools/              # 工具选型
 │   └── adr/                # 架构决策
 │   └── case-studies/        # 48 个实践案例（位于 docs/ 下以供 MkDocs 构建）
-├── examples/                # 10 个代码示例
+├── examples/                # 8 个代码示例
 ├── ai-dev-framework/        # 通用治理框架
 │   └── standards/          # 通用治理标准
 ├── tools/scripts/           # 自动化工具

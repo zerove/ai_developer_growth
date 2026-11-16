@@ -62,7 +62,7 @@ python -m tools.scripts.validate_case_study --path docs/<category>/<filename>.md
 
 | 修改前 | 修改后 |
 |--------|--------|
-| ![before](url) | ![after](url) |
+| （粘贴修改前截图） | （粘贴修改后截图） |
 
 ---
 

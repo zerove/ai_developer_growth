@@ -8,7 +8,7 @@ assignees: ''
 
 ## ⚠️ 提交前必读
 
-请仔细阅读 [贡献指南](CONTRIBUTING.md#1-案例提交-case-study) 中的案例提交要求。
+请仔细阅读 [贡献指南](../../CONTRIBUTING.md#1-案例提交-case-study) 中的案例提交要求。
 
 **自动验证会检查**：
 - ✅ 必填章节完整性

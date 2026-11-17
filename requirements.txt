@@ -1,36 +1,11 @@
-# Runtime dependencies
+# Runtime dependencies（与 pyproject.toml [project].dependencies 保持一致）
 # 注意: rules_engine/logger.py 无条件导入 loguru, 缺它会让 `adg`/rules_engine
 # 在全新环境直接 ImportError。pyproject.toml [project].dependencies 是运行时
 # 依赖的唯一权威源, 本文件必须与之保持一致。
 pyyaml>=6.0
 loguru>=0.7
 
-# search-server (scripts/search-server.py) runtime dependencies
-fastapi>=0.110
-uvicorn>=0.29
-jieba>=0.42
-
-# AST 深度分析（rules_engine/ast_parser.py）多语言支持
-tree-sitter>=0.23
-tree-sitter-python>=0.23
-tree-sitter-typescript>=0.23
-tree-sitter-javascript>=0.23
-tree-sitter-go>=0.23
-tree-sitter-rust>=0.23
-tree-sitter-java>=0.23
-tree-sitter-ruby>=0.23
-tree-sitter-php>=0.23
-tree-sitter-cpp>=0.23
-tree-sitter-c-sharp>=0.23
-tree-sitter-kotlin>=0.23
-tree-sitter-swift>=0.7
-
-# 核心运行时依赖是 stdlib + pyyaml + loguru; tree-sitter 系列是 AST 语义检查的
-# 多语言可选增强 (缺失时 ast_parser 会退化为纯正则检查, 见 pyproject.toml 注释)。
-
-# Dev/test dependencies (install with: pip install -r requirements.txt)
-pytest>=7.0
-pytest-cov>=4.0
-pytest-xdist>=3.0
-mypy>=1.0
-ruff>=0.1.0
+# 其余依赖按 extras 安装（pyproject.toml [project.optional-dependencies]）:
+#   pip install -e ".[search]"    # search-server (fastapi/uvicorn/jieba)
+#   pip install -e ".[dev-core]"  # 测试/lint 工具链
+#   pip install -e ".[dev-semantic]"  # AST 语义检查 tree-sitter 系列

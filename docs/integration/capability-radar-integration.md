@@ -56,7 +56,7 @@ updated: 2026-07-21
 ```markdown
 ## 新员工 Onboarding - 能力雷达基线建立
 
-新员工入职第一周需完成 [能力雷达自评](examples/capability-radar/README.md)，
+新员工入职第一周需完成 [能力雷达自评](../../examples/capability-radar/README.md)，
 建立个人能力基线。导师需在第一周内完成 1-on-1 复盘，
 基于雷达结果制定个性化成长计划。
 ```

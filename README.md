@@ -26,7 +26,7 @@
 
 ## 📚 知识地图
 
-完整索引见 [docs/MOC.md](docs/MOC.md)（409 篇文档）。
+完整索引见 [docs/MOC.md](docs/MOC.md)（415 篇文档）。
 
 ### 🧠 认知升级
 理解 AI 时代的游戏规则。
@@ -165,10 +165,10 @@ python ai-dev-framework/src/ai_dev_framework/jcode_init.py your-project --langua
 
 | 指标 | 数量 |
 |------|------|
-| 📄 核心文档 | 412 篇 |
+| 📄 核心文档 | 415 篇 |
 | 📚 实践案例 | 48 个 |
-| 🛠️ 代码示例 | 10 个 |
-| 📋 架构决策 | 73 条 |
+| 🛠️ 代码示例 | 8 个 |
+| 📋 架构决策 | 85 条 |
 | 🧪 测试用例 | 5975 个（`pytest --collect-only`） |
 
 ### 🔌 自检：门禁是否还活着
@@ -210,7 +210,7 @@ GITHUB_TOKEN=<your_token> make ci-alert
 
 ```
 ai_developer_growth/
-├── docs/                    # 412 篇文档
+├── docs/                    # 415 篇文档
 │   ├── mindset/            # 认知升级
 │   ├── learning/           # 学习方法
 │   ├── efficiency/         # 工程效率
@@ -239,7 +239,7 @@ ai_developer_growth/
 
 - **GOVERNANCE.md** - 完整的治理标准
 - **4 道质量门禁** - 确保代码质量
-- **多语言规范** - 规则引擎当前内置 25 种语言 (Python, TypeScript, Rust, Go...)
+- **多语言规范** - 规则引擎当前内置 26 种语言 (Python, TypeScript, Rust, Go...)
 - **9 种框架规范** - React, Vue, FastAPI, Spring Boot...
 
 详见 [[docs/agent-dev/quality-gates|质量门禁]]。

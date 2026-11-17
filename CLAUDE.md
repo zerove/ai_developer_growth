@@ -1,7 +1,7 @@
 # CLAUDE.md - AI Developer Growth Project
 
 ## 项目概览
-这是一个开源知识库，专注于 AI 时代开发者成长方法论。包含 412 篇文档、48 个实践案例、8 个代码示例、73 条 ADR 决策记录，以及 7 个核心治理 Agent。新增 15 个 jcode skills。
+这是一个开源知识库，专注于 AI 时代开发者成长方法论。包含 415 篇文档、48 个实践案例、8 个代码示例、85 条 ADR 决策记录，以及 7 个核心治理 Agent。新增 15 个 jcode skills。
 
 ## 核心结构
 ```
@@ -12,7 +12,7 @@ ai_developer_growth/
 ├── ROADMAP.md             # 路线图
 ├── UBIQUITOUS_LANGUAGE.md # 领域术语表
 ├── agents/                # 7 个 Agent 定义
-├── docs/                  # 412 篇文档
+├── docs/                  # 415 篇文档
 │   ├── case-studies/     # 48 个实践案例（MkDocs 构建）
 │   ├── efficiency/        # 效率相关
 │   ├── learning/          # 学习相关
@@ -52,7 +52,7 @@ ai_developer_growth/
 配置文件位于 `.jcode/` 目录：
 - `.jcode/PROJECT.md` - 项目配置
 - `.jcode/SWARM.md` - 多 Agent 协作配置
-- `.jcode/scripts/` - 12 个可执行脚本
+- `.jcode/scripts/` - 12 个脚本（11 个入口 + `_common.py` 公共库）
 
 ## 已实现参考 Agent (examples/)
 - **context-sync** - 自动维护 CONTEXT.md、ADR.md、项目状态同步
@@ -154,7 +154,7 @@ Agent 定义必须包含：
 - Git commit message 使用中文，如 `feat: 添加自动修复引擎`
 
 ## 注意事项
-- 所有文档使用 Wikilink 格式：`[[../docs/MOC|显示文本]]`
+- 所有文档使用 Wikilink 格式：`[[docs/MOC|显示文本]]`
 - 案例研究必须包含：背景/过程/对比/洞察/场景五要素 + 效率对比表
 - 新术语先在 `UBIQUITOUS_LANGUAGE.md` 定义
 - 禁止硬编码路径，使用相对路径或环境变量

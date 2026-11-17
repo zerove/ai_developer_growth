@@ -19,12 +19,12 @@ AI 时代开发者成长知识库 + 治理框架（knowledge base + governance f
 |---|---|
 | 版本 | v2.24.0（`pyproject.toml`） |
 | 语言 | Python 3.11+ 工具链 + Markdown 文档 |
-| 源码规模 | `tools/scripts` + `.jcode/scripts` 共 221 个 `.py` 文件 |
-| 测试规模 | **5936 collected**（`pytest --collect-only`，含 `ai-dev-framework/tests`）；最近本地/CI 口径随 README 统计同步（见 `README.md` 与 `.quality-trends/`） |
+| 源码规模 | `tools/scripts` + `.jcode/scripts` 共 232 个 `.py` 文件 |
+| 测试规模 | **5975 collected**（`pytest --collect-only`，含 `ai-dev-framework/tests`）；最近本地/CI 口径随 README 统计同步（见 `README.md` 与 `.quality-trends/`） |
 | 覆盖率 | CI/门禁统一口径 `--cov=tools --cov=.jcode/scripts`，阈值来自 `[tool.adg].cov_min/branch_cov_min`；最近全量实测 **87%**（2026-11-09） |
-| 类型检查 | mypy **246 source files** clean（`mypy tools .jcode ai-dev-framework/src`，遵循 `pyproject.toml`）；CI `jobs-type-check.yml` 同口径 |
+| 类型检查 | mypy **230 source files** clean（`mypy tools .jcode ai-dev-framework/src`，遵循 `pyproject.toml`）；CI `jobs-type-check.yml` 同口径 |
 | 代码风格 | ruff check + ruff format（`ruff==0.15.17` 锁定；`make check-all`/CI/门禁统一） |
-| ADR 累计 | 73 篇（`docs/adr/ADR-*.md`；ADR-001~007 于 `649a947` 归档缺失，ADR-006 为空号，ADR-040 为追补；最新至 ADR-082） |
+| ADR 累计 | 85 篇（`docs/adr/` 下 81 个 `ADR-*.md` + 4 个数字编号历史文件；ADR-001~004 已恢复，ADR-006 为空号，ADR-040 为追补；最新至 ADR-084） |
 
 ## 核心目录
 
@@ -292,60 +292,75 @@ AI 时代开发者成长知识库 + 治理框架（knowledge base + governance f
 
 ---
 
-## 更新记录: 2026-11-13 07:16:24
+## 更新记录: 2026-11-16 19:12:59
 
 ### 任务
 Git 变更同步
 
 ### 变更摘要
-- 变更文件 4 个 (+38 / -64 行)
-  - .jcode/exceptions.yaml
+- 变更文件 4 个 (+65 / -39 行)
+  - .jcode/baseline.json
   - CONTEXT.md
   - README.md
-  - tools/scripts/hooks/misc_runner.py
+  - tools/scripts/mutation_score.py
 
-## 更新记录: 2026-11-13 07:02:19
+## 更新记录: 2026-11-16 19:02:18
 
 ### 任务
 Git 变更同步
 
 ### 变更摘要
-- 变更文件 1 个 (+1 / -1 行)
+- 变更文件 3 个 (+60 / -25 行)
+  - CONTEXT.md
   - README.md
+  - tools/scripts/mutation_score.py
 
-## 更新记录: 2026-11-13 06:39:55
-
-### 任务
-Git 变更同步
-
-### 变更摘要
-- 变更文件 3 个 (+259 / -0 行)
-  - .gitignore
-  - .jcode/policies/governance.rego
-  - .jcode/policies/supply-chain-policy.yaml
-
-## 更新记录: 2026-11-13 06:39:55
+## 更新记录: 2026-11-16 08:29:53
 
 ### 任务
 Git 变更同步
 
 ### 变更摘要
-- 变更文件 3 个 (+259 / -0 行)
-  - .gitignore
-  - .jcode/policies/governance.rego
-  - .jcode/policies/supply-chain-policy.yaml
+- 变更文件 7 个 (+89 / -41 行)
+  - .github/workflows/language-rules.yml
+  - .jcode/baseline.json
+  - CONTEXT.md
+  - mkdocs.yml
+  - tests/test_basic_checks_full.py
+  - tools/scripts/hooks/basic_checks.py
+  - tools/scripts/mutation_score.py
 
-## 更新记录: 2026-11-12 18:09:47
+## 更新记录: 2026-11-16 08:23:35
 
 ### 任务
 Git 变更同步
 
 ### 变更摘要
-- 变更文件 5 个 (+59 / -20 行)
+- 变更文件 5 个 (+73 / -26 行)
+  - CONTEXT.md
+  - mkdocs.yml
+  - tests/test_basic_checks_full.py
+  - tools/scripts/hooks/basic_checks.py
+  - tools/scripts/mutation_score.py
+
+## 更新记录: 2026-11-16 07:59:27
+
+### 任务
+Git 变更同步
+
+### 变更摘要
+- 变更文件 12 个 (+94 / -347 行)
+  - .adg-hook.backup.log
+  - .github/ISSUE_TEMPLATE/case-study.md
+  - .github/PULL_REQUEST_TEMPLATE.md
+  - .github/PULL_REQUEST_TEMPLATE/methodology-improvement.md
   - .gitignore
-  - pyproject.toml
-  - tests/test_check_doc_code_refs.py
-  - tools/scripts/chaos_experiment_runner.py
-  - tools/scripts/hooks/domain_checks.py
+  - CLAUDE.md
+  - CONTEXT.md
+  - README.md
+  - tests/conftest.py
+  - tests/test_report_generator_skipped.py
+  - tools/scripts/mkdocs_incremental.py
+  - tools/scripts/mutation_score.py
 
 <!-- 滚动窗口: 已自动裁剪 1 条旧更新记录 -->

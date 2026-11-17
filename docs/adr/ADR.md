@@ -12,10 +12,9 @@ updated: 2026-09-17
 
 > 本文件汇总所有架构决策记录，按时间倒序排列。
 
-> ⚠️ **历史编号缺口**：ADR-001 ~ ADR-007 曾存在，但在 `649a947`（2026-07-28，标题为“全面优化 — 清理冗余”）中随文档整理一并删除，
-> 且未留下替代记录。其中 ADR-003（四道质量门禁系统设计）等内容仍有实质价值。
-> 下方表格只覆盖**当前磁盘上存在**的 ADR，因此从 ADR-010 开始。
-> 这不是生成器的缺陷，而是历史归档缺失 —— 详见 CHANGELOG 与 ROADMAP 的待办。
+> ⚠️ **历史编号说明**：ADR-001 ~ ADR-004 及变体 001b/002b 已于 2026-11 恢复（重命名归档文件后回归），
+> ADR-005/007/008/009 以数字编号保留；ADR-006 为历史空号（已删除未复用），ADR-040 为 2026-10-02 追补。
+> 下方表格覆盖当前磁盘上存在的全部 81 个 `ADR-*.md`，从 ADR-001 开始。
 
 ---
 
@@ -25,6 +24,8 @@ updated: 2026-09-17
 
 | ID | 标题 | 状态 | 日期 |
 |----|------|------|------|
+| [[ADR-084-config-toml-resilience|ADR-084]] | pyproject.toml 配置加载的链式调用容错 | — | — |
+| [[ADR-083-sys-path-shadowing|ADR-083]] | 防范 sys.path 顺序导致的模块遮蔽 | — | — |
 | [[ADR-082-adg-check-uses-checkstore-cache|ADR-082]] | adg check 引入 CheckStore 文件级增量缓存 | ✅ 已接受 | 2026-11-12 |
 | [[ADR-081-auto-fix-must-only-change-reported-occurrence|ADR-081]] | 自动修复必须只改上报的那一处命中 | ✅ 已接受 | 2026-11-12 |
 | [[ADR-080-canonical-rule-id-prefix|ADR-080]] | 规则 ID 前缀必须来自共享规范映射，不得由语言名截断推导 | ✅ 已接受 | 2026-10-28 |
@@ -98,6 +99,12 @@ updated: 2026-09-17
 | [[ADR-012-vector-rag-not-core|ADR-012]] | 向量 RAG 不作为 ai_developer_growth 检索核心 | ✅ 已接受 | — |
 | [[ADR-011-phase18-ai-native-dialogue-community-cleanup|ADR-011]] | Phase 18 - 对话界面、社区案例清理、AI-Native 生态完善 | 已拆分关闭 (2026-08-29) | — |
 | [[ADR-010-community-growth-infrastructure|ADR-010]] | P2 社区增长基础设施 | ✅ 已通过 | — |
+| [[ADR-004-agent-collaboration-model|ADR-004]] | 多 Agent 协作模型与编排模式 | — | — |
+| [[ADR-003-quality-gate-system|ADR-003]] | 四道质量门禁系统设计 | — | — |
+| [[ADR-002-knowledge-first-restructure|ADR-002]] | 知识优先重构——项目定位重定向 | — | — |
+| [[ADR-002b-refactor-validate-language-rules|ADR-002b]] | 重构 validate_language_rules.py 模块化 | 已通过 | 2026-07-23 |
+| [[ADR-001-enhanced-git-analyzer|ADR-001]] | 增强 Git 变更解析的鲁棒性 | 已通过 | — |
+| [[ADR-001b-language-rules-engine-architecture|ADR-001b]] | 语言规则引擎架构设计 | 已通过 | 2026-07-23 |
 
 <!-- END GENERATED ADR INDEX -->
 

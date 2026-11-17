@@ -57,8 +57,7 @@ class Entry:
 
     @property
     def filename(self) -> str:
-        suffix = f"-{self.suffix}" if self.suffix else ""
-        return f"ADR-{self.number:03d}{suffix}-{self.slug}.md"
+        return f"ADR-{self.number:03d}{self.suffix}-{self.slug}.md"
 
     @property
     def wiki_link(self) -> str:

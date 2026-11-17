@@ -1,8 +1,6 @@
 # 🚀 AI Developer Growth
 
-[![CI](https://img.shields.io/badge/CI-passing-brightgreen)](#)
 [![Python 3.11+](https://img.shields.io/badge/Python-3.11+-blue.svg)](https://www.python.org/downloads/)
-[![Coverage](https://img.shields.io/badge/Coverage-86%25-brightgreen)](#)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](CONTRIBUTING.md)
 [![Stars](https://img.shields.io/github/stars/zerove/ai_developer_growth)](https://github.com/zerove/ai_developer_growth/stargazers)
@@ -168,7 +166,7 @@ python ai-dev-framework/src/ai_dev_framework/jcode_init.py your-project --langua
 | 📄 核心文档 | 415 篇 |
 | 📚 实践案例 | 48 个 |
 | 🛠️ 代码示例 | 8 个 |
-| 📋 架构决策 | 85 条 |
+| 📋 架构决策 | 81 条 |
 | 🧪 测试用例 | 5975 个（`pytest --collect-only`） |
 
 ### 🔌 自检：门禁是否还活着

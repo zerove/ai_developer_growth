@@ -24,7 +24,7 @@ AI 时代开发者成长知识库 + 治理框架（knowledge base + governance f
 | 覆盖率 | CI/门禁统一口径 `--cov=tools --cov=.jcode/scripts`，阈值来自 `[tool.adg].cov_min/branch_cov_min`；最近全量实测 **87%**（2026-11-09） |
 | 类型检查 | mypy **230 source files** clean（`mypy tools .jcode ai-dev-framework/src`，遵循 `pyproject.toml`）；CI `jobs-type-check.yml` 同口径 |
 | 代码风格 | ruff check + ruff format（`ruff==0.15.17` 锁定；`make check-all`/CI/门禁统一） |
-| ADR 累计 | 85 篇（`docs/adr/` 下 81 个 `ADR-*.md` + 4 个数字编号历史文件；ADR-001~004 已恢复，ADR-006 为空号，ADR-040 为追补；最新至 ADR-084） |
+| ADR 累计 | 81 篇（`docs/adr/ADR-*.md`，与 `update_stats.py` 口径一致；另有 4 个数字编号历史文件 005/007/008/009 未计入，ADR-006 为空号，ADR-040 为追补；最新至 ADR-084） |
 
 ## 核心目录
 
@@ -292,6 +292,24 @@ AI 时代开发者成长知识库 + 治理框架（knowledge base + governance f
 
 ---
 
+## 更新记录: 2026-11-17 18:36:10
+
+### 任务
+Git 变更同步
+
+### 变更摘要
+- 变更文件 10 个 (+67 / -51 行)
+  - AGENTS.md
+  - CLAUDE.md
+  - CONTEXT.md
+  - README.md
+  - docs/adr/ADR-083-sys-path-shadowing.md
+  - docs/adr/ADR-084-config-toml-resilience.md
+  - docs/integration/capability-radar-integration.md
+  - mkdocs.yml
+  - tests/test_search_recall.py
+  - tools/scripts/mutation_score.py
+
 ## 更新记录: 2026-11-16 19:12:59
 
 ### 任务
@@ -341,26 +359,6 @@ Git 变更同步
   - mkdocs.yml
   - tests/test_basic_checks_full.py
   - tools/scripts/hooks/basic_checks.py
-  - tools/scripts/mutation_score.py
-
-## 更新记录: 2026-11-16 07:59:27
-
-### 任务
-Git 变更同步
-
-### 变更摘要
-- 变更文件 12 个 (+94 / -347 行)
-  - .adg-hook.backup.log
-  - .github/ISSUE_TEMPLATE/case-study.md
-  - .github/PULL_REQUEST_TEMPLATE.md
-  - .github/PULL_REQUEST_TEMPLATE/methodology-improvement.md
-  - .gitignore
-  - CLAUDE.md
-  - CONTEXT.md
-  - README.md
-  - tests/conftest.py
-  - tests/test_report_generator_skipped.py
-  - tools/scripts/mkdocs_incremental.py
   - tools/scripts/mutation_score.py
 
 <!-- 滚动窗口: 已自动裁剪 1 条旧更新记录 -->

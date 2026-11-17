@@ -125,6 +125,7 @@ debug_mutmut.py
 logs/
 .adg-hook*.log
 adg-report.html
+adg_monitoring_dashboard.html
 
 # 工具运行时生成产物（Machine-specific 基线 / 一次性报告，不入库）
 .perf_baseline.json

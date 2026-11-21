@@ -5,7 +5,7 @@ category: 治理层
 tags: ['REST']
 difficulty: 基础
 reading_time: 10 分钟
-updated: 2026-09-17
+updated: 2026-11-21
 ---
 
 # 架构决策记录 (ADR) 索引
@@ -13,8 +13,8 @@ updated: 2026-09-17
 > 本文件汇总所有架构决策记录，按时间倒序排列。
 
 > ⚠️ **历史编号说明**：ADR-001 ~ ADR-004 及变体 001b/002b 已于 2026-11 恢复（重命名归档文件后回归），
-> ADR-005/007/008/009 以数字编号保留；ADR-006 为历史空号（已删除未复用），ADR-040 为 2026-10-02 追补。
-> 下方表格覆盖当前磁盘上存在的全部 81 个 `ADR-*.md`，从 ADR-001 开始。
+> ADR-005/007/008/009 为保留编号（无记录，未复用）；ADR-006 为历史空号（已删除未复用），ADR-040 为 2026-10-02 追补。
+> 下方表格覆盖当前磁盘上存在的全部 83 个 `ADR-*.md`，从 ADR-001 开始。
 
 ---
 
@@ -24,6 +24,8 @@ updated: 2026-09-17
 
 | ID | 标题 | 状态 | 日期 |
 |----|------|------|------|
+| [[ADR-086-adr-number-reserved-ranges|ADR-086]] | ADR 编号保留段 | ✅ 已接受 | 2026-11-21 |
+| [[ADR-085-archive-not-in-moc|ADR-085]] | 归档层不纳入 MOC 导航 | ✅ 已接受 | 2026-11-21 |
 | [[ADR-084-config-toml-resilience|ADR-084]] | pyproject.toml 配置加载的链式调用容错 | — | — |
 | [[ADR-083-sys-path-shadowing|ADR-083]] | 防范 sys.path 顺序导致的模块遮蔽 | — | — |
 | [[ADR-082-adg-check-uses-checkstore-cache|ADR-082]] | adg check 引入 CheckStore 文件级增量缓存 | ✅ 已接受 | 2026-11-12 |

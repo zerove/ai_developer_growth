@@ -292,6 +292,20 @@ AI 时代开发者成长知识库 + 治理框架（knowledge base + governance f
 
 ---
 
+## 更新记录: 2026-11-21 20:52:56
+
+### 任务
+Git 变更同步
+
+### 变更摘要
+- 变更文件 6 个 (+82 / -76 行)
+  - CONTEXT.md
+  - tests/conftest.py
+  - tests/test_redos_structural_coverage.py
+  - tests/test_search_recall.py
+  - tests/test_search_server_smoke.py
+  - tools/scripts/hooks/tool_runner.py
+
 ## 更新记录: 2026-11-21 19:48:32
 
 ### 任务
@@ -337,14 +351,5 @@ Git 变更同步
   - ROADMAP.md
   - docs/adr/ADR.md
   - tools/scripts/hooks/basic_checks.py
-
-## 更新记录: 2026-11-21 16:41:36
-
-### 任务
-Git 变更同步
-
-### 变更摘要
-- 变更文件 1 个 (+3 / -0 行)
-  - tests/test_doc_index_reachability.py
 
 <!-- 滚动窗口: 已自动裁剪 1 条旧更新记录 -->

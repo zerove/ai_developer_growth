@@ -21,8 +21,8 @@ AI 时代开发者成长知识库 + 治理框架（knowledge base + governance f
 | 语言 | Python 3.11+ 工具链 + Markdown 文档 |
 | 源码规模 | `tools/scripts` + `.jcode/scripts` 共 232 个 `.py` 文件 |
 | 测试规模 | **5975 collected**（`pytest --collect-only`，含 `ai-dev-framework/tests`）；最近本地/CI 口径随 README 统计同步（见 `README.md` 与 `.quality-trends/`） |
-| 覆盖率 | CI/门禁统一口径 `--cov=tools --cov=.jcode/scripts`，阈值来自 `[tool.adg].cov_min/branch_cov_min`；最近全量实测 **87%**（2026-11-09） |
-| 类型检查 | mypy **230 source files** clean（`mypy tools .jcode ai-dev-framework/src`，遵循 `pyproject.toml`）；CI `jobs-type-check.yml` 同口径 |
+| 覆盖率 | CI/门禁统一口径 `--cov=tools --cov=.jcode/scripts`，阈值来自 `[tool.adg].cov_min/branch_cov_min`；最近全量实测 **87%**（2026-11-21 `coverage report` 实测，门槛 80%） |
+| 类型检查 | mypy **255 source files** clean（`mypy tools .jcode ai-dev-framework/src`，遵循 `pyproject.toml`）；CI `jobs-type-check.yml` 同口径 |
 | 代码风格 | ruff check + ruff format（`ruff==0.15.17` 锁定；`make check-all`/CI/门禁统一） |
 | ADR 累计 | 81 篇（`docs/adr/ADR-*.md`，与 `update_stats.py` 口径一致；另有 4 个数字编号历史文件 005/007/008/009 未计入，ADR-006 为空号，ADR-040 为追补；最新至 ADR-084） |
 
@@ -292,6 +292,41 @@ AI 时代开发者成长知识库 + 治理框架（knowledge base + governance f
 
 ---
 
+## 更新记录: 2026-11-18 09:37:33
+
+### 任务
+Git 变更同步
+
+### 变更摘要
+- 变更文件 11 个 (+51 / -52 行)
+  - .jcode/baseline.json
+  - CLAUDE.md
+  - CONTEXT.md
+  - README.md
+  - docs/adr/ADR-083-sys-path-shadowing.md
+  - docs/adr/ADR-084-config-toml-resilience.md
+  - mkdocs.yml
+  - tests/test_search_recall.py
+  - tools/scripts/link_auditor.py
+  - tools/scripts/local_ci_mirror.py
+  - tools/scripts/mutation_score.py
+
+## 更新记录: 2026-11-17 19:06:13
+
+### 任务
+Git 变更同步
+
+### 变更摘要
+- 变更文件 8 个 (+35 / -36 行)
+  - CLAUDE.md
+  - CONTEXT.md
+  - README.md
+  - docs/adr/ADR-083-sys-path-shadowing.md
+  - docs/adr/ADR-084-config-toml-resilience.md
+  - mkdocs.yml
+  - tests/test_search_recall.py
+  - tools/scripts/mutation_score.py
+
 ## 更新记录: 2026-11-17 18:36:10
 
 ### 任务
@@ -331,34 +366,6 @@ Git 变更同步
 - 变更文件 3 个 (+60 / -25 行)
   - CONTEXT.md
   - README.md
-  - tools/scripts/mutation_score.py
-
-## 更新记录: 2026-11-16 08:29:53
-
-### 任务
-Git 变更同步
-
-### 变更摘要
-- 变更文件 7 个 (+89 / -41 行)
-  - .github/workflows/language-rules.yml
-  - .jcode/baseline.json
-  - CONTEXT.md
-  - mkdocs.yml
-  - tests/test_basic_checks_full.py
-  - tools/scripts/hooks/basic_checks.py
-  - tools/scripts/mutation_score.py
-
-## 更新记录: 2026-11-16 08:23:35
-
-### 任务
-Git 变更同步
-
-### 变更摘要
-- 变更文件 5 个 (+73 / -26 行)
-  - CONTEXT.md
-  - mkdocs.yml
-  - tests/test_basic_checks_full.py
-  - tools/scripts/hooks/basic_checks.py
   - tools/scripts/mutation_score.py
 
 <!-- 滚动窗口: 已自动裁剪 1 条旧更新记录 -->

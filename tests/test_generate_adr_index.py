@@ -153,11 +153,7 @@ class IndexCompletenessTest(unittest.TestCase):
         module = _load_module()
         numbers = sorted({e.number for e in module.collect_entries()})
         reserved = {5, 6, 7, 8, 9}
-        gaps = [
-            n
-            for n in range(numbers[0], numbers[-1] + 1)
-            if n not in numbers and n not in reserved
-        ]
+        gaps = [n for n in range(numbers[0], numbers[-1] + 1) if n not in numbers and n not in reserved]
         self.assertEqual(gaps, [], f"ADR 编号存在断层: {gaps}")
 
 

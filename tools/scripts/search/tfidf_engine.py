@@ -126,6 +126,11 @@ class EnhancedTFIDF:
         self.avg_doc_length: float = 0
         self.inverted_index: dict[str, list[tuple[int, int]]] = defaultdict(list)
         self.synonym_dict = SynonymDictionary()
+        # 搜索热路径优化: add_document 时分词一次, 搜索阶段直接复用
+        # (此前 _score_documents 每次 term×doc 命中都重新 jieba 分词全文).
+        self._doc_tokens: list[list[str]] = []
+        # O(1) 维护 avg_doc_length: add_document 里每次 sum 全部 doc_lengths 是 O(n^2).
+        self._total_doc_len: int = 0
 
     def _tokenize(self, text: str) -> list[str]:
         """
@@ -145,9 +150,14 @@ class EnhancedTFIDF:
         # Filter out very short tokens
         return [t for t in tokens if len(t) > 1]
 
-    def _compute_tf(self, term: str, doc_tokens: list[str]) -> float:
-        """Compute term frequency with BM25."""
-        term_count = doc_tokens.count(term)
+    def _compute_tf(self, term: str, doc_tokens: list[str], term_count: int | None = None) -> float:
+        """Compute term frequency with BM25.
+
+        ``term_count`` 可由调用方传入（搜索时直接从 inverted_index 复用
+        已计数，等价于 ``doc_tokens.count(term)``），省去遍历 token 的开销。
+        """
+        if term_count is None:
+            term_count = doc_tokens.count(term)
         doc_length = len(doc_tokens)
 
         # BM25 TF component
@@ -172,12 +182,14 @@ class EnhancedTFIDF:
         self.documents.append(doc)
         doc_id = len(self.documents) - 1
 
-        # Tokenize
+        # Tokenize —— 同时缓存到 _doc_tokens（搜索阶段直接复用）
         tokens = self._tokenize(doc.title + " " + doc.content)
+        self._doc_tokens.append(tokens)
         self.doc_lengths.append(len(tokens))
 
-        # Update average document length
-        self.avg_doc_length = sum(self.doc_lengths) / len(self.doc_lengths)
+        # Update average document length (O(1) 增量维护)
+        self._total_doc_len += len(tokens)
+        self.avg_doc_length = self._total_doc_len / len(self.doc_lengths)
 
         # Update document frequencies and inverted index
         term_counts = Counter(tokens)
@@ -235,11 +247,11 @@ class EnhancedTFIDF:
             idf = self._compute_idf(term)
 
             for doc_id, term_count in self.inverted_index[term]:
-                # Get document tokens for TF computation
-                doc = self.documents[doc_id]
-                doc_tokens = self._tokenize(doc.title + " " + doc.content)
+                # 复用 add_document 时缓存的 token（此前每个 term×doc 命中都
+                # 重新 jieba 分词全文 —— 热路径命中几百文档时最慢）
+                doc_tokens = self._doc_tokens[doc_id]
 
-                tf = self._compute_tf(term, doc_tokens)
+                tf = self._compute_tf(term, doc_tokens, term_count)
                 scores[doc_id] += tf * idf
                 match_terms[doc_id].add(term)
 

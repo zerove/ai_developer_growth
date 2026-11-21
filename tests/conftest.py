@@ -20,8 +20,11 @@ import tempfile
 import warnings
 from collections.abc import Iterator
 from pathlib import Path
+from typing import Any
 
 import pytest
+
+from tools.scripts.search.tfidf_engine import Document, EnhancedTFIDF
 
 # 注入项目根到 sys.path:
 # 裸 `pytest` 可执行文件不会像 `python -m pytest` 那样自动把 cwd 加入 sys.path,
@@ -269,6 +272,53 @@ Test scenarios.
 """
 
 
+def _serialize_shared_index(index: EnhancedTFIDF) -> dict[str, Any]:
+    """把 EnhancedTFIDF 序列化为 JSON 可承载的纯 dict（安全策略禁用 pickle 反序列化）."""
+    return {
+        "k1": index.k1,
+        "b": index.b,
+        "documents": [
+            {
+                "id": doc.id,
+                "title": doc.title,
+                "content": doc.content,
+                "doc_type": doc.doc_type,
+                "tags": list(doc.tags),
+                "category": doc.category,
+                "difficulty": doc.difficulty,
+            }
+            for doc in index.documents
+        ],
+        "doc_freqs": {str(term): int(count) for term, count in index.doc_freqs.items()},
+        "doc_lengths": [int(length) for length in index.doc_lengths],
+        "avg_doc_length": index.avg_doc_length,
+        "inverted_index": {
+            str(term): [[int(doc_id), int(count)] for doc_id, count in pairs]
+            for term, pairs in index.inverted_index.items()
+        },
+        "synonyms": {str(term): sorted(syns) for term, syns in index.synonym_dict.synonyms.items()},
+        "doc_tokens": [list(tokens) for tokens in index._doc_tokens],
+        "total_doc_len": int(index._total_doc_len),
+    }
+
+
+def _restore_shared_index(payload: dict[str, Any]) -> EnhancedTFIDF:
+    """从 JSON payload 重建 EnhancedTFIDF（结构与 _serialize_shared_index 镜像）."""
+    index = EnhancedTFIDF(k1=float(payload["k1"]), b=float(payload["b"]))
+    index.documents = [Document(**doc) for doc in payload["documents"]]
+    index.doc_freqs = {str(k): int(v) for k, v in payload["doc_freqs"].items()}
+    index.doc_lengths = [int(x) for x in payload["doc_lengths"]]
+    index.avg_doc_length = float(payload["avg_doc_length"])
+    inverted_index: dict[str, list[tuple[int, int]]] = {}
+    for term, pairs in payload["inverted_index"].items():
+        inverted_index[str(term)] = [(int(p[0]), int(p[1])) for p in pairs]
+    index.inverted_index = inverted_index
+    index.synonym_dict.synonyms = {str(k): set(v) for k, v in payload["synonyms"].items()}
+    index._doc_tokens = [list(t) for t in payload["doc_tokens"]]
+    index._total_doc_len = int(payload["total_doc_len"])
+    return index
+
+
 @pytest.fixture(scope="session")
 def shared_search_index():
     """会话级共享 search 索引 —— search 相关测试模块复用。
@@ -276,11 +326,11 @@ def shared_search_index():
     原实现中 search_recall / search_server_smoke 等模块各自构建一份全量
     索引（单模块 ~5-8s），多模块乘加；且 xdist 每 worker 一个 session，相同
     索引重复构建。现由 conftest 构建一次，模块级 fixture 复用，并按文档
-    指纹缓存到临时目录 pickle（worker 间复用，指纹变则自动失效）。
+    指纹缓存到临时目录 JSON 文件（worker 间复用，指纹变则自动失效）。
     """
     import hashlib
     import importlib.util
-    import pickle
+    import json
 
     spec = importlib.util.spec_from_file_location(
         "adg_search_server_shared",
@@ -297,16 +347,14 @@ def shared_search_index():
         fp.update(d.id.encode())
         fp.update(d.title.encode())
         fp.update(d.content.encode())
-    cache_path = Path(tempfile.gettempdir()) / f"adg-search-index-{fp.hexdigest()[:16]}.pkl"
+    cache_path = Path(tempfile.gettempdir()) / f"adg-search-index-{fp.hexdigest()[:16]}.json"
     if cache_path.exists():
         try:
-            with open(cache_path, "rb") as f:
-                return pickle.load(f)
+            return _restore_shared_index(json.loads(cache_path.read_text(encoding="utf-8")))
         except Exception:
             pass  # 缓存损坏/不可用 → 重建
     index = create_enhanced_index(documents)
     tmp_path = cache_path.with_name(f"{cache_path.name}.{os.getpid()}.tmp")
-    with open(tmp_path, "wb") as f:
-        pickle.dump(index, f)
+    tmp_path.write_text(json.dumps(_serialize_shared_index(index)), encoding="utf-8")
     os.replace(tmp_path, cache_path)  # 原子替换，跨 worker 读取安全
     return index

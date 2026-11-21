@@ -292,6 +292,15 @@ AI 时代开发者成长知识库 + 治理框架（knowledge base + governance f
 
 ---
 
+## 更新记录: 2026-11-21 16:41:36
+
+### 任务
+Git 变更同步
+
+### 变更摘要
+- 变更文件 1 个 (+3 / -0 行)
+  - tests/test_doc_index_reachability.py
+
 ## 更新记录: 2026-11-18 09:37:33
 
 ### 任务
@@ -353,17 +362,6 @@ Git 变更同步
 ### 变更摘要
 - 变更文件 4 个 (+65 / -39 行)
   - .jcode/baseline.json
-  - CONTEXT.md
-  - README.md
-  - tools/scripts/mutation_score.py
-
-## 更新记录: 2026-11-16 19:02:18
-
-### 任务
-Git 变更同步
-
-### 变更摘要
-- 变更文件 3 个 (+60 / -25 行)
   - CONTEXT.md
   - README.md
   - tools/scripts/mutation_score.py

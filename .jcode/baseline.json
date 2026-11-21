@@ -11,6 +11,12 @@
     ".jcode/scripts/self-correction-loop.py": {
       "type:使用 Any 类型": 2
     },
+    "docs/archive/optimization/code_quality_fixes.py": {
+      "structure:函数超过 N 行 (实际 N 行)": 1
+    },
+    "docs/archive/optimization/performance_optimizer.py": {
+      "structure:函数超过 N 行 (实际 N 行)": 2
+    },
     "scripts/team-radar-collect.py": {
       "structure:函数超过 N 行 (实际 N 行)": 2
     },
@@ -20,17 +26,12 @@
     "tools/multiproject/__init__.py": {
       "structure:函数超过 N 行 (实际 N 行)": 1
     },
-    "scripts/optimization/code_quality_fixes.py": {
-      "structure:函数超过 N 行 (实际 N 行)": 1
-    },
-    "scripts/optimization/performance_optimizer.py": {
-      "structure:函数超过 N 行 (实际 N 行)": 2
-    },
     "tools/scripts/fix_applier.py": {
       "structure:函数超过 N 行 (实际 N 行)": 1
     },
-    "tools/scripts/smart_commit.py": {
-      "type:使用 Any 类型": 4
+    "tools/scripts/hooks/phase_runner.py": {
+      "type:使用 Any 类型": 1,
+      "structure:函数超过 N 行 (实际 N 行)": 1
     },
     "tools/scripts/rule_registry.py": {
       "structure:函数超过 N 行 (实际 N 行)": 1
@@ -41,9 +42,8 @@
     "tools/scripts/rules_engine/auto_fix.py": {
       "structure:函数超过 N 行 (实际 N 行)": 1
     },
-    "tools/scripts/hooks/phase_runner.py": {
-      "type:使用 Any 类型": 1,
-      "structure:函数超过 N 行 (实际 N 行)": 1
+    "tools/scripts/smart_commit.py": {
+      "type:使用 Any 类型": 4
     }
   }
 }

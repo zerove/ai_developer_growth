@@ -123,7 +123,7 @@ nav:
     - Prompt Template: agent-dev/agent-prompt-template.md
     - Context Management: agent-dev/context-management.md
     - Quality Gates: agent-dev/quality-gates.md
-  - ADRs (11):
+  - ADRs (13):
     - ADR Index: adr/ADR.md
     - "001b: Language Rules Arch": adr/ADR-001b-language-rules-engine-architecture.md
     - "001: Enhanced Git Analyzer": adr/ADR-001-enhanced-git-analyzer.md
@@ -135,6 +135,8 @@ nav:
     - "007: M4 Navigation": adr/007-m4-ai-navigation-design.md
     - "008: Production Workflow": adr/008-production-grade-workflow.md
     - "009: CI/CD Optimization": adr/009-ci-cd-optimization-security.md
+    - "085: Archive Not In MOC": adr/ADR-085-archive-not-in-moc.md
+    - "086: ADR Number Reserved Ranges": adr/ADR-086-adr-number-reserved-ranges.md
   - Architecture:
     - Rule Loading: architecture/rule-loading.md
     - Infinite Language Support: architecture/infinite-language-support.md

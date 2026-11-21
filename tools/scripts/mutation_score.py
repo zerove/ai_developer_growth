@@ -37,11 +37,14 @@ def read_status_counts(cache_path: Path, paths: tuple[str, ...] = ()) -> dict[st
     query = "SELECT status, COUNT(*) FROM Mutant GROUP BY status"
     params: tuple[str, ...] = ()
     if paths:
+        # 占位符数量动态, 值一律参数化传入; 不用 f-string 嵌 SQL 以免
+        # 触发 bandit B608 (string-based query construction) 误报。
+        placeholders = ", ".join("?" for _ in paths)
         query = (
-            "SELECT m.status, COUNT(*) FROM Mutant m "
+            "SELECT m.status, COUNT(*) FROM Mutant m "  # nosec B608 - 占位符数量由 paths 长度决定, 值全部参数化传入, 无注入面
             "JOIN Line l ON l.id = m.line "
             "JOIN SourceFile sf ON sf.id = l.sourcefile "
-            f"WHERE sf.filename IN ({', '.join('?' for _ in paths)}) "
+            "WHERE sf.filename IN (" + placeholders + ") "
             "GROUP BY m.status"
         )
         params = paths

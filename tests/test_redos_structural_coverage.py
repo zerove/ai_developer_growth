@@ -218,7 +218,15 @@ def _iter_dynamic_sites() -> tuple[tuple[str, int, int], ...]:
         if any(part in skip_dirs for part in path.parts):
             continue
         try:
-            tree = ast.parse(path.read_text(encoding="utf-8"))
+            content = path.read_text(encoding="utf-8")
+        except OSError:
+            continue
+        # 预过滤：`re.<方法>` 属性调用必然有 "re." 字样——没有的文件直接
+        # 跳过 ast.parse + walk，节省普查大头（787 个文件中绝大多数不含 re.）。
+        if "re." not in content:
+            continue
+        try:
+            tree = ast.parse(content)
         except (OSError, SyntaxError, ValueError):
             continue
         for node in ast.walk(tree):

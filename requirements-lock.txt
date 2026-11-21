@@ -20,7 +20,7 @@ googleapis-common-protos==1.75.1
     #   opentelemetry-exporter-otlp-proto-http
 grpcio==1.83.0
     # via opentelemetry-exporter-otlp-proto-grpc
-idna==3.18
+idna==3.19
     # via requests
 iniconfig==2.3.0
     # via pytest

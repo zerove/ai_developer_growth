@@ -142,7 +142,9 @@ class TestPyPIClient:
         assert fake.client().resolve_version("pkg", "0.23", ">=") is None
 
     def test_missing_package_returns_none(self) -> None:
-        fake = FakePyPI({})
+        # 缺失包必须以 None 进入缓存 —— 否则 client() 会对空缓存做真实网络 fetch
+        # （urllib + 重试，约 12.8s；测试契约明确要求 PyPI 客户端不触网）。
+        fake = FakePyPI({"pkg": None})
         assert fake.client().resolve_version("pkg", "1.0", ">=") is None
 
     def test_exact_pin_not_published_returns_none(self) -> None:

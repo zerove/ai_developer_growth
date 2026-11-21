@@ -12,6 +12,7 @@ import math
 import re
 from collections import Counter, defaultdict
 from dataclasses import dataclass, field
+from typing import Any
 
 
 @dataclass
@@ -176,6 +177,52 @@ class EnhancedTFIDF:
 
         # IDF with smoothing
         return math.log((n_docs - doc_freq + 0.5) / (doc_freq + 0.5) + 1)
+
+    def to_dict(self) -> dict[str, Any]:
+        """序列化索引为 JSON 可承载的纯 dict（安全策略禁用 pickle 反序列化）."""
+        return {
+            "k1": self.k1,
+            "b": self.b,
+            "documents": [
+                {
+                    "id": doc.id,
+                    "title": doc.title,
+                    "content": doc.content,
+                    "doc_type": doc.doc_type,
+                    "tags": list(doc.tags),
+                    "category": doc.category,
+                    "difficulty": doc.difficulty,
+                }
+                for doc in self.documents
+            ],
+            "doc_freqs": {str(term): int(count) for term, count in self.doc_freqs.items()},
+            "doc_lengths": [int(length) for length in self.doc_lengths],
+            "avg_doc_length": self.avg_doc_length,
+            "inverted_index": {
+                str(term): [[int(doc_id), int(count)] for doc_id, count in pairs]
+                for term, pairs in self.inverted_index.items()
+            },
+            "synonyms": {str(term): sorted(syns) for term, syns in self.synonym_dict.synonyms.items()},
+            "doc_tokens": [list(tokens) for tokens in self._doc_tokens],
+            "total_doc_len": int(self._total_doc_len),
+        }
+
+    @classmethod
+    def from_dict(cls, data: dict[str, Any]) -> "EnhancedTFIDF":
+        """从 to_dict 序列化结果重建索引（结构互为镜像）。"""
+        index = cls(k1=float(data["k1"]), b=float(data["b"]))
+        index.documents = [Document(**doc) for doc in data["documents"]]
+        index.doc_freqs = {str(k): int(v) for k, v in data["doc_freqs"].items()}
+        index.doc_lengths = [int(x) for x in data["doc_lengths"]]
+        index.avg_doc_length = float(data["avg_doc_length"])
+        inverted_index: dict[str, list[tuple[int, int]]] = {}
+        for term, pairs in data["inverted_index"].items():
+            inverted_index[str(term)] = [(int(p[0]), int(p[1])) for p in pairs]
+        index.inverted_index = inverted_index
+        index.synonym_dict.synonyms = {str(k): set(v) for k, v in data["synonyms"].items()}
+        index._doc_tokens = [list(t) for t in data["doc_tokens"]]
+        index._total_doc_len = int(data["total_doc_len"])
+        return index
 
     def add_document(self, doc: Document) -> None:
         """Add a document to the index."""

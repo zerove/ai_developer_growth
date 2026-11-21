@@ -6,6 +6,7 @@ as standard Model Context Protocol tools for AI assistants (Claude, Cursor, etc.
 
 from __future__ import annotations
 
+import hashlib
 import json
 import sys
 from typing import TYPE_CHECKING
@@ -50,13 +51,28 @@ TOOL_REGISTRY: list[dict[str, object]] = [
 ]
 
 
+# P2-9 工具链优化: MCP server 进程级知识索引共享 —— 按文档指纹缓存，
+# 同一进程内多个 server 实例 / 多次 _get_search_index 调用只建一次索引。
+_MODULE_LEVEL_INDEX_CACHE: dict[str, object] = {}
+
+
+def _knowledge_index_fingerprint(documents: list[Document]) -> str:
+    """按文档 id/title/content 计算指纹 —— 索引缓存键，文档变化则自动失效。"""
+    digest = hashlib.sha256()
+    for doc in documents:
+        digest.update(doc.id.encode())
+        digest.update(doc.title.encode())
+        digest.update(doc.content.encode())
+    return digest.hexdigest()
+
+
 class AINativeMCPServer:
     def __init__(self) -> None:
         self.root_dir = get_project_root()
         self._search_index: object | None = None
 
     def _get_search_index(self) -> object:
-        """惰性构建知识库索引（首次调用时加载，后续复用）。"""
+        """惰性构建知识库索引（首次调用时加载，后续复用；进程级按指纹缓存）。"""
         if self._search_index is None:
             import importlib.util
 
@@ -68,7 +84,13 @@ class AINativeMCPServer:
             spec.loader.exec_module(mod)
             from tools.scripts.search.tfidf_engine import create_enhanced_index
 
-            self._search_index = create_enhanced_index(mod.load_documents())
+            documents = mod.load_documents()
+            fingerprint = _knowledge_index_fingerprint(documents)
+            index = _MODULE_LEVEL_INDEX_CACHE.get(fingerprint)
+            if index is None:
+                index = create_enhanced_index(documents)
+                _MODULE_LEVEL_INDEX_CACHE[fingerprint] = index
+            self._search_index = index
         return self._search_index
 
     def _handle_initialize(self) -> dict[str, object]:

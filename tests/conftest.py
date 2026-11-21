@@ -24,7 +24,7 @@ from typing import Any
 
 import pytest
 
-from tools.scripts.search.tfidf_engine import Document, EnhancedTFIDF
+from tools.scripts.search.tfidf_engine import EnhancedTFIDF
 
 # 注入项目根到 sys.path:
 # 裸 `pytest` 可执行文件不会像 `python -m pytest` 那样自动把 cwd 加入 sys.path,
@@ -274,49 +274,12 @@ Test scenarios.
 
 def _serialize_shared_index(index: EnhancedTFIDF) -> dict[str, Any]:
     """把 EnhancedTFIDF 序列化为 JSON 可承载的纯 dict（安全策略禁用 pickle 反序列化）."""
-    return {
-        "k1": index.k1,
-        "b": index.b,
-        "documents": [
-            {
-                "id": doc.id,
-                "title": doc.title,
-                "content": doc.content,
-                "doc_type": doc.doc_type,
-                "tags": list(doc.tags),
-                "category": doc.category,
-                "difficulty": doc.difficulty,
-            }
-            for doc in index.documents
-        ],
-        "doc_freqs": {str(term): int(count) for term, count in index.doc_freqs.items()},
-        "doc_lengths": [int(length) for length in index.doc_lengths],
-        "avg_doc_length": index.avg_doc_length,
-        "inverted_index": {
-            str(term): [[int(doc_id), int(count)] for doc_id, count in pairs]
-            for term, pairs in index.inverted_index.items()
-        },
-        "synonyms": {str(term): sorted(syns) for term, syns in index.synonym_dict.synonyms.items()},
-        "doc_tokens": [list(tokens) for tokens in index._doc_tokens],
-        "total_doc_len": int(index._total_doc_len),
-    }
+    return index.to_dict()
 
 
 def _restore_shared_index(payload: dict[str, Any]) -> EnhancedTFIDF:
-    """从 JSON payload 重建 EnhancedTFIDF（结构与 _serialize_shared_index 镜像）."""
-    index = EnhancedTFIDF(k1=float(payload["k1"]), b=float(payload["b"]))
-    index.documents = [Document(**doc) for doc in payload["documents"]]
-    index.doc_freqs = {str(k): int(v) for k, v in payload["doc_freqs"].items()}
-    index.doc_lengths = [int(x) for x in payload["doc_lengths"]]
-    index.avg_doc_length = float(payload["avg_doc_length"])
-    inverted_index: dict[str, list[tuple[int, int]]] = {}
-    for term, pairs in payload["inverted_index"].items():
-        inverted_index[str(term)] = [(int(p[0]), int(p[1])) for p in pairs]
-    index.inverted_index = inverted_index
-    index.synonym_dict.synonyms = {str(k): set(v) for k, v in payload["synonyms"].items()}
-    index._doc_tokens = [list(t) for t in payload["doc_tokens"]]
-    index._total_doc_len = int(payload["total_doc_len"])
-    return index
+    """从 JSON payload 重建 EnhancedTFIDF（结构与序列化互为镜像）."""
+    return EnhancedTFIDF.from_dict(payload)
 
 
 @pytest.fixture(scope="session")

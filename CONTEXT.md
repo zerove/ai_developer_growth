@@ -292,64 +292,73 @@ AI 时代开发者成长知识库 + 治理框架（knowledge base + governance f
 
 ---
 
-## 更新记录: 2026-11-21 22:12:55
+## 更新记录: 2026-11-21 23:31:42
 
 ### 任务
 Git 变更同步
 
 ### 变更摘要
-- 变更文件 4 个 (+127 / -42 行)
+- 变更文件 5 个 (+123 / -28 行)
   - CONTEXT.md
   - tests/conftest.py
-  - tools/scripts/architecture_drift_guard.py
-  - tools/scripts/rules_engine/semantic_checker.py
+  - tests/test_supply_chain_compliance_policy.py
+  - tools/scripts/ai_native_mcp_server.py
+  - tools/scripts/search/tfidf_engine.py
 
-## 更新记录: 2026-11-21 21:58:30
+## 更新记录: 2026-11-21 23:27:27
 
 ### 任务
 Git 变更同步
 
 ### 变更摘要
-- 变更文件 4 个 (+84 / -39 行)
+- 变更文件 6 个 (+124 / -29 行)
   - CONTEXT.md
   - tests/conftest.py
-  - tools/scripts/architecture_drift_guard.py
-  - tools/scripts/rules_engine/semantic_checker.py
+  - tests/test_supply_chain_compliance_policy.py
+  - tools/scripts/_sc_pypi.py
+  - tools/scripts/ai_native_mcp_server.py
+  - tools/scripts/search/tfidf_engine.py
 
-## 更新记录: 2026-11-21 21:53:39
+## 更新记录: 2026-11-21 23:22:38
 
 ### 任务
 Git 变更同步
 
 ### 变更摘要
-- 变更文件 4 个 (+69 / -25 行)
+- 变更文件 6 个 (+123 / -29 行)
   - CONTEXT.md
   - tests/conftest.py
-  - tools/scripts/architecture_drift_guard.py
-  - tools/scripts/rules_engine/semantic_checker.py
+  - tests/test_supply_chain_compliance_policy.py
+  - tools/scripts/_sc_pypi.py
+  - tools/scripts/ai_native_mcp_server.py
+  - tools/scripts/search/tfidf_engine.py
 
-## 更新记录: 2026-11-21 20:52:56
+## 更新记录: 2026-11-21 23:17:30
 
 ### 任务
 Git 变更同步
 
 ### 变更摘要
-- 变更文件 6 个 (+82 / -76 行)
+- 变更文件 6 个 (+121 / -29 行)
   - CONTEXT.md
   - tests/conftest.py
-  - tests/test_redos_structural_coverage.py
-  - tests/test_search_recall.py
-  - tests/test_search_server_smoke.py
-  - tools/scripts/hooks/tool_runner.py
+  - tests/test_supply_chain_compliance_policy.py
+  - tools/scripts/_sc_pypi.py
+  - tools/scripts/ai_native_mcp_server.py
+  - tools/scripts/search/tfidf_engine.py
 
-## 更新记录: 2026-11-21 19:48:32
+## 更新记录: 2026-11-21 23:12:01
 
 ### 任务
 Git 变更同步
 
 ### 变更摘要
-- 变更文件 2 个 (+46 / -44 行)
+- 变更文件 6 个 (+120 / -30 行)
   - CONTEXT.md
+  - tests/conftest.py
+  - tests/test_supply_chain_compliance_policy.py
+  - tools/scripts/_sc_pypi.py
+  - tools/scripts/ai_native_mcp_server.py
   - tools/scripts/search/tfidf_engine.py
 
 <!-- 滚动窗口: 已自动裁剪 1 条旧更新记录 -->

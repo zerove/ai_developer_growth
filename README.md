@@ -163,10 +163,10 @@ python ai-dev-framework/src/ai_dev_framework/jcode_init.py your-project --langua
 
 | 指标 | 数量 |
 |------|------|
-| 📄 核心文档 | 415 篇 |
+| 📄 核心文档 | 417 篇 |
 | 📚 实践案例 | 48 个 |
 | 🛠️ 代码示例 | 8 个 |
-| 📋 架构决策 | 81 条 |
+| 📋 架构决策 | 83 条 |
 | 🧪 测试用例 | 5975 个（`pytest --collect-only`） |
 
 ### 🔌 自检：门禁是否还活着

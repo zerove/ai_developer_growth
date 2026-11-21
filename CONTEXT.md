@@ -24,7 +24,7 @@ AI 时代开发者成长知识库 + 治理框架（knowledge base + governance f
 | 覆盖率 | CI/门禁统一口径 `--cov=tools --cov=.jcode/scripts`，阈值来自 `[tool.adg].cov_min/branch_cov_min`；最近全量实测 **87%**（2026-11-21 `coverage report` 实测，门槛 80%） |
 | 类型检查 | mypy **255 source files** clean（`mypy tools .jcode ai-dev-framework/src`，遵循 `pyproject.toml`）；CI `jobs-type-check.yml` 同口径 |
 | 代码风格 | ruff check + ruff format（`ruff==0.15.17` 锁定；`make check-all`/CI/门禁统一） |
-| ADR 累计 | 81 篇（`docs/adr/ADR-*.md`，与 `update_stats.py` 口径一致；另有 4 个数字编号历史文件 005/007/008/009 未计入，ADR-006 为空号，ADR-040 为追补；最新至 ADR-084） |
+| ADR 累计 | 83 篇（`docs/adr/ADR-*.md`，与 `update_stats.py` 口径一致；另有 4 个数字编号历史文件 005/007/008/009 未计入，ADR-006 为空号，ADR-040 为追补；最新至 ADR-086） |
 
 ## 核心目录
 

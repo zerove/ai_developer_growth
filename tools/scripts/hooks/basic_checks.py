@@ -207,6 +207,46 @@ def _tests_for_modules(changed: list[Path], tests_dir: Path = Path("tests")) -> 
     return sorted(selected)
 
 
+def _uncovered_changed_modules(changed: list[Path], targets: list[Path]) -> bool:
+    """变更模块在增量范围内找不到匹配测试时回退全量 —— 不漏检。
+
+    启发式映射（`_tests_for_modules`）靠"同名约定/import 反查"枚举测试；
+    行为测试（只经 `docs/`、功能门禁等触碰、不 import 模块）会被漏掉 ——
+    比如 `link_auditor.py` 的 `docs/archive/README.md` 孤儿判定测试
+    `test_doc_index_reachability` 此前被本地增量放行、远端 CI 才抓到。
+    """
+    for changed_file in changed:
+        if "examples" in changed_file.parts or "tests" in changed_file.parts:
+            continue
+        stem = changed_file.stem
+        module_path = str(changed_file.with_suffix("")).replace("/", ".").lstrip("./")
+        if not any(_matches_module(t, stem, module_path) for t in targets):
+            return True
+    return False
+
+
+# ── 行为测试注册表 ──────────────────────────────────────────────
+# 跨文件行为测试: 改动模块 X 后除启发式枚举外也跑这些测试。
+# 历史上远端 CI full-suite 才抓到的漏洞均在此登记:
+#   - link_auditor.py 改 archive 层跳过时, test_doc_index_reachability
+#     （MOC 孤儿判定）被本地增量放行, 远端 CI 才抓到 —— 先前借同名约定
+#     测试 test_link_auditor.py 覆盖, 但它不经 import 触及 MOC 逻辑。
+BEHAVIOR_TESTS: dict[str, list[str]] = {
+    "link_auditor": ["test_doc_index_reachability.py"],
+}
+
+
+def _add_behavior_tests(changed: list[Path], targets: list[Path]) -> list[Path]:
+    """合并注册表中为变更模块声明的行为测试（按文件名匹配，不存在则忽略）。"""
+    extra: set[Path] = set()
+    for changed_file in changed:
+        for name in BEHAVIOR_TESTS.get(changed_file.stem, []):
+            candidate = Path("tests") / name
+            if candidate.is_file():
+                extra.add(candidate)
+    return sorted(set(targets) | extra)
+
+
 def run_tests_incremental(base: str = "HEAD") -> tuple[bool, str]:
     """只运行受变更影响的测试（时间预算分层的 PR 级入口）。
 
@@ -231,10 +271,10 @@ def run_tests_incremental(base: str = "HEAD") -> tuple[bool, str]:
         return True, "No changed Python files; incremental test skipped"
 
     targets = _tests_for_modules(changed)
-    if not targets:
-        return True, (
-            f"No tests reference {len(changed)} changed file(s); falling back to full suite is recommended before merge"
-        )
+    if not targets or _uncovered_changed_modules(changed, targets):
+        # 无法确定受影响范围时回退全量 —— 保证不漏检
+        return run_tests()
+    targets = _add_behavior_tests(changed, targets)
 
     cmd = [sys.executable, "-m", "pytest", *[str(t) for t in targets], "-v", "--tb=short", "-p", "no:cacheprovider"]
 

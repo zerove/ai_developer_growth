@@ -53,6 +53,9 @@ class TestLayerIndexesAreReachable:
             rel_dir = index.parent.relative_to(DOCS).as_posix()
             if rel_dir in NESTED:
                 continue
+            if rel_dir == "archive":
+                # 归档目录收录已停维的历史资产, 不是知识层 —— 与 link_auditor 的孤儿扫描口径一致
+                continue
             # MOC 以 [[docs/<层>/README|标题]] 或相对路径引用
             if f"docs/{rel_dir}/README" not in moc and f"{rel_dir}/README" not in moc:
                 orphans.append(f"docs/{rel_dir}/README.md")

@@ -145,10 +145,19 @@ class IndexCompletenessTest(unittest.TestCase):
         self.assertEqual(numbers, sorted(numbers, reverse=True))
 
     def test_numbers_are_contiguous(self) -> None:
-        """编号不应有断层 (ADR-040 缺失曾长期无人察觉)。"""
+        """编号不应有断层 (ADR-040 缺失曾长期无人察觉)。
+
+        例外: 头部明确声明的保留编号段 —— 见 ADR.md 头部说明
+        (ADR-005/007/008/009 以数字编号保留, ADR-006 为历史空号)。
+        """
         module = _load_module()
         numbers = sorted({e.number for e in module.collect_entries()})
-        gaps = [n for n in range(numbers[0], numbers[-1] + 1) if n not in numbers]
+        reserved = {5, 6, 7, 8, 9}
+        gaps = [
+            n
+            for n in range(numbers[0], numbers[-1] + 1)
+            if n not in numbers and n not in reserved
+        ]
         self.assertEqual(gaps, [], f"ADR 编号存在断层: {gaps}")
 
 

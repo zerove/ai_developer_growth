@@ -22,6 +22,7 @@
 | 质量门禁 | Quality Gate | 开发流程中的质量检查关卡，必须通过才能继续 | GOVERNANCE.md |
 | 5 步闭环 | 5-Step Lifecycle | 需求分析→Prompt 设计→实现编码→自动化审计→资产更新 | GOVERNANCE.md |
 | 资产更新 | Asset Update | 开发完成后更新文档、ADR、CONTEXT 等项目资产 | GOVERNANCE.md |
+| 归档 | Archive | 已停止主动维护、保留供追溯的历史资产（docs/archive/） | ADR-085 |
 | 最小权限 | Least Privilege | Agent 仅获得完成任务所需的最少工具权限 | prompt-standards.md |
 | 上下文管理 | Context Management | 维护 CONTEXT.md、ADR.md、AGENTS.md 等状态文件 | context-management.md |
 | 4 道门禁 | 4 Quality Gates | Gate 1: Prompt 设计 → Gate 2: 实现编码 → Gate 3: 自动化审计 → Gate 4: 资产更新 | GOVERNANCE.md |

@@ -292,6 +292,30 @@ AI 时代开发者成长知识库 + 治理框架（knowledge base + governance f
 
 ---
 
+## 更新记录: 2026-11-21 21:58:30
+
+### 任务
+Git 变更同步
+
+### 变更摘要
+- 变更文件 4 个 (+84 / -39 行)
+  - CONTEXT.md
+  - tests/conftest.py
+  - tools/scripts/architecture_drift_guard.py
+  - tools/scripts/rules_engine/semantic_checker.py
+
+## 更新记录: 2026-11-21 21:53:39
+
+### 任务
+Git 变更同步
+
+### 变更摘要
+- 变更文件 4 个 (+69 / -25 行)
+  - CONTEXT.md
+  - tests/conftest.py
+  - tools/scripts/architecture_drift_guard.py
+  - tools/scripts/rules_engine/semantic_checker.py
+
 ## 更新记录: 2026-11-21 20:52:56
 
 ### 任务
@@ -324,32 +348,5 @@ Git 变更同步
 ### 变更摘要
 - 变更文件 1 个 (+15 / -18 行)
   - CONTEXT.md
-
-## 更新记录: 2026-11-21 18:39:03
-
-### 任务
-Git 变更同步
-
-### 变更摘要
-- 变更文件 7 个 (+78 / -4 行)
-  - CONTEXT.md
-  - README.md
-  - ROADMAP.md
-  - UBIQUITOUS_LANGUAGE.md
-  - docs/archive/README.md
-  - mkdocs.yml
-  - tools/scripts/update_stats.py
-
-## 更新记录: 2026-11-21 17:24:54
-
-### 任务
-Git 变更同步
-
-### 变更摘要
-- 变更文件 4 个 (+59 / -19 行)
-  - CONTEXT.md
-  - ROADMAP.md
-  - docs/adr/ADR.md
-  - tools/scripts/hooks/basic_checks.py
 
 <!-- 滚动窗口: 已自动裁剪 1 条旧更新记录 -->

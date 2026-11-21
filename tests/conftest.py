@@ -274,10 +274,13 @@ def shared_search_index():
     """会话级共享 search 索引 —— search 相关测试模块复用。
 
     原实现中 search_recall / search_server_smoke 等模块各自构建一份全量
-    索引（单模块 ~5-8s），多模块乘加。现由 conftest 构建一次，模块级
-    fixture 复用。
+    索引（单模块 ~5-8s），多模块乘加；且 xdist 每 worker 一个 session，相同
+    索引重复构建。现由 conftest 构建一次，模块级 fixture 复用，并按文档
+    指纹缓存到临时目录 pickle（worker 间复用，指纹变则自动失效）。
     """
+    import hashlib
     import importlib.util
+    import pickle
 
     spec = importlib.util.spec_from_file_location(
         "adg_search_server_shared",
@@ -288,4 +291,22 @@ def shared_search_index():
     spec.loader.exec_module(mod)
     from tools.scripts.search.tfidf_engine import create_enhanced_index
 
-    return create_enhanced_index(mod.load_documents())
+    documents = mod.load_documents()
+    fp = hashlib.sha256()
+    for d in documents:
+        fp.update(d.id.encode())
+        fp.update(d.title.encode())
+        fp.update(d.content.encode())
+    cache_path = Path(tempfile.gettempdir()) / f"adg-search-index-{fp.hexdigest()[:16]}.pkl"
+    if cache_path.exists():
+        try:
+            with open(cache_path, "rb") as f:
+                return pickle.load(f)
+        except Exception:
+            pass  # 缓存损坏/不可用 → 重建
+    index = create_enhanced_index(documents)
+    tmp_path = cache_path.with_name(f"{cache_path.name}.{os.getpid()}.tmp")
+    with open(tmp_path, "wb") as f:
+        pickle.dump(index, f)
+    os.replace(tmp_path, cache_path)  # 原子替换，跨 worker 读取安全
+    return index

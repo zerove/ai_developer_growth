@@ -9,6 +9,7 @@ Checks codebase against ADR rules and architectural layering constraints
 
 from __future__ import annotations
 
+import os
 import sys
 from pathlib import Path
 
@@ -63,19 +64,29 @@ class ArchitectureDriftGuard:
         self.unsupported_languages: list[str] = []
         self.scanned_languages: list[str] = []
 
+    def _walk_source_files(self) -> list[Path]:
+        """单次 os.walk 枚举非跳过目录下的全部文件。
+
+        原实现：detect_project_languages 与 _scan_language_for_violations
+        各自 rglob 一遍全树（含 .venv）—— 实测 run_architecture_guard
+        ~4.5s 中大部分是两次遍历 + 每个条目的 is_file/parts 检查。
+        目录剪枝 + 单次遍历后实测 ~2s。
+        """
+        skip_dirs = {".git", "node_modules", ".venv", "venv", "__pycache__", "dist", "build", "target"}
+        out: list[Path] = []
+        for root, dirs, files in os.walk(self.root_dir):
+            dirs[:] = [d for d in dirs if d not in skip_dirs]
+            out.extend(Path(root) / f for f in files)
+        return out
+
     def detect_project_languages(self) -> list[str]:
         """按源码扩展名统计项目语言构成（不依赖标记文件的健壮探测）。"""
+        return self._detect_languages(self._walk_source_files())
+
+    def _detect_languages(self, files: list[Path]) -> list[str]:
+        """按扩展名统计语言构成（计数降序）。"""
         counts: dict[str, int] = {}
-        skip_dirs = {".git", "node_modules", ".venv", "venv", "__pycache__", "dist", "build", "target"}
-        for path in self.root_dir.rglob("*"):
-            if not path.is_file():
-                continue
-            try:
-                rel_parts = path.relative_to(self.root_dir).parts[:-1]
-            except ValueError:
-                rel_parts = ()
-            if any(part in skip_dirs for part in rel_parts):
-                continue
+        for path in files:
             suffix = path.suffix.lower()
             for lang, exts in LANGUAGE_EXTENSIONS.items():
                 if suffix in exts:
@@ -92,7 +103,8 @@ class ArchitectureDriftGuard:
         self.unsupported_languages = []
         self.scanned_languages = []
 
-        languages = self.detect_project_languages()
+        files = self._walk_source_files()
+        languages = self._detect_languages(files)
         if not languages:
             # 纯文档/配置项目: 无源码可查不算错误
             return self.violations
@@ -100,16 +112,23 @@ class ArchitectureDriftGuard:
         domain_markers = ("domain",)
         skip_dirs = {".git", "node_modules", ".venv", "venv"}
         for lang in languages:
-            self._scan_language_for_violations(lang, domain_markers, skip_dirs)
+            self._scan_language_for_violations(lang, domain_markers, skip_dirs, files=files)
         return self.violations
 
-    def _scan_language_for_violations(self, lang: str, domain_markers: tuple[str, ...], skip_dirs: set[str]) -> None:
+    def _scan_language_for_violations(
+        self,
+        lang: str,
+        domain_markers: tuple[str, ...],
+        skip_dirs: set[str],
+        files: list[Path] | None = None,
+    ) -> None:
         """扫描单语言的分层违规 (方法级 helper, 内部 append self.violations).
 
         Args:
             lang: 语言
             domain_markers: 域目录关键字 (含 domain 字符串)
             skip_dirs: 跳过目录集合
+            files: 预缓存的全量文件列表（check_layering 共享一次 os.walk）
         """
         patterns = LAYERING_IMPORT_PATTERNS.get(lang)
         if patterns is None:
@@ -117,7 +136,7 @@ class ArchitectureDriftGuard:
             return
         self.scanned_languages.append(lang)
         exts = LANGUAGE_EXTENSIONS[lang]
-        for file_path in self.root_dir.rglob("*"):
+        for file_path in files if files is not None else self._walk_source_files():
             if file_path.suffix.lower() not in exts:
                 continue
             if any(part in skip_dirs for part in file_path.parts):

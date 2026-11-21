@@ -266,7 +266,7 @@ class SemanticChecker:
         """
         parse_errors: list[SemanticIssue] = []
         try:
-            ast_result = self.parser.parse_file(filepath)
+            ast_result = self.parser.parse_file(filepath, use_cache=True)
         except Exception as e:
             parse_errors.append(
                 SemanticIssue(

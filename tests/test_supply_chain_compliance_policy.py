@@ -16,6 +16,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import urllib.error
 from pathlib import Path
 from typing import Any
 
@@ -323,3 +324,173 @@ def test_severity_enum_kept_in_scan_result() -> None:
     result = ScanResult(project_path=".")
     assert result.license_review == []
     assert Severity.NONE.value == "none"
+
+
+# ── P1: mutation 杀伤补强（_sc_pypi.py） ──────────────────────
+
+
+class TestPyPIMutationHardening:
+    def test_classifier_skips_non_license_then_matches(self) -> None:
+        # 杀 mut#71: continue->break 会在非 License classifier 处提前退出
+        assert (
+            license_from_classifiers(
+                [
+                    "Programming Language :: Python :: 3",
+                    "License :: OSI Approved :: MIT License",
+                ]
+            )
+            == "MIT"
+        )
+
+    def test_pypi_client_default_timeout(self) -> None:
+        client = PyPIMetadataClient()
+        assert client.timeout == 15
+        assert client._cache == {}
+        assert client._missing == set()
+
+    def test_license_of_falls_back_to_info_license_text(self) -> None:
+        # 杀 mut#98: info.get("license") 被误改键名
+        fake = FakePyPI({"pkg": {"info": {"license": "Apache Software License 2.0"}}})
+        assert fake.client().license_of("pkg") == "Apache-2.0"
+
+    def test_resolve_version_specifier_empty_string(self) -> None:
+        fake = FakePyPI({"pkg": {"info": {}, "releases": {"0.23.0": [], "0.24.0": []}}})
+        assert fake.client().resolve_version("pkg", "0.23", "") == "0.23.0"
+
+    def test_resolve_version_specifier_tilde_arrow(self) -> None:
+        fake = FakePyPI({"pkg": {"info": {}, "releases": {"1.2.0": [], "1.3.0": []}}})
+        assert fake.client().resolve_version("pkg", "1.1", "~>") == "1.2.0"
+
+    def test_resolve_version_specifier_gt(self) -> None:
+        fake = FakePyPI({"pkg": {"info": {}, "releases": {"1.2.0": [], "1.3.0": []}}})
+        assert fake.client().resolve_version("pkg", "1.1", ">") == "1.2.0"
+
+    def test_resolve_version_specifier_triple_eq(self) -> None:
+        # === 走下界匹配分支（与 == 不同）；杀 mut#115
+        fake = FakePyPI({"pkg": {"info": {}, "releases": {"1.2.0": [], "1.3.0": []}}})
+        assert fake.client().resolve_version("pkg", "1.1", "===") == "1.2.0"
+
+    def test_compatible_prefix_uses_pep440_segment_boundary(self) -> None:
+        # 杀 mut#122: ~=1.2.3 只允许 1.2.x，不能跨到 1.3.x
+        fake = FakePyPI({"pkg": {"info": {}, "releases": {"1.2.9": [], "1.3.0": []}}})
+        assert fake.client().resolve_version("pkg", "1.2.3", "~=") == "1.2.9"
+
+    def test_compatible_picks_highest_in_prefix(self) -> None:
+        # 杀 mut#125: reverse=False 会选最低兼容版本
+        fake = FakePyPI({"pkg": {"info": {}, "releases": {"1.2.3": [], "1.2.9": [], "1.3.0": []}}})
+        assert fake.client().resolve_version("pkg", "1.2.0", "~=") == "1.2.9"
+
+    def test_package_missing_true_for_404(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        client = PyPIMetadataClient()
+
+        def fake_urlopen(request: Any, timeout: int = 0) -> Any:
+            raise urllib.error.HTTPError(request.full_url, 404, "not found", hdrs=None, fp=None)
+
+        monkeypatch.setattr(urllib.request, "urlopen", fake_urlopen)
+        assert client.package_missing("nope") is True
+        assert client.package_missing("nope") is True  # 缓存命中
+
+    def test_package_missing_false_for_5xx(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        client = PyPIMetadataClient()
+
+        def fake_urlopen(request: Any, timeout: int = 0) -> Any:
+            raise urllib.error.HTTPError(request.full_url, 503, "down", hdrs=None, fp=None)
+
+        monkeypatch.setattr(urllib.request, "urlopen", fake_urlopen)
+        monkeypatch.setattr("time.sleep", lambda *_: None)
+        assert client.package_missing("pkg") is False
+
+    def test_fetch_retries_on_5xx_then_succeeds(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        client = PyPIMetadataClient()
+        calls: list[int] = []
+        sleeps: list[float] = []
+
+        class Resp:
+            def __enter__(self) -> Resp:
+                return self
+
+            def __exit__(self, *args: object) -> None:
+                return None
+
+            def read(self) -> bytes:
+                return b'{"info": {}, "releases": {"1.0.0": []}}'
+
+        def fake_urlopen(request: Any, timeout: int = 0) -> Resp:
+            calls.append(1)
+            if len(calls) < 3:
+                raise urllib.error.HTTPError(request.full_url, 500, "err", hdrs=None, fp=None)
+            return Resp()
+
+        monkeypatch.setattr(urllib.request, "urlopen", fake_urlopen)
+        monkeypatch.setattr("time.sleep", lambda s: sleeps.append(s))
+        data = client.metadata("pkg")
+        assert data is not None
+        assert len(calls) == 3
+        assert sleeps == [0.5, 1.0]  # 0.5 * attempt
+
+    def test_fetch_retries_on_exception_then_fails(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        client = PyPIMetadataClient()
+        calls: list[int] = []
+        sleeps: list[float] = []
+
+        def fake_urlopen(request: Any, timeout: int = 0) -> Any:
+            calls.append(1)
+            raise OSError("boom")
+
+        monkeypatch.setattr(urllib.request, "urlopen", fake_urlopen)
+        monkeypatch.setattr("time.sleep", lambda s: sleeps.append(s))
+        assert client.metadata("pkg") is None
+        assert len(calls) == 3
+        assert sleeps == [0.5, 1.0]
+
+    def test_fetch_404_does_not_retry(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        client = PyPIMetadataClient()
+        calls: list[int] = []
+
+        def fake_urlopen(request: Any, timeout: int = 0) -> Any:
+            calls.append(1)
+            raise urllib.error.HTTPError(request.full_url, 404, "not found", hdrs=None, fp=None)
+
+        monkeypatch.setattr(urllib.request, "urlopen", fake_urlopen)
+        assert client.metadata("missing") is None
+        assert calls == [1]
+        assert client.package_missing("missing") is True
+
+    def test_fetch_non_retryable_http_error_returns_none(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        client = PyPIMetadataClient()
+        calls: list[int] = []
+
+        def fake_urlopen(request: Any, timeout: int = 0) -> Any:
+            calls.append(1)
+            raise urllib.error.HTTPError(request.full_url, 403, "forbidden", hdrs=None, fp=None)
+
+        monkeypatch.setattr(urllib.request, "urlopen", fake_urlopen)
+        assert client.metadata("pkg") is None
+        assert calls == [1]
+        assert client.package_missing("pkg") is False
+
+    def test_fetch_sends_accept_json_header(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        client = PyPIMetadataClient()
+        seen: dict[str, Any] = {}
+
+        class Resp:
+            def __enter__(self) -> Resp:
+                return self
+
+            def __exit__(self, *args: object) -> None:
+                return None
+
+            def read(self) -> bytes:
+                return b"{}"
+
+        def fake_urlopen(request: Any, timeout: int = 0) -> Resp:
+            seen["url"] = request.full_url
+            seen["accept"] = request.get_header("Accept")
+            seen["timeout"] = timeout
+            return Resp()
+
+        monkeypatch.setattr(urllib.request, "urlopen", fake_urlopen)
+        client.metadata("Pkg.Name")
+        assert seen["url"] == "https://pypi.org/pypi/Pkg.Name/json"
+        assert seen["accept"] == "application/json"
+        assert seen["timeout"] == 15

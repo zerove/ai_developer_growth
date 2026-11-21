@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import argparse
 import logging
+import os
 import subprocess
 import sys
 from collections.abc import Callable
@@ -74,18 +75,30 @@ def _excluded_scan_dirs() -> set[str]:
 
 
 def _count_language_files(project_root: Path) -> dict[Language, int]:
-    """扫描所有扩展名, 统计各语言文件数 (排除第三方/构建目录)。"""
+    """扫描所有扩展名, 统计各语言文件数 (排除第三方/构建目录)。
+
+    单次 os.walk 收集全部扩展名：原实现按 EXTENSION_MAP 的每个扩展名
+    rglob 一次，每次遍历整棵树（含 .venv 全量枚举，实测 ~17s）；改为
+    单次遍历 + 目录剪枝 + 后缀分类，实测 ~0.2s。
+    """
     _node_ecosystem_languages = {Language.TYPESCRIPT, Language.JAVASCRIPT}
     has_package_json = (project_root / "package.json").exists()
     excluded = _excluded_scan_dirs()
 
     ext_counts: dict[Language, int] = {}
-    for ext, lang in EXTENSION_MAP.items():
-        if lang in _node_ecosystem_languages and not has_package_json:
-            continue
-        count = sum(1 for p in project_root.rglob(f"*{ext}") if not (set(p.parts) & excluded))
-        if count > 0:
-            ext_counts[lang] = ext_counts.get(lang, 0) + count
+    for _root, dirs, files in os.walk(project_root):
+        # 直接剪枝（不再枚举被排除目录的子树），对齐原实现
+        # `set(p.parts) & excluded` 的过滤语义（文件名在 excluded 内也跳过）
+        dirs[:] = [d for d in dirs if d not in excluded]
+        for f in files:
+            if f in excluded:
+                continue
+            lang = EXTENSION_MAP.get(Path(f).suffix)
+            if lang is None:
+                continue
+            if lang in _node_ecosystem_languages and not has_package_json:
+                continue
+            ext_counts[lang] = ext_counts.get(lang, 0) + 1
     return ext_counts
 
 

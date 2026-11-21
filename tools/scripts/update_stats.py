@@ -195,6 +195,45 @@ def _record_trend(root: Path, stats: dict[str, int], skip_gate: bool) -> None:
         print(f"📈 趋势快照已记录: {stats}")
 
 
+def _check_stats_history_freshness(root: Path, warn_days: int = 30) -> list[str]:
+    """stats_history 最新条目停更告警 —— 趋势数据，警告不拦截（不红）。
+
+    历史上此检查缺失曾导致 stats_history 3 个月无新条目
+    （期间 ADR 数 73→81 变化未被记录），补一个软告警。
+    """
+    history_file = root / ".quality-trends" / "stats_history.jsonl"
+    if not history_file.exists():
+        return []
+    newest: datetime | None = None
+    try:
+        for line in history_file.read_text(encoding="utf-8").splitlines():
+            line = line.strip()
+            if not line:
+                continue
+            try:
+                entry = json.loads(line)
+            except json.JSONDecodeError:
+                continue
+            ts = entry.get("timestamp")
+            if not isinstance(ts, str):
+                continue
+            try:
+                parsed = datetime.fromisoformat(ts)
+            except ValueError:
+                continue
+            if newest is None or parsed > newest:
+                newest = parsed
+    except OSError:
+        return []
+    if newest is None:
+        return []
+    days = (datetime.now(timezone.utc) - newest).days
+    if days > warn_days:
+        stamp = newest.strftime("%Y-%m-%d %H:%M")
+        return [f"⚠️ stats_history 已 {days} 天未更新（最新 {stamp}），建议：python -m tools.scripts.update_stats"]
+    return []
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description="项目统计单一事实来源同步")
     parser.add_argument("--check", action="store_true", help="仅检查不一致, 有漂移时退出码 1 (CI 模式)")
@@ -220,6 +259,8 @@ def main() -> int:
 
     if args.check:
         drift = _find_drift(readme, stats)
+        for warning in _check_stats_history_freshness(root):
+            print(warning)
         if drift:
             print("❌ README 统计与实际不一致:")
             for d in drift:

@@ -292,6 +292,18 @@ AI 时代开发者成长知识库 + 治理框架（knowledge base + governance f
 
 ---
 
+## 更新记录: 2026-11-21 17:24:54
+
+### 任务
+Git 变更同步
+
+### 变更摘要
+- 变更文件 4 个 (+59 / -19 行)
+  - CONTEXT.md
+  - ROADMAP.md
+  - docs/adr/ADR.md
+  - tools/scripts/hooks/basic_checks.py
+
 ## 更新记录: 2026-11-21 16:41:36
 
 ### 任务
@@ -352,18 +364,6 @@ Git 变更同步
   - docs/integration/capability-radar-integration.md
   - mkdocs.yml
   - tests/test_search_recall.py
-  - tools/scripts/mutation_score.py
-
-## 更新记录: 2026-11-16 19:12:59
-
-### 任务
-Git 变更同步
-
-### 变更摘要
-- 变更文件 4 个 (+65 / -39 行)
-  - .jcode/baseline.json
-  - CONTEXT.md
-  - README.md
   - tools/scripts/mutation_score.py
 
 <!-- 滚动窗口: 已自动裁剪 1 条旧更新记录 -->

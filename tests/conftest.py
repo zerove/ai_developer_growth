@@ -267,3 +267,25 @@ Test insights.
 
 Test scenarios.
 """
+
+
+@pytest.fixture(scope="session")
+def shared_search_index():
+    """会话级共享 search 索引 —— search 相关测试模块复用。
+
+    原实现中 search_recall / search_server_smoke 等模块各自构建一份全量
+    索引（单模块 ~5-8s），多模块乘加。现由 conftest 构建一次，模块级
+    fixture 复用。
+    """
+    import importlib.util
+
+    spec = importlib.util.spec_from_file_location(
+        "adg_search_server_shared",
+        Path(__file__).resolve().parent.parent / "scripts" / "search-server.py",
+    )
+    assert spec and spec.loader
+    mod = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(mod)
+    from tools.scripts.search.tfidf_engine import create_enhanced_index
+
+    return create_enhanced_index(mod.load_documents())

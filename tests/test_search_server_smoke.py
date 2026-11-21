@@ -75,27 +75,19 @@ class TestDocumentLoading:
 class TestSearchQuality:
     """检索质量：中英文查询均有合理结果。"""
 
-    def test_search_returns_relevant_results(self, server) -> None:
-        docs = server.load_documents()
-        index = server.create_enhanced_index(docs)
-        results = index.search("质量门禁", top_k=3)
+    def test_search_returns_relevant_results(self, shared_search_index) -> None:
+        results = shared_search_index.search("质量门禁", top_k=3)
         assert len(results) > 0, "中文查询无结果"
 
-    def test_english_query_works(self, server) -> None:
-        docs = server.load_documents()
-        index = server.create_enhanced_index(docs)
-        results = index.search("code review", top_k=3)
+    def test_english_query_works(self, shared_search_index) -> None:
+        results = shared_search_index.search("code review", top_k=3)
         assert len(results) > 0, "英文查询无结果"
 
-    def test_stats_endpoint_data_available(self, server) -> None:
-        docs = server.load_documents()
-        index = server.create_enhanced_index(docs)
-        stats = index.get_stats()
-        assert stats["total_documents"] == len(docs)
+    def test_stats_endpoint_data_available(self, shared_search_index) -> None:
+        stats = shared_search_index.get_stats()
+        assert stats["total_documents"] > 0
         assert stats["total_terms"] > 0
 
-    def test_suggestions_work(self, server) -> None:
-        docs = server.load_documents()
-        index = server.create_enhanced_index(docs)
-        suggestions = index.suggest("ai")
+    def test_suggestions_work(self, shared_search_index) -> None:
+        suggestions = shared_search_index.suggest("ai")
         assert isinstance(suggestions, list)

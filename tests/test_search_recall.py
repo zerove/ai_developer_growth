@@ -11,13 +11,7 @@
 
 from __future__ import annotations
 
-import importlib.util
-import sys
-from pathlib import Path
-
 import pytest
-
-ROOT = Path(__file__).resolve().parent.parent
 
 # (查询, top_k 内期望命中的文档 id 或 None)
 CASES: list[tuple[str, str | None]] = [
@@ -39,16 +33,9 @@ CASES: list[tuple[str, str | None]] = [
 
 
 @pytest.fixture(scope="module")
-def search_index():
-    """构建一次全量索引供全部用例复用（jieba 首次加载约 1s）。"""
-    sys.path.insert(0, str(ROOT))
-    spec = importlib.util.spec_from_file_location("search_server", ROOT / "scripts/search-server.py")
-    assert spec and spec.loader
-    mod = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(mod)
-    from tools.scripts.search.tfidf_engine import create_enhanced_index
-
-    return create_enhanced_index(mod.load_documents())
+def search_index(shared_search_index):
+    """复用会话级共享索引（原各模块各自构建一份，共享后更快）。"""
+    return shared_search_index
 
 
 @pytest.mark.parametrize(("query", "expected_id"), CASES)

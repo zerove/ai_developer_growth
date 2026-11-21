@@ -125,12 +125,12 @@ nav:
     - Quality Gates: agent-dev/quality-gates.md
   - ADRs (11):
     - ADR Index: adr/ADR.md
-    - "001: Language Rules Arch": adr/001-language-rules-engine-architecture.md
-    - "001b: Enhanced Git Analyzer": adr/001-enhanced-git-analyzer.md
-    - "002: Knowledge First Restructure": adr/002-knowledge-first-restructure.md
-    - "002b: Refactor Validation": adr/002-refactor-validate-language-rules.md
-    - "003: Quality Gate System": adr/003-quality-gate-system.md
-    - "004: Agent Collaboration": adr/004-agent-collaboration-model.md
+    - "001b: Language Rules Arch": adr/ADR-001b-language-rules-engine-architecture.md
+    - "001: Enhanced Git Analyzer": adr/ADR-001-enhanced-git-analyzer.md
+    - "002: Knowledge First Restructure": adr/ADR-002-knowledge-first-restructure.md
+    - "002b: Refactor Validation": adr/ADR-002b-refactor-validate-language-rules.md
+    - "003: Quality Gate System": adr/ADR-003-quality-gate-system.md
+    - "004: Agent Collaboration": adr/ADR-004-agent-collaboration-model.md
     - "005: AI Navigation": adr/005-ai-navigation-system.md
     - "007: M4 Navigation": adr/007-m4-ai-navigation-design.md
     - "008: Production Workflow": adr/008-production-grade-workflow.md

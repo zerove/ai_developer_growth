@@ -148,7 +148,7 @@ def build_registry() -> GateRegistry:
             Gate("arch-guard", (py, "-m", "tools.scripts.architecture_drift_guard"), note="架构漂移防御"),
             Gate("secret-scan", (*runner, "secret-scan"), requires=("gitleaks",), note="密钥扫描（需 gitleaks）"),
             Gate("sbom", (*runner, "sbom", "--output", ".cache/local-ci-sbom.json"), note="SBOM 生成"),
-            Gate("dep-graph", (*runner, "dep-graph"), note="依赖图分析（对应 jobs-dependency-graph.yml）"),
+            Gate("dep-graph", (*runner, "dep-graph", "analyze"), note="依赖图分析（对应 jobs-dependency-graph.yml）"),
             Gate("ci-heartbeat", (*runner, "ci-heartbeat"), optional=True, note="远端门禁存活探测（仅告警）"),
         ]
     )

@@ -254,6 +254,9 @@ def find_moc_unreferenced_indexes(directory: str = ".", moc_path: str = "docs/MO
 
     orphans: list[str] = []
     for layer in layers:
+        if layer == "archive":
+            # 归档目录收录已停止维护的历史资产, 不是知识层, 不入 MOC 导航
+            continue
         if not os.path.isfile(os.path.join(docs_dir, layer, "README.md")):
             continue
         # MOC 以 [[docs/<层>/README|标题]] 或相对路径引用

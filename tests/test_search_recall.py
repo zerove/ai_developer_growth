@@ -21,7 +21,7 @@ ROOT = Path(__file__).resolve().parent.parent
 
 # (查询, top_k 内期望命中的文档 id 或 None)
 CASES: list[tuple[str, str | None]] = [
-    ("质量门禁", "adr_003-quality-gate-system"),
+    ("质量门禁", "adr_ADR-003-quality-gate-system"),
     ("多智能体协作编排", None),
     ("AI 开发生命周期", "efficiency_ai-native-sdlc-whitepaper"),
     ("部署与运维", "efficiency_ai-deployment-operations"),

@@ -292,6 +292,25 @@ AI 时代开发者成长知识库 + 治理框架（knowledge base + governance f
 
 ---
 
+## 更新记录: 2026-11-21 19:48:32
+
+### 任务
+Git 变更同步
+
+### 变更摘要
+- 变更文件 2 个 (+46 / -44 行)
+  - CONTEXT.md
+  - tools/scripts/search/tfidf_engine.py
+
+## 更新记录: 2026-11-21 19:34:46
+
+### 任务
+Git 变更同步
+
+### 变更摘要
+- 变更文件 1 个 (+15 / -18 行)
+  - CONTEXT.md
+
 ## 更新记录: 2026-11-21 18:39:03
 
 ### 任务
@@ -327,40 +346,5 @@ Git 变更同步
 ### 变更摘要
 - 变更文件 1 个 (+3 / -0 行)
   - tests/test_doc_index_reachability.py
-
-## 更新记录: 2026-11-18 09:37:33
-
-### 任务
-Git 变更同步
-
-### 变更摘要
-- 变更文件 11 个 (+51 / -52 行)
-  - .jcode/baseline.json
-  - CLAUDE.md
-  - CONTEXT.md
-  - README.md
-  - docs/adr/ADR-083-sys-path-shadowing.md
-  - docs/adr/ADR-084-config-toml-resilience.md
-  - mkdocs.yml
-  - tests/test_search_recall.py
-  - tools/scripts/link_auditor.py
-  - tools/scripts/local_ci_mirror.py
-  - tools/scripts/mutation_score.py
-
-## 更新记录: 2026-11-17 19:06:13
-
-### 任务
-Git 变更同步
-
-### 变更摘要
-- 变更文件 8 个 (+35 / -36 行)
-  - CLAUDE.md
-  - CONTEXT.md
-  - README.md
-  - docs/adr/ADR-083-sys-path-shadowing.md
-  - docs/adr/ADR-084-config-toml-resilience.md
-  - mkdocs.yml
-  - tests/test_search_recall.py
-  - tools/scripts/mutation_score.py
 
 <!-- 滚动窗口: 已自动裁剪 1 条旧更新记录 -->

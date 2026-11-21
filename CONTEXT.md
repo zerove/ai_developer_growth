@@ -292,6 +292,21 @@ AI 时代开发者成长知识库 + 治理框架（knowledge base + governance f
 
 ---
 
+## 更新记录: 2026-11-21 18:39:03
+
+### 任务
+Git 变更同步
+
+### 变更摘要
+- 变更文件 7 个 (+78 / -4 行)
+  - CONTEXT.md
+  - README.md
+  - ROADMAP.md
+  - UBIQUITOUS_LANGUAGE.md
+  - docs/archive/README.md
+  - mkdocs.yml
+  - tools/scripts/update_stats.py
+
 ## 更新记录: 2026-11-21 17:24:54
 
 ### 任务
@@ -344,24 +359,6 @@ Git 变更同步
   - README.md
   - docs/adr/ADR-083-sys-path-shadowing.md
   - docs/adr/ADR-084-config-toml-resilience.md
-  - mkdocs.yml
-  - tests/test_search_recall.py
-  - tools/scripts/mutation_score.py
-
-## 更新记录: 2026-11-17 18:36:10
-
-### 任务
-Git 变更同步
-
-### 变更摘要
-- 变更文件 10 个 (+67 / -51 行)
-  - AGENTS.md
-  - CLAUDE.md
-  - CONTEXT.md
-  - README.md
-  - docs/adr/ADR-083-sys-path-shadowing.md
-  - docs/adr/ADR-084-config-toml-resilience.md
-  - docs/integration/capability-radar-integration.md
   - mkdocs.yml
   - tests/test_search_recall.py
   - tools/scripts/mutation_score.py

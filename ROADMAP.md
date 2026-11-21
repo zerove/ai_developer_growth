@@ -107,6 +107,34 @@ Git 快照，只看到 `docs/adr/` 的中间态，被误当成全量污染。
   `ai-dev-framework/*/rules.md` 都写着 `python tools/scripts/X.py ...`，
   改调用方需同步改这些文档
 
+### ✅ ADR-085/086：归档层不入 MOC + 编号保留段（新增 2 篇 ADR）
+
+- [x] **ADR-085 archive 层**：`link_auditor.py`（`find_moc_unreferenced_indexes`）
+  与 `tests/test_doc_index_reachability.py` 跳过 archive 层（同口径），
+  `docs/archive/README.md` 明确"不入 MOC 导航"的刻意设计
+- [x] **ADR-086 编号保留段**：`ADR.md` 头部细化为"005/007/008/009 为保留编号（无记录，未复用）；006 为历史空号"，
+  `test_numbers_are_contiguous` 允许头部声明的保留段出现空号；索引重新生成（83 条），`--check` 通过
+
+### ✅ 统计与文档口径同步（README/CONTEXT/ADR.md）
+
+- [x] **统计同步**：`update_stats` 重新生成 —— README 核心文档 415→417、架构决策 81→83；
+  `CONTEXT.md` ADR 累计 83 篇，最新至 ADR-086；`stats_history` 追加 2026-11-21 条目
+  （`adrs: 83, core_docs: 417, tests: 5975`，门禁全绿）
+- [x] **全量回归验证**：本地 `pytest` 全量 5,971 passed / 4 skipped（多轮全量实测通过）；
+  远端 master CI（5dd6fea，2026-11-21）绿
+
+### ✅ 增量测试门禁加固（pre-push）
+
+- [x] **全量兜底**：`run_tests_incremental` 增量范围无法覆盖某变更模块
+  （`_uncovered_changed_modules`）时回退全量 `run_tests()`
+- [x] **行为测试注册表**：`BEHAVIOR_TESTS` 登记 `link_auditor → test_doc_index_reachability`
+  （此前远端 CI 才发现的漏洞类）；`update_stats --check` 新增 stats_history 停更告警
+
+### ✅ 远端 CI 修复放行
+
+- [x] 远端 CI 在 cb639fa（ADR-085/086 推送）上因 README 统计漂移（文档 415/ADR 81）
+  失败 2 次 → 重跑 `update_stats` 同步 → 提交 5dd6fea → 远端 CI 绿
+
 ---
 
 ## 历史状态 (2026-10-05)

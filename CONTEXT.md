@@ -292,6 +292,16 @@ AI 时代开发者成长知识库 + 治理框架（knowledge base + governance f
 
 ---
 
+## 更新记录: 2026-11-22 13:17:30
+
+### 任务
+Git 变更同步
+
+### 变更摘要
+- 变更文件 2 个 (+73 / -0 行)
+  - .github/workflows/mutation-testing.yml
+  - tests/test_ci_mutation_workflow_contract.py
+
 ## 更新记录: 2026-11-21 23:31:42
 
 ### 任务
@@ -340,20 +350,6 @@ Git 变更同步
 
 ### 变更摘要
 - 变更文件 6 个 (+121 / -29 行)
-  - CONTEXT.md
-  - tests/conftest.py
-  - tests/test_supply_chain_compliance_policy.py
-  - tools/scripts/_sc_pypi.py
-  - tools/scripts/ai_native_mcp_server.py
-  - tools/scripts/search/tfidf_engine.py
-
-## 更新记录: 2026-11-21 23:12:01
-
-### 任务
-Git 变更同步
-
-### 变更摘要
-- 变更文件 6 个 (+120 / -30 行)
   - CONTEXT.md
   - tests/conftest.py
   - tests/test_supply_chain_compliance_policy.py

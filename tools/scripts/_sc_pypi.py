@@ -39,6 +39,7 @@ CLASSIFIER_TO_SPDX: dict[str, str] = {
     "gnu general public license v2 or later (gplv2+)": "GPL-2.0",
     "gnu lesser general public license v3 or later (lgplv3+)": "LGPL-3.0",
     "gnu lesser general public license v2 or later (lgplv2+)": "LGPL-2.1",
+    "gnu lesser general public license v2.1": "LGPL-2.1",
     "python software foundation license": "Python-2.0",
     "zlib/libpng license": "Zlib",
     "the unlicense (unlicense)": "Unlicense",

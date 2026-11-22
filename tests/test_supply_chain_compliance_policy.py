@@ -57,6 +57,26 @@ class TestLicenseNormalization:
         for raw_name, spdx in CLASSIFIER_TO_SPDX.items():
             assert license_from_classifiers([f"License :: OSI Approved :: {raw_name}"]) == spdx
 
+    def test_classifier_map_exact_values_locked(self) -> None:
+        # 固化识别结果值（map 维度：键->值 映射不变才杀存活 mutants）
+        assert license_from_classifiers(["License :: OSI Approved :: mit license"]) == "MIT"
+        assert license_from_classifiers(["License :: OSI Approved :: apache software license"]) == "Apache-2.0"
+        assert license_from_classifiers(["License :: OSI Approved :: bsd license"]) == "BSD-3-Clause"
+        assert license_from_classifiers(["License :: OSI Approved :: isc license (iscl)"]) == "ISC"
+        assert (
+            license_from_classifiers(["License :: OSI Approved :: mozilla public license 2.0 (mpl 2.0)"]) == "MPL-2.0"
+        )
+        assert (
+            license_from_classifiers(
+                ["License :: OSI Approved :: gnu lesser general public license v2 or later (lgplv2+)"]
+            )
+            == "LGPL-2.1"
+        )
+        assert (
+            license_from_classifiers(["License :: OSI Approved :: gnu lesser general public license v2.1"])
+            == "LGPL-2.1"
+        )
+
     def test_text_fallback(self) -> None:
         assert normalize_license_text("Apache Software License 2.0") == "Apache-2.0"
 
@@ -443,7 +463,7 @@ class TestPyPIMutationHardening:
         assert len(calls) == 3
         assert sleeps == [0.5, 1.0]
 
-    def test_fetch_404_does_not_retry(self, monkeypatch: pytest.MonkeyPatch) -> None:
+    def test_fetch_404_does_not_retry(self, monkeypatch: pytest.MonkeyPatch, caplog: pytest.LogCaptureFixture) -> None:
         client = PyPIMetadataClient()
         calls: list[int] = []
 
@@ -455,6 +475,26 @@ class TestPyPIMutationHardening:
         assert client.metadata("missing") is None
         assert calls == [1]
         assert client.package_missing("missing") is True
+        # mut#95: 状态为空时一律按存在处理
+        assert client._missing == {"missing"}
+        assert "PyPI metadata lookup failed" in caplog.text
+
+    def test_fetch_warning_logged_on_terminal_failure(
+        self, monkeypatch: pytest.MonkeyPatch, caplog: pytest.LogCaptureFixture
+    ) -> None:
+        # mut#92: retry 循环试图再次成功 → 变异体存活。固化“正常失败+尝试次数有限”语义。
+        client = PyPIMetadataClient()
+
+        def fake_urlopen(request: Any, timeout: int = 0) -> Any:
+            raise urllib.error.HTTPError(request.full_url, 503, "down", hdrs=None, fp=None)
+
+        monkeypatch.setattr(urllib.request, "urlopen", fake_urlopen)
+        monkeypatch.setattr("time.sleep", lambda *_: None)
+        assert client.metadata("pkg") is None
+        # mut#103/108: 应回传 None 并写入警告（非silent）
+        assert "PyPI metadata lookup failed" in caplog.text
+        assert client.metadata("pkg") is None  # 重试：已记录警告
+        assert client.metadata("pkg") is None
 
     def test_fetch_non_retryable_http_error_returns_none(self, monkeypatch: pytest.MonkeyPatch) -> None:
         client = PyPIMetadataClient()

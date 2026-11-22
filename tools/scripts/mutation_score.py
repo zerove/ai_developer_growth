@@ -137,10 +137,8 @@ def main(argv: list[str] | None = None) -> int:
     print(summary)
 
     if args.report:
-        args.report.write_text(
-            args.report.read_text(encoding="utf-8") + summary + "\n",
-            encoding="utf-8",
-        )
+        existing = args.report.read_text(encoding="utf-8") if args.report.exists() else ""
+        args.report.write_text(existing + summary + "\n", encoding="utf-8")
 
     if not counts:
         print("❌ 未找到 mutmut 缓存库: 变异测试没有真正执行")

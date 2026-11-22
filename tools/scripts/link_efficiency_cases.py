@@ -126,21 +126,36 @@ def _parse_h1_keywords(content: str) -> set[str]:
     return keywords
 
 
+_ALIAS_GROUPS: tuple[tuple[str, ...], ...] = tuple(tuple(g) for g in KEYWORD_ALIASES.values())
+_group_set_cache: dict[str, frozenset[int]] = {}
+
+
+def _keyword_group_set(keyword: str) -> frozenset[int]:
+    """计算 keyword（小写后）出现在哪些 alias group 里 (惰性缓存)。"""
+    key = keyword.lower()
+    cached = _group_set_cache.get(key)
+    if cached is None:
+        cached = frozenset(i for i, group in enumerate(_ALIAS_GROUPS) if key in group)
+        _group_set_cache[key] = cached
+    return cached
+
+
 def _match_score(ai_kws: set[str], case_kws: set[str]) -> int:
-    """两个关键词集合的重叠分数 (含 alias 展开)。"""
+    """两个关键词集合的重叠分数 (含 alias 展开)。
+
+    性能优化: 每个 keyword 先预算一次 group set（缓存），每对 (k,c) 只做
+    lowercase 比较 + 集合相交判定，避免原版每对都遍历全部 alias group。
+    语义与原版一致：k_lower==c_lower 得 2；否则若两者同在一个 group 得 1。
+    """
+    ai_items = [(k, k.lower(), _keyword_group_set(k)) for k in ai_kws]
+    case_items = [(c, c.lower(), _keyword_group_set(c)) for c in case_kws]
     score = 0
-    for k in ai_kws:
-        k_lower = k.lower()
-        for ck in case_kws:
-            ck_lower = ck.lower()
-            if k_lower == ck_lower:
+    for k, kl, kg in ai_items:
+        for c, cl, cg in case_items:
+            if kl == cl:
                 score += 2
-            else:
-                # alias 匹配
-                for alias_group in KEYWORD_ALIASES.values():
-                    if k_lower in alias_group and ck_lower in alias_group:
-                        score += 1
-                        break
+            elif not kg.isdisjoint(cg):
+                score += 1
     return score
 
 

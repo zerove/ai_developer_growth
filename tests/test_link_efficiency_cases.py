@@ -14,6 +14,8 @@ import subprocess
 import sys
 from pathlib import Path
 
+from tools.scripts.link_efficiency_cases import _match_score
+
 ROOT = Path(__file__).resolve().parents[1]
 SCRIPT = ROOT / "tools" / "scripts" / "link_efficiency_cases.py"
 
@@ -26,6 +28,33 @@ def _run(*args: str) -> subprocess.CompletedProcess[str]:
         text=True,
         timeout=60,
     )
+
+
+class TestMatchScore:
+    """_match_score 行为固化 (P3: 性能优化后的语义锁定)。"""
+
+    def test_equal_keywords_score_2(self) -> None:
+        # 杀 mut: score += 2 → 其他值
+        assert _match_score({"ai"}, {"ai"}) == 2
+
+    def test_case_insensitive_equal_score_2(self) -> None:
+        assert _match_score({"AI"}, {"ai"}) == 2
+
+    def test_alias_same_group_scores_1(self) -> None:
+        # 杀 mut: score += 1 → 0/2 (击穿 isdisjoint 判定)
+        assert _match_score({"review"}, {"审查"}) == 1
+
+    def test_alias_different_group_scores_0(self) -> None:
+        # 杀 mut: 判定逻辑误触（如 kl==cl 改成 !=）
+        assert _match_score({"ai"}, {"agent"}) == 0
+
+    def test_no_overlap_scores_0(self) -> None:
+        # 杀 mut: _keyword_group_set 预算缓存判定误触 (kg/cg 应为空)
+        assert _match_score({"nonexistent-a"}, {"nonexistent-b"}) == 0
+
+    def test_multiple_pairs_sum(self) -> None:
+        # 杀 mut: 循环/求和误差
+        assert _match_score({"ai", "agent"}, {"ai", "agent"}) == 4
 
 
 class TestLinkScript:

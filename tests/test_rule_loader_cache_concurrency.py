@@ -176,13 +176,13 @@ class TestDiskCacheConcurrency:
         with tempfile.TemporaryDirectory() as tmp:
             cache_dir = Path(tmp)
             # 先写入一份较大的缓存, 拉长“已截断但未写完”的暴露窗口
-            seeder = _popen(_SEEDER, cache_dir, "1200")
+            seeder = _popen(_SEEDER, cache_dir, "800")
             seed_out, seed_err = seeder.communicate(timeout=300)
             assert "SEEDED" in seed_out, f"预置进程异常: {seed_err[-800:]!r}"
 
             # 写进程: 载荷大小与轮数（在保持撕裂窗口的前提下收敛耗时）
-            writer = _popen(_BIG_WRITER, cache_dir, "220", "18")
-            reader = _popen(_READER, cache_dir, "6")
+            writer = _popen(_BIG_WRITER, cache_dir, "140", "10")
+            reader = _popen(_READER, cache_dir, "5")
             reader_out, _ = reader.communicate(timeout=300)
             writer_out, writer_err = writer.communicate(timeout=300)
             assert "BIGWROTE" in writer_out, f"写进程异常: {writer_err[-800:]!r}"

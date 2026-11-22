@@ -53,7 +53,7 @@ jobs:
           # 超时用 shell 的 `timeout`(超时返回码 124)处理, job 级 timeout-minutes 兜底。
           timeout 2400 mutmut run \
             --paths-to-mutate tools/scripts/_sc_pypi.py \
-            --runner "python -m pytest tests/test_supply_chain_compliance_policy.py -x -q -p no:cacheprovider" \
+            --runner "python -m pytest tests/test_supply_chain_compliance_policy.py tests/test_sc_pypi_mutant_hardening.py -x -q -p no:cacheprovider" \
             --CI \
             --no-progress
 

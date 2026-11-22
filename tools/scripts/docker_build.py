@@ -272,12 +272,22 @@ def _print_build_header(args: argparse.Namespace, components: list[tuple[str, st
     print(f"{'=' * 60}\n")
 
 
-def _preflight_checks(components: list[tuple[str, str]]) -> bool:
-    """验证 Dockerfile 存在与 buildx 可用。"""
+def _preflight_checks(components: list[tuple[str, str]], dry_run: bool = False) -> bool:
+    """验证 Dockerfile 存在与 buildx 可用。
+
+    Args:
+        components: (name, dockerfile) 对列表
+        dry_run: dry-run 模式下跳过全部 buildx 探测/builder 创建
+            (`docker buildx version`/`create --bootstrap` 在本环境实测 ~2.9s/次；
+            dry-run 不实际构建，这些开销没有产出价值，真实构建路径保留)。
+    """
     for name, df in components:
         if not Path(df).exists():
             print(f"❌ Dockerfile 不存在: {df}")
             return False
+
+    if dry_run:
+        return True
 
     code, _ = run_cmd(["docker", "buildx", "version"])
     if code != 0:
@@ -440,7 +450,7 @@ def main() -> int:
 
     _print_build_header(args, components)
 
-    if not _preflight_checks(components):
+    if not _preflight_checks(components, dry_run=args.dry_run):
         return 1
 
     failed, sbom_files = _build_all_components(args, components, extra_tags, sbom_dir)

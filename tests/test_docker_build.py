@@ -203,6 +203,34 @@ class TestPreflight:
         assert _preflight_checks([("x", "Dockerfile")]) is True
         assert any("buildx" in c for c in calls if c)
 
+    def test_dry_run_skips_buildx_create(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+        # 杀 mut: dry_run 判定反转 / create 缺席
+        monkeypatch.chdir(tmp_path)
+        (tmp_path / "Dockerfile").write_text("FROM scratch\n")
+        calls: list[list[str]] = []
+
+        def fake_run(cmd: list[str], **kw: object) -> tuple[int, str]:
+            calls.append(cmd)
+            return (0, "")
+
+        monkeypatch.setattr("tools.scripts.docker_build.run_cmd", fake_run)
+        assert _preflight_checks([("x", "Dockerfile")], dry_run=True) is True
+        assert not any("buildx" in c or "create" in c for c in calls if c)
+
+    def test_real_run_calls_buildx_create(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+        # 杀 mut: --bootstrap/--use 被改/变异丢分支
+        monkeypatch.chdir(tmp_path)
+        (tmp_path / "Dockerfile").write_text("FROM scratch\n")
+        calls: list[list[str]] = []
+
+        def fake_run(cmd: list[str], **kw: object) -> tuple[int, str]:
+            calls.append(cmd)
+            return (0, "")
+
+        monkeypatch.setattr("tools.scripts.docker_build.run_cmd", fake_run)
+        assert _preflight_checks([("x", "Dockerfile")], dry_run=False) is True
+        assert any("create" in c and "--use" in c and "--bootstrap" in c for c in calls if c)
+
 
 class TestCollectExtraTags:
     def test_merges_extra_and_timestamp(self) -> None:

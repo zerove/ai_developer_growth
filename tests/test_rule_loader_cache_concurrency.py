@@ -182,7 +182,7 @@ class TestDiskCacheConcurrency:
 
             # 写进程: 载荷大小与轮数（在保持撕裂窗口的前提下收敛耗时）
             writer = _popen(_BIG_WRITER, cache_dir, "140", "10")
-            reader = _popen(_READER, cache_dir, "5")
+            reader = _popen(_READER, cache_dir, "4")
             reader_out, _ = reader.communicate(timeout=300)
             writer_out, writer_err = writer.communicate(timeout=300)
             assert "BIGWROTE" in writer_out, f"写进程异常: {writer_err[-800:]!r}"

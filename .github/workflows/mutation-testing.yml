@@ -68,6 +68,18 @@ jobs:
             --CI \
             --no-progress
 
+      # 扩面 3: _sc_scanners / _sc_models 扫描器与数据模型核心逻辑。
+      # mutmut 2.x 的 --paths-to-mutate 支持逗号分隔多目标; _sc_models 属纯逻辑
+      # (枚举/数据类序列化), _sc_scanners 属扫描决策逻辑 (OSV/GHSA/License/Signature/
+      # SupplyChain), 与既有两个目标共用同一个 WAL 缓存库 (按源文件区分, 互不串扰)。
+      - name: Run mutation testing (scanners_and_models)
+        run: |
+          timeout 1800 mutmut run \
+            --paths-to-mutate tools/scripts/_sc_scanners.py,tools/scripts/_sc_models.py \
+            --runner "python -m pytest tests/test_supply_chain_compliance_policy.py tests/test_supply_chain_unit.py -x -q -p no:cacheprovider" \
+            --CI \
+            --no-progress
+
       - name: Generate mutation report
         run: |
           mutmut results > mutation-report.txt
@@ -79,6 +91,31 @@ jobs:
           # grep 无匹配 (全部击杀) 时报告为空, 由得分门禁按缓存计数兜底判定。
           mutmut results | grep "supply_runner" > mutation-supply-report.txt || true
           cat mutation-supply-report.txt
+
+      - name: Generate scanners_and_models mutation report
+        run: |
+          # results 只列出未击杀变异体; 按目标文件过滤, 避免混入既有目标结论。
+          mutmut results | grep -e "_sc_scanners" -e "_sc_models" > mutation-scanners-report.txt || true
+          cat mutation-scanners-report.txt
+
+      - name: Check mutation score (scanners_and_models)
+        # 基准阈值 0.1（2026-11-22 本地实测击杀率 ~13.2%, 低于阈值即判定通过；
+        # 低于实测值的保守值, 避免 nightly 报告自动变红成假绿; 后续提升
+        # 扫描器/模型覆盖杀伤力时可逐步回调）。
+        continue-on-error: true
+        run: |
+          python -m tools.scripts.mutation_score \
+            --cache .mutmut-cache \
+            --paths tools/scripts/_sc_scanners.py tools/scripts/_sc_models.py \
+            --min-rate 0.1 \
+            --report mutation-scanners-report.txt
+
+      - name: Upload scanners_and_models mutation report
+        uses: actions/upload-artifact@v4
+        with:
+          name: mutation-scanners-report
+          path: mutation-scanners-report.txt
+          retention-days: 30
 
       # 夜间只读基线：击杀率阈值告警但不阻断 PR/merge（报告已上传 artifact）。
       # --paths: 只统计对应目标的变异体, 两个目标共用缓存时不能混合计分。

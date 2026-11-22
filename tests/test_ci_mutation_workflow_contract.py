@@ -125,3 +125,39 @@ def test_supply_runner_report_is_uploaded() -> None:
     upload = [s for s in _steps() if s.get("name") == "Upload supply runner mutation report"]
     assert upload, "缺少 supply_runner 变异报告上传步骤"
     assert upload[0]["with"]["path"] == "mutation-supply-report.txt"
+
+
+def test_scanners_and_models_run_is_scoped_to_dedicated_tests() -> None:
+    """_sc_scanners/_sc_models 夜间变异必须限定范围并用其决策逻辑对应的测试做 runner。"""
+    script = _script("Run mutation testing (scanners_and_models)")
+    assert "--paths-to-mutate tools/scripts/_sc_scanners.py,tools/scripts/_sc_models.py" in script
+    assert "--max-runtime" not in script, "mutmut 2.x 不支持 --max-runtime"
+    assert "timeout " in script, "scanners_and_models 变异缺少 shell 级超时"
+    for test_file in (
+        "tests/test_supply_chain_compliance_policy.py",
+        "tests/test_supply_chain_unit.py",
+    ):
+        assert test_file in script, f"runner 缺少决策逻辑测试: {test_file}"
+
+
+def test_scanners_and_models_score_gate_exists() -> None:
+    """scanners_and_models 目标也必须有独立的击杀率门禁 (per-target, 不可混合计分)。"""
+    steps = [s for s in _steps() if s.get("name") == "Check mutation score (scanners_and_models)"]
+    assert steps, "缺少 scanners_and_models 变异得分门禁步骤"
+    script = str(steps[0].get("run", ""))
+    assert "mutation_score" in script
+    assert "--min-rate" in script
+    assert "--paths" in script
+    assert "_sc_scanners.py" in script
+    assert "_sc_models.py" in script
+
+
+def test_scanners_and_models_report_is_uploaded() -> None:
+    """scanners_and_models 的未击杀变异体必须进独立报告 (artifact)。"""
+    report = _script("Generate scanners_and_models mutation report")
+    assert "mutmut results" in report
+    assert "--show-all" not in report, "mutmut 2.x 的 results 没有 --show-all"
+    assert "mutation-scanners-report.txt" in report
+    upload = [s for s in _steps() if s.get("name") == "Upload scanners_and_models mutation report"]
+    assert upload, "缺少 scanners_and_models 变异报告上传步骤"
+    assert upload[0]["with"]["path"] == "mutation-scanners-report.txt"
